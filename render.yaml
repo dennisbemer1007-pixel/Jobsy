@@ -3,10 +3,14 @@
 #
 # After first deploy, free web services sleep after ~15 min idle (~1 min cold start).
 # Free Postgres expires after 30 days.
+#
+# Important: free web services cannot receive private-network traffic.
+# Cross-service URLs must use RENDER_EXTERNAL_URL (public *.onrender.com), not property: host.
 
 databases:
   - name: jobsy-db
     plan: free
+    region: oregon
     postgresMajorVersion: "16"
     databaseName: jobsy
     user: jobsy
@@ -16,7 +20,7 @@ services:
     name: jobsy-api
     runtime: docker
     plan: free
-    region: frankfurt
+    region: oregon
     dockerfilePath: ./Jobsy.Api/Dockerfile
     dockerContext: .
     healthCheckPath: /health
@@ -37,18 +41,18 @@ services:
         fromService:
           name: jobsy-web
           type: web
-          property: host
+          envVarKey: RENDER_EXTERNAL_URL
       - key: Cors__AllowedOrigins__0
         fromService:
           name: jobsy-web
           type: web
-          property: host
+          envVarKey: RENDER_EXTERNAL_URL
 
   - type: web
     name: jobsy-web
     runtime: docker
     plan: free
-    region: frankfurt
+    region: oregon
     dockerfilePath: ./Jobsy.Web/Dockerfile
     dockerContext: .
     healthCheckPath: /
@@ -61,4 +65,4 @@ services:
         fromService:
           name: jobsy-api
           type: web
-          property: host
+          envVarKey: RENDER_EXTERNAL_URL

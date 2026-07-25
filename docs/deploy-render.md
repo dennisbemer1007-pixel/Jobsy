@@ -13,11 +13,13 @@ Tijdelijke publieke demo zonder laptop. Free tier: services slapen na ~15 min id
 
 ## Gebruiken
 
-- Open de URL van **jobsy-web** (Dashboard → service → `.onrender.com`).
+- Open de URL van **jobsy-web** (Dashboard → klik `jobsy-web` → link bovenaan, bv. `https://jobsy-web-xxxx.onrender.com`).
 - Demo-login: `kandidaat@jobsy.local` / `Jobsy123!` (zelfde accounts als lokaal).
-- API/Swagger: URL van **jobsy-api** + `/swagger`.
+- API health: URL van **jobsy-api** + `/health`.
 
-Na idle even geduld bij de eerste hit (cold start). Soms moet je de pagina twee keer laden als Web al wakker is maar API nog opstart.
+Als `jobsy-api` **Failed** toont: open die service → **Logs**, en klik op de Blueprint **Manual sync** na een fix-push.
+
+**Let op:** free web services kunnen elkaar niet via het privé-netwerk bereiken. In `render.yaml` gebruiken we daarom `RENDER_EXTERNAL_URL` (publiek), niet `property: host`.
 
 ## Wat de Blueprint zet
 
