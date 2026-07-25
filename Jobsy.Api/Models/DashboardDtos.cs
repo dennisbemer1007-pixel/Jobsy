@@ -99,7 +99,8 @@ public record UpdateCandidateProfileRequest(
     DateOnly? DateOfBirth,
     CandidatePreferencesDto? Preferences,
     double? HomeLatitude = null,
-    double? HomeLongitude = null);
+    double? HomeLongitude = null,
+    bool ClearHomeLocation = false);
 
 public record UpdateLanguageRequest(string Language);
 

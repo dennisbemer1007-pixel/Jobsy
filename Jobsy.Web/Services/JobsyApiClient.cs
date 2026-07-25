@@ -284,6 +284,7 @@ public sealed class JobsyApiClient : IAsyncDisposable
         CandidatePreferences? preferences = null,
         double? homeLatitude = null,
         double? homeLongitude = null,
+        bool clearHomeLocation = false,
         CancellationToken ct = default)
     {
         var response = await _http.PutAsJsonAsync("api/me/profile", new
@@ -292,7 +293,8 @@ public sealed class JobsyApiClient : IAsyncDisposable
             dateOfBirth,
             preferences,
             homeLatitude,
-            homeLongitude
+            homeLongitude,
+            clearHomeLocation
         }, ct);
         response.EnsureSuccessStatusCode();
         return await response.Content.ReadFromJsonAsync<MeProfile>(cancellationToken: ct);

@@ -2,14 +2,18 @@
 @rendermode @(new InteractiveServerRenderMode(prerender: false))
 @attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Candidate")]
 @inject JobsyApiClient Api
+@inject IGeocodingClient Geocoder
+@implements IAsyncDisposable
 
 <PageTitle>Profiel · Jobsy</PageTitle>
 
-<div class="panel-page">
+<div class="panel-page profile-page">
+    <header class="saved-gate__header profile-page__header">
+        <h1>Profiel</h1>
+    </header>
     <article class="detail-card">
-        <a class="back-link" href="/home">← Terug</a>
-        <h1>Mijn profiel</h1>
-        <p class="login-lead">Open for work, voorkeuren, thuislocatie (PushBom) en geboortedatum (voor leeftijdsloon).</p>
+        <h1 class="profile-page__title">Mijn profiel</h1>
+        <p class="login-lead">Open for work, voorkeuren, thuisadres (PushBom) en geboortedatum (voor leeftijdsloon).</p>
 
         @if (_loading)
         {
@@ -28,15 +32,54 @@
                     <input type="date" @bind="_dobInput" />
                 </label>
 
-                <label>
-                    Thuislocatie breedtegraad
-                    <input type="number" step="0.0001" @bind="_homeLat" />
-                </label>
-
-                <label>
-                    Thuislocatie lengtegraad
-                    <input type="number" step="0.0001" @bind="_homeLng" />
-                </label>
+                <div class="profile-address">
+                    <label for="profile-home-address">Thuisadres</label>
+                    <div class="address-field">
+                        <input id="profile-home-address"
+                               type="text"
+                               autocomplete="off"
+                               placeholder="Straat, postcode of plaats…"
+                               value="@_homeAddress"
+                               @oninput="OnAddressInputAsync"
+                               @onfocus="OnAddressFocus"
+                               @onkeydown="OnAddressKeyDown" />
+                        @if (!string.IsNullOrWhiteSpace(_homeAddress) || _homeLat is not null)
+                        {
+                            <button type="button"
+                                    class="engagement-btn address-field__clear"
+                                    @onclick="ClearHomeAddress">
+                                Wissen
+                            </button>
+                        }
+                    </div>
+                    @if (_showSuggestions)
+                    {
+                        <ul class="address-suggestions" role="listbox">
+                            @if (_suggesting)
+                            {
+                                <li class="address-suggestions__status">Laden…</li>
+                            }
+                            else if (_suggestions.Count == 0 && _homeAddress.Trim().Length >= 3)
+                            {
+                                <li class="address-suggestions__status">Geen adressen gevonden</li>
+                            }
+                            else
+                            {
+                                @foreach (var suggestion in _suggestions)
+                                {
+                                    <li>
+                                        <button type="button"
+                                                class="address-suggestions__item"
+                                                @onclick="() => SelectSuggestion(suggestion)">
+                                            @suggestion.Label
+                                        </button>
+                                    </li>
+                                }
+                            }
+                        </ul>
+                    }
+                    <p class="profile-address__hint">Typ minstens 3 tekens en kies een adres uit de suggesties.</p>
+                </div>
 
                 <label>
                     Max. reistijd (minuten)
@@ -92,12 +135,20 @@
     private bool _openForWork;
     private bool _authenticatorEnabled;
     private DateOnly? _dobInput;
+    private string _homeAddress = string.Empty;
     private double? _homeLat;
     private double? _homeLng;
+    private bool _homeLocationDirty;
     private int? _maxTravel = 30;
     private string _preferredTransport = "";
     private readonly HashSet<string> _selectedRoles = new(StringComparer.OrdinalIgnoreCase);
     private string? _message;
+
+    private List<AddressSuggestion> _suggestions = [];
+    private bool _showSuggestions;
+    private bool _suggesting;
+    private CancellationTokenSource? _suggestCts;
+    private int _suggestGeneration;
 
     protected override async Task OnInitializedAsync()
     {
@@ -122,6 +173,21 @@
             {
                 _selectedRoles.Add(role);
             }
+
+            if (_homeLat is not null && _homeLng is not null)
+            {
+                try
+                {
+                    var label = await Geocoder.ReverseAsync(_homeLat.Value, _homeLng.Value);
+                    _homeAddress = string.IsNullOrWhiteSpace(label)
+                        ? $"{_homeLat.Value.ToString("0.#####", System.Globalization.CultureInfo.InvariantCulture)}, {_homeLng.Value.ToString("0.#####", System.Globalization.CultureInfo.InvariantCulture)}"
+                        : label;
+                }
+                catch
+                {
+                    _homeAddress = $"{_homeLat.Value.ToString("0.#####", System.Globalization.CultureInfo.InvariantCulture)}, {_homeLng.Value.ToString("0.#####", System.Globalization.CultureInfo.InvariantCulture)}";
+                }
+            }
         }
         finally
         {
@@ -141,12 +207,120 @@
         }
     }
 
+    private async Task OnAddressInputAsync(ChangeEventArgs e)
+    {
+        _homeAddress = e.Value?.ToString() ?? string.Empty;
+        _homeLat = null;
+        _homeLng = null;
+        _homeLocationDirty = true;
+        _message = null;
+        await SuggestAddressesAsync(_homeAddress);
+    }
+
+    private void OnAddressFocus()
+    {
+        if (_suggestions.Count > 0 || (_homeAddress.Trim().Length >= 3 && _suggesting))
+        {
+            _showSuggestions = true;
+        }
+    }
+
+    private void OnAddressKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key == "Escape")
+        {
+            _showSuggestions = false;
+        }
+    }
+
+    private async Task SuggestAddressesAsync(string query)
+    {
+        _suggestCts?.Cancel();
+        _suggestCts?.Dispose();
+        _suggestCts = new CancellationTokenSource();
+        var token = _suggestCts.Token;
+        var generation = ++_suggestGeneration;
+
+        var trimmed = query.Trim();
+        if (trimmed.Length < 3)
+        {
+            _suggestions = [];
+            _showSuggestions = false;
+            _suggesting = false;
+            return;
+        }
+
+        _showSuggestions = true;
+        _suggesting = true;
+
+        try
+        {
+            await Task.Delay(280, token);
+            var results = await Geocoder.SuggestAsync(trimmed, token);
+            if (generation != _suggestGeneration || token.IsCancellationRequested)
+            {
+                return;
+            }
+
+            _suggestions = results.ToList();
+        }
+        catch (OperationCanceledException)
+        {
+            return;
+        }
+        catch
+        {
+            if (generation == _suggestGeneration)
+            {
+                _suggestions = [];
+            }
+        }
+        finally
+        {
+            if (generation == _suggestGeneration)
+            {
+                _suggesting = false;
+            }
+        }
+    }
+
+    private void SelectSuggestion(AddressSuggestion suggestion)
+    {
+        _showSuggestions = false;
+        _suggestions = [];
+        _homeAddress = suggestion.Label;
+        _homeLat = suggestion.Latitude;
+        _homeLng = suggestion.Longitude;
+        _homeLocationDirty = true;
+        _message = null;
+    }
+
+    private void ClearHomeAddress()
+    {
+        _homeAddress = string.Empty;
+        _homeLat = null;
+        _homeLng = null;
+        _homeLocationDirty = true;
+        _suggestions = [];
+        _showSuggestions = false;
+        _message = null;
+    }
+
     private async Task SaveAsync()
     {
         _saving = true;
         _message = null;
         try
         {
+            if (_homeLocationDirty
+                && !string.IsNullOrWhiteSpace(_homeAddress)
+                && (_homeLat is null || _homeLng is null))
+            {
+                _message = "Kies een adres uit de suggesties.";
+                return;
+            }
+
+            var clearHome = _homeLocationDirty && string.IsNullOrWhiteSpace(_homeAddress);
             await Api.UpdateMyProfileAsync(
                 openForWork: _openForWork,
                 dateOfBirth: _dobInput,
@@ -156,8 +330,10 @@
                     MaxTravelMinutes = _maxTravel,
                     PreferredTransport = string.IsNullOrWhiteSpace(_preferredTransport) ? null : _preferredTransport
                 },
-                homeLatitude: _homeLat,
-                homeLongitude: _homeLng);
+                homeLatitude: clearHome || !_homeLocationDirty ? null : _homeLat,
+                homeLongitude: clearHome || !_homeLocationDirty ? null : _homeLng,
+                clearHomeLocation: clearHome);
+            _homeLocationDirty = false;
             _message = "Profiel opgeslagen.";
         }
         catch (Exception ex)
@@ -168,5 +344,12 @@
         {
             _saving = false;
         }
+    }
+
+    public ValueTask DisposeAsync()
+    {
+        _suggestCts?.Cancel();
+        _suggestCts?.Dispose();
+        return ValueTask.CompletedTask;
     }
 }

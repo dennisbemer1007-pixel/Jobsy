@@ -1,6 +1,7 @@
 using Jobsy.Web.Auth;
 using Jobsy.Web.Components;
 using Jobsy.Web.Localization;
+using Jobsy.Web.Security;
 using Jobsy.Web.Services;
 using Microsoft.AspNetCore.HttpOverrides;
 
@@ -12,6 +13,8 @@ builder.Services.Configure<ForwardedHeadersOptions>(options =>
     options.KnownNetworks.Clear();
     options.KnownProxies.Clear();
 });
+
+builder.Services.AddJobsyDataProtection(builder.Configuration, builder.Environment);
 
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();

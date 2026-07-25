@@ -34,10 +34,12 @@ public class AuthRedirectsTests
 public class RoleNavCatalogTests
 {
     [Fact]
-    public void ForUser_anonymous_gets_map_and_login()
+    public void ForUser_anonymous_gets_search_saved_profile()
     {
         var items = RoleNavCatalog.ForUser(new ClaimsPrincipal(new ClaimsIdentity()));
+        Assert.Equal(3, items.Count);
         Assert.Contains(items, i => i.Href == "/");
+        Assert.Contains(items, i => i.Href == "/candidate/liked");
         Assert.Contains(items, i => i.Href == "/login");
     }
 
@@ -55,12 +57,15 @@ public class RoleNavCatalogTests
     }
 
     [Fact]
-    public void ForUser_candidate_includes_home_and_banenkaart()
+    public void ForUser_candidate_gets_search_saved_profile()
     {
         var identity = new ClaimsIdentity([new Claim(ClaimTypes.Role, JobsyRoles.Candidate)], "test");
         var items = RoleNavCatalog.ForUser(new ClaimsPrincipal(identity));
-        Assert.Contains(items, i => i.Href == "/home");
+        Assert.Equal(3, items.Count);
         Assert.Contains(items, i => i.Href == "/");
+        Assert.Contains(items, i => i.Href == "/candidate/liked");
+        Assert.Contains(items, i => i.Href == "/candidate/profile");
+        Assert.DoesNotContain(items, i => i.Href == "/home");
     }
 
     [Fact]

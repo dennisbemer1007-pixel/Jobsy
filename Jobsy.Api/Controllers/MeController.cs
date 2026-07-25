@@ -140,7 +140,11 @@ public class MeController : ControllerBase
             user.OpenForWork = request.OpenForWork.Value;
         }
 
-        if (request.HomeLatitude is not null || request.HomeLongitude is not null)
+        if (request.ClearHomeLocation)
+        {
+            user.HomeLocation = null;
+        }
+        else if (request.HomeLatitude is not null || request.HomeLongitude is not null)
         {
             if (request.HomeLatitude is null || request.HomeLongitude is null)
             {

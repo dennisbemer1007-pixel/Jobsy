@@ -18,7 +18,7 @@ public static class DependencyInjection
         IConfiguration configuration,
         IHostEnvironment? environment = null)
     {
-        var connectionString = configuration.GetConnectionString("JobsyDb");
+        var connectionString = ResolveJobsyConnectionString(configuration);
         var isDev = environment?.IsDevelopment() ?? true;
 
         if (string.IsNullOrWhiteSpace(connectionString))
@@ -26,20 +26,35 @@ public static class DependencyInjection
             if (!isDev)
             {
                 throw new InvalidOperationException(
-                    "ConnectionStrings:JobsyDb is required outside Development.");
+                    "ConnectionStrings:JobsyDb (or DATABASE_URL) is required outside Development. " +
+                    "On Render: jobsy-api → Environment → set ConnectionStrings__JobsyDb to the " +
+                    "Internal Database URL from jobsy-db → Info.");
             }
 
             connectionString =
                 "Host=localhost;Port=5432;Database=JobsyDb;Username=postgres;Password=postgres";
         }
-        else if (!isDev
-                 && connectionString.Contains("Password=postgres", StringComparison.OrdinalIgnoreCase))
+
+        try
+        {
+            connectionString = NormalizePostgresConnectionString(connectionString);
+        }
+        catch (Exception ex)
         {
             throw new InvalidOperationException(
-                "Default postgres password is not allowed outside Development.");
+                "ConnectionStrings:JobsyDb is not a valid Postgres connection string. " +
+                "Paste the Internal Database URL from Render (jobsy-db → Info).", ex);
         }
 
-        services.AddDataProtection();
+        if (!isDev
+            && connectionString.Contains("Password=postgres", StringComparison.OrdinalIgnoreCase)
+            && connectionString.Contains("Host=localhost", StringComparison.OrdinalIgnoreCase))
+        {
+            throw new InvalidOperationException(
+                "Default local postgres connection is not allowed outside Development.");
+        }
+
+        services.AddJobsyDataProtection(connectionString);
         services.AddSingleton<ISecretProtector, SecretProtector>();
 
         services.AddOptions<JobsyFeatureOptions>()
@@ -106,5 +121,47 @@ public static class DependencyInjection
         services.AddHostedService<DataRetentionHostedService>();
 
         return services;
+    }
+
+    internal static string? ResolveJobsyConnectionString(IConfiguration configuration)
+    {
+        var fromConfig = configuration.GetConnectionString("JobsyDb");
+        if (!string.IsNullOrWhiteSpace(fromConfig))
+        {
+            return fromConfig;
+        }
+
+        // Render / Heroku-style fallback when a database is linked in the dashboard.
+        return configuration["DATABASE_URL"];
+    }
+
+    /// <summary>
+    /// Converts postgres:// URLs (Render) to Npgsql key=value form and trims quotes.
+    /// </summary>
+    internal static string NormalizePostgresConnectionString(string raw)
+    {
+        var value = raw.Trim().Trim('"', '\'');
+        if (value.Length == 0)
+        {
+            throw new ArgumentException("Connection string is empty.");
+        }
+
+        if (!value.StartsWith("postgres://", StringComparison.OrdinalIgnoreCase)
+            && !value.StartsWith("postgresql://", StringComparison.OrdinalIgnoreCase))
+        {
+            return value;
+        }
+
+        var uri = new Uri(value);
+        var userInfo = uri.UserInfo.Split(':', 2);
+        var username = Uri.UnescapeDataString(userInfo[0]);
+        var password = userInfo.Length > 1 ? Uri.UnescapeDataString(userInfo[1]) : "";
+        var database = Uri.UnescapeDataString(uri.AbsolutePath.Trim('/'));
+        var port = uri.Port > 0 ? uri.Port : 5432;
+
+        // Render requires SSL for external hosts; Internal hostnames usually contain -a / dpg-
+        var ssl = "SSL Mode=Require;Trust Server Certificate=true";
+
+        return $"Host={uri.Host};Port={port};Database={database};Username={username};Password={password};{ssl}";
     }
 }

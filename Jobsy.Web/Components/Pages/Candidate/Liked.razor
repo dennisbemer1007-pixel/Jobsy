@@ -1,43 +1,85 @@
 @page "/candidate/liked"
 @rendermode @(new InteractiveServerRenderMode(prerender: false))
-@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Candidate")]
+@attribute [Microsoft.AspNetCore.Authorization.AllowAnonymous]
+@using Microsoft.AspNetCore.Components.Authorization
 @inject JobsyApiClient Api
+@inject CultureState Culture
+@inject AuthenticationStateProvider AuthState
 
-<PageTitle>Geliked · Jobsy</PageTitle>
+<PageTitle>@Culture["Saved.Title"] · Jobsy</PageTitle>
 
-<div class="panel-page">
-    <header class="panel-header">
-        <div>
-            <a class="back-link" href="/home">← Terug</a>
-            <h1>Gelikede vacatures</h1>
-            <p class="login-lead">Je favorieten op de banenkaart.</p>
-        </div>
-    </header>
+<AuthorizeView Roles="Candidate">
+    <Authorized>
+        <div class="panel-page">
+            <header class="panel-header">
+                <div>
+                    <h1>@Culture["Saved.Title"]</h1>
+                    <p class="login-lead">Je favorieten op de banenkaart.</p>
+                </div>
+            </header>
 
-    @if (_loading)
-    {
-        <p class="state-message">Laden…</p>
-    }
-    else if (_items.Count == 0)
-    {
-        <p class="state-message">Nog geen likes. <a href="/">Ontdek vacatures</a>.</p>
-    }
-    else
-    {
-        <div class="table-list">
-            @foreach (var item in _items)
+            @if (_loading)
             {
-                <a class="table-row table-row--link" href="@($"/vacancies/{item.VacancyId}")">
-                    <div>
-                        <strong>@item.VacancyTitle</strong>
-                        <span class="muted">@item.CompanyName</span>
-                    </div>
-                    <span class="muted">@item.CreatedAt.ToLocalTime().ToString("dd-MM-yyyy")</span>
-                </a>
+                <p class="state-message">@Culture["Common.Loading"]</p>
+            }
+            else if (_items.Count == 0)
+            {
+                <p class="state-message">Nog geen likes. <a href="/">Ontdek vacatures</a>.</p>
+            }
+            else
+            {
+                <div class="vacancy-list vacancy-list--cards">
+                    @foreach (var item in _items)
+                    {
+                        <a class="job-card" href="@($"/vacancies/{item.VacancyId}")">
+                            <div class="job-card__media">
+                                <div class="job-card__overlay">
+                                    <h2>@item.VacancyTitle</h2>
+                                    <p class="job-card__travel">@item.CompanyName</p>
+                                </div>
+                            </div>
+                            <div class="job-card__footer">
+                                <p class="job-card__company">@item.CompanyName</p>
+                                <p class="job-card__location">@item.CreatedAt.ToLocalTime().ToString("dd-MM-yyyy")</p>
+                            </div>
+                        </a>
+                    }
+                </div>
             }
         </div>
-    }
-</div>
+    </Authorized>
+    <NotAuthorized>
+        <div class="saved-gate">
+            <header class="saved-gate__header">
+                <h1>@Culture["Saved.Title"]</h1>
+            </header>
+            <div class="saved-gate__body">
+                <div class="saved-gate__hero" aria-hidden="true">
+                    <div class="saved-gate__door">
+                        <span class="saved-gate__sofa"></span>
+                    </div>
+                </div>
+                <h2>@Culture["Saved.Headline"]</h2>
+                <p>@Culture["Saved.Lead"]</p>
+                <div class="saved-gate__actions">
+                    <a class="provider-btn provider-btn--google"
+                       href="@($"/account/external/google?returnUrl={Uri.EscapeDataString("/candidate/liked")}")">
+                        <span class="provider-btn__icon provider-btn__icon--google" aria-hidden="true">G</span>
+                        @Culture["Saved.ContinueGoogle"]
+                    </a>
+                    <a class="provider-btn"
+                       href="@($"/login?returnUrl={Uri.EscapeDataString("/candidate/liked")}")">
+                        @Culture["Saved.ContinueApple"]
+                    </a>
+                    <a class="login-submit saved-gate__email"
+                       href="@($"/login?returnUrl={Uri.EscapeDataString("/candidate/liked")}")">
+                        @Culture["Saved.ContinueEmail"]
+                    </a>
+                </div>
+            </div>
+        </div>
+    </NotAuthorized>
+</AuthorizeView>
 
 @code {
     private List<CandidateEngagementItem> _items = [];
@@ -45,9 +87,20 @@
 
     protected override async Task OnInitializedAsync()
     {
+        var state = await AuthState.GetAuthenticationStateAsync();
+        if (state.User.Identity?.IsAuthenticated != true || !state.User.IsInRole("Candidate"))
+        {
+            _loading = false;
+            return;
+        }
+
         try
         {
             _items = (await Api.GetMyLikesAsync()).ToList();
+        }
+        catch
+        {
+            _items = [];
         }
         finally
         {

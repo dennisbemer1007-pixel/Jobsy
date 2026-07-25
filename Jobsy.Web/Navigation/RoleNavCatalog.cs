@@ -7,9 +7,9 @@ public static class RoleNavCatalog
 {
     public static readonly NavItem[] Anonymous =
     [
-        new("Nav.JobMap", "/", NavIcons.Map),
-        new("Nav.Register", "/register", NavIcons.Login),
-        new("Nav.Login", "/login", NavIcons.Login)
+        new("Nav.Search", "/", NavIcons.Search),
+        new("Nav.Saved", "/candidate/liked", NavIcons.Liked),
+        new("Nav.Profile", "/login", NavIcons.Profile)
     ];
 
     public static readonly NavItem[] Admin =
@@ -24,12 +24,9 @@ public static class RoleNavCatalog
 
     public static readonly NavItem[] Candidate =
     [
-        new("Nav.Home", "/home", NavIcons.Home),
-        new("Nav.JobMap", "/", NavIcons.Map),
-        new("Nav.Applications", "/candidate/applications", NavIcons.Applications),
-        new("Nav.Shared", "/candidate/shared", NavIcons.Shared),
-        new("Nav.Liked", "/candidate/liked", NavIcons.Liked),
-        new("Nav.Profile", "/candidate/profile", NavIcons.Profile)
+        new("Nav.Search", "/", NavIcons.Search),
+        new("Nav.Saved", "/candidate/liked", NavIcons.Liked, ["/candidate/shared", "/candidate/applications"]),
+        new("Nav.Profile", "/candidate/profile", NavIcons.Profile, ["/home"])
     ];
 
     public static readonly NavItem[] Enterprise =

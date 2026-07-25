@@ -67,3 +67,7 @@ services:
           name: jobsy-api
           type: web
           envVarKey: RENDER_EXTERNAL_URL
+      - key: ConnectionStrings__JobsyDb
+        fromDatabase:
+          name: jobsy-db
+          property: connectionString

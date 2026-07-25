@@ -7,13 +7,116 @@
 @using Jobsy.Core.Rules
 @using Microsoft.AspNetCore.Components.Authorization
 
-<div class="funda-layout @(showMapOnMobile ? "show-map" : "show-list")">
+<div class="jobsy-discovery @(showMapOnMobile ? "show-map" : "show-list") @(_filtersOpen ? "filters-open" : null)">
+    <div class="jobsy-chrome">
+        <header class="jobsy-chrome__header">
+            <a class="jobsy-logo" href="/" aria-label="Jobsy">
+                <span class="jobsy-logo__mark">Jobsy</span>
+            </a>
+        </header>
+
+        <div class="jobsy-chrome__search">
+            <label class="visually-hidden" for="discovery-address">@Culture["Discovery.Address"]</label>
+            <div class="jobsy-search @(_origin is not null ? "jobsy-search--with-clear" : null)">
+                <input id="discovery-address"
+                       type="text"
+                       autocomplete="off"
+                       placeholder="@Culture["Discovery.AddressPlaceholder"]"
+                       value="@_addressQuery"
+                       @oninput="OnAddressInputAsync"
+                       @onfocus="OnAddressFocus"
+                       @onkeydown="OnAddressKeyDown" />
+                @if (_origin is not null)
+                {
+                    <button type="button"
+                            class="jobsy-search__clear"
+                            title="@Culture["Common.Clear"]"
+                            @onclick="ClearOriginAsync"
+                            aria-label="@Culture["Common.Clear"]">
+                        @Culture["Common.Clear"]
+                    </button>
+                }
+                <button type="button"
+                        class="jobsy-search__btn"
+                        title="@Culture["Discovery.UseMyLocation"]"
+                        disabled="@_locating"
+                        @onclick="RequestLocationAsync"
+                        aria-label="@Culture["Discovery.UseMyLocation"]">
+                    <span class="jobsy-search__icon" aria-hidden="true">
+                        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+                    </span>
+                </button>
+            </div>
+            @if (_showSuggestions)
+            {
+                <ul class="address-suggestions" role="listbox">
+                    @if (_suggesting)
+                    {
+                        <li class="address-suggestions__status">@Culture["Common.Loading"]</li>
+                    }
+                    else if (_suggestions.Count == 0 && _addressQuery.Trim().Length >= 3)
+                    {
+                        <li class="address-suggestions__status">@Culture["Discovery.AddressNoResults"]</li>
+                    }
+                    else
+                    {
+                        @foreach (var suggestion in _suggestions)
+                        {
+                            <li>
+                                <button type="button"
+                                        class="address-suggestions__item"
+                                        @onclick="() => SelectSuggestionAsync(suggestion)">
+                                    @suggestion.Label
+                                </button>
+                            </li>
+                        }
+                    }
+                </ul>
+            }
+            @if (!string.IsNullOrEmpty(_locationError))
+            {
+                <p class="state-message error filter-bar__error">@_locationError</p>
+            }
+        </div>
+
+        <div class="jobsy-chrome__actions" role="toolbar" aria-label="@Culture["Discovery.Filters"]">
+            <button type="button"
+                    class="jobsy-action @(_filtersOpen ? "is-active" : null)"
+                    @onclick="ToggleFilters"
+                    aria-expanded="@_filtersOpen"
+                    aria-controls="discovery-filters">
+                <span class="jobsy-action__icon" aria-hidden="true">@((MarkupString)NavIcons.Filters)</span>
+                <span>@Culture["Discovery.Filters"]</span>
+                @if (ActiveFilterCount > 0)
+                {
+                    <span class="jobsy-action__badge">@ActiveFilterCount</span>
+                }
+            </button>
+            <a class="jobsy-action" href="/candidate/liked">
+                <span class="jobsy-action__icon" aria-hidden="true">@((MarkupString)NavIcons.Liked)</span>
+                <span>@Culture["Discovery.SaveSearch"]</span>
+            </a>
+            <button type="button" class="jobsy-action jobsy-action--toggle" @onclick="ToggleMobileView">
+                @if (showMapOnMobile)
+                {
+                    <span class="jobsy-action__icon" aria-hidden="true">@((MarkupString)NavIcons.List)</span>
+                    <span>@Culture["Discovery.List"]</span>
+                }
+                else
+                {
+                    <span class="jobsy-action__icon" aria-hidden="true">@((MarkupString)NavIcons.Map)</span>
+                    <span>@Culture["Discovery.Map"]</span>
+                }
+            </button>
+        </div>
+    </div>
+
     <aside class="vacancy-pane">
-        <div class="filter-bar">
-            <div class="filter-bar__address">
-                <label for="discovery-address">@Culture["Discovery.Address"]</label>
+        <div class="discovery-toolbar discovery-toolbar--desktop" role="toolbar" aria-label="@Culture["Discovery.Filters"]">
+            <div class="filter-bar__address discovery-toolbar__address">
+                <label for="discovery-address-desktop">@Culture["Discovery.Address"]</label>
                 <div class="address-field">
-                    <input id="discovery-address"
+                    <input id="discovery-address-desktop"
                            type="text"
                            autocomplete="off"
                            placeholder="@Culture["Discovery.AddressPlaceholder"]"
@@ -68,62 +171,84 @@
                     <p class="state-message error filter-bar__error">@_locationError</p>
                 }
             </div>
-
-            <label>
-                @Culture["Discovery.TravelMinutes"]
-                <input type="number" min="5" max="90" value="@_maxTravelMinutes"
-                       @onchange="OnMaxMinutesChanged" />
-            </label>
-            <label>
-                @Culture["Discovery.Transport"]
-                <select value="@_selectedTransport" @onchange="OnTransportChanged">
-                    <option value="Fiets">@Culture["Transport.Bike"]</option>
-                    <option value="Auto">@Culture["Transport.Car"]</option>
-                    <option value="OV">@Culture["Transport.Transit"]</option>
-                    <option value="Lopend">@Culture["Transport.Walk"]</option>
-                </select>
-            </label>
-            <label>
-                @Culture["Discovery.Radius"]
-                <input type="number" min="1" max="50" value="@_radiusKm"
-                       @onchange="OnRadiusChanged" />
-            </label>
-            <label>
-                @Culture["Discovery.Age"]
-                <select value="@AgeSelectValue" @onchange="OnAgeChanged">
-                    <option value="">@Culture["Discovery.AgeAny"]</option>
-                    @for (var age = 15; age <= 21; age++)
-                    {
-                        <option value="@age">@(age == 21 ? "21+" : age.ToString())</option>
-                    }
-                </select>
-            </label>
-            <label>
-                @Culture["Discovery.WorkType"]
-                <select value="@_selectedWorkType" @onchange="OnWorkTypeChanged">
-                    <option value="">@Culture["Discovery.WorkTypeAny"]</option>
-                    @foreach (var label in WorkTypeLabels.All)
-                    {
-                        <option value="@label">@label</option>
-                    }
-                </select>
-            </label>
-            @if (_ageYears is not null)
-            {
-                <label>
-                    @Culture["Discovery.MinWage"]
-                    <input type="number" min="0" step="0.50" placeholder="—"
-                           value="@(_minHourlyWage?.ToString(System.Globalization.CultureInfo.InvariantCulture) ?? "")"
-                           @onchange="OnMinWageChanged" />
-                </label>
-                <label>
-                    @Culture["Discovery.MaxWage"]
-                    <input type="number" min="0" step="0.50" placeholder="—"
-                           value="@(_maxHourlyWage?.ToString(System.Globalization.CultureInfo.InvariantCulture) ?? "")"
-                           @onchange="OnMaxWageChanged" />
-                </label>
-            }
+            <button type="button"
+                    class="discovery-filter-toggle @(_filtersOpen ? "is-active" : null)"
+                    @onclick="ToggleFilters"
+                    aria-expanded="@_filtersOpen"
+                    aria-controls="discovery-filters-desktop">
+                <span class="discovery-filter-toggle__icon" aria-hidden="true">@((MarkupString)NavIcons.Filters)</span>
+                <span>@Culture["Discovery.Filters"]</span>
+                @if (ActiveFilterCount > 0)
+                {
+                    <span class="jobsy-action__badge">@ActiveFilterCount</span>
+                }
+            </button>
         </div>
+
+        @if (_filtersOpen)
+        {
+            <div id="discovery-filters-desktop" class="filter-bar filter-bar--desktop">
+                <label class="filter-required">
+                    @Culture["Discovery.WorkType"]
+                    <select value="@_selectedWorkType" @onchange="OnWorkTypeChanged" required>
+                        <option value="">@Culture["Discovery.WorkTypeAny"]</option>
+                        @foreach (var label in WorkTypeLabels.All)
+                        {
+                            <option value="@label">@label</option>
+                        }
+                    </select>
+                </label>
+                <label class="filter-required">
+                    @Culture["Discovery.Age"]
+                    <select value="@AgeSelectValue" @onchange="OnAgeChanged" required>
+                        <option value="">@Culture["Discovery.AgeAny"]</option>
+                        @for (var age = 15; age <= 21; age++)
+                        {
+                            <option value="@age">@(age == 21 ? "21+" : age.ToString())</option>
+                        }
+                    </select>
+                </label>
+                @if (_ageYears is not null)
+                {
+                    <label>
+                        @Culture["Discovery.MinWage"]
+                        <input type="number" min="0" step="0.50" placeholder="—"
+                               value="@(_minHourlyWage?.ToString(System.Globalization.CultureInfo.InvariantCulture) ?? "")"
+                               @onchange="OnMinWageChanged" />
+                    </label>
+                    <label>
+                        @Culture["Discovery.MaxWage"]
+                        <input type="number" min="0" step="0.50" placeholder="—"
+                               value="@(_maxHourlyWage?.ToString(System.Globalization.CultureInfo.InvariantCulture) ?? "")"
+                               @onchange="OnMaxWageChanged" />
+                    </label>
+                }
+                <label>
+                    @Culture["Discovery.TravelMinutes"]
+                    <input type="number" min="5" max="90" value="@_maxTravelMinutes"
+                           @onchange="OnMaxMinutesChanged" />
+                </label>
+                <label>
+                    @Culture["Discovery.Transport"]
+                    <select value="@_selectedTransport" @onchange="OnTransportChanged">
+                        <option value="Fiets">@Culture["Transport.Bike"]</option>
+                        <option value="Auto">@Culture["Transport.Car"]</option>
+                        <option value="OV">@Culture["Transport.Transit"]</option>
+                        <option value="Lopend">@Culture["Transport.Walk"]</option>
+                    </select>
+                </label>
+                <label>
+                    @Culture["Discovery.Radius"]
+                    <input type="number" min="1" max="50" value="@_radiusKm"
+                           @onchange="OnRadiusChanged" />
+                </label>
+                <div class="filter-bar__actions">
+                    <button type="button" class="filter-bar__search" @onclick="ApplySearch">
+                        @Culture["Discovery.Search"]
+                    </button>
+                </div>
+            </div>
+        }
 
         @if (_loading)
         {
@@ -148,80 +273,61 @@
         }
         else
         {
-            <div class="vacancy-list">
+            <div class="results-meta">
+                <p class="results-meta__count">@Culture.Format("Discovery.ResultCount", _vacancies.Count)</p>
+                <span class="results-meta__sort">
+                    <span class="jobsy-action__icon" aria-hidden="true">@((MarkupString)NavIcons.List)</span>
+                    @Culture["Discovery.Sort"]
+                </span>
+            </div>
+            <div class="vacancy-list vacancy-list--cards">
                 @foreach (var vacancy in _vacancies)
                 {
-                    <article class="vacancy-card @(_hoveredId == vacancy.Id ? "is-hovered" : null)"
+                    var wageText = FormatWage(vacancy);
+                    var travelText = vacancy.TravelMinutes is not null
+                        ? $"± {vacancy.TravelMinutes} min"
+                        : $"max {_maxTravelMinutes} min";
+                    <article class="job-card @(_hoveredId == vacancy.Id ? "is-hovered" : null) @(vacancy.IsHighlighted ? "job-card--highlight" : null)"
                              @onmouseenter="() => OnHover(vacancy.Id)"
                              @onmouseleave="() => OnHover(null)"
                              @onclick="() => OnSelect(vacancy.Id)">
-                        <div class="vacancy-card-top">
-                            <h2>@vacancy.Title</h2>
-                            @if (!vacancy.WageVisible)
+                        <a class="job-card__media" href="@($"/vacancies/{vacancy.Id}")" @onclick:stopPropagation="true"
+                           style="@(string.IsNullOrWhiteSpace(vacancy.ImageUrl) ? null : $"background-image:url('{vacancy.ImageUrl}')")">
+                            @if (vacancy.IsHighlighted)
                             {
-                                <a class="wage wage--cta" href="/candidate/profile" @onclick:stopPropagation="true">
-                                    @WageVisibilityRules.MissingDateOfBirthMessage
-                                </a>
+                                <span class="job-card__badge">Top</span>
                             }
-                            else if (vacancy.HourlyWage is not null)
+                            else if (vacancy.WorkTypes.Length > 0)
                             {
-                                <span class="wage">€ @vacancy.HourlyWage.Value.ToString("0.00")</span>
+                                <span class="job-card__badge job-card__badge--soft">@vacancy.WorkTypes[0]</span>
                             }
-                            else if (vacancy.WageByAge is { Count: > 0 })
-                            {
-                                <table class="wage-table">
-                                    <tbody>
-                                    @foreach (var band in vacancy.WageByAge)
-                                    {
-                                        <tr>
-                                            <th>@band.Label</th>
-                                            <td>€ @band.HourlyRate.ToString("0.00")</td>
-                                        </tr>
-                                    }
-                                    </tbody>
-                                </table>
-                            }
-                        </div>
-                        <p class="company">@vacancy.CompanyName</p>
-                        <p class="address">@vacancy.CompanyAddress</p>
-                        <p class="travel-hint">
-                            @if (vacancy.TravelMinutes is not null)
-                            {
-                                <span class="travel-badge">± @vacancy.TravelMinutes min @TransportVerb(_selectedTransport)</span>
-                                @if (vacancy.DistanceKm is not null)
+                            <div class="job-card__overlay">
+                                <h2>@vacancy.Title</h2>
+                                <p class="job-card__travel">@travelText · @TransportVerb(_selectedTransport)</p>
+                                @if (!string.IsNullOrEmpty(wageText))
                                 {
-                                    <span class="muted"> · @vacancy.DistanceKm.Value.ToString("0.0") km</span>
+                                    <p class="job-card__wage">@wageText</p>
                                 }
-                            }
-                            else
-                            {
-                                <span class="travel-badge travel-badge--soft">@_selectedTransport · max @_maxTravelMinutes min</span>
-                            }
-                        </p>
-                        <div class="badges">
-                            @foreach (var workType in vacancy.WorkTypes)
-                            {
-                                <span class="badge badge--worktype">@workType</span>
-                            }
-                            @foreach (var transport in vacancy.RequiredTransport)
-                            {
-                                <span class="badge">@transport</span>
-                            }
-                        </div>
-                        <div class="vacancy-card__actions" @onclick:stopPropagation="true">
-                            <a class="vacancy-card__link" href="@($"/vacancies/{vacancy.Id}")">Bekijk</a>
-                            <AuthorizeView>
-                                <Authorized>
-                                    <button type="button" class="vacancy-card__link" @onclick="() => OpenShare(vacancy)">Delen</button>
-                                    <a class="vacancy-card__link vacancy-card__link--primary" href="@($"/vacancies/{vacancy.Id}#apply")">Solliciteer</a>
-                                </Authorized>
-                                <NotAuthorized>
-                                    <a class="vacancy-card__link vacancy-card__link--primary"
-                                       href="@($"/login?returnUrl={Uri.EscapeDataString($"/vacancies/{vacancy.Id}#apply")}")">
-                                        Solliciteer
-                                    </a>
-                                </NotAuthorized>
-                            </AuthorizeView>
+                            </div>
+                        </a>
+                        <div class="job-card__footer">
+                            <p class="job-card__company">@vacancy.CompanyName</p>
+                            <p class="job-card__location">@vacancy.CompanyAddress</p>
+                            <div class="vacancy-card__actions" @onclick:stopPropagation="true">
+                                <a class="vacancy-card__link" href="@($"/vacancies/{vacancy.Id}")">Bekijk</a>
+                                <AuthorizeView>
+                                    <Authorized>
+                                        <button type="button" class="vacancy-card__link" @onclick="() => OpenShare(vacancy)">Delen</button>
+                                        <a class="vacancy-card__link vacancy-card__link--primary" href="@($"/vacancies/{vacancy.Id}#apply")">Solliciteer</a>
+                                    </Authorized>
+                                    <NotAuthorized>
+                                        <a class="vacancy-card__link vacancy-card__link--primary"
+                                           href="@($"/login?returnUrl={Uri.EscapeDataString($"/vacancies/{vacancy.Id}#apply")}")">
+                                            Solliciteer
+                                        </a>
+                                    </NotAuthorized>
+                                </AuthorizeView>
+                            </div>
                         </div>
                     </article>
                 }
@@ -231,11 +337,130 @@
 
     <section class="map-pane">
         <div @ref="_mapElement" id="job-map" class="job-map"></div>
+        <button type="button"
+                class="discovery-filter-fab @(_filtersOpen ? "is-active" : null)"
+                @onclick="ToggleFilters"
+                aria-expanded="@_filtersOpen"
+                aria-controls="discovery-filters-desktop"
+                title="@Culture["Discovery.Filters"]"
+                aria-label="@Culture["Discovery.Filters"]">
+            <span class="discovery-filter-fab__icon" aria-hidden="true">@((MarkupString)NavIcons.Filters)</span>
+            @if (ActiveFilterCount > 0)
+            {
+                <span class="jobsy-action__badge">@ActiveFilterCount</span>
+            }
+        </button>
     </section>
 
-    <button class="mobile-toggle" type="button" @onclick="ToggleMobileView">
-        @(showMapOnMobile ? "Lijst tonen" : "Kaart tonen")
-    </button>
+    @if (_filtersOpen)
+    {
+        <div class="filter-sheet-backdrop" @onclick="CloseFilters"></div>
+        <div id="discovery-filters" class="filter-sheet" role="dialog" aria-modal="true" aria-labelledby="filter-sheet-title">
+            <div class="filter-sheet__header">
+                <h2 id="filter-sheet-title">
+                    @Culture["Discovery.Filters"]
+                    @if (ActiveFilterCount > 0)
+                    {
+                        <span class="jobsy-action__badge">@ActiveFilterCount</span>
+                    }
+                </h2>
+                <button type="button" class="filter-sheet__cancel" @onclick="CloseFilters">@Culture["Discovery.Cancel"]</button>
+            </div>
+
+            @if (ActiveFilterCount > 0)
+            {
+                <div class="filter-sheet__tags">
+                    @if (!string.IsNullOrWhiteSpace(_selectedWorkType))
+                    {
+                        <button type="button" class="filter-tag" @onclick="ClearWorkTypeAsync">@_selectedWorkType ×</button>
+                    }
+                    @if (_ageYears is not null)
+                    {
+                        <button type="button" class="filter-tag" @onclick="ClearAgeAsync">@_ageYears ×</button>
+                    }
+                    <button type="button" class="filter-sheet__clear" @onclick="ClearAllFiltersAsync">@Culture["Discovery.ClearFilters"]</button>
+                </div>
+            }
+
+            <div class="filter-sheet__body">
+                <section class="filter-section filter-section--hero">
+                    <h3>@Culture["Discovery.TravelSlider"]</h3>
+                    <div class="travel-slider">
+                        <input type="range" min="5" max="90" step="5"
+                               value="@_maxTravelMinutes"
+                               @oninput="OnTravelSliderInput"
+                               @onchange="OnMaxMinutesChanged" />
+                        <div class="travel-slider__value">
+                            <strong>@_maxTravelMinutes</strong> @Culture["Discovery.Minutes"]
+                        </div>
+                    </div>
+                    <label>
+                        @Culture["Discovery.Transport"]
+                        <select value="@_selectedTransport" @onchange="OnTransportChanged">
+                            <option value="Fiets">@Culture["Transport.Bike"]</option>
+                            <option value="Auto">@Culture["Transport.Car"]</option>
+                            <option value="OV">@Culture["Transport.Transit"]</option>
+                            <option value="Lopend">@Culture["Transport.Walk"]</option>
+                        </select>
+                    </label>
+                </section>
+
+                <section class="filter-section">
+                    <h3>@Culture["Discovery.WorkType"]</h3>
+                    <label>
+                        <select value="@_selectedWorkType" @onchange="OnWorkTypeChanged">
+                            <option value="">@Culture["Discovery.WorkTypeAny"]</option>
+                            @foreach (var label in WorkTypeLabels.All)
+                            {
+                                <option value="@label">@label</option>
+                            }
+                        </select>
+                    </label>
+                </section>
+
+                <section class="filter-section">
+                    <h3>@Culture["Discovery.Age"] · uurloon</h3>
+                    <label>
+                        @Culture["Discovery.Age"]
+                        <select value="@AgeSelectValue" @onchange="OnAgeChanged">
+                            <option value="">@Culture["Discovery.AgeAny"]</option>
+                            @for (var age = 15; age <= 21; age++)
+                            {
+                                <option value="@age">@(age == 21 ? "21+" : age.ToString())</option>
+                            }
+                        </select>
+                    </label>
+                    @if (_ageYears is not null)
+                    {
+                        <label>
+                            @Culture["Discovery.MinWage"]
+                            <input type="number" min="0" step="0.50" placeholder="—"
+                                   value="@(_minHourlyWage?.ToString(System.Globalization.CultureInfo.InvariantCulture) ?? "")"
+                                   @onchange="OnMinWageChanged" />
+                        </label>
+                        <label>
+                            @Culture["Discovery.MaxWage"]
+                            <input type="number" min="0" step="0.50" placeholder="—"
+                                   value="@(_maxHourlyWage?.ToString(System.Globalization.CultureInfo.InvariantCulture) ?? "")"
+                                   @onchange="OnMaxWageChanged" />
+                        </label>
+                    }
+                </section>
+
+                <section class="filter-section">
+                    <label>
+                        @Culture["Discovery.Radius"]
+                        <input type="number" min="1" max="50" value="@_radiusKm"
+                               @onchange="OnRadiusChanged" />
+                    </label>
+                </section>
+            </div>
+
+            <button type="button" class="filter-sheet__apply" @onclick="ApplySearch">
+                @Culture["Discovery.Search"]
+            </button>
+        </div>
+    }
 </div>
 
 <ShareModal IsOpen="_shareOpen" Vacancy="_shareVacancy" OnClose="CloseShare" />
@@ -245,7 +470,8 @@
     private bool _loading = true;
     private string? _error;
     private Guid? _hoveredId;
-    private bool showMapOnMobile;
+    private bool showMapOnMobile = true;
+    private bool _filtersOpen;
     private bool _mapReady;
     private bool _mapInitScheduled;
     private ElementReference _mapElement;
@@ -273,6 +499,22 @@
 
     private string AgeSelectValue => _ageYears?.ToString() ?? "";
 
+    private int ActiveFilterCount
+    {
+        get
+        {
+            var n = 0;
+            if (!string.IsNullOrWhiteSpace(_selectedWorkType)) n++;
+            if (_ageYears is not null) n++;
+            if (_minHourlyWage is not null) n++;
+            if (_maxHourlyWage is not null) n++;
+            if (_maxTravelMinutes != 30) n++;
+            if (_selectedTransport != "Fiets") n++;
+            if (_radiusKm != 15) n++;
+            return n;
+        }
+    }
+
     protected override async Task OnInitializedAsync()
     {
         Culture.Changed += OnCultureChanged;
@@ -293,6 +535,16 @@
                     else if (profile.DateOfBirth is DateOnly dob)
                     {
                         _ageYears = AgeFromDob(dob);
+                    }
+
+                    if (profile.Preferences.MaxTravelMinutes is int travel)
+                    {
+                        _maxTravelMinutes = Math.Clamp(travel, 5, 90);
+                    }
+
+                    if (!string.IsNullOrWhiteSpace(profile.Preferences.PreferredTransport))
+                    {
+                        _selectedTransport = profile.Preferences.PreferredTransport;
                     }
                 }
             }
@@ -319,6 +571,37 @@
         "Lopend" => Culture["Transport.Walk"],
         _ => transport
     };
+
+    private string? FormatWage(VacancyListItem vacancy)
+    {
+        if (!vacancy.WageVisible)
+        {
+            return null;
+        }
+
+        if (vacancy.HourlyWage is not null)
+        {
+            return $"€ {vacancy.HourlyWage.Value:0.00}/u";
+        }
+
+        if (vacancy.WageByAge is { Count: > 0 })
+        {
+            if (_ageYears is int age)
+            {
+                var band = vacancy.WageByAge
+                    .OrderBy(b => Math.Abs(b.AgeYears - age))
+                    .FirstOrDefault();
+                if (band is not null)
+                {
+                    return $"€ {band.HourlyRate:0.00}/u";
+                }
+            }
+
+            return string.Join(" · ", vacancy.WageByAge.Take(2).Select(b => $"{b.Label} €{b.HourlyRate:0.00}"));
+        }
+
+        return null;
+    }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
@@ -389,6 +672,8 @@
 
             await Js.InvokeVoidAsync("jobMap.init", "job-map", markers, options);
             _mapReady = true;
+            await Task.Delay(80);
+            await Js.InvokeVoidAsync("jobMap.invalidate");
         }
         catch (JSDisconnectedException)
         {
@@ -450,6 +735,7 @@
     private List<Dictionary<string, object?>> BuildMarkers() =>
         _vacancies.Select(v =>
         {
+            var primaryType = v.WorkTypes.FirstOrDefault() ?? "";
             var dict = new Dictionary<string, object?>
             {
                 ["id"] = v.Id.ToString(),
@@ -462,6 +748,7 @@
                 ["lng"] = v.Longitude,
                 ["transport"] = v.RequiredTransport,
                 ["workTypes"] = v.WorkTypes,
+                ["workType"] = primaryType,
                 ["travelMinutes"] = v.TravelMinutes,
                 ["transportLabel"] = TransportVerb(_selectedTransport)
             };
@@ -678,6 +965,14 @@
         _ => "reistijd"
     };
 
+    private void OnTravelSliderInput(ChangeEventArgs e)
+    {
+        if (int.TryParse(e.Value?.ToString(), out var value))
+        {
+            _maxTravelMinutes = Math.Clamp(value, 5, 90);
+        }
+    }
+
     private async Task OnMaxMinutesChanged(ChangeEventArgs e)
     {
         if (int.TryParse(e.Value?.ToString(), out var value))
@@ -867,6 +1162,55 @@
         _shareOpen = false;
         _shareVacancy = null;
         return Task.CompletedTask;
+    }
+
+    private void ToggleFilters() => _filtersOpen = !_filtersOpen;
+
+    private void CloseFilters() => _filtersOpen = false;
+
+    private async Task ApplySearch()
+    {
+        if (_mapReady)
+        {
+            try { await Js.InvokeVoidAsync("jobMap.setTravelOptions", TravelMapOptions()); }
+            catch { /* ignore */ }
+        }
+
+        await LoadVacanciesAsync();
+        _filtersOpen = false;
+    }
+
+    private async Task ClearWorkTypeAsync()
+    {
+        _selectedWorkType = "";
+        await LoadVacanciesAsync();
+    }
+
+    private async Task ClearAgeAsync()
+    {
+        _ageYears = null;
+        _minHourlyWage = null;
+        _maxHourlyWage = null;
+        await PersistAgeAsync();
+        await LoadVacanciesAsync();
+    }
+
+    private async Task ClearAllFiltersAsync()
+    {
+        _selectedWorkType = "";
+        _ageYears = null;
+        _minHourlyWage = null;
+        _maxHourlyWage = null;
+        _maxTravelMinutes = 30;
+        _selectedTransport = "Fiets";
+        _radiusKm = 15;
+        await PersistAgeAsync();
+        if (_mapReady)
+        {
+            try { await Js.InvokeVoidAsync("jobMap.setTravelOptions", TravelMapOptions()); }
+            catch { /* ignore */ }
+        }
+        await LoadVacanciesAsync();
     }
 
     private async Task ToggleMobileView()

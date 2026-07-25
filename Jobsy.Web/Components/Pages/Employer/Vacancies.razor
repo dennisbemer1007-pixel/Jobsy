@@ -1,6 +1,8 @@
 @page "/employer/vacancies"
 @rendermode @(new InteractiveServerRenderMode(prerender: false))
 @attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "BranchManager,RegionalManager,EnterpriseManager,Intermediary,Admin")]
+@using Jobsy.Core.Rules
+@using Microsoft.AspNetCore.Components.Authorization
 @inject JobsyApiClient Api
 @inject AuthenticationStateProvider AuthState
 
@@ -15,6 +17,40 @@
         <a class="login-submit" href="/branch/vacancies/new" style="text-decoration:none;display:inline-flex;align-items:center;">Nieuwe vacature</a>
     </header>
 
+    <div class="employer-search filter-bar">
+        <label class="filter-required">
+            Type baan
+            <select @bind="_workTypeFilter" @bind:after="ApplyFilters">
+                <option value="">Alle branches</option>
+                @foreach (var label in WorkTypeLabels.All)
+                {
+                    <option value="@label">@label</option>
+                }
+            </select>
+        </label>
+        <label class="filter-required">
+            Uurloon (op basis van leeftijd)
+            <select @bind="_ageFilter" @bind:after="ApplyFilters">
+                <option value="">Alle leeftijden</option>
+                @for (var age = 15; age <= 21; age++)
+                {
+                    <option value="@age">@(age == 21 ? "21+" : age.ToString())</option>
+                }
+            </select>
+        </label>
+        @if (!string.IsNullOrEmpty(_ageFilter))
+        {
+            <label>
+                Min. uurloon (€)
+                <input type="number" min="0" step="0.50" @bind="_minWage" @bind:after="ApplyFilters" />
+            </label>
+            <label>
+                Max. uurloon (€)
+                <input type="number" min="0" step="0.50" @bind="_maxWage" @bind:after="ApplyFilters" />
+            </label>
+        }
+    </div>
+
     @if (_loading)
     {
         <p class="state-message">Laden…</p>
@@ -23,16 +59,24 @@
     {
         <p class="state-message error">@_error</p>
     }
+    else if (_filtered.Count == 0)
+    {
+        <p class="state-message">Geen vacatures voor deze filters.</p>
+    }
     else
     {
         <div class="table-list">
-            @foreach (var v in _vacancies)
+            @foreach (var v in _filtered)
             {
                 <div class="table-row">
                     <div>
                         <strong>@v.Title</strong>
                         <span class="muted">
                             @v.CompanyName · @v.Status
+                            @if (v.WorkTypes.Length > 0)
+                            {
+                                <text> · @string.Join(", ", v.WorkTypes)</text>
+                            }
                             @if (v.IsHighlighted)
                             {
                                 <text> · highlight</text>
@@ -92,6 +136,7 @@
 
 @code {
     private List<VacancyListItem> _vacancies = [];
+    private List<VacancyListItem> _filtered = [];
     private bool _loading = true;
     private bool _canApprovePublish;
     private string? _error;
@@ -100,6 +145,10 @@
     private VacancyListItem? _publishVacancy;
     private bool _pushBomOpen;
     private VacancyListItem? _pushBomVacancy;
+    private string _workTypeFilter = "";
+    private string _ageFilter = "";
+    private decimal? _minWage;
+    private decimal? _maxWage;
 
     protected override async Task OnInitializedAsync()
     {
@@ -109,6 +158,7 @@
             var user = state.User;
             _canApprovePublish = user.IsInRole("EnterpriseManager") || user.IsInRole("Admin");
             _vacancies = (await Api.GetManagedVacanciesAsync()).ToList();
+            ApplyFilters();
         }
         catch (Exception ex)
         {
@@ -120,8 +170,65 @@
         }
     }
 
+    private void ApplyFilters()
+    {
+        IEnumerable<VacancyListItem> query = _vacancies;
+
+        if (!string.IsNullOrWhiteSpace(_workTypeFilter))
+        {
+            query = query.Where(v => v.WorkTypes.Any(w =>
+                string.Equals(w, _workTypeFilter, StringComparison.OrdinalIgnoreCase)));
+        }
+
+        if (int.TryParse(_ageFilter, out var age))
+        {
+            query = query.Where(v =>
+            {
+                var wage = ResolveWage(v, age);
+                if (wage is null)
+                {
+                    return false;
+                }
+
+                if (_minWage is decimal min && wage < min)
+                {
+                    return false;
+                }
+
+                if (_maxWage is decimal max && wage > max)
+                {
+                    return false;
+                }
+
+                return true;
+            });
+        }
+
+        _filtered = query.ToList();
+    }
+
+    private static decimal? ResolveWage(VacancyListItem v, int age)
+    {
+        if (v.HourlyWage is not null)
+        {
+            return v.HourlyWage;
+        }
+
+        if (v.WageByAge is { Count: > 0 })
+        {
+            return v.WageByAge
+                .OrderBy(b => Math.Abs(b.AgeYears - age))
+                .FirstOrDefault()?.HourlyRate;
+        }
+
+        return null;
+    }
+
     private async Task RefreshAsync()
-        => _vacancies = (await Api.GetManagedVacanciesAsync()).ToList();
+    {
+        _vacancies = (await Api.GetManagedVacanciesAsync()).ToList();
+        ApplyFilters();
+    }
 
     private void OpenPublish(VacancyListItem vacancy)
     {

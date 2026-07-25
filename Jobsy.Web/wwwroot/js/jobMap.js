@@ -2,8 +2,6 @@ window.jobMap = (function () {
     let map = null;
     let clusterGroup = null;
     let markersById = {};
-    let defaultIcon = null;
-    let highlightIcon = null;
     let originMarker = null;
     let travelRingLayers = [];
     let travelOptions = { maxMinutes: 30, transport: "Fiets", radiusKm: 15 };
@@ -25,13 +23,29 @@ window.jobMap = (function () {
         Lopend: "lopen"
     };
 
-    function createIcon(highlighted) {
+    function workTypeGlyph(workType) {
+        const t = String(workType || "").toLowerCase();
+        // Simple emoji glyphs for branch recognition on the map
+        if (t.indexOf("horeca") >= 0) return "☕";
+        if (t.indexOf("winkel") >= 0 || t.indexOf("retail") >= 0 || t.indexOf("supermarkt") >= 0) return "🛒";
+        if (t.indexOf("logistiek") >= 0) return "📦";
+        if (t.indexOf("zorg") >= 0) return "✚";
+        if (t.indexOf("kantoor") >= 0) return "💼";
+        if (t.indexOf("bouw") >= 0) return "🔧";
+        if (t.indexOf("tuinbouw") >= 0) return "🌿";
+        if (t.indexOf("schoonmaak") >= 0) return "✨";
+        if (t.indexOf("productie") >= 0) return "🏭";
+        return "●";
+    }
+
+    function createIcon(highlighted, workType) {
+        const glyph = workTypeGlyph(workType);
         return L.divIcon({
             className: highlighted ? "job-marker job-marker--active" : "job-marker",
-            html: "<span class=\"job-marker__pin\"></span>",
-            iconSize: [28, 36],
-            iconAnchor: [14, 34],
-            popupAnchor: [0, -30]
+            html: "<span class=\"job-marker__glyph\" aria-hidden=\"true\">" + glyph + "</span>",
+            iconSize: [34, 34],
+            iconAnchor: [17, 17],
+            popupAnchor: [0, -18]
         });
     }
 
@@ -51,6 +65,38 @@ window.jobMap = (function () {
     function formatWage(wage) {
         if (wage == null || wage === "") return "";
         return Number(wage).toFixed(2).replace(".", ",");
+    }
+
+    function isNarrowViewport() {
+        return (window.innerWidth || 0) <= 768;
+    }
+
+    function jobPopupOptions() {
+        const vw = window.innerWidth || 360;
+        const maxWidth = isNarrowViewport()
+            ? Math.max(220, Math.min(300, vw - 28))
+            : 340;
+        return {
+            className: "job-map-popup",
+            maxWidth: maxWidth,
+            minWidth: isNarrowViewport() ? Math.min(240, maxWidth) : 280,
+            autoPanPadding: isNarrowViewport() ? [12, 56] : [36, 48],
+            keepInView: true
+        };
+    }
+
+    function clusterPopupOptions() {
+        const vw = window.innerWidth || 360;
+        const maxWidth = isNarrowViewport()
+            ? Math.max(220, Math.min(300, vw - 28))
+            : 320;
+        return {
+            className: "job-cluster-popup",
+            maxWidth: maxWidth,
+            minWidth: isNarrowViewport() ? Math.min(220, maxWidth) : 260,
+            autoPanPadding: isNarrowViewport() ? [12, 56] : [36, 48],
+            keepInView: true
+        };
     }
 
     function wageHtml(v) {
@@ -74,9 +120,7 @@ window.jobMap = (function () {
         if (v.travelMinutes == null) return "";
         const transport = escapeHtml(String(v.transportLabel || TRANSPORT_LABEL[v.transport] || "reistijd"));
         return (
-            "<p class=\"map-popup__travel\">" +
-                "<span class=\"travel-badge\">± " + escapeHtml(String(v.travelMinutes)) + " min " + transport + "</span>" +
-            "</p>"
+            "<span class=\"map-popup__travel-inline\">± " + escapeHtml(String(v.travelMinutes)) + " min " + transport + "</span>"
         );
     }
 
@@ -110,13 +154,13 @@ window.jobMap = (function () {
             "<div class=\"map-popup\">" +
                 "<div class=\"" + mediaClass + "\">" + mediaInner + "</div>" +
                 "<div class=\"map-popup__body\">" +
-                    "<div class=\"map-popup__top\">" +
+                "<div class=\"map-popup__top\">" +
                         "<h3 class=\"map-popup__title\">" + escapeHtml(v.title) + "</h3>" +
-                        wageHtml(v) +
+                        travelHtml(v) +
                     "</div>" +
                     "<p class=\"map-popup__company\">" + escapeHtml(v.company) + "</p>" +
                     "<p class=\"map-popup__address\">" + escapeHtml(v.address || "") + "</p>" +
-                    travelHtml(v) +
+                    wageHtml(v) +
                     (badges ? "<div class=\"map-popup__badges\">" + badges + "</div>" : "") +
                     "<div class=\"map-popup__actions\">" +
                         "<a class=\"map-popup__cta\" href=\"" + detailHref + "\" data-job-id=\"" + escapeAttr(v.id) + "\">Bekijk vacature</a>" +
@@ -178,12 +222,7 @@ window.jobMap = (function () {
             map.closePopup(activeClusterPopup);
         }
 
-        activeClusterPopup = L.popup({
-            className: "job-cluster-popup",
-            maxWidth: 360,
-            minWidth: 300,
-            autoPanPadding: [40, 40]
-        })
+        activeClusterPopup = L.popup(clusterPopupOptions())
             .setLatLng(latlng)
             .setContent(buildClusterListHtml(childMarkers))
             .openOn(map);
@@ -283,10 +322,10 @@ window.jobMap = (function () {
 
             const circle = L.circle([lat, lng], {
                 radius: radius,
-                color: "#2fbf6b",
+                color: "#007bff",
                 weight: index === minutes.length - 1 ? 2 : 1.5,
                 opacity: 0.7,
-                fillColor: "#2fbf6b",
+                fillColor: "#007bff",
                 fillOpacity: 0.08 + index * 0.03,
                 interactive: false
             }).addTo(map);
@@ -370,15 +409,7 @@ window.jobMap = (function () {
         openCallback = options && options.dotNetRef ? options.dotNetRef : null;
         normalizeTravelOptions(options && options.travel);
 
-        defaultIcon = createIcon(false);
-        highlightIcon = createIcon(true);
-
-        map = L.map(el, {
-            zoomControl: true,
-            scrollWheelZoom: true
-        });
-
-        // Light Carto basemap — CSS filter in app.css applies Jobsy green tint
+        // Light Carto basemap — CSS filter in app.css applies Jobsy blue tint
         L.tileLayer("https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png", {
             maxZoom: 19,
             attribution: "&copy; <a href=\"https://www.openstreetmap.org/copyright\">OpenStreetMap</a> &copy; <a href=\"https://carto.com/attributions\">CARTO</a>"
@@ -426,17 +457,15 @@ window.jobMap = (function () {
                 return;
             }
 
+            const workType = Array.isArray(v.workTypes) && v.workTypes.length
+                ? v.workTypes[0]
+                : (v.workType || "");
             const marker = L.marker([lat, lng], {
-                icon: defaultIcon,
+                icon: createIcon(false, workType),
                 jobData: v
             });
 
-            marker.bindPopup(buildPopupHtml(v), {
-                className: "job-map-popup",
-                maxWidth: 440,
-                minWidth: 400,
-                autoPanPadding: [48, 48]
-            });
+            marker.bindPopup(buildPopupHtml(v), jobPopupOptions());
 
             marker.on("click", function () {
                 highlight(v.id);
@@ -469,9 +498,9 @@ window.jobMap = (function () {
         } else {
             originMarker = L.circleMarker([la, ln], {
                 radius: 9,
-                color: "#0b6e4f",
+                color: "#0056b3",
                 weight: 3,
-                fillColor: "#2fbf6b",
+                fillColor: "#007bff",
                 fillOpacity: 1
             }).addTo(map);
             originMarker.bindTooltip("Jouw locatie", { direction: "top" });
@@ -514,7 +543,12 @@ window.jobMap = (function () {
 
     function highlight(id) {
         Object.keys(markersById).forEach(function (key) {
-            markersById[key].setIcon(key === id ? highlightIcon : defaultIcon);
+            const marker = markersById[key];
+            const data = marker.options.jobData || {};
+            const workType = Array.isArray(data.workTypes) && data.workTypes.length
+                ? data.workTypes[0]
+                : (data.workType || "");
+            marker.setIcon(createIcon(key === id, workType));
         });
     }
 
