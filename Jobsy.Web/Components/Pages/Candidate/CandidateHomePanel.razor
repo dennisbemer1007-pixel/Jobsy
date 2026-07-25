@@ -1,0 +1,157 @@
+@using Jobsy.Web.Components.Shared
+@inject JobsyApiClient Api
+
+<div class="panel-page">
+    <header class="panel-header">
+        <div>
+            <h1>Welkom terug</h1>
+            <p class="login-lead">Jouw sollicitaties, shares, likes en reacties.</p>
+        </div>
+        <div class="period-tabs" role="tablist" aria-label="Periode">
+            @foreach (var p in Periods)
+            {
+                <button type="button"
+                        class="period-tab @(_period == p.Key ? "period-tab--active" : null)"
+                        role="tab"
+                        aria-selected="@(_period == p.Key)"
+                        disabled="@_loading"
+                        @onclick="() => SetPeriodAsync(p.Key)">
+                    @p.Label
+                </button>
+            }
+        </div>
+    </header>
+
+    @if (_error is not null)
+    {
+        <p class="state-message error">@_error</p>
+    }
+    else if (_loading && _metrics.Count == 0)
+    {
+        <p class="state-message">Laden…</p>
+    }
+    else
+    {
+        <div class="stat-grid">
+            @foreach (var metric in _metrics)
+            {
+                <MetricTile Label="@metric.Label"
+                            FormattedValue="@metric.Value.ToString("0")"
+                            Selected="@(_selectedKey == metric.Key)"
+                            OnClick="() => SelectMetricAsync(metric.Key)" />
+            }
+            <a class="stat-card stat-card--link" href="/candidate/profile">
+                <span class="stat-card__label">Profiel</span>
+                <strong class="stat-card__value">→</strong>
+            </a>
+        </div>
+
+        @if (_selectedKey is not null)
+        {
+            <DrilldownGrid Title="@SelectedLabel"
+                           OverviewHref="@ListHrefFor(_selectedKey)"
+                           Loading="@_drillLoading"
+                           ShowAmount="false"
+                           Items="_drilldown" />
+        }
+
+        <p class="panel-section">
+            <a class="login-submit" href="/" style="text-decoration:none;display:inline-flex;">Naar banenkaart</a>
+        </p>
+    }
+</div>
+
+@code {
+    private static readonly (string Key, string Label)[] Periods =
+    [
+        ("day", "Dag"),
+        ("week", "Week"),
+        ("month", "Maand")
+    ];
+
+    private string _period = "week";
+    private string? _selectedKey;
+    private bool _loading = true;
+    private bool _drillLoading;
+    private string? _error;
+    private List<MetricCount> _metrics = [];
+    private List<MetricDrilldownItem> _drilldown = [];
+
+    private string SelectedLabel =>
+        _metrics.FirstOrDefault(m => m.Key == _selectedKey)?.Label ?? _selectedKey ?? "";
+
+    protected override async Task OnInitializedAsync()
+        => await LoadSummaryAsync();
+
+    private async Task SetPeriodAsync(string period)
+    {
+        if (_period == period)
+        {
+            return;
+        }
+
+        _period = period;
+        await LoadSummaryAsync();
+        if (_selectedKey is not null)
+        {
+            await LoadDrilldownAsync(_selectedKey);
+        }
+    }
+
+    private async Task SelectMetricAsync(string key)
+    {
+        if (_selectedKey == key)
+        {
+            _selectedKey = null;
+            _drilldown = [];
+            return;
+        }
+
+        _selectedKey = key;
+        await LoadDrilldownAsync(key);
+    }
+
+    private async Task LoadSummaryAsync()
+    {
+        _loading = true;
+        _error = null;
+        try
+        {
+            _metrics = (await Api.GetMyMetricsSummaryAsync(_period)).ToList();
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+            _metrics = [];
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private async Task LoadDrilldownAsync(string key)
+    {
+        _drillLoading = true;
+        try
+        {
+            _drilldown = (await Api.GetMyMetricsDrilldownAsync(key, _period)).ToList();
+        }
+        catch
+        {
+            _drilldown = [];
+        }
+        finally
+        {
+            _drillLoading = false;
+        }
+    }
+
+    private static string ListHrefFor(string key) => key.ToLowerInvariant() switch
+    {
+        "applications" => "/candidate/applications",
+        "likes" => "/candidate/liked",
+        "shares" => "/candidate/shared",
+        _ => "/home"
+    };
+}

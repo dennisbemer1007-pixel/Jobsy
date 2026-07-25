@@ -1,0 +1,52 @@
+@using System.Security.Claims
+@using Jobsy.Web.Localization
+@using Microsoft.AspNetCore.Components.Authorization
+@inject CultureState Culture
+@implements IDisposable
+
+<div class="auth-header">
+    <AuthorizeView>
+        <Authorized>
+            <div class="auth-user" title="@context.User.FindFirst(ClaimTypes.Email)?.Value">
+                <span class="auth-user__name">@DisplayName(context.User)</span>
+                <span class="auth-user__role">@RoleLabel(context.User)</span>
+            </div>
+            <a class="auth-link auth-link--muted" href="/account/logout">@Culture["Auth.Logout"]</a>
+        </Authorized>
+        <NotAuthorized>
+            <a class="auth-link" href="/register">@Culture["Auth.Register"]</a>
+            <a class="auth-link" href="/login">@Culture["Auth.Login"]</a>
+        </NotAuthorized>
+    </AuthorizeView>
+</div>
+
+@code {
+    protected override void OnInitialized()
+        => Culture.Changed += OnCultureChanged;
+
+    private void OnCultureChanged()
+        => InvokeAsync(StateHasChanged);
+
+    private string DisplayName(ClaimsPrincipal user)
+        => user.Identity?.Name
+           ?? user.FindFirst(ClaimTypes.Email)?.Value
+           ?? Culture["Auth.User"];
+
+    private string RoleLabel(ClaimsPrincipal user)
+    {
+        var role = user.FindFirst(ClaimTypes.Role)?.Value;
+        return role switch
+        {
+            "BranchManager" or "Manager" => Culture["Role.BranchManager"],
+            "RegionalManager" => Culture["Role.RegionalManager"],
+            "EnterpriseManager" => Culture["Role.EnterpriseManager"],
+            "Intermediary" => Culture["Role.Intermediary"],
+            "Admin" => Culture["Role.Admin"],
+            "Candidate" => Culture["Role.Candidate"],
+            _ => role ?? Culture["Auth.User"]
+        };
+    }
+
+    public void Dispose()
+        => Culture.Changed -= OnCultureChanged;
+}

@@ -1,0 +1,94 @@
+@page "/admin/wages"
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
+@attribute [Authorize(Roles = "Admin")]
+@using Jobsy.Web.Components.Admin
+@inject JobsyApiClient Api
+
+<PageTitle>Minimumloon · Jobsy</PageTitle>
+
+<AdminPageShell Title="Salaris en WML beheer" Lead="Platform WML-tarieven. Halfjaarlijkse update via stub/job.">
+    @if (_loading)
+    {
+        <p class="state-message">Laden…</p>
+    }
+    else
+    {
+        <div class="inline-actions" style="margin-bottom:1rem">
+            <button class="provider-btn" type="button" disabled="@_busy" @onclick="RunSemiAnnualAsync">
+                Halfjaarlijkse WML-update (stub)
+            </button>
+        </div>
+
+        <div class="table-list">
+            @foreach (var r in _rates)
+            {
+                <div class="table-row">
+                    <div>
+                        <strong>@r.Label</strong>
+                        <span class="muted">Leeftijd @r.AgeYears · vanaf @r.EffectiveFrom.ToString("dd-MM-yyyy")</span>
+                    </div>
+                    <div class="inline-actions">
+                        <input type="number" step="0.01" @bind="r.HourlyRate" style="width:5.5rem" />
+                        <button class="provider-btn" type="button" @onclick="() => SaveAsync(r)">Opslaan</button>
+                    </div>
+                </div>
+            }
+        </div>
+        @if (!string.IsNullOrEmpty(_message))
+        {
+            <p class="state-message">@_message</p>
+        }
+    }
+</AdminPageShell>
+
+@code {
+    private List<WageRateItem> _rates = [];
+    private bool _loading = true;
+    private bool _busy;
+    private string? _message;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            _rates = (await Api.GetWageRatesAsync()).ToList();
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private async Task SaveAsync(WageRateItem rate)
+    {
+        try
+        {
+            await Api.UpsertWageRateAsync(rate);
+            _message = $"Tarief '{rate.Label}' opgeslagen.";
+            _rates = (await Api.GetWageRatesAsync()).ToList();
+        }
+        catch (Exception ex)
+        {
+            _message = ex.Message;
+        }
+    }
+
+    private async Task RunSemiAnnualAsync()
+    {
+        _busy = true;
+        try
+        {
+            var result = await Api.RunSemiAnnualWageUpdateAsync();
+            _message = result?.Message ?? "Update uitgevoerd.";
+            _rates = (await Api.GetWageRatesAsync()).ToList();
+        }
+        catch (Exception ex)
+        {
+            _message = ex.Message;
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+}

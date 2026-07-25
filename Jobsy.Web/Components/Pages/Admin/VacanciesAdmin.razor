@@ -1,0 +1,286 @@
+@page "/admin/vacancies"
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
+@attribute [Authorize(Roles = "Admin")]
+@using Jobsy.Web.Components.Admin
+@using Microsoft.AspNetCore.WebUtilities
+@inject JobsyApiClient Api
+@inject NavigationManager Nav
+
+<PageTitle>Vacatures · Jobsy</PageTitle>
+
+<AdminPageShell Title="Vacatures" Lead="Platformbreed overzicht met engagement-metrics en acties.">
+    @if (_loading)
+    {
+        <p class="state-message">Laden…</p>
+    }
+    else if (!string.IsNullOrEmpty(_error))
+    {
+        <p class="state-message error">@_error</p>
+    }
+    else
+    {
+        <div class="filter-bar">
+            <label>
+                Bedrijf
+                <input type="search" @bind="_companyFilter" @bind:event="oninput" placeholder="Bedrijfsnaam…" />
+            </label>
+            <label>
+                Titel
+                <input type="search" @bind="_titleFilter" @bind:event="oninput" placeholder="Vacaturetitel…" />
+            </label>
+            <label>
+                Status
+                <select @bind="_statusFilter">
+                    <option value="">Alle</option>
+                    <option value="Active">Actief</option>
+                    <option value="Draft">Draft</option>
+                    <option value="Archived">Inactief</option>
+                    <option value="PendingApproval">Pending</option>
+                </select>
+            </label>
+            <label class="filter-check">
+                <input type="checkbox" @bind="_extendedOnly" />
+                Alleen verlengd
+            </label>
+            <span class="muted">@_filtered.Count van @_vacancies.Count</span>
+        </div>
+
+        @if (!string.IsNullOrEmpty(_message))
+        {
+            <p class="state-message">@_message</p>
+        }
+
+        @if (_filtered.Count == 0)
+        {
+            <p class="state-message">Geen vacatures gevonden.</p>
+        }
+        else
+        {
+            <div class="table-scroll">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Titel</th>
+                            <th>Bedrijf</th>
+                            <th>Status</th>
+                            <th><button type="button" class="linkish" @onclick='() => Drill("clicks")'>Clicks</button></th>
+                            <th><button type="button" class="linkish" @onclick='() => Drill("shares")'>Shared</button></th>
+                            <th><button type="button" class="linkish" @onclick='() => Drill("applications")'>Applied</button></th>
+                            <th><button type="button" class="linkish" @onclick='() => Drill("extensions")'>Extended</button></th>
+                            <th><button type="button" class="linkish" @onclick='() => Drill("likes")'>Liked</button></th>
+                            <th>Acties</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var v in _filtered)
+                        {
+                            <tr>
+                                <td><strong>@v.Title</strong></td>
+                                <td>@v.CompanyName <span class="muted">(@v.CompanyType)</span></td>
+                                <td>@v.Status</td>
+                                <td><a href="@MetricHref(v, "clicks")">@v.ClickCount</a></td>
+                                <td><a href="@MetricHref(v, "shares")">@v.ShareCount</a></td>
+                                <td><a href="@MetricHref(v, "applications")">@v.ApplicationCount</a></td>
+                                <td><a href="@MetricHref(v, "extensions")">@v.ExtensionCount</a></td>
+                                <td><a href="@MetricHref(v, "likes")">@v.LikeCount</a></td>
+                                <td class="inline-actions">
+                                    <a class="provider-btn" href="/vacancy/@v.Id">Bekijken</a>
+                                    @if (v.Status == "Active")
+                                    {
+                                        <button class="provider-btn" type="button" disabled="@_busy" @onclick="() => DeactivateAsync(v)">Inactief</button>
+                                        <button class="provider-btn" type="button" disabled="@_busy" @onclick="() => ExtendAsync(v)">Verlengen</button>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+
+        @if (_drillKey is not null)
+        {
+            <section class="panel-section">
+                <h2>Drilldown: @_drillKey</h2>
+                @if (_drillLoading)
+                {
+                    <p class="state-message">Laden…</p>
+                }
+                else if (_drilldown.Count == 0)
+                {
+                    <p class="state-message">Geen items.</p>
+                }
+                else
+                {
+                    <div class="table-list">
+                        @foreach (var item in _drilldown)
+                        {
+                            <div class="table-row">
+                                <div>
+                                    <strong>@item.Title</strong>
+                                    <span class="muted">@item.Subtitle</span>
+                                </div>
+                                <span class="muted">@item.CreatedAt.ToLocalTime().ToString("dd-MM HH:mm")</span>
+                            </div>
+                        }
+                    </div>
+                }
+            </section>
+        }
+    }
+</AdminPageShell>
+
+@code {
+    private List<AdminVacancyItem> _vacancies = [];
+    private string _companyFilter = "";
+    private string _titleFilter = "";
+    private string _statusFilter = "";
+    private bool _extendedOnly;
+    private bool _sortByApplications;
+    private Guid? _companyIdFilter;
+    private bool _loading = true;
+    private bool _busy;
+    private bool _drillLoading;
+    private string? _error;
+    private string? _message;
+    private string? _drillKey;
+    private List<MetricDrilldownItem> _drilldown = [];
+
+    private List<AdminVacancyItem> _filtered => Filter().ToList();
+
+    protected override async Task OnInitializedAsync()
+    {
+        var uri = Nav.ToAbsoluteUri(Nav.Uri);
+        var qs = QueryHelpers.ParseQuery(uri.Query);
+        if (qs.TryGetValue("companyId", out var cid) && Guid.TryParse(cid, out var companyId))
+        {
+            _companyIdFilter = companyId;
+        }
+
+        if (qs.TryGetValue("status", out var status))
+        {
+            _statusFilter = status.ToString();
+        }
+
+        if (qs.TryGetValue("extended", out var ext) && bool.TryParse(ext, out var extended) && extended)
+        {
+            _extendedOnly = true;
+        }
+
+        if (qs.TryGetValue("sort", out var sort)
+            && sort.ToString().Equals("applications", StringComparison.OrdinalIgnoreCase))
+        {
+            _sortByApplications = true;
+        }
+
+        try
+        {
+            _vacancies = (await Api.GetAdminVacanciesAsync()).ToList();
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private IEnumerable<AdminVacancyItem> Filter()
+    {
+        IEnumerable<AdminVacancyItem> q = _vacancies;
+        if (_companyIdFilter is Guid cid)
+        {
+            q = q.Where(v => v.CompanyId == cid);
+        }
+
+        if (!string.IsNullOrWhiteSpace(_companyFilter))
+        {
+            q = q.Where(v => v.CompanyName.Contains(_companyFilter, StringComparison.OrdinalIgnoreCase));
+        }
+
+        if (!string.IsNullOrWhiteSpace(_titleFilter))
+        {
+            q = q.Where(v => v.Title.Contains(_titleFilter, StringComparison.OrdinalIgnoreCase));
+        }
+
+        if (!string.IsNullOrWhiteSpace(_statusFilter))
+        {
+            q = q.Where(v => v.Status.Equals(_statusFilter, StringComparison.OrdinalIgnoreCase));
+        }
+
+        if (_extendedOnly)
+        {
+            q = q.Where(v => v.IsExtended);
+        }
+
+        if (_sortByApplications)
+        {
+            q = q.OrderByDescending(v => v.ApplicationCount).ThenBy(v => v.Title);
+        }
+
+        return q;
+    }
+
+    private static string MetricHref(AdminVacancyItem v, string metric)
+        => $"/vacancy/{v.Id}?metric={metric}";
+
+    private async Task Drill(string key)
+    {
+        _drillKey = key;
+        _drillLoading = true;
+        try
+        {
+            _drilldown = (await Api.GetEmployerMetricsDrilldownAsync(key, "week")).ToList();
+        }
+        catch
+        {
+            _drilldown = [];
+        }
+        finally
+        {
+            _drillLoading = false;
+        }
+    }
+
+    private async Task ExtendAsync(AdminVacancyItem v)
+    {
+        _busy = true;
+        _message = null;
+        try
+        {
+            await Api.AdminExtendVacancyAsync(v.Id);
+            _message = $"Vacature '{v.Title}' verlengd.";
+            _vacancies = (await Api.GetAdminVacanciesAsync()).ToList();
+        }
+        catch (Exception ex)
+        {
+            _message = ex.Message;
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private async Task DeactivateAsync(AdminVacancyItem v)
+    {
+        _busy = true;
+        _message = null;
+        try
+        {
+            await Api.AdminDeactivateVacancyAsync(v.Id);
+            _message = $"Vacature '{v.Title}' gezet op inactief.";
+            _vacancies = (await Api.GetAdminVacanciesAsync()).ToList();
+        }
+        catch (Exception ex)
+        {
+            _message = ex.Message;
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+}

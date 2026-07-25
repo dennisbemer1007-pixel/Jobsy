@@ -1,0 +1,293 @@
+@page "/admin/finance"
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
+@attribute [Authorize(Roles = "Admin")]
+@using Jobsy.Web.Components.Admin
+@using Microsoft.AspNetCore.WebUtilities
+@inject JobsyApiClient Api
+@inject NavigationManager Nav
+
+<PageTitle>Financieel · Jobsy</PageTitle>
+
+<AdminPageShell Title="Financieel" Lead="Token-KPI’s per periode en volledig tokenlog (aankoop, welkomsttoken, admin-grant en verbruik).">
+    <div class="admin-sublinks">
+        <button type="button" class="admin-sublink @(_tab == "kpi" ? "admin-sublink--active" : null)" @onclick='() => SetTab("kpi")'>KPI’s</button>
+        <button type="button" class="admin-sublink @(_tab == "tokenlog" ? "admin-sublink--active" : null)" @onclick='() => SetTab("tokenlog")'>Tokenlog</button>
+        <a class="admin-sublink" href="/admin/tokens">Token-grant (demo)</a>
+    </div>
+
+    @if (_tab == "kpi")
+    {
+        <div class="period-tabs" role="tablist" aria-label="Periode" style="margin:1rem 0">
+            @foreach (var p in Periods)
+            {
+                <button type="button"
+                        class="period-tab @(_period == p.Key ? "period-tab--active" : null)"
+                        @onclick="() => SetPeriodAsync(p.Key)">
+                    @p.Label
+                </button>
+            }
+        </div>
+
+        @if (_loading)
+        {
+            <p class="state-message">Laden…</p>
+        }
+        else if (!string.IsNullOrEmpty(_error))
+        {
+            <p class="state-message error">@_error</p>
+        }
+        else
+        {
+            <div class="stat-grid">
+                @foreach (var m in _metrics.Where(IsFinanceMetric))
+                {
+                    <button type="button"
+                            class="stat-card stat-card--link @(_selectedKey == m.Key ? "stat-card--selected" : null)"
+                            @onclick="() => SelectMetricAsync(m.Key)">
+                        <span class="stat-card__label">@m.Label</span>
+                        <strong class="stat-card__value">@FormatValue(m)</strong>
+                    </button>
+                }
+            </div>
+
+            @if (_selectedKey is not null)
+            {
+                <section class="panel-section">
+                    <h2>@_metrics.FirstOrDefault(x => x.Key == _selectedKey)?.Label</h2>
+                    @if (_drillLoading)
+                    {
+                        <p class="state-message">Laden…</p>
+                    }
+                    else if (_drilldown.Count == 0)
+                    {
+                        <p class="state-message">Geen items.</p>
+                    }
+                    else
+                    {
+                        <div class="table-list">
+                            @foreach (var item in _drilldown)
+                            {
+                                <div class="table-row">
+                                    <div>
+                                        <strong>@item.Title</strong>
+                                        <span class="muted">@item.Subtitle</span>
+                                    </div>
+                                    <span class="muted">
+                                        @if (item.Amount is not null)
+                                        {
+                                            <text>@item.Amount.Value.ToString("0.##") · </text>
+                                        }
+                                        @item.CreatedAt.ToLocalTime().ToString("dd-MM HH:mm")
+                                    </span>
+                                </div>
+                            }
+                        </div>
+                    }
+                </section>
+            }
+        }
+    }
+    else
+    {
+        <div class="filter-bar">
+            <label>
+                Filter bedrijf
+                <input type="search" @bind="_companyFilter" @bind:event="oninput" placeholder="Bedrijfsnaam…" />
+            </label>
+            <button class="provider-btn" type="button" disabled="@_logLoading" @onclick="LoadLogsAsync">Zoeken</button>
+            <span class="muted">@_filteredLogs.Count regels</span>
+        </div>
+
+        @if (_logLoading)
+        {
+            <p class="state-message">Laden…</p>
+        }
+        else if (!string.IsNullOrEmpty(_logError))
+        {
+            <p class="state-message error">@_logError</p>
+        }
+        else if (_filteredLogs.Count == 0)
+        {
+            <p class="state-message">Geen tokenlog-regels.</p>
+        }
+        else
+        {
+            <div class="table-scroll">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Datum</th>
+                            <th>Bedrijf</th>
+                            <th>Soort</th>
+                            <th>Reason</th>
+                            <th>Amount</th>
+                            <th>Old</th>
+                            <th>New</th>
+                            <th>Reden / note</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var row in _filteredLogs)
+                        {
+                            <tr>
+                                <td>@row.CreatedAt.ToLocalTime().ToString("dd-MM HH:mm")</td>
+                                <td>@row.CompanyName</td>
+                                <td>@row.Kind</td>
+                                <td>@row.Reason</td>
+                                <td>@row.Amount.ToString("0.##")</td>
+                                <td>@row.OldBalance.ToString("0.##")</td>
+                                <td>@row.NewBalance.ToString("0.##")</td>
+                                <td class="muted">@row.Note</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    }
+</AdminPageShell>
+
+@code {
+    private static readonly (string Key, string Label)[] Periods =
+    [
+        ("day", "Dag"),
+        ("week", "Week"),
+        ("month", "Maand")
+    ];
+
+    private static readonly HashSet<string> FinanceKeys = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "tokens_purchased", "tokens_spent", "pushboms", "extensions"
+    };
+
+    private string _tab = "kpi";
+    private string _period = "week";
+    private string? _selectedKey;
+    private bool _loading = true;
+    private bool _drillLoading;
+    private bool _logLoading;
+    private string? _error;
+    private string? _logError;
+    private string _companyFilter = "";
+    private List<MetricCount> _metrics = [];
+    private List<MetricDrilldownItem> _drilldown = [];
+    private List<TokenLogItem> _logs = [];
+
+    private List<TokenLogItem> _filteredLogs =>
+        string.IsNullOrWhiteSpace(_companyFilter)
+            ? _logs
+            : _logs.Where(l => l.CompanyName.Contains(_companyFilter, StringComparison.OrdinalIgnoreCase)).ToList();
+
+    protected override async Task OnInitializedAsync()
+    {
+        var qs = QueryHelpers.ParseQuery(Nav.ToAbsoluteUri(Nav.Uri).Query);
+        if (qs.TryGetValue("tab", out var tab) && tab == "tokenlog")
+        {
+            _tab = "tokenlog";
+            await LoadLogsAsync();
+        }
+        else
+        {
+            await LoadMetricsAsync();
+        }
+    }
+
+    private async Task SetTab(string tab)
+    {
+        _tab = tab;
+        if (tab == "tokenlog" && _logs.Count == 0)
+        {
+            await LoadLogsAsync();
+        }
+        else if (tab == "kpi" && _metrics.Count == 0)
+        {
+            await LoadMetricsAsync();
+        }
+    }
+
+    private static bool IsFinanceMetric(MetricCount m) => FinanceKeys.Contains(m.Key);
+
+    private static string FormatValue(MetricCount metric)
+        => metric.Key.StartsWith("tokens_", StringComparison.OrdinalIgnoreCase)
+            ? metric.Value.ToString("0.##")
+            : metric.Value.ToString("0");
+
+    private async Task SetPeriodAsync(string period)
+    {
+        if (_period == period) return;
+        _period = period;
+        await LoadMetricsAsync();
+        if (_selectedKey is not null)
+        {
+            await LoadDrilldownAsync(_selectedKey);
+        }
+    }
+
+    private async Task SelectMetricAsync(string key)
+    {
+        if (_selectedKey == key)
+        {
+            _selectedKey = null;
+            _drilldown = [];
+            return;
+        }
+
+        _selectedKey = key;
+        await LoadDrilldownAsync(key);
+    }
+
+    private async Task LoadMetricsAsync()
+    {
+        _loading = true;
+        _error = null;
+        try
+        {
+            _metrics = (await Api.GetEmployerMetricsSummaryAsync(_period)).ToList();
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private async Task LoadDrilldownAsync(string key)
+    {
+        _drillLoading = true;
+        try
+        {
+            _drilldown = (await Api.GetEmployerMetricsDrilldownAsync(key, _period)).ToList();
+        }
+        catch
+        {
+            _drilldown = [];
+        }
+        finally
+        {
+            _drillLoading = false;
+        }
+    }
+
+    private async Task LoadLogsAsync()
+    {
+        _logLoading = true;
+        _logError = null;
+        try
+        {
+            _logs = (await Api.GetTokenLogsAsync(
+                string.IsNullOrWhiteSpace(_companyFilter) ? null : _companyFilter)).ToList();
+        }
+        catch (Exception ex)
+        {
+            _logError = ex.Message;
+            _logs = [];
+        }
+        finally
+        {
+            _logLoading = false;
+        }
+    }
+}

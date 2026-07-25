@@ -1,0 +1,123 @@
+# Changelog: Jobsy
+
+Alle noemenswaardige wijzigingen aan dit project worden in dit bestand bijgehouden.
+
+## [0.8.0] - 2026-07-25 (Sprint 8: Polish, seed, docs, cleanup)
+### Toegevoegd
+- Rijke idempotente `Sprint8MetricsSeeder`: spends/pushboms/extensions, time-spread engagement, statusmix-vacatures (Draft/Pending/Archived + intermediair), platform logs, allocations.
+- Gedeelde UI: `MetricTile`, `DrilldownGrid`; `ShareVacancyModal` → `ShareModal`.
+- Candidate BottomNav: Home → `/home`; Admin-nav gestript (modules blijven op `/home`); Intermediary `/home` gebruikt EmployerHomePanel.
+
+### Opgeruimd
+- Dode componenten: `AdminHub`, `ComingSoonPage`.
+- Legacy dashboards `/branch` en `/regional` redirecten naar `/home` (aliases `/banen`, `/admin`, `/admin/cockpit` blijven).
+
+### Docs
+- `ROLES_AND_VIEWS.md` en `REQUIREMENTS.md` bijgewerkt naar Sprints 4–7 + entry `/` ↔ `/home`.
+- `MOCKDATA.md` beschrijft Sprint 8 metrics/logs seed.
+
+### Review-fixes
+- Metric drilldowns voor stock-KPI’s (active vacancies / users / companies); applications redacteren PII tot Accept (employers).
+- `MetricsKeys.PlatformOnly` naar Core (Api niet meer afhankelijk van Infrastructure type).
+- Seeder: geen early-exit op bestaande Spend/Allocation; intermediair-spend gebruikt bestaande vacancy-id; Café-guard voor archived vacancy.
+- EmployerHomePanel toont alle metrics (geen `Take(8)`); Intermediary applications-link + `/branch/applicants` authorize.
+
+## [0.7.0] - 2026-07-24 (Sprint 7: Registratie KVK + org-merge)
+### Toegevoegd
+- Publieke registratieflow `/register`: KVK → vestiging → scope (alleen-vestiging / hele organisatie) → contact → activatie-mail (stub link).
+- Unique `KvkEstablishmentId` blijft de vestigingssleutel; activatie maakt `User` + `LocalAuthCredential` (uniek stub-wachtwoord).
+- Conflictflow: vestiging al in gebruik → `EstablishmentTakeoverRequest`; inbox `/employer/takeovers`; na goedkeuring org-merge (parent-koppeling + token-allocatie naar organisatie).
+- Login valt terug op `POST api/auth/local-login` voor geregistreerde accounts (naast DemoUsers).
+
+### Beveiliging / review-fixes
+- Activatietoken is one-time (cleared na gebruik); replay lekt geen wachtwoord; TTL 48u.
+- `ActivationUrl` alleen in API-response als `JobsyFeatures:ExposeRegistrationActivationLinks` (Development aan).
+- `stub-activation` is Admin-only + Development/feature-flag (niet anoniem).
+- Organisatie-overname alleen door EnterpriseManager/Admin; prior owners verliezen memberships.
+- Geen nieuwe parent bij bestaande `ParentCompanyId`; siblings met openstaande registratie worden niet geclaimd.
+- Dubbele pending-registratie op dezelfde vestiging → conflict; EM claims∩DB her-expand children.
+
+### API
+- `api/registration` (submit / activate / kvk establishments / takeovers approve|reject)
+- `api/auth/local-login`
+
+## [0.6.0] - 2026-07-24 (Sprint 6: Admin suite)
+### Toegevoegd
+- Admin platformdashboard (`/home`) met doorklikbare KPI’s; platform-only metrics (`errors`, `companies_employers` / `companies_intermediaries`, users) alleen voor Admin.
+- Admin modules: bedrijven/intermediairs, gebruikers, vacatures, financieel (KPI + tokenlog), platform logging, token-grant, WML/salaris, systeeminstellingen, integratie-pings.
+- Intermediair-seed/backfill (`CompanyType.Intermediary`) voor admin KPI’s.
+- Halfjaarlijkse WML-update stub (`POST api/wages/semi-annual-update`) + `MinimumWageUpdateHostedService` reminder-job (Europe/Amsterdam).
+- Settings: token-pack pricing, spend-costs en early-adapter rules upsert via `api/settings`.
+- Admin UI grids (`.table-scroll` / `.data-table`) en filters; placeholders (moderatie, masterdata, notificaties) als muted “later” onder `AdminPageShell`.
+
+### API
+- Uitbreiding admin-metrics drilldowns; `api/wages` upsert + semi-annual; `api/settings/token-pricing` (+ packs/costs/early-adapter); admin company/user/vacancy/log endpoints.
+
+### Review-fixes
+- `SalaryService` leest actuele `MinimumWageRates` uit de DB (hardcoded alleen als fallback) — admin WML-edits gelden voor `/check` en vacaturevalidatie.
+- Semi-annual `EffectiveFrom` valt op de due-date (1 jan/1 jul) i.p.v. altijd de volgende periode; reminder-job gebruikt NL-kalender.
+- Admin `UserCount` + users-filter tellen ook `UserCompanies`-memberships; `tokens_purchased` telt geen grants meer.
+- `GET api/wages` toont alleen huidige effectieve tarieven per leeftijd; intermediair krijgt geen Westland-logo-fallback.
+
+## [0.5.0] - 2026-07-24 (Sprint 5: Bedrijf / Regio / Vestiging UI)
+### Toegevoegd
+- Employer dashboards met doorklikbare metrics (periode-tabs + drilldown via `api/metrics`, scoped door `CompanyAuthorizationService`).
+- Vacaturebeheer: rich-text toolbar, image/video-URL, salaristabel-dropdown, live preview-tegel, Publiceren-popup met token-opties (highlight / pushbom / verlengen).
+- Tokens: Mollie-stub checkout (`/tokens/checkout-stub`), vestiging-allocatie (`Allocation` ledger), logs met bedrijfsnaam-filter.
+- Vestigingen toevoegen via KVK-stub; Regio’s CRUD; Gebruikers invite-by-email + rollen (e-mail stub).
+- Salaristabellen CRUD voor employers; beschikbaar bij vacatureplaatsing.
+- Sollicitanten: progressive disclosure — eerst woonplaats/afstand/voorkeuren; na Accept volledige PII.
+
+### API
+- `POST api/tokens/checkout`, `POST api/tokens/checkout/complete`, `POST api/tokens/allocate`, `GET api/tokens/packs|costs`
+- `api/regions` CRUD, `POST api/companies/from-kvk`, `api/salary-tables`, `api/company-users` (+ invite)
+- Employer applications DTO zonder PII tot status Accepted
+
+### Beveiliging / review-fixes
+- Checkout-sessies persisted (`TokenPurchaseCheckout`); complete crediteert alleen server-side PackSize; onbekende paymentIds zijn niet betaald.
+- Invite blokkeert cross-tenant overname en peer/hogere rollen.
+- Salaristabel-upsert controleert ownership (geen IDOR via body CompanyId).
+- KVK-vestiging moet matchen op parent-KVK; prefs geredacteerd tot Accept; preview zonder MarkupString XSS.
+- `RequireCompanyAccess` faalt closed zonder CompanyId; application react via atomische Pending-update.
+
+## [0.4.0] - 2026-07-24 (Sprint 4: Engagement ledger + token products)
+### Toegevoegd
+- Publish-opties: base / highlight / pushbom / extend met typed token-debit (`TrySpendMany`) en saldo-check.
+- PushBom stub: selecteert `OpenForWork`-kandidaten binnen 10 km (`User.HomeLocation` + PostGIS / Haversine-fallback), schrijft push-logs.
+- Verlengen (+14 dagen, `ExtensionCount`) en inactive (`Archived`).
+- Onvoldoende tokens bij publish → `PendingApproval` + notificatie naar EnterpriseManager; `POST .../approve-publish` om goed te keuren.
+- Employer vacaturebeheer-acties voor productflows; profiel ondersteunt thuislocatie.
+
+### Opgelost (code review)
+- PendingApproval alleen via `ApprovePublish` (geen bypass door branch managers).
+- Aangevraagde publish-opties blijven bewaard (`RequestedHighlight/PushBom/Extend`) en worden bij goedkeuring afgeschreven.
+- Status/flag opnieuw gevalideerd binnen spend-transactie (minder double-spend races).
+- Push/e-mail pas ná commit; lege PushBom schrijft geen tokens af.
+- UI: Goedkeuren alleen voor EnterpriseManager/Admin.
+
+### Bestond al (bevestigd)
+- Like / unlike / share / click engagement-API’s en typed `TokenTransaction` ledger.
+
+## [0.3.0] - 2026-07-24 (Sprint 3: Kandidaat dashboard)
+### Toegevoegd
+- Kandidaat `/home` met metrics-tegels (sollicitaties / shares / likes / reacties) × dag/week/maand en drilldown-grids.
+- Mijn sollicitaties, geliked en gedeeld-pagina's met echte data.
+- Profiel: Open for work, voorkeuren (domeinen / reistijd / vervoer) en geboortedatum.
+- Sollicitatieflow koppelt `CandidateUserId`, stuurt IEmailService-bevestiging (stub) en optionele Authenticator stub-flag (`JobsyFeatures:AuthenticatorEnabled`).
+- Werkgever-reactie (`POST api/applications/{id}/react`) met stub e-mail + push + deeplink.
+- `IPushNotificationService` stub en candidate-scoped metrics API (`api/me/metrics`).
+
+### Opgelost
+- Duplicate apply checkt nu ook op e-mail; unique indexes op `(VacancyId, CandidateUserId)` en `(VacancyId, CandidateEmail)`.
+- Werkgever-react alleen toegestaan bij status Pending (geen spam-notificaties).
+- Vacaturedetail toont bestaande sollicitatie na refresh.
+- `PublicWebBaseUrl` wijst naar poort 5201; e-mail HTML wordt ge-escaped.
+
+## [0.1.0] - 2026-07-23 (Week 1: Fundament & Demo MVP)
+### Toegevoegd
+- Initiële mappenstructuur volgens Clean Architecture (.NET 9).
+- Database-entiteiten (`User`, `Company`, `Vacancy`, `TokenTransaction`) met Entity Framework Core en PostGIS ondersteuning.
+- Automatische Database Seeder met realistische mockdata voor de regio's Westland en Den Haag.
+- Basis Web API endpoints voor het opvragen van actieve vacatures.
+- Eerste Blazor frontend component met een Funda-achtige split-screen opzet.
+- Documentatie bestanden (`REQUIREMENTS.md`, `CONTEXT.md`, `SECURITY.md`, `TESTING.md`, `ARCHITECTURE.md`).

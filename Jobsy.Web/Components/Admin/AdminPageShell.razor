@@ -1,0 +1,15 @@
+<div class="panel-page">
+    <p class="panel-back"><a href="/home">← Beheer</a></p>
+    <h1>@Title</h1>
+    @if (!string.IsNullOrWhiteSpace(Lead))
+    {
+        <p class="login-lead">@Lead</p>
+    }
+    @ChildContent
+</div>
+
+@code {
+    [Parameter, EditorRequired] public string Title { get; set; } = "";
+    [Parameter] public string? Lead { get; set; }
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+}

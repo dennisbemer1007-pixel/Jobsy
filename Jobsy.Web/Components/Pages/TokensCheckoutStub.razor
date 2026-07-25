@@ -1,0 +1,77 @@
+@page "/tokens/checkout-stub"
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "BranchManager,RegionalManager,EnterpriseManager,Intermediary,Admin")]
+@inject JobsyApiClient Api
+@inject NavigationManager Navigation
+
+<PageTitle>Checkout stub · Jobsy</PageTitle>
+
+<div class="panel-page">
+    <h1>Mollie checkout (stub)</h1>
+    <p class="login-lead">Simuleer een geslaagde betaling. Tokens worden bijgeschreven op basis van de server-side checkout-sessie.</p>
+
+    @if (_loading)
+    {
+        <p class="state-message">Laden…</p>
+    }
+    else
+    {
+        <div class="stat-grid">
+            <div class="stat-card">
+                <span class="stat-card__label">Payment</span>
+                <strong class="stat-card__value" style="font-size:1rem">@_paymentId</strong>
+            </div>
+        </div>
+
+        <div class="inline-actions" style="margin-top:1.5rem">
+            <button class="login-submit" type="button" disabled="@_busy || string.IsNullOrWhiteSpace(_paymentId)" @onclick="CompleteAsync">
+                @(_busy ? "Bezig…" : "Betaal (stub)")
+            </button>
+            <a class="auth-link" href="/employer/tokens">Annuleren</a>
+        </div>
+
+        @if (!string.IsNullOrEmpty(_message))
+        {
+            <p class="state-message">@_message</p>
+        }
+    }
+</div>
+
+@code {
+    private bool _loading = true;
+    private bool _busy;
+    private string _paymentId = "";
+    private string? _message;
+
+    protected override void OnInitialized()
+    {
+        var uri = Navigation.ToAbsoluteUri(Navigation.Uri);
+        var query = Microsoft.AspNetCore.WebUtilities.QueryHelpers.ParseQuery(uri.Query);
+        _paymentId = query.TryGetValue("paymentId", out var pid) ? pid.ToString() : "";
+        _loading = false;
+    }
+
+    private async Task CompleteAsync()
+    {
+        if (string.IsNullOrWhiteSpace(_paymentId))
+        {
+            _message = "Ongeldige checkout-parameters.";
+            return;
+        }
+
+        _busy = true;
+        try
+        {
+            await Api.CompleteTokenCheckoutAsync(_paymentId);
+            Navigation.NavigateTo("/employer/tokens");
+        }
+        catch (Exception ex)
+        {
+            _message = ex.Message;
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+}

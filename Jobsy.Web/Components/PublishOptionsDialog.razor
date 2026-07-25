@@ -1,0 +1,240 @@
+@inject JobsyApiClient Api
+
+@if (IsOpen && Vacancy is not null)
+{
+    <div class="share-modal-backdrop" @onclick="Close"></div>
+    <div class="share-modal publish-modal" role="dialog" aria-modal="true" aria-labelledby="publish-modal-title">
+        <div class="share-modal__header">
+            <h2 id="publish-modal-title">Publiceren</h2>
+            <button type="button" class="share-modal__close" @onclick="Close" aria-label="Sluiten">×</button>
+        </div>
+        <p class="share-modal__lead">@Vacancy.Title · @Vacancy.CompanyName</p>
+
+        <div class="publish-options">
+            <label class="publish-option">
+                <input type="checkbox" checked disabled />
+                <span>
+                    Basis publiceren
+                    <em>@_costs.GetValueOrDefault("Publish", 1m).ToString("0.##") token</em>
+                </span>
+            </label>
+            <label class="publish-option">
+                <input type="checkbox" @bind="_highlight" />
+                <span>
+                    Highlight
+                    <em>+@_costs.GetValueOrDefault("Highlight", 0.5m).ToString("0.##") token</em>
+                </span>
+            </label>
+            <label class="publish-option">
+                <input type="checkbox" checked="@_pushBom" @onchange="OnPushBomChanged" />
+                <span>
+                    PushBom
+                    <em>Bereik-preview vóór afrekenen</em>
+                </span>
+            </label>
+            <label class="publish-option">
+                <input type="checkbox" @bind="_extend" />
+                <span>
+                    Verlengen (+14 dagen)
+                    <em>+@_costs.GetValueOrDefault("Extend", 1m).ToString("0.##") token</em>
+                </span>
+            </label>
+        </div>
+
+        @if (_pushBom)
+        {
+            <div class="pushbom-preview" aria-live="polite">
+                @if (_previewLoading)
+                {
+                    <p class="muted">Bereik berekenen…</p>
+                }
+                else if (!string.IsNullOrEmpty(_previewError))
+                {
+                    <p class="state-message error">@_previewError</p>
+                }
+                else if (_preview is not null)
+                {
+                    <p class="pushbom-preview__count">
+                        <strong>@_preview.CandidateCount</strong>
+                        @( _preview.CandidateCount == 1 ? "geschikte kandidaat" : "geschikte kandidaten" )
+                        in bereik
+                    </p>
+                    <p class="muted">
+                        Binnen @_preview.RadiusKm.ToString("0.#") km en @_preview.MaxTravelMinutes min reistijd
+                    </p>
+                    @if (_preview.CandidateCount == 0)
+                    {
+                        <p class="state-message error">Geen bereik — PushBom kan niet worden geactiveerd.</p>
+                    }
+                    else if (!_preview.HasPricing)
+                    {
+                        <p class="state-message error">Geen tokenprijs voor dit bereik geconfigureerd.</p>
+                    }
+                    else
+                    {
+                        <p class="pushbom-preview__cost">
+                            Kost <strong>@_preview.CostTokens.ToString("0.##")</strong> token(s)
+                            · saldo @_preview.TokenBalance.ToString("0.##")
+                        </p>
+                    }
+                }
+            </div>
+        }
+
+        <p class="muted">Totaal: <strong>@TotalCost.ToString("0.##")</strong> token(s)</p>
+
+        <div class="inline-actions" style="margin-top:1rem">
+            <button type="button" class="login-submit" disabled="@ConfirmDisabled" @onclick="ConfirmAsync">
+                @(_busy ? "Bezig…" : "Publiceren")
+            </button>
+            <button type="button" class="provider-btn" disabled="@_busy" @onclick="Close">Annuleren</button>
+        </div>
+
+        @if (!string.IsNullOrEmpty(_error))
+        {
+            <p class="state-message error">@_error</p>
+        }
+    </div>
+}
+
+@code {
+    [Parameter] public bool IsOpen { get; set; }
+    [Parameter] public VacancyListItem? Vacancy { get; set; }
+    [Parameter] public EventCallback OnClose { get; set; }
+    [Parameter] public EventCallback<VacancyProductActionResult?> OnPublished { get; set; }
+
+    private bool _highlight;
+    private bool _pushBom;
+    private bool _extend;
+    private bool _busy;
+    private bool _previewLoading;
+    private string? _error;
+    private string? _previewError;
+    private PushBomPreview? _preview;
+    private Dictionary<string, decimal> _costs = new(StringComparer.OrdinalIgnoreCase);
+
+    private decimal PushBomCost =>
+        _pushBom && _preview is { HasPricing: true, CandidateCount: > 0 }
+            ? _preview.CostTokens
+            : 0;
+
+    private decimal TotalCost =>
+        _costs.GetValueOrDefault("Publish", 1m)
+        + (_highlight ? _costs.GetValueOrDefault("Highlight", 0.5m) : 0)
+        + PushBomCost
+        + (_extend ? _costs.GetValueOrDefault("Extend", 1m) : 0);
+
+    private bool ConfirmDisabled =>
+        _busy
+        || (_pushBom && (_previewLoading
+            || _preview is null
+            || _preview.CandidateCount == 0
+            || !_preview.HasPricing));
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (!IsOpen)
+        {
+            return;
+        }
+
+        if (_costs.Count == 0)
+        {
+            try
+            {
+                var costs = await Api.GetTokenCostsAsync();
+                _costs = costs.ToDictionary(c => c.Reason, c => c.CostTokens, StringComparer.OrdinalIgnoreCase);
+            }
+            catch
+            {
+                _costs = new Dictionary<string, decimal>(StringComparer.OrdinalIgnoreCase)
+                {
+                    ["Publish"] = 1m,
+                    ["Highlight"] = 0.5m,
+                    ["PushBom"] = 3m,
+                    ["Extend"] = 1m
+                };
+            }
+        }
+
+        if (_pushBom && _preview is null && !_previewLoading && Vacancy is not null)
+        {
+            await LoadPreviewAsync();
+        }
+    }
+
+    private async Task OnPushBomChanged(ChangeEventArgs e)
+    {
+        _pushBom = e.Value is true || string.Equals(e.Value?.ToString(), "true", StringComparison.OrdinalIgnoreCase);
+        _preview = null;
+        _previewError = null;
+        if (_pushBom)
+        {
+            await LoadPreviewAsync();
+        }
+    }
+
+    private async Task LoadPreviewAsync()
+    {
+        if (Vacancy is null)
+        {
+            return;
+        }
+
+        _previewLoading = true;
+        _previewError = null;
+        try
+        {
+            _preview = await Api.PreviewPushBomAsync(Vacancy.Id);
+        }
+        catch (Exception ex)
+        {
+            _preview = null;
+            _previewError = ex.Message;
+        }
+        finally
+        {
+            _previewLoading = false;
+        }
+    }
+
+    private Task Close()
+    {
+        _error = null;
+        _previewError = null;
+        _preview = null;
+        _highlight = false;
+        _pushBom = false;
+        _extend = false;
+        return OnClose.InvokeAsync();
+    }
+
+    private async Task ConfirmAsync()
+    {
+        if (Vacancy is null || ConfirmDisabled)
+        {
+            return;
+        }
+
+        _busy = true;
+        _error = null;
+        try
+        {
+            var result = await Api.PublishVacancyAsync(
+                Vacancy.Id,
+                highlight: _highlight,
+                pushBom: _pushBom,
+                extend: _extend);
+            await OnPublished.InvokeAsync(result);
+            await Close();
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+}

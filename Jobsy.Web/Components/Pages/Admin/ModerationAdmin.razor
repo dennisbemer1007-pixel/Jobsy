@@ -1,0 +1,10 @@
+@page "/admin/moderation"
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
+@attribute [Authorize(Roles = "Admin")]
+@using Jobsy.Web.Components.Admin
+
+<PageTitle>Moderatie · Jobsy</PageTitle>
+
+<AdminPageShell Title="Content en vacature moderatie" Lead="Controleer vacatures, afbeeldingen en meldingen.">
+    <p class="muted">Nog niet beschikbaar — moderatiewachtrij komt later.</p>
+</AdminPageShell>

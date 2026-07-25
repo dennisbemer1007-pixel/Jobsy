@@ -1,0 +1,40 @@
+@inherits LayoutComponentBase
+@using Jobsy.Web.Localization
+@inject CultureState Culture
+@implements IDisposable
+
+<div class="app-shell has-bottom-nav" dir="@(Culture.IsRightToLeft ? "rtl" : null)">
+    <header class="app-header">
+        <div class="app-header__brand">
+            <a class="brand" href="/">Jobsy</a>
+            <span class="brand-tagline">@Culture["Brand.Tagline"]</span>
+        </div>
+        <div class="app-header__actions">
+            <LanguageSelector />
+            <TokenWalletChip />
+            <AuthHeader />
+        </div>
+    </header>
+
+    <main class="app-main">
+        @Body
+    </main>
+
+    <AppFooter />
+    <BottomNav />
+</div>
+
+@code {
+    protected override async Task OnInitializedAsync()
+    {
+        Culture.Changed += OnCultureChanged;
+        await Culture.InitializeAsync();
+        await Culture.SyncDocumentAsync();
+    }
+
+    private void OnCultureChanged()
+        => InvokeAsync(StateHasChanged);
+
+    public void Dispose()
+        => Culture.Changed -= OnCultureChanged;
+}

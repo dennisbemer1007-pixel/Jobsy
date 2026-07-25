@@ -1,0 +1,280 @@
+@* Expandable integration settings tile with green/red status and live test. *@
+
+<article class="company-card integration-tile @(StatusClass)" @onclick="Toggle">
+    <div class="integration-tile__header">
+        <div>
+            <h3 class="company-card__name">@Credential.DisplayName</h3>
+            <p class="company-card__meta">@StatusLabel</p>
+        </div>
+        <span class="integration-tile__chevron" aria-hidden="true">@(_expanded ? "▾" : "▸")</span>
+    </div>
+    <p class="company-card__address">@(string.IsNullOrWhiteSpace(StatusMessage) ? Credential.Description : StatusMessage)</p>
+
+    @if (_expanded)
+    {
+        <div class="integration-key-form" @onclick:stopPropagation="true">
+            <p class="muted">@Credential.Description</p>
+
+            @if (Credential.SupportsApiKey)
+            {
+                @if (Credential.HasApiKey && !string.IsNullOrWhiteSpace(Credential.ApiKeyMasked))
+                {
+                    <p class="muted">Huidige API-key: @Credential.ApiKeyMasked</p>
+                }
+                <label>
+                    API-key
+                    <input type="password"
+                           autocomplete="off"
+                           placeholder="@(Credential.HasApiKey ? "Nieuwe key (leeg = behouden)" : "Plak API-key")"
+                           @bind="_apiKey"
+                           @bind:event="oninput"
+                           @bind:after="MarkDirty" />
+                </label>
+            }
+
+            @if (Credential.SupportsOAuth)
+            {
+                <label>
+                    Client ID
+                    <input @bind="_clientId" @bind:event="oninput" @bind:after="MarkDirty" />
+                </label>
+                @if (Credential.HasClientSecret && !string.IsNullOrWhiteSpace(Credential.ClientSecretMasked))
+                {
+                    <p class="muted">Huidig secret: @Credential.ClientSecretMasked</p>
+                }
+                <label>
+                    Client Secret
+                    <input type="password"
+                           autocomplete="off"
+                           placeholder="@(Credential.HasClientSecret ? "Nieuw secret (leeg = behouden)" : "Client secret")"
+                           @bind="_clientSecret"
+                           @bind:event="oninput"
+                           @bind:after="MarkDirty" />
+                </label>
+            }
+
+            @if (Credential.SupportsTenantId)
+            {
+                <label>
+                    Tenant ID
+                    <input @bind="_tenantId" @bind:event="oninput" @bind:after="MarkDirty" placeholder="common of tenant-guid" />
+                </label>
+            }
+
+            @if (Credential.SupportsModel)
+            {
+                <label>
+                    Model
+                    <input @bind="_model" @bind:event="oninput" @bind:after="MarkDirty" placeholder="gpt-4o-mini" />
+                </label>
+            }
+
+            @if (Credential.SupportsBaseUrl)
+            {
+                <label>
+                    Base URL
+                    <input @bind="_baseUrl" @bind:event="oninput" @bind:after="MarkDirty" placeholder="https://..." />
+                </label>
+            }
+
+            @if (Credential.SupportsFromAddress)
+            {
+                <label>
+                    Afzender (From)
+                    <input @bind="_fromAddress" @bind:event="oninput" @bind:after="MarkDirty" placeholder="noreply@example.com" />
+                </label>
+            }
+
+            <div class="inline-actions">
+                <button class="provider-btn" type="button" disabled="@_busy" @onclick="SaveAsync" @onclick:stopPropagation="true">Opslaan</button>
+                <button class="login-submit" type="button" disabled="@_busy" @onclick="TestAsync" @onclick:stopPropagation="true">Test verbinding</button>
+                @if (Credential.HasApiKey || Credential.HasClientSecret)
+                {
+                    <button class="provider-btn" type="button" disabled="@_busy" @onclick="ClearSecretsAsync" @onclick:stopPropagation="true">Secrets wissen</button>
+                }
+            </div>
+
+            @if (!string.IsNullOrEmpty(_localMessage))
+            {
+                <p class="state-message @(_localOk == false ? "error" : null)">@_localMessage</p>
+            }
+        </div>
+    }
+</article>
+
+@code {
+    [Parameter, EditorRequired] public IntegrationCredentialItem Credential { get; set; } = default!;
+    [Parameter] public IntegrationHealthItem? Health { get; set; }
+    [Parameter] public EventCallback OnChanged { get; set; }
+    [Inject] private JobsyApiClient Api { get; set; } = default!;
+
+    private string? _boundKey;
+    private DateTime? _boundUpdatedAtUtc;
+    private bool _expanded;
+    private bool _busy;
+    private bool _dirty;
+    private bool? _localOk;
+    private string? _localMessage;
+    private string _apiKey = "";
+    private string _clientId = "";
+    private string _clientSecret = "";
+    private string _tenantId = "";
+    private string _model = "gpt-4o-mini";
+    private string _baseUrl = "";
+    private string _fromAddress = "";
+
+    private string StatusClass => EffectivePingOk switch
+    {
+        true => "integration-tile--ok",
+        false => "integration-tile--fail",
+        null => "integration-tile--unknown"
+    };
+
+    private bool? EffectivePingOk => Health?.LastPingOk ?? Credential.LastPingOk;
+
+    private string StatusLabel => EffectivePingOk switch
+    {
+        true => "Verbonden",
+        false => "Geen verbinding",
+        null => "Niet getest"
+    };
+
+    private string StatusMessage =>
+        !string.IsNullOrWhiteSpace(Health?.StatusMessage)
+            ? Health!.StatusMessage
+            : Credential.LastPingMessage ?? string.Empty;
+
+    protected override void OnParametersSet()
+    {
+        var keyChanged = !string.Equals(_boundKey, Credential.Key, StringComparison.OrdinalIgnoreCase);
+        var serverUpdated = Credential.UpdatedAtUtc != _boundUpdatedAtUtc;
+        if (keyChanged)
+        {
+            _boundKey = Credential.Key;
+            _expanded = false;
+            _dirty = false;
+            SyncDraftsFromCredential();
+            return;
+        }
+
+        // Refresh drafts from server after save/test reload, unless the user is mid-edit.
+        if (serverUpdated && !_dirty)
+        {
+            SyncDraftsFromCredential();
+        }
+    }
+
+    private void SyncDraftsFromCredential()
+    {
+        _apiKey = "";
+        _clientSecret = "";
+        _clientId = Credential.ClientId ?? "";
+        _tenantId = Credential.TenantId ?? "";
+        _model = Credential.Model ?? "gpt-4o-mini";
+        _baseUrl = Credential.BaseUrl ?? "";
+        _fromAddress = Credential.FromAddress ?? "";
+        _boundUpdatedAtUtc = Credential.UpdatedAtUtc;
+        _dirty = false;
+    }
+
+    private void MarkDirty() => _dirty = true;
+
+    private void Toggle()
+    {
+        _expanded = !_expanded;
+        if (_expanded && !_dirty)
+        {
+            SyncDraftsFromCredential();
+            _localMessage = null;
+        }
+    }
+
+    private IntegrationCredentialSaveForm BuildSaveForm(bool clearSecrets = false) => new()
+    {
+        ApiKey = Credential.SupportsApiKey ? _apiKey : null,
+        Model = Credential.SupportsModel ? _model : null,
+        ClientId = Credential.SupportsOAuth ? _clientId : null,
+        ClientSecret = Credential.SupportsOAuth ? _clientSecret : null,
+        TenantId = Credential.SupportsTenantId ? _tenantId : null,
+        BaseUrl = Credential.SupportsBaseUrl ? _baseUrl : null,
+        FromAddress = Credential.SupportsFromAddress ? _fromAddress : null,
+        ClearApiKey = clearSecrets && Credential.SupportsApiKey,
+        ClearClientSecret = clearSecrets && Credential.SupportsOAuth
+    };
+
+    private async Task SaveAsync()
+    {
+        _busy = true;
+        _localMessage = null;
+        try
+        {
+            await Api.SaveIntegrationCredentialAsync(Credential.Key, BuildSaveForm());
+            _apiKey = "";
+            _clientSecret = "";
+            _dirty = false;
+            _localOk = true;
+            _localMessage = "Opgeslagen. Klik op Test verbinding om te controleren.";
+            await OnChanged.InvokeAsync();
+        }
+        catch (Exception ex)
+        {
+            _localOk = false;
+            _localMessage = ex.Message;
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private async Task ClearSecretsAsync()
+    {
+        _busy = true;
+        _localMessage = null;
+        try
+        {
+            await Api.SaveIntegrationCredentialAsync(Credential.Key, BuildSaveForm(clearSecrets: true));
+            _apiKey = "";
+            _clientSecret = "";
+            _dirty = false;
+            _localOk = true;
+            _localMessage = "Secrets gewist.";
+            await OnChanged.InvokeAsync();
+        }
+        catch (Exception ex)
+        {
+            _localOk = false;
+            _localMessage = ex.Message;
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private async Task TestAsync()
+    {
+        _busy = true;
+        _localMessage = null;
+        try
+        {
+            var result = await Api.TestIntegrationAsync(Credential.Key);
+            if (result is not null)
+            {
+                _localOk = result.IsActive;
+                _localMessage = result.StatusMessage;
+            }
+
+            await OnChanged.InvokeAsync();
+        }
+        catch (Exception ex)
+        {
+            _localOk = false;
+            _localMessage = ex.Message;
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+}

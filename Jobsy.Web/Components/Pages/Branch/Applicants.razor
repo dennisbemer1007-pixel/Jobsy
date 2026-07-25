@@ -1,0 +1,126 @@
+@page "/branch/applicants"
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "BranchManager,RegionalManager,EnterpriseManager,Intermediary")]
+@inject JobsyApiClient Api
+
+<PageTitle>Sollicitanten · Jobsy</PageTitle>
+
+<div class="panel-page">
+    <h1>Sollicitantenoverzicht</h1>
+    <p class="login-lead">
+        Eerst woonplaats, afstand en voorkeuren. Na akkoord: volledige contactgegevens (PII).
+    </p>
+
+    @if (_loading)
+    {
+        <p class="state-message">Laden…</p>
+    }
+    else if (_items.Count == 0)
+    {
+        <p class="state-message">Nog geen reacties.</p>
+    }
+    else
+    {
+        <div class="table-list">
+            @foreach (var a in _items)
+            {
+                <div class="table-row">
+                    <div>
+                        @if (a.PiiRevealed)
+                        {
+                            <strong>@a.CandidateName</strong>
+                            <span class="muted">@a.CandidateEmail</span>
+                            @if (!string.IsNullOrWhiteSpace(a.CandidateAddress))
+                            {
+                                <span class="muted">@a.CandidateAddress</span>
+                            }
+                        }
+                        else
+                        {
+                            <strong>@(a.CandidateCity ?? "Kandidaat")</strong>
+                            <span class="muted">
+                                @(a.DistanceKm is not null ? $"{a.DistanceKm:0.#} km" : "afstand onbekend")
+                                · @a.PreferredTransport · @a.EstimatedTravelMinutes min
+                            </span>
+                            @if (!string.IsNullOrWhiteSpace(a.PreferencesSummary))
+                            {
+                                <span class="muted">Voorkeuren: @a.PreferencesSummary</span>
+                            }
+                        }
+                        <span class="muted">@a.VacancyTitle · @StatusLabel(a.Status)</span>
+                    </div>
+                    <div class="inline-actions">
+                        @if (a.Status == "Pending")
+                        {
+                            <button type="button" class="engagement-btn" disabled="@_busyId.HasValue" @onclick="() => ReactAsync(a.Id, AcceptedStatus)">
+                                Accepteer
+                            </button>
+                            <button type="button" class="engagement-btn" disabled="@_busyId.HasValue" @onclick="() => ReactAsync(a.Id, RejectedStatus)">
+                                Wijs af
+                            </button>
+                        }
+                        else
+                        {
+                            <span class="status-pill status-pill--@a.Status.ToLowerInvariant()">@StatusLabel(a.Status)</span>
+                        }
+                    </div>
+                </div>
+            }
+        </div>
+        @if (!string.IsNullOrEmpty(_message))
+        {
+            <p class="state-message">@_message</p>
+        }
+    }
+</div>
+
+@code {
+    private const string AcceptedStatus = "Accepted";
+    private const string RejectedStatus = "Rejected";
+
+    private List<EmployerApplicationItem> _items = [];
+    private bool _loading = true;
+    private Guid? _busyId;
+    private string? _message;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            _items = (await Api.GetApplicationsAsync()).ToList();
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private async Task ReactAsync(Guid id, string status)
+    {
+        _busyId = id;
+        _message = null;
+        try
+        {
+            await Api.ReactToApplicationAsync(id, status);
+            _items = (await Api.GetApplicationsAsync()).ToList();
+            _message = status == "Accepted"
+                ? "Geaccepteerd — PII zichtbaar, stub e-mail/push verstuurd."
+                : "Afgewezen — stub e-mail/push verstuurd.";
+        }
+        catch (Exception ex)
+        {
+            _message = ex.Message;
+        }
+        finally
+        {
+            _busyId = null;
+        }
+    }
+
+    private static string StatusLabel(string status) => status switch
+    {
+        "Accepted" => "Geaccepteerd",
+        "Rejected" => "Afgewezen",
+        _ => "In behandeling"
+    };
+}

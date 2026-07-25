@@ -1,0 +1,162 @@
+@page "/employer/branches"
+@page "/regional/branches"
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "RegionalManager,EnterpriseManager")]
+@inject JobsyApiClient Api
+
+<PageTitle>Vestigingen · Jobsy</PageTitle>
+
+<div class="panel-page">
+    <header class="panel-header">
+        <div>
+            <h1>Mijn vestigingen</h1>
+            <p class="login-lead">Bestaande vestigingen en toevoegen via KVK-stub.</p>
+        </div>
+    </header>
+
+    @if (_loading)
+    {
+        <p class="state-message">Laden…</p>
+    }
+    else if (!string.IsNullOrEmpty(_error))
+    {
+        <p class="state-message error">@_error</p>
+    }
+    else
+    {
+        <div class="table-list">
+            @foreach (var c in _companies)
+            {
+                <div class="table-row">
+                    <div>
+                        <strong>@c.Name</strong>
+                        <span class="muted">@c.Address · KVK @c.KvkNumber</span>
+                    </div>
+                    <span>@c.TokenBalance.ToString("0.##") tokens · @c.ActiveVacancies actief</span>
+                </div>
+            }
+        </div>
+
+        <section class="panel-section">
+            <h2>Vestiging toevoegen (KVK-stub)</h2>
+            <p class="muted"><a class="auth-link" href="/employer/takeovers">Overnameverzoeken →</a></p>
+            <AuthorizeView Roles="EnterpriseManager,Admin">
+                <Authorized>
+                    <form class="login-form" style="max-width:480px" @onsubmit="LookupAsync" @onsubmit:preventDefault>
+                        <label>
+                            KVK-nummer
+                            <input @bind="_kvkNumber" placeholder="bijv. 11223344" required />
+                        </label>
+                        <button class="provider-btn" type="submit" disabled="@_busy">Zoek vestigingen</button>
+                    </form>
+
+                    @if (_establishments.Count > 0)
+                    {
+                        <div class="table-list" style="margin-top:1rem">
+                            @foreach (var e in _establishments)
+                            {
+                                <div class="table-row">
+                                    <div>
+                                        <strong>@e.Name</strong>
+                                        <span class="muted">@e.Address · @e.KvkEstablishmentId</span>
+                                    </div>
+                                    @if (e.IsInUse)
+                                    {
+                                        <span class="muted">Al geregistreerd</span>
+                                    }
+                                    else
+                                    {
+                                        <button class="provider-btn" type="button" disabled="@_busy" @onclick="() => RegisterAsync(e)">
+                                            Toevoegen
+                                        </button>
+                                    }
+                                </div>
+                            }
+                        </div>
+                    }
+                </Authorized>
+                <NotAuthorized>
+                    <p class="muted">Alleen EnterpriseManager kan vestigingen via KVK toevoegen.</p>
+                </NotAuthorized>
+            </AuthorizeView>
+        </section>
+
+        @if (!string.IsNullOrEmpty(_message))
+        {
+            <p class="state-message">@_message</p>
+        }
+    }
+</div>
+
+@code {
+    private List<CompanySummary> _companies = [];
+    private List<KvkEstablishmentItem> _establishments = [];
+    private bool _loading = true;
+    private bool _busy;
+    private string? _error;
+    private string? _message;
+    private string _kvkNumber = "11223344";
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            _companies = (await Api.GetMyCompaniesAsync()).ToList();
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private async Task LookupAsync()
+    {
+        _busy = true;
+        _message = null;
+        try
+        {
+            _establishments = (await Api.GetKvkEstablishmentsAsync(_kvkNumber.Trim())).ToList();
+            if (_establishments.Count == 0)
+            {
+                _message = "Geen vestigingen gevonden in KVK-stub.";
+            }
+        }
+        catch (Exception ex)
+        {
+            _message = ex.Message;
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private async Task RegisterAsync(KvkEstablishmentItem establishment)
+    {
+        _busy = true;
+        _message = null;
+        try
+        {
+            var parentId = _companies.FirstOrDefault()?.Id;
+            await Api.RegisterEstablishmentAsync(
+                establishment.KvkNumber,
+                establishment.KvkEstablishmentId,
+                parentId);
+            _companies = (await Api.GetMyCompaniesAsync()).ToList();
+            _establishments = (await Api.GetKvkEstablishmentsAsync(_kvkNumber.Trim())).ToList();
+            _message = $"{establishment.Name} toegevoegd.";
+        }
+        catch (Exception ex)
+        {
+            _message = ex.Message;
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+}

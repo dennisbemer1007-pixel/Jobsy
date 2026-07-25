@@ -1,0 +1,41 @@
+using Jobsy.Core.Enums;
+
+namespace Jobsy.Core.Entities;
+
+/// <summary>
+/// Public employer self-registration via KVK (pending activation or takeover).
+/// </summary>
+public class CompanyRegistration
+{
+    public Guid Id { get; set; }
+
+    public string KvkNumber { get; set; } = string.Empty;
+    public string KvkEstablishmentId { get; set; } = string.Empty;
+    public string EstablishmentName { get; set; } = string.Empty;
+    public string EstablishmentAddress { get; set; } = string.Empty;
+    public double Latitude { get; set; }
+    public double Longitude { get; set; }
+
+    public RegistrationScope Scope { get; set; }
+    public string ContactName { get; set; } = string.Empty;
+    public string ContactEmail { get; set; } = string.Empty;
+    public string? ContactPhone { get; set; }
+
+    public string ActivationToken { get; set; } = string.Empty;
+    public CompanyRegistrationStatus Status { get; set; } = CompanyRegistrationStatus.PendingActivation;
+
+    public Guid? CreatedUserId { get; set; }
+    public User? CreatedUser { get; set; }
+    public Guid? CreatedOrganizationCompanyId { get; set; }
+    public Company? CreatedOrganizationCompany { get; set; }
+    public Guid? CreatedBranchCompanyId { get; set; }
+    public Company? CreatedBranchCompany { get; set; }
+
+    public DateTime? ConsentAcceptedAt { get; set; }
+    public string? ConsentVersion { get; set; }
+
+    public DateTime CreatedAt { get; set; }
+    public DateTime? ActivatedAt { get; set; }
+
+    public ICollection<EstablishmentTakeoverRequest> TakeoverRequests { get; set; } = new List<EstablishmentTakeoverRequest>();
+}

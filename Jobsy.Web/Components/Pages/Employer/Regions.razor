@@ -1,0 +1,208 @@
+@page "/employer/regions"
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "EnterpriseManager,Admin")]
+@inject JobsyApiClient Api
+
+<PageTitle>Regio's · Jobsy</PageTitle>
+
+<div class="panel-page">
+    <header class="panel-header">
+        <div>
+            <h1>Regio's</h1>
+            <p class="login-lead">Groepeer vestigingen in regio's.</p>
+        </div>
+    </header>
+
+    @if (_loading)
+    {
+        <p class="state-message">Laden…</p>
+    }
+    else if (!string.IsNullOrEmpty(_error))
+    {
+        <p class="state-message error">@_error</p>
+    }
+    else
+    {
+        <div class="table-list">
+            @foreach (var r in _regions)
+            {
+                <div class="table-row">
+                    <div>
+                        <strong>@r.Name</strong>
+                        <span class="muted">
+                            @r.OrganizationCompanyName ·
+                            @string.Join(", ", r.Companies.Select(c => c.CompanyName))
+                        </span>
+                    </div>
+                    <div class="inline-actions">
+                        <button class="provider-btn" type="button" @onclick="() => StartEdit(r)">Bewerk</button>
+                        <button class="provider-btn" type="button" @onclick="() => DeleteAsync(r.Id)">Verwijder</button>
+                    </div>
+                </div>
+            }
+        </div>
+
+        <section class="panel-section">
+            <h2>@(_editId is null ? "Nieuwe regio" : "Regio bewerken")</h2>
+            <form class="login-form" style="max-width:520px" @onsubmit="SaveAsync" @onsubmit:preventDefault>
+                <label>
+                    Naam
+                    <input @bind="_name" required />
+                </label>
+                @if (_editId is null)
+                {
+                    <label>
+                        Organisatie
+                        <select @bind="_orgCompanyId">
+                            @foreach (var c in _companies)
+                            {
+                                <option value="@c.Id">@c.Name</option>
+                            }
+                        </select>
+                    </label>
+                }
+                <fieldset class="checkbox-set">
+                    <legend>Vestigingen</legend>
+                    @foreach (var c in _companies)
+                    {
+                        <label class="publish-option">
+                            <input type="checkbox"
+                                   checked="@_selectedCompanies.Contains(c.Id)"
+                                   @onchange="e => ToggleCompany(c.Id, (bool)(e.Value ?? false))" />
+                            <span>@c.Name</span>
+                        </label>
+                    }
+                </fieldset>
+                <div class="inline-actions">
+                    <button class="login-submit" type="submit" disabled="@_busy">Opslaan</button>
+                    @if (_editId is not null)
+                    {
+                        <button class="provider-btn" type="button" @onclick="ResetForm">Annuleren</button>
+                    }
+                </div>
+            </form>
+        </section>
+
+        @if (!string.IsNullOrEmpty(_message))
+        {
+            <p class="state-message">@_message</p>
+        }
+    }
+</div>
+
+@code {
+    private List<RegionItem> _regions = [];
+    private List<CompanySummary> _companies = [];
+    private HashSet<Guid> _selectedCompanies = [];
+    private bool _loading = true;
+    private bool _busy;
+    private string? _error;
+    private string? _message;
+    private string _name = "";
+    private Guid _orgCompanyId;
+    private Guid? _editId;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            _companies = (await Api.GetMyCompaniesAsync()).ToList();
+            if (_companies.Count > 0)
+            {
+                _orgCompanyId = _companies[0].Id;
+            }
+
+            _regions = (await Api.GetRegionsAsync()).ToList();
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private void ToggleCompany(Guid id, bool selected)
+    {
+        if (selected)
+        {
+            _selectedCompanies.Add(id);
+        }
+        else
+        {
+            _selectedCompanies.Remove(id);
+        }
+    }
+
+    private void StartEdit(RegionItem region)
+    {
+        _editId = region.Id;
+        _name = region.Name;
+        _orgCompanyId = region.OrganizationCompanyId;
+        _selectedCompanies = region.Companies.Select(c => c.CompanyId).ToHashSet();
+    }
+
+    private void ResetForm()
+    {
+        _editId = null;
+        _name = "";
+        _selectedCompanies = [];
+    }
+
+    private async Task SaveAsync()
+    {
+        _busy = true;
+        _message = null;
+        try
+        {
+            var ids = _selectedCompanies.ToArray();
+            if (_editId is Guid id)
+            {
+                await Api.UpdateRegionAsync(id, _name, ids);
+                _message = "Regio bijgewerkt.";
+            }
+            else
+            {
+                await Api.CreateRegionAsync(_name, _orgCompanyId, ids);
+                _message = "Regio aangemaakt.";
+            }
+
+            _regions = (await Api.GetRegionsAsync()).ToList();
+            ResetForm();
+        }
+        catch (Exception ex)
+        {
+            _message = ex.Message;
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private async Task DeleteAsync(Guid id)
+    {
+        _busy = true;
+        try
+        {
+            await Api.DeleteRegionAsync(id);
+            _regions = (await Api.GetRegionsAsync()).ToList();
+            if (_editId == id)
+            {
+                ResetForm();
+            }
+
+            _message = "Regio verwijderd.";
+        }
+        catch (Exception ex)
+        {
+            _message = ex.Message;
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+}

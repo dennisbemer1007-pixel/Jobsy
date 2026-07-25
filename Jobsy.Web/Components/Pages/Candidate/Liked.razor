@@ -1,0 +1,57 @@
+@page "/candidate/liked"
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Candidate")]
+@inject JobsyApiClient Api
+
+<PageTitle>Geliked · Jobsy</PageTitle>
+
+<div class="panel-page">
+    <header class="panel-header">
+        <div>
+            <a class="back-link" href="/home">← Terug</a>
+            <h1>Gelikede vacatures</h1>
+            <p class="login-lead">Je favorieten op de banenkaart.</p>
+        </div>
+    </header>
+
+    @if (_loading)
+    {
+        <p class="state-message">Laden…</p>
+    }
+    else if (_items.Count == 0)
+    {
+        <p class="state-message">Nog geen likes. <a href="/">Ontdek vacatures</a>.</p>
+    }
+    else
+    {
+        <div class="table-list">
+            @foreach (var item in _items)
+            {
+                <a class="table-row table-row--link" href="@($"/vacancies/{item.VacancyId}")">
+                    <div>
+                        <strong>@item.VacancyTitle</strong>
+                        <span class="muted">@item.CompanyName</span>
+                    </div>
+                    <span class="muted">@item.CreatedAt.ToLocalTime().ToString("dd-MM-yyyy")</span>
+                </a>
+            }
+        </div>
+    }
+</div>
+
+@code {
+    private List<CandidateEngagementItem> _items = [];
+    private bool _loading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            _items = (await Api.GetMyLikesAsync()).ToList();
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+}

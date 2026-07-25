@@ -1,0 +1,20 @@
+{
+  "name": "jobsy",
+  "version": "1.0.0",
+  "description": "*Hyper-lokale job-matching voor de regio Westland en Den Haag.*",
+  "main": "index.js",
+  "directories": {
+    "doc": "docs"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "playwright": "^1.62.0",
+    "pptxgenjs": "^4.0.1"
+  }
+}

@@ -1,0 +1,82 @@
+@page "/admin/tokens"
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
+@attribute [Authorize(Roles = "Admin")]
+@using Jobsy.Web.Components.Admin
+@inject JobsyApiClient Api
+
+<PageTitle>Token-beheer · Jobsy</PageTitle>
+
+<AdminPageShell Title="Token-beheer" Lead="Ken handmatig tokens toe aan bedrijven. Elke toekenning vereist een reden in de tokenlog.">
+    <div class="admin-sublinks">
+        <a class="admin-sublink" href="/admin/finance">← Financieel</a>
+        <a class="admin-sublink" href="/admin/finance?tab=tokenlog">Tokenlog</a>
+    </div>
+
+    @if (_loading)
+    {
+        <p class="state-message">Laden…</p>
+    }
+    else
+    {
+        <div class="table-list">
+            @foreach (var c in _companies)
+            {
+                <div class="table-row">
+                    <div>
+                        <strong>@c.Name</strong>
+                        <span class="muted">@c.Type · @c.TokenBalance.ToString("0.##") tokens</span>
+                    </div>
+                    <button class="provider-btn" type="button" @onclick="() => OpenGrant(c)">Tokens toekennen</button>
+                </div>
+            }
+        </div>
+        @if (!string.IsNullOrEmpty(_message))
+        {
+            <p class="state-message">@_message</p>
+        }
+    }
+</AdminPageShell>
+
+<GrantTokensDialog IsOpen="_grantOpen"
+                   Company="_selected"
+                   OnClose="CloseGrant"
+                   OnGranted="OnGrantedAsync" />
+
+@code {
+    private List<AdminCompanyItem> _companies = [];
+    private bool _loading = true;
+    private string? _message;
+    private bool _grantOpen;
+    private AdminCompanyItem? _selected;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            _companies = (await Api.GetAdminCompaniesAsync()).ToList();
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private void OpenGrant(AdminCompanyItem company)
+    {
+        _selected = company;
+        _grantOpen = true;
+        _message = null;
+    }
+
+    private void CloseGrant()
+    {
+        _grantOpen = false;
+        _selected = null;
+    }
+
+    private async Task OnGrantedAsync()
+    {
+        _companies = (await Api.GetAdminCompaniesAsync()).ToList();
+        _message = "Tokens toegekend. Zie tokenlog voor de reden.";
+    }
+}

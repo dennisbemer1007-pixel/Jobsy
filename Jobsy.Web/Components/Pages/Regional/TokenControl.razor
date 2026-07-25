@@ -1,0 +1,135 @@
+@page "/regional/tokens"
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "RegionalManager,EnterpriseManager")]
+@inject JobsyApiClient Api
+
+<PageTitle>Tokens & vacatures · Jobsy</PageTitle>
+
+<div class="panel-page">
+    <header class="panel-header">
+        <div>
+            <h1>Centrale token- en vacaturecontrole</h1>
+            <p class="login-lead">Verbruik, allocatie en status binnen jouw organisatie.</p>
+        </div>
+        <a class="auth-link" href="/employer/tokens">Saldo & aankoop →</a>
+    </header>
+
+    @if (_loading)
+    {
+        <p class="state-message">Laden…</p>
+    }
+    else
+    {
+        <section class="panel-section">
+            <h2>Token-saldo per vestiging</h2>
+            <div class="table-list">
+                @foreach (var b in _balances)
+                {
+                    <div class="table-row">
+                        <strong>@b.CompanyName</strong>
+                        <span>@b.Balance.ToString("0.##") tokens</span>
+                    </div>
+                }
+            </div>
+        </section>
+
+        <section class="panel-section">
+            <h2>Allocatie</h2>
+            <form class="login-form" style="max-width:420px" @onsubmit="AllocateAsync" @onsubmit:preventDefault>
+                <label>
+                    Van
+                    <select @bind="_fromCompanyId">
+                        @foreach (var b in _balances)
+                        {
+                            <option value="@b.CompanyId">@b.CompanyName</option>
+                        }
+                    </select>
+                </label>
+                <label>
+                    Naar
+                    <select @bind="_toCompanyId">
+                        @foreach (var b in _balances)
+                        {
+                            <option value="@b.CompanyId">@b.CompanyName</option>
+                        }
+                    </select>
+                </label>
+                <label>
+                    Aantal
+                    <input type="number" min="0.5" step="0.5" @bind="_amount" />
+                </label>
+                <button class="login-submit" type="submit" disabled="@_busy">Alloceren</button>
+            </form>
+        </section>
+
+        <section class="panel-section">
+            <h2>Vacatures</h2>
+            <div class="table-list">
+                @foreach (var v in _vacancies)
+                {
+                    <div class="table-row">
+                        <div>
+                            <strong>@v.Title</strong>
+                            <span class="muted">@v.CompanyName · @v.Status</span>
+                        </div>
+                        <span>€ @(v.HourlyWage?.ToString("0.00") ?? "—")</span>
+                    </div>
+                }
+            </div>
+        </section>
+
+        @if (!string.IsNullOrEmpty(_message))
+        {
+            <p class="state-message">@_message</p>
+        }
+    }
+</div>
+
+@code {
+    private List<TokenBalance> _balances = [];
+    private List<VacancyListItem> _vacancies = [];
+    private bool _loading = true;
+    private bool _busy;
+    private Guid _fromCompanyId;
+    private Guid _toCompanyId;
+    private decimal _amount = 1;
+    private string? _message;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            _balances = (await Api.GetTokenBalancesAsync()).ToList();
+            _vacancies = (await Api.GetManagedVacanciesAsync()).ToList();
+            if (_balances.Count > 0)
+            {
+                _fromCompanyId = _balances[0].CompanyId;
+                _toCompanyId = _balances.Count > 1 ? _balances[1].CompanyId : _balances[0].CompanyId;
+            }
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private async Task AllocateAsync()
+    {
+        _busy = true;
+        _message = null;
+        try
+        {
+            await Api.AllocateTokensAsync(_fromCompanyId, _toCompanyId, _amount);
+            _balances = (await Api.GetTokenBalancesAsync()).ToList();
+            _message = "Tokens gealloceerd.";
+        }
+        catch (Exception ex)
+        {
+            _message = ex.Message;
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+}

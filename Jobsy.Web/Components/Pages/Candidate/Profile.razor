@@ -1,0 +1,172 @@
+@page "/candidate/profile"
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Candidate")]
+@inject JobsyApiClient Api
+
+<PageTitle>Profiel · Jobsy</PageTitle>
+
+<div class="panel-page">
+    <article class="detail-card">
+        <a class="back-link" href="/home">← Terug</a>
+        <h1>Mijn profiel</h1>
+        <p class="login-lead">Open for work, voorkeuren, thuislocatie (PushBom) en geboortedatum (voor leeftijdsloon).</p>
+
+        @if (_loading)
+        {
+            <p class="state-message">Laden…</p>
+        }
+        else
+        {
+            <div class="profile-form">
+                <label class="profile-toggle">
+                    <input type="checkbox" @bind="_openForWork" />
+                    <span>Open for work</span>
+                </label>
+
+                <label>
+                    Geboortedatum
+                    <input type="date" @bind="_dobInput" />
+                </label>
+
+                <label>
+                    Thuislocatie breedtegraad
+                    <input type="number" step="0.0001" @bind="_homeLat" />
+                </label>
+
+                <label>
+                    Thuislocatie lengtegraad
+                    <input type="number" step="0.0001" @bind="_homeLng" />
+                </label>
+
+                <label>
+                    Max. reistijd (minuten)
+                    <input type="number" min="1" max="180" @bind="_maxTravel" />
+                </label>
+
+                <label>
+                    Voorkeursvervoer
+                    <select @bind="_preferredTransport">
+                        <option value="">—</option>
+                        <option>Fiets</option>
+                        <option>Auto</option>
+                        <option>OV</option>
+                        <option>Lopend</option>
+                    </select>
+                </label>
+
+                <fieldset class="profile-roles">
+                    <legend>Interessedomeinen</legend>
+                    @foreach (var role in RoleOptions)
+                    {
+                        <label>
+                            <input type="checkbox"
+                                   checked="@_selectedRoles.Contains(role)"
+                                   @onchange="e => ToggleRole(role, (bool)(e.Value ?? false))" />
+                            @role
+                        </label>
+                    }
+                </fieldset>
+
+                @if (_authenticatorEnabled)
+                {
+                    <p class="login-lead">Authenticator-optie is beschikbaar als stub bij solliciteren.</p>
+                }
+
+                <button class="login-submit" type="button" disabled="@_saving" @onclick="SaveAsync">
+                    Opslaan
+                </button>
+                @if (!string.IsNullOrEmpty(_message))
+                {
+                    <p class="state-message">@_message</p>
+                }
+            </div>
+        }
+    </article>
+</div>
+
+@code {
+    private static readonly string[] RoleOptions = ["horeca", "retail", "logistiek", "tuinbouw", "zorg", "kantoor"];
+
+    private bool _loading = true;
+    private bool _saving;
+    private bool _openForWork;
+    private bool _authenticatorEnabled;
+    private DateOnly? _dobInput;
+    private double? _homeLat;
+    private double? _homeLng;
+    private int? _maxTravel = 30;
+    private string _preferredTransport = "";
+    private readonly HashSet<string> _selectedRoles = new(StringComparer.OrdinalIgnoreCase);
+    private string? _message;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var profile = await Api.GetMyProfileAsync();
+            if (profile is null)
+            {
+                _message = "Profiel niet gevonden.";
+                return;
+            }
+
+            _dobInput = profile.DateOfBirth;
+            _openForWork = profile.OpenForWork;
+            _authenticatorEnabled = profile.AuthenticatorEnabled;
+            _homeLat = profile.HomeLatitude;
+            _homeLng = profile.HomeLongitude;
+            _maxTravel = profile.Preferences.MaxTravelMinutes ?? 30;
+            _preferredTransport = profile.Preferences.PreferredTransport ?? "";
+            _selectedRoles.Clear();
+            foreach (var role in profile.Preferences.Roles)
+            {
+                _selectedRoles.Add(role);
+            }
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private void ToggleRole(string role, bool selected)
+    {
+        if (selected)
+        {
+            _selectedRoles.Add(role);
+        }
+        else
+        {
+            _selectedRoles.Remove(role);
+        }
+    }
+
+    private async Task SaveAsync()
+    {
+        _saving = true;
+        _message = null;
+        try
+        {
+            await Api.UpdateMyProfileAsync(
+                openForWork: _openForWork,
+                dateOfBirth: _dobInput,
+                preferences: new CandidatePreferences
+                {
+                    Roles = _selectedRoles.OrderBy(r => r).ToList(),
+                    MaxTravelMinutes = _maxTravel,
+                    PreferredTransport = string.IsNullOrWhiteSpace(_preferredTransport) ? null : _preferredTransport
+                },
+                homeLatitude: _homeLat,
+                homeLongitude: _homeLng);
+            _message = "Profiel opgeslagen.";
+        }
+        catch (Exception ex)
+        {
+            _message = ex.Message;
+        }
+        finally
+        {
+            _saving = false;
+        }
+    }
+}

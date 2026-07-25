@@ -1,0 +1,252 @@
+@page "/employer/tokens"
+@page "/branch/tokens"
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "BranchManager,RegionalManager,EnterpriseManager,Intermediary")]
+@inject JobsyApiClient Api
+@inject NavigationManager Navigation
+@inject AuthenticationStateProvider AuthState
+
+<PageTitle>Tokens · Jobsy</PageTitle>
+
+<div class="panel-page">
+    <header class="panel-header">
+        <div>
+            <h1>Mijn tokens</h1>
+            <p class="login-lead">Saldo (inclusief welkomsttoken), Mollie-stub aankoop, vestiging-allocatie en logs.</p>
+        </div>
+        <a class="auth-link" href="/regional/tokens">Uitgebreid tokenbeheer</a>
+    </header>
+
+    @if (_loading)
+    {
+        <p class="state-message">Laden…</p>
+    }
+    else if (!string.IsNullOrEmpty(_error))
+    {
+        <p class="state-message error">@_error</p>
+    }
+    else
+    {
+        <div class="stat-grid">
+            <div class="stat-card">
+                <span class="stat-card__label">Totaal saldo</span>
+                <strong class="stat-card__value">@_balances.Sum(b => b.Balance).ToString("0.##")</strong>
+            </div>
+        </div>
+
+        <section class="panel-section">
+            <h2>Saldo per vestiging</h2>
+            <div class="table-list">
+                @foreach (var b in _balances)
+                {
+                    <div class="table-row">
+                        <div>
+                            <strong>@b.CompanyName</strong>
+                        </div>
+                        <strong>@b.Balance.ToString("0.##") tokens</strong>
+                    </div>
+                }
+            </div>
+        </section>
+
+        <section class="panel-section">
+            <h2>Tokens kopen (Mollie stub)</h2>
+            <form class="login-form" style="max-width:420px" @onsubmit="CheckoutAsync" @onsubmit:preventDefault>
+                <label>
+                    Vestiging
+                    <select @bind="_checkoutCompanyId">
+                        @foreach (var b in _balances)
+                        {
+                            <option value="@b.CompanyId">@b.CompanyName</option>
+                        }
+                    </select>
+                </label>
+                <label>
+                    Pakket
+                    <select @bind="_packSize">
+                        @foreach (var p in _packs)
+                        {
+                            <option value="@p.PackSize">@p.PackSize tokens — € @p.PriceEuro.ToString("0.00")</option>
+                        }
+                    </select>
+                </label>
+                <button class="login-submit" type="submit" disabled="@_busy">Naar checkout</button>
+            </form>
+        </section>
+
+        @if (_canAllocate)
+        {
+            <section class="panel-section">
+                <h2>Vestiging-allocatie</h2>
+                <form class="login-form" style="max-width:420px" @onsubmit="AllocateAsync" @onsubmit:preventDefault>
+                    <label>
+                        Van
+                        <select @bind="_fromCompanyId">
+                            @foreach (var b in _balances)
+                            {
+                                <option value="@b.CompanyId">@b.CompanyName (@b.Balance.ToString("0.##"))</option>
+                            }
+                        </select>
+                    </label>
+                    <label>
+                        Naar
+                        <select @bind="_toCompanyId">
+                            @foreach (var b in _balances)
+                            {
+                                <option value="@b.CompanyId">@b.CompanyName</option>
+                            }
+                        </select>
+                    </label>
+                    <label>
+                        Aantal
+                        <input type="number" min="0.5" step="0.5" @bind="_allocateAmount" />
+                    </label>
+                    <button class="login-submit" type="submit" disabled="@_busy">Alloceren</button>
+                </form>
+            </section>
+        }
+
+        <section class="panel-section">
+            <h2>Token-logs</h2>
+            <form class="login-form" style="max-width:420px;margin-bottom:1rem" @onsubmit="LoadLogsAsync" @onsubmit:preventDefault>
+                <label>
+                    Filter bedrijfsnaam
+                    <input @bind="_logFilter" placeholder="bijv. Fred" />
+                </label>
+                <button class="provider-btn" type="submit" disabled="@_busy">Filter</button>
+            </form>
+            <div class="table-list">
+                @foreach (var log in _logs)
+                {
+                    <div class="table-row">
+                        <div>
+                            <strong>@log.CompanyName</strong>
+                            <span class="muted">@log.Kind / @log.Reason · @log.Note</span>
+                        </div>
+                        <span>@log.Amount.ToString("+0.##;-0.##") · @log.CreatedAt.ToLocalTime().ToString("dd-MM HH:mm")</span>
+                    </div>
+                }
+            </div>
+        </section>
+
+        @if (!string.IsNullOrEmpty(_message))
+        {
+            <p class="state-message">@_message</p>
+        }
+    }
+</div>
+
+@code {
+    private List<TokenBalance> _balances = [];
+    private List<TokenPackItem> _packs = [];
+    private List<TokenLogItem> _logs = [];
+    private bool _loading = true;
+    private bool _busy;
+    private bool _canAllocate;
+    private string? _error;
+    private string? _message;
+    private Guid _checkoutCompanyId;
+    private int _packSize = 5;
+    private Guid _fromCompanyId;
+    private Guid _toCompanyId;
+    private decimal _allocateAmount = 1;
+    private string _logFilter = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var state = await AuthState.GetAuthenticationStateAsync();
+            _canAllocate = state.User.IsInRole("RegionalManager")
+                || state.User.IsInRole("EnterpriseManager")
+                || state.User.IsInRole("Admin");
+
+            _balances = (await Api.GetTokenBalancesAsync()).ToList();
+            _packs = (await Api.GetTokenPacksAsync()).ToList();
+            if (_balances.Count > 0)
+            {
+                _checkoutCompanyId = _balances[0].CompanyId;
+                _fromCompanyId = _balances[0].CompanyId;
+                _toCompanyId = _balances.Count > 1 ? _balances[1].CompanyId : _balances[0].CompanyId;
+            }
+
+            if (_packs.Count > 0)
+            {
+                _packSize = _packs[0].PackSize;
+            }
+
+            _logs = (await Api.GetTokenLogsAsync()).ToList();
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private async Task CheckoutAsync()
+    {
+        _busy = true;
+        _message = null;
+        try
+        {
+            var result = await Api.CreateTokenCheckoutAsync(_checkoutCompanyId, _packSize);
+            if (result is null)
+            {
+                _message = "Checkout mislukt.";
+                return;
+            }
+
+            Navigation.NavigateTo(result.CheckoutUrl, forceLoad: true);
+        }
+        catch (Exception ex)
+        {
+            _message = ex.Message;
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private async Task AllocateAsync()
+    {
+        _busy = true;
+        _message = null;
+        try
+        {
+            await Api.AllocateTokensAsync(_fromCompanyId, _toCompanyId, _allocateAmount);
+            _balances = (await Api.GetTokenBalancesAsync()).ToList();
+            _logs = (await Api.GetTokenLogsAsync(_logFilter)).ToList();
+            _message = "Tokens gealloceerd.";
+        }
+        catch (Exception ex)
+        {
+            _message = ex.Message;
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private async Task LoadLogsAsync()
+    {
+        _busy = true;
+        try
+        {
+            _logs = (await Api.GetTokenLogsAsync(string.IsNullOrWhiteSpace(_logFilter) ? null : _logFilter)).ToList();
+        }
+        catch (Exception ex)
+        {
+            _message = ex.Message;
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+}

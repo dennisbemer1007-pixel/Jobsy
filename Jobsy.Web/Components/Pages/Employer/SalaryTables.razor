@@ -1,0 +1,138 @@
+@page "/employer/salary-tables"
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "EnterpriseManager,Admin")]
+@inject JobsyApiClient Api
+
+<PageTitle>Salaristabellen · Jobsy</PageTitle>
+
+<div class="panel-page">
+    <header class="panel-header">
+        <div>
+            <h1>Salaristabellen</h1>
+            <p class="login-lead">CAO-schalen per bedrijf — beschikbaar bij vacatureplaatsing.</p>
+        </div>
+    </header>
+
+    @if (_loading)
+    {
+        <p class="state-message">Laden…</p>
+    }
+    else if (!string.IsNullOrEmpty(_error))
+    {
+        <p class="state-message error">@_error</p>
+    }
+    else
+    {
+        <div class="table-list">
+            @foreach (var t in _tables)
+            {
+                <div class="table-row">
+                    <div>
+                        <strong>@t.Name</strong>
+                        <span class="muted">
+                            @t.CompanyName · @(t.IsActive ? "actief" : "inactief") ·
+                            @string.Join(", ", t.Rates.Select(r => $"{r.Label}: €{r.HourlyRate:0.00}"))
+                        </span>
+                    </div>
+                </div>
+            }
+        </div>
+
+        <section class="panel-section">
+            <h2>Nieuwe tabel</h2>
+            <form class="login-form" style="max-width:480px" @onsubmit="SaveAsync" @onsubmit:preventDefault>
+                <label>
+                    Bedrijf
+                    <select @bind="_companyId">
+                        @foreach (var c in _companies)
+                        {
+                            <option value="@c.Id">@c.Name</option>
+                        }
+                    </select>
+                </label>
+                <label>
+                    Naam
+                    <input @bind="_name" required />
+                </label>
+                <label>
+                    Tarief 21+ (€
+                    <input type="number" step="0.01" min="1" @bind="_rate21" />
+                </label>
+                <label>
+                    Tarief 18 (€)
+                    <input type="number" step="0.01" min="1" @bind="_rate18" />
+                </label>
+                <button class="login-submit" type="submit" disabled="@_busy">Opslaan</button>
+            </form>
+        </section>
+
+        @if (!string.IsNullOrEmpty(_message))
+        {
+            <p class="state-message">@_message</p>
+        }
+    }
+</div>
+
+@code {
+    private List<SalaryTableItem> _tables = [];
+    private List<CompanySummary> _companies = [];
+    private bool _loading = true;
+    private bool _busy;
+    private string? _error;
+    private string? _message;
+    private Guid _companyId;
+    private string _name = "";
+    private decimal _rate21 = 14.50m;
+    private decimal _rate18 = 8.00m;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            _companies = (await Api.GetMyCompaniesAsync()).ToList();
+            if (_companies.Count > 0)
+            {
+                _companyId = _companies[0].Id;
+            }
+
+            _tables = (await Api.GetSalaryTablesAsync()).ToList();
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private async Task SaveAsync()
+    {
+        _busy = true;
+        _message = null;
+        try
+        {
+            await Api.UpsertSalaryTableAsync(new UpsertSalaryTableForm(
+                null,
+                _companyId,
+                _name,
+                true,
+                [
+                    new UpsertSalaryRateForm(null, 21, _rate21, "21+"),
+                    new UpsertSalaryRateForm(null, 18, _rate18, "18")
+                ]));
+            _tables = (await Api.GetSalaryTablesAsync()).ToList();
+            _name = "";
+            _message = "Salaristabel opgeslagen.";
+        }
+        catch (Exception ex)
+        {
+            _message = ex.Message;
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+}

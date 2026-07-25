@@ -1,0 +1,392 @@
+@page "/admin/settings"
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
+@attribute [Authorize(Roles = "Admin")]
+@using Jobsy.Web.Components.Admin
+@inject JobsyApiClient Api
+
+<PageTitle>Settings · Jobsy</PageTitle>
+
+<AdminPageShell Title="Systeeminstellingen" Lead="Alle API-koppelingen, feature flags en token pricing via tegels.">
+    @if (_loading)
+    {
+        <p class="state-message">Laden…</p>
+    }
+    else if (!string.IsNullOrEmpty(_error))
+    {
+        <p class="state-message error">@_error</p>
+    }
+    else
+    {
+        <section class="panel-section">
+            <div class="panel-header">
+                <h2>Integraties</h2>
+                <button class="provider-btn" type="button" disabled="@_pingBusy" @onclick="ReloadIntegrationsAsync">Vernieuwen</button>
+            </div>
+            <p class="muted">Groen = laatste test OK · Rood = geen verbinding / niet OK · Grijs = nog niet getest. Open een tegel om credentials te zetten en te testen.</p>
+            <div class="company-grid">
+                @foreach (var cred in _credentials)
+                {
+                    var health = _health.FirstOrDefault(h => string.Equals(h.Key, cred.Key, StringComparison.OrdinalIgnoreCase));
+                    <IntegrationSettingsTile @key="cred.Key" Credential="cred" Health="health" OnChanged="ReloadIntegrationsAsync" />
+                }
+            </div>
+            <p class="muted"><a class="auth-link" href="/admin/integrations">Alleen integraties →</a></p>
+        </section>
+
+        <section class="panel-section">
+            <h2>Platform features</h2>
+            <article class="company-card platform-features-card">
+                <label class="filter-check">
+                    <input type="checkbox" @bind="_features.VacancyContentModerationEnabled" />
+                    AI-vacaturemoderatie aan
+                </label>
+                <p class="muted">Uit = geen AI/heuristiek-check bij opslaan (bijv. bij klachten dat moderatie te streng is).</p>
+
+                <label class="filter-check">
+                    <input type="checkbox" @bind="_features.AuthenticatorEnabled" />
+                    Authenticator stub aan
+                </label>
+
+                <label class="filter-check">
+                    <input type="checkbox" @bind="_features.ExposeRegistrationActivationLinks" />
+                    Activatielinks in API tonen (demo)
+                </label>
+
+                <label>
+                    Public web base URL
+                    <input @bind="_features.PublicWebBaseUrl" @bind:event="oninput" placeholder="http://localhost:5201" />
+                </label>
+
+                <div class="inline-actions" style="margin-top:0.75rem">
+                    <button class="provider-btn" type="button" disabled="@_featureBusy" @onclick="SaveFeaturesAsync">Opslaan</button>
+                </div>
+            </article>
+        </section>
+
+        <section class="panel-section">
+            <h2>Financieel — pack pricing</h2>
+            <div class="table-list">
+                @foreach (var pack in _settings?.Packs ?? [])
+                {
+                    <div class="table-row">
+                        <div>
+                            <strong>@pack.PackSize tokens</strong>
+                            <span class="muted">@(pack.IsActive ? "actief" : "inactief")</span>
+                        </div>
+                        <div class="inline-actions">
+                            <input type="number" step="0.01" min="0" @bind="pack.PriceEuro" style="width:5.5rem" />
+                            <label class="filter-check"><input type="checkbox" @bind="pack.IsActive" /> Actief</label>
+                            <button class="provider-btn" type="button" @onclick="() => SavePackAsync(pack)">Opslaan</button>
+                        </div>
+                    </div>
+                }
+            </div>
+        </section>
+
+        <section class="panel-section">
+            <h2>Financieel — spend costs</h2>
+            <p class="muted">PushBom-prijs volgt uit bereik-tiers hieronder; de flat PushBom-kost geldt alleen als fallback zonder matching tier.</p>
+            <div class="table-list">
+                @foreach (var cost in _settings?.Costs ?? [])
+                {
+                    <div class="table-row">
+                        <div>
+                            <strong>@cost.Reason</strong>
+                            <span class="muted">@(cost.IsActive ? "actief" : "inactief")</span>
+                        </div>
+                        <div class="inline-actions">
+                            <input type="number" step="0.1" min="0" @bind="cost.CostTokens" style="width:5.5rem" />
+                            <label class="filter-check"><input type="checkbox" @bind="cost.IsActive" /> Actief</label>
+                            <button class="provider-btn" type="button" @onclick="() => SaveCostAsync(cost)">Opslaan</button>
+                        </div>
+                    </div>
+                }
+            </div>
+        </section>
+
+        <section class="panel-section">
+            <h2>PushBom — bereik &amp; tokenprijs</h2>
+            <p class="muted">Straal en maximale reistijd bepalen het potentiële bereik. Tokenkost hangt af van het aantal geschikte kandidaten in dat bereik.</p>
+
+            @if (_pushBomSettings is not null)
+            {
+                <article class="company-card platform-features-card" style="margin-bottom:1rem">
+                    <div class="inline-actions" style="flex-wrap:wrap;gap:0.75rem">
+                        <label>
+                            Straal (km)
+                            <input type="number" min="1" max="100" step="0.5" @bind="_pushBomSettings.RadiusKm" style="width:5.5rem" />
+                        </label>
+                        <label>
+                            Max. reistijd (min)
+                            <input type="number" min="5" max="180" @bind="_pushBomSettings.MaxTravelMinutes" style="width:5.5rem" />
+                        </label>
+                        <button class="provider-btn" type="button" disabled="@_pushBomBusy" @onclick="SavePushBomSettingsAsync">Opslaan</button>
+                    </div>
+                </article>
+            }
+
+            <div class="table-list">
+                @foreach (var tier in _pushBomTiers)
+                {
+                    <div class="table-row">
+                        <div class="inline-actions" style="flex-wrap:wrap">
+                            <label>
+                                Min
+                                <input type="number" min="0" @bind="tier.MinCandidates" style="width:4rem" />
+                            </label>
+                            <label>
+                                Max
+                                <input type="number" min="0" value="@(tier.MaxCandidates?.ToString() ?? "")"
+                                       @onchange="e => SetTierMax(tier, e)" style="width:4rem" title="Leeg = onbeperkt" />
+                            </label>
+                            <label>
+                                Tokens
+                                <input type="number" step="0.1" min="0" @bind="tier.CostTokens" style="width:4.5rem" />
+                            </label>
+                            <label class="filter-check"><input type="checkbox" @bind="tier.IsActive" /> Actief</label>
+                            <button class="provider-btn" type="button" @onclick="() => SaveTierAsync(tier)">Opslaan</button>
+                            <button class="provider-btn" type="button" @onclick="() => DeleteTierAsync(tier)">Verwijder</button>
+                        </div>
+                    </div>
+                }
+            </div>
+            <div class="inline-actions" style="margin-top:0.75rem">
+                <button class="provider-btn" type="button" @onclick="AddTier">+ Tier toevoegen</button>
+            </div>
+        </section>
+
+        <section class="panel-section">
+            <h2>Early adapter rules</h2>
+            <div class="table-list">
+                @foreach (var rule in _settings?.EarlyAdapterRules ?? [])
+                {
+                    <div class="table-row">
+                        <div style="flex:1">
+                            <input @bind="rule.Name" style="width:100%;margin-bottom:0.35rem" />
+                            <span class="muted">Maandelijks grant / aankoopkorting %</span>
+                        </div>
+                        <div class="inline-actions">
+                            <input type="number" min="0" @bind="rule.MonthlyGrantTokens" style="width:4.5rem" title="Monthly grant" />
+                            <input type="number" step="0.1" min="0" max="100" @bind="rule.PurchaseDiscountPercent" style="width:4.5rem" title="Discount %" />
+                            <label class="filter-check"><input type="checkbox" @bind="rule.IsActive" /> Actief</label>
+                            <button class="provider-btn" type="button" @onclick="() => SaveRuleAsync(rule)">Opslaan</button>
+                        </div>
+                    </div>
+                }
+            </div>
+        </section>
+
+        @if (!string.IsNullOrEmpty(_message))
+        {
+            <p class="state-message">@_message</p>
+        }
+    }
+</AdminPageShell>
+
+@code {
+    private TokenPricingSettings? _settings;
+    private PushBomSettingsItem? _pushBomSettings;
+    private List<PushBomPricingTierItem> _pushBomTiers = [];
+    private List<IntegrationHealthItem> _health = [];
+    private List<IntegrationCredentialItem> _credentials = [];
+    private PlatformFeatureItem _features = new();
+    private bool _loading = true;
+    private bool _pingBusy;
+    private bool _featureBusy;
+    private bool _pushBomBusy;
+    private string? _error;
+    private string? _message;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            _settings = await Api.GetTokenPricingSettingsAsync();
+            _pushBomSettings = _settings?.PushBomSettings ?? new PushBomSettingsItem();
+            _pushBomTiers = _settings?.PushBomPricingTiers?.ToList() ?? [];
+            _features = await Api.GetPlatformFeaturesAsync() ?? new PlatformFeatureItem();
+            await ReloadIntegrationsAsync();
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private async Task ReloadIntegrationsAsync()
+    {
+        _pingBusy = true;
+        try
+        {
+            _health = (await Api.GetIntegrationHealthAsync()).ToList();
+            _credentials = (await Api.GetIntegrationCredentialsAsync()).ToList();
+        }
+        finally
+        {
+            _pingBusy = false;
+        }
+    }
+
+    private async Task SaveFeaturesAsync()
+    {
+        _featureBusy = true;
+        try
+        {
+            _features = await Api.SavePlatformFeaturesAsync(_features) ?? _features;
+            _message = "Platform features opgeslagen.";
+        }
+        catch (Exception ex)
+        {
+            _message = ex.Message;
+        }
+        finally
+        {
+            _featureBusy = false;
+        }
+    }
+
+    private async Task SavePackAsync(TokenPackSetting pack)
+    {
+        try
+        {
+            await Api.UpdateTokenPackAsync(pack.Id, pack.PriceEuro, pack.IsActive);
+            _message = $"Pack {pack.PackSize} opgeslagen.";
+        }
+        catch (Exception ex)
+        {
+            _message = ex.Message;
+        }
+    }
+
+    private async Task SaveCostAsync(TokenCostSetting cost)
+    {
+        try
+        {
+            await Api.UpdateTokenCostAsync(cost.Id, cost.CostTokens, cost.IsActive);
+            _message = $"Cost {cost.Reason} opgeslagen.";
+        }
+        catch (Exception ex)
+        {
+            _message = ex.Message;
+        }
+    }
+
+    private async Task SavePushBomSettingsAsync()
+    {
+        if (_pushBomSettings is null)
+        {
+            return;
+        }
+
+        _pushBomBusy = true;
+        try
+        {
+            var saved = await Api.UpdatePushBomSettingsAsync(
+                _pushBomSettings.RadiusKm,
+                _pushBomSettings.MaxTravelMinutes);
+            if (saved is not null)
+            {
+                _pushBomSettings = saved;
+            }
+
+            _message = "PushBom bereik-instellingen opgeslagen.";
+        }
+        catch (Exception ex)
+        {
+            _message = ex.Message;
+        }
+        finally
+        {
+            _pushBomBusy = false;
+        }
+    }
+
+    private void AddTier()
+    {
+        var nextMin = _pushBomTiers.Count == 0
+            ? 1
+            : _pushBomTiers.Max(t => t.MaxCandidates ?? t.MinCandidates) + 1;
+        _pushBomTiers.Add(new PushBomPricingTierItem
+        {
+            Id = Guid.Empty,
+            MinCandidates = nextMin,
+            MaxCandidates = nextMin + 9,
+            CostTokens = 1m,
+            IsActive = true
+        });
+    }
+
+    private static void SetTierMax(PushBomPricingTierItem tier, ChangeEventArgs e)
+    {
+        var raw = e.Value?.ToString();
+        if (string.IsNullOrWhiteSpace(raw))
+        {
+            tier.MaxCandidates = null;
+            return;
+        }
+
+        tier.MaxCandidates = int.TryParse(raw, out var value) ? value : tier.MaxCandidates;
+    }
+
+    private async Task SaveTierAsync(PushBomPricingTierItem tier)
+    {
+        try
+        {
+            var saved = await Api.UpsertPushBomPricingTierAsync(tier);
+            if (saved is not null)
+            {
+                tier.Id = saved.Id;
+                tier.MinCandidates = saved.MinCandidates;
+                tier.MaxCandidates = saved.MaxCandidates;
+                tier.CostTokens = saved.CostTokens;
+                tier.IsActive = saved.IsActive;
+            }
+
+            _message = "PushBom-prijstier opgeslagen.";
+        }
+        catch (Exception ex)
+        {
+            _message = ex.Message;
+        }
+    }
+
+    private async Task DeleteTierAsync(PushBomPricingTierItem tier)
+    {
+        try
+        {
+            if (tier.Id != Guid.Empty)
+            {
+                await Api.DeletePushBomPricingTierAsync(tier.Id);
+            }
+
+            _pushBomTiers.Remove(tier);
+            _message = "PushBom-prijstier verwijderd.";
+        }
+        catch (Exception ex)
+        {
+            _message = ex.Message;
+        }
+    }
+
+    private async Task SaveRuleAsync(EarlyAdapterRuleItem rule)
+    {
+        try
+        {
+            var saved = await Api.UpsertEarlyAdapterRuleAsync(rule);
+            if (saved is not null)
+            {
+                rule.Id = saved.Id;
+            }
+
+            _message = $"Rule '{rule.Name}' opgeslagen.";
+        }
+        catch (Exception ex)
+        {
+            _message = ex.Message;
+        }
+    }
+}

@@ -1,0 +1,51 @@
+@* Shared drilldown list under a selected metric tile. *@
+
+<section class="panel-section">
+    <div class="panel-header">
+        <h2>@Title</h2>
+        @if (!string.IsNullOrWhiteSpace(OverviewHref))
+        {
+            <a class="auth-link" href="@OverviewHref">Volledig overzicht →</a>
+        }
+    </div>
+    @if (Loading)
+    {
+        <p class="state-message">Laden…</p>
+    }
+    else if (Items.Count == 0)
+    {
+        <p class="state-message">Geen items in deze periode.</p>
+    }
+    else
+    {
+        <div class="table-list">
+            @foreach (var item in Items)
+            {
+                <div class="table-row">
+                    <div>
+                        <strong>@item.Title</strong>
+                        @if (!string.IsNullOrWhiteSpace(item.Subtitle))
+                        {
+                            <span class="muted">@item.Subtitle</span>
+                        }
+                    </div>
+                    <span class="muted">
+                        @if (ShowAmount && item.Amount is not null)
+                        {
+                            <text>@item.Amount.Value.ToString("0.##") · </text>
+                        }
+                        @item.CreatedAt.ToLocalTime().ToString("dd-MM HH:mm")
+                    </span>
+                </div>
+            }
+        </div>
+    }
+</section>
+
+@code {
+    [Parameter] public string Title { get; set; } = string.Empty;
+    [Parameter] public string? OverviewHref { get; set; }
+    [Parameter] public bool Loading { get; set; }
+    [Parameter] public bool ShowAmount { get; set; } = true;
+    [Parameter] public IReadOnlyList<MetricDrilldownItem> Items { get; set; } = [];
+}

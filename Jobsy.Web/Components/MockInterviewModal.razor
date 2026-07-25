@@ -1,0 +1,161 @@
+@namespace Jobsy.Web.Components
+@inject JobsyApiClient Api
+
+@if (IsOpen && Vacancy is not null)
+{
+    <div class="share-modal-backdrop" @onclick="Close"></div>
+    <div class="mock-interview-modal" role="dialog" aria-modal="true" aria-labelledby="mock-interview-title">
+        <div class="share-modal__header">
+            <div>
+                <h2 id="mock-interview-title">Oefen je sollicitatiegesprek</h2>
+                <p class="share-modal__lead">@Vacancy.Title · @Vacancy.CompanyName</p>
+            </div>
+            <button type="button" class="share-modal__close" @onclick="Close" aria-label="Sluiten">×</button>
+        </div>
+
+        <p class="mock-interview-modal__disclaimer">
+            Oefengesprek met AI — geen echt gesprek met de werkgever.
+            Deel geen BSN, bankgegevens of wachtwoorden.
+            <a class="auth-link" href="/gebruiksvoorwaarden" target="_blank" rel="noopener">Chatbot-disclaimer</a>
+        </p>
+
+        <div class="mock-interview-chat">
+            @if (_messages.Count == 0 && !_busy)
+            {
+                <p class="mock-interview-chat__empty">Even geduld — de recruiter start het gesprek…</p>
+            }
+            @foreach (var msg in _messages)
+            {
+                <div class="mock-interview-bubble mock-interview-bubble--@msg.Role">
+                    <span class="mock-interview-bubble__role">@(msg.Role == "user" ? "Jij" : "Recruiter")</span>
+                    <p>@msg.Content</p>
+                </div>
+            }
+            @if (_busy)
+            {
+                <div class="mock-interview-bubble mock-interview-bubble--assistant mock-interview-bubble--typing">
+                    <span class="mock-interview-bubble__role">Recruiter</span>
+                    <p>Even denken…</p>
+                </div>
+            }
+        </div>
+
+        @if (!string.IsNullOrEmpty(_error))
+        {
+            <p class="state-message error">@_error</p>
+        }
+
+        <form class="mock-interview-compose" @onsubmit="SendAsync" @onsubmit:preventDefault="true">
+            <label class="visually-hidden" for="mock-interview-input">Jouw antwoord</label>
+            <textarea id="mock-interview-input"
+                      rows="2"
+                      maxlength="2000"
+                      placeholder="Typ je antwoord…"
+                      disabled="@(_busy || !_started)"
+                      @bind="_draft"
+                      @bind:event="oninput"></textarea>
+            <div class="mock-interview-compose__actions">
+                <button type="button" class="engagement-btn" disabled="@_busy" @onclick="RestartAsync">Opnieuw</button>
+                <button type="submit" class="login-submit" disabled="@(_busy || !_started || string.IsNullOrWhiteSpace(_draft))">
+                    Verstuur
+                </button>
+            </div>
+        </form>
+    </div>
+}
+
+@code {
+    [Parameter] public bool IsOpen { get; set; }
+    [Parameter] public VacancyListItem? Vacancy { get; set; }
+    [Parameter] public EventCallback OnClose { get; set; }
+
+    private readonly List<MockInterviewChatMessage> _messages = [];
+    private string _draft = string.Empty;
+    private string? _error;
+    private bool _busy;
+    private bool _started;
+    private bool _wasOpen;
+    private Guid _sessionVacancyId;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (IsOpen && Vacancy is not null && (!_wasOpen || _sessionVacancyId != Vacancy.Id))
+        {
+            _wasOpen = true;
+            _sessionVacancyId = Vacancy.Id;
+            await StartSessionAsync();
+        }
+        else if (!IsOpen)
+        {
+            _wasOpen = false;
+        }
+    }
+
+    private async Task Close()
+    {
+        await OnClose.InvokeAsync();
+    }
+
+    private async Task StartSessionAsync()
+    {
+        if (Vacancy is null)
+        {
+            return;
+        }
+
+        _messages.Clear();
+        _draft = string.Empty;
+        _error = null;
+        _started = false;
+        _busy = true;
+        try
+        {
+            var reply = await Api.ContinueMockInterviewAsync(Vacancy.Id, []);
+            _messages.Add(new MockInterviewChatMessage("assistant", reply.Reply));
+            _started = true;
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private async Task RestartAsync()
+    {
+        await StartSessionAsync();
+    }
+
+    private async Task SendAsync()
+    {
+        if (Vacancy is null || _busy || string.IsNullOrWhiteSpace(_draft))
+        {
+            return;
+        }
+
+        var text = _draft.Trim();
+        _draft = string.Empty;
+        _error = null;
+        _messages.Add(new MockInterviewChatMessage("user", text));
+        _busy = true;
+        try
+        {
+            var history = _messages
+                .Select(m => new MockInterviewChatMessage(m.Role, m.Content))
+                .ToList();
+            var reply = await Api.ContinueMockInterviewAsync(Vacancy.Id, history);
+            _messages.Add(new MockInterviewChatMessage("assistant", reply.Reply));
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+}

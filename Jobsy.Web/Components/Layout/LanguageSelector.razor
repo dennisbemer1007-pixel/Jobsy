@@ -1,0 +1,63 @@
+@using Jobsy.Core.Localization
+@using Jobsy.Web.Localization
+@inject CultureState Culture
+@implements IDisposable
+
+<div class="language-selector" @onfocusout="OnFocusOut">
+    <button type="button"
+            class="language-selector__toggle"
+            aria-haspopup="listbox"
+            aria-expanded="@_open"
+            aria-label="@Culture["Language.Choose"]"
+            title="@Culture["Language.Label"]"
+            @onclick="Toggle">
+        <span class="language-selector__flag" aria-hidden="true">@Culture.Current.FlagEmoji</span>
+        <span class="language-selector__code">@Culture.Language.ToUpperInvariant()</span>
+        <span class="language-selector__caret" aria-hidden="true">▾</span>
+    </button>
+    @if (_open)
+    {
+        <ul class="language-selector__menu" role="listbox" aria-label="@Culture["Language.Label"]">
+            @foreach (var lang in JobsyLanguages.All)
+            {
+                <li role="option" aria-selected="@(lang.Code == Culture.Language)">
+                    <button type="button"
+                            class="language-selector__option @(lang.Code == Culture.Language ? "is-active" : null)"
+                            @onclick="() => SelectAsync(lang.Code)">
+                        <span class="language-selector__flag" aria-hidden="true">@lang.FlagEmoji</span>
+                        <span class="language-selector__name">@lang.NativeName</span>
+                        <span class="language-selector__code">@lang.Code.ToUpperInvariant()</span>
+                    </button>
+                </li>
+            }
+        </ul>
+    }
+</div>
+
+@code {
+    private bool _open;
+
+    protected override void OnInitialized()
+        => Culture.Changed += OnCultureChanged;
+
+    private void OnCultureChanged()
+        => InvokeAsync(StateHasChanged);
+
+    private void Toggle()
+        => _open = !_open;
+
+    private async Task OnFocusOut(FocusEventArgs _)
+    {
+        await Task.Delay(150);
+        _open = false;
+    }
+
+    private async Task SelectAsync(string code)
+    {
+        _open = false;
+        await Culture.SetLanguageAsync(code);
+    }
+
+    public void Dispose()
+        => Culture.Changed -= OnCultureChanged;
+}

@@ -1,0 +1,64 @@
+# Jobsy temporary free demo on Render.
+# Docs: docs/deploy-render.md
+#
+# After first deploy, free web services sleep after ~15 min idle (~1 min cold start).
+# Free Postgres expires after 30 days.
+
+databases:
+  - name: jobsy-db
+    plan: free
+    postgresMajorVersion: "16"
+    databaseName: jobsy
+    user: jobsy
+
+services:
+  - type: web
+    name: jobsy-api
+    runtime: docker
+    plan: free
+    region: frankfurt
+    dockerfilePath: ./Jobsy.Api/Dockerfile
+    dockerContext: .
+    healthCheckPath: /health
+    envVars:
+      - key: ASPNETCORE_ENVIRONMENT
+        value: Production
+      - key: AllowedHosts
+        value: "*"
+      - key: JobsyAuth__AllowDevelopmentAuth
+        value: "true"
+      - key: JobsyFeatures__ExposeRegistrationActivationLinks
+        value: "true"
+      - key: ConnectionStrings__JobsyDb
+        fromDatabase:
+          name: jobsy-db
+          property: connectionString
+      - key: PublicWebBaseUrl
+        fromService:
+          name: jobsy-web
+          type: web
+          property: host
+      - key: Cors__AllowedOrigins__0
+        fromService:
+          name: jobsy-web
+          type: web
+          property: host
+
+  - type: web
+    name: jobsy-web
+    runtime: docker
+    plan: free
+    region: frankfurt
+    dockerfilePath: ./Jobsy.Web/Dockerfile
+    dockerContext: .
+    healthCheckPath: /
+    envVars:
+      - key: ASPNETCORE_ENVIRONMENT
+        value: Production
+      - key: AllowedHosts
+        value: "*"
+      - key: ApiBaseUrl
+        fromService:
+          name: jobsy-api
+          type: web
+          property: host

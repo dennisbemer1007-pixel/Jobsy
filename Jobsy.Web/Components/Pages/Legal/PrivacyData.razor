@@ -1,0 +1,82 @@
+@page "/privacy/data"
+@attribute [Authorize]
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
+@inject JobsyApiClient Api
+@inject NavigationManager Navigation
+@inject AuthenticationStateProvider AuthState
+
+<PageTitle>Mijn gegevens · Jobsy</PageTitle>
+
+<div class="panel-page">
+    <h1>Mijn gegevens (AVG)</h1>
+    <p class="login-lead">
+        Exporteer je persoonsgegevens of vraag anonimisering van je account aan.
+    </p>
+
+    <div class="inline-actions" style="margin-top:1.5rem">
+        <button class="login-submit" type="button" disabled="@_busy" @onclick="ExportAsync">
+            @(_busyExport ? "Bezig…" : "Exporteer JSON")
+        </button>
+        <button class="provider-btn" type="button" disabled="@_busy" @onclick="DeleteAsync">
+            @(_busyDelete ? "Bezig…" : "Account anonimiseren")
+        </button>
+        <a class="auth-link" href="/privacy">Terug naar privacyverklaring</a>
+    </div>
+
+    @if (!string.IsNullOrEmpty(_message))
+    {
+        <p class="state-message">@_message</p>
+    }
+
+    @if (!string.IsNullOrEmpty(_exportJson))
+    {
+        <pre class="code-block" style="margin-top:1.5rem;white-space:pre-wrap;max-height:28rem;overflow:auto">@_exportJson</pre>
+    }
+</div>
+
+@code {
+    private bool _busyExport;
+    private bool _busyDelete;
+    private bool _busy => _busyExport || _busyDelete;
+    private string? _message;
+    private string? _exportJson;
+
+    private async Task ExportAsync()
+    {
+        _busyExport = true;
+        _message = null;
+        try
+        {
+            _exportJson = await Api.ExportPrivacyDataAsync();
+            _message = "Export geladen. Bewaar dit bestand veilig.";
+        }
+        catch (Exception ex)
+        {
+            _message = ex.Message;
+        }
+        finally
+        {
+            _busyExport = false;
+        }
+    }
+
+    private async Task DeleteAsync()
+    {
+        _busyDelete = true;
+        _message = null;
+        try
+        {
+            await Api.DeleteAccountAsync();
+            _message = "Account geanonimiseerd. Je wordt uitgelogd.";
+            Navigation.NavigateTo("/account/logout", forceLoad: true);
+        }
+        catch (Exception ex)
+        {
+            _message = ex.Message;
+        }
+        finally
+        {
+            _busyDelete = false;
+        }
+    }
+}

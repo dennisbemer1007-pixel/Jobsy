@@ -1,0 +1,233 @@
+@page "/register"
+@attribute [AllowAnonymous]
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
+@inject JobsyApiClient Api
+@inject NavigationManager Navigation
+
+<PageTitle>Registreren · Jobsy</PageTitle>
+
+<div class="login-page">
+    <div class="login-card register-card">
+        <h1>Bedrijf registreren</h1>
+        <p class="login-lead">KVK → vestiging → scope → contact → activatie.</p>
+
+        <div class="wizard-steps" aria-label="Stappen">
+            <span class="@StepClass(1)">1. KVK</span>
+            <span class="@StepClass(2)">2. Vestiging</span>
+            <span class="@StepClass(3)">3. Scope</span>
+            <span class="@StepClass(4)">4. Contact</span>
+        </div>
+
+        @if (!string.IsNullOrEmpty(_error))
+        {
+            <p class="login-error">@_error</p>
+        }
+
+        @if (_step == 1)
+        {
+            <form class="login-form" @onsubmit="LookupAsync" @onsubmit:preventDefault>
+                <label>
+                    KVK-nummer
+                    <input @bind="_kvkNumber" placeholder="bijv. 12345678" required maxlength="20" />
+                </label>
+                <p class="muted">Stub-KVK’s: 12345678, 87654321, 11223344, 55667788</p>
+                <button class="login-submit" type="submit" disabled="@_busy">Zoek vestigingen</button>
+            </form>
+        }
+        else if (_step == 2)
+        {
+            <div class="table-list">
+                @foreach (var e in _establishments)
+                {
+                    <button type="button"
+                            class="table-row register-choice @(_selected?.KvkEstablishmentId == e.KvkEstablishmentId ? "is-selected" : null)"
+                            @onclick="() => SelectEstablishment(e)">
+                        <div>
+                            <strong>@e.Name</strong>
+                            <span class="muted">@e.Address · @e.KvkEstablishmentId</span>
+                        </div>
+                        <span class="@(e.IsInUse ? "badge-warn" : "badge-ok")">
+                            @(e.IsInUse ? "Al in gebruik" : "Beschikbaar")
+                        </span>
+                    </button>
+                }
+            </div>
+            <div class="wizard-actions">
+                <button class="provider-btn" type="button" @onclick="() => _step = 1">Terug</button>
+                <button class="login-submit" type="button" disabled="@(_selected is null)" @onclick="() => _step = 3">
+                    Verder
+                </button>
+            </div>
+        }
+        else if (_step == 3)
+        {
+            <fieldset class="scope-fieldset">
+                <legend>Registratiescope</legend>
+                <label class="scope-option">
+                    <input type="radio" name="scope" checked="@(_scope == "BranchOnly")"
+                           @onchange="@(() => _scope = "BranchOnly")" />
+                    <span>
+                        <strong>Alleen deze vestiging</strong>
+                        <span class="muted">Je wordt filiaalmanager van één vestiging.</span>
+                    </span>
+                </label>
+                <label class="scope-option">
+                    <input type="radio" name="scope" checked="@(_scope == "Organization")"
+                           @onchange="@(() => _scope = "Organization")" />
+                    <span>
+                        <strong>Hele organisatie</strong>
+                        <span class="muted">Parent-organisatie + vrije vestigingen onder dit KVK-nummer.</span>
+                    </span>
+                </label>
+            </fieldset>
+
+            @if (_selected?.IsInUse == true)
+            {
+                <p class="state-message">Deze vestiging is al geregistreerd — na versturen volgt een overnameverzoek.</p>
+            }
+
+            <div class="wizard-actions">
+                <button class="provider-btn" type="button" @onclick="() => _step = 2">Terug</button>
+                <button class="login-submit" type="button" @onclick="() => _step = 4">Verder</button>
+            </div>
+        }
+        else if (_step == 4)
+        {
+            <form class="login-form" @onsubmit="SubmitAsync" @onsubmit:preventDefault>
+                <label>
+                    Naam
+                    <input @bind="_contactName" required maxlength="256" />
+                </label>
+                <label>
+                    E-mail
+                    <input type="email" @bind="_contactEmail" required maxlength="256" />
+                </label>
+                <label>
+                    Telefoon (optioneel)
+                    <input @bind="_contactPhone" maxlength="64" />
+                </label>
+                <p class="muted">Gekozen: @_selected?.Name · @_scope</p>
+                <label class="profile-toggle legal-consent">
+                    <input type="checkbox" @bind="_acceptedTerms" required />
+                    <span>
+                        Ik ga akkoord met de
+                        <a class="auth-link" href="/algemene-voorwaarden" target="_blank" rel="noopener">algemene voorwaarden</a>
+                        (inclusief tokenbeleid en betalingen) en de
+                        <a class="auth-link" href="/privacy" target="_blank" rel="noopener">privacyverklaring</a>.
+                    </span>
+                </label>
+                <div class="wizard-actions">
+                    <button class="provider-btn" type="button" @onclick="() => _step = 3">Terug</button>
+                    <button class="login-submit" type="submit" disabled="@(_busy || !_acceptedTerms)">Registreren</button>
+                </div>
+            </form>
+        }
+        else if (_step == 5)
+        {
+            <p class="state-message">@_message</p>
+            @if (!string.IsNullOrEmpty(_activationUrl))
+            {
+                <p class="muted">Stub activatielink (alleen zichtbaar als ExposeRegistrationActivationLinks aan staat):</p>
+                <p><a class="auth-link" href="@_activationUrl">@_activationUrl</a></p>
+            }
+            else
+            {
+                <p class="muted">Check PlatformLogs / e-mail-stub voor de activatielink.</p>
+            }
+            <a class="login-submit" href="/login" style="display:inline-block;text-align:center;text-decoration:none;margin-top:1rem">
+                Naar inloggen
+            </a>
+        }
+
+        <p class="muted" style="margin-top:1.25rem">
+            Al een account? <a class="auth-link" href="/login">Inloggen</a>
+        </p>
+    </div>
+</div>
+
+@code {
+    private int _step = 1;
+    private bool _busy;
+    private string? _error;
+    private string? _message;
+    private string? _activationUrl;
+    private string _kvkNumber = "12345678";
+    private string _scope = "BranchOnly";
+    private string _contactName = "";
+    private string _contactEmail = "";
+    private string _contactPhone = "";
+    private bool _acceptedTerms;
+    private List<KvkEstablishmentItem> _establishments = [];
+    private KvkEstablishmentItem? _selected;
+
+    private string StepClass(int n) => _step == n ? "wizard-step is-active" : "wizard-step";
+
+    private async Task LookupAsync()
+    {
+        _busy = true;
+        _error = null;
+        try
+        {
+            _establishments = (await Api.GetRegistrationEstablishmentsAsync(_kvkNumber.Trim())).ToList();
+            if (_establishments.Count == 0)
+            {
+                _error = "Geen vestigingen gevonden voor dit KVK-nummer.";
+                return;
+            }
+
+            _selected = null;
+            _step = 2;
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private void SelectEstablishment(KvkEstablishmentItem e) => _selected = e;
+
+    private async Task SubmitAsync()
+    {
+        if (_selected is null)
+        {
+            _error = "Kies eerst een vestiging.";
+            return;
+        }
+
+        if (!_acceptedTerms)
+        {
+            _error = "Je moet akkoord gaan met de algemene voorwaarden en de privacyverklaring.";
+            return;
+        }
+
+        _busy = true;
+        _error = null;
+        try
+        {
+            var result = await Api.SubmitRegistrationAsync(
+                _selected.KvkNumber,
+                _selected.KvkEstablishmentId,
+                _scope,
+                _contactName.Trim(),
+                _contactEmail.Trim(),
+                string.IsNullOrWhiteSpace(_contactPhone) ? null : _contactPhone.Trim(),
+                acceptedTerms: true);
+
+            _message = result.Message;
+            _activationUrl = result.ActivationUrl;
+            _step = 5;
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+}

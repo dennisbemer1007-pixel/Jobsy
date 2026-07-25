@@ -1,0 +1,52 @@
+@using Jobsy.Web.Localization
+@using Jobsy.Web.Navigation
+@using Microsoft.AspNetCore.Components.Authorization
+@inject NavigationManager Navigation
+@inject AuthenticationStateProvider AuthState
+@inject CultureState Culture
+@implements IDisposable
+
+<nav class="bottom-nav" aria-label="@Culture["Nav.Main"]">
+    @foreach (var item in _items)
+    {
+        var title = Culture[item.TitleKey];
+        var active = RoleNavCatalog.IsActive(item, Navigation.ToBaseRelativePath(Navigation.Uri));
+        <a class="bottom-nav__item @(active ? "is-active" : null)"
+           href="@item.Href"
+           title="@title"
+           aria-current="@(active ? "page" : null)">
+            <span class="bottom-nav__icon" aria-hidden="true">
+                @((MarkupString)item.Svg)
+            </span>
+            <span class="bottom-nav__label">@title</span>
+        </a>
+    }
+</nav>
+
+@code {
+    private IReadOnlyList<NavItem> _items = RoleNavCatalog.Anonymous;
+
+    protected override async Task OnInitializedAsync()
+    {
+        Navigation.LocationChanged += OnLocationChanged;
+        Culture.Changed += OnCultureChanged;
+        var state = await AuthState.GetAuthenticationStateAsync();
+        _items = RoleNavCatalog.ForUser(state.User);
+    }
+
+    private void OnCultureChanged()
+        => InvokeAsync(StateHasChanged);
+
+    private async void OnLocationChanged(object? sender, LocationChangedEventArgs e)
+    {
+        var state = await AuthState.GetAuthenticationStateAsync();
+        _items = RoleNavCatalog.ForUser(state.User);
+        await InvokeAsync(StateHasChanged);
+    }
+
+    public void Dispose()
+    {
+        Navigation.LocationChanged -= OnLocationChanged;
+        Culture.Changed -= OnCultureChanged;
+    }
+}

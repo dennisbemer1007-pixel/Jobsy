@@ -1,0 +1,458 @@
+@page "/vacancies/{Id:guid}"
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
+@attribute [Microsoft.AspNetCore.Authorization.AllowAnonymous]
+@inject JobsyApiClient Api
+@inject NavigationManager Navigation
+@inject IJSRuntime Js
+@inject AuthenticationStateProvider AuthState
+@inject CultureState Culture
+@using Jobsy.Core.Rules
+@using Microsoft.AspNetCore.Components.Authorization
+@implements IDisposable
+
+<PageTitle>@(_vacancy?.Title ?? Culture["Vacancy.Title"]) · Jobsy</PageTitle>
+
+<div class="panel-page">
+    @if (_loading)
+    {
+        <p class="state-message">@Culture["Common.Loading"]</p>
+    }
+    else if (_vacancy is null)
+    {
+        <p class="state-message error">@Culture["Vacancy.NotFound"]</p>
+    }
+    else
+    {
+        <article class="detail-card">
+            <a class="back-link" href="/">@Culture["Vacancy.BackToMap"]</a>
+            <div class="detail-card__top">
+                <div>
+                    <h1>@_vacancy.Title</h1>
+                    <p class="company">@_vacancy.CompanyName</p>
+                    <p class="address">@_vacancy.CompanyAddress</p>
+                </div>
+                @if (_vacancy.WageVisible && _vacancy.HourlyWage is not null)
+                {
+                    <span class="wage">€ @_vacancy.HourlyWage.Value.ToString("0.00")</span>
+                }
+                else
+                {
+                    <a class="wage wage--cta" href="#dob">@WageVisibilityRules.MissingDateOfBirthMessage</a>
+                }
+            </div>
+
+            @if (!string.IsNullOrWhiteSpace(_vacancy.ImageUrl))
+            {
+                <img class="detail-card__image" src="@_vacancy.ImageUrl" alt="" />
+            }
+
+            <p class="detail-card__body">@_vacancy.Description</p>
+            <p class="travel-hint">
+                @Culture["Vacancy.StartDate"]: @_vacancy.StartDate.ToString("dd-MM-yyyy")
+                @if (_vacancy.WorkTypes.Length > 0)
+                {
+                    <text> · @Culture["Vacancy.WorkType"]: @string.Join(", ", _vacancy.WorkTypes)</text>
+                }
+                · @Culture["Vacancy.Transport"]: @string.Join(", ", _vacancy.RequiredTransport)
+            </p>
+            @if (_vacancy.TravelMinutes is not null)
+            {
+                <p class="travel-hint">
+                    <span class="travel-badge">± @_vacancy.TravelMinutes min @Culture["Vacancy.FromYourLocation"]</span>
+                    @if (_vacancy.DistanceKm is not null)
+                    {
+                        <span> (@_vacancy.DistanceKm.Value.ToString("0.0") km)</span>
+                    }
+                </p>
+            }
+
+            @if (!_vacancy.WageVisible)
+            {
+                <div id="dob" class="dob-prompt">
+                    <p>@Culture["Vacancy.DobPrompt"]</p>
+                    <AuthorizeView Roles="Candidate">
+                        <Authorized>
+                            <label>
+                                @Culture["Vacancy.DateOfBirth"]
+                                <input type="date" @bind="_dobInput" />
+                            </label>
+                            <button class="login-submit" type="button" disabled="@_savingDob" @onclick="SaveDobAsync">
+                                @Culture["Common.Save"]
+                            </button>
+                            <p class="login-lead">@Culture["Vacancy.ManageInProfile"] <a href="/candidate/profile">@Culture["Vacancy.YourProfile"]</a>.</p>
+                        </Authorized>
+                        <NotAuthorized>
+                            <a class="login-submit" href="@LoginUrl" style="text-decoration:none;display:inline-flex;">@Culture["Vacancy.LoginAsCandidate"]</a>
+                        </NotAuthorized>
+                    </AuthorizeView>
+                </div>
+            }
+
+            <div class="engagement-actions">
+                <AuthorizeView>
+                    <Authorized>
+                        <button class="engagement-btn" type="button" disabled="@_liking" @onclick="ToggleLikeAsync">
+                            @(_liked ? Culture["Vacancy.Liked"] : Culture["Vacancy.Like"])
+                        </button>
+                        <button class="engagement-btn" type="button" @onclick="OpenShare">
+                            @Culture["Vacancy.Share"]
+                        </button>
+                    </Authorized>
+                    <NotAuthorized>
+                        <a class="engagement-btn" href="@LoginUrl">@Culture["Vacancy.Like"]</a>
+                        <a class="engagement-btn" href="@LoginUrl">@Culture["Vacancy.Share"]</a>
+                    </NotAuthorized>
+                </AuthorizeView>
+            </div>
+
+            <div class="mock-interview-cta">
+                <AuthorizeView Roles="Candidate">
+                    <Authorized>
+                        <button class="engagement-btn mock-interview-cta__btn" type="button" @onclick="OpenMockInterview">
+                            Oefen je sollicitatiegesprek
+                        </button>
+                        <p class="mock-interview-cta__hint">
+                            Oefen met een AI-recruiter op basis van deze vacature — los van solliciteren.
+                        </p>
+                    </Authorized>
+                    <NotAuthorized>
+                        <AuthorizeView Context="authState">
+                            <Authorized Context="authed">
+                                <p class="login-lead">Alleen kandidaten kunnen een oefengesprek starten.</p>
+                            </Authorized>
+                            <NotAuthorized Context="anon">
+                                <a class="engagement-btn mock-interview-cta__btn" href="@LoginUrl">
+                                    Oefen je sollicitatiegesprek
+                                </a>
+                                <p class="mock-interview-cta__hint">
+                                    Log in als kandidaat om te oefenen met een AI-recruiter.
+                                </p>
+                            </NotAuthorized>
+                        </AuthorizeView>
+                    </NotAuthorized>
+                </AuthorizeView>
+            </div>
+
+            <div id="apply">
+                <AuthorizeView Roles="Candidate">
+                    <Authorized>
+                        <div class="detail-actions">
+                            <label>
+                                Jouw vervoer
+                                <select value="@_transport" @onchange="OnTransportChanged">
+                                    <option>Fiets</option>
+                                    <option>Auto</option>
+                                    <option>OV</option>
+                                    <option>Lopend</option>
+                                </select>
+                            </label>
+                            @if (_authenticatorEnabled)
+                            {
+                                <label class="profile-toggle">
+                                    <input type="checkbox" @bind="_useAuthenticator" />
+                                    <span>Bevestig met Authenticator (stub)</span>
+                                </label>
+                            }
+                            <label class="profile-toggle legal-consent">
+                                <input type="checkbox" @bind="_acceptedTerms" />
+                                <span>
+                                    Ik ga akkoord met de
+                                    <a class="auth-link" href="/gebruiksvoorwaarden" target="_blank" rel="noopener">gebruiksvoorwaarden</a>
+                                    (inclusief chatbot-disclaimer) en de
+                                    <a class="auth-link" href="/privacy" target="_blank" rel="noopener">privacyverklaring</a>.
+                                </span>
+                            </label>
+                            <button class="login-submit" type="button" disabled="@(_applying || _applied || !_acceptedTerms)" @onclick="ApplyAsync">
+                                @(_applied ? "Reactie verstuurd" : "Solliciteer")
+                            </button>
+                        </div>
+                    </Authorized>
+                    <NotAuthorized>
+                        <AuthorizeView Context="authState">
+                            <Authorized Context="authed">
+                                <p class="login-lead">Alleen kandidaten kunnen solliciteren.</p>
+                            </Authorized>
+                            <NotAuthorized Context="anon">
+                                <p class="login-lead">Log in als kandidaat om te solliciteren.</p>
+                                <a class="login-submit" href="@LoginUrl" style="text-decoration:none;display:inline-flex;">Inloggen om te solliciteren</a>
+                            </NotAuthorized>
+                        </AuthorizeView>
+                    </NotAuthorized>
+                </AuthorizeView>
+            </div>
+
+            @if (!string.IsNullOrEmpty(_message))
+            {
+                <p class="state-message">@_message</p>
+            }
+        </article>
+    }
+</div>
+
+<ShareModal IsOpen="_shareOpen" Vacancy="_vacancy" OnClose="CloseShare" />
+<MockInterviewModal IsOpen="_mockInterviewOpen" Vacancy="_vacancy" OnClose="CloseMockInterview" />
+
+@code {
+    [Parameter] public Guid Id { get; set; }
+
+    private VacancyListItem? _vacancy;
+    private bool _loading = true;
+    private bool _applying;
+    private bool _applied;
+    private bool _liked;
+    private bool _liking;
+    private bool _shareOpen;
+    private bool _mockInterviewOpen;
+    private bool _savingDob;
+    private DateOnly? _dobInput;
+    private string _transport = "Fiets";
+    private string? _message;
+    private bool _clickRecorded;
+    private bool _authenticatorEnabled;
+    private bool _useAuthenticator;
+    private bool _acceptedTerms;
+
+    private string LoginUrl =>
+        $"/login?returnUrl={Uri.EscapeDataString($"/vacancies/{Id}")}";
+
+    protected override async Task OnInitializedAsync()
+    {
+        Culture.Changed += OnCultureChanged;
+        await LoadAsync(origin: null);
+        await LoadLikeAsync();
+    }
+
+    private async void OnCultureChanged()
+    {
+        await LoadAsync(origin: null);
+        await InvokeAsync(StateHasChanged);
+    }
+
+    public void Dispose()
+        => Culture.Changed -= OnCultureChanged;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender || _vacancy is null || _clickRecorded)
+        {
+            return;
+        }
+
+        _clickRecorded = true;
+        try
+        {
+            var dict = await Js.InvokeAsync<Dictionary<string, double>?>("jobsyGeo.getStoredOrigin");
+            if (dict is not null && dict.TryGetValue("lat", out var lat) && dict.TryGetValue("lng", out var lng))
+            {
+                await LoadAsync(new OriginPoint { Latitude = lat, Longitude = lng });
+                await InvokeAsync(StateHasChanged);
+            }
+
+            await Api.RecordClickOnceAsync(Js, Id);
+
+            var uri = Navigation.ToAbsoluteUri(Navigation.Uri);
+            if (uri.Fragment.Equals("#apply", StringComparison.OrdinalIgnoreCase))
+            {
+                await Js.InvokeVoidAsync("jobsyGeo.scrollToId", "apply");
+            }
+            else if (uri.Fragment.Equals("#dob", StringComparison.OrdinalIgnoreCase))
+            {
+                await Js.InvokeVoidAsync("jobsyGeo.scrollToId", "dob");
+            }
+        }
+        catch
+        {
+            // non-fatal
+        }
+    }
+
+    private async Task LoadAsync(OriginPoint? origin)
+    {
+        try
+        {
+            _vacancy = await Api.GetVacancyAsync(
+                Id,
+                origin?.Latitude,
+                origin?.Longitude,
+                _transport);
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private async Task LoadLikeAsync()
+    {
+        var auth = await AuthState.GetAuthenticationStateAsync();
+        if (auth.User.Identity?.IsAuthenticated != true)
+        {
+            return;
+        }
+
+        if (RoleClaimMatching.HasRole(auth.User, JobsyRoles.Candidate))
+        {
+            try
+            {
+                var profile = await Api.GetMyProfileAsync();
+                _dobInput = profile?.DateOfBirth;
+                _authenticatorEnabled = profile?.AuthenticatorEnabled == true;
+            }
+            catch
+            {
+                // ignore
+            }
+
+            try
+            {
+                var mine = await Api.GetMyApplicationsAsync();
+                _applied = mine.Any(a => a.VacancyId == Id);
+                if (_applied)
+                {
+                    _message = "Je hebt al gereageerd op deze vacature.";
+                }
+            }
+            catch
+            {
+                // ignore
+            }
+        }
+
+        try
+        {
+            _liked = await Api.GetLikedAsync(Id);
+        }
+        catch
+        {
+            _liked = false;
+        }
+    }
+
+    private async Task SaveDobAsync()
+    {
+        if (_dobInput is null)
+        {
+            _message = "Kies een geboortedatum.";
+            return;
+        }
+
+        _savingDob = true;
+        try
+        {
+            await Api.UpdateDateOfBirthAsync(_dobInput.Value);
+            await LoadAsync(origin: null);
+            // Refresh with origin if available
+            try
+            {
+                var dict = await Js.InvokeAsync<Dictionary<string, double>?>("jobsyGeo.getStoredOrigin");
+                if (dict is not null && dict.TryGetValue("lat", out var lat) && dict.TryGetValue("lng", out var lng))
+                {
+                    await LoadAsync(new OriginPoint { Latitude = lat, Longitude = lng });
+                }
+            }
+            catch
+            {
+                // ignore
+            }
+
+            _message = "Geboortedatum opgeslagen — je ziet nu het loon.";
+        }
+        catch (Exception ex)
+        {
+            _message = ex.Message;
+        }
+        finally
+        {
+            _savingDob = false;
+        }
+    }
+
+    private async Task OnTransportChanged(ChangeEventArgs e)
+    {
+        _transport = e.Value?.ToString() ?? "Fiets";
+        if (_vacancy?.TravelMinutes is null)
+        {
+            return;
+        }
+
+        try
+        {
+            var dict = await Js.InvokeAsync<Dictionary<string, double>?>("jobsyGeo.getStoredOrigin");
+            if (dict is not null && dict.TryGetValue("lat", out var lat) && dict.TryGetValue("lng", out var lng))
+            {
+                await LoadAsync(new OriginPoint { Latitude = lat, Longitude = lng });
+            }
+        }
+        catch
+        {
+            // ignore
+        }
+    }
+
+    private async Task ApplyAsync()
+    {
+        if (_vacancy is null || _applied)
+        {
+            return;
+        }
+
+        if (!_acceptedTerms)
+        {
+            _message = "Je moet akkoord gaan met de gebruiksvoorwaarden en de privacyverklaring om te solliciteren.";
+            return;
+        }
+
+        _applying = true;
+        try
+        {
+            var minutes = _vacancy.TravelMinutes ?? 15;
+            await Api.ApplyAsync(_vacancy.Id, _transport, minutes, _useAuthenticator, acceptedTerms: true);
+            _applied = true;
+            _message = _useAuthenticator
+                ? "Je reactie is verstuurd (Authenticator stub). Bevestigingsmail staat in de stub-log."
+                : "Je reactie is verstuurd. Bevestigingsmail staat in de stub-log.";
+        }
+        catch (Exception ex)
+        {
+            _message = ex.Message;
+        }
+        finally
+        {
+            _applying = false;
+        }
+    }
+
+    private async Task ToggleLikeAsync()
+    {
+        _liking = true;
+        try
+        {
+            _liked = await Api.SetLikedAsync(Id, !_liked);
+            _message = _liked ? "Opgeslagen bij je likes." : "Like verwijderd.";
+        }
+        catch (Exception ex)
+        {
+            _message = ex.Message;
+        }
+        finally
+        {
+            _liking = false;
+        }
+    }
+
+    private void OpenShare() => _shareOpen = true;
+
+    private Task CloseShare()
+    {
+        _shareOpen = false;
+        return Task.CompletedTask;
+    }
+
+    private void OpenMockInterview() => _mockInterviewOpen = true;
+
+    private Task CloseMockInterview()
+    {
+        _mockInterviewOpen = false;
+        return Task.CompletedTask;
+    }
+}

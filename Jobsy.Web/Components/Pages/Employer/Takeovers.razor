@@ -1,0 +1,122 @@
+@page "/employer/takeovers"
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "BranchManager,EnterpriseManager,Admin")]
+@inject JobsyApiClient Api
+
+<PageTitle>Overnameverzoeken · Jobsy</PageTitle>
+
+<div class="panel-page">
+    <header class="panel-header">
+        <div>
+            <h1>Overnameverzoeken</h1>
+            <p class="login-lead">Vestigingen waarvoor iemand overname heeft aangevraagd.</p>
+        </div>
+    </header>
+
+    @if (_loading)
+    {
+        <p class="state-message">Laden…</p>
+    }
+    else if (!string.IsNullOrEmpty(_error))
+    {
+        <p class="state-message error">@_error</p>
+    }
+    else if (_items.Count == 0)
+    {
+        <p class="muted">Geen openstaande verzoeken.</p>
+    }
+    else
+    {
+        <div class="table-list">
+            @foreach (var item in _items)
+            {
+                <div class="table-row">
+                    <div>
+                        <strong>@item.TargetCompanyName</strong>
+                        <span class="muted">@item.KvkEstablishmentId · scope @item.Scope</span>
+                        <span class="muted">Aanvrager: @item.RequesterName (@item.RequesterEmail)</span>
+                    </div>
+                    <div class="wizard-actions">
+                        <button class="provider-btn" type="button" disabled="@_busy"
+                                @onclick="() => RejectAsync(item.TakeoverId)">Afwijzen</button>
+                        <button class="login-submit" type="button" disabled="@_busy"
+                                @onclick="() => ApproveAsync(item.TakeoverId)">Goedkeuren</button>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+
+    @if (!string.IsNullOrEmpty(_message))
+    {
+        <p class="state-message">@_message</p>
+    }
+</div>
+
+@code {
+    private List<TakeoverInboxItem> _items = [];
+    private bool _loading = true;
+    private bool _busy;
+    private string? _error;
+    private string? _message;
+
+    protected override async Task OnInitializedAsync() => await ReloadAsync();
+
+    private async Task ReloadAsync()
+    {
+        _loading = true;
+        _error = null;
+        try
+        {
+            _items = (await Api.GetTakeoverInboxAsync()).ToList();
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private async Task ApproveAsync(Guid id)
+    {
+        _busy = true;
+        _message = null;
+        try
+        {
+            var result = await Api.ApproveTakeoverAsync(id);
+            _message = result.Message;
+            await ReloadAsync();
+        }
+        catch (Exception ex)
+        {
+            _message = ex.Message;
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private async Task RejectAsync(Guid id)
+    {
+        _busy = true;
+        _message = null;
+        try
+        {
+            var result = await Api.RejectTakeoverAsync(id);
+            _message = result.Message;
+            await ReloadAsync();
+        }
+        catch (Exception ex)
+        {
+            _message = ex.Message;
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+}

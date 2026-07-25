@@ -1,0 +1,1096 @@
+using System.Net.Http.Json;
+using System.Net;
+using System.Text.Json;
+using Jobsy.Core.Enums;
+using Jobsy.Web.Models;
+using Microsoft.JSInterop;
+
+namespace Jobsy.Web.Services;
+
+public sealed class JobsyApiClient : IAsyncDisposable
+{
+    private readonly HttpClient _http;
+
+    public JobsyApiClient(HttpClient http)
+    {
+        _http = http;
+    }
+
+    public async Task<IReadOnlyList<VacancyListItem>> GetActiveVacanciesAsync(CancellationToken ct = default)
+        => await _http.GetFromJsonAsync<List<VacancyListItem>>("api/vacancies", ct) ?? [];
+
+    public async Task<IReadOnlyList<VacancyListItem>> DiscoverVacanciesAsync(
+        double? originLat,
+        double? originLng,
+        string transport,
+        int maxMinutes,
+        double? radiusKm,
+        int? ageYears = null,
+        decimal? minHourlyWage = null,
+        decimal? maxHourlyWage = null,
+        string? workType = null,
+        CancellationToken ct = default)
+    {
+        var qs = $"transport={Uri.EscapeDataString(transport)}&maxMinutes={maxMinutes}";
+        if (originLat is not null && originLng is not null)
+        {
+            qs += $"&originLat={originLat.Value.ToString(System.Globalization.CultureInfo.InvariantCulture)}"
+                + $"&originLng={originLng.Value.ToString(System.Globalization.CultureInfo.InvariantCulture)}";
+        }
+
+        if (radiusKm is not null)
+        {
+            qs += $"&radiusKm={radiusKm.Value.ToString(System.Globalization.CultureInfo.InvariantCulture)}";
+        }
+
+        if (ageYears is not null)
+        {
+            qs += $"&ageYears={ageYears.Value}";
+        }
+
+        if (minHourlyWage is not null)
+        {
+            qs += $"&minHourlyWage={minHourlyWage.Value.ToString(System.Globalization.CultureInfo.InvariantCulture)}";
+        }
+
+        if (maxHourlyWage is not null)
+        {
+            qs += $"&maxHourlyWage={maxHourlyWage.Value.ToString(System.Globalization.CultureInfo.InvariantCulture)}";
+        }
+
+        if (!string.IsNullOrWhiteSpace(workType))
+        {
+            qs += $"&workType={Uri.EscapeDataString(workType)}";
+        }
+
+        return await _http.GetFromJsonAsync<List<VacancyListItem>>($"api/vacancies/discover?{qs}", ct) ?? [];
+    }
+
+    public async Task<VacancyListItem?> GetVacancyAsync(
+        Guid id,
+        double? originLat = null,
+        double? originLng = null,
+        string? transport = null,
+        CancellationToken ct = default)
+    {
+        var url = $"api/vacancies/{id}";
+        var parts = new List<string>();
+        if (originLat is not null && originLng is not null)
+        {
+            parts.Add($"originLat={originLat.Value.ToString(System.Globalization.CultureInfo.InvariantCulture)}");
+            parts.Add($"originLng={originLng.Value.ToString(System.Globalization.CultureInfo.InvariantCulture)}");
+        }
+
+        if (!string.IsNullOrWhiteSpace(transport))
+        {
+            parts.Add($"transport={Uri.EscapeDataString(transport)}");
+        }
+
+        if (parts.Count > 0)
+        {
+            url += "?" + string.Join("&", parts);
+        }
+
+        return await _http.GetFromJsonAsync<VacancyListItem>(url, ct);
+    }
+
+    public async Task<IReadOnlyList<VacancyListItem>> GetManagedVacanciesAsync(CancellationToken ct = default)
+        => await _http.GetFromJsonAsync<List<VacancyListItem>>("api/vacancies/manage", ct) ?? [];
+
+    public async Task<VacancyListItem?> CreateVacancyAsync(CreateVacancyForm form, CancellationToken ct = default)
+    {
+        var response = await _http.PostAsJsonAsync("api/vacancies", form, ct);
+        if (response.StatusCode == System.Net.HttpStatusCode.UnprocessableEntity)
+        {
+            var feedback = await response.Content.ReadFromJsonAsync<VacancyModerationFeedback>(cancellationToken: ct);
+            if (feedback is not null &&
+                string.Equals(feedback.Code, Jobsy.Core.Interfaces.VacancyModerationCodes.ContentModeration, StringComparison.Ordinal))
+            {
+                throw new VacancyModerationException(
+                    feedback.Message ?? "De vacaturetekst vraagt om een aanpassing.",
+                    feedback.Suggestion ?? "Pas de tekst aan en probeer opnieuw.");
+            }
+        }
+
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException(TryExtractMessage(body) ?? body);
+        }
+
+        return await response.Content.ReadFromJsonAsync<VacancyListItem>(cancellationToken: ct);
+    }
+
+    public async Task<IReadOnlyList<VacancyListItem>> CreateBatchAsync(BatchVacancyForm form, CancellationToken ct = default)
+    {
+        var response = await _http.PostAsJsonAsync("api/vacancies/batch", form, ct);
+        if (response.StatusCode == System.Net.HttpStatusCode.UnprocessableEntity)
+        {
+            var feedback = await response.Content.ReadFromJsonAsync<VacancyModerationFeedback>(cancellationToken: ct);
+            if (feedback is not null &&
+                string.Equals(feedback.Code, Jobsy.Core.Interfaces.VacancyModerationCodes.ContentModeration, StringComparison.Ordinal))
+            {
+                throw new VacancyModerationException(
+                    feedback.Message ?? "De vacaturetekst vraagt om een aanpassing.",
+                    feedback.Suggestion ?? "Pas de tekst aan en probeer opnieuw.");
+            }
+        }
+
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException(TryExtractMessage(body) ?? body);
+        }
+
+        return await response.Content.ReadFromJsonAsync<List<VacancyListItem>>(cancellationToken: ct) ?? [];
+    }
+
+    public async Task<VacancyProductActionResult?> PublishVacancyAsync(
+        Guid vacancyId,
+        bool highlight = false,
+        bool pushBom = false,
+        bool extend = false,
+        CancellationToken ct = default)
+    {
+        var response = await _http.PostAsJsonAsync(
+            "api/vacancies/publish",
+            new { vacancyId, highlight, pushBom, extend },
+            ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException(body);
+        }
+
+        return await response.Content.ReadFromJsonAsync<VacancyProductActionResult>(cancellationToken: ct);
+    }
+
+    public async Task<VacancyProductActionResult?> ApprovePublishAsync(Guid vacancyId, CancellationToken ct = default)
+        => await PostVacancyProductAsync($"api/vacancies/{vacancyId}/approve-publish", ct);
+
+    public async Task<VacancyProductActionResult?> HighlightVacancyAsync(Guid vacancyId, CancellationToken ct = default)
+        => await PostVacancyProductAsync($"api/vacancies/{vacancyId}/highlight", ct);
+
+    public async Task<PushBomPreview?> PreviewPushBomAsync(Guid vacancyId, CancellationToken ct = default)
+        => await _http.GetFromJsonAsync<PushBomPreview>($"api/vacancies/{vacancyId}/pushbom/preview", ct);
+
+    public async Task<VacancyProductActionResult?> PushBomVacancyAsync(Guid vacancyId, CancellationToken ct = default)
+        => await PostVacancyProductAsync($"api/vacancies/{vacancyId}/pushbom", ct);
+
+    public async Task<VacancyProductActionResult?> ExtendVacancyAsync(Guid vacancyId, CancellationToken ct = default)
+        => await PostVacancyProductAsync($"api/vacancies/{vacancyId}/extend", ct);
+
+    public async Task<VacancyProductActionResult?> DeactivateVacancyAsync(Guid vacancyId, CancellationToken ct = default)
+        => await PostVacancyProductAsync($"api/vacancies/{vacancyId}/inactive", ct);
+
+    private async Task<VacancyProductActionResult?> PostVacancyProductAsync(string url, CancellationToken ct)
+    {
+        var response = await _http.PostAsync(url, null, ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException(body);
+        }
+
+        return await response.Content.ReadFromJsonAsync<VacancyProductActionResult>(cancellationToken: ct);
+    }
+
+    public async Task RecordClickAsync(Guid vacancyId, string? anonymousKey = null, CancellationToken ct = default)
+    {
+        var response = await _http.PostAsJsonAsync(
+            $"api/vacancies/{vacancyId}/clicks",
+            new { anonymousKey },
+            ct);
+        response.EnsureSuccessStatusCode();
+    }
+
+    /// <summary>
+    /// Records a click once per vacancy per browser tab (sessionStorage dedupe).
+    /// Always includes a stable anonymousKey; the API uses it only when no DB user is resolved.
+    /// </summary>
+    public async Task RecordClickOnceAsync(
+        IJSRuntime js,
+        Guid vacancyId,
+        CancellationToken ct = default)
+    {
+        var claimed = await js.InvokeAsync<bool>("jobsyGeo.tryClaimClick", vacancyId.ToString());
+        if (!claimed)
+        {
+            return;
+        }
+
+        var anonKey = await js.InvokeAsync<string>("jobsyGeo.getOrCreateAnonymousKey");
+        await RecordClickAsync(vacancyId, anonKey, ct);
+    }
+
+    public async Task<bool> GetLikedAsync(Guid vacancyId, CancellationToken ct = default)
+    {
+        var result = await _http.GetFromJsonAsync<LikeStatus>($"api/vacancies/{vacancyId}/like", ct);
+        return result?.Liked == true;
+    }
+
+    public async Task<bool> SetLikedAsync(Guid vacancyId, bool liked, CancellationToken ct = default)
+    {
+        HttpResponseMessage response;
+        if (liked)
+        {
+            response = await _http.PostAsync($"api/vacancies/{vacancyId}/like", null, ct);
+        }
+        else
+        {
+            response = await _http.DeleteAsync($"api/vacancies/{vacancyId}/like", ct);
+        }
+
+        response.EnsureSuccessStatusCode();
+        var result = await response.Content.ReadFromJsonAsync<LikeStatus>(cancellationToken: ct);
+        return result?.Liked == true;
+    }
+
+    public async Task ShareVacancyAsync(Guid vacancyId, ShareChannel channel, CancellationToken ct = default)
+    {
+        var response = await _http.PostAsJsonAsync($"api/vacancies/{vacancyId}/shares", new { channel }, ct);
+        response.EnsureSuccessStatusCode();
+    }
+
+    public async Task<MeProfile?> GetMyProfileAsync(CancellationToken ct = default)
+    {
+        try
+        {
+            return await _http.GetFromJsonAsync<MeProfile>("api/me/profile", ct);
+        }
+        catch (HttpRequestException ex) when (ex.StatusCode == HttpStatusCode.Unauthorized || ex.StatusCode == HttpStatusCode.NotFound)
+        {
+            return null;
+        }
+    }
+
+    public async Task<MeProfile?> UpdateDateOfBirthAsync(DateOnly dateOfBirth, CancellationToken ct = default)
+    {
+        var response = await _http.PutAsJsonAsync("api/me/date-of-birth", new { dateOfBirth }, ct);
+        response.EnsureSuccessStatusCode();
+        return await response.Content.ReadFromJsonAsync<MeProfile>(cancellationToken: ct);
+    }
+
+    public async Task<MeProfile?> UpdateMyLanguageAsync(string language, CancellationToken ct = default)
+    {
+        var response = await _http.PutAsJsonAsync("api/me/language", new { language }, ct);
+        response.EnsureSuccessStatusCode();
+        return await response.Content.ReadFromJsonAsync<MeProfile>(cancellationToken: ct);
+    }
+
+    public async Task<MeProfile?> UpdateMyProfileAsync(
+        bool? openForWork = null,
+        DateOnly? dateOfBirth = null,
+        CandidatePreferences? preferences = null,
+        double? homeLatitude = null,
+        double? homeLongitude = null,
+        CancellationToken ct = default)
+    {
+        var response = await _http.PutAsJsonAsync("api/me/profile", new
+        {
+            openForWork,
+            dateOfBirth,
+            preferences,
+            homeLatitude,
+            homeLongitude
+        }, ct);
+        response.EnsureSuccessStatusCode();
+        return await response.Content.ReadFromJsonAsync<MeProfile>(cancellationToken: ct);
+    }
+
+    public async Task<IReadOnlyList<MetricCount>> GetMyMetricsSummaryAsync(string period = "week", CancellationToken ct = default)
+        => await _http.GetFromJsonAsync<List<MetricCount>>($"api/me/metrics/summary?period={Uri.EscapeDataString(period)}", ct) ?? [];
+
+    public async Task<IReadOnlyList<MetricDrilldownItem>> GetMyMetricsDrilldownAsync(
+        string key,
+        string period = "week",
+        CancellationToken ct = default)
+        => await _http.GetFromJsonAsync<List<MetricDrilldownItem>>(
+            $"api/me/metrics/drilldown/{Uri.EscapeDataString(key)}?period={Uri.EscapeDataString(period)}", ct) ?? [];
+
+    public async Task<IReadOnlyList<MetricCount>> GetEmployerMetricsSummaryAsync(
+        string period = "week",
+        Guid? companyId = null,
+        CancellationToken ct = default)
+    {
+        var qs = $"period={Uri.EscapeDataString(period)}";
+        if (companyId is not null)
+        {
+            qs += $"&companyId={companyId}";
+        }
+
+        return await _http.GetFromJsonAsync<List<MetricCount>>($"api/metrics/summary?{qs}", ct) ?? [];
+    }
+
+    public async Task<IReadOnlyList<MetricDrilldownItem>> GetEmployerMetricsDrilldownAsync(
+        string key,
+        string period = "week",
+        Guid? companyId = null,
+        CancellationToken ct = default)
+    {
+        var qs = $"period={Uri.EscapeDataString(period)}";
+        if (companyId is not null)
+        {
+            qs += $"&companyId={companyId}";
+        }
+
+        return await _http.GetFromJsonAsync<List<MetricDrilldownItem>>(
+            $"api/metrics/drilldown/{Uri.EscapeDataString(key)}?{qs}", ct) ?? [];
+    }
+
+    public async Task<IReadOnlyList<ApplicationItem>> GetMyApplicationsAsync(CancellationToken ct = default)
+        => await _http.GetFromJsonAsync<List<ApplicationItem>>("api/me/applications", ct) ?? [];
+
+    public async Task<IReadOnlyList<CandidateEngagementItem>> GetMyLikesAsync(CancellationToken ct = default)
+        => await _http.GetFromJsonAsync<List<CandidateEngagementItem>>("api/me/likes", ct) ?? [];
+
+    public async Task<IReadOnlyList<CandidateEngagementItem>> GetMySharesAsync(CancellationToken ct = default)
+        => await _http.GetFromJsonAsync<List<CandidateEngagementItem>>("api/me/shares", ct) ?? [];
+
+    public async Task<IReadOnlyList<CompanySummary>> GetMyCompaniesAsync(CancellationToken ct = default)
+        => await _http.GetFromJsonAsync<List<CompanySummary>>("api/companies/mine", ct) ?? [];
+
+    public async Task<CompanySummary?> RegisterEstablishmentAsync(
+        string kvkNumber,
+        string kvkEstablishmentId,
+        Guid? parentCompanyId = null,
+        CancellationToken ct = default)
+    {
+        var response = await _http.PostAsJsonAsync("api/companies/from-kvk", new
+        {
+            kvkNumber,
+            kvkEstablishmentId,
+            parentCompanyId
+        }, ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException(string.IsNullOrWhiteSpace(body) ? response.ReasonPhrase : body);
+        }
+
+        return await response.Content.ReadFromJsonAsync<CompanySummary>(cancellationToken: ct);
+    }
+
+    public async Task<IReadOnlyList<KvkEstablishmentItem>> GetKvkEstablishmentsAsync(
+        string kvkNumber,
+        CancellationToken ct = default)
+        => await _http.GetFromJsonAsync<List<KvkEstablishmentItem>>(
+            $"api/kvk/{Uri.EscapeDataString(kvkNumber)}/establishments", ct) ?? [];
+
+    public async Task<IReadOnlyList<KvkEstablishmentItem>> GetRegistrationEstablishmentsAsync(
+        string kvkNumber,
+        CancellationToken ct = default)
+        => await _http.GetFromJsonAsync<List<KvkEstablishmentItem>>(
+            $"api/registration/kvk/{Uri.EscapeDataString(kvkNumber)}/establishments", ct) ?? [];
+
+    public async Task<RegistrationSubmitResult> SubmitRegistrationAsync(
+        string kvkNumber,
+        string kvkEstablishmentId,
+        string scope,
+        string contactName,
+        string contactEmail,
+        string? contactPhone = null,
+        bool acceptedTerms = false,
+        string? consentVersion = null,
+        CancellationToken ct = default)
+    {
+        var response = await _http.PostAsJsonAsync("api/registration", new
+        {
+            kvkNumber,
+            kvkEstablishmentId,
+            scope,
+            contactName,
+            contactEmail,
+            contactPhone,
+            acceptedTerms,
+            consentVersion = consentVersion ?? "2026-07-25"
+        }, ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException(ExtractMessage(body) ?? response.ReasonPhrase ?? "Registratie mislukt.");
+        }
+
+        return await response.Content.ReadFromJsonAsync<RegistrationSubmitResult>(cancellationToken: ct)
+               ?? throw new InvalidOperationException("Lege registratierespons.");
+    }
+
+    public async Task<RegistrationActivationResult> ActivateRegistrationAsync(
+        string token,
+        CancellationToken ct = default)
+    {
+        var response = await _http.PostAsync(
+            $"api/registration/activate?token={Uri.EscapeDataString(token)}",
+            null,
+            ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException(ExtractMessage(body) ?? response.ReasonPhrase ?? "Activatie mislukt.");
+        }
+
+        return await response.Content.ReadFromJsonAsync<RegistrationActivationResult>(cancellationToken: ct)
+               ?? throw new InvalidOperationException("Lege activatierespons.");
+    }
+
+    public async Task<IReadOnlyList<TakeoverInboxItem>> GetTakeoverInboxAsync(CancellationToken ct = default)
+        => await _http.GetFromJsonAsync<List<TakeoverInboxItem>>("api/registration/takeovers", ct) ?? [];
+
+    public async Task<TakeoverDecisionResult> ApproveTakeoverAsync(Guid takeoverId, CancellationToken ct = default)
+    {
+        var response = await _http.PostAsync($"api/registration/takeovers/{takeoverId}/approve", null, ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException(ExtractMessage(body) ?? response.ReasonPhrase ?? "Goedkeuren mislukt.");
+        }
+
+        return await response.Content.ReadFromJsonAsync<TakeoverDecisionResult>(cancellationToken: ct)
+               ?? throw new InvalidOperationException("Lege takeover-respons.");
+    }
+
+    public async Task<TakeoverDecisionResult> RejectTakeoverAsync(
+        Guid takeoverId,
+        string? note = null,
+        CancellationToken ct = default)
+    {
+        var response = await _http.PostAsJsonAsync(
+            $"api/registration/takeovers/{takeoverId}/reject",
+            new { note },
+            ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException(ExtractMessage(body) ?? response.ReasonPhrase ?? "Afwijzen mislukt.");
+        }
+
+        return await response.Content.ReadFromJsonAsync<TakeoverDecisionResult>(cancellationToken: ct)
+               ?? throw new InvalidOperationException("Lege takeover-respons.");
+    }
+
+    private static string? ExtractMessage(string body)
+    {
+        if (string.IsNullOrWhiteSpace(body))
+        {
+            return null;
+        }
+
+        try
+        {
+            using var doc = System.Text.Json.JsonDocument.Parse(body);
+            if (doc.RootElement.TryGetProperty("message", out var msg))
+            {
+                return msg.GetString();
+            }
+        }
+        catch
+        {
+            // fall through
+        }
+
+        return body.Length > 400 ? body[..400] : body;
+    }
+
+    public async Task<IReadOnlyList<TokenBalance>> GetTokenBalancesAsync(CancellationToken ct = default)
+        => await _http.GetFromJsonAsync<List<TokenBalance>>("api/tokens/balance", ct) ?? [];
+
+    public async Task<IReadOnlyList<TokenPackItem>> GetTokenPacksAsync(CancellationToken ct = default)
+        => await _http.GetFromJsonAsync<List<TokenPackItem>>("api/tokens/packs", ct) ?? [];
+
+    public async Task<IReadOnlyList<TokenSpendCostItem>> GetTokenCostsAsync(CancellationToken ct = default)
+        => await _http.GetFromJsonAsync<List<TokenSpendCostItem>>("api/tokens/costs", ct) ?? [];
+
+    public async Task<IReadOnlyList<TokenLogItem>> GetTokenLogsAsync(string? companyName = null, CancellationToken ct = default)
+    {
+        var url = "api/tokens/logs";
+        if (!string.IsNullOrWhiteSpace(companyName))
+        {
+            url += $"?companyName={Uri.EscapeDataString(companyName)}";
+        }
+
+        return await _http.GetFromJsonAsync<List<TokenLogItem>>(url, ct) ?? [];
+    }
+
+    public async Task<CheckoutResult?> CreateTokenCheckoutAsync(Guid companyId, int packSize, CancellationToken ct = default)
+    {
+        var response = await _http.PostAsJsonAsync("api/tokens/checkout", new { companyId, packSize }, ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException(string.IsNullOrWhiteSpace(body) ? response.ReasonPhrase : body);
+        }
+
+        return await response.Content.ReadFromJsonAsync<CheckoutResult>(cancellationToken: ct);
+    }
+
+    public async Task CompleteTokenCheckoutAsync(
+        string paymentId,
+        CancellationToken ct = default)
+    {
+        var response = await _http.PostAsJsonAsync(
+            "api/tokens/checkout/complete",
+            new { paymentId },
+            ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException(string.IsNullOrWhiteSpace(body) ? response.ReasonPhrase : body);
+        }
+    }
+
+    public async Task AllocateTokensAsync(
+        Guid fromCompanyId,
+        Guid toCompanyId,
+        decimal amount,
+        string? note = null,
+        CancellationToken ct = default)
+    {
+        var response = await _http.PostAsJsonAsync(
+            "api/tokens/allocate",
+            new { fromCompanyId, toCompanyId, amount, note },
+            ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException(string.IsNullOrWhiteSpace(body) ? response.ReasonPhrase : body);
+        }
+    }
+
+    public async Task GrantTokensAsync(
+        Guid companyId,
+        decimal amount,
+        string note,
+        CancellationToken ct = default)
+    {
+        var response = await _http.PostAsJsonAsync(
+            "api/tokens/grant",
+            new { companyId, amount, note },
+            ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException(string.IsNullOrWhiteSpace(body) ? response.ReasonPhrase : body);
+        }
+    }
+
+    public async Task<IReadOnlyList<EmployerApplicationItem>> GetApplicationsAsync(CancellationToken ct = default)
+        => await _http.GetFromJsonAsync<List<EmployerApplicationItem>>("api/applications", ct) ?? [];
+
+    public async Task<IReadOnlyList<RegionItem>> GetRegionsAsync(CancellationToken ct = default)
+        => await _http.GetFromJsonAsync<List<RegionItem>>("api/regions", ct) ?? [];
+
+    public async Task<RegionItem?> CreateRegionAsync(
+        string name,
+        Guid organizationCompanyId,
+        Guid[]? companyIds = null,
+        CancellationToken ct = default)
+    {
+        var response = await _http.PostAsJsonAsync("api/regions", new
+        {
+            name,
+            organizationCompanyId,
+            companyIds
+        }, ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException(string.IsNullOrWhiteSpace(body) ? response.ReasonPhrase : body);
+        }
+
+        return await response.Content.ReadFromJsonAsync<RegionItem>(cancellationToken: ct);
+    }
+
+    public async Task<RegionItem?> UpdateRegionAsync(
+        Guid id,
+        string name,
+        Guid[] companyIds,
+        CancellationToken ct = default)
+    {
+        var response = await _http.PutAsJsonAsync($"api/regions/{id}", new { name, companyIds }, ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException(string.IsNullOrWhiteSpace(body) ? response.ReasonPhrase : body);
+        }
+
+        return await response.Content.ReadFromJsonAsync<RegionItem>(cancellationToken: ct);
+    }
+
+    public async Task DeleteRegionAsync(Guid id, CancellationToken ct = default)
+    {
+        var response = await _http.DeleteAsync($"api/regions/{id}", ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException(string.IsNullOrWhiteSpace(body) ? response.ReasonPhrase : body);
+        }
+    }
+
+    public async Task<IReadOnlyList<SalaryTableItem>> GetSalaryTablesAsync(Guid? companyId = null, CancellationToken ct = default)
+    {
+        var url = "api/salary-tables";
+        if (companyId is not null)
+        {
+            url += $"?companyId={companyId}";
+        }
+
+        return await _http.GetFromJsonAsync<List<SalaryTableItem>>(url, ct) ?? [];
+    }
+
+    public async Task<SalaryTableItem?> UpsertSalaryTableAsync(UpsertSalaryTableForm form, CancellationToken ct = default)
+    {
+        var response = await _http.PostAsJsonAsync("api/salary-tables", form, ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException(string.IsNullOrWhiteSpace(body) ? response.ReasonPhrase : body);
+        }
+
+        return await response.Content.ReadFromJsonAsync<SalaryTableItem>(cancellationToken: ct);
+    }
+
+    public async Task<IReadOnlyList<CompanyUserItem>> GetCompanyUsersAsync(CancellationToken ct = default)
+        => await _http.GetFromJsonAsync<List<CompanyUserItem>>("api/company-users", ct) ?? [];
+
+    public async Task<CompanyUserItem?> InviteCompanyUserAsync(InviteUserForm form, CancellationToken ct = default)
+    {
+        var response = await _http.PostAsJsonAsync("api/company-users/invite", form, ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException(string.IsNullOrWhiteSpace(body) ? response.ReasonPhrase : body);
+        }
+
+        return await response.Content.ReadFromJsonAsync<CompanyUserItem>(cancellationToken: ct);
+    }
+
+    public async Task ApplyAsync(
+        Guid vacancyId,
+        string preferredTransport,
+        int estimatedTravelMinutes,
+        bool useAuthenticator = false,
+        bool acceptedTerms = false,
+        string? consentVersion = null,
+        CancellationToken ct = default)
+    {
+        var response = await _http.PostAsJsonAsync("api/applications", new
+        {
+            vacancyId,
+            preferredTransport,
+            estimatedTravelMinutes,
+            useAuthenticator,
+            acceptedTerms,
+            consentVersion = consentVersion ?? "2026-07-25"
+        }, ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException(string.IsNullOrWhiteSpace(body) ? response.ReasonPhrase : body);
+        }
+    }
+
+    public async Task<string> ExportPrivacyDataAsync(CancellationToken ct = default)
+    {
+        var response = await _http.GetAsync("api/privacy/export", ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException(ExtractMessage(body) ?? response.ReasonPhrase ?? "Export mislukt.");
+        }
+
+        return await response.Content.ReadAsStringAsync(ct);
+    }
+
+    public async Task DeleteAccountAsync(CancellationToken ct = default)
+    {
+        var response = await _http.PostAsync("api/privacy/delete-account", null, ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException(ExtractMessage(body) ?? response.ReasonPhrase ?? "Verwijderen mislukt.");
+        }
+    }
+
+    public async Task<MockInterviewReply> ContinueMockInterviewAsync(
+        Guid vacancyId,
+        IReadOnlyList<MockInterviewChatMessage> messages,
+        CancellationToken ct = default)
+    {
+        var response = await _http.PostAsJsonAsync("api/mock-interview", new
+        {
+            vacancyId,
+            messages = messages.Select(m => new { role = m.Role, content = m.Content })
+        }, ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException(TryExtractMessage(body) ?? (string.IsNullOrWhiteSpace(body) ? response.ReasonPhrase : body));
+        }
+
+        return await response.Content.ReadFromJsonAsync<MockInterviewReply>(cancellationToken: ct)
+               ?? throw new InvalidOperationException("Geen antwoord van de oefenchat.");
+    }
+
+    public async Task ReactToApplicationAsync(Guid applicationId, string status, CancellationToken ct = default)
+    {
+        var response = await _http.PostAsJsonAsync($"api/applications/{applicationId}/react", new { status }, ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException(string.IsNullOrWhiteSpace(body) ? response.ReasonPhrase : body);
+        }
+    }
+
+    public async Task<IReadOnlyList<AdminCompanyItem>> GetAdminCompaniesAsync(CancellationToken ct = default)
+        => await _http.GetFromJsonAsync<List<AdminCompanyItem>>("api/admin/companies", ct) ?? [];
+
+    public async Task<AdminCompanyItem?> RegisterAdminCompanyFromKvkAsync(
+        string kvkNumber,
+        string kvkEstablishmentId,
+        string type = "Employer",
+        Guid? parentCompanyId = null,
+        CancellationToken ct = default)
+    {
+        var response = await _http.PostAsJsonAsync("api/admin/companies/from-kvk", new
+        {
+            kvkNumber,
+            kvkEstablishmentId,
+            type,
+            parentCompanyId
+        }, ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException(string.IsNullOrWhiteSpace(body) ? response.ReasonPhrase : body);
+        }
+
+        return await response.Content.ReadFromJsonAsync<AdminCompanyItem>(cancellationToken: ct);
+    }
+
+    public async Task<IReadOnlyList<AdminUserItem>> GetAdminUsersAsync(CancellationToken ct = default)
+        => await _http.GetFromJsonAsync<List<AdminUserItem>>("api/admin/users", ct) ?? [];
+
+    public async Task<IReadOnlyList<AdminVacancyItem>> GetAdminVacanciesAsync(CancellationToken ct = default)
+        => await _http.GetFromJsonAsync<List<AdminVacancyItem>>("api/admin/vacancies", ct) ?? [];
+
+    public async Task<VacancyProductActionResult?> AdminExtendVacancyAsync(Guid vacancyId, CancellationToken ct = default)
+        => await PostVacancyProductAsync($"api/admin/vacancies/{vacancyId}/extend", ct);
+
+    public async Task<VacancyProductActionResult?> AdminDeactivateVacancyAsync(Guid vacancyId, CancellationToken ct = default)
+        => await PostVacancyProductAsync($"api/admin/vacancies/{vacancyId}/inactive", ct);
+
+    public async Task<IReadOnlyList<PlatformLogItem>> GetPlatformLogsAsync(
+        string? category = null,
+        string? level = null,
+        DateTime? from = null,
+        DateTime? to = null,
+        CancellationToken ct = default)
+    {
+        var qs = new List<string>();
+        if (!string.IsNullOrWhiteSpace(category))
+        {
+            qs.Add($"category={Uri.EscapeDataString(category)}");
+        }
+
+        if (!string.IsNullOrWhiteSpace(level))
+        {
+            qs.Add($"level={Uri.EscapeDataString(level)}");
+        }
+
+        if (from is not null)
+        {
+            qs.Add($"from={Uri.EscapeDataString(from.Value.ToString("O"))}");
+        }
+
+        if (to is not null)
+        {
+            qs.Add($"to={Uri.EscapeDataString(to.Value.ToString("O"))}");
+        }
+
+        var url = qs.Count == 0 ? "api/platform-logs" : $"api/platform-logs?{string.Join("&", qs)}";
+        return await _http.GetFromJsonAsync<List<PlatformLogItem>>(url, ct) ?? [];
+    }
+
+    public async Task<TokenPricingSettings?> GetTokenPricingSettingsAsync(CancellationToken ct = default)
+        => await _http.GetFromJsonAsync<TokenPricingSettings>("api/settings/token-pricing", ct);
+
+    public async Task UpdateTokenPackAsync(Guid id, decimal priceEuro, bool isActive, CancellationToken ct = default)
+    {
+        var response = await _http.PutAsJsonAsync(
+            $"api/settings/token-pricing/packs/{id}",
+            new { id, priceEuro, isActive },
+            ct);
+        response.EnsureSuccessStatusCode();
+    }
+
+    public async Task UpdateTokenCostAsync(Guid id, decimal costTokens, bool isActive, CancellationToken ct = default)
+    {
+        var response = await _http.PutAsJsonAsync(
+            $"api/settings/token-pricing/costs/{id}",
+            new { id, costTokens, isActive },
+            ct);
+        response.EnsureSuccessStatusCode();
+    }
+
+    public async Task<PushBomSettingsItem?> UpdatePushBomSettingsAsync(
+        double radiusKm,
+        int maxTravelMinutes,
+        CancellationToken ct = default)
+    {
+        var response = await _http.PutAsJsonAsync(
+            "api/settings/token-pricing/pushbom-settings",
+            new { radiusKm, maxTravelMinutes },
+            ct);
+        response.EnsureSuccessStatusCode();
+        return await response.Content.ReadFromJsonAsync<PushBomSettingsItem>(cancellationToken: ct);
+    }
+
+    public async Task<PushBomPricingTierItem?> UpsertPushBomPricingTierAsync(
+        PushBomPricingTierItem tier,
+        CancellationToken ct = default)
+    {
+        var response = await _http.PutAsJsonAsync("api/settings/token-pricing/pushbom-tiers", new
+        {
+            id = tier.Id == Guid.Empty ? (Guid?)null : tier.Id,
+            minCandidates = tier.MinCandidates,
+            maxCandidates = tier.MaxCandidates,
+            costTokens = tier.CostTokens,
+            isActive = tier.IsActive
+        }, ct);
+        response.EnsureSuccessStatusCode();
+        return await response.Content.ReadFromJsonAsync<PushBomPricingTierItem>(cancellationToken: ct);
+    }
+
+    public async Task DeletePushBomPricingTierAsync(Guid id, CancellationToken ct = default)
+    {
+        var response = await _http.DeleteAsync($"api/settings/token-pricing/pushbom-tiers/{id}", ct);
+        response.EnsureSuccessStatusCode();
+    }
+
+    public async Task<EarlyAdapterRuleItem?> UpsertEarlyAdapterRuleAsync(EarlyAdapterRuleItem rule, CancellationToken ct = default)
+    {
+        var response = await _http.PutAsJsonAsync("api/settings/early-adapter-rules", new
+        {
+            id = rule.Id == Guid.Empty ? (Guid?)null : rule.Id,
+            name = rule.Name,
+            monthlyGrantTokens = rule.MonthlyGrantTokens,
+            purchaseDiscountPercent = rule.PurchaseDiscountPercent,
+            isActive = rule.IsActive
+        }, ct);
+        response.EnsureSuccessStatusCode();
+        return await response.Content.ReadFromJsonAsync<EarlyAdapterRuleItem>(cancellationToken: ct);
+    }
+
+    public async Task<IReadOnlyList<WageRateItem>> GetWageRatesAsync(CancellationToken ct = default)
+        => await _http.GetFromJsonAsync<List<WageRateItem>>("api/wages", ct) ?? [];
+
+    public async Task UpsertWageRateAsync(WageRateItem item, CancellationToken ct = default)
+    {
+        var response = await _http.PutAsJsonAsync("api/wages", item, ct);
+        response.EnsureSuccessStatusCode();
+    }
+
+    public async Task<SemiAnnualWageUpdateResult?> RunSemiAnnualWageUpdateAsync(CancellationToken ct = default)
+    {
+        var response = await _http.PostAsync("api/wages/semi-annual-update", null, ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException(string.IsNullOrWhiteSpace(body) ? response.ReasonPhrase : body);
+        }
+
+        return await response.Content.ReadFromJsonAsync<SemiAnnualWageUpdateResult>(cancellationToken: ct);
+    }
+
+    public async Task<WageCheckResult?> CheckWageAsync(decimal hourlyWage, int ageYears = 21, CancellationToken ct = default)
+        => await _http.GetFromJsonAsync<WageCheckResult>($"api/wages/check?hourlyWage={hourlyWage}&ageYears={ageYears}", ct);
+
+    public async Task<IReadOnlyList<IntegrationHealthItem>> GetIntegrationHealthAsync(CancellationToken ct = default)
+        => await _http.GetFromJsonAsync<List<IntegrationHealthItem>>("api/integrations/health", ct) ?? [];
+
+    public async Task<IntegrationHealthItem?> TestIntegrationAsync(string key, CancellationToken ct = default)
+    {
+        var response = await _http.PostAsync(
+            $"api/integrations/health/{Uri.EscapeDataString(key)}/test",
+            null,
+            ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException(TryExtractMessage(body) ?? body);
+        }
+
+        return await response.Content.ReadFromJsonAsync<IntegrationHealthItem>(cancellationToken: ct);
+    }
+
+    public async Task<IReadOnlyList<IntegrationCredentialItem>> GetIntegrationCredentialsAsync(
+        CancellationToken ct = default)
+        => await _http.GetFromJsonAsync<List<IntegrationCredentialItem>>(
+            "api/settings/integration-credentials", ct) ?? [];
+
+    public async Task<IntegrationCredentialItem?> SaveIntegrationCredentialAsync(
+        string key,
+        IntegrationCredentialSaveForm form,
+        CancellationToken ct = default)
+    {
+        var response = await _http.PutAsJsonAsync(
+            $"api/settings/integration-credentials/{Uri.EscapeDataString(key)}",
+            form,
+            ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException(TryExtractMessage(body) ?? body);
+        }
+
+        return await response.Content.ReadFromJsonAsync<IntegrationCredentialItem>(cancellationToken: ct);
+    }
+
+    public async Task<PlatformFeatureItem?> GetPlatformFeaturesAsync(CancellationToken ct = default)
+        => await _http.GetFromJsonAsync<PlatformFeatureItem>("api/settings/platform-features", ct);
+
+    public async Task<PlatformFeatureItem?> SavePlatformFeaturesAsync(
+        PlatformFeatureItem features,
+        CancellationToken ct = default)
+    {
+        var response = await _http.PutAsJsonAsync("api/settings/platform-features", features, ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException(TryExtractMessage(body) ?? body);
+        }
+
+        return await response.Content.ReadFromJsonAsync<PlatformFeatureItem>(cancellationToken: ct);
+    }
+
+    public ValueTask DisposeAsync()
+    {
+        _http.Dispose();
+        return ValueTask.CompletedTask;
+    }
+
+    private static string? TryExtractMessage(string body)
+    {
+        if (string.IsNullOrWhiteSpace(body))
+        {
+            return null;
+        }
+
+        try
+        {
+            using var doc = JsonDocument.Parse(body);
+            if (doc.RootElement.TryGetProperty("message", out var message) &&
+                message.ValueKind == JsonValueKind.String)
+            {
+                return message.GetString();
+            }
+        }
+        catch (JsonException)
+        {
+            // fall through
+        }
+
+        return null;
+    }
+}
+
+public sealed class VacancyModerationException : Exception
+{
+    public VacancyModerationException(string warning, string suggestion)
+        : base(warning)
+    {
+        Warning = warning;
+        Suggestion = suggestion;
+    }
+
+    public string Warning { get; }
+    public string Suggestion { get; }
+}
+
+public sealed class VacancyModerationFeedback
+{
+    public string? Code { get; set; }
+    public string? Message { get; set; }
+    public string? Suggestion { get; set; }
+}
+
+public record CreateVacancyForm(
+    Guid CompanyId,
+    string Title,
+    string Description,
+    decimal HourlyWage,
+    DateOnly StartDate,
+    DateOnly EndDate,
+    TransportMode RequiredTransport,
+    WorkType WorkTypes,
+    string? ImageUrl = null,
+    string? VideoUrl = null,
+    Guid? SalaryTableId = null);
+
+public record BatchVacancyForm(
+    string Title,
+    string Description,
+    decimal HourlyWage,
+    DateOnly StartDate,
+    DateOnly EndDate,
+    TransportMode RequiredTransport,
+    WorkType WorkTypes,
+    Guid[] CompanyIds);
+
+public sealed class IntegrationHealthItem
+{
+    public string Key { get; set; } = string.Empty;
+    public string DisplayName { get; set; } = string.Empty;
+    public bool IsActive { get; set; }
+    public string StatusMessage { get; set; } = string.Empty;
+    public DateTime CheckedAtUtc { get; set; }
+    public bool? LastPingOk { get; set; }
+}
+
+public sealed class IntegrationCredentialItem
+{
+    public string Key { get; set; } = string.Empty;
+    public string DisplayName { get; set; } = string.Empty;
+    public string Description { get; set; } = string.Empty;
+    public bool HasApiKey { get; set; }
+    public string? ApiKeyMasked { get; set; }
+    public bool HasClientSecret { get; set; }
+    public string? ClientSecretMasked { get; set; }
+    public string? ClientId { get; set; }
+    public string? TenantId { get; set; }
+    public string? Model { get; set; }
+    public string? BaseUrl { get; set; }
+    public string? FromAddress { get; set; }
+    public bool SupportsApiKey { get; set; }
+    public bool SupportsModel { get; set; }
+    public bool SupportsOAuth { get; set; }
+    public bool SupportsTenantId { get; set; }
+    public bool SupportsBaseUrl { get; set; }
+    public bool SupportsFromAddress { get; set; }
+    public bool? LastPingOk { get; set; }
+    public string? LastPingMessage { get; set; }
+    public DateTime? LastPingAtUtc { get; set; }
+    public DateTime? UpdatedAtUtc { get; set; }
+}
+
+public sealed class IntegrationCredentialSaveForm
+{
+    public string? ApiKey { get; set; }
+    public string? Model { get; set; }
+    public string? ClientId { get; set; }
+    public string? ClientSecret { get; set; }
+    public string? TenantId { get; set; }
+    public string? BaseUrl { get; set; }
+    public string? FromAddress { get; set; }
+    public bool ClearApiKey { get; set; }
+    public bool ClearClientSecret { get; set; }
+}
+
+public sealed class PlatformFeatureItem
+{
+    public bool VacancyContentModerationEnabled { get; set; } = true;
+    public bool AuthenticatorEnabled { get; set; }
+    public bool ExposeRegistrationActivationLinks { get; set; }
+    public string PublicWebBaseUrl { get; set; } = "http://localhost:5201";
+    public DateTime? UpdatedAtUtc { get; set; }
+}

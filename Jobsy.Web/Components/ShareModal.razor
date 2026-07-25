@@ -1,0 +1,98 @@
+@inject NavigationManager Navigation
+@inject JobsyApiClient Api
+@inject IJSRuntime Js
+
+@if (IsOpen && Vacancy is not null)
+{
+    <div class="share-modal-backdrop" @onclick="Close"></div>
+    <div class="share-modal" role="dialog" aria-modal="true" aria-labelledby="share-modal-title">
+        <div class="share-modal__header">
+            <h2 id="share-modal-title">Delen</h2>
+            <button type="button" class="share-modal__close" @onclick="Close" aria-label="Sluiten">×</button>
+        </div>
+        <p class="share-modal__lead">@Vacancy.Title · @Vacancy.CompanyName</p>
+        <div class="share-modal__channels">
+            @foreach (var channel in Channels)
+            {
+                <button type="button" class="share-modal__channel" @onclick="() => ShareAsync(channel.Channel)">
+                    <span>@channel.Label</span>
+                </button>
+            }
+        </div>
+        @if (!string.IsNullOrEmpty(_message))
+        {
+            <p class="state-message">@_message</p>
+        }
+        @if (!string.IsNullOrEmpty(_error))
+        {
+            <p class="state-message error">@_error</p>
+        }
+    </div>
+}
+
+@code {
+    private static readonly (ShareChannel Channel, string Label)[] Channels =
+    [
+        (ShareChannel.WhatsApp, "WhatsApp"),
+        (ShareChannel.Email, "E-mail"),
+        (ShareChannel.Facebook, "Facebook"),
+        (ShareChannel.LinkedIn, "LinkedIn"),
+        (ShareChannel.Signal, "Signal")
+    ];
+
+    [Parameter] public bool IsOpen { get; set; }
+    [Parameter] public VacancyListItem? Vacancy { get; set; }
+    [Parameter] public EventCallback OnClose { get; set; }
+
+    private string? _error;
+    private string? _message;
+
+    private Task Close() => OnClose.InvokeAsync();
+
+    private async Task ShareAsync(ShareChannel channel)
+    {
+        if (Vacancy is null)
+        {
+            return;
+        }
+
+        _error = null;
+        _message = null;
+        try
+        {
+            await Api.ShareVacancyAsync(Vacancy.Id, channel);
+            var url = Navigation.ToAbsoluteUri($"/vacancies/{Vacancy.Id}").ToString();
+            var plainText = $"{Vacancy.Title} bij {Vacancy.CompanyName} — bekijk op Jobsy: {url}";
+            var text = Uri.EscapeDataString($"{Vacancy.Title} bij {Vacancy.CompanyName} — bekijk op Jobsy");
+            var encodedUrl = Uri.EscapeDataString(url);
+
+            var deepLink = channel switch
+            {
+                ShareChannel.WhatsApp => $"https://wa.me/?text={text}%20{encodedUrl}",
+                ShareChannel.Email => $"mailto:?subject={Uri.EscapeDataString(Vacancy.Title)}&body={text}%0A%0A{encodedUrl}",
+                ShareChannel.Facebook => $"https://www.facebook.com/sharer/sharer.php?u={encodedUrl}",
+                ShareChannel.LinkedIn => $"https://www.linkedin.com/sharing/share-offsite/?url={encodedUrl}",
+                ShareChannel.Signal => $"sgnls://send?text={text}%20{encodedUrl}",
+                _ => url
+            };
+
+            if (channel == ShareChannel.Signal)
+            {
+                // Custom scheme may fail silently; always offer clipboard fallback.
+                await Js.InvokeVoidAsync("jobsyGeo.openShare", deepLink);
+                var copied = await Js.InvokeAsync<bool>("jobsyGeo.copyText", plainText);
+                _message = copied
+                    ? "Signal geopend (indien geïnstalleerd). Link ook gekopieerd."
+                    : "Open Signal en plak de vacaturelink handmatig.";
+                return;
+            }
+
+            await Js.InvokeVoidAsync("jobsyGeo.openShare", deepLink);
+            await Close();
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+    }
+}

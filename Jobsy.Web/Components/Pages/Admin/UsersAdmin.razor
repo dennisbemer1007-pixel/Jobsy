@@ -1,0 +1,176 @@
+@page "/admin/users"
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
+@attribute [Authorize(Roles = "Admin")]
+@using Jobsy.Web.Components.Admin
+@inject JobsyApiClient Api
+@inject NavigationManager Nav
+@using Microsoft.AspNetCore.WebUtilities
+
+<PageTitle>Gebruikers · Jobsy</PageTitle>
+
+<AdminPageShell Title="Gebruikers en kandidaten" Lead="Zoek op naam, e-mail, rol of type. Early adapters zijn gemarkeerd.">
+    @if (_loading)
+    {
+        <p class="state-message">Laden…</p>
+    }
+    else if (!string.IsNullOrEmpty(_error))
+    {
+        <p class="state-message error">@_error</p>
+    }
+    else
+    {
+        <div class="filter-bar">
+            <label>
+                Zoeken
+                <input type="search" @bind="_query" @bind:event="oninput" placeholder="Naam, e-mail, rol…" />
+            </label>
+            <label>
+                Rol
+                <select @bind="_roleFilter">
+                    <option value="">Alle</option>
+                    @foreach (var role in _roles)
+                    {
+                        <option value="@role">@role</option>
+                    }
+                </select>
+            </label>
+            <label>
+                Type bedrijf
+                <select @bind="_typeFilter">
+                    <option value="">Alle</option>
+                    <option value="Employer">Employer</option>
+                    <option value="Intermediary">Intermediary</option>
+                    <option value="none">Geen bedrijf</option>
+                </select>
+            </label>
+            <label class="filter-check">
+                <input type="checkbox" @bind="_earlyOnly" />
+                Alleen early adapters
+            </label>
+            <span class="muted">@_filtered.Count van @_users.Count</span>
+        </div>
+
+        @if (_filtered.Count == 0)
+        {
+            <p class="state-message">Geen gebruikers gevonden.</p>
+        }
+        else
+        {
+            <div class="table-scroll">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Naam</th>
+                            <th>E-mail</th>
+                            <th>Rol</th>
+                            <th>Bedrijf / type</th>
+                            <th>Early adapter</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var u in _filtered)
+                        {
+                            <tr>
+                                <td><strong>@u.FullName</strong></td>
+                                <td>@u.Email</td>
+                                <td>@u.Role</td>
+                                <td>
+                                    @if (u.CompanyName is not null)
+                                    {
+                                        <text>@u.CompanyName <span class="muted">(@u.CompanyType)</span></text>
+                                    }
+                                    else
+                                    {
+                                        <span class="muted">—</span>
+                                    }
+                                </td>
+                                <td>@(u.IsEarlyAdapter ? "Ja" : "Nee")</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    }
+</AdminPageShell>
+
+@code {
+    private List<AdminUserItem> _users = [];
+    private string _query = "";
+    private string _roleFilter = "";
+    private string _typeFilter = "";
+    private bool _earlyOnly;
+    private bool _loading = true;
+    private string? _error;
+
+    private IEnumerable<string> _roles =>
+        _users.Select(u => u.Role).Distinct().OrderBy(r => r);
+
+    private List<AdminUserItem> _filtered => Filter().ToList();
+
+    protected override async Task OnInitializedAsync()
+    {
+        var uri = Nav.ToAbsoluteUri(Nav.Uri);
+        if (QueryHelpers.ParseQuery(uri.Query).TryGetValue("companyId", out var companyRaw)
+            && Guid.TryParse(companyRaw, out var companyId))
+        {
+            _companyIdFilter = companyId;
+        }
+
+        try
+        {
+            _users = (await Api.GetAdminUsersAsync()).ToList();
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private Guid? _companyIdFilter;
+
+    private IEnumerable<AdminUserItem> Filter()
+    {
+        IEnumerable<AdminUserItem> q = _users;
+        if (_companyIdFilter is Guid cid)
+        {
+            q = q.Where(u => u.CompanyId == cid || u.MembershipCompanyIds.Contains(cid));
+        }
+
+        if (_earlyOnly)
+        {
+            q = q.Where(u => u.IsEarlyAdapter);
+        }
+
+        if (!string.IsNullOrWhiteSpace(_roleFilter))
+        {
+            q = q.Where(u => u.Role.Equals(_roleFilter, StringComparison.OrdinalIgnoreCase));
+        }
+
+        if (_typeFilter == "none")
+        {
+            q = q.Where(u => u.CompanyId is null);
+        }
+        else if (!string.IsNullOrWhiteSpace(_typeFilter))
+        {
+            q = q.Where(u => string.Equals(u.CompanyType, _typeFilter, StringComparison.OrdinalIgnoreCase));
+        }
+
+        if (!string.IsNullOrWhiteSpace(_query))
+        {
+            var terms = _query.Trim().Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+            q = q.Where(u => terms.All(t =>
+                Contains(u.FullName, t) || Contains(u.Email, t) || Contains(u.Role, t)
+                || Contains(u.CompanyName, t) || Contains(u.CompanyType, t)));
+        }
+
+        return q;
+    }
+
+    private static bool Contains(string? value, string term) =>
+        !string.IsNullOrEmpty(value) && value.Contains(term, StringComparison.OrdinalIgnoreCase);
+}

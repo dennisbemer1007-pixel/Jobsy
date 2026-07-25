@@ -1,0 +1,143 @@
+using Jobsy.Core.Contracts;
+using Jobsy.Core.Enums;
+
+namespace Jobsy.Api.Models;
+
+public record CompanySummaryDto(
+    Guid Id,
+    string Name,
+    string Address,
+    string KvkNumber,
+    decimal TokenBalance,
+    int ActiveVacancies);
+
+public record TokenBalanceDto(Guid CompanyId, string CompanyName, decimal Balance);
+
+public record GrantTokensRequest(Guid CompanyId, decimal Amount, string Note);
+
+public record ApplicationDto(
+    Guid Id,
+    Guid VacancyId,
+    string VacancyTitle,
+    string CompanyName,
+    string CandidateName,
+    string CandidateEmail,
+    string PreferredTransport,
+    int EstimatedTravelMinutes,
+    DateTime CreatedAt,
+    string Status,
+    DateTime? RespondedAt = null);
+
+public record ApplyRequest(
+    Guid VacancyId,
+    string PreferredTransport,
+    int EstimatedTravelMinutes,
+    bool UseAuthenticator = false,
+    bool AcceptedTerms = false,
+    string? ConsentVersion = null);
+
+public record ReactToApplicationRequest(ApplicationStatus Status);
+
+public record ApplyResultDto(
+    ApplicationDto Application,
+    bool ConfirmationEmailQueued,
+    bool AuthenticatorStubUsed);
+
+public record MinimumWageRateDto(
+    Guid Id,
+    int AgeYears,
+    decimal HourlyRate,
+    string Label,
+    DateOnly EffectiveFrom);
+
+public record UpsertWageRateRequest(
+    Guid? Id,
+    int AgeYears,
+    decimal HourlyRate,
+    string Label,
+    DateOnly EffectiveFrom);
+
+public record AdminCompanyDto(
+    Guid Id,
+    string Name,
+    string KvkNumber,
+    string Address,
+    string? LogoUrl);
+
+public record AdminUserDto(
+    Guid Id,
+    string Email,
+    string FullName,
+    string Role,
+    Guid? CompanyId);
+
+public record MeAccessDto(
+    string? Role,
+    bool IsAdmin,
+    bool IsEmployer,
+    bool IsCandidate,
+    IReadOnlyCollection<Guid>? AccessibleCompanyIds,
+    bool AllCompanies);
+
+public record MeProfileDto(
+    Guid Id,
+    string Email,
+    string FullName,
+    string Role,
+    DateOnly? DateOfBirth,
+    bool HasDateOfBirth,
+    bool OpenForWork,
+    CandidatePreferencesDto Preferences,
+    bool AuthenticatorEnabled,
+    double? HomeLatitude = null,
+    double? HomeLongitude = null);
+
+public record UpdateDateOfBirthRequest(DateOnly DateOfBirth);
+
+public record UpdateCandidateProfileRequest(
+    bool? OpenForWork,
+    DateOnly? DateOfBirth,
+    CandidatePreferencesDto? Preferences,
+    double? HomeLatitude = null,
+    double? HomeLongitude = null);
+
+public record UpdateLanguageRequest(string Language);
+
+public record RecordClickRequest(string? AnonymousKey);
+
+public record ShareVacancyRequest(ShareChannel Channel);
+
+public record LikeStatusDto(bool Liked);
+
+public record ShareRecordedDto(Guid Id, ShareChannel Channel, DateTime CreatedAt);
+
+public record PublishVacancyRequest(
+    Guid VacancyId,
+    bool Highlight = false,
+    bool PushBom = false,
+    bool Extend = false);
+
+public record PushBomPreviewDto(
+    int CandidateCount,
+    decimal CostTokens,
+    double RadiusKm,
+    int MaxTravelMinutes,
+    bool HasPricing,
+    decimal TokenBalance,
+    bool CanAfford);
+
+public record VacancyProductActionResultDto(
+    VacancyListItemDto Vacancy,
+    bool PendingApproval = false,
+    string? Message = null,
+    int PushBomRecipientCount = 0);
+
+public record BatchVacancyRequest(
+    string Title,
+    string Description,
+    decimal HourlyWage,
+    DateOnly StartDate,
+    DateOnly EndDate,
+    TransportMode RequiredTransport,
+    WorkType WorkTypes,
+    Guid[] CompanyIds);

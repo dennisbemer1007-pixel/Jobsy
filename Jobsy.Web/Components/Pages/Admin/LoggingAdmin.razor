@@ -1,0 +1,127 @@
+@page "/admin/logging"
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
+@attribute [Authorize(Roles = "Admin")]
+@using Jobsy.Web.Components.Admin
+@using Microsoft.AspNetCore.WebUtilities
+@inject JobsyApiClient Api
+@inject NavigationManager Nav
+
+<PageTitle>Logging · Jobsy</PageTitle>
+
+<AdminPageShell Title="Platform logging" Lead="Filter op type (level/categorie) en datum.">
+    <div class="filter-bar">
+        <label>
+            Level
+            <select @bind="_level" @bind:after="ReloadAsync">
+                <option value="">Alle</option>
+                <option value="Info">Info</option>
+                <option value="Warning">Warning</option>
+                <option value="Error">Error</option>
+            </select>
+        </label>
+        <label>
+            Categorie
+            <input type="search" @bind="_category" @bind:event="oninput" placeholder="bijv. Push, Wages…" />
+        </label>
+        <label>
+            Van
+            <input type="date" @bind="_fromDate" />
+        </label>
+        <label>
+            Tot
+            <input type="date" @bind="_toDate" />
+        </label>
+        <button class="provider-btn" type="button" disabled="@_loading" @onclick="ReloadAsync">Filter</button>
+        <span class="muted">@_logs.Count logs</span>
+    </div>
+
+    @if (_loading)
+    {
+        <p class="state-message">Laden…</p>
+    }
+    else if (!string.IsNullOrEmpty(_error))
+    {
+        <p class="state-message error">@_error</p>
+    }
+    else if (_filtered.Count == 0)
+    {
+        <p class="state-message">Geen logs gevonden.</p>
+    }
+    else
+    {
+        <div class="table-scroll">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Datum</th>
+                        <th>Level</th>
+                        <th>Type / categorie</th>
+                        <th>Bericht</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var log in _filtered)
+                    {
+                        <tr>
+                            <td>@log.CreatedAt.ToLocalTime().ToString("dd-MM-yyyy HH:mm")</td>
+                            <td>@log.Level</td>
+                            <td>@log.Category</td>
+                            <td>@log.Message</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</AdminPageShell>
+
+@code {
+    private List<PlatformLogItem> _logs = [];
+    private string _level = "";
+    private string _category = "";
+    private DateTime? _fromDate;
+    private DateTime? _toDate;
+    private bool _loading = true;
+    private string? _error;
+
+    private List<PlatformLogItem> _filtered =>
+        string.IsNullOrWhiteSpace(_category)
+            ? _logs
+            : _logs.Where(l => l.Category.Contains(_category, StringComparison.OrdinalIgnoreCase)).ToList();
+
+    protected override async Task OnInitializedAsync()
+    {
+        var qs = QueryHelpers.ParseQuery(Nav.ToAbsoluteUri(Nav.Uri).Query);
+        if (qs.TryGetValue("level", out var level))
+        {
+            _level = level.ToString();
+        }
+
+        await ReloadAsync();
+    }
+
+    private async Task ReloadAsync()
+    {
+        _loading = true;
+        _error = null;
+        try
+        {
+            DateTime? from = _fromDate?.Date;
+            DateTime? to = _toDate?.Date.AddDays(1).AddTicks(-1);
+            _logs = (await Api.GetPlatformLogsAsync(
+                category: null,
+                level: string.IsNullOrWhiteSpace(_level) ? null : _level,
+                from: from,
+                to: to)).ToList();
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+            _logs = [];
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+}

@@ -1,0 +1,23 @@
+@using Jobsy.Web.Localization
+@inject CultureState Culture
+@implements IDisposable
+
+<footer class="app-footer">
+    <nav class="app-footer__links" aria-label="@Culture["Footer.Legal"]">
+        <a href="/privacy">@Culture["Footer.Privacy"]</a>
+        <a href="/algemene-voorwaarden">@Culture["Footer.Terms"]</a>
+        <a href="/gebruiksvoorwaarden">@Culture["Footer.Usage"]</a>
+    </nav>
+    <p class="app-footer__copy">© @DateTime.UtcNow.Year Jobsy</p>
+</footer>
+
+@code {
+    protected override void OnInitialized()
+        => Culture.Changed += OnCultureChanged;
+
+    private void OnCultureChanged()
+        => InvokeAsync(StateHasChanged);
+
+    public void Dispose()
+        => Culture.Changed -= OnCultureChanged;
+}

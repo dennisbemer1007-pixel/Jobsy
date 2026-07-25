@@ -1,0 +1,65 @@
+@page "/register/activate"
+@attribute [AllowAnonymous]
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
+@inject JobsyApiClient Api
+@inject NavigationManager Navigation
+
+<PageTitle>Activatie · Jobsy</PageTitle>
+
+<div class="login-page">
+    <div class="login-card">
+        <h1>Account activeren</h1>
+
+        @if (_loading)
+        {
+            <p class="state-message">Bezig met activeren…</p>
+        }
+        else if (!string.IsNullOrEmpty(_error))
+        {
+            <p class="login-error">@_error</p>
+            <a class="auth-link" href="/register">Opnieuw registreren</a>
+        }
+        else if (_result is not null)
+        {
+            <p class="state-message">Welkom, @_result.FullName — je account is actief.</p>
+            <p class="muted">Je hebt 1 welkomsttoken ontvangen. Daarmee plaats je je eerste vacature gratis.</p>
+            <p class="muted">Rol: @_result.Role</p>
+            <p class="muted">Eenmalig tijdelijk wachtwoord (bewaar dit veilig): <code>@_result.TemporaryPassword</code></p>
+            <a class="login-submit" href="/login" style="display:inline-block;text-align:center;text-decoration:none;margin-top:1rem">
+                Inloggen
+            </a>
+        }
+    </div>
+</div>
+
+@code {
+    private bool _loading = true;
+    private string? _error;
+    private RegistrationActivationResult? _result;
+
+    [SupplyParameterFromQuery]
+    public string? Token { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (string.IsNullOrWhiteSpace(Token))
+        {
+            _error = "Geen activatie-token in de URL.";
+            _loading = false;
+            return;
+        }
+
+        try
+        {
+            _result = await Api.ActivateRegistrationAsync(Token);
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+}

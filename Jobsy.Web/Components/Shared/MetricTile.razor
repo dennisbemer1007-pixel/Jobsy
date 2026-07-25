@@ -1,0 +1,17 @@
+@* Shared clickable KPI tile for role dashboards. *@
+
+<button type="button"
+        class="stat-card stat-card--link @(Selected ? "stat-card--selected" : null)"
+        @onclick="HandleClickAsync">
+    <span class="stat-card__label">@Label</span>
+    <strong class="stat-card__value">@FormattedValue</strong>
+</button>
+
+@code {
+    [Parameter] public string Label { get; set; } = string.Empty;
+    [Parameter] public string FormattedValue { get; set; } = "0";
+    [Parameter] public bool Selected { get; set; }
+    [Parameter] public EventCallback OnClick { get; set; }
+
+    private Task HandleClickAsync() => OnClick.InvokeAsync();
+}

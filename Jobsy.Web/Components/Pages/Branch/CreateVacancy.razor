@@ -1,0 +1,419 @@
+@page "/branch/vacancies/new"
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "BranchManager,RegionalManager,EnterpriseManager,Intermediary")]
+@inject JobsyApiClient Api
+@inject NavigationManager Navigation
+@using Jobsy.Core.Enums
+@using Jobsy.Core.Rules
+
+<PageTitle>@(_isDuplicate ? "Vacature dupliceren" : "Vacature plaatsen") · Jobsy</PageTitle>
+
+<div class="panel-page vacancy-editor">
+    <header class="panel-header">
+        <div>
+            <h1>@(_isDuplicate ? "Vacature dupliceren" : "Vacature plaatsen")</h1>
+            <p class="login-lead">
+                @if (_isDuplicate)
+                {
+                    <text>Gegevens zijn overgenomen uit de bronvacature. Pas aan waar nodig en sla op als concept — publiceren via de vacaturelijst.</text>
+                }
+                else
+                {
+                    <text>Rich text, media en salaristabel. Opslaan als concept — publiceren via de vacaturelijst.</text>
+                }
+            </p>
+        </div>
+    </header>
+
+    <div class="vacancy-editor__grid">
+        <form class="login-form" @onsubmit="SaveAsync" @onsubmit:preventDefault>
+            @if (_companies.Count > 1)
+            {
+                <label>
+                    Vestiging
+                    <select @bind="_companyId" @bind:after="LoadSalaryTablesAsync">
+                        @foreach (var c in _companies)
+                        {
+                            <option value="@c.Id">@c.Name</option>
+                        }
+                    </select>
+                </label>
+            }
+            <label>
+                Titel
+                <input @bind="_title" @bind:event="oninput" required />
+            </label>
+                <label>
+                    Omschrijving
+                    <div class="richtext-toolbar">
+                        <button type="button" class="provider-btn" @onclick='() => WrapSelection("b")'>Vet</button>
+                        <button type="button" class="provider-btn" @onclick='() => WrapSelection("i")'>Cursief</button>
+                        <button type="button" class="provider-btn" @onclick='() => WrapSelection("ul")'>Lijst</button>
+                    </div>
+                    <textarea rows="8" @bind="_description" @bind:event="oninput" required></textarea>
+                </label>
+                <label>
+                    Afbeelding-URL
+                    <input @bind="_imageUrl" @bind:event="oninput" placeholder="https://…" />
+                </label>
+                <label>
+                    Video-URL
+                    <input @bind="_videoUrl" @bind:event="oninput" placeholder="https://… (YouTube/Vimeo)" />
+                </label>
+                <label>
+                    Uurloon (€)
+                    <input type="number" step="0.01" min="1" @bind="_wage" @bind:event="oninput" @bind:after="RefreshWageCheckAsync" />
+                </label>
+            @if (_wageCheck is not null)
+            {
+                <p class="@(_wageCheck.MeetsMinimum ? "ok-hint" : "state-message error")">
+                    Minimumloon (21+): € @_wageCheck.Minimum.ToString("0.00") —
+                    @(_wageCheck.MeetsMinimum ? "voldoet" : "onder minimum")
+                </p>
+            }
+            <label>
+                Salaristabel
+                <select @bind="_salaryTableId">
+                    <option value="">— Geen —</option>
+                    @foreach (var t in _salaryTables)
+                    {
+                        <option value="@t.Id">@t.Name</option>
+                    }
+                </select>
+            </label>
+            <label>
+                Vervoer
+                <select @bind="_transport">
+                    <option value="Bike">Fiets</option>
+                    <option value="Car">Auto</option>
+                    <option value="PublicTransport">OV</option>
+                    <option value="Bike,Car">Fiets + Auto</option>
+                </select>
+            </label>
+            <fieldset class="worktype-fieldset">
+                <legend>Branche (max @WorkTypeLabels.MaxPerVacancy)</legend>
+                <div class="worktype-options">
+                    @foreach (var label in WorkTypeLabels.All)
+                    {
+                        var selected = _selectedWorkTypes.Contains(label);
+                        var disabled = !selected && _selectedWorkTypes.Count >= WorkTypeLabels.MaxPerVacancy;
+                        <label class="checkbox-row @(disabled ? "is-disabled" : null)">
+                            <input type="checkbox"
+                                   checked="@selected"
+                                   disabled="@disabled"
+                                   @onchange="e => ToggleWorkType(label, e)" />
+                            @label
+                        </label>
+                    }
+                </div>
+            </fieldset>
+            <button class="login-submit" type="submit" disabled="@_saving">
+                @(_isDuplicate ? "Opslaan als nieuw concept" : "Opslaan als concept")
+            </button>
+        </form>
+
+        <aside class="vacancy-preview" aria-label="Preview-tegel">
+            <h2>Preview</h2>
+            <article class="vacancy-card vacancy-card--preview">
+                @if (SafeImageUrl is not null)
+                {
+                    <div class="vacancy-card-top" style="@($"background-image:url('{SafeImageUrl}')")"></div>
+                }
+                <h2>@(string.IsNullOrWhiteSpace(_title) ? "Titel…" : _title)</h2>
+                <p class="muted">@SelectedCompanyName</p>
+                <div class="vacancy-preview__body">@PreviewPlain</div>
+                <p><strong>€ @_wage.ToString("0.00")</strong> / uur</p>
+                @if (_selectedWorkTypes.Count > 0)
+                {
+                    <p class="muted">Branche: @string.Join(", ", _selectedWorkTypes)</p>
+                }
+                @if (!string.IsNullOrWhiteSpace(_videoUrl))
+                {
+                    <p class="muted">Video: @_videoUrl</p>
+                }
+                @if (!string.IsNullOrWhiteSpace(_salaryTableId) && Guid.TryParse(_salaryTableId, out var sid))
+                {
+                    var table = _salaryTables.FirstOrDefault(t => t.Id == sid);
+                    if (table is not null)
+                    {
+                        <p class="muted">Salaristabel: @table.Name</p>
+                    }
+                }
+            </article>
+        </aside>
+    </div>
+
+    @if (!string.IsNullOrEmpty(_message))
+    {
+        <p class="state-message error">@_message</p>
+    }
+</div>
+
+@if (_moderationOpen)
+{
+    <div class="share-modal-backdrop" @onclick="CloseModeration"></div>
+    <div class="share-modal moderation-modal" role="dialog" aria-modal="true" aria-labelledby="moderation-title">
+        <div class="share-modal__header">
+            <h2 id="moderation-title">Even aanpassen</h2>
+            <button type="button" class="share-modal__close" @onclick="CloseModeration" aria-label="Sluiten">×</button>
+        </div>
+        <p class="share-modal__lead">We hebben de tekst bekeken voordat we opslaan.</p>
+        <p class="moderation-modal__warning">@_moderationWarning</p>
+        @if (!string.IsNullOrWhiteSpace(_moderationSuggestion))
+        {
+            <div class="moderation-modal__suggestion">
+                <strong>Tip</strong>
+                <p>@_moderationSuggestion</p>
+            </div>
+        }
+        <div class="inline-actions" style="margin-top:1rem">
+            <button type="button" class="login-submit" @onclick="CloseModeration">Tekst aanpassen</button>
+        </div>
+    </div>
+}
+
+@code {
+    [SupplyParameterFromQuery(Name = "from")]
+    public Guid? From { get; set; }
+
+    private string _title = "";
+    private string _description = "";
+    private string _imageUrl = "";
+    private string _videoUrl = "";
+    private string _salaryTableId = "";
+    private decimal _wage = 14.50m;
+    private string _transport = "Bike";
+    private HashSet<string> _selectedWorkTypes = new(StringComparer.OrdinalIgnoreCase);
+    private bool _saving;
+    private bool _isDuplicate;
+    private string? _message;
+    private bool _moderationOpen;
+    private string? _moderationWarning;
+    private string? _moderationSuggestion;
+    private WageCheckResult? _wageCheck;
+    private Guid _companyId;
+    private List<CompanySummary> _companies = [];
+    private List<SalaryTableItem> _salaryTables = [];
+
+    private string SelectedCompanyName =>
+        _companies.FirstOrDefault(c => c.Id == _companyId)?.Name ?? "Vestiging";
+
+    private string PreviewPlain =>
+        string.IsNullOrWhiteSpace(_description)
+            ? "Omschrijving…"
+            : HtmlSanitize.ToPlainPreview(_description);
+
+    private string? SafeImageUrl
+    {
+        get
+        {
+            var url = HtmlSanitize.NormalizeMediaUrl(_imageUrl);
+            if (url is null)
+            {
+                return null;
+            }
+
+            // Prevent breaking out of CSS url('…')
+            return url.Replace("'", "%27", StringComparison.Ordinal).Replace("\"", "%22", StringComparison.Ordinal);
+        }
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        _companies = (await Api.GetMyCompaniesAsync()).ToList();
+        if (_companies.Count > 0)
+        {
+            _companyId = _companies[0].Id;
+        }
+
+        if (From is Guid sourceId)
+        {
+            await PrefillFromAsync(sourceId);
+        }
+
+        await RefreshWageCheckAsync();
+        await LoadSalaryTablesAsync();
+    }
+
+    private async Task PrefillFromAsync(Guid sourceId)
+    {
+        try
+        {
+            var source = await Api.GetVacancyAsync(sourceId);
+            if (source is null)
+            {
+                _message = "Bronvacature niet gevonden.";
+                return;
+            }
+
+            if (_companies.All(c => c.Id != source.CompanyId))
+            {
+                _message = "Je hebt geen toegang tot de bronvacature.";
+                return;
+            }
+
+            _isDuplicate = true;
+            _companyId = source.CompanyId;
+            _title = AppendCopySuffix(source.Title);
+            _description = source.Description;
+            _imageUrl = source.ImageUrl ?? "";
+            _videoUrl = source.VideoUrl ?? "";
+            _wage = source.HourlyWage ?? 14.50m;
+            _salaryTableId = source.SalaryTableId?.ToString() ?? "";
+            _transport = MapTransportToFormValue(source.RequiredTransport);
+            _selectedWorkTypes = source.WorkTypes.ToHashSet(StringComparer.OrdinalIgnoreCase);
+        }
+        catch (Exception ex)
+        {
+            _message = ex.Message;
+        }
+    }
+
+    private static string AppendCopySuffix(string title)
+    {
+        const string suffix = " (kopie)";
+        return title.EndsWith(suffix, StringComparison.OrdinalIgnoreCase)
+            ? title
+            : title + suffix;
+    }
+
+    private static string MapTransportToFormValue(string[] required)
+    {
+        static bool Has(string[] values, params string[] aliases) =>
+            aliases.Any(a => values.Contains(a, StringComparer.OrdinalIgnoreCase));
+
+        var hasBike = Has(required, TransportLabels.Bike, nameof(TransportMode.Bike));
+        var hasCar = Has(required, TransportLabels.Car, nameof(TransportMode.Car));
+        var hasOv = Has(required, TransportLabels.PublicTransport, nameof(TransportMode.PublicTransport));
+
+        if (hasBike && hasCar)
+        {
+            return "Bike,Car";
+        }
+
+        if (hasCar)
+        {
+            return "Car";
+        }
+
+        if (hasOv)
+        {
+            return "PublicTransport";
+        }
+
+        return "Bike";
+    }
+
+    private void ToggleWorkType(string label, ChangeEventArgs e)
+    {
+        var on = e.Value is bool b && b || e.Value?.ToString() == "on";
+        if (on)
+        {
+            if (_selectedWorkTypes.Count >= WorkTypeLabels.MaxPerVacancy && !_selectedWorkTypes.Contains(label))
+            {
+                return;
+            }
+
+            _selectedWorkTypes.Add(label);
+        }
+        else
+        {
+            _selectedWorkTypes.Remove(label);
+        }
+    }
+
+    private async Task RefreshWageCheckAsync()
+        => _wageCheck = await Api.CheckWageAsync(_wage);
+
+    private async Task LoadSalaryTablesAsync()
+    {
+        if (_companyId == Guid.Empty)
+        {
+            _salaryTables = [];
+            return;
+        }
+
+        try
+        {
+            _salaryTables = (await Api.GetSalaryTablesAsync(_companyId)).Where(t => t.IsActive).ToList();
+        }
+        catch
+        {
+            _salaryTables = [];
+        }
+    }
+
+    private void WrapSelection(string tag)
+    {
+        _description = tag switch
+        {
+            "ul" => _description + "\n<ul>\n<li>Punt</li>\n</ul>\n",
+            _ => $"<{tag}>{_description}</{tag}>"
+        };
+    }
+
+    private void CloseModeration()
+    {
+        _moderationOpen = false;
+    }
+
+    private async Task SaveAsync()
+    {
+        if (_companyId == Guid.Empty)
+        {
+            _message = "Geen vestiging gekoppeld aan dit account.";
+            return;
+        }
+
+        var workTypes = WorkTypeLabels.Combine(_selectedWorkTypes);
+        if (!WorkTypeLabels.IsValidSelection(workTypes))
+        {
+            _message = $"Kies 1 of {WorkTypeLabels.MaxPerVacancy} branches.";
+            return;
+        }
+
+        _saving = true;
+        _message = null;
+        try
+        {
+            var mode = _transport switch
+            {
+                "Car" => TransportMode.Car,
+                "PublicTransport" => TransportMode.PublicTransport,
+                "Bike,Car" => TransportMode.Bike | TransportMode.Car,
+                _ => TransportMode.Bike
+            };
+
+            Guid? salaryTableId = Guid.TryParse(_salaryTableId, out var sid) ? sid : null;
+            var today = DateOnly.FromDateTime(DateTime.Today);
+            await Api.CreateVacancyAsync(new CreateVacancyForm(
+                _companyId,
+                _title,
+                _description,
+                _wage,
+                today,
+                today.AddMonths(3),
+                mode,
+                workTypes,
+                string.IsNullOrWhiteSpace(_imageUrl) ? null : _imageUrl.Trim(),
+                string.IsNullOrWhiteSpace(_videoUrl) ? null : _videoUrl.Trim(),
+                salaryTableId));
+
+            Navigation.NavigateTo("/employer/vacancies");
+        }
+        catch (VacancyModerationException ex)
+        {
+            _moderationWarning = ex.Warning;
+            _moderationSuggestion = ex.Suggestion;
+            _moderationOpen = true;
+        }
+        catch (Exception ex)
+        {
+            _message = ex.Message;
+        }
+        finally
+        {
+            _saving = false;
+        }
+    }
+}

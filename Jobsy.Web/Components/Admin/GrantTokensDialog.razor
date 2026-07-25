@@ -1,0 +1,120 @@
+@inject JobsyApiClient Api
+
+@if (IsOpen && Company is not null)
+{
+    <div class="share-modal-backdrop" @onclick="Close"></div>
+    <div class="share-modal" role="dialog" aria-modal="true" aria-labelledby="grant-tokens-title">
+        <div class="share-modal__header">
+            <h2 id="grant-tokens-title">Tokens toekennen</h2>
+            <button type="button" class="share-modal__close" @onclick="Close" aria-label="Sluiten">×</button>
+        </div>
+        <p class="share-modal__lead">@Company.Name · saldo @Company.TokenBalance.ToString("0.##")</p>
+
+        <form class="login-form" @onsubmit="ConfirmAsync" @onsubmit:preventDefault>
+            <label>
+                Aantal tokens
+                <input type="number" min="0.5" max="1000" step="0.5" @bind="_amount" required />
+            </label>
+            <label>
+                Reden (zichtbaar in tokenlog)
+                <textarea @bind="_note" rows="3" maxlength="512" required
+                          placeholder="bijv. Compensatie storing / marketingactie / supportticket #…"></textarea>
+            </label>
+
+            <div class="inline-actions" style="margin-top:1rem">
+                <button type="submit" class="login-submit" disabled="@_busy">
+                    @(_busy ? "Bezig…" : "Toekennen")
+                </button>
+                <button type="button" class="provider-btn" disabled="@_busy" @onclick="Close">Annuleren</button>
+            </div>
+        </form>
+
+        @if (!string.IsNullOrEmpty(_error))
+        {
+            <p class="state-message error">@_error</p>
+        }
+    </div>
+}
+
+@code {
+    [Parameter] public bool IsOpen { get; set; }
+    [Parameter] public AdminCompanyItem? Company { get; set; }
+    [Parameter] public EventCallback OnClose { get; set; }
+    [Parameter] public EventCallback OnGranted { get; set; }
+
+    private Guid? _openedForCompanyId;
+    private decimal _amount = 5;
+    private string _note = "";
+    private bool _busy;
+    private string? _error;
+
+    protected override void OnParametersSet()
+    {
+        if (!IsOpen || Company is null)
+        {
+            _openedForCompanyId = null;
+            return;
+        }
+
+        if (_openedForCompanyId == Company.Id)
+        {
+            return;
+        }
+
+        _openedForCompanyId = Company.Id;
+        _amount = 5;
+        _note = "";
+        _error = null;
+        _busy = false;
+    }
+
+    private async Task Close()
+    {
+        if (_busy)
+        {
+            return;
+        }
+
+        _openedForCompanyId = null;
+        await OnClose.InvokeAsync();
+    }
+
+    private async Task ConfirmAsync()
+    {
+        if (Company is null)
+        {
+            return;
+        }
+
+        if (_amount <= 0)
+        {
+            _error = "Aantal moet groter dan 0 zijn.";
+            return;
+        }
+
+        var note = _note.Trim();
+        if (string.IsNullOrWhiteSpace(note))
+        {
+            _error = "Reden is verplicht voor de tokenlog.";
+            return;
+        }
+
+        _busy = true;
+        _error = null;
+        try
+        {
+            await Api.GrantTokensAsync(Company.Id, _amount, note);
+            _openedForCompanyId = null;
+            await OnGranted.InvokeAsync();
+            await OnClose.InvokeAsync();
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+}

@@ -1,0 +1,351 @@
+namespace Jobsy.Web.Models;
+
+public class CompanySummary
+{
+    public Guid Id { get; set; }
+    public string Name { get; set; } = string.Empty;
+    public string Address { get; set; } = string.Empty;
+    public string KvkNumber { get; set; } = string.Empty;
+    public decimal TokenBalance { get; set; }
+    public int ActiveVacancies { get; set; }
+}
+
+public class TokenBalance
+{
+    public Guid CompanyId { get; set; }
+    public string CompanyName { get; set; } = string.Empty;
+    public decimal Balance { get; set; }
+}
+
+public class ApplicationItem
+{
+    public Guid Id { get; set; }
+    public Guid VacancyId { get; set; }
+    public string VacancyTitle { get; set; } = string.Empty;
+    public string CompanyName { get; set; } = string.Empty;
+    public string CandidateName { get; set; } = string.Empty;
+    public string CandidateEmail { get; set; } = string.Empty;
+    public string PreferredTransport { get; set; } = string.Empty;
+    public int EstimatedTravelMinutes { get; set; }
+    public DateTime CreatedAt { get; set; }
+    public string Status { get; set; } = "Pending";
+    public DateTime? RespondedAt { get; set; }
+}
+
+public class EmployerApplicationItem
+{
+    public Guid Id { get; set; }
+    public Guid VacancyId { get; set; }
+    public string VacancyTitle { get; set; } = string.Empty;
+    public string CompanyName { get; set; } = string.Empty;
+    public string PreferredTransport { get; set; } = string.Empty;
+    public int EstimatedTravelMinutes { get; set; }
+    public DateTime CreatedAt { get; set; }
+    public string Status { get; set; } = "Pending";
+    public DateTime? RespondedAt { get; set; }
+    public string? CandidateCity { get; set; }
+    public double? DistanceKm { get; set; }
+    public string? PreferencesSummary { get; set; }
+    public string? CandidateName { get; set; }
+    public string? CandidateEmail { get; set; }
+    public string? CandidateAddress { get; set; }
+    public bool PiiRevealed { get; set; }
+}
+
+public class TokenPackItem
+{
+    public int PackSize { get; set; }
+    public decimal PriceEuro { get; set; }
+}
+
+public class TokenSpendCostItem
+{
+    public string Reason { get; set; } = string.Empty;
+    public decimal CostTokens { get; set; }
+}
+
+public class TokenLogItem
+{
+    public Guid Id { get; set; }
+    public Guid CompanyId { get; set; }
+    public string CompanyName { get; set; } = string.Empty;
+    public string Kind { get; set; } = string.Empty;
+    public string Reason { get; set; } = string.Empty;
+    public decimal Amount { get; set; }
+    public decimal OldBalance { get; set; }
+    public decimal NewBalance { get; set; }
+    public string? Note { get; set; }
+    public Guid? VacancyId { get; set; }
+    public Guid? BranchCompanyId { get; set; }
+    public DateTime CreatedAt { get; set; }
+}
+
+public class CheckoutResult
+{
+    public string PaymentId { get; set; } = string.Empty;
+    public string CheckoutUrl { get; set; } = string.Empty;
+    public int PackSize { get; set; }
+    public decimal AmountEuro { get; set; }
+    public bool IsStub { get; set; }
+}
+
+public class KvkEstablishmentItem
+{
+    public string KvkNumber { get; set; } = string.Empty;
+    public string EstablishmentNumber { get; set; } = string.Empty;
+    public string KvkEstablishmentId { get; set; } = string.Empty;
+    public string Name { get; set; } = string.Empty;
+    public string Address { get; set; } = string.Empty;
+    public double Latitude { get; set; }
+    public double Longitude { get; set; }
+    public bool IsInUse { get; set; }
+}
+
+public class RegistrationSubmitResult
+{
+    public Guid RegistrationId { get; set; }
+    public string Status { get; set; } = string.Empty;
+    public bool RequiresTakeover { get; set; }
+    public string Message { get; set; } = string.Empty;
+    public string? ActivationUrl { get; set; }
+}
+
+public class RegistrationActivationResult
+{
+    public Guid RegistrationId { get; set; }
+    public Guid UserId { get; set; }
+    public string Email { get; set; } = string.Empty;
+    public string FullName { get; set; } = string.Empty;
+    public string Role { get; set; } = string.Empty;
+    public Guid? CompanyId { get; set; }
+    public List<Guid> CompanyIds { get; set; } = [];
+    public string TemporaryPassword { get; set; } = string.Empty;
+    public Guid? OrganizationCompanyId { get; set; }
+    public Guid? BranchCompanyId { get; set; }
+}
+
+public class TakeoverInboxItem
+{
+    public Guid TakeoverId { get; set; }
+    public Guid RegistrationId { get; set; }
+    public Guid TargetCompanyId { get; set; }
+    public string TargetCompanyName { get; set; } = string.Empty;
+    public string KvkEstablishmentId { get; set; } = string.Empty;
+    public string RequesterName { get; set; } = string.Empty;
+    public string RequesterEmail { get; set; } = string.Empty;
+    public string Scope { get; set; } = string.Empty;
+    public DateTime CreatedAt { get; set; }
+}
+
+public class TakeoverDecisionResult
+{
+    public Guid TakeoverId { get; set; }
+    public string Status { get; set; } = string.Empty;
+    public string Message { get; set; } = string.Empty;
+    public Guid? OrganizationCompanyId { get; set; }
+    public Guid? BranchCompanyId { get; set; }
+}
+
+public class RegionItem
+{
+    public Guid Id { get; set; }
+    public string Name { get; set; } = string.Empty;
+    public Guid OrganizationCompanyId { get; set; }
+    public string OrganizationCompanyName { get; set; } = string.Empty;
+    public List<RegionCompanyItem> Companies { get; set; } = [];
+}
+
+public class RegionCompanyItem
+{
+    public Guid CompanyId { get; set; }
+    public string CompanyName { get; set; } = string.Empty;
+}
+
+public class SalaryTableItem
+{
+    public Guid Id { get; set; }
+    public Guid CompanyId { get; set; }
+    public string CompanyName { get; set; } = string.Empty;
+    public string Name { get; set; } = string.Empty;
+    public bool IsActive { get; set; }
+    public List<SalaryRateItem> Rates { get; set; } = [];
+}
+
+public class SalaryRateItem
+{
+    public Guid Id { get; set; }
+    public int AgeYears { get; set; }
+    public decimal HourlyRate { get; set; }
+    public string Label { get; set; } = string.Empty;
+}
+
+public record UpsertSalaryTableForm(
+    Guid? Id,
+    Guid CompanyId,
+    string Name,
+    bool IsActive,
+    IReadOnlyList<UpsertSalaryRateForm>? Rates = null);
+
+public record UpsertSalaryRateForm(Guid? Id, int AgeYears, decimal HourlyRate, string Label);
+
+public class CompanyUserItem
+{
+    public Guid Id { get; set; }
+    public string Email { get; set; } = string.Empty;
+    public string FullName { get; set; } = string.Empty;
+    public string Role { get; set; } = string.Empty;
+    public Guid? CompanyId { get; set; }
+    public string? CompanyName { get; set; }
+    public List<Guid> MembershipCompanyIds { get; set; } = [];
+}
+
+public record InviteUserForm(
+    string Email,
+    string FullName,
+    string Role,
+    Guid? PrimaryCompanyId,
+    Guid[]? MembershipCompanyIds = null);
+
+public class WageRateItem
+{
+    public Guid Id { get; set; }
+    public int AgeYears { get; set; }
+    public decimal HourlyRate { get; set; }
+    public string Label { get; set; } = string.Empty;
+    public DateOnly EffectiveFrom { get; set; }
+}
+
+public class WageCheckResult
+{
+    public decimal HourlyWage { get; set; }
+    public int AgeYears { get; set; }
+    public decimal Minimum { get; set; }
+    public bool MeetsMinimum { get; set; }
+}
+
+public class AdminCompanyItem
+{
+    public Guid Id { get; set; }
+    public string Name { get; set; } = string.Empty;
+    public string KvkNumber { get; set; } = string.Empty;
+    public string Address { get; set; } = string.Empty;
+    public string? LogoUrl { get; set; }
+    public string Type { get; set; } = "Employer";
+    public Guid? ParentCompanyId { get; set; }
+    public int UserCount { get; set; }
+    public int ActiveVacancyCount { get; set; }
+    public int TotalVacancyCount { get; set; }
+    public int ApplicationCount { get; set; }
+    public decimal TokenBalance { get; set; }
+}
+
+public class AdminUserItem
+{
+    public Guid Id { get; set; }
+    public string Email { get; set; } = string.Empty;
+    public string FullName { get; set; } = string.Empty;
+    public string Role { get; set; } = string.Empty;
+    public Guid? CompanyId { get; set; }
+    public string? CompanyName { get; set; }
+    public string? CompanyType { get; set; }
+    public bool IsEarlyAdapter { get; set; }
+    public bool IsActive { get; set; } = true;
+    public List<Guid> MembershipCompanyIds { get; set; } = [];
+}
+
+public class AdminVacancyItem
+{
+    public Guid Id { get; set; }
+    public string Title { get; set; } = string.Empty;
+    public string Status { get; set; } = string.Empty;
+    public Guid CompanyId { get; set; }
+    public string CompanyName { get; set; } = string.Empty;
+    public string CompanyType { get; set; } = string.Empty;
+    public bool IsHighlighted { get; set; }
+    public int ExtensionCount { get; set; }
+    public DateOnly StartDate { get; set; }
+    public DateOnly EndDate { get; set; }
+    public int ClickCount { get; set; }
+    public int ShareCount { get; set; }
+    public int ApplicationCount { get; set; }
+    public int LikeCount { get; set; }
+    public bool IsExtended { get; set; }
+}
+
+public class PlatformLogItem
+{
+    public Guid Id { get; set; }
+    public string Level { get; set; } = string.Empty;
+    public string Category { get; set; } = string.Empty;
+    public string Message { get; set; } = string.Empty;
+    public DateTime CreatedAt { get; set; }
+}
+
+public class TokenPricingSettings
+{
+    public List<TokenPackSetting> Packs { get; set; } = [];
+    public List<TokenCostSetting> Costs { get; set; } = [];
+    public List<EarlyAdapterRuleItem> EarlyAdapterRules { get; set; } = [];
+    public PushBomSettingsItem? PushBomSettings { get; set; }
+    public List<PushBomPricingTierItem> PushBomPricingTiers { get; set; } = [];
+}
+
+public class TokenPackSetting
+{
+    public Guid Id { get; set; }
+    public int PackSize { get; set; }
+    public decimal PriceEuro { get; set; }
+    public bool IsActive { get; set; }
+}
+
+public class TokenCostSetting
+{
+    public Guid Id { get; set; }
+    public string Reason { get; set; } = string.Empty;
+    public decimal CostTokens { get; set; }
+    public bool IsActive { get; set; }
+}
+
+public class PushBomSettingsItem
+{
+    public Guid Id { get; set; }
+    public double RadiusKm { get; set; } = 10;
+    public int MaxTravelMinutes { get; set; } = 30;
+    public DateTime? UpdatedAtUtc { get; set; }
+}
+
+public class PushBomPricingTierItem
+{
+    public Guid Id { get; set; }
+    public int MinCandidates { get; set; }
+    public int? MaxCandidates { get; set; }
+    public decimal CostTokens { get; set; }
+    public bool IsActive { get; set; }
+}
+
+public class PushBomPreview
+{
+    public int CandidateCount { get; set; }
+    public decimal CostTokens { get; set; }
+    public double RadiusKm { get; set; }
+    public int MaxTravelMinutes { get; set; }
+    public bool HasPricing { get; set; }
+    public decimal TokenBalance { get; set; }
+    public bool CanAfford { get; set; }
+}
+
+public class EarlyAdapterRuleItem
+{
+    public Guid Id { get; set; }
+    public string Name { get; set; } = string.Empty;
+    public int MonthlyGrantTokens { get; set; }
+    public decimal PurchaseDiscountPercent { get; set; }
+    public bool IsActive { get; set; }
+}
+
+public class SemiAnnualWageUpdateResult
+{
+    public DateOnly EffectiveFrom { get; set; }
+    public int RatesUpdated { get; set; }
+    public string Message { get; set; } = string.Empty;
+}

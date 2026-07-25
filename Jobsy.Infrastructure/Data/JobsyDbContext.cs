@@ -1,0 +1,402 @@
+using Jobsy.Core.Entities;
+using Microsoft.EntityFrameworkCore;
+
+namespace Jobsy.Infrastructure.Data;
+
+public class JobsyDbContext : DbContext
+{
+    public JobsyDbContext(DbContextOptions<JobsyDbContext> options)
+        : base(options)
+    {
+    }
+
+    public DbSet<User> Users => Set<User>();
+    public DbSet<Company> Companies => Set<Company>();
+    public DbSet<UserCompany> UserCompanies => Set<UserCompany>();
+    public DbSet<Vacancy> Vacancies => Set<Vacancy>();
+    public DbSet<TokenTransaction> TokenTransactions => Set<TokenTransaction>();
+    public DbSet<Application> Applications => Set<Application>();
+    public DbSet<MinimumWageRate> MinimumWageRates => Set<MinimumWageRate>();
+    public DbSet<VacancyClick> VacancyClicks => Set<VacancyClick>();
+    public DbSet<VacancyLike> VacancyLikes => Set<VacancyLike>();
+    public DbSet<VacancyShare> VacancyShares => Set<VacancyShare>();
+    public DbSet<Region> Regions => Set<Region>();
+    public DbSet<RegionCompany> RegionCompanies => Set<RegionCompany>();
+    public DbSet<CompanySalaryTable> CompanySalaryTables => Set<CompanySalaryTable>();
+    public DbSet<CompanySalaryRate> CompanySalaryRates => Set<CompanySalaryRate>();
+    public DbSet<TokenPricing> TokenPricings => Set<TokenPricing>();
+    public DbSet<TokenSpendCost> TokenSpendCosts => Set<TokenSpendCost>();
+    public DbSet<PushBomSettings> PushBomSettings => Set<PushBomSettings>();
+    public DbSet<PushBomPricingTier> PushBomPricingTiers => Set<PushBomPricingTier>();
+    public DbSet<EarlyAdapterRule> EarlyAdapterRules => Set<EarlyAdapterRule>();
+    public DbSet<IntegrationCredential> IntegrationCredentials => Set<IntegrationCredential>();
+    public DbSet<PlatformFeatureSettings> PlatformFeatureSettings => Set<PlatformFeatureSettings>();
+    public DbSet<PlatformLog> PlatformLogs => Set<PlatformLog>();
+    public DbSet<TokenPurchaseCheckout> TokenPurchaseCheckouts => Set<TokenPurchaseCheckout>();
+    public DbSet<CompanyRegistration> CompanyRegistrations => Set<CompanyRegistration>();
+    public DbSet<EstablishmentTakeoverRequest> EstablishmentTakeoverRequests => Set<EstablishmentTakeoverRequest>();
+    public DbSet<LocalAuthCredential> LocalAuthCredentials => Set<LocalAuthCredential>();
+
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    {
+        base.OnModelCreating(modelBuilder);
+
+        modelBuilder.HasPostgresExtension("postgis");
+
+        modelBuilder.Entity<User>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Email).HasMaxLength(256).IsRequired();
+            entity.Property(e => e.FullName).HasMaxLength(256).IsRequired();
+            entity.Property(e => e.PreferencesJson).HasMaxLength(4000);
+            entity.Property(e => e.ConsentVersion).HasMaxLength(32);
+            entity.Property(e => e.HomeLocation)
+                .HasConversion(new NullableGeoPointConverter())
+                .HasColumnType("geometry(Point, 4326)")
+                .IsRequired(false);
+            entity.HasIndex(e => e.HomeLocation).HasMethod("GIST");
+            entity.HasIndex(e => e.Email).IsUnique();
+            entity.HasOne(e => e.Company)
+                .WithMany(c => c.PrimaryUsers)
+                .HasForeignKey(e => e.CompanyId)
+                .OnDelete(DeleteBehavior.SetNull);
+        });
+
+        modelBuilder.Entity<UserCompany>(entity =>
+        {
+            entity.HasKey(e => new { e.UserId, e.CompanyId });
+            entity.HasOne(e => e.User)
+                .WithMany(u => u.CompanyMemberships)
+                .HasForeignKey(e => e.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne(e => e.Company)
+                .WithMany(c => c.UserMemberships)
+                .HasForeignKey(e => e.CompanyId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<Company>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Name).HasMaxLength(256).IsRequired();
+            entity.Property(e => e.KvkNumber).HasMaxLength(20).IsRequired();
+            entity.Property(e => e.KvkEstablishmentId).HasMaxLength(40);
+            entity.Property(e => e.Address).HasMaxLength(512).IsRequired();
+            entity.Property(e => e.LogoUrl).HasMaxLength(1024);
+            entity.Property(e => e.Location)
+                .HasConversion(new GeoPointConverter())
+                .HasColumnType("geometry(Point, 4326)");
+            entity.HasIndex(e => e.Location).HasMethod("GIST");
+            entity.HasIndex(e => e.KvkEstablishmentId).IsUnique();
+            entity.HasOne(e => e.ParentCompany)
+                .WithMany(c => c.ChildCompanies)
+                .HasForeignKey(e => e.ParentCompanyId)
+                .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        modelBuilder.Entity<Vacancy>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Title).HasMaxLength(256).IsRequired();
+            entity.Property(e => e.Description).HasMaxLength(20000).IsRequired();
+            entity.Property(e => e.HourlyWage).HasPrecision(8, 2);
+            entity.Property(e => e.ImageUrl).HasMaxLength(1024);
+            entity.Property(e => e.VideoUrl).HasMaxLength(1024);
+            entity.Property(e => e.Location)
+                .HasConversion(new GeoPointConverter())
+                .HasColumnType("geometry(Point, 4326)");
+            entity.HasIndex(e => e.Location).HasMethod("GIST");
+            entity.HasOne(e => e.Company)
+                .WithMany(c => c.Vacancies)
+                .HasForeignKey(e => e.CompanyId)
+                .OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne(e => e.SalaryTable)
+                .WithMany(t => t.Vacancies)
+                .HasForeignKey(e => e.SalaryTableId)
+                .OnDelete(DeleteBehavior.SetNull);
+        });
+
+        modelBuilder.Entity<TokenTransaction>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Amount).HasPrecision(10, 2);
+            entity.Property(e => e.OldBalance).HasPrecision(10, 2);
+            entity.Property(e => e.NewBalance).HasPrecision(10, 2);
+            entity.Property(e => e.Note).HasMaxLength(512);
+            entity.HasOne(e => e.Company)
+                .WithMany(c => c.TokenTransactions)
+                .HasForeignKey(e => e.CompanyId)
+                .OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne(e => e.ActorUser)
+                .WithMany()
+                .HasForeignKey(e => e.ActorUserId)
+                .OnDelete(DeleteBehavior.SetNull);
+            entity.HasOne(e => e.Vacancy)
+                .WithMany()
+                .HasForeignKey(e => e.VacancyId)
+                .OnDelete(DeleteBehavior.SetNull);
+            entity.HasOne(e => e.BranchCompany)
+                .WithMany()
+                .HasForeignKey(e => e.BranchCompanyId)
+                .OnDelete(DeleteBehavior.SetNull);
+            entity.HasIndex(e => e.CreatedAt);
+        });
+
+        modelBuilder.Entity<Application>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.CandidateName).HasMaxLength(256).IsRequired();
+            entity.Property(e => e.CandidateEmail).HasMaxLength(256).IsRequired();
+            entity.Property(e => e.CandidateCity).HasMaxLength(128);
+            entity.Property(e => e.CandidateAddress).HasMaxLength(512);
+            entity.Property(e => e.PreferredTransport).HasMaxLength(64).IsRequired();
+            entity.Property(e => e.PreferencesSummary).HasMaxLength(1024);
+            entity.Property(e => e.ConsentVersion).HasMaxLength(32);
+            entity.HasOne(e => e.Vacancy)
+                .WithMany(v => v.Applications)
+                .HasForeignKey(e => e.VacancyId)
+                .OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne(e => e.CandidateUser)
+                .WithMany()
+                .HasForeignKey(e => e.CandidateUserId)
+                .OnDelete(DeleteBehavior.SetNull);
+            entity.HasIndex(e => e.CreatedAt);
+            // Prevents double-apply races when CandidateUserId is set (NULLs are distinct in PostgreSQL).
+            entity.HasIndex(e => new { e.VacancyId, e.CandidateUserId })
+                .IsUnique()
+                .HasFilter("\"CandidateUserId\" IS NOT NULL");
+            entity.HasIndex(e => new { e.VacancyId, e.CandidateEmail }).IsUnique();
+        });
+
+        modelBuilder.Entity<MinimumWageRate>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Label).HasMaxLength(128).IsRequired();
+            entity.Property(e => e.HourlyRate).HasPrecision(8, 2);
+            entity.HasIndex(e => e.AgeYears);
+        });
+
+        modelBuilder.Entity<VacancyClick>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.AnonymousKey).HasMaxLength(128);
+            entity.HasOne(e => e.Vacancy)
+                .WithMany(v => v.Clicks)
+                .HasForeignKey(e => e.VacancyId)
+                .OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne(e => e.User)
+                .WithMany()
+                .HasForeignKey(e => e.UserId)
+                .OnDelete(DeleteBehavior.SetNull);
+            entity.HasIndex(e => e.CreatedAt);
+        });
+
+        modelBuilder.Entity<VacancyLike>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.HasIndex(e => new { e.VacancyId, e.UserId }).IsUnique();
+            entity.HasOne(e => e.Vacancy)
+                .WithMany(v => v.Likes)
+                .HasForeignKey(e => e.VacancyId)
+                .OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne(e => e.User)
+                .WithMany()
+                .HasForeignKey(e => e.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+            entity.HasIndex(e => e.CreatedAt);
+        });
+
+        modelBuilder.Entity<VacancyShare>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.HasOne(e => e.Vacancy)
+                .WithMany(v => v.Shares)
+                .HasForeignKey(e => e.VacancyId)
+                .OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne(e => e.User)
+                .WithMany()
+                .HasForeignKey(e => e.UserId)
+                .OnDelete(DeleteBehavior.SetNull);
+            entity.HasIndex(e => e.CreatedAt);
+        });
+
+        modelBuilder.Entity<Region>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Name).HasMaxLength(256).IsRequired();
+            entity.HasOne(e => e.OrganizationCompany)
+                .WithMany()
+                .HasForeignKey(e => e.OrganizationCompanyId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<RegionCompany>(entity =>
+        {
+            entity.HasKey(e => new { e.RegionId, e.CompanyId });
+            entity.HasOne(e => e.Region)
+                .WithMany(r => r.Companies)
+                .HasForeignKey(e => e.RegionId)
+                .OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne(e => e.Company)
+                .WithMany(c => c.RegionMemberships)
+                .HasForeignKey(e => e.CompanyId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<CompanySalaryTable>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Name).HasMaxLength(256).IsRequired();
+            entity.HasOne(e => e.Company)
+                .WithMany(c => c.SalaryTables)
+                .HasForeignKey(e => e.CompanyId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<CompanySalaryRate>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Label).HasMaxLength(128).IsRequired();
+            entity.Property(e => e.HourlyRate).HasPrecision(8, 2);
+            entity.HasOne(e => e.SalaryTable)
+                .WithMany(t => t.Rates)
+                .HasForeignKey(e => e.SalaryTableId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<TokenPricing>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.PriceEuro).HasPrecision(10, 2);
+            entity.HasIndex(e => e.PackSize).IsUnique();
+        });
+
+        modelBuilder.Entity<TokenSpendCost>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.CostTokens).HasPrecision(10, 2);
+            entity.HasIndex(e => e.Reason).IsUnique();
+        });
+
+        modelBuilder.Entity<PushBomSettings>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+        });
+
+        modelBuilder.Entity<PushBomPricingTier>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.CostTokens).HasPrecision(10, 2);
+            entity.HasIndex(e => new { e.MinCandidates, e.MaxCandidates });
+        });
+
+        modelBuilder.Entity<EarlyAdapterRule>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Name).HasMaxLength(256).IsRequired();
+            entity.Property(e => e.PurchaseDiscountPercent).HasPrecision(5, 2);
+        });
+
+        modelBuilder.Entity<IntegrationCredential>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.ApiKey).HasMaxLength(2048);
+            entity.Property(e => e.ClientId).HasMaxLength(256);
+            entity.Property(e => e.ClientSecret).HasMaxLength(2048);
+            entity.Property(e => e.TenantId).HasMaxLength(128);
+            entity.Property(e => e.Model).HasMaxLength(64);
+            entity.Property(e => e.BaseUrl).HasMaxLength(512);
+            entity.Property(e => e.FromAddress).HasMaxLength(256);
+            entity.Property(e => e.LastPingMessage).HasMaxLength(500);
+            entity.HasIndex(e => e.Key).IsUnique();
+        });
+
+        modelBuilder.Entity<PlatformFeatureSettings>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.PublicWebBaseUrl).HasMaxLength(512);
+        });
+
+        modelBuilder.Entity<PlatformLog>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Category).HasMaxLength(128).IsRequired();
+            entity.Property(e => e.Message).HasMaxLength(2000).IsRequired();
+            entity.HasIndex(e => e.CreatedAt);
+            entity.HasIndex(e => e.Category);
+        });
+
+        modelBuilder.Entity<TokenPurchaseCheckout>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.PaymentId).HasMaxLength(80).IsRequired();
+            entity.Property(e => e.AmountEuro).HasPrecision(10, 2);
+            entity.HasIndex(e => e.PaymentId).IsUnique();
+            entity.HasOne(e => e.Company)
+                .WithMany()
+                .HasForeignKey(e => e.CompanyId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<CompanyRegistration>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.KvkNumber).HasMaxLength(20).IsRequired();
+            entity.Property(e => e.KvkEstablishmentId).HasMaxLength(40).IsRequired();
+            entity.Property(e => e.EstablishmentName).HasMaxLength(256).IsRequired();
+            entity.Property(e => e.EstablishmentAddress).HasMaxLength(512).IsRequired();
+            entity.Property(e => e.ContactName).HasMaxLength(256).IsRequired();
+            entity.Property(e => e.ContactEmail).HasMaxLength(256).IsRequired();
+            entity.Property(e => e.ContactPhone).HasMaxLength(64);
+            entity.Property(e => e.ActivationToken).HasMaxLength(128).IsRequired();
+            entity.Property(e => e.ConsentVersion).HasMaxLength(32);
+            entity.HasIndex(e => e.ActivationToken).IsUnique();
+            entity.HasIndex(e => e.ContactEmail);
+            entity.HasIndex(e => e.CreatedAt);
+            entity.HasOne(e => e.CreatedUser)
+                .WithMany()
+                .HasForeignKey(e => e.CreatedUserId)
+                .OnDelete(DeleteBehavior.SetNull);
+            entity.HasOne(e => e.CreatedOrganizationCompany)
+                .WithMany()
+                .HasForeignKey(e => e.CreatedOrganizationCompanyId)
+                .OnDelete(DeleteBehavior.SetNull);
+            entity.HasOne(e => e.CreatedBranchCompany)
+                .WithMany()
+                .HasForeignKey(e => e.CreatedBranchCompanyId)
+                .OnDelete(DeleteBehavior.SetNull);
+        });
+
+        modelBuilder.Entity<EstablishmentTakeoverRequest>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.DecisionNote).HasMaxLength(1024);
+            entity.HasIndex(e => e.Status);
+            entity.HasIndex(e => e.CreatedAt);
+            entity.HasOne(e => e.Registration)
+                .WithMany(r => r.TakeoverRequests)
+                .HasForeignKey(e => e.RegistrationId)
+                .OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne(e => e.TargetCompany)
+                .WithMany()
+                .HasForeignKey(e => e.TargetCompanyId)
+                .OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne(e => e.DecidedByUser)
+                .WithMany()
+                .HasForeignKey(e => e.DecidedByUserId)
+                .OnDelete(DeleteBehavior.SetNull);
+        });
+
+        modelBuilder.Entity<LocalAuthCredential>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Email).HasMaxLength(256).IsRequired();
+            entity.Property(e => e.PasswordHash).HasMaxLength(512).IsRequired();
+            entity.HasIndex(e => e.Email).IsUnique();
+            entity.HasOne(e => e.User)
+                .WithMany()
+                .HasForeignKey(e => e.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+    }
+}

@@ -1,0 +1,10 @@
+@page "/admin/masterdata"
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
+@attribute [Authorize(Roles = "Admin")]
+@using Jobsy.Web.Components.Admin
+
+<PageTitle>Masterdata · Jobsy</PageTitle>
+
+<AdminPageShell Title="Masterdata" Lead="Referentiegegevens zoals branches, regio’s en vervoerstypen.">
+    <p class="muted">Nog niet beschikbaar — masterdata-beheer komt later.</p>
+</AdminPageShell>

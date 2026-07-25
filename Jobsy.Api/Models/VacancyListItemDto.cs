@@ -1,0 +1,30 @@
+namespace Jobsy.Api.Models;
+
+public record WageByAgeDto(int AgeYears, decimal HourlyRate, string Label);
+
+public record VacancyListItemDto(
+    Guid Id,
+    string Title,
+    string Description,
+    decimal? HourlyWage,
+    DateOnly StartDate,
+    DateOnly EndDate,
+    string Status,
+    Guid CompanyId,
+    string CompanyName,
+    string CompanyAddress,
+    string? CompanyLogoUrl,
+    string? ImageUrl,
+    double Latitude,
+    double Longitude,
+    string[] RequiredTransport,
+    bool WageVisible = true,
+    int? TravelMinutes = null,
+    double? DistanceKm = null,
+    bool IsHighlighted = false,
+    int ExtensionCount = 0,
+    string? VideoUrl = null,
+    Guid? SalaryTableId = null,
+    IReadOnlyList<WageByAgeDto>? WageByAge = null,
+    int? ResolvedForAge = null,
+    string[]? WorkTypes = null);

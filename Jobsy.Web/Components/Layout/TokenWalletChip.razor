@@ -1,0 +1,50 @@
+@using Jobsy.Core.Authorization
+@using Jobsy.Web.Navigation
+@using Microsoft.AspNetCore.Components.Authorization
+@inject JobsyApiClient Api
+@inject AuthenticationStateProvider AuthState
+
+<AuthorizeView Roles="@string.Join(',', JobsyRoles.EmployerRoles)">
+    <Authorized>
+        @if (_loaded && _total is not null)
+        {
+            <a class="token-wallet-chip" href="@_href" title="Token-saldo">
+                <span class="token-wallet-chip__icon" aria-hidden="true">◎</span>
+                <span class="token-wallet-chip__value">@_total.Value.ToString("0.##")</span>
+                <span class="token-wallet-chip__label">tokens</span>
+            </a>
+        }
+    </Authorized>
+</AuthorizeView>
+
+@code {
+    private decimal? _total;
+    private bool _loaded;
+    private string _href = "/employer/tokens";
+
+    protected override async Task OnInitializedAsync()
+    {
+        var state = await AuthState.GetAuthenticationStateAsync();
+        if (state.User.Identity?.IsAuthenticated != true
+            || !JobsyRoles.EmployerRoles.Any(r => state.User.IsInRole(r)))
+        {
+            return;
+        }
+
+        _href = RoleNavCatalog.TokensHrefFor(state.User);
+
+        try
+        {
+            var balances = await Api.GetTokenBalancesAsync();
+            _total = balances.Sum(b => b.Balance);
+        }
+        catch
+        {
+            _total = null;
+        }
+        finally
+        {
+            _loaded = true;
+        }
+    }
+}

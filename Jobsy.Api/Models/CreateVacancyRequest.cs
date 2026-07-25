@@ -1,0 +1,16 @@
+using Jobsy.Core.Enums;
+
+namespace Jobsy.Api.Models;
+
+public record CreateVacancyRequest(
+    Guid CompanyId,
+    string Title,
+    string Description,
+    decimal HourlyWage,
+    DateOnly StartDate,
+    DateOnly EndDate,
+    TransportMode RequiredTransport,
+    WorkType WorkTypes,
+    string? ImageUrl = null,
+    string? VideoUrl = null,
+    Guid? SalaryTableId = null);

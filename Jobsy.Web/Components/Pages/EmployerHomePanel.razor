@@ -1,0 +1,176 @@
+@using Jobsy.Web.Components.Shared
+@inject JobsyApiClient Api
+
+<div class="panel-page">
+    <header class="panel-header">
+        <div>
+            <h1>@Title</h1>
+            <p class="login-lead">@Lead</p>
+        </div>
+        <div class="period-tabs" role="tablist" aria-label="Periode">
+            @foreach (var p in Periods)
+            {
+                <button type="button"
+                        class="period-tab @(_period == p.Key ? "period-tab--active" : null)"
+                        role="tab"
+                        aria-selected="@(_period == p.Key)"
+                        disabled="@_loading"
+                        @onclick="() => SetPeriodAsync(p.Key)">
+                    @p.Label
+                </button>
+            }
+        </div>
+    </header>
+
+    @if (_error is not null)
+    {
+        <p class="state-message error">@_error</p>
+    }
+    else if (_loading && _metrics.Count == 0)
+    {
+        <p class="state-message">Laden…</p>
+    }
+    else
+    {
+        <div class="stat-grid">
+            @foreach (var metric in _metrics)
+            {
+                <MetricTile Label="@metric.Label"
+                            FormattedValue="@FormatValue(metric)"
+                            Selected="@(_selectedKey == metric.Key)"
+                            OnClick="() => SelectMetricAsync(metric.Key)" />
+            }
+            <a class="stat-card stat-card--link" href="@TokensHref">
+                <span class="stat-card__label">Tokens</span>
+                <strong class="stat-card__value">→</strong>
+            </a>
+            <a class="stat-card stat-card--link" href="@VacanciesHref">
+                <span class="stat-card__label">Vacatures</span>
+                <strong class="stat-card__value">→</strong>
+            </a>
+            @if (!string.IsNullOrEmpty(ExtraHref))
+            {
+                <a class="stat-card stat-card--link" href="@ExtraHref">
+                    <span class="stat-card__label">@ExtraLabel</span>
+                    <strong class="stat-card__value">→</strong>
+                </a>
+            }
+        </div>
+
+        @if (_selectedKey is not null)
+        {
+            <DrilldownGrid Title="@SelectedLabel"
+                           OverviewHref="@ListHrefFor(_selectedKey)"
+                           Loading="@_drillLoading"
+                           Items="_drilldown" />
+        }
+    }
+</div>
+
+@code {
+    private static readonly (string Key, string Label)[] Periods =
+    [
+        ("day", "Dag"),
+        ("week", "Week"),
+        ("month", "Maand")
+    ];
+
+    [Parameter] public string Title { get; set; } = "Dashboard";
+    [Parameter] public string Lead { get; set; } = string.Empty;
+    [Parameter] public string VacanciesHref { get; set; } = "/employer/vacancies";
+    [Parameter] public string TokensHref { get; set; } = "/employer/tokens";
+    [Parameter] public string ApplicationsHref { get; set; } = "/branch/applicants";
+    [Parameter] public string? ExtraHref { get; set; }
+    [Parameter] public string ExtraLabel { get; set; } = "Meer";
+
+    private string _period = "week";
+    private string? _selectedKey;
+    private bool _loading = true;
+    private bool _drillLoading;
+    private string? _error;
+    private List<MetricCount> _metrics = [];
+    private List<MetricDrilldownItem> _drilldown = [];
+
+    private string SelectedLabel =>
+        _metrics.FirstOrDefault(m => m.Key == _selectedKey)?.Label ?? _selectedKey ?? "";
+
+    protected override async Task OnInitializedAsync()
+        => await LoadSummaryAsync();
+
+    private static string FormatValue(MetricCount metric)
+        => metric.Key.StartsWith("tokens_", StringComparison.OrdinalIgnoreCase)
+            ? metric.Value.ToString("0.##")
+            : metric.Value.ToString("0");
+
+    private async Task SetPeriodAsync(string period)
+    {
+        if (_period == period)
+        {
+            return;
+        }
+
+        _period = period;
+        await LoadSummaryAsync();
+        if (_selectedKey is not null)
+        {
+            await LoadDrilldownAsync(_selectedKey);
+        }
+    }
+
+    private async Task SelectMetricAsync(string key)
+    {
+        if (_selectedKey == key)
+        {
+            _selectedKey = null;
+            _drilldown = [];
+            return;
+        }
+
+        _selectedKey = key;
+        await LoadDrilldownAsync(key);
+    }
+
+    private async Task LoadSummaryAsync()
+    {
+        _loading = true;
+        _error = null;
+        try
+        {
+            _metrics = (await Api.GetEmployerMetricsSummaryAsync(_period)).ToList();
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+            _metrics = [];
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private async Task LoadDrilldownAsync(string key)
+    {
+        _drillLoading = true;
+        try
+        {
+            _drilldown = (await Api.GetEmployerMetricsDrilldownAsync(key, _period)).ToList();
+        }
+        catch
+        {
+            _drilldown = [];
+        }
+        finally
+        {
+            _drillLoading = false;
+        }
+    }
+
+    private string ListHrefFor(string key) => key.ToLowerInvariant() switch
+    {
+        "applications" => ApplicationsHref,
+        "active_vacancies" or "active_vacancies_employers" or "active_vacancies_intermediaries" => VacanciesHref,
+        "tokens_purchased" or "tokens_spent" or "pushboms" or "extensions" => TokensHref,
+        _ => VacanciesHref
+    };
+}

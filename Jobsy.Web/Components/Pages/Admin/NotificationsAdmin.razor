@@ -1,0 +1,10 @@
+@page "/admin/notifications"
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
+@attribute [Authorize(Roles = "Admin")]
+@using Jobsy.Web.Components.Admin
+
+<PageTitle>Notificaties · Jobsy</PageTitle>
+
+<AdminPageShell Title="Notificaties" Lead="E-mail-, push- en in-app berichten naar gebruikers.">
+    <p class="muted">Nog niet beschikbaar — templates en verzendwachtrij komen later.</p>
+</AdminPageShell>

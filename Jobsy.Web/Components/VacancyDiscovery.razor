@@ -1,0 +1,909 @@
+@inject JobsyApiClient Api
+@inject IGeocodingClient Geocoder
+@inject IJSRuntime Js
+@inject CultureState Culture
+@inject AuthenticationStateProvider AuthState
+@implements IAsyncDisposable
+@using Jobsy.Core.Rules
+@using Microsoft.AspNetCore.Components.Authorization
+
+<div class="funda-layout @(showMapOnMobile ? "show-map" : "show-list")">
+    <aside class="vacancy-pane">
+        <div class="filter-bar">
+            <div class="filter-bar__address">
+                <label for="discovery-address">@Culture["Discovery.Address"]</label>
+                <div class="address-field">
+                    <input id="discovery-address"
+                           type="text"
+                           autocomplete="off"
+                           placeholder="@Culture["Discovery.AddressPlaceholder"]"
+                           value="@_addressQuery"
+                           @oninput="OnAddressInputAsync"
+                           @onfocus="OnAddressFocus"
+                           @onkeydown="OnAddressKeyDown" />
+                    <button type="button"
+                            class="engagement-btn address-field__geo"
+                            title="@Culture["Discovery.UseMyLocation"]"
+                            disabled="@_locating"
+                            @onclick="RequestLocationAsync">
+                        @(_locating ? Culture["Common.Busy"] : Culture["Discovery.UseMyLocation"])
+                    </button>
+                    @if (_origin is not null)
+                    {
+                        <button type="button"
+                                class="engagement-btn address-field__clear"
+                                @onclick="ClearOriginAsync">
+                            @Culture["Common.Clear"]
+                        </button>
+                    }
+                </div>
+                @if (_showSuggestions)
+                {
+                    <ul class="address-suggestions" role="listbox">
+                        @if (_suggesting)
+                        {
+                            <li class="address-suggestions__status">@Culture["Common.Loading"]</li>
+                        }
+                        else if (_suggestions.Count == 0 && _addressQuery.Trim().Length >= 3)
+                        {
+                            <li class="address-suggestions__status">@Culture["Discovery.AddressNoResults"]</li>
+                        }
+                        else
+                        {
+                            @foreach (var suggestion in _suggestions)
+                            {
+                                <li>
+                                    <button type="button"
+                                            class="address-suggestions__item"
+                                            @onclick="() => SelectSuggestionAsync(suggestion)">
+                                        @suggestion.Label
+                                    </button>
+                                </li>
+                            }
+                        }
+                    </ul>
+                }
+                @if (!string.IsNullOrEmpty(_locationError))
+                {
+                    <p class="state-message error filter-bar__error">@_locationError</p>
+                }
+            </div>
+
+            <label>
+                @Culture["Discovery.TravelMinutes"]
+                <input type="number" min="5" max="90" value="@_maxTravelMinutes"
+                       @onchange="OnMaxMinutesChanged" />
+            </label>
+            <label>
+                @Culture["Discovery.Transport"]
+                <select value="@_selectedTransport" @onchange="OnTransportChanged">
+                    <option value="Fiets">@Culture["Transport.Bike"]</option>
+                    <option value="Auto">@Culture["Transport.Car"]</option>
+                    <option value="OV">@Culture["Transport.Transit"]</option>
+                    <option value="Lopend">@Culture["Transport.Walk"]</option>
+                </select>
+            </label>
+            <label>
+                @Culture["Discovery.Radius"]
+                <input type="number" min="1" max="50" value="@_radiusKm"
+                       @onchange="OnRadiusChanged" />
+            </label>
+            <label>
+                @Culture["Discovery.Age"]
+                <select value="@AgeSelectValue" @onchange="OnAgeChanged">
+                    <option value="">@Culture["Discovery.AgeAny"]</option>
+                    @for (var age = 15; age <= 21; age++)
+                    {
+                        <option value="@age">@(age == 21 ? "21+" : age.ToString())</option>
+                    }
+                </select>
+            </label>
+            <label>
+                @Culture["Discovery.WorkType"]
+                <select value="@_selectedWorkType" @onchange="OnWorkTypeChanged">
+                    <option value="">@Culture["Discovery.WorkTypeAny"]</option>
+                    @foreach (var label in WorkTypeLabels.All)
+                    {
+                        <option value="@label">@label</option>
+                    }
+                </select>
+            </label>
+            @if (_ageYears is not null)
+            {
+                <label>
+                    @Culture["Discovery.MinWage"]
+                    <input type="number" min="0" step="0.50" placeholder="—"
+                           value="@(_minHourlyWage?.ToString(System.Globalization.CultureInfo.InvariantCulture) ?? "")"
+                           @onchange="OnMinWageChanged" />
+                </label>
+                <label>
+                    @Culture["Discovery.MaxWage"]
+                    <input type="number" min="0" step="0.50" placeholder="—"
+                           value="@(_maxHourlyWage?.ToString(System.Globalization.CultureInfo.InvariantCulture) ?? "")"
+                           @onchange="OnMaxWageChanged" />
+                </label>
+            }
+        </div>
+
+        @if (_loading)
+        {
+            <p class="state-message">@Culture["Discovery.Loading"]</p>
+        }
+        else if (!string.IsNullOrEmpty(_error))
+        {
+            <p class="state-message error">@_error</p>
+        }
+        else if (_vacancies.Count == 0)
+        {
+            <p class="state-message">
+                @if (_origin is null)
+                {
+                    @Culture.Format("Discovery.NoneWithoutOrigin", TransportLabel(_selectedTransport))
+                }
+                else
+                {
+                    @Culture.Format("Discovery.NoneWithOrigin", _maxTravelMinutes, TransportLabel(_selectedTransport))
+                }
+            </p>
+        }
+        else
+        {
+            <div class="vacancy-list">
+                @foreach (var vacancy in _vacancies)
+                {
+                    <article class="vacancy-card @(_hoveredId == vacancy.Id ? "is-hovered" : null)"
+                             @onmouseenter="() => OnHover(vacancy.Id)"
+                             @onmouseleave="() => OnHover(null)"
+                             @onclick="() => OnSelect(vacancy.Id)">
+                        <div class="vacancy-card-top">
+                            <h2>@vacancy.Title</h2>
+                            @if (!vacancy.WageVisible)
+                            {
+                                <a class="wage wage--cta" href="/candidate/profile" @onclick:stopPropagation="true">
+                                    @WageVisibilityRules.MissingDateOfBirthMessage
+                                </a>
+                            }
+                            else if (vacancy.HourlyWage is not null)
+                            {
+                                <span class="wage">€ @vacancy.HourlyWage.Value.ToString("0.00")</span>
+                            }
+                            else if (vacancy.WageByAge is { Count: > 0 })
+                            {
+                                <table class="wage-table">
+                                    <tbody>
+                                    @foreach (var band in vacancy.WageByAge)
+                                    {
+                                        <tr>
+                                            <th>@band.Label</th>
+                                            <td>€ @band.HourlyRate.ToString("0.00")</td>
+                                        </tr>
+                                    }
+                                    </tbody>
+                                </table>
+                            }
+                        </div>
+                        <p class="company">@vacancy.CompanyName</p>
+                        <p class="address">@vacancy.CompanyAddress</p>
+                        <p class="travel-hint">
+                            @if (vacancy.TravelMinutes is not null)
+                            {
+                                <span class="travel-badge">± @vacancy.TravelMinutes min @TransportVerb(_selectedTransport)</span>
+                                @if (vacancy.DistanceKm is not null)
+                                {
+                                    <span class="muted"> · @vacancy.DistanceKm.Value.ToString("0.0") km</span>
+                                }
+                            }
+                            else
+                            {
+                                <span class="travel-badge travel-badge--soft">@_selectedTransport · max @_maxTravelMinutes min</span>
+                            }
+                        </p>
+                        <div class="badges">
+                            @foreach (var workType in vacancy.WorkTypes)
+                            {
+                                <span class="badge badge--worktype">@workType</span>
+                            }
+                            @foreach (var transport in vacancy.RequiredTransport)
+                            {
+                                <span class="badge">@transport</span>
+                            }
+                        </div>
+                        <div class="vacancy-card__actions" @onclick:stopPropagation="true">
+                            <a class="vacancy-card__link" href="@($"/vacancies/{vacancy.Id}")">Bekijk</a>
+                            <AuthorizeView>
+                                <Authorized>
+                                    <button type="button" class="vacancy-card__link" @onclick="() => OpenShare(vacancy)">Delen</button>
+                                    <a class="vacancy-card__link vacancy-card__link--primary" href="@($"/vacancies/{vacancy.Id}#apply")">Solliciteer</a>
+                                </Authorized>
+                                <NotAuthorized>
+                                    <a class="vacancy-card__link vacancy-card__link--primary"
+                                       href="@($"/login?returnUrl={Uri.EscapeDataString($"/vacancies/{vacancy.Id}#apply")}")">
+                                        Solliciteer
+                                    </a>
+                                </NotAuthorized>
+                            </AuthorizeView>
+                        </div>
+                    </article>
+                }
+            </div>
+        }
+    </aside>
+
+    <section class="map-pane">
+        <div @ref="_mapElement" id="job-map" class="job-map"></div>
+    </section>
+
+    <button class="mobile-toggle" type="button" @onclick="ToggleMobileView">
+        @(showMapOnMobile ? "Lijst tonen" : "Kaart tonen")
+    </button>
+</div>
+
+<ShareModal IsOpen="_shareOpen" Vacancy="_shareVacancy" OnClose="CloseShare" />
+
+@code {
+    private List<VacancyListItem> _vacancies = [];
+    private bool _loading = true;
+    private string? _error;
+    private Guid? _hoveredId;
+    private bool showMapOnMobile;
+    private bool _mapReady;
+    private bool _mapInitScheduled;
+    private ElementReference _mapElement;
+    private int _maxTravelMinutes = 30;
+    private int _radiusKm = 15;
+    private string _selectedTransport = "Fiets";
+    private string _selectedWorkType = "";
+    private int? _ageYears;
+    private decimal? _minHourlyWage;
+    private decimal? _maxHourlyWage;
+    private bool _isCandidate;
+    private CandidatePreferences? _candidatePrefs;
+    private OriginPoint? _origin;
+    private string _addressQuery = string.Empty;
+    private List<AddressSuggestion> _suggestions = [];
+    private bool _showSuggestions;
+    private bool _suggesting;
+    private bool _locating;
+    private string? _locationError;
+    private bool _shareOpen;
+    private VacancyListItem? _shareVacancy;
+    private DotNetObjectReference<VacancyDiscovery>? _dotNetRef;
+    private CancellationTokenSource? _suggestCts;
+    private int _suggestGeneration;
+
+    private string AgeSelectValue => _ageYears?.ToString() ?? "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        Culture.Changed += OnCultureChanged;
+        try
+        {
+            var state = await AuthState.GetAuthenticationStateAsync();
+            _isCandidate = state.User.IsInRole("Candidate");
+            if (_isCandidate)
+            {
+                var profile = await Api.GetMyProfileAsync();
+                if (profile is not null)
+                {
+                    _candidatePrefs = profile.Preferences;
+                    if (profile.Preferences.AgeYears is int prefAge)
+                    {
+                        _ageYears = prefAge;
+                    }
+                    else if (profile.DateOfBirth is DateOnly dob)
+                    {
+                        _ageYears = AgeFromDob(dob);
+                    }
+                }
+            }
+        }
+        catch
+        {
+            // anonymous or profile unavailable
+        }
+
+        await LoadVacanciesAsync();
+    }
+
+    private async void OnCultureChanged()
+    {
+        await LoadVacanciesAsync();
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private string TransportLabel(string transport) => transport switch
+    {
+        "Fiets" => Culture["Transport.Bike"],
+        "Auto" => Culture["Transport.Car"],
+        "OV" => Culture["Transport.Transit"],
+        "Lopend" => Culture["Transport.Walk"],
+        _ => transport
+    };
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            try
+            {
+                if (_ageYears is null)
+                {
+                    var storedAge = await Js.InvokeAsync<int?>("jobsyGeo.getStoredAge");
+                    if (storedAge is int age)
+                    {
+                        _ageYears = age;
+                    }
+                }
+                else
+                {
+                    await Js.InvokeVoidAsync("jobsyGeo.setStoredAge", _ageYears.Value);
+                }
+
+                var stored = await Js.InvokeAsync<StoredOrigin?>("jobsyGeo.getStoredOrigin");
+                if (stored is not null && IsFinite(stored.Lat) && IsFinite(stored.Lng))
+                {
+                    _origin = new OriginPoint { Latitude = stored.Lat, Longitude = stored.Lng };
+                    if (!string.IsNullOrWhiteSpace(stored.Label))
+                    {
+                        _addressQuery = stored.Label;
+                    }
+                    else
+                    {
+                        await FillAddressFromCoordinatesAsync(stored.Lat, stored.Lng, persistLabel: true);
+                    }
+                }
+
+                await LoadVacanciesAsync();
+                StateHasChanged();
+            }
+            catch
+            {
+                // geolocation helpers not ready yet
+            }
+        }
+
+        if (_mapReady || _mapInitScheduled || _loading)
+        {
+            return;
+        }
+
+        _mapInitScheduled = true;
+
+        try
+        {
+            _dotNetRef ??= DotNetObjectReference.Create(this);
+            var markers = BuildMarkers();
+            var options = new Dictionary<string, object?>
+            {
+                ["dotNetRef"] = _dotNetRef,
+                ["travel"] = TravelMapOptions()
+            };
+            if (_origin is not null)
+            {
+                options["origin"] = new Dictionary<string, object?>
+                {
+                    ["lat"] = _origin.Latitude,
+                    ["lng"] = _origin.Longitude
+                };
+            }
+
+            await Js.InvokeVoidAsync("jobMap.init", "job-map", markers, options);
+            _mapReady = true;
+        }
+        catch (JSDisconnectedException)
+        {
+            _mapInitScheduled = false;
+        }
+        catch (InvalidOperationException)
+        {
+            _mapInitScheduled = false;
+        }
+        catch (JSException)
+        {
+            _mapInitScheduled = false;
+            await Task.Delay(150);
+            await InvokeAsync(StateHasChanged);
+        }
+    }
+
+    private async Task LoadVacanciesAsync()
+    {
+        _loading = true;
+        _error = null;
+        try
+        {
+            var items = await Api.DiscoverVacanciesAsync(
+                _origin?.Latitude,
+                _origin?.Longitude,
+                _selectedTransport,
+                _maxTravelMinutes,
+                _origin is null ? null : _radiusKm,
+                _ageYears,
+                _ageYears is null ? null : _minHourlyWage,
+                _ageYears is null ? null : _maxHourlyWage,
+                string.IsNullOrWhiteSpace(_selectedWorkType) ? null : _selectedWorkType);
+            _vacancies = items.ToList();
+            if (_mapReady)
+            {
+                await Js.InvokeVoidAsync("jobMap.setVacancies", BuildMarkers());
+                if (_origin is not null)
+                {
+                    await Js.InvokeVoidAsync("jobMap.setOrigin", _origin.Latitude, _origin.Longitude, TravelMapOptions());
+                }
+                else
+                {
+                    await Js.InvokeVoidAsync("jobMap.setTravelOptions", TravelMapOptions());
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            _error = $"Kon vacatures niet laden. Start de API op poort 5200. ({ex.Message})";
+            _vacancies = [];
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private List<Dictionary<string, object?>> BuildMarkers() =>
+        _vacancies.Select(v =>
+        {
+            var dict = new Dictionary<string, object?>
+            {
+                ["id"] = v.Id.ToString(),
+                ["title"] = v.Title,
+                ["company"] = v.CompanyName,
+                ["address"] = v.CompanyAddress,
+                ["logoUrl"] = v.CompanyLogoUrl,
+                ["imageUrl"] = v.ImageUrl,
+                ["lat"] = v.Latitude,
+                ["lng"] = v.Longitude,
+                ["transport"] = v.RequiredTransport,
+                ["workTypes"] = v.WorkTypes,
+                ["travelMinutes"] = v.TravelMinutes,
+                ["transportLabel"] = TransportVerb(_selectedTransport)
+            };
+            if (!v.WageVisible)
+            {
+                dict["wageLabel"] = WageVisibilityRules.MissingDateOfBirthMessage;
+            }
+            else if (v.HourlyWage is not null)
+            {
+                dict["wage"] = (double)v.HourlyWage.Value;
+            }
+            else if (v.WageByAge is { Count: > 0 })
+            {
+                dict["wageBands"] = v.WageByAge.Select(b => new Dictionary<string, object?>
+                {
+                    ["ageYears"] = b.AgeYears,
+                    ["hourlyRate"] = (double)b.HourlyRate,
+                    ["label"] = b.Label
+                }).ToList();
+            }
+
+            return dict;
+        }).ToList();
+
+    private async Task OnAddressInputAsync(ChangeEventArgs e)
+    {
+        _addressQuery = e.Value?.ToString() ?? string.Empty;
+        _locationError = null;
+        await SuggestAddressesAsync(_addressQuery);
+    }
+
+    private void OnAddressFocus()
+    {
+        if (_suggestions.Count > 0 || (_addressQuery.Trim().Length >= 3 && _suggesting))
+        {
+            _showSuggestions = true;
+        }
+    }
+
+    private void OnAddressKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key == "Escape")
+        {
+            _showSuggestions = false;
+        }
+    }
+
+    private async Task SuggestAddressesAsync(string query)
+    {
+        _suggestCts?.Cancel();
+        _suggestCts?.Dispose();
+        _suggestCts = new CancellationTokenSource();
+        var token = _suggestCts.Token;
+        var generation = ++_suggestGeneration;
+
+        var trimmed = query.Trim();
+        if (trimmed.Length < 3)
+        {
+            _suggestions = [];
+            _showSuggestions = false;
+            _suggesting = false;
+            return;
+        }
+
+        _showSuggestions = true;
+        _suggesting = true;
+
+        try
+        {
+            await Task.Delay(280, token);
+            var results = await Geocoder.SuggestAsync(trimmed, token);
+            if (generation != _suggestGeneration || token.IsCancellationRequested)
+            {
+                return;
+            }
+
+            _suggestions = results.ToList();
+        }
+        catch (OperationCanceledException)
+        {
+            return;
+        }
+        catch
+        {
+            if (generation == _suggestGeneration)
+            {
+                _suggestions = [];
+            }
+        }
+        finally
+        {
+            if (generation == _suggestGeneration)
+            {
+                _suggesting = false;
+            }
+        }
+    }
+
+    private async Task SelectSuggestionAsync(AddressSuggestion suggestion)
+    {
+        _showSuggestions = false;
+        _suggestions = [];
+        _addressQuery = suggestion.Label;
+        await ApplyOriginAsync(suggestion.Latitude, suggestion.Longitude, suggestion.Label);
+    }
+
+    private async Task RequestLocationAsync()
+    {
+        _locating = true;
+        _locationError = null;
+        _showSuggestions = false;
+        try
+        {
+            var dict = await Js.InvokeAsync<Dictionary<string, double>>("jobsyGeo.requestLocation");
+            var lat = dict["lat"];
+            var lng = dict["lng"];
+            var label = await FillAddressFromCoordinatesAsync(lat, lng, persistLabel: false);
+            await ApplyOriginAsync(lat, lng, label);
+        }
+        catch (Exception ex)
+        {
+            _locationError = ex.Message;
+        }
+        finally
+        {
+            _locating = false;
+        }
+    }
+
+    private async Task<string?> FillAddressFromCoordinatesAsync(double lat, double lng, bool persistLabel)
+    {
+        try
+        {
+            var label = await Geocoder.ReverseAsync(lat, lng);
+            if (!string.IsNullOrWhiteSpace(label))
+            {
+                _addressQuery = label;
+                if (persistLabel)
+                {
+                    await Js.InvokeVoidAsync("jobsyGeo.setStoredOrigin", lat, lng, label);
+                }
+
+                return label;
+            }
+        }
+        catch
+        {
+            // keep coordinates even if reverse geocode fails
+        }
+
+        if (string.IsNullOrWhiteSpace(_addressQuery))
+        {
+            _addressQuery = $"{lat.ToString("0.#####", System.Globalization.CultureInfo.InvariantCulture)}, {lng.ToString("0.#####", System.Globalization.CultureInfo.InvariantCulture)}";
+        }
+
+        return string.IsNullOrWhiteSpace(_addressQuery) ? null : _addressQuery;
+    }
+
+    private async Task ApplyOriginAsync(double lat, double lng, string? label)
+    {
+        _origin = new OriginPoint { Latitude = lat, Longitude = lng };
+        try
+        {
+            await Js.InvokeVoidAsync("jobsyGeo.setStoredOrigin", lat, lng, label);
+        }
+        catch
+        {
+            // ignore storage failures
+        }
+
+        await LoadVacanciesAsync();
+        if (_mapReady)
+        {
+            await Js.InvokeVoidAsync("jobMap.setOrigin", lat, lng, TravelMapOptions());
+        }
+    }
+
+    private async Task ClearOriginAsync()
+    {
+        _origin = null;
+        _addressQuery = string.Empty;
+        _suggestions = [];
+        _showSuggestions = false;
+        _locationError = null;
+        try
+        {
+            await Js.InvokeVoidAsync("jobsyGeo.clearStoredOrigin");
+            if (_mapReady)
+            {
+                await Js.InvokeVoidAsync("jobMap.clearOrigin");
+            }
+        }
+        catch
+        {
+            // ignore
+        }
+
+        await LoadVacanciesAsync();
+    }
+
+    private Dictionary<string, object?> TravelMapOptions() => new()
+    {
+        ["maxMinutes"] = _maxTravelMinutes,
+        ["transport"] = _selectedTransport,
+        ["radiusKm"] = _radiusKm
+    };
+
+    private static string TransportVerb(string transport) => transport switch
+    {
+        "Fiets" => "fietsen",
+        "Auto" => "rijden",
+        "OV" => "OV",
+        "Lopend" => "lopen",
+        _ => "reistijd"
+    };
+
+    private async Task OnMaxMinutesChanged(ChangeEventArgs e)
+    {
+        if (int.TryParse(e.Value?.ToString(), out var value))
+        {
+            _maxTravelMinutes = Math.Clamp(value, 5, 90);
+            if (_mapReady)
+            {
+                try { await Js.InvokeVoidAsync("jobMap.setTravelOptions", TravelMapOptions()); }
+                catch { /* ignore */ }
+            }
+            await LoadVacanciesAsync();
+        }
+    }
+
+    private async Task OnTransportChanged(ChangeEventArgs e)
+    {
+        _selectedTransport = e.Value?.ToString() ?? "Fiets";
+        if (_mapReady)
+        {
+            try { await Js.InvokeVoidAsync("jobMap.setTravelOptions", TravelMapOptions()); }
+            catch { /* ignore */ }
+        }
+        await LoadVacanciesAsync();
+    }
+
+    private async Task OnWorkTypeChanged(ChangeEventArgs e)
+    {
+        _selectedWorkType = e.Value?.ToString() ?? "";
+        await LoadVacanciesAsync();
+    }
+
+    private async Task OnRadiusChanged(ChangeEventArgs e)
+    {
+        if (int.TryParse(e.Value?.ToString(), out var value))
+        {
+            _radiusKm = Math.Clamp(value, 1, 50);
+            if (_mapReady)
+            {
+                try { await Js.InvokeVoidAsync("jobMap.setTravelOptions", TravelMapOptions()); }
+                catch { /* ignore */ }
+            }
+            await LoadVacanciesAsync();
+        }
+    }
+
+    private async Task OnAgeChanged(ChangeEventArgs e)
+    {
+        var raw = e.Value?.ToString();
+        if (string.IsNullOrWhiteSpace(raw) || !int.TryParse(raw, out var age))
+        {
+            _ageYears = null;
+            _minHourlyWage = null;
+            _maxHourlyWage = null;
+        }
+        else
+        {
+            _ageYears = Math.Clamp(age, 15, 67);
+        }
+
+        await PersistAgeAsync();
+        await LoadVacanciesAsync();
+    }
+
+    private async Task OnMinWageChanged(ChangeEventArgs e)
+    {
+        _minHourlyWage = TryParseWage(e.Value?.ToString());
+        await LoadVacanciesAsync();
+    }
+
+    private async Task OnMaxWageChanged(ChangeEventArgs e)
+    {
+        _maxHourlyWage = TryParseWage(e.Value?.ToString());
+        await LoadVacanciesAsync();
+    }
+
+    private async Task PersistAgeAsync()
+    {
+        try
+        {
+            if (_ageYears is int age)
+            {
+                await Js.InvokeVoidAsync("jobsyGeo.setStoredAge", age);
+            }
+            else
+            {
+                await Js.InvokeVoidAsync("jobsyGeo.clearStoredAge");
+            }
+        }
+        catch
+        {
+            // ignore storage failures
+        }
+
+        if (!_isCandidate)
+        {
+            return;
+        }
+
+        try
+        {
+            var profile = await Api.GetMyProfileAsync();
+            var prefs = profile?.Preferences ?? _candidatePrefs ?? new CandidatePreferences();
+            prefs.AgeYears = _ageYears;
+            _candidatePrefs = prefs;
+            await Api.UpdateMyProfileAsync(preferences: prefs);
+        }
+        catch
+        {
+            // profile persist is best-effort
+        }
+    }
+
+    private static decimal? TryParseWage(string? raw)
+    {
+        if (string.IsNullOrWhiteSpace(raw))
+        {
+            return null;
+        }
+
+        if (decimal.TryParse(raw, System.Globalization.NumberStyles.Number,
+                System.Globalization.CultureInfo.InvariantCulture, out var value)
+            || decimal.TryParse(raw, System.Globalization.NumberStyles.Number,
+                System.Globalization.CultureInfo.CurrentCulture, out value))
+        {
+            return value < 0 ? null : value;
+        }
+
+        return null;
+    }
+
+    private static int AgeFromDob(DateOnly dob)
+    {
+        var today = DateOnly.FromDateTime(DateTime.Today);
+        var age = today.Year - dob.Year;
+        if (dob > today.AddYears(-age))
+        {
+            age--;
+        }
+
+        return Math.Clamp(age, 15, 67);
+    }
+
+    private async Task OnHover(Guid? id)
+    {
+        _hoveredId = id;
+        if (_mapReady)
+        {
+            await Js.InvokeVoidAsync("jobMap.highlight", id?.ToString());
+        }
+    }
+
+    private async Task OnSelect(Guid id)
+    {
+        _hoveredId = id;
+        if (_mapReady)
+        {
+            await Js.InvokeVoidAsync("jobMap.focus", id.ToString());
+        }
+    }
+
+    [JSInvokable]
+    public async Task OnMapVacancyOpened(string id)
+    {
+        if (!Guid.TryParse(id, out var vacancyId))
+        {
+            return;
+        }
+
+        try
+        {
+            await Api.RecordClickOnceAsync(Js, vacancyId);
+        }
+        catch
+        {
+            // tracking must not break UX
+        }
+    }
+
+    private void OpenShare(VacancyListItem vacancy)
+    {
+        _shareVacancy = vacancy;
+        _shareOpen = true;
+    }
+
+    private Task CloseShare()
+    {
+        _shareOpen = false;
+        _shareVacancy = null;
+        return Task.CompletedTask;
+    }
+
+    private async Task ToggleMobileView()
+    {
+        showMapOnMobile = !showMapOnMobile;
+        if (_mapReady)
+        {
+            await Task.Delay(50);
+            await Js.InvokeVoidAsync("jobMap.invalidate");
+        }
+    }
+
+    private static bool IsFinite(double value) =>
+        !double.IsNaN(value) && !double.IsInfinity(value);
+
+    public async ValueTask DisposeAsync()
+    {
+        Culture.Changed -= OnCultureChanged;
+        _suggestCts?.Cancel();
+        _suggestCts?.Dispose();
+        _dotNetRef?.Dispose();
+        if (_mapReady)
+        {
+            try
+            {
+                await Js.InvokeVoidAsync("jobMap.dispose");
+            }
+            catch (JSDisconnectedException)
+            {
+            }
+        }
+    }
+
+    private sealed class StoredOrigin
+    {
+        public double Lat { get; set; }
+        public double Lng { get; set; }
+        public string? Label { get; set; }
+    }
+}

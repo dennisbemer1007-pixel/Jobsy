@@ -1,0 +1,164 @@
+@page "/employer/users"
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "EnterpriseManager,Admin")]
+@inject JobsyApiClient Api
+
+<PageTitle>Gebruikers · Jobsy</PageTitle>
+
+<div class="panel-page">
+    <header class="panel-header">
+        <div>
+            <h1>Gebruikers</h1>
+            <p class="login-lead">Uitnodigen per e-mail en rollen toekennen (stub-mail).</p>
+        </div>
+    </header>
+
+    @if (_loading)
+    {
+        <p class="state-message">Laden…</p>
+    }
+    else if (!string.IsNullOrEmpty(_error))
+    {
+        <p class="state-message error">@_error</p>
+    }
+    else
+    {
+        <div class="table-list">
+            @foreach (var u in _users)
+            {
+                <div class="table-row">
+                    <div>
+                        <strong>@u.FullName</strong>
+                        <span class="muted">@u.Email · @u.Role · @(u.CompanyName ?? "—")</span>
+                    </div>
+                </div>
+            }
+        </div>
+
+        <section class="panel-section">
+            <h2>Uitnodigen</h2>
+            <form class="login-form" style="max-width:480px" @onsubmit="InviteAsync" @onsubmit:preventDefault>
+                <label>
+                    E-mail
+                    <input type="email" @bind="_email" required />
+                </label>
+                <label>
+                    Naam
+                    <input @bind="_fullName" required />
+                </label>
+                <label>
+                    Rol
+                    <select @bind="_role">
+                        <option value="BranchManager">BranchManager</option>
+                        <option value="RegionalManager">RegionalManager</option>
+                        <option value="Intermediary">Intermediary</option>
+                    </select>
+                </label>
+                <label>
+                    Primaire vestiging
+                    <select @bind="_primaryCompanyId">
+                        <option value="">— Geen —</option>
+                        @foreach (var c in _companies)
+                        {
+                            <option value="@c.Id">@c.Name</option>
+                        }
+                    </select>
+                </label>
+                <fieldset class="checkbox-set">
+                    <legend>Extra lidmaatschappen</legend>
+                    @foreach (var c in _companies)
+                    {
+                        <label class="publish-option">
+                            <input type="checkbox"
+                                   checked="@_memberships.Contains(c.Id)"
+                                   @onchange="e => ToggleMembership(c.Id, (bool)(e.Value ?? false))" />
+                            <span>@c.Name</span>
+                        </label>
+                    }
+                </fieldset>
+                <button class="login-submit" type="submit" disabled="@_busy">Uitnodigen</button>
+            </form>
+        </section>
+
+        @if (!string.IsNullOrEmpty(_message))
+        {
+            <p class="state-message">@_message</p>
+        }
+    }
+</div>
+
+@code {
+    private List<CompanyUserItem> _users = [];
+    private List<CompanySummary> _companies = [];
+    private HashSet<Guid> _memberships = [];
+    private bool _loading = true;
+    private bool _busy;
+    private string? _error;
+    private string? _message;
+    private string _email = "";
+    private string _fullName = "";
+    private string _role = "BranchManager";
+    private string _primaryCompanyId = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            _companies = (await Api.GetMyCompaniesAsync()).ToList();
+            _users = (await Api.GetCompanyUsersAsync()).ToList();
+            if (_companies.Count > 0)
+            {
+                _primaryCompanyId = _companies[0].Id.ToString();
+            }
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private void ToggleMembership(Guid id, bool selected)
+    {
+        if (selected)
+        {
+            _memberships.Add(id);
+        }
+        else
+        {
+            _memberships.Remove(id);
+        }
+    }
+
+    private async Task InviteAsync()
+    {
+        _busy = true;
+        _message = null;
+        try
+        {
+            Guid? primary = Guid.TryParse(_primaryCompanyId, out var pid) ? pid : null;
+            await Api.InviteCompanyUserAsync(new InviteUserForm(
+                _email,
+                _fullName,
+                _role,
+                primary,
+                _memberships.ToArray()));
+            _users = (await Api.GetCompanyUsersAsync()).ToList();
+            _email = "";
+            _fullName = "";
+            _memberships = [];
+            _message = "Uitnodiging verstuurd (stub e-mail).";
+        }
+        catch (Exception ex)
+        {
+            _message = ex.Message;
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+}

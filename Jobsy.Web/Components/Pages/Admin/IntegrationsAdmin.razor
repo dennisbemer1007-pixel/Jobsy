@@ -1,0 +1,64 @@
+@page "/admin/integrations"
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
+@attribute [Authorize(Roles = "Admin")]
+@using Jobsy.Web.Components.Admin
+@inject JobsyApiClient Api
+
+<PageTitle>API-koppelingen · Jobsy</PageTitle>
+
+<AdminPageShell Title="API koppelingen" Lead="Configureer en test externe API’s. Groen = OK, rood = geen verbinding.">
+    @if (_loading)
+    {
+        <p class="state-message">Laden…</p>
+    }
+    else if (!string.IsNullOrEmpty(_error))
+    {
+        <p class="state-message error">@_error</p>
+    }
+    else
+    {
+        <div class="company-grid">
+            @foreach (var cred in _credentials)
+            {
+                var health = _health.FirstOrDefault(h => string.Equals(h.Key, cred.Key, StringComparison.OrdinalIgnoreCase));
+                <IntegrationSettingsTile @key="cred.Key" Credential="cred" Health="health" OnChanged="ReloadAsync" />
+            }
+        </div>
+
+        @if (!string.IsNullOrEmpty(_message))
+        {
+            <p class="state-message">@_message</p>
+        }
+    }
+</AdminPageShell>
+
+@code {
+    private List<IntegrationHealthItem> _health = [];
+    private List<IntegrationCredentialItem> _credentials = [];
+    private bool _loading = true;
+    private string? _error;
+    private string? _message;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            await ReloadAsync();
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private async Task ReloadAsync()
+    {
+        _health = (await Api.GetIntegrationHealthAsync()).ToList();
+        _credentials = (await Api.GetIntegrationCredentialsAsync()).ToList();
+        _message = null;
+    }
+}

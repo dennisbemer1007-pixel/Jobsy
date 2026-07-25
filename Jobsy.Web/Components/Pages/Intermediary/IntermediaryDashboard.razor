@@ -1,0 +1,51 @@
+@page "/intermediary"
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Intermediary")]
+@inject JobsyApiClient Api
+
+<PageTitle>Intermediair Dashboard · Jobsy</PageTitle>
+
+<div class="panel-page">
+    <header class="panel-header">
+        <div>
+            <h1>Intermediair Dashboard</h1>
+            <p class="login-lead">Werven voor meerdere externe opdrachtgevers.</p>
+        </div>
+        <a class="login-submit" href="/intermediary/batch" style="text-decoration:none;display:inline-flex;align-items:center;">Batch-tool</a>
+    </header>
+
+    @if (_loading)
+    {
+        <p class="state-message">Laden…</p>
+    }
+    else
+    {
+        <div class="stat-grid">
+            @foreach (var c in _companies)
+            {
+                <div class="stat-card">
+                    <span class="stat-card__label">@c.Name</span>
+                    <strong class="stat-card__value">@c.ActiveVacancies</strong>
+                    <span class="muted">@c.TokenBalance tokens</span>
+                </div>
+            }
+        </div>
+    }
+</div>
+
+@code {
+    private List<CompanySummary> _companies = [];
+    private bool _loading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            _companies = (await Api.GetMyCompaniesAsync()).ToList();
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+}

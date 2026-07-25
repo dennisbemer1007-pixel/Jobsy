@@ -1,0 +1,221 @@
+@page "/employer/vacancies"
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "BranchManager,RegionalManager,EnterpriseManager,Intermediary,Admin")]
+@inject JobsyApiClient Api
+@inject AuthenticationStateProvider AuthState
+
+<PageTitle>Vacatures · Jobsy</PageTitle>
+
+<div class="panel-page">
+    <header class="panel-header">
+        <div>
+            <h1>Vacatures</h1>
+            <p class="login-lead">Beheer concepten en actieve vacatures. Publiceren via token-opties popup.</p>
+        </div>
+        <a class="login-submit" href="/branch/vacancies/new" style="text-decoration:none;display:inline-flex;align-items:center;">Nieuwe vacature</a>
+    </header>
+
+    @if (_loading)
+    {
+        <p class="state-message">Laden…</p>
+    }
+    else if (!string.IsNullOrEmpty(_error))
+    {
+        <p class="state-message error">@_error</p>
+    }
+    else
+    {
+        <div class="table-list">
+            @foreach (var v in _vacancies)
+            {
+                <div class="table-row">
+                    <div>
+                        <strong>@v.Title</strong>
+                        <span class="muted">
+                            @v.CompanyName · @v.Status
+                            @if (v.IsHighlighted)
+                            {
+                                <text> · highlight</text>
+                            }
+                            @if (v.ExtensionCount > 0)
+                            {
+                                <text> · @v.ExtensionCount× verlengd</text>
+                            }
+                            · € @(v.HourlyWage?.ToString("0.00") ?? "—")
+                        </span>
+                    </div>
+                    <div class="table-row__actions">
+                        <a class="auth-link" href="@($"/vacancies/{v.Id}")">Bekijk</a>
+                        <a class="auth-link" href="@($"/branch/vacancies/new?from={v.Id}")">Dupliceren</a>
+                        @if (v.Status == "Draft")
+                        {
+                            <button class="provider-btn" type="button" @onclick="() => OpenPublish(v)">Publiceer…</button>
+                        }
+                        @if (v.Status == "PendingApproval" && _canApprovePublish)
+                        {
+                            <button class="provider-btn" type="button" @onclick="() => ApproveAsync(v.Id)">Goedkeuren</button>
+                        }
+                        @if (v.Status == "Active")
+                        {
+                            @if (!v.IsHighlighted)
+                            {
+                                <button class="provider-btn" type="button" @onclick="() => HighlightAsync(v.Id)">Highlight</button>
+                            }
+                            <button class="provider-btn" type="button" @onclick="() => OpenPushBom(v)">PushBom…</button>
+                            <button class="provider-btn" type="button" @onclick="() => ExtendAsync(v.Id)">Verleng</button>
+                            <button class="provider-btn" type="button" @onclick="() => DeactivateAsync(v.Id)">Inactive</button>
+                        }
+                        @if (v.Status == "Archived")
+                        {
+                            <button class="provider-btn" type="button" @onclick="() => ExtendAsync(v.Id)">Heractiveer (+verlengen)</button>
+                        }
+                    </div>
+                </div>
+            }
+        </div>
+        @if (!string.IsNullOrEmpty(_message))
+        {
+            <p class="state-message">@_message</p>
+        }
+    }
+</div>
+
+<PublishOptionsDialog IsOpen="_publishOpen"
+                      Vacancy="_publishVacancy"
+                      OnClose="ClosePublish"
+                      OnPublished="OnPublished" />
+
+<PushBomConfirmDialog IsOpen="_pushBomOpen"
+                      Vacancy="_pushBomVacancy"
+                      OnClose="ClosePushBom"
+                      OnConfirmed="OnPushBomConfirmed" />
+
+@code {
+    private List<VacancyListItem> _vacancies = [];
+    private bool _loading = true;
+    private bool _canApprovePublish;
+    private string? _error;
+    private string? _message;
+    private bool _publishOpen;
+    private VacancyListItem? _publishVacancy;
+    private bool _pushBomOpen;
+    private VacancyListItem? _pushBomVacancy;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var state = await AuthState.GetAuthenticationStateAsync();
+            var user = state.User;
+            _canApprovePublish = user.IsInRole("EnterpriseManager") || user.IsInRole("Admin");
+            _vacancies = (await Api.GetManagedVacanciesAsync()).ToList();
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private async Task RefreshAsync()
+        => _vacancies = (await Api.GetManagedVacanciesAsync()).ToList();
+
+    private void OpenPublish(VacancyListItem vacancy)
+    {
+        _publishVacancy = vacancy;
+        _publishOpen = true;
+    }
+
+    private Task ClosePublish()
+    {
+        _publishOpen = false;
+        _publishVacancy = null;
+        return Task.CompletedTask;
+    }
+
+    private async Task OnPublished(VacancyProductActionResult? result)
+    {
+        await RefreshAsync();
+        _message = result?.PendingApproval == true
+            ? (result.Message ?? "Wacht op goedkeuring (onvoldoende tokens).")
+            : "Vacature gepubliceerd.";
+    }
+
+    private async Task ApproveAsync(Guid id)
+    {
+        try
+        {
+            await Api.ApprovePublishAsync(id);
+            await RefreshAsync();
+            _message = "Publicatie goedgekeurd.";
+        }
+        catch (Exception ex)
+        {
+            _message = ex.Message;
+        }
+    }
+
+    private async Task HighlightAsync(Guid id)
+    {
+        try
+        {
+            await Api.HighlightVacancyAsync(id);
+            await RefreshAsync();
+            _message = "Vacature gehighlight.";
+        }
+        catch (Exception ex)
+        {
+            _message = ex.Message;
+        }
+    }
+
+    private void OpenPushBom(VacancyListItem vacancy)
+    {
+        _pushBomVacancy = vacancy;
+        _pushBomOpen = true;
+    }
+
+    private Task ClosePushBom()
+    {
+        _pushBomOpen = false;
+        _pushBomVacancy = null;
+        return Task.CompletedTask;
+    }
+
+    private async Task OnPushBomConfirmed(VacancyProductActionResult? result)
+    {
+        await RefreshAsync();
+        _message = $"PushBom verstuurd naar {result?.PushBomRecipientCount ?? 0} kandidaten (stub).";
+    }
+
+    private async Task ExtendAsync(Guid id)
+    {
+        try
+        {
+            await Api.ExtendVacancyAsync(id);
+            await RefreshAsync();
+            _message = "Vacature verlengd (+14 dagen).";
+        }
+        catch (Exception ex)
+        {
+            _message = ex.Message;
+        }
+    }
+
+    private async Task DeactivateAsync(Guid id)
+    {
+        try
+        {
+            await Api.DeactivateVacancyAsync(id);
+            await RefreshAsync();
+            _message = "Vacature inactive (gearchiveerd).";
+        }
+        catch (Exception ex)
+        {
+            _message = ex.Message;
+        }
+    }
+}

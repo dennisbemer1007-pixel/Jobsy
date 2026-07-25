@@ -1,0 +1,64 @@
+@page "/candidate/applications"
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Candidate")]
+@inject JobsyApiClient Api
+
+<PageTitle>Sollicitaties · Jobsy</PageTitle>
+
+<div class="panel-page">
+    <header class="panel-header">
+        <div>
+            <a class="back-link" href="/home">← Terug</a>
+            <h1>Mijn sollicitaties</h1>
+            <p class="login-lead">Status van je reacties op vacatures.</p>
+        </div>
+    </header>
+
+    @if (_loading)
+    {
+        <p class="state-message">Laden…</p>
+    }
+    else if (_items.Count == 0)
+    {
+        <p class="state-message">Nog geen sollicitaties. <a href="/">Bekijk de banenkaart</a>.</p>
+    }
+    else
+    {
+        <div class="table-list">
+            @foreach (var a in _items)
+            {
+                <a class="table-row table-row--link" href="@($"/vacancies/{a.VacancyId}")">
+                    <div>
+                        <strong>@a.VacancyTitle</strong>
+                        <span class="muted">@a.CompanyName · @a.PreferredTransport · @a.EstimatedTravelMinutes min</span>
+                    </div>
+                    <span class="status-pill status-pill--@a.Status.ToLowerInvariant()">@StatusLabel(a.Status)</span>
+                </a>
+            }
+        </div>
+    }
+</div>
+
+@code {
+    private List<ApplicationItem> _items = [];
+    private bool _loading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            _items = (await Api.GetMyApplicationsAsync()).ToList();
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private static string StatusLabel(string status) => status switch
+    {
+        "Accepted" => "Geaccepteerd",
+        "Rejected" => "Afgewezen",
+        _ => "In behandeling"
+    };
+}

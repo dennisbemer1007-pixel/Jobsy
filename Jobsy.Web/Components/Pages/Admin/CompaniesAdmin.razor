@@ -1,0 +1,254 @@
+@page "/admin/companies"
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
+@attribute [Authorize(Roles = "Admin")]
+@using Jobsy.Web.Components.Admin
+@using Microsoft.AspNetCore.WebUtilities
+@inject JobsyApiClient Api
+@inject NavigationManager Nav
+
+<PageTitle>Bedrijven · Jobsy</PageTitle>
+
+<AdminPageShell Title="Bedrijven en intermediairs" Lead="Aantal-kolommen zijn doorklikbaar. Nieuw bedrijf via KVK-stub.">
+    @if (_loading)
+    {
+        <p class="state-message">Laden…</p>
+    }
+    else if (!string.IsNullOrEmpty(_error))
+    {
+        <p class="state-message error">@_error</p>
+    }
+    else
+    {
+        <div class="filter-bar">
+            <label>
+                Zoeken
+                <input type="search" @bind="_query" @bind:event="oninput" placeholder="Naam, adres, KVK…" />
+            </label>
+            <label>
+                Type
+                <select @bind="_typeFilter">
+                    <option value="">Alle</option>
+                    <option value="Employer">Bedrijven</option>
+                    <option value="Intermediary">Intermediairs</option>
+                </select>
+            </label>
+            <span class="muted">@_filtered.Count van @_companies.Count</span>
+        </div>
+
+        <div class="table-scroll">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Naam</th>
+                        <th>Type</th>
+                        <th>KVK</th>
+                        <th>Gebruikers</th>
+                        <th>Actieve vacatures</th>
+                        <th>Totaal vacatures</th>
+                        <th>Sollicitaties</th>
+                        <th>Tokens</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var c in _filtered)
+                    {
+                        <tr>
+                            <td>
+                                <strong>@c.Name</strong>
+                                <div class="muted">@c.Address</div>
+                            </td>
+                            <td>@c.Type</td>
+                            <td>@c.KvkNumber</td>
+                            <td><a href="/admin/users?companyId=@c.Id">@c.UserCount</a></td>
+                            <td><a href="/admin/vacancies?companyId=@c.Id&amp;status=Active">@c.ActiveVacancyCount</a></td>
+                            <td><a href="/admin/vacancies?companyId=@c.Id">@c.TotalVacancyCount</a></td>
+                            <td><a href="/admin/vacancies?companyId=@c.Id&amp;sort=applications">@c.ApplicationCount</a></td>
+                            <td>
+                                <div class="inline-actions">
+                                    <a href="/admin/finance?tab=tokenlog">@c.TokenBalance.ToString("0.##")</a>
+                                    <button class="provider-btn" type="button" @onclick="() => OpenGrant(c)">+ Tokens</button>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        <section class="panel-section">
+            <h2>Nieuw bedrijf / intermediair (KVK-stub)</h2>
+            <form class="login-form" style="max-width:480px" @onsubmit="LookupAsync" @onsubmit:preventDefault>
+                <label>
+                    KVK-nummer
+                    <input @bind="_kvkNumber" placeholder="bijv. 55667788" required />
+                </label>
+                <label>
+                    Type
+                    <select @bind="_newType">
+                        <option value="Employer">Employer</option>
+                        <option value="Intermediary">Intermediary</option>
+                    </select>
+                </label>
+                <button class="provider-btn" type="submit" disabled="@_busy">Zoek vestigingen</button>
+            </form>
+
+            @if (_establishments.Count > 0)
+            {
+                <div class="table-list" style="margin-top:1rem">
+                    @foreach (var e in _establishments)
+                    {
+                        <div class="table-row">
+                            <div>
+                                <strong>@e.Name</strong>
+                                <span class="muted">@e.Address · @e.KvkEstablishmentId</span>
+                            </div>
+                            @if (e.IsInUse)
+                            {
+                                <span class="muted">Al geregistreerd</span>
+                            }
+                            else
+                            {
+                                <button class="provider-btn" type="button" disabled="@_busy" @onclick="() => RegisterAsync(e)">
+                                    Toevoegen
+                                </button>
+                            }
+                        </div>
+                    }
+                </div>
+            }
+
+            @if (!string.IsNullOrEmpty(_message))
+            {
+                <p class="state-message">@_message</p>
+            }
+        </section>
+    }
+</AdminPageShell>
+
+<GrantTokensDialog IsOpen="_grantOpen"
+                   Company="_grantCompany"
+                   OnClose="CloseGrant"
+                   OnGranted="OnGrantedAsync" />
+
+@code {
+    private List<AdminCompanyItem> _companies = [];
+    private List<KvkEstablishmentItem> _establishments = [];
+    private string _query = "";
+    private string _typeFilter = "";
+    private string _kvkNumber = "55667788";
+    private string _newType = "Intermediary";
+    private bool _loading = true;
+    private bool _busy;
+    private string? _error;
+    private string? _message;
+    private bool _grantOpen;
+    private AdminCompanyItem? _grantCompany;
+
+    private List<AdminCompanyItem> _filtered => Filter().ToList();
+
+    protected override async Task OnInitializedAsync()
+    {
+        var qs = QueryHelpers.ParseQuery(Nav.ToAbsoluteUri(Nav.Uri).Query);
+        if (qs.TryGetValue("type", out var type))
+        {
+            _typeFilter = type.ToString();
+        }
+
+        try
+        {
+            _companies = (await Api.GetAdminCompaniesAsync()).ToList();
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private IEnumerable<AdminCompanyItem> Filter()
+    {
+        IEnumerable<AdminCompanyItem> q = _companies;
+        if (!string.IsNullOrWhiteSpace(_typeFilter))
+        {
+            q = q.Where(c => c.Type.Equals(_typeFilter, StringComparison.OrdinalIgnoreCase));
+        }
+
+        if (string.IsNullOrWhiteSpace(_query))
+        {
+            return q;
+        }
+
+        var terms = _query.Trim().Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        return q.Where(c => terms.All(t =>
+            Contains(c.Name, t) || Contains(c.Address, t) || Contains(c.KvkNumber, t) || Contains(c.Type, t)));
+    }
+
+    private static bool Contains(string? value, string term) =>
+        !string.IsNullOrEmpty(value) && value.Contains(term, StringComparison.OrdinalIgnoreCase);
+
+    private async Task LookupAsync()
+    {
+        _busy = true;
+        _message = null;
+        try
+        {
+            _establishments = (await Api.GetKvkEstablishmentsAsync(_kvkNumber.Trim())).ToList();
+            if (_establishments.Count == 0)
+            {
+                _message = "Geen vestigingen gevonden in KVK-stub.";
+            }
+        }
+        catch (Exception ex)
+        {
+            _message = ex.Message;
+            _establishments = [];
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private async Task RegisterAsync(KvkEstablishmentItem e)
+    {
+        _busy = true;
+        _message = null;
+        try
+        {
+            await Api.RegisterAdminCompanyFromKvkAsync(e.KvkNumber, e.KvkEstablishmentId, _newType);
+            _message = $"'{e.Name}' toegevoegd als {_newType}.";
+            _companies = (await Api.GetAdminCompaniesAsync()).ToList();
+            _establishments = (await Api.GetKvkEstablishmentsAsync(_kvkNumber.Trim())).ToList();
+        }
+        catch (Exception ex)
+        {
+            _message = ex.Message;
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private void OpenGrant(AdminCompanyItem company)
+    {
+        _grantCompany = company;
+        _grantOpen = true;
+        _message = null;
+    }
+
+    private void CloseGrant()
+    {
+        _grantOpen = false;
+        _grantCompany = null;
+    }
+
+    private async Task OnGrantedAsync()
+    {
+        _companies = (await Api.GetAdminCompaniesAsync()).ToList();
+        _message = "Tokens toegekend. Zie tokenlog voor de reden.";
+    }
+}

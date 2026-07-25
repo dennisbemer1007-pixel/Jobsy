@@ -1,0 +1,50 @@
+@page "/home"
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
+@attribute [Microsoft.AspNetCore.Authorization.Authorize]
+@using Jobsy.Core.Authorization
+@using Jobsy.Web.Components.Pages.Admin
+@using Microsoft.AspNetCore.Components.Authorization
+
+<PageTitle>Home · Jobsy</PageTitle>
+
+<AuthorizeView Roles="@JobsyRoles.Admin">
+    <Authorized>
+        <AdminHomePanel />
+    </Authorized>
+</AuthorizeView>
+
+<AuthorizeView Roles="@JobsyRoles.Candidate">
+    <Authorized>
+        <CandidateHomePanel />
+    </Authorized>
+</AuthorizeView>
+
+<AuthorizeView Roles="@JobsyRoles.BranchManager">
+    <Authorized>
+        <EmployerHomePanel Title="Vestiging dashboard" Lead="Jouw vacatures en tokens in één oogopslag." VacanciesHref="/employer/vacancies" TokensHref="/branch/tokens" />
+    </Authorized>
+</AuthorizeView>
+
+<AuthorizeView Roles="@JobsyRoles.RegionalManager">
+    <Authorized>
+        <EmployerHomePanel Title="Regio dashboard" Lead="Vacatures en vestigingen in jouw regio." VacanciesHref="/employer/vacancies" TokensHref="/employer/tokens" ExtraHref="/regional/branches" ExtraLabel="Mijn vestigingen" />
+    </Authorized>
+</AuthorizeView>
+
+<AuthorizeView Roles="@JobsyRoles.EnterpriseManager">
+    <Authorized>
+        <EmployerHomePanel Title="Bedrijf dashboard" Lead="Vacatures, tokens, vestigingen en regio’s." VacanciesHref="/employer/vacancies" TokensHref="/employer/tokens" ExtraHref="/employer/branches" ExtraLabel="Vestigingen" />
+    </Authorized>
+</AuthorizeView>
+
+<AuthorizeView Roles="@JobsyRoles.Intermediary">
+    <Authorized>
+        <EmployerHomePanel Title="Intermediair dashboard"
+                           Lead="KPI’s, batch-publicatie en tokens voor gekoppelde opdrachtgevers."
+                           VacanciesHref="/intermediary/batch"
+                           TokensHref="/employer/tokens"
+                           ApplicationsHref="/intermediary"
+                           ExtraHref="/intermediary"
+                           ExtraLabel="Opdrachtgevers" />
+    </Authorized>
+</AuthorizeView>

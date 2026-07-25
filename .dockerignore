@@ -1,0 +1,16 @@
+.git
+**/.git
+**/bin
+**/obj
+**/node_modules
+**/.vs
+**/.idea
+**/*.user
+**/*.suo
+**/TestResults
+**/coverage
+docs/demo/**/*.png
+docs/demo/**/*.jpg
+**/.cursor
+**/agent-transcripts
+**/terminals
