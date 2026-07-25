@@ -1,16 +1,17 @@
 # Jobsy temporary free demo on Render.
 # Docs: docs/deploy-render.md
 #
-# After first deploy, free web services sleep after ~15 min idle (~1 min cold start).
-# Free Postgres expires after 30 days.
+# Free web services cannot receive private-network traffic from each other —
+# use RENDER_EXTERNAL_URL for cross-service HTTP.
+# All resources MUST share one region (private DB access).
 #
-# Important: free web services cannot receive private-network traffic.
-# Cross-service URLs must use RENDER_EXTERNAL_URL (public *.onrender.com), not property: host.
+# If you previously deployed with mixed regions, delete jobsy-api, jobsy-web,
+# and jobsy-db in the Render Dashboard, then Manual sync this Blueprint.
 
 databases:
   - name: jobsy-db
     plan: free
-    region: oregon
+    region: frankfurt
     postgresMajorVersion: "16"
     databaseName: jobsy
     user: jobsy
@@ -20,7 +21,7 @@ services:
     name: jobsy-api
     runtime: docker
     plan: free
-    region: oregon
+    region: frankfurt
     dockerfilePath: ./Jobsy.Api/Dockerfile
     dockerContext: .
     healthCheckPath: /health
@@ -52,7 +53,7 @@ services:
     name: jobsy-web
     runtime: docker
     plan: free
-    region: oregon
+    region: frankfurt
     dockerfilePath: ./Jobsy.Web/Dockerfile
     dockerContext: .
     healthCheckPath: /

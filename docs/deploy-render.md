@@ -4,36 +4,33 @@ Tijdelijke publieke demo zonder laptop. Free tier: services slapen na ~15 min id
 
 ## Eenmalig: code + Blueprint
 
-1. Zorg dat deze repo op GitHub staat: `dennisbemer1007-pixel/Jobsy` (main/master met `render.yaml`).
-2. Maak een gratis account op [https://render.com/register](https://render.com/register) (GitHub-login mag).
-3. In Render Dashboard: **New** → **Blueprint**.
-4. Selecteer de GitHub-repo `Jobsy` en bevestig de Blueprint (`render.yaml`).
-5. Kies region **Frankfurt** als gevraagd (staat al in de Blueprint).
-6. Wacht tot `jobsy-db`, `jobsy-api` en `jobsy-web` groen zijn (eerste build kan 5–10 min duren).
+1. Repo op GitHub: `dennisbemer1007-pixel/Jobsy` (branch `main` met `render.yaml`).
+2. Account op [https://render.com/register](https://render.com/register) (GitHub-login).
+3. Render Dashboard: **New** → **Blueprint** → repo **Jobsy** → Deploy.
+
+## Als sync faalt of API “Failed” is (regio-mismatch)
+
+Eerdere deploys hadden DB in **Oregon** en web in **Frankfurt**. Regio’s zijn **niet** te wijzigen.
+
+1. Verwijder in het Dashboard (Allow/confirm alles):
+   - `jobsy-api`
+   - `jobsy-web`
+   - `jobsy-db`
+2. Blueprint-pagina → **Manual sync**
+3. Wacht tot alle drie opnieuw groen zijn (zelfde regio: **Frankfurt**)
 
 ## Gebruiken
 
-- Open de URL van **jobsy-web** (Dashboard → klik `jobsy-web` → link bovenaan, bv. `https://jobsy-web-xxxx.onrender.com`).
-- Demo-login: `kandidaat@jobsy.local` / `Jobsy123!` (zelfde accounts als lokaal).
-- API health: URL van **jobsy-api** + `/health`.
+- URL: klik **`jobsy-web`** → link bovenaan (`https://….onrender.com`)
+- Login: `kandidaat@jobsy.local` / `Jobsy123!`
+- API check: **`jobsy-api`** URL + `/health`
 
-Als `jobsy-api` **Failed** toont: open die service → **Logs**, en klik op de Blueprint **Manual sync** na een fix-push.
+Na idle: eerste hit ~1 min cold start. Soms 2× laden (Web wakker, API nog niet).
 
-**Let op:** free web services kunnen elkaar niet via het privé-netwerk bereiken. In `render.yaml` gebruiken we daarom `RENDER_EXTERNAL_URL` (publiek), niet `property: host`.
+## Waarom zo geconfigureerd
 
-## Wat de Blueprint zet
-
-| Service | Plan | Rol |
-|---------|------|-----|
-| `jobsy-db` | Free Postgres 16 + PostGIS (via EF) | Database |
-| `jobsy-api` | Free web (Docker) | API + seed |
-| `jobsy-web` | Free web (Docker) | Blazor UI |
-
-Env o.a.: `JobsyAuth__AllowDevelopmentAuth=true` (demo header-auth, **niet** voor echte productie).
-
-## Lokaal Docker (optioneel)
-
-```powershell
-docker build -f Jobsy.Api/Dockerfile -t jobsy-api .
-docker build -f Jobsy.Web/Dockerfile -t jobsy-web .
-```
+| Keuze | Reden |
+|-------|--------|
+| Alles `frankfurt` | Zelfde private network voor Postgres |
+| `RENDER_EXTERNAL_URL` | Free web services mogen geen privé-HTTP van elkaar ontvangen |
+| `JobsyAuth__AllowDevelopmentAuth` | Demo-logins zonder Entra (niet voor echte productie) |
