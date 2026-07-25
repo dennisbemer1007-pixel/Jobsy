@@ -730,6 +730,12 @@
         {
             _loading = false;
         }
+
+        // Map init is gated on !_loading in OnAfterRenderAsync — nudge a re-render after load.
+        if (!_mapReady && !_mapInitScheduled)
+        {
+            await InvokeAsync(StateHasChanged);
+        }
     }
 
     private List<Dictionary<string, object?>> BuildMarkers() =>

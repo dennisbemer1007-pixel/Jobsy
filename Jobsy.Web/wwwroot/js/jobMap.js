@@ -409,6 +409,11 @@ window.jobMap = (function () {
         openCallback = options && options.dotNetRef ? options.dotNetRef : null;
         normalizeTravelOptions(options && options.travel);
 
+        map = L.map(el, {
+            zoomControl: true,
+            scrollWheelZoom: true
+        });
+
         // Light Carto basemap — CSS filter in app.css applies Jobsy blue tint
         L.tileLayer("https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png", {
             maxZoom: 19,

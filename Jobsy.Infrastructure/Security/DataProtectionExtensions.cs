@@ -17,11 +17,24 @@ internal static class DataProtectionExtensions
         services.AddDataProtection()
             .SetApplicationName("Jobsy.Api");
 
-        services.AddSingleton<IConfigureOptions<KeyManagementOptions>>(
-            new ConfigureOptions<KeyManagementOptions>(options =>
+        try
+        {
+            var repository = new PostgresXmlRepository(connectionString);
+            if (!repository.TryEnsureTable())
             {
-                options.XmlRepository = new PostgresXmlRepository(connectionString);
-            }));
+                return services;
+            }
+
+            services.AddSingleton<IConfigureOptions<KeyManagementOptions>>(
+                new ConfigureOptions<KeyManagementOptions>(options =>
+                {
+                    options.XmlRepository = repository;
+                }));
+        }
+        catch
+        {
+            // Keep default key ring so the API still starts.
+        }
 
         return services;
     }
@@ -35,6 +48,19 @@ internal static class DataProtectionExtensions
         public PostgresXmlRepository(string connectionString)
         {
             _connectionString = connectionString;
+        }
+
+        public bool TryEnsureTable()
+        {
+            try
+            {
+                EnsureTable();
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
         }
 
         public IReadOnlyCollection<XElement> GetAllElements()
@@ -55,19 +81,26 @@ internal static class DataProtectionExtensions
 
         public void StoreElement(XElement element, string friendlyName)
         {
-            EnsureTable();
-            using var conn = new NpgsqlConnection(_connectionString);
-            conn.Open();
-            using var cmd = new NpgsqlCommand(
-                """
-                INSERT INTO "__DataProtectionKeys" ("Id", "Xml")
-                VALUES (@id, @xml)
-                ON CONFLICT ("Id") DO UPDATE SET "Xml" = EXCLUDED."Xml"
-                """,
-                conn);
-            cmd.Parameters.AddWithValue("id", friendlyName);
-            cmd.Parameters.AddWithValue("xml", element.ToString(SaveOptions.DisableFormatting));
-            cmd.ExecuteNonQuery();
+            try
+            {
+                EnsureTable();
+                using var conn = new NpgsqlConnection(_connectionString);
+                conn.Open();
+                using var cmd = new NpgsqlCommand(
+                    """
+                    INSERT INTO "__DataProtectionKeys" ("Id", "Xml")
+                    VALUES (@id, @xml)
+                    ON CONFLICT ("Id") DO UPDATE SET "Xml" = EXCLUDED."Xml"
+                    """,
+                    conn);
+                cmd.Parameters.AddWithValue("id", friendlyName);
+                cmd.Parameters.AddWithValue("xml", element.ToString(SaveOptions.DisableFormatting));
+                cmd.ExecuteNonQuery();
+            }
+            catch
+            {
+                // Ignore persistence failures for this process lifetime.
+            }
         }
 
         private void EnsureTable()

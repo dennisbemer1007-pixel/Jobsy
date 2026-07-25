@@ -10,6 +10,7 @@ namespace Jobsy.Web.Security;
 /// <summary>
 /// Persists ASP.NET Data Protection keys in Postgres so antiforgery/auth cookies
 /// survive Render redeploys (ephemeral container disks wipe the default key ring).
+/// Falls back to the default ephemeral key ring when Postgres is unreachable.
 /// </summary>
 public static class DataProtectionSetup
 {
@@ -27,12 +28,25 @@ public static class DataProtectionSetup
             return services;
         }
 
-        var normalized = NormalizePostgresConnectionString(connectionString);
-        services.AddSingleton<IConfigureOptions<KeyManagementOptions>>(
-            new ConfigureOptions<KeyManagementOptions>(options =>
+        try
+        {
+            var normalized = NormalizePostgresConnectionString(connectionString);
+            var repository = new PostgresXmlRepository(normalized);
+            if (!repository.TryEnsureTable())
             {
-                options.XmlRepository = new PostgresXmlRepository(normalized);
-            }));
+                return services;
+            }
+
+            services.AddSingleton<IConfigureOptions<KeyManagementOptions>>(
+                new ConfigureOptions<KeyManagementOptions>(options =>
+                {
+                    options.XmlRepository = repository;
+                }));
+        }
+        catch
+        {
+            // Keep ephemeral keys so the site still boots without Postgres.
+        }
 
         return services;
     }
@@ -91,6 +105,19 @@ public static class DataProtectionSetup
             _connectionString = connectionString;
         }
 
+        public bool TryEnsureTable()
+        {
+            try
+            {
+                EnsureTable();
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
         public IReadOnlyCollection<XElement> GetAllElements()
         {
             EnsureTable();
@@ -109,19 +136,26 @@ public static class DataProtectionSetup
 
         public void StoreElement(XElement element, string friendlyName)
         {
-            EnsureTable();
-            using var conn = new NpgsqlConnection(_connectionString);
-            conn.Open();
-            using var cmd = new NpgsqlCommand(
-                """
-                INSERT INTO "__DataProtectionKeys" ("Id", "Xml")
-                VALUES (@id, @xml)
-                ON CONFLICT ("Id") DO UPDATE SET "Xml" = EXCLUDED."Xml"
-                """,
-                conn);
-            cmd.Parameters.AddWithValue("id", friendlyName);
-            cmd.Parameters.AddWithValue("xml", element.ToString(SaveOptions.DisableFormatting));
-            cmd.ExecuteNonQuery();
+            try
+            {
+                EnsureTable();
+                using var conn = new NpgsqlConnection(_connectionString);
+                conn.Open();
+                using var cmd = new NpgsqlCommand(
+                    """
+                    INSERT INTO "__DataProtectionKeys" ("Id", "Xml")
+                    VALUES (@id, @xml)
+                    ON CONFLICT ("Id") DO UPDATE SET "Xml" = EXCLUDED."Xml"
+                    """,
+                    conn);
+                cmd.Parameters.AddWithValue("id", friendlyName);
+                cmd.Parameters.AddWithValue("xml", element.ToString(SaveOptions.DisableFormatting));
+                cmd.ExecuteNonQuery();
+            }
+            catch
+            {
+                // Ignore persistence failures; in-memory key ring still works for this process.
+            }
         }
 
         private void EnsureTable()
