@@ -60,6 +60,14 @@ Na een redeploy kan Render kort dit loggen als je browser nog oude cookies heeft
 
 **Structureel:** `jobsy-web` bewaart Data Protection-keys in Postgres (`ConnectionStrings__JobsyDb`). Zorg dat die env-var gezet is (Blueprint zet dit via `jobsy-db`). Zonder DB-keys blijven cookies na elke deploy ongeldig.
 
+## Crash: inotify / FileSystemWatcher limit
+
+Als de API crasht met:
+`The configured user limit (128) on the number of inotify instances has been reached`
+
+dan heeft .NET te veel file-watchers (config reload). De Dockerfiles en Blueprint zetten
+`DOTNET_HOSTBUILDER__RELOADCONFIGONCHANGE=false`. Na push: Manual Deploy van `jobsy-api` (en eventueel `jobsy-web`).
+
 ## Connection string fout (na DB-upgrade)
 
 Als `jobsy-api` crasht met:

@@ -15,6 +15,8 @@ RUN dotnet publish Jobsy.Api/Jobsy.Api.csproj -c Release -o /app/publish /p:UseA
 FROM mcr.microsoft.com/dotnet/aspnet:9.0 AS final
 WORKDIR /app
 COPY --from=build /app/publish .
+# Render/Linux: avoid FileSystemWatcher (inotify) exhaustion on small instances.
+ENV DOTNET_HOSTBUILDER__RELOADCONFIGONCHANGE=false
 ENV ASPNETCORE_URLS=http://0.0.0.0:8080
 EXPOSE 8080
 CMD ["sh", "-c", "dotnet Jobsy.Api.dll --urls http://0.0.0.0:${PORT:-8080}"]

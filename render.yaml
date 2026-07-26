@@ -30,6 +30,8 @@ services:
     envVars:
       - key: ASPNETCORE_ENVIRONMENT
         value: Production
+      - key: DOTNET_HOSTBUILDER__RELOADCONFIGONCHANGE
+        value: "false"
       - key: AllowedHosts
         value: "*"
       - key: JobsyAuth__AllowDevelopmentAuth
@@ -62,6 +64,8 @@ services:
     envVars:
       - key: ASPNETCORE_ENVIRONMENT
         value: Production
+      - key: DOTNET_HOSTBUILDER__RELOADCONFIGONCHANGE
+        value: "false"
       - key: AllowedHosts
         value: "*"
       - key: ApiBaseUrl
