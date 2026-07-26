@@ -1,12 +1,34 @@
-# Jobsy op Render (gratis demo)
+# Jobsy op Render (always-on demo)
 
-Tijdelijke publieke demo zonder laptop. Free tier: services slapen na ~15 min idle (~1 min cold start). Free Postgres vervalt na **30 dagen**.
+Publieke demo zonder laptop. Blueprint gebruikt **betaalde instance types**:
+
+| Resource | Plan | Effect |
+|----------|------|--------|
+| `jobsy-api` / `jobsy-web` | **Starter** (~$7/mo elk) | Geen spin-down na idle |
+| `jobsy-db` | **Basic-256mb** | Geen 30-dagen free-expiry |
+
+Een workspace-betaalplan of creditcard alleen is **niet** genoeg: Free instances blijven slapen. Het instance-type per service telt.
+
+Indicatie kosten: ~$14/mo web + Postgres-compute/storage (prorata per seconde). Zie [Render pricing](https://render.com/pricing).
 
 ## Eenmalig: code + Blueprint
 
 1. Repo op GitHub: `dennisbemer1007-pixel/Jobsy` (branch `main` met `render.yaml`).
-2. Account op [https://render.com/register](https://render.com/register) (GitHub-login).
+2. Account op [https://render.com/register](https://render.com/register) (GitHub-login) + betaalmethode.
 3. Render Dashboard: **New** → **Blueprint** → repo **Jobsy** → Deploy.
+
+## Bestaande free-deploy upgraden
+
+1. Push deze `render.yaml` naar `main`.
+2. Blueprint-pagina → **Manual sync** (of wacht op auto-sync).
+3. Bevestig upgrades naar Starter / Basic-256mb in het Dashboard.
+4. Controleer na sync:
+   - `jobsy-api` → **Environment**: `ConnectionStrings__JobsyDb` is een echte `postgres://` / `postgresql://` URL
+   - `jobsy-api` Logs: `Seeding Jobsy mock data` of `Seed completed`
+   - `jobsy-api` URL + `/health` → OK
+5. Open `jobsy-web`; mockdata (Westland / Den Haag vacatures) hoort zichtbaar te zijn.
+
+Als de connection string leeg is of corrupt (vaak na DB-upgrade), zie hieronder.
 
 ## Als sync faalt of API “Failed” is (regio-mismatch)
 
@@ -18,6 +40,7 @@ Eerdere deploys hadden DB in **Oregon** en web in **Frankfurt**. Regio’s zijn 
    - `jobsy-db`
 2. Blueprint-pagina → **Manual sync**
 3. Wacht tot alle drie opnieuw groen zijn (zelfde regio: **Frankfurt**)
+4. API herseedt mockdata bij eerste start op een lege DB
 
 ## Gebruiken
 
@@ -25,7 +48,7 @@ Eerdere deploys hadden DB in **Oregon** en web in **Frankfurt**. Regio’s zijn 
 - Login: `kandidaat@jobsy.local` / `Jobsy123!`
 - API check: **`jobsy-api`** URL + `/health`
 
-Na idle: eerste hit ~1 min cold start. Soms 2× laden (Web wakker, API nog niet).
+Services blijven draaien; geen cold start na idle.
 
 ## Antiforgery / “key was not found in the key ring”
 
@@ -37,25 +60,28 @@ Na een redeploy kan Render kort dit loggen als je browser nog oude cookies heeft
 
 **Structureel:** `jobsy-web` bewaart Data Protection-keys in Postgres (`ConnectionStrings__JobsyDb`). Zorg dat die env-var gezet is (Blueprint zet dit via `jobsy-db`). Zonder DB-keys blijven cookies na elke deploy ongeldig.
 
-## Connection string fout (Starter-upgrade)
+## Connection string fout (na DB-upgrade)
 
 Als `jobsy-api` crasht met:
 `Format of the initialization string does not conform to specification starting at index 0`
 
-dan is `ConnectionStrings__JobsyDb` leeg of geen echte Postgres-string.
+dan is `ConnectionStrings__JobsyDb` leeg of geen echte Postgres-string — mockdata en de site blijven dan leeg/kapot.
 
 1. Open **`jobsy-db`** → **Info** → kopieer **Internal Database URL**  
    (begint met `postgres://` of `postgresql://`)
-2. Open **`jobsy-api`** → **Environment**
+2. Open **`jobsy-api`** én **`jobsy-web`** → **Environment**
 3. Zet / herstel key **`ConnectionStrings__JobsyDb`** op die volledige URL (geen aanhalingstekens)
-4. **Save** → Manual Deploy van `jobsy-api`
+4. **Save** → Manual Deploy van `jobsy-api` (web daarna desnoods ook)
 5. Optioneel in DB-shell: `CREATE EXTENSION IF NOT EXISTS postgis;`
+6. In API-logs bevestigen dat de seeder draait
 
 ## Waarom zo geconfigureerd
 
 | Keuze | Reden |
 |-------|--------|
+| `plan: starter` op api + web | Always-on; geen 15-min spin-down |
+| `plan: basic-256mb` op DB | Blijvende Postgres (geen free 30-dagen expiry) |
 | Alles `frankfurt` | Zelfde private network voor Postgres |
-| `RENDER_EXTERNAL_URL` | Free web services mogen geen privé-HTTP van elkaar ontvangen |
+| `RENDER_EXTERNAL_URL` | Stabiele cross-service HTTP (ook op free bruikbaar) |
 | `ConnectionStrings__JobsyDb` op **web én api** | Data Protection-keys in Postgres (antiforgery/auth cookies na redeploy) |
 | `JobsyAuth__AllowDevelopmentAuth` | Demo-logins zonder Entra (niet voor echte productie) |

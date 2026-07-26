@@ -1,8 +1,10 @@
-# Jobsy temporary free demo on Render.
+# Jobsy always-on demo on Render (paid instance types).
 # Docs: docs/deploy-render.md
 #
-# Free web services cannot receive private-network traffic from each other —
-# use RENDER_EXTERNAL_URL for cross-service HTTP.
+# Starter web services do not spin down on idle.
+# basic-256mb Postgres does not expire after 30 days (unlike free).
+#
+# Cross-service HTTP still uses RENDER_EXTERNAL_URL (works on free and paid).
 # All resources MUST share one region (private DB access).
 #
 # If you previously deployed with mixed regions, delete jobsy-api, jobsy-web,
@@ -10,7 +12,7 @@
 
 databases:
   - name: jobsy-db
-    plan: free
+    plan: basic-256mb
     region: frankfurt
     postgresMajorVersion: "16"
     databaseName: jobsy
@@ -20,7 +22,7 @@ services:
   - type: web
     name: jobsy-api
     runtime: docker
-    plan: free
+    plan: starter
     region: frankfurt
     dockerfilePath: ./Jobsy.Api/Dockerfile
     dockerContext: .
@@ -52,7 +54,7 @@ services:
   - type: web
     name: jobsy-web
     runtime: docker
-    plan: free
+    plan: starter
     region: frankfurt
     dockerfilePath: ./Jobsy.Web/Dockerfile
     dockerContext: .

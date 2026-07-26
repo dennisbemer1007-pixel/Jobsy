@@ -20,10 +20,11 @@ Jobsy/
 └── Jobsy.Web/             # Blazor Funda-layout (lijst + Leaflet-kaart)
 ```
 
-## Cloud-demo (Render, gratis)
+## Cloud-demo (Render, always-on)
 
-Tijdelijk publiek zonder laptop: zie [`docs/deploy-render.md`](docs/deploy-render.md).
-Blueprint: [`render.yaml`](render.yaml) → Render **New → Blueprint** op GitHub-repo `dennisbemer1007-pixel/Jobsy`.
+Publiek zonder laptop: zie [`docs/deploy-render.md`](docs/deploy-render.md).
+Blueprint: [`render.yaml`](render.yaml) → Starter web + Basic Postgres (geen idle spin-down).
+Render **New → Blueprint** op GitHub-repo `dennisbemer1007-pixel/Jobsy` (of Manual sync op bestaande Blueprint).
 
 ## Lokaal starten
 
