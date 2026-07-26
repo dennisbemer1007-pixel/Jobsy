@@ -1,29 +1,29 @@
 :root {
-    /* Lobsy brand palette — Funda-inspired layout with Lobsy blue */
-    --bg: #f0f6fc;
+    /* Lobsy brand — deep navy shell + coral pin from the mascot */
+    --bg: #f2f5f9;
     --surface: #ffffff;
-    --text: #1a2332;
-    --muted: #5b6777;
-    --border: #d5e3f0;
-    --brand: #007bff;
-    --brand-deep: #0056b3;
-    --accent: #007bff;
-    --accent-soft: #e8f2ff;
-    --accent-hover: #0069d9;
-    --accent-deep: #004a99;
-    --secondary: #1e4e8c;
+    --text: #122033;
+    --muted: #5a6a7d;
+    --border: #d5dee9;
+    --brand: #0f2d5c;
+    --brand-deep: #0a2044;
+    --accent: #e8432e;
+    --accent-soft: #fde8e4;
+    --accent-hover: #d63624;
+    --accent-deep: #b82c1d;
+    --secondary: #163a6b;
     --danger: #9b1c1c;
     --danger-soft: #fef2f2;
     --warn: #a65b00;
     --warn-soft: #fff8e7;
-    --hover: #eef4fb;
-    --shadow: 0 1px 2px rgba(0, 70, 140, 0.06);
-    --shadow-lg: 0 12px 32px rgba(0, 70, 140, 0.14);
+    --hover: #eef2f7;
+    --shadow: 0 1px 2px rgba(15, 45, 92, 0.07);
+    --shadow-lg: 0 12px 32px rgba(15, 45, 92, 0.14);
     --radius: 12px;
     --radius-sm: 8px;
-    --map-land: #dce8f5;
-    --map-ring-fill: rgba(0, 123, 255, 0.14);
-    --map-ring-stroke: rgba(0, 123, 255, 0.55);
+    --map-land: #d9e3ef;
+    --map-ring-fill: rgba(232, 67, 46, 0.14);
+    --map-ring-stroke: rgba(232, 67, 46, 0.55);
     --font: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
 }
 
@@ -488,9 +488,8 @@ a {
 .login-brand__logo {
     width: 56px;
     height: 56px;
-    border-radius: 10px;
-    object-fit: cover;
-    background: #000;
+    object-fit: contain;
+    background: transparent;
     display: block;
 }
 
@@ -724,9 +723,9 @@ a {
     display: inline-flex;
     align-items: center;
     gap: 0.45rem;
-    padding: 0.2rem 0.55rem 0.2rem 0.2rem;
-    border-radius: 8px;
-    background: #0b1b33;
+    padding: 0.1rem 0.15rem 0.1rem 0;
+    border-radius: 0;
+    background: transparent;
     color: #fff;
     font-size: 1.2rem;
     font-weight: 800;
@@ -737,10 +736,9 @@ a {
 .brand__logo {
     width: 40px;
     height: 40px;
-    border-radius: 6px;
-    object-fit: cover;
+    object-fit: contain;
     display: block;
-    background: #000;
+    background: transparent;
 }
 
 .brand__name {
@@ -966,7 +964,7 @@ a {
     border: none;
     border-radius: 8px;
     padding: 0.65rem 1.25rem;
-    background: var(--secondary);
+    background: var(--accent);
     color: #fff;
     font: inherit;
     font-weight: 700;
@@ -974,7 +972,7 @@ a {
 }
 
 .filter-bar__search:hover {
-    background: var(--brand-deep);
+    background: var(--accent-hover);
 }
 
 .discovery-filter-fab {
@@ -1102,7 +1100,7 @@ a {
     left: 0.55rem;
     z-index: 2;
     padding: 0.2rem 0.45rem;
-    background: var(--brand);
+    background: var(--accent);
     color: #fff;
     font-size: 0.72rem;
     font-weight: 700;
@@ -1134,6 +1132,14 @@ a {
     font-size: 0.86rem;
     font-weight: 600;
     color: #fff;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+}
+
+.job-card__travel .lobsy-mark {
+    color: #ff7a5c;
+    flex-shrink: 0;
 }
 
 .job-card__wage {
@@ -1583,6 +1589,83 @@ a {
 
 .travel-hint .travel-badge {
     margin-top: 0.15rem;
+}
+
+.lobsy-mark {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 0;
+    color: var(--accent);
+}
+
+.lobsy-mark svg {
+    display: block;
+}
+
+.lobsy-proximity {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    margin-top: 0.85rem;
+    padding: 0.85rem 0.95rem;
+    border-radius: var(--radius);
+    border: 1px solid color-mix(in srgb, var(--accent) 22%, var(--border));
+    background:
+        linear-gradient(135deg, color-mix(in srgb, var(--accent-soft) 70%, var(--surface)), var(--surface));
+}
+
+.lobsy-proximity__icon {
+    flex-shrink: 0;
+    width: 2.25rem;
+    height: 2.25rem;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--brand);
+    color: #ff7a5c;
+    box-shadow: 0 4px 12px rgba(15, 45, 92, 0.18);
+}
+
+.lobsy-proximity__body {
+    min-width: 0;
+    flex: 1;
+}
+
+.lobsy-proximity__title {
+    margin: 0;
+    font-size: 0.92rem;
+    font-weight: 700;
+    color: var(--brand);
+    letter-spacing: -0.01em;
+    line-height: 1.35;
+}
+
+.lobsy-proximity__meta {
+    margin: 0.45rem 0 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+}
+
+.lobsy-proximity__chip {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.22rem 0.6rem;
+    border-radius: 999px;
+    background: var(--accent);
+    color: #fff;
+    font-size: 0.76rem;
+    font-weight: 700;
+    line-height: 1.2;
+}
+
+.lobsy-proximity__chip--soft {
+    background: color-mix(in srgb, var(--brand) 8%, var(--surface));
+    color: var(--secondary);
+    border: 1px solid color-mix(in srgb, var(--brand) 16%, var(--border));
+    font-weight: 600;
 }
 
 .badges {
@@ -2220,48 +2303,71 @@ a {
     }
 
     .cluster-list__row {
-        flex-direction: column;
-        gap: 0.45rem;
+        align-items: center;
+        gap: 0.55rem;
     }
 
-    .cluster-list__wage-panel {
-        max-width: none;
-        width: 100%;
-    }
-
-    .map-popup {
+    .map-popup:not(.map-popup--with-wages) {
         flex-direction: column;
     }
 
-    .map-popup__main {
+    .map-popup:not(.map-popup--with-wages) .map-popup__main {
         flex-direction: column;
     }
 
-    .map-popup__media {
+    .map-popup:not(.map-popup--with-wages) .map-popup__media {
         flex: none;
         width: 100%;
         height: 96px;
     }
 
-    .map-popup__media--logo-only {
+    .map-popup:not(.map-popup--with-wages) .map-popup__media--logo-only {
         height: 72px;
     }
 
-    .map-popup__media--logo-only .map-popup__logo {
+    .map-popup:not(.map-popup--with-wages) .map-popup__media--logo-only .map-popup__logo {
         width: 44px;
         height: 44px;
+    }
+
+    /* Keep vacancy + uurlonen side-by-side in the single-job popup */
+    .map-popup.map-popup--with-wages {
+        flex-direction: row;
+        align-items: stretch;
+    }
+
+    .map-popup.map-popup--with-wages .map-popup__main {
+        flex-direction: column;
+        flex: 1 1 auto;
+        min-width: 0;
+    }
+
+    .map-popup.map-popup--with-wages .map-popup__media {
+        flex: none;
+        width: 100%;
+        height: 72px;
+    }
+
+    .map-popup.map-popup--with-wages .map-popup__media--logo-only {
+        height: 56px;
+    }
+
+    .map-popup.map-popup--with-wages .map-popup__media--logo-only .map-popup__logo {
+        width: 40px;
+        height: 40px;
     }
 
     .map-popup__body {
         padding: 0.6rem 0.7rem 0.65rem;
     }
 
-    .map-popup__wage-panel {
-        max-width: none;
-        min-width: 0;
-        border-left: none;
-        border-top: 1px solid var(--border);
-        padding: 0.55rem 0.7rem 0.65rem;
+    .map-popup.map-popup--with-wages .map-popup__wage-panel {
+        flex: 0 0 auto;
+        min-width: 6.75rem;
+        max-width: 8.25rem;
+        border-left: 1px solid var(--border);
+        border-top: none;
+        padding: 0.55rem 0.55rem 0.6rem;
     }
 
     .map-popup__top {
@@ -2344,22 +2450,22 @@ a {
     .jobsy-logo__img {
         width: 36px;
         height: 36px;
-        border-radius: 6px;
-        object-fit: cover;
+        object-fit: contain;
         display: block;
-        background: #000;
+        background: transparent;
     }
 
     .jobsy-logo__mark {
         display: inline-flex;
         align-items: center;
-        padding: 0.2rem 0.55rem;
-        border-radius: 6px;
-        background: #0b1b33;
+        padding: 0;
+        border-radius: 0;
+        background: transparent;
         color: #fff;
         font-weight: 800;
         font-size: 1.05rem;
         letter-spacing: -0.02em;
+        text-shadow: 0 1px 2px rgba(0, 40, 90, 0.35);
     }
 
     .jobsy-chrome__search {
@@ -2696,12 +2802,12 @@ html[dir="rtl"] .language-selector__menu {
 }
 
 .vacancy-card__link--primary {
-    color: var(--brand);
+    color: var(--accent);
     font-weight: 700;
 }
 
 .vacancy-card__link--primary:hover {
-    color: var(--accent-hover);
+    color: var(--accent-deep);
 }
 
 .engagement-actions {

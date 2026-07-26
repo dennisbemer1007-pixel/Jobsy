@@ -74,13 +74,16 @@ window.jobMap = (function () {
     function jobPopupOptions(withWagePanel) {
         const vw = window.innerWidth || 360;
         const narrow = isNarrowViewport();
+        // Keep room for vacancy + wage panel side-by-side, also on small screens.
         const maxWidth = narrow
-            ? Math.max(220, Math.min(300, vw - 28))
+            ? Math.max(260, Math.min(withWagePanel ? 380 : 300, vw - 20))
             : (withWagePanel ? 460 : 340);
         return {
             className: "job-map-popup" + (withWagePanel ? " job-map-popup--with-wages" : ""),
             maxWidth: maxWidth,
-            minWidth: narrow ? Math.min(240, maxWidth) : (withWagePanel ? 400 : 280),
+            minWidth: narrow
+                ? Math.min(withWagePanel ? 300 : 240, maxWidth)
+                : (withWagePanel ? 400 : 280),
             autoPanPadding: narrow ? [12, 56] : [36, 48],
             keepInView: true
         };
@@ -140,13 +143,10 @@ window.jobMap = (function () {
         if (v.wageLabel) {
             return "<span class=\"cluster-list__wage cluster-list__wage--masked\">" + escapeHtml(v.wageLabel) + "</span>";
         }
+        // Cluster list stays compact: no per-age wage tables when age is unset.
+        // Single resolved wage (age filter active) still shows inline.
         if (hasWageBands(v)) {
-            return (
-                "<aside class=\"cluster-list__wage-panel\" aria-label=\"Uurlonen per leeftijd\">" +
-                    "<p class=\"cluster-list__wage-title\">Uurlonen</p>" +
-                    "<table class=\"map-popup__wage-table\"><tbody>" + wageTableRowsHtml(v.wageBands) + "</tbody></table>" +
-                "</aside>"
-            );
+            return "";
         }
         if (v.wage == null || v.wage === "") {
             return "";
@@ -218,9 +218,8 @@ window.jobMap = (function () {
                 const v = marker.options.jobData;
                 if (!v) return "";
                 const wageBlock = clusterWageHtml(v);
-                const itemClass = "cluster-list__item" + (hasWageBands(v) ? " cluster-list__item--with-wages" : "");
                 return (
-                    "<button type=\"button\" class=\"" + itemClass + "\" data-job-id=\"" + escapeAttr(v.id) + "\">" +
+                    "<button type=\"button\" class=\"cluster-list__item\" data-job-id=\"" + escapeAttr(v.id) + "\">" +
                         "<div class=\"cluster-list__row\">" +
                             "<div class=\"cluster-list__main\">" +
                                 "<span class=\"cluster-list__title\">" + escapeHtml(v.title) + "</span>" +
@@ -256,15 +255,13 @@ window.jobMap = (function () {
     function openClusterList(clusterLayer) {
         const childMarkers = clusterLayer.getAllChildMarkers();
         const latlng = clusterLayer.getLatLng();
-        const anyBands = childMarkers.some(function (marker) {
-            return marker.options.jobData && hasWageBands(marker.options.jobData);
-        });
 
         if (activeClusterPopup) {
             map.closePopup(activeClusterPopup);
         }
 
-        activeClusterPopup = L.popup(clusterPopupOptions(anyBands))
+        // Never widen cluster popups for wage tables — bands are only on single-job popups.
+        activeClusterPopup = L.popup(clusterPopupOptions(false))
             .setLatLng(latlng)
             .setContent(buildClusterListHtml(childMarkers))
             .openOn(map);

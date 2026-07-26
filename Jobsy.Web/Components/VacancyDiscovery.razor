@@ -11,7 +11,7 @@
     <div class="jobsy-chrome">
         <header class="jobsy-chrome__header">
             <a class="jobsy-logo" href="/" aria-label="Lobsy">
-                <img class="jobsy-logo__img" src="images/brand/lobsy.png" alt="Lobsy" width="36" height="36" />
+                <img class="jobsy-logo__img" src="images/brand/lobsy.png?v=20260726-no-ai" alt="Lobsy" width="36" height="36" />
                 <span class="jobsy-logo__mark">Lobsy</span>
             </a>
         </header>
@@ -308,7 +308,10 @@
                             }
                             <div class="job-card__overlay">
                                 <h2>@vacancy.Title</h2>
-                                <p class="job-card__travel">@travelText · @TransportVerb(_selectedTransport)</p>
+                                <p class="job-card__travel">
+                                    <LobsyMark Compact="true" />
+                                    <span>@travelText · @TransportVerb(_selectedTransport)</span>
+                                </p>
                                 @if (!string.IsNullOrEmpty(wageText))
                                 {
                                     <p class="job-card__wage">@wageText</p>

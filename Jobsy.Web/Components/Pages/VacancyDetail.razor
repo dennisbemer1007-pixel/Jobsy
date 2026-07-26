@@ -68,19 +68,39 @@
                 @Culture["Vacancy.StartDate"]: @_vacancy.StartDate.ToString("dd-MM-yyyy")
                 @if (_vacancy.WorkTypes.Length > 0)
                 {
-                    <text> · @Culture["Vacancy.WorkType"]: @string.Join(", ", _vacancy.WorkTypes)</text>
+                    <text>             · @Culture["Vacancy.WorkType"]: @string.Join(", ", _vacancy.WorkTypes)</text>
                 }
-                · @Culture["Vacancy.Transport"]: @string.Join(", ", _vacancy.RequiredTransport)
             </p>
-            @if (_vacancy.TravelMinutes is not null)
+            @if (_vacancy.TravelMinutes is not null || _vacancy.RequiredTransport.Length > 0)
             {
-                <p class="travel-hint">
-                    <span class="travel-badge">± @_vacancy.TravelMinutes min @Culture["Vacancy.FromYourLocation"]</span>
-                    @if (_vacancy.DistanceKm is not null)
-                    {
-                        <span> (@_vacancy.DistanceKm.Value.ToString("0.0") km)</span>
-                    }
-                </p>
+                <aside class="lobsy-proximity" aria-label="@Culture["Vacancy.ProximityLabel"]">
+                    <span class="lobsy-proximity__icon">
+                        <LobsyMark />
+                    </span>
+                    <div class="lobsy-proximity__body">
+                        <p class="lobsy-proximity__title">@Culture["Vacancy.ProximityWink"]</p>
+                        <p class="lobsy-proximity__meta">
+                            @if (_vacancy.TravelMinutes is not null)
+                            {
+                                <span class="lobsy-proximity__chip">
+                                    ± @_vacancy.TravelMinutes min @Culture["Vacancy.FromYourLocation"]
+                                </span>
+                            }
+                            @if (_vacancy.DistanceKm is not null)
+                            {
+                                <span class="lobsy-proximity__chip lobsy-proximity__chip--soft">
+                                    @_vacancy.DistanceKm.Value.ToString("0.0") km
+                                </span>
+                            }
+                            @if (_vacancy.RequiredTransport.Length > 0)
+                            {
+                                <span class="lobsy-proximity__chip lobsy-proximity__chip--soft">
+                                    @Culture["Vacancy.Transport"]: @string.Join(" · ", _vacancy.RequiredTransport)
+                                </span>
+                            }
+                        </p>
+                    </div>
+                </aside>
             }
 
             @if (!_vacancy.WageVisible)
