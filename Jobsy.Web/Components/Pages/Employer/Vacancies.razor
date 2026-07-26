@@ -93,25 +93,25 @@
                         <a class="auth-link" href="@($"/branch/vacancies/new?from={v.Id}")">Dupliceren</a>
                         @if (v.Status == "Draft")
                         {
-                            <button class="provider-btn" type="button" @onclick="() => OpenPublish(v)">Publiceer…</button>
+                            <button class="btn-compact" type="button" @onclick="() => OpenPublish(v)">Publiceer…</button>
                         }
                         @if (v.Status == "PendingApproval" && _canApprovePublish)
                         {
-                            <button class="provider-btn" type="button" @onclick="() => ApproveAsync(v.Id)">Goedkeuren</button>
+                            <button class="btn-compact" type="button" @onclick="() => ApproveAsync(v.Id)">Goedkeuren</button>
                         }
                         @if (v.Status == "Active")
                         {
                             @if (!v.IsHighlighted)
                             {
-                                <button class="provider-btn" type="button" @onclick="() => HighlightAsync(v.Id)">Highlight</button>
+                                <button class="btn-compact" type="button" @onclick="() => HighlightAsync(v.Id)">Highlight</button>
                             }
-                            <button class="provider-btn" type="button" @onclick="() => OpenPushBom(v)">PushBom…</button>
-                            <button class="provider-btn" type="button" @onclick="() => ExtendAsync(v.Id)">Verleng</button>
-                            <button class="provider-btn" type="button" @onclick="() => DeactivateAsync(v.Id)">Inactive</button>
+                            <button class="btn-compact" type="button" @onclick="() => OpenPushBom(v)">PushBom…</button>
+                            <button class="btn-compact" type="button" @onclick="() => ExtendAsync(v.Id)">Verleng</button>
+                            <button class="btn-compact" type="button" @onclick="() => DeactivateAsync(v.Id)">Inactive</button>
                         }
                         @if (v.Status == "Archived")
                         {
-                            <button class="provider-btn" type="button" @onclick="() => ExtendAsync(v.Id)">Heractiveer (+verlengen)</button>
+                            <button class="btn-compact" type="button" @onclick="() => ExtendAsync(v.Id)">Heractiveer (+verlengen)</button>
                         }
                     </div>
                 </div>

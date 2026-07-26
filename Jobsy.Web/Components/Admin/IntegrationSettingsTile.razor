@@ -86,11 +86,11 @@
             }
 
             <div class="inline-actions">
-                <button class="provider-btn" type="button" disabled="@_busy" @onclick="SaveAsync" @onclick:stopPropagation="true">Opslaan</button>
-                <button class="login-submit" type="button" disabled="@_busy" @onclick="TestAsync" @onclick:stopPropagation="true">Test verbinding</button>
+                <button class="btn-compact" type="button" disabled="@_busy" @onclick="SaveAsync" @onclick:stopPropagation="true">Opslaan</button>
+                <button class="btn-compact btn-compact--primary" type="button" disabled="@_busy" @onclick="TestAsync" @onclick:stopPropagation="true">Test verbinding</button>
                 @if (Credential.HasApiKey || Credential.HasClientSecret)
                 {
-                    <button class="provider-btn" type="button" disabled="@_busy" @onclick="ClearSecretsAsync" @onclick:stopPropagation="true">Secrets wissen</button>
+                    <button class="btn-compact" type="button" disabled="@_busy" @onclick="ClearSecretsAsync" @onclick:stopPropagation="true">Secrets wissen</button>
                 }
             </div>
 

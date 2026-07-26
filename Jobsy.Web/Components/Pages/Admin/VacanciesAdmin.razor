@@ -8,7 +8,7 @@
 
 <PageTitle>Vacatures · Jobsy</PageTitle>
 
-<AdminPageShell Title="Vacatures" Lead="Platformbreed overzicht met engagement-metrics en acties.">
+<AdminPageShell Title="Vacatures" Lead="Platformbreed overzicht met engagement-metrics en acties." Wide="true">
     @if (_loading)
     {
         <p class="state-message">Laden…</p>
@@ -60,8 +60,8 @@
                 <table class="data-table">
                     <thead>
                         <tr>
-                            <th>Titel</th>
-                            <th>Bedrijf</th>
+                            <th class="data-table__col--wrap">Titel</th>
+                            <th class="data-table__col--wrap">Bedrijf</th>
                             <th>Status</th>
                             <th><button type="button" class="linkish" @onclick='() => Drill("clicks")'>Clicks</button></th>
                             <th><button type="button" class="linkish" @onclick='() => Drill("shares")'>Shared</button></th>
@@ -75,8 +75,10 @@
                         @foreach (var v in _filtered)
                         {
                             <tr>
-                                <td><strong>@v.Title</strong></td>
-                                <td>@v.CompanyName <span class="muted">(@v.CompanyType)</span></td>
+                                <td class="data-table__col--wrap">
+                                    <a href="/vacancies/@v.Id"><strong>@v.Title</strong></a>
+                                </td>
+                                <td class="data-table__col--wrap">@v.CompanyName <span class="muted">(@v.CompanyType)</span></td>
                                 <td>@v.Status</td>
                                 <td><a href="@MetricHref(v, "clicks")">@v.ClickCount</a></td>
                                 <td><a href="@MetricHref(v, "shares")">@v.ShareCount</a></td>
@@ -84,11 +86,11 @@
                                 <td><a href="@MetricHref(v, "extensions")">@v.ExtensionCount</a></td>
                                 <td><a href="@MetricHref(v, "likes")">@v.LikeCount</a></td>
                                 <td class="inline-actions">
-                                    <a class="provider-btn" href="/vacancy/@v.Id">Bekijken</a>
+                                    <a class="btn-compact" href="/vacancies/@v.Id">Bekijken</a>
                                     @if (v.Status == "Active")
                                     {
-                                        <button class="provider-btn" type="button" disabled="@_busy" @onclick="() => DeactivateAsync(v)">Inactief</button>
-                                        <button class="provider-btn" type="button" disabled="@_busy" @onclick="() => ExtendAsync(v)">Verlengen</button>
+                                        <button class="btn-compact" type="button" disabled="@_busy" @onclick="() => DeactivateAsync(v)">Inactief</button>
+                                        <button class="btn-compact" type="button" disabled="@_busy" @onclick="() => ExtendAsync(v)">Verlengen</button>
                                     }
                                 </td>
                             </tr>
@@ -224,7 +226,7 @@
     }
 
     private static string MetricHref(AdminVacancyItem v, string metric)
-        => $"/vacancy/{v.Id}?metric={metric}";
+        => $"/vacancies/{v.Id}?metric={metric}";
 
     private async Task Drill(string key)
     {

@@ -205,8 +205,105 @@ a {
 
 .inline-actions {
     display: flex;
+    flex-wrap: wrap;
     gap: 0.45rem;
     align-items: center;
+}
+
+/* Compact buttons inside tables, filter bars and dialogs (provider-btn defaults to width:100%) */
+.inline-actions .provider-btn,
+.inline-actions .login-submit,
+.table-row .provider-btn,
+.table-row .login-submit,
+.table-row__actions .provider-btn,
+.table-row__actions .login-submit,
+.filter-bar .provider-btn,
+.filter-bar .login-submit,
+.panel-header .provider-btn {
+    width: auto;
+    flex: 0 0 auto;
+    padding: 0.35rem 0.7rem;
+    font-size: 0.82rem;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.inline-actions .login-submit,
+.table-row .login-submit {
+    margin-top: 0;
+}
+
+.btn-compact {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.35rem;
+    width: auto;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 0.35rem 0.7rem;
+    background: var(--surface);
+    font: inherit;
+    font-weight: 600;
+    font-size: 0.82rem;
+    color: var(--text);
+    cursor: pointer;
+    text-decoration: none;
+    white-space: nowrap;
+}
+
+.btn-compact:hover:not(:disabled) {
+    background: var(--hover);
+}
+
+.btn-compact:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+}
+
+.btn-compact--primary {
+    border-color: transparent;
+    background: var(--accent);
+    color: #fff;
+}
+
+.btn-compact--primary:hover:not(:disabled) {
+    background: var(--accent-hover);
+}
+
+.icon-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.25rem;
+    height: 2.25rem;
+    padding: 0;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--surface);
+    color: var(--brand);
+    cursor: pointer;
+    flex: 0 0 auto;
+    align-self: end;
+}
+
+.icon-btn:hover:not(:disabled) {
+    background: var(--hover);
+}
+
+.icon-btn:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+}
+
+.icon-btn svg {
+    width: 1.1rem;
+    height: 1.1rem;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
 }
 
 .detail-card {
@@ -2873,21 +2970,27 @@ a.map-popup__cta {
 
 .admin-sublinks {
     display: flex;
-    flex-direction: column;
+    flex-direction: row;
+    flex-wrap: wrap;
     gap: 0.5rem;
     margin-bottom: 1rem;
+    align-items: center;
 }
 
 .admin-sublink {
     display: inline-flex;
     align-items: center;
     width: fit-content;
-    padding: 0.65rem 0.9rem;
+    padding: 0.4rem 0.75rem;
     background: var(--accent-soft);
     color: var(--brand);
+    border: none;
     border-radius: 8px;
+    font: inherit;
     font-weight: 600;
-    font-size: 0.95rem;
+    font-size: 0.88rem;
+    cursor: pointer;
+    text-decoration: none;
 }
 
 .admin-sublink:hover {
@@ -3335,6 +3438,32 @@ button.stat-card {
 }
 
 /* Sprint 6 — admin grids */
+.panel-page--wide {
+    max-width: min(1480px, 100%);
+}
+
+.panel-page .filter-bar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: 0.75rem 1rem;
+    padding: 0.85rem 1rem;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    border-bottom: 1px solid var(--border);
+    background: color-mix(in srgb, var(--accent-soft) 55%, var(--surface));
+    margin-bottom: 0.75rem;
+}
+
+.panel-page .filter-bar label {
+    flex: 0 1 12rem;
+}
+
+.panel-page .filter-bar .muted,
+.panel-page .filter-bar .filter-check {
+    align-self: center;
+}
+
 .table-scroll {
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
@@ -3347,16 +3476,28 @@ button.stat-card {
 .data-table {
     width: 100%;
     border-collapse: collapse;
-    font-size: 0.92rem;
+    font-size: 0.88rem;
+    table-layout: auto;
 }
 
 .data-table th,
 .data-table td {
-    padding: 0.65rem 0.85rem;
+    padding: 0.55rem 0.7rem;
     text-align: left;
     border-bottom: 1px solid var(--border);
     vertical-align: middle;
     white-space: nowrap;
+}
+
+.data-table th.data-table__col--wrap,
+.data-table td.data-table__col--wrap {
+    white-space: normal;
+    min-width: 8rem;
+    max-width: 16rem;
+}
+
+.data-table td.inline-actions {
+    white-space: normal;
 }
 
 .data-table th {

@@ -8,7 +8,7 @@
 
 <PageTitle>Bedrijven · Jobsy</PageTitle>
 
-<AdminPageShell Title="Bedrijven en intermediairs" Lead="Aantal-kolommen zijn doorklikbaar. Nieuw bedrijf via KVK-stub.">
+<AdminPageShell Title="Bedrijven en intermediairs" Lead="Aantal-kolommen zijn doorklikbaar. Nieuw bedrijf via KVK-stub." Wide="true">
     @if (_loading)
     {
         <p class="state-message">Laden…</p>
@@ -39,7 +39,7 @@
             <table class="data-table">
                 <thead>
                     <tr>
-                        <th>Naam</th>
+                        <th class="data-table__col--wrap">Naam</th>
                         <th>Type</th>
                         <th>KVK</th>
                         <th>Gebruikers</th>
@@ -53,7 +53,7 @@
                     @foreach (var c in _filtered)
                     {
                         <tr>
-                            <td>
+                            <td class="data-table__col--wrap">
                                 <strong>@c.Name</strong>
                                 <div class="muted">@c.Address</div>
                             </td>
@@ -66,7 +66,7 @@
                             <td>
                                 <div class="inline-actions">
                                     <a href="/admin/finance?tab=tokenlog">@c.TokenBalance.ToString("0.##")</a>
-                                    <button class="provider-btn" type="button" @onclick="() => OpenGrant(c)">+ Tokens</button>
+                                    <button class="btn-compact" type="button" @onclick="() => OpenGrant(c)">+ Tokens</button>
                                 </div>
                             </td>
                         </tr>
@@ -89,7 +89,7 @@
                         <option value="Intermediary">Intermediary</option>
                     </select>
                 </label>
-                <button class="provider-btn" type="submit" disabled="@_busy">Zoek vestigingen</button>
+                <button class="btn-compact btn-compact--primary" type="submit" disabled="@_busy">Zoek vestigingen</button>
             </form>
 
             @if (_establishments.Count > 0)
@@ -108,7 +108,7 @@
                             }
                             else
                             {
-                                <button class="provider-btn" type="button" disabled="@_busy" @onclick="() => RegisterAsync(e)">
+                                <button class="btn-compact" type="button" disabled="@_busy" @onclick="() => RegisterAsync(e)">
                                     Toevoegen
                                 </button>
                             }

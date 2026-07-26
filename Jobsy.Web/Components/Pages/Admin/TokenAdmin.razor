@@ -18,18 +18,37 @@
     }
     else
     {
-        <div class="table-list">
-            @foreach (var c in _companies)
-            {
-                <div class="table-row">
-                    <div>
-                        <strong>@c.Name</strong>
-                        <span class="muted">@c.Type · @c.TokenBalance.ToString("0.##") tokens</span>
-                    </div>
-                    <button class="provider-btn" type="button" @onclick="() => OpenGrant(c)">Tokens toekennen</button>
-                </div>
-            }
+        <div class="filter-bar">
+            <label>
+                Zoeken
+                <input type="search" @bind="_query" @bind:event="oninput" placeholder="Naam, KVK of adres…" />
+            </label>
+            <span class="muted">@_filtered.Count van @_companies.Count</span>
         </div>
+
+        @if (_filtered.Count == 0)
+        {
+            <p class="state-message">Geen bedrijven gevonden.</p>
+        }
+        else
+        {
+            <div class="table-list">
+                @foreach (var c in _filtered)
+                {
+                    <div class="table-row">
+                        <div>
+                            <strong>@c.Name</strong>
+                            <span class="muted">@c.Type · KVK @c.KvkNumber · @c.TokenBalance.ToString("0.##") tokens</span>
+                            @if (!string.IsNullOrWhiteSpace(c.Address))
+                            {
+                                <span class="muted">@c.Address</span>
+                            }
+                        </div>
+                        <button class="btn-compact" type="button" @onclick="() => OpenGrant(c)">Tokens toekennen</button>
+                    </div>
+                }
+            </div>
+        }
         @if (!string.IsNullOrEmpty(_message))
         {
             <p class="state-message">@_message</p>
@@ -44,10 +63,13 @@
 
 @code {
     private List<AdminCompanyItem> _companies = [];
+    private string _query = "";
     private bool _loading = true;
     private string? _message;
     private bool _grantOpen;
     private AdminCompanyItem? _selected;
+
+    private List<AdminCompanyItem> _filtered => Filter().ToList();
 
     protected override async Task OnInitializedAsync()
     {
@@ -60,6 +82,21 @@
             _loading = false;
         }
     }
+
+    private IEnumerable<AdminCompanyItem> Filter()
+    {
+        if (string.IsNullOrWhiteSpace(_query))
+        {
+            return _companies;
+        }
+
+        var terms = _query.Trim().Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        return _companies.Where(c => terms.All(t =>
+            Contains(c.Name, t) || Contains(c.Address, t) || Contains(c.KvkNumber, t) || Contains(c.Type, t)));
+    }
+
+    private static bool Contains(string? value, string term) =>
+        !string.IsNullOrEmpty(value) && value.Contains(term, StringComparison.OrdinalIgnoreCase);
 
     private void OpenGrant(AdminCompanyItem company)
     {

@@ -92,9 +92,15 @@
         <div class="filter-bar">
             <label>
                 Filter bedrijf
-                <input type="search" @bind="_companyFilter" @bind:event="oninput" placeholder="Bedrijfsnaam…" />
+                <input type="search" @bind="_companyFilter" @bind:event="oninput" placeholder="Bedrijfsnaam…"
+                       @onkeydown="OnFilterKeyDown" />
             </label>
-            <button class="provider-btn" type="button" disabled="@_logLoading" @onclick="LoadLogsAsync">Zoeken</button>
+            <button class="icon-btn" type="button" disabled="@_logLoading" @onclick="LoadLogsAsync" title="Zoeken" aria-label="Zoeken">
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <circle cx="11" cy="11" r="7"></circle>
+                    <path d="M20 20l-3.5-3.5"></path>
+                </svg>
+            </button>
             <span class="muted">@_filteredLogs.Count regels</span>
         </div>
 
@@ -268,6 +274,14 @@
         finally
         {
             _drillLoading = false;
+        }
+    }
+
+    private async Task OnFilterKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter")
+        {
+            await LoadLogsAsync();
         }
     }
 

@@ -84,10 +84,10 @@
         <p class="muted">Totaal: <strong>@TotalCost.ToString("0.##")</strong> token(s)</p>
 
         <div class="inline-actions" style="margin-top:1rem">
-            <button type="button" class="login-submit" disabled="@ConfirmDisabled" @onclick="ConfirmAsync">
+            <button type="button" class="btn-compact btn-compact--primary" disabled="@ConfirmDisabled" @onclick="ConfirmAsync">
                 @(_busy ? "Bezig…" : "Publiceren")
             </button>
-            <button type="button" class="provider-btn" disabled="@_busy" @onclick="Close">Annuleren</button>
+            <button type="button" class="btn-compact" disabled="@_busy" @onclick="Close">Annuleren</button>
         </div>
 
         @if (!string.IsNullOrEmpty(_error))

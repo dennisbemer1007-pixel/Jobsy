@@ -20,7 +20,7 @@
         <section class="panel-section">
             <div class="panel-header">
                 <h2>Integraties</h2>
-                <button class="provider-btn" type="button" disabled="@_pingBusy" @onclick="ReloadIntegrationsAsync">Vernieuwen</button>
+                <button class="btn-compact" type="button" disabled="@_pingBusy" @onclick="ReloadIntegrationsAsync">Vernieuwen</button>
             </div>
             <p class="muted">Groen = laatste test OK · Rood = geen verbinding / niet OK · Grijs = nog niet getest. Open een tegel om credentials te zetten en te testen.</p>
             <div class="company-grid">
@@ -58,7 +58,7 @@
                 </label>
 
                 <div class="inline-actions" style="margin-top:0.75rem">
-                    <button class="provider-btn" type="button" disabled="@_featureBusy" @onclick="SaveFeaturesAsync">Opslaan</button>
+                    <button class="btn-compact btn-compact--primary" type="button" disabled="@_featureBusy" @onclick="SaveFeaturesAsync">Opslaan</button>
                 </div>
             </article>
         </section>
@@ -76,7 +76,7 @@
                         <div class="inline-actions">
                             <input type="number" step="0.01" min="0" @bind="pack.PriceEuro" style="width:5.5rem" />
                             <label class="filter-check"><input type="checkbox" @bind="pack.IsActive" /> Actief</label>
-                            <button class="provider-btn" type="button" @onclick="() => SavePackAsync(pack)">Opslaan</button>
+                            <button class="btn-compact" type="button" @onclick="() => SavePackAsync(pack)">Opslaan</button>
                         </div>
                     </div>
                 }
@@ -97,7 +97,7 @@
                         <div class="inline-actions">
                             <input type="number" step="0.1" min="0" @bind="cost.CostTokens" style="width:5.5rem" />
                             <label class="filter-check"><input type="checkbox" @bind="cost.IsActive" /> Actief</label>
-                            <button class="provider-btn" type="button" @onclick="() => SaveCostAsync(cost)">Opslaan</button>
+                            <button class="btn-compact" type="button" @onclick="() => SaveCostAsync(cost)">Opslaan</button>
                         </div>
                     </div>
                 }
@@ -120,7 +120,7 @@
                             Max. reistijd (min)
                             <input type="number" min="5" max="180" @bind="_pushBomSettings.MaxTravelMinutes" style="width:5.5rem" />
                         </label>
-                        <button class="provider-btn" type="button" disabled="@_pushBomBusy" @onclick="SavePushBomSettingsAsync">Opslaan</button>
+                        <button class="btn-compact btn-compact--primary" type="button" disabled="@_pushBomBusy" @onclick="SavePushBomSettingsAsync">Opslaan</button>
                     </div>
                 </article>
             }
@@ -144,14 +144,14 @@
                                 <input type="number" step="0.1" min="0" @bind="tier.CostTokens" style="width:4.5rem" />
                             </label>
                             <label class="filter-check"><input type="checkbox" @bind="tier.IsActive" /> Actief</label>
-                            <button class="provider-btn" type="button" @onclick="() => SaveTierAsync(tier)">Opslaan</button>
-                            <button class="provider-btn" type="button" @onclick="() => DeleteTierAsync(tier)">Verwijder</button>
+                            <button class="btn-compact" type="button" @onclick="() => SaveTierAsync(tier)">Opslaan</button>
+                            <button class="btn-compact" type="button" @onclick="() => DeleteTierAsync(tier)">Verwijder</button>
                         </div>
                     </div>
                 }
             </div>
             <div class="inline-actions" style="margin-top:0.75rem">
-                <button class="provider-btn" type="button" @onclick="AddTier">+ Tier toevoegen</button>
+                <button class="btn-compact" type="button" @onclick="AddTier">+ Tier toevoegen</button>
             </div>
         </section>
 
@@ -169,7 +169,7 @@
                             <input type="number" min="0" @bind="rule.MonthlyGrantTokens" style="width:4.5rem" title="Monthly grant" />
                             <input type="number" step="0.1" min="0" max="100" @bind="rule.PurchaseDiscountPercent" style="width:4.5rem" title="Discount %" />
                             <label class="filter-check"><input type="checkbox" @bind="rule.IsActive" /> Actief</label>
-                            <button class="provider-btn" type="button" @onclick="() => SaveRuleAsync(rule)">Opslaan</button>
+                            <button class="btn-compact" type="button" @onclick="() => SaveRuleAsync(rule)">Opslaan</button>
                         </div>
                     </div>
                 }
