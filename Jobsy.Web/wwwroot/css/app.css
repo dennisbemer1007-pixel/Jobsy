@@ -148,8 +148,13 @@ a {
     display: flex;
     justify-content: space-between;
     gap: 1rem;
-    align-items: flex-start;
+    align-items: center;
+    flex-wrap: wrap;
     margin-bottom: 1.25rem;
+}
+
+.panel-header > .period-tabs {
+    margin-left: auto;
 }
 
 .panel-page h1 {
@@ -475,6 +480,23 @@ a {
     .token-wallet-chip {
         padding: 0.35rem 0.5rem;
     }
+
+    .auth-link--login {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.3rem;
+        padding: 0.4rem 0.6rem;
+        border: 1px solid color-mix(in srgb, var(--brand) 18%, var(--border));
+        border-radius: 8px;
+        background: color-mix(in srgb, var(--pearl-shine) 70%, transparent);
+        color: var(--brand);
+        font-weight: 700;
+        font-size: 0.82rem;
+    }
+
+    .auth-link--login .auth-link__label {
+        display: inline;
+    }
 }
 
 .auth-link {
@@ -492,6 +514,24 @@ a {
 
 .auth-link--muted {
     color: var(--muted);
+}
+
+.auth-link--login {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+}
+
+.auth-link__icon {
+    display: inline-flex;
+    width: 1.1rem;
+    height: 1.1rem;
+    flex-shrink: 0;
+}
+
+.auth-link__icon svg {
+    width: 100%;
+    height: 100%;
 }
 
 .auth-logout-form {
@@ -1301,6 +1341,9 @@ a {
 .job-card {
     display: flex;
     flex-direction: column;
+    align-self: stretch;
+    height: auto;
+    min-height: 0;
     border: none;
     border-radius: 0;
     background: transparent;
@@ -1313,7 +1356,11 @@ a {
 .job-card__media {
     position: relative;
     display: block;
-    aspect-ratio: 4 / 3;
+    width: 100%;
+    /* padding-bottom aspect ratio so CSS Grid max-content sizing gets a real height */
+    height: 0;
+    padding-bottom: 75%; /* 4:3 */
+    flex: none;
     background:
         linear-gradient(160deg, color-mix(in srgb, var(--brand) 35%, #1a2332), color-mix(in srgb, var(--secondary) 55%, #0b1b33)),
         center / cover no-repeat;
@@ -1322,6 +1369,11 @@ a {
     color: #fff;
     text-decoration: none;
     overflow: hidden;
+}
+
+.job-card__footer {
+    flex: 0 0 auto;
+    padding: 0.45rem 0.1rem 0.2rem;
 }
 
 .job-card__badge {
@@ -1376,10 +1428,6 @@ a {
     margin: 0.15rem 0 0;
     font-size: 0.8rem;
     color: rgba(255, 255, 255, 0.9);
-}
-
-.job-card__footer {
-    padding: 0.45rem 0.1rem 0.2rem;
 }
 
 .job-card__company {
@@ -1700,6 +1748,7 @@ a {
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 0.75rem;
     align-content: start;
+    grid-auto-rows: max-content;
 }
 
 .vacancy-card {
@@ -2727,9 +2776,47 @@ a {
     .jobsy-chrome__header {
         display: flex;
         align-items: center;
+        justify-content: space-between;
+        gap: 0.5rem;
         padding: 0.55rem 0.85rem 0.35rem;
         background: var(--pearl-gradient);
         border-bottom: 1px solid color-mix(in srgb, var(--border) 80%, var(--brand) 20%);
+    }
+
+    .jobsy-chrome__header-actions {
+        display: flex;
+        align-items: center;
+        gap: 0.35rem;
+        flex-shrink: 0;
+        margin-left: auto;
+    }
+
+    .jobsy-chrome__header-actions .language-selector__code,
+    .jobsy-chrome__header-actions .language-selector__caret {
+        display: none;
+    }
+
+    .jobsy-chrome__header-actions .language-selector__toggle {
+        padding: 0.4rem;
+        min-width: 2.25rem;
+        justify-content: center;
+    }
+
+    .jobsy-chrome__header-actions .auth-link--login {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+        padding: 0.4rem 0.65rem;
+        border: 1px solid color-mix(in srgb, var(--brand) 18%, var(--border));
+        border-radius: 8px;
+        background: color-mix(in srgb, var(--pearl-shine) 70%, transparent);
+        color: var(--brand);
+        font-weight: 700;
+        font-size: 0.82rem;
+    }
+
+    .jobsy-chrome__header-actions .auth-user {
+        display: none;
     }
 
     .jobsy-logo {
@@ -3967,12 +4054,18 @@ a.map-popup__cta {
 }
 
 .period-tabs {
-    display: flex;
+    display: inline-flex;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    align-items: center;
     gap: 0.35rem;
-    flex-wrap: wrap;
+    flex-shrink: 0;
 }
 
 .period-tab {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     border: 1px solid var(--border);
     background: var(--surface);
     color: var(--muted);
@@ -3981,12 +4074,40 @@ a.map-popup__cta {
     font-size: 0.85rem;
     font-weight: 600;
     cursor: pointer;
+    white-space: nowrap;
+    width: auto;
+    flex: 0 0 auto;
 }
 
 .period-tab--active {
     border-color: var(--accent);
     color: var(--brand);
     background: var(--accent-soft);
+}
+
+@media (max-width: 640px) {
+    .panel-header {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .panel-header > .period-tabs {
+        margin-left: 0;
+    }
+
+    .period-tabs {
+        width: 100%;
+        display: flex;
+        flex-direction: row;
+        flex-wrap: nowrap;
+    }
+
+    .period-tab {
+        flex: 1 1 0;
+        width: auto;
+        text-align: center;
+        padding: 0.45rem 0.5rem;
+    }
 }
 
 .stat-card--selected {

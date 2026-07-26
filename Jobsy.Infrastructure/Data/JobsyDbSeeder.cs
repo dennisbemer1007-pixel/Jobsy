@@ -27,6 +27,7 @@ public static class JobsyDbSeeder
         if (await db.Companies.AnyAsync())
         {
             await MediaBackfillSeeder.BackfillMediaAsync(db, logger);
+            await DemoUsersSeeder.SeedUsersAsync(db, logger);
             await PlatformSettingsSeeder.SeedPlatformSettingsAsync(db, logger);
             await Sprint0DemoSeeder.SeedSprint0DemoAsync(db, logger);
             await Sprint8MetricsSeeder.SeedRichMetricsAsync(db, logger);

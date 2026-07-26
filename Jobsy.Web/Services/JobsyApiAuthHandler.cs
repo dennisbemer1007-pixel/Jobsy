@@ -39,9 +39,9 @@ public sealed class JobsyApiAuthHandler : DelegatingHandler
 
         if (user.Identity?.IsAuthenticated == true)
         {
-            var email = user.FindFirst(ClaimTypes.Email)?.Value ?? user.Identity.Name;
+            var email = ResolveEmail(user);
             var role = user.FindFirst(ClaimTypes.Role)?.Value;
-            var name = user.Identity.Name;
+            var name = user.FindFirst(ClaimTypes.Name)?.Value ?? user.Identity.Name;
             var companyId = user.FindFirst(JobsyClaimTypes.CompanyId)?.Value;
             var companyIds = user.FindFirst(JobsyClaimTypes.CompanyIds)?.Value;
 
@@ -102,6 +102,31 @@ public sealed class JobsyApiAuthHandler : DelegatingHandler
 
         request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
         return await base.SendAsync(request, cancellationToken);
+    }
+
+    /// <summary>
+    /// Never fall back to display name — API DevelopmentAuth looks up users by email.
+    /// </summary>
+    internal static string? ResolveEmail(ClaimsPrincipal user)
+    {
+        foreach (var type in new[]
+                 {
+                     ClaimTypes.Email,
+                     "email",
+                     "preferred_username",
+                     "emails",
+                     ClaimTypes.NameIdentifier,
+                     "sub"
+                 })
+        {
+            var value = user.FindFirst(type)?.Value?.Trim();
+            if (!string.IsNullOrWhiteSpace(value) && value.Contains('@', StringComparison.Ordinal))
+            {
+                return value;
+            }
+        }
+
+        return null;
     }
 
     private async Task<ClaimsPrincipal> ResolveUserAsync()

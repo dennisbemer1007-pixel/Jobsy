@@ -26,7 +26,10 @@
             </form>
         </Authorized>
         <NotAuthorized>
-            <a class="auth-link auth-link--login" href="/login">@Culture["Auth.Login"]</a>
+            <a class="auth-link auth-link--login" href="/login">
+                <span class="auth-link__icon" aria-hidden="true">@((MarkupString)NavIcons.Login)</span>
+                <span class="auth-link__label">@Culture["Auth.Login"]</span>
+            </a>
         </NotAuthorized>
     </AuthorizeView>
 </div>

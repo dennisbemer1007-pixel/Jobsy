@@ -139,6 +139,7 @@ public sealed class DevelopmentAuthHandler : AuthenticationHandler<Authenticatio
 
         if (dbUser is null)
         {
+            Logger.LogWarning("Development auth rejected unknown/inactive email {Email}", email);
             return AuthenticateResult.Fail("Unknown or inactive user for Development auth.");
         }
 

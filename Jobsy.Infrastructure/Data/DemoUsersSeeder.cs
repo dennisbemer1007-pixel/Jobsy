@@ -8,18 +8,16 @@ namespace Jobsy.Infrastructure.Data;
 
 internal static class DemoUsersSeeder
 {
+    private static readonly Guid WestlandId = Guid.Parse("11111111-1111-1111-1111-111111111111");
+    private static readonly Guid CafeId = Guid.Parse("22222222-2222-2222-2222-222222222222");
+    private static readonly Guid SupermarketId = Guid.Parse("33333333-3333-3333-3333-333333333333");
+    private static readonly Guid IntermediaryCompanyId = Guid.Parse("44444444-4444-4444-4444-444444444444");
+
     public static async Task SeedUsersAsync(JobsyDbContext db, ILogger logger)
     {
-        if (await db.Users.AnyAsync())
-        {
-            return;
-        }
+        var added = 0;
 
-        var westlandId = Guid.Parse("11111111-1111-1111-1111-111111111111");
-        var cafeId = Guid.Parse("22222222-2222-2222-2222-222222222222");
-        var supermarketId = Guid.Parse("33333333-3333-3333-3333-333333333333");
-
-        var candidate = new User
+        added += await EnsureUserAsync(db, new User
         {
             Id = Guid.Parse("aaaaaaaa-1111-1111-1111-111111111111"),
             Email = "kandidaat@jobsy.local",
@@ -32,9 +30,9 @@ internal static class DemoUsersSeeder
             PreferencesJson = """{"roles":["horeca","retail"],"maxTravelMinutes":30}""",
             IsEarlyAdapter = true,
             IsActive = true
-        };
+        });
 
-        var candidateDenHaag = new User
+        added += await EnsureUserAsync(db, new User
         {
             Id = Guid.Parse("aaaaaaaa-2222-2222-2222-222222222222"),
             Email = "kandidaat.denhaag@jobsy.local",
@@ -46,9 +44,9 @@ internal static class DemoUsersSeeder
             HomeLocation = new GeoPoint(52.0780, 4.3100),
             PreferencesJson = """{"roles":["horeca"],"maxTravelMinutes":25}""",
             IsActive = true
-        };
+        });
 
-        var candidateFar = new User
+        added += await EnsureUserAsync(db, new User
         {
             Id = Guid.Parse("aaaaaaaa-3333-3333-3333-333333333333"),
             Email = "kandidaat.ver@jobsy.local",
@@ -60,74 +58,135 @@ internal static class DemoUsersSeeder
             HomeLocation = new GeoPoint(52.3700, 4.8950),
             PreferencesJson = """{"roles":["retail"],"maxTravelMinutes":40}""",
             IsActive = true
-        };
+        });
 
-        var branchManager = new User
+        var branchManagerId = Guid.Parse("bbbbbbbb-1111-1111-1111-111111111111");
+        added += await EnsureUserAsync(db, new User
         {
-            Id = Guid.Parse("bbbbbbbb-1111-1111-1111-111111111111"),
+            Id = branchManagerId,
             Email = "ondernemer@jobsy.local",
             FullName = "Demo Filiaalmanager",
             Role = UserRole.BranchManager,
-            CompanyId = westlandId,
+            CompanyId = WestlandId,
             IsActive = true
-        };
+        });
 
-        var regionalManager = new User
+        var regionalManagerId = Guid.Parse("cccccccc-1111-1111-1111-111111111111");
+        added += await EnsureUserAsync(db, new User
         {
-            Id = Guid.Parse("cccccccc-1111-1111-1111-111111111111"),
+            Id = regionalManagerId,
             Email = "regio@jobsy.local",
             FullName = "Regiomanager Den Haag",
             Role = UserRole.RegionalManager,
-            CompanyId = cafeId,
+            CompanyId = CafeId,
             IsActive = true
-        };
+        });
 
-        var enterpriseManager = new User
+        var enterpriseManagerId = Guid.Parse("dddddddd-1111-1111-1111-111111111111");
+        added += await EnsureUserAsync(db, new User
         {
-            Id = Guid.Parse("dddddddd-1111-1111-1111-111111111111"),
+            Id = enterpriseManagerId,
             Email = "enterprise@jobsy.local",
             FullName = "Bedrijfsmanager Jobsy Retail",
             Role = UserRole.EnterpriseManager,
-            CompanyId = supermarketId,
+            CompanyId = SupermarketId,
             IsActive = true
-        };
+        });
 
-        var intermediary = new User
+        var intermediaryId = Guid.Parse("eeeeeeee-1111-1111-1111-111111111111");
+        added += await EnsureUserAsync(db, new User
         {
-            Id = Guid.Parse("eeeeeeee-1111-1111-1111-111111111111"),
+            Id = intermediaryId,
             Email = "intermediair@jobsy.local",
             FullName = "Intermediair Demo",
             Role = UserRole.Intermediary,
-            CompanyId = Guid.Parse("44444444-4444-4444-4444-444444444444"),
+            CompanyId = IntermediaryCompanyId,
             IsActive = true
-        };
+        });
 
-        var admin = new User
+        var adminId = Guid.Parse("ffffffff-1111-1111-1111-111111111111");
+        added += await EnsureUserAsync(db, new User
         {
-            Id = Guid.Parse("ffffffff-1111-1111-1111-111111111111"),
+            Id = adminId,
             Email = "admin@jobsy.local",
             FullName = "Platform Admin",
             Role = UserRole.Admin,
             CompanyId = null,
             IsActive = true
-        };
+        });
 
-        db.Users.AddRange(
-            candidate, candidateDenHaag, candidateFar,
-            branchManager, regionalManager, enterpriseManager, intermediary, admin);
+        await EnsureMembershipAsync(db, branchManagerId, WestlandId);
+        await EnsureMembershipAsync(db, regionalManagerId, CafeId);
+        await EnsureMembershipAsync(db, regionalManagerId, SupermarketId);
+        await EnsureMembershipAsync(db, enterpriseManagerId, SupermarketId);
+        await EnsureMembershipAsync(db, enterpriseManagerId, CafeId);
+        await EnsureMembershipAsync(db, enterpriseManagerId, WestlandId);
+        await EnsureMembershipAsync(db, intermediaryId, WestlandId);
+        await EnsureMembershipAsync(db, intermediaryId, CafeId);
+        await EnsureMembershipAsync(db, intermediaryId, SupermarketId);
 
-        db.UserCompanies.AddRange(
-            new UserCompany { UserId = branchManager.Id, CompanyId = westlandId },
-            new UserCompany { UserId = regionalManager.Id, CompanyId = cafeId },
-            new UserCompany { UserId = regionalManager.Id, CompanyId = supermarketId },
-            new UserCompany { UserId = enterpriseManager.Id, CompanyId = supermarketId },
-            new UserCompany { UserId = enterpriseManager.Id, CompanyId = cafeId },
-            new UserCompany { UserId = enterpriseManager.Id, CompanyId = westlandId },
-            new UserCompany { UserId = intermediary.Id, CompanyId = westlandId },
-            new UserCompany { UserId = intermediary.Id, CompanyId = cafeId },
-            new UserCompany { UserId = intermediary.Id, CompanyId = supermarketId });
+        if (added > 0 || db.ChangeTracker.HasChanges())
+        {
+            await db.SaveChangesAsync();
+        }
 
-        await db.SaveChangesAsync();
-        logger.LogInformation("Seeded role users (candidates with HomeLocation, managers, intermediary, admin).");
+        if (added > 0)
+        {
+            logger.LogInformation("Ensured {Count} demo role user(s) (candidates, managers, intermediary, admin).", added);
+        }
+    }
+
+    private static async Task<int> EnsureUserAsync(JobsyDbContext db, User template)
+    {
+        var email = template.Email.ToLowerInvariant();
+        var existing = await db.Users.FirstOrDefaultAsync(u => u.Email.ToLower() == email);
+        if (existing is not null)
+        {
+            // Keep accounts active and roles aligned with demo expectations.
+            if (!existing.IsActive)
+            {
+                existing.IsActive = true;
+            }
+
+            if (existing.Role != template.Role)
+            {
+                existing.Role = template.Role;
+            }
+
+            if (template.CompanyId is Guid companyId && existing.CompanyId != companyId)
+            {
+                existing.CompanyId = companyId;
+            }
+
+            return 0;
+        }
+
+        // Avoid PK collisions if the email is new but the deterministic id already exists.
+        if (await db.Users.AnyAsync(u => u.Id == template.Id))
+        {
+            template.Id = Guid.NewGuid();
+        }
+
+        db.Users.Add(template);
+        return 1;
+    }
+
+    private static async Task EnsureMembershipAsync(JobsyDbContext db, Guid userId, Guid companyId)
+    {
+        if (!await db.Companies.AnyAsync(c => c.Id == companyId))
+        {
+            return;
+        }
+
+        if (!await db.Users.AnyAsync(u => u.Id == userId))
+        {
+            return;
+        }
+
+        var exists = await db.UserCompanies.AnyAsync(m => m.UserId == userId && m.CompanyId == companyId);
+        if (!exists)
+        {
+            db.UserCompanies.Add(new UserCompany { UserId = userId, CompanyId = companyId });
+        }
     }
 }
