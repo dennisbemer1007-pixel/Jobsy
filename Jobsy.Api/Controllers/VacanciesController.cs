@@ -70,8 +70,8 @@ public class VacanciesController : ControllerBase
     }
 
     /// <summary>
-    /// Banenkaart discover: filter by transport and travel time via IRoutingService.
-    /// Without origin coordinates, only transport filter is applied.
+    /// Banenkaart discover: without origin returns all active vacancies (optional workType/wage).
+    /// With origin, filters by transport, travel time and optional radius via IRoutingService.
     /// Optional ageYears resolves salary-table wages; min/max hourly filters apply when age is set.
     /// </summary>
     [HttpGet("discover")]
@@ -95,22 +95,26 @@ public class VacanciesController : ControllerBase
         var targetLanguage = await ResolveTargetLanguageAsync(cancellationToken);
         var vacancies = await LoadActiveVacanciesAsync(cancellationToken);
 
-        var transportFiltered = vacancies
-            .Where(v => TransportLabels.MatchesRequired(TransportLabels.Expand(v.RequiredTransport), transport))
+        var workTypeFiltered = vacancies
             .Where(v => WorkTypeLabels.MatchesFilter(v.WorkTypes, workType))
             .ToList();
 
         List<VacancyListItemDto> results;
         if (originLat is null || originLng is null)
         {
-            results = new List<VacancyListItemDto>(transportFiltered.Count);
-            foreach (var v in transportFiltered)
+            // No origin: show all matching work-type vacancies (transport is only a routing preference once located).
+            results = new List<VacancyListItemDto>(workTypeFiltered.Count);
+            foreach (var v in workTypeFiltered.OrderBy(v => v.Title))
             {
                 results.Add(await MapToDtoAsync(v, showWage, targetLanguage, age, cancellationToken: cancellationToken));
             }
         }
         else
         {
+            var transportFiltered = workTypeFiltered
+                .Where(v => TransportLabels.MatchesRequired(TransportLabels.Expand(v.RequiredTransport), transport))
+                .ToList();
+
             var lat = originLat.Value;
             var lng = originLng.Value;
 

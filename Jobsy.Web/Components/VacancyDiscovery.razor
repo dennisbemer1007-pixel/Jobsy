@@ -268,7 +268,7 @@
             <p class="state-message">
                 @if (_origin is null)
                 {
-                    @Culture.Format("Discovery.NoneWithoutOrigin", TransportLabel(_selectedTransport))
+                    @Culture["Discovery.NoneWithoutOrigin"]
                 }
                 else
                 {
@@ -552,12 +552,25 @@
             if (_ageYears is not null) n++;
             if (_minHourlyWage is not null) n++;
             if (_maxHourlyWage is not null) n++;
-            if (_maxTravelMinutes != 30) n++;
-            if (_selectedTransport != "Fiets") n++;
-            if (_radiusKm != 15) n++;
+            if (_origin is not null && _maxTravelMinutes != 30) n++;
+            if (_origin is not null && _selectedTransport != "Fiets") n++;
+            if (_origin is not null && _radiusKm != 15) n++;
             return n;
         }
     }
+
+    /// <summary>
+    /// Work-type / wage filters that should still empty the list when no matches exist.
+    /// Default proximity + a far stored origin falls back to the full catalog.
+    /// </summary>
+    private bool ShouldFallbackFromEmptyProximity =>
+        _origin is not null
+        && string.IsNullOrWhiteSpace(_selectedWorkType)
+        && _minHourlyWage is null
+        && _maxHourlyWage is null
+        && _maxTravelMinutes == 30
+        && _radiusKm == 15
+        && string.Equals(_selectedTransport, "Fiets", StringComparison.Ordinal);
 
     protected override async Task OnInitializedAsync()
     {
@@ -755,6 +768,22 @@
                 _ageYears is null ? null : _minHourlyWage,
                 _ageYears is null ? null : _maxHourlyWage,
                 string.IsNullOrWhiteSpace(_selectedWorkType) ? null : _selectedWorkType);
+
+            // Stale/far stored origin + default proximity can wipe the catalog; show all until filters tighten.
+            if (items.Count == 0 && ShouldFallbackFromEmptyProximity)
+            {
+                items = await Api.DiscoverVacanciesAsync(
+                    originLat: null,
+                    originLng: null,
+                    _selectedTransport,
+                    _maxTravelMinutes,
+                    radiusKm: null,
+                    _ageYears,
+                    _ageYears is null ? null : _minHourlyWage,
+                    _ageYears is null ? null : _maxHourlyWage,
+                    string.IsNullOrWhiteSpace(_selectedWorkType) ? null : _selectedWorkType);
+            }
+
             _vacancies = items.ToList();
             if (_mapReady)
             {

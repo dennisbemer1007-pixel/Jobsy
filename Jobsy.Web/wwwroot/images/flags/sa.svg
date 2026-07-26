@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 30 20" role="img" aria-label="Saudi Arabia">
+  <rect width="30" height="20" fill="#165d31"/>
+  <path fill="#fff" d="M6.5 8.2c1.8-2.2 5.2-3.2 8.6-2.6 2.8.5 5.2 2.1 6.2 4.1-1.4-1.1-3.4-1.8-5.6-1.9-3.2-.2-6.2.9-7.8 2.6-.5.5-1 .4-1.4-.2z"/>
+  <path fill="#fff" d="M8.2 11.6h13.6c.5 0 .8.3.7.7l-.3 1.1c-.1.4-.5.6-.9.6H9.1c-.5 0-.8-.3-.7-.7l.3-1.1c.1-.4.5-.6.9-.6z"/>
+  <rect x="9.5" y="15.2" width="11" height="1.15" rx="0.4" fill="#fff"/>
+</svg>

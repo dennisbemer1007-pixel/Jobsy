@@ -73,12 +73,13 @@ a {
     align-items: center;
     justify-content: space-between;
     gap: 1rem;
-    padding: 0.75rem 1.25rem;
+    padding: 0.55rem 1.25rem;
     background: var(--pearl-gradient);
     border-bottom: 1px solid color-mix(in srgb, var(--border) 80%, var(--brand) 20%);
     z-index: 20;
     color: var(--brand);
     box-shadow: 0 1px 0 rgba(255, 255, 255, 0.7) inset;
+    position: relative;
 }
 
 .app-header .brand-tagline {
@@ -122,7 +123,7 @@ a {
 
 .app-header__brand {
     display: flex;
-    align-items: baseline;
+    align-items: center;
     gap: 0.75rem;
     min-width: 0;
 }
@@ -524,8 +525,8 @@ a {
 }
 
 .login-brand__logo {
-    width: 56px;
-    height: 56px;
+    width: 80px;
+    height: 80px;
     object-fit: contain;
     background: transparent;
     display: block;
@@ -621,6 +622,32 @@ a {
     flex: 1;
     height: 1px;
     background: var(--border);
+}
+
+.login-register {
+    margin-top: 1.25rem;
+    padding-top: 1.15rem;
+    border-top: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    gap: 0.65rem;
+}
+
+.login-register__lead {
+    margin: 0;
+    text-align: center;
+    color: var(--muted);
+    font-size: 0.9rem;
+}
+
+.provider-btn--register {
+    background: color-mix(in srgb, var(--brand) 8%, var(--surface));
+    border-color: color-mix(in srgb, var(--brand) 22%, var(--border));
+    color: var(--brand);
+}
+
+.provider-btn--register:hover {
+    background: color-mix(in srgb, var(--brand) 14%, var(--surface));
 }
 
 .login-form {
@@ -760,20 +787,20 @@ a {
 .brand {
     display: inline-flex;
     align-items: center;
-    gap: 0.55rem;
+    gap: 0.7rem;
     padding: 0.1rem 0.15rem 0.1rem 0;
     border-radius: 0;
     background: transparent;
     color: var(--brand);
-    font-size: 1.35rem;
+    font-size: 1.55rem;
     font-weight: 800;
     letter-spacing: -0.02em;
     text-decoration: none;
 }
 
 .brand__logo {
-    width: 56px;
-    height: 56px;
+    width: 88px;
+    height: 88px;
     object-fit: contain;
     display: block;
     background: transparent;
@@ -784,6 +811,13 @@ a {
     padding-right: 0.2rem;
 }
 
+.brand__text {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 0.75rem;
+    min-width: 0;
+}
+
 .brand:hover {
     color: var(--brand-deep);
     opacity: 0.92;
@@ -792,6 +826,15 @@ a {
 .brand-tagline {
     color: var(--muted);
     font-size: 0.9rem;
+    line-height: 1.2;
+    white-space: nowrap;
+    align-self: center;
+}
+
+@media (max-width: 720px) {
+    .brand-tagline {
+        display: none;
+    }
 }
 
 .saved-gate {
@@ -911,6 +954,64 @@ a {
     min-height: 0;
     display: flex;
     flex-direction: column;
+    overflow-x: hidden;
+    overflow-y: auto;
+    position: relative;
+    z-index: 1;
+}
+
+/* Large side watermarks on desktop pages with side gutters (panel/detail, not discovery map) */
+.lobsy-watermarks {
+    display: none;
+}
+
+.lobsy-watermark {
+    position: fixed;
+    top: 50%;
+    width: clamp(200px, 22vw, 380px);
+    height: auto;
+    aspect-ratio: 1;
+    object-fit: contain;
+    opacity: 0.12;
+    mix-blend-mode: multiply;
+    pointer-events: none;
+    user-select: none;
+    z-index: 0;
+}
+
+.lobsy-watermark--left {
+    left: max(0.5rem, calc((100vw - 1100px) / 2 - clamp(200px, 22vw, 380px) * 0.42));
+    transform: translateY(-50%);
+}
+
+.lobsy-watermark--right {
+    right: max(0.5rem, calc((100vw - 1100px) / 2 - clamp(200px, 22vw, 380px) * 0.42));
+    transform: translateY(-50%) scaleX(-1);
+}
+
+@media (min-width: 1200px) {
+    .app-shell:not(:has(.jobsy-discovery)):not(:has(.funda-layout)) .lobsy-watermarks {
+        display: block;
+    }
+}
+
+@media (min-width: 1600px) {
+    .lobsy-watermark {
+        width: clamp(280px, 20vw, 420px);
+        opacity: 0.14;
+    }
+}
+
+@media (max-width: 900px) {
+    .brand__logo {
+        width: 72px;
+        height: 72px;
+    }
+
+    .brand {
+        font-size: 1.35rem;
+        gap: 0.55rem;
+    }
 }
 
 .jobsy-discovery,
@@ -2791,8 +2892,13 @@ a {
 }
 
 .language-selector__flag {
-    font-size: 1.05rem;
-    line-height: 1;
+    display: inline-block;
+    width: 1.15rem;
+    height: 0.85rem;
+    border-radius: 2px;
+    object-fit: cover;
+    box-shadow: 0 0 0 1px color-mix(in srgb, var(--border) 70%, transparent);
+    flex-shrink: 0;
 }
 
 .language-selector__code {
@@ -3365,7 +3471,8 @@ a.map-popup__cta {
 
 .app-shell.has-bottom-nav .app-main,
 .app-shell:has(.bottom-nav) .app-main {
-    padding-bottom: 7.5rem; /* bottom-nav + legal footer */
+    /* Room for fixed legal footer + bottom-nav so content stays above the ribbon */
+    padding-bottom: calc(4.5rem + 3.25rem + 0.75rem);
 }
 
 .bottom-nav__item {
@@ -3427,7 +3534,7 @@ a.map-popup__cta {
 
     .app-shell.has-bottom-nav .app-main,
     .app-shell:has(.bottom-nav) .app-main {
-        padding-bottom: 5.5rem; /* bottom-nav + legal footer */
+        padding-bottom: calc(3.25rem + 3rem + 0.75rem);
     }
 
     .token-wallet-chip__label {
@@ -4312,8 +4419,7 @@ button.linkish:hover {
     align-items: center;
     justify-content: space-between;
     gap: 0.35rem 1rem;
-    padding: 0.4rem 1.25rem;
-    padding-bottom: max(0.4rem, env(safe-area-inset-bottom));
+    padding: 0.5rem 1.25rem;
     background: var(--surface);
     border-top: 1px solid var(--border);
     color: var(--muted);

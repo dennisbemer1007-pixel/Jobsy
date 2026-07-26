@@ -11,7 +11,7 @@
             aria-label="@Culture["Language.Choose"]"
             title="@Culture["Language.Label"]"
             @onclick="Toggle">
-        <span class="language-selector__flag" aria-hidden="true">@Culture.Current.FlagEmoji</span>
+        <img class="language-selector__flag" src="@Culture.Current.FlagImage" alt="" width="18" height="13" />
         <span class="language-selector__code">@Culture.Language.ToUpperInvariant()</span>
         <span class="language-selector__caret" aria-hidden="true">▾</span>
     </button>
@@ -24,7 +24,7 @@
                     <button type="button"
                             class="language-selector__option @(lang.Code == Culture.Language ? "is-active" : null)"
                             @onclick="() => SelectAsync(lang.Code)">
-                        <span class="language-selector__flag" aria-hidden="true">@lang.FlagEmoji</span>
+                        <img class="language-selector__flag" src="@lang.FlagImage" alt="" width="18" height="13" />
                         <span class="language-selector__name">@lang.NativeName</span>
                         <span class="language-selector__code">@lang.Code.ToUpperInvariant()</span>
                     </button>

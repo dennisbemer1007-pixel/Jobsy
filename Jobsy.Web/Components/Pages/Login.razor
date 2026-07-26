@@ -1,6 +1,7 @@
 @page "/login"
 @attribute [AllowAnonymous]
 @using Jobsy.Web.Auth
+@using Jobsy.Web.Localization
 @using Microsoft.AspNetCore.Antiforgery
 @using Microsoft.AspNetCore.WebUtilities
 @using Microsoft.Extensions.Options
@@ -8,17 +9,19 @@
 @inject IAntiforgery Antiforgery
 @inject NavigationManager Navigation
 @inject IHttpContextAccessor HttpContextAccessor
+@inject CultureState Culture
+@implements IDisposable
 
-<PageTitle>Inloggen · Lobsy</PageTitle>
+<PageTitle>@Culture["Login.Title"] · Lobsy</PageTitle>
 
 <div class="login-page">
     <div class="login-card">
         <div class="login-brand">
-            <img class="login-brand__logo" src="images/brand/lobsy.png?v=20260726-no-ai" alt="Lobsy" width="64" height="64" />
+            <img class="login-brand__logo" src="images/brand/lobsy.png?v=20260726-no-ai" alt="Lobsy" width="80" height="80" />
             <span class="login-brand__name">Lobsy</span>
         </div>
-        <h1>Inloggen</h1>
-        <p class="login-lead">Kies Microsoft Entra, Google of je Lobsy-account.</p>
+        <h1>@Culture["Login.Title"]</h1>
+        <p class="login-lead">@Culture["Login.Lead"]</p>
 
         @if (!string.IsNullOrEmpty(_errorMessage))
         {
@@ -39,7 +42,7 @@
             else
             {
                 <button type="button" class="provider-btn provider-btn--entra is-disabled" disabled
-                        title="Vul Entra ClientId/Secret in appsettings.json">
+                        title="@Culture["Login.EntraNotConfigured"]">
                     <span class="provider-btn__icon" aria-hidden="true">
                         <svg viewBox="0 0 23 23" width="18" height="18"><path fill="#f25022" d="M1 1h10v10H1z"/><path fill="#7fba00" d="M12 1h10v10H12z"/><path fill="#00a4ef" d="M1 12h10v10H1z"/><path fill="#ffb900" d="M12 12h10v10H12z"/></svg>
                     </span>
@@ -58,35 +61,36 @@
             else
             {
                 <button type="button" class="provider-btn provider-btn--google is-disabled" disabled
-                        title="Vul Google ClientId/Secret in appsettings.json">
+                        title="@Culture["Login.GoogleNotConfigured"]">
                     <span class="provider-btn__icon provider-btn__icon--google" aria-hidden="true">G</span>
                     Google
                 </button>
             }
         </div>
 
-        <div class="login-divider"><span>of met e-mail</span></div>
+        <div class="login-divider"><span>@Culture["Login.OrEmail"]</span></div>
 
         <form method="post" action="/account/login" class="login-form">
             <input type="hidden" name="@_antiforgeryFieldName" value="@_antiforgeryToken" />
             <input type="hidden" name="returnUrl" value="@_returnUrl" />
             <label>
-                E-mail
+                @Culture["Login.Email"]
                 <input type="email" name="email" required autocomplete="username" placeholder="kandidaat@jobsy.local" />
             </label>
             <label>
-                Wachtwoord
+                @Culture["Login.Password"]
                 <input type="password" name="password" required autocomplete="current-password" placeholder="••••••••" />
             </label>
-            <button type="submit" class="login-submit">Inloggen</button>
+            <button type="submit" class="login-submit">@Culture["Login.Submit"]</button>
         </form>
 
-        <p class="muted" style="margin-top:1rem;text-align:center">
-            Nieuw bedrijf? <a class="auth-link" href="/register">Registreer via KVK</a>
-        </p>
+        <div class="login-register">
+            <p class="login-register__lead">@Culture["Login.RegisterLead"]</p>
+            <a class="provider-btn provider-btn--register" href="/register">@Culture["Login.RegisterCta"]</a>
+        </div>
 
         <details class="login-demo" open>
-            <summary>Demo-accounts — klik om in te loggen</summary>
+            <summary>@Culture["Login.DemoTitle"]</summary>
             <div class="login-demo__list">
                 @foreach (var user in _demoUsers)
                 {
@@ -102,7 +106,7 @@
                     </form>
                 }
             </div>
-            <p class="login-demo__hint">Tijdelijk voor lokale demo — één klik, geen typen.</p>
+            <p class="login-demo__hint">@Culture["Login.DemoHint"]</p>
         </details>
     </div>
 </div>
@@ -121,6 +125,8 @@
 
     protected override void OnInitialized()
     {
+        Culture.Changed += OnCultureChanged;
+
         var http = HttpContext ?? HttpContextAccessor.HttpContext;
         if (http is not null)
         {
@@ -146,23 +152,29 @@
         {
             _errorMessage = error.ToString() switch
             {
-                "invalid" => "Ongeldige e-mail of wachtwoord.",
-                "entra-not-configured" => "Microsoft Entra is nog niet geconfigureerd. Vul ClientId en ClientSecret in appsettings.json.",
-                "google-not-configured" => "Google is nog niet geconfigureerd. Vul ClientId en ClientSecret in appsettings.json.",
-                "unknown-provider" => "Onbekende loginprovider.",
-                _ => "Inloggen mislukt. Probeer het opnieuw."
+                "invalid" => Culture["Login.ErrorInvalid"],
+                "entra-not-configured" => Culture["Login.ErrorEntra"],
+                "google-not-configured" => Culture["Login.ErrorGoogle"],
+                "unknown-provider" => Culture["Login.ErrorProvider"],
+                _ => Culture["Login.ErrorGeneric"]
             };
         }
     }
 
-    private static string RoleLabel(string role) => role switch
+    private void OnCultureChanged()
+        => InvokeAsync(StateHasChanged);
+
+    private string RoleLabel(string role) => role switch
     {
-        "Candidate" => "Kandidaat",
-        "BranchManager" => "Filiaalmanager",
-        "RegionalManager" => "Regiomanager",
-        "EnterpriseManager" => "Bedrijfsmanager",
-        "Intermediary" => "Intermediair",
-        "Admin" => "Admin",
+        "Candidate" => Culture["Role.Candidate"],
+        "BranchManager" => Culture["Role.BranchManager"],
+        "RegionalManager" => Culture["Role.RegionalManager"],
+        "EnterpriseManager" => Culture["Role.EnterpriseManager"],
+        "Intermediary" => Culture["Role.Intermediary"],
+        "Admin" => Culture["Role.Admin"],
         _ => role
     };
+
+    public void Dispose()
+        => Culture.Changed -= OnCultureChanged;
 }

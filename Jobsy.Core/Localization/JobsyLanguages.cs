@@ -59,4 +59,15 @@ public sealed record LanguageOption(
     string NativeName,
     string FlagEmoji,
     string CultureName,
-    bool IsRightToLeft);
+    bool IsRightToLeft)
+{
+    /// <summary>
+    /// Local SVG flag path (emoji flags often fail on Windows).
+    /// </summary>
+    public string FlagImage => Code switch
+    {
+        "en" => "images/flags/gb.svg",
+        "ar" => "images/flags/sa.svg",
+        _ => $"images/flags/{Code}.svg"
+    };
+}

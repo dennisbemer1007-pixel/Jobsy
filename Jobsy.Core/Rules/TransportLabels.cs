@@ -27,6 +27,14 @@ public static class TransportLabels
         return labels.ToArray();
     }
 
-    public static bool MatchesRequired(string[] requiredTransport, string selectedLabel) =>
-        requiredTransport.Contains(selectedLabel, StringComparer.OrdinalIgnoreCase);
+    public static bool MatchesRequired(string[] requiredTransport, string selectedLabel)
+    {
+        // No required modes ⇒ reachable by any transport the candidate chooses.
+        if (requiredTransport is not { Length: > 0 })
+        {
+            return true;
+        }
+
+        return requiredTransport.Contains(selectedLabel, StringComparer.OrdinalIgnoreCase);
+    }
 }

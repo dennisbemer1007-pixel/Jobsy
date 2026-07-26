@@ -4,13 +4,19 @@
 @implements IDisposable
 
 <div class="app-shell has-bottom-nav" dir="@(Culture.IsRightToLeft ? "rtl" : null)">
+    <div class="lobsy-watermarks" aria-hidden="true">
+        <img class="lobsy-watermark lobsy-watermark--left" src="images/brand/lobsy.png?v=20260726-no-ai" alt="" />
+        <img class="lobsy-watermark lobsy-watermark--right" src="images/brand/lobsy.png?v=20260726-no-ai" alt="" />
+    </div>
     <header class="app-header">
         <div class="app-header__brand">
             <a class="brand" href="/" aria-label="Lobsy">
-                <img class="brand__logo" src="images/brand/lobsy.png?v=20260726-no-ai" alt="Lobsy" width="56" height="56" />
-                <span class="brand__name">Lobsy</span>
+                <img class="brand__logo" src="images/brand/lobsy.png?v=20260726-no-ai" alt="Lobsy" width="88" height="88" />
+                <span class="brand__text">
+                    <span class="brand__name">Lobsy</span>
+                    <span class="brand-tagline">@Culture["Brand.Tagline"]</span>
+                </span>
             </a>
-            <span class="brand-tagline">@Culture["Brand.Tagline"]</span>
         </div>
         <div class="app-header__actions">
             <LanguageSelector />
