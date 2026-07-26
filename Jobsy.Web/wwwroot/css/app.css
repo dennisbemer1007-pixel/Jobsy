@@ -1961,6 +1961,105 @@ a {
     font-weight: 600;
 }
 
+.vacancy-location {
+    margin-top: 1rem;
+}
+
+.vacancy-location__map-wrap {
+    position: relative;
+    width: 100%;
+    height: 240px;
+    border-radius: var(--radius);
+    overflow: hidden;
+    border: 1px solid var(--border);
+    background: var(--map-land, #e8eef5);
+}
+
+.vacancy-location__map {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 1;
+}
+
+.vacancy-detail-marker {
+    background: transparent;
+    border: none;
+}
+
+.vacancy-detail-marker__img {
+    display: block;
+    width: 48px;
+    height: 48px;
+    object-fit: contain;
+    filter: drop-shadow(0 2px 4px rgba(0, 40, 80, 0.35));
+    pointer-events: none;
+    user-select: none;
+}
+
+.vacancy-location__actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: end;
+    gap: 0.75rem;
+    margin-top: 0.75rem;
+}
+
+.vacancy-location__transport {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+}
+
+.vacancy-location__transport select {
+    min-width: 8.5rem;
+    padding: 0.45rem 0.55rem;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--surface);
+    color: var(--text);
+    font: inherit;
+    font-size: 0.92rem;
+    font-weight: 500;
+    text-transform: none;
+    letter-spacing: normal;
+}
+
+.vacancy-location__buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.vacancy-location__btn {
+    min-height: 2.35rem;
+}
+
+@media (max-width: 560px) {
+    .vacancy-location__map-wrap {
+        height: 200px;
+    }
+
+    .vacancy-location__actions {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .vacancy-location__buttons {
+        width: 100%;
+    }
+
+    .vacancy-location__btn {
+        flex: 1 1 auto;
+    }
+}
+
 .badges {
     display: flex;
     flex-wrap: wrap;
