@@ -170,11 +170,15 @@ public class VacanciesController : ControllerBase
         [FromQuery] double? originLat,
         [FromQuery] double? originLng,
         [FromQuery] string? transport,
-        CancellationToken cancellationToken)
+        [FromQuery] int? ageYears = null,
+        CancellationToken cancellationToken = default)
     {
+        int? age = ageYears is int a ? Math.Clamp(a, 15, 67) : null;
         var vacancy = await _db.Vacancies
             .AsNoTracking()
             .Include(v => v.Company)
+            .Include(v => v.SalaryTable!)
+                .ThenInclude(t => t.Rates)
             .FirstOrDefaultAsync(v => v.Id == id, cancellationToken);
 
         if (vacancy is null)
@@ -185,8 +189,8 @@ public class VacanciesController : ControllerBase
         var today = DateOnly.FromDateTime(DateTime.UtcNow);
         if (VacancyVisibilityRules.IsPubliclyVisible(vacancy, today))
         {
-            var showWage = await CanViewerSeeWageAsync(cancellationToken);
-            return Ok(await MapWithOptionalRouteAsync(vacancy, originLat, originLng, transport, showWage, cancellationToken));
+            var showWage = age is not null || await CanViewerSeeWageAsync(cancellationToken);
+            return Ok(await MapWithOptionalRouteAsync(vacancy, originLat, originLng, transport, showWage, age, cancellationToken));
         }
 
         // Drafts / pending / archived: only for authenticated employers with company access (or admin).
@@ -195,7 +199,7 @@ public class VacanciesController : ControllerBase
             && await _companyAuth.CanAccessCompanyAsync(User, vacancy.CompanyId, cancellationToken))
         {
             // Employers always see wage on managed vacancies.
-            return Ok(await MapWithOptionalRouteAsync(vacancy, originLat, originLng, transport, showWage: true, cancellationToken));
+            return Ok(await MapWithOptionalRouteAsync(vacancy, originLat, originLng, transport, showWage: true, age, cancellationToken));
         }
 
         return NotFound();
@@ -613,13 +617,14 @@ public class VacanciesController : ControllerBase
         double? originLng,
         string? transport,
         bool showWage,
-        CancellationToken cancellationToken)
+        int? ageYears = null,
+        CancellationToken cancellationToken = default)
     {
         var targetLanguage = await ResolveTargetLanguageAsync(cancellationToken);
 
         if (originLat is null || originLng is null)
         {
-            return await MapToDtoAsync(vacancy, showWage, targetLanguage, cancellationToken: cancellationToken);
+            return await MapToDtoAsync(vacancy, showWage, targetLanguage, ageYears, cancellationToken: cancellationToken);
         }
 
         var mode = TransportLabels.Parse(transport);
@@ -637,6 +642,7 @@ public class VacanciesController : ControllerBase
             vacancy,
             showWage,
             targetLanguage,
+            ageYears,
             travelMinutes: travelMinutes,
             distanceKm: distanceKm,
             cancellationToken: cancellationToken);

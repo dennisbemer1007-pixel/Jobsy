@@ -71,6 +71,7 @@ public sealed class JobsyApiClient : IAsyncDisposable
         double? originLat = null,
         double? originLng = null,
         string? transport = null,
+        int? ageYears = null,
         CancellationToken ct = default)
     {
         var url = $"api/vacancies/{id}";
@@ -84,6 +85,11 @@ public sealed class JobsyApiClient : IAsyncDisposable
         if (!string.IsNullOrWhiteSpace(transport))
         {
             parts.Add($"transport={Uri.EscapeDataString(transport)}");
+        }
+
+        if (ageYears is not null)
+        {
+            parts.Add($"ageYears={ageYears.Value}");
         }
 
         if (parts.Count > 0)

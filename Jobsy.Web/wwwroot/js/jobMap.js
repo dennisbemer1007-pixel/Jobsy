@@ -71,16 +71,17 @@ window.jobMap = (function () {
         return (window.innerWidth || 0) <= 768;
     }
 
-    function jobPopupOptions() {
+    function jobPopupOptions(withWagePanel) {
         const vw = window.innerWidth || 360;
-        const maxWidth = isNarrowViewport()
+        const narrow = isNarrowViewport();
+        const maxWidth = narrow
             ? Math.max(220, Math.min(300, vw - 28))
-            : 340;
+            : (withWagePanel ? 460 : 340);
         return {
-            className: "job-map-popup",
+            className: "job-map-popup" + (withWagePanel ? " job-map-popup--with-wages" : ""),
             maxWidth: maxWidth,
-            minWidth: isNarrowViewport() ? Math.min(240, maxWidth) : 280,
-            autoPanPadding: isNarrowViewport() ? [12, 56] : [36, 48],
+            minWidth: narrow ? Math.min(240, maxWidth) : (withWagePanel ? 400 : 280),
+            autoPanPadding: narrow ? [12, 56] : [36, 48],
             keepInView: true
         };
     }
@@ -99,21 +100,36 @@ window.jobMap = (function () {
         };
     }
 
-    function wageHtml(v) {
+    function hasWageBands(v) {
+        return Array.isArray(v.wageBands) && v.wageBands.length > 0;
+    }
+
+    function wageInlineHtml(v) {
         if (v.wageLabel) {
             return "<span class=\"map-popup__wage map-popup__wage--masked\">" + escapeHtml(v.wageLabel) + "</span>";
         }
-        if (Array.isArray(v.wageBands) && v.wageBands.length > 0) {
-            const rows = v.wageBands.map(function (b) {
-                return "<tr><th>" + escapeHtml(String(b.label || b.ageYears || "")) + "</th>" +
-                    "<td>€ " + formatWage(b.hourlyRate) + "</td></tr>";
-            }).join("");
-            return "<table class=\"map-popup__wage-table\"><tbody>" + rows + "</tbody></table>";
+        if (hasWageBands(v)) {
+            // Per-age table lives in the side panel, not inline.
+            return "";
         }
         if (v.wage == null || v.wage === "") {
             return "";
         }
         return "<span class=\"map-popup__wage\">€ " + formatWage(v.wage) + "</span>";
+    }
+
+    function wagePanelHtml(v) {
+        if (!hasWageBands(v)) return "";
+        const rows = v.wageBands.map(function (b) {
+            return "<tr><th>" + escapeHtml(String(b.label || b.ageYears || "")) + "</th>" +
+                "<td>€ " + formatWage(b.hourlyRate) + "</td></tr>";
+        }).join("");
+        return (
+            "<aside class=\"map-popup__wage-panel\" aria-label=\"Uurlonen per leeftijd\">" +
+                "<p class=\"map-popup__wage-panel-title\">Uurlonen</p>" +
+                "<table class=\"map-popup__wage-table\"><tbody>" + rows + "</tbody></table>" +
+            "</aside>"
+        );
     }
 
     function travelHtml(v) {
@@ -149,23 +165,27 @@ window.jobMap = (function () {
         }
 
         const detailHref = "/vacancies/" + encodeURIComponent(v.id);
+        const rootClass = "map-popup" + (hasWageBands(v) ? " map-popup--with-wages" : "");
 
         return (
-            "<div class=\"map-popup\">" +
-                "<div class=\"" + mediaClass + "\">" + mediaInner + "</div>" +
-                "<div class=\"map-popup__body\">" +
-                "<div class=\"map-popup__top\">" +
-                        "<h3 class=\"map-popup__title\">" + escapeHtml(v.title) + "</h3>" +
-                        travelHtml(v) +
-                    "</div>" +
-                    "<p class=\"map-popup__company\">" + escapeHtml(v.company) + "</p>" +
-                    "<p class=\"map-popup__address\">" + escapeHtml(v.address || "") + "</p>" +
-                    wageHtml(v) +
-                    (badges ? "<div class=\"map-popup__badges\">" + badges + "</div>" : "") +
-                    "<div class=\"map-popup__actions\">" +
-                        "<a class=\"map-popup__cta\" href=\"" + detailHref + "\" data-job-id=\"" + escapeAttr(v.id) + "\">Bekijk vacature</a>" +
+            "<div class=\"" + rootClass + "\">" +
+                "<div class=\"map-popup__main\">" +
+                    "<div class=\"" + mediaClass + "\">" + mediaInner + "</div>" +
+                    "<div class=\"map-popup__body\">" +
+                        "<div class=\"map-popup__top\">" +
+                            "<h3 class=\"map-popup__title\">" + escapeHtml(v.title) + "</h3>" +
+                            travelHtml(v) +
+                        "</div>" +
+                        "<p class=\"map-popup__company\">" + escapeHtml(v.company) + "</p>" +
+                        "<p class=\"map-popup__address\">" + escapeHtml(v.address || "") + "</p>" +
+                        wageInlineHtml(v) +
+                        (badges ? "<div class=\"map-popup__badges\">" + badges + "</div>" : "") +
+                        "<div class=\"map-popup__actions\">" +
+                            "<a class=\"map-popup__cta\" href=\"" + detailHref + "\" data-job-id=\"" + escapeAttr(v.id) + "\">Bekijk vacature</a>" +
+                        "</div>" +
                     "</div>" +
                 "</div>" +
+                wagePanelHtml(v) +
             "</div>"
         );
     }
@@ -441,11 +461,79 @@ window.jobMap = (function () {
             setOrigin(options.origin.lat, options.origin.lng, options.travel);
         }
 
+        addLocateControl();
+
         [50, 200, 500].forEach(function (ms) {
             setTimeout(invalidate, ms);
         });
 
         window.addEventListener("resize", invalidate);
+    }
+
+    function locateIconHtml() {
+        return (
+            "<svg class=\"job-map-locate__icon\" viewBox=\"0 0 24 24\" width=\"20\" height=\"20\" aria-hidden=\"true\">" +
+                "<circle cx=\"12\" cy=\"12\" r=\"3.2\" fill=\"currentColor\"/>" +
+                "<path fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" " +
+                    "d=\"M12 3v2.5M12 18.5V21M3 12h2.5M18.5 12H21\"/>" +
+                "<circle cx=\"12\" cy=\"12\" r=\"7\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"/>" +
+            "</svg>"
+        );
+    }
+
+    function addLocateControl() {
+        if (!map) return;
+
+        const LocateControl = L.Control.extend({
+            onAdd: function () {
+                const bar = L.DomUtil.create("div", "leaflet-bar job-map-locate");
+                const btn = L.DomUtil.create("a", "job-map-locate__btn", bar);
+                btn.href = "#";
+                btn.title = "Mijn locatie";
+                btn.setAttribute("role", "button");
+                btn.setAttribute("aria-label", "Mijn locatie");
+                btn.innerHTML = locateIconHtml();
+
+                L.DomEvent.disableClickPropagation(bar);
+                L.DomEvent.on(btn, "click", L.DomEvent.stop)
+                    .on(btn, "click", function () {
+                        if (btn.classList.contains("is-busy")) return;
+                        btn.classList.add("is-busy");
+                        const done = function () {
+                            btn.classList.remove("is-busy");
+                        };
+
+                        if (openCallback) {
+                            openCallback.invokeMethodAsync("OnMapLocateClicked")
+                                .then(done, done);
+                        } else if (window.jobsyGeo && typeof window.jobsyGeo.requestLocation === "function") {
+                            window.jobsyGeo.requestLocation()
+                                .then(function (pos) {
+                                    setOrigin(pos.lat, pos.lng, travelOptions);
+                                })
+                                .then(done, done);
+                        } else {
+                            done();
+                        }
+                    });
+
+                return bar;
+            }
+        });
+
+        new LocateControl({ position: "bottomright" }).addTo(map);
+        syncLocateButton();
+    }
+
+    function syncLocateButton() {
+        if (!map) return;
+        const btn = map.getContainer().querySelector(".job-map-locate__btn");
+        if (!btn) return;
+        if (originMarker) {
+            btn.classList.add("is-active");
+        } else {
+            btn.classList.remove("is-active");
+        }
     }
 
     function setVacancies(vacancies) {
@@ -470,7 +558,7 @@ window.jobMap = (function () {
                 jobData: v
             });
 
-            marker.bindPopup(buildPopupHtml(v), jobPopupOptions());
+            marker.bindPopup(buildPopupHtml(v), jobPopupOptions(hasWageBands(v)));
 
             marker.on("click", function () {
                 highlight(v.id);
@@ -512,6 +600,7 @@ window.jobMap = (function () {
         }
 
         drawTravelRings(la, ln);
+        syncLocateButton();
         const markerBounds = Object.keys(markersById).map(function (id) {
             const ll = markersById[id].getLatLng();
             return [ll.lat, ll.lng];
@@ -538,6 +627,7 @@ window.jobMap = (function () {
             map.removeLayer(originMarker);
             originMarker = null;
         }
+        syncLocateButton();
     }
 
     function invalidate() {

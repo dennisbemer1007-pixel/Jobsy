@@ -35,7 +35,24 @@
                 {
                     <span class="wage">€ @_vacancy.HourlyWage.Value.ToString("0.00")</span>
                 }
-                else
+                else if (_vacancy.WageVisible && _vacancy.WageByAge is { Count: > 0 })
+                {
+                    <aside class="detail-wage-panel" aria-label="Uurlonen per leeftijd">
+                        <p class="detail-wage-panel__title">Uurlonen</p>
+                        <table class="wage-table">
+                            <tbody>
+                                @foreach (var band in _vacancy.WageByAge)
+                                {
+                                    <tr>
+                                        <th>@band.Label</th>
+                                        <td>€ @band.HourlyRate.ToString("0.00")</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </aside>
+                }
+                else if (!_vacancy.WageVisible)
                 {
                     <a class="wage wage--cta" href="#dob">@WageVisibilityRules.MissingDateOfBirthMessage</a>
                 }
@@ -211,6 +228,7 @@
     private bool _authenticatorEnabled;
     private bool _useAuthenticator;
     private bool _acceptedTerms;
+    private int? _ageYears;
 
     private string LoginUrl =>
         $"/login?returnUrl={Uri.EscapeDataString($"/vacancies/{Id}")}";
@@ -242,11 +260,23 @@
         try
         {
             var dict = await Js.InvokeAsync<Dictionary<string, double>?>("jobsyGeo.getStoredOrigin");
+            OriginPoint? origin = null;
             if (dict is not null && dict.TryGetValue("lat", out var lat) && dict.TryGetValue("lng", out var lng))
             {
-                await LoadAsync(new OriginPoint { Latitude = lat, Longitude = lng });
-                await InvokeAsync(StateHasChanged);
+                origin = new OriginPoint { Latitude = lat, Longitude = lng };
             }
+
+            try
+            {
+                _ageYears = await Js.InvokeAsync<int?>("jobsyGeo.getStoredAge");
+            }
+            catch
+            {
+                _ageYears = null;
+            }
+
+            await LoadAsync(origin);
+            await InvokeAsync(StateHasChanged);
 
             await Api.RecordClickOnceAsync(Js, Id);
 
@@ -274,7 +304,8 @@
                 Id,
                 origin?.Latitude,
                 origin?.Longitude,
-                _transport);
+                _transport,
+                _ageYears);
         }
         finally
         {

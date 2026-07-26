@@ -3,6 +3,7 @@ window.jobsyGeo = (function () {
     const ANON_KEY = "jobsy.anonymousKey";
     const CLICKED_KEY = "jobsy.clickedVacancies";
     const AGE_KEY = "jobsy.discoveryAge";
+    const PROMPT_KEY = "jobsy.locationPrompted";
 
     function getStoredOrigin() {
         try {
@@ -35,6 +36,22 @@ window.jobsyGeo = (function () {
 
     function clearStoredOrigin() {
         localStorage.removeItem(STORAGE_KEY);
+    }
+
+    function wasLocationPrompted() {
+        try {
+            return sessionStorage.getItem(PROMPT_KEY) === "1";
+        } catch {
+            return false;
+        }
+    }
+
+    function markLocationPrompted() {
+        try {
+            sessionStorage.setItem(PROMPT_KEY, "1");
+        } catch {
+            // ignore
+        }
     }
 
     function getStoredAge() {
@@ -125,9 +142,31 @@ window.jobsyGeo = (function () {
                     }
                     reject(new Error(message));
                 },
-                { enableHighAccuracy: false, timeout: 12000, maximumAge: 60000 }
+                { enableHighAccuracy: true, timeout: 15000, maximumAge: 30000 }
             );
         });
+    }
+
+    /**
+     * On first visit in a tab: ask for geolocation when no origin is stored.
+     * Returns { lat, lng, label? } on success, null if skipped/denied.
+     */
+    async function ensureLocationOnLaunch() {
+        const existing = getStoredOrigin();
+        if (existing) {
+            return existing;
+        }
+
+        if (wasLocationPrompted()) {
+            return null;
+        }
+
+        markLocationPrompted();
+        try {
+            return await requestLocation();
+        } catch {
+            return null;
+        }
     }
 
     function scrollToId(id) {
@@ -172,6 +211,9 @@ window.jobsyGeo = (function () {
         getStoredAge,
         setStoredAge,
         clearStoredAge,
+        wasLocationPrompted,
+        markLocationPrompted,
+        ensureLocationOnLaunch,
         getOrCreateAnonymousKey,
         tryClaimClick,
         requestLocation,

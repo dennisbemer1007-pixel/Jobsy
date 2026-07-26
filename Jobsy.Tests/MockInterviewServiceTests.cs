@@ -26,46 +26,59 @@ public class MockInterviewServiceTests
     }
 
     [Fact]
-    public void ScriptedFallback_opens_with_vacancy_context()
+    public void ScriptedFallback_opens_with_vacancy_specific_question()
     {
         var vacancy = new MockInterviewVacancyContext(
             Guid.NewGuid(),
             "Magazijnmedewerker",
-            "Inpakken en laden",
+            "Je werkt in het magazijn: inpakken van orders en laden van karren. Tempo en netjes werken zijn belangrijk.",
             "Bakkerij De Zon",
             "Kerkstraat 1",
             new DateOnly(2026, 8, 1),
             ["Fiets"],
-            null);
+            null,
+            ["Logistiek"]);
 
         var reply = MockInterviewService.ScriptedFallback.NextReply(vacancy, []);
 
         Assert.Contains("Magazijnmedewerker", reply, StringComparison.Ordinal);
         Assert.Contains("Bakkerij De Zon", reply, StringComparison.Ordinal);
-        Assert.Contains("oefen", reply, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("Vraag:", reply, StringComparison.Ordinal);
+        Assert.True(
+            reply.Contains("magazijn", StringComparison.OrdinalIgnoreCase)
+            || reply.Contains("inpak", StringComparison.OrdinalIgnoreCase)
+            || reply.Contains("logistiek", StringComparison.OrdinalIgnoreCase));
     }
 
     [Fact]
-    public void ScriptedFallback_gives_feedback_after_answer()
+    public void ScriptedFallback_gives_sterk_and_tip_after_answer()
     {
         var vacancy = new MockInterviewVacancyContext(
             Guid.NewGuid(),
             "Bezorgmedewerker",
-            "Bezorgen in de buurt",
+            "Je bezorgt bestellingen in de buurt per fiets. Klantvriendelijk en op tijd zijn is belangrijk.",
             "FietsExpress",
             null,
             new DateOnly(2026, 8, 1),
             ["Fiets"],
-            14.50m);
+            14.50m,
+            []);
 
         var history = new List<MockInterviewMessage>
         {
-            new("assistant", "Waarom past deze vacature bij jou?"),
+            new("assistant", "Vraag: Waarom past deze vacature bij jou?"),
             new("user", "Ik woon dichtbij en vind fietsen leuk, plus ik heb al bezorgd bij een webshop.")
         };
 
         var reply = MockInterviewService.ScriptedFallback.NextReply(vacancy, history);
 
-        Assert.Contains("ervaring", reply, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("Sterk:", reply, StringComparison.Ordinal);
+        Assert.Contains("Tip:", reply, StringComparison.Ordinal);
+        Assert.Contains("Vraag:", reply, StringComparison.Ordinal);
+        Assert.True(
+            reply.Contains("bezorg", StringComparison.OrdinalIgnoreCase)
+            || reply.Contains("klant", StringComparison.OrdinalIgnoreCase)
+            || reply.Contains("ervaring", StringComparison.OrdinalIgnoreCase)
+            || reply.Contains("fiets", StringComparison.OrdinalIgnoreCase));
     }
 }

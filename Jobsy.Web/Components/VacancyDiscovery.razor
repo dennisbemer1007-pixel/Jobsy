@@ -43,7 +43,11 @@
                         @onclick="RequestLocationAsync"
                         aria-label="@Culture["Discovery.UseMyLocation"]">
                     <span class="jobsy-search__icon" aria-hidden="true">
-                        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+                        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                            <circle cx="12" cy="12" r="3"/>
+                            <circle cx="12" cy="12" r="7"/>
+                            <path d="M12 3v2.5M12 18.5V21M3 12h2.5M18.5 12H21"/>
+                        </svg>
                     </span>
                 </button>
             </div>
@@ -622,7 +626,7 @@
                     await Js.InvokeVoidAsync("jobsyGeo.setStoredAge", _ageYears.Value);
                 }
 
-                var stored = await Js.InvokeAsync<StoredOrigin?>("jobsyGeo.getStoredOrigin");
+                var stored = await Js.InvokeAsync<StoredOrigin?>("jobsyGeo.ensureLocationOnLaunch");
                 if (stored is not null && IsFinite(stored.Lat) && IsFinite(stored.Lng))
                 {
                     _origin = new OriginPoint { Latitude = stored.Lat, Longitude = stored.Lng };
@@ -1156,6 +1160,10 @@
             // tracking must not break UX
         }
     }
+
+    [JSInvokable]
+    public Task OnMapLocateClicked()
+        => RequestLocationAsync();
 
     private void OpenShare(VacancyListItem vacancy)
     {

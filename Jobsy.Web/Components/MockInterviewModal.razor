@@ -14,28 +14,49 @@
         </div>
 
         <p class="mock-interview-modal__disclaimer">
-            Oefengesprek met AI — geen echt gesprek met de werkgever.
+            Coachingsgesprek op basis van deze vacature — geen echt gesprek met de werkgever.
             Deel geen BSN, bankgegevens of wachtwoorden.
             <a class="auth-link" href="/gebruiksvoorwaarden" target="_blank" rel="noopener">Chatbot-disclaimer</a>
         </p>
 
+        @if (_started && !_busy)
+        {
+            <p class="mock-interview-progress">@ProgressLabel</p>
+        }
+
         <div class="mock-interview-chat">
             @if (_messages.Count == 0 && !_busy)
             {
-                <p class="mock-interview-chat__empty">Even geduld — de recruiter start het gesprek…</p>
+                <p class="mock-interview-chat__empty">Even geduld — je coach start het gesprek…</p>
             }
             @foreach (var msg in _messages)
             {
                 <div class="mock-interview-bubble mock-interview-bubble--@msg.Role">
-                    <span class="mock-interview-bubble__role">@(msg.Role == "user" ? "Jij" : "Recruiter")</span>
-                    <p>@msg.Content</p>
+                    <span class="mock-interview-bubble__role">@(msg.Role == "user" ? "Jij" : "Coach")</span>
+                    @if (msg.Role == "assistant")
+                    {
+                        @foreach (var block in ParseCoachBlocks(msg.Content))
+                        {
+                            <div class="mock-interview-block mock-interview-block--@block.Kind">
+                                @if (!string.IsNullOrEmpty(block.Label))
+                                {
+                                    <span class="mock-interview-block__label">@block.Label</span>
+                                }
+                                <p>@block.Text</p>
+                            </div>
+                        }
+                    }
+                    else
+                    {
+                        <p>@msg.Content</p>
+                    }
                 </div>
             }
             @if (_busy)
             {
                 <div class="mock-interview-bubble mock-interview-bubble--assistant mock-interview-bubble--typing">
-                    <span class="mock-interview-bubble__role">Recruiter</span>
-                    <p>Even denken…</p>
+                    <span class="mock-interview-bubble__role">Coach</span>
+                    <p>Ik lees je antwoord en bedenk feedback…</p>
                 </div>
             }
         </div>
@@ -45,19 +66,24 @@
             <p class="state-message error">@_error</p>
         }
 
+        @if (_started && !_busy)
+        {
+            <p class="mock-interview-hint">@CurrentHint</p>
+        }
+
         <form class="mock-interview-compose" @onsubmit="SendAsync" @onsubmit:preventDefault="true">
             <label class="visually-hidden" for="mock-interview-input">Jouw antwoord</label>
             <textarea id="mock-interview-input"
-                      rows="2"
+                      rows="3"
                       maxlength="2000"
-                      placeholder="Typ je antwoord…"
+                      placeholder="Antwoord met een concreet voorbeeld (situatie → wat jij deed → resultaat)…"
                       disabled="@(_busy || !_started)"
                       @bind="_draft"
                       @bind:event="oninput"></textarea>
             <div class="mock-interview-compose__actions">
                 <button type="button" class="engagement-btn" disabled="@_busy" @onclick="RestartAsync">Opnieuw</button>
                 <button type="submit" class="login-submit" disabled="@(_busy || !_started || string.IsNullOrWhiteSpace(_draft))">
-                    Verstuur
+                    Verstuur antwoord
                 </button>
             </div>
         </form>
@@ -76,6 +102,26 @@
     private bool _started;
     private bool _wasOpen;
     private Guid _sessionVacancyId;
+
+    private int UserAnswerCount => _messages.Count(m => m.Role == "user");
+
+    private string ProgressLabel => UserAnswerCount switch
+    {
+        0 => "Stap 1 · Beantwoord de openingsvraag",
+        1 => "Stap 2 · Bouw verder op feedback",
+        2 => "Stap 3 · Situatie uit de vacature",
+        3 => "Stap 4 · Praktisch & beschikbaar",
+        4 => "Stap 5 · Jouw vraag aan de werkgever",
+        _ => "Afronding · Je hebt de oefening doorlopen"
+    };
+
+    private string CurrentHint => UserAnswerCount switch
+    {
+        0 => "Tip: noem iets dat letterlijk in de vacature staat en zeg waarom dat bij jou past.",
+        1 => "Tip: geef één kort voorbeeld (school, sport, bijbaan of stage).",
+        2 => "Tip: denk hardop — wat doe je eerst, en waarom?",
+        _ => "Tip: houd het eerlijk en concreet; eindig met een zin die bij déze vacature past."
+    };
 
     protected override async Task OnParametersSetAsync()
     {
@@ -158,4 +204,107 @@
             _busy = false;
         }
     }
+
+    private static IReadOnlyList<CoachBlock> ParseCoachBlocks(string content)
+    {
+        if (string.IsNullOrWhiteSpace(content))
+        {
+            return [];
+        }
+
+        var lines = content.Replace("\r\n", "\n", StringComparison.Ordinal).Split('\n');
+        var blocks = new List<CoachBlock>();
+        string? currentKind = null;
+        string? currentLabel = null;
+        var buffer = new List<string>();
+
+        void Flush()
+        {
+            if (buffer.Count == 0 && currentKind is null)
+            {
+                return;
+            }
+
+            var text = string.Join("\n", buffer).Trim();
+            if (text.Length == 0 && currentKind is null)
+            {
+                buffer.Clear();
+                return;
+            }
+
+            blocks.Add(new CoachBlock(currentKind ?? "body", currentLabel, text));
+            buffer.Clear();
+            currentKind = null;
+            currentLabel = null;
+        }
+
+        foreach (var raw in lines)
+        {
+            var line = raw.TrimEnd();
+            if (StartsWithLabel(line, "Sterk:", out var sterk))
+            {
+                Flush();
+                currentKind = "strong";
+                currentLabel = "Sterk";
+                if (!string.IsNullOrWhiteSpace(sterk))
+                {
+                    buffer.Add(sterk);
+                }
+                continue;
+            }
+
+            if (StartsWithLabel(line, "Tip:", out var tip))
+            {
+                Flush();
+                currentKind = "tip";
+                currentLabel = "Tip";
+                if (!string.IsNullOrWhiteSpace(tip))
+                {
+                    buffer.Add(tip);
+                }
+                continue;
+            }
+
+            if (StartsWithLabel(line, "Vraag:", out var vraag))
+            {
+                Flush();
+                currentKind = "question";
+                currentLabel = "Vraag";
+                if (!string.IsNullOrWhiteSpace(vraag))
+                {
+                    buffer.Add(vraag);
+                }
+                continue;
+            }
+
+            if (string.IsNullOrWhiteSpace(line) && buffer.Count == 0 && currentKind is null)
+            {
+                continue;
+            }
+
+            if (currentKind is null)
+            {
+                currentKind = "body";
+            }
+
+            buffer.Add(line);
+        }
+
+        Flush();
+        return blocks.Count > 0 ? blocks : [new CoachBlock("body", null, content.Trim())];
+    }
+
+    private static bool StartsWithLabel(string line, string label, out string rest)
+    {
+        rest = string.Empty;
+        if (!line.StartsWith(label, StringComparison.OrdinalIgnoreCase))
+        {
+            return false;
+        }
+
+        rest = line[label.Length..].Trim();
+        return true;
+    }
+
+    private sealed record CoachBlock(string Kind, string? Label, string Text);
 }

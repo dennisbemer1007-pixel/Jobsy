@@ -20,7 +20,8 @@ public sealed record MockInterviewVacancyContext(
     string? CompanyAddress,
     DateOnly StartDate,
     IReadOnlyList<string> RequiredTransport,
-    decimal? HourlyWage);
+    decimal? HourlyWage,
+    IReadOnlyList<string> WorkTypes);
 
 public sealed record MockInterviewMessage(string Role, string Content);
 

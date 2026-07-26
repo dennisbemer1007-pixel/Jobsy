@@ -84,7 +84,8 @@ public sealed class MockInterviewController : ControllerBase
             vacancy.Company.Address,
             vacancy.StartDate,
             TransportLabels.Expand(vacancy.RequiredTransport),
-            HourlyWage: null);
+            HourlyWage: null,
+            WorkTypeLabels.Expand(vacancy.WorkTypes));
 
         var history = request.Messages
             .Select(m => new MockInterviewMessage(m.Role, m.Content))

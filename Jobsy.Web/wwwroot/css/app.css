@@ -318,6 +318,39 @@ a {
     display: flex;
     justify-content: space-between;
     gap: 1rem;
+    align-items: flex-start;
+}
+
+.detail-wage-panel {
+    flex-shrink: 0;
+    min-width: 7.5rem;
+    padding: 0.55rem 0.7rem;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border);
+    background: color-mix(in srgb, var(--accent-soft) 55%, var(--surface));
+}
+
+.detail-wage-panel__title {
+    margin: 0 0 0.3rem;
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--muted);
+}
+
+.detail-wage-panel .wage-table {
+    font-size: 0.82rem;
+}
+
+.detail-wage-panel .wage-table th,
+.detail-wage-panel .wage-table td {
+    padding: 0.12rem 0.15rem;
+}
+
+.detail-wage-panel .wage-table td {
+    text-align: right;
+    padding-left: 0.65rem;
 }
 
 .detail-card h1 {
@@ -1397,23 +1430,26 @@ a {
     border-collapse: collapse;
     font-size: 0.78rem;
     margin: 0;
+    width: 100%;
     color: var(--brand);
 }
 
 .map-popup__wage-table th,
 .map-popup__wage-table td {
-    padding: 0.05rem 0.3rem;
+    padding: 0.18rem 0.2rem;
     text-align: left;
 }
 
 .map-popup__wage-table th {
     color: var(--muted);
     font-weight: 500;
+    padding-right: 0.55rem;
 }
 
 .map-popup__wage-table td {
     font-weight: 700;
     white-space: nowrap;
+    text-align: right;
 }
 
 .company {
@@ -1541,6 +1577,45 @@ a {
 .job-map .leaflet-bar a:hover {
     background: var(--accent-soft) !important;
     color: var(--brand) !important;
+}
+
+.job-map-locate {
+    margin-bottom: 18px !important;
+    border: none !important;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.28);
+    border-radius: 2px;
+    overflow: hidden;
+}
+
+.job-map-locate__btn {
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+    width: 40px !important;
+    height: 40px !important;
+    line-height: 1 !important;
+    color: #5f6368 !important;
+    background: #fff !important;
+    border: none !important;
+    border-bottom: none !important;
+}
+
+.job-map-locate__btn:hover {
+    background: #f8f9fa !important;
+    color: var(--brand) !important;
+}
+
+.job-map-locate__btn.is-active {
+    color: var(--accent) !important;
+}
+
+.job-map-locate__btn.is-busy {
+    opacity: 0.55;
+    pointer-events: none;
+}
+
+.job-map-locate__icon {
+    display: block;
 }
 
 .job-map .leaflet-control-attribution {
@@ -1733,6 +1808,10 @@ a {
     max-width: min(340px, calc(100vw - 1.5rem));
 }
 
+.leaflet-popup.job-map-popup.job-map-popup--with-wages {
+    max-width: min(460px, calc(100vw - 1.5rem));
+}
+
 .leaflet-popup.job-map-popup .leaflet-popup-content-wrapper {
     padding: 0;
     border-radius: var(--radius);
@@ -1746,6 +1825,10 @@ a {
     min-width: 0 !important;
     width: 100% !important;
     max-width: 340px;
+}
+
+.leaflet-popup.job-map-popup.job-map-popup--with-wages .leaflet-popup-content {
+    max-width: 460px;
 }
 
 .leaflet-popup.job-map-popup .leaflet-popup-tip {
@@ -1773,6 +1856,13 @@ a {
     max-width: 100%;
     font-family: var(--font);
     color: var(--text);
+}
+
+.map-popup__main {
+    display: flex;
+    align-items: stretch;
+    min-width: 0;
+    flex: 1 1 auto;
 }
 
 .map-popup__media {
@@ -1823,6 +1913,27 @@ a {
     display: flex;
     flex-direction: column;
     gap: 0.15rem;
+}
+
+.map-popup__wage-panel {
+    flex: 0 0 auto;
+    min-width: 7.5rem;
+    max-width: 9.5rem;
+    padding: 0.65rem 0.7rem;
+    border-left: 1px solid var(--border);
+    background: color-mix(in srgb, var(--accent-soft) 55%, var(--surface));
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+}
+
+.map-popup__wage-panel-title {
+    margin: 0;
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--muted);
 }
 
 .map-popup__top {
@@ -1906,7 +2017,7 @@ a {
     border-radius: var(--radius-sm);
     padding: 0.55rem 0.75rem;
     background: var(--accent);
-    color: #fff;
+    color: #fff !important;
     font: inherit;
     font-size: 0.88rem;
     font-weight: 600;
@@ -1915,8 +2026,12 @@ a {
     text-decoration: none;
 }
 
-.map-popup__cta:hover {
+.map-popup__cta:hover,
+.map-popup__cta:focus,
+.map-popup__cta:visited {
     background: var(--accent-hover);
+    color: #fff !important;
+    text-decoration: none;
 }
 
 .state-message {
@@ -1943,7 +2058,15 @@ a {
         max-width: calc(100vw - 1.25rem);
     }
 
+    .leaflet-popup.job-map-popup.job-map-popup--with-wages .leaflet-popup-content {
+        max-width: calc(100vw - 1.25rem);
+    }
+
     .map-popup {
+        flex-direction: column;
+    }
+
+    .map-popup__main {
         flex-direction: column;
     }
 
@@ -1964,6 +2087,14 @@ a {
 
     .map-popup__body {
         padding: 0.6rem 0.7rem 0.65rem;
+    }
+
+    .map-popup__wage-panel {
+        max-width: none;
+        min-width: 0;
+        border-left: none;
+        border-top: 1px solid var(--border);
+        padding: 0.55rem 0.7rem 0.65rem;
     }
 
     .map-popup__top {
@@ -2594,13 +2725,31 @@ a.engagement-btn {
 }
 
 .mock-interview-modal__disclaimer {
-    margin: 0 0 0.75rem;
+    margin: 0 0 0.55rem;
     padding: 0.55rem 0.7rem;
     border-radius: var(--radius-sm);
     background: var(--accent-soft);
     color: var(--muted);
     font-size: 0.8rem;
     line-height: 1.4;
+}
+
+.mock-interview-progress {
+    margin: 0 0 0.45rem;
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: var(--brand);
+}
+
+.mock-interview-hint {
+    margin: 0.45rem 0 0.35rem;
+    padding: 0.45rem 0.65rem;
+    border-radius: var(--radius-sm);
+    background: color-mix(in srgb, var(--accent-soft) 70%, var(--surface));
+    border: 1px solid color-mix(in srgb, var(--accent) 25%, var(--border));
+    color: var(--brand);
+    font-size: 0.8rem;
+    line-height: 1.35;
 }
 
 .mock-interview-chat {
@@ -2663,6 +2812,52 @@ a.engagement-btn {
 
 .mock-interview-bubble--typing {
     opacity: 0.75;
+}
+
+.mock-interview-block {
+    margin-top: 0.45rem;
+}
+
+.mock-interview-block:first-of-type {
+    margin-top: 0.3rem;
+}
+
+.mock-interview-block__label {
+    display: inline-block;
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    margin-bottom: 0.1rem;
+}
+
+.mock-interview-block--strong .mock-interview-block__label {
+    color: #0f7a45;
+}
+
+.mock-interview-block--tip {
+    padding: 0.4rem 0.5rem;
+    border-radius: 8px;
+    background: color-mix(in srgb, #fff6db 80%, var(--surface));
+    border: 1px solid color-mix(in srgb, #e2c36a 45%, var(--border));
+}
+
+.mock-interview-block--tip .mock-interview-block__label {
+    color: #8a6a00;
+}
+
+.mock-interview-block--question {
+    margin-top: 0.65rem;
+    padding-top: 0.45rem;
+    border-top: 1px dashed var(--border);
+}
+
+.mock-interview-block--question .mock-interview-block__label {
+    color: var(--brand);
+}
+
+.mock-interview-block--question p {
+    font-weight: 600;
 }
 
 .mock-interview-compose {
@@ -2747,7 +2942,10 @@ a.engagement-btn {
 
 a.map-popup__cta {
     display: inline-flex;
+    align-items: center;
+    justify-content: center;
     text-decoration: none;
+    color: #fff !important;
 }
 
 /* —— Bottom nav —— */
