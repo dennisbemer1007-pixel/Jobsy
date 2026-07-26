@@ -14,7 +14,8 @@ public static class JobsyApiClientFactory
         var handler = new JobsyApiAuthHandler(
             sp.GetRequiredService<IHttpContextAccessor>(),
             sp.GetRequiredService<AuthenticationStateProvider>(),
-            sp)
+            sp,
+            configuration)
         {
             InnerHandler = new HttpClientHandler()
         };

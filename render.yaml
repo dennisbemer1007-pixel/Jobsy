@@ -33,25 +33,28 @@ services:
       - key: DOTNET_HOSTBUILDER__RELOADCONFIGONCHANGE
         value: "false"
       - key: AllowedHosts
-        value: "*"
+        value: "lobsy.nl;www.lobsy.nl;.onrender.com"
       - key: JobsyAuth__AllowDevelopmentAuth
         value: "true"
+      - key: JobsyAuth__DevelopmentAuthSecret
+        generateValue: true
       - key: JobsyFeatures__ExposeRegistrationActivationLinks
-        value: "true"
+        value: "false"
       - key: ConnectionStrings__JobsyDb
         fromDatabase:
           name: jobsy-db
           property: connectionString
       - key: PublicWebBaseUrl
-        fromService:
-          name: jobsy-web
-          type: web
-          envVarKey: RENDER_EXTERNAL_URL
+        value: "https://lobsy.nl"
       - key: Cors__AllowedOrigins__0
         fromService:
           name: jobsy-web
           type: web
           envVarKey: RENDER_EXTERNAL_URL
+      - key: Cors__AllowedOrigins__1
+        value: "https://lobsy.nl"
+      - key: Cors__AllowedOrigins__2
+        value: "https://www.lobsy.nl"
 
   - type: web
     name: jobsy-web
@@ -67,7 +70,12 @@ services:
       - key: DOTNET_HOSTBUILDER__RELOADCONFIGONCHANGE
         value: "false"
       - key: AllowedHosts
-        value: "*"
+        value: "lobsy.nl;www.lobsy.nl;.onrender.com"
+      - key: JobsyAuth__DevelopmentAuthSecret
+        fromService:
+          name: jobsy-api
+          type: web
+          envVarKey: JobsyAuth__DevelopmentAuthSecret
       - key: ApiBaseUrl
         fromService:
           name: jobsy-api

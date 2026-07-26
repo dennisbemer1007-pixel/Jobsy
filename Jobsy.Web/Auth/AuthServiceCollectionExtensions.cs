@@ -184,13 +184,6 @@ public static class AuthServiceCollectionExtensions
             await http.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
             return Results.Redirect("/");
         });
-
-        // Keep GET for backwards compatibility but prefer POST with antiforgery.
-        app.MapGet("/account/logout", async (HttpContext http) =>
-        {
-            await http.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
-            return Results.Redirect("/");
-        });
     }
 
     private static ClaimsPrincipal CreateLocalPrincipal(DemoUserOptions user)

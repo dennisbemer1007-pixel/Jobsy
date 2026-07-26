@@ -92,13 +92,14 @@ window.jobMap = (function () {
     function clusterPopupOptions(withWagePanel) {
         const vw = window.innerWidth || 360;
         const narrow = isNarrowViewport();
+        // Wider popup: paginated cluster cards are intentionally larger for readability.
         const maxWidth = narrow
-            ? Math.max(220, Math.min(340, vw - 28))
-            : (withWagePanel ? 420 : 320);
+            ? Math.max(260, Math.min(380, vw - 24))
+            : (withWagePanel ? 420 : 360);
         return {
             className: "job-cluster-popup" + (withWagePanel ? " job-cluster-popup--with-wages" : ""),
             maxWidth: maxWidth,
-            minWidth: narrow ? Math.min(240, maxWidth) : (withWagePanel ? 360 : 260),
+            minWidth: narrow ? Math.min(280, maxWidth) : (withWagePanel ? 360 : 300),
             autoPanPadding: narrow ? [12, 56] : [36, 48],
             keepInView: true
         };
@@ -212,34 +213,105 @@ window.jobMap = (function () {
         );
     }
 
-    function buildClusterListHtml(childMarkers) {
-        const items = childMarkers
+    const CLUSTER_PAGE_SIZE = 3;
+
+    function clusterJobsFromMarkers(childMarkers) {
+        return childMarkers
             .map(function (marker) {
-                const v = marker.options.jobData;
-                if (!v) return "";
-                const wageBlock = clusterWageHtml(v);
-                return (
-                    "<button type=\"button\" class=\"cluster-list__item\" data-job-id=\"" + escapeAttr(v.id) + "\">" +
-                        "<div class=\"cluster-list__row\">" +
-                            "<div class=\"cluster-list__main\">" +
-                                "<span class=\"cluster-list__title\">" + escapeHtml(v.title) + "</span>" +
-                                "<span class=\"cluster-list__company\">" + escapeHtml(v.company) + "</span>" +
-                            "</div>" +
-                            wageBlock +
-                        "</div>" +
-                    "</button>"
-                );
+                return marker.options.jobData;
             })
-            .join("");
+            .filter(Boolean);
+    }
+
+    function buildClusterItemHtml(v) {
+        const wageBlock = clusterWageHtml(v);
+        const travel = travelHtml(v);
+        return (
+            "<button type=\"button\" class=\"cluster-list__item\" data-job-id=\"" + escapeAttr(v.id) + "\">" +
+                "<div class=\"cluster-list__row\">" +
+                    "<div class=\"cluster-list__main\">" +
+                        "<span class=\"cluster-list__title\">" + escapeHtml(v.title) + "</span>" +
+                        "<span class=\"cluster-list__company\">" + escapeHtml(v.company) + "</span>" +
+                        (travel ? "<span class=\"cluster-list__travel\">" + travel + "</span>" : "") +
+                    "</div>" +
+                    wageBlock +
+                "</div>" +
+            "</button>"
+        );
+    }
+
+    function buildClusterListHtml(childMarkers, page) {
+        const jobs = clusterJobsFromMarkers(childMarkers);
+        const total = jobs.length;
+        const pageCount = Math.max(1, Math.ceil(total / CLUSTER_PAGE_SIZE));
+        const current = Math.min(Math.max(1, page || 1), pageCount);
+        const start = (current - 1) * CLUSTER_PAGE_SIZE;
+        const pageJobs = jobs.slice(start, start + CLUSTER_PAGE_SIZE);
+        const items = pageJobs.map(buildClusterItemHtml).join("");
+
+        let pager = "";
+        if (pageCount > 1) {
+            pager =
+                "<div class=\"cluster-list__pager\">" +
+                    "<button type=\"button\" class=\"cluster-list__page-btn\" data-cluster-page=\"" + (current - 1) + "\"" +
+                        (current <= 1 ? " disabled" : "") + ">Vorige</button>" +
+                    "<span class=\"cluster-list__page-status\">" + current + " / " + pageCount + "</span>" +
+                    "<button type=\"button\" class=\"cluster-list__page-btn\" data-cluster-page=\"" + (current + 1) + "\"" +
+                        (current >= pageCount ? " disabled" : "") + ">Volgende</button>" +
+                "</div>";
+        }
+
+        const rangeEnd = Math.min(start + pageJobs.length, total);
+        const rangeLabel = total === 0
+            ? "0 vacatures"
+            : (start + 1) + "–" + rangeEnd + " van " + total;
 
         return (
             "<div class=\"cluster-list\">" +
                 "<div class=\"cluster-list__header\">" +
-                    "<strong>" + childMarkers.length + " vacatures op deze locatie</strong>" +
+                    "<strong>" + escapeHtml(String(total)) + " vacatures op deze locatie</strong>" +
+                    (pageCount > 1 ? "<span class=\"cluster-list__range\">" + escapeHtml(rangeLabel) + "</span>" : "") +
                 "</div>" +
                 "<div class=\"cluster-list__items\">" + items + "</div>" +
+                pager +
             "</div>"
         );
+    }
+
+    function bindClusterPopupInteractions(popup, childMarkers) {
+        const popupEl = popup.getElement();
+        if (!popupEl) {
+            return;
+        }
+
+        popupEl.querySelectorAll(".cluster-list__item").forEach(function (btn) {
+            btn.addEventListener("click", function (ev) {
+                ev.preventDefault();
+                ev.stopPropagation();
+                const id = btn.getAttribute("data-job-id");
+                map.closePopup(popup);
+                if (popup === activeClusterPopup) {
+                    activeClusterPopup = null;
+                }
+                focus(id);
+            });
+        });
+
+        popupEl.querySelectorAll("[data-cluster-page]").forEach(function (btn) {
+            btn.addEventListener("click", function (ev) {
+                ev.preventDefault();
+                ev.stopPropagation();
+                if (btn.disabled) {
+                    return;
+                }
+                const nextPage = parseInt(btn.getAttribute("data-cluster-page") || "0", 10);
+                if (!nextPage) {
+                    return;
+                }
+                popup.setContent(buildClusterListHtml(childMarkers, nextPage));
+                bindClusterPopupInteractions(popup, childMarkers);
+            });
+        });
     }
 
     function notifyOpen(id) {
@@ -263,24 +335,10 @@ window.jobMap = (function () {
         // Never widen cluster popups for wage tables — bands are only on single-job popups.
         activeClusterPopup = L.popup(clusterPopupOptions(false))
             .setLatLng(latlng)
-            .setContent(buildClusterListHtml(childMarkers))
+            .setContent(buildClusterListHtml(childMarkers, 1))
             .openOn(map);
 
-        const popupEl = activeClusterPopup.getElement();
-        if (!popupEl) {
-            return;
-        }
-
-        popupEl.querySelectorAll(".cluster-list__item").forEach(function (btn) {
-            btn.addEventListener("click", function (ev) {
-                ev.preventDefault();
-                ev.stopPropagation();
-                const id = btn.getAttribute("data-job-id");
-                map.closePopup(activeClusterPopup);
-                activeClusterPopup = null;
-                focus(id);
-            });
-        });
+        bindClusterPopupInteractions(activeClusterPopup, childMarkers);
     }
 
     function bindPopupClicks(marker, v) {

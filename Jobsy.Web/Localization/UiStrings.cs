@@ -30,7 +30,7 @@ public static class UiStrings
     {
         var nl = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
         {
-            ["Brand.Tagline"] = "Hyper-lokaal matchen op reistijd",
+            ["Brand.Tagline"] = "Dichtbij genoeg om het pantser te laten vallen",
             ["Nav.Main"] = "Hoofdnavigatie",
             ["Nav.JobMap"] = "Banenkaart",
             ["Nav.Search"] = "Zoeken",
@@ -56,6 +56,10 @@ public static class UiStrings
             ["Discovery.Cancel"] = "Annuleren",
             ["Discovery.ResultCount"] = "{0} bijbanen op Lobsy",
             ["Discovery.Sort"] = "Sorteer",
+            ["Discovery.SortDistance"] = "Afstand",
+            ["Discovery.SortType"] = "Type vacature",
+            ["Discovery.SortRecent"] = "Startdatum",
+            ["Discovery.SortAlpha"] = "Alfabet",
             ["Discovery.TravelSlider"] = "Reistijd",
             ["Discovery.Minutes"] = "min",
             ["Saved.Title"] = "Bewaard",
@@ -145,7 +149,7 @@ public static class UiStrings
 
         var en = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
         {
-            ["Brand.Tagline"] = "Hyper-local matching by travel time",
+            ["Brand.Tagline"] = "Close enough to drop the shell",
             ["Nav.Main"] = "Main navigation",
             ["Nav.JobMap"] = "Job map",
             ["Nav.Search"] = "Search",
@@ -171,6 +175,10 @@ public static class UiStrings
             ["Discovery.Cancel"] = "Cancel",
             ["Discovery.ResultCount"] = "{0} jobs on Lobsy",
             ["Discovery.Sort"] = "Sort",
+            ["Discovery.SortDistance"] = "Distance",
+            ["Discovery.SortType"] = "Job type",
+            ["Discovery.SortRecent"] = "Start date",
+            ["Discovery.SortAlpha"] = "A–Z",
             ["Discovery.TravelSlider"] = "Travel time",
             ["Discovery.Minutes"] = "min",
             ["Saved.Title"] = "Saved",
@@ -260,7 +268,7 @@ public static class UiStrings
 
         var pl = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
         {
-            ["Brand.Tagline"] = "Hiperlokalne dopasowanie według czasu dojazdu",
+            ["Brand.Tagline"] = "Na tyle blisko, by zrzucić pancerz",
             ["Nav.Main"] = "Nawigacja główna",
             ["Nav.JobMap"] = "Mapa ofert",
             ["Nav.Register"] = "Rejestracja",
@@ -351,7 +359,7 @@ public static class UiStrings
 
         var ro = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
         {
-            ["Brand.Tagline"] = "Potrivire hiper-locală după timpul de deplasare",
+            ["Brand.Tagline"] = "Destul de aproape ca să lași carapacea",
             ["Nav.Main"] = "Navigare principală",
             ["Nav.JobMap"] = "Hartă joburi",
             ["Nav.Register"] = "Înregistrare",
@@ -442,7 +450,7 @@ public static class UiStrings
 
         var ar = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
         {
-            ["Brand.Tagline"] = "مطابقة محلية حسب وقت التنقل",
+            ["Brand.Tagline"] = "قريب بما يكفي لتترك القوقعة",
             ["Nav.Main"] = "التنقل الرئيسي",
             ["Nav.JobMap"] = "خريطة الوظائف",
             ["Nav.Register"] = "تسجيل",

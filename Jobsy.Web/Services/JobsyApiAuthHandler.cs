@@ -16,15 +16,18 @@ public sealed class JobsyApiAuthHandler : DelegatingHandler
     private readonly IHttpContextAccessor _httpContextAccessor;
     private readonly AuthenticationStateProvider _authStateProvider;
     private readonly IServiceProvider _services;
+    private readonly IConfiguration _configuration;
 
     public JobsyApiAuthHandler(
         IHttpContextAccessor httpContextAccessor,
         AuthenticationStateProvider authStateProvider,
-        IServiceProvider services)
+        IServiceProvider services,
+        IConfiguration configuration)
     {
         _httpContextAccessor = httpContextAccessor;
         _authStateProvider = authStateProvider;
         _services = services;
+        _configuration = configuration;
     }
 
     protected override async Task<HttpResponseMessage> SendAsync(
@@ -45,6 +48,12 @@ public sealed class JobsyApiAuthHandler : DelegatingHandler
             if (!string.IsNullOrWhiteSpace(email))
             {
                 request.Headers.TryAddWithoutValidation("X-Jobsy-Email", email);
+
+                var developmentAuthSecret = _configuration["JobsyAuth:DevelopmentAuthSecret"];
+                if (!string.IsNullOrEmpty(developmentAuthSecret))
+                {
+                    request.Headers.TryAddWithoutValidation("X-Jobsy-Dev-Secret", developmentAuthSecret);
+                }
             }
 
             if (!string.IsNullOrWhiteSpace(role))

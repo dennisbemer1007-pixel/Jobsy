@@ -1,9 +1,11 @@
 @page "/privacy/data"
 @attribute [Authorize]
 @rendermode @(new InteractiveServerRenderMode(prerender: false))
+@using Microsoft.AspNetCore.Antiforgery
 @inject JobsyApiClient Api
-@inject NavigationManager Navigation
-@inject AuthenticationStateProvider AuthState
+@inject IAntiforgery Antiforgery
+@inject IHttpContextAccessor HttpContextAccessor
+@inject IJSRuntime Js
 
 <PageTitle>Mijn gegevens · Lobsy</PageTitle>
 
@@ -18,10 +20,18 @@
             @(_busyExport ? "Bezig…" : "Exporteer JSON")
         </button>
         <button class="provider-btn" type="button" disabled="@_busy" @onclick="DeleteAsync">
-            @(_busyDelete ? "Bezig…" : "Account anonimiseren")
+            @(_busyDelete ? "Bezig…" : (_pendingDeleteConfirm ? "Bevestig anonimiseren" : "Account anonimiseren"))
         </button>
         <a class="auth-link" href="/privacy">Terug naar privacyverklaring</a>
     </div>
+
+    @if (_pendingDeleteConfirm && !_deleted)
+    {
+        <p class="state-message" role="alert">
+            Weet je het zeker? Je account wordt geanonimiseerd. Sollicitaties blijven bewaard zonder persoonsgegevens.
+            Klik opnieuw op «Bevestig anonimiseren» om door te gaan.
+        </p>
+    }
 
     @if (!string.IsNullOrEmpty(_message))
     {
@@ -32,14 +42,44 @@
     {
         <pre class="code-block" style="margin-top:1.5rem;white-space:pre-wrap;max-height:28rem;overflow:auto">@_exportJson</pre>
     }
+
+    @if (_deleted)
+    {
+        <form id="post-delete-logout" method="post" action="/account/logout">
+            <input type="hidden" name="__RequestVerificationToken" value="@_antiforgeryToken" />
+        </form>
+    }
 </div>
 
 @code {
     private bool _busyExport;
     private bool _busyDelete;
     private bool _busy => _busyExport || _busyDelete;
+    private bool _pendingDeleteConfirm;
+    private bool _deleted;
+    private bool _submitLogoutPending;
+    private string _antiforgeryToken = "";
     private string? _message;
     private string? _exportJson;
+
+    protected override void OnInitialized()
+    {
+        var http = HttpContextAccessor.HttpContext;
+        if (http is not null)
+        {
+            var tokens = Antiforgery.GetAndStoreTokens(http);
+            _antiforgeryToken = tokens.RequestToken ?? "";
+        }
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (_submitLogoutPending)
+        {
+            _submitLogoutPending = false;
+            await Js.InvokeVoidAsync("eval", "document.getElementById('post-delete-logout')?.submit()");
+        }
+    }
 
     private async Task ExportAsync()
     {
@@ -62,17 +102,26 @@
 
     private async Task DeleteAsync()
     {
+        if (!_pendingDeleteConfirm)
+        {
+            _pendingDeleteConfirm = true;
+            _message = null;
+            return;
+        }
+
         _busyDelete = true;
         _message = null;
         try
         {
             await Api.DeleteAccountAsync();
             _message = "Account geanonimiseerd. Je wordt uitgelogd.";
-            Navigation.NavigateTo("/account/logout", forceLoad: true);
+            _deleted = true;
+            _submitLogoutPending = true;
         }
         catch (Exception ex)
         {
             _message = ex.Message;
+            _pendingDeleteConfirm = false;
         }
         finally
         {

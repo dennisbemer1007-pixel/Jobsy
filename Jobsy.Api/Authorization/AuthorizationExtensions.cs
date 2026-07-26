@@ -1,4 +1,6 @@
 using System.Security.Claims;
+using System.Security.Cryptography;
+using System.Text;
 using System.Text.Encodings.Web;
 using Jobsy.Core.Authorization;
 using Jobsy.Core.Enums;
@@ -88,19 +90,27 @@ public static class AuthorizationExtensions
 /// Local/demo authentication via headers — Development or explicit JobsyAuth:AllowDevelopmentAuth.
 /// Header <c>X-Jobsy-Email</c> must match an active DB user; role/company claims come from the database
 /// (client-supplied <c>X-Jobsy-Role</c> is ignored for privilege).
+/// Outside pure Development (or when <c>JobsyAuth:DevelopmentAuthSecret</c> is set), requires
+/// header <c>X-Jobsy-Dev-Secret</c> matching that secret (fixed-time compare).
 /// </summary>
 public sealed class DevelopmentAuthHandler : AuthenticationHandler<AuthenticationSchemeOptions>
 {
     private readonly JobsyDbContext _db;
+    private readonly IHostEnvironment _environment;
+    private readonly IConfiguration _configuration;
 
     public DevelopmentAuthHandler(
         IOptionsMonitor<AuthenticationSchemeOptions> options,
         ILoggerFactory logger,
         UrlEncoder encoder,
-        JobsyDbContext db)
+        JobsyDbContext db,
+        IHostEnvironment environment,
+        IConfiguration configuration)
         : base(options, logger, encoder)
     {
         _db = db;
+        _environment = environment;
+        _configuration = configuration;
     }
 
     protected override async Task<AuthenticateResult> HandleAuthenticateAsync()
@@ -114,6 +124,12 @@ public sealed class DevelopmentAuthHandler : AuthenticationHandler<Authenticatio
         if (string.IsNullOrWhiteSpace(email))
         {
             return AuthenticateResult.NoResult();
+        }
+
+        var secretResult = ValidateDevelopmentAuthSecret();
+        if (secretResult is not null)
+        {
+            return secretResult;
         }
 
         var dbUser = await _db.Users
@@ -151,5 +167,44 @@ public sealed class DevelopmentAuthHandler : AuthenticationHandler<Authenticatio
         var identity = new ClaimsIdentity(claims, Scheme.Name);
         var ticket = new AuthenticationTicket(new ClaimsPrincipal(identity), Scheme.Name);
         return AuthenticateResult.Success(ticket);
+    }
+
+    /// <summary>
+    /// Returns a failed result when the secret check fails; null when the check passes or is skipped.
+    /// </summary>
+    private AuthenticateResult? ValidateDevelopmentAuthSecret()
+    {
+        var configuredSecret = _configuration["JobsyAuth:DevelopmentAuthSecret"];
+        var secretConfigured = !string.IsNullOrEmpty(configuredSecret);
+        var requireSecret = !_environment.IsDevelopment() || secretConfigured;
+
+        if (!requireSecret)
+        {
+            // Pure Development with empty secret: header-only auth for local DX.
+            return null;
+        }
+
+        if (!secretConfigured)
+        {
+            return AuthenticateResult.Fail(
+                "JobsyAuth:DevelopmentAuthSecret is required when AllowDevelopmentAuth is enabled outside Development (or when the secret is configured).");
+        }
+
+        if (!Request.Headers.TryGetValue("X-Jobsy-Dev-Secret", out var providedValues))
+        {
+            return AuthenticateResult.Fail("Missing X-Jobsy-Dev-Secret header.");
+        }
+
+        var provided = providedValues.FirstOrDefault() ?? string.Empty;
+        var expectedBytes = Encoding.UTF8.GetBytes(configuredSecret!);
+        var providedBytes = Encoding.UTF8.GetBytes(provided);
+
+        if (expectedBytes.Length != providedBytes.Length
+            || !CryptographicOperations.FixedTimeEquals(expectedBytes, providedBytes))
+        {
+            return AuthenticateResult.Fail("Invalid X-Jobsy-Dev-Secret.");
+        }
+
+        return null;
     }
 }

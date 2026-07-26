@@ -11,6 +11,16 @@ Een workspace-betaalplan of creditcard alleen is **niet** genoeg: Free instances
 
 Indicatie kosten: ~$14/mo web + Postgres-compute/storage (prorata per seconde). Zie [Render pricing](https://render.com/pricing).
 
+## Security (demo)
+
+De Blueprint houdt `JobsyAuth__AllowDevelopmentAuth=true` zodat demo-login via de Web UI werkt, maar:
+
+- `JobsyAuth__DevelopmentAuthSecret` wordt gegenereerd op `jobsy-api` en gedeeld met `jobsy-web`. Alleen requests met die secret-header worden geaccepteerd — spoofing van `X-Jobsy-Email` vanaf het internet werkt niet meer.
+- `JobsyFeatures__ExposeRegistrationActivationLinks=false` (geen activatie-URL in API-responses).
+- Custom domain: `PublicWebBaseUrl=https://lobsy.nl` + CORS voor `lobsy.nl` / `www.lobsy.nl`.
+
+Na Blueprint sync: controleer dat beide services dezelfde `JobsyAuth__DevelopmentAuthSecret` hebben.
+
 ## Eenmalig: code + Blueprint
 
 1. Repo op GitHub: `dennisbemer1007-pixel/Jobsy` (branch `main` met `render.yaml`).

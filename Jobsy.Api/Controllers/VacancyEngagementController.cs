@@ -1,3 +1,4 @@
+using System.Text.RegularExpressions;
 using Jobsy.Api.Models;
 using Jobsy.Core.Entities;
 using Jobsy.Core.Enums;
@@ -13,7 +14,7 @@ namespace Jobsy.Api.Controllers;
 
 [ApiController]
 [Route("api/vacancies/{vacancyId:guid}")]
-public class VacancyEngagementController : ControllerBase
+public partial class VacancyEngagementController : ControllerBase
 {
     private readonly JobsyDbContext _db;
     private readonly IUserLookupService _users;
@@ -55,6 +56,11 @@ public class VacancyEngagementController : ControllerBase
             if (string.IsNullOrWhiteSpace(anonymousKey))
             {
                 return BadRequest(new { message = "anonymousKey is verplicht zonder bekende gebruiker." });
+            }
+
+            if (anonymousKey.Length > 128 || !IsValidAnonymousKey(anonymousKey))
+            {
+                return BadRequest(new { message = "anonymousKey is ongeldig." });
             }
         }
 
@@ -199,4 +205,18 @@ public class VacancyEngagementController : ControllerBase
         var today = DateOnly.FromDateTime(DateTime.UtcNow);
         return VacancyVisibilityRules.IsPubliclyVisible(vacancy, today);
     }
+
+    private static bool IsValidAnonymousKey(string anonymousKey)
+    {
+        if (AnonymousGuidKeyRegex().IsMatch(anonymousKey))
+        {
+            return true;
+        }
+
+        return anonymousKey.Length is >= 10 and <= 128
+            && anonymousKey.StartsWith("anon-", StringComparison.Ordinal);
+    }
+
+    [GeneratedRegex("^anon-[0-9a-fA-F-]{36}$", RegexOptions.CultureInvariant)]
+    private static partial Regex AnonymousGuidKeyRegex();
 }

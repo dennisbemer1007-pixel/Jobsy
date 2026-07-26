@@ -131,15 +131,14 @@
                         <button class="engagement-btn" type="button" disabled="@_liking" @onclick="ToggleLikeAsync">
                             @(_liked ? Culture["Vacancy.Liked"] : Culture["Vacancy.Like"])
                         </button>
-                        <button class="engagement-btn" type="button" @onclick="OpenShare">
-                            @Culture["Vacancy.Share"]
-                        </button>
                     </Authorized>
                     <NotAuthorized>
                         <a class="engagement-btn" href="@LoginUrl">@Culture["Vacancy.Like"]</a>
-                        <a class="engagement-btn" href="@LoginUrl">@Culture["Vacancy.Share"]</a>
                     </NotAuthorized>
                 </AuthorizeView>
+                <button class="engagement-btn" type="button" @onclick="OpenShare">
+                    @Culture["Vacancy.Share"]
+                </button>
             </div>
 
             <div class="mock-interview-cta">

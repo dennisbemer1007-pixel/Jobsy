@@ -84,10 +84,10 @@ window.jobsyGeo = (function () {
     }
 
     function getOrCreateAnonymousKey() {
-        let key = localStorage.getItem(ANON_KEY);
+        let key = sessionStorage.getItem(ANON_KEY);
         if (!key) {
             key = "anon-" + crypto.randomUUID();
-            localStorage.setItem(ANON_KEY, key);
+            sessionStorage.setItem(ANON_KEY, key);
         }
         return key;
     }
@@ -148,25 +148,10 @@ window.jobsyGeo = (function () {
     }
 
     /**
-     * On first visit in a tab: ask for geolocation when no origin is stored.
-     * Returns { lat, lng, label? } on success, null if skipped/denied.
+     * Returns stored origin only. Geolocation requires explicit user action ("Mijn locatie").
      */
     async function ensureLocationOnLaunch() {
-        const existing = getStoredOrigin();
-        if (existing) {
-            return existing;
-        }
-
-        if (wasLocationPrompted()) {
-            return null;
-        }
-
-        markLocationPrompted();
-        try {
-            return await requestLocation();
-        } catch {
-            return null;
-        }
+        return getStoredOrigin();
     }
 
     function scrollToId(id) {

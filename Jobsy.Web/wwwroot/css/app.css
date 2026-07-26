@@ -17,6 +17,8 @@
     --accent-deep: #0a2044;
     --secondary: #163a6b;
     --coral: #e8432e;
+    --coral-deep: #c73524;
+    --coral-soft: #fde8e4;
     --danger: #9b1c1c;
     --danger-soft: #fef2f2;
     --warn: #a65b00;
@@ -452,6 +454,27 @@ a {
     color: var(--muted);
 }
 
+.auth-logout-form {
+    display: inline;
+    margin: 0;
+}
+
+.auth-link--button {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font: inherit;
+    padding: 0.35rem 0.55rem;
+    color: inherit;
+    border-radius: 6px;
+    transition: color 0.15s ease, background 0.15s ease;
+}
+
+.auth-link--button:hover {
+    color: var(--brand);
+    background: var(--accent-soft);
+}
+
 .auth-user {
     display: flex;
     flex-direction: column;
@@ -737,23 +760,24 @@ a {
 .brand {
     display: inline-flex;
     align-items: center;
-    gap: 0.45rem;
+    gap: 0.55rem;
     padding: 0.1rem 0.15rem 0.1rem 0;
     border-radius: 0;
     background: transparent;
     color: var(--brand);
-    font-size: 1.2rem;
+    font-size: 1.35rem;
     font-weight: 800;
     letter-spacing: -0.02em;
     text-decoration: none;
 }
 
 .brand__logo {
-    width: 40px;
-    height: 40px;
+    width: 56px;
+    height: 56px;
     object-fit: contain;
     display: block;
     background: transparent;
+    flex-shrink: 0;
 }
 
 .brand__name {
@@ -1075,6 +1099,20 @@ a {
 .results-meta__sort .jobsy-action__icon {
     width: 1.1rem;
     height: 1.1rem;
+    flex-shrink: 0;
+}
+
+.results-meta__sort-select {
+    border: 1px solid color-mix(in srgb, var(--brand) 16%, var(--border));
+    border-radius: var(--radius-sm);
+    background: var(--pearl-shine);
+    color: var(--brand);
+    font: inherit;
+    font-size: 0.88rem;
+    font-weight: 600;
+    padding: 0.35rem 0.55rem;
+    max-width: 11rem;
+    cursor: pointer;
 }
 
 .vacancy-list--cards {
@@ -1611,7 +1649,7 @@ a {
     align-items: center;
     justify-content: center;
     line-height: 0;
-    color: var(--accent);
+    color: var(--coral);
 }
 
 .lobsy-mark svg {
@@ -1823,16 +1861,16 @@ a {
     margin: 0 auto;
     border-radius: 50% 50% 50% 0;
     transform: rotate(-45deg);
-    background: var(--brand);
+    background: var(--coral);
     border: 3px solid #fff;
-    box-shadow: 0 3px 10px rgba(0, 70, 140, 0.35);
+    box-shadow: 0 3px 10px color-mix(in srgb, var(--coral) 40%, transparent);
 }
 
 .job-marker--active .job-marker__pin {
     width: 26px;
     height: 26px;
-    background: var(--accent-hover);
-    box-shadow: 0 0 0 5px color-mix(in srgb, var(--accent) 30%, transparent), 0 4px 12px rgba(0, 70, 140, 0.35);
+    background: var(--coral-deep);
+    box-shadow: 0 0 0 5px color-mix(in srgb, var(--coral) 28%, transparent), 0 4px 12px color-mix(in srgb, var(--coral) 40%, transparent);
 }
 
 .job-marker__glyph {
@@ -1842,10 +1880,10 @@ a {
     width: 34px;
     height: 34px;
     border-radius: 50%;
-    background: var(--brand);
+    background: var(--coral);
     color: #fff;
     border: 3px solid #fff;
-    box-shadow: 0 3px 10px rgba(0, 70, 140, 0.35);
+    box-shadow: 0 3px 10px color-mix(in srgb, var(--coral) 40%, transparent);
     font-size: 0.95rem;
     line-height: 1;
 }
@@ -1853,8 +1891,8 @@ a {
 .job-marker--active .job-marker__glyph {
     width: 38px;
     height: 38px;
-    background: var(--accent-hover);
-    box-shadow: 0 0 0 5px color-mix(in srgb, var(--accent) 30%, transparent), 0 4px 12px rgba(0, 70, 140, 0.35);
+    background: var(--coral-deep);
+    box-shadow: 0 0 0 5px color-mix(in srgb, var(--coral) 28%, transparent), 0 4px 12px color-mix(in srgb, var(--coral) 40%, transparent);
 }
 
 .job-marker__glyph svg {
@@ -1874,12 +1912,12 @@ a {
     width: 100%;
     height: 100%;
     border-radius: 50%;
-    background: var(--brand);
+    background: var(--coral);
     color: #fff;
     font-weight: 700;
     font-family: var(--font);
     border: 3px solid #fff;
-    box-shadow: 0 4px 14px color-mix(in srgb, var(--brand) 45%, transparent);
+    box-shadow: 0 4px 14px color-mix(in srgb, var(--coral) 45%, transparent);
 }
 
 .job-cluster--sm div {
@@ -1888,12 +1926,12 @@ a {
 
 .job-cluster--md div {
     font-size: 1.05rem;
-    background: color-mix(in srgb, var(--brand) 88%, #000);
+    background: color-mix(in srgb, var(--coral) 88%, #000);
 }
 
 .job-cluster--lg div {
     font-size: 1.15rem;
-    background: color-mix(in srgb, var(--brand) 72%, #000);
+    background: color-mix(in srgb, var(--coral) 72%, #000);
 }
 
 .travel-ring-label {
@@ -1923,7 +1961,7 @@ a {
 }
 
 .leaflet-popup.job-cluster-popup {
-    max-width: min(320px, calc(100vw - 1.5rem));
+    max-width: min(360px, calc(100vw - 1.5rem));
 }
 
 .leaflet-popup.job-cluster-popup.job-cluster-popup--with-wages {
@@ -1934,7 +1972,7 @@ a {
     margin: 0;
     min-width: 0 !important;
     width: 100% !important;
-    max-width: 320px;
+    max-width: 360px;
 }
 
 .leaflet-popup.job-cluster-popup.job-cluster-popup--with-wages .leaflet-popup-content {
@@ -1942,17 +1980,25 @@ a {
 }
 
 .cluster-list__header {
-    padding: 0.85rem 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+    padding: 0.95rem 1.1rem;
     border-bottom: 1px solid var(--border);
     background: var(--accent-soft);
-    font-size: 0.92rem;
+    font-size: 1rem;
+}
+
+.cluster-list__range {
+    font-size: 0.85rem;
+    color: var(--muted);
 }
 
 .cluster-list__items {
     display: flex;
     flex-direction: column;
-    max-height: 320px;
-    overflow-y: auto;
+    max-height: none;
+    overflow: visible;
 }
 
 .cluster-list__item {
@@ -1962,7 +2008,7 @@ a {
     border: none;
     border-bottom: 1px solid var(--border);
     background: var(--surface);
-    padding: 0.7rem 0.85rem;
+    padding: 1rem 1.1rem;
     cursor: pointer;
     font: inherit;
     color: var(--text);
@@ -1980,7 +2026,7 @@ a {
     display: flex;
     align-items: flex-start;
     justify-content: space-between;
-    gap: 0.75rem;
+    gap: 0.9rem;
 }
 
 .cluster-list__main {
@@ -1988,34 +2034,77 @@ a {
     flex: 1 1 auto;
     display: flex;
     flex-direction: column;
-    gap: 0.2rem;
+    gap: 0.28rem;
 }
 
 .cluster-list__title {
     font-weight: 700;
-    font-size: 0.92rem;
-    line-height: 1.3;
+    font-size: 1.05rem;
+    line-height: 1.35;
 }
 
 .cluster-list__company {
-    font-size: 0.8rem;
+    font-size: 0.92rem;
+    color: var(--muted);
+}
+
+.cluster-list__travel {
+    font-size: 0.86rem;
     color: var(--muted);
 }
 
 .cluster-list__wage {
     flex-shrink: 0;
-    font-size: 0.88rem;
+    font-size: 1rem;
     font-weight: 700;
     color: var(--brand);
     white-space: nowrap;
 }
 
 .cluster-list__wage--masked {
-    font-size: 0.75rem;
-    max-width: 6.5rem;
+    font-size: 0.82rem;
+    max-width: 7.5rem;
     white-space: normal;
     text-align: right;
-    line-height: 1.25;
+    line-height: 1.3;
+}
+
+.cluster-list__pager {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding: 0.75rem 1.1rem;
+    border-top: 1px solid var(--border);
+    background: color-mix(in srgb, var(--pearl-shine) 70%, var(--surface));
+}
+
+.cluster-list__page-btn {
+    border: 1px solid color-mix(in srgb, var(--brand) 18%, var(--border));
+    border-radius: var(--radius-sm);
+    background: var(--surface);
+    color: var(--brand);
+    font: inherit;
+    font-size: 0.9rem;
+    font-weight: 600;
+    padding: 0.45rem 0.75rem;
+    cursor: pointer;
+}
+
+.cluster-list__page-btn:hover:not(:disabled) {
+    background: var(--accent-soft);
+}
+
+.cluster-list__page-btn:disabled {
+    opacity: 0.4;
+    cursor: default;
+}
+
+.cluster-list__page-status {
+    font-size: 0.88rem;
+    font-weight: 600;
+    color: var(--muted);
+    white-space: nowrap;
 }
 
 .cluster-list__wage-panel {
@@ -2421,10 +2510,6 @@ a {
         font-size: 0.84rem;
     }
 
-    .cluster-list__items {
-        max-height: 42vh;
-    }
-
     .app-shell:has(.jobsy-discovery) .app-header,
     .app-shell:has(.jobsy-discovery) .app-footer {
         display: none;
@@ -2460,16 +2545,17 @@ a {
     .jobsy-logo {
         display: inline-flex;
         align-items: center;
-        gap: 0.4rem;
+        gap: 0.5rem;
         text-decoration: none;
     }
 
     .jobsy-logo__img {
-        width: 36px;
-        height: 36px;
+        width: 48px;
+        height: 48px;
         object-fit: contain;
         display: block;
         background: transparent;
+        flex-shrink: 0;
     }
 
     .jobsy-logo__mark {
@@ -2480,7 +2566,7 @@ a {
         background: transparent;
         color: var(--brand);
         font-weight: 800;
-        font-size: 1.05rem;
+        font-size: 1.2rem;
         letter-spacing: -0.02em;
         text-shadow: none;
     }

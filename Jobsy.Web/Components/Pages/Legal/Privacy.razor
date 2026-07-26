@@ -7,7 +7,7 @@
     <header class="panel-header">
         <div>
             <h1>Privacyverklaring</h1>
-            <p class="login-lead">Laatst bijgewerkt: 25 juli 2026</p>
+            <p class="login-lead">Laatst bijgewerkt: 26 juli 2026</p>
         </div>
     </header>
 
@@ -19,15 +19,15 @@
 
     <article class="legal-doc">
         <section>
-            <h2>1. Wie zijn wij?</h2>
+            <h2>1. Verwerkingsverantwoordelijke</h2>
             <p>
                 Lobsy (“wij”, “ons”) is een platform voor hyper-lokaal matchen van kandidaten en werkgevers
                 op basis van reistijd. In deze privacyverklaring leggen we uit welke persoonsgegevens we
                 verwerken, waarom we dat doen en welke rechten je hebt.
             </p>
             <p>
-                Voor vragen over privacy kun je contact opnemen via het contactkanaal dat in het platform
-                of in onze correspondentie is vermeld.
+                <strong>Verwerkingsverantwoordelijke:</strong> Lobsy (demo/platform).
+                Contact via <a href="mailto:privacy@lobsy.nl">privacy@lobsy.nl</a> of het contactkanaal in het platform.
             </p>
         </section>
 
@@ -38,7 +38,7 @@
                 <li><strong>Accountgegevens:</strong> naam, e-mailadres, inloggegevens en (indien van toepassing) telefoonnummer.</li>
                 <li><strong>Kandidaten:</strong> geboortedatum (voor leeftijdsloon), voorkeursvervoer, locatiegegevens voor reistijdschattingen, likes, sollicitaties en eventuele authenticator-bevestigingen.</li>
                 <li><strong>Ondernemers:</strong> KVK-gegevens, vestigingsgegevens, contactpersonen, gebruikersrollen en token-/betalingsgerelateerde transactiegegevens.</li>
-                <li><strong>Technische gegevens:</strong> sessie-informatie, beveiligingslogs en noodzakelijke cookies voor inloggen en werking van de dienst.</li>
+                <li><strong>Technische gegevens:</strong> sessie-cookie <code>Jobsy.Auth</code>; een anonieme engagement-sleutel in <code>sessionStorage</code> (per tab); klik- en deelstatistieken op vacatures; beveiligingslogs en noodzakelijke cookies voor inloggen en werking van de dienst.</li>
                 <li><strong>Communicatie:</strong> berichten of bevestigingen die via het platform of e-mailstubs worden verstuurd.</li>
             </ul>
             <p>
@@ -58,13 +58,16 @@
         </section>
 
         <section>
-            <h2>4. Delen met derden</h2>
-            <p>We kunnen gegevens delen met:</p>
+            <h2>4. Verwerkers en derden</h2>
+            <p>We kunnen gegevens delen met of laten verwerken door:</p>
             <ul>
                 <li><strong>Werkgevers / vestigingen</strong> wanneer je solliciteert of gegevens deelt in het kader van een reactie.</li>
-                <li><strong>Identiteitsproviders</strong> (bijv. Microsoft Entra of Google) als je daarmee inlogt.</li>
-                <li><strong>Betaaldienstverleners</strong> (bijv. Mollie) voor tokenaankopen door ondernemers.</li>
-                <li><strong>Technische dienstverleners</strong> (hosting, e-mail, AI-moderatie of assistentie) die namens ons verwerken onder passende afspraken.</li>
+                <li><strong>Hosting:</strong> Render (hosting van de applicatie).</li>
+                <li><strong>Kaarten / OSM-tegels</strong> voor de weergave van de vacaturekaart.</li>
+                <li><strong>Geocoding:</strong> Nominatim / OpenStreetMap voor adres- of locatieomzetting.</li>
+                <li><strong>Identiteitsproviders:</strong> Google of Microsoft (Entra) als je daarmee inlogt.</li>
+                <li><strong>Betaaldienstverleners:</strong> optioneel Mollie voor tokenaankopen door ondernemers.</li>
+                <li><strong>AI (optioneel):</strong> OpenAI voor het oefengesprek; zie hieronder. Bij gebruik kan sprake zijn van doorgifte naar de Verenigde Staten.</li>
             </ul>
             <p>We verkopen je persoonsgegevens niet.</p>
         </section>
@@ -72,24 +75,38 @@
         <section>
             <h2>5. Locatie en reistijd</h2>
             <p>
-                Voor reistijdschattingen kan Lobsy gebruikmaken van een door jou opgegeven of opgeslagen
-                herkomstlocatie. Deze gegevens gebruiken we om vacatures te rangschikken en reistijden te tonen.
-                Je kunt locatiegegevens beperken of wissen via de beschikbare account- of apparaatinstellingen
-                waar dat technisch wordt ondersteund.
+                Locatiegegevens gebruiken we alleen na een expliciete actie van jou (bijvoorbeeld het delen
+                van je positie of het opslaan van een herkomstlocatie). Deze gegevens gebruiken we om vacatures
+                te rangschikken en reistijden te tonen. Je kunt locatiegegevens beperken of wissen via de
+                beschikbare account- of apparaatinstellingen waar dat technisch wordt ondersteund.
             </p>
         </section>
 
         <section>
             <h2>6. Bewaartermijnen</h2>
+            <ul>
+                <li><strong>Platformlogs:</strong> 90 dagen.</li>
+                <li><strong>Geannuleerde registraties:</strong> 30 dagen.</li>
+                <li><strong>Klikken en shares:</strong> 365 dagen.</li>
+                <li><strong>Accountgegevens:</strong> tot anonimisering of verwijdering op jouw verzoek, of zolang het account actief nodig is voor de dienst.</li>
+            </ul>
             <p>
-                We bewaren persoonsgegevens niet langer dan nodig voor de doelen hierboven, tenzij een langere
-                bewaartermijn wettelijk verplicht is (bijvoorbeeld voor financiële administratie bij tokenaankopen).
-                Sollicitaties, accountgegevens en logs worden periodiek beoordeeld en opgeschoond of geanonimiseerd.
+                Langere bewaartermijnen kunnen gelden waar dat wettelijk verplicht is
+                (bijvoorbeeld voor financiële administratie bij tokenaankopen).
             </p>
         </section>
 
         <section>
-            <h2>7. Beveiliging</h2>
+            <h2>7. AI-oefengesprek</h2>
+            <p>
+                Bij het optionele oefengesprek kunnen berichten en vacaturecontext naar OpenAI worden gestuurd
+                om antwoorden te genereren. Deze chatgeschiedenis wordt niet permanent server-side opgeslagen
+                als gespreksarchief. Bij gebruik van OpenAI kan doorgifte naar de Verenigde Staten plaatsvinden.
+            </p>
+        </section>
+
+        <section>
+            <h2>8. Beveiliging</h2>
             <p>
                 We treffen passende technische en organisatorische maatregelen, waaronder toegangscontrole op rol,
                 beveiligde sessies/cookies en beperking van persoonsgegevens in logs. Geen enkele online dienst
@@ -98,7 +115,7 @@
         </section>
 
         <section>
-            <h2>8. Jouw rechten (AVG)</h2>
+            <h2>9. Jouw rechten (AVG)</h2>
             <p>Je hebt onder meer recht op:</p>
             <ul>
                 <li>inzage, rectificatie en aanvulling;</li>
@@ -116,7 +133,7 @@
         </section>
 
         <section>
-            <h2>9. Minderjarigen</h2>
+            <h2>10. Minderjarigen</h2>
             <p>
                 Lobsy is bedoeld voor werkzoekenden en werkgevers in een professionele context. Als je jonger bent
                 dan 16 jaar, gebruik het platform alleen met toestemming van een ouder of voogd waar dat wettelijk vereist is.
@@ -124,7 +141,7 @@
         </section>
 
         <section>
-            <h2>10. Wijzigingen</h2>
+            <h2>11. Wijzigingen</h2>
             <p>
                 We kunnen deze verklaring aanpassen. De actuele versie staat altijd op deze pagina. Bij ingrijpende
                 wijzigingen informeren we gebruikers via het platform of per e-mail waar dat redelijk is.

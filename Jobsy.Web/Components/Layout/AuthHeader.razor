@@ -1,7 +1,10 @@
 @using System.Security.Claims
 @using Jobsy.Web.Localization
+@using Microsoft.AspNetCore.Antiforgery
 @using Microsoft.AspNetCore.Components.Authorization
 @inject CultureState Culture
+@inject IAntiforgery Antiforgery
+@inject IHttpContextAccessor HttpContextAccessor
 @implements IDisposable
 
 <div class="auth-header">
@@ -11,7 +14,10 @@
                 <span class="auth-user__name">@DisplayName(context.User)</span>
                 <span class="auth-user__role">@RoleLabel(context.User)</span>
             </div>
-            <a class="auth-link auth-link--muted" href="/account/logout">@Culture["Auth.Logout"]</a>
+            <form method="post" action="/account/logout" class="auth-logout-form">
+                <input type="hidden" name="__RequestVerificationToken" value="@_antiforgeryToken" />
+                <button type="submit" class="auth-link auth-link--muted auth-link--button">@Culture["Auth.Logout"]</button>
+            </form>
         </Authorized>
         <NotAuthorized>
             <a class="auth-link" href="/register">@Culture["Auth.Register"]</a>
@@ -21,8 +27,18 @@
 </div>
 
 @code {
+    private string _antiforgeryToken = "";
+
     protected override void OnInitialized()
-        => Culture.Changed += OnCultureChanged;
+    {
+        Culture.Changed += OnCultureChanged;
+        var http = HttpContextAccessor.HttpContext;
+        if (http is not null)
+        {
+            var tokens = Antiforgery.GetAndStoreTokens(http);
+            _antiforgeryToken = tokens.RequestToken ?? "";
+        }
+    }
 
     private void OnCultureChanged()
         => InvokeAsync(StateHasChanged);

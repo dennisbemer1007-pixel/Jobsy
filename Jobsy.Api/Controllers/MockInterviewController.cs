@@ -6,6 +6,7 @@ using Jobsy.Infrastructure.Data;
 using Jobsy.Infrastructure.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 
 namespace Jobsy.Api.Controllers;
@@ -33,6 +34,7 @@ public sealed class MockInterviewController : ControllerBase
     /// </summary>
     [HttpPost]
     [Authorize(Policy = JobsyPolicies.RequireCandidate)]
+    [EnableRateLimiting("ai")]
     public async Task<ActionResult<MockInterviewResponseDto>> Continue(
         [FromBody] MockInterviewRequest request,
         CancellationToken cancellationToken)

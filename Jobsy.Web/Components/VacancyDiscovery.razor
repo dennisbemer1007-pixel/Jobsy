@@ -11,7 +11,7 @@
     <div class="jobsy-chrome">
         <header class="jobsy-chrome__header">
             <a class="jobsy-logo" href="/" aria-label="Lobsy">
-                <img class="jobsy-logo__img" src="images/brand/lobsy.png?v=20260726-no-ai" alt="Lobsy" width="36" height="36" />
+                <img class="jobsy-logo__img" src="images/brand/lobsy.png?v=20260726-no-ai" alt="Lobsy" width="48" height="48" />
                 <span class="jobsy-logo__mark">Lobsy</span>
             </a>
         </header>
@@ -280,13 +280,22 @@
         {
             <div class="results-meta">
                 <p class="results-meta__count">@Culture.Format("Discovery.ResultCount", _vacancies.Count)</p>
-                <span class="results-meta__sort">
+                <label class="results-meta__sort">
                     <span class="jobsy-action__icon" aria-hidden="true">@((MarkupString)NavIcons.List)</span>
-                    @Culture["Discovery.Sort"]
-                </span>
+                    <span class="visually-hidden">@Culture["Discovery.Sort"]</span>
+                    <select class="results-meta__sort-select" value="@EffectiveSortMode" @onchange="OnSortChanged">
+                        @if (_origin is not null)
+                        {
+                            <option value="distance">@Culture["Discovery.SortDistance"]</option>
+                        }
+                        <option value="type">@Culture["Discovery.SortType"]</option>
+                        <option value="recent">@Culture["Discovery.SortRecent"]</option>
+                        <option value="title">@Culture["Discovery.SortAlpha"]</option>
+                    </select>
+                </label>
             </div>
             <div class="vacancy-list vacancy-list--cards">
-                @foreach (var vacancy in _vacancies)
+                @foreach (var vacancy in SortedVacancies)
                 {
                     var wageText = FormatWage(vacancy);
                     var travelText = vacancy.TravelMinutes is not null
@@ -323,9 +332,9 @@
                             <p class="job-card__location">@vacancy.CompanyAddress</p>
                             <div class="vacancy-card__actions" @onclick:stopPropagation="true">
                                 <a class="vacancy-card__link" href="@($"/vacancies/{vacancy.Id}")">Bekijk</a>
+                                <button type="button" class="vacancy-card__link" @onclick="() => OpenShare(vacancy)">Delen</button>
                                 <AuthorizeView>
                                     <Authorized>
-                                        <button type="button" class="vacancy-card__link" @onclick="() => OpenShare(vacancy)">Delen</button>
                                         <a class="vacancy-card__link vacancy-card__link--primary" href="@($"/vacancies/{vacancy.Id}#apply")">Solliciteer</a>
                                     </Authorized>
                                     <NotAuthorized>
@@ -487,6 +496,7 @@
     private int _radiusKm = 15;
     private string _selectedTransport = "Fiets";
     private string _selectedWorkType = "";
+    private string _sortMode = "title";
     private int? _ageYears;
     private decimal? _minHourlyWage;
     private decimal? _maxHourlyWage;
@@ -506,6 +516,32 @@
     private int _suggestGeneration;
 
     private string AgeSelectValue => _ageYears?.ToString() ?? "";
+
+    private IEnumerable<VacancyListItem> SortedVacancies
+    {
+        get
+        {
+            var mode = EffectiveSortMode;
+            return mode switch
+            {
+                "distance" => _vacancies
+                    .OrderBy(v => v.TravelMinutes ?? int.MaxValue)
+                    .ThenBy(v => v.DistanceKm ?? double.MaxValue)
+                    .ThenBy(v => v.Title, StringComparer.CurrentCultureIgnoreCase),
+                "type" => _vacancies
+                    .OrderBy(v => v.WorkTypes.FirstOrDefault() ?? "\uFFFF", StringComparer.CurrentCultureIgnoreCase)
+                    .ThenBy(v => v.Title, StringComparer.CurrentCultureIgnoreCase),
+                "recent" => _vacancies
+                    .OrderByDescending(v => v.StartDate)
+                    .ThenBy(v => v.Title, StringComparer.CurrentCultureIgnoreCase),
+                _ => _vacancies
+                    .OrderBy(v => v.Title, StringComparer.CurrentCultureIgnoreCase)
+            };
+        }
+    }
+
+    private string EffectiveSortMode =>
+        _sortMode == "distance" && _origin is null ? "title" : _sortMode;
 
     private int ActiveFilterCount
     {
@@ -634,6 +670,10 @@
                 if (stored is not null && IsFinite(stored.Lat) && IsFinite(stored.Lng))
                 {
                     _origin = new OriginPoint { Latitude = stored.Lat, Longitude = stored.Lng };
+                    if (_sortMode is not "type" and not "recent")
+                    {
+                        _sortMode = "distance";
+                    }
                     if (!string.IsNullOrWhiteSpace(stored.Label))
                     {
                         _addressQuery = stored.Label;
@@ -924,6 +964,10 @@
     private async Task ApplyOriginAsync(double lat, double lng, string? label)
     {
         _origin = new OriginPoint { Latitude = lat, Longitude = lng };
+        if (_sortMode is not "type" and not "recent")
+        {
+            _sortMode = "distance";
+        }
         try
         {
             await Js.InvokeVoidAsync("jobsyGeo.setStoredOrigin", lat, lng, label);
@@ -943,6 +987,10 @@
     private async Task ClearOriginAsync()
     {
         _origin = null;
+        if (_sortMode == "distance")
+        {
+            _sortMode = "title";
+        }
         _addressQuery = string.Empty;
         _suggestions = [];
         _showSuggestions = false;
@@ -1180,6 +1228,18 @@
         _shareOpen = false;
         _shareVacancy = null;
         return Task.CompletedTask;
+    }
+
+    private void OnSortChanged(ChangeEventArgs e)
+    {
+        var value = e.Value?.ToString();
+        _sortMode = value switch
+        {
+            "distance" when _origin is not null => "distance",
+            "type" or "recent" or "title" => value,
+            "distance" => "title",
+            _ => _origin is not null ? "distance" : "title"
+        };
     }
 
     private void ToggleFilters() => _filtersOpen = !_filtersOpen;

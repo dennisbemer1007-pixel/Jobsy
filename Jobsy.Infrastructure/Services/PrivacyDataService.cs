@@ -43,6 +43,27 @@ public sealed class PrivacyDataService : IPrivacyDataService
             .Select(l => new { l.VacancyId, l.CreatedAt })
             .ToListAsync(cancellationToken);
 
+        var shares = await _db.VacancyShares.AsNoTracking()
+            .Where(s => s.UserId == user.Id)
+            .Select(s => new
+            {
+                s.Id,
+                s.VacancyId,
+                Channel = s.Channel.ToString(),
+                s.CreatedAt
+            })
+            .ToListAsync(cancellationToken);
+
+        var clicks = await _db.VacancyClicks.AsNoTracking()
+            .Where(c => c.UserId == user.Id)
+            .Select(c => new
+            {
+                c.Id,
+                c.VacancyId,
+                c.CreatedAt
+            })
+            .ToListAsync(cancellationToken);
+
         var memberships = await _db.UserCompanies.AsNoTracking()
             .Where(m => m.UserId == user.Id)
             .Select(m => m.CompanyId)
@@ -70,7 +91,9 @@ public sealed class PrivacyDataService : IPrivacyDataService
             },
             CompanyMemberships = memberships,
             Applications = applications,
-            Likes = likes
+            Likes = likes,
+            VacancyShares = shares,
+            VacancyClicks = clicks
         };
     }
 
@@ -108,6 +131,16 @@ public sealed class PrivacyDataService : IPrivacyDataService
             .Where(l => l.UserId == user.Id)
             .ToListAsync(cancellationToken);
         _db.VacancyLikes.RemoveRange(likes);
+
+        var shares = await _db.VacancyShares
+            .Where(s => s.UserId == user.Id)
+            .ToListAsync(cancellationToken);
+        _db.VacancyShares.RemoveRange(shares);
+
+        var clicks = await _db.VacancyClicks
+            .Where(c => c.UserId == user.Id)
+            .ToListAsync(cancellationToken);
+        _db.VacancyClicks.RemoveRange(clicks);
 
         var credentials = await _db.LocalAuthCredentials
             .Where(c => c.UserId == user.Id)
