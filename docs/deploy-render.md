@@ -70,6 +70,15 @@ Na een redeploy kan Render kort dit loggen als je browser nog oude cookies heeft
 
 **Structureel:** `jobsy-web` bewaart Data Protection-keys in Postgres (`ConnectionStrings__JobsyDb`). Zorg dat die env-var gezet is (Blueprint zet dit via `jobsy-db`). Zonder DB-keys blijven cookies na elke deploy ongeldig.
 
+## API deploy “Timed Out” terwijl logs “Now listening” tonen
+
+Render markeert de deploy pas live als `healthCheckPath` (`/health`) herhaaldelijk **2xx/3xx** teruggeeft (max. ~15 min). Als de API wél start maar de check faalt (vaak door `AllowedHosts` 400, of `UseHttpsRedirection` die interne probes naar `https://lobsy.nl/health` stuurt), zie je:
+
+- `Application started` / `Now listening on: http://0.0.0.0:10000`
+- daarna `==> Timed Out` en `Detected service running on port 10000`
+
+Mitigatie in repo: API `AllowedHosts=*`, geen HTTPS-redirect in Production, seed via background hosted service (luistert meteen), `/health` anonymous.
+
 ## Crash: inotify / FileSystemWatcher limit
 
 Als de API crasht met:

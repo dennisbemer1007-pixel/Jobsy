@@ -3,7 +3,6 @@ using Jobsy.Api.Authorization;
 using Jobsy.Api.Jobs;
 using Jobsy.Core;
 using Jobsy.Infrastructure;
-using Jobsy.Infrastructure.Data;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.RateLimiting;
 
@@ -28,6 +27,7 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddInfrastructure(builder.Configuration, builder.Environment);
 builder.Services.AddJobsyApiAuthorization(builder.Configuration, builder.Environment);
+builder.Services.AddHostedService<DatabaseSeedHostedService>();
 builder.Services.AddHostedService<MinimumWageUpdateHostedService>();
 
 var allowedOrigins = (builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>()
@@ -82,19 +82,33 @@ var app = builder.Build();
 
 app.UseForwardedHeaders();
 
+// Short-circuit before auth/HTTPS so Render probes always get 200 once Kestrel listens.
+app.Use(async (context, next) =>
+{
+    if (HttpMethods.IsGet(context.Request.Method)
+        && context.Request.Path.Equals("/health", StringComparison.OrdinalIgnoreCase))
+    {
+        context.Response.StatusCode = StatusCodes.Status200OK;
+        context.Response.ContentType = "application/json; charset=utf-8";
+        await context.Response.WriteAsync("""{"status":"ok"}""", context.RequestAborted);
+        return;
+    }
+
+    await next();
+});
+
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
+    app.UseHttpsRedirection();
 }
-
-if (!app.Environment.IsDevelopment())
+else
 {
+    // Render terminates TLS at the edge; do not redirect internal HTTP probes to https://{Host}/health
+    // (Host may be a custom domain that points at the web service, not this API).
     app.UseHsts();
 }
-
-// Behind Render TLS; avoid redirect loops when proto is already https via forwarded headers.
-app.UseHttpsRedirection();
 
 app.UseCors("JobsyWeb");
 app.UseRateLimiter();
@@ -117,8 +131,6 @@ app.MapGet("/health", () => Results.Ok(new { status = "ok" }))
     .AllowAnonymous();
 
 app.MapControllers();
-
-await JobsyDbSeeder.SeedAsync(app.Services);
 
 app.Run();
 

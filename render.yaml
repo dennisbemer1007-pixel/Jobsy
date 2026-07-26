@@ -32,8 +32,10 @@ services:
         value: Production
       - key: DOTNET_HOSTBUILDER__RELOADCONFIGONCHANGE
         value: "false"
+      # "*" avoids Render health-check 400s when Host is localhost / internal / onrender subdomain.
+      # Browser origin access is still limited by Cors__AllowedOrigins.
       - key: AllowedHosts
-        value: "lobsy.nl;www.lobsy.nl;.onrender.com"
+        value: "*"
       - key: JobsyAuth__AllowDevelopmentAuth
         value: "true"
       - key: JobsyAuth__DevelopmentAuthSecret
@@ -70,7 +72,7 @@ services:
       - key: DOTNET_HOSTBUILDER__RELOADCONFIGONCHANGE
         value: "false"
       - key: AllowedHosts
-        value: "lobsy.nl;www.lobsy.nl;.onrender.com"
+        value: "*"
       - key: JobsyAuth__DevelopmentAuthSecret
         fromService:
           name: jobsy-api
