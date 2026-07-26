@@ -26,7 +26,7 @@ builder.Services.AddHttpClient<IGeocodingClient, NominatimGeocodingClient>(clien
     client.Timeout = TimeSpan.FromSeconds(8);
     client.DefaultRequestHeaders.TryAddWithoutValidation(
         "User-Agent",
-        "Jobsy/1.0 (demo; contact@jobsy.local)");
+        "Lobsy/1.0 (demo; contact@jobsy.local)");
     client.DefaultRequestHeaders.TryAddWithoutValidation("Accept-Language", "nl");
 });
 

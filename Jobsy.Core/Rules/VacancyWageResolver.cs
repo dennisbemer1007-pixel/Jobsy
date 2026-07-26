@@ -8,6 +8,21 @@ namespace Jobsy.Core.Rules;
 /// </summary>
 public static class VacancyWageResolver
 {
+    /// <summary>
+    /// Indicative youth fractions of the adult (21+) rate when a vacancy has no salary table.
+    /// Roughly mirrors common Dutch youth / WML-style steps used in Jobsy demo data.
+    /// </summary>
+    private static readonly (int AgeYears, string Label, decimal FractionOfAdult)[] DefaultYouthFractions =
+    [
+        (15, "15", 0.31m),
+        (16, "16", 0.36m),
+        (17, "17", 0.41m),
+        (18, "18", 0.55m),
+        (19, "19", 0.66m),
+        (20, "20", 0.79m),
+        (21, "21+", 1.00m)
+    ];
+
     public static decimal ResolveHourlyWage(
         decimal vacancyHourlyWage,
         IEnumerable<CompanySalaryRate>? rates,
@@ -38,19 +53,27 @@ public static class VacancyWageResolver
         IEnumerable<CompanySalaryRate>? rates)
     {
         var bands = rates?.OrderBy(r => r.AgeYears).ToList() ?? [];
-        if (bands.Count == 0)
+        if (bands.Count > 0)
         {
-            return
-            [
-                new WageAgeBand(21, vacancyHourlyWage, "Alle")
-            ];
+            return bands
+                .Select(r => new WageAgeBand(
+                    r.AgeYears,
+                    r.HourlyRate,
+                    string.IsNullOrWhiteSpace(r.Label) ? r.AgeYears.ToString() : r.Label))
+                .ToList();
         }
 
-        return bands
-            .Select(r => new WageAgeBand(
-                r.AgeYears,
-                r.HourlyRate,
-                string.IsNullOrWhiteSpace(r.Label) ? r.AgeYears.ToString() : r.Label))
+        return BuildDefaultYouthBands(vacancyHourlyWage);
+    }
+
+    public static IReadOnlyList<WageAgeBand> BuildDefaultYouthBands(decimal adultHourlyWage)
+    {
+        var adult = Math.Max(0.01m, adultHourlyWage);
+        return DefaultYouthFractions
+            .Select(f => new WageAgeBand(
+                f.AgeYears,
+                Math.Round(adult * f.FractionOfAdult, 2, MidpointRounding.AwayFromZero),
+                f.Label))
             .ToList();
     }
 }

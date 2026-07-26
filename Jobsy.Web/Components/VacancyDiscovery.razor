@@ -10,8 +10,9 @@
 <div class="jobsy-discovery @(showMapOnMobile ? "show-map" : "show-list") @(_filtersOpen ? "filters-open" : null)">
     <div class="jobsy-chrome">
         <header class="jobsy-chrome__header">
-            <a class="jobsy-logo" href="/" aria-label="Jobsy">
-                <span class="jobsy-logo__mark">Jobsy</span>
+            <a class="jobsy-logo" href="/" aria-label="Lobsy">
+                <img class="jobsy-logo__img" src="images/brand/lobsy.png" alt="Lobsy" width="36" height="36" />
+                <span class="jobsy-logo__mark">Lobsy</span>
             </a>
         </header>
 
@@ -583,11 +584,6 @@
             return null;
         }
 
-        if (vacancy.HourlyWage is not null)
-        {
-            return $"€ {vacancy.HourlyWage.Value:0.00}/u";
-        }
-
         if (vacancy.WageByAge is { Count: > 0 })
         {
             if (_ageYears is int age)
@@ -602,6 +598,11 @@
             }
 
             return string.Join(" · ", vacancy.WageByAge.Take(2).Select(b => $"{b.Label} €{b.HourlyRate:0.00}"));
+        }
+
+        if (vacancy.HourlyWage is not null)
+        {
+            return $"€ {vacancy.HourlyWage.Value:0.00}/u";
         }
 
         return null;
@@ -766,10 +767,6 @@
             {
                 dict["wageLabel"] = WageVisibilityRules.MissingDateOfBirthMessage;
             }
-            else if (v.HourlyWage is not null)
-            {
-                dict["wage"] = (double)v.HourlyWage.Value;
-            }
             else if (v.WageByAge is { Count: > 0 })
             {
                 dict["wageBands"] = v.WageByAge.Select(b => new Dictionary<string, object?>
@@ -778,6 +775,10 @@
                     ["hourlyRate"] = (double)b.HourlyRate,
                     ["label"] = b.Label
                 }).ToList();
+            }
+            else if (v.HourlyWage is not null)
+            {
+                dict["wage"] = (double)v.HourlyWage.Value;
             }
 
             return dict;

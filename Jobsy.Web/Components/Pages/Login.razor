@@ -9,12 +9,16 @@
 @inject NavigationManager Navigation
 @inject IHttpContextAccessor HttpContextAccessor
 
-<PageTitle>Inloggen · Jobsy</PageTitle>
+<PageTitle>Inloggen · Lobsy</PageTitle>
 
 <div class="login-page">
     <div class="login-card">
+        <div class="login-brand">
+            <img class="login-brand__logo" src="images/brand/lobsy.png" alt="Lobsy" width="64" height="64" />
+            <span class="login-brand__name">Lobsy</span>
+        </div>
         <h1>Inloggen</h1>
-        <p class="login-lead">Kies Microsoft Entra, Google of je Jobsy-account.</p>
+        <p class="login-lead">Kies Microsoft Entra, Google of je Lobsy-account.</p>
 
         @if (!string.IsNullOrEmpty(_errorMessage))
         {
@@ -81,17 +85,24 @@
             Nieuw bedrijf? <a class="auth-link" href="/register">Registreer via KVK</a>
         </p>
 
-        <details class="login-demo">
-            <summary>Demo-accounts</summary>
-            <ul>
-                <li><code>kandidaat@jobsy.local</code> · Kandidaat</li>
-                <li><code>ondernemer@jobsy.local</code> · Filiaalmanager</li>
-                <li><code>regio@jobsy.local</code> · Regiomanager</li>
-                <li><code>enterprise@jobsy.local</code> · Bedrijfsmanager</li>
-                <li><code>intermediair@jobsy.local</code> · Intermediair</li>
-                <li><code>admin@jobsy.local</code> · Admin</li>
-            </ul>
-            <p>Wachtwoord voor alle accounts: <code>Jobsy123!</code></p>
+        <details class="login-demo" open>
+            <summary>Demo-accounts — klik om in te loggen</summary>
+            <div class="login-demo__list">
+                @foreach (var user in _demoUsers)
+                {
+                    <form method="post" action="/account/login" class="login-demo__form">
+                        <input type="hidden" name="@_antiforgeryFieldName" value="@_antiforgeryToken" />
+                        <input type="hidden" name="returnUrl" value="@_returnUrl" />
+                        <input type="hidden" name="email" value="@user.Email" />
+                        <input type="hidden" name="password" value="@user.Password" />
+                        <button type="submit" class="login-demo__btn">
+                            <span class="login-demo__role">@RoleLabel(user.Role)</span>
+                            <span class="login-demo__email">@user.Email</span>
+                        </button>
+                    </form>
+                }
+            </div>
+            <p class="login-demo__hint">Tijdelijk voor lokale demo — één klik, geen typen.</p>
         </details>
     </div>
 </div>
@@ -103,6 +114,7 @@
     private bool _googleEnabled;
     private string _antiforgeryFieldName = string.Empty;
     private string _antiforgeryToken = string.Empty;
+    private IReadOnlyList<DemoUserOptions> _demoUsers = [];
 
     [CascadingParameter]
     private HttpContext? HttpContext { get; set; }
@@ -120,6 +132,7 @@
         var auth = AuthOptions.Value;
         _entraEnabled = auth.Entra.IsConfigured;
         _googleEnabled = auth.Google.IsConfigured;
+        _demoUsers = auth.DemoUsers;
 
         var uri = Navigation.ToAbsoluteUri(Navigation.Uri);
         var query = QueryHelpers.ParseQuery(uri.Query);
@@ -141,4 +154,15 @@
             };
         }
     }
+
+    private static string RoleLabel(string role) => role switch
+    {
+        "Candidate" => "Kandidaat",
+        "BranchManager" => "Filiaalmanager",
+        "RegionalManager" => "Regiomanager",
+        "EnterpriseManager" => "Bedrijfsmanager",
+        "Intermediary" => "Intermediair",
+        "Admin" => "Admin",
+        _ => role
+    };
 }

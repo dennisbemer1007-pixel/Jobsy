@@ -54,6 +54,17 @@ public class VacancyWageResolverTests
         Assert.Equal(18, bands[0].AgeYears);
         Assert.Equal(21, bands[1].AgeYears);
     }
+
+    [Fact]
+    public void GetWageBands_without_table_returns_scaled_youth_bands()
+    {
+        var bands = VacancyWageResolver.GetWageBands(14.50m, null);
+        Assert.Equal(7, bands.Count);
+        Assert.Equal("15", bands[0].Label);
+        Assert.Equal("21+", bands[^1].Label);
+        Assert.Equal(14.50m, bands[^1].HourlyRate);
+        Assert.True(bands[0].HourlyRate < bands[^1].HourlyRate);
+    }
 }
 
 

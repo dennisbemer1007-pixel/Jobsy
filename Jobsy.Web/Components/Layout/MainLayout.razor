@@ -6,7 +6,10 @@
 <div class="app-shell has-bottom-nav" dir="@(Culture.IsRightToLeft ? "rtl" : null)">
     <header class="app-header">
         <div class="app-header__brand">
-            <a class="brand" href="/">Jobsy</a>
+            <a class="brand" href="/" aria-label="Lobsy">
+                <img class="brand__logo" src="images/brand/lobsy.png" alt="Lobsy" width="40" height="40" />
+                <span class="brand__name">Lobsy</span>
+            </a>
             <span class="brand-tagline">@Culture["Brand.Tagline"]</span>
         </div>
         <div class="app-header__actions">

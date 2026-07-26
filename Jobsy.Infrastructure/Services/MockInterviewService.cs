@@ -51,7 +51,7 @@ public sealed class MockInterviewService : IMockInterviewService
            als de "Vraag:" (nog over hetzelfde thema) i.p.v. meteen door naar een nieuw onderwerp.
         4. Geen harde toezeggingen over salaris, contract of aanname.
         5. Nooit BSN, bankgegevens, wachtwoorden of andere zeer gevoelige data vragen.
-        6. Als gevraagd wordt of dit echt is: leg uit dat dit een oefengesprek via Jobsy is.
+        6. Als gevraagd wordt of dit echt is: leg uit dat dit een oefengesprek via Lobsy is.
         7. Rond na 5–6 vragen af met een kort samenvattend compliment + 2 takeaways om te onthouden.
         """;
 
@@ -312,7 +312,7 @@ public sealed class MockInterviewService : IMockInterviewService
             {
                 return
                     $"Hoi! Ik help je oefenen voor {plan.Title} bij {plan.Company}. " +
-                    "Dit is een oefengesprek via Jobsy — geen echt gesprek, wél met vragen uit de vacature.\n\n" +
+                    "Dit is een oefengesprek via Lobsy — geen echt gesprek, wél met vragen uit de vacature.\n\n" +
                     $"In de tekst zie ik vooral: {plan.ThemeSummary}.\n\n" +
                     $"Vraag: {plan.Questions[0]}";
             }

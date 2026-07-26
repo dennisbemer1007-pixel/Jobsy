@@ -86,16 +86,17 @@ window.jobMap = (function () {
         };
     }
 
-    function clusterPopupOptions() {
+    function clusterPopupOptions(withWagePanel) {
         const vw = window.innerWidth || 360;
-        const maxWidth = isNarrowViewport()
-            ? Math.max(220, Math.min(300, vw - 28))
-            : 320;
+        const narrow = isNarrowViewport();
+        const maxWidth = narrow
+            ? Math.max(220, Math.min(340, vw - 28))
+            : (withWagePanel ? 420 : 320);
         return {
-            className: "job-cluster-popup",
+            className: "job-cluster-popup" + (withWagePanel ? " job-cluster-popup--with-wages" : ""),
             maxWidth: maxWidth,
-            minWidth: isNarrowViewport() ? Math.min(220, maxWidth) : 260,
-            autoPanPadding: isNarrowViewport() ? [12, 56] : [36, 48],
+            minWidth: narrow ? Math.min(240, maxWidth) : (withWagePanel ? 360 : 260),
+            autoPanPadding: narrow ? [12, 56] : [36, 48],
             keepInView: true
         };
     }
@@ -118,18 +119,39 @@ window.jobMap = (function () {
         return "<span class=\"map-popup__wage\">€ " + formatWage(v.wage) + "</span>";
     }
 
-    function wagePanelHtml(v) {
-        if (!hasWageBands(v)) return "";
-        const rows = v.wageBands.map(function (b) {
+    function wageTableRowsHtml(bands) {
+        return bands.map(function (b) {
             return "<tr><th>" + escapeHtml(String(b.label || b.ageYears || "")) + "</th>" +
                 "<td>€ " + formatWage(b.hourlyRate) + "</td></tr>";
         }).join("");
+    }
+
+    function wagePanelHtml(v) {
+        if (!hasWageBands(v)) return "";
         return (
             "<aside class=\"map-popup__wage-panel\" aria-label=\"Uurlonen per leeftijd\">" +
                 "<p class=\"map-popup__wage-panel-title\">Uurlonen</p>" +
-                "<table class=\"map-popup__wage-table\"><tbody>" + rows + "</tbody></table>" +
+                "<table class=\"map-popup__wage-table\"><tbody>" + wageTableRowsHtml(v.wageBands) + "</tbody></table>" +
             "</aside>"
         );
+    }
+
+    function clusterWageHtml(v) {
+        if (v.wageLabel) {
+            return "<span class=\"cluster-list__wage cluster-list__wage--masked\">" + escapeHtml(v.wageLabel) + "</span>";
+        }
+        if (hasWageBands(v)) {
+            return (
+                "<aside class=\"cluster-list__wage-panel\" aria-label=\"Uurlonen per leeftijd\">" +
+                    "<p class=\"cluster-list__wage-title\">Uurlonen</p>" +
+                    "<table class=\"map-popup__wage-table\"><tbody>" + wageTableRowsHtml(v.wageBands) + "</tbody></table>" +
+                "</aside>"
+            );
+        }
+        if (v.wage == null || v.wage === "") {
+            return "";
+        }
+        return "<span class=\"cluster-list__wage\">€ " + formatWage(v.wage) + "</span>";
     }
 
     function travelHtml(v) {
@@ -195,20 +217,17 @@ window.jobMap = (function () {
             .map(function (marker) {
                 const v = marker.options.jobData;
                 if (!v) return "";
-                const wage = v.wageLabel
-                    ? escapeHtml(v.wageLabel)
-                    : (Array.isArray(v.wageBands) && v.wageBands.length
-                        ? v.wageBands.map(function (b) {
-                            return escapeHtml(String(b.label || b.ageYears || "")) + " € " + formatWage(b.hourlyRate);
-                        }).join(" · ")
-                        : (v.wage == null || v.wage === "" ? "" : ("€ " + formatWage(v.wage))));
+                const wageBlock = clusterWageHtml(v);
+                const itemClass = "cluster-list__item" + (hasWageBands(v) ? " cluster-list__item--with-wages" : "");
                 return (
-                    "<button type=\"button\" class=\"cluster-list__item\" data-job-id=\"" + escapeAttr(v.id) + "\">" +
-                        "<span class=\"cluster-list__title\">" + escapeHtml(v.title) + "</span>" +
-                        "<span class=\"cluster-list__meta\">" +
-                            "<span>" + escapeHtml(v.company) + "</span>" +
-                            (wage ? "<strong>" + wage + "</strong>" : "") +
-                        "</span>" +
+                    "<button type=\"button\" class=\"" + itemClass + "\" data-job-id=\"" + escapeAttr(v.id) + "\">" +
+                        "<div class=\"cluster-list__row\">" +
+                            "<div class=\"cluster-list__main\">" +
+                                "<span class=\"cluster-list__title\">" + escapeHtml(v.title) + "</span>" +
+                                "<span class=\"cluster-list__company\">" + escapeHtml(v.company) + "</span>" +
+                            "</div>" +
+                            wageBlock +
+                        "</div>" +
                     "</button>"
                 );
             })
@@ -237,12 +256,15 @@ window.jobMap = (function () {
     function openClusterList(clusterLayer) {
         const childMarkers = clusterLayer.getAllChildMarkers();
         const latlng = clusterLayer.getLatLng();
+        const anyBands = childMarkers.some(function (marker) {
+            return marker.options.jobData && hasWageBands(marker.options.jobData);
+        });
 
         if (activeClusterPopup) {
             map.closePopup(activeClusterPopup);
         }
 
-        activeClusterPopup = L.popup(clusterPopupOptions())
+        activeClusterPopup = L.popup(clusterPopupOptions(anyBands))
             .setLatLng(latlng)
             .setContent(buildClusterListHtml(childMarkers))
             .openOn(map);

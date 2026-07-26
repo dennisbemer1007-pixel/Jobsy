@@ -10,7 +10,7 @@
 @using Microsoft.AspNetCore.Components.Authorization
 @implements IDisposable
 
-<PageTitle>@(_vacancy?.Title ?? Culture["Vacancy.Title"]) · Jobsy</PageTitle>
+<PageTitle>@(_vacancy?.Title ?? Culture["Vacancy.Title"]) · Lobsy</PageTitle>
 
 <div class="panel-page">
     @if (_loading)
@@ -31,11 +31,7 @@
                     <p class="company">@_vacancy.CompanyName</p>
                     <p class="address">@_vacancy.CompanyAddress</p>
                 </div>
-                @if (_vacancy.WageVisible && _vacancy.HourlyWage is not null)
-                {
-                    <span class="wage">€ @_vacancy.HourlyWage.Value.ToString("0.00")</span>
-                }
-                else if (_vacancy.WageVisible && _vacancy.WageByAge is { Count: > 0 })
+                @if (_vacancy.WageVisible && _vacancy.WageByAge is { Count: > 0 })
                 {
                     <aside class="detail-wage-panel" aria-label="Uurlonen per leeftijd">
                         <p class="detail-wage-panel__title">Uurlonen</p>
@@ -51,6 +47,10 @@
                             </tbody>
                         </table>
                     </aside>
+                }
+                else if (_vacancy.WageVisible && _vacancy.HourlyWage is not null)
+                {
+                    <span class="wage">€ @_vacancy.HourlyWage.Value.ToString("0.00")</span>
                 }
                 else if (!_vacancy.WageVisible)
                 {

@@ -62,8 +62,8 @@
         {
             await Api.ShareVacancyAsync(Vacancy.Id, channel);
             var url = Navigation.ToAbsoluteUri($"/vacancies/{Vacancy.Id}").ToString();
-            var plainText = $"{Vacancy.Title} bij {Vacancy.CompanyName} — bekijk op Jobsy: {url}";
-            var text = Uri.EscapeDataString($"{Vacancy.Title} bij {Vacancy.CompanyName} — bekijk op Jobsy");
+            var plainText = $"{Vacancy.Title} bij {Vacancy.CompanyName} — bekijk op Lobsy: {url}";
+            var text = Uri.EscapeDataString($"{Vacancy.Title} bij {Vacancy.CompanyName} — bekijk op Lobsy");
             var encodedUrl = Uri.EscapeDataString(url);
 
             var deepLink = channel switch

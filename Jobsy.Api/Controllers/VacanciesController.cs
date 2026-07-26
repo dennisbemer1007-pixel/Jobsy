@@ -725,15 +725,13 @@ public class VacanciesController : ControllerBase
                 hourly = VacancyWageResolver.ResolveHourlyWage(v.HourlyWage, rates, age);
                 resolvedForAge = age;
             }
-            else if (rates is { Count: > 0 })
+            else
             {
+                // Without an age filter always expose per-age bands (company table, or
+                // a scaled youth scale from the vacancy's flat hourly wage).
                 wageByAge = VacancyWageResolver.GetWageBands(v.HourlyWage, rates)
                     .Select(b => new WageByAgeDto(b.AgeYears, b.HourlyRate, b.Label))
                     .ToList();
-            }
-            else
-            {
-                hourly = v.HourlyWage;
             }
         }
 
