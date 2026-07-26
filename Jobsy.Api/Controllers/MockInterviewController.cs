@@ -1,14 +1,14 @@
-using Lobsy.Api.Models;
+using Jobsy.Api.Models;
 using Jobsy.Core.Authorization;
 using Jobsy.Core.Interfaces;
 using Jobsy.Core.Rules;
-using Lobsy.Infrastructure.Data;
-using Lobsy.Infrastructure.Services;
+using Jobsy.Infrastructure.Data;
+using Jobsy.Infrastructure.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
-namespace Lobsy.Api.Controllers;
+namespace Jobsy.Api.Controllers;
 
 [ApiController]
 [Route("api/mock-interview")]
