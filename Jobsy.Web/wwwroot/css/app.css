@@ -1,30 +1,44 @@
 :root {
-    /* Lobsy brand — deep navy shell + coral pin from the mascot */
-    --bg: #f2f5f9;
-    --surface: #ffffff;
+    /* Lobsy — pearl shell surfaces + deep navy actions */
+    --pearl: #f7f4f0;
+    --pearl-mid: #efe9e3;
+    --pearl-cool: #e8eef5;
+    --pearl-shine: #fffcfa;
+    --bg: #f5f2ee;
+    --surface: #fffcfa;
     --text: #122033;
     --muted: #5a6a7d;
-    --border: #d5dee9;
+    --border: #ddd5cc;
     --brand: #0f2d5c;
     --brand-deep: #0a2044;
-    --accent: #e8432e;
-    --accent-soft: #fde8e4;
-    --accent-hover: #d63624;
-    --accent-deep: #b82c1d;
+    --accent: #0f2d5c;
+    --accent-soft: #e7eef7;
+    --accent-hover: #163a6b;
+    --accent-deep: #0a2044;
     --secondary: #163a6b;
+    --coral: #e8432e;
     --danger: #9b1c1c;
     --danger-soft: #fef2f2;
     --warn: #a65b00;
     --warn-soft: #fff8e7;
-    --hover: #eef2f7;
-    --shadow: 0 1px 2px rgba(15, 45, 92, 0.07);
-    --shadow-lg: 0 12px 32px rgba(15, 45, 92, 0.14);
+    --hover: #f0ebe6;
+    --shadow: 0 1px 2px rgba(15, 45, 92, 0.06);
+    --shadow-lg: 0 12px 32px rgba(15, 45, 92, 0.12);
     --radius: 12px;
     --radius-sm: 8px;
-    --map-land: #d9e3ef;
-    --map-ring-fill: rgba(232, 67, 46, 0.14);
-    --map-ring-stroke: rgba(232, 67, 46, 0.55);
+    --map-land: #e4e0da;
+    --map-ring-fill: rgba(15, 45, 92, 0.12);
+    --map-ring-stroke: rgba(15, 45, 92, 0.45);
     --font: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+    --pearl-gradient:
+        linear-gradient(
+            135deg,
+            var(--pearl-shine) 0%,
+            var(--pearl) 28%,
+            var(--pearl-cool) 58%,
+            var(--pearl-mid) 82%,
+            var(--pearl-shine) 100%
+        );
 }
 
 * {
@@ -58,48 +72,49 @@ a {
     justify-content: space-between;
     gap: 1rem;
     padding: 0.75rem 1.25rem;
-    background: var(--brand);
-    border-bottom: 1px solid color-mix(in srgb, var(--brand) 70%, #000);
+    background: var(--pearl-gradient);
+    border-bottom: 1px solid color-mix(in srgb, var(--border) 80%, var(--brand) 20%);
     z-index: 20;
-    color: #fff;
+    color: var(--brand);
+    box-shadow: 0 1px 0 rgba(255, 255, 255, 0.7) inset;
 }
 
 .app-header .brand-tagline {
-    color: rgba(255, 255, 255, 0.85);
+    color: color-mix(in srgb, var(--brand) 55%, var(--muted));
 }
 
 .app-header .auth-link,
 .app-header .language-selector__toggle {
-    color: #fff;
+    color: var(--brand);
 }
 
 .app-header .auth-link:hover,
 .app-header .language-selector__toggle:hover {
-    color: #fff;
-    background: rgba(255, 255, 255, 0.16);
+    color: var(--brand-deep);
+    background: color-mix(in srgb, var(--brand) 8%, transparent);
 }
 
 .app-header .auth-user__name {
-    color: #fff;
+    color: var(--brand);
 }
 
 .app-header .auth-user__role {
-    color: rgba(255, 255, 255, 0.8);
+    color: var(--muted);
 }
 
 .app-header .token-wallet-chip {
-    background: rgba(255, 255, 255, 0.16);
-    color: #fff;
-    border-color: transparent;
+    background: color-mix(in srgb, var(--brand) 8%, var(--pearl-shine));
+    color: var(--brand);
+    border: 1px solid color-mix(in srgb, var(--brand) 14%, var(--border));
 }
 
 .app-header .token-wallet-chip__label {
-    color: rgba(255, 255, 255, 0.85);
+    color: var(--muted);
 }
 
 .app-header .language-selector__toggle {
-    border-color: rgba(255, 255, 255, 0.35);
-    background: transparent;
+    border-color: color-mix(in srgb, var(--brand) 18%, var(--border));
+    background: color-mix(in srgb, var(--pearl-shine) 70%, transparent);
 }
 
 
@@ -464,9 +479,9 @@ a {
     justify-content: center;
     padding: 2rem 1rem;
     background:
-        radial-gradient(ellipse at top right, color-mix(in srgb, var(--accent) 16%, transparent), transparent 45%),
-        radial-gradient(ellipse at bottom left, color-mix(in srgb, var(--brand) 10%, transparent), transparent 40%),
-        var(--bg);
+        radial-gradient(ellipse at top right, color-mix(in srgb, var(--pearl-cool) 70%, transparent), transparent 48%),
+        radial-gradient(ellipse at bottom left, color-mix(in srgb, var(--pearl-mid) 80%, transparent), transparent 42%),
+        var(--pearl-gradient);
 }
 
 .login-card {
@@ -726,7 +741,7 @@ a {
     padding: 0.1rem 0.15rem 0.1rem 0;
     border-radius: 0;
     background: transparent;
-    color: #fff;
+    color: var(--brand);
     font-size: 1.2rem;
     font-weight: 800;
     letter-spacing: -0.02em;
@@ -746,7 +761,7 @@ a {
 }
 
 .brand:hover {
-    color: #fff;
+    color: var(--brand-deep);
     opacity: 0.92;
 }
 
@@ -1138,7 +1153,7 @@ a {
 }
 
 .job-card__travel .lobsy-mark {
-    color: #ff7a5c;
+    color: var(--coral);
     flex-shrink: 0;
 }
 
@@ -1623,9 +1638,10 @@ a {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    background: var(--brand);
-    color: #ff7a5c;
-    box-shadow: 0 4px 12px rgba(15, 45, 92, 0.18);
+    background: var(--pearl-gradient);
+    color: var(--coral);
+    border: 1px solid color-mix(in srgb, var(--brand) 16%, var(--border));
+    box-shadow: 0 4px 12px rgba(15, 45, 92, 0.1);
 }
 
 .lobsy-proximity__body {
@@ -2437,7 +2453,8 @@ a {
         display: flex;
         align-items: center;
         padding: 0.55rem 0.85rem 0.35rem;
-        background: var(--brand);
+        background: var(--pearl-gradient);
+        border-bottom: 1px solid color-mix(in srgb, var(--border) 80%, var(--brand) 20%);
     }
 
     .jobsy-logo {
@@ -2461,17 +2478,17 @@ a {
         padding: 0;
         border-radius: 0;
         background: transparent;
-        color: #fff;
+        color: var(--brand);
         font-weight: 800;
         font-size: 1.05rem;
         letter-spacing: -0.02em;
-        text-shadow: 0 1px 2px rgba(0, 40, 90, 0.35);
+        text-shadow: none;
     }
 
     .jobsy-chrome__search {
         position: relative;
         padding: 0.55rem 0.75rem 0.35rem;
-        background: var(--brand);
+        background: var(--pearl-gradient);
     }
 
     .jobsy-search {
@@ -2486,19 +2503,19 @@ a {
 
     .jobsy-search input {
         width: 100%;
-        border: 1px solid rgba(255, 255, 255, 0.55);
+        border: 1px solid color-mix(in srgb, var(--brand) 16%, var(--border));
         border-radius: 8px;
         padding: 0.7rem 0.8rem;
         font: inherit;
-        background: #fff;
+        background: var(--pearl-shine);
         color: var(--text);
     }
 
     .jobsy-search__clear {
-        border: 1px solid rgba(255, 255, 255, 0.55);
+        border: 1px solid color-mix(in srgb, var(--brand) 16%, var(--border));
         border-radius: 8px;
         padding: 0 0.75rem;
-        background: rgba(255, 255, 255, 0.92);
+        background: var(--pearl-shine);
         color: var(--secondary);
         font: inherit;
         font-size: 0.82rem;
@@ -2512,12 +2529,16 @@ a {
         height: 2.75rem;
         border: none;
         border-radius: 8px;
-        background: color-mix(in srgb, var(--brand) 82%, #000);
+        background: var(--brand);
         color: #fff;
         display: inline-flex;
         align-items: center;
         justify-content: center;
         cursor: pointer;
+    }
+
+    .jobsy-search__btn:hover {
+        background: var(--accent-hover);
     }
 
     .jobsy-chrome__actions {
