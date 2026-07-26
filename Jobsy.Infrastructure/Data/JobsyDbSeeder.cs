@@ -30,6 +30,7 @@ public static class JobsyDbSeeder
             await PlatformSettingsSeeder.SeedPlatformSettingsAsync(db, logger);
             await Sprint0DemoSeeder.SeedSprint0DemoAsync(db, logger);
             await Sprint8MetricsSeeder.SeedRichMetricsAsync(db, logger);
+            await WestlandVacanciesSeeder.SeedWestlandBanenkaartAsync(db, logger);
             return;
         }
 
@@ -39,6 +40,7 @@ public static class JobsyDbSeeder
         await PlatformSettingsSeeder.SeedPlatformSettingsAsync(db, logger);
         await Sprint0DemoSeeder.SeedSprint0DemoAsync(db, logger);
         await Sprint8MetricsSeeder.SeedRichMetricsAsync(db, logger);
+        await WestlandVacanciesSeeder.SeedWestlandBanenkaartAsync(db, logger);
         logger.LogInformation("Seed completed: employers + intermediary, vacancies, tokens, role users, sprint-0/8 demo.");
     }
 }

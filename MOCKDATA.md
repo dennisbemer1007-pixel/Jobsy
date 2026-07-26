@@ -1,9 +1,9 @@
 # Mockdata Specificatie: Jobsy (Westland & Den Haag)
 
 Automatische seed via `JobsyDbSeeder` bij API-start:
-`DemoCompaniesSeeder` → `DemoUsersSeeder` → `ApplicationsAndWagesSeeder` → `PlatformSettingsSeeder` → `Sprint0DemoSeeder` → **`Sprint8MetricsSeeder`**.
+`DemoCompaniesSeeder` → `DemoUsersSeeder` → `ApplicationsAndWagesSeeder` → `PlatformSettingsSeeder` → `Sprint0DemoSeeder` → **`Sprint8MetricsSeeder`** → **`WestlandVacanciesSeeder`**.
 
-Bestaande DB’s krijgen media/settings/sprint0/sprint8 **backfill** (idempotent).
+Bestaande DB’s krijgen media/settings/sprint0/sprint8/westland **backfill** (idempotent).
 
 ## 1. Bedrijven
 
@@ -13,6 +13,8 @@ Bestaande DB’s krijgen media/settings/sprint0/sprint8 **backfill** (idempotent
 | Boutique Café De Stad | Employer | 87654321 | Grote Markt DH 52.0735, 4.3120 | 5 |
 | Supermarkt De Fred | Employer | 11223344 | Statenkwartier 52.0910, 4.2815 | 5 |
 | Demo Intermediair Flex BV | Intermediary | 55667788 | Binckhorstlaan 52.0680, 4.3350 | 20 |
+
+Plus **12 Westland-werkgevers** (Naaldwijk, De Lier, Honselersdijk, Monster, Poeldijk, Wateringen, Maasdijk, Kwintsheul, 's-Gravenzande, Heenweg) via `WestlandVacanciesSeeder` (KVK `71001001`–`71001012`).
 
 Plus regio “Den Haag Stad”, salaristabel De Fred, token packs/costs/PushBom-tiers (platform settings).
 
@@ -27,6 +29,19 @@ Plus regio “Den Haag Stad”, salaristabel De Fred, token packs/costs/PushBom-
 | Seizoenshulp kas (concept) | Westland | Draft |
 | Avondploeg orderpicker | Westland | PendingApproval (+ requested options) |
 | Zomerhulp (afgelopen) | Café | Archived |
+
+### Banenkaart-testset (Westland)
+
+`WestlandVacanciesSeeder` voegt **~52 Active** vacatures toe, verspreid over het Westland, zodat alle discover-filters te testen zijn:
+
+| Filter | Dekking in seed |
+|--------|-----------------|
+| **Branche (workType)** | Alle 9: Horeca, Winkel, Logistiek, Tuinbouw, Zorg, Kantoor, Bouw, Schoonmaak, Productie (+ enkele dual flags) |
+| **Vervoer** | Exclusief Lopend / Fiets / Auto / OV + gangbare combinaties |
+| **Reistijd / radius** | Dichtbij Honselersdijk (~1–2 km), midden (~3–8 km), rand (~8–15 km, o.a. Ter Heijde / Hoek van Holland) |
+| **Leeftijd + uurloon** | Enkele retail-vacatures met salaristabel (jeugdschaal); lonen van ~€8,50 tot ~€18,50 |
+
+Guard: platform-log `"Westland banenkaart seed 50"`. Vacature-IDs `a1000000-0000-4000-8000-…`.
 
 ## 3. Demo-accounts (wachtwoord via DemoUsers / local-login)
 
