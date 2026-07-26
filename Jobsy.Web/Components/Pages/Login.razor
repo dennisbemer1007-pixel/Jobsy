@@ -84,30 +84,33 @@
             <button type="submit" class="login-submit">@Culture["Login.Submit"]</button>
         </form>
 
+        @if (_demoUsers.Count > 0)
+        {
+            <details class="login-demo" open>
+                <summary>@Culture["Login.DemoTitle"]</summary>
+                <div class="login-demo__list">
+                    @foreach (var user in _demoUsers)
+                    {
+                        <form method="post" action="/account/login" class="login-demo__form">
+                            <input type="hidden" name="@_antiforgeryFieldName" value="@_antiforgeryToken" />
+                            <input type="hidden" name="returnUrl" value="@_returnUrl" />
+                            <input type="hidden" name="email" value="@user.Email" />
+                            <input type="hidden" name="password" value="@user.Password" />
+                            <button type="submit" class="login-demo__btn">
+                                <span class="login-demo__role">@RoleLabel(user.Role)</span>
+                                <span class="login-demo__email">@user.Email</span>
+                            </button>
+                        </form>
+                    }
+                </div>
+                <p class="login-demo__hint">@Culture["Login.DemoHint"]</p>
+            </details>
+        }
+
         <div class="login-register">
             <p class="login-register__lead">@Culture["Login.RegisterLead"]</p>
             <a class="provider-btn provider-btn--register" href="/register">@Culture["Login.RegisterCta"]</a>
         </div>
-
-        <details class="login-demo" open>
-            <summary>@Culture["Login.DemoTitle"]</summary>
-            <div class="login-demo__list">
-                @foreach (var user in _demoUsers)
-                {
-                    <form method="post" action="/account/login" class="login-demo__form">
-                        <input type="hidden" name="@_antiforgeryFieldName" value="@_antiforgeryToken" />
-                        <input type="hidden" name="returnUrl" value="@_returnUrl" />
-                        <input type="hidden" name="email" value="@user.Email" />
-                        <input type="hidden" name="password" value="@user.Password" />
-                        <button type="submit" class="login-demo__btn">
-                            <span class="login-demo__role">@RoleLabel(user.Role)</span>
-                            <span class="login-demo__email">@user.Email</span>
-                        </button>
-                    </form>
-                }
-            </div>
-            <p class="login-demo__hint">@Culture["Login.DemoHint"]</p>
-        </details>
     </div>
 </div>
 

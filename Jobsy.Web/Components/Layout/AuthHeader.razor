@@ -1,5 +1,6 @@
 @using System.Security.Claims
 @using Jobsy.Web.Localization
+@using Jobsy.Web.Navigation
 @using Microsoft.AspNetCore.Antiforgery
 @using Microsoft.AspNetCore.Components.Authorization
 @inject CultureState Culture
@@ -16,11 +17,16 @@
             </div>
             <form method="post" action="/account/logout" class="auth-logout-form">
                 <input type="hidden" name="__RequestVerificationToken" value="@_antiforgeryToken" />
-                <button type="submit" class="auth-link auth-link--muted auth-link--button">@Culture["Auth.Logout"]</button>
+                <button type="submit"
+                        class="auth-icon-btn"
+                        title="@Culture["Auth.Logout"]"
+                        aria-label="@Culture["Auth.Logout"]">
+                    <span class="auth-icon-btn__icon" aria-hidden="true">@((MarkupString)NavIcons.Logout)</span>
+                </button>
             </form>
         </Authorized>
         <NotAuthorized>
-            <a class="auth-link" href="/login">@Culture["Auth.Login"]</a>
+            <a class="auth-link auth-link--login" href="/login">@Culture["Auth.Login"]</a>
         </NotAuthorized>
     </AuthorizeView>
 </div>
