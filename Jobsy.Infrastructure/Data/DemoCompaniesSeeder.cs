@@ -82,7 +82,8 @@ internal static class DemoCompaniesSeeder
                 Location = new GeoPoint(51.9812, 4.2235),
                 RequiredTransport = TransportMode.Bike | TransportMode.Car,
                 WorkTypes = WorkType.Logistiek | WorkType.Tuinbouw,
-                ImageUrl = "https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?auto=format&fit=crop&w=600&q=80"
+                ImageUrl = "https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?auto=format&fit=crop&w=600&q=80",
+                VideoUrl = "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
             },
             new Vacancy
             {
@@ -97,7 +98,8 @@ internal static class DemoCompaniesSeeder
                 Location = new GeoPoint(52.0735, 4.3120),
                 RequiredTransport = TransportMode.Walking | TransportMode.Bike | TransportMode.PublicTransport,
                 WorkTypes = WorkType.Horeca,
-                ImageUrl = "https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?auto=format&fit=crop&w=600&q=80"
+                ImageUrl = "https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?auto=format&fit=crop&w=600&q=80",
+                VideoUrl = "https://www.youtube.com/watch?v=9No-FiEInLA"
             },
             new Vacancy
             {
@@ -112,7 +114,6 @@ internal static class DemoCompaniesSeeder
                 Location = new GeoPoint(52.0910, 4.2815),
                 RequiredTransport = TransportMode.Bike | TransportMode.PublicTransport,
                 WorkTypes = WorkType.Winkel,
-                // Geen ImageUrl: toont alleen logo (optioneel plaatje).
                 ImageUrl = null
             }
         };

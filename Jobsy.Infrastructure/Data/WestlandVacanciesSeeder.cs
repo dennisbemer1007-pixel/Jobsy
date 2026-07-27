@@ -205,6 +205,18 @@ internal static class WestlandVacanciesSeeder
             return img[WorkType.Logistiek];
         }
 
+        // A small pool of thematic YouTube videos (publicly embeddable) assigned to
+        // a handful of vacancies by 1-based index so the detail page can demo video playback.
+        var videoByIndex = new Dictionary<int, string>
+        {
+            [2]  = "https://www.youtube.com/watch?v=9No-FiEInLA",  // barista/horeca sfeer
+            [6]  = "https://www.youtube.com/watch?v=4Cr2I4aKgC4",  // orderpicken / logistiek
+            [15] = "https://www.youtube.com/watch?v=dQw4w9WgXcQ",  // teamleider kas (placeholder)
+            [22] = "https://www.youtube.com/watch?v=4Cr2I4aKgC4",  // heftruck / logistiek
+            [33] = "https://www.youtube.com/watch?v=9No-FiEInLA",  // tomatenplukker tuinbouw
+            [49] = "https://www.youtube.com/watch?v=dQw4w9WgXcQ",  // senior monteur
+        };
+
         // Locations spread across Westland (and a few edge spots for radius/travel filters).
         // Candidate home seed ≈ 51.9850, 4.2300 (Honselersdijk).
         var specs = new (string Title, string Desc, int CompanyN, double Lat, double Lng,
@@ -296,7 +308,8 @@ internal static class WestlandVacanciesSeeder
                 ImageUrl = Img(s.Types),
                 IsHighlighted = s.Highlight,
                 MaxApplications = 8,
-                SalaryTableId = s.UseSalaryTable ? salaryTableId : null
+                SalaryTableId = s.UseSalaryTable ? salaryTableId : null,
+                VideoUrl = videoByIndex.GetValueOrDefault(i + 1)
             });
         }
 

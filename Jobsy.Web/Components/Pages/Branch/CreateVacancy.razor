@@ -3,6 +3,7 @@
 @attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "BranchManager,RegionalManager,EnterpriseManager,Intermediary")]
 @inject JobsyApiClient Api
 @inject NavigationManager Navigation
+@inject IJSRuntime Js
 @using Jobsy.Core.Enums
 @using Jobsy.Core.Rules
 
@@ -45,12 +46,47 @@
             </label>
                 <label>
                     Omschrijving
-                    <div class="richtext-toolbar">
-                        <button type="button" class="provider-btn" @onclick='() => WrapSelection("b")'>Vet</button>
-                        <button type="button" class="provider-btn" @onclick='() => WrapSelection("i")'>Cursief</button>
-                        <button type="button" class="provider-btn" @onclick='() => WrapSelection("ul")'>Lijst</button>
+                    <div class="richtext-toolbar" role="toolbar" aria-label="Opmaak">
+                        <div class="richtext-toolbar__group">
+                            <button type="button" class="richtext-btn" title="Vet" aria-label="Vet"
+                                    @onclick='() => FormatAsync("b")'><span aria-hidden="true">B</span></button>
+                            <button type="button" class="richtext-btn richtext-btn--italic" title="Cursief" aria-label="Cursief"
+                                    @onclick='() => FormatAsync("i")'><span aria-hidden="true">I</span></button>
+                            <button type="button" class="richtext-btn richtext-btn--underline" title="Onderstrepen" aria-label="Onderstrepen"
+                                    @onclick='() => FormatAsync("u")'><span aria-hidden="true">U</span></button>
+                        </div>
+                        <span class="richtext-toolbar__sep" aria-hidden="true"></span>
+                        <div class="richtext-toolbar__group">
+                            <button type="button" class="richtext-btn @(_align == "left" ? "is-active" : null)" title="Links uitlijnen" aria-label="Links uitlijnen"
+                                    @onclick='() => AlignAsync("left")'>
+                                @((MarkupString)AlignLeftSvg)
+                            </button>
+                            <button type="button" class="richtext-btn @(_align == "center" ? "is-active" : null)" title="Centreren" aria-label="Centreren"
+                                    @onclick='() => AlignAsync("center")'>
+                                @((MarkupString)AlignCenterSvg)
+                            </button>
+                            <button type="button" class="richtext-btn @(_align == "right" ? "is-active" : null)" title="Rechts uitlijnen" aria-label="Rechts uitlijnen"
+                                    @onclick='() => AlignAsync("right")'>
+                                @((MarkupString)AlignRightSvg)
+                            </button>
+                            <button type="button" class="richtext-btn @(_align == "justify" ? "is-active" : null)" title="Uitvullen" aria-label="Uitvullen"
+                                    @onclick='() => AlignAsync("justify")'>
+                                @((MarkupString)AlignJustifySvg)
+                            </button>
+                        </div>
+                        <span class="richtext-toolbar__sep" aria-hidden="true"></span>
+                        <div class="richtext-toolbar__group">
+                            <button type="button" class="richtext-btn" title="Lijst" aria-label="Lijst"
+                                    @onclick="InsertListAsync">
+                                @((MarkupString)ListSvg)
+                            </button>
+                            <button type="button" class="richtext-btn" title="Link invoegen" aria-label="Link invoegen"
+                                    @onclick="InsertLinkAsync">
+                                @((MarkupString)LinkSvg)
+                            </button>
+                        </div>
                     </div>
-                    <textarea rows="8" @bind="_description" @bind:event="oninput" required></textarea>
+                    <textarea @ref="_descriptionRef" rows="8" @bind="_description" @bind:event="oninput" required></textarea>
                 </label>
                 <label>
                     Afbeelding-URL
@@ -191,15 +227,30 @@
 }
 
 @code {
+    private const string AlignLeftSvg =
+        "<svg viewBox=\"0 0 16 16\" fill=\"currentColor\" aria-hidden=\"true\"><path d=\"M2 3h12v1.2H2zm0 3h8v1.2H2zm0 3h12v1.2H2zm0 3h8v1.2H2z\"/></svg>";
+    private const string AlignCenterSvg =
+        "<svg viewBox=\"0 0 16 16\" fill=\"currentColor\" aria-hidden=\"true\"><path d=\"M2 3h12v1.2H2zm2 3h8v1.2H4zm-2 3h12v1.2H2zm2 3h8v1.2H4z\"/></svg>";
+    private const string AlignRightSvg =
+        "<svg viewBox=\"0 0 16 16\" fill=\"currentColor\" aria-hidden=\"true\"><path d=\"M2 3h12v1.2H2zm4 3h8v1.2H6zm-4 3h12v1.2H2zm4 3h8v1.2H6z\"/></svg>";
+    private const string AlignJustifySvg =
+        "<svg viewBox=\"0 0 16 16\" fill=\"currentColor\" aria-hidden=\"true\"><path d=\"M2 3h12v1.2H2zm0 3h12v1.2H2zm0 3h12v1.2H2zm0 3h12v1.2H2z\"/></svg>";
+    private const string ListSvg =
+        "<svg viewBox=\"0 0 16 16\" fill=\"currentColor\" aria-hidden=\"true\"><circle cx=\"3\" cy=\"4\" r=\"1.1\"/><circle cx=\"3\" cy=\"8\" r=\"1.1\"/><circle cx=\"3\" cy=\"12\" r=\"1.1\"/><path d=\"M6 3.4h8v1.2H6zm0 4h8v1.2H6zm0 4h8v1.2H6z\"/></svg>";
+    private const string LinkSvg =
+        "<svg viewBox=\"0 0 16 16\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.6\" stroke-linecap=\"round\" aria-hidden=\"true\"><path d=\"M6.5 9.5 9.5 6.5\"/><path d=\"M7.2 11.2 5.5 12.9a2.4 2.4 0 0 1-3.4-3.4L3.8 8\"/><path d=\"M8.8 4.8 10.5 3.1a2.4 2.4 0 0 1 3.4 3.4L12.2 8\"/></svg>";
+
     [SupplyParameterFromQuery(Name = "from")]
     public Guid? From { get; set; }
 
+    private ElementReference _descriptionRef;
     private string _title = "";
     private string _description = "";
     private string _imageUrl = "";
     private string _videoUrl = "";
     private string _salaryTableId = "";
     private string _transport = "Bike";
+    private string? _align;
     private HashSet<string> _selectedWorkTypes = new(StringComparer.OrdinalIgnoreCase);
     private bool _saving;
     private bool _isDuplicate;
@@ -376,13 +427,51 @@
         }
     }
 
-    private void WrapSelection(string tag)
+    private async Task FormatAsync(string tag)
     {
-        _description = tag switch
+        var next = await Js.InvokeAsync<string?>("jobsyRichtext.wrap", _descriptionRef, $"<{tag}>", $"</{tag}>", "tekst");
+        if (next is not null)
         {
-            "ul" => _description + "\n<ul>\n<li>Punt</li>\n</ul>\n",
-            _ => $"<{tag}>{_description}</{tag}>"
-        };
+            _description = next;
+        }
+    }
+
+    private async Task AlignAsync(string align)
+    {
+        _align = align;
+        var next = await Js.InvokeAsync<string?>(
+            "jobsyRichtext.wrap",
+            _descriptionRef,
+            $"<p style=\"text-align:{align}\">",
+            "</p>",
+            "tekst");
+        if (next is not null)
+        {
+            _description = next;
+        }
+    }
+
+    private async Task InsertListAsync()
+    {
+        var next = await Js.InvokeAsync<string?>(
+            "jobsyRichtext.wrap",
+            _descriptionRef,
+            "<ul>\n<li>",
+            "</li>\n</ul>",
+            "Punt");
+        if (next is not null)
+        {
+            _description = next;
+        }
+    }
+
+    private async Task InsertLinkAsync()
+    {
+        var next = await Js.InvokeAsync<string?>("jobsyRichtext.insertLink", _descriptionRef);
+        if (next is not null)
+        {
+            _description = next;
+        }
     }
 
     private void CloseModeration()
