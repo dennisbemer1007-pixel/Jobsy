@@ -78,6 +78,14 @@ public static class AuthorizationExtensions
             options.AddPolicy(JobsyPolicies.RequireCandidate, policy =>
                 policy.RequireAuthenticatedUser()
                     .RequireRole(JobsyRoles.Candidate));
+
+            options.AddPolicy(JobsyPolicies.RequireSalesManager, policy =>
+                policy.RequireAuthenticatedUser()
+                    .RequireRole(JobsyRoles.SalesManager));
+
+            options.AddPolicy(JobsyPolicies.RequireAdminOrSalesManager, policy =>
+                policy.RequireAuthenticatedUser()
+                    .RequireRole(JobsyRoles.Admin, JobsyRoles.SalesManager));
         });
 
         services.AddScoped<CompanyScopeFilter>();

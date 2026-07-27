@@ -48,3 +48,9 @@
                            ExtraLabel="Opdrachtgevers" />
     </Authorized>
 </AuthorizeView>
+
+<AuthorizeView Roles="@JobsyRoles.SalesManager">
+    <Authorized>
+        <SalesManagerHomePanel />
+    </Authorized>
+</AuthorizeView>

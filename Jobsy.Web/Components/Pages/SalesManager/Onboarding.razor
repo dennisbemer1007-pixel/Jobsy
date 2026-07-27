@@ -1,0 +1,156 @@
+@page "/salesmanager/onboarding"
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
+@attribute [Authorize(Roles = "SalesManager")]
+@inject JobsyApiClient Api
+
+<PageTitle>Onboarding · Lobsy</PageTitle>
+
+<div class="panel-page">
+    <header class="panel-header">
+        <div>
+            <h1>Salesmanager onboarding</h1>
+            <p class="login-lead">Vul KvK, BTW en NAW in en onderteken de bemiddelingsovereenkomst. Daarna ontvang je je unieke code.</p>
+        </div>
+    </header>
+
+    @if (_loading)
+    {
+        <p class="state-message">Laden…</p>
+    }
+    else if (_profile?.IsOnboardingComplete == true)
+    {
+        <p class="state-message">Onboarding afgerond. Jouw trackingcode:</p>
+        <p class="stat-card__value">@_profile.TrackingCode</p>
+        <a class="auth-link" href="/salesmanager">Naar dashboard</a>
+    }
+    else
+    {
+        @if (!string.IsNullOrEmpty(_error))
+        {
+            <p class="state-message error">@_error</p>
+        }
+        @if (!string.IsNullOrEmpty(_message))
+        {
+            <p class="state-message">@_message</p>
+        }
+
+        <form class="login-form" style="max-width:520px" @onsubmit="SaveProfileAsync" @onsubmit:preventDefault>
+            <label>Bedrijfsnaam <input @bind="_form.CompanyName" required maxlength="256" /></label>
+            <label>KvK-nummer <input @bind="_form.KvkNumber" required maxlength="20" placeholder="12345678" /></label>
+            <label>BTW-nummer <input @bind="_form.VatNumber" required maxlength="32" placeholder="NL123456789B01" /></label>
+            <label>Adres <input @bind="_form.Address" required maxlength="512" /></label>
+            <label>Postcode <input @bind="_form.PostalCode" required maxlength="16" /></label>
+            <label>Plaats <input @bind="_form.City" required maxlength="128" /></label>
+            <label>Land <input @bind="_form.Country" maxlength="64" /></label>
+            <label>IBAN (optioneel) <input @bind="_form.Iban" maxlength="34" /></label>
+            <button class="login-submit" type="submit" disabled="@_busy">Gegevens opslaan</button>
+        </form>
+
+        <section class="panel-section" style="margin-top:1.5rem;max-width:520px">
+            <h2>Bemiddelingsovereenkomst</h2>
+            <p class="muted">
+                Door te ondertekenen bevestig je dat de opgegeven KvK- en BTW-gegevens juist zijn en ga je akkoord
+                met de Lobsy-bemiddelingsovereenkomst (self-billing, 21% BTW, commissiestructuur).
+            </p>
+            <button class="login-submit" type="button" disabled="@(_busy || !_canSign)" @onclick="SignAsync">
+                Ondertekenen &amp; trackingcode genereren
+            </button>
+        </section>
+    }
+</div>
+
+@code {
+    private SalesManagerProfile? _profile;
+    private SalesManagerProfileForm _form = new();
+    private bool _loading = true;
+    private bool _busy;
+    private bool _canSign;
+    private string? _error;
+    private string? _message;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            _profile = await Api.GetMySalesManagerProfileAsync();
+            if (_profile is not null)
+            {
+                _form = new SalesManagerProfileForm
+                {
+                    CompanyName = _profile.CompanyName ?? "",
+                    KvkNumber = _profile.KvkNumber ?? "",
+                    VatNumber = _profile.VatNumber ?? "",
+                    Address = _profile.Address ?? "",
+                    PostalCode = _profile.PostalCode ?? "",
+                    City = _profile.City ?? "",
+                    Country = _profile.Country ?? "NL",
+                    Iban = _profile.Iban
+                };
+                _canSign = HasBusinessData(_form) && _profile.AgreementSignedAt is null;
+            }
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private async Task SaveProfileAsync()
+    {
+        _busy = true;
+        _error = null;
+        _message = null;
+        try
+        {
+            _profile = await Api.UpdateMySalesManagerProfileAsync(_form);
+            _canSign = _profile is not null && !_profile.IsOnboardingComplete && _profile.AgreementSignedAt is null;
+            _message = "Gegevens opgeslagen.";
+            if (_profile?.IsOnboardingComplete == true)
+            {
+                _message = $"Onboarding compleet. Code: {_profile.TrackingCode}";
+            }
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private async Task SignAsync()
+    {
+        _busy = true;
+        _error = null;
+        try
+        {
+            _profile = await Api.SignSalesManagerAgreementAsync();
+            _message = _profile?.IsOnboardingComplete == true
+                ? $"Overeenkomst ondertekend. Trackingcode: {_profile.TrackingCode}"
+                : "Overeenkomst ondertekend.";
+            _canSign = false;
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private static bool HasBusinessData(SalesManagerProfileForm f) =>
+        !string.IsNullOrWhiteSpace(f.CompanyName)
+        && !string.IsNullOrWhiteSpace(f.KvkNumber)
+        && !string.IsNullOrWhiteSpace(f.VatNumber)
+        && !string.IsNullOrWhiteSpace(f.Address)
+        && !string.IsNullOrWhiteSpace(f.PostalCode)
+        && !string.IsNullOrWhiteSpace(f.City);
+}

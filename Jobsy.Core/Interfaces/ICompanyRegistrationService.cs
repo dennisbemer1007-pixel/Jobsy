@@ -43,7 +43,8 @@ public sealed record RegistrationSubmitRequest(
     string ContactEmail,
     string? ContactPhone,
     bool AcceptedTerms = false,
-    string? ConsentVersion = null);
+    string? ConsentVersion = null,
+    string? SalesManagerTrackingCode = null);
 
 public sealed record RegistrationSubmitResult(
     Guid RegistrationId,

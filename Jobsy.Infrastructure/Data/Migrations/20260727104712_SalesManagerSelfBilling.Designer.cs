@@ -3,6 +3,7 @@ using System;
 using Jobsy.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using NetTopologySuite.Geometries;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
@@ -12,9 +13,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Jobsy.Infrastructure.Data.Migrations
 {
     [DbContext(typeof(JobsyDbContext))]
-    partial class JobsyDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260727104712_SalesManagerSelfBilling")]
+    partial class SalesManagerSelfBilling
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -147,9 +150,7 @@ namespace Jobsy.Infrastructure.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("CompanyId")
-                        .IsUnique()
-                        .HasFilter("\"Kind\" = 0 AND \"CompanyId\" IS NOT NULL");
+                    b.HasIndex("CompanyId");
 
                     b.HasIndex("CreatedAt");
 

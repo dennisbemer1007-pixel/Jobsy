@@ -20,6 +20,7 @@ public class TokensController : ControllerBase
     private readonly ITokenLedgerService _tokenLedger;
     private readonly IPaymentService _payments;
     private readonly IUserLookupService _users;
+    private readonly ICommissionLedgerService _commissions;
     private readonly IHostEnvironment _environment;
 
     public TokensController(
@@ -28,6 +29,7 @@ public class TokensController : ControllerBase
         ITokenLedgerService tokenLedger,
         IPaymentService payments,
         IUserLookupService users,
+        ICommissionLedgerService commissions,
         IHostEnvironment environment)
     {
         _db = db;
@@ -35,6 +37,7 @@ public class TokensController : ControllerBase
         _tokenLedger = tokenLedger;
         _payments = payments;
         _users = users;
+        _commissions = commissions;
         _environment = environment;
     }
 
@@ -213,6 +216,20 @@ public class TokensController : ControllerBase
                 actor?.Id,
                 $"Mollie stub {session.PaymentId}",
                 cancellationToken);
+
+            // Accrue salesmanager token commission when the supplier was referred.
+            var company = await _db.Companies.AsNoTracking()
+                .FirstOrDefaultAsync(c => c.Id == session.CompanyId, cancellationToken);
+            if (company?.ReferredBySalesManagerUserId is Guid smId)
+            {
+                await _commissions.TryCreditTokenCommissionAsync(
+                    smId,
+                    session.CompanyId,
+                    session.Id,
+                    session.AmountEuro,
+                    company.FirstYearStartedAt,
+                    cancellationToken);
+            }
 
             return Ok(new TokenBalanceDto(session.CompanyId, session.Company.Name, entry.NewBalance));
         }

@@ -36,6 +36,11 @@ public class JobsyDbContext : DbContext
     public DbSet<CompanyRegistration> CompanyRegistrations => Set<CompanyRegistration>();
     public DbSet<EstablishmentTakeoverRequest> EstablishmentTakeoverRequests => Set<EstablishmentTakeoverRequest>();
     public DbSet<LocalAuthCredential> LocalAuthCredentials => Set<LocalAuthCredential>();
+    public DbSet<SalesManagerProfile> SalesManagerProfiles => Set<SalesManagerProfile>();
+    public DbSet<SupplierOnboardingCheckout> SupplierOnboardingCheckouts => Set<SupplierOnboardingCheckout>();
+    public DbSet<CommissionLedgerEntry> CommissionLedgerEntries => Set<CommissionLedgerEntry>();
+    public DbSet<SelfBillingInvoice> SelfBillingInvoices => Set<SelfBillingInvoice>();
+    public DbSet<SelfBillingInvoiceLine> SelfBillingInvoiceLines => Set<SelfBillingInvoiceLine>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -92,6 +97,14 @@ public class JobsyDbContext : DbContext
                 .WithMany(c => c.ChildCompanies)
                 .HasForeignKey(e => e.ParentCompanyId)
                 .OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne(e => e.ReferredBySalesManagerUser)
+                .WithMany()
+                .HasForeignKey(e => e.ReferredBySalesManagerUserId)
+                .OnDelete(DeleteBehavior.SetNull);
+            entity.HasIndex(e => e.ReferredBySalesManagerUserId);
+            entity.HasIndex(e => e.FirstYearSupplierSlot)
+                .IsUnique()
+                .HasFilter("\"FirstYearSupplierSlot\" IS NOT NULL");
         });
 
         modelBuilder.Entity<Vacancy>(entity =>
@@ -350,6 +363,7 @@ public class JobsyDbContext : DbContext
             entity.Property(e => e.ContactPhone).HasMaxLength(64);
             entity.Property(e => e.ActivationToken).HasMaxLength(128).IsRequired();
             entity.Property(e => e.ConsentVersion).HasMaxLength(32);
+            entity.Property(e => e.SalesManagerTrackingCode).HasMaxLength(32);
             entity.HasIndex(e => e.ActivationToken).IsUnique();
             entity.HasIndex(e => e.ContactEmail);
             entity.HasIndex(e => e.CreatedAt);
@@ -396,6 +410,106 @@ public class JobsyDbContext : DbContext
             entity.HasOne(e => e.User)
                 .WithMany()
                 .HasForeignKey(e => e.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<SalesManagerProfile>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.CompanyName).HasMaxLength(256);
+            entity.Property(e => e.KvkNumber).HasMaxLength(20);
+            entity.Property(e => e.VatNumber).HasMaxLength(32);
+            entity.Property(e => e.Address).HasMaxLength(512);
+            entity.Property(e => e.PostalCode).HasMaxLength(16);
+            entity.Property(e => e.City).HasMaxLength(128);
+            entity.Property(e => e.Country).HasMaxLength(64);
+            entity.Property(e => e.Iban).HasMaxLength(34);
+            entity.Property(e => e.TrackingCode).HasMaxLength(32);
+            entity.Property(e => e.AgreementVersion).HasMaxLength(64);
+            entity.HasIndex(e => e.UserId).IsUnique();
+            entity.HasIndex(e => e.TrackingCode)
+                .IsUnique()
+                .HasFilter("\"TrackingCode\" IS NOT NULL");
+            entity.HasOne(e => e.User)
+                .WithOne()
+                .HasForeignKey<SalesManagerProfile>(e => e.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<SupplierOnboardingCheckout>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.PaymentId).HasMaxLength(80).IsRequired();
+            entity.Property(e => e.AmountEuro).HasPrecision(10, 2);
+            entity.HasIndex(e => e.PaymentId).IsUnique();
+            entity.HasOne(e => e.Company)
+                .WithMany()
+                .HasForeignKey(e => e.CompanyId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<CommissionLedgerEntry>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.AmountExVat).HasPrecision(10, 2);
+            entity.Property(e => e.VatAmount).HasPrecision(10, 2);
+            entity.Property(e => e.VatRate).HasPrecision(5, 4);
+            entity.Property(e => e.Note).HasMaxLength(512);
+            entity.Property(e => e.SourcePaymentId).HasMaxLength(80);
+            entity.HasIndex(e => e.SalesManagerUserId);
+            entity.HasIndex(e => e.CreatedAt);
+            entity.HasIndex(e => e.SourcePaymentId)
+                .IsUnique()
+                .HasFilter("\"SourcePaymentId\" IS NOT NULL");
+            entity.HasIndex(e => e.SourceTokenCheckoutId)
+                .IsUnique()
+                .HasFilter("\"SourceTokenCheckoutId\" IS NOT NULL");
+            // At most one founder bonus per referred supplier company.
+            entity.HasIndex(e => e.CompanyId)
+                .IsUnique()
+                .HasFilter("\"Kind\" = 0 AND \"CompanyId\" IS NOT NULL");
+            entity.HasOne(e => e.SalesManagerUser)
+                .WithMany()
+                .HasForeignKey(e => e.SalesManagerUserId)
+                .OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne(e => e.Company)
+                .WithMany()
+                .HasForeignKey(e => e.CompanyId)
+                .OnDelete(DeleteBehavior.SetNull);
+            entity.HasOne(e => e.SelfBillingInvoice)
+                .WithMany(i => i.LinkedLedgerEntries)
+                .HasForeignKey(e => e.SelfBillingInvoiceId)
+                .OnDelete(DeleteBehavior.SetNull);
+        });
+
+        modelBuilder.Entity<SelfBillingInvoice>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.InvoiceNumber).HasMaxLength(32).IsRequired();
+            entity.Property(e => e.SalesManagerCompanyName).HasMaxLength(256).IsRequired();
+            entity.Property(e => e.SalesManagerKvkNumber).HasMaxLength(20).IsRequired();
+            entity.Property(e => e.SalesManagerVatNumber).HasMaxLength(32).IsRequired();
+            entity.Property(e => e.SalesManagerAddress).HasMaxLength(512).IsRequired();
+            entity.Property(e => e.SubtotalExVat).HasPrecision(10, 2);
+            entity.Property(e => e.VatAmount).HasPrecision(10, 2);
+            entity.Property(e => e.TotalInclVat).HasPrecision(10, 2);
+            entity.Property(e => e.VatRate).HasPrecision(5, 4);
+            entity.HasIndex(e => e.InvoiceNumber).IsUnique();
+            entity.HasIndex(e => e.SalesManagerUserId);
+            entity.HasOne(e => e.SalesManagerUser)
+                .WithMany()
+                .HasForeignKey(e => e.SalesManagerUserId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<SelfBillingInvoiceLine>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Description).HasMaxLength(512).IsRequired();
+            entity.Property(e => e.AmountExVat).HasPrecision(10, 2);
+            entity.HasOne(e => e.Invoice)
+                .WithMany(i => i.Lines)
+                .HasForeignKey(e => e.SelfBillingInvoiceId)
                 .OnDelete(DeleteBehavior.Cascade);
         });
     }

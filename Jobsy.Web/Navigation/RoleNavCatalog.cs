@@ -17,7 +17,7 @@ public static class RoleNavCatalog
         new("Nav.Home", "/home", NavIcons.Home),
         new("Nav.JobMap", "/", NavIcons.Map),
         new("Nav.Vacancies", "/admin/vacancies", NavIcons.Vacancies, ["/admin/moderation"]),
-        new("Nav.Finance", "/admin/finance", NavIcons.Finance, ["/admin/tokens"]),
+        new("Nav.Finance", "/admin/finance", NavIcons.Finance, ["/admin/tokens", "/admin/sales-managers"]),
         new("Nav.Companies", "/admin/companies", NavIcons.Companies),
         new("Nav.Settings", "/admin/settings", NavIcons.Settings, ["/admin/integrations", "/admin/users", "/admin/logging", "/admin/wages"])
     ];
@@ -69,6 +69,14 @@ public static class RoleNavCatalog
         new("Nav.Tokens", "/employer/tokens", NavIcons.Tokens)
     ];
 
+    public static readonly NavItem[] SalesManager =
+    [
+        new("Nav.Home", "/home", NavIcons.Home),
+        new("Nav.Dashboard", "/salesmanager", NavIcons.Finance),
+        new("Nav.Onboarding", "/salesmanager/onboarding", NavIcons.Users),
+        new("Nav.Invoices", "/salesmanager/invoices", NavIcons.Tokens)
+    ];
+
     public static IReadOnlyList<NavItem> ForUser(ClaimsPrincipal? user)
     {
         if (user?.Identity?.IsAuthenticated != true)
@@ -79,6 +87,11 @@ public static class RoleNavCatalog
         if (RoleClaimMatching.HasRole(user, JobsyRoles.Admin))
         {
             return Admin;
+        }
+
+        if (RoleClaimMatching.HasRole(user, JobsyRoles.SalesManager))
+        {
+            return SalesManager;
         }
 
         if (RoleClaimMatching.HasRole(user, JobsyRoles.Candidate))

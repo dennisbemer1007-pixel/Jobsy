@@ -12,6 +12,7 @@ public static class AdminNavItems
         ..RoleNavCatalog.Admin,
         new("Nav.Integrations", "/admin/integrations", NavIcons.Api),
         new("Nav.Notifications", "/admin/notifications", NavIcons.Notifications),
+        new("Nav.SalesManagers", "/admin/sales-managers", NavIcons.Users),
     ];
 
     public static bool IsActive(NavItem item, string relativePath)

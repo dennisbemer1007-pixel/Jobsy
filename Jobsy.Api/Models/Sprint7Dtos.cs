@@ -10,7 +10,8 @@ public record SubmitRegistrationRequest(
     string ContactEmail,
     string? ContactPhone = null,
     bool AcceptedTerms = false,
-    string? ConsentVersion = null);
+    string? ConsentVersion = null,
+    string? SalesManagerTrackingCode = null);
 
 public record RegistrationSubmitResponse(
     Guid RegistrationId,

@@ -1,0 +1,97 @@
+@page "/salesmanager/invoices"
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
+@attribute [Authorize(Roles = "SalesManager")]
+@inject JobsyApiClient Api
+
+<PageTitle>Self-billing · Lobsy</PageTitle>
+
+<div class="panel-page">
+    <header class="panel-header">
+        <div>
+            <h1>Self-billing facturen</h1>
+            <p class="login-lead">Genereer een factuur over je openstaande tegoed (21% BTW). Uitbetaling volgt na admin-afhandeling.</p>
+        </div>
+        <button class="login-submit" type="button" disabled="@_busy" @onclick="CreateInvoiceAsync">Factuur genereren</button>
+    </header>
+
+    @if (!string.IsNullOrEmpty(_error))
+    {
+        <p class="state-message error">@_error</p>
+    }
+    @if (!string.IsNullOrEmpty(_message))
+    {
+        <p class="state-message">@_message</p>
+    }
+
+    @if (_loading)
+    {
+        <p class="state-message">Laden…</p>
+    }
+    else
+    {
+        <div class="table-list">
+            @foreach (var inv in _invoices)
+            {
+                <div class="table-row">
+                    <div>
+                        <strong>@inv.InvoiceNumber</strong>
+                        <div class="muted">@inv.Status · @inv.CreatedAt.ToLocalTime().ToString("g")</div>
+                    </div>
+                    <span>€ @inv.TotalInclVat.ToString("0.00") incl. BTW</span>
+                </div>
+            }
+        </div>
+        @if (_invoices.Count == 0)
+        {
+            <p class="muted">Nog geen facturen.</p>
+        }
+    }
+</div>
+
+@code {
+    private List<SelfBillingInvoiceItem> _invoices = [];
+    private bool _loading = true;
+    private bool _busy;
+    private string? _error;
+    private string? _message;
+
+    protected override async Task OnInitializedAsync() => await ReloadAsync();
+
+    private async Task ReloadAsync()
+    {
+        _loading = true;
+        try
+        {
+            _invoices = await Api.GetMySelfBillingInvoicesAsync();
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private async Task CreateInvoiceAsync()
+    {
+        _busy = true;
+        _error = null;
+        _message = null;
+        try
+        {
+            var inv = await Api.CreateMySelfBillingInvoiceAsync();
+            _message = inv is null ? "Factuur aangemaakt." : $"Factuur {inv.InvoiceNumber} uitgegeven.";
+            await ReloadAsync();
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+}

@@ -1,0 +1,127 @@
+@page "/employer/onboarding-checkout"
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
+@attribute [Authorize(Roles = "BranchManager,RegionalManager,EnterpriseManager,Intermediary,Admin")]
+@inject JobsyApiClient Api
+@inject NavigationManager Nav
+@inject AuthenticationStateProvider AuthState
+
+<PageTitle>First-year onboarding · Lobsy</PageTitle>
+
+<div class="panel-page">
+    <header class="panel-header">
+        <div>
+            <h1>First-year onboardingbetaling</h1>
+            <p class="login-lead">€ 2.500,00 voor het eerste jaar. Na harde betaling krijgt de gekoppelde salesmanager 20% commissie (als founder-slot).</p>
+        </div>
+    </header>
+
+    @if (!string.IsNullOrEmpty(_error))
+    {
+        <p class="state-message error">@_error</p>
+    }
+    @if (!string.IsNullOrEmpty(_message))
+    {
+        <p class="state-message">@_message</p>
+    }
+
+    @if (string.IsNullOrEmpty(_paymentId))
+    {
+        <label>
+            Bedrijf-ID
+            <input @bind="_companyIdText" placeholder="Guid van je vestiging" />
+        </label>
+        <button class="login-submit" type="button" disabled="@_busy" @onclick="StartCheckoutAsync">Start €2500 checkout (stub)</button>
+    }
+    else
+    {
+        <p class="muted">PaymentId: @_paymentId</p>
+        <button class="login-submit" type="button" disabled="@_busy" @onclick="CompleteAsync">Simuleer betaling &amp; credit</button>
+    }
+</div>
+
+@code {
+    [SupplyParameterFromQuery(Name = "paymentId")]
+    public string? PaymentIdQuery { get; set; }
+
+    [SupplyParameterFromQuery(Name = "companyId")]
+    public string? CompanyIdQuery { get; set; }
+
+    private string _companyIdText = "";
+    private Guid? _companyId;
+    private string? _paymentId;
+    private bool _busy;
+    private string? _error;
+    private string? _message;
+
+    protected override void OnParametersSet()
+    {
+        if (!string.IsNullOrWhiteSpace(PaymentIdQuery))
+        {
+            _paymentId = PaymentIdQuery;
+        }
+
+        if (Guid.TryParse(CompanyIdQuery, out var cid))
+        {
+            _companyId = cid;
+            _companyIdText = cid.ToString();
+        }
+    }
+
+    private async Task StartCheckoutAsync()
+    {
+        _busy = true;
+        _error = null;
+        try
+        {
+            if (!Guid.TryParse(_companyIdText, out var companyId))
+            {
+                _error = "Ongeldig bedrijf-ID.";
+                return;
+            }
+
+            _companyId = companyId;
+            var result = await Api.CreateOnboardingCheckoutAsync(companyId);
+            _paymentId = result?.PaymentId;
+            _message = result is null ? "Checkout gestart." : $"Checkout € {result.AmountEuro:0.00} gestart.";
+            if (!string.IsNullOrEmpty(result?.CheckoutUrl))
+            {
+                Nav.NavigateTo(result.CheckoutUrl + $"&companyId={companyId}", forceLoad: false);
+            }
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private async Task CompleteAsync()
+    {
+        if (_companyId is null || string.IsNullOrWhiteSpace(_paymentId))
+        {
+            _error = "Checkout onvolledig.";
+            return;
+        }
+
+        _busy = true;
+        _error = null;
+        try
+        {
+            var result = await Api.CompleteOnboardingCheckoutAsync(_companyId.Value, _paymentId);
+            _message = result is null
+                ? "Afgerond."
+                : $"Status {result.Status}. Commissie bijgeschreven: {result.CommissionCredited}. Slot: {result.FirstYearSupplierSlot?.ToString() ?? "—"}";
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+}

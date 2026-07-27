@@ -1,0 +1,70 @@
+@using Jobsy.Web.Services
+@inject JobsyApiClient Api
+@inject NavigationManager Nav
+
+<section class="panel-page">
+    <header class="panel-header">
+        <div>
+            <h1>Salesmanager</h1>
+            <p class="login-lead">Jouw netwerk, commissiewallet en self-billing.</p>
+        </div>
+        <a class="auth-link" href="/salesmanager">Naar dashboard</a>
+    </header>
+
+    @if (_loading)
+    {
+        <p class="state-message">Laden…</p>
+    }
+    else if (!string.IsNullOrEmpty(_error))
+    {
+        <p class="state-message error">@_error</p>
+    }
+    else if (_dashboard is not null && !_dashboard.IsOnboardingComplete)
+    {
+        <p class="state-message">Rond eerst je onboarding af om een trackingcode te ontvangen.</p>
+        <a class="login-submit" href="/salesmanager/onboarding" style="display:inline-block;text-decoration:none;text-align:center">Start onboarding</a>
+    }
+    else if (_dashboard is not null)
+    {
+        <div class="stat-grid">
+            <div class="stat-card">
+                <span class="stat-card__label">Trackingcode</span>
+                <strong class="stat-card__value">@_dashboard.TrackingCode</strong>
+            </div>
+            <div class="stat-card">
+                <span class="stat-card__label">Saldo excl. BTW</span>
+                <strong class="stat-card__value">€ @_dashboard.BalanceExVat.ToString("0.00")</strong>
+            </div>
+            <div class="stat-card">
+                <span class="stat-card__label">Suppliers</span>
+                <strong class="stat-card__value">@_dashboard.Suppliers.Count</strong>
+            </div>
+            <div class="stat-card">
+                <span class="stat-card__label">Openstaand (niet gefactureerd)</span>
+                <strong class="stat-card__value">€ @_dashboard.UninvoicedExVat.ToString("0.00")</strong>
+            </div>
+        </div>
+    }
+</section>
+
+@code {
+    private SalesManagerDashboard? _dashboard;
+    private bool _loading = true;
+    private string? _error;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            _dashboard = await Api.GetMySalesManagerDashboardAsync();
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+}

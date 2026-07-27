@@ -1,0 +1,286 @@
+using Jobsy.Api.Models;
+using Jobsy.Core.Authorization;
+using Jobsy.Core.Interfaces;
+using Jobsy.Core.Rules;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+
+namespace Jobsy.Api.Controllers;
+
+[ApiController]
+[Route("api/sales-managers")]
+public class SalesManagersController : ControllerBase
+{
+    private readonly ISalesManagerInviteService _invite;
+    private readonly ISalesManagerOnboardingService _onboarding;
+    private readonly ISalesManagerDashboardService _dashboard;
+    private readonly ISelfBillingInvoiceService _invoices;
+    private readonly IUserLookupService _users;
+    private readonly ICompanyAuthorizationService _companyAuth;
+    private readonly IHostEnvironment _environment;
+
+    public SalesManagersController(
+        ISalesManagerInviteService invite,
+        ISalesManagerOnboardingService onboarding,
+        ISalesManagerDashboardService dashboard,
+        ISelfBillingInvoiceService invoices,
+        IUserLookupService users,
+        ICompanyAuthorizationService companyAuth,
+        IHostEnvironment environment)
+    {
+        _invite = invite;
+        _onboarding = onboarding;
+        _dashboard = dashboard;
+        _invoices = invoices;
+        _users = users;
+        _companyAuth = companyAuth;
+        _environment = environment;
+    }
+
+    [HttpPost("invite")]
+    [Authorize(Policy = JobsyPolicies.RequireAdmin)]
+    public async Task<ActionResult<SalesManagerInviteResponse>> Invite(
+        [FromBody] InviteSalesManagerRequest request,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            var result = await _invite.InviteAsync(request.Email, request.FullName, cancellationToken);
+            // Temp password only returned in Development (also emailed via stub). Avoid leaking in prod HTTP logs.
+            return Ok(new SalesManagerInviteResponse(
+                result.UserId,
+                result.Email,
+                result.FullName,
+                _environment.IsDevelopment() ? result.TemporaryPassword : null,
+                result.CreatedNewUser));
+        }
+        catch (ArgumentException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+    }
+
+    [HttpGet]
+    [Authorize(Policy = JobsyPolicies.RequireAdmin)]
+    public async Task<ActionResult<IEnumerable<SalesManagerListItemDto>>> List(CancellationToken cancellationToken)
+        => Ok(await _dashboard.ListSalesManagersAsync(cancellationToken));
+
+    [HttpGet("{userId:guid}/dashboard")]
+    [Authorize(Policy = JobsyPolicies.RequireAdminOrSalesManager)]
+    public async Task<ActionResult<SalesManagerDashboardDto>> GetDashboard(
+        Guid userId,
+        CancellationToken cancellationToken)
+    {
+        if (!await CanAccessSalesManagerAsync(userId, cancellationToken))
+        {
+            return Forbid();
+        }
+
+        var dto = await _dashboard.GetDashboardAsync(userId, cancellationToken);
+        return dto is null ? NotFound() : Ok(dto);
+    }
+
+    [HttpGet("me/profile")]
+    [Authorize(Policy = JobsyPolicies.RequireSalesManager)]
+    public async Task<ActionResult<SalesManagerProfileDto>> GetMyProfile(CancellationToken cancellationToken)
+    {
+        var user = await _users.FindByPrincipalAsync(User, cancellationToken);
+        if (user is null)
+        {
+            return Unauthorized();
+        }
+
+        var profile = await _onboarding.GetProfileAsync(user.Id, cancellationToken);
+        return profile is null ? NotFound() : Ok(profile);
+    }
+
+    [HttpPut("me/profile")]
+    [Authorize(Policy = JobsyPolicies.RequireSalesManager)]
+    public async Task<ActionResult<SalesManagerProfileDto>> UpdateMyProfile(
+        [FromBody] UpdateSalesManagerProfileRequest request,
+        CancellationToken cancellationToken)
+    {
+        var user = await _users.FindByPrincipalAsync(User, cancellationToken);
+        if (user is null)
+        {
+            return Unauthorized();
+        }
+
+        try
+        {
+            var profile = await _onboarding.UpdateProfileAsync(
+                user.Id,
+                new SalesManagerProfileUpdateRequest(
+                    request.CompanyName,
+                    request.KvkNumber,
+                    request.VatNumber,
+                    request.Address,
+                    request.PostalCode,
+                    request.City,
+                    request.Country,
+                    request.Iban),
+                cancellationToken);
+            return Ok(profile);
+        }
+        catch (ArgumentException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+    }
+
+    [HttpPost("me/sign-agreement")]
+    [Authorize(Policy = JobsyPolicies.RequireSalesManager)]
+    public async Task<ActionResult<SalesManagerProfileDto>> SignAgreement(
+        [FromBody] SignSalesManagerAgreementRequest? request,
+        CancellationToken cancellationToken)
+    {
+        var user = await _users.FindByPrincipalAsync(User, cancellationToken);
+        if (user is null)
+        {
+            return Unauthorized();
+        }
+
+        try
+        {
+            var version = request?.AgreementVersion ?? SalesCommissionRules.CurrentAgreementVersion;
+            var profile = await _onboarding.SignAgreementAsync(user.Id, version, cancellationToken);
+            return Ok(profile);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+    }
+
+    [HttpGet("me/dashboard")]
+    [Authorize(Policy = JobsyPolicies.RequireSalesManager)]
+    public async Task<ActionResult<SalesManagerDashboardDto>> GetMyDashboard(CancellationToken cancellationToken)
+    {
+        var user = await _users.FindByPrincipalAsync(User, cancellationToken);
+        if (user is null)
+        {
+            return Unauthorized();
+        }
+
+        var dto = await _dashboard.GetDashboardAsync(user.Id, cancellationToken);
+        return dto is null ? NotFound() : Ok(dto);
+    }
+
+    [HttpGet("me/invoices")]
+    [Authorize(Policy = JobsyPolicies.RequireSalesManager)]
+    public async Task<ActionResult<IEnumerable<SelfBillingInvoiceDto>>> ListMyInvoices(
+        CancellationToken cancellationToken)
+    {
+        var user = await _users.FindByPrincipalAsync(User, cancellationToken);
+        if (user is null)
+        {
+            return Unauthorized();
+        }
+
+        var invoices = await _invoices.ListForSalesManagerAsync(user.Id, cancellationToken);
+        return Ok(invoices.Select(MapInvoice));
+    }
+
+    [HttpPost("me/invoices")]
+    [Authorize(Policy = JobsyPolicies.RequireSalesManager)]
+    public async Task<ActionResult<SelfBillingInvoiceDto>> CreateInvoice(CancellationToken cancellationToken)
+    {
+        var user = await _users.FindByPrincipalAsync(User, cancellationToken);
+        if (user is null)
+        {
+            return Unauthorized();
+        }
+
+        try
+        {
+            var invoice = await _invoices.CreateFromUninvoicedBalanceAsync(user.Id, cancellationToken);
+            return Ok(MapInvoice(invoice));
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+    }
+
+    [HttpPost("{userId:guid}/invoices")]
+    [Authorize(Policy = JobsyPolicies.RequireAdmin)]
+    public async Task<ActionResult<SelfBillingInvoiceDto>> CreateInvoiceFor(
+        Guid userId,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            var invoice = await _invoices.CreateFromUninvoicedBalanceAsync(userId, cancellationToken);
+            return Ok(MapInvoice(invoice));
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+    }
+
+    [HttpPost("invoices/{invoiceId:guid}/mark-paid")]
+    [Authorize(Policy = JobsyPolicies.RequireAdmin)]
+    public async Task<ActionResult<SelfBillingInvoiceDto>> MarkPaid(
+        Guid invoiceId,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            var invoice = await _invoices.MarkPaidAsync(invoiceId, cancellationToken);
+            return Ok(MapInvoice(invoice));
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(new { message = ex.Message });
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+    }
+
+    private async Task<bool> CanAccessSalesManagerAsync(Guid userId, CancellationToken cancellationToken)
+    {
+        if (_companyAuth.IsAdmin(User))
+        {
+            return true;
+        }
+
+        var me = await _users.FindByPrincipalAsync(User, cancellationToken);
+        return me is not null && me.Id == userId;
+    }
+
+    private static SelfBillingInvoiceDto MapInvoice(Core.Entities.SelfBillingInvoice i) =>
+        new(i.Id, i.InvoiceNumber, i.SubtotalExVat, i.VatAmount, i.TotalInclVat,
+            i.Status.ToString(), i.CreatedAt, i.IssuedAt, i.PaidAt);
+}
+
+public record InviteSalesManagerRequest(string Email, string FullName);
+
+public record SalesManagerInviteResponse(
+    Guid UserId,
+    string Email,
+    string FullName,
+    string? TemporaryPassword,
+    bool CreatedNewUser);
+
+public record UpdateSalesManagerProfileRequest(
+    string CompanyName,
+    string KvkNumber,
+    string VatNumber,
+    string Address,
+    string PostalCode,
+    string City,
+    string? Country = "NL",
+    string? Iban = null);
+
+public record SignSalesManagerAgreementRequest(string? AgreementVersion = null);

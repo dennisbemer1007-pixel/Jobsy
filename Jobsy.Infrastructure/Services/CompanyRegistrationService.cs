@@ -5,6 +5,7 @@ using Jobsy.Core.Entities;
 using Jobsy.Core.Enums;
 using Jobsy.Core.Interfaces;
 using Jobsy.Core.Privacy;
+using Jobsy.Core.Rules;
 using Jobsy.Core.ValueObjects;
 using Jobsy.Infrastructure.Data;
 using Jobsy.Infrastructure.Security;
@@ -67,6 +68,23 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
             throw new ArgumentException("Je moet akkoord gaan met de voorwaarden en privacyverklaring.");
         }
 
+        string? trackingCode = null;
+        if (!string.IsNullOrWhiteSpace(request.SalesManagerTrackingCode))
+        {
+            trackingCode = request.SalesManagerTrackingCode.Trim().ToUpperInvariant();
+            var validCode = await _db.SalesManagerProfiles.AsNoTracking().AnyAsync(
+                p => p.TrackingCode != null
+                     && p.TrackingCode.ToUpper() == trackingCode
+                     && p.OnboardingCompletedAt != null
+                     && p.AgreementSignedAt != null,
+                cancellationToken);
+            if (!validCode)
+            {
+                throw new ArgumentException(
+                    "Deze salesmanager-code is onbekend of nog niet actief. Laat het veld leeg of vul een geldige code in.");
+            }
+        }
+
         var establishments = await _kvk.GetEstablishmentsAsync(kvkNumber, cancellationToken);
         var match = establishments.FirstOrDefault(e =>
             e.KvkEstablishmentId.Equals(establishmentId, StringComparison.OrdinalIgnoreCase));
@@ -123,6 +141,7 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
             ConsentVersion = string.IsNullOrWhiteSpace(request.ConsentVersion)
                 ? PrivacyConstants.CurrentConsentVersion
                 : request.ConsentVersion.Trim(),
+            SalesManagerTrackingCode = trackingCode,
             CreatedAt = DateTime.UtcNow
         };
 
@@ -491,6 +510,9 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
         registration.CreatedBranchCompanyId = branchId;
         registration.ActivationToken = string.Empty;
 
+        // Preserve salesmanager referral captured at submit time.
+        await ApplySalesManagerReferralAsync(registration, target, orgId, cancellationToken);
+
         _db.PlatformLogs.Add(new PlatformLog
         {
             Id = Guid.NewGuid(),
@@ -643,6 +665,8 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
             _db.Companies.Add(branch);
             await WmlSalaryTableService.EnsureForCompanyAsync(_db, branch.Id, cancellationToken);
         }
+
+        await ApplySalesManagerReferralAsync(registration, branch, orgId, cancellationToken);
 
         var role = registration.Scope == RegistrationScope.Organization
             ? UserRole.EnterpriseManager
@@ -926,4 +950,66 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
 
     private static string BuildActivationUrl(string token, string publicWebBaseUrl)
         => $"{publicWebBaseUrl.TrimEnd('/')}/register/activate?token={Uri.EscapeDataString(token)}";
+
+    private async Task ApplySalesManagerReferralAsync(
+        CompanyRegistration registration,
+        Company branch,
+        Guid? orgId,
+        CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrWhiteSpace(registration.SalesManagerTrackingCode))
+        {
+            return;
+        }
+
+        var code = registration.SalesManagerTrackingCode.Trim().ToUpperInvariant();
+        var profile = await _db.SalesManagerProfiles
+            .FirstOrDefaultAsync(
+                p => p.TrackingCode != null
+                     && p.TrackingCode.ToUpper() == code
+                     && p.OnboardingCompletedAt != null,
+                cancellationToken);
+
+        if (profile is null)
+        {
+            _logger.LogWarning(
+                "Unknown or incomplete salesmanager tracking code {Code} on registration {Id}",
+                code, registration.Id);
+            return;
+        }
+
+        branch.ReferredBySalesManagerUserId = profile.UserId;
+        branch.FirstYearStartedAt = DateTime.UtcNow;
+
+        if (orgId is Guid oid)
+        {
+            var org = await _db.Companies.FirstOrDefaultAsync(c => c.Id == oid, cancellationToken)
+                      ?? _db.Companies.Local.FirstOrDefault(c => c.Id == oid);
+            if (org is not null)
+            {
+                org.ReferredBySalesManagerUserId = profile.UserId;
+                org.FirstYearStartedAt ??= DateTime.UtcNow;
+            }
+        }
+
+        // Reserve founder slot early (1–10) so the bonus can credit after €2500 payment.
+        if (branch.FirstYearSupplierSlot is null)
+        {
+            var usedSlots = await _db.Companies
+                .Where(c => c.FirstYearSupplierSlot != null)
+                .Select(c => c.FirstYearSupplierSlot!.Value)
+                .ToListAsync(cancellationToken);
+
+            usedSlots.AddRange(_db.Companies.Local
+                .Where(c => c.FirstYearSupplierSlot != null && c.Id != branch.Id)
+                .Select(c => c.FirstYearSupplierSlot!.Value));
+
+            var next = Enumerable.Range(1, SalesCommissionRules.MaxFounderSlots)
+                .FirstOrDefault(s => !usedSlots.Contains(s));
+            if (next > 0)
+            {
+                branch.FirstYearSupplierSlot = next;
+            }
+        }
+    }
 }

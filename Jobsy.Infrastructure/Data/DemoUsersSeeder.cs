@@ -115,6 +115,19 @@ internal static class DemoUsersSeeder
             IsActive = true
         });
 
+        var salesManagerId = Guid.Parse("aaaaaaaa-5555-5555-5555-555555555555");
+        added += await EnsureUserAsync(db, new User
+        {
+            Id = salesManagerId,
+            Email = "sales@jobsy.local",
+            FullName = "Demo Salesmanager",
+            Role = UserRole.SalesManager,
+            CompanyId = null,
+            IsActive = true
+        });
+
+        await EnsureSalesManagerProfileAsync(db, salesManagerId);
+
         await EnsureMembershipAsync(db, branchManagerId, WestlandId);
         await EnsureMembershipAsync(db, regionalManagerId, CafeId);
         await EnsureMembershipAsync(db, regionalManagerId, SupermarketId);
@@ -188,5 +201,39 @@ internal static class DemoUsersSeeder
         {
             db.UserCompanies.Add(new UserCompany { UserId = userId, CompanyId = companyId });
         }
+    }
+
+    private static async Task EnsureSalesManagerProfileAsync(JobsyDbContext db, Guid userId)
+    {
+        if (!await db.Users.AnyAsync(u => u.Id == userId))
+        {
+            return;
+        }
+
+        if (await db.SalesManagerProfiles.AnyAsync(p => p.UserId == userId))
+        {
+            return;
+        }
+
+        var now = DateTime.UtcNow;
+        db.SalesManagerProfiles.Add(new SalesManagerProfile
+        {
+            Id = Guid.Parse("aaaaaaaa-5555-6666-7777-555555555555"),
+            UserId = userId,
+            CompanyName = "Demo Sales BV",
+            KvkNumber = "87654321",
+            VatNumber = "NL87654321B01",
+            Address = "Voorbeeldstraat 1",
+            PostalCode = "2671AB",
+            City = "Naaldwijk",
+            Country = "NL",
+            Iban = "NL91ABNA0417164300",
+            TrackingCode = "SM-DEMO01",
+            AgreementSignedAt = now,
+            AgreementVersion = "2026-07-27-sm-mediation",
+            OnboardingCompletedAt = now,
+            CreatedAt = now,
+            UpdatedAt = now
+        });
     }
 }

@@ -34,6 +34,9 @@ public class CompanyRegistration
     public DateTime? ConsentAcceptedAt { get; set; }
     public string? ConsentVersion { get; set; }
 
+    /// <summary>Optional salesmanager tracking code captured at submit.</summary>
+    public string? SalesManagerTrackingCode { get; set; }
+
     public DateTime CreatedAt { get; set; }
     public DateTime? ActivatedAt { get; set; }
 

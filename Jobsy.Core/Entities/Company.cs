@@ -29,6 +29,16 @@ public class Company
     /// </summary>
     public bool HasReceivedWelcomeToken { get; set; }
 
+    /// <summary>Salesmanager who referred this supplier (via tracking code).</summary>
+    public Guid? ReferredBySalesManagerUserId { get; set; }
+    public User? ReferredBySalesManagerUser { get; set; }
+
+    /// <summary>Platform-wide founder slot 1–10 when eligible; null otherwise.</summary>
+    public int? FirstYearSupplierSlot { get; set; }
+
+    /// <summary>Start of the first-year partnership window (for token commission year 1/2).</summary>
+    public DateTime? FirstYearStartedAt { get; set; }
+
     public ICollection<Vacancy> Vacancies { get; set; } = new List<Vacancy>();
     public ICollection<TokenTransaction> TokenTransactions { get; set; } = new List<TokenTransaction>();
     public ICollection<User> PrimaryUsers { get; set; } = new List<User>();

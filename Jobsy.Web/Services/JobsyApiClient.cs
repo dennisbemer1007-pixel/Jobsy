@@ -400,6 +400,7 @@ public sealed class JobsyApiClient : IAsyncDisposable
         string? contactPhone = null,
         bool acceptedTerms = false,
         string? consentVersion = null,
+        string? salesManagerTrackingCode = null,
         CancellationToken ct = default)
     {
         var response = await _http.PostAsJsonAsync("api/registration", new
@@ -411,7 +412,8 @@ public sealed class JobsyApiClient : IAsyncDisposable
             contactEmail,
             contactPhone,
             acceptedTerms,
-            consentVersion = consentVersion ?? "2026-07-25"
+            consentVersion = consentVersion ?? "2026-07-25",
+            salesManagerTrackingCode
         }, ct);
         if (!response.IsSuccessStatusCode)
         {
@@ -1000,6 +1002,116 @@ public sealed class JobsyApiClient : IAsyncDisposable
 
         return null;
     }
+
+    public async Task<SalesManagerInviteResult?> InviteSalesManagerAsync(
+        string email,
+        string fullName,
+        CancellationToken ct = default)
+    {
+        var response = await _http.PostAsJsonAsync("api/sales-managers/invite", new { email, fullName }, ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException(ExtractMessage(body) ?? "Uitnodigen mislukt.");
+        }
+
+        return await response.Content.ReadFromJsonAsync<SalesManagerInviteResult>(cancellationToken: ct);
+    }
+
+    public async Task<List<SalesManagerListItem>> GetSalesManagersAsync(CancellationToken ct = default)
+        => await _http.GetFromJsonAsync<List<SalesManagerListItem>>("api/sales-managers", ct) ?? [];
+
+    public async Task<SalesManagerDashboard?> GetMySalesManagerDashboardAsync(CancellationToken ct = default)
+        => await _http.GetFromJsonAsync<SalesManagerDashboard>("api/sales-managers/me/dashboard", ct);
+
+    public async Task<SalesManagerDashboard?> GetSalesManagerDashboardAsync(Guid userId, CancellationToken ct = default)
+        => await _http.GetFromJsonAsync<SalesManagerDashboard>($"api/sales-managers/{userId}/dashboard", ct);
+
+    public async Task<SalesManagerProfile?> GetMySalesManagerProfileAsync(CancellationToken ct = default)
+        => await _http.GetFromJsonAsync<SalesManagerProfile>("api/sales-managers/me/profile", ct);
+
+    public async Task<SalesManagerProfile?> UpdateMySalesManagerProfileAsync(
+        SalesManagerProfileForm form,
+        CancellationToken ct = default)
+    {
+        var response = await _http.PutAsJsonAsync("api/sales-managers/me/profile", form, ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException(ExtractMessage(body) ?? "Profiel opslaan mislukt.");
+        }
+
+        return await response.Content.ReadFromJsonAsync<SalesManagerProfile>(cancellationToken: ct);
+    }
+
+    public async Task<SalesManagerProfile?> SignSalesManagerAgreementAsync(CancellationToken ct = default)
+    {
+        var response = await _http.PostAsJsonAsync("api/sales-managers/me/sign-agreement", new { }, ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException(ExtractMessage(body) ?? "Ondertekenen mislukt.");
+        }
+
+        return await response.Content.ReadFromJsonAsync<SalesManagerProfile>(cancellationToken: ct);
+    }
+
+    public async Task<List<SelfBillingInvoiceItem>> GetMySelfBillingInvoicesAsync(CancellationToken ct = default)
+        => await _http.GetFromJsonAsync<List<SelfBillingInvoiceItem>>("api/sales-managers/me/invoices", ct) ?? [];
+
+    public async Task<SelfBillingInvoiceItem?> CreateMySelfBillingInvoiceAsync(CancellationToken ct = default)
+    {
+        var response = await _http.PostAsync("api/sales-managers/me/invoices", null, ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException(ExtractMessage(body) ?? "Factuur aanmaken mislukt.");
+        }
+
+        return await response.Content.ReadFromJsonAsync<SelfBillingInvoiceItem>(cancellationToken: ct);
+    }
+
+    public async Task<SelfBillingInvoiceItem?> MarkSelfBillingInvoicePaidAsync(Guid invoiceId, CancellationToken ct = default)
+    {
+        var response = await _http.PostAsync($"api/sales-managers/invoices/{invoiceId}/mark-paid", null, ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException(ExtractMessage(body) ?? "Markeren als betaald mislukt.");
+        }
+
+        return await response.Content.ReadFromJsonAsync<SelfBillingInvoiceItem>(cancellationToken: ct);
+    }
+
+    public async Task<OnboardingCheckoutResult?> CreateOnboardingCheckoutAsync(Guid companyId, CancellationToken ct = default)
+    {
+        var response = await _http.PostAsync($"api/companies/{companyId}/onboarding/checkout", null, ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException(ExtractMessage(body) ?? "Onboarding-checkout mislukt.");
+        }
+
+        return await response.Content.ReadFromJsonAsync<OnboardingCheckoutResult>(cancellationToken: ct);
+    }
+
+    public async Task<OnboardingCompleteResult?> CompleteOnboardingCheckoutAsync(
+        Guid companyId,
+        string paymentId,
+        CancellationToken ct = default)
+    {
+        var response = await _http.PostAsJsonAsync(
+            $"api/companies/{companyId}/onboarding/complete",
+            new { paymentId },
+            ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException(ExtractMessage(body) ?? "Onboarding-betaling afronden mislukt.");
+        }
+
+        return await response.Content.ReadFromJsonAsync<OnboardingCompleteResult>(cancellationToken: ct);
+    }
 }
 
 public sealed class VacancyModerationException : Exception
@@ -1102,3 +1214,124 @@ public sealed class PlatformFeatureItem
     public string PublicWebBaseUrl { get; set; } = "http://localhost:5201";
     public DateTime? UpdatedAtUtc { get; set; }
 }
+
+public sealed class SalesManagerInviteResult
+{
+    public Guid UserId { get; set; }
+    public string Email { get; set; } = string.Empty;
+    public string FullName { get; set; } = string.Empty;
+    public string? TemporaryPassword { get; set; }
+    public bool CreatedNewUser { get; set; }
+}
+
+public sealed class SalesManagerListItem
+{
+    public Guid UserId { get; set; }
+    public string Email { get; set; } = string.Empty;
+    public string FullName { get; set; } = string.Empty;
+    public string? TrackingCode { get; set; }
+    public bool IsOnboardingComplete { get; set; }
+    public decimal BalanceExVat { get; set; }
+    public int SupplierCount { get; set; }
+}
+
+public sealed class SalesManagerDashboard
+{
+    public Guid UserId { get; set; }
+    public string Email { get; set; } = string.Empty;
+    public string FullName { get; set; } = string.Empty;
+    public string? TrackingCode { get; set; }
+    public bool IsOnboardingComplete { get; set; }
+    public decimal BalanceExVat { get; set; }
+    public decimal BalanceInclVat { get; set; }
+    public decimal UninvoicedExVat { get; set; }
+    public decimal OutstandingIssuedExVat { get; set; }
+    public List<ReferredSupplierItem> Suppliers { get; set; } = [];
+    public List<CommissionEntryItem> RecentLedger { get; set; } = [];
+    public List<SelfBillingInvoiceItem> Invoices { get; set; } = [];
+}
+
+public sealed class ReferredSupplierItem
+{
+    public Guid CompanyId { get; set; }
+    public string Name { get; set; } = string.Empty;
+    public string KvkNumber { get; set; } = string.Empty;
+    public int? FirstYearSupplierSlot { get; set; }
+    public DateTime? FirstYearStartedAt { get; set; }
+    public bool HasPaidOnboarding { get; set; }
+}
+
+public sealed class CommissionEntryItem
+{
+    public Guid Id { get; set; }
+    public string Kind { get; set; } = string.Empty;
+    public decimal AmountExVat { get; set; }
+    public decimal VatAmount { get; set; }
+    public string? Note { get; set; }
+    public Guid? CompanyId { get; set; }
+    public string? CompanyName { get; set; }
+    public DateTime CreatedAt { get; set; }
+    public Guid? InvoiceId { get; set; }
+}
+
+public sealed class SelfBillingInvoiceItem
+{
+    public Guid Id { get; set; }
+    public string InvoiceNumber { get; set; } = string.Empty;
+    public decimal SubtotalExVat { get; set; }
+    public decimal VatAmount { get; set; }
+    public decimal TotalInclVat { get; set; }
+    public string Status { get; set; } = string.Empty;
+    public DateTime CreatedAt { get; set; }
+    public DateTime? IssuedAt { get; set; }
+    public DateTime? PaidAt { get; set; }
+}
+
+public sealed class SalesManagerProfile
+{
+    public Guid UserId { get; set; }
+    public string Email { get; set; } = string.Empty;
+    public string FullName { get; set; } = string.Empty;
+    public string? CompanyName { get; set; }
+    public string? KvkNumber { get; set; }
+    public string? VatNumber { get; set; }
+    public string? Address { get; set; }
+    public string? PostalCode { get; set; }
+    public string? City { get; set; }
+    public string? Country { get; set; }
+    public string? Iban { get; set; }
+    public string? TrackingCode { get; set; }
+    public DateTime? AgreementSignedAt { get; set; }
+    public string? AgreementVersion { get; set; }
+    public DateTime? OnboardingCompletedAt { get; set; }
+    public bool IsOnboardingComplete { get; set; }
+}
+
+public sealed class SalesManagerProfileForm
+{
+    public string CompanyName { get; set; } = string.Empty;
+    public string KvkNumber { get; set; } = string.Empty;
+    public string VatNumber { get; set; } = string.Empty;
+    public string Address { get; set; } = string.Empty;
+    public string PostalCode { get; set; } = string.Empty;
+    public string City { get; set; } = string.Empty;
+    public string? Country { get; set; } = "NL";
+    public string? Iban { get; set; }
+}
+
+public sealed class OnboardingCheckoutResult
+{
+    public string PaymentId { get; set; } = string.Empty;
+    public string CheckoutUrl { get; set; } = string.Empty;
+    public decimal AmountEuro { get; set; }
+    public bool IsStub { get; set; }
+}
+
+public sealed class OnboardingCompleteResult
+{
+    public Guid CompanyId { get; set; }
+    public string Status { get; set; } = string.Empty;
+    public bool CommissionCredited { get; set; }
+    public int? FirstYearSupplierSlot { get; set; }
+}
+

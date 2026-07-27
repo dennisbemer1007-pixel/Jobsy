@@ -10,5 +10,6 @@ public enum UserRole
     RegionalManager = 2,
     EnterpriseManager = 3,
     Intermediary = 4,
-    Admin = 5
+    Admin = 5,
+    SalesManager = 6
 }

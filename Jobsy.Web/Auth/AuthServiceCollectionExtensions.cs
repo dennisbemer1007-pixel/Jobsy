@@ -305,6 +305,7 @@ public static class AuthServiceCollectionExtensions
         "enterprisemanager" or "bedrijfsmanager" => "EnterpriseManager",
         "intermediary" or "intermediair" => "Intermediary",
         "admin" or "administrator" => "Admin",
+        "salesmanager" or "sales" => "SalesManager",
         _ => "Candidate"
     };
 

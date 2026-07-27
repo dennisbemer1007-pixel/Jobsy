@@ -6,4 +6,6 @@ public static class JobsyPolicies
     public const string RequireEmployer = "RequireEmployer";
     public const string RequireAdminOrEmployer = "RequireAdminOrEmployer";
     public const string RequireCandidate = "RequireCandidate";
+    public const string RequireSalesManager = "RequireSalesManager";
+    public const string RequireAdminOrSalesManager = "RequireAdminOrSalesManager";
 }

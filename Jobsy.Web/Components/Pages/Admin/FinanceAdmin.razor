@@ -13,6 +13,7 @@
         <button type="button" class="admin-sublink @(_tab == "kpi" ? "admin-sublink--active" : null)" @onclick='() => SetTab("kpi")'>KPI’s</button>
         <button type="button" class="admin-sublink @(_tab == "tokenlog" ? "admin-sublink--active" : null)" @onclick='() => SetTab("tokenlog")'>Tokenlog</button>
         <a class="admin-sublink" href="/admin/tokens">Token-grant (demo)</a>
+        <a class="admin-sublink" href="/admin/sales-managers">Salesmanagers</a>
     </div>
 
     @if (_tab == "kpi")

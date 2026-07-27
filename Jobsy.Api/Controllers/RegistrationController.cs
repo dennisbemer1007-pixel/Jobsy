@@ -73,7 +73,8 @@ public class RegistrationController : ControllerBase
                     request.ContactEmail,
                     request.ContactPhone,
                     request.AcceptedTerms,
-                    request.ConsentVersion),
+                    request.ConsentVersion,
+                    request.SalesManagerTrackingCode),
                 cancellationToken);
 
             return Ok(new RegistrationSubmitResponse(

@@ -1,0 +1,194 @@
+@page "/admin/sales-managers"
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
+@attribute [Authorize(Roles = "Admin")]
+@using Jobsy.Web.Components.Admin
+@inject JobsyApiClient Api
+
+<PageTitle>Salesmanagers · Lobsy</PageTitle>
+
+<AdminPageShell Title="Salesmanagers" Lead="Nodig salesmanagers uit, bekijk wallets en markeer self-billing uitbetalingen.">
+    <section class="panel-section">
+        <h2>Uitnodigen</h2>
+        <form class="login-form" style="max-width:480px" @onsubmit="InviteAsync" @onsubmit:preventDefault>
+            <label>Naam <input @bind="_inviteName" required /></label>
+            <label>E-mail <input type="email" @bind="_inviteEmail" required /></label>
+            <button class="login-submit" type="submit" disabled="@_busy">Uitnodigen</button>
+        </form>
+        @if (!string.IsNullOrEmpty(_inviteResult))
+        {
+            <p class="state-message">@_inviteResult</p>
+        }
+    </section>
+
+    @if (!string.IsNullOrEmpty(_error))
+    {
+        <p class="state-message error">@_error</p>
+    }
+
+    @if (_loading)
+    {
+        <p class="state-message">Laden…</p>
+    }
+    else
+    {
+        <section class="panel-section">
+            <h2>Overzicht</h2>
+            <div class="table-list">
+                @foreach (var sm in _list)
+                {
+                    <button type="button" class="table-row table-row--link" @onclick="() => SelectAsync(sm.UserId)">
+                        <div>
+                            <strong>@sm.FullName</strong>
+                            <div class="muted">@sm.Email · @(sm.TrackingCode ?? "geen code") · @sm.SupplierCount suppliers</div>
+                        </div>
+                        <span>€ @sm.BalanceExVat.ToString("0.00")</span>
+                    </button>
+                }
+            </div>
+        </section>
+
+        @if (_selected is not null)
+        {
+            <section class="panel-section">
+                <h2>@_selected.FullName</h2>
+                <p class="muted">Code: @(_selected.TrackingCode ?? "—") · Onboarding: @(_selected.IsOnboardingComplete ? "ja" : "nee")</p>
+                <div class="stat-grid">
+                    <div class="stat-card">
+                        <span class="stat-card__label">Saldo excl. BTW</span>
+                        <strong class="stat-card__value">€ @_selected.BalanceExVat.ToString("0.00")</strong>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-card__label">Openstaand issued</span>
+                        <strong class="stat-card__value">€ @_selected.OutstandingIssuedExVat.ToString("0.00")</strong>
+                    </div>
+                </div>
+
+                <h3>Suppliers</h3>
+                <div class="table-list">
+                    @foreach (var s in _selected.Suppliers)
+                    {
+                        <div class="table-row">
+                            <div>
+                                <strong>@s.Name</strong>
+                                <div class="muted">slot @(s.FirstYearSupplierSlot?.ToString() ?? "—")</div>
+                            </div>
+                            <span>@(s.HasPaidOnboarding ? "betaald" : "open")</span>
+                        </div>
+                    }
+                </div>
+
+                <h3>Facturen</h3>
+                <div class="table-list">
+                    @foreach (var inv in _selected.Invoices)
+                    {
+                        <div class="table-row">
+                            <div>
+                                <strong>@inv.InvoiceNumber</strong>
+                                <div class="muted">@inv.Status</div>
+                            </div>
+                            <div style="display:flex;gap:.5rem;align-items:center">
+                                <span>€ @inv.TotalInclVat.ToString("0.00")</span>
+                                @if (inv.Status == "Issued")
+                                {
+                                    <button type="button" class="provider-btn" disabled="@_busy" @onclick="() => MarkPaidAsync(inv.Id)">Markeer betaald</button>
+                                }
+                            </div>
+                        </div>
+                    }
+                </div>
+            </section>
+        }
+    }
+</AdminPageShell>
+
+@code {
+    private List<SalesManagerListItem> _list = [];
+    private SalesManagerDashboard? _selected;
+    private string _inviteName = "";
+    private string _inviteEmail = "";
+    private string? _inviteResult;
+    private string? _error;
+    private bool _loading = true;
+    private bool _busy;
+
+    protected override async Task OnInitializedAsync() => await ReloadListAsync();
+
+    private async Task ReloadListAsync()
+    {
+        _loading = true;
+        try
+        {
+            _list = await Api.GetSalesManagersAsync();
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private async Task InviteAsync()
+    {
+        _busy = true;
+        _error = null;
+        _inviteResult = null;
+        try
+        {
+            var result = await Api.InviteSalesManagerAsync(_inviteEmail.Trim(), _inviteName.Trim());
+            _inviteResult = result is null
+                ? "Uitgenodigd."
+                : string.IsNullOrEmpty(result.TemporaryPassword)
+                    ? $"Uitgenodigd: {result.Email}. Tijdelijk wachtwoord is naar de e-mail-stub gestuurd."
+                    : $"Uitgenodigd: {result.Email}. Tijdelijk wachtwoord (alleen Development): {result.TemporaryPassword}";
+            _inviteEmail = "";
+            _inviteName = "";
+            await ReloadListAsync();
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private async Task SelectAsync(Guid userId)
+    {
+        _error = null;
+        try
+        {
+            _selected = await Api.GetSalesManagerDashboardAsync(userId);
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+    }
+
+    private async Task MarkPaidAsync(Guid invoiceId)
+    {
+        _busy = true;
+        _error = null;
+        try
+        {
+            await Api.MarkSelfBillingInvoicePaidAsync(invoiceId);
+            if (_selected is not null)
+            {
+                await SelectAsync(_selected.UserId);
+            }
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+}
