@@ -45,7 +45,8 @@ public static class MetricsKeys
     public static readonly HashSet<string> PlatformOnly = new(StringComparer.OrdinalIgnoreCase)
     {
         "errors", "users_open_for_work", "users_active",
-        "companies_employers", "companies_intermediaries"
+        "companies_employers", "companies_intermediaries",
+        "site_visits", "site_visits_unique"
     };
 }
 

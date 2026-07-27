@@ -1,6 +1,9 @@
 @inherits LayoutComponentBase
 @using Jobsy.Web.Localization
 @inject CultureState Culture
+@inject JobsyApiClient Api
+@inject IJSRuntime Js
+@inject NavigationManager Navigation
 @implements IDisposable
 
 <div class="app-shell has-bottom-nav" dir="@(Culture.IsRightToLeft ? "rtl" : null)">
@@ -34,11 +37,32 @@
 </div>
 
 @code {
+    private bool _siteVisitRecorded;
+
     protected override async Task OnInitializedAsync()
     {
         Culture.Changed += OnCultureChanged;
         await Culture.InitializeAsync();
         await Culture.SyncDocumentAsync();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender || _siteVisitRecorded)
+        {
+            return;
+        }
+
+        _siteVisitRecorded = true;
+        try
+        {
+            var path = new Uri(Navigation.Uri).AbsolutePath;
+            await Api.RecordSiteVisitOnceAsync(Js, path);
+        }
+        catch
+        {
+            // Analytics must not block the app shell.
+        }
     }
 
     private void OnCultureChanged()

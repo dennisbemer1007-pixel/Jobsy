@@ -37,5 +37,6 @@ public class Vacancy
     public ICollection<VacancyClick> Clicks { get; set; } = new List<VacancyClick>();
     public ICollection<VacancyLike> Likes { get; set; } = new List<VacancyLike>();
     public ICollection<VacancyShare> Shares { get; set; } = new List<VacancyShare>();
+    public ICollection<VacancySearchImpression> SearchImpressions { get; set; } = new List<VacancySearchImpression>();
     public ICollection<Application> Applications { get; set; } = new List<Application>();
 }

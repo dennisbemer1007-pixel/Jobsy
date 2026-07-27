@@ -72,7 +72,9 @@
     [
         ("day", "Dag"),
         ("week", "Week"),
-        ("month", "Maand")
+        ("month", "Maand"),
+        ("quarter", "Kwartaal"),
+        ("year", "Jaar")
     ];
 
     private string _period = "week";
@@ -171,7 +173,8 @@
         "users_open_for_work" or "users_active" => "/admin/users",
         "tokens_purchased" or "tokens_spent" or "pushboms" or "extensions" => "/admin/finance?tab=tokenlog",
         "active_vacancies" or "active_vacancies_employers" or "active_vacancies_intermediaries"
-            or "applications" or "clicks" or "shares" or "likes" => "/admin/vacancies",
+            or "applications" or "impressions" or "clicks" or "shares" or "likes" => "/admin/vacancies",
+        "site_visits" or "site_visits_unique" => "/admin/vacancies",
         _ => "/admin/vacancies"
     };
 }

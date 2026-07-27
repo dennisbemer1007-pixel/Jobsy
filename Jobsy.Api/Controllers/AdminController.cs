@@ -169,6 +169,7 @@ public class AdminController : ControllerBase
                 v.ExtensionCount,
                 v.StartDate,
                 v.EndDate,
+                v.SearchImpressions.Count,
                 v.Clicks.Count,
                 v.Shares.Count,
                 v.Applications.Count,

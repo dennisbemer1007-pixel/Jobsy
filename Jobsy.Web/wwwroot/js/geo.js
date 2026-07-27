@@ -2,6 +2,7 @@ window.jobsyGeo = (function () {
     const STORAGE_KEY = "jobsy.origin";
     const ANON_KEY = "jobsy.anonymousKey";
     const CLICKED_KEY = "jobsy.clickedVacancies";
+    const SITE_VISIT_KEY = "jobsy.siteVisitClaimed";
     const AGE_KEY = "jobsy.discoveryAge";
     const PROMPT_KEY = "jobsy.locationPrompted";
 
@@ -84,10 +85,24 @@ window.jobsyGeo = (function () {
     }
 
     function getOrCreateAnonymousKey() {
-        let key = sessionStorage.getItem(ANON_KEY);
+        let key = null;
+        try {
+            key = localStorage.getItem(ANON_KEY) || sessionStorage.getItem(ANON_KEY);
+        } catch {
+            key = sessionStorage.getItem(ANON_KEY);
+        }
         if (!key) {
             key = "anon-" + crypto.randomUUID();
+        }
+        try {
+            localStorage.setItem(ANON_KEY, key);
+        } catch {
+            // ignore
+        }
+        try {
             sessionStorage.setItem(ANON_KEY, key);
+        } catch {
+            // ignore
         }
         return key;
     }
@@ -111,6 +126,19 @@ window.jobsyGeo = (function () {
         set.push(id);
         sessionStorage.setItem(CLICKED_KEY, JSON.stringify(set));
         return true;
+    }
+
+    /** Returns true once per browser tab session for site-visit analytics. */
+    function tryClaimSiteVisit() {
+        try {
+            if (sessionStorage.getItem(SITE_VISIT_KEY) === "1") {
+                return false;
+            }
+            sessionStorage.setItem(SITE_VISIT_KEY, "1");
+            return true;
+        } catch {
+            return true;
+        }
     }
 
     function requestLocation() {
@@ -201,6 +229,7 @@ window.jobsyGeo = (function () {
         ensureLocationOnLaunch,
         getOrCreateAnonymousKey,
         tryClaimClick,
+        tryClaimSiteVisit,
         requestLocation,
         scrollToId,
         openShare,

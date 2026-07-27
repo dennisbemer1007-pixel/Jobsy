@@ -777,6 +777,17 @@
             }
 
             _vacancies = items.ToList();
+            if (_vacancies.Count > 0)
+            {
+                try
+                {
+                    await Api.RecordImpressionsAsync(Js, _vacancies.Select(v => v.Id));
+                }
+                catch
+                {
+                    // Analytics must not block discovery.
+                }
+            }
             if (_mapReady)
             {
                 await Js.InvokeVoidAsync("jobMap.setVacancies", BuildMarkers());

@@ -64,7 +64,9 @@
     [
         ("day", "Dag"),
         ("week", "Week"),
-        ("month", "Maand")
+        ("month", "Maand"),
+        ("quarter", "Kwartaal"),
+        ("year", "Jaar")
     ];
 
     [Parameter] public string Title { get; set; } = "Dashboard";
@@ -131,6 +133,7 @@
     private string ListHrefFor(string key) => key.ToLowerInvariant() switch
     {
         "applications" => ApplicationsHref,
+        "impressions" or "clicks" => VacanciesHref,
         "active_vacancies" or "active_vacancies_employers" or "active_vacancies_intermediaries" => VacanciesHref,
         "tokens_purchased" or "tokens_spent" or "pushboms" or "extensions" => TokensHref,
         _ => VacanciesHref

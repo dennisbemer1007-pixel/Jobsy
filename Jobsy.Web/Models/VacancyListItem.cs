@@ -27,6 +27,9 @@ public class VacancyListItem
     public List<WageByAgeItem> WageByAge { get; set; } = [];
     public int? ResolvedForAge { get; set; }
     public string[] WorkTypes { get; set; } = [];
+    public int ImpressionCount { get; set; }
+    public int ClickCount { get; set; }
+    public int ApplicationCount { get; set; }
 }
 
 public sealed class WageByAgeItem

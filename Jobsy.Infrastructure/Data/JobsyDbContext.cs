@@ -20,6 +20,8 @@ public class JobsyDbContext : DbContext
     public DbSet<VacancyClick> VacancyClicks => Set<VacancyClick>();
     public DbSet<VacancyLike> VacancyLikes => Set<VacancyLike>();
     public DbSet<VacancyShare> VacancyShares => Set<VacancyShare>();
+    public DbSet<VacancySearchImpression> VacancySearchImpressions => Set<VacancySearchImpression>();
+    public DbSet<SiteVisit> SiteVisits => Set<SiteVisit>();
     public DbSet<Region> Regions => Set<Region>();
     public DbSet<RegionCompany> RegionCompanies => Set<RegionCompany>();
     public DbSet<CompanySalaryTable> CompanySalaryTables => Set<CompanySalaryTable>();
@@ -233,6 +235,35 @@ public class JobsyDbContext : DbContext
                 .HasForeignKey(e => e.UserId)
                 .OnDelete(DeleteBehavior.SetNull);
             entity.HasIndex(e => e.CreatedAt);
+        });
+
+        modelBuilder.Entity<VacancySearchImpression>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.AnonymousKey).HasMaxLength(128);
+            entity.HasOne(e => e.Vacancy)
+                .WithMany(v => v.SearchImpressions)
+                .HasForeignKey(e => e.VacancyId)
+                .OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne(e => e.User)
+                .WithMany()
+                .HasForeignKey(e => e.UserId)
+                .OnDelete(DeleteBehavior.SetNull);
+            entity.HasIndex(e => e.CreatedAt);
+            entity.HasIndex(e => e.VacancyId);
+        });
+
+        modelBuilder.Entity<SiteVisit>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.AnonymousKey).HasMaxLength(128);
+            entity.Property(e => e.Path).HasMaxLength(512);
+            entity.HasOne(e => e.User)
+                .WithMany()
+                .HasForeignKey(e => e.UserId)
+                .OnDelete(DeleteBehavior.SetNull);
+            entity.HasIndex(e => e.CreatedAt);
+            entity.HasIndex(e => e.AnonymousKey);
         });
 
         modelBuilder.Entity<Region>(entity =>

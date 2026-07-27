@@ -67,12 +67,18 @@ public sealed class DataRetentionHostedService : BackgroundService
         var sharesRemoved = await db.VacancyShares
             .Where(s => s.CreatedAt < engagementCutoff)
             .ExecuteDeleteAsync(cancellationToken);
+        var impressionsRemoved = await db.VacancySearchImpressions
+            .Where(i => i.CreatedAt < engagementCutoff)
+            .ExecuteDeleteAsync(cancellationToken);
+        var visitsRemoved = await db.SiteVisits
+            .Where(v => v.CreatedAt < engagementCutoff)
+            .ExecuteDeleteAsync(cancellationToken);
 
-        if (logsRemoved + regsRemoved + clicksRemoved + sharesRemoved > 0)
+        if (logsRemoved + regsRemoved + clicksRemoved + sharesRemoved + impressionsRemoved + visitsRemoved > 0)
         {
             _logger.LogInformation(
-                "Retention purge: logs={Logs}, registrations={Regs}, clicks={Clicks}, shares={Shares}",
-                logsRemoved, regsRemoved, clicksRemoved, sharesRemoved);
+                "Retention purge: logs={Logs}, registrations={Regs}, clicks={Clicks}, shares={Shares}, impressions={Impressions}, visits={Visits}",
+                logsRemoved, regsRemoved, clicksRemoved, sharesRemoved, impressionsRemoved, visitsRemoved);
         }
     }
 }

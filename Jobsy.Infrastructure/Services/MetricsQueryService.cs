@@ -50,6 +50,10 @@ public sealed class MetricsQueryService : IMetricsQueryService
             .Where(c => vacancyIds.Contains(c.VacancyId) && c.CreatedAt >= from && c.CreatedAt <= to)
             .CountAsync(cancellationToken);
 
+        var impressions = await _db.VacancySearchImpressions.AsNoTracking()
+            .Where(i => vacancyIds.Contains(i.VacancyId) && i.CreatedAt >= from && i.CreatedAt <= to)
+            .CountAsync(cancellationToken);
+
         var shares = await _db.VacancyShares.AsNoTracking()
             .Where(s => vacancyIds.Contains(s.VacancyId) && s.CreatedAt >= from && s.CreatedAt <= to)
             .CountAsync(cancellationToken);
@@ -92,6 +96,7 @@ public sealed class MetricsQueryService : IMetricsQueryService
             new("users_open_for_work", "Open for work", periodKey, openForWork),
             new("users_active", "Actieve gebruikers", periodKey, allUsers),
             new("applications", "Sollicitaties", periodKey, applications),
+            new("impressions", "Getoond na zoekactie", periodKey, impressions),
             new("clicks", "Vacatureclicks", periodKey, clicks),
             new("shares", "Gedeelde vacatures", periodKey, shares),
             new("likes", "Gelikete vacatures", periodKey, likes),
@@ -101,6 +106,27 @@ public sealed class MetricsQueryService : IMetricsQueryService
             new("companies_employers", "Bedrijven", periodKey, employers),
             new("companies_intermediaries", "Intermediairs", periodKey, intermediaries)
         };
+
+        if (includePlatformOnly)
+        {
+            var siteVisitRows = await _db.SiteVisits.AsNoTracking()
+                .Where(v => v.CreatedAt >= from && v.CreatedAt <= to)
+                .Select(v => new { v.Id, v.UserId, v.AnonymousKey })
+                .ToListAsync(cancellationToken);
+
+            var siteVisits = siteVisitRows.Count;
+            var uniqueVisitors = siteVisitRows
+                .Select(v => v.UserId is Guid uid
+                    ? "u:" + uid.ToString()
+                    : "a:" + (v.AnonymousKey ?? v.Id.ToString()))
+                .Distinct(StringComparer.Ordinal)
+                .Count();
+
+            var clicksIndex = metrics.FindIndex(m => m.Key == "clicks");
+            var insertAt = clicksIndex >= 0 ? clicksIndex + 1 : metrics.Count;
+            metrics.Insert(insertAt, new MetricCountDto("site_visits_unique", "Sitebezoeken (uniek)", periodKey, uniqueVisitors));
+            metrics.Insert(insertAt, new MetricCountDto("site_visits", "Sitebezoeken", periodKey, siteVisits));
+        }
 
         if (!includePlatformOnly)
         {
@@ -137,6 +163,12 @@ public sealed class MetricsQueryService : IMetricsQueryService
         {
             "tokens_purchased" or "tokens_spent" => await TokenDrilldownAsync(key, from, to, companyIds, cancellationToken),
             "applications" => await ApplicationsDrilldownAsync(vacancyIds, from, to, includePlatformOnly, cancellationToken),
+            "impressions" => await _db.VacancySearchImpressions.AsNoTracking()
+                .Where(i => vacancyIds.Contains(i.VacancyId) && i.CreatedAt >= from && i.CreatedAt <= to)
+                .OrderByDescending(i => i.CreatedAt)
+                .Select(i => new MetricDrilldownItemDto(
+                    i.Id, i.Vacancy.Title, i.User != null ? i.User.Email : "anoniem", i.CreatedAt, null))
+                .ToListAsync(cancellationToken),
             "clicks" => await _db.VacancyClicks.AsNoTracking()
                 .Where(c => vacancyIds.Contains(c.VacancyId) && c.CreatedAt >= from && c.CreatedAt <= to)
                 .OrderByDescending(c => c.CreatedAt)
@@ -155,6 +187,17 @@ public sealed class MetricsQueryService : IMetricsQueryService
                 .Select(l => new MetricDrilldownItemDto(
                     l.Id, l.Vacancy.Title, l.User.Email, l.CreatedAt, null))
                 .ToListAsync(cancellationToken),
+            "site_visits" => await _db.SiteVisits.AsNoTracking()
+                .Where(v => v.CreatedAt >= from && v.CreatedAt <= to)
+                .OrderByDescending(v => v.CreatedAt)
+                .Select(v => new MetricDrilldownItemDto(
+                    v.Id,
+                    v.Path ?? "/",
+                    v.User != null ? v.User.Email : (v.AnonymousKey ?? "anoniem"),
+                    v.CreatedAt,
+                    null))
+                .ToListAsync(cancellationToken),
+            "site_visits_unique" => await SiteVisitsUniqueDrilldownAsync(from, to, cancellationToken),
             "errors" => await _db.PlatformLogs.AsNoTracking()
                 .Where(l => l.Level == PlatformLogLevel.Error && l.CreatedAt >= from && l.CreatedAt <= to)
                 .OrderByDescending(l => l.CreatedAt)
@@ -180,6 +223,42 @@ public sealed class MetricsQueryService : IMetricsQueryService
             "companies_intermediaries" => await CompaniesDrilldownAsync(CompanyType.Intermediary, cancellationToken),
             _ => Array.Empty<MetricDrilldownItemDto>()
         };
+    }
+
+    private async Task<List<MetricDrilldownItemDto>> SiteVisitsUniqueDrilldownAsync(
+        DateTime from,
+        DateTime to,
+        CancellationToken ct)
+    {
+        var rows = await _db.SiteVisits.AsNoTracking()
+            .Where(v => v.CreatedAt >= from && v.CreatedAt <= to)
+            .OrderByDescending(v => v.CreatedAt)
+            .Select(v => new
+            {
+                v.Id,
+                v.Path,
+                v.CreatedAt,
+                VisitorKey = v.UserId != null
+                    ? "u:" + v.UserId.Value.ToString()
+                    : "a:" + (v.AnonymousKey ?? v.Id.ToString()),
+                Label = v.User != null ? v.User.Email : (v.AnonymousKey ?? "anoniem")
+            })
+            .ToListAsync(ct);
+
+        return rows
+            .GroupBy(r => r.VisitorKey)
+            .Select(g =>
+            {
+                var first = g.OrderByDescending(x => x.CreatedAt).First();
+                return new MetricDrilldownItemDto(
+                    first.Id,
+                    first.Label,
+                    $"{g.Count()} bezoeken · {first.Path ?? "/"}",
+                    first.CreatedAt,
+                    g.Count());
+            })
+            .OrderByDescending(i => i.CreatedAt)
+            .ToList();
     }
 
     private async Task<List<MetricDrilldownItemDto>> ApplicationsDrilldownAsync(

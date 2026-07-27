@@ -292,6 +292,7 @@ public class AdminVacancyItem
     public int ExtensionCount { get; set; }
     public DateOnly StartDate { get; set; }
     public DateOnly EndDate { get; set; }
+    public int ImpressionCount { get; set; }
     public int ClickCount { get; set; }
     public int ShareCount { get; set; }
     public int ApplicationCount { get; set; }

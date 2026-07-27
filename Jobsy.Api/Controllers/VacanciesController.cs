@@ -228,7 +228,30 @@ public class VacanciesController : ControllerBase
         }
 
         var vacancies = await query.OrderBy(v => v.Title).ToListAsync(cancellationToken);
-        return Ok(vacancies.Select(v => MapToDto(v, showWage: true)));
+        var ids = vacancies.Select(v => v.Id).ToList();
+
+        var impressionCounts = await _db.VacancySearchImpressions.AsNoTracking()
+            .Where(i => ids.Contains(i.VacancyId))
+            .GroupBy(i => i.VacancyId)
+            .Select(g => new { VacancyId = g.Key, Count = g.Count() })
+            .ToDictionaryAsync(x => x.VacancyId, x => x.Count, cancellationToken);
+        var clickCounts = await _db.VacancyClicks.AsNoTracking()
+            .Where(c => ids.Contains(c.VacancyId))
+            .GroupBy(c => c.VacancyId)
+            .Select(g => new { VacancyId = g.Key, Count = g.Count() })
+            .ToDictionaryAsync(x => x.VacancyId, x => x.Count, cancellationToken);
+        var applicationCounts = await _db.Applications.AsNoTracking()
+            .Where(a => ids.Contains(a.VacancyId))
+            .GroupBy(a => a.VacancyId)
+            .Select(g => new { VacancyId = g.Key, Count = g.Count() })
+            .ToDictionaryAsync(x => x.VacancyId, x => x.Count, cancellationToken);
+
+        return Ok(vacancies.Select(v => MapToDto(
+            v,
+            showWage: true,
+            impressionCount: impressionCounts.GetValueOrDefault(v.Id),
+            clickCount: clickCounts.GetValueOrDefault(v.Id),
+            applicationCount: applicationCounts.GetValueOrDefault(v.Id))));
     }
 
     /// <summary>
@@ -768,7 +791,10 @@ public class VacanciesController : ControllerBase
         bool showWage,
         int? ageYears = null,
         int? travelMinutes = null,
-        double? distanceKm = null)
+        double? distanceKm = null,
+        int impressionCount = 0,
+        int clickCount = 0,
+        int applicationCount = 0)
     {
         decimal? hourly = null;
         IReadOnlyList<WageByAgeDto>? wageByAge = null;
@@ -820,6 +846,9 @@ public class VacanciesController : ControllerBase
             v.SalaryTableId,
             wageByAge,
             resolvedForAge,
-            WorkTypeLabels.Expand(v.WorkTypes));
+            WorkTypeLabels.Expand(v.WorkTypes),
+            impressionCount,
+            clickCount,
+            applicationCount);
     }
 }

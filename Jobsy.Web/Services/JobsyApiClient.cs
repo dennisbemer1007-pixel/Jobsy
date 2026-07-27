@@ -229,6 +229,44 @@ public sealed class JobsyApiClient : IAsyncDisposable
         await RecordClickAsync(vacancyId, anonKey, ct);
     }
 
+    public async Task RecordImpressionsAsync(
+        IJSRuntime js,
+        IEnumerable<Guid> vacancyIds,
+        CancellationToken ct = default)
+    {
+        var ids = vacancyIds.Where(id => id != Guid.Empty).Distinct().ToList();
+        if (ids.Count == 0)
+        {
+            return;
+        }
+
+        var anonKey = await js.InvokeAsync<string>("jobsyGeo.getOrCreateAnonymousKey");
+        var response = await _http.PostAsJsonAsync(
+            "api/analytics/impressions",
+            new { vacancyIds = ids, anonymousKey = anonKey },
+            ct);
+        response.EnsureSuccessStatusCode();
+    }
+
+    public async Task RecordSiteVisitOnceAsync(
+        IJSRuntime js,
+        string? path = null,
+        CancellationToken ct = default)
+    {
+        var claimed = await js.InvokeAsync<bool>("jobsyGeo.tryClaimSiteVisit");
+        if (!claimed)
+        {
+            return;
+        }
+
+        var anonKey = await js.InvokeAsync<string>("jobsyGeo.getOrCreateAnonymousKey");
+        var response = await _http.PostAsJsonAsync(
+            "api/analytics/site-visits",
+            new { anonymousKey = anonKey, path },
+            ct);
+        response.EnsureSuccessStatusCode();
+    }
+
     public async Task<bool> GetLikedAsync(Guid vacancyId, CancellationToken ct = default)
     {
         var result = await _http.GetFromJsonAsync<LikeStatus>($"api/vacancies/{vacancyId}/like", ct);

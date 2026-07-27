@@ -39,6 +39,7 @@ public record AdminVacancyDetailDto(
     int ExtensionCount,
     DateOnly StartDate,
     DateOnly EndDate,
+    int ImpressionCount,
     int ClickCount,
     int ShareCount,
     int ApplicationCount,

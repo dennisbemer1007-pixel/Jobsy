@@ -27,4 +27,7 @@ public record VacancyListItemDto(
     Guid? SalaryTableId = null,
     IReadOnlyList<WageByAgeDto>? WageByAge = null,
     int? ResolvedForAge = null,
-    string[]? WorkTypes = null);
+    string[]? WorkTypes = null,
+    int ImpressionCount = 0,
+    int ClickCount = 0,
+    int ApplicationCount = 0);

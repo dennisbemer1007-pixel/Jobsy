@@ -4393,11 +4393,11 @@ a.map-popup__cta {
         width: 100%;
         display: flex;
         flex-direction: row;
-        flex-wrap: nowrap;
+        flex-wrap: wrap;
     }
 
     .period-tab {
-        flex: 1 1 0;
+        flex: 1 1 calc(33.333% - 0.35rem);
         width: auto;
         text-align: center;
         padding: 0.45rem 0.5rem;

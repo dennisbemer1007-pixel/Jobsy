@@ -107,6 +107,10 @@ public record UpdateLanguageRequest(string Language);
 
 public record RecordClickRequest(string? AnonymousKey);
 
+public record RecordImpressionsRequest(IReadOnlyList<Guid>? VacancyIds, string? AnonymousKey);
+
+public record RecordSiteVisitRequest(string? AnonymousKey, string? Path);
+
 public record ShareVacancyRequest(ShareChannel Channel);
 
 public record LikeStatusDto(bool Liked);
