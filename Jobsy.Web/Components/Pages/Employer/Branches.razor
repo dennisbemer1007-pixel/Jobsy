@@ -10,7 +10,7 @@
     <header class="panel-header">
         <div>
             <h1>Mijn vestigingen</h1>
-            <p class="login-lead">Bestaande vestigingen en toevoegen via KVK-stub.</p>
+            <p class="login-lead">Vestigingen beheren en managers uitnodigen.</p>
         </div>
     </header>
 
@@ -24,18 +24,75 @@
     }
     else
     {
+        <AuthorizeView Roles="EnterpriseManager,Admin">
+            <Authorized>
+                <section class="panel-section">
+                    <h2>Bedrijfsmanager uitnodigen</h2>
+                    <p class="muted">Alleen voor het huidige bedrijf (organisatie).</p>
+                    <form class="login-form" style="max-width:480px" @onsubmit="InviteEnterpriseAsync" @onsubmit:preventDefault>
+                        <label>
+                            Bedrijf
+                            <select @bind="_inviteOrgId">
+                                @foreach (var org in _organizations)
+                                {
+                                    <option value="@org.Id">@org.Name</option>
+                                }
+                            </select>
+                        </label>
+                        <label>
+                            E-mail
+                            <input type="email" @bind="_emEmail" required />
+                        </label>
+                        <label>
+                            Naam
+                            <input @bind="_emName" required />
+                        </label>
+                        <button class="login-submit" type="submit" disabled="@_busy">Uitnodigen</button>
+                    </form>
+                </section>
+            </Authorized>
+        </AuthorizeView>
+
         <div class="table-list">
-            @foreach (var c in _companies)
+            @foreach (var c in _branches)
             {
-                <div class="table-row">
-                    <div>
+                <div class="table-row" style="flex-wrap:wrap;gap:0.75rem">
+                    <div style="flex:1;min-width:12rem">
                         <strong>@c.Name</strong>
                         <span class="muted">@c.Address · KVK @c.KvkNumber</span>
                     </div>
-                    <span>@c.TokenBalance.ToString("0.##") tokens · @c.ActiveVacancies actief</span>
+                    <span class="muted">@c.TokenBalance.ToString("0.##") tokens · @c.ActiveVacancies actief</span>
+                    <AuthorizeView Roles="EnterpriseManager,Admin">
+                        <Authorized>
+                            <button class="provider-btn" type="button" @onclick="() => OpenBranchInvite(c)">
+                                Vestigingsmanager uitnodigen
+                            </button>
+                        </Authorized>
+                    </AuthorizeView>
                 </div>
             }
         </div>
+
+        @if (_inviteBranch is not null)
+        {
+            <section class="panel-section">
+                <h2>Vestigingsmanager · @_inviteBranch.Name</h2>
+                <form class="login-form" style="max-width:480px" @onsubmit="InviteBranchManagerAsync" @onsubmit:preventDefault>
+                    <label>
+                        E-mail
+                        <input type="email" @bind="_bmEmail" required />
+                    </label>
+                    <label>
+                        Naam
+                        <input @bind="_bmName" required />
+                    </label>
+                    <div class="inline-actions">
+                        <button class="login-submit" type="submit" disabled="@_busy">Uitnodigen</button>
+                        <button class="provider-btn" type="button" @onclick="CloseBranchInvite">Annuleren</button>
+                    </div>
+                </form>
+            </section>
+        }
 
         <section class="panel-section">
             <h2>Vestiging toevoegen (KVK-stub)</h2>
@@ -90,6 +147,8 @@
 
 @code {
     private List<CompanySummary> _companies = [];
+    private List<CompanySummary> _organizations = [];
+    private List<CompanySummary> _branches = [];
     private List<KvkEstablishmentItem> _establishments = [];
     private bool _loading = true;
     private bool _busy;
@@ -97,11 +156,19 @@
     private string? _message;
     private string _kvkNumber = "11223344";
 
+    private Guid _inviteOrgId;
+    private string _emEmail = "";
+    private string _emName = "";
+
+    private CompanySummary? _inviteBranch;
+    private string _bmEmail = "";
+    private string _bmName = "";
+
     protected override async Task OnInitializedAsync()
     {
         try
         {
-            _companies = (await Api.GetMyCompaniesAsync()).ToList();
+            await ReloadCompaniesAsync();
         }
         catch (Exception ex)
         {
@@ -111,6 +178,118 @@
         {
             _loading = false;
         }
+    }
+
+    private async Task ReloadCompaniesAsync()
+    {
+        _companies = (await Api.GetMyCompaniesAsync()).ToList();
+        _organizations = _companies.Where(c => c.ParentCompanyId is null).OrderBy(c => c.Name).ToList();
+        _branches = _companies
+            .Where(c => c.ParentCompanyId is not null || _organizations.Count == 0)
+            .OrderBy(c => c.Name)
+            .ToList();
+        if (_organizations.Count == 0)
+        {
+            _organizations = _companies.OrderBy(c => c.Name).ToList();
+        }
+
+        if (_organizations.Count > 0 && _inviteOrgId == Guid.Empty)
+        {
+            _inviteOrgId = _organizations[0].Id;
+        }
+    }
+
+    private void OpenBranchInvite(CompanySummary branch)
+    {
+        _inviteBranch = branch;
+        _bmEmail = "";
+        _bmName = "";
+        _message = null;
+    }
+
+    private void CloseBranchInvite()
+    {
+        _inviteBranch = null;
+        _bmEmail = "";
+        _bmName = "";
+    }
+
+    private async Task InviteEnterpriseAsync()
+    {
+        _busy = true;
+        _message = null;
+        try
+        {
+            var result = await Api.InviteCompanyUserAsync(new InviteUserForm(
+                _emEmail,
+                _emName,
+                "EnterpriseManager",
+                _inviteOrgId,
+                [_inviteOrgId]));
+            _emEmail = "";
+            _emName = "";
+            _message = FormatInviteMessage("Bedrijfsmanager", result);
+        }
+        catch (Exception ex)
+        {
+            _message = ex.Message;
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private async Task InviteBranchManagerAsync()
+    {
+        if (_inviteBranch is null)
+        {
+            return;
+        }
+
+        _busy = true;
+        _message = null;
+        try
+        {
+            var branchId = _inviteBranch.Id;
+            var result = await Api.InviteCompanyUserAsync(new InviteUserForm(
+                _bmEmail,
+                _bmName,
+                "BranchManager",
+                branchId,
+                [branchId]));
+            CloseBranchInvite();
+            _message = FormatInviteMessage("Vestigingsmanager", result);
+        }
+        catch (Exception ex)
+        {
+            _message = ex.Message;
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private static string FormatInviteMessage(string roleLabel, CompanyUserItem? result)
+    {
+        if (result is null)
+        {
+            return $"{roleLabel} uitgenodigd.";
+        }
+
+        var parts = new List<string> { $"{roleLabel} uitgenodigd ({result.Email})." };
+        if (!string.IsNullOrWhiteSpace(result.LoginUrl))
+        {
+            parts.Add($"Inloggen: {result.LoginUrl}");
+        }
+
+        if (!string.IsNullOrWhiteSpace(result.TemporaryPassword))
+        {
+            parts.Add($"Tijdelijk wachtwoord: {result.TemporaryPassword}");
+        }
+
+        return string.Join(" ", parts);
     }
 
     private async Task LookupAsync()
@@ -141,12 +320,12 @@
         _message = null;
         try
         {
-            var parentId = _companies.FirstOrDefault()?.Id;
+            var parentId = _organizations.FirstOrDefault()?.Id ?? _companies.FirstOrDefault()?.Id;
             await Api.RegisterEstablishmentAsync(
                 establishment.KvkNumber,
                 establishment.KvkEstablishmentId,
                 parentId);
-            _companies = (await Api.GetMyCompaniesAsync()).ToList();
+            await ReloadCompaniesAsync();
             _establishments = (await Api.GetKvkEstablishmentsAsync(_kvkNumber.Trim())).ToList();
             _message = $"{establishment.Name} toegevoegd.";
         }

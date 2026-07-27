@@ -7,6 +7,7 @@ using Jobsy.Core.Interfaces;
 using Jobsy.Core.Localization;
 using Jobsy.Core.Rules;
 using Jobsy.Infrastructure.Data;
+using Jobsy.Infrastructure.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -251,17 +252,20 @@ public class VacanciesController : ControllerBase
             return BadRequest(new { message = "Salaristabel is verplicht." });
         }
 
+        var organizationId = company.ParentCompanyId ?? company.Id;
         var salaryTable = await _db.CompanySalaryTables
             .Include(t => t.Rates)
-            .FirstOrDefaultAsync(
-                t => t.Id == tableId && t.CompanyId == request.CompanyId && t.IsActive,
-                cancellationToken);
-        if (salaryTable is null)
+            .Include(t => t.AllowedBranches)
+            .FirstOrDefaultAsync(t => t.Id == tableId && t.IsActive, cancellationToken);
+        var allowed = salaryTable is not null
+            && (WmlSalaryTableService.IsAllowedForBranch(salaryTable, request.CompanyId, organizationId)
+                || salaryTable.CompanyId == request.CompanyId);
+        if (!allowed)
         {
             return BadRequest(new { message = "Salaristabel niet gevonden voor deze vestiging." });
         }
 
-        if (salaryTable.Rates.Count == 0)
+        if (salaryTable!.Rates.Count == 0)
         {
             return BadRequest(new { message = "Salaristabel heeft geen tarieven." });
         }
@@ -530,14 +534,17 @@ public class VacanciesController : ControllerBase
                 continue;
             }
 
+            var organizationId = company.ParentCompanyId ?? company.Id;
             var salaryTable = await _db.CompanySalaryTables
                 .Include(t => t.Rates)
                 .FirstOrDefaultAsync(
-                    t => t.CompanyId == companyId && t.IsActive && t.Name == "WML",
+                    t => t.IsActive
+                         && t.IsSystemWml
+                         && t.CompanyId == organizationId,
                     cancellationToken);
             if (salaryTable is null || salaryTable.Rates.Count == 0)
             {
-                return BadRequest(new { message = $"Geen actieve WML-salaristabel voor vestiging {company.Name}." });
+                return BadRequest(new { message = $"Geen actief Wettelijk Minimumloon voor vestiging {company.Name}." });
             }
 
             var adultRate = salaryTable.Rates

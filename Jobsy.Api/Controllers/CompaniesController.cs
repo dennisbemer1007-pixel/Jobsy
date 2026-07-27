@@ -53,7 +53,8 @@ public class CompaniesController : ControllerBase
                 c.Address,
                 c.KvkNumber,
                 c.TokenTransactions.Sum(t => t.Amount),
-                c.Vacancies.Count(v => v.Status == VacancyStatus.Active)))
+                c.Vacancies.Count(v => v.Status == VacancyStatus.Active),
+                c.ParentCompanyId))
             .ToListAsync(cancellationToken);
 
         return Ok(companies);
@@ -150,6 +151,7 @@ public class CompaniesController : ControllerBase
             company.Address,
             company.KvkNumber,
             0,
-            0));
+            0,
+            company.ParentCompanyId));
     }
 }

@@ -152,7 +152,8 @@ internal static class WestlandVacanciesSeeder
                 Id = tableId,
                 CompanyId = companyId,
                 Name = "Westland jeugdschaal",
-                IsActive = true
+                IsActive = true,
+                IsSystemWml = false
             });
             db.CompanySalaryRates.AddRange(
                 new CompanySalaryRate { Id = Guid.NewGuid(), SalaryTableId = tableId, AgeYears = 15, HourlyRate = 4.50m, Label = "15" },
@@ -162,6 +163,11 @@ internal static class WestlandVacanciesSeeder
                 new CompanySalaryRate { Id = Guid.NewGuid(), SalaryTableId = tableId, AgeYears = 19, HourlyRate = 9.50m, Label = "19" },
                 new CompanySalaryRate { Id = Guid.NewGuid(), SalaryTableId = tableId, AgeYears = 20, HourlyRate = 11.50m, Label = "20" },
                 new CompanySalaryRate { Id = Guid.NewGuid(), SalaryTableId = tableId, AgeYears = 21, HourlyRate = 14.50m, Label = "21+" });
+            db.CompanySalaryTableAllowedBranches.Add(new CompanySalaryTableAllowedBranch
+            {
+                SalaryTableId = tableId,
+                CompanyId = companyId
+            });
         }
 
         return tableId;

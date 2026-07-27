@@ -407,8 +407,10 @@
             _salaryTables = (await Api.GetSalaryTablesAsync(_companyId)).Where(t => t.IsActive).ToList();
             if (string.IsNullOrWhiteSpace(_salaryTableId))
             {
-                var wml = _salaryTables.FirstOrDefault(t =>
-                    t.Name.Equals("WML", StringComparison.OrdinalIgnoreCase));
+                var wml = _salaryTables.FirstOrDefault(t => t.IsSystemWml)
+                          ?? _salaryTables.FirstOrDefault(t =>
+                              t.Name.Equals("Wettelijk Minimumloon", StringComparison.OrdinalIgnoreCase)
+                              || t.Name.Equals("WML", StringComparison.OrdinalIgnoreCase));
                 if (wml is not null)
                 {
                     _salaryTableId = wml.Id.ToString();
@@ -416,8 +418,10 @@
             }
             else if (_salaryTables.All(t => t.Id.ToString() != _salaryTableId))
             {
-                var wml = _salaryTables.FirstOrDefault(t =>
-                    t.Name.Equals("WML", StringComparison.OrdinalIgnoreCase));
+                var wml = _salaryTables.FirstOrDefault(t => t.IsSystemWml)
+                          ?? _salaryTables.FirstOrDefault(t =>
+                              t.Name.Equals("Wettelijk Minimumloon", StringComparison.OrdinalIgnoreCase)
+                              || t.Name.Equals("WML", StringComparison.OrdinalIgnoreCase));
                 _salaryTableId = wml?.Id.ToString() ?? _salaryTables.FirstOrDefault()?.Id.ToString() ?? "";
             }
         }

@@ -69,19 +69,27 @@ public class SalesManagersController : ControllerBase
     public async Task<ActionResult<IEnumerable<SalesManagerListItemDto>>> List(CancellationToken cancellationToken)
         => Ok(await _dashboard.ListSalesManagersAsync(cancellationToken));
 
-    [HttpGet("{userId:guid}/dashboard")]
-    [Authorize(Policy = JobsyPolicies.RequireAdminOrSalesManager)]
-    public async Task<ActionResult<SalesManagerDashboardDto>> GetDashboard(
-        Guid userId,
-        CancellationToken cancellationToken)
+    [HttpGet("me/dashboard")]
+    [Authorize(Policy = JobsyPolicies.RequireSalesManager)]
+    public async Task<ActionResult<SalesManagerDashboardDto>> GetMyDashboard(CancellationToken cancellationToken)
     {
-        if (!await CanAccessSalesManagerAsync(userId, cancellationToken))
+        var user = await _users.FindByPrincipalAsync(User, cancellationToken);
+        if (user is null)
         {
-            return Forbid();
+            return Unauthorized();
         }
 
-        var dto = await _dashboard.GetDashboardAsync(userId, cancellationToken);
-        return dto is null ? NotFound() : Ok(dto);
+        var dto = await _dashboard.GetDashboardAsync(user.Id, cancellationToken);
+        if (dto is null)
+        {
+            return NotFound(new
+            {
+                message =
+                    "Geen salesmanager-dashboard gevonden. Controleer of je account in de database de rol SalesManager heeft (seed/migratie)."
+            });
+        }
+
+        return Ok(dto);
     }
 
     [HttpGet("me/profile")]
@@ -95,7 +103,9 @@ public class SalesManagersController : ControllerBase
         }
 
         var profile = await _onboarding.GetProfileAsync(user.Id, cancellationToken);
-        return profile is null ? NotFound() : Ok(profile);
+        return profile is null
+            ? NotFound(new { message = "Salesmanager-profiel niet gevonden." })
+            : Ok(profile);
     }
 
     [HttpPut("me/profile")]
@@ -160,18 +170,21 @@ public class SalesManagersController : ControllerBase
         }
     }
 
-    [HttpGet("me/dashboard")]
-    [Authorize(Policy = JobsyPolicies.RequireSalesManager)]
-    public async Task<ActionResult<SalesManagerDashboardDto>> GetMyDashboard(CancellationToken cancellationToken)
+    [HttpGet("{userId:guid}/dashboard")]
+    [Authorize(Policy = JobsyPolicies.RequireAdminOrSalesManager)]
+    public async Task<ActionResult<SalesManagerDashboardDto>> GetDashboard(
+        Guid userId,
+        CancellationToken cancellationToken)
     {
-        var user = await _users.FindByPrincipalAsync(User, cancellationToken);
-        if (user is null)
+        if (!await CanAccessSalesManagerAsync(userId, cancellationToken))
         {
-            return Unauthorized();
+            return Forbid();
         }
 
-        var dto = await _dashboard.GetDashboardAsync(user.Id, cancellationToken);
-        return dto is null ? NotFound() : Ok(dto);
+        var dto = await _dashboard.GetDashboardAsync(userId, cancellationToken);
+        return dto is null
+            ? NotFound(new { message = "Salesmanager niet gevonden." })
+            : Ok(dto);
     }
 
     [HttpGet("me/invoices")]

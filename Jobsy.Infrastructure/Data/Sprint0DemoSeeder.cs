@@ -170,10 +170,11 @@ internal static class Sprint0DemoSeeder
                 });
         }
 
+        var westlandId = Guid.Parse("11111111-1111-1111-1111-111111111111");
+
         // Demo purchase + spend ledger rows for metrics
         if (!await db.TokenTransactions.AnyAsync(t => t.Kind == TokenTransactionKind.Purchase))
         {
-            var westlandId = Guid.Parse("11111111-1111-1111-1111-111111111111");
             var balance = await db.TokenTransactions.Where(t => t.CompanyId == westlandId).SumAsync(t => t.Amount);
             db.TokenTransactions.Add(new TokenTransaction
             {
@@ -190,6 +191,37 @@ internal static class Sprint0DemoSeeder
         }
 
         var supermarketId = Guid.Parse("33333333-3333-3333-3333-333333333333");
+        var cafeId = Guid.Parse("22222222-2222-2222-2222-222222222222");
+
+        // Demo retail group: vestigingen under Supermarkt De Fred.
+        foreach (var branchId in new[] { cafeId, westlandId })
+        {
+            var branch = await db.Companies.FirstOrDefaultAsync(c => c.Id == branchId);
+            if (branch is not null && branch.ParentCompanyId is null)
+            {
+                branch.ParentCompanyId = supermarketId;
+            }
+        }
+
+        // Consolidate leftover vestiging WML copies onto the org table.
+        var orgWml = await db.CompanySalaryTables
+            .FirstOrDefaultAsync(t => t.CompanyId == supermarketId && t.IsSystemWml);
+        if (orgWml is not null)
+        {
+            var vestigingWmls = await db.CompanySalaryTables
+                .Where(t => t.IsSystemWml && (t.CompanyId == cafeId || t.CompanyId == westlandId))
+                .ToListAsync();
+            foreach (var extra in vestigingWmls)
+            {
+                foreach (var vacancy in await db.Vacancies.Where(v => v.SalaryTableId == extra.Id).ToListAsync())
+                {
+                    vacancy.SalaryTableId = orgWml.Id;
+                }
+
+                db.CompanySalaryTables.Remove(extra);
+            }
+        }
+
         if (!await db.Regions.AnyAsync())
         {
             var region = new Region
@@ -199,20 +231,20 @@ internal static class Sprint0DemoSeeder
                 Name = "Den Haag Stad"
             };
             db.Regions.Add(region);
-            var cafeId = Guid.Parse("22222222-2222-2222-2222-222222222222");
             db.RegionCompanies.AddRange(
                 new RegionCompany { RegionId = region.Id, CompanyId = supermarketId },
                 new RegionCompany { RegionId = region.Id, CompanyId = cafeId });
         }
 
-        if (!await db.CompanySalaryTables.AnyAsync())
+        if (!await db.CompanySalaryTables.AnyAsync(t => t.Name == "De Fred CAO schaal"))
         {
             var table = new CompanySalaryTable
             {
                 Id = Guid.Parse("55555555-5555-5555-5555-555555555555"),
                 CompanyId = supermarketId,
                 Name = "De Fred CAO schaal",
-                IsActive = true
+                IsActive = true,
+                IsSystemWml = false
             };
             db.CompanySalaryTables.Add(table);
             db.CompanySalaryRates.AddRange(
@@ -223,6 +255,27 @@ internal static class Sprint0DemoSeeder
                 new CompanySalaryRate { Id = Guid.NewGuid(), SalaryTableId = table.Id, AgeYears = 19, HourlyRate = 9.50m, Label = "19" },
                 new CompanySalaryRate { Id = Guid.NewGuid(), SalaryTableId = table.Id, AgeYears = 20, HourlyRate = 11.50m, Label = "20" },
                 new CompanySalaryRate { Id = Guid.NewGuid(), SalaryTableId = table.Id, AgeYears = 21, HourlyRate = 14.50m, Label = "21+" });
+            db.CompanySalaryTableAllowedBranches.Add(new CompanySalaryTableAllowedBranch
+            {
+                SalaryTableId = table.Id,
+                CompanyId = supermarketId
+            });
+        }
+        else
+        {
+            // Ensure demo CAO table remains usable by the supermarket vestiging/org.
+            var cao = await db.CompanySalaryTables
+                .Include(t => t.AllowedBranches)
+                .FirstOrDefaultAsync(t => t.Name == "De Fred CAO schaal");
+            if (cao is not null
+                && cao.AllowedBranches.All(b => b.CompanyId != supermarketId))
+            {
+                db.CompanySalaryTableAllowedBranches.Add(new CompanySalaryTableAllowedBranch
+                {
+                    SalaryTableId = cao.Id,
+                    CompanyId = supermarketId
+                });
+            }
         }
 
         var fredVacancyId = Guid.Parse("cccccccc-cccc-cccc-cccc-cccccccccccc");
@@ -353,10 +406,10 @@ internal static class Sprint0DemoSeeder
             """{"roles":["retail"],"maxTravelMinutes":40}""");
 
         // Ensure enterprise manager can approve Westland pending publishes.
+        var westlandId = Guid.Parse("11111111-1111-1111-1111-111111111111");
         var enterprise = await db.Users.FirstOrDefaultAsync(u => u.Email == "enterprise@jobsy.local");
         if (enterprise is not null)
         {
-            var westlandId = Guid.Parse("11111111-1111-1111-1111-111111111111");
             var hasWestland = await db.UserCompanies.AnyAsync(uc =>
                 uc.UserId == enterprise.Id && uc.CompanyId == westlandId);
             if (!hasWestland)

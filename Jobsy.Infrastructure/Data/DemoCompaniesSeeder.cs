@@ -52,6 +52,10 @@ internal static class DemoCompaniesSeeder
             Location = new GeoPoint(52.0910, 4.2815)
         };
 
+        // Vestigingen under the Fred retail organisation (same demo group for EM flows).
+        westland.ParentCompanyId = supermarketId;
+        cafe.ParentCompanyId = supermarketId;
+
         var intermediaryCompany = new Company
         {
             Id = intermediaryCompanyId,

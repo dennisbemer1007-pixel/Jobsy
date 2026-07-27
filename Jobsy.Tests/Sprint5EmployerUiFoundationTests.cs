@@ -99,7 +99,7 @@ public class Sprint5EmployerUiFoundationTests
     [Fact]
     public void Invite_rules_block_peer_and_cross_scope()
     {
-        Assert.False(EmployerInviteRules.CanAssignRole(UserRole.EnterpriseManager, UserRole.EnterpriseManager));
+        Assert.True(EmployerInviteRules.CanAssignRole(UserRole.EnterpriseManager, UserRole.EnterpriseManager));
         Assert.True(EmployerInviteRules.CanAssignRole(UserRole.EnterpriseManager, UserRole.BranchManager));
         Assert.False(EmployerInviteRules.CanAssignRole(UserRole.BranchManager, UserRole.RegionalManager));
 

@@ -27,6 +27,12 @@ public static class EmployerInviteRules
             return true;
         }
 
+        // Bedrijfsmanagers may invite peer bedrijfsmanagers for the same organization.
+        if (callerRole == UserRole.EnterpriseManager && targetRole == UserRole.EnterpriseManager)
+        {
+            return true;
+        }
+
         return Rank(callerRole) > Rank(targetRole);
     }
 

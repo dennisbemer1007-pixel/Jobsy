@@ -8,6 +8,12 @@ public static class JobsyDbSeeder
 {
     public static async Task SeedAsync(IServiceProvider services)
     {
+        await MigrateAsync(services);
+        await SeedDataAsync(services);
+    }
+
+    public static async Task MigrateAsync(IServiceProvider services)
+    {
         using var scope = services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<JobsyDbContext>();
         var logger = scope.ServiceProvider.GetRequiredService<ILoggerFactory>().CreateLogger("JobsyDbSeeder");
@@ -23,25 +29,58 @@ public static class JobsyDbSeeder
                 "No EF migrations found. Using EnsureCreated. Run: dotnet ef migrations add InitialCreate -p Jobsy.Infrastructure -s Jobsy.Api");
             await db.Database.EnsureCreatedAsync();
         }
+    }
+
+    public static async Task SeedDataAsync(IServiceProvider services)
+    {
+        using var scope = services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<JobsyDbContext>();
+        var logger = scope.ServiceProvider.GetRequiredService<ILoggerFactory>().CreateLogger("JobsyDbSeeder");
 
         if (await db.Companies.AnyAsync())
         {
-            await MediaBackfillSeeder.BackfillMediaAsync(db, logger);
+            // Users first so salesmanager demo account exists even if later seeders fail.
             await DemoUsersSeeder.SeedUsersAsync(db, logger);
-            await PlatformSettingsSeeder.SeedPlatformSettingsAsync(db, logger);
-            await Sprint0DemoSeeder.SeedSprint0DemoAsync(db, logger);
-            await Sprint8MetricsSeeder.SeedRichMetricsAsync(db, logger);
-            await WestlandVacanciesSeeder.SeedWestlandBanenkaartAsync(db, logger);
+
+            // Hierarchy / salary-table demo fixes before wage sync.
+            try
+            {
+                await Sprint0DemoSeeder.SeedSprint0DemoAsync(db, logger);
+            }
+            catch (Exception ex)
+            {
+                logger.LogWarning(ex, "Sprint0 demo seed failed; continuing.");
+            }
+
+            try
+            {
+                await MediaBackfillSeeder.BackfillMediaAsync(db, logger);
+                await PlatformSettingsSeeder.SeedPlatformSettingsAsync(db, logger);
+                await Sprint8MetricsSeeder.SeedRichMetricsAsync(db, logger);
+                await WestlandVacanciesSeeder.SeedWestlandBanenkaartAsync(db, logger);
+            }
+            catch (Exception ex)
+            {
+                logger.LogWarning(ex, "Partial seed failure after demo users; continuing.");
+            }
+
             return;
         }
 
         await DemoCompaniesSeeder.SeedCompaniesAsync(db, logger);
         await DemoUsersSeeder.SeedUsersAsync(db, logger);
-        await ApplicationsAndWagesSeeder.SeedApplicationsAndWagesAsync(db, logger);
-        await PlatformSettingsSeeder.SeedPlatformSettingsAsync(db, logger);
-        await Sprint0DemoSeeder.SeedSprint0DemoAsync(db, logger);
-        await Sprint8MetricsSeeder.SeedRichMetricsAsync(db, logger);
-        await WestlandVacanciesSeeder.SeedWestlandBanenkaartAsync(db, logger);
-        logger.LogInformation("Seed completed: employers + intermediary, vacancies, tokens, role users, sprint-0/8 demo.");
+        try
+        {
+            await ApplicationsAndWagesSeeder.SeedApplicationsAndWagesAsync(db, logger);
+            await PlatformSettingsSeeder.SeedPlatformSettingsAsync(db, logger);
+            await Sprint0DemoSeeder.SeedSprint0DemoAsync(db, logger);
+            await Sprint8MetricsSeeder.SeedRichMetricsAsync(db, logger);
+            await WestlandVacanciesSeeder.SeedWestlandBanenkaartAsync(db, logger);
+            logger.LogInformation("Seed completed: employers + intermediary, vacancies, tokens, role users, sprint-0/8 demo.");
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(ex, "Partial seed failure after companies/users; continuing.");
+        }
     }
 }

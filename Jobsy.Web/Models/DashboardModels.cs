@@ -8,6 +8,7 @@ public class CompanySummary
     public string KvkNumber { get; set; } = string.Empty;
     public decimal TokenBalance { get; set; }
     public int ActiveVacancies { get; set; }
+    public Guid? ParentCompanyId { get; set; }
 }
 
 public class TokenBalance
@@ -168,7 +169,12 @@ public class SalaryTableItem
     public string CompanyName { get; set; } = string.Empty;
     public string Name { get; set; } = string.Empty;
     public bool IsActive { get; set; }
+    public bool IsSystemWml { get; set; }
+    public int VacancyCount { get; set; }
+    public List<Guid> AllowedBranchIds { get; set; } = [];
+    public List<string> AllowedBranchNames { get; set; } = [];
     public List<SalaryRateItem> Rates { get; set; } = [];
+    public List<SalaryTableChangeLogItem>? ChangeLogs { get; set; }
 }
 
 public class SalaryRateItem
@@ -179,12 +185,30 @@ public class SalaryRateItem
     public string Label { get; set; } = string.Empty;
 }
 
+public class SalaryTableChangeLogItem
+{
+    public Guid Id { get; set; }
+    public string Action { get; set; } = string.Empty;
+    public string? ActorEmail { get; set; }
+    public string Message { get; set; } = string.Empty;
+    public DateTime CreatedAt { get; set; }
+}
+
+public class SalaryTableVacancyItem
+{
+    public Guid Id { get; set; }
+    public string Title { get; set; } = string.Empty;
+    public string CompanyName { get; set; } = string.Empty;
+    public string Status { get; set; } = string.Empty;
+}
+
 public record UpsertSalaryTableForm(
     Guid? Id,
     Guid CompanyId,
     string Name,
     bool IsActive,
-    IReadOnlyList<UpsertSalaryRateForm>? Rates = null);
+    IReadOnlyList<UpsertSalaryRateForm>? Rates = null,
+    IReadOnlyList<Guid>? AllowedBranchIds = null);
 
 public record UpsertSalaryRateForm(Guid? Id, int AgeYears, decimal HourlyRate, string Label);
 
@@ -197,6 +221,8 @@ public class CompanyUserItem
     public Guid? CompanyId { get; set; }
     public string? CompanyName { get; set; }
     public List<Guid> MembershipCompanyIds { get; set; } = [];
+    public string? TemporaryPassword { get; set; }
+    public string? LoginUrl { get; set; }
 }
 
 public record InviteUserForm(
@@ -204,7 +230,8 @@ public record InviteUserForm(
     string FullName,
     string Role,
     Guid? PrimaryCompanyId,
-    Guid[]? MembershipCompanyIds = null);
+    Guid[]? MembershipCompanyIds = null,
+    Guid? RegionId = null);
 
 public class WageRateItem
 {

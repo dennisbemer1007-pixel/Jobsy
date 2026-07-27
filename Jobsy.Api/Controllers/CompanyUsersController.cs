@@ -1,4 +1,5 @@
 using System.Net;
+using System.Security.Cryptography;
 using Jobsy.Api.Models;
 using Jobsy.Core.Authorization;
 using Jobsy.Core.Entities;
@@ -6,7 +7,9 @@ using Jobsy.Core.Enums;
 using Jobsy.Core.Interfaces;
 using Jobsy.Core.Rules;
 using Jobsy.Infrastructure.Data;
+using Jobsy.Infrastructure.Security;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -17,35 +20,47 @@ namespace Jobsy.Api.Controllers;
 [Authorize(Roles = $"{JobsyRoles.EnterpriseManager},{JobsyRoles.Admin}")]
 public class CompanyUsersController : ControllerBase
 {
+    private static readonly UserRole[] EmployerRoleFilter =
+    [
+        UserRole.BranchManager,
+        UserRole.RegionalManager,
+        UserRole.EnterpriseManager,
+        UserRole.Intermediary
+    ];
+
     private readonly JobsyDbContext _db;
     private readonly ICompanyAuthorizationService _companyAuth;
     private readonly IEmailService _email;
     private readonly IUserLookupService _users;
     private readonly IPlatformFeatureService _features;
+    private readonly IWebHostEnvironment _environment;
 
     public CompanyUsersController(
         JobsyDbContext db,
         ICompanyAuthorizationService companyAuth,
         IEmailService email,
         IUserLookupService users,
-        IPlatformFeatureService features)
+        IPlatformFeatureService features,
+        IWebHostEnvironment environment)
     {
         _db = db;
         _companyAuth = companyAuth;
         _email = email;
         _users = users;
         _features = features;
+        _environment = environment;
     }
 
     [HttpGet]
     public async Task<ActionResult<IEnumerable<CompanyUserDto>>> List(CancellationToken cancellationToken)
     {
         var accessible = await _companyAuth.GetAccessibleCompanyIdsAsync(User, cancellationToken);
+        // Inline enum filter — JobsyRoles.IsEmployer() is not EF-translatable and caused HTTP 500.
         var query = _db.Users
             .AsNoTracking()
             .Include(u => u.Company)
             .Include(u => u.CompanyMemberships)
-            .Where(u => JobsyRoles.IsEmployer(u.Role))
+            .Where(u => EmployerRoleFilter.Contains(u.Role))
             .AsQueryable();
 
         if (accessible is not null)
@@ -56,7 +71,7 @@ public class CompanyUsersController : ControllerBase
         }
 
         var users = await query.OrderBy(u => u.Email).ToListAsync(cancellationToken);
-        return Ok(users.Select(Map));
+        return Ok(users.Select(u => Map(u)));
     }
 
     [HttpPost("invite")]
@@ -78,11 +93,48 @@ public class CompanyUsersController : ControllerBase
         var callerRole = _companyAuth.IsAdmin(User) ? UserRole.Admin : caller.Role;
         if (!EmployerInviteRules.CanAssignRole(callerRole, request.Role))
         {
-            return BadRequest(new { message = "Je mag deze rol niet toekennen (alleen lagere rollen dan jezelf)." });
+            return BadRequest(new { message = "Je mag deze rol niet toekennen." });
         }
 
         var email = request.Email.Trim().ToLowerInvariant();
         var accessible = await _companyAuth.GetAccessibleCompanyIdsAsync(User, cancellationToken);
+
+        // Optional: resolve memberships from a region (regiomanager invite).
+        var membershipIds = (request.MembershipCompanyIds ?? []).Distinct().ToList();
+        if (request.RegionId is Guid regionId)
+        {
+            var region = await _db.Regions
+                .AsNoTracking()
+                .Include(r => r.Companies)
+                .FirstOrDefaultAsync(r => r.Id == regionId, cancellationToken);
+            if (region is null)
+            {
+                return NotFound(new { message = "Regio niet gevonden." });
+            }
+
+            if (accessible is not null
+                && !accessible.Contains(region.OrganizationCompanyId)
+                && !_companyAuth.IsAdmin(User))
+            {
+                return Forbid();
+            }
+
+            if (request.Role != UserRole.RegionalManager)
+            {
+                return BadRequest(new { message = "Een regio-uitnodiging is alleen voor regiomanagers." });
+            }
+
+            membershipIds = region.Companies.Select(c => c.CompanyId).Distinct().ToList();
+            if (!membershipIds.Contains(region.OrganizationCompanyId))
+            {
+                membershipIds.Add(region.OrganizationCompanyId);
+            }
+
+            if (request.PrimaryCompanyId is null)
+            {
+                request = request with { PrimaryCompanyId = region.OrganizationCompanyId };
+            }
+        }
 
         if (request.PrimaryCompanyId is Guid primary)
         {
@@ -90,16 +142,58 @@ public class CompanyUsersController : ControllerBase
             {
                 return Forbid();
             }
+
+            // Scope rules per role
+            var company = await _db.Companies.AsNoTracking()
+                .FirstOrDefaultAsync(c => c.Id == primary, cancellationToken);
+            if (company is null)
+            {
+                return NotFound(new { message = "Bedrijf niet gevonden." });
+            }
+
+            if (request.Role == UserRole.EnterpriseManager && company.ParentCompanyId is not null)
+            {
+                return BadRequest(new { message = "Bedrijfsmanagers horen bij het bedrijf (organisatie), niet bij een vestiging." });
+            }
+
+            if (request.Role == UserRole.BranchManager && company.ParentCompanyId is null
+                && await _db.Companies.AnyAsync(c => c.ParentCompanyId == company.Id, cancellationToken))
+            {
+                // Allow BM on org only when there are no child vestigingen (single-location org).
+                // Prefer inviting against a vestiging when children exist.
+                return BadRequest(new { message = "Kies een vestiging voor de vestigingsmanager." });
+            }
+        }
+        else if (request.Role is UserRole.BranchManager or UserRole.EnterpriseManager or UserRole.RegionalManager)
+        {
+            return BadRequest(new { message = "Primaire vestiging/bedrijf is verplicht voor deze rol." });
         }
 
-        var membershipIds = (request.MembershipCompanyIds ?? [])
-            .Distinct()
+        membershipIds = membershipIds
             .Where(id => accessible is null || _companyAuth.IsAdmin(User) || accessible.Contains(id))
             .ToList();
 
         if (request.PrimaryCompanyId is Guid p && !membershipIds.Contains(p))
         {
             membershipIds.Add(p);
+        }
+
+        // Enterprise managers get membership on all org vestigingen so ExpandChild stays consistent.
+        if (request.Role == UserRole.EnterpriseManager && request.PrimaryCompanyId is Guid orgId)
+        {
+            var childIds = await _db.Companies
+                .AsNoTracking()
+                .Where(c => c.ParentCompanyId == orgId)
+                .Select(c => c.Id)
+                .ToListAsync(cancellationToken);
+            foreach (var childId in childIds)
+            {
+                if (!membershipIds.Contains(childId)
+                    && (accessible is null || _companyAuth.IsAdmin(User) || accessible.Contains(childId)))
+                {
+                    membershipIds.Add(childId);
+                }
+            }
         }
 
         var existing = await _db.Users
@@ -110,7 +204,7 @@ public class CompanyUsersController : ControllerBase
         User user;
         if (existing is not null)
         {
-            if (existing.Role is UserRole.Candidate or UserRole.Admin)
+            if (existing.Role is UserRole.Candidate or UserRole.Admin or UserRole.SalesManager)
             {
                 return BadRequest(new { message = "Dit e-mailadres is al in gebruik met een andere rol." });
             }
@@ -130,7 +224,6 @@ public class CompanyUsersController : ControllerBase
 
             user = existing;
             user.FullName = request.FullName.Trim();
-            // Same-org only (checked above): update role when caller may assign the target role.
             user.Role = request.Role;
             if (request.PrimaryCompanyId is Guid newPrimary)
             {
@@ -165,18 +258,40 @@ public class CompanyUsersController : ControllerBase
             }
         }
 
+        var temporaryPassword = GenerateTemporaryPassword();
+        var credential = await _db.LocalAuthCredentials
+            .FirstOrDefaultAsync(c => c.UserId == user.Id, cancellationToken);
+        if (credential is null)
+        {
+            _db.LocalAuthCredentials.Add(new LocalAuthCredential
+            {
+                Id = Guid.NewGuid(),
+                UserId = user.Id,
+                Email = email,
+                PasswordHash = JobsyPasswordHasher.Hash(temporaryPassword)
+            });
+        }
+        else
+        {
+            credential.Email = email;
+            credential.PasswordHash = JobsyPasswordHasher.Hash(temporaryPassword);
+        }
+
         await _db.SaveChangesAsync(cancellationToken);
 
         var features = await _features.GetAsync(cancellationToken);
         var loginUrl = features.PublicWebBaseUrl.TrimEnd('/') + "/login";
         var name = WebUtility.HtmlEncode(user.FullName);
+        var roleLabel = RoleLabel(user.Role);
         await _email.SendAsync(new EmailMessage(
             user.Email,
-            "Uitnodiging voor Jobsy",
+            $"Uitnodiging voor Lobsy ({roleLabel})",
             $"""
              <p>Hoi {name},</p>
-             <p>Je bent uitgenodigd als <strong>{user.Role}</strong> op Jobsy.</p>
-             <p><a href="{loginUrl}">Log in om te beginnen</a></p>
+             <p>Je bent uitgenodigd als <strong>{WebUtility.HtmlEncode(roleLabel)}</strong> op Lobsy.</p>
+             <p>Log in via <a href="{loginUrl}">{loginUrl}</a></p>
+             <p>E-mail: <strong>{WebUtility.HtmlEncode(user.Email)}</strong><br/>
+             Tijdelijk wachtwoord: <strong>{WebUtility.HtmlEncode(temporaryPassword)}</strong></p>
              <p><em>Invite stub — geen echte mail.</em></p>
              """,
             "UserInvite"), cancellationToken);
@@ -187,15 +302,41 @@ public class CompanyUsersController : ControllerBase
             .Include(u => u.CompanyMemberships)
             .FirstAsync(u => u.Id == user.Id, cancellationToken);
 
-        return Ok(Map(loaded));
+        return Ok(Map(
+            loaded,
+            temporaryPassword: _environment.IsDevelopment() ? temporaryPassword : null,
+            loginUrl: loginUrl));
     }
 
-    private static CompanyUserDto Map(User u) => new(
+    private static string RoleLabel(UserRole role) => role switch
+    {
+        UserRole.EnterpriseManager => "bedrijfsmanager",
+        UserRole.RegionalManager => "regiomanager",
+        UserRole.BranchManager => "vestigingsmanager",
+        UserRole.Intermediary => "intermediair",
+        _ => role.ToString()
+    };
+
+    private static string GenerateTemporaryPassword()
+    {
+        const string alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789!@#";
+        Span<char> chars = stackalloc char[12];
+        for (var i = 0; i < chars.Length; i++)
+        {
+            chars[i] = alphabet[RandomNumberGenerator.GetInt32(alphabet.Length)];
+        }
+
+        return new string(chars);
+    }
+
+    private static CompanyUserDto Map(User u, string? temporaryPassword = null, string? loginUrl = null) => new(
         u.Id,
         u.Email,
         u.FullName,
         u.Role.ToString(),
         u.CompanyId,
         u.Company?.Name,
-        u.CompanyMemberships.Select(m => m.CompanyId).ToList());
+        u.CompanyMemberships.Select(m => m.CompanyId).ToList(),
+        temporaryPassword,
+        loginUrl);
 }

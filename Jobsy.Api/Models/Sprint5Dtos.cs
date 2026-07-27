@@ -38,16 +38,35 @@ public record SalaryTableDto(
     string CompanyName,
     string Name,
     bool IsActive,
-    IReadOnlyList<SalaryRateDto> Rates);
+    bool IsSystemWml,
+    int VacancyCount,
+    IReadOnlyList<Guid> AllowedBranchIds,
+    IReadOnlyList<string> AllowedBranchNames,
+    IReadOnlyList<SalaryRateDto> Rates,
+    IReadOnlyList<SalaryTableChangeLogDto>? ChangeLogs = null);
 
 public record SalaryRateDto(Guid Id, int AgeYears, decimal HourlyRate, string Label);
+
+public record SalaryTableChangeLogDto(
+    Guid Id,
+    string Action,
+    string? ActorEmail,
+    string Message,
+    DateTime CreatedAt);
+
+public record SalaryTableVacancyDto(
+    Guid Id,
+    string Title,
+    string CompanyName,
+    string Status);
 
 public record UpsertSalaryTableRequest(
     Guid? Id,
     Guid CompanyId,
     string Name,
     bool IsActive,
-    IReadOnlyList<UpsertSalaryRateRequest>? Rates = null);
+    IReadOnlyList<UpsertSalaryRateRequest>? Rates = null,
+    IReadOnlyList<Guid>? AllowedBranchIds = null);
 
 public record UpsertSalaryRateRequest(Guid? Id, int AgeYears, decimal HourlyRate, string Label);
 
@@ -60,14 +79,17 @@ public record CompanyUserDto(
     string Role,
     Guid? CompanyId,
     string? CompanyName,
-    IReadOnlyList<Guid> MembershipCompanyIds);
+    IReadOnlyList<Guid> MembershipCompanyIds,
+    string? TemporaryPassword = null,
+    string? LoginUrl = null);
 
 public record InviteUserRequest(
     string Email,
     string FullName,
     UserRole Role,
     Guid? PrimaryCompanyId,
-    Guid[]? MembershipCompanyIds = null);
+    Guid[]? MembershipCompanyIds = null,
+    Guid? RegionId = null);
 
 public record EmployerApplicationDto(
     Guid Id,

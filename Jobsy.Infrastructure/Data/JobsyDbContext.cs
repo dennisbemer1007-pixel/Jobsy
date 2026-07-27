@@ -24,6 +24,8 @@ public class JobsyDbContext : DbContext
     public DbSet<RegionCompany> RegionCompanies => Set<RegionCompany>();
     public DbSet<CompanySalaryTable> CompanySalaryTables => Set<CompanySalaryTable>();
     public DbSet<CompanySalaryRate> CompanySalaryRates => Set<CompanySalaryRate>();
+    public DbSet<CompanySalaryTableAllowedBranch> CompanySalaryTableAllowedBranches => Set<CompanySalaryTableAllowedBranch>();
+    public DbSet<CompanySalaryTableChangeLog> CompanySalaryTableChangeLogs => Set<CompanySalaryTableChangeLog>();
     public DbSet<TokenPricing> TokenPricings => Set<TokenPricing>();
     public DbSet<TokenSpendCost> TokenSpendCosts => Set<TokenSpendCost>();
     public DbSet<PushBomSettings> PushBomSettings => Set<PushBomSettings>();
@@ -264,6 +266,9 @@ public class JobsyDbContext : DbContext
                 .WithMany(c => c.SalaryTables)
                 .HasForeignKey(e => e.CompanyId)
                 .OnDelete(DeleteBehavior.Cascade);
+            entity.HasIndex(e => new { e.CompanyId, e.IsSystemWml })
+                .IsUnique()
+                .HasFilter("\"IsSystemWml\" = TRUE");
         });
 
         modelBuilder.Entity<CompanySalaryRate>(entity =>
@@ -273,6 +278,32 @@ public class JobsyDbContext : DbContext
             entity.Property(e => e.HourlyRate).HasPrecision(8, 2);
             entity.HasOne(e => e.SalaryTable)
                 .WithMany(t => t.Rates)
+                .HasForeignKey(e => e.SalaryTableId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<CompanySalaryTableAllowedBranch>(entity =>
+        {
+            entity.HasKey(e => new { e.SalaryTableId, e.CompanyId });
+            entity.HasOne(e => e.SalaryTable)
+                .WithMany(t => t.AllowedBranches)
+                .HasForeignKey(e => e.SalaryTableId)
+                .OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne(e => e.Company)
+                .WithMany()
+                .HasForeignKey(e => e.CompanyId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<CompanySalaryTableChangeLog>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Action).HasMaxLength(32).IsRequired();
+            entity.Property(e => e.ActorEmail).HasMaxLength(256);
+            entity.Property(e => e.Message).HasMaxLength(1000).IsRequired();
+            entity.HasIndex(e => e.CreatedAt);
+            entity.HasOne(e => e.SalaryTable)
+                .WithMany(t => t.ChangeLogs)
                 .HasForeignKey(e => e.SalaryTableId)
                 .OnDelete(DeleteBehavior.Cascade);
         });

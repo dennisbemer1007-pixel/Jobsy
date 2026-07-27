@@ -647,6 +647,12 @@ public sealed class JobsyApiClient : IAsyncDisposable
         return await _http.GetFromJsonAsync<List<SalaryTableItem>>(url, ct) ?? [];
     }
 
+    public async Task<SalaryTableItem?> GetSalaryTableAsync(Guid id, CancellationToken ct = default)
+        => await _http.GetFromJsonAsync<SalaryTableItem>($"api/salary-tables/{id}", ct);
+
+    public async Task<IReadOnlyList<SalaryTableVacancyItem>> GetSalaryTableVacanciesAsync(Guid id, CancellationToken ct = default)
+        => await _http.GetFromJsonAsync<List<SalaryTableVacancyItem>>($"api/salary-tables/{id}/vacancies", ct) ?? [];
+
     public async Task<SalaryTableItem?> UpsertSalaryTableAsync(UpsertSalaryTableForm form, CancellationToken ct = default)
     {
         var response = await _http.PostAsJsonAsync("api/salary-tables", form, ct);
@@ -1022,13 +1028,44 @@ public sealed class JobsyApiClient : IAsyncDisposable
         => await _http.GetFromJsonAsync<List<SalesManagerListItem>>("api/sales-managers", ct) ?? [];
 
     public async Task<SalesManagerDashboard?> GetMySalesManagerDashboardAsync(CancellationToken ct = default)
-        => await _http.GetFromJsonAsync<SalesManagerDashboard>("api/sales-managers/me/dashboard", ct);
+    {
+        var response = await _http.GetAsync("api/sales-managers/me/dashboard", ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException(
+                ExtractMessage(body)
+                ?? $"Salesmanager-dashboard mislukt ({(int)response.StatusCode}). Is de API (poort 5200) gestart en gemigreerd?");
+        }
+
+        return await response.Content.ReadFromJsonAsync<SalesManagerDashboard>(cancellationToken: ct);
+    }
 
     public async Task<SalesManagerDashboard?> GetSalesManagerDashboardAsync(Guid userId, CancellationToken ct = default)
-        => await _http.GetFromJsonAsync<SalesManagerDashboard>($"api/sales-managers/{userId}/dashboard", ct);
+    {
+        var response = await _http.GetAsync($"api/sales-managers/{userId}/dashboard", ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException(ExtractMessage(body) ?? $"Dashboard ophalen mislukt ({(int)response.StatusCode}).");
+        }
+
+        return await response.Content.ReadFromJsonAsync<SalesManagerDashboard>(cancellationToken: ct);
+    }
 
     public async Task<SalesManagerProfile?> GetMySalesManagerProfileAsync(CancellationToken ct = default)
-        => await _http.GetFromJsonAsync<SalesManagerProfile>("api/sales-managers/me/profile", ct);
+    {
+        var response = await _http.GetAsync("api/sales-managers/me/profile", ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException(
+                ExtractMessage(body)
+                ?? $"Salesmanager-profiel mislukt ({(int)response.StatusCode}). Is de API (poort 5200) gestart?");
+        }
+
+        return await response.Content.ReadFromJsonAsync<SalesManagerProfile>(cancellationToken: ct);
+    }
 
     public async Task<SalesManagerProfile?> UpdateMySalesManagerProfileAsync(
         SalesManagerProfileForm form,

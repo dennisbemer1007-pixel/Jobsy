@@ -9,7 +9,8 @@ public record CompanySummaryDto(
     string Address,
     string KvkNumber,
     decimal TokenBalance,
-    int ActiveVacancies);
+    int ActiveVacancies,
+    Guid? ParentCompanyId = null);
 
 public record TokenBalanceDto(Guid CompanyId, string CompanyName, decimal Balance);
 

@@ -9,7 +9,7 @@
     <header class="panel-header">
         <div>
             <h1>Regio's</h1>
-            <p class="login-lead">Groepeer vestigingen in regio's.</p>
+            <p class="login-lead">Groepeer vestigingen en nodig per regio een regiomanager uit.</p>
         </div>
     </header>
 
@@ -26,8 +26,8 @@
         <div class="table-list">
             @foreach (var r in _regions)
             {
-                <div class="table-row">
-                    <div>
+                <div class="table-row" style="flex-wrap:wrap;gap:0.75rem">
+                    <div style="flex:1;min-width:12rem">
                         <strong>@r.Name</strong>
                         <span class="muted">
                             @r.OrganizationCompanyName ·
@@ -35,12 +35,35 @@
                         </span>
                     </div>
                     <div class="inline-actions">
+                        <button class="provider-btn" type="button" @onclick="() => StartInvite(r)">Regiomanager uitnodigen</button>
                         <button class="provider-btn" type="button" @onclick="() => StartEdit(r)">Bewerk</button>
                         <button class="provider-btn" type="button" @onclick="() => DeleteAsync(r.Id)">Verwijder</button>
                     </div>
                 </div>
             }
         </div>
+
+        @if (_inviteRegion is not null)
+        {
+            <section class="panel-section">
+                <h2>Regiomanager · @_inviteRegion.Name</h2>
+                <p class="muted">Krijgt toegang tot de vestigingen in deze regio.</p>
+                <form class="login-form" style="max-width:480px" @onsubmit="InviteRegionalAsync" @onsubmit:preventDefault>
+                    <label>
+                        E-mail
+                        <input type="email" @bind="_rmEmail" required />
+                    </label>
+                    <label>
+                        Naam
+                        <input @bind="_rmName" required />
+                    </label>
+                    <div class="inline-actions">
+                        <button class="login-submit" type="submit" disabled="@_busy">Uitnodigen</button>
+                        <button class="provider-btn" type="button" @onclick="CloseInvite">Annuleren</button>
+                    </div>
+                </form>
+            </section>
+        }
 
         <section class="panel-section">
             <h2>@(_editId is null ? "Nieuwe regio" : "Regio bewerken")</h2>
@@ -54,7 +77,7 @@
                     <label>
                         Organisatie
                         <select @bind="_orgCompanyId">
-                            @foreach (var c in _companies)
+                            @foreach (var c in _organizations)
                             {
                                 <option value="@c.Id">@c.Name</option>
                             }
@@ -93,6 +116,7 @@
 @code {
     private List<RegionItem> _regions = [];
     private List<CompanySummary> _companies = [];
+    private List<CompanySummary> _organizations = [];
     private HashSet<Guid> _selectedCompanies = [];
     private bool _loading = true;
     private bool _busy;
@@ -102,14 +126,24 @@
     private Guid _orgCompanyId;
     private Guid? _editId;
 
+    private RegionItem? _inviteRegion;
+    private string _rmEmail = "";
+    private string _rmName = "";
+
     protected override async Task OnInitializedAsync()
     {
         try
         {
             _companies = (await Api.GetMyCompaniesAsync()).ToList();
-            if (_companies.Count > 0)
+            _organizations = _companies.Where(c => c.ParentCompanyId is null).OrderBy(c => c.Name).ToList();
+            if (_organizations.Count == 0)
             {
-                _orgCompanyId = _companies[0].Id;
+                _organizations = _companies;
+            }
+
+            if (_organizations.Count > 0)
+            {
+                _orgCompanyId = _organizations[0].Id;
             }
 
             _regions = (await Api.GetRegionsAsync()).ToList();
@@ -138,6 +172,7 @@
 
     private void StartEdit(RegionItem region)
     {
+        _inviteRegion = null;
         _editId = region.Id;
         _name = region.Name;
         _orgCompanyId = region.OrganizationCompanyId;
@@ -149,6 +184,64 @@
         _editId = null;
         _name = "";
         _selectedCompanies = [];
+    }
+
+    private void StartInvite(RegionItem region)
+    {
+        _editId = null;
+        _inviteRegion = region;
+        _rmEmail = "";
+        _rmName = "";
+        _message = null;
+    }
+
+    private void CloseInvite()
+    {
+        _inviteRegion = null;
+        _rmEmail = "";
+        _rmName = "";
+    }
+
+    private async Task InviteRegionalAsync()
+    {
+        if (_inviteRegion is null)
+        {
+            return;
+        }
+
+        _busy = true;
+        _message = null;
+        try
+        {
+            var result = await Api.InviteCompanyUserAsync(new InviteUserForm(
+                _rmEmail,
+                _rmName,
+                "RegionalManager",
+                _inviteRegion.OrganizationCompanyId,
+                null,
+                _inviteRegion.Id));
+            CloseInvite();
+            var parts = new List<string> { $"Regiomanager uitgenodigd ({result?.Email})." };
+            if (!string.IsNullOrWhiteSpace(result?.LoginUrl))
+            {
+                parts.Add($"Inloggen: {result.LoginUrl}");
+            }
+
+            if (!string.IsNullOrWhiteSpace(result?.TemporaryPassword))
+            {
+                parts.Add($"Tijdelijk wachtwoord: {result.TemporaryPassword}");
+            }
+
+            _message = string.Join(" ", parts);
+        }
+        catch (Exception ex)
+        {
+            _message = ex.Message;
+        }
+        finally
+        {
+            _busy = false;
+        }
     }
 
     private async Task SaveAsync()
@@ -192,6 +285,11 @@
             if (_editId == id)
             {
                 ResetForm();
+            }
+
+            if (_inviteRegion?.Id == id)
+            {
+                CloseInvite();
             }
 
             _message = "Regio verwijderd.";

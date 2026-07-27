@@ -31,8 +31,12 @@ public sealed class SalesManagerOnboardingService : ISalesManagerOnboardingServi
             return null;
         }
 
-        var profile = await _db.SalesManagerProfiles.AsNoTracking()
-            .FirstOrDefaultAsync(p => p.UserId == userId, cancellationToken);
+        // Always ensure a profile row exists so GET never 404s for a valid salesmanager.
+        var profile = await EnsureProfileAsync(userId, cancellationToken);
+        if (_db.ChangeTracker.HasChanges())
+        {
+            await _db.SaveChangesAsync(cancellationToken);
+        }
 
         return Map(user, profile);
     }

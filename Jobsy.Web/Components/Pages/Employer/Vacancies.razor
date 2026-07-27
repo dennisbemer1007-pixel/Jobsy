@@ -3,8 +3,10 @@
 @attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "BranchManager,RegionalManager,EnterpriseManager,Intermediary,Admin")]
 @using Jobsy.Core.Rules
 @using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.AspNetCore.WebUtilities
 @inject JobsyApiClient Api
 @inject AuthenticationStateProvider AuthState
+@inject NavigationManager Navigation
 
 <PageTitle>Vacatures · Lobsy</PageTitle>
 
@@ -18,6 +20,13 @@
     </header>
 
     <div class="employer-search filter-bar">
+        @if (_salaryTableFilter is not null)
+        {
+            <p class="muted" style="grid-column:1/-1;margin:0">
+                Gefilterd op salaristabel@(string.IsNullOrWhiteSpace(_salaryTableFilterName) ? "" : $": {_salaryTableFilterName}")
+                · <button type="button" class="auth-link" style="border:none;background:none;padding:0;cursor:pointer" @onclick="ClearSalaryTableFilter">Filter wissen</button>
+            </p>
+        }
         <label class="filter-required">
             Type baan
             <select @bind="_workTypeFilter" @bind:after="ApplyFilters">
@@ -149,15 +158,38 @@
     private string _ageFilter = "";
     private decimal? _minWage;
     private decimal? _maxWage;
+    private Guid? _salaryTableFilter;
+    private string? _salaryTableFilterName;
 
     protected override async Task OnInitializedAsync()
     {
         try
         {
+            var uri = Navigation.ToAbsoluteUri(Navigation.Uri);
+            if (QueryHelpers.ParseQuery(uri.Query).TryGetValue("salaryTableId", out var raw)
+                && Guid.TryParse(raw, out var tableId))
+            {
+                _salaryTableFilter = tableId;
+            }
+
             var state = await AuthState.GetAuthenticationStateAsync();
             var user = state.User;
             _canApprovePublish = user.IsInRole("EnterpriseManager") || user.IsInRole("Admin");
             _vacancies = (await Api.GetManagedVacanciesAsync()).ToList();
+
+            if (_salaryTableFilter is Guid tid)
+            {
+                try
+                {
+                    var table = await Api.GetSalaryTableAsync(tid);
+                    _salaryTableFilterName = table?.Name;
+                }
+                catch
+                {
+                    _salaryTableFilterName = null;
+                }
+            }
+
             ApplyFilters();
         }
         catch (Exception ex)
@@ -173,6 +205,11 @@
     private void ApplyFilters()
     {
         IEnumerable<VacancyListItem> query = _vacancies;
+
+        if (_salaryTableFilter is Guid tableId)
+        {
+            query = query.Where(v => v.SalaryTableId == tableId);
+        }
 
         if (!string.IsNullOrWhiteSpace(_workTypeFilter))
         {
@@ -205,6 +242,14 @@
         }
 
         _filtered = query.ToList();
+    }
+
+    private void ClearSalaryTableFilter()
+    {
+        _salaryTableFilter = null;
+        _salaryTableFilterName = null;
+        Navigation.NavigateTo("/employer/vacancies", replace: true);
+        ApplyFilters();
     }
 
     private static decimal? ResolveWage(VacancyListItem v, int age)

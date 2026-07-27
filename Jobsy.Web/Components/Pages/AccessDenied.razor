@@ -1,6 +1,5 @@
 @page "/access-denied"
 @attribute [AllowAnonymous]
-@attribute [ExcludeFromInteractiveRouting]
 
 <PageTitle>Geen toegang · Lobsy</PageTitle>
 
@@ -11,9 +10,9 @@
             Je hebt geen rechten om deze pagina te bekijken.
         </p>
         <p>
-            <a href="/home">Naar home</a>
+            <a class="auth-link" href="/home">Naar home</a>
             ·
-            <a href="/login">Inloggen</a>
+            <a class="auth-link" href="/login">Inloggen</a>
         </p>
     </div>
 </div>

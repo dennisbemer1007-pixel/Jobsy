@@ -137,8 +137,16 @@
                             class="engagement-btn address-field__geo"
                             title="@Culture["Discovery.UseMyLocation"]"
                             disabled="@_locating"
-                            @onclick="RequestLocationAsync">
-                        @(_locating ? Culture["Common.Busy"] : Culture["Discovery.UseMyLocation"])
+                            @onclick="RequestLocationAsync"
+                            aria-label="@Culture["Discovery.UseMyLocation"]"
+                            aria-busy="@_locating">
+                        <span class="address-field__geo-icon" aria-hidden="true">
+                            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                                <circle cx="12" cy="12" r="3"/>
+                                <circle cx="12" cy="12" r="7"/>
+                                <path d="M12 3v2.5M12 18.5V21M3 12h2.5M18.5 12H21"/>
+                            </svg>
+                        </span>
                     </button>
                     @if (_origin is not null)
                     {
@@ -343,19 +351,6 @@
 
     <section class="map-pane">
         <div @ref="_mapElement" id="job-map" class="job-map"></div>
-        <button type="button"
-                class="discovery-filter-fab @(_filtersOpen ? "is-active" : null)"
-                @onclick="ToggleFilters"
-                aria-expanded="@_filtersOpen"
-                aria-controls="discovery-filters-desktop"
-                title="@Culture["Discovery.Filters"]"
-                aria-label="@Culture["Discovery.Filters"]">
-            <span class="discovery-filter-fab__icon" aria-hidden="true">@((MarkupString)NavIcons.Filters)</span>
-            @if (ActiveFilterCount > 0)
-            {
-                <span class="jobsy-action__badge">@ActiveFilterCount</span>
-            }
-        </button>
     </section>
 
     @if (_filtersOpen)
@@ -599,11 +594,6 @@
                             _selectedWorkType = preferred!;
                         }
                     }
-
-                    if (_ageYears is int ageForWage)
-                    {
-                        await ApplyWageFromWmlAsync(ageForWage);
-                    }
                 }
             }
         }
@@ -637,40 +627,25 @@
             return null;
         }
 
-        // Age filter: show the resolved wage from the linked salary table (or flat wage).
-        if (_ageYears is int age)
+        // Without an age filter, never show wages (list must match map popups).
+        if (_ageYears is not int age)
         {
-            if (vacancy.HourlyWage is not null)
-            {
-                return $"€ {vacancy.HourlyWage.Value:0.00}/u";
-            }
-
-            if (vacancy.WageByAge is { Count: > 0 })
-            {
-                var band = vacancy.WageByAge
-                    .Where(b => b.AgeYears <= age)
-                    .OrderByDescending(b => b.AgeYears)
-                    .FirstOrDefault()
-                    ?? vacancy.WageByAge.OrderBy(b => b.AgeYears).First();
-                return $"€ {band.HourlyRate:0.00}/u";
-            }
-
             return null;
-        }
-
-        if (vacancy.WageByAge is { Count: > 0 })
-        {
-            var adult = vacancy.WageByAge
-                .Where(b => b.AgeYears >= 21)
-                .OrderBy(b => b.AgeYears)
-                .FirstOrDefault()
-                ?? vacancy.WageByAge.OrderByDescending(b => b.AgeYears).First();
-            return $"€ {adult.HourlyRate:0.00}/u";
         }
 
         if (vacancy.HourlyWage is not null)
         {
             return $"€ {vacancy.HourlyWage.Value:0.00}/u";
+        }
+
+        if (vacancy.WageByAge is { Count: > 0 })
+        {
+            var band = vacancy.WageByAge
+                .Where(b => b.AgeYears <= age)
+                .OrderByDescending(b => b.AgeYears)
+                .FirstOrDefault()
+                ?? vacancy.WageByAge.OrderBy(b => b.AgeYears).First();
+            return $"€ {band.HourlyRate:0.00}/u";
         }
 
         return null;
@@ -688,7 +663,7 @@
                     if (storedAge is int age)
                     {
                         _ageYears = age;
-                        await ApplyWageFromWmlAsync(age);
+                        // Do not prefill min wage from WML — user sets wage filters explicitly.
                     }
                 }
                 else
@@ -1131,42 +1106,18 @@
         if (string.IsNullOrWhiteSpace(raw) || !int.TryParse(raw, out var age))
         {
             _ageYears = null;
+            // Wage filters only apply with an age; clear them when age is cleared.
             _minHourlyWage = null;
             _maxHourlyWage = null;
         }
         else
         {
+            // Do not auto-fill min wage from WML — wage filters stay empty until the user sets them.
             _ageYears = Math.Clamp(age, 15, 67);
-            await ApplyWageFromWmlAsync(_ageYears.Value);
         }
 
         await PersistAgeAsync();
         await LoadVacanciesAsync();
-    }
-
-    /// <summary>
-    /// Prefills the min hourly wage filter from the current WML rate for the selected age.
-    /// Vacancy cards still resolve pay from each vacancy's linked salary table.
-    /// </summary>
-    private async Task ApplyWageFromWmlAsync(int ageYears)
-    {
-        try
-        {
-            var rates = await Api.GetWageRatesAsync();
-            var match = rates
-                .Where(r => r.AgeYears <= ageYears)
-                .OrderByDescending(r => r.AgeYears)
-                .FirstOrDefault()
-                ?? rates.OrderBy(r => r.AgeYears).FirstOrDefault();
-            if (match is not null)
-            {
-                _minHourlyWage = match.HourlyRate;
-            }
-        }
-        catch
-        {
-            // wage prefill is best-effort
-        }
     }
 
     private async Task OnMinWageChanged(ChangeEventArgs e)

@@ -49,9 +49,10 @@
                 <label>
                     Rol
                     <select @bind="_role">
-                        <option value="BranchManager">BranchManager</option>
-                        <option value="RegionalManager">RegionalManager</option>
-                        <option value="Intermediary">Intermediary</option>
+                        <option value="EnterpriseManager">Bedrijfsmanager</option>
+                        <option value="RegionalManager">Regiomanager</option>
+                        <option value="BranchManager">Vestigingsmanager</option>
+                        <option value="Intermediary">Intermediair</option>
                     </select>
                 </label>
                 <label>
@@ -150,7 +151,7 @@
             _email = "";
             _fullName = "";
             _memberships = [];
-            _message = "Uitnodiging verstuurd (stub e-mail).";
+            _message = "Uitnodiging verstuurd met inloglink en tijdelijk wachtwoord (stub e-mail).";
         }
         catch (Exception ex)
         {

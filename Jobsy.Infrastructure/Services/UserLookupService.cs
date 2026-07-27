@@ -28,6 +28,6 @@ public sealed class UserLookupService : IUserLookupService
 
         return await _db.Users
             .AsNoTracking()
-            .FirstOrDefaultAsync(u => u.Email == email && u.IsActive, cancellationToken);
+            .FirstOrDefaultAsync(u => u.Email.ToLower() == email.Trim().ToLower() && u.IsActive, cancellationToken);
     }
 }
