@@ -93,7 +93,7 @@ public class TokensController : ControllerBase
     }
 
     [HttpPost("checkout")]
-    [Authorize(Policy = JobsyPolicies.RequireEmployer)]
+    [Authorize(Roles = JobsyRoles.TokenPurchaseRoles)]
     [RequireCompanyAccess]
     public async Task<ActionResult<CheckoutResultDto>> CreateCheckout(
         [FromBody] CreateCheckoutRequest request,
@@ -136,7 +136,7 @@ public class TokensController : ControllerBase
     /// PackSize and CompanyId come from the server-side session.
     /// </summary>
     [HttpPost("checkout/complete")]
-    [Authorize(Policy = JobsyPolicies.RequireEmployer)]
+    [Authorize(Roles = JobsyRoles.TokenPurchaseRoles)]
     public async Task<ActionResult<TokenBalanceDto>> CompleteCheckout(
         [FromBody] CompleteCheckoutRequest request,
         CancellationToken cancellationToken)
@@ -248,7 +248,7 @@ public class TokensController : ControllerBase
     }
 
     [HttpPost("allocate")]
-    [Authorize(Roles = $"{JobsyRoles.RegionalManager},{JobsyRoles.EnterpriseManager},{JobsyRoles.Admin}")]
+    [Authorize(Roles = JobsyRoles.TokenAllocateRoles)]
     public async Task<ActionResult<object>> Allocate(
         [FromBody] AllocateTokensRequest request,
         CancellationToken cancellationToken)

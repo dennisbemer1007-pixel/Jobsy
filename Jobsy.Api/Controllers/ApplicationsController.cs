@@ -191,7 +191,7 @@ public class ApplicationsController : ControllerBase
     }
 
     [HttpPost("{id:guid}/react")]
-    [Authorize(Policy = JobsyPolicies.RequireEmployer)]
+    [Authorize(Roles = JobsyRoles.ApplicationReactRoles)]
     public async Task<ActionResult<EmployerApplicationDto>> React(
         Guid id,
         [FromBody] ReactToApplicationRequest request,

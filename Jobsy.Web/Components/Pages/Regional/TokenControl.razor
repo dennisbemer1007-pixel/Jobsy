@@ -2,6 +2,7 @@
 @rendermode @(new InteractiveServerRenderMode(prerender: false))
 @attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "RegionalManager,EnterpriseManager")]
 @inject JobsyApiClient Api
+@inject AuthenticationStateProvider AuthState
 
 <PageTitle>Tokens & vacatures · Lobsy</PageTitle>
 
@@ -9,9 +10,18 @@
     <header class="panel-header">
         <div>
             <h1>Centrale token- en vacaturecontrole</h1>
-            <p class="login-lead">Verbruik, allocatie en status binnen jouw organisatie.</p>
+            <p class="login-lead">
+                @if (_canAllocate)
+                {
+                    <text>Verbruik, allocatie en status binnen jouw organisatie.</text>
+                }
+                else
+                {
+                    <text>Alleen-lezen: token-saldo en vacaturestatus in jouw regio.</text>
+                }
+            </p>
         </div>
-        <a class="auth-link" href="/employer/tokens">Saldo & aankoop →</a>
+        <a class="auth-link" href="/employer/tokens">Saldo →</a>
     </header>
 
     @if (_loading)
@@ -33,34 +43,37 @@
             </div>
         </section>
 
-        <section class="panel-section">
-            <h2>Allocatie</h2>
-            <form class="login-form" style="max-width:420px" @onsubmit="AllocateAsync" @onsubmit:preventDefault>
-                <label>
-                    Van
-                    <select @bind="_fromCompanyId">
-                        @foreach (var b in _balances)
-                        {
-                            <option value="@b.CompanyId">@b.CompanyName</option>
-                        }
-                    </select>
-                </label>
-                <label>
-                    Naar
-                    <select @bind="_toCompanyId">
-                        @foreach (var b in _balances)
-                        {
-                            <option value="@b.CompanyId">@b.CompanyName</option>
-                        }
-                    </select>
-                </label>
-                <label>
-                    Aantal
-                    <input type="number" min="0.5" step="0.5" @bind="_amount" />
-                </label>
-                <button class="login-submit" type="submit" disabled="@_busy">Alloceren</button>
-            </form>
-        </section>
+        @if (_canAllocate)
+        {
+            <section class="panel-section">
+                <h2>Allocatie</h2>
+                <form class="login-form" style="max-width:420px" @onsubmit="AllocateAsync" @onsubmit:preventDefault>
+                    <label>
+                        Van
+                        <select @bind="_fromCompanyId">
+                            @foreach (var b in _balances)
+                            {
+                                <option value="@b.CompanyId">@b.CompanyName</option>
+                            }
+                        </select>
+                    </label>
+                    <label>
+                        Naar
+                        <select @bind="_toCompanyId">
+                            @foreach (var b in _balances)
+                            {
+                                <option value="@b.CompanyId">@b.CompanyName</option>
+                            }
+                        </select>
+                    </label>
+                    <label>
+                        Aantal
+                        <input type="number" min="0.5" step="0.5" @bind="_amount" />
+                    </label>
+                    <button class="login-submit" type="submit" disabled="@_busy">Alloceren</button>
+                </form>
+            </section>
+        }
 
         <section class="panel-section">
             <h2>Vacatures</h2>
@@ -90,6 +103,7 @@
     private List<VacancyListItem> _vacancies = [];
     private bool _loading = true;
     private bool _busy;
+    private bool _canAllocate;
     private Guid _fromCompanyId;
     private Guid _toCompanyId;
     private decimal _amount = 1;
@@ -99,6 +113,8 @@
     {
         try
         {
+            var state = await AuthState.GetAuthenticationStateAsync();
+            _canAllocate = state.User.IsInRole("EnterpriseManager") || state.User.IsInRole("Admin");
             _balances = (await Api.GetTokenBalancesAsync()).ToList();
             _vacancies = (await Api.GetManagedVacanciesAsync()).ToList();
             if (_balances.Count > 0)
@@ -115,6 +131,11 @@
 
     private async Task AllocateAsync()
     {
+        if (!_canAllocate)
+        {
+            return;
+        }
+
         _busy = true;
         _message = null;
         try

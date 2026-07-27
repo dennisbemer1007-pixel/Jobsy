@@ -45,7 +45,7 @@ public static class RoleNavCatalog
     [
         new("Nav.Home", "/home", NavIcons.Home),
         new("Nav.JobMap", "/", NavIcons.Map),
-        new("Nav.Vacancies", "/employer/vacancies", NavIcons.Vacancies, ["/regional", "/branch/vacancies/new", "/branch/applicants"]),
+        new("Nav.Vacancies", "/employer/vacancies", NavIcons.Vacancies, ["/regional", "/branch/applicants"]),
         new("Nav.MyBranches", "/regional/branches", NavIcons.Branches, ["/employer/takeovers"])
     ];
 
@@ -71,8 +71,7 @@ public static class RoleNavCatalog
 
     public static readonly NavItem[] SalesManager =
     [
-        new("Nav.Home", "/home", NavIcons.Home),
-        new("Nav.Dashboard", "/salesmanager", NavIcons.Finance),
+        new("Nav.Home", "/home", NavIcons.Home, ["/salesmanager"]),
         new("Nav.Onboarding", "/salesmanager/onboarding", NavIcons.Users),
         new("Nav.Invoices", "/salesmanager/invoices", NavIcons.Tokens)
     ];

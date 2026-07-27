@@ -2,13 +2,21 @@
 @rendermode @(new InteractiveServerRenderMode(prerender: false))
 @attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "BranchManager,RegionalManager,EnterpriseManager,Intermediary")]
 @inject JobsyApiClient Api
+@inject AuthenticationStateProvider AuthState
 
 <PageTitle>Sollicitanten · Lobsy</PageTitle>
 
 <div class="panel-page">
     <h1>Sollicitantenoverzicht</h1>
     <p class="login-lead">
-        Eerst woonplaats, afstand en voorkeuren. Na akkoord: volledige contactgegevens (PII).
+        @if (_canReact)
+        {
+            <text>Eerst woonplaats, afstand en voorkeuren. Na akkoord: volledige contactgegevens (PII).</text>
+        }
+        else
+        {
+            <text>Alleen-lezen overzicht van sollicitaties in jouw regio.</text>
+        }
     </p>
 
     @if (_loading)
@@ -50,7 +58,7 @@
                         <span class="muted">@a.VacancyTitle · @StatusLabel(a.Status)</span>
                     </div>
                     <div class="inline-actions">
-                        @if (a.Status == "Pending")
+                        @if (_canReact && a.Status == "Pending")
                         {
                             <button type="button" class="engagement-btn" disabled="@_busyId.HasValue" @onclick="() => ReactAsync(a.Id, AcceptedStatus)">
                                 Accepteer
@@ -80,6 +88,7 @@
 
     private List<EmployerApplicationItem> _items = [];
     private bool _loading = true;
+    private bool _canReact;
     private Guid? _busyId;
     private string? _message;
 
@@ -87,6 +96,12 @@
     {
         try
         {
+            var state = await AuthState.GetAuthenticationStateAsync();
+            var user = state.User;
+            _canReact = user.IsInRole("BranchManager")
+                || user.IsInRole("EnterpriseManager")
+                || user.IsInRole("Intermediary")
+                || user.IsInRole("Admin");
             _items = (await Api.GetApplicationsAsync()).ToList();
         }
         finally
@@ -97,6 +112,11 @@
 
     private async Task ReactAsync(Guid id, string status)
     {
+        if (!_canReact)
+        {
+            return;
+        }
+
         _busyId = id;
         _message = null;
         try

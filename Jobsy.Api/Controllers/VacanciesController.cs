@@ -258,7 +258,7 @@ public class VacanciesController : ControllerBase
     /// Create a vacancy for a company the employer is allowed to manage.
     /// </summary>
     [HttpPost]
-    [Authorize(Policy = JobsyPolicies.RequireEmployer)]
+    [Authorize(Roles = JobsyRoles.VacancyLifecycleRoles)]
     [RequireCompanyAccess]
     public async Task<ActionResult<VacancyListItemDto>> Create(
         [FromBody] CreateVacancyRequest request,
@@ -365,7 +365,7 @@ public class VacanciesController : ControllerBase
     }
 
     [HttpPost("publish")]
-    [Authorize(Policy = JobsyPolicies.RequireEmployer)]
+    [Authorize(Roles = JobsyRoles.VacancyLifecycleRoles)]
     public async Task<ActionResult<VacancyProductActionResultDto>> Publish(
         [FromBody] PublishVacancyRequest request,
         CancellationToken cancellationToken)
@@ -426,7 +426,7 @@ public class VacanciesController : ControllerBase
     }
 
     [HttpPost("{id:guid}/highlight")]
-    [Authorize(Policy = JobsyPolicies.RequireEmployer)]
+    [Authorize(Roles = JobsyRoles.VacancyLifecycleRoles)]
     public async Task<ActionResult<VacancyProductActionResultDto>> Highlight(
         Guid id,
         CancellationToken cancellationToken)
@@ -435,7 +435,7 @@ public class VacanciesController : ControllerBase
     }
 
     [HttpGet("{id:guid}/pushbom/preview")]
-    [Authorize(Policy = JobsyPolicies.RequireEmployer)]
+    [Authorize(Roles = JobsyRoles.VacancyLifecycleRoles)]
     public async Task<ActionResult<PushBomPreviewDto>> PreviewPushBom(
         Guid id,
         CancellationToken cancellationToken)
@@ -468,7 +468,7 @@ public class VacanciesController : ControllerBase
     }
 
     [HttpPost("{id:guid}/pushbom")]
-    [Authorize(Policy = JobsyPolicies.RequireEmployer)]
+    [Authorize(Roles = JobsyRoles.VacancyLifecycleRoles)]
     public async Task<ActionResult<VacancyProductActionResultDto>> PushBom(
         Guid id,
         CancellationToken cancellationToken)
@@ -477,7 +477,7 @@ public class VacanciesController : ControllerBase
     }
 
     [HttpPost("{id:guid}/extend")]
-    [Authorize(Policy = JobsyPolicies.RequireEmployer)]
+    [Authorize(Roles = JobsyRoles.VacancyLifecycleRoles)]
     public async Task<ActionResult<VacancyProductActionResultDto>> Extend(
         Guid id,
         CancellationToken cancellationToken)
@@ -486,7 +486,7 @@ public class VacanciesController : ControllerBase
     }
 
     [HttpPost("{id:guid}/inactive")]
-    [Authorize(Policy = JobsyPolicies.RequireEmployer)]
+    [Authorize(Roles = JobsyRoles.VacancyLifecycleRoles)]
     public async Task<ActionResult<VacancyProductActionResultDto>> Deactivate(
         Guid id,
         CancellationToken cancellationToken)
@@ -513,7 +513,7 @@ public class VacanciesController : ControllerBase
     }
 
     [HttpPost("batch")]
-    [Authorize(Roles = $"{JobsyRoles.Intermediary},{JobsyRoles.EnterpriseManager},{JobsyRoles.RegionalManager},{JobsyRoles.Admin}")]
+    [Authorize(Roles = $"{JobsyRoles.Intermediary},{JobsyRoles.EnterpriseManager},{JobsyRoles.Admin}")]
     public async Task<ActionResult<IEnumerable<VacancyListItemDto>>> CreateBatch(
         [FromBody] BatchVacancyRequest request,
         CancellationToken cancellationToken)

@@ -9,7 +9,7 @@
     <header class="panel-header">
         <div>
             <h1>Gebruikers</h1>
-            <p class="login-lead">Uitnodigen per e-mail en rollen toekennen (stub-mail).</p>
+            <p class="login-lead">Uitnodigen, bewerken en rollen toekennen binnen jouw organisatie.</p>
         </div>
     </header>
 
@@ -29,11 +29,73 @@
                 <div class="table-row">
                     <div>
                         <strong>@u.FullName</strong>
-                        <span class="muted">@u.Email · @u.Role · @(u.CompanyName ?? "—")</span>
+                        <span class="muted">
+                            @u.Email · @RoleLabel(u.Role) · @(u.CompanyName ?? "—")
+                            @if (!u.IsActive)
+                            {
+                                <text> · inactief</text>
+                            }
+                        </span>
+                    </div>
+                    <div class="table-row__actions">
+                        <button class="btn-compact" type="button" disabled="@_busy" @onclick="() => StartEdit(u)">Bewerken</button>
                     </div>
                 </div>
             }
         </div>
+
+        @if (_editing is not null)
+        {
+            <section class="panel-section">
+                <h2>Gebruiker bewerken</h2>
+                <p class="muted">@_editing.Email</p>
+                <form class="login-form" style="max-width:480px" @onsubmit="SaveEditAsync" @onsubmit:preventDefault>
+                    <label>
+                        Naam
+                        <input @bind="_editFullName" required />
+                    </label>
+                    <label>
+                        Rol
+                        <select @bind="_editRole">
+                            <option value="EnterpriseManager">Bedrijfsmanager</option>
+                            <option value="RegionalManager">Regiomanager</option>
+                            <option value="BranchManager">Vestigingsmanager</option>
+                            <option value="Intermediary">Intermediair</option>
+                        </select>
+                    </label>
+                    <label>
+                        Primaire vestiging
+                        <select @bind="_editPrimaryCompanyId">
+                            <option value="">— Geen —</option>
+                            @foreach (var c in _companies)
+                            {
+                                <option value="@c.Id">@c.Name</option>
+                            }
+                        </select>
+                    </label>
+                    <fieldset class="checkbox-set">
+                        <legend>Extra lidmaatschappen</legend>
+                        @foreach (var c in _companies)
+                        {
+                            <label class="publish-option">
+                                <input type="checkbox"
+                                       checked="@_editMemberships.Contains(c.Id)"
+                                       @onchange="e => ToggleEditMembership(c.Id, (bool)(e.Value ?? false))" />
+                                <span>@c.Name</span>
+                            </label>
+                        }
+                    </fieldset>
+                    <label class="publish-option">
+                        <input type="checkbox" @bind="_editIsActive" />
+                        <span>Actief</span>
+                    </label>
+                    <div class="inline-actions">
+                        <button class="login-submit" type="submit" disabled="@_busy">Opslaan</button>
+                        <button class="btn-compact" type="button" disabled="@_busy" @onclick="CancelEdit">Annuleren</button>
+                    </div>
+                </form>
+            </section>
+        }
 
         <section class="panel-section">
             <h2>Uitnodigen</h2>
@@ -92,6 +154,7 @@
     private List<CompanyUserItem> _users = [];
     private List<CompanySummary> _companies = [];
     private HashSet<Guid> _memberships = [];
+    private HashSet<Guid> _editMemberships = [];
     private bool _loading = true;
     private bool _busy;
     private string? _error;
@@ -100,6 +163,12 @@
     private string _fullName = "";
     private string _role = "BranchManager";
     private string _primaryCompanyId = "";
+
+    private CompanyUserItem? _editing;
+    private string _editFullName = "";
+    private string _editRole = "BranchManager";
+    private string _editPrimaryCompanyId = "";
+    private bool _editIsActive = true;
 
     protected override async Task OnInitializedAsync()
     {
@@ -122,6 +191,23 @@
         }
     }
 
+    private void StartEdit(CompanyUserItem user)
+    {
+        _editing = user;
+        _editFullName = user.FullName;
+        _editRole = user.Role;
+        _editPrimaryCompanyId = user.CompanyId?.ToString() ?? "";
+        _editIsActive = user.IsActive;
+        _editMemberships = user.MembershipCompanyIds.ToHashSet();
+        _message = null;
+    }
+
+    private void CancelEdit()
+    {
+        _editing = null;
+        _editMemberships = [];
+    }
+
     private void ToggleMembership(Guid id, bool selected)
     {
         if (selected)
@@ -131,6 +217,50 @@
         else
         {
             _memberships.Remove(id);
+        }
+    }
+
+    private void ToggleEditMembership(Guid id, bool selected)
+    {
+        if (selected)
+        {
+            _editMemberships.Add(id);
+        }
+        else
+        {
+            _editMemberships.Remove(id);
+        }
+    }
+
+    private async Task SaveEditAsync()
+    {
+        if (_editing is null)
+        {
+            return;
+        }
+
+        _busy = true;
+        _message = null;
+        try
+        {
+            Guid? primary = Guid.TryParse(_editPrimaryCompanyId, out var pid) ? pid : null;
+            await Api.UpdateCompanyUserAsync(_editing.Id, new UpdateCompanyUserForm(
+                _editFullName,
+                _editRole,
+                primary,
+                _editMemberships.ToArray(),
+                _editIsActive));
+            _users = (await Api.GetCompanyUsersAsync()).ToList();
+            CancelEdit();
+            _message = "Gebruiker opgeslagen.";
+        }
+        catch (Exception ex)
+        {
+            _message = ex.Message;
+        }
+        finally
+        {
+            _busy = false;
         }
     }
 
@@ -162,4 +292,13 @@
             _busy = false;
         }
     }
+
+    private static string RoleLabel(string role) => role switch
+    {
+        "EnterpriseManager" => "Bedrijfsmanager",
+        "RegionalManager" => "Regiomanager",
+        "BranchManager" => "Vestigingsmanager",
+        "Intermediary" => "Intermediair",
+        _ => role
+    };
 }

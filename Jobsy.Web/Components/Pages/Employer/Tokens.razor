@@ -12,9 +12,21 @@
     <header class="panel-header">
         <div>
             <h1>Mijn tokens</h1>
-            <p class="login-lead">Saldo (inclusief welkomsttoken), Mollie-stub aankoop, vestiging-allocatie en logs.</p>
+            <p class="login-lead">
+                @if (_canPurchase || _canAllocate)
+                {
+                    <text>Saldo (inclusief welkomsttoken), Mollie-stub aankoop, vestiging-allocatie en logs.</text>
+                }
+                else
+                {
+                    <text>Alleen-lezen: token-saldo en logs in jouw regio.</text>
+                }
+            </p>
         </div>
-        <a class="auth-link" href="/regional/tokens">Uitgebreid tokenbeheer</a>
+        @if (_canAllocate)
+        {
+            <a class="auth-link" href="/regional/tokens">Uitgebreid tokenbeheer</a>
+        }
     </header>
 
     @if (_loading)
@@ -49,30 +61,33 @@
             </div>
         </section>
 
-        <section class="panel-section">
-            <h2>Tokens kopen (Mollie stub)</h2>
-            <form class="login-form" style="max-width:420px" @onsubmit="CheckoutAsync" @onsubmit:preventDefault>
-                <label>
-                    Vestiging
-                    <select @bind="_checkoutCompanyId">
-                        @foreach (var b in _balances)
-                        {
-                            <option value="@b.CompanyId">@b.CompanyName</option>
-                        }
-                    </select>
-                </label>
-                <label>
-                    Pakket
-                    <select @bind="_packSize">
-                        @foreach (var p in _packs)
-                        {
-                            <option value="@p.PackSize">@p.PackSize tokens — € @p.PriceEuro.ToString("0.00")</option>
-                        }
-                    </select>
-                </label>
-                <button class="login-submit" type="submit" disabled="@_busy">Naar checkout</button>
-            </form>
-        </section>
+        @if (_canPurchase)
+        {
+            <section class="panel-section">
+                <h2>Tokens kopen (Mollie stub)</h2>
+                <form class="login-form" style="max-width:420px" @onsubmit="CheckoutAsync" @onsubmit:preventDefault>
+                    <label>
+                        Vestiging
+                        <select @bind="_checkoutCompanyId">
+                            @foreach (var b in _balances)
+                            {
+                                <option value="@b.CompanyId">@b.CompanyName</option>
+                            }
+                        </select>
+                    </label>
+                    <label>
+                        Pakket
+                        <select @bind="_packSize">
+                            @foreach (var p in _packs)
+                            {
+                                <option value="@p.PackSize">@p.PackSize tokens — € @p.PriceEuro.ToString("0.00")</option>
+                            }
+                        </select>
+                    </label>
+                    <button class="login-submit" type="submit" disabled="@_busy">Naar checkout</button>
+                </form>
+            </section>
+        }
 
         @if (_canAllocate)
         {
@@ -143,6 +158,7 @@
     private bool _loading = true;
     private bool _busy;
     private bool _canAllocate;
+    private bool _canPurchase;
     private string? _error;
     private string? _message;
     private Guid _checkoutCompanyId;
@@ -157,9 +173,12 @@
         try
         {
             var state = await AuthState.GetAuthenticationStateAsync();
-            _canAllocate = state.User.IsInRole("RegionalManager")
-                || state.User.IsInRole("EnterpriseManager")
-                || state.User.IsInRole("Admin");
+            var user = state.User;
+            _canAllocate = user.IsInRole("EnterpriseManager") || user.IsInRole("Admin");
+            _canPurchase = user.IsInRole("BranchManager")
+                || user.IsInRole("EnterpriseManager")
+                || user.IsInRole("Intermediary")
+                || user.IsInRole("Admin");
 
             _balances = (await Api.GetTokenBalancesAsync()).ToList();
             _packs = (await Api.GetTokenPacksAsync()).ToList();

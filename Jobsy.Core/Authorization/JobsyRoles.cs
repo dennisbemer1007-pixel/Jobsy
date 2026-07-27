@@ -29,5 +29,47 @@ public static class JobsyRoles
             or UserRole.EnterpriseManager
             or UserRole.Intermediary;
 
+    /// <summary>
+    /// Branch, enterprise, intermediary and admin may create/publish/highlight/pushbom/extend/deactivate.
+    /// Regional managers have a read-only vacancy view.
+    /// </summary>
+    public static bool CanManageVacancyLifecycle(UserRole role) =>
+        role is UserRole.BranchManager
+            or UserRole.EnterpriseManager
+            or UserRole.Intermediary
+            or UserRole.Admin;
+
+    public static bool CanCreateVacancies(UserRole role) => CanManageVacancyLifecycle(role);
+
+    /// <summary>Roles allowed to mutate vacancy lifecycle (API Authorize attribute).</summary>
+    public const string VacancyLifecycleRoles =
+        $"{BranchManager},{EnterpriseManager},{Intermediary},{Admin}";
+
+    /// <summary>Regional managers may view applications but not accept/reject.</summary>
+    public static bool CanReactToApplications(UserRole role) =>
+        role is UserRole.BranchManager
+            or UserRole.EnterpriseManager
+            or UserRole.Intermediary
+            or UserRole.Admin;
+
+    public const string ApplicationReactRoles =
+        $"{BranchManager},{EnterpriseManager},{Intermediary},{Admin}";
+
+    /// <summary>Regional managers may view token balances/logs but not buy or allocate.</summary>
+    public static bool CanPurchaseTokens(UserRole role) =>
+        role is UserRole.BranchManager
+            or UserRole.EnterpriseManager
+            or UserRole.Intermediary
+            or UserRole.Admin;
+
+    public static bool CanAllocateTokens(UserRole role) =>
+        role is UserRole.EnterpriseManager or UserRole.Admin;
+
+    public const string TokenPurchaseRoles =
+        $"{BranchManager},{EnterpriseManager},{Intermediary},{Admin}";
+
+    public const string TokenAllocateRoles =
+        $"{EnterpriseManager},{Admin}";
+
     public static bool RequiresCompanyLink(UserRole role) => IsEmployer(role);
 }

@@ -718,6 +718,18 @@ public sealed class JobsyApiClient : IAsyncDisposable
         return await response.Content.ReadFromJsonAsync<CompanyUserItem>(cancellationToken: ct);
     }
 
+    public async Task<CompanyUserItem?> UpdateCompanyUserAsync(Guid userId, UpdateCompanyUserForm form, CancellationToken ct = default)
+    {
+        var response = await _http.PutAsJsonAsync($"api/company-users/{userId}", form, ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException(string.IsNullOrWhiteSpace(body) ? response.ReasonPhrase : body);
+        }
+
+        return await response.Content.ReadFromJsonAsync<CompanyUserItem>(cancellationToken: ct);
+    }
+
     public async Task ApplyAsync(
         Guid vacancyId,
         string preferredTransport,

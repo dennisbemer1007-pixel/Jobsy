@@ -1,6 +1,6 @@
 @page "/tokens/checkout-stub"
 @rendermode @(new InteractiveServerRenderMode(prerender: false))
-@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "BranchManager,RegionalManager,EnterpriseManager,Intermediary,Admin")]
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "BranchManager,EnterpriseManager,Intermediary,Admin")]
 @inject JobsyApiClient Api
 @inject NavigationManager Navigation
 

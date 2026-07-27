@@ -221,6 +221,7 @@ public class CompanyUserItem
     public Guid? CompanyId { get; set; }
     public string? CompanyName { get; set; }
     public List<Guid> MembershipCompanyIds { get; set; } = [];
+    public bool IsActive { get; set; } = true;
     public string? TemporaryPassword { get; set; }
     public string? LoginUrl { get; set; }
 }
@@ -232,6 +233,13 @@ public record InviteUserForm(
     Guid? PrimaryCompanyId,
     Guid[]? MembershipCompanyIds = null,
     Guid? RegionId = null);
+
+public record UpdateCompanyUserForm(
+    string FullName,
+    string Role,
+    Guid? PrimaryCompanyId,
+    Guid[]? MembershipCompanyIds = null,
+    bool IsActive = true);
 
 public class WageRateItem
 {

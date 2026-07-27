@@ -308,6 +308,161 @@ public class CompanyUsersController : ControllerBase
             loginUrl: loginUrl));
     }
 
+    [HttpPut("{id:guid}")]
+    public async Task<ActionResult<CompanyUserDto>> Update(
+        Guid id,
+        [FromBody] UpdateCompanyUserRequest request,
+        CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrWhiteSpace(request.FullName))
+        {
+            return BadRequest(new { message = "Naam is verplicht." });
+        }
+
+        var caller = await _users.FindByPrincipalAsync(User, cancellationToken);
+        if (caller is null)
+        {
+            return Unauthorized();
+        }
+
+        var callerRole = _companyAuth.IsAdmin(User) ? UserRole.Admin : caller.Role;
+        if (!EmployerInviteRules.CanAssignRole(callerRole, request.Role))
+        {
+            return BadRequest(new { message = "Je mag deze rol niet toekennen." });
+        }
+
+        var user = await _db.Users
+            .Include(u => u.CompanyMemberships)
+            .Include(u => u.Company)
+            .FirstOrDefaultAsync(u => u.Id == id, cancellationToken);
+        if (user is null || !EmployerRoleFilter.Contains(user.Role))
+        {
+            return NotFound(new { message = "Gebruiker niet gevonden." });
+        }
+
+        var accessible = await _companyAuth.GetAccessibleCompanyIdsAsync(User, cancellationToken);
+        var existingMemberships = user.CompanyMemberships.Select(m => m.CompanyId).ToList();
+        if (!EmployerInviteRules.IsWithinCallerScope(
+                user.CompanyId,
+                existingMemberships,
+                accessible,
+                _companyAuth.IsAdmin(User)))
+        {
+            return Forbid();
+        }
+
+        if (!EmployerInviteRules.CanAssignRole(callerRole, user.Role)
+            && caller.Id != user.Id)
+        {
+            return BadRequest(new { message = "Je mag deze gebruiker niet bewerken." });
+        }
+
+        if (caller.Id == user.Id)
+        {
+            if (request.Role != user.Role)
+            {
+                return BadRequest(new { message = "Je kunt je eigen rol niet wijzigen." });
+            }
+
+            if (!request.IsActive)
+            {
+                return BadRequest(new { message = "Je kunt jezelf niet deactiveren." });
+            }
+        }
+
+        if (request.PrimaryCompanyId is Guid primary)
+        {
+            if (accessible is not null && !accessible.Contains(primary) && !_companyAuth.IsAdmin(User))
+            {
+                return Forbid();
+            }
+
+            var company = await _db.Companies.AsNoTracking()
+                .FirstOrDefaultAsync(c => c.Id == primary, cancellationToken);
+            if (company is null)
+            {
+                return NotFound(new { message = "Bedrijf niet gevonden." });
+            }
+
+            if (request.Role == UserRole.EnterpriseManager && company.ParentCompanyId is not null)
+            {
+                return BadRequest(new { message = "Bedrijfsmanagers horen bij het bedrijf (organisatie), niet bij een vestiging." });
+            }
+
+            if (request.Role == UserRole.BranchManager && company.ParentCompanyId is null
+                && await _db.Companies.AnyAsync(c => c.ParentCompanyId == company.Id, cancellationToken))
+            {
+                return BadRequest(new { message = "Kies een vestiging voor de vestigingsmanager." });
+            }
+        }
+        else if (request.Role is UserRole.BranchManager or UserRole.EnterpriseManager or UserRole.RegionalManager)
+        {
+            return BadRequest(new { message = "Primaire vestiging/bedrijf is verplicht voor deze rol." });
+        }
+
+        var membershipIds = (request.MembershipCompanyIds ?? [])
+            .Distinct()
+            .Where(mid => accessible is null || _companyAuth.IsAdmin(User) || accessible.Contains(mid))
+            .ToList();
+
+        if (request.PrimaryCompanyId is Guid p && !membershipIds.Contains(p))
+        {
+            membershipIds.Add(p);
+        }
+
+        if (request.Role == UserRole.EnterpriseManager && request.PrimaryCompanyId is Guid orgId)
+        {
+            var childIds = await _db.Companies
+                .AsNoTracking()
+                .Where(c => c.ParentCompanyId == orgId)
+                .Select(c => c.Id)
+                .ToListAsync(cancellationToken);
+            foreach (var childId in childIds)
+            {
+                if (!membershipIds.Contains(childId)
+                    && (accessible is null || _companyAuth.IsAdmin(User) || accessible.Contains(childId)))
+                {
+                    membershipIds.Add(childId);
+                }
+            }
+        }
+
+        user.FullName = request.FullName.Trim();
+        user.Role = request.Role;
+        user.CompanyId = request.PrimaryCompanyId;
+        user.IsActive = request.IsActive;
+
+        var toRemove = user.CompanyMemberships
+            .Where(m => !membershipIds.Contains(m.CompanyId))
+            .ToList();
+        foreach (var membership in toRemove)
+        {
+            // Only remove memberships the caller can manage.
+            if (accessible is null || _companyAuth.IsAdmin(User) || accessible.Contains(membership.CompanyId))
+            {
+                _db.UserCompanies.Remove(membership);
+            }
+        }
+
+        foreach (var companyId in membershipIds)
+        {
+            if (user.CompanyMemberships.All(m => m.CompanyId != companyId))
+            {
+                _db.UserCompanies.Add(new UserCompany { UserId = user.Id, CompanyId = companyId });
+            }
+        }
+
+        await _db.SaveChangesAsync(cancellationToken);
+
+        var loaded = await _db.Users
+            .AsNoTracking()
+            .Include(u => u.Company)
+            .Include(u => u.CompanyMemberships)
+            .FirstAsync(u => u.Id == user.Id, cancellationToken);
+
+        return Ok(Map(loaded));
+    }
+
     private static string RoleLabel(UserRole role) => role switch
     {
         UserRole.EnterpriseManager => "bedrijfsmanager",
@@ -337,6 +492,7 @@ public class CompanyUsersController : ControllerBase
         u.CompanyId,
         u.Company?.Name,
         u.CompanyMemberships.Select(m => m.CompanyId).ToList(),
+        u.IsActive,
         temporaryPassword,
         loginUrl);
 }

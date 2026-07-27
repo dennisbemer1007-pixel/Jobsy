@@ -14,9 +14,21 @@
     <header class="panel-header">
         <div>
             <h1>Vacatures</h1>
-            <p class="login-lead">Beheer concepten en actieve vacatures. Publiceren via token-opties popup.</p>
+            <p class="login-lead">
+                @if (_canManageVacancy)
+                {
+                    <text>Beheer concepten en actieve vacatures. Publiceren via token-opties popup.</text>
+                }
+                else
+                {
+                    <text>Bekijk vacatures in jouw regio (alleen-lezen).</text>
+                }
+            </p>
         </div>
-        <a class="login-submit" href="/branch/vacancies/new" style="text-decoration:none;display:inline-flex;align-items:center;">Nieuwe vacature</a>
+        @if (_canManageVacancy)
+        {
+            <a class="login-submit" href="/branch/vacancies/new" style="text-decoration:none;display:inline-flex;align-items:center;">Nieuwe vacature</a>
+        }
     </header>
 
     <div class="employer-search filter-bar">
@@ -100,8 +112,11 @@
                     </div>
                     <div class="table-row__actions">
                         <a class="auth-link" href="@($"/vacancies/{v.Id}")">Bekijk</a>
-                        <a class="auth-link" href="@($"/branch/vacancies/new?from={v.Id}")">Dupliceren</a>
-                        @if (v.Status == "Draft")
+                        @if (_canManageVacancy)
+                        {
+                            <a class="auth-link" href="@($"/branch/vacancies/new?from={v.Id}")">Dupliceren</a>
+                        }
+                        @if (_canManageVacancy && v.Status == "Draft")
                         {
                             <button class="btn-compact" type="button" @onclick="() => OpenPublish(v)">Publiceer…</button>
                         }
@@ -109,7 +124,7 @@
                         {
                             <button class="btn-compact" type="button" @onclick="() => ApproveAsync(v.Id)">Goedkeuren</button>
                         }
-                        @if (v.Status == "Active")
+                        @if (_canManageVacancy && v.Status == "Active")
                         {
                             @if (!v.IsHighlighted)
                             {
@@ -119,7 +134,7 @@
                             <button class="btn-compact" type="button" @onclick="() => ExtendAsync(v.Id)">Verleng</button>
                             <button class="btn-compact" type="button" @onclick="() => DeactivateAsync(v.Id)">Inactive</button>
                         }
-                        @if (v.Status == "Archived")
+                        @if (_canManageVacancy && v.Status == "Archived")
                         {
                             <button class="btn-compact" type="button" @onclick="() => ExtendAsync(v.Id)">Heractiveer (+verlengen)</button>
                         }
@@ -149,6 +164,7 @@
     private List<VacancyListItem> _filtered = [];
     private bool _loading = true;
     private bool _canApprovePublish;
+    private bool _canManageVacancy;
     private string? _error;
     private string? _message;
     private bool _publishOpen;
@@ -176,6 +192,10 @@
             var state = await AuthState.GetAuthenticationStateAsync();
             var user = state.User;
             _canApprovePublish = user.IsInRole("EnterpriseManager") || user.IsInRole("Admin");
+            _canManageVacancy = user.IsInRole("BranchManager")
+                || user.IsInRole("EnterpriseManager")
+                || user.IsInRole("Intermediary")
+                || user.IsInRole("Admin");
             _vacancies = (await Api.GetManagedVacanciesAsync()).ToList();
 
             if (_salaryTableFilter is Guid tid)

@@ -80,6 +80,7 @@ public record CompanyUserDto(
     Guid? CompanyId,
     string? CompanyName,
     IReadOnlyList<Guid> MembershipCompanyIds,
+    bool IsActive = true,
     string? TemporaryPassword = null,
     string? LoginUrl = null);
 
@@ -90,6 +91,13 @@ public record InviteUserRequest(
     Guid? PrimaryCompanyId,
     Guid[]? MembershipCompanyIds = null,
     Guid? RegionId = null);
+
+public record UpdateCompanyUserRequest(
+    string FullName,
+    UserRole Role,
+    Guid? PrimaryCompanyId,
+    Guid[]? MembershipCompanyIds = null,
+    bool IsActive = true);
 
 public record EmployerApplicationDto(
     Guid Id,
