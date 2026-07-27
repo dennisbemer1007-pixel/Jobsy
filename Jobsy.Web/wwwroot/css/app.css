@@ -3523,12 +3523,12 @@ a.engagement-btn {
     top: 50%;
     transform: translate(-50%, -50%);
     z-index: 81;
-    width: min(420px, calc(100vw - 2rem));
+    width: min(380px, calc(100vw - 2rem));
     background: var(--surface);
     border: 1px solid var(--border);
     border-radius: 14px;
     box-shadow: var(--shadow-lg);
-    padding: 1.1rem 1.2rem 1.25rem;
+    padding: 1rem 1.1rem 1.15rem;
 }
 
 .share-modal__header {
@@ -3540,7 +3540,7 @@ a.engagement-btn {
 
 .share-modal__header h2 {
     margin: 0;
-    font-size: 1.15rem;
+    font-size: 1.05rem;
 }
 
 .share-modal__close {
@@ -3553,29 +3553,81 @@ a.engagement-btn {
 }
 
 .share-modal__lead {
-    margin: 0.35rem 0 0.9rem;
+    margin: 0.3rem 0 0.85rem;
     color: var(--muted);
-    font-size: 0.9rem;
+    font-size: 0.86rem;
 }
 
 .share-modal__channels {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 0.55rem;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 0.45rem;
 }
 
-.share-modal__channel {
+.share-modal__icon-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+    width: 2.35rem;
+    height: 2.35rem;
+    padding: 0;
     border: 1px solid var(--border);
-    border-radius: 10px;
+    border-radius: 999px;
     background: var(--surface);
-    padding: 0.7rem 0.75rem;
-    font: inherit;
+    color: var(--text);
     cursor: pointer;
+    line-height: 0;
+    transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease, transform 0.15s ease;
 }
 
-.share-modal__channel:hover {
-    border-color: var(--accent);
+.share-modal__icon-btn:hover {
     background: var(--hover);
+    border-color: color-mix(in srgb, var(--accent) 55%, var(--border));
+    transform: translateY(-1px);
+}
+
+.share-modal__icon-btn svg {
+    width: 1.15rem;
+    height: 1.15rem;
+    display: block;
+}
+
+.share-modal__icon-btn--whatsapp {
+    color: #128c7e;
+}
+
+.share-modal__icon-btn--facebook {
+    color: #1877f2;
+}
+
+.share-modal__icon-btn--linkedin {
+    color: #0a66c2;
+}
+
+.share-modal__icon-btn--x {
+    color: #111111;
+}
+
+.share-modal__icon-btn--telegram {
+    color: #229ed9;
+}
+
+.share-modal__icon-btn--signal {
+    color: #3a76f0;
+}
+
+.share-modal__icon-btn--email,
+.share-modal__icon-btn--copy {
+    color: var(--muted);
+}
+
+.share-modal__icon-btn--copy.is-copied {
+    color: #1a7f4b;
+    border-color: color-mix(in srgb, #1a7f4b 45%, var(--border));
+    background: color-mix(in srgb, #1a7f4b 10%, var(--surface));
 }
 
 .mock-interview-cta {

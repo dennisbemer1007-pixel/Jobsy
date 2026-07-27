@@ -53,7 +53,9 @@ public enum ShareChannel
     Facebook = 2,
     LinkedIn = 3,
     Signal = 4,
-    Other = 5
+    Other = 5,
+    X = 6,
+    Telegram = 7
 }
 
 public enum IntegrationKey
