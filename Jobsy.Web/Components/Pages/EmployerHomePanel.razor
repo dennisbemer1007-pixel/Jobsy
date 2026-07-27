@@ -1,5 +1,6 @@
 @using Jobsy.Web.Components.Shared
 @inject JobsyApiClient Api
+@inject NavigationManager Navigation
 
 <div class="panel-page">
     <header class="panel-header">
@@ -37,8 +38,7 @@
             {
                 <MetricTile Label="@metric.Label"
                             FormattedValue="@FormatValue(metric)"
-                            Selected="@(_selectedKey == metric.Key)"
-                            OnClick="() => SelectMetricAsync(metric.Key)" />
+                            OnClick="() => OpenMetricAsync(metric)" />
             }
             <a class="stat-card stat-card--link" href="@TokensHref">
                 <span class="stat-card__label">Tokens</span>
@@ -56,14 +56,6 @@
                 </a>
             }
         </div>
-
-        @if (_selectedKey is not null)
-        {
-            <DrilldownGrid Title="@SelectedLabel"
-                           OverviewHref="@ListHrefFor(_selectedKey)"
-                           Loading="@_drillLoading"
-                           Items="_drilldown" />
-        }
     }
 </div>
 
@@ -84,15 +76,9 @@
     [Parameter] public string ExtraLabel { get; set; } = "Meer";
 
     private string _period = "week";
-    private string? _selectedKey;
     private bool _loading = true;
-    private bool _drillLoading;
     private string? _error;
     private List<MetricCount> _metrics = [];
-    private List<MetricDrilldownItem> _drilldown = [];
-
-    private string SelectedLabel =>
-        _metrics.FirstOrDefault(m => m.Key == _selectedKey)?.Label ?? _selectedKey ?? "";
 
     protected override async Task OnInitializedAsync()
         => await LoadSummaryAsync();
@@ -111,23 +97,16 @@
 
         _period = period;
         await LoadSummaryAsync();
-        if (_selectedKey is not null)
-        {
-            await LoadDrilldownAsync(_selectedKey);
-        }
     }
 
-    private async Task SelectMetricAsync(string key)
+    private Task OpenMetricAsync(MetricCount metric)
     {
-        if (_selectedKey == key)
-        {
-            _selectedKey = null;
-            _drilldown = [];
-            return;
-        }
-
-        _selectedKey = key;
-        await LoadDrilldownAsync(key);
+        var overview = ListHrefFor(metric.Key);
+        var qs = $"period={Uri.EscapeDataString(_period)}"
+                 + $"&label={Uri.EscapeDataString(metric.Label)}"
+                 + $"&overview={Uri.EscapeDataString(overview)}";
+        Navigation.NavigateTo($"/home/metrics/{Uri.EscapeDataString(metric.Key)}?{qs}");
+        return Task.CompletedTask;
     }
 
     private async Task LoadSummaryAsync()
@@ -146,23 +125,6 @@
         finally
         {
             _loading = false;
-        }
-    }
-
-    private async Task LoadDrilldownAsync(string key)
-    {
-        _drillLoading = true;
-        try
-        {
-            _drilldown = (await Api.GetEmployerMetricsDrilldownAsync(key, _period)).ToList();
-        }
-        catch
-        {
-            _drilldown = [];
-        }
-        finally
-        {
-            _drillLoading = false;
         }
     }
 

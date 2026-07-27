@@ -128,6 +128,7 @@ public class CompaniesController : ControllerBase
         };
 
         _db.Companies.Add(company);
+        await Jobsy.Infrastructure.Services.WmlSalaryTableService.EnsureForCompanyAsync(_db, company.Id, cancellationToken);
 
         // Grant membership to the inviting enterprise manager.
         var manager = await _users.FindByPrincipalAsync(User, cancellationToken);

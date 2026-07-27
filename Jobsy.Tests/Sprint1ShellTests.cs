@@ -78,6 +78,18 @@ public class RoleNavCatalogTests
     }
 
     [Fact]
+    public void IsActive_tokens_does_not_highlight_vacancies()
+    {
+        var items = RoleNavCatalog.Branch;
+        var vacancies = items.First(i => i.Href == "/employer/vacancies");
+        var tokens = items.First(i => i.Href == "/branch/tokens");
+
+        Assert.True(RoleNavCatalog.IsActive(tokens, "branch/tokens", items));
+        Assert.False(RoleNavCatalog.IsActive(vacancies, "branch/tokens", items));
+        Assert.True(RoleNavCatalog.IsActive(vacancies, "branch/vacancies/new", items));
+    }
+
+    [Fact]
     public void TokensHrefFor_branch_manager()
     {
         var identity = new ClaimsIdentity([new Claim(ClaimTypes.Role, JobsyRoles.BranchManager)], "test");

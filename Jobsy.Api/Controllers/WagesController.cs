@@ -163,6 +163,9 @@ public class WagesController : ControllerBase
 
         await _db.SaveChangesAsync(cancellationToken);
 
+        // Keep company default "WML" tables in sync with platform rates.
+        await Jobsy.Infrastructure.Services.WmlSalaryTableService.SyncAllWmlTablesAsync(_db, cancellationToken);
+
         _db.PlatformLogs.Add(new Core.Entities.PlatformLog
         {
             Id = Guid.NewGuid(),

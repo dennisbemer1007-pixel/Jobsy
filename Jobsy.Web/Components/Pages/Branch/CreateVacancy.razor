@@ -60,27 +60,39 @@
                     Video-URL
                     <input @bind="_videoUrl" @bind:event="oninput" placeholder="https://… (YouTube/Vimeo)" />
                 </label>
-                <label>
-                    Uurloon (€)
-                    <input type="number" step="0.01" min="1" @bind="_wage" @bind:event="oninput" @bind:after="RefreshWageCheckAsync" />
-                </label>
-            @if (_wageCheck is not null)
-            {
-                <p class="@(_wageCheck.MeetsMinimum ? "ok-hint" : "state-message error")">
-                    Minimumloon (21+): € @_wageCheck.Minimum.ToString("0.00") —
-                    @(_wageCheck.MeetsMinimum ? "voldoet" : "onder minimum")
-                </p>
-            }
             <label>
                 Salaristabel
-                <select @bind="_salaryTableId">
-                    <option value="">— Geen —</option>
+                <select @bind="_salaryTableId" @bind:after="OnSalaryTableChanged" required>
+                    <option value="">— Kies een salaristabel —</option>
                     @foreach (var t in _salaryTables)
                     {
                         <option value="@t.Id">@t.Name</option>
                     }
                 </select>
             </label>
+            @if (SelectedSalaryTable is not null)
+            {
+                <div class="salary-table-preview" aria-live="polite">
+                    <p class="salary-table-preview__title">Voorbeeld · @SelectedSalaryTable.Name</p>
+                    <table class="wage-table">
+                        <thead>
+                            <tr>
+                                <th>Leeftijd</th>
+                                <th>Uurloon</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var rate in SelectedSalaryTable.Rates.OrderBy(r => r.AgeYears))
+                            {
+                                <tr>
+                                    <th>@rate.Label</th>
+                                    <td>€ @rate.HourlyRate.ToString("0.00")</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
             <label>
                 Vervoer
                 <select @bind="_transport">
@@ -122,7 +134,21 @@
                 <h2>@(string.IsNullOrWhiteSpace(_title) ? "Titel…" : _title)</h2>
                 <p class="muted">@SelectedCompanyName</p>
                 <div class="vacancy-preview__body">@PreviewPlain</div>
-                <p><strong>€ @_wage.ToString("0.00")</strong> / uur</p>
+                @if (SelectedSalaryTable is not null)
+                {
+                    var adult = SelectedSalaryTable.Rates
+                        .OrderByDescending(r => r.AgeYears)
+                        .FirstOrDefault();
+                    if (adult is not null)
+                    {
+                        <p><strong>€ @adult.HourlyRate.ToString("0.00")</strong> / uur (@adult.Label)</p>
+                    }
+                    <p class="muted">Salaristabel: @SelectedSalaryTable.Name</p>
+                }
+                else
+                {
+                    <p class="muted">Kies een salaristabel</p>
+                }
                 @if (_selectedWorkTypes.Count > 0)
                 {
                     <p class="muted">Branche: @string.Join(", ", _selectedWorkTypes)</p>
@@ -130,14 +156,6 @@
                 @if (!string.IsNullOrWhiteSpace(_videoUrl))
                 {
                     <p class="muted">Video: @_videoUrl</p>
-                }
-                @if (!string.IsNullOrWhiteSpace(_salaryTableId) && Guid.TryParse(_salaryTableId, out var sid))
-                {
-                    var table = _salaryTables.FirstOrDefault(t => t.Id == sid);
-                    if (table is not null)
-                    {
-                        <p class="muted">Salaristabel: @table.Name</p>
-                    }
                 }
             </article>
         </aside>
@@ -181,7 +199,6 @@
     private string _imageUrl = "";
     private string _videoUrl = "";
     private string _salaryTableId = "";
-    private decimal _wage = 14.50m;
     private string _transport = "Bike";
     private HashSet<string> _selectedWorkTypes = new(StringComparer.OrdinalIgnoreCase);
     private bool _saving;
@@ -190,13 +207,17 @@
     private bool _moderationOpen;
     private string? _moderationWarning;
     private string? _moderationSuggestion;
-    private WageCheckResult? _wageCheck;
     private Guid _companyId;
     private List<CompanySummary> _companies = [];
     private List<SalaryTableItem> _salaryTables = [];
 
     private string SelectedCompanyName =>
         _companies.FirstOrDefault(c => c.Id == _companyId)?.Name ?? "Vestiging";
+
+    private SalaryTableItem? SelectedSalaryTable =>
+        Guid.TryParse(_salaryTableId, out var sid)
+            ? _salaryTables.FirstOrDefault(t => t.Id == sid)
+            : null;
 
     private string PreviewPlain =>
         string.IsNullOrWhiteSpace(_description)
@@ -231,7 +252,6 @@
             await PrefillFromAsync(sourceId);
         }
 
-        await RefreshWageCheckAsync();
         await LoadSalaryTablesAsync();
     }
 
@@ -258,7 +278,6 @@
             _description = source.Description;
             _imageUrl = source.ImageUrl ?? "";
             _videoUrl = source.VideoUrl ?? "";
-            _wage = source.HourlyWage ?? 14.50m;
             _salaryTableId = source.SalaryTableId?.ToString() ?? "";
             _transport = MapTransportToFormValue(source.RequiredTransport);
             _selectedWorkTypes = source.WorkTypes.ToHashSet(StringComparer.OrdinalIgnoreCase);
@@ -322,8 +341,7 @@
         }
     }
 
-    private async Task RefreshWageCheckAsync()
-        => _wageCheck = await Api.CheckWageAsync(_wage);
+    private Task OnSalaryTableChanged() => Task.CompletedTask;
 
     private async Task LoadSalaryTablesAsync()
     {
@@ -336,6 +354,21 @@
         try
         {
             _salaryTables = (await Api.GetSalaryTablesAsync(_companyId)).Where(t => t.IsActive).ToList();
+            if (string.IsNullOrWhiteSpace(_salaryTableId))
+            {
+                var wml = _salaryTables.FirstOrDefault(t =>
+                    t.Name.Equals("WML", StringComparison.OrdinalIgnoreCase));
+                if (wml is not null)
+                {
+                    _salaryTableId = wml.Id.ToString();
+                }
+            }
+            else if (_salaryTables.All(t => t.Id.ToString() != _salaryTableId))
+            {
+                var wml = _salaryTables.FirstOrDefault(t =>
+                    t.Name.Equals("WML", StringComparison.OrdinalIgnoreCase));
+                _salaryTableId = wml?.Id.ToString() ?? _salaryTables.FirstOrDefault()?.Id.ToString() ?? "";
+            }
         }
         catch
         {
@@ -365,6 +398,25 @@
             return;
         }
 
+        if (!Guid.TryParse(_salaryTableId, out var salaryTableId))
+        {
+            _message = "Kies een salaristabel.";
+            return;
+        }
+
+        var table = _salaryTables.FirstOrDefault(t => t.Id == salaryTableId);
+        if (table is null || table.Rates.Count == 0)
+        {
+            _message = "Geselecteerde salaristabel heeft geen tarieven.";
+            return;
+        }
+
+        var adultRate = table.Rates
+            .Where(r => r.AgeYears >= 21)
+            .OrderBy(r => r.AgeYears)
+            .FirstOrDefault()
+            ?? table.Rates.OrderByDescending(r => r.AgeYears).First();
+
         var workTypes = WorkTypeLabels.Combine(_selectedWorkTypes);
         if (!WorkTypeLabels.IsValidSelection(workTypes))
         {
@@ -384,13 +436,12 @@
                 _ => TransportMode.Bike
             };
 
-            Guid? salaryTableId = Guid.TryParse(_salaryTableId, out var sid) ? sid : null;
             var today = DateOnly.FromDateTime(DateTime.Today);
             await Api.CreateVacancyAsync(new CreateVacancyForm(
                 _companyId,
                 _title,
                 _description,
-                _wage,
+                adultRate.HourlyRate,
                 today,
                 today.AddMonths(3),
                 mode,

@@ -1,5 +1,6 @@
 using Jobsy.Core.Entities;
 using Jobsy.Core.Enums;
+using Jobsy.Infrastructure.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
@@ -25,6 +26,9 @@ internal static class ApplicationsAndWagesSeeder
             await db.SaveChangesAsync();
             logger.LogInformation("Seeded minimum wage rates.");
         }
+
+        await WmlSalaryTableService.EnsureForAllCompaniesAsync(db);
+        logger.LogInformation("Ensured default WML salary tables for companies.");
 
         if (await db.Applications.AnyAsync())
         {

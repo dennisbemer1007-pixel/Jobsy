@@ -24,7 +24,38 @@
     else
     {
         <article class="detail-card">
-            <a class="back-link" href="/">@Culture["Vacancy.BackToMap"]</a>
+            <div class="detail-card__header-row">
+                <a class="back-link" href="/">@Culture["Vacancy.BackToMap"]</a>
+                <div class="detail-engagement-icons">
+                    <AuthorizeView>
+                        <Authorized>
+                            <button class="engagement-icon-btn @(_liked ? "is-liked" : null)"
+                                    type="button"
+                                    disabled="@_liking"
+                                    title="@(_liked ? Culture["Vacancy.Liked"] : Culture["Vacancy.Like"])"
+                                    aria-label="@(_liked ? Culture["Vacancy.Liked"] : Culture["Vacancy.Like"])"
+                                    @onclick="ToggleLikeAsync">
+                                @((MarkupString)(_liked ? LikedHeartFilledSvg : LikedHeartOutlineSvg))
+                            </button>
+                        </Authorized>
+                        <NotAuthorized>
+                            <a class="engagement-icon-btn"
+                               href="@LoginUrl"
+                               title="@Culture["Vacancy.Like"]"
+                               aria-label="@Culture["Vacancy.Like"]">
+                                @((MarkupString)LikedHeartOutlineSvg)
+                            </a>
+                        </NotAuthorized>
+                    </AuthorizeView>
+                    <button class="engagement-icon-btn"
+                            type="button"
+                            title="@Culture["Vacancy.Share"]"
+                            aria-label="@Culture["Vacancy.Share"]"
+                            @onclick="OpenShare">
+                        @((MarkupString)ShareIconSvg)
+                    </button>
+                </div>
+            </div>
             <div class="detail-card__top">
                 <div>
                     <h1>@_vacancy.Title</h1>
@@ -153,22 +184,6 @@
                 </div>
             }
 
-            <div class="engagement-actions">
-                <AuthorizeView>
-                    <Authorized>
-                        <button class="engagement-btn" type="button" disabled="@_liking" @onclick="ToggleLikeAsync">
-                            @(_liked ? Culture["Vacancy.Liked"] : Culture["Vacancy.Like"])
-                        </button>
-                    </Authorized>
-                    <NotAuthorized>
-                        <a class="engagement-btn" href="@LoginUrl">@Culture["Vacancy.Like"]</a>
-                    </NotAuthorized>
-                </AuthorizeView>
-                <button class="engagement-btn" type="button" @onclick="OpenShare">
-                    @Culture["Vacancy.Share"]
-                </button>
-            </div>
-
             <div class="mock-interview-cta">
                 <AuthorizeView Roles="Candidate">
                     <Authorized>
@@ -257,6 +272,15 @@
 <MockInterviewModal IsOpen="_mockInterviewOpen" Vacancy="_vacancy" OnClose="CloseMockInterview" />
 
 @code {
+    private const string LikedHeartOutlineSvg =
+        "<svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.75\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z\"/></svg>";
+
+    private const string LikedHeartFilledSvg =
+        "<svg viewBox=\"0 0 24 24\" fill=\"currentColor\" stroke=\"currentColor\" stroke-width=\"1.25\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z\"/></svg>";
+
+    private const string ShareIconSvg =
+        "<svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.75\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><circle cx=\"18\" cy=\"5\" r=\"3\"/><circle cx=\"6\" cy=\"12\" r=\"3\"/><circle cx=\"18\" cy=\"19\" r=\"3\"/><path d=\"m8.6 13.5 6.8 4M15.4 6.5l-6.8 4\"/></svg>";
+
     [Parameter] public Guid Id { get; set; }
 
     private VacancyListItem? _vacancy;

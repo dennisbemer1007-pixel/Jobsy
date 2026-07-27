@@ -246,18 +246,40 @@ public class VacanciesController : ControllerBase
             return NotFound(new { message = "Bedrijf niet gevonden." });
         }
 
-        if (request.SalaryTableId is Guid tableId)
+        if (request.SalaryTableId is not Guid tableId)
         {
-            var tableOk = await _db.CompanySalaryTables.AnyAsync(
-                t => t.Id == tableId && t.CompanyId == request.CompanyId && t.IsActive,
-                cancellationToken);
-            if (!tableOk)
-            {
-                return BadRequest(new { message = "Salaristabel niet gevonden voor deze vestiging." });
-            }
+            return BadRequest(new { message = "Salaristabel is verplicht." });
         }
 
-        if (!_salary.MeetsMinimumWage(request.HourlyWage, ageYears: 21))
+        var salaryTable = await _db.CompanySalaryTables
+            .Include(t => t.Rates)
+            .FirstOrDefaultAsync(
+                t => t.Id == tableId && t.CompanyId == request.CompanyId && t.IsActive,
+                cancellationToken);
+        if (salaryTable is null)
+        {
+            return BadRequest(new { message = "Salaristabel niet gevonden voor deze vestiging." });
+        }
+
+        if (salaryTable.Rates.Count == 0)
+        {
+            return BadRequest(new { message = "Salaristabel heeft geen tarieven." });
+        }
+
+        var adultRate = salaryTable.Rates
+            .Where(r => r.AgeYears >= 21)
+            .OrderBy(r => r.AgeYears)
+            .Select(r => r.HourlyRate)
+            .FirstOrDefault();
+        if (adultRate <= 0)
+        {
+            adultRate = salaryTable.Rates.Max(r => r.HourlyRate);
+        }
+
+        // Prefer explicit wage only when no table adult rate could be resolved; otherwise table wins.
+        var hourlyWage = adultRate > 0 ? adultRate : request.HourlyWage;
+
+        if (!_salary.MeetsMinimumWage(hourlyWage, ageYears: 21))
         {
             return BadRequest(new { message = "Uurloon ligt onder het wettelijk minimumloon (21+)." });
         }
@@ -295,7 +317,7 @@ public class VacanciesController : ControllerBase
             Id = Guid.NewGuid(),
             Title = request.Title,
             Description = request.Description,
-            HourlyWage = request.HourlyWage,
+            HourlyWage = hourlyWage,
             StartDate = request.StartDate,
             EndDate = request.EndDate,
             Status = VacancyStatus.Draft,
@@ -305,7 +327,7 @@ public class VacanciesController : ControllerBase
             WorkTypes = request.WorkTypes,
             ImageUrl = imageUrl,
             VideoUrl = videoUrl,
-            SalaryTableId = request.SalaryTableId
+            SalaryTableId = tableId
         };
 
         _db.Vacancies.Add(vacancy);
@@ -508,19 +530,46 @@ public class VacanciesController : ControllerBase
                 continue;
             }
 
+            var salaryTable = await _db.CompanySalaryTables
+                .Include(t => t.Rates)
+                .FirstOrDefaultAsync(
+                    t => t.CompanyId == companyId && t.IsActive && t.Name == "WML",
+                    cancellationToken);
+            if (salaryTable is null || salaryTable.Rates.Count == 0)
+            {
+                return BadRequest(new { message = $"Geen actieve WML-salaristabel voor vestiging {company.Name}." });
+            }
+
+            var adultRate = salaryTable.Rates
+                .Where(r => r.AgeYears >= 21)
+                .OrderBy(r => r.AgeYears)
+                .Select(r => r.HourlyRate)
+                .FirstOrDefault();
+            if (adultRate <= 0)
+            {
+                adultRate = salaryTable.Rates.Max(r => r.HourlyRate);
+            }
+
+            var hourlyWage = adultRate > 0 ? adultRate : request.HourlyWage;
+            if (!_salary.MeetsMinimumWage(hourlyWage, ageYears: 21))
+            {
+                return BadRequest(new { message = $"Uurloon ligt onder het wettelijk minimumloon voor vestiging {company.Name}." });
+            }
+
             var vacancy = new Core.Entities.Vacancy
             {
                 Id = Guid.NewGuid(),
                 Title = request.Title,
                 Description = request.Description,
-                HourlyWage = request.HourlyWage,
+                HourlyWage = hourlyWage,
                 StartDate = request.StartDate,
                 EndDate = request.EndDate,
                 Status = VacancyStatus.Draft,
                 CompanyId = companyId,
                 Location = company.Location,
                 RequiredTransport = request.RequiredTransport,
-                WorkTypes = request.WorkTypes
+                WorkTypes = request.WorkTypes,
+                SalaryTableId = salaryTable.Id
             };
             _db.Vacancies.Add(vacancy);
             vacancy.Company = company;

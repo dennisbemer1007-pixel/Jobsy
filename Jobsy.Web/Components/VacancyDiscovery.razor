@@ -588,6 +588,22 @@
                     {
                         _selectedTransport = profile.Preferences.PreferredTransport;
                     }
+
+                    if (profile.Preferences.Roles is { Count: > 0 })
+                    {
+                        var preferred = profile.Preferences.Roles
+                            .Select(r => WorkTypeLabels.Expand(WorkTypeLabels.Parse(r)).FirstOrDefault())
+                            .FirstOrDefault(l => !string.IsNullOrWhiteSpace(l));
+                        if (!string.IsNullOrWhiteSpace(preferred))
+                        {
+                            _selectedWorkType = preferred!;
+                        }
+                    }
+
+                    if (_ageYears is int ageForWage)
+                    {
+                        await ApplyWageFromWmlAsync(ageForWage);
+                    }
                 }
             }
         }
@@ -616,22 +632,40 @@
 
     private string? FormatWage(VacancyListItem vacancy)
     {
-        if (!vacancy.WageVisible || _ageYears is null)
+        if (!vacancy.WageVisible)
         {
+            return null;
+        }
+
+        // Age filter: show the resolved wage from the linked salary table (or flat wage).
+        if (_ageYears is int age)
+        {
+            if (vacancy.HourlyWage is not null)
+            {
+                return $"€ {vacancy.HourlyWage.Value:0.00}/u";
+            }
+
+            if (vacancy.WageByAge is { Count: > 0 })
+            {
+                var band = vacancy.WageByAge
+                    .Where(b => b.AgeYears <= age)
+                    .OrderByDescending(b => b.AgeYears)
+                    .FirstOrDefault()
+                    ?? vacancy.WageByAge.OrderBy(b => b.AgeYears).First();
+                return $"€ {band.HourlyRate:0.00}/u";
+            }
+
             return null;
         }
 
         if (vacancy.WageByAge is { Count: > 0 })
         {
-            var band = vacancy.WageByAge
-                .OrderBy(b => Math.Abs(b.AgeYears - _ageYears.Value))
-                .FirstOrDefault();
-            if (band is not null)
-            {
-                return $"€ {band.HourlyRate:0.00}/u";
-            }
-
-            return null;
+            var adult = vacancy.WageByAge
+                .Where(b => b.AgeYears >= 21)
+                .OrderBy(b => b.AgeYears)
+                .FirstOrDefault()
+                ?? vacancy.WageByAge.OrderByDescending(b => b.AgeYears).First();
+            return $"€ {adult.HourlyRate:0.00}/u";
         }
 
         if (vacancy.HourlyWage is not null)
@@ -654,6 +688,7 @@
                     if (storedAge is int age)
                     {
                         _ageYears = age;
+                        await ApplyWageFromWmlAsync(age);
                     }
                 }
                 else
@@ -819,19 +854,18 @@
             };
             if (_ageYears is not null && v.WageVisible)
             {
-                if (v.WageByAge is { Count: > 0 })
-                {
-                    var band = v.WageByAge
-                        .OrderBy(b => Math.Abs(b.AgeYears - _ageYears.Value))
-                        .FirstOrDefault();
-                    if (band is not null)
-                    {
-                        dict["wage"] = (double)band.HourlyRate;
-                    }
-                }
-                else if (v.HourlyWage is not null)
+                if (v.HourlyWage is not null)
                 {
                     dict["wage"] = (double)v.HourlyWage.Value;
+                }
+                else if (v.WageByAge is { Count: > 0 })
+                {
+                    var band = v.WageByAge
+                        .Where(b => b.AgeYears <= _ageYears.Value)
+                        .OrderByDescending(b => b.AgeYears)
+                        .FirstOrDefault()
+                        ?? v.WageByAge.OrderBy(b => b.AgeYears).First();
+                    dict["wage"] = (double)band.HourlyRate;
                 }
             }
 
@@ -1103,10 +1137,36 @@
         else
         {
             _ageYears = Math.Clamp(age, 15, 67);
+            await ApplyWageFromWmlAsync(_ageYears.Value);
         }
 
         await PersistAgeAsync();
         await LoadVacanciesAsync();
+    }
+
+    /// <summary>
+    /// Prefills the min hourly wage filter from the current WML rate for the selected age.
+    /// Vacancy cards still resolve pay from each vacancy's linked salary table.
+    /// </summary>
+    private async Task ApplyWageFromWmlAsync(int ageYears)
+    {
+        try
+        {
+            var rates = await Api.GetWageRatesAsync();
+            var match = rates
+                .Where(r => r.AgeYears <= ageYears)
+                .OrderByDescending(r => r.AgeYears)
+                .FirstOrDefault()
+                ?? rates.OrderBy(r => r.AgeYears).FirstOrDefault();
+            if (match is not null)
+            {
+                _minHourlyWage = match.HourlyRate;
+            }
+        }
+        catch
+        {
+            // wage prefill is best-effort
+        }
     }
 
     private async Task OnMinWageChanged(ChangeEventArgs e)

@@ -112,6 +112,7 @@ public class AdminController : ControllerBase
         };
 
         _db.Companies.Add(company);
+        await Jobsy.Infrastructure.Services.WmlSalaryTableService.EnsureForCompanyAsync(_db, company.Id, cancellationToken);
         await _db.SaveChangesAsync(cancellationToken);
 
         return CreatedAtAction(nameof(GetCompanies), new AdminCompanyDetailDto(

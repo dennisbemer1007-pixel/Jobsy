@@ -406,6 +406,7 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
                 _db.Companies.Add(org);
                 target.ParentCompanyId = org.Id;
                 orgId = org.Id;
+                await WmlSalaryTableService.EnsureForCompanyAsync(_db, org.Id, cancellationToken);
             }
 
             await ClaimSiblingEstablishmentsAsync(registration.KvkNumber, orgId.Value, target.Id, cancellationToken);
@@ -608,6 +609,7 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
             };
             _db.Companies.Add(org);
             orgId = org.Id;
+            await WmlSalaryTableService.EnsureForCompanyAsync(_db, org.Id, cancellationToken);
 
             branch = new Company
             {
@@ -621,6 +623,7 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
                 ParentCompanyId = org.Id
             };
             _db.Companies.Add(branch);
+            await WmlSalaryTableService.EnsureForCompanyAsync(_db, branch.Id, cancellationToken);
 
             await ClaimSiblingEstablishmentsAsync(
                 registration.KvkNumber, org.Id, branch.Id, cancellationToken);
@@ -638,6 +641,7 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
                 Type = CompanyType.Employer
             };
             _db.Companies.Add(branch);
+            await WmlSalaryTableService.EnsureForCompanyAsync(_db, branch.Id, cancellationToken);
         }
 
         var role = registration.Scope == RegistrationScope.Organization
@@ -712,6 +716,7 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
                 ParentCompanyId = orgId
             };
             _db.Companies.Add(sibling);
+            await WmlSalaryTableService.EnsureForCompanyAsync(_db, sibling.Id, cancellationToken);
             usedIds.Add(est.KvkEstablishmentId);
         }
 

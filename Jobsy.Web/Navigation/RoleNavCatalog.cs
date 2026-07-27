@@ -33,9 +33,9 @@ public static class RoleNavCatalog
     [
         new("Nav.Home", "/home", NavIcons.Home),
         new("Nav.JobMap", "/", NavIcons.Map),
-        new("Nav.Vacancies", "/employer/vacancies", NavIcons.Vacancies, ["/branch", "/branch/vacancies/new"]),
+        new("Nav.Vacancies", "/employer/vacancies", NavIcons.Vacancies, ["/branch/vacancies/new", "/branch/applicants"]),
         new("Nav.SalaryTables", "/employer/salary-tables", NavIcons.Wages),
-        new("Nav.Tokens", "/employer/tokens", NavIcons.Tokens, ["/regional/tokens", "/admin/tokens"]),
+        new("Nav.Tokens", "/employer/tokens", NavIcons.Tokens, ["/regional/tokens", "/admin/tokens", "/branch/tokens"]),
         new("Nav.Branches", "/employer/branches", NavIcons.Branches, ["/employer/takeovers"]),
         new("Nav.Regions", "/employer/regions", NavIcons.Regions),
         new("Nav.Users", "/employer/users", NavIcons.Users)
@@ -45,7 +45,7 @@ public static class RoleNavCatalog
     [
         new("Nav.Home", "/home", NavIcons.Home),
         new("Nav.JobMap", "/", NavIcons.Map),
-        new("Nav.Vacancies", "/employer/vacancies", NavIcons.Vacancies, ["/regional", "/branch"]),
+        new("Nav.Vacancies", "/employer/vacancies", NavIcons.Vacancies, ["/regional", "/branch/vacancies/new", "/branch/applicants"]),
         new("Nav.MyBranches", "/regional/branches", NavIcons.Branches, ["/employer/takeovers"])
     ];
 
@@ -53,10 +53,12 @@ public static class RoleNavCatalog
     [
         new("Nav.Home", "/home", NavIcons.Home),
         new("Nav.JobMap", "/", NavIcons.Map),
-        new("Nav.Vacancies", "/employer/vacancies", NavIcons.Vacancies, ["/branch", "/branch/vacancies/new"]),
+        new("Nav.Vacancies", "/employer/vacancies", NavIcons.Vacancies, ["/branch/vacancies/new", "/branch/applicants"]),
         new("Nav.MyTokens", "/branch/tokens", NavIcons.Tokens),
         new("Nav.Takeovers", "/employer/takeovers", NavIcons.Branches)
     ];
+
+    public static readonly NavItem Takeovers = new("Nav.Takeovers", "/employer/takeovers", NavIcons.Branches);
 
     public static readonly NavItem[] Intermediary =
     [
@@ -107,13 +109,23 @@ public static class RoleNavCatalog
         return Anonymous;
     }
 
-    public static bool IsActive(NavItem item, string relativePath)
+    public static bool IsActive(NavItem item, string relativePath, IReadOnlyList<NavItem>? siblings = null)
     {
         var path = NormalizePath(relativePath);
+        var itemHref = NormalizePath(item.Href);
 
-        if (string.Equals(path, NormalizePath(item.Href), StringComparison.OrdinalIgnoreCase))
+        if (string.Equals(path, itemHref, StringComparison.OrdinalIgnoreCase))
         {
             return true;
+        }
+
+        // Another nav item owns this path exactly (e.g. /branch/tokens vs Vacatures ExtraActivePaths /branch).
+        if (siblings is not null
+            && siblings.Any(other =>
+                !ReferenceEquals(other, item)
+                && string.Equals(path, NormalizePath(other.Href), StringComparison.OrdinalIgnoreCase)))
+        {
+            return false;
         }
 
         if (item.ExtraActivePaths is null)

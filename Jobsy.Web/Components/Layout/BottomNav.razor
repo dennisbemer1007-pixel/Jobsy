@@ -1,16 +1,18 @@
+@using Jobsy.Core.Authorization
 @using Jobsy.Web.Localization
 @using Jobsy.Web.Navigation
 @using Microsoft.AspNetCore.Components.Authorization
 @inject NavigationManager Navigation
 @inject AuthenticationStateProvider AuthState
 @inject CultureState Culture
+@inject JobsyApiClient Api
 @implements IDisposable
 
 <nav class="bottom-nav" aria-label="@Culture["Nav.Main"]">
     @foreach (var item in _items)
     {
         var title = Culture[item.TitleKey];
-        var active = RoleNavCatalog.IsActive(item, Navigation.ToBaseRelativePath(Navigation.Uri));
+        var active = RoleNavCatalog.IsActive(item, Navigation.ToBaseRelativePath(Navigation.Uri), _items);
         <a class="bottom-nav__item @(active ? "is-active" : null)"
            href="@item.Href"
            title="@title"
@@ -25,13 +27,13 @@
 
 @code {
     private IReadOnlyList<NavItem> _items = RoleNavCatalog.Anonymous;
+    private bool _hasTakeoverActions;
 
     protected override async Task OnInitializedAsync()
     {
         Navigation.LocationChanged += OnLocationChanged;
         Culture.Changed += OnCultureChanged;
-        var state = await AuthState.GetAuthenticationStateAsync();
-        _items = RoleNavCatalog.ForUser(state.User);
+        await RefreshItemsAsync();
     }
 
     private void OnCultureChanged()
@@ -39,9 +41,43 @@
 
     private async void OnLocationChanged(object? sender, LocationChangedEventArgs e)
     {
-        var state = await AuthState.GetAuthenticationStateAsync();
-        _items = RoleNavCatalog.ForUser(state.User);
+        await RefreshItemsAsync();
         await InvokeAsync(StateHasChanged);
+    }
+
+    private async Task RefreshItemsAsync()
+    {
+        var state = await AuthState.GetAuthenticationStateAsync();
+        var catalog = RoleNavCatalog.ForUser(state.User);
+
+        if (RoleClaimMatching.HasRole(state.User, JobsyRoles.BranchManager)
+            && !RoleClaimMatching.HasRole(state.User, JobsyRoles.Admin)
+            && !RoleClaimMatching.HasRole(state.User, JobsyRoles.EnterpriseManager)
+            && !RoleClaimMatching.HasRole(state.User, JobsyRoles.RegionalManager))
+        {
+            await RefreshTakeoverFlagAsync();
+            if (!_hasTakeoverActions)
+            {
+                catalog = catalog
+                    .Where(i => !string.Equals(i.Href, RoleNavCatalog.Takeovers.Href, StringComparison.OrdinalIgnoreCase))
+                    .ToList();
+            }
+        }
+
+        _items = catalog;
+    }
+
+    private async Task RefreshTakeoverFlagAsync()
+    {
+        try
+        {
+            var inbox = await Api.GetTakeoverInboxAsync();
+            _hasTakeoverActions = inbox.Count > 0;
+        }
+        catch
+        {
+            _hasTakeoverActions = false;
+        }
     }
 
     public void Dispose()

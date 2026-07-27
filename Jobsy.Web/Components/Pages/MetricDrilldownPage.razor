@@ -1,0 +1,122 @@
+@page "/home/metrics/{Key}"
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "BranchManager,RegionalManager,EnterpriseManager,Intermediary,Admin")]
+@inject JobsyApiClient Api
+@inject NavigationManager Navigation
+@using Jobsy.Web.Components.Shared
+
+<PageTitle>@(_label ?? Key) · Lobsy</PageTitle>
+
+<div class="panel-page">
+    <header class="panel-header">
+        <div>
+            <a class="back-link" href="/home">← Dashboard</a>
+            <h1>@(_label ?? Key)</h1>
+            <p class="login-lead">Items in periode @_period.</p>
+        </div>
+        <div class="period-tabs" role="tablist" aria-label="Periode">
+            @foreach (var p in Periods)
+            {
+                <button type="button"
+                        class="period-tab @(_period == p.Key ? "period-tab--active" : null)"
+                        role="tab"
+                        aria-selected="@(_period == p.Key)"
+                        disabled="@_loading"
+                        @onclick="() => SetPeriodAsync(p.Key)">
+                    @p.Label
+                </button>
+            }
+        </div>
+    </header>
+
+    @if (!string.IsNullOrEmpty(_error))
+    {
+        <p class="state-message error">@_error</p>
+    }
+    else
+    {
+        <DrilldownGrid Title="@(_label ?? Key)"
+                       OverviewHref="@_overviewHref"
+                       Loading="@_loading"
+                       Items="_items" />
+    }
+</div>
+
+@code {
+    private static readonly (string Key, string Label)[] Periods =
+    [
+        ("day", "Dag"),
+        ("week", "Week"),
+        ("month", "Maand")
+    ];
+
+    [Parameter] public string Key { get; set; } = "";
+
+    [SupplyParameterFromQuery(Name = "period")]
+    public string? Period { get; set; }
+
+    [SupplyParameterFromQuery(Name = "label")]
+    public string? Label { get; set; }
+
+    [SupplyParameterFromQuery(Name = "overview")]
+    public string? Overview { get; set; }
+
+    private string _period = "week";
+    private string? _label;
+    private string? _overviewHref;
+    private bool _loading = true;
+    private string? _error;
+    private List<MetricDrilldownItem> _items = [];
+
+    protected override async Task OnParametersSetAsync()
+    {
+        _period = string.IsNullOrWhiteSpace(Period) ? "week" : Period.Trim().ToLowerInvariant();
+        _label = string.IsNullOrWhiteSpace(Label) ? null : Uri.UnescapeDataString(Label);
+        _overviewHref = string.IsNullOrWhiteSpace(Overview) ? null : Uri.UnescapeDataString(Overview);
+        await LoadAsync();
+    }
+
+    private async Task SetPeriodAsync(string period)
+    {
+        if (_period == period)
+        {
+            return;
+        }
+
+        _period = period;
+        var uri = Navigation.GetUriWithQueryParameter("period", _period);
+        Navigation.NavigateTo(uri, replace: true);
+        await LoadAsync();
+    }
+
+    private async Task LoadAsync()
+    {
+        if (string.IsNullOrWhiteSpace(Key))
+        {
+            _error = "Geen metric geselecteerd.";
+            _items = [];
+            _loading = false;
+            return;
+        }
+
+        _loading = true;
+        _error = null;
+        try
+        {
+            _items = (await Api.GetEmployerMetricsDrilldownAsync(Key, _period)).ToList();
+            if (string.IsNullOrWhiteSpace(_label) && _items.Count > 0)
+            {
+                _label = Key;
+            }
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+            _items = [];
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+}
