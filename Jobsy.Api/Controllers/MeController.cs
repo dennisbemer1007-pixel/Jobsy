@@ -270,7 +270,8 @@ public class MeController : ControllerBase
                 l.Vacancy.Title,
                 l.Vacancy.Company.Name,
                 l.CreatedAt,
-                null))
+                null,
+                l.Vacancy.ImageUrl))
             .ToListAsync(cancellationToken);
 
         return Ok(items);
@@ -295,7 +296,8 @@ public class MeController : ControllerBase
                 s.Vacancy.Title,
                 s.Vacancy.Company.Name,
                 s.CreatedAt,
-                s.Channel.ToString()))
+                s.Channel.ToString(),
+                s.Vacancy.ImageUrl))
             .ToListAsync(cancellationToken);
 
         return Ok(items);

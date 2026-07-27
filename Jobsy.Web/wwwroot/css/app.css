@@ -3523,47 +3523,53 @@ a.engagement-btn {
     top: 50%;
     transform: translate(-50%, -50%);
     z-index: 81;
-    width: min(380px, calc(100vw - 2rem));
+    width: max-content;
+    max-width: calc(100vw - 2rem);
     background: var(--surface);
     border: 1px solid var(--border);
-    border-radius: 14px;
+    border-radius: 12px;
     box-shadow: var(--shadow-lg);
-    padding: 1rem 1.1rem 1.15rem;
+    padding: 0.75rem 0.85rem 0.85rem;
 }
 
 .share-modal__header {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 0.75rem;
+    gap: 0.5rem;
 }
 
 .share-modal__header h2 {
     margin: 0;
-    font-size: 1.05rem;
+    font-size: 0.95rem;
 }
 
 .share-modal__close {
     border: none;
     background: transparent;
-    font-size: 1.4rem;
+    font-size: 1.2rem;
     line-height: 1;
     cursor: pointer;
     color: var(--muted);
+    padding: 0.1rem 0.25rem;
 }
 
 .share-modal__lead {
-    margin: 0.3rem 0 0.85rem;
+    margin: 0.2rem 0 0.65rem;
     color: var(--muted);
-    font-size: 0.86rem;
+    font-size: 0.78rem;
+    max-width: 16rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .share-modal__channels {
     display: flex;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
     align-items: center;
-    justify-content: center;
-    gap: 0.45rem;
+    justify-content: flex-start;
+    gap: 0.2rem;
 }
 
 .share-modal__icon-btn {
@@ -3571,28 +3577,35 @@ a.engagement-btn {
     align-items: center;
     justify-content: center;
     box-sizing: border-box;
-    width: 2.35rem;
-    height: 2.35rem;
+    width: 1.65rem;
+    height: 1.65rem;
+    min-width: 1.65rem;
+    min-height: 1.65rem;
+    max-width: 1.65rem;
+    max-height: 1.65rem;
     padding: 0;
-    border: 1px solid var(--border);
-    border-radius: 999px;
-    background: var(--surface);
+    margin: 0;
+    border: none;
+    border-radius: 6px;
+    background: transparent;
     color: var(--text);
     cursor: pointer;
     line-height: 0;
-    transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease, transform 0.15s ease;
+    flex: 0 0 1.65rem;
+    transition: background 0.12s ease, color 0.12s ease;
 }
 
 .share-modal__icon-btn:hover {
     background: var(--hover);
-    border-color: color-mix(in srgb, var(--accent) 55%, var(--border));
-    transform: translateY(-1px);
 }
 
 .share-modal__icon-btn svg {
-    width: 1.15rem;
-    height: 1.15rem;
+    width: 0.95rem !important;
+    height: 0.95rem !important;
+    max-width: 0.95rem !important;
+    max-height: 0.95rem !important;
     display: block;
+    flex-shrink: 0;
 }
 
 .share-modal__icon-btn--whatsapp {
@@ -3626,8 +3639,39 @@ a.engagement-btn {
 
 .share-modal__icon-btn--copy.is-copied {
     color: #1a7f4b;
-    border-color: color-mix(in srgb, #1a7f4b 45%, var(--border));
-    background: color-mix(in srgb, #1a7f4b 10%, var(--surface));
+    background: color-mix(in srgb, #1a7f4b 10%, transparent);
+}
+
+.share-modal .state-message {
+    margin: 0.55rem 0 0;
+    font-size: 0.78rem;
+}
+
+@media (max-width: 420px) {
+    .share-modal {
+        padding: 0.65rem 0.7rem 0.75rem;
+    }
+
+    .share-modal__channels {
+        gap: 0.12rem;
+    }
+
+    .share-modal__icon-btn {
+        width: 1.5rem;
+        height: 1.5rem;
+        min-width: 1.5rem;
+        min-height: 1.5rem;
+        max-width: 1.5rem;
+        max-height: 1.5rem;
+        flex-basis: 1.5rem;
+    }
+
+    .share-modal__icon-btn svg {
+        width: 0.88rem !important;
+        height: 0.88rem !important;
+        max-width: 0.88rem !important;
+        max-height: 0.88rem !important;
+    }
 }
 
 .mock-interview-cta {

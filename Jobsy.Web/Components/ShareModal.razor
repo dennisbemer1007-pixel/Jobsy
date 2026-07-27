@@ -50,27 +50,27 @@
 
 @code {
     private const string CopySvg =
-        "<svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.75\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><rect x=\"9\" y=\"9\" width=\"11\" height=\"11\" rx=\"2\"/><path d=\"M5 15V5a2 2 0 0 1 2-2h10\"/></svg>";
+        "<svg width=\"15\" height=\"15\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.75\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><rect x=\"9\" y=\"9\" width=\"11\" height=\"11\" rx=\"2\"/><path d=\"M5 15V5a2 2 0 0 1 2-2h10\"/></svg>";
 
     private const string CheckSvg =
-        "<svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"m5 12 5 5L20 7\"/></svg>";
+        "<svg width=\"15\" height=\"15\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"m5 12 5 5L20 7\"/></svg>";
 
     private static readonly (ShareChannel Channel, string Label, string Css, string Svg)[] Channels =
     [
         (ShareChannel.WhatsApp, "WhatsApp", "whatsapp",
-            "<svg viewBox=\"0 0 24 24\" fill=\"currentColor\" aria-hidden=\"true\"><path d=\"M12.04 2a9.9 9.9 0 0 0-8.5 14.9L2 22l5.25-1.38A9.9 9.9 0 1 0 12.04 2zm0 1.8a8.1 8.1 0 0 1 6.9 12.2l-.3.48.72 2.62-2.7-.7-.46.28a8.1 8.1 0 1 1-4.16-14.88zm4.66 10.3c-.2-.1-1.18-.58-1.36-.65-.18-.07-.32-.1-.45.1-.13.2-.52.65-.64.78-.12.13-.24.15-.44.05-.2-.1-.84-.31-1.6-.99-.59-.52-.99-1.17-1.1-1.37-.12-.2-.01-.3.09-.4.09-.09.2-.24.3-.36.1-.12.13-.2.2-.34.07-.13.03-.25-.02-.35-.05-.1-.45-1.08-.62-1.48-.16-.38-.33-.33-.45-.34h-.38c-.13 0-.35.05-.53.25-.18.2-.7.68-.7 1.66s.72 1.93.82 2.06c.1.13 1.4 2.14 3.4 3 .48.2.85.33 1.14.42.48.15.91.13 1.26.08.38-.06 1.18-.48 1.35-.95.17-.47.17-.87.12-.95-.05-.08-.18-.13-.38-.23z\"/></svg>"),
+            "<svg width=\"15\" height=\"15\" viewBox=\"0 0 24 24\" fill=\"currentColor\" aria-hidden=\"true\"><path d=\"M12.04 2a9.9 9.9 0 0 0-8.5 14.9L2 22l5.25-1.38A9.9 9.9 0 1 0 12.04 2zm0 1.8a8.1 8.1 0 0 1 6.9 12.2l-.3.48.72 2.62-2.7-.7-.46.28a8.1 8.1 0 1 1-4.16-14.88zm4.66 10.3c-.2-.1-1.18-.58-1.36-.65-.18-.07-.32-.1-.45.1-.13.2-.52.65-.64.78-.12.13-.24.15-.44.05-.2-.1-.84-.31-1.6-.99-.59-.52-.99-1.17-1.1-1.37-.12-.2-.01-.3.09-.4.09-.09.2-.24.3-.36.1-.12.13-.2.2-.34.07-.13.03-.25-.02-.35-.05-.1-.45-1.08-.62-1.48-.16-.38-.33-.33-.45-.34h-.38c-.13 0-.35.05-.53.25-.18.2-.7.68-.7 1.66s.72 1.93.82 2.06c.1.13 1.4 2.14 3.4 3 .48.2.85.33 1.14.42.48.15.91.13 1.26.08.38-.06 1.18-.48 1.35-.95.17-.47.17-.87.12-.95-.05-.08-.18-.13-.38-.23z\"/></svg>"),
         (ShareChannel.Email, "E-mail", "email",
-            "<svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.75\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><rect x=\"3\" y=\"5\" width=\"18\" height=\"14\" rx=\"2\"/><path d=\"m3 7 9 7 9-7\"/></svg>"),
+            "<svg width=\"15\" height=\"15\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.75\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><rect x=\"3\" y=\"5\" width=\"18\" height=\"14\" rx=\"2\"/><path d=\"m3 7 9 7 9-7\"/></svg>"),
         (ShareChannel.Facebook, "Facebook", "facebook",
-            "<svg viewBox=\"0 0 24 24\" fill=\"currentColor\" aria-hidden=\"true\"><path d=\"M13.5 22v-8h2.7l.4-3.1h-3.1V8.9c0-.9.3-1.5 1.6-1.5H16.8V4.6C16.4 4.5 15.3 4.4 14 4.4c-2.7 0-4.5 1.6-4.5 4.6v2.6H7v3.1h2.5V22h4z\"/></svg>"),
+            "<svg width=\"15\" height=\"15\" viewBox=\"0 0 24 24\" fill=\"currentColor\" aria-hidden=\"true\"><path d=\"M13.5 22v-8h2.7l.4-3.1h-3.1V8.9c0-.9.3-1.5 1.6-1.5H16.8V4.6C16.4 4.5 15.3 4.4 14 4.4c-2.7 0-4.5 1.6-4.5 4.6v2.6H7v3.1h2.5V22h4z\"/></svg>"),
         (ShareChannel.LinkedIn, "LinkedIn", "linkedin",
-            "<svg viewBox=\"0 0 24 24\" fill=\"currentColor\" aria-hidden=\"true\"><path d=\"M6.5 9.5H3.7V20h2.8V9.5zM5.1 4a1.65 1.65 0 1 0 0 3.3 1.65 1.65 0 0 0 0-3.3zM20.3 20h-2.8v-5.6c0-1.3-.5-2.2-1.7-2.2-1 0-1.5.6-1.8 1.3-.1.2-.1.5-.1.8V20h-2.8s.1-9.4 0-10.5h2.8v1.5c.4-.6 1.1-1.7 2.8-1.7 2 0 3.6 1.3 3.6 4.2V20z\"/></svg>"),
+            "<svg width=\"15\" height=\"15\" viewBox=\"0 0 24 24\" fill=\"currentColor\" aria-hidden=\"true\"><path d=\"M6.5 9.5H3.7V20h2.8V9.5zM5.1 4a1.65 1.65 0 1 0 0 3.3 1.65 1.65 0 0 0 0-3.3zM20.3 20h-2.8v-5.6c0-1.3-.5-2.2-1.7-2.2-1 0-1.5.6-1.8 1.3-.1.2-.1.5-.1.8V20h-2.8s.1-9.4 0-10.5h2.8v1.5c.4-.6 1.1-1.7 2.8-1.7 2 0 3.6 1.3 3.6 4.2V20z\"/></svg>"),
         (ShareChannel.X, "X", "x",
-            "<svg viewBox=\"0 0 24 24\" fill=\"currentColor\" aria-hidden=\"true\"><path d=\"M18.2 3H21l-6.6 7.55L22 21h-6.2l-4.85-6.35L5.5 21H2.7l7.05-8.05L2 3h6.35l4.4 5.85L18.2 3zm-1.1 16.2h1.7L7 4.7H5.2l11.9 14.5z\"/></svg>"),
+            "<svg width=\"15\" height=\"15\" viewBox=\"0 0 24 24\" fill=\"currentColor\" aria-hidden=\"true\"><path d=\"M18.2 3H21l-6.6 7.55L22 21h-6.2l-4.85-6.35L5.5 21H2.7l7.05-8.05L2 3h6.35l4.4 5.85L18.2 3zm-1.1 16.2h1.7L7 4.7H5.2l11.9 14.5z\"/></svg>"),
         (ShareChannel.Telegram, "Telegram", "telegram",
-            "<svg viewBox=\"0 0 24 24\" fill=\"currentColor\" aria-hidden=\"true\"><path d=\"M21.7 4.3 2.9 11.5c-1.3.5-1.3 1.2-.2 1.5l4.8 1.5 1.9 5.7c.2.7.4 1 .9 1 .6 0 .8-.2 1.1-.5l2.7-2.6 5.6 4.1c1 .6 1.8.3 2-.9L23.1 5.5c.3-1.4-.5-2-1.4-1.2zM9.4 14.7l-.2 3.2-.9-2.9 10.7-6.7-9.6 6.4z\"/></svg>"),
+            "<svg width=\"15\" height=\"15\" viewBox=\"0 0 24 24\" fill=\"currentColor\" aria-hidden=\"true\"><path d=\"M21.7 4.3 2.9 11.5c-1.3.5-1.3 1.2-.2 1.5l4.8 1.5 1.9 5.7c.2.7.4 1 .9 1 .6 0 .8-.2 1.1-.5l2.7-2.6 5.6 4.1c1 .6 1.8.3 2-.9L23.1 5.5c.3-1.4-.5-2-1.4-1.2zM9.4 14.7l-.2 3.2-.9-2.9 10.7-6.7-9.6 6.4z\"/></svg>"),
         (ShareChannel.Signal, "Signal", "signal",
-            "<svg viewBox=\"0 0 24 24\" fill=\"currentColor\" aria-hidden=\"true\"><path d=\"M12 2.2c-5.1 0-9.3 3.9-9.3 8.8 0 3.1 1.6 5.8 4.1 7.4l-.9 3.3 3.5-1.1c.8.2 1.7.3 2.6.3 5.1 0 9.3-3.9 9.3-8.8S17.1 2.2 12 2.2zm4.8 11.5c-.2.5-1.1 1-1.6 1.1-.4.1-.9.1-1.4 0-.3-.1-.7-.2-1.2-.4-2.1-.9-3.5-2.9-3.6-3.1-.1-.2-.9-1.2-.9-2.3s.6-1.6.8-1.8c.2-.2.4-.3.6-.3h.4c.1 0 .3 0 .4.3.2.5.5 1.3.6 1.4.1.1.1.3 0 .4l-.3.4c-.1.1-.2.3-.1.5.1.2.5.8 1.1 1.3.7.6 1.4.9 1.6 1 .2.1.4.1.5 0l.5-.6c.1-.1.3-.1.4-.1.2 0 .9.4 1.1.5.2.1.3.1.4.2.1.1.1.5-.1 1z\"/></svg>")
+            "<svg width=\"15\" height=\"15\" viewBox=\"0 0 24 24\" fill=\"currentColor\" aria-hidden=\"true\"><path d=\"M12 2.2c-5.1 0-9.3 3.9-9.3 8.8 0 3.1 1.6 5.8 4.1 7.4l-.9 3.3 3.5-1.1c.8.2 1.7.3 2.6.3 5.1 0 9.3-3.9 9.3-8.8S17.1 2.2 12 2.2zm4.8 11.5c-.2.5-1.1 1-1.6 1.1-.4.1-.9.1-1.4 0-.3-.1-.7-.2-1.2-.4-2.1-.9-3.5-2.9-3.6-3.1-.1-.2-.9-1.2-.9-2.3s.6-1.6.8-1.8c.2-.2.4-.3.6-.3h.4c.1 0 .3 0 .4.3.2.5.5 1.3.6 1.4.1.1.1.3 0 .4l-.3.4c-.1.1-.2.3-.1.5.1.2.5.8 1.1 1.3.7.6 1.4.9 1.6 1 .2.1.4.1.5 0l.5-.6c.1-.1.3-.1.4-.1.2 0 .9.4 1.1.5.2.1.3.1.4.2.1.1.1.5-.1 1z\"/></svg>")
     ];
 
     [Parameter] public bool IsOpen { get; set; }

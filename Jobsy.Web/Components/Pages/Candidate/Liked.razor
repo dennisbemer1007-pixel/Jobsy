@@ -31,18 +31,19 @@
                 <div class="vacancy-list vacancy-list--cards">
                     @foreach (var item in _items)
                     {
-                        <a class="job-card" href="@($"/vacancies/{item.VacancyId}")">
-                            <div class="job-card__media">
+                        <article class="job-card">
+                            <a class="job-card__media" href="@($"/vacancies/{item.VacancyId}")"
+                               style="@(string.IsNullOrWhiteSpace(item.ImageUrl) ? null : $"background-image:url('{item.ImageUrl}')")">
                                 <div class="job-card__overlay">
                                     <h2>@item.VacancyTitle</h2>
                                     <p class="job-card__travel">@item.CompanyName</p>
                                 </div>
-                            </div>
+                            </a>
                             <div class="job-card__footer">
                                 <p class="job-card__company">@item.CompanyName</p>
                                 <p class="job-card__location">@item.CreatedAt.ToLocalTime().ToString("dd-MM-yyyy")</p>
                             </div>
-                        </a>
+                        </article>
                     }
                 </div>
             }

@@ -13,4 +13,5 @@ public record CandidateVacancyEngagementDto(
     string VacancyTitle,
     string CompanyName,
     DateTime CreatedAt,
-    string? Channel = null);
+    string? Channel = null,
+    string? ImageUrl = null);
