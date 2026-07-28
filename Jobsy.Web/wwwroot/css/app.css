@@ -5157,19 +5157,95 @@ button.linkish:hover {
     color: var(--danger);
 }
 
+.cluster-single {
+    padding: 0.15rem 1.65rem 0.15rem 0.1rem;
+    min-width: 0;
+}
+
 .cluster-single__meta {
     display: flex;
     align-items: center;
-    justify-content: space-between;
+    justify-content: flex-start;
     gap: 0.5rem;
-    margin-bottom: 0.55rem;
+    margin: 0 0 0.45rem;
+    padding-right: 0.25rem;
     font-size: 0.78rem;
     font-weight: 600;
     color: var(--muted);
 }
 
+.cluster-single__count {
+    line-height: 1.2;
+}
+
 .cluster-single .map-popup {
     box-shadow: none;
+}
+
+.cluster-single__pager {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.65rem;
+    margin-top: 0.65rem;
+    padding-top: 0.55rem;
+    border-top: 1px solid var(--border);
+}
+
+.cluster-single__nav {
+    width: 2.1rem;
+    height: 2.1rem;
+    border-radius: 999px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--brand);
+    font-size: 1.35rem;
+    font-weight: 700;
+    line-height: 1;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.cluster-single__nav:hover:not(:disabled) {
+    background: var(--accent-soft);
+    border-color: color-mix(in srgb, var(--brand) 30%, var(--border));
+}
+
+.cluster-single__nav:disabled {
+    opacity: 0.35;
+    cursor: default;
+}
+
+.cluster-single__page-status {
+    min-width: 3.2rem;
+    text-align: center;
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: var(--brand);
+}
+
+.leaflet-popup.job-cluster-popup a.leaflet-popup-close-button,
+.leaflet-popup.job-map-popup a.leaflet-popup-close-button {
+    top: 8px !important;
+    right: 8px !important;
+    width: 28px !important;
+    height: 28px !important;
+    padding: 0 !important;
+    font-size: 18px !important;
+    line-height: 28px !important;
+    color: var(--muted) !important;
+    background: rgba(255, 255, 255, 0.95) !important;
+    border-radius: 50% !important;
+    box-shadow: 0 1px 3px rgba(15, 45, 92, 0.12);
+    z-index: 20 !important;
+}
+
+.icon-btn--add {
+    width: 2.1rem;
+    min-width: 2.1rem;
+    padding: 0;
 }
 
 .map-popup__pager {

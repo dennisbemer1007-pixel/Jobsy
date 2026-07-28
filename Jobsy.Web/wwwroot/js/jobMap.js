@@ -229,12 +229,12 @@ window.jobMap = (function () {
         }
 
         return (
-            "<div class=\"cluster-list__pager map-popup__pager\">" +
-                "<button type=\"button\" class=\"cluster-list__page-btn\" data-cluster-page=\"" + (current - 1) + "\"" +
-                    (current <= 1 ? " disabled" : "") + ">Vorige</button>" +
-                "<span class=\"cluster-list__page-status\">" + current + " / " + pageCount + "</span>" +
-                "<button type=\"button\" class=\"cluster-list__page-btn\" data-cluster-page=\"" + (current + 1) + "\"" +
-                    (current >= pageCount ? " disabled" : "") + ">Volgende</button>" +
+            "<div class=\"cluster-single__pager\" role=\"navigation\" aria-label=\"Vacatures op deze locatie\">" +
+                "<button type=\"button\" class=\"cluster-single__nav\" data-cluster-page=\"" + (current - 1) + "\"" +
+                    (current <= 1 ? " disabled" : "") + " aria-label=\"Vorige vacature\">‹</button>" +
+                "<span class=\"cluster-single__page-status\">" + current + " / " + pageCount + "</span>" +
+                "<button type=\"button\" class=\"cluster-single__nav\" data-cluster-page=\"" + (current + 1) + "\"" +
+                    (current >= pageCount ? " disabled" : "") + " aria-label=\"Volgende vacature\">›</button>" +
             "</div>"
         );
     }
@@ -252,10 +252,10 @@ window.jobMap = (function () {
         return (
             "<div class=\"cluster-single\">" +
                 "<div class=\"cluster-single__meta\">" +
-                    "<span>" + escapeHtml(String(total)) + " vacatures hier</span>" +
-                    buildClusterPagerHtml(current, pageCount) +
+                    "<span class=\"cluster-single__count\">" + escapeHtml(String(total)) + " vacatures hier</span>" +
                 "</div>" +
                 buildPopupHtml(job) +
+                buildClusterPagerHtml(current, pageCount) +
             "</div>"
         );
     }
@@ -281,7 +281,6 @@ window.jobMap = (function () {
                     return;
                 }
                 if (!el.classList.contains("map-popup__cta")) {
-                    // Card body click (not interactive children besides CTA).
                     if (ev.target.closest("a, button")) {
                         return;
                     }
@@ -296,17 +295,21 @@ window.jobMap = (function () {
             btn.addEventListener("click", function (ev) {
                 ev.preventDefault();
                 ev.stopPropagation();
-                if (btn.disabled) {
+                if (btn.disabled || btn.getAttribute("disabled") != null) {
                     return;
                 }
                 const nextPage = parseInt(btn.getAttribute("data-cluster-page") || "0", 10);
-                if (!nextPage) {
+                const jobs = clusterJobsFromMarkers(childMarkers);
+                const pageCount = Math.max(1, jobs.length);
+                if (!nextPage || nextPage < 1 || nextPage > pageCount) {
                     return;
                 }
-                const jobs = clusterJobsFromMarkers(childMarkers);
-                const job = jobs[nextPage - 1];
+                const job = jobs[nextPage - 1] || {};
                 popup.setContent(buildClusterSingleHtml(childMarkers, nextPage));
-                popup.options = Object.assign({}, popup.options, jobPopupOptions(hasWageBands(job || {})));
+                // Keep popup open on last/first page — only update content.
+                if (typeof popup.update === "function") {
+                    popup.update();
+                }
                 bindClusterPopupInteractions(popup, childMarkers);
             });
         });
@@ -332,7 +335,14 @@ window.jobMap = (function () {
             map.closePopup(activeClusterPopup);
         }
 
-        activeClusterPopup = L.popup(jobPopupOptions(hasWageBands(first)))
+        const opts = Object.assign({}, jobPopupOptions(hasWageBands(first)), {
+            className: (jobPopupOptions(hasWageBands(first)).className || "") + " job-cluster-popup",
+            closeOnClick: false,
+            autoClose: false,
+            closeButton: true
+        });
+
+        activeClusterPopup = L.popup(opts)
             .setLatLng(latlng)
             .setContent(buildClusterSingleHtml(childMarkers, 1))
             .openOn(map);

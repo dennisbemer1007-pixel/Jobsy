@@ -450,6 +450,7 @@
     private int? _ageYears;
     private bool _mapReady;
     private bool _openingRoute;
+    private Guid? _mappedVacancyId;
 
     private string LoginUrl =>
         $"/login?returnUrl={Uri.EscapeDataString($"/vacancies/{Id}")}";
@@ -497,7 +498,9 @@
         _vacancy is not null
         && double.IsFinite(_vacancy.Latitude)
         && double.IsFinite(_vacancy.Longitude)
-        && !(_vacancy.Latitude == 0 && _vacancy.Longitude == 0);
+        && !(_vacancy.Latitude == 0 && _vacancy.Longitude == 0)
+        && Math.Abs(_vacancy.Latitude) <= 90
+        && Math.Abs(_vacancy.Longitude) <= 180;
 
     protected override async Task OnInitializedAsync()
     {
@@ -576,26 +579,45 @@
 
     private async Task EnsureDetailMapAsync()
     {
-        if (!HasLocation || _mapReady)
+        if (!HasLocation)
         {
             return;
         }
 
+        // Recreate when navigating to another vacancy or first paint.
+        if (_mapReady && _mappedVacancyId == Id)
+        {
+            return;
+        }
+
+        if (_mapReady)
+        {
+            try { await Js.InvokeVoidAsync("vacancyDetailMap.dispose"); }
+            catch { /* ignore */ }
+            _mapReady = false;
+        }
+
         try
         {
-            await Js.InvokeVoidAsync("vacancyDetailMap.init", "vacancy-detail-map", new
+            // Pass invariant strings so JS never misreads culture-formatted decimals.
+            var lat = _vacancy!.Latitude.ToString(System.Globalization.CultureInfo.InvariantCulture);
+            var lng = _vacancy.Longitude.ToString(System.Globalization.CultureInfo.InvariantCulture);
+            await Js.InvokeVoidAsync("vacancyDetailMap.init", "vacancy-detail-map", new Dictionary<string, object?>
             {
-                lat = _vacancy!.Latitude,
-                lng = _vacancy.Longitude,
-                title = _vacancy.Title,
-                company = _vacancy.CompanyName,
-                address = _vacancy.CompanyAddress
+                ["lat"] = lat,
+                ["lng"] = lng,
+                ["title"] = _vacancy.Title,
+                ["company"] = _vacancy.CompanyName,
+                ["address"] = _vacancy.CompanyAddress
             });
             _mapReady = true;
+            _mappedVacancyId = Id;
         }
         catch
         {
             // Leaflet may not be ready yet — retry on next render
+            _mapReady = false;
+            _mappedVacancyId = null;
         }
     }
 

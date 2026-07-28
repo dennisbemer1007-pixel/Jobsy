@@ -38,7 +38,9 @@ public static class ApplicationPreferenceRedaction
                 }
             }
 
-            if (root.TryGetProperty("maxTravelMinutes", out var m) && m.TryGetInt32(out var mins))
+            if (root.TryGetProperty("maxTravelMinutes", out var m)
+                && m.ValueKind == JsonValueKind.Number
+                && m.TryGetInt32(out var mins))
             {
                 parts.Add($"max {mins} min");
             }

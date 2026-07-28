@@ -1,6 +1,8 @@
 window.vacancyDetailMap = (function () {
     let map = null;
     let marker = null;
+    let currentLat = null;
+    let currentLng = null;
 
     const TRAVEL_MODE = {
         Fiets: "bicycling",
@@ -20,6 +22,16 @@ window.vacancyDetailMap = (function () {
         });
     }
 
+    function readCoord(options, camel, pascal) {
+        const raw = options && (options[camel] != null ? options[camel] : options[pascal]);
+        if (raw == null || raw === "") {
+            return NaN;
+        }
+        // Support invariant strings ("52.07") and numbers.
+        const n = typeof raw === "number" ? raw : Number(String(raw).trim().replace(",", "."));
+        return n;
+    }
+
     function init(elementId, options) {
         if (typeof L === "undefined") {
             throw new Error("Leaflet (L) is not loaded");
@@ -30,11 +42,24 @@ window.vacancyDetailMap = (function () {
             throw new Error("Map element #" + elementId + " not found");
         }
 
-        const lat = Number(options && options.lat);
-        const lng = Number(options && options.lng);
+        const lat = readCoord(options, "lat", "Lat");
+        const lng = readCoord(options, "lng", "Lng");
         if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
             throw new Error("Invalid vacancy coordinates");
         }
+        // Guard against swapped lat/lng for NL/BE-ish data (lng around 3–8, lat around 50–54).
+        let useLat = lat;
+        let useLng = lng;
+        if (Math.abs(lat) <= 90 && Math.abs(lng) <= 180) {
+            // If values look swapped for the Low Countries, correct them.
+            if (lat > 2 && lat < 10 && lng > 49 && lng < 55) {
+                useLat = lng;
+                useLng = lat;
+            }
+        }
+
+        currentLat = useLat;
+        currentLng = useLng;
 
         if (map) {
             dispose();
@@ -53,7 +78,7 @@ window.vacancyDetailMap = (function () {
                 "&copy; <a href=\"https://carto.com/attributions\">CARTO</a>"
         }).addTo(map);
 
-        marker = L.marker([lat, lng], {
+        marker = L.marker([useLat, useLng], {
             icon: createLobsyIcon(),
             title: (options && options.title) || "Locatie"
         }).addTo(map);
@@ -67,18 +92,31 @@ window.vacancyDetailMap = (function () {
             );
         }
 
-        map.setView([lat, lng], 15);
+        map.setView([useLat, useLng], 15);
 
         [50, 200, 400, 800].forEach(function (ms) {
             setTimeout(function () {
                 invalidate();
-                if (map) {
-                    map.setView([lat, lng], map.getZoom() || 15, { animate: false });
-                }
+                recenter();
             }, ms);
         });
 
-        window.addEventListener("resize", invalidate);
+        window.addEventListener("resize", onResize);
+    }
+
+    function recenter() {
+        if (!map || !Number.isFinite(currentLat) || !Number.isFinite(currentLng)) {
+            return;
+        }
+        map.setView([currentLat, currentLng], map.getZoom() || 15, { animate: false });
+        if (marker) {
+            marker.setLatLng([currentLat, currentLng]);
+        }
+    }
+
+    function onResize() {
+        invalidate();
+        recenter();
     }
 
     function invalidate() {
@@ -88,8 +126,10 @@ window.vacancyDetailMap = (function () {
     }
 
     function dispose() {
-        window.removeEventListener("resize", invalidate);
+        window.removeEventListener("resize", onResize);
         marker = null;
+        currentLat = null;
+        currentLng = null;
         if (map) {
             map.remove();
             map = null;
@@ -105,26 +145,24 @@ window.vacancyDetailMap = (function () {
      * Uses stored/passed origin when available; otherwise destination-only.
      */
     function openRoute(options) {
-        const destLat = Number(options && options.destLat);
-        const destLng = Number(options && options.destLng);
-        if (!Number.isFinite(destLat) || !Number.isFinite(destLng)) {
+        const destLat = readCoord(options, "destLat", "DestLat");
+        const destLng = readCoord(options, "destLng", "DestLng");
+        const lat = Number.isFinite(destLat) ? destLat : currentLat;
+        const lng = Number.isFinite(destLng) ? destLng : currentLng;
+        if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
             return { opened: false };
         }
 
         const mode = travelMode(options && options.transport);
         let url =
             "https://www.google.com/maps/dir/?api=1" +
-            "&destination=" + encodeURIComponent(destLat + "," + destLng) +
+            "&destination=" + encodeURIComponent(lat + "," + lng) +
             "&travelmode=" + encodeURIComponent(mode);
 
-        const originLatRaw = options && options.originLat;
-        const originLngRaw = options && options.originLng;
-        if (originLatRaw != null && originLngRaw != null) {
-            const originLat = Number(originLatRaw);
-            const originLng = Number(originLngRaw);
-            if (Number.isFinite(originLat) && Number.isFinite(originLng)) {
-                url += "&origin=" + encodeURIComponent(originLat + "," + originLng);
-            }
+        const originLat = readCoord(options, "originLat", "OriginLat");
+        const originLng = readCoord(options, "originLng", "OriginLng");
+        if (Number.isFinite(originLat) && Number.isFinite(originLng)) {
+            url += "&origin=" + encodeURIComponent(originLat + "," + originLng);
         }
 
         const win = window.open(url, "_blank", "noopener,noreferrer");
@@ -133,15 +171,17 @@ window.vacancyDetailMap = (function () {
 
     /** Opens Google Street View at the company location. */
     function openStreetView(options) {
-        const lat = Number(options && options.lat);
-        const lng = Number(options && options.lng);
-        if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
+        const lat = readCoord(options, "lat", "Lat");
+        const lng = readCoord(options, "lng", "Lng");
+        const useLat = Number.isFinite(lat) ? lat : currentLat;
+        const useLng = Number.isFinite(lng) ? lng : currentLng;
+        if (!Number.isFinite(useLat) || !Number.isFinite(useLng)) {
             return { opened: false };
         }
 
         const url =
             "https://www.google.com/maps/@?api=1&map_action=pano&viewpoint=" +
-            encodeURIComponent(lat + "," + lng);
+            encodeURIComponent(useLat + "," + useLng);
 
         const win = window.open(url, "_blank", "noopener,noreferrer");
         return { opened: !!win };

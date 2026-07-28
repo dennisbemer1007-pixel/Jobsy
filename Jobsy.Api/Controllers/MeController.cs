@@ -363,7 +363,9 @@ public class MeController : ControllerBase
             }
 
             int? maxTravel = null;
-            if (root.TryGetProperty("maxTravelMinutes", out var travelEl) && travelEl.TryGetInt32(out var travel))
+            if (root.TryGetProperty("maxTravelMinutes", out var travelEl)
+                && travelEl.ValueKind == JsonValueKind.Number
+                && travelEl.TryGetInt32(out var travel))
             {
                 maxTravel = travel;
             }
@@ -387,7 +389,9 @@ public class MeController : ControllerBase
             }
 
             int? ageYears = null;
-            if (root.TryGetProperty("ageYears", out var ageEl) && ageEl.TryGetInt32(out var age)
+            if (root.TryGetProperty("ageYears", out var ageEl)
+                && ageEl.ValueKind == JsonValueKind.Number
+                && ageEl.TryGetInt32(out var age)
                 && age is >= 15 and <= 67)
             {
                 ageYears = age;
@@ -449,15 +453,24 @@ public class MeController : ControllerBase
                         continue;
                     }
 
-                    var name = item.TryGetProperty("employerName", out var employerNameEl) ? employerNameEl.GetString() : null;
+                    var name = item.TryGetProperty("employerName", out var employerNameEl)
+                               && employerNameEl.ValueKind == JsonValueKind.String
+                        ? employerNameEl.GetString()
+                        : null;
                     if (string.IsNullOrWhiteSpace(name))
                     {
                         continue;
                     }
 
-                    var role = item.TryGetProperty("role", out var roleEl) ? roleEl.GetString() : null;
+                    var role = item.TryGetProperty("role", out var roleEl)
+                               && roleEl.ValueKind == JsonValueKind.String
+                        ? roleEl.GetString()
+                        : null;
                     int? years = null;
-                    if (item.TryGetProperty("years", out var yearsEl) && yearsEl.TryGetInt32(out var yearsVal) && yearsVal is >= 0 and <= 80)
+                    if (item.TryGetProperty("years", out var yearsEl)
+                        && yearsEl.ValueKind == JsonValueKind.Number
+                        && yearsEl.TryGetInt32(out var yearsVal)
+                        && yearsVal is >= 0 and <= 80)
                     {
                         years = yearsVal;
                     }
@@ -494,7 +507,7 @@ public class MeController : ControllerBase
                 employers,
                 educations.Distinct(StringComparer.OrdinalIgnoreCase).ToList());
         }
-        catch (JsonException)
+        catch (Exception)
         {
             return EmptyPreferences();
         }

@@ -781,6 +781,7 @@ public sealed class VacancyProductService : IVacancyProductService
         {
             using var doc = JsonDocument.Parse(preferencesJson);
             if (doc.RootElement.TryGetProperty("maxTravelMinutes", out var el)
+                && el.ValueKind == System.Text.Json.JsonValueKind.Number
                 && el.TryGetInt32(out var minutes)
                 && minutes > 0)
             {
