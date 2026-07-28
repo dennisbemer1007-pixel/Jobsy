@@ -8,7 +8,8 @@ public record CandidatePreferencesDto(
     int? AgeYears = null,
     string? AboutMe = null,
     IReadOnlyList<string>? DrivingLicenses = null,
-    IReadOnlyDictionary<string, IReadOnlyList<string>>? Availability = null,
+    // Concrete string[] values — IReadOnlyList as dictionary values can fail System.Text.Json.
+    IReadOnlyDictionary<string, string[]>? Availability = null,
     IReadOnlyList<CandidateEmployerHistoryDto>? Employers = null,
     IReadOnlyList<string>? Educations = null);
 

@@ -858,21 +858,45 @@
                 ["travelMinutes"] = v.TravelMinutes,
                 ["transportLabel"] = TransportVerb(_selectedTransport)
             };
-            if (_ageYears is not null && v.WageVisible)
+            if (v.WageVisible)
             {
-                if (v.HourlyWage is not null)
+                if (_ageYears is int age)
                 {
-                    dict["wage"] = (double)v.HourlyWage.Value;
+                    if (v.HourlyWage is not null)
+                    {
+                        dict["wage"] = (double)v.HourlyWage.Value;
+                    }
+                    else if (v.WageByAge is { Count: > 0 })
+                    {
+                        var band = v.WageByAge
+                            .Where(b => b.AgeYears <= age)
+                            .OrderByDescending(b => b.AgeYears)
+                            .FirstOrDefault()
+                            ?? v.WageByAge.OrderBy(b => b.AgeYears).First();
+                        dict["wage"] = (double)band.HourlyRate;
+                    }
                 }
                 else if (v.WageByAge is { Count: > 0 })
                 {
-                    var band = v.WageByAge
-                        .Where(b => b.AgeYears <= _ageYears.Value)
-                        .OrderByDescending(b => b.AgeYears)
-                        .FirstOrDefault()
-                        ?? v.WageByAge.OrderBy(b => b.AgeYears).First();
-                    dict["wage"] = (double)band.HourlyRate;
+                    // Leeftijd = Alle → show full wage table beside the popup.
+                    dict["wageBands"] = v.WageByAge
+                        .OrderBy(b => b.AgeYears)
+                        .Select(b => new Dictionary<string, object?>
+                        {
+                            ["ageYears"] = b.AgeYears,
+                            ["hourlyRate"] = (double)b.HourlyRate,
+                            ["label"] = b.Label
+                        })
+                        .ToList();
                 }
+                else if (v.HourlyWage is not null)
+                {
+                    dict["wage"] = (double)v.HourlyWage.Value;
+                }
+            }
+            else
+            {
+                dict["wageLabel"] = WageVisibilityRules.MissingDateOfBirthMessage;
             }
 
             return dict;

@@ -10,7 +10,7 @@
 @using Microsoft.AspNetCore.Components.Authorization
 @implements IAsyncDisposable
 
-<PageTitle>@(_vacancy?.Title ?? Culture["Vacancy.Title"]) Â· Lobsy</PageTitle>
+<PageTitle>@(_vacancy?.Title ?? Culture["Vacancy.Title"]) · Lobsy</PageTitle>
 
 <div class="panel-page">
     @if (_loading)
@@ -90,7 +90,7 @@
                                 {
                                     <tr>
                                         <th>@band.Label</th>
-                                        <td>â‚¬ @band.HourlyRate.ToString("0.00")</td>
+                                        <td>€ @band.HourlyRate.ToString("0.00")</td>
                                     </tr>
                                 }
                             </tbody>
@@ -99,7 +99,7 @@
                 }
                 else if (_vacancy.WageVisible && _vacancy.HourlyWage is not null)
                 {
-                    <span class="wage">â‚¬ @_vacancy.HourlyWage.Value.ToString("0.00")</span>
+                    <span class="wage">€ @_vacancy.HourlyWage.Value.ToString("0.00")</span>
                 }
                 else if (!_vacancy.WageVisible)
                 {
@@ -117,7 +117,7 @@
                 @Culture["Vacancy.StartDate"]: @_vacancy.StartDate.ToString("dd-MM-yyyy")
                 @if (_vacancy.WorkTypes.Length > 0)
                 {
-                    <text>             Â· @Culture["Vacancy.WorkType"]: @string.Join(", ", _vacancy.WorkTypes)</text>
+                    <text>             · @Culture["Vacancy.WorkType"]: @string.Join(", ", _vacancy.WorkTypes)</text>
                 }
             </p>
             @if (!string.IsNullOrWhiteSpace(_vacancy.RequiredDrivingLicense)
@@ -157,7 +157,7 @@
                             @if (_vacancy.TravelMinutes is not null)
                             {
                                 <span class="lobsy-proximity__chip">
-                                    Â± @_vacancy.TravelMinutes min @Culture["Vacancy.FromYourLocation"]
+                                    ± @_vacancy.TravelMinutes min @Culture["Vacancy.FromYourLocation"]
                                 </span>
                             }
                             @if (_vacancy.DistanceKm is not null)
@@ -169,7 +169,7 @@
                             @if (_vacancy.RequiredTransport.Length > 0)
                             {
                                 <span class="lobsy-proximity__chip lobsy-proximity__chip--soft">
-                                    @Culture["Vacancy.Transport"]: @string.Join(" Â· ", _vacancy.RequiredTransport)
+                                    @Culture["Vacancy.Transport"]: @string.Join(" · ", _vacancy.RequiredTransport)
                                 </span>
                             }
                         </p>
@@ -234,7 +234,7 @@
                             Oefen je sollicitatiegesprek
                         </button>
                         <p class="mock-interview-cta__hint">
-                            Oefen met een AI-recruiter op basis van deze vacature â€” los van solliciteren.
+                            Oefen met een AI-recruiter op basis van deze vacature — los van solliciteren.
                         </p>
                     </Authorized>
                     <NotAuthorized>
@@ -321,7 +321,7 @@
                                            inputmode="numeric"
                                            autocomplete="one-time-code"
                                            maxlength="6"
-                                           placeholder="â€¢â€¢â€¢â€¢â€¢â€¢"
+                                           placeholder="••••••"
                                            @bind="_verificationCode"
                                            @bind:event="oninput" />
                                 </label>
@@ -329,7 +329,7 @@
                                         type="button"
                                         disabled="@(_applying || _verificationCode.Trim().Length != 6)"
                                         @onclick="VerifyApplicationAsync">
-                                    @(_applying ? "Bezigâ€¦" : "Bevestigen en versturen")
+                                    @(_applying ? "Bezig…" : "Bevestigen en versturen")
                                 </button>
                                 <button class="engagement-btn apply-flow__secondary"
                                         type="button"
@@ -383,7 +383,7 @@
                                         type="button"
                                         disabled="@(_applying || !_acceptedTerms || !_workPermitConfirmed)"
                                         @onclick="ApplyAsync">
-                                    @(_applying ? "Bezigâ€¦" : "Sollicitatie versturen")
+                                    @(_applying ? "Bezig…" : "Sollicitatie versturen")
                                 </button>
                                 <p class="apply-flow__hint">Daarna ontvang je een code per e-mail om te bevestigen.</p>
                             </div>
@@ -595,7 +595,7 @@
         }
         catch
         {
-            // Leaflet may not be ready yet â€” retry on next render
+            // Leaflet may not be ready yet — retry on next render
         }
     }
 
@@ -703,7 +703,7 @@
                 // ignore
             }
 
-            _message = "Geboortedatum opgeslagen â€” je ziet nu het loon.";
+            _message = "Geboortedatum opgeslagen — je ziet nu het loon.";
         }
         catch (Exception ex)
         {

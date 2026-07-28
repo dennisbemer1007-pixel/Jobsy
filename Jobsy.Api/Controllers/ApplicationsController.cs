@@ -73,6 +73,24 @@ public class ApplicationsController : ControllerBase
         [FromBody] ApplyRequest request,
         CancellationToken cancellationToken)
     {
+        try
+        {
+            return await ApplyCoreAsync(request, cancellationToken);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new
+            {
+                message = "Sollicitatie mislukt door een serverfout. Herstart de API na de laatste update of controleer of migrations zijn toegepast.",
+                detail = ex.InnerException?.Message ?? ex.Message
+            });
+        }
+    }
+
+    private async Task<ActionResult<ApplyResultDto>> ApplyCoreAsync(
+        ApplyRequest request,
+        CancellationToken cancellationToken)
+    {
         if (!request.AcceptedTerms)
         {
             return BadRequest(new { message = "Je moet akkoord gaan met de gebruiksvoorwaarden en privacyverklaring." });
@@ -206,10 +224,18 @@ public class ApplicationsController : ControllerBase
                     return BadRequest(new { message = "Je hebt al gereageerd op deze vacature." });
                 }
 
-                return BadRequest(new { message = "Sollicitatie kon niet worden opgeslagen. Probeer het opnieuw." });
+                return BadRequest(new { message = "Sollicitatie kon niet worden opgeslagen. Probeer het opnieuw.", detail });
             }
 
-            await SendVerificationCodeAsync(candidate, vacancy, code, cancellationToken);
+            try
+            {
+                await SendVerificationCodeAsync(candidate, vacancy, code, cancellationToken);
+            }
+            catch
+            {
+                // Email stub/provider failures must not fail the apply after save.
+            }
+
             var pendingDto = new ApplicationDto(
                 application.Id,
                 vacancy.Id,

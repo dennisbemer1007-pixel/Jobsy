@@ -306,6 +306,11 @@ public sealed class JobsyApiClient : IAsyncDisposable
         {
             return null;
         }
+        catch (HttpRequestException ex) when (ex.StatusCode == HttpStatusCode.InternalServerError)
+        {
+            throw new InvalidOperationException(
+                "Profiel-API gaf een serverfout (500). Herstart de API zodat de laatste fix actief is.", ex);
+        }
     }
 
     public async Task<MeProfile?> UpdateDateOfBirthAsync(DateOnly dateOfBirth, CancellationToken ct = default)

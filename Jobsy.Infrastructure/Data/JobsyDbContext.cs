@@ -57,7 +57,7 @@ public class JobsyDbContext : DbContext
             entity.HasKey(e => e.Id);
             entity.Property(e => e.Email).HasMaxLength(256).IsRequired();
             entity.Property(e => e.FullName).HasMaxLength(256).IsRequired();
-            entity.Property(e => e.PreferencesJson).HasMaxLength(4000);
+            entity.Property(e => e.PreferencesJson).HasMaxLength(8000);
             entity.Property(e => e.ConsentVersion).HasMaxLength(32);
             entity.Property(e => e.HomeLocation)
                 .HasConversion(new NullableGeoPointConverter())
@@ -169,7 +169,7 @@ public class JobsyDbContext : DbContext
             entity.Property(e => e.CandidateCity).HasMaxLength(128);
             entity.Property(e => e.CandidateAddress).HasMaxLength(512);
             entity.Property(e => e.PreferredTransport).HasMaxLength(64).IsRequired();
-            entity.Property(e => e.PreferencesSummary).HasMaxLength(1024);
+            entity.Property(e => e.PreferencesSummary).HasMaxLength(2048);
             entity.Property(e => e.ConsentVersion).HasMaxLength(32);
             entity.Property(e => e.EmailVerificationCode).HasMaxLength(6);
             entity.Property(e => e.SnapshotAvailabilityJson).HasMaxLength(2048);

@@ -81,8 +81,8 @@ namespace Jobsy.Infrastructure.Data.Migrations
                         .HasColumnType("integer");
 
                     b.Property<string>("PreferencesSummary")
-                        .HasMaxLength(1024)
-                        .HasColumnType("character varying(1024)");
+                        .HasMaxLength(2048)
+                        .HasColumnType("character varying(2048)");
 
                     b.Property<string>("PreferredTransport")
                         .IsRequired()
@@ -1238,8 +1238,8 @@ namespace Jobsy.Infrastructure.Data.Migrations
                         .HasColumnType("boolean");
 
                     b.Property<string>("PreferencesJson")
-                        .HasMaxLength(4000)
-                        .HasColumnType("character varying(4000)");
+                        .HasMaxLength(8000)
+                        .HasColumnType("character varying(8000)");
 
                     b.Property<int>("Role")
                         .HasColumnType("integer");

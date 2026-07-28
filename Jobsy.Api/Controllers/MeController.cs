@@ -56,17 +56,24 @@ public class MeController : ControllerBase
             companies is null));
     }
 
-    [HttpGet("profile")]
+        [HttpGet("profile")]
     public async Task<ActionResult<MeProfileDto>> GetProfile(CancellationToken cancellationToken)
     {
-        var user = await _users.FindByPrincipalAsync(User, cancellationToken);
-        if (user is null)
+        try
         {
-            return NotFound(new { message = "Gebruiker niet gevonden in Jobsy." });
-        }
+            var user = await _users.FindByPrincipalAsync(User, cancellationToken);
+            if (user is null)
+            {
+                return NotFound(new { message = "Gebruiker niet gevonden in Jobsy." });
+            }
 
-        var features = await _features.GetAsync(cancellationToken);
-        return Ok(ToProfileDto(user, features.AuthenticatorEnabled));
+            var features = await _features.GetAsync(cancellationToken);
+            return Ok(ToProfileDto(user, features.AuthenticatorEnabled));
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { message = "Profiel kon niet worden geladen.", detail = ex.Message });
+        }
     }
 
     [HttpPut("language")]
@@ -187,7 +194,7 @@ public class MeController : ControllerBase
                 return BadRequest(new { message = "Leeftijd moet tussen 15 en 67 liggen." });
             }
 
-            var roles = request.Preferences.Roles
+            var roles = (request.Preferences.Roles ?? [])
                 .Where(r => !string.IsNullOrWhiteSpace(r))
                 .Select(r => r.Trim().ToLowerInvariant())
                 .Distinct()
@@ -408,7 +415,7 @@ public class MeController : ControllerBase
                 }
             }
 
-            var availability = new Dictionary<string, IReadOnlyList<string>>(StringComparer.OrdinalIgnoreCase);
+            var availability = new Dictionary<string, string[]>();
             if (root.TryGetProperty("availability", out var availabilityEl) && availabilityEl.ValueKind == JsonValueKind.Object)
             {
                 foreach (var day in availabilityEl.EnumerateObject())
@@ -424,8 +431,11 @@ public class MeController : ControllerBase
                         .Where(x => !string.IsNullOrWhiteSpace(x))
                         .Select(x => x!.Trim())
                         .Distinct(StringComparer.OrdinalIgnoreCase)
-                        .ToList();
-                    availability[day.Name] = slots;
+                        .ToArray();
+                    if (slots.Length > 0)
+                    {
+                        availability[day.Name] = slots;
+                    }
                 }
             }
 
@@ -498,7 +508,7 @@ public class MeController : ControllerBase
         null,
         null,
         [],
-        new Dictionary<string, IReadOnlyList<string>>(StringComparer.OrdinalIgnoreCase),
+        new Dictionary<string, string[]>(),
         [],
         []);
 
@@ -510,7 +520,7 @@ public class MeController : ControllerBase
         int? ageYears = null,
         string? aboutMe = null,
         IEnumerable<string>? drivingLicenses = null,
-        IReadOnlyDictionary<string, IReadOnlyList<string>>? availability = null,
+        IReadOnlyDictionary<string, string[]>? availability = null,
         IEnumerable<CandidateEmployerHistoryDto>? employers = null,
         IEnumerable<string>? educations = null)
     {

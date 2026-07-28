@@ -213,7 +213,7 @@ window.jobMap = (function () {
         );
     }
 
-    const CLUSTER_PAGE_SIZE = 3;
+    const CLUSTER_PAGE_SIZE = 1;
 
     function clusterJobsFromMarkers(childMarkers) {
         return childMarkers
@@ -223,57 +223,39 @@ window.jobMap = (function () {
             .filter(Boolean);
     }
 
-    function buildClusterItemHtml(v) {
-        const wageBlock = clusterWageHtml(v);
-        const travel = travelHtml(v);
+    function buildClusterPagerHtml(current, pageCount) {
+        if (pageCount <= 1) {
+            return "";
+        }
+
         return (
-            "<button type=\"button\" class=\"cluster-list__item\" data-job-id=\"" + escapeAttr(v.id) + "\">" +
-                "<div class=\"cluster-list__row\">" +
-                    "<div class=\"cluster-list__main\">" +
-                        "<span class=\"cluster-list__title\">" + escapeHtml(v.title) + "</span>" +
-                        "<span class=\"cluster-list__company\">" + escapeHtml(v.company) + "</span>" +
-                        (travel ? "<span class=\"cluster-list__travel\">" + travel + "</span>" : "") +
-                    "</div>" +
-                    wageBlock +
-                "</div>" +
-            "</button>"
+            "<div class=\"cluster-list__pager map-popup__pager\">" +
+                "<button type=\"button\" class=\"cluster-list__page-btn\" data-cluster-page=\"" + (current - 1) + "\"" +
+                    (current <= 1 ? " disabled" : "") + ">Vorige</button>" +
+                "<span class=\"cluster-list__page-status\">" + current + " / " + pageCount + "</span>" +
+                "<button type=\"button\" class=\"cluster-list__page-btn\" data-cluster-page=\"" + (current + 1) + "\"" +
+                    (current >= pageCount ? " disabled" : "") + ">Volgende</button>" +
+            "</div>"
         );
     }
 
-    function buildClusterListHtml(childMarkers, page) {
+    function buildClusterSingleHtml(childMarkers, page) {
         const jobs = clusterJobsFromMarkers(childMarkers);
         const total = jobs.length;
         const pageCount = Math.max(1, Math.ceil(total / CLUSTER_PAGE_SIZE));
         const current = Math.min(Math.max(1, page || 1), pageCount);
-        const start = (current - 1) * CLUSTER_PAGE_SIZE;
-        const pageJobs = jobs.slice(start, start + CLUSTER_PAGE_SIZE);
-        const items = pageJobs.map(buildClusterItemHtml).join("");
-
-        let pager = "";
-        if (pageCount > 1) {
-            pager =
-                "<div class=\"cluster-list__pager\">" +
-                    "<button type=\"button\" class=\"cluster-list__page-btn\" data-cluster-page=\"" + (current - 1) + "\"" +
-                        (current <= 1 ? " disabled" : "") + ">Vorige</button>" +
-                    "<span class=\"cluster-list__page-status\">" + current + " / " + pageCount + "</span>" +
-                    "<button type=\"button\" class=\"cluster-list__page-btn\" data-cluster-page=\"" + (current + 1) + "\"" +
-                        (current >= pageCount ? " disabled" : "") + ">Volgende</button>" +
-                "</div>";
+        const job = jobs[current - 1];
+        if (!job) {
+            return "<div class=\"cluster-list\"><p>Geen vacatures</p></div>";
         }
 
-        const rangeEnd = Math.min(start + pageJobs.length, total);
-        const rangeLabel = total === 0
-            ? "0 vacatures"
-            : (start + 1) + "–" + rangeEnd + " van " + total;
-
         return (
-            "<div class=\"cluster-list\">" +
-                "<div class=\"cluster-list__header\">" +
-                    "<strong>" + escapeHtml(String(total)) + " vacatures op deze locatie</strong>" +
-                    (pageCount > 1 ? "<span class=\"cluster-list__range\">" + escapeHtml(rangeLabel) + "</span>" : "") +
+            "<div class=\"cluster-single\">" +
+                "<div class=\"cluster-single__meta\">" +
+                    "<span>" + escapeHtml(String(total)) + " vacatures hier</span>" +
+                    buildClusterPagerHtml(current, pageCount) +
                 "</div>" +
-                "<div class=\"cluster-list__items\">" + items + "</div>" +
-                pager +
+                buildPopupHtml(job) +
             "</div>"
         );
     }
@@ -284,16 +266,29 @@ window.jobMap = (function () {
             return;
         }
 
-        popupEl.querySelectorAll(".cluster-list__item").forEach(function (btn) {
-            btn.addEventListener("click", function (ev) {
-                ev.preventDefault();
-                ev.stopPropagation();
-                const id = btn.getAttribute("data-job-id");
-                map.closePopup(popup);
-                if (popup === activeClusterPopup) {
-                    activeClusterPopup = null;
+        // Open vacancy detail immediately on CTA / main card click.
+        popupEl.querySelectorAll(".map-popup__cta, .map-popup__main").forEach(function (el) {
+            if (el.dataset.boundNav) {
+                return;
+            }
+            el.dataset.boundNav = "1";
+            el.addEventListener("click", function (ev) {
+                const cta = el.classList.contains("map-popup__cta")
+                    ? el
+                    : el.querySelector(".map-popup__cta");
+                const id = (cta && cta.getAttribute("data-job-id")) || null;
+                if (!id) {
+                    return;
                 }
-                focus(id);
+                if (!el.classList.contains("map-popup__cta")) {
+                    // Card body click (not interactive children besides CTA).
+                    if (ev.target.closest("a, button")) {
+                        return;
+                    }
+                    ev.preventDefault();
+                    window.location.href = "/vacancies/" + encodeURIComponent(id);
+                }
+                notifyOpen(id);
             });
         });
 
@@ -308,7 +303,10 @@ window.jobMap = (function () {
                 if (!nextPage) {
                     return;
                 }
-                popup.setContent(buildClusterListHtml(childMarkers, nextPage));
+                const jobs = clusterJobsFromMarkers(childMarkers);
+                const job = jobs[nextPage - 1];
+                popup.setContent(buildClusterSingleHtml(childMarkers, nextPage));
+                popup.options = Object.assign({}, popup.options, jobPopupOptions(hasWageBands(job || {})));
                 bindClusterPopupInteractions(popup, childMarkers);
             });
         });
@@ -327,15 +325,16 @@ window.jobMap = (function () {
     function openClusterList(clusterLayer) {
         const childMarkers = clusterLayer.getAllChildMarkers();
         const latlng = clusterLayer.getLatLng();
+        const jobs = clusterJobsFromMarkers(childMarkers);
+        const first = jobs[0] || {};
 
         if (activeClusterPopup) {
             map.closePopup(activeClusterPopup);
         }
 
-        // Never widen cluster popups for wage tables — bands are only on single-job popups.
-        activeClusterPopup = L.popup(clusterPopupOptions(false))
+        activeClusterPopup = L.popup(jobPopupOptions(hasWageBands(first)))
             .setLatLng(latlng)
-            .setContent(buildClusterListHtml(childMarkers, 1))
+            .setContent(buildClusterSingleHtml(childMarkers, 1))
             .openOn(map);
 
         bindClusterPopupInteractions(activeClusterPopup, childMarkers);

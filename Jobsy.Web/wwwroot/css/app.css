@@ -5060,11 +5060,130 @@ button.linkish:hover {
 
 @media (max-width: 1024px) {
     .app-footer {
-        padding: 0.65rem 0.85rem 0.35rem;
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0.35rem;
+        padding: 0.55rem 0.75rem 0.45rem;
+    }
+
+    .app-footer__links {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 0;
+        width: 100%;
+        border: 1px solid var(--border);
+        border-radius: var(--radius-sm);
+        overflow: hidden;
+        background: var(--surface);
+    }
+
+    .app-footer__links a {
+        text-align: center;
+        text-decoration: none;
+        font-size: 0.68rem;
+        font-weight: 600;
+        line-height: 1.2;
+        padding: 0.55rem 0.35rem;
+        color: var(--brand);
+        border-right: 1px solid var(--border);
+    }
+
+    .app-footer__links a:last-child {
+        border-right: none;
     }
 
     .app-footer__copy {
         display: none;
+    }
+}
+
+.profile-entry-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr) 5.5rem auto;
+    gap: 0.45rem;
+    align-items: center;
+    margin-bottom: 0.45rem;
+}
+
+.profile-entry-row input {
+    min-width: 0;
+    width: 100%;
+}
+
+.profile-roles .profile-entry-row:has(input:only-of-type),
+.profile-roles .profile-entry-row:has(input:first-child:nth-last-child(2)) {
+    grid-template-columns: minmax(0, 1fr) auto;
+}
+
+.icon-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.3rem;
+    min-width: 2.1rem;
+    min-height: 2.1rem;
+    padding: 0.35rem 0.55rem;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--muted);
+    font: inherit;
+    font-size: 0.82rem;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.icon-btn:hover {
+    background: var(--hover);
+    color: var(--brand);
+    border-color: color-mix(in srgb, var(--brand) 25%, var(--border));
+}
+
+.icon-btn--add {
+    align-self: flex-start;
+    margin-top: 0.15rem;
+    padding-inline: 0.65rem;
+}
+
+.icon-btn--danger {
+    color: var(--danger);
+    border-color: transparent;
+    background: transparent;
+}
+
+.icon-btn--danger:hover {
+    background: var(--danger-soft);
+    border-color: color-mix(in srgb, var(--danger) 25%, var(--border));
+    color: var(--danger);
+}
+
+.cluster-single__meta {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    margin-bottom: 0.55rem;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--muted);
+}
+
+.cluster-single .map-popup {
+    box-shadow: none;
+}
+
+.map-popup__pager {
+    margin: 0;
+    flex-shrink: 0;
+}
+
+@media (max-width: 640px) {
+    .profile-entry-row {
+        grid-template-columns: 1fr 1fr auto;
+    }
+
+    .profile-entry-row input[type="number"] {
+        grid-column: 1 / 2;
     }
 }
 

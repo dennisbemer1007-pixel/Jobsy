@@ -69,8 +69,13 @@ window.vacancyDetailMap = (function () {
 
         map.setView([lat, lng], 15);
 
-        [50, 200, 400].forEach(function (ms) {
-            setTimeout(invalidate, ms);
+        [50, 200, 400, 800].forEach(function (ms) {
+            setTimeout(function () {
+                invalidate();
+                if (map) {
+                    map.setView([lat, lng], map.getZoom() || 15, { animate: false });
+                }
+            }, ms);
         });
 
         window.addEventListener("resize", invalidate);
