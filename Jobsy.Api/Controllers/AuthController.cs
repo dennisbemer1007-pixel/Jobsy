@@ -18,11 +18,16 @@ public class AuthController : ControllerBase
 {
     private readonly JobsyDbContext _db;
     private readonly IConfiguration _configuration;
+    private readonly IIntegrationCredentialService _credentials;
 
-    public AuthController(JobsyDbContext db, IConfiguration configuration)
+    public AuthController(
+        JobsyDbContext db,
+        IConfiguration configuration,
+        IIntegrationCredentialService credentials)
     {
         _db = db;
         _configuration = configuration;
+        _credentials = credentials;
     }
 
     /// <summary>
@@ -150,6 +155,66 @@ public class AuthController : ControllerBase
             flags.ShowCandidateHowTo,
             flags.HasCandidateApplications));
     }
+
+    /// <summary>
+    /// Public status for login buttons (no secrets). True when Integraties has Client ID + secret.
+    /// </summary>
+    [HttpGet("external-providers")]
+    [AllowAnonymous]
+    public async Task<ActionResult<ExternalProvidersStatusResponse>> GetExternalProviders(
+        CancellationToken cancellationToken)
+    {
+        var entra = await _credentials.GetAsync(IntegrationKey.MicrosoftEntra, cancellationToken);
+        var google = await _credentials.GetAsync(IntegrationKey.GoogleEntra, cancellationToken);
+        return Ok(new ExternalProvidersStatusResponse(
+            Entra: IsOAuthConfigured(entra),
+            Google: IsOAuthConfigured(google)));
+    }
+
+    /// <summary>
+    /// Server-to-server OAuth client config for Jobsy.Web (Integraties credentials).
+    /// </summary>
+    [HttpGet("external-provider-config/{provider}")]
+    [AllowAnonymous]
+    [EnableRateLimiting("auth")]
+    public async Task<ActionResult<ExternalProviderConfigResponse>> GetExternalProviderConfig(
+        string provider,
+        CancellationToken cancellationToken)
+    {
+        if (!IsTrustedProvisionCaller())
+        {
+            return Unauthorized(new { message = "Ongeldige provision-secret." });
+        }
+
+        var key = provider.Trim().ToLowerInvariant() switch
+        {
+            "entra" or "microsoft" or "microsoftentra" => IntegrationKey.MicrosoftEntra,
+            "google" or "googleentra" => IntegrationKey.GoogleEntra,
+            _ => (IntegrationKey?)null
+        };
+        if (key is null)
+        {
+            return BadRequest(new { message = "Onbekende provider." });
+        }
+
+        var secrets = await _credentials.GetSecretsAsync(key.Value, cancellationToken);
+        if (string.IsNullOrWhiteSpace(secrets?.ClientId)
+            || string.IsNullOrWhiteSpace(secrets.ClientSecret))
+        {
+            return NotFound(new { message = "Provider is niet geconfigureerd in Integraties." });
+        }
+
+        return Ok(new ExternalProviderConfigResponse(
+            key.Value.ToString(),
+            secrets.ClientId.Trim(),
+            secrets.ClientSecret.Trim(),
+            string.IsNullOrWhiteSpace(secrets.TenantId) ? null : secrets.TenantId.Trim()));
+    }
+
+    private static bool IsOAuthConfigured(IntegrationCredentialView? view)
+        => view is not null
+           && !string.IsNullOrWhiteSpace(view.ClientId)
+           && view.HasClientSecret;
 
     private bool IsTrustedProvisionCaller()
     {

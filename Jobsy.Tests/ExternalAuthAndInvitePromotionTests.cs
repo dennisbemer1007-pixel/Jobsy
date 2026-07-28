@@ -1,15 +1,16 @@
+using Jobsy.Api.Controllers;
 using Jobsy.Api.Models;
 using Jobsy.Core.Entities;
 using Jobsy.Core.Enums;
 using Jobsy.Core.Rules;
 using Jobsy.Core.ValueObjects;
 using Jobsy.Infrastructure.Data;
+using Jobsy.Infrastructure.Services;
 using Jobsy.Web.Auth;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
-using Jobsy.Api.Controllers;
 
 namespace Jobsy.Tests;
 
@@ -195,7 +196,8 @@ public class ExternalAuthAndInvitePromotionTests
                 ["JobsyAuth:DevelopmentAuthSecret"] = secret
             })
             .Build();
-        return new AuthController(db, config);
+        var credentials = new IntegrationCredentialService(db, new PassthroughSecretProtector());
+        return new AuthController(db, config, credentials);
     }
 
     private static ControllerContext WithProvisionSecret(string secret)
