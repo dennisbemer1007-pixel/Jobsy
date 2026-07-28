@@ -35,14 +35,18 @@ public record ApplyRequest(
     int EstimatedTravelMinutes,
     bool UseAuthenticator = false,
     bool AcceptedTerms = false,
-    string? ConsentVersion = null);
+    string? ConsentVersion = null,
+    bool WorkPermitConfirmed = false,
+    string? VerificationCode = null);
 
 public record ReactToApplicationRequest(ApplicationStatus Status);
 
 public record ApplyResultDto(
     ApplicationDto Application,
     bool ConfirmationEmailQueued,
-    bool AuthenticatorStubUsed);
+    bool AuthenticatorStubUsed,
+    bool RequiresVerification = false,
+    bool VerificationCodeSent = false);
 
 public record MinimumWageRateDto(
     Guid Id,

@@ -5,7 +5,17 @@ public record CandidatePreferencesDto(
     int? MaxTravelMinutes,
     string? PreferredTransport,
     string? Language = null,
-    int? AgeYears = null);
+    int? AgeYears = null,
+    string? AboutMe = null,
+    IReadOnlyList<string>? DrivingLicenses = null,
+    IReadOnlyDictionary<string, IReadOnlyList<string>>? Availability = null,
+    IReadOnlyList<CandidateEmployerHistoryDto>? Employers = null,
+    IReadOnlyList<string>? Educations = null);
+
+public record CandidateEmployerHistoryDto(
+    string EmployerName,
+    string? Role = null,
+    int? Years = null);
 
 public record CandidateVacancyEngagementDto(
     Guid Id,

@@ -110,6 +110,84 @@
                     }
                 </fieldset>
 
+                <fieldset class="profile-roles">
+                    <legend>Rijbewijzen</legend>
+                    @foreach (var license in LicenseOptions)
+                    {
+                        <label>
+                            <input type="checkbox"
+                                   checked="@_selectedLicenses.Contains(license)"
+                                   @onchange="e => ToggleLicense(license, (bool)(e.Value ?? false))" />
+                            @license
+                        </label>
+                    }
+                </fieldset>
+
+                <label>
+                    Vertel wat over jezelf
+                    <textarea rows="4" @bind="_aboutMe"></textarea>
+                </label>
+
+                <fieldset class="profile-roles">
+                    <legend>Beschikbaarheid</legend>
+                    <table class="wage-table">
+                        <thead>
+                            <tr>
+                                <th>Dag</th>
+                                @foreach (var slot in AvailabilitySlots)
+                                {
+                                    <th>@slot</th>
+                                }
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var day in AvailabilityDays)
+                            {
+                                <tr>
+                                    <th>@day</th>
+                                    @foreach (var slot in AvailabilitySlots)
+                                    {
+                                        var key = $"{day}:{slot}";
+                                        <td>
+                                            <input type="checkbox"
+                                                   checked="@_availability.Contains(key)"
+                                                   @onchange="e => ToggleAvailability(key, (bool)(e.Value ?? false))" />
+                                        </td>
+                                    }
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </fieldset>
+
+                <fieldset class="profile-roles">
+                    <legend>Werkervaring (werkgevers)</legend>
+                    @for (var i = 0; i < _employers.Count; i++)
+                    {
+                        var idx = i;
+                        <div class="inline-actions">
+                            <input placeholder="Werkgever" @bind="_employers[idx].EmployerName" />
+                            <input placeholder="Functie" @bind="_employers[idx].Role" />
+                            <input type="number" min="0" max="80" placeholder="Jaren" @bind="_employers[idx].Years" />
+                            <button type="button" class="engagement-btn" @onclick="() => RemoveEmployer(idx)">Verwijder</button>
+                        </div>
+                    }
+                    <button type="button" class="engagement-btn" @onclick="AddEmployer">Werkgever toevoegen</button>
+                </fieldset>
+
+                <fieldset class="profile-roles">
+                    <legend>Diploma/Opleiding</legend>
+                    @for (var i = 0; i < _educations.Count; i++)
+                    {
+                        var idx = i;
+                        <div class="inline-actions">
+                            <input placeholder="Bijv. MBO Logistiek" @bind="_educations[idx]" />
+                            <button type="button" class="engagement-btn" @onclick="() => RemoveEducation(idx)">Verwijder</button>
+                        </div>
+                    }
+                    <button type="button" class="engagement-btn" @onclick="AddEducation">Opleiding toevoegen</button>
+                </fieldset>
+
                 @if (_authenticatorEnabled)
                 {
                     <p class="login-lead">Authenticator-optie is beschikbaar als stub bij solliciteren.</p>
@@ -129,6 +207,9 @@
 
 @code {
     private static readonly string[] RoleOptions = ["horeca", "retail", "logistiek", "tuinbouw", "zorg", "kantoor"];
+    private static readonly string[] LicenseOptions = ["B", "A", "AM", "T", "Heftruck", "BE", "C", "CE", "D"];
+    private static readonly string[] AvailabilityDays = ["Ma", "Di", "Wo", "Do", "Vr", "Za", "Zo"];
+    private static readonly string[] AvailabilitySlots = ["Ochtend", "Middag", "Avond", "Nacht"];
 
     private bool _loading = true;
     private bool _saving;
@@ -142,6 +223,11 @@
     private int? _maxTravel = 30;
     private string _preferredTransport = "";
     private readonly HashSet<string> _selectedRoles = new(StringComparer.OrdinalIgnoreCase);
+    private readonly HashSet<string> _selectedLicenses = new(StringComparer.OrdinalIgnoreCase);
+    private readonly HashSet<string> _availability = new(StringComparer.OrdinalIgnoreCase);
+    private readonly List<CandidateEmployerHistory> _employers = [];
+    private readonly List<string> _educations = [];
+    private string? _aboutMe;
     private string? _message;
 
     private List<AddressSuggestion> _suggestions = [];
@@ -173,6 +259,24 @@
             {
                 _selectedRoles.Add(role);
             }
+            _selectedLicenses.Clear();
+            foreach (var license in profile.Preferences.DrivingLicenses)
+            {
+                _selectedLicenses.Add(license);
+            }
+            _aboutMe = profile.Preferences.AboutMe;
+            _availability.Clear();
+            foreach (var day in profile.Preferences.Availability)
+            {
+                foreach (var slot in day.Value)
+                {
+                    _availability.Add($"{day.Key}:{slot}");
+                }
+            }
+            _employers.Clear();
+            _employers.AddRange(profile.Preferences.Employers);
+            _educations.Clear();
+            _educations.AddRange(profile.Preferences.Educations);
 
             if (_homeLat is not null && _homeLng is not null)
             {
@@ -206,6 +310,35 @@
             _selectedRoles.Remove(role);
         }
     }
+
+    private void ToggleLicense(string license, bool selected)
+    {
+        if (selected)
+        {
+            _selectedLicenses.Add(license);
+        }
+        else
+        {
+            _selectedLicenses.Remove(license);
+        }
+    }
+
+    private void ToggleAvailability(string key, bool selected)
+    {
+        if (selected)
+        {
+            _availability.Add(key);
+        }
+        else
+        {
+            _availability.Remove(key);
+        }
+    }
+
+    private void AddEmployer() => _employers.Add(new CandidateEmployerHistory());
+    private void RemoveEmployer(int index) => _employers.RemoveAt(index);
+    private void AddEducation() => _educations.Add(string.Empty);
+    private void RemoveEducation(int index) => _educations.RemoveAt(index);
 
     private async Task OnAddressInputAsync(ChangeEventArgs e)
     {
@@ -328,7 +461,12 @@
                 {
                     Roles = _selectedRoles.OrderBy(r => r).ToList(),
                     MaxTravelMinutes = _maxTravel,
-                    PreferredTransport = string.IsNullOrWhiteSpace(_preferredTransport) ? null : _preferredTransport
+                    PreferredTransport = string.IsNullOrWhiteSpace(_preferredTransport) ? null : _preferredTransport,
+                    AboutMe = string.IsNullOrWhiteSpace(_aboutMe) ? null : _aboutMe.Trim(),
+                    DrivingLicenses = _selectedLicenses.OrderBy(x => x).ToList(),
+                    Availability = BuildAvailability(),
+                    Employers = _employers.Where(e => !string.IsNullOrWhiteSpace(e.EmployerName)).ToList(),
+                    Educations = _educations.Where(x => !string.IsNullOrWhiteSpace(x)).Select(x => x.Trim()).ToList()
                 },
                 homeLatitude: clearHome || !_homeLocationDirty ? null : _homeLat,
                 homeLongitude: clearHome || !_homeLocationDirty ? null : _homeLng,
@@ -351,5 +489,31 @@
         _suggestCts?.Cancel();
         _suggestCts?.Dispose();
         return ValueTask.CompletedTask;
+    }
+
+    private Dictionary<string, List<string>> BuildAvailability()
+    {
+        var map = new Dictionary<string, List<string>>(StringComparer.OrdinalIgnoreCase);
+        foreach (var key in _availability)
+        {
+            var parts = key.Split(':', 2);
+            if (parts.Length != 2)
+            {
+                continue;
+            }
+
+            if (!map.TryGetValue(parts[0], out var slots))
+            {
+                slots = [];
+                map[parts[0]] = slots;
+            }
+
+            if (!slots.Contains(parts[1], StringComparer.OrdinalIgnoreCase))
+            {
+                slots.Add(parts[1]);
+            }
+        }
+
+        return map;
     }
 }

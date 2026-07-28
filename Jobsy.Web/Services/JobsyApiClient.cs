@@ -730,12 +730,14 @@ public sealed class JobsyApiClient : IAsyncDisposable
         return await response.Content.ReadFromJsonAsync<CompanyUserItem>(cancellationToken: ct);
     }
 
-    public async Task ApplyAsync(
+    public async Task<ApplyResultItem?> ApplyAsync(
         Guid vacancyId,
         string preferredTransport,
         int estimatedTravelMinutes,
         bool useAuthenticator = false,
         bool acceptedTerms = false,
+        bool workPermitConfirmed = false,
+        string? verificationCode = null,
         string? consentVersion = null,
         CancellationToken ct = default)
     {
@@ -746,6 +748,8 @@ public sealed class JobsyApiClient : IAsyncDisposable
             estimatedTravelMinutes,
             useAuthenticator,
             acceptedTerms,
+            workPermitConfirmed,
+            verificationCode,
             consentVersion = consentVersion ?? "2026-07-25"
         }, ct);
         if (!response.IsSuccessStatusCode)
@@ -753,6 +757,8 @@ public sealed class JobsyApiClient : IAsyncDisposable
             var body = await response.Content.ReadAsStringAsync(ct);
             throw new InvalidOperationException(string.IsNullOrWhiteSpace(body) ? response.ReasonPhrase : body);
         }
+
+        return await response.Content.ReadFromJsonAsync<ApplyResultItem>(cancellationToken: ct);
     }
 
     public async Task<string> ExportPrivacyDataAsync(CancellationToken ct = default)
@@ -800,6 +806,26 @@ public sealed class JobsyApiClient : IAsyncDisposable
     public async Task ReactToApplicationAsync(Guid applicationId, string status, CancellationToken ct = default)
     {
         var response = await _http.PostAsJsonAsync($"api/applications/{applicationId}/react", new { status }, ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException(string.IsNullOrWhiteSpace(body) ? response.ReasonPhrase : body);
+        }
+    }
+
+    public async Task MarkEmployerContactAsync(Guid applicationId, CancellationToken ct = default)
+    {
+        var response = await _http.PostAsync($"api/applications/{applicationId}/contact", null, ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException(string.IsNullOrWhiteSpace(body) ? response.ReasonPhrase : body);
+        }
+    }
+
+    public async Task FulfillVacancyAsync(Guid vacancyId, Guid applicationId, CancellationToken ct = default)
+    {
+        var response = await _http.PostAsync($"api/applications/vacancies/{vacancyId}/fulfill/{applicationId}", null, ct);
         if (!response.IsSuccessStatusCode)
         {
             var body = await response.Content.ReadAsStringAsync(ct);
@@ -1232,7 +1258,10 @@ public record CreateVacancyForm(
     WorkType WorkTypes,
     string? ImageUrl = null,
     string? VideoUrl = null,
-    Guid? SalaryTableId = null);
+    Guid? SalaryTableId = null,
+    string? RequiredDrivingLicense = null,
+    string? RequiredEducation = null,
+    int? MinimumEmployers = null);
 
 public record BatchVacancyForm(
     string Title,

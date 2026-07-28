@@ -21,7 +21,10 @@ public enum ApplicationStatus
 {
     Pending = 0,
     Accepted = 1,
-    Rejected = 2
+    Rejected = 2,
+    EmployerContacting = 3,
+    Hired = 4,
+    FilledElsewhere = 5
 }
 
 public enum CompanyType

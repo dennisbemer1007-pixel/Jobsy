@@ -354,7 +354,10 @@ public class VacanciesController : ControllerBase
             WorkTypes = request.WorkTypes,
             ImageUrl = imageUrl,
             VideoUrl = videoUrl,
-            SalaryTableId = tableId
+            SalaryTableId = tableId,
+            RequiredDrivingLicense = string.IsNullOrWhiteSpace(request.RequiredDrivingLicense) ? null : request.RequiredDrivingLicense.Trim(),
+            RequiredEducation = string.IsNullOrWhiteSpace(request.RequiredEducation) ? null : request.RequiredEducation.Trim(),
+            MinimumEmployers = request.MinimumEmployers is > 0 ? request.MinimumEmployers : null
         };
 
         _db.Vacancies.Add(vacancy);
@@ -849,6 +852,10 @@ public class VacanciesController : ControllerBase
             WorkTypeLabels.Expand(v.WorkTypes),
             impressionCount,
             clickCount,
-            applicationCount);
+            applicationCount,
+            v.RequiredDrivingLicense,
+            v.RequiredEducation,
+            v.MinimumEmployers,
+            v.FulfilledByApplicationId);
     }
 }

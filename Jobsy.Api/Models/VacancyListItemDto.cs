@@ -30,4 +30,8 @@ public record VacancyListItemDto(
     string[]? WorkTypes = null,
     int ImpressionCount = 0,
     int ClickCount = 0,
-    int ApplicationCount = 0);
+    int ApplicationCount = 0,
+    string? RequiredDrivingLicense = null,
+    string? RequiredEducation = null,
+    int? MinimumEmployers = null,
+    Guid? FulfilledByApplicationId = null);

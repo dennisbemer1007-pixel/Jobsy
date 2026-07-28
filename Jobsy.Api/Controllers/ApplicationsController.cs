@@ -1,6 +1,7 @@
 using System.Net;
 using Jobsy.Api.Models;
 using Jobsy.Core.Authorization;
+using Jobsy.Core.Contracts;
 using Jobsy.Core.Enums;
 using Jobsy.Core.Interfaces;
 using Jobsy.Core.Privacy;
@@ -10,6 +11,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
+using System.Text.Json;
 
 namespace Jobsy.Api.Controllers;
 
@@ -48,6 +50,7 @@ public class ApplicationsController : ControllerBase
         var query = _db.Applications
             .AsNoTracking()
             .Include(a => a.Vacancy).ThenInclude(v => v.Company)
+            .Where(a => a.EmailVerifiedAt != null)
             .AsQueryable();
 
         if (accessible is not null)
@@ -74,6 +77,10 @@ public class ApplicationsController : ControllerBase
         {
             return BadRequest(new { message = "Je moet akkoord gaan met de gebruiksvoorwaarden en privacyverklaring." });
         }
+        if (!request.WorkPermitConfirmed)
+        {
+            return BadRequest(new { message = "Je moet bevestigen dat je wettelijk in Nederland mag werken." });
+        }
 
         var vacancy = await _db.Vacancies
             .Include(v => v.Company)
@@ -85,7 +92,9 @@ public class ApplicationsController : ControllerBase
         }
 
         var today = DateOnly.FromDateTime(DateTime.UtcNow);
-        var applicationCount = await _db.Applications.CountAsync(a => a.VacancyId == vacancy.Id, cancellationToken);
+        var applicationCount = await _db.Applications.CountAsync(
+            a => a.VacancyId == vacancy.Id && a.EmailVerifiedAt != null,
+            cancellationToken);
         if (!VacancyVisibilityRules.CanAcceptApplications(vacancy, today, applicationCount))
         {
             return BadRequest(new { message = "Deze vacature neemt geen sollicitaties meer aan." });
@@ -97,14 +106,21 @@ public class ApplicationsController : ControllerBase
             return Unauthorized(new { message = "Inloggegevens incompleet; solliciteren niet mogelijk." });
         }
 
-        var alreadyApplied = await _db.Applications.AnyAsync(
+        var existing = await _db.Applications.FirstOrDefaultAsync(
             a => a.VacancyId == vacancy.Id
                  && (a.CandidateUserId == candidate.Id
                      || a.CandidateEmail.ToLower() == candidate.Email.ToLower()),
             cancellationToken);
-        if (alreadyApplied)
+        if (existing is not null && existing.EmailVerifiedAt is not null)
         {
             return BadRequest(new { message = "Je hebt al gereageerd op deze vacature." });
+        }
+
+        var preferences = MeController.ParsePreferences(candidate.PreferencesJson);
+        var requirementError = ValidateHardRequirements(vacancy, preferences);
+        if (requirementError is not null)
+        {
+            return BadRequest(new { message = requirementError });
         }
 
         var authenticatorStubUsed = false;
@@ -129,35 +145,101 @@ public class ApplicationsController : ControllerBase
                 vacancy.Location.Longitude);
         }
 
-        var application = new Core.Entities.Application
+        var application = existing ?? new Core.Entities.Application
         {
             Id = Guid.NewGuid(),
             VacancyId = vacancy.Id,
             CandidateUserId = candidate.Id,
             CandidateName = candidate.FullName,
             CandidateEmail = candidate.Email,
-            CandidateCity = ExtractCityHint(candidate),
-            PreferredTransport = request.PreferredTransport,
-            EstimatedTravelMinutes = request.EstimatedTravelMinutes,
-            DistanceKm = distanceKm,
-            PreferencesSummary = candidate.PreferencesJson,
-            Status = ApplicationStatus.Pending,
-            ConsentAcceptedAt = DateTime.UtcNow,
-            ConsentVersion = string.IsNullOrWhiteSpace(request.ConsentVersion)
-                ? PrivacyConstants.CurrentConsentVersion
-                : request.ConsentVersion.Trim(),
-            CreatedAt = DateTime.UtcNow
+            CreatedAt = DateTime.UtcNow,
+            Status = ApplicationStatus.Pending
         };
 
-        _db.Applications.Add(application);
-        try
+        application.CandidateCity = ExtractCityHint(candidate);
+        application.PreferredTransport = request.PreferredTransport;
+        application.EstimatedTravelMinutes = request.EstimatedTravelMinutes;
+        application.DistanceKm = distanceKm;
+        application.PreferencesSummary = candidate.PreferencesJson;
+        application.ConsentAcceptedAt = DateTime.UtcNow;
+        application.ConsentVersion = string.IsNullOrWhiteSpace(request.ConsentVersion)
+            ? PrivacyConstants.CurrentConsentVersion
+            : request.ConsentVersion.Trim();
+        application.WorkPermitConfirmed = request.WorkPermitConfirmed;
+        application.SnapshotAvailabilityJson = preferences.Availability is null ? null : JsonSerializer.Serialize(preferences.Availability);
+        application.SnapshotDrivingLicenses = preferences.DrivingLicenses is null ? null : string.Join(", ", preferences.DrivingLicenses);
+        application.SnapshotEducations = preferences.Educations is null ? null : string.Join(", ", preferences.Educations);
+        application.SnapshotAboutMe = preferences.AboutMe;
+        application.CandidateEmployerCount = preferences.Employers?.Count ?? 0;
+
+        var isVerificationAttempt = !string.IsNullOrWhiteSpace(request.VerificationCode);
+        if (!isVerificationAttempt)
         {
-            await _db.SaveChangesAsync(cancellationToken);
+            var code = Random.Shared.Next(0, 1_000_000).ToString("D6");
+            application.EmailVerificationCode = code;
+            application.EmailVerificationExpiresAt = DateTime.UtcNow.AddMinutes(10);
+            application.EmailVerifiedAt = null;
+            application.Status = ApplicationStatus.Pending;
+            if (existing is null)
+            {
+                _db.Applications.Add(application);
+            }
+
+            try
+            {
+                await _db.SaveChangesAsync(cancellationToken);
+            }
+            catch (DbUpdateException)
+            {
+                return BadRequest(new { message = "Je hebt al gereageerd op deze vacature." });
+            }
+
+            await SendVerificationCodeAsync(candidate, vacancy, code, cancellationToken);
+            var pendingDto = new ApplicationDto(
+                application.Id,
+                vacancy.Id,
+                vacancy.Title,
+                vacancy.Company.Name,
+                application.CandidateName,
+                application.CandidateEmail,
+                application.PreferredTransport,
+                application.EstimatedTravelMinutes,
+                application.CreatedAt,
+                "PendingVerification",
+                null);
+            return Ok(new ApplyResultDto(
+                pendingDto,
+                ConfirmationEmailQueued: false,
+                authenticatorStubUsed,
+                RequiresVerification: true,
+                VerificationCodeSent: true));
         }
-        catch (DbUpdateException)
+
+        if (existing is null)
         {
-            return BadRequest(new { message = "Je hebt al gereageerd op deze vacature." });
+            return BadRequest(new { message = "Start eerst met Verzenden om een verificatiecode te ontvangen." });
         }
+
+        if (existing.EmailVerifiedAt is not null)
+        {
+            return BadRequest(new { message = "Deze sollicitatie is al bevestigd." });
+        }
+
+        if (existing.EmailVerificationExpiresAt is null || existing.EmailVerificationExpiresAt < DateTime.UtcNow)
+        {
+            return BadRequest(new { message = "Verificatiecode verlopen. Klik opnieuw op Verzenden." });
+        }
+
+        if (!string.Equals(existing.EmailVerificationCode, request.VerificationCode?.Trim(), StringComparison.Ordinal))
+        {
+            return BadRequest(new { message = "Onjuiste verificatiecode." });
+        }
+
+        existing.EmailVerifiedAt = DateTime.UtcNow;
+        existing.EmailVerificationCode = null;
+        existing.EmailVerificationExpiresAt = null;
+        existing.WorkPermitConfirmed = request.WorkPermitConfirmed;
+        await _db.SaveChangesAsync(cancellationToken);
 
         var deepLink = await BuildDeepLinkAsync("/candidate/applications", cancellationToken);
         var name = Html(candidate.FullName);
@@ -174,18 +256,20 @@ public class ApplicationsController : ControllerBase
              """,
             "ApplicationConfirmation"), cancellationToken);
 
+        await NotifyEmployersOfNewApplicationAsync(vacancy, existing, cancellationToken);
+
         var dto = new ApplicationDto(
-            application.Id,
+            existing.Id,
             vacancy.Id,
             vacancy.Title,
             vacancy.Company.Name,
-            application.CandidateName,
-            application.CandidateEmail,
-            application.PreferredTransport,
-            application.EstimatedTravelMinutes,
-            application.CreatedAt,
-            application.Status.ToString(),
-            application.RespondedAt);
+            existing.CandidateName,
+            existing.CandidateEmail,
+            existing.PreferredTransport,
+            existing.EstimatedTravelMinutes,
+            existing.CreatedAt,
+            existing.Status.ToString(),
+            existing.RespondedAt);
 
         return Ok(new ApplyResultDto(dto, ConfirmationEmailQueued: true, authenticatorStubUsed));
     }
@@ -209,6 +293,10 @@ public class ApplicationsController : ControllerBase
         if (application is null)
         {
             return NotFound();
+        }
+        if (application.EmailVerifiedAt is null)
+        {
+            return BadRequest(new { message = "Sollicitatie is nog niet geverifieerd." });
         }
 
         var accessible = await _companyAuth.GetAccessibleCompanyIdsAsync(User, cancellationToken);
@@ -268,9 +356,117 @@ public class ApplicationsController : ControllerBase
         return Ok(MapEmployerDto(application));
     }
 
+    [HttpPost("{id:guid}/contact")]
+    [Authorize(Roles = JobsyRoles.ApplicationReactRoles)]
+    public async Task<ActionResult<EmployerApplicationDto>> MarkEmployerContact(Guid id, CancellationToken cancellationToken)
+    {
+        var application = await _db.Applications
+            .Include(a => a.Vacancy).ThenInclude(v => v.Company)
+            .FirstOrDefaultAsync(a => a.Id == id, cancellationToken);
+        if (application is null)
+        {
+            return NotFound();
+        }
+
+        var accessible = await _companyAuth.GetAccessibleCompanyIdsAsync(User, cancellationToken);
+        if (accessible is not null && !accessible.Contains(application.Vacancy.CompanyId))
+        {
+            return Forbid();
+        }
+
+        if (application.Status != ApplicationStatus.Accepted)
+        {
+            return BadRequest(new { message = "Contact kan alleen na acceptatie." });
+        }
+
+        application.Status = ApplicationStatus.EmployerContacting;
+        application.RespondedAt = DateTime.UtcNow;
+        await _db.SaveChangesAsync(cancellationToken);
+
+        var deepLink = await BuildDeepLinkAsync($"/vacancies/{application.VacancyId}", cancellationToken);
+        await _email.SendAsync(new EmailMessage(
+            application.CandidateEmail,
+            $"Werkgever neemt contact op: {application.Vacancy.Title}",
+            $"""
+             <p>Goed nieuws! De werkgever van <strong>{Html(application.Vacancy.Title)}</strong> neemt contact met je op.</p>
+             <p><a href="{deepLink}">Open vacature</a></p>
+             """,
+            "EmployerContacting"), cancellationToken);
+        await _push.SendAsync(new PushMessage(
+            application.CandidateEmail,
+            "Werkgever neemt contact op",
+            $"{application.Vacancy.Company.Name} neemt contact op over {application.Vacancy.Title}",
+            deepLink,
+            "EmployerContacting"), cancellationToken);
+
+        return Ok(MapEmployerDto(application));
+    }
+
+    [HttpPost("vacancies/{vacancyId:guid}/fulfill/{applicationId:guid}")]
+    [Authorize(Roles = JobsyRoles.ApplicationReactRoles)]
+    public async Task<ActionResult> FulfillVacancy(Guid vacancyId, Guid applicationId, CancellationToken cancellationToken)
+    {
+        var vacancy = await _db.Vacancies
+            .Include(v => v.Company)
+            .FirstOrDefaultAsync(v => v.Id == vacancyId, cancellationToken);
+        if (vacancy is null)
+        {
+            return NotFound();
+        }
+
+        var accessible = await _companyAuth.GetAccessibleCompanyIdsAsync(User, cancellationToken);
+        if (accessible is not null && !accessible.Contains(vacancy.CompanyId))
+        {
+            return Forbid();
+        }
+
+        var chosen = await _db.Applications.FirstOrDefaultAsync(a => a.Id == applicationId && a.VacancyId == vacancyId, cancellationToken);
+        if (chosen is null)
+        {
+            return NotFound(new { message = "Geselecteerde sollicitatie niet gevonden." });
+        }
+        if (chosen.EmailVerifiedAt is null)
+        {
+            return BadRequest(new { message = "Alleen geverifieerde sollicitaties kunnen op vervuld worden gezet." });
+        }
+
+        vacancy.Status = VacancyStatus.Fulfilled;
+        vacancy.FulfilledByApplicationId = chosen.Id;
+        chosen.Status = ApplicationStatus.Hired;
+        chosen.RespondedAt = DateTime.UtcNow;
+
+        var others = await _db.Applications
+            .Where(a => a.VacancyId == vacancyId && a.Id != chosen.Id && a.EmailVerifiedAt != null)
+            .ToListAsync(cancellationToken);
+        foreach (var other in others)
+        {
+            other.Status = ApplicationStatus.FilledElsewhere;
+            other.RespondedAt = DateTime.UtcNow;
+        }
+
+        await _db.SaveChangesAsync(cancellationToken);
+
+        await _email.SendAsync(new EmailMessage(
+            chosen.CandidateEmail,
+            $"Gefeliciteerd! Je bent aangenomen voor {vacancy.Title}",
+            $"<p>Gefeliciteerd! Je bent geselecteerd voor <strong>{Html(vacancy.Title)}</strong> bij {Html(vacancy.Company.Name)}.</p>",
+            "ApplicationHired"), cancellationToken);
+
+        foreach (var other in others)
+        {
+            await _email.SendAsync(new EmailMessage(
+                other.CandidateEmail,
+                $"Update sollicitatie: {vacancy.Title}",
+                $"<p>Bedankt voor je sollicitatie op <strong>{Html(vacancy.Title)}</strong>.</p><p>De keuze is helaas op een andere kandidaat gevallen.</p>",
+                "ApplicationFilledElsewhere"), cancellationToken);
+        }
+
+        return Ok();
+    }
+
     private static EmployerApplicationDto MapEmployerDto(Core.Entities.Application a)
     {
-        var revealed = a.Status == ApplicationStatus.Accepted;
+        var revealed = a.Status is ApplicationStatus.Accepted or ApplicationStatus.EmployerContacting or ApplicationStatus.Hired;
         return new EmployerApplicationDto(
             a.Id,
             a.VacancyId,
@@ -287,7 +483,101 @@ public class ApplicationsController : ControllerBase
             revealed ? a.CandidateName : null,
             revealed ? a.CandidateEmail : null,
             revealed ? a.CandidateAddress : null,
-            revealed);
+            revealed,
+            a.WorkPermitConfirmed,
+            a.SnapshotAvailabilityJson,
+            a.SnapshotDrivingLicenses,
+            a.SnapshotEducations,
+            a.SnapshotAboutMe,
+            a.CandidateEmployerCount);
+    }
+
+    private async Task SendVerificationCodeAsync(
+        Core.Entities.User candidate,
+        Core.Entities.Vacancy vacancy,
+        string code,
+        CancellationToken cancellationToken)
+    {
+        await _email.SendAsync(new EmailMessage(
+            candidate.Email,
+            $"Verificatiecode voor sollicitatie: {vacancy.Title}",
+            $"""
+             <p>Hoi {Html(candidate.FullName)},</p>
+             <p>Gebruik deze 6-cijferige code om je sollicitatie af te ronden:</p>
+             <p style="font-size:1.6rem"><strong>{Html(code)}</strong></p>
+             <p>De code is 10 minuten geldig.</p>
+             """,
+            "ApplicationVerificationCode"), cancellationToken);
+    }
+
+    private async Task NotifyEmployersOfNewApplicationAsync(
+        Core.Entities.Vacancy vacancy,
+        Core.Entities.Application application,
+        CancellationToken cancellationToken)
+    {
+        var deepLink = await BuildDeepLinkAsync("/branch/applicants", cancellationToken);
+        var contacts = await _db.Users
+            .AsNoTracking()
+            .Where(u =>
+                u.IsActive
+                && u.Role != UserRole.Candidate
+                && (u.CompanyId == vacancy.CompanyId || u.CompanyMemberships.Any(m => m.CompanyId == vacancy.CompanyId)))
+            .Select(u => u.Email)
+            .Distinct()
+            .ToListAsync(cancellationToken);
+
+        foreach (var email in contacts)
+        {
+            await _email.SendAsync(new EmailMessage(
+                email,
+                $"Nieuwe sollicitatie: {vacancy.Title}",
+                $"""
+                 <p>Er is een nieuwe sollicitatie ontvangen voor <strong>{Html(vacancy.Title)}</strong>.</p>
+                 <p><a href="{deepLink}">Open sollicitantenoverzicht</a></p>
+                 """,
+                "EmployerNewApplication"), cancellationToken);
+
+            await _push.SendAsync(new PushMessage(
+                email,
+                "Nieuwe sollicitatie",
+                $"{vacancy.Company.Name}: nieuwe kandidaat voor {vacancy.Title}",
+                deepLink,
+                "EmployerNewApplication"), cancellationToken);
+        }
+    }
+
+    private static string? ValidateHardRequirements(Core.Entities.Vacancy vacancy, CandidatePreferencesDto prefs)
+    {
+        if (!string.IsNullOrWhiteSpace(vacancy.RequiredDrivingLicense))
+        {
+            var hasLicense = prefs.DrivingLicenses?.Any(x =>
+                string.Equals(x, vacancy.RequiredDrivingLicense, StringComparison.OrdinalIgnoreCase)) == true;
+            if (!hasLicense)
+            {
+                return $"Deze vacature vereist rijbewijs {vacancy.RequiredDrivingLicense}.";
+            }
+        }
+
+        if (!string.IsNullOrWhiteSpace(vacancy.RequiredEducation))
+        {
+            var hasEducation = prefs.Educations?.Any(x =>
+                string.Equals(x, vacancy.RequiredEducation, StringComparison.OrdinalIgnoreCase)) == true;
+            if (!hasEducation)
+            {
+                return $"Deze vacature vereist opleiding/diploma: {vacancy.RequiredEducation}.";
+            }
+        }
+
+        if (vacancy.MinimumEmployers is > 0)
+        {
+            var employerCount = prefs.Employers?.Count ?? 0;
+            if (employerCount < vacancy.MinimumEmployers.Value)
+            {
+                return $"Deze vacature vereist minimaal {vacancy.MinimumEmployers.Value} eerdere werkgever(s).";
+            }
+        }
+
+        return null;
     }
 
     private static string? ExtractCityHint(Core.Entities.User candidate)

@@ -20,6 +20,15 @@ public class Application
     public ApplicationStatus Status { get; set; } = ApplicationStatus.Pending;
     public DateTime? ConsentAcceptedAt { get; set; }
     public string? ConsentVersion { get; set; }
+    public bool WorkPermitConfirmed { get; set; }
+    public string? EmailVerificationCode { get; set; }
+    public DateTime? EmailVerificationExpiresAt { get; set; }
+    public DateTime? EmailVerifiedAt { get; set; }
+    public string? SnapshotAvailabilityJson { get; set; }
+    public string? SnapshotDrivingLicenses { get; set; }
+    public string? SnapshotEducations { get; set; }
+    public string? SnapshotAboutMe { get; set; }
+    public int CandidateEmployerCount { get; set; }
     public DateTime CreatedAt { get; set; }
     public DateTime? RespondedAt { get; set; }
 }

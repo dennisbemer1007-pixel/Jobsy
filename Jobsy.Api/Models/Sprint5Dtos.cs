@@ -118,4 +118,10 @@ public record EmployerApplicationDto(
     string? CandidateEmail,
     /// <summary>Null until Accepted — progressive disclosure.</summary>
     string? CandidateAddress,
-    bool PiiRevealed);
+    bool PiiRevealed,
+    bool WorkPermitConfirmed,
+    string? SnapshotAvailabilityJson,
+    string? SnapshotDrivingLicenses,
+    string? SnapshotEducations,
+    string? SnapshotAboutMe,
+    int CandidateEmployerCount);

@@ -119,6 +119,8 @@ public class JobsyDbContext : DbContext
             entity.Property(e => e.HourlyWage).HasPrecision(8, 2);
             entity.Property(e => e.ImageUrl).HasMaxLength(1024);
             entity.Property(e => e.VideoUrl).HasMaxLength(1024);
+            entity.Property(e => e.RequiredDrivingLicense).HasMaxLength(256);
+            entity.Property(e => e.RequiredEducation).HasMaxLength(256);
             entity.Property(e => e.Location)
                 .HasConversion(new GeoPointConverter())
                 .HasColumnType("geometry(Point, 4326)");
@@ -169,6 +171,11 @@ public class JobsyDbContext : DbContext
             entity.Property(e => e.PreferredTransport).HasMaxLength(64).IsRequired();
             entity.Property(e => e.PreferencesSummary).HasMaxLength(1024);
             entity.Property(e => e.ConsentVersion).HasMaxLength(32);
+            entity.Property(e => e.EmailVerificationCode).HasMaxLength(6);
+            entity.Property(e => e.SnapshotAvailabilityJson).HasMaxLength(2048);
+            entity.Property(e => e.SnapshotDrivingLicenses).HasMaxLength(512);
+            entity.Property(e => e.SnapshotEducations).HasMaxLength(512);
+            entity.Property(e => e.SnapshotAboutMe).HasMaxLength(1024);
             entity.HasOne(e => e.Vacancy)
                 .WithMany(v => v.Applications)
                 .HasForeignKey(e => e.VacancyId)

@@ -29,6 +29,10 @@ public class Vacancy
     public bool RequestedHighlight { get; set; }
     public bool RequestedPushBom { get; set; }
     public bool RequestedExtend { get; set; }
+    public string? RequiredDrivingLicense { get; set; }
+    public string? RequiredEducation { get; set; }
+    public int? MinimumEmployers { get; set; }
+    public Guid? FulfilledByApplicationId { get; set; }
 
     public int MaxApplications { get; set; } = 5;
     public Guid? SalaryTableId { get; set; }

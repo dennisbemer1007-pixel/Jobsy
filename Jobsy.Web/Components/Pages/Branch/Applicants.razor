@@ -55,6 +55,19 @@
                                 <span class="muted">Voorkeuren: @a.PreferencesSummary</span>
                             }
                         }
+                        <span class="muted">Werkvergunning: @(a.WorkPermitConfirmed ? "Bevestigd" : "Onbekend")</span>
+                        @if (!string.IsNullOrWhiteSpace(a.SnapshotDrivingLicenses))
+                        {
+                            <span class="muted">Rijbewijs: @a.SnapshotDrivingLicenses</span>
+                        }
+                        @if (!string.IsNullOrWhiteSpace(a.SnapshotEducations))
+                        {
+                            <span class="muted">Opleiding: @a.SnapshotEducations</span>
+                        }
+                        @if (a.CandidateEmployerCount > 0)
+                        {
+                            <span class="muted">Eerdere werkgevers: @a.CandidateEmployerCount</span>
+                        }
                         <span class="muted">@a.VacancyTitle · @StatusLabel(a.Status)</span>
                     </div>
                     <div class="inline-actions">
@@ -67,10 +80,19 @@
                                 Wijs af
                             </button>
                         }
-                        else
+                        @if (_canReact && a.Status == "Accepted")
                         {
-                            <span class="status-pill status-pill--@a.Status.ToLowerInvariant()">@StatusLabel(a.Status)</span>
+                            <button type="button" class="engagement-btn" disabled="@_busyId.HasValue" @onclick="() => MarkContactAsync(a.Id)">
+                                Contact met kandidaat
+                            </button>
                         }
+                        @if (_canReact && (a.Status == "Accepted" || a.Status == "EmployerContacting"))
+                        {
+                            <button type="button" class="engagement-btn" disabled="@_busyId.HasValue" @onclick="() => FulfillAsync(a.VacancyId, a.Id)">
+                                Markeer als vervuld
+                            </button>
+                        }
+                        <span class="status-pill status-pill--@a.Status.ToLowerInvariant()">@StatusLabel(a.Status)</span>
                     </div>
                 </div>
             }
@@ -137,10 +159,53 @@
         }
     }
 
+    private async Task MarkContactAsync(Guid id)
+    {
+        _busyId = id;
+        _message = null;
+        try
+        {
+            await Api.MarkEmployerContactAsync(id);
+            _items = (await Api.GetApplicationsAsync()).ToList();
+            _message = "Status bijgewerkt naar: Werkgever neemt contact op.";
+        }
+        catch (Exception ex)
+        {
+            _message = ex.Message;
+        }
+        finally
+        {
+            _busyId = null;
+        }
+    }
+
+    private async Task FulfillAsync(Guid vacancyId, Guid applicationId)
+    {
+        _busyId = applicationId;
+        _message = null;
+        try
+        {
+            await Api.FulfillVacancyAsync(vacancyId, applicationId);
+            _items = (await Api.GetApplicationsAsync()).ToList();
+            _message = "Vacature gemarkeerd als vervuld; overige kandidaten zijn geïnformeerd.";
+        }
+        catch (Exception ex)
+        {
+            _message = ex.Message;
+        }
+        finally
+        {
+            _busyId = null;
+        }
+    }
+
     private static string StatusLabel(string status) => status switch
     {
         "Accepted" => "Geaccepteerd",
         "Rejected" => "Afgewezen",
+        "EmployerContacting" => "Werkgever neemt contact op",
+        "Hired" => "Aangenomen",
+        "FilledElsewhere" => "De keuze is op een andere kandidaat gevallen",
         _ => "In behandeling"
     };
 }

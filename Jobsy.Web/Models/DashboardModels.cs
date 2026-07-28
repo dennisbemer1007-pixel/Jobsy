@@ -33,6 +33,15 @@ public class ApplicationItem
     public DateTime? RespondedAt { get; set; }
 }
 
+public class ApplyResultItem
+{
+    public ApplicationItem Application { get; set; } = new();
+    public bool ConfirmationEmailQueued { get; set; }
+    public bool AuthenticatorStubUsed { get; set; }
+    public bool RequiresVerification { get; set; }
+    public bool VerificationCodeSent { get; set; }
+}
+
 public class EmployerApplicationItem
 {
     public Guid Id { get; set; }
@@ -51,6 +60,12 @@ public class EmployerApplicationItem
     public string? CandidateEmail { get; set; }
     public string? CandidateAddress { get; set; }
     public bool PiiRevealed { get; set; }
+    public bool WorkPermitConfirmed { get; set; }
+    public string? SnapshotAvailabilityJson { get; set; }
+    public string? SnapshotDrivingLicenses { get; set; }
+    public string? SnapshotEducations { get; set; }
+    public string? SnapshotAboutMe { get; set; }
+    public int CandidateEmployerCount { get; set; }
 }
 
 public class TokenPackItem

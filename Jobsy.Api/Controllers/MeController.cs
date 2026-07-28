@@ -1,4 +1,5 @@
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using Jobsy.Api.Models;
 using Jobsy.Core.Authorization;
 using Jobsy.Core.Contracts;
@@ -19,7 +20,8 @@ public class MeController : ControllerBase
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
         PropertyNameCaseInsensitive = true,
-        PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+        DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
     };
 
     private readonly ICompanyAuthorizationService _companyAuth;
@@ -99,7 +101,12 @@ public class MeController : ControllerBase
             existing.MaxTravelMinutes,
             existing.PreferredTransport,
             language,
-            existing.AgeYears);
+            existing.AgeYears,
+            existing.AboutMe,
+            existing.DrivingLicenses,
+            existing.Availability,
+            existing.Employers,
+            existing.Educations);
 
         await _db.SaveChangesAsync(cancellationToken);
         var features = await _features.GetAsync(cancellationToken);
@@ -199,7 +206,12 @@ public class MeController : ControllerBase
                     ? null
                     : request.Preferences.PreferredTransport.Trim(),
                 language,
-                request.Preferences.AgeYears);
+                request.Preferences.AgeYears,
+                request.Preferences.AboutMe,
+                request.Preferences.DrivingLicenses,
+                request.Preferences.Availability,
+                request.Preferences.Employers,
+                request.Preferences.Educations);
         }
 
         await _db.SaveChangesAsync(cancellationToken);
@@ -244,7 +256,7 @@ public class MeController : ControllerBase
                 a.PreferredTransport,
                 a.EstimatedTravelMinutes,
                 a.CreatedAt,
-                a.Status.ToString(),
+                a.EmailVerifiedAt == null ? "PendingVerification" : a.Status.ToString(),
                 a.RespondedAt))
             .ToListAsync(cancellationToken);
 
@@ -320,7 +332,7 @@ public class MeController : ControllerBase
     {
         if (string.IsNullOrWhiteSpace(json))
         {
-            return new CandidatePreferencesDto([], null, null, null, null);
+            return new CandidatePreferencesDto([], null, null, null, null, null, [], null, [], []);
         }
 
         try
@@ -374,11 +386,107 @@ public class MeController : ControllerBase
                 ageYears = age;
             }
 
-            return new CandidatePreferencesDto(roles, maxTravel, transport, language, ageYears);
+            string? aboutMe = null;
+            if (root.TryGetProperty("aboutMe", out var aboutEl) && aboutEl.ValueKind == JsonValueKind.String)
+            {
+                aboutMe = aboutEl.GetString();
+            }
+
+            var drivingLicenses = new List<string>();
+            if (root.TryGetProperty("drivingLicenses", out var drivingEl) && drivingEl.ValueKind == JsonValueKind.Array)
+            {
+                foreach (var item in drivingEl.EnumerateArray())
+                {
+                    if (item.ValueKind == JsonValueKind.String)
+                    {
+                        var value = item.GetString()?.Trim();
+                        if (!string.IsNullOrWhiteSpace(value))
+                        {
+                            drivingLicenses.Add(value);
+                        }
+                    }
+                }
+            }
+
+            var availability = new Dictionary<string, IReadOnlyList<string>>(StringComparer.OrdinalIgnoreCase);
+            if (root.TryGetProperty("availability", out var availabilityEl) && availabilityEl.ValueKind == JsonValueKind.Object)
+            {
+                foreach (var day in availabilityEl.EnumerateObject())
+                {
+                    if (day.Value.ValueKind != JsonValueKind.Array)
+                    {
+                        continue;
+                    }
+
+                    var slots = day.Value.EnumerateArray()
+                        .Where(x => x.ValueKind == JsonValueKind.String)
+                        .Select(x => x.GetString())
+                        .Where(x => !string.IsNullOrWhiteSpace(x))
+                        .Select(x => x!.Trim())
+                        .Distinct(StringComparer.OrdinalIgnoreCase)
+                        .ToList();
+                    availability[day.Name] = slots;
+                }
+            }
+
+            var employers = new List<CandidateEmployerHistoryDto>();
+            if (root.TryGetProperty("employers", out var employersEl) && employersEl.ValueKind == JsonValueKind.Array)
+            {
+                foreach (var item in employersEl.EnumerateArray())
+                {
+                    if (item.ValueKind != JsonValueKind.Object)
+                    {
+                        continue;
+                    }
+
+                    var name = item.TryGetProperty("employerName", out var employerNameEl) ? employerNameEl.GetString() : null;
+                    if (string.IsNullOrWhiteSpace(name))
+                    {
+                        continue;
+                    }
+
+                    var role = item.TryGetProperty("role", out var roleEl) ? roleEl.GetString() : null;
+                    int? years = null;
+                    if (item.TryGetProperty("years", out var yearsEl) && yearsEl.TryGetInt32(out var yearsVal) && yearsVal is >= 0 and <= 80)
+                    {
+                        years = yearsVal;
+                    }
+
+                    employers.Add(new CandidateEmployerHistoryDto(name.Trim(), string.IsNullOrWhiteSpace(role) ? null : role.Trim(), years));
+                }
+            }
+
+            var educations = new List<string>();
+            if (root.TryGetProperty("educations", out var educationsEl) && educationsEl.ValueKind == JsonValueKind.Array)
+            {
+                foreach (var item in educationsEl.EnumerateArray())
+                {
+                    if (item.ValueKind == JsonValueKind.String)
+                    {
+                        var value = item.GetString()?.Trim();
+                        if (!string.IsNullOrWhiteSpace(value))
+                        {
+                            educations.Add(value);
+                        }
+                    }
+                }
+            }
+
+            return new CandidatePreferencesDto(
+                roles,
+                maxTravel,
+                transport,
+                language,
+                ageYears,
+                aboutMe,
+                drivingLicenses.Distinct(StringComparer.OrdinalIgnoreCase).ToList(),
+                availability,
+                employers,
+                educations.Distinct(StringComparer.OrdinalIgnoreCase).ToList());
         }
         catch (JsonException)
         {
-            return new CandidatePreferencesDto([], null, null, null, null);
+            return new CandidatePreferencesDto([], null, null, null, null, null, [], null, [], []);
         }
     }
 
@@ -387,7 +495,12 @@ public class MeController : ControllerBase
         int? maxTravelMinutes,
         string? preferredTransport,
         string? language,
-        int? ageYears = null)
+        int? ageYears = null,
+        string? aboutMe = null,
+        IEnumerable<string>? drivingLicenses = null,
+        IReadOnlyDictionary<string, IReadOnlyList<string>>? availability = null,
+        IEnumerable<CandidateEmployerHistoryDto>? employers = null,
+        IEnumerable<string>? educations = null)
     {
         return JsonSerializer.Serialize(new
         {
@@ -397,7 +510,28 @@ public class MeController : ControllerBase
             language = string.IsNullOrWhiteSpace(language)
                 ? null
                 : JobsyLanguages.Normalize(language),
-            ageYears
+            ageYears,
+            aboutMe = string.IsNullOrWhiteSpace(aboutMe) ? null : aboutMe.Trim(),
+            drivingLicenses = drivingLicenses?
+                .Where(x => !string.IsNullOrWhiteSpace(x))
+                .Select(x => x.Trim())
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .ToArray(),
+            availability,
+            employers = employers?
+                .Where(e => !string.IsNullOrWhiteSpace(e.EmployerName))
+                .Select(e => new
+                {
+                    employerName = e.EmployerName.Trim(),
+                    role = string.IsNullOrWhiteSpace(e.Role) ? null : e.Role.Trim(),
+                    years = e.Years is >= 0 and <= 80 ? e.Years : null
+                })
+                .ToArray(),
+            educations = educations?
+                .Where(x => !string.IsNullOrWhiteSpace(x))
+                .Select(x => x.Trim())
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .ToArray()
         }, JsonOptions);
     }
 }

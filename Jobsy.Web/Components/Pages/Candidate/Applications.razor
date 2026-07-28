@@ -39,15 +39,31 @@
     }
 </div>
 
+@if (_showCelebration)
+{
+    <div class="share-modal-backdrop"></div>
+    <div class="share-modal" role="dialog" aria-modal="true" aria-labelledby="hired-title">
+        <div class="share-modal__header">
+            <h2 id="hired-title">Gefeliciteerd!</h2>
+        </div>
+        <p>Gefeliciteerd met je nieuwe baan!</p>
+        <div class="inline-actions" style="margin-top:1rem">
+            <button type="button" class="login-submit" @onclick="() => _showCelebration = false">Sluiten</button>
+        </div>
+    </div>
+}
+
 @code {
     private List<ApplicationItem> _items = [];
     private bool _loading = true;
+    private bool _showCelebration;
 
     protected override async Task OnInitializedAsync()
     {
         try
         {
             _items = (await Api.GetMyApplicationsAsync()).ToList();
+            _showCelebration = _items.Any(x => x.Status == "Hired");
         }
         finally
         {
@@ -59,6 +75,10 @@
     {
         "Accepted" => "Geaccepteerd",
         "Rejected" => "Afgewezen",
+        "PendingVerification" => "Wacht op e-mailverificatie",
+        "EmployerContacting" => "Werkgever neemt contact op",
+        "Hired" => "Aangenomen",
+        "FilledElsewhere" => "De keuze is op een andere kandidaat gevallen",
         _ => "In behandeling"
     };
 }

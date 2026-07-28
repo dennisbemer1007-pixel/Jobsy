@@ -155,6 +155,18 @@
                     }
                 </div>
             </fieldset>
+            <label>
+                Vereist rijbewijs (optioneel)
+                <input @bind="_requiredDrivingLicense" placeholder="Bijv. B" />
+            </label>
+            <label>
+                Vereiste opleiding/diploma (optioneel)
+                <input @bind="_requiredEducation" placeholder="Bijv. MBO 3 Logistiek" />
+            </label>
+            <label>
+                Minimaal aantal werkgevers (optioneel)
+                <input type="number" min="0" max="50" @bind="_minimumEmployers" />
+            </label>
             <button class="login-submit" type="submit" disabled="@_saving">
                 @(_isDuplicate ? "Opslaan als nieuw concept" : "Opslaan als concept")
             </button>
@@ -250,6 +262,9 @@
     private string _videoUrl = "";
     private string _salaryTableId = "";
     private string _transport = "Bike";
+    private string _requiredDrivingLicense = "";
+    private string _requiredEducation = "";
+    private int? _minimumEmployers;
     private string? _align;
     private HashSet<string> _selectedWorkTypes = new(StringComparer.OrdinalIgnoreCase);
     private bool _saving;
@@ -332,6 +347,9 @@
             _salaryTableId = source.SalaryTableId?.ToString() ?? "";
             _transport = MapTransportToFormValue(source.RequiredTransport);
             _selectedWorkTypes = source.WorkTypes.ToHashSet(StringComparer.OrdinalIgnoreCase);
+            _requiredDrivingLicense = source.RequiredDrivingLicense ?? "";
+            _requiredEducation = source.RequiredEducation ?? "";
+            _minimumEmployers = source.MinimumEmployers;
         }
         catch (Exception ex)
         {
@@ -541,7 +559,10 @@
                 workTypes,
                 string.IsNullOrWhiteSpace(_imageUrl) ? null : _imageUrl.Trim(),
                 string.IsNullOrWhiteSpace(_videoUrl) ? null : _videoUrl.Trim(),
-                salaryTableId));
+                salaryTableId,
+                string.IsNullOrWhiteSpace(_requiredDrivingLicense) ? null : _requiredDrivingLicense.Trim(),
+                string.IsNullOrWhiteSpace(_requiredEducation) ? null : _requiredEducation.Trim(),
+                _minimumEmployers is > 0 ? _minimumEmployers : null));
 
             Navigation.NavigateTo("/employer/vacancies");
         }

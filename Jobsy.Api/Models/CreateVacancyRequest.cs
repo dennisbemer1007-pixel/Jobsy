@@ -13,4 +13,7 @@ public record CreateVacancyRequest(
     WorkType WorkTypes,
     string? ImageUrl = null,
     string? VideoUrl = null,
-    Guid? SalaryTableId = null);
+    Guid? SalaryTableId = null,
+    string? RequiredDrivingLicense = null,
+    string? RequiredEducation = null,
+    int? MinimumEmployers = null);

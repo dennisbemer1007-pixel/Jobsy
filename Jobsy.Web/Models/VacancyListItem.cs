@@ -30,6 +30,10 @@ public class VacancyListItem
     public int ImpressionCount { get; set; }
     public int ClickCount { get; set; }
     public int ApplicationCount { get; set; }
+    public string? RequiredDrivingLicense { get; set; }
+    public string? RequiredEducation { get; set; }
+    public int? MinimumEmployers { get; set; }
+    public Guid? FulfilledByApplicationId { get; set; }
 }
 
 public sealed class WageByAgeItem
@@ -61,6 +65,18 @@ public sealed class CandidatePreferences
     public string? PreferredTransport { get; set; }
     public string? Language { get; set; }
     public int? AgeYears { get; set; }
+    public string? AboutMe { get; set; }
+    public List<string> DrivingLicenses { get; set; } = [];
+    public Dictionary<string, List<string>> Availability { get; set; } = new(StringComparer.OrdinalIgnoreCase);
+    public List<CandidateEmployerHistory> Employers { get; set; } = [];
+    public List<string> Educations { get; set; } = [];
+}
+
+public sealed class CandidateEmployerHistory
+{
+    public string EmployerName { get; set; } = string.Empty;
+    public string? Role { get; set; }
+    public int? Years { get; set; }
 }
 
 public sealed class VacancyProductActionResult

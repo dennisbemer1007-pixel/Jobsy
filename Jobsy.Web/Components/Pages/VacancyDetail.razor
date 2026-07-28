@@ -120,6 +120,31 @@
                     <text>             · @Culture["Vacancy.WorkType"]: @string.Join(", ", _vacancy.WorkTypes)</text>
                 }
             </p>
+            @if (!string.IsNullOrWhiteSpace(_vacancy.RequiredDrivingLicense)
+                || !string.IsNullOrWhiteSpace(_vacancy.RequiredEducation)
+                || _vacancy.MinimumEmployers is > 0)
+            {
+                <aside class="lobsy-proximity" aria-label="Harde eisen">
+                    <span class="lobsy-proximity__icon"><LobsyMark /></span>
+                    <div class="lobsy-proximity__body">
+                        <p class="lobsy-proximity__title">Harde eisen</p>
+                        <p class="lobsy-proximity__meta">
+                            @if (!string.IsNullOrWhiteSpace(_vacancy.RequiredDrivingLicense))
+                            {
+                                <span class="lobsy-proximity__chip">Rijbewijs: @_vacancy.RequiredDrivingLicense</span>
+                            }
+                            @if (!string.IsNullOrWhiteSpace(_vacancy.RequiredEducation))
+                            {
+                                <span class="lobsy-proximity__chip">Diploma/Opleiding: @_vacancy.RequiredEducation</span>
+                            }
+                            @if (_vacancy.MinimumEmployers is > 0)
+                            {
+                                <span class="lobsy-proximity__chip">Min. @_vacancy.MinimumEmployers werkgever(s)</span>
+                            }
+                        </p>
+                    </div>
+                </aside>
+            }
             @if (_vacancy.TravelMinutes is not null || _vacancy.RequiredTransport.Length > 0)
             {
                 <aside class="lobsy-proximity" aria-label="@Culture["Vacancy.ProximityLabel"]">
@@ -259,9 +284,33 @@
                                     <a class="auth-link" href="/privacy" target="_blank" rel="noopener">privacyverklaring</a>.
                                 </span>
                             </label>
-                            <button class="login-submit" type="button" disabled="@(_applying || _applied || !_acceptedTerms)" @onclick="ApplyAsync">
-                                @(_applied ? "Reactie verstuurd" : "Solliciteer")
+                            <label class="profile-toggle legal-consent">
+                                <input type="checkbox" @bind="_workPermitConfirmed" />
+                                <span>Ik ben wettelijk bevoegd om in Nederland te werken.</span>
+                            </label>
+                            @if (!_profileReadyForApply)
+                            {
+                                <p class="login-lead">
+                                    Vul eerst je kernprofiel aan via <a href="/candidate/profile">Mijn profiel</a>
+                                    (beschikbaarheid, rijbewijs, werkervaring, over jezelf).
+                                </p>
+                            }
+                            <button class="login-submit"
+                                    type="button"
+                                    disabled="@(_applying || _applied || !_acceptedTerms || !_workPermitConfirmed || !_profileReadyForApply)"
+                                    @onclick="ApplyAsync">
+                                @(_applied ? "Reactie verstuurd" : _awaitingVerification ? "Code opnieuw sturen" : "Solliciteer")
                             </button>
+                            @if (_awaitingVerification)
+                            {
+                                <label>
+                                    6-cijferige verificatiecode
+                                    <input maxlength="6" @bind="_verificationCode" placeholder="123456" />
+                                </label>
+                                <button class="engagement-btn" type="button" disabled="@(_applying || string.IsNullOrWhiteSpace(_verificationCode))" @onclick="VerifyApplicationAsync">
+                                    Verifieer en verstuur
+                                </button>
+                            }
                         </div>
                     </Authorized>
                     <NotAuthorized>
@@ -308,6 +357,10 @@
     private bool _authenticatorEnabled;
     private bool _useAuthenticator;
     private bool _acceptedTerms;
+    private bool _workPermitConfirmed;
+    private bool _profileReadyForApply = true;
+    private bool _awaitingVerification;
+    private string _verificationCode = string.Empty;
     private int? _ageYears;
     private bool _mapReady;
     private bool _openingRoute;
@@ -453,6 +506,14 @@
                 var profile = await Api.GetMyProfileAsync();
                 _dobInput = profile?.DateOfBirth;
                 _authenticatorEnabled = profile?.AuthenticatorEnabled == true;
+                if (profile is not null)
+                {
+                    _profileReadyForApply =
+                        profile.Preferences.Availability.Count > 0
+                        && profile.Preferences.DrivingLicenses.Count > 0
+                        && profile.Preferences.Employers.Count > 0
+                        && !string.IsNullOrWhiteSpace(profile.Preferences.AboutMe);
+                }
             }
             catch
             {
@@ -462,11 +523,12 @@
             try
             {
                 var mine = await Api.GetMyApplicationsAsync();
-                _applied = mine.Any(a => a.VacancyId == Id);
+                _applied = mine.Any(a => a.VacancyId == Id && a.Status != "PendingVerification");
                 if (_applied)
                 {
                     _message = "Je hebt al gereageerd op deze vacature.";
                 }
+                _awaitingVerification = mine.Any(a => a.VacancyId == Id && a.Status == "PendingVerification");
             }
             catch
             {
@@ -638,16 +700,86 @@
             _message = "Je moet akkoord gaan met de gebruiksvoorwaarden en de privacyverklaring om te solliciteren.";
             return;
         }
+        if (!_workPermitConfirmed)
+        {
+            _message = "Bevestig eerst dat je in Nederland mag werken.";
+            return;
+        }
+        if (!_profileReadyForApply)
+        {
+            _message = "Vul eerst je profiel aan via Mijn profiel.";
+            return;
+        }
 
         _applying = true;
         try
         {
             var minutes = _vacancy.TravelMinutes ?? 15;
-            await Api.ApplyAsync(_vacancy.Id, _transport, minutes, _useAuthenticator, acceptedTerms: true);
-            _applied = true;
-            _message = _useAuthenticator
-                ? "Je reactie is verstuurd (Authenticator stub). Bevestigingsmail staat in de stub-log."
-                : "Je reactie is verstuurd. Bevestigingsmail staat in de stub-log.";
+            var wasAwaitingVerification = _awaitingVerification;
+            var result = await Api.ApplyAsync(
+                _vacancy.Id,
+                _transport,
+                minutes,
+                _useAuthenticator,
+                acceptedTerms: true,
+                workPermitConfirmed: true);
+            if (result?.RequiresVerification == true)
+            {
+                _awaitingVerification = true;
+                _message = wasAwaitingVerification
+                    ? "Er is een (nieuwe) 6-cijferige code naar je e-mail gestuurd. Vul deze in om te bevestigen."
+                    : "Er is een 6-cijferige code naar je e-mail gestuurd. Vul deze in om te bevestigen.";
+            }
+            else
+            {
+                _applied = true;
+                _awaitingVerification = false;
+                _message = _useAuthenticator
+                    ? "Je reactie is verstuurd (Authenticator stub). Bevestigingsmail staat in de stub-log."
+                    : "Je reactie is verstuurd. Bevestigingsmail staat in de stub-log.";
+            }
+        }
+        catch (Exception ex)
+        {
+            _message = ex.Message;
+        }
+        finally
+        {
+            _applying = false;
+        }
+    }
+
+    private async Task VerifyApplicationAsync()
+    {
+        if (_vacancy is null || !_awaitingVerification)
+        {
+            return;
+        }
+
+        _applying = true;
+        try
+        {
+            var minutes = _vacancy.TravelMinutes ?? 15;
+            var result = await Api.ApplyAsync(
+                _vacancy.Id,
+                _transport,
+                minutes,
+                _useAuthenticator,
+                acceptedTerms: true,
+                workPermitConfirmed: true,
+                verificationCode: _verificationCode.Trim());
+
+            _applied = result?.RequiresVerification != true;
+            _awaitingVerification = result?.RequiresVerification == true;
+            if (_applied)
+            {
+                _verificationCode = string.Empty;
+                _message = "Je sollicitatie is geverifieerd en verstuurd.";
+            }
+            else
+            {
+                _message = "Code nog niet geaccepteerd. Controleer de code en probeer opnieuw.";
+            }
         }
         catch (Exception ex)
         {

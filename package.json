@@ -14,7 +14,15 @@
   "license": "ISC",
   "type": "commonjs",
   "dependencies": {
-    "playwright": "^1.62.0",
+    "playwright": "^1.52.0",
     "pptxgenjs": "^4.0.1"
-  }
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dennisbemer1007-pixel/Jobsy.git"
+  },
+  "bugs": {
+    "url": "https://github.com/dennisbemer1007-pixel/Jobsy/issues"
+  },
+  "homepage": "https://github.com/dennisbemer1007-pixel/Jobsy#readme"
 }
