@@ -144,6 +144,11 @@ public static class AuthServiceCollectionExtensions
             {
                 returnUrl = AuthRedirects.CandidateHowToPath;
             }
+            else if (principal.IsInRole("Candidate")
+                     || principal.HasClaim(ClaimTypes.Role, "Candidate"))
+            {
+                returnUrl = AuthRedirects.BanenkaartPath;
+            }
 
             await http.SignInAsync(
                 CookieAuthenticationDefaults.AuthenticationScheme,
@@ -316,9 +321,17 @@ public static class AuthServiceCollectionExtensions
 
             ApplyProfileClaims(identity, profile, "external");
 
-            if (profile.ShowCandidateHowTo && properties is not null)
+            if (properties is not null)
             {
-                properties.RedirectUri = AuthRedirects.CandidateHowToPath;
+                var role = NormalizeRole(profile.Role);
+                if (profile.ShowCandidateHowTo)
+                {
+                    properties.RedirectUri = AuthRedirects.CandidateHowToPath;
+                }
+                else if (role == "Candidate")
+                {
+                    properties.RedirectUri = AuthRedirects.BanenkaartPath;
+                }
             }
         }
         catch

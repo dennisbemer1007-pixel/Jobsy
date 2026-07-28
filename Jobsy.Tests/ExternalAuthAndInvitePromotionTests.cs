@@ -4,6 +4,7 @@ using Jobsy.Core.Enums;
 using Jobsy.Core.Rules;
 using Jobsy.Core.ValueObjects;
 using Jobsy.Infrastructure.Data;
+using Jobsy.Web.Auth;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -32,6 +33,48 @@ public class ExternalAuthAndInvitePromotionTests
         Assert.True(body.ShowCandidateHowTo);
         Assert.False(body.HasCandidateApplications);
         Assert.Equal(1, await db.Users.CountAsync(u => u.Email == "nieuw@example.com"));
+        Assert.NotNull(await db.Users.Where(u => u.Email == "nieuw@example.com")
+            .Select(u => u.LastLoginAtUtc).SingleAsync());
+    }
+
+    [Fact]
+    public async Task Ensure_external_second_login_skips_how_to_for_candidate()
+    {
+        await using var db = CreateDb();
+        db.Users.Add(new User
+        {
+            Id = Guid.NewGuid(),
+            Email = "terug@example.com",
+            FullName = "Terugkerend",
+            Role = UserRole.Candidate,
+            IsActive = true,
+            LastLoginAtUtc = DateTime.UtcNow.AddDays(-1)
+        });
+        await db.SaveChangesAsync();
+
+        var sut = CreateAuthController(db, secret: "test-secret");
+        sut.ControllerContext = WithProvisionSecret("test-secret");
+
+        var result = await sut.EnsureExternal(
+            new EnsureExternalUserRequest("terug@example.com", "Terugkerend"),
+            CancellationToken.None);
+
+        var ok = Assert.IsType<OkObjectResult>(result.Result);
+        var body = Assert.IsType<EnsureExternalUserResponse>(ok.Value);
+        Assert.False(body.IsNewUser);
+        Assert.Equal("Candidate", body.Role);
+        Assert.False(body.ShowCandidateHowTo);
+    }
+
+    [Fact]
+    public void CandidatePostLoginUrl_first_vs_returning()
+    {
+        Assert.Equal(
+            AuthRedirects.CandidateHowToPath,
+            AuthRedirects.CandidatePostLoginUrl(showCandidateHowTo: true));
+        Assert.Equal(
+            AuthRedirects.BanenkaartPath,
+            AuthRedirects.CandidatePostLoginUrl(showCandidateHowTo: false));
     }
 
     [Fact]

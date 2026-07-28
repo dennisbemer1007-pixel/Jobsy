@@ -16,12 +16,22 @@ namespace Jobsy.Infrastructure.Data.Migrations
                 table: "Users",
                 type: "timestamp with time zone",
                 nullable: true);
+
+            migrationBuilder.AddColumn<DateTime>(
+                name: "LastLoginAtUtc",
+                table: "Users",
+                type: "timestamp with time zone",
+                nullable: true);
         }
 
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropColumn(
                 name: "CandidateHowToCompletedAt",
+                table: "Users");
+
+            migrationBuilder.DropColumn(
+                name: "LastLoginAtUtc",
                 table: "Users");
         }
     }

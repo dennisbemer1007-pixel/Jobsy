@@ -35,9 +35,11 @@ public class User
 
     /// <summary>
     /// When the candidate completed (or dismissed) the "Hoe werkt Lobsy" onboarding page.
-    /// Null for new candidates → redirect there after first Google/Entra login.
     /// </summary>
     public DateTime? CandidateHowToCompletedAt { get; set; }
+
+    /// <summary>Last successful login (local or external). Null = never logged in before.</summary>
+    public DateTime? LastLoginAtUtc { get; set; }
 
     /// <summary>
     /// Extra company memberships for RegionalManager, EnterpriseManager and Intermediary.

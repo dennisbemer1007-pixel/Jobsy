@@ -58,7 +58,6 @@ public class AuthController : ControllerBase
         }
 
         var user = await _db.Users
-            .AsNoTracking()
             .Include(u => u.CompanyMemberships)
             .FirstOrDefaultAsync(u => u.Id == credential.UserId, cancellationToken);
 
@@ -184,7 +183,12 @@ public class AuthController : ControllerBase
         var hasApps = await _db.Applications.AsNoTracking()
             .AnyAsync(a => a.CandidateUserId == user.Id, cancellationToken);
 
-        var showHowTo = user.Role == UserRole.Candidate && user.CandidateHowToCompletedAt is null;
+        // Eerste login ooit → Hoe werkt Lobsy; daarna → banenkaart (nav blijft beschikbaar).
+        var isFirstLogin = user.LastLoginAtUtc is null;
+        var showHowTo = user.Role == UserRole.Candidate && isFirstLogin;
+
+        user.LastLoginAtUtc = DateTime.UtcNow;
+        await _db.SaveChangesAsync(cancellationToken);
 
         return (companyIds, showHowTo, hasApps);
     }

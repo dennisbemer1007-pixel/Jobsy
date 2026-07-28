@@ -5,6 +5,11 @@ namespace Jobsy.Web.Auth;
 public static partial class AuthRedirects
 {
     public const string CandidateHowToPath = "/candidate/hoe-werkt-lobsy";
+    public const string BanenkaartPath = "/";
+
+    /// <summary>Post-login landing for a candidate based on first-login how-to flag.</summary>
+    public static string CandidatePostLoginUrl(bool showCandidateHowTo)
+        => showCandidateHowTo ? CandidateHowToPath : BanenkaartPath;
 
     [GeneratedRegex(@"^/[A-Za-z0-9\-._~!$&'()*+,;=:@%/?]*$", RegexOptions.CultureInvariant)]
     private static partial Regex SafeLocalPathRegex();
