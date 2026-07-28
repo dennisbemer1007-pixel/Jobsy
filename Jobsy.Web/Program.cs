@@ -63,6 +63,9 @@ app.Use(async (context, next) =>
     await next();
 });
 
+// Apply Integraties ClientId/Secret before OIDC/Google redeem the auth code on callback.
+app.UseExternalAuthCallbackCredentials();
+
 app.UseAuthentication();
 app.UseAuthorization();
 app.UseAntiforgery();

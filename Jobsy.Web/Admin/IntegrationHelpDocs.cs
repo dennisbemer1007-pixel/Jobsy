@@ -42,7 +42,7 @@ public static class IntegrationHelpDocs
         Summary: "Microsoft-login via Entra ID (Azure AD) / OpenID Connect.",
         UsedFor: "De knop ‘Microsoft Entra’ op de loginpagina. Gebruikers loggen in met een Microsoft-account; Lobsy maakt (standaard) een kandidaat-sessie aan.",
         WhereToGetKey: "Azure Portal → Microsoft Entra ID → App-registraties → Nieuwe registratie. Neem Application (client) ID, maak een Client secret, en zet Tenant ID (of ‘common’). Redirect URI: https://JOUW-WEB-URL/signin-entra",
-        Tip: "Credentials uit Integraties activeren de login-knoppen automatisch (env vars Authentication__Entra__… blijven optioneel als override).",
+        Tip: "Redirect URI moet exact https://lobsy.nl/signin-entra zijn (of jouw web-URL). Credentials uit Integraties activeren de login-knop; vul ook Tenant ID in (of ‘common’). Env vars Authentication__Entra__… blijven optioneel als override.",
         DocsUrl: "https://portal.azure.com/#view/Microsoft_AAD_RegisteredApps/ApplicationsListBlade",
         DocsUrlLabel: "Azure App-registraties");
 

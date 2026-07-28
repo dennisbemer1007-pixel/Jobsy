@@ -68,19 +68,37 @@ public static class AuthServiceCollectionExtensions
             options.ResponseType = OpenIdConnectResponseType.Code;
             options.CallbackPath = authOptions.Entra.CallbackPath;
             options.SaveTokens = true;
-            options.GetClaimsFromUserInfoEndpoint = true;
+            // Entra ID tokens already carry profile/email claims; UserInfo often 404s and caused 500s.
+            options.GetClaimsFromUserInfoEndpoint = false;
+            options.Scope.Clear();
             options.Scope.Add("openid");
             options.Scope.Add("profile");
             options.Scope.Add("email");
             options.TokenValidationParameters.NameClaimType = "name";
+            options.TokenValidationParameters.IssuerValidator = EntraOidcOptionsApplier.ValidateMicrosoftIssuer;
             options.Events = new OpenIdConnectEvents
             {
+                OnRedirectToIdentityProvider = ApplyEntraCredentialsBeforeChallengeAsync,
+                OnMessageReceived = ApplyEntraCredentialsBeforeCallbackAsync,
                 OnTokenValidated = async context =>
                 {
                     await ApplyExternalJobsyProfileAsync(
                         context.HttpContext,
                         context.Principal,
                         context.Properties);
+                },
+                OnRemoteFailure = context =>
+                {
+                    var logger = context.HttpContext.RequestServices
+                        .GetRequiredService<ILoggerFactory>()
+                        .CreateLogger("Jobsy.Web.Auth.Entra");
+                    logger.LogWarning(
+                        context.Failure,
+                        "Microsoft Entra login mislukt: {Message}",
+                        context.Failure?.Message);
+                    context.HandleResponse();
+                    context.Response.Redirect("/login?error=entra-failed");
+                    return Task.CompletedTask;
                 }
             };
         });
@@ -94,12 +112,39 @@ public static class AuthServiceCollectionExtensions
                 ? "pending"
                 : authOptions.Google.ClientSecret;
             options.CallbackPath = authOptions.Google.CallbackPath;
+            options.Events.OnRedirectToAuthorizationEndpoint = async context =>
+            {
+                var source = context.HttpContext.RequestServices.GetRequiredService<IExternalAuthCredentialSource>();
+                var google = await source.GetGoogleAsync(context.HttpContext.RequestAborted);
+                if (google is null)
+                {
+                    context.Response.Redirect("/login?error=google-not-configured");
+                    return;
+                }
+
+                context.Options.ClientId = google.ClientId;
+                context.Options.ClientSecret = google.ClientSecret;
+                context.Response.Redirect(context.RedirectUri);
+            };
             options.Events.OnCreatingTicket = async context =>
             {
                 await ApplyExternalJobsyProfileAsync(
                     context.HttpContext,
                     context.Principal,
                     context.Properties);
+            };
+            options.Events.OnRemoteFailure = context =>
+            {
+                var logger = context.HttpContext.RequestServices
+                    .GetRequiredService<ILoggerFactory>()
+                    .CreateLogger("Jobsy.Web.Auth.Google");
+                logger.LogWarning(
+                    context.Failure,
+                    "Google login mislukt: {Message}",
+                    context.Failure?.Message);
+                context.HandleResponse();
+                context.Response.Redirect("/login?error=google-failed");
+                return Task.CompletedTask;
             };
         });
 
@@ -109,6 +154,35 @@ public static class AuthServiceCollectionExtensions
         services.AddScoped<AuthenticationStateProvider, ServerAuthenticationStateProvider>();
 
         return services;
+    }
+
+    private static async Task ApplyEntraCredentialsBeforeChallengeAsync(RedirectContext context)
+    {
+        var source = context.HttpContext.RequestServices.GetRequiredService<IExternalAuthCredentialSource>();
+        var entra = await source.GetEntraAsync(context.HttpContext.RequestAborted);
+        if (entra is null)
+        {
+            context.HandleResponse();
+            context.Response.Redirect("/login?error=entra-not-configured");
+            return;
+        }
+
+        EntraOidcOptionsApplier.Apply(context.Options, entra);
+        context.ProtocolMessage.ClientId = entra.ClientId;
+    }
+
+    private static async Task ApplyEntraCredentialsBeforeCallbackAsync(MessageReceivedContext context)
+    {
+        var source = context.HttpContext.RequestServices.GetRequiredService<IExternalAuthCredentialSource>();
+        var entra = await source.GetEntraAsync(context.HttpContext.RequestAborted);
+        if (entra is null)
+        {
+            context.HandleResponse();
+            context.Response.Redirect("/login?error=entra-not-configured");
+            return;
+        }
+
+        EntraOidcOptionsApplier.Apply(context.Options, entra);
     }
 
     public static void MapJobsyAuthEndpoints(this WebApplication app)
@@ -191,12 +265,7 @@ public static class AuthServiceCollectionExtensions
                     return Results.Redirect("/login?error=entra-not-configured");
                 }
 
-                var options = oidcOptions.Get(EntraScheme);
-                var tenant = string.IsNullOrWhiteSpace(entra.TenantId) ? "common" : entra.TenantId;
-                options.ClientId = entra.ClientId;
-                options.ClientSecret = entra.ClientSecret;
-                options.Authority = $"https://login.microsoftonline.com/{tenant}/v2.0";
-                options.MetadataAddress = $"{options.Authority}/.well-known/openid-configuration";
+                EntraOidcOptionsApplier.Apply(oidcOptions.Get(EntraScheme), entra);
             }
             else
             {
