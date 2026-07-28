@@ -1,4 +1,3 @@
-using System.Text;
 using Jobsy.Api.Models;
 using Jobsy.Core.Authorization;
 using Jobsy.Core.Interfaces;
@@ -218,7 +217,7 @@ public class SalesManagersController : ControllerBase
 
         try
         {
-            var invoice = await _invoices.CreateFromUninvoicedBalanceAsync(user.Id, cancellationToken);
+            var invoice = await _invoices.CreateFromUninvoicedBalanceAsync(user.Id, cancellationToken: cancellationToken);
             return Ok(MapInvoice(invoice));
         }
         catch (InvalidOperationException ex)
@@ -239,10 +238,10 @@ public class SalesManagersController : ControllerBase
 
         try
         {
-            var html = await _payouts.RenderInvoiceHtmlAsync(invoiceId, user.Id, cancellationToken);
+            var pdf = await _payouts.RenderInvoicePdfAsync(invoiceId, user.Id, cancellationToken);
             var invoice = await _invoices.GetAsync(invoiceId, cancellationToken);
-            var fileName = $"{invoice?.InvoiceNumber ?? invoiceId.ToString("N")}.html";
-            return File(Encoding.UTF8.GetBytes(html), "text/html; charset=utf-8", fileName);
+            var fileName = $"{invoice?.InvoiceNumber ?? invoiceId.ToString("N")}.pdf";
+            return File(pdf, "application/pdf", fileName);
         }
         catch (KeyNotFoundException ex)
         {
@@ -257,6 +256,7 @@ public class SalesManagersController : ControllerBase
     [HttpGet("me/payouts/preview")]
     [Authorize(Policy = JobsyPolicies.RequireSalesManager)]
     public async Task<ActionResult<SalesManagerPayoutPreviewDto>> GetPayoutPreview(
+        [FromQuery] decimal? amountExVat,
         CancellationToken cancellationToken)
     {
         var user = await _users.FindByPrincipalAsync(User, cancellationToken);
@@ -265,12 +265,13 @@ public class SalesManagersController : ControllerBase
             return Unauthorized();
         }
 
-        return Ok(await _payouts.GetPreviewAsync(user.Id, cancellationToken));
+        return Ok(await _payouts.GetPreviewAsync(user.Id, amountExVat, cancellationToken));
     }
 
     [HttpPost("me/payouts/checkout")]
     [Authorize(Policy = JobsyPolicies.RequireSalesManager)]
     public async Task<ActionResult<SalesManagerPayoutCheckoutResult>> CreatePayoutCheckout(
+        [FromBody] CreateSalesManagerPayoutCheckoutRequest? request,
         CancellationToken cancellationToken)
     {
         var user = await _users.FindByPrincipalAsync(User, cancellationToken);
@@ -281,7 +282,12 @@ public class SalesManagersController : ControllerBase
 
         try
         {
-            return Ok(await _payouts.CreateCheckoutAsync(user.Id, cancellationToken));
+            if (request?.AmountExVat is null or <= 0)
+            {
+                return BadRequest(new { message = "Geef een bedrag excl. BTW op om uit te betalen." });
+            }
+
+            return Ok(await _payouts.CreateCheckoutAsync(user.Id, request.AmountExVat.Value, cancellationToken));
         }
         catch (InvalidOperationException ex)
         {
@@ -331,7 +337,7 @@ public class SalesManagersController : ControllerBase
     {
         try
         {
-            var invoice = await _invoices.CreateFromUninvoicedBalanceAsync(userId, cancellationToken);
+            var invoice = await _invoices.CreateFromUninvoicedBalanceAsync(userId, cancellationToken: cancellationToken);
             return Ok(MapInvoice(invoice));
         }
         catch (InvalidOperationException ex)
@@ -399,3 +405,5 @@ public record UpdateSalesManagerProfileRequest(
 public record SignSalesManagerAgreementRequest(string? AgreementVersion = null);
 
 public record CompleteSalesManagerPayoutRequest(string PaymentId);
+
+public record CreateSalesManagerPayoutCheckoutRequest(decimal? AmountExVat);

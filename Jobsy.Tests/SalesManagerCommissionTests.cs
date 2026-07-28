@@ -102,8 +102,9 @@ public class SalesManagerCommissionTests
         var preview = await payouts.GetPreviewAsync(smId);
         Assert.True(preview.CanPayout);
         Assert.Equal("NL**4300", preview.MaskedIban);
+        Assert.Equal(preview.AvailableExVat, preview.AmountExVat);
 
-        var checkout = await payouts.CreateCheckoutAsync(smId);
+        var checkout = await payouts.CreateCheckoutAsync(smId, preview.AmountExVat);
         Assert.True(checkout.IsStub);
         Assert.StartsWith("stub_payout_", checkout.PaymentId);
 
@@ -114,6 +115,13 @@ public class SalesManagerCommissionTests
         var invoice = await db.SelfBillingInvoices.SingleAsync(i => i.Id == completed.InvoiceId);
         Assert.Equal(SelfBillingInvoiceStatus.Paid, invoice.Status);
 
+        var pdf = await payouts.RenderInvoicePdfAsync(invoice.Id, smId);
+        Assert.True(pdf.Length > 100);
+        Assert.Equal(0x25, pdf[0]); // %
+        Assert.Equal((byte)'P', pdf[1]);
+        Assert.Equal((byte)'D', pdf[2]);
+        Assert.Equal((byte)'F', pdf[3]);
+
         var log = await db.PlatformLogs.SingleAsync(l => l.Category == "SalesManagerPayout");
         Assert.Contains("NL**4300", log.Message);
         Assert.Contains("Uitbetaling naar rekening", log.Message);
@@ -121,6 +129,37 @@ public class SalesManagerCommissionTests
         var again = await payouts.CompleteCheckoutAsync(checkout.PaymentId, smId);
         Assert.Equal(completed.InvoiceId, again.InvoiceId);
         Assert.Equal(1, await db.SelfBillingInvoices.CountAsync(i => i.SalesManagerUserId == smId));
+    }
+
+    [Fact]
+    public async Task Partial_payout_leaves_remaining_uninvoiced_balance()
+    {
+        await using var db = CreateDb();
+        var (smId, companyId) = await SeedReferredCompanyAsync(db, slot: 6, kvk: "55550006");
+        var ledger = new CommissionLedgerService(db);
+        await ledger.TryCreditFounderBonusAsync(smId, companyId, "pay_partial_1", 6);
+
+        var invoices = new SelfBillingInvoiceService(db, ledger);
+        var payouts = new SalesManagerPayoutService(
+            db, invoices, ledger, new TestHostEnvironment(),
+            NullLogger<SalesManagerPayoutService>.Instance);
+
+        var available = await ledger.GetUninvoicedBalanceExVatAsync(smId);
+        Assert.Equal(SalesCommissionRules.FounderBonusExVat, available);
+
+        var partial = 100.00m;
+        var checkout = await payouts.CreateCheckoutAsync(smId, partial);
+        var completed = await payouts.CompleteCheckoutAsync(checkout.PaymentId, smId);
+
+        var invoice = await db.SelfBillingInvoices.SingleAsync(i => i.Id == completed.InvoiceId);
+        Assert.Equal(partial, invoice.SubtotalExVat);
+        Assert.Equal(SelfBillingInvoiceStatus.Paid, invoice.Status);
+
+        var remaining = await ledger.GetUninvoicedBalanceExVatAsync(smId);
+        Assert.Equal(available - partial, remaining);
+
+        var balance = await ledger.GetBalanceExVatAsync(smId);
+        Assert.Equal(remaining, balance);
     }
 
     [Fact]

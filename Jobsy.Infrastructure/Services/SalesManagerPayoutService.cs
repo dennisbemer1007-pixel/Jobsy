@@ -1,6 +1,4 @@
 using System.Globalization;
-using System.Net;
-using System.Text;
 using Jobsy.Core.Entities;
 using Jobsy.Core.Enums;
 using Jobsy.Core.Interfaces;
@@ -9,6 +7,9 @@ using Jobsy.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using QuestPDF.Fluent;
+using QuestPDF.Helpers;
+using QuestPDF.Infrastructure;
 
 namespace Jobsy.Infrastructure.Services;
 
@@ -19,6 +20,11 @@ public sealed class SalesManagerPayoutService : ISalesManagerPayoutService
     private readonly ICommissionLedgerService _ledger;
     private readonly IHostEnvironment _environment;
     private readonly ILogger<SalesManagerPayoutService> _logger;
+
+    static SalesManagerPayoutService()
+    {
+        QuestPDF.Settings.License = LicenseType.Community;
+    }
 
     public SalesManagerPayoutService(
         JobsyDbContext db,
@@ -36,6 +42,7 @@ public sealed class SalesManagerPayoutService : ISalesManagerPayoutService
 
     public async Task<SalesManagerPayoutPreviewDto> GetPreviewAsync(
         Guid salesManagerUserId,
+        decimal? requestedAmountExVat = null,
         CancellationToken cancellationToken = default)
     {
         var profile = await _db.SalesManagerProfiles
@@ -45,47 +52,77 @@ public sealed class SalesManagerPayoutService : ISalesManagerPayoutService
         if (profile is null)
         {
             return new SalesManagerPayoutPreviewDto(
-                0, 0, 0, null, "—", false, "Salesmanager-profiel ontbreekt.");
+                0, 0, 0, 0, null, "—", false, "Salesmanager-profiel ontbreekt.");
         }
+
+        var masked = ISalesManagerPayoutService.MaskIban(profile.Iban);
 
         if (!profile.IsOnboardingComplete)
         {
             return new SalesManagerPayoutPreviewDto(
-                0, 0, 0, profile.Iban, ISalesManagerPayoutService.MaskIban(profile.Iban),
+                0, 0, 0, 0, profile.Iban, masked,
                 false, "Onboarding moet compleet zijn vóór uitbetaling.");
         }
 
         if (string.IsNullOrWhiteSpace(profile.Iban))
         {
             return new SalesManagerPayoutPreviewDto(
-                0, 0, 0, null, "—", false,
+                0, 0, 0, 0, null, "—", false,
                 "Vul eerst je IBAN in bij onboarding om uit te laten betalen.");
         }
 
-        var uninvoiced = await _ledger.GetUninvoicedBalanceExVatAsync(salesManagerUserId, cancellationToken);
-        if (uninvoiced <= 0)
+        var available = await _ledger.GetUninvoicedBalanceExVatAsync(salesManagerUserId, cancellationToken);
+        available = decimal.Round(available, 2, MidpointRounding.AwayFromZero);
+        if (available <= 0)
         {
             return new SalesManagerPayoutPreviewDto(
-                0, 0, 0, profile.Iban, ISalesManagerPayoutService.MaskIban(profile.Iban),
+                0, 0, 0, 0, profile.Iban, masked,
                 false, "Geen openstaand tegoed om uit te betalen.");
         }
 
-        var vat = SalesCommissionRules.VatOn(uninvoiced);
+        decimal amountExVat;
+        if (requestedAmountExVat is null)
+        {
+            amountExVat = available;
+        }
+        else
+        {
+            amountExVat = decimal.Round(requestedAmountExVat.Value, 2, MidpointRounding.AwayFromZero);
+            if (amountExVat <= 0)
+            {
+                return new SalesManagerPayoutPreviewDto(
+                    available, 0, 0, 0, profile.Iban, masked,
+                    false, "Kies een bedrag groter dan € 0,00.");
+            }
+
+            if (amountExVat > available)
+            {
+                return new SalesManagerPayoutPreviewDto(
+                    available, available, SalesCommissionRules.VatOn(available), SalesCommissionRules.InclVat(available),
+                    profile.Iban, masked,
+                    false,
+                    $"Bedrag mag niet hoger zijn dan je openstaande tegoed (€ {available:0.00} excl. BTW).");
+            }
+        }
+
+        var vat = SalesCommissionRules.VatOn(amountExVat);
         return new SalesManagerPayoutPreviewDto(
-            uninvoiced,
+            available,
+            amountExVat,
             vat,
-            uninvoiced + vat,
+            amountExVat + vat,
             profile.Iban,
-            ISalesManagerPayoutService.MaskIban(profile.Iban),
+            masked,
             true,
             null);
     }
 
     public async Task<SalesManagerPayoutCheckoutResult> CreateCheckoutAsync(
         Guid salesManagerUserId,
+        decimal requestedAmountExVat,
         CancellationToken cancellationToken = default)
     {
-        var preview = await GetPreviewAsync(salesManagerUserId, cancellationToken);
+        var preview = await GetPreviewAsync(salesManagerUserId, requestedAmountExVat, cancellationToken);
         if (!preview.CanPayout)
         {
             throw new InvalidOperationException(preview.BlockReason ?? "Uitbetaling niet mogelijk.");
@@ -241,8 +278,9 @@ public sealed class SalesManagerPayoutService : ISalesManagerPayoutService
 
         try
         {
+            // Use the amount locked on the checkout session (not the live full balance).
             var invoice = await _invoices.CreateFromUninvoicedBalanceAsync(
-                salesManagerUserId, cancellationToken);
+                salesManagerUserId, session.AmountExVat, cancellationToken);
             invoice = await _invoices.MarkPaidAsync(invoice.Id, cancellationToken);
 
             session = await _db.SalesManagerPayoutCheckouts.FirstAsync(c => c.Id == session.Id, cancellationToken);
@@ -304,7 +342,7 @@ public sealed class SalesManagerPayoutService : ISalesManagerPayoutService
         }
     }
 
-    public async Task<string> RenderInvoiceHtmlAsync(
+    public async Task<byte[]> RenderInvoicePdfAsync(
         Guid invoiceId,
         Guid salesManagerUserId,
         CancellationToken cancellationToken = default)
@@ -318,44 +356,84 @@ public sealed class SalesManagerPayoutService : ISalesManagerPayoutService
         }
 
         var culture = CultureInfo.GetCultureInfo("nl-NL");
-        var sb = new StringBuilder();
-        sb.Append("<!DOCTYPE html><html lang=\"nl\"><head><meta charset=\"utf-8\"/>");
-        sb.Append("<title>").Append(WebUtility.HtmlEncode(invoice.InvoiceNumber)).Append("</title>");
-        sb.Append("<style>body{font-family:Segoe UI,Arial,sans-serif;margin:2rem;color:#111}");
-        sb.Append("h1{font-size:1.4rem}table{width:100%;border-collapse:collapse;margin-top:1.25rem}");
-        sb.Append("th,td{border-bottom:1px solid #ddd;padding:.45rem .2rem;text-align:left}");
-        sb.Append("td.num,th.num{text-align:right}.muted{color:#666}.totals{margin-top:1rem}</style></head><body>");
-        sb.Append("<p class=\"muted\">Self-billing factuur</p>");
-        sb.Append("<h1>").Append(WebUtility.HtmlEncode(invoice.InvoiceNumber)).Append("</h1>");
-        sb.Append("<p><strong>").Append(WebUtility.HtmlEncode(invoice.SalesManagerCompanyName)).Append("</strong><br/>");
-        sb.Append("KvK ").Append(WebUtility.HtmlEncode(invoice.SalesManagerKvkNumber)).Append("<br/>");
-        sb.Append("BTW ").Append(WebUtility.HtmlEncode(invoice.SalesManagerVatNumber)).Append("<br/>");
-        sb.Append(WebUtility.HtmlEncode(invoice.SalesManagerAddress)).Append("</p>");
-        sb.Append("<p class=\"muted\">Status: ").Append(WebUtility.HtmlEncode(invoice.Status.ToString()));
-        if (invoice.IssuedAt is DateTime issued)
-        {
-            sb.Append(" · Uitgegeven ").Append(issued.ToLocalTime().ToString("g", culture));
-        }
+        var lines = invoice.Lines.OrderBy(l => l.Description).ToList();
 
-        if (invoice.PaidAt is DateTime paid)
+        return Document.Create(container =>
         {
-            sb.Append(" · Betaald ").Append(paid.ToLocalTime().ToString("g", culture));
-        }
+            container.Page(page =>
+            {
+                page.Size(PageSizes.A4);
+                page.Margin(40);
+                page.DefaultTextStyle(x => x.FontSize(10).FontColor(Colors.Grey.Darken4));
 
-        sb.Append("</p><table><thead><tr><th>Omschrijving</th><th class=\"num\">Bedrag excl. BTW</th></tr></thead><tbody>");
-        foreach (var line in invoice.Lines.OrderBy(l => l.Description))
-        {
-            sb.Append("<tr><td>").Append(WebUtility.HtmlEncode(line.Description)).Append("</td>");
-            sb.Append("<td class=\"num\">€ ").Append(line.AmountExVat.ToString("0.00", culture)).Append("</td></tr>");
-        }
+                page.Header().Column(col =>
+                {
+                    col.Item().Text("Self-billing factuur").FontSize(11).FontColor(Colors.Grey.Darken2);
+                    col.Item().Text(invoice.InvoiceNumber).FontSize(20).SemiBold();
+                });
 
-        sb.Append("</tbody></table><div class=\"totals\">");
-        sb.Append("<div>Subtotaal excl. BTW: € ").Append(invoice.SubtotalExVat.ToString("0.00", culture)).Append("</div>");
-        sb.Append("<div>BTW (").Append((invoice.VatRate * 100).ToString("0", culture)).Append("%): € ")
-            .Append(invoice.VatAmount.ToString("0.00", culture)).Append("</div>");
-        sb.Append("<div><strong>Totaal incl. BTW: € ")
-            .Append(invoice.TotalInclVat.ToString("0.00", culture)).Append("</strong></div></div>");
-        sb.Append("<p class=\"muted\" style=\"margin-top:2rem\">Gegenereerd door Lobsy self-billing.</p></body></html>");
-        return sb.ToString();
+                page.Content().PaddingVertical(16).Column(col =>
+                {
+                    col.Spacing(8);
+                    col.Item().Text(invoice.SalesManagerCompanyName).SemiBold().FontSize(12);
+                    col.Item().Text($"KvK {invoice.SalesManagerKvkNumber}");
+                    col.Item().Text($"BTW {invoice.SalesManagerVatNumber}");
+                    col.Item().Text(invoice.SalesManagerAddress);
+
+                    var statusLine = $"Status: {invoice.Status}";
+                    if (invoice.IssuedAt is DateTime issued)
+                    {
+                        statusLine += $" · Uitgegeven {issued.ToLocalTime().ToString("g", culture)}";
+                    }
+
+                    if (invoice.PaidAt is DateTime paid)
+                    {
+                        statusLine += $" · Betaald {paid.ToLocalTime().ToString("g", culture)}";
+                    }
+
+                    col.Item().PaddingTop(8).Text(statusLine).FontColor(Colors.Grey.Darken2);
+
+                    col.Item().PaddingTop(16).Table(table =>
+                    {
+                        table.ColumnsDefinition(columns =>
+                        {
+                            columns.RelativeColumn(3);
+                            columns.RelativeColumn(1);
+                        });
+
+                        table.Header(header =>
+                        {
+                            header.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2)
+                                .PaddingBottom(4).Text("Omschrijving").SemiBold();
+                            header.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2)
+                                .PaddingBottom(4).AlignRight().Text("Bedrag excl. BTW").SemiBold();
+                        });
+
+                        foreach (var line in lines)
+                        {
+                            table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten3)
+                                .PaddingVertical(4).Text(line.Description);
+                            table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten3)
+                                .PaddingVertical(4).AlignRight()
+                                .Text($"€ {line.AmountExVat.ToString("0.00", culture)}");
+                        }
+                    });
+
+                    col.Item().AlignRight().PaddingTop(12).Column(totals =>
+                    {
+                        totals.Item().Text($"Subtotaal excl. BTW: € {invoice.SubtotalExVat.ToString("0.00", culture)}");
+                        totals.Item().Text(
+                            $"BTW ({(invoice.VatRate * 100).ToString("0", culture)}%): € {invoice.VatAmount.ToString("0.00", culture)}");
+                        totals.Item().PaddingTop(4)
+                            .Text($"Totaal incl. BTW: € {invoice.TotalInclVat.ToString("0.00", culture)}")
+                            .SemiBold().FontSize(12);
+                    });
+                });
+
+                page.Footer().AlignCenter()
+                    .Text("Gegenereerd door Lobsy self-billing.")
+                    .FontSize(9).FontColor(Colors.Grey.Medium);
+            });
+        }).GeneratePdf();
     }
 }

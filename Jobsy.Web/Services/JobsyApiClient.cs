@@ -1266,12 +1266,24 @@ public sealed class JobsyApiClient : IAsyncDisposable
         return await response.Content.ReadFromJsonAsync<SelfBillingInvoiceItem>(cancellationToken: ct);
     }
 
-    public async Task<SalesManagerPayoutPreview?> GetMyPayoutPreviewAsync(CancellationToken ct = default)
-        => await _http.GetFromJsonAsync<SalesManagerPayoutPreview>("api/sales-managers/me/payouts/preview", ct);
-
-    public async Task<SalesManagerPayoutCheckoutResult?> CreateMyPayoutCheckoutAsync(CancellationToken ct = default)
+    public async Task<SalesManagerPayoutPreview?> GetMyPayoutPreviewAsync(
+        decimal? amountExVat = null,
+        CancellationToken ct = default)
     {
-        var response = await _http.PostAsync("api/sales-managers/me/payouts/checkout", null, ct);
+        var url = amountExVat is null
+            ? "api/sales-managers/me/payouts/preview"
+            : $"api/sales-managers/me/payouts/preview?amountExVat={amountExVat.Value.ToString(System.Globalization.CultureInfo.InvariantCulture)}";
+        return await _http.GetFromJsonAsync<SalesManagerPayoutPreview>(url, ct);
+    }
+
+    public async Task<SalesManagerPayoutCheckoutResult?> CreateMyPayoutCheckoutAsync(
+        decimal amountExVat,
+        CancellationToken ct = default)
+    {
+        var response = await _http.PostAsJsonAsync(
+            "api/sales-managers/me/payouts/checkout",
+            new { amountExVat },
+            ct);
         if (!response.IsSuccessStatusCode)
         {
             var body = await response.Content.ReadAsStringAsync(ct);
@@ -1311,9 +1323,10 @@ public sealed class JobsyApiClient : IAsyncDisposable
             throw new InvalidOperationException(ExtractMessage(body) ?? "Download mislukt.");
         }
 
-        var html = await response.Content.ReadAsStringAsync(ct);
-        var fileName = string.IsNullOrWhiteSpace(invoiceNumber) ? $"{invoiceId:N}.html" : $"{invoiceNumber}.html";
-        await js.InvokeVoidAsync("jobsyDownload.text", fileName, html, "text/html;charset=utf-8");
+        var bytes = await response.Content.ReadAsByteArrayAsync(ct);
+        var fileName = string.IsNullOrWhiteSpace(invoiceNumber) ? $"{invoiceId:N}.pdf" : $"{invoiceNumber}.pdf";
+        var base64 = Convert.ToBase64String(bytes);
+        await js.InvokeVoidAsync("jobsyDownload.bytes", fileName, base64, "application/pdf");
     }
 
     public async Task<SelfBillingInvoiceItem?> MarkSelfBillingInvoicePaidAsync(Guid invoiceId, CancellationToken ct = default)
@@ -1560,6 +1573,7 @@ public sealed class SelfBillingInvoiceItem
 
 public sealed class SalesManagerPayoutPreview
 {
+    public decimal AvailableExVat { get; set; }
     public decimal AmountExVat { get; set; }
     public decimal VatAmount { get; set; }
     public decimal AmountInclVat { get; set; }

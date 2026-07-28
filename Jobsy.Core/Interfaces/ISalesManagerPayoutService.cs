@@ -4,10 +4,12 @@ public interface ISalesManagerPayoutService
 {
     Task<SalesManagerPayoutPreviewDto> GetPreviewAsync(
         Guid salesManagerUserId,
+        decimal? requestedAmountExVat = null,
         CancellationToken cancellationToken = default);
 
     Task<SalesManagerPayoutCheckoutResult> CreateCheckoutAsync(
         Guid salesManagerUserId,
+        decimal requestedAmountExVat,
         CancellationToken cancellationToken = default);
 
     Task<SalesManagerPayoutCompleteResult> CompleteCheckoutAsync(
@@ -15,7 +17,7 @@ public interface ISalesManagerPayoutService
         Guid salesManagerUserId,
         CancellationToken cancellationToken = default);
 
-    Task<string> RenderInvoiceHtmlAsync(
+    Task<byte[]> RenderInvoicePdfAsync(
         Guid invoiceId,
         Guid salesManagerUserId,
         CancellationToken cancellationToken = default);
@@ -40,6 +42,7 @@ public interface ISalesManagerPayoutService
 }
 
 public sealed record SalesManagerPayoutPreviewDto(
+    decimal AvailableExVat,
     decimal AmountExVat,
     decimal VatAmount,
     decimal AmountInclVat,

@@ -221,7 +221,7 @@ public static class PageHelpDocs
 
         ["/salesmanager/invoices"] = new(
             "Facturen (sales)",
-            "Self-billing / factuuroverzicht voor salesmanagers.",
+            "Self-billing / factuuroverzicht voor salesmanagers. Kies zelf het uitbetalingsbedrag; download facturen als PDF.",
             "Bekijk of download facturen gekoppeld aan uitbetalingen.",
             "Administratie van commissies of uitbetalingen."),
 

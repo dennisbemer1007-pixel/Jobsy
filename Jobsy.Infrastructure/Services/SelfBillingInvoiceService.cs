@@ -19,6 +19,7 @@ public sealed class SelfBillingInvoiceService : ISelfBillingInvoiceService
 
     public async Task<SelfBillingInvoice> CreateFromUninvoicedBalanceAsync(
         Guid salesManagerUserId,
+        decimal? maxAmountExVat = null,
         CancellationToken cancellationToken = default)
     {
         var profile = await _db.SalesManagerProfiles
@@ -46,8 +47,41 @@ public sealed class SelfBillingInvoiceService : ISelfBillingInvoiceService
             throw new InvalidOperationException("Geen openstaand tegoed om te factureren.");
         }
 
-        var entryIds = entries.Select(e => e.Id).ToList();
-        var subtotal = entries.Sum(e => e.AmountExVat);
+        var available = decimal.Round(entries.Sum(e => e.AmountExVat), 2, MidpointRounding.AwayFromZero);
+        decimal target;
+        if (maxAmountExVat is null)
+        {
+            target = available;
+        }
+        else
+        {
+            target = decimal.Round(maxAmountExVat.Value, 2, MidpointRounding.AwayFromZero);
+            if (target <= 0)
+            {
+                throw new InvalidOperationException("Kies een bedrag groter dan € 0,00.");
+            }
+
+            if (target > available)
+            {
+                throw new InvalidOperationException(
+                    $"Bedrag mag niet hoger zijn dan je openstaande tegoed (€ {available:0.00} excl. BTW).");
+            }
+        }
+
+        var selected = SelectEntries(entries, target);
+        if (selected.Count == 0)
+        {
+            throw new InvalidOperationException("Geen openstaand tegoed om te factureren.");
+        }
+
+        // Split last partial entry before claiming so remainder stays uninvoiced.
+        foreach (var pick in selected.Where(p => p.IsPartial).ToList())
+        {
+            SplitLedgerEntry(pick.Entry, pick.AmountExVat);
+        }
+
+        var entryIds = selected.Select(s => s.Entry.Id).ToList();
+        var subtotal = decimal.Round(selected.Sum(s => s.AmountExVat), 2, MidpointRounding.AwayFromZero);
         var vat = SalesCommissionRules.VatOn(subtotal);
         var now = DateTime.UtcNow;
         var invoiceNumber = await NextInvoiceNumberAsync(cancellationToken);
@@ -71,14 +105,14 @@ public sealed class SelfBillingInvoiceService : ISelfBillingInvoiceService
             IssuedAt = now
         };
 
-        foreach (var entry in entries)
+        foreach (var pick in selected)
         {
             invoice.Lines.Add(new SelfBillingInvoiceLine
             {
                 Id = Guid.NewGuid(),
-                Description = entry.Note ?? entry.Kind.ToString(),
-                AmountExVat = entry.AmountExVat,
-                SourceLedgerEntryId = entry.Id
+                Description = pick.Entry.Note ?? pick.Entry.Kind.ToString(),
+                AmountExVat = pick.AmountExVat,
+                SourceLedgerEntryId = pick.Entry.Id
             });
         }
 
@@ -98,10 +132,10 @@ public sealed class SelfBillingInvoiceService : ISelfBillingInvoiceService
         catch (InvalidOperationException)
         {
             attached = 0;
-            foreach (var entry in entries)
+            foreach (var entryId in entryIds)
             {
                 var tracked = await _db.CommissionLedgerEntries
-                    .FirstAsync(e => e.Id == entry.Id, cancellationToken);
+                    .FirstAsync(e => e.Id == entryId, cancellationToken);
                 if (tracked.SelfBillingInvoiceId is null)
                 {
                     tracked.SelfBillingInvoiceId = invoiceId;
@@ -112,7 +146,7 @@ public sealed class SelfBillingInvoiceService : ISelfBillingInvoiceService
             await _db.SaveChangesAsync(cancellationToken);
         }
 
-        if (attached != entries.Count)
+        if (attached != entryIds.Count)
         {
             if (tx is not null)
             {
@@ -235,6 +269,67 @@ public sealed class SelfBillingInvoiceService : ISelfBillingInvoiceService
             .FirstOrDefaultAsync(i => i.Id == invoiceId, cancellationToken);
     }
 
+    private static List<SelectedLedgerAmount> SelectEntries(
+        IReadOnlyList<CommissionLedgerEntry> entries,
+        decimal targetExVat)
+    {
+        var remaining = targetExVat;
+        var selected = new List<SelectedLedgerAmount>();
+        foreach (var entry in entries)
+        {
+            if (remaining <= 0)
+            {
+                break;
+            }
+
+            var take = Math.Min(entry.AmountExVat, remaining);
+            take = decimal.Round(take, 2, MidpointRounding.AwayFromZero);
+            if (take <= 0)
+            {
+                continue;
+            }
+
+            selected.Add(new SelectedLedgerAmount(entry, take, take < entry.AmountExVat));
+            remaining = decimal.Round(remaining - take, 2, MidpointRounding.AwayFromZero);
+        }
+
+        return selected;
+    }
+
+    private void SplitLedgerEntry(CommissionLedgerEntry entry, decimal invoiceAmountExVat)
+    {
+        var remainderExVat = decimal.Round(entry.AmountExVat - invoiceAmountExVat, 2, MidpointRounding.AwayFromZero);
+        if (remainderExVat <= 0)
+        {
+            return;
+        }
+
+        // Keep unique indexes: don't copy SourcePaymentId / SourceTokenCheckoutId / founder CompanyId.
+        var remainder = new CommissionLedgerEntry
+        {
+            Id = Guid.NewGuid(),
+            SalesManagerUserId = entry.SalesManagerUserId,
+            Kind = entry.Kind == CommissionEntryKind.FounderBonus
+                ? CommissionEntryKind.Adjustment
+                : entry.Kind,
+            AmountExVat = remainderExVat,
+            VatAmount = SalesCommissionRules.VatOn(remainderExVat),
+            VatRate = entry.VatRate,
+            Note = string.IsNullOrWhiteSpace(entry.Note)
+                ? "Restant na gedeeltelijke uitbetaling"
+                : $"{entry.Note} (restant)",
+            CompanyId = entry.Kind == CommissionEntryKind.FounderBonus ? null : entry.CompanyId,
+            SourcePaymentId = null,
+            SourceTokenCheckoutId = null,
+            SelfBillingInvoiceId = null,
+            CreatedAt = DateTime.UtcNow
+        };
+        _db.CommissionLedgerEntries.Add(remainder);
+
+        entry.AmountExVat = invoiceAmountExVat;
+        entry.VatAmount = SalesCommissionRules.VatOn(invoiceAmountExVat);
+    }
+
     private async Task<string> NextInvoiceNumberAsync(CancellationToken cancellationToken)
     {
         var year = DateTime.UtcNow.Year;
@@ -263,4 +358,9 @@ public sealed class SelfBillingInvoiceService : ISelfBillingInvoiceService
             $"{profile.PostalCode} {profile.City}".Trim(),
             profile.Country
         }.Where(s => !string.IsNullOrWhiteSpace(s)));
+
+    private sealed record SelectedLedgerAmount(
+        CommissionLedgerEntry Entry,
+        decimal AmountExVat,
+        bool IsPartial);
 }

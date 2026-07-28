@@ -11,7 +11,7 @@
     <header class="panel-header">
         <div>
             <h1>Facturen</h1>
-            <p class="login-lead">Laat openstaand tegoed uitbetalen via Mollie. Na uitbetaling kun je de self-billing factuur downloaden.</p>
+            <p class="login-lead">Kies zelf welk bedrag je laat uitbetalen via Mollie. Na uitbetaling download je de self-billing factuur als PDF.</p>
         </div>
         <button class="login-submit" type="button" disabled="@_busy" @onclick="OpenPayoutModalAsync">Uitbetalen</button>
     </header>
@@ -42,7 +42,7 @@
                     <div class="inline-actions">
                         <span>€ @inv.TotalInclVat.ToString("0.00") incl. BTW</span>
                         <button class="provider-btn" type="button" disabled="@_busy"
-                                @onclick="() => DownloadAsync(inv)">Download</button>
+                                @onclick="() => DownloadAsync(inv)">Download PDF</button>
                     </div>
                 </div>
             }
@@ -58,7 +58,7 @@
 {
     <div class="share-modal-backdrop" @onclick="CloseModal"></div>
     <div class="share-modal" role="dialog" aria-modal="true" aria-labelledby="payout-title"
-         style="width:min(26rem, calc(100vw - 2rem));max-width:calc(100vw - 2rem)">
+         style="width:min(28rem, calc(100vw - 2rem));max-width:calc(100vw - 2rem)">
         <div class="share-modal__header">
             <h2 id="payout-title">Uitbetalen via Mollie</h2>
             <button type="button" class="share-modal__close" @onclick="CloseModal" aria-label="Sluiten">×</button>
@@ -67,7 +67,7 @@
         {
             <p class="state-message">Laden…</p>
         }
-        else if (!_preview.CanPayout)
+        else if (_preview.AvailableExVat <= 0 && !_preview.CanPayout)
         {
             <p class="share-modal__lead" style="white-space:normal;max-width:none">@_preview.BlockReason</p>
             <div class="inline-actions" style="margin-top:1rem">
@@ -77,15 +77,46 @@
         else
         {
             <p class="share-modal__lead" style="white-space:normal;max-width:none">
-                Bevestig uitbetaling van je openstaande commissie naar je bankrekening via Mollie.
-                Na afronding verschijnt de self-billing factuur in dit overzicht.
+                Kies welk deel van je openstaande commissie je nu wilt laten uitbetalen.
+                Na afronding verschijnt de self-billing factuur (PDF) in dit overzicht.
             </p>
             <p><strong>Rekening:</strong> @_preview.MaskedIban</p>
-            <p><strong>Bedrag:</strong> € @_preview.AmountInclVat.ToString("0.00") incl. BTW
-                <span class="muted">(€ @_preview.AmountExVat.ToString("0.00") + € @_preview.VatAmount.ToString("0.00") BTW)</span>
-            </p>
+            <p class="muted">Beschikbaar: € @_preview.AvailableExVat.ToString("0.00") excl. BTW
+                (€ @InclVat(_preview.AvailableExVat).ToString("0.00") incl. BTW)</p>
+
+            <label class="login-form" style="display:block;margin-top:0.85rem">
+                Bedrag excl. BTW
+                <input type="number"
+                       min="0.01"
+                       max="@_preview.AvailableExVat.ToString(System.Globalization.CultureInfo.InvariantCulture)"
+                       step="0.01"
+                       inputmode="decimal"
+                       value="@_amountInput"
+                       @oninput="OnAmountInput"
+                       disabled="@_busy" />
+            </label>
+            <div class="inline-actions" style="margin-top:0.5rem">
+                <button type="button" class="btn-compact" disabled="@_busy" @onclick="SetFullAmount">Alles</button>
+            </div>
+
+            @if (_selectedAmountExVat is decimal amount && amount > 0)
+            {
+                <p style="margin-top:0.85rem">
+                    <strong>Je laat uitbetalen:</strong>
+                    € @InclVat(amount).ToString("0.00") incl. BTW
+                    <span class="muted">(€ @amount.ToString("0.00") + € @VatOn(amount).ToString("0.00") BTW)</span>
+                </p>
+            }
+
+            @if (!string.IsNullOrEmpty(_preview.BlockReason) && !_preview.CanPayout && _preview.AvailableExVat > 0)
+            {
+                <p class="state-message error">@_preview.BlockReason</p>
+            }
+
             <div class="inline-actions" style="margin-top:1rem">
-                <button type="button" class="login-submit" disabled="@_busy" @onclick="ConfirmPayoutAsync">
+                <button type="button" class="login-submit"
+                        disabled="@(_busy || !CanConfirm)"
+                        @onclick="ConfirmPayoutAsync">
                     @(_busy ? "Bezig…" : "Bevestigen via Mollie")
                 </button>
                 <button type="button" class="btn-compact" disabled="@_busy" @onclick="CloseModal">Annuleren</button>
@@ -101,12 +132,20 @@
 @code {
     private List<SelfBillingInvoiceItem> _invoices = [];
     private SalesManagerPayoutPreview? _preview;
+    private string _amountInput = "";
+    private decimal? _selectedAmountExVat;
     private bool _loading = true;
     private bool _busy;
     private bool _modalOpen;
     private string? _error;
     private string? _message;
     private string? _modalError;
+
+    private bool CanConfirm =>
+        _preview is { CanPayout: true, AvailableExVat: > 0 }
+        && _selectedAmountExVat is decimal a
+        && a > 0
+        && a <= _preview.AvailableExVat;
 
     [SupplyParameterFromQuery(Name = "paid")]
     public string? PaidInvoiceQuery { get; set; }
@@ -115,7 +154,7 @@
     {
         if (!string.IsNullOrWhiteSpace(PaidInvoiceQuery))
         {
-            _message = $"Uitbetaling afgerond. Factuur {PaidInvoiceQuery} is beschikbaar om te downloaden.";
+            _message = $"Uitbetaling afgerond. Factuur {PaidInvoiceQuery} is als PDF beschikbaar om te downloaden.";
         }
 
         await ReloadAsync();
@@ -143,11 +182,18 @@
         _modalOpen = true;
         _modalError = null;
         _preview = null;
+        _amountInput = "";
+        _selectedAmountExVat = null;
         _error = null;
         _message = null;
         try
         {
             _preview = await Api.GetMyPayoutPreviewAsync();
+            if (_preview is { AvailableExVat: > 0 })
+            {
+                SetAmount(_preview.AvailableExVat);
+                await RefreshPreviewAsync();
+            }
         }
         catch (Exception ex)
         {
@@ -166,13 +212,79 @@
         _modalError = null;
     }
 
+    private async Task OnAmountInput(ChangeEventArgs e)
+    {
+        _amountInput = e.Value?.ToString() ?? "";
+        if (TryParseAmount(_amountInput, out var amount))
+        {
+            _selectedAmountExVat = amount;
+            await RefreshPreviewAsync();
+        }
+        else
+        {
+            _selectedAmountExVat = null;
+            if (_preview is not null)
+            {
+                _preview.CanPayout = false;
+                _preview.BlockReason = "Voer een geldig bedrag in (bijv. 100,00).";
+            }
+        }
+    }
+
+    private async Task SetFullAmount()
+    {
+        if (_preview is null || _preview.AvailableExVat <= 0)
+        {
+            return;
+        }
+
+        SetAmount(_preview.AvailableExVat);
+        await RefreshPreviewAsync();
+    }
+
+    private void SetAmount(decimal amountExVat)
+    {
+        var rounded = decimal.Round(amountExVat, 2, MidpointRounding.AwayFromZero);
+        _selectedAmountExVat = rounded;
+        _amountInput = rounded.ToString("0.00", System.Globalization.CultureInfo.GetCultureInfo("nl-NL"));
+    }
+
+    private async Task RefreshPreviewAsync()
+    {
+        if (_selectedAmountExVat is not decimal amount)
+        {
+            return;
+        }
+
+        try
+        {
+            var available = _preview?.AvailableExVat;
+            _preview = await Api.GetMyPayoutPreviewAsync(amount);
+            if (_preview is not null && available is decimal keepAvailable && keepAvailable > _preview.AvailableExVat)
+            {
+                // Keep the originally shown available ceiling while typing.
+                _preview.AvailableExVat = keepAvailable;
+            }
+        }
+        catch (Exception ex)
+        {
+            _modalError = ex.Message;
+        }
+    }
+
     private async Task ConfirmPayoutAsync()
     {
+        if (_selectedAmountExVat is not decimal amount || amount <= 0)
+        {
+            _modalError = "Kies een bedrag om uit te betalen.";
+            return;
+        }
+
         _busy = true;
         _modalError = null;
         try
         {
-            var checkout = await Api.CreateMyPayoutCheckoutAsync();
+            var checkout = await Api.CreateMyPayoutCheckoutAsync(amount);
             if (checkout is null || string.IsNullOrWhiteSpace(checkout.CheckoutUrl))
             {
                 throw new InvalidOperationException("Geen Mollie-checkout ontvangen.");
@@ -198,7 +310,7 @@
         try
         {
             await Api.DownloadMySelfBillingInvoiceAsync(inv.Id, inv.InvoiceNumber, Js);
-            _message = $"Factuur {inv.InvoiceNumber} gedownload.";
+            _message = $"Factuur {inv.InvoiceNumber} (PDF) gedownload.";
         }
         catch (Exception ex)
         {
@@ -208,5 +320,27 @@
         {
             _busy = false;
         }
+    }
+
+    private static decimal VatOn(decimal amountExVat)
+        => decimal.Round(amountExVat * 0.21m, 2, MidpointRounding.AwayFromZero);
+
+    private static decimal InclVat(decimal amountExVat) => amountExVat + VatOn(amountExVat);
+
+    private static bool TryParseAmount(string? raw, out decimal amount)
+    {
+        amount = 0;
+        if (string.IsNullOrWhiteSpace(raw))
+        {
+            return false;
+        }
+
+        var normalized = raw.Trim().Replace(',', '.');
+        return decimal.TryParse(
+                   normalized,
+                   System.Globalization.NumberStyles.Number,
+                   System.Globalization.CultureInfo.InvariantCulture,
+                   out amount)
+               && amount > 0;
     }
 }
