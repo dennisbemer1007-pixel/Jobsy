@@ -166,15 +166,24 @@
                     </table>
                 </fieldset>
 
-                <fieldset class="profile-roles">
+                <fieldset class="profile-employers">
                     <legend>Werkervaring (werkgevers)</legend>
                     @for (var i = 0; i < _employers.Count; i++)
                     {
                         var idx = i;
-                        <div class="profile-entry-row">
-                            <input placeholder="Werkgever" @bind="_employers[idx].EmployerName" />
-                            <input placeholder="Functie" @bind="_employers[idx].Role" />
-                            <input type="number" min="0" max="80" placeholder="Jaren" @bind="_employers[idx].Years" />
+                        <div class="profile-employer-card">
+                            <label class="profile-employer-card__field">
+                                <span>Werkgever</span>
+                                <input placeholder="Naam werkgever" @bind="_employers[idx].EmployerName" />
+                            </label>
+                            <label class="profile-employer-card__field">
+                                <span>Functie</span>
+                                <input placeholder="Functie / rol" @bind="_employers[idx].Role" />
+                            </label>
+                            <label class="profile-employer-card__field profile-employer-card__field--years">
+                                <span>Jaren</span>
+                                <input type="number" min="0" max="80" placeholder="0" @bind="_employers[idx].Years" />
+                            </label>
                             <button type="button"
                                     class="icon-btn icon-btn--danger"
                                     title="Verwijderen"
@@ -187,7 +196,9 @@
                         </div>
                     }
                     <button type="button" class="icon-btn icon-btn--add" title="Werkgever toevoegen" aria-label="Werkgever toevoegen" @onclick="AddEmployer">
-                        <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14" /><path d="M5 12h14" /></svg>
+                        <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round">
+                            <path d="M12 5v14" /><path d="M5 12h14" />
+                        </svg>
                     </button>
                 </fieldset>
 
@@ -327,16 +338,23 @@
 
             if (_homeLat is not null && _homeLng is not null)
             {
-                try
+                if (!string.IsNullOrWhiteSpace(prefs.HomeAddress) && !LooksLikeCoordinates(prefs.HomeAddress))
                 {
-                    var label = await Geocoder.ReverseAsync(_homeLat.Value, _homeLng.Value);
-                    _homeAddress = string.IsNullOrWhiteSpace(label)
-                        ? $"{_homeLat.Value.ToString("0.#####", System.Globalization.CultureInfo.InvariantCulture)}, {_homeLng.Value.ToString("0.#####", System.Globalization.CultureInfo.InvariantCulture)}"
-                        : label;
+                    _homeAddress = prefs.HomeAddress!;
                 }
-                catch
+                else
                 {
-                    _homeAddress = $"{_homeLat.Value.ToString("0.#####", System.Globalization.CultureInfo.InvariantCulture)}, {_homeLng.Value.ToString("0.#####", System.Globalization.CultureInfo.InvariantCulture)}";
+                    try
+                    {
+                        var label = await Geocoder.ReverseAsync(_homeLat.Value, _homeLng.Value);
+                        _homeAddress = string.IsNullOrWhiteSpace(label)
+                            ? FormatCoordinateFallback(_homeLat.Value, _homeLng.Value)
+                            : label;
+                    }
+                    catch
+                    {
+                        _homeAddress = FormatCoordinateFallback(_homeLat.Value, _homeLng.Value);
+                    }
                 }
             }
         }
@@ -508,6 +526,22 @@
         _message = null;
     }
 
+    private static bool LooksLikeCoordinates(string? value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            return false;
+        }
+
+        var parts = value.Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
+        return parts.Length == 2
+            && double.TryParse(parts[0], System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out _)
+            && double.TryParse(parts[1], System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out _);
+    }
+
+    private static string FormatCoordinateFallback(double lat, double lng) =>
+        $"{lat.ToString("0.#####", System.Globalization.CultureInfo.InvariantCulture)}, {lng.ToString("0.#####", System.Globalization.CultureInfo.InvariantCulture)}";
+
     private async Task SaveAsync()
     {
         _saving = true;
@@ -523,6 +557,11 @@
             }
 
             var clearHome = _homeLocationDirty && string.IsNullOrWhiteSpace(_homeAddress);
+            var homeAddressToSave = clearHome
+                ? null
+                : string.IsNullOrWhiteSpace(_homeAddress) || LooksLikeCoordinates(_homeAddress)
+                    ? null
+                    : _homeAddress.Trim();
             await Api.UpdateMyProfileAsync(
                 openForWork: _openForWork,
                 dateOfBirth: _dobInput,
@@ -537,7 +576,8 @@
                     Employers = _employers.Where(e => !string.IsNullOrWhiteSpace(e.EmployerName)).ToList(),
                     Educations = _selectedEducations
                         .OrderBy(x => Array.IndexOf(EducationLevelLabels.ProfileAll, x))
-                        .ToList()
+                        .ToList(),
+                    HomeAddress = homeAddressToSave
                 },
                 homeLatitude: clearHome || !_homeLocationDirty ? null : _homeLat,
                 homeLongitude: clearHome || !_homeLocationDirty ? null : _homeLng,

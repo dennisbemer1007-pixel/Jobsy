@@ -70,6 +70,7 @@ public sealed class CandidatePreferences
     public Dictionary<string, List<string>> Availability { get; set; } = new(StringComparer.OrdinalIgnoreCase);
     public List<CandidateEmployerHistory> Employers { get; set; } = [];
     public List<string> Educations { get; set; } = [];
+    public string? HomeAddress { get; set; }
 }
 
 public sealed class CandidateEmployerHistory

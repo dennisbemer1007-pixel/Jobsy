@@ -5101,7 +5101,7 @@ button.linkish:hover {
 
 .profile-entry-row {
     display: grid;
-    grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr) 5.5rem auto;
+    grid-template-columns: minmax(0, 1fr) auto;
     gap: 0.45rem;
     align-items: center;
     margin-bottom: 0.45rem;
@@ -5112,27 +5112,87 @@ button.linkish:hover {
     width: 100%;
 }
 
-.profile-roles .profile-entry-row:has(input:only-of-type),
-.profile-roles .profile-entry-row:has(input:first-child:nth-last-child(2)) {
-    grid-template-columns: minmax(0, 1fr) auto;
+.profile-employers {
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 0.85rem 1rem 1rem;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.profile-employers legend {
+    padding: 0 0.25rem;
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
+.profile-employer-card {
+    display: grid;
+    grid-template-columns: minmax(0, 1.4fr) minmax(0, 1.2fr) 5.75rem auto;
+    gap: 0.65rem 0.75rem;
+    align-items: end;
+    padding: 0.75rem;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    background: color-mix(in srgb, var(--surface) 92%, var(--hover));
+}
+
+.profile-employer-card__field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+    min-width: 0;
+    margin: 0;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+}
+
+.profile-employer-card__field input {
+    width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+}
+
+.profile-employer-card__field--years {
+    max-width: 5.75rem;
+}
+
+.profile-employer-card .icon-btn {
+    align-self: end;
+    margin-bottom: 0.05rem;
+}
+
+.profile-employers > .icon-btn--add {
+    align-self: flex-start;
 }
 
 .icon-btn {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    gap: 0.3rem;
-    min-width: 2.1rem;
-    min-height: 2.1rem;
-    padding: 0.35rem 0.55rem;
-    border-radius: var(--radius-sm);
+    width: 2.25rem;
+    height: 2.25rem;
+    min-width: 2.25rem;
+    min-height: 2.25rem;
+    padding: 0;
+    border-radius: 8px;
     border: 1px solid var(--border);
-    background: transparent;
+    background: var(--surface);
     color: var(--muted);
     font: inherit;
-    font-size: 0.82rem;
-    font-weight: 600;
     cursor: pointer;
+    flex: 0 0 auto;
+}
+
+.icon-btn svg {
+    width: 1.1rem;
+    height: 1.1rem;
+    display: block;
 }
 
 .icon-btn:hover {
@@ -5142,20 +5202,26 @@ button.linkish:hover {
 }
 
 .icon-btn--add {
-    align-self: flex-start;
-    margin-top: 0.15rem;
-    padding-inline: 0.65rem;
+    color: var(--brand);
+    border-color: color-mix(in srgb, var(--brand) 22%, var(--border));
+    background: color-mix(in srgb, var(--brand) 6%, var(--surface));
+}
+
+.icon-btn--add:hover {
+    background: color-mix(in srgb, var(--brand) 12%, var(--surface));
+    color: var(--brand);
+    border-color: color-mix(in srgb, var(--brand) 35%, var(--border));
 }
 
 .icon-btn--danger {
     color: var(--danger);
-    border-color: transparent;
-    background: transparent;
+    border-color: color-mix(in srgb, var(--danger) 22%, var(--border));
+    background: color-mix(in srgb, var(--danger) 6%, var(--surface));
 }
 
 .icon-btn--danger:hover {
-    background: var(--danger-soft);
-    border-color: color-mix(in srgb, var(--danger) 25%, var(--border));
+    background: var(--danger-soft, color-mix(in srgb, var(--danger) 12%, var(--surface)));
+    border-color: color-mix(in srgb, var(--danger) 35%, var(--border));
     color: var(--danger);
 }
 
@@ -5232,24 +5298,24 @@ button.linkish:hover {
     z-index: 20 !important;
 }
 
-.icon-btn--add {
-    width: 2.1rem;
-    min-width: 2.1rem;
-    padding: 0;
-}
-
 .map-popup__pager {
     margin: 0;
     flex-shrink: 0;
 }
 
 @media (max-width: 640px) {
-    .profile-entry-row {
-        grid-template-columns: 1fr 1fr auto;
+    .profile-employer-card {
+        grid-template-columns: 1fr 1fr;
     }
 
-    .profile-entry-row input[type="number"] {
-        grid-column: 1 / 2;
+    .profile-employer-card__field--years {
+        max-width: none;
+    }
+
+    .profile-employer-card .icon-btn {
+        grid-column: 2;
+        justify-self: end;
+        align-self: center;
     }
 }
 

@@ -11,7 +11,8 @@ public record CandidatePreferencesDto(
     // Concrete string[] values — IReadOnlyList as dictionary values can fail System.Text.Json.
     IReadOnlyDictionary<string, string[]>? Availability = null,
     IReadOnlyList<CandidateEmployerHistoryDto>? Employers = null,
-    IReadOnlyList<string>? Educations = null);
+    IReadOnlyList<string>? Educations = null,
+    string? HomeAddress = null);
 
 public record CandidateEmployerHistoryDto(
     string EmployerName,

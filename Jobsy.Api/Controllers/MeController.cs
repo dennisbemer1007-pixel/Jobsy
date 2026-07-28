@@ -113,7 +113,8 @@ public class MeController : ControllerBase
             existing.DrivingLicenses,
             existing.Availability,
             existing.Employers,
-            existing.Educations);
+            existing.Educations,
+            existing.HomeAddress);
 
         await _db.SaveChangesAsync(cancellationToken);
         var features = await _features.GetAsync(cancellationToken);
@@ -218,7 +219,8 @@ public class MeController : ControllerBase
                 request.Preferences.DrivingLicenses,
                 request.Preferences.Availability,
                 request.Preferences.Employers,
-                request.Preferences.Educations);
+                request.Preferences.Educations,
+                request.Preferences.HomeAddress);
         }
 
         await _db.SaveChangesAsync(cancellationToken);
@@ -495,6 +497,17 @@ public class MeController : ControllerBase
                 }
             }
 
+            string? homeAddress = null;
+            if (root.TryGetProperty("homeAddress", out var homeAddressEl)
+                && homeAddressEl.ValueKind == JsonValueKind.String)
+            {
+                homeAddress = homeAddressEl.GetString()?.Trim();
+                if (string.IsNullOrWhiteSpace(homeAddress))
+                {
+                    homeAddress = null;
+                }
+            }
+
             return new CandidatePreferencesDto(
                 roles,
                 maxTravel,
@@ -505,7 +518,8 @@ public class MeController : ControllerBase
                 drivingLicenses.Distinct(StringComparer.OrdinalIgnoreCase).ToList(),
                 availability,
                 employers,
-                educations.Distinct(StringComparer.OrdinalIgnoreCase).ToList());
+                educations.Distinct(StringComparer.OrdinalIgnoreCase).ToList(),
+                homeAddress);
         }
         catch (Exception)
         {
@@ -523,7 +537,8 @@ public class MeController : ControllerBase
         [],
         new Dictionary<string, string[]>(),
         [],
-        []);
+        [],
+        null);
 
     public static string SerializePreferences(
         IEnumerable<string> roles,
@@ -535,8 +550,15 @@ public class MeController : ControllerBase
         IEnumerable<string>? drivingLicenses = null,
         IReadOnlyDictionary<string, string[]>? availability = null,
         IEnumerable<CandidateEmployerHistoryDto>? employers = null,
-        IEnumerable<string>? educations = null)
+        IEnumerable<string>? educations = null,
+        string? homeAddress = null)
     {
+        var trimmedHome = string.IsNullOrWhiteSpace(homeAddress) ? null : homeAddress.Trim();
+        if (trimmedHome is { Length: > 256 })
+        {
+            trimmedHome = trimmedHome[..256];
+        }
+
         return JsonSerializer.Serialize(new
         {
             roles,
@@ -566,7 +588,8 @@ public class MeController : ControllerBase
                 .Where(x => !string.IsNullOrWhiteSpace(x))
                 .Select(x => x.Trim())
                 .Distinct(StringComparer.OrdinalIgnoreCase)
-                .ToArray()
+                .ToArray(),
+            homeAddress = trimmedHome
         }, JsonOptions);
     }
 }
