@@ -1,14 +1,14 @@
-using Microsoft.EntityFrameworkCore.Infrastructure;
+﻿using System;
 using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
 namespace Jobsy.Infrastructure.Data.Migrations
 {
-    [DbContext(typeof(JobsyDbContext))]
-    [Migration("20260728160000_AddMasterdataOptionsAndVacancyWorkTypeLabels")]
-    public partial class AddMasterdataOptionsAndVacancyWorkTypeLabels : Migration
+    /// <inheritdoc />
+    public partial class SyncMasterdataModel : Migration
     {
+        /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.AddColumn<string>(
@@ -65,10 +65,15 @@ namespace Jobsy.Infrastructure.Data.Migrations
                 """);
         }
 
+        /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.DropTable(name: "MasterdataOptions");
-            migrationBuilder.DropColumn(name: "WorkTypeLabels", table: "Vacancies");
+            migrationBuilder.DropTable(
+                name: "MasterdataOptions");
+
+            migrationBuilder.DropColumn(
+                name: "WorkTypeLabels",
+                table: "Vacancies");
         }
     }
 }
