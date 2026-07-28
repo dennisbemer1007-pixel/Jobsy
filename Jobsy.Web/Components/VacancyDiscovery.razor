@@ -218,7 +218,10 @@
                 <label class="filter-required">
                     @Culture["Discovery.Age"]
                     <select value="@AgeSelectValue" @onchange="OnAgeChanged" required>
-                        <option value="">@Culture["Discovery.AgeAny"]</option>
+                        @if (_profileAgeYears is null)
+                        {
+                            <option value="all">@Culture["Discovery.AgeAny"]</option>
+                        }
                         @for (var age = 15; age <= 21; age++)
                         {
                             <option value="@age">@(age == 21 ? "21+" : age.ToString())</option>
@@ -423,8 +426,11 @@
                     <h3>@Culture["Discovery.Age"] · uurloon</h3>
                     <label>
                         @Culture["Discovery.Age"]
-                        <select value="@AgeSelectValue" @onchange="OnAgeChanged">
-                            <option value="">@Culture["Discovery.AgeAny"]</option>
+                        <select value="@AgeSelectValue" @onchange="OnAgeChanged" required>
+                            @if (_profileAgeYears is null)
+                            {
+                                <option value="all">@Culture["Discovery.AgeAny"]</option>
+                            }
                             @for (var age = 15; age <= 21; age++)
                             {
                                 <option value="@age">@(age == 21 ? "21+" : age.ToString())</option>
@@ -480,6 +486,8 @@
     private string _selectedWorkType = "";
     private string _sortMode = "title";
     private int? _ageYears;
+    /// <summary>Age from candidate profile (DOB), used as default / restore target.</summary>
+    private int? _profileAgeYears;
     private decimal? _minHourlyWage;
     private decimal? _maxHourlyWage;
     private bool _isCandidate;
@@ -495,7 +503,16 @@
     private CancellationTokenSource? _suggestCts;
     private int _suggestGeneration;
 
-    private string AgeSelectValue => _ageYears?.ToString() ?? "";
+    /// <summary>
+    /// Always maps to an existing &lt;option&gt;: "all", 15–20, or "21" (21+).
+    /// Ages above 21 must not leave the select blank.
+    /// </summary>
+    private string AgeSelectValue => _ageYears switch
+    {
+        null => "all",
+        >= 21 => "21",
+        var age => age.Value.ToString()
+    };
 
     private IEnumerable<VacancyListItem> SortedVacancies
     {
@@ -565,14 +582,7 @@
                 if (profile is not null)
                 {
                     _candidatePrefs = profile.Preferences;
-                    if (profile.Preferences.AgeYears is int prefAge)
-                    {
-                        _ageYears = prefAge;
-                    }
-                    else if (profile.DateOfBirth is DateOnly dob)
-                    {
-                        _ageYears = AgeFromDob(dob);
-                    }
+                    ApplyAgeFromProfile(profile);
 
                     if (profile.Preferences.MaxTravelMinutes is int travel)
                     {
@@ -657,12 +667,22 @@
         {
             try
             {
+                // Candidate age comes from profile (DOB). Only use localStorage for anonymous / no DOB.
+                if (_ageYears is null && _isCandidate)
+                {
+                    var profile = await Api.GetMyProfileAsync();
+                    if (profile is not null)
+                    {
+                        ApplyAgeFromProfile(profile);
+                    }
+                }
+
                 if (_ageYears is null)
                 {
                     var storedAge = await Js.InvokeAsync<int?>("jobsyGeo.getStoredAge");
                     if (storedAge is int age)
                     {
-                        _ageYears = age;
+                        _ageYears = NormalizeFilterAge(age);
                         // Do not prefill min wage from WML — user sets wage filters explicitly.
                     }
                 }
@@ -1114,17 +1134,20 @@
     private async Task OnAgeChanged(ChangeEventArgs e)
     {
         var raw = e.Value?.ToString();
-        if (string.IsNullOrWhiteSpace(raw) || !int.TryParse(raw, out var age))
+        // "all" (and any non-numeric) means Alle — never leave the select without a selection.
+        if (string.IsNullOrWhiteSpace(raw)
+            || string.Equals(raw, "all", StringComparison.OrdinalIgnoreCase)
+            || !int.TryParse(raw, out var age))
         {
-            _ageYears = null;
-            // Wage filters only apply with an age; clear them when age is cleared.
+            // Logged-in candidates with a profile age keep that age (from geboortedatum).
+            _ageYears = _profileAgeYears;
             _minHourlyWage = null;
             _maxHourlyWage = null;
         }
         else
         {
             // Do not auto-fill min wage from WML — wage filters stay empty until the user sets them.
-            _ageYears = Math.Clamp(age, 15, 67);
+            _ageYears = NormalizeFilterAge(age);
         }
 
         await PersistAgeAsync();
@@ -1161,22 +1184,24 @@
             // ignore storage failures
         }
 
-        if (!_isCandidate)
+        // Candidate age lives on geboortedatum in the profile — do not overwrite Preferences.AgeYears
+        // from the banenkaart filter (that made the filter stick on Alle / diverge from DOB).
+    }
+
+    private void ApplyAgeFromProfile(MeProfile profile)
+    {
+        // Geboortedatum is the profile source of truth for leeftijd.
+        if (profile.DateOfBirth is DateOnly dob)
         {
+            _profileAgeYears = NormalizeFilterAge(AgeFromDob(dob));
+            _ageYears = _profileAgeYears;
             return;
         }
 
-        try
+        if (profile.Preferences.AgeYears is int prefAge)
         {
-            var profile = await Api.GetMyProfileAsync();
-            var prefs = profile?.Preferences ?? _candidatePrefs ?? new CandidatePreferences();
-            prefs.AgeYears = _ageYears;
-            _candidatePrefs = prefs;
-            await Api.UpdateMyProfileAsync(preferences: prefs);
-        }
-        catch
-        {
-            // profile persist is best-effort
+            _profileAgeYears = NormalizeFilterAge(prefAge);
+            _ageYears = _profileAgeYears;
         }
     }
 
@@ -1209,6 +1234,9 @@
 
         return Math.Clamp(age, 15, 67);
     }
+
+    /// <summary>Filter UI only offers 15–21 (21+); clamp so the select always has a matching option.</summary>
+    private static int NormalizeFilterAge(int age) => Math.Clamp(age, 15, 21);
 
     private async Task OnHover(Guid? id)
     {
@@ -1286,7 +1314,8 @@
 
     private async Task ClearAgeAsync()
     {
-        _ageYears = null;
+        // Candidates: restore profile age (DOB), don't leave Alle when profile has an age.
+        _ageYears = _profileAgeYears;
         _minHourlyWage = null;
         _maxHourlyWage = null;
         await PersistAgeAsync();
@@ -1296,7 +1325,7 @@
     private async Task ClearAllFiltersAsync()
     {
         _selectedWorkType = "";
-        _ageYears = null;
+        _ageYears = _profileAgeYears;
         _minHourlyWage = null;
         _maxHourlyWage = null;
         _maxTravelMinutes = 30;
