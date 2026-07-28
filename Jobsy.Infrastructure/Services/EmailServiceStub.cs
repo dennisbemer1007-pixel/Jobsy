@@ -7,6 +7,7 @@ using Microsoft.Extensions.Logging;
 
 namespace Jobsy.Infrastructure.Services;
 
+/// <summary>Dev fallback: logs outbound mail to PlatformLog without sending.</summary>
 public sealed class EmailServiceStub : IEmailService
 {
     private readonly JobsyDbContext _db;

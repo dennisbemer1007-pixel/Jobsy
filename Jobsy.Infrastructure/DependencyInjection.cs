@@ -108,7 +108,8 @@ public static class DependencyInjection
         }
 
         services.AddScoped<IKvkService, KvkServiceStub>();
-        services.AddScoped<IEmailService, EmailServiceStub>();
+        services.AddScoped<EmailServiceStub>();
+        services.AddScoped<IEmailService, SmtpEmailService>();
         services.AddScoped<IPushNotificationService, PushNotificationServiceStub>();
         services.AddScoped<IIntegrationHealthService, IntegrationHealthStub>();
         services.AddScoped<IIntegrationCredentialService, IntegrationCredentialService>();

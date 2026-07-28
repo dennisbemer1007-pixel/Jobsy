@@ -212,7 +212,7 @@ public sealed class IntegrationCredentialService : IIntegrationCredentialService
 
     public static bool SupportsApiKey(IntegrationKey key) => key is
         IntegrationKey.Mollie or IntegrationKey.Kvk or IntegrationKey.Mail
-        or IntegrationKey.PostcodeCheck or IntegrationKey.OpenAI;
+        or IntegrationKey.OpenAI;
 
     public static bool SupportsModel(IntegrationKey key) => key == IntegrationKey.OpenAI;
 
@@ -223,7 +223,7 @@ public sealed class IntegrationCredentialService : IIntegrationCredentialService
 
     public static bool SupportsBaseUrl(IntegrationKey key) => key is
         IntegrationKey.OpenAI or IntegrationKey.Mollie or IntegrationKey.Kvk
-        or IntegrationKey.Mail or IntegrationKey.PostcodeCheck;
+        or IntegrationKey.Mail;
 
     public static bool SupportsFromAddress(IntegrationKey key) => key == IntegrationKey.Mail;
 
@@ -235,7 +235,6 @@ public sealed class IntegrationCredentialService : IIntegrationCredentialService
         IntegrationKey.MicrosoftEntra => "Microsoft Entra",
         IntegrationKey.GoogleEntra => "Google",
         IntegrationKey.Mail => "Mail",
-        IntegrationKey.PostcodeCheck => "PostcodeCheck",
         _ => key.ToString()
     };
 
@@ -247,7 +246,6 @@ public sealed class IntegrationCredentialService : IIntegrationCredentialService
         IntegrationKey.MicrosoftEntra => "Microsoft-login (OIDC).",
         IntegrationKey.GoogleEntra => "Google-login (OAuth).",
         IntegrationKey.Mail => "Uitgaande e-mail (SMTP/API).",
-        IntegrationKey.PostcodeCheck => "Postcode / geocoding.",
         _ => string.Empty
     };
 

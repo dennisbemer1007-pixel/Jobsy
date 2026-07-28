@@ -71,7 +71,6 @@ public sealed class IntegrationHealthStub : IIntegrationHealthService
                 IntegrationKey.Mollie => await TestMollieAsync(cancellationToken),
                 IntegrationKey.Kvk => await TestConfiguredAsync(key, "KvK API-key", cancellationToken),
                 IntegrationKey.Mail => await TestMailAsync(cancellationToken),
-                IntegrationKey.PostcodeCheck => await TestConfiguredAsync(key, "Postcode API-key", cancellationToken),
                 IntegrationKey.MicrosoftEntra => await TestOAuthAsync(key, requireTenant: true, cancellationToken),
                 IntegrationKey.GoogleEntra => await TestOAuthAsync(key, requireTenant: false, cancellationToken),
                 _ => (false, "Geen test beschikbaar voor deze integratie.")
@@ -158,21 +157,27 @@ public sealed class IntegrationHealthStub : IIntegrationHealthService
     private async Task<(bool Ok, string Message)> TestMailAsync(CancellationToken cancellationToken)
     {
         var secrets = await _credentials.GetSecretsAsync(IntegrationKey.Mail, cancellationToken);
-        var hasTransport = !string.IsNullOrWhiteSpace(secrets?.ApiKey)
-            || (!string.IsNullOrWhiteSpace(secrets?.BaseUrl)
-                && !string.IsNullOrWhiteSpace(secrets.ClientId)
-                && !string.IsNullOrWhiteSpace(secrets.ClientSecret));
-        if (!hasTransport)
+        if (SmtpEmailService.TryResolveSmtp(secrets, out var smtp))
         {
-            return (false, "Configureer API-key of SMTP (host + gebruiker + wachtwoord).");
+            // Lightweight TCP reachability check (no auth handshake).
+            using var tcp = new System.Net.Sockets.TcpClient();
+            using var linked = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+            linked.CancelAfter(TimeSpan.FromSeconds(8));
+            await tcp.ConnectAsync(smtp.Host, smtp.Port, linked.Token);
+            return (true, $"SMTP bereikbaar op {smtp.Host}:{smtp.Port}. Gmail: App Password + 2FA vereist.");
         }
 
-        if (string.IsNullOrWhiteSpace(secrets?.FromAddress))
+        if (!string.IsNullOrWhiteSpace(secrets?.ApiKey))
         {
-            return (false, "Vul een afzenderadres (From) in.");
+            if (string.IsNullOrWhiteSpace(secrets.FromAddress))
+            {
+                return (false, "Vul een afzenderadres (From) in.");
+            }
+
+            return (true, "Mail API-key aanwezig (SMTP niet geconfigureerd — e-mail gaat naar PlatformLog-stub).");
         }
 
-        return (true, "Mailconfig compleet (stub verstuurt naar PlatformLog tot SMTP live is).");
+        return (false, "Configureer SMTP: BaseUrl (host), ClientId (gebruiker), ClientSecret (wachtwoord/app-wachtwoord) en From.");
     }
 
     private async Task<(bool Ok, string Message)> TestOAuthAsync(

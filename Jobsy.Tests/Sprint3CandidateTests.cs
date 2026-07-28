@@ -146,6 +146,31 @@ public class Sprint3CandidateTests
         Assert.DoesNotContain("BodyHtml", log.DetailsJson);
     }
 
+    [Theory]
+    [InlineData("smtp.gmail.com", "smtp.gmail.com", 587)]
+    [InlineData("smtp.gmail.com:465", "smtp.gmail.com", 465)]
+    [InlineData("smtp://smtp.gmail.com:587", "smtp.gmail.com", 587)]
+    public void Smtp_parses_host_and_port(string input, string expectedHost, int expectedPort)
+    {
+        Assert.True(SmtpEmailService.TryParseHostPort(input, out var host, out var port));
+        Assert.Equal(expectedHost, host);
+        Assert.Equal(expectedPort, port);
+    }
+
+    [Fact]
+    public void Smtp_resolve_requires_full_credentials()
+    {
+        Assert.False(SmtpEmailService.TryResolveSmtp(null, out _));
+        Assert.False(SmtpEmailService.TryResolveSmtp(
+            new IntegrationCredentialSecrets(null, "u", "p", null, null, "smtp.gmail.com", null),
+            out _));
+        Assert.True(SmtpEmailService.TryResolveSmtp(
+            new IntegrationCredentialSecrets(null, "u@gmail.com", "app-pass", null, null, "smtp.gmail.com", "u@gmail.com"),
+            out var settings));
+        Assert.Equal("smtp.gmail.com", settings.Host);
+        Assert.Equal(587, settings.Port);
+    }
+
     [Fact]
     public async Task Push_stub_includes_deeplink()
     {

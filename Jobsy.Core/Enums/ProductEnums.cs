@@ -68,6 +68,5 @@ public enum IntegrationKey
     MicrosoftEntra = 2,
     GoogleEntra = 3,
     Mail = 4,
-    PostcodeCheck = 5,
     OpenAI = 6
 }
