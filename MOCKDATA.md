@@ -54,6 +54,19 @@ Guard: platform-log `"Westland banenkaart seed 50"`. Vacature-IDs `a1000000-0000
 | enterprise@jobsy.local | EnterpriseManager |
 | intermediair@jobsy.local | Intermediary |
 | admin@jobsy.local | Admin |
+| sales@jobsy.local | SalesManager (`SM-DEMO01`, wachtwoord `Jobsy123!`) |
+
+## 3b. Salesmanager-demo (`SalesManagerDemoSeeder` v2)
+
+Login: **sales@jobsy.local** / `Jobsy123!`. Guard: platform-log `"SalesManager dashboard seed v2"`.
+
+| Onderdeel | Seed |
+|-----------|------|
+| **Referrals (3)** | Westland Fresh (slot 1), Boutique Café (slot 2), Supermarkt De Fred (slot 3) — allen €2500 onboarding betaald |
+| **Founder bonuses** | €500 excl. BTW per leverancier (3×) |
+| **Tokencommissies** | Café €75, Westland €120, Fred €42,50 (+ €25 kick-off adjustment) |
+| **Facturen** | `SB-DEMO-2026-001` **Paid** (Westland founder) · `SB-DEMO-2026-002` **Issued** (Fred founder) |
+| **Openstaand** | Café-founder + tokenregels + adjustment blijven uninvoiced → uitbetalen-demo |
 
 ## 4. Metrics & logs (Sprint 8)
 
