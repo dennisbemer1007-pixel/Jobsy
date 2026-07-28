@@ -1,3 +1,4 @@
+@using Jobsy.Web.Admin
 @* Expandable integration settings tile with green/red status and live test. *@
 
 <article class="company-card integration-tile @(StatusClass)" @onclick="Toggle">
@@ -6,9 +7,56 @@
             <h3 class="company-card__name">@Credential.DisplayName</h3>
             <p class="company-card__meta">@StatusLabel</p>
         </div>
-        <span class="integration-tile__chevron" aria-hidden="true">@(_expanded ? "▾" : "▸")</span>
+        <div class="integration-tile__actions">
+            @if (Help is not null)
+            {
+                <button type="button"
+                        class="integration-tile__info @(_helpOpen ? "is-open" : null)"
+                        title="Informatie over @Credential.DisplayName"
+                        aria-label="Informatie over @Credential.DisplayName"
+                        aria-expanded="@_helpOpen"
+                        @onclick="ToggleHelp"
+                        @onclick:stopPropagation="true">
+                    i
+                </button>
+            }
+            <span class="integration-tile__chevron" aria-hidden="true">@(_expanded ? "▾" : "▸")</span>
+        </div>
     </div>
     <p class="company-card__address">@(string.IsNullOrWhiteSpace(StatusMessage) ? Credential.Description : StatusMessage)</p>
+
+    @if (_helpOpen && Help is not null)
+    {
+        <aside class="integration-help" @onclick:stopPropagation="true">
+            <p class="integration-help__summary">@Help.Summary</p>
+            <dl class="integration-help__list">
+                <div>
+                    <dt>Gebruik in Lobsy</dt>
+                    <dd>@Help.UsedFor</dd>
+                </div>
+                <div>
+                    <dt>Key / credentials aanmaken</dt>
+                    <dd>@Help.WhereToGetKey</dd>
+                </div>
+                @if (!string.IsNullOrWhiteSpace(Help.Tip))
+                {
+                    <div>
+                        <dt>Tip</dt>
+                        <dd>@Help.Tip</dd>
+                    </div>
+                }
+            </dl>
+            @if (!string.IsNullOrWhiteSpace(Help.DocsUrl))
+            {
+                <p class="integration-help__link">
+                    <a class="auth-link" href="@Help.DocsUrl" target="_blank" rel="noopener noreferrer"
+                       @onclick:stopPropagation="true">
+                        @(Help.DocsUrlLabel ?? "Documentatie openen") ↗
+                    </a>
+                </p>
+            }
+        </aside>
+    }
 
     @if (_expanded)
     {
@@ -141,6 +189,7 @@
     private string? _boundKey;
     private DateTime? _boundUpdatedAtUtc;
     private bool _expanded;
+    private bool _helpOpen;
     private bool _busy;
     private bool _dirty;
     private bool? _localOk;
@@ -152,6 +201,8 @@
     private string _model = "gpt-4o-mini";
     private string _baseUrl = "";
     private string _fromAddress = "";
+
+    private IntegrationHelpDocs.Doc? Help => IntegrationHelpDocs.TryGet(Credential.Key);
 
     private string StatusClass => EffectivePingOk switch
     {
@@ -185,6 +236,7 @@
         {
             _boundKey = Credential.Key;
             _expanded = false;
+            _helpOpen = false;
             _dirty = false;
             SyncDraftsFromCredential();
             return;
@@ -220,6 +272,11 @@
             SyncDraftsFromCredential();
             _localMessage = null;
         }
+    }
+
+    private void ToggleHelp()
+    {
+        _helpOpen = !_helpOpen;
     }
 
     private IntegrationCredentialSaveForm BuildSaveForm(bool clearSecrets = false) => new()
