@@ -160,16 +160,23 @@ public class ApplicationsController : ControllerBase
         application.PreferredTransport = request.PreferredTransport;
         application.EstimatedTravelMinutes = request.EstimatedTravelMinutes;
         application.DistanceKm = distanceKm;
-        application.PreferencesSummary = candidate.PreferencesJson;
+        // Compact summary only — full prefs JSON easily exceeds varchar(1024) and broke Apply.
+        application.PreferencesSummary = BuildCompactPreferencesSummary(preferences);
         application.ConsentAcceptedAt = DateTime.UtcNow;
         application.ConsentVersion = string.IsNullOrWhiteSpace(request.ConsentVersion)
             ? PrivacyConstants.CurrentConsentVersion
             : request.ConsentVersion.Trim();
         application.WorkPermitConfirmed = request.WorkPermitConfirmed;
-        application.SnapshotAvailabilityJson = preferences.Availability is null ? null : JsonSerializer.Serialize(preferences.Availability);
-        application.SnapshotDrivingLicenses = preferences.DrivingLicenses is null ? null : string.Join(", ", preferences.DrivingLicenses);
-        application.SnapshotEducations = preferences.Educations is null ? null : string.Join(", ", preferences.Educations);
-        application.SnapshotAboutMe = preferences.AboutMe;
+        application.SnapshotAvailabilityJson = Truncate(
+            preferences.Availability is null ? null : JsonSerializer.Serialize(preferences.Availability),
+            2048);
+        application.SnapshotDrivingLicenses = Truncate(
+            preferences.DrivingLicenses is null ? null : string.Join(", ", preferences.DrivingLicenses),
+            512);
+        application.SnapshotEducations = Truncate(
+            preferences.Educations is null ? null : string.Join(", ", preferences.Educations),
+            512);
+        application.SnapshotAboutMe = Truncate(preferences.AboutMe, 1024);
         application.CandidateEmployerCount = preferences.Employers?.Count ?? 0;
 
         var isVerificationAttempt = !string.IsNullOrWhiteSpace(request.VerificationCode);
@@ -189,9 +196,17 @@ public class ApplicationsController : ControllerBase
             {
                 await _db.SaveChangesAsync(cancellationToken);
             }
-            catch (DbUpdateException)
+            catch (DbUpdateException ex)
             {
-                return BadRequest(new { message = "Je hebt al gereageerd op deze vacature." });
+                var detail = ex.InnerException?.Message ?? ex.Message;
+                if (detail.Contains("23505", StringComparison.Ordinal)
+                    || detail.Contains("unique", StringComparison.OrdinalIgnoreCase)
+                    || detail.Contains("duplicate", StringComparison.OrdinalIgnoreCase))
+                {
+                    return BadRequest(new { message = "Je hebt al gereageerd op deze vacature." });
+                }
+
+                return BadRequest(new { message = "Sollicitatie kon niet worden opgeslagen. Probeer het opnieuw." });
             }
 
             await SendVerificationCodeAsync(candidate, vacancy, code, cancellationToken);
@@ -544,6 +559,26 @@ public class ApplicationsController : ControllerBase
                 deepLink,
                 "EmployerNewApplication"), cancellationToken);
         }
+    }
+
+    private static string BuildCompactPreferencesSummary(CandidatePreferencesDto preferences)
+    {
+        return JsonSerializer.Serialize(new
+        {
+            roles = preferences.Roles ?? [],
+            maxTravelMinutes = preferences.MaxTravelMinutes,
+            preferredTransport = preferences.PreferredTransport
+        });
+    }
+
+    private static string? Truncate(string? value, int maxLength)
+    {
+        if (string.IsNullOrEmpty(value) || value.Length <= maxLength)
+        {
+            return value;
+        }
+
+        return value[..maxLength];
     }
 
     private static string? ValidateHardRequirements(Core.Entities.Vacancy vacancy, CandidatePreferencesDto prefs)

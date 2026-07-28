@@ -3,6 +3,7 @@
 @attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Candidate")]
 @inject JobsyApiClient Api
 @inject IGeocodingClient Geocoder
+@inject NavigationManager Navigation
 @implements IAsyncDisposable
 
 <PageTitle>Profiel · Lobsy</PageTitle>
@@ -10,6 +11,10 @@
 <div class="panel-page profile-page">
     <header class="saved-gate__header profile-page__header">
         <h1>Profiel</h1>
+        @if (!string.IsNullOrWhiteSpace(_returnUrl))
+        {
+            <p class="login-lead">Vul je gegevens aan en ga daarna terug naar solliciteren.</p>
+        }
     </header>
     <article class="detail-card">
         <h1 class="profile-page__title">Mijn profiel</h1>
@@ -229,6 +234,7 @@
     private readonly List<string> _educations = [];
     private string? _aboutMe;
     private string? _message;
+    private string? _returnUrl;
 
     private List<AddressSuggestion> _suggestions = [];
     private bool _showSuggestions;
@@ -236,8 +242,12 @@
     private CancellationTokenSource? _suggestCts;
     private int _suggestGeneration;
 
+    [SupplyParameterFromQuery(Name = "returnUrl")]
+    public string? ReturnUrl { get; set; }
+
     protected override async Task OnInitializedAsync()
     {
+        _returnUrl = SanitizeReturnUrl(ReturnUrl);
         try
         {
             var profile = await Api.GetMyProfileAsync();
@@ -247,36 +257,37 @@
                 return;
             }
 
+            var prefs = profile.Preferences ?? new CandidatePreferences();
             _dobInput = profile.DateOfBirth;
             _openForWork = profile.OpenForWork;
             _authenticatorEnabled = profile.AuthenticatorEnabled;
             _homeLat = profile.HomeLatitude;
             _homeLng = profile.HomeLongitude;
-            _maxTravel = profile.Preferences.MaxTravelMinutes ?? 30;
-            _preferredTransport = profile.Preferences.PreferredTransport ?? "";
+            _maxTravel = prefs.MaxTravelMinutes ?? 30;
+            _preferredTransport = prefs.PreferredTransport ?? "";
             _selectedRoles.Clear();
-            foreach (var role in profile.Preferences.Roles)
+            foreach (var role in prefs.Roles ?? [])
             {
                 _selectedRoles.Add(role);
             }
             _selectedLicenses.Clear();
-            foreach (var license in profile.Preferences.DrivingLicenses)
+            foreach (var license in prefs.DrivingLicenses ?? [])
             {
                 _selectedLicenses.Add(license);
             }
-            _aboutMe = profile.Preferences.AboutMe;
+            _aboutMe = prefs.AboutMe;
             _availability.Clear();
-            foreach (var day in profile.Preferences.Availability)
+            foreach (var day in prefs.Availability ?? [])
             {
-                foreach (var slot in day.Value)
+                foreach (var slot in day.Value ?? [])
                 {
                     _availability.Add($"{day.Key}:{slot}");
                 }
             }
             _employers.Clear();
-            _employers.AddRange(profile.Preferences.Employers);
+            _employers.AddRange(prefs.Employers ?? []);
             _educations.Clear();
-            _educations.AddRange(profile.Preferences.Educations);
+            _educations.AddRange(prefs.Educations ?? []);
 
             if (_homeLat is not null && _homeLng is not null)
             {
@@ -292,6 +303,10 @@
                     _homeAddress = $"{_homeLat.Value.ToString("0.#####", System.Globalization.CultureInfo.InvariantCulture)}, {_homeLng.Value.ToString("0.#####", System.Globalization.CultureInfo.InvariantCulture)}";
                 }
             }
+        }
+        catch (Exception ex)
+        {
+            _message = $"Profiel laden mislukt: {ex.Message}";
         }
         finally
         {
@@ -473,6 +488,11 @@
                 clearHomeLocation: clearHome);
             _homeLocationDirty = false;
             _message = "Profiel opgeslagen.";
+            if (!string.IsNullOrWhiteSpace(_returnUrl))
+            {
+                Navigation.NavigateTo(_returnUrl);
+                return;
+            }
         }
         catch (Exception ex)
         {
@@ -482,6 +502,28 @@
         {
             _saving = false;
         }
+    }
+
+    private static string? SanitizeReturnUrl(string? raw)
+    {
+        if (string.IsNullOrWhiteSpace(raw))
+        {
+            return null;
+        }
+
+        // Only local relative paths such as /vacancies/{id}#apply
+        if (!raw.StartsWith('/') || raw.StartsWith("//", StringComparison.Ordinal))
+        {
+            return null;
+        }
+
+        if (raw.Contains('\\', StringComparison.Ordinal)
+            || raw.Contains("://", StringComparison.Ordinal))
+        {
+            return null;
+        }
+
+        return raw;
     }
 
     public ValueTask DisposeAsync()

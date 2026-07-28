@@ -10,7 +10,7 @@
 @using Microsoft.AspNetCore.Components.Authorization
 @implements IAsyncDisposable
 
-<PageTitle>@(_vacancy?.Title ?? Culture["Vacancy.Title"]) · Lobsy</PageTitle>
+<PageTitle>@(_vacancy?.Title ?? Culture["Vacancy.Title"]) Â· Lobsy</PageTitle>
 
 <div class="panel-page">
     @if (_loading)
@@ -90,7 +90,7 @@
                                 {
                                     <tr>
                                         <th>@band.Label</th>
-                                        <td>€ @band.HourlyRate.ToString("0.00")</td>
+                                        <td>â‚¬ @band.HourlyRate.ToString("0.00")</td>
                                     </tr>
                                 }
                             </tbody>
@@ -99,7 +99,7 @@
                 }
                 else if (_vacancy.WageVisible && _vacancy.HourlyWage is not null)
                 {
-                    <span class="wage">€ @_vacancy.HourlyWage.Value.ToString("0.00")</span>
+                    <span class="wage">â‚¬ @_vacancy.HourlyWage.Value.ToString("0.00")</span>
                 }
                 else if (!_vacancy.WageVisible)
                 {
@@ -117,7 +117,7 @@
                 @Culture["Vacancy.StartDate"]: @_vacancy.StartDate.ToString("dd-MM-yyyy")
                 @if (_vacancy.WorkTypes.Length > 0)
                 {
-                    <text>             · @Culture["Vacancy.WorkType"]: @string.Join(", ", _vacancy.WorkTypes)</text>
+                    <text>             Â· @Culture["Vacancy.WorkType"]: @string.Join(", ", _vacancy.WorkTypes)</text>
                 }
             </p>
             @if (!string.IsNullOrWhiteSpace(_vacancy.RequiredDrivingLicense)
@@ -157,7 +157,7 @@
                             @if (_vacancy.TravelMinutes is not null)
                             {
                                 <span class="lobsy-proximity__chip">
-                                    ± @_vacancy.TravelMinutes min @Culture["Vacancy.FromYourLocation"]
+                                    Â± @_vacancy.TravelMinutes min @Culture["Vacancy.FromYourLocation"]
                                 </span>
                             }
                             @if (_vacancy.DistanceKm is not null)
@@ -169,7 +169,7 @@
                             @if (_vacancy.RequiredTransport.Length > 0)
                             {
                                 <span class="lobsy-proximity__chip lobsy-proximity__chip--soft">
-                                    @Culture["Vacancy.Transport"]: @string.Join(" · ", _vacancy.RequiredTransport)
+                                    @Culture["Vacancy.Transport"]: @string.Join(" Â· ", _vacancy.RequiredTransport)
                                 </span>
                             }
                         </p>
@@ -234,7 +234,7 @@
                             Oefen je sollicitatiegesprek
                         </button>
                         <p class="mock-interview-cta__hint">
-                            Oefen met een AI-recruiter op basis van deze vacature — los van solliciteren.
+                            Oefen met een AI-recruiter op basis van deze vacature â€” los van solliciteren.
                         </p>
                     </Authorized>
                     <NotAuthorized>
@@ -255,82 +255,164 @@
                 </AuthorizeView>
             </div>
 
-            <div id="apply">
+            <div id="apply" class="apply-flow">
                 <AuthorizeView Roles="Candidate">
                     <Authorized>
-                        <div class="detail-actions">
-                            <label>
-                                @Culture["Vacancy.YourTransport"]
-                                <select value="@_transport" @onchange="OnTransportChanged">
-                                    <option value="Fiets">@Culture["Transport.Bike"]</option>
-                                    <option value="Auto">@Culture["Transport.Car"]</option>
-                                    <option value="OV">@Culture["Transport.Transit"]</option>
-                                    <option value="Lopend">@Culture["Transport.Walk"]</option>
-                                </select>
-                            </label>
-                            @if (_authenticatorEnabled)
-                            {
-                                <label class="profile-toggle">
-                                    <input type="checkbox" @bind="_useAuthenticator" />
-                                    <span>Bevestig met Authenticator (stub)</span>
-                                </label>
-                            }
-                            <label class="profile-toggle legal-consent">
-                                <input type="checkbox" @bind="_acceptedTerms" />
-                                <span>
-                                    Ik ga akkoord met de
-                                    <a class="auth-link" href="/gebruiksvoorwaarden" target="_blank" rel="noopener">gebruiksvoorwaarden</a>
-                                    (inclusief chatbot-disclaimer) en de
-                                    <a class="auth-link" href="/privacy" target="_blank" rel="noopener">privacyverklaring</a>.
-                                </span>
-                            </label>
-                            <label class="profile-toggle legal-consent">
-                                <input type="checkbox" @bind="_workPermitConfirmed" />
-                                <span>Ik ben wettelijk bevoegd om in Nederland te werken.</span>
-                            </label>
-                            @if (!_profileReadyForApply)
-                            {
-                                <p class="login-lead">
-                                    Vul eerst je kernprofiel aan via <a href="/candidate/profile">Mijn profiel</a>
-                                    (beschikbaarheid, rijbewijs, werkervaring, over jezelf).
+                        <header class="apply-flow__header">
+                            <h2 class="apply-flow__title">Solliciteren</h2>
+                            <p class="apply-flow__lead">@ApplyFlowLead</p>
+                        </header>
+
+                        <ol class="apply-steps" aria-label="Sollicitatiestappen">
+                            <li class="apply-steps__item @ProfileStepClass">
+                                <span class="apply-steps__num" aria-hidden="true">1</span>
+                                <span class="apply-steps__label">Profiel</span>
+                            </li>
+                            <li class="apply-steps__item @ConsentStepClass">
+                                <span class="apply-steps__num" aria-hidden="true">2</span>
+                                <span class="apply-steps__label">Akkoord</span>
+                            </li>
+                            <li class="apply-steps__item @SendStepClass">
+                                <span class="apply-steps__num" aria-hidden="true">3</span>
+                                <span class="apply-steps__label">Versturen</span>
+                            </li>
+                            <li class="apply-steps__item @VerifyStepClass">
+                                <span class="apply-steps__num" aria-hidden="true">4</span>
+                                <span class="apply-steps__label">Bevestigen</span>
+                            </li>
+                        </ol>
+
+                        @if (_applied)
+                        {
+                            <div class="apply-panel apply-panel--success" role="status">
+                                <p class="apply-panel__title">Sollicitatie verstuurd</p>
+                                <p class="apply-panel__text">Je reactie is bevestigd. Je ziet de status terug onder Mijn sollicitaties.</p>
+                                <a class="engagement-btn apply-flow__secondary" href="/candidate/applications">Naar mijn sollicitaties</a>
+                            </div>
+                        }
+                        else if (!_profileReadyForApply)
+                        {
+                            <div class="apply-panel apply-panel--warn">
+                                <p class="apply-panel__title">Eerst je profiel afronden</p>
+                                <p class="apply-panel__text">Werkgevers zien deze gegevens bij je sollicitatie. Vul het volgende aan:</p>
+                                <ul class="apply-checklist">
+                                    <li class="@(_profileHasAvailability ? "is-done" : null)">Beschikbaarheid</li>
+                                    <li class="@(_profileHasLicense ? "is-done" : null)">Rijbewijs</li>
+                                    <li class="@(_profileHasEmployers ? "is-done" : null)">Werkervaring</li>
+                                    <li class="@(_profileHasAboutMe ? "is-done" : null)">Over jezelf</li>
+                                </ul>
+                                <a class="login-submit apply-flow__primary"
+                                   href="@ProfileReturnHref">
+                                    Profiel aanvullen
+                                </a>
+                            </div>
+                        }
+                        else if (_awaitingVerification)
+                        {
+                            <div class="apply-panel apply-panel--verify">
+                                <p class="apply-panel__title">Bevestig met e-mailcode</p>
+                                <p class="apply-panel__text">
+                                    We hebben een 6-cijferige code gestuurd naar je e-mail. Vul die hier in om je sollicitatie af te ronden.
                                 </p>
-                            }
-                            <button class="login-submit"
-                                    type="button"
-                                    disabled="@(_applying || _applied || !_acceptedTerms || !_workPermitConfirmed || !_profileReadyForApply)"
-                                    @onclick="ApplyAsync">
-                                @(_applied ? "Reactie verstuurd" : _awaitingVerification ? "Code opnieuw sturen" : "Solliciteer")
-                            </button>
-                            @if (_awaitingVerification)
-                            {
-                                <label>
-                                    6-cijferige verificatiecode
-                                    <input maxlength="6" @bind="_verificationCode" placeholder="123456" />
+                                <label class="apply-code-field">
+                                    <span>Verificatiecode</span>
+                                    <input class="apply-code-field__input"
+                                           type="text"
+                                           inputmode="numeric"
+                                           autocomplete="one-time-code"
+                                           maxlength="6"
+                                           placeholder="â€¢â€¢â€¢â€¢â€¢â€¢"
+                                           @bind="_verificationCode"
+                                           @bind:event="oninput" />
                                 </label>
-                                <button class="engagement-btn" type="button" disabled="@(_applying || string.IsNullOrWhiteSpace(_verificationCode))" @onclick="VerifyApplicationAsync">
-                                    Verifieer en verstuur
+                                <button class="login-submit apply-flow__primary"
+                                        type="button"
+                                        disabled="@(_applying || _verificationCode.Trim().Length != 6)"
+                                        @onclick="VerifyApplicationAsync">
+                                    @(_applying ? "Bezigâ€¦" : "Bevestigen en versturen")
                                 </button>
-                            }
-                        </div>
+                                <button class="engagement-btn apply-flow__secondary"
+                                        type="button"
+                                        disabled="@_applying"
+                                        @onclick="ApplyAsync">
+                                    Code opnieuw sturen
+                                </button>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="apply-panel">
+                                <section class="apply-section">
+                                    <h3 class="apply-section__title">Hoe ga je?</h3>
+                                    <label class="apply-field">
+                                        <span>Vervoer</span>
+                                        <select value="@_transport" @onchange="OnTransportChanged">
+                                            <option value="Fiets">@Culture["Transport.Bike"]</option>
+                                            <option value="Auto">@Culture["Transport.Car"]</option>
+                                            <option value="OV">@Culture["Transport.Transit"]</option>
+                                            <option value="Lopend">@Culture["Transport.Walk"]</option>
+                                        </select>
+                                    </label>
+                                </section>
+
+                                <section class="apply-section">
+                                    <h3 class="apply-section__title">Bevestigingen</h3>
+                                    @if (_authenticatorEnabled)
+                                    {
+                                        <label class="apply-check">
+                                            <input type="checkbox" @bind="_useAuthenticator" />
+                                            <span>Bevestig met Authenticator (stub)</span>
+                                        </label>
+                                    }
+                                    <label class="apply-check">
+                                        <input type="checkbox" @bind="_acceptedTerms" />
+                                        <span>
+                                            Ik ga akkoord met de
+                                            <a class="auth-link" href="/gebruiksvoorwaarden" target="_blank" rel="noopener">gebruiksvoorwaarden</a>
+                                            en de
+                                            <a class="auth-link" href="/privacy" target="_blank" rel="noopener">privacyverklaring</a>.
+                                        </span>
+                                    </label>
+                                    <label class="apply-check">
+                                        <input type="checkbox" @bind="_workPermitConfirmed" />
+                                        <span>Ik mag wettelijk in Nederland werken.</span>
+                                    </label>
+                                </section>
+
+                                <button class="login-submit apply-flow__primary"
+                                        type="button"
+                                        disabled="@(_applying || !_acceptedTerms || !_workPermitConfirmed)"
+                                        @onclick="ApplyAsync">
+                                    @(_applying ? "Bezigâ€¦" : "Sollicitatie versturen")
+                                </button>
+                                <p class="apply-flow__hint">Daarna ontvang je een code per e-mail om te bevestigen.</p>
+                            </div>
+                        }
+
+                        @if (!string.IsNullOrEmpty(_message))
+                        {
+                            <p class="apply-flow__message @(_applied ? "is-success" : null)" role="status">@_message</p>
+                        }
                     </Authorized>
                     <NotAuthorized>
-                        <AuthorizeView Context="authState">
-                            <Authorized Context="authed">
-                                <p class="login-lead">Alleen kandidaten kunnen solliciteren.</p>
-                            </Authorized>
-                            <NotAuthorized Context="anon">
-                                <p class="login-lead">Log in als kandidaat om te solliciteren.</p>
-                                <a class="login-submit" href="@LoginUrl" style="text-decoration:none;display:inline-flex;">Inloggen om te solliciteren</a>
-                            </NotAuthorized>
-                        </AuthorizeView>
+                        <div class="apply-panel">
+                            <header class="apply-flow__header">
+                                <h2 class="apply-flow__title">Solliciteren</h2>
+                            </header>
+                            <AuthorizeView Context="authState">
+                                <Authorized Context="authed">
+                                    <p class="apply-panel__text">Alleen kandidaten kunnen solliciteren.</p>
+                                </Authorized>
+                                <NotAuthorized Context="anon">
+                                    <p class="apply-panel__text">Log in als kandidaat om te solliciteren op deze vacature.</p>
+                                    <a class="login-submit apply-flow__primary" href="@LoginUrl">Inloggen om te solliciteren</a>
+                                </NotAuthorized>
+                            </AuthorizeView>
+                        </div>
                     </NotAuthorized>
                 </AuthorizeView>
             </div>
 
-            @if (!string.IsNullOrEmpty(_message))
-            {
-                <p class="state-message">@_message</p>
-            }
         </article>
     }
 </div>
@@ -359,6 +441,10 @@
     private bool _acceptedTerms;
     private bool _workPermitConfirmed;
     private bool _profileReadyForApply = true;
+    private bool _profileHasAvailability;
+    private bool _profileHasLicense;
+    private bool _profileHasEmployers;
+    private bool _profileHasAboutMe;
     private bool _awaitingVerification;
     private string _verificationCode = string.Empty;
     private int? _ageYears;
@@ -367,6 +453,45 @@
 
     private string LoginUrl =>
         $"/login?returnUrl={Uri.EscapeDataString($"/vacancies/{Id}")}";
+
+    private string ProfileReturnHref =>
+        $"/candidate/profile?returnUrl={Uri.EscapeDataString($"/vacancies/{Id}#apply")}";
+
+    private string ApplyFlowLead => _applied
+        ? "Klaar — je sollicitatie is bevestigd."
+        : !_profileReadyForApply
+            ? "Nog even je profiel afronden, daarna kun je solliciteren."
+            : _awaitingVerification
+                ? "Bijna klaar — bevestig met de code uit je e-mail."
+                : "In 4 korte stappen. Duidelijk en snel op je telefoon.";
+
+    private string ProfileStepClass =>
+        _applied || _profileReadyForApply ? "is-done" : "is-current";
+
+    private string ConsentStepClass =>
+        _applied || _awaitingVerification
+            ? "is-done"
+            : _profileReadyForApply && (_acceptedTerms && _workPermitConfirmed)
+                ? "is-done"
+                : _profileReadyForApply
+                    ? "is-current"
+                    : string.Empty;
+
+    private string SendStepClass =>
+        _applied
+            ? "is-done"
+            : _awaitingVerification
+                ? "is-done"
+                : _profileReadyForApply && _acceptedTerms && _workPermitConfirmed
+                    ? "is-current"
+                    : string.Empty;
+
+    private string VerifyStepClass =>
+        _applied
+            ? "is-done"
+            : _awaitingVerification
+                ? "is-current"
+                : string.Empty;
 
     private bool HasLocation =>
         _vacancy is not null
@@ -470,7 +595,7 @@
         }
         catch
         {
-            // Leaflet may not be ready yet — retry on next render
+            // Leaflet may not be ready yet â€” retry on next render
         }
     }
 
@@ -508,11 +633,16 @@
                 _authenticatorEnabled = profile?.AuthenticatorEnabled == true;
                 if (profile is not null)
                 {
+                    var prefs = profile.Preferences ?? new CandidatePreferences();
+                    _profileHasAvailability = (prefs.Availability?.Count ?? 0) > 0;
+                    _profileHasLicense = (prefs.DrivingLicenses?.Count ?? 0) > 0;
+                    _profileHasEmployers = (prefs.Employers?.Count ?? 0) > 0;
+                    _profileHasAboutMe = !string.IsNullOrWhiteSpace(prefs.AboutMe);
                     _profileReadyForApply =
-                        profile.Preferences.Availability.Count > 0
-                        && profile.Preferences.DrivingLicenses.Count > 0
-                        && profile.Preferences.Employers.Count > 0
-                        && !string.IsNullOrWhiteSpace(profile.Preferences.AboutMe);
+                        _profileHasAvailability
+                        && _profileHasLicense
+                        && _profileHasEmployers
+                        && _profileHasAboutMe;
                 }
             }
             catch
@@ -573,7 +703,7 @@
                 // ignore
             }
 
-            _message = "Geboortedatum opgeslagen — je ziet nu het loon.";
+            _message = "Geboortedatum opgeslagen â€” je ziet nu het loon.";
         }
         catch (Exception ex)
         {

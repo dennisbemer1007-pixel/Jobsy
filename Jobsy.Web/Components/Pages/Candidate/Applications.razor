@@ -65,6 +65,10 @@
             _items = (await Api.GetMyApplicationsAsync()).ToList();
             _showCelebration = _items.Any(x => x.Status == "Hired");
         }
+        catch
+        {
+            _items = [];
+        }
         finally
         {
             _loading = false;

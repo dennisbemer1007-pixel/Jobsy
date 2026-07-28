@@ -332,7 +332,7 @@ public class MeController : ControllerBase
     {
         if (string.IsNullOrWhiteSpace(json))
         {
-            return new CandidatePreferencesDto([], null, null, null, null, null, [], null, [], []);
+            return EmptyPreferences();
         }
 
         try
@@ -486,9 +486,21 @@ public class MeController : ControllerBase
         }
         catch (JsonException)
         {
-            return new CandidatePreferencesDto([], null, null, null, null, null, [], null, [], []);
+            return EmptyPreferences();
         }
     }
+
+    private static CandidatePreferencesDto EmptyPreferences() => new(
+        [],
+        null,
+        null,
+        null,
+        null,
+        null,
+        [],
+        new Dictionary<string, IReadOnlyList<string>>(StringComparer.OrdinalIgnoreCase),
+        [],
+        []);
 
     public static string SerializePreferences(
         IEnumerable<string> roles,
