@@ -56,7 +56,7 @@
             {
                 <div class="mock-interview-bubble mock-interview-bubble--assistant mock-interview-bubble--typing">
                     <span class="mock-interview-bubble__role">Coach</span>
-                    <p>Ik lees je antwoord en bedenk feedback…</p>
+                    <p>Ik lees mee en geef je gerichte feedback…</p>
                 </div>
             }
         </div>
@@ -241,6 +241,18 @@
         foreach (var raw in lines)
         {
             var line = raw.TrimEnd();
+            if (StartsWithLabel(line, "Let op:", out var letOp))
+            {
+                Flush();
+                currentKind = "caution";
+                currentLabel = "Let op";
+                if (!string.IsNullOrWhiteSpace(letOp))
+                {
+                    buffer.Add(letOp);
+                }
+                continue;
+            }
+
             if (StartsWithLabel(line, "Sterk:", out var sterk))
             {
                 Flush();
@@ -261,6 +273,18 @@
                 if (!string.IsNullOrWhiteSpace(tip))
                 {
                     buffer.Add(tip);
+                }
+                continue;
+            }
+
+            if (StartsWithLabel(line, "Probeer zo:", out var probeerZo))
+            {
+                Flush();
+                currentKind = "rewrite";
+                currentLabel = "Probeer zo";
+                if (!string.IsNullOrWhiteSpace(probeerZo))
+                {
+                    buffer.Add(probeerZo);
                 }
                 continue;
             }

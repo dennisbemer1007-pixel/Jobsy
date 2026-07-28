@@ -18,9 +18,9 @@ public sealed class MockInterviewService : IMockInterviewService
 
     private const string SystemPromptTemplate =
         """
-        Je bent een warme, scherpe coach-recruiter in Nederland. Je helpt een jongere oefenen voor
-        een sollicitatiegesprek via chat. Dit is géén echt gesprek en géén toezegging van werk.
-        Doel: de kandidaat écht helpen — met gerichte vragen uit DEZE vacature en bruikbaar advies.
+        Je bent een warme, praktische coach-recruiter in Nederland. Je helpt een jongere oefenen
+        voor een sollicitatiegesprek via chat. Dit is géén echt gesprek en géén toezegging van werk.
+        Doel: het moet voelen als échte hulp — reageer op WAT ZE ZEGGEN, niet met standaardfrases.
 
         Vacaturecontext:
         - Functie: {title}
@@ -33,26 +33,31 @@ public sealed class MockInterviewService : IMockInterviewService
         - Vacaturetekst:
         {description}
 
-        Kernopdracht — vacature-eerst:
-        - Haal 3–5 concrete taken, eisen of situaties uit de vacaturetekst (niet algemeen).
-        - Stel vragen die daar letterlijk of duidelijk op aansluiten (noem een taak/eis uit de tekst).
-        - Vermijd generieke vragen als “waarom wil je werken?” zonder koppeling aan deze rol.
+        Kernopdracht — vacature-eerst + interactief:
+        - Haal 3–5 concrete taken/eisen uit de vacaturetekst.
+        - Reageer op details uit hun laatste antwoord (citaat of parafrase). Geen generieke lof.
+        - Varieer je tips: soms STAR, soms toon, soms koppeling aan een vacaturetaak, soms een herschrijfvoorbeeld.
+        - Als het antwoord vaag/kort is: blijf bij hetzelfde thema met een soft doorvraag als "Vraag:".
 
-        Antwoordstructuur NA elk kandidatenantwoord (verplicht, behalve bij de openingsbeurt):
-        1) Regel die begint met "Sterk: " — wat goed ging, graag met een citaat of detail uit hun antwoord.
-        2) Regel die begint met "Tip: " — één concrete verbetering voor een écht gesprek
-           (bijv. STAR: situatie → actie → resultaat, of koppeling aan een vacaturetaak).
-        3) Lege regel, daarna "Vraag: " + precies één volgende oefenvraag.
+        Antwoordstructuur NA elk kandidatenantwoord (verplicht, behalve openingsbeurt):
+        1) Optioneel: regel "Let op: " — ALLEEN bij beledigende, grove of respectloze taal.
+           Vriendelijk, zonder shamen: leg uit dat een nette toon in een echt gesprek beter werkt,
+           en nodig uit om het anders te formuleren.
+        2) Regel "Sterk: " — wat goed ging, met een kort citaat/detail uit HUN antwoord
+           (sla over of houd heel kort als het antwoord vooral beledigend was).
+        3) Regel "Tip: " — één concrete verbetering.
+        4) Optioneel: regel "Probeer zo: " — één herschreven voorbeeldzin in hun woorden/stijl,
+           gekoppeld aan de vacature (max ~35 woorden).
+        5) Lege regel, daarna "Vraag: " + precies één volgende oefenvraag.
 
         Extra gedragsregels:
-        1. Nederlands, natuurlijk, bemoedigend — alsof je écht meedenkt.
-        2. Eén vraag per beurt; max ~140 woorden.
-        3. Als het antwoord vaag/kort is: tip om een voorbeeld te geven, en stel eventueel een soft doorvraag
-           als de "Vraag:" (nog over hetzelfde thema) i.p.v. meteen door naar een nieuw onderwerp.
+        1. Nederlands, natuurlijk, bemoedigend — alsof je echt meedenkt.
+        2. Eén vraag per beurt; max ~160 woorden.
+        3. Herhaal niet dezelfde tip twee beurten achter elkaar.
         4. Geen harde toezeggingen over salaris, contract of aanname.
         5. Nooit BSN, bankgegevens, wachtwoorden of andere zeer gevoelige data vragen.
         6. Als gevraagd wordt of dit echt is: leg uit dat dit een oefengesprek via Lobsy is.
-        7. Rond na 5–6 vragen af met een kort samenvattend compliment + 2 takeaways om te onthouden.
+        7. Rond na 5–6 vragen af met compliment + 2 takeaways + één zin "zo kun je dit morgen gebruiken".
         """;
 
     private static readonly JsonSerializerOptions JsonOptions = new()
@@ -173,10 +178,11 @@ public sealed class MockInterviewService : IMockInterviewService
             {
                 role = "user",
                 content =
-                    "Start het oefengesprek. Stel je kort voor als recruiter van dit bedrijf, " +
+                    "Start het oefengesprek. Stel je kort voor als coach-recruiter van dit bedrijf, " +
                     "zeg dat dit een oefengesprek is waarin je hen helpt scherper te antwoorden, " +
                     "noem in één zin een concrete taak/eis uit de vacaturetekst, " +
-                    "en stel je eerste gerichte vraag (begin met 'Vraag: ')."
+                    "en stel je eerste gerichte vraag (begin met 'Vraag: '). " +
+                    "Geen Sterk/Tip in deze openingsbeurt."
             });
         }
         else
@@ -185,6 +191,20 @@ public sealed class MockInterviewService : IMockInterviewService
             {
                 messages.Add(new { role = turn.Role, content = turn.Content });
             }
+
+            var lastUser = history.LastOrDefault(m => m.Role == "user")?.Content ?? "";
+            messages.Add(new
+            {
+                role = "user",
+                content =
+                    "Reageer nu als coach op mijn laatste antwoord hierboven. " +
+                    "Citeer of parafraseer iets uit mijn tekst. " +
+                    (DutchInterviewAnswerHeuristics.LooksInsulting(lastUser)
+                        ? "Mijn toon was mogelijk te scherp: begin met 'Let op: ' (vriendelijk, zonder shamen), " +
+                          "geef daarna Tip + 'Probeer zo: ' met een nette herschrijving, en stel dezelfde oefenvraag opnieuw. "
+                        : "Gebruik Sterk + Tip, en voeg 'Probeer zo: ' toe als mijn antwoord vaag of kort was. ") +
+                    "Eindig met precies één 'Vraag: '."
+            });
         }
 
         var client = _httpClientFactory.CreateClient("IntegrationProbe");
@@ -195,8 +215,8 @@ public sealed class MockInterviewService : IMockInterviewService
         request.Content = JsonContent.Create(new
         {
             model,
-            temperature = 0.65,
-            max_tokens = 550,
+            temperature = 0.85,
+            max_tokens = 650,
             messages
         });
 
@@ -319,77 +339,156 @@ public sealed class MockInterviewService : IMockInterviewService
 
             var lastUser = history.LastOrDefault(m => m.Role == "user")?.Content?.Trim() ?? "";
             var coaching = BuildCoaching(lastUser, plan, userTurns);
+            var insulting = DutchInterviewAnswerHeuristics.LooksInsulting(lastUser);
+            var vague = DutchInterviewAnswerHeuristics.LooksVague(lastUser);
 
-            if (userTurns >= plan.Questions.Count)
+            if (userTurns >= plan.Questions.Count && !insulting)
             {
                 return
                     $"{coaching}\n\n" +
                     $"Mooi geoefend voor {plan.Title}! Dit was geen echte beoordeling.\n" +
                     $"Onthoud: (1) koppel je antwoord aan taken uit de vacature, zoals {plan.PrimaryHook}. " +
-                    "(2) Gebruik een kort voorbeeld: situatie → wat jij deed → resultaat. Succes!";
+                    "(2) Gebruik een kort voorbeeld: situatie → wat jij deed → resultaat. " +
+                    "Morgen kun je dit letterlijk zo oefenen hardop voor de spiegel. Succes!";
             }
 
-            return $"{coaching}\n\nVraag: {plan.Questions[userTurns]}";
+            // Beledigend of heel vaag → zelfde thema opnieuw, met herschrijfvoorbeeld.
+            var questionIndex = insulting || vague
+                ? Math.Max(0, Math.Min(userTurns - 1, plan.Questions.Count - 1))
+                : Math.Min(userTurns, plan.Questions.Count - 1);
+            if (questionIndex < 0)
+            {
+                questionIndex = 0;
+            }
+
+            return $"{coaching}\n\nVraag: {plan.Questions[questionIndex]}";
         }
 
         private static string BuildCoaching(string answer, InterviewPlan plan, int userTurnIndex)
         {
-            var strong = BuildStrong(answer, plan);
+            if (DutchInterviewAnswerHeuristics.LooksInsulting(answer))
+            {
+                var rewrite = DutchInterviewAnswerHeuristics.BuildRewriteSuggestion(answer, plan.PrimaryHook);
+                return
+                    $"Let op: {DutchInterviewAnswerHeuristics.FriendlyToneRedirect(plan.PrimaryHook)}\n" +
+                    $"Tip: Formuleer wat je bedoelt zonder scheldwoorden — dat komt sterker over.\n" +
+                    rewrite;
+            }
+
+            var strong = BuildStrong(answer, plan, userTurnIndex);
             var tip = BuildTip(answer, plan, userTurnIndex);
-            return $"Sterk: {strong}\nTip: {tip}";
+            var rewriteLine = DutchInterviewAnswerHeuristics.LooksVague(answer)
+                || !DutchInterviewAnswerHeuristics.HasStarCue(answer)
+                ? "\n" + DutchInterviewAnswerHeuristics.BuildRewriteSuggestion(answer, plan.PrimaryHook)
+                : string.Empty;
+
+            return $"Sterk: {strong}\nTip: {tip}{rewriteLine}";
         }
 
-        private static string BuildStrong(string answer, InterviewPlan plan)
+        private static string BuildStrong(string answer, InterviewPlan plan, int userTurnIndex)
         {
+            var quote = DutchInterviewAnswerHeuristics.ExtractQuote(answer);
+            var quoteBit = string.IsNullOrWhiteSpace(quote) ? null : $" (“{quote}”)";
+
             if (answer.Length < 12)
             {
-                return "Je bent in ieder geval begonnen — dat telt. Nu maken we het concreter.";
+                return Pick(userTurnIndex, answer,
+                    "Je bent in ieder geval begonnen — dat telt. Nu maken we het concreter.",
+                    "Kort maar duidelijk: je doet mee. Laten we er één voorbeeld onder zetten.",
+                    "Goed dat je reageert. Met één zin extra wordt het al sterker.");
             }
 
             var matchedTheme = plan.Themes.FirstOrDefault(t =>
                 answer.Contains(t.Keyword, StringComparison.OrdinalIgnoreCase));
             if (matchedTheme is not null)
             {
-                return $"Je noemt iets over {matchedTheme.Label} — dat sluit aan bij wat {plan.Company} zoekt.";
+                return Pick(userTurnIndex, answer,
+                    $"Je noemt iets over {matchedTheme.Label}{quoteBit} — dat sluit aan bij wat {plan.Company} zoekt.",
+                    $"Mooi dat {matchedTheme.Label} terugkomt in je antwoord{quoteBit}. Dat hoort bij deze vacature.",
+                    $"Je koppelt al richting {matchedTheme.Label}{quoteBit}. Een recruiter hoort dat graag.");
             }
 
             if (ContainsAny(answer, "bijvoorbeeld", "toen", "vorige", "school", "stage", "werk", "ik heb", "ik deed"))
             {
-                return "Je geeft al een stukje ervaring of voorbeeld. Dat klinkt geloofwaardiger dan alleen ‘ik wil graag’.";
+                return Pick(userTurnIndex, answer,
+                    $"Je geeft al een stukje ervaring of voorbeeld{quoteBit}. Dat klinkt geloofwaardiger dan alleen ‘ik wil graag’.",
+                    $"Sterk dat je een voorbeeld aansnijdt{quoteBit}. Dat blijft beter hangen dan vage beloftes.",
+                    $"Je deelt iets echts uit je ervaring{quoteBit}. Dat is precies wat een gesprek levend maakt.");
             }
 
             if (answer.Length >= 80)
             {
-                return "Je antwoord is inhoudelijk; je denkt na over de rol. Dat merkt een recruiter.";
+                return Pick(userTurnIndex, answer,
+                    $"Je antwoord is inhoudelijk{quoteBit}; je denkt na over de rol. Dat merkt een recruiter.",
+                    $"Je legt al best wat uit{quoteBit}. Met één resultaat erbij wordt het nóg scherper.",
+                    $"Duidelijk dat je de moeite neemt{quoteBit}. Laten we het afronden met wat het opleverde.");
             }
 
-            return $"Duidelijk dat je reageert op {plan.Title}. Je hebt een basis waarop we kunnen bouwen.";
+            return Pick(userTurnIndex, answer,
+                $"Duidelijk dat je reageert op {plan.Title}{quoteBit}. Je hebt een basis waarop we kunnen bouwen.",
+                $"Je pakt de vraag serieus op{quoteBit}. Nu maken we hem vacature-specifieker.",
+                $"Heldere start over {plan.Title}{quoteBit}. Eén concreet detail maakt het af.");
         }
 
         private static string BuildTip(string answer, InterviewPlan plan, int userTurnIndex)
         {
             if (answer.Length < 25)
             {
-                return $"Maak het langer met één voorbeeld. Koppel het aan: {plan.PrimaryHook}.";
+                return Pick(userTurnIndex, answer,
+                    $"Maak het langer met één voorbeeld. Koppel het aan: {plan.PrimaryHook}.",
+                    $"Voeg 1 zin toe: wat deed jij precies bij {plan.PrimaryHook}?",
+                    $"Noem één moment (school/werk/sport) dat past bij {plan.PrimaryHook}.");
             }
 
-            if (!ContainsAny(answer, "omdat", "daardoor", "bijvoorbeeld", "toen", "daarna", "resultaat", "geleerd"))
+            if (!DutchInterviewAnswerHeuristics.HasStarCue(answer))
             {
-                return "Voeg een mini-structuur toe: situatie → wat jij deed → wat het opleverde. Dat blijft beter hangen.";
+                return Pick(userTurnIndex, answer,
+                    "Voeg een mini-structuur toe: situatie → wat jij deed → wat het opleverde.",
+                    "Eindig met het resultaat: wat ging er beter door jouw actie?",
+                    "Begin met ‘Toen …’ en zeg daarna wat jij deed. Dat klinkt als een verhaal.");
             }
 
             if (userTurnIndex <= 1)
             {
-                return $"Noem expliciet een taak uit de vacature (bijv. {plan.PrimaryHook}) en zeg hoe jij dat aanpakt.";
+                return Pick(userTurnIndex, answer,
+                    $"Noem expliciet een taak uit de vacature (bijv. {plan.PrimaryHook}) en zeg hoe jij dat aanpakt.",
+                    $"Koppel je voorbeeld aan {plan.PrimaryHook} — dan hoort de recruiter meteen de match.",
+                    $"Zeg in één zin waarom dit past bij {plan.Company}.");
             }
 
             if (plan.Themes.Count > 1 && userTurnIndex < plan.Themes.Count)
             {
                 var next = plan.Themes[Math.Min(userTurnIndex, plan.Themes.Count - 1)];
-                return $"In een echt gesprek kun je ook {next.Label} noemen — dat staat centraal in deze vacature.";
+                return Pick(userTurnIndex, answer,
+                    $"In een echt gesprek kun je ook {next.Label} noemen — dat staat centraal in deze vacature.",
+                    $"Bonuspunt: breng {next.Label} kort in; dat staat in de tekst van {plan.Company}.",
+                    $"Je mag straks ook {next.Label} aantikken — dat versterkt je verhaal.");
             }
 
-            return "Houd het in een live gesprek iets korter en eindig met waarom dit bij deze vacature past.";
+            return Pick(userTurnIndex, answer,
+                "Houd het in een live gesprek iets korter en eindig met waarom dit bij deze vacature past.",
+                "Oefen hardop: max 30 seconden, met één voorbeeld en één resultaat.",
+                "Sluit af met een korte vraag terug — dat maakt je actief in het gesprek.");
+        }
+
+        private static string Pick(int turn, string answer, params string[] options)
+        {
+            if (options.Length == 0)
+            {
+                return string.Empty;
+            }
+
+            var hash = turn * 397;
+            unchecked
+            {
+                foreach (var ch in answer)
+                {
+                    hash = (hash * 31) + ch;
+                }
+            }
+
+            var idx = Math.Abs(hash) % options.Length;
+            return options[idx];
         }
 
         private static bool ContainsAny(string text, params string[] needles)

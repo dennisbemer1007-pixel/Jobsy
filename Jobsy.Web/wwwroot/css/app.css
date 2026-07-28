@@ -4197,6 +4197,17 @@ a.engagement-btn {
     color: #0f7a45;
 }
 
+.mock-interview-block--caution {
+    padding: 0.4rem 0.5rem;
+    border-radius: 8px;
+    background: color-mix(in srgb, #fde8e8 75%, var(--surface));
+    border: 1px solid color-mix(in srgb, #e8a0a0 50%, var(--border));
+}
+
+.mock-interview-block--caution .mock-interview-block__label {
+    color: #b42318;
+}
+
 .mock-interview-block--tip {
     padding: 0.4rem 0.5rem;
     border-radius: 8px;
@@ -4206,6 +4217,21 @@ a.engagement-btn {
 
 .mock-interview-block--tip .mock-interview-block__label {
     color: #8a6a00;
+}
+
+.mock-interview-block--rewrite {
+    padding: 0.4rem 0.5rem;
+    border-radius: 8px;
+    background: color-mix(in srgb, #e6f7f4 80%, var(--surface));
+    border: 1px solid color-mix(in srgb, #7bc4b8 45%, var(--border));
+}
+
+.mock-interview-block--rewrite .mock-interview-block__label {
+    color: #0f766e;
+}
+
+.mock-interview-block--rewrite p {
+    font-style: italic;
 }
 
 .mock-interview-block--question {

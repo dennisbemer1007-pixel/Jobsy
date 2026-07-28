@@ -64,7 +64,7 @@ public static class IntegrationHelpDocs
 
     private static readonly Doc OpenAi = new(
         Summary: "OpenAI API voor tekstmodellen.",
-        UsedFor: "Vacaturetekst-moderatie (ongepaste of risicovolle content markeren/blokkeren) wanneer platformmoderatie aan staat.",
+        UsedFor: "Vacaturetekst-moderatie (ongepaste of risicovolle content markeren/blokkeren) én de interactieve coach in ‘Oefen je sollicitatiegesprek’ (met scripted fallback zonder key).",
         WhereToGetKey: "platform.openai.com → API keys → Create new secret key. Model bijv. gpt-4o-mini. Base URL leeg of https://api.openai.com/v1/",
         Tip: "Het veld toont na Opslaan geen key terug (alleen gemaskeerd). Test leest de opgeslagen key uit de database — eerst Opslaan of laat Test auto-opslaan.",
         DocsUrl: "https://platform.openai.com/api-keys",
