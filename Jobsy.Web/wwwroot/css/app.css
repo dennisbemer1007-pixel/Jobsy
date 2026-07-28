@@ -4555,6 +4555,51 @@ button.stat-card {
     text-transform: capitalize;
 }
 
+.profile-roles label.is-disabled {
+    opacity: 0.45;
+    pointer-events: none;
+}
+
+.profile-min-employers {
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 0.55rem 0.85rem 0.65rem;
+    margin: 0;
+}
+
+.profile-min-employers legend {
+    padding: 0 0.25rem;
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
+.profile-min-employers__options {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.25rem 0.85rem;
+}
+
+.profile-min-employers__options label {
+    display: inline-flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 0.35rem;
+    margin: 0;
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: var(--text);
+    text-transform: none;
+    letter-spacing: normal;
+    cursor: pointer;
+}
+
+.profile-min-employers__options input {
+    margin: 0;
+    width: auto;
+    padding: 0;
+}
+
 /* Sprint 5 — publish popup, vacancy editor, checkboxes */
 .publish-modal {
     max-width: 28rem;

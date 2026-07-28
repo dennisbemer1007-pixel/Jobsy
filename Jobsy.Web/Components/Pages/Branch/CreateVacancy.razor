@@ -138,63 +138,55 @@
                     <option value="Bike,Car">Fiets + Auto</option>
                 </select>
             </label>
-            <fieldset class="worktype-fieldset">
+            <fieldset class="profile-roles">
                 <legend>Branche (max @WorkTypeLabels.MaxPerVacancy)</legend>
-                <div class="worktype-options">
-                    @foreach (var label in WorkTypeLabels.All)
-                    {
-                        var selected = _selectedWorkTypes.Contains(label);
-                        var disabled = !selected && _selectedWorkTypes.Count >= WorkTypeLabels.MaxPerVacancy;
-                        <label class="checkbox-row @(disabled ? "is-disabled" : null)">
-                            <input type="checkbox"
-                                   checked="@selected"
-                                   disabled="@disabled"
-                                   @onchange="e => ToggleWorkType(label, e)" />
-                            @label
-                        </label>
-                    }
-                </div>
+                @foreach (var label in WorkTypeLabels.All)
+                {
+                    var selected = _selectedWorkTypes.Contains(label);
+                    var disabled = !selected && _selectedWorkTypes.Count >= WorkTypeLabels.MaxPerVacancy;
+                    <label class="@(disabled ? "is-disabled" : null)">
+                        <input type="checkbox"
+                               checked="@selected"
+                               disabled="@disabled"
+                               @onchange="e => ToggleWorkType(label, e)" />
+                        @label
+                    </label>
+                }
             </fieldset>
-            <fieldset class="worktype-fieldset">
+            <fieldset class="profile-roles">
                 <legend>Vereist rijbewijs (optioneel)</legend>
-                <div class="worktype-options">
-                    @foreach (var license in DrivingLicenseLabels.All)
-                    {
-                        var selected = _selectedLicenses.Contains(license);
-                        <label class="checkbox-row">
-                            <input type="checkbox"
-                                   checked="@selected"
-                                   @onchange="e => ToggleLicense(license, e)" />
-                            @license
-                        </label>
-                    }
-                </div>
+                @foreach (var license in DrivingLicenseLabels.All)
+                {
+                    <label>
+                        <input type="checkbox"
+                               checked="@_selectedLicenses.Contains(license)"
+                               @onchange="e => ToggleLicense(license, e)" />
+                        @license
+                    </label>
+                }
             </fieldset>
-            <fieldset class="worktype-fieldset">
+            <fieldset class="profile-roles">
                 <legend>Vereist opleidingsniveau (optioneel)</legend>
-                <div class="worktype-options">
-                    @foreach (var level in EducationLevelLabels.VacancyAll)
-                    {
-                        var selected = _selectedEducationLevels.Contains(level);
-                        <label class="checkbox-row">
-                            <input type="checkbox"
-                                   checked="@selected"
-                                   @onchange="e => ToggleEducation(level, e)" />
-                            @level
-                        </label>
-                    }
-                </div>
+                @foreach (var level in EducationLevelLabels.VacancyAll)
+                {
+                    <label>
+                        <input type="checkbox"
+                               checked="@_selectedEducationLevels.Contains(level)"
+                               @onchange="e => ToggleEducation(level, e)" />
+                        @level
+                    </label>
+                }
             </fieldset>
-            <fieldset class="worktype-fieldset">
-                <legend>Minimaal aantal werkgevers (optioneel)</legend>
-                <div class="worktype-options">
-                    <label class="checkbox-row">
+            <fieldset class="profile-min-employers">
+                <legend>Minimaal aantal werkgevers</legend>
+                <div class="profile-min-employers__options" role="radiogroup" aria-label="Minimaal aantal werkgevers">
+                    <label>
                         <input type="radio" name="min-employers" checked="@(_minimumEmployers is null)" @onchange="() => SetMinimumEmployers(null)" />
-                        Geen minimum
+                        Geen
                     </label>
                     @foreach (var n in new[] { 1, 2, 3 })
                     {
-                        <label class="checkbox-row">
+                        <label>
                             <input type="radio" name="min-employers" checked="@(_minimumEmployers == n)" @onchange="() => SetMinimumEmployers(n)" />
                             @n
                         </label>
