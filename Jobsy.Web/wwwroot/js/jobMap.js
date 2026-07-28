@@ -93,16 +93,19 @@ window.jobMap = (function () {
         const vw = window.innerWidth || 360;
         const vh = window.innerHeight || 640;
         const narrow = isNarrowViewport();
+        // Wider card on phones; leave a little room for the external close button.
         const maxWidth = narrow
-            ? Math.max(240, Math.min(withWagePanel ? 320 : 280, vw - 28))
+            ? Math.max(280, Math.min(withWagePanel ? 360 : 340, vw - 16))
             : (withWagePanel ? 420 : 360);
         return {
             className: "job-cluster-popup" + (withWagePanel ? " job-cluster-popup--with-wages" : ""),
             maxWidth: maxWidth,
-            minWidth: narrow ? Math.min(220, maxWidth) : (withWagePanel ? 360 : 300),
-            // Extra vertical padding so pager + close stay inside the map on phones.
+            minWidth: narrow
+                ? Math.min(withWagePanel ? 300 : 280, maxWidth)
+                : (withWagePanel ? 360 : 300),
+            // Extra padding so pager + external close stay inside the map on phones.
             autoPanPadding: narrow
-                ? [14, Math.max(72, Math.round(vh * 0.08))]
+                ? [18, Math.max(80, Math.round(vh * 0.09))]
                 : [36, 48],
             keepInView: true
         };

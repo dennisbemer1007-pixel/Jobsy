@@ -462,11 +462,13 @@
     private bool _requiresDrivingLicense;
     private bool _requiresEducation;
     private bool _awaitingVerification;
+    private bool _enteredVerifyThisSession;
     private string _verificationCode = string.Empty;
     private int? _ageYears;
     private bool _mapReady;
     private bool _openingRoute;
     private Guid? _mappedVacancyId;
+    private Guid? _loadedVacancyId;
 
     private string LoginUrl =>
         $"/login?returnUrl={Uri.EscapeDataString($"/vacancies/{Id}")}";
@@ -518,11 +520,49 @@
         && Math.Abs(_vacancy.Latitude) <= 90
         && Math.Abs(_vacancy.Longitude) <= 180;
 
-    protected override async Task OnInitializedAsync()
+    protected override void OnInitialized()
     {
         Culture.Changed += OnCultureChanged;
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (_loadedVacancyId == Id)
+        {
+            return;
+        }
+
+        ResetApplyUiState();
+        _loadedVacancyId = Id;
+        _loading = true;
+        _liked = false;
+        _clickRecorded = false;
+        _vacancy = null;
         await LoadAsync(origin: null);
         await LoadLikeAsync();
+    }
+
+    private void ResetApplyUiState()
+    {
+        _applying = false;
+        _applied = false;
+        _awaitingVerification = false;
+        _enteredVerifyThisSession = false;
+        _acceptedTerms = false;
+        _workPermitConfirmed = false;
+        _useAuthenticator = false;
+        _verificationCode = string.Empty;
+        _message = null;
+        _profileReadyForApply = true;
+        _profileHasAvailability = false;
+        _profileHasLicense = true;
+        _profileHasEmployers = false;
+        _profileHasEducation = true;
+        _profileHasAboutMe = false;
+        _requiresDrivingLicense = false;
+        _requiresEducation = false;
+        _authenticatorEnabled = false;
+        _dobInput = null;
     }
 
     private async void OnCultureChanged()
@@ -704,12 +744,20 @@
             try
             {
                 var mine = await Api.GetMyApplicationsAsync();
+                // Completed application → show success. PendingVerification must NOT auto-open
+                // step 4: every fresh visit starts at Profiel/Akkoord/Versturen unless the user
+                // just applied in this session (_enteredVerifyThisSession).
                 _applied = mine.Any(a => a.VacancyId == Id && a.Status != "PendingVerification");
                 if (_applied)
                 {
+                    _awaitingVerification = false;
+                    _enteredVerifyThisSession = false;
                     _message = "Je hebt al gereageerd op deze vacature.";
                 }
-                _awaitingVerification = mine.Any(a => a.VacancyId == Id && a.Status == "PendingVerification");
+                else if (!_enteredVerifyThisSession)
+                {
+                    _awaitingVerification = false;
+                }
             }
             catch
             {
@@ -876,20 +924,25 @@
             return;
         }
 
-        if (!_acceptedTerms)
+        // Resend from the verify panel: terms/profile already satisfied this session.
+        var isResend = _awaitingVerification && _enteredVerifyThisSession;
+        if (!isResend)
         {
-            _message = "Je moet akkoord gaan met de gebruiksvoorwaarden en de privacyverklaring om te solliciteren.";
-            return;
-        }
-        if (!_workPermitConfirmed)
-        {
-            _message = "Bevestig eerst dat je in Nederland mag werken.";
-            return;
-        }
-        if (!_profileReadyForApply)
-        {
-            _message = "Vul eerst je profiel aan via Mijn profiel.";
-            return;
+            if (!_acceptedTerms)
+            {
+                _message = "Je moet akkoord gaan met de gebruiksvoorwaarden en de privacyverklaring om te solliciteren.";
+                return;
+            }
+            if (!_workPermitConfirmed)
+            {
+                _message = "Bevestig eerst dat je in Nederland mag werken.";
+                return;
+            }
+            if (!_profileReadyForApply)
+            {
+                _message = "Vul eerst je profiel aan via Mijn profiel.";
+                return;
+            }
         }
 
         _applying = true;
@@ -907,6 +960,7 @@
             if (result?.RequiresVerification == true)
             {
                 _awaitingVerification = true;
+                _enteredVerifyThisSession = true;
                 _message = wasAwaitingVerification
                     ? "Er is een (nieuwe) 6-cijferige code naar je e-mail gestuurd. Vul deze in om te bevestigen."
                     : "Er is een 6-cijferige code naar je e-mail gestuurd. Vul deze in om te bevestigen.";
@@ -915,6 +969,7 @@
             {
                 _applied = true;
                 _awaitingVerification = false;
+                _enteredVerifyThisSession = false;
                 _message = _useAuthenticator
                     ? "Je reactie is verstuurd (Authenticator stub). Bevestigingsmail staat in de stub-log."
                     : "Je reactie is verstuurd. Bevestigingsmail staat in de stub-log.";
@@ -955,6 +1010,7 @@
             if (_applied)
             {
                 _verificationCode = string.Empty;
+                _enteredVerifyThisSession = false;
                 _message = "Je sollicitatie is geverifieerd en verstuurd.";
             }
             else

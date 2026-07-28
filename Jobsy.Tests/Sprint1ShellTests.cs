@@ -54,6 +54,12 @@ public class RoleNavCatalogTests
         Assert.True(RoleNavCatalog.IsActive(
             items.First(i => i.Href == "/admin/settings"),
             "admin/users"));
+        Assert.True(RoleNavCatalog.IsActive(
+            items.First(i => i.Href == "/admin/settings"),
+            "admin/notifications"));
+        Assert.True(RoleNavCatalog.IsActive(
+            items.First(i => i.Href == "/admin/finance"),
+            "admin/sales-managers"));
     }
 
     [Fact]

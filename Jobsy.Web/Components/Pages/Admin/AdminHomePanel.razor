@@ -7,7 +7,7 @@
     <header class="panel-header">
         <div>
             <h1>Platform dashboard</h1>
-            <p class="login-lead">KPI’s over het hele platform — klik een tegel voor drilldown.</p>
+            <p class="login-lead">KPI’s over het hele platform — klik een tegel voor drilldown. Modules via Settings of Financieel in de navigatie.</p>
         </div>
         <div class="period-tabs" role="tablist" aria-label="Periode">
             @foreach (var p in Periods)
@@ -51,19 +51,6 @@
                            Loading="@_drillLoading"
                            Items="_drilldown" />
         }
-
-        <section class="panel-section">
-            <h2>Modules</h2>
-            <div class="admin-hub__grid" role="list">
-                @foreach (var tile in AdminNavItems.All.Where(t => t.Href != "/home"))
-                {
-                    <a class="admin-tile" href="@tile.Href" role="listitem">
-                        <span class="admin-tile__icon" aria-hidden="true">@((MarkupString)tile.Svg)</span>
-                        <span class="admin-tile__label">@Culture[tile.TitleKey]</span>
-                    </a>
-                }
-            </div>
-        </section>
     }
 </div>
 

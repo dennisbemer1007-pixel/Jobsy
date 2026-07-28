@@ -1,0 +1,38 @@
+@using Jobsy.Web.Localization
+@using Jobsy.Web.Navigation
+@inject NavigationManager Navigation
+@inject CultureState Culture
+@implements IDisposable
+
+<nav class="admin-sublinks" aria-label="@Culture["Nav.Settings"]">
+    @foreach (var item in AdminNavItems.SettingsModules)
+    {
+        var title = Culture[item.TitleKey];
+        var active = RoleNavCatalog.IsActive(item, Navigation.ToBaseRelativePath(Navigation.Uri), AdminNavItems.SettingsModules);
+        <a class="admin-sublink @(active ? "admin-sublink--active" : null)"
+           href="@item.Href"
+           aria-current="@(active ? "page" : null)">
+            @title
+        </a>
+    }
+</nav>
+
+@code {
+    protected override void OnInitialized()
+    {
+        Navigation.LocationChanged += OnLocationChanged;
+        Culture.Changed += OnCultureChanged;
+    }
+
+    private void OnLocationChanged(object? sender, LocationChangedEventArgs e)
+        => InvokeAsync(StateHasChanged);
+
+    private void OnCultureChanged()
+        => InvokeAsync(StateHasChanged);
+
+    public void Dispose()
+    {
+        Navigation.LocationChanged -= OnLocationChanged;
+        Culture.Changed -= OnCultureChanged;
+    }
+}

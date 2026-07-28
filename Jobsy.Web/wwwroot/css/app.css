@@ -2297,15 +2297,16 @@ a {
     box-shadow: var(--shadow);
 }
 
+.leaflet-popup.job-cluster-popup {
+    overflow: visible;
+    max-width: min(360px, calc(100vw - 1.5rem));
+}
+
 .leaflet-popup.job-cluster-popup .leaflet-popup-content-wrapper {
     padding: 0;
     border-radius: var(--radius);
     box-shadow: var(--shadow-lg);
     overflow: hidden;
-}
-
-.leaflet-popup.job-cluster-popup {
-    max-width: min(360px, calc(100vw - 1.5rem));
 }
 
 .leaflet-popup.job-cluster-popup.job-cluster-popup--with-wages {
@@ -2490,6 +2491,7 @@ a {
 
 /* Funda-achtige kaartpopup */
 .leaflet-popup.job-map-popup {
+    overflow: visible;
     max-width: min(340px, calc(100vw - 1.5rem));
 }
 
@@ -2521,17 +2523,20 @@ a {
 }
 
 .leaflet-popup.job-map-popup a.leaflet-popup-close-button {
-    top: 6px;
-    right: 6px;
+    top: -10px;
+    right: -10px;
     width: 28px;
     height: 28px;
     padding: 0;
-    font-size: 20px;
+    font-size: 18px;
+    font-weight: 700;
     line-height: 28px;
-    color: var(--muted);
-    background: rgba(255, 255, 255, 0.92);
-    border-radius: 50%;
-    z-index: 2;
+    text-align: center;
+    color: #fff;
+    background: var(--brand);
+    border-radius: 6px;
+    box-shadow: 0 2px 8px rgba(15, 45, 92, 0.25);
+    z-index: 30;
 }
 
 .map-popup {
@@ -2626,7 +2631,7 @@ a {
     flex-direction: column;
     align-items: flex-start;
     gap: 0.2rem;
-    padding-right: 1.5rem;
+    padding-right: 0.25rem;
     min-width: 0;
 }
 
@@ -2740,20 +2745,39 @@ a {
 @media (max-width: 768px) {
     .leaflet-popup.job-map-popup,
     .leaflet-popup.job-cluster-popup {
-        max-width: calc(100vw - 1.25rem);
+        max-width: calc(100vw - 0.75rem);
     }
 
     .leaflet-popup.job-map-popup .leaflet-popup-content,
     .leaflet-popup.job-cluster-popup .leaflet-popup-content {
-        max-width: calc(100vw - 1.25rem);
+        max-width: calc(100vw - 0.75rem);
     }
 
     .leaflet-popup.job-map-popup.job-map-popup--with-wages .leaflet-popup-content {
-        max-width: calc(100vw - 1.25rem);
+        max-width: calc(100vw - 0.75rem);
     }
 
     .leaflet-popup.job-cluster-popup.job-cluster-popup--with-wages .leaflet-popup-content {
-        max-width: calc(100vw - 1.25rem);
+        max-width: calc(100vw - 0.75rem);
+    }
+
+    /* Funda-style: square brand close button outside the card (top-right) */
+    .leaflet-popup.job-cluster-popup a.leaflet-popup-close-button,
+    .leaflet-popup.job-map-popup a.leaflet-popup-close-button {
+        top: -12px !important;
+        right: -10px !important;
+        width: 30px !important;
+        height: 30px !important;
+        padding: 0 !important;
+        font-size: 20px !important;
+        font-weight: 700 !important;
+        line-height: 30px !important;
+        text-align: center !important;
+        color: #fff !important;
+        background: var(--brand) !important;
+        border-radius: 6px !important;
+        box-shadow: 0 2px 8px rgba(15, 45, 92, 0.28);
+        z-index: 30 !important;
     }
 
     .cluster-list__row {
@@ -2825,7 +2849,7 @@ a {
     }
 
     .map-popup__top {
-        padding-right: 1.6rem;
+        padding-right: 0.25rem;
     }
 
     .map-popup__title {
@@ -2867,45 +2891,65 @@ a {
 
     .cluster-single {
         max-height: min(60vh, 360px);
-        padding: 0.1rem 1.35rem 0.1rem 0.05rem;
+        padding: 0;
         gap: 0;
     }
 
-    .cluster-single .map-popup {
+    /* Horizontal Funda-style card: full-height photo left, content right */
+    .cluster-single .map-popup,
+    .cluster-single .map-popup:not(.map-popup--with-wages),
+    .cluster-single .map-popup.map-popup--with-wages {
         flex: 1 1 auto;
         min-height: 0;
+        flex-direction: row;
+        align-items: stretch;
         overflow-y: auto;
         -webkit-overflow-scrolling: touch;
     }
 
-    .cluster-single .map-popup:not(.map-popup--with-wages) .map-popup__media {
-        height: 64px;
+    .cluster-single .map-popup:not(.map-popup--with-wages) .map-popup__main,
+    .cluster-single .map-popup.map-popup--with-wages .map-popup__main {
+        flex-direction: row;
+        align-items: stretch;
+        flex: 1 1 auto;
+        min-width: 0;
     }
 
-    .cluster-single .map-popup:not(.map-popup--with-wages) .map-popup__media--logo-only {
-        height: 48px;
-    }
-
+    .cluster-single .map-popup:not(.map-popup--with-wages) .map-popup__media,
     .cluster-single .map-popup.map-popup--with-wages .map-popup__media {
-        height: 56px;
+        flex: 0 0 96px;
+        width: 96px;
+        height: auto;
+        align-self: stretch;
+        min-height: 132px;
     }
 
+    .cluster-single .map-popup:not(.map-popup--with-wages) .map-popup__media--logo-only,
     .cluster-single .map-popup.map-popup--with-wages .map-popup__media--logo-only {
+        height: auto;
+        min-height: 110px;
+    }
+
+    .cluster-single .map-popup:not(.map-popup--with-wages) .map-popup__media--logo-only .map-popup__logo,
+    .cluster-single .map-popup.map-popup--with-wages .map-popup__media--logo-only .map-popup__logo {
+        width: 44px;
         height: 44px;
     }
 
     .cluster-single .map-popup__body {
-        padding: 0.45rem 0.55rem 0.5rem;
+        padding: 0.55rem 0.65rem 0.55rem;
     }
 
     .cluster-single .map-popup.map-popup--with-wages .map-popup__wage-panel {
-        min-width: 5.75rem;
-        max-width: 6.75rem;
+        min-width: 5.5rem;
+        max-width: 6.5rem;
         padding: 0.4rem 0.4rem 0.45rem;
+        border-left: 1px solid var(--border);
+        border-top: none;
     }
 
     .cluster-single .map-popup__title {
-        font-size: 0.84rem;
+        font-size: 0.86rem;
         -webkit-line-clamp: 2;
     }
 
@@ -5501,7 +5545,7 @@ button.linkish:hover {
 .cluster-single {
     display: flex;
     flex-direction: column;
-    padding: 0.15rem 1.65rem 0.15rem 0.1rem;
+    padding: 0;
     min-width: 0;
 }
 
@@ -5561,18 +5605,20 @@ button.linkish:hover {
 
 .leaflet-popup.job-cluster-popup a.leaflet-popup-close-button,
 .leaflet-popup.job-map-popup a.leaflet-popup-close-button {
-    top: 8px !important;
-    right: 8px !important;
+    top: -10px !important;
+    right: -10px !important;
     width: 28px !important;
     height: 28px !important;
     padding: 0 !important;
     font-size: 18px !important;
+    font-weight: 700 !important;
     line-height: 28px !important;
-    color: var(--muted) !important;
-    background: rgba(255, 255, 255, 0.95) !important;
-    border-radius: 50% !important;
-    box-shadow: 0 1px 3px rgba(15, 45, 92, 0.12);
-    z-index: 20 !important;
+    text-align: center !important;
+    color: #fff !important;
+    background: var(--brand) !important;
+    border-radius: 6px !important;
+    box-shadow: 0 2px 8px rgba(15, 45, 92, 0.25);
+    z-index: 30 !important;
 }
 
 .map-popup__pager {

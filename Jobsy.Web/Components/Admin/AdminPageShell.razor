@@ -5,6 +5,10 @@
     {
         <p class="login-lead">@Lead</p>
     }
+    @if (ShowSettingsNav)
+    {
+        <AdminSettingsSubnav />
+    }
     @ChildContent
 </div>
 
@@ -12,5 +16,6 @@
     [Parameter, EditorRequired] public string Title { get; set; } = "";
     [Parameter] public string? Lead { get; set; }
     [Parameter] public bool Wide { get; set; }
+    [Parameter] public bool ShowSettingsNav { get; set; }
     [Parameter] public RenderFragment? ChildContent { get; set; }
 }
