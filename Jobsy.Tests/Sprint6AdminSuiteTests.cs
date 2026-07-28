@@ -263,10 +263,14 @@ public class Sprint6AdminSuiteTests
         });
         await db.SaveChangesAsync();
 
-        var controller = new SettingsController(db, new IntegrationCredentialService(db, new PassthroughSecretProtector()), new PlatformFeatureService(
+        var controller = new SettingsController(
             db,
-            Microsoft.Extensions.Options.Options.Create(new Jobsy.Core.Options.JobsyFeatureOptions()),
-            new Microsoft.Extensions.Configuration.ConfigurationBuilder().Build()));
+            new IntegrationCredentialService(db, new PassthroughSecretProtector()),
+            new PlatformFeatureService(
+                db,
+                Microsoft.Extensions.Options.Options.Create(new Jobsy.Core.Options.JobsyFeatureOptions()),
+                new Microsoft.Extensions.Configuration.ConfigurationBuilder().Build()),
+            new PlatformCompanySettingsService(db));
 
         var create = await controller.UpsertEarlyAdapterRule(
             new UpsertEarlyAdapterRuleRequest(null, "Pilot", 5, 10m, true),

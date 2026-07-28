@@ -18,6 +18,7 @@ public sealed class SalesManagerPayoutService : ISalesManagerPayoutService
     private readonly JobsyDbContext _db;
     private readonly ISelfBillingInvoiceService _invoices;
     private readonly ICommissionLedgerService _ledger;
+    private readonly IPlatformCompanySettingsService _companySettings;
     private readonly IHostEnvironment _environment;
     private readonly ILogger<SalesManagerPayoutService> _logger;
 
@@ -30,12 +31,14 @@ public sealed class SalesManagerPayoutService : ISalesManagerPayoutService
         JobsyDbContext db,
         ISelfBillingInvoiceService invoices,
         ICommissionLedgerService ledger,
+        IPlatformCompanySettingsService companySettings,
         IHostEnvironment environment,
         ILogger<SalesManagerPayoutService> logger)
     {
         _db = db;
         _invoices = invoices;
         _ledger = ledger;
+        _companySettings = companySettings;
         _environment = environment;
         _logger = logger;
     }
@@ -355,85 +358,202 @@ public sealed class SalesManagerPayoutService : ISalesManagerPayoutService
             throw new UnauthorizedAccessException("Factuur hoort niet bij deze salesmanager.");
         }
 
+        var platform = await _companySettings.GetAsync(cancellationToken);
+        var logo = _companySettings.GetBrandLogoPng();
+        var watermark = _companySettings.GetBrandWatermarkPng();
         var culture = CultureInfo.GetCultureInfo("nl-NL");
         var lines = invoice.Lines.OrderBy(l => l.Description).ToList();
+        var platformAddress = platform.FormatAddressBlock();
+
+        // Half A4 ≈ half page height on portrait A4 (~421pt). Keep logo square in the center.
+        const float watermarkSize = 400f;
 
         return Document.Create(container =>
         {
             container.Page(page =>
             {
                 page.Size(PageSizes.A4);
-                page.Margin(40);
+                page.MarginTop(36);
+                page.MarginBottom(36);
+                page.MarginHorizontal(42);
                 page.DefaultTextStyle(x => x.FontSize(10).FontColor(Colors.Grey.Darken4));
 
-                page.Header().Column(col =>
+                page.Background()
+                    .AlignCenter()
+                    .AlignMiddle()
+                    .Width(watermarkSize)
+                    .Height(watermarkSize)
+                    .Image(watermark)
+                    .FitArea();
+
+                page.Header().Row(row =>
                 {
-                    col.Item().Text("Self-billing factuur").FontSize(11).FontColor(Colors.Grey.Darken2);
-                    col.Item().Text(invoice.InvoiceNumber).FontSize(20).SemiBold();
+                    row.ConstantItem(52).Height(52).Image(logo).FitArea();
+                    row.RelativeItem().PaddingLeft(12).AlignMiddle().Column(col =>
+                    {
+                        col.Item().Text(platform.CompanyName).FontSize(18).SemiBold()
+                            .FontColor(Color.FromHex("#0F766E"));
+                        col.Item().PaddingTop(2).Text(platform.Slogan).FontSize(9)
+                            .FontColor(Colors.Grey.Darken2).Italic();
+                    });
+                    row.ConstantItem(140).AlignRight().AlignMiddle().Column(col =>
+                    {
+                        col.Item().AlignRight().Text("SELF-BILLING").FontSize(8)
+                            .FontColor(Colors.Grey.Medium);
+                        col.Item().AlignRight().Text(invoice.InvoiceNumber).FontSize(12).SemiBold();
+                    });
                 });
 
-                page.Content().PaddingVertical(16).Column(col =>
+                page.Content().PaddingTop(18).Column(col =>
                 {
-                    col.Spacing(8);
-                    col.Item().Text(invoice.SalesManagerCompanyName).SemiBold().FontSize(12);
-                    col.Item().Text($"KvK {invoice.SalesManagerKvkNumber}");
-                    col.Item().Text($"BTW {invoice.SalesManagerVatNumber}");
-                    col.Item().Text(invoice.SalesManagerAddress);
+                    col.Spacing(0);
 
-                    var statusLine = $"Status: {invoice.Status}";
-                    if (invoice.IssuedAt is DateTime issued)
+                    col.Item().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).PaddingBottom(10).Row(row =>
                     {
-                        statusLine += $" · Uitgegeven {issued.ToLocalTime().ToString("g", culture)}";
-                    }
+                        row.RelativeItem().Column(left =>
+                        {
+                            left.Item().Text("Leverancier").FontSize(8).FontColor(Colors.Grey.Medium);
+                            left.Item().PaddingTop(4).Text(invoice.SalesManagerCompanyName).SemiBold().FontSize(11);
+                            left.Item().PaddingTop(2).Text($"KvK {invoice.SalesManagerKvkNumber}");
+                            left.Item().Text($"BTW {invoice.SalesManagerVatNumber}");
+                            left.Item().PaddingTop(2).Text(invoice.SalesManagerAddress);
+                        });
 
-                    if (invoice.PaidAt is DateTime paid)
-                    {
-                        statusLine += $" · Betaald {paid.ToLocalTime().ToString("g", culture)}";
-                    }
+                        row.ConstantItem(18);
+                        row.RelativeItem().Column(right =>
+                        {
+                            right.Item().Text("Status").FontSize(8).FontColor(Colors.Grey.Medium);
+                            right.Item().PaddingTop(4).Text(invoice.Status.ToString()).SemiBold();
+                            if (invoice.IssuedAt is DateTime issued)
+                            {
+                                right.Item().PaddingTop(2)
+                                    .Text($"Uitgegeven {issued.ToLocalTime().ToString("g", culture)}");
+                            }
 
-                    col.Item().PaddingTop(8).Text(statusLine).FontColor(Colors.Grey.Darken2);
+                            if (invoice.PaidAt is DateTime paid)
+                            {
+                                right.Item().Text($"Betaald {paid.ToLocalTime().ToString("g", culture)}");
+                            }
+                        });
+                    });
 
                     col.Item().PaddingTop(16).Table(table =>
                     {
                         table.ColumnsDefinition(columns =>
                         {
-                            columns.RelativeColumn(3);
-                            columns.RelativeColumn(1);
+                            columns.ConstantColumn(28);
+                            columns.RelativeColumn(3.2f);
+                            columns.RelativeColumn(1.2f);
                         });
 
                         table.Header(header =>
                         {
-                            header.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2)
-                                .PaddingBottom(4).Text("Omschrijving").SemiBold();
-                            header.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2)
-                                .PaddingBottom(4).AlignRight().Text("Bedrag excl. BTW").SemiBold();
+                            header.Cell().Element(HeaderCell).Text("#");
+                            header.Cell().Element(HeaderCell).Text("Omschrijving");
+                            header.Cell().Element(HeaderCell).AlignRight().Text("Bedrag excl. BTW");
                         });
 
+                        var i = 1;
                         foreach (var line in lines)
                         {
-                            table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten3)
-                                .PaddingVertical(4).Text(line.Description);
-                            table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten3)
-                                .PaddingVertical(4).AlignRight()
+                            var zebra = i % 2 == 0;
+                            table.Cell().Element(c => BodyCell(c, zebra)).Text(i.ToString(culture));
+                            table.Cell().Element(c => BodyCell(c, zebra)).Text(line.Description);
+                            table.Cell().Element(c => BodyCell(c, zebra)).AlignRight()
                                 .Text($"€ {line.AmountExVat.ToString("0.00", culture)}");
+                            i++;
                         }
                     });
 
-                    col.Item().AlignRight().PaddingTop(12).Column(totals =>
+                    col.Item().PaddingTop(14).AlignRight().Width(220).Column(totals =>
                     {
-                        totals.Item().Text($"Subtotaal excl. BTW: € {invoice.SubtotalExVat.ToString("0.00", culture)}");
-                        totals.Item().Text(
-                            $"BTW ({(invoice.VatRate * 100).ToString("0", culture)}%): € {invoice.VatAmount.ToString("0.00", culture)}");
-                        totals.Item().PaddingTop(4)
-                            .Text($"Totaal incl. BTW: € {invoice.TotalInclVat.ToString("0.00", culture)}")
-                            .SemiBold().FontSize(12);
+                        totals.Item().Row(r =>
+                        {
+                            r.RelativeItem().Text("Subtotaal excl. BTW");
+                            r.ConstantItem(90).AlignRight()
+                                .Text($"€ {invoice.SubtotalExVat.ToString("0.00", culture)}");
+                        });
+                        totals.Item().PaddingTop(3).Row(r =>
+                        {
+                            r.RelativeItem().Text($"BTW ({(invoice.VatRate * 100).ToString("0", culture)}%)");
+                            r.ConstantItem(90).AlignRight()
+                                .Text($"€ {invoice.VatAmount.ToString("0.00", culture)}");
+                        });
+                        totals.Item().PaddingTop(6).BorderTop(1).BorderColor(Colors.Grey.Lighten1)
+                            .PaddingTop(6).Row(r =>
+                            {
+                                r.RelativeItem().Text("Totaal incl. BTW").SemiBold().FontSize(11);
+                                r.ConstantItem(90).AlignRight()
+                                    .Text($"€ {invoice.TotalInclVat.ToString("0.00", culture)}")
+                                    .SemiBold().FontSize(11);
+                            });
                     });
                 });
 
-                page.Footer().AlignCenter()
-                    .Text("Gegenereerd door Lobsy self-billing.")
-                    .FontSize(9).FontColor(Colors.Grey.Medium);
+                page.Footer().Column(footer =>
+                {
+                    footer.Item().BorderTop(1).BorderColor(Colors.Grey.Lighten2).PaddingTop(10).Column(plat =>
+                    {
+                        plat.Item().Text(platform.CompanyName).SemiBold().FontSize(9)
+                            .FontColor(Color.FromHex("#0F766E"));
+                        if (!string.IsNullOrWhiteSpace(platformAddress))
+                        {
+                            foreach (var line in platformAddress.Split('\n'))
+                            {
+                                plat.Item().Text(line).FontSize(8).FontColor(Colors.Grey.Darken2);
+                            }
+                        }
+
+                        var meta = new List<string>();
+                        if (!string.IsNullOrWhiteSpace(platform.KvkNumber))
+                        {
+                            meta.Add($"KvK {platform.KvkNumber}");
+                        }
+
+                        if (!string.IsNullOrWhiteSpace(platform.VatNumber))
+                        {
+                            meta.Add($"BTW {platform.VatNumber}");
+                        }
+
+                        if (!string.IsNullOrWhiteSpace(platform.Phone))
+                        {
+                            meta.Add(platform.Phone!);
+                        }
+
+                        if (!string.IsNullOrWhiteSpace(platform.Email))
+                        {
+                            meta.Add(platform.Email!);
+                        }
+
+                        if (meta.Count > 0)
+                        {
+                            plat.Item().PaddingTop(2).Text(string.Join("  ·  ", meta))
+                                .FontSize(8).FontColor(Colors.Grey.Darken2);
+                        }
+                    });
+
+                    footer.Item().PaddingTop(6).AlignCenter()
+                        .Text("Self-billing factuur gegenereerd door Lobsy")
+                        .FontSize(8).FontColor(Colors.Grey.Medium);
+                });
             });
         }).GeneratePdf();
+
+        static IContainer HeaderCell(IContainer container) =>
+            container
+                .BorderBottom(1)
+                .BorderColor(Colors.Grey.Lighten1)
+                .Background(Color.FromHex("#F3FAF9"))
+                .PaddingVertical(6)
+                .PaddingHorizontal(4)
+                .DefaultTextStyle(x => x.SemiBold().FontSize(9).FontColor(Colors.Grey.Darken3));
+
+        static IContainer BodyCell(IContainer container, bool zebra) =>
+            container
+                .Background(zebra ? Color.FromHex("#FAFCFC") : Colors.White)
+                .BorderBottom(1)
+                .BorderColor(Colors.Grey.Lighten3)
+                .PaddingVertical(5)
+                .PaddingHorizontal(4);
     }
 }

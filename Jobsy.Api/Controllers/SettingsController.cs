@@ -18,15 +18,18 @@ public class SettingsController : ControllerBase
     private readonly JobsyDbContext _db;
     private readonly IIntegrationCredentialService _credentials;
     private readonly IPlatformFeatureService _features;
+    private readonly IPlatformCompanySettingsService _companySettings;
 
     public SettingsController(
         JobsyDbContext db,
         IIntegrationCredentialService credentials,
-        IPlatformFeatureService features)
+        IPlatformFeatureService features,
+        IPlatformCompanySettingsService companySettings)
     {
         _db = db;
         _credentials = credentials;
         _features = features;
+        _companySettings = companySettings;
     }
 
     [HttpGet("token-pricing")]
@@ -284,6 +287,34 @@ public class SettingsController : ControllerBase
         return Ok(ToFeatureDto(snap));
     }
 
+    [HttpGet("company")]
+    public async Task<ActionResult<PlatformCompanyDto>> GetCompanySettings(CancellationToken cancellationToken)
+    {
+        var snap = await _companySettings.GetAsync(cancellationToken);
+        return Ok(ToCompanyDto(snap));
+    }
+
+    [HttpPut("company")]
+    public async Task<ActionResult<PlatformCompanyDto>> UpdateCompanySettings(
+        [FromBody] UpdatePlatformCompanyRequest request,
+        CancellationToken cancellationToken)
+    {
+        var snap = await _companySettings.UpdateAsync(
+            new PlatformCompanyUpdate(
+                request.CompanyName ?? "",
+                request.Slogan,
+                request.Address,
+                request.PostalCode,
+                request.City,
+                request.Country,
+                request.KvkNumber,
+                request.VatNumber,
+                request.Phone,
+                request.Email),
+            cancellationToken);
+        return Ok(ToCompanyDto(snap));
+    }
+
     [HttpGet("integration-credentials")]
     public async Task<ActionResult<IEnumerable<IntegrationCredentialDto>>> GetIntegrationCredentials(
         CancellationToken cancellationToken)
@@ -343,6 +374,20 @@ public class SettingsController : ControllerBase
             snap.PublicWebBaseUrl,
             snap.UpdatedAtUtc);
 
+    private static PlatformCompanyDto ToCompanyDto(PlatformCompanySnapshot snap) =>
+        new(
+            snap.CompanyName,
+            snap.Slogan,
+            snap.Address,
+            snap.PostalCode,
+            snap.City,
+            snap.Country,
+            snap.KvkNumber,
+            snap.VatNumber,
+            snap.Phone,
+            snap.Email,
+            snap.UpdatedAtUtc);
+
     private static IntegrationCredentialDto ToDto(IntegrationCredentialView view) =>
         new(
             view.Key.ToString(),
@@ -368,3 +413,28 @@ public class SettingsController : ControllerBase
             view.LastPingAtUtc,
             view.UpdatedAtUtc);
 }
+
+public sealed record PlatformCompanyDto(
+    string CompanyName,
+    string Slogan,
+    string? Address,
+    string? PostalCode,
+    string? City,
+    string? Country,
+    string? KvkNumber,
+    string? VatNumber,
+    string? Phone,
+    string? Email,
+    DateTime? UpdatedAtUtc);
+
+public sealed record UpdatePlatformCompanyRequest(
+    string? CompanyName,
+    string? Slogan,
+    string? Address,
+    string? PostalCode,
+    string? City,
+    string? Country,
+    string? KvkNumber,
+    string? VatNumber,
+    string? Phone,
+    string? Email);

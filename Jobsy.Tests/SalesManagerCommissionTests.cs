@@ -95,8 +95,9 @@ public class SalesManagerCommissionTests
         await ledger.TryCreditFounderBonusAsync(smId, companyId, "pay_payout_1", 5);
 
         var invoices = new SelfBillingInvoiceService(db, ledger);
+        var company = new PlatformCompanySettingsService(db);
         var payouts = new SalesManagerPayoutService(
-            db, invoices, ledger, new TestHostEnvironment(),
+            db, invoices, ledger, company, new TestHostEnvironment(),
             NullLogger<SalesManagerPayoutService>.Instance);
 
         var preview = await payouts.GetPreviewAsync(smId);
@@ -140,8 +141,9 @@ public class SalesManagerCommissionTests
         await ledger.TryCreditFounderBonusAsync(smId, companyId, "pay_partial_1", 6);
 
         var invoices = new SelfBillingInvoiceService(db, ledger);
+        var company = new PlatformCompanySettingsService(db);
         var payouts = new SalesManagerPayoutService(
-            db, invoices, ledger, new TestHostEnvironment(),
+            db, invoices, ledger, company, new TestHostEnvironment(),
             NullLogger<SalesManagerPayoutService>.Instance);
 
         var available = await ledger.GetUninvoicedBalanceExVatAsync(smId);

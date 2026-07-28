@@ -11,6 +11,7 @@ public static class AdminNavItems
     public static readonly NavItem[] SettingsModules =
     [
         new("Nav.Settings", "/admin/settings", NavIcons.Settings),
+        new("Nav.CompanyDetails", "/admin/company", NavIcons.Companies),
         new("Nav.Masterdata", "/admin/masterdata", NavIcons.Masterdata),
         new("Nav.Integrations", "/admin/integrations", NavIcons.Api),
         new("Nav.Notifications", "/admin/notifications", NavIcons.Notifications),

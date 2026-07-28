@@ -1,6 +1,7 @@
 using Jobsy.Core.Entities;
 using Jobsy.Core.Enums;
 using Jobsy.Core.Rules;
+using Jobsy.Infrastructure.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
@@ -87,6 +88,19 @@ internal static class PlatformSettingsSeeder
                     CostTokens = 4m,
                     IsActive = true
                 });
+        }
+
+        if (!await db.PlatformCompanySettings.AnyAsync())
+        {
+            db.PlatformCompanySettings.Add(new PlatformCompanySettings
+            {
+                Id = PlatformCompanySettingsService.SingletonId,
+                CompanyName = PlatformCompanySettingsService.DefaultCompanyName,
+                Slogan = PlatformCompanySettingsService.DefaultSlogan,
+                Country = "NL",
+                UpdatedAtUtc = DateTime.UtcNow
+            });
+            logger.LogInformation("Seeded default PlatformCompanySettings (Lobsy).");
         }
 
         await db.SaveChangesAsync();

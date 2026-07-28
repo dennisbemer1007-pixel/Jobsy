@@ -1,0 +1,124 @@
+@page "/admin/company"
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
+@attribute [Authorize(Roles = "Admin")]
+@using Jobsy.Web.Components.Admin
+@inject JobsyApiClient Api
+
+<PageTitle>Bedrijfsgegevens · Lobsy</PageTitle>
+
+<AdminPageShell Title="Bedrijfsgegevens" Lead="NAW, KvK en BTW van Lobsy — zichtbaar onderaan self-billing factuur-PDF’s." ShowSettingsNav="true">
+    @if (_loading)
+    {
+        <p class="state-message">Laden…</p>
+    }
+    else if (!string.IsNullOrEmpty(_error))
+    {
+        <p class="state-message error">@_error</p>
+    }
+    else
+    {
+        <section class="panel-section">
+            <div class="panel-header">
+                <h2>Lobsy / Jobsy</h2>
+                <button class="login-submit" type="button" disabled="@_busy" @onclick="SaveAsync">
+                    @(_busy ? "Opslaan…" : "Opslaan")
+                </button>
+            </div>
+            <p class="muted">Deze gegevens verschijnen onderaan de salesmanager-factuur-PDF’s, samen met het Lobsy-logo en de slogan.</p>
+
+            @if (!string.IsNullOrEmpty(_message))
+            {
+                <p class="state-message">@_message</p>
+            }
+
+            <div class="login-form" style="max-width:36rem;margin-top:1rem;display:grid;gap:0.75rem">
+                <label>
+                    Bedrijfsnaam
+                    <input @bind="_form.CompanyName" />
+                </label>
+                <label>
+                    Slogan
+                    <input @bind="_form.Slogan" />
+                </label>
+                <label>
+                    Adres
+                    <input @bind="_form.Address" />
+                </label>
+                <div style="display:grid;grid-template-columns:8rem 1fr;gap:0.75rem">
+                    <label>
+                        Postcode
+                        <input @bind="_form.PostalCode" />
+                    </label>
+                    <label>
+                        Plaats
+                        <input @bind="_form.City" />
+                    </label>
+                </div>
+                <label>
+                    Land
+                    <input @bind="_form.Country" />
+                </label>
+                <label>
+                    KvK-nummer
+                    <input @bind="_form.KvkNumber" />
+                </label>
+                <label>
+                    BTW-nummer
+                    <input @bind="_form.VatNumber" />
+                </label>
+                <label>
+                    Telefoon
+                    <input @bind="_form.Phone" />
+                </label>
+                <label>
+                    E-mail
+                    <input type="email" @bind="_form.Email" />
+                </label>
+            </div>
+        </section>
+    }
+</AdminPageShell>
+
+@code {
+    private PlatformCompanyItem _form = new();
+    private bool _loading = true;
+    private bool _busy;
+    private string? _error;
+    private string? _message;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            _form = await Api.GetPlatformCompanyAsync() ?? new PlatformCompanyItem();
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private async Task SaveAsync()
+    {
+        _busy = true;
+        _error = null;
+        _message = null;
+        try
+        {
+            _form = await Api.SavePlatformCompanyAsync(_form) ?? _form;
+            _message = "Bedrijfsgegevens opgeslagen.";
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+}

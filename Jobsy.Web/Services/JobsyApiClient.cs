@@ -1137,6 +1137,23 @@ public sealed class JobsyApiClient : IAsyncDisposable
         return await response.Content.ReadFromJsonAsync<PlatformFeatureItem>(cancellationToken: ct);
     }
 
+    public async Task<PlatformCompanyItem?> GetPlatformCompanyAsync(CancellationToken ct = default)
+        => await _http.GetFromJsonAsync<PlatformCompanyItem>("api/settings/company", ct);
+
+    public async Task<PlatformCompanyItem?> SavePlatformCompanyAsync(
+        PlatformCompanyItem company,
+        CancellationToken ct = default)
+    {
+        var response = await _http.PutAsJsonAsync("api/settings/company", company, ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException(TryExtractMessage(body) ?? body);
+        }
+
+        return await response.Content.ReadFromJsonAsync<PlatformCompanyItem>(cancellationToken: ct);
+    }
+
     public ValueTask DisposeAsync()
     {
         _http.Dispose();
@@ -1496,6 +1513,21 @@ public sealed class PlatformFeatureItem
     public bool AuthenticatorEnabled { get; set; }
     public bool ExposeRegistrationActivationLinks { get; set; }
     public string PublicWebBaseUrl { get; set; } = "http://localhost:5201";
+    public DateTime? UpdatedAtUtc { get; set; }
+}
+
+public sealed class PlatformCompanyItem
+{
+    public string CompanyName { get; set; } = "Lobsy";
+    public string Slogan { get; set; } = "Dichtbij genoeg om het pantser te laten vallen";
+    public string? Address { get; set; }
+    public string? PostalCode { get; set; }
+    public string? City { get; set; }
+    public string? Country { get; set; } = "NL";
+    public string? KvkNumber { get; set; }
+    public string? VatNumber { get; set; }
+    public string? Phone { get; set; }
+    public string? Email { get; set; }
     public DateTime? UpdatedAtUtc { get; set; }
 }
 

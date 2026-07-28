@@ -35,6 +35,7 @@ public class JobsyDbContext : DbContext
     public DbSet<EarlyAdapterRule> EarlyAdapterRules => Set<EarlyAdapterRule>();
     public DbSet<IntegrationCredential> IntegrationCredentials => Set<IntegrationCredential>();
     public DbSet<PlatformFeatureSettings> PlatformFeatureSettings => Set<PlatformFeatureSettings>();
+    public DbSet<PlatformCompanySettings> PlatformCompanySettings => Set<PlatformCompanySettings>();
     public DbSet<PlatformLog> PlatformLogs => Set<PlatformLog>();
     public DbSet<TokenPurchaseCheckout> TokenPurchaseCheckouts => Set<TokenPurchaseCheckout>();
     public DbSet<CompanyRegistration> CompanyRegistrations => Set<CompanyRegistration>();
@@ -400,6 +401,21 @@ public class JobsyDbContext : DbContext
         {
             entity.HasKey(e => e.Id);
             entity.Property(e => e.PublicWebBaseUrl).HasMaxLength(512);
+        });
+
+        modelBuilder.Entity<PlatformCompanySettings>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.CompanyName).HasMaxLength(200).IsRequired();
+            entity.Property(e => e.Slogan).HasMaxLength(240);
+            entity.Property(e => e.Address).HasMaxLength(240);
+            entity.Property(e => e.PostalCode).HasMaxLength(20);
+            entity.Property(e => e.City).HasMaxLength(120);
+            entity.Property(e => e.Country).HasMaxLength(80);
+            entity.Property(e => e.KvkNumber).HasMaxLength(32);
+            entity.Property(e => e.VatNumber).HasMaxLength(32);
+            entity.Property(e => e.Phone).HasMaxLength(40);
+            entity.Property(e => e.Email).HasMaxLength(200);
         });
 
         modelBuilder.Entity<PlatformLog>(entity =>

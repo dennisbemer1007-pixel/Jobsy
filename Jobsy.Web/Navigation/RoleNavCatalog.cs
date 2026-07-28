@@ -15,7 +15,7 @@ public static class RoleNavCatalog
         new("Nav.Finance", "/admin/finance", NavIcons.Finance, ["/admin/tokens", "/admin/sales-managers"]),
         new("Nav.Companies", "/admin/companies", NavIcons.Companies),
         new("Nav.Settings", "/admin/settings", NavIcons.Settings,
-            ["/admin/integrations", "/admin/users", "/admin/logging", "/admin/wages", "/admin/masterdata", "/admin/notifications"])
+            ["/admin/integrations", "/admin/users", "/admin/logging", "/admin/wages", "/admin/masterdata", "/admin/notifications", "/admin/company"])
     ];
 
     public static readonly NavItem[] Candidate =

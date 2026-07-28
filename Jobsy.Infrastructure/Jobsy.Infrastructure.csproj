@@ -20,6 +20,11 @@
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="9.0.0" />
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL.NetTopologySuite" Version="9.0.0" />
     <PackageReference Include="QuestPDF" Version="2025.7.1" />
+    <PackageReference Include="SixLabors.ImageSharp" Version="3.1.12" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="Assets\lobsy.png" LogicalName="Jobsy.Infrastructure.Assets.lobsy.png" />
   </ItemGroup>
 
   <ItemGroup>

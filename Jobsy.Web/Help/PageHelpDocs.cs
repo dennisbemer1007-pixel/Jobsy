@@ -285,6 +285,12 @@ public static class PageHelpDocs
             "Zet features aan/uit (moderatie, authenticator, …) en beheer gerelateerde opties. Integraties zitten in hetzelfde settings-gebied.",
             "Gedrag van Lobsy afstemmen zonder code-deploys."),
 
+        ["/admin/company"] = new(
+            "Beheer · Bedrijfsgegevens",
+            "NAW, KvK en BTW van Lobsy.",
+            "Vul bedrijfsnaam, slogan, adres, KvK en BTW in. Deze gegevens staan onderaan self-billing factuur-PDF’s.",
+            "Juridische platformgegevens op facturen houden."),
+
         ["/admin/integrations"] = new(
             "Beheer · Integraties",
             "API-koppelingen (Mollie, KVK, Entra, Google, Mail, OpenAI).",
