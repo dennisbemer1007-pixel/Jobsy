@@ -1,0 +1,359 @@
+namespace Jobsy.Web.Help;
+
+/// <summary>Pagina-documentatie voor de globale info-knop (niet op de banenkaart).</summary>
+public static class PageHelpDocs
+{
+    public sealed record Doc(
+        string Title,
+        string Purpose,
+        string HowItWorks,
+        string UsedFor);
+
+    public static bool IsExcludedPath(string? path)
+    {
+        var p = Normalize(path);
+        return p is "/" or "/banen";
+    }
+
+    public static Doc? TryGet(string? path)
+    {
+        var p = Normalize(path);
+        if (IsExcludedPath(p))
+        {
+            return null;
+        }
+
+        if (Exact.TryGetValue(p, out var exact))
+        {
+            return exact;
+        }
+
+        foreach (var (prefix, doc) in Prefixes)
+        {
+            if (p.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
+            {
+                return doc;
+            }
+        }
+
+        return Fallback;
+    }
+
+    private static string Normalize(string? path)
+    {
+        if (string.IsNullOrWhiteSpace(path))
+        {
+            return "/";
+        }
+
+        var p = path.Trim();
+        var q = p.IndexOf('?', StringComparison.Ordinal);
+        if (q >= 0)
+        {
+            p = p[..q];
+        }
+
+        if (p.Length > 1)
+        {
+            p = p.TrimEnd('/');
+        }
+
+        return string.IsNullOrEmpty(p) ? "/" : p.ToLowerInvariant();
+    }
+
+    private static readonly Doc Fallback = new(
+        Title: "Deze pagina",
+        Purpose: "Onderdeel van Lobsy — het platform voor banen zoeken en vacatures beheren.",
+        HowItWorks: "Gebruik de navigatie onderaan of in het menu om tussen modules te wisselen. Op de meeste schermen kun je gegevens bekijken, filteren of bewerken binnen jouw rol.",
+        UsedFor: "Afhankelijk van je rol (kandidaat, werkgever, intermediair, sales of admin) zie je andere modules en rechten.");
+
+    private static readonly Dictionary<string, Doc> Exact = new(StringComparer.OrdinalIgnoreCase)
+    {
+        ["/login"] = new(
+            "Inloggen",
+            "Toegang tot Lobsy met Microsoft Entra, Google of een Lobsy-/demo-account.",
+            "Kies een inlogmethode. Externe login stuurt je naar de provider en terug naar Lobsy. Lokale/demo-accounts gebruiken e-mail en wachtwoord.",
+            "Sessie starten zodat je sollicitaties, vacatures, tokens of beheer kunt gebruiken."),
+
+        ["/register"] = new(
+            "Bedrijf registreren",
+            "Nieuwe werkgever of intermediair aanmelden via KVK-gegevens.",
+            "Vul contact- en KVK-/vestigingsgegevens in. Na indienen volgt activatie (e-mail) en eventueel controle/overname als de vestiging al bestaat.",
+            "Een organisatie-account opzetten om vacatures te plaatsen en tokens te beheren."),
+
+        ["/register/activate"] = new(
+            "Account activeren",
+            "Bevestigen van een registratie via activatielink.",
+            "Open de link uit de e-mail (of demo-link). Daarna is het account actief of volgt een overnameproces.",
+            "Registratie afronden zodat managers kunnen inloggen."),
+
+        ["/access-denied"] = new(
+            "Geen toegang",
+            "Je hebt deze pagina geopend zonder de juiste rol of rechten.",
+            "Ga terug naar Home of log in met een account dat wél toegang heeft.",
+            "Voorkomen dat gevoelige beheer- of werkgeversfuncties per ongeluk openstaan."),
+
+        ["/home"] = new(
+            "Home / dashboard",
+            "Startscherm na inloggen, afgestemd op jouw rol.",
+            "Je ziet KPI’s, snelle links en taken die bij jouw rol horen (kandidaat, vestiging, regio, enterprise, intermediair, sales of admin).",
+            "Overzicht houden en snel naar vacatures, tokens, sollicitaties of beheer gaan."),
+
+        ["/candidate/liked"] = new(
+            "Bewaard",
+            "Vacatures die je hebt geliket of bewaard.",
+            "Bekijk de lijst, open details of verwijder items. Anonieme gebruikers zien een beperkte weergave; ingelogde kandidaten hun eigen bewaarde set.",
+            "Interessante banen bijhouden zonder meteen te solliciteren."),
+
+        ["/candidate/shared"] = new(
+            "Gedeeld",
+            "Vacatures die met jou zijn gedeeld.",
+            "Open gedeelde items om de vacature te bekijken of verder te bewaren/solliciteren.",
+            "Doorverwijzingen van anderen of eerdere shares terugvinden."),
+
+        ["/candidate/applications"] = new(
+            "Mijn sollicitaties",
+            "Overzicht van je sollicitaties en statussen.",
+            "Filter op tabbladen, open een sollicitatie of trek in waar dat mag.",
+            "Voortgang volgen van openstaande en afgeronde sollicitaties."),
+
+        ["/candidate/profile"] = new(
+            "Mijn profiel",
+            "Jouw kandidaatgegevens voor matching en solliciteren.",
+            "Vul interesses, opleiding, rijbewijzen, voorkeuren en locatie in. Wijzigingen helpen filters op de banenkaart en harde eisen bij sollicitaties.",
+            "Betere matches en sneller solliciteren met volledige gegevens."),
+
+        ["/employer/vacancies"] = new(
+            "Vacatures (werkgever)",
+            "Beheer van vacatures van jouw organisatie of vestiging.",
+            "Bekijk, filter en open vacatures. Afhankelijk van rol kun je publiceren, pauzeren of naar plaatsen gaan.",
+            "Openstaande banen beheren en opvolgen."),
+
+        ["/employer/tokens"] = new(
+            "Tokens",
+            "Token-saldo, aankoop en allocatie binnen de organisatie.",
+            "Bekijk wallet/saldo, koop een pakket (Mollie-stub), of wijs tokens toe aan vestigingen. Logs tonen mutaties.",
+            "Vacaturepublicatie en andere token-acties bekostigen."),
+
+        ["/branch/tokens"] = new(
+            "Tokens (vestiging)",
+            "Token-saldo en aankoop voor jouw vestiging.",
+            "Zelfde tokenflow als bij werkgever, gericht op branch-niveau.",
+            "Zorgen dat er saldo is om vacatures te plaatsen."),
+
+        ["/employer/branches"] = new(
+            "Vestigingen",
+            "Vestigingen onder jouw organisatie beheren.",
+            "Bekijk vestigingen, zoek via KVK-stub nieuwe vestigingen en registreer ze. Overnames lopen via een apart scherm.",
+            "Organisatiestructuur opbouwen zodat managers per vestiging kunnen werken."),
+
+        ["/regional/branches"] = new(
+            "Mijn vestigingen (regio)",
+            "Vestigingen binnen jouw regiobereik.",
+            "Inzicht in gekoppelde vestigingen; beheer hangt af van rechten.",
+            "Regionale sturing over meerdere locaties."),
+
+        ["/employer/regions"] = new(
+            "Regio’s",
+            "Regio-indeling van de enterprise-organisatie.",
+            "Bekijk of bewerk regio’s en koppelingen die regiomanagers gebruiken.",
+            "Schaalbare structuur voor meerdere vestigingen."),
+
+        ["/employer/users"] = new(
+            "Gebruikers (organisatie)",
+            "Managers en uitnodigingen binnen het bedrijf.",
+            "Nodig gebruikers uit per e-mail, bekijk rollen en beheer toegang tot vestigingen/regio’s.",
+            "Het juiste team toegang geven tot vacatures en tokens."),
+
+        ["/employer/salary-tables"] = new(
+            "Salaristabellen / CAO",
+            "Loontabellen die aan vacatures of vestigingen gekoppeld kunnen worden.",
+            "Maak of open tabellen, beheer schalen/bedragen en koppel waar nodig aan branches.",
+            "Consistente beloning tonen en WML-/CAO-afspraken ondersteunen."),
+
+        ["/employer/takeovers"] = new(
+            "Overnameverzoeken",
+            "Conflicten wanneer een vestiging al geregistreerd is.",
+            "Bekijk openstaande overnames en keur goed of af. Goedkeuring kan org-structuur samenvoegen.",
+            "Dubbele KVK-vestigingen netjes laten claimen door de juiste partij."),
+
+        ["/employer/onboarding-checkout"] = new(
+            "Onboarding-betaling",
+            "Eerstejaars of onboarding-checkout voor werkgevers.",
+            "Rond de stub-betaling af zodat onboarding verder kan.",
+            "Account/organisatie activeren voor productiegebruik."),
+
+        ["/branch/vacancies/new"] = new(
+            "Vacature plaatsen",
+            "Nieuwe vacature aanmaken voor een vestiging.",
+            "Vul titel, eisen, loon, locatie en masterdata-keuzes in. Publiceren kan tokens kosten en kan door moderatie gaan.",
+            "Banen zichtbaar maken op de banenkaart voor kandidaten."),
+
+        ["/branch/applicants"] = new(
+            "Sollicitanten",
+            "Binnenkomende sollicitaties op jouw vacatures.",
+            "Filter en open kandidaten, bekijk status en vervolgstappen.",
+            "Selectie en opvolging van sollicitaties door managers."),
+
+        ["/regional/tokens"] = new(
+            "Tokencontrole (regio)",
+            "Centrale controle op tokens en vacatures in de regio.",
+            "Bekijk saldo’s/gebruik over vestigingen heen (vaak meer inzicht dan bewerken).",
+            "Regionale sturing zonder per vestiging te hoeven inloggen."),
+
+        ["/intermediary"] = new(
+            "Intermediair dashboard",
+            "Overzicht voor uitzenders/intermediairs en hun opdrachtgevers.",
+            "KPI’s, snelle links naar batch-tool, tokens en sollicitaties.",
+            "Meerdere opdrachtgevers bedienen vanuit één account."),
+
+        ["/intermediary/batch"] = new(
+            "Batch-vacatures",
+            "Meerdere vacatures in één flow publiceren of beheren.",
+            "Gebruik de batch-tool om efficiënt vacatures voor opdrachtgevers te plaatsen.",
+            "Volume-publicatie zonder per vacature alles opnieuw te doen."),
+
+        ["/salesmanager/onboarding"] = new(
+            "Sales onboarding",
+            "Profiel en gegevens van de salesmanager afronden.",
+            "Vul verplichte velden (o.a. bedrijfs-/factuurgegevens) in tot onboarding compleet is.",
+            "Klaarzetten voor facturatie en uitbetalingen."),
+
+        ["/salesmanager/invoices"] = new(
+            "Facturen (sales)",
+            "Self-billing / factuuroverzicht voor salesmanagers.",
+            "Bekijk of download facturen gekoppeld aan uitbetalingen.",
+            "Administratie van commissies of uitbetalingen."),
+
+        ["/salesmanager/payout-checkout"] = new(
+            "Uitbetaling",
+            "Uitbetalingstraject (Mollie-stub) voor salesmanagers.",
+            "Start de checkout-stub; daarna volgt self-billing/documentatie in het platform.",
+            "Verdiensten laten uitbetalen volgens het salesproces."),
+
+        ["/tokens/checkout-stub"] = new(
+            "Token checkout",
+            "Stub-betaalpagina voor een tokenpakket.",
+            "Bevestig de aankoop in de stub; saldo wordt bijgeschreven alsof Mollie betaald heeft.",
+            "Testen van token-aankoop zonder echte betaling."),
+
+        ["/admin/companies"] = new(
+            "Beheer · Bedrijven",
+            "Alle werkgevers en intermediairs op het platform.",
+            "Zoek/filter bedrijven, ken tokens toe, of voeg toe via KVK-stub.",
+            "Platformbeheer van organisatiestructuur en wallets."),
+
+        ["/admin/users"] = new(
+            "Beheer · Gebruikers",
+            "Accounts van kandidaten en managers.",
+            "Zoek gebruikers, bekijk rollen en beheer toegang waar nodig.",
+            "Support en beheer van inloggerechtigde personen."),
+
+        ["/admin/vacancies"] = new(
+            "Beheer · Vacatures",
+            "Platformbreed vacatureoverzicht.",
+            "Zoek en open vacatures over alle bedrijven heen.",
+            "Moderatie, support en kwaliteitscontrole."),
+
+        ["/admin/finance"] = new(
+            "Beheer · Financieel",
+            "Financieel overzicht van het platform.",
+            "Bekijk relevante geld-/tokenstromen en rapportages.",
+            "Inzicht voor exploitatie en controle."),
+
+        ["/admin/tokens"] = new(
+            "Beheer · Tokens",
+            "Centrale tokenadministratie.",
+            "Ken tokens toe aan bedrijven en bekijk saldi.",
+            "Demo’s, credits of correcties uitvoeren."),
+
+        ["/admin/sales-managers"] = new(
+            "Beheer · Salesmanagers",
+            "Salesmanager-accounts en status.",
+            "Beheer onboarding, koppelingen en overzicht van salesmanagers.",
+            "Het saleskanaal operationeel houden."),
+
+        ["/admin/moderation"] = new(
+            "Beheer · Moderatie",
+            "Content- en vacaturemoderatie.",
+            "Bekijk gemarkeerde of te beoordelen vacatureteksten (o.a. via OpenAI-moderatie).",
+            "Ongewenste of risicovolle content tegenhouden."),
+
+        ["/admin/settings"] = new(
+            "Beheer · Instellingen",
+            "Systeeminstellingen en platformfeatures.",
+            "Zet features aan/uit (moderatie, authenticator, …) en beheer gerelateerde opties. Integraties zitten in hetzelfde settings-gebied.",
+            "Gedrag van Lobsy afstemmen zonder code-deploys."),
+
+        ["/admin/integrations"] = new(
+            "Beheer · Integraties",
+            "API-koppelingen (Mollie, KVK, Entra, Google, Mail, OpenAI).",
+            "Vul credentials in, sla op en test de verbinding. Gebruik de i per tegel voor details.",
+            "Externe diensten laten werken voor login, mail, betalen en moderatie."),
+
+        ["/admin/masterdata"] = new(
+            "Beheer · Masterdata",
+            "Keuzelijsten zoals branches, rijbewijzen, opleidingen en minimum werkgevers.",
+            "Voeg opties toe, wijzig of deactiveer ze. Ze verschijnen in profiel- en vacatureformulieren.",
+            "Consistente keuzes in de hele app zonder hardcoding."),
+
+        ["/admin/wages"] = new(
+            "Beheer · Salaris / WML",
+            "Wettelijk minimumloon en loonreferenties.",
+            "Beheer WML-gegevens die vacatures en validatie ondersteunen.",
+            "Compliant lonen tonen en controleren."),
+
+        ["/admin/notifications"] = new(
+            "Beheer · Notificaties",
+            "Platformnotificaties en berichtenverkeer.",
+            "Bekijk of beheer notificatie-instellingen/-logs binnen het admin-domein.",
+            "Communicatie naar gebruikers volgen."),
+
+        ["/admin/logging"] = new(
+            "Beheer · Logging",
+            "Platformlogboek voor audits en fouten.",
+            "Filter en bekijk logregels (o.a. betalingen, overnames, systeemevents).",
+            "Problemen analyseren en acties nalopen."),
+
+        ["/privacy"] = new(
+            "Privacyverklaring",
+            "Uitleg welke gegevens Lobsy verwerkt.",
+            "Lees de tekst; voor inzage/export ga je naar ‘Mijn gegevens’ als je bent ingelogd.",
+            "Transparantie en AVG-informatie."),
+
+        ["/privacy/data"] = new(
+            "Mijn gegevens",
+            "Inzage in jouw persoonsgegevens in Lobsy.",
+            "Bekijk welke data aan je account hangt en gebruik export/verwijderacties waar beschikbaar.",
+            "AVG-rechten uitoefenen."),
+
+        ["/gebruiksvoorwaarden"] = new(
+            "Gebruiksvoorwaarden",
+            "Voorwaarden voor kandidaten die Lobsy gebruiken.",
+            "Lees de afspraken over gebruik van het platform.",
+            "Duidelijkheid over rechten en plichten als werkzoeker."),
+
+        ["/algemene-voorwaarden"] = new(
+            "Algemene voorwaarden",
+            "Voorwaarden voor ondernemers/werkgevers.",
+            "Lees de AV over tokens, publicatie en aansprakelijkheid.",
+            "Juridische basis voor zakelijk gebruik van Lobsy.")
+    };
+
+    private static readonly (string Prefix, Doc Doc)[] Prefixes =
+    [
+        ("/vacancies/", new(
+            "Vacaturedetail",
+            "Details van één vacature op de banenkaart.",
+            "Bekijk eisen, loon en locatie. Solliciteer als kandidaat (met eventuele harde eisen), of bewaar/deel. Managers zien geen solliciteer-CTA.",
+            "Een baan beoordelen en solliciteren of delen.")),
+
+        ("/home/metrics/", new(
+            "Metric detail",
+            "Uitgesplitste cijfers achter een dashboard-KPI.",
+            "Bekijk de onderliggende lijst of grafiek bij de gekozen metric-key.",
+            "Dieper analyseren waarom een KPI zo staat.")),
+
+        ("/employer/salary-tables/", Exact["/employer/salary-tables"])
+    ];
+}

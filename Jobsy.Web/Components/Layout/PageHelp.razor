@@ -1,0 +1,74 @@
+@using Jobsy.Web.Help
+@implements IDisposable
+@inject NavigationManager Navigation
+
+@if (_doc is not null)
+{
+    <div class="page-help">
+        <button type="button"
+                class="page-help__btn @(_open ? "is-open" : null)"
+                title="Info over deze pagina"
+                aria-label="Info over deze pagina: @_doc.Title"
+                aria-expanded="@_open"
+                aria-controls="page-help-panel"
+                @onclick="Toggle">
+            i
+        </button>
+
+        @if (_open)
+        {
+            <aside id="page-help-panel" class="page-help__panel" role="dialog" aria-label="@_doc.Title">
+                <div class="page-help__panel-head">
+                    <strong>@_doc.Title</strong>
+                    <button type="button" class="page-help__close" aria-label="Sluiten" @onclick="Close">×</button>
+                </div>
+                <dl class="page-help__list">
+                    <div>
+                        <dt>Doel</dt>
+                        <dd>@_doc.Purpose</dd>
+                    </div>
+                    <div>
+                        <dt>Werking</dt>
+                        <dd>@_doc.HowItWorks</dd>
+                    </div>
+                    <div>
+                        <dt>Waarvoor</dt>
+                        <dd>@_doc.UsedFor</dd>
+                    </div>
+                </dl>
+            </aside>
+        }
+    </div>
+}
+
+@code {
+    private bool _open;
+    private string? _path;
+    private PageHelpDocs.Doc? _doc;
+
+    protected override void OnInitialized()
+    {
+        Navigation.LocationChanged += OnLocationChanged;
+        RefreshFromUri();
+    }
+
+    private void OnLocationChanged(object? sender, LocationChangedEventArgs e)
+    {
+        _open = false;
+        RefreshFromUri();
+        _ = InvokeAsync(StateHasChanged);
+    }
+
+    private void RefreshFromUri()
+    {
+        _path = new Uri(Navigation.Uri).AbsolutePath;
+        _doc = PageHelpDocs.TryGet(_path);
+    }
+
+    private void Toggle() => _open = !_open;
+
+    private void Close() => _open = false;
+
+    public void Dispose()
+        => Navigation.LocationChanged -= OnLocationChanged;
+}
