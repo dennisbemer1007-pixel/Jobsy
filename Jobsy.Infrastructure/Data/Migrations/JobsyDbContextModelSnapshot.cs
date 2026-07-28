@@ -1343,6 +1343,12 @@ namespace Jobsy.Infrastructure.Data.Migrations
                     b.Property<DateTime?>("TermsAcceptedAt")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<DateTime?>("CandidateHowToCompletedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("LastLoginAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
                     b.HasKey("Id");
 
                     b.HasIndex("CompanyId");

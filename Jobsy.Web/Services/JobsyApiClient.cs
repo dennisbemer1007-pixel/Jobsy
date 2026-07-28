@@ -449,6 +449,16 @@ public sealed class JobsyApiClient : IAsyncDisposable
     public async Task<IReadOnlyList<ApplicationItem>> GetMyApplicationsAsync(CancellationToken ct = default)
         => await _http.GetFromJsonAsync<List<ApplicationItem>>("api/me/applications", ct) ?? [];
 
+    public async Task CompleteCandidateHowToAsync(CancellationToken ct = default)
+    {
+        var response = await _http.PostAsync("api/me/candidate-how-to-completed", null, ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException(string.IsNullOrWhiteSpace(body) ? response.ReasonPhrase : body);
+        }
+    }
+
     public async Task WithdrawApplicationAsync(Guid applicationId, CancellationToken ct = default)
     {
         var response = await _http.PostAsync($"api/applications/{applicationId}/withdraw", null, ct);

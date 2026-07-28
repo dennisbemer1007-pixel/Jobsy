@@ -60,12 +60,13 @@ public class RoleNavCatalogTests
     }
 
     [Fact]
-    public void ForUser_candidate_gets_search_saved_applications_profile()
+    public void ForUser_candidate_gets_search_how_saved_applications_profile()
     {
         var identity = new ClaimsIdentity([new Claim(ClaimTypes.Role, JobsyRoles.Candidate)], "test");
         var items = RoleNavCatalog.ForUser(new ClaimsPrincipal(identity));
-        Assert.Equal(4, items.Count);
+        Assert.Equal(5, items.Count);
         Assert.Contains(items, i => i.Href == "/");
+        Assert.Contains(items, i => i.Href == "/candidate/hoe-werkt-lobsy");
         Assert.Contains(items, i => i.Href == "/candidate/liked");
         Assert.Contains(items, i => i.Href == "/candidate/applications");
         Assert.Contains(items, i => i.Href == "/candidate/profile");
@@ -73,6 +74,17 @@ public class RoleNavCatalogTests
         var saved = items.First(i => i.Href == "/candidate/liked");
         Assert.Contains("/candidate/shared", saved.ExtraActivePaths ?? []);
         Assert.DoesNotContain("/candidate/applications", saved.ExtraActivePaths ?? []);
+    }
+
+    [Fact]
+    public void ForUser_branch_manager_with_candidate_apps_gets_applications_nav()
+    {
+        var identity = new ClaimsIdentity("test");
+        identity.AddClaim(new Claim(ClaimTypes.Role, JobsyRoles.BranchManager));
+        identity.AddClaim(new Claim(JobsyClaimTypes.HasCandidateApplications, "1"));
+        var items = RoleNavCatalog.ForUser(new ClaimsPrincipal(identity));
+        Assert.Contains(items, i => i.Href == "/branch/tokens");
+        Assert.Contains(items, i => i.Href == "/candidate/applications");
     }
 
     [Fact]

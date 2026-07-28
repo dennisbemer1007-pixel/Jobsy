@@ -34,6 +34,14 @@ public class User
     public string? ConsentVersion { get; set; }
 
     /// <summary>
+    /// When the candidate completed (or dismissed) the "Hoe werkt Lobsy" onboarding page.
+    /// </summary>
+    public DateTime? CandidateHowToCompletedAt { get; set; }
+
+    /// <summary>Last successful login (local or external). Null = never logged in before.</summary>
+    public DateTime? LastLoginAtUtc { get; set; }
+
+    /// <summary>
     /// Extra company memberships for RegionalManager, EnterpriseManager and Intermediary.
     /// </summary>
     public ICollection<UserCompany> CompanyMemberships { get; set; } = new List<UserCompany>();

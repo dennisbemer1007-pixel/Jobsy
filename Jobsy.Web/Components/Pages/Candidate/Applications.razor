@@ -1,9 +1,12 @@
 @page "/candidate/applications"
 @rendermode @(new InteractiveServerRenderMode(prerender: false))
-@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Candidate")]
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Candidate,BranchManager,RegionalManager,EnterpriseManager,Intermediary,Admin")]
+@using Jobsy.Core.Authorization
 @using Jobsy.Web.Localization
+@using Microsoft.AspNetCore.Components.Authorization
 @inject JobsyApiClient Api
 @inject CultureState Culture
+@inject AuthenticationStateProvider AuthState
 
 <PageTitle>@Culture["Nav.MyApplications"] · Lobsy</PageTitle>
 
@@ -11,7 +14,16 @@
     <header class="panel-header">
         <div>
             <h1>@Culture["Nav.MyApplications"]</h1>
-            <p class="login-lead">Status van je reacties op vacatures.</p>
+            <p class="login-lead">
+                @if (_readOnly)
+                {
+                    <text>Jouw eerdere sollicitaties (alleen-lezen). Intrekken of nieuwe sollicitaties kan via een kandidaataccount.</text>
+                }
+                else
+                {
+                    <text>Status van je reacties op vacatures.</text>
+                }
+            </p>
         </div>
     </header>
 
@@ -31,7 +43,7 @@
         <p class="state-message">
             @if (_items.Count == 0)
             {
-                <text>Nog geen sollicitaties. <a href="/">Bekijk de banenkaart</a>.</text>
+                <text>Nog geen sollicitaties. @if (!_readOnly) { <a href="/">Bekijk de banenkaart</a><text>.</text> }</text>
             }
             else
             {
@@ -51,7 +63,7 @@
                     </a>
                     <div class="application-row__meta">
                         <span class="status-pill status-pill--@a.Status.ToLowerInvariant()">@StatusLabel(a.Status)</span>
-                        @if (CanWithdraw(a.Status))
+                        @if (!_readOnly && CanWithdraw(a.Status))
                         {
                             <button type="button"
                                     class="btn-compact"
@@ -72,7 +84,7 @@
     }
 </div>
 
-@if (_showCelebration)
+@if (_showCelebration && !_readOnly)
 {
     <div class="share-modal-backdrop"></div>
     <div class="share-modal" role="dialog" aria-modal="true" aria-labelledby="hired-title">
@@ -90,6 +102,7 @@
     private List<ApplicationItem> _items = [];
     private List<ApplicationItem> _filtered = [];
     private bool _loading = true;
+    private bool _readOnly;
     private bool _showCelebration;
     private string _tab = "all";
     private Guid? _busyId;
@@ -97,10 +110,13 @@
 
     protected override async Task OnInitializedAsync()
     {
+        var state = await AuthState.GetAuthenticationStateAsync();
+        _readOnly = !RoleClaimMatching.HasRole(state.User, JobsyRoles.Candidate);
+
         try
         {
             _items = (await Api.GetMyApplicationsAsync()).ToList();
-            _showCelebration = _items.Any(x => x.Status == "Hired");
+            _showCelebration = !_readOnly && _items.Any(x => x.Status == "Hired");
             ApplyTab();
         }
         catch
@@ -140,12 +156,16 @@
     private static bool IsMatched(ApplicationItem a)
         => a.Status is "Accepted" or "EmployerContacting" or "Hired";
 
-    /// <summary>Withdraw only after verification (Open / submitted), not while awaiting e-mail code.</summary>
     private static bool CanWithdraw(string status)
         => status == "Pending";
 
     private async Task WithdrawAsync(ApplicationItem item)
     {
+        if (_readOnly)
+        {
+            return;
+        }
+
         _busyId = item.Id;
         _message = null;
         try
@@ -172,8 +192,8 @@
         "PendingVerification" => "Wacht op e-mailverificatie",
         "EmployerContacting" => "Werkgever neemt contact op",
         "Hired" => "Aangenomen",
-        "FilledElsewhere" => "De keuze is op een andere kandidaat gevallen",
-        "Pending" => "Open",
-        _ => "In behandeling"
+        "FilledElsewhere" => "Ingevuld elders",
+        "Withdrawn" => "Ingetrokken",
+        _ => status
     };
 }
