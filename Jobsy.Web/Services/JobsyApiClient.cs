@@ -1256,6 +1256,56 @@ public sealed class JobsyApiClient : IAsyncDisposable
         return await response.Content.ReadFromJsonAsync<SelfBillingInvoiceItem>(cancellationToken: ct);
     }
 
+    public async Task<SalesManagerPayoutPreview?> GetMyPayoutPreviewAsync(CancellationToken ct = default)
+        => await _http.GetFromJsonAsync<SalesManagerPayoutPreview>("api/sales-managers/me/payouts/preview", ct);
+
+    public async Task<SalesManagerPayoutCheckoutResult?> CreateMyPayoutCheckoutAsync(CancellationToken ct = default)
+    {
+        var response = await _http.PostAsync("api/sales-managers/me/payouts/checkout", null, ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException(ExtractMessage(body) ?? "Uitbetaling starten mislukt.");
+        }
+
+        return await response.Content.ReadFromJsonAsync<SalesManagerPayoutCheckoutResult>(cancellationToken: ct);
+    }
+
+    public async Task<SalesManagerPayoutCompleteResult?> CompleteMyPayoutCheckoutAsync(
+        string paymentId,
+        CancellationToken ct = default)
+    {
+        var response = await _http.PostAsJsonAsync(
+            "api/sales-managers/me/payouts/complete",
+            new { paymentId },
+            ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException(ExtractMessage(body) ?? "Uitbetaling afronden mislukt.");
+        }
+
+        return await response.Content.ReadFromJsonAsync<SalesManagerPayoutCompleteResult>(cancellationToken: ct);
+    }
+
+    public async Task DownloadMySelfBillingInvoiceAsync(
+        Guid invoiceId,
+        string invoiceNumber,
+        IJSRuntime js,
+        CancellationToken ct = default)
+    {
+        var response = await _http.GetAsync($"api/sales-managers/me/invoices/{invoiceId}/download", ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException(ExtractMessage(body) ?? "Download mislukt.");
+        }
+
+        var html = await response.Content.ReadAsStringAsync(ct);
+        var fileName = string.IsNullOrWhiteSpace(invoiceNumber) ? $"{invoiceId:N}.html" : $"{invoiceNumber}.html";
+        await js.InvokeVoidAsync("jobsyDownload.text", fileName, html, "text/html;charset=utf-8");
+    }
+
     public async Task<SelfBillingInvoiceItem?> MarkSelfBillingInvoicePaidAsync(Guid invoiceId, CancellationToken ct = default)
     {
         var response = await _http.PostAsync($"api/sales-managers/invoices/{invoiceId}/mark-paid", null, ct);
@@ -1496,6 +1546,35 @@ public sealed class SelfBillingInvoiceItem
     public DateTime CreatedAt { get; set; }
     public DateTime? IssuedAt { get; set; }
     public DateTime? PaidAt { get; set; }
+}
+
+public sealed class SalesManagerPayoutPreview
+{
+    public decimal AmountExVat { get; set; }
+    public decimal VatAmount { get; set; }
+    public decimal AmountInclVat { get; set; }
+    public string? Iban { get; set; }
+    public string MaskedIban { get; set; } = "—";
+    public bool CanPayout { get; set; }
+    public string? BlockReason { get; set; }
+}
+
+public sealed class SalesManagerPayoutCheckoutResult
+{
+    public string PaymentId { get; set; } = string.Empty;
+    public string CheckoutUrl { get; set; } = string.Empty;
+    public decimal AmountEuro { get; set; }
+    public string MaskedIban { get; set; } = string.Empty;
+    public bool IsStub { get; set; }
+}
+
+public sealed class SalesManagerPayoutCompleteResult
+{
+    public Guid InvoiceId { get; set; }
+    public string InvoiceNumber { get; set; } = string.Empty;
+    public decimal TotalInclVat { get; set; }
+    public string MaskedIban { get; set; } = string.Empty;
+    public string Status { get; set; } = string.Empty;
 }
 
 public sealed class SalesManagerProfile

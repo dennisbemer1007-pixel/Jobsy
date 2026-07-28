@@ -87,6 +87,43 @@ public class SalesManagerCommissionTests
     }
 
     [Fact]
+    public async Task Payout_stub_creates_paid_invoice_and_platform_log()
+    {
+        await using var db = CreateDb();
+        var (smId, companyId) = await SeedReferredCompanyAsync(db, slot: 5, kvk: "55550005");
+        var ledger = new CommissionLedgerService(db);
+        await ledger.TryCreditFounderBonusAsync(smId, companyId, "pay_payout_1", 5);
+
+        var invoices = new SelfBillingInvoiceService(db, ledger);
+        var payouts = new SalesManagerPayoutService(
+            db, invoices, ledger, new TestHostEnvironment(),
+            NullLogger<SalesManagerPayoutService>.Instance);
+
+        var preview = await payouts.GetPreviewAsync(smId);
+        Assert.True(preview.CanPayout);
+        Assert.Equal("NL**4300", preview.MaskedIban);
+
+        var checkout = await payouts.CreateCheckoutAsync(smId);
+        Assert.True(checkout.IsStub);
+        Assert.StartsWith("stub_payout_", checkout.PaymentId);
+
+        var completed = await payouts.CompleteCheckoutAsync(checkout.PaymentId, smId);
+        Assert.Equal(nameof(SalesManagerPayoutCheckoutStatus.Completed), completed.Status);
+        Assert.Equal(0m, await ledger.GetBalanceExVatAsync(smId));
+
+        var invoice = await db.SelfBillingInvoices.SingleAsync(i => i.Id == completed.InvoiceId);
+        Assert.Equal(SelfBillingInvoiceStatus.Paid, invoice.Status);
+
+        var log = await db.PlatformLogs.SingleAsync(l => l.Category == "SalesManagerPayout");
+        Assert.Contains("NL**4300", log.Message);
+        Assert.Contains("Uitbetaling naar rekening", log.Message);
+
+        var again = await payouts.CompleteCheckoutAsync(checkout.PaymentId, smId);
+        Assert.Equal(completed.InvoiceId, again.InvoiceId);
+        Assert.Equal(1, await db.SelfBillingInvoices.CountAsync(i => i.SalesManagerUserId == smId));
+    }
+
+    [Fact]
     public async Task Self_billing_invoice_then_mark_paid_is_idempotent()
     {
         await using var db = CreateDb();

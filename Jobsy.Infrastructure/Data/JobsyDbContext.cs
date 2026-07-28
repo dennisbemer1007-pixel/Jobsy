@@ -45,6 +45,7 @@ public class JobsyDbContext : DbContext
     public DbSet<CommissionLedgerEntry> CommissionLedgerEntries => Set<CommissionLedgerEntry>();
     public DbSet<SelfBillingInvoice> SelfBillingInvoices => Set<SelfBillingInvoice>();
     public DbSet<SelfBillingInvoiceLine> SelfBillingInvoiceLines => Set<SelfBillingInvoiceLine>();
+    public DbSet<SalesManagerPayoutCheckout> SalesManagerPayoutCheckouts => Set<SalesManagerPayoutCheckout>();
     public DbSet<MasterdataOption> MasterdataOptions => Set<MasterdataOption>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -581,6 +582,22 @@ public class JobsyDbContext : DbContext
             entity.HasOne(e => e.Invoice)
                 .WithMany(i => i.Lines)
                 .HasForeignKey(e => e.SelfBillingInvoiceId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<SalesManagerPayoutCheckout>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.PaymentId).HasMaxLength(80).IsRequired();
+            entity.Property(e => e.MaskedIban).HasMaxLength(34).IsRequired();
+            entity.Property(e => e.AmountEuro).HasPrecision(10, 2);
+            entity.Property(e => e.AmountExVat).HasPrecision(10, 2);
+            entity.Property(e => e.VatAmount).HasPrecision(10, 2);
+            entity.HasIndex(e => e.PaymentId).IsUnique();
+            entity.HasIndex(e => e.SalesManagerUserId);
+            entity.HasOne(e => e.SalesManagerUser)
+                .WithMany()
+                .HasForeignKey(e => e.SalesManagerUserId)
                 .OnDelete(DeleteBehavior.Cascade);
         });
 

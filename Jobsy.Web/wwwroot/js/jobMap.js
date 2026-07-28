@@ -7,6 +7,7 @@ window.jobMap = (function () {
     let travelOptions = { maxMinutes: 30, transport: "Fiets", radiusKm: 15 };
     let activeClusterPopup = null;
     let openCallback = null;
+    let outsideClickCloserBound = false;
 
     const SPEED_M_PER_MIN = {
         // Keep in sync with MockRoutingService SpeedsKmPerHour
@@ -299,7 +300,8 @@ window.jobMap = (function () {
         popupEl.querySelectorAll("[data-cluster-page]").forEach(function (btn) {
             btn.addEventListener("click", function (ev) {
                 ev.preventDefault();
-                ev.stopPropagation();
+                // Stop both DOM and Leaflet bubbling so pager clicks never close the popup.
+                L.DomEvent.stop(ev);
                 if (btn.disabled || btn.getAttribute("disabled") != null) {
                     return;
                 }
@@ -309,7 +311,6 @@ window.jobMap = (function () {
                 if (!nextPage || nextPage < 1 || nextPage > pageCount) {
                     return;
                 }
-                const job = jobs[nextPage - 1] || {};
                 popup.setContent(buildClusterSingleHtml(childMarkers, nextPage));
                 // Keep popup open on last/first page — only update content.
                 if (typeof popup.update === "function") {
@@ -318,6 +319,72 @@ window.jobMap = (function () {
                 bindClusterPopupInteractions(popup, childMarkers);
             });
         });
+    }
+
+    function eventTargetInsidePopup(ev, popup) {
+        if (!popup || !ev) {
+            return false;
+        }
+        const popupEl = typeof popup.getElement === "function" ? popup.getElement() : null;
+        const target = ev.target || ev.srcElement;
+        return !!(popupEl && target && popupEl.contains(target));
+    }
+
+    function closePopupsIfClickOutside(ev) {
+        if (!map) {
+            return;
+        }
+
+        // Clicks inside any open popup (pager, CTA, content, close btn) must stay put.
+        if (activeClusterPopup && eventTargetInsidePopup(ev, activeClusterPopup)) {
+            return;
+        }
+        if (map._popup && eventTargetInsidePopup(ev, map._popup)) {
+            return;
+        }
+
+        const target = ev.target || ev.srcElement;
+        const onMarkerOrCluster = !!(target && target.closest &&
+            target.closest(".leaflet-marker-icon, .marker-cluster, .job-cluster, .job-marker"));
+
+        // Marker/cluster icons manage their own open/replace; don't force-close marker popups
+        // here (would break click-to-toggle). Still dismiss the custom cluster list.
+        if (onMarkerOrCluster) {
+            if (activeClusterPopup) {
+                map.closePopup(activeClusterPopup);
+            }
+            return;
+        }
+
+        if (activeClusterPopup) {
+            map.closePopup(activeClusterPopup);
+            return;
+        }
+
+        // Empty-map click: also close single vacancy popups (Leaflet preclick is unreliable
+        // alongside MarkerCluster + bubblingMouseEvents:false).
+        if (map._popup) {
+            map.closePopup();
+        }
+    }
+
+    function bindOutsideClickCloser() {
+        if (!map || outsideClickCloserBound) {
+            return;
+        }
+        outsideClickCloserBound = true;
+        // Native capture: L.DomEvent.on's 4th arg is context, not useCapture.
+        // Capture still runs when markers/clusters stop Leaflet click bubbling.
+        map.getContainer().addEventListener("click", closePopupsIfClickOutside, true);
+    }
+
+    function unbindOutsideClickCloser() {
+        if (!map || !outsideClickCloserBound) {
+            outsideClickCloserBound = false;
+            return;
+        }
+        map.getContainer().removeEventListener("click", closePopupsIfClickOutside, true);
+        outsideClickCloserBound = false;
     }
 
     function notifyOpen(id) {
@@ -340,8 +407,8 @@ window.jobMap = (function () {
             map.closePopup(activeClusterPopup);
         }
 
-        // closeOnClick:true (default) — map clicks outside close the popup.
-        // Pager buttons use stopPropagation so they stay usable inside the popup.
+        // closeOnClick stays true for Leaflet-native path; bindOutsideClickCloser is the
+        // reliable fallback when MarkerCluster swallows map preclick/click bubbling.
         const opts = Object.assign({}, clusterPopupOptions(hasWageBands(first)), {
             closeOnClick: true,
             autoClose: true,
@@ -550,7 +617,8 @@ window.jobMap = (function () {
         });
 
         clusterGroup.on("clusterclick", function (e) {
-            // Prevent the same gesture from also firing map click → closing the new popup.
+            // Stop Leaflet bubbling (_stopped) — native-only stopPropagation is not enough.
+            L.DomEvent.stopPropagation(e);
             if (e.originalEvent) {
                 L.DomEvent.stopPropagation(e.originalEvent);
             }
@@ -560,6 +628,7 @@ window.jobMap = (function () {
         setVacancies(vacancies || []);
 
         map.addLayer(clusterGroup);
+        bindOutsideClickCloser();
 
         if (options && options.origin) {
             setOrigin(options.origin.lat, options.origin.lng, options.travel);
@@ -775,6 +844,7 @@ window.jobMap = (function () {
             clusterGroup = null;
         }
         if (map) {
+            unbindOutsideClickCloser();
             map.remove();
             map = null;
         }

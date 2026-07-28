@@ -1,3 +1,4 @@
+using System.Text;
 using Jobsy.Api.Models;
 using Jobsy.Core.Authorization;
 using Jobsy.Core.Interfaces;
@@ -15,6 +16,7 @@ public class SalesManagersController : ControllerBase
     private readonly ISalesManagerOnboardingService _onboarding;
     private readonly ISalesManagerDashboardService _dashboard;
     private readonly ISelfBillingInvoiceService _invoices;
+    private readonly ISalesManagerPayoutService _payouts;
     private readonly IUserLookupService _users;
     private readonly ICompanyAuthorizationService _companyAuth;
     private readonly IHostEnvironment _environment;
@@ -24,6 +26,7 @@ public class SalesManagersController : ControllerBase
         ISalesManagerOnboardingService onboarding,
         ISalesManagerDashboardService dashboard,
         ISelfBillingInvoiceService invoices,
+        ISalesManagerPayoutService payouts,
         IUserLookupService users,
         ICompanyAuthorizationService companyAuth,
         IHostEnvironment environment)
@@ -32,6 +35,7 @@ public class SalesManagersController : ControllerBase
         _onboarding = onboarding;
         _dashboard = dashboard;
         _invoices = invoices;
+        _payouts = payouts;
         _users = users;
         _companyAuth = companyAuth;
         _environment = environment;
@@ -223,6 +227,102 @@ public class SalesManagersController : ControllerBase
         }
     }
 
+    [HttpGet("me/invoices/{invoiceId:guid}/download")]
+    [Authorize(Policy = JobsyPolicies.RequireSalesManager)]
+    public async Task<IActionResult> DownloadMyInvoice(Guid invoiceId, CancellationToken cancellationToken)
+    {
+        var user = await _users.FindByPrincipalAsync(User, cancellationToken);
+        if (user is null)
+        {
+            return Unauthorized();
+        }
+
+        try
+        {
+            var html = await _payouts.RenderInvoiceHtmlAsync(invoiceId, user.Id, cancellationToken);
+            var invoice = await _invoices.GetAsync(invoiceId, cancellationToken);
+            var fileName = $"{invoice?.InvoiceNumber ?? invoiceId.ToString("N")}.html";
+            return File(Encoding.UTF8.GetBytes(html), "text/html; charset=utf-8", fileName);
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(new { message = ex.Message });
+        }
+        catch (UnauthorizedAccessException)
+        {
+            return Forbid();
+        }
+    }
+
+    [HttpGet("me/payouts/preview")]
+    [Authorize(Policy = JobsyPolicies.RequireSalesManager)]
+    public async Task<ActionResult<SalesManagerPayoutPreviewDto>> GetPayoutPreview(
+        CancellationToken cancellationToken)
+    {
+        var user = await _users.FindByPrincipalAsync(User, cancellationToken);
+        if (user is null)
+        {
+            return Unauthorized();
+        }
+
+        return Ok(await _payouts.GetPreviewAsync(user.Id, cancellationToken));
+    }
+
+    [HttpPost("me/payouts/checkout")]
+    [Authorize(Policy = JobsyPolicies.RequireSalesManager)]
+    public async Task<ActionResult<SalesManagerPayoutCheckoutResult>> CreatePayoutCheckout(
+        CancellationToken cancellationToken)
+    {
+        var user = await _users.FindByPrincipalAsync(User, cancellationToken);
+        if (user is null)
+        {
+            return Unauthorized();
+        }
+
+        try
+        {
+            return Ok(await _payouts.CreateCheckoutAsync(user.Id, cancellationToken));
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+    }
+
+    [HttpPost("me/payouts/complete")]
+    [Authorize(Policy = JobsyPolicies.RequireSalesManager)]
+    public async Task<ActionResult<SalesManagerPayoutCompleteResult>> CompletePayoutCheckout(
+        [FromBody] CompleteSalesManagerPayoutRequest request,
+        CancellationToken cancellationToken)
+    {
+        var user = await _users.FindByPrincipalAsync(User, cancellationToken);
+        if (user is null)
+        {
+            return Unauthorized();
+        }
+
+        try
+        {
+            return Ok(await _payouts.CompleteCheckoutAsync(request.PaymentId, user.Id, cancellationToken));
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(new { message = ex.Message });
+        }
+        catch (UnauthorizedAccessException)
+        {
+            return Forbid();
+        }
+        catch (ArgumentException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+    }
+
     [HttpPost("{userId:guid}/invoices")]
     [Authorize(Policy = JobsyPolicies.RequireAdmin)]
     public async Task<ActionResult<SelfBillingInvoiceDto>> CreateInvoiceFor(
@@ -297,3 +397,5 @@ public record UpdateSalesManagerProfileRequest(
     string? Iban = null);
 
 public record SignSalesManagerAgreementRequest(string? AgreementVersion = null);
+
+public record CompleteSalesManagerPayoutRequest(string PaymentId);

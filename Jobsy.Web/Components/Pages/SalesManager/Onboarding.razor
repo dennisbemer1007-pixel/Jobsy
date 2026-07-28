@@ -42,7 +42,7 @@
             <label>Postcode <input @bind="_form.PostalCode" required maxlength="16" /></label>
             <label>Plaats <input @bind="_form.City" required maxlength="128" /></label>
             <label>Land <input @bind="_form.Country" maxlength="64" /></label>
-            <label>IBAN (optioneel) <input @bind="_form.Iban" maxlength="34" /></label>
+            <label>IBAN (voor uitbetaling) <input @bind="_form.Iban" maxlength="34" /></label>
             <button class="login-submit" type="submit" disabled="@_busy">Gegevens opslaan</button>
         </form>
 

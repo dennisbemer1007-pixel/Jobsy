@@ -1,0 +1,83 @@
+@page "/salesmanager/payout-checkout"
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
+@attribute [Authorize(Roles = "SalesManager")]
+@inject JobsyApiClient Api
+@inject NavigationManager Navigation
+
+<PageTitle>Uitbetaling stub · Lobsy</PageTitle>
+
+<div class="panel-page">
+    <h1>Mollie uitbetaling (stub)</h1>
+    <p class="login-lead">
+        Simuleer een geslaagde uitbetaling naar je bankrekening.
+        Daarna wordt de self-billing factuur aangemaakt en als betaald gemarkeerd.
+    </p>
+
+    @if (_loading)
+    {
+        <p class="state-message">Laden…</p>
+    }
+    else
+    {
+        <div class="stat-grid">
+            <div class="stat-card">
+                <span class="stat-card__label">Payment</span>
+                <strong class="stat-card__value" style="font-size:1rem">@_paymentId</strong>
+            </div>
+        </div>
+
+        <div class="inline-actions" style="margin-top:1.5rem">
+            <button class="login-submit" type="button" disabled="@_busy || string.IsNullOrWhiteSpace(_paymentId)" @onclick="CompleteAsync">
+                @(_busy ? "Bezig…" : "Uitbetalen (stub)")
+            </button>
+            <a class="auth-link" href="/salesmanager/invoices">Annuleren</a>
+        </div>
+
+        @if (!string.IsNullOrEmpty(_message))
+        {
+            <p class="state-message">@_message</p>
+        }
+    }
+</div>
+
+@code {
+    private bool _loading = true;
+    private bool _busy;
+    private string _paymentId = "";
+    private string? _message;
+
+    protected override void OnInitialized()
+    {
+        var uri = Navigation.ToAbsoluteUri(Navigation.Uri);
+        var query = Microsoft.AspNetCore.WebUtilities.QueryHelpers.ParseQuery(uri.Query);
+        _paymentId = query.TryGetValue("paymentId", out var pid) ? pid.ToString() : "";
+        _loading = false;
+    }
+
+    private async Task CompleteAsync()
+    {
+        if (string.IsNullOrWhiteSpace(_paymentId))
+        {
+            _message = "Ongeldige checkout-parameters.";
+            return;
+        }
+
+        _busy = true;
+        try
+        {
+            var result = await Api.CompleteMyPayoutCheckoutAsync(_paymentId);
+            var q = result is null
+                ? ""
+                : $"?paid={Uri.EscapeDataString(result.InvoiceNumber)}";
+            Navigation.NavigateTo($"/salesmanager/invoices{q}");
+        }
+        catch (Exception ex)
+        {
+            _message = ex.Message;
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+}

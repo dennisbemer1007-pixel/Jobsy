@@ -119,6 +119,7 @@ public static class DependencyInjection
         services.AddScoped<ICommissionLedgerService, CommissionLedgerService>();
         services.AddScoped<ISupplierOnboardingPaymentService, SupplierOnboardingPaymentService>();
         services.AddScoped<ISelfBillingInvoiceService, SelfBillingInvoiceService>();
+        services.AddScoped<ISalesManagerPayoutService, SalesManagerPayoutService>();
         services.AddScoped<ISalesManagerDashboardService, SalesManagerDashboardService>();
         services.AddScoped<IVacancyContentModerationService, VacancyContentModerationService>();
         services.AddScoped<IMockInterviewService, MockInterviewService>();

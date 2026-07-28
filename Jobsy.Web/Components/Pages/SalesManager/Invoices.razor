@@ -2,16 +2,18 @@
 @rendermode @(new InteractiveServerRenderMode(prerender: false))
 @attribute [Authorize(Roles = "SalesManager")]
 @inject JobsyApiClient Api
+@inject NavigationManager Nav
+@inject IJSRuntime Js
 
-<PageTitle>Self-billing · Lobsy</PageTitle>
+<PageTitle>Facturen · Lobsy</PageTitle>
 
 <div class="panel-page">
     <header class="panel-header">
         <div>
-            <h1>Self-billing facturen</h1>
-            <p class="login-lead">Genereer een factuur over je openstaande tegoed (21% BTW). Uitbetaling volgt na admin-afhandeling.</p>
+            <h1>Facturen</h1>
+            <p class="login-lead">Laat openstaand tegoed uitbetalen via Mollie. Na uitbetaling kun je de self-billing factuur downloaden.</p>
         </div>
-        <button class="login-submit" type="button" disabled="@_busy" @onclick="CreateInvoiceAsync">Factuur genereren</button>
+        <button class="login-submit" type="button" disabled="@_busy" @onclick="OpenPayoutModalAsync">Uitbetalen</button>
     </header>
 
     @if (!string.IsNullOrEmpty(_error))
@@ -37,7 +39,11 @@
                         <strong>@inv.InvoiceNumber</strong>
                         <div class="muted">@inv.Status · @inv.CreatedAt.ToLocalTime().ToString("g")</div>
                     </div>
-                    <span>€ @inv.TotalInclVat.ToString("0.00") incl. BTW</span>
+                    <div class="inline-actions">
+                        <span>€ @inv.TotalInclVat.ToString("0.00") incl. BTW</span>
+                        <button class="provider-btn" type="button" disabled="@_busy"
+                                @onclick="() => DownloadAsync(inv)">Download</button>
+                    </div>
                 </div>
             }
         </div>
@@ -48,14 +54,72 @@
     }
 </div>
 
+@if (_modalOpen)
+{
+    <div class="share-modal-backdrop" @onclick="CloseModal"></div>
+    <div class="share-modal" role="dialog" aria-modal="true" aria-labelledby="payout-title"
+         style="width:min(26rem, calc(100vw - 2rem));max-width:calc(100vw - 2rem)">
+        <div class="share-modal__header">
+            <h2 id="payout-title">Uitbetalen via Mollie</h2>
+            <button type="button" class="share-modal__close" @onclick="CloseModal" aria-label="Sluiten">×</button>
+        </div>
+        @if (_preview is null)
+        {
+            <p class="state-message">Laden…</p>
+        }
+        else if (!_preview.CanPayout)
+        {
+            <p class="share-modal__lead" style="white-space:normal;max-width:none">@_preview.BlockReason</p>
+            <div class="inline-actions" style="margin-top:1rem">
+                <button type="button" class="btn-compact" @onclick="CloseModal">Sluiten</button>
+            </div>
+        }
+        else
+        {
+            <p class="share-modal__lead" style="white-space:normal;max-width:none">
+                Bevestig uitbetaling van je openstaande commissie naar je bankrekening via Mollie.
+                Na afronding verschijnt de self-billing factuur in dit overzicht.
+            </p>
+            <p><strong>Rekening:</strong> @_preview.MaskedIban</p>
+            <p><strong>Bedrag:</strong> € @_preview.AmountInclVat.ToString("0.00") incl. BTW
+                <span class="muted">(€ @_preview.AmountExVat.ToString("0.00") + € @_preview.VatAmount.ToString("0.00") BTW)</span>
+            </p>
+            <div class="inline-actions" style="margin-top:1rem">
+                <button type="button" class="login-submit" disabled="@_busy" @onclick="ConfirmPayoutAsync">
+                    @(_busy ? "Bezig…" : "Bevestigen via Mollie")
+                </button>
+                <button type="button" class="btn-compact" disabled="@_busy" @onclick="CloseModal">Annuleren</button>
+            </div>
+        }
+        @if (!string.IsNullOrEmpty(_modalError))
+        {
+            <p class="state-message error">@_modalError</p>
+        }
+    </div>
+}
+
 @code {
     private List<SelfBillingInvoiceItem> _invoices = [];
+    private SalesManagerPayoutPreview? _preview;
     private bool _loading = true;
     private bool _busy;
+    private bool _modalOpen;
     private string? _error;
     private string? _message;
+    private string? _modalError;
 
-    protected override async Task OnInitializedAsync() => await ReloadAsync();
+    [SupplyParameterFromQuery(Name = "paid")]
+    public string? PaidInvoiceQuery { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (!string.IsNullOrWhiteSpace(PaidInvoiceQuery))
+        {
+            _message = $"Uitbetaling afgerond. Factuur {PaidInvoiceQuery} is beschikbaar om te downloaden.";
+        }
+
+        await ReloadAsync();
+    }
 
     private async Task ReloadAsync()
     {
@@ -74,16 +138,67 @@
         }
     }
 
-    private async Task CreateInvoiceAsync()
+    private async Task OpenPayoutModalAsync()
     {
-        _busy = true;
+        _modalOpen = true;
+        _modalError = null;
+        _preview = null;
         _error = null;
         _message = null;
         try
         {
-            var inv = await Api.CreateMySelfBillingInvoiceAsync();
-            _message = inv is null ? "Factuur aangemaakt." : $"Factuur {inv.InvoiceNumber} uitgegeven.";
-            await ReloadAsync();
+            _preview = await Api.GetMyPayoutPreviewAsync();
+        }
+        catch (Exception ex)
+        {
+            _modalError = ex.Message;
+        }
+    }
+
+    private void CloseModal()
+    {
+        if (_busy)
+        {
+            return;
+        }
+
+        _modalOpen = false;
+        _modalError = null;
+    }
+
+    private async Task ConfirmPayoutAsync()
+    {
+        _busy = true;
+        _modalError = null;
+        try
+        {
+            var checkout = await Api.CreateMyPayoutCheckoutAsync();
+            if (checkout is null || string.IsNullOrWhiteSpace(checkout.CheckoutUrl))
+            {
+                throw new InvalidOperationException("Geen Mollie-checkout ontvangen.");
+            }
+
+            _modalOpen = false;
+            Nav.NavigateTo(checkout.CheckoutUrl, forceLoad: false);
+        }
+        catch (Exception ex)
+        {
+            _modalError = ex.Message;
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private async Task DownloadAsync(SelfBillingInvoiceItem inv)
+    {
+        _busy = true;
+        _error = null;
+        try
+        {
+            await Api.DownloadMySelfBillingInvoiceAsync(inv.Id, inv.InvoiceNumber, Js);
+            _message = $"Factuur {inv.InvoiceNumber} gedownload.";
         }
         catch (Exception ex)
         {

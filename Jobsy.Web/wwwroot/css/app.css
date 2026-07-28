@@ -2135,6 +2135,15 @@ a {
     background: var(--map-land);
 }
 
+/* Let clicks beside a popup hit the map (pane can grow with transforms). */
+.job-map .leaflet-popup-pane {
+    pointer-events: none;
+}
+
+.job-map .leaflet-popup-pane .leaflet-popup {
+    pointer-events: auto;
+}
+
 /* Soft Jobsy-tinted basemap (Carto light + blue grade) */
 .job-map .leaflet-tile-pane {
     filter: grayscale(0.15) sepia(0.18) hue-rotate(185deg) saturate(1.2) brightness(1.02) contrast(0.97);
