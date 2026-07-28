@@ -45,6 +45,7 @@ public class JobsyDbContext : DbContext
     public DbSet<CommissionLedgerEntry> CommissionLedgerEntries => Set<CommissionLedgerEntry>();
     public DbSet<SelfBillingInvoice> SelfBillingInvoices => Set<SelfBillingInvoice>();
     public DbSet<SelfBillingInvoiceLine> SelfBillingInvoiceLines => Set<SelfBillingInvoiceLine>();
+    public DbSet<MasterdataOption> MasterdataOptions => Set<MasterdataOption>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -121,6 +122,7 @@ public class JobsyDbContext : DbContext
             entity.Property(e => e.VideoUrl).HasMaxLength(1024);
             entity.Property(e => e.RequiredDrivingLicense).HasMaxLength(256);
             entity.Property(e => e.RequiredEducation).HasMaxLength(256);
+            entity.Property(e => e.WorkTypeLabels).HasMaxLength(512);
             entity.Property(e => e.Location)
                 .HasConversion(new GeoPointConverter())
                 .HasColumnType("geometry(Point, 4326)");
@@ -580,6 +582,16 @@ public class JobsyDbContext : DbContext
                 .WithMany(i => i.Lines)
                 .HasForeignKey(e => e.SelfBillingInvoiceId)
                 .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<MasterdataOption>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Category).HasMaxLength(64).IsRequired();
+            entity.Property(e => e.Value).HasMaxLength(128).IsRequired();
+            entity.Property(e => e.Label).HasMaxLength(128).IsRequired();
+            entity.HasIndex(e => new { e.Category, e.Value }).IsUnique();
+            entity.HasIndex(e => new { e.Category, e.SortOrder });
         });
     }
 }

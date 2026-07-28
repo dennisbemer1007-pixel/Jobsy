@@ -105,7 +105,7 @@
 
                 <fieldset class="profile-roles">
                     <legend>Interessedomeinen</legend>
-                    @foreach (var role in WorkTypeLabels.All)
+                    @foreach (var role in _branchOptions)
                     {
                         <label>
                             <input type="checkbox"
@@ -118,7 +118,7 @@
 
                 <fieldset class="profile-roles">
                     <legend>Rijbewijzen</legend>
-                    @foreach (var license in DrivingLicenseLabels.All)
+                    @foreach (var license in _licenseOptions)
                     {
                         <label>
                             <input type="checkbox"
@@ -172,27 +172,36 @@
                     {
                         var idx = i;
                         <div class="profile-employer-card">
-                            <label class="profile-employer-card__field">
-                                <span>Werkgever</span>
-                                <input placeholder="Naam werkgever" @bind="_employers[idx].EmployerName" />
+                            <div class="profile-employer-card__top">
+                                <label class="profile-employer-card__field profile-employer-card__field--employer">
+                                    <span>Werkgever</span>
+                                    <input placeholder="Naam werkgever" @bind="_employers[idx].EmployerName" />
+                                </label>
+                                <label class="profile-employer-card__field profile-employer-card__field--role">
+                                    <span>Functie</span>
+                                    <input placeholder="Functie / rol" @bind="_employers[idx].Role" />
+                                </label>
+                                <label class="profile-employer-card__field profile-employer-card__field--years">
+                                    <span>Jaren</span>
+                                    <input type="number" min="0" max="80" placeholder="0" @bind="_employers[idx].Years" />
+                                </label>
+                                <button type="button"
+                                        class="icon-btn icon-btn--danger"
+                                        title="Verwijderen"
+                                        aria-label="Werkgever verwijderen"
+                                        @onclick="() => RemoveEmployer(idx)">
+                                    <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M3 6h18" /><path d="M8 6V4h8v2" /><path d="M19 6l-1 14H6L5 6" /><path d="M10 11v6" /><path d="M14 11v6" />
+                                    </svg>
+                                </button>
+                            </div>
+                            <label class="profile-employer-card__field profile-employer-card__field--description">
+                                <span>Wat heb je daar gedaan?</span>
+                                <textarea rows="3"
+                                          maxlength="1000"
+                                          placeholder="Korte omschrijving van je werkzaamheden"
+                                          @bind="_employers[idx].Description"></textarea>
                             </label>
-                            <label class="profile-employer-card__field">
-                                <span>Functie</span>
-                                <input placeholder="Functie / rol" @bind="_employers[idx].Role" />
-                            </label>
-                            <label class="profile-employer-card__field profile-employer-card__field--years">
-                                <span>Jaren</span>
-                                <input type="number" min="0" max="80" placeholder="0" @bind="_employers[idx].Years" />
-                            </label>
-                            <button type="button"
-                                    class="icon-btn icon-btn--danger"
-                                    title="Verwijderen"
-                                    aria-label="Werkgever verwijderen"
-                                    @onclick="() => RemoveEmployer(idx)">
-                                <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
-                                    <path d="M3 6h18" /><path d="M8 6V4h8v2" /><path d="M19 6l-1 14H6L5 6" /><path d="M10 11v6" /><path d="M14 11v6" />
-                                </svg>
-                            </button>
                         </div>
                     }
                     <button type="button" class="icon-btn icon-btn--add" title="Werkgever toevoegen" aria-label="Werkgever toevoegen" @onclick="AddEmployer">
@@ -204,7 +213,7 @@
 
                 <fieldset class="profile-roles">
                     <legend>Opleidingsniveau</legend>
-                    @foreach (var level in EducationLevelLabels.ProfileAll)
+                    @foreach (var level in _educationOptions)
                     {
                         <label>
                             <input type="checkbox"
@@ -252,6 +261,9 @@
     private readonly HashSet<string> _selectedEducations = new(StringComparer.OrdinalIgnoreCase);
     private readonly HashSet<string> _availability = new(StringComparer.OrdinalIgnoreCase);
     private readonly List<CandidateEmployerHistory> _employers = [];
+    private List<string> _branchOptions = WorkTypeLabels.All.ToList();
+    private List<string> _licenseOptions = DrivingLicenseLabels.All.ToList();
+    private List<string> _educationOptions = EducationLevelLabels.ProfileAll.ToList();
     private string? _aboutMe;
     private string? _message;
     private string? _returnUrl;
@@ -270,6 +282,7 @@
         _returnUrl = SanitizeReturnUrl(ReturnUrl);
         try
         {
+            await LoadMasterdataAsync();
             var profile = await Api.GetMyProfileAsync();
             if (profile is null)
             {
@@ -288,7 +301,9 @@
             _selectedRoles.Clear();
             foreach (var role in prefs.Roles ?? [])
             {
-                var label = WorkTypeLabels.Expand(WorkTypeLabels.Parse(role)).FirstOrDefault();
+                var label = WorkTypeLabels.Expand(WorkTypeLabels.Parse(role)).FirstOrDefault()
+                    ?? _branchOptions.FirstOrDefault(b => string.Equals(b, role, StringComparison.OrdinalIgnoreCase))
+                    ?? role;
                 if (!string.IsNullOrWhiteSpace(label))
                 {
                     _selectedRoles.Add(label);
@@ -365,6 +380,24 @@
         finally
         {
             _loading = false;
+        }
+    }
+
+    private async Task LoadMasterdataAsync()
+    {
+        try
+        {
+            var options = await Api.GetMasterdataAsync(audience: "candidate");
+            var branches = options.Where(o => o.Category == MasterdataCategories.Branch).Select(o => o.Label).ToList();
+            var licenses = options.Where(o => o.Category == MasterdataCategories.DrivingLicense).Select(o => o.Label).ToList();
+            var education = options.Where(o => o.Category == MasterdataCategories.EducationLevel).Select(o => o.Label).ToList();
+            if (branches.Count > 0) _branchOptions = branches;
+            if (licenses.Count > 0) _licenseOptions = licenses;
+            if (education.Count > 0) _educationOptions = education;
+        }
+        catch
+        {
+            // keep built-in fallbacks
         }
     }
 
@@ -575,7 +608,11 @@
                     Availability = BuildAvailability(),
                     Employers = _employers.Where(e => !string.IsNullOrWhiteSpace(e.EmployerName)).ToList(),
                     Educations = _selectedEducations
-                        .OrderBy(x => Array.IndexOf(EducationLevelLabels.ProfileAll, x))
+                        .OrderBy(x =>
+                        {
+                            var idx = _educationOptions.FindIndex(o => string.Equals(o, x, StringComparison.OrdinalIgnoreCase));
+                            return idx < 0 ? int.MaxValue : idx;
+                        })
                         .ToList(),
                     HomeAddress = homeAddressToSave
                 },

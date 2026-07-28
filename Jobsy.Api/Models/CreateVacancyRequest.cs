@@ -10,7 +10,7 @@ public record CreateVacancyRequest(
     DateOnly StartDate,
     DateOnly EndDate,
     TransportMode RequiredTransport,
-    WorkType WorkTypes,
+    string[] WorkTypes,
     string? ImageUrl = null,
     string? VideoUrl = null,
     Guid? SalaryTableId = null,

@@ -10,6 +10,7 @@ public static class AdminNavItems
     public static readonly NavItem[] All =
     [
         ..RoleNavCatalog.Admin,
+        new("Nav.Masterdata", "/admin/masterdata", NavIcons.Masterdata),
         new("Nav.Integrations", "/admin/integrations", NavIcons.Api),
         new("Nav.Notifications", "/admin/notifications", NavIcons.Notifications),
         new("Nav.SalesManagers", "/admin/sales-managers", NavIcons.Users),

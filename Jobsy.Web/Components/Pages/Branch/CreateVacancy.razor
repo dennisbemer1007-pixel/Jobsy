@@ -140,7 +140,7 @@
             </label>
             <fieldset class="profile-roles">
                 <legend>Branche (max @WorkTypeLabels.MaxPerVacancy)</legend>
-                @foreach (var label in WorkTypeLabels.All)
+                @foreach (var label in _branchOptions)
                 {
                     var selected = _selectedWorkTypes.Contains(label);
                     var disabled = !selected && _selectedWorkTypes.Count >= WorkTypeLabels.MaxPerVacancy;
@@ -155,7 +155,7 @@
             </fieldset>
             <fieldset class="profile-roles">
                 <legend>Vereist rijbewijs (optioneel)</legend>
-                @foreach (var license in DrivingLicenseLabels.All)
+                @foreach (var license in _licenseOptions)
                 {
                     <label>
                         <input type="checkbox"
@@ -167,7 +167,7 @@
             </fieldset>
             <fieldset class="profile-roles">
                 <legend>Vereist opleidingsniveau (optioneel)</legend>
-                @foreach (var level in EducationLevelLabels.VacancyAll)
+                @foreach (var level in _educationOptions)
                 {
                     <label>
                         <input type="checkbox"
@@ -184,7 +184,7 @@
                         <input type="radio" name="min-employers" checked="@(_minimumEmployers is null)" @onchange="() => SetMinimumEmployers(null)" />
                         Geen
                     </label>
-                    @foreach (var n in new[] { 1, 2, 3 })
+                    @foreach (var n in _minEmployerOptions)
                     {
                         <label>
                             <input type="radio" name="min-employers" checked="@(_minimumEmployers == n)" @onchange="() => SetMinimumEmployers(n)" />
@@ -293,6 +293,10 @@
     private HashSet<string> _selectedWorkTypes = new(StringComparer.OrdinalIgnoreCase);
     private HashSet<string> _selectedLicenses = new(StringComparer.OrdinalIgnoreCase);
     private HashSet<string> _selectedEducationLevels = new(StringComparer.OrdinalIgnoreCase);
+    private List<string> _branchOptions = WorkTypeLabels.All.ToList();
+    private List<string> _licenseOptions = DrivingLicenseLabels.All.ToList();
+    private List<string> _educationOptions = EducationLevelLabels.VacancyAll.ToList();
+    private List<int> _minEmployerOptions = [1, 2, 3];
     private bool _saving;
     private bool _isDuplicate;
     private string? _message;
@@ -339,12 +343,42 @@
             _companyId = _companies[0].Id;
         }
 
+        await LoadMasterdataAsync();
+
         if (From is Guid sourceId)
         {
             await PrefillFromAsync(sourceId);
         }
 
         await LoadSalaryTablesAsync();
+    }
+
+    private async Task LoadMasterdataAsync()
+    {
+        try
+        {
+            var options = await Api.GetMasterdataAsync(audience: "vacancy");
+            var branches = options.Where(o => o.Category == MasterdataCategories.Branch).Select(o => o.Label).ToList();
+            var licenses = options.Where(o => o.Category == MasterdataCategories.DrivingLicense).Select(o => o.Label).ToList();
+            var education = options.Where(o => o.Category == MasterdataCategories.EducationLevel).Select(o => o.Label).ToList();
+            var minEmployers = options
+                .Where(o => o.Category == MasterdataCategories.MinEmployers)
+                .Select(o => int.TryParse(o.Value, out var n) ? n : (int?)null)
+                .Where(n => n is >= 1)
+                .Select(n => n!.Value)
+                .Distinct()
+                .OrderBy(n => n)
+                .ToList();
+
+            if (branches.Count > 0) _branchOptions = branches;
+            if (licenses.Count > 0) _licenseOptions = licenses;
+            if (education.Count > 0) _educationOptions = education;
+            if (minEmployers.Count > 0) _minEmployerOptions = minEmployers;
+        }
+        catch
+        {
+            // keep built-in fallbacks
+        }
     }
 
     private async Task PrefillFromAsync(Guid sourceId)
@@ -378,8 +412,8 @@
             _selectedEducationLevels = EducationLevelLabels.Split(source.RequiredEducation)
                 .Where(x => EducationLevelLabels.VacancyAll.Contains(x, StringComparer.OrdinalIgnoreCase))
                 .ToHashSet(StringComparer.OrdinalIgnoreCase);
-            _minimumEmployers = source.MinimumEmployers is >= 1 and <= 3
-                ? source.MinimumEmployers
+            _minimumEmployers = source.MinimumEmployers is int min && _minEmployerOptions.Contains(min)
+                ? min
                 : null;
         }
         catch (Exception ex)
@@ -587,8 +621,12 @@
             .FirstOrDefault()
             ?? table.Rates.OrderByDescending(r => r.AgeYears).First();
 
-        var workTypes = WorkTypeLabels.Combine(_selectedWorkTypes);
-        if (!WorkTypeLabels.IsValidSelection(workTypes))
+        var branchLabels = _selectedWorkTypes
+            .Where(x => !string.IsNullOrWhiteSpace(x))
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .Take(WorkTypeLabels.MaxPerVacancy)
+            .ToArray();
+        if (branchLabels.Length is < 1 or > WorkTypeLabels.MaxPerVacancy)
         {
             _message = $"Kies 1 of {WorkTypeLabels.MaxPerVacancy} branches.";
             return;
@@ -615,13 +653,13 @@
                 today,
                 today.AddMonths(3),
                 mode,
-                workTypes,
+                branchLabels,
                 string.IsNullOrWhiteSpace(_imageUrl) ? null : _imageUrl.Trim(),
                 string.IsNullOrWhiteSpace(_videoUrl) ? null : _videoUrl.Trim(),
                 salaryTableId,
                 DrivingLicenseLabels.Combine(_selectedLicenses),
                 EducationLevelLabels.Combine(_selectedEducationLevels, forVacancy: true),
-                _minimumEmployers is >= 1 and <= 3 ? _minimumEmployers : null));
+                _minimumEmployers is int min && _minEmployerOptions.Contains(min) ? min : null));
 
             Navigation.NavigateTo("/employer/vacancies");
         }

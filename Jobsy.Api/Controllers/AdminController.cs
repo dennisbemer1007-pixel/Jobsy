@@ -254,7 +254,7 @@ public class AdminController : ControllerBase
                 v.SalaryTableId,
                 null,
                 null,
-                WorkTypeLabels.Expand(v.WorkTypes)),
+                WorkTypeLabels.ResolveLabels(v.WorkTypes, v.WorkTypeLabels)),
             result.PendingApproval,
             result.ErrorMessage,
             result.PushBomRecipientCount);

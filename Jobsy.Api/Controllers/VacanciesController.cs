@@ -97,7 +97,7 @@ public class VacanciesController : ControllerBase
         var vacancies = await LoadActiveVacanciesAsync(cancellationToken);
 
         var workTypeFiltered = vacancies
-            .Where(v => WorkTypeLabels.MatchesFilter(v.WorkTypes, workType))
+            .Where(v => WorkTypeLabels.MatchesFilter(v.WorkTypes, v.WorkTypeLabels, workType))
             .ToList();
 
         List<VacancyListItemDto> results;
@@ -311,9 +311,15 @@ public class VacanciesController : ControllerBase
             return BadRequest(new { message = "Uurloon ligt onder het wettelijk minimumloon (21+)." });
         }
 
-        if (!WorkTypeLabels.IsValidSelection(request.WorkTypes))
+        var branchLabels = NormalizeBranchLabels(request.WorkTypes);
+        if (branchLabels.Length is < 1 or > WorkTypeLabels.MaxPerVacancy)
         {
             return BadRequest(new { message = $"Kies 1 of {WorkTypeLabels.MaxPerVacancy} branches." });
+        }
+
+        if (!await AreBranchLabelsAllowedAsync(branchLabels, cancellationToken))
+        {
+            return BadRequest(new { message = "Een of meer branches zijn ongeldig of niet actief." });
         }
 
         var imageUrl = HtmlSanitize.NormalizeMediaUrl(request.ImageUrl);
@@ -351,7 +357,8 @@ public class VacanciesController : ControllerBase
             CompanyId = request.CompanyId,
             Location = company.Location,
             RequiredTransport = request.RequiredTransport,
-            WorkTypes = request.WorkTypes,
+            WorkTypes = WorkTypeLabels.Combine(branchLabels),
+            WorkTypeLabels = WorkTypeLabels.CombineStored(branchLabels),
             ImageUrl = imageUrl,
             VideoUrl = videoUrl,
             SalaryTableId = tableId,
@@ -537,9 +544,15 @@ public class VacanciesController : ControllerBase
             });
         }
 
-        if (!WorkTypeLabels.IsValidSelection(request.WorkTypes))
+        var branchLabels = NormalizeBranchLabels(request.WorkTypes);
+        if (branchLabels.Length is < 1 or > WorkTypeLabels.MaxPerVacancy)
         {
             return BadRequest(new { message = $"Kies 1 of {WorkTypeLabels.MaxPerVacancy} branches." });
+        }
+
+        if (!await AreBranchLabelsAllowedAsync(branchLabels, cancellationToken))
+        {
+            return BadRequest(new { message = "Een of meer branches zijn ongeldig of niet actief." });
         }
 
         var created = new List<Core.Entities.Vacancy>();
@@ -601,7 +614,8 @@ public class VacanciesController : ControllerBase
                 CompanyId = companyId,
                 Location = company.Location,
                 RequiredTransport = request.RequiredTransport,
-                WorkTypes = request.WorkTypes,
+                WorkTypes = WorkTypeLabels.Combine(branchLabels),
+                WorkTypeLabels = WorkTypeLabels.CombineStored(branchLabels),
                 SalaryTableId = salaryTable.Id
             };
             _db.Vacancies.Add(vacancy);
@@ -849,7 +863,7 @@ public class VacanciesController : ControllerBase
             v.SalaryTableId,
             wageByAge,
             resolvedForAge,
-            WorkTypeLabels.Expand(v.WorkTypes),
+            WorkTypeLabels.ResolveLabels(v.WorkTypes, v.WorkTypeLabels),
             impressionCount,
             clickCount,
             applicationCount,
@@ -857,5 +871,35 @@ public class VacanciesController : ControllerBase
             v.RequiredEducation,
             v.MinimumEmployers,
             v.FulfilledByApplicationId);
+    }
+
+    private static string[] NormalizeBranchLabels(IEnumerable<string>? labels) =>
+        (labels ?? [])
+            .Select(x => x?.Trim())
+            .Where(x => !string.IsNullOrWhiteSpace(x))
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .Take(WorkTypeLabels.MaxPerVacancy)
+            .Select(x => x!)
+            .ToArray();
+
+    private async Task<bool> AreBranchLabelsAllowedAsync(string[] labels, CancellationToken cancellationToken)
+    {
+        if (labels.Length == 0)
+        {
+            return false;
+        }
+
+        var allowed = await _db.MasterdataOptions.AsNoTracking()
+            .Where(o => o.Category == MasterdataCategories.Branch && o.IsActive && o.ShowOnVacancy)
+            .Select(o => o.Value)
+            .ToListAsync(cancellationToken);
+
+        if (allowed.Count == 0)
+        {
+            // Seed not applied yet — fall back to built-in labels.
+            allowed = WorkTypeLabels.All.ToList();
+        }
+
+        return labels.All(l => allowed.Contains(l, StringComparer.OrdinalIgnoreCase));
     }
 }

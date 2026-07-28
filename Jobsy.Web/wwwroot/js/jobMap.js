@@ -91,16 +91,19 @@ window.jobMap = (function () {
 
     function clusterPopupOptions(withWagePanel) {
         const vw = window.innerWidth || 360;
+        const vh = window.innerHeight || 640;
         const narrow = isNarrowViewport();
-        // Wider popup: paginated cluster cards are intentionally larger for readability.
         const maxWidth = narrow
-            ? Math.max(260, Math.min(380, vw - 24))
+            ? Math.max(240, Math.min(withWagePanel ? 320 : 280, vw - 28))
             : (withWagePanel ? 420 : 360);
         return {
             className: "job-cluster-popup" + (withWagePanel ? " job-cluster-popup--with-wages" : ""),
             maxWidth: maxWidth,
-            minWidth: narrow ? Math.min(280, maxWidth) : (withWagePanel ? 360 : 300),
-            autoPanPadding: narrow ? [12, 56] : [36, 48],
+            minWidth: narrow ? Math.min(220, maxWidth) : (withWagePanel ? 360 : 300),
+            // Extra vertical padding so pager + close stay inside the map on phones.
+            autoPanPadding: narrow
+                ? [14, Math.max(72, Math.round(vh * 0.08))]
+                : [36, 48],
             keepInView: true
         };
     }
@@ -332,8 +335,7 @@ window.jobMap = (function () {
             map.closePopup(activeClusterPopup);
         }
 
-        const opts = Object.assign({}, jobPopupOptions(hasWageBands(first)), {
-            className: (jobPopupOptions(hasWageBands(first)).className || "") + " job-cluster-popup",
+        const opts = Object.assign({}, clusterPopupOptions(hasWageBands(first)), {
             closeOnClick: false,
             autoClose: false,
             closeButton: true

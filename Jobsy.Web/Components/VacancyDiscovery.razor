@@ -209,7 +209,7 @@
                     @Culture["Discovery.WorkType"]
                     <select value="@_selectedWorkType" @onchange="OnWorkTypeChanged" required>
                         <option value="">@Culture["Discovery.WorkTypeAny"]</option>
-                        @foreach (var label in WorkTypeLabels.All)
+                        @foreach (var label in _branchOptions)
                         {
                             <option value="@label">@label</option>
                         }
@@ -412,7 +412,7 @@
                     <label>
                         <select value="@_selectedWorkType" @onchange="OnWorkTypeChanged">
                             <option value="">@Culture["Discovery.WorkTypeAny"]</option>
-                            @foreach (var label in WorkTypeLabels.All)
+                            @foreach (var label in _branchOptions)
                             {
                                 <option value="@label">@label</option>
                             }
@@ -479,6 +479,7 @@
     private int _radiusKm = 15;
     private string _selectedTransport = "Fiets";
     private string _selectedWorkType = "";
+    private List<string> _branchOptions = WorkTypeLabels.All.ToList();
     private string _sortMode = "title";
     private bool _sortChosenByUser;
     private int? _ageYears;
@@ -574,6 +575,7 @@
         Culture.Changed += OnCultureChanged;
         try
         {
+            await LoadBranchOptionsAsync();
             var state = await AuthState.GetAuthenticationStateAsync();
             _isCandidate = state.User.IsInRole("Candidate");
             if (_isCandidate)
@@ -613,6 +615,23 @@
         }
 
         await LoadVacanciesAsync();
+    }
+
+    private async Task LoadBranchOptionsAsync()
+    {
+        try
+        {
+            var options = await Api.GetMasterdataAsync(MasterdataCategories.Branch);
+            var branches = options.Select(o => o.Label).Where(l => !string.IsNullOrWhiteSpace(l)).ToList();
+            if (branches.Count > 0)
+            {
+                _branchOptions = branches;
+            }
+        }
+        catch
+        {
+            // keep built-in fallback
+        }
     }
 
     private async void OnCultureChanged()

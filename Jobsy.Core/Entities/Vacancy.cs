@@ -20,6 +20,9 @@ public class Vacancy
     /// <summary>Up to two branches (sector types) for discovery filtering.</summary>
     public WorkType WorkTypes { get; set; }
 
+    /// <summary>Selected branch labels (comma-separated). Preferred over WorkTypes flags when set.</summary>
+    public string? WorkTypeLabels { get; set; }
+
     public string? ImageUrl { get; set; }
     public string? VideoUrl { get; set; }
     public bool IsHighlighted { get; set; }

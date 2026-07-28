@@ -78,6 +78,7 @@ public sealed class CandidateEmployerHistory
     public string EmployerName { get; set; } = string.Empty;
     public string? Role { get; set; }
     public int? Years { get; set; }
+    public string? Description { get; set; }
 }
 
 public sealed class VacancyProductActionResult

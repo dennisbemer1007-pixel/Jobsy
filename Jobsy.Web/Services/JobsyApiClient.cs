@@ -16,6 +16,63 @@ public sealed class JobsyApiClient : IAsyncDisposable
         _http = http;
     }
 
+    public async Task<IReadOnlyList<MasterdataOptionItem>> GetMasterdataAsync(
+        string? category = null,
+        string? audience = null,
+        CancellationToken ct = default)
+    {
+        var qs = new List<string>();
+        if (!string.IsNullOrWhiteSpace(category))
+        {
+            qs.Add($"category={Uri.EscapeDataString(category)}");
+        }
+
+        if (!string.IsNullOrWhiteSpace(audience))
+        {
+            qs.Add($"audience={Uri.EscapeDataString(audience)}");
+        }
+
+        var url = qs.Count == 0 ? "api/masterdata" : "api/masterdata?" + string.Join("&", qs);
+        return await _http.GetFromJsonAsync<List<MasterdataOptionItem>>(url, ct) ?? [];
+    }
+
+    public async Task<IReadOnlyList<MasterdataOptionItem>> GetMasterdataAdminAsync(CancellationToken ct = default)
+        => await _http.GetFromJsonAsync<List<MasterdataOptionItem>>("api/masterdata/admin", ct) ?? [];
+
+    public async Task<MasterdataOptionItem?> CreateMasterdataAsync(MasterdataOptionForm form, CancellationToken ct = default)
+    {
+        var response = await _http.PostAsJsonAsync("api/masterdata", form, ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException(TryExtractMessage(body) ?? body);
+        }
+
+        return await response.Content.ReadFromJsonAsync<MasterdataOptionItem>(cancellationToken: ct);
+    }
+
+    public async Task<MasterdataOptionItem?> UpdateMasterdataAsync(Guid id, MasterdataOptionForm form, CancellationToken ct = default)
+    {
+        var response = await _http.PutAsJsonAsync($"api/masterdata/{id}", form, ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException(TryExtractMessage(body) ?? body);
+        }
+
+        return await response.Content.ReadFromJsonAsync<MasterdataOptionItem>(cancellationToken: ct);
+    }
+
+    public async Task DeleteMasterdataAsync(Guid id, CancellationToken ct = default)
+    {
+        var response = await _http.DeleteAsync($"api/masterdata/{id}", ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException(TryExtractMessage(body) ?? body);
+        }
+    }
+
     public async Task<IReadOnlyList<VacancyListItem>> GetActiveVacanciesAsync(CancellationToken ct = default)
         => await _http.GetFromJsonAsync<List<VacancyListItem>>("api/vacancies", ct) ?? [];
 
@@ -1260,7 +1317,7 @@ public record CreateVacancyForm(
     DateOnly StartDate,
     DateOnly EndDate,
     TransportMode RequiredTransport,
-    WorkType WorkTypes,
+    string[] WorkTypes,
     string? ImageUrl = null,
     string? VideoUrl = null,
     Guid? SalaryTableId = null,
@@ -1275,8 +1332,31 @@ public record BatchVacancyForm(
     DateOnly StartDate,
     DateOnly EndDate,
     TransportMode RequiredTransport,
-    WorkType WorkTypes,
+    string[] WorkTypes,
     Guid[] CompanyIds);
+
+public sealed class MasterdataOptionItem
+{
+    public Guid Id { get; set; }
+    public string Category { get; set; } = string.Empty;
+    public string Value { get; set; } = string.Empty;
+    public string Label { get; set; } = string.Empty;
+    public int SortOrder { get; set; }
+    public bool IsActive { get; set; } = true;
+    public bool ShowOnCandidate { get; set; } = true;
+    public bool ShowOnVacancy { get; set; } = true;
+}
+
+public sealed class MasterdataOptionForm
+{
+    public string Category { get; set; } = string.Empty;
+    public string Value { get; set; } = string.Empty;
+    public string Label { get; set; } = string.Empty;
+    public int? SortOrder { get; set; }
+    public bool? IsActive { get; set; }
+    public bool? ShowOnCandidate { get; set; }
+    public bool? ShowOnVacancy { get; set; }
+}
 
 public sealed class IntegrationHealthItem
 {

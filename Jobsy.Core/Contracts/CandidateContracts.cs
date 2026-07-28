@@ -17,7 +17,8 @@ public record CandidatePreferencesDto(
 public record CandidateEmployerHistoryDto(
     string EmployerName,
     string? Role = null,
-    int? Years = null);
+    int? Years = null,
+    string? Description = null);
 
 public record CandidateVacancyEngagementDto(
     Guid Id,

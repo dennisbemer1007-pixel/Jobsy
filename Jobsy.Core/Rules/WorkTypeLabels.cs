@@ -83,8 +83,17 @@ public static class WorkTypeLabels
         => types != WorkType.None && CountFlags(types) <= MaxPerVacancy;
 
     public static bool MatchesFilter(WorkType vacancyTypes, string? selectedLabel)
+        => MatchesFilter(vacancyTypes, storedLabels: null, selectedLabel);
+
+    public static bool MatchesFilter(WorkType vacancyTypes, string? storedLabels, string? selectedLabel)
     {
         if (string.IsNullOrWhiteSpace(selectedLabel))
+        {
+            return true;
+        }
+
+        var labels = ResolveLabels(vacancyTypes, storedLabels);
+        if (labels.Any(l => string.Equals(l, selectedLabel, StringComparison.OrdinalIgnoreCase)))
         {
             return true;
         }
@@ -92,9 +101,50 @@ public static class WorkTypeLabels
         var required = Parse(selectedLabel);
         if (required == WorkType.None)
         {
-            return true;
+            return false;
         }
 
         return vacancyTypes.HasFlag(required);
+    }
+
+    public static string[] ResolveLabels(WorkType vacancyTypes, string? storedLabels)
+    {
+        var fromStore = SplitStored(storedLabels);
+        if (fromStore.Length > 0)
+        {
+            return fromStore;
+        }
+
+        return Expand(vacancyTypes);
+    }
+
+    public static string? CombineStored(IEnumerable<string>? labels)
+    {
+        if (labels is null)
+        {
+            return null;
+        }
+
+        var selected = labels
+            .Select(x => x?.Trim())
+            .Where(x => !string.IsNullOrWhiteSpace(x))
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .Take(MaxPerVacancy)
+            .ToArray();
+
+        return selected.Length == 0 ? null : string.Join(", ", selected!);
+    }
+
+    public static string[] SplitStored(string? stored)
+    {
+        if (string.IsNullOrWhiteSpace(stored))
+        {
+            return [];
+        }
+
+        return stored
+            .Split([',', ';', '|'], StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToArray();
     }
 }

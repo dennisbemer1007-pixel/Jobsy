@@ -149,5 +149,5 @@ public record BatchVacancyRequest(
     DateOnly StartDate,
     DateOnly EndDate,
     TransportMode RequiredTransport,
-    WorkType WorkTypes,
+    string[] WorkTypes,
     Guid[] CompanyIds);

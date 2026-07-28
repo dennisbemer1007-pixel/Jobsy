@@ -43,7 +43,7 @@
             Type baan
             <select @bind="_workTypeFilter" @bind:after="ApplyFilters">
                 <option value="">Alle branches</option>
-                @foreach (var label in WorkTypeLabels.All)
+                @foreach (var label in _branchOptions)
                 {
                     <option value="@label">@label</option>
                 }
@@ -172,6 +172,7 @@
     private bool _pushBomOpen;
     private VacancyListItem? _pushBomVacancy;
     private string _workTypeFilter = "";
+    private List<string> _branchOptions = WorkTypeLabels.All.ToList();
     private string _ageFilter = "";
     private decimal? _minWage;
     private decimal? _maxWage;
@@ -196,6 +197,20 @@
                 || user.IsInRole("EnterpriseManager")
                 || user.IsInRole("Intermediary")
                 || user.IsInRole("Admin");
+            try
+            {
+                var options = await Api.GetMasterdataAsync(MasterdataCategories.Branch);
+                var branches = options.Select(o => o.Label).Where(l => !string.IsNullOrWhiteSpace(l)).ToList();
+                if (branches.Count > 0)
+                {
+                    _branchOptions = branches;
+                }
+            }
+            catch
+            {
+                // keep fallback
+            }
+
             _vacancies = (await Api.GetManagedVacanciesAsync()).ToList();
 
             if (_salaryTableFilter is Guid tid)

@@ -1,10 +1,233 @@
 @page "/admin/masterdata"
 @rendermode @(new InteractiveServerRenderMode(prerender: false))
 @attribute [Authorize(Roles = "Admin")]
+@using Jobsy.Core.Rules
 @using Jobsy.Web.Components.Admin
+@inject JobsyApiClient Api
 
 <PageTitle>Masterdata · Lobsy</PageTitle>
 
-<AdminPageShell Title="Masterdata" Lead="Referentiegegevens zoals branches, regio’s en vervoerstypen.">
-    <p class="muted">Nog niet beschikbaar — masterdata-beheer komt later.</p>
+<AdminPageShell Title="Masterdata" Lead="Beheer de keuzelijsten voor kandidaatprofiel en vacatures.">
+    @if (_loading)
+    {
+        <p class="state-message">Laden…</p>
+    }
+    else
+    {
+        <div class="masterdata-tabs" role="tablist">
+            @foreach (var category in MasterdataCategories.All)
+            {
+                <button type="button"
+                        class="provider-btn @(_activeCategory == category ? "is-active" : null)"
+                        role="tab"
+                        aria-selected="@(_activeCategory == category)"
+                        @onclick="() => SelectCategory(category)">
+                    @MasterdataCategories.DisplayName(category)
+                </button>
+            }
+        </div>
+
+        <section class="masterdata-panel">
+            <header class="masterdata-panel__header">
+                <h2>@MasterdataCategories.DisplayName(_activeCategory)</h2>
+                <p class="muted">@CategoryHint</p>
+            </header>
+
+            <div class="table-list">
+                @foreach (var item in ActiveItems)
+                {
+                    <div class="table-row masterdata-row">
+                        <div class="masterdata-row__fields">
+                            <label>
+                                Waarde
+                                <input @bind="item.Value" @bind:event="oninput" disabled="@(_busyId == item.Id)" />
+                            </label>
+                            <label>
+                                Label
+                                <input @bind="item.Label" @bind:event="oninput" disabled="@(_busyId == item.Id)" />
+                            </label>
+                            <label class="masterdata-row__sort">
+                                Volgorde
+                                <input type="number" min="0" @bind="item.SortOrder" @bind:event="oninput" disabled="@(_busyId == item.Id)" />
+                            </label>
+                        </div>
+                        <div class="masterdata-row__flags">
+                            <label>
+                                <input type="checkbox" @bind="item.IsActive" disabled="@(_busyId == item.Id)" />
+                                Actief
+                            </label>
+                            @if (_activeCategory != MasterdataCategories.MinEmployers)
+                            {
+                                <label>
+                                    <input type="checkbox" @bind="item.ShowOnCandidate" disabled="@(_busyId == item.Id)" />
+                                    Kandidaat
+                                </label>
+                            }
+                            <label>
+                                <input type="checkbox" @bind="item.ShowOnVacancy" disabled="@(_busyId == item.Id)" />
+                                Vacature
+                            </label>
+                        </div>
+                        <div class="inline-actions">
+                            <button class="provider-btn" type="button" disabled="@(_busyId == item.Id)" @onclick="() => SaveAsync(item)">Opslaan</button>
+                            <button class="provider-btn provider-btn--danger" type="button" disabled="@(_busyId == item.Id)" @onclick="() => DeleteAsync(item)">Verwijderen</button>
+                        </div>
+                    </div>
+                }
+            </div>
+
+            <div class="masterdata-add">
+                <h3>Toevoegen</h3>
+                <div class="masterdata-row__fields">
+                    <label>
+                        Waarde
+                        <input @bind="_newValue" placeholder="@NewValuePlaceholder" />
+                    </label>
+                    <label>
+                        Label
+                        <input @bind="_newLabel" placeholder="Weergavenaam" />
+                    </label>
+                </div>
+                <button class="login-submit" type="button" disabled="@_creating" @onclick="CreateAsync">Toevoegen</button>
+            </div>
+        </section>
+
+        @if (!string.IsNullOrEmpty(_message))
+        {
+            <p class="state-message">@_message</p>
+        }
+    }
 </AdminPageShell>
+
+@code {
+    private List<MasterdataOptionItem> _items = [];
+    private string _activeCategory = MasterdataCategories.Branch;
+    private bool _loading = true;
+    private Guid? _busyId;
+    private bool _creating;
+    private string? _message;
+    private string _newValue = "";
+    private string _newLabel = "";
+
+    private IEnumerable<MasterdataOptionItem> ActiveItems =>
+        _items.Where(i => i.Category == _activeCategory)
+            .OrderBy(i => i.SortOrder)
+            .ThenBy(i => i.Label);
+
+    private string CategoryHint => _activeCategory switch
+    {
+        MasterdataCategories.Branch => "Zichtbaar bij interesedomeinen (kandidaat) en branche (vacature).",
+        MasterdataCategories.DrivingLicense => "Zichtbaar bij rijbewijzen op profiel en vacature-eisen.",
+        MasterdataCategories.EducationLevel => "Zichtbaar bij opleidingsniveau. “Geen” alleen voor kandidaten.",
+        MasterdataCategories.MinEmployers => "Keuzes voor minimaal aantal werkgevers op vacatures.",
+        _ => ""
+    };
+
+    private string NewValuePlaceholder => _activeCategory == MasterdataCategories.MinEmployers
+        ? "Bijv. 4"
+        : "Bijv. nieuwe waarde";
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            await ReloadAsync();
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private void SelectCategory(string category)
+    {
+        _activeCategory = category;
+        _message = null;
+        _newValue = "";
+        _newLabel = "";
+    }
+
+    private async Task ReloadAsync()
+    {
+        _items = (await Api.GetMasterdataAdminAsync()).ToList();
+    }
+
+    private async Task SaveAsync(MasterdataOptionItem item)
+    {
+        _busyId = item.Id;
+        _message = null;
+        try
+        {
+            await Api.UpdateMasterdataAsync(item.Id, new MasterdataOptionForm
+            {
+                Category = item.Category,
+                Value = item.Value,
+                Label = item.Label,
+                SortOrder = item.SortOrder,
+                IsActive = item.IsActive,
+                ShowOnCandidate = item.ShowOnCandidate,
+                ShowOnVacancy = item.ShowOnVacancy
+            });
+            await ReloadAsync();
+            _message = "Opgeslagen.";
+        }
+        catch (Exception ex)
+        {
+            _message = ex.Message;
+        }
+        finally
+        {
+            _busyId = null;
+        }
+    }
+
+    private async Task DeleteAsync(MasterdataOptionItem item)
+    {
+        _busyId = item.Id;
+        _message = null;
+        try
+        {
+            await Api.DeleteMasterdataAsync(item.Id);
+            await ReloadAsync();
+            _message = "Verwijderd.";
+        }
+        catch (Exception ex)
+        {
+            _message = ex.Message;
+        }
+        finally
+        {
+            _busyId = null;
+        }
+    }
+
+    private async Task CreateAsync()
+    {
+        _creating = true;
+        _message = null;
+        try
+        {
+            var value = _newValue.Trim();
+            var label = string.IsNullOrWhiteSpace(_newLabel) ? value : _newLabel.Trim();
+            await Api.CreateMasterdataAsync(new MasterdataOptionForm
+            {
+                Category = _activeCategory,
+                Value = value,
+                Label = label,
+                IsActive = true
+            });
+            _newValue = "";
+            _newLabel = "";
+            await ReloadAsync();
+            _message = "Toegevoegd.";
+        }
+        catch (Exception ex)
+        {
+            _message = ex.Message;
+        }
+        finally
+        {
+            _creating = false;
+        }
+    }
+}

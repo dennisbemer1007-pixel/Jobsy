@@ -477,7 +477,26 @@ public class MeController : ControllerBase
                         years = yearsVal;
                     }
 
-                    employers.Add(new CandidateEmployerHistoryDto(name.Trim(), string.IsNullOrWhiteSpace(role) ? null : role.Trim(), years));
+                    string? description = null;
+                    if (item.TryGetProperty("description", out var descriptionEl)
+                        && descriptionEl.ValueKind == JsonValueKind.String)
+                    {
+                        description = descriptionEl.GetString()?.Trim();
+                        if (string.IsNullOrWhiteSpace(description))
+                        {
+                            description = null;
+                        }
+                        else if (description.Length > 1000)
+                        {
+                            description = description[..1000];
+                        }
+                    }
+
+                    employers.Add(new CandidateEmployerHistoryDto(
+                        name.Trim(),
+                        string.IsNullOrWhiteSpace(role) ? null : role.Trim(),
+                        years,
+                        description));
                 }
             }
 
@@ -577,11 +596,21 @@ public class MeController : ControllerBase
             availability,
             employers = employers?
                 .Where(e => !string.IsNullOrWhiteSpace(e.EmployerName))
-                .Select(e => new
+                .Select(e =>
                 {
-                    employerName = e.EmployerName.Trim(),
-                    role = string.IsNullOrWhiteSpace(e.Role) ? null : e.Role.Trim(),
-                    years = e.Years is >= 0 and <= 80 ? e.Years : null
+                    var description = string.IsNullOrWhiteSpace(e.Description) ? null : e.Description.Trim();
+                    if (description is { Length: > 1000 })
+                    {
+                        description = description[..1000];
+                    }
+
+                    return new
+                    {
+                        employerName = e.EmployerName.Trim(),
+                        role = string.IsNullOrWhiteSpace(e.Role) ? null : e.Role.Trim(),
+                        years = e.Years is >= 0 and <= 80 ? e.Years : null,
+                        description
+                    };
                 })
                 .ToArray(),
             educations = educations?

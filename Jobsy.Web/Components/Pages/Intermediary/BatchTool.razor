@@ -25,22 +25,20 @@
             <input type="number" step="0.01" @bind="_wage" />
         </label>
 
-        <fieldset class="worktype-fieldset">
+        <fieldset class="profile-roles">
             <legend>Branche (max @WorkTypeLabels.MaxPerVacancy)</legend>
-            <div class="worktype-options">
-                @foreach (var label in WorkTypeLabels.All)
-                {
-                    var selected = _selectedWorkTypes.Contains(label);
-                    var disabled = !selected && _selectedWorkTypes.Count >= WorkTypeLabels.MaxPerVacancy;
-                    <label class="checkbox-row @(disabled ? "is-disabled" : null)">
-                        <input type="checkbox"
-                               checked="@selected"
-                               disabled="@disabled"
-                               @onchange="e => ToggleWorkType(label, e)" />
-                        @label
-                    </label>
-                }
-            </div>
+            @foreach (var label in _branchOptions)
+            {
+                var selected = _selectedWorkTypes.Contains(label);
+                var disabled = !selected && _selectedWorkTypes.Count >= WorkTypeLabels.MaxPerVacancy;
+                <label class="@(disabled ? "is-disabled" : null)">
+                    <input type="checkbox"
+                           checked="@selected"
+                           disabled="@disabled"
+                           @onchange="e => ToggleWorkType(label, e)" />
+                    @label
+                </label>
+            }
         </fieldset>
 
         <fieldset class="batch-locations">
@@ -70,6 +68,7 @@
     private string _description = "Flexibele inzet via intermediair.";
     private decimal _wage = 13.50m;
     private HashSet<string> _selectedWorkTypes = new(StringComparer.OrdinalIgnoreCase) { WorkTypeLabels.Winkel };
+    private List<string> _branchOptions = WorkTypeLabels.All.ToList();
     private bool _saving;
     private string? _message;
 
@@ -77,6 +76,23 @@
     {
         _companies = (await Api.GetMyCompaniesAsync()).ToList();
         _selected = _companies.Select(c => c.Id).ToHashSet();
+        try
+        {
+            var options = await Api.GetMasterdataAsync(MasterdataCategories.Branch, audience: "vacancy");
+            var branches = options.Select(o => o.Label).Where(l => !string.IsNullOrWhiteSpace(l)).ToList();
+            if (branches.Count > 0)
+            {
+                _branchOptions = branches;
+                if (!_selectedWorkTypes.Any(s => _branchOptions.Contains(s, StringComparer.OrdinalIgnoreCase)))
+                {
+                    _selectedWorkTypes = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { _branchOptions[0] };
+                }
+            }
+        }
+        catch
+        {
+            // keep fallbacks
+        }
     }
 
     private void Toggle(Guid id, ChangeEventArgs e)
@@ -112,8 +128,12 @@
             return;
         }
 
-        var workTypes = WorkTypeLabels.Combine(_selectedWorkTypes);
-        if (!WorkTypeLabels.IsValidSelection(workTypes))
+        var branchLabels = _selectedWorkTypes
+            .Where(x => !string.IsNullOrWhiteSpace(x))
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .Take(WorkTypeLabels.MaxPerVacancy)
+            .ToArray();
+        if (branchLabels.Length is < 1 or > WorkTypeLabels.MaxPerVacancy)
         {
             _message = $"Kies 1 of {WorkTypeLabels.MaxPerVacancy} branches.";
             return;
@@ -130,7 +150,7 @@
                 today,
                 today.AddMonths(2),
                 TransportMode.Bike | TransportMode.PublicTransport,
-                workTypes,
+                branchLabels,
                 _selected.ToArray()));
             _message = $"{created.Count} concept-vacatures aangemaakt.";
         }
