@@ -315,6 +315,36 @@ public class ApplicationsController : ControllerBase
         return Ok(new ApplyResultDto(dto, ConfirmationEmailQueued: true, authenticatorStubUsed));
     }
 
+    [HttpPost("{id:guid}/withdraw")]
+    [Authorize(Policy = JobsyPolicies.RequireCandidate)]
+    [EnableRateLimiting("public-write")]
+    public async Task<IActionResult> Withdraw(Guid id, CancellationToken cancellationToken)
+    {
+        var user = await _users.FindByPrincipalAsync(User, cancellationToken);
+        if (user is null)
+        {
+            return NotFound(new { message = "Gebruiker niet gevonden in Jobsy." });
+        }
+
+        var application = await _db.Applications
+            .FirstOrDefaultAsync(a => a.Id == id && a.CandidateUserId == user.Id, cancellationToken);
+
+        if (application is null)
+        {
+            return NotFound();
+        }
+
+        // Only verified "Open" (Pending) applications can be withdrawn — not PendingVerification.
+        if (!ApplicationRules.CanCandidateWithdraw(application.Status, application.EmailVerifiedAt))
+        {
+            return BadRequest(new { message = "Alleen open sollicitaties kunnen worden ingetrokken." });
+        }
+
+        _db.Applications.Remove(application);
+        await _db.SaveChangesAsync(cancellationToken);
+        return NoContent();
+    }
+
     [HttpPost("{id:guid}/react")]
     [Authorize(Roles = JobsyRoles.ApplicationReactRoles)]
     public async Task<ActionResult<EmployerApplicationDto>> React(

@@ -366,7 +366,7 @@
                         <span class="jobsy-action__badge">@ActiveFilterCount</span>
                     }
                 </h2>
-                <button type="button" class="filter-sheet__cancel" @onclick="CloseFilters">@Culture["Discovery.Cancel"]</button>
+                <button type="button" class="share-modal__close" @onclick="CloseFilters" aria-label="Sluiten">×</button>
             </div>
 
             @if (ActiveFilterCount > 0)

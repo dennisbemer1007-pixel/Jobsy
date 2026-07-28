@@ -14,4 +14,7 @@ public static class ApplicationRules
 
     public static bool CanEmployerReact(ApplicationStatus status)
         => status == ApplicationStatus.Pending;
+
+    public static bool CanCandidateWithdraw(ApplicationStatus status, DateTime? emailVerifiedAt)
+        => emailVerifiedAt is not null && status == ApplicationStatus.Pending;
 }

@@ -85,7 +85,9 @@ window.jobMap = (function () {
                 ? Math.min(withWagePanel ? 300 : 240, maxWidth)
                 : (withWagePanel ? 400 : 280),
             autoPanPadding: narrow ? [12, 56] : [36, 48],
-            keepInView: true
+            keepInView: true,
+            closeOnClick: true,
+            closeButton: true
         };
     }
 
@@ -338,9 +340,11 @@ window.jobMap = (function () {
             map.closePopup(activeClusterPopup);
         }
 
+        // closeOnClick:true (default) — map clicks outside close the popup.
+        // Pager buttons use stopPropagation so they stay usable inside the popup.
         const opts = Object.assign({}, clusterPopupOptions(hasWageBands(first)), {
-            closeOnClick: false,
-            autoClose: false,
+            closeOnClick: true,
+            autoClose: true,
             closeButton: true
         });
 
@@ -348,6 +352,13 @@ window.jobMap = (function () {
             .setLatLng(latlng)
             .setContent(buildClusterSingleHtml(childMarkers, 1))
             .openOn(map);
+
+        const opened = activeClusterPopup;
+        opened.on("remove", function () {
+            if (activeClusterPopup === opened) {
+                activeClusterPopup = null;
+            }
+        });
 
         bindClusterPopupInteractions(activeClusterPopup, childMarkers);
     }
@@ -519,7 +530,8 @@ window.jobMap = (function () {
 
         map = L.map(el, {
             zoomControl: true,
-            scrollWheelZoom: true
+            scrollWheelZoom: true,
+            closePopupOnClick: true
         });
 
         // Light Carto basemap — CSS filter in app.css applies Jobsy blue tint
@@ -538,6 +550,10 @@ window.jobMap = (function () {
         });
 
         clusterGroup.on("clusterclick", function (e) {
+            // Prevent the same gesture from also firing map click → closing the new popup.
+            if (e.originalEvent) {
+                L.DomEvent.stopPropagation(e.originalEvent);
+            }
             openClusterList(e.layer);
         });
 

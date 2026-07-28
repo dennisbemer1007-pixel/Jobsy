@@ -2,6 +2,7 @@
 @rendermode @(new InteractiveServerRenderMode(prerender: false))
 @attribute [Authorize(Roles = "Admin")]
 @using Jobsy.Web.Components.Admin
+@using Jobsy.Web.Navigation
 @using Microsoft.AspNetCore.WebUtilities
 @inject JobsyApiClient Api
 @inject NavigationManager Nav
@@ -88,7 +89,9 @@
                                 <td><a href="@MetricHref(v, "extensions")">@v.ExtensionCount</a></td>
                                 <td><a href="@MetricHref(v, "likes")">@v.LikeCount</a></td>
                                 <td class="inline-actions">
-                                    <a class="btn-compact" href="/vacancies/@v.Id">Bekijken</a>
+                                    <a class="icon-btn" href="/vacancies/@v.Id" title="Bekijken" aria-label="Vacature bekijken">
+                                        @((MarkupString)ActionIcons.View)
+                                    </a>
                                     @if (v.Status == "Active")
                                     {
                                         <button class="btn-compact" type="button" disabled="@_busy" @onclick="() => DeactivateAsync(v)">Inactief</button>

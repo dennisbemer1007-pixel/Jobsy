@@ -2,6 +2,7 @@
 @rendermode @(new InteractiveServerRenderMode(prerender: false))
 @attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "BranchManager,RegionalManager,EnterpriseManager,Intermediary,Admin")]
 @using Jobsy.Core.Rules
+@using Jobsy.Web.Navigation
 @using Microsoft.AspNetCore.Components.Authorization
 @using Microsoft.AspNetCore.WebUtilities
 @inject JobsyApiClient Api
@@ -86,12 +87,12 @@
     }
     else
     {
-        <div class="table-list">
+        <div class="table-list vacancy-manage-list">
             @foreach (var v in _filtered)
             {
-                <div class="table-row">
-                    <div>
-                        <strong>@v.Title</strong>
+                <div class="table-row vacancy-manage-row">
+                    <div class="vacancy-manage-row__main">
+                        <strong class="vacancy-manage-row__title">@v.Title</strong>
                         <span class="muted">
                             @v.CompanyName · @v.Status
                             @if (v.WorkTypes.Length > 0)
@@ -110,11 +111,15 @@
                             · € @(v.HourlyWage?.ToString("0.00") ?? "—")
                         </span>
                     </div>
-                    <div class="table-row__actions">
-                        <a class="auth-link" href="@($"/vacancies/{v.Id}")">Bekijk</a>
+                    <div class="table-row__actions vacancy-manage-row__actions">
+                        <a class="icon-btn" href="@($"/vacancies/{v.Id}")" title="Bekijken" aria-label="Vacature bekijken">
+                            @((MarkupString)ActionIcons.View)
+                        </a>
                         @if (_canManageVacancy)
                         {
-                            <a class="auth-link" href="@($"/branch/vacancies/new?from={v.Id}")">Dupliceren</a>
+                            <a class="icon-btn" href="@($"/branch/vacancies/new?from={v.Id}")" title="Dupliceren" aria-label="Vacature dupliceren">
+                                @((MarkupString)ActionIcons.Duplicate)
+                            </a>
                         }
                         @if (_canManageVacancy && v.Status == "Draft")
                         {
@@ -130,7 +135,9 @@
                             {
                                 <button class="btn-compact" type="button" @onclick="() => HighlightAsync(v.Id)">Highlight</button>
                             }
-                            <button class="btn-compact" type="button" @onclick="() => OpenPushBom(v)">PushBom…</button>
+                            <button class="icon-btn" type="button" title="PushBom" aria-label="PushBom versturen" @onclick="() => OpenPushBom(v)">
+                                @((MarkupString)ActionIcons.Bomb)
+                            </button>
                             <button class="btn-compact" type="button" @onclick="() => ExtendAsync(v.Id)">Verleng</button>
                             <button class="btn-compact" type="button" @onclick="() => DeactivateAsync(v.Id)">Inactive</button>
                         }

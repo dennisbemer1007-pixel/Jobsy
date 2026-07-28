@@ -8,26 +8,33 @@
 @inject JobsyApiClient Api
 @implements IDisposable
 
-<nav class="bottom-nav" aria-label="@Culture["Nav.Main"]">
-    @foreach (var item in _items)
-    {
-        var title = Culture[item.TitleKey];
-        var active = RoleNavCatalog.IsActive(item, Navigation.ToBaseRelativePath(Navigation.Uri), _items);
-        <a class="bottom-nav__item @(active ? "is-active" : null)"
-           href="@item.Href"
-           title="@title"
-           aria-current="@(active ? "page" : null)">
-            <span class="bottom-nav__icon" aria-hidden="true">
-                @((MarkupString)item.Svg)
-            </span>
-            <span class="bottom-nav__label">@title</span>
-        </a>
-    }
-</nav>
+@if (_items.Count > 0)
+{
+    <nav class="bottom-nav" aria-label="@Culture["Nav.Main"]">
+        @foreach (var item in _items)
+        {
+            var title = Culture[item.TitleKey];
+            var active = RoleNavCatalog.IsActive(item, Navigation.ToBaseRelativePath(Navigation.Uri), _items);
+            <a class="bottom-nav__item @(active ? "is-active" : null)"
+               href="@item.Href"
+               title="@title"
+               aria-current="@(active ? "page" : null)">
+                <span class="bottom-nav__icon" aria-hidden="true">
+                    @((MarkupString)item.Svg)
+                </span>
+                <span class="bottom-nav__label">@title</span>
+            </a>
+        }
+    </nav>
+}
 
 @code {
     private IReadOnlyList<NavItem> _items = RoleNavCatalog.Anonymous;
     private bool _hasTakeoverActions;
+    private bool _salesOnboardingComplete;
+
+    [Parameter]
+    public EventCallback<bool> HasItemsChanged { get; set; }
 
     protected override async Task OnInitializedAsync()
     {
@@ -64,7 +71,24 @@
             }
         }
 
+        if (RoleClaimMatching.HasRole(state.User, JobsyRoles.SalesManager)
+            && !RoleClaimMatching.HasRole(state.User, JobsyRoles.Admin))
+        {
+            await RefreshSalesOnboardingFlagAsync();
+            if (_salesOnboardingComplete)
+            {
+                catalog = catalog
+                    .Where(i => !string.Equals(i.Href, "/salesmanager/onboarding", StringComparison.OrdinalIgnoreCase))
+                    .ToList();
+            }
+        }
+
+        var previousCount = _items.Count;
         _items = catalog;
+        if (previousCount != _items.Count || HasItemsChanged.HasDelegate)
+        {
+            await HasItemsChanged.InvokeAsync(_items.Count > 0);
+        }
     }
 
     private async Task RefreshTakeoverFlagAsync()
@@ -77,6 +101,19 @@
         catch
         {
             _hasTakeoverActions = false;
+        }
+    }
+
+    private async Task RefreshSalesOnboardingFlagAsync()
+    {
+        try
+        {
+            var dash = await Api.GetMySalesManagerDashboardAsync();
+            _salesOnboardingComplete = dash?.IsOnboardingComplete == true;
+        }
+        catch
+        {
+            _salesOnboardingComplete = false;
         }
     }
 

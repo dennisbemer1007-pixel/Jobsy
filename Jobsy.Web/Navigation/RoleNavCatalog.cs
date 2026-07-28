@@ -5,12 +5,7 @@ namespace Jobsy.Web.Navigation;
 
 public static class RoleNavCatalog
 {
-    public static readonly NavItem[] Anonymous =
-    [
-        new("Nav.Search", "/", NavIcons.Search),
-        new("Nav.Saved", "/candidate/liked", NavIcons.Liked),
-        new("Nav.Profile", "/login", NavIcons.Profile)
-    ];
+    public static readonly NavItem[] Anonymous = [];
 
     public static readonly NavItem[] Admin =
     [
@@ -26,7 +21,8 @@ public static class RoleNavCatalog
     public static readonly NavItem[] Candidate =
     [
         new("Nav.Search", "/", NavIcons.Search),
-        new("Nav.Saved", "/candidate/liked", NavIcons.Liked, ["/candidate/shared", "/candidate/applications"]),
+        new("Nav.Saved", "/candidate/liked", NavIcons.Liked, ["/candidate/shared"]),
+        new("Nav.MyApplications", "/candidate/applications", NavIcons.Applications),
         new("Nav.Profile", "/candidate/profile", NavIcons.Profile, ["/home"])
     ];
 

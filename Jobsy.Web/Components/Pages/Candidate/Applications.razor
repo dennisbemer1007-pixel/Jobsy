@@ -1,41 +1,74 @@
 @page "/candidate/applications"
 @rendermode @(new InteractiveServerRenderMode(prerender: false))
 @attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Candidate")]
+@using Jobsy.Web.Localization
 @inject JobsyApiClient Api
+@inject CultureState Culture
 
-<PageTitle>Sollicitaties · Lobsy</PageTitle>
+<PageTitle>@Culture["Nav.MyApplications"] · Lobsy</PageTitle>
 
 <div class="panel-page">
     <header class="panel-header">
         <div>
-            <a class="back-link" href="/home">← Terug</a>
-            <h1>Mijn sollicitaties</h1>
+            <h1>@Culture["Nav.MyApplications"]</h1>
             <p class="login-lead">Status van je reacties op vacatures.</p>
         </div>
     </header>
+
+    <div class="admin-sublinks" role="tablist" aria-label="@Culture["Nav.MyApplications"]">
+        <button type="button" class="admin-sublink @(_tab == "all" ? "admin-sublink--active" : null)" role="tab" aria-selected="@(_tab == "all")" @onclick='() => SetTab("all")'>@Culture["Apps.TabAll"]</button>
+        <button type="button" class="admin-sublink @(_tab == "open" ? "admin-sublink--active" : null)" role="tab" aria-selected="@(_tab == "open")" @onclick='() => SetTab("open")'>@Culture["Apps.TabOpen"]</button>
+        <button type="button" class="admin-sublink @(_tab == "rejected" ? "admin-sublink--active" : null)" role="tab" aria-selected="@(_tab == "rejected")" @onclick='() => SetTab("rejected")'>@Culture["Apps.TabRejected"]</button>
+        <button type="button" class="admin-sublink @(_tab == "matched" ? "admin-sublink--active" : null)" role="tab" aria-selected="@(_tab == "matched")" @onclick='() => SetTab("matched")'>@Culture["Apps.TabMatched"]</button>
+    </div>
 
     @if (_loading)
     {
         <p class="state-message">Laden…</p>
     }
-    else if (_items.Count == 0)
+    else if (_filtered.Count == 0)
     {
-        <p class="state-message">Nog geen sollicitaties. <a href="/">Bekijk de banenkaart</a>.</p>
+        <p class="state-message">
+            @if (_items.Count == 0)
+            {
+                <text>Nog geen sollicitaties. <a href="/">Bekijk de banenkaart</a>.</text>
+            }
+            else
+            {
+                <text>Geen sollicitaties in deze tab.</text>
+            }
+        </p>
     }
     else
     {
         <div class="table-list">
-            @foreach (var a in _items)
+            @foreach (var a in _filtered)
             {
-                <a class="table-row table-row--link" href="@($"/vacancies/{a.VacancyId}")">
-                    <div>
+                <div class="table-row application-row">
+                    <a class="application-row__link" href="@($"/vacancies/{a.VacancyId}")">
                         <strong>@a.VacancyTitle</strong>
                         <span class="muted">@a.CompanyName · @a.PreferredTransport · @a.EstimatedTravelMinutes min</span>
+                    </a>
+                    <div class="application-row__meta">
+                        <span class="status-pill status-pill--@a.Status.ToLowerInvariant()">@StatusLabel(a.Status)</span>
+                        @if (CanWithdraw(a.Status))
+                        {
+                            <button type="button"
+                                    class="btn-compact"
+                                    disabled="@(_busyId == a.Id)"
+                                    @onclick="() => WithdrawAsync(a)">
+                                @(_busyId == a.Id ? "…" : Culture["Apps.Withdraw"])
+                            </button>
+                        }
                     </div>
-                    <span class="status-pill status-pill--@a.Status.ToLowerInvariant()">@StatusLabel(a.Status)</span>
-                </a>
+                </div>
             }
         </div>
+    }
+
+    @if (!string.IsNullOrEmpty(_message))
+    {
+        <p class="state-message">@_message</p>
     }
 </div>
 
@@ -55,8 +88,12 @@
 
 @code {
     private List<ApplicationItem> _items = [];
+    private List<ApplicationItem> _filtered = [];
     private bool _loading = true;
     private bool _showCelebration;
+    private string _tab = "all";
+    private Guid? _busyId;
+    private string? _message;
 
     protected override async Task OnInitializedAsync()
     {
@@ -64,14 +101,67 @@
         {
             _items = (await Api.GetMyApplicationsAsync()).ToList();
             _showCelebration = _items.Any(x => x.Status == "Hired");
+            ApplyTab();
         }
         catch
         {
             _items = [];
+            _filtered = [];
         }
         finally
         {
             _loading = false;
+        }
+    }
+
+    private void SetTab(string tab)
+    {
+        _tab = tab;
+        ApplyTab();
+    }
+
+    private void ApplyTab()
+    {
+        _filtered = _tab switch
+        {
+            "open" => _items.Where(IsOpen).ToList(),
+            "rejected" => _items.Where(IsRejected).ToList(),
+            "matched" => _items.Where(IsMatched).ToList(),
+            _ => _items.ToList()
+        };
+    }
+
+    private static bool IsOpen(ApplicationItem a)
+        => a.Status is "Pending" or "PendingVerification";
+
+    private static bool IsRejected(ApplicationItem a)
+        => a.Status is "Rejected" or "FilledElsewhere";
+
+    private static bool IsMatched(ApplicationItem a)
+        => a.Status is "Accepted" or "EmployerContacting" or "Hired";
+
+    /// <summary>Withdraw only after verification (Open / submitted), not while awaiting e-mail code.</summary>
+    private static bool CanWithdraw(string status)
+        => status == "Pending";
+
+    private async Task WithdrawAsync(ApplicationItem item)
+    {
+        _busyId = item.Id;
+        _message = null;
+        try
+        {
+            await Api.WithdrawApplicationAsync(item.Id);
+            _items.RemoveAll(x => x.Id == item.Id);
+            ApplyTab();
+            _message = "Sollicitatie ingetrokken.";
+        }
+        catch (Exception ex)
+        {
+            _message = ex.Message;
+        }
+        finally
+        {
+            _busyId = null;
         }
     }
 
@@ -83,6 +173,7 @@
         "EmployerContacting" => "Werkgever neemt contact op",
         "Hired" => "Aangenomen",
         "FilledElsewhere" => "De keuze is op een andere kandidaat gevallen",
+        "Pending" => "Open",
         _ => "In behandeling"
     };
 }

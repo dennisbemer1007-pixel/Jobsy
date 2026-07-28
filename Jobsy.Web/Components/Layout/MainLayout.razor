@@ -6,7 +6,7 @@
 @inject NavigationManager Navigation
 @implements IDisposable
 
-<div class="app-shell has-bottom-nav" dir="@(Culture.IsRightToLeft ? "rtl" : null)">
+<div class="app-shell @(_hasBottomNav ? "has-bottom-nav" : null)" dir="@(Culture.IsRightToLeft ? "rtl" : null)">
     <div class="lobsy-watermarks" aria-hidden="true">
         <img class="lobsy-watermark lobsy-watermark--left" src="images/brand/lobsy.png?v=20260726-no-ai" alt="" />
         <img class="lobsy-watermark lobsy-watermark--right" src="images/brand/lobsy.png?v=20260726-no-ai" alt="" />
@@ -33,11 +33,12 @@
         <AppFooter />
     </main>
 
-    <BottomNav />
+    <BottomNav HasItemsChanged="OnBottomNavItemsChanged" />
 </div>
 
 @code {
     private bool _siteVisitRecorded;
+    private bool _hasBottomNav;
 
     protected override async Task OnInitializedAsync()
     {
@@ -63,6 +64,17 @@
         {
             // Analytics must not block the app shell.
         }
+    }
+
+    private Task OnBottomNavItemsChanged(bool hasItems)
+    {
+        if (_hasBottomNav == hasItems)
+        {
+            return Task.CompletedTask;
+        }
+
+        _hasBottomNav = hasItems;
+        return InvokeAsync(StateHasChanged);
     }
 
     private void OnCultureChanged()

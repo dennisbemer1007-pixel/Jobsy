@@ -3,6 +3,7 @@
 @attribute [Authorize(Roles = "Admin")]
 @using Jobsy.Core.Rules
 @using Jobsy.Web.Components.Admin
+@using Jobsy.Web.Navigation
 @inject JobsyApiClient Api
 
 <PageTitle>Masterdata · Lobsy</PageTitle>
@@ -70,7 +71,9 @@
                         </div>
                         <div class="inline-actions">
                             <button class="provider-btn" type="button" disabled="@(_busyId == item.Id)" @onclick="() => SaveAsync(item)">Opslaan</button>
-                            <button class="provider-btn provider-btn--danger" type="button" disabled="@(_busyId == item.Id)" @onclick="() => DeleteAsync(item)">Verwijderen</button>
+                            <button type="button" class="icon-btn icon-btn--danger" title="Verwijderen" aria-label="Item verwijderen" disabled="@(_busyId == item.Id)" @onclick="() => DeleteAsync(item)">
+                                @((MarkupString)ActionIcons.Trash)
+                            </button>
                         </div>
                     </div>
                 }

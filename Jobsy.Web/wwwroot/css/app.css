@@ -1478,6 +1478,11 @@ a {
     font-size: 1.25rem;
 }
 
+.filter-sheet__header .share-modal__close {
+    margin-left: auto;
+    flex-shrink: 0;
+}
+
 .filter-sheet__cancel {
     border: none;
     background: transparent;
@@ -3463,6 +3468,95 @@ html[dir="rtl"] .language-selector__menu {
     display: flex;
     align-items: center;
     gap: 0.65rem;
+    flex-wrap: wrap;
+}
+
+.vacancy-manage-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 0.75rem 1rem;
+    align-items: center;
+}
+
+.vacancy-manage-row__main {
+    min-width: 0;
+}
+
+.vacancy-manage-row__title {
+    display: block;
+    font-size: 1.05rem;
+    font-weight: 700;
+    line-height: 1.3;
+}
+
+.vacancy-manage-row__actions {
+    justify-content: flex-end;
+}
+
+.application-row {
+    align-items: flex-start;
+}
+
+.application-row__link {
+    flex: 1;
+    min-width: 0;
+    color: inherit;
+    text-decoration: none;
+}
+
+.application-row__link:hover strong {
+    text-decoration: underline;
+}
+
+.application-row__meta {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 0.45rem;
+    flex-shrink: 0;
+}
+
+.profile-roles--wide {
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+}
+
+.profile-roles--wide label {
+    text-transform: none;
+}
+
+.login-form .profile-roles label {
+    flex-direction: row;
+    align-items: center;
+}
+
+a.icon-btn {
+    text-decoration: none;
+}
+
+@media (max-width: 640px) {
+    .vacancy-manage-row {
+        grid-template-columns: 1fr;
+    }
+
+    .vacancy-manage-row__title {
+        font-size: 1.12rem;
+    }
+
+    .vacancy-manage-row__actions {
+        width: 100%;
+        justify-content: flex-start;
+    }
+
+    .application-row {
+        flex-wrap: wrap;
+    }
+
+    .application-row__meta {
+        width: 100%;
+        flex-direction: row;
+        align-items: center;
+        justify-content: space-between;
+    }
 }
 
 .vacancy-card__actions {

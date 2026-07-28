@@ -1,6 +1,7 @@
 @page "/employer/users"
 @rendermode @(new InteractiveServerRenderMode(prerender: false))
 @attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "EnterpriseManager,Admin")]
+@using Jobsy.Web.Navigation
 @inject JobsyApiClient Api
 
 <PageTitle>Gebruikers · Lobsy</PageTitle>
@@ -38,7 +39,9 @@
                         </span>
                     </div>
                     <div class="table-row__actions">
-                        <button class="btn-compact" type="button" disabled="@_busy" @onclick="() => StartEdit(u)">Bewerken</button>
+                        <button type="button" class="icon-btn" title="Bewerken" aria-label="Gebruiker bewerken" disabled="@_busy" @onclick="() => StartEdit(u)">
+                            @((MarkupString)ActionIcons.Edit)
+                        </button>
                     </div>
                 </div>
             }
@@ -73,15 +76,15 @@
                             }
                         </select>
                     </label>
-                    <fieldset class="checkbox-set">
+                    <fieldset class="profile-roles profile-roles--wide">
                         <legend>Extra lidmaatschappen</legend>
                         @foreach (var c in _companies)
                         {
-                            <label class="publish-option">
+                            <label>
                                 <input type="checkbox"
                                        checked="@_editMemberships.Contains(c.Id)"
                                        @onchange="e => ToggleEditMembership(c.Id, (bool)(e.Value ?? false))" />
-                                <span>@c.Name</span>
+                                @c.Name
                             </label>
                         }
                     </fieldset>
@@ -127,15 +130,15 @@
                         }
                     </select>
                 </label>
-                <fieldset class="checkbox-set">
+                <fieldset class="profile-roles profile-roles--wide">
                     <legend>Extra lidmaatschappen</legend>
                     @foreach (var c in _companies)
                     {
-                        <label class="publish-option">
+                        <label>
                             <input type="checkbox"
                                    checked="@_memberships.Contains(c.Id)"
                                    @onchange="e => ToggleMembership(c.Id, (bool)(e.Value ?? false))" />
-                            <span>@c.Name</span>
+                            @c.Name
                         </label>
                     }
                 </fieldset>

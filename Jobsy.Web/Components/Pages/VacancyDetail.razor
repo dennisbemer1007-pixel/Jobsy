@@ -408,20 +408,18 @@
                         }
                     </Authorized>
                     <NotAuthorized>
-                        <div class="apply-panel">
-                            <header class="apply-flow__header">
-                                <h2 class="apply-flow__title">Solliciteren</h2>
-                            </header>
-                            <AuthorizeView Context="authState">
-                                <Authorized Context="authed">
-                                    <p class="apply-panel__text">Alleen kandidaten kunnen solliciteren.</p>
-                                </Authorized>
-                                <NotAuthorized Context="anon">
+                        @* Hide Solliciteren for admin / intermediary / manager roles; only anonymous see login-to-apply. *@
+                        <AuthorizeView Context="authState">
+                            <NotAuthorized Context="anon">
+                                <div class="apply-panel">
+                                    <header class="apply-flow__header">
+                                        <h2 class="apply-flow__title">Solliciteren</h2>
+                                    </header>
                                     <p class="apply-panel__text">Log in als kandidaat om te solliciteren op deze vacature.</p>
                                     <a class="login-submit apply-flow__primary" href="@LoginUrl">Inloggen om te solliciteren</a>
-                                </NotAuthorized>
-                            </AuthorizeView>
-                        </div>
+                                </div>
+                            </NotAuthorized>
+                        </AuthorizeView>
                     </NotAuthorized>
                 </AuthorizeView>
             </div>

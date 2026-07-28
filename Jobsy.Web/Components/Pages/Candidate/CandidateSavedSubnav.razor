@@ -1,0 +1,25 @@
+@* Shared Bewaard / Gedeeld tabs under Saved bottom-nav. *@
+@using Jobsy.Web.Localization
+@inject NavigationManager Navigation
+@inject CultureState Culture
+
+<nav class="admin-sublinks" aria-label="@Culture["Nav.Saved"]">
+    <a class="admin-sublink @(IsLiked ? "admin-sublink--active" : null)"
+       href="/candidate/liked"
+       aria-current="@(IsLiked ? "page" : null)">
+        @Culture["Saved.TabLiked"]
+    </a>
+    <a class="admin-sublink @(IsShared ? "admin-sublink--active" : null)"
+       href="/candidate/shared"
+       aria-current="@(IsShared ? "page" : null)">
+        @Culture["Saved.TabShared"]
+    </a>
+</nav>
+
+@code {
+    private bool IsLiked
+        => Navigation.ToBaseRelativePath(Navigation.Uri).TrimStart('/').StartsWith("candidate/liked", StringComparison.OrdinalIgnoreCase);
+
+    private bool IsShared
+        => Navigation.ToBaseRelativePath(Navigation.Uri).TrimStart('/').StartsWith("candidate/shared", StringComparison.OrdinalIgnoreCase);
+}

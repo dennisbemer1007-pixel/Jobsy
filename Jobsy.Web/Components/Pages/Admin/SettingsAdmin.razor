@@ -2,6 +2,7 @@
 @rendermode @(new InteractiveServerRenderMode(prerender: false))
 @attribute [Authorize(Roles = "Admin")]
 @using Jobsy.Web.Components.Admin
+@using Jobsy.Web.Navigation
 @inject JobsyApiClient Api
 
 <PageTitle>Settings · Lobsy</PageTitle>
@@ -145,7 +146,9 @@
                             </label>
                             <label class="filter-check"><input type="checkbox" @bind="tier.IsActive" /> Actief</label>
                             <button class="btn-compact" type="button" @onclick="() => SaveTierAsync(tier)">Opslaan</button>
-                            <button class="btn-compact" type="button" @onclick="() => DeleteTierAsync(tier)">Verwijder</button>
+                            <button type="button" class="icon-btn icon-btn--danger" title="Verwijderen" aria-label="Tier verwijderen" @onclick="() => DeleteTierAsync(tier)">
+                                @((MarkupString)ActionIcons.Trash)
+                            </button>
                         </div>
                     </div>
                 }

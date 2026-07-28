@@ -1,18 +1,21 @@
 @page "/candidate/shared"
 @rendermode @(new InteractiveServerRenderMode(prerender: false))
 @attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Candidate")]
+@using Jobsy.Web.Localization
 @inject JobsyApiClient Api
+@inject CultureState Culture
 
-<PageTitle>Gedeeld · Lobsy</PageTitle>
+<PageTitle>@Culture["Saved.TabShared"] · Lobsy</PageTitle>
 
 <div class="panel-page">
     <header class="panel-header">
         <div>
-            <a class="back-link" href="/home">← Terug</a>
-            <h1>Gedeelde vacatures</h1>
+            <h1>@Culture["Saved.Title"]</h1>
             <p class="login-lead">Vacatures die jij hebt gedeeld.</p>
         </div>
     </header>
+
+    <CandidateSavedSubnav />
 
     @if (_loading)
     {
