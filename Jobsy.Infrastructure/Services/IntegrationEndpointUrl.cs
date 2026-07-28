@@ -1,4 +1,5 @@
 using System.Net;
+using System.Text.RegularExpressions;
 
 namespace Jobsy.Infrastructure.Services;
 
@@ -7,6 +8,10 @@ namespace Jobsy.Infrastructure.Services;
 /// </summary>
 public static class IntegrationEndpointUrl
 {
+    private static readonly Regex SmtpHostName =
+        new(@"^(?=.{1,253}$)(?!-)[A-Za-z0-9-]{1,63}(?<!-)(\.(?!-)[A-Za-z0-9-]{1,63}(?<!-))*$",
+            RegexOptions.Compiled | RegexOptions.CultureInvariant);
+
     public static bool TryNormalizeBaseUrl(string? value, out string? normalized, out string? error)
     {
         normalized = null;
@@ -36,6 +41,84 @@ public static class IntegrationEndpointUrl
         }
 
         normalized = uri.AbsoluteUri.TrimEnd('/') + "/";
+        return true;
+    }
+
+    /// <summary>
+    /// Mail uses BaseUrl as SMTP host (not an HTTP URL): host, host:port, or smtp(s)://host:port.
+    /// </summary>
+    public static bool TryNormalizeSmtpHost(string? value, out string? normalized, out string? error)
+    {
+        normalized = null;
+        error = null;
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            return true;
+        }
+
+        var raw = value.Trim();
+        if (raw.Contains('@', StringComparison.Ordinal))
+        {
+            error = "SMTP-host mag geen credentials bevatten.";
+            return false;
+        }
+
+        if (raw.StartsWith("http://", StringComparison.OrdinalIgnoreCase)
+            || raw.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
+        {
+            error = "Voor Mail vul je een SMTP-host in (bijv. smtp.gmail.com), geen http(s)-URL.";
+            return false;
+        }
+
+        if (raw.StartsWith("smtp://", StringComparison.OrdinalIgnoreCase)
+            || raw.StartsWith("smtps://", StringComparison.OrdinalIgnoreCase))
+        {
+            var schemeEnd = raw.IndexOf("://", StringComparison.Ordinal);
+            raw = raw[(schemeEnd + 3)..];
+        }
+
+        var slash = raw.IndexOf('/');
+        if (slash >= 0)
+        {
+            raw = raw[..slash];
+        }
+
+        if (string.IsNullOrWhiteSpace(raw))
+        {
+            error = "SMTP-host is ongeldig (bijv. smtp.gmail.com of smtp.gmail.com:587).";
+            return false;
+        }
+
+        string host;
+        int? explicitPort = null;
+        var colon = raw.LastIndexOf(':');
+        if (colon > 0 && colon < raw.Length - 1
+            && int.TryParse(raw[(colon + 1)..], out var parsedPort)
+            && parsedPort is > 0 and <= 65535)
+        {
+            host = raw[..colon].Trim();
+            explicitPort = parsedPort;
+        }
+        else
+        {
+            host = raw.Trim();
+        }
+
+        if (string.IsNullOrWhiteSpace(host)
+            || (!IPAddress.TryParse(host, out _) && !SmtpHostName.IsMatch(host)))
+        {
+            error = "SMTP-host is ongeldig (bijv. smtp.gmail.com of smtp.gmail.com:587).";
+            return false;
+        }
+
+        if (IsBlockedHost(host))
+        {
+            error = "SMTP-host mag niet naar een privé- of lokale host wijzen.";
+            return false;
+        }
+
+        // Canonical: host, or host:port when the user (or smtp:// URL) specified a port.
+        normalized = explicitPort is { } port ? $"{host}:{port}" : host;
         return true;
     }
 

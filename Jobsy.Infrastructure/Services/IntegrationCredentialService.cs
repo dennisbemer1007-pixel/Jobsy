@@ -95,7 +95,10 @@ public sealed class IntegrationCredentialService : IIntegrationCredentialService
 
         if (update.BaseUrl is not null)
         {
-            if (!IntegrationEndpointUrl.TryNormalizeBaseUrl(update.BaseUrl, out var normalized, out var error))
+            var ok = key == IntegrationKey.Mail
+                ? IntegrationEndpointUrl.TryNormalizeSmtpHost(update.BaseUrl, out var normalized, out var error)
+                : IntegrationEndpointUrl.TryNormalizeBaseUrl(update.BaseUrl, out normalized, out error);
+            if (!ok)
             {
                 throw new InvalidOperationException(error ?? "Ongeldige Base URL.");
             }

@@ -72,9 +72,16 @@
             @if (Credential.SupportsBaseUrl)
             {
                 <label>
-                    Base URL
-                    <input @bind="_baseUrl" @bind:event="oninput" @bind:after="MarkDirty" placeholder="https://..." />
+                    @(IsMailIntegration ? "SMTP-host" : "Base URL")
+                    <input @bind="_baseUrl"
+                           @bind:event="oninput"
+                           @bind:after="MarkDirty"
+                           placeholder="@(IsMailIntegration ? "smtp.gmail.com of smtp.gmail.com:587" : "https://...")" />
                 </label>
+                @if (IsMailIntegration)
+                {
+                    <p class="muted">Geen https:// — alleen de SMTP-host (Gmail: smtp.gmail.com, poort 587 standaard).</p>
+                }
             }
 
             @if (Credential.SupportsFromAddress)
@@ -143,6 +150,9 @@
         !string.IsNullOrWhiteSpace(Health?.StatusMessage)
             ? Health!.StatusMessage
             : Credential.LastPingMessage ?? string.Empty;
+
+    private bool IsMailIntegration =>
+        string.Equals(Credential.Key, "Mail", StringComparison.OrdinalIgnoreCase);
 
     protected override void OnParametersSet()
     {

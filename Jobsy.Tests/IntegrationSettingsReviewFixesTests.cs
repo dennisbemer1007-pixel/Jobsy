@@ -28,6 +28,45 @@ public class IntegrationSettingsReviewFixesTests
         }
     }
 
+    [Theory]
+    [InlineData("smtp.gmail.com", true, "smtp.gmail.com")]
+    [InlineData("smtp.gmail.com:587", true, "smtp.gmail.com:587")]
+    [InlineData("smtp://smtp.gmail.com:587", true, "smtp.gmail.com:587")]
+    [InlineData("smtps://smtp.gmail.com:465", true, "smtp.gmail.com:465")]
+    [InlineData("https://smtp.gmail.com", false, null)]
+    [InlineData("http://smtp.gmail.com", false, null)]
+    [InlineData("localhost", false, null)]
+    [InlineData("127.0.0.1", false, null)]
+    [InlineData("user:pass@smtp.gmail.com", false, null)]
+    [InlineData("", true, null)]
+    public void Smtp_host_validation_accepts_gmail_formats(string input, bool expectedOk, string? expectedNormalized)
+    {
+        var ok = IntegrationEndpointUrl.TryNormalizeSmtpHost(input, out var normalized, out var error);
+        Assert.Equal(expectedOk, ok);
+        Assert.Equal(expectedNormalized, normalized);
+        if (!expectedOk)
+        {
+            Assert.False(string.IsNullOrWhiteSpace(error));
+        }
+    }
+
+    [Fact]
+    public async Task Mail_accepts_smtp_host_without_https()
+    {
+        var options = new DbContextOptionsBuilder<JobsyDbContext>()
+            .UseInMemoryDatabase(Guid.NewGuid().ToString())
+            .Options;
+        await using var db = new JobsyDbContext(options);
+        var sut = new IntegrationCredentialService(db, new PassthroughSecretProtector());
+
+        await sut.UpsertAsync(
+            Jobsy.Core.Enums.IntegrationKey.Mail,
+            new IntegrationCredentialUpdate(BaseUrl: "smtp.gmail.com"));
+
+        var secrets = await sut.GetSecretsAsync(Jobsy.Core.Enums.IntegrationKey.Mail);
+        Assert.Equal("smtp.gmail.com", secrets?.BaseUrl);
+    }
+
     [Fact]
     public async Task Moderation_disabled_allows_any_text()
     {
