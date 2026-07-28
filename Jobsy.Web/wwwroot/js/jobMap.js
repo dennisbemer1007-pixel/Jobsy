@@ -251,9 +251,6 @@ window.jobMap = (function () {
 
         return (
             "<div class=\"cluster-single\">" +
-                "<div class=\"cluster-single__meta\">" +
-                    "<span class=\"cluster-single__count\">" + escapeHtml(String(total)) + " vacatures hier</span>" +
-                "</div>" +
                 buildPopupHtml(job) +
                 buildClusterPagerHtml(current, pageCount) +
             "</div>"

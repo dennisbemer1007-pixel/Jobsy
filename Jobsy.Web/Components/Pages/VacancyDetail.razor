@@ -135,7 +135,7 @@
                             }
                             @if (!string.IsNullOrWhiteSpace(_vacancy.RequiredEducation))
                             {
-                                <span class="lobsy-proximity__chip">Diploma/Opleiding: @_vacancy.RequiredEducation</span>
+                                <span class="lobsy-proximity__chip">Opleidingsniveau: @_vacancy.RequiredEducation</span>
                             }
                             @if (_vacancy.MinimumEmployers is > 0)
                             {
@@ -297,8 +297,21 @@
                                 <p class="apply-panel__text">Werkgevers zien deze gegevens bij je sollicitatie. Vul het volgende aan:</p>
                                 <ul class="apply-checklist">
                                     <li class="@(_profileHasAvailability ? "is-done" : null)">Beschikbaarheid</li>
-                                    <li class="@(_profileHasLicense ? "is-done" : null)">Rijbewijs</li>
-                                    <li class="@(_profileHasEmployers ? "is-done" : null)">Werkervaring</li>
+                                    @if (_requiresDrivingLicense)
+                                    {
+                                        <li class="@(_profileHasLicense ? "is-done" : null)">Rijbewijs (@_vacancy.RequiredDrivingLicense)</li>
+                                    }
+                                    <li class="@(_profileHasEmployers ? "is-done" : null)">
+                                        Werkervaring
+                                        @if (_vacancy.MinimumEmployers is > 0)
+                                        {
+                                            <text> (min. @_vacancy.MinimumEmployers)</text>
+                                        }
+                                    </li>
+                                    @if (_requiresEducation)
+                                    {
+                                        <li class="@(_profileHasEducation ? "is-done" : null)">Opleiding (@_vacancy.RequiredEducation)</li>
+                                    }
                                     <li class="@(_profileHasAboutMe ? "is-done" : null)">Over jezelf</li>
                                 </ul>
                                 <a class="login-submit apply-flow__primary"
@@ -442,9 +455,12 @@
     private bool _workPermitConfirmed;
     private bool _profileReadyForApply = true;
     private bool _profileHasAvailability;
-    private bool _profileHasLicense;
+    private bool _profileHasLicense = true;
     private bool _profileHasEmployers;
+    private bool _profileHasEducation = true;
     private bool _profileHasAboutMe;
+    private bool _requiresDrivingLicense;
+    private bool _requiresEducation;
     private bool _awaitingVerification;
     private string _verificationCode = string.Empty;
     private int? _ageYears;
@@ -656,14 +672,27 @@
                 if (profile is not null)
                 {
                     var prefs = profile.Preferences ?? new CandidatePreferences();
+                    _requiresDrivingLicense = !string.IsNullOrWhiteSpace(_vacancy?.RequiredDrivingLicense);
+                    _requiresEducation = !string.IsNullOrWhiteSpace(_vacancy?.RequiredEducation);
+
                     _profileHasAvailability = (prefs.Availability?.Count ?? 0) > 0;
-                    _profileHasLicense = (prefs.DrivingLicenses?.Count ?? 0) > 0;
-                    _profileHasEmployers = (prefs.Employers?.Count ?? 0) > 0;
+                    _profileHasLicense = !_requiresDrivingLicense
+                        || DrivingLicenseLabels.CandidateMeetsRequirement(
+                            prefs.DrivingLicenses,
+                            _vacancy!.RequiredDrivingLicense);
+                    var employerCount = prefs.Employers?.Count ?? 0;
+                    var minEmployers = _vacancy?.MinimumEmployers is > 0 ? _vacancy.MinimumEmployers.Value : 1;
+                    _profileHasEmployers = employerCount >= minEmployers;
+                    _profileHasEducation = !_requiresEducation
+                        || EducationLevelLabels.CandidateMeetsRequirement(
+                            prefs.Educations,
+                            _vacancy!.RequiredEducation);
                     _profileHasAboutMe = !string.IsNullOrWhiteSpace(prefs.AboutMe);
                     _profileReadyForApply =
                         _profileHasAvailability
                         && _profileHasLicense
                         && _profileHasEmployers
+                        && _profileHasEducation
                         && _profileHasAboutMe;
                 }
             }

@@ -609,24 +609,14 @@ public class ApplicationsController : ControllerBase
 
     private static string? ValidateHardRequirements(Core.Entities.Vacancy vacancy, CandidatePreferencesDto prefs)
     {
-        if (!string.IsNullOrWhiteSpace(vacancy.RequiredDrivingLicense))
+        if (!DrivingLicenseLabels.CandidateMeetsRequirement(prefs.DrivingLicenses, vacancy.RequiredDrivingLicense))
         {
-            var hasLicense = prefs.DrivingLicenses?.Any(x =>
-                string.Equals(x, vacancy.RequiredDrivingLicense, StringComparison.OrdinalIgnoreCase)) == true;
-            if (!hasLicense)
-            {
-                return $"Deze vacature vereist rijbewijs {vacancy.RequiredDrivingLicense}.";
-            }
+            return $"Deze vacature vereist rijbewijs {vacancy.RequiredDrivingLicense}.";
         }
 
-        if (!string.IsNullOrWhiteSpace(vacancy.RequiredEducation))
+        if (!EducationLevelLabels.CandidateMeetsRequirement(prefs.Educations, vacancy.RequiredEducation))
         {
-            var hasEducation = prefs.Educations?.Any(x =>
-                string.Equals(x, vacancy.RequiredEducation, StringComparison.OrdinalIgnoreCase)) == true;
-            if (!hasEducation)
-            {
-                return $"Deze vacature vereist opleiding/diploma: {vacancy.RequiredEducation}.";
-            }
+            return $"Deze vacature vereist opleidingsniveau: {vacancy.RequiredEducation}.";
         }
 
         if (vacancy.MinimumEmployers is > 0)

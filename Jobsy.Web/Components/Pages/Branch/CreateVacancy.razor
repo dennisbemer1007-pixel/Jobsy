@@ -155,18 +155,52 @@
                     }
                 </div>
             </fieldset>
-            <label>
-                Vereist rijbewijs (optioneel)
-                <input @bind="_requiredDrivingLicense" placeholder="Bijv. B" />
-            </label>
-            <label>
-                Vereiste opleiding/diploma (optioneel)
-                <input @bind="_requiredEducation" placeholder="Bijv. MBO 3 Logistiek" />
-            </label>
-            <label>
-                Minimaal aantal werkgevers (optioneel)
-                <input type="number" min="0" max="50" @bind="_minimumEmployers" />
-            </label>
+            <fieldset class="worktype-fieldset">
+                <legend>Vereist rijbewijs (optioneel)</legend>
+                <div class="worktype-options">
+                    @foreach (var license in DrivingLicenseLabels.All)
+                    {
+                        var selected = _selectedLicenses.Contains(license);
+                        <label class="checkbox-row">
+                            <input type="checkbox"
+                                   checked="@selected"
+                                   @onchange="e => ToggleLicense(license, e)" />
+                            @license
+                        </label>
+                    }
+                </div>
+            </fieldset>
+            <fieldset class="worktype-fieldset">
+                <legend>Vereist opleidingsniveau (optioneel)</legend>
+                <div class="worktype-options">
+                    @foreach (var level in EducationLevelLabels.VacancyAll)
+                    {
+                        var selected = _selectedEducationLevels.Contains(level);
+                        <label class="checkbox-row">
+                            <input type="checkbox"
+                                   checked="@selected"
+                                   @onchange="e => ToggleEducation(level, e)" />
+                            @level
+                        </label>
+                    }
+                </div>
+            </fieldset>
+            <fieldset class="worktype-fieldset">
+                <legend>Minimaal aantal werkgevers (optioneel)</legend>
+                <div class="worktype-options">
+                    <label class="checkbox-row">
+                        <input type="radio" name="min-employers" checked="@(_minimumEmployers is null)" @onchange="() => SetMinimumEmployers(null)" />
+                        Geen minimum
+                    </label>
+                    @foreach (var n in new[] { 1, 2, 3 })
+                    {
+                        <label class="checkbox-row">
+                            <input type="radio" name="min-employers" checked="@(_minimumEmployers == n)" @onchange="() => SetMinimumEmployers(n)" />
+                            @n
+                        </label>
+                    }
+                </div>
+            </fieldset>
             <button class="login-submit" type="submit" disabled="@_saving">
                 @(_isDuplicate ? "Opslaan als nieuw concept" : "Opslaan als concept")
             </button>
@@ -262,11 +296,11 @@
     private string _videoUrl = "";
     private string _salaryTableId = "";
     private string _transport = "Bike";
-    private string _requiredDrivingLicense = "";
-    private string _requiredEducation = "";
     private int? _minimumEmployers;
     private string? _align;
     private HashSet<string> _selectedWorkTypes = new(StringComparer.OrdinalIgnoreCase);
+    private HashSet<string> _selectedLicenses = new(StringComparer.OrdinalIgnoreCase);
+    private HashSet<string> _selectedEducationLevels = new(StringComparer.OrdinalIgnoreCase);
     private bool _saving;
     private bool _isDuplicate;
     private string? _message;
@@ -347,9 +381,14 @@
             _salaryTableId = source.SalaryTableId?.ToString() ?? "";
             _transport = MapTransportToFormValue(source.RequiredTransport);
             _selectedWorkTypes = source.WorkTypes.ToHashSet(StringComparer.OrdinalIgnoreCase);
-            _requiredDrivingLicense = source.RequiredDrivingLicense ?? "";
-            _requiredEducation = source.RequiredEducation ?? "";
-            _minimumEmployers = source.MinimumEmployers;
+            _selectedLicenses = DrivingLicenseLabels.Split(source.RequiredDrivingLicense)
+                .ToHashSet(StringComparer.OrdinalIgnoreCase);
+            _selectedEducationLevels = EducationLevelLabels.Split(source.RequiredEducation)
+                .Where(x => EducationLevelLabels.VacancyAll.Contains(x, StringComparer.OrdinalIgnoreCase))
+                .ToHashSet(StringComparer.OrdinalIgnoreCase);
+            _minimumEmployers = source.MinimumEmployers is >= 1 and <= 3
+                ? source.MinimumEmployers
+                : null;
         }
         catch (Exception ex)
         {
@@ -409,6 +448,34 @@
             _selectedWorkTypes.Remove(label);
         }
     }
+
+    private void ToggleLicense(string license, ChangeEventArgs e)
+    {
+        var on = e.Value is bool b && b || e.Value?.ToString() == "on";
+        if (on)
+        {
+            _selectedLicenses.Add(license);
+        }
+        else
+        {
+            _selectedLicenses.Remove(license);
+        }
+    }
+
+    private void ToggleEducation(string level, ChangeEventArgs e)
+    {
+        var on = e.Value is bool b && b || e.Value?.ToString() == "on";
+        if (on)
+        {
+            _selectedEducationLevels.Add(level);
+        }
+        else
+        {
+            _selectedEducationLevels.Remove(level);
+        }
+    }
+
+    private void SetMinimumEmployers(int? value) => _minimumEmployers = value;
 
     private Task OnSalaryTableChanged() => Task.CompletedTask;
 
@@ -560,9 +627,9 @@
                 string.IsNullOrWhiteSpace(_imageUrl) ? null : _imageUrl.Trim(),
                 string.IsNullOrWhiteSpace(_videoUrl) ? null : _videoUrl.Trim(),
                 salaryTableId,
-                string.IsNullOrWhiteSpace(_requiredDrivingLicense) ? null : _requiredDrivingLicense.Trim(),
-                string.IsNullOrWhiteSpace(_requiredEducation) ? null : _requiredEducation.Trim(),
-                _minimumEmployers is > 0 ? _minimumEmployers : null));
+                DrivingLicenseLabels.Combine(_selectedLicenses),
+                EducationLevelLabels.Combine(_selectedEducationLevels, forVacancy: true),
+                _minimumEmployers is >= 1 and <= 3 ? _minimumEmployers : null));
 
             Navigation.NavigateTo("/employer/vacancies");
         }

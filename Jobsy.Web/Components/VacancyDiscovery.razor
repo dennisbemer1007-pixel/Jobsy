@@ -218,10 +218,7 @@
                 <label class="filter-required">
                     @Culture["Discovery.Age"]
                     <select value="@AgeSelectValue" @onchange="OnAgeChanged" required>
-                        @if (_profileAgeYears is null)
-                        {
-                            <option value="all">@Culture["Discovery.AgeAny"]</option>
-                        }
+                        <option value="all">@Culture["Discovery.AgeAny"]</option>
                         @for (var age = 15; age <= 21; age++)
                         {
                             <option value="@age">@(age == 21 ? "21+" : age.ToString())</option>
@@ -305,7 +302,8 @@
                         }
                         <option value="type">@Culture["Discovery.SortType"]</option>
                         <option value="recent">@Culture["Discovery.SortRecent"]</option>
-                        <option value="title">@Culture["Discovery.SortAlpha"]</option>
+                        <option value="title">@Culture["Discovery.SortAlphaAsc"]</option>
+                        <option value="title-desc">@Culture["Discovery.SortAlphaDesc"]</option>
                     </select>
                 </label>
             </div>
@@ -427,10 +425,7 @@
                     <label>
                         @Culture["Discovery.Age"]
                         <select value="@AgeSelectValue" @onchange="OnAgeChanged" required>
-                            @if (_profileAgeYears is null)
-                            {
-                                <option value="all">@Culture["Discovery.AgeAny"]</option>
-                            }
+                            <option value="all">@Culture["Discovery.AgeAny"]</option>
                             @for (var age = 15; age <= 21; age++)
                             {
                                 <option value="@age">@(age == 21 ? "21+" : age.ToString())</option>
@@ -485,6 +480,7 @@
     private string _selectedTransport = "Fiets";
     private string _selectedWorkType = "";
     private string _sortMode = "title";
+    private bool _sortChosenByUser;
     private int? _ageYears;
     /// <summary>Age from candidate profile (DOB), used as default / restore target.</summary>
     private int? _profileAgeYears;
@@ -514,26 +510,30 @@
         var age => age.Value.ToString()
     };
 
-    private IEnumerable<VacancyListItem> SortedVacancies
+    private IReadOnlyList<VacancyListItem> SortedVacancies
     {
         get
         {
             var mode = EffectiveSortMode;
-            return mode switch
+            var titleComparer = StringComparer.CurrentCultureIgnoreCase;
+            IEnumerable<VacancyListItem> sorted = mode switch
             {
                 "distance" => _vacancies
                     .OrderBy(v => v.TravelMinutes ?? int.MaxValue)
                     .ThenBy(v => v.DistanceKm ?? double.MaxValue)
-                    .ThenBy(v => v.Title, StringComparer.CurrentCultureIgnoreCase),
+                    .ThenBy(v => v.Title, titleComparer),
                 "type" => _vacancies
-                    .OrderBy(v => v.WorkTypes.FirstOrDefault() ?? "\uFFFF", StringComparer.CurrentCultureIgnoreCase)
-                    .ThenBy(v => v.Title, StringComparer.CurrentCultureIgnoreCase),
+                    .OrderBy(v => v.WorkTypes.FirstOrDefault() ?? "\uFFFF", titleComparer)
+                    .ThenBy(v => v.Title, titleComparer),
                 "recent" => _vacancies
                     .OrderByDescending(v => v.StartDate)
-                    .ThenBy(v => v.Title, StringComparer.CurrentCultureIgnoreCase),
+                    .ThenBy(v => v.Title, titleComparer),
+                "title-desc" => _vacancies
+                    .OrderByDescending(v => v.Title, titleComparer),
                 _ => _vacancies
-                    .OrderBy(v => v.Title, StringComparer.CurrentCultureIgnoreCase)
+                    .OrderBy(v => v.Title, titleComparer)
             };
+            return sorted.ToList();
         }
     }
 
@@ -695,7 +695,7 @@
                 if (stored is not null && IsFinite(stored.Lat) && IsFinite(stored.Lng))
                 {
                     _origin = new OriginPoint { Latitude = stored.Lat, Longitude = stored.Lng };
-                    if (_sortMode is not "type" and not "recent")
+                    if (!_sortChosenByUser && _sortMode is not "type" and not "recent")
                     {
                         _sortMode = "distance";
                     }
@@ -1039,7 +1039,7 @@
     private async Task ApplyOriginAsync(double lat, double lng, string? label)
     {
         _origin = new OriginPoint { Latitude = lat, Longitude = lng };
-        if (_sortMode is not "type" and not "recent")
+        if (!_sortChosenByUser && _sortMode is not "type" and not "recent")
         {
             _sortMode = "distance";
         }
@@ -1158,13 +1158,12 @@
     private async Task OnAgeChanged(ChangeEventArgs e)
     {
         var raw = e.Value?.ToString();
-        // "all" (and any non-numeric) means Alle — never leave the select without a selection.
+        // "all" (and any non-numeric) means Alle.
         if (string.IsNullOrWhiteSpace(raw)
             || string.Equals(raw, "all", StringComparison.OrdinalIgnoreCase)
             || !int.TryParse(raw, out var age))
         {
-            // Logged-in candidates with a profile age keep that age (from geboortedatum).
-            _ageYears = _profileAgeYears;
+            _ageYears = null;
             _minHourlyWage = null;
             _maxHourlyWage = null;
         }
@@ -1305,10 +1304,11 @@
     private void OnSortChanged(ChangeEventArgs e)
     {
         var value = e.Value?.ToString();
+        _sortChosenByUser = true;
         _sortMode = value switch
         {
             "distance" when _origin is not null => "distance",
-            "type" or "recent" or "title" => value,
+            "type" or "recent" or "title" or "title-desc" => value!,
             "distance" => "title",
             _ => _origin is not null ? "distance" : "title"
         };
@@ -1338,8 +1338,7 @@
 
     private async Task ClearAgeAsync()
     {
-        // Candidates: restore profile age (DOB), don't leave Alle when profile has an age.
-        _ageYears = _profileAgeYears;
+        _ageYears = null;
         _minHourlyWage = null;
         _maxHourlyWage = null;
         await PersistAgeAsync();
@@ -1349,7 +1348,7 @@
     private async Task ClearAllFiltersAsync()
     {
         _selectedWorkType = "";
-        _ageYears = _profileAgeYears;
+        _ageYears = null;
         _minHourlyWage = null;
         _maxHourlyWage = null;
         _maxTravelMinutes = 30;
