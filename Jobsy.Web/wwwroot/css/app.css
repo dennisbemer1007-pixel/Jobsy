@@ -677,6 +677,167 @@ a {
         var(--pearl-gradient);
 }
 
+/* Full-viewport login dialog: popup on desktop, immersive on mobile */
+.login-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 90;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+}
+
+.login-modal__backdrop {
+    position: absolute;
+    inset: 0;
+    background: color-mix(in srgb, var(--brand) 22%, rgba(15, 23, 42, 0.48));
+    cursor: pointer;
+    text-decoration: none;
+}
+
+.login-modal__dialog {
+    position: relative;
+    z-index: 1;
+    width: min(420px, calc(100vw - 2rem));
+    max-height: min(92vh, 920px);
+    overflow: auto;
+    margin: 0;
+    animation: login-modal-in 180ms ease-out;
+}
+
+.login-modal__dialog.login-card {
+    width: min(420px, calc(100vw - 2rem));
+}
+
+.login-modal__header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 0.75rem;
+}
+
+.login-modal__header .login-brand {
+    margin-bottom: 0.85rem;
+}
+
+.login-modal__close {
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2rem;
+    height: 2rem;
+    margin-top: 0.15rem;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--muted);
+    font-size: 1.35rem;
+    line-height: 1;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.login-modal__close:hover {
+    background: var(--hover);
+    color: var(--text);
+}
+
+.login-modal__actions {
+    margin-top: 1.15rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--border);
+    display: flex;
+    justify-content: center;
+}
+
+.login-modal__cancel {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 2.5rem;
+    padding: 0.45rem 0.9rem;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--text);
+    font: inherit;
+    font-size: 0.92rem;
+    font-weight: 600;
+    text-decoration: none;
+    text-align: center;
+}
+
+.login-modal__cancel:hover {
+    background: var(--hover);
+}
+
+@keyframes login-modal-in {
+    from {
+        opacity: 0;
+        transform: translateY(10px) scale(0.98);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+@media (max-width: 720px) {
+    .login-modal {
+        align-items: stretch;
+        justify-content: stretch;
+    }
+
+    .login-modal__backdrop {
+        display: none;
+    }
+
+    .login-modal__dialog {
+        width: 100%;
+        max-width: none;
+        max-height: none;
+        min-height: 100dvh;
+        border-radius: 0;
+        border: none;
+        box-shadow: none;
+        padding: 1.25rem 1.1rem calc(1.5rem + env(safe-area-inset-bottom, 0px));
+        animation: none;
+        background:
+            radial-gradient(ellipse at top right, color-mix(in srgb, var(--pearl-cool) 70%, transparent), transparent 48%),
+            radial-gradient(ellipse at bottom left, color-mix(in srgb, var(--pearl-mid) 80%, transparent), transparent 42%),
+            var(--pearl-gradient),
+            var(--surface);
+    }
+
+    .login-modal__dialog.login-card {
+        width: 100%;
+    }
+
+    .login-modal__close {
+        width: 2.4rem;
+        height: 2.4rem;
+        font-size: 1.5rem;
+    }
+
+    .login-modal__actions {
+        position: sticky;
+        bottom: 0;
+        margin-top: 1.5rem;
+        padding: 1rem 0 calc(0.25rem + env(safe-area-inset-bottom, 0px));
+        background: linear-gradient(to top, var(--surface) 70%, transparent);
+        border-top: none;
+    }
+
+    .login-modal__cancel {
+        width: 100%;
+        min-height: 2.85rem;
+        background: var(--surface);
+        border-color: color-mix(in srgb, var(--brand) 35%, var(--border));
+    }
+}
+
 .login-card {
     width: min(420px, 100%);
     background: var(--surface);

@@ -15,13 +15,25 @@
 
 <PageTitle>@Culture["Login.Title"] · Lobsy</PageTitle>
 
-<div class="login-page">
-    <div class="login-card">
-        <div class="login-brand">
-            <img class="login-brand__logo" src="images/brand/lobsy.png?v=20260726-no-ai" alt="Lobsy" width="80" height="80" />
-            <span class="login-brand__name">Lobsy</span>
+<div class="login-modal" role="dialog" aria-modal="true" aria-labelledby="login-title">
+    <a class="login-modal__backdrop"
+       href="@_dismissUrl"
+       tabindex="-1"
+       aria-label="@Culture["Login.Close"]"></a>
+
+    <div class="login-modal__dialog login-card">
+        <div class="login-modal__header">
+            <div class="login-brand">
+                <img class="login-brand__logo" src="images/brand/lobsy.png?v=20260726-no-ai" alt="Lobsy" width="80" height="80" />
+                <span class="login-brand__name">Lobsy</span>
+            </div>
+            <a class="login-modal__close"
+               href="@_dismissUrl"
+               aria-label="@Culture["Login.Close"]"
+               title="@Culture["Login.Close"]">×</a>
         </div>
-        <h1>@Culture["Login.Title"]</h1>
+
+        <h1 id="login-title">@Culture["Login.Title"]</h1>
         <p class="login-lead">@Culture["Login.Lead"]</p>
 
         @if (!string.IsNullOrEmpty(_errorMessage))
@@ -112,11 +124,16 @@
             <p class="login-register__lead">@Culture["Login.RegisterLead"]</p>
             <a class="provider-btn provider-btn--register" href="/register">@Culture["Login.RegisterCta"]</a>
         </div>
+
+        <div class="login-modal__actions">
+            <a class="login-modal__cancel" href="@_dismissUrl">@Culture["Login.BackToMap"]</a>
+        </div>
     </div>
 </div>
 
 @code {
     private string _returnUrl = "/home";
+    private string _dismissUrl = AuthRedirects.BanenkaartPath;
     private string? _errorMessage;
     private bool _entraEnabled;
     private bool _googleEnabled;
@@ -151,6 +168,9 @@
         {
             _returnUrl = AuthRedirects.SafeLocalUrl(AuthRedirects.PostLoginUrl(returnUrl.ToString()));
         }
+
+        // Closing the dialog always returns to the banenkaart (not a protected returnUrl).
+        _dismissUrl = AuthRedirects.BanenkaartPath;
 
         if (query.TryGetValue("error", out var error))
         {
