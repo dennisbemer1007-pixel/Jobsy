@@ -21,6 +21,8 @@
     --coral-soft: #fde8e4;
     --danger: #9b1c1c;
     --danger-soft: #fef2f2;
+    --success: #15803d;
+    --success-soft: #ecfdf3;
     --warn: #a65b00;
     --warn-soft: #fff8e7;
     --hover: #f0ebe6;
@@ -4488,8 +4490,8 @@ a.map-popup__cta {
 }
 
 .integration-tile--ok {
-    border-color: var(--brand);
-    box-shadow: 0 0 0 1px color-mix(in srgb, var(--brand) 15%, transparent);
+    border-color: var(--success);
+    box-shadow: 0 0 0 1px color-mix(in srgb, var(--success) 18%, transparent);
 }
 
 .integration-tile--fail {
@@ -4501,7 +4503,7 @@ a.map-popup__cta {
     border-color: var(--border);
 }
 
-.integration-tile--ok .company-card__meta { color: var(--brand); }
+.integration-tile--ok .company-card__meta { color: var(--success); }
 .integration-tile--fail .company-card__meta { color: var(--danger); }
 .integration-tile--unknown .company-card__meta { color: var(--muted); }
 
