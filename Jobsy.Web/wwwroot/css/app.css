@@ -4551,6 +4551,11 @@ a.map-popup__cta {
     box-sizing: border-box;
 }
 
+/* Mask typed secrets without type=password (avoids browser autofill dots on empty fields). */
+.integration-key-form input.integration-secret-input {
+    -webkit-text-security: disc;
+}
+
 .company-card__logo {
     display: flex;
     align-items: center;

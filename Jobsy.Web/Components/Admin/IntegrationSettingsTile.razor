@@ -21,10 +21,22 @@
                 {
                     <p class="muted">Huidige API-key: @Credential.ApiKeyMasked</p>
                 }
+                else
+                {
+                    <p class="muted">Nog geen API-key opgeslagen.</p>
+                }
                 <label>
                     API-key
-                    <input type="password"
+                    @* type=text + text-security: empty field stays empty (no browser password-dots). *@
+                    <input class="integration-secret-input"
+                           type="text"
                            autocomplete="off"
+                           autocorrect="off"
+                           autocapitalize="off"
+                           spellcheck="false"
+                           data-lpignore="true"
+                           data-1p-ignore="true"
+                           name="@($"integration-{Credential.Key}-api-key")"
                            placeholder="@(Credential.HasApiKey ? "Nieuwe key (leeg = behouden)" : "Plak API-key")"
                            @bind="_apiKey"
                            @bind:event="oninput"
@@ -42,10 +54,21 @@
                 {
                     <p class="muted">Huidig secret: @Credential.ClientSecretMasked</p>
                 }
+                else
+                {
+                    <p class="muted">Nog geen client secret opgeslagen.</p>
+                }
                 <label>
                     Client Secret
-                    <input type="password"
+                    <input class="integration-secret-input"
+                           type="text"
                            autocomplete="off"
+                           autocorrect="off"
+                           autocapitalize="off"
+                           spellcheck="false"
+                           data-lpignore="true"
+                           data-1p-ignore="true"
+                           name="@($"integration-{Credential.Key}-client-secret")"
                            placeholder="@(Credential.HasClientSecret ? "Nieuw secret (leeg = behouden)" : "Client secret")"
                            @bind="_clientSecret"
                            @bind:event="oninput"
@@ -268,6 +291,19 @@
         _localMessage = null;
         try
         {
+            // Backend test leest alleen opgeslagen secrets uit de DB — eerst form bewaren
+            // zodat getypte (nog niet opgeslagen) waarden ook meegenomen worden.
+            var hasUnsavedSecrets =
+                !string.IsNullOrWhiteSpace(_apiKey) ||
+                !string.IsNullOrWhiteSpace(_clientSecret);
+            if (_dirty || hasUnsavedSecrets)
+            {
+                await Api.SaveIntegrationCredentialAsync(Credential.Key, BuildSaveForm());
+                _apiKey = "";
+                _clientSecret = "";
+                _dirty = false;
+            }
+
             var result = await Api.TestIntegrationAsync(Credential.Key);
             if (result is not null)
             {
