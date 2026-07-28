@@ -6,6 +6,7 @@
 @using Microsoft.AspNetCore.WebUtilities
 @using Microsoft.Extensions.Options
 @inject IOptions<AuthOptions> AuthOptions
+@inject IExternalAuthCredentialSource ExternalAuth
 @inject IAntiforgery Antiforgery
 @inject NavigationManager Navigation
 @inject IHttpContextAccessor HttpContextAccessor
@@ -126,7 +127,7 @@
     [CascadingParameter]
     private HttpContext? HttpContext { get; set; }
 
-    protected override void OnInitialized()
+    protected override async Task OnInitializedAsync()
     {
         Culture.Changed += OnCultureChanged;
 
@@ -139,9 +140,9 @@
         }
 
         var auth = AuthOptions.Value;
-        _entraEnabled = auth.Entra.IsConfigured;
-        _googleEnabled = auth.Google.IsConfigured;
         _demoUsers = auth.DemoUsers;
+        _entraEnabled = await ExternalAuth.IsEntraConfiguredAsync();
+        _googleEnabled = await ExternalAuth.IsGoogleConfiguredAsync();
 
         var uri = Navigation.ToAbsoluteUri(Navigation.Uri);
         var query = QueryHelpers.ParseQuery(uri.Query);

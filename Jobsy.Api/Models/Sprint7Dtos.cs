@@ -74,3 +74,11 @@ public record EnsureExternalUserResponse(
     bool IsNewUser,
     bool ShowCandidateHowTo,
     bool HasCandidateApplications);
+
+public record ExternalProvidersStatusResponse(bool Entra, bool Google);
+
+public record ExternalProviderConfigResponse(
+    string Provider,
+    string ClientId,
+    string ClientSecret,
+    string? TenantId);

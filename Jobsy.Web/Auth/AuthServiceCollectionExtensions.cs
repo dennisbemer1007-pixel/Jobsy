@@ -28,7 +28,9 @@ public static class AuthServiceCollectionExtensions
     {
         services.Configure<AuthOptions>(configuration.GetSection(AuthOptions.SectionName));
         services.AddSingleton<DemoUserStore>();
+        services.AddMemoryCache();
         services.AddHttpClient("JobsyAuthProvision");
+        services.AddSingleton<IExternalAuthCredentialSource, ExternalAuthCredentialSource>();
 
         var authOptions = configuration.GetSection(AuthOptions.SectionName).Get<AuthOptions>() ?? new AuthOptions();
         var secureAlways = environment is not null && !environment.IsDevelopment();
@@ -50,54 +52,56 @@ public static class AuthServiceCollectionExtensions
                     : CookieSecurePolicy.SameAsRequest;
             });
 
-        if (authOptions.Entra.IsConfigured)
+        // Always register schemes so Integraties credentials can activate login without env vars.
+        var entraTenant = string.IsNullOrWhiteSpace(authOptions.Entra.TenantId)
+            ? "common"
+            : authOptions.Entra.TenantId;
+        authBuilder.AddOpenIdConnect(EntraScheme, options =>
         {
-            var tenant = string.IsNullOrWhiteSpace(authOptions.Entra.TenantId)
-                ? "common"
-                : authOptions.Entra.TenantId;
-
-            authBuilder.AddOpenIdConnect(EntraScheme, options =>
+            options.Authority = $"https://login.microsoftonline.com/{entraTenant}/v2.0";
+            options.ClientId = string.IsNullOrWhiteSpace(authOptions.Entra.ClientId)
+                ? "pending"
+                : authOptions.Entra.ClientId;
+            options.ClientSecret = string.IsNullOrWhiteSpace(authOptions.Entra.ClientSecret)
+                ? "pending"
+                : authOptions.Entra.ClientSecret;
+            options.ResponseType = OpenIdConnectResponseType.Code;
+            options.CallbackPath = authOptions.Entra.CallbackPath;
+            options.SaveTokens = true;
+            options.GetClaimsFromUserInfoEndpoint = true;
+            options.Scope.Add("openid");
+            options.Scope.Add("profile");
+            options.Scope.Add("email");
+            options.TokenValidationParameters.NameClaimType = "name";
+            options.Events = new OpenIdConnectEvents
             {
-                options.Authority = $"https://login.microsoftonline.com/{tenant}/v2.0";
-                options.ClientId = authOptions.Entra.ClientId!;
-                options.ClientSecret = authOptions.Entra.ClientSecret!;
-                options.ResponseType = OpenIdConnectResponseType.Code;
-                options.CallbackPath = authOptions.Entra.CallbackPath;
-                options.SaveTokens = true;
-                options.GetClaimsFromUserInfoEndpoint = true;
-                options.Scope.Add("openid");
-                options.Scope.Add("profile");
-                options.Scope.Add("email");
-                options.TokenValidationParameters.NameClaimType = "name";
-                options.Events = new OpenIdConnectEvents
-                {
-                    OnTokenValidated = async context =>
-                    {
-                        await ApplyExternalJobsyProfileAsync(
-                            context.HttpContext,
-                            context.Principal,
-                            context.Properties);
-                    }
-                };
-            });
-        }
-
-        if (authOptions.Google.IsConfigured)
-        {
-            authBuilder.AddGoogle(GoogleScheme, options =>
-            {
-                options.ClientId = authOptions.Google.ClientId!;
-                options.ClientSecret = authOptions.Google.ClientSecret!;
-                options.CallbackPath = authOptions.Google.CallbackPath;
-                options.Events.OnCreatingTicket = async context =>
+                OnTokenValidated = async context =>
                 {
                     await ApplyExternalJobsyProfileAsync(
                         context.HttpContext,
                         context.Principal,
                         context.Properties);
-                };
-            });
-        }
+                }
+            };
+        });
+
+        authBuilder.AddGoogle(GoogleScheme, options =>
+        {
+            options.ClientId = string.IsNullOrWhiteSpace(authOptions.Google.ClientId)
+                ? "pending"
+                : authOptions.Google.ClientId;
+            options.ClientSecret = string.IsNullOrWhiteSpace(authOptions.Google.ClientSecret)
+                ? "pending"
+                : authOptions.Google.ClientSecret;
+            options.CallbackPath = authOptions.Google.CallbackPath;
+            options.Events.OnCreatingTicket = async context =>
+            {
+                await ApplyExternalJobsyProfileAsync(
+                    context.HttpContext,
+                    context.Principal,
+                    context.Properties);
+            };
+        });
 
         services.AddAuthorization();
         services.AddCascadingAuthenticationState();
@@ -162,12 +166,14 @@ public static class AuthServiceCollectionExtensions
             return Results.Redirect(AuthRedirects.SafeLocalUrl(returnUrl));
         });
 
-        app.MapGet("/account/external/{provider}", (
+        app.MapGet("/account/external/{provider}", async (
             string provider,
-            IOptions<AuthOptions> options,
+            HttpContext http,
+            IExternalAuthCredentialSource credentials,
+            IOptionsMonitor<OpenIdConnectOptions> oidcOptions,
+            IOptionsMonitor<Microsoft.AspNetCore.Authentication.Google.GoogleOptions> googleOptions,
             string? returnUrl) =>
         {
-            var auth = options.Value;
             var scheme = provider.Equals("entra", StringComparison.OrdinalIgnoreCase) ? EntraScheme
                 : provider.Equals("google", StringComparison.OrdinalIgnoreCase) ? GoogleScheme
                 : null;
@@ -177,14 +183,32 @@ public static class AuthServiceCollectionExtensions
                 return Results.Redirect("/login?error=unknown-provider");
             }
 
-            if (scheme == EntraScheme && !auth.Entra.IsConfigured)
+            if (scheme == EntraScheme)
             {
-                return Results.Redirect("/login?error=entra-not-configured");
-            }
+                var entra = await credentials.GetEntraAsync(http.RequestAborted);
+                if (entra is null)
+                {
+                    return Results.Redirect("/login?error=entra-not-configured");
+                }
 
-            if (scheme == GoogleScheme && !auth.Google.IsConfigured)
+                var options = oidcOptions.Get(EntraScheme);
+                var tenant = string.IsNullOrWhiteSpace(entra.TenantId) ? "common" : entra.TenantId;
+                options.ClientId = entra.ClientId;
+                options.ClientSecret = entra.ClientSecret;
+                options.Authority = $"https://login.microsoftonline.com/{tenant}/v2.0";
+                options.MetadataAddress = $"{options.Authority}/.well-known/openid-configuration";
+            }
+            else
             {
-                return Results.Redirect("/login?error=google-not-configured");
+                var google = await credentials.GetGoogleAsync(http.RequestAborted);
+                if (google is null)
+                {
+                    return Results.Redirect("/login?error=google-not-configured");
+                }
+
+                var options = googleOptions.Get(GoogleScheme);
+                options.ClientId = google.ClientId;
+                options.ClientSecret = google.ClientSecret;
             }
 
             var props = new AuthenticationProperties

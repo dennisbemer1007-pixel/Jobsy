@@ -42,7 +42,7 @@ public static class IntegrationHelpDocs
         Summary: "Microsoft-login via Entra ID (Azure AD) / OpenID Connect.",
         UsedFor: "De knop ‘Microsoft Entra’ op de loginpagina. Gebruikers loggen in met een Microsoft-account; Lobsy maakt (standaard) een kandidaat-sessie aan.",
         WhereToGetKey: "Azure Portal → Microsoft Entra ID → App-registraties → Nieuwe registratie. Neem Application (client) ID, maak een Client secret, en zet Tenant ID (of ‘common’). Redirect URI: https://JOUW-WEB-URL/signin-entra",
-        Tip: "Zet dezelfde Client ID / Secret / Tenant ook als env vars op jobsy-web (Authentication__Entra__…) zodat de login-knop actief wordt. Integraties-tegel alleen is niet genoeg voor de knop.",
+        Tip: "Credentials uit Integraties activeren de login-knoppen automatisch (env vars Authentication__Entra__… blijven optioneel als override).",
         DocsUrl: "https://portal.azure.com/#view/Microsoft_AAD_RegisteredApps/ApplicationsListBlade",
         DocsUrlLabel: "Azure App-registraties");
 
@@ -50,7 +50,7 @@ public static class IntegrationHelpDocs
         Summary: "Google-login via OAuth 2.0.",
         UsedFor: "De knop ‘Google’ op de loginpagina voor kandidaten/gebruikers met een Google-account.",
         WhereToGetKey: "Google Cloud Console → eigen project → APIs & Services → OAuth consent screen, daarna Credentials → OAuth client ID (Web application). Redirect URI: https://JOUW-WEB-URL/signin-google",
-        Tip: "Maak een nieuw Cloud-project als je ‘Access denied’ ziet op een andermans project. Zet Client ID/Secret ook op jobsy-web (Authentication__Google__…). In Testing-modus moeten testusers op de consent screen staan.",
+        Tip: "Credentials uit Integraties activeren de login-knoppen automatisch. In Testing-modus moeten testusers op de consent screen staan.",
         DocsUrl: "https://console.cloud.google.com/apis/credentials",
         DocsUrlLabel: "Google Cloud Credentials");
 

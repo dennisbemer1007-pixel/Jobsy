@@ -208,7 +208,7 @@ public sealed class IntegrationHealthStub : IIntegrationHealthService
         }
 
         var label = IntegrationCredentialService.DisplayName(key);
-        return (true, $"{label}-credentials aanwezig. Herstart de Web-app om login te activeren.");
+        return (true, $"{label}-credentials aanwezig. Login-knoppen gebruiken deze Integraties-gegevens.");
     }
 
     private async Task<(bool Ok, string Message)> TestConfiguredAsync(
