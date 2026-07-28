@@ -59,4 +59,18 @@ public record LocalLoginResponse(
     string FullName,
     string Role,
     Guid? CompanyId,
-    IReadOnlyList<Guid> CompanyIds);
+    IReadOnlyList<Guid> CompanyIds,
+    bool ShowCandidateHowTo = false,
+    bool HasCandidateApplications = false);
+
+public record EnsureExternalUserRequest(string Email, string? FullName);
+
+public record EnsureExternalUserResponse(
+    string Email,
+    string FullName,
+    string Role,
+    Guid? CompanyId,
+    IReadOnlyList<Guid> CompanyIds,
+    bool IsNewUser,
+    bool ShowCandidateHowTo,
+    bool HasCandidateApplications);

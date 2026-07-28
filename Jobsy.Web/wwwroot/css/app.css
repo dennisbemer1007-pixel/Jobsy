@@ -153,6 +153,38 @@ a {
     margin-bottom: 1.25rem;
 }
 
+.how-lobsy-steps {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    display: grid;
+    gap: 1rem;
+}
+
+.how-lobsy-step {
+    padding: 1rem 1.1rem;
+    border-radius: var(--radius-sm);
+    border: 1px solid color-mix(in srgb, var(--brand) 14%, var(--border));
+    background: color-mix(in srgb, var(--brand) 4%, var(--surface));
+}
+
+.how-lobsy-step h2 {
+    margin: 0 0 0.4rem;
+    font-size: 1.05rem;
+    color: var(--brand);
+}
+
+.how-lobsy-step p {
+    margin: 0;
+    line-height: 1.5;
+    color: var(--text);
+}
+
+.how-lobsy-actions {
+    margin-top: 1.5rem;
+    align-items: center;
+}
+
 .panel-header > .period-tabs {
     margin-left: auto;
 }

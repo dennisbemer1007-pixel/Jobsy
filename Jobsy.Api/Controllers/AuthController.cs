@@ -1,4 +1,7 @@
 using Jobsy.Api.Models;
+using Jobsy.Core.Authorization;
+using Jobsy.Core.Entities;
+using Jobsy.Core.Enums;
 using Jobsy.Core.Interfaces;
 using Jobsy.Infrastructure.Data;
 using Jobsy.Infrastructure.Security;
@@ -14,10 +17,12 @@ namespace Jobsy.Api.Controllers;
 public class AuthController : ControllerBase
 {
     private readonly JobsyDbContext _db;
+    private readonly IConfiguration _configuration;
 
-    public AuthController(JobsyDbContext db)
+    public AuthController(JobsyDbContext db, IConfiguration configuration)
     {
         _db = db;
+        _configuration = configuration;
     }
 
     /// <summary>
@@ -62,17 +67,125 @@ public class AuthController : ControllerBase
             return Unauthorized(new { message = "Account is niet actief." });
         }
 
+        var flags = await BuildFlagsAsync(user, cancellationToken);
+        return Ok(new LocalLoginResponse(
+            user.Email,
+            user.FullName,
+            user.Role.ToString(),
+            user.CompanyId,
+            flags.CompanyIds,
+            flags.ShowCandidateHowTo,
+            flags.HasCandidateApplications));
+    }
+
+    /// <summary>
+    /// Upserts an external (Google/Entra) identity into Jobsy Users.
+    /// New users become Candidate; invited managers keep their DB role.
+    /// Requires the shared JobsyAuth development/provision secret (server-to-server).
+    /// </summary>
+    [HttpPost("ensure-external")]
+    [AllowAnonymous]
+    [EnableRateLimiting("auth")]
+    public async Task<ActionResult<EnsureExternalUserResponse>> EnsureExternal(
+        [FromBody] EnsureExternalUserRequest request,
+        CancellationToken cancellationToken)
+    {
+        if (!IsTrustedProvisionCaller())
+        {
+            return Unauthorized(new { message = "Ongeldige provision-secret." });
+        }
+
+        if (string.IsNullOrWhiteSpace(request.Email))
+        {
+            return BadRequest(new { message = "E-mail is verplicht." });
+        }
+
+        var email = request.Email.Trim().ToLowerInvariant();
+        var fullName = string.IsNullOrWhiteSpace(request.FullName)
+            ? email
+            : request.FullName.Trim();
+
+        var user = await _db.Users
+            .Include(u => u.CompanyMemberships)
+            .FirstOrDefaultAsync(u => u.Email.ToLower() == email, cancellationToken);
+
+        var isNew = false;
+        if (user is null)
+        {
+            isNew = true;
+            user = new User
+            {
+                Id = Guid.NewGuid(),
+                Email = email,
+                FullName = fullName,
+                Role = UserRole.Candidate,
+                IsActive = true
+            };
+            _db.Users.Add(user);
+            await _db.SaveChangesAsync(cancellationToken);
+        }
+        else
+        {
+            if (!user.IsActive)
+            {
+                return Unauthorized(new { message = "Account is niet actief." });
+            }
+
+            if (!string.IsNullOrWhiteSpace(fullName)
+                && !string.Equals(user.FullName, fullName, StringComparison.Ordinal)
+                && fullName != email)
+            {
+                user.FullName = fullName;
+                await _db.SaveChangesAsync(cancellationToken);
+            }
+        }
+
+        var flags = await BuildFlagsAsync(user, cancellationToken);
+        return Ok(new EnsureExternalUserResponse(
+            user.Email,
+            user.FullName,
+            user.Role.ToString(),
+            user.CompanyId,
+            flags.CompanyIds,
+            isNew,
+            flags.ShowCandidateHowTo,
+            flags.HasCandidateApplications));
+    }
+
+    private bool IsTrustedProvisionCaller()
+    {
+        var expected = _configuration["JobsyAuth:DevelopmentAuthSecret"]
+                       ?? _configuration["JobsyAuth:ExternalProvisionSecret"];
+        if (string.IsNullOrWhiteSpace(expected))
+        {
+            // Local/dev without secret: allow loopback-only provision for DX.
+            var remote = HttpContext.Connection.RemoteIpAddress;
+            return remote is null
+                   || System.Net.IPAddress.IsLoopback(remote);
+        }
+
+        if (!Request.Headers.TryGetValue("X-Jobsy-Provision-Secret", out var provided))
+        {
+            return false;
+        }
+
+        return string.Equals(provided.ToString(), expected, StringComparison.Ordinal);
+    }
+
+    private async Task<(IReadOnlyList<Guid> CompanyIds, bool ShowCandidateHowTo, bool HasCandidateApplications)>
+        BuildFlagsAsync(User user, CancellationToken cancellationToken)
+    {
         var companyIds = user.CompanyMemberships.Select(m => m.CompanyId).Distinct().ToList();
         if (user.CompanyId is Guid primary && !companyIds.Contains(primary))
         {
             companyIds.Insert(0, primary);
         }
 
-        return Ok(new LocalLoginResponse(
-            user.Email,
-            user.FullName,
-            user.Role.ToString(),
-            user.CompanyId,
-            companyIds));
+        var hasApps = await _db.Applications.AsNoTracking()
+            .AnyAsync(a => a.CandidateUserId == user.Id, cancellationToken);
+
+        var showHowTo = user.Role == UserRole.Candidate && user.CandidateHowToCompletedAt is null;
+
+        return (companyIds, showHowTo, hasApps);
     }
 }

@@ -34,6 +34,12 @@ public class User
     public string? ConsentVersion { get; set; }
 
     /// <summary>
+    /// When the candidate completed (or dismissed) the "Hoe werkt Lobsy" onboarding page.
+    /// Null for new candidates → redirect there after first Google/Entra login.
+    /// </summary>
+    public DateTime? CandidateHowToCompletedAt { get; set; }
+
+    /// <summary>
     /// Extra company memberships for RegionalManager, EnterpriseManager and Intermediary.
     /// </summary>
     public ICollection<UserCompany> CompanyMemberships { get; set; } = new List<UserCompany>();

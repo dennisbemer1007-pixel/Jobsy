@@ -202,24 +202,33 @@ public class CompanyUsersController : ControllerBase
             .FirstOrDefaultAsync(u => u.Email.ToLower() == email, cancellationToken);
 
         User user;
+        var promotedFromCandidate = false;
         if (existing is not null)
         {
-            if (existing.Role is UserRole.Candidate or UserRole.Admin or UserRole.SalesManager)
+            if (existing.Role is UserRole.Admin or UserRole.SalesManager)
             {
                 return BadRequest(new { message = "Dit e-mailadres is al in gebruik met een andere rol." });
             }
 
-            var existingMemberships = existing.CompanyMemberships.Select(m => m.CompanyId).ToList();
-            if (!EmployerInviteRules.IsWithinCallerScope(
-                    existing.CompanyId,
-                    existingMemberships,
-                    accessible,
-                    _companyAuth.IsAdmin(User)))
+            if (existing.Role == UserRole.Candidate)
             {
-                return BadRequest(new
+                // Behoud User.Id zodat sollicitaties/profiel blijven bestaan; rol wordt manager.
+                promotedFromCandidate = true;
+            }
+            else
+            {
+                var existingMemberships = existing.CompanyMemberships.Select(m => m.CompanyId).ToList();
+                if (!EmployerInviteRules.IsWithinCallerScope(
+                        existing.CompanyId,
+                        existingMemberships,
+                        accessible,
+                        _companyAuth.IsAdmin(User)))
                 {
-                    message = "Deze gebruiker hoort bij een andere organisatie en kan niet worden overgenomen."
-                });
+                    return BadRequest(new
+                    {
+                        message = "Deze gebruiker hoort bij een andere organisatie en kan niet worden overgenomen."
+                    });
+                }
             }
 
             user = existing;
@@ -289,9 +298,14 @@ public class CompanyUsersController : ControllerBase
             $"""
              <p>Hoi {name},</p>
              <p>Je bent uitgenodigd als <strong>{WebUtility.HtmlEncode(roleLabel)}</strong> op Lobsy.</p>
-             <p>Log in via <a href="{loginUrl}">{loginUrl}</a></p>
+             <p>Log in via <a href="{loginUrl}">{loginUrl}</a> met je tijdelijke wachtwoord,
+             of met <strong>Google</strong> / <strong>Microsoft Entra</strong> op hetzelfde e-mailadres
+             — dan krijg je automatisch je managerrol.</p>
              <p>E-mail: <strong>{WebUtility.HtmlEncode(user.Email)}</strong><br/>
              Tijdelijk wachtwoord: <strong>{WebUtility.HtmlEncode(temporaryPassword)}</strong></p>
+             {(promotedFromCandidate
+                 ? "<p>Je eerdere sollicitaties blijven zichtbaar (alleen-lezen) in Lobsy.</p>"
+                 : "")}
              <p><em>Invite stub — geen echte mail.</em></p>
              """,
             "UserInvite"), cancellationToken);

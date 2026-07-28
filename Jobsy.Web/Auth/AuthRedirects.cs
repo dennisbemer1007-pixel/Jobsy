@@ -4,6 +4,8 @@ namespace Jobsy.Web.Auth;
 
 public static partial class AuthRedirects
 {
+    public const string CandidateHowToPath = "/candidate/hoe-werkt-lobsy";
+
     [GeneratedRegex(@"^/[A-Za-z0-9\-._~!$&'()*+,;=:@%/?]*$", RegexOptions.CultureInvariant)]
     private static partial Regex SafeLocalPathRegex();
 
@@ -53,7 +55,10 @@ public static partial class AuthRedirects
         }
 
         // Reject absolute URLs / scheme tricks before decoding.
-        if (Uri.TryCreate(url, UriKind.Absolute, out _))
+        // Note: on Linux, Uri.TryCreate("/path", Absolute) can succeed as file:// — ignore those.
+        if (Uri.TryCreate(url, UriKind.Absolute, out var absolute)
+            && absolute.IsAbsoluteUri
+            && !string.Equals(absolute.Scheme, "file", StringComparison.OrdinalIgnoreCase))
         {
             return false;
         }

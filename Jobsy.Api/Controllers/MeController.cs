@@ -243,7 +243,6 @@ public class MeController : ControllerBase
     }
 
     [HttpGet("applications")]
-    [Authorize(Policy = JobsyPolicies.RequireCandidate)]
     public async Task<ActionResult<IEnumerable<ApplicationDto>>> GetMyApplications(CancellationToken cancellationToken)
     {
         var user = await _users.FindByPrincipalAsync(User, cancellationToken);
@@ -270,6 +269,30 @@ public class MeController : ControllerBase
             .ToListAsync(cancellationToken);
 
         return Ok(items);
+    }
+
+    [HttpPost("candidate-how-to-completed")]
+    public async Task<IActionResult> CompleteCandidateHowTo(CancellationToken cancellationToken)
+    {
+        var lookup = await _users.FindByPrincipalAsync(User, cancellationToken);
+        if (lookup is null)
+        {
+            return NotFound(new { message = "Gebruiker niet gevonden in Jobsy." });
+        }
+
+        var user = await _db.Users.FirstOrDefaultAsync(u => u.Id == lookup.Id, cancellationToken);
+        if (user is null)
+        {
+            return NotFound(new { message = "Gebruiker niet gevonden in Jobsy." });
+        }
+
+        if (user.CandidateHowToCompletedAt is null)
+        {
+            user.CandidateHowToCompletedAt = DateTime.UtcNow;
+            await _db.SaveChangesAsync(cancellationToken);
+        }
+
+        return NoContent();
     }
 
     [HttpGet("likes")]

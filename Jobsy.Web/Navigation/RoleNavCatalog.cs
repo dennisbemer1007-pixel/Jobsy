@@ -21,10 +21,14 @@ public static class RoleNavCatalog
     public static readonly NavItem[] Candidate =
     [
         new("Nav.Search", "/", NavIcons.Search),
+        new("Nav.HowLobsyWorks", "/candidate/hoe-werkt-lobsy", NavIcons.Info),
         new("Nav.Saved", "/candidate/liked", NavIcons.Liked, ["/candidate/shared"]),
         new("Nav.MyApplications", "/candidate/applications", NavIcons.Applications),
         new("Nav.Profile", "/candidate/profile", NavIcons.Profile, ["/home"])
     ];
+
+    public static readonly NavItem MyApplicationsReadOnly =
+        new("Nav.MyApplications", "/candidate/applications", NavIcons.Applications);
 
     public static readonly NavItem[] Enterprise =
     [
@@ -97,25 +101,42 @@ public static class RoleNavCatalog
 
         if (RoleClaimMatching.HasRole(user, JobsyRoles.EnterpriseManager))
         {
-            return Enterprise;
+            return WithOptionalCandidateApplications(Enterprise, user);
         }
 
         if (RoleClaimMatching.HasRole(user, JobsyRoles.RegionalManager))
         {
-            return Regional;
+            return WithOptionalCandidateApplications(Regional, user);
         }
 
         if (RoleClaimMatching.HasRole(user, JobsyRoles.BranchManager))
         {
-            return Branch;
+            return WithOptionalCandidateApplications(Branch, user);
         }
 
         if (RoleClaimMatching.HasRole(user, JobsyRoles.Intermediary))
         {
-            return Intermediary;
+            return WithOptionalCandidateApplications(Intermediary, user);
         }
 
         return Anonymous;
+    }
+
+    private static IReadOnlyList<NavItem> WithOptionalCandidateApplications(
+        NavItem[] baseItems,
+        ClaimsPrincipal user)
+    {
+        if (!user.HasClaim(JobsyClaimTypes.HasCandidateApplications, "1"))
+        {
+            return baseItems;
+        }
+
+        if (baseItems.Any(i => i.Href == MyApplicationsReadOnly.Href))
+        {
+            return baseItems;
+        }
+
+        return [.. baseItems, MyApplicationsReadOnly];
     }
 
     public static bool IsActive(NavItem item, string relativePath, IReadOnlyList<NavItem>? siblings = null)

@@ -1,6 +1,9 @@
+@using Jobsy.Core.Authorization
 @using Jobsy.Web.Components.Shared
+@using Microsoft.AspNetCore.Components.Authorization
 @inject JobsyApiClient Api
 @inject NavigationManager Navigation
+@inject AuthenticationStateProvider AuthState
 
 <div class="panel-page">
     <header class="panel-header">
@@ -48,6 +51,13 @@
                 <span class="stat-card__label">Vacatures</span>
                 <strong class="stat-card__value">→</strong>
             </a>
+            @if (_showMyApplications)
+            {
+                <a class="stat-card stat-card--link" href="/candidate/applications">
+                    <span class="stat-card__label">Mijn sollicitaties</span>
+                    <strong class="stat-card__value">→</strong>
+                </a>
+            }
             @if (!string.IsNullOrEmpty(ExtraHref))
             {
                 <a class="stat-card stat-card--link" href="@ExtraHref">
@@ -79,11 +89,16 @@
 
     private string _period = "week";
     private bool _loading = true;
+    private bool _showMyApplications;
     private string? _error;
     private List<MetricCount> _metrics = [];
 
     protected override async Task OnInitializedAsync()
-        => await LoadSummaryAsync();
+    {
+        var state = await AuthState.GetAuthenticationStateAsync();
+        _showMyApplications = state.User.HasClaim(JobsyClaimTypes.HasCandidateApplications, "1");
+        await LoadSummaryAsync();
+    }
 
     private static string FormatValue(MetricCount metric)
         => metric.Key.StartsWith("tokens_", StringComparison.OrdinalIgnoreCase)

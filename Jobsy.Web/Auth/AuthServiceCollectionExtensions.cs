@@ -1,8 +1,9 @@
+using System.Net.Http.Json;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
-using System.Net.Http.Json;
 using Jobsy.Core;
+using Jobsy.Core.Authorization;
 using Microsoft.AspNetCore.Antiforgery;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
@@ -27,6 +28,7 @@ public static class AuthServiceCollectionExtensions
     {
         services.Configure<AuthOptions>(configuration.GetSection(AuthOptions.SectionName));
         services.AddSingleton<DemoUserStore>();
+        services.AddHttpClient("JobsyAuthProvision");
 
         var authOptions = configuration.GetSection(AuthOptions.SectionName).Get<AuthOptions>() ?? new AuthOptions();
         var secureAlways = environment is not null && !environment.IsDevelopment();
@@ -69,10 +71,12 @@ public static class AuthServiceCollectionExtensions
                 options.TokenValidationParameters.NameClaimType = "name";
                 options.Events = new OpenIdConnectEvents
                 {
-                    OnTokenValidated = context =>
+                    OnTokenValidated = async context =>
                     {
-                        EnrichExternalPrincipal(context.Principal);
-                        return Task.CompletedTask;
+                        await ApplyExternalJobsyProfileAsync(
+                            context.HttpContext,
+                            context.Principal,
+                            context.Properties);
                     }
                 };
             });
@@ -85,10 +89,12 @@ public static class AuthServiceCollectionExtensions
                 options.ClientId = authOptions.Google.ClientId!;
                 options.ClientSecret = authOptions.Google.ClientSecret!;
                 options.CallbackPath = authOptions.Google.CallbackPath;
-                options.Events.OnCreatingTicket = context =>
+                options.Events.OnCreatingTicket = async context =>
                 {
-                    EnrichExternalPrincipal(context.Principal);
-                    return Task.CompletedTask;
+                    await ApplyExternalJobsyProfileAsync(
+                        context.HttpContext,
+                        context.Principal,
+                        context.Properties);
                 };
             });
         }
@@ -131,6 +137,12 @@ public static class AuthServiceCollectionExtensions
             if (principal is null)
             {
                 return Results.Redirect($"/login?error=invalid&returnUrl={Uri.EscapeDataString(AuthRedirects.SafeLocalUrl(returnUrl))}");
+            }
+
+            if (principal.HasClaim(c =>
+                    c.Type == "show_candidate_how_to" && c.Value == "1"))
+            {
+                returnUrl = AuthRedirects.CandidateHowToPath;
             }
 
             await http.SignInAsync(
@@ -200,12 +212,12 @@ public static class AuthServiceCollectionExtensions
 
         if (!string.IsNullOrWhiteSpace(user.CompanyId))
         {
-            claims.Add(new Claim(Jobsy.Core.Authorization.JobsyClaimTypes.CompanyId, user.CompanyId));
+            claims.Add(new Claim(JobsyClaimTypes.CompanyId, user.CompanyId));
         }
 
         if (!string.IsNullOrWhiteSpace(user.CompanyIds))
         {
-            claims.Add(new Claim(Jobsy.Core.Authorization.JobsyClaimTypes.CompanyIds, user.CompanyIds));
+            claims.Add(new Claim(JobsyClaimTypes.CompanyIds, user.CompanyIds));
         }
 
         return new ClaimsPrincipal(new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme));
@@ -234,37 +246,176 @@ public static class AuthServiceCollectionExtensions
                 return null;
             }
 
-            var role = NormalizeRole(profile.Role);
-            var claims = new List<Claim>
-            {
-                new(ClaimTypes.NameIdentifier, profile.Email.ToLowerInvariant()),
-                new(ClaimTypes.Name, profile.FullName),
-                new(ClaimTypes.Email, profile.Email),
-                new(ClaimTypes.Role, role),
-                new("auth_method", "local-registration")
-            };
-
-            if (profile.CompanyId is Guid companyId)
-            {
-                claims.Add(new Claim(
-                    Jobsy.Core.Authorization.JobsyClaimTypes.CompanyId,
-                    companyId.ToString()));
-            }
-
-            if (profile.CompanyIds is { Count: > 0 })
-            {
-                claims.Add(new Claim(
-                    Jobsy.Core.Authorization.JobsyClaimTypes.CompanyIds,
-                    string.Join(',', profile.CompanyIds)));
-            }
-
-            return new ClaimsPrincipal(
-                new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme));
+            return CreatePrincipalFromProfile(profile, "local-registration");
         }
         catch
         {
             return null;
         }
+    }
+
+    private static async Task ApplyExternalJobsyProfileAsync(
+        HttpContext http,
+        ClaimsPrincipal? principal,
+        AuthenticationProperties? properties)
+    {
+        if (principal?.Identity is not ClaimsIdentity identity || !identity.IsAuthenticated)
+        {
+            return;
+        }
+
+        EnsureNameClaim(identity);
+
+        var email = identity.FindFirst(ClaimTypes.Email)?.Value
+                    ?? identity.FindFirst("preferred_username")?.Value
+                    ?? identity.FindFirst("email")?.Value;
+        if (string.IsNullOrWhiteSpace(email))
+        {
+            // Fallback: still Candidate so login isn't blocked.
+            ReplaceRoleClaim(identity, "Candidate");
+            return;
+        }
+
+        var fullName = identity.FindFirst(ClaimTypes.Name)?.Value ?? email;
+        var config = http.RequestServices.GetRequiredService<IConfiguration>();
+        var factory = http.RequestServices.GetRequiredService<IHttpClientFactory>();
+
+        try
+        {
+            var apiBase = JobsyPublicUrl.NormalizeBaseUrl(
+                config["ApiBaseUrl"],
+                "http://localhost:5200/");
+            var client = factory.CreateClient("JobsyAuthProvision");
+            client.BaseAddress = new Uri(apiBase);
+            client.Timeout = TimeSpan.FromSeconds(10);
+
+            var secret = config["JobsyAuth:DevelopmentAuthSecret"]
+                         ?? config["JobsyAuth:ExternalProvisionSecret"];
+            using var request = new HttpRequestMessage(HttpMethod.Post, "api/auth/ensure-external")
+            {
+                Content = JsonContent.Create(new { email, fullName })
+            };
+            if (!string.IsNullOrWhiteSpace(secret))
+            {
+                request.Headers.TryAddWithoutValidation("X-Jobsy-Provision-Secret", secret);
+            }
+
+            using var response = await client.SendAsync(request);
+            if (!response.IsSuccessStatusCode)
+            {
+                ReplaceRoleClaim(identity, "Candidate");
+                return;
+            }
+
+            var profile = await response.Content.ReadFromJsonAsync<LocalApiLoginProfile>();
+            if (profile is null)
+            {
+                ReplaceRoleClaim(identity, "Candidate");
+                return;
+            }
+
+            ApplyProfileClaims(identity, profile, "external");
+
+            if (profile.ShowCandidateHowTo && properties is not null)
+            {
+                properties.RedirectUri = AuthRedirects.CandidateHowToPath;
+            }
+        }
+        catch
+        {
+            ReplaceRoleClaim(identity, "Candidate");
+        }
+    }
+
+    private static ClaimsPrincipal CreatePrincipalFromProfile(LocalApiLoginProfile profile, string authMethod)
+    {
+        var identity = new ClaimsIdentity(CookieAuthenticationDefaults.AuthenticationScheme);
+        identity.AddClaim(new Claim(ClaimTypes.NameIdentifier, profile.Email.ToLowerInvariant()));
+        identity.AddClaim(new Claim(ClaimTypes.Email, profile.Email));
+        identity.AddClaim(new Claim(ClaimTypes.Name, profile.FullName));
+        identity.AddClaim(new Claim("auth_method", authMethod));
+        ApplyProfileClaims(identity, profile, authMethod);
+        return new ClaimsPrincipal(identity);
+    }
+
+    private static void ApplyProfileClaims(ClaimsIdentity identity, LocalApiLoginProfile profile, string authMethod)
+    {
+        ReplaceRoleClaim(identity, NormalizeRole(profile.Role));
+
+        foreach (var existing in identity.FindAll(JobsyClaimTypes.CompanyId).ToList())
+        {
+            identity.RemoveClaim(existing);
+        }
+
+        foreach (var existing in identity.FindAll(JobsyClaimTypes.CompanyIds).ToList())
+        {
+            identity.RemoveClaim(existing);
+        }
+
+        foreach (var existing in identity.FindAll(JobsyClaimTypes.HasCandidateApplications).ToList())
+        {
+            identity.RemoveClaim(existing);
+        }
+
+        foreach (var existing in identity.FindAll("show_candidate_how_to").ToList())
+        {
+            identity.RemoveClaim(existing);
+        }
+
+        if (profile.CompanyId is Guid companyId)
+        {
+            identity.AddClaim(new Claim(JobsyClaimTypes.CompanyId, companyId.ToString()));
+        }
+
+        if (profile.CompanyIds is { Count: > 0 })
+        {
+            identity.AddClaim(new Claim(
+                JobsyClaimTypes.CompanyIds,
+                string.Join(',', profile.CompanyIds)));
+        }
+
+        if (profile.HasCandidateApplications)
+        {
+            identity.AddClaim(new Claim(JobsyClaimTypes.HasCandidateApplications, "1"));
+        }
+
+        if (profile.ShowCandidateHowTo)
+        {
+            identity.AddClaim(new Claim("show_candidate_how_to", "1"));
+        }
+
+        if (!identity.HasClaim(c => c.Type == "auth_method"))
+        {
+            identity.AddClaim(new Claim("auth_method", authMethod));
+        }
+    }
+
+    private static void EnsureNameClaim(ClaimsIdentity identity)
+    {
+        if (identity.HasClaim(c => c.Type == ClaimTypes.Name))
+        {
+            return;
+        }
+
+        var email = identity.FindFirst(ClaimTypes.Email)?.Value
+                    ?? identity.FindFirst("preferred_username")?.Value
+                    ?? "Gebruiker";
+        identity.AddClaim(new Claim(ClaimTypes.Name, email));
+    }
+
+    private static void ReplaceRoleClaim(ClaimsIdentity identity, string role)
+    {
+        foreach (var existing in identity.FindAll(ClaimTypes.Role).ToList())
+        {
+            identity.RemoveClaim(existing);
+        }
+
+        foreach (var existing in identity.FindAll("roles").ToList())
+        {
+            identity.RemoveClaim(existing);
+        }
+
+        identity.AddClaim(new Claim(ClaimTypes.Role, role));
     }
 
     private sealed class LocalApiLoginProfile
@@ -274,28 +425,9 @@ public static class AuthServiceCollectionExtensions
         public string Role { get; set; } = "Candidate";
         public Guid? CompanyId { get; set; }
         public List<Guid>? CompanyIds { get; set; }
-    }
-
-    private static void EnrichExternalPrincipal(ClaimsPrincipal? principal)
-    {
-        if (principal?.Identity is not ClaimsIdentity identity || !identity.IsAuthenticated)
-        {
-            return;
-        }
-
-        if (!identity.HasClaim(c => c.Type == ClaimTypes.Role))
-        {
-            // Externe providers krijgen standaard kandidaat; admin/manager via lokale accounts of Entra app roles later.
-            identity.AddClaim(new Claim(ClaimTypes.Role, "Candidate"));
-        }
-
-        if (!identity.HasClaim(c => c.Type == ClaimTypes.Name))
-        {
-            var email = identity.FindFirst(ClaimTypes.Email)?.Value
-                        ?? identity.FindFirst("preferred_username")?.Value
-                        ?? "Gebruiker";
-            identity.AddClaim(new Claim(ClaimTypes.Name, email));
-        }
+        public bool ShowCandidateHowTo { get; set; }
+        public bool HasCandidateApplications { get; set; }
+        public bool IsNewUser { get; set; }
     }
 
     private static string NormalizeRole(string role) => role.Trim().ToLowerInvariant() switch
@@ -308,7 +440,6 @@ public static class AuthServiceCollectionExtensions
         "salesmanager" or "sales" => "SalesManager",
         _ => "Candidate"
     };
-
 }
 
 public class DemoUserStore
@@ -330,7 +461,6 @@ public class DemoUserStore
             return false;
         }
 
-        // Constant-time compare for demo passwords (plain in config for local MVP).
         var expected = Encoding.UTF8.GetBytes(user.Password);
         var actual = Encoding.UTF8.GetBytes(password);
         if (expected.Length != actual.Length)
@@ -340,6 +470,4 @@ public class DemoUserStore
 
         return CryptographicOperations.FixedTimeEquals(expected, actual);
     }
-
-    public IReadOnlyList<DemoUserOptions> All => _users;
 }
