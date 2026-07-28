@@ -288,9 +288,15 @@ public static class AuthServiceCollectionExtensions
             return Results.Challenge(props, [scheme]);
         });
 
-        app.MapPost("/account/logout", async (HttpContext http, IAntiforgery antiforgery) =>
+        app.MapMethods("/account/logout", ["GET", "POST"], async (HttpContext http) =>
         {
-            await antiforgery.ValidateRequestAsync(http);
+            // POST from the header form uses antiforgery; GET covers refresh / Cookie LogoutPath / bookmarks.
+            if (HttpMethods.IsPost(http.Request.Method))
+            {
+                var antiforgery = http.RequestServices.GetRequiredService<IAntiforgery>();
+                await antiforgery.ValidateRequestAsync(http);
+            }
+
             await http.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
             return Results.Redirect("/");
         });

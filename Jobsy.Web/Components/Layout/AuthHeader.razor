@@ -16,7 +16,10 @@
                 <span class="auth-user__role">@RoleLabel(context.User)</span>
             </div>
             <form method="post" action="/account/logout" class="auth-logout-form">
-                <input type="hidden" name="__RequestVerificationToken" value="@_antiforgeryToken" />
+                @if (!string.IsNullOrEmpty(_antiforgeryFieldName) && !string.IsNullOrEmpty(_antiforgeryToken))
+                {
+                    <input type="hidden" name="@_antiforgeryFieldName" value="@_antiforgeryToken" />
+                }
                 <button type="submit"
                         class="auth-icon-btn"
                         title="@Culture["Auth.Logout"]"
@@ -35,6 +38,7 @@
 </div>
 
 @code {
+    private string _antiforgeryFieldName = "";
     private string _antiforgeryToken = "";
 
     protected override void OnInitialized()
@@ -44,6 +48,7 @@
         if (http is not null)
         {
             var tokens = Antiforgery.GetAndStoreTokens(http);
+            _antiforgeryFieldName = tokens.FormFieldName;
             _antiforgeryToken = tokens.RequestToken ?? "";
         }
     }
