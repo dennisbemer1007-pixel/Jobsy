@@ -2,6 +2,7 @@ using System.Security.Claims;
 using Jobsy.Core.Entities;
 using Jobsy.Core.Enums;
 using Jobsy.Core.Interfaces;
+using Jobsy.Core.Privacy;
 using Jobsy.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 
@@ -31,11 +32,19 @@ public sealed class PrivacyDataService : IPrivacyDataService
                 a.VacancyId,
                 a.PreferredTransport,
                 a.EstimatedTravelMinutes,
+                a.DistanceKm,
                 a.Status,
                 a.CreatedAt,
                 a.RespondedAt,
                 a.ConsentAcceptedAt,
-                a.ConsentVersion
+                a.ConsentVersion,
+                a.WorkPermitConfirmed,
+                a.SnapshotAvailabilityJson,
+                a.SnapshotDrivingLicenses,
+                a.SnapshotEducations,
+                a.SnapshotAboutMe,
+                a.CandidateEmployerCount,
+                EmailVerified = a.EmailVerifiedAt != null
             })
             .ToListAsync(cancellationToken);
 
@@ -65,9 +74,39 @@ public sealed class PrivacyDataService : IPrivacyDataService
             })
             .ToListAsync(cancellationToken);
 
+        var impressions = await _db.VacancySearchImpressions.AsNoTracking()
+            .Where(i => i.UserId == user.Id)
+            .Select(i => new { i.Id, i.VacancyId, i.CreatedAt })
+            .ToListAsync(cancellationToken);
+
+        var siteVisits = await _db.SiteVisits.AsNoTracking()
+            .Where(v => v.UserId == user.Id)
+            .Select(v => new { v.Id, v.Path, v.CreatedAt })
+            .ToListAsync(cancellationToken);
+
         var memberships = await _db.UserCompanies.AsNoTracking()
             .Where(m => m.UserId == user.Id)
             .Select(m => m.CompanyId)
+            .ToListAsync(cancellationToken);
+
+        var registrations = await _db.CompanyRegistrations.AsNoTracking()
+            .Where(r => r.CreatedUserId == user.Id || r.ContactEmail == user.Email)
+            .Select(r => new
+            {
+                r.Id,
+                r.KvkNumber,
+                r.EstablishmentName,
+                Scope = r.Scope.ToString(),
+                r.ContactName,
+                r.ContactEmail,
+                r.ContactPhone,
+                Status = r.Status.ToString(),
+                r.ConsentAcceptedAt,
+                r.ConsentVersion,
+                r.SalesManagerTrackingCode,
+                r.CreatedAt,
+                r.ActivatedAt
+            })
             .ToListAsync(cancellationToken);
 
         var salesProfile = await _db.SalesManagerProfiles.AsNoTracking()
@@ -138,9 +177,27 @@ public sealed class PrivacyDataService : IPrivacyDataService
             })
             .ToListAsync(cancellationToken);
 
+        var payouts = await _db.SalesManagerPayoutCheckouts.AsNoTracking()
+            .Where(p => p.SalesManagerUserId == user.Id)
+            .OrderByDescending(p => p.CreatedAt)
+            .Select(p => new
+            {
+                p.Id,
+                p.PaymentId,
+                p.AmountEuro,
+                p.AmountExVat,
+                p.VatAmount,
+                p.MaskedIban,
+                Status = p.Status.ToString(),
+                p.CreatedAt,
+                p.CompletedAt
+            })
+            .ToListAsync(cancellationToken);
+
         return new
         {
             ExportedAtUtc = DateTime.UtcNow,
+            ConsentVersion = PrivacyConstants.CurrentConsentVersion,
             User = new
             {
                 user.Id,
@@ -163,9 +220,13 @@ public sealed class PrivacyDataService : IPrivacyDataService
             Likes = likes,
             VacancyShares = shares,
             VacancyClicks = clicks,
+            VacancySearchImpressions = impressions,
+            SiteVisits = siteVisits,
+            CompanyRegistrations = registrations,
             SalesManagerProfile = salesProfile,
             CommissionLedger = commissionEntries,
-            SelfBillingInvoices = invoices
+            SelfBillingInvoices = invoices,
+            SalesManagerPayouts = payouts
         };
     }
 
@@ -184,9 +245,10 @@ public sealed class PrivacyDataService : IPrivacyDataService
             .FirstOrDefaultAsync(u => u.Email == email && u.IsActive, cancellationToken)
             ?? throw new UnauthorizedAccessException("Gebruiker niet gevonden.");
 
+        var originalEmail = user.Email;
         var anonymizedEmail = $"deleted-{user.Id:N}@anonymized.jobsy.local";
         var applications = await _db.Applications
-            .Where(a => a.CandidateUserId == user.Id || a.CandidateEmail == user.Email)
+            .Where(a => a.CandidateUserId == user.Id || a.CandidateEmail == originalEmail)
             .ToListAsync(cancellationToken);
 
         foreach (var app in applications)
@@ -197,6 +259,14 @@ public sealed class PrivacyDataService : IPrivacyDataService
             app.CandidateAddress = null;
             app.PreferencesSummary = null;
             app.CandidateUserId = null;
+            app.DistanceKm = null;
+            app.SnapshotAvailabilityJson = null;
+            app.SnapshotDrivingLicenses = null;
+            app.SnapshotEducations = null;
+            app.SnapshotAboutMe = null;
+            app.CandidateEmployerCount = 0;
+            app.EmailVerificationCode = null;
+            app.EmailVerificationExpiresAt = null;
         }
 
         var likes = await _db.VacancyLikes
@@ -214,12 +284,34 @@ public sealed class PrivacyDataService : IPrivacyDataService
             .ToListAsync(cancellationToken);
         _db.VacancyClicks.RemoveRange(clicks);
 
+        var impressions = await _db.VacancySearchImpressions
+            .Where(i => i.UserId == user.Id)
+            .ToListAsync(cancellationToken);
+        _db.VacancySearchImpressions.RemoveRange(impressions);
+
+        var siteVisits = await _db.SiteVisits
+            .Where(v => v.UserId == user.Id)
+            .ToListAsync(cancellationToken);
+        _db.SiteVisits.RemoveRange(siteVisits);
+
         var credentials = await _db.LocalAuthCredentials
             .Where(c => c.UserId == user.Id)
             .ToListAsync(cancellationToken);
         _db.LocalAuthCredentials.RemoveRange(credentials);
 
         _db.UserCompanies.RemoveRange(user.CompanyMemberships);
+
+        var registrations = await _db.CompanyRegistrations
+            .Where(r => r.CreatedUserId == user.Id || r.ContactEmail == originalEmail)
+            .ToListAsync(cancellationToken);
+        foreach (var registration in registrations)
+        {
+            registration.ContactName = "Verwijderde gebruiker";
+            registration.ContactEmail = anonymizedEmail;
+            registration.ContactPhone = null;
+            registration.ActivationToken = string.Empty;
+            registration.SalesManagerTrackingCode = null;
+        }
 
         // AVG: anonymize salesmanager business PII; keep financial rows for fiscal retention
         // but strip personal identifiers from profile and invoice snapshots.
@@ -240,6 +332,14 @@ public sealed class PrivacyDataService : IPrivacyDataService
             salesProfile.AgreementVersion = null;
             salesProfile.OnboardingCompletedAt = null;
             salesProfile.UpdatedAt = DateTime.UtcNow;
+        }
+
+        var payouts = await _db.SalesManagerPayoutCheckouts
+            .Where(p => p.SalesManagerUserId == user.Id)
+            .ToListAsync(cancellationToken);
+        foreach (var payout in payouts)
+        {
+            payout.MaskedIban = "ANON";
         }
 
         var invoices = await _db.SelfBillingInvoices

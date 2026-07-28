@@ -35,8 +35,11 @@ public static class ExternalAuthCallbackCredentialBootstrap
                     var options = context.RequestServices
                         .GetRequiredService<IOptionsMonitor<AspNetGoogleOptions>>()
                         .Get(AuthServiceCollectionExtensions.GoogleScheme);
-                    options.ClientId = google.ClientId;
-                    options.ClientSecret = google.ClientSecret;
+                    lock (AuthServiceCollectionExtensions.GoogleOptionsSync)
+                    {
+                        options.ClientId = google.ClientId;
+                        options.ClientSecret = google.ClientSecret;
+                    }
                 }
             }
 

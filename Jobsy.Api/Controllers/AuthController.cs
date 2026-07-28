@@ -1,3 +1,5 @@
+using System.Security.Cryptography;
+using System.Text;
 using Jobsy.Api.Models;
 using Jobsy.Core.Authorization;
 using Jobsy.Core.Entities;
@@ -19,15 +21,18 @@ public class AuthController : ControllerBase
     private readonly JobsyDbContext _db;
     private readonly IConfiguration _configuration;
     private readonly IIntegrationCredentialService _credentials;
+    private readonly IHostEnvironment _environment;
 
     public AuthController(
         JobsyDbContext db,
         IConfiguration configuration,
-        IIntegrationCredentialService credentials)
+        IIntegrationCredentialService credentials,
+        IHostEnvironment environment)
     {
         _db = db;
         _configuration = configuration;
         _credentials = credentials;
+        _environment = environment;
     }
 
     /// <summary>
@@ -222,7 +227,12 @@ public class AuthController : ControllerBase
                        ?? _configuration["JobsyAuth:ExternalProvisionSecret"];
         if (string.IsNullOrWhiteSpace(expected))
         {
-            // Local/dev without secret: allow loopback-only provision for DX.
+            // Fail closed outside Development. Local DX may use loopback without a secret.
+            if (!_environment.IsDevelopment())
+            {
+                return false;
+            }
+
             var remote = HttpContext.Connection.RemoteIpAddress;
             return remote is null
                    || System.Net.IPAddress.IsLoopback(remote);
@@ -233,7 +243,10 @@ public class AuthController : ControllerBase
             return false;
         }
 
-        return string.Equals(provided.ToString(), expected, StringComparison.Ordinal);
+        var expectedBytes = Encoding.UTF8.GetBytes(expected);
+        var providedBytes = Encoding.UTF8.GetBytes(provided.ToString());
+        return expectedBytes.Length == providedBytes.Length
+               && CryptographicOperations.FixedTimeEquals(expectedBytes, providedBytes);
     }
 
     private async Task<(IReadOnlyList<Guid> CompanyIds, bool ShowCandidateHowTo, bool HasCandidateApplications)>

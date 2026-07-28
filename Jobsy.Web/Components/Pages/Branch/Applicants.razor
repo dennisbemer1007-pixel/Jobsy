@@ -56,17 +56,20 @@
                             }
                         }
                         <span class="muted">Werkvergunning: @(a.WorkPermitConfirmed ? "Bevestigd" : "Onbekend")</span>
-                        @if (!string.IsNullOrWhiteSpace(a.SnapshotDrivingLicenses))
+                        @if (a.PiiRevealed)
                         {
-                            <span class="muted">Rijbewijs: @a.SnapshotDrivingLicenses</span>
-                        }
-                        @if (!string.IsNullOrWhiteSpace(a.SnapshotEducations))
-                        {
-                            <span class="muted">Opleiding: @a.SnapshotEducations</span>
-                        }
-                        @if (a.CandidateEmployerCount > 0)
-                        {
-                            <span class="muted">Eerdere werkgevers: @a.CandidateEmployerCount</span>
+                            @if (!string.IsNullOrWhiteSpace(a.SnapshotDrivingLicenses))
+                            {
+                                <span class="muted">Rijbewijs: @a.SnapshotDrivingLicenses</span>
+                            }
+                            @if (!string.IsNullOrWhiteSpace(a.SnapshotEducations))
+                            {
+                                <span class="muted">Opleiding: @a.SnapshotEducations</span>
+                            }
+                            @if (a.CandidateEmployerCount > 0)
+                            {
+                                <span class="muted">Eerdere werkgevers: @a.CandidateEmployerCount</span>
+                            }
                         }
                         <span class="muted">@a.VacancyTitle · @StatusLabel(a.Status)</span>
                     </div>

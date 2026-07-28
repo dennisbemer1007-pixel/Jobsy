@@ -205,7 +205,7 @@ public class Sprint4TokenProductsTests
         Assert.True(result.Succeeded);
         Assert.Equal(1, result.PushBomRecipientCount);
         Assert.Single(db.PlatformLogs.Where(l => l.Category == "PushBom"));
-        Assert.Contains(db.PlatformLogs, l => l.Message.Contains("near@jobsy.local"));
+        Assert.Contains(db.PlatformLogs, l => l.Message.Contains("n***@jobsy.local"));
         // Tier 1–9 → 1 token (not flat 3)
         Assert.Equal(9m, await db.TokenTransactions.Where(t => t.CompanyId == companyId).SumAsync(t => t.Amount));
     }

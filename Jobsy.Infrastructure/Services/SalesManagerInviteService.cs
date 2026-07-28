@@ -121,7 +121,7 @@ public sealed class SalesManagerInviteService : ISalesManagerInviteService
             Id = Guid.NewGuid(),
             Level = PlatformLogLevel.Info,
             Category = "SalesManager",
-            Message = $"Salesmanager invited: {normalizedEmail}",
+            Message = $"Salesmanager invited: {EmailServiceStub.RedactEmail(normalizedEmail)}",
             CreatedAt = DateTime.UtcNow
         });
 
@@ -140,7 +140,10 @@ public sealed class SalesManagerInviteService : ISalesManagerInviteService
              """,
             "SalesManagerInvite"), cancellationToken);
 
-        _logger.LogInformation("Invited salesmanager {Email} ({UserId})", normalizedEmail, user.Id);
+        _logger.LogInformation(
+            "Invited salesmanager {Email} ({UserId})",
+            EmailServiceStub.RedactEmail(normalizedEmail),
+            user.Id);
 
         return new SalesManagerInviteResult(user.Id, normalizedEmail, name, temporaryPassword, createdNew);
     }

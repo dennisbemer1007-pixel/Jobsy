@@ -138,9 +138,7 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
                 : request.ContactPhone.Trim(),
             ActivationToken = Convert.ToHexString(RandomNumberGenerator.GetBytes(32)),
             ConsentAcceptedAt = DateTime.UtcNow,
-            ConsentVersion = string.IsNullOrWhiteSpace(request.ConsentVersion)
-                ? PrivacyConstants.CurrentConsentVersion
-                : request.ConsentVersion.Trim(),
+            ConsentVersion = PrivacyConstants.CurrentConsentVersion,
             SalesManagerTrackingCode = trackingCode,
             CreatedAt = DateTime.UtcNow
         };
@@ -272,7 +270,7 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
 
         await GrantWelcomeTokenAsync(branchId, user.Id, cancellationToken);
 
-        _logger.LogInformation("Activated registration {Id} for {Email}", registration.Id, registration.ContactEmail);
+        _logger.LogInformation("Activated registration {Id} for {Email}", registration.Id, EmailServiceStub.RedactEmail(registration.ContactEmail));
 
         return await BuildActivationResultAsync(registration, temporaryPassword, cancellationToken);
     }
@@ -519,7 +517,7 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
             Level = PlatformLogLevel.Info,
             Category = "OrgMerge",
             Message =
-                $"Takeover approved: {target.Name} ({target.KvkEstablishmentId}) → requester {registration.ContactEmail} ({registration.Scope})",
+                $"Takeover approved: {target.Name} ({target.KvkEstablishmentId}) → requester {EmailServiceStub.RedactEmail(registration.ContactEmail)} ({registration.Scope})",
             DetailsJson =
                 $"{{\"takeoverId\":\"{takeover.Id}\",\"orgId\":\"{orgId}\",\"branchId\":\"{branchId}\"}}",
             CreatedAt = DateTime.UtcNow

@@ -46,6 +46,7 @@ public sealed record SalesManagerPayoutPreviewDto(
     decimal AmountExVat,
     decimal VatAmount,
     decimal AmountInclVat,
+    /// <summary>Always null in API responses — use <see cref="MaskedIban"/>.</summary>
     string? Iban,
     string MaskedIban,
     bool CanPayout,

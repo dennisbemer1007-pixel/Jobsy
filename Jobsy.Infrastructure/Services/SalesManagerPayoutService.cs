@@ -5,6 +5,7 @@ using Jobsy.Core.Interfaces;
 using Jobsy.Core.Rules;
 using Jobsy.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using QuestPDF.Fluent;
@@ -20,6 +21,7 @@ public sealed class SalesManagerPayoutService : ISalesManagerPayoutService
     private readonly ICommissionLedgerService _ledger;
     private readonly IPlatformCompanySettingsService _companySettings;
     private readonly IHostEnvironment _environment;
+    private readonly IConfiguration _configuration;
     private readonly ILogger<SalesManagerPayoutService> _logger;
 
     static SalesManagerPayoutService()
@@ -33,6 +35,7 @@ public sealed class SalesManagerPayoutService : ISalesManagerPayoutService
         ICommissionLedgerService ledger,
         IPlatformCompanySettingsService companySettings,
         IHostEnvironment environment,
+        IConfiguration configuration,
         ILogger<SalesManagerPayoutService> logger)
     {
         _db = db;
@@ -40,6 +43,7 @@ public sealed class SalesManagerPayoutService : ISalesManagerPayoutService
         _ledger = ledger;
         _companySettings = companySettings;
         _environment = environment;
+        _configuration = configuration;
         _logger = logger;
     }
 
@@ -63,7 +67,7 @@ public sealed class SalesManagerPayoutService : ISalesManagerPayoutService
         if (!profile.IsOnboardingComplete)
         {
             return new SalesManagerPayoutPreviewDto(
-                0, 0, 0, 0, profile.Iban, masked,
+                0, 0, 0, 0, null, masked,
                 false, "Onboarding moet compleet zijn vóór uitbetaling.");
         }
 
@@ -79,7 +83,7 @@ public sealed class SalesManagerPayoutService : ISalesManagerPayoutService
         if (available <= 0)
         {
             return new SalesManagerPayoutPreviewDto(
-                0, 0, 0, 0, profile.Iban, masked,
+                0, 0, 0, 0, null, masked,
                 false, "Geen openstaand tegoed om uit te betalen.");
         }
 
@@ -94,7 +98,7 @@ public sealed class SalesManagerPayoutService : ISalesManagerPayoutService
             if (amountExVat <= 0)
             {
                 return new SalesManagerPayoutPreviewDto(
-                    available, 0, 0, 0, profile.Iban, masked,
+                    available, 0, 0, 0, null, masked,
                     false, "Kies een bedrag groter dan € 0,00.");
             }
 
@@ -102,7 +106,7 @@ public sealed class SalesManagerPayoutService : ISalesManagerPayoutService
             {
                 return new SalesManagerPayoutPreviewDto(
                     available, available, SalesCommissionRules.VatOn(available), SalesCommissionRules.InclVat(available),
-                    profile.Iban, masked,
+                    null, masked,
                     false,
                     $"Bedrag mag niet hoger zijn dan je openstaande tegoed (€ {available:0.00} excl. BTW).");
             }
@@ -114,7 +118,7 @@ public sealed class SalesManagerPayoutService : ISalesManagerPayoutService
             amountExVat,
             vat,
             amountExVat + vat,
-            profile.Iban,
+            null,
             masked,
             true,
             null);
@@ -140,6 +144,13 @@ public sealed class SalesManagerPayoutService : ISalesManagerPayoutService
         foreach (var prior in open)
         {
             prior.Status = SalesManagerPayoutCheckoutStatus.Cancelled;
+        }
+
+        // Stub payouts only in Development / explicit demo auth (live Mollie not wired yet).
+        if (!AllowStubPayouts())
+        {
+            throw new InvalidOperationException(
+                "Live uitbetaling (Mollie) is nog niet geconfigureerd. Neem contact op met Lobsy.");
         }
 
         // TODO(real-Mollie): create a Mollie payout/transfer to the SM bank account and use the returned id/url.
@@ -207,8 +218,8 @@ public sealed class SalesManagerPayoutService : ISalesManagerPayoutService
             throw new InvalidOperationException("Checkout is geannuleerd.");
         }
 
-        // Development stub: Pending → Paid (real Mollie webhook would set Paid).
-        if (_environment.IsDevelopment()
+        // Development / demo stub: Pending → Paid (real Mollie webhook would set Paid).
+        if (AllowStubPayouts()
             && session.PaymentId.StartsWith("stub_payout_", StringComparison.Ordinal)
             && session.Status == SalesManagerPayoutCheckoutStatus.Pending)
         {
@@ -556,4 +567,8 @@ public sealed class SalesManagerPayoutService : ISalesManagerPayoutService
                 .PaddingVertical(5)
                 .PaddingHorizontal(4);
     }
+
+    private bool AllowStubPayouts() =>
+        _environment.IsDevelopment()
+        || _configuration.GetValue("JobsyAuth:AllowDevelopmentAuth", false);
 }

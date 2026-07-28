@@ -11,6 +11,8 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.FileProviders;
+using Microsoft.Extensions.Hosting;
 
 namespace Jobsy.Tests;
 
@@ -197,7 +199,17 @@ public class ExternalAuthAndInvitePromotionTests
             })
             .Build();
         var credentials = new IntegrationCredentialService(db, new PassthroughSecretProtector());
-        return new AuthController(db, config, credentials);
+        return new AuthController(
+            db, config, credentials,
+            new StubHostEnvironment { EnvironmentName = Environments.Development });
+    }
+
+    private sealed class StubHostEnvironment : IHostEnvironment
+    {
+        public string EnvironmentName { get; set; } = Environments.Development;
+        public string ApplicationName { get; set; } = "Jobsy.Tests";
+        public string ContentRootPath { get; set; } = AppContext.BaseDirectory;
+        public IFileProvider ContentRootFileProvider { get; set; } = new NullFileProvider();
     }
 
     private static ControllerContext WithProvisionSecret(string secret)

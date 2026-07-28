@@ -98,11 +98,13 @@ public class SalesManagerCommissionTests
         var company = new PlatformCompanySettingsService(db);
         var payouts = new SalesManagerPayoutService(
             db, invoices, ledger, company, new TestHostEnvironment(),
+            new ConfigurationBuilder().Build(),
             NullLogger<SalesManagerPayoutService>.Instance);
 
         var preview = await payouts.GetPreviewAsync(smId);
         Assert.True(preview.CanPayout);
         Assert.Equal("NL**4300", preview.MaskedIban);
+        Assert.Null(preview.Iban);
         Assert.Equal(preview.AvailableExVat, preview.AmountExVat);
 
         var checkout = await payouts.CreateCheckoutAsync(smId, preview.AmountExVat);
@@ -144,6 +146,7 @@ public class SalesManagerCommissionTests
         var company = new PlatformCompanySettingsService(db);
         var payouts = new SalesManagerPayoutService(
             db, invoices, ledger, company, new TestHostEnvironment(),
+            new ConfigurationBuilder().Build(),
             NullLogger<SalesManagerPayoutService>.Instance);
 
         var available = await ledger.GetUninvoicedBalanceExVatAsync(smId);
@@ -292,6 +295,46 @@ public class SalesManagerCommissionTests
         Assert.Contains("NL87654321B01", json);
         Assert.Contains("CommissionLedger", json);
         Assert.Contains("SelfBillingInvoices", json);
+        Assert.Contains("SalesManagerPayouts", json);
+
+        // Seed an application snapshot + site visit to assert Art. 17 completeness.
+        var vacancyId = Guid.NewGuid();
+        db.Vacancies.Add(new Vacancy
+        {
+            Id = vacancyId,
+            CompanyId = companyId,
+            Title = "Privacy test vacature",
+            Description = "x",
+            HourlyWage = 14m,
+            StartDate = DateOnly.FromDateTime(DateTime.UtcNow),
+            EndDate = DateOnly.FromDateTime(DateTime.UtcNow.AddDays(30)),
+            Status = VacancyStatus.Active,
+            Location = new GeoPoint(52, 4),
+            RequiredTransport = TransportMode.Bike
+        });
+        db.Applications.Add(new Application
+        {
+            Id = Guid.NewGuid(),
+            VacancyId = vacancyId,
+            CandidateUserId = smId,
+            CandidateName = "Demo SM",
+            CandidateEmail = "sm@jobsy.local",
+            PreferredTransport = "Bike",
+            Status = ApplicationStatus.Pending,
+            SnapshotAboutMe = "Persoonlijke bio",
+            SnapshotDrivingLicenses = "B",
+            EmailVerificationCode = "123456",
+            DistanceKm = 4.2,
+            CreatedAt = DateTime.UtcNow
+        });
+        db.SiteVisits.Add(new SiteVisit
+        {
+            Id = Guid.NewGuid(),
+            UserId = smId,
+            Path = "/salesmanager",
+            CreatedAt = DateTime.UtcNow
+        });
+        await db.SaveChangesAsync();
 
         await privacy.DeleteOrAnonymizeAsync(principal);
 
@@ -308,6 +351,13 @@ public class SalesManagerCommissionTests
         var invoice = await db.SelfBillingInvoices.SingleAsync(i => i.SalesManagerUserId == smId);
         Assert.Equal("ANON", invoice.SalesManagerVatNumber);
         Assert.Equal("Geanonimiseerd", invoice.SalesManagerAddress);
+
+        var app = await db.Applications.SingleAsync(a => a.VacancyId == vacancyId);
+        Assert.Null(app.SnapshotAboutMe);
+        Assert.Null(app.SnapshotDrivingLicenses);
+        Assert.Null(app.EmailVerificationCode);
+        Assert.Null(app.DistanceKm);
+        Assert.Equal(0, await db.SiteVisits.CountAsync(v => v.UserId == smId));
     }
 
     private static SupplierOnboardingPaymentService CreateOnboardingService(JobsyDbContext db) =>

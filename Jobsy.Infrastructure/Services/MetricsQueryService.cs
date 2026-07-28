@@ -162,41 +162,38 @@ public sealed class MetricsQueryService : IMetricsQueryService
         return key.ToLowerInvariant() switch
         {
             "tokens_purchased" or "tokens_spent" => await TokenDrilldownAsync(key, from, to, companyIds, cancellationToken),
-            "applications" => await ApplicationsDrilldownAsync(vacancyIds, from, to, includePlatformOnly, cancellationToken),
-            "impressions" => await _db.VacancySearchImpressions.AsNoTracking()
-                .Where(i => vacancyIds.Contains(i.VacancyId) && i.CreatedAt >= from && i.CreatedAt <= to)
-                .OrderByDescending(i => i.CreatedAt)
+            "applications" => await ApplicationsDrilldownAsync(vacancyIds, from, to, cancellationToken),
+            "impressions" => (await _db.VacancySearchImpressions.AsNoTracking()
+                    .Where(i => vacancyIds.Contains(i.VacancyId) && i.CreatedAt >= from && i.CreatedAt <= to)
+                    .OrderByDescending(i => i.CreatedAt)
+                    .Select(i => new { i.Id, Title = i.Vacancy.Title, Email = i.User != null ? i.User.Email : null, i.CreatedAt })
+                    .ToListAsync(cancellationToken))
                 .Select(i => new MetricDrilldownItemDto(
-                    i.Id, i.Vacancy.Title, i.User != null ? i.User.Email : "anoniem", i.CreatedAt, null))
-                .ToListAsync(cancellationToken),
-            "clicks" => await _db.VacancyClicks.AsNoTracking()
-                .Where(c => vacancyIds.Contains(c.VacancyId) && c.CreatedAt >= from && c.CreatedAt <= to)
-                .OrderByDescending(c => c.CreatedAt)
+                    i.Id, i.Title, EngagementLabel(i.Email, includePlatformOnly), i.CreatedAt, null))
+                .ToList(),
+            "clicks" => (await _db.VacancyClicks.AsNoTracking()
+                    .Where(c => vacancyIds.Contains(c.VacancyId) && c.CreatedAt >= from && c.CreatedAt <= to)
+                    .OrderByDescending(c => c.CreatedAt)
+                    .Select(c => new { c.Id, Title = c.Vacancy.Title, Email = c.User != null ? c.User.Email : null, c.CreatedAt })
+                    .ToListAsync(cancellationToken))
                 .Select(c => new MetricDrilldownItemDto(
-                    c.Id, c.Vacancy.Title, c.User != null ? c.User.Email : "anoniem", c.CreatedAt, null))
-                .ToListAsync(cancellationToken),
+                    c.Id, c.Title, EngagementLabel(c.Email, includePlatformOnly), c.CreatedAt, null))
+                .ToList(),
             "shares" => await _db.VacancyShares.AsNoTracking()
                 .Where(s => vacancyIds.Contains(s.VacancyId) && s.CreatedAt >= from && s.CreatedAt <= to)
                 .OrderByDescending(s => s.CreatedAt)
                 .Select(s => new MetricDrilldownItemDto(
                     s.Id, s.Vacancy.Title, s.Channel.ToString(), s.CreatedAt, null))
                 .ToListAsync(cancellationToken),
-            "likes" => await _db.VacancyLikes.AsNoTracking()
-                .Where(l => vacancyIds.Contains(l.VacancyId) && l.CreatedAt >= from && l.CreatedAt <= to)
-                .OrderByDescending(l => l.CreatedAt)
+            "likes" => (await _db.VacancyLikes.AsNoTracking()
+                    .Where(l => vacancyIds.Contains(l.VacancyId) && l.CreatedAt >= from && l.CreatedAt <= to)
+                    .OrderByDescending(l => l.CreatedAt)
+                    .Select(l => new { l.Id, Title = l.Vacancy.Title, Email = (string?)l.User.Email, l.CreatedAt })
+                    .ToListAsync(cancellationToken))
                 .Select(l => new MetricDrilldownItemDto(
-                    l.Id, l.Vacancy.Title, l.User.Email, l.CreatedAt, null))
-                .ToListAsync(cancellationToken),
-            "site_visits" => await _db.SiteVisits.AsNoTracking()
-                .Where(v => v.CreatedAt >= from && v.CreatedAt <= to)
-                .OrderByDescending(v => v.CreatedAt)
-                .Select(v => new MetricDrilldownItemDto(
-                    v.Id,
-                    v.Path ?? "/",
-                    v.User != null ? v.User.Email : (v.AnonymousKey ?? "anoniem"),
-                    v.CreatedAt,
-                    null))
-                .ToListAsync(cancellationToken),
+                    l.Id, l.Title, EngagementLabel(l.Email, includePlatformOnly), l.CreatedAt, null))
+                .ToList(),
+            "site_visits" => await SiteVisitsDrilldownAsync(from, to, cancellationToken),
             "site_visits_unique" => await SiteVisitsUniqueDrilldownAsync(from, to, cancellationToken),
             "errors" => await _db.PlatformLogs.AsNoTracking()
                 .Where(l => l.Level == PlatformLogLevel.Error && l.CreatedAt >= from && l.CreatedAt <= to)
@@ -209,11 +206,7 @@ public sealed class MetricsQueryService : IMetricsQueryService
             "active_vacancies" => await ActiveVacanciesDrilldownAsync(companyIds, type: null, cancellationToken),
             "active_vacancies_employers" => await ActiveVacanciesDrilldownAsync(companyIds, CompanyType.Employer, cancellationToken),
             "active_vacancies_intermediaries" => await ActiveVacanciesDrilldownAsync(companyIds, CompanyType.Intermediary, cancellationToken),
-            "users_open_for_work" => await _db.Users.AsNoTracking()
-                .Where(u => u.Role == UserRole.Candidate && u.IsActive && u.OpenForWork)
-                .OrderBy(u => u.FullName)
-                .Select(u => new MetricDrilldownItemDto(u.Id, u.FullName, u.Email, DateTime.UtcNow, null))
-                .ToListAsync(cancellationToken),
+            "users_open_for_work" => await UsersOpenForWorkDrilldownAsync(cancellationToken),
             "users_active" => await _db.Users.AsNoTracking()
                 .Where(u => u.IsActive)
                 .OrderBy(u => u.FullName)
@@ -223,6 +216,56 @@ public sealed class MetricsQueryService : IMetricsQueryService
             "companies_intermediaries" => await CompaniesDrilldownAsync(CompanyType.Intermediary, cancellationToken),
             _ => Array.Empty<MetricDrilldownItemDto>()
         };
+    }
+
+    private static string EngagementLabel(string? email, bool includePlatformOnly)
+    {
+        if (string.IsNullOrWhiteSpace(email))
+        {
+            return "anoniem";
+        }
+
+        return includePlatformOnly
+            ? EmailServiceStub.RedactEmail(email)
+            : "Gebruiker";
+    }
+
+    private async Task<List<MetricDrilldownItemDto>> SiteVisitsDrilldownAsync(
+        DateTime from,
+        DateTime to,
+        CancellationToken ct)
+    {
+        var rows = await _db.SiteVisits.AsNoTracking()
+            .Where(v => v.CreatedAt >= from && v.CreatedAt <= to)
+            .OrderByDescending(v => v.CreatedAt)
+            .Select(v => new
+            {
+                v.Id,
+                Path = v.Path ?? "/",
+                Email = v.User != null ? v.User.Email : null,
+                AnonymousKey = v.AnonymousKey,
+                v.CreatedAt
+            })
+            .ToListAsync(ct);
+
+        return rows.Select(v => new MetricDrilldownItemDto(
+            v.Id,
+            v.Path,
+            v.Email is not null ? EmailServiceStub.RedactEmail(v.Email) : (v.AnonymousKey ?? "anoniem"),
+            v.CreatedAt,
+            null)).ToList();
+    }
+
+    private async Task<List<MetricDrilldownItemDto>> UsersOpenForWorkDrilldownAsync(CancellationToken ct)
+    {
+        var rows = await _db.Users.AsNoTracking()
+            .Where(u => u.Role == UserRole.Candidate && u.IsActive && u.OpenForWork)
+            .OrderBy(u => u.FullName)
+            .Select(u => new { u.Id, u.FullName, u.Email })
+            .ToListAsync(ct);
+
+        return rows.Select(u => new MetricDrilldownItemDto(
+            u.Id, u.FullName, EmailServiceStub.RedactEmail(u.Email), DateTime.UtcNow, null)).ToList();
     }
 
     private async Task<List<MetricDrilldownItemDto>> SiteVisitsUniqueDrilldownAsync(
@@ -241,7 +284,7 @@ public sealed class MetricsQueryService : IMetricsQueryService
                 VisitorKey = v.UserId != null
                     ? "u:" + v.UserId.Value.ToString()
                     : "a:" + (v.AnonymousKey ?? v.Id.ToString()),
-                Label = v.User != null ? v.User.Email : (v.AnonymousKey ?? "anoniem")
+                Label = v.User != null ? "Gebruiker" : (v.AnonymousKey ?? "anoniem")
             })
             .ToListAsync(ct);
 
@@ -265,7 +308,6 @@ public sealed class MetricsQueryService : IMetricsQueryService
         IReadOnlyCollection<Guid> vacancyIds,
         DateTime from,
         DateTime to,
-        bool includePlatformOnly,
         CancellationToken ct)
     {
         var rows = await _db.Applications.AsNoTracking()
@@ -284,7 +326,10 @@ public sealed class MetricsQueryService : IMetricsQueryService
 
         return rows.Select(a =>
         {
-            var reveal = includePlatformOnly || a.Status == ApplicationStatus.Accepted;
+            // Progressive disclosure: names only after employer acceptance (same as applicants API).
+            var reveal = a.Status is ApplicationStatus.Accepted
+                or ApplicationStatus.EmployerContacting
+                or ApplicationStatus.Hired;
             var title = reveal
                 ? a.CandidateName
                 : (string.IsNullOrWhiteSpace(a.CandidateCity) ? "Kandidaat" : a.CandidateCity);

@@ -104,11 +104,10 @@
                 <div class="login-demo__list">
                     @foreach (var user in _demoUsers)
                     {
-                        <form method="post" action="/account/login" class="login-demo__form">
+                        <form method="post" action="/account/demo-login" class="login-demo__form">
                             <input type="hidden" name="@_antiforgeryFieldName" value="@_antiforgeryToken" />
                             <input type="hidden" name="returnUrl" value="@_returnUrl" />
                             <input type="hidden" name="email" value="@user.Email" />
-                            <input type="hidden" name="password" value="@user.Password" />
                             <button type="submit" class="login-demo__btn">
                                 <span class="login-demo__role">@RoleLabel(user.Role)</span>
                                 <span class="login-demo__email">@user.Email</span>

@@ -5,6 +5,7 @@ using System.Text.Encodings.Web;
 using Jobsy.Core.Authorization;
 using Jobsy.Core.Enums;
 using Jobsy.Infrastructure.Data;
+using Jobsy.Infrastructure.Services;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
@@ -147,7 +148,7 @@ public sealed class DevelopmentAuthHandler : AuthenticationHandler<Authenticatio
 
         if (dbUser is null)
         {
-            Logger.LogWarning("Development auth rejected unknown/inactive email {Email}", email);
+            Logger.LogWarning("Development auth rejected unknown/inactive email {Email}", EmailServiceStub.RedactEmail(email));
             return AuthenticateResult.Fail("Unknown or inactive user for Development auth.");
         }
 

@@ -21,6 +21,9 @@ public static class AuthServiceCollectionExtensions
     public const string EntraScheme = "Entra";
     public const string GoogleScheme = "Google";
 
+    /// <summary>Serializes GoogleOptions ClientId/Secret mutations across concurrent OAuth flows.</summary>
+    internal static readonly object GoogleOptionsSync = new();
+
     public static IServiceCollection AddJobsyAuthentication(
         this IServiceCollection services,
         IConfiguration configuration,
@@ -67,7 +70,7 @@ public static class AuthServiceCollectionExtensions
                 : authOptions.Entra.ClientSecret;
             options.ResponseType = OpenIdConnectResponseType.Code;
             options.CallbackPath = authOptions.Entra.CallbackPath;
-            options.SaveTokens = true;
+            options.SaveTokens = false;
             // Entra ID tokens already carry profile/email claims; UserInfo often 404s and caused 500s.
             options.GetClaimsFromUserInfoEndpoint = false;
             options.Scope.Clear();
@@ -82,6 +85,14 @@ public static class AuthServiceCollectionExtensions
                 OnMessageReceived = ApplyEntraCredentialsBeforeCallbackAsync,
                 OnTokenValidated = async context =>
                 {
+                    if (IsEmailUnverified(context.Principal))
+                    {
+                        context.Fail("E-mailadres is niet geverifieerd bij de identity provider.");
+                        context.HandleResponse();
+                        context.Response.Redirect("/login?error=email-unverified");
+                        return;
+                    }
+
                     await ApplyExternalJobsyProfileAsync(
                         context.HttpContext,
                         context.Principal,
@@ -122,12 +133,22 @@ public static class AuthServiceCollectionExtensions
                     return;
                 }
 
-                context.Options.ClientId = google.ClientId;
-                context.Options.ClientSecret = google.ClientSecret;
+                lock (GoogleOptionsSync)
+                {
+                    context.Options.ClientId = google.ClientId;
+                    context.Options.ClientSecret = google.ClientSecret;
+                }
+
                 context.Response.Redirect(context.RedirectUri);
             };
             options.Events.OnCreatingTicket = async context =>
             {
+                if (IsEmailUnverified(context.Principal))
+                {
+                    context.Fail("E-mailadres is niet geverifieerd bij de identity provider.");
+                    return;
+                }
+
                 await ApplyExternalJobsyProfileAsync(
                     context.HttpContext,
                     context.Principal,
@@ -240,6 +261,48 @@ public static class AuthServiceCollectionExtensions
             return Results.Redirect(AuthRedirects.SafeLocalUrl(returnUrl));
         });
 
+        // Demo one-click login resolves password server-side so credentials stay out of HTML.
+        app.MapPost("/account/demo-login", async (
+            HttpContext http,
+            DemoUserStore users,
+            IAntiforgery antiforgery) =>
+        {
+            await antiforgery.ValidateRequestAsync(http);
+
+            var form = await http.Request.ReadFormAsync();
+            var email = form["email"].ToString().Trim();
+            var returnUrl = string.IsNullOrWhiteSpace(form["returnUrl"]) ? "/home" : form["returnUrl"].ToString();
+            returnUrl = AuthRedirects.PostLoginUrl(returnUrl);
+
+            if (!users.TryFindByEmail(email, out var user) || user is null)
+            {
+                return Results.Redirect($"/login?error=invalid&returnUrl={Uri.EscapeDataString(AuthRedirects.SafeLocalUrl(returnUrl))}");
+            }
+
+            var principal = CreateLocalPrincipal(user);
+            if (principal.HasClaim(c =>
+                    c.Type == "show_candidate_how_to" && c.Value == "1"))
+            {
+                returnUrl = AuthRedirects.CandidateHowToPath;
+            }
+            else if (principal.IsInRole("Candidate")
+                     || principal.HasClaim(ClaimTypes.Role, "Candidate"))
+            {
+                returnUrl = AuthRedirects.BanenkaartPath;
+            }
+
+            await http.SignInAsync(
+                CookieAuthenticationDefaults.AuthenticationScheme,
+                principal,
+                new AuthenticationProperties
+                {
+                    IsPersistent = true,
+                    ExpiresUtc = DateTimeOffset.UtcNow.AddHours(8)
+                });
+
+            return Results.Redirect(AuthRedirects.SafeLocalUrl(returnUrl));
+        });
+
         app.MapGet("/account/external/{provider}", async (
             string provider,
             HttpContext http,
@@ -276,8 +339,11 @@ public static class AuthServiceCollectionExtensions
                 }
 
                 var options = googleOptions.Get(GoogleScheme);
-                options.ClientId = google.ClientId;
-                options.ClientSecret = google.ClientSecret;
+                lock (GoogleOptionsSync)
+                {
+                    options.ClientId = google.ClientId;
+                    options.ClientSecret = google.ClientSecret;
+                }
             }
 
             var props = new AuthenticationProperties
@@ -358,6 +424,12 @@ public static class AuthServiceCollectionExtensions
         }
     }
 
+    private static bool IsEmailUnverified(ClaimsPrincipal? principal)
+    {
+        var value = principal?.FindFirst("email_verified")?.Value;
+        return string.Equals(value, "false", StringComparison.OrdinalIgnoreCase);
+    }
+
     private static async Task ApplyExternalJobsyProfileAsync(
         HttpContext http,
         ClaimsPrincipal? principal,
@@ -369,6 +441,12 @@ public static class AuthServiceCollectionExtensions
         }
 
         EnsureNameClaim(identity);
+
+        // Providers may assert email_verified=false; reject those earlier in OIDC events.
+        if (!identity.HasClaim(c => c.Type == "email_verified"))
+        {
+            identity.AddClaim(new Claim("email_verified", "true"));
+        }
 
         var email = identity.FindFirst(ClaimTypes.Email)?.Value
                     ?? identity.FindFirst("preferred_username")?.Value
@@ -581,5 +659,12 @@ public class DemoUserStore
         }
 
         return CryptographicOperations.FixedTimeEquals(expected, actual);
+    }
+
+    public bool TryFindByEmail(string email, out DemoUserOptions? user)
+    {
+        user = _users.FirstOrDefault(u =>
+            string.Equals(u.Email, email, StringComparison.OrdinalIgnoreCase));
+        return user is not null;
     }
 }

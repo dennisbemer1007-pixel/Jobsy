@@ -20,21 +20,22 @@ public sealed class PushNotificationServiceStub : IPushNotificationService
 
     public async Task SendAsync(PushMessage message, CancellationToken cancellationToken = default)
     {
+        var redactedTo = EmailServiceStub.RedactEmail(message.UserEmail);
         _logger.LogInformation(
             "Push stub → {Email}: {Title} ({DeepLink})",
-            message.UserEmail, message.Title, message.DeepLink);
+            redactedTo, message.Title, message.DeepLink);
 
         _db.PlatformLogs.Add(new PlatformLog
         {
             Id = Guid.NewGuid(),
             Level = PlatformLogLevel.Info,
             Category = message.Category ?? "Push",
-            Message = $"Push to {message.UserEmail}: {message.Title}",
+            Message = $"Push to {redactedTo}: {message.Title}",
             DetailsJson = JsonSerializer.Serialize(new
             {
-                message.UserEmail,
+                To = redactedTo,
                 message.Title,
-                message.Body,
+                BodyLength = message.Body?.Length ?? 0,
                 message.DeepLink
             }),
             CreatedAt = DateTime.UtcNow

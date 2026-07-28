@@ -59,7 +59,7 @@ public sealed class SalesManagerOnboardingService : ISalesManagerOnboardingServi
         profile.PostalCode = request.PostalCode.Trim();
         profile.City = request.City.Trim();
         profile.Country = string.IsNullOrWhiteSpace(request.Country) ? "NL" : request.Country.Trim();
-        profile.Iban = string.IsNullOrWhiteSpace(request.Iban) ? null : request.Iban.Trim().Replace(" ", "");
+        profile.Iban = ResolveIbanUpdate(profile.Iban, request.Iban);
         profile.UpdatedAt = DateTime.UtcNow;
 
         TryCompleteOnboarding(profile);
@@ -163,6 +163,23 @@ public sealed class SalesManagerOnboardingService : ISalesManagerOnboardingServi
         }
     }
 
+    private static string? ResolveIbanUpdate(string? current, string? incoming)
+    {
+        if (string.IsNullOrWhiteSpace(incoming))
+        {
+            // Empty form field keeps the stored IBAN (GET never returns the full value).
+            return current;
+        }
+
+        var compact = incoming.Trim().Replace(" ", "", StringComparison.Ordinal);
+        if (compact.Contains('*', StringComparison.Ordinal))
+        {
+            return current;
+        }
+
+        return compact.ToUpperInvariant();
+    }
+
     private static string GenerateTrackingCode()
     {
         const string alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
@@ -187,7 +204,10 @@ public sealed class SalesManagerOnboardingService : ISalesManagerOnboardingServi
             profile?.PostalCode,
             profile?.City,
             profile?.Country,
-            profile?.Iban,
+            // Never return the full IBAN over the API — only a masked preview.
+            string.IsNullOrWhiteSpace(profile?.Iban)
+                ? null
+                : ISalesManagerPayoutService.MaskIban(profile.Iban),
             profile?.TrackingCode,
             profile?.AgreementSignedAt,
             profile?.AgreementVersion,

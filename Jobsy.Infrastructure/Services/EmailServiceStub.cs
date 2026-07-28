@@ -45,7 +45,7 @@ public sealed class EmailServiceStub : IEmailService
         await _db.SaveChangesAsync(cancellationToken);
     }
 
-    internal static string RedactEmail(string email)
+    public static string RedactEmail(string email)
     {
         if (string.IsNullOrWhiteSpace(email))
         {

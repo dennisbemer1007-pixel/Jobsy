@@ -8,6 +8,8 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.FileProviders;
+using Microsoft.Extensions.Hosting;
 
 namespace Jobsy.Tests;
 
@@ -69,7 +71,9 @@ public class ExternalProviderConfigTests
                 ["JobsyAuth:DevelopmentAuthSecret"] = secret
             })
             .Build();
-        return new AuthController(db, config, credentials);
+        return new AuthController(
+            db, config, credentials,
+            new StubHostEnvironment { EnvironmentName = Environments.Development });
     }
 
     private static JobsyDbContext CreateDb()
@@ -78,5 +82,13 @@ public class ExternalProviderConfigTests
             .UseInMemoryDatabase(Guid.NewGuid().ToString())
             .Options;
         return new JobsyDbContext(options);
+    }
+
+    private sealed class StubHostEnvironment : IHostEnvironment
+    {
+        public string EnvironmentName { get; set; } = Environments.Development;
+        public string ApplicationName { get; set; } = "Jobsy.Tests";
+        public string ContentRootPath { get; set; } = AppContext.BaseDirectory;
+        public IFileProvider ContentRootFileProvider { get; set; } = new NullFileProvider();
     }
 }

@@ -181,9 +181,8 @@ public class ApplicationsController : ControllerBase
         // Compact summary only — full prefs JSON easily exceeds varchar(1024) and broke Apply.
         application.PreferencesSummary = BuildCompactPreferencesSummary(preferences);
         application.ConsentAcceptedAt = DateTime.UtcNow;
-        application.ConsentVersion = string.IsNullOrWhiteSpace(request.ConsentVersion)
-            ? PrivacyConstants.CurrentConsentVersion
-            : request.ConsentVersion.Trim();
+        // Server stamps consent version — client-supplied values are ignored (AVG integrity).
+        application.ConsentVersion = PrivacyConstants.CurrentConsentVersion;
         application.WorkPermitConfirmed = request.WorkPermitConfirmed;
         application.SnapshotAvailabilityJson = Truncate(
             preferences.Availability is null ? null : JsonSerializer.Serialize(preferences.Availability),
@@ -556,11 +555,11 @@ public class ApplicationsController : ControllerBase
             revealed ? a.CandidateAddress : null,
             revealed,
             a.WorkPermitConfirmed,
-            a.SnapshotAvailabilityJson,
-            a.SnapshotDrivingLicenses,
-            a.SnapshotEducations,
-            a.SnapshotAboutMe,
-            a.CandidateEmployerCount);
+            revealed ? a.SnapshotAvailabilityJson : null,
+            revealed ? a.SnapshotDrivingLicenses : null,
+            revealed ? a.SnapshotEducations : null,
+            revealed ? a.SnapshotAboutMe : null,
+            revealed ? a.CandidateEmployerCount : 0);
     }
 
     private async Task SendVerificationCodeAsync(
