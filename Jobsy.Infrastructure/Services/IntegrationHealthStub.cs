@@ -132,6 +132,14 @@ public sealed class IntegrationHealthStub : IIntegrationHealthService
             return (false, "Geen Mollie API-key geconfigureerd.");
         }
 
+        var apiKey = secrets.ApiKey.Trim();
+        if (!apiKey.StartsWith("test_", StringComparison.Ordinal)
+            && !apiKey.StartsWith("live_", StringComparison.Ordinal)
+            && !apiKey.StartsWith("access_", StringComparison.Ordinal))
+        {
+            return (false, "Mollie API-key moet beginnen met test_, live_ of access_.");
+        }
+
         var rawBase = string.IsNullOrWhiteSpace(secrets.BaseUrl)
             ? "https://api.mollie.com/v2/"
             : secrets.BaseUrl;
@@ -141,17 +149,20 @@ public sealed class IntegrationHealthStub : IIntegrationHealthService
             return (false, error ?? "Ongeldige Mollie Base URL.");
         }
 
+        // /methods werkt met gewone API-keys (test_/live_). /permissions is alleen OAuth.
         var client = _httpClientFactory.CreateClient("IntegrationProbe");
-        using var request = new HttpRequestMessage(HttpMethod.Get, new Uri(new Uri(baseUrl), "permissions"));
-        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", secrets.ApiKey);
+        using var request = new HttpRequestMessage(HttpMethod.Get, new Uri(new Uri(baseUrl), "methods"));
+        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", apiKey);
         using var response = await client.SendAsync(request, cancellationToken);
         if (response.IsSuccessStatusCode)
         {
-            return (true, "Verbinding met Mollie OK.");
+            var mode = apiKey.StartsWith("live_", StringComparison.Ordinal) ? "live" : "test";
+            return (true, $"Verbinding met Mollie OK ({mode}).");
         }
 
-        // Test keys / stubs may 401 on live API — still report clearly.
-        return (false, $"Mollie gaf {(int)response.StatusCode} — controleer de API-key.");
+        var body = await response.Content.ReadAsStringAsync(cancellationToken);
+        var detail = body.Length > 160 ? body[..160] : body;
+        return (false, $"Mollie gaf {(int)response.StatusCode} — controleer de API-key. {detail}".Trim());
     }
 
     private async Task<(bool Ok, string Message)> TestMailAsync(CancellationToken cancellationToken)
