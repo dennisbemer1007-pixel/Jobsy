@@ -11,7 +11,8 @@ public record CompanySummaryDto(
     decimal TokenBalance,
     int ActiveVacancies,
     Guid? ParentCompanyId = null,
-    bool TokensManagedByEnterprise = false);
+    bool TokensManagedByEnterprise = false,
+    bool CsvBatchImportEnabled = false);
 
 public record TokenBalanceDto(
     Guid CompanyId,
@@ -21,6 +22,8 @@ public record TokenBalanceDto(
     bool TokensManagedByEnterprise = false);
 
 public record UpdateTokenManagementRequest(bool TokensManagedByEnterprise);
+
+public record UpdateCsvBatchImportRequest(bool CsvBatchImportEnabled);
 
 public record GrantTokensRequest(Guid CompanyId, decimal Amount, string Note);
 

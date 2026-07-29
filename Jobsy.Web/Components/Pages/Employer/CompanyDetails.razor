@@ -9,7 +9,7 @@
     <header class="panel-header">
         <div>
             <h1>Bedrijfsgegevens</h1>
-            <p class="login-lead">Organisatiegegevens en externe API-koppeling.</p>
+            <p class="login-lead">Organisatiegegevens, CSV-import en externe API-koppeling.</p>
         </div>
     </header>
 
@@ -49,10 +49,32 @@
             </section>
 
             <section class="panel-section">
+                <h2>CSV Batch Import</h2>
+                <p class="muted">
+                    Schakel batch-import van vacatures via CSV in. Vacatures komen binnen als concept;
+                    publiceren (en tokenverbruik) gebeurt daarna in Lobsy — net als bij de API.
+                </p>
+                <label class="checkbox-row">
+                    <input type="checkbox"
+                           checked="@_org.CsvBatchImportEnabled"
+                           disabled="@_busy"
+                           @onchange="OnCsvToggleAsync" />
+                    CSV Batch Import inschakelen
+                </label>
+                @if (_org.CsvBatchImportEnabled)
+                {
+                    <p class="muted" style="margin-top:0.5rem">
+                        Navigatie toont nu de tab <a href="/employer/csv-import">CSV Import</a>.
+                    </p>
+                }
+            </section>
+
+            <section class="panel-section">
                 <h2>API-koppeling</h2>
                 <p class="muted">
                     Externe systemen kunnen vacatures aanmaken, wijzigen en status opvragen via
                     <code>X-API-Key</code> op <code>/api/external/vacancies</code>.
+                    Nieuwe vacatures blijven concept tot je ze in Lobsy publiceert (tokenverwerking).
                     De volledige sleutel wordt nooit opgeslagen — alleen een hash.
                 </p>
 
@@ -320,6 +342,43 @@
                 ? "Credentials verzonden."
                 : $"Nieuwe API-key verzonden naar {result.RecipientEmail} (prefix {result.KeyPrefix}). De vorige key is gedeactiveerd.";
             await LoadKeysForSelectedAsync();
+        }
+        catch (Exception ex)
+        {
+            _message = ex.Message;
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private async Task OnCsvToggleAsync(ChangeEventArgs e)
+    {
+        if (_org is null || _busy)
+        {
+            return;
+        }
+
+        var enabled = e.Value is bool b && b || e.Value?.ToString() == "on";
+        _busy = true;
+        _message = null;
+        try
+        {
+            var updated = await Api.UpdateCsvBatchImportAsync(_org.Id, enabled);
+            if (updated is not null)
+            {
+                _org.CsvBatchImportEnabled = updated.CsvBatchImportEnabled;
+                var idx = _organizations.FindIndex(o => o.Id == _org.Id);
+                if (idx >= 0)
+                {
+                    _organizations[idx].CsvBatchImportEnabled = updated.CsvBatchImportEnabled;
+                }
+            }
+
+            _message = enabled
+                ? "CSV Batch Import is ingeschakeld. De tab CSV Import verschijnt in het menu."
+                : "CSV Batch Import is uitgeschakeld.";
         }
         catch (Exception ex)
         {

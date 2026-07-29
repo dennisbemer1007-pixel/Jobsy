@@ -6318,6 +6318,153 @@ button.linkish:hover {
     background: color-mix(in srgb, var(--brand, #0b6e4f) 14%, transparent);
 }
 
+.source-badge--csv {
+    color: #0a5c8a;
+    background: color-mix(in srgb, #0a5c8a 14%, transparent);
+}
+
+/* —— CSV import —— */
+.csv-howto__grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 1.25rem;
+    margin: 1rem 0;
+}
+
+.csv-howto code {
+    font-size: 0.85em;
+}
+
+.csv-dropzone {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.35rem;
+    min-height: 9rem;
+    padding: 1.5rem 1rem;
+    border: 2px dashed color-mix(in srgb, var(--brand, #0b6e4f) 45%, var(--border, #d0d5da));
+    border-radius: 0.75rem;
+    background:
+        radial-gradient(ellipse at 20% 0%, color-mix(in srgb, var(--brand, #0b6e4f) 10%, transparent), transparent 55%),
+        linear-gradient(180deg, color-mix(in srgb, var(--surface, #fff) 92%, #e8f2ee), var(--surface, #fff));
+    text-align: center;
+    cursor: pointer;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
+}
+
+.csv-dropzone.is-dragover {
+    border-color: var(--brand, #0b6e4f);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--brand, #0b6e4f) 18%, transparent);
+    transform: translateY(-1px);
+}
+
+.csv-dropzone__title {
+    font-weight: 650;
+    color: var(--text, #1a2229);
+}
+
+.csv-dropzone__input {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    cursor: pointer;
+}
+
+.csv-dropzone__file {
+    margin-top: 0.35rem;
+    z-index: 1;
+    pointer-events: none;
+}
+
+.csv-results-table .csv-inline-input {
+    width: 100%;
+    min-width: 7rem;
+    font: inherit;
+    padding: 0.35rem 0.45rem;
+    border: 1px solid var(--border, #d0d5da);
+    border-radius: 0.35rem;
+    background: var(--surface, #fff);
+}
+
+.csv-results-table .mono,
+.csv-inline-input.mono {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 0.85em;
+}
+
+.csv-row--fail {
+    background: color-mix(in srgb, var(--warn, #b45309) 6%, transparent);
+}
+
+.csv-row--ok {
+    background: color-mix(in srgb, var(--brand, #0b6e4f) 5%, transparent);
+}
+
+.csv-row-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 0.45rem;
+    min-width: 14rem;
+}
+
+.csv-error {
+    margin: 0;
+    color: var(--warn, #b45309);
+    font-size: 0.9rem;
+}
+
+.csv-inline-label {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+    font-size: 0.8rem;
+    color: var(--text-muted, #5a6570);
+}
+
+.csv-celebrate-modal {
+    max-width: 28rem;
+}
+
+.csv-celebrate {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 0.75rem;
+}
+
+.csv-celebrate__mascot {
+    width: 7.5rem;
+    height: 7.5rem;
+    object-fit: contain;
+    animation: csv-lobster-party 0.9s ease-in-out infinite alternate;
+    filter: drop-shadow(0 8px 16px color-mix(in srgb, var(--brand, #0b6e4f) 25%, transparent));
+}
+
+.csv-celebrate__score {
+    font-size: 1.15rem;
+    margin: 0;
+}
+
+@keyframes csv-lobster-party {
+    from {
+        transform: translateY(0) rotate(-6deg) scale(1);
+    }
+    to {
+        transform: translateY(-10px) rotate(6deg) scale(1.06);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .csv-celebrate__mascot {
+        animation: none;
+    }
+}
+
 /* —— Legal pages & footer —— */
 .legal-page {
     max-width: 720px;

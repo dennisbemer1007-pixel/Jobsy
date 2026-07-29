@@ -15,7 +15,7 @@ public class Vacancy
     public Guid CompanyId { get; set; }
     public Company Company { get; set; } = null!;
 
-    /// <summary>Whether the vacancy was created via the UI or external API.</summary>
+    /// <summary>Whether the vacancy was created via the UI, external API, or CSV import.</summary>
     public VacancySource CreatedVia { get; set; } = VacancySource.Manual;
 
     public GeoPoint Location { get; set; } = null!;

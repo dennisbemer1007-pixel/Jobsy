@@ -55,7 +55,8 @@ public class CompaniesController : ControllerBase
                 c.TokenTransactions.Sum(t => t.Amount),
                 c.Vacancies.Count(v => v.Status == VacancyStatus.Active),
                 c.ParentCompanyId,
-                c.TokensManagedByEnterprise))
+                c.TokensManagedByEnterprise,
+                c.CsvBatchImportEnabled))
             .ToListAsync(cancellationToken);
 
         return Ok(companies);
@@ -154,7 +155,8 @@ public class CompaniesController : ControllerBase
             0,
             0,
             company.ParentCompanyId,
-            company.TokensManagedByEnterprise));
+            company.TokensManagedByEnterprise,
+            company.CsvBatchImportEnabled));
     }
 
     /// <summary>
@@ -193,13 +195,57 @@ public class CompaniesController : ControllerBase
         company.TokensManagedByEnterprise = request.TokensManagedByEnterprise;
         await _db.SaveChangesAsync(cancellationToken);
 
+        return Ok(await ToSummaryAsync(company, cancellationToken));
+    }
+
+    /// <summary>
+    /// Enable/disable CSV Batch Import for an organisation (parent company).
+    /// </summary>
+    [HttpPut("{companyId:guid}/csv-batch-import")]
+    [Authorize(Roles = $"{JobsyRoles.EnterpriseManager},{JobsyRoles.Admin}")]
+    public async Task<ActionResult<CompanySummaryDto>> UpdateCsvBatchImport(
+        Guid companyId,
+        [FromBody] UpdateCsvBatchImportRequest request,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            await _companyAuth.EnsureCanAccessCompanyAsync(User, companyId, cancellationToken);
+        }
+        catch (Core.Exceptions.ForbiddenCompanyAccessException)
+        {
+            return Forbid();
+        }
+
+        var company = await _db.Companies.FirstOrDefaultAsync(c => c.Id == companyId, cancellationToken);
+        if (company is null)
+        {
+            return NotFound(new { message = "Bedrijf niet gevonden." });
+        }
+
+        if (company.ParentCompanyId is not null)
+        {
+            return BadRequest(new
+            {
+                message = "CSV Batch Import schakel je in op organisatieniveau (niet op een vestiging)."
+            });
+        }
+
+        company.CsvBatchImportEnabled = request.CsvBatchImportEnabled;
+        await _db.SaveChangesAsync(cancellationToken);
+
+        return Ok(await ToSummaryAsync(company, cancellationToken));
+    }
+
+    private async Task<CompanySummaryDto> ToSummaryAsync(Company company, CancellationToken cancellationToken)
+    {
         var balance = await _db.TokenTransactions.AsNoTracking()
             .Where(t => t.CompanyId == company.Id)
             .SumAsync(t => t.Amount, cancellationToken);
         var activeVacancies = await _db.Vacancies.AsNoTracking()
             .CountAsync(v => v.CompanyId == company.Id && v.Status == VacancyStatus.Active, cancellationToken);
 
-        return Ok(new CompanySummaryDto(
+        return new CompanySummaryDto(
             company.Id,
             company.Name,
             company.Address,
@@ -207,6 +253,7 @@ public class CompaniesController : ControllerBase
             balance,
             activeVacancies,
             company.ParentCompanyId,
-            company.TokensManagedByEnterprise));
+            company.TokensManagedByEnterprise,
+            company.CsvBatchImportEnabled);
     }
 }

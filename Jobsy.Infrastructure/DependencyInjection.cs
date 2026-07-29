@@ -102,6 +102,7 @@ public static class DependencyInjection
         services.AddScoped<IUserLookupService, UserLookupService>();
         services.AddScoped<ITokenLedgerService, TokenLedgerService>();
         services.AddScoped<IVacancyProductService, VacancyProductService>();
+        services.AddScoped<IVacancyDraftCreationService, VacancyDraftCreationService>();
         services.AddScoped<IMetricsQueryService, MetricsQueryService>();
         services.AddScoped<ICandidateMetricsQueryService, CandidateMetricsQueryService>();
 

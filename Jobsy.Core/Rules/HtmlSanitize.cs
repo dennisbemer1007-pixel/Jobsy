@@ -142,6 +142,16 @@ public static class HtmlSanitize
         return IsSafeHttpsUrl(trimmed);
     }
 
+    /// <summary>Max decoded bytes for vacancy images supplied as Base64 / data URIs.</summary>
+    public const int MaxImageBytes = 400_000;
+
+    /// <summary>Max stored length for ImageUrl including data:image base64 payloads.</summary>
+    public const int MaxImageUrlLength = 600_000;
+
+    private static readonly Regex DataImageRegex = new(
+        @"^data:image/(png|jpe?g|gif|webp);base64,([A-Za-z0-9+/=\s]+)$",
+        RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | RegexOptions.Compiled);
+
     public static string? NormalizeMediaUrl(string? url)
     {
         if (string.IsNullOrWhiteSpace(url))
@@ -150,7 +160,139 @@ public static class HtmlSanitize
         }
 
         var trimmed = url.Trim();
-        return IsSafeHttpsUrl(trimmed) ? trimmed : null;
+        if (IsSafeHttpsUrl(trimmed))
+        {
+            return trimmed.Length > 1024 ? null : trimmed;
+        }
+
+        return NormalizeImageData(trimmed);
+    }
+
+    /// <summary>
+    /// Accepts http(s) URLs, data:image Base64 URIs, or raw Base64 image payloads.
+    /// Returns a normalized URL / data URI, or null when invalid.
+    /// </summary>
+    public static string? NormalizeImageInput(string? input, out string? error)
+    {
+        error = null;
+        if (string.IsNullOrWhiteSpace(input))
+        {
+            return null;
+        }
+
+        var trimmed = input.Trim().Trim('"');
+        if (IsSafeHttpsUrl(trimmed))
+        {
+            if (trimmed.Length > 1024)
+            {
+                error = "Afbeelding-URL is te lang (max 1024 tekens).";
+                return null;
+            }
+
+            return trimmed;
+        }
+
+        var dataUri = NormalizeImageData(trimmed);
+        if (dataUri is null)
+        {
+            error = "Ongeldige afbeelding (alleen http/https of Base64/data:image).";
+            return null;
+        }
+
+        if (dataUri.Length > MaxImageUrlLength)
+        {
+            error = "Afbeelding is te groot na Base64-encoding.";
+            return null;
+        }
+
+        return dataUri;
+    }
+
+    private static string? NormalizeImageData(string trimmed)
+    {
+        var match = DataImageRegex.Match(trimmed);
+        if (match.Success)
+        {
+            var mime = match.Groups[1].Value.ToLowerInvariant();
+            if (mime == "jpg")
+            {
+                mime = "jpeg";
+            }
+
+            var payload = Regex.Replace(match.Groups[2].Value, @"\s+", "");
+            if (!TryDecodeBase64Image(payload, out _))
+            {
+                return null;
+            }
+
+            return $"data:image/{mime};base64,{payload}";
+        }
+
+        // Raw Base64 without data: prefix — sniff magic bytes after decode.
+        var compact = Regex.Replace(trimmed, @"\s+", "");
+        if (compact.Length < 32 || compact.Contains(':', StringComparison.Ordinal))
+        {
+            return null;
+        }
+
+        if (!TryDecodeBase64Image(compact, out var bytes))
+        {
+            return null;
+        }
+
+        var mimeType = DetectImageMime(bytes);
+        return mimeType is null ? null : $"data:{mimeType};base64,{compact}";
+    }
+
+    private static bool TryDecodeBase64Image(string payload, out byte[] bytes)
+    {
+        bytes = [];
+        try
+        {
+            bytes = Convert.FromBase64String(payload);
+        }
+        catch (FormatException)
+        {
+            return false;
+        }
+
+        if (bytes.Length is 0 or > MaxImageBytes)
+        {
+            return false;
+        }
+
+        return DetectImageMime(bytes) is not null;
+    }
+
+    private static string? DetectImageMime(ReadOnlySpan<byte> bytes)
+    {
+        if (bytes.Length >= 3 && bytes[0] == 0xFF && bytes[1] == 0xD8 && bytes[2] == 0xFF)
+        {
+            return "image/jpeg";
+        }
+
+        if (bytes.Length >= 8
+            && bytes[0] == 0x89 && bytes[1] == 0x50 && bytes[2] == 0x4E && bytes[3] == 0x47
+            && bytes[4] == 0x0D && bytes[5] == 0x0A && bytes[6] == 0x1A && bytes[7] == 0x0A)
+        {
+            return "image/png";
+        }
+
+        if (bytes.Length >= 6
+            && bytes[0] == (byte)'G' && bytes[1] == (byte)'I' && bytes[2] == (byte)'F'
+            && bytes[3] == (byte)'8' && (bytes[4] == (byte)'7' || bytes[4] == (byte)'9') && bytes[5] == (byte)'a')
+        {
+            return "image/gif";
+        }
+
+        if (bytes.Length >= 12
+            && bytes[0] == (byte)'R' && bytes[1] == (byte)'I' && bytes[2] == (byte)'F' && bytes[3] == (byte)'F'
+            && bytes[8] == (byte)'W' && bytes[9] == (byte)'E' && bytes[10] == (byte)'B' && bytes[11] == (byte)'P')
+        {
+            return "image/webp";
+        }
+
+        return null;
     }
 
     private static string? ExtractAttribute(string attributes, string name)

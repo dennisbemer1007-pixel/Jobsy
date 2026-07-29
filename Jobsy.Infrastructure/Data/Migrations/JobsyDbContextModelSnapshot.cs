@@ -331,6 +331,9 @@ namespace Jobsy.Infrastructure.Data.Migrations
                     b.Property<Guid?>("ReferredBySalesManagerUserId")
                         .HasColumnType("uuid");
 
+                    b.Property<bool>("CsvBatchImportEnabled")
+                        .HasColumnType("boolean");
+
                     b.Property<bool>("TokensManagedByEnterprise")
                         .HasColumnType("boolean");
 
@@ -1568,8 +1571,8 @@ namespace Jobsy.Infrastructure.Data.Migrations
                         .HasColumnType("numeric(8,2)");
 
                     b.Property<string>("ImageUrl")
-                        .HasMaxLength(1024)
-                        .HasColumnType("character varying(1024)");
+                        .HasMaxLength(600000)
+                        .HasColumnType("character varying(600000)");
 
                     b.Property<bool>("IsHighlighted")
                         .HasColumnType("boolean");

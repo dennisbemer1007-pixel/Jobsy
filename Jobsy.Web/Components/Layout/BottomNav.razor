@@ -32,6 +32,7 @@
     private IReadOnlyList<NavItem> _items = RoleNavCatalog.Anonymous;
     private bool _hasTakeoverActions;
     private bool _salesOnboardingComplete;
+    private bool _csvImportEnabled;
     private bool _roleFlagsLoaded;
     private string? _lastRoleFingerprint;
 
@@ -101,6 +102,32 @@
             }
         }
 
+        if (RoleClaimMatching.HasRole(state.User, JobsyRoles.EnterpriseManager)
+            || RoleClaimMatching.HasRole(state.User, JobsyRoles.Admin))
+        {
+            var path = RoleNavCatalog.NormalizePath(Navigation.ToBaseRelativePath(Navigation.Uri));
+            var csvRelevantPath = path.StartsWith("/employer/company", StringComparison.OrdinalIgnoreCase)
+                                  || path.StartsWith("/employer/csv-import", StringComparison.OrdinalIgnoreCase);
+            if (forceRoleApis || rolesChanged || !_roleFlagsLoaded || csvRelevantPath)
+            {
+                await RefreshCsvImportFlagAsync();
+            }
+
+            if (!_csvImportEnabled)
+            {
+                catalog = catalog
+                    .Where(i => !string.Equals(i.Href, RoleNavCatalog.CsvImport.Href, StringComparison.OrdinalIgnoreCase))
+                    .ToList();
+            }
+        }
+        else
+        {
+            // Non-EM roles never see CSV import even if catalog somehow includes it.
+            catalog = catalog
+                .Where(i => !string.Equals(i.Href, RoleNavCatalog.CsvImport.Href, StringComparison.OrdinalIgnoreCase))
+                .ToList();
+        }
+
         _roleFlagsLoaded = true;
 
         var previousCount = _items.Count;
@@ -134,6 +161,19 @@
         catch
         {
             _salesOnboardingComplete = false;
+        }
+    }
+
+    private async Task RefreshCsvImportFlagAsync()
+    {
+        try
+        {
+            var companies = await Api.GetMyCompaniesAsync();
+            _csvImportEnabled = companies.Any(c => c.CsvBatchImportEnabled);
+        }
+        catch
+        {
+            _csvImportEnabled = false;
         }
     }
 

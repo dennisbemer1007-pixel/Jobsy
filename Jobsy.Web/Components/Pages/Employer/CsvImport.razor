@@ -1,0 +1,495 @@
+@page "/employer/csv-import"
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "EnterpriseManager,Admin")]
+@inject JobsyApiClient Api
+@using Jobsy.Core.Rules
+@using Microsoft.AspNetCore.Components.Forms
+
+<PageTitle>CSV Import · Lobsy</PageTitle>
+
+<div class="panel-page csv-import-page">
+    <header class="panel-header">
+        <div>
+            <h1>CSV Import</h1>
+            <p class="login-lead">Importeer vacatures veilig als concept. Publiceren (met tokens) doe je daarna in Lobsy.</p>
+        </div>
+    </header>
+
+    @if (_loading)
+    {
+        <p class="state-message">Laden…</p>
+    }
+    else if (!string.IsNullOrEmpty(_fatalError))
+    {
+        <p class="state-message error">@_fatalError</p>
+    }
+    else if (_organizations.Count == 0)
+    {
+        <p class="state-message">Geen organisatie met CSV Batch Import gevonden. Schakel dit in bij Bedrijfsgegevens.</p>
+    }
+    else
+    {
+        <section class="panel-section csv-howto">
+            <h2>How-to · minimale CSV-vereisten</h2>
+            <p class="muted">
+                Gebruik een UTF-8 CSV met headerrij. Scheidingsteken: komma. Velden met komma’s of regeleinden tussen aanhalingstekens zetten.
+                Geslaagde rijen worden <strong>concept-vacatures</strong> — publiceer ze via <a href="/employer/vacancies">Vacatures</a> (daar zit tokenverwerking).
+                Hetzelfde geldt voor vacatures die via de API binnenkomen.
+            </p>
+            <div class="csv-howto__grid">
+                <div>
+                    <h3>Verplicht</h3>
+                    <ul>
+                        <li><code>titel</code></li>
+                        <li><code>omschrijving</code></li>
+                        <li><code>startdatum</code> (yyyy-MM-dd of dd-MM-yyyy)</li>
+                        <li><code>einddatum</code></li>
+                        <li><code>branches</code> (1 of 2, scheid met <code>;</code> of <code>|</code>)</li>
+                        <li><code>salaristabel_id</code> (GUID van een actieve salaristabel)</li>
+                    </ul>
+                </div>
+                <div>
+                    <h3>Optioneel</h3>
+                    <ul>
+                        <li><code>vestiging_id</code> (GUID; anders de gekozen vestiging hieronder)</li>
+                        <li><code>uurloon</code> (valt terug op salaristabel 21+)</li>
+                        <li><code>afbeelding</code> — http(s)-URL <strong>of Base64-string</strong> (png/jpeg/gif/webp, max ~400&nbsp;KB)</li>
+                        <li><code>video</code> (http/https)</li>
+                        <li><code>vervoer</code> (Fiets, Auto, OV, Lopend)</li>
+                        <li><code>rijbewijs</code>, <code>opleiding</code>, <code>minimum_werkgevers</code></li>
+                    </ul>
+                </div>
+            </div>
+            <p class="muted">
+                Voorbeeldheader:
+                <code>titel,omschrijving,startdatum,einddatum,branches,salaristabel_id,afbeelding</code>
+            </p>
+        </section>
+
+        <section class="panel-section">
+            <h2>Upload</h2>
+            @if (_organizations.Count > 1)
+            {
+                <label class="filter-required" style="max-width:24rem;display:block;margin-bottom:0.75rem">
+                    Organisatie
+                    <select @bind="_selectedOrgId" @bind:after="OnOrgChangedAsync">
+                        @foreach (var org in _organizations)
+                        {
+                            <option value="@org.Id">@org.Name</option>
+                        }
+                    </select>
+                </label>
+            }
+
+            <label class="filter-required" style="max-width:24rem;display:block;margin-bottom:0.75rem">
+                Standaard vestiging
+                <select @bind="_selectedCompanyId">
+                    @foreach (var c in _targetCompanies)
+                    {
+                        <option value="@c.Id">@c.Name</option>
+                    }
+                </select>
+            </label>
+
+            <label class="csv-dropzone @(_dragOver ? "is-dragover" : null)"
+                   @ondragenter="OnDragEnter"
+                   @ondragover="OnDragOver"
+                   @ondragleave="OnDragLeave"
+                   @ondragenter:preventDefault
+                   @ondragover:preventDefault>
+                <span class="csv-dropzone__title">Sleep een .csv-bestand hierheen of blader</span>
+                <span class="muted">Alleen .csv · max 5 MB · UTF-8</span>
+                <InputFile OnChange="OnFileSelected" accept=".csv,text/csv" class="csv-dropzone__input" />
+                @if (!string.IsNullOrEmpty(_fileName))
+                {
+                    <span class="csv-dropzone__file">Gekozen: <strong>@_fileName</strong></span>
+                }
+            </label>
+
+            @if (!string.IsNullOrEmpty(_parseError))
+            {
+                <p class="state-message error">@_parseError</p>
+            }
+
+            <div class="inline-actions" style="margin-top:1rem">
+                <button class="login-submit" type="button" disabled="@(_busy || _pendingRows.Count == 0)" @onclick="ImportAsync">
+                    @(_busy ? "Bezig…" : $"Importeer {_pendingRows.Count} rijen")
+                </button>
+            </div>
+        </section>
+
+        @if (_results.Count > 0)
+        {
+            <section class="panel-section">
+                <h2>Importresultaten</h2>
+                <p class="muted">
+                    @_successCount geslaagd · @_failCount mislukt.
+                    Corrigeer mislukte rijen inline en klik op <em>Opnieuw aanbieden</em>.
+                </p>
+
+                <div class="table-scroll">
+                    <table class="data-table csv-results-table">
+                        <thead>
+                            <tr>
+                                <th>Rij</th>
+                                <th>Status</th>
+                                <th>Titel</th>
+                                <th>Branches</th>
+                                <th>Startdatum</th>
+                                <th>Einddatum</th>
+                                <th>Salaristabel</th>
+                                <th>Fout / actie</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var row in _results)
+                            {
+                                <tr class="@(row.Success ? "csv-row--ok" : "csv-row--fail")">
+                                    <td>@row.RowNumber</td>
+                                    <td>
+                                        @if (row.Success)
+                                        {
+                                            <span class="badge-ok">Geslaagd</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge-warn">Mislukt</span>
+                                        }
+                                    </td>
+                                    @if (row.Success)
+                                    {
+                                        <td>@row.Data.Title</td>
+                                        <td>@row.Data.Branches</td>
+                                        <td>@row.Data.StartDate</td>
+                                        <td>@row.Data.EndDate</td>
+                                        <td class="mono">@ShortGuid(row.Data.SalaryTableId)</td>
+                                        <td class="muted">Concept · @ShortGuid(row.VacancyId?.ToString())</td>
+                                    }
+                                    else
+                                    {
+                                        <td><input class="csv-inline-input" @bind="row.Data.Title" /></td>
+                                        <td><input class="csv-inline-input" @bind="row.Data.Branches" /></td>
+                                        <td><input class="csv-inline-input" @bind="row.Data.StartDate" /></td>
+                                        <td><input class="csv-inline-input" @bind="row.Data.EndDate" /></td>
+                                        <td><input class="csv-inline-input mono" @bind="row.Data.SalaryTableId" /></td>
+                                        <td>
+                                            <div class="csv-row-actions">
+                                                <p class="csv-error">@row.ErrorMessage</p>
+                                                <label class="csv-inline-label">
+                                                    Omschrijving
+                                                    <textarea rows="2" class="csv-inline-input" @bind="row.Data.Description"></textarea>
+                                                </label>
+                                                <label class="csv-inline-label">
+                                                    Afbeelding (URL of Base64)
+                                                    <textarea rows="2" class="csv-inline-input mono" @bind="row.Data.Image"></textarea>
+                                                </label>
+                                                <button class="btn-compact btn-compact--primary" type="button"
+                                                        disabled="@_busy" @onclick="() => RetryAsync(row)">
+                                                    Opnieuw aanbieden
+                                                </button>
+                                            </div>
+                                        </td>
+                                    }
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        }
+    }
+</div>
+
+@if (_showCelebrate && _lastImport is not null)
+{
+    <div class="share-modal-backdrop" @onclick="CloseCelebrate"></div>
+    <div class="share-modal csv-celebrate-modal" role="dialog" aria-modal="true" aria-labelledby="csv-celebrate-title">
+        <div class="share-modal__header">
+            <h2 id="csv-celebrate-title">Feest! Import verwerkt</h2>
+            <button type="button" class="share-modal__close" @onclick="CloseCelebrate" aria-label="Sluiten">×</button>
+        </div>
+        <div class="csv-celebrate">
+            <img src="/images/brand/lobsy.png" alt="De vrolijke kreeft van Lobsy" class="csv-celebrate__mascot" width="120" height="120" />
+            <p class="csv-celebrate__score">
+                <strong>@_lastImport.SuccessCount</strong> van <strong>@_lastImport.TotalRows</strong> rijen succesvol verwerkt.
+            </p>
+            <p class="share-modal__lead">
+                @_lastImport.PublishHint
+            </p>
+            @if (_lastImport.FailedCount > 0)
+            {
+                <p class="muted">
+                    Mislukte rijen staan in het overzicht hieronder. Pas de velden aan en klik op
+                    <strong>Opnieuw aanbieden</strong> — dan valideren we die rij opnieuw en schrijven we hem alsnog in als concept.
+                </p>
+            }
+            else
+            {
+                <p class="muted">Alle rijen zijn gelukt. Ga naar Vacatures om te publiceren.</p>
+            }
+        </div>
+        <div class="inline-actions" style="margin-top:1rem">
+            <a class="login-submit" href="/employer/vacancies" style="text-decoration:none;display:inline-flex;align-items:center;">Naar vacatures</a>
+            <button class="btn-compact" type="button" @onclick="CloseCelebrate">Sluiten</button>
+        </div>
+    </div>
+}
+
+@code {
+    private List<CompanySummary> _allCompanies = [];
+    private List<CompanySummary> _organizations = [];
+    private List<CompanySummary> _targetCompanies = [];
+    private string _selectedOrgId = "";
+    private string _selectedCompanyId = "";
+    private bool _loading = true;
+    private bool _busy;
+    private bool _dragOver;
+    private bool _showCelebrate;
+    private string? _fatalError;
+    private string? _parseError;
+    private string? _fileName;
+    private List<CsvImportRowForm> _pendingRows = [];
+    private List<CsvImportRowResult> _results = [];
+    private CsvImportResult? _lastImport;
+    private int _successCount => _results.Count(r => r.Success);
+    private int _failCount => _results.Count(r => !r.Success);
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            _allCompanies = (await Api.GetMyCompaniesAsync()).ToList();
+            _organizations = _allCompanies
+                .Where(c => c.ParentCompanyId is null && c.CsvBatchImportEnabled)
+                .OrderBy(c => c.Name)
+                .ToList();
+
+            // Single-company orgs without children still work when flag is on that company.
+            if (_organizations.Count == 0)
+            {
+                _organizations = _allCompanies
+                    .Where(c => c.CsvBatchImportEnabled)
+                    .OrderBy(c => c.Name)
+                    .ToList();
+            }
+
+            if (_organizations.Count == 0)
+            {
+                return;
+            }
+
+            _selectedOrgId = _organizations[0].Id.ToString();
+            RefreshTargets();
+        }
+        catch (Exception ex)
+        {
+            _fatalError = ex.Message;
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private Task OnOrgChangedAsync()
+    {
+        RefreshTargets();
+        return Task.CompletedTask;
+    }
+
+    private void RefreshTargets()
+    {
+        if (!Guid.TryParse(_selectedOrgId, out var orgId))
+        {
+            _targetCompanies = [];
+            return;
+        }
+
+        _targetCompanies = _allCompanies
+            .Where(c => c.Id == orgId || c.ParentCompanyId == orgId)
+            .OrderBy(c => c.ParentCompanyId is null ? 0 : 1)
+            .ThenBy(c => c.Name)
+            .ToList();
+
+        if (_targetCompanies.Count == 0)
+        {
+            _selectedCompanyId = "";
+            return;
+        }
+
+        if (string.IsNullOrEmpty(_selectedCompanyId)
+            || !_targetCompanies.Any(c => c.Id.ToString() == _selectedCompanyId))
+        {
+            // Prefer a vestiging when available.
+            var vestiging = _targetCompanies.FirstOrDefault(c => c.ParentCompanyId is not null)
+                            ?? _targetCompanies[0];
+            _selectedCompanyId = vestiging.Id.ToString();
+        }
+    }
+
+    private void OnDragEnter(DragEventArgs _) => _dragOver = true;
+    private void OnDragOver(DragEventArgs _) => _dragOver = true;
+    private void OnDragLeave(DragEventArgs _) => _dragOver = false;
+
+    private async Task OnFileSelected(InputFileChangeEventArgs e)
+    {
+        _parseError = null;
+        _pendingRows = [];
+        _fileName = null;
+        try
+        {
+            var file = e.File;
+            if (file is null)
+            {
+                return;
+            }
+
+            if (!file.Name.EndsWith(".csv", StringComparison.OrdinalIgnoreCase)
+                && !string.Equals(file.ContentType, "text/csv", StringComparison.OrdinalIgnoreCase))
+            {
+                _parseError = "Alleen .csv-bestanden zijn toegestaan.";
+                return;
+            }
+
+            if (file.Size > 5 * 1024 * 1024)
+            {
+                _parseError = "Bestand is te groot (max 5 MB).";
+                return;
+            }
+
+            await using var stream = file.OpenReadStream(maxAllowedSize: 5 * 1024 * 1024);
+            using var reader = new StreamReader(stream);
+            var text = await reader.ReadToEndAsync();
+            var parsed = VacancyCsvParser.Parse(text);
+            if (!parsed.Succeeded)
+            {
+                _parseError = parsed.ErrorMessage;
+                return;
+            }
+
+            _fileName = file.Name;
+            _pendingRows = parsed.Rows.Select(r => new CsvImportRowForm
+            {
+                RowNumber = r.RowNumber,
+                Title = Get(r, VacancyCsvSchema.Title),
+                Description = Get(r, VacancyCsvSchema.Description),
+                StartDate = Get(r, VacancyCsvSchema.StartDate),
+                EndDate = Get(r, VacancyCsvSchema.EndDate),
+                Branches = Get(r, VacancyCsvSchema.Branches),
+                SalaryTableId = Get(r, VacancyCsvSchema.SalaryTableId),
+                CompanyId = Get(r, VacancyCsvSchema.CompanyId),
+                HourlyWage = Get(r, VacancyCsvSchema.HourlyWage),
+                Image = Get(r, VacancyCsvSchema.Image),
+                Video = Get(r, VacancyCsvSchema.Video),
+                Transport = Get(r, VacancyCsvSchema.Transport),
+                DrivingLicense = Get(r, VacancyCsvSchema.DrivingLicense),
+                Education = Get(r, VacancyCsvSchema.Education),
+                MinimumEmployers = Get(r, VacancyCsvSchema.MinimumEmployers)
+            }).ToList();
+        }
+        catch (Exception ex)
+        {
+            _parseError = ex.Message;
+        }
+    }
+
+    private static string? Get(VacancyCsvParser.ParsedRow row, string key) =>
+        row.Fields.TryGetValue(key, out var v) ? v : null;
+
+    private async Task ImportAsync()
+    {
+        if (!Guid.TryParse(_selectedCompanyId, out var companyId) || _pendingRows.Count == 0 || _busy)
+        {
+            return;
+        }
+
+        _busy = true;
+        _parseError = null;
+        try
+        {
+            var result = await Api.ImportVacanciesCsvAsync(companyId, _pendingRows);
+            if (result is null)
+            {
+                _parseError = "Geen antwoord van de server.";
+                return;
+            }
+
+            _lastImport = result;
+            _results = result.Rows;
+            _showCelebrate = result.SuccessCount > 0;
+            _pendingRows = [];
+            _fileName = null;
+        }
+        catch (Exception ex)
+        {
+            _parseError = ex.Message;
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private async Task RetryAsync(CsvImportRowResult row)
+    {
+        if (!Guid.TryParse(_selectedCompanyId, out var companyId) || row.Success || _busy)
+        {
+            return;
+        }
+
+        _busy = true;
+        try
+        {
+            row.Data.RowNumber = row.RowNumber;
+            var result = await Api.RetryVacancyCsvRowAsync(companyId, row.Data);
+            if (result is null)
+            {
+                row.ErrorMessage = "Geen antwoord van de server.";
+                return;
+            }
+
+            var idx = _results.FindIndex(r => r.RowNumber == row.RowNumber);
+            if (idx >= 0)
+            {
+                _results[idx] = result;
+            }
+
+            if (result.Success)
+            {
+                _showCelebrate = true;
+                _lastImport = new CsvImportResult
+                {
+                    TotalRows = 1,
+                    SuccessCount = 1,
+                    FailedCount = 0,
+                    Rows = [result],
+                    PublishHint = VacancyCsvImportControllerPublishHint
+                };
+            }
+        }
+        catch (Exception ex)
+        {
+            row.ErrorMessage = ex.Message;
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    // Keep in sync with API publish hint text.
+    private const string VacancyCsvImportControllerPublishHint =
+        "Geslaagde rijen zijn opgeslagen als concept. Publiceer ze via Vacatures in Lobsy — daar wordt het tokenverbruik verwerkt. Dit geldt ook voor vacatures via de API.";
+
+    private void CloseCelebrate() => _showCelebrate = false;
+
+    private static string ShortGuid(string? value)
+    {
+        if (string.IsNullOrWhiteSpace(value) || value.Length < 8)
+        {
+            return value ?? "—";
+        }
+
+        return value[..8] + "…";
+    }
+}

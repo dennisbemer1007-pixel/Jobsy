@@ -84,8 +84,8 @@
                                 <td class="data-table__col--wrap">@v.CompanyName <span class="muted">(@v.CompanyType)</span></td>
                                 <td>@v.Status</td>
                                 <td>
-                                    <span class="source-badge source-badge--@(string.Equals(v.CreatedVia, "Api", StringComparison.OrdinalIgnoreCase) ? "api" : "manual")">
-                                        @(string.Equals(v.CreatedVia, "Api", StringComparison.OrdinalIgnoreCase) ? "API" : "Handmatig")
+                                    <span class="source-badge source-badge--@VacancySourceDisplay.CssModifier(v.CreatedVia)">
+                                        @VacancySourceDisplay.Label(v.CreatedVia)
                                     </span>
                                 </td>
                                 <td><a href="@MetricHref(v, "impressions")">@v.ImpressionCount</a></td>

@@ -115,13 +115,18 @@ public class ExternalVacanciesController : ControllerBase
             return BadRequest(new { message = "Een of meer branches zijn ongeldig of niet actief." });
         }
 
-        var imageUrl = HtmlSanitize.NormalizeMediaUrl(request.ImageUrl);
-        var videoUrl = HtmlSanitize.NormalizeMediaUrl(request.VideoUrl);
-        if (request.ImageUrl is not null && imageUrl is null)
+        string? imageUrl = null;
+        string? imageError = null;
+        if (!string.IsNullOrWhiteSpace(request.ImageUrl))
         {
-            return BadRequest(new { message = "Ongeldige afbeelding-URL (alleen http/https)." });
+            imageUrl = HtmlSanitize.NormalizeImageInput(request.ImageUrl, out imageError);
+            if (imageUrl is null)
+            {
+                return BadRequest(new { message = imageError ?? "Ongeldige afbeelding-URL of Base64." });
+            }
         }
 
+        var videoUrl = HtmlSanitize.NormalizeMediaUrl(request.VideoUrl);
         if (request.VideoUrl is not null && videoUrl is null)
         {
             return BadRequest(new { message = "Ongeldige video-URL (alleen http/https)." });
@@ -235,10 +240,15 @@ public class ExternalVacanciesController : ControllerBase
 
         if (request.ImageUrl is not null)
         {
-            var imageUrl = HtmlSanitize.NormalizeMediaUrl(request.ImageUrl);
-            if (imageUrl is null && !string.IsNullOrWhiteSpace(request.ImageUrl))
+            string? imageUrl = null;
+            string? imageError = null;
+            if (!string.IsNullOrWhiteSpace(request.ImageUrl))
             {
-                return BadRequest(new { message = "Ongeldige afbeelding-URL (alleen http/https)." });
+                imageUrl = HtmlSanitize.NormalizeImageInput(request.ImageUrl, out imageError);
+                if (imageUrl is null)
+                {
+                    return BadRequest(new { message = imageError ?? "Ongeldige afbeelding-URL of Base64." });
+                }
             }
 
             vacancy.ImageUrl = imageUrl;

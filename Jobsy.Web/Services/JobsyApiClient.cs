@@ -812,6 +812,60 @@ public sealed class JobsyApiClient : IAsyncDisposable
         return await response.Content.ReadFromJsonAsync<CompanySummary>(cancellationToken: ct);
     }
 
+    public async Task<CompanySummary?> UpdateCsvBatchImportAsync(
+        Guid companyId,
+        bool csvBatchImportEnabled,
+        CancellationToken ct = default)
+    {
+        var response = await _http.PutAsJsonAsync(
+            $"api/companies/{companyId}/csv-batch-import",
+            new { csvBatchImportEnabled },
+            ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException(TryExtractMessage(body) ?? body);
+        }
+
+        return await response.Content.ReadFromJsonAsync<CompanySummary>(cancellationToken: ct);
+    }
+
+    public async Task<CsvImportResult?> ImportVacanciesCsvAsync(
+        Guid companyId,
+        IReadOnlyList<CsvImportRowForm> rows,
+        CancellationToken ct = default)
+    {
+        var response = await _http.PostAsJsonAsync(
+            "api/vacancies/csv-import",
+            new { companyId, rows },
+            ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException(TryExtractMessage(body) ?? body);
+        }
+
+        return await response.Content.ReadFromJsonAsync<CsvImportResult>(cancellationToken: ct);
+    }
+
+    public async Task<CsvImportRowResult?> RetryVacancyCsvRowAsync(
+        Guid companyId,
+        CsvImportRowForm row,
+        CancellationToken ct = default)
+    {
+        var response = await _http.PostAsJsonAsync(
+            "api/vacancies/csv-import/row",
+            new { companyId, row },
+            ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException(TryExtractMessage(body) ?? body);
+        }
+
+        return await response.Content.ReadFromJsonAsync<CsvImportRowResult>(cancellationToken: ct);
+    }
+
     public async Task GrantTokensAsync(
         Guid companyId,
         decimal amount,
@@ -1654,6 +1708,43 @@ public record BatchVacancyForm(
     TransportMode RequiredTransport,
     string[] WorkTypes,
     Guid[] CompanyIds);
+
+public sealed class CsvImportRowForm
+{
+    public int RowNumber { get; set; }
+    public string? Title { get; set; }
+    public string? Description { get; set; }
+    public string? StartDate { get; set; }
+    public string? EndDate { get; set; }
+    public string? Branches { get; set; }
+    public string? SalaryTableId { get; set; }
+    public string? CompanyId { get; set; }
+    public string? HourlyWage { get; set; }
+    public string? Image { get; set; }
+    public string? Video { get; set; }
+    public string? Transport { get; set; }
+    public string? DrivingLicense { get; set; }
+    public string? Education { get; set; }
+    public string? MinimumEmployers { get; set; }
+}
+
+public sealed class CsvImportResult
+{
+    public int TotalRows { get; set; }
+    public int SuccessCount { get; set; }
+    public int FailedCount { get; set; }
+    public List<CsvImportRowResult> Rows { get; set; } = [];
+    public string PublishHint { get; set; } = string.Empty;
+}
+
+public sealed class CsvImportRowResult
+{
+    public int RowNumber { get; set; }
+    public bool Success { get; set; }
+    public Guid? VacancyId { get; set; }
+    public string? ErrorMessage { get; set; }
+    public CsvImportRowForm Data { get; set; } = new();
+}
 
 public sealed class MasterdataOptionItem
 {

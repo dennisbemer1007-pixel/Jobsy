@@ -36,6 +36,11 @@ public class Company
     /// </summary>
     public bool TokensManagedByEnterprise { get; set; }
 
+    /// <summary>
+    /// When true for an organisation (parent company), the CSV Batch Import nav and screen are available.
+    /// </summary>
+    public bool CsvBatchImportEnabled { get; set; }
+
     /// <summary>Salesmanager who referred this supplier (via tracking code).</summary>
     public Guid? ReferredBySalesManagerUserId { get; set; }
     public User? ReferredBySalesManagerUser { get; set; }

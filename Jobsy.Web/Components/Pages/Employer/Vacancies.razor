@@ -95,7 +95,7 @@
                         <strong class="vacancy-manage-row__title">@v.Title</strong>
                         <span class="muted">
                             @v.CompanyName · @v.Status
-                            · <span class="source-badge source-badge--@(string.Equals(v.CreatedVia, "Api", StringComparison.OrdinalIgnoreCase) ? "api" : "manual")">@(string.Equals(v.CreatedVia, "Api", StringComparison.OrdinalIgnoreCase) ? "API" : "Handmatig")</span>
+                            · <span class="source-badge source-badge--@VacancySourceDisplay.CssModifier(v.CreatedVia)">@VacancySourceDisplay.Label(v.CreatedVia)</span>
                             @if (v.WorkTypes.Length > 0)
                             {
                                 <text> · @string.Join(", ", v.WorkTypes)</text>

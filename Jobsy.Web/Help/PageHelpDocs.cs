@@ -166,10 +166,16 @@ public static class PageHelpDocs
             "Het juiste team toegang geven tot vacatures en tokens."),
 
         ["/employer/company"] = new(
-            "Bedrijfsgegevens & API",
-            "Organisatiegegevens en externe API-keys voor ATS-koppelingen.",
-            "Genereer een API-key (één keer zichtbaar), deactiveer of rotatieer, en verstuur credentials per e-mail. Alleen de hash wordt opgeslagen.",
-            "Externe systemen veilig vacatures laten beheren binnen jouw bedrijf."),
+            "Bedrijfsgegevens",
+            "Organisatie-info, CSV Batch Import en API-keys.",
+            "Bekijk NAW/KVK, schakel CSV-import in/uit en beheer API-sleutels voor externe vacaturekoppelingen. API- en CSV-vacatures blijven concept tot publicatie in Lobsy.",
+            "Koppel ATS/partners en batch-CSV veilig aan de juiste organisatie."),
+
+        ["/employer/csv-import"] = new(
+            "CSV Import",
+            "Batch-import van vacatures via CSV.",
+            "Volg de How-to, upload een .csv, bekijk geslaagde/mislukte rijen en herstel mislukte rijen inline. Concepten publiceer je daarna via Vacatures (tokens).",
+            "Veilig en controleerbaar veel vacatures in één keer aanmaken."),
 
         ["/employer/salary-tables"] = new(
             "Salaristabellen / CAO",

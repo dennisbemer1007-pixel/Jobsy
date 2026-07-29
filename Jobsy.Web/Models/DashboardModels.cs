@@ -10,6 +10,7 @@ public class CompanySummary
     public int ActiveVacancies { get; set; }
     public Guid? ParentCompanyId { get; set; }
     public bool TokensManagedByEnterprise { get; set; }
+    public bool CsvBatchImportEnabled { get; set; }
 }
 
 public class CompanyApiKeyItem

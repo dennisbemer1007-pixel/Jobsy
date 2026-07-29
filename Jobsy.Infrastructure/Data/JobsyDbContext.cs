@@ -1,4 +1,5 @@
 using Jobsy.Core.Entities;
+using Jobsy.Core.Rules;
 using Microsoft.EntityFrameworkCore;
 
 namespace Jobsy.Infrastructure.Data;
@@ -125,7 +126,7 @@ public class JobsyDbContext : DbContext
             entity.Property(e => e.Title).HasMaxLength(256).IsRequired();
             entity.Property(e => e.Description).HasMaxLength(20000).IsRequired();
             entity.Property(e => e.HourlyWage).HasPrecision(8, 2);
-            entity.Property(e => e.ImageUrl).HasMaxLength(1024);
+            entity.Property(e => e.ImageUrl).HasMaxLength(HtmlSanitize.MaxImageUrlLength);
             entity.Property(e => e.VideoUrl).HasMaxLength(1024);
             entity.Property(e => e.RequiredDrivingLicense).HasMaxLength(256);
             entity.Property(e => e.RequiredEducation).HasMaxLength(256);
