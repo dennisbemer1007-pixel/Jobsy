@@ -10,9 +10,10 @@ namespace Jobsy.Infrastructure.Data.Migrations
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.DropIndex(
-                name: "IX_Vacancies_CompanyId",
-                table: "Vacancies");
+            // Hand-written hotpath migration added IX_Vacancies_CompanyId_Status but left the
+            // snapshot with the old FK-only IX_Vacancies_CompanyId. Model now only declares the
+            // composite index (left-prefix covers CompanyId lookups).
+            migrationBuilder.Sql("""DROP INDEX IF EXISTS "IX_Vacancies_CompanyId";""");
         }
 
         /// <inheritdoc />
