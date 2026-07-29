@@ -3,6 +3,7 @@
 @attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "EnterpriseManager,Admin")]
 @inject JobsyApiClient Api
 @inject IJSRuntime Js
+@inject BottomNavRefreshService NavRefresh
 
 <PageTitle>Bedrijfsgegevens · Lobsy</PageTitle>
 
@@ -581,6 +582,8 @@
                     _organizations[idx].CsvBatchImportEnabled = updated.CsvBatchImportEnabled;
                 }
             }
+
+            await NavRefresh.RequestRefreshAsync();
 
             _message = enabled
                 ? "CSV Batch Import is ingeschakeld. De tab CSV Import verschijnt in het menu."
