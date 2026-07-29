@@ -132,7 +132,7 @@ public class TokensController : ControllerBase
     }
 
     /// <summary>
-    /// Credits tokens for a persisted checkout session. Client may only send PaymentId —
+    /// Credits tokens for a persisted checkout session. Client may send PaymentId or CheckoutId —
     /// PackSize and CompanyId come from the server-side session.
     /// </summary>
     [HttpPost("checkout/complete")]
@@ -141,14 +141,24 @@ public class TokensController : ControllerBase
         [FromBody] CompleteCheckoutRequest request,
         CancellationToken cancellationToken)
     {
-        if (string.IsNullOrWhiteSpace(request.PaymentId))
+        TokenPurchaseCheckout? session = null;
+        if (request.CheckoutId is Guid checkoutId && checkoutId != Guid.Empty)
+        {
+            session = await _db.TokenPurchaseCheckouts
+                .Include(c => c.Company)
+                .FirstOrDefaultAsync(c => c.Id == checkoutId, cancellationToken);
+        }
+        else if (!string.IsNullOrWhiteSpace(request.PaymentId))
+        {
+            session = await _db.TokenPurchaseCheckouts
+                .Include(c => c.Company)
+                .FirstOrDefaultAsync(c => c.PaymentId == request.PaymentId, cancellationToken);
+        }
+        else
         {
             return BadRequest(new { message = "Ongeldige checkout." });
         }
 
-        var session = await _db.TokenPurchaseCheckouts
-            .Include(c => c.Company)
-            .FirstOrDefaultAsync(c => c.PaymentId == request.PaymentId, cancellationToken);
         if (session is null)
         {
             return NotFound(new { message = "Checkout-sessie niet gevonden." });
@@ -183,7 +193,7 @@ public class TokensController : ControllerBase
             await _db.SaveChangesAsync(cancellationToken);
         }
 
-        var status = await _payments.GetPaymentStatusAsync(request.PaymentId, cancellationToken);
+        var status = await _payments.GetPaymentStatusAsync(session.PaymentId, cancellationToken);
         if (!status.IsPaid)
         {
             return BadRequest(new { message = "Betaling is nog niet afgerond." });
@@ -210,11 +220,14 @@ public class TokensController : ControllerBase
         try
         {
             var actor = await _users.FindByPrincipalAsync(User, cancellationToken);
+            var notePrefix = session.PaymentId.StartsWith("stub_pay_", StringComparison.Ordinal)
+                ? "Mollie stub"
+                : "Mollie";
             var entry = await _tokenLedger.RecordPurchaseAsync(
                 session.CompanyId,
                 session.PackSize,
                 actor?.Id,
-                $"Mollie stub {session.PaymentId}",
+                $"{notePrefix} {session.PaymentId}",
                 cancellationToken);
 
             // Accrue salesmanager token commission when the supplier was referred.

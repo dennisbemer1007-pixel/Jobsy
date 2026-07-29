@@ -16,7 +16,7 @@
             <p class="login-lead">
                 @if (_canPurchase || _canAllocate)
                 {
-                    <text>Saldo (inclusief welkomsttoken), Mollie-stub aankoop, vestiging-allocatie en logs.</text>
+                    <text>Saldo (inclusief welkomsttoken), Mollie-aankoop, vestiging-allocatie en logs.</text>
                 }
                 else
                 {
@@ -65,7 +65,7 @@
         @if (_canPurchase)
         {
             <section class="panel-section">
-                <h2>Tokens kopen (Mollie stub)</h2>
+                <h2>Tokens kopen</h2>
                 <form class="login-form" style="max-width:420px" @onsubmit="CheckoutAsync" @onsubmit:preventDefault>
                     <label>
                         Vestiging

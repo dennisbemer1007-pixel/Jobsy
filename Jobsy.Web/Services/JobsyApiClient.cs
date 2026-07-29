@@ -678,6 +678,21 @@ public sealed class JobsyApiClient : IAsyncDisposable
         }
     }
 
+    public async Task CompleteTokenCheckoutBySessionAsync(
+        Guid checkoutId,
+        CancellationToken ct = default)
+    {
+        var response = await _http.PostAsJsonAsync(
+            "api/tokens/checkout/complete",
+            new { checkoutId },
+            ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException(string.IsNullOrWhiteSpace(body) ? response.ReasonPhrase : body);
+        }
+    }
+
     public async Task AllocateTokensAsync(
         Guid fromCompanyId,
         Guid toCompanyId,

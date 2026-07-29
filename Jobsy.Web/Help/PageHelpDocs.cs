@@ -132,7 +132,7 @@ public static class PageHelpDocs
         ["/employer/tokens"] = new(
             "Tokens",
             "Token-saldo, aankoop en allocatie binnen de organisatie.",
-            "Bekijk wallet/saldo, koop een pakket (Mollie-stub), of wijs tokens toe aan vestigingen. Logs tonen mutaties.",
+            "Bekijk wallet/saldo, koop een pakket via Mollie, of wijs tokens toe aan vestigingen. Logs tonen mutaties.",
             "Vacaturepublicatie en andere token-acties bekostigen."),
 
         ["/branch/tokens"] = new(
@@ -231,9 +231,15 @@ public static class PageHelpDocs
             "Start de checkout-stub; daarna volgt self-billing/documentatie in het platform.",
             "Verdiensten laten uitbetalen volgens het salesproces."),
 
+        ["/tokens/checkout-return"] = new(
+            "Betaling afronden",
+            "Terugkeer na Mollie-betaling voor een tokenpakket.",
+            "Lobsy controleert de status bij Mollie en schrijft tokens bij. Blijft het hangen: opnieuw proberen of Tokens openen.",
+            "Na betalen tokens automatisch bijschrijven."),
+
         ["/tokens/checkout-stub"] = new(
-            "Token checkout",
-            "Stub-betaalpagina voor een tokenpakket.",
+            "Token checkout (Development)",
+            "Lokale stub-betaalpagina zonder Mollie API-key.",
             "Bevestig de aankoop in de stub; saldo wordt bijgeschreven alsof Mollie betaald heeft.",
             "Testen van token-aankoop zonder echte betaling."),
 

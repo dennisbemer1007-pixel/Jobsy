@@ -6,6 +6,7 @@ using Jobsy.Core.ValueObjects;
 using Jobsy.Infrastructure.Data;
 using Jobsy.Infrastructure.Services;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 
@@ -39,12 +40,14 @@ public class StubServicesTests
         });
         await db.SaveChangesAsync();
 
-        var sut = new MolliePaymentStub(db, NullLogger<MolliePaymentStub>.Instance);
+        var features = CreateFeatures(db);
+        var sut = new MolliePaymentStub(db, features, NullLogger<MolliePaymentStub>.Instance);
         var result = await sut.CreateTokenPurchaseCheckoutAsync(companyId, 10);
         Assert.True(result.IsStub);
         Assert.Equal(10, result.PackSize);
         Assert.Equal(40.00m, result.AmountEuro);
         Assert.StartsWith("stub_pay_", result.PaymentId);
+        Assert.Contains("/tokens/checkout-stub?paymentId=", result.CheckoutUrl);
 
         var session = await db.TokenPurchaseCheckouts.SingleAsync(c => c.PaymentId == result.PaymentId);
         Assert.Equal(companyId, session.CompanyId);
@@ -59,7 +62,7 @@ public class StubServicesTests
             .UseInMemoryDatabase(Guid.NewGuid().ToString())
             .Options;
         await using var db = new JobsyDbContext(options);
-        var sut = new MolliePaymentStub(db, NullLogger<MolliePaymentStub>.Instance);
+        var sut = new MolliePaymentStub(db, CreateFeatures(db), NullLogger<MolliePaymentStub>.Instance);
 
         var status = await sut.GetPaymentStatusAsync("forged_pay_id");
         Assert.False(status.IsPaid);
@@ -129,6 +132,20 @@ public class StubServicesTests
         Assert.False(updated.VacancyContentModerationEnabled);
         var loaded = await sut.GetAsync();
         Assert.False(loaded.VacancyContentModerationEnabled);
+    }
+
+    private static PlatformFeatureService CreateFeatures(JobsyDbContext db)
+    {
+        var config = new ConfigurationBuilder()
+            .AddInMemoryCollection(new Dictionary<string, string?>
+            {
+                ["PublicWebBaseUrl"] = "http://localhost:5201"
+            })
+            .Build();
+        return new PlatformFeatureService(
+            db,
+            Options.Create(new JobsyFeatureOptions()),
+            config);
     }
 
     private sealed class FakeHttpClientFactory : IHttpClientFactory
