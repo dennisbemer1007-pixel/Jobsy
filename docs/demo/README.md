@@ -41,6 +41,7 @@ Wachtwoord voor alle accounts: `Jobsy123!`
 | `enterprise@jobsy.local` | Enterprise / Bedrijfsmanager |
 | `intermediair@jobsy.local` | Intermediair |
 | `admin@jobsy.local` | Admin |
+| `sales@jobsy.local` | Salesmanager |
 
 ## Screenshots opnieuw maken
 

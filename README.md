@@ -74,6 +74,7 @@ Rechtsboven: **Inloggen**. Ondersteund:
   - `enterprise@jobsy.local` (Enterprise)
   - `intermediair@jobsy.local` (Intermediair)
   - `admin@jobsy.local` (Admin)
+  - `sales@jobsy.local` (Salesmanager)
   - Wachtwoord: `Jobsy123!`
 
 ## Demo-materiaal

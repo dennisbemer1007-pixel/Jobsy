@@ -15,7 +15,7 @@ Indicatie kosten: ~$14/mo web + Postgres-compute/storage (prorata per seconde). 
 
 De Blueprint houdt `JobsyAuth__AllowDevelopmentAuth=true` zodat demo-login via de Web UI werkt, maar:
 
-- Buiten Development accepteert header-auth **alleen** `@jobsy.local` demo-accounts (geen echte gebruikers), en **niet** Admin/SalesManager.
+- Buiten Development accepteert header-auth **alleen** `@jobsy.local` demo-accounts (geen echte gebruikers), inclusief Admin/SalesManager voor de publieke demo.
 - OAuth client-secrets vereisen een aparte `JobsyAuth__ExternalProvisionSecret` (niet dezelfde DevelopmentAuthSecret; Web gebruikt geen DevelopmentAuthSecret-fallback meer).
 - Custom domain: `PublicWebBaseUrl=https://lobsy.nl` + CORS voor `lobsy.nl` / `www.lobsy.nl`.
 

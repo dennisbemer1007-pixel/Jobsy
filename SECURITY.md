@@ -17,7 +17,7 @@
 - **IBAN:** Volledige IBAN alleen server-side; API/UI tonen gemaskeerde vorm.
 - **Retention:** `DataRetentionHostedService` purged logs/engagement/cancelled registrations/site visits.
 - **Logging:** Geen plaintext e-mailadressen in PlatformLogs (redaction via `EmailServiceStub.RedactEmail`).
-- **Demo:** `JobsyAuth:AllowDevelopmentAuth` + DemoUsers zijn bewust voor de publieke demo; seed draait alleen bij Development / `Seed:Enabled` / AllowDevelopmentAuth. Demo one-click login zet geen wachtwoorden in HTML. Buiten Development mag header-auth alleen `@jobsy.local` demo-accounts **zonder** Admin/SalesManager. OAuth client-secrets vereisen een aparte `JobsyAuth:ExternalProvisionSecret` (nooit DevelopmentAuthSecret als fallback).
+- **Demo:** `JobsyAuth:AllowDevelopmentAuth` + DemoUsers zijn bewust voor de publieke demo; seed draait alleen bij Development / `Seed:Enabled` / AllowDevelopmentAuth. Demo one-click login zet geen wachtwoorden in HTML. Buiten Development mag header-auth alleen `@jobsy.local` demo-accounts (incl. Admin/SalesManager). OAuth client-secrets vereisen een aparte `JobsyAuth:ExternalProvisionSecret` (nooit DevelopmentAuthSecret als fallback).
 - **Verification OTPs:** Sollicitatie- en unsubscribe-codes via `RandomNumberGenerator` + constant-time compare (`VerificationCodes`). Max 5 foute pogingen per code + rate limit policy `otp-verify` (10/min).
 - **Verified applications only:** Werkgeversmetrics/counts/drilldowns en kandidaat-sollicitatielijsten tellen alleen `EmailVerifiedAt != null`.
 - **Registration activate:** Tijdelijk wachtwoord gaat alleen per e-mail; API/UI echo’t hem buiten Development niet.
