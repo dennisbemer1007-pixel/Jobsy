@@ -1,3 +1,5 @@
+using System.Net.Http.Headers;
+using System.Net.Http.Json;
 using System.Text.Json;
 using Jobsy.Core.Entities;
 using Jobsy.Core.Enums;
@@ -11,38 +13,127 @@ using MimeKit;
 namespace Jobsy.Infrastructure.Services;
 
 /// <summary>
-/// Sends mail via SMTP (MailKit) when Mail integration credentials are complete.
-/// Gmail: enable 2FA and use an App Password as ClientSecret — normal account passwords are rejected.
-/// Falls back to <see cref="EmailServiceStub"/> (PlatformLog only) when SMTP settings are incomplete.
+/// Sends mail via Resend API (preferred on cloud hosts) or SMTP (MailKit).
+/// Gmail SMTP from datacenter IPs often fails with 5.7.9 WebLoginRequired even with App Passwords.
+/// Falls back to <see cref="EmailServiceStub"/> when neither path is configured.
 /// </summary>
 public sealed class SmtpEmailService : IEmailService
 {
+    public const string ResendHttpClientName = "ResendMail";
+    public const string DefaultResendApiBase = "https://api.resend.com/";
+
     private readonly IIntegrationCredentialService _credentials;
     private readonly EmailServiceStub _stub;
     private readonly JobsyDbContext _db;
+    private readonly IHttpClientFactory _httpClientFactory;
     private readonly ILogger<SmtpEmailService> _logger;
 
     public SmtpEmailService(
         IIntegrationCredentialService credentials,
         EmailServiceStub stub,
         JobsyDbContext db,
+        IHttpClientFactory httpClientFactory,
         ILogger<SmtpEmailService> logger)
     {
         _credentials = credentials;
         _stub = stub;
         _db = db;
+        _httpClientFactory = httpClientFactory;
         _logger = logger;
     }
 
     public async Task SendAsync(EmailMessage message, CancellationToken cancellationToken = default)
     {
         var secrets = await _credentials.GetSecretsAsync(IntegrationKey.Mail, cancellationToken);
-        if (!TryResolveSmtp(secrets, out var settings))
+        if (TryResolveResend(secrets, out var resend))
         {
-            await _stub.SendAsync(message, cancellationToken);
+            await SendViaResendAsync(message, resend, cancellationToken);
             return;
         }
 
+        if (TryResolveSmtp(secrets, out var settings))
+        {
+            await SendViaSmtpAsync(message, settings, cancellationToken);
+            return;
+        }
+
+        await _stub.SendAsync(message, cancellationToken);
+    }
+
+    private async Task SendViaResendAsync(
+        EmailMessage message,
+        ResendSettings settings,
+        CancellationToken cancellationToken)
+    {
+        var redactedTo = EmailServiceStub.RedactEmail(message.To);
+        try
+        {
+            var client = _httpClientFactory.CreateClient(ResendHttpClientName);
+            using var request = new HttpRequestMessage(HttpMethod.Post, "emails");
+            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", settings.ApiKey);
+            request.Content = JsonContent.Create(new
+            {
+                from = settings.FromAddress,
+                to = new[] { message.To },
+                subject = message.Subject,
+                html = message.BodyHtml ?? string.Empty
+            });
+
+            using var response = await client.SendAsync(request, cancellationToken);
+            var body = await response.Content.ReadAsStringAsync(cancellationToken);
+            if (!response.IsSuccessStatusCode)
+            {
+                throw new InvalidOperationException(FormatResendError((int)response.StatusCode, body));
+            }
+
+            _logger.LogInformation(
+                "Resend mail sent → {To}: {Subject}",
+                redactedTo, message.Subject);
+
+            await WritePlatformLogAsync(
+                PlatformLogLevel.Info,
+                message.Category ?? "Email",
+                $"Resend mail to {redactedTo}: {message.Subject}",
+                new
+                {
+                    To = redactedTo,
+                    message.Subject,
+                    Category = message.Category,
+                    BodyLength = message.BodyHtml?.Length ?? 0,
+                    Provider = "Resend",
+                    Sent = true
+                },
+                cancellationToken);
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            var friendly = ex is InvalidOperationException ioe
+                ? ioe.Message
+                : $"Resend-fout: {Truncate(ex.Message, 220)}";
+            _logger.LogError(ex, "Resend mail failed → {To}: {Subject}", redactedTo, message.Subject);
+            await WritePlatformLogAsync(
+                PlatformLogLevel.Error,
+                message.Category ?? "Email",
+                $"Resend mail failed to {redactedTo}: {message.Subject} — {friendly}",
+                new
+                {
+                    To = redactedTo,
+                    message.Subject,
+                    Category = message.Category,
+                    Provider = "Resend",
+                    Sent = false,
+                    Error = friendly
+                },
+                cancellationToken);
+            throw new InvalidOperationException(friendly, ex);
+        }
+    }
+
+    private async Task SendViaSmtpAsync(
+        EmailMessage message,
+        SmtpSettings settings,
+        CancellationToken cancellationToken)
+    {
         var redactedTo = EmailServiceStub.RedactEmail(message.To);
         try
         {
@@ -110,6 +201,22 @@ public sealed class SmtpEmailService : IEmailService
 
             throw new InvalidOperationException(friendly, ex);
         }
+    }
+
+    internal static bool TryResolveResend(
+        IntegrationCredentialSecrets? secrets,
+        out ResendSettings settings)
+    {
+        settings = default!;
+        if (secrets is null
+            || string.IsNullOrWhiteSpace(secrets.ApiKey)
+            || string.IsNullOrWhiteSpace(secrets.FromAddress))
+        {
+            return false;
+        }
+
+        settings = new ResendSettings(secrets.ApiKey.Trim(), secrets.FromAddress.Trim());
+        return true;
     }
 
     internal static bool TryResolveSmtp(
@@ -195,30 +302,63 @@ public sealed class SmtpEmailService : IEmailService
         var raw = ex.Message;
         var isGmail = settings.Host.Contains("gmail", StringComparison.OrdinalIgnoreCase)
             || settings.Host.Contains("google", StringComparison.OrdinalIgnoreCase);
+        var webLoginRequired =
+            raw.Contains("5.7.9", StringComparison.OrdinalIgnoreCase)
+            || raw.Contains("WebLoginRequired", StringComparison.OrdinalIgnoreCase);
         var looksLikeAuth =
-            raw.Contains("5.7.0", StringComparison.OrdinalIgnoreCase)
+            webLoginRequired
+            || raw.Contains("5.7.0", StringComparison.OrdinalIgnoreCase)
             || raw.Contains("Authentication", StringComparison.OrdinalIgnoreCase)
             || raw.Contains("authenticate", StringComparison.OrdinalIgnoreCase)
             || ex is AuthenticationException;
+
+        if (isGmail && webLoginRequired)
+        {
+            return
+                "Gmail blokkeert SMTP vanaf deze server (5.7.9 WebLoginRequired). " +
+                "Dat gebeurt vaak op cloud-hosts, ook met een correct App-wachtwoord. " +
+                "Oplossing: gebruik Resend (API-key + From) i.p.v. Gmail-SMTP, of probeer " +
+                "https://accounts.google.com/DisplayUnlockCaptcha terwijl je bent ingelogd. " +
+                $"Technisch: {Truncate(raw, 160)}";
+        }
 
         if (isGmail && looksLikeAuth)
         {
             return
                 "Gmail weigert de login (Authentication Required). " +
                 "Gebruik géén gewoon Gmail-wachtwoord: zet 2-stapsverificatie aan en maak een " +
-                "App-wachtwoord (16 tekens). Vul dat in bij ‘App-wachtwoord’, je volledige Gmail-adres " +
-                "bij ‘SMTP-gebruiker’, en hetzelfde adres bij ‘Afzender’. " +
-                $"Technisch: {Truncate(raw, 180)}";
+                "App-wachtwoord (16 tekens). Op cloud-hosts faalt Gmail-SMTP vaak alsnog — " +
+                "gebruik dan Resend (API-key). " +
+                $"Technisch: {Truncate(raw, 160)}";
         }
 
         if (looksLikeAuth)
         {
             return
-                "SMTP-authenticatie mislukt. Controleer gebruiker/wachtwoord (voor Gmail: App-wachtwoord). " +
+                "SMTP-authenticatie mislukt. Controleer gebruiker/wachtwoord. " +
                 $"Technisch: {Truncate(raw, 180)}";
         }
 
         return Truncate(raw, 280);
+    }
+
+    internal static string FormatResendError(int statusCode, string body)
+    {
+        var detail = Truncate(body.Replace('\n', ' ').Trim(), 180);
+        if (statusCode is 401 or 403)
+        {
+            return
+                $"Resend weigert de aanvraag ({statusCode}). Controleer API-key en of het From-domein " +
+                $"geverifieerd is (of gebruik onboarding@resend.dev naar je eigen inbox). {detail}";
+        }
+
+        if (statusCode == 422)
+        {
+            return
+                $"Resend wijst het bericht af (422). Vaak: From niet geverifieerd of ongeldig adres. {detail}";
+        }
+
+        return $"Resend gaf {statusCode}. {detail}";
     }
 
     private static string Truncate(string value, int max)
@@ -242,6 +382,8 @@ public sealed class SmtpEmailService : IEmailService
         });
         await _db.SaveChangesAsync(cancellationToken);
     }
+
+    internal sealed record ResendSettings(string ApiKey, string FromAddress);
 
     internal sealed record SmtpSettings(
         string Host,

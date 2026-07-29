@@ -89,6 +89,12 @@ public static class DependencyInjection
             AllowAutoRedirect = false
         });
 
+        services.AddHttpClient(SmtpEmailService.ResendHttpClientName, client =>
+        {
+            client.BaseAddress = new Uri(SmtpEmailService.DefaultResendApiBase);
+            client.Timeout = TimeSpan.FromSeconds(20);
+        });
+
         services.AddScoped<IRoutingService, MockRoutingService>();
         services.AddScoped<ISalaryService, SalaryService>();
         services.AddScoped<ICompanyAuthorizationService, CompanyAuthorizationService>();

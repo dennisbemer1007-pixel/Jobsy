@@ -76,19 +76,21 @@ public sealed class IntegrationHealthStub : IIntegrationHealthService
         }
 
         var secrets = await _credentials.GetSecretsAsync(IntegrationKey.Mail, cancellationToken);
+        var resendReady = SmtpEmailService.TryResolveResend(secrets, out _);
         var smtpReady = SmtpEmailService.TryResolveSmtp(secrets, out var smtp);
         var redacted = EmailServiceStub.RedactEmail(trimmed);
         var body =
             "<p>Dit is een testmail van Lobsy.</p>" +
-            "<p>Als je dit bericht ziet, werkt de uitgaande SMTP-configuratie.</p>";
+            "<p>Als je dit bericht ziet, werkt de uitgaande mailconfiguratie.</p>";
 
-        if (!smtpReady)
+        if (!resendReady && !smtpReady)
         {
             await _email.SendAsync(
                 new EmailMessage(trimmed, "Lobsy testmail", body, "MailTest"),
                 cancellationToken);
             var stubMessage =
-                "SMTP niet volledig geconfigureerd (host, poort, gebruiker, wachtwoord/app-wachtwoord, From). " +
+                "Mail niet geconfigureerd. Vul Resend API-key + From in (aanbevolen op cloud), " +
+                "of SMTP-host/gebruiker/app-wachtwoord/From. " +
                 $"Testmail naar {redacted} is alleen in PlatformLog gelogd — niet echt verzonden.";
             await _credentials.SavePingResultAsync(IntegrationKey.Mail, false, stubMessage, cancellationToken);
             return new SendTestMailResult(false, false, stubMessage);
@@ -99,25 +101,41 @@ public sealed class IntegrationHealthStub : IIntegrationHealthService
             await _email.SendAsync(
                 new EmailMessage(trimmed, "Lobsy testmail", body, "MailTest"),
                 cancellationToken);
-            var okMessage =
-                $"Testmail verzonden naar {redacted} via {smtp.Host}:{smtp.Port}.";
+            var via = resendReady
+                ? "Resend API"
+                : $"{smtp.Host}:{smtp.Port}";
+            var okMessage = $"Testmail verzonden naar {redacted} via {via}.";
             await _credentials.SavePingResultAsync(IntegrationKey.Mail, true, okMessage, cancellationToken);
             return new SendTestMailResult(true, true, okMessage);
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
-            _logger.LogWarning(ex, "Testmail via SMTP mislukt");
+            _logger.LogWarning(ex, "Testmail mislukt");
             var failMessage = ex is InvalidOperationException
                 ? ex.Message
-                : SmtpEmailService.FormatSmtpError(ex, smtp);
-            if (!failMessage.Contains(smtp.Host, StringComparison.OrdinalIgnoreCase))
+                : (smtpReady
+                    ? SmtpEmailService.FormatSmtpError(ex, smtp)
+                    : Truncate(ex.Message, 280));
+            if (smtpReady
+                && !resendReady
+                && !failMessage.Contains(smtp.Host, StringComparison.OrdinalIgnoreCase))
             {
                 failMessage = $"Testmail mislukt via {smtp.Host}:{smtp.Port}: {failMessage}";
+            }
+            else if (!failMessage.StartsWith("Testmail", StringComparison.OrdinalIgnoreCase)
+                     && !failMessage.StartsWith("Gmail", StringComparison.OrdinalIgnoreCase)
+                     && !failMessage.StartsWith("Resend", StringComparison.OrdinalIgnoreCase)
+                     && !failMessage.StartsWith("SMTP", StringComparison.OrdinalIgnoreCase))
+            {
+                failMessage = $"Testmail mislukt: {failMessage}";
             }
 
             await _credentials.SavePingResultAsync(IntegrationKey.Mail, false, failMessage, cancellationToken);
             return new SendTestMailResult(false, true, failMessage);
         }
+
+        static string Truncate(string value, int max)
+            => value.Length <= max ? value : value[..max] + "…";
     }
 
     private static bool LooksLikeEmail(string value)
@@ -243,6 +261,11 @@ public sealed class IntegrationHealthStub : IIntegrationHealthService
     private async Task<(bool Ok, string Message)> TestMailAsync(CancellationToken cancellationToken)
     {
         var secrets = await _credentials.GetSecretsAsync(IntegrationKey.Mail, cancellationToken);
+        if (SmtpEmailService.TryResolveResend(secrets, out _))
+        {
+            return (true, "Resend API-key + From aanwezig. Gebruik ‘Stuur testmail’ om echt te versturen.");
+        }
+
         if (SmtpEmailService.TryResolveSmtp(secrets, out var smtp))
         {
             // Lightweight TCP reachability check (no auth handshake).
@@ -250,10 +273,10 @@ public sealed class IntegrationHealthStub : IIntegrationHealthService
             using var linked = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
             linked.CancelAfter(TimeSpan.FromSeconds(8));
             await tcp.ConnectAsync(smtp.Host, smtp.Port, linked.Token);
-            return (true, $"SMTP bereikbaar op {smtp.Host}:{smtp.Port}. Gebruik ‘Stuur testmail’ om login/App-wachtwoord te controleren.");
+            return (true, $"SMTP bereikbaar op {smtp.Host}:{smtp.Port}. Let op: Gmail blokkeert cloud-SMTP vaak (5.7.9) — Resend API is betrouwbaarder.");
         }
 
-        return (false, "Configureer SMTP: host, poort, SMTP-gebruiker, App-wachtwoord en From (Gmail: App-wachtwoord, geen gewoon wachtwoord).");
+        return (false, "Configureer Resend (API-key + From) of SMTP (host, poort, gebruiker, app-wachtwoord, From).");
     }
 
     private async Task<(bool Ok, string Message)> TestOAuthAsync(

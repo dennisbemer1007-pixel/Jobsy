@@ -55,12 +55,12 @@ public static class IntegrationHelpDocs
         DocsUrlLabel: "Google Cloud Credentials");
 
     private static readonly Doc Mail = new(
-        Summary: "Uitgaande e-mail via SMTP (bijv. Gmail).",
+        Summary: "Uitgaande e-mail via Resend API (aanbevolen) of SMTP.",
         UsedFor: "Registratie-activatiemail, sollicitatie-verificatiecodes, notificaties en overige platformmails.",
-        WhereToGetKey: "Voor Gmail: Google-account → Beveiliging → 2-stapsverificatie aan → App-wachtwoorden → App-wachtwoord aanmaken (Mail / Overig). Plak de 16 tekens bij ‘App-wachtwoord’. SMTP-gebruiker = je Gmail-adres. Host: smtp.gmail.com, poort: 587.",
-        Tip: "Gewoon Gmail-wachtwoord werkt niet (fout 5.7.0 Authentication Required). From-adres hetzelfde houden als SMTP-gebruiker. Gebruik ‘Stuur testmail’ om te controleren.",
-        DocsUrl: "https://myaccount.google.com/apppasswords",
-        DocsUrlLabel: "Gmail app-wachtwoorden");
+        WhereToGetKey: "Aanbevolen: resend.com → API Keys → Create. Plak bij ‘Resend API-key’. From: geverifieerd domein, of tijdelijk onboarding@resend.dev (alleen naar je eigen inbox). Alternatief SMTP: Gmail App-wachtwoord — maar Gmail blokkeert cloud-servers vaak met fout 5.7.9.",
+        Tip: "Fout 5.7.9 WebLoginRequired = Google blokkeert de server-IP. Los dit niet op met opnieuw een App-wachtwoord; gebruik Resend. Resend heeft voorrang als API-key + From zijn ingevuld.",
+        DocsUrl: "https://resend.com/api-keys",
+        DocsUrlLabel: "Resend API keys");
 
     private static readonly Doc OpenAi = new(
         Summary: "OpenAI API voor tekstmodellen.",

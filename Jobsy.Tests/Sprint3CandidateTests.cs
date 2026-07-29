@@ -174,6 +174,39 @@ public class Sprint3CandidateTests
     }
 
     [Fact]
+    public void Smtp_format_error_explains_gmail_weblogin_required()
+    {
+        var settings = new SmtpEmailService.SmtpSettings(
+            "smtp.gmail.com",
+            587,
+            "u@gmail.com",
+            "secret",
+            "u@gmail.com");
+        var message = SmtpEmailService.FormatSmtpError(
+            new InvalidOperationException(
+                "534: 5.7.9 Please log in with your web browser and then try again. For more information, go to https://support.google.com/mail/?p=WebLoginRequired"),
+            settings);
+
+        Assert.Contains("5.7.9", message, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("Resend", message, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("cloud", message, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public void Resend_resolve_requires_api_key_and_from()
+    {
+        Assert.False(SmtpEmailService.TryResolveResend(null, out _));
+        Assert.False(SmtpEmailService.TryResolveResend(
+            new IntegrationCredentialSecrets("re_test", null, null, null, null, null, null),
+            out _));
+        Assert.True(SmtpEmailService.TryResolveResend(
+            new IntegrationCredentialSecrets("re_test", null, null, null, null, null, "onboarding@resend.dev"),
+            out var settings));
+        Assert.Equal("re_test", settings.ApiKey);
+        Assert.Equal("onboarding@resend.dev", settings.FromAddress);
+    }
+
+    [Fact]
     public void Smtp_format_error_explains_gmail_auth()
     {
         var settings = new SmtpEmailService.SmtpSettings(

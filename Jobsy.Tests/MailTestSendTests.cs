@@ -35,6 +35,7 @@ public class MailTestSendTests
         Assert.False(result.Ok);
         Assert.False(result.SentViaSmtp);
         Assert.Contains("PlatformLog", result.Message, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("Resend", result.Message, StringComparison.OrdinalIgnoreCase);
 
         var log = Assert.Single(db.PlatformLogs);
         Assert.Equal("MailTest", log.Category);
@@ -81,6 +82,7 @@ public class MailTestSendTests
             credentials,
             new EmailServiceStub(db, NullLogger<EmailServiceStub>.Instance),
             db,
+            new FakeHttpClientFactory(),
             NullLogger<SmtpEmailService>.Instance);
         return new IntegrationHealthStub(
             credentials,

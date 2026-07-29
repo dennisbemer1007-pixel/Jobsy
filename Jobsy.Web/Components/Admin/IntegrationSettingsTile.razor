@@ -67,14 +67,14 @@
             {
                 @if (Credential.HasApiKey && !string.IsNullOrWhiteSpace(Credential.ApiKeyMasked))
                 {
-                    <p class="muted">Huidige API-key: @Credential.ApiKeyMasked</p>
+                    <p class="muted">@(IsMailIntegration ? "Huidige Resend API-key:" : "Huidige API-key:") @Credential.ApiKeyMasked</p>
                 }
                 else
                 {
-                    <p class="muted">Nog geen API-key opgeslagen.</p>
+                    <p class="muted">@(IsMailIntegration ? "Nog geen Resend API-key opgeslagen." : "Nog geen API-key opgeslagen.")</p>
                 }
                 <label>
-                    API-key
+                    @(IsMailIntegration ? "Resend API-key (aanbevolen)" : "API-key")
                     @* type=text + text-security: empty field stays empty (no browser password-dots). *@
                     <input class="integration-secret-input"
                            type="text"
@@ -85,15 +85,25 @@
                            data-lpignore="true"
                            data-1p-ignore="true"
                            name="@($"integration-{Credential.Key}-api-key")"
-                           placeholder="@(Credential.HasApiKey ? "Nieuwe key (leeg = behouden)" : "Plak API-key")"
+                           placeholder="@(IsMailIntegration
+                               ? (Credential.HasApiKey ? "Nieuwe Resend-key (leeg = behouden)" : "re_...")
+                               : (Credential.HasApiKey ? "Nieuwe key (leeg = behouden)" : "Plak API-key"))"
                            @bind="_apiKey"
                            @bind:event="oninput"
                            @bind:after="MarkDirty" />
                 </label>
+                @if (IsMailIntegration)
+                {
+                    <p class="muted">Op cloud-hosts blokkeert Gmail SMTP vaak (fout 5.7.9). Resend werkt wél: key van resend.com, From geverifieerd of tijdelijk onboarding@resend.dev.</p>
+                }
             }
 
             @if (Credential.SupportsOAuth)
             {
+                @if (IsMailIntegration)
+                {
+                    <p class="muted"><strong>Optioneel:</strong> SMTP (alleen als Resend niet gebruikt wordt; Gmail vanaf servers faalt vaak).</p>
+                }
                 <label>
                     @(IsMailIntegration ? "SMTP-gebruiker (Gmail-adres)" : "Client ID")
                     <input @bind="_clientId"
@@ -127,10 +137,6 @@
                            @bind:event="oninput"
                            @bind:after="MarkDirty" />
                 </label>
-                @if (IsMailIntegration)
-                {
-                    <p class="muted">Gmail accepteert geen gewoon accountwachtwoord. Maak een App-wachtwoord aan (2FA vereist) en plak dat hier.</p>
-                }
             }
 
             @if (Credential.SupportsTenantId)
@@ -182,7 +188,7 @@
                     <input @bind="_fromAddress"
                            @bind:event="oninput"
                            @bind:after="MarkDirty"
-                           placeholder="@(IsMailIntegration ? "zelfde als SMTP-gebruiker" : "noreply@example.com")" />
+                           placeholder="@(IsMailIntegration ? "onboarding@resend.dev of jouw@domein.nl" : "noreply@example.com")" />
                 </label>
             }
 
@@ -213,7 +219,7 @@
                             @onclick:stopPropagation="true">
                         Stuur testmail
                     </button>
-                    <p class="muted">Stuurt een echte testmail via de opgeslagen SMTP-instellingen.</p>
+                    <p class="muted">Stuurt een echte testmail via Resend (als API-key gezet is) of SMTP.</p>
                 </div>
             }
 
