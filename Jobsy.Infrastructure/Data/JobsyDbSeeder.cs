@@ -60,6 +60,7 @@ public static class JobsyDbSeeder
                 await Sprint8MetricsSeeder.SeedRichMetricsAsync(db, logger);
                 await SalesManagerDemoSeeder.SeedAsync(db, logger);
                 await WestlandVacanciesSeeder.SeedWestlandBanenkaartAsync(db, logger);
+                await HaaglandenVacanciesSeeder.SeedHaaglandenBanenkaartAsync(db, logger);
             }
             catch (Exception ex)
             {
@@ -80,6 +81,7 @@ public static class JobsyDbSeeder
             await Sprint8MetricsSeeder.SeedRichMetricsAsync(db, logger);
             await SalesManagerDemoSeeder.SeedAsync(db, logger);
             await WestlandVacanciesSeeder.SeedWestlandBanenkaartAsync(db, logger);
+            await HaaglandenVacanciesSeeder.SeedHaaglandenBanenkaartAsync(db, logger);
             logger.LogInformation("Seed completed: employers + intermediary, vacancies, tokens, role users, sprint-0/8 demo.");
         }
         catch (Exception ex)

@@ -1,9 +1,9 @@
-# Mockdata Specificatie: Jobsy (Westland & Den Haag)
+# Mockdata Specificatie: Jobsy (Westland & Haaglanden)
 
 Automatische seed via `JobsyDbSeeder` bij API-start:
-`DemoCompaniesSeeder` → `DemoUsersSeeder` → `ApplicationsAndWagesSeeder` → `PlatformSettingsSeeder` → `Sprint0DemoSeeder` → **`Sprint8MetricsSeeder`** → **`WestlandVacanciesSeeder`**.
+`DemoCompaniesSeeder` → `DemoUsersSeeder` → `ApplicationsAndWagesSeeder` → `PlatformSettingsSeeder` → `Sprint0DemoSeeder` → **`Sprint8MetricsSeeder`** → **`WestlandVacanciesSeeder`** → **`HaaglandenVacanciesSeeder`**.
 
-Bestaande DB’s krijgen media/settings/sprint0/sprint8/westland **backfill** (idempotent).
+Bestaande DB’s krijgen media/settings/sprint0/sprint8/westland/haaglanden **backfill** (idempotent).
 
 ## 1. Bedrijven
 
@@ -15,6 +15,11 @@ Bestaande DB’s krijgen media/settings/sprint0/sprint8/westland **backfill** (i
 | Demo Intermediair Flex BV | Intermediary | 55667788 | Binckhorstlaan 52.0680, 4.3350 | 20 |
 
 Plus **12 Westland-werkgevers** (Naaldwijk, De Lier, Honselersdijk, Monster, Poeldijk, Wateringen, Maasdijk, Kwintsheul, 's-Gravenzande, Heenweg) via `WestlandVacanciesSeeder` (KVK `71001001`–`71001012`).
+
+Plus **Haaglanden-werkgevers** via `HaaglandenVacanciesSeeder`:
+- Den Haag: 12 werkgevers (KVK `72001001`–`72001012`)
+- Delft: 10 werkgevers (KVK `73001001`–`73001010`)
+- Zoetermeer: 8 werkgevers (KVK `74001001`–`74001008`)
 
 Plus regio “Den Haag Stad”, salaristabel De Fred, token packs/costs/PushBom-tiers (platform settings).
 
@@ -42,6 +47,25 @@ Plus regio “Den Haag Stad”, salaristabel De Fred, token packs/costs/PushBom-
 | **Leeftijd + uurloon** | Enkele retail-vacatures met salaristabel (jeugdschaal); lonen van ~€8,50 tot ~€18,50 |
 
 Guard: platform-log `"Westland banenkaart seed 50"`. Vacature-IDs `a1000000-0000-4000-8000-…`.
+
+### Banenkaart-testset (Haaglanden)
+
+`HaaglandenVacanciesSeeder` voegt **225 Active** vacatures toe:
+
+| Stad | Aantal | Vacature-IDs | Bedrijfs-IDs |
+|------|--------|--------------|--------------|
+| Den Haag | 100 | `a2000000-…` | `c2000000-…` |
+| Delft | 75 | `a3000000-…` | `c3000000-…` |
+| Zoetermeer | 50 | `a4000000-…` | `c4000000-…` |
+
+| Kenmerk | Dekking |
+|---------|---------|
+| **Unieke content** | Iedere vacature heeft een eigen titelvariant, uitgebreide tekst (intro / taken / aanbod / profiel) en unieke `ImageUrl` |
+| **Rijbewijs** | ~30% met `RequiredDrivingLicense` (B, BE, AM, T, Heftruck, C, …) |
+| **Branche** | Alle 9 work types + enkele dual flags |
+| **Wijken** | Den Haag (o.a. Centrum, Scheveningen, Binckhorst, Laak, Escamp, Ypenburg), Delft (Centrum, TU, Tanthof, Schieoevers), Zoetermeer (Stadshart, Rokkeveen, Seghwaert, Bleizo) |
+
+Guard: platform-log `"Haaglanden banenkaart seed DH100-Delft75-Zoetermeer50"`.
 
 ## 3. Demo-accounts (wachtwoord via DemoUsers / local-login)
 
@@ -80,6 +104,6 @@ Zodat `/home` en admin-finance gevuld zijn over **dag / week / maand**:
 Guard: platform-log `"Sprint 8 rich metrics seed"` voorkomt dubbele runs.
 
 ## 5. Doel
-1. Banenkaart direct gevuld (Westland + Den Haag + intermediair).
+1. Banenkaart direct gevuld (Westland + Den Haag + Delft + Zoetermeer + intermediair).
 2. OSRM/reistijd-demo tussen regio’s.
 3. Dashboards zonder lege KPI’s tijdens demos/pitches.
