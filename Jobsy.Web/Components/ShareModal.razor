@@ -1,17 +1,20 @@
+@using Jobsy.Web.Localization
 @inject NavigationManager Navigation
 @inject JobsyApiClient Api
 @inject IJSRuntime Js
+@inject CultureState Culture
+@implements IDisposable
 
 @if (IsOpen && Vacancy is not null)
 {
     <div class="share-modal-backdrop" @onclick="Close"></div>
     <div class="share-modal" role="dialog" aria-modal="true" aria-labelledby="share-modal-title">
         <div class="share-modal__header">
-            <h2 id="share-modal-title">Delen</h2>
-            <button type="button" class="share-modal__close" @onclick="Close" aria-label="Sluiten">×</button>
+            <h2 id="share-modal-title">@Culture["Share.Title"]</h2>
+            <button type="button" class="share-modal__close" @onclick="Close" aria-label="@Culture["Common.Close"]">×</button>
         </div>
         <p class="share-modal__lead">@Vacancy.Title · @Vacancy.CompanyName</p>
-        <div class="share-modal__channels" role="group" aria-label="Deelkanalen">
+        <div class="share-modal__channels" role="group" aria-label="@Culture["Share.Channels"]">
             @foreach (var channel in Channels)
             {
                 <button type="button"
@@ -24,8 +27,8 @@
             }
             <button type="button"
                     class="share-modal__icon-btn share-modal__icon-btn--copy @(_copied ? "is-copied" : null)"
-                    title="@(_copied ? "Link gekopieerd" : "Link kopiëren")"
-                    aria-label="@(_copied ? "Link gekopieerd" : "Link kopiëren")"
+                    title="@(_copied ? Culture["Share.Copied"] : Culture["Share.CopyLink"])"
+                    aria-label="@(_copied ? Culture["Share.Copied"] : Culture["Share.CopyLink"])"
                     @onclick="CopyLinkAsync">
                 @if (_copied)
                 {
@@ -81,12 +84,26 @@
     private string? _message;
     private bool _copied;
 
+    protected override void OnInitialized()
+        => Culture.Changed += OnCultureChanged;
+
+    private void OnCultureChanged()
+        => InvokeAsync(StateHasChanged);
+
+    public void Dispose()
+        => Culture.Changed -= OnCultureChanged;
+
     private Task Close() => OnClose.InvokeAsync();
 
     private string VacancyUrl =>
         Vacancy is null
             ? ""
             : Navigation.ToAbsoluteUri($"/vacancies/{Vacancy.Id}").ToString();
+
+    private string ShareText =>
+        Vacancy is null
+            ? ""
+            : Culture.Format("Share.Text", Vacancy.Title, Vacancy.CompanyName);
 
     private async Task CopyLinkAsync()
     {
@@ -112,7 +129,7 @@
             if (copied)
             {
                 _copied = true;
-                _message = "Link gekopieerd — plak waar je wilt delen.";
+                _message = Culture["Share.CopiedMsg"];
                 await InvokeAsync(StateHasChanged);
                 await Task.Delay(1800);
                 _copied = false;
@@ -120,7 +137,7 @@
             }
             else
             {
-                _error = "Kopiëren lukte niet. Selecteer de link handmatig.";
+                _error = Culture["Share.CopyFailed"];
             }
         }
         catch (Exception ex)
@@ -151,8 +168,9 @@
             }
 
             var url = VacancyUrl;
-            var plainText = $"{Vacancy.Title} bij {Vacancy.CompanyName} — bekijk op Lobsy: {url}";
-            var text = Uri.EscapeDataString($"{Vacancy.Title} bij {Vacancy.CompanyName} — bekijk op Lobsy");
+            var shareBody = ShareText;
+            var plainText = $"{shareBody}: {url}";
+            var text = Uri.EscapeDataString(shareBody);
             var encodedUrl = Uri.EscapeDataString(url);
 
             var deepLink = channel switch
@@ -173,8 +191,8 @@
                 await Js.InvokeVoidAsync("jobsyGeo.openShare", deepLink);
                 var copied = await Js.InvokeAsync<bool>("jobsyGeo.copyText", plainText);
                 _message = copied
-                    ? "Signal geopend (indien geïnstalleerd). Link ook gekopieerd."
-                    : "Open Signal en plak de vacaturelink handmatig.";
+                    ? Culture["Share.SignalCopied"]
+                    : Culture["Share.SignalManual"];
                 return;
             }
 

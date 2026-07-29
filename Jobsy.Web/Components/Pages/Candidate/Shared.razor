@@ -4,6 +4,7 @@
 @using Jobsy.Web.Localization
 @inject JobsyApiClient Api
 @inject CultureState Culture
+@implements IDisposable
 
 <PageTitle>@Culture["Saved.TabShared"] · Lobsy</PageTitle>
 
@@ -11,7 +12,7 @@
     <header class="panel-header">
         <div>
             <h1>@Culture["Saved.Title"]</h1>
-            <p class="login-lead">Vacatures die jij hebt gedeeld.</p>
+            <p class="login-lead">@Culture["Saved.SharedLead"]</p>
         </div>
     </header>
 
@@ -19,11 +20,11 @@
 
     @if (_loading)
     {
-        <p class="state-message">Laden…</p>
+        <p class="state-message">@Culture["Common.Loading"]</p>
     }
     else if (_items.Count == 0)
     {
-        <p class="state-message">Nog niets gedeeld. <a href="/">Naar banenkaart</a>.</p>
+        <p class="state-message">@Culture["Saved.EmptyShared"] <a href="/">@Culture["Saved.ToMap"]</a>.</p>
     }
     else
     {
@@ -46,6 +47,9 @@
     private List<CandidateEngagementItem> _items = [];
     private bool _loading = true;
 
+    protected override void OnInitialized()
+        => Culture.Changed += OnCultureChanged;
+
     protected override async Task OnInitializedAsync()
     {
         try
@@ -57,4 +61,10 @@
             _loading = false;
         }
     }
+
+    private void OnCultureChanged()
+        => InvokeAsync(StateHasChanged);
+
+    public void Dispose()
+        => Culture.Changed -= OnCultureChanged;
 }

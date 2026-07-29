@@ -4,48 +4,50 @@
 @inject JobsyApiClient Api
 @inject IGeocodingClient Geocoder
 @inject NavigationManager Navigation
+@inject CultureState Culture
 @using Jobsy.Core.Rules
+@using Jobsy.Web.Localization
 @using Jobsy.Web.Navigation
 @implements IAsyncDisposable
 
-<PageTitle>Profiel · Lobsy</PageTitle>
+<PageTitle>@Culture["Profile.Title"] · Lobsy</PageTitle>
 
 <div class="panel-page profile-page">
     <header class="saved-gate__header profile-page__header">
-        <h1>Profiel</h1>
+        <h1>@Culture["Profile.Title"]</h1>
         @if (!string.IsNullOrWhiteSpace(_returnUrl))
         {
-            <p class="login-lead">Vul je gegevens aan en ga daarna terug naar solliciteren.</p>
+            <p class="login-lead">@Culture["Profile.ReturnHint"]</p>
         }
     </header>
     <article class="detail-card">
-        <h1 class="profile-page__title">Mijn profiel</h1>
-        <p class="login-lead">Open for work, voorkeuren, thuisadres (PushBom) en geboortedatum (voor leeftijdsloon).</p>
+        <h1 class="profile-page__title">@Culture["Profile.MyProfile"]</h1>
+        <p class="login-lead">@Culture["Profile.Lead"]</p>
 
         @if (_loading)
         {
-            <p class="state-message">Laden…</p>
+            <p class="state-message">@Culture["Common.Loading"]</p>
         }
         else
         {
             <div class="profile-form">
                 <label class="profile-toggle">
                     <input type="checkbox" @bind="_openForWork" />
-                    <span>Open for work</span>
+                    <span>@Culture["Profile.OpenForWork"]</span>
                 </label>
 
                 <label>
-                    Geboortedatum
+                    @Culture["Profile.DateOfBirth"]
                     <input type="date" @bind="_dobInput" />
                 </label>
 
                 <div class="profile-address">
-                    <label for="profile-home-address">Thuisadres</label>
+                    <label for="profile-home-address">@Culture["Profile.HomeAddress"]</label>
                     <div class="address-field">
                         <input id="profile-home-address"
                                type="text"
                                autocomplete="off"
-                               placeholder="Straat, postcode of plaats…"
+                               placeholder="@Culture["Discovery.AddressPlaceholder"]"
                                value="@_homeAddress"
                                @oninput="OnAddressInputAsync"
                                @onfocus="OnAddressFocus"
@@ -55,7 +57,7 @@
                             <button type="button"
                                     class="engagement-btn address-field__clear"
                                     @onclick="ClearHomeAddress">
-                                Wissen
+                                @Culture["Common.Clear"]
                             </button>
                         }
                     </div>
@@ -64,11 +66,11 @@
                         <ul class="address-suggestions" role="listbox">
                             @if (_suggesting)
                             {
-                                <li class="address-suggestions__status">Laden…</li>
+                                <li class="address-suggestions__status">@Culture["Common.Loading"]</li>
                             }
                             else if (_suggestions.Count == 0 && _homeAddress.Trim().Length >= 3)
                             {
-                                <li class="address-suggestions__status">Geen adressen gevonden</li>
+                                <li class="address-suggestions__status">@Culture["Discovery.AddressNoResults"]</li>
                             }
                             else
                             {
@@ -85,40 +87,40 @@
                             }
                         </ul>
                     }
-                    <p class="profile-address__hint">Typ minstens 3 tekens en kies een adres uit de suggesties.</p>
+                    <p class="profile-address__hint">@Culture["Profile.AddressHint"]</p>
                 </div>
 
                 <label>
-                    Max. reistijd (minuten)
+                    @Culture["Profile.MaxTravel"]
                     <input type="number" min="1" max="180" @bind="_maxTravel" />
                 </label>
 
                 <label>
-                    Voorkeursvervoer
+                    @Culture["Profile.PreferredTransport"]
                     <select @bind="_preferredTransport">
                         <option value="">—</option>
-                        <option>Fiets</option>
-                        <option>Auto</option>
-                        <option>OV</option>
-                        <option>Lopend</option>
+                        <option value="Fiets">@Culture["Transport.Bike"]</option>
+                        <option value="Auto">@Culture["Transport.Car"]</option>
+                        <option value="OV">@Culture["Transport.Transit"]</option>
+                        <option value="Lopend">@Culture["Transport.Walk"]</option>
                     </select>
                 </label>
 
                 <fieldset class="profile-roles">
-                    <legend>Interessedomeinen</legend>
+                    <legend>@Culture["Profile.Interests"]</legend>
                     @foreach (var role in _branchOptions)
                     {
                         <label>
                             <input type="checkbox"
                                    checked="@_selectedRoles.Contains(role)"
                                    @onchange="e => ToggleRole(role, (bool)(e.Value ?? false))" />
-                            @role
+                            @UiLabels.WorkType(Culture, role)
                         </label>
                     }
                 </fieldset>
 
                 <fieldset class="profile-roles">
-                    <legend>Rijbewijzen</legend>
+                    <legend>@Culture["Profile.Licenses"]</legend>
                     @foreach (var license in _licenseOptions)
                     {
                         <label>
@@ -131,19 +133,19 @@
                 </fieldset>
 
                 <label>
-                    Vertel wat over jezelf
+                    @Culture["Profile.AboutMe"]
                     <textarea rows="4" @bind="_aboutMe"></textarea>
                 </label>
 
                 <fieldset class="profile-roles">
-                    <legend>Beschikbaarheid</legend>
+                    <legend>@Culture["Profile.Availability"]</legend>
                     <table class="wage-table">
                         <thead>
                             <tr>
-                                <th>Dag</th>
+                                <th>@Culture["Profile.Day"]</th>
                                 @foreach (var slot in AvailabilitySlots)
                                 {
-                                    <th>@slot</th>
+                                    <th>@UiLabels.AvailabilitySlot(Culture, slot)</th>
                                 }
                             </tr>
                         </thead>
@@ -151,7 +153,7 @@
                             @foreach (var day in AvailabilityDays)
                             {
                                 <tr>
-                                    <th>@day</th>
+                                    <th>@UiLabels.Weekday(Culture, day)</th>
                                     @foreach (var slot in AvailabilitySlots)
                                     {
                                         var key = $"{day}:{slot}";
@@ -168,42 +170,42 @@
                 </fieldset>
 
                 <fieldset class="profile-employers">
-                    <legend>Werkervaring (werkgevers)</legend>
+                    <legend>@Culture["Profile.Experience"]</legend>
                     @for (var i = 0; i < _employers.Count; i++)
                     {
                         var idx = i;
                         <div class="profile-employer-card">
                             <div class="profile-employer-card__top">
                                 <label class="profile-employer-card__field profile-employer-card__field--employer">
-                                    <span>Werkgever</span>
-                                    <input placeholder="Naam werkgever" @bind="_employers[idx].EmployerName" />
+                                    <span>@Culture["Profile.Employer"]</span>
+                                    <input placeholder="@Culture["Profile.EmployerName"]" @bind="_employers[idx].EmployerName" />
                                 </label>
                                 <label class="profile-employer-card__field profile-employer-card__field--role">
-                                    <span>Functie</span>
-                                    <input placeholder="Functie / rol" @bind="_employers[idx].Role" />
+                                    <span>@Culture["Profile.Role"]</span>
+                                    <input placeholder="@Culture["Profile.RolePlaceholder"]" @bind="_employers[idx].Role" />
                                 </label>
                                 <label class="profile-employer-card__field profile-employer-card__field--years">
-                                    <span>Jaren</span>
+                                    <span>@Culture["Profile.Years"]</span>
                                     <input type="number" min="0" max="80" placeholder="0" @bind="_employers[idx].Years" />
                                 </label>
                                 <button type="button"
                                         class="icon-btn icon-btn--danger"
-                                        title="Verwijderen"
-                                        aria-label="Werkgever verwijderen"
+                                        title="@Culture["Profile.RemoveEmployer"]"
+                                        aria-label="@Culture["Profile.RemoveEmployer"]"
                                         @onclick="() => RemoveEmployer(idx)">
                                     @((MarkupString)ActionIcons.Trash)
                                 </button>
                             </div>
                             <label class="profile-employer-card__field profile-employer-card__field--description">
-                                <span>Wat heb je daar gedaan?</span>
+                                <span>@Culture["Profile.WhatDidYouDo"]</span>
                                 <textarea rows="3"
                                           maxlength="1000"
-                                          placeholder="Korte omschrijving van je werkzaamheden"
+                                          placeholder="@Culture["Profile.DutiesPlaceholder"]"
                                           @bind="_employers[idx].Description"></textarea>
                             </label>
                         </div>
                     }
-                    <button type="button" class="icon-btn icon-btn--add" title="Werkgever toevoegen" aria-label="Werkgever toevoegen" @onclick="AddEmployer">
+                    <button type="button" class="icon-btn icon-btn--add" title="@Culture["Profile.AddEmployer"]" aria-label="@Culture["Profile.AddEmployer"]" @onclick="AddEmployer">
                         <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round">
                             <path d="M12 5v14" /><path d="M5 12h14" />
                         </svg>
@@ -211,7 +213,7 @@
                 </fieldset>
 
                 <fieldset class="profile-roles">
-                    <legend>Opleidingsniveau</legend>
+                    <legend>@Culture["Profile.Education"]</legend>
                     @foreach (var level in _educationOptions)
                     {
                         <label>
@@ -225,11 +227,11 @@
 
                 @if (_authenticatorEnabled)
                 {
-                    <p class="login-lead">Authenticator-optie is beschikbaar als stub bij solliciteren.</p>
+                    <p class="login-lead">@Culture["Profile.AuthenticatorHint"]</p>
                 }
 
                 <button class="login-submit" type="button" disabled="@_saving" @onclick="SaveAsync">
-                    Opslaan
+                    @Culture["Common.Save"]
                 </button>
                 @if (!string.IsNullOrEmpty(_message))
                 {
@@ -242,15 +244,14 @@
     @if (!_loading)
     {
         <section class="detail-card profile-unsubscribe" aria-labelledby="profile-unsubscribe-title">
-            <h2 id="profile-unsubscribe-title" class="profile-page__title">Account afmelden</h2>
+            <h2 id="profile-unsubscribe-title" class="profile-page__title">@Culture["Profile.UnsubscribeTitle"]</h2>
             <p class="login-lead">
-                Meld je account af als je Lobsy niet meer wilt gebruiken. Je gegevens worden opgeschoond;
-                bij een latere aanmelding start je opnieuw met een schoon account.
+                @Culture["Profile.UnsubscribeLead"]
             </p>
             <button class="provider-btn provider-btn--danger"
                     type="button"
                     @onclick="OpenUnsubscribe">
-                Afmelden
+                @Culture["Profile.Unsubscribe"]
             </button>
         </section>
     }
@@ -296,6 +297,9 @@
 
     [SupplyParameterFromQuery(Name = "returnUrl")]
     public string? ReturnUrl { get; set; }
+
+    protected override void OnInitialized()
+        => Culture.Changed += OnCultureChanged;
 
     protected override async Task OnInitializedAsync()
     {
@@ -402,6 +406,9 @@
             _loading = false;
         }
     }
+
+    private void OnCultureChanged()
+        => InvokeAsync(StateHasChanged);
 
     private void OpenUnsubscribe() => _unsubscribeOpen = true;
     private void CloseUnsubscribe() => _unsubscribeOpen = false;
@@ -685,6 +692,7 @@
 
     public ValueTask DisposeAsync()
     {
+        Culture.Changed -= OnCultureChanged;
         _suggestCts?.Cancel();
         _suggestCts?.Dispose();
         return ValueTask.CompletedTask;
