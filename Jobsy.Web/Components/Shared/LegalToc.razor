@@ -1,0 +1,32 @@
+@inject NavigationManager Navigation
+
+<nav class="legal-toc" aria-label="Inhoudsopgave">
+    <a href="/privacy"
+       class="@(IsActive("privacy") ? "legal-toc__link--active" : null)"
+       aria-current="@(IsActive("privacy") ? "page" : null)">
+        Privacyverklaring
+    </a>
+    <a href="/algemene-voorwaarden"
+       class="@(IsActive("algemene-voorwaarden") ? "legal-toc__link--active" : null)"
+       aria-current="@(IsActive("algemene-voorwaarden") ? "page" : null)">
+        Algemene voorwaarden
+    </a>
+    <a href="/gebruiksvoorwaarden"
+       class="@(IsActive("gebruiksvoorwaarden") ? "legal-toc__link--active" : null)"
+       aria-current="@(IsActive("gebruiksvoorwaarden") ? "page" : null)">
+        Gebruiksvoorwaarden
+    </a>
+    <a href="/wie-zijn-wij"
+       class="@(IsActive("wie-zijn-wij") ? "legal-toc__link--active" : null)"
+       aria-current="@(IsActive("wie-zijn-wij") ? "page" : null)">
+        Wie zijn wij
+    </a>
+</nav>
+
+@code {
+    private string CurrentPath
+        => Navigation.ToBaseRelativePath(Navigation.Uri).TrimStart('/').Split('?', '#')[0];
+
+    private bool IsActive(string path)
+        => string.Equals(CurrentPath, path, StringComparison.OrdinalIgnoreCase);
+}
