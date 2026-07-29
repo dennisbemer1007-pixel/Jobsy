@@ -794,6 +794,24 @@ public sealed class JobsyApiClient : IAsyncDisposable
         }
     }
 
+    public async Task<CompanySummary?> UpdateTokenManagementAsync(
+        Guid companyId,
+        bool tokensManagedByEnterprise,
+        CancellationToken ct = default)
+    {
+        var response = await _http.PutAsJsonAsync(
+            $"api/companies/{companyId}/token-management",
+            new { tokensManagedByEnterprise },
+            ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException(string.IsNullOrWhiteSpace(body) ? response.ReasonPhrase : body);
+        }
+
+        return await response.Content.ReadFromJsonAsync<CompanySummary>(cancellationToken: ct);
+    }
+
     public async Task GrantTokensAsync(
         Guid companyId,
         decimal amount,

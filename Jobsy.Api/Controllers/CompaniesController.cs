@@ -54,7 +54,8 @@ public class CompaniesController : ControllerBase
                 c.KvkNumber,
                 c.TokenTransactions.Sum(t => t.Amount),
                 c.Vacancies.Count(v => v.Status == VacancyStatus.Active),
-                c.ParentCompanyId))
+                c.ParentCompanyId,
+                c.TokensManagedByEnterprise))
             .ToListAsync(cancellationToken);
 
         return Ok(companies);
@@ -152,6 +153,60 @@ public class CompaniesController : ControllerBase
             company.KvkNumber,
             0,
             0,
-            company.ParentCompanyId));
+            company.ParentCompanyId,
+            company.TokensManagedByEnterprise));
+    }
+
+    /// <summary>
+    /// Toggle whether the bedrijfsmanager manages tokens for a vestiging (checkbox opt-in).
+    /// </summary>
+    [HttpPut("{companyId:guid}/token-management")]
+    [Authorize(Roles = $"{JobsyRoles.EnterpriseManager},{JobsyRoles.Admin}")]
+    public async Task<ActionResult<CompanySummaryDto>> UpdateTokenManagement(
+        Guid companyId,
+        [FromBody] UpdateTokenManagementRequest request,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            await _companyAuth.EnsureCanAccessCompanyAsync(User, companyId, cancellationToken);
+        }
+        catch (Core.Exceptions.ForbiddenCompanyAccessException)
+        {
+            return Forbid();
+        }
+
+        var company = await _db.Companies.FirstOrDefaultAsync(c => c.Id == companyId, cancellationToken);
+        if (company is null)
+        {
+            return NotFound(new { message = "Bedrijf niet gevonden." });
+        }
+
+        if (company.ParentCompanyId is null)
+        {
+            return BadRequest(new
+            {
+                message = "Tokenbeheer-optie geldt alleen voor vestigingen, niet voor de organisatiopot."
+            });
+        }
+
+        company.TokensManagedByEnterprise = request.TokensManagedByEnterprise;
+        await _db.SaveChangesAsync(cancellationToken);
+
+        var balance = await _db.TokenTransactions.AsNoTracking()
+            .Where(t => t.CompanyId == company.Id)
+            .SumAsync(t => t.Amount, cancellationToken);
+        var activeVacancies = await _db.Vacancies.AsNoTracking()
+            .CountAsync(v => v.CompanyId == company.Id && v.Status == VacancyStatus.Active, cancellationToken);
+
+        return Ok(new CompanySummaryDto(
+            company.Id,
+            company.Name,
+            company.Address,
+            company.KvkNumber,
+            balance,
+            activeVacancies,
+            company.ParentCompanyId,
+            company.TokensManagedByEnterprise));
     }
 }

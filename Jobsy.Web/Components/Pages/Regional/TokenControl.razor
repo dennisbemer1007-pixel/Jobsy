@@ -13,7 +13,7 @@
             <p class="login-lead">
                 @if (_canAllocate)
                 {
-                    <text>Verbruik, allocatie en status binnen jouw organisatie.</text>
+                    <text>Organisatiepot, uitgifte aan vestigingen en vacaturestatus.</text>
                 }
                 else
                 {
@@ -21,7 +21,7 @@
                 }
             </p>
         </div>
-        <a class="auth-link" href="/employer/tokens">Saldo →</a>
+        <a class="auth-link" href="/employer/tokens">Tokenbeheer →</a>
     </header>
 
     @if (_loading)
@@ -30,13 +30,33 @@
     }
     else
     {
+        @if (_pot is not null)
+        {
+            <div class="stat-grid">
+                <div class="stat-card">
+                    <span class="stat-card__label">Organisatiepot</span>
+                    <strong class="stat-card__value">@_pot.Balance.ToString("0.##")</strong>
+                </div>
+            </div>
+        }
+
         <section class="panel-section">
             <h2>Token-saldo per vestiging</h2>
             <div class="table-list">
                 @foreach (var b in _balances)
                 {
                     <div class="table-row">
-                        <strong>@b.CompanyName</strong>
+                        <div>
+                            <strong>@b.CompanyName</strong>
+                            @if (b.ParentCompanyId is null && _hasOrgHierarchy)
+                            {
+                                <span class="muted"> · pot</span>
+                            }
+                            else if (b.TokensManagedByEnterprise)
+                            {
+                                <span class="muted"> · tokenbeheer bedrijfsmanager</span>
+                            }
+                        </div>
                         <span>@b.Balance.ToString("0.##") tokens</span>
                     </div>
                 }
@@ -46,32 +66,30 @@
         @if (_canAllocate)
         {
             <section class="panel-section">
-                <h2>Allocatie</h2>
-                <form class="login-form" style="max-width:420px" @onsubmit="AllocateAsync" @onsubmit:preventDefault>
-                    <label>
-                        Van
-                        <select @bind="_fromCompanyId">
-                            @foreach (var b in _balances)
-                            {
-                                <option value="@b.CompanyId">@b.CompanyName</option>
-                            }
-                        </select>
-                    </label>
-                    <label>
-                        Naar
-                        <select @bind="_toCompanyId">
-                            @foreach (var b in _balances)
-                            {
-                                <option value="@b.CompanyId">@b.CompanyName</option>
-                            }
-                        </select>
-                    </label>
-                    <label>
-                        Aantal
-                        <input type="number" min="0.5" step="0.5" @bind="_amount" />
-                    </label>
-                    <button class="login-submit" type="submit" disabled="@_busy">Alloceren</button>
-                </form>
+                <h2>Tokens uitgeven</h2>
+                @if (_issueTargets.Count == 0)
+                {
+                    <p class="muted">Geen vestigingen aangevinkt. Stel tokenbeheer in via <a class="auth-link" href="/employer/tokens">Mijn tokens</a>.</p>
+                }
+                else
+                {
+                    <form class="login-form" style="max-width:420px" @onsubmit="IssueAsync" @onsubmit:preventDefault>
+                        <label>
+                            Vestiging
+                            <select @bind="_toCompanyId">
+                                @foreach (var b in _issueTargets)
+                                {
+                                    <option value="@b.CompanyId">@b.CompanyName</option>
+                                }
+                            </select>
+                        </label>
+                        <label>
+                            Aantal
+                            <input type="number" min="0.5" step="0.5" @bind="_amount" />
+                        </label>
+                        <button class="login-submit" type="submit" disabled="@(_busy || _pot is null)">Uitgeven</button>
+                    </form>
+                }
             </section>
         }
 
@@ -104,10 +122,12 @@
     private bool _loading = true;
     private bool _busy;
     private bool _canAllocate;
-    private Guid _fromCompanyId;
+    private bool _hasOrgHierarchy;
     private Guid _toCompanyId;
     private decimal _amount = 1;
     private string? _message;
+    private TokenBalance? _pot;
+    private List<TokenBalance> _issueTargets = [];
 
     protected override async Task OnInitializedAsync()
     {
@@ -115,13 +135,8 @@
         {
             var state = await AuthState.GetAuthenticationStateAsync();
             _canAllocate = state.User.IsInRole("EnterpriseManager") || state.User.IsInRole("Admin");
-            _balances = (await Api.GetTokenBalancesAsync()).ToList();
+            await ReloadBalancesAsync();
             _vacancies = (await Api.GetManagedVacanciesAsync()).ToList();
-            if (_balances.Count > 0)
-            {
-                _fromCompanyId = _balances[0].CompanyId;
-                _toCompanyId = _balances.Count > 1 ? _balances[1].CompanyId : _balances[0].CompanyId;
-            }
         }
         finally
         {
@@ -129,9 +144,26 @@
         }
     }
 
-    private async Task AllocateAsync()
+    private async Task ReloadBalancesAsync()
     {
-        if (!_canAllocate)
+        _balances = (await Api.GetTokenBalancesAsync()).ToList();
+        _hasOrgHierarchy = _balances.Any(b => b.ParentCompanyId is not null);
+        _pot = _balances.FirstOrDefault(b => b.ParentCompanyId is null && _hasOrgHierarchy)
+            ?? _balances.FirstOrDefault(b => b.ParentCompanyId is null);
+        _issueTargets = _balances
+            .Where(b => b.ParentCompanyId is not null && b.TokensManagedByEnterprise)
+            .OrderBy(b => b.CompanyName)
+            .ToList();
+        if (_issueTargets.Count > 0
+            && (_toCompanyId == Guid.Empty || _issueTargets.All(b => b.CompanyId != _toCompanyId)))
+        {
+            _toCompanyId = _issueTargets[0].CompanyId;
+        }
+    }
+
+    private async Task IssueAsync()
+    {
+        if (!_canAllocate || _pot is null)
         {
             return;
         }
@@ -140,9 +172,9 @@
         _message = null;
         try
         {
-            await Api.AllocateTokensAsync(_fromCompanyId, _toCompanyId, _amount);
-            _balances = (await Api.GetTokenBalancesAsync()).ToList();
-            _message = "Tokens gealloceerd.";
+            await Api.AllocateTokensAsync(_pot.CompanyId, _toCompanyId, _amount, "Uitgifte uit organisatiopot");
+            await ReloadBalancesAsync();
+            _message = "Tokens uitgegeven.";
         }
         catch (Exception ex)
         {

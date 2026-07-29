@@ -76,7 +76,7 @@ Onvoldoende tokens bij publiceren → `PendingApproval` (EM/Admin keurt goed).
 |-------|--------|
 | `/home` | Bedrijfs-KPI’s |
 | `/employer/vacancies` | Vacaturebeheer + approve-publish |
-| `/employer/tokens` | Aankoop (Mollie-stub), allocatie, logs |
+| `/employer/tokens` | Pot-aankoop (radio pakketten), vestiging-opt-in, uitgifte, logs |
 | `/employer/branches` · `/employer/regions` | Vestigingen / regio’s |
 | `/employer/users` | Invite-by-email + rollen |
 | `/employer/salary-tables` | CAO/schalen voor vacatures |

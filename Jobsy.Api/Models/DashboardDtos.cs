@@ -10,9 +10,17 @@ public record CompanySummaryDto(
     string KvkNumber,
     decimal TokenBalance,
     int ActiveVacancies,
-    Guid? ParentCompanyId = null);
+    Guid? ParentCompanyId = null,
+    bool TokensManagedByEnterprise = false);
 
-public record TokenBalanceDto(Guid CompanyId, string CompanyName, decimal Balance);
+public record TokenBalanceDto(
+    Guid CompanyId,
+    string CompanyName,
+    decimal Balance,
+    Guid? ParentCompanyId = null,
+    bool TokensManagedByEnterprise = false);
+
+public record UpdateTokenManagementRequest(bool TokensManagedByEnterprise);
 
 public record GrantTokensRequest(Guid CompanyId, decimal Amount, string Note);
 

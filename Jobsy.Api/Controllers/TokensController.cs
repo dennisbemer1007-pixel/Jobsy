@@ -62,7 +62,9 @@ public class TokensController : ControllerBase
             .Select(c => new TokenBalanceDto(
                 c.Id,
                 c.Name,
-                c.TokenTransactions.Sum(t => t.Amount)))
+                c.TokenTransactions.Sum(t => t.Amount),
+                c.ParentCompanyId,
+                c.TokensManagedByEnterprise))
             .ToListAsync(cancellationToken);
 
         return Ok(balances);
@@ -118,8 +120,54 @@ public class TokensController : ControllerBase
             return NotFound(new { message = "Bedrijf niet gevonden." });
         }
 
+        var purchaseTargetId = request.CompanyId;
+        var isEnterprise = User.IsInRole(JobsyRoles.EnterpriseManager);
+        var isBranch = User.IsInRole(JobsyRoles.BranchManager);
+        var isAdmin = _companyAuth.IsAdmin(User);
+        var isIntermediary = User.IsInRole(JobsyRoles.Intermediary);
+
+        if (isBranch && !isAdmin && !isEnterprise && !isIntermediary)
+        {
+            if (company.TokensManagedByEnterprise)
+            {
+                return BadRequest(new
+                {
+                    message = "Tokenbeheer voor deze vestiging ligt bij de bedrijfsmanager. Je kunt hier geen tokens kopen."
+                });
+            }
+        }
+        else if (isEnterprise && !isAdmin)
+        {
+            // Bedrijfsmanager koopt altijd in de organisatiopot (parent / org-root).
+            if (company.ParentCompanyId is Guid parentId)
+            {
+                purchaseTargetId = parentId;
+            }
+
+            var pot = await _db.Companies.AsNoTracking()
+                .FirstOrDefaultAsync(c => c.Id == purchaseTargetId, cancellationToken);
+            if (pot is null)
+            {
+                return NotFound(new { message = "Organisatiepot niet gevonden." });
+            }
+
+            if (pot.ParentCompanyId is not null)
+            {
+                return BadRequest(new { message = "Tokens worden gekocht in de organisatiopot, niet per vestiging." });
+            }
+
+            try
+            {
+                await _companyAuth.EnsureCanAccessCompanyAsync(User, purchaseTargetId, cancellationToken);
+            }
+            catch (Core.Exceptions.ForbiddenCompanyAccessException)
+            {
+                return Forbid();
+            }
+        }
+
         var result = await _payments.CreateTokenPurchaseCheckoutAsync(
-            request.CompanyId,
+            purchaseTargetId,
             request.PackSize,
             cancellationToken);
 
@@ -306,6 +354,17 @@ public class TokensController : ControllerBase
             }
         }
 
+        // Pot → vestiging: only when the bedrijfsmanager has opted in for that branch.
+        if (!_companyAuth.IsAdmin(User)
+            && to.ParentCompanyId == from.Id
+            && !to.TokensManagedByEnterprise)
+        {
+            return BadRequest(new
+            {
+                message = "Deze vestiging is niet aangevinkt voor tokenbeheer door de bedrijfsmanager."
+            });
+        }
+
         try
         {
             var actor = await _users.FindByPrincipalAsync(User, cancellationToken);
@@ -319,8 +378,8 @@ public class TokensController : ControllerBase
 
             return Ok(new
             {
-                from = new TokenBalanceDto(from.Id, from.Name, fromEntry.NewBalance),
-                to = new TokenBalanceDto(to.Id, to.Name, toEntry.NewBalance)
+                from = new TokenBalanceDto(from.Id, from.Name, fromEntry.NewBalance, from.ParentCompanyId, from.TokensManagedByEnterprise),
+                to = new TokenBalanceDto(to.Id, to.Name, toEntry.NewBalance, to.ParentCompanyId, to.TokensManagedByEnterprise)
             });
         }
         catch (ArgumentException ex)

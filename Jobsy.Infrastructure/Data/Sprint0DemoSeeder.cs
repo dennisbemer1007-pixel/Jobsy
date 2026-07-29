@@ -202,6 +202,11 @@ internal static class Sprint0DemoSeeder
             {
                 branch.ParentCompanyId = supermarketId;
             }
+
+            if (branch is not null && !branch.TokensManagedByEnterprise)
+            {
+                branch.TokensManagedByEnterprise = true;
+            }
         }
 
         // Consolidate leftover vestiging WML copies onto the org table.

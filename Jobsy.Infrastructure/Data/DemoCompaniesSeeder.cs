@@ -55,6 +55,9 @@ internal static class DemoCompaniesSeeder
         // Vestigingen under the Fred retail organisation (same demo group for EM flows).
         westland.ParentCompanyId = supermarketId;
         cafe.ParentCompanyId = supermarketId;
+        // Bedrijfsmanager doet tokenbeheer voor deze vestigingen (pot → uitgifte).
+        westland.TokensManagedByEnterprise = true;
+        cafe.TokensManagedByEnterprise = true;
 
         var intermediaryCompany = new Company
         {

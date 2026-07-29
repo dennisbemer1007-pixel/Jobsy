@@ -29,6 +29,13 @@ public class Company
     /// </summary>
     public bool HasReceivedWelcomeToken { get; set; }
 
+    /// <summary>
+    /// When true, the enterprise manager (bedrijfsmanager) manages tokens for this vestiging:
+    /// purchases go into the organisation pot and the EM issues tokens to this branch.
+    /// When false, the vestiging manages its own token purchases.
+    /// </summary>
+    public bool TokensManagedByEnterprise { get; set; }
+
     /// <summary>Salesmanager who referred this supplier (via tracking code).</summary>
     public Guid? ReferredBySalesManagerUserId { get; set; }
     public User? ReferredBySalesManagerUser { get; set; }
