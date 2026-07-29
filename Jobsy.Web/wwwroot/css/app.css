@@ -7313,6 +7313,60 @@ a.apply-flow__secondary {
     border-color: var(--accent);
 }
 
+@media (max-width: 480px) {
+    .lobsy-assistant {
+        right: 0.5rem;
+        bottom: 0.5rem;
+    }
+
+    .lobsy-assistant.has-bottom-nav {
+        bottom: calc(3.5rem + env(safe-area-inset-bottom, 0px));
+    }
+
+    .lobsy-assistant__fab {
+        width: 60px;
+        height: 60px;
+    }
+
+    .lobsy-assistant__fab-logo {
+        width: 50px;
+        height: 50px;
+    }
+
+    .lobsy-assistant__panel {
+        width: calc(100vw - 1rem);
+        max-height: calc(100dvh - 5rem);
+        padding: 0.65rem 0.7rem 0.75rem;
+    }
+
+    .lobsy-assistant.has-bottom-nav .lobsy-assistant__panel {
+        max-height: calc(100dvh - 8.5rem - env(safe-area-inset-bottom, 0px));
+    }
+
+    .lobsy-assistant__logo {
+        width: 48px;
+        height: 48px;
+    }
+
+    .lobsy-assistant__chat {
+        min-height: 100px;
+        max-height: 38vh;
+    }
+
+    .lobsy-assistant__bubble-logo {
+        width: 28px;
+        height: 28px;
+    }
+
+    .lobsy-assistant__compose {
+        margin-top: 0.4rem;
+    }
+
+    .lobsy-assistant__compose textarea {
+        min-height: 2.2rem;
+    }
+}
+
 @media (prefers-reduced-motion: reduce) {
     .lobsy-assistant__fab:hover,
     .lobsy-assistant__fab:focus-visible {
