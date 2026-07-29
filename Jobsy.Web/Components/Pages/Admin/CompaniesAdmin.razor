@@ -5,13 +5,15 @@
 @using Microsoft.AspNetCore.WebUtilities
 @inject JobsyApiClient Api
 @inject NavigationManager Nav
+@inject CultureState Culture
+@implements IDisposable
 
-<PageTitle>Bedrijven · Lobsy</PageTitle>
+<PageTitle>@Culture["Admin.Companies"] · Lobsy</PageTitle>
 
-<AdminPageShell Title="Bedrijven en intermediairs" Lead="Aantal-kolommen zijn doorklikbaar. Nieuw bedrijf via KVK-stub." Wide="true">
+<AdminPageShell Title="@Culture["Admin.Companies"]" Lead="@Culture["Admin.CompaniesLead"]" Wide="true">
     @if (_loading)
     {
-        <p class="state-message">Laden…</p>
+        <p class="state-message">@Culture["Common.Loading"]</p>
     }
     else if (!string.IsNullOrEmpty(_error))
     {
@@ -21,8 +23,8 @@
     {
         <div class="filter-bar">
             <label>
-                Zoeken
-                <input type="search" @bind="_query" @bind:event="oninput" placeholder="Naam, adres, KVK…" />
+                @Culture["Common.Search"]
+                <input type="search" @bind="_query" @bind:event="oninput" placeholder="@Culture["Admin.SearchPlaceholder"]" />
             </label>
             <label>
                 Type
@@ -148,6 +150,16 @@
     private AdminCompanyItem? _grantCompany;
 
     private List<AdminCompanyItem> _filtered => Filter().ToList();
+
+
+    protected override void OnInitialized()
+        => Culture.Changed += OnCultureChanged;
+
+    private void OnCultureChanged()
+        => InvokeAsync(StateHasChanged);
+
+    public void Dispose()
+        => Culture.Changed -= OnCultureChanged;
 
     protected override async Task OnInitializedAsync()
     {

@@ -3,13 +3,15 @@
 @attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "EnterpriseManager,Admin")]
 @using Jobsy.Web.Navigation
 @inject JobsyApiClient Api
+@inject CultureState Culture
+@implements IDisposable
 
-<PageTitle>Gebruikers · Lobsy</PageTitle>
+<PageTitle>@Culture["Employer.Users"] · Lobsy</PageTitle>
 
 <div class="panel-page">
     <header class="panel-header">
         <div>
-            <h1>Gebruikers</h1>
+            <h1>@Culture["Employer.Users"]</h1>
             <p class="login-lead">Uitnodigen, bewerken en rollen toekennen binnen jouw organisatie.</p>
         </div>
     </header>
@@ -93,7 +95,7 @@
                         <span>Actief</span>
                     </label>
                     <div class="inline-actions">
-                        <button class="login-submit" type="submit" disabled="@_busy">Opslaan</button>
+                        <button class="login-submit" type="submit" disabled="@_busy">@Culture["Common.Save"]</button>
                         <button class="btn-compact" type="button" disabled="@_busy" @onclick="CancelEdit">Annuleren</button>
                     </div>
                 </form>
@@ -172,6 +174,15 @@
     private string _editRole = "BranchManager";
     private string _editPrimaryCompanyId = "";
     private bool _editIsActive = true;
+
+    protected override void OnInitialized()
+        => Culture.Changed += OnCultureChanged;
+
+    private void OnCultureChanged()
+        => InvokeAsync(StateHasChanged);
+
+    public void Dispose()
+        => Culture.Changed -= OnCultureChanged;
 
     protected override async Task OnInitializedAsync()
     {

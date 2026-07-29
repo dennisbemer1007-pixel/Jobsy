@@ -4,15 +4,17 @@
 @inject JobsyApiClient Api
 @inject NavigationManager Navigation
 @inject IJSRuntime Js
+@inject CultureState Culture
+@implements IDisposable
 @using Jobsy.Core.Enums
 @using Jobsy.Core.Rules
 
-<PageTitle>@(_isDuplicate ? "Vacature dupliceren" : "Vacature plaatsen") · Lobsy</PageTitle>
+<PageTitle>@(_isDuplicate ? Culture["Employer.DuplicateVacancy"] : Culture["Employer.CreateVacancy"]) · Lobsy</PageTitle>
 
 <div class="panel-page vacancy-editor">
     <header class="panel-header">
         <div>
-            <h1>@(_isDuplicate ? "Vacature dupliceren" : "Vacature plaatsen")</h1>
+            <h1>@(_isDuplicate ? Culture["Employer.DuplicateVacancy"] : Culture["Employer.CreateVacancy"])</h1>
             <p class="login-lead">
                 @if (_isDuplicate)
                 {
@@ -194,7 +196,7 @@
                 </div>
             </fieldset>
             <button class="login-submit" type="submit" disabled="@_saving">
-                @(_isDuplicate ? "Opslaan als nieuw concept" : "Opslaan als concept")
+                @Culture["Employer.SaveDraft"]
             </button>
         </form>
 
@@ -334,6 +336,15 @@
             return url.Replace("'", "%27", StringComparison.Ordinal).Replace("\"", "%22", StringComparison.Ordinal);
         }
     }
+
+    protected override void OnInitialized()
+        => Culture.Changed += OnCultureChanged;
+
+    private void OnCultureChanged()
+        => InvokeAsync(StateHasChanged);
+
+    public void Dispose()
+        => Culture.Changed -= OnCultureChanged;
 
     protected override async Task OnInitializedAsync()
     {

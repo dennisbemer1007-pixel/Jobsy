@@ -6,13 +6,15 @@
 @inject NavigationManager Navigation
 @inject AuthenticationStateProvider AuthState
 @inject Jobsy.Web.Services.TokenBalanceCache TokenBalances
+@inject CultureState Culture
+@implements IDisposable
 
-<PageTitle>Tokens · Lobsy</PageTitle>
+<PageTitle>@Culture["Employer.MyTokens"] · Lobsy</PageTitle>
 
 <div class="panel-page">
     <header class="panel-header">
         <div>
-            <h1>Mijn tokens</h1>
+            <h1>@Culture["Employer.MyTokens"]</h1>
             <p class="login-lead">
                 @if (_canPurchase || _canAllocate)
                 {
@@ -168,6 +170,15 @@
     private Guid _toCompanyId;
     private decimal _allocateAmount = 1;
     private string _logFilter = "";
+
+    protected override void OnInitialized()
+        => Culture.Changed += OnCultureChanged;
+
+    private void OnCultureChanged()
+        => InvokeAsync(StateHasChanged);
+
+    public void Dispose()
+        => Culture.Changed -= OnCultureChanged;
 
     protected override async Task OnInitializedAsync()
     {

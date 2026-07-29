@@ -3,13 +3,15 @@
 @attribute [Authorize(Roles = "Admin")]
 @using Jobsy.Web.Components.Admin
 @inject JobsyApiClient Api
+@inject CultureState Culture
+@implements IDisposable
 
-<PageTitle>Bedrijfsgegevens · Lobsy</PageTitle>
+<PageTitle>@Culture["Admin.CompanyDetails"] · Lobsy</PageTitle>
 
-<AdminPageShell Title="Bedrijfsgegevens" Lead="NAW, KvK en BTW van Lobsy — zichtbaar onderaan self-billing factuur-PDF’s." ShowSettingsNav="true">
+<AdminPageShell Title="@Culture["Admin.CompanyDetails"]" Lead="@Culture["Admin.CompanyDetailsLead"]" ShowSettingsNav="true">
     @if (_loading)
     {
-        <p class="state-message">Laden…</p>
+        <p class="state-message">@Culture["Common.Loading"]</p>
     }
     else if (!string.IsNullOrEmpty(_error))
     {
@@ -85,6 +87,16 @@
     private bool _busy;
     private string? _error;
     private string? _message;
+
+
+    protected override void OnInitialized()
+        => Culture.Changed += OnCultureChanged;
+
+    private void OnCultureChanged()
+        => InvokeAsync(StateHasChanged);
+
+    public void Dispose()
+        => Culture.Changed -= OnCultureChanged;
 
     protected override async Task OnInitializedAsync()
     {

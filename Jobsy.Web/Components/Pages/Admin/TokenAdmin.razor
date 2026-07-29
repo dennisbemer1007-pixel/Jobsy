@@ -3,10 +3,12 @@
 @attribute [Authorize(Roles = "Admin")]
 @using Jobsy.Web.Components.Admin
 @inject JobsyApiClient Api
+@inject CultureState Culture
+@implements IDisposable
 
-<PageTitle>Token-beheer · Lobsy</PageTitle>
+<PageTitle>@Culture["Admin.Tokens"] · Lobsy</PageTitle>
 
-<AdminPageShell Title="Token-beheer" Lead="Ken handmatig tokens toe aan bedrijven. Elke toekenning vereist een reden in de tokenlog.">
+<AdminPageShell Title="@Culture["Admin.Tokens"]" Lead="@Culture["Admin.TokensLead"]">
     <div class="admin-sublinks">
         <a class="admin-sublink" href="/admin/finance">← Financieel</a>
         <a class="admin-sublink" href="/admin/finance?tab=tokenlog">Tokenlog</a>
@@ -14,14 +16,14 @@
 
     @if (_loading)
     {
-        <p class="state-message">Laden…</p>
+        <p class="state-message">@Culture["Common.Loading"]</p>
     }
     else
     {
         <div class="filter-bar">
             <label>
-                Zoeken
-                <input type="search" @bind="_query" @bind:event="oninput" placeholder="Naam, KVK of adres…" />
+                @Culture["Common.Search"]
+                <input type="search" @bind="_query" @bind:event="oninput" placeholder="@Culture["Admin.SearchPlaceholder"]" />
             </label>
             <span class="muted">@_filtered.Count van @_companies.Count</span>
         </div>
@@ -70,6 +72,15 @@
     private AdminCompanyItem? _selected;
 
     private List<AdminCompanyItem> _filtered => Filter().ToList();
+
+    protected override void OnInitialized()
+        => Culture.Changed += OnCultureChanged;
+
+    private void OnCultureChanged()
+        => InvokeAsync(StateHasChanged);
+
+    public void Dispose()
+        => Culture.Changed -= OnCultureChanged;
 
     protected override async Task OnInitializedAsync()
     {

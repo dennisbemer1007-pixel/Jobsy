@@ -5,10 +5,12 @@
 @using Microsoft.AspNetCore.WebUtilities
 @inject JobsyApiClient Api
 @inject NavigationManager Nav
+@inject CultureState Culture
+@implements IDisposable
 
-<PageTitle>Financieel · Lobsy</PageTitle>
+<PageTitle>@Culture["Admin.Finance"] · Lobsy</PageTitle>
 
-<AdminPageShell Title="Financieel" Lead="Token-KPI’s per periode en volledig tokenlog (aankoop, welkomsttoken, admin-grant en verbruik).">
+<AdminPageShell Title="@Culture["Admin.Finance"]" Lead="@Culture["Admin.FinanceLead"]">
     <div class="admin-sublinks">
         <button type="button" class="admin-sublink @(_tab == "kpi" ? "admin-sublink--active" : null)" @onclick='() => SetTab("kpi")'>KPI’s</button>
         <button type="button" class="admin-sublink @(_tab == "tokenlog" ? "admin-sublink--active" : null)" @onclick='() => SetTab("tokenlog")'>Tokenlog</button>
@@ -93,7 +95,7 @@
         <div class="filter-bar">
             <label>
                 Filter bedrijf
-                <input type="search" @bind="_companyFilter" @bind:event="oninput" placeholder="Bedrijfsnaam…"
+                <input type="search" @bind="_companyFilter" @bind:event="oninput" placeholder="@Culture["Admin.CompanyPlaceholder"]"
                        @onkeydown="OnFilterKeyDown" />
             </label>
             <button class="icon-btn" type="button" disabled="@_logLoading" @onclick="LoadLogsAsync" title="Zoeken" aria-label="Zoeken">
@@ -186,6 +188,16 @@
         string.IsNullOrWhiteSpace(_companyFilter)
             ? _logs
             : _logs.Where(l => l.CompanyName.Contains(_companyFilter, StringComparison.OrdinalIgnoreCase)).ToList();
+
+
+    protected override void OnInitialized()
+        => Culture.Changed += OnCultureChanged;
+
+    private void OnCultureChanged()
+        => InvokeAsync(StateHasChanged);
+
+    public void Dispose()
+        => Culture.Changed -= OnCultureChanged;
 
     protected override async Task OnInitializedAsync()
     {

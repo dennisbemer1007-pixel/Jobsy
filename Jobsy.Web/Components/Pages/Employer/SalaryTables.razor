@@ -4,13 +4,15 @@
 @attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "EnterpriseManager,Admin")]
 @inject JobsyApiClient Api
 @inject NavigationManager Navigation
+@inject CultureState Culture
+@implements IDisposable
 
-<PageTitle>Salaristabellen · Lobsy</PageTitle>
+<PageTitle>@Culture["Employer.SalaryTables"] · Lobsy</PageTitle>
 
 <div class="panel-page">
     <header class="panel-header">
         <div>
-            <h1>Salaristabellen</h1>
+            <h1>@Culture["Employer.SalaryTables"]</h1>
             <p class="login-lead">CAO-schalen op bedrijfsniveau — vestigingen kiezen hieruit bij vacatureplaatsing.</p>
         </div>
         @if (_view == ViewMode.List)
@@ -252,6 +254,15 @@
     private Guid? _editingId;
     private string _name = "";
     private bool _isActive = true;
+
+    protected override void OnInitialized()
+        => Culture.Changed += OnCultureChanged;
+
+    private void OnCultureChanged()
+        => InvokeAsync(StateHasChanged);
+
+    public void Dispose()
+        => Culture.Changed -= OnCultureChanged;
 
     protected override async Task OnInitializedAsync()
     {

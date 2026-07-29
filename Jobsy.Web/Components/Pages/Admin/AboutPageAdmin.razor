@@ -4,13 +4,15 @@
 @using Jobsy.Web.Components.Admin
 @inject JobsyApiClient Api
 @inject IJSRuntime Js
+@inject CultureState Culture
+@implements IDisposable
 
-<PageTitle>Wie zijn wij · Beheer · Lobsy</PageTitle>
+<PageTitle>@Culture["Admin.About"] · Lobsy</PageTitle>
 
-<AdminPageShell Title="Wie zijn wij" Lead="Pas de publieke ‘Wie zijn wij’-pagina aan. Wijzigingen zijn direct zichtbaar op /wie-zijn-wij." ShowSettingsNav="true">
+<AdminPageShell Title="@Culture["Admin.About"]" Lead="@Culture["Admin.AboutLead"]" ShowSettingsNav="true">
     @if (_loading)
     {
-        <p class="state-message">Laden…</p>
+        <p class="state-message">@Culture["Common.Loading"]</p>
     }
     else if (!string.IsNullOrEmpty(_error) && string.IsNullOrWhiteSpace(_form.BodyHtml) && string.IsNullOrWhiteSpace(_form.Title))
     {
@@ -110,6 +112,16 @@
 
     private string PreviewBody
         => Jobsy.Core.Rules.HtmlSanitize.ToSafeMarkup(_form.BodyHtml);
+
+
+    protected override void OnInitialized()
+        => Culture.Changed += OnCultureChanged;
+
+    private void OnCultureChanged()
+        => InvokeAsync(StateHasChanged);
+
+    public void Dispose()
+        => Culture.Changed -= OnCultureChanged;
 
     protected override async Task OnInitializedAsync()
     {

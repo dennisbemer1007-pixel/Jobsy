@@ -6,13 +6,15 @@
 @using Microsoft.AspNetCore.WebUtilities
 @inject JobsyApiClient Api
 @inject NavigationManager Nav
+@inject CultureState Culture
+@implements IDisposable
 
-<PageTitle>Vacatures · Lobsy</PageTitle>
+<PageTitle>@Culture["Admin.Vacancies"] · Lobsy</PageTitle>
 
-<AdminPageShell Title="Vacatures" Lead="Platformbreed overzicht met engagement-metrics en acties." Wide="true">
+<AdminPageShell Title="@Culture["Admin.Vacancies"]" Lead="@Culture["Admin.VacanciesLead"]" Wide="true">
     @if (_loading)
     {
-        <p class="state-message">Laden…</p>
+        <p class="state-message">@Culture["Common.Loading"]</p>
     }
     else if (!string.IsNullOrEmpty(_error))
     {
@@ -23,7 +25,7 @@
         <div class="filter-bar">
             <label>
                 Bedrijf
-                <input type="search" @bind="_companyFilter" @bind:event="oninput" placeholder="Bedrijfsnaam…" />
+                <input type="search" @bind="_companyFilter" @bind:event="oninput" placeholder="@Culture["Admin.CompanyPlaceholder"]" />
             </label>
             <label>
                 Titel
@@ -53,7 +55,7 @@
 
         @if (_filtered.Count == 0)
         {
-            <p class="state-message">Geen vacatures gevonden.</p>
+            <p class="state-message">@Culture["Admin.NoVacancies"]</p>
         }
         else
         {
@@ -154,6 +156,16 @@
     private List<MetricDrilldownItem> _drilldown = [];
 
     private List<AdminVacancyItem> _filtered => Filter().ToList();
+
+
+    protected override void OnInitialized()
+        => Culture.Changed += OnCultureChanged;
+
+    private void OnCultureChanged()
+        => InvokeAsync(StateHasChanged);
+
+    public void Dispose()
+        => Culture.Changed -= OnCultureChanged;
 
     protected override async Task OnInitializedAsync()
     {

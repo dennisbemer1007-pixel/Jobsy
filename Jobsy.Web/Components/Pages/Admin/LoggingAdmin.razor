@@ -5,10 +5,12 @@
 @using Microsoft.AspNetCore.WebUtilities
 @inject JobsyApiClient Api
 @inject NavigationManager Nav
+@inject CultureState Culture
+@implements IDisposable
 
-<PageTitle>Logging · Lobsy</PageTitle>
+<PageTitle>@Culture["Admin.Logging"] · Lobsy</PageTitle>
 
-<AdminPageShell Title="Platform logging" Lead="Filter op type (level/categorie) en datum. Uitschrijvingen van kandidaten staan onder categorie Unsubscribe." ShowSettingsNav="true">
+<AdminPageShell Title="@Culture["Admin.Logging"]" Lead="@Culture["Admin.LoggingLead"]" ShowSettingsNav="true">
     <div class="filter-bar">
         <label>
             Level
@@ -88,6 +90,16 @@
         string.IsNullOrWhiteSpace(_category)
             ? _logs
             : _logs.Where(l => l.Category.Contains(_category, StringComparison.OrdinalIgnoreCase)).ToList();
+
+
+    protected override void OnInitialized()
+        => Culture.Changed += OnCultureChanged;
+
+    private void OnCultureChanged()
+        => InvokeAsync(StateHasChanged);
+
+    public void Dispose()
+        => Culture.Changed -= OnCultureChanged;
 
     protected override async Task OnInitializedAsync()
     {

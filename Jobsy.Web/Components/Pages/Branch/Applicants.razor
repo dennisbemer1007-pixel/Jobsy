@@ -3,25 +3,18 @@
 @attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "BranchManager,RegionalManager,EnterpriseManager,Intermediary")]
 @inject JobsyApiClient Api
 @inject AuthenticationStateProvider AuthState
+@inject CultureState Culture
+@implements IDisposable
 
-<PageTitle>Sollicitanten · Lobsy</PageTitle>
+<PageTitle>@Culture["Employer.Applicants"] · Lobsy</PageTitle>
 
 <div class="panel-page">
-    <h1>Sollicitantenoverzicht</h1>
-    <p class="login-lead">
-        @if (_canReact)
-        {
-            <text>Eerst woonplaats, afstand en voorkeuren. Na akkoord: volledige contactgegevens (PII).</text>
-        }
-        else
-        {
-            <text>Alleen-lezen overzicht van sollicitaties in jouw regio.</text>
-        }
-    </p>
+    <h1>@Culture["Employer.Applicants"]</h1>
+    <p class="login-lead">@Culture["Employer.ApplicantsLead"]</p>
 
     @if (_loading)
     {
-        <p class="state-message">Laden…</p>
+        <p class="state-message">@Culture["Common.Loading"]</p>
     }
     else if (_items.Count == 0)
     {
@@ -71,7 +64,7 @@
                                 <span class="muted">Eerdere werkgevers: @a.CandidateEmployerCount</span>
                             }
                         }
-                        <span class="muted">@a.VacancyTitle · @StatusLabel(a.Status)</span>
+                        <span class="muted">@a.VacancyTitle · @UiLabels.ApplicationStatus(Culture, a.Status)</span>
                     </div>
                     <div class="inline-actions">
                         @if (_canReact && a.Status == "Pending")
@@ -95,7 +88,7 @@
                                 Markeer als vervuld
                             </button>
                         }
-                        <span class="status-pill status-pill--@a.Status.ToLowerInvariant()">@StatusLabel(a.Status)</span>
+                        <span class="status-pill status-pill--@a.Status.ToLowerInvariant()">@UiLabels.ApplicationStatus(Culture, a.Status)</span>
                     </div>
                 </div>
             }
@@ -116,6 +109,15 @@
     private bool _canReact;
     private Guid? _busyId;
     private string? _message;
+
+    protected override void OnInitialized()
+        => Culture.Changed += OnCultureChanged;
+
+    private void OnCultureChanged()
+        => InvokeAsync(StateHasChanged);
+
+    public void Dispose()
+        => Culture.Changed -= OnCultureChanged;
 
     protected override async Task OnInitializedAsync()
     {
@@ -201,14 +203,4 @@
             _busyId = null;
         }
     }
-
-    private static string StatusLabel(string status) => status switch
-    {
-        "Accepted" => "Geaccepteerd",
-        "Rejected" => "Afgewezen",
-        "EmployerContacting" => "Werkgever neemt contact op",
-        "Hired" => "Aangenomen",
-        "FilledElsewhere" => "De keuze is op een andere kandidaat gevallen",
-        _ => "In behandeling"
-    };
 }
