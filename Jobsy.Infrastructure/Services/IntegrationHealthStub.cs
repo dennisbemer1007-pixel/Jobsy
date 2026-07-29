@@ -107,7 +107,14 @@ public sealed class IntegrationHealthStub : IIntegrationHealthService
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
             _logger.LogWarning(ex, "Testmail via SMTP mislukt");
-            var failMessage = $"Testmail mislukt via {smtp.Host}:{smtp.Port}: {ex.Message}";
+            var failMessage = ex is InvalidOperationException
+                ? ex.Message
+                : SmtpEmailService.FormatSmtpError(ex, smtp);
+            if (!failMessage.Contains(smtp.Host, StringComparison.OrdinalIgnoreCase))
+            {
+                failMessage = $"Testmail mislukt via {smtp.Host}:{smtp.Port}: {failMessage}";
+            }
+
             await _credentials.SavePingResultAsync(IntegrationKey.Mail, false, failMessage, cancellationToken);
             return new SendTestMailResult(false, true, failMessage);
         }
@@ -243,20 +250,10 @@ public sealed class IntegrationHealthStub : IIntegrationHealthService
             using var linked = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
             linked.CancelAfter(TimeSpan.FromSeconds(8));
             await tcp.ConnectAsync(smtp.Host, smtp.Port, linked.Token);
-            return (true, $"SMTP bereikbaar op {smtp.Host}:{smtp.Port}. Gmail: App Password + 2FA vereist.");
+            return (true, $"SMTP bereikbaar op {smtp.Host}:{smtp.Port}. Gebruik ‘Stuur testmail’ om login/App-wachtwoord te controleren.");
         }
 
-        if (!string.IsNullOrWhiteSpace(secrets?.ApiKey))
-        {
-            if (string.IsNullOrWhiteSpace(secrets.FromAddress))
-            {
-                return (false, "Vul een afzenderadres (From) in.");
-            }
-
-            return (true, "Mail API-key aanwezig (SMTP niet geconfigureerd — e-mail gaat naar PlatformLog-stub).");
-        }
-
-        return (false, "Configureer SMTP: host, poort, ClientId (gebruiker), ClientSecret (wachtwoord/app-wachtwoord) en From.");
+        return (false, "Configureer SMTP: host, poort, SMTP-gebruiker, App-wachtwoord en From (Gmail: App-wachtwoord, geen gewoon wachtwoord).");
     }
 
     private async Task<(bool Ok, string Message)> TestOAuthAsync(

@@ -158,6 +158,40 @@ public class Sprint3CandidateTests
     }
 
     [Fact]
+    public void Smtp_resolve_strips_spaces_from_app_password()
+    {
+        Assert.True(SmtpEmailService.TryResolveSmtp(
+            new IntegrationCredentialSecrets(
+                null,
+                "u@gmail.com",
+                "abcd efgh ijkl mnop",
+                null,
+                null,
+                "smtp.gmail.com",
+                "u@gmail.com"),
+            out var settings));
+        Assert.Equal("abcdefghijklmnop", settings.Password);
+    }
+
+    [Fact]
+    public void Smtp_format_error_explains_gmail_auth()
+    {
+        var settings = new SmtpEmailService.SmtpSettings(
+            "smtp.gmail.com",
+            587,
+            "u@gmail.com",
+            "secret",
+            "u@gmail.com");
+        var message = SmtpEmailService.FormatSmtpError(
+            new InvalidOperationException(
+                "The SMTP server requires a secure connection or the client was not authenticated. The server response was: 5.7.0 Authentication Required."),
+            settings);
+
+        Assert.Contains("App-wachtwoord", message, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("5.7.0", message, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
     public void Smtp_resolve_requires_full_credentials()
     {
         Assert.False(SmtpEmailService.TryResolveSmtp(null, out _));

@@ -214,7 +214,7 @@ public sealed class IntegrationCredentialService : IIntegrationCredentialService
     public static bool IsConfigurable(IntegrationKey key) => ConfigurableKeys.Contains(key);
 
     public static bool SupportsApiKey(IntegrationKey key) => key is
-        IntegrationKey.Mollie or IntegrationKey.Kvk or IntegrationKey.Mail
+        IntegrationKey.Mollie or IntegrationKey.Kvk
         or IntegrationKey.OpenAI;
 
     public static bool SupportsModel(IntegrationKey key) => key == IntegrationKey.OpenAI;
@@ -248,7 +248,7 @@ public sealed class IntegrationCredentialService : IIntegrationCredentialService
         IntegrationKey.Kvk => "KvK-handelsregister koppeling.",
         IntegrationKey.MicrosoftEntra => "Microsoft-login (OIDC).",
         IntegrationKey.GoogleEntra => "Google-login (OAuth).",
-        IntegrationKey.Mail => "Uitgaande e-mail (SMTP/API).",
+        IntegrationKey.Mail => "Uitgaande e-mail via SMTP (Gmail: App-wachtwoord).",
         _ => string.Empty
     };
 

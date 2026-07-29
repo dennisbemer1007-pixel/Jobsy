@@ -1,17 +1,18 @@
-using System.Net;
-using System.Net.Mail;
 using System.Text.Json;
 using Jobsy.Core.Entities;
 using Jobsy.Core.Enums;
 using Jobsy.Core.Interfaces;
 using Jobsy.Infrastructure.Data;
+using MailKit.Net.Smtp;
+using MailKit.Security;
 using Microsoft.Extensions.Logging;
+using MimeKit;
 
 namespace Jobsy.Infrastructure.Services;
 
 /// <summary>
-/// Sends mail via SMTP when Mail integration credentials are complete.
-/// Gmail (temporary): enable 2FA and use an App Password as ClientSecret — normal account passwords are rejected.
+/// Sends mail via SMTP (MailKit) when Mail integration credentials are complete.
+/// Gmail: enable 2FA and use an App Password as ClientSecret — normal account passwords are rejected.
 /// Falls back to <see cref="EmailServiceStub"/> (PlatformLog only) when SMTP settings are incomplete.
 /// </summary>
 public sealed class SmtpEmailService : IEmailService
@@ -45,17 +46,23 @@ public sealed class SmtpEmailService : IEmailService
         var redactedTo = EmailServiceStub.RedactEmail(message.To);
         try
         {
-            using var client = CreateClient(settings);
-            using var mail = new MailMessage
-            {
-                From = new MailAddress(settings.FromAddress),
-                Subject = message.Subject,
-                Body = message.BodyHtml ?? string.Empty,
-                IsBodyHtml = true
-            };
-            mail.To.Add(message.To);
+            var mime = new MimeMessage();
+            mime.From.Add(MailboxAddress.Parse(settings.FromAddress));
+            mime.To.Add(MailboxAddress.Parse(message.To));
+            mime.Subject = message.Subject;
+            mime.Body = new TextPart("html") { Text = message.BodyHtml ?? string.Empty };
 
-            await client.SendMailAsync(mail, cancellationToken);
+            using var client = new SmtpClient();
+            client.Timeout = 20_000;
+
+            var secure = settings.Port == 465
+                ? SecureSocketOptions.SslOnConnect
+                : SecureSocketOptions.StartTls;
+
+            await client.ConnectAsync(settings.Host, settings.Port, secure, cancellationToken);
+            await client.AuthenticateAsync(settings.Username, settings.Password, cancellationToken);
+            await client.SendAsync(mime, cancellationToken);
+            await client.DisconnectAsync(true, cancellationToken);
 
             _logger.LogInformation(
                 "SMTP mail sent → {To}: {Subject} via {Host}:{Port}",
@@ -79,6 +86,7 @@ public sealed class SmtpEmailService : IEmailService
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
+            var friendly = FormatSmtpError(ex, settings);
             _logger.LogError(
                 ex,
                 "SMTP mail failed → {To}: {Subject} via {Host}:{Port}",
@@ -87,7 +95,7 @@ public sealed class SmtpEmailService : IEmailService
             await WritePlatformLogAsync(
                 PlatformLogLevel.Error,
                 message.Category ?? "Email",
-                $"SMTP mail failed to {redactedTo}: {message.Subject} — {ex.Message}",
+                $"SMTP mail failed to {redactedTo}: {message.Subject} — {friendly}",
                 new
                 {
                     To = redactedTo,
@@ -96,11 +104,11 @@ public sealed class SmtpEmailService : IEmailService
                     settings.Host,
                     settings.Port,
                     Sent = false,
-                    Error = ex.Message
+                    Error = friendly
                 },
                 cancellationToken);
 
-            throw;
+            throw new InvalidOperationException(friendly, ex);
         }
     }
 
@@ -123,11 +131,18 @@ public sealed class SmtpEmailService : IEmailService
             return false;
         }
 
+        // Gmail app passwords are often shown as "xxxx xxxx xxxx xxxx" — spaces are ignored.
+        var password = secrets.ClientSecret.Replace(" ", string.Empty, StringComparison.Ordinal).Trim();
+        if (string.IsNullOrWhiteSpace(password))
+        {
+            return false;
+        }
+
         settings = new SmtpSettings(
             host,
             port,
             secrets.ClientId.Trim(),
-            secrets.ClientSecret,
+            password,
             secrets.FromAddress.Trim());
         return true;
     }
@@ -175,17 +190,39 @@ public sealed class SmtpEmailService : IEmailService
         return !string.IsNullOrWhiteSpace(host);
     }
 
-    internal static SmtpClient CreateClient(SmtpSettings settings)
+    internal static string FormatSmtpError(Exception ex, SmtpSettings settings)
     {
-        // EnableSsl = true uses STARTTLS on port 587 (Gmail) and SSL on 465.
-        return new SmtpClient(settings.Host, settings.Port)
+        var raw = ex.Message;
+        var isGmail = settings.Host.Contains("gmail", StringComparison.OrdinalIgnoreCase)
+            || settings.Host.Contains("google", StringComparison.OrdinalIgnoreCase);
+        var looksLikeAuth =
+            raw.Contains("5.7.0", StringComparison.OrdinalIgnoreCase)
+            || raw.Contains("Authentication", StringComparison.OrdinalIgnoreCase)
+            || raw.Contains("authenticate", StringComparison.OrdinalIgnoreCase)
+            || ex is AuthenticationException;
+
+        if (isGmail && looksLikeAuth)
         {
-            EnableSsl = true,
-            DeliveryMethod = SmtpDeliveryMethod.Network,
-            UseDefaultCredentials = false,
-            Credentials = new NetworkCredential(settings.Username, settings.Password)
-        };
+            return
+                "Gmail weigert de login (Authentication Required). " +
+                "Gebruik géén gewoon Gmail-wachtwoord: zet 2-stapsverificatie aan en maak een " +
+                "App-wachtwoord (16 tekens). Vul dat in bij ‘App-wachtwoord’, je volledige Gmail-adres " +
+                "bij ‘SMTP-gebruiker’, en hetzelfde adres bij ‘Afzender’. " +
+                $"Technisch: {Truncate(raw, 180)}";
+        }
+
+        if (looksLikeAuth)
+        {
+            return
+                "SMTP-authenticatie mislukt. Controleer gebruiker/wachtwoord (voor Gmail: App-wachtwoord). " +
+                $"Technisch: {Truncate(raw, 180)}";
+        }
+
+        return Truncate(raw, 280);
     }
+
+    private static string Truncate(string value, int max)
+        => value.Length <= max ? value : value[..max] + "…";
 
     private async Task WritePlatformLogAsync(
         PlatformLogLevel level,
