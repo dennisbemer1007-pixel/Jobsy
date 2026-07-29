@@ -1,6 +1,7 @@
 using Jobsy.Api.Authorization;
 using Jobsy.Api.Models;
 using Jobsy.Core.Authorization;
+using Jobsy.Core.Entities;
 using Jobsy.Core.Enums;
 using Jobsy.Core.Exceptions;
 using Jobsy.Core.Interfaces;
@@ -363,12 +364,24 @@ public class VacanciesController : ControllerBase
 
         if (request.OverrideContactPreference)
         {
+            Company? parent = null;
+            if (company.ParentCompanyId is Guid parentId)
+            {
+                parent = await _db.Companies.AsNoTracking()
+                    .FirstOrDefaultAsync(c => c.Id == parentId, cancellationToken);
+            }
+
+            var email = FirstNonEmpty(company.ContactEmail, parent?.ContactEmail);
+            var phone = FirstNonEmpty(company.ContactPhone, parent?.ContactPhone);
+            var whatsApp = FirstNonEmpty(company.ContactWhatsApp, parent?.ContactWhatsApp, phone);
             var contactError = EmployerContactPreferenceRules.Validate(
                 request.DirectContactEnabled,
                 request.ContactPreferMail,
                 request.ContactPreferPhone,
                 request.ContactPreferWhatsApp,
-                requireContactValues: false);
+                email,
+                phone,
+                whatsApp);
             if (contactError is not null)
             {
                 return BadRequest(new { message = contactError });
@@ -711,12 +724,25 @@ public class VacanciesController : ControllerBase
 
         if (request.OverrideContactPreference)
         {
+            var company = vacancy.Company;
+            Company? parent = null;
+            if (company.ParentCompanyId is Guid parentId)
+            {
+                parent = await _db.Companies.AsNoTracking()
+                    .FirstOrDefaultAsync(c => c.Id == parentId, cancellationToken);
+            }
+
+            var email = FirstNonEmpty(company.ContactEmail, parent?.ContactEmail);
+            var phone = FirstNonEmpty(company.ContactPhone, parent?.ContactPhone);
+            var whatsApp = FirstNonEmpty(company.ContactWhatsApp, parent?.ContactWhatsApp, phone);
             var contactError = EmployerContactPreferenceRules.Validate(
                 request.DirectContactEnabled,
                 request.ContactPreferMail,
                 request.ContactPreferPhone,
                 request.ContactPreferWhatsApp,
-                requireContactValues: false);
+                email,
+                phone,
+                whatsApp);
             if (contactError is not null)
             {
                 return BadRequest(new { message = contactError });
@@ -1044,6 +1070,19 @@ public class VacanciesController : ControllerBase
             v.MinimumEmployers,
             v.FulfilledByApplicationId,
             v.CreatedVia.ToString());
+    }
+
+    private static string? FirstNonEmpty(params string?[] values)
+    {
+        foreach (var value in values)
+        {
+            if (!string.IsNullOrWhiteSpace(value))
+            {
+                return value.Trim();
+            }
+        }
+
+        return null;
     }
 
     private static string[] NormalizeBranchLabels(IEnumerable<string>? labels) =>

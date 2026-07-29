@@ -643,7 +643,7 @@ public static class UiStrings
             ["Apply.SentTitle"] = "Application sent",
             ["Apply.SentBody"] = "Your response has been confirmed. You can see the status under My applications.",
             ["Apply.DirectContactTitle"] = "Get in touch directly",
-            ["Apply.DirectContactLead"] = "Neem direct contact op met de ondernemer voor sneller resultaat",
+            ["Apply.DirectContactLead"] = "Contact the employer directly for a faster result",
             ["Apply.DirectContactChannels"] = "Contact options",
             ["Apply.Call"] = "Call",
             ["Apply.Mail"] = "Mail",

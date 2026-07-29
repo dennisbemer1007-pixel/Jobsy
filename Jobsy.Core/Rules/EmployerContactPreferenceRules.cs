@@ -1,4 +1,5 @@
 using Jobsy.Core.Entities;
+using System.Net.Mail;
 
 namespace Jobsy.Core.Rules;
 
@@ -15,10 +16,13 @@ public static class EmployerContactPreferenceRules
         "Vul een contact-e-mailadres in wanneer Mail is aangevinkt.";
 
     public const string PhoneRequiresNumber =
-        "Vul een telefoonnummer in wanneer Telefoon is aangevinkt.";
+        "Vul een geldig telefoonnummer in wanneer Telefoon is aangevinkt.";
 
     public const string WhatsAppRequiresNumber =
-        "Vul een WhatsApp-nummer in (of telefoonnummer) wanneer WhatsApp is aangevinkt.";
+        "Vul een geldig WhatsApp-nummer in (of telefoonnummer) wanneer WhatsApp is aangevinkt.";
+
+    public const string InvalidEmail =
+        "Vul een geldig e-mailadres in.";
 
     public static string? Validate(
         bool directContactEnabled,
@@ -45,19 +49,27 @@ public static class EmployerContactPreferenceRules
             return null;
         }
 
-        if (preferMail && string.IsNullOrWhiteSpace(contactEmail))
+        if (preferMail)
         {
-            return MailRequiresEmail;
+            if (string.IsNullOrWhiteSpace(contactEmail))
+            {
+                return MailRequiresEmail;
+            }
+
+            if (!IsValidEmail(contactEmail))
+            {
+                return InvalidEmail;
+            }
         }
 
-        if (preferPhone && string.IsNullOrWhiteSpace(contactPhone))
+        if (preferPhone && NormalizePhoneDigits(contactPhone) is null)
         {
             return PhoneRequiresNumber;
         }
 
         if (preferWhatsApp
-            && string.IsNullOrWhiteSpace(contactWhatsApp)
-            && string.IsNullOrWhiteSpace(contactPhone))
+            && NormalizePhoneDigits(contactWhatsApp) is null
+            && NormalizePhoneDigits(contactPhone) is null)
         {
             return WhatsAppRequiresNumber;
         }
@@ -67,7 +79,7 @@ public static class EmployerContactPreferenceRules
 
     /// <summary>
     /// Effective contact options for a vacancy after a successful application.
-    /// Returns unavailable when the employer did not opt in or no usable channel remains.
+    /// Company (or vacancy override) flags are authoritative; parent only fills missing contact values.
     /// </summary>
     public static EffectiveEmployerContact Resolve(Company company, Vacancy vacancy, Company? parent = null)
     {
@@ -83,36 +95,32 @@ public static class EmployerContactPreferenceRules
             phone = vacancy.ContactPreferPhone;
             whatsApp = vacancy.ContactPreferWhatsApp;
         }
-        else if (company.DirectContactEnabled || parent is null || !parent.DirectContactEnabled)
+        else
         {
+            // Company settings win — a vestiging can turn direct contact off even if the org has it on.
             enabled = company.DirectContactEnabled;
             mail = company.ContactPreferMail;
             phone = company.ContactPreferPhone;
             whatsApp = company.ContactPreferWhatsApp;
         }
-        else
-        {
-            enabled = parent.DirectContactEnabled;
-            mail = parent.ContactPreferMail;
-            phone = parent.ContactPreferPhone;
-            whatsApp = parent.ContactPreferWhatsApp;
-        }
 
         var email = FirstNonEmpty(company.ContactEmail, parent?.ContactEmail);
         var phoneNumber = FirstNonEmpty(company.ContactPhone, parent?.ContactPhone);
-        var whatsAppNumber = FirstNonEmpty(company.ContactWhatsApp, parent?.ContactWhatsApp, phoneNumber);
+        var whatsAppRaw = FirstNonEmpty(company.ContactWhatsApp, parent?.ContactWhatsApp, phoneNumber);
+        var phoneDigits = NormalizePhoneDigits(phoneNumber);
+        var whatsAppDigits = NormalizePhoneDigits(whatsAppRaw);
 
-        if (string.IsNullOrWhiteSpace(email))
+        if (string.IsNullOrWhiteSpace(email) || !IsValidEmail(email))
         {
             mail = false;
         }
 
-        if (string.IsNullOrWhiteSpace(phoneNumber))
+        if (phoneDigits is null)
         {
             phone = false;
         }
 
-        if (string.IsNullOrWhiteSpace(whatsAppNumber))
+        if (whatsAppDigits is null)
         {
             whatsApp = false;
         }
@@ -127,26 +135,61 @@ public static class EmployerContactPreferenceRules
             OfferMail: mail,
             OfferPhone: phone,
             OfferWhatsApp: whatsApp,
-            Email: mail ? email : null,
-            Phone: phone ? phoneNumber : null,
-            WhatsAppNumber: whatsApp ? DigitsOnly(whatsAppNumber) : null);
+            Email: mail ? email!.Trim() : null,
+            Phone: phone ? phoneNumber!.Trim() : null,
+            WhatsAppNumber: whatsApp ? whatsAppDigits : null);
     }
 
-    public static string? DigitsOnly(string? value)
+    /// <summary>
+    /// Digits for wa.me / validation. NL mobiles starting with 0 become 31…
+    /// </summary>
+    public static string? NormalizePhoneDigits(string? value)
     {
         if (string.IsNullOrWhiteSpace(value))
         {
             return null;
         }
 
-        var digits = new string(value.Where(char.IsDigit).ToArray());
-        return string.IsNullOrEmpty(digits) ? null : digits;
+        var trimmed = value.Trim();
+        var digits = new string(trimmed.Where(char.IsDigit).ToArray());
+        if (digits.Length < 8)
+        {
+            return null;
+        }
+
+        // Dutch national format: 06xxxxxxxx → 316xxxxxxxx
+        if (digits.StartsWith('0') && digits.Length is >= 9 and <= 11)
+        {
+            digits = "31" + digits[1..];
+        }
+
+        return digits.Length >= 8 ? digits : null;
     }
+
+    public static string? DigitsOnly(string? value) => NormalizePhoneDigits(value);
 
     public static string? WhatsAppUrl(string? digitsOrPhone)
     {
-        var digits = DigitsOnly(digitsOrPhone);
+        var digits = NormalizePhoneDigits(digitsOrPhone);
         return digits is null ? null : $"https://wa.me/{digits}";
+    }
+
+    public static bool IsValidEmail(string? email)
+    {
+        if (string.IsNullOrWhiteSpace(email) || !email.Contains('@'))
+        {
+            return false;
+        }
+
+        try
+        {
+            _ = new MailAddress(email.Trim());
+            return true;
+        }
+        catch
+        {
+            return false;
+        }
     }
 
     private static string? FirstNonEmpty(params string?[] values)

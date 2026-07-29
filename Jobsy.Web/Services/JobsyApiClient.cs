@@ -1098,6 +1098,25 @@ public sealed class JobsyApiClient : IAsyncDisposable
         return await response.Content.ReadFromJsonAsync<ApplyResultItem>(cancellationToken: ct);
     }
 
+    public async Task<EmployerDirectContactItem?> GetDirectContactForVacancyAsync(
+        Guid vacancyId,
+        CancellationToken ct = default)
+    {
+        var response = await _http.GetAsync($"api/applications/by-vacancy/{vacancyId}/direct-contact", ct);
+        if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
+        {
+            return null;
+        }
+
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException(string.IsNullOrWhiteSpace(body) ? response.ReasonPhrase : body);
+        }
+
+        return await response.Content.ReadFromJsonAsync<EmployerDirectContactItem>(cancellationToken: ct);
+    }
+
     public async Task<string> ExportPrivacyDataAsync(CancellationToken ct = default)
     {
         var response = await _http.GetAsync("api/privacy/export", ct);

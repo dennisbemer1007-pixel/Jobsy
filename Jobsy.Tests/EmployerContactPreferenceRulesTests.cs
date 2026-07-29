@@ -42,6 +42,18 @@ public class EmployerContactPreferenceRulesTests
     }
 
     [Fact]
+    public void Validate_rejects_invalid_email()
+    {
+        var error = EmployerContactPreferenceRules.Validate(
+            directContactEnabled: true,
+            preferMail: true,
+            preferPhone: false,
+            preferWhatsApp: false,
+            contactEmail: "not-an-email");
+        Assert.Equal(EmployerContactPreferenceRules.InvalidEmail, error);
+    }
+
+    [Fact]
     public void Validate_ok_with_whatsapp_and_phone_number()
     {
         var error = EmployerContactPreferenceRules.Validate(
@@ -51,6 +63,20 @@ public class EmployerContactPreferenceRulesTests
             preferWhatsApp: true,
             contactPhone: "+31612345678");
         Assert.Null(error);
+    }
+
+    [Fact]
+    public void NormalizePhoneDigits_converts_nl_06_to_country_code()
+    {
+        Assert.Equal("31612345678", EmployerContactPreferenceRules.NormalizePhoneDigits("06-12345678"));
+        Assert.Equal("31612345678", EmployerContactPreferenceRules.NormalizePhoneDigits("+31 6 12345678"));
+    }
+
+    [Fact]
+    public void NormalizePhoneDigits_rejects_non_digit_junk()
+    {
+        Assert.Null(EmployerContactPreferenceRules.NormalizePhoneDigits("N/A"));
+        Assert.Null(EmployerContactPreferenceRules.NormalizePhoneDigits("abc"));
     }
 
     [Fact]
@@ -66,7 +92,7 @@ public class EmployerContactPreferenceRulesTests
         Assert.True(effective.Available);
         Assert.True(effective.OfferWhatsApp);
         Assert.False(effective.OfferMail);
-        Assert.Equal("https://wa.me/0612345678", effective.WhatsAppUrl);
+        Assert.Equal("https://wa.me/31612345678", effective.WhatsAppUrl);
     }
 
     [Fact]
@@ -87,7 +113,7 @@ public class EmployerContactPreferenceRulesTests
     }
 
     [Fact]
-    public void Resolve_falls_back_to_parent_company_flags()
+    public void Resolve_child_off_does_not_inherit_parent_toggle()
     {
         var parent = Company("parent@example.com", "0699999999");
         parent.DirectContactEnabled = true;
@@ -95,7 +121,20 @@ public class EmployerContactPreferenceRulesTests
 
         var child = Company(null, null);
         child.DirectContactEnabled = false;
-        child.ParentCompany = parent;
+
+        var vacancy = new Vacancy { OverrideContactPreference = false };
+        var effective = EmployerContactPreferenceRules.Resolve(child, vacancy, parent);
+
+        Assert.False(effective.Available);
+    }
+
+    [Fact]
+    public void Resolve_uses_parent_contact_values_when_child_enabled()
+    {
+        var parent = Company("parent@example.com", "0699999999");
+        var child = Company(null, null);
+        child.DirectContactEnabled = true;
+        child.ContactPreferMail = true;
 
         var vacancy = new Vacancy { OverrideContactPreference = false };
         var effective = EmployerContactPreferenceRules.Resolve(child, vacancy, parent);
@@ -112,6 +151,20 @@ public class EmployerContactPreferenceRulesTests
         company.DirectContactEnabled = true;
         company.ContactPreferMail = true;
         company.ContactPreferPhone = true;
+
+        var vacancy = new Vacancy { OverrideContactPreference = false };
+        var effective = EmployerContactPreferenceRules.Resolve(company, vacancy);
+
+        Assert.False(effective.Available);
+    }
+
+    [Fact]
+    public void Resolve_hides_channel_with_non_digit_phone()
+    {
+        var company = Company("a@b.nl", "N/A");
+        company.DirectContactEnabled = true;
+        company.ContactPreferPhone = true;
+        company.ContactPreferWhatsApp = true;
 
         var vacancy = new Vacancy { OverrideContactPreference = false };
         var effective = EmployerContactPreferenceRules.Resolve(company, vacancy);
