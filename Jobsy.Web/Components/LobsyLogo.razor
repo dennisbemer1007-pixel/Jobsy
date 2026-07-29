@@ -1,0 +1,68 @@
+@namespace Jobsy.Web.Components
+@using System.Threading
+
+<span class="lobsy-logo @(Animate ? "lobsy-logo--animate" : null) @Class"
+      role="img"
+      aria-label="@Alt">
+    <svg class="lobsy-logo__svg" viewBox="0 0 1024 1024" focusable="false" aria-hidden="true">
+        <defs>
+            <mask id="@BodyMaskId" maskUnits="userSpaceOnUse">
+                <rect width="1024" height="1024" fill="#fff" />
+                <polygon points="@LeftClawPoints" fill="#000" />
+                <polygon points="@RightClawPoints" fill="#000" />
+            </mask>
+            <clipPath id="@LeftClawClipId" clipPathUnits="userSpaceOnUse">
+                <polygon points="@LeftClawPoints" />
+            </clipPath>
+            <clipPath id="@RightClawClipId" clipPathUnits="userSpaceOnUse">
+                <polygon points="@RightClawPoints" />
+            </clipPath>
+        </defs>
+
+        <image href="@Src"
+               width="1024"
+               height="1024"
+               mask="@($"url(#{BodyMaskId})")"
+               preserveAspectRatio="xMidYMid meet" />
+
+        <g class="lobsy-logo__claw lobsy-logo__claw--left">
+            <image href="@Src"
+                   width="1024"
+                   height="1024"
+                   clip-path="@($"url(#{LeftClawClipId})")"
+                   preserveAspectRatio="xMidYMid meet" />
+        </g>
+        <g class="lobsy-logo__claw lobsy-logo__claw--right">
+            <image href="@Src"
+                   width="1024"
+                   height="1024"
+                   clip-path="@($"url(#{RightClawClipId})")"
+                   preserveAspectRatio="xMidYMid meet" />
+        </g>
+
+        @* Navy lids over the eye-stalk dots — briefly cover on blink *@
+        <ellipse class="lobsy-logo__lid lobsy-logo__lid--left" cx="467" cy="302" rx="14" ry="13" />
+        <ellipse class="lobsy-logo__lid lobsy-logo__lid--right" cx="557" cy="302" rx="14" ry="13" />
+    </svg>
+</span>
+
+@code {
+    private static int _seq;
+    private readonly string _id = Interlocked.Increment(ref _seq).ToString();
+
+    private const string Src = "images/brand/lobsy.png?v=20260729-live";
+
+    // Far-point claw silhouettes in the 1024 viewBox (left / right pincers).
+    private const string LeftClawPoints =
+        "241,311 247,270 270,225 312,187 362,174 373,177 409,229 422,279 414,320 439,382 439,428 439,499 399,526 313,529 297,506 252,453 208,402 207,395";
+    private const string RightClawPoints =
+        "605,339 601,281 614,229 653,177 657,176 714,191 756,229 778,274 784,315 814,398 813,417 771,471 727,507 711,529 625,526 585,499 585,434 585,387";
+
+    private string BodyMaskId => $"lobsy-body-{_id}";
+    private string LeftClawClipId => $"lobsy-claw-l-{_id}";
+    private string RightClawClipId => $"lobsy-claw-r-{_id}";
+
+    [Parameter] public string? Class { get; set; }
+    [Parameter] public string Alt { get; set; } = "Lobsy";
+    [Parameter] public bool Animate { get; set; } = true;
+}
