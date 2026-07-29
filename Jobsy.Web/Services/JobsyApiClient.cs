@@ -855,9 +855,12 @@ public sealed class JobsyApiClient : IAsyncDisposable
         return await response.Content.ReadAsStringAsync(ct);
     }
 
-    public async Task DeleteAccountAsync(CancellationToken ct = default)
+    public async Task DeleteAccountAsync(string verificationCode, CancellationToken ct = default)
     {
-        var response = await _http.PostAsync("api/privacy/delete-account", null, ct);
+        var response = await _http.PostAsJsonAsync(
+            "api/privacy/delete-account",
+            new { verificationCode },
+            ct);
         if (!response.IsSuccessStatusCode)
         {
             var body = await response.Content.ReadAsStringAsync(ct);

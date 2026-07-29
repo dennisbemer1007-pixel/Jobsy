@@ -239,6 +239,39 @@ public class AccountUnsubscribeTests
         Assert.Contains("toelichting", ex.Message, StringComparison.OrdinalIgnoreCase);
     }
 
+    [Fact]
+    public async Task Non_candidate_can_also_unsubscribe_with_otp()
+    {
+        await using var db = CreateDb();
+        var userId = Guid.NewGuid();
+        const string email = "werkgever@test.nl";
+        db.Users.Add(new User
+        {
+            Id = userId,
+            Email = email,
+            FullName = "Filiaal",
+            Role = UserRole.BranchManager,
+            IsActive = true,
+            PreferencesJson = null
+        });
+        await db.SaveChangesAsync();
+
+        var privacy = CreatePrivacy(db);
+        var principal = new ClaimsPrincipal(new ClaimsIdentity(
+        [
+            new Claim(ClaimTypes.Email, email),
+            new Claim(ClaimTypes.Role, "BranchManager")
+        ], "test"));
+
+        await privacy.RequestUnsubscribeAsync(principal, AccountUnsubscribeReasons.Privacy, null);
+        var code = (await db.Users.SingleAsync(u => u.Id == userId)).UnsubscribeVerificationCode!;
+        await privacy.ConfirmUnsubscribeAsync(principal, code);
+
+        var user = await db.Users.SingleAsync(u => u.Id == userId);
+        Assert.False(user.IsActive);
+        Assert.StartsWith("deleted-", user.Email);
+    }
+
     private static PrivacyDataService CreatePrivacy(JobsyDbContext db) =>
         new(db, new StubUserLookup(db), new EmailServiceStub(db, NullLogger<EmailServiceStub>.Instance));
 

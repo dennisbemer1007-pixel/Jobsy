@@ -245,7 +245,6 @@ public sealed class PrivacyDataService : IPrivacyDataService
         CancellationToken cancellationToken = default)
     {
         var user = await ResolveActiveUserAsync(principal, cancellationToken);
-        EnsureCandidate(user);
 
         var code = reasonCode?.Trim() ?? string.Empty;
         if (!AccountUnsubscribeReasons.IsKnown(code))
@@ -322,7 +321,6 @@ public sealed class PrivacyDataService : IPrivacyDataService
         CancellationToken cancellationToken = default)
     {
         var user = await ResolveActiveUserAsync(principal, cancellationToken);
-        EnsureCandidate(user);
 
         var code = verificationCode?.Trim() ?? string.Empty;
         if (code.Length != 6 || !code.All(char.IsDigit))
@@ -568,14 +566,6 @@ public sealed class PrivacyDataService : IPrivacyDataService
                    .Include(u => u.CompanyMemberships)
                    .FirstOrDefaultAsync(u => u.Email == email && u.IsActive, cancellationToken)
                ?? throw new UnauthorizedAccessException("Gebruiker niet gevonden.");
-    }
-
-    private static void EnsureCandidate(User user)
-    {
-        if (user.Role != UserRole.Candidate)
-        {
-            throw new InvalidOperationException("Alleen kandidaten kunnen zich via deze flow afmelden.");
-        }
     }
 
     private static string FormatUnsubscribeLogMessage(

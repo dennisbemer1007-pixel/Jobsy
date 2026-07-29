@@ -12,7 +12,7 @@
 - **Data Minimization:** Alleen opslaan wat strikt noodzakelijk is voor de match en sollicitatie.
 - **Consent:** Server-side vastgelegd (`ConsentAcceptedAt` / `ConsentVersion` = `PrivacyConstants.CurrentConsentVersion`); clientversies worden genegeerd.
 - **Progressive disclosure:** Werkgevers zien kandidaat-PII en snapshotvelden pas na acceptatie (`Accepted` / `EmployerContacting` / `Hired`).
-- **Right to be Forgotten:** `IPrivacyDataService` + `/api/privacy/delete-account` en UI `/privacy/data` — wist o.a. snapshots, verificatiecodes, site visits, registratiecontact, IBAN/MaskedIban. Kandidaten kunnen via `/candidate/profile` afmelden met reden + e-mailverificatiecode (`request-unsubscribe` / `confirm-unsubscribe`); admin ziet de reden in platform logs (categorie `Unsubscribe`).
+- **Right to be Forgotten:** `IPrivacyDataService` + geverifieerde uitschrijving (`request-unsubscribe` / `confirm-unsubscribe`) via UI `/privacy/data` en `/candidate/profile` — reden + e-mailverificatiecode, daarna blokkeren en anonimiseren (snapshots, verificatiecodes, site visits, registratiecontact, IBAN/MaskedIban). Admin ziet de reden in platform logs (categorie `Unsubscribe`). `POST /api/privacy/delete-account` vereist dezelfde verificatiecode.
 - **Data portability:** `/api/privacy/export` (applications+snapshots, engagement, registraties, sales payouts/ledger/invoices).
 - **IBAN:** Volledige IBAN alleen server-side; API/UI tonen gemaskeerde vorm.
 - **Retention:** `DataRetentionHostedService` purged logs/engagement/cancelled registrations/site visits.

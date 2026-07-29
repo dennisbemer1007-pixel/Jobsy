@@ -10,7 +10,7 @@ public interface IPrivacyDataService
     Task DeleteOrAnonymizeAsync(ClaimsPrincipal principal, CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Candidate unsubscribe step 1: store reason, e-mail a verification code.
+    /// Account deletion step 1: store reason, e-mail a verification code.
     /// </summary>
     Task<RequestUnsubscribeResponse> RequestUnsubscribeAsync(
         ClaimsPrincipal principal,
@@ -19,7 +19,7 @@ public interface IPrivacyDataService
         CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Candidate unsubscribe step 2: verify code, block account and anonymize data.
+    /// Account deletion step 2: verify code, block account and anonymize data.
     /// </summary>
     Task ConfirmUnsubscribeAsync(
         ClaimsPrincipal principal,

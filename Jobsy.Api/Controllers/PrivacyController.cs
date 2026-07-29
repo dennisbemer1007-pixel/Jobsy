@@ -34,9 +34,8 @@ public sealed class PrivacyController : ControllerBase
         }
     }
 
-    /// <summary>Fixed unsubscribe reason options for candidates.</summary>
+    /// <summary>Fixed unsubscribe / account-deletion reason options.</summary>
     [HttpGet("unsubscribe-reasons")]
-    [Authorize(Roles = "Candidate")]
     public ActionResult<IEnumerable<UnsubscribeReasonOptionDto>> GetUnsubscribeReasons()
     {
         var items = AccountUnsubscribeReasons.All.Select(r =>
@@ -47,9 +46,8 @@ public sealed class PrivacyController : ControllerBase
         return Ok(items);
     }
 
-    /// <summary>Candidate unsubscribe step 1 — store reason and e-mail verification code.</summary>
+    /// <summary>Account deletion step 1 — store reason and e-mail verification code.</summary>
     [HttpPost("request-unsubscribe")]
-    [Authorize(Roles = "Candidate")]
     [EnableRateLimiting("auth")]
     public async Task<IActionResult> RequestUnsubscribe(
         [FromBody] RequestUnsubscribeRequest request,
@@ -78,9 +76,8 @@ public sealed class PrivacyController : ControllerBase
         }
     }
 
-    /// <summary>Candidate unsubscribe step 2 — verify code, block account and clean data.</summary>
+    /// <summary>Account deletion step 2 — verify code, block account and clean data.</summary>
     [HttpPost("confirm-unsubscribe")]
-    [Authorize(Roles = "Candidate")]
     [EnableRateLimiting("auth")]
     public async Task<IActionResult> ConfirmUnsubscribe(
         [FromBody] ConfirmUnsubscribeRequest request,
@@ -105,19 +102,40 @@ public sealed class PrivacyController : ControllerBase
         }
     }
 
-    /// <summary>AVG Art. 17 — anonymize / erase account data.</summary>
+    /// <summary>
+    /// AVG Art. 17 — anonymize account data. Requires a prior <c>request-unsubscribe</c>
+    /// and the e-mail verification code (same as <c>confirm-unsubscribe</c>).
+    /// </summary>
     [HttpPost("delete-account")]
     [EnableRateLimiting("auth")]
-    public async Task<IActionResult> DeleteAccount(CancellationToken cancellationToken)
+    public async Task<IActionResult> DeleteAccount(
+        [FromBody] ConfirmUnsubscribeRequest? request,
+        CancellationToken cancellationToken)
     {
+        if (string.IsNullOrWhiteSpace(request?.VerificationCode))
+        {
+            return BadRequest(new
+            {
+                message = "Bevestig met de e-mailverificatiecode. Vraag eerst een code aan via request-unsubscribe."
+            });
+        }
+
         try
         {
-            await _privacy.DeleteOrAnonymizeAsync(User, cancellationToken);
+            await _privacy.ConfirmUnsubscribeAsync(User, request.VerificationCode, cancellationToken);
             return Ok(new { message = "Accountgegevens zijn geanonimiseerd." });
         }
         catch (UnauthorizedAccessException ex)
         {
             return Unauthorized(new { message = ex.Message });
+        }
+        catch (ArgumentException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { message = ex.Message });
         }
     }
 }
