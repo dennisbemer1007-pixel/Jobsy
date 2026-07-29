@@ -689,48 +689,55 @@
             return;
         }
 
-        if (RoleClaimMatching.HasRole(auth.User, JobsyRoles.Candidate))
+        var isCandidate = RoleClaimMatching.HasRole(auth.User, JobsyRoles.Candidate);
+        Task<MeProfile?>? profileTask = null;
+        Task<IReadOnlyList<ApplicationItem>?>? appsTask = null;
+        if (isCandidate)
         {
-            try
-            {
-                var profile = await Api.GetMyProfileAsync();
-                _dobInput = profile?.DateOfBirth;
-                _authenticatorEnabled = profile?.AuthenticatorEnabled == true;
-                if (profile is not null)
-                {
-                    var prefs = profile.Preferences ?? new CandidatePreferences();
-                    _requiresDrivingLicense = !string.IsNullOrWhiteSpace(_vacancy?.RequiredDrivingLicense);
-                    _requiresEducation = !string.IsNullOrWhiteSpace(_vacancy?.RequiredEducation);
+            profileTask = SafeProfileAsync();
+            appsTask = SafeApplicationsAsync();
+        }
 
-                    _profileHasAvailability = (prefs.Availability?.Count ?? 0) > 0;
-                    _profileHasLicense = !_requiresDrivingLicense
-                        || DrivingLicenseLabels.CandidateMeetsRequirement(
-                            prefs.DrivingLicenses,
-                            _vacancy!.RequiredDrivingLicense);
-                    var employerCount = prefs.Employers?.Count ?? 0;
-                    var minEmployers = _vacancy?.MinimumEmployers is > 0 ? _vacancy.MinimumEmployers.Value : 1;
-                    _profileHasEmployers = employerCount >= minEmployers;
-                    _profileHasEducation = !_requiresEducation
-                        || EducationLevelLabels.CandidateMeetsRequirement(
-                            prefs.Educations,
-                            _vacancy!.RequiredEducation);
-                    _profileHasAboutMe = !string.IsNullOrWhiteSpace(prefs.AboutMe);
-                    _profileReadyForApply =
-                        _profileHasAvailability
-                        && _profileHasLicense
-                        && _profileHasEmployers
-                        && _profileHasEducation
-                        && _profileHasAboutMe;
-                }
-            }
-            catch
-            {
-                // ignore
-            }
+        var likedTask = SafeLikedAsync();
 
-            try
+        if (profileTask is not null)
+        {
+            var profile = await profileTask;
+            if (profile is not null)
             {
-                var mine = await Api.GetMyApplicationsAsync();
+                _dobInput = profile.DateOfBirth;
+                _authenticatorEnabled = profile.AuthenticatorEnabled == true;
+                var prefs = profile.Preferences ?? new CandidatePreferences();
+                _requiresDrivingLicense = !string.IsNullOrWhiteSpace(_vacancy?.RequiredDrivingLicense);
+                _requiresEducation = !string.IsNullOrWhiteSpace(_vacancy?.RequiredEducation);
+
+                _profileHasAvailability = (prefs.Availability?.Count ?? 0) > 0;
+                _profileHasLicense = !_requiresDrivingLicense
+                    || DrivingLicenseLabels.CandidateMeetsRequirement(
+                        prefs.DrivingLicenses,
+                        _vacancy!.RequiredDrivingLicense);
+                var employerCount = prefs.Employers?.Count ?? 0;
+                var minEmployers = _vacancy?.MinimumEmployers is > 0 ? _vacancy.MinimumEmployers.Value : 1;
+                _profileHasEmployers = employerCount >= minEmployers;
+                _profileHasEducation = !_requiresEducation
+                    || EducationLevelLabels.CandidateMeetsRequirement(
+                        prefs.Educations,
+                        _vacancy!.RequiredEducation);
+                _profileHasAboutMe = !string.IsNullOrWhiteSpace(prefs.AboutMe);
+                _profileReadyForApply =
+                    _profileHasAvailability
+                    && _profileHasLicense
+                    && _profileHasEmployers
+                    && _profileHasEducation
+                    && _profileHasAboutMe;
+            }
+        }
+
+        if (appsTask is not null)
+        {
+            var mine = await appsTask;
+            if (mine is not null)
+            {
                 // Completed application → show success. PendingVerification must NOT auto-open
                 // step 4: every fresh visit starts at Profiel/Akkoord/Versturen unless the user
                 // just applied in this session (_enteredVerifyThisSession).
@@ -746,19 +753,44 @@
                     _awaitingVerification = false;
                 }
             }
-            catch
-            {
-                // ignore
-            }
         }
 
+        _liked = await likedTask;
+    }
+
+    private async Task<MeProfile?> SafeProfileAsync()
+    {
         try
         {
-            _liked = await Api.GetLikedAsync(Id);
+            return await Api.GetMyProfileAsync();
         }
         catch
         {
-            _liked = false;
+            return null;
+        }
+    }
+
+    private async Task<IReadOnlyList<ApplicationItem>?> SafeApplicationsAsync()
+    {
+        try
+        {
+            return await Api.GetMyApplicationsAsync();
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    private async Task<bool> SafeLikedAsync()
+    {
+        try
+        {
+            return await Api.GetLikedAsync(Id);
+        }
+        catch
+        {
+            return false;
         }
     }
 

@@ -40,24 +40,73 @@ public class AdminController : ControllerBase
         var companies = await _db.Companies
             .AsNoTracking()
             .OrderBy(c => c.Name)
-            .Select(c => new AdminCompanyDetailDto(
+            .Select(c => new
+            {
                 c.Id,
                 c.Name,
                 c.KvkNumber,
                 c.Address,
                 c.LogoUrl,
-                c.Type.ToString(),
-                c.ParentCompanyId,
-                _db.Users.Count(u => u.IsActive && (
-                    u.CompanyId == c.Id
-                    || u.CompanyMemberships.Any(m => m.CompanyId == c.Id))),
-                c.Vacancies.Count(v => v.Status == VacancyStatus.Active),
-                c.Vacancies.Count(),
-                c.Vacancies.Sum(v => v.Applications.Count),
-                c.TokenTransactions.Sum(t => (decimal?)t.Amount) ?? 0m))
+                Type = c.Type.ToString(),
+                c.ParentCompanyId
+            })
             .ToListAsync(cancellationToken);
 
-        return Ok(companies);
+        var companyIds = companies.Select(c => c.Id).ToList();
+
+        // Users counted via primary CompanyId OR membership (same semantics as before).
+        var membershipPairs = await _db.UserCompanies.AsNoTracking()
+            .Where(m => companyIds.Contains(m.CompanyId) && m.User.IsActive)
+            .Select(m => new { m.CompanyId, m.UserId })
+            .ToListAsync(cancellationToken);
+        var primaryPairs = await _db.Users.AsNoTracking()
+            .Where(u => u.IsActive && u.CompanyId != null && companyIds.Contains(u.CompanyId.Value))
+            .Select(u => new { CompanyId = u.CompanyId!.Value, UserId = u.Id })
+            .ToListAsync(cancellationToken);
+        var userCounts = primaryPairs.Concat(membershipPairs)
+            .GroupBy(x => x.CompanyId)
+            .ToDictionary(g => g.Key, g => g.Select(x => x.UserId).Distinct().Count());
+
+        var vacancyStats = await _db.Vacancies.AsNoTracking()
+            .Where(v => companyIds.Contains(v.CompanyId))
+            .GroupBy(v => v.CompanyId)
+            .Select(g => new
+            {
+                CompanyId = g.Key,
+                Active = g.Count(v => v.Status == VacancyStatus.Active),
+                Total = g.Count()
+            })
+            .ToDictionaryAsync(x => x.CompanyId, cancellationToken);
+
+        var applicationCounts = await _db.Applications.AsNoTracking()
+            .Where(a => companyIds.Contains(a.Vacancy.CompanyId))
+            .GroupBy(a => a.Vacancy.CompanyId)
+            .Select(g => new { CompanyId = g.Key, Count = g.Count() })
+            .ToDictionaryAsync(x => x.CompanyId, x => x.Count, cancellationToken);
+
+        var tokenBalances = await _db.TokenTransactions.AsNoTracking()
+            .Where(t => companyIds.Contains(t.CompanyId))
+            .GroupBy(t => t.CompanyId)
+            .Select(g => new { CompanyId = g.Key, Balance = g.Sum(t => t.Amount) })
+            .ToDictionaryAsync(x => x.CompanyId, x => x.Balance, cancellationToken);
+
+        return Ok(companies.Select(c =>
+        {
+            vacancyStats.TryGetValue(c.Id, out var vac);
+            return new AdminCompanyDetailDto(
+                c.Id,
+                c.Name,
+                c.KvkNumber,
+                c.Address,
+                c.LogoUrl,
+                c.Type,
+                c.ParentCompanyId,
+                userCounts.GetValueOrDefault(c.Id),
+                vac?.Active ?? 0,
+                vac?.Total ?? 0,
+                applicationCounts.GetValueOrDefault(c.Id),
+                tokenBalances.GetValueOrDefault(c.Id));
+        }));
     }
 
     [HttpPost("companies/from-kvk")]
@@ -158,26 +207,65 @@ public class AdminController : ControllerBase
         var vacancies = await _db.Vacancies
             .AsNoTracking()
             .OrderByDescending(v => v.StartDate)
-            .Select(v => new AdminVacancyDetailDto(
+            .Select(v => new
+            {
                 v.Id,
                 v.Title,
-                v.Status.ToString(),
+                Status = v.Status.ToString(),
                 v.CompanyId,
-                v.Company.Name,
-                v.Company.Type.ToString(),
+                CompanyName = v.Company.Name,
+                CompanyType = v.Company.Type.ToString(),
                 v.IsHighlighted,
                 v.ExtensionCount,
                 v.StartDate,
-                v.EndDate,
-                v.SearchImpressions.Count,
-                v.Clicks.Count,
-                v.Shares.Count,
-                v.Applications.Count,
-                v.Likes.Count,
-                v.ExtensionCount > 0))
+                v.EndDate
+            })
             .ToListAsync(cancellationToken);
 
-        return Ok(vacancies);
+        var ids = vacancies.Select(v => v.Id).ToList();
+        var impressions = await _db.VacancySearchImpressions.AsNoTracking()
+            .Where(i => ids.Contains(i.VacancyId))
+            .GroupBy(i => i.VacancyId)
+            .Select(g => new { g.Key, Count = g.Count() })
+            .ToDictionaryAsync(x => x.Key, x => x.Count, cancellationToken);
+        var clicks = await _db.VacancyClicks.AsNoTracking()
+            .Where(c => ids.Contains(c.VacancyId))
+            .GroupBy(c => c.VacancyId)
+            .Select(g => new { g.Key, Count = g.Count() })
+            .ToDictionaryAsync(x => x.Key, x => x.Count, cancellationToken);
+        var shares = await _db.VacancyShares.AsNoTracking()
+            .Where(s => ids.Contains(s.VacancyId))
+            .GroupBy(s => s.VacancyId)
+            .Select(g => new { g.Key, Count = g.Count() })
+            .ToDictionaryAsync(x => x.Key, x => x.Count, cancellationToken);
+        var applications = await _db.Applications.AsNoTracking()
+            .Where(a => ids.Contains(a.VacancyId))
+            .GroupBy(a => a.VacancyId)
+            .Select(g => new { g.Key, Count = g.Count() })
+            .ToDictionaryAsync(x => x.Key, x => x.Count, cancellationToken);
+        var likes = await _db.VacancyLikes.AsNoTracking()
+            .Where(l => ids.Contains(l.VacancyId))
+            .GroupBy(l => l.VacancyId)
+            .Select(g => new { g.Key, Count = g.Count() })
+            .ToDictionaryAsync(x => x.Key, x => x.Count, cancellationToken);
+
+        return Ok(vacancies.Select(v => new AdminVacancyDetailDto(
+            v.Id,
+            v.Title,
+            v.Status,
+            v.CompanyId,
+            v.CompanyName,
+            v.CompanyType,
+            v.IsHighlighted,
+            v.ExtensionCount,
+            v.StartDate,
+            v.EndDate,
+            impressions.GetValueOrDefault(v.Id),
+            clicks.GetValueOrDefault(v.Id),
+            shares.GetValueOrDefault(v.Id),
+            applications.GetValueOrDefault(v.Id),
+            likes.GetValueOrDefault(v.Id),
+            v.ExtensionCount > 0)));
     }
 
     [HttpPost("vacancies/{id:guid}/extend")]

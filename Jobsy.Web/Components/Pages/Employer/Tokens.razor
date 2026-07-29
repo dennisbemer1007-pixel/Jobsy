@@ -5,6 +5,7 @@
 @inject JobsyApiClient Api
 @inject NavigationManager Navigation
 @inject AuthenticationStateProvider AuthState
+@inject Jobsy.Web.Services.TokenBalanceCache TokenBalances
 
 <PageTitle>Tokens · Lobsy</PageTitle>
 
@@ -181,6 +182,7 @@
                 || user.IsInRole("Admin");
 
             _balances = (await Api.GetTokenBalancesAsync()).ToList();
+            TokenBalances.Invalidate();
             _packs = (await Api.GetTokenPacksAsync()).ToList();
             if (_balances.Count > 0)
             {
@@ -239,6 +241,7 @@
         {
             await Api.AllocateTokensAsync(_fromCompanyId, _toCompanyId, _allocateAmount);
             _balances = (await Api.GetTokenBalancesAsync()).ToList();
+            TokenBalances.Invalidate();
             _logs = (await Api.GetTokenLogsAsync(_logFilter)).ToList();
             _message = "Tokens gealloceerd.";
         }

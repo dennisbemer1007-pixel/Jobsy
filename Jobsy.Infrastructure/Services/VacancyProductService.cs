@@ -556,17 +556,22 @@ public sealed class VacancyProductService : IVacancyProductService
             settings.RadiusKm,
             cancellationToken);
 
-        var suitable = new List<User>();
-        foreach (var candidate in withinRadius)
-        {
-            if (candidate.HomeLocation is null)
+        // Crow-flies bound before routing (same approach as Discover).
+        var shortlist = withinRadius
+            .Where(c => c.HomeLocation is not null)
+            .Where(c =>
             {
-                continue;
-            }
+                var mode = ResolveTransportMode(c.PreferencesJson, vacancy.RequiredTransport);
+                var reachKm = TravelReach.MaxCrowFliesKm(mode, settings.MaxTravelMinutes, settings.RadiusKm);
+                return GeoDistance.IsWithinKm(vacancy.Location, c.HomeLocation!, reachKm);
+            })
+            .ToList();
 
+        var routed = await Task.WhenAll(shortlist.Select(async candidate =>
+        {
             var mode = ResolveTransportMode(candidate.PreferencesJson, vacancy.RequiredTransport);
             var route = await _routing.GetRouteAsync(
-                candidate.HomeLocation.Latitude,
+                candidate.HomeLocation!.Latitude,
                 candidate.HomeLocation.Longitude,
                 vacancy.Location.Latitude,
                 vacancy.Location.Longitude,
@@ -574,6 +579,12 @@ public sealed class VacancyProductService : IVacancyProductService
                 cancellationToken);
 
             var travelMinutes = (int)Math.Ceiling(route.DurationSeconds / 60.0);
+            return (candidate, travelMinutes);
+        }));
+
+        var suitable = new List<User>();
+        foreach (var (candidate, travelMinutes) in routed)
+        {
             if (travelMinutes > settings.MaxTravelMinutes)
             {
                 continue;
@@ -712,11 +723,13 @@ public sealed class VacancyProductService : IVacancyProductService
             }
 
             return await _db.Users
+                .AsNoTracking()
                 .Where(u => ids.Contains(u.Id))
                 .ToListAsync(cancellationToken);
         }
 
         var candidates = await _db.Users
+            .AsNoTracking()
             .Where(u =>
                 u.Role == UserRole.Candidate
                 && u.IsActive

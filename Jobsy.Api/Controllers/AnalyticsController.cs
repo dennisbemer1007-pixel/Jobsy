@@ -1,8 +1,8 @@
 using System.Text.RegularExpressions;
 using Jobsy.Api.Models;
 using Jobsy.Core.Entities;
+using Jobsy.Core.Enums;
 using Jobsy.Core.Interfaces;
-using Jobsy.Core.Rules;
 using Jobsy.Infrastructure.Data;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -71,16 +71,19 @@ public partial class AnalyticsController : ControllerBase
 
         var today = DateOnly.FromDateTime(DateTime.UtcNow);
         var visibleIds = await _db.Vacancies.AsNoTracking()
-            .Where(v => vacancyIds.Contains(v.Id))
+            .Where(v => vacancyIds.Contains(v.Id)
+                && v.Status == VacancyStatus.Active
+                && v.StartDate <= today
+                && v.EndDate >= today)
+            .Select(v => v.Id)
             .ToListAsync(cancellationToken);
 
         var now = DateTime.UtcNow;
         var rows = visibleIds
-            .Where(v => VacancyVisibilityRules.IsPubliclyVisible(v, today))
-            .Select(v => new VacancySearchImpression
+            .Select(id => new VacancySearchImpression
             {
                 Id = Guid.NewGuid(),
-                VacancyId = v.Id,
+                VacancyId = id,
                 UserId = userId,
                 AnonymousKey = anonymousKey,
                 CreatedAt = now

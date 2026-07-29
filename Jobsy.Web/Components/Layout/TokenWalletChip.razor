@@ -1,8 +1,10 @@
 @using Jobsy.Core.Authorization
 @using Jobsy.Web.Navigation
+@using Jobsy.Web.Services
 @using Microsoft.AspNetCore.Components.Authorization
 @inject JobsyApiClient Api
 @inject AuthenticationStateProvider AuthState
+@inject TokenBalanceCache TokenBalances
 
 <AuthorizeView Roles="@string.Join(',', JobsyRoles.EmployerRoles)">
     <Authorized>
@@ -35,8 +37,11 @@
 
         try
         {
-            var balances = await Api.GetTokenBalancesAsync();
-            _total = balances.Sum(b => b.Balance);
+            _total = await TokenBalances.GetOrLoadAsync(async () =>
+            {
+                var balances = await Api.GetTokenBalancesAsync();
+                return balances.Sum(b => b.Balance);
+            });
         }
         catch
         {

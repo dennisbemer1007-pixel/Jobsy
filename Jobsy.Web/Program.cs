@@ -21,6 +21,7 @@ builder.Services.AddRazorComponents()
 
 builder.Services.AddJobsyAuthentication(builder.Configuration, builder.Environment);
 builder.Services.AddScoped<CultureState>();
+builder.Services.AddScoped<TokenBalanceCache>();
 builder.Services.AddHttpClient<IGeocodingClient, NominatimGeocodingClient>(client =>
 {
     client.Timeout = TimeSpan.FromSeconds(8);
