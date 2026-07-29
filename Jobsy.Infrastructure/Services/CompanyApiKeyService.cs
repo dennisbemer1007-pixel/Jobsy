@@ -1,9 +1,12 @@
 using System.Net;
+using Jobsy.Core;
+using Jobsy.Core.Authorization;
 using Jobsy.Core.Entities;
 using Jobsy.Core.Interfaces;
 using Jobsy.Infrastructure.Data;
 using Jobsy.Infrastructure.Security;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 
 namespace Jobsy.Infrastructure.Services;
@@ -11,18 +14,22 @@ namespace Jobsy.Infrastructure.Services;
 public sealed class CompanyApiKeyService : ICompanyApiKeyService
 {
     public const int MaxNameLength = 128;
+    public const string ExternalVacanciesPath = "/api/external/vacancies";
 
     private readonly JobsyDbContext _db;
     private readonly IEmailService _email;
+    private readonly IConfiguration _configuration;
     private readonly ILogger<CompanyApiKeyService> _logger;
 
     public CompanyApiKeyService(
         JobsyDbContext db,
         IEmailService email,
+        IConfiguration configuration,
         ILogger<CompanyApiKeyService> logger)
     {
         _db = db;
         _email = email;
+        _configuration = configuration;
         _logger = logger;
     }
 
@@ -96,6 +103,11 @@ public sealed class CompanyApiKeyService : ICompanyApiKeyService
         var company = await _db.Companies.FirstOrDefaultAsync(c => c.Id == companyId, cancellationToken)
             ?? throw new KeyNotFoundException("Bedrijf niet gevonden.");
 
+        if (company.ParentCompanyId is not null)
+        {
+            throw new ArgumentException("API-keys horen bij de organisatie, niet bij een vestiging.");
+        }
+
         var label = NormalizeName(name);
         var plaintext = ApiKeyHasher.GeneratePlaintext();
         var entity = new ApiKey
@@ -168,6 +180,11 @@ public sealed class CompanyApiKeyService : ICompanyApiKeyService
             .FirstOrDefaultAsync(c => c.Id == companyId, cancellationToken)
             ?? throw new KeyNotFoundException("Bedrijf niet gevonden.");
 
+        if (company.ParentCompanyId is not null)
+        {
+            throw new ArgumentException("API-keys horen bij de organisatie, niet bij een vestiging.");
+        }
+
         var normalized = recipientEmail.Trim().ToLowerInvariant();
         if (string.IsNullOrWhiteSpace(normalized) || !normalized.Contains('@', StringComparison.Ordinal))
         {
@@ -190,19 +207,26 @@ public sealed class CompanyApiKeyService : ICompanyApiKeyService
 
         try
         {
+            var apiBase = ResolvePublicApiBaseUrl();
+            var endpoint = apiBase + ExternalVacanciesPath;
+            var swaggerUrl = apiBase + "/swagger";
             await _email.SendAsync(new EmailMessage(
                 normalized,
                 $"Lobsy API-credentials voor {company.Name}",
                 $"""
                  <p>Hallo,</p>
                  <p>Hierbij de API-credentials voor <strong>{WebUtility.HtmlEncode(company.Name)}</strong>.</p>
-                 <p>Gebruik header <code>X-API-Key</code> op de externe vacature-API
-                 (<code>/api/external/vacancies</code>).</p>
+                 <p><strong>Endpoint:</strong><br/>
+                 <code>{WebUtility.HtmlEncode(endpoint)}</code></p>
+                 <p><strong>Header:</strong><br/>
+                 <code>{ApiKeyAuthDefaults.HeaderName}: &lt;jouw-api-key&gt;</code></p>
+                 <p><strong>API-key:</strong><br/>
+                 <code>{WebUtility.HtmlEncode(plaintext)}</code></p>
+                 <p>Prefix (ter herkenning): <code>{WebUtility.HtmlEncode(entity.KeyPrefix)}</code></p>
+                 <p>Bekijk request/response in Swagger:
+                 <a href="{WebUtility.HtmlEncode(swaggerUrl)}">{WebUtility.HtmlEncode(swaggerUrl)}</a></p>
                  <p><strong>Let op:</strong> deze sleutel wordt slechts één keer getoond en
                  vervangt eventuele eerdere actieve keys. Bewaar hem veilig.</p>
-                 <p>API-key:</p>
-                 <p><code>{WebUtility.HtmlEncode(plaintext)}</code></p>
-                 <p>Prefix (ter herkenning): <code>{WebUtility.HtmlEncode(entity.KeyPrefix)}</code></p>
                  """,
                 "CompanyApiKeyCredentials"), cancellationToken);
         }
@@ -232,6 +256,17 @@ public sealed class CompanyApiKeyService : ICompanyApiKeyService
         {
             existing.IsActive = false;
         }
+    }
+
+    private string ResolvePublicApiBaseUrl()
+    {
+        var raw = _configuration["PublicApiBaseUrl"];
+        if (string.IsNullOrWhiteSpace(raw))
+        {
+            raw = "http://localhost:5200";
+        }
+
+        return JobsyPublicUrl.NormalizeOrigin(raw).TrimEnd('/');
     }
 
     private static string NormalizeName(string? name)

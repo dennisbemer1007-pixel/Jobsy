@@ -4,6 +4,7 @@ using Jobsy.Core.Enums;
 using Jobsy.Core.Interfaces;
 using Jobsy.Core.Options;
 using Jobsy.Core.Rules;
+using Jobsy.Core.Security;
 using Jobsy.Core.ValueObjects;
 using Jobsy.Infrastructure.Data;
 using Jobsy.Infrastructure.Services;
@@ -326,7 +327,7 @@ public class SalesManagerCommissionTests
             Status = ApplicationStatus.Pending,
             SnapshotAboutMe = "Persoonlijke bio",
             SnapshotDrivingLicenses = "B",
-            EmailVerificationCode = "123456",
+            EmailVerificationCode = VerificationCodes.Hash("123456"),
             DistanceKm = 4.2,
             CreatedAt = DateTime.UtcNow
         });

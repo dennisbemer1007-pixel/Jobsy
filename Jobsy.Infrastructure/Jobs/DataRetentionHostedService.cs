@@ -9,7 +9,8 @@ using Microsoft.Extensions.Logging;
 namespace Jobsy.Infrastructure.Jobs;
 
 /// <summary>
-/// Purges aged platform logs, cancelled registrations, and old engagement events.
+/// Purges aged platform logs, cancelled registrations, old engagement events,
+/// and unverified application drafts (AVG retention).
 /// </summary>
 public sealed class DataRetentionHostedService : BackgroundService
 {
@@ -74,11 +75,18 @@ public sealed class DataRetentionHostedService : BackgroundService
             .Where(v => v.CreatedAt < engagementCutoff)
             .ExecuteDeleteAsync(cancellationToken);
 
-        if (logsRemoved + regsRemoved + clicksRemoved + sharesRemoved + impressionsRemoved + visitsRemoved > 0)
+        var draftCutoff = now.AddHours(-PrivacyConstants.UnverifiedApplicationRetentionHours);
+        var unverifiedAppsRemoved = await db.Applications
+            .Where(a => a.EmailVerifiedAt == null && a.CreatedAt < draftCutoff)
+            .ExecuteDeleteAsync(cancellationToken);
+
+        if (logsRemoved + regsRemoved + clicksRemoved + sharesRemoved + impressionsRemoved + visitsRemoved
+            + unverifiedAppsRemoved > 0)
         {
             _logger.LogInformation(
-                "Retention purge: logs={Logs}, registrations={Regs}, clicks={Clicks}, shares={Shares}, impressions={Impressions}, visits={Visits}",
-                logsRemoved, regsRemoved, clicksRemoved, sharesRemoved, impressionsRemoved, visitsRemoved);
+                "Retention purge: logs={Logs}, registrations={Regs}, clicks={Clicks}, shares={Shares}, impressions={Impressions}, visits={Visits}, unverifiedApps={UnverifiedApps}",
+                logsRemoved, regsRemoved, clicksRemoved, sharesRemoved, impressionsRemoved, visitsRemoved,
+                unverifiedAppsRemoved);
         }
     }
 }

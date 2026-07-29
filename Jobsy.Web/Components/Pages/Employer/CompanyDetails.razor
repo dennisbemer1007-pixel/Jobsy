@@ -1,17 +1,18 @@
 @page "/employer/company"
 @rendermode @(new InteractiveServerRenderMode(prerender: false))
-@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "EnterpriseManager,Admin")]
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "BranchManager,EnterpriseManager,Admin")]
 @inject JobsyApiClient Api
 @inject IJSRuntime Js
 @inject BottomNavRefreshService NavRefresh
+@inject IConfiguration Configuration
 
 <PageTitle>Bedrijfsgegevens · Lobsy</PageTitle>
 
-<div class="panel-page">
+<div class="panel-page company-details">
     <header class="panel-header">
         <div>
             <h1>Bedrijfsgegevens</h1>
-            <p class="login-lead">Organisatiegegevens, bereikbaarheid, CSV-import en externe API-koppeling.</p>
+            <p class="login-lead">Organisatie, contactvoorkeur, CSV-import en API-koppeling — alles op één plek.</p>
         </div>
     </header>
 
@@ -31,7 +32,7 @@
     {
         @if (_organizations.Count > 1)
         {
-            <label class="filter-required" style="max-width:24rem;display:block;margin-bottom:1rem">
+            <label class="company-details__org-select filter-required">
                 Organisatie / vestiging
                 <select @bind="_selectedOrgId" @bind:after="OnOrgChangedAsync">
                     @foreach (var org in _organizations)
@@ -44,50 +45,107 @@
 
         @if (_org is not null)
         {
-            <section class="panel-section">
-                <h2>@_org.Name</h2>
-                <p class="muted">@_org.Address · KVK @_org.KvkNumber</p>
-                <p class="muted">@_org.TokenBalance.ToString("0.##") tokens · @_org.ActiveVacancies actieve vacatures</p>
+            <section class="panel-section company-details__overview">
+                <div class="company-details__overview-head">
+                    <div>
+                        <h2>@_org.Name</h2>
+                        <p class="muted company-details__address">
+                            @_org.Address
+                            @if (!string.IsNullOrWhiteSpace(_org.KvkNumber))
+                            {
+                                <text> · KVK @_org.KvkNumber</text>
+                            }
+                        </p>
+                        @if (_org.ParentCompanyId is not null)
+                        {
+                            <span class="company-details__badge">Vestiging</span>
+                        }
+                        else
+                        {
+                            <span class="company-details__badge company-details__badge--org">Organisatie</span>
+                        }
+                    </div>
+                </div>
+                <div class="stat-grid company-details__stats">
+                    <div class="stat-card">
+                        <span class="stat-card__label">Tokens</span>
+                        <strong class="stat-card__value">@_org.TokenBalance.ToString("0.##")</strong>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-card__label">Actieve vacatures</span>
+                        <strong class="stat-card__value">@_org.ActiveVacancies</strong>
+                    </div>
+                </div>
             </section>
 
-            <section class="panel-section">
-                <h2>Voorkeur voor contact</h2>
-                <p class="muted">
-                    Geef aan of kandidaten na een succesvolle sollicitatie direct contact mogen opnemen
-                    (mail, telefoon of WhatsApp). Per vacature kun je dit later overschrijven.
-                    WhatsApp en telefoon worden nooit op de openbare vacaturepagina getoond.
+            <section class="panel-section company-details__card">
+                <h2>Contactvoorkeur</h2>
+                <p class="muted company-details__lead">
+                    Mag een kandidaat na een succesvolle sollicitatie direct contact opnemen?
+                    Per vacature kun je dit later overschrijven. Telefoon en WhatsApp staan nooit op de openbare vacaturepagina.
                 </p>
-                <label class="checkbox-row">
+                @if (_org.ParentCompanyId is null)
+                {
+                    <p class="company-details__callout company-details__callout--warn">
+                        Dit geldt voor vacatures van deze organisatie. Voor vestiging-vacatures zet je contactvoorkeur
+                        ook per vestiging (of overschrijf per vacature).
+                    </p>
+                }
+
+                <label class="company-details__toggle">
                     <input type="checkbox"
                            checked="@_directContactEnabled"
                            disabled="@_busy"
                            @onchange="OnDirectContactToggle" />
-                    Direct contact gewenst (WhatsApp / Telefoon / Mail)
+                    <span>
+                        <strong>Direct contact gewenst</strong>
+                        <span class="muted">Mail, telefoon of WhatsApp tonen na sollicitatie</span>
+                    </span>
                 </label>
+
                 @if (_directContactEnabled)
                 {
-                    <div class="contact-pref-channels" style="margin-top:0.75rem;display:grid;gap:0.5rem">
-                        <label class="checkbox-row">
-                            <input type="checkbox" @bind="_preferMail" disabled="@_busy" />
-                            Mail
-                        </label>
-                        <label class="checkbox-row">
-                            <input type="checkbox" @bind="_preferPhone" disabled="@_busy" />
-                            Telefoon
-                        </label>
-                        <label class="checkbox-row">
-                            <input type="checkbox" @bind="_preferWhatsApp" disabled="@_busy" />
-                            WhatsApp
-                        </label>
-                    </div>
-                    <div class="login-form" style="margin-top:0.75rem;max-width:28rem">
+                    <fieldset class="scope-fieldset company-details__channels" disabled="@_busy">
+                        <legend>Kanalen</legend>
+                        <div class="company-details__channel-grid">
+                            <label class="scope-option">
+                                <input type="checkbox" @bind="_preferMail" disabled="@_busy" />
+                                <span>
+                                    <strong>Mail</strong>
+                                    <span class="muted">Via contact-e-mail</span>
+                                </span>
+                            </label>
+                            <label class="scope-option">
+                                <input type="checkbox" @bind="_preferPhone" disabled="@_busy" />
+                                <span>
+                                    <strong>Telefoon</strong>
+                                    <span class="muted">Alleen na sollicitatie</span>
+                                </span>
+                            </label>
+                            <label class="scope-option">
+                                <input type="checkbox" @bind="_preferWhatsApp" disabled="@_busy" />
+                                <span>
+                                    <strong>WhatsApp</strong>
+                                    <span class="muted">Optioneel apart nummer</span>
+                                </span>
+                            </label>
+                        </div>
+                    </fieldset>
+
+                    <div class="login-form company-details__contact-form">
                         <label>
                             Contact-e-mail
-                            <input type="email" @bind="_contactEmail" disabled="@(_busy || !_preferMail)" />
+                            <input type="email"
+                                   @bind="_contactEmail"
+                                   placeholder="bijv. vacatures@bedrijf.nl"
+                                   disabled="@(_busy || !_preferMail)" />
                         </label>
                         <label>
                             Telefoonnummer
-                            <input type="tel" @bind="_contactPhone" disabled="@(_busy || (!_preferPhone && !_preferWhatsApp))" />
+                            <input type="tel"
+                                   @bind="_contactPhone"
+                                   placeholder="+31 …"
+                                   disabled="@(_busy || (!_preferPhone && !_preferWhatsApp))" />
                         </label>
                         <label>
                             WhatsApp-nummer
@@ -98,120 +156,177 @@
                         </label>
                     </div>
                 }
-                <div class="inline-actions" style="margin-top:0.75rem">
+
+                <div class="inline-actions company-details__actions">
                     <button class="login-submit" type="button" disabled="@_busy" @onclick="SaveContactPreferenceAsync">
                         Contactvoorkeur opslaan
                     </button>
                 </div>
+                @if (_feedbackSection == FeedbackSection.Contact && !string.IsNullOrEmpty(_message))
+                {
+                    <p class="state-message @(_messageIsError ? "error" : null)">@_message</p>
+                }
             </section>
 
             @if (_org.ParentCompanyId is null)
             {
-            <section class="panel-section">
+            <section class="panel-section company-details__card">
                 <h2>CSV Batch Import</h2>
-                <p class="muted">
-                    Schakel batch-import van vacatures via CSV in. Vacatures komen binnen als concept;
-                    publiceren (en tokenverbruik) gebeurt daarna in Lobsy — net als bij de API.
+                <p class="muted company-details__lead">
+                    Importeer meerdere vacatures tegelijk via CSV. Ze komen binnen als concept;
+                    publiceren (en tokenverbruik) doe je daarna in Lobsy.
                 </p>
-                <label class="checkbox-row">
+
+                <label class="company-details__toggle">
                     <input type="checkbox"
                            checked="@_org.CsvBatchImportEnabled"
                            disabled="@_busy"
                            @onchange="OnCsvToggleAsync" />
-                    CSV Batch Import inschakelen
+                    <span>
+                        <strong>CSV Batch Import inschakelen</strong>
+                        <span class="muted">Toont de tab CSV Import in de navigatie</span>
+                    </span>
                 </label>
+
                 @if (_org.CsvBatchImportEnabled)
                 {
-                    <p class="muted" style="margin-top:0.5rem">
-                        Navigatie toont nu de tab <a href="/employer/csv-import">CSV Import</a>.
+                    <p class="company-details__callout">
+                        Klaar om te importeren?
+                        <a href="/employer/csv-import">Ga naar CSV Import</a>
                     </p>
+                }
+
+                @if (_feedbackSection == FeedbackSection.Csv && !string.IsNullOrEmpty(_message))
+                {
+                    <p class="state-message @(_messageIsError ? "error" : null)">@_message</p>
                 }
             </section>
 
-            <section class="panel-section">
+            <section class="panel-section company-details__card">
                 <h2>API-koppeling</h2>
-                <p class="muted">
-                    Externe systemen kunnen vacatures aanmaken, wijzigen en status opvragen via
-                    <code>X-API-Key</code> op <code>/api/external/vacancies</code>.
-                    Nieuwe vacatures blijven concept tot je ze in Lobsy publiceert (tokenverwerking).
+                <p class="muted company-details__lead">
+                    Koppel een ATS of ander systeem aan Lobsy. Vacatures via de API blijven concept tot je ze publiceert.
                     De volledige sleutel wordt nooit opgeslagen — alleen een hash.
                 </p>
 
+                <div class="api-cred-panel">
+                    <div class="api-cred-field">
+                        <span class="api-cred-field__label">Endpoint</span>
+                        <div class="api-cred-field__row">
+                            <code class="api-cred-field__value">@_vacanciesEndpoint</code>
+                            <button type="button"
+                                    class="api-key-modal__copy @(_endpointCopied ? "is-copied" : null)"
+                                    title="@(_endpointCopied ? "Gekopieerd" : "Endpoint kopiëren")"
+                                    aria-label="@(_endpointCopied ? "Gekopieerd" : "Endpoint kopiëren")"
+                                    @onclick="() => CopyTextAsync(_vacanciesEndpoint, CopiedField.Endpoint)">
+                                @((MarkupString)(_endpointCopied ? CheckSvg : CopySvg))
+                            </button>
+                        </div>
+                    </div>
+                    <div class="api-cred-field">
+                        <span class="api-cred-field__label">Authenticatie</span>
+                        <code class="api-cred-field__value">X-API-Key: &lt;jouw-api-key&gt;</code>
+                    </div>
+                    <div class="api-cred-field">
+                        <span class="api-cred-field__label">Documentatie (Swagger)</span>
+                        <p class="api-cred-field__help">
+                            Bekijk en test de verbinding: request, response en beschikbare endpoints.
+                        </p>
+                        <a class="api-cred-field__link" href="@_swaggerUrl" target="_blank" rel="noopener noreferrer">
+                            Open Swagger-documentatie
+                        </a>
+                    </div>
+                </div>
+
                 @if (_activeKey is null)
                 {
-                    <div class="inline-actions">
-                        <button class="login-submit" type="button" disabled="@_busy" @onclick="GenerateAsync">
-                            API Key genereren
-                        </button>
-                        <button class="btn-compact" type="button" disabled="@_busy" @onclick="EmailCredentialsAsync">
-                            Verzend credentials via e-mail
-                        </button>
+                    <div class="company-details__empty-key">
+                        <p class="muted">Nog geen actieve API-key. Genereer er één of laat credentials naar je account-e-mail sturen.</p>
+                        <div class="inline-actions company-details__actions">
+                            <button class="login-submit" type="button" disabled="@_busy" @onclick="GenerateAsync">
+                                API-key genereren
+                            </button>
+                            <button class="btn-compact" type="button" disabled="@_busy" @onclick="EmailCredentialsAsync">
+                                Verzend via e-mail
+                            </button>
+                        </div>
                     </div>
-                    <p class="muted" style="margin-top:0.5rem">
-                        E-mail genereert een nieuwe key en stuurt die naar jouw account-e-mail.
-                    </p>
                 }
                 else
                 {
-                    <div class="table-list" style="margin-bottom:1rem">
-                        <div class="table-row">
-                            <div>
-                                <strong>@_activeKey.Name</strong>
-                                <span class="muted">
-                                    @_activeKey.KeyPrefix
-                                    · actief
-                                    · aangemaakt @_activeKey.CreatedAt.ToLocalTime().ToString("dd-MM-yyyy HH:mm")
-                                    @if (_activeKey.LastUsedAt is DateTime used)
-                                    {
-                                        <text> · laatst gebruikt @used.ToLocalTime().ToString("dd-MM-yyyy HH:mm")</text>
-                                    }
-                                    else
-                                    {
-                                        <text> · nog niet gebruikt</text>
-                                    }
-                                </span>
+                    <div class="api-cred-panel api-cred-panel--key">
+                        <div class="api-cred-field">
+                            <span class="api-cred-field__label">Actieve API-key</span>
+                            <div class="company-details__key-head">
+                                <strong class="api-cred-field__name">@_activeKey.Name</strong>
+                                <span class="company-details__badge company-details__badge--ok">Actief</span>
                             </div>
+                            <code class="api-cred-field__value api-cred-field__value--key">@_activeKey.KeyPrefix</code>
+                            <p class="muted api-cred-field__meta">
+                                Aangemaakt @_activeKey.CreatedAt.ToLocalTime().ToString("dd-MM-yyyy HH:mm")
+                                @if (_activeKey.LastUsedAt is DateTime used)
+                                {
+                                    <text> · laatst gebruikt @used.ToLocalTime().ToString("dd-MM-yyyy HH:mm")</text>
+                                }
+                                else
+                                {
+                                    <text> · nog niet gebruikt</text>
+                                }
+                            </p>
+                            <p class="muted api-cred-field__help">
+                                Alleen het prefix is zichtbaar. De volledige key zag je één keer bij genereren of e-mail.
+                            </p>
                         </div>
                     </div>
-                    <div class="inline-actions">
-                        <button class="btn-compact" type="button" disabled="@_busy" @onclick="DeactivateAsync">
-                            Desactiveren
+                    <div class="inline-actions company-details__actions">
+                        <button class="btn-compact btn-compact--primary" type="button" disabled="@_busy" @onclick="ConfirmEmail">
+                            Nieuwe key e-mailen
                         </button>
-                        <button class="btn-compact" type="button" disabled="@_busy" @onclick="GenerateAsync">
+                        <button class="btn-compact" type="button" disabled="@_busy" @onclick="ConfirmGenerate">
                             Nieuwe key genereren
                         </button>
-                        <button class="btn-compact btn-compact--primary" type="button" disabled="@_busy" @onclick="ConfirmEmailAsync">
-                            Verzend credentials via e-mail
+                        <button class="btn-compact" type="button" disabled="@_busy" @onclick="DeactivateAsync">
+                            Deactiveren
                         </button>
                     </div>
-                    <p class="muted" style="margin-top:0.5rem">
-                        Let op: e-mailen of opnieuw genereren deactiveert de huidige key en maakt een nieuwe.
+                    <p class="muted company-details__warn">
+                        E-mailen of opnieuw genereren deactiveert de huidige key en maakt een nieuwe.
                     </p>
                 }
 
+                <details class="api-cred-example">
+                    <summary>Voorbeeld aanroep en response</summary>
+                    <p class="muted">POST — vacature aanmaken (komt binnen als concept):</p>
+                    <pre class="api-cred-example__code">@ExampleRequestCurl</pre>
+                    <p class="muted">Response (201):</p>
+                    <pre class="api-cred-example__code">@ExampleResponseJson</pre>
+                </details>
+
                 @if (_inactiveKeys.Count > 0)
                 {
-                    <h3 style="margin-top:1.5rem">Eerdere keys</h3>
-                    <div class="table-list">
-                        @foreach (var k in _inactiveKeys)
-                        {
-                            <div class="table-row">
-                                <div>
-                                    <strong>@k.Name</strong>
-                                    <span class="muted">
-                                        @k.KeyPrefix · inactief · @k.CreatedAt.ToLocalTime().ToString("dd-MM-yyyy")
-                                    </span>
+                    <details class="company-details__history">
+                        <summary>Eerdere keys (@_inactiveKeys.Count)</summary>
+                        <div class="table-list">
+                            @foreach (var k in _inactiveKeys)
+                            {
+                                <div class="table-row">
+                                    <div>
+                                        <strong>@k.Name</strong>
+                                        <span class="muted">
+                                            <code>@k.KeyPrefix</code> · inactief · @k.CreatedAt.ToLocalTime().ToString("dd-MM-yyyy")
+                                        </span>
+                                    </div>
                                 </div>
-                            </div>
-                        }
-                    </div>
+                            }
+                        </div>
+                    </details>
+                }
+
+                @if (_feedbackSection == FeedbackSection.Api && !string.IsNullOrEmpty(_message) && !_showKeyModal)
+                {
+                    <p class="state-message @(_messageIsError ? "error" : null)">@_message</p>
                 }
             </section>
-            }
-
-            @if (!string.IsNullOrEmpty(_message))
-            {
-                <p class="state-message">@_message</p>
             }
         }
     }
@@ -225,38 +340,56 @@
             <h2 id="api-key-modal-title">API-key gegenereerd</h2>
             <button type="button" class="share-modal__close" @onclick="CloseKeyModal" aria-label="Sluiten">×</button>
         </div>
-        <p class="share-modal__lead">
+        <p class="share-modal__lead api-key-modal__lead">
             <strong>Let op:</strong> deze sleutel is slechts één keer zichtbaar. Kopieer en bewaar hem veilig.
             Gebruik daarna niet “Verzend via e-mail” — dat maakt een andere key aan.
         </p>
+
         <label class="api-key-modal__label" for="api-key-value">API-key</label>
         <div class="api-key-modal__row">
-            <input id="api-key-value"
-                   class="api-key-modal__input"
-                   type="text"
-                   readonly
-                   value="@_generated.PlaintextKey"
-                   onclick="this.select()" />
+            <pre id="api-key-value"
+                 class="api-key-modal__value"
+                 tabindex="0">@_generated.PlaintextKey</pre>
             <button type="button"
                     class="api-key-modal__copy @(_keyCopied ? "is-copied" : null)"
                     title="@(_keyCopied ? "Gekopieerd" : "API-key kopiëren")"
                     aria-label="@(_keyCopied ? "Gekopieerd" : "API-key kopiëren")"
-                    @onclick="CopyApiKeyAsync">
-                @if (_keyCopied)
-                {
-                    @((MarkupString)CheckSvg)
-                }
-                else
-                {
-                    @((MarkupString)CopySvg)
-                }
+                    @onclick="() => CopyTextAsync(_generated.PlaintextKey, CopiedField.ApiKey)">
+                @((MarkupString)(_keyCopied ? CheckSvg : CopySvg))
             </button>
         </div>
+
+        <label class="api-key-modal__label">Endpoint</label>
+        <div class="api-key-modal__row">
+            <code class="api-key-modal__value api-key-modal__value--endpoint">@_vacanciesEndpoint</code>
+            <button type="button"
+                    class="api-key-modal__copy @(_endpointCopied ? "is-copied" : null)"
+                    title="@(_endpointCopied ? "Gekopieerd" : "Endpoint kopiëren")"
+                    aria-label="@(_endpointCopied ? "Gekopieerd" : "Endpoint kopiëren")"
+                    @onclick="() => CopyTextAsync(_vacanciesEndpoint, CopiedField.Endpoint)">
+                @((MarkupString)(_endpointCopied ? CheckSvg : CopySvg))
+            </button>
+        </div>
+
+        <p class="api-key-modal__meta">
+            Header: <code>X-API-Key</code>
+            · prefix <code>@_generated.KeyPrefix</code>
+        </p>
+        <p class="api-key-modal__meta">
+            Swagger (request/response):
+            <a href="@_swaggerUrl" target="_blank" rel="noopener noreferrer">Open documentatie</a>
+        </p>
+
+        <details class="api-cred-example api-cred-example--modal">
+            <summary>Voorbeeld aanroep en response</summary>
+            <pre class="api-cred-example__code">@ExampleRequestCurl</pre>
+            <pre class="api-cred-example__code">@ExampleResponseJson</pre>
+        </details>
+
         @if (!string.IsNullOrEmpty(_keyCopyMessage))
         {
             <p class="state-message @(_keyCopyFailed ? "error" : null)">@_keyCopyMessage</p>
         }
-        <p class="muted">Header: <code>X-API-Key: …</code> · prefix @_generated.KeyPrefix</p>
         <div class="inline-actions" style="margin-top:1rem">
             <button class="login-submit" type="button" @onclick="CloseKeyModal">Ik heb de key bewaard</button>
         </div>
@@ -266,12 +399,12 @@
 @if (_confirmEmail)
 {
     <div class="share-modal-backdrop" @onclick="CancelEmail"></div>
-    <div class="share-modal" role="dialog" aria-modal="true" aria-labelledby="api-email-modal-title">
+    <div class="share-modal api-key-modal" role="dialog" aria-modal="true" aria-labelledby="api-email-modal-title">
         <div class="share-modal__header">
             <h2 id="api-email-modal-title">Credentials e-mailen?</h2>
             <button type="button" class="share-modal__close" @onclick="CancelEmail" aria-label="Sluiten">×</button>
         </div>
-        <p class="share-modal__lead">
+        <p class="share-modal__lead api-key-modal__lead">
             Dit deactiveert de huidige API-key en stuurt een <strong>nieuwe</strong> key naar jouw account-e-mail.
             De oude key werkt daarna niet meer.
         </p>
@@ -282,7 +415,40 @@
     </div>
 }
 
+@if (_confirmGenerate)
+{
+    <div class="share-modal-backdrop" @onclick="CancelGenerate"></div>
+    <div class="share-modal api-key-modal" role="dialog" aria-modal="true" aria-labelledby="api-generate-modal-title">
+        <div class="share-modal__header">
+            <h2 id="api-generate-modal-title">Nieuwe API-key genereren?</h2>
+            <button type="button" class="share-modal__close" @onclick="CancelGenerate" aria-label="Sluiten">×</button>
+        </div>
+        <p class="share-modal__lead api-key-modal__lead">
+            Dit deactiveert de huidige API-key. De nieuwe sleutel zie je één keer in het volgende scherm.
+        </p>
+        <div class="inline-actions" style="margin-top:1rem">
+            <button class="login-submit" type="button" disabled="@_busy" @onclick="GenerateAsync">Bevestigen</button>
+            <button class="btn-compact" type="button" disabled="@_busy" @onclick="CancelGenerate">Annuleren</button>
+        </div>
+    </div>
+}
+
 @code {
+    private enum CopiedField
+    {
+        None,
+        ApiKey,
+        Endpoint
+    }
+
+    private enum FeedbackSection
+    {
+        None,
+        Contact,
+        Csv,
+        Api
+    }
+
     private const string CopySvg =
         "<svg width=\"18\" height=\"18\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.75\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><rect x=\"9\" y=\"9\" width=\"11\" height=\"11\" rx=\"2\"/><path d=\"M5 15V5a2 2 0 0 1 2-2h10\"/></svg>";
 
@@ -298,10 +464,13 @@
     private GeneratedApiKeyItem? _generated;
     private bool _showKeyModal;
     private bool _confirmEmail;
+    private bool _confirmGenerate;
     private bool _loading = true;
     private bool _busy;
     private string? _error;
     private string? _message;
+    private bool _messageIsError;
+    private FeedbackSection _feedbackSection = FeedbackSection.None;
     private bool _directContactEnabled;
     private bool _preferMail;
     private bool _preferPhone;
@@ -310,10 +479,48 @@
     private string _contactPhone = "";
     private string _contactWhatsApp = "";
     private bool _keyCopied;
+    private bool _endpointCopied;
     private bool _keyCopyFailed;
     private string? _keyCopyMessage;
+    private string _apiBaseUrl = "http://localhost:5200";
+    private string _vacanciesEndpoint = "http://localhost:5200/api/external/vacancies";
+    private string _swaggerUrl = "http://localhost:5200/swagger";
 
-    protected override async Task OnInitializedAsync() => await ReloadAsync();
+    private string ExampleRequestCurl => ExternalApiDocsCopy.ExampleRequestCurl(_vacanciesEndpoint);
+    private static string ExampleResponseJson => ExternalApiDocsCopy.ExampleResponseJson;
+
+    protected override async Task OnInitializedAsync()
+    {
+        ResolveApiUrls();
+        await ReloadAsync();
+    }
+
+    private void ResolveApiUrls()
+    {
+        var raw = Configuration["ApiBaseUrl"];
+        if (string.IsNullOrWhiteSpace(raw))
+        {
+            raw = "http://localhost:5200";
+        }
+
+        _apiBaseUrl = Jobsy.Core.JobsyPublicUrl.NormalizeOrigin(raw).TrimEnd('/');
+        _vacanciesEndpoint = _apiBaseUrl + "/api/external/vacancies";
+        _swaggerUrl = _apiBaseUrl + "/swagger";
+    }
+
+    private void SetFeedback(FeedbackSection section, string message, bool isError = false)
+    {
+        _feedbackSection = section;
+        _message = message;
+        _messageIsError = isError;
+    }
+
+    private void ClearFeedback()
+    {
+        _feedbackSection = FeedbackSection.None;
+        _message = null;
+        _messageIsError = false;
+    }
 
     private async Task ReloadAsync()
     {
@@ -322,7 +529,6 @@
         try
         {
             var companies = await Api.GetMyCompaniesAsync();
-            // Prefer organisations; fall back to all companies so vestigingen can set contact prefs too.
             _organizations = companies
                 .Where(c => c.ParentCompanyId is null)
                 .OrderBy(c => c.Name)
@@ -333,7 +539,6 @@
             }
             else
             {
-                // Also include vestigingen so contact prefs can be set per vestiging.
                 var extras = companies
                     .Where(c => c.ParentCompanyId is not null)
                     .OrderBy(c => c.Name);
@@ -364,7 +569,11 @@
         }
     }
 
-    private async Task OnOrgChangedAsync() => await LoadKeysForSelectedAsync();
+    private async Task OnOrgChangedAsync()
+    {
+        ClearFeedback();
+        await LoadKeysForSelectedAsync();
+    }
 
     private async Task LoadKeysForSelectedAsync()
     {
@@ -422,12 +631,12 @@
 
         if (_directContactEnabled && !_preferMail && !_preferPhone && !_preferWhatsApp)
         {
-            _message = "Kies minstens één contactoptie (Mail, Telefoon of WhatsApp).";
+            SetFeedback(FeedbackSection.Contact, "Kies minstens één contactoptie (Mail, Telefoon of WhatsApp).", isError: true);
             return;
         }
 
         _busy = true;
-        _message = null;
+        ClearFeedback();
         try
         {
             var updated = await Api.UpdateContactPreferenceAsync(
@@ -442,12 +651,12 @@
             if (updated is not null)
             {
                 ApplyContactToLocal(updated);
-                _message = "Contactvoorkeur opgeslagen.";
+                SetFeedback(FeedbackSection.Contact, "Contactvoorkeur opgeslagen.");
             }
         }
         catch (Exception ex)
         {
-            _message = ex.Message;
+            SetFeedback(FeedbackSection.Contact, ex.Message, isError: true);
         }
         finally
         {
@@ -486,7 +695,8 @@
         }
 
         _busy = true;
-        _message = null;
+        ClearFeedback();
+        _confirmGenerate = false;
         try
         {
             _generated = await Api.GenerateCompanyApiKeyAsync(_org.Id);
@@ -495,7 +705,7 @@
         }
         catch (Exception ex)
         {
-            _message = ex.Message;
+            SetFeedback(FeedbackSection.Api, ex.Message, isError: true);
         }
         finally
         {
@@ -511,16 +721,16 @@
         }
 
         _busy = true;
-        _message = null;
+        ClearFeedback();
         try
         {
             await Api.DeactivateCompanyApiKeyAsync(_org.Id, _activeKey.Id);
-            _message = "API-key gedeactiveerd.";
+            SetFeedback(FeedbackSection.Api, "API-key gedeactiveerd.");
             await LoadKeysForSelectedAsync();
         }
         catch (Exception ex)
         {
-            _message = ex.Message;
+            SetFeedback(FeedbackSection.Api, ex.Message, isError: true);
         }
         finally
         {
@@ -528,9 +738,13 @@
         }
     }
 
-    private void ConfirmEmailAsync() => _confirmEmail = true;
+    private void ConfirmEmail() => _confirmEmail = true;
 
     private void CancelEmail() => _confirmEmail = false;
+
+    private void ConfirmGenerate() => _confirmGenerate = true;
+
+    private void CancelGenerate() => _confirmGenerate = false;
 
     private async Task EmailCredentialsAsync()
     {
@@ -540,19 +754,21 @@
         }
 
         _busy = true;
-        _message = null;
+        ClearFeedback();
         _confirmEmail = false;
         try
         {
             var result = await Api.EmailCompanyApiKeyCredentialsAsync(_org.Id);
-            _message = result is null
-                ? "Credentials verzonden."
-                : $"Nieuwe API-key verzonden naar {result.RecipientEmail} (prefix {result.KeyPrefix}). De vorige key is gedeactiveerd.";
+            SetFeedback(
+                FeedbackSection.Api,
+                result is null
+                    ? "Credentials verzonden."
+                    : $"Nieuwe API-key verzonden naar {result.RecipientEmail} (prefix {result.KeyPrefix}). De vorige key is gedeactiveerd.");
             await LoadKeysForSelectedAsync();
         }
         catch (Exception ex)
         {
-            _message = ex.Message;
+            SetFeedback(FeedbackSection.Api, ex.Message, isError: true);
         }
         finally
         {
@@ -569,7 +785,7 @@
 
         var enabled = e.Value is bool b && b || e.Value?.ToString() == "on";
         _busy = true;
-        _message = null;
+        ClearFeedback();
         try
         {
             var updated = await Api.UpdateCsvBatchImportAsync(_org.Id, enabled);
@@ -585,13 +801,15 @@
 
             await NavRefresh.RequestRefreshAsync();
 
-            _message = enabled
-                ? "CSV Batch Import is ingeschakeld. De tab CSV Import verschijnt in het menu."
-                : "CSV Batch Import is uitgeschakeld.";
+            SetFeedback(
+                FeedbackSection.Csv,
+                enabled
+                    ? "CSV Batch Import is ingeschakeld. De tab CSV Import verschijnt in het menu."
+                    : "CSV Batch Import is uitgeschakeld.");
         }
         catch (Exception ex)
         {
-            _message = ex.Message;
+            SetFeedback(FeedbackSection.Csv, ex.Message, isError: true);
         }
         finally
         {
@@ -604,13 +822,14 @@
         _showKeyModal = false;
         _generated = null;
         _keyCopied = false;
+        _endpointCopied = false;
         _keyCopyFailed = false;
         _keyCopyMessage = null;
     }
 
-    private async Task CopyApiKeyAsync()
+    private async Task CopyTextAsync(string? text, CopiedField field)
     {
-        if (_generated is null || string.IsNullOrWhiteSpace(_generated.PlaintextKey))
+        if (string.IsNullOrWhiteSpace(text))
         {
             return;
         }
@@ -619,21 +838,28 @@
         _keyCopyMessage = null;
         try
         {
-            var copied = await Js.InvokeAsync<bool>("jobsyGeo.copyText", _generated.PlaintextKey);
+            var copied = await Js.InvokeAsync<bool>("jobsyGeo.copyText", text);
             if (copied)
             {
-                _keyCopied = true;
-                _keyCopyMessage = "API-key gekopieerd naar het klembord.";
+                _keyCopied = field == CopiedField.ApiKey;
+                _endpointCopied = field == CopiedField.Endpoint;
+                _keyCopyMessage = field switch
+                {
+                    CopiedField.ApiKey => "API-key gekopieerd naar het klembord.",
+                    CopiedField.Endpoint => "Endpoint gekopieerd naar het klembord.",
+                    _ => "Gekopieerd naar het klembord."
+                };
                 await InvokeAsync(StateHasChanged);
                 await Task.Delay(1800);
                 _keyCopied = false;
+                _endpointCopied = false;
                 _keyCopyMessage = null;
                 await InvokeAsync(StateHasChanged);
             }
             else
             {
                 _keyCopyFailed = true;
-                _keyCopyMessage = "Kopiëren mislukt. Selecteer de key en kopieer handmatig.";
+                _keyCopyMessage = "Kopiëren mislukt. Selecteer de tekst en kopieer handmatig.";
             }
         }
         catch (Exception ex)

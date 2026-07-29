@@ -4,6 +4,7 @@ using Jobsy.Core.Authorization;
 using Jobsy.Core.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 
 namespace Jobsy.Api.Controllers;
 
@@ -11,6 +12,7 @@ namespace Jobsy.Api.Controllers;
 [ApiController]
 [Route("api/companies/{companyId:guid}/api-keys")]
 [Authorize(Roles = $"{JobsyRoles.EnterpriseManager},{JobsyRoles.Admin}")]
+[EnableRateLimiting("auth")]
 public class CompanyApiKeysController : ControllerBase
 {
     private readonly ICompanyApiKeyService _apiKeys;

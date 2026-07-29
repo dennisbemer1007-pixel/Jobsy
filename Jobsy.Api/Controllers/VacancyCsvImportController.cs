@@ -16,6 +16,7 @@ namespace Jobsy.Api.Controllers;
 [Route("api/vacancies/csv-import")]
 [Authorize(Roles = $"{JobsyRoles.EnterpriseManager},{JobsyRoles.Admin}")]
 [EnableRateLimiting("public-write")]
+[RequestSizeLimit(10 * 1024 * 1024)]
 public class VacancyCsvImportController : ControllerBase
 {
     public const string PublishHint =
@@ -345,7 +346,7 @@ public class VacancyCsvImportController : ControllerBase
     }
 
     private static CsvImportRowResultDto Fail(int rowNumber, CsvImportRowRequest data, string message) =>
-        new(rowNumber, false, null, message, data);
+        new(rowNumber, false, null, message, TruncateHeavyFields(data));
 
     private static CsvImportResultDto ToResult(IReadOnlyList<CsvImportRowResultDto> rows)
     {

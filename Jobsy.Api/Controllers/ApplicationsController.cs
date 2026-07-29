@@ -250,7 +250,7 @@ public class ApplicationsController : ControllerBase
         if (!isVerificationAttempt)
         {
             var code = VerificationCodes.CreateNumericCode();
-            application.EmailVerificationCode = code;
+            application.EmailVerificationCode = VerificationCodes.Hash(code);
             application.EmailVerificationExpiresAt = DateTime.UtcNow.AddMinutes(10);
             application.EmailVerificationFailedAttempts = 0;
             application.EmailVerifiedAt = null;
@@ -333,7 +333,7 @@ public class ApplicationsController : ControllerBase
             return BadRequest(new { message = "Te veel onjuiste pogingen. Vraag een nieuwe verificatiecode aan." });
         }
 
-        if (!VerificationCodes.FixedTimeEquals(existing.EmailVerificationCode, request.VerificationCode?.Trim()))
+        if (!VerificationCodes.MatchesHash(existing.EmailVerificationCode, request.VerificationCode?.Trim()))
         {
             var attempts = existing.EmailVerificationFailedAttempts;
             var lockedOut = VerificationCodes.RegisterFailedAttempt(ref attempts);

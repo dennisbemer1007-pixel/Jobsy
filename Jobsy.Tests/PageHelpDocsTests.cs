@@ -19,6 +19,7 @@ public class PageHelpDocsTests
     [InlineData("/home", "Home / dashboard")]
     [InlineData("/candidate/applications", "Mijn sollicitaties")]
     [InlineData("/employer/tokens", "Tokens")]
+    [InlineData("/employer/company", "Bedrijfsgegevens")]
     [InlineData("/admin/integrations", "Beheer · Integraties")]
     [InlineData("/branch/vacancies/new", "Vacature plaatsen")]
     public void Known_paths_return_titled_docs(string path, string title)

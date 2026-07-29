@@ -217,6 +217,11 @@ public class ExternalVacanciesController : ControllerBase
             vacancy.EndDate = end;
         }
 
+        if (vacancy.EndDate < vacancy.StartDate)
+        {
+            return BadRequest(new { message = "Einddatum mag niet vóór de startdatum liggen." });
+        }
+
         if (request.RequiredTransport is TransportMode transport)
         {
             vacancy.RequiredTransport = transport;

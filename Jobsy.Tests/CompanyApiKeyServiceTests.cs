@@ -87,6 +87,8 @@ public class CompanyApiKeyServiceTests
         Assert.Equal("manager@example.com", result.RecipientEmail);
         Assert.Single(email.Messages);
         Assert.Contains("lobsy_", email.Messages[0].BodyHtml);
+        Assert.Contains("https://api.example.test/api/external/vacancies", email.Messages[0].BodyHtml);
+        Assert.Contains("https://api.example.test/swagger", email.Messages[0].BodyHtml);
         Assert.DoesNotContain(first.PlaintextKey, email.Messages[0].BodyHtml);
         Assert.Equal(1, await db.ApiKeys.CountAsync(k => k.IsActive));
         Assert.Equal(2, await db.ApiKeys.CountAsync());
@@ -156,7 +158,75 @@ public class CompanyApiKeyServiceTests
     }
 
     private static CompanyApiKeyService CreateSut(JobsyDbContext db, IEmailService? email = null)
-        => new(db, email ?? new RecordingEmailService(), NullLogger<CompanyApiKeyService>.Instance);
+        => new(
+            db,
+            email ?? new RecordingEmailService(),
+            new FixedConfig("PublicApiBaseUrl", "https://api.example.test"),
+            NullLogger<CompanyApiKeyService>.Instance);
+
+    private sealed class FixedConfig : Microsoft.Extensions.Configuration.IConfiguration
+    {
+        private readonly Dictionary<string, string?> _values;
+
+        public FixedConfig(string key, string? value)
+            => _values = new Dictionary<string, string?>(StringComparer.OrdinalIgnoreCase) { [key] = value };
+
+        public string? this[string key]
+        {
+            get => _values.TryGetValue(key, out var v) ? v : null;
+            set => _values[key] = value;
+        }
+
+        public IEnumerable<Microsoft.Extensions.Configuration.IConfigurationSection> GetChildren() => [];
+
+        public Microsoft.Extensions.Primitives.IChangeToken GetReloadToken() => new NoopChangeToken();
+
+        public Microsoft.Extensions.Configuration.IConfigurationSection GetSection(string key)
+            => new FixedSection(this, key);
+
+        private sealed class FixedSection : Microsoft.Extensions.Configuration.IConfigurationSection
+        {
+            private readonly FixedConfig _root;
+            public FixedSection(FixedConfig root, string key)
+            {
+                _root = root;
+                Key = key;
+                Path = key;
+            }
+
+            public string Key { get; }
+            public string Path { get; }
+            public string? Value
+            {
+                get => _root[Key];
+                set => _root[Key] = value;
+            }
+
+            public string? this[string key]
+            {
+                get => _root[Path + ":" + key];
+                set => _root[Path + ":" + key] = value;
+            }
+
+            public IEnumerable<Microsoft.Extensions.Configuration.IConfigurationSection> GetChildren() => [];
+            public Microsoft.Extensions.Primitives.IChangeToken GetReloadToken() => new NoopChangeToken();
+            public Microsoft.Extensions.Configuration.IConfigurationSection GetSection(string key)
+                => new FixedSection(_root, Path + ":" + key);
+        }
+
+        private sealed class NoopChangeToken : Microsoft.Extensions.Primitives.IChangeToken
+        {
+            public bool HasChanged => false;
+            public bool ActiveChangeCallbacks => false;
+            public IDisposable RegisterChangeCallback(Action<object?> callback, object? state) => EmptyDisposable.Instance;
+        }
+
+        private sealed class EmptyDisposable : IDisposable
+        {
+            public static readonly EmptyDisposable Instance = new();
+            public void Dispose() { }
+        }
+    }
 
     private static async Task<Guid> SeedCompanyAsync(JobsyDbContext db)
     {
