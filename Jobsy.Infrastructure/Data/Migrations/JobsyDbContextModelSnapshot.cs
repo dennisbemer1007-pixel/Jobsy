@@ -713,6 +713,33 @@ namespace Jobsy.Infrastructure.Data.Migrations
                 });
 
             
+            modelBuilder.Entity("Jobsy.Core.Entities.AboutPageSettings", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("BodyHtml")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Lead")
+                        .HasMaxLength(400)
+                        .HasColumnType("character varying(400)");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<DateTime>("UpdatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("AboutPageSettings");
+                });
+
             modelBuilder.Entity("Jobsy.Core.Entities.PlatformCompanySettings", b =>
                 {
                     b.Property<Guid>("Id")

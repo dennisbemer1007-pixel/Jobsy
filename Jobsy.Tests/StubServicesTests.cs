@@ -77,6 +77,7 @@ public class StubServicesTests
         var sut = new IntegrationHealthStub(
             credentials,
             http,
+            new EmailServiceStub(db, NullLogger<EmailServiceStub>.Instance),
             Options.Create(new OpenAiOptions()),
             NullLogger<IntegrationHealthStub>.Instance);
 

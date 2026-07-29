@@ -83,15 +83,61 @@ public static class WorkTypeLabels
         => types != WorkType.None && CountFlags(types) <= MaxPerVacancy;
 
     public static bool MatchesFilter(WorkType vacancyTypes, string? selectedLabel)
-        => MatchesFilter(vacancyTypes, storedLabels: null, selectedLabel);
+        => MatchesFilter(vacancyTypes, storedLabels: null, selectedLabels: WrapLabel(selectedLabel));
 
     public static bool MatchesFilter(WorkType vacancyTypes, string? storedLabels, string? selectedLabel)
+        => MatchesFilter(vacancyTypes, storedLabels, selectedLabels: WrapLabel(selectedLabel));
+
+    private static IEnumerable<string>? WrapLabel(string? selectedLabel)
+        => string.IsNullOrWhiteSpace(selectedLabel) ? null : [selectedLabel];
+
+    /// <summary>
+    /// True when no filter is set, or the vacancy matches any selected branch (OR).
+    /// Accepts a single label, repeated query values, or comma-separated lists.
+    /// </summary>
+    public static bool MatchesFilter(
+        WorkType vacancyTypes,
+        string? storedLabels,
+        IEnumerable<string>? selectedLabels)
     {
-        if (string.IsNullOrWhiteSpace(selectedLabel))
+        var selected = NormalizeFilterLabels(selectedLabels);
+        if (selected.Length == 0)
         {
             return true;
         }
 
+        return selected.Any(label => MatchesSingleFilter(vacancyTypes, storedLabels, label));
+    }
+
+    public static string[] NormalizeFilterLabels(IEnumerable<string>? selectedLabels)
+    {
+        if (selectedLabels is null)
+        {
+            return [];
+        }
+
+        return selectedLabels
+            .SelectMany(SplitStored)
+            .Select(NormalizeKnownLabel)
+            .Where(l => !string.IsNullOrWhiteSpace(l))
+            .Select(l => l!)
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToArray();
+    }
+
+    private static string? NormalizeKnownLabel(string raw)
+    {
+        var fromFlags = Expand(Parse(raw)).FirstOrDefault();
+        if (!string.IsNullOrWhiteSpace(fromFlags))
+        {
+            return fromFlags;
+        }
+
+        return All.FirstOrDefault(l => l.Equals(raw.Trim(), StringComparison.OrdinalIgnoreCase));
+    }
+
+    private static bool MatchesSingleFilter(WorkType vacancyTypes, string? storedLabels, string selectedLabel)
+    {
         var labels = ResolveLabels(vacancyTypes, storedLabels);
         if (labels.Any(l => string.Equals(l, selectedLabel, StringComparison.OrdinalIgnoreCase)))
         {

@@ -15,6 +15,11 @@ public interface IIntegrationHealthService
     Task<IntegrationHealthResult> TestConnectionAsync(
         IntegrationKey key,
         CancellationToken cancellationToken = default);
+
+    /// <summary>Sends a real test e-mail via the configured Mail SMTP settings.</summary>
+    Task<SendTestMailResult> SendTestMailAsync(
+        string to,
+        CancellationToken cancellationToken = default);
 }
 
 public record IntegrationHealthResult(
@@ -24,3 +29,8 @@ public record IntegrationHealthResult(
     string StatusMessage,
     DateTime CheckedAtUtc,
     bool? LastPingOk = null);
+
+public record SendTestMailResult(
+    bool Ok,
+    bool SentViaSmtp,
+    string Message);

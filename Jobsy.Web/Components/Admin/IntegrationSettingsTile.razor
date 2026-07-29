@@ -147,11 +147,22 @@
                     <input @bind="_baseUrl"
                            @bind:event="oninput"
                            @bind:after="MarkDirty"
-                           placeholder="@(IsMailIntegration ? "smtp.gmail.com of smtp.gmail.com:587" : "https://...")" />
+                           placeholder="@(IsMailIntegration ? "smtp.gmail.com" : "https://...")" />
                 </label>
                 @if (IsMailIntegration)
                 {
-                    <p class="muted">Geen https:// — alleen de SMTP-host (Gmail: smtp.gmail.com, poort 587 standaard).</p>
+                    <label>
+                        SMTP-poort
+                        <input type="number"
+                               min="1"
+                               max="65535"
+                               inputmode="numeric"
+                               @bind="_smtpPort"
+                               @bind:event="oninput"
+                               @bind:after="MarkDirty"
+                               placeholder="587" />
+                    </label>
+                    <p class="muted">Alleen de hostnaam (geen https://). Standaardpoort 587 (STARTTLS); 465 voor SSL.</p>
                 }
             }
 
@@ -171,6 +182,28 @@
                     <button class="btn-compact" type="button" disabled="@_busy" @onclick="ClearSecretsAsync" @onclick:stopPropagation="true">Secrets wissen</button>
                 }
             </div>
+
+            @if (IsMailIntegration)
+            {
+                <div class="integration-test-mail" @onclick:stopPropagation="true">
+                    <label>
+                        Testmail naar
+                        <input type="email"
+                               autocomplete="email"
+                               @bind="_testMailTo"
+                               @bind:event="oninput"
+                               placeholder="jouw@email.nl" />
+                    </label>
+                    <button class="btn-compact btn-compact--primary"
+                            type="button"
+                            disabled="@(_busy || string.IsNullOrWhiteSpace(_testMailTo))"
+                            @onclick="SendTestMailAsync"
+                            @onclick:stopPropagation="true">
+                        Stuur testmail
+                    </button>
+                    <p class="muted">Stuurt een echte testmail via de opgeslagen SMTP-instellingen.</p>
+                </div>
+            }
 
             @if (!string.IsNullOrEmpty(_localMessage))
             {
@@ -200,7 +233,9 @@
     private string _tenantId = "";
     private string _model = "gpt-4o-mini";
     private string _baseUrl = "";
+    private string _smtpPort = "587";
     private string _fromAddress = "";
+    private string _testMailTo = "";
 
     private IntegrationHelpDocs.Doc? Help => IntegrationHelpDocs.TryGet(Credential.Key);
 
@@ -256,10 +291,62 @@
         _clientId = Credential.ClientId ?? "";
         _tenantId = Credential.TenantId ?? "";
         _model = Credential.Model ?? "gpt-4o-mini";
-        _baseUrl = Credential.BaseUrl ?? "";
+        SplitHostAndPort(Credential.BaseUrl, out _baseUrl, out _smtpPort);
         _fromAddress = Credential.FromAddress ?? "";
+        if (IsMailIntegration && string.IsNullOrWhiteSpace(_testMailTo) && !string.IsNullOrWhiteSpace(_fromAddress))
+        {
+            _testMailTo = _fromAddress;
+        }
+
         _boundUpdatedAtUtc = Credential.UpdatedAtUtc;
         _dirty = false;
+    }
+
+    private static void SplitHostAndPort(string? stored, out string host, out string port)
+    {
+        host = "";
+        port = "587";
+        if (string.IsNullOrWhiteSpace(stored))
+        {
+            return;
+        }
+
+        var raw = stored.Trim();
+        var colon = raw.LastIndexOf(':');
+        if (colon > 0
+            && colon < raw.Length - 1
+            && int.TryParse(raw[(colon + 1)..], out var parsed)
+            && parsed is > 0 and <= 65535)
+        {
+            host = raw[..colon].Trim();
+            port = parsed.ToString();
+            return;
+        }
+
+        host = raw;
+    }
+
+    private static string CombineHostAndPort(string host, string portText)
+    {
+        var cleanedHost = (host ?? string.Empty).Trim();
+        // Drop accidental host:port if the user typed both into the host field.
+        var colon = cleanedHost.LastIndexOf(':');
+        if (colon > 0
+            && colon < cleanedHost.Length - 1
+            && int.TryParse(cleanedHost[(colon + 1)..], out var embedded)
+            && embedded is > 0 and <= 65535)
+        {
+            cleanedHost = cleanedHost[..colon].Trim();
+        }
+
+        if (!int.TryParse((portText ?? string.Empty).Trim(), out var port) || port is < 1 or > 65535)
+        {
+            port = 587;
+        }
+
+        return string.IsNullOrWhiteSpace(cleanedHost)
+            ? string.Empty
+            : $"{cleanedHost}:{port}";
     }
 
     private void MarkDirty() => _dirty = true;
@@ -286,7 +373,9 @@
         ClientId = Credential.SupportsOAuth ? _clientId : null,
         ClientSecret = Credential.SupportsOAuth ? _clientSecret : null,
         TenantId = Credential.SupportsTenantId ? _tenantId : null,
-        BaseUrl = Credential.SupportsBaseUrl ? _baseUrl : null,
+        BaseUrl = Credential.SupportsBaseUrl
+            ? (IsMailIntegration ? CombineHostAndPort(_baseUrl, _smtpPort) : _baseUrl)
+            : null,
         FromAddress = Credential.SupportsFromAddress ? _fromAddress : null,
         ClearApiKey = clearSecrets && Credential.SupportsApiKey,
         ClearClientSecret = clearSecrets && Credential.SupportsOAuth
@@ -366,6 +455,43 @@
             {
                 _localOk = result.IsActive;
                 _localMessage = result.StatusMessage;
+            }
+
+            await OnChanged.InvokeAsync();
+        }
+        catch (Exception ex)
+        {
+            _localOk = false;
+            _localMessage = ex.Message;
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private async Task SendTestMailAsync()
+    {
+        _busy = true;
+        _localMessage = null;
+        try
+        {
+            var hasUnsavedSecrets =
+                !string.IsNullOrWhiteSpace(_apiKey) ||
+                !string.IsNullOrWhiteSpace(_clientSecret);
+            if (_dirty || hasUnsavedSecrets)
+            {
+                await Api.SaveIntegrationCredentialAsync(Credential.Key, BuildSaveForm());
+                _apiKey = "";
+                _clientSecret = "";
+                _dirty = false;
+            }
+
+            var result = await Api.SendTestMailAsync(_testMailTo);
+            if (result is not null)
+            {
+                _localOk = result.Ok;
+                _localMessage = result.Message;
             }
 
             await OnChanged.InvokeAsync();

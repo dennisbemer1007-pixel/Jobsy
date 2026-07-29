@@ -2,6 +2,7 @@ using System.Net.Http.Json;
 using System.Net;
 using System.Text.Json;
 using Jobsy.Core.Enums;
+using Jobsy.Core.Rules;
 using Jobsy.Web.Models;
 using Microsoft.JSInterop;
 
@@ -85,7 +86,7 @@ public sealed class JobsyApiClient : IAsyncDisposable
         int? ageYears = null,
         decimal? minHourlyWage = null,
         decimal? maxHourlyWage = null,
-        string? workType = null,
+        IEnumerable<string>? workTypes = null,
         CancellationToken ct = default)
     {
         var qs = $"transport={Uri.EscapeDataString(transport)}&maxMinutes={maxMinutes}";
@@ -115,9 +116,12 @@ public sealed class JobsyApiClient : IAsyncDisposable
             qs += $"&maxHourlyWage={maxHourlyWage.Value.ToString(System.Globalization.CultureInfo.InvariantCulture)}";
         }
 
-        if (!string.IsNullOrWhiteSpace(workType))
+        if (workTypes is not null)
         {
-            qs += $"&workType={Uri.EscapeDataString(workType)}";
+            foreach (var workType in WorkTypeLabels.NormalizeFilterLabels(workTypes))
+            {
+                qs += $"&workType={Uri.EscapeDataString(workType)}";
+            }
         }
 
         return await _http.GetFromJsonAsync<List<VacancyListItem>>($"api/vacancies/discover?{qs}", ct) ?? [];
@@ -1156,6 +1160,21 @@ public sealed class JobsyApiClient : IAsyncDisposable
         return await response.Content.ReadFromJsonAsync<IntegrationHealthItem>(cancellationToken: ct);
     }
 
+    public async Task<SendTestMailResultItem?> SendTestMailAsync(string to, CancellationToken ct = default)
+    {
+        var response = await _http.PostAsJsonAsync(
+            "api/integrations/health/Mail/send-test",
+            new { to },
+            ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException(TryExtractMessage(body) ?? body);
+        }
+
+        return await response.Content.ReadFromJsonAsync<SendTestMailResultItem>(cancellationToken: ct);
+    }
+
     public async Task<IReadOnlyList<IntegrationCredentialItem>> GetIntegrationCredentialsAsync(
         CancellationToken ct = default)
         => await _http.GetFromJsonAsync<List<IntegrationCredentialItem>>(
@@ -1211,6 +1230,26 @@ public sealed class JobsyApiClient : IAsyncDisposable
         }
 
         return await response.Content.ReadFromJsonAsync<PlatformCompanyItem>(cancellationToken: ct);
+    }
+
+    public async Task<AboutPageItem?> GetPublicAboutPageAsync(CancellationToken ct = default)
+        => await _http.GetFromJsonAsync<AboutPageItem>("api/site/about", ct);
+
+    public async Task<AboutPageItem?> GetAboutPageAsync(CancellationToken ct = default)
+        => await _http.GetFromJsonAsync<AboutPageItem>("api/settings/about", ct);
+
+    public async Task<AboutPageItem?> SaveAboutPageAsync(
+        AboutPageItem about,
+        CancellationToken ct = default)
+    {
+        var response = await _http.PutAsJsonAsync("api/settings/about", about, ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException(TryExtractMessage(body) ?? body);
+        }
+
+        return await response.Content.ReadFromJsonAsync<AboutPageItem>(cancellationToken: ct);
     }
 
     public ValueTask DisposeAsync()
@@ -1527,6 +1566,13 @@ public sealed class IntegrationHealthItem
     public bool? LastPingOk { get; set; }
 }
 
+public sealed class SendTestMailResultItem
+{
+    public bool Ok { get; set; }
+    public bool SentViaSmtp { get; set; }
+    public string Message { get; set; } = string.Empty;
+}
+
 public sealed class IntegrationCredentialItem
 {
     public string Key { get; set; } = string.Empty;
@@ -1587,6 +1633,14 @@ public sealed class PlatformCompanyItem
     public string? VatNumber { get; set; }
     public string? Phone { get; set; }
     public string? Email { get; set; }
+    public DateTime? UpdatedAtUtc { get; set; }
+}
+
+public sealed class AboutPageItem
+{
+    public string Title { get; set; } = "Wie zijn wij";
+    public string Lead { get; set; } = "Over Lobsy — en de mens achter de knop";
+    public string BodyHtml { get; set; } = string.Empty;
     public DateTime? UpdatedAtUtc { get; set; }
 }
 

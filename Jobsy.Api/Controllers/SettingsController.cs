@@ -19,17 +19,20 @@ public class SettingsController : ControllerBase
     private readonly IIntegrationCredentialService _credentials;
     private readonly IPlatformFeatureService _features;
     private readonly IPlatformCompanySettingsService _companySettings;
+    private readonly IAboutPageSettingsService _aboutPage;
 
     public SettingsController(
         JobsyDbContext db,
         IIntegrationCredentialService credentials,
         IPlatformFeatureService features,
-        IPlatformCompanySettingsService companySettings)
+        IPlatformCompanySettingsService companySettings,
+        IAboutPageSettingsService aboutPage)
     {
         _db = db;
         _credentials = credentials;
         _features = features;
         _companySettings = companySettings;
+        _aboutPage = aboutPage;
     }
 
     [HttpGet("token-pricing")]
@@ -315,6 +318,27 @@ public class SettingsController : ControllerBase
         return Ok(ToCompanyDto(snap));
     }
 
+    [HttpGet("about")]
+    public async Task<ActionResult<AboutPageDto>> GetAboutPage(CancellationToken cancellationToken)
+    {
+        var snap = await _aboutPage.GetAsync(cancellationToken);
+        return Ok(SiteController.ToDto(snap));
+    }
+
+    [HttpPut("about")]
+    public async Task<ActionResult<AboutPageDto>> UpdateAboutPage(
+        [FromBody] UpdateAboutPageRequest request,
+        CancellationToken cancellationToken)
+    {
+        var snap = await _aboutPage.UpdateAsync(
+            new AboutPageUpdate(
+                request.Title ?? "",
+                request.Lead,
+                request.BodyHtml ?? ""),
+            cancellationToken);
+        return Ok(SiteController.ToDto(snap));
+    }
+
     [HttpGet("integration-credentials")]
     public async Task<ActionResult<IEnumerable<IntegrationCredentialDto>>> GetIntegrationCredentials(
         CancellationToken cancellationToken)
@@ -438,3 +462,8 @@ public sealed record UpdatePlatformCompanyRequest(
     string? VatNumber,
     string? Phone,
     string? Email);
+
+public sealed record UpdateAboutPageRequest(
+    string? Title,
+    string? Lead,
+    string? BodyHtml);

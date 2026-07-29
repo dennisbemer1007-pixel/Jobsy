@@ -11,17 +11,20 @@ public sealed class IntegrationHealthStub : IIntegrationHealthService
 {
     private readonly IIntegrationCredentialService _credentials;
     private readonly IHttpClientFactory _httpClientFactory;
+    private readonly IEmailService _email;
     private readonly OpenAiOptions _openAiOptions;
     private readonly ILogger<IntegrationHealthStub> _logger;
 
     public IntegrationHealthStub(
         IIntegrationCredentialService credentials,
         IHttpClientFactory httpClientFactory,
+        IEmailService email,
         IOptions<OpenAiOptions> openAiOptions,
         ILogger<IntegrationHealthStub> logger)
     {
         _credentials = credentials;
         _httpClientFactory = httpClientFactory;
+        _email = email;
         _openAiOptions = openAiOptions.Value;
         _logger = logger;
     }
@@ -57,6 +60,71 @@ public sealed class IntegrationHealthStub : IIntegrationHealthService
             message,
             DateTime.UtcNow,
             ok);
+    }
+
+    public async Task<SendTestMailResult> SendTestMailAsync(
+        string to,
+        CancellationToken cancellationToken = default)
+    {
+        var trimmed = (to ?? string.Empty).Trim();
+        if (!LooksLikeEmail(trimmed))
+        {
+            return new SendTestMailResult(
+                false,
+                false,
+                "Vul een geldig e-mailadres in.");
+        }
+
+        var secrets = await _credentials.GetSecretsAsync(IntegrationKey.Mail, cancellationToken);
+        var smtpReady = SmtpEmailService.TryResolveSmtp(secrets, out var smtp);
+        var redacted = EmailServiceStub.RedactEmail(trimmed);
+        var body =
+            "<p>Dit is een testmail van Lobsy.</p>" +
+            "<p>Als je dit bericht ziet, werkt de uitgaande SMTP-configuratie.</p>";
+
+        if (!smtpReady)
+        {
+            await _email.SendAsync(
+                new EmailMessage(trimmed, "Lobsy testmail", body, "MailTest"),
+                cancellationToken);
+            var stubMessage =
+                "SMTP niet volledig geconfigureerd (host, poort, gebruiker, wachtwoord/app-wachtwoord, From). " +
+                $"Testmail naar {redacted} is alleen in PlatformLog gelogd — niet echt verzonden.";
+            await _credentials.SavePingResultAsync(IntegrationKey.Mail, false, stubMessage, cancellationToken);
+            return new SendTestMailResult(false, false, stubMessage);
+        }
+
+        try
+        {
+            await _email.SendAsync(
+                new EmailMessage(trimmed, "Lobsy testmail", body, "MailTest"),
+                cancellationToken);
+            var okMessage =
+                $"Testmail verzonden naar {redacted} via {smtp.Host}:{smtp.Port}.";
+            await _credentials.SavePingResultAsync(IntegrationKey.Mail, true, okMessage, cancellationToken);
+            return new SendTestMailResult(true, true, okMessage);
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            _logger.LogWarning(ex, "Testmail via SMTP mislukt");
+            var failMessage = $"Testmail mislukt via {smtp.Host}:{smtp.Port}: {ex.Message}";
+            await _credentials.SavePingResultAsync(IntegrationKey.Mail, false, failMessage, cancellationToken);
+            return new SendTestMailResult(false, true, failMessage);
+        }
+    }
+
+    private static bool LooksLikeEmail(string value)
+    {
+        if (string.IsNullOrWhiteSpace(value) || value.Length > 254)
+        {
+            return false;
+        }
+
+        var at = value.IndexOf('@');
+        return at > 0
+            && at < value.Length - 1
+            && value.IndexOf('@', at + 1) < 0
+            && value.Contains('.', StringComparison.Ordinal);
     }
 
     private async Task<(bool Ok, string Message)> RunLiveTestAsync(
@@ -188,7 +256,7 @@ public sealed class IntegrationHealthStub : IIntegrationHealthService
             return (true, "Mail API-key aanwezig (SMTP niet geconfigureerd — e-mail gaat naar PlatformLog-stub).");
         }
 
-        return (false, "Configureer SMTP: BaseUrl (host), ClientId (gebruiker), ClientSecret (wachtwoord/app-wachtwoord) en From.");
+        return (false, "Configureer SMTP: host, poort, ClientId (gebruiker), ClientSecret (wachtwoord/app-wachtwoord) en From.");
     }
 
     private async Task<(bool Ok, string Message)> TestOAuthAsync(

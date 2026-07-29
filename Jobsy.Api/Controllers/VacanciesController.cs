@@ -74,6 +74,7 @@ public class VacanciesController : ControllerBase
     /// Banenkaart discover: without origin returns all active vacancies (optional workType/wage).
     /// With origin, filters by transport, travel time and optional radius via IRoutingService.
     /// Optional ageYears resolves salary-table wages; min/max hourly filters apply when age is set.
+    /// Pass repeated workType query values (or comma-separated) to match any selected branch.
     /// </summary>
     [HttpGet("discover")]
     [AllowAnonymous]
@@ -86,7 +87,7 @@ public class VacanciesController : ControllerBase
         [FromQuery] int? ageYears = null,
         [FromQuery] decimal? minHourlyWage = null,
         [FromQuery] decimal? maxHourlyWage = null,
-        [FromQuery] string? workType = null,
+        [FromQuery] string[]? workType = null,
         CancellationToken cancellationToken = default)
     {
         maxMinutes = Math.Clamp(maxMinutes, 5, 90);

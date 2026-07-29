@@ -1761,6 +1761,15 @@ a {
     font-weight: 600;
 }
 
+.filter-section .filter-check {
+    flex-direction: row;
+    align-items: center;
+    margin-top: 0;
+    color: var(--text);
+    font-size: 0.88rem;
+    font-weight: 500;
+}
+
 .filter-section select,
 .filter-section input[type="number"] {
     border: 1px solid var(--border);
@@ -1807,6 +1816,42 @@ a {
 
 .filter-required select {
     border-color: color-mix(in srgb, var(--brand) 35%, var(--border));
+}
+
+.filter-branches {
+    grid-column: 1 / -1;
+    margin: 0;
+    padding: 0;
+    border: none;
+    min-width: 0;
+}
+
+.filter-branches__legend {
+    padding: 0;
+    margin: 0 0 0.35rem;
+    font-size: 0.75rem;
+    color: var(--muted);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+}
+
+.filter-branches__options {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem 0.75rem;
+}
+
+.filter-section .filter-branches__options {
+    margin-top: 0.15rem;
+}
+
+.filter-branches__options .filter-check {
+    text-transform: none;
+    letter-spacing: normal;
+    color: var(--text);
+    font-size: 0.88rem;
+    font-weight: 500;
 }
 
 .vacancy-pane {
@@ -1948,7 +1993,7 @@ a {
     letter-spacing: 0.03em;
 }
 
-.filter-bar input,
+.filter-bar input:not([type="checkbox"]):not([type="radio"]),
 .filter-bar select {
     border: 1px solid var(--border);
     border-radius: 6px;
@@ -5308,6 +5353,19 @@ a.map-popup__cta {
     box-sizing: border-box;
 }
 
+.integration-test-mail {
+    display: flex;
+    flex-direction: column;
+    gap: 0.45rem;
+    margin-top: 0.35rem;
+    padding-top: 0.65rem;
+    border-top: 1px dashed var(--border);
+}
+
+.integration-test-mail .btn-compact {
+    align-self: flex-start;
+}
+
 /* Mask typed secrets without type=password (avoids browser autofill dots on empty fields). */
 .integration-key-form input.integration-secret-input {
     -webkit-text-security: disc;
@@ -6123,6 +6181,11 @@ button.linkish:hover {
     text-underline-offset: 0.15em;
 }
 
+.legal-toc a.legal-toc__link--active {
+    color: var(--text);
+    text-decoration-thickness: 2px;
+}
+
 .legal-doc section {
     margin-bottom: 1.5rem;
 }
@@ -6151,6 +6214,55 @@ button.linkish:hover {
 
 .legal-doc li {
     margin-bottom: 0.35rem;
+}
+
+.about-page {
+    position: relative;
+    overflow: hidden;
+}
+
+.about-page__watermark {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    pointer-events: none;
+    user-select: none;
+    z-index: 0;
+}
+
+.about-page__watermark img {
+    width: min(520px, 88%);
+    height: auto;
+    max-height: 70vh;
+    object-fit: contain;
+    opacity: 0.08;
+    transform: translateY(1.5rem);
+}
+
+.about-page > *:not(.about-page__watermark) {
+    position: relative;
+    z-index: 1;
+}
+
+.about-doc strong {
+    font-weight: 700;
+}
+
+.about-admin-body {
+    width: 100%;
+    min-height: 22rem;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 0.9rem;
+    line-height: 1.45;
+}
+
+.about-admin-preview__doc {
+    margin-top: 0.75rem;
+    padding: 1rem 1.1rem;
+    background: color-mix(in srgb, var(--surface) 88%, var(--brand) 4%);
+    border: 1px solid var(--border);
+    border-radius: 0.75rem;
 }
 
 .legal-consent {
