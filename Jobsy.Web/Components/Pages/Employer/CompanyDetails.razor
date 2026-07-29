@@ -2,6 +2,7 @@
 @rendermode @(new InteractiveServerRenderMode(prerender: false))
 @attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "EnterpriseManager,Admin")]
 @inject JobsyApiClient Api
+@inject IJSRuntime Js
 
 <PageTitle>Bedrijfsgegevens · Lobsy</PageTitle>
 
@@ -218,7 +219,7 @@
 @if (_showKeyModal && _generated is not null)
 {
     <div class="share-modal-backdrop" @onclick="CloseKeyModal"></div>
-    <div class="share-modal" role="dialog" aria-modal="true" aria-labelledby="api-key-modal-title">
+    <div class="share-modal api-key-modal" role="dialog" aria-modal="true" aria-labelledby="api-key-modal-title">
         <div class="share-modal__header">
             <h2 id="api-key-modal-title">API-key gegenereerd</h2>
             <button type="button" class="share-modal__close" @onclick="CloseKeyModal" aria-label="Sluiten">×</button>
@@ -227,10 +228,33 @@
             <strong>Let op:</strong> deze sleutel is slechts één keer zichtbaar. Kopieer en bewaar hem veilig.
             Gebruik daarna niet “Verzend via e-mail” — dat maakt een andere key aan.
         </p>
-        <label>
-            API-key
-            <input type="text" readonly value="@_generated.PlaintextKey" onclick="this.select()" style="font-family:monospace" />
-        </label>
+        <label class="api-key-modal__label" for="api-key-value">API-key</label>
+        <div class="api-key-modal__row">
+            <input id="api-key-value"
+                   class="api-key-modal__input"
+                   type="text"
+                   readonly
+                   value="@_generated.PlaintextKey"
+                   onclick="this.select()" />
+            <button type="button"
+                    class="api-key-modal__copy @(_keyCopied ? "is-copied" : null)"
+                    title="@(_keyCopied ? "Gekopieerd" : "API-key kopiëren")"
+                    aria-label="@(_keyCopied ? "Gekopieerd" : "API-key kopiëren")"
+                    @onclick="CopyApiKeyAsync">
+                @if (_keyCopied)
+                {
+                    @((MarkupString)CheckSvg)
+                }
+                else
+                {
+                    @((MarkupString)CopySvg)
+                }
+            </button>
+        </div>
+        @if (!string.IsNullOrEmpty(_keyCopyMessage))
+        {
+            <p class="state-message @(_keyCopyFailed ? "error" : null)">@_keyCopyMessage</p>
+        }
         <p class="muted">Header: <code>X-API-Key: …</code> · prefix @_generated.KeyPrefix</p>
         <div class="inline-actions" style="margin-top:1rem">
             <button class="login-submit" type="button" @onclick="CloseKeyModal">Ik heb de key bewaard</button>
@@ -258,6 +282,12 @@
 }
 
 @code {
+    private const string CopySvg =
+        "<svg width=\"18\" height=\"18\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.75\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><rect x=\"9\" y=\"9\" width=\"11\" height=\"11\" rx=\"2\"/><path d=\"M5 15V5a2 2 0 0 1 2-2h10\"/></svg>";
+
+    private const string CheckSvg =
+        "<svg width=\"18\" height=\"18\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"m5 12 5 5L20 7\"/></svg>";
+
     private List<CompanySummary> _organizations = [];
     private CompanySummary? _org;
     private string _selectedOrgId = "";
@@ -278,6 +308,9 @@
     private string _contactEmail = "";
     private string _contactPhone = "";
     private string _contactWhatsApp = "";
+    private bool _keyCopied;
+    private bool _keyCopyFailed;
+    private string? _keyCopyMessage;
 
     protected override async Task OnInitializedAsync() => await ReloadAsync();
 
@@ -567,5 +600,43 @@
     {
         _showKeyModal = false;
         _generated = null;
+        _keyCopied = false;
+        _keyCopyFailed = false;
+        _keyCopyMessage = null;
+    }
+
+    private async Task CopyApiKeyAsync()
+    {
+        if (_generated is null || string.IsNullOrWhiteSpace(_generated.PlaintextKey))
+        {
+            return;
+        }
+
+        _keyCopyFailed = false;
+        _keyCopyMessage = null;
+        try
+        {
+            var copied = await Js.InvokeAsync<bool>("jobsyGeo.copyText", _generated.PlaintextKey);
+            if (copied)
+            {
+                _keyCopied = true;
+                _keyCopyMessage = "API-key gekopieerd naar het klembord.";
+                await InvokeAsync(StateHasChanged);
+                await Task.Delay(1800);
+                _keyCopied = false;
+                _keyCopyMessage = null;
+                await InvokeAsync(StateHasChanged);
+            }
+            else
+            {
+                _keyCopyFailed = true;
+                _keyCopyMessage = "Kopiëren mislukt. Selecteer de key en kopieer handmatig.";
+            }
+        }
+        catch (Exception ex)
+        {
+            _keyCopyFailed = true;
+            _keyCopyMessage = ex.Message;
+        }
     }
 }
