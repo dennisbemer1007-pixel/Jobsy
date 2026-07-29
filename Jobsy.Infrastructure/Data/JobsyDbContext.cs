@@ -36,6 +36,7 @@ public class JobsyDbContext : DbContext
     public DbSet<IntegrationCredential> IntegrationCredentials => Set<IntegrationCredential>();
     public DbSet<PlatformFeatureSettings> PlatformFeatureSettings => Set<PlatformFeatureSettings>();
     public DbSet<PlatformCompanySettings> PlatformCompanySettings => Set<PlatformCompanySettings>();
+    public DbSet<AboutPageSettings> AboutPageSettings => Set<AboutPageSettings>();
     public DbSet<PlatformLog> PlatformLogs => Set<PlatformLog>();
     public DbSet<TokenPurchaseCheckout> TokenPurchaseCheckouts => Set<TokenPurchaseCheckout>();
     public DbSet<CompanyRegistration> CompanyRegistrations => Set<CompanyRegistration>();
@@ -416,6 +417,14 @@ public class JobsyDbContext : DbContext
             entity.Property(e => e.VatNumber).HasMaxLength(32);
             entity.Property(e => e.Phone).HasMaxLength(40);
             entity.Property(e => e.Email).HasMaxLength(200);
+        });
+
+        modelBuilder.Entity<AboutPageSettings>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Title).HasMaxLength(200).IsRequired();
+            entity.Property(e => e.Lead).HasMaxLength(400);
+            entity.Property(e => e.BodyHtml).IsRequired();
         });
 
         modelBuilder.Entity<PlatformLog>(entity =>

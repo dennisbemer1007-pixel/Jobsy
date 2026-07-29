@@ -1,0 +1,75 @@
+@page "/wie-zijn-wij"
+@attribute [AllowAnonymous]
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
+@inject JobsyApiClient Api
+
+<PageTitle>@(_page.Title) · Lobsy</PageTitle>
+
+<div class="panel-page legal-page about-page">
+    <div class="about-page__watermark" aria-hidden="true">
+        <img src="images/brand/lobsy.png?v=20260729-live" alt="" />
+    </div>
+
+    @if (_loading)
+    {
+        <p class="state-message">Laden…</p>
+    }
+    else
+    {
+        <header class="panel-header">
+            <div>
+                <h1>@_page.Title</h1>
+                @if (!string.IsNullOrWhiteSpace(_page.Lead))
+                {
+                    <p class="login-lead">@_page.Lead</p>
+                }
+            </div>
+        </header>
+
+        <LegalToc />
+
+        @if (!string.IsNullOrEmpty(_error))
+        {
+            <p class="state-message error">@_error</p>
+        }
+
+        <article class="legal-doc about-doc">
+            @((MarkupString)_safeBody)
+        </article>
+    }
+</div>
+
+@code {
+    private AboutPageItem _page = new();
+    private string _safeBody = string.Empty;
+    private bool _loading = true;
+    private string? _error;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            _page = await Api.GetPublicAboutPageAsync() ?? new AboutPageItem();
+            if (string.IsNullOrWhiteSpace(_page.Title))
+            {
+                _page.Title = "Wie zijn wij";
+            }
+
+            _safeBody = Jobsy.Core.Rules.HtmlSanitize.ToSafeMarkup(_page.BodyHtml);
+        }
+        catch (Exception)
+        {
+            _error = "De pagina-inhoud kon niet worden geladen.";
+            _page = new AboutPageItem
+            {
+                Title = "Wie zijn wij",
+                Lead = "Over Lobsy — en de mens achter de knop"
+            };
+            _safeBody = string.Empty;
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+}

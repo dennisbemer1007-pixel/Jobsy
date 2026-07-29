@@ -103,6 +103,19 @@ internal static class PlatformSettingsSeeder
             logger.LogInformation("Seeded default PlatformCompanySettings (Lobsy).");
         }
 
+        if (!await db.AboutPageSettings.AnyAsync())
+        {
+            db.AboutPageSettings.Add(new AboutPageSettings
+            {
+                Id = AboutPageSettingsService.SingletonId,
+                Title = AboutPageSettingsService.DefaultTitle,
+                Lead = AboutPageSettingsService.DefaultLead,
+                BodyHtml = AboutPageSettingsService.DefaultBodyHtml,
+                UpdatedAtUtc = DateTime.UtcNow
+            });
+            logger.LogInformation("Seeded default AboutPageSettings (Wie zijn wij).");
+        }
+
         await db.SaveChangesAsync();
         logger.LogInformation("Ensured platform token pricing / spend costs / PushBom tiers / early-adapter rules.");
     }

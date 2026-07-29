@@ -1,0 +1,209 @@
+@page "/admin/about"
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
+@attribute [Authorize(Roles = "Admin")]
+@using Jobsy.Web.Components.Admin
+@inject JobsyApiClient Api
+@inject IJSRuntime Js
+
+<PageTitle>Wie zijn wij · Beheer · Lobsy</PageTitle>
+
+<AdminPageShell Title="Wie zijn wij" Lead="Pas de publieke ‘Wie zijn wij’-pagina aan. Wijzigingen zijn direct zichtbaar op /wie-zijn-wij." ShowSettingsNav="true">
+    @if (_loading)
+    {
+        <p class="state-message">Laden…</p>
+    }
+    else if (!string.IsNullOrEmpty(_error) && string.IsNullOrWhiteSpace(_form.BodyHtml) && string.IsNullOrWhiteSpace(_form.Title))
+    {
+        <p class="state-message error">@_error</p>
+    }
+    else
+    {
+        <section class="panel-section">
+            <div class="panel-header">
+                <h2>Pagina-inhoud</h2>
+                <div class="inline-actions">
+                    <a class="auth-link" href="/wie-zijn-wij" target="_blank" rel="noopener">Bekijk publieke pagina</a>
+                    <button class="login-submit" type="button" disabled="@_busy" @onclick="SaveAsync">
+                        @(_busy ? "Opslaan…" : "Opslaan")
+                    </button>
+                </div>
+            </div>
+            <p class="muted">
+                Gebruik koppen (H2) voor secties. Opmaak ondersteunt vet, cursief, lijsten en links.
+                Onveilige HTML wordt automatisch weggefilterd.
+            </p>
+
+            @if (!string.IsNullOrEmpty(_message))
+            {
+                <p class="state-message">@_message</p>
+            }
+            @if (!string.IsNullOrEmpty(_error))
+            {
+                <p class="state-message error">@_error</p>
+            }
+
+            <div class="login-form about-admin-form" style="max-width:48rem;margin-top:1rem;display:grid;gap:0.75rem">
+                <label>
+                    Titel
+                    <input @bind="_form.Title" maxlength="200" />
+                </label>
+                <label>
+                    Introregel
+                    <input @bind="_form.Lead" maxlength="400" />
+                </label>
+                <label>
+                    Inhoud
+                    <div class="richtext-toolbar" role="toolbar" aria-label="Opmaak">
+                        <div class="richtext-toolbar__group">
+                            <button type="button" class="richtext-btn" title="Kop (H2)" aria-label="Kop"
+                                    @onclick="InsertHeadingAsync"><span aria-hidden="true">H2</span></button>
+                            <button type="button" class="richtext-btn" title="Vet" aria-label="Vet"
+                                    @onclick='() => FormatAsync("strong")'><span aria-hidden="true">B</span></button>
+                            <button type="button" class="richtext-btn richtext-btn--italic" title="Cursief" aria-label="Cursief"
+                                    @onclick='() => FormatAsync("em")'><span aria-hidden="true">I</span></button>
+                        </div>
+                        <span class="richtext-toolbar__sep" aria-hidden="true"></span>
+                        <div class="richtext-toolbar__group">
+                            <button type="button" class="richtext-btn" title="Lijst" aria-label="Lijst"
+                                    @onclick="InsertListAsync">Lijst</button>
+                            <button type="button" class="richtext-btn" title="Link invoegen" aria-label="Link invoegen"
+                                    @onclick="InsertLinkAsync">Link</button>
+                            <button type="button" class="richtext-btn" title="Nieuwe sectie" aria-label="Nieuwe sectie"
+                                    @onclick="InsertSectionAsync">Sectie</button>
+                        </div>
+                    </div>
+                    <textarea @ref="_bodyRef"
+                              class="about-admin-body"
+                              rows="22"
+                              @bind="_form.BodyHtml"
+                              @bind:event="oninput"></textarea>
+                </label>
+            </div>
+
+            <div class="about-admin-preview panel-section" style="margin-top:1.5rem">
+                <h2>Voorbeeld</h2>
+                <p class="muted">Zo ziet de inhoud er ongeveer uit op de publieke pagina.</p>
+                <article class="legal-doc about-doc about-admin-preview__doc">
+                    <header class="panel-header" style="margin-bottom:1rem">
+                        <div>
+                            <h1>@(_form.Title)</h1>
+                            @if (!string.IsNullOrWhiteSpace(_form.Lead))
+                            {
+                                <p class="login-lead">@_form.Lead</p>
+                            }
+                        </div>
+                    </header>
+                    @((MarkupString)PreviewBody)
+                </article>
+            </div>
+        </section>
+    }
+</AdminPageShell>
+
+@code {
+    private AboutPageItem _form = new();
+    private ElementReference _bodyRef;
+    private bool _loading = true;
+    private bool _busy;
+    private string? _error;
+    private string? _message;
+
+    private string PreviewBody
+        => Jobsy.Core.Rules.HtmlSanitize.ToSafeMarkup(_form.BodyHtml);
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            _form = await Api.GetAboutPageAsync() ?? new AboutPageItem();
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private async Task SaveAsync()
+    {
+        _busy = true;
+        _error = null;
+        _message = null;
+        try
+        {
+            _form = await Api.SaveAboutPageAsync(_form) ?? _form;
+            _message = "Wie zijn wij is opgeslagen.";
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private async Task FormatAsync(string tag)
+    {
+        var next = await Js.InvokeAsync<string?>("jobsyRichtext.wrap", _bodyRef, $"<{tag}>", $"</{tag}>", "tekst");
+        if (next is not null)
+        {
+            _form.BodyHtml = next;
+        }
+    }
+
+    private async Task InsertHeadingAsync()
+    {
+        var next = await Js.InvokeAsync<string?>(
+            "jobsyRichtext.wrap",
+            _bodyRef,
+            "<h2>",
+            "</h2>",
+            "Kop");
+        if (next is not null)
+        {
+            _form.BodyHtml = next;
+        }
+    }
+
+    private async Task InsertListAsync()
+    {
+        var next = await Js.InvokeAsync<string?>(
+            "jobsyRichtext.wrap",
+            _bodyRef,
+            "<ul>\n<li>",
+            "</li>\n</ul>",
+            "punt");
+        if (next is not null)
+        {
+            _form.BodyHtml = next;
+        }
+    }
+
+    private async Task InsertLinkAsync()
+    {
+        var next = await Js.InvokeAsync<string?>("jobsyRichtext.insertLink", _bodyRef);
+        if (next is not null)
+        {
+            _form.BodyHtml = next;
+        }
+    }
+
+    private async Task InsertSectionAsync()
+    {
+        var next = await Js.InvokeAsync<string?>(
+            "jobsyRichtext.wrap",
+            _bodyRef,
+            "<section>\n<h2>",
+            "</h2>\n<p>Tekst…</p>\n</section>",
+            "Nieuwe sectie");
+        if (next is not null)
+        {
+            _form.BodyHtml = next;
+        }
+    }
+}
