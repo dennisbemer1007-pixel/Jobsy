@@ -26,8 +26,6 @@ public record UpdateExternalVacancyRequest(
 
 public record GenerateApiKeyRequest(string? Name = null);
 
-public record EmailApiKeyRequest(string? Email = null);
-
 public record GeneratedApiKeyResponse(
     Guid Id,
     Guid CompanyId,

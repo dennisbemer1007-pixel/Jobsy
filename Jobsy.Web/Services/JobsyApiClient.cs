@@ -543,12 +543,11 @@ public sealed class JobsyApiClient : IAsyncDisposable
 
     public async Task<EmailApiKeyResultItem?> EmailCompanyApiKeyCredentialsAsync(
         Guid companyId,
-        string? email = null,
         CancellationToken ct = default)
     {
-        var response = await _http.PostAsJsonAsync(
+        var response = await _http.PostAsync(
             $"api/companies/{companyId}/api-keys/email-credentials",
-            new { email },
+            null,
             ct);
         if (!response.IsSuccessStatusCode)
         {

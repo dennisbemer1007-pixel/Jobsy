@@ -1,22 +1,29 @@
 using System.Net;
 using Jobsy.Core.Entities;
-using Jobsy.Core.Enums;
 using Jobsy.Core.Interfaces;
 using Jobsy.Infrastructure.Data;
 using Jobsy.Infrastructure.Security;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 
 namespace Jobsy.Infrastructure.Services;
 
 public sealed class CompanyApiKeyService : ICompanyApiKeyService
 {
+    public const int MaxNameLength = 128;
+
     private readonly JobsyDbContext _db;
     private readonly IEmailService _email;
+    private readonly ILogger<CompanyApiKeyService> _logger;
 
-    public CompanyApiKeyService(JobsyDbContext db, IEmailService email)
+    public CompanyApiKeyService(
+        JobsyDbContext db,
+        IEmailService email,
+        ILogger<CompanyApiKeyService> logger)
     {
         _db = db;
         _email = email;
+        _logger = logger;
     }
 
     public async Task<ApiKey?> FindActiveByPlaintextAsync(
@@ -89,26 +96,20 @@ public sealed class CompanyApiKeyService : ICompanyApiKeyService
         var company = await _db.Companies.FirstOrDefaultAsync(c => c.Id == companyId, cancellationToken)
             ?? throw new KeyNotFoundException("Bedrijf niet gevonden.");
 
-        var activeKeys = await _db.ApiKeys
-            .Where(k => k.CompanyId == companyId && k.IsActive)
-            .ToListAsync(cancellationToken);
-        foreach (var existing in activeKeys)
-        {
-            existing.IsActive = false;
-        }
-
+        var label = NormalizeName(name);
         var plaintext = ApiKeyHasher.GeneratePlaintext();
         var entity = new ApiKey
         {
             Id = Guid.NewGuid(),
             CompanyId = company.Id,
             ApiKeyHash = ApiKeyHasher.Hash(plaintext),
-            Name = string.IsNullOrWhiteSpace(name) ? "API-koppeling" : name.Trim(),
+            Name = label,
             KeyPrefix = ApiKeyHasher.ToDisplayPrefix(plaintext),
             IsActive = true,
             CreatedAt = DateTime.UtcNow
         };
 
+        await DeactivateActiveKeysAsync(companyId, cancellationToken);
         _db.ApiKeys.Add(entity);
         await _db.SaveChangesAsync(cancellationToken);
 
@@ -163,34 +164,84 @@ public sealed class CompanyApiKeyService : ICompanyApiKeyService
         string recipientEmail,
         CancellationToken cancellationToken = default)
     {
-        var company = await _db.Companies.AsNoTracking()
+        var company = await _db.Companies
             .FirstOrDefaultAsync(c => c.Id == companyId, cancellationToken)
             ?? throw new KeyNotFoundException("Bedrijf niet gevonden.");
 
         var normalized = recipientEmail.Trim().ToLowerInvariant();
-        if (string.IsNullOrWhiteSpace(normalized) || !normalized.Contains('@'))
+        if (string.IsNullOrWhiteSpace(normalized) || !normalized.Contains('@', StringComparison.Ordinal))
         {
             throw new ArgumentException("Ongeldig e-mailadres.");
         }
 
-        // Rotate: plaintext of an existing key is never recoverable from the hash.
-        var generated = await GenerateAsync(companyId, "API-koppeling (e-mail)", cancellationToken);
+        // Build the new key in memory first; only persist after e-mail succeeds so a mail
+        // failure cannot leave the company without a recoverable active key.
+        var plaintext = ApiKeyHasher.GeneratePlaintext();
+        var entity = new ApiKey
+        {
+            Id = Guid.NewGuid(),
+            CompanyId = company.Id,
+            ApiKeyHash = ApiKeyHasher.Hash(plaintext),
+            Name = "API-koppeling (e-mail)",
+            KeyPrefix = ApiKeyHasher.ToDisplayPrefix(plaintext),
+            IsActive = true,
+            CreatedAt = DateTime.UtcNow
+        };
 
-        await _email.SendAsync(new EmailMessage(
-            normalized,
-            $"Lobsy API-credentials voor {company.Name}",
-            $"""
-             <p>Hallo,</p>
-             <p>Hierbij de API-credentials voor <strong>{WebUtility.HtmlEncode(company.Name)}</strong>.</p>
-             <p>Gebruik header <code>X-API-Key</code> op de externe vacature-API.</p>
-             <p><strong>Let op:</strong> deze sleutel wordt slechts één keer getoond. Bewaar hem veilig.</p>
-             <p>API-key:</p>
-             <p><code>{WebUtility.HtmlEncode(generated.PlaintextKey)}</code></p>
-             <p>Prefix (ter herkenning): <code>{WebUtility.HtmlEncode(generated.KeyPrefix)}</code></p>
-             <p>Eerdere actieve keys voor dit bedrijf zijn gedeactiveerd.</p>
-             """,
-            "CompanyApiKeyCredentials"), cancellationToken);
+        try
+        {
+            await _email.SendAsync(new EmailMessage(
+                normalized,
+                $"Lobsy API-credentials voor {company.Name}",
+                $"""
+                 <p>Hallo,</p>
+                 <p>Hierbij de API-credentials voor <strong>{WebUtility.HtmlEncode(company.Name)}</strong>.</p>
+                 <p>Gebruik header <code>X-API-Key</code> op de externe vacature-API
+                 (<code>/api/external/vacancies</code>).</p>
+                 <p><strong>Let op:</strong> deze sleutel wordt slechts één keer getoond en
+                 vervangt eventuele eerdere actieve keys. Bewaar hem veilig.</p>
+                 <p>API-key:</p>
+                 <p><code>{WebUtility.HtmlEncode(plaintext)}</code></p>
+                 <p>Prefix (ter herkenning): <code>{WebUtility.HtmlEncode(entity.KeyPrefix)}</code></p>
+                 """,
+                "CompanyApiKeyCredentials"), cancellationToken);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(
+                ex,
+                "Failed to e-mail API credentials for company {CompanyId}; key was not activated.",
+                companyId);
+            throw new InvalidOperationException(
+                "Versturen van de API-credentials is mislukt. De bestaande key blijft actief.", ex);
+        }
 
-        return new EmailApiKeyResult(generated.Id, normalized, generated.KeyPrefix, Sent: true);
+        await DeactivateActiveKeysAsync(companyId, cancellationToken);
+        _db.ApiKeys.Add(entity);
+        await _db.SaveChangesAsync(cancellationToken);
+
+        return new EmailApiKeyResult(entity.Id, normalized, entity.KeyPrefix, Sent: true);
+    }
+
+    private async Task DeactivateActiveKeysAsync(Guid companyId, CancellationToken cancellationToken)
+    {
+        var activeKeys = await _db.ApiKeys
+            .Where(k => k.CompanyId == companyId && k.IsActive)
+            .ToListAsync(cancellationToken);
+        foreach (var existing in activeKeys)
+        {
+            existing.IsActive = false;
+        }
+    }
+
+    private static string NormalizeName(string? name)
+    {
+        var label = string.IsNullOrWhiteSpace(name) ? "API-koppeling" : name.Trim();
+        if (label.Length > MaxNameLength)
+        {
+            throw new ArgumentException($"Naam mag maximaal {MaxNameLength} tekens zijn.");
+        }
+
+        return label;
     }
 }

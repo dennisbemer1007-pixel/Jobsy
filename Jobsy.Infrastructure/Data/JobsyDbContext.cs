@@ -156,6 +156,11 @@ public class JobsyDbContext : DbContext
             entity.Property(e => e.KeyPrefix).HasMaxLength(32).IsRequired();
             entity.HasIndex(e => e.ApiKeyHash).IsUnique();
             entity.HasIndex(e => new { e.CompanyId, e.IsActive });
+            // At most one active key per company (Postgres partial unique index).
+            entity.HasIndex(e => e.CompanyId)
+                .IsUnique()
+                .HasFilter("\"IsActive\" = TRUE")
+                .HasDatabaseName("IX_ApiKeys_CompanyId_Active");
             entity.HasOne(e => e.Company)
                 .WithMany(c => c.ApiKeys)
                 .HasForeignKey(e => e.CompanyId)

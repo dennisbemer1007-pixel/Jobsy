@@ -1,12 +1,9 @@
 using Jobsy.Api.Authorization;
 using Jobsy.Api.Models;
 using Jobsy.Core.Authorization;
-using Jobsy.Core.Enums;
 using Jobsy.Core.Interfaces;
-using Jobsy.Infrastructure.Data;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 
 namespace Jobsy.Api.Controllers;
 
@@ -18,16 +15,13 @@ public class CompanyApiKeysController : ControllerBase
 {
     private readonly ICompanyApiKeyService _apiKeys;
     private readonly IUserLookupService _users;
-    private readonly JobsyDbContext _db;
 
     public CompanyApiKeysController(
         ICompanyApiKeyService apiKeys,
-        IUserLookupService users,
-        JobsyDbContext db)
+        IUserLookupService users)
     {
         _apiKeys = apiKeys;
         _users = users;
-        _db = db;
     }
 
     [HttpGet]
@@ -47,15 +41,26 @@ public class CompanyApiKeysController : ControllerBase
         [FromBody] GenerateApiKeyRequest? request,
         CancellationToken cancellationToken)
     {
-        var result = await _apiKeys.GenerateAsync(companyId, request?.Name, cancellationToken);
-        return Ok(new GeneratedApiKeyResponse(
-            result.Id,
-            result.CompanyId,
-            result.Name,
-            result.KeyPrefix,
-            result.PlaintextKey,
-            result.CreatedAt,
-            "Bewaar deze API-key nu — hij wordt hierna niet opnieuw getoond."));
+        try
+        {
+            var result = await _apiKeys.GenerateAsync(companyId, request?.Name, cancellationToken);
+            return Ok(new GeneratedApiKeyResponse(
+                result.Id,
+                result.CompanyId,
+                result.Name,
+                result.KeyPrefix,
+                result.PlaintextKey,
+                result.CreatedAt,
+                "Bewaar deze API-key nu — hij wordt hierna niet opnieuw getoond."));
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(new { message = ex.Message });
+        }
+        catch (ArgumentException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
     }
 
     [HttpPost("{apiKeyId:guid}/deactivate")]
@@ -91,48 +96,42 @@ public class CompanyApiKeysController : ControllerBase
         return Ok(new { message = "Actieve API-key gedeactiveerd." });
     }
 
+    /// <summary>
+    /// Rotates to a new API key and e-mails it to the signed-in bedrijfsmanager.
+    /// Arbitrary recipient addresses are rejected to prevent credential exfiltration.
+    /// </summary>
     [HttpPost("email-credentials")]
     [RequireCompanyAccess]
     public async Task<ActionResult<EmailApiKeyResult>> EmailCredentials(
         Guid companyId,
-        [FromBody] EmailApiKeyRequest? request,
         CancellationToken cancellationToken)
     {
-        var recipient = await ResolveRecipientEmailAsync(companyId, request?.Email, cancellationToken);
+        var actor = await _users.FindByPrincipalAsync(User, cancellationToken);
+        var recipient = actor?.Email?.Trim().ToLowerInvariant();
         if (string.IsNullOrWhiteSpace(recipient))
         {
             return BadRequest(new
             {
-                message = "Geen e-mailadres beschikbaar. Koppel een bedrijfsmanager of geef een e-mailadres op."
+                message = "Geen e-mailadres op jouw account. Log opnieuw in of werk je profiel bij."
             });
         }
 
-        var result = await _apiKeys.EmailCredentialsAsync(companyId, recipient, cancellationToken);
-        return Ok(result);
-    }
-
-    private async Task<string?> ResolveRecipientEmailAsync(
-        Guid companyId,
-        string? overrideEmail,
-        CancellationToken cancellationToken)
-    {
-        if (!string.IsNullOrWhiteSpace(overrideEmail))
+        try
         {
-            return overrideEmail.Trim().ToLowerInvariant();
+            var result = await _apiKeys.EmailCredentialsAsync(companyId, recipient, cancellationToken);
+            return Ok(result);
         }
-
-        var actor = await _users.FindByPrincipalAsync(User, cancellationToken);
-        if (!string.IsNullOrWhiteSpace(actor?.Email))
+        catch (KeyNotFoundException ex)
         {
-            return actor.Email.Trim().ToLowerInvariant();
+            return NotFound(new { message = ex.Message });
         }
-
-        // Fall back to an active enterprise manager for this company.
-        return await _db.Users.AsNoTracking()
-            .Where(u => u.IsActive && u.Role == UserRole.EnterpriseManager)
-            .Where(u => u.CompanyId == companyId
-                        || u.CompanyMemberships.Any(m => m.CompanyId == companyId))
-            .Select(u => u.Email)
-            .FirstOrDefaultAsync(cancellationToken);
+        catch (ArgumentException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+        catch (InvalidOperationException ex)
+        {
+            return StatusCode(StatusCodes.Status502BadGateway, new { message = ex.Message });
+        }
     }
 }

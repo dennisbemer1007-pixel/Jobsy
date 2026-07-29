@@ -47,6 +47,18 @@ public class ExternalVacanciesController : ControllerBase
         [FromBody] CreateVacancyRequest request,
         CancellationToken cancellationToken)
     {
+        if (request is null
+            || string.IsNullOrWhiteSpace(request.Title)
+            || string.IsNullOrWhiteSpace(request.Description))
+        {
+            return BadRequest(new { message = "Titel en omschrijving zijn verplicht." });
+        }
+
+        if (request.EndDate < request.StartDate)
+        {
+            return BadRequest(new { message = "Einddatum mag niet vóór de startdatum liggen." });
+        }
+
         var company = await _db.Companies.FirstOrDefaultAsync(c => c.Id == request.CompanyId, cancellationToken);
         if (company is null)
         {
@@ -167,27 +179,16 @@ public class ExternalVacanciesController : ControllerBase
         CancellationToken cancellationToken)
     {
         var vacancy = await _db.Vacancies.FirstOrDefaultAsync(v => v.Id == id, cancellationToken);
-        if (vacancy is null)
+        if (vacancy is null
+            || !await _companyAuth.CanAccessCompanyAsync(User, vacancy.CompanyId, cancellationToken))
         {
+            // Hide cross-tenant existence from other API keys.
             return NotFound(new { message = "Vacature niet gevonden." });
-        }
-
-        if (!await _companyAuth.CanAccessCompanyAsync(User, vacancy.CompanyId, cancellationToken))
-        {
-            return StatusCode(StatusCodes.Status403Forbidden, new
-            {
-                error = "Forbidden",
-                message = "Je hebt geen toegang tot data van dit bedrijf."
-            });
         }
 
         if (request.CompanyId is Guid bodyCompanyId && bodyCompanyId != vacancy.CompanyId)
         {
-            return StatusCode(StatusCodes.Status403Forbidden, new
-            {
-                error = "Forbidden",
-                message = "CompanyId mag niet worden gewijzigd via de API."
-            });
+            return BadRequest(new { message = "CompanyId mag niet worden gewijzigd via de API." });
         }
 
         if (!string.IsNullOrWhiteSpace(request.Title))
@@ -284,6 +285,23 @@ public class ExternalVacanciesController : ControllerBase
                 });
             }
 
+            // Do not silently demote Active → Draft; only archive (or keep draft edits).
+            if (vacancy.Status == VacancyStatus.Active && status == VacancyStatus.Draft)
+            {
+                return BadRequest(new
+                {
+                    message = "Actieve vacatures kunnen via API alleen op Archived worden gezet."
+                });
+            }
+
+            if (vacancy.Status is VacancyStatus.PendingApproval or VacancyStatus.Fulfilled)
+            {
+                return BadRequest(new
+                {
+                    message = $"Vacature met status {vacancy.Status} kan niet via de API worden gewijzigd."
+                });
+            }
+
             vacancy.Status = status;
         }
 
@@ -310,18 +328,10 @@ public class ExternalVacanciesController : ControllerBase
     {
         var vacancy = await _db.Vacancies.AsNoTracking()
             .FirstOrDefaultAsync(v => v.Id == id, cancellationToken);
-        if (vacancy is null)
+        if (vacancy is null
+            || !await _companyAuth.CanAccessCompanyAsync(User, vacancy.CompanyId, cancellationToken))
         {
             return NotFound(new { message = "Vacature niet gevonden." });
-        }
-
-        if (!await _companyAuth.CanAccessCompanyAsync(User, vacancy.CompanyId, cancellationToken))
-        {
-            return StatusCode(StatusCodes.Status403Forbidden, new
-            {
-                error = "Forbidden",
-                message = "Je hebt geen toegang tot data van dit bedrijf."
-            });
         }
 
         return Ok(ToStatusDto(vacancy));

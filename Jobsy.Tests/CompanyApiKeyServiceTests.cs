@@ -1,13 +1,13 @@
 using System.Security.Claims;
 using Jobsy.Core.Authorization;
 using Jobsy.Core.Entities;
-using Jobsy.Core.Enums;
 using Jobsy.Core.Interfaces;
 using Jobsy.Core.ValueObjects;
 using Jobsy.Infrastructure.Data;
 using Jobsy.Infrastructure.Security;
 using Jobsy.Infrastructure.Services;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging.Abstractions;
 
 namespace Jobsy.Tests;
 
@@ -19,7 +19,7 @@ public class CompanyApiKeyServiceTests
         await using var db = CreateDb();
         var companyId = await SeedCompanyAsync(db);
         var email = new RecordingEmailService();
-        var sut = new CompanyApiKeyService(db, email);
+        var sut = CreateSut(db, email);
 
         var generated = await sut.GenerateAsync(companyId, "ATS");
 
@@ -34,7 +34,7 @@ public class CompanyApiKeyServiceTests
     {
         await using var db = CreateDb();
         var companyId = await SeedCompanyAsync(db);
-        var sut = new CompanyApiKeyService(db, new RecordingEmailService());
+        var sut = CreateSut(db);
 
         var first = await sut.GenerateAsync(companyId);
         var second = await sut.GenerateAsync(companyId);
@@ -47,11 +47,22 @@ public class CompanyApiKeyServiceTests
     }
 
     [Fact]
+    public async Task Generate_rejects_oversized_name()
+    {
+        await using var db = CreateDb();
+        var companyId = await SeedCompanyAsync(db);
+        var sut = CreateSut(db);
+
+        await Assert.ThrowsAsync<ArgumentException>(() =>
+            sut.GenerateAsync(companyId, new string('x', CompanyApiKeyService.MaxNameLength + 1)));
+    }
+
+    [Fact]
     public async Task FindActive_rejects_inactive_and_wrong_key()
     {
         await using var db = CreateDb();
         var companyId = await SeedCompanyAsync(db);
-        var sut = new CompanyApiKeyService(db, new RecordingEmailService());
+        var sut = CreateSut(db);
         var generated = await sut.GenerateAsync(companyId);
 
         Assert.NotNull(await sut.FindActiveByPlaintextAsync(generated.PlaintextKey));
@@ -62,13 +73,13 @@ public class CompanyApiKeyServiceTests
     }
 
     [Fact]
-    public async Task EmailCredentials_rotates_and_sends_plaintext()
+    public async Task EmailCredentials_sends_before_persisting_and_rotates()
     {
         await using var db = CreateDb();
         var companyId = await SeedCompanyAsync(db);
         var email = new RecordingEmailService();
-        var sut = new CompanyApiKeyService(db, email);
-        await sut.GenerateAsync(companyId);
+        var sut = CreateSut(db, email);
+        var first = await sut.GenerateAsync(companyId);
 
         var result = await sut.EmailCredentialsAsync(companyId, "manager@example.com");
 
@@ -76,8 +87,27 @@ public class CompanyApiKeyServiceTests
         Assert.Equal("manager@example.com", result.RecipientEmail);
         Assert.Single(email.Messages);
         Assert.Contains("lobsy_", email.Messages[0].BodyHtml);
+        Assert.DoesNotContain(first.PlaintextKey, email.Messages[0].BodyHtml);
         Assert.Equal(1, await db.ApiKeys.CountAsync(k => k.IsActive));
         Assert.Equal(2, await db.ApiKeys.CountAsync());
+        Assert.Null(await sut.FindActiveByPlaintextAsync(first.PlaintextKey));
+    }
+
+    [Fact]
+    public async Task EmailCredentials_mail_failure_keeps_existing_key_active()
+    {
+        await using var db = CreateDb();
+        var companyId = await SeedCompanyAsync(db);
+        var failing = new FailingEmailService();
+        var sut = CreateSut(db, failing);
+        var first = await sut.GenerateAsync(companyId);
+
+        var ex = await Assert.ThrowsAsync<InvalidOperationException>(() =>
+            sut.EmailCredentialsAsync(companyId, "manager@example.com"));
+
+        Assert.Contains("mislukt", ex.Message, StringComparison.OrdinalIgnoreCase);
+        Assert.Equal(1, await db.ApiKeys.CountAsync());
+        Assert.NotNull(await sut.FindActiveByPlaintextAsync(first.PlaintextKey));
     }
 
     [Fact]
@@ -125,6 +155,9 @@ public class CompanyApiKeyServiceTests
         Assert.NotEqual(hash, ApiKeyHasher.Hash("lobsy_other"));
     }
 
+    private static CompanyApiKeyService CreateSut(JobsyDbContext db, IEmailService? email = null)
+        => new(db, email ?? new RecordingEmailService(), NullLogger<CompanyApiKeyService>.Instance);
+
     private static async Task<Guid> SeedCompanyAsync(JobsyDbContext db)
     {
         var id = Guid.NewGuid();
@@ -157,5 +190,11 @@ public class CompanyApiKeyServiceTests
             Messages.Add(message);
             return Task.CompletedTask;
         }
+    }
+
+    private sealed class FailingEmailService : IEmailService
+    {
+        public Task SendAsync(EmailMessage message, CancellationToken cancellationToken = default)
+            => throw new InvalidOperationException("SMTP down");
     }
 }

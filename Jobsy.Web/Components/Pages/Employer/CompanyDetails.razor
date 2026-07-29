@@ -21,89 +21,117 @@
     {
         <p class="state-message error">@_error</p>
     }
-    else if (_org is null)
+    else if (_organizations.Count == 0)
     {
         <p class="state-message">Geen organisatie gevonden.</p>
     }
     else
     {
-        <section class="panel-section">
-            <h2>@_org.Name</h2>
-            <p class="muted">@_org.Address · KVK @_org.KvkNumber</p>
-            <p class="muted">@_org.TokenBalance.ToString("0.##") tokens · @_org.ActiveVacancies actieve vacatures</p>
-        </section>
-
-        <section class="panel-section">
-            <h2>API-koppeling</h2>
-            <p class="muted">
-                Externe systemen kunnen vacatures aanmaken, wijzigen en status opvragen via
-                <code>X-API-Key</code>. De volledige sleutel wordt nooit opgeslagen — alleen een hash.
-            </p>
-
-            @if (_activeKey is null)
-            {
-                <button class="login-submit" type="button" disabled="@_busy" @onclick="GenerateAsync">
-                    API Key genereren
-                </button>
-            }
-            else
-            {
-                <div class="table-list" style="margin-bottom:1rem">
-                    <div class="table-row">
-                        <div>
-                            <strong>@_activeKey.Name</strong>
-                            <span class="muted">
-                                @_activeKey.KeyPrefix
-                                · actief
-                                · aangemaakt @_activeKey.CreatedAt.ToLocalTime().ToString("dd-MM-yyyy HH:mm")
-                                @if (_activeKey.LastUsedAt is DateTime used)
-                                {
-                                    <text> · laatst gebruikt @used.ToLocalTime().ToString("dd-MM-yyyy HH:mm")</text>
-                                }
-                                else
-                                {
-                                    <text> · nog niet gebruikt</text>
-                                }
-                            </span>
-                        </div>
-                    </div>
-                </div>
-                <div class="inline-actions">
-                    <button class="btn-compact" type="button" disabled="@_busy" @onclick="DeactivateAsync">
-                        Desactiveren
-                    </button>
-                    <button class="btn-compact" type="button" disabled="@_busy" @onclick="GenerateAsync">
-                        Nieuwe key genereren
-                    </button>
-                    <button class="btn-compact btn-compact--primary" type="button" disabled="@_busy" @onclick="EmailCredentialsAsync">
-                        Verzend credentials via e-mail
-                    </button>
-                </div>
-            }
-
-            @if (_inactiveKeys.Count > 0)
-            {
-                <h3 style="margin-top:1.5rem">Eerdere keys</h3>
-                <div class="table-list">
-                    @foreach (var k in _inactiveKeys)
+        @if (_organizations.Count > 1)
+        {
+            <label class="filter-required" style="max-width:24rem;display:block;margin-bottom:1rem">
+                Organisatie
+                <select @bind="_selectedOrgId" @bind:after="OnOrgChangedAsync">
+                    @foreach (var org in _organizations)
                     {
+                        <option value="@org.Id">@org.Name</option>
+                    }
+                </select>
+            </label>
+        }
+
+        @if (_org is not null)
+        {
+            <section class="panel-section">
+                <h2>@_org.Name</h2>
+                <p class="muted">@_org.Address · KVK @_org.KvkNumber</p>
+                <p class="muted">@_org.TokenBalance.ToString("0.##") tokens · @_org.ActiveVacancies actieve vacatures</p>
+            </section>
+
+            <section class="panel-section">
+                <h2>API-koppeling</h2>
+                <p class="muted">
+                    Externe systemen kunnen vacatures aanmaken, wijzigen en status opvragen via
+                    <code>X-API-Key</code> op <code>/api/external/vacancies</code>.
+                    De volledige sleutel wordt nooit opgeslagen — alleen een hash.
+                </p>
+
+                @if (_activeKey is null)
+                {
+                    <div class="inline-actions">
+                        <button class="login-submit" type="button" disabled="@_busy" @onclick="GenerateAsync">
+                            API Key genereren
+                        </button>
+                        <button class="btn-compact" type="button" disabled="@_busy" @onclick="EmailCredentialsAsync">
+                            Verzend credentials via e-mail
+                        </button>
+                    </div>
+                    <p class="muted" style="margin-top:0.5rem">
+                        E-mail genereert een nieuwe key en stuurt die naar jouw account-e-mail.
+                    </p>
+                }
+                else
+                {
+                    <div class="table-list" style="margin-bottom:1rem">
                         <div class="table-row">
                             <div>
-                                <strong>@k.Name</strong>
+                                <strong>@_activeKey.Name</strong>
                                 <span class="muted">
-                                    @k.KeyPrefix · inactief · @k.CreatedAt.ToLocalTime().ToString("dd-MM-yyyy")
+                                    @_activeKey.KeyPrefix
+                                    · actief
+                                    · aangemaakt @_activeKey.CreatedAt.ToLocalTime().ToString("dd-MM-yyyy HH:mm")
+                                    @if (_activeKey.LastUsedAt is DateTime used)
+                                    {
+                                        <text> · laatst gebruikt @used.ToLocalTime().ToString("dd-MM-yyyy HH:mm")</text>
+                                    }
+                                    else
+                                    {
+                                        <text> · nog niet gebruikt</text>
+                                    }
                                 </span>
                             </div>
                         </div>
-                    }
-                </div>
-            }
+                    </div>
+                    <div class="inline-actions">
+                        <button class="btn-compact" type="button" disabled="@_busy" @onclick="DeactivateAsync">
+                            Desactiveren
+                        </button>
+                        <button class="btn-compact" type="button" disabled="@_busy" @onclick="GenerateAsync">
+                            Nieuwe key genereren
+                        </button>
+                        <button class="btn-compact btn-compact--primary" type="button" disabled="@_busy" @onclick="ConfirmEmailAsync">
+                            Verzend credentials via e-mail
+                        </button>
+                    </div>
+                    <p class="muted" style="margin-top:0.5rem">
+                        Let op: e-mailen of opnieuw genereren deactiveert de huidige key en maakt een nieuwe.
+                    </p>
+                }
 
-            @if (!string.IsNullOrEmpty(_message))
-            {
-                <p class="state-message">@_message</p>
-            }
-        </section>
+                @if (_inactiveKeys.Count > 0)
+                {
+                    <h3 style="margin-top:1.5rem">Eerdere keys</h3>
+                    <div class="table-list">
+                        @foreach (var k in _inactiveKeys)
+                        {
+                            <div class="table-row">
+                                <div>
+                                    <strong>@k.Name</strong>
+                                    <span class="muted">
+                                        @k.KeyPrefix · inactief · @k.CreatedAt.ToLocalTime().ToString("dd-MM-yyyy")
+                                    </span>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                }
+
+                @if (!string.IsNullOrEmpty(_message))
+                {
+                    <p class="state-message">@_message</p>
+                }
+            </section>
+        }
     }
 </div>
 
@@ -117,6 +145,7 @@
         </div>
         <p class="share-modal__lead">
             <strong>Let op:</strong> deze sleutel is slechts één keer zichtbaar. Kopieer en bewaar hem veilig.
+            Gebruik daarna niet “Verzend via e-mail” — dat maakt een andere key aan.
         </p>
         <label>
             API-key
@@ -129,13 +158,35 @@
     </div>
 }
 
+@if (_confirmEmail)
+{
+    <div class="share-modal-backdrop" @onclick="CancelEmail"></div>
+    <div class="share-modal" role="dialog" aria-modal="true" aria-labelledby="api-email-modal-title">
+        <div class="share-modal__header">
+            <h2 id="api-email-modal-title">Credentials e-mailen?</h2>
+            <button type="button" class="share-modal__close" @onclick="CancelEmail" aria-label="Sluiten">×</button>
+        </div>
+        <p class="share-modal__lead">
+            Dit deactiveert de huidige API-key en stuurt een <strong>nieuwe</strong> key naar jouw account-e-mail.
+            De oude key werkt daarna niet meer.
+        </p>
+        <div class="inline-actions" style="margin-top:1rem">
+            <button class="login-submit" type="button" disabled="@_busy" @onclick="EmailCredentialsAsync">Bevestigen</button>
+            <button class="btn-compact" type="button" disabled="@_busy" @onclick="CancelEmail">Annuleren</button>
+        </div>
+    </div>
+}
+
 @code {
+    private List<CompanySummary> _organizations = [];
     private CompanySummary? _org;
+    private string _selectedOrgId = "";
     private List<CompanyApiKeyItem> _keys = [];
     private CompanyApiKeyItem? _activeKey;
     private List<CompanyApiKeyItem> _inactiveKeys = [];
     private GeneratedApiKeyItem? _generated;
     private bool _showKeyModal;
+    private bool _confirmEmail;
     private bool _loading = true;
     private bool _busy;
     private string? _error;
@@ -150,16 +201,28 @@
         try
         {
             var companies = await Api.GetMyCompaniesAsync();
-            _org = companies.FirstOrDefault(c => c.ParentCompanyId is null)
-                   ?? companies.FirstOrDefault();
-            if (_org is null)
+            _organizations = companies
+                .Where(c => c.ParentCompanyId is null)
+                .OrderBy(c => c.Name)
+                .ToList();
+            if (_organizations.Count == 0)
             {
+                _organizations = companies.OrderBy(c => c.Name).ToList();
+            }
+
+            if (_organizations.Count == 0)
+            {
+                _org = null;
                 return;
             }
 
-            _keys = (await Api.GetCompanyApiKeysAsync(_org.Id)).ToList();
-            _activeKey = _keys.FirstOrDefault(k => k.IsActive);
-            _inactiveKeys = _keys.Where(k => !k.IsActive).ToList();
+            if (string.IsNullOrEmpty(_selectedOrgId)
+                || !_organizations.Any(o => o.Id.ToString() == _selectedOrgId))
+            {
+                _selectedOrgId = _organizations[0].Id.ToString();
+            }
+
+            await LoadKeysForSelectedAsync();
         }
         catch (Exception ex)
         {
@@ -169,6 +232,21 @@
         {
             _loading = false;
         }
+    }
+
+    private async Task OnOrgChangedAsync() => await LoadKeysForSelectedAsync();
+
+    private async Task LoadKeysForSelectedAsync()
+    {
+        _org = _organizations.FirstOrDefault(o => o.Id.ToString() == _selectedOrgId);
+        if (_org is null)
+        {
+            return;
+        }
+
+        _keys = (await Api.GetCompanyApiKeysAsync(_org.Id)).ToList();
+        _activeKey = _keys.FirstOrDefault(k => k.IsActive);
+        _inactiveKeys = _keys.Where(k => !k.IsActive).ToList();
     }
 
     private async Task GenerateAsync()
@@ -184,7 +262,7 @@
         {
             _generated = await Api.GenerateCompanyApiKeyAsync(_org.Id);
             _showKeyModal = _generated is not null;
-            await ReloadAsync();
+            await LoadKeysForSelectedAsync();
         }
         catch (Exception ex)
         {
@@ -209,7 +287,7 @@
         {
             await Api.DeactivateCompanyApiKeyAsync(_org.Id, _activeKey.Id);
             _message = "API-key gedeactiveerd.";
-            await ReloadAsync();
+            await LoadKeysForSelectedAsync();
         }
         catch (Exception ex)
         {
@@ -221,6 +299,10 @@
         }
     }
 
+    private void ConfirmEmailAsync() => _confirmEmail = true;
+
+    private void CancelEmail() => _confirmEmail = false;
+
     private async Task EmailCredentialsAsync()
     {
         if (_org is null || _busy)
@@ -230,13 +312,14 @@
 
         _busy = true;
         _message = null;
+        _confirmEmail = false;
         try
         {
             var result = await Api.EmailCompanyApiKeyCredentialsAsync(_org.Id);
             _message = result is null
                 ? "Credentials verzonden."
-                : $"Nieuwe API-key verzonden naar {result.RecipientEmail} (prefix {result.KeyPrefix}). De key is niet meer in de app te zien.";
-            await ReloadAsync();
+                : $"Nieuwe API-key verzonden naar {result.RecipientEmail} (prefix {result.KeyPrefix}). De vorige key is gedeactiveerd.";
+            await LoadKeysForSelectedAsync();
         }
         catch (Exception ex)
         {
