@@ -3,37 +3,44 @@
 @rendermode @(new InteractiveServerRenderMode(prerender: false))
 @inject JobsyApiClient Api
 @inject NavigationManager Navigation
+@inject CultureState Culture
+@implements IDisposable
 
-<PageTitle>Activatie · Lobsy</PageTitle>
+<PageTitle>@Culture["Page.ActivateTitle"]</PageTitle>
 
 <div class="login-page">
     <div class="login-card">
-        <h1>Account activeren</h1>
+        <h1>@Culture["Page.ActivateTitle"]</h1>
 
         @if (_loading)
         {
-            <p class="state-message">Bezig met activeren…</p>
+            <p class="state-message">@Culture["Register.Activating"]</p>
+        }
+        else if (_missingToken)
+        {
+            <p class="login-error">@Culture["Register.NoToken"]</p>
+            <a class="auth-link" href="/register">@Culture["Register.Retry"]</a>
         }
         else if (!string.IsNullOrEmpty(_error))
         {
             <p class="login-error">@_error</p>
-            <a class="auth-link" href="/register">Opnieuw registreren</a>
+            <a class="auth-link" href="/register">@Culture["Register.Retry"]</a>
         }
         else if (_result is not null)
         {
-            <p class="state-message">Welkom, @_result.FullName — je account is actief.</p>
-            <p class="muted">Je hebt 1 welkomsttoken ontvangen. Daarmee plaats je je eerste vacature gratis.</p>
-            <p class="muted">Rol: @_result.Role</p>
+            <p class="state-message">@Culture.Format("Register.Activated", _result.FullName)</p>
+            <p class="muted">@Culture["Register.WelcomeToken"]</p>
+            <p class="muted">@Culture.Format("Register.Role", _result.Role)</p>
             @if (!string.IsNullOrWhiteSpace(_result.TemporaryPassword))
             {
-                <p class="muted">Eenmalig tijdelijk wachtwoord (alleen Development): <code>@_result.TemporaryPassword</code></p>
+                <p class="muted">@Culture["Register.TempPasswordDev"] <code>@_result.TemporaryPassword</code></p>
             }
             else
             {
-                <p class="muted">Je tijdelijke wachtwoord is per e-mail verstuurd. Log daarna in of gebruik Google / Microsoft.</p>
+                <p class="muted">@Culture["Register.TempPasswordEmail"]</p>
             }
             <a class="login-submit" href="/login" style="display:inline-block;text-align:center;text-decoration:none;margin-top:1rem">
-                Inloggen
+                @Culture["Register.GoLogin"]
             </a>
         }
     </div>
@@ -41,17 +48,21 @@
 
 @code {
     private bool _loading = true;
+    private bool _missingToken;
     private string? _error;
     private RegistrationActivationResult? _result;
 
     [SupplyParameterFromQuery]
     public string? Token { get; set; }
 
+    protected override void OnInitialized()
+        => Culture.Changed += OnCultureChanged;
+
     protected override async Task OnInitializedAsync()
     {
         if (string.IsNullOrWhiteSpace(Token))
         {
-            _error = "Geen activatie-token in de URL.";
+            _missingToken = true;
             _loading = false;
             return;
         }
@@ -69,4 +80,10 @@
             _loading = false;
         }
     }
+
+    private void OnCultureChanged()
+        => InvokeAsync(StateHasChanged);
+
+    public void Dispose()
+        => Culture.Changed -= OnCultureChanged;
 }

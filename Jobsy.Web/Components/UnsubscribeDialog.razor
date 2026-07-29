@@ -3,19 +3,21 @@
 @inject IAntiforgery Antiforgery
 @inject IHttpContextAccessor HttpContextAccessor
 @inject IJSRuntime Js
+@inject CultureState Culture
+@implements IDisposable
 
 @if (IsOpen)
 {
     <div class="share-modal-backdrop" @onclick="CloseAsync"></div>
     <div class="share-modal publish-modal unsubscribe-modal" role="dialog" aria-modal="true" aria-labelledby="unsubscribe-modal-title">
         <div class="share-modal__header">
-            <h2 id="unsubscribe-modal-title">Account afmelden</h2>
-            <button type="button" class="share-modal__close" @onclick="CloseAsync" aria-label="Sluiten" disabled="@_busy">×</button>
+            <h2 id="unsubscribe-modal-title">@Culture["Unsubscribe.Title"]</h2>
+            <button type="button" class="share-modal__close" @onclick="CloseAsync" aria-label="@Culture["Unsubscribe.Close"]" disabled="@_busy">×</button>
         </div>
 
         @if (_completed)
         {
-            <p class="share-modal__lead">Je account is afgemeld. Je gegevens zijn opgeschoond en je wordt uitgelogd.</p>
+            <p class="share-modal__lead">@Culture["Unsubscribe.Completed"]</p>
             <form id="unsubscribe-logout" method="post" action="/account/logout">
                 <input type="hidden" name="__RequestVerificationToken" value="@_antiforgeryToken" />
             </form>
@@ -23,11 +25,10 @@
         else if (_awaitingVerification)
         {
             <p class="share-modal__lead">
-                We hebben een 6-cijferige code naar je e-mail gestuurd. Vul die hier in om je afmelding te bevestigen.
-                Daarna wordt je account geblokkeerd en worden je gegevens opgeschoond.
+                @Culture["Unsubscribe.VerifyLead"]
             </p>
             <label class="apply-code-field">
-                <span>Verificatiecode</span>
+                <span>@Culture["Unsubscribe.Code"]</span>
                 <input class="apply-code-field__input"
                        type="text"
                        inputmode="numeric"
@@ -43,39 +44,38 @@
                         class="btn-compact btn-compact--primary"
                         disabled="@(_busy || _verificationCode.Trim().Length != 6)"
                         @onclick="ConfirmAsync">
-                    @(_busy ? "Bezig…" : "Bevestig afmelden")
+                    @(_busy ? Culture["Common.Busy"] : Culture["Unsubscribe.Confirm"])
                 </button>
                 <button type="button" class="btn-compact" disabled="@_busy" @onclick="ResendAsync">
-                    Code opnieuw sturen
+                    @Culture["Unsubscribe.Resend"]
                 </button>
                 <button type="button" class="btn-compact" disabled="@_busy" @onclick="BackToReasonAsync">
-                    Terug
+                    @Culture["Common.Back"]
                 </button>
             </div>
         }
         else
         {
             <p class="share-modal__lead">
-                Je account wordt geblokkeerd en je persoonsgegevens worden netjes opgeschoond.
-                Sollicitaties blijven bewaard zonder jouw gegevens. Bij een nieuwe aanmelding krijg je een schoon account.
+                @Culture["Unsubscribe.Lead"]
             </p>
             <label>
-                Waarom wil je je afmelden?
+                @Culture["Unsubscribe.Why"]
                 <select @bind="_reasonCode" disabled="@_busy">
-                    <option value="">— Kies een reden —</option>
+                    <option value="">@Culture["Unsubscribe.PickReason"]</option>
                     @foreach (var reason in _reasons)
                     {
-                        <option value="@reason.Code">@reason.Label</option>
+                        <option value="@reason.Code">@ReasonLabel(reason)</option>
                     }
                 </select>
             </label>
             @if (SelectedRequiresOther)
             {
                 <label style="margin-top:0.75rem;display:block">
-                    Toelichting
+                    @Culture["Unsubscribe.OtherLabel"]
                     <textarea rows="3"
                               maxlength="1000"
-                              placeholder="Vertel kort waarom…"
+                              placeholder="@Culture["Unsubscribe.OtherPlaceholder"]"
                               disabled="@_busy"
                               @bind="_reasonOther"></textarea>
                 </label>
@@ -85,9 +85,9 @@
                         class="btn-compact btn-compact--primary"
                         disabled="@(_busy || !CanRequest)"
                         @onclick="RequestAsync">
-                    @(_busy ? "Bezig…" : "Stuur verificatiecode")
+                    @(_busy ? Culture["Common.Busy"] : Culture["Unsubscribe.SendCode"])
                 </button>
-                <button type="button" class="btn-compact" disabled="@_busy" @onclick="CloseAsync">Annuleren</button>
+                <button type="button" class="btn-compact" disabled="@_busy" @onclick="CloseAsync">@Culture["Common.Cancel"]</button>
             </div>
         }
 
@@ -129,6 +129,7 @@
 
     protected override void OnInitialized()
     {
+        Culture.Changed += OnCultureChanged;
         var http = HttpContextAccessor.HttpContext;
         if (http is not null)
         {
@@ -158,6 +159,21 @@
             await Js.InvokeVoidAsync("eval", "document.getElementById('unsubscribe-logout')?.submit()");
         }
     }
+
+    private string ReasonLabel(UnsubscribeReasonOption reason)
+    {
+        var key = $"Unsubscribe.Reason.{reason.Code}";
+        var translated = Culture[key];
+        return string.Equals(translated, key, StringComparison.Ordinal)
+            ? reason.Label
+            : translated;
+    }
+
+    private void OnCultureChanged()
+        => InvokeAsync(StateHasChanged);
+
+    public void Dispose()
+        => Culture.Changed -= OnCultureChanged;
 
     private async Task LoadReasonsAsync()
     {

@@ -1,17 +1,20 @@
 @page "/privacy"
 @attribute [AllowAnonymous]
+@inject CultureState Culture
 
-<PageTitle>Privacyverklaring · Lobsy</PageTitle>
+<PageTitle>@Culture["Legal.Privacy"] · Lobsy</PageTitle>
 
 <div class="panel-page legal-page">
     <header class="panel-header">
         <div>
-            <h1>Privacyverklaring</h1>
+            <h1>@Culture["Legal.Privacy"]</h1>
             <p class="login-lead">Laatst bijgewerkt: 28 juli 2026</p>
         </div>
     </header>
 
     <LegalToc />
+
+    <p class="login-lead muted">@Culture["Legal.DocNote"]</p>
 
     <article class="legal-doc">
         <section>

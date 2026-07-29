@@ -5,15 +5,17 @@
 @inject JobsyApiClient Api
 @inject AuthenticationStateProvider AuthState
 @inject TokenBalanceCache TokenBalances
+@inject CultureState Culture
+@implements IDisposable
 
 <AuthorizeView Roles="@string.Join(',', JobsyRoles.EmployerRoles)">
     <Authorized>
         @if (_loaded && _total is not null)
         {
-            <a class="token-wallet-chip" href="@_href" title="Token-saldo">
+            <a class="token-wallet-chip" href="@_href" title="@Culture["Common.TokenBalance"]">
                 <span class="token-wallet-chip__icon" aria-hidden="true">◎</span>
                 <span class="token-wallet-chip__value">@_total.Value.ToString("0.##")</span>
-                <span class="token-wallet-chip__label">tokens</span>
+                <span class="token-wallet-chip__label">@Culture["Common.Tokens"]</span>
             </a>
         }
     </Authorized>
@@ -23,6 +25,9 @@
     private decimal? _total;
     private bool _loaded;
     private string _href = "/employer/tokens";
+
+    protected override void OnInitialized()
+        => Culture.Changed += OnCultureChanged;
 
     protected override async Task OnInitializedAsync()
     {
@@ -52,4 +57,10 @@
             _loaded = true;
         }
     }
+
+    private void OnCultureChanged()
+        => InvokeAsync(StateHasChanged);
+
+    public void Dispose()
+        => Culture.Changed -= OnCultureChanged;
 }

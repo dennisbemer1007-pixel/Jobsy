@@ -1,18 +1,19 @@
 @page "/access-denied"
 @attribute [AllowAnonymous]
+@inject CultureState Culture
 
-<PageTitle>Geen toegang · Lobsy</PageTitle>
+<PageTitle>@Culture["Page.AccessDeniedTitle"]</PageTitle>
 
 <div class="login-page">
     <div class="login-card">
-        <h1>Geen toegang</h1>
+        <h1>@Culture["Access.Title"]</h1>
         <p class="login-lead">
-            Je hebt geen rechten om deze pagina te bekijken.
+            @Culture["Access.Lead"]
         </p>
         <p>
-            <a class="auth-link" href="/home">Naar home</a>
+            <a class="auth-link" href="/home">@Culture["Access.ToHome"]</a>
             ·
-            <a class="auth-link" href="/login">Inloggen</a>
+            <a class="auth-link" href="/login">@Culture["Auth.Login"]</a>
         </p>
     </div>
 </div>

@@ -3,19 +3,21 @@
 @rendermode @(new InteractiveServerRenderMode(prerender: false))
 @inject JobsyApiClient Api
 @inject NavigationManager Navigation
+@inject CultureState Culture
+@implements IDisposable
 
-<PageTitle>Registreren · Lobsy</PageTitle>
+<PageTitle>@Culture["Page.RegisterTitle"]</PageTitle>
 
 <div class="login-page">
     <div class="login-card register-card">
-        <h1>Bedrijf registreren</h1>
-        <p class="login-lead">KVK → vestiging → scope → contact → activatie.</p>
+        <h1>@Culture["Register.CompanyTitle"]</h1>
+        <p class="login-lead">@Culture["Register.Lead"]</p>
 
-        <div class="wizard-steps" aria-label="Stappen">
-            <span class="@StepClass(1)">1. KVK</span>
-            <span class="@StepClass(2)">2. Vestiging</span>
-            <span class="@StepClass(3)">3. Scope</span>
-            <span class="@StepClass(4)">4. Contact</span>
+        <div class="wizard-steps" aria-label="@Culture["Register.Steps"]">
+            <span class="@StepClass(1)">@Culture["Register.StepKvk"]</span>
+            <span class="@StepClass(2)">@Culture["Register.StepBranch"]</span>
+            <span class="@StepClass(3)">@Culture["Register.StepScope"]</span>
+            <span class="@StepClass(4)">@Culture["Register.StepContact"]</span>
         </div>
 
         @if (!string.IsNullOrEmpty(_error))
@@ -27,11 +29,11 @@
         {
             <form class="login-form" @onsubmit="LookupAsync" @onsubmit:preventDefault>
                 <label>
-                    KVK-nummer
-                    <input @bind="_kvkNumber" placeholder="bijv. 12345678" required maxlength="20" />
+                    @Culture["Register.KvkNumber"]
+                    <input @bind="_kvkNumber" placeholder="@Culture["Register.KvkPlaceholder"]" required maxlength="20" />
                 </label>
                 <p class="muted">Stub-KVK’s: 12345678, 87654321, 11223344, 55667788</p>
-                <button class="login-submit" type="submit" disabled="@_busy">Zoek vestigingen</button>
+                <button class="login-submit" type="submit" disabled="@_busy">@Culture["Register.SearchEstablishments"]</button>
             </form>
         }
         else if (_step == 2)
@@ -47,83 +49,83 @@
                             <span class="muted">@e.Address · @e.KvkEstablishmentId</span>
                         </div>
                         <span class="@(e.IsInUse ? "badge-warn" : "badge-ok")">
-                            @(e.IsInUse ? "Al in gebruik" : "Beschikbaar")
+                            @(e.IsInUse ? Culture["Register.InUse"] : Culture["Register.Available"])
                         </span>
                     </button>
                 }
             </div>
             <div class="wizard-actions">
-                <button class="provider-btn" type="button" @onclick="() => _step = 1">Terug</button>
+                <button class="provider-btn" type="button" @onclick="() => _step = 1">@Culture["Common.Back"]</button>
                 <button class="login-submit" type="button" disabled="@(_selected is null)" @onclick="() => _step = 3">
-                    Verder
+                    @Culture["Common.Next"]
                 </button>
             </div>
         }
         else if (_step == 3)
         {
             <fieldset class="scope-fieldset">
-                <legend>Registratiescope</legend>
+                <legend>@Culture["Register.ScopeLegend"]</legend>
                 <label class="scope-option">
                     <input type="radio" name="scope" checked="@(_scope == "BranchOnly")"
                            @onchange="@(() => _scope = "BranchOnly")" />
                     <span>
-                        <strong>Alleen deze vestiging</strong>
-                        <span class="muted">Je wordt filiaalmanager van één vestiging.</span>
+                        <strong>@Culture["Register.ScopeBranch"]</strong>
+                        <span class="muted">@Culture["Register.ScopeBranchHint"]</span>
                     </span>
                 </label>
                 <label class="scope-option">
                     <input type="radio" name="scope" checked="@(_scope == "Organization")"
                            @onchange="@(() => _scope = "Organization")" />
                     <span>
-                        <strong>Hele organisatie</strong>
-                        <span class="muted">Parent-organisatie + vrije vestigingen onder dit KVK-nummer.</span>
+                        <strong>@Culture["Register.ScopeOrg"]</strong>
+                        <span class="muted">@Culture["Register.ScopeOrgHint"]</span>
                     </span>
                 </label>
             </fieldset>
 
             @if (_selected?.IsInUse == true)
             {
-                <p class="state-message">Deze vestiging is al geregistreerd — na versturen volgt een overnameverzoek.</p>
+                <p class="state-message">@Culture["Register.AlreadyRegistered"]</p>
             }
 
             <div class="wizard-actions">
-                <button class="provider-btn" type="button" @onclick="() => _step = 2">Terug</button>
-                <button class="login-submit" type="button" @onclick="() => _step = 4">Verder</button>
+                <button class="provider-btn" type="button" @onclick="() => _step = 2">@Culture["Common.Back"]</button>
+                <button class="login-submit" type="button" @onclick="() => _step = 4">@Culture["Common.Next"]</button>
             </div>
         }
         else if (_step == 4)
         {
             <form class="login-form" @onsubmit="SubmitAsync" @onsubmit:preventDefault>
                 <label>
-                    Naam
+                    @Culture["Common.Name"]
                     <input @bind="_contactName" required maxlength="256" />
                 </label>
                 <label>
-                    E-mail
+                    @Culture["Common.Email"]
                     <input type="email" @bind="_contactEmail" required maxlength="256" />
                 </label>
                 <label>
-                    Telefoon (optioneel)
+                    @Culture["Common.Phone"] (@Culture["Common.Optional"])
                     <input @bind="_contactPhone" maxlength="64" />
                 </label>
                 <label>
-                    Salesmanager-code (optioneel)
+                    @Culture["Register.SalesCode"] (@Culture["Common.Optional"])
                     <input @bind="_salesManagerCode" maxlength="32" placeholder="SM-XXXXXX" />
                 </label>
-                <p class="muted">Laat leeg als je geen code hebt. Een ongeldige code blokkeert de registratie.</p>
-                <p class="muted">Gekozen: @_selected?.Name · @_scope</p>
+                <p class="muted">@Culture["Register.SalesCodeHint"]</p>
+                <p class="muted">@Culture.Format("Register.Chosen", _selected?.Name ?? "", _scope)</p>
                 <label class="profile-toggle legal-consent">
                     <input type="checkbox" @bind="_acceptedTerms" required />
                     <span>
-                        Ik ga akkoord met de
-                        <a class="auth-link" href="/algemene-voorwaarden" target="_blank" rel="noopener">algemene voorwaarden</a>
-                        (inclusief tokenbeleid en betalingen) en de
-                        <a class="auth-link" href="/privacy" target="_blank" rel="noopener">privacyverklaring</a>.
+                        @Culture["Register.AcceptTerms"]
+                        <a class="auth-link" href="/algemene-voorwaarden" target="_blank" rel="noopener">@Culture["Register.Terms"]</a>
+                        @Culture["Register.TermsTail"]
+                        <a class="auth-link" href="/privacy" target="_blank" rel="noopener">@Culture["Register.Privacy"]</a>.
                     </span>
                 </label>
                 <div class="wizard-actions">
-                    <button class="provider-btn" type="button" @onclick="() => _step = 3">Terug</button>
-                    <button class="login-submit" type="submit" disabled="@(_busy || !_acceptedTerms)">Registreren</button>
+                    <button class="provider-btn" type="button" @onclick="() => _step = 3">@Culture["Common.Back"]</button>
+                    <button class="login-submit" type="submit" disabled="@(_busy || !_acceptedTerms)">@Culture["Register.Submit"]</button>
                 </div>
             </form>
         }
@@ -140,12 +142,12 @@
                 <p class="muted">Check PlatformLogs / e-mail-stub voor de activatielink.</p>
             }
             <a class="login-submit" href="/login" style="display:inline-block;text-align:center;text-decoration:none;margin-top:1rem">
-                Naar inloggen
+                @Culture["Register.GoLogin"]
             </a>
         }
 
         <p class="muted" style="margin-top:1.25rem">
-            Al een account? <a class="auth-link" href="/login">Inloggen</a>
+            Al een account? <a class="auth-link" href="/login">@Culture["Auth.Login"]</a>
         </p>
     </div>
 </div>
@@ -165,6 +167,15 @@
     private bool _acceptedTerms;
     private List<KvkEstablishmentItem> _establishments = [];
     private KvkEstablishmentItem? _selected;
+
+    protected override void OnInitialized()
+        => Culture.Changed += OnCultureChanged;
+
+    private void OnCultureChanged()
+        => InvokeAsync(StateHasChanged);
+
+    public void Dispose()
+        => Culture.Changed -= OnCultureChanged;
 
     private string StepClass(int n) => _step == n ? "wizard-step is-active" : "wizard-step";
 
