@@ -1,4 +1,5 @@
 using Jobsy.Core.Entities;
+using Jobsy.Core.Rules;
 using Microsoft.EntityFrameworkCore;
 
 namespace Jobsy.Infrastructure.Data;
@@ -100,6 +101,9 @@ public class JobsyDbContext : DbContext
             entity.Property(e => e.KvkEstablishmentId).HasMaxLength(40);
             entity.Property(e => e.Address).HasMaxLength(512).IsRequired();
             entity.Property(e => e.LogoUrl).HasMaxLength(1024);
+            entity.Property(e => e.ContactEmail).HasMaxLength(256);
+            entity.Property(e => e.ContactPhone).HasMaxLength(64);
+            entity.Property(e => e.ContactWhatsApp).HasMaxLength(64);
             entity.Property(e => e.Location)
                 .HasConversion(new GeoPointConverter())
                 .HasColumnType("geometry(Point, 4326)");
@@ -125,11 +129,12 @@ public class JobsyDbContext : DbContext
             entity.Property(e => e.Title).HasMaxLength(256).IsRequired();
             entity.Property(e => e.Description).HasMaxLength(20000).IsRequired();
             entity.Property(e => e.HourlyWage).HasPrecision(8, 2);
-            entity.Property(e => e.ImageUrl).HasMaxLength(1024);
+            entity.Property(e => e.ImageUrl).HasMaxLength(HtmlSanitize.MaxImageUrlLength);
             entity.Property(e => e.VideoUrl).HasMaxLength(1024);
             entity.Property(e => e.RequiredDrivingLicense).HasMaxLength(256);
             entity.Property(e => e.RequiredEducation).HasMaxLength(256);
             entity.Property(e => e.WorkTypeLabels).HasMaxLength(512);
+            entity.Property(e => e.CreatedAtUtc).HasDefaultValueSql("CURRENT_TIMESTAMP");
             entity.Property(e => e.Location)
                 .HasConversion(new GeoPointConverter())
                 .HasColumnType("geometry(Point, 4326)");
@@ -137,6 +142,7 @@ public class JobsyDbContext : DbContext
             // Discover / public feed: Status + date window (and employer manage by company).
             entity.HasIndex(e => new { e.Status, e.EndDate, e.StartDate });
             entity.HasIndex(e => new { e.CompanyId, e.Status });
+            entity.HasIndex(e => new { e.Status, e.PublishedAtUtc, e.CreatedAtUtc });
             entity.HasOne(e => e.Company)
                 .WithMany(c => c.Vacancies)
                 .HasForeignKey(e => e.CompanyId)

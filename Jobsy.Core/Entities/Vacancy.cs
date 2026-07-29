@@ -15,8 +15,20 @@ public class Vacancy
     public Guid CompanyId { get; set; }
     public Company Company { get; set; } = null!;
 
-    /// <summary>Whether the vacancy was created via the UI or external API.</summary>
+    /// <summary>Whether the vacancy was created via the UI, external API, or CSV import.</summary>
     public VacancySource CreatedVia { get; set; } = VacancySource.Manual;
+
+    /// <summary>UTC creation timestamp (used for never-published draft cleanup).</summary>
+    public DateTime CreatedAtUtc { get; set; } = DateTime.UtcNow;
+
+    /// <summary>
+    /// First successful publish timestamp. Null means the vacancy was never live —
+    /// only those drafts are eligible for automatic cleanup.
+    /// </summary>
+    public DateTime? PublishedAtUtc { get; set; }
+
+    /// <summary>When the 30-day draft cleanup warning e-mail was sent (once).</summary>
+    public DateTime? DraftCleanupWarningSentAtUtc { get; set; }
 
     public GeoPoint Location { get; set; } = null!;
     public TransportMode RequiredTransport { get; set; }
@@ -44,6 +56,17 @@ public class Vacancy
     public int MaxApplications { get; set; } = 5;
     public Guid? SalaryTableId { get; set; }
     public CompanySalaryTable? SalaryTable { get; set; }
+
+    /// <summary>
+    /// When true, this vacancy uses its own direct-contact flags instead of the company (or parent) defaults.
+    /// Contact values (e-mail/phone/WhatsApp) always come from the company profile.
+    /// </summary>
+    public bool OverrideContactPreference { get; set; }
+
+    public bool DirectContactEnabled { get; set; }
+    public bool ContactPreferMail { get; set; }
+    public bool ContactPreferPhone { get; set; }
+    public bool ContactPreferWhatsApp { get; set; }
 
     public ICollection<VacancyClick> Clicks { get; set; } = new List<VacancyClick>();
     public ICollection<VacancyLike> Likes { get; set; } = new List<VacancyLike>();

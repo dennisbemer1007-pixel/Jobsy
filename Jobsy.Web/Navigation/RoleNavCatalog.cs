@@ -40,8 +40,12 @@ public static class RoleNavCatalog
         new("Nav.Branches", "/employer/branches", NavIcons.Branches, ["/employer/takeovers"]),
         new("Nav.Regions", "/employer/regions", NavIcons.Regions),
         new("Nav.Users", "/employer/users", NavIcons.Users),
+        new("Nav.CsvImport", "/employer/csv-import", NavIcons.Batch),
         new("Nav.CompanyDetails", "/employer/company", NavIcons.Companies)
     ];
+
+    public static readonly NavItem CsvImport =
+        new("Nav.CsvImport", "/employer/csv-import", NavIcons.Batch);
 
     public static readonly NavItem[] Regional =
     [

@@ -128,6 +128,29 @@ public sealed class MetricsQueryService : IMetricsQueryService
             var insertAt = clicksIndex >= 0 ? clicksIndex + 1 : metrics.Count;
             metrics.Insert(insertAt, new MetricCountDto("site_visits_unique", "Sitebezoeken (uniek)", periodKey, uniqueVisitors));
             metrics.Insert(insertAt, new MetricCountDto("site_visits", "Sitebezoeken", periodKey, siteVisits));
+
+            var companiesWithApi = await _db.Companies.AsNoTracking()
+                .CountAsync(c => c.ApiKeys.Any(k => k.IsActive), cancellationToken);
+            var companiesWithCsv = await _db.Companies.AsNoTracking()
+                .CountAsync(c => c.CsvBatchImportEnabled && c.ParentCompanyId == null, cancellationToken);
+            var unpublished = await _db.Vacancies.AsNoTracking()
+                .CountAsync(v => v.Status == VacancyStatus.Draft && v.PublishedAtUtc == null, cancellationToken);
+
+            var reengagementSent = await _db.Companies.AsNoTracking()
+                .CountAsync(c => c.ReengagementEmailSentAtUtc != null, cancellationToken);
+            var reengagementReactivated = await CountReengagementReactivatedAsync(cancellationToken);
+
+            metrics.Add(new MetricCountDto("companies_with_api", "Bedrijven met API-koppeling", periodKey, companiesWithApi));
+            metrics.Add(new MetricCountDto("companies_with_csv", "Bedrijven met CSV-import", periodKey, companiesWithCsv));
+            metrics.Add(new MetricCountDto("unpublished_vacancies", "Ongepubliceerde concepten", periodKey, unpublished));
+            metrics.Add(new MetricCountDto("reengagement_emails_sent", "We-missen-je mails verstuurd", periodKey, reengagementSent));
+            metrics.Add(new MetricCountDto(
+                "reengagement_reactivated",
+                "We-missen-je conversie",
+                periodKey,
+                reengagementSent == 0
+                    ? 0
+                    : Math.Round(100m * reengagementReactivated / reengagementSent, 1)));
         }
 
         if (!includePlatformOnly)
@@ -216,8 +239,168 @@ public sealed class MetricsQueryService : IMetricsQueryService
                 .ToListAsync(cancellationToken),
             "companies_employers" => await CompaniesDrilldownAsync(CompanyType.Employer, cancellationToken),
             "companies_intermediaries" => await CompaniesDrilldownAsync(CompanyType.Intermediary, cancellationToken),
+            "companies_with_api" => await IntegrationCompaniesDrilldownAsync(VacancySource.Api, cancellationToken),
+            "companies_with_csv" => await IntegrationCompaniesDrilldownAsync(VacancySource.Csv, cancellationToken),
+            "unpublished_vacancies" => await UnpublishedVacanciesDrilldownAsync(cancellationToken),
+            "reengagement_emails_sent" => await ReengagementSentDrilldownAsync(cancellationToken),
+            "reengagement_reactivated" => await ReengagementReactivatedDrilldownAsync(cancellationToken),
             _ => Array.Empty<MetricDrilldownItemDto>()
         };
+    }
+
+    private async Task<int> CountReengagementReactivatedAsync(CancellationToken ct)
+    {
+        var sent = await _db.Companies.AsNoTracking()
+            .Where(c => c.ReengagementEmailSentAtUtc != null)
+            .Select(c => new { c.Id, SentAt = c.ReengagementEmailSentAtUtc!.Value })
+            .ToListAsync(ct);
+
+        var count = 0;
+        foreach (var org in sent)
+        {
+            if (await WasActiveAfterAsync(org.Id, org.SentAt, ct))
+            {
+                count++;
+            }
+        }
+
+        return count;
+    }
+
+    private async Task<bool> WasActiveAfterAsync(Guid orgId, DateTime afterUtc, CancellationToken ct)
+    {
+        var orgIds = await _db.Companies.AsNoTracking()
+            .Where(c => c.Id == orgId || c.ParentCompanyId == orgId)
+            .Select(c => c.Id)
+            .ToListAsync(ct);
+
+        if (await _db.Vacancies.AsNoTracking()
+                .AnyAsync(v => orgIds.Contains(v.CompanyId) && v.CreatedAtUtc > afterUtc, ct))
+        {
+            return true;
+        }
+
+        if (await _db.Vacancies.AsNoTracking()
+                .AnyAsync(v => orgIds.Contains(v.CompanyId) && v.PublishedAtUtc > afterUtc, ct))
+        {
+            return true;
+        }
+
+        if (await _db.Users.AsNoTracking()
+                .AnyAsync(u => u.LastLoginAtUtc > afterUtc
+                               && (u.CompanyId != null && orgIds.Contains(u.CompanyId.Value)
+                                   || u.CompanyMemberships.Any(m => orgIds.Contains(m.CompanyId))), ct))
+        {
+            return true;
+        }
+
+        if (await _db.ApiKeys.AsNoTracking()
+                .AnyAsync(k => orgIds.Contains(k.CompanyId) && k.LastUsedAt > afterUtc, ct))
+        {
+            return true;
+        }
+
+        return await _db.Companies.AsNoTracking()
+            .AnyAsync(c => orgIds.Contains(c.Id) && c.LastCsvImportAtUtc > afterUtc, ct);
+    }
+
+    private async Task<List<MetricDrilldownItemDto>> IntegrationCompaniesDrilldownAsync(
+        VacancySource source,
+        CancellationToken ct)
+    {
+        if (source == VacancySource.Api)
+        {
+            var rows = await _db.Companies.AsNoTracking()
+                .Where(c => c.ApiKeys.Any(k => k.IsActive))
+                .OrderBy(c => c.Name)
+                .Select(c => new
+                {
+                    c.Id,
+                    c.Name,
+                    VacancyCount = c.Vacancies.Count(v => v.CreatedVia == VacancySource.Api),
+                    KeyCreated = c.ApiKeys.Where(k => k.IsActive).Max(k => (DateTime?)k.CreatedAt)
+                })
+                .ToListAsync(ct);
+
+            return rows.Select(r => new MetricDrilldownItemDto(
+                r.Id,
+                r.Name,
+                $"API · {r.VacancyCount} vacatures via API",
+                r.KeyCreated ?? DateTime.UtcNow,
+                r.VacancyCount)).ToList();
+        }
+
+        var csvOrgs = await _db.Companies.AsNoTracking()
+            .Where(c => c.CsvBatchImportEnabled && c.ParentCompanyId == null)
+            .OrderBy(c => c.Name)
+            .Select(c => new { c.Id, c.Name, c.LastCsvImportAtUtc })
+            .ToListAsync(ct);
+
+        var counts = await _db.Vacancies.AsNoTracking()
+            .Where(v => v.CreatedVia == VacancySource.Csv)
+            .Select(v => new { v.CompanyId, ParentId = v.Company.ParentCompanyId })
+            .ToListAsync(ct);
+
+        return csvOrgs.Select(r =>
+        {
+            var vacancyCount = counts.Count(v => v.CompanyId == r.Id || v.ParentId == r.Id);
+            return new MetricDrilldownItemDto(
+                r.Id,
+                r.Name,
+                $"CSV · {vacancyCount} vacatures via CSV",
+                r.LastCsvImportAtUtc ?? DateTime.UtcNow,
+                vacancyCount);
+        }).ToList();
+    }
+
+    private Task<List<MetricDrilldownItemDto>> UnpublishedVacanciesDrilldownAsync(CancellationToken ct)
+        => _db.Vacancies.AsNoTracking()
+            .Where(v => v.Status == VacancyStatus.Draft && v.PublishedAtUtc == null)
+            .OrderByDescending(v => v.CreatedAtUtc)
+            .Select(v => new MetricDrilldownItemDto(
+                v.Id,
+                v.Title,
+                $"{v.Company.Name} · {v.CreatedVia} · concept",
+                v.CreatedAtUtc,
+                null))
+            .ToListAsync(ct);
+
+    private Task<List<MetricDrilldownItemDto>> ReengagementSentDrilldownAsync(CancellationToken ct)
+        => _db.Companies.AsNoTracking()
+            .Where(c => c.ReengagementEmailSentAtUtc != null)
+            .OrderByDescending(c => c.ReengagementEmailSentAtUtc)
+            .Select(c => new MetricDrilldownItemDto(
+                c.Id,
+                c.Name,
+                "We missen je · verstuurd",
+                c.ReengagementEmailSentAtUtc!.Value,
+                null))
+            .ToListAsync(ct);
+
+    private async Task<List<MetricDrilldownItemDto>> ReengagementReactivatedDrilldownAsync(CancellationToken ct)
+    {
+        var sent = await _db.Companies.AsNoTracking()
+            .Where(c => c.ReengagementEmailSentAtUtc != null)
+            .Select(c => new { c.Id, c.Name, SentAt = c.ReengagementEmailSentAtUtc!.Value })
+            .ToListAsync(ct);
+
+        var items = new List<MetricDrilldownItemDto>();
+        foreach (var org in sent)
+        {
+            if (!await WasActiveAfterAsync(org.Id, org.SentAt, ct))
+            {
+                continue;
+            }
+
+            items.Add(new MetricDrilldownItemDto(
+                org.Id,
+                org.Name,
+                "Weer actief na we-missen-je mail",
+                org.SentAt,
+                null));
+        }
+
+        return items.OrderByDescending(i => i.CreatedAt).ToList();
     }
 
     private static string EngagementLabel(string? email, bool includePlatformOnly)

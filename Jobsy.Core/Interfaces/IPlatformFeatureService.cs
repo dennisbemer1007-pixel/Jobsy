@@ -14,10 +14,12 @@ public sealed record PlatformFeatureSnapshot(
     bool AuthenticatorEnabled,
     bool ExposeRegistrationActivationLinks,
     string PublicWebBaseUrl,
-    DateTime? UpdatedAtUtc);
+    DateTime? UpdatedAtUtc,
+    int InactiveCompanyDays = 120);
 
 public sealed record PlatformFeatureUpdate(
     bool VacancyContentModerationEnabled,
     bool AuthenticatorEnabled,
     bool ExposeRegistrationActivationLinks,
-    string? PublicWebBaseUrl);
+    string? PublicWebBaseUrl,
+    int InactiveCompanyDays = 120);

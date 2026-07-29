@@ -151,6 +151,7 @@ public class ApplicationsController : ControllerBase
 
         var vacancy = await _db.Vacancies
             .Include(v => v.Company)
+                .ThenInclude(c => c.ParentCompany)
             .FirstOrDefaultAsync(v => v.Id == request.VacancyId, cancellationToken);
 
         if (vacancy is null)
@@ -389,7 +390,80 @@ public class ApplicationsController : ControllerBase
             existing.Status.ToString(),
             existing.RespondedAt);
 
-        return Ok(new ApplyResultDto(dto, ConfirmationEmailQueued: true, authenticatorStubUsed));
+        return Ok(new ApplyResultDto(
+            dto,
+            ConfirmationEmailQueued: true,
+            authenticatorStubUsed,
+            DirectContact: ToDirectContactDto(vacancy)));
+    }
+
+    /// <summary>
+    /// Re-fetch employer direct-contact options after a verified application (never public).
+    /// </summary>
+    [HttpGet("by-vacancy/{vacancyId:guid}/direct-contact")]
+    [Authorize(Policy = JobsyPolicies.RequireCandidate)]
+    public async Task<ActionResult<EmployerDirectContactDto>> GetDirectContactForVacancy(
+        Guid vacancyId,
+        CancellationToken cancellationToken)
+    {
+        var candidate = await _users.FindByPrincipalAsync(User, cancellationToken);
+        if (candidate is null || !candidate.IsActive)
+        {
+            return Unauthorized();
+        }
+
+        var hasVerifiedApplication = await _db.Applications.AsNoTracking().AnyAsync(
+            a => a.VacancyId == vacancyId
+                 && a.EmailVerifiedAt != null
+                 && (a.CandidateUserId == candidate.Id
+                     || a.CandidateEmail.ToLower() == candidate.Email.ToLower()),
+            cancellationToken);
+        if (!hasVerifiedApplication)
+        {
+            return NotFound(new { message = "Geen bevestigde sollicitatie op deze vacature." });
+        }
+
+        var vacancy = await _db.Vacancies.AsNoTracking()
+            .Include(v => v.Company)
+                .ThenInclude(c => c.ParentCompany)
+            .FirstOrDefaultAsync(v => v.Id == vacancyId, cancellationToken);
+        if (vacancy is null)
+        {
+            return NotFound();
+        }
+
+        var dto = ToDirectContactDto(vacancy);
+        if (dto is null)
+        {
+            return Ok(new EmployerDirectContactDto(
+                Available: false,
+                OfferMail: false,
+                OfferPhone: false,
+                OfferWhatsApp: false));
+        }
+
+        return Ok(dto);
+    }
+
+    private static EmployerDirectContactDto? ToDirectContactDto(Core.Entities.Vacancy vacancy)
+    {
+        var effective = EmployerContactPreferenceRules.Resolve(
+            vacancy.Company,
+            vacancy,
+            vacancy.Company.ParentCompany);
+        if (!effective.Available)
+        {
+            return null;
+        }
+
+        return new EmployerDirectContactDto(
+            Available: true,
+            OfferMail: effective.OfferMail,
+            OfferPhone: effective.OfferPhone,
+            OfferWhatsApp: effective.OfferWhatsApp,
+            Email: effective.Email,
+            Phone: effective.Phone,
+            WhatsAppUrl: effective.WhatsAppUrl);
     }
 
     [HttpPost("{id:guid}/withdraw")]

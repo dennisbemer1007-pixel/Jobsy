@@ -46,7 +46,10 @@ public static class MetricsKeys
     {
         "errors", "users_open_for_work", "users_active",
         "companies_employers", "companies_intermediaries",
-        "site_visits", "site_visits_unique"
+        "site_visits", "site_visits_unique",
+        "companies_with_api", "companies_with_csv",
+        "unpublished_vacancies",
+        "reengagement_emails_sent", "reengagement_reactivated"
     };
 }
 

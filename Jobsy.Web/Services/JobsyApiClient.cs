@@ -812,6 +812,135 @@ public sealed class JobsyApiClient : IAsyncDisposable
         return await response.Content.ReadFromJsonAsync<CompanySummary>(cancellationToken: ct);
     }
 
+    public async Task<CompanySummary?> UpdateCsvBatchImportAsync(
+        Guid companyId,
+        bool csvBatchImportEnabled,
+        CancellationToken ct = default)
+    {
+        var response = await _http.PutAsJsonAsync(
+            $"api/companies/{companyId}/csv-batch-import",
+            new { csvBatchImportEnabled },
+            ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException(TryExtractMessage(body) ?? body);
+        }
+
+        return await response.Content.ReadFromJsonAsync<CompanySummary>(cancellationToken: ct);
+    }
+
+    public async Task<CompanySummary?> UpdateContactPreferenceAsync(
+        Guid companyId,
+        bool directContactEnabled,
+        bool contactPreferMail,
+        bool contactPreferPhone,
+        bool contactPreferWhatsApp,
+        string? contactEmail,
+        string? contactPhone,
+        string? contactWhatsApp,
+        CancellationToken ct = default)
+    {
+        var response = await _http.PutAsJsonAsync(
+            $"api/companies/{companyId}/contact-preference",
+            new
+            {
+                directContactEnabled,
+                contactPreferMail,
+                contactPreferPhone,
+                contactPreferWhatsApp,
+                contactEmail,
+                contactPhone,
+                contactWhatsApp
+            },
+            ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException(TryExtractMessage(body) ?? body);
+        }
+
+        return await response.Content.ReadFromJsonAsync<CompanySummary>(cancellationToken: ct);
+    }
+
+    public async Task<VacancyContactPreferenceItem?> GetVacancyContactPreferenceAsync(
+        Guid vacancyId,
+        CancellationToken ct = default)
+    {
+        var response = await _http.GetAsync($"api/vacancies/{vacancyId}/contact-preference", ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            return null;
+        }
+
+        return await response.Content.ReadFromJsonAsync<VacancyContactPreferenceItem>(cancellationToken: ct);
+    }
+
+    public async Task<VacancyContactPreferenceItem?> UpdateVacancyContactPreferenceAsync(
+        Guid vacancyId,
+        bool overrideContactPreference,
+        bool directContactEnabled,
+        bool contactPreferMail,
+        bool contactPreferPhone,
+        bool contactPreferWhatsApp,
+        CancellationToken ct = default)
+    {
+        var response = await _http.PutAsJsonAsync(
+            $"api/vacancies/{vacancyId}/contact-preference",
+            new
+            {
+                overrideContactPreference,
+                directContactEnabled,
+                contactPreferMail,
+                contactPreferPhone,
+                contactPreferWhatsApp
+            },
+            ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException(TryExtractMessage(body) ?? body);
+        }
+
+        return await response.Content.ReadFromJsonAsync<VacancyContactPreferenceItem>(cancellationToken: ct);
+    }
+
+    public async Task<CsvImportResult?> ImportVacanciesCsvAsync(
+        Guid companyId,
+        IReadOnlyList<CsvImportRowForm> rows,
+        CancellationToken ct = default)
+    {
+        var response = await _http.PostAsJsonAsync(
+            "api/vacancies/csv-import",
+            new { companyId, rows },
+            ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException(TryExtractMessage(body) ?? body);
+        }
+
+        return await response.Content.ReadFromJsonAsync<CsvImportResult>(cancellationToken: ct);
+    }
+
+    public async Task<CsvImportRowResult?> RetryVacancyCsvRowAsync(
+        Guid companyId,
+        CsvImportRowForm row,
+        CancellationToken ct = default)
+    {
+        var response = await _http.PostAsJsonAsync(
+            "api/vacancies/csv-import/row",
+            new { companyId, row },
+            ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException(TryExtractMessage(body) ?? body);
+        }
+
+        return await response.Content.ReadFromJsonAsync<CsvImportRowResult>(cancellationToken: ct);
+    }
+
     public async Task GrantTokensAsync(
         Guid companyId,
         decimal amount,
@@ -967,6 +1096,25 @@ public sealed class JobsyApiClient : IAsyncDisposable
         }
 
         return await response.Content.ReadFromJsonAsync<ApplyResultItem>(cancellationToken: ct);
+    }
+
+    public async Task<EmployerDirectContactItem?> GetDirectContactForVacancyAsync(
+        Guid vacancyId,
+        CancellationToken ct = default)
+    {
+        var response = await _http.GetAsync($"api/applications/by-vacancy/{vacancyId}/direct-contact", ct);
+        if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
+        {
+            return null;
+        }
+
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException(string.IsNullOrWhiteSpace(body) ? response.ReasonPhrase : body);
+        }
+
+        return await response.Content.ReadFromJsonAsync<EmployerDirectContactItem>(cancellationToken: ct);
     }
 
     public async Task<string> ExportPrivacyDataAsync(CancellationToken ct = default)
@@ -1643,7 +1791,12 @@ public record CreateVacancyForm(
     Guid? SalaryTableId = null,
     string? RequiredDrivingLicense = null,
     string? RequiredEducation = null,
-    int? MinimumEmployers = null);
+    int? MinimumEmployers = null,
+    bool OverrideContactPreference = false,
+    bool DirectContactEnabled = false,
+    bool ContactPreferMail = false,
+    bool ContactPreferPhone = false,
+    bool ContactPreferWhatsApp = false);
 
 public record BatchVacancyForm(
     string Title,
@@ -1654,6 +1807,43 @@ public record BatchVacancyForm(
     TransportMode RequiredTransport,
     string[] WorkTypes,
     Guid[] CompanyIds);
+
+public sealed class CsvImportRowForm
+{
+    public int RowNumber { get; set; }
+    public string? Title { get; set; }
+    public string? Description { get; set; }
+    public string? StartDate { get; set; }
+    public string? EndDate { get; set; }
+    public string? Branches { get; set; }
+    public string? SalaryTableId { get; set; }
+    public string? CompanyId { get; set; }
+    public string? HourlyWage { get; set; }
+    public string? Image { get; set; }
+    public string? Video { get; set; }
+    public string? Transport { get; set; }
+    public string? DrivingLicense { get; set; }
+    public string? Education { get; set; }
+    public string? MinimumEmployers { get; set; }
+}
+
+public sealed class CsvImportResult
+{
+    public int TotalRows { get; set; }
+    public int SuccessCount { get; set; }
+    public int FailedCount { get; set; }
+    public List<CsvImportRowResult> Rows { get; set; } = [];
+    public string PublishHint { get; set; } = string.Empty;
+}
+
+public sealed class CsvImportRowResult
+{
+    public int RowNumber { get; set; }
+    public bool Success { get; set; }
+    public Guid? VacancyId { get; set; }
+    public string? ErrorMessage { get; set; }
+    public CsvImportRowForm Data { get; set; } = new();
+}
 
 public sealed class MasterdataOptionItem
 {
@@ -1741,6 +1931,7 @@ public sealed class PlatformFeatureItem
     public bool ExposeRegistrationActivationLinks { get; set; }
     public string PublicWebBaseUrl { get; set; } = "http://localhost:5201";
     public DateTime? UpdatedAtUtc { get; set; }
+    public int InactiveCompanyDays { get; set; } = 120;
 }
 
 public sealed class PlatformCompanyItem

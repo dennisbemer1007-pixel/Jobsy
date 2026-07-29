@@ -96,7 +96,7 @@ public static class PageHelpDocs
         ["/home"] = new(
             "Home / dashboard",
             "Startscherm na inloggen, afgestemd op jouw rol.",
-            "Je ziet KPI’s, snelle links en taken die bij jouw rol horen (kandidaat, vestiging, regio, enterprise, intermediair, sales of admin).",
+            "Je ziet KPI’s (voor admin o.a. API/CSV-gebruik, ongepubliceerde concepten en we-missen-je conversie), snelle links en taken. Klik een tegel voor drilldown.",
             "Overzicht houden en snel naar vacatures, tokens, sollicitaties of beheer gaan."),
 
         ["/candidate/liked"] = new(
@@ -125,9 +125,9 @@ public static class PageHelpDocs
 
         ["/employer/vacancies"] = new(
             "Vacatures (werkgever)",
-            "Beheer van vacatures van jouw organisatie of vestiging.",
-            "Bekijk, filter en open vacatures. Afhankelijk van rol kun je publiceren, pauzeren of naar plaatsen gaan.",
-            "Openstaande banen beheren en opvolgen."),
+            "Beheer van vacatures van jouw organisatie of vestiging, inclusief concepten uit CSV-import of API.",
+            "Bekijk status en herkomst (Handmatig, CSV of API). Concepten publiceer je hier — daar wordt het tokenverbruik verwerkt. Afhankelijk van rol kun je publiceren, pauzeren of nieuwe vacatures plaatsen.",
+            "Openstaande banen beheren, importeren afronden en opvolgen."),
 
         ["/employer/tokens"] = new(
             "Tokens",
@@ -166,10 +166,16 @@ public static class PageHelpDocs
             "Het juiste team toegang geven tot vacatures en tokens."),
 
         ["/employer/company"] = new(
-            "Bedrijfsgegevens & API",
-            "Organisatiegegevens en externe API-keys voor ATS-koppelingen.",
-            "Genereer een API-key (één keer zichtbaar), deactiveer of rotatieer, en verstuur credentials per e-mail. Alleen de hash wordt opgeslagen.",
-            "Externe systemen veilig vacatures laten beheren binnen jouw bedrijf."),
+            "Bedrijfsgegevens",
+            "Organisatiegegevens, CSV Batch Import en externe API-koppeling.",
+            "Bekijk NAW en KVK. Schakel CSV Batch Import in om de navigatietab CSV Import te tonen. Beheer API-keys (genereren, deactiveren, e-mailen) voor ATS-partners. Vacatures via CSV of API komen binnen als concept; publiceren (en tokens) doe je in Lobsy onder Vacatures.",
+            "Organisatie veilig koppelen aan batch-CSV en externe systemen."),
+
+        ["/employer/csv-import"] = new(
+            "CSV Import",
+            "Veilige batch-import van vacatures via een CSV-bestand voor jouw organisatie.",
+            "Lees de How-to voor verplichte kolommen (titel, omschrijving, data’s, branches, salaristabel-id). Upload een .csv (komma of puntkomma) via slepen of bladeren. Afbeeldingen mag je als URL of Base64 in de kolom afbeelding zetten. Elke rij wordt strikt gevalideerd: geldige rijen worden concept-vacatures, ongeldige blijven staan met een foutmelding. Corrigeer mislukte rijen inline en klik Opnieuw aanbieden. Publiceer geslaagde concepten daarna via Vacatures (tokenverwerking).",
+            "Snel en controleerbaar veel vacatures aanmaken zonder blind foute data in te lezen."),
 
         ["/employer/salary-tables"] = new(
             "Salaristabellen / CAO",
@@ -293,8 +299,8 @@ public static class PageHelpDocs
 
         ["/admin/settings"] = new(
             "Beheer · Instellingen",
-            "Systeeminstellingen en platformfeatures.",
-            "Zet features aan/uit (moderatie, authenticator, …) en beheer gerelateerde opties. Integraties zitten in hetzelfde settings-gebied.",
+            "Systeeminstellingen, platformfeatures en inactiviteitsperiode.",
+            "Zet features aan/uit (moderatie, authenticator, …), stel de inactieve periode in voor de eenmalige “We missen je”-mail (standaard 120 dagen), en beheer integraties.",
             "Gedrag van Lobsy afstemmen zonder code-deploys."),
 
         ["/admin/company"] = new(

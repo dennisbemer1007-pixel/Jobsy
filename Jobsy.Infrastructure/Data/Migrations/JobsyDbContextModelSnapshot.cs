@@ -331,6 +331,39 @@ namespace Jobsy.Infrastructure.Data.Migrations
                     b.Property<Guid?>("ReferredBySalesManagerUserId")
                         .HasColumnType("uuid");
 
+                    b.Property<bool>("CsvBatchImportEnabled")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("ContactEmail")
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
+                    b.Property<string>("ContactPhone")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<bool>("ContactPreferMail")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("ContactPreferPhone")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("ContactPreferWhatsApp")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("ContactWhatsApp")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<bool>("DirectContactEnabled")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateTime?>("LastCsvImportAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("ReengagementEmailSentAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<bool>("TokensManagedByEnterprise")
                         .HasColumnType("boolean");
 
@@ -864,6 +897,9 @@ namespace Jobsy.Infrastructure.Data.Migrations
 
                     b.Property<bool>("ExposeRegistrationActivationLinks")
                         .HasColumnType("boolean");
+
+                    b.Property<int>("InactiveCompanyDays")
+                        .HasColumnType("integer");
 
                     b.Property<string>("PublicWebBaseUrl")
                         .HasMaxLength(512)
@@ -1546,8 +1582,28 @@ namespace Jobsy.Infrastructure.Data.Migrations
                     b.Property<Guid>("CompanyId")
                         .HasColumnType("uuid");
 
+                    b.Property<bool>("ContactPreferMail")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("ContactPreferPhone")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("ContactPreferWhatsApp")
+                        .HasColumnType("boolean");
+
                     b.Property<int>("CreatedVia")
                         .HasColumnType("integer");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+                    b.Property<bool>("DirectContactEnabled")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateTime?>("DraftCleanupWarningSentAtUtc")
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("Description")
                         .IsRequired()
@@ -1568,8 +1624,8 @@ namespace Jobsy.Infrastructure.Data.Migrations
                         .HasColumnType("numeric(8,2)");
 
                     b.Property<string>("ImageUrl")
-                        .HasMaxLength(1024)
-                        .HasColumnType("character varying(1024)");
+                        .HasMaxLength(600000)
+                        .HasColumnType("character varying(600000)");
 
                     b.Property<bool>("IsHighlighted")
                         .HasColumnType("boolean");
@@ -1583,6 +1639,12 @@ namespace Jobsy.Infrastructure.Data.Migrations
 
                     b.Property<int?>("MinimumEmployers")
                         .HasColumnType("integer");
+
+                    b.Property<bool>("OverrideContactPreference")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateTime?>("PublishedAtUtc")
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<bool>("RequestedExtend")
                         .HasColumnType("boolean");
@@ -1640,6 +1702,8 @@ namespace Jobsy.Infrastructure.Data.Migrations
                     b.HasIndex("CompanyId", "Status");
 
                     b.HasIndex("Status", "EndDate", "StartDate");
+
+                    b.HasIndex("Status", "PublishedAtUtc", "CreatedAtUtc");
 
                     b.ToTable("Vacancies");
                 });

@@ -16,4 +16,9 @@ public record CreateVacancyRequest(
     Guid? SalaryTableId = null,
     string? RequiredDrivingLicense = null,
     string? RequiredEducation = null,
-    int? MinimumEmployers = null);
+    int? MinimumEmployers = null,
+    bool OverrideContactPreference = false,
+    bool DirectContactEnabled = false,
+    bool ContactPreferMail = false,
+    bool ContactPreferPhone = false,
+    bool ContactPreferWhatsApp = false);

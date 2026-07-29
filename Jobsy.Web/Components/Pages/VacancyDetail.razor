@@ -273,6 +273,15 @@
                             <div class="apply-panel apply-panel--success" role="status">
                                 <p class="apply-panel__title">@Culture["Apply.SentTitle"]</p>
                                 <p class="apply-panel__text">@Culture["Apply.SentBody"]</p>
+                                @if (_directContact is { Available: true })
+                                {
+                                    <button type="button"
+                                            class="login-submit apply-flow__primary"
+                                            style="margin-bottom:0.5rem"
+                                            @onclick="() => OpenDirectContactIfAvailable(_directContact)">
+                                        @Culture["Apply.DirectContactTitle"]
+                                    </button>
+                                }
                                 <a class="engagement-btn apply-flow__secondary" href="/candidate/applications">@Culture["Apply.MyApplications"]</a>
                             </div>
                         }
@@ -419,6 +428,7 @@
 
 <ShareModal IsOpen="_shareOpen" Vacancy="_vacancy" OnClose="CloseShare" />
 <MockInterviewModal IsOpen="_mockInterviewOpen" Vacancy="_vacancy" OnClose="CloseMockInterview" />
+<DirectContactModal IsOpen="_directContactOpen" Contact="_directContact" OnClose="CloseDirectContact" />
 
 @code {
     [Parameter] public Guid Id { get; set; }
@@ -431,6 +441,8 @@
     private bool _liking;
     private bool _shareOpen;
     private bool _mockInterviewOpen;
+    private bool _directContactOpen;
+    private EmployerDirectContactItem? _directContact;
     private bool _savingDob;
     private DateOnly? _dobInput;
     private string _transport = "Fiets";
@@ -550,6 +562,8 @@
         _requiresEducation = false;
         _authenticatorEnabled = false;
         _dobInput = null;
+        _directContact = null;
+        _directContactOpen = false;
     }
 
     private async void OnCultureChanged()
@@ -747,6 +761,7 @@
                     _awaitingVerification = false;
                     _enteredVerifyThisSession = false;
                     _message = Culture["Apply.AlreadyApplied"];
+                    await LoadDirectContactAsync();
                 }
                 else if (!_enteredVerifyThisSession)
                 {
@@ -756,6 +771,27 @@
         }
 
         _liked = await likedTask;
+    }
+
+    private async Task LoadDirectContactAsync()
+    {
+        try
+        {
+            var contact = await Api.GetDirectContactForVacancyAsync(Id);
+            if (contact is { Available: true }
+                && (contact.OfferMail || contact.OfferPhone || contact.OfferWhatsApp))
+            {
+                _directContact = contact;
+            }
+            else
+            {
+                _directContact = null;
+            }
+        }
+        catch
+        {
+            _directContact = null;
+        }
     }
 
     private async Task<MeProfile?> SafeProfileAsync()
@@ -992,6 +1028,7 @@
                 _message = _useAuthenticator
                     ? Culture["Apply.CodeSentAuthenticator"]
                     : Culture["Apply.SentStub"];
+                OpenDirectContactIfAvailable(result?.DirectContact);
             }
         }
         catch (Exception ex)
@@ -1031,6 +1068,7 @@
                 _verificationCode = string.Empty;
                 _enteredVerifyThisSession = false;
                 _message = Culture["Apply.Verified"];
+                OpenDirectContactIfAvailable(result?.DirectContact);
             }
             else
             {
@@ -1088,6 +1126,31 @@
     private Task CloseMockInterview()
     {
         _mockInterviewOpen = false;
+        return Task.CompletedTask;
+    }
+
+    private void OpenDirectContactIfAvailable(EmployerDirectContactItem? contact)
+    {
+        if (contact is null || !contact.Available)
+        {
+            return;
+        }
+
+        var hasWhatsApp = contact.OfferWhatsApp && !string.IsNullOrWhiteSpace(contact.WhatsAppUrl);
+        var hasPhone = contact.OfferPhone && !string.IsNullOrWhiteSpace(contact.Phone);
+        var hasMail = contact.OfferMail && !string.IsNullOrWhiteSpace(contact.Email);
+        if (!hasWhatsApp && !hasPhone && !hasMail)
+        {
+            return;
+        }
+
+        _directContact = contact;
+        _directContactOpen = true;
+    }
+
+    private Task CloseDirectContact()
+    {
+        _directContactOpen = false;
         return Task.CompletedTask;
     }
 }
