@@ -3,9 +3,11 @@
 @inject IJSRuntime Js
 @inject CultureState Culture
 @inject AuthenticationStateProvider AuthState
+@inject NavigationManager Navigation
 @implements IAsyncDisposable
 @using Jobsy.Core.Rules
 @using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.AspNetCore.WebUtilities
 
 <div class="jobsy-discovery @(showMapOnMobile ? "show-map" : "show-list") @(_filtersOpen ? "filters-open" : null)">
     <div class="jobsy-chrome">
@@ -573,6 +575,8 @@
     protected override async Task OnInitializedAsync()
     {
         Culture.Changed += OnCultureChanged;
+        Navigation.LocationChanged += OnLocationChanged;
+        ApplyWorkTypeFromQuery();
         try
         {
             await LoadBranchOptionsAsync();
@@ -596,7 +600,9 @@
                         _selectedTransport = profile.Preferences.PreferredTransport;
                     }
 
-                    if (profile.Preferences.Roles is { Count: > 0 })
+                    // Query-param workType (from assistant) wins over profile preference.
+                    if (string.IsNullOrWhiteSpace(_selectedWorkType)
+                        && profile.Preferences.Roles is { Count: > 0 })
                     {
                         var preferred = profile.Preferences.Roles
                             .Select(r => WorkTypeLabels.Expand(WorkTypeLabels.Parse(r)).FirstOrDefault())
@@ -615,6 +621,41 @@
         }
 
         await LoadVacanciesAsync();
+    }
+
+    private async void OnLocationChanged(object? sender, Microsoft.AspNetCore.Components.Routing.LocationChangedEventArgs e)
+    {
+        var before = _selectedWorkType;
+        ApplyWorkTypeFromQuery();
+        if (!string.Equals(before, _selectedWorkType, StringComparison.OrdinalIgnoreCase))
+        {
+            showMapOnMobile = true;
+            await LoadVacanciesAsync();
+            await InvokeAsync(StateHasChanged);
+        }
+    }
+
+    private void ApplyWorkTypeFromQuery()
+    {
+        var uri = Navigation.ToAbsoluteUri(Navigation.Uri);
+        if (!QueryHelpers.ParseQuery(uri.Query).TryGetValue("workType", out var values))
+        {
+            return;
+        }
+
+        var raw = values.FirstOrDefault();
+        if (string.IsNullOrWhiteSpace(raw))
+        {
+            return;
+        }
+
+        var parsed = WorkTypeLabels.Expand(WorkTypeLabels.Parse(raw)).FirstOrDefault()
+                     ?? WorkTypeLabels.All.FirstOrDefault(l =>
+                         l.Equals(raw.Trim(), StringComparison.OrdinalIgnoreCase));
+        if (!string.IsNullOrWhiteSpace(parsed))
+        {
+            _selectedWorkType = parsed!;
+        }
     }
 
     private async Task LoadBranchOptionsAsync()
@@ -1398,6 +1439,7 @@
     public async ValueTask DisposeAsync()
     {
         Culture.Changed -= OnCultureChanged;
+        Navigation.LocationChanged -= OnLocationChanged;
         _suggestCts?.Cancel();
         _suggestCts?.Dispose();
         _dotNetRef?.Dispose();

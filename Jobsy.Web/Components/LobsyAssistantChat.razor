@@ -1,0 +1,262 @@
+@namespace Jobsy.Web.Components
+@using Microsoft.AspNetCore.Components.Authorization
+@using Jobsy.Core.Authorization
+@inject JobsyApiClient Api
+@inject CultureState Culture
+@inject NavigationManager Navigation
+@inject AuthenticationStateProvider AuthState
+@implements IDisposable
+
+<AuthorizeView>
+    <Authorized>
+        @if (_visible)
+        {
+            <div class="lobsy-assistant @(_open ? "is-open" : null) @(_hasBottomNav ? "has-bottom-nav" : null)">
+                @if (_open)
+                {
+                    <div class="lobsy-assistant__panel" role="dialog" aria-modal="false" aria-labelledby="lobsy-assistant-title" tabindex="-1" @onkeydown="OnKeyDown">
+                        <header class="lobsy-assistant__header">
+                            <div class="lobsy-assistant__brand">
+                                <LobsyLogo Class="lobsy-assistant__logo" Alt="" Animate="true" />
+                                <div>
+                                    <h2 id="lobsy-assistant-title">@Culture["Assistant.Title"]</h2>
+                                    <p class="lobsy-assistant__lead">@Culture["Assistant.Lead"]</p>
+                                </div>
+                            </div>
+                            <button type="button" class="share-modal__close" @onclick="Close" aria-label="@Culture["Assistant.Close"]">×</button>
+                        </header>
+
+                        <div class="lobsy-assistant__chat">
+                            @foreach (var msg in _messages)
+                            {
+                                <div class="lobsy-assistant__bubble lobsy-assistant__bubble--@msg.Role">
+                                    @if (msg.Role == "assistant")
+                                    {
+                                        <div class="lobsy-assistant__bubble-head">
+                                            <LobsyLogo Class="lobsy-assistant__bubble-logo" Alt="" Animate="false" />
+                                            <span>@Culture["Assistant.BotName"]</span>
+                                        </div>
+                                    }
+                                    else
+                                    {
+                                        <span class="lobsy-assistant__bubble-role">@Culture["Assistant.You"]</span>
+                                    }
+                                    <p>@msg.Content</p>
+                                </div>
+                            }
+                            @if (_busy)
+                            {
+                                <div class="lobsy-assistant__bubble lobsy-assistant__bubble--assistant lobsy-assistant__bubble--typing">
+                                    <div class="lobsy-assistant__bubble-head">
+                                        <LobsyLogo Class="lobsy-assistant__bubble-logo" Alt="" Animate="false" />
+                                        <span>@Culture["Assistant.BotName"]</span>
+                                    </div>
+                                    <p>@Culture["Assistant.Typing"]</p>
+                                </div>
+                            }
+                        </div>
+
+                        @if (_actionLinks.Count > 0)
+                        {
+                            <div class="lobsy-assistant__actions">
+                                @foreach (var link in _actionLinks)
+                                {
+                                    <button type="button" class="engagement-btn lobsy-assistant__action" @onclick="() => FollowLink(link)">
+                                        @(link.Label ?? link.Url ?? "→")
+                                    </button>
+                                }
+                            </div>
+                        }
+
+                        @if (!string.IsNullOrEmpty(_error))
+                        {
+                            <p class="state-message error">@_error</p>
+                        }
+
+                        <form class="lobsy-assistant__compose" @onsubmit="SendAsync" @onsubmit:preventDefault="true">
+                            <label class="visually-hidden" for="lobsy-assistant-input">@Culture["Assistant.InputLabel"]</label>
+                            <textarea id="lobsy-assistant-input"
+                                      rows="2"
+                                      maxlength="1500"
+                                      placeholder="@Culture["Assistant.Placeholder"]"
+                                      disabled="@_busy"
+                                      @bind="_draft"
+                                      @bind:event="oninput"></textarea>
+                            <button type="submit" class="login-submit" disabled="@(_busy || string.IsNullOrWhiteSpace(_draft))">
+                                @Culture["Assistant.Send"]
+                            </button>
+                        </form>
+                    </div>
+                }
+
+                <button type="button"
+                        class="lobsy-assistant__fab"
+                        @onclick="Toggle"
+                        aria-expanded="@_open"
+                        aria-label="@Culture["Assistant.Open"]">
+                    <LobsyLogo Class="lobsy-assistant__fab-logo" Alt="" Animate="true" />
+                </button>
+            </div>
+        }
+    </Authorized>
+</AuthorizeView>
+
+@code {
+    [Parameter] public bool HasBottomNav { get; set; }
+
+    private bool _visible;
+    private bool _open;
+    private bool _busy;
+    private bool _started;
+    private bool _hasBottomNav;
+    private string _draft = "";
+    private string? _error;
+    private readonly List<AssistantChatMessage> _messages = [];
+    private List<AssistantChatActionItem> _actionLinks = [];
+
+    protected override void OnInitialized()
+    {
+        Culture.Changed += OnCultureChanged;
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        _hasBottomNav = HasBottomNav;
+        await ResolveVisibilityAsync();
+    }
+
+    public void Dispose()
+    {
+        Culture.Changed -= OnCultureChanged;
+    }
+
+    private void OnCultureChanged() => _ = InvokeAsync(StateHasChanged);
+
+    private async Task ResolveVisibilityAsync()
+    {
+        try
+        {
+            var state = await AuthState.GetAuthenticationStateAsync();
+            var user = state.User;
+            _visible = user.Identity?.IsAuthenticated == true
+                       && (RoleClaimMatching.HasRole(user, JobsyRoles.Candidate)
+                           || RoleClaimMatching.HasRole(user, JobsyRoles.SalesManager)
+                           || RoleClaimMatching.HasRole(user, JobsyRoles.Admin)
+                           || RoleClaimMatching.HasAnyRole(user, JobsyRoles.EmployerRoles));
+        }
+        catch
+        {
+            _visible = false;
+        }
+    }
+
+    private async Task Toggle()
+    {
+        _open = !_open;
+        if (_open && !_started)
+        {
+            await StartAsync();
+        }
+    }
+
+    private void Close()
+    {
+        _open = false;
+    }
+
+    private async Task OnKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key is "Escape" or "Esc")
+        {
+            Close();
+        }
+
+        await Task.CompletedTask;
+    }
+
+    private async Task StartAsync()
+    {
+        _messages.Clear();
+        _actionLinks = [];
+        _error = null;
+        _busy = true;
+        _started = true;
+        try
+        {
+            var reply = await Api.SendAssistantChatAsync([]);
+            _messages.Add(new AssistantChatMessage("assistant", reply.Reply));
+            ApplyActions(reply.Actions);
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+            _started = false;
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private async Task SendAsync()
+    {
+        if (_busy || string.IsNullOrWhiteSpace(_draft))
+        {
+            return;
+        }
+
+        var text = _draft.Trim();
+        _draft = "";
+        _error = null;
+        _messages.Add(new AssistantChatMessage("user", text));
+        _busy = true;
+        _actionLinks = [];
+        try
+        {
+            var history = _messages.Select(m => new AssistantChatMessage(m.Role, m.Content)).ToList();
+            var reply = await Api.SendAssistantChatAsync(history);
+            _messages.Add(new AssistantChatMessage("assistant", reply.Reply));
+            ApplyActions(reply.Actions);
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private void ApplyActions(IReadOnlyList<AssistantChatActionItem>? actions)
+    {
+        if (actions is null || actions.Count == 0)
+        {
+            return;
+        }
+
+        _actionLinks = actions
+            .Where(a => !string.IsNullOrWhiteSpace(a.Url))
+            .GroupBy(a => a.Url)
+            .Select(g => g.First())
+            .Take(6)
+            .ToList();
+
+        var filter = actions.FirstOrDefault(a =>
+            string.Equals(a.Type, "setFilters", StringComparison.OrdinalIgnoreCase)
+            && !string.IsNullOrWhiteSpace(a.Url));
+        if (filter?.Url is not null)
+        {
+            // Navigate so VacancyDiscovery picks up ?workType=
+            Navigation.NavigateTo(filter.Url, forceLoad: false);
+        }
+    }
+
+    private void FollowLink(AssistantChatActionItem link)
+    {
+        if (!string.IsNullOrWhiteSpace(link.Url))
+        {
+            Navigation.NavigateTo(link.Url, forceLoad: false);
+        }
+    }
+}
