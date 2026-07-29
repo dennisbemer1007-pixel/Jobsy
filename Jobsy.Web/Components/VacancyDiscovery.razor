@@ -382,6 +382,10 @@
                     {
                         <button type="button" class="filter-tag" @onclick="() => ClearWorkTypeAsync(workType)">@workType ×</button>
                     }
+                    @if (!string.IsNullOrWhiteSpace(_searchQuery))
+                    {
+                        <button type="button" class="filter-tag" @onclick="ClearSearchQueryAsync">“@_searchQuery” ×</button>
+                    }
                     @if (_ageYears is not null)
                     {
                         <button type="button" class="filter-tag" @onclick="ClearAgeAsync">@_ageYears ×</button>
@@ -487,6 +491,8 @@
     private int _radiusKm = 15;
     private string _selectedTransport = "Fiets";
     private readonly HashSet<string> _selectedWorkTypes = new(StringComparer.OrdinalIgnoreCase);
+    /// <summary>Hidden keyword filter from assistant (?q=); not a primary UI control.</summary>
+    private string? _searchQuery;
     private List<string> _branchOptions = WorkTypeLabels.All.ToList();
     private string _sortMode = "title";
     private bool _sortChosenByUser;
@@ -555,6 +561,7 @@
         {
             var n = 0;
             if (_selectedWorkTypes.Count > 0) n++;
+            if (!string.IsNullOrWhiteSpace(_searchQuery)) n++;
             if (_ageYears is not null) n++;
             if (_minHourlyWage is not null) n++;
             if (_maxHourlyWage is not null) n++;
@@ -572,6 +579,7 @@
     private bool ShouldFallbackFromEmptyProximity =>
         _origin is not null
         && _selectedWorkTypes.Count == 0
+        && string.IsNullOrWhiteSpace(_searchQuery)
         && _minHourlyWage is null
         && _maxHourlyWage is null
         && _maxTravelMinutes == 30
@@ -583,6 +591,7 @@
         Culture.Changed += OnCultureChanged;
         Navigation.LocationChanged += OnLocationChanged;
         ApplyWorkTypeFromQuery();
+        ApplySearchQueryFromQuery();
         try
         {
             await LoadBranchOptionsAsync();
@@ -634,9 +643,12 @@
 
     private async void OnLocationChanged(object? sender, Microsoft.AspNetCore.Components.Routing.LocationChangedEventArgs e)
     {
-        var before = _selectedWorkTypes.ToHashSet(StringComparer.OrdinalIgnoreCase);
+        var beforeTypes = _selectedWorkTypes.ToHashSet(StringComparer.OrdinalIgnoreCase);
+        var beforeQuery = _searchQuery;
         ApplyWorkTypeFromQuery();
-        if (!before.SetEquals(_selectedWorkTypes))
+        ApplySearchQueryFromQuery();
+        if (!beforeTypes.SetEquals(_selectedWorkTypes)
+            || !string.Equals(beforeQuery, _searchQuery, StringComparison.Ordinal))
         {
             showMapOnMobile = true;
             await LoadVacanciesAsync();
@@ -667,6 +679,19 @@
                          ?? label;
             _selectedWorkTypes.Add(option);
         }
+    }
+
+    private void ApplySearchQueryFromQuery()
+    {
+        var uri = Navigation.ToAbsoluteUri(Navigation.Uri);
+        if (!QueryHelpers.ParseQuery(uri.Query).TryGetValue("q", out var values))
+        {
+            _searchQuery = null;
+            return;
+        }
+
+        var raw = values.FirstOrDefault()?.Trim();
+        _searchQuery = string.IsNullOrWhiteSpace(raw) ? null : raw;
     }
 
     private async Task LoadBranchOptionsAsync()
@@ -850,7 +875,8 @@
                 _ageYears,
                 _ageYears is null ? null : _minHourlyWage,
                 _ageYears is null ? null : _maxHourlyWage,
-                _selectedWorkTypes.Count == 0 ? null : _selectedWorkTypes);
+                _selectedWorkTypes.Count == 0 ? null : _selectedWorkTypes,
+                _searchQuery);
 
             // Stale/far stored origin + default proximity can wipe the catalog; show all until filters tighten.
             if (items.Count == 0 && ShouldFallbackFromEmptyProximity)
@@ -864,7 +890,8 @@
                     _ageYears,
                     _ageYears is null ? null : _minHourlyWage,
                     _ageYears is null ? null : _maxHourlyWage,
-                    _selectedWorkTypes.Count == 0 ? null : _selectedWorkTypes);
+                    _selectedWorkTypes.Count == 0 ? null : _selectedWorkTypes,
+                    _searchQuery);
             }
 
             _vacancies = items.ToList();
@@ -1418,6 +1445,35 @@
         await LoadVacanciesAsync();
     }
 
+    private async Task ClearSearchQueryAsync()
+    {
+        _searchQuery = null;
+        var uri = Navigation.ToAbsoluteUri(Navigation.Uri);
+        var parsed = QueryHelpers.ParseQuery(uri.Query);
+        if (parsed.ContainsKey("q"))
+        {
+            var parts = new List<string>();
+            foreach (var kv in parsed)
+            {
+                if (string.Equals(kv.Key, "q", StringComparison.OrdinalIgnoreCase))
+                {
+                    continue;
+                }
+
+                foreach (var value in kv.Value)
+                {
+                    parts.Add($"{Uri.EscapeDataString(kv.Key)}={Uri.EscapeDataString(value ?? string.Empty)}");
+                }
+            }
+
+            var next = parts.Count == 0 ? uri.AbsolutePath : $"{uri.AbsolutePath}?{string.Join("&", parts)}";
+            Navigation.NavigateTo(next, forceLoad: false);
+            return;
+        }
+
+        await LoadVacanciesAsync();
+    }
+
     private async Task ClearAgeAsync()
     {
         _ageYears = null;
@@ -1430,6 +1486,7 @@
     private async Task ClearAllFiltersAsync()
     {
         _selectedWorkTypes.Clear();
+        _searchQuery = null;
         _ageYears = null;
         _minHourlyWage = null;
         _maxHourlyWage = null;

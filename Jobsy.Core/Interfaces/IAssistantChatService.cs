@@ -25,6 +25,7 @@ public sealed record AssistantChatAction(
     string Type,
     string? Url = null,
     string? WorkType = null,
+    string? SearchQuery = null,
     int? Count = null,
     string? Label = null,
     Guid? ApplicationId = null,

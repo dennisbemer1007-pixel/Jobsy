@@ -87,6 +87,7 @@ public sealed class JobsyApiClient : IAsyncDisposable
         decimal? minHourlyWage = null,
         decimal? maxHourlyWage = null,
         IEnumerable<string>? workTypes = null,
+        string? searchQuery = null,
         CancellationToken ct = default)
     {
         var qs = $"transport={Uri.EscapeDataString(transport)}&maxMinutes={maxMinutes}";
@@ -122,6 +123,11 @@ public sealed class JobsyApiClient : IAsyncDisposable
             {
                 qs += $"&workType={Uri.EscapeDataString(workType)}";
             }
+        }
+
+        if (!string.IsNullOrWhiteSpace(searchQuery))
+        {
+            qs += $"&q={Uri.EscapeDataString(searchQuery.Trim())}";
         }
 
         return await _http.GetFromJsonAsync<List<VacancyListItem>>($"api/vacancies/discover?{qs}", ct) ?? [];
