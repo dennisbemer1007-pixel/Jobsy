@@ -101,29 +101,37 @@ public sealed class SalesManagerDashboardService : ISalesManagerDashboardService
         var managers = await _db.Users.AsNoTracking()
             .Where(u => u.Role == UserRole.SalesManager)
             .OrderBy(u => u.FullName)
+            .Select(u => new { u.Id, u.Email, u.FullName })
             .ToListAsync(cancellationToken);
 
+        var ids = managers.Select(m => m.Id).ToList();
         var profiles = await _db.SalesManagerProfiles.AsNoTracking()
-            .Where(p => managers.Select(m => m.Id).Contains(p.UserId))
+            .Where(p => ids.Contains(p.UserId))
             .ToDictionaryAsync(p => p.UserId, cancellationToken);
 
-        var result = new List<SalesManagerListItemDto>();
-        foreach (var user in managers)
+        var balances = await _db.CommissionLedgerEntries.AsNoTracking()
+            .Where(e => ids.Contains(e.SalesManagerUserId))
+            .GroupBy(e => e.SalesManagerUserId)
+            .Select(g => new { g.Key, Sum = g.Sum(x => x.AmountExVat) })
+            .ToDictionaryAsync(x => x.Key, x => x.Sum, cancellationToken);
+
+        var supplierCounts = await _db.Companies.AsNoTracking()
+            .Where(c => c.ReferredBySalesManagerUserId != null && ids.Contains(c.ReferredBySalesManagerUserId.Value))
+            .GroupBy(c => c.ReferredBySalesManagerUserId!.Value)
+            .Select(g => new { g.Key, Count = g.Count() })
+            .ToDictionaryAsync(x => x.Key, x => x.Count, cancellationToken);
+
+        return managers.Select(user =>
         {
             profiles.TryGetValue(user.Id, out var profile);
-            var balance = await _ledger.GetBalanceExVatAsync(user.Id, cancellationToken);
-            var count = await _db.Companies.CountAsync(
-                c => c.ReferredBySalesManagerUserId == user.Id, cancellationToken);
-            result.Add(new SalesManagerListItemDto(
+            return new SalesManagerListItemDto(
                 user.Id,
                 user.Email,
                 user.FullName,
                 profile?.TrackingCode,
                 profile?.IsOnboardingComplete ?? false,
-                balance,
-                count));
-        }
-
-        return result;
+                balances.GetValueOrDefault(user.Id),
+                supplierCounts.GetValueOrDefault(user.Id));
+        }).ToList();
     }
 }

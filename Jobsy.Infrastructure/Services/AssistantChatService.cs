@@ -242,13 +242,48 @@ public sealed class AssistantChatService : IAssistantChatService
         CancellationToken cancellationToken)
     {
         var today = DateOnly.FromDateTime(DateTime.UtcNow);
-        var all = await _db.Vacancies.AsNoTracking()
-            .Include(v => v.Company)
-            .Where(v => v.Status == VacancyStatus.Active && v.StartDate <= today && v.EndDate >= today)
+        var query = _db.Vacancies.AsNoTracking()
+            .Where(v => v.Status == VacancyStatus.Active && v.StartDate <= today && v.EndDate >= today);
+
+        var tokens = VacancyTextSearch.GetRequiredTokens(searchQuery);
+        foreach (var token in tokens)
+        {
+            // Prefilter must stay looser than VacancyTextSearch: compound job titles
+            // like "heftruckchauffeur" also match titles containing the root "heftruck".
+            var t = token;
+            var root = TryJobRoot(token);
+            if (root is null)
+            {
+                query = query.Where(v =>
+                    v.Title.ToLower().Contains(t)
+                    || v.Description.ToLower().Contains(t)
+                    || (v.WorkTypeLabels != null && v.WorkTypeLabels.ToLower().Contains(t))
+                    || (v.RequiredDrivingLicense != null && v.RequiredDrivingLicense.ToLower().Contains(t))
+                    || (v.RequiredEducation != null && v.RequiredEducation.ToLower().Contains(t)));
+            }
+            else
+            {
+                var r = root;
+                query = query.Where(v =>
+                    v.Title.ToLower().Contains(t)
+                    || v.Title.ToLower().Contains(r)
+                    || v.Description.ToLower().Contains(t)
+                    || v.Description.ToLower().Contains(r)
+                    || (v.WorkTypeLabels != null && (v.WorkTypeLabels.ToLower().Contains(t) || v.WorkTypeLabels.ToLower().Contains(r)))
+                    || (v.RequiredDrivingLicense != null && (v.RequiredDrivingLicense.ToLower().Contains(t) || v.RequiredDrivingLicense.ToLower().Contains(r)))
+                    || (v.RequiredEducation != null && (v.RequiredEducation.ToLower().Contains(t) || v.RequiredEducation.ToLower().Contains(r))));
+            }
+        }
+
+        // Cap DB payload; refine with exact VacancyTextSearch (suffix roots) in memory.
+        var loadDescription = tokens.Count > 0;
+        var all = await query
+            .OrderBy(v => v.Title)
+            .Take(500)
             .Select(v => new VacancySearchRow(
                 v.Id,
                 v.Title,
-                v.Description,
+                loadDescription ? v.Description : string.Empty,
                 v.Company.Name,
                 v.WorkTypes,
                 v.WorkTypeLabels,
@@ -323,6 +358,29 @@ public sealed class AssistantChatService : IAssistantChatService
         }
 
         return new AssistantChatResult(sb.ToString().Trim(), false, actions);
+    }
+
+    private static readonly string[] JobSuffixesForPrefilter =
+    [
+        "chauffeur", "medewerker", "hulp", "assistent", "operator", "picker", "plukker",
+        "driver", "worker", "helper", "assistant"
+    ];
+
+    private static string? TryJobRoot(string token)
+    {
+        foreach (var suffix in JobSuffixesForPrefilter)
+        {
+            if (token.EndsWith(suffix, StringComparison.Ordinal) && token.Length > suffix.Length + 2)
+            {
+                var root = token[..^suffix.Length];
+                if (root.Length >= 3)
+                {
+                    return root;
+                }
+            }
+        }
+
+        return null;
     }
 
     private sealed record VacancySearchRow(

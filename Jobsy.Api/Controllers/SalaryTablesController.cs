@@ -54,6 +54,7 @@ public class SalaryTablesController : ControllerBase
 
             var forBranch = await _db.CompanySalaryTables
                 .AsNoTracking()
+                .AsSplitQuery()
                 .Include(t => t.Company)
                 .Include(t => t.Rates)
                 .Include(t => t.AllowedBranches)
@@ -102,6 +103,7 @@ public class SalaryTablesController : ControllerBase
 
         var tables = await _db.CompanySalaryTables
             .AsNoTracking()
+            .AsSplitQuery()
             .Include(t => t.Company)
             .Include(t => t.Rates)
             .Include(t => t.AllowedBranches)
@@ -120,6 +122,7 @@ public class SalaryTablesController : ControllerBase
     {
         var table = await _db.CompanySalaryTables
             .AsNoTracking()
+            .AsSplitQuery()
             .Include(t => t.Company)
             .Include(t => t.Rates)
             .Include(t => t.AllowedBranches)
@@ -168,7 +171,6 @@ public class SalaryTablesController : ControllerBase
 
         var vacancies = await _db.Vacancies
             .AsNoTracking()
-            .Include(v => v.Company)
             .Where(v => v.SalaryTableId == id)
             .OrderBy(v => v.Title)
             .Select(v => new SalaryTableVacancyDto(

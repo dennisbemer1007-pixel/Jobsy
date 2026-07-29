@@ -261,7 +261,8 @@ public class VacanciesController : ControllerBase
             showWage: true,
             impressionCount: impressionCounts.GetValueOrDefault(v.Id),
             clickCount: clickCounts.GetValueOrDefault(v.Id),
-            applicationCount: applicationCounts.GetValueOrDefault(v.Id))));
+            applicationCount: applicationCounts.GetValueOrDefault(v.Id),
+            includeDescription: false)));
     }
 
     /// <summary>

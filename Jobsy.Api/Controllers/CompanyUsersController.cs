@@ -58,8 +58,6 @@ public class CompanyUsersController : ControllerBase
         // Inline enum filter — JobsyRoles.IsEmployer() is not EF-translatable and caused HTTP 500.
         var query = _db.Users
             .AsNoTracking()
-            .Include(u => u.Company)
-            .Include(u => u.CompanyMemberships)
             .Where(u => EmployerRoleFilter.Contains(u.Role))
             .AsQueryable();
 
@@ -70,8 +68,30 @@ public class CompanyUsersController : ControllerBase
                 || u.CompanyMemberships.Any(m => accessible.Contains(m.CompanyId)));
         }
 
-        var users = await query.OrderBy(u => u.Email).ToListAsync(cancellationToken);
-        return Ok(users.Select(u => Map(u)));
+        var users = await query
+            .OrderBy(u => u.Email)
+            .Select(u => new
+            {
+                u.Id,
+                u.Email,
+                u.FullName,
+                Role = u.Role.ToString(),
+                u.CompanyId,
+                CompanyName = u.Company != null ? u.Company.Name : null,
+                MembershipCompanyIds = u.CompanyMemberships.Select(m => m.CompanyId).ToList(),
+                u.IsActive
+            })
+            .ToListAsync(cancellationToken);
+
+        return Ok(users.Select(u => new CompanyUserDto(
+            u.Id,
+            u.Email,
+            u.FullName,
+            u.Role,
+            u.CompanyId,
+            u.CompanyName,
+            u.MembershipCompanyIds,
+            u.IsActive)));
     }
 
     [HttpPost("invite")]
