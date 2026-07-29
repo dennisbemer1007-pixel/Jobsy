@@ -488,6 +488,90 @@ public sealed class JobsyApiClient : IAsyncDisposable
     public async Task<IReadOnlyList<CompanySummary>> GetMyCompaniesAsync(CancellationToken ct = default)
         => await _http.GetFromJsonAsync<List<CompanySummary>>("api/companies/mine", ct) ?? [];
 
+    public async Task<IReadOnlyList<CompanyApiKeyItem>> GetCompanyApiKeysAsync(
+        Guid companyId,
+        CancellationToken ct = default)
+        => await _http.GetFromJsonAsync<List<CompanyApiKeyItem>>(
+            $"api/companies/{companyId}/api-keys", ct) ?? [];
+
+    public async Task<GeneratedApiKeyItem?> GenerateCompanyApiKeyAsync(
+        Guid companyId,
+        string? name = null,
+        CancellationToken ct = default)
+    {
+        var response = await _http.PostAsJsonAsync(
+            $"api/companies/{companyId}/api-keys",
+            new { name },
+            ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException(TryExtractMessage(body) ?? body);
+        }
+
+        return await response.Content.ReadFromJsonAsync<GeneratedApiKeyItem>(cancellationToken: ct);
+    }
+
+    public async Task DeactivateCompanyApiKeyAsync(
+        Guid companyId,
+        Guid apiKeyId,
+        CancellationToken ct = default)
+    {
+        var response = await _http.PostAsync(
+            $"api/companies/{companyId}/api-keys/{apiKeyId}/deactivate",
+            null,
+            ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException(TryExtractMessage(body) ?? body);
+        }
+    }
+
+    public async Task DeactivateActiveCompanyApiKeyAsync(Guid companyId, CancellationToken ct = default)
+    {
+        var response = await _http.PostAsync(
+            $"api/companies/{companyId}/api-keys/deactivate-active",
+            null,
+            ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException(TryExtractMessage(body) ?? body);
+        }
+    }
+
+    public async Task<EmailApiKeyResultItem?> EmailCompanyApiKeyCredentialsAsync(
+        Guid companyId,
+        string? email = null,
+        CancellationToken ct = default)
+    {
+        var response = await _http.PostAsJsonAsync(
+            $"api/companies/{companyId}/api-keys/email-credentials",
+            new { email },
+            ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException(TryExtractMessage(body) ?? body);
+        }
+
+        return await response.Content.ReadFromJsonAsync<EmailApiKeyResultItem>(cancellationToken: ct);
+    }
+
+    public async Task<IReadOnlyList<AdminApiKeyItem>> GetAdminApiKeysAsync(CancellationToken ct = default)
+        => await _http.GetFromJsonAsync<List<AdminApiKeyItem>>("api/admin/api-keys", ct) ?? [];
+
+    public async Task DeactivateAdminApiKeyAsync(Guid apiKeyId, CancellationToken ct = default)
+    {
+        var response = await _http.PostAsync($"api/admin/api-keys/{apiKeyId}/deactivate", null, ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException(TryExtractMessage(body) ?? body);
+        }
+    }
+
     public async Task<CompanySummary?> RegisterEstablishmentAsync(
         string kvkNumber,
         string kvkEstablishmentId,

@@ -34,6 +34,7 @@ public class JobsyDbContext : DbContext
     public DbSet<PushBomPricingTier> PushBomPricingTiers => Set<PushBomPricingTier>();
     public DbSet<EarlyAdapterRule> EarlyAdapterRules => Set<EarlyAdapterRule>();
     public DbSet<IntegrationCredential> IntegrationCredentials => Set<IntegrationCredential>();
+    public DbSet<ApiKey> ApiKeys => Set<ApiKey>();
     public DbSet<PlatformFeatureSettings> PlatformFeatureSettings => Set<PlatformFeatureSettings>();
     public DbSet<PlatformCompanySettings> PlatformCompanySettings => Set<PlatformCompanySettings>();
     public DbSet<AboutPageSettings> AboutPageSettings => Set<AboutPageSettings>();
@@ -144,6 +145,21 @@ public class JobsyDbContext : DbContext
                 .WithMany(t => t.Vacancies)
                 .HasForeignKey(e => e.SalaryTableId)
                 .OnDelete(DeleteBehavior.SetNull);
+        });
+
+        modelBuilder.Entity<ApiKey>(entity =>
+        {
+            entity.ToTable("ApiKeys");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.ApiKeyHash).HasMaxLength(64).IsRequired();
+            entity.Property(e => e.Name).HasMaxLength(128).IsRequired();
+            entity.Property(e => e.KeyPrefix).HasMaxLength(32).IsRequired();
+            entity.HasIndex(e => e.ApiKeyHash).IsUnique();
+            entity.HasIndex(e => new { e.CompanyId, e.IsActive });
+            entity.HasOne(e => e.Company)
+                .WithMany(c => c.ApiKeys)
+                .HasForeignKey(e => e.CompanyId)
+                .OnDelete(DeleteBehavior.Cascade);
         });
 
         modelBuilder.Entity<TokenTransaction>(entity =>

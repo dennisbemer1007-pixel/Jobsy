@@ -45,4 +45,5 @@ public class Company
     public ICollection<UserCompany> UserMemberships { get; set; } = new List<UserCompany>();
     public ICollection<RegionCompany> RegionMemberships { get; set; } = new List<RegionCompany>();
     public ICollection<CompanySalaryTable> SalaryTables { get; set; } = new List<CompanySalaryTable>();
+    public ICollection<ApiKey> ApiKeys { get; set; } = new List<ApiKey>();
 }

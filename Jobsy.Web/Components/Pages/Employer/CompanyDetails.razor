@@ -1,0 +1,256 @@
+@page "/employer/company"
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "EnterpriseManager,Admin")]
+@inject JobsyApiClient Api
+
+<PageTitle>Bedrijfsgegevens · Lobsy</PageTitle>
+
+<div class="panel-page">
+    <header class="panel-header">
+        <div>
+            <h1>Bedrijfsgegevens</h1>
+            <p class="login-lead">Organisatiegegevens en externe API-koppeling.</p>
+        </div>
+    </header>
+
+    @if (_loading)
+    {
+        <p class="state-message">Laden…</p>
+    }
+    else if (!string.IsNullOrEmpty(_error))
+    {
+        <p class="state-message error">@_error</p>
+    }
+    else if (_org is null)
+    {
+        <p class="state-message">Geen organisatie gevonden.</p>
+    }
+    else
+    {
+        <section class="panel-section">
+            <h2>@_org.Name</h2>
+            <p class="muted">@_org.Address · KVK @_org.KvkNumber</p>
+            <p class="muted">@_org.TokenBalance.ToString("0.##") tokens · @_org.ActiveVacancies actieve vacatures</p>
+        </section>
+
+        <section class="panel-section">
+            <h2>API-koppeling</h2>
+            <p class="muted">
+                Externe systemen kunnen vacatures aanmaken, wijzigen en status opvragen via
+                <code>X-API-Key</code>. De volledige sleutel wordt nooit opgeslagen — alleen een hash.
+            </p>
+
+            @if (_activeKey is null)
+            {
+                <button class="login-submit" type="button" disabled="@_busy" @onclick="GenerateAsync">
+                    API Key genereren
+                </button>
+            }
+            else
+            {
+                <div class="table-list" style="margin-bottom:1rem">
+                    <div class="table-row">
+                        <div>
+                            <strong>@_activeKey.Name</strong>
+                            <span class="muted">
+                                @_activeKey.KeyPrefix
+                                · actief
+                                · aangemaakt @_activeKey.CreatedAt.ToLocalTime().ToString("dd-MM-yyyy HH:mm")
+                                @if (_activeKey.LastUsedAt is DateTime used)
+                                {
+                                    <text> · laatst gebruikt @used.ToLocalTime().ToString("dd-MM-yyyy HH:mm")</text>
+                                }
+                                else
+                                {
+                                    <text> · nog niet gebruikt</text>
+                                }
+                            </span>
+                        </div>
+                    </div>
+                </div>
+                <div class="inline-actions">
+                    <button class="btn-compact" type="button" disabled="@_busy" @onclick="DeactivateAsync">
+                        Desactiveren
+                    </button>
+                    <button class="btn-compact" type="button" disabled="@_busy" @onclick="GenerateAsync">
+                        Nieuwe key genereren
+                    </button>
+                    <button class="btn-compact btn-compact--primary" type="button" disabled="@_busy" @onclick="EmailCredentialsAsync">
+                        Verzend credentials via e-mail
+                    </button>
+                </div>
+            }
+
+            @if (_inactiveKeys.Count > 0)
+            {
+                <h3 style="margin-top:1.5rem">Eerdere keys</h3>
+                <div class="table-list">
+                    @foreach (var k in _inactiveKeys)
+                    {
+                        <div class="table-row">
+                            <div>
+                                <strong>@k.Name</strong>
+                                <span class="muted">
+                                    @k.KeyPrefix · inactief · @k.CreatedAt.ToLocalTime().ToString("dd-MM-yyyy")
+                                </span>
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+
+            @if (!string.IsNullOrEmpty(_message))
+            {
+                <p class="state-message">@_message</p>
+            }
+        </section>
+    }
+</div>
+
+@if (_showKeyModal && _generated is not null)
+{
+    <div class="share-modal-backdrop" @onclick="CloseKeyModal"></div>
+    <div class="share-modal" role="dialog" aria-modal="true" aria-labelledby="api-key-modal-title">
+        <div class="share-modal__header">
+            <h2 id="api-key-modal-title">API-key gegenereerd</h2>
+            <button type="button" class="share-modal__close" @onclick="CloseKeyModal" aria-label="Sluiten">×</button>
+        </div>
+        <p class="share-modal__lead">
+            <strong>Let op:</strong> deze sleutel is slechts één keer zichtbaar. Kopieer en bewaar hem veilig.
+        </p>
+        <label>
+            API-key
+            <input type="text" readonly value="@_generated.PlaintextKey" onclick="this.select()" style="font-family:monospace" />
+        </label>
+        <p class="muted">Header: <code>X-API-Key: …</code> · prefix @_generated.KeyPrefix</p>
+        <div class="inline-actions" style="margin-top:1rem">
+            <button class="login-submit" type="button" @onclick="CloseKeyModal">Ik heb de key bewaard</button>
+        </div>
+    </div>
+}
+
+@code {
+    private CompanySummary? _org;
+    private List<CompanyApiKeyItem> _keys = [];
+    private CompanyApiKeyItem? _activeKey;
+    private List<CompanyApiKeyItem> _inactiveKeys = [];
+    private GeneratedApiKeyItem? _generated;
+    private bool _showKeyModal;
+    private bool _loading = true;
+    private bool _busy;
+    private string? _error;
+    private string? _message;
+
+    protected override async Task OnInitializedAsync() => await ReloadAsync();
+
+    private async Task ReloadAsync()
+    {
+        _loading = true;
+        _error = null;
+        try
+        {
+            var companies = await Api.GetMyCompaniesAsync();
+            _org = companies.FirstOrDefault(c => c.ParentCompanyId is null)
+                   ?? companies.FirstOrDefault();
+            if (_org is null)
+            {
+                return;
+            }
+
+            _keys = (await Api.GetCompanyApiKeysAsync(_org.Id)).ToList();
+            _activeKey = _keys.FirstOrDefault(k => k.IsActive);
+            _inactiveKeys = _keys.Where(k => !k.IsActive).ToList();
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private async Task GenerateAsync()
+    {
+        if (_org is null || _busy)
+        {
+            return;
+        }
+
+        _busy = true;
+        _message = null;
+        try
+        {
+            _generated = await Api.GenerateCompanyApiKeyAsync(_org.Id);
+            _showKeyModal = _generated is not null;
+            await ReloadAsync();
+        }
+        catch (Exception ex)
+        {
+            _message = ex.Message;
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private async Task DeactivateAsync()
+    {
+        if (_org is null || _activeKey is null || _busy)
+        {
+            return;
+        }
+
+        _busy = true;
+        _message = null;
+        try
+        {
+            await Api.DeactivateCompanyApiKeyAsync(_org.Id, _activeKey.Id);
+            _message = "API-key gedeactiveerd.";
+            await ReloadAsync();
+        }
+        catch (Exception ex)
+        {
+            _message = ex.Message;
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private async Task EmailCredentialsAsync()
+    {
+        if (_org is null || _busy)
+        {
+            return;
+        }
+
+        _busy = true;
+        _message = null;
+        try
+        {
+            var result = await Api.EmailCompanyApiKeyCredentialsAsync(_org.Id);
+            _message = result is null
+                ? "Credentials verzonden."
+                : $"Nieuwe API-key verzonden naar {result.RecipientEmail} (prefix {result.KeyPrefix}). De key is niet meer in de app te zien.";
+            await ReloadAsync();
+        }
+        catch (Exception ex)
+        {
+            _message = ex.Message;
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private void CloseKeyModal()
+    {
+        _showKeyModal = false;
+        _generated = null;
+    }
+}

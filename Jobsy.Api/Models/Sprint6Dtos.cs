@@ -44,7 +44,8 @@ public record AdminVacancyDetailDto(
     int ShareCount,
     int ApplicationCount,
     int LikeCount,
-    bool IsExtended);
+    bool IsExtended,
+    string CreatedVia = "Manual");
 
 public record RegisterAdminCompanyRequest(
     string KvkNumber,

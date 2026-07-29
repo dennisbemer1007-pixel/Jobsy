@@ -366,6 +366,7 @@ public class VacanciesController : ControllerBase
             EndDate = request.EndDate,
             Status = VacancyStatus.Draft,
             CompanyId = request.CompanyId,
+            CreatedVia = VacancySource.Manual,
             Location = company.Location,
             RequiredTransport = request.RequiredTransport,
             WorkTypes = WorkTypeLabels.Combine(branchLabels),
@@ -623,6 +624,7 @@ public class VacanciesController : ControllerBase
                 EndDate = request.EndDate,
                 Status = VacancyStatus.Draft,
                 CompanyId = companyId,
+                CreatedVia = VacancySource.Manual,
                 Location = company.Location,
                 RequiredTransport = request.RequiredTransport,
                 WorkTypes = WorkTypeLabels.Combine(branchLabels),
@@ -938,7 +940,8 @@ public class VacanciesController : ControllerBase
             v.RequiredDrivingLicense,
             v.RequiredEducation,
             v.MinimumEmployers,
-            v.FulfilledByApplicationId);
+            v.FulfilledByApplicationId,
+            v.CreatedVia.ToString());
     }
 
     private static string[] NormalizeBranchLabels(IEnumerable<string>? labels) =>

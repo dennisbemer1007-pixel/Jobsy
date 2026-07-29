@@ -8,4 +8,5 @@ public static class JobsyPolicies
     public const string RequireCandidate = "RequireCandidate";
     public const string RequireSalesManager = "RequireSalesManager";
     public const string RequireAdminOrSalesManager = "RequireAdminOrSalesManager";
+    public const string RequireApiKey = "RequireApiKey";
 }

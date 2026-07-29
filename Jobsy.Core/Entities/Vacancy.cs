@@ -14,6 +14,10 @@ public class Vacancy
     public VacancyStatus Status { get; set; }
     public Guid CompanyId { get; set; }
     public Company Company { get; set; } = null!;
+
+    /// <summary>Whether the vacancy was created via the UI or external API.</summary>
+    public VacancySource CreatedVia { get; set; } = VacancySource.Manual;
+
     public GeoPoint Location { get; set; } = null!;
     public TransportMode RequiredTransport { get; set; }
 

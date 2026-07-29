@@ -165,6 +165,12 @@ public static class PageHelpDocs
             "Nodig gebruikers uit per e-mail, bekijk rollen en beheer toegang tot vestigingen/regio’s.",
             "Het juiste team toegang geven tot vacatures en tokens."),
 
+        ["/employer/company"] = new(
+            "Bedrijfsgegevens & API",
+            "Organisatiegegevens en externe API-keys voor ATS-koppelingen.",
+            "Genereer een API-key (één keer zichtbaar), deactiveer of rotatieer, en verstuur credentials per e-mail. Alleen de hash wordt opgeslagen.",
+            "Externe systemen veilig vacatures laten beheren binnen jouw bedrijf."),
+
         ["/employer/salary-tables"] = new(
             "Salaristabellen / CAO",
             "Loontabellen die aan vacatures of vestigingen gekoppeld kunnen worden.",
@@ -308,6 +314,12 @@ public static class PageHelpDocs
             "API-koppelingen (Mollie, KVK, Entra, Google, Mail, OpenAI).",
             "Vul credentials in, sla op en test de verbinding. Gebruik de i per tegel voor details.",
             "Externe diensten laten werken voor login, mail, betalen en moderatie."),
+
+        ["/admin/api-keys"] = new(
+            "Beheer · API Beheer",
+            "Overzicht van alle bedrijfs-API-keys (actief/inactief).",
+            "Bekijk prefix, laatste gebruik en deactiveer keys direct bij incidenten. Plaintext keys zijn nooit zichtbaar voor admins.",
+            "Platformbrede controle over externe vacature-API-toegang."),
 
         ["/admin/masterdata"] = new(
             "Beheer · Masterdata",

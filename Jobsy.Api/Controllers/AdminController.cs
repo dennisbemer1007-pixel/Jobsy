@@ -21,17 +21,20 @@ public class AdminController : ControllerBase
     private readonly IKvkService _kvk;
     private readonly IVacancyProductService _products;
     private readonly IUserLookupService _users;
+    private readonly ICompanyApiKeyService _apiKeys;
 
     public AdminController(
         JobsyDbContext db,
         IKvkService kvk,
         IVacancyProductService products,
-        IUserLookupService users)
+        IUserLookupService users,
+        ICompanyApiKeyService apiKeys)
     {
         _db = db;
         _kvk = kvk;
         _products = products;
         _users = users;
+        _apiKeys = apiKeys;
     }
 
     [HttpGet("companies")]
@@ -218,7 +221,8 @@ public class AdminController : ControllerBase
                 v.IsHighlighted,
                 v.ExtensionCount,
                 v.StartDate,
-                v.EndDate
+                v.EndDate,
+                CreatedVia = v.CreatedVia.ToString()
             })
             .ToListAsync(cancellationToken);
 
@@ -265,7 +269,27 @@ public class AdminController : ControllerBase
             shares.GetValueOrDefault(v.Id),
             applications.GetValueOrDefault(v.Id),
             likes.GetValueOrDefault(v.Id),
-            v.ExtensionCount > 0)));
+            v.ExtensionCount > 0,
+            v.CreatedVia)));
+    }
+
+    [HttpGet("api-keys")]
+    public async Task<ActionResult<IEnumerable<AdminApiKeyView>>> GetApiKeys(CancellationToken cancellationToken)
+    {
+        var items = await _apiKeys.ListAllAsync(cancellationToken);
+        return Ok(items);
+    }
+
+    [HttpPost("api-keys/{id:guid}/deactivate")]
+    public async Task<IActionResult> DeactivateApiKey(Guid id, CancellationToken cancellationToken)
+    {
+        var ok = await _apiKeys.DeactivateAsync(id, cancellationToken);
+        if (!ok)
+        {
+            return NotFound(new { message = "API-key niet gevonden." });
+        }
+
+        return Ok(new { message = "API-key gedeactiveerd." });
     }
 
     [HttpPost("vacancies/{id:guid}/extend")]
@@ -342,7 +366,15 @@ public class AdminController : ControllerBase
                 v.SalaryTableId,
                 null,
                 null,
-                WorkTypeLabels.ResolveLabels(v.WorkTypes, v.WorkTypeLabels)),
+                WorkTypeLabels.ResolveLabels(v.WorkTypes, v.WorkTypeLabels),
+                0,
+                0,
+                0,
+                v.RequiredDrivingLicense,
+                v.RequiredEducation,
+                v.MinimumEmployers,
+                v.FulfilledByApplicationId,
+                v.CreatedVia.ToString()),
             result.PendingApproval,
             result.ErrorMessage,
             result.PushBomRecipientCount);

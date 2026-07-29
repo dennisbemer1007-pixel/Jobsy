@@ -98,6 +98,7 @@ public static class DependencyInjection
         services.AddScoped<IRoutingService, MockRoutingService>();
         services.AddScoped<ISalaryService, SalaryService>();
         services.AddScoped<ICompanyAuthorizationService, CompanyAuthorizationService>();
+        services.AddScoped<ICompanyApiKeyService, CompanyApiKeyService>();
         services.AddScoped<IUserLookupService, UserLookupService>();
         services.AddScoped<ITokenLedgerService, TokenLedgerService>();
         services.AddScoped<IVacancyProductService, VacancyProductService>();

@@ -57,6 +57,10 @@ public static class AuthorizationExtensions
                 _ => { });
         }
 
+        authBuilder.AddScheme<AuthenticationSchemeOptions, ApiKeyAuthenticationHandler>(
+            ApiKeyAuthDefaults.AuthenticationScheme,
+            _ => { });
+
         services.AddAuthorization(options =>
         {
             // Fail closed: new endpoints require auth unless explicitly [AllowAnonymous].
@@ -87,6 +91,10 @@ public static class AuthorizationExtensions
             options.AddPolicy(JobsyPolicies.RequireAdminOrSalesManager, policy =>
                 policy.RequireAuthenticatedUser()
                     .RequireRole(JobsyRoles.Admin, JobsyRoles.SalesManager));
+
+            options.AddPolicy(JobsyPolicies.RequireApiKey, policy =>
+                policy.AddAuthenticationSchemes(ApiKeyAuthDefaults.AuthenticationScheme)
+                    .RequireAuthenticatedUser());
         });
 
         services.AddScoped<CompanyScopeFilter>();

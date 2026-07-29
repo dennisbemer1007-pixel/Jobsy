@@ -6282,6 +6282,26 @@ button.linkish:hover {
 .badge-ok { color: var(--brand); }
 .badge-warn { color: var(--warn); }
 
+.source-badge {
+    display: inline-block;
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    padding: 0.1rem 0.45rem;
+    border-radius: 0.25rem;
+    vertical-align: baseline;
+}
+
+.source-badge--manual {
+    color: var(--text-muted, #5a6570);
+    background: color-mix(in srgb, var(--text-muted, #5a6570) 12%, transparent);
+}
+
+.source-badge--api {
+    color: var(--brand, #0b6e4f);
+    background: color-mix(in srgb, var(--brand, #0b6e4f) 14%, transparent);
+}
+
 /* —— Legal pages & footer —— */
 .legal-page {
     max-width: 720px;

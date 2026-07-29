@@ -64,6 +64,7 @@
                             <th class="data-table__col--wrap">Titel</th>
                             <th class="data-table__col--wrap">Bedrijf</th>
                             <th>Status</th>
+                            <th>Bron</th>
                             <th><button type="button" class="linkish" @onclick='() => Drill("impressions")'>Getoond</button></th>
                             <th><button type="button" class="linkish" @onclick='() => Drill("clicks")'>Clicks</button></th>
                             <th><button type="button" class="linkish" @onclick='() => Drill("shares")'>Shared</button></th>
@@ -82,6 +83,11 @@
                                 </td>
                                 <td class="data-table__col--wrap">@v.CompanyName <span class="muted">(@v.CompanyType)</span></td>
                                 <td>@v.Status</td>
+                                <td>
+                                    <span class="source-badge source-badge--@(string.Equals(v.CreatedVia, "Api", StringComparison.OrdinalIgnoreCase) ? "api" : "manual")">
+                                        @(string.Equals(v.CreatedVia, "Api", StringComparison.OrdinalIgnoreCase) ? "API" : "Handmatig")
+                                    </span>
+                                </td>
                                 <td><a href="@MetricHref(v, "impressions")">@v.ImpressionCount</a></td>
                                 <td><a href="@MetricHref(v, "clicks")">@v.ClickCount</a></td>
                                 <td><a href="@MetricHref(v, "shares")">@v.ShareCount</a></td>

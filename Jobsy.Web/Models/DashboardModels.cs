@@ -11,6 +11,48 @@ public class CompanySummary
     public Guid? ParentCompanyId { get; set; }
 }
 
+public class CompanyApiKeyItem
+{
+    public Guid Id { get; set; }
+    public Guid CompanyId { get; set; }
+    public string Name { get; set; } = string.Empty;
+    public string KeyPrefix { get; set; } = string.Empty;
+    public bool IsActive { get; set; }
+    public DateTime? LastUsedAt { get; set; }
+    public DateTime CreatedAt { get; set; }
+}
+
+public class AdminApiKeyItem
+{
+    public Guid Id { get; set; }
+    public Guid CompanyId { get; set; }
+    public string CompanyName { get; set; } = string.Empty;
+    public string Name { get; set; } = string.Empty;
+    public string KeyPrefix { get; set; } = string.Empty;
+    public bool IsActive { get; set; }
+    public DateTime? LastUsedAt { get; set; }
+    public DateTime CreatedAt { get; set; }
+}
+
+public class GeneratedApiKeyItem
+{
+    public Guid Id { get; set; }
+    public Guid CompanyId { get; set; }
+    public string Name { get; set; } = string.Empty;
+    public string KeyPrefix { get; set; } = string.Empty;
+    public string PlaintextKey { get; set; } = string.Empty;
+    public DateTime CreatedAt { get; set; }
+    public string Warning { get; set; } = string.Empty;
+}
+
+public class EmailApiKeyResultItem
+{
+    public Guid Id { get; set; }
+    public string RecipientEmail { get; set; } = string.Empty;
+    public string KeyPrefix { get; set; } = string.Empty;
+    public bool Sent { get; set; }
+}
+
 public class TokenBalance
 {
     public Guid CompanyId { get; set; }
@@ -321,6 +363,7 @@ public class AdminVacancyItem
     public int ApplicationCount { get; set; }
     public int LikeCount { get; set; }
     public bool IsExtended { get; set; }
+    public string CreatedVia { get; set; } = "Manual";
 }
 
 public class PlatformLogItem

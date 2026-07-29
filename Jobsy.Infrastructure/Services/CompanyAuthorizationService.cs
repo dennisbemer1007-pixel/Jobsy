@@ -43,6 +43,22 @@ public class CompanyAuthorizationService : ICompanyAuthorizationService
         ClaimsPrincipal user,
         CancellationToken cancellationToken = default)
     {
+        // External API-key clients: scope strictly to the key's company (+ child vestigingen).
+        if (string.Equals(
+                user.Identity?.AuthenticationType,
+                ApiKeyAuthDefaults.AuthenticationScheme,
+                StringComparison.Ordinal))
+        {
+            var claimed = ReadCompanyIdsFromClaims(user).ToHashSet();
+            if (claimed.Count == 0)
+            {
+                return Array.Empty<Guid>();
+            }
+
+            await ExpandChildCompanyIdsAsync(claimed, cancellationToken);
+            return claimed.ToList();
+        }
+
         if (IsAdmin(user))
         {
             return null; // all companies
@@ -60,14 +76,14 @@ public class CompanyAuthorizationService : ICompanyAuthorizationService
             return Array.Empty<Guid>();
         }
 
-        var claimed = ReadCompanyIdsFromClaims(user);
-        if (claimed.Count == 0)
+        var claimIds = ReadCompanyIdsFromClaims(user);
+        if (claimIds.Count == 0)
         {
             return dbIds;
         }
 
         // Claims may only narrow access to a subset of DB memberships.
-        var narrowed = claimed.Where(dbIds.Contains).ToHashSet();
+        var narrowed = claimIds.Where(dbIds.Contains).ToHashSet();
 
         // Re-expand children after claim intersection so new vestigingen under an
         // accessible parent remain reachable without re-login.
