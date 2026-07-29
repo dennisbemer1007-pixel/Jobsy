@@ -9,6 +9,7 @@ public interface IMockInterviewService
     Task<MockInterviewTurnResult> ContinueAsync(
         MockInterviewVacancyContext vacancy,
         IReadOnlyList<MockInterviewMessage> history,
+        string? language = null,
         CancellationToken cancellationToken = default);
 }
 

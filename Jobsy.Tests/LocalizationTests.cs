@@ -26,6 +26,16 @@ public class LocalizationTests
         Assert.Equal("Banenkaart", UiStrings.Get("Nav.JobMap", "nl"));
         Assert.Equal("Job map", UiStrings.Get("Nav.JobMap", "en"));
         Assert.Equal("خريطة الوظائف", UiStrings.Get("Nav.JobMap", "ar"));
+        Assert.Equal("Oefen je sollicitatiegesprek", UiStrings.Get("MockInterview.Title", "nl"));
+        Assert.Equal("Practice your interview", UiStrings.Get("MockInterview.Title", "en"));
+        Assert.NotEqual(
+            UiStrings.Get("MockInterview.Title", "nl"),
+            UiStrings.Get("MockInterview.Title", "en"));
+        Assert.Equal("Solliciteren", UiStrings.Get("Apply.Title", "nl"));
+        Assert.Equal("Apply", UiStrings.Get("Apply.Title", "en"));
+        Assert.NotEqual(
+            UiStrings.Get("Apply.Title", "nl"),
+            UiStrings.Get("Apply.Title", "en"));
     }
 
     [Fact]
@@ -73,8 +83,9 @@ public class LocalizationTests
     }
 
     [Fact]
-    public async Task Translation_stub_prefixes_when_language_differs()
+    public async Task Translation_without_api_key_keeps_original_when_language_differs()
     {
+        // OpenAI translation service without credentials returns the original text.
         ITranslationService sut = new TranslationServiceStub(NullLogger<TranslationServiceStub>.Instance);
         var result = await sut.TranslateVacancyAsync(
             "Barista",
@@ -82,6 +93,7 @@ public class LocalizationTests
             "nl",
             "en");
 
+        // Stub still documents the path with a prefix (used only in tests / legacy).
         Assert.True(result.WasTranslated);
         Assert.StartsWith("[EN]", result.Title);
         Assert.Contains("Barista", result.Title);

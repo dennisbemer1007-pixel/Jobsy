@@ -1,22 +1,27 @@
 @namespace Jobsy.Web.Components
+@using Jobsy.Core.Localization
 @inject JobsyApiClient Api
+@inject CultureState Culture
+@implements IDisposable
 
 @if (IsOpen && Vacancy is not null)
 {
     <div class="share-modal-backdrop" @onclick="Close"></div>
-    <div class="mock-interview-modal" role="dialog" aria-modal="true" aria-labelledby="mock-interview-title">
+    <div class="mock-interview-modal" role="dialog" aria-modal="true" aria-labelledby="mock-interview-title" tabindex="-1" @onkeydown="OnModalKeyDown">
         <div class="share-modal__header">
-            <div>
-                <h2 id="mock-interview-title">Oefen je sollicitatiegesprek</h2>
-                <p class="share-modal__lead">@Vacancy.Title · @Vacancy.CompanyName</p>
+            <div class="mock-interview-modal__brand">
+                <LobsyCoachAvatar Class="mock-interview-modal__avatar" Language="@Culture.Language" Alt="Lobsy" />
+                <div>
+                    <h2 id="mock-interview-title">@Culture["MockInterview.Title"]</h2>
+                    <p class="share-modal__lead">@Vacancy.Title · @Vacancy.CompanyName</p>
+                </div>
             </div>
-            <button type="button" class="share-modal__close" @onclick="Close" aria-label="Sluiten">×</button>
+            <button type="button" class="share-modal__close" @onclick="Close" aria-label="@Culture["MockInterview.Close"]">×</button>
         </div>
 
         <p class="mock-interview-modal__disclaimer">
-            Coachingsgesprek op basis van deze vacature — geen echt gesprek met de werkgever.
-            Deel geen BSN, bankgegevens of wachtwoorden.
-            <a class="auth-link" href="/gebruiksvoorwaarden" target="_blank" rel="noopener">Chatbot-disclaimer</a>
+            @Culture["MockInterview.Disclaimer"]
+            <a class="auth-link" href="/gebruiksvoorwaarden" target="_blank" rel="noopener">@Culture["MockInterview.DisclaimerLink"]</a>
         </p>
 
         @if (_started && !_busy)
@@ -27,14 +32,17 @@
         <div class="mock-interview-chat">
             @if (_messages.Count == 0 && !_busy)
             {
-                <p class="mock-interview-chat__empty">Even geduld — je coach start het gesprek…</p>
+                <p class="mock-interview-chat__empty">@Culture["MockInterview.Empty"]</p>
             }
             @foreach (var msg in _messages)
             {
                 <div class="mock-interview-bubble mock-interview-bubble--@msg.Role">
-                    <span class="mock-interview-bubble__role">@(msg.Role == "user" ? "Jij" : "Coach")</span>
                     @if (msg.Role == "assistant")
                     {
+                        <div class="mock-interview-bubble__head">
+                            <LobsyCoachAvatar Class="mock-interview-bubble__avatar" Language="@Culture.Language" Alt="" Animate="false" />
+                            <span class="mock-interview-bubble__role">@Culture["MockInterview.Coach"]</span>
+                        </div>
                         @foreach (var block in ParseCoachBlocks(msg.Content))
                         {
                             <div class="mock-interview-block mock-interview-block--@block.Kind">
@@ -48,6 +56,7 @@
                     }
                     else
                     {
+                        <span class="mock-interview-bubble__role">@Culture["MockInterview.You"]</span>
                         <p>@msg.Content</p>
                     }
                 </div>
@@ -55,8 +64,11 @@
             @if (_busy)
             {
                 <div class="mock-interview-bubble mock-interview-bubble--assistant mock-interview-bubble--typing">
-                    <span class="mock-interview-bubble__role">Coach</span>
-                    <p>Ik lees mee en geef je gerichte feedback…</p>
+                    <div class="mock-interview-bubble__head">
+                        <LobsyCoachAvatar Class="mock-interview-bubble__avatar" Language="@Culture.Language" Alt="" Animate="false" />
+                        <span class="mock-interview-bubble__role">@Culture["MockInterview.Coach"]</span>
+                    </div>
+                    <p>@Culture["MockInterview.Typing"]</p>
                 </div>
             }
         </div>
@@ -72,18 +84,18 @@
         }
 
         <form class="mock-interview-compose" @onsubmit="SendAsync" @onsubmit:preventDefault="true">
-            <label class="visually-hidden" for="mock-interview-input">Jouw antwoord</label>
+            <label class="visually-hidden" for="mock-interview-input">@Culture["MockInterview.InputLabel"]</label>
             <textarea id="mock-interview-input"
                       rows="3"
                       maxlength="2000"
-                      placeholder="Antwoord met een concreet voorbeeld (situatie → wat jij deed → resultaat)…"
+                      placeholder="@Culture["MockInterview.Placeholder"]"
                       disabled="@(_busy || !_started)"
                       @bind="_draft"
                       @bind:event="oninput"></textarea>
             <div class="mock-interview-compose__actions">
-                <button type="button" class="engagement-btn" disabled="@_busy" @onclick="RestartAsync">Opnieuw</button>
+                <button type="button" class="engagement-btn" disabled="@_busy" @onclick="RestartAsync">@Culture["MockInterview.Restart"]</button>
                 <button type="submit" class="login-submit" disabled="@(_busy || !_started || string.IsNullOrWhiteSpace(_draft))">
-                    Verstuur antwoord
+                    @Culture["MockInterview.Send"]
                 </button>
             </div>
         </form>
@@ -102,26 +114,75 @@
     private bool _started;
     private bool _wasOpen;
     private Guid _sessionVacancyId;
+    private string _sessionLanguage = "";
+
+    private bool _restartWhenIdle;
 
     private int UserAnswerCount => _messages.Count(m => m.Role == "user");
 
     private string ProgressLabel => UserAnswerCount switch
     {
-        0 => "Stap 1 · Beantwoord de openingsvraag",
-        1 => "Stap 2 · Bouw verder op feedback",
-        2 => "Stap 3 · Situatie uit de vacature",
-        3 => "Stap 4 · Praktisch & beschikbaar",
-        4 => "Stap 5 · Jouw vraag aan de werkgever",
-        _ => "Afronding · Je hebt de oefening doorlopen"
+        0 => Culture["MockInterview.Progress0"],
+        1 => Culture["MockInterview.Progress1"],
+        2 => Culture["MockInterview.Progress2"],
+        3 => Culture["MockInterview.Progress3"],
+        4 => Culture["MockInterview.Progress4"],
+        _ => Culture["MockInterview.Progress5"]
     };
 
     private string CurrentHint => UserAnswerCount switch
     {
-        0 => "Tip: noem iets dat letterlijk in de vacature staat en zeg waarom dat bij jou past.",
-        1 => "Tip: geef één kort voorbeeld (school, sport, bijbaan of stage).",
-        2 => "Tip: denk hardop — wat doe je eerst, en waarom?",
-        _ => "Tip: houd het eerlijk en concreet; eindig met een zin die bij déze vacature past."
+        0 => Culture["MockInterview.Hint0"],
+        1 => Culture["MockInterview.Hint1"],
+        2 => Culture["MockInterview.Hint2"],
+        _ => Culture["MockInterview.Hint3"]
     };
+
+    protected override void OnInitialized()
+    {
+        Culture.Changed += OnCultureChanged;
+    }
+
+    public void Dispose()
+    {
+        Culture.Changed -= OnCultureChanged;
+    }
+
+    private async Task OnModalKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key is "Escape" or "Esc")
+        {
+            await Close();
+        }
+    }
+
+    private void OnCultureChanged()
+    {
+        _ = InvokeAsync(async () =>
+        {
+            if (!IsOpen || Vacancy is null)
+            {
+                StateHasChanged();
+                return;
+            }
+
+            if (string.Equals(_sessionLanguage, Culture.Language, StringComparison.OrdinalIgnoreCase))
+            {
+                StateHasChanged();
+                return;
+            }
+
+            if (_busy)
+            {
+                _restartWhenIdle = true;
+                StateHasChanged();
+                return;
+            }
+
+            await StartSessionAsync();
+            StateHasChanged();
+        });
+    }
 
     protected override async Task OnParametersSetAsync()
     {
@@ -134,6 +195,7 @@
         else if (!IsOpen)
         {
             _wasOpen = false;
+            _restartWhenIdle = false;
         }
     }
 
@@ -154,6 +216,8 @@
         _error = null;
         _started = false;
         _busy = true;
+        _restartWhenIdle = false;
+        _sessionLanguage = Culture.Language;
         try
         {
             var reply = await Api.ContinueMockInterviewAsync(Vacancy.Id, []);
@@ -167,6 +231,13 @@
         finally
         {
             _busy = false;
+        }
+
+        if (_restartWhenIdle
+            && !string.Equals(_sessionLanguage, Culture.Language, StringComparison.OrdinalIgnoreCase))
+        {
+            _restartWhenIdle = false;
+            await StartSessionAsync();
         }
     }
 
@@ -205,7 +276,7 @@
         }
     }
 
-    private static IReadOnlyList<CoachBlock> ParseCoachBlocks(string content)
+    private IReadOnlyList<CoachBlock> ParseCoachBlocks(string content)
     {
         if (string.IsNullOrWhiteSpace(content))
         {
@@ -241,62 +312,14 @@
         foreach (var raw in lines)
         {
             var line = raw.TrimEnd();
-            if (StartsWithLabel(line, "Let op:", out var letOp))
+            if (TryMatchLabel(line, out var kind, out var displayKey, out var rest))
             {
                 Flush();
-                currentKind = "caution";
-                currentLabel = "Let op";
-                if (!string.IsNullOrWhiteSpace(letOp))
+                currentKind = kind;
+                currentLabel = Culture[displayKey];
+                if (!string.IsNullOrWhiteSpace(rest))
                 {
-                    buffer.Add(letOp);
-                }
-                continue;
-            }
-
-            if (StartsWithLabel(line, "Sterk:", out var sterk))
-            {
-                Flush();
-                currentKind = "strong";
-                currentLabel = "Sterk";
-                if (!string.IsNullOrWhiteSpace(sterk))
-                {
-                    buffer.Add(sterk);
-                }
-                continue;
-            }
-
-            if (StartsWithLabel(line, "Tip:", out var tip))
-            {
-                Flush();
-                currentKind = "tip";
-                currentLabel = "Tip";
-                if (!string.IsNullOrWhiteSpace(tip))
-                {
-                    buffer.Add(tip);
-                }
-                continue;
-            }
-
-            if (StartsWithLabel(line, "Probeer zo:", out var probeerZo))
-            {
-                Flush();
-                currentKind = "rewrite";
-                currentLabel = "Probeer zo";
-                if (!string.IsNullOrWhiteSpace(probeerZo))
-                {
-                    buffer.Add(probeerZo);
-                }
-                continue;
-            }
-
-            if (StartsWithLabel(line, "Vraag:", out var vraag))
-            {
-                Flush();
-                currentKind = "question";
-                currentLabel = "Vraag";
-                if (!string.IsNullOrWhiteSpace(vraag))
-                {
-                    buffer.Add(vraag);
+                    buffer.Add(rest);
                 }
                 continue;
             }
@@ -318,16 +341,25 @@
         return blocks.Count > 0 ? blocks : [new CoachBlock("body", null, content.Trim())];
     }
 
-    private static bool StartsWithLabel(string line, string label, out string rest)
+    private static bool TryMatchLabel(string line, out string kind, out string displayKey, out string rest)
     {
-        rest = string.Empty;
-        if (!line.StartsWith(label, StringComparison.OrdinalIgnoreCase))
+        kind = "";
+        displayKey = "";
+        rest = "";
+        foreach (var (prefix, k, key) in MockInterviewLabels.AllBlockPrefixes)
         {
-            return false;
+            if (!line.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
+            {
+                continue;
+            }
+
+            kind = k;
+            displayKey = key;
+            rest = line[prefix.Length..].Trim();
+            return true;
         }
 
-        rest = line[label.Length..].Trim();
-        return true;
+        return false;
     }
 
     private sealed record CoachBlock(string Kind, string? Label, string Text);

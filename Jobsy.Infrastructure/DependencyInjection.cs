@@ -125,7 +125,7 @@ public static class DependencyInjection
         services.AddScoped<ISalesManagerDashboardService, SalesManagerDashboardService>();
         services.AddScoped<IVacancyContentModerationService, VacancyContentModerationService>();
         services.AddScoped<IMockInterviewService, MockInterviewService>();
-        services.AddScoped<ITranslationService, TranslationServiceStub>();
+        services.AddScoped<ITranslationService, OpenAiTranslationService>();
         services.AddScoped<IPrivacyDataService, PrivacyDataService>();
         services.AddHostedService<DataRetentionHostedService>();
 

@@ -82,8 +82,8 @@
                 </div>
                 @if (_vacancy.WageVisible && _vacancy.WageByAge is { Count: > 0 })
                 {
-                    <aside class="detail-wage-panel" aria-label="Uurlonen per leeftijd">
-                        <p class="detail-wage-panel__title">Uurlonen</p>
+                    <aside class="detail-wage-panel" aria-label="@Culture["Vacancy.WagesByAge"]">
+                        <p class="detail-wage-panel__title">@Culture["Vacancy.Wages"]</p>
                         <table class="wage-table">
                             <tbody>
                                 @foreach (var band in _vacancy.WageByAge)
@@ -103,7 +103,7 @@
                 }
                 else if (!_vacancy.WageVisible)
                 {
-                    <a class="wage wage--cta" href="#dob">@WageVisibilityRules.MissingDateOfBirthMessage</a>
+                    <a class="wage wage--cta" href="#dob">@Culture["Vacancy.EnterDob"]</a>
                 }
             </div>
 
@@ -117,29 +117,29 @@
                 @Culture["Vacancy.StartDate"]: @_vacancy.StartDate.ToString("dd-MM-yyyy")
                 @if (_vacancy.WorkTypes.Length > 0)
                 {
-                    <text>             · @Culture["Vacancy.WorkType"]: @string.Join(", ", _vacancy.WorkTypes)</text>
+                    <text>             · @Culture["Vacancy.WorkType"]: @string.Join(", ", _vacancy.WorkTypes.Select(LocalizeWorkType))</text>
                 }
             </p>
             @if (!string.IsNullOrWhiteSpace(_vacancy.RequiredDrivingLicense)
                 || !string.IsNullOrWhiteSpace(_vacancy.RequiredEducation)
                 || _vacancy.MinimumEmployers is > 0)
             {
-                <aside class="lobsy-proximity" aria-label="Harde eisen">
+                <aside class="lobsy-proximity" aria-label="@Culture["Vacancy.HardRequirements"]">
                     <span class="lobsy-proximity__icon"><LobsyMark /></span>
                     <div class="lobsy-proximity__body">
-                        <p class="lobsy-proximity__title">Harde eisen</p>
+                        <p class="lobsy-proximity__title">@Culture["Vacancy.HardRequirements"]</p>
                         <p class="lobsy-proximity__meta">
                             @if (!string.IsNullOrWhiteSpace(_vacancy.RequiredDrivingLicense))
                             {
-                                <span class="lobsy-proximity__chip">Rijbewijs: @_vacancy.RequiredDrivingLicense</span>
+                                <span class="lobsy-proximity__chip">@Culture["Vacancy.License"]: @_vacancy.RequiredDrivingLicense</span>
                             }
                             @if (!string.IsNullOrWhiteSpace(_vacancy.RequiredEducation))
                             {
-                                <span class="lobsy-proximity__chip">Opleidingsniveau: @_vacancy.RequiredEducation</span>
+                                <span class="lobsy-proximity__chip">@Culture["Vacancy.EducationLevel"]: @_vacancy.RequiredEducation</span>
                             }
                             @if (_vacancy.MinimumEmployers is > 0)
                             {
-                                <span class="lobsy-proximity__chip">Min. @_vacancy.MinimumEmployers werkgever(s)</span>
+                                <span class="lobsy-proximity__chip">@Culture.Format("Vacancy.MinEmployers", _vacancy.MinimumEmployers)</span>
                             }
                         </p>
                     </div>
@@ -157,7 +157,7 @@
                             @if (_vacancy.TravelMinutes is not null)
                             {
                                 <span class="lobsy-proximity__chip">
-                                    ± @_vacancy.TravelMinutes min @Culture["Vacancy.FromYourLocation"]
+                                    ± @_vacancy.TravelMinutes @Culture["Discovery.Minutes"] @Culture["Vacancy.FromYourLocation"]
                                 </span>
                             }
                             @if (_vacancy.DistanceKm is not null)
@@ -169,7 +169,7 @@
                             @if (_vacancy.RequiredTransport.Length > 0)
                             {
                                 <span class="lobsy-proximity__chip lobsy-proximity__chip--soft">
-                                    @Culture["Vacancy.Transport"]: @string.Join(" · ", _vacancy.RequiredTransport)
+                                    @Culture["Vacancy.Transport"]: @string.Join(" · ", _vacancy.RequiredTransport.Select(LocalizeTransport))
                                 </span>
                             }
                         </p>
@@ -227,108 +227,97 @@
                 </div>
             }
 
-            <div class="mock-interview-cta">
-                <AuthorizeView Roles="Candidate">
-                    <Authorized>
-                        <button class="engagement-btn mock-interview-cta__btn" type="button" @onclick="OpenMockInterview">
-                            Oefen je sollicitatiegesprek
+            <AuthorizeView Roles="Candidate">
+                <Authorized>
+                    <div class="lobsy-coach-cta">
+                        <button type="button"
+                                class="lobsy-coach-cta__btn"
+                                @onclick="OpenMockInterview"
+                                aria-label="@Culture["MockInterview.CtaAria"]">
+                            <LobsyCoachAvatar Class="lobsy-coach-cta__mascot" Language="@Culture.Language" Alt="" />
+                            <span class="lobsy-coach-cta__bubble">@Culture["MockInterview.CtaBubble"]</span>
                         </button>
-                        <p class="mock-interview-cta__hint">
-                            Oefen met een AI-recruiter op basis van deze vacature — los van solliciteren.
-                        </p>
-                    </Authorized>
-                    <NotAuthorized>
-                        <AuthorizeView Context="authState">
-                            <Authorized Context="authed">
-                                <p class="login-lead">Alleen kandidaten kunnen een oefengesprek starten.</p>
-                            </Authorized>
-                            <NotAuthorized Context="anon">
-                                <a class="engagement-btn mock-interview-cta__btn" href="@LoginUrl">
-                                    Oefen je sollicitatiegesprek
-                                </a>
-                                <p class="mock-interview-cta__hint">
-                                    Log in als kandidaat om te oefenen met een AI-recruiter.
-                                </p>
-                            </NotAuthorized>
-                        </AuthorizeView>
-                    </NotAuthorized>
-                </AuthorizeView>
-            </div>
+                    </div>
+                </Authorized>
+            </AuthorizeView>
 
             <div id="apply" class="apply-flow">
                 <AuthorizeView Roles="Candidate">
                     <Authorized>
                         <header class="apply-flow__header">
-                            <h2 class="apply-flow__title">Solliciteren</h2>
+                            <h2 class="apply-flow__title">@Culture["Apply.Title"]</h2>
                             <p class="apply-flow__lead">@ApplyFlowLead</p>
                         </header>
 
-                        <ol class="apply-steps" aria-label="Sollicitatiestappen">
+                        <ol class="apply-steps" aria-label="@Culture["Apply.StepsLabel"]">
                             <li class="apply-steps__item @ProfileStepClass">
                                 <span class="apply-steps__num" aria-hidden="true">1</span>
-                                <span class="apply-steps__label">Profiel</span>
+                                <span class="apply-steps__label">@Culture["Apply.StepProfile"]</span>
                             </li>
                             <li class="apply-steps__item @ConsentStepClass">
                                 <span class="apply-steps__num" aria-hidden="true">2</span>
-                                <span class="apply-steps__label">Akkoord</span>
+                                <span class="apply-steps__label">@Culture["Apply.StepConsent"]</span>
                             </li>
                             <li class="apply-steps__item @SendStepClass">
                                 <span class="apply-steps__num" aria-hidden="true">3</span>
-                                <span class="apply-steps__label">Versturen</span>
+                                <span class="apply-steps__label">@Culture["Apply.StepSend"]</span>
                             </li>
                             <li class="apply-steps__item @VerifyStepClass">
                                 <span class="apply-steps__num" aria-hidden="true">4</span>
-                                <span class="apply-steps__label">Bevestigen</span>
+                                <span class="apply-steps__label">@Culture["Apply.StepVerify"]</span>
                             </li>
                         </ol>
 
                         @if (_applied)
                         {
                             <div class="apply-panel apply-panel--success" role="status">
-                                <p class="apply-panel__title">Sollicitatie verstuurd</p>
-                                <p class="apply-panel__text">Je reactie is bevestigd. Je ziet de status terug onder Mijn sollicitaties.</p>
-                                <a class="engagement-btn apply-flow__secondary" href="/candidate/applications">Naar mijn sollicitaties</a>
+                                <p class="apply-panel__title">@Culture["Apply.SentTitle"]</p>
+                                <p class="apply-panel__text">@Culture["Apply.SentBody"]</p>
+                                <a class="engagement-btn apply-flow__secondary" href="/candidate/applications">@Culture["Apply.MyApplications"]</a>
                             </div>
                         }
                         else if (!_profileReadyForApply)
                         {
                             <div class="apply-panel apply-panel--warn">
-                                <p class="apply-panel__title">Eerst je profiel afronden</p>
-                                <p class="apply-panel__text">Werkgevers zien deze gegevens bij je sollicitatie. Vul het volgende aan:</p>
+                                <p class="apply-panel__title">@Culture["Apply.CompleteProfileTitle"]</p>
+                                <p class="apply-panel__text">@Culture["Apply.CompleteProfileBody"]</p>
                                 <ul class="apply-checklist">
-                                    <li class="@(_profileHasAvailability ? "is-done" : null)">Beschikbaarheid</li>
+                                    <li class="@(_profileHasAvailability ? "is-done" : null)">@Culture["Apply.Availability"]</li>
                                     @if (_requiresDrivingLicense)
                                     {
-                                        <li class="@(_profileHasLicense ? "is-done" : null)">Rijbewijs (@_vacancy.RequiredDrivingLicense)</li>
+                                        <li class="@(_profileHasLicense ? "is-done" : null)">@Culture.Format("Apply.LicenseItem", _vacancy.RequiredDrivingLicense!)</li>
                                     }
                                     <li class="@(_profileHasEmployers ? "is-done" : null)">
-                                        Werkervaring
                                         @if (_vacancy.MinimumEmployers is > 0)
                                         {
-                                            <text> (min. @_vacancy.MinimumEmployers)</text>
+                                            @Culture.Format("Apply.ExperienceMin", _vacancy.MinimumEmployers)
+                                        }
+                                        else
+                                        {
+                                            @Culture["Apply.Experience"]
                                         }
                                     </li>
                                     @if (_requiresEducation)
                                     {
-                                        <li class="@(_profileHasEducation ? "is-done" : null)">Opleiding (@_vacancy.RequiredEducation)</li>
+                                        <li class="@(_profileHasEducation ? "is-done" : null)">@Culture.Format("Apply.EducationItem", _vacancy.RequiredEducation!)</li>
                                     }
-                                    <li class="@(_profileHasAboutMe ? "is-done" : null)">Over jezelf</li>
+                                    <li class="@(_profileHasAboutMe ? "is-done" : null)">@Culture["Apply.AboutYou"]</li>
                                 </ul>
                                 <a class="login-submit apply-flow__primary"
                                    href="@ProfileReturnHref">
-                                    Profiel aanvullen
+                                    @Culture["Apply.CompleteProfileCta"]
                                 </a>
                             </div>
                         }
                         else if (_awaitingVerification)
                         {
                             <div class="apply-panel apply-panel--verify">
-                                <p class="apply-panel__title">Bevestig met e-mailcode</p>
+                                <p class="apply-panel__title">@Culture["Apply.VerifyTitle"]</p>
                                 <p class="apply-panel__text">
-                                    We hebben een 6-cijferige code gestuurd naar je e-mail. Vul die hier in om je sollicitatie af te ronden.
+                                    @Culture["Apply.VerifyBody"]
                                 </p>
                                 <label class="apply-code-field">
-                                    <span>Verificatiecode</span>
+                                    <span>@Culture["Apply.VerificationCode"]</span>
                                     <input class="apply-code-field__input"
                                            type="text"
                                            inputmode="numeric"
@@ -342,13 +331,13 @@
                                         type="button"
                                         disabled="@(_applying || _verificationCode.Trim().Length != 6)"
                                         @onclick="VerifyApplicationAsync">
-                                    @(_applying ? "Bezig…" : "Bevestigen en versturen")
+                                    @(_applying ? Culture["Apply.Busy"] : Culture["Apply.ConfirmSend"])
                                 </button>
                                 <button class="engagement-btn apply-flow__secondary"
                                         type="button"
                                         disabled="@_applying"
                                         @onclick="ApplyAsync">
-                                    Code opnieuw sturen
+                                    @Culture["Apply.ResendCode"]
                                 </button>
                             </div>
                         }
@@ -356,9 +345,9 @@
                         {
                             <div class="apply-panel">
                                 <section class="apply-section">
-                                    <h3 class="apply-section__title">Hoe ga je?</h3>
+                                    <h3 class="apply-section__title">@Culture["Apply.HowTravel"]</h3>
                                     <label class="apply-field">
-                                        <span>Vervoer</span>
+                                        <span>@Culture["Apply.Transport"]</span>
                                         <select value="@_transport" @onchange="OnTransportChanged">
                                             <option value="Fiets">@Culture["Transport.Bike"]</option>
                                             <option value="Auto">@Culture["Transport.Car"]</option>
@@ -369,26 +358,26 @@
                                 </section>
 
                                 <section class="apply-section">
-                                    <h3 class="apply-section__title">Bevestigingen</h3>
+                                    <h3 class="apply-section__title">@Culture["Apply.Confirmations"]</h3>
                                     @if (_authenticatorEnabled)
                                     {
                                         <label class="apply-check">
                                             <input type="checkbox" @bind="_useAuthenticator" />
-                                            <span>Bevestig met Authenticator (stub)</span>
+                                            <span>@Culture["Apply.UseAuthenticator"]</span>
                                         </label>
                                     }
                                     <label class="apply-check">
                                         <input type="checkbox" @bind="_acceptedTerms" />
                                         <span>
-                                            Ik ga akkoord met de
-                                            <a class="auth-link" href="/gebruiksvoorwaarden" target="_blank" rel="noopener">gebruiksvoorwaarden</a>
-                                            en de
-                                            <a class="auth-link" href="/privacy" target="_blank" rel="noopener">privacyverklaring</a>.
+                                            @Culture["Apply.AcceptTerms"]
+                                            <a class="auth-link" href="/gebruiksvoorwaarden" target="_blank" rel="noopener">@Culture["Apply.Terms"]</a>
+                                            @Culture["Apply.AndThe"]
+                                            <a class="auth-link" href="/privacy" target="_blank" rel="noopener">@Culture["Apply.Privacy"]</a>.
                                         </span>
                                     </label>
                                     <label class="apply-check">
                                         <input type="checkbox" @bind="_workPermitConfirmed" />
-                                        <span>Ik mag wettelijk in Nederland werken.</span>
+                                        <span>@Culture["Apply.WorkPermit"]</span>
                                     </label>
                                 </section>
 
@@ -396,9 +385,9 @@
                                         type="button"
                                         disabled="@(_applying || !_acceptedTerms || !_workPermitConfirmed)"
                                         @onclick="ApplyAsync">
-                                    @(_applying ? "Bezig…" : "Sollicitatie versturen")
+                                    @(_applying ? Culture["Apply.Busy"] : Culture["Apply.Submit"])
                                 </button>
-                                <p class="apply-flow__hint">Daarna ontvang je een code per e-mail om te bevestigen.</p>
+                                <p class="apply-flow__hint">@Culture["Apply.EmailCodeHint"]</p>
                             </div>
                         }
 
@@ -413,10 +402,10 @@
                             <NotAuthorized Context="anon">
                                 <div class="apply-panel">
                                     <header class="apply-flow__header">
-                                        <h2 class="apply-flow__title">Solliciteren</h2>
+                                        <h2 class="apply-flow__title">@Culture["Apply.Title"]</h2>
                                     </header>
-                                    <p class="apply-panel__text">Log in als kandidaat om te solliciteren op deze vacature.</p>
-                                    <a class="login-submit apply-flow__primary" href="@LoginUrl">Inloggen om te solliciteren</a>
+                                    <p class="apply-panel__text">@Culture["Apply.LoginToApply"]</p>
+                                    <a class="login-submit apply-flow__primary" href="@LoginUrl">@Culture["Apply.LoginCta"]</a>
                                 </div>
                             </NotAuthorized>
                         </AuthorizeView>
@@ -475,12 +464,12 @@
         $"/candidate/profile?returnUrl={Uri.EscapeDataString($"/vacancies/{Id}#apply")}";
 
     private string ApplyFlowLead => _applied
-        ? "Klaar — je sollicitatie is bevestigd."
+        ? Culture["Apply.LeadDone"]
         : !_profileReadyForApply
-            ? "Nog even je profiel afronden, daarna kun je solliciteren."
+            ? Culture["Apply.LeadProfile"]
             : _awaitingVerification
-                ? "Bijna klaar — bevestig met de code uit je e-mail."
-                : "In 4 korte stappen. Duidelijk en snel op je telefoon.";
+                ? Culture["Apply.LeadVerify"]
+                : Culture["Apply.LeadReady"];
 
     private string ProfileStepClass =>
         _applied || _profileReadyForApply ? "is-done" : "is-current";
@@ -750,7 +739,7 @@
                 {
                     _awaitingVerification = false;
                     _enteredVerifyThisSession = false;
-                    _message = "Je hebt al gereageerd op deze vacature.";
+                    _message = Culture["Apply.AlreadyApplied"];
                 }
                 else if (!_enteredVerifyThisSession)
                 {
@@ -777,7 +766,7 @@
     {
         if (_dobInput is null)
         {
-            _message = "Kies een geboortedatum.";
+            _message = Culture["Apply.PickDob"];
             return;
         }
 
@@ -800,7 +789,7 @@
                 // ignore
             }
 
-            _message = "Geboortedatum opgeslagen — je ziet nu het loon.";
+            _message = Culture["Apply.DobSaved"];
         }
         catch (Exception ex)
         {
@@ -928,17 +917,17 @@
         {
             if (!_acceptedTerms)
             {
-                _message = "Je moet akkoord gaan met de gebruiksvoorwaarden en de privacyverklaring om te solliciteren.";
+                _message = Culture["Apply.MustAcceptTerms"];
                 return;
             }
             if (!_workPermitConfirmed)
             {
-                _message = "Bevestig eerst dat je in Nederland mag werken.";
+                _message = Culture["Apply.MustConfirmWorkPermit"];
                 return;
             }
             if (!_profileReadyForApply)
             {
-                _message = "Vul eerst je profiel aan via Mijn profiel.";
+                _message = Culture["Apply.CompleteProfileFirst"];
                 return;
             }
         }
@@ -960,8 +949,8 @@
                 _awaitingVerification = true;
                 _enteredVerifyThisSession = true;
                 _message = wasAwaitingVerification
-                    ? "Er is een (nieuwe) 6-cijferige code naar je e-mail gestuurd. Vul deze in om te bevestigen."
-                    : "Er is een 6-cijferige code naar je e-mail gestuurd. Vul deze in om te bevestigen.";
+                    ? Culture["Apply.CodeResent"]
+                    : Culture["Apply.CodeSent"];
             }
             else
             {
@@ -969,8 +958,8 @@
                 _awaitingVerification = false;
                 _enteredVerifyThisSession = false;
                 _message = _useAuthenticator
-                    ? "Je reactie is verstuurd (Authenticator stub). Bevestigingsmail staat in de stub-log."
-                    : "Je reactie is verstuurd. Bevestigingsmail staat in de stub-log.";
+                    ? Culture["Apply.CodeSentAuthenticator"]
+                    : Culture["Apply.SentStub"];
             }
         }
         catch (Exception ex)
@@ -1009,11 +998,11 @@
             {
                 _verificationCode = string.Empty;
                 _enteredVerifyThisSession = false;
-                _message = "Je sollicitatie is geverifieerd en verstuurd.";
+                _message = Culture["Apply.Verified"];
             }
             else
             {
-                _message = "Code nog niet geaccepteerd. Controleer de code en probeer opnieuw.";
+                _message = Culture["Apply.CodeRejected"];
             }
         }
         catch (Exception ex)
@@ -1032,7 +1021,7 @@
         try
         {
             _liked = await Api.SetLikedAsync(Id, !_liked);
-            _message = _liked ? "Opgeslagen bij je likes." : "Like verwijderd.";
+            _message = _liked ? Culture["Vacancy.LikedToast"] : Culture["Vacancy.LikeRemoved"];
         }
         catch (Exception ex)
         {
@@ -1051,6 +1040,29 @@
         _shareOpen = false;
         return Task.CompletedTask;
     }
+
+    private string LocalizeWorkType(string label) => label switch
+    {
+        WorkTypeLabels.Horeca => Culture["WorkType.Horeca"],
+        WorkTypeLabels.Winkel => Culture["WorkType.Winkel"],
+        WorkTypeLabels.Logistiek => Culture["WorkType.Logistiek"],
+        WorkTypeLabels.Tuinbouw => Culture["WorkType.Tuinbouw"],
+        WorkTypeLabels.Zorg => Culture["WorkType.Zorg"],
+        WorkTypeLabels.Kantoor => Culture["WorkType.Kantoor"],
+        WorkTypeLabels.Bouw => Culture["WorkType.Bouw"],
+        WorkTypeLabels.Schoonmaak => Culture["WorkType.Schoonmaak"],
+        WorkTypeLabels.Productie => Culture["WorkType.Productie"],
+        _ => label
+    };
+
+    private string LocalizeTransport(string transport) => transport switch
+    {
+        "Fiets" => Culture["Transport.Bike"],
+        "Auto" => Culture["Transport.Car"],
+        "OV" => Culture["Transport.Transit"],
+        "Lopend" => Culture["Transport.Walk"],
+        _ => transport
+    };
 
     private void OpenMockInterview() => _mockInterviewOpen = true;
 

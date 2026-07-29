@@ -4363,6 +4363,204 @@ a.engagement-btn {
     line-height: 1.4;
 }
 
+/* Lobster coach CTA on vacancy detail (candidates only) */
+.lobsy-coach-cta {
+    margin: 1.25rem 0 0.5rem;
+    display: flex;
+    justify-content: flex-start;
+}
+
+.lobsy-coach-cta__btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.85rem;
+    padding: 0.55rem 0.85rem 0.55rem 0.45rem;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    text-align: start;
+    max-width: 100%;
+}
+
+.lobsy-coach-cta__btn:hover .lobsy-coach-cta__bubble,
+.lobsy-coach-cta__btn:focus-visible .lobsy-coach-cta__bubble {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px color-mix(in srgb, var(--brand) 14%, transparent);
+}
+
+.lobsy-coach-cta__btn:focus-visible {
+    outline: 2px solid color-mix(in srgb, var(--accent) 55%, var(--brand));
+    outline-offset: 3px;
+    border-radius: 14px;
+}
+
+.lobsy-coach-cta__mascot {
+    width: 72px;
+    height: 72px;
+    flex-shrink: 0;
+}
+
+.lobsy-coach-cta__bubble {
+    position: relative;
+    display: inline-block;
+    max-width: 16rem;
+    padding: 0.7rem 0.95rem;
+    border-radius: 16px;
+    background: var(--surface);
+    border: 1px solid color-mix(in srgb, var(--accent) 35%, var(--border));
+    color: var(--brand);
+    font-weight: 700;
+    font-size: 0.95rem;
+    line-height: 1.35;
+    box-shadow: 0 4px 14px color-mix(in srgb, var(--brand) 8%, transparent);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.lobsy-coach-cta__bubble::before {
+    content: "";
+    position: absolute;
+    left: -8px;
+    top: 50%;
+    width: 14px;
+    height: 14px;
+    background: var(--surface);
+    border-left: 1px solid color-mix(in srgb, var(--accent) 35%, var(--border));
+    border-bottom: 1px solid color-mix(in srgb, var(--accent) 35%, var(--border));
+    transform: translateY(-50%) rotate(45deg);
+}
+
+/* Coach avatar (chat + CTA) */
+.lobsy-coach {
+    display: block;
+    position: relative;
+    line-height: 0;
+    flex-shrink: 0;
+    width: 56px;
+    height: 56px;
+    background: transparent;
+}
+
+.lobsy-coach__svg {
+    display: block;
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+}
+
+.lobsy-coach__lid {
+    fill: #01154b;
+    opacity: 0;
+    transform-box: fill-box;
+    transform-origin: 50% 50%;
+    transform: scaleY(0);
+    pointer-events: none;
+}
+
+.lobsy-coach__claw {
+    transform-box: view-box;
+    transform: rotate(0deg);
+    pointer-events: none;
+}
+
+.lobsy-coach__claw--hold {
+    transform-origin: 38.5% 36%;
+}
+
+.lobsy-coach__claw--snap {
+    transform-origin: 61.5% 36%;
+}
+
+.lobsy-coach__flag {
+    /* soft paper edge */
+    filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.25));
+}
+
+.lobsy-coach--animate .lobsy-coach__lid--left {
+    animation: lobsy-blink 5.8s ease-in-out infinite;
+}
+
+.lobsy-coach--animate .lobsy-coach__lid--right {
+    animation: lobsy-blink 5.8s ease-in-out infinite;
+    animation-delay: 0.05s;
+}
+
+.lobsy-coach--animate .lobsy-coach__claw--hold {
+    animation: lobsy-claw-hold 7.5s ease-in-out infinite;
+}
+
+.lobsy-coach--animate .lobsy-coach__claw--snap {
+    animation: lobsy-claw-snap 6.2s ease-in-out infinite;
+    animation-delay: 0.55s;
+}
+
+@keyframes lobsy-claw-hold {
+    0%,
+    62%,
+    100% {
+        transform: rotate(0deg);
+    }
+    68% {
+        transform: rotate(-3deg);
+    }
+    76% {
+        transform: rotate(2deg);
+    }
+    84% {
+        transform: rotate(0deg);
+    }
+}
+
+@keyframes lobsy-claw-snap {
+    0%,
+    58%,
+    100% {
+        transform: rotate(0deg);
+    }
+    62% {
+        transform: rotate(10deg);
+    }
+    66% {
+        transform: rotate(-2deg);
+    }
+    70% {
+        transform: rotate(8deg);
+    }
+    74% {
+        transform: rotate(0deg);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .lobsy-coach--animate .lobsy-coach__lid,
+    .lobsy-coach--animate .lobsy-coach__claw {
+        animation: none !important;
+    }
+}
+
+.mock-interview-modal__brand {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    min-width: 0;
+}
+
+.mock-interview-modal__avatar {
+    width: 56px;
+    height: 56px;
+}
+
+.mock-interview-bubble__head {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    margin-bottom: 0.15rem;
+}
+
+.mock-interview-bubble__avatar {
+    width: 36px;
+    height: 36px;
+}
+
 .mock-interview-modal {
     position: fixed;
     left: 50%;

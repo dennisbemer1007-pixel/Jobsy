@@ -4,6 +4,7 @@ using System.Text.Json;
 using System.Text.RegularExpressions;
 using Jobsy.Core.Enums;
 using Jobsy.Core.Interfaces;
+using Jobsy.Core.Localization;
 using Jobsy.Core.Options;
 using Jobsy.Core.Rules;
 using Microsoft.Extensions.Logging;
@@ -18,46 +19,43 @@ public sealed class MockInterviewService : IMockInterviewService
 
     private const string SystemPromptTemplate =
         """
-        Je bent een warme, praktische coach-recruiter in Nederland. Je helpt een jongere oefenen
-        voor een sollicitatiegesprek via chat. Dit is géén echt gesprek en géén toezegging van werk.
-        Doel: het moet voelen als échte hulp — reageer op WAT ZE ZEGGEN, niet met standaardfrases.
+        You are a warm, practical coach-recruiter helping a young person practice a job interview in chat.
+        This is NOT a real interview and NOT a job offer. React to WHAT THEY SAY — no generic fluff.
 
-        Vacaturecontext:
-        - Functie: {title}
-        - Werkgever: {company}
-        - Adres: {address}
-        - Branches: {workTypes}
-        - Startdatum: {startDate}
-        - Vervoer: {transport}
-        - Uurloon (alleen als zichtbaar/bekend): {wage}
-        - Vacaturetekst:
+        LANGUAGE (mandatory): Reply entirely in {languageName}. Every label and sentence must be in {languageName}.
+
+        Vacancy context:
+        - Role: {title}
+        - Employer: {company}
+        - Address: {address}
+        - Sectors: {workTypes}
+        - Start date: {startDate}
+        - Transport: {transport}
+        - Hourly wage (only if known): {wage}
+        - Vacancy text:
         {description}
 
-        Kernopdracht — vacature-eerst + interactief:
-        - Haal 3–5 concrete taken/eisen uit de vacaturetekst.
-        - Reageer op details uit hun laatste antwoord (citaat of parafrase). Geen generieke lof.
-        - Varieer je tips: soms STAR, soms toon, soms koppeling aan een vacaturetaak, soms een herschrijfvoorbeeld.
-        - Als het antwoord vaag/kort is: blijf bij hetzelfde thema met een soft doorvraag als "Vraag:".
+        Core task — vacancy-first + interactive:
+        - Pull 3–5 concrete tasks/requirements from the vacancy text.
+        - React to details from their last answer (quote or paraphrase). No generic praise.
+        - Vary tips: sometimes STAR, tone, vacancy task link, or a rewrite example.
+        - If the answer is vague/short: stay on the same theme with a soft follow-up as "{questionLabel} ".
 
-        Antwoordstructuur NA elk kandidatenantwoord (verplicht, behalve openingsbeurt):
-        1) Optioneel: regel "Let op: " — ALLEEN bij beledigende, grove of respectloze taal.
-           Vriendelijk, zonder shamen: leg uit dat een nette toon in een echt gesprek beter werkt,
-           en nodig uit om het anders te formuleren.
-        2) Regel "Sterk: " — wat goed ging, met een kort citaat/detail uit HUN antwoord
-           (sla over of houd heel kort als het antwoord vooral beledigend was).
-        3) Regel "Tip: " — één concrete verbetering.
-        4) Optioneel: regel "Probeer zo: " — één herschreven voorbeeldzin in hun woorden/stijl,
-           gekoppeld aan de vacature (max ~35 woorden).
-        5) Lege regel, daarna "Vraag: " + precies één volgende oefenvraag.
+        Reply structure AFTER each candidate answer (required, except the opening turn):
+        1) Optional line "{cautionLabel} " — ONLY for insulting/rude language. Friendly, no shaming.
+        2) Line "{strongLabel} " — what went well, with a short quote from THEIR answer.
+        3) Line "{tipLabel} " — one concrete improvement.
+        4) Optional line "{rewriteLabel} " — one rewritten example sentence (max ~35 words).
+        5) Blank line, then "{questionLabel} " + exactly one next practice question.
 
-        Extra gedragsregels:
-        1. Nederlands, natuurlijk, bemoedigend — alsof je echt meedenkt.
-        2. Eén vraag per beurt; max ~160 woorden.
-        3. Herhaal niet dezelfde tip twee beurten achter elkaar.
-        4. Geen harde toezeggingen over salaris, contract of aanname.
-        5. Nooit BSN, bankgegevens, wachtwoorden of andere zeer gevoelige data vragen.
-        6. Als gevraagd wordt of dit echt is: leg uit dat dit een oefengesprek via Lobsy is.
-        7. Rond na 5–6 vragen af met compliment + 2 takeaways + één zin "zo kun je dit morgen gebruiken".
+        Extra rules:
+        1. Natural, encouraging {languageName} — as if you are thinking with them.
+        2. One question per turn; max ~160 words.
+        3. Do not repeat the same tip two turns in a row.
+        4. No hard promises about salary, contract, or hiring.
+        5. Never ask for SSN/BSN, bank details, passwords, or other highly sensitive data.
+        6. If asked whether this is real: explain it is a Lobsy practice chat.
+        7. After 5–6 questions, wrap up with a compliment + 2 takeaways + one "use this tomorrow" line.
         """;
 
     private static readonly JsonSerializerOptions JsonOptions = new()
@@ -85,8 +83,11 @@ public sealed class MockInterviewService : IMockInterviewService
     public async Task<MockInterviewTurnResult> ContinueAsync(
         MockInterviewVacancyContext vacancy,
         IReadOnlyList<MockInterviewMessage> history,
+        string? language = null,
         CancellationToken cancellationToken = default)
     {
+        var lang = JobsyLanguages.Normalize(language);
+        var labels = Jobsy.Core.Localization.MockInterviewLabels.For(lang);
         var sanitized = SanitizeHistory(history);
         var apiKey = await ResolveApiKeyAsync(cancellationToken);
         if (!string.IsNullOrWhiteSpace(apiKey))
@@ -95,7 +96,8 @@ public sealed class MockInterviewService : IMockInterviewService
             {
                 var model = await ResolveModelAsync(cancellationToken);
                 var baseUrl = await ResolveBaseUrlAsync(cancellationToken);
-                var reply = await CompleteWithOpenAiAsync(vacancy, sanitized, apiKey, model, baseUrl, cancellationToken);
+                var reply = await CompleteWithOpenAiAsync(
+                    vacancy, sanitized, labels, apiKey, model, baseUrl, cancellationToken);
                 if (!string.IsNullOrWhiteSpace(reply))
                 {
                     return new MockInterviewTurnResult(reply.Trim(), UsedAi: true);
@@ -107,7 +109,9 @@ public sealed class MockInterviewService : IMockInterviewService
             }
         }
 
-        return new MockInterviewTurnResult(ScriptedFallback.NextReply(vacancy, sanitized), UsedAi: false);
+        return new MockInterviewTurnResult(
+            ScriptedFallback.NextReply(vacancy, sanitized, labels),
+            UsedAi: false);
     }
 
     public static IReadOnlyList<MockInterviewMessage> SanitizeHistory(IReadOnlyList<MockInterviewMessage> history)
@@ -161,12 +165,13 @@ public sealed class MockInterviewService : IMockInterviewService
     private async Task<string?> CompleteWithOpenAiAsync(
         MockInterviewVacancyContext vacancy,
         IReadOnlyList<MockInterviewMessage> history,
+        MockInterviewLabels.Pack labels,
         string apiKey,
         string model,
         string baseUrl,
         CancellationToken cancellationToken)
     {
-        var system = BuildSystemPrompt(vacancy);
+        var system = BuildSystemPrompt(vacancy, labels);
         var messages = new List<object>(history.Count + 2)
         {
             new { role = "system", content = system }
@@ -178,11 +183,12 @@ public sealed class MockInterviewService : IMockInterviewService
             {
                 role = "user",
                 content =
-                    "Start het oefengesprek. Stel je kort voor als coach-recruiter van dit bedrijf, " +
-                    "zeg dat dit een oefengesprek is waarin je hen helpt scherper te antwoorden, " +
-                    "noem in één zin een concrete taak/eis uit de vacaturetekst, " +
-                    "en stel je eerste gerichte vraag (begin met 'Vraag: '). " +
-                    "Geen Sterk/Tip in deze openingsbeurt."
+                    $"Start the practice interview in {labels.LanguageName}. " +
+                    "Briefly introduce yourself as the coach-recruiter for this company, " +
+                    "say this is a practice chat where you help them answer more sharply, " +
+                    "mention in one sentence a concrete task/requirement from the vacancy text, " +
+                    $"and ask your first focused question (start with '{labels.Question} '). " +
+                    $"No {labels.Strong.TrimEnd(':')}/{labels.Tip.TrimEnd(':')} in this opening turn."
             });
         }
         else
@@ -197,13 +203,13 @@ public sealed class MockInterviewService : IMockInterviewService
             {
                 role = "user",
                 content =
-                    "Reageer nu als coach op mijn laatste antwoord hierboven. " +
-                    "Citeer of parafraseer iets uit mijn tekst. " +
+                    $"Reply now as coach in {labels.LanguageName} to my last answer above. " +
+                    "Quote or paraphrase something from my text. " +
                     (DutchInterviewAnswerHeuristics.LooksInsulting(lastUser)
-                        ? "Mijn toon was mogelijk te scherp: begin met 'Let op: ' (vriendelijk, zonder shamen), " +
-                          "geef daarna Tip + 'Probeer zo: ' met een nette herschrijving, en stel dezelfde oefenvraag opnieuw. "
-                        : "Gebruik Sterk + Tip, en voeg 'Probeer zo: ' toe als mijn antwoord vaag of kort was. ") +
-                    "Eindig met precies één 'Vraag: '."
+                        ? $"My tone may have been too sharp: start with '{labels.Caution} ' (friendly, no shaming), " +
+                          $"then {labels.Tip.TrimEnd(':')} + '{labels.Rewrite} ' with a polite rewrite, and ask the same practice question again. "
+                        : $"Use {labels.Strong.TrimEnd(':')} + {labels.Tip.TrimEnd(':')}, and add '{labels.Rewrite} ' if my answer was vague or short. ") +
+                    $"End with exactly one '{labels.Question} '."
             });
         }
 
@@ -235,7 +241,7 @@ public sealed class MockInterviewService : IMockInterviewService
         return completion?.Choices?.FirstOrDefault()?.Message?.Content;
     }
 
-    private static string BuildSystemPrompt(MockInterviewVacancyContext vacancy)
+    private static string BuildSystemPrompt(MockInterviewVacancyContext vacancy, MockInterviewLabels.Pack labels)
     {
         var description = HtmlSanitize.ToPlainPreview(vacancy.Description, maxLength: 3_500);
         var transport = vacancy.RequiredTransport is { Count: > 0 }
@@ -248,15 +254,24 @@ public sealed class MockInterviewService : IMockInterviewService
             ? "niet getoond"
             : $"€ {vacancy.HourlyWage.Value:0.00} per uur";
 
+        static string Safe(string? value)
+            => (value ?? string.Empty).Replace("{", "{{", StringComparison.Ordinal).Replace("}", "}}", StringComparison.Ordinal);
+
         return SystemPromptTemplate
-            .Replace("{title}", vacancy.Title.Trim(), StringComparison.Ordinal)
-            .Replace("{company}", vacancy.CompanyName.Trim(), StringComparison.Ordinal)
-            .Replace("{address}", string.IsNullOrWhiteSpace(vacancy.CompanyAddress) ? "onbekend" : vacancy.CompanyAddress.Trim(), StringComparison.Ordinal)
-            .Replace("{workTypes}", workTypes, StringComparison.Ordinal)
+            .Replace("{languageName}", labels.LanguageName, StringComparison.Ordinal)
+            .Replace("{cautionLabel}", labels.Caution, StringComparison.Ordinal)
+            .Replace("{strongLabel}", labels.Strong, StringComparison.Ordinal)
+            .Replace("{tipLabel}", labels.Tip, StringComparison.Ordinal)
+            .Replace("{rewriteLabel}", labels.Rewrite, StringComparison.Ordinal)
+            .Replace("{questionLabel}", labels.Question, StringComparison.Ordinal)
+            .Replace("{title}", Safe(vacancy.Title.Trim()), StringComparison.Ordinal)
+            .Replace("{company}", Safe(vacancy.CompanyName.Trim()), StringComparison.Ordinal)
+            .Replace("{address}", Safe(string.IsNullOrWhiteSpace(vacancy.CompanyAddress) ? "onbekend" : vacancy.CompanyAddress.Trim()), StringComparison.Ordinal)
+            .Replace("{workTypes}", Safe(workTypes), StringComparison.Ordinal)
             .Replace("{startDate}", vacancy.StartDate.ToString("dd-MM-yyyy"), StringComparison.Ordinal)
-            .Replace("{transport}", transport, StringComparison.Ordinal)
-            .Replace("{wage}", wage, StringComparison.Ordinal)
-            .Replace("{description}", description, StringComparison.Ordinal);
+            .Replace("{transport}", Safe(transport), StringComparison.Ordinal)
+            .Replace("{wage}", Safe(wage), StringComparison.Ordinal)
+            .Replace("{description}", Safe(description), StringComparison.Ordinal);
     }
 
     private async Task<string?> ResolveApiKeyAsync(CancellationToken cancellationToken)
@@ -323,27 +338,53 @@ public sealed class MockInterviewService : IMockInterviewService
     {
         public static string NextReply(
             MockInterviewVacancyContext vacancy,
-            IReadOnlyList<MockInterviewMessage> history)
+            IReadOnlyList<MockInterviewMessage> history,
+            MockInterviewLabels.Pack? labels = null)
         {
+            var requested = labels ?? MockInterviewLabels.For("nl");
+            // Scripted path is fully authored in NL + EN. Other UI languages get English
+            // coach prose (labels parsed by the UI into the active Culture). OpenAI covers pl/ro/ar.
+            var useEnglish = !string.Equals(requested.LanguageCode, "nl", StringComparison.OrdinalIgnoreCase);
+            labels = useEnglish ? MockInterviewLabels.For("en") : requested;
+
             var plan = InterviewPlan.FromVacancy(vacancy);
             var userTurns = history.Count(m => m.Role == "user");
 
             if (history.Count == 0)
             {
+                if (useEnglish)
+                {
+                    return
+                        $"Hi! I'll help you practice for {plan.Title} at {plan.Company}. " +
+                        "This is a Lobsy practice chat — not a real interview, but with questions from the vacancy.\n\n" +
+                        $"Key themes I see: {plan.ThemeSummary}.\n\n" +
+                        $"{labels.Question} {EnglishQuestion(plan, 0)}";
+                }
+
                 return
                     $"Hoi! Ik help je oefenen voor {plan.Title} bij {plan.Company}. " +
                     "Dit is een oefengesprek via Lobsy — geen echt gesprek, wél met vragen uit de vacature.\n\n" +
                     $"In de tekst zie ik vooral: {plan.ThemeSummary}.\n\n" +
-                    $"Vraag: {plan.Questions[0]}";
+                    $"{labels.Question} {plan.Questions[0]}";
             }
 
             var lastUser = history.LastOrDefault(m => m.Role == "user")?.Content?.Trim() ?? "";
-            var coaching = BuildCoaching(lastUser, plan, userTurns);
+            var coaching = BuildCoaching(lastUser, plan, userTurns, labels, useEnglish);
             var insulting = DutchInterviewAnswerHeuristics.LooksInsulting(lastUser);
             var vague = DutchInterviewAnswerHeuristics.LooksVague(lastUser);
 
             if (userTurns >= plan.Questions.Count && !insulting)
             {
+                if (useEnglish)
+                {
+                    return
+                        $"{coaching}\n\n" +
+                        $"Nice practice for {plan.Title}! This was not a real assessment.\n" +
+                        $"Remember: (1) link your answer to tasks from the vacancy, such as {plan.PrimaryHook}. " +
+                        "(2) Use a short example: situation → what you did → result. " +
+                        "Tomorrow you can rehearse this out loud in front of a mirror. Good luck!";
+                }
+
                 return
                     $"{coaching}\n\n" +
                     $"Mooi geoefend voor {plan.Title}! Dit was geen echte beoordeling.\n" +
@@ -352,7 +393,6 @@ public sealed class MockInterviewService : IMockInterviewService
                     "Morgen kun je dit letterlijk zo oefenen hardop voor de spiegel. Succes!";
             }
 
-            // Beledigend of heel vaag → zelfde thema opnieuw, met herschrijfvoorbeeld.
             var questionIndex = insulting || vague
                 ? Math.Max(0, Math.Min(userTurns - 1, plan.Questions.Count - 1))
                 : Math.Min(userTurns, plan.Questions.Count - 1);
@@ -361,28 +401,70 @@ public sealed class MockInterviewService : IMockInterviewService
                 questionIndex = 0;
             }
 
-            return $"{coaching}\n\nVraag: {plan.Questions[questionIndex]}";
+            var question = useEnglish
+                ? EnglishQuestion(plan, questionIndex)
+                : plan.Questions[questionIndex];
+
+            return $"{coaching}\n\n{labels.Question} {question}";
         }
 
-        private static string BuildCoaching(string answer, InterviewPlan plan, int userTurnIndex)
+        private static string EnglishQuestion(InterviewPlan plan, int index)
+        {
+            var hook = plan.PrimaryHook;
+            return (index % 5) switch
+            {
+                0 => $"What draws you to {plan.Title} at {plan.Company}? Mention something concrete from the vacancy (e.g. {hook}).",
+                1 => $"Give one concrete example (school, sports, side job, internship) that helps you with: {hook}.",
+                2 => $"It's busy around {hook} and someone asks for something else at the same time. What do you do first, and why?",
+                3 => $"How will you get to work reliably, and when can you start around {plan.Themes.LastOrDefault()?.Label ?? "the start date"}?",
+                _ => "Last practice question: what would you ask the employer about this vacancy — and why is that a smart question?"
+            };
+        }
+
+        private static string BuildCoaching(
+            string answer,
+            InterviewPlan plan,
+            int userTurnIndex,
+            MockInterviewLabels.Pack labels,
+            bool useEnglish)
         {
             if (DutchInterviewAnswerHeuristics.LooksInsulting(answer))
             {
+                if (useEnglish)
+                {
+                    return
+                        $"{labels.Caution} Please keep a respectful tone — that works better in a real interview.\n" +
+                        $"{labels.Tip} Say what you mean without swear words — that comes across stronger.\n" +
+                        $"{labels.Rewrite} \"For {plan.PrimaryHook} I stay calm under pressure. For example when it got busy, I did X first and then checked everything was right.\"";
+                }
+
                 var rewrite = DutchInterviewAnswerHeuristics.BuildRewriteSuggestion(answer, plan.PrimaryHook);
                 return
-                    $"Let op: {DutchInterviewAnswerHeuristics.FriendlyToneRedirect(plan.PrimaryHook)}\n" +
-                    $"Tip: Formuleer wat je bedoelt zonder scheldwoorden — dat komt sterker over.\n" +
-                    rewrite;
+                    $"{labels.Caution} {DutchInterviewAnswerHeuristics.FriendlyToneRedirect(plan.PrimaryHook)}\n" +
+                    $"{labels.Tip} Formuleer wat je bedoelt zonder scheldwoorden — dat komt sterker over.\n" +
+                    rewrite.Replace("Probeer zo:", labels.Rewrite, StringComparison.OrdinalIgnoreCase);
+            }
+
+            if (useEnglish)
+            {
+                var rewriteLine = DutchInterviewAnswerHeuristics.LooksVague(answer)
+                    || !DutchInterviewAnswerHeuristics.HasStarCue(answer)
+                    ? $"\n{labels.Rewrite} \"For example with {plan.PrimaryHook}: when [situation], I did [action], and that led to [result].\""
+                    : string.Empty;
+                return
+                    $"{labels.Strong} You shared something we can build on.\n" +
+                    $"{labels.Tip} Link your answer explicitly to: {plan.PrimaryHook}.{rewriteLine}";
             }
 
             var strong = BuildStrong(answer, plan, userTurnIndex);
             var tip = BuildTip(answer, plan, userTurnIndex);
-            var rewriteLine = DutchInterviewAnswerHeuristics.LooksVague(answer)
+            var nlRewrite = DutchInterviewAnswerHeuristics.LooksVague(answer)
                 || !DutchInterviewAnswerHeuristics.HasStarCue(answer)
                 ? "\n" + DutchInterviewAnswerHeuristics.BuildRewriteSuggestion(answer, plan.PrimaryHook)
+                    .Replace("Probeer zo:", labels.Rewrite, StringComparison.OrdinalIgnoreCase)
                 : string.Empty;
 
-            return $"Sterk: {strong}\nTip: {tip}{rewriteLine}";
+            return $"{labels.Strong} {strong}\n{labels.Tip} {tip}{nlRewrite}";
         }
 
         private static string BuildStrong(string answer, InterviewPlan plan, int userTurnIndex)

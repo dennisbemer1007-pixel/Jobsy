@@ -1,4 +1,5 @@
 using Jobsy.Core.Interfaces;
+using Jobsy.Core.Localization;
 using Jobsy.Infrastructure.Services;
 
 namespace Jobsy.Tests;
@@ -173,5 +174,52 @@ public class MockInterviewServiceTests
         Assert.Contains("Sterk:", a, StringComparison.Ordinal);
         Assert.Contains("Sterk:", b, StringComparison.Ordinal);
         Assert.NotEqual(a, b);
+    }
+
+    [Fact]
+    public void ScriptedFallback_english_uses_english_labels()
+    {
+        var vacancy = new MockInterviewVacancyContext(
+            Guid.NewGuid(),
+            "Warehouse helper",
+            "You pack orders in the warehouse.",
+            "Fresh Co",
+            null,
+            new DateOnly(2026, 8, 1),
+            ["Fiets"],
+            null,
+            ["Logistiek"]);
+
+        var reply = MockInterviewService.ScriptedFallback.NextReply(
+            vacancy,
+            [],
+            MockInterviewLabels.For("en"));
+
+        Assert.Contains("Question:", reply, StringComparison.Ordinal);
+        Assert.Contains("Hi!", reply, StringComparison.Ordinal);
+        Assert.DoesNotContain("Vraag:", reply, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void ScriptedFallback_polish_falls_back_to_english_prose()
+    {
+        var vacancy = new MockInterviewVacancyContext(
+            Guid.NewGuid(),
+            "Barista",
+            "Je maakt koffie voor gasten.",
+            "Café Zon",
+            null,
+            new DateOnly(2026, 8, 1),
+            [],
+            null,
+            ["Horeca"]);
+
+        var reply = MockInterviewService.ScriptedFallback.NextReply(
+            vacancy,
+            [],
+            MockInterviewLabels.For("pl"));
+
+        Assert.Contains("Question:", reply, StringComparison.Ordinal);
+        Assert.Contains("Hi!", reply, StringComparison.Ordinal);
     }
 }
