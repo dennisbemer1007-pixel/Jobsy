@@ -6167,23 +6167,40 @@ button.linkish:hover {
 .legal-toc {
     display: flex;
     flex-wrap: wrap;
-    gap: 0.65rem 1.1rem;
+    gap: 0.5rem;
     margin: 0 0 1.5rem;
-    padding: 0.75rem 0;
+    padding: 0 0 0.85rem;
     border-bottom: 1px solid var(--border);
 }
 
 .legal-toc a {
+    display: inline-flex;
+    align-items: center;
     color: var(--brand);
-    font-size: 0.9rem;
+    font-size: 0.85rem;
     font-weight: 600;
-    text-decoration: underline;
-    text-underline-offset: 0.15em;
+    text-decoration: none;
+    line-height: 1.25;
+    padding: 0.45rem 0.7rem;
+    border: 1px solid color-mix(in srgb, var(--brand) 18%, var(--border));
+    border-radius: var(--radius-sm);
+    background: color-mix(in srgb, var(--surface) 92%, var(--brand) 4%);
+}
+
+.legal-toc a:hover {
+    background: color-mix(in srgb, var(--brand) 8%, var(--surface));
 }
 
 .legal-toc a.legal-toc__link--active {
-    color: var(--text);
-    text-decoration-thickness: 2px;
+    color: #fff;
+    background: var(--brand);
+    border-color: var(--brand);
+    text-decoration: none;
+}
+
+.legal-doc {
+    position: relative;
+    z-index: 1;
 }
 
 .legal-doc section {
@@ -6218,26 +6235,28 @@ button.linkish:hover {
 
 .about-page {
     position: relative;
-    overflow: hidden;
+    /* Must stay visible so mobile touch-scroll on .app-main is not trapped/clipped */
+    overflow: visible;
 }
 
 .about-page__watermark {
     position: absolute;
-    inset: 0;
-    display: grid;
-    place-items: center;
+    top: 3.5rem;
+    left: 50%;
+    width: min(420px, 78%);
+    transform: translateX(-50%);
     pointer-events: none;
     user-select: none;
     z-index: 0;
 }
 
 .about-page__watermark img {
-    width: min(520px, 88%);
+    display: block;
+    width: 100%;
     height: auto;
-    max-height: 70vh;
+    max-height: min(420px, 55vh);
     object-fit: contain;
-    opacity: 0.08;
-    transform: translateY(1.5rem);
+    opacity: 0.07;
 }
 
 .about-page > *:not(.about-page__watermark) {
@@ -6299,6 +6318,7 @@ button.linkish:hover {
     border-top: 1px solid var(--border);
     color: var(--muted);
     font-size: 0.75rem;
+    flex-shrink: 0;
 }
 
 .app-footer__links {
@@ -6322,6 +6342,25 @@ button.linkish:hover {
 }
 
 @media (max-width: 1024px) {
+    .legal-page {
+        padding-bottom: 2.5rem;
+    }
+
+    .legal-toc {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 0.45rem;
+        margin-bottom: 1.25rem;
+    }
+
+    .legal-toc a {
+        justify-content: center;
+        text-align: center;
+        font-size: 0.78rem;
+        padding: 0.55rem 0.4rem;
+        min-height: 2.6rem;
+    }
+
     .app-footer {
         flex-direction: column;
         align-items: stretch;
@@ -6331,7 +6370,7 @@ button.linkish:hover {
 
     .app-footer__links {
         display: grid;
-        grid-template-columns: repeat(3, minmax(0, 1fr));
+        grid-template-columns: repeat(2, minmax(0, 1fr));
         gap: 0;
         width: 100%;
         border: 1px solid var(--border);
@@ -6349,14 +6388,32 @@ button.linkish:hover {
         padding: 0.55rem 0.35rem;
         color: var(--brand);
         border-right: 1px solid var(--border);
+        border-bottom: 1px solid var(--border);
     }
 
-    .app-footer__links a:last-child {
+    .app-footer__links a:nth-child(2n) {
         border-right: none;
+    }
+
+    .app-footer__links a:nth-last-child(-n + 2) {
+        border-bottom: none;
     }
 
     .app-footer__copy {
         display: none;
+    }
+}
+
+@media (max-width: 420px) {
+    .legal-toc {
+        grid-template-columns: 1fr;
+    }
+
+    .legal-toc a {
+        justify-content: flex-start;
+        text-align: left;
+        padding-left: 0.75rem;
+        min-height: 2.4rem;
     }
 }
 
