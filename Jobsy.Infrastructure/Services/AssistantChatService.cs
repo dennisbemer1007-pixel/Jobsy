@@ -23,13 +23,15 @@ public sealed class AssistantChatService : IAssistantChatService
 
     private static readonly JsonSerializerOptions JsonOptions = new() { PropertyNameCaseInsensitive = true };
 
-    private static readonly string[] SearchStopwords =
+        private static readonly string[] SearchStopwords =
     [
-        "ik", "zoek", "zoeken", "een", "de", "het", "een", "vacature", "vacatures", "baan", "banen",
-        "job", "jobs", "als", "voor", "naar", "op", "de", "kaart", "toon", "tonen", "vind", "vinden",
-        "show", "find", "search", "looking", "want", "wil", "graag", "graag", "bij", "met", "van",
+        "ik", "zoek", "zoeken", "een", "de", "het", "vacature", "vacatures", "baan", "banen",
+        "job", "jobs", "als", "voor", "naar", "op", "kaart", "toon", "tonen", "vind", "vinden",
+        "show", "find", "search", "looking", "want", "wil", "graag", "bij", "met", "van",
         "in", "mijn", "me", "kan", "je", "jij", "mij", "please", "for", "the", "a", "an", "and",
-        "or", "is", "zijn", "daar", "hier", "lobsy", "jobsy", "open", "openen", "link", "doorlink"
+        "or", "is", "zijn", "daar", "hier", "lobsy", "jobsy", "open", "openen", "link", "doorlink",
+        "buurt", "omgeving", "regio", "plaats", "stad", "dichtbij", "nearby", "area", "alle", "all",
+        "iets", "passends", "graag", "heb", "bent", "ben"
     ];
 
     private readonly JobsyDbContext _db;
@@ -136,14 +138,14 @@ public sealed class AssistantChatService : IAssistantChatService
                 return await CandidateApplicationsAsync(context, cancellationToken);
             }
 
-            if (LooksLikeCandidateStats(text))
+            if (LooksLikeCandidateProfile(text) || LooksLikeCandidateStats(text))
             {
-                return await CandidateStatsAsync(context, DetectPeriod(text), cancellationToken);
+                return await CandidateProfileAsync(context, DetectPeriod(text), cancellationToken);
             }
 
             var workType = DetectWorkType(text);
             var jobQuery = ExtractJobSearchQuery(lastUser, workType);
-            if (workType is not null || jobQuery is not null || LooksLikeVacancySearch(text))
+            if (IsVacancySearchIntent(text, workType, jobQuery))
             {
                 return await CandidateVacancySearchAsync(context, workType, jobQuery, cancellationToken);
             }
@@ -286,8 +288,8 @@ public sealed class AssistantChatService : IAssistantChatService
         {
             sb.AppendLine(lang switch
             {
-                "en" => $"I found {count} vacancies for “{label}”. Showing them on the job map (hidden search filter).",
-                _ => $"Ik heb {count} vacatures gevonden voor “{label}”. Ik toon ze op de banenkaart (verborgen zoekfilter)."
+                "en" => $"I found {count} vacancies containing “{label}”. Showing them on the job map.",
+                _ => $"Ik heb {count} vacatures gevonden met “{label}” in de tekst. Ik toon ze op de banenkaart."
             });
 
             foreach (var m in matches)
@@ -406,23 +408,79 @@ public sealed class AssistantChatService : IAssistantChatService
         AssistantChatContext context,
         string period,
         CancellationToken cancellationToken)
+        => await CandidateProfileAsync(context, period, cancellationToken);
+
+    private async Task<AssistantChatResult> CandidateProfileAsync(
+        AssistantChatContext context,
+        string period,
+        CancellationToken cancellationToken)
     {
+        var user = await _db.Users.AsNoTracking()
+            .FirstOrDefaultAsync(u => u.Id == context.UserId, cancellationToken);
         var metrics = await _candidateMetrics.GetSummaryAsync(context.UserId, period, cancellationToken);
+        var apps = await _db.Applications.AsNoTracking()
+            .Include(a => a.Vacancy).ThenInclude(v => v.Company)
+            .Where(a => a.CandidateUserId == context.UserId)
+            .OrderByDescending(a => a.CreatedAt)
+            .Take(5)
+            .ToListAsync(cancellationToken);
+
         var lang = JobsyLanguages.Normalize(context.Language);
         var periodLabel = PeriodLabel(period, lang);
         var sb = new StringBuilder();
-        sb.AppendLine(lang == "en"
-            ? $"Your activity ({periodLabel}) — only your own profile:"
-            : $"Jouw activiteit ({periodLabel}) — alleen binnen jouw profiel:");
+        if (lang == "en")
+        {
+            sb.AppendLine("Within your candidate profile:");
+            if (user is not null)
+            {
+                sb.AppendLine($"• Name: {user.FullName}");
+                sb.AppendLine($"• Open for work: {(user.OpenForWork ? "yes" : "no")}");
+            }
+
+            sb.AppendLine($"Activity ({periodLabel}):");
+        }
+        else
+        {
+            sb.AppendLine("Binnen jouw kandidatenprofiel:");
+            if (user is not null)
+            {
+                sb.AppendLine($"• Naam: {user.FullName}");
+                sb.AppendLine($"• Open for work: {(user.OpenForWork ? "ja" : "nee")}");
+            }
+
+            sb.AppendLine($"Activiteit ({periodLabel}):");
+        }
+
         foreach (var m in metrics)
         {
             sb.AppendLine($"• {m.Label}: {m.Value}");
         }
 
+        if (apps.Count > 0)
+        {
+            sb.AppendLine(lang == "en" ? "Recent applications:" : "Recente sollicitaties:");
+            foreach (var a in apps)
+            {
+                sb.AppendLine($"• {a.Vacancy.Title} — {a.Vacancy.Company.Name}: {a.Status}");
+            }
+        }
+        else
+        {
+            sb.AppendLine(lang == "en"
+                ? "You have no applications yet."
+                : "Je hebt nog geen sollicitaties.");
+        }
+
         return new AssistantChatResult(
             sb.ToString().Trim(),
             false,
-            [new AssistantChatAction(AssistantActionTypes.Navigate, Url: "/home", Label: "Dashboard")]);
+            [
+                new AssistantChatAction(AssistantActionTypes.Navigate, Url: "/home", Label: "Dashboard"),
+                new AssistantChatAction(AssistantActionTypes.Navigate, Url: "/candidate/applications",
+                    Label: lang == "en" ? "My applications" : "Mijn sollicitaties"),
+                new AssistantChatAction(AssistantActionTypes.Navigate, Url: "/candidate/profile",
+                    Label: lang == "en" ? "My profile" : "Mijn profiel")
+            ]);
     }
 
     private async Task<AssistantChatResult> ManagerKpisAsync(
@@ -828,7 +886,7 @@ Verbetervoorstellen:
         var scope = role switch
         {
             JobsyRoles.Candidate =>
-                "You help a JOBSEEKER on Lobsy only: targeted vacancy search (job titles like forklift/heftruck), job map filters, how Lobsy works, own application status and own activity stats. Never invent vacancies. Never access other users’ data.",
+                "You help a JOBSEEKER on Lobsy only: listen to their question and answer from their own profile data (applications, likes, shares, open-for-work, preferences) OR search vacancies by keywords that appear in vacancy title/description (e.g. chauffeur). Never invent vacancies. Never access other users’ data.",
             JobsyRoles.SalesManager =>
                 "You help a SALESMANAGER on Lobsy only: their referrals, commissions, invoices, onboarding, tracking code. Stay inside their account. No candidate personal NAW data of third parties.",
             JobsyRoles.Admin =>
@@ -850,8 +908,8 @@ Verbetervoorstellen:
         return context.Role switch
         {
             JobsyRoles.Candidate => lang == "en"
-                ? "Hi! I’m Lobsy. Ask me to find a specific job (e.g. forklift driver), how Lobsy works, or your application status."
-                : "Hoi! Ik ben Lobsy. Vraag me om een gerichte vacature (bijv. heftruckchauffeur), hoe Lobsy werkt, of de status van je sollicitaties.",
+                ? "Hi! I’m Lobsy. Ask me anything in your profile (applications, likes), or search vacancies by keyword (e.g. chauffeur)."
+                : "Hoi! Ik ben Lobsy. Stel me elke vraag binnen jouw profiel (sollicitaties, likes), of zoek vacatures op trefwoord (bijv. chauffeur).",
             JobsyRoles.SalesManager => lang == "en"
                 ? "Hi! I can help with your salesmanager account: referrals, commissions, and invoices — only your data."
                 : "Hoi! Ik help met je salesmanager-account: doorverwijzingen, commissies en facturen — alleen jouw gegevens.",
@@ -870,8 +928,8 @@ Verbetervoorstellen:
         return context.Role switch
         {
             JobsyRoles.Candidate => lang == "en"
-                ? "I can search vacancies by job title or sector (e.g. “heftruckchauffeur”), explain how Lobsy works, or show your application status."
-                : "Ik kan vacatures zoeken op functie of branche (bijv. “heftruckchauffeur”), uitleggen hoe Lobsy werkt, of je sollicitatiestatus tonen.",
+                ? "I can search vacancies by keyword (e.g. “chauffeur”), explain how Lobsy works, or answer questions about your profile and applications."
+                : "Ik kan vacatures zoeken op trefwoord (bijv. “chauffeur”), uitleggen hoe Lobsy werkt, of vragen beantwoorden over jouw profiel en sollicitaties.",
             JobsyRoles.SalesManager => lang == "en"
                 ? "Try asking about your commissions, referred suppliers, or invoices."
                 : "Probeer te vragen naar je commissies, doorverwezen leveranciers of facturen.",
@@ -953,17 +1011,51 @@ Verbetervoorstellen:
     }
 
     private static bool LooksLikeHowLobsy(string text) =>
-        ContainsAny(text, "hoe werkt", "how does lobsy", "how lobsy", "uitleg", "how to use", "wat kan ik");
+        ContainsAny(text, "hoe werkt", "how does lobsy", "how lobsy", "uitleg", "how to use");
 
     private static bool LooksLikeApplicationStatus(string text) =>
         ContainsAny(text, "sollicitatie", "application status", "mijn sollicitat", "status van mijn", "my application");
 
-    private static bool LooksLikeVacancySearch(string text) =>
-        ContainsAny(text, "vacature", "vacatures", "banen", "jobs", "zoek", "search", "toon", "show", "vind", "find",
-            "heftruck", "reachtruck", "chauffeur", "magazijn", "orderpicker", "barista", "plukker");
+    /// <summary>
+    /// Vacancy search only when the user clearly asks for jobs — not every sentence with "zoek".
+    /// </summary>
+    private static bool IsVacancySearchIntent(string text, string? workType, string? jobQuery)
+    {
+        var mentionsJobs = ContainsAny(text,
+            "vacature", "vacatures", "baan", "banen", "job", "jobs", "werk zoek", "zoek werk");
+        var searchVerb = ContainsAny(text, "zoek", "search", "toon", "show", "vind", "find");
+        var jobWord = !string.IsNullOrWhiteSpace(jobQuery)
+                      || ContainsAny(text, "heftruck", "reachtruck", "chauffeur", "orderpicker", "barista", "plukker",
+                          "magazijnmedewerker", "kasmedewerker");
+
+        if (mentionsJobs && (searchVerb || jobWord || workType is not null))
+        {
+            return true;
+        }
+
+        if (searchVerb && (jobWord || workType is not null))
+        {
+            return true;
+        }
+
+        // Bare job title / sector: "chauffeur", "horeca vacatures"
+        if (jobWord || (workType is not null && mentionsJobs))
+        {
+            return true;
+        }
+
+        return false;
+    }
+
+    private static bool LooksLikeCandidateProfile(string text) =>
+        ContainsAny(text,
+            "mijn profiel", "my profile", "binnen mijn", "in mijn account", "over mij", "about me",
+            "open for work", "mijn gegevens", "my details", "wat staat er in mijn", "alles over mijn");
 
     private static bool LooksLikeCandidateStats(string text) =>
-        ContainsAny(text, "hoe vaak heb ik", "mijn likes", "mijn shares", "mijn statistiek", "my stats", "mijn activiteit", "how many likes");
+        ContainsAny(text,
+            "hoe vaak heb ik", "mijn likes", "mijn shares", "mijn statistiek", "my stats",
+            "mijn activiteit", "how many likes", "mijn overzicht", "mijn dashboard");
 
     private static bool LooksLikeKpi(string text) =>
         ContainsAny(text, "kpi", "statistiek", "metrics", "clicks", "klik", "impressies", "impressions", "prestatie", "dashboard", "overzicht");
@@ -1037,42 +1129,25 @@ Verbetervoorstellen:
         };
 
     /// <summary>
-    /// Pull a job-title style query from free text (e.g. "heftruckchauffeur"), excluding branch labels.
+    /// Pull a job-title style query from free text (e.g. "chauffeur" from
+    /// "Ik zoek vacatures voor een chauffeur"), excluding branch labels.
     /// </summary>
     public static string? ExtractJobSearchQuery(string raw, string? detectedWorkType)
     {
-        if (string.IsNullOrWhiteSpace(raw))
+        var drop = new List<string>(WorkTypeLabels.All);
+        if (!string.IsNullOrWhiteSpace(detectedWorkType))
         {
-            return null;
+            drop.Add(detectedWorkType);
         }
 
-        var tokens = VacancyTextSearch.Normalize(raw)
-            .Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
-            .Where(t => t.Length >= 3)
-            .Where(t => !SearchStopwords.Contains(t, StringComparer.OrdinalIgnoreCase))
-            .Where(t => detectedWorkType is null
-                        || !t.Equals(VacancyTextSearch.Normalize(detectedWorkType), StringComparison.OrdinalIgnoreCase))
-            .Where(t => WorkTypeLabels.All.All(w =>
-                !t.Equals(VacancyTextSearch.Normalize(w), StringComparison.OrdinalIgnoreCase)))
-            .ToList();
-
-        // Drop common English/Dutch branch synonyms already mapped to work types.
-        var branchSynonyms = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
-        {
+        drop.AddRange(
+        [
             "horeca", "hospitality", "logistiek", "warehouse", "magazijn", "retail", "winkel", "shop",
             "tuinbouw", "zorg", "care", "healthcare", "kantoor", "office", "bouw", "construction",
             "schoonmaak", "cleaning", "productie", "production", "fabriek", "cafe", "restaurant", "bar"
-        };
-        tokens = tokens.Where(t => !branchSynonyms.Contains(t)).ToList();
+        ]);
 
-        if (tokens.Count == 0)
-        {
-            return null;
-        }
-
-        // Prefer the longest token (often the compound job title).
-        var best = tokens.OrderByDescending(t => t.Length).First();
-        return best.Length >= 4 ? best : string.Join(' ', tokens);
+        return VacancyTextSearch.ExtractSearchPhrase(raw, SearchStopwords, drop);
     }
 
     private static string? DetectWorkType(string text)

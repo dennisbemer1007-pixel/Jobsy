@@ -41,6 +41,41 @@ public class AssistantChatServiceTests
     }
 
     [Fact]
+    public void ExtractJobSearchQuery_pulls_chauffeur_from_sentence()
+    {
+        var q = AssistantChatService.ExtractJobSearchQuery(
+            "Ik zoek vacatures voor een chauffeur",
+            detectedWorkType: null);
+        Assert.Equal("chauffeur", q);
+    }
+
+    [Fact]
+    public void VacancyTextSearch_matches_literal_chauffeur_word()
+    {
+        Assert.True(VacancyTextSearch.MatchesText(
+            "Reachtruck chauffeur",
+            "Werk in het DC",
+            "Logistiek",
+            null,
+            null,
+            "chauffeur"));
+        Assert.True(VacancyTextSearch.MatchesText(
+            "Chauffeur intern 's-Gravenzande",
+            "Interne ritten",
+            "Logistiek",
+            null,
+            null,
+            "chauffeur"));
+        Assert.False(VacancyTextSearch.MatchesText(
+            "Barista centrum Naaldwijk",
+            "Koffiebar",
+            "Horeca",
+            null,
+            null,
+            "chauffeur"));
+    }
+
+    [Fact]
     public void VacancyTextSearch_matches_heftruck_root()
     {
         Assert.True(VacancyTextSearch.MatchesText(
@@ -136,6 +171,95 @@ public class AssistantChatServiceTests
             && a.SearchQuery == "heftruckchauffeur"
             && a.Url!.Contains("q=heftruckchauffeur"));
         Assert.Contains(result.Actions, a => a.VacancyId == id);
+    }
+
+    [Fact]
+    public async Task Candidate_chauffeur_search_matches_word_in_title()
+    {
+        await using var db = CreateDb();
+        var companyId = Guid.NewGuid();
+        db.Companies.Add(new Company
+        {
+            Id = companyId,
+            Name = "DC West",
+            Address = "Straat 1",
+            Type = CompanyType.Employer,
+            Location = new GeoPoint(52, 4)
+        });
+        var today = DateOnly.FromDateTime(DateTime.UtcNow);
+        var matchId = Guid.NewGuid();
+        var otherId = Guid.NewGuid();
+        db.Vacancies.AddRange(
+            new Vacancy
+            {
+                Id = matchId,
+                CompanyId = companyId,
+                Title = "Reachtruck chauffeur",
+                Description = "DC werk",
+                Status = VacancyStatus.Active,
+                StartDate = today.AddDays(-1),
+                EndDate = today.AddDays(30),
+                WorkTypes = WorkType.Logistiek,
+                WorkTypeLabels = "Logistiek",
+                Location = new GeoPoint(52, 4),
+                RequiredTransport = TransportMode.Car
+            },
+            new Vacancy
+            {
+                Id = otherId,
+                CompanyId = companyId,
+                Title = "Barista",
+                Description = "Koffie",
+                Status = VacancyStatus.Active,
+                StartDate = today.AddDays(-1),
+                EndDate = today.AddDays(30),
+                WorkTypes = WorkType.Horeca,
+                WorkTypeLabels = "Horeca",
+                Location = new GeoPoint(52, 4),
+                RequiredTransport = TransportMode.Bike
+            });
+        await db.SaveChangesAsync();
+
+        var sut = CreateSut(db);
+        var result = await sut.ChatAsync(
+            new AssistantChatContext(Guid.NewGuid(), JobsyRoles.Candidate, "nl", null),
+            [new AssistantChatMessage("user", "Ik zoek vacatures voor een chauffeur")],
+            CancellationToken.None);
+
+        Assert.Equal("chauffeur", AssistantChatService.ExtractJobSearchQuery(
+            "Ik zoek vacatures voor een chauffeur", null));
+        Assert.Contains("chauffeur", result.Reply, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains(result.Actions, a =>
+            a.Type == AssistantActionTypes.SetFilters && a.SearchQuery == "chauffeur");
+        Assert.Contains(result.Actions, a => a.VacancyId == matchId);
+        Assert.DoesNotContain(result.Actions, a => a.VacancyId == otherId);
+    }
+
+    [Fact]
+    public async Task Candidate_profile_question_returns_own_data()
+    {
+        await using var db = CreateDb();
+        var userId = Guid.NewGuid();
+        db.Users.Add(new User
+        {
+            Id = userId,
+            Email = "kandidaat@test.nl",
+            FullName = "Kees Kandidaat",
+            Role = UserRole.Candidate,
+            OpenForWork = true,
+            IsActive = true
+        });
+        await db.SaveChangesAsync();
+
+        var sut = CreateSut(db);
+        var result = await sut.ChatAsync(
+            new AssistantChatContext(userId, JobsyRoles.Candidate, "nl", null),
+            [new AssistantChatMessage("user", "Wat staat er in mijn profiel?")],
+            CancellationToken.None);
+
+        Assert.Contains("Kees Kandidaat", result.Reply);
+        Assert.Contains("Open for work", result.Reply, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains(result.Actions, a => a.Url == "/candidate/profile");
     }
 
     [Fact]
