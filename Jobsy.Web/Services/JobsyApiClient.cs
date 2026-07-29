@@ -2,6 +2,7 @@ using System.Net.Http.Json;
 using System.Net;
 using System.Text.Json;
 using Jobsy.Core.Enums;
+using Jobsy.Core.Rules;
 using Jobsy.Web.Models;
 using Microsoft.JSInterop;
 
@@ -85,7 +86,7 @@ public sealed class JobsyApiClient : IAsyncDisposable
         int? ageYears = null,
         decimal? minHourlyWage = null,
         decimal? maxHourlyWage = null,
-        string? workType = null,
+        IEnumerable<string>? workTypes = null,
         CancellationToken ct = default)
     {
         var qs = $"transport={Uri.EscapeDataString(transport)}&maxMinutes={maxMinutes}";
@@ -115,9 +116,12 @@ public sealed class JobsyApiClient : IAsyncDisposable
             qs += $"&maxHourlyWage={maxHourlyWage.Value.ToString(System.Globalization.CultureInfo.InvariantCulture)}";
         }
 
-        if (!string.IsNullOrWhiteSpace(workType))
+        if (workTypes is not null)
         {
-            qs += $"&workType={Uri.EscapeDataString(workType)}";
+            foreach (var workType in WorkTypeLabels.NormalizeFilterLabels(workTypes))
+            {
+                qs += $"&workType={Uri.EscapeDataString(workType)}";
+            }
         }
 
         return await _http.GetFromJsonAsync<List<VacancyListItem>>($"api/vacancies/discover?{qs}", ct) ?? [];

@@ -97,6 +97,16 @@ public class WorkTypeLabelsTests
         Assert.False(WorkTypeLabels.MatchesFilter(types, "Logistiek"));
         Assert.True(WorkTypeLabels.MatchesFilter(types, null));
     }
+
+    [Fact]
+    public void MatchesFilter_accepts_any_of_multiple_labels()
+    {
+        var types = WorkType.Winkel | WorkType.Horeca;
+        Assert.True(WorkTypeLabels.MatchesFilter(types, null, ["Logistiek", "Winkel"]));
+        Assert.True(WorkTypeLabels.MatchesFilter(types, null, ["Horeca,Zorg"]));
+        Assert.False(WorkTypeLabels.MatchesFilter(types, null, ["Logistiek", "Zorg"]));
+        Assert.True(WorkTypeLabels.MatchesFilter(types, null, Array.Empty<string>()));
+    }
 }
 
 public class TransportLabelsTests

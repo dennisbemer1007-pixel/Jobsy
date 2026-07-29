@@ -207,16 +207,20 @@
         @if (_filtersOpen)
         {
             <div id="discovery-filters-desktop" class="filter-bar filter-bar--desktop">
-                <label class="filter-required">
-                    @Culture["Discovery.WorkType"]
-                    <select value="@_selectedWorkType" @onchange="OnWorkTypeChanged" required>
-                        <option value="">@Culture["Discovery.WorkTypeAny"]</option>
+                <fieldset class="filter-branches">
+                    <legend class="filter-branches__legend">@Culture["Discovery.WorkType"]</legend>
+                    <div class="filter-branches__options" role="group" aria-label="@Culture["Discovery.WorkType"]">
                         @foreach (var label in _branchOptions)
                         {
-                            <option value="@label">@label</option>
+                            <label class="filter-check">
+                                <input type="checkbox"
+                                       checked="@_selectedWorkTypes.Contains(label)"
+                                       @onchange="e => ToggleWorkTypeAsync(label, e)" />
+                                @label
+                            </label>
                         }
-                    </select>
-                </label>
+                    </div>
+                </fieldset>
                 <label class="filter-required">
                     @Culture["Discovery.Age"]
                     <select value="@AgeSelectValue" @onchange="OnAgeChanged" required>
@@ -374,9 +378,9 @@
             @if (ActiveFilterCount > 0)
             {
                 <div class="filter-sheet__tags">
-                    @if (!string.IsNullOrWhiteSpace(_selectedWorkType))
+                    @foreach (var workType in _selectedWorkTypes.OrderBy(x => x, StringComparer.CurrentCultureIgnoreCase))
                     {
-                        <button type="button" class="filter-tag" @onclick="ClearWorkTypeAsync">@_selectedWorkType ×</button>
+                        <button type="button" class="filter-tag" @onclick="() => ClearWorkTypeAsync(workType)">@workType ×</button>
                     }
                     @if (_ageYears is not null)
                     {
@@ -411,15 +415,17 @@
 
                 <section class="filter-section">
                     <h3>@Culture["Discovery.WorkType"]</h3>
-                    <label>
-                        <select value="@_selectedWorkType" @onchange="OnWorkTypeChanged">
-                            <option value="">@Culture["Discovery.WorkTypeAny"]</option>
-                            @foreach (var label in _branchOptions)
-                            {
-                                <option value="@label">@label</option>
-                            }
-                        </select>
-                    </label>
+                    <div class="filter-branches__options" role="group" aria-label="@Culture["Discovery.WorkType"]">
+                        @foreach (var label in _branchOptions)
+                        {
+                            <label class="filter-check">
+                                <input type="checkbox"
+                                       checked="@_selectedWorkTypes.Contains(label)"
+                                       @onchange="e => ToggleWorkTypeAsync(label, e)" />
+                                @label
+                            </label>
+                        }
+                    </div>
                 </section>
 
                 <section class="filter-section">
@@ -480,7 +486,7 @@
     private int _maxTravelMinutes = 30;
     private int _radiusKm = 15;
     private string _selectedTransport = "Fiets";
-    private string _selectedWorkType = "";
+    private readonly HashSet<string> _selectedWorkTypes = new(StringComparer.OrdinalIgnoreCase);
     private List<string> _branchOptions = WorkTypeLabels.All.ToList();
     private string _sortMode = "title";
     private bool _sortChosenByUser;
@@ -548,7 +554,7 @@
         get
         {
             var n = 0;
-            if (!string.IsNullOrWhiteSpace(_selectedWorkType)) n++;
+            if (_selectedWorkTypes.Count > 0) n++;
             if (_ageYears is not null) n++;
             if (_minHourlyWage is not null) n++;
             if (_maxHourlyWage is not null) n++;
@@ -565,7 +571,7 @@
     /// </summary>
     private bool ShouldFallbackFromEmptyProximity =>
         _origin is not null
-        && string.IsNullOrWhiteSpace(_selectedWorkType)
+        && _selectedWorkTypes.Count == 0
         && _minHourlyWage is null
         && _maxHourlyWage is null
         && _maxTravelMinutes == 30
@@ -601,15 +607,18 @@
                     }
 
                     // Query-param workType (from assistant) wins over profile preference.
-                    if (string.IsNullOrWhiteSpace(_selectedWorkType)
+                    if (_selectedWorkTypes.Count == 0
                         && profile.Preferences.Roles is { Count: > 0 })
                     {
-                        var preferred = profile.Preferences.Roles
-                            .Select(r => WorkTypeLabels.Expand(WorkTypeLabels.Parse(r)).FirstOrDefault())
-                            .FirstOrDefault(l => !string.IsNullOrWhiteSpace(l));
-                        if (!string.IsNullOrWhiteSpace(preferred))
+                        foreach (var role in profile.Preferences.Roles)
                         {
-                            _selectedWorkType = preferred!;
+                            var preferred = WorkTypeLabels.Expand(WorkTypeLabels.Parse(role)).FirstOrDefault()
+                                            ?? _branchOptions.FirstOrDefault(l =>
+                                                l.Equals(role.Trim(), StringComparison.OrdinalIgnoreCase));
+                            if (!string.IsNullOrWhiteSpace(preferred))
+                            {
+                                _selectedWorkTypes.Add(preferred!);
+                            }
                         }
                     }
                 }
@@ -625,9 +634,9 @@
 
     private async void OnLocationChanged(object? sender, Microsoft.AspNetCore.Components.Routing.LocationChangedEventArgs e)
     {
-        var before = _selectedWorkType;
+        var before = _selectedWorkTypes.ToHashSet(StringComparer.OrdinalIgnoreCase);
         ApplyWorkTypeFromQuery();
-        if (!string.Equals(before, _selectedWorkType, StringComparison.OrdinalIgnoreCase))
+        if (!before.SetEquals(_selectedWorkTypes))
         {
             showMapOnMobile = true;
             await LoadVacanciesAsync();
@@ -643,18 +652,20 @@
             return;
         }
 
-        var raw = values.FirstOrDefault();
-        if (string.IsNullOrWhiteSpace(raw))
+        var parsed = WorkTypeLabels.NormalizeFilterLabels(values);
+        if (parsed.Length == 0)
         {
             return;
         }
 
-        var parsed = WorkTypeLabels.Expand(WorkTypeLabels.Parse(raw)).FirstOrDefault()
-                     ?? WorkTypeLabels.All.FirstOrDefault(l =>
-                         l.Equals(raw.Trim(), StringComparison.OrdinalIgnoreCase));
-        if (!string.IsNullOrWhiteSpace(parsed))
+        _selectedWorkTypes.Clear();
+        foreach (var label in parsed)
         {
-            _selectedWorkType = parsed!;
+            // Prefer masterdata / built-in option casing when available.
+            var option = _branchOptions.FirstOrDefault(l =>
+                             l.Equals(label, StringComparison.OrdinalIgnoreCase))
+                         ?? label;
+            _selectedWorkTypes.Add(option);
         }
     }
 
@@ -839,7 +850,7 @@
                 _ageYears,
                 _ageYears is null ? null : _minHourlyWage,
                 _ageYears is null ? null : _maxHourlyWage,
-                string.IsNullOrWhiteSpace(_selectedWorkType) ? null : _selectedWorkType);
+                _selectedWorkTypes.Count == 0 ? null : _selectedWorkTypes);
 
             // Stale/far stored origin + default proximity can wipe the catalog; show all until filters tighten.
             if (items.Count == 0 && ShouldFallbackFromEmptyProximity)
@@ -853,7 +864,7 @@
                     _ageYears,
                     _ageYears is null ? null : _minHourlyWage,
                     _ageYears is null ? null : _maxHourlyWage,
-                    string.IsNullOrWhiteSpace(_selectedWorkType) ? null : _selectedWorkType);
+                    _selectedWorkTypes.Count == 0 ? null : _selectedWorkTypes);
             }
 
             _vacancies = items.ToList();
@@ -1195,9 +1206,20 @@
         await LoadVacanciesAsync();
     }
 
-    private async Task OnWorkTypeChanged(ChangeEventArgs e)
+    private async Task ToggleWorkTypeAsync(string label, ChangeEventArgs e)
     {
-        _selectedWorkType = e.Value?.ToString() ?? "";
+        var selected = e.Value is bool b
+            ? b
+            : bool.TryParse(e.Value?.ToString(), out var parsed) && parsed;
+        if (selected)
+        {
+            _selectedWorkTypes.Add(label);
+        }
+        else
+        {
+            _selectedWorkTypes.Remove(label);
+        }
+
         await LoadVacanciesAsync();
     }
 
@@ -1390,9 +1412,9 @@
         _filtersOpen = false;
     }
 
-    private async Task ClearWorkTypeAsync()
+    private async Task ClearWorkTypeAsync(string label)
     {
-        _selectedWorkType = "";
+        _selectedWorkTypes.Remove(label);
         await LoadVacanciesAsync();
     }
 
@@ -1407,7 +1429,7 @@
 
     private async Task ClearAllFiltersAsync()
     {
-        _selectedWorkType = "";
+        _selectedWorkTypes.Clear();
         _ageYears = null;
         _minHourlyWage = null;
         _maxHourlyWage = null;

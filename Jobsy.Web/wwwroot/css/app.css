@@ -1740,6 +1740,15 @@ a {
     font-weight: 600;
 }
 
+.filter-section .filter-check {
+    flex-direction: row;
+    align-items: center;
+    margin-top: 0;
+    color: var(--text);
+    font-size: 0.88rem;
+    font-weight: 500;
+}
+
 .filter-section select,
 .filter-section input[type="number"] {
     border: 1px solid var(--border);
@@ -1786,6 +1795,42 @@ a {
 
 .filter-required select {
     border-color: color-mix(in srgb, var(--brand) 35%, var(--border));
+}
+
+.filter-branches {
+    grid-column: 1 / -1;
+    margin: 0;
+    padding: 0;
+    border: none;
+    min-width: 0;
+}
+
+.filter-branches__legend {
+    padding: 0;
+    margin: 0 0 0.35rem;
+    font-size: 0.75rem;
+    color: var(--muted);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+}
+
+.filter-branches__options {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem 0.75rem;
+}
+
+.filter-section .filter-branches__options {
+    margin-top: 0.15rem;
+}
+
+.filter-branches__options .filter-check {
+    text-transform: none;
+    letter-spacing: normal;
+    color: var(--text);
+    font-size: 0.88rem;
+    font-weight: 500;
 }
 
 .vacancy-pane {
@@ -1927,7 +1972,7 @@ a {
     letter-spacing: 0.03em;
 }
 
-.filter-bar input,
+.filter-bar input:not([type="checkbox"]):not([type="radio"]),
 .filter-bar select {
     border: 1px solid var(--border);
     border-radius: 6px;
