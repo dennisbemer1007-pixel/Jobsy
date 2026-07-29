@@ -75,6 +75,7 @@ public class VacanciesController : ControllerBase
     /// With origin, filters by transport, travel time and optional radius via IRoutingService.
     /// Optional ageYears resolves salary-table wages; min/max hourly filters apply when age is set.
     /// Pass repeated workType query values (or comma-separated) to match any selected branch.
+    /// Optional q filters by title/description/requirements (assistant keyword search / hidden filter).
     /// </summary>
     [HttpGet("discover")]
     [AllowAnonymous]
@@ -88,6 +89,7 @@ public class VacanciesController : ControllerBase
         [FromQuery] decimal? minHourlyWage = null,
         [FromQuery] decimal? maxHourlyWage = null,
         [FromQuery] string[]? workType = null,
+        [FromQuery] string? q = null,
         CancellationToken cancellationToken = default)
     {
         maxMinutes = Math.Clamp(maxMinutes, 5, 90);
@@ -99,6 +101,7 @@ public class VacanciesController : ControllerBase
 
         var workTypeFiltered = vacancies
             .Where(v => WorkTypeLabels.MatchesFilter(v.WorkTypes, v.WorkTypeLabels, workType))
+            .Where(v => VacancyTextSearch.Matches(v, q))
             .ToList();
 
         List<VacancyListItemDto> results;

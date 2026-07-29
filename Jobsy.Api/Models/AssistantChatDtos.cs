@@ -20,6 +20,7 @@ public sealed record AssistantChatActionDto(
     string Type,
     string? Url,
     string? WorkType,
+    string? SearchQuery,
     int? Count,
     string? Label,
     Guid? ApplicationId,

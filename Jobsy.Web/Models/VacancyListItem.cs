@@ -129,6 +129,7 @@ public sealed class AssistantChatActionItem
     public string Type { get; set; } = string.Empty;
     public string? Url { get; set; }
     public string? WorkType { get; set; }
+    public string? SearchQuery { get; set; }
     public int? Count { get; set; }
     public string? Label { get; set; }
     public Guid? ApplicationId { get; set; }
