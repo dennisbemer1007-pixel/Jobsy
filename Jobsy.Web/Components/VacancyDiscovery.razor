@@ -638,7 +638,8 @@
             // anonymous or profile unavailable
         }
 
-        await LoadVacanciesAsync();
+        // Vacancies load once from OnAfterRenderAsync after geolocation/age are ready
+        // to avoid a duplicate discover round-trip on first paint.
     }
 
     private async void OnLocationChanged(object? sender, Microsoft.AspNetCore.Components.Routing.LocationChangedEventArgs e)
@@ -764,15 +765,6 @@
             try
             {
                 // Candidate age comes from profile (DOB). Only use localStorage for anonymous / no DOB.
-                if (_ageYears is null && _isCandidate)
-                {
-                    var profile = await Api.GetMyProfileAsync();
-                    if (profile is not null)
-                    {
-                        ApplyAgeFromProfile(profile);
-                    }
-                }
-
                 if (_ageYears is null)
                 {
                     var storedAge = await Js.InvokeAsync<int?>("jobsyGeo.getStoredAge");
@@ -804,14 +796,14 @@
                         await FillAddressFromCoordinatesAsync(stored.Lat, stored.Lng, persistLabel: true);
                     }
                 }
-
-                await LoadVacanciesAsync();
-                StateHasChanged();
             }
             catch
             {
-                // geolocation helpers not ready yet
+                // geolocation helpers not ready yet — still load vacancies below
             }
+
+            await LoadVacanciesAsync();
+            StateHasChanged();
         }
 
         if (_mapReady || _mapInitScheduled || _loading)

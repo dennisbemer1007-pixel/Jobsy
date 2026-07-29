@@ -1,5 +1,6 @@
 using Jobsy.Core.Enums;
 using Jobsy.Core.Interfaces;
+using Jobsy.Core.Rules;
 
 namespace Jobsy.Infrastructure.Services;
 
@@ -9,14 +10,6 @@ namespace Jobsy.Infrastructure.Services;
 /// </summary>
 public class MockRoutingService : IRoutingService
 {
-    private static readonly Dictionary<TransportMode, double> SpeedsKmPerHour = new()
-    {
-        [TransportMode.Walking] = 5.0,
-        [TransportMode.Bike] = 18.0,
-        [TransportMode.Car] = 40.0,
-        [TransportMode.PublicTransport] = 25.0
-    };
-
     public Task<RouteResult> GetRouteAsync(
         double fromLatitude,
         double fromLongitude,
@@ -27,7 +20,7 @@ public class MockRoutingService : IRoutingService
     {
         var mode = NormalizeMode(transportMode);
         var distanceMeters = HaversineMeters(fromLatitude, fromLongitude, toLatitude, toLongitude);
-        var speed = SpeedsKmPerHour[mode];
+        var speed = TravelReach.SpeedKmPerHour(mode);
         var durationSeconds = distanceMeters / (speed * 1000.0 / 3600.0);
 
         return Task.FromResult(new RouteResult(distanceMeters, durationSeconds, mode));

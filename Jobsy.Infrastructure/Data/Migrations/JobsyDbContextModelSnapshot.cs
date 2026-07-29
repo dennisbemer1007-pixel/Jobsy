@@ -123,6 +123,11 @@ namespace Jobsy.Infrastructure.Data.Migrations
 
                     b.HasIndex("CreatedAt");
 
+                    b.HasIndex("EmailVerifiedAt")
+                        .HasFilter("\"EmailVerifiedAt\" IS NOT NULL");
+
+                    b.HasIndex("Status");
+
                     b.HasIndex("VacancyId", "CandidateEmail")
                         .IsUnique();
 
@@ -1569,11 +1574,15 @@ modelBuilder.Entity("Jobsy.Core.Entities.PlatformFeatureSettings", b =>
 
                     b.HasIndex("CompanyId");
 
+                    b.HasIndex("CompanyId", "Status");
+
                     b.HasIndex("Location");
 
                     NpgsqlIndexBuilderExtensions.HasMethod(b.HasIndex("Location"), "GIST");
 
                     b.HasIndex("SalaryTableId");
+
+                    b.HasIndex("Status", "EndDate", "StartDate");
 
                     b.ToTable("Vacancies");
                 });

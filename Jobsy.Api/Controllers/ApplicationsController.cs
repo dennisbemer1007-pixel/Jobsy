@@ -49,7 +49,6 @@ public class ApplicationsController : ControllerBase
         var accessible = await _companyAuth.GetAccessibleCompanyIdsAsync(User, cancellationToken);
         var query = _db.Applications
             .AsNoTracking()
-            .Include(a => a.Vacancy).ThenInclude(v => v.Company)
             .Where(a => a.EmailVerifiedAt != null)
             .AsQueryable();
 
@@ -61,9 +60,59 @@ public class ApplicationsController : ControllerBase
         var rows = await query
             .OrderBy(a => a.EstimatedTravelMinutes)
             .ThenByDescending(a => a.CreatedAt)
+            .Select(a => new
+            {
+                a.Id,
+                a.VacancyId,
+                VacancyTitle = a.Vacancy.Title,
+                CompanyName = a.Vacancy.Company.Name,
+                a.PreferredTransport,
+                a.EstimatedTravelMinutes,
+                a.CreatedAt,
+                a.Status,
+                a.RespondedAt,
+                a.CandidateCity,
+                a.DistanceKm,
+                a.PreferencesSummary,
+                a.CandidateName,
+                a.CandidateEmail,
+                a.CandidateAddress,
+                a.WorkPermitConfirmed,
+                a.SnapshotAvailabilityJson,
+                a.SnapshotDrivingLicenses,
+                a.SnapshotEducations,
+                a.SnapshotAboutMe,
+                a.CandidateEmployerCount
+            })
             .ToListAsync(cancellationToken);
 
-        return Ok(rows.Select(MapEmployerDto));
+        return Ok(rows.Select(a =>
+        {
+            var revealed = a.Status is ApplicationStatus.Accepted or ApplicationStatus.EmployerContacting or ApplicationStatus.Hired;
+            return new EmployerApplicationDto(
+                a.Id,
+                a.VacancyId,
+                a.VacancyTitle,
+                a.CompanyName,
+                a.PreferredTransport,
+                a.EstimatedTravelMinutes,
+                a.CreatedAt,
+                a.Status.ToString(),
+                a.RespondedAt,
+                a.CandidateCity,
+                a.DistanceKm,
+                ApplicationPreferenceRedaction.RedactForEmployer(a.PreferencesSummary, revealed),
+                revealed ? a.CandidateName : null,
+                revealed ? a.CandidateEmail : null,
+                revealed ? a.CandidateAddress : null,
+                revealed,
+                a.WorkPermitConfirmed,
+                revealed ? a.SnapshotAvailabilityJson : null,
+                revealed ? a.SnapshotDrivingLicenses : null,
+                revealed ? a.SnapshotEducations : null,
+                revealed ? a.SnapshotAboutMe : null,
+                revealed ? a.CandidateEmployerCount : 0);
+        }));
     }
 
     [HttpPost]

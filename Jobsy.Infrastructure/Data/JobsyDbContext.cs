@@ -133,6 +133,9 @@ public class JobsyDbContext : DbContext
                 .HasConversion(new GeoPointConverter())
                 .HasColumnType("geometry(Point, 4326)");
             entity.HasIndex(e => e.Location).HasMethod("GIST");
+            // Discover / public feed: Status + date window (and employer manage by company).
+            entity.HasIndex(e => new { e.Status, e.EndDate, e.StartDate });
+            entity.HasIndex(e => new { e.CompanyId, e.Status });
             entity.HasOne(e => e.Company)
                 .WithMany(c => c.Vacancies)
                 .HasForeignKey(e => e.CompanyId)
@@ -193,6 +196,10 @@ public class JobsyDbContext : DbContext
                 .HasForeignKey(e => e.CandidateUserId)
                 .OnDelete(DeleteBehavior.SetNull);
             entity.HasIndex(e => e.CreatedAt);
+            entity.HasIndex(e => e.Status);
+            // Employer inbox filters verified applications across managed companies.
+            entity.HasIndex(e => e.EmailVerifiedAt)
+                .HasFilter("\"EmailVerifiedAt\" IS NOT NULL");
             // Prevents double-apply races when CandidateUserId is set (NULLs are distinct in PostgreSQL).
             entity.HasIndex(e => new { e.VacancyId, e.CandidateUserId })
                 .IsUnique()

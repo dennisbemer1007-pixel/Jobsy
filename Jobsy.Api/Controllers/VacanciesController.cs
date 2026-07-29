@@ -52,6 +52,7 @@ public class VacanciesController : ControllerBase
 
     /// <summary>
     /// Public Funda feed: all currently active vacancies.
+    /// List payloads omit full descriptions (detail endpoint keeps them).
     /// </summary>
     [HttpGet]
     [AllowAnonymous]
@@ -61,12 +62,13 @@ public class VacanciesController : ControllerBase
         var showWage = await CanViewerSeeWageAsync(cancellationToken);
         var targetLanguage = await ResolveTargetLanguageAsync(cancellationToken);
         var vacancies = await LoadActiveVacanciesAsync(cancellationToken);
-        var mapped = new List<VacancyListItemDto>(vacancies.Count);
-        foreach (var v in vacancies)
-        {
-            mapped.Add(await MapToDtoAsync(v, showWage, targetLanguage, cancellationToken: cancellationToken));
-        }
-
+        var mapped = await MapManyToDtoAsync(
+            vacancies,
+            showWage,
+            targetLanguage,
+            ageYears: null,
+            includeDescription: false,
+            cancellationToken);
         return Ok(mapped);
     }
 
@@ -104,15 +106,14 @@ public class VacanciesController : ControllerBase
             .Where(v => VacancyTextSearch.Matches(v, q))
             .ToList();
 
-        List<VacancyListItemDto> results;
+        List<(Core.Entities.Vacancy Vacancy, int? TravelMinutes, double? DistanceKm)> candidates;
         if (originLat is null || originLng is null)
         {
             // No origin: show all matching work-type vacancies (transport is only a routing preference once located).
-            results = new List<VacancyListItemDto>(workTypeFiltered.Count);
-            foreach (var v in workTypeFiltered.OrderBy(v => v.Title))
-            {
-                results.Add(await MapToDtoAsync(v, showWage, targetLanguage, age, cancellationToken: cancellationToken));
-            }
+            candidates = workTypeFiltered
+                .OrderBy(v => v.Title)
+                .Select(v => (v, (int?)null, (double?)null))
+                .ToList();
         }
         else
         {
@@ -122,8 +123,15 @@ public class VacanciesController : ControllerBase
 
             var lat = originLat.Value;
             var lng = originLng.Value;
+            var origin = new Core.ValueObjects.GeoPoint(lat, lng);
+            var reachKm = TravelReach.MaxCrowFliesKm(mode, maxMinutes, radiusKm);
 
-            var routeTasks = transportFiltered.Select(async vacancy =>
+            // Crow-flies prefilter before routing (uses GIST-backed locations in memory; avoids O(n) routes).
+            var nearby = transportFiltered
+                .Where(v => GeoDistance.IsWithinKm(origin, v.Location, reachKm))
+                .ToList();
+
+            var routeTasks = nearby.Select(async vacancy =>
             {
                 var route = await _routing.GetRouteAsync(
                     lat,
@@ -139,36 +147,34 @@ public class VacanciesController : ControllerBase
             });
 
             var routed = await Task.WhenAll(routeTasks);
-            var filtered = routed
+            candidates = routed
                 .Where(r => !(radiusKm is > 0 && r.distanceKm > radiusKm.Value))
                 .Where(r => r.travelMinutes <= maxMinutes)
                 .OrderBy(r => r.travelMinutes)
                 .ThenBy(r => r.vacancy.Title)
+                .Select(r => (r.vacancy, (int?)r.travelMinutes, (double?)Math.Round(r.distanceKm, 2)))
                 .ToList();
-
-            results = new List<VacancyListItemDto>(filtered.Count);
-            foreach (var r in filtered)
-            {
-                results.Add(await MapToDtoAsync(
-                    r.vacancy,
-                    showWage,
-                    targetLanguage,
-                    age,
-                    r.travelMinutes,
-                    Math.Round(r.distanceKm, 2),
-                    cancellationToken));
-            }
         }
 
-        if (age is not null && (minHourlyWage is not null || maxHourlyWage is not null))
+        // Resolve wages before translation so min/max filters avoid OpenAI work on discarded rows.
+        var wageReady = new List<(Core.Entities.Vacancy Vacancy, int? TravelMinutes, double? DistanceKm, VacancyListItemDto Dto)>(candidates.Count);
+        foreach (var c in candidates)
         {
-            results = results
-                .Where(v => v.HourlyWage is decimal wage
-                    && (minHourlyWage is null || wage >= minHourlyWage)
-                    && (maxHourlyWage is null || wage <= maxHourlyWage))
-                .ToList();
+            var dto = MapToDto(c.Vacancy, showWage, age, c.TravelMinutes, c.DistanceKm, includeDescription: false);
+            if (age is not null && (minHourlyWage is not null || maxHourlyWage is not null))
+            {
+                if (dto.HourlyWage is not decimal wage
+                    || (minHourlyWage is not null && wage < minHourlyWage)
+                    || (maxHourlyWage is not null && wage > maxHourlyWage))
+                {
+                    continue;
+                }
+            }
+
+            wageReady.Add((c.Vacancy, c.TravelMinutes, c.DistanceKm, dto));
         }
 
+        var results = await TranslateManyAsync(wageReady.Select(x => x.Dto).ToList(), targetLanguage, cancellationToken);
         return Ok(results);
     }
 
@@ -224,7 +230,7 @@ public class VacanciesController : ControllerBase
         CancellationToken cancellationToken)
     {
         var accessible = await _companyAuth.GetAccessibleCompanyIdsAsync(User, cancellationToken);
-        var query = _db.Vacancies.AsNoTracking().Include(v => v.Company).AsQueryable();
+        var query = _db.Vacancies.AsNoTracking().AsSplitQuery().Include(v => v.Company).AsQueryable();
 
         if (accessible is not null)
         {
@@ -704,6 +710,7 @@ public class VacanciesController : ControllerBase
 
         return await _db.Vacancies
             .AsNoTracking()
+            .AsSplitQuery()
             .Include(v => v.Company)
             .Include(v => v.SalaryTable!)
                 .ThenInclude(t => t.Rates)
@@ -713,6 +720,76 @@ public class VacanciesController : ControllerBase
                 && v.EndDate >= today)
             .OrderBy(v => v.Title)
             .ToListAsync(cancellationToken);
+    }
+
+    private async Task<List<VacancyListItemDto>> MapManyToDtoAsync(
+        IReadOnlyList<Core.Entities.Vacancy> vacancies,
+        bool showWage,
+        string targetLanguage,
+        int? ageYears,
+        bool includeDescription,
+        CancellationToken cancellationToken)
+    {
+        var mapped = new List<VacancyListItemDto>(vacancies.Count);
+        foreach (var v in vacancies)
+        {
+            mapped.Add(MapToDto(v, showWage, ageYears, includeDescription: includeDescription));
+        }
+
+        return await TranslateManyAsync(mapped, targetLanguage, cancellationToken);
+    }
+
+    private async Task<List<VacancyListItemDto>> TranslateManyAsync(
+        List<VacancyListItemDto> items,
+        string targetLanguage,
+        CancellationToken cancellationToken)
+    {
+        if (items.Count == 0 || JobsyLanguages.AreSame(VacancySourceLanguage, targetLanguage))
+        {
+            return items;
+        }
+
+        // Bound OpenAI concurrency on cold caches; warm cache stays cheap.
+        using var gate = new SemaphoreSlim(4);
+        var tasks = items.Select(async dto =>
+        {
+            await gate.WaitAsync(cancellationToken);
+            try
+            {
+                return await TranslateDtoAsync(dto, targetLanguage, cancellationToken);
+            }
+            finally
+            {
+                gate.Release();
+            }
+        });
+
+        var translated = await Task.WhenAll(tasks);
+        return translated.ToList();
+    }
+
+    private async Task<VacancyListItemDto> TranslateDtoAsync(
+        VacancyListItemDto dto,
+        string targetLanguage,
+        CancellationToken cancellationToken)
+    {
+        if (JobsyLanguages.AreSame(VacancySourceLanguage, targetLanguage))
+        {
+            return dto;
+        }
+
+        var translated = await _translation.TranslateVacancyAsync(
+            dto.Title,
+            dto.Description,
+            VacancySourceLanguage,
+            targetLanguage,
+            cancellationToken);
+
+        return dto with
+        {
+            Title = translated.Title,
+            Description = translated.Description
+        };
     }
 
     private async Task<VacancyListItemDto> MapWithOptionalRouteAsync(
@@ -785,26 +862,11 @@ public class VacanciesController : ControllerBase
         int? ageYears = null,
         int? travelMinutes = null,
         double? distanceKm = null,
+        bool includeDescription = true,
         CancellationToken cancellationToken = default)
     {
-        var dto = MapToDto(v, showWage, ageYears, travelMinutes, distanceKm);
-        if (JobsyLanguages.AreSame(VacancySourceLanguage, targetLanguage))
-        {
-            return dto;
-        }
-
-        var translated = await _translation.TranslateVacancyAsync(
-            dto.Title,
-            dto.Description,
-            VacancySourceLanguage,
-            targetLanguage,
-            cancellationToken);
-
-        return dto with
-        {
-            Title = translated.Title,
-            Description = translated.Description
-        };
+        var dto = MapToDto(v, showWage, ageYears, travelMinutes, distanceKm, includeDescription: includeDescription);
+        return await TranslateDtoAsync(dto, targetLanguage, cancellationToken);
     }
 
     private static VacancyListItemDto MapToDto(
@@ -815,7 +877,8 @@ public class VacanciesController : ControllerBase
         double? distanceKm = null,
         int impressionCount = 0,
         int clickCount = 0,
-        int applicationCount = 0)
+        int applicationCount = 0,
+        bool includeDescription = true)
     {
         decimal? hourly = null;
         IReadOnlyList<WageByAgeDto>? wageByAge = null;
@@ -845,7 +908,7 @@ public class VacanciesController : ControllerBase
         return new VacancyListItemDto(
             v.Id,
             v.Title,
-            v.Description,
+            includeDescription ? v.Description : string.Empty,
             hourly,
             v.StartDate,
             v.EndDate,

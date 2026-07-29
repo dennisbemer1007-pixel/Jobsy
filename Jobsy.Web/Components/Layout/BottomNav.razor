@@ -32,6 +32,8 @@
     private IReadOnlyList<NavItem> _items = RoleNavCatalog.Anonymous;
     private bool _hasTakeoverActions;
     private bool _salesOnboardingComplete;
+    private bool _roleFlagsLoaded;
+    private string? _lastRoleFingerprint;
 
     [Parameter]
     public EventCallback<bool> HasItemsChanged { get; set; }
@@ -40,7 +42,7 @@
     {
         Navigation.LocationChanged += OnLocationChanged;
         Culture.Changed += OnCultureChanged;
-        await RefreshItemsAsync();
+        await RefreshItemsAsync(forceRoleApis: true);
     }
 
     private void OnCultureChanged()
@@ -48,21 +50,33 @@
 
     private async void OnLocationChanged(object? sender, LocationChangedEventArgs e)
     {
-        await RefreshItemsAsync();
+        // Active styling is URI-based; avoid re-hitting takeover/sales APIs on every nav.
+        await RefreshItemsAsync(forceRoleApis: false);
         await InvokeAsync(StateHasChanged);
     }
 
-    private async Task RefreshItemsAsync()
+    private async Task RefreshItemsAsync(bool forceRoleApis)
     {
         var state = await AuthState.GetAuthenticationStateAsync();
+        var fingerprint = string.Join(',', state.User.Claims
+            .Where(c => c.Type is System.Security.Claims.ClaimTypes.Role or "role")
+            .Select(c => c.Value)
+            .OrderBy(v => v, StringComparer.Ordinal));
         var catalog = RoleNavCatalog.ForUser(state.User);
+
+        var rolesChanged = !string.Equals(_lastRoleFingerprint, fingerprint, StringComparison.Ordinal);
+        _lastRoleFingerprint = fingerprint;
 
         if (RoleClaimMatching.HasRole(state.User, JobsyRoles.BranchManager)
             && !RoleClaimMatching.HasRole(state.User, JobsyRoles.Admin)
             && !RoleClaimMatching.HasRole(state.User, JobsyRoles.EnterpriseManager)
             && !RoleClaimMatching.HasRole(state.User, JobsyRoles.RegionalManager))
         {
-            await RefreshTakeoverFlagAsync();
+            if (forceRoleApis || rolesChanged || !_roleFlagsLoaded)
+            {
+                await RefreshTakeoverFlagAsync();
+            }
+
             if (!_hasTakeoverActions)
             {
                 catalog = catalog
@@ -74,7 +88,11 @@
         if (RoleClaimMatching.HasRole(state.User, JobsyRoles.SalesManager)
             && !RoleClaimMatching.HasRole(state.User, JobsyRoles.Admin))
         {
-            await RefreshSalesOnboardingFlagAsync();
+            if (forceRoleApis || rolesChanged || !_roleFlagsLoaded)
+            {
+                await RefreshSalesOnboardingFlagAsync();
+            }
+
             if (_salesOnboardingComplete)
             {
                 catalog = catalog
@@ -82,6 +100,8 @@
                     .ToList();
             }
         }
+
+        _roleFlagsLoaded = true;
 
         var previousCount = _items.Count;
         _items = catalog;
