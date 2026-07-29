@@ -2013,6 +2013,8 @@ public static class UiStrings
             ["Metrics.ToMap"] = "إلى خريطة الوظائف",
         };
 
+        UiStringsExtras.MergeAll(nl, en, pl, ro, ar);
+
         return new Dictionary<string, Dictionary<string, string>>(StringComparer.OrdinalIgnoreCase)
         {
             ["nl"] = nl,
