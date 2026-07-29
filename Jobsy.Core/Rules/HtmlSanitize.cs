@@ -160,12 +160,13 @@ public static class HtmlSanitize
         }
 
         var trimmed = url.Trim();
-        if (IsSafeHttpsUrl(trimmed))
+        // Media URLs (video/image links) must be http(s) — Base64 is only for NormalizeImageInput.
+        if (!IsSafeHttpsUrl(trimmed) || trimmed.Length > 1024)
         {
-            return trimmed.Length > 1024 ? null : trimmed;
+            return null;
         }
 
-        return NormalizeImageData(trimmed);
+        return trimmed;
     }
 
     /// <summary>
@@ -213,19 +214,14 @@ public static class HtmlSanitize
         var match = DataImageRegex.Match(trimmed);
         if (match.Success)
         {
-            var mime = match.Groups[1].Value.ToLowerInvariant();
-            if (mime == "jpg")
-            {
-                mime = "jpeg";
-            }
-
             var payload = Regex.Replace(match.Groups[2].Value, @"\s+", "");
-            if (!TryDecodeBase64Image(payload, out _))
+            if (!TryDecodeBase64Image(payload, out var bytes))
             {
                 return null;
             }
 
-            return $"data:image/{mime};base64,{payload}";
+            var sniffed = DetectImageMime(bytes);
+            return sniffed is null ? null : $"data:{sniffed};base64,{payload}";
         }
 
         // Raw Base64 without data: prefix — sniff magic bytes after decode.
@@ -235,12 +231,12 @@ public static class HtmlSanitize
             return null;
         }
 
-        if (!TryDecodeBase64Image(compact, out var bytes))
+        if (!TryDecodeBase64Image(compact, out var rawBytes))
         {
             return null;
         }
 
-        var mimeType = DetectImageMime(bytes);
+        var mimeType = DetectImageMime(rawBytes);
         return mimeType is null ? null : $"data:{mimeType};base64,{compact}";
     }
 

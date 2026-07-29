@@ -122,11 +122,36 @@ public sealed class VacancyDraftCreationService : IVacancyDraftCreationService
         string? videoUrl = null;
         if (!string.IsNullOrWhiteSpace(input.VideoUrl))
         {
-            videoUrl = HtmlSanitize.NormalizeMediaUrl(input.VideoUrl);
+            // Video must be an http(s) URL — never Base64/data URIs.
+            var trimmedVideo = input.VideoUrl.Trim();
+            videoUrl = HtmlSanitize.IsSafeHttpsUrl(trimmedVideo) && trimmedVideo.Length <= 1024
+                ? trimmedVideo
+                : null;
             if (videoUrl is null)
             {
                 return VacancyDraftCreateResult.Fail("Ongeldige video-URL (alleen http/https).");
             }
+        }
+
+        var drivingLicense = string.IsNullOrWhiteSpace(input.RequiredDrivingLicense)
+            ? null
+            : input.RequiredDrivingLicense.Trim();
+        if (drivingLicense is { Length: > 256 })
+        {
+            return VacancyDraftCreateResult.Fail("Rijbewijs mag maximaal 256 tekens zijn.");
+        }
+
+        var education = string.IsNullOrWhiteSpace(input.RequiredEducation)
+            ? null
+            : input.RequiredEducation.Trim();
+        if (education is { Length: > 256 })
+        {
+            return VacancyDraftCreateResult.Fail("Opleiding mag maximaal 256 tekens zijn.");
+        }
+
+        if (input.MinimumEmployers is < 0 or > 100)
+        {
+            return VacancyDraftCreateResult.Fail("Minimum werkgevers moet tussen 0 en 100 liggen.");
         }
 
         var moderation = await _moderation.CheckAsync(input.Title, input.Description, cancellationToken);
@@ -155,18 +180,15 @@ public sealed class VacancyDraftCreationService : IVacancyDraftCreationService
             ImageUrl = imageUrl,
             VideoUrl = videoUrl,
             SalaryTableId = input.SalaryTableId,
-            RequiredDrivingLicense = string.IsNullOrWhiteSpace(input.RequiredDrivingLicense)
-                ? null
-                : input.RequiredDrivingLicense.Trim(),
-            RequiredEducation = string.IsNullOrWhiteSpace(input.RequiredEducation)
-                ? null
-                : input.RequiredEducation.Trim(),
+            RequiredDrivingLicense = drivingLicense,
+            RequiredEducation = education,
             MinimumEmployers = input.MinimumEmployers is > 0 ? input.MinimumEmployers : null
         };
 
         _db.Vacancies.Add(vacancy);
         await _db.SaveChangesAsync(cancellationToken);
         vacancy.Company = company;
+        _db.ChangeTracker.Clear();
         return VacancyDraftCreateResult.Ok(vacancy);
     }
 

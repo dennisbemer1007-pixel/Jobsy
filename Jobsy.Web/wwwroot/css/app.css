@@ -6425,6 +6425,17 @@ button.linkish:hover {
     color: var(--text-muted, #5a6570);
 }
 
+.csv-inline-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+}
+
+.csv-inline-row .csv-inline-input {
+    flex: 1 1 6rem;
+    min-width: 5rem;
+}
+
 .csv-celebrate-modal {
     max-width: 28rem;
 }

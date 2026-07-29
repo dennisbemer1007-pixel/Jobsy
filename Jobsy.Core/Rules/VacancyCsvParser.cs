@@ -3,9 +3,11 @@ using System.Text;
 
 namespace Jobsy.Core.Rules;
 
-/// <summary>Lightweight RFC4180-ish CSV parser for vacancy imports (shared by Web + tests).</summary>
+/// <summary>RFC4180-ish CSV parser for vacancy imports (quoted multiline + ,/; delimiter).</summary>
 public static class VacancyCsvParser
 {
+    public const int MaxRows = 500;
+
     public sealed record ParsedRow(int RowNumber, IReadOnlyDictionary<string, string> Fields);
 
     public sealed record ParseResult(
@@ -21,14 +23,30 @@ public static class VacancyCsvParser
             return new ParseResult(false, "CSV-bestand is leeg.", [], []);
         }
 
-        var lines = SplitLines(csvText);
-        if (lines.Count == 0)
+        var text = csvText.TrimStart('\uFEFF');
+        var delimiter = DetectDelimiter(text);
+        if (delimiter is null)
         {
-            return new ParseResult(false, "CSV-bestand is leeg.", [], []);
+            return new ParseResult(
+                false,
+                "Kon geen CSV-scheidingsteken vinden. Gebruik komma (,) of puntkomma (;).",
+                [],
+                []);
         }
 
-        var headerCells = ParseLine(lines[0]);
-        if (headerCells.Count == 0)
+        var records = ParseRecords(text, delimiter.Value, out var parseError);
+        if (parseError is not null)
+        {
+            return new ParseResult(false, parseError, [], []);
+        }
+
+        if (records.Count == 0)
+        {
+            return new ParseResult(false, "CSV-headerrij ontbreekt.", [], []);
+        }
+
+        var headerCells = records[0].Cells;
+        if (headerCells.Count == 0 || headerCells.All(string.IsNullOrWhiteSpace))
         {
             return new ParseResult(false, "CSV-headerrij ontbreekt.", [], []);
         }
@@ -68,27 +86,35 @@ public static class VacancyCsvParser
         }
 
         var rows = new List<ParsedRow>();
-        for (var i = 1; i < lines.Count; i++)
+        for (var i = 1; i < records.Count; i++)
         {
-            var line = lines[i];
-            if (string.IsNullOrWhiteSpace(line))
+            var record = records[i];
+            if (record.Cells.Count == 0 || record.Cells.All(string.IsNullOrWhiteSpace))
             {
                 continue;
             }
 
-            var cells = ParseLine(line);
             var map = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
             for (var c = 0; c < headers.Count; c++)
             {
-                map[headers[c]] = c < cells.Count ? cells[c].Trim() : string.Empty;
+                map[headers[c]] = c < record.Cells.Count ? record.Cells[c].Trim() : string.Empty;
             }
 
-            rows.Add(new ParsedRow(i + 1, map));
+            rows.Add(new ParsedRow(record.StartLineNumber, map));
         }
 
         if (rows.Count == 0)
         {
             return new ParseResult(false, "CSV bevat geen datarijen.", headers, []);
+        }
+
+        if (rows.Count > MaxRows)
+        {
+            return new ParseResult(
+                false,
+                $"Maximaal {MaxRows} rijen per import (bestand heeft {rows.Count}).",
+                headers,
+                []);
         }
 
         return new ParseResult(true, null, headers, rows);
@@ -159,61 +185,155 @@ public static class VacancyCsvParser
             .ToArray();
     }
 
-    private static List<string> SplitLines(string text)
+    private sealed record CsvRecord(int StartLineNumber, List<string> Cells);
+
+    private static char? DetectDelimiter(string text)
     {
-        var normalized = text.Replace("\r\n", "\n").Replace('\r', '\n');
-        var lines = normalized.Split('\n', StringSplitOptions.None).ToList();
-        if (lines.Count > 0 && lines[0].StartsWith('\uFEFF'))
+        // Inspect the first logical header line outside quotes.
+        var commas = 0;
+        var semis = 0;
+        var inQuotes = false;
+        for (var i = 0; i < text.Length; i++)
         {
-            lines[0] = lines[0][1..];
+            var ch = text[i];
+            if (ch == '"')
+            {
+                if (inQuotes && i + 1 < text.Length && text[i + 1] == '"')
+                {
+                    i++;
+                    continue;
+                }
+
+                inQuotes = !inQuotes;
+                continue;
+            }
+
+            if (inQuotes)
+            {
+                continue;
+            }
+
+            if (ch is '\n' or '\r')
+            {
+                break;
+            }
+
+            if (ch == ',')
+            {
+                commas++;
+            }
+            else if (ch == ';')
+            {
+                semis++;
+            }
         }
 
-        return lines;
+        if (commas == 0 && semis == 0)
+        {
+            return ','; // single-column edge case; header validation will fail clearly
+        }
+
+        return semis > commas ? ';' : ',';
     }
 
-    private static List<string> ParseLine(string line)
+    private static List<CsvRecord> ParseRecords(string text, char delimiter, out string? error)
     {
-        var result = new List<string>();
+        error = null;
+        var records = new List<CsvRecord>();
+        var cells = new List<string>();
         var sb = new StringBuilder();
         var inQuotes = false;
-        for (var i = 0; i < line.Length; i++)
+        var lineNumber = 1;
+        var recordStartLine = 1;
+        var i = 0;
+
+        void EndCell()
         {
-            var ch = line[i];
+            cells.Add(sb.ToString());
+            sb.Clear();
+        }
+
+        void EndRecord()
+        {
+            EndCell();
+            records.Add(new CsvRecord(recordStartLine, cells));
+            cells = new List<string>();
+            recordStartLine = lineNumber;
+        }
+
+        while (i < text.Length)
+        {
+            var ch = text[i];
             if (inQuotes)
             {
                 if (ch == '"')
                 {
-                    if (i + 1 < line.Length && line[i + 1] == '"')
+                    if (i + 1 < text.Length && text[i + 1] == '"')
                     {
                         sb.Append('"');
-                        i++;
+                        i += 2;
+                        continue;
                     }
-                    else
-                    {
-                        inQuotes = false;
-                    }
+
+                    inQuotes = false;
+                    i++;
+                    continue;
                 }
-                else
+
+                if (ch == '\n')
                 {
-                    sb.Append(ch);
+                    lineNumber++;
                 }
+
+                sb.Append(ch);
+                i++;
+                continue;
             }
-            else if (ch == '"')
+
+            if (ch == '"')
             {
                 inQuotes = true;
+                i++;
+                continue;
             }
-            else if (ch == ',')
+
+            if (ch == delimiter)
             {
-                result.Add(sb.ToString());
-                sb.Clear();
+                EndCell();
+                i++;
+                continue;
             }
-            else
+
+            if (ch == '\r')
             {
-                sb.Append(ch);
+                i++;
+                continue;
             }
+
+            if (ch == '\n')
+            {
+                lineNumber++;
+                EndRecord();
+                i++;
+                continue;
+            }
+
+            sb.Append(ch);
+            i++;
         }
 
-        result.Add(sb.ToString());
-        return result;
+        if (inQuotes)
+        {
+            error = $"CSV heeft een niet-afgesloten aanhalingsteken (rond regel {recordStartLine}).";
+            return [];
+        }
+
+        // Trailing content / final record (even if file ends without newline).
+        if (sb.Length > 0 || cells.Count > 0)
+        {
+            EndRecord();
+        }
+
+        return records;
     }
 }

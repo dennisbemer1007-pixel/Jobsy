@@ -7,26 +7,12 @@ public static class TransportModeParser
 {
     public static TransportMode ParseMany(string? raw)
     {
-        if (string.IsNullOrWhiteSpace(raw))
+        if (!TryParseMany(raw, out var mode, out _))
         {
             return TransportMode.Bike | TransportMode.PublicTransport;
         }
 
-        var parts = VacancyCsvParser.SplitMultiValue(raw);
-        if (parts.Length == 0)
-        {
-            return TransportMode.Bike | TransportMode.PublicTransport;
-        }
-
-        TransportMode mode = TransportMode.None;
-        foreach (var part in parts)
-        {
-            mode |= ParseOne(part);
-        }
-
-        return mode == TransportMode.None
-            ? TransportMode.Bike | TransportMode.PublicTransport
-            : mode;
+        return mode;
     }
 
     public static bool TryParseMany(string? raw, out TransportMode mode, out string? error)
@@ -60,9 +46,6 @@ public static class TransportModeParser
 
         return true;
     }
-
-    private static TransportMode ParseOne(string label) =>
-        TryParseOne(label, out var mode) ? mode : TransportMode.Bike;
 
     private static bool TryParseOne(string label, out TransportMode mode)
     {

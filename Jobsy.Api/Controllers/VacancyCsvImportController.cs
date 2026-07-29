@@ -21,18 +21,23 @@ public class VacancyCsvImportController : ControllerBase
     public const string PublishHint =
         "Geslaagde rijen zijn opgeslagen als concept. Publiceer ze via Vacatures in Lobsy — daar wordt het tokenverbruik verwerkt. Dit geldt ook voor vacatures via de API.";
 
+    private const int MaxImageEchoChars = 120;
+
     private readonly JobsyDbContext _db;
     private readonly ICompanyAuthorizationService _companyAuth;
     private readonly IVacancyDraftCreationService _drafts;
+    private readonly ILogger<VacancyCsvImportController> _logger;
 
     public VacancyCsvImportController(
         JobsyDbContext db,
         ICompanyAuthorizationService companyAuth,
-        IVacancyDraftCreationService drafts)
+        IVacancyDraftCreationService drafts,
+        ILogger<VacancyCsvImportController> logger)
     {
         _db = db;
         _companyAuth = companyAuth;
         _drafts = drafts;
+        _logger = logger;
     }
 
     /// <summary>Import multiple CSV rows. Failed rows are skipped but returned for inline repair.</summary>
@@ -46,9 +51,9 @@ public class VacancyCsvImportController : ControllerBase
             return BadRequest(new { message = "Geen rijen om te importeren." });
         }
 
-        if (request.Rows.Count > 500)
+        if (request.Rows.Count > VacancyCsvParser.MaxRows)
         {
-            return BadRequest(new { message = "Maximaal 500 rijen per import." });
+            return BadRequest(new { message = $"Maximaal {VacancyCsvParser.MaxRows} rijen per import." });
         }
 
         var gate = await EnsureCsvImportAllowedAsync(request.CompanyId, cancellationToken);
@@ -57,11 +62,10 @@ public class VacancyCsvImportController : ControllerBase
             return gate.Result;
         }
 
-        var defaultCompanyId = request.CompanyId;
         var results = new List<CsvImportRowResultDto>(request.Rows.Count);
         foreach (var row in request.Rows.OrderBy(r => r.RowNumber))
         {
-            results.Add(await ProcessRowAsync(defaultCompanyId, row, cancellationToken));
+            results.Add(await ProcessRowAsync(request.CompanyId, gate.OrgId, row, cancellationToken));
         }
 
         return Ok(ToResult(results));
@@ -84,7 +88,7 @@ public class VacancyCsvImportController : ControllerBase
             return gate.Result;
         }
 
-        var result = await ProcessRowAsync(request.CompanyId, request.Row, cancellationToken);
+        var result = await ProcessRowAsync(request.CompanyId, gate.OrgId, request.Row, cancellationToken);
         return Ok(result);
     }
 
@@ -125,6 +129,7 @@ public class VacancyCsvImportController : ControllerBase
 
     private async Task<CsvImportRowResultDto> ProcessRowAsync(
         Guid defaultCompanyId,
+        Guid allowedOrgId,
         CsvImportRowRequest row,
         CancellationToken cancellationToken)
     {
@@ -151,6 +156,11 @@ public class VacancyCsvImportController : ControllerBase
             if (end is null)
             {
                 return Fail(row.RowNumber, data, "Einddatum ontbreekt of is ongeldig (gebruik yyyy-MM-dd of dd-MM-yyyy).");
+            }
+
+            if (end < start)
+            {
+                return Fail(row.RowNumber, data, "Einddatum mag niet vóór de startdatum liggen.");
             }
 
             var branches = VacancyCsvParser.SplitMultiValue(row.Branches);
@@ -189,6 +199,22 @@ public class VacancyCsvImportController : ControllerBase
                 return Fail(row.RowNumber, data, "Geen toegang tot deze vestiging.");
             }
 
+            var target = await _db.Companies.AsNoTracking()
+                .FirstOrDefaultAsync(c => c.Id == companyId, cancellationToken);
+            if (target is null)
+            {
+                return Fail(row.RowNumber, data, "Vestiging niet gevonden.");
+            }
+
+            var targetOrgId = target.ParentCompanyId ?? target.Id;
+            if (targetOrgId != allowedOrgId)
+            {
+                return Fail(
+                    row.RowNumber,
+                    data,
+                    "Vestiging hoort niet bij de organisatie waarvoor CSV-import is ingeschakeld.");
+            }
+
             if (!TransportModeParser.TryParseMany(row.Transport, out var transport, out var transportError))
             {
                 return Fail(row.RowNumber, data, transportError!);
@@ -209,9 +235,9 @@ public class VacancyCsvImportController : ControllerBase
             int? minimumEmployers = null;
             if (!string.IsNullOrWhiteSpace(row.MinimumEmployers))
             {
-                if (!int.TryParse(row.MinimumEmployers.Trim(), out var minEmp) || minEmp < 0)
+                if (!int.TryParse(row.MinimumEmployers.Trim(), out var minEmp) || minEmp is < 0 or > 100)
                 {
-                    return Fail(row.RowNumber, data, "Minimum werkgevers is ongeldig.");
+                    return Fail(row.RowNumber, data, "Minimum werkgevers is ongeldig (0–100).");
                 }
 
                 minimumEmployers = minEmp;
@@ -246,11 +272,12 @@ public class VacancyCsvImportController : ControllerBase
                 true,
                 created.Vacancy.Id,
                 null,
-                data);
+                TruncateHeavyFields(data));
         }
         catch (Exception ex)
         {
-            return Fail(row.RowNumber, data, $"Onverwachte fout: {ex.Message}");
+            _logger.LogError(ex, "CSV import failed for row {RowNumber}", row.RowNumber);
+            return Fail(row.RowNumber, data, "Onverwachte fout bij verwerken van deze rij. Controleer de velden en probeer opnieuw.");
         }
     }
 
@@ -271,6 +298,32 @@ public class VacancyCsvImportController : ControllerBase
             row.DrivingLicense,
             row.Education,
             row.MinimumEmployers);
+
+    /// <summary>Shrink Base64 payloads on success only — failed rows keep full data for inline repair.</summary>
+    private static CsvImportRowRequest TruncateHeavyFields(CsvImportRowRequest row) =>
+        row with { Image = TruncateImageEcho(row.Image) };
+
+    private static string? TruncateImageEcho(string? image)
+    {
+        if (string.IsNullOrWhiteSpace(image))
+        {
+            return image;
+        }
+
+        var trimmed = image.Trim();
+        if (trimmed.Length <= MaxImageEchoChars)
+        {
+            return trimmed;
+        }
+
+        // Keep enough for URL edits; Base64 payloads are summarized for memory/UX.
+        if (trimmed.StartsWith("http", StringComparison.OrdinalIgnoreCase))
+        {
+            return trimmed[..Math.Min(trimmed.Length, 1024)];
+        }
+
+        return trimmed[..MaxImageEchoChars] + "…";
+    }
 
     private static CsvImportRowResultDto Fail(int rowNumber, CsvImportRowRequest data, string message) =>
         new(rowNumber, false, null, message, data);

@@ -98,6 +98,64 @@ public class VacancyDraftCreationServiceTests
         Assert.Equal(VacancyStatus.Draft, result.Vacancy.Status);
     }
 
+    [Fact]
+    public async Task CreateDraft_rejects_base64_video()
+    {
+        await using var db = CreateDb();
+        var companyId = Guid.NewGuid();
+        var tableId = Guid.NewGuid();
+        SeedCompanyWithTable(db, companyId, tableId);
+        await db.SaveChangesAsync();
+
+        var png = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==";
+        var sut = new VacancyDraftCreationService(db, new AlwaysOkSalary(), new AllowAllModeration());
+        var result = await sut.CreateDraftAsync(
+            new VacancyDraftInput(
+                companyId,
+                "Met video",
+                "Omschrijving",
+                0,
+                DateOnly.FromDateTime(DateTime.UtcNow),
+                DateOnly.FromDateTime(DateTime.UtcNow.AddMonths(1)),
+                TransportMode.Bike,
+                ["Winkel"],
+                tableId,
+                VideoUrl: png),
+            VacancySource.Csv);
+
+        Assert.False(result.Succeeded);
+        Assert.Contains("video", result.ErrorMessage, StringComparison.OrdinalIgnoreCase);
+        Assert.Equal(0, await db.Vacancies.CountAsync());
+    }
+
+    [Fact]
+    public async Task CreateDraft_rejects_overlong_driving_license()
+    {
+        await using var db = CreateDb();
+        var companyId = Guid.NewGuid();
+        var tableId = Guid.NewGuid();
+        SeedCompanyWithTable(db, companyId, tableId);
+        await db.SaveChangesAsync();
+
+        var sut = new VacancyDraftCreationService(db, new AlwaysOkSalary(), new AllowAllModeration());
+        var result = await sut.CreateDraftAsync(
+            new VacancyDraftInput(
+                companyId,
+                "Titel",
+                "Omschrijving",
+                0,
+                DateOnly.FromDateTime(DateTime.UtcNow),
+                DateOnly.FromDateTime(DateTime.UtcNow.AddMonths(1)),
+                TransportMode.Bike,
+                ["Winkel"],
+                tableId,
+                RequiredDrivingLicense: new string('B', 300)),
+            VacancySource.Csv);
+
+        Assert.False(result.Succeeded);
+        Assert.Contains("Rijbewijs", result.ErrorMessage);
+    }
+
     private static JobsyDbContext CreateDb()
     {
         var options = new DbContextOptionsBuilder<JobsyDbContext>()

@@ -32,7 +32,8 @@
         <section class="panel-section csv-howto">
             <h2>How-to · minimale CSV-vereisten</h2>
             <p class="muted">
-                Gebruik een UTF-8 CSV met headerrij. Scheidingsteken: komma. Velden met komma’s of regeleinden tussen aanhalingstekens zetten.
+                Gebruik een UTF-8 CSV met headerrij. Scheidingsteken: komma <code>,</code> of puntkomma <code>;</code>.
+                Velden met komma’s of regeleinden tussen aanhalingstekens zetten.
                 Geslaagde rijen worden <strong>concept-vacatures</strong> — publiceer ze via <a href="/employer/vacancies">Vacatures</a> (daar zit tokenverwerking).
                 Hetzelfde geldt voor vacatures die via de API binnenkomen.
             </p>
@@ -52,7 +53,7 @@
                     <h3>Optioneel</h3>
                     <ul>
                         <li><code>vestiging_id</code> (GUID; anders de gekozen vestiging hieronder)</li>
-                        <li><code>uurloon</code> (valt terug op salaristabel 21+)</li>
+                        <li><code>uurloon</code> (optioneel; actieve salaristabel 21+ bepaalt het getoonde loon)</li>
                         <li><code>afbeelding</code> — http(s)-URL <strong>of Base64-string</strong> (png/jpeg/gif/webp, max ~400&nbsp;KB)</li>
                         <li><code>video</code> (http/https)</li>
                         <li><code>vervoer</code> (Fiets, Auto, OV, Lopend)</li>
@@ -180,8 +181,28 @@
                                                     <textarea rows="2" class="csv-inline-input" @bind="row.Data.Description"></textarea>
                                                 </label>
                                                 <label class="csv-inline-label">
+                                                    Vestiging-id
+                                                    <input class="csv-inline-input mono" @bind="row.Data.CompanyId" />
+                                                </label>
+                                                <label class="csv-inline-label">
+                                                    Vervoer
+                                                    <input class="csv-inline-input" @bind="row.Data.Transport" />
+                                                </label>
+                                                <label class="csv-inline-label">
+                                                    Video (http/https)
+                                                    <input class="csv-inline-input" @bind="row.Data.Video" />
+                                                </label>
+                                                <label class="csv-inline-label">
                                                     Afbeelding (URL of Base64)
                                                     <textarea rows="2" class="csv-inline-input mono" @bind="row.Data.Image"></textarea>
+                                                </label>
+                                                <label class="csv-inline-label">
+                                                    Rijbewijs / opleiding / min. werkgevers
+                                                    <div class="csv-inline-row">
+                                                        <input class="csv-inline-input" placeholder="Rijbewijs" @bind="row.Data.DrivingLicense" />
+                                                        <input class="csv-inline-input" placeholder="Opleiding" @bind="row.Data.Education" />
+                                                        <input class="csv-inline-input" placeholder="Min. werkgevers" @bind="row.Data.MinimumEmployers" />
+                                                    </div>
                                                 </label>
                                                 <button class="btn-compact btn-compact--primary" type="button"
                                                         disabled="@_busy" @onclick="() => RetryAsync(row)">
@@ -368,6 +389,12 @@
             }
 
             _fileName = file.Name;
+            if (parsed.Rows.Count > VacancyCsvParser.MaxRows)
+            {
+                _parseError = $"Maximaal {VacancyCsvParser.MaxRows} rijen per import (bestand heeft {parsed.Rows.Count}).";
+                return;
+            }
+
             _pendingRows = parsed.Rows.Select(r => new CsvImportRowForm
             {
                 RowNumber = r.RowNumber,
@@ -456,13 +483,15 @@
 
             if (result.Success)
             {
+                // Keep overall batch totals; only refresh the repaired row in the grid.
                 _showCelebrate = true;
+                var success = _results.Count(r => r.Success);
                 _lastImport = new CsvImportResult
                 {
-                    TotalRows = 1,
-                    SuccessCount = 1,
-                    FailedCount = 0,
-                    Rows = [result],
+                    TotalRows = _results.Count,
+                    SuccessCount = success,
+                    FailedCount = _results.Count - success,
+                    Rows = _results,
                     PublishHint = VacancyCsvImportControllerPublishHint
                 };
             }
