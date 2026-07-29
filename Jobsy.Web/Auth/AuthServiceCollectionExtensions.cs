@@ -471,8 +471,7 @@ public static class AuthServiceCollectionExtensions
             client.BaseAddress = new Uri(apiBase);
             client.Timeout = TimeSpan.FromSeconds(10);
 
-            var secret = config["JobsyAuth:DevelopmentAuthSecret"]
-                         ?? config["JobsyAuth:ExternalProvisionSecret"];
+            var secret = config["JobsyAuth:ExternalProvisionSecret"];
             using var request = new HttpRequestMessage(HttpMethod.Post, "api/auth/ensure-external")
             {
                 Content = JsonContent.Create(new { email, fullName })

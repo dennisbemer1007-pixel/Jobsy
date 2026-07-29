@@ -278,6 +278,7 @@ public sealed class PrivacyDataService : IPrivacyDataService
         user.UnsubscribeReasonOther = other;
         user.UnsubscribeVerificationCode = verificationCode;
         user.UnsubscribeVerificationExpiresAt = expiresAt;
+        user.UnsubscribeVerificationFailedAttempts = 0;
 
         _db.PlatformLogs.Add(new PlatformLog
         {
@@ -341,9 +342,29 @@ public sealed class PrivacyDataService : IPrivacyDataService
             throw new InvalidOperationException("Verificatiecode verlopen. Vraag een nieuwe code aan.");
         }
 
+        if (user.UnsubscribeVerificationFailedAttempts >= VerificationCodes.MaxFailedAttempts)
+        {
+            user.UnsubscribeVerificationCode = null;
+            user.UnsubscribeVerificationExpiresAt = null;
+            await _db.SaveChangesAsync(cancellationToken);
+            throw new InvalidOperationException("Te veel onjuiste pogingen. Vraag een nieuwe verificatiecode aan.");
+        }
+
         if (!VerificationCodes.FixedTimeEquals(user.UnsubscribeVerificationCode, code))
         {
-            throw new ArgumentException("Onjuiste verificatiecode.");
+            var attempts = user.UnsubscribeVerificationFailedAttempts;
+            var lockedOut = VerificationCodes.RegisterFailedAttempt(ref attempts);
+            user.UnsubscribeVerificationFailedAttempts = attempts;
+            if (lockedOut)
+            {
+                user.UnsubscribeVerificationCode = null;
+                user.UnsubscribeVerificationExpiresAt = null;
+            }
+
+            await _db.SaveChangesAsync(cancellationToken);
+            throw new ArgumentException(lockedOut
+                ? "Te veel onjuiste pogingen. Vraag een nieuwe verificatiecode aan."
+                : "Onjuiste verificatiecode.");
         }
 
         var reasonCode = user.UnsubscribeReasonCode;
@@ -514,6 +535,7 @@ public sealed class PrivacyDataService : IPrivacyDataService
         user.LastLoginAtUtc = null;
         user.UnsubscribeVerificationCode = null;
         user.UnsubscribeVerificationExpiresAt = null;
+        user.UnsubscribeVerificationFailedAttempts = 0;
         user.UnsubscribeReasonCode = null;
         user.UnsubscribeReasonOther = null;
 

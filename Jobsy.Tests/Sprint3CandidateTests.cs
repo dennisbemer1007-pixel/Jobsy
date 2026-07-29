@@ -313,6 +313,20 @@ public class Sprint3CandidateTests
     }
 
     [Fact]
+    public void VerificationCodes_lock_out_after_max_failed_attempts()
+    {
+        var attempts = 0;
+        for (var i = 1; i < VerificationCodes.MaxFailedAttempts; i++)
+        {
+            Assert.False(VerificationCodes.RegisterFailedAttempt(ref attempts));
+            Assert.Equal(i, attempts);
+        }
+
+        Assert.True(VerificationCodes.RegisterFailedAttempt(ref attempts));
+        Assert.Equal(VerificationCodes.MaxFailedAttempts, attempts);
+    }
+
+    [Fact]
     public void HtmlEncode_escapes_mail_payload_characters()
     {
         var encoded = System.Net.WebUtility.HtmlEncode("<script>x</script> & \"Cafe\"");

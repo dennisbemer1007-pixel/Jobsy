@@ -270,6 +270,8 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
 
         await GrantWelcomeTokenAsync(branchId, user.Id, cancellationToken);
 
+        await SendActivatedCredentialsEmailAsync(registration, temporaryPassword, cancellationToken);
+
         _logger.LogInformation("Activated registration {Id} for {Email}", registration.Id, EmailServiceStub.RedactEmail(registration.ContactEmail));
 
         return await BuildActivationResultAsync(registration, temporaryPassword, cancellationToken);
@@ -941,6 +943,30 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
              <p><em>Stub — geen echte mail.</em></p>
              """,
             "RegistrationActivation"), cancellationToken);
+    }
+
+    private async Task SendActivatedCredentialsEmailAsync(
+        CompanyRegistration registration,
+        string temporaryPassword,
+        CancellationToken cancellationToken)
+    {
+        var features = await _features.GetAsync(cancellationToken);
+        var loginUrl = features.PublicWebBaseUrl.TrimEnd('/') + "/login";
+        var safeName = WebUtility.HtmlEncode(registration.ContactName);
+        await _email.SendAsync(new EmailMessage(
+            registration.ContactEmail,
+            "Je Jobsy-account is actief",
+            $"""
+             <p>Hoi {safeName},</p>
+             <p>Je account voor <strong>{WebUtility.HtmlEncode(registration.EstablishmentName)}</strong> is geactiveerd.</p>
+             <p>Log bij voorkeur in met <strong>Google</strong> of <strong>Microsoft</strong> op
+             <code>{WebUtility.HtmlEncode(registration.ContactEmail)}</code>.</p>
+             <p>Of gebruik dit eenmalige tijdelijke wachtwoord (niet opnieuw zichtbaar in de app):</p>
+             <p><code>{WebUtility.HtmlEncode(temporaryPassword)}</code></p>
+             <p><a href="{WebUtility.HtmlEncode(loginUrl)}">Naar inloggen</a></p>
+             <p><em>Wijzig dit wachtwoord zo snel mogelijk. Stub — geen echte mail.</em></p>
+             """,
+            "RegistrationCredentials"), cancellationToken);
     }
 
     private static string GenerateTemporaryPassword()

@@ -24,6 +24,8 @@ public class Application
     public string? EmailVerificationCode { get; set; }
     public DateTime? EmailVerificationExpiresAt { get; set; }
     public DateTime? EmailVerifiedAt { get; set; }
+    /// <summary>Failed OTP guesses for the current verification code; lockout after max attempts.</summary>
+    public int EmailVerificationFailedAttempts { get; set; }
     public string? SnapshotAvailabilityJson { get; set; }
     public string? SnapshotDrivingLicenses { get; set; }
     public string? SnapshotEducations { get; set; }

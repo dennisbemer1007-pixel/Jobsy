@@ -120,7 +120,8 @@ public class RegistrationController : ControllerBase
                 result.Role,
                 result.CompanyId,
                 result.CompanyIds,
-                result.TemporaryPassword,
+                // Never echo credentials outside Development — password is e-mailed only.
+                _environment.IsDevelopment() ? result.TemporaryPassword : null,
                 result.OrganizationCompanyId,
                 result.BranchCompanyId));
         }

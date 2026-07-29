@@ -24,7 +24,14 @@
             <p class="state-message">Welkom, @_result.FullName — je account is actief.</p>
             <p class="muted">Je hebt 1 welkomsttoken ontvangen. Daarmee plaats je je eerste vacature gratis.</p>
             <p class="muted">Rol: @_result.Role</p>
-            <p class="muted">Eenmalig tijdelijk wachtwoord (bewaar dit veilig): <code>@_result.TemporaryPassword</code></p>
+            @if (!string.IsNullOrWhiteSpace(_result.TemporaryPassword))
+            {
+                <p class="muted">Eenmalig tijdelijk wachtwoord (alleen Development): <code>@_result.TemporaryPassword</code></p>
+            }
+            else
+            {
+                <p class="muted">Je tijdelijke wachtwoord is per e-mail verstuurd. Log daarna in of gebruik Google / Microsoft.</p>
+            }
             <a class="login-submit" href="/login" style="display:inline-block;text-align:center;text-decoration:none;margin-top:1rem">
                 Inloggen
             </a>

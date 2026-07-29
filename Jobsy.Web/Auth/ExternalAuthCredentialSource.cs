@@ -98,8 +98,7 @@ public sealed class ExternalAuthCredentialSource : IExternalAuthCredentialSource
             using var request = new HttpRequestMessage(
                 HttpMethod.Get,
                 $"api/auth/external-provider-config/{provider}");
-            var secret = _configuration["JobsyAuth:DevelopmentAuthSecret"]
-                         ?? _configuration["JobsyAuth:ExternalProvisionSecret"];
+            var secret = _configuration["JobsyAuth:ExternalProvisionSecret"];
             if (!string.IsNullOrWhiteSpace(secret))
             {
                 request.Headers.TryAddWithoutValidation("X-Jobsy-Provision-Secret", secret);

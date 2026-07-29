@@ -69,7 +69,7 @@ public class ApplicationsController : ControllerBase
 
     [HttpPost]
     [Authorize(Policy = JobsyPolicies.RequireCandidate)]
-    [EnableRateLimiting("public-write")]
+    [EnableRateLimiting("otp-verify")]
     public async Task<ActionResult<ApplyResultDto>> Apply(
         [FromBody] ApplyRequest request,
         CancellationToken cancellationToken)
@@ -202,6 +202,7 @@ public class ApplicationsController : ControllerBase
             var code = VerificationCodes.CreateNumericCode();
             application.EmailVerificationCode = code;
             application.EmailVerificationExpiresAt = DateTime.UtcNow.AddMinutes(10);
+            application.EmailVerificationFailedAttempts = 0;
             application.EmailVerifiedAt = null;
             application.Status = ApplicationStatus.Pending;
             if (existing is null)
@@ -267,19 +268,45 @@ public class ApplicationsController : ControllerBase
             return BadRequest(new { message = "Deze sollicitatie is al bevestigd." });
         }
 
-        if (existing.EmailVerificationExpiresAt is null || existing.EmailVerificationExpiresAt < DateTime.UtcNow)
+        if (string.IsNullOrWhiteSpace(existing.EmailVerificationCode)
+            || existing.EmailVerificationExpiresAt is null
+            || existing.EmailVerificationExpiresAt < DateTime.UtcNow)
         {
             return BadRequest(new { message = "Verificatiecode verlopen. Klik opnieuw op Verzenden." });
         }
 
+        if (existing.EmailVerificationFailedAttempts >= VerificationCodes.MaxFailedAttempts)
+        {
+            existing.EmailVerificationCode = null;
+            existing.EmailVerificationExpiresAt = null;
+            await _db.SaveChangesAsync(cancellationToken);
+            return BadRequest(new { message = "Te veel onjuiste pogingen. Vraag een nieuwe verificatiecode aan." });
+        }
+
         if (!VerificationCodes.FixedTimeEquals(existing.EmailVerificationCode, request.VerificationCode?.Trim()))
         {
-            return BadRequest(new { message = "Onjuiste verificatiecode." });
+            var attempts = existing.EmailVerificationFailedAttempts;
+            var lockedOut = VerificationCodes.RegisterFailedAttempt(ref attempts);
+            existing.EmailVerificationFailedAttempts = attempts;
+            if (lockedOut)
+            {
+                existing.EmailVerificationCode = null;
+                existing.EmailVerificationExpiresAt = null;
+            }
+
+            await _db.SaveChangesAsync(cancellationToken);
+            return BadRequest(new
+            {
+                message = lockedOut
+                    ? "Te veel onjuiste pogingen. Vraag een nieuwe verificatiecode aan."
+                    : "Onjuiste verificatiecode."
+            });
         }
 
         existing.EmailVerifiedAt = DateTime.UtcNow;
         existing.EmailVerificationCode = null;
         existing.EmailVerificationExpiresAt = null;
+        existing.EmailVerificationFailedAttempts = 0;
         existing.WorkPermitConfirmed = request.WorkPermitConfirmed;
         await _db.SaveChangesAsync(cancellationToken);
 
