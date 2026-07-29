@@ -50,6 +50,71 @@ public class AssistantChatServiceTests
     }
 
     [Fact]
+    public void ExtractJobSearchQuery_strips_travel_noise_for_winkel_query()
+    {
+        var q = AssistantChatService.ExtractJobSearchQuery(
+            "ik zoek een baan in de winkel op max 10 min lopen bij mij vandaan",
+            detectedWorkType: "Winkel");
+        Assert.True(string.IsNullOrWhiteSpace(q));
+    }
+
+    [Fact]
+    public void DetectMaxTravelMinutes_and_transport_from_dutch_query()
+    {
+        const string text = "ik zoek een baan in de winkel op max 10 min lopen bij mij vandaan";
+        Assert.Equal(10, AssistantChatService.DetectMaxTravelMinutes(text));
+        Assert.Equal("Lopend", AssistantChatService.DetectTransport(text));
+    }
+
+    [Fact]
+    public async Task Candidate_winkel_walk_search_sets_travel_filters_without_toxic_q()
+    {
+        await using var db = CreateDb();
+        var companyId = Guid.NewGuid();
+        db.Companies.Add(new Company
+        {
+            Id = companyId,
+            Name = "Buurtsuper",
+            Address = "Straat 1",
+            Type = CompanyType.Employer,
+            Location = new GeoPoint(52, 4)
+        });
+        var today = DateOnly.FromDateTime(DateTime.UtcNow);
+        db.Vacancies.Add(new Vacancy
+        {
+            Id = Guid.NewGuid(),
+            CompanyId = companyId,
+            Title = "Kassamedewerker",
+            Description = "Winkel werk in de buurt",
+            Status = VacancyStatus.Active,
+            StartDate = today.AddDays(-1),
+            EndDate = today.AddDays(30),
+            WorkTypes = WorkType.Winkel,
+            WorkTypeLabels = "Winkel",
+            Location = new GeoPoint(52, 4),
+            RequiredTransport = TransportMode.Walking | TransportMode.Bike
+        });
+        await db.SaveChangesAsync();
+
+        var sut = CreateSut(db);
+        var result = await sut.ChatAsync(
+            new AssistantChatContext(Guid.NewGuid(), JobsyRoles.Candidate, "nl", null),
+            [new AssistantChatMessage("user", "ik zoek een baan in de winkel op max 10 min lopen bij mij vandaan")],
+            CancellationToken.None);
+
+        Assert.DoesNotContain("geen vacatures", result.Reply, StringComparison.OrdinalIgnoreCase);
+        var filter = Assert.Single(result.Actions, a => a.Type == AssistantActionTypes.SetFilters);
+        Assert.Equal("Winkel", filter.WorkType);
+        Assert.True(string.IsNullOrWhiteSpace(filter.SearchQuery));
+        Assert.Equal(10, filter.MaxTravelMinutes);
+        Assert.Equal("Lopend", filter.Transport);
+        Assert.Contains("workType=Winkel", filter.Url, StringComparison.Ordinal);
+        Assert.Contains("maxMinutes=10", filter.Url, StringComparison.Ordinal);
+        Assert.Contains("transport=Lopend", filter.Url, StringComparison.Ordinal);
+        Assert.DoesNotContain("q=", filter.Url, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
     public void VacancyTextSearch_matches_literal_chauffeur_word()
     {
         Assert.True(VacancyTextSearch.MatchesText(

@@ -61,7 +61,7 @@ public sealed record RegistrationActivationResult(
     string Role,
     Guid? CompanyId,
     IReadOnlyList<Guid> CompanyIds,
-    /// <summary>One-time temporary password shown only at activation (never stored plaintext).</summary>
+    /// <summary>One-time temporary password (service layer only; API must not echo outside Development).</summary>
     string TemporaryPassword,
     Guid? OrganizationCompanyId,
     Guid? BranchCompanyId);

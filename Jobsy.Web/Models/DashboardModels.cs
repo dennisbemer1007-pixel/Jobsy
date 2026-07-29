@@ -135,7 +135,7 @@ public class RegistrationActivationResult
     public string Role { get; set; } = string.Empty;
     public Guid? CompanyId { get; set; }
     public List<Guid> CompanyIds { get; set; } = [];
-    public string TemporaryPassword { get; set; } = string.Empty;
+    public string? TemporaryPassword { get; set; }
     public Guid? OrganizationCompanyId { get; set; }
     public Guid? BranchCompanyId { get; set; }
 }

@@ -90,7 +90,7 @@
             }
         </div>
 
-        <div class="jobsy-chrome__actions" role="toolbar" aria-label="@Culture["Discovery.Filters"]">
+        <div class="jobsy-chrome__actions @(ActiveFilterCount > 0 ? "jobsy-chrome__actions--with-clear" : null)" role="toolbar" aria-label="@Culture["Discovery.Filters"]">
             <button type="button"
                     class="jobsy-action @(_filtersOpen ? "is-active" : null)"
                     @onclick="ToggleFilters"
@@ -103,6 +103,16 @@
                     <span class="jobsy-action__badge">@ActiveFilterCount</span>
                 }
             </button>
+            @if (ActiveFilterCount > 0)
+            {
+                <button type="button"
+                        class="jobsy-action jobsy-action--clear"
+                        title="@Culture["Discovery.ClearFilters"]"
+                        @onclick="ClearAllFiltersAsync"
+                        aria-label="@Culture["Discovery.ClearFilters"]">
+                    <span class="jobsy-action__icon" aria-hidden="true">@((MarkupString)NavIcons.ClearFilters)</span>
+                </button>
+            }
             <a class="jobsy-action" href="/candidate/liked">
                 <span class="jobsy-action__icon" aria-hidden="true">@((MarkupString)NavIcons.Liked)</span>
                 <span>@Culture["Discovery.SaveSearch"]</span>
@@ -190,18 +200,30 @@
                     <p class="state-message error filter-bar__error">@_locationError</p>
                 }
             </div>
-            <button type="button"
-                    class="discovery-filter-toggle @(_filtersOpen ? "is-active" : null)"
-                    @onclick="ToggleFilters"
-                    aria-expanded="@_filtersOpen"
-                    aria-controls="discovery-filters-desktop">
-                <span class="discovery-filter-toggle__icon" aria-hidden="true">@((MarkupString)NavIcons.Filters)</span>
-                <span>@Culture["Discovery.Filters"]</span>
+            <div class="discovery-filter-group">
+                <button type="button"
+                        class="discovery-filter-toggle @(_filtersOpen ? "is-active" : null)"
+                        @onclick="ToggleFilters"
+                        aria-expanded="@_filtersOpen"
+                        aria-controls="discovery-filters-desktop">
+                    <span class="discovery-filter-toggle__icon" aria-hidden="true">@((MarkupString)NavIcons.Filters)</span>
+                    <span>@Culture["Discovery.Filters"]</span>
+                    @if (ActiveFilterCount > 0)
+                    {
+                        <span class="jobsy-action__badge">@ActiveFilterCount</span>
+                    }
+                </button>
                 @if (ActiveFilterCount > 0)
                 {
-                    <span class="jobsy-action__badge">@ActiveFilterCount</span>
+                    <button type="button"
+                            class="discovery-filter-clear"
+                            title="@Culture["Discovery.ClearFilters"]"
+                            @onclick="ClearAllFiltersAsync"
+                            aria-label="@Culture["Discovery.ClearFilters"]">
+                        <span class="discovery-filter-toggle__icon" aria-hidden="true">@((MarkupString)NavIcons.ClearFilters)</span>
+                    </button>
                 }
-            </button>
+            </div>
         </div>
 
         @if (_filtersOpen)
@@ -216,7 +238,7 @@
                                 <input type="checkbox"
                                        checked="@_selectedWorkTypes.Contains(label)"
                                        @onchange="e => ToggleWorkTypeAsync(label, e)" />
-                                @label
+                                @UiLabels.WorkType(Culture, label)
                             </label>
                         }
                     </div>
@@ -266,6 +288,17 @@
                            @onchange="OnRadiusChanged" />
                 </label>
                 <div class="filter-bar__actions">
+                    @if (ActiveFilterCount > 0)
+                    {
+                        <button type="button"
+                                class="filter-bar__clear"
+                                title="@Culture["Discovery.ClearFilters"]"
+                                @onclick="ClearAllFiltersAsync"
+                                aria-label="@Culture["Discovery.ClearFilters"]">
+                            <span class="filter-bar__clear-icon" aria-hidden="true">@((MarkupString)NavIcons.ClearFilters)</span>
+                            <span>@Culture["Discovery.ClearFilters"]</span>
+                        </button>
+                    }
                     <button type="button" class="filter-bar__search" @onclick="ApplySearch">
                         @Culture["Discovery.Search"]
                     </button>
@@ -290,7 +323,7 @@
                 }
                 else
                 {
-                    @Culture.Format("Discovery.NoneWithOrigin", _maxTravelMinutes, TransportLabel(_selectedTransport))
+                    @Culture.Format("Discovery.NoneWithOrigin", _maxTravelMinutes, UiLabels.Transport(Culture, _selectedTransport))
                 }
             </p>
         }
@@ -318,8 +351,8 @@
                 {
                     var wageText = FormatWage(vacancy);
                     var travelText = vacancy.TravelMinutes is not null
-                        ? $"± {vacancy.TravelMinutes} min"
-                        : $"max {_maxTravelMinutes} min";
+                        ? $"± {vacancy.TravelMinutes} {Culture["Discovery.Minutes"]}"
+                        : Culture.Format("Discovery.MaxMinutes", _maxTravelMinutes);
                     <article class="job-card @(_hoveredId == vacancy.Id ? "is-hovered" : null) @(vacancy.IsHighlighted ? "job-card--highlight" : null)"
                              @onmouseenter="() => OnHover(vacancy.Id)"
                              @onmouseleave="() => OnHover(null)"
@@ -328,17 +361,17 @@
                            style="@(string.IsNullOrWhiteSpace(vacancy.ImageUrl) ? null : $"background-image:url('{vacancy.ImageUrl}')")">
                             @if (vacancy.IsHighlighted)
                             {
-                                <span class="job-card__badge">Top</span>
+                                <span class="job-card__badge">@Culture["Discovery.Top"]</span>
                             }
                             else if (vacancy.WorkTypes.Length > 0)
                             {
-                                <span class="job-card__badge job-card__badge--soft">@vacancy.WorkTypes[0]</span>
+                                <span class="job-card__badge job-card__badge--soft">@UiLabels.WorkType(Culture, vacancy.WorkTypes[0])</span>
                             }
                             <div class="job-card__overlay">
                                 <h2>@vacancy.Title</h2>
                                 <p class="job-card__travel">
                                     <LobsyMark Compact="true" />
-                                    <span>@travelText · @TransportVerb(_selectedTransport)</span>
+                                    <span>@travelText · @UiLabels.TransportVerb(Culture, _selectedTransport)</span>
                                 </p>
                                 @if (!string.IsNullOrEmpty(wageText))
                                 {
@@ -372,7 +405,19 @@
                         <span class="jobsy-action__badge">@ActiveFilterCount</span>
                     }
                 </h2>
-                <button type="button" class="share-modal__close" @onclick="CloseFilters" aria-label="Sluiten">×</button>
+                <div class="filter-sheet__header-actions">
+                    @if (ActiveFilterCount > 0)
+                    {
+                        <button type="button"
+                                class="filter-sheet__clear-icon"
+                                title="@Culture["Discovery.ClearFilters"]"
+                                @onclick="ClearAllFiltersAsync"
+                                aria-label="@Culture["Discovery.ClearFilters"]">
+                            <span aria-hidden="true">@((MarkupString)NavIcons.ClearFilters)</span>
+                        </button>
+                    }
+                    <button type="button" class="share-modal__close" @onclick="CloseFilters" aria-label="@Culture["Common.Close"]">×</button>
+                </div>
             </div>
 
             @if (ActiveFilterCount > 0)
@@ -380,7 +425,7 @@
                 <div class="filter-sheet__tags">
                     @foreach (var workType in _selectedWorkTypes.OrderBy(x => x, StringComparer.CurrentCultureIgnoreCase))
                     {
-                        <button type="button" class="filter-tag" @onclick="() => ClearWorkTypeAsync(workType)">@workType ×</button>
+                        <button type="button" class="filter-tag" @onclick="() => ClearWorkTypeAsync(workType)">@UiLabels.WorkType(Culture, workType) ×</button>
                     }
                     @if (!string.IsNullOrWhiteSpace(_searchQuery))
                     {
@@ -390,7 +435,14 @@
                     {
                         <button type="button" class="filter-tag" @onclick="ClearAgeAsync">@_ageYears ×</button>
                     }
-                    <button type="button" class="filter-sheet__clear" @onclick="ClearAllFiltersAsync">@Culture["Discovery.ClearFilters"]</button>
+                    <button type="button"
+                            class="filter-sheet__clear"
+                            title="@Culture["Discovery.ClearFilters"]"
+                            @onclick="ClearAllFiltersAsync"
+                            aria-label="@Culture["Discovery.ClearFilters"]">
+                        <span class="filter-sheet__clear-glyph" aria-hidden="true">@((MarkupString)NavIcons.ClearFilters)</span>
+                        <span>@Culture["Discovery.ClearFilters"]</span>
+                    </button>
                 </div>
             }
 
@@ -426,14 +478,14 @@
                                 <input type="checkbox"
                                        checked="@_selectedWorkTypes.Contains(label)"
                                        @onchange="e => ToggleWorkTypeAsync(label, e)" />
-                                @label
+                                @UiLabels.WorkType(Culture, label)
                             </label>
                         }
                     </div>
                 </section>
 
                 <section class="filter-section">
-                    <h3>@Culture["Discovery.Age"] · uurloon</h3>
+                    <h3>@Culture["Discovery.Age"] · @Culture["Discovery.HourlyWageShort"]</h3>
                     <label>
                         @Culture["Discovery.Age"]
                         <select value="@AgeSelectValue" @onchange="OnAgeChanged" required>
@@ -592,6 +644,8 @@
         Navigation.LocationChanged += OnLocationChanged;
         ApplyWorkTypeFromQuery();
         ApplySearchQueryFromQuery();
+        ApplyTravelFromQuery();
+        ApplyTransportFromQuery();
         try
         {
             await LoadBranchOptionsAsync();
@@ -646,12 +700,23 @@
     {
         var beforeTypes = _selectedWorkTypes.ToHashSet(StringComparer.OrdinalIgnoreCase);
         var beforeQuery = _searchQuery;
+        var beforeMinutes = _maxTravelMinutes;
+        var beforeTransport = _selectedTransport;
         ApplyWorkTypeFromQuery();
         ApplySearchQueryFromQuery();
+        ApplyTravelFromQuery();
+        ApplyTransportFromQuery();
         if (!beforeTypes.SetEquals(_selectedWorkTypes)
-            || !string.Equals(beforeQuery, _searchQuery, StringComparison.Ordinal))
+            || !string.Equals(beforeQuery, _searchQuery, StringComparison.Ordinal)
+            || beforeMinutes != _maxTravelMinutes
+            || !string.Equals(beforeTransport, _selectedTransport, StringComparison.OrdinalIgnoreCase))
         {
             showMapOnMobile = true;
+            if (_mapReady)
+            {
+                try { await Js.InvokeVoidAsync("jobMap.setTravelOptions", TravelMapOptions()); }
+                catch { /* ignore */ }
+            }
             await LoadVacanciesAsync();
             await InvokeAsync(StateHasChanged);
         }
@@ -695,6 +760,45 @@
         _searchQuery = string.IsNullOrWhiteSpace(raw) ? null : raw;
     }
 
+    private void ApplyTravelFromQuery()
+    {
+        var uri = Navigation.ToAbsoluteUri(Navigation.Uri);
+        if (!QueryHelpers.ParseQuery(uri.Query).TryGetValue("maxMinutes", out var values))
+        {
+            return;
+        }
+
+        var raw = values.FirstOrDefault()?.Trim();
+        if (int.TryParse(raw, out var minutes))
+        {
+            _maxTravelMinutes = Math.Clamp(minutes, 5, 90);
+        }
+    }
+
+    private void ApplyTransportFromQuery()
+    {
+        var uri = Navigation.ToAbsoluteUri(Navigation.Uri);
+        if (!QueryHelpers.ParseQuery(uri.Query).TryGetValue("transport", out var values))
+        {
+            return;
+        }
+
+        var raw = values.FirstOrDefault()?.Trim();
+        if (string.IsNullOrWhiteSpace(raw))
+        {
+            return;
+        }
+
+        _selectedTransport = raw switch
+        {
+            var t when t.Equals("Lopend", StringComparison.OrdinalIgnoreCase) => "Lopend",
+            var t when t.Equals("Fiets", StringComparison.OrdinalIgnoreCase) => "Fiets",
+            var t when t.Equals("Auto", StringComparison.OrdinalIgnoreCase) => "Auto",
+            var t when t.Equals("OV", StringComparison.OrdinalIgnoreCase) => "OV",
+            _ => _selectedTransport
+        };
+    }
+
     private async Task LoadBranchOptionsAsync()
     {
         try
@@ -718,15 +822,6 @@
         await InvokeAsync(StateHasChanged);
     }
 
-    private string TransportLabel(string transport) => transport switch
-    {
-        "Fiets" => Culture["Transport.Bike"],
-        "Auto" => Culture["Transport.Car"],
-        "OV" => Culture["Transport.Transit"],
-        "Lopend" => Culture["Transport.Walk"],
-        _ => transport
-    };
-
     private string? FormatWage(VacancyListItem vacancy)
     {
         if (!vacancy.WageVisible)
@@ -742,7 +837,7 @@
 
         if (vacancy.HourlyWage is not null)
         {
-            return $"€ {vacancy.HourlyWage.Value:0.00}/u";
+            return $"€ {vacancy.HourlyWage.Value:0.00}{Culture["Wage.PerHour"]}";
         }
 
         if (vacancy.WageByAge is { Count: > 0 })
@@ -752,7 +847,7 @@
                 .OrderByDescending(b => b.AgeYears)
                 .FirstOrDefault()
                 ?? vacancy.WageByAge.OrderBy(b => b.AgeYears).First();
-            return $"€ {band.HourlyRate:0.00}/u";
+            return $"€ {band.HourlyRate:0.00}{Culture["Wage.PerHour"]}";
         }
 
         return null;
@@ -946,7 +1041,7 @@
                 ["workTypes"] = v.WorkTypes,
                 ["workType"] = primaryType,
                 ["travelMinutes"] = v.TravelMinutes,
-                ["transportLabel"] = TransportVerb(_selectedTransport)
+                ["transportLabel"] = UiLabels.TransportVerb(Culture, _selectedTransport)
             };
             if (v.WageVisible)
             {
@@ -1181,15 +1276,6 @@
         ["maxMinutes"] = _maxTravelMinutes,
         ["transport"] = _selectedTransport,
         ["radiusKm"] = _radiusKm
-    };
-
-    private static string TransportVerb(string transport) => transport switch
-    {
-        "Fiets" => "fietsen",
-        "Auto" => "rijden",
-        "OV" => "OV",
-        "Lopend" => "lopen",
-        _ => "reistijd"
     };
 
     private void OnTravelSliderInput(ChangeEventArgs e)

@@ -62,7 +62,8 @@ internal static class ApplicationsAndWagesSeeder
                     DistanceKm = 3.2,
                     PreferencesSummary = candidate.PreferencesJson,
                     Status = ApplicationStatus.Pending,
-                    CreatedAt = now.AddHours(-5)
+                    CreatedAt = now.AddHours(-5),
+                    EmailVerifiedAt = DateTime.UtcNow
                 });
                 first = false;
             }
@@ -79,7 +80,8 @@ internal static class ApplicationsAndWagesSeeder
                     EstimatedTravelMinutes = 12,
                     DistanceKm = 3.2,
                     Status = ApplicationStatus.Pending,
-                    CreatedAt = now.AddHours(-5)
+                    CreatedAt = now.AddHours(-5),
+                    EmailVerifiedAt = DateTime.UtcNow
                 },
                 new Application
                 {
@@ -92,7 +94,8 @@ internal static class ApplicationsAndWagesSeeder
                     EstimatedTravelMinutes = 28,
                     DistanceKm = 8.1,
                     Status = ApplicationStatus.Pending,
-                    CreatedAt = now.AddHours(-2)
+                    CreatedAt = now.AddHours(-2),
+                    EmailVerifiedAt = DateTime.UtcNow
                 });
         }
 

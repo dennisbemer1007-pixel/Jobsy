@@ -134,6 +134,8 @@ public sealed class AssistantChatActionItem
     public string? Label { get; set; }
     public Guid? ApplicationId { get; set; }
     public Guid? VacancyId { get; set; }
+    public int? MaxTravelMinutes { get; set; }
+    public string? Transport { get; set; }
 }
 
 public sealed class MetricCount

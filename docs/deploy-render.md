@@ -15,11 +15,15 @@ Indicatie kosten: ~$14/mo web + Postgres-compute/storage (prorata per seconde). 
 
 De Blueprint houdt `JobsyAuth__AllowDevelopmentAuth=true` zodat demo-login via de Web UI werkt, maar:
 
-- `JobsyAuth__DevelopmentAuthSecret` wordt gegenereerd op `jobsy-api` en gedeeld met `jobsy-web`. Alleen requests met die secret-header worden geaccepteerd — spoofing van `X-Jobsy-Email` vanaf het internet werkt niet meer.
-- `JobsyFeatures__ExposeRegistrationActivationLinks=false` (geen activatie-URL in API-responses).
+- Buiten Development accepteert header-auth **alleen** `@jobsy.local` demo-accounts (geen echte gebruikers), en **niet** Admin/SalesManager.
+- OAuth client-secrets vereisen een aparte `JobsyAuth__ExternalProvisionSecret` (niet dezelfde DevelopmentAuthSecret; Web gebruikt geen DevelopmentAuthSecret-fallback meer).
 - Custom domain: `PublicWebBaseUrl=https://lobsy.nl` + CORS voor `lobsy.nl` / `www.lobsy.nl`.
 
-Na Blueprint sync: controleer dat beide services dezelfde `JobsyAuth__DevelopmentAuthSecret` hebben.
+- `JobsyAuth__DevelopmentAuthSecret` wordt gegenereerd op `jobsy-api` en gedeeld met `jobsy-web`. Alleen requests met die secret-header worden geaccepteerd — spoofing van `X-Jobsy-Email` vanaf het internet werkt niet meer.
+- `JobsyAuth__ExternalProvisionSecret` wordt apart gegenereerd en gedeeld met `jobsy-web` voor OAuth credential-provisioning.
+- `JobsyFeatures__ExposeRegistrationActivationLinks=false` (geen activatie-URL in API-responses).
+
+Na Blueprint sync: controleer dat beide services dezelfde `JobsyAuth__DevelopmentAuthSecret` én `JobsyAuth__ExternalProvisionSecret` hebben.
 
 ## Eenmalig: code + Blueprint
 

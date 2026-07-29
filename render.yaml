@@ -40,6 +40,8 @@ services:
         value: "true"
       - key: JobsyAuth__DevelopmentAuthSecret
         generateValue: true
+      - key: JobsyAuth__ExternalProvisionSecret
+        generateValue: true
       - key: JobsyFeatures__ExposeRegistrationActivationLinks
         value: "false"
       - key: ConnectionStrings__JobsyDb
@@ -78,6 +80,11 @@ services:
           name: jobsy-api
           type: web
           envVarKey: JobsyAuth__DevelopmentAuthSecret
+      - key: JobsyAuth__ExternalProvisionSecret
+        fromService:
+          name: jobsy-api
+          type: web
+          envVarKey: JobsyAuth__ExternalProvisionSecret
       - key: ApiBaseUrl
         fromService:
           name: jobsy-api

@@ -92,7 +92,8 @@ public sealed class AssistantController : ControllerBase
             result.Reply,
             result.UsedAi,
             result.Actions.Select(a => new AssistantChatActionDto(
-                a.Type, a.Url, a.WorkType, a.SearchQuery, a.Count, a.Label, a.ApplicationId, a.VacancyId)).ToList()));
+                a.Type, a.Url, a.WorkType, a.SearchQuery, a.Count, a.Label, a.ApplicationId, a.VacancyId,
+                a.MaxTravelMinutes, a.Transport)).ToList()));
     }
 
     private string ResolveLanguage()

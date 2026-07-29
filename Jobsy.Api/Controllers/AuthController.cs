@@ -223,8 +223,9 @@ public class AuthController : ControllerBase
 
     private bool IsTrustedProvisionCaller()
     {
-        var expected = _configuration["JobsyAuth:DevelopmentAuthSecret"]
-                       ?? _configuration["JobsyAuth:ExternalProvisionSecret"];
+        // Never accept DevelopmentAuthSecret here — that secret only unlocks demo header-auth.
+        // OAuth client secrets require a dedicated ExternalProvisionSecret (or loopback in Development).
+        var expected = _configuration["JobsyAuth:ExternalProvisionSecret"];
         if (string.IsNullOrWhiteSpace(expected))
         {
             // Fail closed outside Development. Local DX may use loopback without a secret.

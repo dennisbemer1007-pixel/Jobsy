@@ -6,6 +6,7 @@ using Jobsy.Core.Enums;
 using Jobsy.Core.Interfaces;
 using Jobsy.Core.Privacy;
 using Jobsy.Core.Rules;
+using Jobsy.Core.Security;
 using Jobsy.Infrastructure.Data;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -117,7 +118,7 @@ public class ApplicationsController : ControllerBase
 
     [HttpPost]
     [Authorize(Policy = JobsyPolicies.RequireCandidate)]
-    [EnableRateLimiting("public-write")]
+    [EnableRateLimiting("otp-verify")]
     public async Task<ActionResult<ApplyResultDto>> Apply(
         [FromBody] ApplyRequest request,
         CancellationToken cancellationToken)
@@ -126,12 +127,11 @@ public class ApplicationsController : ControllerBase
         {
             return await ApplyCoreAsync(request, cancellationToken);
         }
-        catch (Exception ex)
+        catch (Exception)
         {
             return StatusCode(500, new
             {
-                message = "Sollicitatie mislukt door een serverfout. Herstart de API na de laatste update of controleer of migrations zijn toegepast.",
-                detail = ex.InnerException?.Message ?? ex.Message
+                message = "Sollicitatie mislukt door een serverfout. Herstart de API na de laatste update of controleer of migrations zijn toegepast."
             });
         }
     }
@@ -248,9 +248,10 @@ public class ApplicationsController : ControllerBase
         var isVerificationAttempt = !string.IsNullOrWhiteSpace(request.VerificationCode);
         if (!isVerificationAttempt)
         {
-            var code = Random.Shared.Next(0, 1_000_000).ToString("D6");
+            var code = VerificationCodes.CreateNumericCode();
             application.EmailVerificationCode = code;
             application.EmailVerificationExpiresAt = DateTime.UtcNow.AddMinutes(10);
+            application.EmailVerificationFailedAttempts = 0;
             application.EmailVerifiedAt = null;
             application.Status = ApplicationStatus.Pending;
             if (existing is null)
@@ -272,7 +273,7 @@ public class ApplicationsController : ControllerBase
                     return BadRequest(new { message = "Je hebt al gereageerd op deze vacature." });
                 }
 
-                return BadRequest(new { message = "Sollicitatie kon niet worden opgeslagen. Probeer het opnieuw.", detail });
+                return BadRequest(new { message = "Sollicitatie kon niet worden opgeslagen. Probeer het opnieuw." });
             }
 
             try
@@ -284,6 +285,8 @@ public class ApplicationsController : ControllerBase
                 // Email stub/provider failures must not fail the apply after save.
             }
 
+            // Draft is stored for code validation but is not a candidate-facing application status
+            // (Sollicitaties only lists verified apps). RequiresVerification drives the UI.
             var pendingDto = new ApplicationDto(
                 application.Id,
                 vacancy.Id,
@@ -294,7 +297,7 @@ public class ApplicationsController : ControllerBase
                 application.PreferredTransport,
                 application.EstimatedTravelMinutes,
                 application.CreatedAt,
-                "PendingVerification",
+                application.Status.ToString(),
                 null);
             return Ok(new ApplyResultDto(
                 pendingDto,
@@ -314,19 +317,45 @@ public class ApplicationsController : ControllerBase
             return BadRequest(new { message = "Deze sollicitatie is al bevestigd." });
         }
 
-        if (existing.EmailVerificationExpiresAt is null || existing.EmailVerificationExpiresAt < DateTime.UtcNow)
+        if (string.IsNullOrWhiteSpace(existing.EmailVerificationCode)
+            || existing.EmailVerificationExpiresAt is null
+            || existing.EmailVerificationExpiresAt < DateTime.UtcNow)
         {
             return BadRequest(new { message = "Verificatiecode verlopen. Klik opnieuw op Verzenden." });
         }
 
-        if (!string.Equals(existing.EmailVerificationCode, request.VerificationCode?.Trim(), StringComparison.Ordinal))
+        if (existing.EmailVerificationFailedAttempts >= VerificationCodes.MaxFailedAttempts)
         {
-            return BadRequest(new { message = "Onjuiste verificatiecode." });
+            existing.EmailVerificationCode = null;
+            existing.EmailVerificationExpiresAt = null;
+            await _db.SaveChangesAsync(cancellationToken);
+            return BadRequest(new { message = "Te veel onjuiste pogingen. Vraag een nieuwe verificatiecode aan." });
+        }
+
+        if (!VerificationCodes.FixedTimeEquals(existing.EmailVerificationCode, request.VerificationCode?.Trim()))
+        {
+            var attempts = existing.EmailVerificationFailedAttempts;
+            var lockedOut = VerificationCodes.RegisterFailedAttempt(ref attempts);
+            existing.EmailVerificationFailedAttempts = attempts;
+            if (lockedOut)
+            {
+                existing.EmailVerificationCode = null;
+                existing.EmailVerificationExpiresAt = null;
+            }
+
+            await _db.SaveChangesAsync(cancellationToken);
+            return BadRequest(new
+            {
+                message = lockedOut
+                    ? "Te veel onjuiste pogingen. Vraag een nieuwe verificatiecode aan."
+                    : "Onjuiste verificatiecode."
+            });
         }
 
         existing.EmailVerifiedAt = DateTime.UtcNow;
         existing.EmailVerificationCode = null;
         existing.EmailVerificationExpiresAt = null;
+        existing.EmailVerificationFailedAttempts = 0;
         existing.WorkPermitConfirmed = request.WorkPermitConfirmed;
         await _db.SaveChangesAsync(cancellationToken);
 
@@ -340,7 +369,7 @@ public class ApplicationsController : ControllerBase
             $"""
              <p>Hoi {name},</p>
              <p>Je sollicitatie op <strong>{title}</strong> bij {company} is ontvangen.</p>
-             <p><a href="{deepLink}">Bekijk je sollicitaties</a></p>
+             <p><a href="{Html(deepLink)}">Bekijk je sollicitaties</a></p>
              {(authenticatorStubUsed ? "<p><em>Authenticator stub: verificatie gesimuleerd.</em></p>" : "")}
              """,
             "ApplicationConfirmation"), cancellationToken);
@@ -382,7 +411,7 @@ public class ApplicationsController : ControllerBase
             return NotFound();
         }
 
-        // Only verified "Open" (Pending) applications can be withdrawn — not PendingVerification.
+        // Only verified "Open" (Pending) applications can be withdrawn — drafts awaiting a code cannot.
         if (!ApplicationRules.CanCandidateWithdraw(application.Status, application.EmailVerifiedAt))
         {
             return BadRequest(new { message = "Alleen open sollicitaties kunnen worden ingetrokken." });
@@ -456,7 +485,7 @@ public class ApplicationsController : ControllerBase
             <p>Hoi {candidateName},</p>
             <p>De werkgever heeft gereageerd ({statusLabel}) op je sollicitatie voor
             <strong>{title}</strong> bij {company}.</p>
-            <p><a href="{deepLink}">Open vacature</a></p>
+            <p><a href="{Html(deepLink)}">Open vacature</a></p>
             """;
 
         await _email.SendAsync(new EmailMessage(
@@ -508,7 +537,7 @@ public class ApplicationsController : ControllerBase
             $"Werkgever neemt contact op: {application.Vacancy.Title}",
             $"""
              <p>Goed nieuws! De werkgever van <strong>{Html(application.Vacancy.Title)}</strong> neemt contact met je op.</p>
-             <p><a href="{deepLink}">Open vacature</a></p>
+             <p><a href="{Html(deepLink)}">Open vacature</a></p>
              """,
             "EmployerContacting"), cancellationToken);
         await _push.SendAsync(new PushMessage(
@@ -652,7 +681,7 @@ public class ApplicationsController : ControllerBase
                 $"Nieuwe sollicitatie: {vacancy.Title}",
                 $"""
                  <p>Er is een nieuwe sollicitatie ontvangen voor <strong>{Html(vacancy.Title)}</strong>.</p>
-                 <p><a href="{deepLink}">Open sollicitantenoverzicht</a></p>
+                 <p><a href="{Html(deepLink)}">Open sollicitantenoverzicht</a></p>
                  """,
                 "EmployerNewApplication"), cancellationToken);
 

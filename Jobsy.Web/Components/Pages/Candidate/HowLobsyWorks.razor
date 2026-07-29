@@ -5,71 +5,50 @@
 @inject JobsyApiClient Api
 @inject NavigationManager Navigation
 @inject CultureState Culture
+@implements IDisposable
 
-<PageTitle>Hoe werkt Lobsy · Lobsy</PageTitle>
+<PageTitle>@Culture["HowLobsy.Title"] · Lobsy</PageTitle>
 
 <div class="panel-page how-lobsy-page">
     <header class="panel-header">
         <div>
-            <h1>Hoe werkt Lobsy?</h1>
-            <p class="login-lead">Van banenkaart tot uitnodiging — zo solliciteer je stap voor stap.</p>
+            <h1>@Culture["HowLobsy.Title"]</h1>
+            <p class="login-lead">@Culture["HowLobsy.Lead"]</p>
         </div>
     </header>
 
     <ol class="how-lobsy-steps">
         <li class="how-lobsy-step">
-            <h2>1. Start op de banenkaart</h2>
-            <p>
-                Open <a href="/">Zoeken / banenkaart</a>. Je ziet vacatures op een kaart rondom jouw regio.
-                Sleep of zoom, tik op pins of clusters, en gebruik filters (bijv. interesse, leeftijd, loon)
-                om banen te vinden die bij je passen.
-            </p>
+            <h2>@Culture["HowLobsy.Step1Title"]</h2>
+            <p>@((MarkupString)Culture.Format("HowLobsy.Step1Body", $"<a href=\"/\">{System.Net.WebUtility.HtmlEncode(Culture["Nav.JobMap"])}</a>"))</p>
         </li>
         <li class="how-lobsy-step">
-            <h2>2. Vul je profiel</h2>
-            <p>
-                Ga naar <a href="/candidate/profile">Profiel</a> en vul opleiding, rijbewijzen, interesses,
-                voorkeuren en je thuislocatie in. Lobsy gebruikt dit om beter te matchen en om te checken
-                of je aan harde eisen van een vacature voldoet.
-            </p>
+            <h2>@Culture["HowLobsy.Step2Title"]</h2>
+            <p>@((MarkupString)Culture.Format("HowLobsy.Step2Body", $"<a href=\"/candidate/profile\">{System.Net.WebUtility.HtmlEncode(Culture["Nav.Profile"])}</a>"))</p>
         </li>
         <li class="how-lobsy-step">
-            <h2>3. Bewaar of deel wat je leuk vindt</h2>
-            <p>
-                Lik of bewaar vacatures onder <a href="/candidate/liked">Bewaard</a>. Gedeelde vacatures
-                vind je terug bij <a href="/candidate/shared">Gedeeld</a>. Zo kun je later rustig verder kijken.
-            </p>
+            <h2>@Culture["HowLobsy.Step3Title"]</h2>
+            <p>@((MarkupString)Culture.Format("HowLobsy.Step3Body", $"<a href=\"/candidate/liked\">{System.Net.WebUtility.HtmlEncode(Culture["Nav.Saved"])}</a>", $"<a href=\"/candidate/shared\">{System.Net.WebUtility.HtmlEncode(Culture["Nav.Shared"])}</a>"))</p>
         </li>
         <li class="how-lobsy-step">
-            <h2>4. Open een vacature en solliciteer</h2>
-            <p>
-                Tik op een vacature voor details: werkgever, loon, eisen en locatie. Klik op
-                <strong>Solliciteren</strong> en doorloop de stappen (o.a. voorkeur vervoer en eventuele
-                verificatie). Ontbrekende eisen zie je duidelijk vóór je afrondt.
-            </p>
+            <h2>@Culture["HowLobsy.Step4Title"]</h2>
+            <p>@((MarkupString)Culture.Format("HowLobsy.Step4Body", $"<strong>{System.Net.WebUtility.HtmlEncode(Culture["Apply.Title"])}</strong>"))</p>
         </li>
         <li class="how-lobsy-step">
-            <h2>5. Volg je sollicitaties</h2>
-            <p>
-                Onder <a href="/candidate/applications">Mijn sollicitaties</a> zie je de status:
-                open, afgewezen of gematcht. Je kunt een open sollicitatie intrekken zolang dat mag.
-            </p>
+            <h2>@Culture["HowLobsy.Step5Title"]</h2>
+            <p>@((MarkupString)Culture.Format("HowLobsy.Step5Body", $"<a href=\"/candidate/applications\">{System.Net.WebUtility.HtmlEncode(Culture["Nav.MyApplications"])}</a>"))</p>
         </li>
         <li class="how-lobsy-step">
-            <h2>6. Uitnodiging van de werkgever</h2>
-            <p>
-                Als een werkgever je selecteert, verandert de status (bijv. geaccepteerd of
-                “werkgever neemt contact op”). Bij een match volgt het contact / de uitnodiging
-                voor het vervolg — gesprek, proefdag of aanname. Gefeliciteerd als je wordt aangenomen!
-            </p>
+            <h2>@Culture["HowLobsy.Step6Title"]</h2>
+            <p>@Culture["HowLobsy.Step6Body"]</p>
         </li>
     </ol>
 
     <div class="inline-actions how-lobsy-actions">
         <button type="button" class="login-submit" disabled="@_busy" @onclick="FinishAsync">
-            @(_busy ? "…" : "Naar de banenkaart")
+            @(_busy ? "…" : Culture["HowLobsy.ToMap"])
         </button>
-        <a class="auth-link" href="/candidate/profile">Eerst mijn profiel →</a>
+        <a class="auth-link" href="/candidate/profile">@Culture["HowLobsy.ToProfile"]</a>
     </div>
 
     @if (!string.IsNullOrEmpty(_message))
@@ -81,6 +60,15 @@
 @code {
     private bool _busy;
     private string? _message;
+
+    protected override void OnInitialized()
+        => Culture.Changed += OnCultureChanged;
+
+    private void OnCultureChanged()
+        => InvokeAsync(StateHasChanged);
+
+    public void Dispose()
+        => Culture.Changed -= OnCultureChanged;
 
     private async Task FinishAsync()
     {

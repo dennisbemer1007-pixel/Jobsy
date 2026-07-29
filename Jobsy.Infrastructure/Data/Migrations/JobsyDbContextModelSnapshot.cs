@@ -74,6 +74,9 @@ namespace Jobsy.Infrastructure.Data.Migrations
                     b.Property<DateTime?>("EmailVerificationExpiresAt")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<int>("EmailVerificationFailedAttempts")
+                        .HasColumnType("integer");
+
                     b.Property<DateTime?>("EmailVerifiedAt")
                         .HasColumnType("timestamp with time zone");
 
@@ -1451,6 +1454,9 @@ modelBuilder.Entity("Jobsy.Core.Entities.PlatformFeatureSettings", b =>
 
                     b.Property<DateTime?>("UnsubscribeVerificationExpiresAt")
                         .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("UnsubscribeVerificationFailedAttempts")
+                        .HasColumnType("integer");
 
                     b.HasKey("Id");
 

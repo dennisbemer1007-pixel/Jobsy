@@ -43,7 +43,9 @@ public sealed class MetricsQueryService : IMetricsQueryService
             v => v.Status == VacancyStatus.Active && v.Company.Type == CompanyType.Intermediary, cancellationToken);
 
         var applications = await _db.Applications.AsNoTracking()
-            .Where(a => vacancyIds.Contains(a.VacancyId) && a.CreatedAt >= from && a.CreatedAt <= to)
+            .Where(a => vacancyIds.Contains(a.VacancyId)
+                        && a.EmailVerifiedAt != null
+                        && a.CreatedAt >= from && a.CreatedAt <= to)
             .CountAsync(cancellationToken);
 
         var clicks = await _db.VacancyClicks.AsNoTracking()
@@ -311,7 +313,9 @@ public sealed class MetricsQueryService : IMetricsQueryService
         CancellationToken ct)
     {
         var rows = await _db.Applications.AsNoTracking()
-            .Where(a => vacancyIds.Contains(a.VacancyId) && a.CreatedAt >= from && a.CreatedAt <= to)
+            .Where(a => vacancyIds.Contains(a.VacancyId)
+                        && a.EmailVerifiedAt != null
+                        && a.CreatedAt >= from && a.CreatedAt <= to)
             .OrderByDescending(a => a.CreatedAt)
             .Select(a => new
             {

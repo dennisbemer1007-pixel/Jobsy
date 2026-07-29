@@ -1,22 +1,25 @@
 @using Jobsy.Web.Components.Shared
+@using Jobsy.Web.Localization
 @inject JobsyApiClient Api
+@inject CultureState Culture
+@implements IDisposable
 
 <div class="panel-page">
     <header class="panel-header">
         <div>
-            <h1>Welkom terug</h1>
-            <p class="login-lead">Jouw sollicitaties, shares, likes en reacties.</p>
+            <h1>@Culture["Metrics.Welcome"]</h1>
+            <p class="login-lead">@Culture["Metrics.Lead"]</p>
         </div>
-        <div class="period-tabs" role="tablist" aria-label="Periode">
-            @foreach (var p in Periods)
+        <div class="period-tabs" role="tablist" aria-label="@Culture["Metrics.Period"]">
+            @foreach (var p in PeriodKeys)
             {
                 <button type="button"
-                        class="period-tab @(_period == p.Key ? "period-tab--active" : null)"
+                        class="period-tab @(_period == p ? "period-tab--active" : null)"
                         role="tab"
-                        aria-selected="@(_period == p.Key)"
+                        aria-selected="@(_period == p)"
                         disabled="@_loading"
-                        @onclick="() => SetPeriodAsync(p.Key)">
-                    @p.Label
+                        @onclick="() => SetPeriodAsync(p)">
+                    @PeriodLabel(p)
                 </button>
             }
         </div>
@@ -28,20 +31,20 @@
     }
     else if (_loading && _metrics.Count == 0)
     {
-        <p class="state-message">Laden…</p>
+        <p class="state-message">@Culture["Common.Loading"]</p>
     }
     else
     {
         <div class="stat-grid">
             @foreach (var metric in _metrics)
             {
-                <MetricTile Label="@metric.Label"
+                <MetricTile Label="@UiLabels.MetricKey(Culture, metric.Key)"
                             FormattedValue="@metric.Value.ToString("0")"
                             Selected="@(_selectedKey == metric.Key)"
                             OnClick="() => SelectMetricAsync(metric.Key)" />
             }
             <a class="stat-card stat-card--link" href="/candidate/profile">
-                <span class="stat-card__label">Profiel</span>
+                <span class="stat-card__label">@Culture["Nav.Profile"]</span>
                 <strong class="stat-card__value">→</strong>
             </a>
         </div>
@@ -56,20 +59,13 @@
         }
 
         <p class="panel-section">
-            <a class="login-submit" href="/" style="text-decoration:none;display:inline-flex;">Naar banenkaart</a>
+            <a class="login-submit" href="/" style="text-decoration:none;display:inline-flex;">@Culture["Metrics.ToMap"]</a>
         </p>
     }
 </div>
 
 @code {
-    private static readonly (string Key, string Label)[] Periods =
-    [
-        ("day", "Dag"),
-        ("week", "Week"),
-        ("month", "Maand"),
-        ("quarter", "Kwartaal"),
-        ("year", "Jaar")
-    ];
+    private static readonly string[] PeriodKeys = ["day", "week", "month", "quarter", "year"];
 
     private string _period = "week";
     private string? _selectedKey;
@@ -80,10 +76,29 @@
     private List<MetricDrilldownItem> _drilldown = [];
 
     private string SelectedLabel =>
-        _metrics.FirstOrDefault(m => m.Key == _selectedKey)?.Label ?? _selectedKey ?? "";
+        _selectedKey is null ? "" : UiLabels.MetricKey(Culture, _selectedKey);
+
+    private string PeriodLabel(string key) => key switch
+    {
+        "day" => Culture["Metrics.Day"],
+        "week" => Culture["Metrics.Week"],
+        "month" => Culture["Metrics.Month"],
+        "quarter" => Culture["Metrics.Quarter"],
+        "year" => Culture["Metrics.Year"],
+        _ => key
+    };
+
+    protected override void OnInitialized()
+        => Culture.Changed += OnCultureChanged;
 
     protected override async Task OnInitializedAsync()
         => await LoadSummaryAsync();
+
+    private void OnCultureChanged()
+        => InvokeAsync(StateHasChanged);
+
+    public void Dispose()
+        => Culture.Changed -= OnCultureChanged;
 
     private async Task SetPeriodAsync(string period)
     {

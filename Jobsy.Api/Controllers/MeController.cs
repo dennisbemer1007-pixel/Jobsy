@@ -28,17 +28,21 @@ public class MeController : ControllerBase
     private readonly IUserLookupService _users;
     private readonly JobsyDbContext _db;
     private readonly IPlatformFeatureService _features;
+    private readonly ITranslationService _translation;
+    private const string VacancySourceLanguage = "nl";
 
     public MeController(
         ICompanyAuthorizationService companyAuth,
         IUserLookupService users,
         JobsyDbContext db,
-        IPlatformFeatureService features)
+        IPlatformFeatureService features,
+        ITranslationService translation)
     {
         _companyAuth = companyAuth;
         _users = users;
         _db = db;
         _features = features;
+        _translation = translation;
     }
 
     [HttpGet("access")]
@@ -70,9 +74,9 @@ public class MeController : ControllerBase
             var features = await _features.GetAsync(cancellationToken);
             return Ok(ToProfileDto(user, features.AuthenticatorEnabled));
         }
-        catch (Exception ex)
+        catch (Exception)
         {
-            return StatusCode(500, new { message = "Profiel kon niet worden geladen.", detail = ex.Message });
+            return StatusCode(500, new { message = "Profiel kon niet worden geladen." });
         }
     }
 
@@ -251,8 +255,9 @@ public class MeController : ControllerBase
             return NotFound(new { message = "Gebruiker niet gevonden in Jobsy." });
         }
 
+        // Only verified (actually submitted) applications — drafts awaiting a verification code stay out of Sollicitaties.
         var items = await _db.Applications.AsNoTracking()
-            .Where(a => a.CandidateUserId == user.Id)
+            .Where(a => a.CandidateUserId == user.Id && a.EmailVerifiedAt != null)
             .OrderByDescending(a => a.CreatedAt)
             .Select(a => new ApplicationDto(
                 a.Id,
@@ -264,9 +269,24 @@ public class MeController : ControllerBase
                 a.PreferredTransport,
                 a.EstimatedTravelMinutes,
                 a.CreatedAt,
-                a.EmailVerifiedAt == null ? "PendingVerification" : a.Status.ToString(),
+                a.Status.ToString(),
                 a.RespondedAt))
             .ToListAsync(cancellationToken);
+
+        var lang = await ResolveTargetLanguageAsync(user, cancellationToken);
+        if (!JobsyLanguages.AreSame(VacancySourceLanguage, lang))
+        {
+            for (var i = 0; i < items.Count; i++)
+            {
+                var translated = await _translation.TranslateVacancyAsync(
+                    items[i].VacancyTitle,
+                    string.Empty,
+                    VacancySourceLanguage,
+                    lang,
+                    cancellationToken);
+                items[i] = items[i] with { VacancyTitle = translated.Title };
+            }
+        }
 
         return Ok(items);
     }
@@ -318,7 +338,7 @@ public class MeController : ControllerBase
                 l.Vacancy.ImageUrl))
             .ToListAsync(cancellationToken);
 
-        return Ok(items);
+        return Ok(await TranslateEngagementTitlesAsync(items, user, cancellationToken));
     }
 
     [HttpGet("shares")]
@@ -344,7 +364,54 @@ public class MeController : ControllerBase
                 s.Vacancy.ImageUrl))
             .ToListAsync(cancellationToken);
 
-        return Ok(items);
+        return Ok(await TranslateEngagementTitlesAsync(items, user, cancellationToken));
+    }
+
+    private async Task<List<CandidateVacancyEngagementDto>> TranslateEngagementTitlesAsync(
+        List<CandidateVacancyEngagementDto> items,
+        Core.Entities.User user,
+        CancellationToken cancellationToken)
+    {
+        var lang = await ResolveTargetLanguageAsync(user, cancellationToken);
+        if (JobsyLanguages.AreSame(VacancySourceLanguage, lang))
+        {
+            return items;
+        }
+
+        for (var i = 0; i < items.Count; i++)
+        {
+            var translated = await _translation.TranslateVacancyAsync(
+                items[i].VacancyTitle,
+                string.Empty,
+                VacancySourceLanguage,
+                lang,
+                cancellationToken);
+            items[i] = items[i] with { VacancyTitle = translated.Title };
+        }
+
+        return items;
+    }
+
+    private Task<string> ResolveTargetLanguageAsync(Core.Entities.User user, CancellationToken cancellationToken)
+    {
+        if (Request.Query.TryGetValue("lang", out var langQuery) && JobsyLanguages.IsSupported(langQuery.ToString()))
+        {
+            return Task.FromResult(JobsyLanguages.Normalize(langQuery.ToString()));
+        }
+
+        if (Request.Headers.TryGetValue("X-Jobsy-Language", out var langHeader)
+            && JobsyLanguages.IsSupported(langHeader.ToString()))
+        {
+            return Task.FromResult(JobsyLanguages.Normalize(langHeader.ToString()));
+        }
+
+        var preferred = ParsePreferences(user.PreferencesJson).Language;
+        if (!string.IsNullOrWhiteSpace(preferred))
+        {
+            return Task.FromResult(JobsyLanguages.Normalize(preferred));
+        }
+
+        return Task.FromResult(JobsyLanguages.Default);
     }
 
     private MeProfileDto ToProfileDto(Core.Entities.User user, bool authenticatorEnabled) => new(

@@ -46,6 +46,9 @@ public class User
 
     public DateTime? UnsubscribeVerificationExpiresAt { get; set; }
 
+    /// <summary>Failed OTP guesses for the current unsubscribe code; lockout after max attempts.</summary>
+    public int UnsubscribeVerificationFailedAttempts { get; set; }
+
     /// <summary>Pending unsubscribe reason code (see <c>AccountUnsubscribeReasons</c>).</summary>
     public string? UnsubscribeReasonCode { get; set; }
 

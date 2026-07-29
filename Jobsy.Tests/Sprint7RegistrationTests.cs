@@ -44,6 +44,9 @@ public class Sprint7RegistrationTests
         Assert.False(string.IsNullOrWhiteSpace(activated.TemporaryPassword));
         Assert.Equal(1, await db.Companies.CountAsync(c => c.KvkEstablishmentId == "99990001_0001"));
         Assert.True(await db.LocalAuthCredentials.AnyAsync(c => c.Email == "nova.branch@jobsy.local"));
+        Assert.True(await db.PlatformLogs.AnyAsync(l =>
+            l.Category == "RegistrationCredentials"
+            || (l.Category == "Email" && l.Message.Contains("Je Jobsy-account is actief"))));
 
         // Welcome token: 1 credit on the vestiging, marked on the company row.
         Assert.NotNull(activated.BranchCompanyId);

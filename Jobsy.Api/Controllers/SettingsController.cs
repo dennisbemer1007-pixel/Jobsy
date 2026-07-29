@@ -280,14 +280,21 @@ public class SettingsController : ControllerBase
         [FromBody] UpdatePlatformFeatureRequest request,
         CancellationToken cancellationToken)
     {
-        var snap = await _features.UpdateAsync(
-            new PlatformFeatureUpdate(
-                request.VacancyContentModerationEnabled,
-                request.AuthenticatorEnabled,
-                request.ExposeRegistrationActivationLinks,
-                request.PublicWebBaseUrl),
-            cancellationToken);
-        return Ok(ToFeatureDto(snap));
+        try
+        {
+            var snap = await _features.UpdateAsync(
+                new PlatformFeatureUpdate(
+                    request.VacancyContentModerationEnabled,
+                    request.AuthenticatorEnabled,
+                    request.ExposeRegistrationActivationLinks,
+                    request.PublicWebBaseUrl),
+                cancellationToken);
+            return Ok(ToFeatureDto(snap));
+        }
+        catch (ArgumentException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
     }
 
     [HttpGet("company")]

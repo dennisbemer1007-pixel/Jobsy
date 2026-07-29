@@ -17,4 +17,11 @@ public static class ApplicationRules
 
     public static bool CanCandidateWithdraw(ApplicationStatus status, DateTime? emailVerifiedAt)
         => emailVerifiedAt is not null && status == ApplicationStatus.Pending;
+
+    /// <summary>
+    /// Only e-mail-verified applications appear under Sollicitaties.
+    /// Drafts waiting on a verification code are not listed and have no candidate-facing status.
+    /// </summary>
+    public static bool IsListedForCandidate(DateTime? emailVerifiedAt)
+        => emailVerifiedAt is not null;
 }

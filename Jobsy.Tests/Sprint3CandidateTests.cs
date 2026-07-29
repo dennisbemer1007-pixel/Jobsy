@@ -3,6 +3,7 @@ using Jobsy.Core.Entities;
 using Jobsy.Core.Enums;
 using Jobsy.Core.Interfaces;
 using Jobsy.Core.Rules;
+using Jobsy.Core.Security;
 using Jobsy.Core.ValueObjects;
 using Jobsy.Infrastructure.Data;
 using Jobsy.Infrastructure.Services;
@@ -89,7 +90,8 @@ public class Sprint3CandidateTests
             CandidateEmail = "a@test.nl",
             PreferredTransport = "Fiets",
             EstimatedTravelMinutes = 10,
-            CreatedAt = now.AddHours(-1)
+            CreatedAt = now.AddHours(-1),
+            EmailVerifiedAt = now.AddHours(-1)
         });
         db.VacancyLikes.Add(new VacancyLike
         {
@@ -277,6 +279,13 @@ public class Sprint3CandidateTests
     }
 
     [Fact]
+    public void ApplicationRules_lists_only_verified_applications_for_candidate()
+    {
+        Assert.True(ApplicationRules.IsListedForCandidate(DateTime.UtcNow));
+        Assert.False(ApplicationRules.IsListedForCandidate(null));
+    }
+
+    [Fact]
     public void Application_entity_has_unique_indexes_for_duplicate_prevention()
     {
         using var db = CreateDb();
@@ -290,6 +299,31 @@ public class Sprint3CandidateTests
             i.Properties.Select(p => p.Name).SequenceEqual(["VacancyId", "CandidateUserId"])
             && i.GetFilter() is not null
             && i.GetFilter()!.Contains("CandidateUserId", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void VerificationCodes_are_six_digits_and_compare_constant_time()
+    {
+        var code = VerificationCodes.CreateNumericCode();
+        Assert.Equal(6, code.Length);
+        Assert.True(code.All(char.IsDigit));
+        Assert.True(VerificationCodes.FixedTimeEquals(code, code));
+        Assert.False(VerificationCodes.FixedTimeEquals(code, "000000"));
+        Assert.False(VerificationCodes.FixedTimeEquals(code, null));
+    }
+
+    [Fact]
+    public void VerificationCodes_lock_out_after_max_failed_attempts()
+    {
+        var attempts = 0;
+        for (var i = 1; i < VerificationCodes.MaxFailedAttempts; i++)
+        {
+            Assert.False(VerificationCodes.RegisterFailedAttempt(ref attempts));
+            Assert.Equal(i, attempts);
+        }
+
+        Assert.True(VerificationCodes.RegisterFailedAttempt(ref attempts));
+        Assert.Equal(VerificationCodes.MaxFailedAttempts, attempts);
     }
 
     [Fact]

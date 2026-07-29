@@ -7,6 +7,7 @@
 @inject JobsyApiClient Api
 @inject CultureState Culture
 @inject AuthenticationStateProvider AuthState
+@implements IDisposable
 
 <PageTitle>@Culture["Nav.MyApplications"] · Lobsy</PageTitle>
 
@@ -15,14 +16,7 @@
         <div>
             <h1>@Culture["Nav.MyApplications"]</h1>
             <p class="login-lead">
-                @if (_readOnly)
-                {
-                    <text>Jouw eerdere sollicitaties (alleen-lezen). Intrekken of nieuwe sollicitaties kan via een kandidaataccount.</text>
-                }
-                else
-                {
-                    <text>Status van je reacties op vacatures.</text>
-                }
+                @(_readOnly ? Culture["Apps.LeadReadOnly"] : Culture["Apps.Lead"])
             </p>
         </div>
     </header>
@@ -36,18 +30,22 @@
 
     @if (_loading)
     {
-        <p class="state-message">Laden…</p>
+        <p class="state-message">@Culture["Common.Loading"]</p>
     }
     else if (_filtered.Count == 0)
     {
         <p class="state-message">
             @if (_items.Count == 0)
             {
-                <text>Nog geen sollicitaties. @if (!_readOnly) { <a href="/">Bekijk de banenkaart</a><text>.</text> }</text>
+                @Culture["Apps.Empty"]
+                @if (!_readOnly)
+                {
+                    <text> <a href="/">@Culture["Apps.BrowseMap"]</a>.</text>
+                }
             }
             else
             {
-                <text>Geen sollicitaties in deze tab.</text>
+                @Culture["Apps.EmptyTab"]
             }
         </p>
     }
@@ -59,10 +57,10 @@
                 <div class="table-row application-row">
                     <a class="application-row__link" href="@($"/vacancies/{a.VacancyId}")">
                         <strong>@a.VacancyTitle</strong>
-                        <span class="muted">@a.CompanyName · @a.PreferredTransport · @a.EstimatedTravelMinutes min</span>
+                        <span class="muted">@a.CompanyName · @UiLabels.Transport(Culture, a.PreferredTransport) · @a.EstimatedTravelMinutes @Culture["Discovery.Minutes"]</span>
                     </a>
                     <div class="application-row__meta">
-                        <span class="status-pill status-pill--@a.Status.ToLowerInvariant()">@StatusLabel(a.Status)</span>
+                        <span class="status-pill status-pill--@a.Status.ToLowerInvariant()">@UiLabels.ApplicationStatus(Culture, a.Status)</span>
                         @if (!_readOnly && CanWithdraw(a.Status))
                         {
                             <button type="button"
@@ -89,11 +87,11 @@
     <div class="share-modal-backdrop"></div>
     <div class="share-modal" role="dialog" aria-modal="true" aria-labelledby="hired-title">
         <div class="share-modal__header">
-            <h2 id="hired-title">Gefeliciteerd!</h2>
+            <h2 id="hired-title">@Culture["Apps.CongratsTitle"]</h2>
         </div>
-        <p>Gefeliciteerd met je nieuwe baan!</p>
+        <p>@Culture["Apps.CongratsBody"]</p>
         <div class="inline-actions" style="margin-top:1rem">
-            <button type="button" class="login-submit" @onclick="() => _showCelebration = false">Sluiten</button>
+            <button type="button" class="login-submit" @onclick="() => _showCelebration = false">@Culture["Common.Close"]</button>
         </div>
     </div>
 }
@@ -107,6 +105,9 @@
     private string _tab = "all";
     private Guid? _busyId;
     private string? _message;
+
+    protected override void OnInitialized()
+        => Culture.Changed += OnCultureChanged;
 
     protected override async Task OnInitializedAsync()
     {
@@ -130,6 +131,24 @@
         }
     }
 
+    private async void OnCultureChanged()
+    {
+        try
+        {
+            _items = (await Api.GetMyApplicationsAsync()).ToList();
+            ApplyTab();
+        }
+        catch
+        {
+            // keep current list
+        }
+
+        await InvokeAsync(StateHasChanged);
+    }
+
+    public void Dispose()
+        => Culture.Changed -= OnCultureChanged;
+
     private void SetTab(string tab)
     {
         _tab = tab;
@@ -148,7 +167,7 @@
     }
 
     private static bool IsOpen(ApplicationItem a)
-        => a.Status is "Pending" or "PendingVerification";
+        => a.Status is "Pending";
 
     private static bool IsRejected(ApplicationItem a)
         => a.Status is "Rejected" or "FilledElsewhere";
@@ -173,7 +192,7 @@
             await Api.WithdrawApplicationAsync(item.Id);
             _items.RemoveAll(x => x.Id == item.Id);
             ApplyTab();
-            _message = "Sollicitatie ingetrokken.";
+            _message = Culture["Apps.WithdrawnMsg"];
         }
         catch (Exception ex)
         {
@@ -184,16 +203,4 @@
             _busyId = null;
         }
     }
-
-    private static string StatusLabel(string status) => status switch
-    {
-        "Accepted" => "Geaccepteerd",
-        "Rejected" => "Afgewezen",
-        "PendingVerification" => "Wacht op e-mailverificatie",
-        "EmployerContacting" => "Werkgever neemt contact op",
-        "Hired" => "Aangenomen",
-        "FilledElsewhere" => "Ingevuld elders",
-        "Withdrawn" => "Ingetrokken",
-        _ => status
-    };
 }

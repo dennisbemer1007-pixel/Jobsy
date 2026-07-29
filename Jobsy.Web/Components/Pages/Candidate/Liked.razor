@@ -1,10 +1,12 @@
 @page "/candidate/liked"
 @rendermode @(new InteractiveServerRenderMode(prerender: false))
 @attribute [Microsoft.AspNetCore.Authorization.AllowAnonymous]
+@using Jobsy.Web.Localization
 @using Microsoft.AspNetCore.Components.Authorization
 @inject JobsyApiClient Api
 @inject CultureState Culture
 @inject AuthenticationStateProvider AuthState
+@implements IDisposable
 
 <PageTitle>@Culture["Saved.Title"] · Lobsy</PageTitle>
 
@@ -14,7 +16,7 @@
             <header class="panel-header">
                 <div>
                     <h1>@Culture["Saved.Title"]</h1>
-                    <p class="login-lead">Je favorieten op de banenkaart.</p>
+                    <p class="login-lead">@Culture["Saved.LeadLoggedIn"]</p>
                 </div>
             </header>
 
@@ -26,7 +28,7 @@
             }
             else if (_items.Count == 0)
             {
-                <p class="state-message">Nog geen likes. <a href="/">Ontdek vacatures</a>.</p>
+                <p class="state-message">@Culture["Saved.EmptyLikes"] <a href="/">@Culture["Saved.Discover"]</a>.</p>
             }
             else
             {
@@ -88,6 +90,9 @@
     private List<CandidateEngagementItem> _items = [];
     private bool _loading = true;
 
+    protected override void OnInitialized()
+        => Culture.Changed += OnCultureChanged;
+
     protected override async Task OnInitializedAsync()
     {
         var state = await AuthState.GetAuthenticationStateAsync();
@@ -110,4 +115,21 @@
             _loading = false;
         }
     }
+
+    private async void OnCultureChanged()
+    {
+        try
+        {
+            _items = (await Api.GetMyLikesAsync()).ToList();
+        }
+        catch
+        {
+            // keep current list
+        }
+
+        await InvokeAsync(StateHasChanged);
+    }
+
+    public void Dispose()
+        => Culture.Changed -= OnCultureChanged;
 }

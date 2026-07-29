@@ -25,7 +25,9 @@ public sealed class CandidateMetricsQueryService : ICandidateMetricsQueryService
         var periodKey = metricsPeriod.ToString().ToLowerInvariant();
 
         var applications = await _db.Applications.AsNoTracking()
-            .CountAsync(a => a.CandidateUserId == candidateUserId && a.CreatedAt >= from && a.CreatedAt <= to, cancellationToken);
+            .CountAsync(a => a.CandidateUserId == candidateUserId
+                             && a.EmailVerifiedAt != null
+                             && a.CreatedAt >= from && a.CreatedAt <= to, cancellationToken);
 
         var shares = await _db.VacancyShares.AsNoTracking()
             .CountAsync(s => s.UserId == candidateUserId && s.CreatedAt >= from && s.CreatedAt <= to, cancellationToken);
@@ -58,7 +60,9 @@ public sealed class CandidateMetricsQueryService : ICandidateMetricsQueryService
         return key.ToLowerInvariant() switch
         {
             "applications" => await _db.Applications.AsNoTracking()
-                .Where(a => a.CandidateUserId == candidateUserId && a.CreatedAt >= from && a.CreatedAt <= to)
+                .Where(a => a.CandidateUserId == candidateUserId
+                            && a.EmailVerifiedAt != null
+                            && a.CreatedAt >= from && a.CreatedAt <= to)
                 .OrderByDescending(a => a.CreatedAt)
                 .Select(a => new MetricDrilldownItemDto(
                     a.Id, a.Vacancy.Title, a.Vacancy.Company.Name, a.CreatedAt, null))

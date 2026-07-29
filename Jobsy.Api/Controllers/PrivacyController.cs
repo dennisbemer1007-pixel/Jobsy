@@ -78,7 +78,7 @@ public sealed class PrivacyController : ControllerBase
 
     /// <summary>Account deletion step 2 — verify code, block account and clean data.</summary>
     [HttpPost("confirm-unsubscribe")]
-    [EnableRateLimiting("auth")]
+    [EnableRateLimiting("otp-verify")]
     public async Task<IActionResult> ConfirmUnsubscribe(
         [FromBody] ConfirmUnsubscribeRequest request,
         CancellationToken cancellationToken)
@@ -107,7 +107,7 @@ public sealed class PrivacyController : ControllerBase
     /// and the e-mail verification code (same as <c>confirm-unsubscribe</c>).
     /// </summary>
     [HttpPost("delete-account")]
-    [EnableRateLimiting("auth")]
+    [EnableRateLimiting("otp-verify")]
     public async Task<IActionResult> DeleteAccount(
         [FromBody] ConfirmUnsubscribeRequest? request,
         CancellationToken cancellationToken)

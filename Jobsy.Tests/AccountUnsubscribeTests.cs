@@ -2,6 +2,7 @@ using System.Security.Claims;
 using Jobsy.Core.Entities;
 using Jobsy.Core.Enums;
 using Jobsy.Core.Privacy;
+using Jobsy.Core.Security;
 using Jobsy.Core.ValueObjects;
 using Jobsy.Infrastructure.Data;
 using Jobsy.Infrastructure.Services;
@@ -172,6 +173,45 @@ public class AccountUnsubscribeTests
             privacy.ConfirmUnsubscribeAsync(principal, "000000"));
         Assert.Contains("Onjuiste", wrong.Message, StringComparison.OrdinalIgnoreCase);
         Assert.True((await db.Users.SingleAsync(u => u.Id == candidateId)).IsActive);
+        Assert.Equal(1, (await db.Users.SingleAsync(u => u.Id == candidateId)).UnsubscribeVerificationFailedAttempts);
+    }
+
+    [Fact]
+    public async Task Confirm_locks_out_after_max_failed_otp_attempts()
+    {
+        await using var db = CreateDb();
+        var candidateId = Guid.NewGuid();
+        const string email = "lockout@test.nl";
+        db.Users.Add(new User
+        {
+            Id = candidateId,
+            Email = email,
+            FullName = "Test",
+            Role = UserRole.Candidate,
+            IsActive = true,
+            UnsubscribeReasonCode = AccountUnsubscribeReasons.FoundJob,
+            UnsubscribeVerificationCode = "654321",
+            UnsubscribeVerificationExpiresAt = DateTime.UtcNow.AddMinutes(10)
+        });
+        await db.SaveChangesAsync();
+
+        var privacy = CreatePrivacy(db);
+        var principal = CreatePrincipal(email);
+
+        for (var i = 1; i < VerificationCodes.MaxFailedAttempts; i++)
+        {
+            var wrong = await Assert.ThrowsAsync<ArgumentException>(() =>
+                privacy.ConfirmUnsubscribeAsync(principal, "000000"));
+            Assert.Contains("Onjuiste", wrong.Message, StringComparison.OrdinalIgnoreCase);
+        }
+
+        var locked = await Assert.ThrowsAsync<ArgumentException>(() =>
+            privacy.ConfirmUnsubscribeAsync(principal, "000000"));
+        Assert.Contains("Te veel", locked.Message, StringComparison.OrdinalIgnoreCase);
+
+        var user = await db.Users.SingleAsync(u => u.Id == candidateId);
+        Assert.Null(user.UnsubscribeVerificationCode);
+        Assert.True(user.IsActive);
     }
 
     [Fact]

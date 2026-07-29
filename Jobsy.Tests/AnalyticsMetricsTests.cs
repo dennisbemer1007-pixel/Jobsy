@@ -59,7 +59,8 @@ public class AnalyticsMetricsTests
             CandidateEmail = "c@example.com",
             CandidateCity = "Delft",
             Status = ApplicationStatus.Pending,
-            CreatedAt = DateTime.UtcNow
+            CreatedAt = DateTime.UtcNow,
+            EmailVerifiedAt = DateTime.UtcNow
         });
         db.SiteVisits.AddRange(
             new SiteVisit

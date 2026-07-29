@@ -1,14 +1,16 @@
 @using Jobsy.Web.Help
+@using Jobsy.Web.Localization
 @implements IDisposable
 @inject NavigationManager Navigation
+@inject CultureState Culture
 
 @if (_doc is not null)
 {
     <div class="page-help">
         <button type="button"
                 class="page-help__btn @(_open ? "is-open" : null)"
-                title="Info over deze pagina"
-                aria-label="Info over deze pagina: @_doc.Title"
+                title="@Culture["Help.AboutPage"]"
+                aria-label="@($"{Culture["Help.AboutPage"]}: {_doc.Title}")"
                 aria-expanded="@_open"
                 aria-controls="page-help-panel"
                 @onclick="Toggle">
@@ -20,19 +22,19 @@
             <aside id="page-help-panel" class="page-help__panel" role="dialog" aria-label="@_doc.Title">
                 <div class="page-help__panel-head">
                     <strong>@_doc.Title</strong>
-                    <button type="button" class="page-help__close" aria-label="Sluiten" @onclick="Close">×</button>
+                    <button type="button" class="page-help__close" aria-label="@Culture["Common.Close"]" @onclick="Close">×</button>
                 </div>
                 <dl class="page-help__list">
                     <div>
-                        <dt>Doel</dt>
+                        <dt>@Culture["Help.Purpose"]</dt>
                         <dd>@_doc.Purpose</dd>
                     </div>
                     <div>
-                        <dt>Werking</dt>
+                        <dt>@Culture["Help.HowItWorks"]</dt>
                         <dd>@_doc.HowItWorks</dd>
                     </div>
                     <div>
-                        <dt>Waarvoor</dt>
+                        <dt>@Culture["Help.UsedFor"]</dt>
                         <dd>@_doc.UsedFor</dd>
                     </div>
                 </dl>
@@ -49,6 +51,7 @@
     protected override void OnInitialized()
     {
         Navigation.LocationChanged += OnLocationChanged;
+        Culture.Changed += OnCultureChanged;
         RefreshFromUri();
     }
 
@@ -58,6 +61,9 @@
         RefreshFromUri();
         _ = InvokeAsync(StateHasChanged);
     }
+
+    private void OnCultureChanged()
+        => InvokeAsync(StateHasChanged);
 
     private void RefreshFromUri()
     {
@@ -70,5 +76,8 @@
     private void Close() => _open = false;
 
     public void Dispose()
-        => Navigation.LocationChanged -= OnLocationChanged;
+    {
+        Navigation.LocationChanged -= OnLocationChanged;
+        Culture.Changed -= OnCultureChanged;
+    }
 }

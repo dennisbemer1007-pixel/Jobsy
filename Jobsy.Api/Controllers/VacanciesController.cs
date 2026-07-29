@@ -251,7 +251,7 @@ public class VacanciesController : ControllerBase
             .Select(g => new { VacancyId = g.Key, Count = g.Count() })
             .ToDictionaryAsync(x => x.VacancyId, x => x.Count, cancellationToken);
         var applicationCounts = await _db.Applications.AsNoTracking()
-            .Where(a => ids.Contains(a.VacancyId))
+            .Where(a => ids.Contains(a.VacancyId) && a.EmailVerifiedAt != null)
             .GroupBy(a => a.VacancyId)
             .Select(g => new { VacancyId = g.Key, Count = g.Count() })
             .ToDictionaryAsync(x => x.VacancyId, x => x.Count, cancellationToken);
