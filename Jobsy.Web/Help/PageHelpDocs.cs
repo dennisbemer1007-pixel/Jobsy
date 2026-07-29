@@ -168,7 +168,7 @@ public static class PageHelpDocs
         ["/employer/company"] = new(
             "Bedrijfsgegevens",
             "Organisatiegegevens, CSV Batch Import en externe API-koppeling.",
-            "Bekijk NAW en KVK. Schakel CSV Batch Import in om de navigatietab CSV Import te tonen. Beheer API-keys (genereren, deactiveren, e-mailen) voor ATS-partners. Vacatures via CSV of API komen binnen als concept; publiceren (en tokens) doe je in Lobsy onder Vacatures.",
+            "Bekijk NAW en KVK. Schakel CSV Batch Import in om de navigatietab CSV Import te tonen. Beheer API-keys (genereren, deactiveren, e-mailen) voor ATS-partners: bekijk endpoint, header en Swagger voor request/response. Vacatures via CSV of API komen binnen als concept; publiceren (en tokens) doe je in Lobsy onder Vacatures.",
             "Organisatie veilig koppelen aan batch-CSV en externe systemen."),
 
         ["/employer/csv-import"] = new(

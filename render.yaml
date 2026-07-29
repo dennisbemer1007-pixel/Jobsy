@@ -50,6 +50,11 @@ services:
           property: connectionString
       - key: PublicWebBaseUrl
         value: "https://lobsy.nl"
+      - key: PublicApiBaseUrl
+        fromService:
+          name: jobsy-api
+          type: web
+          envVarKey: RENDER_EXTERNAL_URL
       - key: Cors__AllowedOrigins__0
         fromService:
           name: jobsy-web

@@ -1,6 +1,7 @@
 using System.Threading.RateLimiting;
 using Jobsy.Api.Authorization;
 using Jobsy.Api.Jobs;
+using Jobsy.Api.Swagger;
 using Jobsy.Core;
 using Jobsy.Infrastructure;
 using Microsoft.AspNetCore.HttpOverrides;
@@ -24,7 +25,7 @@ builder.Services.AddControllers()
             new System.Text.Json.Serialization.JsonStringEnumConverter());
     });
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+builder.Services.AddSwaggerGen(ExternalApiSwagger.Configure);
 builder.Services.AddInfrastructure(builder.Configuration, builder.Environment);
 builder.Services.AddJobsyApiAuthorization(builder.Configuration, builder.Environment);
 builder.Services.AddHostedService<DatabaseSeedHostedService>();
@@ -107,10 +108,18 @@ app.Use(async (context, next) =>
     await next();
 });
 
+// Partner docs for the external vacancy API (X-API-Key). Always available so employers
+// can open the Swagger link from Bedrijfsgegevens — only documents /api/external/vacancies.
+app.UseSwagger();
+app.UseSwaggerUI(options =>
+{
+    options.SwaggerEndpoint($"/swagger/{ExternalApiSwagger.DocumentName}/swagger.json", "Lobsy externe vacature-API");
+    options.DocumentTitle = "Lobsy API · Swagger";
+    options.RoutePrefix = "swagger";
+});
+
 if (app.Environment.IsDevelopment())
 {
-    app.UseSwagger();
-    app.UseSwaggerUI();
     app.UseHttpsRedirection();
 }
 else

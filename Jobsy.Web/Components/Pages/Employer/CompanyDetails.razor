@@ -4,6 +4,7 @@
 @inject JobsyApiClient Api
 @inject IJSRuntime Js
 @inject BottomNavRefreshService NavRefresh
+@inject IConfiguration Configuration
 
 <PageTitle>Bedrijfsgegevens · Lobsy</PageTitle>
 
@@ -131,15 +132,43 @@
             <section class="panel-section">
                 <h2>API-koppeling</h2>
                 <p class="muted">
-                    Externe systemen kunnen vacatures aanmaken, wijzigen en status opvragen via
-                    <code>X-API-Key</code> op <code>/api/external/vacancies</code>.
+                    Externe systemen kunnen vacatures aanmaken, wijzigen en status opvragen.
                     Nieuwe vacatures blijven concept tot je ze in Lobsy publiceert (tokenverwerking).
                     De volledige sleutel wordt nooit opgeslagen — alleen een hash.
                 </p>
 
+                <div class="api-cred-panel">
+                    <div class="api-cred-field">
+                        <span class="api-cred-field__label">Endpoint</span>
+                        <div class="api-cred-field__row">
+                            <code class="api-cred-field__value">@_vacanciesEndpoint</code>
+                            <button type="button"
+                                    class="api-key-modal__copy @(_endpointCopied ? "is-copied" : null)"
+                                    title="@(_endpointCopied ? "Gekopieerd" : "Endpoint kopiëren")"
+                                    aria-label="@(_endpointCopied ? "Gekopieerd" : "Endpoint kopiëren")"
+                                    @onclick="() => CopyTextAsync(_vacanciesEndpoint, CopiedField.Endpoint)">
+                                @((MarkupString)(_endpointCopied ? CheckSvg : CopySvg))
+                            </button>
+                        </div>
+                    </div>
+                    <div class="api-cred-field">
+                        <span class="api-cred-field__label">Header</span>
+                        <code class="api-cred-field__value">X-API-Key: &lt;jouw-api-key&gt;</code>
+                    </div>
+                    <div class="api-cred-field">
+                        <span class="api-cred-field__label">Documentatie (Swagger)</span>
+                        <p class="api-cred-field__help">
+                            Open Swagger om de verbinding te testen en te zien hoe request en response eruitzien.
+                        </p>
+                        <a class="api-cred-field__link" href="@_swaggerUrl" target="_blank" rel="noopener noreferrer">
+                            @_swaggerUrl
+                        </a>
+                    </div>
+                </div>
+
                 @if (_activeKey is null)
                 {
-                    <div class="inline-actions">
+                    <div class="inline-actions" style="margin-top:1rem">
                         <button class="login-submit" type="button" disabled="@_busy" @onclick="GenerateAsync">
                             API Key genereren
                         </button>
@@ -153,29 +182,31 @@
                 }
                 else
                 {
-                    <div class="table-list" style="margin-bottom:1rem">
-                        <div class="table-row">
-                            <div>
-                                <strong>@_activeKey.Name</strong>
-                                <span class="muted">
-                                    @_activeKey.KeyPrefix
-                                    · actief
-                                    · aangemaakt @_activeKey.CreatedAt.ToLocalTime().ToString("dd-MM-yyyy HH:mm")
-                                    @if (_activeKey.LastUsedAt is DateTime used)
-                                    {
-                                        <text> · laatst gebruikt @used.ToLocalTime().ToString("dd-MM-yyyy HH:mm")</text>
-                                    }
-                                    else
-                                    {
-                                        <text> · nog niet gebruikt</text>
-                                    }
-                                </span>
-                            </div>
+                    <div class="api-cred-panel api-cred-panel--key" style="margin-top:1rem">
+                        <div class="api-cred-field">
+                            <span class="api-cred-field__label">Actieve API-key</span>
+                            <strong class="api-cred-field__name">@_activeKey.Name</strong>
+                            <code class="api-cred-field__value api-cred-field__value--key">@_activeKey.KeyPrefix</code>
+                            <p class="muted api-cred-field__meta">
+                                actief
+                                · aangemaakt @_activeKey.CreatedAt.ToLocalTime().ToString("dd-MM-yyyy HH:mm")
+                                @if (_activeKey.LastUsedAt is DateTime used)
+                                {
+                                    <text> · laatst gebruikt @used.ToLocalTime().ToString("dd-MM-yyyy HH:mm")</text>
+                                }
+                                else
+                                {
+                                    <text> · nog niet gebruikt</text>
+                                }
+                            </p>
+                            <p class="muted api-cred-field__help">
+                                Alleen het prefix is zichtbaar. De volledige key is één keer getoond bij genereren of e-mail.
+                            </p>
                         </div>
                     </div>
-                    <div class="inline-actions">
+                    <div class="inline-actions" style="margin-top:0.85rem">
                         <button class="btn-compact" type="button" disabled="@_busy" @onclick="DeactivateAsync">
-                            Desactiveren
+                            Deactiveren
                         </button>
                         <button class="btn-compact" type="button" disabled="@_busy" @onclick="GenerateAsync">
                             Nieuwe key genereren
@@ -189,6 +220,14 @@
                     </p>
                 }
 
+                <details class="api-cred-example">
+                    <summary>Voorbeeld aanroep en response</summary>
+                    <p class="muted">POST — vacature aanmaken (komt binnen als concept):</p>
+                    <pre class="api-cred-example__code">@ExampleRequestCurl</pre>
+                    <p class="muted">Response (201):</p>
+                    <pre class="api-cred-example__code">@ExampleResponseJson</pre>
+                </details>
+
                 @if (_inactiveKeys.Count > 0)
                 {
                     <h3 style="margin-top:1.5rem">Eerdere keys</h3>
@@ -199,7 +238,7 @@
                                 <div>
                                     <strong>@k.Name</strong>
                                     <span class="muted">
-                                        @k.KeyPrefix · inactief · @k.CreatedAt.ToLocalTime().ToString("dd-MM-yyyy")
+                                        <code>@k.KeyPrefix</code> · inactief · @k.CreatedAt.ToLocalTime().ToString("dd-MM-yyyy")
                                     </span>
                                 </div>
                             </div>
@@ -225,38 +264,56 @@
             <h2 id="api-key-modal-title">API-key gegenereerd</h2>
             <button type="button" class="share-modal__close" @onclick="CloseKeyModal" aria-label="Sluiten">×</button>
         </div>
-        <p class="share-modal__lead">
+        <p class="share-modal__lead api-key-modal__lead">
             <strong>Let op:</strong> deze sleutel is slechts één keer zichtbaar. Kopieer en bewaar hem veilig.
             Gebruik daarna niet “Verzend via e-mail” — dat maakt een andere key aan.
         </p>
+
         <label class="api-key-modal__label" for="api-key-value">API-key</label>
         <div class="api-key-modal__row">
-            <input id="api-key-value"
-                   class="api-key-modal__input"
-                   type="text"
-                   readonly
-                   value="@_generated.PlaintextKey"
-                   onclick="this.select()" />
+            <pre id="api-key-value"
+                 class="api-key-modal__value"
+                 tabindex="0">@_generated.PlaintextKey</pre>
             <button type="button"
                     class="api-key-modal__copy @(_keyCopied ? "is-copied" : null)"
                     title="@(_keyCopied ? "Gekopieerd" : "API-key kopiëren")"
                     aria-label="@(_keyCopied ? "Gekopieerd" : "API-key kopiëren")"
-                    @onclick="CopyApiKeyAsync">
-                @if (_keyCopied)
-                {
-                    @((MarkupString)CheckSvg)
-                }
-                else
-                {
-                    @((MarkupString)CopySvg)
-                }
+                    @onclick="() => CopyTextAsync(_generated.PlaintextKey, CopiedField.ApiKey)">
+                @((MarkupString)(_keyCopied ? CheckSvg : CopySvg))
             </button>
         </div>
+
+        <label class="api-key-modal__label">Endpoint</label>
+        <div class="api-key-modal__row">
+            <code class="api-key-modal__value api-key-modal__value--endpoint">@_vacanciesEndpoint</code>
+            <button type="button"
+                    class="api-key-modal__copy @(_endpointCopied ? "is-copied" : null)"
+                    title="@(_endpointCopied ? "Gekopieerd" : "Endpoint kopiëren")"
+                    aria-label="@(_endpointCopied ? "Gekopieerd" : "Endpoint kopiëren")"
+                    @onclick="() => CopyTextAsync(_vacanciesEndpoint, CopiedField.Endpoint)">
+                @((MarkupString)(_endpointCopied ? CheckSvg : CopySvg))
+            </button>
+        </div>
+
+        <p class="api-key-modal__meta">
+            Header: <code>X-API-Key</code>
+            · prefix <code>@_generated.KeyPrefix</code>
+        </p>
+        <p class="api-key-modal__meta">
+            Swagger (request/response):
+            <a href="@_swaggerUrl" target="_blank" rel="noopener noreferrer">@_swaggerUrl</a>
+        </p>
+
+        <details class="api-cred-example api-cred-example--modal">
+            <summary>Voorbeeld aanroep en response</summary>
+            <pre class="api-cred-example__code">@ExampleRequestCurl</pre>
+            <pre class="api-cred-example__code">@ExampleResponseJson</pre>
+        </details>
+
         @if (!string.IsNullOrEmpty(_keyCopyMessage))
         {
             <p class="state-message @(_keyCopyFailed ? "error" : null)">@_keyCopyMessage</p>
         }
-        <p class="muted">Header: <code>X-API-Key: …</code> · prefix @_generated.KeyPrefix</p>
         <div class="inline-actions" style="margin-top:1rem">
             <button class="login-submit" type="button" @onclick="CloseKeyModal">Ik heb de key bewaard</button>
         </div>
@@ -283,6 +340,13 @@
 }
 
 @code {
+    private enum CopiedField
+    {
+        None,
+        ApiKey,
+        Endpoint
+    }
+
     private const string CopySvg =
         "<svg width=\"18\" height=\"18\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.75\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><rect x=\"9\" y=\"9\" width=\"11\" height=\"11\" rx=\"2\"/><path d=\"M5 15V5a2 2 0 0 1 2-2h10\"/></svg>";
 
@@ -310,10 +374,34 @@
     private string _contactPhone = "";
     private string _contactWhatsApp = "";
     private bool _keyCopied;
+    private bool _endpointCopied;
     private bool _keyCopyFailed;
     private string? _keyCopyMessage;
+    private string _apiBaseUrl = "http://localhost:5200";
+    private string _vacanciesEndpoint = "http://localhost:5200/api/external/vacancies";
+    private string _swaggerUrl = "http://localhost:5200/swagger";
 
-    protected override async Task OnInitializedAsync() => await ReloadAsync();
+    private string ExampleRequestCurl => ExternalApiDocsCopy.ExampleRequestCurl(_vacanciesEndpoint);
+    private static string ExampleResponseJson => ExternalApiDocsCopy.ExampleResponseJson;
+
+    protected override async Task OnInitializedAsync()
+    {
+        ResolveApiUrls();
+        await ReloadAsync();
+    }
+
+    private void ResolveApiUrls()
+    {
+        var raw = Configuration["ApiBaseUrl"];
+        if (string.IsNullOrWhiteSpace(raw))
+        {
+            raw = "http://localhost:5200";
+        }
+
+        _apiBaseUrl = Jobsy.Core.JobsyPublicUrl.NormalizeOrigin(raw).TrimEnd('/');
+        _vacanciesEndpoint = _apiBaseUrl + "/api/external/vacancies";
+        _swaggerUrl = _apiBaseUrl + "/swagger";
+    }
 
     private async Task ReloadAsync()
     {
@@ -604,13 +692,14 @@
         _showKeyModal = false;
         _generated = null;
         _keyCopied = false;
+        _endpointCopied = false;
         _keyCopyFailed = false;
         _keyCopyMessage = null;
     }
 
-    private async Task CopyApiKeyAsync()
+    private async Task CopyTextAsync(string? text, CopiedField field)
     {
-        if (_generated is null || string.IsNullOrWhiteSpace(_generated.PlaintextKey))
+        if (string.IsNullOrWhiteSpace(text))
         {
             return;
         }
@@ -619,21 +708,28 @@
         _keyCopyMessage = null;
         try
         {
-            var copied = await Js.InvokeAsync<bool>("jobsyGeo.copyText", _generated.PlaintextKey);
+            var copied = await Js.InvokeAsync<bool>("jobsyGeo.copyText", text);
             if (copied)
             {
-                _keyCopied = true;
-                _keyCopyMessage = "API-key gekopieerd naar het klembord.";
+                _keyCopied = field == CopiedField.ApiKey;
+                _endpointCopied = field == CopiedField.Endpoint;
+                _keyCopyMessage = field switch
+                {
+                    CopiedField.ApiKey => "API-key gekopieerd naar het klembord.",
+                    CopiedField.Endpoint => "Endpoint gekopieerd naar het klembord.",
+                    _ => "Gekopieerd naar het klembord."
+                };
                 await InvokeAsync(StateHasChanged);
                 await Task.Delay(1800);
                 _keyCopied = false;
+                _endpointCopied = false;
                 _keyCopyMessage = null;
                 await InvokeAsync(StateHasChanged);
             }
             else
             {
                 _keyCopyFailed = true;
-                _keyCopyMessage = "Kopiëren mislukt. Selecteer de key en kopieer handmatig.";
+                _keyCopyMessage = "Kopiëren mislukt. Selecteer de tekst en kopieer handmatig.";
             }
         }
         catch (Exception ex)
