@@ -644,6 +644,8 @@
         Navigation.LocationChanged += OnLocationChanged;
         ApplyWorkTypeFromQuery();
         ApplySearchQueryFromQuery();
+        ApplyTravelFromQuery();
+        ApplyTransportFromQuery();
         try
         {
             await LoadBranchOptionsAsync();
@@ -697,12 +699,23 @@
     {
         var beforeTypes = _selectedWorkTypes.ToHashSet(StringComparer.OrdinalIgnoreCase);
         var beforeQuery = _searchQuery;
+        var beforeMinutes = _maxTravelMinutes;
+        var beforeTransport = _selectedTransport;
         ApplyWorkTypeFromQuery();
         ApplySearchQueryFromQuery();
+        ApplyTravelFromQuery();
+        ApplyTransportFromQuery();
         if (!beforeTypes.SetEquals(_selectedWorkTypes)
-            || !string.Equals(beforeQuery, _searchQuery, StringComparison.Ordinal))
+            || !string.Equals(beforeQuery, _searchQuery, StringComparison.Ordinal)
+            || beforeMinutes != _maxTravelMinutes
+            || !string.Equals(beforeTransport, _selectedTransport, StringComparison.OrdinalIgnoreCase))
         {
             showMapOnMobile = true;
+            if (_mapReady)
+            {
+                try { await Js.InvokeVoidAsync("jobMap.setTravelOptions", TravelMapOptions()); }
+                catch { /* ignore */ }
+            }
             await LoadVacanciesAsync();
             await InvokeAsync(StateHasChanged);
         }
@@ -744,6 +757,45 @@
 
         var raw = values.FirstOrDefault()?.Trim();
         _searchQuery = string.IsNullOrWhiteSpace(raw) ? null : raw;
+    }
+
+    private void ApplyTravelFromQuery()
+    {
+        var uri = Navigation.ToAbsoluteUri(Navigation.Uri);
+        if (!QueryHelpers.ParseQuery(uri.Query).TryGetValue("maxMinutes", out var values))
+        {
+            return;
+        }
+
+        var raw = values.FirstOrDefault()?.Trim();
+        if (int.TryParse(raw, out var minutes))
+        {
+            _maxTravelMinutes = Math.Clamp(minutes, 5, 90);
+        }
+    }
+
+    private void ApplyTransportFromQuery()
+    {
+        var uri = Navigation.ToAbsoluteUri(Navigation.Uri);
+        if (!QueryHelpers.ParseQuery(uri.Query).TryGetValue("transport", out var values))
+        {
+            return;
+        }
+
+        var raw = values.FirstOrDefault()?.Trim();
+        if (string.IsNullOrWhiteSpace(raw))
+        {
+            return;
+        }
+
+        _selectedTransport = raw switch
+        {
+            var t when t.Equals("Lopend", StringComparison.OrdinalIgnoreCase) => "Lopend",
+            var t when t.Equals("Fiets", StringComparison.OrdinalIgnoreCase) => "Fiets",
+            var t when t.Equals("Auto", StringComparison.OrdinalIgnoreCase) => "Auto",
+            var t when t.Equals("OV", StringComparison.OrdinalIgnoreCase) => "OV",
+            _ => _selectedTransport
+        };
     }
 
     private async Task LoadBranchOptionsAsync()

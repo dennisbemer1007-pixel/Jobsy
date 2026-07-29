@@ -2,6 +2,7 @@ using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text;
 using System.Text.Json;
+using System.Text.RegularExpressions;
 using Jobsy.Core.Authorization;
 using Jobsy.Core.Contracts;
 using Jobsy.Core.Enums;
@@ -31,7 +32,12 @@ public sealed class AssistantChatService : IAssistantChatService
         "in", "mijn", "me", "kan", "je", "jij", "mij", "please", "for", "the", "a", "an", "and",
         "or", "is", "zijn", "daar", "hier", "lobsy", "jobsy", "open", "openen", "link", "doorlink",
         "buurt", "omgeving", "regio", "plaats", "stad", "dichtbij", "nearby", "area", "alle", "all",
-        "iets", "passends", "graag", "heb", "bent", "ben"
+        "iets", "passends", "graag", "heb", "bent", "ben",
+        // Travel / proximity noise — these become map filters, not keyword search.
+        "max", "binnen", "within", "min", "minuut", "minuten", "minute", "minutes",
+        "lopen", "lopend", "loopafstand", "vandaan", "reistijd", "travel", "walking", "walk",
+        "fiets", "fietsen", "bike", "cycling", "auto", "car", "rijden", "driving",
+        "ov", "tram", "bus", "metro", "transit", "voet"
     ];
 
     private readonly JobsyDbContext _db;
@@ -144,10 +150,14 @@ public sealed class AssistantChatService : IAssistantChatService
             }
 
             var workType = DetectWorkType(text);
+            var maxTravelMinutes = DetectMaxTravelMinutes(text);
+            var transport = DetectTransport(text);
             var jobQuery = ExtractJobSearchQuery(lastUser, workType);
-            if (IsVacancySearchIntent(text, workType, jobQuery))
+            if (IsVacancySearchIntent(text, workType, jobQuery)
+                || (workType is not null && (maxTravelMinutes is not null || transport is not null)))
             {
-                return await CandidateVacancySearchAsync(context, workType, jobQuery, cancellationToken);
+                return await CandidateVacancySearchAsync(
+                    context, workType, jobQuery, maxTravelMinutes, transport, cancellationToken);
             }
         }
 
@@ -239,6 +249,8 @@ public sealed class AssistantChatService : IAssistantChatService
         AssistantChatContext context,
         string? workType,
         string? searchQuery,
+        int? maxTravelMinutes,
+        string? transport,
         CancellationToken cancellationToken)
     {
         var today = DateOnly.FromDateTime(DateTime.UtcNow);
@@ -271,25 +283,54 @@ public sealed class AssistantChatService : IAssistantChatService
         var matches = matched.Take(8).ToList();
 
         var lang = JobsyLanguages.Normalize(context.Language);
-        var label = !string.IsNullOrWhiteSpace(searchQuery)
-            ? searchQuery
-            : workType ?? (lang == "en" ? "all sectors" : "alle branches");
+        var filterSummary = BuildFilterSummary(workType, searchQuery, maxTravelMinutes, transport, lang);
+        var hasTravelFilters = maxTravelMinutes is not null || !string.IsNullOrWhiteSpace(transport);
 
         var sb = new StringBuilder();
-        if (count == 0)
+        if (count == 0 && !string.IsNullOrWhiteSpace(searchQuery))
         {
             sb.Append(lang switch
             {
-                "en" => $"I couldn’t find vacancies for “{label}”. Try another job title or sector.",
-                _ => $"Ik kon geen vacatures vinden voor “{label}”. Probeer een andere functienaam of branche."
+                "en" => $"I couldn’t find vacancies for “{searchQuery}”. Try another job title or sector.",
+                _ => $"Ik kon geen vacatures vinden voor “{searchQuery}”. Probeer een andere functienaam of branche."
+            });
+        }
+        else if (hasTravelFilters)
+        {
+            sb.AppendLine(lang switch
+            {
+                "en" => $"I’ve set the filters to {filterSummary}. Vacancies within your travel time appear on the job map (set your location if it isn’t active yet).",
+                _ => $"Ik zet de filters op {filterSummary}. Vacatures binnen jouw reistijd verschijnen op de banenkaart (deel je locatie als die nog niet actief is)."
+            });
+
+            if (count > 0 && string.IsNullOrWhiteSpace(searchQuery))
+            {
+                sb.AppendLine(lang switch
+                {
+                    "en" => $"There are {count} vacancies in this sector overall — the map applies your travel filter.",
+                    _ => $"Er zijn {count} vacatures in deze branche — de kaart past jouw reistijdfilter toe."
+                });
+            }
+
+            foreach (var m in matches.Take(5))
+            {
+                sb.AppendLine($"• {m.Title} — {m.Company}");
+            }
+        }
+        else if (count == 0)
+        {
+            sb.Append(lang switch
+            {
+                "en" => $"I couldn’t find vacancies for “{filterSummary}”. Try another job title or sector.",
+                _ => $"Ik kon geen vacatures vinden voor “{filterSummary}”. Probeer een andere functienaam of branche."
             });
         }
         else
         {
             sb.AppendLine(lang switch
             {
-                "en" => $"I found {count} vacancies containing “{label}”. Showing them on the job map.",
-                _ => $"Ik heb {count} vacatures gevonden met “{label}” in de tekst. Ik toon ze op de banenkaart."
+                "en" => $"I found {count} vacancies for {filterSummary}. Showing them on the job map.",
+                _ => $"Ik heb {count} vacatures gevonden voor {filterSummary}. Ik toon ze op de banenkaart."
             });
 
             foreach (var m in matches)
@@ -305,12 +346,14 @@ public sealed class AssistantChatService : IAssistantChatService
             }
         }
 
-        var url = BuildMapFilterUrl(workType, searchQuery);
+        var url = BuildMapFilterUrl(workType, searchQuery, maxTravelMinutes, transport);
         var actions = new List<AssistantChatAction>
         {
             new(AssistantActionTypes.SetFilters, Url: url, WorkType: workType, SearchQuery: searchQuery, Count: count,
-                Label: lang == "en" ? "Show on map" : "Toon op kaart"),
-            new(AssistantActionTypes.Navigate, Url: url, Label: lang == "en" ? "Job map" : "Banenkaart")
+                Label: lang == "en" ? "Show on map" : "Toon op kaart",
+                MaxTravelMinutes: maxTravelMinutes, Transport: transport),
+            new(AssistantActionTypes.Navigate, Url: url, Label: lang == "en" ? "Job map" : "Banenkaart",
+                MaxTravelMinutes: maxTravelMinutes, Transport: transport)
         };
 
         foreach (var m in matches)
@@ -335,7 +378,11 @@ public sealed class AssistantChatService : IAssistantChatService
         string? RequiredDrivingLicense,
         string? RequiredEducation);
 
-    private static string BuildMapFilterUrl(string? workType, string? searchQuery)
+    private static string BuildMapFilterUrl(
+        string? workType,
+        string? searchQuery,
+        int? maxTravelMinutes = null,
+        string? transport = null)
     {
         var parts = new List<string>();
         if (!string.IsNullOrWhiteSpace(workType))
@@ -348,7 +395,58 @@ public sealed class AssistantChatService : IAssistantChatService
             parts.Add($"q={Uri.EscapeDataString(searchQuery.Trim())}");
         }
 
+        if (maxTravelMinutes is int minutes)
+        {
+            parts.Add($"maxMinutes={minutes}");
+        }
+
+        if (!string.IsNullOrWhiteSpace(transport))
+        {
+            parts.Add($"transport={Uri.EscapeDataString(transport)}");
+        }
+
         return parts.Count == 0 ? "/" : "/?" + string.Join("&", parts);
+    }
+
+    private static string BuildFilterSummary(
+        string? workType,
+        string? searchQuery,
+        int? maxTravelMinutes,
+        string? transport,
+        string lang)
+    {
+        var parts = new List<string>();
+        if (!string.IsNullOrWhiteSpace(searchQuery))
+        {
+            parts.Add($"“{searchQuery}”");
+        }
+        else if (!string.IsNullOrWhiteSpace(workType))
+        {
+            parts.Add(workType);
+        }
+        else
+        {
+            parts.Add(lang == "en" ? "all sectors" : "alle branches");
+        }
+
+        if (maxTravelMinutes is int minutes)
+        {
+            parts.Add(lang == "en" ? $"max {minutes} min" : $"max {minutes} min");
+        }
+
+        if (!string.IsNullOrWhiteSpace(transport))
+        {
+            parts.Add(transport switch
+            {
+                TransportLabels.Walking => lang == "en" ? "walking" : "lopen",
+                TransportLabels.Bike => lang == "en" ? "bike" : "fiets",
+                TransportLabels.Car => lang == "en" ? "car" : "auto",
+                TransportLabels.PublicTransport => lang == "en" ? "transit" : "OV",
+                _ => transport
+            });
+        }
+
+        return string.Join(", ", parts);
     }
 
     private async Task<AssistantChatResult> CandidateApplicationsAsync(
@@ -1130,10 +1228,11 @@ Verbetervoorstellen:
 
     /// <summary>
     /// Pull a job-title style query from free text (e.g. "chauffeur" from
-    /// "Ik zoek vacatures voor een chauffeur"), excluding branch labels.
+    /// "Ik zoek vacatures voor een chauffeur"), excluding branch labels and travel noise.
     /// </summary>
     public static string? ExtractJobSearchQuery(string raw, string? detectedWorkType)
     {
+        var cleaned = StripTravelAndProximityNoise(raw);
         var drop = new List<string>(WorkTypeLabels.All);
         if (!string.IsNullOrWhiteSpace(detectedWorkType))
         {
@@ -1147,7 +1246,86 @@ Verbetervoorstellen:
             "schoonmaak", "cleaning", "productie", "production", "fabriek", "cafe", "restaurant", "bar"
         ]);
 
-        return VacancyTextSearch.ExtractSearchPhrase(raw, SearchStopwords, drop);
+        return VacancyTextSearch.ExtractSearchPhrase(cleaned, SearchStopwords, drop);
+    }
+
+    /// <summary>Remove travel/proximity phrases so they don't become toxic ?q= keywords.</summary>
+    public static string StripTravelAndProximityNoise(string raw)
+    {
+        if (string.IsNullOrWhiteSpace(raw))
+        {
+            return raw;
+        }
+
+        var s = Regex.Replace(
+            raw,
+            @"\b(?:max|binnen|within)?\s*\d{1,3}\s*(?:min(?:uut|uten?)?|minutes?)\b",
+            " ",
+            RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
+        s = Regex.Replace(
+            s,
+            @"\b(?:te\s+voet|lopen|lopend|loopafstand|vandaan|reistijd|walking|walk|fiets(?:en)?|bike|cycling|auto|car|rijden|driving|ov|tram|bus|metro|transit)\b",
+            " ",
+            RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
+        return Regex.Replace(s, @"\s{2,}", " ").Trim();
+    }
+
+    public static int? DetectMaxTravelMinutes(string text)
+    {
+        if (string.IsNullOrWhiteSpace(text))
+        {
+            return null;
+        }
+
+        var match = Regex.Match(
+            text,
+            @"\b(?:max(?:imaal)?|binnen|within|tot)?\s*(\d{1,3})\s*(?:min(?:uut|uten?)?|minutes?)\b",
+            RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
+        if (!match.Success)
+        {
+            match = Regex.Match(
+                text,
+                @"\b(\d{1,3})\s*(?:min(?:uut|uten?)?|minutes?)\b",
+                RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
+        }
+
+        if (!match.Success || !int.TryParse(match.Groups[1].Value, out var minutes))
+        {
+            return null;
+        }
+
+        return Math.Clamp(minutes, 5, 90);
+    }
+
+    public static string? DetectTransport(string text)
+    {
+        if (string.IsNullOrWhiteSpace(text))
+        {
+            return null;
+        }
+
+        // Prefer the most specific mode mentioned; walking phrases beat generic "rijden".
+        if (ContainsAny(text, "lopen", "lopend", "te voet", "walking", "walk", "loopafstand"))
+        {
+            return TransportLabels.Walking;
+        }
+
+        if (ContainsAny(text, "fiets", "fietsen", "bike", "cycling"))
+        {
+            return TransportLabels.Bike;
+        }
+
+        if (Regex.IsMatch(text, @"\b(?:ov|tram|bus|metro|transit|openbaar)\b", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant))
+        {
+            return TransportLabels.PublicTransport;
+        }
+
+        if (ContainsAny(text, "auto", "car", "rijden", "driving"))
+        {
+            return TransportLabels.Car;
+        }
+
+        return null;
     }
 
     private static string? DetectWorkType(string text)

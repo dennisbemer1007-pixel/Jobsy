@@ -24,4 +24,6 @@ public sealed record AssistantChatActionDto(
     int? Count,
     string? Label,
     Guid? ApplicationId,
-    Guid? VacancyId);
+    Guid? VacancyId,
+    int? MaxTravelMinutes = null,
+    string? Transport = null);

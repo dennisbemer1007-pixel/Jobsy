@@ -29,7 +29,9 @@ public sealed record AssistantChatAction(
     int? Count = null,
     string? Label = null,
     Guid? ApplicationId = null,
-    Guid? VacancyId = null);
+    Guid? VacancyId = null,
+    int? MaxTravelMinutes = null,
+    string? Transport = null);
 
 public static class AssistantActionTypes
 {
