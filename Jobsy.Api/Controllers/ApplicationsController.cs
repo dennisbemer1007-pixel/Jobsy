@@ -710,7 +710,5 @@ public class ApplicationsController : ControllerBase
         return baseUrl + relativePath;
     }
 
-    private static string SafeHref(string url) => Html(url);
-
     private static string Html(string? value) => WebUtility.HtmlEncode(value ?? string.Empty);
 }
