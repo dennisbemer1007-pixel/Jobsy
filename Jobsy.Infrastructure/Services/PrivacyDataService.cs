@@ -276,7 +276,7 @@ public sealed class PrivacyDataService : IPrivacyDataService
 
         user.UnsubscribeReasonCode = code;
         user.UnsubscribeReasonOther = other;
-        user.UnsubscribeVerificationCode = verificationCode;
+        user.UnsubscribeVerificationCode = VerificationCodes.Hash(verificationCode);
         user.UnsubscribeVerificationExpiresAt = expiresAt;
         user.UnsubscribeVerificationFailedAttempts = 0;
 
@@ -350,7 +350,7 @@ public sealed class PrivacyDataService : IPrivacyDataService
             throw new InvalidOperationException("Te veel onjuiste pogingen. Vraag een nieuwe verificatiecode aan.");
         }
 
-        if (!VerificationCodes.FixedTimeEquals(user.UnsubscribeVerificationCode, code))
+        if (!VerificationCodes.MatchesHash(user.UnsubscribeVerificationCode, code))
         {
             var attempts = user.UnsubscribeVerificationFailedAttempts;
             var lockedOut = VerificationCodes.RegisterFailedAttempt(ref attempts);

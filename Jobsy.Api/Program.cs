@@ -108,15 +108,24 @@ app.Use(async (context, next) =>
     await next();
 });
 
-// Partner docs for the external vacancy API (X-API-Key). Always available so employers
-// can open the Swagger link from Bedrijfsgegevens — only documents /api/external/vacancies.
-app.UseSwagger();
-app.UseSwaggerUI(options =>
+// Partner docs for the external vacancy API (X-API-Key). Scoped to /api/external/vacancies.
+// Enabled by default for employer Swagger links; disable with Swagger:Enabled=false.
+var swaggerEnabled = builder.Configuration.GetValue("Swagger:Enabled", true);
+if (swaggerEnabled)
 {
-    options.SwaggerEndpoint($"/swagger/{ExternalApiSwagger.DocumentName}/swagger.json", "Lobsy externe vacature-API");
-    options.DocumentTitle = "Lobsy API · Swagger";
-    options.RoutePrefix = "swagger";
-});
+    app.UseSwagger();
+    app.UseSwaggerUI(options =>
+    {
+        options.SwaggerEndpoint($"/swagger/{ExternalApiSwagger.DocumentName}/swagger.json", "Lobsy externe vacature-API");
+        options.DocumentTitle = "Lobsy API · Swagger";
+        options.RoutePrefix = "swagger";
+        if (!app.Environment.IsDevelopment())
+        {
+            // Reduce abuse of live "Try it out" against production.
+            options.SupportedSubmitMethods();
+        }
+    });
+}
 
 if (app.Environment.IsDevelopment())
 {

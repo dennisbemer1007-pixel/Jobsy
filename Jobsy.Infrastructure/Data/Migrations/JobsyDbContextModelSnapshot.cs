@@ -143,8 +143,8 @@ namespace Jobsy.Infrastructure.Data.Migrations
                         .HasColumnType("double precision");
 
                     b.Property<string>("EmailVerificationCode")
-                        .HasMaxLength(6)
-                        .HasColumnType("character varying(6)");
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
 
                     b.Property<DateTime?>("EmailVerificationExpiresAt")
                         .HasColumnType("timestamp with time zone");
@@ -1535,8 +1535,8 @@ namespace Jobsy.Infrastructure.Data.Migrations
                         .HasColumnType("character varying(1000)");
 
                     b.Property<string>("UnsubscribeVerificationCode")
-                        .HasMaxLength(6)
-                        .HasColumnType("character varying(6)");
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
 
                     b.Property<DateTime?>("UnsubscribeVerificationExpiresAt")
                         .HasColumnType("timestamp with time zone");

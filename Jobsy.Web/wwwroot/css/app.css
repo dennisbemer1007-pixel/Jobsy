@@ -5360,9 +5360,10 @@ a.engagement-btn {
     line-height: 1.4;
 }
 
-.company-details__callout a {
-    font-weight: 700;
-    color: var(--brand);
+.company-details__callout--warn {
+    margin-bottom: 0.85rem;
+    border-color: color-mix(in srgb, var(--warn, #b45309) 28%, var(--border));
+    background: color-mix(in srgb, var(--warn, #b45309) 8%, var(--surface));
 }
 
 .company-details__empty-key {

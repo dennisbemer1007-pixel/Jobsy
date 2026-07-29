@@ -65,7 +65,7 @@ public class JobsyDbContext : DbContext
             entity.Property(e => e.FullName).HasMaxLength(256).IsRequired();
             entity.Property(e => e.PreferencesJson).HasMaxLength(8000);
             entity.Property(e => e.ConsentVersion).HasMaxLength(32);
-            entity.Property(e => e.UnsubscribeVerificationCode).HasMaxLength(6);
+            entity.Property(e => e.UnsubscribeVerificationCode).HasMaxLength(64);
             entity.Property(e => e.UnsubscribeReasonCode).HasMaxLength(64);
             entity.Property(e => e.UnsubscribeReasonOther).HasMaxLength(1000);
             entity.Property(e => e.HomeLocation)
@@ -209,7 +209,7 @@ public class JobsyDbContext : DbContext
             entity.Property(e => e.PreferredTransport).HasMaxLength(64).IsRequired();
             entity.Property(e => e.PreferencesSummary).HasMaxLength(2048);
             entity.Property(e => e.ConsentVersion).HasMaxLength(32);
-            entity.Property(e => e.EmailVerificationCode).HasMaxLength(6);
+            entity.Property(e => e.EmailVerificationCode).HasMaxLength(64);
             entity.Property(e => e.SnapshotAvailabilityJson).HasMaxLength(2048);
             entity.Property(e => e.SnapshotDrivingLicenses).HasMaxLength(512);
             entity.Property(e => e.SnapshotEducations).HasMaxLength(512);

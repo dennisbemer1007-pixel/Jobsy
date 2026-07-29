@@ -103,6 +103,11 @@ public sealed class CompanyApiKeyService : ICompanyApiKeyService
         var company = await _db.Companies.FirstOrDefaultAsync(c => c.Id == companyId, cancellationToken)
             ?? throw new KeyNotFoundException("Bedrijf niet gevonden.");
 
+        if (company.ParentCompanyId is not null)
+        {
+            throw new ArgumentException("API-keys horen bij de organisatie, niet bij een vestiging.");
+        }
+
         var label = NormalizeName(name);
         var plaintext = ApiKeyHasher.GeneratePlaintext();
         var entity = new ApiKey
@@ -174,6 +179,11 @@ public sealed class CompanyApiKeyService : ICompanyApiKeyService
         var company = await _db.Companies
             .FirstOrDefaultAsync(c => c.Id == companyId, cancellationToken)
             ?? throw new KeyNotFoundException("Bedrijf niet gevonden.");
+
+        if (company.ParentCompanyId is not null)
+        {
+            throw new ArgumentException("API-keys horen bij de organisatie, niet bij een vestiging.");
+        }
 
         var normalized = recipientEmail.Trim().ToLowerInvariant();
         if (string.IsNullOrWhiteSpace(normalized) || !normalized.Contains('@', StringComparison.Ordinal))

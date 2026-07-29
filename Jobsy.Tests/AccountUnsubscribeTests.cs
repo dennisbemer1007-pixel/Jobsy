@@ -1,13 +1,13 @@
 using System.Security.Claims;
 using Jobsy.Core.Entities;
 using Jobsy.Core.Enums;
+using Jobsy.Core.Interfaces;
 using Jobsy.Core.Privacy;
 using Jobsy.Core.Security;
 using Jobsy.Core.ValueObjects;
 using Jobsy.Infrastructure.Data;
 using Jobsy.Infrastructure.Services;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging.Abstractions;
 
 namespace Jobsy.Tests;
 
@@ -90,7 +90,7 @@ public class AccountUnsubscribeTests
         });
         await db.SaveChangesAsync();
 
-        var privacy = CreatePrivacy(db);
+        var privacy = CreatePrivacy(db, out var mail);
         var principal = CreatePrincipal(email);
 
         await privacy.RequestUnsubscribeAsync(
@@ -102,6 +102,7 @@ public class AccountUnsubscribeTests
         Assert.Equal(AccountUnsubscribeReasons.Other, pending.UnsubscribeReasonCode);
         Assert.Equal("Ik wil even stoppen met zoeken", pending.UnsubscribeReasonOther);
         Assert.False(string.IsNullOrWhiteSpace(pending.UnsubscribeVerificationCode));
+        Assert.Equal(VerificationCodes.HashLength, pending.UnsubscribeVerificationCode!.Length);
         Assert.NotNull(pending.UnsubscribeVerificationExpiresAt);
 
         var requestLog = await db.PlatformLogs
@@ -109,7 +110,8 @@ public class AccountUnsubscribeTests
             .SingleAsync();
         Assert.Contains("Ik wil even stoppen met zoeken", requestLog.Message);
 
-        var code = pending.UnsubscribeVerificationCode!;
+        var code = ExtractOtpFromMail(mail);
+        Assert.True(VerificationCodes.MatchesHash(pending.UnsubscribeVerificationCode, code));
         await privacy.ConfirmUnsubscribeAsync(principal, code);
 
         var user = await db.Users.SingleAsync(u => u.Id == candidateId);
@@ -153,7 +155,7 @@ public class AccountUnsubscribeTests
             Role = UserRole.Candidate,
             IsActive = true,
             UnsubscribeReasonCode = AccountUnsubscribeReasons.FoundJob,
-            UnsubscribeVerificationCode = "123456",
+            UnsubscribeVerificationCode = VerificationCodes.Hash("123456"),
             UnsubscribeVerificationExpiresAt = DateTime.UtcNow.AddMinutes(-1)
         });
         await db.SaveChangesAsync();
@@ -190,7 +192,7 @@ public class AccountUnsubscribeTests
             Role = UserRole.Candidate,
             IsActive = true,
             UnsubscribeReasonCode = AccountUnsubscribeReasons.FoundJob,
-            UnsubscribeVerificationCode = "654321",
+            UnsubscribeVerificationCode = VerificationCodes.Hash("654321"),
             UnsubscribeVerificationExpiresAt = DateTime.UtcNow.AddMinutes(10)
         });
         await db.SaveChangesAsync();
@@ -232,10 +234,10 @@ public class AccountUnsubscribeTests
         });
         await db.SaveChangesAsync();
 
-        var privacy = CreatePrivacy(db);
+        var privacy = CreatePrivacy(db, out var mail);
         var principal = CreatePrincipal(email);
         await privacy.RequestUnsubscribeAsync(principal, AccountUnsubscribeReasons.FoundJob, null);
-        var code = (await db.Users.SingleAsync(u => u.Id == oldId)).UnsubscribeVerificationCode!;
+        var code = ExtractOtpFromMail(mail);
         await privacy.ConfirmUnsubscribeAsync(principal, code);
 
         Assert.False(await db.Users.AnyAsync(u => u.Email == email && u.IsActive));
@@ -296,7 +298,7 @@ public class AccountUnsubscribeTests
         });
         await db.SaveChangesAsync();
 
-        var privacy = CreatePrivacy(db);
+        var privacy = CreatePrivacy(db, out var mail);
         var principal = new ClaimsPrincipal(new ClaimsIdentity(
         [
             new Claim(ClaimTypes.Email, email),
@@ -304,7 +306,7 @@ public class AccountUnsubscribeTests
         ], "test"));
 
         await privacy.RequestUnsubscribeAsync(principal, AccountUnsubscribeReasons.Privacy, null);
-        var code = (await db.Users.SingleAsync(u => u.Id == userId)).UnsubscribeVerificationCode!;
+        var code = ExtractOtpFromMail(mail);
         await privacy.ConfirmUnsubscribeAsync(principal, code);
 
         var user = await db.Users.SingleAsync(u => u.Id == userId);
@@ -312,8 +314,23 @@ public class AccountUnsubscribeTests
         Assert.StartsWith("deleted-", user.Email);
     }
 
-    private static PrivacyDataService CreatePrivacy(JobsyDbContext db) =>
-        new(db, new StubUserLookup(db), new EmailServiceStub(db, NullLogger<EmailServiceStub>.Instance));
+    private static PrivacyDataService CreatePrivacy(JobsyDbContext db, out CapturingEmailService email)
+    {
+        email = new CapturingEmailService();
+        return new PrivacyDataService(db, new StubUserLookup(db), email);
+    }
+
+    private static PrivacyDataService CreatePrivacy(JobsyDbContext db)
+        => CreatePrivacy(db, out _);
+
+    private static string ExtractOtpFromMail(CapturingEmailService email)
+    {
+        var html = email.Messages.LastOrDefault()?.BodyHtml
+            ?? throw new InvalidOperationException("Geen e-mail verzonden.");
+        var match = System.Text.RegularExpressions.Regex.Match(html, @"\b(\d{6})\b");
+        Assert.True(match.Success, "Geen 6-cijferige OTP in e-mail.");
+        return match.Groups[1].Value;
+    }
 
     private static ClaimsPrincipal CreatePrincipal(string email) =>
         new(new ClaimsIdentity(
@@ -328,6 +345,17 @@ public class AccountUnsubscribeTests
             .UseInMemoryDatabase(Guid.NewGuid().ToString())
             .Options;
         return new JobsyDbContext(options);
+    }
+
+    private sealed class CapturingEmailService : IEmailService
+    {
+        public List<EmailMessage> Messages { get; } = [];
+
+        public Task SendAsync(EmailMessage message, CancellationToken cancellationToken = default)
+        {
+            Messages.Add(message);
+            return Task.CompletedTask;
+        }
     }
 
     private sealed class StubUserLookup(JobsyDbContext db) : Jobsy.Core.Interfaces.IUserLookupService

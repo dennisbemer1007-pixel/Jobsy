@@ -1,6 +1,6 @@
 @page "/employer/company"
 @rendermode @(new InteractiveServerRenderMode(prerender: false))
-@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "EnterpriseManager,Admin")]
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "BranchManager,EnterpriseManager,Admin")]
 @inject JobsyApiClient Api
 @inject IJSRuntime Js
 @inject BottomNavRefreshService NavRefresh
@@ -84,6 +84,13 @@
                     Mag een kandidaat na een succesvolle sollicitatie direct contact opnemen?
                     Per vacature kun je dit later overschrijven. Telefoon en WhatsApp staan nooit op de openbare vacaturepagina.
                 </p>
+                @if (_org.ParentCompanyId is null)
+                {
+                    <p class="company-details__callout company-details__callout--warn">
+                        Dit geldt voor vacatures van deze organisatie. Voor vestiging-vacatures zet je contactvoorkeur
+                        ook per vestiging (of overschrijf per vacature).
+                    </p>
+                }
 
                 <label class="company-details__toggle">
                     <input type="checkbox"
@@ -272,10 +279,10 @@
                         </div>
                     </div>
                     <div class="inline-actions company-details__actions">
-                        <button class="btn-compact btn-compact--primary" type="button" disabled="@_busy" @onclick="ConfirmEmailAsync">
+                        <button class="btn-compact btn-compact--primary" type="button" disabled="@_busy" @onclick="ConfirmEmail">
                             Nieuwe key e-mailen
                         </button>
-                        <button class="btn-compact" type="button" disabled="@_busy" @onclick="GenerateAsync">
+                        <button class="btn-compact" type="button" disabled="@_busy" @onclick="ConfirmGenerate">
                             Nieuwe key genereren
                         </button>
                         <button class="btn-compact" type="button" disabled="@_busy" @onclick="DeactivateAsync">
@@ -408,6 +415,24 @@
     </div>
 }
 
+@if (_confirmGenerate)
+{
+    <div class="share-modal-backdrop" @onclick="CancelGenerate"></div>
+    <div class="share-modal api-key-modal" role="dialog" aria-modal="true" aria-labelledby="api-generate-modal-title">
+        <div class="share-modal__header">
+            <h2 id="api-generate-modal-title">Nieuwe API-key genereren?</h2>
+            <button type="button" class="share-modal__close" @onclick="CancelGenerate" aria-label="Sluiten">×</button>
+        </div>
+        <p class="share-modal__lead api-key-modal__lead">
+            Dit deactiveert de huidige API-key. De nieuwe sleutel zie je één keer in het volgende scherm.
+        </p>
+        <div class="inline-actions" style="margin-top:1rem">
+            <button class="login-submit" type="button" disabled="@_busy" @onclick="GenerateAsync">Bevestigen</button>
+            <button class="btn-compact" type="button" disabled="@_busy" @onclick="CancelGenerate">Annuleren</button>
+        </div>
+    </div>
+}
+
 @code {
     private enum CopiedField
     {
@@ -439,6 +464,7 @@
     private GeneratedApiKeyItem? _generated;
     private bool _showKeyModal;
     private bool _confirmEmail;
+    private bool _confirmGenerate;
     private bool _loading = true;
     private bool _busy;
     private string? _error;
@@ -670,6 +696,7 @@
 
         _busy = true;
         ClearFeedback();
+        _confirmGenerate = false;
         try
         {
             _generated = await Api.GenerateCompanyApiKeyAsync(_org.Id);
@@ -711,9 +738,13 @@
         }
     }
 
-    private void ConfirmEmailAsync() => _confirmEmail = true;
+    private void ConfirmEmail() => _confirmEmail = true;
 
     private void CancelEmail() => _confirmEmail = false;
+
+    private void ConfirmGenerate() => _confirmGenerate = true;
+
+    private void CancelGenerate() => _confirmGenerate = false;
 
     private async Task EmailCredentialsAsync()
     {

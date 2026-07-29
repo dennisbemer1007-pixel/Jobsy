@@ -310,6 +310,9 @@ public class Sprint3CandidateTests
         Assert.True(VerificationCodes.FixedTimeEquals(code, code));
         Assert.False(VerificationCodes.FixedTimeEquals(code, "000000"));
         Assert.False(VerificationCodes.FixedTimeEquals(code, null));
+        Assert.True(VerificationCodes.MatchesHash(VerificationCodes.Hash(code), code));
+        Assert.False(VerificationCodes.MatchesHash(VerificationCodes.Hash(code), "000000"));
+        Assert.Equal(VerificationCodes.HashLength, VerificationCodes.Hash(code).Length);
     }
 
     [Fact]
