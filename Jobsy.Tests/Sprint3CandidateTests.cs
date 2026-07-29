@@ -277,6 +277,13 @@ public class Sprint3CandidateTests
     }
 
     [Fact]
+    public void ApplicationRules_lists_only_verified_applications_for_candidate()
+    {
+        Assert.True(ApplicationRules.IsListedForCandidate(DateTime.UtcNow));
+        Assert.False(ApplicationRules.IsListedForCandidate(null));
+    }
+
+    [Fact]
     public void Application_entity_has_unique_indexes_for_duplicate_prevention()
     {
         using var db = CreateDb();

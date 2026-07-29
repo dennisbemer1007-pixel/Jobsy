@@ -731,10 +731,10 @@
             try
             {
                 var mine = await Api.GetMyApplicationsAsync();
-                // Completed application → show success. PendingVerification must NOT auto-open
-                // step 4: every fresh visit starts at Profiel/Akkoord/Versturen unless the user
-                // just applied in this session (_enteredVerifyThisSession).
-                _applied = mine.Any(a => a.VacancyId == Id && a.Status != "PendingVerification");
+                // Only verified (submitted) applications are returned — drafts awaiting a code stay out.
+                // Fresh visits therefore start at Profiel/Akkoord/Versturen unless the user just
+                // entered verify in this session (_enteredVerifyThisSession).
+                _applied = mine.Any(a => a.VacancyId == Id);
                 if (_applied)
                 {
                     _awaitingVerification = false;

@@ -251,8 +251,9 @@ public class MeController : ControllerBase
             return NotFound(new { message = "Gebruiker niet gevonden in Jobsy." });
         }
 
+        // Only verified (actually submitted) applications — drafts awaiting a verification code stay out of Sollicitaties.
         var items = await _db.Applications.AsNoTracking()
-            .Where(a => a.CandidateUserId == user.Id)
+            .Where(a => a.CandidateUserId == user.Id && a.EmailVerifiedAt != null)
             .OrderByDescending(a => a.CreatedAt)
             .Select(a => new ApplicationDto(
                 a.Id,
@@ -264,7 +265,7 @@ public class MeController : ControllerBase
                 a.PreferredTransport,
                 a.EstimatedTravelMinutes,
                 a.CreatedAt,
-                a.EmailVerifiedAt == null ? "PendingVerification" : a.Status.ToString(),
+                a.Status.ToString(),
                 a.RespondedAt))
             .ToListAsync(cancellationToken);
 

@@ -90,7 +90,7 @@
             }
         </div>
 
-        <div class="jobsy-chrome__actions" role="toolbar" aria-label="@Culture["Discovery.Filters"]">
+        <div class="jobsy-chrome__actions @(ActiveFilterCount > 0 ? "jobsy-chrome__actions--with-clear" : null)" role="toolbar" aria-label="@Culture["Discovery.Filters"]">
             <button type="button"
                     class="jobsy-action @(_filtersOpen ? "is-active" : null)"
                     @onclick="ToggleFilters"
@@ -103,6 +103,16 @@
                     <span class="jobsy-action__badge">@ActiveFilterCount</span>
                 }
             </button>
+            @if (ActiveFilterCount > 0)
+            {
+                <button type="button"
+                        class="jobsy-action jobsy-action--clear"
+                        title="@Culture["Discovery.ClearFilters"]"
+                        @onclick="ClearAllFiltersAsync"
+                        aria-label="@Culture["Discovery.ClearFilters"]">
+                    <span class="jobsy-action__icon" aria-hidden="true">@((MarkupString)NavIcons.ClearFilters)</span>
+                </button>
+            }
             <a class="jobsy-action" href="/candidate/liked">
                 <span class="jobsy-action__icon" aria-hidden="true">@((MarkupString)NavIcons.Liked)</span>
                 <span>@Culture["Discovery.SaveSearch"]</span>
@@ -190,18 +200,30 @@
                     <p class="state-message error filter-bar__error">@_locationError</p>
                 }
             </div>
-            <button type="button"
-                    class="discovery-filter-toggle @(_filtersOpen ? "is-active" : null)"
-                    @onclick="ToggleFilters"
-                    aria-expanded="@_filtersOpen"
-                    aria-controls="discovery-filters-desktop">
-                <span class="discovery-filter-toggle__icon" aria-hidden="true">@((MarkupString)NavIcons.Filters)</span>
-                <span>@Culture["Discovery.Filters"]</span>
+            <div class="discovery-filter-group">
+                <button type="button"
+                        class="discovery-filter-toggle @(_filtersOpen ? "is-active" : null)"
+                        @onclick="ToggleFilters"
+                        aria-expanded="@_filtersOpen"
+                        aria-controls="discovery-filters-desktop">
+                    <span class="discovery-filter-toggle__icon" aria-hidden="true">@((MarkupString)NavIcons.Filters)</span>
+                    <span>@Culture["Discovery.Filters"]</span>
+                    @if (ActiveFilterCount > 0)
+                    {
+                        <span class="jobsy-action__badge">@ActiveFilterCount</span>
+                    }
+                </button>
                 @if (ActiveFilterCount > 0)
                 {
-                    <span class="jobsy-action__badge">@ActiveFilterCount</span>
+                    <button type="button"
+                            class="discovery-filter-clear"
+                            title="@Culture["Discovery.ClearFilters"]"
+                            @onclick="ClearAllFiltersAsync"
+                            aria-label="@Culture["Discovery.ClearFilters"]">
+                        <span class="discovery-filter-toggle__icon" aria-hidden="true">@((MarkupString)NavIcons.ClearFilters)</span>
+                    </button>
                 }
-            </button>
+            </div>
         </div>
 
         @if (_filtersOpen)
@@ -266,6 +288,17 @@
                            @onchange="OnRadiusChanged" />
                 </label>
                 <div class="filter-bar__actions">
+                    @if (ActiveFilterCount > 0)
+                    {
+                        <button type="button"
+                                class="filter-bar__clear"
+                                title="@Culture["Discovery.ClearFilters"]"
+                                @onclick="ClearAllFiltersAsync"
+                                aria-label="@Culture["Discovery.ClearFilters"]">
+                            <span class="filter-bar__clear-icon" aria-hidden="true">@((MarkupString)NavIcons.ClearFilters)</span>
+                            <span>@Culture["Discovery.ClearFilters"]</span>
+                        </button>
+                    }
                     <button type="button" class="filter-bar__search" @onclick="ApplySearch">
                         @Culture["Discovery.Search"]
                     </button>
@@ -372,7 +405,19 @@
                         <span class="jobsy-action__badge">@ActiveFilterCount</span>
                     }
                 </h2>
-                <button type="button" class="share-modal__close" @onclick="CloseFilters" aria-label="Sluiten">×</button>
+                <div class="filter-sheet__header-actions">
+                    @if (ActiveFilterCount > 0)
+                    {
+                        <button type="button"
+                                class="filter-sheet__clear-icon"
+                                title="@Culture["Discovery.ClearFilters"]"
+                                @onclick="ClearAllFiltersAsync"
+                                aria-label="@Culture["Discovery.ClearFilters"]">
+                            <span aria-hidden="true">@((MarkupString)NavIcons.ClearFilters)</span>
+                        </button>
+                    }
+                    <button type="button" class="share-modal__close" @onclick="CloseFilters" aria-label="Sluiten">×</button>
+                </div>
             </div>
 
             @if (ActiveFilterCount > 0)
@@ -390,7 +435,14 @@
                     {
                         <button type="button" class="filter-tag" @onclick="ClearAgeAsync">@_ageYears ×</button>
                     }
-                    <button type="button" class="filter-sheet__clear" @onclick="ClearAllFiltersAsync">@Culture["Discovery.ClearFilters"]</button>
+                    <button type="button"
+                            class="filter-sheet__clear"
+                            title="@Culture["Discovery.ClearFilters"]"
+                            @onclick="ClearAllFiltersAsync"
+                            aria-label="@Culture["Discovery.ClearFilters"]">
+                        <span class="filter-sheet__clear-glyph" aria-hidden="true">@((MarkupString)NavIcons.ClearFilters)</span>
+                        <span>@Culture["Discovery.ClearFilters"]</span>
+                    </button>
                 </div>
             }
 

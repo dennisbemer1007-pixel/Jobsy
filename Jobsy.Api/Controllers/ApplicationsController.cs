@@ -235,6 +235,8 @@ public class ApplicationsController : ControllerBase
                 // Email stub/provider failures must not fail the apply after save.
             }
 
+            // Draft is stored for code validation but is not a candidate-facing application status
+            // (Sollicitaties only lists verified apps). RequiresVerification drives the UI.
             var pendingDto = new ApplicationDto(
                 application.Id,
                 vacancy.Id,
@@ -245,7 +247,7 @@ public class ApplicationsController : ControllerBase
                 application.PreferredTransport,
                 application.EstimatedTravelMinutes,
                 application.CreatedAt,
-                "PendingVerification",
+                application.Status.ToString(),
                 null);
             return Ok(new ApplyResultDto(
                 pendingDto,
@@ -333,7 +335,7 @@ public class ApplicationsController : ControllerBase
             return NotFound();
         }
 
-        // Only verified "Open" (Pending) applications can be withdrawn — not PendingVerification.
+        // Only verified "Open" (Pending) applications can be withdrawn — drafts awaiting a code cannot.
         if (!ApplicationRules.CanCandidateWithdraw(application.Status, application.EmailVerifiedAt))
         {
             return BadRequest(new { message = "Alleen open sollicitaties kunnen worden ingetrokken." });

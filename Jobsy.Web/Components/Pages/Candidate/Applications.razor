@@ -148,7 +148,7 @@
     }
 
     private static bool IsOpen(ApplicationItem a)
-        => a.Status is "Pending" or "PendingVerification";
+        => a.Status is "Pending";
 
     private static bool IsRejected(ApplicationItem a)
         => a.Status is "Rejected" or "FilledElsewhere";
@@ -187,9 +187,9 @@
 
     private static string StatusLabel(string status) => status switch
     {
+        "Pending" => "Open",
         "Accepted" => "Geaccepteerd",
         "Rejected" => "Afgewezen",
-        "PendingVerification" => "Wacht op e-mailverificatie",
         "EmployerContacting" => "Werkgever neemt contact op",
         "Hired" => "Aangenomen",
         "FilledElsewhere" => "Ingevuld elders",
