@@ -127,7 +127,7 @@
                             <input type="checkbox"
                                    checked="@_selectedLicenses.Contains(license)"
                                    @onchange="e => ToggleLicense(license, (bool)(e.Value ?? false))" />
-                            @license
+                            @UiLabels.License(Culture, license)
                         </label>
                     }
                 </fieldset>
@@ -220,7 +220,7 @@
                             <input type="checkbox"
                                    checked="@_selectedEducations.Contains(level)"
                                    @onchange="e => ToggleEducation(level, (bool)(e.Value ?? false))" />
-                            @level
+                            @UiLabels.Education(Culture, level)
                         </label>
                     }
                 </fieldset>
@@ -310,7 +310,7 @@
             var profile = await Api.GetMyProfileAsync();
             if (profile is null)
             {
-                _message = "Profiel niet gevonden.";
+                _message = Culture["Profile.NotFound"];
                 return;
             }
 
@@ -399,7 +399,7 @@
         }
         catch (Exception ex)
         {
-            _message = $"Profiel laden mislukt: {ex.Message}";
+            _message = Culture.Format("Profile.LoadFailed", ex.Message);
         }
         finally
         {
@@ -616,7 +616,7 @@
                 && !string.IsNullOrWhiteSpace(_homeAddress)
                 && (_homeLat is null || _homeLng is null))
             {
-                _message = "Kies een adres uit de suggesties.";
+                _message = Culture["Profile.PickAddress"];
                 return;
             }
 
@@ -651,7 +651,7 @@
                 homeLongitude: clearHome || !_homeLocationDirty ? null : _homeLng,
                 clearHomeLocation: clearHome);
             _homeLocationDirty = false;
-            _message = "Profiel opgeslagen.";
+            _message = Culture["Profile.Saved"];
             if (!string.IsNullOrWhiteSpace(_returnUrl))
             {
                 Navigation.NavigateTo(_returnUrl);

@@ -116,8 +116,19 @@
         }
     }
 
-    private void OnCultureChanged()
-        => InvokeAsync(StateHasChanged);
+    private async void OnCultureChanged()
+    {
+        try
+        {
+            _items = (await Api.GetMyLikesAsync()).ToList();
+        }
+        catch
+        {
+            // keep current list
+        }
+
+        await InvokeAsync(StateHasChanged);
+    }
 
     public void Dispose()
         => Culture.Changed -= OnCultureChanged;

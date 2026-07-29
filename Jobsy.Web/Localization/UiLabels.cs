@@ -78,4 +78,14 @@ public static class UiLabels
         "reactions" => culture["Metrics.Reactions"],
         _ => key
     };
+
+    public static string Education(CultureState culture, string level) =>
+        string.Equals(level, EducationLevelLabels.None, StringComparison.OrdinalIgnoreCase)
+            ? culture["Education.None"]
+            : level;
+
+    public static string License(CultureState culture, string license) =>
+        string.Equals(license, "Heftruck", StringComparison.OrdinalIgnoreCase)
+            ? culture["License.Heftruck"]
+            : license;
 }

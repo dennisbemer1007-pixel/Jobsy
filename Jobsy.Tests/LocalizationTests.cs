@@ -39,6 +39,35 @@ public class LocalizationTests
     }
 
     [Fact]
+    public void UiStrings_new_candidate_chrome_keys_exist_in_all_languages()
+    {
+        string[] languages = ["nl", "en", "pl", "ro", "ar"];
+        string[] sampleKeys =
+        [
+            "Apps.Status.Pending",
+            "Profile.Title",
+            "HowLobsy.Title",
+            "Share.Title",
+            "Metrics.Welcome",
+            "Discovery.Top",
+            "Transport.Verb.Bike",
+            "Help.Purpose",
+            "Education.None",
+            "Common.Close"
+        ];
+
+        foreach (var key in sampleKeys)
+        {
+            foreach (var lang in languages)
+            {
+                var value = UiStrings.Get(key, lang);
+                Assert.False(string.IsNullOrWhiteSpace(value));
+                Assert.NotEqual(key, value);
+            }
+        }
+    }
+
+    [Fact]
     public void ParsePreferences_reads_language()
     {
         var prefs = MeController.ParsePreferences(

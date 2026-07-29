@@ -57,7 +57,7 @@
                 <div class="table-row application-row">
                     <a class="application-row__link" href="@($"/vacancies/{a.VacancyId}")">
                         <strong>@a.VacancyTitle</strong>
-                        <span class="muted">@a.CompanyName · @UiLabels.Transport(Culture, a.PreferredTransport) · @a.EstimatedTravelMinutes min</span>
+                        <span class="muted">@a.CompanyName · @UiLabels.Transport(Culture, a.PreferredTransport) · @a.EstimatedTravelMinutes @Culture["Discovery.Minutes"]</span>
                     </a>
                     <div class="application-row__meta">
                         <span class="status-pill status-pill--@a.Status.ToLowerInvariant()">@UiLabels.ApplicationStatus(Culture, a.Status)</span>
@@ -131,8 +131,20 @@
         }
     }
 
-    private void OnCultureChanged()
-        => InvokeAsync(StateHasChanged);
+    private async void OnCultureChanged()
+    {
+        try
+        {
+            _items = (await Api.GetMyApplicationsAsync()).ToList();
+            ApplyTab();
+        }
+        catch
+        {
+            // keep current list
+        }
+
+        await InvokeAsync(StateHasChanged);
+    }
 
     public void Dispose()
         => Culture.Changed -= OnCultureChanged;

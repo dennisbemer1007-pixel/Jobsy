@@ -238,7 +238,7 @@
                                 <input type="checkbox"
                                        checked="@_selectedWorkTypes.Contains(label)"
                                        @onchange="e => ToggleWorkTypeAsync(label, e)" />
-                                @label
+                                @UiLabels.WorkType(Culture, label)
                             </label>
                         }
                     </div>
@@ -323,7 +323,7 @@
                 }
                 else
                 {
-                    @Culture.Format("Discovery.NoneWithOrigin", _maxTravelMinutes, TransportLabel(_selectedTransport))
+                    @Culture.Format("Discovery.NoneWithOrigin", _maxTravelMinutes, UiLabels.Transport(Culture, _selectedTransport))
                 }
             </p>
         }
@@ -351,8 +351,8 @@
                 {
                     var wageText = FormatWage(vacancy);
                     var travelText = vacancy.TravelMinutes is not null
-                        ? $"± {vacancy.TravelMinutes} min"
-                        : $"max {_maxTravelMinutes} min";
+                        ? $"± {vacancy.TravelMinutes} {Culture["Discovery.Minutes"]}"
+                        : Culture.Format("Discovery.MaxMinutes", _maxTravelMinutes);
                     <article class="job-card @(_hoveredId == vacancy.Id ? "is-hovered" : null) @(vacancy.IsHighlighted ? "job-card--highlight" : null)"
                              @onmouseenter="() => OnHover(vacancy.Id)"
                              @onmouseleave="() => OnHover(null)"
@@ -361,17 +361,17 @@
                            style="@(string.IsNullOrWhiteSpace(vacancy.ImageUrl) ? null : $"background-image:url('{vacancy.ImageUrl}')")">
                             @if (vacancy.IsHighlighted)
                             {
-                                <span class="job-card__badge">Top</span>
+                                <span class="job-card__badge">@Culture["Discovery.Top"]</span>
                             }
                             else if (vacancy.WorkTypes.Length > 0)
                             {
-                                <span class="job-card__badge job-card__badge--soft">@vacancy.WorkTypes[0]</span>
+                                <span class="job-card__badge job-card__badge--soft">@UiLabels.WorkType(Culture, vacancy.WorkTypes[0])</span>
                             }
                             <div class="job-card__overlay">
                                 <h2>@vacancy.Title</h2>
                                 <p class="job-card__travel">
                                     <LobsyMark Compact="true" />
-                                    <span>@travelText · @TransportVerb(_selectedTransport)</span>
+                                    <span>@travelText · @UiLabels.TransportVerb(Culture, _selectedTransport)</span>
                                 </p>
                                 @if (!string.IsNullOrEmpty(wageText))
                                 {
@@ -416,7 +416,7 @@
                             <span aria-hidden="true">@((MarkupString)NavIcons.ClearFilters)</span>
                         </button>
                     }
-                    <button type="button" class="share-modal__close" @onclick="CloseFilters" aria-label="Sluiten">×</button>
+                    <button type="button" class="share-modal__close" @onclick="CloseFilters" aria-label="@Culture["Common.Close"]">×</button>
                 </div>
             </div>
 
@@ -425,7 +425,7 @@
                 <div class="filter-sheet__tags">
                     @foreach (var workType in _selectedWorkTypes.OrderBy(x => x, StringComparer.CurrentCultureIgnoreCase))
                     {
-                        <button type="button" class="filter-tag" @onclick="() => ClearWorkTypeAsync(workType)">@workType ×</button>
+                        <button type="button" class="filter-tag" @onclick="() => ClearWorkTypeAsync(workType)">@UiLabels.WorkType(Culture, workType) ×</button>
                     }
                     @if (!string.IsNullOrWhiteSpace(_searchQuery))
                     {
@@ -478,14 +478,14 @@
                                 <input type="checkbox"
                                        checked="@_selectedWorkTypes.Contains(label)"
                                        @onchange="e => ToggleWorkTypeAsync(label, e)" />
-                                @label
+                                @UiLabels.WorkType(Culture, label)
                             </label>
                         }
                     </div>
                 </section>
 
                 <section class="filter-section">
-                    <h3>@Culture["Discovery.Age"] · uurloon</h3>
+                    <h3>@Culture["Discovery.Age"] · @Culture["Discovery.HourlyWageShort"]</h3>
                     <label>
                         @Culture["Discovery.Age"]
                         <select value="@AgeSelectValue" @onchange="OnAgeChanged" required>
@@ -769,15 +769,6 @@
         await InvokeAsync(StateHasChanged);
     }
 
-    private string TransportLabel(string transport) => transport switch
-    {
-        "Fiets" => Culture["Transport.Bike"],
-        "Auto" => Culture["Transport.Car"],
-        "OV" => Culture["Transport.Transit"],
-        "Lopend" => Culture["Transport.Walk"],
-        _ => transport
-    };
-
     private string? FormatWage(VacancyListItem vacancy)
     {
         if (!vacancy.WageVisible)
@@ -793,7 +784,7 @@
 
         if (vacancy.HourlyWage is not null)
         {
-            return $"€ {vacancy.HourlyWage.Value:0.00}/u";
+            return $"€ {vacancy.HourlyWage.Value:0.00}{Culture["Wage.PerHour"]}";
         }
 
         if (vacancy.WageByAge is { Count: > 0 })
@@ -803,7 +794,7 @@
                 .OrderByDescending(b => b.AgeYears)
                 .FirstOrDefault()
                 ?? vacancy.WageByAge.OrderBy(b => b.AgeYears).First();
-            return $"€ {band.HourlyRate:0.00}/u";
+            return $"€ {band.HourlyRate:0.00}{Culture["Wage.PerHour"]}";
         }
 
         return null;
@@ -1006,7 +997,7 @@
                 ["workTypes"] = v.WorkTypes,
                 ["workType"] = primaryType,
                 ["travelMinutes"] = v.TravelMinutes,
-                ["transportLabel"] = TransportVerb(_selectedTransport)
+                ["transportLabel"] = UiLabels.TransportVerb(Culture, _selectedTransport)
             };
             if (v.WageVisible)
             {
@@ -1241,15 +1232,6 @@
         ["maxMinutes"] = _maxTravelMinutes,
         ["transport"] = _selectedTransport,
         ["radiusKm"] = _radiusKm
-    };
-
-    private static string TransportVerb(string transport) => transport switch
-    {
-        "Fiets" => "fietsen",
-        "Auto" => "rijden",
-        "OV" => "OV",
-        "Lopend" => "lopen",
-        _ => "reistijd"
     };
 
     private void OnTravelSliderInput(ChangeEventArgs e)

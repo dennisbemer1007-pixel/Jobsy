@@ -131,11 +131,11 @@
                         <p class="lobsy-proximity__meta">
                             @if (!string.IsNullOrWhiteSpace(_vacancy.RequiredDrivingLicense))
                             {
-                                <span class="lobsy-proximity__chip">@Culture["Vacancy.License"]: @_vacancy.RequiredDrivingLicense</span>
+                                <span class="lobsy-proximity__chip">@Culture["Vacancy.License"]: @LocalizeLicenseList(_vacancy.RequiredDrivingLicense)</span>
                             }
                             @if (!string.IsNullOrWhiteSpace(_vacancy.RequiredEducation))
                             {
-                                <span class="lobsy-proximity__chip">@Culture["Vacancy.EducationLevel"]: @_vacancy.RequiredEducation</span>
+                                <span class="lobsy-proximity__chip">@Culture["Vacancy.EducationLevel"]: @LocalizeEducationList(_vacancy.RequiredEducation)</span>
                             }
                             @if (_vacancy.MinimumEmployers is > 0)
                             {
@@ -285,7 +285,7 @@
                                     <li class="@(_profileHasAvailability ? "is-done" : null)">@Culture["Apply.Availability"]</li>
                                     @if (_requiresDrivingLicense)
                                     {
-                                        <li class="@(_profileHasLicense ? "is-done" : null)">@Culture.Format("Apply.LicenseItem", _vacancy.RequiredDrivingLicense!)</li>
+                                        <li class="@(_profileHasLicense ? "is-done" : null)">@Culture.Format("Apply.LicenseItem", LocalizeLicenseList(_vacancy.RequiredDrivingLicense!))</li>
                                     }
                                     <li class="@(_profileHasEmployers ? "is-done" : null)">
                                         @if (_vacancy.MinimumEmployers is > 0)
@@ -299,7 +299,7 @@
                                     </li>
                                     @if (_requiresEducation)
                                     {
-                                        <li class="@(_profileHasEducation ? "is-done" : null)">@Culture.Format("Apply.EducationItem", _vacancy.RequiredEducation!)</li>
+                                        <li class="@(_profileHasEducation ? "is-done" : null)">@Culture.Format("Apply.EducationItem", LocalizeEducationList(_vacancy.RequiredEducation!))</li>
                                     }
                                     <li class="@(_profileHasAboutMe ? "is-done" : null)">@Culture["Apply.AboutYou"]</li>
                                 </ul>
@@ -1041,28 +1041,15 @@
         return Task.CompletedTask;
     }
 
-    private string LocalizeWorkType(string label) => label switch
-    {
-        WorkTypeLabels.Horeca => Culture["WorkType.Horeca"],
-        WorkTypeLabels.Winkel => Culture["WorkType.Winkel"],
-        WorkTypeLabels.Logistiek => Culture["WorkType.Logistiek"],
-        WorkTypeLabels.Tuinbouw => Culture["WorkType.Tuinbouw"],
-        WorkTypeLabels.Zorg => Culture["WorkType.Zorg"],
-        WorkTypeLabels.Kantoor => Culture["WorkType.Kantoor"],
-        WorkTypeLabels.Bouw => Culture["WorkType.Bouw"],
-        WorkTypeLabels.Schoonmaak => Culture["WorkType.Schoonmaak"],
-        WorkTypeLabels.Productie => Culture["WorkType.Productie"],
-        _ => label
-    };
+    private string LocalizeWorkType(string label) => UiLabels.WorkType(Culture, label);
 
-    private string LocalizeTransport(string transport) => transport switch
-    {
-        "Fiets" => Culture["Transport.Bike"],
-        "Auto" => Culture["Transport.Car"],
-        "OV" => Culture["Transport.Transit"],
-        "Lopend" => Culture["Transport.Walk"],
-        _ => transport
-    };
+    private string LocalizeTransport(string transport) => UiLabels.Transport(Culture, transport);
+
+    private string LocalizeLicenseList(string stored) =>
+        string.Join(", ", DrivingLicenseLabels.Split(stored).Select(x => UiLabels.License(Culture, x)));
+
+    private string LocalizeEducationList(string stored) =>
+        string.Join(", ", EducationLevelLabels.Split(stored).Select(x => UiLabels.Education(Culture, x)));
 
     private void OpenMockInterview() => _mockInterviewOpen = true;
 
