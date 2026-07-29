@@ -49,6 +49,7 @@ public sealed class PlatformFeatureService : IPlatformFeatureService
         row.VacancyContentModerationEnabled = update.VacancyContentModerationEnabled;
         row.AuthenticatorEnabled = update.AuthenticatorEnabled;
         row.ExposeRegistrationActivationLinks = update.ExposeRegistrationActivationLinks;
+        row.InactiveCompanyDays = Math.Clamp(update.InactiveCompanyDays, 30, 730);
         if (!string.IsNullOrWhiteSpace(update.PublicWebBaseUrl))
         {
             var normalized = JobsyPublicUrl.NormalizeOrigin(update.PublicWebBaseUrl);
@@ -125,6 +126,7 @@ public sealed class PlatformFeatureService : IPlatformFeatureService
             string.IsNullOrWhiteSpace(row?.PublicWebBaseUrl)
                 ? configBase
                 : JobsyPublicUrl.NormalizeOrigin(row.PublicWebBaseUrl),
-            row?.UpdatedAtUtc);
+            row?.UpdatedAtUtc,
+            row?.InactiveCompanyDays is > 0 ? row.InactiveCompanyDays : 120);
     }
 }

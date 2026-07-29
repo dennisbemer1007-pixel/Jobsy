@@ -1832,6 +1832,7 @@ public sealed class PlatformFeatureItem
     public bool ExposeRegistrationActivationLinks { get; set; }
     public string PublicWebBaseUrl { get; set; } = "http://localhost:5201";
     public DateTime? UpdatedAtUtc { get; set; }
+    public int InactiveCompanyDays { get; set; } = 120;
 }
 
 public sealed class PlatformCompanyItem

@@ -287,7 +287,8 @@ public class SettingsController : ControllerBase
                     request.VacancyContentModerationEnabled,
                     request.AuthenticatorEnabled,
                     request.ExposeRegistrationActivationLinks,
-                    request.PublicWebBaseUrl),
+                    request.PublicWebBaseUrl,
+                    request.InactiveCompanyDays),
                 cancellationToken);
             return Ok(ToFeatureDto(snap));
         }
@@ -403,7 +404,8 @@ public class SettingsController : ControllerBase
             snap.AuthenticatorEnabled,
             snap.ExposeRegistrationActivationLinks,
             snap.PublicWebBaseUrl,
-            snap.UpdatedAtUtc);
+            snap.UpdatedAtUtc,
+            snap.InactiveCompanyDays);
 
     private static PlatformCompanyDto ToCompanyDto(PlatformCompanySnapshot snap) =>
         new(

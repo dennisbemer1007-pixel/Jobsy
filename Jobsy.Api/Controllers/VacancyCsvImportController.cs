@@ -62,10 +62,23 @@ public class VacancyCsvImportController : ControllerBase
             return gate.Result;
         }
 
+        var defaultCompanyId = request.CompanyId;
         var results = new List<CsvImportRowResultDto>(request.Rows.Count);
+        var touchedCompanies = new HashSet<Guid>();
         foreach (var row in request.Rows.OrderBy(r => r.RowNumber))
         {
-            results.Add(await ProcessRowAsync(request.CompanyId, gate.OrgId, row, cancellationToken));
+            var result = await ProcessRowAsync(request.CompanyId, gate.OrgId, row, cancellationToken);
+            results.Add(result);
+            if (result.Success)
+            {
+                var companyId = VacancyCsvParser.TryParseGuid(row.CompanyId) ?? defaultCompanyId;
+                touchedCompanies.Add(companyId);
+            }
+        }
+
+        foreach (var companyId in touchedCompanies)
+        {
+            await TouchCsvImportActivityAsync(companyId, cancellationToken);
         }
 
         return Ok(ToResult(results));
@@ -89,6 +102,12 @@ public class VacancyCsvImportController : ControllerBase
         }
 
         var result = await ProcessRowAsync(request.CompanyId, gate.OrgId, request.Row, cancellationToken);
+        if (result.Success)
+        {
+            var companyId = VacancyCsvParser.TryParseGuid(request.Row.CompanyId) ?? request.CompanyId;
+            await TouchCsvImportActivityAsync(companyId, cancellationToken);
+        }
+
         return Ok(result);
     }
 
@@ -337,5 +356,27 @@ public class VacancyCsvImportController : ControllerBase
             rows.Count - success,
             rows,
             PublishHint);
+    }
+
+    private async Task TouchCsvImportActivityAsync(Guid companyId, CancellationToken cancellationToken)
+    {
+        var company = await _db.Companies.FirstOrDefaultAsync(c => c.Id == companyId, cancellationToken);
+        if (company is null)
+        {
+            return;
+        }
+
+        company.LastCsvImportAtUtc = DateTime.UtcNow;
+        // Also stamp the organisation root for re-engagement inactivity checks.
+        if (company.ParentCompanyId is Guid parentId)
+        {
+            var org = await _db.Companies.FirstOrDefaultAsync(c => c.Id == parentId, cancellationToken);
+            if (org is not null)
+            {
+                org.LastCsvImportAtUtc = DateTime.UtcNow;
+            }
+        }
+
+        await _db.SaveChangesAsync(cancellationToken);
     }
 }

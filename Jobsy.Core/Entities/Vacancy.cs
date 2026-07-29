@@ -18,6 +18,18 @@ public class Vacancy
     /// <summary>Whether the vacancy was created via the UI, external API, or CSV import.</summary>
     public VacancySource CreatedVia { get; set; } = VacancySource.Manual;
 
+    /// <summary>UTC creation timestamp (used for never-published draft cleanup).</summary>
+    public DateTime CreatedAtUtc { get; set; } = DateTime.UtcNow;
+
+    /// <summary>
+    /// First successful publish timestamp. Null means the vacancy was never live —
+    /// only those drafts are eligible for automatic cleanup.
+    /// </summary>
+    public DateTime? PublishedAtUtc { get; set; }
+
+    /// <summary>When the 30-day draft cleanup warning e-mail was sent (once).</summary>
+    public DateTime? DraftCleanupWarningSentAtUtc { get; set; }
+
     public GeoPoint Location { get; set; } = null!;
     public TransportMode RequiredTransport { get; set; }
 

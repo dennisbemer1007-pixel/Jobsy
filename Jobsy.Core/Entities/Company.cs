@@ -41,6 +41,15 @@ public class Company
     /// </summary>
     public bool CsvBatchImportEnabled { get; set; }
 
+    /// <summary>
+    /// Hard stop: when set, a "We missen je" re-engagement e-mail was already sent once for this account.
+    /// Never auto-send again unless an admin clears this field.
+    /// </summary>
+    public DateTime? ReengagementEmailSentAtUtc { get; set; }
+
+    /// <summary>Last successful CSV vacancy import (any row) for activity tracking.</summary>
+    public DateTime? LastCsvImportAtUtc { get; set; }
+
     /// <summary>Salesmanager who referred this supplier (via tracking code).</summary>
     public Guid? ReferredBySalesManagerUserId { get; set; }
     public User? ReferredBySalesManagerUser { get; set; }

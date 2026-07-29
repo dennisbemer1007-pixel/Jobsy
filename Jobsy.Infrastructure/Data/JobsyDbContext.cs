@@ -131,6 +131,7 @@ public class JobsyDbContext : DbContext
             entity.Property(e => e.RequiredDrivingLicense).HasMaxLength(256);
             entity.Property(e => e.RequiredEducation).HasMaxLength(256);
             entity.Property(e => e.WorkTypeLabels).HasMaxLength(512);
+            entity.Property(e => e.CreatedAtUtc).HasDefaultValueSql("CURRENT_TIMESTAMP");
             entity.Property(e => e.Location)
                 .HasConversion(new GeoPointConverter())
                 .HasColumnType("geometry(Point, 4326)");
@@ -138,6 +139,7 @@ public class JobsyDbContext : DbContext
             // Discover / public feed: Status + date window (and employer manage by company).
             entity.HasIndex(e => new { e.Status, e.EndDate, e.StartDate });
             entity.HasIndex(e => new { e.CompanyId, e.Status });
+            entity.HasIndex(e => new { e.Status, e.PublishedAtUtc, e.CreatedAtUtc });
             entity.HasOne(e => e.Company)
                 .WithMany(c => c.Vacancies)
                 .HasForeignKey(e => e.CompanyId)

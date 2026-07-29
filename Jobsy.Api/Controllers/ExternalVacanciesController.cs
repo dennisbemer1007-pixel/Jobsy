@@ -154,6 +154,7 @@ public class ExternalVacanciesController : ControllerBase
             Status = VacancyStatus.Draft,
             CompanyId = request.CompanyId,
             CreatedVia = VacancySource.Api,
+            CreatedAtUtc = DateTime.UtcNow,
             Location = company.Location,
             RequiredTransport = request.RequiredTransport,
             WorkTypes = WorkTypeLabels.Combine(branchLabels),

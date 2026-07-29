@@ -516,6 +516,7 @@ public sealed class VacancyProductService : IVacancyProductService
     private static void ApplyPublishEffects(Vacancy vacancy, VacancyPublishOptions options)
     {
         vacancy.Status = VacancyStatus.Active;
+        vacancy.PublishedAtUtc ??= DateTime.UtcNow;
         if (options.Highlight)
         {
             vacancy.IsHighlighted = true;

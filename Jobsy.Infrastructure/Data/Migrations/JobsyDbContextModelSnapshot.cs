@@ -334,6 +334,12 @@ namespace Jobsy.Infrastructure.Data.Migrations
                     b.Property<bool>("CsvBatchImportEnabled")
                         .HasColumnType("boolean");
 
+                    b.Property<DateTime?>("LastCsvImportAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("ReengagementEmailSentAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<bool>("TokensManagedByEnterprise")
                         .HasColumnType("boolean");
 
@@ -867,6 +873,9 @@ namespace Jobsy.Infrastructure.Data.Migrations
 
                     b.Property<bool>("ExposeRegistrationActivationLinks")
                         .HasColumnType("boolean");
+
+                    b.Property<int>("InactiveCompanyDays")
+                        .HasColumnType("integer");
 
                     b.Property<string>("PublicWebBaseUrl")
                         .HasMaxLength(512)
@@ -1552,6 +1561,14 @@ namespace Jobsy.Infrastructure.Data.Migrations
                     b.Property<int>("CreatedVia")
                         .HasColumnType("integer");
 
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+                    b.Property<DateTime?>("DraftCleanupWarningSentAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<string>("Description")
                         .IsRequired()
                         .HasMaxLength(20000)
@@ -1586,6 +1603,9 @@ namespace Jobsy.Infrastructure.Data.Migrations
 
                     b.Property<int?>("MinimumEmployers")
                         .HasColumnType("integer");
+
+                    b.Property<DateTime?>("PublishedAtUtc")
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<bool>("RequestedExtend")
                         .HasColumnType("boolean");
@@ -1643,6 +1663,8 @@ namespace Jobsy.Infrastructure.Data.Migrations
                     b.HasIndex("CompanyId", "Status");
 
                     b.HasIndex("Status", "EndDate", "StartDate");
+
+                    b.HasIndex("Status", "PublishedAtUtc", "CreatedAtUtc");
 
                     b.ToTable("Vacancies");
                 });

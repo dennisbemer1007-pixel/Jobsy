@@ -96,7 +96,7 @@ public static class PageHelpDocs
         ["/home"] = new(
             "Home / dashboard",
             "Startscherm na inloggen, afgestemd op jouw rol.",
-            "Je ziet KPI’s, snelle links en taken die bij jouw rol horen (kandidaat, vestiging, regio, enterprise, intermediair, sales of admin).",
+            "Je ziet KPI’s (voor admin o.a. API/CSV-gebruik, ongepubliceerde concepten en we-missen-je conversie), snelle links en taken. Klik een tegel voor drilldown.",
             "Overzicht houden en snel naar vacatures, tokens, sollicitaties of beheer gaan."),
 
         ["/candidate/liked"] = new(
@@ -299,8 +299,8 @@ public static class PageHelpDocs
 
         ["/admin/settings"] = new(
             "Beheer · Instellingen",
-            "Systeeminstellingen en platformfeatures.",
-            "Zet features aan/uit (moderatie, authenticator, …) en beheer gerelateerde opties. Integraties zitten in hetzelfde settings-gebied.",
+            "Systeeminstellingen, platformfeatures en inactiviteitsperiode.",
+            "Zet features aan/uit (moderatie, authenticator, …), stel de inactieve periode in voor de eenmalige “We missen je”-mail (standaard 120 dagen), en beheer integraties.",
             "Gedrag van Lobsy afstemmen zonder code-deploys."),
 
         ["/admin/company"] = new(

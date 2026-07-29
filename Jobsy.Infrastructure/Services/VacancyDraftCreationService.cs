@@ -171,6 +171,7 @@ public sealed class VacancyDraftCreationService : IVacancyDraftCreationService
             Status = VacancyStatus.Draft,
             CompanyId = input.CompanyId,
             CreatedVia = source,
+            CreatedAtUtc = DateTime.UtcNow,
             Location = company.Location,
             RequiredTransport = input.RequiredTransport == TransportMode.None
                 ? TransportMode.Bike | TransportMode.PublicTransport
