@@ -1172,6 +1172,26 @@ public sealed class JobsyApiClient : IAsyncDisposable
         return await response.Content.ReadFromJsonAsync<PlatformCompanyItem>(cancellationToken: ct);
     }
 
+    public async Task<AboutPageItem?> GetPublicAboutPageAsync(CancellationToken ct = default)
+        => await _http.GetFromJsonAsync<AboutPageItem>("api/site/about", ct);
+
+    public async Task<AboutPageItem?> GetAboutPageAsync(CancellationToken ct = default)
+        => await _http.GetFromJsonAsync<AboutPageItem>("api/settings/about", ct);
+
+    public async Task<AboutPageItem?> SaveAboutPageAsync(
+        AboutPageItem about,
+        CancellationToken ct = default)
+    {
+        var response = await _http.PutAsJsonAsync("api/settings/about", about, ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException(TryExtractMessage(body) ?? body);
+        }
+
+        return await response.Content.ReadFromJsonAsync<AboutPageItem>(cancellationToken: ct);
+    }
+
     public ValueTask DisposeAsync()
     {
         _http.Dispose();
@@ -1546,6 +1566,14 @@ public sealed class PlatformCompanyItem
     public string? VatNumber { get; set; }
     public string? Phone { get; set; }
     public string? Email { get; set; }
+    public DateTime? UpdatedAtUtc { get; set; }
+}
+
+public sealed class AboutPageItem
+{
+    public string Title { get; set; } = "Wie zijn wij";
+    public string Lead { get; set; } = "Over Lobsy — en de mens achter de knop";
+    public string BodyHtml { get; set; } = string.Empty;
     public DateTime? UpdatedAtUtc { get; set; }
 }
 

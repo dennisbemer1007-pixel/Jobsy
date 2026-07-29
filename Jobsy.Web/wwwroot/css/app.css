@@ -6170,6 +6170,22 @@ button.linkish:hover {
     font-weight: 700;
 }
 
+.about-admin-body {
+    width: 100%;
+    min-height: 22rem;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 0.9rem;
+    line-height: 1.45;
+}
+
+.about-admin-preview__doc {
+    margin-top: 0.75rem;
+    padding: 1rem 1.1rem;
+    background: color-mix(in srgb, var(--surface) 88%, var(--brand) 4%);
+    border: 1px solid var(--border);
+    border-radius: 0.75rem;
+}
+
 .legal-consent {
     align-items: flex-start !important;
     margin: 0.75rem 0 0.25rem;

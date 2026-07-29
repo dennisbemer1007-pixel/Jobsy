@@ -115,6 +115,7 @@ public static class DependencyInjection
         services.AddScoped<IIntegrationCredentialService, IntegrationCredentialService>();
         services.AddScoped<IPlatformFeatureService, PlatformFeatureService>();
         services.AddScoped<IPlatformCompanySettingsService, PlatformCompanySettingsService>();
+        services.AddScoped<IAboutPageSettingsService, AboutPageSettingsService>();
         services.AddScoped<ICompanyRegistrationService, CompanyRegistrationService>();
         services.AddScoped<ISalesManagerInviteService, SalesManagerInviteService>();
         services.AddScoped<ISalesManagerOnboardingService, SalesManagerOnboardingService>();

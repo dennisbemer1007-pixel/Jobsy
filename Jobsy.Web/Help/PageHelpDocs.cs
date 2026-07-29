@@ -291,6 +291,12 @@ public static class PageHelpDocs
             "Vul bedrijfsnaam, slogan, adres, KvK en BTW in. Deze gegevens staan onderaan self-billing factuur-PDF’s.",
             "Juridische platformgegevens op facturen houden."),
 
+        ["/admin/about"] = new(
+            "Beheer · Wie zijn wij",
+            "Publieke ‘Wie zijn wij’-pagina bewerken.",
+            "Pas titel, introregel en inhoud aan. Gebruik koppen voor secties. De pagina is zichtbaar via /wie-zijn-wij.",
+            "Het verhaal achter Lobsy up-to-date houden zonder code-deploys."),
+
         ["/admin/integrations"] = new(
             "Beheer · Integraties",
             "API-koppelingen (Mollie, KVK, Entra, Google, Mail, OpenAI).",
