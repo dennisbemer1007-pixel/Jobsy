@@ -95,19 +95,22 @@
             @if (Credential.SupportsOAuth)
             {
                 <label>
-                    Client ID
-                    <input @bind="_clientId" @bind:event="oninput" @bind:after="MarkDirty" />
+                    @(IsMailIntegration ? "SMTP-gebruiker (Gmail-adres)" : "Client ID")
+                    <input @bind="_clientId"
+                           @bind:event="oninput"
+                           @bind:after="MarkDirty"
+                           placeholder="@(IsMailIntegration ? "jouw@gmail.com" : null)" />
                 </label>
                 @if (Credential.HasClientSecret && !string.IsNullOrWhiteSpace(Credential.ClientSecretMasked))
                 {
-                    <p class="muted">Huidig secret: @Credential.ClientSecretMasked</p>
+                    <p class="muted">@(IsMailIntegration ? "Huidig app-wachtwoord:" : "Huidig secret:") @Credential.ClientSecretMasked</p>
                 }
                 else
                 {
-                    <p class="muted">Nog geen client secret opgeslagen.</p>
+                    <p class="muted">@(IsMailIntegration ? "Nog geen app-wachtwoord opgeslagen." : "Nog geen client secret opgeslagen.")</p>
                 }
                 <label>
-                    Client Secret
+                    @(IsMailIntegration ? "App-wachtwoord" : "Client Secret")
                     <input class="integration-secret-input"
                            type="text"
                            autocomplete="off"
@@ -117,11 +120,17 @@
                            data-lpignore="true"
                            data-1p-ignore="true"
                            name="@($"integration-{Credential.Key}-client-secret")"
-                           placeholder="@(Credential.HasClientSecret ? "Nieuw secret (leeg = behouden)" : "Client secret")"
+                           placeholder="@(IsMailIntegration
+                               ? (Credential.HasClientSecret ? "Nieuw app-wachtwoord (leeg = behouden)" : "16-tekens app-wachtwoord")
+                               : (Credential.HasClientSecret ? "Nieuw secret (leeg = behouden)" : "Client secret"))"
                            @bind="_clientSecret"
                            @bind:event="oninput"
                            @bind:after="MarkDirty" />
                 </label>
+                @if (IsMailIntegration)
+                {
+                    <p class="muted">Gmail accepteert geen gewoon accountwachtwoord. Maak een App-wachtwoord aan (2FA vereist) en plak dat hier.</p>
+                }
             }
 
             @if (Credential.SupportsTenantId)
@@ -170,7 +179,10 @@
             {
                 <label>
                     Afzender (From)
-                    <input @bind="_fromAddress" @bind:event="oninput" @bind:after="MarkDirty" placeholder="noreply@example.com" />
+                    <input @bind="_fromAddress"
+                           @bind:event="oninput"
+                           @bind:after="MarkDirty"
+                           placeholder="@(IsMailIntegration ? "zelfde als SMTP-gebruiker" : "noreply@example.com")" />
                 </label>
             }
 
