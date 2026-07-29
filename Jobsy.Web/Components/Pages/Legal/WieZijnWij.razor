@@ -2,8 +2,9 @@
 @attribute [AllowAnonymous]
 @rendermode @(new InteractiveServerRenderMode(prerender: false))
 @inject JobsyApiClient Api
+@inject CultureState Culture
 
-<PageTitle>@(_page.Title) · Lobsy</PageTitle>
+<PageTitle>@Culture["Legal.About"] · Lobsy</PageTitle>
 
 <div class="panel-page legal-page about-page">
     <div class="about-page__watermark" aria-hidden="true">
@@ -12,13 +13,13 @@
 
     @if (_loading)
     {
-        <p class="state-message">Laden…</p>
+        <p class="state-message">@Culture["Common.Loading"]</p>
     }
     else
     {
         <header class="panel-header">
             <div>
-                <h1>@_page.Title</h1>
+                <h1>@Culture["Legal.About"]</h1>
                 @if (!string.IsNullOrWhiteSpace(_page.Lead))
                 {
                     <p class="login-lead">@_page.Lead</p>
@@ -27,6 +28,8 @@
         </header>
 
         <LegalToc />
+
+        <p class="login-lead muted">@Culture["Legal.DocNote"]</p>
 
         @if (!string.IsNullOrEmpty(_error))
         {

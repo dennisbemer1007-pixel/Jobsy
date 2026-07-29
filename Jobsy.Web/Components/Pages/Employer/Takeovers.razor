@@ -17,7 +17,7 @@
 
     @if (_loading)
     {
-        <p class="state-message">Laden…</p>
+        <p class="state-message">@Culture["Common.Loading"]</p>
     }
     else if (!string.IsNullOrEmpty(_error))
     {

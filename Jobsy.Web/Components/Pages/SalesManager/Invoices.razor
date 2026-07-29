@@ -4,14 +4,15 @@
 @inject JobsyApiClient Api
 @inject NavigationManager Nav
 @inject IJSRuntime Js
+@inject CultureState Culture
 
-<PageTitle>Facturen · Lobsy</PageTitle>
+<PageTitle>@Culture["Sales.Invoices"] · Lobsy</PageTitle>
 
 <div class="panel-page">
     <header class="panel-header">
         <div>
-            <h1>Facturen</h1>
-            <p class="login-lead">Kies zelf welk bedrag je laat uitbetalen via Mollie. Na uitbetaling download je de self-billing factuur als PDF.</p>
+            <h1>@Culture["Sales.Invoices"]</h1>
+            <p class="login-lead">@Culture["Sales.InvoicesLead"]</p>
         </div>
         <button class="login-submit" type="button" disabled="@_busy" @onclick="OpenPayoutModalAsync">Uitbetalen</button>
     </header>
@@ -27,7 +28,7 @@
 
     @if (_loading)
     {
-        <p class="state-message">Laden…</p>
+        <p class="state-message">@Culture["Common.Loading"]</p>
     }
     else
     {
@@ -61,11 +62,11 @@
          style="width:min(28rem, calc(100vw - 2rem));max-width:calc(100vw - 2rem)">
         <div class="share-modal__header">
             <h2 id="payout-title">Uitbetalen via Mollie</h2>
-            <button type="button" class="share-modal__close" @onclick="CloseModal" aria-label="Sluiten">×</button>
+            <button type="button" class="share-modal__close" @onclick="CloseModal" aria-label="@Culture["Common.Close"]">×</button>
         </div>
         @if (_preview is null)
         {
-            <p class="state-message">Laden…</p>
+            <p class="state-message">@Culture["Common.Loading"]</p>
         }
         else if (_preview.AvailableExVat <= 0 && !_preview.CanPayout)
         {
@@ -119,7 +120,7 @@
                         @onclick="ConfirmPayoutAsync">
                     @(_busy ? "Bezig…" : "Bevestigen via Mollie")
                 </button>
-                <button type="button" class="btn-compact" disabled="@_busy" @onclick="CloseModal">Annuleren</button>
+                <button type="button" class="btn-compact" disabled="@_busy" @onclick="CloseModal">@Culture["Common.Cancel"]</button>
             </div>
         }
         @if (!string.IsNullOrEmpty(_modalError))

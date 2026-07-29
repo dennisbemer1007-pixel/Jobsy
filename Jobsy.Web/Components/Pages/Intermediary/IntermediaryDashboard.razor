@@ -2,6 +2,7 @@
 @rendermode @(new InteractiveServerRenderMode(prerender: false))
 @attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Intermediary")]
 @inject JobsyApiClient Api
+@inject CultureState Culture
 
 <PageTitle>Intermediair Dashboard · Lobsy</PageTitle>
 
@@ -16,7 +17,7 @@
 
     @if (_loading)
     {
-        <p class="state-message">Laden…</p>
+        <p class="state-message">@Culture["Common.Loading"]</p>
     }
     else
     {

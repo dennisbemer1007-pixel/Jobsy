@@ -18,7 +18,7 @@
 
     @if (_loading)
     {
-        <p class="state-message">Laden…</p>
+        <p class="state-message">@Culture["Common.Loading"]</p>
     }
     else if (!string.IsNullOrEmpty(_error))
     {
@@ -66,7 +66,7 @@
                     </label>
                     <div class="inline-actions">
                         <button class="login-submit" type="submit" disabled="@_busy">Uitnodigen</button>
-                        <button class="provider-btn" type="button" @onclick="CloseInvite">Annuleren</button>
+                        <button class="provider-btn" type="button" @onclick="CloseInvite">@Culture["Common.Cancel"]</button>
                     </div>
                 </form>
             </section>
@@ -104,10 +104,10 @@
                     }
                 </fieldset>
                 <div class="inline-actions">
-                    <button class="login-submit" type="submit" disabled="@_busy">Opslaan</button>
+                    <button class="login-submit" type="submit" disabled="@_busy">@Culture["Common.Save"]</button>
                     @if (_editId is not null)
                     {
-                        <button class="provider-btn" type="button" @onclick="ResetForm">Annuleren</button>
+                        <button class="provider-btn" type="button" @onclick="ResetForm">@Culture["Common.Cancel"]</button>
                     }
                 </div>
             </form>

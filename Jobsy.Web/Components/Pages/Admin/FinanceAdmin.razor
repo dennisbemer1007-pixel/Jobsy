@@ -33,7 +33,7 @@
 
         @if (_loading)
         {
-            <p class="state-message">Laden…</p>
+            <p class="state-message">@Culture["Common.Loading"]</p>
         }
         else if (!string.IsNullOrEmpty(_error))
         {
@@ -59,7 +59,7 @@
                     <h2>@_metrics.FirstOrDefault(x => x.Key == _selectedKey)?.Label</h2>
                     @if (_drillLoading)
                     {
-                        <p class="state-message">Laden…</p>
+                        <p class="state-message">@Culture["Common.Loading"]</p>
                     }
                     else if (_drilldown.Count == 0)
                     {
@@ -109,7 +109,7 @@
 
         @if (_logLoading)
         {
-            <p class="state-message">Laden…</p>
+            <p class="state-message">@Culture["Common.Loading"]</p>
         }
         else if (!string.IsNullOrEmpty(_logError))
         {

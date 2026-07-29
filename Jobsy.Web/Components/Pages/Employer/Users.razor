@@ -18,7 +18,7 @@
 
     @if (_loading)
     {
-        <p class="state-message">Laden…</p>
+        <p class="state-message">@Culture["Common.Loading"]</p>
     }
     else if (!string.IsNullOrEmpty(_error))
     {
@@ -96,7 +96,7 @@
                     </label>
                     <div class="inline-actions">
                         <button class="login-submit" type="submit" disabled="@_busy">@Culture["Common.Save"]</button>
-                        <button class="btn-compact" type="button" disabled="@_busy" @onclick="CancelEdit">Annuleren</button>
+                        <button class="btn-compact" type="button" disabled="@_busy" @onclick="CancelEdit">@Culture["Common.Cancel"]</button>
                     </div>
                 </form>
             </section>

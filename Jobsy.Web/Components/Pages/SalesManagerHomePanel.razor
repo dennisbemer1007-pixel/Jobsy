@@ -1,21 +1,22 @@
 @using Jobsy.Web.Services
 @inject JobsyApiClient Api
+@inject CultureState Culture
 
 <section class="panel-page">
     <header class="panel-header">
         <div>
-            <h1>Salesmanager</h1>
-            <p class="login-lead">Gekoppelde ondernemers, wallet en self-billing uitbetalingen.</p>
+            <h1>@Culture["Sales.Dashboard"]</h1>
+            <p class="login-lead">@Culture["Sales.DashboardLead"]</p>
         </div>
         @if (_dashboard is not null && !_dashboard.IsOnboardingComplete)
         {
-            <a class="auth-link" href="/salesmanager/onboarding">Onboarding</a>
+            <a class="auth-link" href="/salesmanager/onboarding">@Culture["Sales.Onboarding"]</a>
         }
     </header>
 
     @if (_loading)
     {
-        <p class="state-message">Laden…</p>
+        <p class="state-message">@Culture["Common.Loading"]</p>
     }
     else if (!string.IsNullOrEmpty(_error))
     {

@@ -3,6 +3,7 @@
 @attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "RegionalManager,EnterpriseManager")]
 @inject JobsyApiClient Api
 @inject AuthenticationStateProvider AuthState
+@inject CultureState Culture
 
 <PageTitle>Tokens & vacatures · Lobsy</PageTitle>
 
@@ -26,7 +27,7 @@
 
     @if (_loading)
     {
-        <p class="state-message">Laden…</p>
+        <p class="state-message">@Culture["Common.Loading"]</p>
     }
     else
     {

@@ -24,20 +24,20 @@
     {
         <div class="filter-bar">
             <label>
-                Bedrijf
+                @Culture["Admin.Company"]
                 <input type="search" @bind="_companyFilter" @bind:event="oninput" placeholder="@Culture["Admin.CompanyPlaceholder"]" />
             </label>
             <label>
-                Titel
-                <input type="search" @bind="_titleFilter" @bind:event="oninput" placeholder="Vacaturetitel…" />
+                @Culture["Admin.Title"]
+                <input type="search" @bind="_titleFilter" @bind:event="oninput" placeholder="@Culture["Admin.VacancyTitlePlaceholder"]" />
             </label>
             <label>
-                Status
+                @Culture["Admin.Status"]
                 <select @bind="_statusFilter">
-                    <option value="">Alle</option>
-                    <option value="Active">Actief</option>
-                    <option value="Draft">Draft</option>
-                    <option value="Archived">Inactief</option>
+                    <option value="">@Culture["Admin.All"]</option>
+                    <option value="Active">@Culture["VacancyStatus.Active"]</option>
+                    <option value="Draft">@Culture["VacancyStatus.Draft"]</option>
+                    <option value="Archived">@Culture["VacancyStatus.Archived"]</option>
                     <option value="PendingApproval">Pending</option>
                 </select>
             </label>
@@ -63,9 +63,9 @@
                 <table class="data-table">
                     <thead>
                         <tr>
-                            <th class="data-table__col--wrap">Titel</th>
-                            <th class="data-table__col--wrap">Bedrijf</th>
-                            <th>Status</th>
+                            <th class="data-table__col--wrap">@Culture["Admin.Title"]</th>
+                            <th class="data-table__col--wrap">@Culture["Admin.Company"]</th>
+                            <th>@Culture["Admin.Status"]</th>
                             <th><button type="button" class="linkish" @onclick='() => Drill("impressions")'>Getoond</button></th>
                             <th><button type="button" class="linkish" @onclick='() => Drill("clicks")'>Clicks</button></th>
                             <th><button type="button" class="linkish" @onclick='() => Drill("shares")'>Shared</button></th>
@@ -96,7 +96,7 @@
                                     </a>
                                     @if (v.Status == "Active")
                                     {
-                                        <button class="btn-compact" type="button" disabled="@_busy" @onclick="() => DeactivateAsync(v)">Inactief</button>
+                                        <button class="btn-compact" type="button" disabled="@_busy" @onclick="() => DeactivateAsync(v)">@Culture["VacancyStatus.Archived"]</button>
                                         <button class="btn-compact" type="button" disabled="@_busy" @onclick="() => ExtendAsync(v)">Verlengen</button>
                                     }
                                 </td>
@@ -113,7 +113,7 @@
                 <h2>Drilldown: @_drillKey</h2>
                 @if (_drillLoading)
                 {
-                    <p class="state-message">Laden…</p>
+                    <p class="state-message">@Culture["Common.Loading"]</p>
                 }
                 else if (_drilldown.Count == 0)
                 {

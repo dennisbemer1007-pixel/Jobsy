@@ -1,19 +1,20 @@
 @inject JobsyApiClient Api
 
 @if (IsOpen && Vacancy is not null)
+@inject CultureState Culture
 {
     <div class="share-modal-backdrop" @onclick="Close"></div>
     <div class="share-modal publish-modal" role="dialog" aria-modal="true" aria-labelledby="pushbom-modal-title">
         <div class="share-modal__header">
-            <h2 id="pushbom-modal-title">PushBom activeren</h2>
-            <button type="button" class="share-modal__close" @onclick="Close" aria-label="Sluiten">×</button>
+            <h2 id="pushbom-modal-title">@Culture["PushBom.Title"]</h2>
+            <button type="button" class="share-modal__close" @onclick="Close" aria-label="@Culture["Common.Close"]">×</button>
         </div>
         <p class="share-modal__lead">@Vacancy.Title · @Vacancy.CompanyName</p>
 
         <div class="pushbom-preview" aria-live="polite">
             @if (_loading)
             {
-                <p class="muted">Bereik berekenen…</p>
+                <p class="muted">@Culture["Employer.ReachCalculating"]</p>
             }
             else if (!string.IsNullOrEmpty(_loadError))
             {
@@ -54,9 +55,9 @@
 
         <div class="inline-actions" style="margin-top:1rem">
             <button type="button" class="btn-compact btn-compact--primary" disabled="@ConfirmDisabled" @onclick="ConfirmAsync">
-                @(_busy ? "Bezig…" : "Activeer en reken af")
+                @(_busy ? Culture["Common.Busy"] : Culture["PushBom.Confirm"])
             </button>
-            <button type="button" class="btn-compact" disabled="@_busy" @onclick="Close">Annuleren</button>
+            <button type="button" class="btn-compact" disabled="@_busy" @onclick="Close">@Culture["Common.Cancel"]</button>
         </div>
 
         @if (!string.IsNullOrEmpty(_error))

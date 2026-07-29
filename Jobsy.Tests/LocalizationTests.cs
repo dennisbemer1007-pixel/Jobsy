@@ -68,6 +68,85 @@ public class LocalizationTests
     }
 
     [Fact]
+    public void UiStrings_extras_sample_keys_exist_in_all_languages()
+    {
+        string[] languages = ["nl", "en", "pl", "ro", "ar"];
+        string[] sampleKeys =
+        [
+            "Unsubscribe.Title",
+            "Employer.VacanciesTitle",
+            "Admin.Vacancies",
+            "Common.Cancel",
+            "Legal.DocNote",
+            "Discovery.LoadFailed",
+            "Admin.Company",
+            "Admin.Title",
+            "Admin.Status",
+            "Admin.All",
+            "VacancyStatus.Active",
+            "VacancyStatus.Draft",
+            "VacancyStatus.Archived",
+            "Admin.VacancyTitlePlaceholder",
+            "Admin.Candidate",
+            "Admin.Vacancy",
+            "Sales.Dashboard",
+            "Sales.Onboarding",
+            "Sales.Invoices",
+            "PushBom.Title",
+            "GrantTokens.Title"
+        ];
+
+        foreach (var key in sampleKeys)
+        {
+            foreach (var lang in languages)
+            {
+                var value = UiStrings.Get(key, lang);
+                Assert.False(string.IsNullOrWhiteSpace(value));
+                Assert.NotEqual(key, value);
+            }
+        }
+    }
+
+    [Fact]
+    public void UiStrings_catalog_key_counts_match_across_languages()
+    {
+        var catalogField = typeof(UiStrings).GetField(
+            "Catalog",
+            System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
+        Assert.NotNull(catalogField);
+
+        var catalog = (Dictionary<string, Dictionary<string, string>>)catalogField!.GetValue(null)!;
+        string[] languages = ["nl", "en", "pl", "ro", "ar"];
+        var nlCount = catalog["nl"].Count;
+        Assert.True(nlCount > 0);
+
+        foreach (var lang in languages)
+        {
+            Assert.True(catalog.ContainsKey(lang), $"Missing language catalog: {lang}");
+            Assert.Equal(nlCount, catalog[lang].Count);
+        }
+
+        // New extras keys resolve distinctly (not as the key itself) after Build/MergeAll.
+        string[] newKeys =
+        [
+            "Admin.Company",
+            "Admin.VacancyTitlePlaceholder",
+            "VacancyStatus.Draft",
+            "Sales.Invoices",
+            "PushBom.Title",
+            "GrantTokens.Title",
+            "Sales.DashboardLead"
+        ];
+        foreach (var key in newKeys)
+        {
+            foreach (var lang in languages)
+            {
+                Assert.NotEqual(key, UiStrings.Get(key, lang));
+            }
+        }
+    }
+
+    [Fact]
     public void ParsePreferences_reads_language()
     {
         var prefs = MeController.ParsePreferences(

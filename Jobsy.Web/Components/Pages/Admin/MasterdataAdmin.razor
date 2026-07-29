@@ -72,7 +72,7 @@
                             </label>
                         </div>
                         <div class="inline-actions">
-                            <button class="provider-btn" type="button" disabled="@(_busyId == item.Id)" @onclick="() => SaveAsync(item)">Opslaan</button>
+                            <button class="provider-btn" type="button" disabled="@(_busyId == item.Id)" @onclick="() => SaveAsync(item)">@Culture["Common.Save"]</button>
                             <button type="button" class="icon-btn icon-btn--danger" title="Verwijderen" aria-label="Item verwijderen" disabled="@(_busyId == item.Id)" @onclick="() => DeleteAsync(item)">
                                 @((MarkupString)ActionIcons.Trash)
                             </button>
@@ -82,7 +82,7 @@
             </div>
 
             <div class="masterdata-add">
-                <h3>Toevoegen</h3>
+                <h3>@Culture["Common.Add"]</h3>
                 <div class="masterdata-row__fields">
                     <label>
                         Waarde
@@ -93,7 +93,7 @@
                         <input @bind="_newLabel" placeholder="Weergavenaam" />
                     </label>
                 </div>
-                <button class="login-submit" type="button" disabled="@_creating" @onclick="CreateAsync">Toevoegen</button>
+                <button class="login-submit" type="button" disabled="@_creating" @onclick="CreateAsync">@Culture["Common.Add"]</button>
             </div>
         </section>
 

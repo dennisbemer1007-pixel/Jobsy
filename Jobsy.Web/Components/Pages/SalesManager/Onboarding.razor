@@ -2,20 +2,21 @@
 @rendermode @(new InteractiveServerRenderMode(prerender: false))
 @attribute [Authorize(Roles = "SalesManager")]
 @inject JobsyApiClient Api
+@inject CultureState Culture
 
-<PageTitle>Onboarding · Lobsy</PageTitle>
+<PageTitle>@Culture["Sales.Onboarding"] · Lobsy</PageTitle>
 
 <div class="panel-page">
     <header class="panel-header">
         <div>
-            <h1>Salesmanager onboarding</h1>
-            <p class="login-lead">Vul KvK, BTW en NAW in en onderteken de bemiddelingsovereenkomst. Daarna ontvang je je unieke code.</p>
+            <h1>@Culture["Sales.Onboarding"]</h1>
+            <p class="login-lead">@Culture["Sales.OnboardingLead"]</p>
         </div>
     </header>
 
     @if (_loading)
     {
-        <p class="state-message">Laden…</p>
+        <p class="state-message">@Culture["Common.Loading"]</p>
     }
     else if (_profile?.IsOnboardingComplete == true)
     {

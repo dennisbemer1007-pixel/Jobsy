@@ -3,6 +3,7 @@
 @attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "BranchManager,EnterpriseManager,Intermediary,Admin")]
 @inject JobsyApiClient Api
 @inject NavigationManager Navigation
+@inject CultureState Culture
 
 <PageTitle>Checkout stub · Lobsy</PageTitle>
 
@@ -12,7 +13,7 @@
 
     @if (_loading)
     {
-        <p class="state-message">Laden…</p>
+        <p class="state-message">@Culture["Common.Loading"]</p>
     }
     else
     {
@@ -27,7 +28,7 @@
             <button class="login-submit" type="button" disabled="@_busy || string.IsNullOrWhiteSpace(_paymentId)" @onclick="CompleteAsync">
                 @(_busy ? "Bezig…" : "Betaal (stub)")
             </button>
-            <a class="auth-link" href="/employer/tokens">Annuleren</a>
+            <a class="auth-link" href="/employer/tokens">@Culture["Common.Cancel"]</a>
         </div>
 
         @if (!string.IsNullOrEmpty(_message))
