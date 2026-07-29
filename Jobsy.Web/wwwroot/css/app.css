@@ -5287,6 +5287,19 @@ a.map-popup__cta {
     box-sizing: border-box;
 }
 
+.integration-test-mail {
+    display: flex;
+    flex-direction: column;
+    gap: 0.45rem;
+    margin-top: 0.35rem;
+    padding-top: 0.65rem;
+    border-top: 1px dashed var(--border);
+}
+
+.integration-test-mail .btn-compact {
+    align-self: flex-start;
+}
+
 /* Mask typed secrets without type=password (avoids browser autofill dots on empty fields). */
 .integration-key-form input.integration-secret-input {
     -webkit-text-security: disc;
