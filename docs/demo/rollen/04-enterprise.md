@@ -13,7 +13,7 @@ De enterprise-manager is de centrale beheerder van een organisatie. Naast vacatu
 |------|------|-------------|
 | Bedrijfs-KPI’s | `/home` | Organisatiebrede metrics |
 | Vacatures + approve-publish | `/employer/vacancies` | Ook goedkeuren bij te weinig tokens |
-| Tokens kopen / alloceren | `/employer/tokens` | Wallet, Mollie-stub, logs |
+| Tokens kopen / uitgeven | `/employer/tokens` | Pot-aankoop, vestiging aanvinken, uitgifte |
 | Vestigingen / regio’s | `/employer/branches`, `/employer/regions` | Structuur |
 | Gebruikers | `/employer/users` | Uitnodigen + rollen |
 | Salaristabellen | `/employer/salary-tables` | CAO/schalen voor vacatures |
@@ -35,7 +35,7 @@ Home · Banenkaart · Vacatures · Salaristabellen · Tokens · Vestigingen · R
 
 ![Tokens](../screenshots/04-enterprise-tokens.png)
 
-*Tokenaankoop, allocatie en logs.*
+*Tokenaankoop in de pot, uitgifte aan vestigingen en logs.*
 
 ![Gebruikers](../screenshots/04-enterprise-gebruikers.png)
 
@@ -51,7 +51,7 @@ Home · Banenkaart · Vacatures · Salaristabellen · Tokens · Vestigingen · R
 
 1. Log in als `enterprise@jobsy.local`.  
 2. **Home**: organisatie-KPI’s.  
-3. **Tokens**: aankoop (stub) + allocatie naar vestigingen noemen.  
+3. **Tokens**: aankoop in de organisatiopot (radio-pakketten) + uitgifte naar aangevinkte vestigingen.  
 4. **Gebruikers**: invite-by-email / rollen.  
 5. **Salaristabellen**: koppeling aan vacatures (CAO).  
 6. **Vacatures**: approve-publish wanneer een filiaal te weinig tokens heeft.  

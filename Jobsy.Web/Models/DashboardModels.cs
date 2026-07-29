@@ -9,6 +9,7 @@ public class CompanySummary
     public decimal TokenBalance { get; set; }
     public int ActiveVacancies { get; set; }
     public Guid? ParentCompanyId { get; set; }
+    public bool TokensManagedByEnterprise { get; set; }
 }
 
 public class TokenBalance
@@ -16,6 +17,8 @@ public class TokenBalance
     public Guid CompanyId { get; set; }
     public string CompanyName { get; set; } = string.Empty;
     public decimal Balance { get; set; }
+    public Guid? ParentCompanyId { get; set; }
+    public bool TokensManagedByEnterprise { get; set; }
 }
 
 public class ApplicationItem

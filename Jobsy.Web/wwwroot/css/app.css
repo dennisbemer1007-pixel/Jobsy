@@ -6272,6 +6272,22 @@ button.linkish:hover {
     gap: 0.15rem;
 }
 
+.token-pack-options {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+}
+
+.token-pack-options .scope-option {
+    margin: 0.35rem 0;
+    padding: 0.35rem 0.25rem;
+    border-radius: 8px;
+}
+
+.token-pack-options .scope-option:hover {
+    background: color-mix(in srgb, var(--brand) 6%, transparent);
+}
+
 .badge-ok,
 .badge-warn {
     font-size: 0.78rem;

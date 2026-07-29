@@ -55,7 +55,10 @@ public static class JobsyRoles
     public const string ApplicationReactRoles =
         $"{BranchManager},{EnterpriseManager},{Intermediary},{Admin}";
 
-    /// <summary>Regional managers may view token balances/logs but not buy or allocate.</summary>
+    /// <summary>
+    /// Branch managers may purchase only when the vestiging is not under enterprise token management.
+    /// Enterprise managers buy into the organisation pot; intermediaries/admins always may purchase.
+    /// </summary>
     public static bool CanPurchaseTokens(UserRole role) =>
         role is UserRole.BranchManager
             or UserRole.EnterpriseManager

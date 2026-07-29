@@ -283,6 +283,9 @@ namespace Jobsy.Infrastructure.Data.Migrations
                     b.Property<Guid?>("ReferredBySalesManagerUserId")
                         .HasColumnType("uuid");
 
+                    b.Property<bool>("TokensManagedByEnterprise")
+                        .HasColumnType("boolean");
+
                     b.Property<int>("Type")
                         .HasColumnType("integer");
 

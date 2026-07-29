@@ -17,7 +17,7 @@ Bij onvoldoende tokens gaat publiceren naar `PendingApproval` (Enterprise of Adm
 | Vacatures beheren / publiceren | `/employer/vacancies` | Publish-opties |
 | Nieuwe vacature | `/branch/vacancies/new` | Aanmaken |
 | Sollicitanten | `/branch/applicants` | Accept → PII zichtbaar |
-| Tokenwallet | `/branch/tokens` | Saldo en logs |
+| Tokenwallet | `/branch/tokens` | Saldo en logs (aankoop alleen als vestiging zelf tokenbeheer doet) |
 | Overnames | `/employer/takeovers` | Inbox |
 
 ### Bottom-navigatie
@@ -50,6 +50,6 @@ Home · Banenkaart · Vacatures · Mijn tokens · Overnames
 2. Toon **Home**: vestiging-KPI’s + tokenchip in de header.  
 3. Ga naar **Vacatures** → wijs op actieve vacatures en publicatie-opties.  
 4. Ga naar **Sollicitanten** → leg uit: gegevens pas na Accept.  
-5. Ga naar **Mijn tokens** → saldo / logs.  
+5. Ga naar **Mijn tokens** → saldo / logs (bij centraal tokenbeheer koopt de bedrijfsmanager).  
 6. Optioneel: **Overnames** noemen als inbox voor overname van een andere vestiging/organisatie.  
-7. Afronden: “Eén vestiging, eigen wallet, operationeel werven.”
+7. Afronden: “Eén vestiging, operationeel werven; tokens via eigen aankoop of via de bedrijfsmanager.”
