@@ -57,6 +57,17 @@ public class Vacancy
     public Guid? SalaryTableId { get; set; }
     public CompanySalaryTable? SalaryTable { get; set; }
 
+    /// <summary>
+    /// When true, this vacancy uses its own direct-contact flags instead of the company (or parent) defaults.
+    /// Contact values (e-mail/phone/WhatsApp) always come from the company profile.
+    /// </summary>
+    public bool OverrideContactPreference { get; set; }
+
+    public bool DirectContactEnabled { get; set; }
+    public bool ContactPreferMail { get; set; }
+    public bool ContactPreferPhone { get; set; }
+    public bool ContactPreferWhatsApp { get; set; }
+
     public ICollection<VacancyClick> Clicks { get; set; } = new List<VacancyClick>();
     public ICollection<VacancyLike> Likes { get; set; } = new List<VacancyLike>();
     public ICollection<VacancyShare> Shares { get; set; } = new List<VacancyShare>();

@@ -11,6 +11,13 @@ public class CompanySummary
     public Guid? ParentCompanyId { get; set; }
     public bool TokensManagedByEnterprise { get; set; }
     public bool CsvBatchImportEnabled { get; set; }
+    public bool DirectContactEnabled { get; set; }
+    public bool ContactPreferMail { get; set; }
+    public bool ContactPreferPhone { get; set; }
+    public bool ContactPreferWhatsApp { get; set; }
+    public string? ContactEmail { get; set; }
+    public string? ContactPhone { get; set; }
+    public string? ContactWhatsApp { get; set; }
 }
 
 public class CompanyApiKeyItem
@@ -86,6 +93,28 @@ public class ApplyResultItem
     public bool AuthenticatorStubUsed { get; set; }
     public bool RequiresVerification { get; set; }
     public bool VerificationCodeSent { get; set; }
+    public EmployerDirectContactItem? DirectContact { get; set; }
+}
+
+public class EmployerDirectContactItem
+{
+    public bool Available { get; set; }
+    public bool OfferMail { get; set; }
+    public bool OfferPhone { get; set; }
+    public bool OfferWhatsApp { get; set; }
+    public string? Email { get; set; }
+    public string? Phone { get; set; }
+    public string? WhatsAppUrl { get; set; }
+}
+
+public class VacancyContactPreferenceItem
+{
+    public Guid VacancyId { get; set; }
+    public bool OverrideContactPreference { get; set; }
+    public bool DirectContactEnabled { get; set; }
+    public bool ContactPreferMail { get; set; }
+    public bool ContactPreferPhone { get; set; }
+    public bool ContactPreferWhatsApp { get; set; }
 }
 
 public class EmployerApplicationItem

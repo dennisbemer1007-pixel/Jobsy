@@ -830,6 +830,81 @@ public sealed class JobsyApiClient : IAsyncDisposable
         return await response.Content.ReadFromJsonAsync<CompanySummary>(cancellationToken: ct);
     }
 
+    public async Task<CompanySummary?> UpdateContactPreferenceAsync(
+        Guid companyId,
+        bool directContactEnabled,
+        bool contactPreferMail,
+        bool contactPreferPhone,
+        bool contactPreferWhatsApp,
+        string? contactEmail,
+        string? contactPhone,
+        string? contactWhatsApp,
+        CancellationToken ct = default)
+    {
+        var response = await _http.PutAsJsonAsync(
+            $"api/companies/{companyId}/contact-preference",
+            new
+            {
+                directContactEnabled,
+                contactPreferMail,
+                contactPreferPhone,
+                contactPreferWhatsApp,
+                contactEmail,
+                contactPhone,
+                contactWhatsApp
+            },
+            ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException(TryExtractMessage(body) ?? body);
+        }
+
+        return await response.Content.ReadFromJsonAsync<CompanySummary>(cancellationToken: ct);
+    }
+
+    public async Task<VacancyContactPreferenceItem?> GetVacancyContactPreferenceAsync(
+        Guid vacancyId,
+        CancellationToken ct = default)
+    {
+        var response = await _http.GetAsync($"api/vacancies/{vacancyId}/contact-preference", ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            return null;
+        }
+
+        return await response.Content.ReadFromJsonAsync<VacancyContactPreferenceItem>(cancellationToken: ct);
+    }
+
+    public async Task<VacancyContactPreferenceItem?> UpdateVacancyContactPreferenceAsync(
+        Guid vacancyId,
+        bool overrideContactPreference,
+        bool directContactEnabled,
+        bool contactPreferMail,
+        bool contactPreferPhone,
+        bool contactPreferWhatsApp,
+        CancellationToken ct = default)
+    {
+        var response = await _http.PutAsJsonAsync(
+            $"api/vacancies/{vacancyId}/contact-preference",
+            new
+            {
+                overrideContactPreference,
+                directContactEnabled,
+                contactPreferMail,
+                contactPreferPhone,
+                contactPreferWhatsApp
+            },
+            ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException(TryExtractMessage(body) ?? body);
+        }
+
+        return await response.Content.ReadFromJsonAsync<VacancyContactPreferenceItem>(cancellationToken: ct);
+    }
+
     public async Task<CsvImportResult?> ImportVacanciesCsvAsync(
         Guid companyId,
         IReadOnlyList<CsvImportRowForm> rows,
@@ -1697,7 +1772,12 @@ public record CreateVacancyForm(
     Guid? SalaryTableId = null,
     string? RequiredDrivingLicense = null,
     string? RequiredEducation = null,
-    int? MinimumEmployers = null);
+    int? MinimumEmployers = null,
+    bool OverrideContactPreference = false,
+    bool DirectContactEnabled = false,
+    bool ContactPreferMail = false,
+    bool ContactPreferPhone = false,
+    bool ContactPreferWhatsApp = false);
 
 public record BatchVacancyForm(
     string Title,

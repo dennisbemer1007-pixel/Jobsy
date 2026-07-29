@@ -50,6 +50,24 @@ public class Company
     /// <summary>Last successful CSV vacancy import (any row) for activity tracking.</summary>
     public DateTime? LastCsvImportAtUtc { get; set; }
 
+    /// <summary>
+    /// When true, candidates may be offered direct contact (mail/phone/WhatsApp) after a successful application.
+    /// </summary>
+    public bool DirectContactEnabled { get; set; }
+
+    public bool ContactPreferMail { get; set; }
+    public bool ContactPreferPhone { get; set; }
+    public bool ContactPreferWhatsApp { get; set; }
+
+    /// <summary>Contact e-mail shown after apply when Mail is preferred.</summary>
+    public string? ContactEmail { get; set; }
+
+    /// <summary>Phone number for tel: links after apply.</summary>
+    public string? ContactPhone { get; set; }
+
+    /// <summary>WhatsApp number (digits); falls back to <see cref="ContactPhone"/> when empty.</summary>
+    public string? ContactWhatsApp { get; set; }
+
     /// <summary>Salesmanager who referred this supplier (via tracking code).</summary>
     public Guid? ReferredBySalesManagerUserId { get; set; }
     public User? ReferredBySalesManagerUser { get; set; }

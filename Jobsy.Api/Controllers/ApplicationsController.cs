@@ -151,6 +151,7 @@ public class ApplicationsController : ControllerBase
 
         var vacancy = await _db.Vacancies
             .Include(v => v.Company)
+                .ThenInclude(c => c.ParentCompany)
             .FirstOrDefaultAsync(v => v.Id == request.VacancyId, cancellationToken);
 
         if (vacancy is null)
@@ -389,7 +390,32 @@ public class ApplicationsController : ControllerBase
             existing.Status.ToString(),
             existing.RespondedAt);
 
-        return Ok(new ApplyResultDto(dto, ConfirmationEmailQueued: true, authenticatorStubUsed));
+        return Ok(new ApplyResultDto(
+            dto,
+            ConfirmationEmailQueued: true,
+            authenticatorStubUsed,
+            DirectContact: ToDirectContactDto(vacancy)));
+    }
+
+    private static EmployerDirectContactDto? ToDirectContactDto(Core.Entities.Vacancy vacancy)
+    {
+        var effective = EmployerContactPreferenceRules.Resolve(
+            vacancy.Company,
+            vacancy,
+            vacancy.Company.ParentCompany);
+        if (!effective.Available)
+        {
+            return null;
+        }
+
+        return new EmployerDirectContactDto(
+            Available: true,
+            OfferMail: effective.OfferMail,
+            OfferPhone: effective.OfferPhone,
+            OfferWhatsApp: effective.OfferWhatsApp,
+            Email: effective.Email,
+            Phone: effective.Phone,
+            WhatsAppUrl: effective.WhatsAppUrl);
     }
 
     [HttpPost("{id:guid}/withdraw")]

@@ -1,0 +1,51 @@
+@using Jobsy.Web.Localization
+@using Jobsy.Web.Models
+@inject CultureState Culture
+
+@if (IsOpen && Contact is not null && Contact.Available)
+{
+    <div class="share-modal-backdrop" @onclick="Close"></div>
+    <div class="share-modal direct-contact-modal" role="dialog" aria-modal="true" aria-labelledby="direct-contact-title">
+        <div class="share-modal__header">
+            <h2 id="direct-contact-title">@Culture["Apply.DirectContactTitle"]</h2>
+            <button type="button" class="share-modal__close" @onclick="Close" aria-label="@Culture["Common.Close"]">×</button>
+        </div>
+        <p class="share-modal__lead">@Culture["Apply.DirectContactLead"]</p>
+        <div class="direct-contact-modal__actions" role="group" aria-label="@Culture["Apply.DirectContactChannels"]">
+            @if (Contact.OfferWhatsApp && !string.IsNullOrWhiteSpace(Contact.WhatsAppUrl))
+            {
+                <a class="login-submit direct-contact-modal__btn direct-contact-modal__btn--whatsapp"
+                   href="@Contact.WhatsAppUrl"
+                   target="_blank"
+                   rel="noopener noreferrer">
+                    WhatsApp
+                </a>
+            }
+            @if (Contact.OfferPhone && !string.IsNullOrWhiteSpace(Contact.Phone))
+            {
+                <a class="login-submit direct-contact-modal__btn direct-contact-modal__btn--phone"
+                   href="@($"tel:{Contact.Phone}")">
+                    @Culture["Apply.Call"] @Contact.Phone
+                </a>
+            }
+            @if (Contact.OfferMail && !string.IsNullOrWhiteSpace(Contact.Email))
+            {
+                <a class="login-submit direct-contact-modal__btn direct-contact-modal__btn--mail"
+                   href="@($"mailto:{Contact.Email}")">
+                    @Culture["Apply.Mail"] @Contact.Email
+                </a>
+            }
+        </div>
+        <div class="inline-actions" style="margin-top:1rem">
+            <button type="button" class="btn-compact" @onclick="Close">@Culture["Common.Close"]</button>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public bool IsOpen { get; set; }
+    [Parameter] public EmployerDirectContactItem? Contact { get; set; }
+    [Parameter] public EventCallback OnClose { get; set; }
+
+    private async Task Close() => await OnClose.InvokeAsync();
+}

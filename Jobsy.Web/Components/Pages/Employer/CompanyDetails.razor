@@ -9,7 +9,7 @@
     <header class="panel-header">
         <div>
             <h1>Bedrijfsgegevens</h1>
-            <p class="login-lead">Organisatiegegevens, CSV-import en externe API-koppeling.</p>
+            <p class="login-lead">Organisatiegegevens, bereikbaarheid, CSV-import en externe API-koppeling.</p>
         </div>
     </header>
 
@@ -30,11 +30,11 @@
         @if (_organizations.Count > 1)
         {
             <label class="filter-required" style="max-width:24rem;display:block;margin-bottom:1rem">
-                Organisatie
+                Organisatie / vestiging
                 <select @bind="_selectedOrgId" @bind:after="OnOrgChangedAsync">
                     @foreach (var org in _organizations)
                     {
-                        <option value="@org.Id">@org.Name</option>
+                        <option value="@org.Id">@(org.ParentCompanyId is null ? org.Name : $"{org.Name} (vestiging)")</option>
                     }
                 </select>
             </label>
@@ -48,6 +48,63 @@
                 <p class="muted">@_org.TokenBalance.ToString("0.##") tokens · @_org.ActiveVacancies actieve vacatures</p>
             </section>
 
+            <section class="panel-section">
+                <h2>Voorkeur voor contact</h2>
+                <p class="muted">
+                    Geef aan of kandidaten na een succesvolle sollicitatie direct contact mogen opnemen
+                    (mail, telefoon of WhatsApp). Per vacature kun je dit later overschrijven.
+                    WhatsApp en telefoon worden nooit op de openbare vacaturepagina getoond.
+                </p>
+                <label class="checkbox-row">
+                    <input type="checkbox"
+                           checked="@_directContactEnabled"
+                           disabled="@_busy"
+                           @onchange="OnDirectContactToggle" />
+                    Direct contact gewenst (WhatsApp / Telefoon / Mail)
+                </label>
+                @if (_directContactEnabled)
+                {
+                    <div class="contact-pref-channels" style="margin-top:0.75rem;display:grid;gap:0.5rem">
+                        <label class="checkbox-row">
+                            <input type="checkbox" @bind="_preferMail" disabled="@_busy" />
+                            Mail
+                        </label>
+                        <label class="checkbox-row">
+                            <input type="checkbox" @bind="_preferPhone" disabled="@_busy" />
+                            Telefoon
+                        </label>
+                        <label class="checkbox-row">
+                            <input type="checkbox" @bind="_preferWhatsApp" disabled="@_busy" />
+                            WhatsApp
+                        </label>
+                    </div>
+                    <div class="login-form" style="margin-top:0.75rem;max-width:28rem">
+                        <label>
+                            Contact-e-mail
+                            <input type="email" @bind="_contactEmail" disabled="@(_busy || !_preferMail)" />
+                        </label>
+                        <label>
+                            Telefoonnummer
+                            <input type="tel" @bind="_contactPhone" disabled="@(_busy || (!_preferPhone && !_preferWhatsApp))" />
+                        </label>
+                        <label>
+                            WhatsApp-nummer
+                            <input type="tel"
+                                   @bind="_contactWhatsApp"
+                                   placeholder="Optioneel — anders telefoonnummer"
+                                   disabled="@(_busy || !_preferWhatsApp)" />
+                        </label>
+                    </div>
+                }
+                <div class="inline-actions" style="margin-top:0.75rem">
+                    <button class="login-submit" type="button" disabled="@_busy" @onclick="SaveContactPreferenceAsync">
+                        Contactvoorkeur opslaan
+                    </button>
+                </div>
+            </section>
+
+            @if (_org.ParentCompanyId is null)
+            {
             <section class="panel-section">
                 <h2>CSV Batch Import</h2>
                 <p class="muted">
@@ -147,12 +204,13 @@
                         }
                     </div>
                 }
-
-                @if (!string.IsNullOrEmpty(_message))
-                {
-                    <p class="state-message">@_message</p>
-                }
             </section>
+            }
+
+            @if (!string.IsNullOrEmpty(_message))
+            {
+                <p class="state-message">@_message</p>
+            }
         }
     }
 </div>
@@ -213,6 +271,13 @@
     private bool _busy;
     private string? _error;
     private string? _message;
+    private bool _directContactEnabled;
+    private bool _preferMail;
+    private bool _preferPhone;
+    private bool _preferWhatsApp;
+    private string _contactEmail = "";
+    private string _contactPhone = "";
+    private string _contactWhatsApp = "";
 
     protected override async Task OnInitializedAsync() => await ReloadAsync();
 
@@ -223,6 +288,7 @@
         try
         {
             var companies = await Api.GetMyCompaniesAsync();
+            // Prefer organisations; fall back to all companies so vestigingen can set contact prefs too.
             _organizations = companies
                 .Where(c => c.ParentCompanyId is null)
                 .OrderBy(c => c.Name)
@@ -230,6 +296,14 @@
             if (_organizations.Count == 0)
             {
                 _organizations = companies.OrderBy(c => c.Name).ToList();
+            }
+            else
+            {
+                // Also include vestigingen so contact prefs can be set per vestiging.
+                var extras = companies
+                    .Where(c => c.ParentCompanyId is not null)
+                    .OrderBy(c => c.Name);
+                _organizations = _organizations.Concat(extras).ToList();
             }
 
             if (_organizations.Count == 0)
@@ -266,14 +340,113 @@
             return;
         }
 
-        _keys = (await Api.GetCompanyApiKeysAsync(_org.Id)).ToList();
-        _activeKey = _keys.FirstOrDefault(k => k.IsActive);
-        _inactiveKeys = _keys.Where(k => !k.IsActive).ToList();
+        SyncContactFormFromOrg();
+        _keys = [];
+        _activeKey = null;
+        _inactiveKeys = [];
+        if (_org.ParentCompanyId is null)
+        {
+            _keys = (await Api.GetCompanyApiKeysAsync(_org.Id)).ToList();
+            _activeKey = _keys.FirstOrDefault(k => k.IsActive);
+            _inactiveKeys = _keys.Where(k => !k.IsActive).ToList();
+        }
+    }
+
+    private void SyncContactFormFromOrg()
+    {
+        if (_org is null)
+        {
+            return;
+        }
+
+        _directContactEnabled = _org.DirectContactEnabled;
+        _preferMail = _org.ContactPreferMail;
+        _preferPhone = _org.ContactPreferPhone;
+        _preferWhatsApp = _org.ContactPreferWhatsApp;
+        _contactEmail = _org.ContactEmail ?? "";
+        _contactPhone = _org.ContactPhone ?? "";
+        _contactWhatsApp = _org.ContactWhatsApp ?? "";
+    }
+
+    private void OnDirectContactToggle(ChangeEventArgs e)
+    {
+        _directContactEnabled = e.Value is bool b && b || e.Value?.ToString() == "on";
+        if (!_directContactEnabled)
+        {
+            _preferMail = false;
+            _preferPhone = false;
+            _preferWhatsApp = false;
+        }
+    }
+
+    private async Task SaveContactPreferenceAsync()
+    {
+        if (_org is null || _busy)
+        {
+            return;
+        }
+
+        if (_directContactEnabled && !_preferMail && !_preferPhone && !_preferWhatsApp)
+        {
+            _message = "Kies minstens één contactoptie (Mail, Telefoon of WhatsApp).";
+            return;
+        }
+
+        _busy = true;
+        _message = null;
+        try
+        {
+            var updated = await Api.UpdateContactPreferenceAsync(
+                _org.Id,
+                _directContactEnabled,
+                _preferMail,
+                _preferPhone,
+                _preferWhatsApp,
+                string.IsNullOrWhiteSpace(_contactEmail) ? null : _contactEmail.Trim(),
+                string.IsNullOrWhiteSpace(_contactPhone) ? null : _contactPhone.Trim(),
+                string.IsNullOrWhiteSpace(_contactWhatsApp) ? null : _contactWhatsApp.Trim());
+            if (updated is not null)
+            {
+                ApplyContactToLocal(updated);
+                _message = "Contactvoorkeur opgeslagen.";
+            }
+        }
+        catch (Exception ex)
+        {
+            _message = ex.Message;
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private void ApplyContactToLocal(CompanySummary updated)
+    {
+        if (_org is null)
+        {
+            return;
+        }
+
+        _org.DirectContactEnabled = updated.DirectContactEnabled;
+        _org.ContactPreferMail = updated.ContactPreferMail;
+        _org.ContactPreferPhone = updated.ContactPreferPhone;
+        _org.ContactPreferWhatsApp = updated.ContactPreferWhatsApp;
+        _org.ContactEmail = updated.ContactEmail;
+        _org.ContactPhone = updated.ContactPhone;
+        _org.ContactWhatsApp = updated.ContactWhatsApp;
+        var idx = _organizations.FindIndex(o => o.Id == _org.Id);
+        if (idx >= 0)
+        {
+            _organizations[idx] = _org;
+        }
+
+        SyncContactFormFromOrg();
     }
 
     private async Task GenerateAsync()
     {
-        if (_org is null || _busy)
+        if (_org is null || _busy || _org.ParentCompanyId is not null)
         {
             return;
         }

@@ -334,6 +334,30 @@ namespace Jobsy.Infrastructure.Data.Migrations
                     b.Property<bool>("CsvBatchImportEnabled")
                         .HasColumnType("boolean");
 
+                    b.Property<string>("ContactEmail")
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
+                    b.Property<string>("ContactPhone")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<bool>("ContactPreferMail")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("ContactPreferPhone")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("ContactPreferWhatsApp")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("ContactWhatsApp")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<bool>("DirectContactEnabled")
+                        .HasColumnType("boolean");
+
                     b.Property<DateTime?>("LastCsvImportAtUtc")
                         .HasColumnType("timestamp with time zone");
 
@@ -1558,6 +1582,15 @@ namespace Jobsy.Infrastructure.Data.Migrations
                     b.Property<Guid>("CompanyId")
                         .HasColumnType("uuid");
 
+                    b.Property<bool>("ContactPreferMail")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("ContactPreferPhone")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("ContactPreferWhatsApp")
+                        .HasColumnType("boolean");
+
                     b.Property<int>("CreatedVia")
                         .HasColumnType("integer");
 
@@ -1565,6 +1598,9 @@ namespace Jobsy.Infrastructure.Data.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("timestamp with time zone")
                         .HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+                    b.Property<bool>("DirectContactEnabled")
+                        .HasColumnType("boolean");
 
                     b.Property<DateTime?>("DraftCleanupWarningSentAtUtc")
                         .HasColumnType("timestamp with time zone");
@@ -1603,6 +1639,9 @@ namespace Jobsy.Infrastructure.Data.Migrations
 
                     b.Property<int?>("MinimumEmployers")
                         .HasColumnType("integer");
+
+                    b.Property<bool>("OverrideContactPreference")
+                        .HasColumnType("boolean");
 
                     b.Property<DateTime?>("PublishedAtUtc")
                         .HasColumnType("timestamp with time zone");

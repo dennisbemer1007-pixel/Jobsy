@@ -101,6 +101,9 @@ public class JobsyDbContext : DbContext
             entity.Property(e => e.KvkEstablishmentId).HasMaxLength(40);
             entity.Property(e => e.Address).HasMaxLength(512).IsRequired();
             entity.Property(e => e.LogoUrl).HasMaxLength(1024);
+            entity.Property(e => e.ContactEmail).HasMaxLength(256);
+            entity.Property(e => e.ContactPhone).HasMaxLength(64);
+            entity.Property(e => e.ContactWhatsApp).HasMaxLength(64);
             entity.Property(e => e.Location)
                 .HasConversion(new GeoPointConverter())
                 .HasColumnType("geometry(Point, 4326)");

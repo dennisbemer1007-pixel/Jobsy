@@ -419,6 +419,7 @@
 
 <ShareModal IsOpen="_shareOpen" Vacancy="_vacancy" OnClose="CloseShare" />
 <MockInterviewModal IsOpen="_mockInterviewOpen" Vacancy="_vacancy" OnClose="CloseMockInterview" />
+<DirectContactModal IsOpen="_directContactOpen" Contact="_directContact" OnClose="CloseDirectContact" />
 
 @code {
     [Parameter] public Guid Id { get; set; }
@@ -431,6 +432,8 @@
     private bool _liking;
     private bool _shareOpen;
     private bool _mockInterviewOpen;
+    private bool _directContactOpen;
+    private EmployerDirectContactItem? _directContact;
     private bool _savingDob;
     private DateOnly? _dobInput;
     private string _transport = "Fiets";
@@ -992,6 +995,7 @@
                 _message = _useAuthenticator
                     ? Culture["Apply.CodeSentAuthenticator"]
                     : Culture["Apply.SentStub"];
+                OpenDirectContactIfAvailable(result?.DirectContact);
             }
         }
         catch (Exception ex)
@@ -1031,6 +1035,7 @@
                 _verificationCode = string.Empty;
                 _enteredVerifyThisSession = false;
                 _message = Culture["Apply.Verified"];
+                OpenDirectContactIfAvailable(result?.DirectContact);
             }
             else
             {
@@ -1088,6 +1093,28 @@
     private Task CloseMockInterview()
     {
         _mockInterviewOpen = false;
+        return Task.CompletedTask;
+    }
+
+    private void OpenDirectContactIfAvailable(EmployerDirectContactItem? contact)
+    {
+        if (contact is null || !contact.Available)
+        {
+            return;
+        }
+
+        if (!contact.OfferMail && !contact.OfferPhone && !contact.OfferWhatsApp)
+        {
+            return;
+        }
+
+        _directContact = contact;
+        _directContactOpen = true;
+    }
+
+    private Task CloseDirectContact()
+    {
+        _directContactOpen = false;
         return Task.CompletedTask;
     }
 }
