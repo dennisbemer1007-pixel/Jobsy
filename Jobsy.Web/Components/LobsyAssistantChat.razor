@@ -164,14 +164,12 @@
         _open = false;
     }
 
-    private async Task OnKeyDown(KeyboardEventArgs e)
+    private void OnKeyDown(KeyboardEventArgs e)
     {
         if (e.Key is "Escape" or "Esc")
         {
             Close();
         }
-
-        await Task.CompletedTask;
     }
 
     private async Task StartAsync()
@@ -187,10 +185,12 @@
             _messages.Add(new AssistantChatMessage("assistant", reply.Reply));
             ApplyActions(reply.Actions);
         }
-        catch (Exception ex)
+        catch
         {
-            _error = ex.Message;
-            _started = false;
+            // Fallback greeting when API is unavailable
+            _messages.Add(new AssistantChatMessage("assistant",
+                Culture["Assistant.Greeting"]));
+            _started = true;
         }
         finally
         {

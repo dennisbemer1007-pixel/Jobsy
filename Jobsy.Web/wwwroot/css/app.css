@@ -6829,8 +6829,8 @@ a.apply-flow__secondary {
 }
 
 .lobsy-assistant__fab {
-    width: 64px;
-    height: 64px;
+    width: 80px;
+    height: 80px;
     border-radius: 50%;
     border: 2px solid color-mix(in srgb, var(--accent) 40%, var(--border));
     background: var(--surface);
@@ -6849,8 +6849,8 @@ a.apply-flow__secondary {
 }
 
 .lobsy-assistant__fab-logo {
-    width: 52px;
-    height: 52px;
+    width: 68px;
+    height: 68px;
 }
 
 .lobsy-assistant__panel {
@@ -6881,8 +6881,8 @@ a.apply-flow__secondary {
 }
 
 .lobsy-assistant__logo {
-    width: 48px;
-    height: 48px;
+    width: 64px;
+    height: 64px;
 }
 
 .lobsy-assistant__header h2 {
@@ -6952,8 +6952,8 @@ a.apply-flow__secondary {
 }
 
 .lobsy-assistant__bubble-logo {
-    width: 28px;
-    height: 28px;
+    width: 38px;
+    height: 38px;
 }
 
 .lobsy-assistant__bubble-role {
