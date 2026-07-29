@@ -885,6 +885,24 @@ public sealed class JobsyApiClient : IAsyncDisposable
                ?? throw new InvalidOperationException("Geen antwoord van de oefenchat.");
     }
 
+    public async Task<AssistantChatReply> SendAssistantChatAsync(
+        IReadOnlyList<AssistantChatMessage> messages,
+        CancellationToken ct = default)
+    {
+        var response = await _http.PostAsJsonAsync("api/assistant/chat", new
+        {
+            messages = messages.Select(m => new { role = m.Role, content = m.Content })
+        }, ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException(TryExtractMessage(body) ?? (string.IsNullOrWhiteSpace(body) ? response.ReasonPhrase : body));
+        }
+
+        return await response.Content.ReadFromJsonAsync<AssistantChatReply>(cancellationToken: ct)
+               ?? throw new InvalidOperationException("Geen antwoord van de assistant.");
+    }
+
     public async Task ReactToApplicationAsync(Guid applicationId, string status, CancellationToken ct = default)
     {
         var response = await _http.PostAsJsonAsync($"api/applications/{applicationId}/react", new { status }, ct);

@@ -2,8 +2,9 @@
 @using System.Threading
 
 <span class="lobsy-logo @(Animate ? "lobsy-logo--animate" : null) @Class"
-      role="img"
-      aria-label="@Alt">
+      role="@(string.IsNullOrEmpty(Alt) ? null : "img")"
+      aria-hidden="@(string.IsNullOrEmpty(Alt) ? "true" : null)"
+      aria-label="@(string.IsNullOrEmpty(Alt) ? null : Alt)">
     <svg class="lobsy-logo__svg" viewBox="0 0 1024 1024" focusable="false" aria-hidden="true">
         <defs>
             <mask id="@BodyMaskId" maskUnits="userSpaceOnUse">

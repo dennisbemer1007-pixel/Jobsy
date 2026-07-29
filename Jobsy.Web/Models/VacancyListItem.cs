@@ -115,6 +115,26 @@ public sealed class MockInterviewReply
     public string Disclaimer { get; set; } = string.Empty;
 }
 
+public sealed record AssistantChatMessage(string Role, string Content);
+
+public sealed class AssistantChatReply
+{
+    public string Reply { get; set; } = string.Empty;
+    public bool UsedAi { get; set; }
+    public List<AssistantChatActionItem> Actions { get; set; } = [];
+}
+
+public sealed class AssistantChatActionItem
+{
+    public string Type { get; set; } = string.Empty;
+    public string? Url { get; set; }
+    public string? WorkType { get; set; }
+    public int? Count { get; set; }
+    public string? Label { get; set; }
+    public Guid? ApplicationId { get; set; }
+    public Guid? VacancyId { get; set; }
+}
+
 public sealed class MetricCount
 {
     public string Key { get; set; } = string.Empty;
