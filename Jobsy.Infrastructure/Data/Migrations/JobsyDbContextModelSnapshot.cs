@@ -1405,6 +1405,21 @@ modelBuilder.Entity("Jobsy.Core.Entities.PlatformFeatureSettings", b =>
                     b.Property<DateTime?>("LastLoginAtUtc")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<string>("UnsubscribeReasonCode")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<string>("UnsubscribeReasonOther")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
+                    b.Property<string>("UnsubscribeVerificationCode")
+                        .HasMaxLength(6)
+                        .HasColumnType("character varying(6)");
+
+                    b.Property<DateTime?>("UnsubscribeVerificationExpiresAt")
+                        .HasColumnType("timestamp with time zone");
+
                     b.HasKey("Id");
 
                     b.HasIndex("CompanyId");

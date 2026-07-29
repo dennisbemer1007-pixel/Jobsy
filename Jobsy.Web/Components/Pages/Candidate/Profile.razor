@@ -238,7 +238,27 @@
             </div>
         }
     </article>
+
+    @if (!_loading)
+    {
+        <section class="detail-card profile-unsubscribe" aria-labelledby="profile-unsubscribe-title">
+            <h2 id="profile-unsubscribe-title" class="profile-page__title">Account afmelden</h2>
+            <p class="login-lead">
+                Meld je account af als je Lobsy niet meer wilt gebruiken. Je gegevens worden opgeschoond;
+                bij een latere aanmelding start je opnieuw met een schoon account.
+            </p>
+            <button class="provider-btn provider-btn--danger"
+                    type="button"
+                    @onclick="OpenUnsubscribe">
+                Afmelden
+            </button>
+        </section>
+    }
 </div>
+
+<UnsubscribeDialog IsOpen="_unsubscribeOpen"
+                   OnClose="CloseUnsubscribe"
+                   OnCompleted="OnUnsubscribeCompleted" />
 
 @code {
     private static readonly string[] AvailabilityDays = ["Ma", "Di", "Wo", "Do", "Vr", "Za", "Zo"];
@@ -248,6 +268,7 @@
     private bool _saving;
     private bool _openForWork;
     private bool _authenticatorEnabled;
+    private bool _unsubscribeOpen;
     private DateOnly? _dobInput;
     private string _homeAddress = string.Empty;
     private double? _homeLat;
@@ -381,6 +402,10 @@
             _loading = false;
         }
     }
+
+    private void OpenUnsubscribe() => _unsubscribeOpen = true;
+    private void CloseUnsubscribe() => _unsubscribeOpen = false;
+    private void OnUnsubscribeCompleted() => _unsubscribeOpen = true;
 
     private async Task LoadMasterdataAsync()
     {

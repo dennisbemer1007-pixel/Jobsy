@@ -332,6 +332,13 @@ public class PlatformLogItem
     public DateTime CreatedAt { get; set; }
 }
 
+public class UnsubscribeReasonOption
+{
+    public string Code { get; set; } = string.Empty;
+    public string Label { get; set; } = string.Empty;
+    public bool RequiresOtherText { get; set; }
+}
+
 public class TokenPricingSettings
 {
     public List<TokenPackSetting> Packs { get; set; } = [];

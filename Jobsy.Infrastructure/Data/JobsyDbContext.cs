@@ -62,6 +62,9 @@ public class JobsyDbContext : DbContext
             entity.Property(e => e.FullName).HasMaxLength(256).IsRequired();
             entity.Property(e => e.PreferencesJson).HasMaxLength(8000);
             entity.Property(e => e.ConsentVersion).HasMaxLength(32);
+            entity.Property(e => e.UnsubscribeVerificationCode).HasMaxLength(6);
+            entity.Property(e => e.UnsubscribeReasonCode).HasMaxLength(64);
+            entity.Property(e => e.UnsubscribeReasonOther).HasMaxLength(1000);
             entity.Property(e => e.HomeLocation)
                 .HasConversion(new NullableGeoPointConverter())
                 .HasColumnType("geometry(Point, 4326)")

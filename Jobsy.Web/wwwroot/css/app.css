@@ -1276,7 +1276,28 @@ a {
 }
 
 .profile-page {
-    padding-top: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+}
+
+.profile-unsubscribe {
+    border-color: color-mix(in srgb, var(--danger) 22%, var(--border));
+}
+
+.profile-unsubscribe .profile-page__title {
+    font-size: 1.15rem;
+}
+
+.unsubscribe-modal label {
+    display: block;
+    margin-top: 0.35rem;
+}
+
+.unsubscribe-modal select,
+.unsubscribe-modal textarea {
+    width: 100%;
+    margin-top: 0.35rem;
 }
 
 .profile-page__header {

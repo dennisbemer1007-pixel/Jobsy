@@ -8,7 +8,7 @@
 
 <PageTitle>Logging · Lobsy</PageTitle>
 
-<AdminPageShell Title="Platform logging" Lead="Filter op type (level/categorie) en datum." ShowSettingsNav="true">
+<AdminPageShell Title="Platform logging" Lead="Filter op type (level/categorie) en datum. Uitschrijvingen van kandidaten staan onder categorie Unsubscribe." ShowSettingsNav="true">
     <div class="filter-bar">
         <label>
             Level
@@ -21,7 +21,7 @@
         </label>
         <label>
             Categorie
-            <input type="search" @bind="_category" @bind:event="oninput" placeholder="bijv. Push, Wages…" />
+            <input type="search" @bind="_category" @bind:event="oninput" placeholder="bijv. Unsubscribe, Privacy…" />
         </label>
         <label>
             Van

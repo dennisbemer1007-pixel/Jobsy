@@ -41,6 +41,17 @@ public class User
     /// <summary>Last successful login (local or external). Null = never logged in before.</summary>
     public DateTime? LastLoginAtUtc { get; set; }
 
+    /// <summary>Pending account-unsubscribe email verification code (6 digits).</summary>
+    public string? UnsubscribeVerificationCode { get; set; }
+
+    public DateTime? UnsubscribeVerificationExpiresAt { get; set; }
+
+    /// <summary>Pending unsubscribe reason code (see <c>AccountUnsubscribeReasons</c>).</summary>
+    public string? UnsubscribeReasonCode { get; set; }
+
+    /// <summary>Free-text explanation when reason is "other".</summary>
+    public string? UnsubscribeReasonOther { get; set; }
+
     /// <summary>
     /// Extra company memberships for RegionalManager, EnterpriseManager and Intermediary.
     /// </summary>

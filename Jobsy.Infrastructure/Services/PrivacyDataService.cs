@@ -1,4 +1,7 @@
+using System.Net;
 using System.Security.Claims;
+using System.Text.Json;
+using Jobsy.Core.Contracts;
 using Jobsy.Core.Entities;
 using Jobsy.Core.Enums;
 using Jobsy.Core.Interfaces;
@@ -10,13 +13,18 @@ namespace Jobsy.Infrastructure.Services;
 
 public sealed class PrivacyDataService : IPrivacyDataService
 {
+    private const int UnsubscribeCodeTtlMinutes = 10;
+    private const int UnsubscribeReasonOtherMaxLength = 1000;
+
     private readonly JobsyDbContext _db;
     private readonly IUserLookupService _users;
+    private readonly IEmailService _email;
 
-    public PrivacyDataService(JobsyDbContext db, IUserLookupService users)
+    public PrivacyDataService(JobsyDbContext db, IUserLookupService users, IEmailService email)
     {
         _db = db;
         _users = users;
+        _email = email;
     }
 
     public async Task<object> ExportAsync(ClaimsPrincipal principal, CancellationToken cancellationToken = default)
@@ -230,20 +238,137 @@ public sealed class PrivacyDataService : IPrivacyDataService
         };
     }
 
-    public async Task DeleteOrAnonymizeAsync(ClaimsPrincipal principal, CancellationToken cancellationToken = default)
+    public async Task<RequestUnsubscribeResponse> RequestUnsubscribeAsync(
+        ClaimsPrincipal principal,
+        string reasonCode,
+        string? reasonOther,
+        CancellationToken cancellationToken = default)
     {
-        var email = principal.FindFirst(ClaimTypes.Email)?.Value
-                    ?? principal.FindFirst("preferred_username")?.Value
-                    ?? principal.Identity?.Name;
-        if (string.IsNullOrWhiteSpace(email))
+        var user = await ResolveActiveUserAsync(principal, cancellationToken);
+        EnsureCandidate(user);
+
+        var code = reasonCode?.Trim() ?? string.Empty;
+        if (!AccountUnsubscribeReasons.IsKnown(code))
         {
-            throw new UnauthorizedAccessException("Gebruiker niet gevonden.");
+            throw new ArgumentException("Kies een geldige reden voor uitschrijving.");
         }
 
-        var user = await _db.Users
-            .Include(u => u.CompanyMemberships)
-            .FirstOrDefaultAsync(u => u.Email == email && u.IsActive, cancellationToken)
-            ?? throw new UnauthorizedAccessException("Gebruiker niet gevonden.");
+        var other = string.IsNullOrWhiteSpace(reasonOther) ? null : reasonOther.Trim();
+        if (AccountUnsubscribeReasons.RequiresOtherText(code))
+        {
+            if (string.IsNullOrWhiteSpace(other))
+            {
+                throw new ArgumentException("Vul een toelichting in bij ‘Anders’.");
+            }
+        }
+        else
+        {
+            other = null;
+        }
+
+        if (other is { Length: > UnsubscribeReasonOtherMaxLength })
+        {
+            throw new ArgumentException($"Toelichting mag maximaal {UnsubscribeReasonOtherMaxLength} tekens zijn.");
+        }
+
+        var verificationCode = Random.Shared.Next(0, 1_000_000).ToString("D6");
+        var expiresAt = DateTime.UtcNow.AddMinutes(UnsubscribeCodeTtlMinutes);
+
+        user.UnsubscribeReasonCode = code;
+        user.UnsubscribeReasonOther = other;
+        user.UnsubscribeVerificationCode = verificationCode;
+        user.UnsubscribeVerificationExpiresAt = expiresAt;
+
+        _db.PlatformLogs.Add(new PlatformLog
+        {
+            Id = Guid.NewGuid(),
+            Level = PlatformLogLevel.Info,
+            Category = "Unsubscribe",
+            Message = FormatUnsubscribeLogMessage("Uitschrijving aangevraagd", code, other, user.Id),
+            DetailsJson = JsonSerializer.Serialize(new
+            {
+                UserId = user.Id,
+                Email = EmailServiceStub.RedactEmail(user.Email),
+                ReasonCode = code,
+                ReasonLabel = AccountUnsubscribeReasons.GetLabel(code),
+                ReasonOther = other,
+                Step = "request"
+            }),
+            CreatedAt = DateTime.UtcNow
+        });
+
+        await _db.SaveChangesAsync(cancellationToken);
+
+        await _email.SendAsync(new EmailMessage(
+            user.Email,
+            "Verificatiecode voor uitschrijving bij Lobsy",
+            $"""
+             <p>Hoi {Html(user.FullName)},</p>
+             <p>Je hebt gevraagd om je Lobsy-account af te melden.</p>
+             <p>Gebruik deze 6-cijferige code om de uitschrijving te bevestigen:</p>
+             <p style="font-size:1.6rem"><strong>{Html(verificationCode)}</strong></p>
+             <p>De code is {UnsubscribeCodeTtlMinutes} minuten geldig. Heb je dit niet zelf aangevraagd? Negeer deze mail dan.</p>
+             """,
+            "AccountUnsubscribeVerification"), cancellationToken);
+
+        return new RequestUnsubscribeResponse(
+            "Er is een verificatiecode naar je e-mail gestuurd.",
+            expiresAt);
+    }
+
+    public async Task ConfirmUnsubscribeAsync(
+        ClaimsPrincipal principal,
+        string verificationCode,
+        CancellationToken cancellationToken = default)
+    {
+        var user = await ResolveActiveUserAsync(principal, cancellationToken);
+        EnsureCandidate(user);
+
+        var code = verificationCode?.Trim() ?? string.Empty;
+        if (code.Length != 6 || !code.All(char.IsDigit))
+        {
+            throw new ArgumentException("Vul de 6-cijferige verificatiecode in.");
+        }
+
+        if (string.IsNullOrWhiteSpace(user.UnsubscribeVerificationCode)
+            || user.UnsubscribeVerificationExpiresAt is null
+            || string.IsNullOrWhiteSpace(user.UnsubscribeReasonCode))
+        {
+            throw new InvalidOperationException("Vraag eerst een nieuwe verificatiecode aan.");
+        }
+
+        if (user.UnsubscribeVerificationExpiresAt < DateTime.UtcNow)
+        {
+            throw new InvalidOperationException("Verificatiecode verlopen. Vraag een nieuwe code aan.");
+        }
+
+        if (!string.Equals(user.UnsubscribeVerificationCode, code, StringComparison.Ordinal))
+        {
+            throw new ArgumentException("Onjuiste verificatiecode.");
+        }
+
+        var reasonCode = user.UnsubscribeReasonCode;
+        var reasonOther = user.UnsubscribeReasonOther;
+        await AnonymizeUserAsync(user, reasonCode, reasonOther, cancellationToken);
+    }
+
+    public async Task DeleteOrAnonymizeAsync(ClaimsPrincipal principal, CancellationToken cancellationToken = default)
+    {
+        var user = await ResolveActiveUserAsync(principal, cancellationToken);
+        await AnonymizeUserAsync(user, reasonCode: null, reasonOther: null, cancellationToken);
+    }
+
+    private async Task AnonymizeUserAsync(
+        User user,
+        string? reasonCode,
+        string? reasonOther,
+        CancellationToken cancellationToken)
+    {
+        // Ensure memberships are loaded for removal.
+        if (!_db.Entry(user).Collection(u => u.CompanyMemberships).IsLoaded)
+        {
+            await _db.Entry(user).Collection(u => u.CompanyMemberships).LoadAsync(cancellationToken);
+        }
 
         var originalEmail = user.Email;
         var anonymizedEmail = $"deleted-{user.Id:N}@anonymized.jobsy.local";
@@ -386,16 +511,87 @@ public sealed class PrivacyDataService : IPrivacyDataService
         user.IsActive = false;
         user.TermsAcceptedAt = null;
         user.ConsentVersion = null;
+        user.CandidateHowToCompletedAt = null;
+        user.LastLoginAtUtc = null;
+        user.UnsubscribeVerificationCode = null;
+        user.UnsubscribeVerificationExpiresAt = null;
+        user.UnsubscribeReasonCode = null;
+        user.UnsubscribeReasonOther = null;
 
-        _db.PlatformLogs.Add(new PlatformLog
+        if (!string.IsNullOrWhiteSpace(reasonCode))
         {
-            Id = Guid.NewGuid(),
-            Level = PlatformLogLevel.Info,
-            Category = "Privacy",
-            Message = $"Account anonymized: {user.Id}",
-            CreatedAt = DateTime.UtcNow
-        });
+            var reasonLabel = AccountUnsubscribeReasons.GetLabel(reasonCode);
+            _db.PlatformLogs.Add(new PlatformLog
+            {
+                Id = Guid.NewGuid(),
+                Level = PlatformLogLevel.Info,
+                Category = "Unsubscribe",
+                Message = FormatUnsubscribeLogMessage("Uitschrijving bevestigd", reasonCode, reasonOther, user.Id),
+                DetailsJson = JsonSerializer.Serialize(new
+                {
+                    UserId = user.Id,
+                    Email = EmailServiceStub.RedactEmail(originalEmail),
+                    ReasonCode = reasonCode,
+                    ReasonLabel = reasonLabel,
+                    ReasonOther = reasonOther,
+                    Step = "confirmed"
+                }),
+                CreatedAt = DateTime.UtcNow
+            });
+        }
+        else
+        {
+            _db.PlatformLogs.Add(new PlatformLog
+            {
+                Id = Guid.NewGuid(),
+                Level = PlatformLogLevel.Info,
+                Category = "Privacy",
+                Message = $"Account anonymized: {user.Id}",
+                CreatedAt = DateTime.UtcNow
+            });
+        }
 
         await _db.SaveChangesAsync(cancellationToken);
     }
+
+    private async Task<User> ResolveActiveUserAsync(ClaimsPrincipal principal, CancellationToken cancellationToken)
+    {
+        var email = principal.FindFirst(ClaimTypes.Email)?.Value
+                    ?? principal.FindFirst("preferred_username")?.Value
+                    ?? principal.Identity?.Name;
+        if (string.IsNullOrWhiteSpace(email))
+        {
+            throw new UnauthorizedAccessException("Gebruiker niet gevonden.");
+        }
+
+        return await _db.Users
+                   .Include(u => u.CompanyMemberships)
+                   .FirstOrDefaultAsync(u => u.Email == email && u.IsActive, cancellationToken)
+               ?? throw new UnauthorizedAccessException("Gebruiker niet gevonden.");
+    }
+
+    private static void EnsureCandidate(User user)
+    {
+        if (user.Role != UserRole.Candidate)
+        {
+            throw new InvalidOperationException("Alleen kandidaten kunnen zich via deze flow afmelden.");
+        }
+    }
+
+    private static string FormatUnsubscribeLogMessage(
+        string prefix,
+        string reasonCode,
+        string? reasonOther,
+        Guid userId)
+    {
+        var label = AccountUnsubscribeReasons.GetLabel(reasonCode);
+        if (!string.IsNullOrWhiteSpace(reasonOther))
+        {
+            return $"{prefix}: {label} — {reasonOther.Trim()} (user {userId})";
+        }
+
+        return $"{prefix}: {label} (user {userId})";
+    }
+
+    private static string Html(string? value) => WebUtility.HtmlEncode(value ?? string.Empty);
 }

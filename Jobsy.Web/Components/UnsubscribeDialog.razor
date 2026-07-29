@@ -1,0 +1,261 @@
+@using Microsoft.AspNetCore.Antiforgery
+@inject JobsyApiClient Api
+@inject IAntiforgery Antiforgery
+@inject IHttpContextAccessor HttpContextAccessor
+@inject IJSRuntime Js
+
+@if (IsOpen)
+{
+    <div class="share-modal-backdrop" @onclick="CloseAsync"></div>
+    <div class="share-modal publish-modal unsubscribe-modal" role="dialog" aria-modal="true" aria-labelledby="unsubscribe-modal-title">
+        <div class="share-modal__header">
+            <h2 id="unsubscribe-modal-title">Account afmelden</h2>
+            <button type="button" class="share-modal__close" @onclick="CloseAsync" aria-label="Sluiten" disabled="@_busy">×</button>
+        </div>
+
+        @if (_completed)
+        {
+            <p class="share-modal__lead">Je account is afgemeld. Je gegevens zijn opgeschoond en je wordt uitgelogd.</p>
+            <form id="unsubscribe-logout" method="post" action="/account/logout">
+                <input type="hidden" name="__RequestVerificationToken" value="@_antiforgeryToken" />
+            </form>
+        }
+        else if (_awaitingVerification)
+        {
+            <p class="share-modal__lead">
+                We hebben een 6-cijferige code naar je e-mail gestuurd. Vul die hier in om je afmelding te bevestigen.
+                Daarna wordt je account geblokkeerd en worden je gegevens opgeschoond.
+            </p>
+            <label class="apply-code-field">
+                <span>Verificatiecode</span>
+                <input class="apply-code-field__input"
+                       type="text"
+                       inputmode="numeric"
+                       autocomplete="one-time-code"
+                       maxlength="6"
+                       placeholder="••••••"
+                       disabled="@_busy"
+                       @bind="_verificationCode"
+                       @bind:event="oninput" />
+            </label>
+            <div class="inline-actions" style="margin-top:1rem">
+                <button type="button"
+                        class="btn-compact btn-compact--primary"
+                        disabled="@(_busy || _verificationCode.Trim().Length != 6)"
+                        @onclick="ConfirmAsync">
+                    @(_busy ? "Bezig…" : "Bevestig afmelden")
+                </button>
+                <button type="button" class="btn-compact" disabled="@_busy" @onclick="ResendAsync">
+                    Code opnieuw sturen
+                </button>
+                <button type="button" class="btn-compact" disabled="@_busy" @onclick="BackToReasonAsync">
+                    Terug
+                </button>
+            </div>
+        }
+        else
+        {
+            <p class="share-modal__lead">
+                Je account wordt geblokkeerd en je persoonsgegevens worden netjes opgeschoond.
+                Sollicitaties blijven bewaard zonder jouw gegevens. Bij een nieuwe aanmelding krijg je een schoon account.
+            </p>
+            <label>
+                Waarom wil je je afmelden?
+                <select @bind="_reasonCode" disabled="@_busy">
+                    <option value="">— Kies een reden —</option>
+                    @foreach (var reason in _reasons)
+                    {
+                        <option value="@reason.Code">@reason.Label</option>
+                    }
+                </select>
+            </label>
+            @if (SelectedRequiresOther)
+            {
+                <label style="margin-top:0.75rem;display:block">
+                    Toelichting
+                    <textarea rows="3"
+                              maxlength="1000"
+                              placeholder="Vertel kort waarom…"
+                              disabled="@_busy"
+                              @bind="_reasonOther"></textarea>
+                </label>
+            }
+            <div class="inline-actions" style="margin-top:1rem">
+                <button type="button"
+                        class="btn-compact btn-compact--primary"
+                        disabled="@(_busy || !CanRequest)"
+                        @onclick="RequestAsync">
+                    @(_busy ? "Bezig…" : "Stuur verificatiecode")
+                </button>
+                <button type="button" class="btn-compact" disabled="@_busy" @onclick="CloseAsync">Annuleren</button>
+            </div>
+        }
+
+        @if (!string.IsNullOrEmpty(_error))
+        {
+            <p class="state-message error">@_error</p>
+        }
+        @if (!string.IsNullOrEmpty(_info))
+        {
+            <p class="state-message">@_info</p>
+        }
+    </div>
+}
+
+@code {
+    [Parameter] public bool IsOpen { get; set; }
+    [Parameter] public EventCallback OnClose { get; set; }
+    [Parameter] public EventCallback OnCompleted { get; set; }
+
+    private List<UnsubscribeReasonOption> _reasons = [];
+    private string _reasonCode = "";
+    private string _reasonOther = "";
+    private string _verificationCode = "";
+    private bool _awaitingVerification;
+    private bool _busy;
+    private bool _completed;
+    private bool _submitLogoutPending;
+    private bool _reasonsLoaded;
+    private string _antiforgeryToken = "";
+    private string? _error;
+    private string? _info;
+
+    private bool SelectedRequiresOther =>
+        _reasons.Any(r => r.RequiresOtherText && string.Equals(r.Code, _reasonCode, StringComparison.OrdinalIgnoreCase));
+
+    private bool CanRequest =>
+        !string.IsNullOrWhiteSpace(_reasonCode)
+        && (!SelectedRequiresOther || !string.IsNullOrWhiteSpace(_reasonOther));
+
+    protected override void OnInitialized()
+    {
+        var http = HttpContextAccessor.HttpContext;
+        if (http is not null)
+        {
+            var tokens = Antiforgery.GetAndStoreTokens(http);
+            _antiforgeryToken = tokens.RequestToken ?? "";
+        }
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (!IsOpen)
+        {
+            return;
+        }
+
+        if (!_reasonsLoaded)
+        {
+            await LoadReasonsAsync();
+        }
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (_submitLogoutPending)
+        {
+            _submitLogoutPending = false;
+            await Js.InvokeVoidAsync("eval", "document.getElementById('unsubscribe-logout')?.submit()");
+        }
+    }
+
+    private async Task LoadReasonsAsync()
+    {
+        try
+        {
+            _reasons = (await Api.GetUnsubscribeReasonsAsync()).ToList();
+            _reasonsLoaded = true;
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+    }
+
+    private async Task RequestAsync()
+    {
+        if (!CanRequest)
+        {
+            return;
+        }
+
+        _busy = true;
+        _error = null;
+        _info = null;
+        try
+        {
+            await Api.RequestUnsubscribeAsync(
+                _reasonCode,
+                SelectedRequiresOther ? _reasonOther.Trim() : null);
+            _awaitingVerification = true;
+            _verificationCode = "";
+            _info = "Controleer je e-mail voor de verificatiecode.";
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private async Task ResendAsync()
+    {
+        _verificationCode = "";
+        await RequestAsync();
+    }
+
+    private Task BackToReasonAsync()
+    {
+        _awaitingVerification = false;
+        _verificationCode = "";
+        _error = null;
+        _info = null;
+        return Task.CompletedTask;
+    }
+
+    private async Task ConfirmAsync()
+    {
+        if (_verificationCode.Trim().Length != 6)
+        {
+            return;
+        }
+
+        _busy = true;
+        _error = null;
+        _info = null;
+        try
+        {
+            await Api.ConfirmUnsubscribeAsync(_verificationCode.Trim());
+            _completed = true;
+            _submitLogoutPending = true;
+            await OnCompleted.InvokeAsync();
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private async Task CloseAsync()
+    {
+        if (_busy || _completed)
+        {
+            return;
+        }
+
+        _awaitingVerification = false;
+        _verificationCode = "";
+        _reasonCode = "";
+        _reasonOther = "";
+        _error = null;
+        _info = null;
+        await OnClose.InvokeAsync();
+    }
+}

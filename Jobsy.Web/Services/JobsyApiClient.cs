@@ -865,6 +865,44 @@ public sealed class JobsyApiClient : IAsyncDisposable
         }
     }
 
+    public async Task<IReadOnlyList<UnsubscribeReasonOption>> GetUnsubscribeReasonsAsync(CancellationToken ct = default)
+    {
+        var response = await _http.GetAsync("api/privacy/unsubscribe-reasons", ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException(ExtractMessage(body) ?? response.ReasonPhrase ?? "Redenen laden mislukt.");
+        }
+
+        return await response.Content.ReadFromJsonAsync<List<UnsubscribeReasonOption>>(cancellationToken: ct) ?? [];
+    }
+
+    public async Task RequestUnsubscribeAsync(string reasonCode, string? reasonOther = null, CancellationToken ct = default)
+    {
+        var response = await _http.PostAsJsonAsync(
+            "api/privacy/request-unsubscribe",
+            new { reasonCode, reasonOther },
+            ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException(ExtractMessage(body) ?? response.ReasonPhrase ?? "Aanvraag mislukt.");
+        }
+    }
+
+    public async Task ConfirmUnsubscribeAsync(string verificationCode, CancellationToken ct = default)
+    {
+        var response = await _http.PostAsJsonAsync(
+            "api/privacy/confirm-unsubscribe",
+            new { verificationCode },
+            ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException(ExtractMessage(body) ?? response.ReasonPhrase ?? "Bevestigen mislukt.");
+        }
+    }
+
     public async Task<MockInterviewReply> ContinueMockInterviewAsync(
         Guid vacancyId,
         IReadOnlyList<MockInterviewChatMessage> messages,

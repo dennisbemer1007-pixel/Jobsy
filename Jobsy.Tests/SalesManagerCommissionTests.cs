@@ -288,7 +288,10 @@ public class SalesManagerCommissionTests
         await ledger.TryCreditFounderBonusAsync(smId, companyId, "pay_privacy", 4);
         await new SelfBillingInvoiceService(db, ledger).CreateFromUninvoicedBalanceAsync(smId);
 
-        var privacy = new PrivacyDataService(db, new StubUserLookup(db));
+        var privacy = new PrivacyDataService(
+            db,
+            new StubUserLookup(db),
+            new EmailServiceStub(db, NullLogger<EmailServiceStub>.Instance));
         var principal = CreatePrincipal("sm@jobsy.local", smId);
         var export = await privacy.ExportAsync(principal);
         var json = System.Text.Json.JsonSerializer.Serialize(export);
