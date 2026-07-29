@@ -392,6 +392,7 @@ internal static class Sprint8MetricsSeeder
                 Status = ApplicationStatus.Accepted,
                 PreferencesSummary = candidate.PreferencesJson,
                 CreatedAt = now.AddDays(-4),
+                    EmailVerifiedAt = DateTime.UtcNow,
                 RespondedAt = now.AddDays(-3)
             });
         }
@@ -414,6 +415,7 @@ internal static class Sprint8MetricsSeeder
                 Status = ApplicationStatus.Rejected,
                 PreferencesSummary = candidate.PreferencesJson,
                 CreatedAt = now.AddDays(-9),
+                    EmailVerifiedAt = DateTime.UtcNow,
                 RespondedAt = now.AddDays(-8)
             });
         }
@@ -434,7 +436,8 @@ internal static class Sprint8MetricsSeeder
                     EstimatedTravelMinutes = 16,
                     DistanceKm = 7.2,
                     Status = ApplicationStatus.Pending,
-                    CreatedAt = now.AddDays(-20)
+                    CreatedAt = now.AddDays(-20),
+                    EmailVerifiedAt = DateTime.UtcNow
                 });
             }
 
@@ -452,6 +455,7 @@ internal static class Sprint8MetricsSeeder
                     DistanceKm = 6.0,
                     Status = ApplicationStatus.Accepted,
                     CreatedAt = now.AddDays(-7),
+                    EmailVerifiedAt = DateTime.UtcNow,
                     RespondedAt = now.AddDays(-6)
                 });
             }
@@ -469,7 +473,8 @@ internal static class Sprint8MetricsSeeder
                     EstimatedTravelMinutes = 35,
                     DistanceKm = 9.4,
                     Status = ApplicationStatus.Pending,
-                    CreatedAt = now.AddHours(-6)
+                    CreatedAt = now.AddHours(-6),
+                    EmailVerifiedAt = DateTime.UtcNow
                 });
             }
         }

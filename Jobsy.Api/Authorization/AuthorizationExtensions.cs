@@ -152,6 +152,17 @@ public sealed class DevelopmentAuthHandler : AuthenticationHandler<Authenticatio
             return AuthenticateResult.Fail("Unknown or inactive user for Development auth.");
         }
 
+        // Outside Development, header-auth may only impersonate demo (@jobsy.local) accounts —
+        // prevents using the demo secret to assume arbitrary production identities.
+        if (!_environment.IsDevelopment()
+            && !email.EndsWith("@jobsy.local", StringComparison.OrdinalIgnoreCase))
+        {
+            Logger.LogWarning(
+                "Development auth rejected non-demo email outside Development {Email}",
+                EmailServiceStub.RedactEmail(email));
+            return AuthenticateResult.Fail("Development auth outside Development is limited to @jobsy.local demo users.");
+        }
+
         var name = Request.Headers["X-Jobsy-Name"].FirstOrDefault() ?? dbUser.FullName;
         var role = dbUser.Role.ToString();
 

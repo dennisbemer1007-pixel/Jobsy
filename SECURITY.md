@@ -17,7 +17,9 @@
 - **IBAN:** Volledige IBAN alleen server-side; API/UI tonen gemaskeerde vorm.
 - **Retention:** `DataRetentionHostedService` purged logs/engagement/cancelled registrations/site visits.
 - **Logging:** Geen plaintext e-mailadressen in PlatformLogs (redaction via `EmailServiceStub.RedactEmail`).
-- **Demo:** `JobsyAuth:AllowDevelopmentAuth` + DemoUsers zijn bewust voor de publieke demo; seed draait alleen bij Development / `Seed:Enabled` / AllowDevelopmentAuth. Demo one-click login zet geen wachtwoorden in HTML.
+- **Demo:** `JobsyAuth:AllowDevelopmentAuth` + DemoUsers zijn bewust voor de publieke demo; seed draait alleen bij Development / `Seed:Enabled` / AllowDevelopmentAuth. Demo one-click login zet geen wachtwoorden in HTML. Buiten Development mag header-auth alleen `@jobsy.local` demo-accounts. OAuth client-secrets vereisen een aparte `JobsyAuth:ExternalProvisionSecret` (niet de demo DevelopmentAuthSecret).
+- **Verification OTPs:** Sollicitatie- en unsubscribe-codes via `RandomNumberGenerator` + constant-time compare (`VerificationCodes`).
+- **Verified applications only:** Werkgeversmetrics/counts/drilldowns en kandidaat-sollicitatielijsten tellen alleen `EmailVerifiedAt != null`.
 
 ## C. Security Headers (Middleware)
 De ASP.NET Core pipeline stuurt standaard:

@@ -144,7 +144,8 @@ internal static class Sprint0DemoSeeder
                     DistanceKm = 3.2,
                     Status = ApplicationStatus.Pending,
                     PreferencesSummary = demoCandidate.PreferencesJson,
-                    CreatedAt = DateTime.UtcNow.AddHours(-3)
+                    CreatedAt = DateTime.UtcNow.AddHours(-3),
+                    EmailVerifiedAt = DateTime.UtcNow
                 });
             }
         }

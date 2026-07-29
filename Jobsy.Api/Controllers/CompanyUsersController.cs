@@ -298,7 +298,7 @@ public class CompanyUsersController : ControllerBase
             $"""
              <p>Hoi {name},</p>
              <p>Je bent uitgenodigd als <strong>{WebUtility.HtmlEncode(roleLabel)}</strong> op Lobsy.</p>
-             <p>Log in via <a href="{loginUrl}">{loginUrl}</a> met je tijdelijke wachtwoord,
+             <p>Log in via <a href="{WebUtility.HtmlEncode(loginUrl)}">{loginUrl}</a> met je tijdelijke wachtwoord,
              of met <strong>Google</strong> / <strong>Microsoft Entra</strong> op hetzelfde e-mailadres
              — dan krijg je automatisch je managerrol.</p>
              <p>E-mail: <strong>{WebUtility.HtmlEncode(user.Email)}</strong><br/>

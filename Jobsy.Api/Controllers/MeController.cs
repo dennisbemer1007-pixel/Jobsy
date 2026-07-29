@@ -74,9 +74,9 @@ public class MeController : ControllerBase
             var features = await _features.GetAsync(cancellationToken);
             return Ok(ToProfileDto(user, features.AuthenticatorEnabled));
         }
-        catch (Exception ex)
+        catch (Exception)
         {
-            return StatusCode(500, new { message = "Profiel kon niet worden geladen.", detail = ex.Message });
+            return StatusCode(500, new { message = "Profiel kon niet worden geladen." });
         }
     }
 

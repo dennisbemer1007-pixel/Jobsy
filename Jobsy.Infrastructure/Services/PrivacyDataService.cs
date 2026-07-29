@@ -6,6 +6,7 @@ using Jobsy.Core.Entities;
 using Jobsy.Core.Enums;
 using Jobsy.Core.Interfaces;
 using Jobsy.Core.Privacy;
+using Jobsy.Core.Security;
 using Jobsy.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 
@@ -270,7 +271,7 @@ public sealed class PrivacyDataService : IPrivacyDataService
             throw new ArgumentException($"Toelichting mag maximaal {UnsubscribeReasonOtherMaxLength} tekens zijn.");
         }
 
-        var verificationCode = Random.Shared.Next(0, 1_000_000).ToString("D6");
+        var verificationCode = VerificationCodes.CreateNumericCode();
         var expiresAt = DateTime.UtcNow.AddMinutes(UnsubscribeCodeTtlMinutes);
 
         user.UnsubscribeReasonCode = code;
@@ -340,7 +341,7 @@ public sealed class PrivacyDataService : IPrivacyDataService
             throw new InvalidOperationException("Verificatiecode verlopen. Vraag een nieuwe code aan.");
         }
 
-        if (!string.Equals(user.UnsubscribeVerificationCode, code, StringComparison.Ordinal))
+        if (!VerificationCodes.FixedTimeEquals(user.UnsubscribeVerificationCode, code))
         {
             throw new ArgumentException("Onjuiste verificatiecode.");
         }

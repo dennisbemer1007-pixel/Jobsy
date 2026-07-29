@@ -455,7 +455,7 @@ public sealed class AssistantChatService : IAssistantChatService
     {
         var apps = await _db.Applications.AsNoTracking()
             .Include(a => a.Vacancy).ThenInclude(v => v.Company)
-            .Where(a => a.CandidateUserId == context.UserId)
+            .Where(a => a.CandidateUserId == context.UserId && a.EmailVerifiedAt != null)
             .OrderByDescending(a => a.CreatedAt)
             .Take(8)
             .ToListAsync(cancellationToken);

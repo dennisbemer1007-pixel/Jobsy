@@ -823,7 +823,7 @@ public sealed class VacancyProductService : IVacancyProductService
                 new EmailMessage(
                     manager.Email,
                     $"Publicatieaanvraag: {vacancy.Title}",
-                    $"<p>Vacature <strong>{System.Net.WebUtility.HtmlEncode(vacancy.Title)}</strong> bij {System.Net.WebUtility.HtmlEncode(companyName)} wacht op goedkeuring (onvoldoende tokens).</p><p><a href=\"{deepLink}\">Open vacaturebeheer</a></p>",
+                    $"<p>Vacature <strong>{System.Net.WebUtility.HtmlEncode(vacancy.Title)}</strong> bij {System.Net.WebUtility.HtmlEncode(companyName)} wacht op goedkeuring (onvoldoende tokens).</p><p><a href=\"{System.Net.WebUtility.HtmlEncode(deepLink)}\">Open vacaturebeheer</a></p>",
                     "PendingApproval"),
                 cancellationToken);
 

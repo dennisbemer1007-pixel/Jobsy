@@ -3,6 +3,7 @@ using Jobsy.Core.Entities;
 using Jobsy.Core.Enums;
 using Jobsy.Core.Interfaces;
 using Jobsy.Core.Rules;
+using Jobsy.Core.Security;
 using Jobsy.Core.ValueObjects;
 using Jobsy.Infrastructure.Data;
 using Jobsy.Infrastructure.Services;
@@ -89,7 +90,8 @@ public class Sprint3CandidateTests
             CandidateEmail = "a@test.nl",
             PreferredTransport = "Fiets",
             EstimatedTravelMinutes = 10,
-            CreatedAt = now.AddHours(-1)
+            CreatedAt = now.AddHours(-1),
+            EmailVerifiedAt = now.AddHours(-1)
         });
         db.VacancyLikes.Add(new VacancyLike
         {
@@ -297,6 +299,17 @@ public class Sprint3CandidateTests
             i.Properties.Select(p => p.Name).SequenceEqual(["VacancyId", "CandidateUserId"])
             && i.GetFilter() is not null
             && i.GetFilter()!.Contains("CandidateUserId", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void VerificationCodes_are_six_digits_and_compare_constant_time()
+    {
+        var code = VerificationCodes.CreateNumericCode();
+        Assert.Equal(6, code.Length);
+        Assert.True(code.All(char.IsDigit));
+        Assert.True(VerificationCodes.FixedTimeEquals(code, code));
+        Assert.False(VerificationCodes.FixedTimeEquals(code, "000000"));
+        Assert.False(VerificationCodes.FixedTimeEquals(code, null));
     }
 
     [Fact]

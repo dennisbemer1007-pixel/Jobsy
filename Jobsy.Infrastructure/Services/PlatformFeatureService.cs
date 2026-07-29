@@ -2,6 +2,7 @@ using Jobsy.Core;
 using Jobsy.Core.Entities;
 using Jobsy.Core.Interfaces;
 using Jobsy.Core.Options;
+using Jobsy.Core.Rules;
 using Jobsy.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -48,12 +49,69 @@ public sealed class PlatformFeatureService : IPlatformFeatureService
         row.VacancyContentModerationEnabled = update.VacancyContentModerationEnabled;
         row.AuthenticatorEnabled = update.AuthenticatorEnabled;
         row.ExposeRegistrationActivationLinks = update.ExposeRegistrationActivationLinks;
-        row.PublicWebBaseUrl = string.IsNullOrWhiteSpace(update.PublicWebBaseUrl)
-            ? null
-            : update.PublicWebBaseUrl.Trim().TrimEnd('/');
+        if (!string.IsNullOrWhiteSpace(update.PublicWebBaseUrl))
+        {
+            var normalized = JobsyPublicUrl.NormalizeOrigin(update.PublicWebBaseUrl);
+            if (!IsAllowedPublicOrigin(normalized))
+            {
+                throw new ArgumentException(
+                    "PublicWebBaseUrl moet https zijn en overeenkomen met de geconfigureerde publieke origin of CORS-origins.");
+            }
+
+            row.PublicWebBaseUrl = normalized.TrimEnd('/');
+        }
+        else
+        {
+            row.PublicWebBaseUrl = null;
+        }
         row.UpdatedAtUtc = DateTime.UtcNow;
         await _db.SaveChangesAsync(cancellationToken);
         return ToSnapshot(row);
+    }
+
+    private bool IsAllowedPublicOrigin(string origin)
+    {
+        if (!Uri.TryCreate(origin, UriKind.Absolute, out var uri)
+            || !string.IsNullOrEmpty(uri.UserInfo))
+        {
+            return false;
+        }
+
+        var isLocalHttp = uri.Scheme == Uri.UriSchemeHttp
+                          && uri.Host is "localhost" or "127.0.0.1" or "::1";
+        if (uri.Scheme != Uri.UriSchemeHttps && !isLocalHttp)
+        {
+            return false;
+        }
+
+        if (!HtmlSanitize.IsSafeHttpsUrl(origin) && !isLocalHttp)
+        {
+            return false;
+        }
+
+        var allowed = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+        {
+            "http://localhost:5201",
+            "https://localhost:5201"
+        };
+
+        var configBase = JobsyPublicUrl.NormalizeOrigin(
+            _configuration["PublicWebBaseUrl"] ?? "http://localhost:5201");
+        if (!string.IsNullOrWhiteSpace(configBase))
+        {
+            allowed.Add(configBase.TrimEnd('/'));
+        }
+
+        foreach (var child in _configuration.GetSection("Cors:AllowedOrigins").GetChildren())
+        {
+            var o = JobsyPublicUrl.NormalizeOrigin(child.Value);
+            if (!string.IsNullOrWhiteSpace(o))
+            {
+                allowed.Add(o.TrimEnd('/'));
+            }
+        }
+
+        return allowed.Contains(origin.TrimEnd('/'));
     }
 
     private PlatformFeatureSnapshot ToSnapshot(PlatformFeatureSettings? row)

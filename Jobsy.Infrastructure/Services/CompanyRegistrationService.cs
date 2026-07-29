@@ -539,7 +539,7 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
              <p>Log in met <code>{WebUtility.HtmlEncode(registration.ContactEmail)}</code>.
              Je eenmalige tijdelijke wachtwoord (bewaar dit veilig; het wordt niet opnieuw getoond):</p>
              <p><code>{WebUtility.HtmlEncode(temporaryPassword)}</code></p>
-             <p><a href="{loginUrl}">Naar inloggen</a></p>
+             <p><a href="{WebUtility.HtmlEncode(loginUrl)}">Naar inloggen</a></p>
              <p><em>Wijzig dit wachtwoord zo snel mogelijk. Stub — geen echte mail.</em></p>
              """,
             "TakeoverApproved"), cancellationToken);
@@ -904,7 +904,7 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
                  <p>Aanvrager: {WebUtility.HtmlEncode(registration.ContactName)}
                  ({WebUtility.HtmlEncode(registration.ContactEmail)}),
                  scope: {WebUtility.HtmlEncode(registration.Scope.ToString())}.</p>
-                 <p><a href="{inboxUrl}">Bekijk verzoeken</a></p>
+                 <p><a href="{WebUtility.HtmlEncode(inboxUrl)}">Bekijk verzoeken</a></p>
                  <p><em>Stub — geen echte mail.</em></p>
                  """,
                 "TakeoverRequest"), cancellationToken);
@@ -936,7 +936,7 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
              <p>Hoi {safeName},</p>
              <p>Bevestig je registratie voor <strong>{WebUtility.HtmlEncode(registration.EstablishmentName)}</strong>
              (scope: {WebUtility.HtmlEncode(registration.Scope.ToString())}).</p>
-             <p><a href="{activationUrl}">Account activeren</a></p>
+             <p><a href="{WebUtility.HtmlEncode(activationUrl)}">Account activeren</a></p>
              <p>Stub-link: <code>{WebUtility.HtmlEncode(activationUrl)}</code></p>
              <p><em>Stub — geen echte mail.</em></p>
              """,

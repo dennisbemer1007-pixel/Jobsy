@@ -6,6 +6,7 @@ using Jobsy.Core.Enums;
 using Jobsy.Core.Interfaces;
 using Jobsy.Core.Privacy;
 using Jobsy.Core.Rules;
+using Jobsy.Core.Security;
 using Jobsy.Infrastructure.Data;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -77,12 +78,11 @@ public class ApplicationsController : ControllerBase
         {
             return await ApplyCoreAsync(request, cancellationToken);
         }
-        catch (Exception ex)
+        catch (Exception)
         {
             return StatusCode(500, new
             {
-                message = "Sollicitatie mislukt door een serverfout. Herstart de API na de laatste update of controleer of migrations zijn toegepast.",
-                detail = ex.InnerException?.Message ?? ex.Message
+                message = "Sollicitatie mislukt door een serverfout. Herstart de API na de laatste update of controleer of migrations zijn toegepast."
             });
         }
     }
@@ -199,7 +199,7 @@ public class ApplicationsController : ControllerBase
         var isVerificationAttempt = !string.IsNullOrWhiteSpace(request.VerificationCode);
         if (!isVerificationAttempt)
         {
-            var code = Random.Shared.Next(0, 1_000_000).ToString("D6");
+            var code = VerificationCodes.CreateNumericCode();
             application.EmailVerificationCode = code;
             application.EmailVerificationExpiresAt = DateTime.UtcNow.AddMinutes(10);
             application.EmailVerifiedAt = null;
@@ -223,7 +223,7 @@ public class ApplicationsController : ControllerBase
                     return BadRequest(new { message = "Je hebt al gereageerd op deze vacature." });
                 }
 
-                return BadRequest(new { message = "Sollicitatie kon niet worden opgeslagen. Probeer het opnieuw.", detail });
+                return BadRequest(new { message = "Sollicitatie kon niet worden opgeslagen. Probeer het opnieuw." });
             }
 
             try
@@ -272,7 +272,7 @@ public class ApplicationsController : ControllerBase
             return BadRequest(new { message = "Verificatiecode verlopen. Klik opnieuw op Verzenden." });
         }
 
-        if (!string.Equals(existing.EmailVerificationCode, request.VerificationCode?.Trim(), StringComparison.Ordinal))
+        if (!VerificationCodes.FixedTimeEquals(existing.EmailVerificationCode, request.VerificationCode?.Trim()))
         {
             return BadRequest(new { message = "Onjuiste verificatiecode." });
         }
@@ -293,7 +293,7 @@ public class ApplicationsController : ControllerBase
             $"""
              <p>Hoi {name},</p>
              <p>Je sollicitatie op <strong>{title}</strong> bij {company} is ontvangen.</p>
-             <p><a href="{deepLink}">Bekijk je sollicitaties</a></p>
+             <p><a href="{Html(deepLink)}">Bekijk je sollicitaties</a></p>
              {(authenticatorStubUsed ? "<p><em>Authenticator stub: verificatie gesimuleerd.</em></p>" : "")}
              """,
             "ApplicationConfirmation"), cancellationToken);
@@ -409,7 +409,7 @@ public class ApplicationsController : ControllerBase
             <p>Hoi {candidateName},</p>
             <p>De werkgever heeft gereageerd ({statusLabel}) op je sollicitatie voor
             <strong>{title}</strong> bij {company}.</p>
-            <p><a href="{deepLink}">Open vacature</a></p>
+            <p><a href="{Html(deepLink)}">Open vacature</a></p>
             """;
 
         await _email.SendAsync(new EmailMessage(
@@ -461,7 +461,7 @@ public class ApplicationsController : ControllerBase
             $"Werkgever neemt contact op: {application.Vacancy.Title}",
             $"""
              <p>Goed nieuws! De werkgever van <strong>{Html(application.Vacancy.Title)}</strong> neemt contact met je op.</p>
-             <p><a href="{deepLink}">Open vacature</a></p>
+             <p><a href="{Html(deepLink)}">Open vacature</a></p>
              """,
             "EmployerContacting"), cancellationToken);
         await _push.SendAsync(new PushMessage(
@@ -605,7 +605,7 @@ public class ApplicationsController : ControllerBase
                 $"Nieuwe sollicitatie: {vacancy.Title}",
                 $"""
                  <p>Er is een nieuwe sollicitatie ontvangen voor <strong>{Html(vacancy.Title)}</strong>.</p>
-                 <p><a href="{deepLink}">Open sollicitantenoverzicht</a></p>
+                 <p><a href="{Html(deepLink)}">Open sollicitantenoverzicht</a></p>
                  """,
                 "EmployerNewApplication"), cancellationToken);
 
@@ -709,6 +709,8 @@ public class ApplicationsController : ControllerBase
 
         return baseUrl + relativePath;
     }
+
+    private static string SafeHref(string url) => Html(url);
 
     private static string Html(string? value) => WebUtility.HtmlEncode(value ?? string.Empty);
 }
