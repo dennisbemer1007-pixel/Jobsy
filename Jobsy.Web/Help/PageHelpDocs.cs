@@ -125,9 +125,9 @@ public static class PageHelpDocs
 
         ["/employer/vacancies"] = new(
             "Vacatures (werkgever)",
-            "Beheer van vacatures van jouw organisatie of vestiging.",
-            "Bekijk, filter en open vacatures. Afhankelijk van rol kun je publiceren, pauzeren of naar plaatsen gaan.",
-            "Openstaande banen beheren en opvolgen."),
+            "Beheer van vacatures van jouw organisatie of vestiging, inclusief concepten uit CSV-import of API.",
+            "Bekijk status en herkomst (Handmatig, CSV of API). Concepten publiceer je hier — daar wordt het tokenverbruik verwerkt. Afhankelijk van rol kun je publiceren, pauzeren of nieuwe vacatures plaatsen.",
+            "Openstaande banen beheren, importeren afronden en opvolgen."),
 
         ["/employer/tokens"] = new(
             "Tokens",
@@ -167,15 +167,15 @@ public static class PageHelpDocs
 
         ["/employer/company"] = new(
             "Bedrijfsgegevens",
-            "Organisatie-info, CSV Batch Import en API-keys.",
-            "Bekijk NAW/KVK, schakel CSV-import in/uit en beheer API-sleutels voor externe vacaturekoppelingen. API- en CSV-vacatures blijven concept tot publicatie in Lobsy.",
-            "Koppel ATS/partners en batch-CSV veilig aan de juiste organisatie."),
+            "Organisatiegegevens, CSV Batch Import en externe API-koppeling.",
+            "Bekijk NAW en KVK. Schakel CSV Batch Import in om de navigatietab CSV Import te tonen. Beheer API-keys (genereren, deactiveren, e-mailen) voor ATS-partners. Vacatures via CSV of API komen binnen als concept; publiceren (en tokens) doe je in Lobsy onder Vacatures.",
+            "Organisatie veilig koppelen aan batch-CSV en externe systemen."),
 
         ["/employer/csv-import"] = new(
             "CSV Import",
-            "Batch-import van vacatures via CSV.",
-            "Volg de How-to, upload een .csv, bekijk geslaagde/mislukte rijen en herstel mislukte rijen inline. Concepten publiceer je daarna via Vacatures (tokens).",
-            "Veilig en controleerbaar veel vacatures in één keer aanmaken."),
+            "Veilige batch-import van vacatures via een CSV-bestand voor jouw organisatie.",
+            "Lees de How-to voor verplichte kolommen (titel, omschrijving, data’s, branches, salaristabel-id). Upload een .csv via slepen of bladeren. Afbeeldingen mag je als URL of Base64 in de kolom afbeelding zetten. Elke rij wordt strikt gevalideerd: geldige rijen worden concept-vacatures, ongeldige blijven staan met een foutmelding. Corrigeer mislukte rijen inline en klik Opnieuw aanbieden. Publiceer geslaagde concepten daarna via Vacatures (tokenverwerking).",
+            "Snel en controleerbaar veel vacatures aanmaken zonder blind foute data in te lezen."),
 
         ["/employer/salary-tables"] = new(
             "Salaristabellen / CAO",
