@@ -34,4 +34,26 @@ public class IntegrationsController : ControllerBase
         IntegrationKey key,
         CancellationToken cancellationToken)
         => Ok(await _health.TestConnectionAsync(key, cancellationToken));
+
+    [HttpPost("health/{key}/send-test")]
+    public async Task<ActionResult<SendTestMailResult>> SendTestMail(
+        IntegrationKey key,
+        [FromBody] SendTestMailRequest request,
+        CancellationToken cancellationToken)
+    {
+        if (key != IntegrationKey.Mail)
+        {
+            return BadRequest(new { message = "Testmail is alleen beschikbaar voor Mail." });
+        }
+
+        var result = await _health.SendTestMailAsync(request?.To ?? string.Empty, cancellationToken);
+        if (!result.Ok && !result.SentViaSmtp && result.Message.Contains("geldig", StringComparison.OrdinalIgnoreCase))
+        {
+            return BadRequest(new { message = result.Message });
+        }
+
+        return Ok(result);
+    }
 }
+
+public sealed record SendTestMailRequest(string? To);

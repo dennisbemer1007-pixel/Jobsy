@@ -56,9 +56,9 @@ public static class IntegrationHelpDocs
 
     private static readonly Doc Mail = new(
         Summary: "Uitgaande e-mail via SMTP (bijv. Gmail).",
-        UsedFor: "Registratie-activatiemail, notificaties en overige platformmails.",
-        WhereToGetKey: "Voor Gmail: Google-account → Beveiliging → 2-stapsverificatie aan → App-wachtwoorden. Plak dat als Client Secret. Client ID = je Gmail-adres. SMTP-host: smtp.gmail.com (poort 587).",
-        Tip: "Base URL / SMTP-host is géén https:// — alleen de hostnaam. From-adres gelijk houden aan het Gmail-account. Opslaan vóór Test verbinding.",
+        UsedFor: "Registratie-activatiemail, sollicitatie-verificatiecodes, notificaties en overige platformmails.",
+        WhereToGetKey: "Voor Gmail: Google-account → Beveiliging → 2-stapsverificatie aan → App-wachtwoorden. Plak dat als Client Secret. Client ID = je Gmail-adres. SMTP-host: smtp.gmail.com, poort: 587.",
+        Tip: "SMTP-host is géén https:// — alleen de hostnaam. Poort apart invullen (587 standaard). From-adres gelijk houden aan het Gmail-account. Gebruik ‘Stuur testmail’ om te controleren of mail echt aankomt.",
         DocsUrl: "https://myaccount.google.com/apppasswords",
         DocsUrlLabel: "Gmail app-wachtwoorden");
 

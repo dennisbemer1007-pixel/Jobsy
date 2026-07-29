@@ -1115,6 +1115,21 @@ public sealed class JobsyApiClient : IAsyncDisposable
         return await response.Content.ReadFromJsonAsync<IntegrationHealthItem>(cancellationToken: ct);
     }
 
+    public async Task<SendTestMailResultItem?> SendTestMailAsync(string to, CancellationToken ct = default)
+    {
+        var response = await _http.PostAsJsonAsync(
+            "api/integrations/health/Mail/send-test",
+            new { to },
+            ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException(TryExtractMessage(body) ?? body);
+        }
+
+        return await response.Content.ReadFromJsonAsync<SendTestMailResultItem>(cancellationToken: ct);
+    }
+
     public async Task<IReadOnlyList<IntegrationCredentialItem>> GetIntegrationCredentialsAsync(
         CancellationToken ct = default)
         => await _http.GetFromJsonAsync<List<IntegrationCredentialItem>>(
@@ -1504,6 +1519,13 @@ public sealed class IntegrationHealthItem
     public string StatusMessage { get; set; } = string.Empty;
     public DateTime CheckedAtUtc { get; set; }
     public bool? LastPingOk { get; set; }
+}
+
+public sealed class SendTestMailResultItem
+{
+    public bool Ok { get; set; }
+    public bool SentViaSmtp { get; set; }
+    public string Message { get; set; } = string.Empty;
 }
 
 public sealed class IntegrationCredentialItem
