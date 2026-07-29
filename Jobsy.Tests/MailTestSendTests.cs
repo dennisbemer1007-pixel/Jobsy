@@ -52,7 +52,8 @@ public class MailTestSendTests
             new IntegrationCredentialUpdate(BaseUrl: "smtp.gmail.com:465"));
 
         var secrets = await credentials.GetSecretsAsync(IntegrationKey.Mail);
-        Assert.Equal("smtp.gmail.com:465", secrets?.BaseUrl);
+        Assert.NotNull(secrets);
+        Assert.Equal("smtp.gmail.com:465", secrets.BaseUrl);
         Assert.True(SmtpEmailService.TryResolveSmtp(
             secrets with
             {
