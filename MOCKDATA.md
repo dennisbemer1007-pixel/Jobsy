@@ -60,7 +60,8 @@ Guard: platform-log `"Westland banenkaart seed 50"`. Vacature-IDs `a1000000-0000
 
 | Kenmerk | Dekking |
 |---------|---------|
-| **Unieke content** | Iedere vacature heeft een eigen titelvariant, uitgebreide tekst (intro / taken / aanbod / profiel) en unieke `ImageUrl` |
+| **Unieke content** | Iedere vacature heeft een eigen titelvariant, uitgebreide tekst (intro / taken / aanbod / profiel), unieke werkende `ImageUrl` (picsum seed) en een `VideoUrl` (YouTube) |
+| **Media backfill** | `MediaBackfillSeeder` vult ontbrekende/kapotte Unsplash-images, videos en te korte teksten bij bestaande databases |
 | **Rijbewijs** | ~30% met `RequiredDrivingLicense` (B, BE, AM, T, Heftruck, C, …) |
 | **Branche** | Alle 9 work types + enkele dual flags |
 | **Wijken** | Den Haag (o.a. Centrum, Scheveningen, Binckhorst, Laak, Escamp, Ypenburg), Delft (Centrum, TU, Tanthof, Schieoevers), Zoetermeer (Stadshart, Rokkeveen, Seghwaert, Bleizo) |

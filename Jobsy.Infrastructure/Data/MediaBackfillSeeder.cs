@@ -38,29 +38,49 @@ internal static class MediaBackfillSeeder
         }
 
         var vacancies = await db.Vacancies.Include(v => v.Company).ToListAsync();
+        var index = 0;
         foreach (var vacancy in vacancies)
         {
-            if (!string.IsNullOrWhiteSpace(vacancy.ImageUrl))
+            var touched = false;
+
+            if (MockVacancyMedia.NeedsImageBackfill(vacancy.ImageUrl))
             {
-                continue;
+                vacancy.ImageUrl = MockVacancyMedia.ImageUrl(vacancy.Id);
+                touched = true;
             }
 
-            if (vacancy.Title.Contains("Orderpicker", StringComparison.OrdinalIgnoreCase))
+            if (MockVacancyMedia.NeedsVideoBackfill(vacancy.VideoUrl))
             {
-                vacancy.ImageUrl = "https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?auto=format&fit=crop&w=600&q=80";
+                vacancy.VideoUrl = MockVacancyMedia.VideoUrl(vacancy.Id);
+                touched = true;
+            }
+
+            if (MockVacancyMedia.NeedsDescriptionBackfill(vacancy.Description))
+            {
+                vacancy.Description = MockVacancyMedia.BuildRichDescription(
+                    vacancy.Title,
+                    vacancy.Description,
+                    vacancy.Company?.Name,
+                    vacancy.WorkTypes,
+                    vacancy.HourlyWage,
+                    index);
+                touched = true;
+            }
+
+            if (touched)
+            {
                 updated = true;
             }
-            else if (vacancy.Title.Contains("Barista", StringComparison.OrdinalIgnoreCase))
-            {
-                vacancy.ImageUrl = "https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?auto=format&fit=crop&w=600&q=80";
-                updated = true;
-            }
+
+            index++;
         }
 
         if (updated)
         {
             await db.SaveChangesAsync();
-            logger.LogInformation("Backfilled company logos / vacancy images on existing mock data.");
+            logger.LogInformation(
+                "Backfilled vacancy images, videos and rich descriptions on existing mock data ({Count} vacancies scanned).",
+                vacancies.Count);
         }
     }
 

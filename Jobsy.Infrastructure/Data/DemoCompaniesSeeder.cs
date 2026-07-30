@@ -80,7 +80,13 @@ internal static class DemoCompaniesSeeder
             {
                 Id = Guid.Parse("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"),
                 Title = "Allround Orderpicker",
-                Description = "Orderpicking in de glastuinbouwlogistiek. E-bike of auto vereist vanwege het Westlandse kasgebied.",
+                Description = MockVacancyMedia.BuildRichDescription(
+                    "Allround Orderpicker",
+                    "Orderpicking in de glastuinbouwlogistiek. E-bike of auto vereist vanwege het Westlandse kasgebied.",
+                    "Westland Fresh Logistics",
+                    WorkType.Logistiek | WorkType.Tuinbouw,
+                    14.50m,
+                    0),
                 HourlyWage = 14.50m,
                 StartDate = today,
                 EndDate = endDate,
@@ -89,14 +95,20 @@ internal static class DemoCompaniesSeeder
                 Location = new GeoPoint(51.9812, 4.2235),
                 RequiredTransport = TransportMode.Bike | TransportMode.Car,
                 WorkTypes = WorkType.Logistiek | WorkType.Tuinbouw,
-                ImageUrl = "https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?auto=format&fit=crop&w=600&q=80",
-                VideoUrl = "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
+                ImageUrl = MockVacancyMedia.ImageUrl(Guid.Parse("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa")),
+                VideoUrl = MockVacancyMedia.VideoUrl(0)
             },
             new Vacancy
             {
                 Id = Guid.Parse("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb"),
                 Title = "Ervaren Barista / Bediening",
-                Description = "Horecafunctie op de Grote Markt. Goed bereikbaar te voet, per fiets of met de tram.",
+                Description = MockVacancyMedia.BuildRichDescription(
+                    "Ervaren Barista / Bediening",
+                    "Horecafunctie op de Grote Markt. Goed bereikbaar te voet, per fiets of met de tram.",
+                    "Boutique Café De Stad",
+                    WorkType.Horeca,
+                    13.80m,
+                    1),
                 HourlyWage = 13.80m,
                 StartDate = today,
                 EndDate = endDate,
@@ -105,14 +117,20 @@ internal static class DemoCompaniesSeeder
                 Location = new GeoPoint(52.0735, 4.3120),
                 RequiredTransport = TransportMode.Walking | TransportMode.Bike | TransportMode.PublicTransport,
                 WorkTypes = WorkType.Horeca,
-                ImageUrl = "https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?auto=format&fit=crop&w=600&q=80",
-                VideoUrl = "https://www.youtube.com/watch?v=9No-FiEInLA"
+                ImageUrl = MockVacancyMedia.ImageUrl(Guid.Parse("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb")),
+                VideoUrl = MockVacancyMedia.VideoUrl(1)
             },
             new Vacancy
             {
                 Id = Guid.Parse("cccccccc-cccc-cccc-cccc-cccccccccccc"),
                 Title = "Vakkenvuller / Kassamedewerker",
-                Description = "Retailfunctie in het Statenkwartier. Bereikbaar per fiets of OV; leeftijdsafhankelijke loonschaal.",
+                Description = MockVacancyMedia.BuildRichDescription(
+                    "Vakkenvuller / Kassamedewerker",
+                    "Retailfunctie in het Statenkwartier. Bereikbaar per fiets of OV; leeftijdsafhankelijke loonschaal.",
+                    "Supermarkt De Fred",
+                    WorkType.Winkel,
+                    13.20m,
+                    2),
                 HourlyWage = 13.20m,
                 StartDate = today,
                 EndDate = endDate,
@@ -121,7 +139,8 @@ internal static class DemoCompaniesSeeder
                 Location = new GeoPoint(52.0910, 4.2815),
                 RequiredTransport = TransportMode.Bike | TransportMode.PublicTransport,
                 WorkTypes = WorkType.Winkel,
-                ImageUrl = null
+                ImageUrl = MockVacancyMedia.ImageUrl(Guid.Parse("cccccccc-cccc-cccc-cccc-cccccccccccc")),
+                VideoUrl = MockVacancyMedia.VideoUrl(2)
             }
         };
 
