@@ -372,6 +372,18 @@
                 {
                     <p class="muted">Kies een salaristabel</p>
                 }
+                @if (_minHours is decimal previewMin && _maxHours is decimal previewMax)
+                {
+                    <p class="muted">@previewMin–@previewMax uur/week</p>
+                }
+                @if (_flexibleTimes)
+                {
+                    <p class="muted">Dagdelen: tijden in overleg</p>
+                }
+                else if (_scheduleSlots.Count > 0)
+                {
+                    <p class="muted">Dagdelen: @_scheduleSlots.Count geselecteerd</p>
+                }
                 @if (_selectedWorkTypes.Count > 0)
                 {
                     <p class="muted">Branche: @string.Join(", ", _selectedWorkTypes)</p>
@@ -855,7 +867,9 @@
 
         try
         {
-            _salaryTables = (await Api.GetSalaryTablesAsync(_companyId)).Where(t => t.IsActive).ToList();
+            _salaryTables = (await Api.GetSalaryTablesAsync(_companyId))
+                .Where(t => t.IsActive && t.Rates.Count > 0)
+                .ToList();
             if (string.IsNullOrWhiteSpace(_salaryTableId))
             {
                 var wml = _salaryTables.FirstOrDefault(t => t.IsSystemWml)

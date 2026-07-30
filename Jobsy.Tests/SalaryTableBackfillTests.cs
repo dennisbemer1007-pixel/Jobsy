@@ -3,7 +3,6 @@ using Jobsy.Core.Enums;
 using Jobsy.Infrastructure.Data;
 using Jobsy.Infrastructure.Services;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging.Abstractions;
 
 namespace Jobsy.Tests;
 

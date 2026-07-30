@@ -112,14 +112,89 @@
                 <img class="detail-card__image" src="@_vacancy.ImageUrl" alt="" />
             }
 
+            @if (VideoEmbedUrl is not null)
+            {
+                <div class="detail-card__video">
+                    <iframe src="@VideoEmbedUrl"
+                            title="@Culture["Vacancy.Video"]"
+                            loading="lazy"
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                            allowfullscreen
+                            referrerpolicy="strict-origin-when-cross-origin"></iframe>
+                </div>
+            }
+            else if (SafeVideoWatchUrl is not null)
+            {
+                <p class="detail-card__video-link">
+                    <a href="@SafeVideoWatchUrl" target="_blank" rel="noopener noreferrer">@Culture["Vacancy.WatchVideo"]</a>
+                </p>
+            }
+
             <p class="detail-card__body">@_vacancy.Description</p>
             <p class="travel-hint">
                 @Culture["Vacancy.StartDate"]: @_vacancy.StartDate.ToString("dd-MM-yyyy")
                 @if (_vacancy.WorkTypes.Length > 0)
                 {
-                    <text>             · @Culture["Vacancy.WorkType"]: @string.Join(", ", _vacancy.WorkTypes.Select(LocalizeWorkType))</text>
+                    <text> · @Culture["Vacancy.WorkType"]: @string.Join(", ", _vacancy.WorkTypes.Select(LocalizeWorkType))</text>
                 }
             </p>
+
+            @if (HasHoursInfo || HasScheduleInfo || HasLegalInfo)
+            {
+                <aside class="vacancy-facts" aria-label="@Culture["Vacancy.Facts"]">
+                    @if (HasHoursInfo)
+                    {
+                        <div class="vacancy-facts__block">
+                            <h2 class="vacancy-facts__title">@Culture["Vacancy.HoursPerWeek"]</h2>
+                            <p class="vacancy-facts__text">
+                                @_vacancy.MinHoursPerWeek?.ToString("0.#")–@_vacancy.MaxHoursPerWeek?.ToString("0.#")
+                                @Culture["Vacancy.HoursUnit"]
+                                @if (HoursCategoryLabel is not null)
+                                {
+                                    <span class="muted"> · @HoursCategoryLabel</span>
+                                }
+                            </p>
+                        </div>
+                    }
+
+                    @if (HasScheduleInfo)
+                    {
+                        <div class="vacancy-facts__block">
+                            <h2 class="vacancy-facts__title">@Culture["Vacancy.DayParts"]</h2>
+                            @if (_vacancy.FlexibleTimes)
+                            {
+                                <p class="vacancy-facts__text">@Culture["Vacancy.FlexibleTimes"]</p>
+                            }
+                            else
+                            {
+                                <div class="vacancy-facts__chips">
+                                    @foreach (var chip in ScheduleChips)
+                                    {
+                                        <span class="vacancy-facts__chip">@chip</span>
+                                    }
+                                </div>
+                            }
+                        </div>
+                    }
+
+                    @if (HasLegalInfo)
+                    {
+                        <div class="vacancy-facts__block">
+                            <h2 class="vacancy-facts__title">@Culture["Vacancy.WorkConditions"]</h2>
+                            <ul class="vacancy-facts__list">
+                                @foreach (var item in LegalFactItems)
+                                {
+                                    <li class="@(item.Highlighted ? "is-alert" : null)">
+                                        <span class="vacancy-facts__badge">@(item.Active ? Culture["Vacancy.Yes"] : Culture["Vacancy.No"])</span>
+                                        <span>@item.Label</span>
+                                    </li>
+                                }
+                            </ul>
+                        </div>
+                    }
+                </aside>
+            }
+
             @if (!string.IsNullOrWhiteSpace(_vacancy.RequiredDrivingLicense)
                 || !string.IsNullOrWhiteSpace(_vacancy.RequiredEducation)
                 || _vacancy.MinimumEmployers is > 0)
@@ -548,6 +623,107 @@
         && !(_vacancy.Latitude == 0 && _vacancy.Longitude == 0)
         && Math.Abs(_vacancy.Latitude) <= 90
         && Math.Abs(_vacancy.Longitude) <= 180;
+
+    private string? VideoEmbedUrl =>
+        _vacancy is null ? null : VideoEmbed.TryGetEmbedUrl(_vacancy.VideoUrl);
+
+    private string? SafeVideoWatchUrl =>
+        VideoEmbedUrl is not null
+            ? null
+            : _vacancy is null ? null : VideoEmbed.TryGetSafeWatchUrl(_vacancy.VideoUrl);
+
+    private bool HasHoursInfo =>
+        _vacancy is { MinHoursPerWeek: not null, MaxHoursPerWeek: not null };
+
+    private bool HasScheduleInfo =>
+        _vacancy is not null
+        && (_vacancy.FlexibleTimes
+            || (!string.IsNullOrWhiteSpace(_vacancy.ScheduleJson) && ScheduleChips.Count > 0));
+
+    private bool HasLegalInfo => LegalFactItems.Count > 0;
+
+    private string? HoursCategoryLabel
+    {
+        get
+        {
+            if (_vacancy?.MinHoursPerWeek is not decimal min || _vacancy.MaxHoursPerWeek is not decimal max)
+            {
+                return null;
+            }
+
+            var range = new HoursRange(min, max);
+            return range.Validate() is null
+                ? HoursRangeRules.CategoryLabel(range.Category)
+                : null;
+        }
+    }
+
+    private IReadOnlyList<string> ScheduleChips
+    {
+        get
+        {
+            if (_vacancy is null || _vacancy.FlexibleTimes || string.IsNullOrWhiteSpace(_vacancy.ScheduleJson))
+            {
+                return [];
+            }
+
+            try
+            {
+                var payload = System.Text.Json.JsonSerializer.Deserialize<SchedulePayload>(
+                    _vacancy.ScheduleJson,
+                    new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                if (payload?.Slots is null || payload.Slots.Count == 0)
+                {
+                    return [];
+                }
+
+                return payload.Slots
+                    .OrderBy(kv => Array.IndexOf(DayPartMatrix.DayCodes, DayPartMatrix.NormalizeDayCode(kv.Key)))
+                    .SelectMany(kv => (kv.Value ?? [])
+                        .OrderBy(p => Array.IndexOf(DayPartMatrix.DayPartCodes, DayPartMatrix.NormalizeDayPartCode(p)))
+                        .Select(p => $"{DayPartMatrix.NormalizeDayCode(kv.Key)} {DayPartMatrix.NormalizeDayPartCode(p)}"))
+                    .Distinct(StringComparer.OrdinalIgnoreCase)
+                    .ToList();
+            }
+            catch (System.Text.Json.JsonException)
+            {
+                return [];
+            }
+        }
+    }
+
+    private IReadOnlyList<LegalFactItem> LegalFactItems
+    {
+        get
+        {
+            if (_vacancy is null)
+            {
+                return [];
+            }
+
+            var items = new List<LegalFactItem>();
+            void Add(bool? value, string label, bool highlightWhenTrue = true, bool invertHighlight = false)
+            {
+                if (value is null)
+                {
+                    return;
+                }
+
+                var active = value.Value;
+                var highlighted = invertHighlight ? !active : (highlightWhenTrue && active);
+                items.Add(new LegalFactItem(label, active, highlighted));
+            }
+
+            Add(_vacancy.LegalWorksAfter19, Culture["Vacancy.LegalWorksAfter19"]);
+            Add(_vacancy.LegalNightShift23To06, Culture["Vacancy.LegalNightShift"]);
+            Add(_vacancy.LegalAdultSupervisorPresent, Culture["Vacancy.LegalAdultSupervisor"], highlightWhenTrue: false, invertHighlight: true);
+            Add(_vacancy.LegalHandlesMoneyOrClosing, Culture["Vacancy.LegalHandlesMoney"]);
+            Add(_vacancy.LegalHeavyOrHazardousWork, Culture["Vacancy.LegalHeavyWork"]);
+            return items;
+        }
+    }
+
+    private readonly record struct LegalFactItem(string Label, bool Active, bool Highlighted);
 
     protected override void OnInitialized()
     {
