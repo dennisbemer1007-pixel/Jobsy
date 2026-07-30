@@ -2389,8 +2389,6 @@ namespace Jobsy.Infrastructure.Data.Migrations
                         .IsRequired();
 
                     b.Navigation("Company");
-
-                    b.Navigation("Invoice");
                 });
 
             modelBuilder.Entity("Jobsy.Core.Entities.TokenPurchaseInvoice", b =>
@@ -2671,6 +2669,11 @@ namespace Jobsy.Infrastructure.Data.Migrations
                     b.Navigation("Shares");
                 });
 #pragma warning restore 612, 618
+
+            modelBuilder.Entity("Jobsy.Core.Entities.TokenPurchaseCheckout", b =>
+                {
+                    b.Navigation("Invoice");
+                });
 
             modelBuilder.Entity("Jobsy.Core.Entities.TokenPurchaseInvoice", b =>
                 {
