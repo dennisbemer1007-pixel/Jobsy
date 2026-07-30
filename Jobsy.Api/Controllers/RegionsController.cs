@@ -27,23 +27,43 @@ public class RegionsController : ControllerBase
     public async Task<ActionResult<IEnumerable<RegionDto>>> List(CancellationToken cancellationToken)
     {
         var accessible = await _companyAuth.GetAccessibleCompanyIdsAsync(User, cancellationToken);
-        var query = _db.Regions
-            .AsNoTracking()
-            .Include(r => r.OrganizationCompany)
-            .Include(r => r.Companies)
-            .ThenInclude(rc => rc.Company)
-            .AsQueryable();
 
+        // Project only scalar fields — never materialize Company.Location (PostGIS geometry),
+        // which has caused 500s when Include()'ing full Company graphs.
+        var query = _db.Regions.AsNoTracking().AsQueryable();
         if (accessible is not null)
         {
             query = query.Where(r => accessible.Contains(r.OrganizationCompanyId));
         }
 
-        var regions = await query
+        var rows = await query
             .OrderBy(r => r.Name)
+            .Select(r => new RegionListRow(
+                r.Id,
+                r.Name,
+                r.OrganizationCompanyId,
+                r.OrganizationCompany != null ? r.OrganizationCompany.Name : "Onbekende organisatie",
+                r.Companies
+                    .Where(c => c.Company != null)
+                    .Select(c => new RegionCompanyRow(c.CompanyId, c.Company!.Name))
+                    .ToList()))
             .ToListAsync(cancellationToken);
 
-        return Ok(regions.Select(Map).ToList());
+        var result = rows
+            .Select(r => new RegionDto(
+                r.Id,
+                r.Name,
+                r.OrganizationCompanyId,
+                string.IsNullOrWhiteSpace(r.OrganizationCompanyName)
+                    ? "Onbekende organisatie"
+                    : r.OrganizationCompanyName,
+                r.Companies
+                    .Select(c => new RegionCompanyItemDto(c.CompanyId, c.CompanyName))
+                    .OrderBy(c => c.CompanyName)
+                    .ToList()))
+            .ToList();
+
+        return Ok(result);
     }
 
     [HttpPost]
@@ -64,9 +84,9 @@ public class RegionsController : ControllerBase
             return Forbid();
         }
 
-        var org = await _db.Companies.FirstOrDefaultAsync(
-            c => c.Id == request.OrganizationCompanyId, cancellationToken);
-        if (org is null)
+        var orgExists = await _db.Companies.AsNoTracking()
+            .AnyAsync(c => c.Id == request.OrganizationCompanyId, cancellationToken);
+        if (!orgExists)
         {
             return NotFound(new { message = "Organisatie niet gevonden." });
         }
@@ -86,13 +106,13 @@ public class RegionsController : ControllerBase
         }
 
         await _db.SaveChangesAsync(cancellationToken);
-        var loaded = await LoadAsync(region.Id, cancellationToken);
+        var loaded = await LoadDtoAsync(region.Id, cancellationToken);
         if (loaded is null)
         {
             return CreatedAtAction(nameof(List), null);
         }
 
-        return CreatedAtAction(nameof(List), Map(loaded));
+        return CreatedAtAction(nameof(List), loaded);
     }
 
     [HttpPut("{id:guid}")]
@@ -130,8 +150,8 @@ public class RegionsController : ControllerBase
         }
 
         await _db.SaveChangesAsync(cancellationToken);
-        var updated = await LoadAsync(region.Id, cancellationToken);
-        return updated is null ? NotFound() : Ok(Map(updated));
+        var updated = await LoadDtoAsync(region.Id, cancellationToken);
+        return updated is null ? NotFound() : Ok(updated);
     }
 
     [HttpDelete("{id:guid}")]
@@ -170,27 +190,54 @@ public class RegionsController : ControllerBase
         var distinct = companyIds.Distinct().ToList();
         if (accessible is null || _companyAuth.IsAdmin(User))
         {
-            return await _db.Companies.Where(c => distinct.Contains(c.Id)).Select(c => c.Id).ToListAsync(ct);
+            return await _db.Companies.AsNoTracking()
+                .Where(c => distinct.Contains(c.Id))
+                .Select(c => c.Id)
+                .ToListAsync(ct);
         }
 
         return distinct.Where(accessible.Contains).ToList();
     }
 
-    private async Task<Region?> LoadAsync(Guid id, CancellationToken ct)
-        => await _db.Regions
-            .AsNoTracking()
-            .Include(r => r.OrganizationCompany)
-            .Include(r => r.Companies).ThenInclude(rc => rc.Company)
-            .FirstOrDefaultAsync(r => r.Id == id, ct);
+    private async Task<RegionDto?> LoadDtoAsync(Guid id, CancellationToken ct)
+    {
+        var row = await _db.Regions.AsNoTracking()
+            .Where(r => r.Id == id)
+            .Select(r => new RegionListRow(
+                r.Id,
+                r.Name,
+                r.OrganizationCompanyId,
+                r.OrganizationCompany != null ? r.OrganizationCompany.Name : "Onbekende organisatie",
+                r.Companies
+                    .Where(c => c.Company != null)
+                    .Select(c => new RegionCompanyRow(c.CompanyId, c.Company!.Name))
+                    .ToList()))
+            .FirstOrDefaultAsync(ct);
 
-    private static RegionDto Map(Region r) => new(
-        r.Id,
-        r.Name,
-        r.OrganizationCompanyId,
-        r.OrganizationCompany?.Name ?? "Onbekende organisatie",
-        r.Companies
-            .Where(c => c.Company is not null)
-            .Select(c => new RegionCompanyItemDto(c.CompanyId, c.Company!.Name))
-            .OrderBy(c => c.CompanyName)
-            .ToList());
+        if (row is null)
+        {
+            return null;
+        }
+
+        return new RegionDto(
+            row.Id,
+            row.Name,
+            row.OrganizationCompanyId,
+            string.IsNullOrWhiteSpace(row.OrganizationCompanyName)
+                ? "Onbekende organisatie"
+                : row.OrganizationCompanyName,
+            row.Companies
+                .Select(c => new RegionCompanyItemDto(c.CompanyId, c.CompanyName))
+                .OrderBy(c => c.CompanyName)
+                .ToList());
+    }
+
+    private sealed record RegionListRow(
+        Guid Id,
+        string Name,
+        Guid OrganizationCompanyId,
+        string OrganizationCompanyName,
+        List<RegionCompanyRow> Companies);
+
+    private sealed record RegionCompanyRow(Guid CompanyId, string CompanyName);
 }
