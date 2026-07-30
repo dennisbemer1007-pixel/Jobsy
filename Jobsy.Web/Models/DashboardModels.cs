@@ -9,6 +9,57 @@ public class CompanySummary
     public decimal TokenBalance { get; set; }
     public int ActiveVacancies { get; set; }
     public Guid? ParentCompanyId { get; set; }
+    public bool TokensManagedByEnterprise { get; set; }
+    public bool CsvBatchImportEnabled { get; set; }
+    public bool DirectContactEnabled { get; set; }
+    public bool ContactPreferMail { get; set; }
+    public bool ContactPreferPhone { get; set; }
+    public bool ContactPreferWhatsApp { get; set; }
+    public string? ContactEmail { get; set; }
+    public string? ContactPhone { get; set; }
+    public string? ContactWhatsApp { get; set; }
+}
+
+public class CompanyApiKeyItem
+{
+    public Guid Id { get; set; }
+    public Guid CompanyId { get; set; }
+    public string Name { get; set; } = string.Empty;
+    public string KeyPrefix { get; set; } = string.Empty;
+    public bool IsActive { get; set; }
+    public DateTime? LastUsedAt { get; set; }
+    public DateTime CreatedAt { get; set; }
+}
+
+public class AdminApiKeyItem
+{
+    public Guid Id { get; set; }
+    public Guid CompanyId { get; set; }
+    public string CompanyName { get; set; } = string.Empty;
+    public string Name { get; set; } = string.Empty;
+    public string KeyPrefix { get; set; } = string.Empty;
+    public bool IsActive { get; set; }
+    public DateTime? LastUsedAt { get; set; }
+    public DateTime CreatedAt { get; set; }
+}
+
+public class GeneratedApiKeyItem
+{
+    public Guid Id { get; set; }
+    public Guid CompanyId { get; set; }
+    public string Name { get; set; } = string.Empty;
+    public string KeyPrefix { get; set; } = string.Empty;
+    public string PlaintextKey { get; set; } = string.Empty;
+    public DateTime CreatedAt { get; set; }
+    public string Warning { get; set; } = string.Empty;
+}
+
+public class EmailApiKeyResultItem
+{
+    public Guid Id { get; set; }
+    public string RecipientEmail { get; set; } = string.Empty;
+    public string KeyPrefix { get; set; } = string.Empty;
+    public bool Sent { get; set; }
 }
 
 public class TokenBalance
@@ -16,6 +67,8 @@ public class TokenBalance
     public Guid CompanyId { get; set; }
     public string CompanyName { get; set; } = string.Empty;
     public decimal Balance { get; set; }
+    public Guid? ParentCompanyId { get; set; }
+    public bool TokensManagedByEnterprise { get; set; }
 }
 
 public class ApplicationItem
@@ -40,6 +93,28 @@ public class ApplyResultItem
     public bool AuthenticatorStubUsed { get; set; }
     public bool RequiresVerification { get; set; }
     public bool VerificationCodeSent { get; set; }
+    public EmployerDirectContactItem? DirectContact { get; set; }
+}
+
+public class EmployerDirectContactItem
+{
+    public bool Available { get; set; }
+    public bool OfferMail { get; set; }
+    public bool OfferPhone { get; set; }
+    public bool OfferWhatsApp { get; set; }
+    public string? Email { get; set; }
+    public string? Phone { get; set; }
+    public string? WhatsAppUrl { get; set; }
+}
+
+public class VacancyContactPreferenceItem
+{
+    public Guid VacancyId { get; set; }
+    public bool OverrideContactPreference { get; set; }
+    public bool DirectContactEnabled { get; set; }
+    public bool ContactPreferMail { get; set; }
+    public bool ContactPreferPhone { get; set; }
+    public bool ContactPreferWhatsApp { get; set; }
 }
 
 public class EmployerApplicationItem
@@ -321,6 +396,7 @@ public class AdminVacancyItem
     public int ApplicationCount { get; set; }
     public int LikeCount { get; set; }
     public bool IsExtended { get; set; }
+    public string CreatedVia { get; set; } = "Manual";
 }
 
 public class PlatformLogItem

@@ -2,6 +2,11 @@
 
 Alle noemenswaardige wijzigingen aan dit project worden in dit bestand bijgehouden.
 
+## [Unreleased]
+
+### Added
+- Functionele specificatie matching / dagdelen / uren / Arbeidstijdenwet voor kandidaat- en werkgeverskant (`docs/FUNCTIONELE_SPECIFICATIES_MATCHING.md`), inclusief verwijzing vanuit `REQUIREMENTS.md`.
+
 ## [0.8.0] - 2026-07-25 (Sprint 8: Polish, seed, docs, cleanup)
 ### Toegevoegd
 - Rijke idempotente `Sprint8MetricsSeeder`: spends/pushboms/extensions, time-spread engagement, statusmix-vacatures (Draft/Pending/Archived + intermediair), platform logs, allocations.

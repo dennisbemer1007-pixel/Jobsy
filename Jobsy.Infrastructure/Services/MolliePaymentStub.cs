@@ -9,11 +9,16 @@ namespace Jobsy.Infrastructure.Services;
 public sealed class MolliePaymentStub : IPaymentService
 {
     private readonly JobsyDbContext _db;
+    private readonly IPlatformFeatureService _features;
     private readonly ILogger<MolliePaymentStub> _logger;
 
-    public MolliePaymentStub(JobsyDbContext db, ILogger<MolliePaymentStub> logger)
+    public MolliePaymentStub(
+        JobsyDbContext db,
+        IPlatformFeatureService features,
+        ILogger<MolliePaymentStub> logger)
     {
         _db = db;
+        _features = features;
         _logger = logger;
     }
 
@@ -63,9 +68,11 @@ public sealed class MolliePaymentStub : IPaymentService
             "Mollie stub checkout for company {CompanyId}: {Pack} tokens = €{Price} ({PaymentId})",
             companyId, packSize, price, paymentId);
 
+        var features = await _features.GetAsync(cancellationToken);
+        var webBase = features.PublicWebBaseUrl.TrimEnd('/');
         return new PaymentCheckoutResult(
             paymentId,
-            $"https://localhost:5201/tokens/checkout-stub?paymentId={Uri.EscapeDataString(paymentId)}",
+            $"{webBase}/tokens/checkout-stub?paymentId={Uri.EscapeDataString(paymentId)}",
             packSize,
             price,
             IsStub: true);

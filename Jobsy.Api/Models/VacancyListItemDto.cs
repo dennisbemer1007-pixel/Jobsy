@@ -34,4 +34,5 @@ public record VacancyListItemDto(
     string? RequiredDrivingLicense = null,
     string? RequiredEducation = null,
     int? MinimumEmployers = null,
-    Guid? FulfilledByApplicationId = null);
+    Guid? FulfilledByApplicationId = null,
+    string CreatedVia = "Manual");

@@ -1,0 +1,86 @@
+@page "/tokens/checkout-return"
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "BranchManager,EnterpriseManager,Intermediary,Admin")]
+@inject JobsyApiClient Api
+@inject NavigationManager Navigation
+
+<PageTitle>Betaling · Lobsy</PageTitle>
+
+<div class="panel-page">
+    <h1>Betaling afronden</h1>
+    <p class="login-lead">We controleren bij Mollie of de betaling is gelukt en schrijven je tokens bij.</p>
+
+    @if (_loading)
+    {
+        <p class="state-message">Betaling controleren…</p>
+    }
+    else if (!string.IsNullOrEmpty(_message))
+    {
+        <p class="state-message error">@_message</p>
+        <div class="inline-actions" style="margin-top:1.5rem">
+            <button class="login-submit" type="button" disabled="@_busy" @onclick="CompleteAsync">
+                @(_busy ? "Bezig…" : "Opnieuw proberen")
+            </button>
+            <a class="auth-link" href="/employer/tokens">Terug naar tokens</a>
+        </div>
+    }
+</div>
+
+@code {
+    private bool _loading = true;
+    private bool _busy;
+    private string? _paymentId;
+    private Guid? _checkoutId;
+    private string? _message;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var uri = Navigation.ToAbsoluteUri(Navigation.Uri);
+        var query = Microsoft.AspNetCore.WebUtilities.QueryHelpers.ParseQuery(uri.Query);
+        if (query.TryGetValue("paymentId", out var pid) && !string.IsNullOrWhiteSpace(pid))
+        {
+            _paymentId = pid.ToString();
+        }
+
+        if (query.TryGetValue("checkoutId", out var cid)
+            && Guid.TryParse(cid.ToString(), out var checkoutId))
+        {
+            _checkoutId = checkoutId;
+        }
+
+        await CompleteAsync();
+    }
+
+    private async Task CompleteAsync()
+    {
+        _busy = true;
+        _message = null;
+        try
+        {
+            if (_checkoutId is Guid checkoutId)
+            {
+                await Api.CompleteTokenCheckoutBySessionAsync(checkoutId);
+            }
+            else if (!string.IsNullOrWhiteSpace(_paymentId))
+            {
+                await Api.CompleteTokenCheckoutAsync(_paymentId);
+            }
+            else
+            {
+                _message = "Geen checkout-gegevens in de return-URL.";
+                return;
+            }
+
+            Navigation.NavigateTo("/employer/tokens");
+        }
+        catch (Exception ex)
+        {
+            _message = ex.Message;
+        }
+        finally
+        {
+            _loading = false;
+            _busy = false;
+        }
+    }
+}

@@ -1,0 +1,178 @@
+@page "/admin/api-keys"
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
+@attribute [Authorize(Roles = "Admin")]
+@using Jobsy.Web.Components.Admin
+@inject JobsyApiClient Api
+
+<PageTitle>API Beheer · Lobsy</PageTitle>
+
+<AdminPageShell Title="API Beheer" Lead="Alle bedrijfs-API-keys: status, laatste gebruik en deactiveren." Wide="true">
+    @if (_loading)
+    {
+        <p class="state-message">Laden…</p>
+    }
+    else if (!string.IsNullOrEmpty(_error))
+    {
+        <p class="state-message error">@_error</p>
+    }
+    else
+    {
+        <div class="filter-bar">
+            <label>
+                Zoeken
+                <input type="search" @bind="_query" @bind:event="oninput" placeholder="Bedrijf, prefix…" />
+            </label>
+            <label>
+                Status
+                <select @bind="_statusFilter">
+                    <option value="">Alle</option>
+                    <option value="active">Actief</option>
+                    <option value="inactive">Inactief</option>
+                </select>
+            </label>
+            <span class="muted">@_filtered.Count van @_keys.Count</span>
+        </div>
+
+        @if (!string.IsNullOrEmpty(_message))
+        {
+            <p class="state-message">@_message</p>
+        }
+
+        @if (_filtered.Count == 0)
+        {
+            <p class="state-message">Geen API-keys gevonden.</p>
+        }
+        else
+        {
+            <div class="table-scroll">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th class="data-table__col--wrap">Bedrijf</th>
+                            <th>Label</th>
+                            <th>Prefix</th>
+                            <th>Status</th>
+                            <th>Laatst gebruikt</th>
+                            <th>Aangemaakt</th>
+                            <th>Acties</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var k in _filtered)
+                        {
+                            <tr>
+                                <td class="data-table__col--wrap">
+                                    <strong>@k.CompanyName</strong>
+                                </td>
+                                <td>@k.Name</td>
+                                <td><code>@k.KeyPrefix</code></td>
+                                <td>
+                                    @if (k.IsActive)
+                                    {
+                                        <span class="badge-ok">Actief</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="muted">Inactief</span>
+                                    }
+                                </td>
+                                <td>
+                                    @(k.LastUsedAt?.ToLocalTime().ToString("dd-MM-yyyy HH:mm") ?? "—")
+                                </td>
+                                <td>@k.CreatedAt.ToLocalTime().ToString("dd-MM-yyyy HH:mm")</td>
+                                <td class="inline-actions">
+                                    @if (k.IsActive)
+                                    {
+                                        <button class="btn-compact" type="button" disabled="@_busy"
+                                                @onclick="() => DeactivateAsync(k)">
+                                            Deactiveren
+                                        </button>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    }
+</AdminPageShell>
+
+@code {
+    private List<AdminApiKeyItem> _keys = [];
+    private string _query = "";
+    private string _statusFilter = "";
+    private bool _loading = true;
+    private bool _busy;
+    private string? _error;
+    private string? _message;
+
+    private List<AdminApiKeyItem> _filtered =>
+        _keys.Where(k =>
+        {
+            if (_statusFilter == "active" && !k.IsActive)
+            {
+                return false;
+            }
+
+            if (_statusFilter == "inactive" && k.IsActive)
+            {
+                return false;
+            }
+
+            if (string.IsNullOrWhiteSpace(_query))
+            {
+                return true;
+            }
+
+            var q = _query.Trim();
+            return k.CompanyName.Contains(q, StringComparison.OrdinalIgnoreCase)
+                   || k.KeyPrefix.Contains(q, StringComparison.OrdinalIgnoreCase)
+                   || k.Name.Contains(q, StringComparison.OrdinalIgnoreCase);
+        }).ToList();
+
+    protected override async Task OnInitializedAsync() => await LoadAsync();
+
+    private async Task LoadAsync()
+    {
+        _loading = true;
+        _error = null;
+        try
+        {
+            _keys = (await Api.GetAdminApiKeysAsync()).ToList();
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private async Task DeactivateAsync(AdminApiKeyItem key)
+    {
+        if (_busy)
+        {
+            return;
+        }
+
+        _busy = true;
+        _message = null;
+        try
+        {
+            await Api.DeactivateAdminApiKeyAsync(key.Id);
+            _message = $"API-key {key.KeyPrefix} gedeactiveerd.";
+            await LoadAsync();
+        }
+        catch (Exception ex)
+        {
+            _message = ex.Message;
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+}

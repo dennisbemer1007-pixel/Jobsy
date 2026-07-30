@@ -24,9 +24,9 @@ public static class IntegrationHelpDocs
 
     private static readonly Doc Mollie = new(
         Summary: "Betaaldienst voor iDEAL en andere methoden.",
-        UsedFor: "Tokenpakketten kopen door werkgevers/intermediairs (checkout). Op dit moment is de checkout in Lobsy nog een stub; de opgeslagen key wordt wel live getest tegen de Mollie API.",
+        UsedFor: "Tokenpakketten kopen door werkgevers/intermediairs. Met een opgeslagen API-key start checkout echte Mollie-betalingen; zonder key blijft Development op de lokale stub.",
         WhereToGetKey: "Mollie Dashboard → Developers → API keys. Gebruik eerst een test-key (begint met test_), later live_ voor echte betalingen.",
-        Tip: "Base URL: https://api.mollie.com/v2/ (of leeg laten). Het API-key veld is na Opslaan bewust leeg; de gemaskeerde ‘Huidige API-key’ toont dat de key bewaard is.",
+        Tip: "Base URL: https://api.mollie.com/v2/ (of leeg laten). Zet PublicWebBaseUrl goed (Admin → Platform) zodat Mollie na betaling terugstuurt naar Lobsy. Webhooks gaan naar de API (/api/webhooks/mollie).",
         DocsUrl: "https://my.mollie.com/dashboard/developers/api-keys",
         DocsUrlLabel: "Mollie API keys");
 

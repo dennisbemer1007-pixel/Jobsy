@@ -15,16 +15,7 @@
     <header class="panel-header">
         <div>
             <h1>@Culture["Employer.MyTokens"]</h1>
-            <p class="login-lead">
-                @if (_canPurchase || _canAllocate)
-                {
-                    <text>Saldo (inclusief welkomsttoken), Mollie-stub aankoop, vestiging-allocatie en logs.</text>
-                }
-                else
-                {
-                    <text>Alleen-lezen: token-saldo en logs in jouw regio.</text>
-                }
-            </p>
+            <p class="login-lead">@_lead</p>
         </div>
         @if (_canAllocate)
         {
@@ -43,6 +34,13 @@
     else
     {
         <div class="stat-grid">
+            @if (_pot is not null)
+            {
+                <div class="stat-card">
+                    <span class="stat-card__label">Organisatiepot</span>
+                    <strong class="stat-card__value">@_pot.Balance.ToString("0.##")</strong>
+                </div>
+            }
             <div class="stat-card">
                 <span class="stat-card__label">Totaal saldo</span>
                 <strong class="stat-card__value">@_balances.Sum(b => b.Balance).ToString("0.##")</strong>
@@ -57,6 +55,14 @@
                     <div class="table-row">
                         <div>
                             <strong>@b.CompanyName</strong>
+                            @if (b.ParentCompanyId is null && _hasOrgHierarchy)
+                            {
+                                <span class="muted"> · pot</span>
+                            }
+                            else if (b.TokensManagedByEnterprise)
+                            {
+                                <span class="muted"> · tokenbeheer bedrijfsmanager</span>
+                            }
                         </div>
                         <strong>@b.Balance.ToString("0.##") tokens</strong>
                     </div>
@@ -64,63 +70,139 @@
             </div>
         </section>
 
-        @if (_canPurchase)
+        @if (_canManageTokenFlags)
         {
             <section class="panel-section">
-                <h2>Tokens kopen (Mollie stub)</h2>
-                <form class="login-form" style="max-width:420px" @onsubmit="CheckoutAsync" @onsubmit:preventDefault>
-                    <label>
-                        Vestiging
-                        <select @bind="_checkoutCompanyId">
-                            @foreach (var b in _balances)
-                            {
-                                <option value="@b.CompanyId">@b.CompanyName</option>
-                            }
-                        </select>
-                    </label>
-                    <label>
-                        Pakket
-                        <select @bind="_packSize">
+                <h2>Tokenbeheer per vestiging</h2>
+                <p class="muted">Vink aan voor welke vestigingen jij als bedrijfsmanager het tokenbeheer doet. Alleen die vestigingen kunnen tokens uit de pot ontvangen.</p>
+                <div class="table-list">
+                    @foreach (var branch in _managedBranches)
+                    {
+                        <label class="table-row checkbox-row" style="cursor:pointer">
+                            <div>
+                                <strong>@branch.CompanyName</strong>
+                                <span class="muted">@branch.Balance.ToString("0.##") tokens</span>
+                            </div>
+                            <input type="checkbox"
+                                   checked="@branch.TokensManagedByEnterprise"
+                                   disabled="@_busy"
+                                   @onchange="e => ToggleTokenManagementAsync(branch, e)" />
+                        </label>
+                    }
+                </div>
+            </section>
+        }
+
+        @if (_canPurchaseIntoPot)
+        {
+            <section class="panel-section">
+                <h2>Tokens kopen</h2>
+                <p class="muted">Koop tokens voor de organisatiopot. Daarna geef je ze uit aan een vestiging.</p>
+                <form class="login-form" style="max-width:480px" @onsubmit="CheckoutIntoPotAsync" @onsubmit:preventDefault>
+                    <fieldset class="scope-fieldset">
+                        <legend>Pakket</legend>
+                        <div class="token-pack-options" role="radiogroup" aria-label="Tokenpakket">
                             @foreach (var p in _packs)
                             {
-                                <option value="@p.PackSize">@p.PackSize tokens — € @p.PriceEuro.ToString("0.00")</option>
+                                <label class="scope-option">
+                                    <input type="radio"
+                                           name="token-pack"
+                                           checked="@(_packSize == p.PackSize)"
+                                           @onchange="() => _packSize = p.PackSize" />
+                                    <span>
+                                        <strong>@p.PackSize tokens</strong>
+                                        <span class="muted">€ @p.PriceEuro.ToString("0.00")</span>
+                                    </span>
+                                </label>
                             }
-                        </select>
-                    </label>
-                    <button class="login-submit" type="submit" disabled="@_busy">Naar checkout</button>
+                        </div>
+                    </fieldset>
+                    <button class="login-submit" type="submit" disabled="@(_busy || _pot is null || _packs.Count == 0)">
+                        Naar checkout
+                    </button>
                 </form>
+            </section>
+        }
+        else if (_canPurchaseOwn)
+        {
+            <section class="panel-section">
+                <h2>Tokens kopen</h2>
+                <form class="login-form" style="max-width:480px" @onsubmit="CheckoutOwnAsync" @onsubmit:preventDefault>
+                    @if (_balances.Count > 1)
+                    {
+                        <label>
+                            Vestiging
+                            <select @bind="_checkoutCompanyId">
+                                @foreach (var b in _balances.Where(x => !x.TokensManagedByEnterprise))
+                                {
+                                    <option value="@b.CompanyId">@b.CompanyName</option>
+                                }
+                            </select>
+                        </label>
+                    }
+                    <fieldset class="scope-fieldset">
+                        <legend>Pakket</legend>
+                        <div class="token-pack-options" role="radiogroup" aria-label="Tokenpakket">
+                            @foreach (var p in _packs)
+                            {
+                                <label class="scope-option">
+                                    <input type="radio"
+                                           name="token-pack-own"
+                                           checked="@(_packSize == p.PackSize)"
+                                           @onchange="() => _packSize = p.PackSize" />
+                                    <span>
+                                        <strong>@p.PackSize tokens</strong>
+                                        <span class="muted">€ @p.PriceEuro.ToString("0.00")</span>
+                                    </span>
+                                </label>
+                            }
+                        </div>
+                    </fieldset>
+                    <button class="login-submit" type="submit" disabled="@(_busy || _checkoutCompanyId == Guid.Empty || _packs.Count == 0)">
+                        Naar checkout
+                    </button>
+                </form>
+            </section>
+        }
+        else if (_isBranchManager)
+        {
+            <section class="panel-section">
+                <h2>Tokens kopen</h2>
+                <p class="muted">Tokenbeheer voor jouw vestiging ligt bij de bedrijfsmanager. Je kunt geen tokens kopen.</p>
             </section>
         }
 
         @if (_canAllocate)
         {
             <section class="panel-section">
-                <h2>Vestiging-allocatie</h2>
-                <form class="login-form" style="max-width:420px" @onsubmit="AllocateAsync" @onsubmit:preventDefault>
-                    <label>
-                        Van
-                        <select @bind="_fromCompanyId">
-                            @foreach (var b in _balances)
-                            {
-                                <option value="@b.CompanyId">@b.CompanyName (@b.Balance.ToString("0.##"))</option>
-                            }
-                        </select>
-                    </label>
-                    <label>
-                        Naar
-                        <select @bind="_toCompanyId">
-                            @foreach (var b in _balances)
-                            {
-                                <option value="@b.CompanyId">@b.CompanyName</option>
-                            }
-                        </select>
-                    </label>
-                    <label>
-                        Aantal
-                        <input type="number" min="0.5" step="0.5" @bind="_allocateAmount" />
-                    </label>
-                    <button class="login-submit" type="submit" disabled="@_busy">Alloceren</button>
-                </form>
+                <h2>Tokens uitgeven</h2>
+                <p class="muted">Geef tokens uit de organisatiopot aan een aangevinkte vestiging.</p>
+                @if (_issueTargets.Count == 0)
+                {
+                    <p class="muted">Geen vestigingen aangevinkt voor tokenbeheer. Vink hierboven eerst een vestiging aan.</p>
+                }
+                else
+                {
+                    <form class="login-form" style="max-width:420px" @onsubmit="IssueAsync" @onsubmit:preventDefault>
+                        <label>
+                            Vestiging
+                            <select @bind="_toCompanyId">
+                                @foreach (var b in _issueTargets)
+                                {
+                                    <option value="@b.CompanyId">@b.CompanyName (@b.Balance.ToString("0.##"))</option>
+                                }
+                            </select>
+                        </label>
+                        <label>
+                            Aantal
+                            <input type="number" min="0.5" step="0.5" @bind="_allocateAmount" />
+                        </label>
+                        <p class="muted" style="margin:0">
+                            Beschikbaar in pot: @(_pot?.Balance.ToString("0.##") ?? "0")
+                        </p>
+                        <button class="login-submit" type="submit" disabled="@(_busy || _pot is null)">Uitgeven</button>
+                    </form>
+                }
             </section>
         }
 
@@ -161,15 +243,23 @@
     private bool _loading = true;
     private bool _busy;
     private bool _canAllocate;
-    private bool _canPurchase;
+    private bool _canPurchaseIntoPot;
+    private bool _canPurchaseOwn;
+    private bool _canManageTokenFlags;
+    private bool _isBranchManager;
+    private bool _hasOrgHierarchy;
     private string? _error;
     private string? _message;
+    private string _lead = "Token-saldo en logs.";
     private Guid _checkoutCompanyId;
     private int _packSize = 5;
-    private Guid _fromCompanyId;
     private Guid _toCompanyId;
     private decimal _allocateAmount = 1;
     private string _logFilter = "";
+
+    private TokenBalance? _pot;
+    private List<TokenBalance> _managedBranches = [];
+    private List<TokenBalance> _issueTargets = [];
 
     protected override void OnInitialized()
         => Culture.Changed += OnCultureChanged;
@@ -186,27 +276,31 @@
         {
             var state = await AuthState.GetAuthenticationStateAsync();
             var user = state.User;
+            _isBranchManager = user.IsInRole("BranchManager");
             _canAllocate = user.IsInRole("EnterpriseManager") || user.IsInRole("Admin");
-            _canPurchase = user.IsInRole("BranchManager")
-                || user.IsInRole("EnterpriseManager")
-                || user.IsInRole("Intermediary")
-                || user.IsInRole("Admin");
+            _canManageTokenFlags = _canAllocate;
+            _canPurchaseIntoPot = user.IsInRole("EnterpriseManager") || user.IsInRole("Admin");
+            var isIntermediary = user.IsInRole("Intermediary");
 
-            _balances = (await Api.GetTokenBalancesAsync()).ToList();
-            TokenBalances.Invalidate();
+            await ReloadBalancesAsync();
             _packs = (await Api.GetTokenPacksAsync()).ToList();
-            if (_balances.Count > 0)
-            {
-                _checkoutCompanyId = _balances[0].CompanyId;
-                _fromCompanyId = _balances[0].CompanyId;
-                _toCompanyId = _balances.Count > 1 ? _balances[1].CompanyId : _balances[0].CompanyId;
-            }
-
             if (_packs.Count > 0)
             {
                 _packSize = _packs[0].PackSize;
             }
 
+            // Filiaal / intermediair: eigen aankoop alleen als vestiging niet onder EM-tokenbeheer valt.
+            if (!_canPurchaseIntoPot && (_isBranchManager || isIntermediary))
+            {
+                var selfManaged = _balances.Where(b => !b.TokensManagedByEnterprise).ToList();
+                _canPurchaseOwn = selfManaged.Count > 0;
+                if (_canPurchaseOwn)
+                {
+                    _checkoutCompanyId = selfManaged[0].CompanyId;
+                }
+            }
+
+            _lead = ResolveLead();
             _logs = (await Api.GetTokenLogsAsync()).ToList();
         }
         catch (Exception ex)
@@ -219,13 +313,87 @@
         }
     }
 
-    private async Task CheckoutAsync()
+    private string ResolveLead()
+    {
+        if (_canPurchaseIntoPot || _canAllocate)
+        {
+            return "Koop tokens in de organisatiopot en geef ze uit aan vestigingen waar jij tokenbeheer doet.";
+        }
+
+        if (_canPurchaseOwn)
+        {
+            return "Saldo, aankoop via Mollie en logs voor jouw vestiging.";
+        }
+
+        if (_isBranchManager)
+        {
+            return "Alleen-lezen: tokenbeheer voor jouw vestiging ligt bij de bedrijfsmanager.";
+        }
+
+        return "Alleen-lezen: token-saldo en logs in jouw regio.";
+    }
+
+    private async Task ReloadBalancesAsync()
+    {
+        _balances = (await Api.GetTokenBalancesAsync()).ToList();
+        TokenBalances.Invalidate();
+        _hasOrgHierarchy = _balances.Any(b => b.ParentCompanyId is not null);
+        _pot = _balances.FirstOrDefault(b => b.ParentCompanyId is null && _hasOrgHierarchy)
+            ?? _balances.FirstOrDefault(b => b.ParentCompanyId is null);
+        _managedBranches = _balances.Where(b => b.ParentCompanyId is not null).OrderBy(b => b.CompanyName).ToList();
+        _issueTargets = _managedBranches.Where(b => b.TokensManagedByEnterprise).ToList();
+        if (_issueTargets.Count > 0
+            && (_toCompanyId == Guid.Empty || _issueTargets.All(b => b.CompanyId != _toCompanyId)))
+        {
+            _toCompanyId = _issueTargets[0].CompanyId;
+        }
+    }
+
+    private async Task ToggleTokenManagementAsync(TokenBalance branch, ChangeEventArgs e)
+    {
+        var enabled = e.Value is bool b && b || string.Equals(e.Value?.ToString(), "true", StringComparison.OrdinalIgnoreCase);
+        _busy = true;
+        _message = null;
+        try
+        {
+            await Api.UpdateTokenManagementAsync(branch.CompanyId, enabled);
+            await ReloadBalancesAsync();
+            _message = enabled
+                ? $"Tokenbeheer voor {branch.CompanyName} staat aan."
+                : $"Tokenbeheer voor {branch.CompanyName} staat uit — de vestiging beheert tokens zelf.";
+        }
+        catch (Exception ex)
+        {
+            _message = ex.Message;
+            await ReloadBalancesAsync();
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private async Task CheckoutIntoPotAsync()
+    {
+        if (_pot is null)
+        {
+            _message = "Geen organisatiopot gevonden.";
+            return;
+        }
+
+        await StartCheckoutAsync(_pot.CompanyId);
+    }
+
+    private async Task CheckoutOwnAsync()
+        => await StartCheckoutAsync(_checkoutCompanyId);
+
+    private async Task StartCheckoutAsync(Guid companyId)
     {
         _busy = true;
         _message = null;
         try
         {
-            var result = await Api.CreateTokenCheckoutAsync(_checkoutCompanyId, _packSize);
+            var result = await Api.CreateTokenCheckoutAsync(companyId, _packSize);
             if (result is null)
             {
                 _message = "Checkout mislukt.";
@@ -244,17 +412,22 @@
         }
     }
 
-    private async Task AllocateAsync()
+    private async Task IssueAsync()
     {
+        if (_pot is null)
+        {
+            _message = "Geen organisatiopot gevonden.";
+            return;
+        }
+
         _busy = true;
         _message = null;
         try
         {
-            await Api.AllocateTokensAsync(_fromCompanyId, _toCompanyId, _allocateAmount);
-            _balances = (await Api.GetTokenBalancesAsync()).ToList();
-            TokenBalances.Invalidate();
+            await Api.AllocateTokensAsync(_pot.CompanyId, _toCompanyId, _allocateAmount, "Uitgifte uit organisatiopot");
+            await ReloadBalancesAsync();
             _logs = (await Api.GetTokenLogsAsync(_logFilter)).ToList();
-            _message = "Tokens gealloceerd.";
+            _message = "Tokens uitgegeven aan vestiging.";
         }
         catch (Exception ex)
         {

@@ -15,7 +15,7 @@ public static class RoleNavCatalog
         new("Nav.Finance", "/admin/finance", NavIcons.Finance, ["/admin/tokens", "/admin/sales-managers"]),
         new("Nav.Companies", "/admin/companies", NavIcons.Companies),
         new("Nav.Settings", "/admin/settings", NavIcons.Settings,
-            ["/admin/integrations", "/admin/users", "/admin/logging", "/admin/wages", "/admin/masterdata", "/admin/notifications", "/admin/company", "/admin/about"])
+            ["/admin/integrations", "/admin/users", "/admin/logging", "/admin/wages", "/admin/masterdata", "/admin/notifications", "/admin/company", "/admin/about", "/admin/api-keys"])
     ];
 
     public static readonly NavItem[] Candidate =
@@ -39,8 +39,13 @@ public static class RoleNavCatalog
         new("Nav.Tokens", "/employer/tokens", NavIcons.Tokens, ["/regional/tokens", "/admin/tokens", "/branch/tokens"]),
         new("Nav.Branches", "/employer/branches", NavIcons.Branches, ["/employer/takeovers"]),
         new("Nav.Regions", "/employer/regions", NavIcons.Regions),
-        new("Nav.Users", "/employer/users", NavIcons.Users)
+        new("Nav.Users", "/employer/users", NavIcons.Users),
+        new("Nav.CsvImport", "/employer/csv-import", NavIcons.Batch),
+        new("Nav.CompanyDetails", "/employer/company", NavIcons.Companies)
     ];
+
+    public static readonly NavItem CsvImport =
+        new("Nav.CsvImport", "/employer/csv-import", NavIcons.Batch);
 
     public static readonly NavItem[] Regional =
     [
@@ -56,6 +61,7 @@ public static class RoleNavCatalog
         new("Nav.JobMap", "/", NavIcons.Map),
         new("Nav.Vacancies", "/employer/vacancies", NavIcons.Vacancies, ["/branch/vacancies/new", "/branch/applicants"]),
         new("Nav.MyTokens", "/branch/tokens", NavIcons.Tokens),
+        new("Nav.CompanyDetails", "/employer/company", NavIcons.Companies),
         new("Nav.Takeovers", "/employer/takeovers", NavIcons.Branches)
     ];
 

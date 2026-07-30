@@ -1,4 +1,5 @@
 using Jobsy.Core.Entities;
+using Jobsy.Core.Rules;
 using Microsoft.EntityFrameworkCore;
 
 namespace Jobsy.Infrastructure.Data;
@@ -34,6 +35,7 @@ public class JobsyDbContext : DbContext
     public DbSet<PushBomPricingTier> PushBomPricingTiers => Set<PushBomPricingTier>();
     public DbSet<EarlyAdapterRule> EarlyAdapterRules => Set<EarlyAdapterRule>();
     public DbSet<IntegrationCredential> IntegrationCredentials => Set<IntegrationCredential>();
+    public DbSet<ApiKey> ApiKeys => Set<ApiKey>();
     public DbSet<PlatformFeatureSettings> PlatformFeatureSettings => Set<PlatformFeatureSettings>();
     public DbSet<PlatformCompanySettings> PlatformCompanySettings => Set<PlatformCompanySettings>();
     public DbSet<AboutPageSettings> AboutPageSettings => Set<AboutPageSettings>();
@@ -63,7 +65,7 @@ public class JobsyDbContext : DbContext
             entity.Property(e => e.FullName).HasMaxLength(256).IsRequired();
             entity.Property(e => e.PreferencesJson).HasMaxLength(8000);
             entity.Property(e => e.ConsentVersion).HasMaxLength(32);
-            entity.Property(e => e.UnsubscribeVerificationCode).HasMaxLength(6);
+            entity.Property(e => e.UnsubscribeVerificationCode).HasMaxLength(64);
             entity.Property(e => e.UnsubscribeReasonCode).HasMaxLength(64);
             entity.Property(e => e.UnsubscribeReasonOther).HasMaxLength(1000);
             entity.Property(e => e.HomeLocation)
@@ -99,6 +101,9 @@ public class JobsyDbContext : DbContext
             entity.Property(e => e.KvkEstablishmentId).HasMaxLength(40);
             entity.Property(e => e.Address).HasMaxLength(512).IsRequired();
             entity.Property(e => e.LogoUrl).HasMaxLength(1024);
+            entity.Property(e => e.ContactEmail).HasMaxLength(256);
+            entity.Property(e => e.ContactPhone).HasMaxLength(64);
+            entity.Property(e => e.ContactWhatsApp).HasMaxLength(64);
             entity.Property(e => e.Location)
                 .HasConversion(new GeoPointConverter())
                 .HasColumnType("geometry(Point, 4326)");
@@ -124,11 +129,12 @@ public class JobsyDbContext : DbContext
             entity.Property(e => e.Title).HasMaxLength(256).IsRequired();
             entity.Property(e => e.Description).HasMaxLength(20000).IsRequired();
             entity.Property(e => e.HourlyWage).HasPrecision(8, 2);
-            entity.Property(e => e.ImageUrl).HasMaxLength(1024);
+            entity.Property(e => e.ImageUrl).HasMaxLength(HtmlSanitize.MaxImageUrlLength);
             entity.Property(e => e.VideoUrl).HasMaxLength(1024);
             entity.Property(e => e.RequiredDrivingLicense).HasMaxLength(256);
             entity.Property(e => e.RequiredEducation).HasMaxLength(256);
             entity.Property(e => e.WorkTypeLabels).HasMaxLength(512);
+            entity.Property(e => e.CreatedAtUtc).HasDefaultValueSql("CURRENT_TIMESTAMP");
             entity.Property(e => e.Location)
                 .HasConversion(new GeoPointConverter())
                 .HasColumnType("geometry(Point, 4326)");
@@ -136,6 +142,7 @@ public class JobsyDbContext : DbContext
             // Discover / public feed: Status + date window (and employer manage by company).
             entity.HasIndex(e => new { e.Status, e.EndDate, e.StartDate });
             entity.HasIndex(e => new { e.CompanyId, e.Status });
+            entity.HasIndex(e => new { e.Status, e.PublishedAtUtc, e.CreatedAtUtc });
             entity.HasOne(e => e.Company)
                 .WithMany(c => c.Vacancies)
                 .HasForeignKey(e => e.CompanyId)
@@ -144,6 +151,26 @@ public class JobsyDbContext : DbContext
                 .WithMany(t => t.Vacancies)
                 .HasForeignKey(e => e.SalaryTableId)
                 .OnDelete(DeleteBehavior.SetNull);
+        });
+
+        modelBuilder.Entity<ApiKey>(entity =>
+        {
+            entity.ToTable("ApiKeys");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.ApiKeyHash).HasMaxLength(64).IsRequired();
+            entity.Property(e => e.Name).HasMaxLength(128).IsRequired();
+            entity.Property(e => e.KeyPrefix).HasMaxLength(32).IsRequired();
+            entity.HasIndex(e => e.ApiKeyHash).IsUnique();
+            entity.HasIndex(e => new { e.CompanyId, e.IsActive });
+            // At most one active key per company (Postgres partial unique index).
+            entity.HasIndex(e => e.CompanyId)
+                .IsUnique()
+                .HasFilter("\"IsActive\" = TRUE")
+                .HasDatabaseName("IX_ApiKeys_CompanyId_Active");
+            entity.HasOne(e => e.Company)
+                .WithMany(c => c.ApiKeys)
+                .HasForeignKey(e => e.CompanyId)
+                .OnDelete(DeleteBehavior.Cascade);
         });
 
         modelBuilder.Entity<TokenTransaction>(entity =>
@@ -182,7 +209,7 @@ public class JobsyDbContext : DbContext
             entity.Property(e => e.PreferredTransport).HasMaxLength(64).IsRequired();
             entity.Property(e => e.PreferencesSummary).HasMaxLength(2048);
             entity.Property(e => e.ConsentVersion).HasMaxLength(32);
-            entity.Property(e => e.EmailVerificationCode).HasMaxLength(6);
+            entity.Property(e => e.EmailVerificationCode).HasMaxLength(64);
             entity.Property(e => e.SnapshotAvailabilityJson).HasMaxLength(2048);
             entity.Property(e => e.SnapshotDrivingLicenses).HasMaxLength(512);
             entity.Property(e => e.SnapshotEducations).HasMaxLength(512);

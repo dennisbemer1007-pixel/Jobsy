@@ -6,6 +6,7 @@
 @inject AuthenticationStateProvider AuthState
 @inject CultureState Culture
 @inject JobsyApiClient Api
+@inject BottomNavRefreshService NavRefresh
 @implements IDisposable
 
 @if (_items.Count > 0)
@@ -32,6 +33,7 @@
     private IReadOnlyList<NavItem> _items = RoleNavCatalog.Anonymous;
     private bool _hasTakeoverActions;
     private bool _salesOnboardingComplete;
+    private bool _csvImportEnabled;
     private bool _roleFlagsLoaded;
     private string? _lastRoleFingerprint;
 
@@ -42,11 +44,18 @@
     {
         Navigation.LocationChanged += OnLocationChanged;
         Culture.Changed += OnCultureChanged;
+        NavRefresh.RefreshRequested += OnNavRefreshRequestedAsync;
         await RefreshItemsAsync(forceRoleApis: true);
     }
 
     private void OnCultureChanged()
         => InvokeAsync(StateHasChanged);
+
+    private async Task OnNavRefreshRequestedAsync()
+    {
+        await RefreshItemsAsync(forceRoleApis: true);
+        await InvokeAsync(StateHasChanged);
+    }
 
     private async void OnLocationChanged(object? sender, LocationChangedEventArgs e)
     {
@@ -101,6 +110,29 @@
             }
         }
 
+        if (RoleClaimMatching.HasRole(state.User, JobsyRoles.EnterpriseManager)
+            || RoleClaimMatching.HasRole(state.User, JobsyRoles.Admin))
+        {
+            // Refresh on init, navigation, and explicit NavRefresh (CSV toggle on Bedrijfsgegevens).
+            if (forceRoleApis || rolesChanged || !_roleFlagsLoaded)
+            {
+                await RefreshCsvImportFlagAsync();
+            }
+
+            if (!_csvImportEnabled)
+            {
+                catalog = catalog
+                    .Where(i => !string.Equals(i.Href, RoleNavCatalog.CsvImport.Href, StringComparison.OrdinalIgnoreCase))
+                    .ToList();
+            }
+        }
+        else
+        {
+            catalog = catalog
+                .Where(i => !string.Equals(i.Href, RoleNavCatalog.CsvImport.Href, StringComparison.OrdinalIgnoreCase))
+                .ToList();
+        }
+
         _roleFlagsLoaded = true;
 
         var previousCount = _items.Count;
@@ -137,9 +169,23 @@
         }
     }
 
+    private async Task RefreshCsvImportFlagAsync()
+    {
+        try
+        {
+            var companies = await Api.GetMyCompaniesAsync();
+            _csvImportEnabled = companies.Any(c => c.CsvBatchImportEnabled);
+        }
+        catch
+        {
+            _csvImportEnabled = false;
+        }
+    }
+
     public void Dispose()
     {
         Navigation.LocationChanged -= OnLocationChanged;
         Culture.Changed -= OnCultureChanged;
+        NavRefresh.RefreshRequested -= OnNavRefreshRequestedAsync;
     }
 }

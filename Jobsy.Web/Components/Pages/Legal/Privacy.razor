@@ -8,7 +8,7 @@
     <header class="panel-header">
         <div>
             <h1>@Culture["Legal.Privacy"]</h1>
-            <p class="login-lead">Laatst bijgewerkt: 28 juli 2026</p>
+            <p class="login-lead">Laatst bijgewerkt: 29 juli 2026</p>
         </div>
     </header>
 
@@ -35,23 +35,24 @@
             <p>Afhankelijk van je rol verwerken we onder meer:</p>
             <ul>
                 <li><strong>Accountgegevens:</strong> naam, e-mailadres, inloggegevens en (indien van toepassing) telefoonnummer.</li>
-                <li><strong>Kandidaten:</strong> geboortedatum (voor leeftijdsloon), voorkeursvervoer, locatiegegevens voor reistijdschattingen, likes, sollicitaties (inclusief een snapshot van voorkeuren/opleiding/rijbewijs na sollicitatie), e-mailverificatie en eventuele authenticator-bevestigingen.</li>
-                <li><strong>Ondernemers:</strong> KVK-gegevens, vestigingsgegevens, contactpersonen, gebruikersrollen en token-/betalingsgerelateerde transactiegegevens.</li>
+                <li><strong>Kandidaten:</strong> geboortedatum (voor leeftijdsloon), voorkeursvervoer, locatiegegevens voor reistijdschattingen, likes, sollicitaties (inclusief een snapshot van voorkeuren/opleiding/rijbewijs na sollicitatie), e-mailverificatie (OTP) en eventuele authenticator-bevestigingen.</li>
+                <li><strong>Ondernemers:</strong> KVK-gegevens, vestigingsgegevens, contactpersonen, contactvoorkeuren (e-mail/telefoon/WhatsApp voor contact ná sollicitatie), gebruikersrollen, API-koppelingen (alleen gehashte keys) en token-/betalingsgerelateerde transactiegegevens.</li>
                 <li><strong>Salesmanagers:</strong> KvK/BTW/NAW, gemaskeerde IBAN voor uitbetaling, trackingcode, commissieboekingen en self-billingfacturen (fiscale bewaarplicht).</li>
-                <li><strong>Technische gegevens:</strong> sessie-cookie <code>Jobsy.Auth</code>; een anonieme engagement-sleutel in <code>sessionStorage</code> (per tab); klik-, like- en deelstatistieken op vacatures; sitebezoeken (pad + optionele user-koppeling); beveiligingslogs en noodzakelijke cookies voor inloggen en werking van de dienst.</li>
-                <li><strong>Communicatie:</strong> berichten of bevestigingen die via het platform of e-mail (stub/SMTP) worden verstuurd. Ontvangers worden in logs geredacteerd.</li>
+                <li><strong>Technische gegevens:</strong> sessie-cookie <code>Jobsy.Auth</code>; taalvoorkeur-cookie <code>Jobsy.Culture</code>; een anonieme engagement-sleutel in <code>sessionStorage</code> (per tab); klik-, like- en deelstatistieken op vacatures; sitebezoeken (pad + optionele user-koppeling); beveiligingslogs en noodzakelijke cookies voor inloggen en werking van de dienst.</li>
+                <li><strong>Communicatie:</strong> berichten of bevestigingen die via het platform of e-mail (Resend) worden verstuurd. Ontvangers worden in logs geredacteerd. API-credentials kunnen éénmalig per e-mail worden verstuurd op verzoek van de bedrijfsmanager.</li>
             </ul>
             <p>
                 We hanteren dataminimalisatie: we slaan alleen op wat nodig is voor matching, solliciteren,
                 accountbeheer, beveiliging en (voor ondernemers) token- en vacaturebeheer.
+                Telefoon- en WhatsApp-nummers van werkgevers staan nooit op de openbare vacaturepagina.
             </p>
         </section>
 
         <section>
             <h2>3. Doeleinden en grondslagen</h2>
             <ul>
-                <li><strong>Uitvoering van de overeenkomst:</strong> account, matching op reistijd, sollicitaties, vacaturepublicatie en tokengebruik.</li>
-                <li><strong>Gerechtvaardigd belang:</strong> beveiliging, fraudepreventie, platformverbetering en moderatie van vacatureteksten.</li>
+                <li><strong>Uitvoering van de overeenkomst:</strong> account, matching op reistijd, sollicitaties, vacaturepublicatie, tokengebruik en (optioneel) direct contact na een succesvolle sollicitatie.</li>
+                <li><strong>Gerechtvaardigd belang:</strong> beveiliging, fraudepreventie, platformverbetering, moderatie van vacatureteksten, en incidentele re-engagementberichten aan inactieve organisaties (maximaal één keer).</li>
                 <li><strong>Toestemming:</strong> waar we daarom vragen (bijvoorbeeld bij akkoord met voorwaarden of optionele functies).</li>
                 <li><strong>Wettelijke verplichting:</strong> bijvoorbeeld bewaarplichten rondom betalingen of verzoeken van bevoegde autoriteiten.</li>
             </ul>
@@ -61,13 +62,15 @@
             <h2>4. Verwerkers en derden</h2>
             <p>We kunnen gegevens delen met of laten verwerken door:</p>
             <ul>
-                <li><strong>Werkgevers / vestigingen</strong> wanneer je solliciteert — contactgegevens en profielsnapshot worden pas gedeeld na acceptatie van de sollicitatie.</li>
+                <li><strong>Werkgevers / vestigingen</strong> wanneer je solliciteert — NAW/contactgegevens worden pas gedeeld na acceptatie van de sollicitatie (progressive disclosure). Reis-/voorkeursinformatie kan eerder zichtbaar zijn voor matching.</li>
                 <li><strong>Hosting:</strong> Render (hosting van de applicatie en database).</li>
+                <li><strong>E-mail:</strong> Resend voor transactionele e-mail (verificatiecodes, bevestigingen, credentials).</li>
                 <li><strong>Kaarten / OSM-tegels</strong> voor de weergave van de vacaturekaart.</li>
                 <li><strong>Geocoding:</strong> Nominatim / OpenStreetMap voor adres- of locatieomzetting.</li>
                 <li><strong>Identiteitsproviders:</strong> Google of Microsoft (Entra) als je daarmee inlogt (alleen geverifieerde e-mailadressen).</li>
-                <li><strong>Betaaldienstverleners:</strong> optioneel Mollie voor tokenaankopen en (toekomstig) salesmanager-uitbetalingen.</li>
-                <li><strong>AI (optioneel):</strong> OpenAI voor het oefengesprek; zie hieronder. Bij gebruik kan sprake zijn van doorgifte naar de Verenigde Staten.</li>
+                <li><strong>Betaaldienstverleners:</strong> optioneel Mollie voor tokenaankopen en (toekomstig) salesmanager-uitbetalingen (minimale metadata: checkout/company/pack).</li>
+                <li><strong>AI (optioneel):</strong> OpenAI voor oefengesprek, vacaturemoderatie, vertaling en de assistent-chat. Bij gebruik kan doorgifte naar de Verenigde Staten plaatsvinden.</li>
+                <li><strong>WhatsApp / telefoon:</strong> alleen wanneer jij of de werkgever daarvoor kiest ná een geverifieerde sollicitatie; het gesprek verloopt buiten Lobsy.</li>
             </ul>
             <p>We verkopen je persoonsgegevens niet.</p>
         </section>
@@ -88,6 +91,7 @@
                 <li><strong>Platformlogs:</strong> 90 dagen.</li>
                 <li><strong>Geannuleerde registraties:</strong> 30 dagen.</li>
                 <li><strong>Klikken, shares, impressions en sitebezoeken:</strong> 365 dagen.</li>
+                <li><strong>Onbevestigde sollicitatiedrafts</strong> (e-mailverificatie niet afgerond): 48 uur, daarna automatisch verwijderd.</li>
                 <li><strong>Self-billing / commissies:</strong> langer bewaard waar fiscale bewaarplicht dat vereist; bij accountverwijdering worden persoonsgegevens geanonimiseerd.</li>
                 <li><strong>Accountgegevens:</strong> tot anonimisering of verwijdering op jouw verzoek, of zolang het account actief nodig is voor de dienst.</li>
             </ul>
@@ -98,11 +102,12 @@
         </section>
 
         <section>
-            <h2>7. AI-oefengesprek</h2>
+            <h2>7. AI-functies</h2>
             <p>
-                Bij het optionele oefengesprek kunnen berichten en vacaturecontext naar OpenAI worden gestuurd
-                om antwoorden te genereren. Deze chatgeschiedenis wordt niet permanent server-side opgeslagen
-                als gespreksarchief. Bij gebruik van OpenAI kan doorgifte naar de Verenigde Staten plaatsvinden.
+                Bij optionele AI-functies (oefengesprek, vacaturemoderatie, vertaling, assistent) kunnen
+                berichten en relevante context naar OpenAI worden gestuurd. Chatgeschiedenis van het oefengesprek
+                wordt niet permanent server-side als gespreksarchief bewaard. Bij gebruik van OpenAI kan
+                doorgifte naar de Verenigde Staten plaatsvinden.
             </p>
         </section>
 
@@ -110,7 +115,8 @@
             <h2>8. Beveiliging</h2>
             <p>
                 We treffen passende technische en organisatorische maatregelen, waaronder toegangscontrole op rol,
-                beveiligde sessies/cookies en beperking van persoonsgegevens in logs. Geen enkele online dienst
+                beveiligde sessies/cookies, gehashte API-keys en verificatiecodes at-rest, rate limiting op
+                gevoelige endpoints, en beperking van persoonsgegevens in logs. Geen enkele online dienst
                 is 100% risicoloos; meld verdachte activiteit zo snel mogelijk.
             </p>
         </section>

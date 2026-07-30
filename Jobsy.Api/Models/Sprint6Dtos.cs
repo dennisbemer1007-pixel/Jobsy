@@ -44,7 +44,8 @@ public record AdminVacancyDetailDto(
     int ShareCount,
     int ApplicationCount,
     int LikeCount,
-    bool IsExtended);
+    bool IsExtended,
+    string CreatedVia = "Manual");
 
 public record RegisterAdminCompanyRequest(
     string KvkNumber,
@@ -111,14 +112,16 @@ public record UpdatePlatformFeatureRequest(
     bool VacancyContentModerationEnabled,
     bool AuthenticatorEnabled,
     bool ExposeRegistrationActivationLinks,
-    string? PublicWebBaseUrl);
+    string? PublicWebBaseUrl,
+    int InactiveCompanyDays = 120);
 
 public record PlatformFeatureDto(
     bool VacancyContentModerationEnabled,
     bool AuthenticatorEnabled,
     bool ExposeRegistrationActivationLinks,
     string PublicWebBaseUrl,
-    DateTime? UpdatedAtUtc);
+    DateTime? UpdatedAtUtc,
+    int InactiveCompanyDays = 120);
 
 public record SemiAnnualWageUpdateResultDto(
     DateOnly EffectiveFrom,

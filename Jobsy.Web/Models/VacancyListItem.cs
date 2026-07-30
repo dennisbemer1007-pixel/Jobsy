@@ -34,6 +34,7 @@ public class VacancyListItem
     public string? RequiredEducation { get; set; }
     public int? MinimumEmployers { get; set; }
     public Guid? FulfilledByApplicationId { get; set; }
+    public string CreatedVia { get; set; } = "Manual";
 }
 
 public sealed class WageByAgeItem

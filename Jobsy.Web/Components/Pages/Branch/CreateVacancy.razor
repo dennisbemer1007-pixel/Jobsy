@@ -195,6 +195,48 @@
                     }
                 </div>
             </fieldset>
+            <fieldset class="profile-roles contact-pref-fieldset">
+                <legend>Voorkeur voor contact</legend>
+                <p class="muted" style="margin:0 0 0.5rem">
+                    Standaard gelden de bedrijfsinstellingen.
+                    Directe contactopties (WhatsApp/telefoon) verschijnen voor kandidaten pas na een succesvolle sollicitatie.
+                </p>
+                @if (SelectedCompany is not null)
+                {
+                    <p class="muted" style="margin:0 0 0.75rem">
+                        Bedrijf:
+                        @(SelectedCompany.DirectContactEnabled
+                            ? $"direct contact aan ({string.Join(", ", CompanyChannelLabels(SelectedCompany))})"
+                            : "direct contact uit")
+                    </p>
+                }
+                <label>
+                    <input type="checkbox" @bind="_overrideContact" @bind:after="OnOverrideContactChanged" />
+                    Afwijkende contactvoorkeur voor deze vacature
+                </label>
+                @if (_overrideContact)
+                {
+                    <label style="margin-top:0.5rem;display:flex;gap:0.5rem;align-items:center">
+                        <input type="checkbox" @bind="_vacancyDirectContact" @bind:after="OnVacancyDirectContactChanged" />
+                        Direct contact gewenst (WhatsApp / Telefoon / Mail)
+                    </label>
+                    @if (_vacancyDirectContact)
+                    {
+                        <label>
+                            <input type="checkbox" @bind="_vacancyPreferMail" />
+                            Mail
+                        </label>
+                        <label>
+                            <input type="checkbox" @bind="_vacancyPreferPhone" />
+                            Telefoon
+                        </label>
+                        <label>
+                            <input type="checkbox" @bind="_vacancyPreferWhatsApp" />
+                            WhatsApp
+                        </label>
+                    }
+                }
+            </fieldset>
             <button class="login-submit" type="submit" disabled="@_saving">
                 @Culture["Employer.SaveDraft"]
             </button>
@@ -308,9 +350,45 @@
     private Guid _companyId;
     private List<CompanySummary> _companies = [];
     private List<SalaryTableItem> _salaryTables = [];
+    private bool _overrideContact;
+    private bool _vacancyDirectContact;
+    private bool _vacancyPreferMail;
+    private bool _vacancyPreferPhone;
+    private bool _vacancyPreferWhatsApp;
+
+    private CompanySummary? SelectedCompany =>
+        _companies.FirstOrDefault(c => c.Id == _companyId);
 
     private string SelectedCompanyName =>
-        _companies.FirstOrDefault(c => c.Id == _companyId)?.Name ?? "Vestiging";
+        SelectedCompany?.Name ?? "Vestiging";
+
+    private static IEnumerable<string> CompanyChannelLabels(CompanySummary c)
+    {
+        if (c.ContactPreferMail) yield return "Mail";
+        if (c.ContactPreferPhone) yield return "Telefoon";
+        if (c.ContactPreferWhatsApp) yield return "WhatsApp";
+    }
+
+    private void OnOverrideContactChanged()
+    {
+        if (!_overrideContact)
+        {
+            _vacancyDirectContact = false;
+            _vacancyPreferMail = false;
+            _vacancyPreferPhone = false;
+            _vacancyPreferWhatsApp = false;
+        }
+    }
+
+    private void OnVacancyDirectContactChanged()
+    {
+        if (!_vacancyDirectContact)
+        {
+            _vacancyPreferMail = false;
+            _vacancyPreferPhone = false;
+            _vacancyPreferWhatsApp = false;
+        }
+    }
 
     private SalaryTableItem? SelectedSalaryTable =>
         Guid.TryParse(_salaryTableId, out var sid)
@@ -426,6 +504,16 @@
             _minimumEmployers = source.MinimumEmployers is int min && _minEmployerOptions.Contains(min)
                 ? min
                 : null;
+
+            var contact = await Api.GetVacancyContactPreferenceAsync(sourceId);
+            if (contact is not null)
+            {
+                _overrideContact = contact.OverrideContactPreference;
+                _vacancyDirectContact = contact.DirectContactEnabled;
+                _vacancyPreferMail = contact.ContactPreferMail;
+                _vacancyPreferPhone = contact.ContactPreferPhone;
+                _vacancyPreferWhatsApp = contact.ContactPreferWhatsApp;
+            }
         }
         catch (Exception ex)
         {
@@ -643,6 +731,16 @@
             return;
         }
 
+        if (_overrideContact
+            && _vacancyDirectContact
+            && !_vacancyPreferMail
+            && !_vacancyPreferPhone
+            && !_vacancyPreferWhatsApp)
+        {
+            _message = "Kies minstens één contactoptie (Mail, Telefoon of WhatsApp).";
+            return;
+        }
+
         _saving = true;
         _message = null;
         try
@@ -670,7 +768,12 @@
                 salaryTableId,
                 DrivingLicenseLabels.Combine(_selectedLicenses),
                 EducationLevelLabels.Combine(_selectedEducationLevels, forVacancy: true),
-                _minimumEmployers is int min && _minEmployerOptions.Contains(min) ? min : null));
+                _minimumEmployers is int min && _minEmployerOptions.Contains(min) ? min : null,
+                _overrideContact,
+                _vacancyDirectContact,
+                _vacancyPreferMail,
+                _vacancyPreferPhone,
+                _vacancyPreferWhatsApp));
 
             Navigation.NavigateTo("/employer/vacancies");
         }

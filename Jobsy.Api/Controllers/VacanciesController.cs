@@ -1,6 +1,7 @@
 using Jobsy.Api.Authorization;
 using Jobsy.Api.Models;
 using Jobsy.Core.Authorization;
+using Jobsy.Core.Entities;
 using Jobsy.Core.Enums;
 using Jobsy.Core.Exceptions;
 using Jobsy.Core.Interfaces;
@@ -333,13 +334,18 @@ public class VacanciesController : ControllerBase
             return BadRequest(new { message = "Een of meer branches zijn ongeldig of niet actief." });
         }
 
-        var imageUrl = HtmlSanitize.NormalizeMediaUrl(request.ImageUrl);
-        var videoUrl = HtmlSanitize.NormalizeMediaUrl(request.VideoUrl);
-        if (request.ImageUrl is not null && imageUrl is null)
+        string? imageUrl = null;
+        string? imageError = null;
+        if (!string.IsNullOrWhiteSpace(request.ImageUrl))
         {
-            return BadRequest(new { message = "Ongeldige afbeelding-URL (alleen http/https)." });
+            imageUrl = HtmlSanitize.NormalizeImageInput(request.ImageUrl, out imageError);
+            if (imageUrl is null)
+            {
+                return BadRequest(new { message = imageError ?? "Ongeldige afbeelding-URL of Base64." });
+            }
         }
 
+        var videoUrl = HtmlSanitize.NormalizeMediaUrl(request.VideoUrl);
         if (request.VideoUrl is not null && videoUrl is null)
         {
             return BadRequest(new { message = "Ongeldige video-URL (alleen http/https)." });
@@ -356,6 +362,32 @@ public class VacanciesController : ControllerBase
             });
         }
 
+        if (request.OverrideContactPreference)
+        {
+            Company? parent = null;
+            if (company.ParentCompanyId is Guid parentId)
+            {
+                parent = await _db.Companies.AsNoTracking()
+                    .FirstOrDefaultAsync(c => c.Id == parentId, cancellationToken);
+            }
+
+            var email = FirstNonEmpty(company.ContactEmail, parent?.ContactEmail);
+            var phone = FirstNonEmpty(company.ContactPhone, parent?.ContactPhone);
+            var whatsApp = FirstNonEmpty(company.ContactWhatsApp, parent?.ContactWhatsApp, phone);
+            var contactError = EmployerContactPreferenceRules.Validate(
+                request.DirectContactEnabled,
+                request.ContactPreferMail,
+                request.ContactPreferPhone,
+                request.ContactPreferWhatsApp,
+                email,
+                phone,
+                whatsApp);
+            if (contactError is not null)
+            {
+                return BadRequest(new { message = contactError });
+            }
+        }
+
         var vacancy = new Core.Entities.Vacancy
         {
             Id = Guid.NewGuid(),
@@ -366,6 +398,8 @@ public class VacanciesController : ControllerBase
             EndDate = request.EndDate,
             Status = VacancyStatus.Draft,
             CompanyId = request.CompanyId,
+            CreatedVia = VacancySource.Manual,
+            CreatedAtUtc = DateTime.UtcNow,
             Location = company.Location,
             RequiredTransport = request.RequiredTransport,
             WorkTypes = WorkTypeLabels.Combine(branchLabels),
@@ -375,7 +409,12 @@ public class VacanciesController : ControllerBase
             SalaryTableId = tableId,
             RequiredDrivingLicense = string.IsNullOrWhiteSpace(request.RequiredDrivingLicense) ? null : request.RequiredDrivingLicense.Trim(),
             RequiredEducation = string.IsNullOrWhiteSpace(request.RequiredEducation) ? null : request.RequiredEducation.Trim(),
-            MinimumEmployers = request.MinimumEmployers is > 0 ? request.MinimumEmployers : null
+            MinimumEmployers = request.MinimumEmployers is > 0 ? request.MinimumEmployers : null,
+            OverrideContactPreference = request.OverrideContactPreference,
+            DirectContactEnabled = request.OverrideContactPreference && request.DirectContactEnabled,
+            ContactPreferMail = request.OverrideContactPreference && request.DirectContactEnabled && request.ContactPreferMail,
+            ContactPreferPhone = request.OverrideContactPreference && request.DirectContactEnabled && request.ContactPreferPhone,
+            ContactPreferWhatsApp = request.OverrideContactPreference && request.DirectContactEnabled && request.ContactPreferWhatsApp
         };
 
         _db.Vacancies.Add(vacancy);
@@ -623,6 +662,8 @@ public class VacanciesController : ControllerBase
                 EndDate = request.EndDate,
                 Status = VacancyStatus.Draft,
                 CompanyId = companyId,
+                CreatedVia = VacancySource.Manual,
+                CreatedAtUtc = DateTime.UtcNow,
                 Location = company.Location,
                 RequiredTransport = request.RequiredTransport,
                 WorkTypes = WorkTypeLabels.Combine(branchLabels),
@@ -637,6 +678,95 @@ public class VacanciesController : ControllerBase
         await _db.SaveChangesAsync(cancellationToken);
         return Ok(created.Select(v => MapToDto(v, showWage: true)));
     }
+
+    /// <summary>
+    /// Vacancy-level contact preference override (employer manage only). Never exposed on public vacancy GET.
+    /// </summary>
+    [HttpGet("{id:guid}/contact-preference")]
+    [Authorize(Roles = JobsyRoles.VacancyLifecycleRoles)]
+    public async Task<ActionResult<VacancyContactPreferenceDto>> GetContactPreference(
+        Guid id,
+        CancellationToken cancellationToken)
+    {
+        var vacancy = await LoadManagedVacancyAsync(id, cancellationToken);
+        if (vacancy is null)
+        {
+            return NotFound();
+        }
+
+        var access = await EnsureCompanyAccessAsync(vacancy.CompanyId, cancellationToken);
+        if (access is not null)
+        {
+            return access;
+        }
+
+        return Ok(ToContactPreferenceDto(vacancy));
+    }
+
+    [HttpPut("{id:guid}/contact-preference")]
+    [Authorize(Roles = JobsyRoles.VacancyLifecycleRoles)]
+    public async Task<ActionResult<VacancyContactPreferenceDto>> UpdateContactPreference(
+        Guid id,
+        [FromBody] UpdateVacancyContactPreferenceRequest request,
+        CancellationToken cancellationToken)
+    {
+        var vacancy = await LoadManagedVacancyAsync(id, cancellationToken);
+        if (vacancy is null)
+        {
+            return NotFound();
+        }
+
+        var access = await EnsureCompanyAccessAsync(vacancy.CompanyId, cancellationToken);
+        if (access is not null)
+        {
+            return access;
+        }
+
+        if (request.OverrideContactPreference)
+        {
+            var company = vacancy.Company;
+            Company? parent = null;
+            if (company.ParentCompanyId is Guid parentId)
+            {
+                parent = await _db.Companies.AsNoTracking()
+                    .FirstOrDefaultAsync(c => c.Id == parentId, cancellationToken);
+            }
+
+            var email = FirstNonEmpty(company.ContactEmail, parent?.ContactEmail);
+            var phone = FirstNonEmpty(company.ContactPhone, parent?.ContactPhone);
+            var whatsApp = FirstNonEmpty(company.ContactWhatsApp, parent?.ContactWhatsApp, phone);
+            var contactError = EmployerContactPreferenceRules.Validate(
+                request.DirectContactEnabled,
+                request.ContactPreferMail,
+                request.ContactPreferPhone,
+                request.ContactPreferWhatsApp,
+                email,
+                phone,
+                whatsApp);
+            if (contactError is not null)
+            {
+                return BadRequest(new { message = contactError });
+            }
+        }
+
+        vacancy.OverrideContactPreference = request.OverrideContactPreference;
+        vacancy.DirectContactEnabled = request.OverrideContactPreference && request.DirectContactEnabled;
+        vacancy.ContactPreferMail = request.OverrideContactPreference && request.DirectContactEnabled && request.ContactPreferMail;
+        vacancy.ContactPreferPhone = request.OverrideContactPreference && request.DirectContactEnabled && request.ContactPreferPhone;
+        vacancy.ContactPreferWhatsApp = request.OverrideContactPreference && request.DirectContactEnabled && request.ContactPreferWhatsApp;
+
+        await _db.SaveChangesAsync(cancellationToken);
+        return Ok(ToContactPreferenceDto(vacancy));
+    }
+
+    private static VacancyContactPreferenceDto ToContactPreferenceDto(Core.Entities.Vacancy vacancy) =>
+        new(
+            vacancy.Id,
+            vacancy.OverrideContactPreference,
+            vacancy.DirectContactEnabled,
+            vacancy.ContactPreferMail,
+            vacancy.ContactPreferPhone,
+            vacancy.ContactPreferWhatsApp);
 
     private async Task<ActionResult<VacancyProductActionResultDto>> RunProductAsync(
         Guid vacancyId,
@@ -938,7 +1068,21 @@ public class VacanciesController : ControllerBase
             v.RequiredDrivingLicense,
             v.RequiredEducation,
             v.MinimumEmployers,
-            v.FulfilledByApplicationId);
+            v.FulfilledByApplicationId,
+            v.CreatedVia.ToString());
+    }
+
+    private static string? FirstNonEmpty(params string?[] values)
+    {
+        foreach (var value in values)
+        {
+            if (!string.IsNullOrWhiteSpace(value))
+            {
+                return value.Trim();
+            }
+        }
+
+        return null;
     }
 
     private static string[] NormalizeBranchLabels(IEnumerable<string>? labels) =>

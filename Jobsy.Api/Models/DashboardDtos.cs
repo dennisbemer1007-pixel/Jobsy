@@ -10,9 +10,51 @@ public record CompanySummaryDto(
     string KvkNumber,
     decimal TokenBalance,
     int ActiveVacancies,
-    Guid? ParentCompanyId = null);
+    Guid? ParentCompanyId = null,
+    bool TokensManagedByEnterprise = false,
+    bool CsvBatchImportEnabled = false,
+    bool DirectContactEnabled = false,
+    bool ContactPreferMail = false,
+    bool ContactPreferPhone = false,
+    bool ContactPreferWhatsApp = false,
+    string? ContactEmail = null,
+    string? ContactPhone = null,
+    string? ContactWhatsApp = null);
 
-public record TokenBalanceDto(Guid CompanyId, string CompanyName, decimal Balance);
+public record TokenBalanceDto(
+    Guid CompanyId,
+    string CompanyName,
+    decimal Balance,
+    Guid? ParentCompanyId = null,
+    bool TokensManagedByEnterprise = false);
+
+public record UpdateTokenManagementRequest(bool TokensManagedByEnterprise);
+
+public record UpdateCsvBatchImportRequest(bool CsvBatchImportEnabled);
+
+public record UpdateContactPreferenceRequest(
+    bool DirectContactEnabled,
+    bool ContactPreferMail,
+    bool ContactPreferPhone,
+    bool ContactPreferWhatsApp,
+    string? ContactEmail = null,
+    string? ContactPhone = null,
+    string? ContactWhatsApp = null);
+
+public record VacancyContactPreferenceDto(
+    Guid VacancyId,
+    bool OverrideContactPreference,
+    bool DirectContactEnabled,
+    bool ContactPreferMail,
+    bool ContactPreferPhone,
+    bool ContactPreferWhatsApp);
+
+public record UpdateVacancyContactPreferenceRequest(
+    bool OverrideContactPreference,
+    bool DirectContactEnabled = false,
+    bool ContactPreferMail = false,
+    bool ContactPreferPhone = false,
+    bool ContactPreferWhatsApp = false);
 
 public record GrantTokensRequest(Guid CompanyId, decimal Amount, string Note);
 
@@ -46,7 +88,20 @@ public record ApplyResultDto(
     bool ConfirmationEmailQueued,
     bool AuthenticatorStubUsed,
     bool RequiresVerification = false,
-    bool VerificationCodeSent = false);
+    bool VerificationCodeSent = false,
+    EmployerDirectContactDto? DirectContact = null);
+
+/// <summary>
+/// Revealed only after a successful (verified) application. Never included on public vacancy payloads.
+/// </summary>
+public record EmployerDirectContactDto(
+    bool Available,
+    bool OfferMail,
+    bool OfferPhone,
+    bool OfferWhatsApp,
+    string? Email = null,
+    string? Phone = null,
+    string? WhatsAppUrl = null);
 
 public record MinimumWageRateDto(
     Guid Id,

@@ -5,7 +5,7 @@ using Microsoft.Extensions.Logging;
 namespace Jobsy.Infrastructure.Services;
 
 /// <summary>
-/// Production placeholder — real Mollie webhook verification must replace the Development stub.
+/// Legacy placeholder kept for reference. Prefer <see cref="MolliePaymentService"/>.
 /// </summary>
 public sealed class DisabledPaymentService : IPaymentService
 {
@@ -21,9 +21,9 @@ public sealed class DisabledPaymentService : IPaymentService
         int packSize,
         CancellationToken cancellationToken = default)
     {
-        _logger.LogError("Payment checkout blocked: Mollie stub is Development-only.");
+        _logger.LogError("Payment checkout blocked: no Mollie payment service registered.");
         throw new InvalidOperationException(
-            "Betalingen zijn niet geconfigureerd. Configureer een echte Mollie-integratie buiten Development.");
+            "Betalingen zijn niet geconfigureerd. Sla een Mollie API-key op onder Admin → Integraties.");
     }
 
     public Task<PaymentStatusResult> GetPaymentStatusAsync(
@@ -31,6 +31,6 @@ public sealed class DisabledPaymentService : IPaymentService
         CancellationToken cancellationToken = default)
     {
         throw new InvalidOperationException(
-            "Betalingen zijn niet geconfigureerd buiten Development.");
+            "Betalingen zijn niet geconfigureerd. Sla een Mollie API-key op onder Admin → Integraties.");
     }
 }

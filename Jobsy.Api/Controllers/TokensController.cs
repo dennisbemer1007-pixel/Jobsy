@@ -62,7 +62,9 @@ public class TokensController : ControllerBase
             .Select(c => new TokenBalanceDto(
                 c.Id,
                 c.Name,
-                c.TokenTransactions.Sum(t => t.Amount)))
+                c.TokenTransactions.Sum(t => t.Amount),
+                c.ParentCompanyId,
+                c.TokensManagedByEnterprise))
             .ToListAsync(cancellationToken);
 
         return Ok(balances);
@@ -118,8 +120,54 @@ public class TokensController : ControllerBase
             return NotFound(new { message = "Bedrijf niet gevonden." });
         }
 
+        var purchaseTargetId = request.CompanyId;
+        var isEnterprise = User.IsInRole(JobsyRoles.EnterpriseManager);
+        var isBranch = User.IsInRole(JobsyRoles.BranchManager);
+        var isAdmin = _companyAuth.IsAdmin(User);
+        var isIntermediary = User.IsInRole(JobsyRoles.Intermediary);
+
+        if (isBranch && !isAdmin && !isEnterprise && !isIntermediary)
+        {
+            if (company.TokensManagedByEnterprise)
+            {
+                return BadRequest(new
+                {
+                    message = "Tokenbeheer voor deze vestiging ligt bij de bedrijfsmanager. Je kunt hier geen tokens kopen."
+                });
+            }
+        }
+        else if (isEnterprise && !isAdmin)
+        {
+            // Bedrijfsmanager koopt altijd in de organisatiopot (parent / org-root).
+            if (company.ParentCompanyId is Guid parentId)
+            {
+                purchaseTargetId = parentId;
+            }
+
+            var pot = await _db.Companies.AsNoTracking()
+                .FirstOrDefaultAsync(c => c.Id == purchaseTargetId, cancellationToken);
+            if (pot is null)
+            {
+                return NotFound(new { message = "Organisatiepot niet gevonden." });
+            }
+
+            if (pot.ParentCompanyId is not null)
+            {
+                return BadRequest(new { message = "Tokens worden gekocht in de organisatiopot, niet per vestiging." });
+            }
+
+            try
+            {
+                await _companyAuth.EnsureCanAccessCompanyAsync(User, purchaseTargetId, cancellationToken);
+            }
+            catch (Core.Exceptions.ForbiddenCompanyAccessException)
+            {
+                return Forbid();
+            }
+        }
+
         var result = await _payments.CreateTokenPurchaseCheckoutAsync(
-            request.CompanyId,
+            purchaseTargetId,
             request.PackSize,
             cancellationToken);
 
@@ -132,7 +180,7 @@ public class TokensController : ControllerBase
     }
 
     /// <summary>
-    /// Credits tokens for a persisted checkout session. Client may only send PaymentId —
+    /// Credits tokens for a persisted checkout session. Client may send PaymentId or CheckoutId —
     /// PackSize and CompanyId come from the server-side session.
     /// </summary>
     [HttpPost("checkout/complete")]
@@ -141,14 +189,24 @@ public class TokensController : ControllerBase
         [FromBody] CompleteCheckoutRequest request,
         CancellationToken cancellationToken)
     {
-        if (string.IsNullOrWhiteSpace(request.PaymentId))
+        TokenPurchaseCheckout? session = null;
+        if (request.CheckoutId is Guid checkoutId && checkoutId != Guid.Empty)
+        {
+            session = await _db.TokenPurchaseCheckouts
+                .Include(c => c.Company)
+                .FirstOrDefaultAsync(c => c.Id == checkoutId, cancellationToken);
+        }
+        else if (!string.IsNullOrWhiteSpace(request.PaymentId))
+        {
+            session = await _db.TokenPurchaseCheckouts
+                .Include(c => c.Company)
+                .FirstOrDefaultAsync(c => c.PaymentId == request.PaymentId, cancellationToken);
+        }
+        else
         {
             return BadRequest(new { message = "Ongeldige checkout." });
         }
 
-        var session = await _db.TokenPurchaseCheckouts
-            .Include(c => c.Company)
-            .FirstOrDefaultAsync(c => c.PaymentId == request.PaymentId, cancellationToken);
         if (session is null)
         {
             return NotFound(new { message = "Checkout-sessie niet gevonden." });
@@ -183,7 +241,7 @@ public class TokensController : ControllerBase
             await _db.SaveChangesAsync(cancellationToken);
         }
 
-        var status = await _payments.GetPaymentStatusAsync(request.PaymentId, cancellationToken);
+        var status = await _payments.GetPaymentStatusAsync(session.PaymentId, cancellationToken);
         if (!status.IsPaid)
         {
             return BadRequest(new { message = "Betaling is nog niet afgerond." });
@@ -210,11 +268,14 @@ public class TokensController : ControllerBase
         try
         {
             var actor = await _users.FindByPrincipalAsync(User, cancellationToken);
+            var notePrefix = session.PaymentId.StartsWith("stub_pay_", StringComparison.Ordinal)
+                ? "Mollie stub"
+                : "Mollie";
             var entry = await _tokenLedger.RecordPurchaseAsync(
                 session.CompanyId,
                 session.PackSize,
                 actor?.Id,
-                $"Mollie stub {session.PaymentId}",
+                $"{notePrefix} {session.PaymentId}",
                 cancellationToken);
 
             // Accrue salesmanager token commission when the supplier was referred.
@@ -293,6 +354,17 @@ public class TokensController : ControllerBase
             }
         }
 
+        // Pot → vestiging: only when the bedrijfsmanager has opted in for that branch.
+        if (!_companyAuth.IsAdmin(User)
+            && to.ParentCompanyId == from.Id
+            && !to.TokensManagedByEnterprise)
+        {
+            return BadRequest(new
+            {
+                message = "Deze vestiging is niet aangevinkt voor tokenbeheer door de bedrijfsmanager."
+            });
+        }
+
         try
         {
             var actor = await _users.FindByPrincipalAsync(User, cancellationToken);
@@ -306,8 +378,8 @@ public class TokensController : ControllerBase
 
             return Ok(new
             {
-                from = new TokenBalanceDto(from.Id, from.Name, fromEntry.NewBalance),
-                to = new TokenBalanceDto(to.Id, to.Name, toEntry.NewBalance)
+                from = new TokenBalanceDto(from.Id, from.Name, fromEntry.NewBalance, from.ParentCompanyId, from.TokensManagedByEnterprise),
+                to = new TokenBalanceDto(to.Id, to.Name, toEntry.NewBalance, to.ParentCompanyId, to.TokensManagedByEnterprise)
             });
         }
         catch (ArgumentException ex)

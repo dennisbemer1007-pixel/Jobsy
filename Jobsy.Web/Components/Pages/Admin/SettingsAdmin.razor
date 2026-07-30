@@ -60,6 +60,15 @@
                     <input @bind="_features.PublicWebBaseUrl" @bind:event="oninput" placeholder="http://localhost:5201" />
                 </label>
 
+                <label>
+                    Inactieve periode (dagen) voor “We missen je”-mail
+                    <input type="number" min="30" max="730" step="1" @bind="_features.InactiveCompanyDays" />
+                </label>
+                <p class="muted">
+                    Standaard 120 dagen (4 maanden). Geen actieve vacature én geen inlog/API/CSV in die periode.
+                    De mail gaat maximaal één keer per bedrijf (harde stop), tenzij een admin het veld reset.
+                </p>
+
                 <div class="inline-actions" style="margin-top:0.75rem">
                     <button class="btn-compact btn-compact--primary" type="button" disabled="@_featureBusy" @onclick="SaveFeaturesAsync">@Culture["Common.Save"]</button>
                 </div>

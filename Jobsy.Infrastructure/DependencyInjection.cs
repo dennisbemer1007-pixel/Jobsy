@@ -98,20 +98,25 @@ public static class DependencyInjection
         services.AddScoped<IRoutingService, MockRoutingService>();
         services.AddScoped<ISalaryService, SalaryService>();
         services.AddScoped<ICompanyAuthorizationService, CompanyAuthorizationService>();
+        services.AddScoped<ICompanyApiKeyService, CompanyApiKeyService>();
         services.AddScoped<IUserLookupService, UserLookupService>();
         services.AddScoped<ITokenLedgerService, TokenLedgerService>();
         services.AddScoped<IVacancyProductService, VacancyProductService>();
+        services.AddScoped<IVacancyDraftCreationService, VacancyDraftCreationService>();
         services.AddScoped<IMetricsQueryService, MetricsQueryService>();
         services.AddScoped<ICandidateMetricsQueryService, CandidateMetricsQueryService>();
 
-        if (isDev)
+        services.AddHttpClient(MolliePaymentService.HttpClientName, client =>
         {
-            services.AddScoped<IPaymentService, MolliePaymentStub>();
-        }
-        else
+            client.Timeout = TimeSpan.FromSeconds(30);
+        }).ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler
         {
-            services.AddScoped<IPaymentService, DisabledPaymentService>();
-        }
+            AllowAutoRedirect = false
+        });
+
+        // Real Mollie when API key is configured; Development falls back to stub without a key.
+        services.AddScoped<MolliePaymentStub>();
+        services.AddScoped<IPaymentService, MolliePaymentService>();
 
         services.AddScoped<IKvkService, KvkServiceStub>();
         services.AddScoped<EmailServiceStub>();
@@ -136,6 +141,8 @@ public static class DependencyInjection
         services.AddScoped<ITranslationService, OpenAiTranslationService>();
         services.AddScoped<IPrivacyDataService, PrivacyDataService>();
         services.AddHostedService<DataRetentionHostedService>();
+        services.AddHostedService<DraftVacancyCleanupHostedService>();
+        services.AddHostedService<CompanyReengagementHostedService>();
 
         return services;
     }

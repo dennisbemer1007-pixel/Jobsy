@@ -24,6 +24,81 @@ namespace Jobsy.Infrastructure.Data.Migrations
             NpgsqlModelBuilderExtensions.HasPostgresExtension(modelBuilder, "postgis");
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
+            modelBuilder.Entity("Jobsy.Core.Entities.AboutPageSettings", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("BodyHtml")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Lead")
+                        .HasMaxLength(400)
+                        .HasColumnType("character varying(400)");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<DateTime>("UpdatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("AboutPageSettings");
+                });
+
+            modelBuilder.Entity("Jobsy.Core.Entities.ApiKey", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("ApiKeyHash")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<Guid>("CompanyId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("KeyPrefix")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)");
+
+                    b.Property<DateTime?>("LastUsedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ApiKeyHash")
+                        .IsUnique();
+
+                    b.HasIndex("CompanyId")
+                        .IsUnique()
+                        .HasDatabaseName("IX_ApiKeys_CompanyId_Active")
+                        .HasFilter("\"IsActive\" = TRUE");
+
+                    b.HasIndex("CompanyId", "IsActive");
+
+                    b.ToTable("ApiKeys", (string)null);
+                });
+
             modelBuilder.Entity("Jobsy.Core.Entities.Application", b =>
                 {
                     b.Property<Guid>("Id")
@@ -68,8 +143,8 @@ namespace Jobsy.Infrastructure.Data.Migrations
                         .HasColumnType("double precision");
 
                     b.Property<string>("EmailVerificationCode")
-                        .HasMaxLength(6)
-                        .HasColumnType("character varying(6)");
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
 
                     b.Property<DateTime?>("EmailVerificationExpiresAt")
                         .HasColumnType("timestamp with time zone");
@@ -255,6 +330,42 @@ namespace Jobsy.Infrastructure.Data.Migrations
 
                     b.Property<Guid?>("ReferredBySalesManagerUserId")
                         .HasColumnType("uuid");
+
+                    b.Property<bool>("CsvBatchImportEnabled")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("ContactEmail")
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
+                    b.Property<string>("ContactPhone")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<bool>("ContactPreferMail")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("ContactPreferPhone")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("ContactPreferWhatsApp")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("ContactWhatsApp")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<bool>("DirectContactEnabled")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateTime?>("LastCsvImportAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("ReengagementEmailSentAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<bool>("TokensManagedByEnterprise")
+                        .HasColumnType("boolean");
 
                     b.Property<int>("Type")
                         .HasColumnType("integer");
@@ -720,34 +831,6 @@ namespace Jobsy.Infrastructure.Data.Migrations
                     b.ToTable("MinimumWageRates");
                 });
 
-            
-            modelBuilder.Entity("Jobsy.Core.Entities.AboutPageSettings", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("BodyHtml")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<string>("Lead")
-                        .HasMaxLength(400)
-                        .HasColumnType("character varying(400)");
-
-                    b.Property<string>("Title")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("character varying(200)");
-
-                    b.Property<DateTime>("UpdatedAtUtc")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("AboutPageSettings");
-                });
-
             modelBuilder.Entity("Jobsy.Core.Entities.PlatformCompanySettings", b =>
                 {
                     b.Property<Guid>("Id")
@@ -803,7 +886,7 @@ namespace Jobsy.Infrastructure.Data.Migrations
                     b.ToTable("PlatformCompanySettings");
                 });
 
-modelBuilder.Entity("Jobsy.Core.Entities.PlatformFeatureSettings", b =>
+            modelBuilder.Entity("Jobsy.Core.Entities.PlatformFeatureSettings", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -814,6 +897,9 @@ modelBuilder.Entity("Jobsy.Core.Entities.PlatformFeatureSettings", b =>
 
                     b.Property<bool>("ExposeRegistrationActivationLinks")
                         .HasColumnType("boolean");
+
+                    b.Property<int>("InactiveCompanyDays")
+                        .HasColumnType("integer");
 
                     b.Property<string>("PublicWebBaseUrl")
                         .HasMaxLength(512)
@@ -1392,6 +1478,9 @@ modelBuilder.Entity("Jobsy.Core.Entities.PlatformFeatureSettings", b =>
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
+                    b.Property<DateTime?>("CandidateHowToCompletedAt")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<Guid?>("CompanyId")
                         .HasColumnType("uuid");
 
@@ -1421,6 +1510,9 @@ modelBuilder.Entity("Jobsy.Core.Entities.PlatformFeatureSettings", b =>
                     b.Property<bool>("IsEarlyAdapter")
                         .HasColumnType("boolean");
 
+                    b.Property<DateTime?>("LastLoginAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<bool>("OpenForWork")
                         .HasColumnType("boolean");
 
@@ -1434,12 +1526,6 @@ modelBuilder.Entity("Jobsy.Core.Entities.PlatformFeatureSettings", b =>
                     b.Property<DateTime?>("TermsAcceptedAt")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<DateTime?>("CandidateHowToCompletedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<DateTime?>("LastLoginAtUtc")
-                        .HasColumnType("timestamp with time zone");
-
                     b.Property<string>("UnsubscribeReasonCode")
                         .HasMaxLength(64)
                         .HasColumnType("character varying(64)");
@@ -1449,8 +1535,8 @@ modelBuilder.Entity("Jobsy.Core.Entities.PlatformFeatureSettings", b =>
                         .HasColumnType("character varying(1000)");
 
                     b.Property<string>("UnsubscribeVerificationCode")
-                        .HasMaxLength(6)
-                        .HasColumnType("character varying(6)");
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
 
                     b.Property<DateTime?>("UnsubscribeVerificationExpiresAt")
                         .HasColumnType("timestamp with time zone");
@@ -1496,6 +1582,29 @@ modelBuilder.Entity("Jobsy.Core.Entities.PlatformFeatureSettings", b =>
                     b.Property<Guid>("CompanyId")
                         .HasColumnType("uuid");
 
+                    b.Property<bool>("ContactPreferMail")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("ContactPreferPhone")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("ContactPreferWhatsApp")
+                        .HasColumnType("boolean");
+
+                    b.Property<int>("CreatedVia")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+                    b.Property<bool>("DirectContactEnabled")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateTime?>("DraftCleanupWarningSentAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<string>("Description")
                         .IsRequired()
                         .HasMaxLength(20000)
@@ -1515,8 +1624,8 @@ modelBuilder.Entity("Jobsy.Core.Entities.PlatformFeatureSettings", b =>
                         .HasColumnType("numeric(8,2)");
 
                     b.Property<string>("ImageUrl")
-                        .HasMaxLength(1024)
-                        .HasColumnType("character varying(1024)");
+                        .HasMaxLength(600000)
+                        .HasColumnType("character varying(600000)");
 
                     b.Property<bool>("IsHighlighted")
                         .HasColumnType("boolean");
@@ -1530,6 +1639,12 @@ modelBuilder.Entity("Jobsy.Core.Entities.PlatformFeatureSettings", b =>
 
                     b.Property<int?>("MinimumEmployers")
                         .HasColumnType("integer");
+
+                    b.Property<bool>("OverrideContactPreference")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateTime?>("PublishedAtUtc")
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<bool>("RequestedExtend")
                         .HasColumnType("boolean");
@@ -1578,17 +1693,17 @@ modelBuilder.Entity("Jobsy.Core.Entities.PlatformFeatureSettings", b =>
 
                     b.HasKey("Id");
 
-                    b.HasIndex("CompanyId");
-
-                    b.HasIndex("CompanyId", "Status");
-
                     b.HasIndex("Location");
 
                     NpgsqlIndexBuilderExtensions.HasMethod(b.HasIndex("Location"), "GIST");
 
                     b.HasIndex("SalaryTableId");
 
+                    b.HasIndex("CompanyId", "Status");
+
                     b.HasIndex("Status", "EndDate", "StartDate");
+
+                    b.HasIndex("Status", "PublishedAtUtc", "CreatedAtUtc");
 
                     b.ToTable("Vacancies");
                 });
@@ -1707,6 +1822,17 @@ modelBuilder.Entity("Jobsy.Core.Entities.PlatformFeatureSettings", b =>
                     b.HasIndex("VacancyId");
 
                     b.ToTable("VacancyShares");
+                });
+
+            modelBuilder.Entity("Jobsy.Core.Entities.ApiKey", b =>
+                {
+                    b.HasOne("Jobsy.Core.Entities.Company", "Company")
+                        .WithMany("ApiKeys")
+                        .HasForeignKey("CompanyId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Company");
                 });
 
             modelBuilder.Entity("Jobsy.Core.Entities.Application", b =>
@@ -2142,6 +2268,8 @@ modelBuilder.Entity("Jobsy.Core.Entities.PlatformFeatureSettings", b =>
 
             modelBuilder.Entity("Jobsy.Core.Entities.Company", b =>
                 {
+                    b.Navigation("ApiKeys");
+
                     b.Navigation("ChildCompanies");
 
                     b.Navigation("PrimaryUsers");

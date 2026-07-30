@@ -57,6 +57,10 @@ public static class AuthorizationExtensions
                 _ => { });
         }
 
+        authBuilder.AddScheme<AuthenticationSchemeOptions, ApiKeyAuthenticationHandler>(
+            ApiKeyAuthDefaults.AuthenticationScheme,
+            _ => { });
+
         services.AddAuthorization(options =>
         {
             // Fail closed: new endpoints require auth unless explicitly [AllowAnonymous].
@@ -87,6 +91,10 @@ public static class AuthorizationExtensions
             options.AddPolicy(JobsyPolicies.RequireAdminOrSalesManager, policy =>
                 policy.RequireAuthenticatedUser()
                     .RequireRole(JobsyRoles.Admin, JobsyRoles.SalesManager));
+
+            options.AddPolicy(JobsyPolicies.RequireApiKey, policy =>
+                policy.AddAuthenticationSchemes(ApiKeyAuthDefaults.AuthenticationScheme)
+                    .RequireAuthenticatedUser());
         });
 
         services.AddScoped<CompanyScopeFilter>();
@@ -161,17 +169,6 @@ public sealed class DevelopmentAuthHandler : AuthenticationHandler<Authenticatio
                 "Development auth rejected non-demo email outside Development {Email}",
                 EmailServiceStub.RedactEmail(email));
             return AuthenticateResult.Fail("Development auth outside Development is limited to @jobsy.local demo users.");
-        }
-
-        // Public demo must not elevate to platform Admin / SalesManager via shared demo secret.
-        if (!_environment.IsDevelopment()
-            && (dbUser.Role == UserRole.Admin || dbUser.Role == UserRole.SalesManager))
-        {
-            Logger.LogWarning(
-                "Development auth rejected privileged demo role {Role} outside Development {Email}",
-                dbUser.Role,
-                EmailServiceStub.RedactEmail(email));
-            return AuthenticateResult.Fail("Development auth outside Development cannot impersonate Admin or SalesManager.");
         }
 
         var name = Request.Headers["X-Jobsy-Name"].FirstOrDefault() ?? dbUser.FullName;

@@ -15,7 +15,7 @@ public record CheckoutResultDto(
     decimal AmountEuro,
     bool IsStub);
 
-public record CompleteCheckoutRequest(string PaymentId);
+public record CompleteCheckoutRequest(string? PaymentId = null, Guid? CheckoutId = null);
 
 public record AllocateTokensRequest(Guid FromCompanyId, Guid ToCompanyId, decimal Amount, string? Note = null);
 

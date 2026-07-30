@@ -397,7 +397,7 @@ public sealed class VacancyProductService : IVacancyProductService
     {
         if (vacancy.Status is not (VacancyStatus.Active or VacancyStatus.Archived))
         {
-            return Fail(vacancy, "Alleen actieve of inactive vacatures kunnen worden verlengd.");
+            return Fail(vacancy, "Alleen actieve of inactieve vacatures kunnen worden verlengd.");
         }
 
         TokenSpendOutcome spend;
@@ -440,7 +440,7 @@ public sealed class VacancyProductService : IVacancyProductService
         await _db.Entry(vacancy).ReloadAsync(cancellationToken);
         if (vacancy.Status != VacancyStatus.Active)
         {
-            return Fail(vacancy, "Alleen actieve vacatures kunnen inactive worden gemaakt.");
+            return Fail(vacancy, "Alleen actieve vacatures kunnen inactief worden gemaakt.");
         }
 
         vacancy.Status = VacancyStatus.Archived;
@@ -516,6 +516,7 @@ public sealed class VacancyProductService : IVacancyProductService
     private static void ApplyPublishEffects(Vacancy vacancy, VacancyPublishOptions options)
     {
         vacancy.Status = VacancyStatus.Active;
+        vacancy.PublishedAtUtc ??= DateTime.UtcNow;
         if (options.Highlight)
         {
             vacancy.IsHighlighted = true;

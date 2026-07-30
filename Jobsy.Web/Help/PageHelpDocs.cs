@@ -96,7 +96,7 @@ public static class PageHelpDocs
         ["/home"] = new(
             "Home / dashboard",
             "Startscherm na inloggen, afgestemd op jouw rol.",
-            "Je ziet KPI’s, snelle links en taken die bij jouw rol horen (kandidaat, vestiging, regio, enterprise, intermediair, sales of admin).",
+            "Je ziet KPI’s (voor admin o.a. API/CSV-gebruik, ongepubliceerde concepten en we-missen-je conversie), snelle links en taken. Klik een tegel voor drilldown.",
             "Overzicht houden en snel naar vacatures, tokens, sollicitaties of beheer gaan."),
 
         ["/candidate/liked"] = new(
@@ -125,14 +125,14 @@ public static class PageHelpDocs
 
         ["/employer/vacancies"] = new(
             "Vacatures (werkgever)",
-            "Beheer van vacatures van jouw organisatie of vestiging.",
-            "Bekijk, filter en open vacatures. Afhankelijk van rol kun je publiceren, pauzeren of naar plaatsen gaan.",
-            "Openstaande banen beheren en opvolgen."),
+            "Beheer van vacatures van jouw organisatie of vestiging, inclusief concepten uit CSV-import of API.",
+            "Bekijk status en herkomst (Handmatig, CSV of API). Concepten publiceer je hier — daar wordt het tokenverbruik verwerkt. Afhankelijk van rol kun je publiceren, pauzeren of nieuwe vacatures plaatsen.",
+            "Openstaande banen beheren, importeren afronden en opvolgen."),
 
         ["/employer/tokens"] = new(
             "Tokens",
             "Token-saldo, aankoop en allocatie binnen de organisatie.",
-            "Bekijk wallet/saldo, koop een pakket (Mollie-stub), of wijs tokens toe aan vestigingen. Logs tonen mutaties.",
+            "Bekijk wallet/saldo, koop een pakket via Mollie, of wijs tokens toe aan vestigingen. Logs tonen mutaties.",
             "Vacaturepublicatie en andere token-acties bekostigen."),
 
         ["/branch/tokens"] = new(
@@ -164,6 +164,18 @@ public static class PageHelpDocs
             "Managers en uitnodigingen binnen het bedrijf.",
             "Nodig gebruikers uit per e-mail, bekijk rollen en beheer toegang tot vestigingen/regio’s.",
             "Het juiste team toegang geven tot vacatures en tokens."),
+
+        ["/employer/company"] = new(
+            "Bedrijfsgegevens",
+            "Beheer hier de kerninstellingen van je organisatie of vestiging: contactvoorkeur voor kandidaten, CSV Batch Import en de externe API-koppeling.",
+            "Kies bovenaan de juiste organisatie/vestiging. Onder Overzicht zie je adres, KVK, tokens en actieve vacatures. Bij Contactvoorkeur geef je aan of kandidaten na sollicitatie mail, telefoon of WhatsApp mogen gebruiken (niet zichtbaar op de openbare vacaturepagina) en sla je de gegevens op. Schakel CSV Batch Import in om de tab CSV Import te tonen — vacatures komen binnen als concept. Bij API-koppeling zie je endpoint, X-API-Key-header en een link naar Swagger (request/response). Genereer of e-mail een API-key; de volledige sleutel is één keer zichtbaar. Publiceren (en tokens) doe je daarna onder Vacatures.",
+            "Organisatie veilig bereikbaar maken voor kandidaten, batch-CSV en ATS/partners."),
+
+        ["/employer/csv-import"] = new(
+            "CSV Import",
+            "Veilige batch-import van vacatures via een CSV-bestand voor jouw organisatie.",
+            "Lees de How-to voor verplichte kolommen (titel, omschrijving, data’s, branches, salaristabel-id). Upload een .csv (komma of puntkomma) via slepen of bladeren. Afbeeldingen mag je als URL of Base64 in de kolom afbeelding zetten. Elke rij wordt strikt gevalideerd: geldige rijen worden concept-vacatures, ongeldige blijven staan met een foutmelding. Corrigeer mislukte rijen inline en klik Opnieuw aanbieden. Publiceer geslaagde concepten daarna via Vacatures (tokenverwerking).",
+            "Snel en controleerbaar veel vacatures aanmaken zonder blind foute data in te lezen."),
 
         ["/employer/salary-tables"] = new(
             "Salaristabellen / CAO",
@@ -231,9 +243,15 @@ public static class PageHelpDocs
             "Start de checkout-stub; daarna volgt self-billing/documentatie in het platform.",
             "Verdiensten laten uitbetalen volgens het salesproces."),
 
+        ["/tokens/checkout-return"] = new(
+            "Betaling afronden",
+            "Terugkeer na Mollie-betaling voor een tokenpakket.",
+            "Lobsy controleert de status bij Mollie en schrijft tokens bij. Blijft het hangen: opnieuw proberen of Tokens openen.",
+            "Na betalen tokens automatisch bijschrijven."),
+
         ["/tokens/checkout-stub"] = new(
-            "Token checkout",
-            "Stub-betaalpagina voor een tokenpakket.",
+            "Token checkout (Development)",
+            "Lokale stub-betaalpagina zonder Mollie API-key.",
             "Bevestig de aankoop in de stub; saldo wordt bijgeschreven alsof Mollie betaald heeft.",
             "Testen van token-aankoop zonder echte betaling."),
 
@@ -281,8 +299,8 @@ public static class PageHelpDocs
 
         ["/admin/settings"] = new(
             "Beheer · Instellingen",
-            "Systeeminstellingen en platformfeatures.",
-            "Zet features aan/uit (moderatie, authenticator, …) en beheer gerelateerde opties. Integraties zitten in hetzelfde settings-gebied.",
+            "Systeeminstellingen, platformfeatures en inactiviteitsperiode.",
+            "Zet features aan/uit (moderatie, authenticator, …), stel de inactieve periode in voor de eenmalige “We missen je”-mail (standaard 120 dagen), en beheer integraties.",
             "Gedrag van Lobsy afstemmen zonder code-deploys."),
 
         ["/admin/company"] = new(
@@ -302,6 +320,12 @@ public static class PageHelpDocs
             "API-koppelingen (Mollie, KVK, Entra, Google, Mail, OpenAI).",
             "Vul credentials in, sla op en test de verbinding. Gebruik de i per tegel voor details.",
             "Externe diensten laten werken voor login, mail, betalen en moderatie."),
+
+        ["/admin/api-keys"] = new(
+            "Beheer · API Beheer",
+            "Overzicht van alle bedrijfs-API-keys (actief/inactief).",
+            "Bekijk prefix, laatste gebruik en deactiveer keys direct bij incidenten. Plaintext keys zijn nooit zichtbaar voor admins.",
+            "Platformbrede controle over externe vacature-API-toegang."),
 
         ["/admin/masterdata"] = new(
             "Beheer · Masterdata",

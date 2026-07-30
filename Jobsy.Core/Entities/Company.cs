@@ -29,6 +29,45 @@ public class Company
     /// </summary>
     public bool HasReceivedWelcomeToken { get; set; }
 
+    /// <summary>
+    /// When true, the enterprise manager (bedrijfsmanager) manages tokens for this vestiging:
+    /// purchases go into the organisation pot and the EM issues tokens to this branch.
+    /// When false, the vestiging manages its own token purchases.
+    /// </summary>
+    public bool TokensManagedByEnterprise { get; set; }
+
+    /// <summary>
+    /// When true for an organisation (parent company), the CSV Batch Import nav and screen are available.
+    /// </summary>
+    public bool CsvBatchImportEnabled { get; set; }
+
+    /// <summary>
+    /// Hard stop: when set, a "We missen je" re-engagement e-mail was already sent once for this account.
+    /// Never auto-send again unless an admin clears this field.
+    /// </summary>
+    public DateTime? ReengagementEmailSentAtUtc { get; set; }
+
+    /// <summary>Last successful CSV vacancy import (any row) for activity tracking.</summary>
+    public DateTime? LastCsvImportAtUtc { get; set; }
+
+    /// <summary>
+    /// When true, candidates may be offered direct contact (mail/phone/WhatsApp) after a successful application.
+    /// </summary>
+    public bool DirectContactEnabled { get; set; }
+
+    public bool ContactPreferMail { get; set; }
+    public bool ContactPreferPhone { get; set; }
+    public bool ContactPreferWhatsApp { get; set; }
+
+    /// <summary>Contact e-mail shown after apply when Mail is preferred.</summary>
+    public string? ContactEmail { get; set; }
+
+    /// <summary>Phone number for tel: links after apply.</summary>
+    public string? ContactPhone { get; set; }
+
+    /// <summary>WhatsApp number (digits); falls back to <see cref="ContactPhone"/> when empty.</summary>
+    public string? ContactWhatsApp { get; set; }
+
     /// <summary>Salesmanager who referred this supplier (via tracking code).</summary>
     public Guid? ReferredBySalesManagerUserId { get; set; }
     public User? ReferredBySalesManagerUser { get; set; }
@@ -45,4 +84,5 @@ public class Company
     public ICollection<UserCompany> UserMemberships { get; set; } = new List<UserCompany>();
     public ICollection<RegionCompany> RegionMemberships { get; set; } = new List<RegionCompany>();
     public ICollection<CompanySalaryTable> SalaryTables { get; set; } = new List<CompanySalaryTable>();
+    public ICollection<ApiKey> ApiKeys { get; set; } = new List<ApiKey>();
 }

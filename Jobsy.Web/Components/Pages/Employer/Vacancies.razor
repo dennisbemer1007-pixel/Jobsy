@@ -91,6 +91,7 @@
                         <strong class="vacancy-manage-row__title">@v.Title</strong>
                         <span class="muted">
                             @v.CompanyName · @v.Status
+                            · <span class="source-badge source-badge--@VacancySourceDisplay.CssModifier(v.CreatedVia)">@VacancySourceDisplay.Label(v.CreatedVia)</span>
                             @if (v.WorkTypes.Length > 0)
                             {
                                 <text> · @string.Join(", ", v.WorkTypes)</text>
@@ -108,15 +109,18 @@
                         </span>
                     </div>
                     <div class="table-row__actions vacancy-manage-row__actions">
-                        <a class="icon-btn" href="@($"/vacancies/{v.Id}")" title="Bekijken" aria-label="Vacature bekijken">
-                            @((MarkupString)ActionIcons.View)
-                        </a>
-                        @if (_canManageVacancy)
-                        {
-                            <a class="icon-btn" href="@($"/branch/vacancies/new?from={v.Id}")" title="Dupliceren" aria-label="Vacature dupliceren">
-                                @((MarkupString)ActionIcons.Duplicate)
+                            <a class="icon-btn" href="@($"/vacancies/{v.Id}")" title="Bekijken" aria-label="Vacature bekijken">
+                                @((MarkupString)ActionIcons.View)
                             </a>
-                        }
+                            @if (_canManageVacancy)
+                            {
+                                <button class="btn-compact" type="button" title="Contactvoorkeur" @onclick="() => OpenContactPref(v)">
+                                    Contact
+                                </button>
+                                <a class="icon-btn" href="@($"/branch/vacancies/new?from={v.Id}")" title="Dupliceren" aria-label="Vacature dupliceren">
+                                    @((MarkupString)ActionIcons.Duplicate)
+                                </a>
+                            }
                         @if (_canManageVacancy && v.Status == "Draft")
                         {
                             <button class="btn-compact" type="button" @onclick="() => OpenPublish(v)">Publiceer…</button>
@@ -162,6 +166,55 @@
                       OnClose="ClosePushBom"
                       OnConfirmed="OnPushBomConfirmed" />
 
+@if (_contactOpen && _contactVacancy is not null)
+{
+    <div class="share-modal-backdrop" @onclick="CloseContactPref"></div>
+    <div class="share-modal" role="dialog" aria-modal="true" aria-labelledby="contact-pref-title">
+        <div class="share-modal__header">
+            <h2 id="contact-pref-title">Voorkeur voor contact</h2>
+            <button type="button" class="share-modal__close" @onclick="CloseContactPref" aria-label="Sluiten">×</button>
+        </div>
+        <p class="share-modal__lead">@_contactVacancy.Title</p>
+        <p class="muted">Overschrijf de bedrijfsinstellingen voor deze vacature. Contactgegevens komen uit het bedrijfsprofiel.</p>
+        <label class="checkbox-row">
+            <input type="checkbox" @bind="_contactOverride" @bind:after="OnContactOverrideChanged" disabled="@_contactBusy" />
+            Afwijkende contactvoorkeur voor deze vacature
+        </label>
+        @if (_contactOverride)
+        {
+            <label class="checkbox-row" style="margin-top:0.5rem">
+                <input type="checkbox" @bind="_contactDirect" @bind:after="OnContactDirectChanged" disabled="@_contactBusy" />
+                Direct contact gewenst (WhatsApp / Telefoon / Mail)
+            </label>
+            @if (_contactDirect)
+            {
+                <div style="margin-top:0.5rem;display:grid;gap:0.35rem">
+                    <label class="checkbox-row">
+                        <input type="checkbox" @bind="_contactMail" disabled="@_contactBusy" />
+                        Mail
+                    </label>
+                    <label class="checkbox-row">
+                        <input type="checkbox" @bind="_contactPhone" disabled="@_contactBusy" />
+                        Telefoon
+                    </label>
+                    <label class="checkbox-row">
+                        <input type="checkbox" @bind="_contactWhatsApp" disabled="@_contactBusy" />
+                        WhatsApp
+                    </label>
+                </div>
+            }
+        }
+        @if (!string.IsNullOrEmpty(_contactError))
+        {
+            <p class="state-message error">@_contactError</p>
+        }
+        <div class="inline-actions" style="margin-top:1rem">
+            <button type="button" class="login-submit" disabled="@_contactBusy" @onclick="SaveContactPrefAsync">Opslaan</button>
+            <button type="button" class="btn-compact" disabled="@_contactBusy" @onclick="CloseContactPref">Annuleren</button>
+        </div>
+    </div>
+}
+
 @code {
     private List<VacancyListItem> _vacancies = [];
     private List<VacancyListItem> _filtered = [];
@@ -174,6 +227,15 @@
     private VacancyListItem? _publishVacancy;
     private bool _pushBomOpen;
     private VacancyListItem? _pushBomVacancy;
+    private bool _contactOpen;
+    private VacancyListItem? _contactVacancy;
+    private bool _contactBusy;
+    private string? _contactError;
+    private bool _contactOverride;
+    private bool _contactDirect;
+    private bool _contactMail;
+    private bool _contactPhone;
+    private bool _contactWhatsApp;
     private string _workTypeFilter = "";
     private List<string> _branchOptions = WorkTypeLabels.All.ToList();
     private string _ageFilter = "";
@@ -411,11 +473,105 @@
         {
             await Api.DeactivateVacancyAsync(id);
             await RefreshAsync();
-            _message = "Vacature inactive (gearchiveerd).";
+            _message = "Vacature inactief (gearchiveerd).";
         }
         catch (Exception ex)
         {
             _message = ex.Message;
+        }
+    }
+
+    private async Task OpenContactPref(VacancyListItem vacancy)
+    {
+        _contactVacancy = vacancy;
+        _contactError = null;
+        _contactBusy = true;
+        _contactOpen = true;
+        try
+        {
+            var pref = await Api.GetVacancyContactPreferenceAsync(vacancy.Id);
+            _contactOverride = pref?.OverrideContactPreference ?? false;
+            _contactDirect = pref?.DirectContactEnabled ?? false;
+            _contactMail = pref?.ContactPreferMail ?? false;
+            _contactPhone = pref?.ContactPreferPhone ?? false;
+            _contactWhatsApp = pref?.ContactPreferWhatsApp ?? false;
+        }
+        catch (Exception ex)
+        {
+            _contactError = ex.Message;
+        }
+        finally
+        {
+            _contactBusy = false;
+        }
+    }
+
+    private void CloseContactPref()
+    {
+        _contactOpen = false;
+        _contactVacancy = null;
+        _contactError = null;
+    }
+
+    private void OnContactOverrideChanged()
+    {
+        if (!_contactOverride)
+        {
+            _contactDirect = false;
+            _contactMail = false;
+            _contactPhone = false;
+            _contactWhatsApp = false;
+        }
+    }
+
+    private void OnContactDirectChanged()
+    {
+        if (!_contactDirect)
+        {
+            _contactMail = false;
+            _contactPhone = false;
+            _contactWhatsApp = false;
+        }
+    }
+
+    private async Task SaveContactPrefAsync()
+    {
+        if (_contactVacancy is null || _contactBusy)
+        {
+            return;
+        }
+
+        if (_contactOverride
+            && _contactDirect
+            && !_contactMail
+            && !_contactPhone
+            && !_contactWhatsApp)
+        {
+            _contactError = "Kies minstens één contactoptie (Mail, Telefoon of WhatsApp).";
+            return;
+        }
+
+        _contactBusy = true;
+        _contactError = null;
+        try
+        {
+            await Api.UpdateVacancyContactPreferenceAsync(
+                _contactVacancy.Id,
+                _contactOverride,
+                _contactDirect,
+                _contactMail,
+                _contactPhone,
+                _contactWhatsApp);
+            _message = "Contactvoorkeur voor vacature opgeslagen.";
+            CloseContactPref();
+        }
+        catch (Exception ex)
+        {
+            _contactError = ex.Message;
+        }
+        finally
+        {
+            _contactBusy = false;
         }
     }
 }

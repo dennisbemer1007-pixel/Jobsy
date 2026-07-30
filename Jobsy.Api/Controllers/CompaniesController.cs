@@ -4,6 +4,7 @@ using Jobsy.Core.Authorization;
 using Jobsy.Core.Entities;
 using Jobsy.Core.Enums;
 using Jobsy.Core.Interfaces;
+using Jobsy.Core.Rules;
 using Jobsy.Core.ValueObjects;
 using Jobsy.Infrastructure.Data;
 using Microsoft.AspNetCore.Authorization;
@@ -54,7 +55,16 @@ public class CompaniesController : ControllerBase
                 c.KvkNumber,
                 c.TokenTransactions.Sum(t => t.Amount),
                 c.Vacancies.Count(v => v.Status == VacancyStatus.Active),
-                c.ParentCompanyId))
+                c.ParentCompanyId,
+                c.TokensManagedByEnterprise,
+                c.CsvBatchImportEnabled,
+                c.DirectContactEnabled,
+                c.ContactPreferMail,
+                c.ContactPreferPhone,
+                c.ContactPreferWhatsApp,
+                c.ContactEmail,
+                c.ContactPhone,
+                c.ContactWhatsApp))
             .ToListAsync(cancellationToken);
 
         return Ok(companies);
@@ -145,13 +155,165 @@ public class CompaniesController : ControllerBase
 
         await _db.SaveChangesAsync(cancellationToken);
 
-        return CreatedAtAction(nameof(GetMine), new CompanySummaryDto(
+        return CreatedAtAction(nameof(GetMine), MapSummary(company, 0, 0));
+    }
+
+    /// <summary>
+    /// Toggle whether the bedrijfsmanager manages tokens for a vestiging (checkbox opt-in).
+    /// </summary>
+    [HttpPut("{companyId:guid}/token-management")]
+    [Authorize(Roles = $"{JobsyRoles.EnterpriseManager},{JobsyRoles.Admin}")]
+    public async Task<ActionResult<CompanySummaryDto>> UpdateTokenManagement(
+        Guid companyId,
+        [FromBody] UpdateTokenManagementRequest request,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            await _companyAuth.EnsureCanAccessCompanyAsync(User, companyId, cancellationToken);
+        }
+        catch (Core.Exceptions.ForbiddenCompanyAccessException)
+        {
+            return Forbid();
+        }
+
+        var company = await _db.Companies.FirstOrDefaultAsync(c => c.Id == companyId, cancellationToken);
+        if (company is null)
+        {
+            return NotFound(new { message = "Bedrijf niet gevonden." });
+        }
+
+        if (company.ParentCompanyId is null)
+        {
+            return BadRequest(new
+            {
+                message = "Tokenbeheer-optie geldt alleen voor vestigingen, niet voor de organisatiopot."
+            });
+        }
+
+        company.TokensManagedByEnterprise = request.TokensManagedByEnterprise;
+        await _db.SaveChangesAsync(cancellationToken);
+
+        return Ok(await ToSummaryAsync(company, cancellationToken));
+    }
+
+    /// <summary>
+    /// Enable/disable CSV Batch Import for an organisation (parent company).
+    /// </summary>
+    [HttpPut("{companyId:guid}/csv-batch-import")]
+    [Authorize(Roles = $"{JobsyRoles.EnterpriseManager},{JobsyRoles.Admin}")]
+    public async Task<ActionResult<CompanySummaryDto>> UpdateCsvBatchImport(
+        Guid companyId,
+        [FromBody] UpdateCsvBatchImportRequest request,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            await _companyAuth.EnsureCanAccessCompanyAsync(User, companyId, cancellationToken);
+        }
+        catch (Core.Exceptions.ForbiddenCompanyAccessException)
+        {
+            return Forbid();
+        }
+
+        var company = await _db.Companies.FirstOrDefaultAsync(c => c.Id == companyId, cancellationToken);
+        if (company is null)
+        {
+            return NotFound(new { message = "Bedrijf niet gevonden." });
+        }
+
+        if (company.ParentCompanyId is not null)
+        {
+            return BadRequest(new
+            {
+                message = "CSV Batch Import schakel je in op organisatieniveau (niet op een vestiging)."
+            });
+        }
+
+        company.CsvBatchImportEnabled = request.CsvBatchImportEnabled;
+        await _db.SaveChangesAsync(cancellationToken);
+
+        return Ok(await ToSummaryAsync(company, cancellationToken));
+    }
+
+    /// <summary>
+    /// Company-level "Voorkeur voor contact" (defaults for vacancies unless overridden).
+    /// </summary>
+    [HttpPut("{companyId:guid}/contact-preference")]
+    [Authorize(Roles = $"{JobsyRoles.BranchManager},{JobsyRoles.EnterpriseManager},{JobsyRoles.Admin},{JobsyRoles.Intermediary}")]
+    public async Task<ActionResult<CompanySummaryDto>> UpdateContactPreference(
+        Guid companyId,
+        [FromBody] UpdateContactPreferenceRequest request,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            await _companyAuth.EnsureCanAccessCompanyAsync(User, companyId, cancellationToken);
+        }
+        catch (Core.Exceptions.ForbiddenCompanyAccessException)
+        {
+            return Forbid();
+        }
+
+        var company = await _db.Companies.FirstOrDefaultAsync(c => c.Id == companyId, cancellationToken);
+        if (company is null)
+        {
+            return NotFound(new { message = "Bedrijf niet gevonden." });
+        }
+
+        var validationError = EmployerContactPreferenceRules.Validate(
+            request.DirectContactEnabled,
+            request.ContactPreferMail,
+            request.ContactPreferPhone,
+            request.ContactPreferWhatsApp,
+            request.ContactEmail,
+            request.ContactPhone,
+            request.ContactWhatsApp);
+        if (validationError is not null)
+        {
+            return BadRequest(new { message = validationError });
+        }
+
+        company.DirectContactEnabled = request.DirectContactEnabled;
+        company.ContactPreferMail = request.DirectContactEnabled && request.ContactPreferMail;
+        company.ContactPreferPhone = request.DirectContactEnabled && request.ContactPreferPhone;
+        company.ContactPreferWhatsApp = request.DirectContactEnabled && request.ContactPreferWhatsApp;
+        company.ContactEmail = string.IsNullOrWhiteSpace(request.ContactEmail) ? null : request.ContactEmail.Trim();
+        company.ContactPhone = string.IsNullOrWhiteSpace(request.ContactPhone) ? null : request.ContactPhone.Trim();
+        company.ContactWhatsApp = string.IsNullOrWhiteSpace(request.ContactWhatsApp) ? null : request.ContactWhatsApp.Trim();
+
+        await _db.SaveChangesAsync(cancellationToken);
+
+        return Ok(await ToSummaryAsync(company, cancellationToken));
+    }
+
+    private async Task<CompanySummaryDto> ToSummaryAsync(Company company, CancellationToken cancellationToken)
+    {
+        var balance = await _db.TokenTransactions.AsNoTracking()
+            .Where(t => t.CompanyId == company.Id)
+            .SumAsync(t => t.Amount, cancellationToken);
+        var activeVacancies = await _db.Vacancies.AsNoTracking()
+            .CountAsync(v => v.CompanyId == company.Id && v.Status == VacancyStatus.Active, cancellationToken);
+
+        return MapSummary(company, balance, activeVacancies);
+    }
+
+    private static CompanySummaryDto MapSummary(Company company, decimal balance, int activeVacancies) =>
+        new(
             company.Id,
             company.Name,
             company.Address,
             company.KvkNumber,
-            0,
-            0,
-            company.ParentCompanyId));
-    }
+            balance,
+            activeVacancies,
+            company.ParentCompanyId,
+            company.TokensManagedByEnterprise,
+            company.CsvBatchImportEnabled,
+            company.DirectContactEnabled,
+            company.ContactPreferMail,
+            company.ContactPreferPhone,
+            company.ContactPreferWhatsApp,
+            company.ContactEmail,
+            company.ContactPhone,
+            company.ContactWhatsApp);
 }

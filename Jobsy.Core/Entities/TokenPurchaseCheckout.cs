@@ -1,7 +1,7 @@
 namespace Jobsy.Core.Entities;
 
 /// <summary>
-/// Persisted Mollie (stub) checkout session. Credits must use stored PackSize/CompanyId only.
+/// Persisted Mollie checkout session. Credits must use stored PackSize/CompanyId only.
 /// </summary>
 public class TokenPurchaseCheckout
 {

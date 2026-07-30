@@ -16,5 +16,11 @@ public class PlatformFeatureSettings
 
     public string? PublicWebBaseUrl { get; set; }
 
+    /// <summary>
+    /// Days without login/API/CSV/active vacancy before a one-time re-engagement e-mail may be sent.
+    /// Default 120 days (4 months).
+    /// </summary>
+    public int InactiveCompanyDays { get; set; } = 120;
+
     public DateTime UpdatedAtUtc { get; set; } = DateTime.UtcNow;
 }
