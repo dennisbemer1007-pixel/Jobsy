@@ -35,4 +35,13 @@ public record VacancyListItemDto(
     string? RequiredEducation = null,
     int? MinimumEmployers = null,
     Guid? FulfilledByApplicationId = null,
-    string CreatedVia = "Manual");
+    string CreatedVia = "Manual",
+    decimal? MinHoursPerWeek = null,
+    decimal? MaxHoursPerWeek = null,
+    bool FlexibleTimes = false,
+    string? ScheduleJson = null,
+    bool? LegalWorksAfter19 = null,
+    bool? LegalNightShift23To06 = null,
+    bool? LegalAdultSupervisorPresent = null,
+    bool? LegalHandlesMoneyOrClosing = null,
+    bool? LegalHeavyOrHazardousWork = null);

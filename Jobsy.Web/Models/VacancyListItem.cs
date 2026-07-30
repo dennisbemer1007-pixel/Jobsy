@@ -35,6 +35,15 @@ public class VacancyListItem
     public int? MinimumEmployers { get; set; }
     public Guid? FulfilledByApplicationId { get; set; }
     public string CreatedVia { get; set; } = "Manual";
+    public decimal? MinHoursPerWeek { get; set; }
+    public decimal? MaxHoursPerWeek { get; set; }
+    public bool FlexibleTimes { get; set; }
+    public string? ScheduleJson { get; set; }
+    public bool? LegalWorksAfter19 { get; set; }
+    public bool? LegalNightShift23To06 { get; set; }
+    public bool? LegalAdultSupervisorPresent { get; set; }
+    public bool? LegalHandlesMoneyOrClosing { get; set; }
+    public bool? LegalHeavyOrHazardousWork { get; set; }
 }
 
 public sealed class WageByAgeItem

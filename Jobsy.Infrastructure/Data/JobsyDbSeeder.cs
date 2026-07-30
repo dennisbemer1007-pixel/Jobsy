@@ -1,3 +1,4 @@
+using Jobsy.Infrastructure.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -61,6 +62,8 @@ public static class JobsyDbSeeder
                 await SalesManagerDemoSeeder.SeedAsync(db, logger);
                 await WestlandVacanciesSeeder.SeedWestlandBanenkaartAsync(db, logger);
                 await HaaglandenVacanciesSeeder.SeedHaaglandenBanenkaartAsync(db, logger);
+                await WmlSalaryTableService.EnsureForAllCompaniesAsync(db);
+                await WmlSalaryTableService.FillEmptySalaryTablesAsync(db);
             }
             catch (Exception ex)
             {
@@ -82,6 +85,8 @@ public static class JobsyDbSeeder
             await SalesManagerDemoSeeder.SeedAsync(db, logger);
             await WestlandVacanciesSeeder.SeedWestlandBanenkaartAsync(db, logger);
             await HaaglandenVacanciesSeeder.SeedHaaglandenBanenkaartAsync(db, logger);
+            await WmlSalaryTableService.EnsureForAllCompaniesAsync(db);
+            await WmlSalaryTableService.FillEmptySalaryTablesAsync(db);
             logger.LogInformation("Seed completed: employers + intermediary, vacancies, tokens, role users, sprint-0/8 demo.");
         }
         catch (Exception ex)

@@ -28,6 +28,7 @@ internal static class ApplicationsAndWagesSeeder
         }
 
         await WmlSalaryTableService.EnsureForAllCompaniesAsync(db);
+        await WmlSalaryTableService.FillEmptySalaryTablesAsync(db);
         logger.LogInformation("Ensured default WML salary tables for companies.");
 
         if (await db.Applications.AnyAsync())

@@ -444,6 +444,14 @@ public class VacanciesController : ControllerBase
             ContactPreferWhatsApp = request.OverrideContactPreference && request.DirectContactEnabled && request.ContactPreferWhatsApp
         };
 
+        var hoursError = ApplyHoursAndSchedule(vacancy, request);
+        if (hoursError is not null)
+        {
+            return BadRequest(new { message = hoursError });
+        }
+
+        ApplyLegalFlags(vacancy, request);
+
         _db.Vacancies.Add(vacancy);
         await _db.SaveChangesAsync(cancellationToken);
 
@@ -1147,7 +1155,85 @@ public class VacanciesController : ControllerBase
             v.RequiredEducation,
             v.MinimumEmployers,
             v.FulfilledByApplicationId,
-            v.CreatedVia.ToString());
+            v.CreatedVia.ToString(),
+            v.MinHoursPerWeek,
+            v.MaxHoursPerWeek,
+            v.FlexibleTimes,
+            v.ScheduleJson,
+            v.LegalWorksAfter19,
+            v.LegalNightShift23To06,
+            v.LegalAdultSupervisorPresent,
+            v.LegalHandlesMoneyOrClosing,
+            v.LegalHeavyOrHazardousWork);
+    }
+
+    private static string? ApplyHoursAndSchedule(Core.Entities.Vacancy vacancy, CreateVacancyRequest request)
+    {
+        if (request.MinHoursPerWeek is not null || request.MaxHoursPerWeek is not null)
+        {
+            var min = request.MinHoursPerWeek ?? request.MaxHoursPerWeek!.Value;
+            var max = request.MaxHoursPerWeek ?? request.MinHoursPerWeek!.Value;
+            var hoursError = HoursRangeRules.Validate(min, max);
+            if (hoursError is not null)
+            {
+                return hoursError;
+            }
+
+            vacancy.MinHoursPerWeek = min;
+            vacancy.MaxHoursPerWeek = max;
+        }
+
+        // Legacy API clients omit schedule → tijden in overleg (FlexibleTimes).
+        if (request.FlexibleTimes is null
+            && (request.ScheduleSlots is null || request.ScheduleSlots.Count == 0))
+        {
+            vacancy.FlexibleTimes = true;
+            vacancy.FlexibleScheduleSource = FlexibleScheduleSource.ApiEmpty.ToString();
+            vacancy.ScheduleJson = null;
+            return null;
+        }
+
+        var flexible = request.FlexibleTimes == true;
+        var schedule = flexible
+            ? SchedulePayload.Flexible(FlexibleScheduleSource.Manual)
+            : new SchedulePayload { FlexibleTimes = false };
+
+        if (!flexible && request.ScheduleSlots is { Count: > 0 })
+        {
+            foreach (var (day, parts) in request.ScheduleSlots)
+            {
+                if (parts is { Length: > 0 })
+                {
+                    schedule.Slots[day] = parts.ToList();
+                }
+            }
+        }
+
+        schedule = schedule.Normalize();
+        var scheduleError = schedule.Validate();
+        if (scheduleError is not null)
+        {
+            return scheduleError;
+        }
+
+        vacancy.FlexibleTimes = schedule.FlexibleTimes;
+        vacancy.FlexibleScheduleSource = schedule.FlexibleTimes
+            ? (schedule.FlexibleSource ?? FlexibleScheduleSource.Manual).ToString()
+            : null;
+        vacancy.ScheduleJson = schedule.FlexibleTimes
+            ? null
+            : System.Text.Json.JsonSerializer.Serialize(schedule);
+
+        return null;
+    }
+
+    private static void ApplyLegalFlags(Core.Entities.Vacancy vacancy, CreateVacancyRequest request)
+    {
+        vacancy.LegalWorksAfter19 = request.LegalWorksAfter19;
+        vacancy.LegalNightShift23To06 = request.LegalNightShift23To06;
+        vacancy.LegalAdultSupervisorPresent = request.LegalAdultSupervisorPresent;
+        vacancy.LegalHandlesMoneyOrClosing = request.LegalHandlesMoneyOrClosing;
+        vacancy.LegalHeavyOrHazardousWork = request.LegalHeavyOrHazardousWork;
     }
 
     private static string? FirstNonEmpty(params string?[] values)

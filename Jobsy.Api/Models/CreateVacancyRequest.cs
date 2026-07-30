@@ -21,4 +21,13 @@ public record CreateVacancyRequest(
     bool DirectContactEnabled = false,
     bool ContactPreferMail = false,
     bool ContactPreferPhone = false,
-    bool ContactPreferWhatsApp = false);
+    bool ContactPreferWhatsApp = false,
+    decimal? MinHoursPerWeek = null,
+    decimal? MaxHoursPerWeek = null,
+    bool? FlexibleTimes = null,
+    Dictionary<string, string[]>? ScheduleSlots = null,
+    bool? LegalWorksAfter19 = null,
+    bool? LegalNightShift23To06 = null,
+    bool? LegalAdultSupervisorPresent = null,
+    bool? LegalHandlesMoneyOrClosing = null,
+    bool? LegalHeavyOrHazardousWork = null);
