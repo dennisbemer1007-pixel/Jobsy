@@ -168,7 +168,18 @@ public sealed class JobsyApiClient : IAsyncDisposable
     }
 
     public async Task<IReadOnlyList<VacancyListItem>> GetManagedVacanciesAsync(CancellationToken ct = default)
-        => await _http.GetFromJsonAsync<List<VacancyListItem>>("api/vacancies/manage", ct) ?? [];
+    {
+        using var response = await _http.GetAsync("api/vacancies/manage", ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException(
+                ExtractMessage(body)
+                ?? $"Vacatures laden mislukt ({(int)response.StatusCode}).");
+        }
+
+        return await response.Content.ReadFromJsonAsync<List<VacancyListItem>>(cancellationToken: ct) ?? [];
+    }
 
     public async Task<VacancyListItem?> CreateVacancyAsync(CreateVacancyForm form, CancellationToken ct = default)
     {
