@@ -120,11 +120,25 @@ app.Use(async (context, next) =>
     await next();
 });
 
+app.Use(async (context, next) =>
+{
+    context.Response.Headers["X-Content-Type-Options"] = "nosniff";
+    context.Response.Headers["X-Frame-Options"] = "DENY";
+    context.Response.Headers["Referrer-Policy"] = "strict-origin-when-cross-origin";
+    context.Response.Headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=()";
+    // Swagger UI needs inline script/style; keep API responses locked down.
+    var path = context.Request.Path.Value ?? string.Empty;
+    context.Response.Headers["Content-Security-Policy"] =
+        path.StartsWith("/swagger", StringComparison.OrdinalIgnoreCase)
+            ? "default-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'; img-src 'self' data:; frame-ancestors 'none'; base-uri 'self'"
+            : "default-src 'none'; frame-ancestors 'none'; base-uri 'none'";
+    await next();
+});
+
 // Partner docs for the external vacancy API (X-API-Key). Scoped to /api/external/vacancies.
-// Default off outside Development; enable explicitly with Swagger:Enabled=true.
-var swaggerEnabled = builder.Configuration.GetValue(
-    "Swagger:Enabled",
-    app.Environment.IsDevelopment());
+// Always on by default so /swagger stays reachable in every environment (including production).
+// Opt out only when needed (e.g. integration tests): Swagger:Enabled=false.
+var swaggerEnabled = builder.Configuration.GetValue("Swagger:Enabled", true);
 if (swaggerEnabled)
 {
     app.UseSwagger();
@@ -154,17 +168,6 @@ else
 
 app.UseCors("JobsyWeb");
 app.UseRateLimiter();
-
-app.Use(async (context, next) =>
-{
-    context.Response.Headers["X-Content-Type-Options"] = "nosniff";
-    context.Response.Headers["X-Frame-Options"] = "DENY";
-    context.Response.Headers["Referrer-Policy"] = "strict-origin-when-cross-origin";
-    context.Response.Headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=()";
-    context.Response.Headers["Content-Security-Policy"] =
-        "default-src 'none'; frame-ancestors 'none'; base-uri 'none'";
-    await next();
-});
 
 app.UseAuthentication();
 app.UseAuthorization();

@@ -30,4 +30,4 @@ De ASP.NET Core pipeline stuurt standaard:
 - `Referrer-Policy`, `Permissions-Policy`
 - HSTS buiten Development
 - `ExceptionHandlingMiddleware` — generieke ProblemDetails naar clients; stacktraces/PII blijven server-side
-- **Swagger:** standaard uit buiten Development (`Swagger:Enabled` default false in base config)
+- **Swagger:** standaard aan (`/swagger`); alleen uit te zetten via `Swagger:Enabled=false`. Buiten Development is “Try it out” uitgeschakeld.
