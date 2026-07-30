@@ -89,6 +89,11 @@
         {
             _companies = (await Api.GetAdminCompaniesAsync()).ToList();
         }
+        catch (Exception ex)
+        {
+            _message = ex.Message;
+            _companies = [];
+        }
         finally
         {
             _loading = false;
@@ -125,7 +130,15 @@
 
     private async Task OnGrantedAsync()
     {
-        _companies = (await Api.GetAdminCompaniesAsync()).ToList();
-        _message = "Tokens toegekend. Zie tokenlog voor de reden.";
+        try
+        {
+            _companies = (await Api.GetAdminCompaniesAsync()).ToList();
+            _message = "Tokens toegekend. Zie tokenlog voor de reden.";
+        }
+        catch (Exception ex)
+        {
+            _message = ex.Message;
+            _companies = [];
+        }
     }
 }

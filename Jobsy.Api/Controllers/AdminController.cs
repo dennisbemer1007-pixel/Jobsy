@@ -56,12 +56,26 @@ public class AdminController : ControllerBase
             .ToListAsync(cancellationToken);
 
         var companyIds = companies.Select(c => c.Id).ToList();
+        if (companyIds.Count == 0)
+        {
+            return Ok(Array.Empty<AdminCompanyDetailDto>());
+        }
 
         // Users counted via primary CompanyId OR membership (same semantics as before).
+        var activeUserIds = await _db.Users.AsNoTracking()
+            .Where(u => u.IsActive)
+            .Select(u => u.Id)
+            .ToListAsync(cancellationToken);
+        var activeUserSet = activeUserIds.ToHashSet();
+
         var membershipPairs = await _db.UserCompanies.AsNoTracking()
-            .Where(m => companyIds.Contains(m.CompanyId) && m.User.IsActive)
+            .Where(m => companyIds.Contains(m.CompanyId))
             .Select(m => new { m.CompanyId, m.UserId })
             .ToListAsync(cancellationToken);
+        membershipPairs = membershipPairs
+            .Where(m => activeUserSet.Contains(m.UserId))
+            .ToList();
+
         var primaryPairs = await _db.Users.AsNoTracking()
             .Where(u => u.IsActive && u.CompanyId != null && companyIds.Contains(u.CompanyId.Value))
             .Select(u => new { CompanyId = u.CompanyId!.Value, UserId = u.Id })
@@ -81,11 +95,21 @@ public class AdminController : ControllerBase
             })
             .ToDictionaryAsync(x => x.CompanyId, cancellationToken);
 
-        var applicationCounts = await _db.Applications.AsNoTracking()
-            .Where(a => companyIds.Contains(a.Vacancy.CompanyId))
-            .GroupBy(a => a.Vacancy.CompanyId)
+        var companyByVacancy = await _db.Vacancies.AsNoTracking()
+            .Where(v => companyIds.Contains(v.CompanyId))
+            .Select(v => new { v.Id, v.CompanyId })
+            .ToListAsync(cancellationToken);
+        var vacancyCompanyMap = companyByVacancy.ToDictionary(v => v.Id, v => v.CompanyId);
+
+        var applicationRows = await _db.Applications.AsNoTracking()
+            .Select(a => a.VacancyId)
+            .ToListAsync(cancellationToken);
+        var applicationCounts = applicationRows
+            .Where(vacancyCompanyMap.ContainsKey)
+            .Select(vacancyId => vacancyCompanyMap[vacancyId])
+            .GroupBy(companyId => companyId)
             .Select(g => new { CompanyId = g.Key, Count = g.Count() })
-            .ToDictionaryAsync(x => x.CompanyId, x => x.Count, cancellationToken);
+            .ToDictionary(x => x.CompanyId, x => x.Count);
 
         var tokenBalances = await _db.TokenTransactions.AsNoTracking()
             .Where(t => companyIds.Contains(t.CompanyId))
