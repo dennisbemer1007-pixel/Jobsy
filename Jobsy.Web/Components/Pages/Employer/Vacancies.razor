@@ -93,9 +93,9 @@
                         <span class="muted">
                             @v.CompanyName · @v.Status
                             · <span class="source-badge source-badge--@VacancySourceDisplay.CssModifier(v.CreatedVia)">@VacancySourceDisplay.Label(v.CreatedVia)</span>
-                            @if (v.WorkTypes.Length > 0)
+                            @if ((v.WorkTypes?.Length ?? 0) > 0)
                             {
-                                <text> · @string.Join(", ", v.WorkTypes)</text>
+                                <text> · @string.Join(", ", v.WorkTypes ?? Array.Empty<string>())</text>
                             }
                             @if (v.IsHighlighted)
                             {
@@ -286,7 +286,7 @@
                 // keep fallback
             }
 
-            _vacancies = (await Api.GetManagedVacanciesAsync()).ToList();
+            _vacancies = (await Api.GetManagedVacanciesAsync()).Select(NormalizeVacancy).ToList();
 
             if (_salaryTableFilter is Guid tid)
             {
@@ -324,7 +324,7 @@
 
         if (!string.IsNullOrWhiteSpace(_workTypeFilter))
         {
-            query = query.Where(v => v.WorkTypes.Any(w =>
+            query = query.Where(v => (v.WorkTypes ?? Array.Empty<string>()).Any(w =>
                 string.Equals(w, _workTypeFilter, StringComparison.OrdinalIgnoreCase)));
         }
 
@@ -382,8 +382,16 @@
 
     private async Task RefreshAsync()
     {
-        _vacancies = (await Api.GetManagedVacanciesAsync()).ToList();
+        _vacancies = (await Api.GetManagedVacanciesAsync()).Select(NormalizeVacancy).ToList();
         ApplyFilters();
+    }
+
+    private static VacancyListItem NormalizeVacancy(VacancyListItem vacancy)
+    {
+        vacancy.WorkTypes ??= Array.Empty<string>();
+        vacancy.RequiredTransport ??= Array.Empty<string>();
+        vacancy.WageByAge ??= new List<WageByAgeItem>();
+        return vacancy;
     }
 
     private void OpenPublish(VacancyListItem vacancy)
