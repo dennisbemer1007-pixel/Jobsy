@@ -120,4 +120,13 @@ public static class ActionIcons
 
     public const string Deactivate =
         "<svg viewBox=\"0 0 24 24\" width=\"18\" height=\"18\" aria-hidden=\"true\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.75\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><circle cx=\"12\" cy=\"12\" r=\"9\"/><path d=\"M10 9v6\"/><path d=\"M14 9v6\"/></svg>";
+
+    public const string Publish =
+        "<svg viewBox=\"0 0 24 24\" width=\"18\" height=\"18\" aria-hidden=\"true\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.75\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M12 19V5\"/><path d=\"m5 12 7-7 7 7\"/><path d=\"M5 19h14\"/></svg>";
+
+    public const string Highlight =
+        "<svg viewBox=\"0 0 24 24\" width=\"18\" height=\"18\" aria-hidden=\"true\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.75\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"m12 3 2.4 5.4 5.9.7-4.4 4 1.2 5.8L12 16.3 6.9 19l1.2-5.8-4.4-4 5.9-.7Z\"/></svg>";
+
+    public const string Reactivate =
+        "<svg viewBox=\"0 0 24 24\" width=\"18\" height=\"18\" aria-hidden=\"true\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.75\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M3 12a9 9 0 0 1 15.5-6.4\"/><path d=\"M21 3v6h-6\"/><path d=\"M21 12a9 9 0 0 1-15.5 6.4\"/><path d=\"M3 21v-6h6\"/></svg>";
 }
