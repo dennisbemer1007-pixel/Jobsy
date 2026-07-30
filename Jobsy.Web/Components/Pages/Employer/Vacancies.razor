@@ -124,7 +124,9 @@
                             }
                         @if (_canManageVacancy && v.Status == "Draft")
                         {
-                            <button class="btn-compact" type="button" @onclick="() => OpenPublish(v)">Publiceer…</button>
+                            <button class="icon-btn" type="button" title="Publiceer" aria-label="Vacature publiceren" @onclick="() => OpenPublish(v)">
+                                @((MarkupString)ActionIcons.Publish)
+                            </button>
                         }
                         @if (v.Status == "PendingApproval" && _canApprovePublish)
                         {
@@ -134,7 +136,9 @@
                         {
                             @if (!v.IsHighlighted)
                             {
-                                <button class="btn-compact" type="button" @onclick="() => HighlightAsync(v.Id)">Highlight</button>
+                                <button class="icon-btn" type="button" title="Highlight" aria-label="Vacature highlighten" @onclick="() => HighlightAsync(v.Id)">
+                                    @((MarkupString)ActionIcons.Highlight)
+                                </button>
                             }
                             <button class="icon-btn" type="button" title="PushBom" aria-label="PushBom versturen" @onclick="() => OpenPushBom(v)">
                                 @((MarkupString)ActionIcons.Bomb)
@@ -148,7 +152,9 @@
                         }
                         @if (_canManageVacancy && v.Status == "Archived")
                         {
-                            <button class="btn-compact" type="button" @onclick="() => ExtendAsync(v.Id)">Heractiveer (+verlengen)</button>
+                            <button class="icon-btn" type="button" title="Heractiveer (+verlengen)" aria-label="Vacature heractiveren en verlengen" @onclick="() => ExtendAsync(v.Id)">
+                                @((MarkupString)ActionIcons.Reactivate)
+                            </button>
                         }
                     </div>
                 </div>
