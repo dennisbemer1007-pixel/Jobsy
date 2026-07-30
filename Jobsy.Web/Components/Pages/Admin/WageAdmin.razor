@@ -3,13 +3,15 @@
 @attribute [Authorize(Roles = "Admin")]
 @using Jobsy.Web.Components.Admin
 @inject JobsyApiClient Api
+@inject CultureState Culture
+@implements IDisposable
 
-<PageTitle>Minimumloon · Lobsy</PageTitle>
+<PageTitle>@Culture["Admin.Wages"] · Lobsy</PageTitle>
 
-<AdminPageShell Title="Salaris en WML beheer" Lead="Platform WML-tarieven. Halfjaarlijkse update via stub/job." ShowSettingsNav="true">
+<AdminPageShell Title="@Culture["Admin.Wages"]" Lead="@Culture["Admin.WagesLead"]" ShowSettingsNav="true">
     @if (_loading)
     {
-        <p class="state-message">Laden…</p>
+        <p class="state-message">@Culture["Common.Loading"]</p>
     }
     else
     {
@@ -29,7 +31,7 @@
                     </div>
                     <div class="inline-actions">
                         <input type="number" step="0.01" @bind="r.HourlyRate" style="width:5.5rem" />
-                        <button class="provider-btn" type="button" @onclick="() => SaveAsync(r)">Opslaan</button>
+                        <button class="provider-btn" type="button" @onclick="() => SaveAsync(r)">@Culture["Common.Save"]</button>
                     </div>
                 </div>
             }
@@ -46,6 +48,16 @@
     private bool _loading = true;
     private bool _busy;
     private string? _message;
+
+
+    protected override void OnInitialized()
+        => Culture.Changed += OnCultureChanged;
+
+    private void OnCultureChanged()
+        => InvokeAsync(StateHasChanged);
+
+    public void Dispose()
+        => Culture.Changed -= OnCultureChanged;
 
     protected override async Task OnInitializedAsync()
     {

@@ -1,4 +1,5 @@
 @* Shared drilldown list under a selected metric tile. *@
+@inject CultureState Culture
 
 <section class="panel-section">
     <div class="panel-header">
@@ -10,7 +11,7 @@
     </div>
     @if (Loading)
     {
-        <p class="state-message">Laden…</p>
+        <p class="state-message">@Culture["Common.Loading"]</p>
     }
     else if (Items.Count == 0)
     {

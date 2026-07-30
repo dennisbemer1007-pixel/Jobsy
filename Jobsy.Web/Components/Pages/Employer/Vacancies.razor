@@ -2,33 +2,29 @@
 @rendermode @(new InteractiveServerRenderMode(prerender: false))
 @attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "BranchManager,RegionalManager,EnterpriseManager,Intermediary,Admin")]
 @using Jobsy.Core.Rules
+@using Jobsy.Web.Localization
 @using Jobsy.Web.Navigation
 @using Microsoft.AspNetCore.Components.Authorization
 @using Microsoft.AspNetCore.WebUtilities
 @inject JobsyApiClient Api
 @inject AuthenticationStateProvider AuthState
 @inject NavigationManager Navigation
+@inject CultureState Culture
+@implements IDisposable
 
-<PageTitle>Vacatures · Lobsy</PageTitle>
+<PageTitle>@Culture["Employer.VacanciesTitle"] · Lobsy</PageTitle>
 
 <div class="panel-page">
     <header class="panel-header">
         <div>
-            <h1>Vacatures</h1>
+            <h1>@Culture["Employer.VacanciesTitle"]</h1>
             <p class="login-lead">
-                @if (_canManageVacancy)
-                {
-                    <text>Beheer concepten en actieve vacatures. Publiceren via token-opties popup.</text>
-                }
-                else
-                {
-                    <text>Bekijk vacatures in jouw regio (alleen-lezen).</text>
-                }
+                @(_canManageVacancy ? Culture["Employer.VacanciesLeadManage"] : Culture["Employer.VacanciesLeadRead"])
             </p>
         </div>
         @if (_canManageVacancy)
         {
-            <a class="login-submit" href="/branch/vacancies/new" style="text-decoration:none;display:inline-flex;align-items:center;">Nieuwe vacature</a>
+            <a class="login-submit" href="/branch/vacancies/new" style="text-decoration:none;display:inline-flex;align-items:center;">@Culture["Employer.NewVacancy"]</a>
         }
     </header>
 
@@ -36,24 +32,24 @@
         @if (_salaryTableFilter is not null)
         {
             <p class="muted" style="grid-column:1/-1;margin:0">
-                Gefilterd op salaristabel@(string.IsNullOrWhiteSpace(_salaryTableFilterName) ? "" : $": {_salaryTableFilterName}")
-                · <button type="button" class="auth-link" style="border:none;background:none;padding:0;cursor:pointer" @onclick="ClearSalaryTableFilter">Filter wissen</button>
+                @Culture["Employer.SalaryTableFilter"]@(string.IsNullOrWhiteSpace(_salaryTableFilterName) ? "" : $": {_salaryTableFilterName}")
+                · <button type="button" class="auth-link" style="border:none;background:none;padding:0;cursor:pointer" @onclick="ClearSalaryTableFilter">@Culture["Employer.ClearFilter"]</button>
             </p>
         }
         <label class="filter-required">
-            Type baan
+            @Culture["Employer.JobType"]
             <select @bind="_workTypeFilter" @bind:after="ApplyFilters">
-                <option value="">Alle branches</option>
+                <option value="">@Culture["Employer.AllSectors"]</option>
                 @foreach (var label in _branchOptions)
                 {
-                    <option value="@label">@label</option>
+                    <option value="@label">@UiLabels.WorkType(Culture, label)</option>
                 }
             </select>
         </label>
         <label class="filter-required">
-            Uurloon (op basis van leeftijd)
+            @Culture["Employer.WageByAge"]
             <select @bind="_ageFilter" @bind:after="ApplyFilters">
-                <option value="">Alle leeftijden</option>
+                <option value="">@Culture["Employer.AllAges"]</option>
                 @for (var age = 15; age <= 21; age++)
                 {
                     <option value="@age">@(age == 21 ? "21+" : age.ToString())</option>
@@ -63,11 +59,11 @@
         @if (!string.IsNullOrEmpty(_ageFilter))
         {
             <label>
-                Min. uurloon (€)
+                @Culture["Employer.MinWage"]
                 <input type="number" min="0" step="0.50" @bind="_minWage" @bind:after="ApplyFilters" />
             </label>
             <label>
-                Max. uurloon (€)
+                @Culture["Employer.MaxWage"]
                 <input type="number" min="0" step="0.50" @bind="_maxWage" @bind:after="ApplyFilters" />
             </label>
         }
@@ -75,7 +71,7 @@
 
     @if (_loading)
     {
-        <p class="state-message">Laden…</p>
+        <p class="state-message">@Culture["Common.Loading"]</p>
     }
     else if (!string.IsNullOrEmpty(_error))
     {
@@ -83,7 +79,7 @@
     }
     else if (_filtered.Count == 0)
     {
-        <p class="state-message">Geen vacatures voor deze filters.</p>
+        <p class="state-message">@Culture["Discovery.NoneWithoutOrigin"]</p>
     }
     else
     {
@@ -247,6 +243,15 @@
     private decimal? _maxWage;
     private Guid? _salaryTableFilter;
     private string? _salaryTableFilterName;
+
+    protected override void OnInitialized()
+        => Culture.Changed += OnCultureChanged;
+
+    private void OnCultureChanged()
+        => InvokeAsync(StateHasChanged);
+
+    public void Dispose()
+        => Culture.Changed -= OnCultureChanged;
 
     protected override async Task OnInitializedAsync()
     {

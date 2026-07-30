@@ -1,12 +1,13 @@
 @inject JobsyApiClient Api
 
 @if (IsOpen && Company is not null)
+@inject CultureState Culture
 {
     <div class="share-modal-backdrop" @onclick="Close"></div>
     <div class="share-modal" role="dialog" aria-modal="true" aria-labelledby="grant-tokens-title">
         <div class="share-modal__header">
-            <h2 id="grant-tokens-title">Tokens toekennen</h2>
-            <button type="button" class="share-modal__close" @onclick="Close" aria-label="Sluiten">×</button>
+            <h2 id="grant-tokens-title">@Culture["GrantTokens.Title"]</h2>
+            <button type="button" class="share-modal__close" @onclick="Close" aria-label="@Culture["Common.Close"]">×</button>
         </div>
         <p class="share-modal__lead">@Company.Name · saldo @Company.TokenBalance.ToString("0.##")</p>
 
@@ -23,9 +24,9 @@
 
             <div class="inline-actions" style="margin-top:1rem">
                 <button type="submit" class="btn-compact btn-compact--primary" disabled="@_busy">
-                    @(_busy ? "Bezig…" : "Toekennen")
+                    @(_busy ? Culture["Common.Busy"] : Culture["GrantTokens.Submit"])
                 </button>
-                <button type="button" class="btn-compact" disabled="@_busy" @onclick="Close">Annuleren</button>
+                <button type="button" class="btn-compact" disabled="@_busy" @onclick="Close">@Culture["Common.Cancel"]</button>
             </div>
         </form>
 

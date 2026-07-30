@@ -6,13 +6,15 @@
 @inject NavigationManager Navigation
 @inject AuthenticationStateProvider AuthState
 @inject Jobsy.Web.Services.TokenBalanceCache TokenBalances
+@inject CultureState Culture
+@implements IDisposable
 
-<PageTitle>Tokens · Lobsy</PageTitle>
+<PageTitle>@Culture["Employer.MyTokens"] · Lobsy</PageTitle>
 
 <div class="panel-page">
     <header class="panel-header">
         <div>
-            <h1>Mijn tokens</h1>
+            <h1>@Culture["Employer.MyTokens"]</h1>
             <p class="login-lead">@_lead</p>
         </div>
         @if (_canAllocate)
@@ -23,7 +25,7 @@
 
     @if (_loading)
     {
-        <p class="state-message">Laden…</p>
+        <p class="state-message">@Culture["Common.Loading"]</p>
     }
     else if (!string.IsNullOrEmpty(_error))
     {
@@ -258,6 +260,15 @@
     private TokenBalance? _pot;
     private List<TokenBalance> _managedBranches = [];
     private List<TokenBalance> _issueTargets = [];
+
+    protected override void OnInitialized()
+        => Culture.Changed += OnCultureChanged;
+
+    private void OnCultureChanged()
+        => InvokeAsync(StateHasChanged);
+
+    public void Dispose()
+        => Culture.Changed -= OnCultureChanged;
 
     protected override async Task OnInitializedAsync()
     {

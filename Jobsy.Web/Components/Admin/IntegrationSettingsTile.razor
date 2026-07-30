@@ -1,5 +1,6 @@
 @using Jobsy.Web.Admin
 @* Expandable integration settings tile with green/red status and live test. *@
+@inject CultureState Culture
 
 <article class="company-card integration-tile @(StatusClass)" @onclick="Toggle">
     <div class="integration-tile__header">
@@ -193,7 +194,7 @@
             }
 
             <div class="inline-actions">
-                <button class="btn-compact" type="button" disabled="@_busy" @onclick="SaveAsync" @onclick:stopPropagation="true">Opslaan</button>
+                <button class="btn-compact" type="button" disabled="@_busy" @onclick="SaveAsync" @onclick:stopPropagation="true">@Culture["Common.Save"]</button>
                 <button class="btn-compact btn-compact--primary" type="button" disabled="@_busy" @onclick="TestAsync" @onclick:stopPropagation="true">Test verbinding</button>
                 @if (Credential.HasApiKey || Credential.HasClientSecret)
                 {

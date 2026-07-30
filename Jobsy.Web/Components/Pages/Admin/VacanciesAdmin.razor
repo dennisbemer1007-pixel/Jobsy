@@ -6,13 +6,15 @@
 @using Microsoft.AspNetCore.WebUtilities
 @inject JobsyApiClient Api
 @inject NavigationManager Nav
+@inject CultureState Culture
+@implements IDisposable
 
-<PageTitle>Vacatures · Lobsy</PageTitle>
+<PageTitle>@Culture["Admin.Vacancies"] · Lobsy</PageTitle>
 
-<AdminPageShell Title="Vacatures" Lead="Platformbreed overzicht met engagement-metrics en acties." Wide="true">
+<AdminPageShell Title="@Culture["Admin.Vacancies"]" Lead="@Culture["Admin.VacanciesLead"]" Wide="true">
     @if (_loading)
     {
-        <p class="state-message">Laden…</p>
+        <p class="state-message">@Culture["Common.Loading"]</p>
     }
     else if (!string.IsNullOrEmpty(_error))
     {
@@ -22,20 +24,20 @@
     {
         <div class="filter-bar">
             <label>
-                Bedrijf
-                <input type="search" @bind="_companyFilter" @bind:event="oninput" placeholder="Bedrijfsnaam…" />
+                @Culture["Admin.Company"]
+                <input type="search" @bind="_companyFilter" @bind:event="oninput" placeholder="@Culture["Admin.CompanyPlaceholder"]" />
             </label>
             <label>
-                Titel
-                <input type="search" @bind="_titleFilter" @bind:event="oninput" placeholder="Vacaturetitel…" />
+                @Culture["Admin.Title"]
+                <input type="search" @bind="_titleFilter" @bind:event="oninput" placeholder="@Culture["Admin.VacancyTitlePlaceholder"]" />
             </label>
             <label>
-                Status
+                @Culture["Admin.Status"]
                 <select @bind="_statusFilter">
-                    <option value="">Alle</option>
-                    <option value="Active">Actief</option>
-                    <option value="Draft">Draft</option>
-                    <option value="Archived">Inactief</option>
+                    <option value="">@Culture["Admin.All"]</option>
+                    <option value="Active">@Culture["VacancyStatus.Active"]</option>
+                    <option value="Draft">@Culture["VacancyStatus.Draft"]</option>
+                    <option value="Archived">@Culture["VacancyStatus.Archived"]</option>
                     <option value="PendingApproval">Pending</option>
                 </select>
             </label>
@@ -53,7 +55,7 @@
 
         @if (_filtered.Count == 0)
         {
-            <p class="state-message">Geen vacatures gevonden.</p>
+            <p class="state-message">@Culture["Admin.NoVacancies"]</p>
         }
         else
         {
@@ -61,9 +63,9 @@
                 <table class="data-table">
                     <thead>
                         <tr>
-                            <th class="data-table__col--wrap">Titel</th>
-                            <th class="data-table__col--wrap">Bedrijf</th>
-                            <th>Status</th>
+                            <th class="data-table__col--wrap">@Culture["Admin.Title"]</th>
+                            <th class="data-table__col--wrap">@Culture["Admin.Company"]</th>
+                            <th>@Culture["Admin.Status"]</th>
                             <th>Bron</th>
                             <th><button type="button" class="linkish" @onclick='() => Drill("impressions")'>Getoond</button></th>
                             <th><button type="button" class="linkish" @onclick='() => Drill("clicks")'>Clicks</button></th>
@@ -100,7 +102,7 @@
                                     </a>
                                     @if (v.Status == "Active")
                                     {
-                                        <button class="btn-compact" type="button" disabled="@_busy" @onclick="() => DeactivateAsync(v)">Inactief</button>
+                                        <button class="btn-compact" type="button" disabled="@_busy" @onclick="() => DeactivateAsync(v)">@Culture["VacancyStatus.Archived"]</button>
                                         <button class="btn-compact" type="button" disabled="@_busy" @onclick="() => ExtendAsync(v)">Verlengen</button>
                                     }
                                 </td>
@@ -117,7 +119,7 @@
                 <h2>Drilldown: @_drillKey</h2>
                 @if (_drillLoading)
                 {
-                    <p class="state-message">Laden…</p>
+                    <p class="state-message">@Culture["Common.Loading"]</p>
                 }
                 else if (_drilldown.Count == 0)
                 {
@@ -160,6 +162,16 @@
     private List<MetricDrilldownItem> _drilldown = [];
 
     private List<AdminVacancyItem> _filtered => Filter().ToList();
+
+
+    protected override void OnInitialized()
+        => Culture.Changed += OnCultureChanged;
+
+    private void OnCultureChanged()
+        => InvokeAsync(StateHasChanged);
+
+    public void Dispose()
+        => Culture.Changed -= OnCultureChanged;
 
     protected override async Task OnInitializedAsync()
     {

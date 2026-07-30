@@ -4,13 +4,15 @@
 @using Jobsy.Web.Components.Admin
 @using Jobsy.Web.Navigation
 @inject JobsyApiClient Api
+@inject CultureState Culture
+@implements IDisposable
 
-<PageTitle>Settings · Lobsy</PageTitle>
+<PageTitle>@Culture["Admin.Settings"] · Lobsy</PageTitle>
 
-<AdminPageShell Title="Systeeminstellingen" Lead="Alle API-koppelingen, feature flags en token pricing via tegels." ShowSettingsNav="true">
+<AdminPageShell Title="@Culture["Admin.Settings"]" Lead="@Culture["Admin.SettingsLead"]" ShowSettingsNav="true">
     @if (_loading)
     {
-        <p class="state-message">Laden…</p>
+        <p class="state-message">@Culture["Common.Loading"]</p>
     }
     else if (!string.IsNullOrEmpty(_error))
     {
@@ -68,7 +70,7 @@
                 </p>
 
                 <div class="inline-actions" style="margin-top:0.75rem">
-                    <button class="btn-compact btn-compact--primary" type="button" disabled="@_featureBusy" @onclick="SaveFeaturesAsync">Opslaan</button>
+                    <button class="btn-compact btn-compact--primary" type="button" disabled="@_featureBusy" @onclick="SaveFeaturesAsync">@Culture["Common.Save"]</button>
                 </div>
             </article>
         </section>
@@ -86,7 +88,7 @@
                         <div class="inline-actions">
                             <input type="number" step="0.01" min="0" @bind="pack.PriceEuro" style="width:5.5rem" />
                             <label class="filter-check"><input type="checkbox" @bind="pack.IsActive" /> Actief</label>
-                            <button class="btn-compact" type="button" @onclick="() => SavePackAsync(pack)">Opslaan</button>
+                            <button class="btn-compact" type="button" @onclick="() => SavePackAsync(pack)">@Culture["Common.Save"]</button>
                         </div>
                     </div>
                 }
@@ -107,7 +109,7 @@
                         <div class="inline-actions">
                             <input type="number" step="0.1" min="0" @bind="cost.CostTokens" style="width:5.5rem" />
                             <label class="filter-check"><input type="checkbox" @bind="cost.IsActive" /> Actief</label>
-                            <button class="btn-compact" type="button" @onclick="() => SaveCostAsync(cost)">Opslaan</button>
+                            <button class="btn-compact" type="button" @onclick="() => SaveCostAsync(cost)">@Culture["Common.Save"]</button>
                         </div>
                     </div>
                 }
@@ -130,7 +132,7 @@
                             Max. reistijd (min)
                             <input type="number" min="5" max="180" @bind="_pushBomSettings.MaxTravelMinutes" style="width:5.5rem" />
                         </label>
-                        <button class="btn-compact btn-compact--primary" type="button" disabled="@_pushBomBusy" @onclick="SavePushBomSettingsAsync">Opslaan</button>
+                        <button class="btn-compact btn-compact--primary" type="button" disabled="@_pushBomBusy" @onclick="SavePushBomSettingsAsync">@Culture["Common.Save"]</button>
                     </div>
                 </article>
             }
@@ -154,7 +156,7 @@
                                 <input type="number" step="0.1" min="0" @bind="tier.CostTokens" style="width:4.5rem" />
                             </label>
                             <label class="filter-check"><input type="checkbox" @bind="tier.IsActive" /> Actief</label>
-                            <button class="btn-compact" type="button" @onclick="() => SaveTierAsync(tier)">Opslaan</button>
+                            <button class="btn-compact" type="button" @onclick="() => SaveTierAsync(tier)">@Culture["Common.Save"]</button>
                             <button type="button" class="icon-btn icon-btn--danger" title="Verwijderen" aria-label="Tier verwijderen" @onclick="() => DeleteTierAsync(tier)">
                                 @((MarkupString)ActionIcons.Trash)
                             </button>
@@ -181,7 +183,7 @@
                             <input type="number" min="0" @bind="rule.MonthlyGrantTokens" style="width:4.5rem" title="Monthly grant" />
                             <input type="number" step="0.1" min="0" max="100" @bind="rule.PurchaseDiscountPercent" style="width:4.5rem" title="Discount %" />
                             <label class="filter-check"><input type="checkbox" @bind="rule.IsActive" /> Actief</label>
-                            <button class="btn-compact" type="button" @onclick="() => SaveRuleAsync(rule)">Opslaan</button>
+                            <button class="btn-compact" type="button" @onclick="() => SaveRuleAsync(rule)">@Culture["Common.Save"]</button>
                         </div>
                     </div>
                 }
@@ -208,6 +210,16 @@
     private bool _pushBomBusy;
     private string? _error;
     private string? _message;
+
+
+    protected override void OnInitialized()
+        => Culture.Changed += OnCultureChanged;
+
+    private void OnCultureChanged()
+        => InvokeAsync(StateHasChanged);
+
+    public void Dispose()
+        => Culture.Changed -= OnCultureChanged;
 
     protected override async Task OnInitializedAsync()
     {

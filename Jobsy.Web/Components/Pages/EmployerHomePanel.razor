@@ -4,6 +4,8 @@
 @inject JobsyApiClient Api
 @inject NavigationManager Navigation
 @inject AuthenticationStateProvider AuthState
+@inject CultureState Culture
+@implements IDisposable
 
 <div class="panel-page">
     <header class="panel-header">
@@ -11,16 +13,16 @@
             <h1>@Title</h1>
             <p class="login-lead">@Lead</p>
         </div>
-        <div class="period-tabs" role="tablist" aria-label="Periode">
-            @foreach (var p in Periods)
+        <div class="period-tabs" role="tablist" aria-label="@Culture["Common.Period"]">
+            @foreach (var p in PeriodKeys)
             {
                 <button type="button"
-                        class="period-tab @(_period == p.Key ? "period-tab--active" : null)"
+                        class="period-tab @(_period == p ? "period-tab--active" : null)"
                         role="tab"
-                        aria-selected="@(_period == p.Key)"
+                        aria-selected="@(_period == p)"
                         disabled="@_loading"
-                        @onclick="() => SetPeriodAsync(p.Key)">
-                    @p.Label
+                        @onclick="() => SetPeriodAsync(p)">
+                    @PeriodLabel(p)
                 </button>
             }
         </div>
@@ -32,7 +34,7 @@
     }
     else if (_loading && _metrics.Count == 0)
     {
-        <p class="state-message">Laden…</p>
+        <p class="state-message">@Culture["Common.Loading"]</p>
     }
     else
     {
@@ -44,17 +46,17 @@
                             OnClick="() => OpenMetricAsync(metric)" />
             }
             <a class="stat-card stat-card--link" href="@TokensHref">
-                <span class="stat-card__label">Tokens</span>
+                <span class="stat-card__label">@Culture["Common.Tokens"]</span>
                 <strong class="stat-card__value">→</strong>
             </a>
             <a class="stat-card stat-card--link" href="@VacanciesHref">
-                <span class="stat-card__label">Vacatures</span>
+                <span class="stat-card__label">@Culture["Employer.DashboardVacancies"]</span>
                 <strong class="stat-card__value">→</strong>
             </a>
             @if (_showMyApplications)
             {
                 <a class="stat-card stat-card--link" href="/candidate/applications">
-                    <span class="stat-card__label">Mijn sollicitaties</span>
+                    <span class="stat-card__label">@Culture["Employer.DashboardApplications"]</span>
                     <strong class="stat-card__value">→</strong>
                 </a>
             }
@@ -70,14 +72,7 @@
 </div>
 
 @code {
-    private static readonly (string Key, string Label)[] Periods =
-    [
-        ("day", "Dag"),
-        ("week", "Week"),
-        ("month", "Maand"),
-        ("quarter", "Kwartaal"),
-        ("year", "Jaar")
-    ];
+    private static readonly string[] PeriodKeys = ["day", "week", "month", "quarter", "year"];
 
     [Parameter] public string Title { get; set; } = "Dashboard";
     [Parameter] public string Lead { get; set; } = string.Empty;
@@ -93,12 +88,31 @@
     private string? _error;
     private List<MetricCount> _metrics = [];
 
+    private string PeriodLabel(string key) => key switch
+    {
+        "day" => Culture["Metrics.Day"],
+        "week" => Culture["Metrics.Week"],
+        "month" => Culture["Metrics.Month"],
+        "quarter" => Culture["Metrics.Quarter"],
+        "year" => Culture["Metrics.Year"],
+        _ => key
+    };
+
+    protected override void OnInitialized()
+        => Culture.Changed += OnCultureChanged;
+
     protected override async Task OnInitializedAsync()
     {
         var state = await AuthState.GetAuthenticationStateAsync();
         _showMyApplications = state.User.HasClaim(JobsyClaimTypes.HasCandidateApplications, "1");
         await LoadSummaryAsync();
     }
+
+    private void OnCultureChanged()
+        => InvokeAsync(StateHasChanged);
+
+    public void Dispose()
+        => Culture.Changed -= OnCultureChanged;
 
     private static string FormatValue(MetricCount metric)
         => metric.Key.StartsWith("tokens_", StringComparison.OrdinalIgnoreCase)

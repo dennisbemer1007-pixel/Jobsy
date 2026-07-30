@@ -1,17 +1,20 @@
 @page "/gebruiksvoorwaarden"
 @attribute [AllowAnonymous]
+@inject CultureState Culture
 
-<PageTitle>Gebruiksvoorwaarden · Lobsy</PageTitle>
+<PageTitle>@Culture["Legal.Usage"] · Lobsy</PageTitle>
 
 <div class="panel-page legal-page">
     <header class="panel-header">
         <div>
-            <h1>Gebruiksvoorwaarden &amp; disclaimer voor kandidaten</h1>
+            <h1>@Culture["Legal.Usage"]</h1>
             <p class="login-lead">Laatst bijgewerkt: 25 juli 2026 · Inclusief chatbot- en AI-gebruik</p>
         </div>
     </header>
 
     <LegalToc />
+
+    <p class="login-lead muted">@Culture["Legal.DocNote"]</p>
 
     <article class="legal-doc">
         <section>

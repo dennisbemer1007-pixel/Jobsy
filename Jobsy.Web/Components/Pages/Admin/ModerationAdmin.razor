@@ -2,9 +2,22 @@
 @rendermode @(new InteractiveServerRenderMode(prerender: false))
 @attribute [Authorize(Roles = "Admin")]
 @using Jobsy.Web.Components.Admin
+@inject CultureState Culture
+@implements IDisposable
 
-<PageTitle>Moderatie · Lobsy</PageTitle>
+<PageTitle>@Culture["Admin.Moderation"] · Lobsy</PageTitle>
 
-<AdminPageShell Title="Content en vacature moderatie" Lead="Controleer vacatures, afbeeldingen en meldingen.">
+<AdminPageShell Title="@Culture["Admin.Moderation"]" Lead="@Culture["Admin.ModerationLead"]">
     <p class="muted">Nog niet beschikbaar — moderatiewachtrij komt later.</p>
 </AdminPageShell>
+
+@code {
+    protected override void OnInitialized()
+        => Culture.Changed += OnCultureChanged;
+
+    private void OnCultureChanged()
+        => InvokeAsync(StateHasChanged);
+
+    public void Dispose()
+        => Culture.Changed -= OnCultureChanged;
+}

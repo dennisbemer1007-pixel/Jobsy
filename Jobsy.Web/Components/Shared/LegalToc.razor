@@ -1,29 +1,40 @@
 @inject NavigationManager Navigation
+@inject CultureState Culture
+@implements IDisposable
 
-<nav class="legal-toc" aria-label="Inhoudsopgave">
+<nav class="legal-toc" aria-label="@Culture["Legal.Toc"]">
     <a href="/privacy"
        class="@(IsActive("privacy") ? "legal-toc__link--active" : null)"
        aria-current="@(IsActive("privacy") ? "page" : null)">
-        Privacyverklaring
+        @Culture["Legal.Privacy"]
     </a>
     <a href="/algemene-voorwaarden"
        class="@(IsActive("algemene-voorwaarden") ? "legal-toc__link--active" : null)"
        aria-current="@(IsActive("algemene-voorwaarden") ? "page" : null)">
-        Algemene voorwaarden
+        @Culture["Legal.Terms"]
     </a>
     <a href="/gebruiksvoorwaarden"
        class="@(IsActive("gebruiksvoorwaarden") ? "legal-toc__link--active" : null)"
        aria-current="@(IsActive("gebruiksvoorwaarden") ? "page" : null)">
-        Gebruiksvoorwaarden
+        @Culture["Legal.Usage"]
     </a>
     <a href="/wie-zijn-wij"
        class="@(IsActive("wie-zijn-wij") ? "legal-toc__link--active" : null)"
        aria-current="@(IsActive("wie-zijn-wij") ? "page" : null)">
-        Wie zijn wij
+        @Culture["Legal.About"]
     </a>
 </nav>
 
 @code {
+    protected override void OnInitialized()
+        => Culture.Changed += OnCultureChanged;
+
+    private void OnCultureChanged()
+        => InvokeAsync(StateHasChanged);
+
+    public void Dispose()
+        => Culture.Changed -= OnCultureChanged;
+
     private string CurrentPath
         => Navigation.ToBaseRelativePath(Navigation.Uri).TrimStart('/').Split('?', '#')[0];
 

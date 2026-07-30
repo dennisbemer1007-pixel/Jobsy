@@ -1008,7 +1008,7 @@
         }
         catch (Exception ex)
         {
-            _error = $"Kon vacatures niet laden. Start de API op poort 5200. ({ex.Message})";
+            _error = Culture.Format("Discovery.LoadFailed", ex.Message);
             _vacancies = [];
         }
         finally

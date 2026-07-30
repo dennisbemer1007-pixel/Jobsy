@@ -3,20 +3,22 @@
 @attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "EnterpriseManager,Admin")]
 @using Jobsy.Web.Navigation
 @inject JobsyApiClient Api
+@inject CultureState Culture
+@implements IDisposable
 
-<PageTitle>Regio's · Lobsy</PageTitle>
+<PageTitle>@Culture["Employer.Regions"] · Lobsy</PageTitle>
 
 <div class="panel-page">
     <header class="panel-header">
         <div>
-            <h1>Regio's</h1>
+            <h1>@Culture["Employer.Regions"]</h1>
             <p class="login-lead">Groepeer vestigingen en nodig per regio een regiomanager uit.</p>
         </div>
     </header>
 
     @if (_loading)
     {
-        <p class="state-message">Laden…</p>
+        <p class="state-message">@Culture["Common.Loading"]</p>
     }
     else if (!string.IsNullOrEmpty(_error))
     {
@@ -64,7 +66,7 @@
                     </label>
                     <div class="inline-actions">
                         <button class="login-submit" type="submit" disabled="@_busy">Uitnodigen</button>
-                        <button class="provider-btn" type="button" @onclick="CloseInvite">Annuleren</button>
+                        <button class="provider-btn" type="button" @onclick="CloseInvite">@Culture["Common.Cancel"]</button>
                     </div>
                 </form>
             </section>
@@ -102,10 +104,10 @@
                     }
                 </fieldset>
                 <div class="inline-actions">
-                    <button class="login-submit" type="submit" disabled="@_busy">Opslaan</button>
+                    <button class="login-submit" type="submit" disabled="@_busy">@Culture["Common.Save"]</button>
                     @if (_editId is not null)
                     {
-                        <button class="provider-btn" type="button" @onclick="ResetForm">Annuleren</button>
+                        <button class="provider-btn" type="button" @onclick="ResetForm">@Culture["Common.Cancel"]</button>
                     }
                 </div>
             </form>
@@ -134,6 +136,15 @@
     private RegionItem? _inviteRegion;
     private string _rmEmail = "";
     private string _rmName = "";
+
+    protected override void OnInitialized()
+        => Culture.Changed += OnCultureChanged;
+
+    private void OnCultureChanged()
+        => InvokeAsync(StateHasChanged);
+
+    public void Dispose()
+        => Culture.Changed -= OnCultureChanged;
 
     protected override async Task OnInitializedAsync()
     {

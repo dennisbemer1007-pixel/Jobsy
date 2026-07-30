@@ -2,20 +2,22 @@
 @rendermode @(new InteractiveServerRenderMode(prerender: false))
 @attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "BranchManager,EnterpriseManager,Admin")]
 @inject JobsyApiClient Api
+@inject CultureState Culture
+@implements IDisposable
 
-<PageTitle>Overnameverzoeken · Lobsy</PageTitle>
+<PageTitle>@Culture["Employer.Takeovers"] · Lobsy</PageTitle>
 
 <div class="panel-page">
     <header class="panel-header">
         <div>
-            <h1>Overnameverzoeken</h1>
+            <h1>@Culture["Employer.Takeovers"]</h1>
             <p class="login-lead">Vestigingen waarvoor iemand overname heeft aangevraagd.</p>
         </div>
     </header>
 
     @if (_loading)
     {
-        <p class="state-message">Laden…</p>
+        <p class="state-message">@Culture["Common.Loading"]</p>
     }
     else if (!string.IsNullOrEmpty(_error))
     {
@@ -59,6 +61,15 @@
     private bool _busy;
     private string? _error;
     private string? _message;
+
+    protected override void OnInitialized()
+        => Culture.Changed += OnCultureChanged;
+
+    private void OnCultureChanged()
+        => InvokeAsync(StateHasChanged);
+
+    public void Dispose()
+        => Culture.Changed -= OnCultureChanged;
 
     protected override async Task OnInitializedAsync() => await ReloadAsync();
 

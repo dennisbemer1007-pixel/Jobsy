@@ -5,13 +5,15 @@
 @inject JobsyApiClient Api
 @inject NavigationManager Nav
 @using Microsoft.AspNetCore.WebUtilities
+@inject CultureState Culture
+@implements IDisposable
 
-<PageTitle>Gebruikers · Lobsy</PageTitle>
+<PageTitle>@Culture["Admin.Users"] · Lobsy</PageTitle>
 
-<AdminPageShell Title="Gebruikers en kandidaten" Lead="Zoek op naam, e-mail, rol of type. Early adapters zijn gemarkeerd." ShowSettingsNav="true">
+<AdminPageShell Title="@Culture["Admin.Users"]" Lead="@Culture["Admin.UsersLead"]" ShowSettingsNav="true">
     @if (_loading)
     {
-        <p class="state-message">Laden…</p>
+        <p class="state-message">@Culture["Common.Loading"]</p>
     }
     else if (!string.IsNullOrEmpty(_error))
     {
@@ -21,8 +23,8 @@
     {
         <div class="filter-bar">
             <label>
-                Zoeken
-                <input type="search" @bind="_query" @bind:event="oninput" placeholder="Naam, e-mail, rol…" />
+                @Culture["Common.Search"]
+                <input type="search" @bind="_query" @bind:event="oninput" placeholder="@Culture["Admin.SearchPlaceholder"]" />
             </label>
             <label>
                 Rol
@@ -107,6 +109,16 @@
         _users.Select(u => u.Role).Distinct().OrderBy(r => r);
 
     private List<AdminUserItem> _filtered => Filter().ToList();
+
+
+    protected override void OnInitialized()
+        => Culture.Changed += OnCultureChanged;
+
+    private void OnCultureChanged()
+        => InvokeAsync(StateHasChanged);
+
+    public void Dispose()
+        => Culture.Changed -= OnCultureChanged;
 
     protected override async Task OnInitializedAsync()
     {

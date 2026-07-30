@@ -3,6 +3,7 @@
 @attribute [Authorize(Roles = "SalesManager")]
 @inject JobsyApiClient Api
 @inject NavigationManager Navigation
+@inject CultureState Culture
 
 <PageTitle>Uitbetaling stub · Lobsy</PageTitle>
 
@@ -15,7 +16,7 @@
 
     @if (_loading)
     {
-        <p class="state-message">Laden…</p>
+        <p class="state-message">@Culture["Common.Loading"]</p>
     }
     else
     {
@@ -30,7 +31,7 @@
             <button class="login-submit" type="button" disabled="@_busy || string.IsNullOrWhiteSpace(_paymentId)" @onclick="CompleteAsync">
                 @(_busy ? "Bezig…" : "Uitbetalen (stub)")
             </button>
-            <a class="auth-link" href="/salesmanager/invoices">Annuleren</a>
+            <a class="auth-link" href="/salesmanager/invoices">@Culture["Common.Cancel"]</a>
         </div>
 
         @if (!string.IsNullOrEmpty(_message))

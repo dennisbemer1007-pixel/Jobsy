@@ -2,9 +2,22 @@
 @rendermode @(new InteractiveServerRenderMode(prerender: false))
 @attribute [Authorize(Roles = "Admin")]
 @using Jobsy.Web.Components.Admin
+@inject CultureState Culture
+@implements IDisposable
 
-<PageTitle>Notificaties · Lobsy</PageTitle>
+<PageTitle>@Culture["Admin.Notifications"] · Lobsy</PageTitle>
 
-<AdminPageShell Title="Notificaties" Lead="E-mail-, push- en in-app berichten naar gebruikers." ShowSettingsNav="true">
+<AdminPageShell Title="@Culture["Admin.Notifications"]" Lead="@Culture["Admin.NotificationsLead"]" ShowSettingsNav="true">
     <p class="muted">Nog niet beschikbaar — templates en verzendwachtrij komen later.</p>
 </AdminPageShell>
+
+@code {
+    protected override void OnInitialized()
+        => Culture.Changed += OnCultureChanged;
+
+    private void OnCultureChanged()
+        => InvokeAsync(StateHasChanged);
+
+    public void Dispose()
+        => Culture.Changed -= OnCultureChanged;
+}

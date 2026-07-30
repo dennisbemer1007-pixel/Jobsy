@@ -3,20 +3,22 @@
 @rendermode @(new InteractiveServerRenderMode(prerender: false))
 @attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "RegionalManager,EnterpriseManager")]
 @inject JobsyApiClient Api
+@inject CultureState Culture
+@implements IDisposable
 
-<PageTitle>Vestigingen · Lobsy</PageTitle>
+<PageTitle>@Culture["Employer.Branches"] · Lobsy</PageTitle>
 
 <div class="panel-page">
     <header class="panel-header">
         <div>
-            <h1>Mijn vestigingen</h1>
+            <h1>@Culture["Employer.Branches"]</h1>
             <p class="login-lead">Vestigingen beheren en managers uitnodigen.</p>
         </div>
     </header>
 
     @if (_loading)
     {
-        <p class="state-message">Laden…</p>
+        <p class="state-message">@Culture["Common.Loading"]</p>
     }
     else if (!string.IsNullOrEmpty(_error))
     {
@@ -88,7 +90,7 @@
                     </label>
                     <div class="inline-actions">
                         <button class="login-submit" type="submit" disabled="@_busy">Uitnodigen</button>
-                        <button class="provider-btn" type="button" @onclick="CloseBranchInvite">Annuleren</button>
+                        <button class="provider-btn" type="button" @onclick="CloseBranchInvite">@Culture["Common.Cancel"]</button>
                     </div>
                 </form>
             </section>
@@ -166,6 +168,15 @@
     private CompanySummary? _inviteBranch;
     private string _bmEmail = "";
     private string _bmName = "";
+
+    protected override void OnInitialized()
+        => Culture.Changed += OnCultureChanged;
+
+    private void OnCultureChanged()
+        => InvokeAsync(StateHasChanged);
+
+    public void Dispose()
+        => Culture.Changed -= OnCultureChanged;
 
     protected override async Task OnInitializedAsync()
     {
