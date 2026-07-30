@@ -102,8 +102,12 @@
                                     </a>
                                     @if (v.Status == "Active")
                                     {
-                                        <button class="btn-compact" type="button" disabled="@_busy" @onclick="() => DeactivateAsync(v)">@Culture["VacancyStatus.Archived"]</button>
-                                        <button class="btn-compact" type="button" disabled="@_busy" @onclick="() => ExtendAsync(v)">Verlengen</button>
+                                        <button class="icon-btn" type="button" title="Verleng" aria-label="Vacature verlengen" disabled="@_busy" @onclick="() => ExtendAsync(v)">
+                                            @((MarkupString)ActionIcons.Extend)
+                                        </button>
+                                        <button class="icon-btn" type="button" title="Inactive" aria-label="Vacature inactief zetten" disabled="@_busy" @onclick="() => DeactivateAsync(v)">
+                                            @((MarkupString)ActionIcons.Deactivate)
+                                        </button>
                                     }
                                 </td>
                             </tr>

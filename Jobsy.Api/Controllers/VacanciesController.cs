@@ -265,9 +265,19 @@ public class VacanciesController : ControllerBase
             .GroupBy(c => c.VacancyId)
             .Select(g => new { VacancyId = g.Key, Count = g.Count() })
             .ToDictionaryAsync(x => x.VacancyId, x => x.Count, cancellationToken);
+        var shareCounts = await _db.VacancyShares.AsNoTracking()
+            .Where(s => ids.Contains(s.VacancyId))
+            .GroupBy(s => s.VacancyId)
+            .Select(g => new { VacancyId = g.Key, Count = g.Count() })
+            .ToDictionaryAsync(x => x.VacancyId, x => x.Count, cancellationToken);
         var applicationCounts = await _db.Applications.AsNoTracking()
             .Where(a => ids.Contains(a.VacancyId) && a.EmailVerifiedAt != null)
             .GroupBy(a => a.VacancyId)
+            .Select(g => new { VacancyId = g.Key, Count = g.Count() })
+            .ToDictionaryAsync(x => x.VacancyId, x => x.Count, cancellationToken);
+        var likeCounts = await _db.VacancyLikes.AsNoTracking()
+            .Where(l => ids.Contains(l.VacancyId))
+            .GroupBy(l => l.VacancyId)
             .Select(g => new { VacancyId = g.Key, Count = g.Count() })
             .ToDictionaryAsync(x => x.VacancyId, x => x.Count, cancellationToken);
 
@@ -282,6 +292,8 @@ public class VacanciesController : ControllerBase
                     impressionCount: impressionCounts.GetValueOrDefault(v.Id),
                     clickCount: clickCounts.GetValueOrDefault(v.Id),
                     applicationCount: applicationCounts.GetValueOrDefault(v.Id),
+                    shareCount: shareCounts.GetValueOrDefault(v.Id),
+                    likeCount: likeCounts.GetValueOrDefault(v.Id),
                     includeDescription: false));
             }
             catch
@@ -1095,7 +1107,9 @@ public class VacanciesController : ControllerBase
         int impressionCount = 0,
         int clickCount = 0,
         int applicationCount = 0,
-        bool includeDescription = true)
+        bool includeDescription = true,
+        int shareCount = 0,
+        int likeCount = 0)
     {
         decimal? hourly = null;
         IReadOnlyList<WageByAgeDto>? wageByAge = null;
@@ -1164,7 +1178,9 @@ public class VacanciesController : ControllerBase
             v.LegalNightShift23To06,
             v.LegalAdultSupervisorPresent,
             v.LegalHandlesMoneyOrClosing,
-            v.LegalHeavyOrHazardousWork);
+            v.LegalHeavyOrHazardousWork,
+            shareCount,
+            likeCount);
     }
 
     private static string? ApplyHoursAndSchedule(Core.Entities.Vacancy vacancy, CreateVacancyRequest request)
