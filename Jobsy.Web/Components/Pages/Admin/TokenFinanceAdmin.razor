@@ -125,7 +125,7 @@
         <div class="panel-section" style="margin-bottom:1rem;border-left:4px solid #0F766E;padding-left:1rem">
             <strong>Inkoop / kostenposten — salesmanager-uitbetalingen</strong>
             <p class="muted" style="margin:0.25rem 0 0">
-                Self-billing facturen met ex-BTW en BTW (standaard 21% inkoop-btw). Tellen mee in Rubriek 5 van de BTW-aangifte wanneer betaald.
+                Alleen betaalde self-billing facturen (PaidAt), gelijk aan Rubriek 5. Ex-BTW + BTW (standaard 21% inkoop-btw).
             </p>
         </div>
         @if (_smCosts.Count == 0)
@@ -349,7 +349,11 @@
                     </p>
                     @if (_wizardPreview.AlreadyDeclared)
                     {
-                        <p class="state-message error" style="margin:0.5rem 0 0">Deze periode is al bevestigd.</p>
+                        <p class="state-message" style="margin:0.5rem 0 0">Alle openstaande BTW-regels voor deze periode zijn al verwerkt.</p>
+                    }
+                    else if (_wizardPreview.TokenInvoiceCount == 0 && _wizardPreview.SalesManagerInvoiceCount == 0)
+                    {
+                        <p class="muted" style="margin:0.5rem 0 0">Geen openstaande verkoop- of inkoopregels om te verwerken@( _wizardPreview.GoodwillCount > 0 ? $" ({_wizardPreview.GoodwillCount} goodwill, geen omzet)." : ".")</p>
                     }
                 </div>
             }

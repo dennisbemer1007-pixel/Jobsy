@@ -43,31 +43,31 @@ public sealed class VatDeclarationService : IVatDeclarationService
             .ToListAsync(cancellationToken);
 
         var periods = tokenDates.Concat(smDates)
-            .Select(d => (d.Year, Quarter: ((d.Month - 1) / 3) + 1))
+            .Select(ToLocalYearQuarter)
             .Distinct()
             .OrderByDescending(p => p.Year)
             .ThenByDescending(p => p.Quarter)
             .ToList();
 
         // Always offer current + previous quarter even if empty (admin can still open wizard).
-        var now = DateTime.UtcNow;
-        var currentQ = ((now.Month - 1) / 3) + 1;
-        EnsurePeriod(periods, now.Year, currentQ);
-        var prev = currentQ == 1 ? (now.Year - 1, 4) : (now.Year, currentQ - 1);
+        var nowLocal = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, Amsterdam);
+        var currentQ = ((nowLocal.Month - 1) / 3) + 1;
+        EnsurePeriod(periods, nowLocal.Year, currentQ);
+        var prev = currentQ == 1 ? (nowLocal.Year - 1, 4) : (nowLocal.Year, currentQ - 1);
         EnsurePeriod(periods, prev.Item1, prev.Item2);
 
         var result = new List<VatOpenPeriodDto>();
         foreach (var (year, quarter) in periods.OrderByDescending(p => p.Year).ThenByDescending(p => p.Quarter))
         {
             var preview = await PreviewAsync(year, quarter, cancellationToken);
+            var hasOpen = preview.TokenInvoiceCount > 0 || preview.SalesManagerInvoiceCount > 0;
             result.Add(new VatOpenPeriodDto(
                 year,
                 quarter,
                 preview.PeriodLabel,
                 preview.TokenInvoiceCount,
                 preview.SalesManagerInvoiceCount,
-                !preview.AlreadyDeclared
-                    && (preview.TokenInvoiceCount > 0 || preview.SalesManagerInvoiceCount > 0 || preview.GoodwillCount > 0)));
+                hasOpen));
         }
 
         return result;
@@ -81,10 +81,6 @@ public sealed class VatDeclarationService : IVatDeclarationService
         ValidatePeriod(year, quarter);
         var label = PeriodLabel(year, quarter);
         var (start, end) = PeriodBounds(year, quarter);
-
-        var already = await _db.VatDeclarations.AsNoTracking()
-            .AnyAsync(d => d.Year == year && d.Quarter == quarter
-                           && d.Status == VatDeclarationStatus.Confirmed, cancellationToken);
 
         var tokens = await _db.TokenPurchaseInvoices.AsNoTracking()
             .Where(i => i.VatDeclarationId == null
@@ -101,6 +97,13 @@ public sealed class VatDeclarationService : IVatDeclarationService
                         && i.PaidAt != null
                         && i.PaidAt >= start && i.PaidAt < end)
             .ToListAsync(cancellationToken);
+
+        var hasConfirmed = await _db.VatDeclarations.AsNoTracking()
+            .AnyAsync(d => d.Year == year && d.Quarter == quarter
+                           && d.Status == VatDeclarationStatus.Confirmed, cancellationToken);
+
+        // AlreadyDeclared = fully closed (confirmed + no remaining open VAT lines).
+        var already = hasConfirmed && tokens.Count == 0 && smInvoices.Count == 0;
 
         var r1Ex = tokens.Sum(t => t.AmountExVatCents);
         var r1Vat = tokens.Sum(t => t.VatAmountCents);
@@ -139,17 +142,8 @@ public sealed class VatDeclarationService : IVatDeclarationService
         CancellationToken cancellationToken = default)
     {
         ValidatePeriod(year, quarter);
-        var label = PeriodLabel(year, quarter);
+        var baseLabel = PeriodLabel(year, quarter);
         var (start, end) = PeriodBounds(year, quarter);
-
-        var existing = await _db.VatDeclarations
-            .AnyAsync(d => d.Year == year && d.Quarter == quarter
-                           && d.Status == VatDeclarationStatus.Confirmed, cancellationToken);
-        if (existing)
-        {
-            throw new InvalidOperationException(
-                $"Er bestaat al een bevestigde BTW-aangifte voor {label}.");
-        }
 
         var tokens = await _db.TokenPurchaseInvoices
             .Where(i => i.VatDeclarationId == null
@@ -170,8 +164,14 @@ public sealed class VatDeclarationService : IVatDeclarationService
         if (tokens.Count == 0 && smInvoices.Count == 0)
         {
             throw new InvalidOperationException(
-                $"Geen openstaande BTW-regels voor {label}.");
+                $"Geen openstaande BTW-regels voor {baseLabel}.");
         }
+
+        // Supplemental runs allowed when new open lines appear after a prior confirm.
+        var priorCount = await _db.VatDeclarations.AsNoTracking()
+            .CountAsync(d => d.Year == year && d.Quarter == quarter
+                             && d.Status == VatDeclarationStatus.Confirmed, cancellationToken);
+        var label = priorCount == 0 ? baseLabel : $"{baseLabel}-{priorCount + 1}";
 
         var platform = await _companySettings.GetAsync(cancellationToken);
         var r1Ex = tokens.Sum(t => t.AmountExVatCents);
@@ -283,24 +283,24 @@ public sealed class VatDeclarationService : IVatDeclarationService
         int? quarter = null,
         CancellationToken cancellationToken = default)
     {
+        // Align with Rubriek 5: only paid invoices, filtered by PaidAt in period.
         var query = _db.SelfBillingInvoices.AsNoTracking()
-            .Where(i => i.Status == SelfBillingInvoiceStatus.Paid || i.Status == SelfBillingInvoiceStatus.Issued);
+            .Where(i => i.Status == SelfBillingInvoiceStatus.Paid && i.PaidAt != null);
 
-        if (year is int y)
+        if (year is int y && quarter is int q && q is >= 1 and <= 4)
         {
-            query = query.Where(i => (i.PaidAt ?? i.IssuedAt ?? i.CreatedAt).Year == y);
-            if (quarter is int q && q is >= 1 and <= 4)
-            {
-                var startMonth = (q - 1) * 3 + 1;
-                var endMonth = startMonth + 2;
-                query = query.Where(i =>
-                    (i.PaidAt ?? i.IssuedAt ?? i.CreatedAt).Month >= startMonth
-                    && (i.PaidAt ?? i.IssuedAt ?? i.CreatedAt).Month <= endMonth);
-            }
+            var (start, end) = PeriodBounds(y, q);
+            query = query.Where(i => i.PaidAt >= start && i.PaidAt < end);
+        }
+        else if (year is int yOnly)
+        {
+            var (start, end) = PeriodBounds(yOnly, 1);
+            end = PeriodBounds(yOnly, 4).End;
+            query = query.Where(i => i.PaidAt >= start && i.PaidAt < end);
         }
 
         return await query
-            .OrderByDescending(i => i.PaidAt ?? i.IssuedAt ?? i.CreatedAt)
+            .OrderByDescending(i => i.PaidAt)
             .Select(i => new SalesManagerCostFinanceRow(
                 i.Id,
                 i.InvoiceNumber,
@@ -315,6 +315,20 @@ public sealed class VatDeclarationService : IVatDeclarationService
                 i.VatDeclarationStatusLabel))
             .Take(2000)
             .ToListAsync(cancellationToken);
+    }
+
+    private static readonly TimeZoneInfo Amsterdam = ResolveAmsterdam();
+
+    private static TimeZoneInfo ResolveAmsterdam()
+    {
+        try
+        {
+            return TimeZoneInfo.FindSystemTimeZoneById("Europe/Amsterdam");
+        }
+        catch (TimeZoneNotFoundException)
+        {
+            return TimeZoneInfo.FindSystemTimeZoneById("W. Europe Standard Time");
+        }
     }
 
     private byte[] RenderPdf(VatDeclaration d, PlatformCompanySnapshot platform)
@@ -448,9 +462,24 @@ public sealed class VatDeclarationService : IVatDeclarationService
     private static (DateTime Start, DateTime End) PeriodBounds(int year, int quarter)
     {
         var startMonth = (quarter - 1) * 3 + 1;
-        var start = new DateTime(year, startMonth, 1, 0, 0, 0, DateTimeKind.Utc);
-        var end = start.AddMonths(3);
+        // Dutch tax quarter in Europe/Amsterdam local time, stored as UTC bounds.
+        var localStart = new DateTime(year, startMonth, 1, 0, 0, 0, DateTimeKind.Unspecified);
+        var localEnd = localStart.AddMonths(3);
+        var start = TimeZoneInfo.ConvertTimeToUtc(localStart, Amsterdam);
+        var end = TimeZoneInfo.ConvertTimeToUtc(localEnd, Amsterdam);
         return (start, end);
+    }
+
+    private static (int Year, int Quarter) ToLocalYearQuarter(DateTime utc)
+    {
+        var universal = utc.Kind switch
+        {
+            DateTimeKind.Utc => utc,
+            DateTimeKind.Local => utc.ToUniversalTime(),
+            _ => DateTime.SpecifyKind(utc, DateTimeKind.Utc)
+        };
+        var amsterdam = TimeZoneInfo.ConvertTimeFromUtc(universal, Amsterdam);
+        return (amsterdam.Year, ((amsterdam.Month - 1) / 3) + 1);
     }
 
     private static void ValidatePeriod(int year, int quarter)

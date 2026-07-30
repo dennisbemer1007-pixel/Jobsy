@@ -42,7 +42,7 @@ public sealed class VatBufferTransferService : IVatBufferTransferService
                 InvoiceNumber = invoice.InvoiceNumber,
                 DestinationIban = "",
                 AmountCents = 0,
-                Status = VatBufferTransferStatus.SkippedNoIban,
+                Status = VatBufferTransferStatus.SkippedNoVat,
                 CreatedAt = DateTime.UtcNow,
                 ProcessedAt = DateTime.UtcNow,
                 Note = "Geen BTW-bedrag om over te boeken."

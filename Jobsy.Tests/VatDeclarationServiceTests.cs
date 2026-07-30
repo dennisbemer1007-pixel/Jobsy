@@ -120,6 +120,102 @@ public class VatDeclarationServiceTests
             sut.GenerateAndConfirmAsync(2026, 1));
     }
 
+    [Fact]
+    public async Task Generate_allows_supplemental_when_new_open_items_appear()
+    {
+        await using var db = CreateDb();
+        SeedPlatform(db);
+
+        var companyId = Guid.NewGuid();
+        db.Companies.Add(new Company
+        {
+            Id = companyId,
+            Name = "Klant BV",
+            KvkNumber = "1",
+            Address = "a",
+            Location = new GeoPoint(51.9, 4.2)
+        });
+
+        var checkout1 = Guid.NewGuid();
+        var (ex, vat, total) = TokenVatPricing.SplitInclVatEuros(121.00m);
+        db.TokenPurchaseCheckouts.Add(new TokenPurchaseCheckout
+        {
+            Id = checkout1,
+            PaymentId = "stub_pay_a",
+            CompanyId = companyId,
+            PackSize = 10,
+            AmountEuro = 121m,
+            AmountExVatCents = ex,
+            VatAmountCents = vat,
+            TotalAmountCents = total,
+            Status = TokenPurchaseCheckoutStatus.Credited,
+            CreatedAt = new DateTime(2026, 2, 10, 0, 0, 0, DateTimeKind.Utc)
+        });
+        db.TokenPurchaseInvoices.Add(new TokenPurchaseInvoice
+        {
+            Id = Guid.NewGuid(),
+            InvoiceNumber = "LOB-TK-2026-0001",
+            TokenPurchaseCheckoutId = checkout1,
+            CompanyId = companyId,
+            MolliePaymentId = "stub_pay_a",
+            PackSize = 10,
+            AmountExVatCents = ex,
+            VatAmountCents = vat,
+            TotalAmountCents = total,
+            CompanyName = "Klant BV",
+            IssuedAt = new DateTime(2026, 2, 10, 12, 0, 0, DateTimeKind.Utc),
+            CreatedAt = new DateTime(2026, 2, 10, 12, 0, 0, DateTimeKind.Utc)
+        });
+        await db.SaveChangesAsync();
+
+        var sut = new VatDeclarationService(db, new PlatformCompanySettingsService(db));
+        var first = await sut.GenerateAndConfirmAsync(2026, 1);
+        Assert.Equal("2026-Q1", first.PeriodLabel);
+
+        var checkout2 = Guid.NewGuid();
+        db.TokenPurchaseCheckouts.Add(new TokenPurchaseCheckout
+        {
+            Id = checkout2,
+            PaymentId = "stub_pay_b",
+            CompanyId = companyId,
+            PackSize = 5,
+            AmountEuro = 60.50m,
+            AmountExVatCents = 5000,
+            VatAmountCents = 1050,
+            TotalAmountCents = 6050,
+            Status = TokenPurchaseCheckoutStatus.Credited,
+            CreatedAt = new DateTime(2026, 3, 1, 0, 0, 0, DateTimeKind.Utc)
+        });
+        db.TokenPurchaseInvoices.Add(new TokenPurchaseInvoice
+        {
+            Id = Guid.NewGuid(),
+            InvoiceNumber = "LOB-TK-2026-0002",
+            TokenPurchaseCheckoutId = checkout2,
+            CompanyId = companyId,
+            MolliePaymentId = "stub_pay_b",
+            PackSize = 5,
+            AmountExVatCents = 5000,
+            VatAmountCents = 1050,
+            TotalAmountCents = 6050,
+            CompanyName = "Klant BV",
+            IssuedAt = new DateTime(2026, 3, 1, 12, 0, 0, DateTimeKind.Utc),
+            CreatedAt = new DateTime(2026, 3, 1, 12, 0, 0, DateTimeKind.Utc)
+        });
+        await db.SaveChangesAsync();
+
+        var preview = await sut.PreviewAsync(2026, 1);
+        Assert.False(preview.AlreadyDeclared);
+        Assert.Equal(1, preview.TokenInvoiceCount);
+
+        var second = await sut.GenerateAndConfirmAsync(2026, 1);
+        Assert.Equal("2026-Q1-2", second.PeriodLabel);
+        Assert.Equal(1, second.TokenInvoiceCount);
+
+        var closed = await sut.PreviewAsync(2026, 1);
+        Assert.True(closed.AlreadyDeclared);
+        Assert.Equal(0, closed.TokenInvoiceCount);
+    }
+
     private static void SeedPlatform(JobsyDbContext db)
     {
         db.PlatformCompanySettings.Add(new PlatformCompanySettings

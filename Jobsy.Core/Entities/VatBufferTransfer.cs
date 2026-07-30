@@ -44,5 +44,8 @@ public enum VatBufferTransferStatus
     Failed = 3,
 
     /// <summary>No Knab BTW IBAN configured at queue time.</summary>
-    SkippedNoIban = 4
+    SkippedNoIban = 4,
+
+    /// <summary>Invoice had no VAT amount to transfer.</summary>
+    SkippedNoVat = 5
 }

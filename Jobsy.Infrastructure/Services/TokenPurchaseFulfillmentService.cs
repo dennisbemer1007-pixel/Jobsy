@@ -1,4 +1,5 @@
 using Jobsy.Core.Entities;
+using Jobsy.Core.Enums;
 using Jobsy.Core.Interfaces;
 using Jobsy.Core.Rules;
 using Jobsy.Infrastructure.Data;
@@ -54,25 +55,22 @@ public sealed class TokenPurchaseFulfillmentService : ITokenPurchaseFulfillmentS
             return null;
         }
 
-        if (session.Status == TokenPurchaseCheckoutStatus.Credited
-            && session.TokenPurchaseInvoiceId is Guid existingInvoiceId)
-        {
-            var existingInvoice = await _invoices.GetAsync(existingInvoiceId, cancellationToken);
-            var bal = await _tokenLedger.GetBalanceAsync(session.CompanyId, cancellationToken);
-            return new TokenPurchaseFulfillmentResult(
-                session.Id,
-                session.CompanyId,
-                session.Company.Name,
-                bal,
-                session.TokenTransactionId ?? Guid.Empty,
-                existingInvoiceId,
-                existingInvoice?.InvoiceNumber ?? "",
-                AlreadyFulfilled: true);
-        }
-
         if (session.Status == TokenPurchaseCheckoutStatus.Cancelled)
         {
             return null;
+        }
+
+        // Already fully fulfilled.
+        if (session.TokenPurchaseInvoiceId is Guid existingInvoiceId)
+        {
+            return await BuildResultAsync(session, existingInvoiceId, alreadyFulfilled: true, cancellationToken);
+        }
+
+        // Credited / partial — repair forward without double-crediting.
+        if (session.Status == TokenPurchaseCheckoutStatus.Credited
+            || session.TokenTransactionId is not null)
+        {
+            return await RepairIncompleteFulfillmentAsync(session, actorUserId, cancellationToken);
         }
 
         if (allowDevStubMarkPaid
@@ -93,12 +91,221 @@ public sealed class TokenPurchaseFulfillmentService : ITokenPurchaseFulfillmentS
 
         EnsureMoneyFields(session);
 
-        // Atomic claim: only one concurrent fulfill can transition Pending/Paid → Credited.
         var creditedAt = DateTime.UtcNow;
-        var claimed = 0;
+        var claimed = await TryClaimAsync(session, creditedAt, cancellationToken);
+        if (claimed == 0)
+        {
+            await _db.Entry(session).ReloadAsync(cancellationToken);
+            if (session.TokenPurchaseInvoiceId is Guid invId)
+            {
+                return await BuildResultAsync(session, invId, alreadyFulfilled: true, cancellationToken);
+            }
+
+            if (session.Status == TokenPurchaseCheckoutStatus.Credited
+                || session.TokenTransactionId is not null)
+            {
+                return await RepairIncompleteFulfillmentAsync(session, actorUserId, cancellationToken);
+            }
+
+            // Another worker is mid-flight; treat as not ready yet (caller can retry).
+            return null;
+        }
+
+        try
+        {
+            return await CompleteAfterClaimAsync(session, actorUserId, cancellationToken);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Token purchase fulfillment failed for checkout {CheckoutId}", session.Id);
+
+            // Never roll back to Paid after a ledger credit — repair on next attempt instead.
+            var existingTx = await _db.TokenTransactions.AsNoTracking()
+                .AnyAsync(t => t.TokenPurchaseCheckoutId == session.Id, cancellationToken);
+            if (!existingTx && session.TokenTransactionId is null)
+            {
+                await ReleaseClaimAsync(session, cancellationToken);
+            }
+
+            throw;
+        }
+    }
+
+    private async Task<TokenPurchaseFulfillmentResult> RepairIncompleteFulfillmentAsync(
+        TokenPurchaseCheckout session,
+        Guid? actorUserId,
+        CancellationToken cancellationToken)
+    {
+        EnsureMoneyFields(session);
+
+        var entry = await _db.TokenTransactions
+            .FirstOrDefaultAsync(t => t.TokenPurchaseCheckoutId == session.Id
+                                      && t.Kind == TokenTransactionKind.Purchase, cancellationToken);
+
+        if (entry is null && session.TokenTransactionId is Guid txId)
+        {
+            entry = await _db.TokenTransactions.FirstOrDefaultAsync(t => t.Id == txId, cancellationToken);
+        }
+
+        if (entry is null)
+        {
+            // Credited without ledger row — complete as if we just claimed.
+            return await CompleteAfterClaimAsync(session, actorUserId, cancellationToken);
+        }
+
+        var invoice = await _db.TokenPurchaseInvoices
+            .FirstOrDefaultAsync(i => i.TokenPurchaseCheckoutId == session.Id, cancellationToken)
+            ?? await _invoices.CreateForCheckoutAsync(session, entry, cancellationToken);
+
+        await LinkCheckoutAndTransactionAsync(session, entry, invoice, cancellationToken);
+        await _vatBuffer.QueueForInvoiceAsync(invoice, cancellationToken);
+        await TryCreditCommissionAsync(session, cancellationToken);
+
+        return await BuildResultAsync(session, invoice.Id, alreadyFulfilled: true, cancellationToken);
+    }
+
+    private async Task<TokenPurchaseFulfillmentResult> CompleteAfterClaimAsync(
+        TokenPurchaseCheckout session,
+        Guid? actorUserId,
+        CancellationToken cancellationToken)
+    {
+        // Idempotent: reuse existing purchase ledger row for this checkout.
+        var entry = await _db.TokenTransactions
+            .FirstOrDefaultAsync(t => t.TokenPurchaseCheckoutId == session.Id
+                                      && t.Kind == TokenTransactionKind.Purchase, cancellationToken);
+
+        if (entry is null)
+        {
+            var notePrefix = session.PaymentId.StartsWith("stub_pay_", StringComparison.Ordinal)
+                ? "Mollie stub"
+                : "Mollie";
+
+            entry = await _tokenLedger.RecordPurchaseAsync(
+                session.CompanyId,
+                session.PackSize,
+                session.AmountExVatCents,
+                session.VatAmountCents,
+                session.TotalAmountCents,
+                session.Id,
+                invoiceId: null,
+                actorUserId,
+                $"{notePrefix} {session.PaymentId}",
+                cancellationToken);
+        }
+
+        TokenPurchaseInvoice invoice;
+        try
+        {
+            invoice = await _invoices.CreateForCheckoutAsync(session, entry, cancellationToken);
+        }
+        catch (DbUpdateException) when (_db.Database.IsRelational())
+        {
+            // Unique InvoiceNumber race — reload existing for this checkout if present.
+            invoice = await _db.TokenPurchaseInvoices
+                .FirstOrDefaultAsync(i => i.TokenPurchaseCheckoutId == session.Id, cancellationToken)
+                ?? throw new InvalidOperationException(
+                    $"Factuur aanmaken mislukt en geen bestaande factuur voor checkout {session.Id}.");
+        }
+
+        await LinkCheckoutAndTransactionAsync(session, entry, invoice, cancellationToken);
+        await _vatBuffer.QueueForInvoiceAsync(invoice, cancellationToken);
+        await TryCreditCommissionAsync(session, cancellationToken);
+
+        _logger.LogInformation(
+            "Token purchase fulfilled: checkout {CheckoutId}, invoice {InvoiceNumber}, VAT {VatCents}c",
+            session.Id, invoice.InvoiceNumber, invoice.VatAmountCents);
+
+        return new TokenPurchaseFulfillmentResult(
+            session.Id,
+            session.CompanyId,
+            session.Company.Name,
+            entry.NewBalance,
+            entry.Id,
+            invoice.Id,
+            invoice.InvoiceNumber,
+            AlreadyFulfilled: false);
+    }
+
+    private async Task LinkCheckoutAndTransactionAsync(
+        TokenPurchaseCheckout session,
+        TokenTransaction entry,
+        TokenPurchaseInvoice invoice,
+        CancellationToken cancellationToken)
+    {
         if (_db.Database.IsRelational())
         {
-            claimed = await _db.TokenPurchaseCheckouts
+            await _db.TokenPurchaseCheckouts
+                .Where(c => c.Id == session.Id)
+                .ExecuteUpdateAsync(
+                    s => s
+                        .SetProperty(c => c.Status, TokenPurchaseCheckoutStatus.Credited)
+                        .SetProperty(c => c.TokenTransactionId, entry.Id)
+                        .SetProperty(c => c.TokenPurchaseInvoiceId, invoice.Id),
+                    cancellationToken);
+
+            await _db.TokenTransactions
+                .Where(t => t.Id == entry.Id)
+                .ExecuteUpdateAsync(
+                    s => s.SetProperty(t => t.TokenPurchaseInvoiceId, invoice.Id),
+                    cancellationToken);
+        }
+        else
+        {
+            session.Status = TokenPurchaseCheckoutStatus.Credited;
+            session.TokenTransactionId = entry.Id;
+            session.TokenPurchaseInvoiceId = invoice.Id;
+            var trackedTx = await _db.TokenTransactions.FirstAsync(t => t.Id == entry.Id, cancellationToken);
+            trackedTx.TokenPurchaseInvoiceId = invoice.Id;
+            await _db.SaveChangesAsync(cancellationToken);
+        }
+
+        session.TokenTransactionId = entry.Id;
+        session.TokenPurchaseInvoiceId = invoice.Id;
+    }
+
+    private async Task TryCreditCommissionAsync(TokenPurchaseCheckout session, CancellationToken cancellationToken)
+    {
+        var company = await _db.Companies.AsNoTracking()
+            .FirstOrDefaultAsync(c => c.Id == session.CompanyId, cancellationToken);
+        if (company?.ReferredBySalesManagerUserId is Guid smId)
+        {
+            await _commissions.TryCreditTokenCommissionAsync(
+                smId,
+                session.CompanyId,
+                session.Id,
+                session.AmountEuro,
+                company.FirstYearStartedAt,
+                cancellationToken);
+        }
+    }
+
+    private async Task<TokenPurchaseFulfillmentResult> BuildResultAsync(
+        TokenPurchaseCheckout session,
+        Guid invoiceId,
+        bool alreadyFulfilled,
+        CancellationToken cancellationToken)
+    {
+        var existingInvoice = await _invoices.GetAsync(invoiceId, cancellationToken);
+        var bal = await _tokenLedger.GetBalanceAsync(session.CompanyId, cancellationToken);
+        return new TokenPurchaseFulfillmentResult(
+            session.Id,
+            session.CompanyId,
+            session.Company.Name,
+            bal,
+            session.TokenTransactionId ?? Guid.Empty,
+            invoiceId,
+            existingInvoice?.InvoiceNumber ?? "",
+            alreadyFulfilled);
+    }
+
+    private async Task<int> TryClaimAsync(
+        TokenPurchaseCheckout session,
+        DateTime creditedAt,
+        CancellationToken cancellationToken)
+    {
+        if (_db.Database.IsRelational())
+        {
+            return await _db.TokenPurchaseCheckouts
                 .Where(c => c.Id == session.Id
                             && (c.Status == TokenPurchaseCheckoutStatus.Pending
                                 || c.Status == TokenPurchaseCheckoutStatus.Paid))
@@ -111,139 +318,40 @@ public sealed class TokenPurchaseFulfillmentService : ITokenPurchaseFulfillmentS
                         .SetProperty(c => c.TotalAmountCents, session.TotalAmountCents),
                     cancellationToken);
         }
-        else
+
+        if (session.Status is TokenPurchaseCheckoutStatus.Pending or TokenPurchaseCheckoutStatus.Paid)
         {
-            // InMemory / tests: claim via tracked entity.
-            if (session.Status is TokenPurchaseCheckoutStatus.Pending or TokenPurchaseCheckoutStatus.Paid)
-            {
-                session.Status = TokenPurchaseCheckoutStatus.Credited;
-                session.CreditedAt = creditedAt;
-                session.AmountExVatCents = session.AmountExVatCents;
-                session.VatAmountCents = session.VatAmountCents;
-                session.TotalAmountCents = session.TotalAmountCents;
-                await _db.SaveChangesAsync(cancellationToken);
-                claimed = 1;
-            }
+            session.Status = TokenPurchaseCheckoutStatus.Credited;
+            session.CreditedAt = creditedAt;
+            await _db.SaveChangesAsync(cancellationToken);
+            return 1;
         }
 
-        if (claimed == 0)
+        return 0;
+    }
+
+    private async Task ReleaseClaimAsync(TokenPurchaseCheckout session, CancellationToken cancellationToken)
+    {
+        if (_db.Database.IsRelational())
         {
-            // Another worker won; reload and return existing fulfillment if present.
-            await _db.Entry(session).ReloadAsync(cancellationToken);
-            if (session.TokenPurchaseInvoiceId is Guid invId)
-            {
-                var inv = await _invoices.GetAsync(invId, cancellationToken);
-                var bal = await _tokenLedger.GetBalanceAsync(session.CompanyId, cancellationToken);
-                return new TokenPurchaseFulfillmentResult(
-                    session.Id,
-                    session.CompanyId,
-                    session.Company.Name,
-                    bal,
-                    session.TokenTransactionId ?? Guid.Empty,
-                    invId,
-                    inv?.InvoiceNumber ?? "",
-                    AlreadyFulfilled: true);
-            }
-
-            return null;
-        }
-
-        try
-        {
-            var notePrefix = session.PaymentId.StartsWith("stub_pay_", StringComparison.Ordinal)
-                ? "Mollie stub"
-                : "Mollie";
-
-            var entry = await _tokenLedger.RecordPurchaseAsync(
-                session.CompanyId,
-                session.PackSize,
-                session.AmountExVatCents,
-                session.VatAmountCents,
-                session.TotalAmountCents,
-                session.Id,
-                invoiceId: null,
-                actorUserId,
-                $"{notePrefix} {session.PaymentId}",
-                cancellationToken);
-
-            var invoice = await _invoices.CreateForCheckoutAsync(session, entry, cancellationToken);
-
-            if (_db.Database.IsRelational())
-            {
-                await _db.TokenPurchaseCheckouts
-                    .Where(c => c.Id == session.Id)
-                    .ExecuteUpdateAsync(
-                        s => s
-                            .SetProperty(c => c.TokenTransactionId, entry.Id)
-                            .SetProperty(c => c.TokenPurchaseInvoiceId, invoice.Id),
-                        cancellationToken);
-
-                await _db.TokenTransactions
-                    .Where(t => t.Id == entry.Id)
-                    .ExecuteUpdateAsync(
-                        s => s.SetProperty(t => t.TokenPurchaseInvoiceId, invoice.Id),
-                        cancellationToken);
-            }
-            else
-            {
-                session.TokenTransactionId = entry.Id;
-                session.TokenPurchaseInvoiceId = invoice.Id;
-                var trackedTx = await _db.TokenTransactions.FirstAsync(t => t.Id == entry.Id, cancellationToken);
-                trackedTx.TokenPurchaseInvoiceId = invoice.Id;
-                await _db.SaveChangesAsync(cancellationToken);
-            }
-
-            await _vatBuffer.QueueForInvoiceAsync(invoice, cancellationToken);
-
-            // Accrue salesmanager token commission when the supplier was referred.
-            var company = await _db.Companies.AsNoTracking()
-                .FirstOrDefaultAsync(c => c.Id == session.CompanyId, cancellationToken);
-            if (company?.ReferredBySalesManagerUserId is Guid smId)
-            {
-                await _commissions.TryCreditTokenCommissionAsync(
-                    smId,
-                    session.CompanyId,
-                    session.Id,
-                    session.AmountEuro,
-                    company.FirstYearStartedAt,
+            await _db.TokenPurchaseCheckouts
+                .Where(c => c.Id == session.Id
+                            && c.Status == TokenPurchaseCheckoutStatus.Credited
+                            && c.TokenTransactionId == null
+                            && c.TokenPurchaseInvoiceId == null)
+                .ExecuteUpdateAsync(
+                    s => s
+                        .SetProperty(c => c.Status, TokenPurchaseCheckoutStatus.Paid)
+                        .SetProperty(c => c.CreditedAt, (DateTime?)null),
                     cancellationToken);
-            }
-
-            _logger.LogInformation(
-                "Token purchase fulfilled: checkout {CheckoutId}, invoice {InvoiceNumber}, VAT {VatCents}c",
-                session.Id, invoice.InvoiceNumber, invoice.VatAmountCents);
-
-            return new TokenPurchaseFulfillmentResult(
-                session.Id,
-                session.CompanyId,
-                session.Company.Name,
-                entry.NewBalance,
-                entry.Id,
-                invoice.Id,
-                invoice.InvoiceNumber,
-                AlreadyFulfilled: false);
+            return;
         }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Token purchase fulfillment failed for checkout {CheckoutId}", session.Id);
-            if (_db.Database.IsRelational())
-            {
-                await _db.TokenPurchaseCheckouts
-                    .Where(c => c.Id == session.Id && c.Status == TokenPurchaseCheckoutStatus.Credited)
-                    .ExecuteUpdateAsync(
-                        s => s
-                            .SetProperty(c => c.Status, TokenPurchaseCheckoutStatus.Paid)
-                            .SetProperty(c => c.CreditedAt, (DateTime?)null),
-                        cancellationToken);
-            }
-            else
-            {
-                session.Status = TokenPurchaseCheckoutStatus.Paid;
-                session.CreditedAt = null;
-                await _db.SaveChangesAsync(cancellationToken);
-            }
 
-            throw;
+        if (session.TokenTransactionId is null && session.TokenPurchaseInvoiceId is null)
+        {
+            session.Status = TokenPurchaseCheckoutStatus.Paid;
+            session.CreditedAt = null;
+            await _db.SaveChangesAsync(cancellationToken);
         }
     }
 
