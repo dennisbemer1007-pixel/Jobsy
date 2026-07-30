@@ -45,7 +45,7 @@ public class ApplicationsController : ControllerBase
     }
 
     [HttpGet]
-    [Authorize(Policy = JobsyPolicies.RequireEmployer)]
+    [Authorize(Policy = JobsyPolicies.RequireAdminOrEmployer)]
     public async Task<ActionResult<IEnumerable<EmployerApplicationDto>>> GetForManagedCompanies(CancellationToken cancellationToken)
     {
         var accessible = await _companyAuth.GetAccessibleCompanyIdsAsync(User, cancellationToken);

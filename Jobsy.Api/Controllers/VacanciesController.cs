@@ -230,7 +230,7 @@ public class VacanciesController : ControllerBase
     /// Branch managers only see their own company.
     /// </summary>
     [HttpGet("manage")]
-    [Authorize(Policy = JobsyPolicies.RequireEmployer)]
+    [Authorize(Policy = JobsyPolicies.RequireAdminOrEmployer)]
     public async Task<ActionResult<IEnumerable<VacancyListItemDto>>> GetManaged(
         CancellationToken cancellationToken)
     {
