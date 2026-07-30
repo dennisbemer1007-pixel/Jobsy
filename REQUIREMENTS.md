@@ -47,6 +47,22 @@ Jobsy is een hyper-lokale job-matching applicatie gericht op de regionale arbeid
 - **Admin suite:** bedrijven, users, vacatures, finance/tokenlog, logging, settings, integratie-pings, WML (incl. halfjaarlijkse update-stub)
 - **Mockdata:** rijke seed (engagement, spends, logs, statusmix) zodat dashboards gevuld zijn
 
+## 4b. Matching, dagdelen, uren & Arbeidstijdenwet (specificatie)
+
+Volledige functionele specificatie voor kandidaat- en werkgeverskant:
+
+→ **[`docs/FUNCTIONELE_SPECIFICATIES_MATCHING.md`](docs/FUNCTIONELE_SPECIFICATIES_MATCHING.md)**
+
+Kernpunten:
+- **Dagdelen-matrix** (vacature + profiel) met vaste blokken Ochtend/Middag/Avond/Nacht en optie **“Tijden in overleg”** (handmatig of auto bij lege API/CSV/ATS-import)
+- **Verplichte uren** min/max per week + automatische urencategorie (bijbaan/parttime/fulltime)
+- **Geen UI-minimumleeftijd;** achtergrondfiltering via verplichte wettelijke taak-vinkjes + `[ i ]`-tooltips (Arbeidstijdenwet)
+- **Matchingspercentage** op banenkaart met breakdown-modal en actie-adviezen
+- **Gulden Middenweg** bij solliciteren (&lt; 50%): OTP tegenhouden, profiel aanpassen of vangnet
+- **Optioneel motivatieveld** op sollicitatieformulier
+- **Werkgeversdashboard:** match-% met kleurcodering, breakdown, wettelijke bevestiging, motivatie, sort hoog→laag
+- **CSV/API:** uren + legal flags verplicht; dagdelen optioneel → “Tijden in overleg”
+
 ## 5. Navigatie & entry points
 - **Anoniem** → banenkaart `/` (BottomNav: Banenkaart, Registreren, Inloggen)
 - **Na login** vanaf `/` of `/banen` → dashboard `/home`
