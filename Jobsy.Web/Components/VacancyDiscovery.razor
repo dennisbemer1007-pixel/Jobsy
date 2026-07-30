@@ -522,9 +522,14 @@
                 </section>
             </div>
 
-            <button type="button" class="filter-sheet__apply" @onclick="ApplySearch">
-                @Culture["Discovery.Search"]
-            </button>
+            <div class="filter-sheet__footer">
+                <button type="button" class="filter-sheet__cancel" @onclick="CloseFilters">
+                    @Culture["Discovery.Cancel"]
+                </button>
+                <button type="button" class="filter-sheet__apply" @onclick="ApplySearch">
+                    @Culture["Discovery.Apply"]
+                </button>
+            </div>
         </div>
     }
 </div>
@@ -543,6 +548,13 @@
     private int _radiusKm = 15;
     private string _selectedTransport = "Fiets";
     private readonly HashSet<string> _selectedWorkTypes = new(StringComparer.OrdinalIgnoreCase);
+    private HashSet<string> _snapSelectedWorkTypes = new(StringComparer.OrdinalIgnoreCase);
+    private int _snapMaxTravelMinutes = 30;
+    private int _snapRadiusKm = 15;
+    private string _snapSelectedTransport = "Fiets";
+    private int? _snapAgeYears;
+    private decimal? _snapMinHourlyWage;
+    private decimal? _snapMaxHourlyWage;
     /// <summary>Hidden keyword filter from assistant (?q=); not a primary UI control.</summary>
     private string? _searchQuery;
     private List<string> _branchOptions = WorkTypeLabels.All.ToList();
@@ -1291,24 +1303,14 @@
         if (int.TryParse(e.Value?.ToString(), out var value))
         {
             _maxTravelMinutes = Math.Clamp(value, 5, 90);
-            if (_mapReady)
-            {
-                try { await Js.InvokeVoidAsync("jobMap.setTravelOptions", TravelMapOptions()); }
-                catch { /* ignore */ }
-            }
-            await LoadVacanciesAsync();
+            await ReloadFiltersIfAppliedAsync();
         }
     }
 
     private async Task OnTransportChanged(ChangeEventArgs e)
     {
         _selectedTransport = e.Value?.ToString() ?? "Fiets";
-        if (_mapReady)
-        {
-            try { await Js.InvokeVoidAsync("jobMap.setTravelOptions", TravelMapOptions()); }
-            catch { /* ignore */ }
-        }
-        await LoadVacanciesAsync();
+        await ReloadFiltersIfAppliedAsync();
     }
 
     private async Task ToggleWorkTypeAsync(string label, ChangeEventArgs e)
@@ -1325,7 +1327,7 @@
             _selectedWorkTypes.Remove(label);
         }
 
-        await LoadVacanciesAsync();
+        await ReloadFiltersIfAppliedAsync();
     }
 
     private async Task OnRadiusChanged(ChangeEventArgs e)
@@ -1333,12 +1335,7 @@
         if (int.TryParse(e.Value?.ToString(), out var value))
         {
             _radiusKm = Math.Clamp(value, 1, 50);
-            if (_mapReady)
-            {
-                try { await Js.InvokeVoidAsync("jobMap.setTravelOptions", TravelMapOptions()); }
-                catch { /* ignore */ }
-            }
-            await LoadVacanciesAsync();
+            await ReloadFiltersIfAppliedAsync();
         }
     }
 
@@ -1360,19 +1357,40 @@
             _ageYears = NormalizeFilterAge(age);
         }
 
-        await PersistAgeAsync();
-        await LoadVacanciesAsync();
+        if (!_filtersOpen)
+        {
+            await PersistAgeAsync();
+        }
+
+        await ReloadFiltersIfAppliedAsync();
     }
 
     private async Task OnMinWageChanged(ChangeEventArgs e)
     {
         _minHourlyWage = TryParseWage(e.Value?.ToString());
-        await LoadVacanciesAsync();
+        await ReloadFiltersIfAppliedAsync();
     }
 
     private async Task OnMaxWageChanged(ChangeEventArgs e)
     {
         _maxHourlyWage = TryParseWage(e.Value?.ToString());
+        await ReloadFiltersIfAppliedAsync();
+    }
+
+    private async Task ReloadFiltersIfAppliedAsync()
+    {
+        // While the filter sheet/bar is open, edits stay pending until Toepassen/Zoeken.
+        if (_filtersOpen)
+        {
+            return;
+        }
+
+        if (_mapReady)
+        {
+            try { await Js.InvokeVoidAsync("jobMap.setTravelOptions", TravelMapOptions()); }
+            catch { /* ignore */ }
+        }
+
         await LoadVacanciesAsync();
     }
 
@@ -1501,12 +1519,57 @@
         };
     }
 
-    private void ToggleFilters() => _filtersOpen = !_filtersOpen;
+    private void ToggleFilters()
+    {
+        if (_filtersOpen)
+        {
+            CloseFilters();
+            return;
+        }
 
-    private void CloseFilters() => _filtersOpen = false;
+        CaptureFilterSnapshot();
+        _filtersOpen = true;
+    }
+
+    private void CloseFilters()
+    {
+        if (_filtersOpen)
+        {
+            RestoreFilterSnapshot();
+        }
+
+        _filtersOpen = false;
+    }
+
+    private void CaptureFilterSnapshot()
+    {
+        _snapMaxTravelMinutes = _maxTravelMinutes;
+        _snapRadiusKm = _radiusKm;
+        _snapSelectedTransport = _selectedTransport;
+        _snapAgeYears = _ageYears;
+        _snapMinHourlyWage = _minHourlyWage;
+        _snapMaxHourlyWage = _maxHourlyWage;
+        _snapSelectedWorkTypes = _selectedWorkTypes.ToHashSet(StringComparer.OrdinalIgnoreCase);
+    }
+
+    private void RestoreFilterSnapshot()
+    {
+        _maxTravelMinutes = _snapMaxTravelMinutes;
+        _radiusKm = _snapRadiusKm;
+        _selectedTransport = _snapSelectedTransport;
+        _ageYears = _snapAgeYears;
+        _minHourlyWage = _snapMinHourlyWage;
+        _maxHourlyWage = _snapMaxHourlyWage;
+        _selectedWorkTypes.Clear();
+        foreach (var type in _snapSelectedWorkTypes)
+        {
+            _selectedWorkTypes.Add(type);
+        }
+    }
 
     private async Task ApplySearch()
     {
+        await PersistAgeAsync();
         if (_mapReady)
         {
             try { await Js.InvokeVoidAsync("jobMap.setTravelOptions", TravelMapOptions()); }
@@ -1514,13 +1577,14 @@
         }
 
         await LoadVacanciesAsync();
+        CaptureFilterSnapshot();
         _filtersOpen = false;
     }
 
     private async Task ClearWorkTypeAsync(string label)
     {
         _selectedWorkTypes.Remove(label);
-        await LoadVacanciesAsync();
+        await ReloadFiltersIfAppliedAsync();
     }
 
     private async Task ClearSearchQueryAsync()
@@ -1549,7 +1613,7 @@
             return;
         }
 
-        await LoadVacanciesAsync();
+        await ReloadFiltersIfAppliedAsync();
     }
 
     private async Task ClearAgeAsync()
@@ -1557,8 +1621,12 @@
         _ageYears = null;
         _minHourlyWage = null;
         _maxHourlyWage = null;
-        await PersistAgeAsync();
-        await LoadVacanciesAsync();
+        if (!_filtersOpen)
+        {
+            await PersistAgeAsync();
+        }
+
+        await ReloadFiltersIfAppliedAsync();
     }
 
     private async Task ClearAllFiltersAsync()
@@ -1571,13 +1639,12 @@
         _maxTravelMinutes = 30;
         _selectedTransport = "Fiets";
         _radiusKm = 15;
-        await PersistAgeAsync();
-        if (_mapReady)
+        if (!_filtersOpen)
         {
-            try { await Js.InvokeVoidAsync("jobMap.setTravelOptions", TravelMapOptions()); }
-            catch { /* ignore */ }
+            await PersistAgeAsync();
         }
-        await LoadVacanciesAsync();
+
+        await ReloadFiltersIfAppliedAsync();
     }
 
     private async Task ToggleMobileView()
