@@ -44,4 +44,6 @@ public record VacancyListItemDto(
     bool? LegalNightShift23To06 = null,
     bool? LegalAdultSupervisorPresent = null,
     bool? LegalHandlesMoneyOrClosing = null,
-    bool? LegalHeavyOrHazardousWork = null);
+    bool? LegalHeavyOrHazardousWork = null,
+    int ShareCount = 0,
+    int LikeCount = 0);
