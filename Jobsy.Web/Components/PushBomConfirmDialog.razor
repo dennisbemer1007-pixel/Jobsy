@@ -1,7 +1,7 @@
 @inject JobsyApiClient Api
+@inject CultureState Culture
 
 @if (IsOpen && Vacancy is not null)
-@inject CultureState Culture
 {
     <div class="share-modal-backdrop" @onclick="Close"></div>
     <div class="share-modal publish-modal" role="dialog" aria-modal="true" aria-labelledby="pushbom-modal-title">

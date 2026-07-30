@@ -25,7 +25,8 @@ public static class JobsyApiClientFactory
             "http://localhost:5200/");
         return new HttpClient(handler)
         {
-            BaseAddress = new Uri(apiBaseUrl)
+            BaseAddress = new Uri(apiBaseUrl),
+            Timeout = TimeSpan.FromSeconds(20)
         };
     }
 }

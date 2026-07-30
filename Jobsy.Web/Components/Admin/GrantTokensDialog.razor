@@ -1,7 +1,7 @@
 @inject JobsyApiClient Api
+@inject CultureState Culture
 
 @if (IsOpen && Company is not null)
-@inject CultureState Culture
 {
     <div class="share-modal-backdrop" @onclick="Close"></div>
     <div class="share-modal" role="dialog" aria-modal="true" aria-labelledby="grant-tokens-title">

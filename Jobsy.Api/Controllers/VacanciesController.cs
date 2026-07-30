@@ -235,6 +235,11 @@ public class VacanciesController : ControllerBase
         CancellationToken cancellationToken)
     {
         var accessible = await _companyAuth.GetAccessibleCompanyIdsAsync(User, cancellationToken);
+        if (accessible is { Count: 0 })
+        {
+            return Ok(Array.Empty<VacancyListItemDto>());
+        }
+
         var query = _db.Vacancies.AsNoTracking().AsSplitQuery().Include(v => v.Company).AsQueryable();
 
         if (accessible is not null)
@@ -243,6 +248,11 @@ public class VacanciesController : ControllerBase
         }
 
         var vacancies = await query.OrderBy(v => v.Title).ToListAsync(cancellationToken);
+        if (vacancies.Count == 0)
+        {
+            return Ok(Array.Empty<VacancyListItemDto>());
+        }
+
         var ids = vacancies.Select(v => v.Id).ToList();
 
         var impressionCounts = await _db.VacancySearchImpressions.AsNoTracking()
@@ -261,13 +271,26 @@ public class VacanciesController : ControllerBase
             .Select(g => new { VacancyId = g.Key, Count = g.Count() })
             .ToDictionaryAsync(x => x.VacancyId, x => x.Count, cancellationToken);
 
-        return Ok(vacancies.Select(v => MapToDto(
-            v,
-            showWage: true,
-            impressionCount: impressionCounts.GetValueOrDefault(v.Id),
-            clickCount: clickCounts.GetValueOrDefault(v.Id),
-            applicationCount: applicationCounts.GetValueOrDefault(v.Id),
-            includeDescription: false)));
+        var mapped = new List<VacancyListItemDto>(vacancies.Count);
+        foreach (var v in vacancies)
+        {
+            try
+            {
+                mapped.Add(MapToDto(
+                    v,
+                    showWage: true,
+                    impressionCount: impressionCounts.GetValueOrDefault(v.Id),
+                    clickCount: clickCounts.GetValueOrDefault(v.Id),
+                    applicationCount: applicationCounts.GetValueOrDefault(v.Id),
+                    includeDescription: false));
+            }
+            catch
+            {
+                // Skip corrupt rows so one bad vacancy cannot 500 the whole manage page.
+            }
+        }
+
+        return Ok(mapped);
     }
 
     /// <summary>
@@ -1100,12 +1123,12 @@ public class VacanciesController : ControllerBase
             v.EndDate,
             v.Status.ToString(),
             v.CompanyId,
-            v.Company.Name,
-            v.Company.Address,
-            v.Company.LogoUrl,
+            v.Company?.Name ?? "Onbekend bedrijf",
+            v.Company?.Address ?? string.Empty,
+            v.Company?.LogoUrl,
             v.ImageUrl,
-            v.Location.Latitude,
-            v.Location.Longitude,
+            v.Location?.Latitude ?? 0,
+            v.Location?.Longitude ?? 0,
             TransportLabels.Expand(v.RequiredTransport),
             showWage,
             travelMinutes,
@@ -1116,7 +1139,7 @@ public class VacanciesController : ControllerBase
             v.SalaryTableId,
             wageByAge,
             resolvedForAge,
-            WorkTypeLabels.ResolveLabels(v.WorkTypes, v.WorkTypeLabels),
+            WorkTypeLabels.ResolveLabels(v.WorkTypes, v.WorkTypeLabels) ?? [],
             impressionCount,
             clickCount,
             applicationCount,

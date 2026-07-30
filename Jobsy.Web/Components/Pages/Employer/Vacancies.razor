@@ -382,8 +382,17 @@
 
     private async Task RefreshAsync()
     {
-        _vacancies = (await Api.GetManagedVacanciesAsync()).Select(NormalizeVacancy).ToList();
-        ApplyFilters();
+        try
+        {
+            _vacancies = (await Api.GetManagedVacanciesAsync()).Select(NormalizeVacancy).ToList();
+            ApplyFilters();
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+            _vacancies = [];
+            _filtered = [];
+        }
     }
 
     private static VacancyListItem NormalizeVacancy(VacancyListItem vacancy)
