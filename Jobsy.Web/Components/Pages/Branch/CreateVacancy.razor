@@ -195,45 +195,150 @@
                     }
                 </div>
             </fieldset>
-            <fieldset class="profile-roles contact-pref-fieldset">
+
+            <fieldset class="vacancy-hours">
+                <legend>Uren per week</legend>
+                <p class="muted vacancy-field-hint">Geef het aantal uren aan waarvoor deze vacature beschikbaar is.</p>
+                <div class="vacancy-hours__row">
+                    <label>
+                        Minimum
+                        <input type="number" min="1" max="60" step="0.5" @bind="_minHours" @bind:event="oninput" />
+                    </label>
+                    <label>
+                        Maximum
+                        <input type="number" min="1" max="60" step="0.5" @bind="_maxHours" @bind:event="oninput" />
+                    </label>
+                </div>
+                @if (_minHours is decimal minH && _maxHours is decimal maxH && maxH >= minH)
+                {
+                    <p class="muted">Categorie: @HoursRangeRules.CategoryLabel(new HoursRange(minH, maxH).Category)</p>
+                }
+            </fieldset>
+
+            <fieldset class="vacancy-schedule">
+                <legend>Dagdelen</legend>
+                <p class="muted vacancy-field-hint">Selecteer voor welke dagdelen de vacature bedoeld is, of kies tijden in overleg.</p>
+                <label class="vacancy-toggle-row">
+                    <input type="checkbox" checked="@_flexibleTimes" @onchange="OnFlexibleTimesChanged" />
+                    <span>
+                        <strong>Tijden in overleg / Variabele tijden</strong>
+                        <span class="muted">Geen vaste dagdelen; matching weegt dagdelen neutraal</span>
+                    </span>
+                </label>
+                <div class="vacancy-schedule__table-wrap @(_flexibleTimes ? "is-disabled" : null)">
+                    <table class="wage-table vacancy-schedule__table">
+                        <thead>
+                            <tr>
+                                <th>Dag</th>
+                                @foreach (var slot in DayPartMatrix.DayPartCodes)
+                                {
+                                    <th>
+                                        @slot
+                                        <div class="muted" style="font-weight:normal;font-size:0.75rem">@DayPartMatrix.DayPartWindows[slot]</div>
+                                    </th>
+                                }
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var day in DayPartMatrix.DayCodes)
+                            {
+                                <tr>
+                                    <th>@day</th>
+                                    @foreach (var slot in DayPartMatrix.DayPartCodes)
+                                    {
+                                        var key = $"{day}:{slot}";
+                                        <td>
+                                            <input type="checkbox"
+                                                   checked="@_scheduleSlots.Contains(key)"
+                                                   disabled="@_flexibleTimes"
+                                                   @onchange="e => ToggleScheduleSlot(key, e)" />
+                                        </td>
+                                    }
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </fieldset>
+
+            <fieldset class="vacancy-legal">
+                <legend>Werkzaamheden &amp; wetgeving</legend>
+                <p class="muted vacancy-field-hint">Deze vinkjes bepalen automatisch of jongeren (15–17) mogen solliciteren. Geen aparte minimumleeftijd nodig.</p>
+                @foreach (var flag in LegalTaskFlags.Catalog)
+                {
+                    var isOn = GetLegalFlag(flag.Code);
+                    <label class="vacancy-legal__row" title="@flag.Tooltip">
+                        <input type="checkbox"
+                               checked="@isOn"
+                               @onchange="e => SetLegalFlag(flag.Code, e)" />
+                        <span class="vacancy-legal__copy">
+                            <span class="vacancy-legal__label">
+                                @flag.Label
+                                <button type="button"
+                                        class="vacancy-legal__info"
+                                        title="@flag.Tooltip"
+                                        aria-label="Toelichting"
+                                        @onclick="() => ToggleLegalTip(flag.Code)"
+                                        @onclick:preventDefault>
+                                    i
+                                </button>
+                            </span>
+                            @if (_openLegalTip == flag.Code)
+                            {
+                                <span class="vacancy-legal__tip">@flag.Tooltip</span>
+                            }
+                        </span>
+                    </label>
+                }
+            </fieldset>
+
+            <fieldset class="vacancy-contact">
                 <legend>Voorkeur voor contact</legend>
-                <p class="muted" style="margin:0 0 0.5rem">
+                <p class="muted vacancy-field-hint">
                     Standaard gelden de bedrijfsinstellingen.
                     Directe contactopties (WhatsApp/telefoon) verschijnen voor kandidaten pas na een succesvolle sollicitatie.
                 </p>
                 @if (SelectedCompany is not null)
                 {
-                    <p class="muted" style="margin:0 0 0.75rem">
+                    <p class="vacancy-contact__company">
                         Bedrijf:
                         @(SelectedCompany.DirectContactEnabled
                             ? $"direct contact aan ({string.Join(", ", CompanyChannelLabels(SelectedCompany))})"
                             : "direct contact uit")
                     </p>
                 }
-                <label>
+                <label class="vacancy-toggle-row">
                     <input type="checkbox" @bind="_overrideContact" @bind:after="OnOverrideContactChanged" />
-                    Afwijkende contactvoorkeur voor deze vacature
+                    <span>
+                        <strong>Afwijkende contactvoorkeur voor deze vacature</strong>
+                        <span class="muted">Overschrijf de standaardinstelling van het bedrijf</span>
+                    </span>
                 </label>
                 @if (_overrideContact)
                 {
-                    <label style="margin-top:0.5rem;display:flex;gap:0.5rem;align-items:center">
+                    <label class="vacancy-toggle-row">
                         <input type="checkbox" @bind="_vacancyDirectContact" @bind:after="OnVacancyDirectContactChanged" />
-                        Direct contact gewenst (WhatsApp / Telefoon / Mail)
+                        <span>
+                            <strong>Direct contact gewenst</strong>
+                            <span class="muted">Mail, telefoon of WhatsApp tonen na sollicitatie</span>
+                        </span>
                     </label>
                     @if (_vacancyDirectContact)
                     {
-                        <label>
-                            <input type="checkbox" @bind="_vacancyPreferMail" />
-                            Mail
-                        </label>
-                        <label>
-                            <input type="checkbox" @bind="_vacancyPreferPhone" />
-                            Telefoon
-                        </label>
-                        <label>
-                            <input type="checkbox" @bind="_vacancyPreferWhatsApp" />
-                            WhatsApp
-                        </label>
+                        <div class="vacancy-contact__channels" role="group" aria-label="Contactkanalen">
+                            <label class="vacancy-contact__channel">
+                                <input type="checkbox" @bind="_vacancyPreferMail" />
+                                Mail
+                            </label>
+                            <label class="vacancy-contact__channel">
+                                <input type="checkbox" @bind="_vacancyPreferPhone" />
+                                Telefoon
+                            </label>
+                            <label class="vacancy-contact__channel">
+                                <input type="checkbox" @bind="_vacancyPreferWhatsApp" />
+                                WhatsApp
+                            </label>
+                        </div>
                     }
                 }
             </fieldset>
@@ -266,6 +371,18 @@
                 else
                 {
                     <p class="muted">Kies een salaristabel</p>
+                }
+                @if (_minHours is decimal previewMin && _maxHours is decimal previewMax)
+                {
+                    <p class="muted">@previewMin–@previewMax uur/week</p>
+                }
+                @if (_flexibleTimes)
+                {
+                    <p class="muted">Dagdelen: tijden in overleg</p>
+                }
+                else if (_scheduleSlots.Count > 0)
+                {
+                    <p class="muted">Dagdelen: @_scheduleSlots.Count geselecteerd</p>
                 }
                 @if (_selectedWorkTypes.Count > 0)
                 {
@@ -355,6 +472,16 @@
     private bool _vacancyPreferMail;
     private bool _vacancyPreferPhone;
     private bool _vacancyPreferWhatsApp;
+    private decimal? _minHours = 8;
+    private decimal? _maxHours = 16;
+    private bool _flexibleTimes = true;
+    private HashSet<string> _scheduleSlots = new(StringComparer.OrdinalIgnoreCase);
+    private bool _legalWorksAfter19;
+    private bool _legalNightShift;
+    private bool _legalAdultSupervisor = true;
+    private bool _legalHandlesMoney;
+    private bool _legalHeavyWork;
+    private string? _openLegalTip;
 
     private CompanySummary? SelectedCompany =>
         _companies.FirstOrDefault(c => c.Id == _companyId);
@@ -504,6 +631,20 @@
             _minimumEmployers = source.MinimumEmployers is int min && _minEmployerOptions.Contains(min)
                 ? min
                 : null;
+            _minHours = source.MinHoursPerWeek ?? 8;
+            _maxHours = source.MaxHoursPerWeek ?? 16;
+            _flexibleTimes = source.FlexibleTimes || string.IsNullOrWhiteSpace(source.ScheduleJson);
+            _scheduleSlots = ParseScheduleSlots(source.ScheduleJson);
+            if (_scheduleSlots.Count > 0)
+            {
+                _flexibleTimes = false;
+            }
+
+            _legalWorksAfter19 = source.LegalWorksAfter19 == true;
+            _legalNightShift = source.LegalNightShift23To06 == true;
+            _legalAdultSupervisor = source.LegalAdultSupervisorPresent != false;
+            _legalHandlesMoney = source.LegalHandlesMoneyOrClosing == true;
+            _legalHeavyWork = source.LegalHeavyOrHazardousWork == true;
 
             var contact = await Api.GetVacancyContactPreferenceAsync(sourceId);
             if (contact is not null)
@@ -602,6 +743,118 @@
 
     private void SetMinimumEmployers(int? value) => _minimumEmployers = value;
 
+    private void OnFlexibleTimesChanged(ChangeEventArgs e)
+    {
+        _flexibleTimes = e.Value is bool b && b || e.Value?.ToString() == "on";
+        if (_flexibleTimes)
+        {
+            _scheduleSlots.Clear();
+        }
+    }
+
+    private void ToggleScheduleSlot(string key, ChangeEventArgs e)
+    {
+        var on = e.Value is bool b && b || e.Value?.ToString() == "on";
+        if (on)
+        {
+            _flexibleTimes = false;
+            _scheduleSlots.Add(key);
+        }
+        else
+        {
+            _scheduleSlots.Remove(key);
+        }
+    }
+
+    private bool GetLegalFlag(string code) => code switch
+    {
+        nameof(LegalTaskFlags.WorksAfter19) => _legalWorksAfter19,
+        nameof(LegalTaskFlags.NightShift23To06) => _legalNightShift,
+        nameof(LegalTaskFlags.AdultSupervisorPresent) => _legalAdultSupervisor,
+        nameof(LegalTaskFlags.HandlesMoneyOrClosing) => _legalHandlesMoney,
+        nameof(LegalTaskFlags.HeavyOrHazardousWork) => _legalHeavyWork,
+        _ => false
+    };
+
+    private void SetLegalFlag(string code, ChangeEventArgs e)
+    {
+        var on = e.Value is bool b && b || e.Value?.ToString() == "on";
+        switch (code)
+        {
+            case nameof(LegalTaskFlags.WorksAfter19):
+                _legalWorksAfter19 = on;
+                break;
+            case nameof(LegalTaskFlags.NightShift23To06):
+                _legalNightShift = on;
+                break;
+            case nameof(LegalTaskFlags.AdultSupervisorPresent):
+                _legalAdultSupervisor = on;
+                break;
+            case nameof(LegalTaskFlags.HandlesMoneyOrClosing):
+                _legalHandlesMoney = on;
+                break;
+            case nameof(LegalTaskFlags.HeavyOrHazardousWork):
+                _legalHeavyWork = on;
+                break;
+        }
+    }
+
+    private void ToggleLegalTip(string code)
+        => _openLegalTip = string.Equals(_openLegalTip, code, StringComparison.Ordinal) ? null : code;
+
+    private static HashSet<string> ParseScheduleSlots(string? scheduleJson)
+    {
+        var set = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        if (string.IsNullOrWhiteSpace(scheduleJson))
+        {
+            return set;
+        }
+
+        try
+        {
+            var payload = System.Text.Json.JsonSerializer.Deserialize<SchedulePayload>(
+                scheduleJson,
+                new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+            if (payload?.Slots is null)
+            {
+                return set;
+            }
+
+            foreach (var (day, parts) in payload.Slots)
+            {
+                foreach (var part in parts)
+                {
+                    set.Add($"{day}:{part}");
+                }
+            }
+        }
+        catch (System.Text.Json.JsonException)
+        {
+            // ignore corrupt schedule on duplicate prefill
+        }
+
+        return set;
+    }
+
+    private Dictionary<string, string[]> BuildScheduleSlotsPayload()
+    {
+        var result = new Dictionary<string, string[]>(StringComparer.OrdinalIgnoreCase);
+        if (_flexibleTimes)
+        {
+            return result;
+        }
+
+        foreach (var group in _scheduleSlots
+                     .Select(k => k.Split(':', 2))
+                     .Where(p => p.Length == 2)
+                     .GroupBy(p => p[0], StringComparer.OrdinalIgnoreCase))
+        {
+            result[group.Key] = group.Select(p => p[1]).Distinct(StringComparer.OrdinalIgnoreCase).ToArray();
+        }
+
+        return result;
+    }
+
     private Task OnSalaryTableChanged() => Task.CompletedTask;
 
     private async Task LoadSalaryTablesAsync()
@@ -614,7 +867,9 @@
 
         try
         {
-            _salaryTables = (await Api.GetSalaryTablesAsync(_companyId)).Where(t => t.IsActive).ToList();
+            _salaryTables = (await Api.GetSalaryTablesAsync(_companyId))
+                .Where(t => t.IsActive && t.Rates.Count > 0)
+                .ToList();
             if (string.IsNullOrWhiteSpace(_salaryTableId))
             {
                 var wml = _salaryTables.FirstOrDefault(t => t.IsSystemWml)
@@ -741,6 +996,25 @@
             return;
         }
 
+        if (_minHours is not decimal minHours || _maxHours is not decimal maxHours)
+        {
+            _message = "Vul minimum- en maximumuren per week in.";
+            return;
+        }
+
+        var hoursError = HoursRangeRules.Validate(minHours, maxHours);
+        if (hoursError is not null)
+        {
+            _message = hoursError;
+            return;
+        }
+
+        if (!_flexibleTimes && _scheduleSlots.Count == 0)
+        {
+            _message = "Selecteer dagdelen of kies ‘Tijden in overleg’.";
+            return;
+        }
+
         _saving = true;
         _message = null;
         try
@@ -773,7 +1047,16 @@
                 _vacancyDirectContact,
                 _vacancyPreferMail,
                 _vacancyPreferPhone,
-                _vacancyPreferWhatsApp));
+                _vacancyPreferWhatsApp,
+                minHours,
+                maxHours,
+                _flexibleTimes,
+                _flexibleTimes ? null : BuildScheduleSlotsPayload(),
+                _legalWorksAfter19,
+                _legalNightShift,
+                _legalAdultSupervisor,
+                _legalHandlesMoney,
+                _legalHeavyWork));
 
             Navigation.NavigateTo("/employer/vacancies");
         }

@@ -1,3 +1,4 @@
+using Jobsy.Infrastructure.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -61,8 +62,13 @@ public static class JobsyDbSeeder
                 await SalesManagerDemoSeeder.SeedAsync(db, logger);
                 await WestlandVacanciesSeeder.SeedWestlandBanenkaartAsync(db, logger);
                 await HaaglandenVacanciesSeeder.SeedHaaglandenBanenkaartAsync(db, logger);
+<<<<<<< HEAD
                 // Re-run media backfill after banenkaart seeds so every vacancy has image/video/copy.
                 await MediaBackfillSeeder.BackfillMediaAsync(db, logger);
+=======
+                await WmlSalaryTableService.EnsureForAllCompaniesAsync(db);
+                await WmlSalaryTableService.FillEmptySalaryTablesAsync(db);
+>>>>>>> origin/cursor/vacancy-create-schedule-legal-7ca7
             }
             catch (Exception ex)
             {
@@ -84,7 +90,12 @@ public static class JobsyDbSeeder
             await SalesManagerDemoSeeder.SeedAsync(db, logger);
             await WestlandVacanciesSeeder.SeedWestlandBanenkaartAsync(db, logger);
             await HaaglandenVacanciesSeeder.SeedHaaglandenBanenkaartAsync(db, logger);
+<<<<<<< HEAD
             await MediaBackfillSeeder.BackfillMediaAsync(db, logger);
+=======
+            await WmlSalaryTableService.EnsureForAllCompaniesAsync(db);
+            await WmlSalaryTableService.FillEmptySalaryTablesAsync(db);
+>>>>>>> origin/cursor/vacancy-create-schedule-legal-7ca7
             logger.LogInformation("Seed completed: employers + intermediary, vacancies, tokens, role users, sprint-0/8 demo.");
         }
         catch (Exception ex)

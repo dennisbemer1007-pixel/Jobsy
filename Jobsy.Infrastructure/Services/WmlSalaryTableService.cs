@@ -126,6 +126,64 @@ public static class WmlSalaryTableService
 
             db.ChangeTracker.Clear();
         }
+
+        await FillEmptySalaryTablesAsync(db, cancellationToken);
+    }
+
+    /// <summary>
+    /// Copies current WML age rates into any active salary table that has zero rates.
+    /// When <paramref name="organizationId"/> is set, only tables for that org (and its branches) are filled.
+    /// </summary>
+    public static async Task FillEmptySalaryTablesAsync(
+        JobsyDbContext db,
+        CancellationToken cancellationToken = default,
+        Guid? organizationId = null)
+    {
+        var rates = await LoadCurrentWmlRatesAsync(db, cancellationToken);
+        if (rates.Count == 0)
+        {
+            return;
+        }
+
+        var query = db.CompanySalaryTables
+            .Include(t => t.Rates)
+            .Where(t => t.IsActive && !t.Rates.Any());
+
+        if (organizationId is Guid orgId)
+        {
+            var branchIds = await db.Companies
+                .AsNoTracking()
+                .Where(c => c.Id == orgId || c.ParentCompanyId == orgId)
+                .Select(c => c.Id)
+                .ToListAsync(cancellationToken);
+            query = query.Where(t => branchIds.Contains(t.CompanyId));
+        }
+
+        var emptyTables = await query.ToListAsync(cancellationToken);
+
+        if (emptyTables.Count == 0)
+        {
+            return;
+        }
+
+        foreach (var table in emptyTables)
+        {
+            foreach (var rate in rates)
+            {
+                db.CompanySalaryRates.Add(new CompanySalaryRate
+                {
+                    Id = Guid.NewGuid(),
+                    SalaryTableId = table.Id,
+                    AgeYears = rate.AgeYears,
+                    HourlyRate = rate.HourlyRate,
+                    Label = string.IsNullOrWhiteSpace(rate.Label)
+                        ? (rate.AgeYears >= 21 ? "21+" : rate.AgeYears.ToString())
+                        : rate.Label
+                });
+            }
+        }
+
+        await db.SaveChangesAsync(cancellationToken);
     }
 
     public static async Task SyncAllWmlTablesAsync(

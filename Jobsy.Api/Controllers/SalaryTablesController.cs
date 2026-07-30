@@ -52,6 +52,10 @@ public class SalaryTablesController : ControllerBase
                 return NotFound(new { message = "Bedrijf niet gevonden." });
             }
 
+            await WmlSalaryTableService.EnsureForCompanyAsync(_db, branchId, cancellationToken);
+            await _db.SaveChangesAsync(cancellationToken);
+            await WmlSalaryTableService.FillEmptySalaryTablesAsync(_db, cancellationToken, organizationId);
+
             var forBranch = await _db.CompanySalaryTables
                 .AsNoTracking()
                 .AsSplitQuery()
