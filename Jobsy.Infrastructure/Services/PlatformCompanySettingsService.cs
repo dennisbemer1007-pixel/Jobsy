@@ -55,6 +55,7 @@ public sealed class PlatformCompanySettingsService : IPlatformCompanySettingsSer
         row.VatNumber = NormalizeOptional(update.VatNumber);
         row.Phone = NormalizeOptional(update.Phone);
         row.Email = NormalizeOptional(update.Email);
+        row.VatBufferIban = NormalizeIban(update.VatBufferIban);
         row.UpdatedAtUtc = DateTime.UtcNow;
 
         await _db.SaveChangesAsync(cancellationToken);
@@ -77,10 +78,23 @@ public sealed class PlatformCompanySettingsService : IPlatformCompanySettingsSer
             NormalizeOptional(row?.VatNumber),
             NormalizeOptional(row?.Phone),
             NormalizeOptional(row?.Email),
+            NormalizeIban(row?.VatBufferIban),
             row?.UpdatedAtUtc);
 
     private static string? NormalizeOptional(string? value)
         => string.IsNullOrWhiteSpace(value) ? null : value.Trim();
+
+    /// <summary>Normalizes IBAN to uppercase without spaces; returns null when empty.</summary>
+    internal static string? NormalizeIban(string? value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            return null;
+        }
+
+        var compact = new string(value.Where(c => !char.IsWhiteSpace(c)).ToArray()).ToUpperInvariant();
+        return compact.Length == 0 ? null : compact;
+    }
 
     private static byte[] LoadEmbeddedLogo()
     {

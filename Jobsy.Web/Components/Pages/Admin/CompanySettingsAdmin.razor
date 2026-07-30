@@ -26,7 +26,7 @@
                     @(_busy ? "Opslaan…" : "Opslaan")
                 </button>
             </div>
-            <p class="muted">Deze gegevens verschijnen onderaan de salesmanager-factuur-PDF’s, samen met het Lobsy-logo en de slogan.</p>
+            <p class="muted">Deze gegevens verschijnen onderaan factuur-PDF’s. Het Knab BTW-IBAN wordt gebruikt voor de geautomatiseerde BTW-buffer.</p>
 
             @if (!string.IsNullOrEmpty(_message))
             {
@@ -68,6 +68,17 @@
                     BTW-nummer
                     <input @bind="_form.VatNumber" />
                 </label>
+                <label>
+                    Knab BTW-rekening (IBAN)
+                    <input @bind="_form.VatBufferIban"
+                           placeholder="NL00KNAB0123456789"
+                           autocomplete="off"
+                           spellcheck="false" />
+                </label>
+                <p class="muted" style="margin:0">
+                    Na elke succesvolle Mollie token-aankoop wordt het BTW-bedrag (21%) als overboeking-opdracht gelogd
+                    naar dit IBAN, met het unieke factuurnummer als omschrijving/kenmerk.
+                </p>
                 <label>
                     Telefoon
                     <input @bind="_form.Phone" />

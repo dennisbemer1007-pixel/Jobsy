@@ -11,6 +11,7 @@
 <AdminPageShell Title="@Culture["Admin.Tokens"]" Lead="@Culture["Admin.TokensLead"]">
     <div class="admin-sublinks">
         <a class="admin-sublink" href="/admin/finance">← Financieel</a>
+        <a class="admin-sublink" href="/admin/token-finance">Token-administratie</a>
         <a class="admin-sublink" href="/admin/finance?tab=tokenlog">Tokenlog</a>
     </div>
 
@@ -46,7 +47,7 @@
                                 <span class="muted">@c.Address</span>
                             }
                         </div>
-                        <button class="btn-compact" type="button" @onclick="() => OpenGrant(c)">Tokens toekennen</button>
+                        <button class="btn-compact" type="button" @onclick="() => OpenGrant(c)">Goodwill toekennen</button>
                     </div>
                 }
             </div>

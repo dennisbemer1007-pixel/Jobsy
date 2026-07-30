@@ -2,10 +2,14 @@ namespace Jobsy.Core.Enums;
 
 public enum TokenTransactionKind
 {
+    /// <summary>Paid token pack via Mollie (creates invoice + BTW buffer).</summary>
     Purchase = 0,
     Spend = 1,
+    /// <summary>System/welcome grant (no revenue).</summary>
     Grant = 2,
-    Allocation = 3
+    Allocation = 3,
+    /// <summary>Admin goodwill / service compensation (€ 0,00 — no BTW/omzet).</summary>
+    Goodwill = 4
 }
 
 public enum TokenSpendReason

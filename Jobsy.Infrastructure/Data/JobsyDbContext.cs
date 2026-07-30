@@ -41,6 +41,8 @@ public class JobsyDbContext : DbContext
     public DbSet<AboutPageSettings> AboutPageSettings => Set<AboutPageSettings>();
     public DbSet<PlatformLog> PlatformLogs => Set<PlatformLog>();
     public DbSet<TokenPurchaseCheckout> TokenPurchaseCheckouts => Set<TokenPurchaseCheckout>();
+    public DbSet<TokenPurchaseInvoice> TokenPurchaseInvoices => Set<TokenPurchaseInvoice>();
+    public DbSet<VatBufferTransfer> VatBufferTransfers => Set<VatBufferTransfer>();
     public DbSet<CompanyRegistration> CompanyRegistrations => Set<CompanyRegistration>();
     public DbSet<EstablishmentTakeoverRequest> EstablishmentTakeoverRequests => Set<EstablishmentTakeoverRequest>();
     public DbSet<LocalAuthCredential> LocalAuthCredentials => Set<LocalAuthCredential>();
@@ -206,7 +208,16 @@ public class JobsyDbContext : DbContext
                 .WithMany()
                 .HasForeignKey(e => e.BranchCompanyId)
                 .OnDelete(DeleteBehavior.SetNull);
+            entity.HasOne(e => e.TokenPurchaseCheckout)
+                .WithMany()
+                .HasForeignKey(e => e.TokenPurchaseCheckoutId)
+                .OnDelete(DeleteBehavior.SetNull);
+            entity.HasOne(e => e.TokenPurchaseInvoice)
+                .WithMany()
+                .HasForeignKey(e => e.TokenPurchaseInvoiceId)
+                .OnDelete(DeleteBehavior.SetNull);
             entity.HasIndex(e => e.CreatedAt);
+            entity.HasIndex(e => e.Kind);
         });
 
         modelBuilder.Entity<Application>(entity =>
@@ -469,6 +480,7 @@ public class JobsyDbContext : DbContext
             entity.Property(e => e.VatNumber).HasMaxLength(32);
             entity.Property(e => e.Phone).HasMaxLength(40);
             entity.Property(e => e.Email).HasMaxLength(200);
+            entity.Property(e => e.VatBufferIban).HasMaxLength(34);
         });
 
         modelBuilder.Entity<AboutPageSettings>(entity =>
@@ -497,6 +509,47 @@ public class JobsyDbContext : DbContext
             entity.HasOne(e => e.Company)
                 .WithMany()
                 .HasForeignKey(e => e.CompanyId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<TokenPurchaseInvoice>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.InvoiceNumber).HasMaxLength(40).IsRequired();
+            entity.Property(e => e.MolliePaymentId).HasMaxLength(80).IsRequired();
+            entity.Property(e => e.CompanyName).HasMaxLength(256).IsRequired();
+            entity.Property(e => e.CompanyKvkNumber).HasMaxLength(32);
+            entity.Property(e => e.CompanyAddress).HasMaxLength(512);
+            entity.Property(e => e.VatRate).HasPrecision(5, 4);
+            entity.HasIndex(e => e.InvoiceNumber).IsUnique();
+            entity.HasIndex(e => e.TokenPurchaseCheckoutId).IsUnique();
+            entity.HasIndex(e => e.IssuedAt);
+            entity.HasOne(e => e.Checkout)
+                .WithOne(c => c.Invoice)
+                .HasForeignKey<TokenPurchaseInvoice>(e => e.TokenPurchaseCheckoutId)
+                .OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne(e => e.Company)
+                .WithMany()
+                .HasForeignKey(e => e.CompanyId)
+                .OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne(e => e.TokenTransaction)
+                .WithMany()
+                .HasForeignKey(e => e.TokenTransactionId)
+                .OnDelete(DeleteBehavior.SetNull);
+        });
+
+        modelBuilder.Entity<VatBufferTransfer>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.InvoiceNumber).HasMaxLength(40).IsRequired();
+            entity.Property(e => e.DestinationIban).HasMaxLength(34).IsRequired();
+            entity.Property(e => e.Note).HasMaxLength(512);
+            entity.HasIndex(e => e.Status);
+            entity.HasIndex(e => e.CreatedAt);
+            entity.HasIndex(e => e.TokenPurchaseInvoiceId).IsUnique();
+            entity.HasOne(e => e.Invoice)
+                .WithMany(i => i.VatBufferTransfers)
+                .HasForeignKey(e => e.TokenPurchaseInvoiceId)
                 .OnDelete(DeleteBehavior.Cascade);
         });
 

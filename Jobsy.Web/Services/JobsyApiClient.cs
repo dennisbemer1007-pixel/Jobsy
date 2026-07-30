@@ -948,7 +948,7 @@ public sealed class JobsyApiClient : IAsyncDisposable
         CancellationToken ct = default)
     {
         var response = await _http.PostAsJsonAsync(
-            "api/tokens/grant",
+            "api/tokens/goodwill",
             new { companyId, amount, note },
             ct);
         if (!response.IsSuccessStatusCode)
@@ -956,6 +956,99 @@ public sealed class JobsyApiClient : IAsyncDisposable
             var body = await response.Content.ReadAsStringAsync(ct);
             throw new InvalidOperationException(string.IsNullOrWhiteSpace(body) ? response.ReasonPhrase : body);
         }
+    }
+
+    public async Task<IReadOnlyList<TokenPurchaseFinanceItem>> GetTokenPurchasesAsync(
+        int? year = null,
+        int? quarter = null,
+        CancellationToken ct = default)
+    {
+        var url = BuildTokenFinanceUrl("api/tokens/finance/purchases", year, quarter);
+        return await _http.GetFromJsonAsync<List<TokenPurchaseFinanceItem>>(url, ct) ?? [];
+    }
+
+    public async Task<IReadOnlyList<TokenGoodwillFinanceItem>> GetTokenGoodwillAsync(
+        int? year = null,
+        int? quarter = null,
+        CancellationToken ct = default)
+    {
+        var url = BuildTokenFinanceUrl("api/tokens/finance/goodwill", year, quarter);
+        return await _http.GetFromJsonAsync<List<TokenGoodwillFinanceItem>>(url, ct) ?? [];
+    }
+
+    public async Task<IReadOnlyList<VatBufferTransferItem>> GetVatBufferTransfersAsync(
+        int? year = null,
+        int? quarter = null,
+        CancellationToken ct = default)
+    {
+        var url = BuildTokenFinanceUrl("api/tokens/finance/vat-transfers", year, quarter);
+        return await _http.GetFromJsonAsync<List<VatBufferTransferItem>>(url, ct) ?? [];
+    }
+
+    public string GetTokenPurchasesExportUrl(int? year = null, int? quarter = null)
+        => BuildTokenFinanceUrl("api/tokens/finance/purchases/export", year, quarter);
+
+    public string GetTokenGoodwillExportUrl(int? year = null, int? quarter = null)
+        => BuildTokenFinanceUrl("api/tokens/finance/goodwill/export", year, quarter);
+
+    public async Task DownloadTokenPurchasesCsvAsync(
+        Microsoft.JSInterop.IJSRuntime js,
+        int? year = null,
+        int? quarter = null,
+        CancellationToken ct = default)
+    {
+        var url = BuildTokenFinanceUrl("api/tokens/finance/purchases/export", year, quarter);
+        var response = await _http.GetAsync(url, ct);
+        response.EnsureSuccessStatusCode();
+        var bytes = await response.Content.ReadAsByteArrayAsync(ct);
+        var fileName = $"token-aankopen-{(year?.ToString() ?? "all")}-Q{(quarter?.ToString() ?? "all")}.csv";
+        var base64 = Convert.ToBase64String(bytes);
+        await js.InvokeVoidAsync("jobsyDownload.bytes", fileName, base64, "text/csv;charset=utf-8");
+    }
+
+    public async Task DownloadTokenGoodwillCsvAsync(
+        Microsoft.JSInterop.IJSRuntime js,
+        int? year = null,
+        int? quarter = null,
+        CancellationToken ct = default)
+    {
+        var url = BuildTokenFinanceUrl("api/tokens/finance/goodwill/export", year, quarter);
+        var response = await _http.GetAsync(url, ct);
+        response.EnsureSuccessStatusCode();
+        var bytes = await response.Content.ReadAsByteArrayAsync(ct);
+        var fileName = $"token-goodwill-{(year?.ToString() ?? "all")}-Q{(quarter?.ToString() ?? "all")}.csv";
+        var base64 = Convert.ToBase64String(bytes);
+        await js.InvokeVoidAsync("jobsyDownload.bytes", fileName, base64, "text/csv;charset=utf-8");
+    }
+
+    public async Task DownloadTokenInvoicePdfAsync(
+        Microsoft.JSInterop.IJSRuntime js,
+        Guid invoiceId,
+        string invoiceNumber,
+        CancellationToken ct = default)
+    {
+        var response = await _http.GetAsync($"api/tokens/invoices/{invoiceId}/pdf", ct);
+        response.EnsureSuccessStatusCode();
+        var bytes = await response.Content.ReadAsByteArrayAsync(ct);
+        var fileName = $"{invoiceNumber}.pdf";
+        var base64 = Convert.ToBase64String(bytes);
+        await js.InvokeVoidAsync("jobsyDownload.bytes", fileName, base64, "application/pdf");
+    }
+
+    private static string BuildTokenFinanceUrl(string path, int? year, int? quarter)
+    {
+        var qs = new List<string>();
+        if (year is int y)
+        {
+            qs.Add($"year={y}");
+        }
+
+        if (quarter is int q)
+        {
+            qs.Add($"quarter={q}");
+        }
+
+        return qs.Count == 0 ? path : $"{path}?{string.Join('&', qs)}";
     }
 
     public async Task<IReadOnlyList<EmployerApplicationItem>> GetApplicationsAsync(CancellationToken ct = default)
@@ -1950,6 +2043,7 @@ public sealed class PlatformCompanyItem
     public string? VatNumber { get; set; }
     public string? Phone { get; set; }
     public string? Email { get; set; }
+    public string? VatBufferIban { get; set; }
     public DateTime? UpdatedAtUtc { get; set; }
 }
 
@@ -2109,5 +2203,53 @@ public sealed class OnboardingCompleteResult
     public string Status { get; set; } = string.Empty;
     public bool CommissionCredited { get; set; }
     public int? FirstYearSupplierSlot { get; set; }
+}
+
+public sealed class TokenPurchaseFinanceItem
+{
+    public Guid InvoiceId { get; set; }
+    public string InvoiceNumber { get; set; } = string.Empty;
+    public Guid CheckoutId { get; set; }
+    public string MolliePaymentId { get; set; } = string.Empty;
+    public Guid CompanyId { get; set; }
+    public string CompanyName { get; set; } = string.Empty;
+    public int PackSize { get; set; }
+    public int AmountExVatCents { get; set; }
+    public int VatAmountCents { get; set; }
+    public int TotalAmountCents { get; set; }
+    public decimal AmountExVatEuro { get; set; }
+    public decimal VatAmountEuro { get; set; }
+    public decimal TotalAmountEuro { get; set; }
+    public DateTime IssuedAt { get; set; }
+    public string InvoicePdfUrl { get; set; } = string.Empty;
+}
+
+public sealed class TokenGoodwillFinanceItem
+{
+    public Guid TransactionId { get; set; }
+    public Guid CompanyId { get; set; }
+    public string CompanyName { get; set; } = string.Empty;
+    public decimal TokenAmount { get; set; }
+    public int AmountExVatCents { get; set; }
+    public int VatAmountCents { get; set; }
+    public int TotalAmountCents { get; set; }
+    public string Reason { get; set; } = string.Empty;
+    public Guid? IssuedByUserId { get; set; }
+    public string? IssuedByName { get; set; }
+    public DateTime CreatedAt { get; set; }
+}
+
+public sealed class VatBufferTransferItem
+{
+    public Guid Id { get; set; }
+    public Guid InvoiceId { get; set; }
+    public string InvoiceNumber { get; set; } = string.Empty;
+    public string DestinationIbanMasked { get; set; } = string.Empty;
+    public int AmountCents { get; set; }
+    public decimal AmountEuro { get; set; }
+    public string Status { get; set; } = string.Empty;
+    public DateTime CreatedAt { get; set; }
+    public DateTime? ProcessedAt { get; set; }
+    public string? Note { get; set; }
 }
 

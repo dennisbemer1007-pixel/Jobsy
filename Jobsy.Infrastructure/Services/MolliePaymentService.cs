@@ -7,6 +7,7 @@ using Jobsy.Core;
 using Jobsy.Core.Entities;
 using Jobsy.Core.Enums;
 using Jobsy.Core.Interfaces;
+using Jobsy.Core.Rules;
 using Jobsy.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -85,6 +86,7 @@ public sealed class MolliePaymentService : IPaymentService
             ?? throw new InvalidOperationException("Company not found.");
 
         var price = await ResolvePackPriceAsync(packSize, cancellationToken);
+        var money = TokenVatPricing.SplitInclVatEuros(price);
         var checkoutId = Guid.NewGuid();
         var features = await _features.GetAsync(cancellationToken);
         var webBase = features.PublicWebBaseUrl.TrimEnd('/');
@@ -147,6 +149,9 @@ public sealed class MolliePaymentService : IPaymentService
             CompanyId = companyId,
             PackSize = packSize,
             AmountEuro = price,
+            AmountExVatCents = money.ExVatCents,
+            VatAmountCents = money.VatCents,
+            TotalAmountCents = money.TotalCents,
             Status = TokenPurchaseCheckoutStatus.Pending,
             CreatedAt = DateTime.UtcNow
         });

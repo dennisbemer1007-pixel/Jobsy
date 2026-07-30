@@ -19,5 +19,10 @@ public class PlatformCompanySettings
     public string? Phone { get; set; }
     public string? Email { get; set; }
 
+    /// <summary>
+    /// Knab BTW-rekening IBAN where VAT from token purchases is buffered.
+    /// </summary>
+    public string? VatBufferIban { get; set; }
+
     public DateTime UpdatedAtUtc { get; set; } = DateTime.UtcNow;
 }

@@ -1,5 +1,6 @@
 using Jobsy.Core.Entities;
 using Jobsy.Core.Interfaces;
+using Jobsy.Core.Rules;
 using Jobsy.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
@@ -52,6 +53,7 @@ public sealed class MolliePaymentStub : IPaymentService
         };
 
         var paymentId = $"stub_pay_{Guid.NewGuid():N}";
+        var (exVat, vat, total) = TokenVatPricing.SplitInclVatEuros(price);
         _db.TokenPurchaseCheckouts.Add(new TokenPurchaseCheckout
         {
             Id = Guid.NewGuid(),
@@ -59,6 +61,9 @@ public sealed class MolliePaymentStub : IPaymentService
             CompanyId = companyId,
             PackSize = packSize,
             AmountEuro = price,
+            AmountExVatCents = exVat,
+            VatAmountCents = vat,
+            TotalAmountCents = total,
             Status = TokenPurchaseCheckoutStatus.Pending,
             CreatedAt = DateTime.UtcNow
         });

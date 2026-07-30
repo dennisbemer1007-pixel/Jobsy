@@ -881,6 +881,10 @@ namespace Jobsy.Infrastructure.Data.Migrations
                         .HasMaxLength(32)
                         .HasColumnType("character varying(32)");
 
+                    b.Property<string>("VatBufferIban")
+                        .HasMaxLength(34)
+                        .HasColumnType("character varying(34)");
+
                     b.HasKey("Id");
 
                     b.ToTable("PlatformCompanySettings");
@@ -1360,6 +1364,9 @@ namespace Jobsy.Infrastructure.Data.Migrations
                         .HasPrecision(10, 2)
                         .HasColumnType("numeric(10,2)");
 
+                    b.Property<int>("AmountExVatCents")
+                        .HasColumnType("integer");
+
                     b.Property<Guid>("CompanyId")
                         .HasColumnType("uuid");
 
@@ -1380,6 +1387,18 @@ namespace Jobsy.Infrastructure.Data.Migrations
                     b.Property<int>("Status")
                         .HasColumnType("integer");
 
+                    b.Property<int>("TotalAmountCents")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid?>("TokenPurchaseInvoiceId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("TokenTransactionId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("VatAmountCents")
+                        .HasColumnType("integer");
+
                     b.HasKey("Id");
 
                     b.HasIndex("CompanyId");
@@ -1388,6 +1407,131 @@ namespace Jobsy.Infrastructure.Data.Migrations
                         .IsUnique();
 
                     b.ToTable("TokenPurchaseCheckouts");
+                });
+
+
+            modelBuilder.Entity("Jobsy.Core.Entities.TokenPurchaseInvoice", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("AmountExVatCents")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("CompanyAddress")
+                        .HasMaxLength(512)
+                        .HasColumnType("character varying(512)");
+
+                    b.Property<Guid>("CompanyId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("CompanyKvkNumber")
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)");
+
+                    b.Property<string>("CompanyName")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("InvoiceNumber")
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("character varying(40)");
+
+                    b.Property<DateTime>("IssuedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("MolliePaymentId")
+                        .IsRequired()
+                        .HasMaxLength(80)
+                        .HasColumnType("character varying(80)");
+
+                    b.Property<int>("PackSize")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid>("TokenPurchaseCheckoutId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("TokenTransactionId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("TotalAmountCents")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("VatAmountCents")
+                        .HasColumnType("integer");
+
+                    b.Property<decimal>("VatRate")
+                        .HasPrecision(5, 4)
+                        .HasColumnType("numeric(5,4)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CompanyId");
+
+                    b.HasIndex("InvoiceNumber")
+                        .IsUnique();
+
+                    b.HasIndex("IssuedAt");
+
+                    b.HasIndex("TokenPurchaseCheckoutId")
+                        .IsUnique();
+
+                    b.HasIndex("TokenTransactionId");
+
+                    b.ToTable("TokenPurchaseInvoices");
+                });
+
+            modelBuilder.Entity("Jobsy.Core.Entities.VatBufferTransfer", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("AmountCents")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("DestinationIban")
+                        .IsRequired()
+                        .HasMaxLength(34)
+                        .HasColumnType("character varying(34)");
+
+                    b.Property<string>("InvoiceNumber")
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("character varying(40)");
+
+                    b.Property<string>("Note")
+                        .HasMaxLength(512)
+                        .HasColumnType("character varying(512)");
+
+                    b.Property<DateTime?>("ProcessedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid>("TokenPurchaseInvoiceId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CreatedAt");
+
+                    b.HasIndex("Status");
+
+                    b.HasIndex("TokenPurchaseInvoiceId")
+                        .IsUnique();
+
+                    b.ToTable("VatBufferTransfers");
                 });
 
             modelBuilder.Entity("Jobsy.Core.Entities.TokenSpendCost", b =>
@@ -1427,6 +1571,9 @@ namespace Jobsy.Infrastructure.Data.Migrations
                         .HasPrecision(10, 2)
                         .HasColumnType("numeric(10,2)");
 
+                    b.Property<int>("AmountExVatCents")
+                        .HasColumnType("integer");
+
                     b.Property<Guid?>("BranchCompanyId")
                         .HasColumnType("uuid");
 
@@ -1454,8 +1601,20 @@ namespace Jobsy.Infrastructure.Data.Migrations
                     b.Property<int>("Reason")
                         .HasColumnType("integer");
 
+                    b.Property<int>("TotalAmountCents")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid?>("TokenPurchaseCheckoutId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("TokenPurchaseInvoiceId")
+                        .HasColumnType("uuid");
+
                     b.Property<Guid?>("VacancyId")
                         .HasColumnType("uuid");
+
+                    b.Property<int>("VatAmountCents")
+                        .HasColumnType("integer");
 
                     b.HasKey("Id");
 
@@ -1466,6 +1625,12 @@ namespace Jobsy.Infrastructure.Data.Migrations
                     b.HasIndex("CompanyId");
 
                     b.HasIndex("CreatedAt");
+
+                    b.HasIndex("Kind");
+
+                    b.HasIndex("TokenPurchaseCheckoutId");
+
+                    b.HasIndex("TokenPurchaseInvoiceId");
 
                     b.HasIndex("VacancyId");
 
@@ -2112,6 +2277,34 @@ namespace Jobsy.Infrastructure.Data.Migrations
                         .IsRequired();
 
                     b.Navigation("Company");
+
+                    b.Navigation("Invoice");
+                });
+
+            modelBuilder.Entity("Jobsy.Core.Entities.TokenPurchaseInvoice", b =>
+                {
+                    b.HasOne("Jobsy.Core.Entities.TokenPurchaseCheckout", "Checkout")
+                        .WithOne("Invoice")
+                        .HasForeignKey("Jobsy.Core.Entities.TokenPurchaseInvoice", "TokenPurchaseCheckoutId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Jobsy.Core.Entities.Company", "Company")
+                        .WithMany()
+                        .HasForeignKey("CompanyId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Jobsy.Core.Entities.TokenTransaction", "TokenTransaction")
+                        .WithMany()
+                        .HasForeignKey("TokenTransactionId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("Checkout");
+
+                    b.Navigation("Company");
+
+                    b.Navigation("TokenTransaction");
                 });
 
             modelBuilder.Entity("Jobsy.Core.Entities.TokenTransaction", b =>
@@ -2132,6 +2325,16 @@ namespace Jobsy.Infrastructure.Data.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("Jobsy.Core.Entities.TokenPurchaseCheckout", "TokenPurchaseCheckout")
+                        .WithMany()
+                        .HasForeignKey("TokenPurchaseCheckoutId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("Jobsy.Core.Entities.TokenPurchaseInvoice", "TokenPurchaseInvoice")
+                        .WithMany()
+                        .HasForeignKey("TokenPurchaseInvoiceId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
                     b.HasOne("Jobsy.Core.Entities.Vacancy", "Vacancy")
                         .WithMany()
                         .HasForeignKey("VacancyId")
@@ -2143,7 +2346,22 @@ namespace Jobsy.Infrastructure.Data.Migrations
 
                     b.Navigation("Company");
 
+                    b.Navigation("TokenPurchaseCheckout");
+
+                    b.Navigation("TokenPurchaseInvoice");
+
                     b.Navigation("Vacancy");
+                });
+
+            modelBuilder.Entity("Jobsy.Core.Entities.VatBufferTransfer", b =>
+                {
+                    b.HasOne("Jobsy.Core.Entities.TokenPurchaseInvoice", "Invoice")
+                        .WithMany("VatBufferTransfers")
+                        .HasForeignKey("TokenPurchaseInvoiceId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Invoice");
                 });
 
             modelBuilder.Entity("Jobsy.Core.Entities.User", b =>
@@ -2331,6 +2549,11 @@ namespace Jobsy.Infrastructure.Data.Migrations
                     b.Navigation("Shares");
                 });
 #pragma warning restore 612, 618
+
+            modelBuilder.Entity("Jobsy.Core.Entities.TokenPurchaseInvoice", b =>
+                {
+                    b.Navigation("VatBufferTransfers");
+                });
         }
     }
 }

@@ -321,7 +321,8 @@ public class SettingsController : ControllerBase
                 request.KvkNumber,
                 request.VatNumber,
                 request.Phone,
-                request.Email),
+                request.Email,
+                request.VatBufferIban),
             cancellationToken);
         return Ok(ToCompanyDto(snap));
     }
@@ -419,6 +420,7 @@ public class SettingsController : ControllerBase
             snap.VatNumber,
             snap.Phone,
             snap.Email,
+            snap.VatBufferIban,
             snap.UpdatedAtUtc);
 
     private static IntegrationCredentialDto ToDto(IntegrationCredentialView view) =>
@@ -458,6 +460,7 @@ public sealed record PlatformCompanyDto(
     string? VatNumber,
     string? Phone,
     string? Email,
+    string? VatBufferIban,
     DateTime? UpdatedAtUtc);
 
 public sealed record UpdatePlatformCompanyRequest(
@@ -470,7 +473,8 @@ public sealed record UpdatePlatformCompanyRequest(
     string? KvkNumber,
     string? VatNumber,
     string? Phone,
-    string? Email);
+    string? Email,
+    string? VatBufferIban = null);
 
 public sealed record UpdateAboutPageRequest(
     string? Title,

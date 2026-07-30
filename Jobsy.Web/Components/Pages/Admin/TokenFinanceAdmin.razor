@@ -1,0 +1,314 @@
+@page "/admin/token-finance"
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
+@attribute [Authorize(Roles = "Admin")]
+@using Jobsy.Web.Components.Admin
+@inject JobsyApiClient Api
+@inject CultureState Culture
+@inject NavigationManager Nav
+@inject IJSRuntime Js
+@implements IDisposable
+
+<PageTitle>Token-administratie · Lobsy</PageTitle>
+
+<AdminPageShell Title="Token-administratie" Lead="Gekochte tokens, facturen, BTW-buffer en goodwill/compensatie — filterbaar per kwartaal.">
+    <div class="admin-sublinks">
+        <a class="admin-sublink" href="/admin/finance">← Financieel</a>
+        <a class="admin-sublink" href="/admin/tokens">Goodwill toekennen</a>
+        <a class="admin-sublink" href="/admin/company">Knab BTW-IBAN</a>
+        <button type="button" class="admin-sublink @(_tab == "purchases" ? "admin-sublink--active" : null)" @onclick='() => SetTab("purchases")'>Aankopen</button>
+        <button type="button" class="admin-sublink @(_tab == "goodwill" ? "admin-sublink--active" : null)" @onclick='() => SetTab("goodwill")'>Goodwill</button>
+        <button type="button" class="admin-sublink @(_tab == "vat" ? "admin-sublink--active" : null)" @onclick='() => SetTab("vat")'>BTW-buffer</button>
+    </div>
+
+    <div class="filter-bar" style="margin-top:1rem">
+        <label>
+            Jaar
+            <select @bind="_year" @bind:after="ReloadAsync">
+                @foreach (var y in Years)
+                {
+                    <option value="@y">@y</option>
+                }
+            </select>
+        </label>
+        <label>
+            Kwartaal
+            <select @bind="_quarter" @bind:after="ReloadAsync">
+                <option value="0">Heel jaar</option>
+                <option value="1">Q1</option>
+                <option value="2">Q2</option>
+                <option value="3">Q3</option>
+                <option value="4">Q4</option>
+            </select>
+        </label>
+        <button class="btn-compact" type="button" disabled="@_loading" @onclick="ReloadAsync">Vernieuwen</button>
+        @if (_tab == "purchases")
+        {
+            <button class="btn-compact" type="button" disabled="@_exportBusy" @onclick="ExportPurchasesAsync">Export CSV</button>
+        }
+        else if (_tab == "goodwill")
+        {
+            <button class="btn-compact" type="button" disabled="@_exportBusy" @onclick="ExportGoodwillAsync">Export CSV</button>
+        }
+        <span class="muted">@_rowCount regels</span>
+    </div>
+
+    @if (_loading)
+    {
+        <p class="state-message">@Culture["Common.Loading"]</p>
+    }
+    else if (!string.IsNullOrEmpty(_error))
+    {
+        <p class="state-message error">@_error</p>
+    }
+    else if (_tab == "purchases")
+    {
+        @if (_purchases.Count == 0)
+        {
+            <p class="state-message">Geen token-aankopen in deze periode.</p>
+        }
+        else
+        {
+            <div class="table-scroll">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Datum</th>
+                            <th>Factuur</th>
+                            <th>Bedrijf</th>
+                            <th>Tokens</th>
+                            <th>Ex-BTW</th>
+                            <th>BTW 21%</th>
+                            <th>Totaal</th>
+                            <th>Mollie</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var row in _purchases)
+                        {
+                            <tr>
+                                <td>@row.IssuedAt.ToLocalTime().ToString("dd-MM-yyyy HH:mm")</td>
+                                <td><strong>@row.InvoiceNumber</strong></td>
+                                <td>@row.CompanyName</td>
+                                <td>@row.PackSize</td>
+                                <td>€ @row.AmountExVatEuro.ToString("0.00")</td>
+                                <td>€ @row.VatAmountEuro.ToString("0.00")</td>
+                                <td>€ @row.TotalAmountEuro.ToString("0.00")</td>
+                                <td class="muted" style="max-width:9rem;overflow:hidden;text-overflow:ellipsis">@row.MolliePaymentId</td>
+                                <td>
+                                    <button class="btn-compact" type="button" disabled="@_exportBusy"
+                                            @onclick="() => DownloadPdfAsync(row)">PDF</button>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+            <p class="muted" style="margin-top:0.75rem">
+                Som ex-BTW € @_purchases.Sum(p => p.AmountExVatEuro).ToString("0.00") ·
+                BTW € @_purchases.Sum(p => p.VatAmountEuro).ToString("0.00") ·
+                Totaal € @_purchases.Sum(p => p.TotalAmountEuro).ToString("0.00")
+            </p>
+        }
+    }
+    else if (_tab == "goodwill")
+    {
+        <div class="panel-section" style="margin-bottom:1rem;border-left:4px solid #0F766E;padding-left:1rem">
+            <strong>Goodwill / Compensatie</strong>
+            <p class="muted" style="margin:0.25rem 0 0">Administratieve waarde € 0,00 — geen BTW-verplichting of omzet. Token-saldo van de ondernemer loopt wel op.</p>
+        </div>
+        @if (_goodwill.Count == 0)
+        {
+            <p class="state-message">Geen goodwill-tokens in deze periode.</p>
+        }
+        else
+        {
+            <div class="table-scroll">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Datum</th>
+                            <th>Ondernemer</th>
+                            <th>Tokens</th>
+                            <th>Waarde</th>
+                            <th>Reden</th>
+                            <th>Uitgegeven door</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var row in _goodwill)
+                        {
+                            <tr>
+                                <td>@row.CreatedAt.ToLocalTime().ToString("dd-MM-yyyy HH:mm")</td>
+                                <td>@row.CompanyName</td>
+                                <td>@row.TokenAmount.ToString("0.##")</td>
+                                <td>€ 0,00</td>
+                                <td>@row.Reason</td>
+                                <td class="muted">@(row.IssuedByName ?? "—")</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    }
+    else
+    {
+        @if (_vatTransfers.Count == 0)
+        {
+            <p class="state-message">Geen BTW-buffer overboekingen in deze periode.</p>
+        }
+        else
+        {
+            <div class="table-scroll">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Datum</th>
+                            <th>Kenmerk (factuur)</th>
+                            <th>IBAN</th>
+                            <th>BTW-bedrag</th>
+                            <th>Status</th>
+                            <th>Notitie</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var row in _vatTransfers)
+                        {
+                            <tr>
+                                <td>@row.CreatedAt.ToLocalTime().ToString("dd-MM-yyyy HH:mm")</td>
+                                <td><strong>@row.InvoiceNumber</strong></td>
+                                <td>@row.DestinationIbanMasked</td>
+                                <td>€ @row.AmountEuro.ToString("0.00")</td>
+                                <td>@row.Status</td>
+                                <td class="muted">@row.Note</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    }
+</AdminPageShell>
+
+@code {
+    private static readonly int[] Years =
+        Enumerable.Range(DateTime.UtcNow.Year - 2, 4).Reverse().ToArray();
+
+    private string _tab = "purchases";
+    private int _year = DateTime.UtcNow.Year;
+    private int _quarter;
+    private bool _loading = true;
+    private bool _exportBusy;
+    private string? _error;
+    private List<TokenPurchaseFinanceItem> _purchases = [];
+    private List<TokenGoodwillFinanceItem> _goodwill = [];
+    private List<VatBufferTransferItem> _vatTransfers = [];
+
+    private int _rowCount => _tab switch
+    {
+        "goodwill" => _goodwill.Count,
+        "vat" => _vatTransfers.Count,
+        _ => _purchases.Count
+    };
+
+    protected override void OnInitialized()
+        => Culture.Changed += OnCultureChanged;
+
+    private void OnCultureChanged()
+        => InvokeAsync(StateHasChanged);
+
+    public void Dispose()
+        => Culture.Changed -= OnCultureChanged;
+
+    protected override async Task OnInitializedAsync()
+        => await ReloadAsync();
+
+    private async Task SetTab(string tab)
+    {
+        _tab = tab;
+        await ReloadAsync();
+    }
+
+    private async Task ReloadAsync()
+    {
+        _loading = true;
+        _error = null;
+        try
+        {
+            var year = _year;
+            int? quarter = _quarter == 0 ? null : _quarter;
+            if (_tab == "purchases")
+            {
+                _purchases = (await Api.GetTokenPurchasesAsync(year, quarter)).ToList();
+            }
+            else if (_tab == "goodwill")
+            {
+                _goodwill = (await Api.GetTokenGoodwillAsync(year, quarter)).ToList();
+            }
+            else
+            {
+                _vatTransfers = (await Api.GetVatBufferTransfersAsync(year, quarter)).ToList();
+            }
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private async Task ExportPurchasesAsync()
+    {
+        _exportBusy = true;
+        try
+        {
+            await Api.DownloadTokenPurchasesCsvAsync(Js, _year, _quarter == 0 ? null : _quarter);
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _exportBusy = false;
+        }
+    }
+
+    private async Task ExportGoodwillAsync()
+    {
+        _exportBusy = true;
+        try
+        {
+            await Api.DownloadTokenGoodwillCsvAsync(Js, _year, _quarter == 0 ? null : _quarter);
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _exportBusy = false;
+        }
+    }
+
+    private async Task DownloadPdfAsync(TokenPurchaseFinanceItem row)
+    {
+        _exportBusy = true;
+        try
+        {
+            await Api.DownloadTokenInvoicePdfAsync(Js, row.InvoiceId, row.InvoiceNumber);
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _exportBusy = false;
+        }
+    }
+}

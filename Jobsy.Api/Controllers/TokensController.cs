@@ -20,8 +20,7 @@ public class TokensController : ControllerBase
     private readonly ITokenLedgerService _tokenLedger;
     private readonly IPaymentService _payments;
     private readonly IUserLookupService _users;
-    private readonly ICommissionLedgerService _commissions;
-    private readonly IHostEnvironment _environment;
+    private readonly ITokenPurchaseFulfillmentService _fulfillment;
 
     public TokensController(
         JobsyDbContext db,
@@ -29,16 +28,14 @@ public class TokensController : ControllerBase
         ITokenLedgerService tokenLedger,
         IPaymentService payments,
         IUserLookupService users,
-        ICommissionLedgerService commissions,
-        IHostEnvironment environment)
+        ITokenPurchaseFulfillmentService fulfillment)
     {
         _db = db;
         _companyAuth = companyAuth;
         _tokenLedger = tokenLedger;
         _payments = payments;
         _users = users;
-        _commissions = commissions;
-        _environment = environment;
+        _fulfillment = fulfillment;
     }
 
     [HttpGet("balance")]
@@ -182,6 +179,7 @@ public class TokensController : ControllerBase
     /// <summary>
     /// Credits tokens for a persisted checkout session. Client may send PaymentId or CheckoutId —
     /// PackSize and CompanyId come from the server-side session.
+    /// Also generates the official invoice and queues the BTW-buffer transfer.
     /// </summary>
     [HttpPost("checkout/complete")]
     [Authorize(Roles = JobsyRoles.TokenPurchaseRoles)]
@@ -221,91 +219,24 @@ public class TokensController : ControllerBase
             return Forbid();
         }
 
-        if (session.Status == TokenPurchaseCheckoutStatus.Credited)
-        {
-            var bal = await _tokenLedger.GetBalanceAsync(session.CompanyId, cancellationToken);
-            return Ok(new TokenBalanceDto(session.CompanyId, session.Company.Name, bal));
-        }
-
         if (session.Status == TokenPurchaseCheckoutStatus.Cancelled)
         {
             return BadRequest(new { message = "Checkout is geannuleerd." });
         }
 
-        // Development stub only: simulate provider webhook by marking Pending → Paid.
-        if (_environment.IsDevelopment()
-            && session.PaymentId.StartsWith("stub_pay_", StringComparison.Ordinal)
-            && session.Status == TokenPurchaseCheckoutStatus.Pending)
-        {
-            session.Status = TokenPurchaseCheckoutStatus.Paid;
-            await _db.SaveChangesAsync(cancellationToken);
-        }
+        var actor = await _users.FindByPrincipalAsync(User, cancellationToken);
+        var result = await _fulfillment.TryFulfillPaidCheckoutAsync(
+            session.Id,
+            actor?.Id,
+            allowDevStubMarkPaid: true,
+            cancellationToken);
 
-        var status = await _payments.GetPaymentStatusAsync(session.PaymentId, cancellationToken);
-        if (!status.IsPaid)
+        if (result is null)
         {
             return BadRequest(new { message = "Betaling is nog niet afgerond." });
         }
 
-        // Atomic claim: only one concurrent complete can transition Pending/Paid → Credited.
-        var creditedAt = DateTime.UtcNow;
-        var claimed = await _db.TokenPurchaseCheckouts
-            .Where(c => c.Id == session.Id
-                        && (c.Status == TokenPurchaseCheckoutStatus.Pending
-                            || c.Status == TokenPurchaseCheckoutStatus.Paid))
-            .ExecuteUpdateAsync(
-                s => s
-                    .SetProperty(c => c.Status, TokenPurchaseCheckoutStatus.Credited)
-                    .SetProperty(c => c.CreditedAt, creditedAt),
-                cancellationToken);
-
-        if (claimed == 0)
-        {
-            var bal = await _tokenLedger.GetBalanceAsync(session.CompanyId, cancellationToken);
-            return Ok(new TokenBalanceDto(session.CompanyId, session.Company.Name, bal));
-        }
-
-        try
-        {
-            var actor = await _users.FindByPrincipalAsync(User, cancellationToken);
-            var notePrefix = session.PaymentId.StartsWith("stub_pay_", StringComparison.Ordinal)
-                ? "Mollie stub"
-                : "Mollie";
-            var entry = await _tokenLedger.RecordPurchaseAsync(
-                session.CompanyId,
-                session.PackSize,
-                actor?.Id,
-                $"{notePrefix} {session.PaymentId}",
-                cancellationToken);
-
-            // Accrue salesmanager token commission when the supplier was referred.
-            var company = await _db.Companies.AsNoTracking()
-                .FirstOrDefaultAsync(c => c.Id == session.CompanyId, cancellationToken);
-            if (company?.ReferredBySalesManagerUserId is Guid smId)
-            {
-                await _commissions.TryCreditTokenCommissionAsync(
-                    smId,
-                    session.CompanyId,
-                    session.Id,
-                    session.AmountEuro,
-                    company.FirstYearStartedAt,
-                    cancellationToken);
-            }
-
-            return Ok(new TokenBalanceDto(session.CompanyId, session.Company.Name, entry.NewBalance));
-        }
-        catch
-        {
-            // Compensate claim so the user can retry.
-            await _db.TokenPurchaseCheckouts
-                .Where(c => c.Id == session.Id && c.Status == TokenPurchaseCheckoutStatus.Credited)
-                .ExecuteUpdateAsync(
-                    s => s
-                        .SetProperty(c => c.Status, TokenPurchaseCheckoutStatus.Paid)
-                        .SetProperty(c => c.CreditedAt, (DateTime?)null),
-                    cancellationToken);
-            throw;
-        }
+        return Ok(new TokenBalanceDto(result.CompanyId, result.CompanyName, result.NewBalance));
     }
 
     [HttpPost("allocate")]
@@ -421,11 +352,12 @@ public class TokensController : ControllerBase
         try
         {
             var actor = await _users.FindByPrincipalAsync(User, cancellationToken);
-            var entry = await _tokenLedger.GrantAsync(
+            // Admin grants via this endpoint are logged as Goodwill (€ 0,00 — no BTW/omzet).
+            var entry = await _tokenLedger.GrantGoodwillAsync(
                 request.CompanyId,
                 request.Amount,
+                note,
                 actorUserId: actor?.Id,
-                note: note,
                 cancellationToken: cancellationToken);
 
             return Ok(new TokenBalanceDto(company.Id, company.Name, entry.NewBalance));
@@ -434,5 +366,19 @@ public class TokensController : ControllerBase
         {
             return BadRequest(new { message = ex.Message });
         }
+        catch (ArgumentException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
     }
+
+    /// <summary>
+    /// Explicit goodwill / compensatie endpoint (same behaviour as grant; clearer for admin tooling).
+    /// </summary>
+    [HttpPost("goodwill")]
+    [Authorize(Policy = JobsyPolicies.RequireAdmin)]
+    public async Task<ActionResult<TokenBalanceDto>> GrantGoodwill(
+        [FromBody] GrantTokensRequest request,
+        CancellationToken cancellationToken)
+        => await Grant(request, cancellationToken);
 }

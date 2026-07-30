@@ -20,10 +20,36 @@ public interface ITokenLedgerService
         string? note = null,
         CancellationToken cancellationToken = default);
 
+    /// <summary>
+    /// Admin goodwill / service compensation. Token balance increases; monetary value is € 0,00 (no BTW/omzet).
+    /// <paramref name="note"/> (reason) is required.
+    /// </summary>
+    Task<TokenTransaction> GrantGoodwillAsync(
+        Guid companyId,
+        decimal amount,
+        string reason,
+        Guid? actorUserId = null,
+        CancellationToken cancellationToken = default);
+
     /// <summary>Records a Mollie (stub) purchase credit on the company ledger.</summary>
     Task<TokenTransaction> RecordPurchaseAsync(
         Guid companyId,
         decimal amount,
+        Guid? actorUserId = null,
+        string? note = null,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Records a paid Mollie purchase with monetary amounts in whole cents and optional checkout/invoice links.
+    /// </summary>
+    Task<TokenTransaction> RecordPurchaseAsync(
+        Guid companyId,
+        decimal tokenAmount,
+        int amountExVatCents,
+        int vatAmountCents,
+        int totalAmountCents,
+        Guid? checkoutId,
+        Guid? invoiceId,
         Guid? actorUserId = null,
         string? note = null,
         CancellationToken cancellationToken = default);

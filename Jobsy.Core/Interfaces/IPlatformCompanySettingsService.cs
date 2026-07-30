@@ -26,6 +26,7 @@ public sealed record PlatformCompanySnapshot(
     string? VatNumber,
     string? Phone,
     string? Email,
+    string? VatBufferIban,
     DateTime? UpdatedAtUtc)
 {
     public string FormatAddressBlock()
@@ -65,4 +66,5 @@ public sealed record PlatformCompanyUpdate(
     string? KvkNumber,
     string? VatNumber,
     string? Phone,
-    string? Email);
+    string? Email,
+    string? VatBufferIban = null);

@@ -101,6 +101,10 @@ public static class DependencyInjection
         services.AddScoped<ICompanyApiKeyService, CompanyApiKeyService>();
         services.AddScoped<IUserLookupService, UserLookupService>();
         services.AddScoped<ITokenLedgerService, TokenLedgerService>();
+        services.AddScoped<ITokenPurchaseInvoiceService, TokenPurchaseInvoiceService>();
+        services.AddScoped<IVatBufferTransferService, VatBufferTransferService>();
+        services.AddScoped<ITokenPurchaseFulfillmentService, TokenPurchaseFulfillmentService>();
+        services.AddScoped<ITokenFinanceQueryService, TokenFinanceQueryService>();
         services.AddScoped<IVacancyProductService, VacancyProductService>();
         services.AddScoped<IVacancyDraftCreationService, VacancyDraftCreationService>();
         services.AddScoped<IMetricsQueryService, MetricsQueryService>();
@@ -143,6 +147,7 @@ public static class DependencyInjection
         services.AddHostedService<DataRetentionHostedService>();
         services.AddHostedService<DraftVacancyCleanupHostedService>();
         services.AddHostedService<CompanyReengagementHostedService>();
+        services.AddHostedService<VatBufferTransferHostedService>();
 
         return services;
     }

@@ -63,6 +63,49 @@ public sealed class TokenLedgerService : ITokenLedgerService
             TokenTransactionKind.Grant,
             actorUserId,
             note ?? "Grant",
+            amountExVatCents: 0,
+            vatAmountCents: 0,
+            totalAmountCents: 0,
+            checkoutId: null,
+            invoiceId: null,
+            cancellationToken);
+    }
+
+    public async Task<TokenTransaction> GrantGoodwillAsync(
+        Guid companyId,
+        decimal amount,
+        string reason,
+        Guid? actorUserId = null,
+        CancellationToken cancellationToken = default)
+    {
+        if (amount <= 0)
+        {
+            throw new ArgumentOutOfRangeException(nameof(amount), "Goodwill amount must be positive.");
+        }
+
+        var note = reason?.Trim();
+        if (string.IsNullOrWhiteSpace(note))
+        {
+            throw new ArgumentException("Reden is verplicht voor goodwill-/compensatietokens.", nameof(reason));
+        }
+
+        if (note.Length > 512)
+        {
+            throw new ArgumentException("Reden mag maximaal 512 tekens zijn.", nameof(reason));
+        }
+
+        // Monetary value € 0,00 — no BTW obligation / omzet; balance still increases.
+        return await CreditAsync(
+            companyId,
+            amount,
+            TokenTransactionKind.Goodwill,
+            actorUserId,
+            note,
+            amountExVatCents: 0,
+            vatAmountCents: 0,
+            totalAmountCents: 0,
+            checkoutId: null,
+            invoiceId: null,
             cancellationToken);
     }
 
@@ -84,6 +127,52 @@ public sealed class TokenLedgerService : ITokenLedgerService
             TokenTransactionKind.Purchase,
             actorUserId,
             note ?? "Mollie purchase",
+            amountExVatCents: 0,
+            vatAmountCents: 0,
+            totalAmountCents: 0,
+            checkoutId: null,
+            invoiceId: null,
+            cancellationToken);
+    }
+
+    public async Task<TokenTransaction> RecordPurchaseAsync(
+        Guid companyId,
+        decimal tokenAmount,
+        int amountExVatCents,
+        int vatAmountCents,
+        int totalAmountCents,
+        Guid? checkoutId,
+        Guid? invoiceId,
+        Guid? actorUserId = null,
+        string? note = null,
+        CancellationToken cancellationToken = default)
+    {
+        if (tokenAmount <= 0)
+        {
+            throw new ArgumentOutOfRangeException(nameof(tokenAmount), "Purchase amount must be positive.");
+        }
+
+        if (totalAmountCents < 0 || amountExVatCents < 0 || vatAmountCents < 0)
+        {
+            throw new ArgumentOutOfRangeException(nameof(totalAmountCents), "Monetary amounts must be non-negative cents.");
+        }
+
+        if (amountExVatCents + vatAmountCents != totalAmountCents)
+        {
+            throw new ArgumentException("Ex-BTW + BTW must equal total (cents).");
+        }
+
+        return await CreditAsync(
+            companyId,
+            tokenAmount,
+            TokenTransactionKind.Purchase,
+            actorUserId,
+            note ?? "Mollie purchase",
+            amountExVatCents,
+            vatAmountCents,
+            totalAmountCents,
+            checkoutId,
+            invoiceId,
             cancellationToken);
     }
 
@@ -164,6 +253,11 @@ public sealed class TokenLedgerService : ITokenLedgerService
         TokenTransactionKind kind,
         Guid? actorUserId,
         string note,
+        int amountExVatCents,
+        int vatAmountCents,
+        int totalAmountCents,
+        Guid? checkoutId,
+        Guid? invoiceId,
         CancellationToken cancellationToken)
     {
         return await ExecuteInTransactionAsync(async () =>
@@ -183,6 +277,11 @@ public sealed class TokenLedgerService : ITokenLedgerService
                 NewBalance = oldBalance + amount,
                 ActorUserId = actorUserId,
                 Note = note,
+                AmountExVatCents = amountExVatCents,
+                VatAmountCents = vatAmountCents,
+                TotalAmountCents = totalAmountCents,
+                TokenPurchaseCheckoutId = checkoutId,
+                TokenPurchaseInvoiceId = invoiceId,
                 CreatedAt = DateTime.UtcNow
             };
 
