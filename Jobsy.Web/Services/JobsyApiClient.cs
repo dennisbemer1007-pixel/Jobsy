@@ -1117,7 +1117,18 @@ public sealed class JobsyApiClient : IAsyncDisposable
         => await _http.GetFromJsonAsync<List<EmployerApplicationItem>>("api/applications", ct) ?? [];
 
     public async Task<IReadOnlyList<RegionItem>> GetRegionsAsync(CancellationToken ct = default)
-        => await _http.GetFromJsonAsync<List<RegionItem>>("api/regions", ct) ?? [];
+    {
+        using var response = await _http.GetAsync("api/regions", ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException(
+                ExtractMessage(body)
+                ?? $"Regio’s laden mislukt ({(int)response.StatusCode}).");
+        }
+
+        return await response.Content.ReadFromJsonAsync<List<RegionItem>>(cancellationToken: ct) ?? [];
+    }
 
     public async Task<RegionItem?> CreateRegionAsync(
         string name,

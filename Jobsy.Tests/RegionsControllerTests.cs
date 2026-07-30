@@ -63,6 +63,65 @@ public class RegionsControllerTests
         Assert.Empty(dto.Companies);
     }
 
+    [Fact]
+    public async Task List_returns_linked_branches_without_loading_geometry()
+    {
+        await using var db = CreateDb();
+        var orgId = Guid.NewGuid();
+        var branchId = Guid.NewGuid();
+        var regionId = Guid.NewGuid();
+
+        db.Companies.AddRange(
+            new Company
+            {
+                Id = orgId,
+                Name = "Org BV",
+                KvkNumber = "12345678",
+                Address = "Straat 1",
+                Location = new Jobsy.Core.ValueObjects.GeoPoint(52.0, 4.0)
+            },
+            new Company
+            {
+                Id = branchId,
+                Name = "Vestiging Noord",
+                KvkNumber = "12345678",
+                Address = "Straat 2",
+                ParentCompanyId = orgId,
+                Location = new Jobsy.Core.ValueObjects.GeoPoint(52.1, 4.1)
+            });
+        db.Regions.Add(new Region
+        {
+            Id = regionId,
+            Name = "Regio Noord",
+            OrganizationCompanyId = orgId
+        });
+        db.RegionCompanies.Add(new RegionCompany
+        {
+            RegionId = regionId,
+            CompanyId = branchId
+        });
+        await db.SaveChangesAsync();
+
+        var controller = new RegionsController(db, new TestCompanyAuthorizationService(accessible: [orgId, branchId]));
+        controller.ControllerContext = new ControllerContext
+        {
+            HttpContext = new DefaultHttpContext
+            {
+                User = new ClaimsPrincipal(new ClaimsIdentity(
+                    [new Claim(ClaimTypes.Role, JobsyRoles.EnterpriseManager)],
+                    "TestAuth"))
+            }
+        };
+
+        var result = await controller.List(CancellationToken.None);
+        var ok = Assert.IsType<OkObjectResult>(result.Result);
+        var payload = Assert.IsAssignableFrom<IEnumerable<RegionDto>>(ok.Value);
+        var dto = Assert.Single(payload);
+        Assert.Equal("Regio Noord", dto.Name);
+        Assert.Equal("Org BV", dto.OrganizationCompanyName);
+        Assert.Equal(branchId, Assert.Single(dto.Companies).CompanyId);
+    }
+
     private static JobsyDbContext CreateDb()
     {
         var options = new DbContextOptionsBuilder<JobsyDbContext>()
@@ -71,16 +130,16 @@ public class RegionsControllerTests
         return new JobsyDbContext(options);
     }
 
-    private sealed class TestCompanyAuthorizationService : ICompanyAuthorizationService
+    private sealed class TestCompanyAuthorizationService(IReadOnlyCollection<Guid>? accessible = null) : ICompanyAuthorizationService
     {
         public bool IsAdmin(ClaimsPrincipal user) => false;
         public bool IsEmployer(ClaimsPrincipal user) => true;
         public bool IsCandidate(ClaimsPrincipal user) => false;
         public UserRole? GetPrimaryRole(ClaimsPrincipal user) => UserRole.EnterpriseManager;
         public Task<IReadOnlyCollection<Guid>?> GetAccessibleCompanyIdsAsync(ClaimsPrincipal user, CancellationToken cancellationToken = default)
-            => Task.FromResult<IReadOnlyCollection<Guid>?>(null);
+            => Task.FromResult(accessible);
         public Task<bool> CanAccessCompanyAsync(ClaimsPrincipal user, Guid companyId, CancellationToken cancellationToken = default)
-            => Task.FromResult(true);
+            => Task.FromResult(accessible is null || accessible.Contains(companyId));
         public Task EnsureCanAccessCompanyAsync(ClaimsPrincipal user, Guid companyId, CancellationToken cancellationToken = default)
             => Task.CompletedTask;
     }
