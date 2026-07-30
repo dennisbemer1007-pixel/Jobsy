@@ -96,11 +96,11 @@
             </section>
         }
 
-        <section class="panel-section">
-            <h2>Vestiging toevoegen (KVK-stub)</h2>
-            <p class="muted"><a class="auth-link" href="/employer/takeovers">Overnameverzoeken →</a></p>
-            <AuthorizeView Roles="EnterpriseManager,Admin">
-                <Authorized>
+        <AuthorizeView Roles="EnterpriseManager">
+            <Authorized>
+                <section class="panel-section">
+                    <h2>Vestiging toevoegen (KVK-stub)</h2>
+                    <p class="muted"><a class="auth-link" href="/employer/takeovers">Overnameverzoeken →</a></p>
                     <form class="login-form" style="max-width:480px" @onsubmit="LookupAsync" @onsubmit:preventDefault>
                         <label>
                             KVK-nummer
@@ -136,12 +136,9 @@
                             }
                         </div>
                     }
-                </Authorized>
-                <NotAuthorized>
-                    <p class="muted">Alleen EnterpriseManager kan vestigingen via KVK toevoegen.</p>
-                </NotAuthorized>
-            </AuthorizeView>
-        </section>
+                </section>
+            </Authorized>
+        </AuthorizeView>
 
         @if (!string.IsNullOrEmpty(_message))
         {
