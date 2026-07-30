@@ -79,7 +79,9 @@ public record ApplyRequest(
     bool AcceptedTerms = false,
     string? ConsentVersion = null,
     bool WorkPermitConfirmed = false,
-    string? VerificationCode = null);
+    string? VerificationCode = null,
+    string? Motivation = null,
+    bool ConfirmLowMatchSafetyNet = false);
 
 public record ReactToApplicationRequest(ApplicationStatus Status);
 
@@ -89,7 +91,11 @@ public record ApplyResultDto(
     bool AuthenticatorStubUsed,
     bool RequiresVerification = false,
     bool VerificationCodeSent = false,
-    EmployerDirectContactDto? DirectContact = null);
+    EmployerDirectContactDto? DirectContact = null,
+    bool RequiresSafetyNetConfirmation = false,
+    int? MatchPercent = null,
+    string? MatchBreakdownJson = null,
+    string? SafetyNetMessage = null);
 
 /// <summary>
 /// Revealed only after a successful (verified) application. Never included on public vacancy payloads.

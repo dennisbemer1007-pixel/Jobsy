@@ -31,6 +31,19 @@ public class Application
     public string? SnapshotEducations { get; set; }
     public string? SnapshotAboutMe { get; set; }
     public int CandidateEmployerCount { get; set; }
+
+    /// <summary>Optional free-text motivation on apply (separate from SnapshotAboutMe).</summary>
+    public string? Motivation { get; set; }
+
+    /// <summary>True when candidate proceeded despite match score &lt; 50% (Gulden Middenweg).</summary>
+    public bool ViaSafetyNet { get; set; }
+
+    /// <summary>Persisted match percentage at apply time (0–100).</summary>
+    public int? MatchPercent { get; set; }
+
+    /// <summary>JSON snapshot of match score breakdown for employer/candidate UI.</summary>
+    public string? MatchBreakdownJson { get; set; }
+
     public DateTime CreatedAt { get; set; }
     public DateTime? RespondedAt { get; set; }
 }

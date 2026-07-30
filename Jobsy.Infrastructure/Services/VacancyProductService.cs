@@ -695,9 +695,10 @@ public sealed class VacancyProductService : IVacancyProductService
     {
         if (_db.Database.IsNpgsql())
         {
-            var meters = radiusKm * 1000.0;
             var role = (int)UserRole.Candidate;
-
+            // Use geometry ST_DWithin (degrees) so the existing GIST index on HomeLocation can be used.
+            // Crow-flies shortlist only — routing still refines by travel minutes.
+            var degrees = radiusKm / 111.32;
             var ids = await _db.Database
                 .SqlQueryRaw<Guid>(
                     """
@@ -708,14 +709,14 @@ public sealed class VacancyProductService : IVacancyProductService
                       AND u."Role" = {0}
                       AND u."HomeLocation" IS NOT NULL
                       AND ST_DWithin(
-                        u."HomeLocation"::geography,
-                        ST_SetSRID(ST_MakePoint({1}, {2}), 4326)::geography,
+                        u."HomeLocation",
+                        ST_SetSRID(ST_MakePoint({1}, {2}), 4326),
                         {3})
                     """,
                     role,
                     origin.Longitude,
                     origin.Latitude,
-                    meters)
+                    degrees)
                 .ToListAsync(cancellationToken);
 
             if (ids.Count == 0)

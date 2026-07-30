@@ -57,6 +57,26 @@ public class Vacancy
     public Guid? SalaryTableId { get; set; }
     public CompanySalaryTable? SalaryTable { get; set; }
 
+    /// <summary>Minimum hours/week for this role (matching + filters).</summary>
+    public decimal? MinHoursPerWeek { get; set; }
+
+    /// <summary>Maximum hours/week for this role (matching + filters).</summary>
+    public decimal? MaxHoursPerWeek { get; set; }
+
+    /// <summary>Day-parts matrix JSON (<see cref="Rules.SchedulePayload"/>).</summary>
+    public string? ScheduleJson { get; set; }
+
+    public bool FlexibleTimes { get; set; }
+
+    /// <summary>Manual | ImportEmpty | ApiEmpty | AtsEmpty when FlexibleTimes.</summary>
+    public string? FlexibleScheduleSource { get; set; }
+
+    public bool? LegalWorksAfter19 { get; set; }
+    public bool? LegalNightShift23To06 { get; set; }
+    public bool? LegalAdultSupervisorPresent { get; set; }
+    public bool? LegalHandlesMoneyOrClosing { get; set; }
+    public bool? LegalHeavyOrHazardousWork { get; set; }
+
     /// <summary>
     /// When true, this vacancy uses its own direct-contact flags instead of the company (or parent) defaults.
     /// Contact values (e-mail/phone/WhatsApp) always come from the company profile.

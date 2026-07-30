@@ -1,11 +1,11 @@
 @page "/candidate/profile"
 @rendermode @(new InteractiveServerRenderMode(prerender: false))
 @attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Candidate")]
+@using Jobsy.Core.Rules
 @inject JobsyApiClient Api
 @inject IGeocodingClient Geocoder
 @inject NavigationManager Navigation
 @inject CultureState Culture
-@using Jobsy.Core.Rules
 @using Jobsy.Web.Localization
 @using Jobsy.Web.Navigation
 @implements IAsyncDisposable
@@ -138,14 +138,40 @@
                 </label>
 
                 <fieldset class="profile-roles">
+                    <legend>Uren per week</legend>
+                    <p class="login-lead">Hoeveel uur wil je roughly per week werken?</p>
+                    <div class="inline-actions" style="gap:0.75rem;align-items:end;flex-wrap:wrap">
+                        <label>
+                            Min.
+                            <input type="number" min="1" max="60" step="0.5" @bind="_minHours" />
+                        </label>
+                        <label>
+                            Max.
+                            <input type="number" min="1" max="60" step="0.5" @bind="_maxHours" />
+                        </label>
+                        @if (_minHours is decimal minH && _maxHours is decimal maxH && maxH >= minH)
+                        {
+                            <span class="muted">Categorie: @HoursRangeRules.CategoryLabel(new HoursRange(minH, maxH).Category)</span>
+                        }
+                    </div>
+                </fieldset>
+
+                <fieldset class="profile-roles">
                     <legend>@Culture["Profile.Availability"]</legend>
-                    <table class="wage-table">
+                    <label>
+                        <input type="checkbox" checked="@_flexibleTimes" @onchange="OnFlexibleTimesChanged" />
+                        Tijden in overleg / Variabele tijden
+                    </label>
+                    <table class="wage-table" style="@(_flexibleTimes ? "opacity:0.45;pointer-events:none" : null)">
                         <thead>
                             <tr>
                                 <th>@Culture["Profile.Day"]</th>
                                 @foreach (var slot in AvailabilitySlots)
                                 {
-                                    <th>@UiLabels.AvailabilitySlot(Culture, slot)</th>
+                                    <th>
+                                        @UiLabels.AvailabilitySlot(Culture, slot)
+                                        <div class="muted" style="font-weight:normal;font-size:0.75rem">@DayPartMatrix.DayPartWindows[slot]</div>
+                                    </th>
                                 }
                             </tr>
                         </thead>
@@ -262,8 +288,8 @@
                    OnCompleted="OnUnsubscribeCompleted" />
 
 @code {
-    private static readonly string[] AvailabilityDays = ["Ma", "Di", "Wo", "Do", "Vr", "Za", "Zo"];
-    private static readonly string[] AvailabilitySlots = ["Ochtend", "Middag", "Avond", "Nacht"];
+    private static readonly string[] AvailabilityDays = DayPartMatrix.DayCodes;
+    private static readonly string[] AvailabilitySlots = DayPartMatrix.DayPartCodes;
 
     private bool _loading = true;
     private bool _saving;
@@ -277,6 +303,9 @@
     private bool _homeLocationDirty;
     private int? _maxTravel = 30;
     private string _preferredTransport = "";
+    private decimal? _minHours = 8;
+    private decimal? _maxHours = 24;
+    private bool _flexibleTimes;
     private readonly HashSet<string> _selectedRoles = new(StringComparer.OrdinalIgnoreCase);
     private readonly HashSet<string> _selectedLicenses = new(StringComparer.OrdinalIgnoreCase);
     private readonly HashSet<string> _selectedEducations = new(StringComparer.OrdinalIgnoreCase);
@@ -350,6 +379,10 @@
                     _availability.Add($"{day.Key}:{slot}");
                 }
             }
+
+            _minHours = prefs.MinHoursPerWeek ?? 8;
+            _maxHours = prefs.MaxHoursPerWeek ?? 24;
+            _flexibleTimes = prefs.FlexibleTimes == true;
             _employers.Clear();
             _employers.AddRange(prefs.Employers ?? []);
             _selectedEducations.Clear();
@@ -460,11 +493,21 @@
     {
         if (selected)
         {
+            _flexibleTimes = false;
             _availability.Add(key);
         }
         else
         {
             _availability.Remove(key);
+        }
+    }
+
+    private void OnFlexibleTimesChanged(ChangeEventArgs e)
+    {
+        _flexibleTimes = e.Value is bool b && b || string.Equals(e.Value?.ToString(), "true", StringComparison.OrdinalIgnoreCase);
+        if (_flexibleTimes)
+        {
+            _availability.Clear();
         }
     }
 
@@ -645,7 +688,10 @@
                             return idx < 0 ? int.MaxValue : idx;
                         })
                         .ToList(),
-                    HomeAddress = homeAddressToSave
+                    HomeAddress = homeAddressToSave,
+                    MinHoursPerWeek = _minHours,
+                    MaxHoursPerWeek = _maxHours,
+                    FlexibleTimes = _flexibleTimes
                 },
                 homeLatitude: clearHome || !_homeLocationDirty ? null : _homeLat,
                 homeLongitude: clearHome || !_homeLocationDirty ? null : _homeLng,

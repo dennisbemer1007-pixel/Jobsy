@@ -11,21 +11,23 @@
 ## B. AVG / GDPR (Privacy by Design)
 - **Data Minimization:** Alleen opslaan wat strikt noodzakelijk is voor de match en sollicitatie.
 - **Consent:** Server-side vastgelegd (`ConsentAcceptedAt` / `ConsentVersion` = `PrivacyConstants.CurrentConsentVersion`); clientversies worden genegeerd.
-- **Progressive disclosure:** Werkgevers zien kandidaat-PII en snapshotvelden pas na acceptatie (`Accepted` / `EmployerContacting` / `Hired`).
-- **Right to be Forgotten:** `IPrivacyDataService` + geverifieerde uitschrijving (`request-unsubscribe` / `confirm-unsubscribe`) via UI `/privacy/data` en `/candidate/profile` — reden + e-mailverificatiecode, daarna blokkeren en anonimiseren (snapshots, verificatiecodes, site visits, registratiecontact, IBAN/MaskedIban). Admin ziet de reden in platform logs (categorie `Unsubscribe`). `POST /api/privacy/delete-account` vereist dezelfde verificatiecode.
+- **Progressive disclosure:** Werkgevers zien kandidaat-PII (incl. stad, afstand, work-permit, snapshots) pas na acceptatie (`Accepted` / `EmployerContacting` / `Hired`); motivatie en match-% zijn pre-accept zichtbaar.
+- **Right to be Forgotten:** `IPrivacyDataService` + geverifieerde uitschrijving (`request-unsubscribe` / `confirm-unsubscribe`) via UI `/privacy/data` en `/candidate/profile` — reden + e-mailverificatiecode, daarna blokkeren en anonimiseren (snapshots, verificatiecodes, site visits, registratiecontact, IBAN/MaskedIban). Admin ziet de reden-code in platform logs (categorie `Unsubscribe`); free-text `ReasonOther` wordt niet gelogd. `POST /api/privacy/delete-account` vereist dezelfde verificatiecode.
 - **Data portability:** `/api/privacy/export` (applications+snapshots, engagement, registraties, sales payouts/ledger/invoices).
 - **IBAN:** Volledige IBAN alleen server-side; API/UI tonen gemaskeerde vorm.
 - **Retention:** `DataRetentionHostedService` purged logs/engagement/cancelled registrations/site visits.
 - **Logging:** Geen plaintext e-mailadressen in PlatformLogs (redaction via `EmailServiceStub.RedactEmail`).
 - **Demo:** `JobsyAuth:AllowDevelopmentAuth` + DemoUsers zijn bewust voor de publieke demo; seed draait alleen bij Development / `Seed:Enabled` / AllowDevelopmentAuth. Demo one-click login zet geen wachtwoorden in HTML. Buiten Development mag header-auth alleen `@jobsy.local` demo-accounts (incl. Admin/SalesManager). OAuth client-secrets vereisen een aparte `JobsyAuth:ExternalProvisionSecret` (nooit DevelopmentAuthSecret als fallback).
-- **Verification OTPs:** Sollicitatie- en unsubscribe-codes via `RandomNumberGenerator` + constant-time compare (`VerificationCodes`). Max 5 foute pogingen per code + rate limit policy `otp-verify` (10/min).
+- **Verification OTPs:** Sollicitatie- en unsubscribe-codes via `RandomNumberGenerator` + HMAC-SHA256 met application pepper (`VerificationCodes.Hash`); legacy unsalted SHA-256 blijft verifieerbaar tijdens rollout. Max 5 foute pogingen per code + rate limit policy `otp-verify` (10/min, keyed op user+IP).
 - **Verified applications only:** Werkgeversmetrics/counts/drilldowns en kandidaat-sollicitatielijsten tellen alleen `EmailVerifiedAt != null`.
 - **Registration activate:** Tijdelijk wachtwoord gaat alleen per e-mail; API/UI echo’t hem buiten Development niet.
 
-## C. Security Headers (Middleware)
+## C. Security Headers & Error Handling (Middleware)
 De ASP.NET Core pipeline stuurt standaard:
 - `Content-Security-Policy` (API)
 - `X-Content-Type-Options: nosniff`
 - `X-Frame-Options: DENY`
 - `Referrer-Policy`, `Permissions-Policy`
 - HSTS buiten Development
+- `ExceptionHandlingMiddleware` — generieke ProblemDetails naar clients; stacktraces/PII blijven server-side
+- **Swagger:** standaard uit buiten Development (`Swagger:Enabled` default false in base config)

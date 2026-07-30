@@ -8,21 +8,6 @@ namespace Jobsy.Core.Rules;
 /// </summary>
 public static class VacancyWageResolver
 {
-    /// <summary>
-    /// Indicative youth fractions of the adult (21+) rate when a vacancy has no salary table.
-    /// Roughly mirrors common Dutch youth / WML-style steps used in Jobsy demo data.
-    /// </summary>
-    private static readonly (int AgeYears, string Label, decimal FractionOfAdult)[] DefaultYouthFractions =
-    [
-        (15, "15", 0.31m),
-        (16, "16", 0.36m),
-        (17, "17", 0.41m),
-        (18, "18", 0.55m),
-        (19, "19", 0.66m),
-        (20, "20", 0.79m),
-        (21, "21+", 1.00m)
-    ];
-
     public static decimal ResolveHourlyWage(
         decimal vacancyHourlyWage,
         IEnumerable<CompanySalaryRate>? rates,
@@ -34,7 +19,7 @@ public static class VacancyWageResolver
             return vacancyHourlyWage;
         }
 
-        var age = Math.Clamp(ageYears, 15, 99);
+        var age = AgeRules.ClampWorkingAge(ageYears);
         var match = bands
             .Where(r => r.AgeYears <= age)
             .OrderByDescending(r => r.AgeYears)
@@ -46,6 +31,23 @@ public static class VacancyWageResolver
         }
 
         return bands.OrderBy(r => r.AgeYears).First().HourlyRate;
+    }
+
+    /// <summary>Adult (21+) hourly rate from a salary table, or null when empty.</summary>
+    public static decimal? ResolveAdultHourlyWage(IEnumerable<CompanySalaryRate>? rates)
+    {
+        var bands = rates?.ToList() ?? [];
+        if (bands.Count == 0)
+        {
+            return null;
+        }
+
+        var adult = bands
+            .Where(r => r.AgeYears >= AgeRules.AdultAgeYears)
+            .OrderBy(r => r.AgeYears)
+            .FirstOrDefault();
+        return adult?.HourlyRate
+               ?? bands.OrderByDescending(r => r.AgeYears).First().HourlyRate;
     }
 
     public static IReadOnlyList<WageAgeBand> GetWageBands(
@@ -69,7 +71,7 @@ public static class VacancyWageResolver
     public static IReadOnlyList<WageAgeBand> BuildDefaultYouthBands(decimal adultHourlyWage)
     {
         var adult = Math.Max(0.01m, adultHourlyWage);
-        return DefaultYouthFractions
+        return YouthWageFractions.Default
             .Select(f => new WageAgeBand(
                 f.AgeYears,
                 Math.Round(adult * f.FractionOfAdult, 2, MidpointRounding.AwayFromZero),

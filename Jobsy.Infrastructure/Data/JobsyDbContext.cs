@@ -74,6 +74,10 @@ public class JobsyDbContext : DbContext
                 .IsRequired(false);
             entity.HasIndex(e => e.HomeLocation).HasMethod("GIST");
             entity.HasIndex(e => e.Email).IsUnique();
+            // PushBom + OpenForWork metrics hot path.
+            entity.HasIndex(e => new { e.OpenForWork, e.IsActive, e.Role })
+                .HasDatabaseName("IX_Users_OpenForWork_IsActive_Role")
+                .HasFilter("\"OpenForWork\" = TRUE AND \"IsActive\" = TRUE");
             entity.HasOne(e => e.Company)
                 .WithMany(c => c.PrimaryUsers)
                 .HasForeignKey(e => e.CompanyId)
@@ -135,6 +139,12 @@ public class JobsyDbContext : DbContext
             entity.Property(e => e.RequiredEducation).HasMaxLength(256);
             entity.Property(e => e.WorkTypeLabels).HasMaxLength(512);
             entity.Property(e => e.CreatedAtUtc).HasDefaultValueSql("CURRENT_TIMESTAMP");
+            entity.Property(e => e.MinHoursPerWeek).HasPrecision(5, 1);
+            entity.Property(e => e.MaxHoursPerWeek).HasPrecision(5, 1);
+            entity.Property(e => e.ScheduleJson).HasMaxLength(4000);
+            entity.Property(e => e.FlexibleScheduleSource).HasMaxLength(32);
+            entity.HasIndex(e => new { e.MinHoursPerWeek, e.MaxHoursPerWeek })
+                .HasDatabaseName("IX_Vacancies_HoursPerWeek");
             entity.Property(e => e.Location)
                 .HasConversion(new GeoPointConverter())
                 .HasColumnType("geometry(Point, 4326)");
@@ -214,6 +224,11 @@ public class JobsyDbContext : DbContext
             entity.Property(e => e.SnapshotDrivingLicenses).HasMaxLength(512);
             entity.Property(e => e.SnapshotEducations).HasMaxLength(512);
             entity.Property(e => e.SnapshotAboutMe).HasMaxLength(1024);
+            entity.Property(e => e.Motivation).HasMaxLength(500);
+            entity.Property(e => e.MatchBreakdownJson).HasMaxLength(4000);
+            entity.HasIndex(e => e.MatchPercent);
+            entity.HasIndex(e => e.ViaSafetyNet)
+                .HasFilter("\"ViaSafetyNet\" = TRUE");
             entity.HasOne(e => e.Vacancy)
                 .WithMany(v => v.Applications)
                 .HasForeignKey(e => e.VacancyId)

@@ -27,6 +27,14 @@
             {
                 <div class="table-row">
                     <div>
+                        @if (a.MatchPercent is int matchPct)
+                        {
+                            <strong class="match-score match-score--@(MatchBand(matchPct, a.ViaSafetyNet))">@matchPct%</strong>
+                            @if (a.ViaSafetyNet)
+                            {
+                                <span class="status-pill">Vangnet</span>
+                            }
+                        }
                         @if (a.PiiRevealed)
                         {
                             <strong>@a.CandidateName</strong>
@@ -35,20 +43,33 @@
                             {
                                 <span class="muted">@a.CandidateAddress</span>
                             }
-                        }
-                        else
-                        {
-                            <strong>@(a.CandidateCity ?? "Kandidaat")</strong>
+                            @if (!string.IsNullOrWhiteSpace(a.CandidateCity))
+                            {
+                                <span class="muted">@a.CandidateCity</span>
+                            }
                             <span class="muted">
                                 @(a.DistanceKm is not null ? $"{a.DistanceKm:0.#} km" : "afstand onbekend")
                                 · @a.PreferredTransport · @a.EstimatedTravelMinutes min
                             </span>
+                        }
+                        else
+                        {
+                            <strong>Kandidaat</strong>
+                            <span class="muted">@a.PreferredTransport · @a.EstimatedTravelMinutes min</span>
                             @if (!string.IsNullOrWhiteSpace(a.PreferencesSummary))
                             {
                                 <span class="muted">Voorkeuren: @a.PreferencesSummary</span>
                             }
                         }
-                        <span class="muted">Werkvergunning: @(a.WorkPermitConfirmed ? "Bevestigd" : "Onbekend")</span>
+                        @if (!string.IsNullOrWhiteSpace(a.Motivation))
+                        {
+                            <span class="muted"><em>Motivatie:</em> @a.Motivation</span>
+                        }
+                        @if (a.PiiRevealed)
+                        {
+                            <span class="muted">Werkvergunning: @(a.WorkPermitConfirmed ? "Bevestigd" : "Onbekend")</span>
+                            <span class="muted">Wettelijk: kandidaat voldoet aan de taakeisen</span>
+                        }
                         @if (a.PiiRevealed)
                         {
                             @if (!string.IsNullOrWhiteSpace(a.SnapshotDrivingLicenses))
@@ -109,6 +130,9 @@
     private bool _canReact;
     private Guid? _busyId;
     private string? _message;
+
+    private static string MatchBand(int percent, bool viaSafetyNet)
+        => viaSafetyNet || percent < 50 ? "red" : percent >= 70 ? "green" : "orange";
 
     protected override void OnInitialized()
         => Culture.Changed += OnCultureChanged;

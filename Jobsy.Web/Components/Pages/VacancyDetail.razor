@@ -388,11 +388,36 @@
                                         <input type="checkbox" @bind="_workPermitConfirmed" />
                                         <span>@Culture["Apply.WorkPermit"]</span>
                                     </label>
+                                    <label class="apply-field">
+                                        <span>Waarom wil jij hier graag aan de slag? (Optioneel – een kort berichtje laat een goede indruk achter en vergroot je kansen!)</span>
+                                        <textarea maxlength="500"
+                                                  rows="3"
+                                                  @bind="_motivation"
+                                                  @bind:event="oninput"
+                                                  placeholder="Optioneel, max. 500 tekens"></textarea>
+                                    </label>
                                 </section>
+
+                                @if (_showSafetyNet)
+                                {
+                                    <div class="apply-panel apply-panel--warn" style="margin-bottom:0.75rem">
+                                        <p class="apply-panel__title">Matchscore @_safetyNetPercent%</p>
+                                        <p class="apply-panel__text">@(_safetyNetMessage ?? "Je matchscore is lager dan 50%. Pas je profiel aan of ga toch door via het vangnet.")</p>
+                                        <div class="inline-actions" style="gap:0.5rem;flex-wrap:wrap">
+                                            <a class="login-submit apply-flow__primary" href="@ProfileReturnHref">Ja, pas mijn profiel aan</a>
+                                            <button class="engagement-btn apply-flow__secondary"
+                                                    type="button"
+                                                    disabled="@_applying"
+                                                    @onclick="ContinueWithSafetyNetAsync">
+                                                Toch doorgaan met solliciteren
+                                            </button>
+                                        </div>
+                                    </div>
+                                }
 
                                 <button class="login-submit apply-flow__primary"
                                         type="button"
-                                        disabled="@(_applying || !_acceptedTerms || !_workPermitConfirmed)"
+                                        disabled="@(_applying || !_acceptedTerms || !_workPermitConfirmed || _showSafetyNet)"
                                         @onclick="ApplyAsync">
                                     @(_applying ? Culture["Apply.Busy"] : Culture["Apply.Submit"])
                                 </button>
@@ -463,6 +488,11 @@
     private bool _awaitingVerification;
     private bool _enteredVerifyThisSession;
     private string _verificationCode = string.Empty;
+    private string _motivation = string.Empty;
+    private bool _showSafetyNet;
+    private string? _safetyNetMessage;
+    private int? _safetyNetPercent;
+    private bool _confirmSafetyNet;
     private int? _ageYears;
     private bool _mapReady;
     private bool _openingRoute;
@@ -1011,7 +1041,20 @@
                 minutes,
                 _useAuthenticator,
                 acceptedTerms: true,
-                workPermitConfirmed: true);
+                workPermitConfirmed: true,
+                motivation: string.IsNullOrWhiteSpace(_motivation) ? null : _motivation.Trim(),
+                confirmLowMatchSafetyNet: _confirmSafetyNet);
+            if (result?.RequiresSafetyNetConfirmation == true)
+            {
+                _showSafetyNet = true;
+                _safetyNetPercent = result.MatchPercent;
+                _safetyNetMessage = result.SafetyNetMessage;
+                _message = result.SafetyNetMessage;
+                return;
+            }
+
+            _showSafetyNet = false;
+            _confirmSafetyNet = false;
             if (result?.RequiresVerification == true)
             {
                 _awaitingVerification = true;
@@ -1041,6 +1084,13 @@
         }
     }
 
+    private async Task ContinueWithSafetyNetAsync()
+    {
+        _confirmSafetyNet = true;
+        _showSafetyNet = false;
+        await ApplyAsync();
+    }
+
     private async Task VerifyApplicationAsync()
     {
         if (_vacancy is null || !_awaitingVerification)
@@ -1059,7 +1109,8 @@
                 _useAuthenticator,
                 acceptedTerms: true,
                 workPermitConfirmed: true,
-                verificationCode: _verificationCode.Trim());
+                verificationCode: _verificationCode.Trim(),
+                motivation: string.IsNullOrWhiteSpace(_motivation) ? null : _motivation.Trim());
 
             _applied = result?.RequiresVerification != true;
             _awaitingVerification = result?.RequiresVerification == true;

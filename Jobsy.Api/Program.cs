@@ -1,4 +1,5 @@
 using System.Threading.RateLimiting;
+using Jobsy.Api;
 using Jobsy.Api.Authorization;
 using Jobsy.Api.Jobs;
 using Jobsy.Api.Swagger;
@@ -69,15 +70,25 @@ builder.Services.AddRateLimiter(options =>
                 QueueLimit = 0
             }));
     // Stricter bucket for OTP verification guesses (apply + unsubscribe confirm).
+    // Prefer authenticated user id when present so forged X-Forwarded-For cannot bypass limits alone.
     options.AddPolicy("otp-verify", httpContext =>
-        RateLimitPartition.GetFixedWindowLimiter(
-            httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+    {
+        var userKey = httpContext.User?.Identity?.IsAuthenticated == true
+            ? httpContext.User.FindFirst("sub")?.Value
+              ?? httpContext.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value
+              ?? httpContext.User.FindFirst(System.Security.Claims.ClaimTypes.Email)?.Value
+            : null;
+        var ip = httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown";
+        var partition = string.IsNullOrWhiteSpace(userKey) ? $"ip:{ip}" : $"user:{userKey}|ip:{ip}";
+        return RateLimitPartition.GetFixedWindowLimiter(
+            partition,
             _ => new FixedWindowRateLimiterOptions
             {
                 PermitLimit = 10,
                 Window = TimeSpan.FromMinutes(1),
                 QueueLimit = 0
-            }));
+            });
+    });
     options.AddPolicy("ai", httpContext =>
         RateLimitPartition.GetFixedWindowLimiter(
             httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown",
@@ -92,6 +103,7 @@ builder.Services.AddRateLimiter(options =>
 var app = builder.Build();
 
 app.UseForwardedHeaders();
+app.UseMiddleware<ExceptionHandlingMiddleware>();
 
 // Short-circuit before auth/HTTPS so Render probes always get 200 once Kestrel listens.
 app.Use(async (context, next) =>
@@ -109,8 +121,10 @@ app.Use(async (context, next) =>
 });
 
 // Partner docs for the external vacancy API (X-API-Key). Scoped to /api/external/vacancies.
-// Enabled by default for employer Swagger links; disable with Swagger:Enabled=false.
-var swaggerEnabled = builder.Configuration.GetValue("Swagger:Enabled", true);
+// Default off outside Development; enable explicitly with Swagger:Enabled=true.
+var swaggerEnabled = builder.Configuration.GetValue(
+    "Swagger:Enabled",
+    app.Environment.IsDevelopment());
 if (swaggerEnabled)
 {
     app.UseSwagger();

@@ -72,6 +72,9 @@ public sealed class CandidatePreferences
     public List<CandidateEmployerHistory> Employers { get; set; } = [];
     public List<string> Educations { get; set; } = [];
     public string? HomeAddress { get; set; }
+    public decimal? MinHoursPerWeek { get; set; }
+    public decimal? MaxHoursPerWeek { get; set; }
+    public bool? FlexibleTimes { get; set; }
 }
 
 public sealed class CandidateEmployerHistory

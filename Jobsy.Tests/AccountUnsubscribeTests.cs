@@ -108,7 +108,10 @@ public class AccountUnsubscribeTests
         var requestLog = await db.PlatformLogs
             .Where(l => l.Category == "Unsubscribe" && l.Message.Contains("aangevraagd"))
             .SingleAsync();
-        Assert.Contains("Ik wil even stoppen met zoeken", requestLog.Message);
+        // Free-text ReasonOther must not appear in platform logs (AVG minimization).
+        Assert.DoesNotContain("Ik wil even stoppen met zoeken", requestLog.Message);
+        Assert.Contains("toelichting aanwezig", requestLog.Message);
+        Assert.Contains("\"HasReasonOther\":true", requestLog.DetailsJson);
 
         var code = ExtractOtpFromMail(mail);
         Assert.True(VerificationCodes.MatchesHash(pending.UnsubscribeVerificationCode, code));
@@ -137,7 +140,8 @@ public class AccountUnsubscribeTests
             .Where(l => l.Category == "Unsubscribe" && l.Message.Contains("bevestigd"))
             .SingleAsync();
         Assert.Contains("Anders", confirmLog.Message);
-        Assert.Contains("Ik wil even stoppen met zoeken", confirmLog.Message);
+        Assert.DoesNotContain("Ik wil even stoppen met zoeken", confirmLog.Message);
+        Assert.Contains("toelichting aanwezig", confirmLog.Message);
         Assert.Contains(candidateId.ToString(), confirmLog.Message);
     }
 

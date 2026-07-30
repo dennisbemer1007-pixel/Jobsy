@@ -124,4 +124,9 @@ public record EmployerApplicationDto(
     string? SnapshotDrivingLicenses,
     string? SnapshotEducations,
     string? SnapshotAboutMe,
-    int CandidateEmployerCount);
+    int CandidateEmployerCount,
+    int? MatchPercent = null,
+    string? MatchBreakdownJson = null,
+    bool ViaSafetyNet = false,
+    string? Motivation = null,
+    bool LegalEligible = true);

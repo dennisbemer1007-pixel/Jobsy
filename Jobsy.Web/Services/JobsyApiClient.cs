@@ -625,7 +625,7 @@ public sealed class JobsyApiClient : IAsyncDisposable
             contactEmail,
             contactPhone,
             acceptedTerms,
-            consentVersion = consentVersion ?? "2026-07-25",
+            consentVersion = consentVersion ?? Jobsy.Core.Privacy.PrivacyConstants.CurrentConsentVersion,
             salesManagerTrackingCode
         }, ct);
         if (!response.IsSuccessStatusCode)
@@ -1076,6 +1076,8 @@ public sealed class JobsyApiClient : IAsyncDisposable
         bool workPermitConfirmed = false,
         string? verificationCode = null,
         string? consentVersion = null,
+        string? motivation = null,
+        bool confirmLowMatchSafetyNet = false,
         CancellationToken ct = default)
     {
         var response = await _http.PostAsJsonAsync("api/applications", new
@@ -1087,7 +1089,9 @@ public sealed class JobsyApiClient : IAsyncDisposable
             acceptedTerms,
             workPermitConfirmed,
             verificationCode,
-            consentVersion = consentVersion ?? "2026-07-25"
+            consentVersion = consentVersion ?? Jobsy.Core.Privacy.PrivacyConstants.CurrentConsentVersion,
+            motivation,
+            confirmLowMatchSafetyNet
         }, ct);
         if (!response.IsSuccessStatusCode)
         {

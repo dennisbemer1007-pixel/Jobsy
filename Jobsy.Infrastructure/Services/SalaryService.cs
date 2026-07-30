@@ -1,4 +1,5 @@
 using Jobsy.Core.Interfaces;
+using Jobsy.Core.Rules;
 using Jobsy.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 
@@ -62,15 +63,9 @@ public class SalaryService : ISalaryService
                 g => g.OrderByDescending(r => r.EffectiveFrom).First().HourlyRate);
     }
 
-    private static decimal HardcodedMinimum(int ageYears) => ageYears switch
-    {
-        >= 21 => AdultMinimumHourly,
-        20 => AdultMinimumHourly * 0.80m,
-        19 => AdultMinimumHourly * 0.60m,
-        18 => AdultMinimumHourly * 0.50m,
-        17 => AdultMinimumHourly * 0.395m,
-        16 => AdultMinimumHourly * 0.345m,
-        15 => AdultMinimumHourly * 0.30m,
-        _ => AdultMinimumHourly * 0.30m
-    };
+    private static decimal HardcodedMinimum(int ageYears)
+        => Math.Round(
+            AdultMinimumHourly * YouthWageFractions.FractionForAge(ageYears),
+            2,
+            MidpointRounding.AwayFromZero);
 }

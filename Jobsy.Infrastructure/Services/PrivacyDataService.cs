@@ -292,7 +292,8 @@ public sealed class PrivacyDataService : IPrivacyDataService
                 Email = EmailServiceStub.RedactEmail(user.Email),
                 ReasonCode = code,
                 ReasonLabel = AccountUnsubscribeReasons.GetLabel(code),
-                ReasonOther = other,
+                // Free-text ReasonOther is not logged (AVG minimization).
+                HasReasonOther = !string.IsNullOrWhiteSpace(other),
                 Step = "request"
             }),
             CreatedAt = DateTime.UtcNow
@@ -554,7 +555,8 @@ public sealed class PrivacyDataService : IPrivacyDataService
                     Email = EmailServiceStub.RedactEmail(originalEmail),
                     ReasonCode = reasonCode,
                     ReasonLabel = reasonLabel,
-                    ReasonOther = reasonOther,
+                    // Free-text ReasonOther is not logged (AVG minimization).
+                    HasReasonOther = !string.IsNullOrWhiteSpace(reasonOther),
                     Step = "confirmed"
                 }),
                 CreatedAt = DateTime.UtcNow
@@ -598,12 +600,11 @@ public sealed class PrivacyDataService : IPrivacyDataService
         Guid userId)
     {
         var label = AccountUnsubscribeReasons.GetLabel(reasonCode);
-        if (!string.IsNullOrWhiteSpace(reasonOther))
-        {
-            return $"{prefix}: {label} — {reasonOther.Trim()} (user {userId})";
-        }
-
-        return $"{prefix}: {label} (user {userId})";
+        // Do not append free-text ReasonOther to the message (AVG minimization).
+        var hasOther = !string.IsNullOrWhiteSpace(reasonOther);
+        return hasOther
+            ? $"{prefix}: {label} (toelichting aanwezig; user {userId})"
+            : $"{prefix}: {label} (user {userId})";
     }
 
     private static string Html(string? value) => WebUtility.HtmlEncode(value ?? string.Empty);

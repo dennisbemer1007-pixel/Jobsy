@@ -12,7 +12,10 @@ public record CandidatePreferencesDto(
     IReadOnlyDictionary<string, string[]>? Availability = null,
     IReadOnlyList<CandidateEmployerHistoryDto>? Employers = null,
     IReadOnlyList<string>? Educations = null,
-    string? HomeAddress = null);
+    string? HomeAddress = null,
+    decimal? MinHoursPerWeek = null,
+    decimal? MaxHoursPerWeek = null,
+    bool? FlexibleTimes = null);
 
 public record CandidateEmployerHistoryDto(
     string EmployerName,

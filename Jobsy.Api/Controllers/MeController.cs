@@ -118,7 +118,10 @@ public class MeController : ControllerBase
             existing.Availability,
             existing.Employers,
             existing.Educations,
-            existing.HomeAddress);
+            existing.HomeAddress,
+            existing.MinHoursPerWeek,
+            existing.MaxHoursPerWeek,
+            existing.FlexibleTimes);
 
         await _db.SaveChangesAsync(cancellationToken);
         var features = await _features.GetAsync(cancellationToken);
@@ -224,7 +227,10 @@ public class MeController : ControllerBase
                 request.Preferences.Availability,
                 request.Preferences.Employers,
                 request.Preferences.Educations,
-                request.Preferences.HomeAddress);
+                request.Preferences.HomeAddress,
+                request.Preferences.MinHoursPerWeek,
+                request.Preferences.MaxHoursPerWeek,
+                request.Preferences.FlexibleTimes);
         }
 
         await _db.SaveChangesAsync(cancellationToken);
@@ -617,6 +623,29 @@ public class MeController : ControllerBase
                 }
             }
 
+            decimal? minHours = null;
+            if (root.TryGetProperty("minHoursPerWeek", out var minHoursEl)
+                && minHoursEl.ValueKind == JsonValueKind.Number
+                && minHoursEl.TryGetDecimal(out var minHoursVal))
+            {
+                minHours = minHoursVal;
+            }
+
+            decimal? maxHours = null;
+            if (root.TryGetProperty("maxHoursPerWeek", out var maxHoursEl)
+                && maxHoursEl.ValueKind == JsonValueKind.Number
+                && maxHoursEl.TryGetDecimal(out var maxHoursVal))
+            {
+                maxHours = maxHoursVal;
+            }
+
+            bool? flexibleTimes = null;
+            if (root.TryGetProperty("flexibleTimes", out var flexibleEl)
+                && (flexibleEl.ValueKind is JsonValueKind.True or JsonValueKind.False))
+            {
+                flexibleTimes = flexibleEl.GetBoolean();
+            }
+
             return new CandidatePreferencesDto(
                 roles,
                 maxTravel,
@@ -628,7 +657,10 @@ public class MeController : ControllerBase
                 availability,
                 employers,
                 educations.Distinct(StringComparer.OrdinalIgnoreCase).ToList(),
-                homeAddress);
+                homeAddress,
+                minHours,
+                maxHours,
+                flexibleTimes);
         }
         catch (Exception)
         {
@@ -647,6 +679,9 @@ public class MeController : ControllerBase
         new Dictionary<string, string[]>(),
         [],
         [],
+        null,
+        null,
+        null,
         null);
 
     public static string SerializePreferences(
@@ -660,7 +695,10 @@ public class MeController : ControllerBase
         IReadOnlyDictionary<string, string[]>? availability = null,
         IEnumerable<CandidateEmployerHistoryDto>? employers = null,
         IEnumerable<string>? educations = null,
-        string? homeAddress = null)
+        string? homeAddress = null,
+        decimal? minHoursPerWeek = null,
+        decimal? maxHoursPerWeek = null,
+        bool? flexibleTimes = null)
     {
         var trimmedHome = string.IsNullOrWhiteSpace(homeAddress) ? null : homeAddress.Trim();
         if (trimmedHome is { Length: > 256 })
@@ -708,7 +746,10 @@ public class MeController : ControllerBase
                 .Select(x => x.Trim())
                 .Distinct(StringComparer.OrdinalIgnoreCase)
                 .ToArray(),
-            homeAddress = trimmedHome
+            homeAddress = trimmedHome,
+            minHoursPerWeek,
+            maxHoursPerWeek,
+            flexibleTimes
         }, JsonOptions);
     }
 }

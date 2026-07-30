@@ -94,6 +94,10 @@ public class ApplyResultItem
     public bool RequiresVerification { get; set; }
     public bool VerificationCodeSent { get; set; }
     public EmployerDirectContactItem? DirectContact { get; set; }
+    public bool RequiresSafetyNetConfirmation { get; set; }
+    public int? MatchPercent { get; set; }
+    public string? MatchBreakdownJson { get; set; }
+    public string? SafetyNetMessage { get; set; }
 }
 
 public class EmployerDirectContactItem
@@ -141,6 +145,11 @@ public class EmployerApplicationItem
     public string? SnapshotEducations { get; set; }
     public string? SnapshotAboutMe { get; set; }
     public int CandidateEmployerCount { get; set; }
+    public int? MatchPercent { get; set; }
+    public string? MatchBreakdownJson { get; set; }
+    public bool ViaSafetyNet { get; set; }
+    public string? Motivation { get; set; }
+    public bool LegalEligible { get; set; } = true;
 }
 
 public class TokenPackItem

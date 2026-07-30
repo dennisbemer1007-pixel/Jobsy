@@ -62,7 +62,7 @@ public class VacanciesController : ControllerBase
     {
         var showWage = await CanViewerSeeWageAsync(cancellationToken);
         var targetLanguage = await ResolveTargetLanguageAsync(cancellationToken);
-        var vacancies = await LoadActiveVacanciesAsync(cancellationToken);
+        var vacancies = await LoadActiveVacanciesAsync(origin: null, reachKm: null, cancellationToken);
         var mapped = await MapManyToDtoAsync(
             vacancies,
             showWage,
@@ -96,11 +96,20 @@ public class VacanciesController : ControllerBase
         CancellationToken cancellationToken = default)
     {
         maxMinutes = Math.Clamp(maxMinutes, 5, 90);
-        int? age = ageYears is int a ? Math.Clamp(a, 15, 67) : null;
+        int? age = ageYears is int a ? AgeRules.ClampFilterAge(a) : null;
         var mode = TransportLabels.Parse(transport);
         var showWage = age is not null || await CanViewerSeeWageAsync(cancellationToken);
         var targetLanguage = await ResolveTargetLanguageAsync(cancellationToken);
-        var vacancies = await LoadActiveVacanciesAsync(cancellationToken);
+
+        double? reachKm = null;
+        Core.ValueObjects.GeoPoint? origin = null;
+        if (originLat is not null && originLng is not null)
+        {
+            origin = new Core.ValueObjects.GeoPoint(originLat.Value, originLng.Value);
+            reachKm = TravelReach.MaxCrowFliesKm(mode, maxMinutes, radiusKm);
+        }
+
+        var vacancies = await LoadActiveVacanciesAsync(origin, reachKm, cancellationToken);
 
         var workTypeFiltered = vacancies
             .Where(v => WorkTypeLabels.MatchesFilter(v.WorkTypes, v.WorkTypeLabels, workType))
@@ -124,13 +133,8 @@ public class VacanciesController : ControllerBase
 
             var lat = originLat.Value;
             var lng = originLng.Value;
-            var origin = new Core.ValueObjects.GeoPoint(lat, lng);
-            var reachKm = TravelReach.MaxCrowFliesKm(mode, maxMinutes, radiusKm);
-
-            // Crow-flies prefilter before routing (uses GIST-backed locations in memory; avoids O(n) routes).
-            var nearby = transportFiltered
-                .Where(v => GeoDistance.IsWithinKm(origin, v.Location, reachKm))
-                .ToList();
+            // Crow-flies shortlist already applied in LoadActiveVacanciesAsync when origin/reach set.
+            var nearby = transportFiltered;
 
             var routeTasks = nearby.Select(async vacancy =>
             {
@@ -835,11 +839,55 @@ public class VacanciesController : ControllerBase
         return WageVisibilityRules.CanShowWage(true, true, user?.DateOfBirth.HasValue == true);
     }
 
-    private async Task<List<Core.Entities.Vacancy>> LoadActiveVacanciesAsync(CancellationToken cancellationToken)
+    private async Task<List<Core.Entities.Vacancy>> LoadActiveVacanciesAsync(
+        Core.ValueObjects.GeoPoint? origin,
+        double? reachKm,
+        CancellationToken cancellationToken)
     {
         var today = DateOnly.FromDateTime(DateTime.UtcNow);
 
-        return await _db.Vacancies
+        // When origin is known, shortlist via PostGIS GIST (geometry degrees) before Includes.
+        if (origin is not null && reachKm is > 0 && _db.Database.IsNpgsql())
+        {
+            var degrees = reachKm.Value / 111.32;
+            var ids = await _db.Database
+                .SqlQueryRaw<Guid>(
+                    """
+                    SELECT v."Id" AS "Value"
+                    FROM "Vacancies" v
+                    WHERE v."Status" = {0}
+                      AND v."StartDate" <= {1}
+                      AND v."EndDate" >= {1}
+                      AND v."Location" IS NOT NULL
+                      AND ST_DWithin(
+                        v."Location",
+                        ST_SetSRID(ST_MakePoint({2}, {3}), 4326),
+                        {4})
+                    """,
+                    (int)VacancyStatus.Active,
+                    today,
+                    origin.Longitude,
+                    origin.Latitude,
+                    degrees)
+                .ToListAsync(cancellationToken);
+
+            if (ids.Count == 0)
+            {
+                return [];
+            }
+
+            return await _db.Vacancies
+                .AsNoTracking()
+                .AsSplitQuery()
+                .Include(v => v.Company)
+                .Include(v => v.SalaryTable!)
+                    .ThenInclude(t => t.Rates)
+                .Where(v => ids.Contains(v.Id))
+                .OrderBy(v => v.Title)
+                .ToListAsync(cancellationToken);
+        }
+
+        var all = await _db.Vacancies
             .AsNoTracking()
             .AsSplitQuery()
             .Include(v => v.Company)
@@ -851,6 +899,13 @@ public class VacanciesController : ControllerBase
                 && v.EndDate >= today)
             .OrderBy(v => v.Title)
             .ToListAsync(cancellationToken);
+
+        if (origin is not null && reachKm is > 0)
+        {
+            return all.Where(v => GeoDistance.IsWithinKm(origin, v.Location, reachKm.Value)).ToList();
+        }
+
+        return all;
     }
 
     private async Task<List<VacancyListItemDto>> MapManyToDtoAsync(

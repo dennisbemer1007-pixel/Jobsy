@@ -1,5 +1,6 @@
 using System.Net;
 using Jobsy.Api.Models;
+using Jobsy.Core.ValueObjects;
 using Jobsy.Core.Authorization;
 using Jobsy.Core.Contracts;
 using Jobsy.Core.Enums;
@@ -59,7 +60,8 @@ public class ApplicationsController : ControllerBase
         }
 
         var rows = await query
-            .OrderBy(a => a.EstimatedTravelMinutes)
+            .OrderByDescending(a => a.MatchPercent ?? -1)
+            .ThenBy(a => a.EstimatedTravelMinutes)
             .ThenByDescending(a => a.CreatedAt)
             .Select(a => new
             {
@@ -83,7 +85,11 @@ public class ApplicationsController : ControllerBase
                 a.SnapshotDrivingLicenses,
                 a.SnapshotEducations,
                 a.SnapshotAboutMe,
-                a.CandidateEmployerCount
+                a.CandidateEmployerCount,
+                a.MatchPercent,
+                a.MatchBreakdownJson,
+                a.ViaSafetyNet,
+                a.Motivation
             })
             .ToListAsync(cancellationToken);
 
@@ -100,19 +106,25 @@ public class ApplicationsController : ControllerBase
                 a.CreatedAt,
                 a.Status.ToString(),
                 a.RespondedAt,
-                a.CandidateCity,
-                a.DistanceKm,
+                revealed ? a.CandidateCity : null,
+                revealed ? a.DistanceKm : null,
                 ApplicationPreferenceRedaction.RedactForEmployer(a.PreferencesSummary, revealed),
                 revealed ? a.CandidateName : null,
                 revealed ? a.CandidateEmail : null,
                 revealed ? a.CandidateAddress : null,
                 revealed,
-                a.WorkPermitConfirmed,
+                revealed && a.WorkPermitConfirmed,
                 revealed ? a.SnapshotAvailabilityJson : null,
                 revealed ? a.SnapshotDrivingLicenses : null,
                 revealed ? a.SnapshotEducations : null,
                 revealed ? a.SnapshotAboutMe : null,
-                revealed ? a.CandidateEmployerCount : 0);
+                revealed ? a.CandidateEmployerCount : 0,
+                a.MatchPercent,
+                a.MatchBreakdownJson,
+                a.ViaSafetyNet,
+                // Motivation is candidate-authored for the employer — show after verified apply (pre-accept OK).
+                a.Motivation,
+                LegalEligible: true);
         }));
     }
 
@@ -179,16 +191,79 @@ public class ApplicationsController : ControllerBase
                  && (a.CandidateUserId == candidate.Id
                      || a.CandidateEmail.ToLower() == candidate.Email.ToLower()),
             cancellationToken);
-        if (existing is not null && existing.EmailVerifiedAt is not null)
+        if (existing is not null
+            && existing.EmailVerifiedAt is not null
+            && ApplicationRules.IsSameCandidate(candidate.Id, candidate.Email, existing.CandidateUserId, existing.CandidateEmail))
         {
             return BadRequest(new { message = "Je hebt al gereageerd op deze vacature." });
         }
 
         var preferences = MeController.ParsePreferences(candidate.PreferencesJson);
-        var requirementError = ValidateHardRequirements(vacancy, preferences);
+        var requirementError = ApplicationRequirementRules.ValidateHardRequirements(
+            vacancy.RequiredDrivingLicense,
+            vacancy.RequiredEducation,
+            vacancy.MinimumEmployers,
+            preferences.DrivingLicenses,
+            preferences.Educations,
+            preferences.Employers?.Count ?? 0);
         if (requirementError is not null)
         {
             return BadRequest(new { message = requirementError });
+        }
+
+        var ageYears = AgeRules.AgeYearsFromDateOfBirth(candidate.DateOfBirth)
+                       ?? preferences.AgeYears;
+        if (ageYears is null && string.IsNullOrWhiteSpace(request.VerificationCode))
+        {
+            // DOB required before OTP for youth-labor + wage integrity.
+            return BadRequest(new
+            {
+                message = "Vul eerst je geboortedatum in op je profiel voordat je solliciteert."
+            });
+        }
+
+        var matchInput = MatchingProfileMapper.BuildInput(
+            vacancy,
+            preferences,
+            request.EstimatedTravelMinutes,
+            ageYears);
+        var match = MatchScoreCalculator.Calculate(matchInput);
+        if (!match.LegalEligible)
+        {
+            return BadRequest(new { message = YouthLaborRules.FriendlyBlockMessage });
+        }
+
+        var matchJson = JsonSerializer.Serialize(match);
+        var isVerificationAttempt = !string.IsNullOrWhiteSpace(request.VerificationCode);
+
+        // Gulden Middenweg: hold OTP until candidate confirms safety net.
+        if (!isVerificationAttempt
+            && GuldenMiddenwegRules.RequiresSafetyNetConfirmation(match)
+            && !request.ConfirmLowMatchSafetyNet)
+        {
+            var placeholder = new ApplicationDto(
+                existing?.Id ?? Guid.Empty,
+                vacancy.Id,
+                vacancy.Title,
+                vacancy.Company.Name,
+                candidate.FullName,
+                candidate.Email,
+                request.PreferredTransport,
+                request.EstimatedTravelMinutes,
+                existing?.CreatedAt ?? DateTime.UtcNow,
+                ApplicationStatus.Pending.ToString());
+            return Ok(new ApplyResultDto(
+                placeholder,
+                ConfirmationEmailQueued: false,
+                AuthenticatorStubUsed: false,
+                RequiresVerification: false,
+                VerificationCodeSent: false,
+                DirectContact: null,
+                RequiresSafetyNetConfirmation: true,
+                MatchPercent: match.TotalPercent,
+                MatchBreakdownJson: matchJson,
+                SafetyNetMessage:
+                $"Je matchscore is {match.TotalPercent}%. Pas je profiel aan voor een betere match, of ga toch door (vangnet)."));
         }
 
         var authenticatorStubUsed = false;
@@ -206,11 +281,11 @@ public class ApplicationsController : ControllerBase
         double? distanceKm = null;
         if (candidate.HomeLocation is not null && vacancy.Location is not null)
         {
-            distanceKm = HaversineKm(
-                candidate.HomeLocation.Latitude,
-                candidate.HomeLocation.Longitude,
-                vacancy.Location.Latitude,
-                vacancy.Location.Longitude);
+            distanceKm = Math.Round(
+                GeoDistance.HaversineKm(
+                    new GeoPoint(candidate.HomeLocation.Latitude, candidate.HomeLocation.Longitude),
+                    new GeoPoint(vacancy.Location.Latitude, vacancy.Location.Longitude)),
+                1);
         }
 
         var application = existing ?? new Core.Entities.Application
@@ -245,14 +320,23 @@ public class ApplicationsController : ControllerBase
             512);
         application.SnapshotAboutMe = Truncate(preferences.AboutMe, 1024);
         application.CandidateEmployerCount = preferences.Employers?.Count ?? 0;
+        application.Motivation = Truncate(string.IsNullOrWhiteSpace(request.Motivation) ? null : request.Motivation.Trim(), 500);
+        application.MatchPercent = match.TotalPercent;
+        application.MatchBreakdownJson = Truncate(matchJson, 4000);
+        application.ViaSafetyNet = GuldenMiddenwegRules.RequiresSafetyNetConfirmation(match)
+                                   && request.ConfirmLowMatchSafetyNet;
 
-        var isVerificationAttempt = !string.IsNullOrWhiteSpace(request.VerificationCode);
         if (!isVerificationAttempt)
         {
             var code = VerificationCodes.CreateNumericCode();
             application.EmailVerificationCode = VerificationCodes.Hash(code);
             application.EmailVerificationExpiresAt = DateTime.UtcNow.AddMinutes(10);
-            application.EmailVerificationFailedAttempts = 0;
+            // Do not reset failed attempts on resend — prevents lockout bypass via spam resend.
+            if (existing is null || existing.EmailVerificationFailedAttempts >= VerificationCodes.MaxFailedAttempts)
+            {
+                application.EmailVerificationFailedAttempts = 0;
+            }
+
             application.EmailVerifiedAt = null;
             application.Status = ApplicationStatus.Pending;
             if (existing is null)
@@ -305,7 +389,11 @@ public class ApplicationsController : ControllerBase
                 ConfirmationEmailQueued: false,
                 authenticatorStubUsed,
                 RequiresVerification: true,
-                VerificationCodeSent: true));
+                VerificationCodeSent: true,
+                DirectContact: null,
+                RequiresSafetyNetConfirmation: false,
+                MatchPercent: match.TotalPercent,
+                MatchBreakdownJson: matchJson));
         }
 
         if (existing is null)
@@ -394,7 +482,10 @@ public class ApplicationsController : ControllerBase
             dto,
             ConfirmationEmailQueued: true,
             authenticatorStubUsed,
-            DirectContact: ToDirectContactDto(vacancy)));
+            DirectContact: ToDirectContactDto(vacancy),
+            RequiresSafetyNetConfirmation: false,
+            MatchPercent: existing.MatchPercent ?? match.TotalPercent,
+            MatchBreakdownJson: existing.MatchBreakdownJson ?? matchJson));
     }
 
     /// <summary>
@@ -699,19 +790,23 @@ public class ApplicationsController : ControllerBase
             a.CreatedAt,
             a.Status.ToString(),
             a.RespondedAt,
-            a.CandidateCity,
-            a.DistanceKm,
+            revealed ? a.CandidateCity : null,
+            revealed ? a.DistanceKm : null,
             ApplicationPreferenceRedaction.RedactForEmployer(a.PreferencesSummary, revealed),
             revealed ? a.CandidateName : null,
             revealed ? a.CandidateEmail : null,
             revealed ? a.CandidateAddress : null,
             revealed,
-            a.WorkPermitConfirmed,
+            revealed && a.WorkPermitConfirmed,
             revealed ? a.SnapshotAvailabilityJson : null,
             revealed ? a.SnapshotDrivingLicenses : null,
             revealed ? a.SnapshotEducations : null,
             revealed ? a.SnapshotAboutMe : null,
-            revealed ? a.CandidateEmployerCount : 0);
+            revealed ? a.CandidateEmployerCount : 0,
+            a.MatchPercent,
+            a.MatchBreakdownJson,
+            a.ViaSafetyNet,
+            a.Motivation);
     }
 
     private async Task SendVerificationCodeAsync(
@@ -788,30 +883,6 @@ public class ApplicationsController : ControllerBase
         return value[..maxLength];
     }
 
-    private static string? ValidateHardRequirements(Core.Entities.Vacancy vacancy, CandidatePreferencesDto prefs)
-    {
-        if (!DrivingLicenseLabels.CandidateMeetsRequirement(prefs.DrivingLicenses, vacancy.RequiredDrivingLicense))
-        {
-            return $"Deze vacature vereist rijbewijs {vacancy.RequiredDrivingLicense}.";
-        }
-
-        if (!EducationLevelLabels.CandidateMeetsRequirement(prefs.Educations, vacancy.RequiredEducation))
-        {
-            return $"Deze vacature vereist opleidingsniveau: {vacancy.RequiredEducation}.";
-        }
-
-        if (vacancy.MinimumEmployers is > 0)
-        {
-            var employerCount = prefs.Employers?.Count ?? 0;
-            if (employerCount < vacancy.MinimumEmployers.Value)
-            {
-                return $"Deze vacature vereist minimaal {vacancy.MinimumEmployers.Value} eerdere werkgever(s).";
-            }
-        }
-
-        return null;
-    }
-
     private static string? ExtractCityHint(Core.Entities.User candidate)
     {
         // Preferences JSON may include city; otherwise leave null until profile enrichment.
@@ -834,18 +905,6 @@ public class ApplicationsController : ControllerBase
         }
 
         return null;
-    }
-
-    private static double HaversineKm(double lat1, double lon1, double lat2, double lon2)
-    {
-        const double R = 6371;
-        static double Rad(double d) => d * Math.PI / 180;
-        var dLat = Rad(lat2 - lat1);
-        var dLon = Rad(lon2 - lon1);
-        var a = Math.Sin(dLat / 2) * Math.Sin(dLat / 2)
-                + Math.Cos(Rad(lat1)) * Math.Cos(Rad(lat2))
-                  * Math.Sin(dLon / 2) * Math.Sin(dLon / 2);
-        return Math.Round(R * 2 * Math.Atan2(Math.Sqrt(a), Math.Sqrt(1 - a)), 1);
     }
 
     private async Task<string> BuildDeepLinkAsync(string relativePath, CancellationToken cancellationToken)
