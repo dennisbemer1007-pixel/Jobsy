@@ -9,6 +9,7 @@ namespace Jobsy.Infrastructure.Data;
 /// <summary>
 /// Idempotent banenkaart test seed: ~50 Active vacancies across Westland,
 /// covering all work types, transport modes, wage bands and distance/radius scenarios.
+/// Every vacancy gets a working image, YouTube VideoUrl and an extensive description.
 /// </summary>
 internal static class WestlandVacanciesSeeder
 {
@@ -179,50 +180,6 @@ internal static class WestlandVacanciesSeeder
         Guid? salaryTableId,
         bool westlandFreshExists)
     {
-        // Image pool by work type for variety on the map cards.
-        var img = new Dictionary<WorkType, string>
-        {
-            [WorkType.Horeca] = "https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?auto=format&fit=crop&w=600&q=80",
-            [WorkType.Winkel] = "https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?auto=format&fit=crop&w=600&q=80",
-            [WorkType.Logistiek] = "https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?auto=format&fit=crop&w=600&q=80",
-            [WorkType.Tuinbouw] = "https://images.unsplash.com/photo-1416879595882-3373a0480b5b?auto=format&fit=crop&w=600&q=80",
-            [WorkType.Zorg] = "https://images.unsplash.com/photo-1576765608535-5f04d1e3f289?auto=format&fit=crop&w=600&q=80",
-            [WorkType.Kantoor] = "https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&w=600&q=80",
-            [WorkType.Bouw] = "https://images.unsplash.com/photo-1504307651254-35680f356dfd?auto=format&fit=crop&w=600&q=80",
-            [WorkType.Schoonmaak] = "https://images.unsplash.com/photo-1581578731548-c64695cc6952?auto=format&fit=crop&w=600&q=80",
-            [WorkType.Productie] = "https://images.unsplash.com/photo-1565793298595-6a879b1d9492?auto=format&fit=crop&w=600&q=80",
-        };
-
-        string Img(WorkType t)
-        {
-            foreach (WorkType flag in Enum.GetValues<WorkType>())
-            {
-                if (flag is WorkType.None || !t.HasFlag(flag))
-                {
-                    continue;
-                }
-
-                if (img.TryGetValue(flag, out var url))
-                {
-                    return url;
-                }
-            }
-
-            return img[WorkType.Logistiek];
-        }
-
-        // A small pool of thematic YouTube videos (publicly embeddable) assigned to
-        // a handful of vacancies by 1-based index so the detail page can demo video playback.
-        var videoByIndex = new Dictionary<int, string>
-        {
-            [2]  = "https://www.youtube.com/watch?v=9No-FiEInLA",  // barista/horeca sfeer
-            [6]  = "https://www.youtube.com/watch?v=4Cr2I4aKgC4",  // orderpicken / logistiek
-            [15] = "https://www.youtube.com/watch?v=dQw4w9WgXcQ",  // teamleider kas (placeholder)
-            [22] = "https://www.youtube.com/watch?v=4Cr2I4aKgC4",  // heftruck / logistiek
-            [33] = "https://www.youtube.com/watch?v=9No-FiEInLA",  // tomatenplukker tuinbouw
-            [49] = "https://www.youtube.com/watch?v=dQw4w9WgXcQ",  // senior monteur
-        };
-
         // Locations spread across Westland (and a few edge spots for radius/travel filters).
         // Candidate home seed ≈ 51.9850, 4.2300 (Honselersdijk).
         var specs = new (string Title, string Desc, int CompanyN, double Lat, double Lng,
@@ -298,11 +255,21 @@ internal static class WestlandVacanciesSeeder
             var companyId = s.CompanyN == 0
                 ? (westlandFreshExists ? WestlandFreshId : CompanyId(1))
                 : CompanyId(s.CompanyN);
+            var vacancyId = VacancyId(i + 1);
+            var companyName = s.CompanyN == 0
+                ? "Westland Fresh Logistics"
+                : $"Westland bedrijf {s.CompanyN}";
             list.Add(new Vacancy
             {
-                Id = VacancyId(i + 1),
+                Id = vacancyId,
                 Title = s.Title,
-                Description = s.Desc + " Westland banenkaart testdata.",
+                Description = MockVacancyMedia.BuildRichDescription(
+                    s.Title,
+                    s.Desc + " Westland banenkaart testdata.",
+                    companyName,
+                    s.Types,
+                    s.Wage,
+                    i),
                 HourlyWage = s.Wage,
                 StartDate = today,
                 EndDate = endDate,
@@ -311,11 +278,11 @@ internal static class WestlandVacanciesSeeder
                 Location = new GeoPoint(s.Lat, s.Lng),
                 RequiredTransport = s.Transport,
                 WorkTypes = s.Types,
-                ImageUrl = Img(s.Types),
+                ImageUrl = MockVacancyMedia.ImageUrl(vacancyId),
                 IsHighlighted = s.Highlight,
                 MaxApplications = 8,
                 SalaryTableId = s.UseSalaryTable ? salaryTableId : null,
-                VideoUrl = videoByIndex.GetValueOrDefault(i + 1)
+                VideoUrl = MockVacancyMedia.VideoUrl(i)
             });
         }
 

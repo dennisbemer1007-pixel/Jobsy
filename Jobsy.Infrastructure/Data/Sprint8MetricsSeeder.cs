@@ -76,7 +76,13 @@ internal static class Sprint8MetricsSeeder
         {
             Id = IntermediaryVacancyId,
             Title = "Flex medewerker retail (pool)",
-            Description = "Intermediair-vacature voor meerdere retailopdrachtgevers in Den Haag.",
+            Description = MockVacancyMedia.BuildRichDescription(
+                "Flex medewerker retail (pool)",
+                "Intermediair-vacature voor meerdere retailopdrachtgevers in Den Haag.",
+                "Demo Intermediair Flex BV",
+                WorkType.Winkel,
+                14.00m,
+                10),
             HourlyWage = 14.00m,
             StartDate = today,
             EndDate = today.AddMonths(2),
@@ -86,7 +92,8 @@ internal static class Sprint8MetricsSeeder
             RequiredTransport = TransportMode.Bike | TransportMode.PublicTransport,
             WorkTypes = WorkType.Winkel,
             MaxApplications = 10,
-            ImageUrl = "https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?auto=format&fit=crop&w=600&q=80"
+            ImageUrl = MockVacancyMedia.ImageUrl(IntermediaryVacancyId),
+            VideoUrl = MockVacancyMedia.VideoUrl(IntermediaryVacancyId)
         });
     }
 
@@ -103,7 +110,13 @@ internal static class Sprint8MetricsSeeder
             {
                 Id = DraftVacancyId,
                 Title = "Seizoenshulp kas (concept)",
-                Description = "Concept-vacature voor demo van Draft-status.",
+                Description = MockVacancyMedia.BuildRichDescription(
+                    "Seizoenshulp kas (concept)",
+                    "Concept-vacature voor demo van Draft-status.",
+                    "Westland Fresh Logistics",
+                    WorkType.Tuinbouw,
+                    14.20m,
+                    11),
                 HourlyWage = 14.20m,
                 StartDate = today.AddDays(7),
                 EndDate = today.AddMonths(1),
@@ -112,7 +125,9 @@ internal static class Sprint8MetricsSeeder
                 Location = new GeoPoint(51.9812, 4.2235),
                 RequiredTransport = TransportMode.Bike | TransportMode.Car,
                 WorkTypes = WorkType.Tuinbouw,
-                MaxApplications = 5
+                MaxApplications = 5,
+                ImageUrl = MockVacancyMedia.ImageUrl(DraftVacancyId),
+                VideoUrl = MockVacancyMedia.VideoUrl(DraftVacancyId)
             });
         }
 
@@ -122,7 +137,13 @@ internal static class Sprint8MetricsSeeder
             {
                 Id = PendingVacancyId,
                 Title = "Avondploeg orderpicker",
-                Description = "Wacht op token-goedkeuring (PendingApproval demo).",
+                Description = MockVacancyMedia.BuildRichDescription(
+                    "Avondploeg orderpicker",
+                    "Wacht op token-goedkeuring (PendingApproval demo).",
+                    "Westland Fresh Logistics",
+                    WorkType.Logistiek,
+                    15.00m,
+                    12),
                 HourlyWage = 15.00m,
                 StartDate = today,
                 EndDate = today.AddMonths(2),
@@ -133,7 +154,9 @@ internal static class Sprint8MetricsSeeder
                 WorkTypes = WorkType.Logistiek,
                 RequestedHighlight = true,
                 RequestedPushBom = true,
-                MaxApplications = 5
+                MaxApplications = 5,
+                ImageUrl = MockVacancyMedia.ImageUrl(PendingVacancyId),
+                VideoUrl = MockVacancyMedia.VideoUrl(PendingVacancyId)
             });
         }
 
@@ -144,7 +167,13 @@ internal static class Sprint8MetricsSeeder
             {
                 Id = ArchivedVacancyId,
                 Title = "Zomerhulp (afgelopen)",
-                Description = "Gearchiveerde demo-vacature.",
+                Description = MockVacancyMedia.BuildRichDescription(
+                    "Zomerhulp (afgelopen)",
+                    "Gearchiveerde demo-vacature.",
+                    "Boutique Café De Stad",
+                    WorkType.Horeca,
+                    13.50m,
+                    13),
                 HourlyWage = 13.50m,
                 StartDate = today.AddMonths(-4),
                 EndDate = today.AddMonths(-1),
@@ -153,7 +182,9 @@ internal static class Sprint8MetricsSeeder
                 Location = new GeoPoint(52.0735, 4.3120),
                 RequiredTransport = TransportMode.Bike | TransportMode.PublicTransport,
                 WorkTypes = WorkType.Horeca,
-                MaxApplications = 5
+                MaxApplications = 5,
+                ImageUrl = MockVacancyMedia.ImageUrl(ArchivedVacancyId),
+                VideoUrl = MockVacancyMedia.VideoUrl(ArchivedVacancyId)
             });
         }
     }
