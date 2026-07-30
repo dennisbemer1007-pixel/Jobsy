@@ -27,7 +27,12 @@ public class RegionsController : ControllerBase
     public async Task<ActionResult<IEnumerable<RegionDto>>> List(CancellationToken cancellationToken)
     {
         var accessible = await _companyAuth.GetAccessibleCompanyIdsAsync(User, cancellationToken);
-        var query = _db.Regions.AsNoTracking().AsQueryable();
+        var query = _db.Regions
+            .AsNoTracking()
+            .Include(r => r.OrganizationCompany)
+            .Include(r => r.Companies)
+            .ThenInclude(rc => rc.Company)
+            .AsQueryable();
 
         if (accessible is not null)
         {
@@ -36,18 +41,9 @@ public class RegionsController : ControllerBase
 
         var regions = await query
             .OrderBy(r => r.Name)
-            .Select(r => new RegionDto(
-                r.Id,
-                r.Name,
-                r.OrganizationCompanyId,
-                r.OrganizationCompany.Name,
-                r.Companies
-                    .Select(c => new RegionCompanyItemDto(c.CompanyId, c.Company.Name))
-                    .OrderBy(c => c.CompanyName)
-                    .ToList()))
             .ToListAsync(cancellationToken);
 
-        return Ok(regions);
+        return Ok(regions.Select(Map).ToList());
     }
 
     [HttpPost]
@@ -191,6 +187,10 @@ public class RegionsController : ControllerBase
         r.Id,
         r.Name,
         r.OrganizationCompanyId,
-        r.OrganizationCompany.Name,
-        r.Companies.Select(c => new RegionCompanyItemDto(c.CompanyId, c.Company.Name)).OrderBy(c => c.CompanyName).ToList());
+        r.OrganizationCompany?.Name ?? "Onbekende organisatie",
+        r.Companies
+            .Where(c => c.Company is not null)
+            .Select(c => new RegionCompanyItemDto(c.CompanyId, c.Company!.Name))
+            .OrderBy(c => c.CompanyName)
+            .ToList());
 }
