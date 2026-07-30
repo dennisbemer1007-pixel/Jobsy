@@ -115,8 +115,8 @@
                             </a>
                             @if (_canManageVacancy)
                             {
-                                <button class="btn-compact" type="button" title="Contactvoorkeur" @onclick="() => OpenContactPref(v)">
-                                    Contact
+                                <button class="icon-btn" type="button" title="Contactvoorkeur" aria-label="Contactvoorkeur" @onclick="() => OpenContactPref(v)">
+                                    @((MarkupString)ActionIcons.Contact)
                                 </button>
                                 <a class="icon-btn" href="@($"/branch/vacancies/new?from={v.Id}")" title="Dupliceren" aria-label="Vacature dupliceren">
                                     @((MarkupString)ActionIcons.Duplicate)
@@ -139,8 +139,12 @@
                             <button class="icon-btn" type="button" title="PushBom" aria-label="PushBom versturen" @onclick="() => OpenPushBom(v)">
                                 @((MarkupString)ActionIcons.Bomb)
                             </button>
-                            <button class="btn-compact" type="button" @onclick="() => ExtendAsync(v.Id)">Verleng</button>
-                            <button class="btn-compact" type="button" @onclick="() => DeactivateAsync(v.Id)">Inactive</button>
+                            <button class="icon-btn" type="button" title="Verleng" aria-label="Vacature verlengen" @onclick="() => ExtendAsync(v.Id)">
+                                @((MarkupString)ActionIcons.Extend)
+                            </button>
+                            <button class="icon-btn" type="button" title="Inactive" aria-label="Vacature inactief zetten" @onclick="() => DeactivateAsync(v.Id)">
+                                @((MarkupString)ActionIcons.Deactivate)
+                            </button>
                         }
                         @if (_canManageVacancy && v.Status == "Archived")
                         {
