@@ -41,5 +41,12 @@ public class TokenPurchaseInvoice
     public DateTime IssuedAt { get; set; }
     public DateTime CreatedAt { get; set; }
 
+    /// <summary>Set when included in a confirmed BTW aangifte — excluded from future open periods.</summary>
+    public Guid? VatDeclarationId { get; set; }
+    public VatDeclaration? VatDeclaration { get; set; }
+
+    /// <summary>e.g. "Verwerkt in aangifte 2026-Q1".</summary>
+    public string? VatDeclarationStatusLabel { get; set; }
+
     public ICollection<VatBufferTransfer> VatBufferTransfers { get; set; } = new List<VatBufferTransfer>();
 }

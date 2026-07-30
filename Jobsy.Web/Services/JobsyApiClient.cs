@@ -1035,6 +1035,57 @@ public sealed class JobsyApiClient : IAsyncDisposable
         await js.InvokeVoidAsync("jobsyDownload.bytes", fileName, base64, "application/pdf");
     }
 
+    public async Task<IReadOnlyList<VatOpenPeriodItem>> GetVatOpenPeriodsAsync(CancellationToken ct = default)
+        => await _http.GetFromJsonAsync<List<VatOpenPeriodItem>>("api/vat/open-periods", ct) ?? [];
+
+    public async Task<VatDeclarationPreviewItem?> PreviewVatDeclarationAsync(
+        int year,
+        int quarter,
+        CancellationToken ct = default)
+        => await _http.GetFromJsonAsync<VatDeclarationPreviewItem>(
+            $"api/vat/preview?year={year}&quarter={quarter}", ct);
+
+    public async Task<VatDeclarationListItem?> GenerateVatDeclarationAsync(
+        int year,
+        int quarter,
+        CancellationToken ct = default)
+    {
+        var response = await _http.PostAsJsonAsync("api/vat/generate", new { year, quarter }, ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException(TryExtractMessage(body) ?? body);
+        }
+
+        return await response.Content.ReadFromJsonAsync<VatDeclarationListItem>(cancellationToken: ct);
+    }
+
+    public async Task<IReadOnlyList<VatDeclarationListItem>> GetVatDeclarationsAsync(CancellationToken ct = default)
+        => await _http.GetFromJsonAsync<List<VatDeclarationListItem>>("api/vat/declarations", ct) ?? [];
+
+    public async Task DownloadVatDeclarationPdfAsync(
+        IJSRuntime js,
+        Guid declarationId,
+        string periodLabel,
+        CancellationToken ct = default)
+    {
+        var response = await _http.GetAsync($"api/vat/declarations/{declarationId}/pdf", ct);
+        response.EnsureSuccessStatusCode();
+        var bytes = await response.Content.ReadAsByteArrayAsync(ct);
+        var fileName = $"BTW-aangifte-{periodLabel}.pdf";
+        var base64 = Convert.ToBase64String(bytes);
+        await js.InvokeVoidAsync("jobsyDownload.bytes", fileName, base64, "application/pdf");
+    }
+
+    public async Task<IReadOnlyList<SalesManagerCostFinanceItem>> GetSalesManagerCostsAsync(
+        int? year = null,
+        int? quarter = null,
+        CancellationToken ct = default)
+    {
+        var url = BuildTokenFinanceUrl("api/vat/sales-manager-costs", year, quarter);
+        return await _http.GetFromJsonAsync<List<SalesManagerCostFinanceItem>>(url, ct) ?? [];
+    }
+
     private static string BuildTokenFinanceUrl(string path, int? year, int? quarter)
     {
         var qs = new List<string>();
@@ -2222,6 +2273,7 @@ public sealed class TokenPurchaseFinanceItem
     public decimal TotalAmountEuro { get; set; }
     public DateTime IssuedAt { get; set; }
     public string InvoicePdfUrl { get; set; } = string.Empty;
+    public string? VatDeclarationStatusLabel { get; set; }
 }
 
 public sealed class TokenGoodwillFinanceItem
@@ -2251,5 +2303,66 @@ public sealed class VatBufferTransferItem
     public DateTime CreatedAt { get; set; }
     public DateTime? ProcessedAt { get; set; }
     public string? Note { get; set; }
+}
+
+public sealed class VatOpenPeriodItem
+{
+    public int Year { get; set; }
+    public int Quarter { get; set; }
+    public string PeriodLabel { get; set; } = string.Empty;
+    public int OpenTokenInvoiceCount { get; set; }
+    public int OpenSalesManagerInvoiceCount { get; set; }
+    public bool HasOpenItems { get; set; }
+}
+
+public sealed class VatDeclarationPreviewItem
+{
+    public int Year { get; set; }
+    public int Quarter { get; set; }
+    public string PeriodLabel { get; set; } = string.Empty;
+    public int Rubriek1OmzetExVatCents { get; set; }
+    public int Rubriek1VatCents { get; set; }
+    public int TokenInvoiceCount { get; set; }
+    public int GoodwillCount { get; set; }
+    public int Rubriek5VoorbelastingCents { get; set; }
+    public int Rubriek5CostExVatCents { get; set; }
+    public int SalesManagerInvoiceCount { get; set; }
+    public int AmountDueCents { get; set; }
+    public bool AlreadyDeclared { get; set; }
+}
+
+public sealed class VatDeclarationListItem
+{
+    public Guid Id { get; set; }
+    public int Year { get; set; }
+    public int Quarter { get; set; }
+    public string PeriodLabel { get; set; } = string.Empty;
+    public string Status { get; set; } = string.Empty;
+    public int Rubriek1OmzetExVatCents { get; set; }
+    public int Rubriek1VatCents { get; set; }
+    public int Rubriek5VoorbelastingCents { get; set; }
+    public int AmountDueCents { get; set; }
+    public int TokenInvoiceCount { get; set; }
+    public int GoodwillCount { get; set; }
+    public int SalesManagerInvoiceCount { get; set; }
+    public DateTime GeneratedAt { get; set; }
+    public string? GeneratedByName { get; set; }
+    public string PlatformCompanyName { get; set; } = string.Empty;
+    public bool HasPdf { get; set; }
+}
+
+public sealed class SalesManagerCostFinanceItem
+{
+    public Guid InvoiceId { get; set; }
+    public string InvoiceNumber { get; set; } = string.Empty;
+    public Guid SalesManagerUserId { get; set; }
+    public string SalesManagerCompanyName { get; set; } = string.Empty;
+    public decimal SubtotalExVat { get; set; }
+    public decimal VatAmount { get; set; }
+    public decimal TotalInclVat { get; set; }
+    public string VatTreatment { get; set; } = string.Empty;
+    public string Status { get; set; } = string.Empty;
+    public DateTime? PaidAt { get; set; }
+    public string? VatDeclarationStatusLabel { get; set; }
 }
 

@@ -1224,12 +1224,24 @@ namespace Jobsy.Infrastructure.Data.Migrations
                         .HasPrecision(5, 4)
                         .HasColumnType("numeric(5,4)");
 
+                    b.Property<Guid?>("VatDeclarationId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("VatDeclarationStatusLabel")
+                        .HasMaxLength(80)
+                        .HasColumnType("character varying(80)");
+
+                    b.Property<int>("VatTreatment")
+                        .HasColumnType("integer");
+
                     b.HasKey("Id");
 
                     b.HasIndex("InvoiceNumber")
                         .IsUnique();
 
                     b.HasIndex("SalesManagerUserId");
+
+                    b.HasIndex("VatDeclarationId");
 
                     b.ToTable("SelfBillingInvoices");
                 });
@@ -1470,6 +1482,13 @@ namespace Jobsy.Infrastructure.Data.Migrations
                         .HasPrecision(5, 4)
                         .HasColumnType("numeric(5,4)");
 
+                    b.Property<Guid?>("VatDeclarationId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("VatDeclarationStatusLabel")
+                        .HasMaxLength(80)
+                        .HasColumnType("character varying(80)");
+
                     b.HasKey("Id");
 
                     b.HasIndex("CompanyId");
@@ -1483,6 +1502,8 @@ namespace Jobsy.Infrastructure.Data.Migrations
                         .IsUnique();
 
                     b.HasIndex("TokenTransactionId");
+
+                    b.HasIndex("VatDeclarationId");
 
                     b.ToTable("TokenPurchaseInvoices");
                 });
@@ -1736,6 +1757,97 @@ namespace Jobsy.Infrastructure.Data.Migrations
                     b.HasIndex("CompanyId");
 
                     b.ToTable("UserCompanies");
+                });
+
+
+            modelBuilder.Entity("Jobsy.Core.Entities.VatDeclaration", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("AmountDueCents")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("GeneratedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("GeneratedByName")
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
+                    b.Property<Guid?>("GeneratedByUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("GoodwillCount")
+                        .HasColumnType("integer");
+
+                    b.Property<byte[]>("PdfBytes")
+                        .HasColumnType("bytea");
+
+                    b.Property<string>("PdfFileName")
+                        .IsRequired()
+                        .HasMaxLength(120)
+                        .HasColumnType("character varying(120)");
+
+                    b.Property<string>("PeriodLabel")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)");
+
+                    b.Property<string>("PlatformAddress")
+                        .HasMaxLength(512)
+                        .HasColumnType("character varying(512)");
+
+                    b.Property<string>("PlatformCompanyName")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("PlatformKvkNumber")
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)");
+
+                    b.Property<string>("PlatformVatNumber")
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)");
+
+                    b.Property<int>("Quarter")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Rubriek1OmzetExVatCents")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Rubriek1VatCents")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Rubriek5CostExVatCents")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Rubriek5VoorbelastingCents")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("SalesManagerInvoiceCount")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("TokenInvoiceCount")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Year")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("GeneratedByUserId");
+
+                    b.HasIndex("PeriodLabel");
+
+                    b.HasIndex("Year", "Quarter");
+
+                    b.ToTable("VatDeclarations");
                 });
 
             modelBuilder.Entity("Jobsy.Core.Entities.Vacancy", b =>
@@ -2363,6 +2475,16 @@ namespace Jobsy.Infrastructure.Data.Migrations
 
                     b.Navigation("Invoice");
                 });
+            modelBuilder.Entity("Jobsy.Core.Entities.VatDeclaration", b =>
+                {
+                    b.HasOne("Jobsy.Core.Entities.User", "GeneratedByUser")
+                        .WithMany()
+                        .HasForeignKey("GeneratedByUserId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("GeneratedByUser");
+                });
+
 
             modelBuilder.Entity("Jobsy.Core.Entities.User", b =>
                 {

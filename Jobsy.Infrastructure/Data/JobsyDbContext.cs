@@ -43,6 +43,7 @@ public class JobsyDbContext : DbContext
     public DbSet<TokenPurchaseCheckout> TokenPurchaseCheckouts => Set<TokenPurchaseCheckout>();
     public DbSet<TokenPurchaseInvoice> TokenPurchaseInvoices => Set<TokenPurchaseInvoice>();
     public DbSet<VatBufferTransfer> VatBufferTransfers => Set<VatBufferTransfer>();
+    public DbSet<VatDeclaration> VatDeclarations => Set<VatDeclaration>();
     public DbSet<CompanyRegistration> CompanyRegistrations => Set<CompanyRegistration>();
     public DbSet<EstablishmentTakeoverRequest> EstablishmentTakeoverRequests => Set<EstablishmentTakeoverRequest>();
     public DbSet<LocalAuthCredential> LocalAuthCredentials => Set<LocalAuthCredential>();
@@ -521,9 +522,11 @@ public class JobsyDbContext : DbContext
             entity.Property(e => e.CompanyKvkNumber).HasMaxLength(32);
             entity.Property(e => e.CompanyAddress).HasMaxLength(512);
             entity.Property(e => e.VatRate).HasPrecision(5, 4);
+            entity.Property(e => e.VatDeclarationStatusLabel).HasMaxLength(80);
             entity.HasIndex(e => e.InvoiceNumber).IsUnique();
             entity.HasIndex(e => e.TokenPurchaseCheckoutId).IsUnique();
             entity.HasIndex(e => e.IssuedAt);
+            entity.HasIndex(e => e.VatDeclarationId);
             entity.HasOne(e => e.Checkout)
                 .WithOne(c => c.Invoice)
                 .HasForeignKey<TokenPurchaseInvoice>(e => e.TokenPurchaseCheckoutId)
@@ -535,6 +538,10 @@ public class JobsyDbContext : DbContext
             entity.HasOne(e => e.TokenTransaction)
                 .WithMany()
                 .HasForeignKey(e => e.TokenTransactionId)
+                .OnDelete(DeleteBehavior.SetNull);
+            entity.HasOne(e => e.VatDeclaration)
+                .WithMany(d => d.TokenPurchaseInvoices)
+                .HasForeignKey(e => e.VatDeclarationId)
                 .OnDelete(DeleteBehavior.SetNull);
         });
 
@@ -551,6 +558,24 @@ public class JobsyDbContext : DbContext
                 .WithMany(i => i.VatBufferTransfers)
                 .HasForeignKey(e => e.TokenPurchaseInvoiceId)
                 .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<VatDeclaration>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.PeriodLabel).HasMaxLength(16).IsRequired();
+            entity.Property(e => e.GeneratedByName).HasMaxLength(256);
+            entity.Property(e => e.PdfFileName).HasMaxLength(120).IsRequired();
+            entity.Property(e => e.PlatformCompanyName).HasMaxLength(200).IsRequired();
+            entity.Property(e => e.PlatformKvkNumber).HasMaxLength(32);
+            entity.Property(e => e.PlatformVatNumber).HasMaxLength(32);
+            entity.Property(e => e.PlatformAddress).HasMaxLength(512);
+            entity.HasIndex(e => new { e.Year, e.Quarter });
+            entity.HasIndex(e => e.PeriodLabel);
+            entity.HasOne(e => e.GeneratedByUser)
+                .WithMany()
+                .HasForeignKey(e => e.GeneratedByUserId)
+                .OnDelete(DeleteBehavior.SetNull);
         });
 
         modelBuilder.Entity<CompanyRegistration>(entity =>
@@ -696,12 +721,18 @@ public class JobsyDbContext : DbContext
             entity.Property(e => e.VatAmount).HasPrecision(10, 2);
             entity.Property(e => e.TotalInclVat).HasPrecision(10, 2);
             entity.Property(e => e.VatRate).HasPrecision(5, 4);
+            entity.Property(e => e.VatDeclarationStatusLabel).HasMaxLength(80);
             entity.HasIndex(e => e.InvoiceNumber).IsUnique();
             entity.HasIndex(e => e.SalesManagerUserId);
+            entity.HasIndex(e => e.VatDeclarationId);
             entity.HasOne(e => e.SalesManagerUser)
                 .WithMany()
                 .HasForeignKey(e => e.SalesManagerUserId)
                 .OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne(e => e.VatDeclaration)
+                .WithMany(d => d.SelfBillingInvoices)
+                .HasForeignKey(e => e.VatDeclarationId)
+                .OnDelete(DeleteBehavior.SetNull);
         });
 
         modelBuilder.Entity<SelfBillingInvoiceLine>(entity =>

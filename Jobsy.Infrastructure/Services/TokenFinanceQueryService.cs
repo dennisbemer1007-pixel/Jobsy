@@ -48,7 +48,8 @@ public sealed class TokenFinanceQueryService : ITokenFinanceQueryService
                 i.VatAmountCents,
                 i.TotalAmountCents,
                 i.IssuedAt,
-                $"/api/tokens/invoices/{i.Id}/pdf"))
+                $"/api/tokens/invoices/{i.Id}/pdf",
+                i.VatDeclarationStatusLabel))
             .Take(2000)
             .ToListAsync(cancellationToken);
     }

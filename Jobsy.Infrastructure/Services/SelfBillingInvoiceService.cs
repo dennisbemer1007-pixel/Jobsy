@@ -100,6 +100,7 @@ public sealed class SelfBillingInvoiceService : ISelfBillingInvoiceService
             VatAmount = vat,
             TotalInclVat = subtotal + vat,
             VatRate = SalesCommissionRules.VatRate,
+            VatTreatment = SalesManagerVatTreatment.Standard21,
             Status = SelfBillingInvoiceStatus.Issued,
             CreatedAt = now,
             IssuedAt = now

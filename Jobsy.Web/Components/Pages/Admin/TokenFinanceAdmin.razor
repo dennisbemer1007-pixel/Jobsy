@@ -9,36 +9,41 @@
 
 <PageTitle>Token-administratie · Lobsy</PageTitle>
 
-<AdminPageShell Title="Token-administratie" Lead="Gekochte tokens, facturen, BTW-buffer en goodwill/compensatie — filterbaar per kwartaal.">
+<AdminPageShell Title="Token-administratie" Lead="Omzet, inkoop (salesmanagers), BTW-aangifte en historie — filterbaar per kwartaal.">
     <div class="admin-sublinks">
         <a class="admin-sublink" href="/admin/finance">← Financieel</a>
         <a class="admin-sublink" href="/admin/tokens">Goodwill toekennen</a>
         <a class="admin-sublink" href="/admin/company">Knab BTW-IBAN</a>
         <button type="button" class="admin-sublink @(_tab == "purchases" ? "admin-sublink--active" : null)" @onclick='() => SetTab("purchases")'>Aankopen</button>
+        <button type="button" class="admin-sublink @(_tab == "smcosts" ? "admin-sublink--active" : null)" @onclick='() => SetTab("smcosts")'>Inkoop / Salesmanagers</button>
         <button type="button" class="admin-sublink @(_tab == "goodwill" ? "admin-sublink--active" : null)" @onclick='() => SetTab("goodwill")'>Goodwill</button>
         <button type="button" class="admin-sublink @(_tab == "vat" ? "admin-sublink--active" : null)" @onclick='() => SetTab("vat")'>BTW-buffer</button>
+        <button type="button" class="admin-sublink @(_tab == "declarations" ? "admin-sublink--active" : null)" @onclick='() => SetTab("declarations")'>BTW Aangiftes &amp; Facturen</button>
     </div>
 
-    <div class="filter-bar" style="margin-top:1rem">
-        <label>
-            Jaar
-            <select @bind="_year" @bind:after="ReloadAsync">
-                @foreach (var y in Years)
-                {
-                    <option value="@y">@y</option>
-                }
-            </select>
-        </label>
-        <label>
-            Kwartaal
-            <select @bind="_quarter" @bind:after="ReloadAsync">
-                <option value="0">Heel jaar</option>
-                <option value="1">Q1</option>
-                <option value="2">Q2</option>
-                <option value="3">Q3</option>
-                <option value="4">Q4</option>
-            </select>
-        </label>
+    <div class="filter-bar" style="margin-top:1rem;align-items:flex-end">
+        @if (_tab != "declarations")
+        {
+            <label>
+                Jaar
+                <select @bind="_year" @bind:after="ReloadAsync">
+                    @foreach (var y in Years)
+                    {
+                        <option value="@y">@y</option>
+                    }
+                </select>
+            </label>
+            <label>
+                Kwartaal
+                <select @bind="_quarter" @bind:after="ReloadAsync">
+                    <option value="0">Heel jaar</option>
+                    <option value="1">Q1</option>
+                    <option value="2">Q2</option>
+                    <option value="3">Q3</option>
+                    <option value="4">Q4</option>
+                </select>
+            </label>
+        }
         <button class="btn-compact" type="button" disabled="@_loading" @onclick="ReloadAsync">Vernieuwen</button>
         @if (_tab == "purchases")
         {
@@ -48,6 +53,9 @@
         {
             <button class="btn-compact" type="button" disabled="@_exportBusy" @onclick="ExportGoodwillAsync">Export CSV</button>
         }
+        <button class="btn-compact btn-compact--primary" type="button" @onclick="OpenWizardAsync">
+            BTW aangifte versturen / genereren
+        </button>
         <span class="muted">@_rowCount regels</span>
     </div>
 
@@ -78,6 +86,7 @@
                             <th>Ex-BTW</th>
                             <th>BTW 21%</th>
                             <th>Totaal</th>
+                            <th>Aangifte-status</th>
                             <th>Mollie</th>
                             <th></th>
                         </tr>
@@ -93,6 +102,7 @@
                                 <td>€ @row.AmountExVatEuro.ToString("0.00")</td>
                                 <td>€ @row.VatAmountEuro.ToString("0.00")</td>
                                 <td>€ @row.TotalAmountEuro.ToString("0.00")</td>
+                                <td class="muted">@(row.VatDeclarationStatusLabel ?? "Openstaand")</td>
                                 <td class="muted" style="max-width:9rem;overflow:hidden;text-overflow:ellipsis">@row.MolliePaymentId</td>
                                 <td>
                                     <button class="btn-compact" type="button" disabled="@_exportBusy"
@@ -107,6 +117,59 @@
                 Som ex-BTW € @_purchases.Sum(p => p.AmountExVatEuro).ToString("0.00") ·
                 BTW € @_purchases.Sum(p => p.VatAmountEuro).ToString("0.00") ·
                 Totaal € @_purchases.Sum(p => p.TotalAmountEuro).ToString("0.00")
+            </p>
+        }
+    }
+    else if (_tab == "smcosts")
+    {
+        <div class="panel-section" style="margin-bottom:1rem;border-left:4px solid #0F766E;padding-left:1rem">
+            <strong>Inkoop / kostenposten — salesmanager-uitbetalingen</strong>
+            <p class="muted" style="margin:0.25rem 0 0">
+                Self-billing facturen met ex-BTW en BTW (standaard 21% inkoop-btw). Tellen mee in Rubriek 5 van de BTW-aangifte wanneer betaald.
+            </p>
+        </div>
+        @if (_smCosts.Count == 0)
+        {
+            <p class="state-message">Geen salesmanager-uitbetalingen in deze periode.</p>
+        }
+        else
+        {
+            <div class="table-scroll">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Betaald</th>
+                            <th>Factuur</th>
+                            <th>Salesmanager</th>
+                            <th>Ex-BTW</th>
+                            <th>BTW</th>
+                            <th>Totaal</th>
+                            <th>BTW-behandeling</th>
+                            <th>Status</th>
+                            <th>Aangifte-status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var row in _smCosts)
+                        {
+                            <tr>
+                                <td>@(row.PaidAt?.ToLocalTime().ToString("dd-MM-yyyy HH:mm") ?? "—")</td>
+                                <td><strong>@row.InvoiceNumber</strong></td>
+                                <td>@row.SalesManagerCompanyName</td>
+                                <td>€ @row.SubtotalExVat.ToString("0.00")</td>
+                                <td>€ @row.VatAmount.ToString("0.00")</td>
+                                <td>€ @row.TotalInclVat.ToString("0.00")</td>
+                                <td>@FormatVatTreatment(row.VatTreatment)</td>
+                                <td>@row.Status</td>
+                                <td class="muted">@(row.VatDeclarationStatusLabel ?? "Openstaand")</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+            <p class="muted" style="margin-top:0.75rem">
+                Som ex-BTW € @_smCosts.Sum(p => p.SubtotalExVat).ToString("0.00") ·
+                BTW € @_smCosts.Sum(p => p.VatAmount).ToString("0.00")
             </p>
         }
     }
@@ -151,7 +214,7 @@
             </div>
         }
     }
-    else
+    else if (_tab == "vat")
     {
         @if (_vatTransfers.Count == 0)
         {
@@ -188,7 +251,125 @@
             </div>
         }
     }
+    else
+    {
+        @if (_declarations.Count == 0)
+        {
+            <p class="state-message">Nog geen gegenereerde BTW-aangiftes. Gebruik de knop hierboven om een periode te bevestigen.</p>
+        }
+        else
+        {
+            <div class="table-scroll">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Periode</th>
+                            <th>Gegenereerd</th>
+                            <th>Bedrijf</th>
+                            <th>Rubriek 1 BTW</th>
+                            <th>Rubriek 5 voorbelasting</th>
+                            <th>Te betalen / ontvangen</th>
+                            <th>Transacties</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var row in _declarations)
+                        {
+                            <tr>
+                                <td><strong>@row.PeriodLabel</strong></td>
+                                <td>
+                                    @row.GeneratedAt.ToLocalTime().ToString("dd-MM-yyyy HH:mm")
+                                    <span class="muted">@(row.GeneratedByName is null ? "" : $" · {row.GeneratedByName}")</span>
+                                </td>
+                                <td>@row.PlatformCompanyName</td>
+                                <td>€ @CentsToEuro(row.Rubriek1VatCents)</td>
+                                <td>€ @CentsToEuro(row.Rubriek5VoorbelastingCents)</td>
+                                <td>
+                                    @(row.AmountDueCents >= 0 ? "Te betalen" : "Terug")
+                                    € @CentsToEuro(Math.Abs(row.AmountDueCents))
+                                </td>
+                                <td class="muted">
+                                    @row.TokenInvoiceCount verkopen ·
+                                    @row.SalesManagerInvoiceCount SM ·
+                                    @row.GoodwillCount goodwill
+                                </td>
+                                <td>
+                                    <button class="btn-compact" type="button" disabled="@(_exportBusy || !row.HasPdf)"
+                                            @onclick="() => DownloadDeclarationPdfAsync(row)">PDF</button>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    }
 </AdminPageShell>
+
+@if (_wizardOpen)
+{
+    <div class="share-modal-backdrop" @onclick="CloseWizard"></div>
+    <div class="share-modal" role="dialog" aria-modal="true" aria-labelledby="vat-wizard-title" style="max-width:32rem">
+        <div class="share-modal__header">
+            <h2 id="vat-wizard-title">BTW aangifte genereren</h2>
+            <button type="button" class="share-modal__close" @onclick="CloseWizard" aria-label="@Culture["Common.Close"]">×</button>
+        </div>
+        <p class="share-modal__lead">Selecteer een openstaand kwartaal. Na bevestiging worden omzet- en inkoopregels verwerkt en een PDF opgeslagen.</p>
+
+        <div class="login-form" style="display:grid;gap:0.75rem">
+            <label>
+                Aangifteperiode
+                <select @bind="_wizardPeriodKey" @bind:after="OnWizardPeriodChangedAsync" disabled="@_wizardBusy">
+                    @if (_openPeriods.Count == 0)
+                    {
+                        <option value="">Geen periodes geladen</option>
+                    }
+                    @foreach (var p in _openPeriods)
+                    {
+                        <option value="@($"{p.Year}-{p.Quarter}")">
+                            @p.PeriodLabel
+                            @(p.HasOpenItems ? $" ({p.OpenTokenInvoiceCount} verkopen / {p.OpenSalesManagerInvoiceCount} SM)" : " — geen openstaande regels")
+                        </option>
+                    }
+                </select>
+            </label>
+
+            @if (_wizardPreview is not null)
+            {
+                <div class="panel-section" style="background:rgba(15,118,110,0.06);padding:0.75rem;border-radius:0.5rem">
+                    <p style="margin:0"><strong>Rubriek 1</strong> — omzet ex. BTW € @CentsToEuro(_wizardPreview.Rubriek1OmzetExVatCents), verschuldigde BTW € @CentsToEuro(_wizardPreview.Rubriek1VatCents) (@_wizardPreview.TokenInvoiceCount facturen)</p>
+                    <p style="margin:0.35rem 0 0"><strong>Rubriek 5</strong> — voorbelasting € @CentsToEuro(_wizardPreview.Rubriek5VoorbelastingCents) (@_wizardPreview.SalesManagerInvoiceCount uitbetalingen)</p>
+                    <p style="margin:0.35rem 0 0">Goodwill in periode: @_wizardPreview.GoodwillCount</p>
+                    <p style="margin:0.5rem 0 0">
+                        <strong>
+                            @(_wizardPreview.AmountDueCents >= 0 ? "Te betalen" : "Terug te ontvangen"):
+                            € @CentsToEuro(Math.Abs(_wizardPreview.AmountDueCents))
+                        </strong>
+                    </p>
+                    @if (_wizardPreview.AlreadyDeclared)
+                    {
+                        <p class="state-message error" style="margin:0.5rem 0 0">Deze periode is al bevestigd.</p>
+                    }
+                </div>
+            }
+
+            @if (!string.IsNullOrEmpty(_wizardError))
+            {
+                <p class="state-message error">@_wizardError</p>
+            }
+
+            <div class="inline-actions" style="margin-top:0.5rem">
+                <button type="button" class="btn-compact btn-compact--primary"
+                        disabled="@(_wizardBusy || _wizardPreview is null || _wizardPreview.AlreadyDeclared || (_wizardPreview.TokenInvoiceCount == 0 && _wizardPreview.SalesManagerInvoiceCount == 0))"
+                        @onclick="ConfirmWizardAsync">
+                    @(_wizardBusy ? "Genereren…" : "Genereer")
+                </button>
+                <button type="button" class="btn-compact" disabled="@_wizardBusy" @onclick="CloseWizard">Annuleren</button>
+            </div>
+        </div>
+    </div>
+}
 
 @code {
     private static readonly int[] Years =
@@ -203,11 +384,22 @@
     private List<TokenPurchaseFinanceItem> _purchases = [];
     private List<TokenGoodwillFinanceItem> _goodwill = [];
     private List<VatBufferTransferItem> _vatTransfers = [];
+    private List<SalesManagerCostFinanceItem> _smCosts = [];
+    private List<VatDeclarationListItem> _declarations = [];
+
+    private bool _wizardOpen;
+    private bool _wizardBusy;
+    private string? _wizardError;
+    private string _wizardPeriodKey = "";
+    private List<VatOpenPeriodItem> _openPeriods = [];
+    private VatDeclarationPreviewItem? _wizardPreview;
 
     private int _rowCount => _tab switch
     {
         "goodwill" => _goodwill.Count,
         "vat" => _vatTransfers.Count,
+        "smcosts" => _smCosts.Count,
+        "declarations" => _declarations.Count,
         _ => _purchases.Count
     };
 
@@ -245,6 +437,14 @@
             {
                 _goodwill = (await Api.GetTokenGoodwillAsync(year, quarter)).ToList();
             }
+            else if (_tab == "smcosts")
+            {
+                _smCosts = (await Api.GetSalesManagerCostsAsync(year, quarter)).ToList();
+            }
+            else if (_tab == "declarations")
+            {
+                _declarations = (await Api.GetVatDeclarationsAsync()).ToList();
+            }
             else
             {
                 _vatTransfers = (await Api.GetVatBufferTransfersAsync(year, quarter)).ToList();
@@ -257,6 +457,108 @@
         finally
         {
             _loading = false;
+        }
+    }
+
+    private async Task OpenWizardAsync()
+    {
+        _wizardOpen = true;
+        _wizardError = null;
+        _wizardPreview = null;
+        _wizardBusy = true;
+        try
+        {
+            _openPeriods = (await Api.GetVatOpenPeriodsAsync()).ToList();
+            var preferred = _openPeriods.FirstOrDefault(p => p.HasOpenItems) ?? _openPeriods.FirstOrDefault();
+            if (preferred is not null)
+            {
+                _wizardPeriodKey = $"{preferred.Year}-{preferred.Quarter}";
+                await LoadWizardPreviewAsync(preferred.Year, preferred.Quarter);
+            }
+        }
+        catch (Exception ex)
+        {
+            _wizardError = ex.Message;
+        }
+        finally
+        {
+            _wizardBusy = false;
+        }
+    }
+
+    private void CloseWizard()
+    {
+        if (_wizardBusy)
+        {
+            return;
+        }
+
+        _wizardOpen = false;
+        _wizardError = null;
+    }
+
+    private async Task OnWizardPeriodChangedAsync()
+    {
+        if (string.IsNullOrWhiteSpace(_wizardPeriodKey))
+        {
+            return;
+        }
+
+        var parts = _wizardPeriodKey.Split('-');
+        if (parts.Length != 2 || !int.TryParse(parts[0], out var y) || !int.TryParse(parts[1], out var q))
+        {
+            return;
+        }
+
+        await LoadWizardPreviewAsync(y, q);
+    }
+
+    private async Task LoadWizardPreviewAsync(int year, int quarter)
+    {
+        _wizardBusy = true;
+        _wizardError = null;
+        try
+        {
+            _wizardPreview = await Api.PreviewVatDeclarationAsync(year, quarter);
+        }
+        catch (Exception ex)
+        {
+            _wizardError = ex.Message;
+            _wizardPreview = null;
+        }
+        finally
+        {
+            _wizardBusy = false;
+        }
+    }
+
+    private async Task ConfirmWizardAsync()
+    {
+        if (_wizardPreview is null)
+        {
+            return;
+        }
+
+        _wizardBusy = true;
+        _wizardError = null;
+        try
+        {
+            var created = await Api.GenerateVatDeclarationAsync(_wizardPreview.Year, _wizardPreview.Quarter);
+            _wizardOpen = false;
+            _tab = "declarations";
+            await ReloadAsync();
+            if (created is not null && created.HasPdf)
+            {
+                await Api.DownloadVatDeclarationPdfAsync(Js, created.Id, created.PeriodLabel);
+            }
+        }
+        catch (Exception ex)
+        {
+            _wizardError = ex.Message;
+        }
+        finally
+        {
+            _wizardBusy = false;
         }
     }
 
@@ -310,4 +612,32 @@
             _exportBusy = false;
         }
     }
+
+    private async Task DownloadDeclarationPdfAsync(VatDeclarationListItem row)
+    {
+        _exportBusy = true;
+        try
+        {
+            await Api.DownloadVatDeclarationPdfAsync(Js, row.Id, row.PeriodLabel);
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _exportBusy = false;
+        }
+    }
+
+    private static string CentsToEuro(int cents)
+        => (cents / 100m).ToString("0.00");
+
+    private static string FormatVatTreatment(string treatment) => treatment switch
+    {
+        "Standard21" => "21% inkoop-btw",
+        "ReverseCharge" => "BTW-verlegging",
+        "Exempt" => "Vrijgesteld",
+        _ => treatment
+    };
 }

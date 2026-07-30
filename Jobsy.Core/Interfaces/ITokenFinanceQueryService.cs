@@ -37,7 +37,8 @@ public sealed record TokenPurchaseFinanceRow(
     int VatAmountCents,
     int TotalAmountCents,
     DateTime IssuedAt,
-    string InvoicePdfPath);
+    string InvoicePdfPath,
+    string? VatDeclarationStatusLabel = null);
 
 public sealed record TokenGoodwillFinanceRow(
     Guid TransactionId,

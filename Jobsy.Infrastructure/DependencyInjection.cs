@@ -105,6 +105,7 @@ public static class DependencyInjection
         services.AddScoped<IVatBufferTransferService, VatBufferTransferService>();
         services.AddScoped<ITokenPurchaseFulfillmentService, TokenPurchaseFulfillmentService>();
         services.AddScoped<ITokenFinanceQueryService, TokenFinanceQueryService>();
+        services.AddScoped<IVatDeclarationService, VatDeclarationService>();
         services.AddScoped<IVacancyProductService, VacancyProductService>();
         services.AddScoped<IVacancyDraftCreationService, VacancyDraftCreationService>();
         services.AddScoped<IMetricsQueryService, MetricsQueryService>();
