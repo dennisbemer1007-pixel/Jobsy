@@ -100,7 +100,7 @@ public class RoleNavCatalogTests
     public void IsActive_tokens_does_not_highlight_vacancies()
     {
         var items = RoleNavCatalog.Branch;
-        var vacancies = items.First(i => i.Href == "/branch/vacancies");
+        var vacancies = items.First(i => i.Href == "/employer/vacancies");
         var tokens = items.First(i => i.Href == "/branch/tokens");
 
         Assert.True(RoleNavCatalog.IsActive(tokens, "branch/tokens", items));
