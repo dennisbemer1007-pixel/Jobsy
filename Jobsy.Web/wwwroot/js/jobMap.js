@@ -93,25 +93,35 @@ window.jobMap = (function () {
     }
 
     function clusterPopupOptions(withWagePanel) {
-        const vw = window.innerWidth || 360;
-        const vh = window.innerHeight || 640;
+        // Same sizing/classes as the single-job popup; only add a cluster flag for the pager strip.
+        const opts = jobPopupOptions(withWagePanel);
         const narrow = isNarrowViewport();
-        // Wider card on phones; leave a little room for the external close button.
-        const maxWidth = narrow
-            ? Math.max(280, Math.min(withWagePanel ? 360 : 340, vw - 16))
-            : (withWagePanel ? 420 : 360);
-        return {
-            className: "job-cluster-popup" + (withWagePanel ? " job-cluster-popup--with-wages" : ""),
-            maxWidth: maxWidth,
-            minWidth: narrow
-                ? Math.min(withWagePanel ? 300 : 280, maxWidth)
-                : (withWagePanel ? 360 : 300),
-            // Extra padding so pager + external close stay inside the map on phones.
-            autoPanPadding: narrow
-                ? [18, Math.max(80, Math.round(vh * 0.09))]
-                : [36, 48],
-            keepInView: true
-        };
+        const vh = window.innerHeight || 640;
+        opts.className = opts.className + " job-map-popup--cluster";
+        // Slightly more vertical padding so the pager + close button stay on-screen.
+        opts.autoPanPadding = narrow
+            ? [12, Math.max(64, Math.round(vh * 0.08))]
+            : [36, 56];
+        return opts;
+    }
+
+    function applyPopupOptions(popup, withWagePanel) {
+        if (!popup) {
+            return;
+        }
+        const opts = clusterPopupOptions(withWagePanel);
+        popup.options.className = opts.className;
+        popup.options.maxWidth = opts.maxWidth;
+        popup.options.minWidth = opts.minWidth;
+        popup.options.autoPanPadding = opts.autoPanPadding;
+
+        const el = typeof popup.getElement === "function" ? popup.getElement() : null;
+        if (el) {
+            // Toggle only our option classes; keep Leaflet animation/utility classes intact.
+            el.classList.add("job-map-popup", "job-map-popup--cluster");
+            el.classList.toggle("job-map-popup--with-wages", !!withWagePanel);
+            el.classList.remove("job-cluster-popup", "job-cluster-popup--with-wages");
+        }
     }
 
     function hasWageBands(v) {
@@ -147,21 +157,6 @@ window.jobMap = (function () {
                 "<table class=\"map-popup__wage-table\"><tbody>" + wageTableRowsHtml(v.wageBands) + "</tbody></table>" +
             "</aside>"
         );
-    }
-
-    function clusterWageHtml(v) {
-        if (v.wageLabel) {
-            return "<span class=\"cluster-list__wage cluster-list__wage--masked\">" + escapeHtml(v.wageLabel) + "</span>";
-        }
-        // Cluster list stays compact: no per-age wage tables when age is unset.
-        // Single resolved wage (age filter active) still shows inline.
-        if (hasWageBands(v)) {
-            return "";
-        }
-        if (v.wage == null || v.wage === "") {
-            return "";
-        }
-        return "<span class=\"cluster-list__wage\">€ " + formatWage(v.wage) + "</span>";
     }
 
     function travelHtml(v) {
@@ -238,11 +233,11 @@ window.jobMap = (function () {
         }
 
         return (
-            "<div class=\"cluster-single__pager\" role=\"navigation\" aria-label=\"Vacatures op deze locatie\">" +
-                "<button type=\"button\" class=\"cluster-single__nav\" data-cluster-page=\"" + (current - 1) + "\"" +
+            "<div class=\"map-popup__pager\" role=\"navigation\" aria-label=\"Vacatures op deze locatie\">" +
+                "<button type=\"button\" class=\"map-popup__pager-nav\" data-cluster-page=\"" + (current - 1) + "\"" +
                     (current <= 1 ? " disabled" : "") + " aria-label=\"Vorige vacature\">‹</button>" +
-                "<span class=\"cluster-single__page-status\">" + current + " / " + pageCount + "</span>" +
-                "<button type=\"button\" class=\"cluster-single__nav\" data-cluster-page=\"" + (current + 1) + "\"" +
+                "<span class=\"map-popup__pager-status\">" + current + " / " + pageCount + "</span>" +
+                "<button type=\"button\" class=\"map-popup__pager-nav\" data-cluster-page=\"" + (current + 1) + "\"" +
                     (current >= pageCount ? " disabled" : "") + " aria-label=\"Volgende vacature\">›</button>" +
             "</div>"
         );
@@ -255,15 +250,11 @@ window.jobMap = (function () {
         const current = Math.min(Math.max(1, page || 1), pageCount);
         const job = jobs[current - 1];
         if (!job) {
-            return "<div class=\"cluster-list\"><p>Geen vacatures</p></div>";
+            return "<div class=\"map-popup\"><p class=\"map-popup__company\">Geen vacatures</p></div>";
         }
 
-        return (
-            "<div class=\"cluster-single\">" +
-                buildPopupHtml(job) +
-                buildClusterPagerHtml(current, pageCount) +
-            "</div>"
-        );
+        // Same vacancy card as a single marker, plus an optional pager footer.
+        return buildPopupHtml(job) + buildClusterPagerHtml(current, pageCount);
     }
 
     function bindClusterPopupInteractions(popup, childMarkers) {
@@ -272,28 +263,17 @@ window.jobMap = (function () {
             return;
         }
 
-        // Open vacancy detail immediately on CTA / main card click.
-        popupEl.querySelectorAll(".map-popup__cta, .map-popup__main").forEach(function (el) {
-            if (el.dataset.boundNav) {
+        // Match single-marker behaviour: CTA notifies open; card body is not a second nav target.
+        popupEl.querySelectorAll(".map-popup__cta").forEach(function (cta) {
+            if (cta.dataset.boundNav) {
                 return;
             }
-            el.dataset.boundNav = "1";
-            el.addEventListener("click", function (ev) {
-                const cta = el.classList.contains("map-popup__cta")
-                    ? el
-                    : el.querySelector(".map-popup__cta");
-                const id = (cta && cta.getAttribute("data-job-id")) || null;
-                if (!id) {
-                    return;
+            cta.dataset.boundNav = "1";
+            cta.addEventListener("click", function () {
+                const id = cta.getAttribute("data-job-id");
+                if (id) {
+                    notifyOpen(id);
                 }
-                if (!el.classList.contains("map-popup__cta")) {
-                    if (ev.target.closest("a, button")) {
-                        return;
-                    }
-                    ev.preventDefault();
-                    window.location.href = "/vacancies/" + encodeURIComponent(id);
-                }
-                notifyOpen(id);
             });
         });
 
@@ -311,6 +291,8 @@ window.jobMap = (function () {
                 if (!nextPage || nextPage < 1 || nextPage > pageCount) {
                     return;
                 }
+                const nextJob = jobs[nextPage - 1] || {};
+                applyPopupOptions(popup, hasWageBands(nextJob));
                 popup.setContent(buildClusterSingleHtml(childMarkers, nextPage));
                 // Keep popup open on last/first page — only update content.
                 if (typeof popup.update === "function") {
