@@ -78,7 +78,7 @@ window.jobMap = (function () {
         // Fixed width so every vacancy card matches (no content-driven resize).
         // Mobile uses a stacked Funda card at nearly full width.
         const width = narrow
-            ? Math.max(300, Math.min(400, vw - 20))
+            ? Math.max(280, Math.min(360, vw - 24))
             : 520;
         return {
             className: "job-map-popup",
