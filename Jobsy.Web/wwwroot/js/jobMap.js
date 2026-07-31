@@ -183,15 +183,21 @@ window.jobMap = (function () {
             "</svg>";
     }
 
+    function travelLineHtml(v) {
+        if (v.travelMinutes == null) {
+            return "<p class=\"map-popup__travel map-popup__travel--empty\" aria-hidden=\"true\"></p>";
+        }
+        const transport = String(v.transportLabel || TRANSPORT_LABEL[v.transport] || "reistijd");
+        return (
+            "<p class=\"map-popup__travel\">" +
+                specIcon("travel") +
+                "<span>± " + escapeHtml(String(v.travelMinutes)) + " min " + escapeHtml(transport) + "</span>" +
+            "</p>"
+        );
+    }
+
     function specsHtml(v) {
         const parts = [];
-        if (v.travelMinutes != null) {
-            const transport = String(v.transportLabel || TRANSPORT_LABEL[v.transport] || "reistijd");
-            parts.push(
-                "<span class=\"map-popup__spec\">" + specIcon("travel") +
-                "<span>± " + escapeHtml(String(v.travelMinutes)) + " min " + escapeHtml(transport) + "</span></span>"
-            );
-        }
 
         const workTypes = Array.isArray(v.workTypes) ? v.workTypes : [];
         const primaryWork = workTypes[0] || v.workType || "";
@@ -343,6 +349,7 @@ window.jobMap = (function () {
                             (v.address
                                 ? "<p class=\"map-popup__address\">" + escapeHtml(v.address) + "</p>"
                                 : "<p class=\"map-popup__address map-popup__address--empty\">&nbsp;</p>") +
+                            travelLineHtml(v) +
                         "</div>" +
                         (wage || "<p class=\"map-popup__wage map-popup__wage--empty\">&nbsp;</p>") +
                         specsHtml(v) +

@@ -3149,7 +3149,7 @@ a {
     display: flex;
     align-items: stretch;
     width: 100%;
-    height: 212px;
+    height: 228px;
     min-width: 0;
     background: var(--surface);
     border-radius: var(--radius);
@@ -3161,8 +3161,8 @@ a {
     position: relative;
     flex: 0 0 200px;
     width: 200px;
-    height: 212px;
-    min-height: 212px;
+    height: 228px;
+    min-height: 228px;
     align-self: stretch;
     background: linear-gradient(160deg, var(--accent-soft), color-mix(in srgb, var(--brand) 28%, white));
     text-decoration: none;
@@ -3221,7 +3221,7 @@ a {
     position: relative;
     flex: 1;
     min-width: 0;
-    height: 212px;
+    height: 228px;
     padding: 0.7rem 0.9rem 0.65rem;
     display: flex;
     flex-direction: column;
@@ -3378,6 +3378,31 @@ a {
 }
 
 .map-popup__address--empty {
+    visibility: hidden;
+}
+
+.map-popup__travel {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    margin: 0.05rem 0 0;
+    min-height: 1.15rem;
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: var(--brand);
+    line-height: 1.2;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+}
+
+.map-popup__travel .map-popup__spec-icon {
+    flex-shrink: 0;
+    color: var(--brand);
+}
+
+.map-popup__travel--empty {
     visibility: hidden;
 }
 
@@ -3559,63 +3584,74 @@ a.map-popup__apply.map-popup__cta:visited {
         right: -10px;
     }
 
-    /* Compact horizontal card on phones — much shorter than the stacked layout */
+    /* Compact horizontal card — title, address and travel stay visible */
     .map-popup__main {
         flex-direction: row;
-        height: 148px;
+        height: 168px;
     }
 
     .map-popup__media {
-        flex: 0 0 112px;
-        width: 112px;
-        height: 148px;
-        min-height: 148px;
+        flex: 0 0 108px;
+        width: 108px;
+        height: 168px;
+        min-height: 168px;
     }
 
     .map-popup__media--logo-only {
-        height: 148px;
-        min-height: 148px;
+        height: 168px;
+        min-height: 168px;
     }
 
     .map-popup__media-logo {
-        width: 48px;
-        height: 48px;
+        width: 44px;
+        height: 44px;
     }
 
     .map-popup__body {
         flex: 1 1 auto;
-        height: 148px;
+        height: 168px;
         min-height: 0;
-        padding: 0.55rem 0.65rem 0.5rem;
-        gap: 0.12rem;
+        padding: 0.5rem 0.6rem 0.45rem;
+        gap: 0.1rem;
         overflow: hidden;
     }
 
     .map-popup__header {
-        gap: 0.08rem;
+        gap: 0.1rem;
+        flex: 0 0 auto;
+        min-height: 0;
     }
 
     .map-popup__title {
-        min-height: 0;
-        font-size: 0.92rem;
-        line-height: 1.25;
+        min-height: 2.2rem;
+        font-size: 0.95rem;
+        line-height: 1.2;
         font-weight: 800;
         -webkit-line-clamp: 2;
+        flex-shrink: 0;
+    }
+
+    .map-popup__address {
+        min-height: 1.05rem;
+        font-size: 0.76rem;
+        -webkit-line-clamp: 1;
+        flex-shrink: 0;
+    }
+
+    .map-popup__travel {
+        min-height: 1.1rem;
+        font-size: 0.76rem;
+        flex-shrink: 0;
     }
 
     .map-popup__wage {
         min-height: 0;
-        font-size: 0.98rem;
+        font-size: 0.92rem;
+        flex-shrink: 1;
     }
 
     .map-popup__wage-unit {
-        font-size: 0.72rem;
-    }
-
-    .map-popup__address {
-        min-height: 0;
-        font-size: 0.74rem;
-        -webkit-line-clamp: 1;
+        font-size: 0.7rem;
     }
 
     .map-popup__specs {
@@ -3623,28 +3659,29 @@ a.map-popup__apply.map-popup__cta:visited {
     }
 
     .map-popup__footer {
-        min-height: 2.15rem;
-        padding-top: 0.25rem;
-        gap: 0.4rem;
+        min-height: 2.1rem;
+        padding-top: 0.2rem;
+        gap: 0.35rem;
         flex-shrink: 0;
     }
 
     .map-popup__company {
-        font-size: 0.78rem;
+        font-size: 0.74rem;
     }
 
     .map-popup__logo {
-        width: 28px;
-        height: 28px;
+        width: 26px;
+        height: 26px;
     }
 
     .map-popup__apply {
-        padding: 0.4rem 0.7rem;
-        font-size: 0.78rem;
+        padding: 0.38rem 0.65rem;
+        font-size: 0.76rem;
     }
 
     .map-popup__address--empty,
     .map-popup__wage--empty,
+    .map-popup__travel--empty,
     .map-popup__specs--empty {
         display: none;
     }
