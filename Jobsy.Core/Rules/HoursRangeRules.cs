@@ -83,4 +83,24 @@ public static class HoursRangeRules
             0m,
             Math.Min(candidate.MaxHoursPerWeek, vacancy.MaxHoursPerWeek)
             - Math.Max(candidate.MinHoursPerWeek, vacancy.MinHoursPerWeek));
+
+    /// <summary>True when the two closed intervals overlap (touching endpoints counts).</summary>
+    public static bool Intersects(HoursRange a, HoursRange b)
+        => a.MaxHoursPerWeek >= b.MinHoursPerWeek && a.MinHoursPerWeek <= b.MaxHoursPerWeek;
+
+    /// <summary>
+    /// Whether vacancy hours overlap the discover filter. Missing vacancy hours are treated as a match
+    /// so incomplete legacy rows stay visible.
+    /// </summary>
+    public static bool MatchesFilter(decimal? vacancyMin, decimal? vacancyMax, decimal filterMin, decimal filterMax)
+    {
+        if (vacancyMin is null && vacancyMax is null)
+        {
+            return true;
+        }
+
+        var vMin = vacancyMin ?? vacancyMax!.Value;
+        var vMax = vacancyMax ?? vacancyMin!.Value;
+        return Intersects(new HoursRange(vMin, vMax), new HoursRange(filterMin, filterMax));
+    }
 }

@@ -91,11 +91,20 @@ public class VacanciesController : ControllerBase
         [FromQuery] int? ageYears = null,
         [FromQuery] decimal? minHourlyWage = null,
         [FromQuery] decimal? maxHourlyWage = null,
+        [FromQuery] int? minHoursPerWeek = null,
+        [FromQuery] int? maxHoursPerWeek = null,
         [FromQuery] string[]? workType = null,
         [FromQuery] string? q = null,
         CancellationToken cancellationToken = default)
     {
         maxMinutes = Math.Clamp(maxMinutes, 5, 90);
+        var filterMinHours = Math.Clamp(minHoursPerWeek ?? 0, 0, 40);
+        var filterMaxHours = Math.Clamp(maxHoursPerWeek ?? 40, 0, 40);
+        if (filterMaxHours < filterMinHours)
+        {
+            (filterMinHours, filterMaxHours) = (filterMaxHours, filterMinHours);
+        }
+
         int? age = ageYears is int a ? AgeRules.ClampFilterAge(a) : null;
         var mode = TransportLabels.Parse(transport);
         var showWage = age is not null || await CanViewerSeeWageAsync(cancellationToken);
@@ -114,6 +123,11 @@ public class VacanciesController : ControllerBase
         var workTypeFiltered = vacancies
             .Where(v => WorkTypeLabels.MatchesFilter(v.WorkTypes, v.WorkTypeLabels, workType))
             .Where(v => VacancyTextSearch.Matches(v, q))
+            .Where(v => HoursRangeRules.MatchesFilter(
+                v.MinHoursPerWeek,
+                v.MaxHoursPerWeek,
+                filterMinHours,
+                filterMaxHours))
             .ToList();
 
         List<(Core.Entities.Vacancy Vacancy, int? TravelMinutes, double? DistanceKm)> candidates;

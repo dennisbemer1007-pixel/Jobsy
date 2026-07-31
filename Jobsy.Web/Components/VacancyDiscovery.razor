@@ -274,6 +274,16 @@
                            @onchange="OnMaxMinutesChanged" />
                 </label>
                 <label>
+                    @Culture["Discovery.MinHours"]
+                    <input type="number" min="0" max="40" value="@_minHoursPerWeek"
+                           @onchange="OnMinHoursChanged" />
+                </label>
+                <label>
+                    @Culture["Discovery.MaxHours"]
+                    <input type="number" min="0" max="40" value="@_maxHoursPerWeek"
+                           @onchange="OnMaxHoursChanged" />
+                </label>
+                <label>
                     @Culture["Discovery.Transport"]
                     <select value="@_selectedTransport" @onchange="OnTransportChanged">
                         <option value="Fiets">@Culture["Transport.Bike"]</option>
@@ -469,6 +479,27 @@
                     </label>
                 </section>
 
+                <section class="filter-section filter-section--hero">
+                    <h3>@Culture["Discovery.HoursSlider"]</h3>
+                    <div class="hours-slider">
+                        <div class="hours-slider__inputs">
+                            <input type="range" min="0" max="40" step="1"
+                                   value="@_minHoursPerWeek"
+                                   aria-label="@Culture["Discovery.MinHours"]"
+                                   @oninput="OnMinHoursSliderInput"
+                                   @onchange="OnMinHoursChanged" />
+                            <input type="range" min="0" max="40" step="1"
+                                   value="@_maxHoursPerWeek"
+                                   aria-label="@Culture["Discovery.MaxHours"]"
+                                   @oninput="OnMaxHoursSliderInput"
+                                   @onchange="OnMaxHoursChanged" />
+                        </div>
+                        <div class="travel-slider__value">
+                            <strong>@_minHoursPerWeek – @_maxHoursPerWeek</strong> @Culture["Discovery.HoursUnit"]
+                        </div>
+                    </div>
+                </section>
+
                 <section class="filter-section">
                     <h3>@Culture["Discovery.WorkType"]</h3>
                     <div class="filter-branches__options" role="group" aria-label="@Culture["Discovery.WorkType"]">
@@ -544,14 +575,21 @@
     private bool _mapReady;
     private bool _mapInitScheduled;
     private ElementReference _mapElement;
+    private const int DefaultMinHoursPerWeek = 0;
+    private const int DefaultMaxHoursPerWeek = 40;
+
     private int _maxTravelMinutes = 30;
     private int _radiusKm = 15;
     private string _selectedTransport = "Fiets";
+    private int _minHoursPerWeek = DefaultMinHoursPerWeek;
+    private int _maxHoursPerWeek = DefaultMaxHoursPerWeek;
     private readonly HashSet<string> _selectedWorkTypes = new(StringComparer.OrdinalIgnoreCase);
     private HashSet<string> _snapSelectedWorkTypes = new(StringComparer.OrdinalIgnoreCase);
     private int _snapMaxTravelMinutes = 30;
     private int _snapRadiusKm = 15;
     private string _snapSelectedTransport = "Fiets";
+    private int _snapMinHoursPerWeek = DefaultMinHoursPerWeek;
+    private int _snapMaxHoursPerWeek = DefaultMaxHoursPerWeek;
     private int? _snapAgeYears;
     private decimal? _snapMinHourlyWage;
     private decimal? _snapMaxHourlyWage;
@@ -629,6 +667,7 @@
             if (_ageYears is not null) n++;
             if (_minHourlyWage is not null) n++;
             if (_maxHourlyWage is not null) n++;
+            if (_minHoursPerWeek != DefaultMinHoursPerWeek || _maxHoursPerWeek != DefaultMaxHoursPerWeek) n++;
             if (_origin is not null && _maxTravelMinutes != 30) n++;
             if (_origin is not null && _selectedTransport != "Fiets") n++;
             if (_origin is not null && _radiusKm != 15) n++;
@@ -646,6 +685,8 @@
         && string.IsNullOrWhiteSpace(_searchQuery)
         && _minHourlyWage is null
         && _maxHourlyWage is null
+        && _minHoursPerWeek == DefaultMinHoursPerWeek
+        && _maxHoursPerWeek == DefaultMaxHoursPerWeek
         && _maxTravelMinutes == 30
         && _radiusKm == 15
         && string.Equals(_selectedTransport, "Fiets", StringComparison.Ordinal);
@@ -658,6 +699,7 @@
         ApplySearchQueryFromQuery();
         ApplyTravelFromQuery();
         ApplyTransportFromQuery();
+        ApplyHoursFromQuery();
         try
         {
             await LoadBranchOptionsAsync();
@@ -680,6 +722,8 @@
                     {
                         _selectedTransport = profile.Preferences.PreferredTransport;
                     }
+
+                    ApplyHoursFromProfile(profile.Preferences);
 
                     // Query-param workType (from assistant) wins over profile preference.
                     if (_selectedWorkTypes.Count == 0
@@ -714,14 +758,19 @@
         var beforeQuery = _searchQuery;
         var beforeMinutes = _maxTravelMinutes;
         var beforeTransport = _selectedTransport;
+        var beforeMinHours = _minHoursPerWeek;
+        var beforeMaxHours = _maxHoursPerWeek;
         ApplyWorkTypeFromQuery();
         ApplySearchQueryFromQuery();
         ApplyTravelFromQuery();
         ApplyTransportFromQuery();
+        ApplyHoursFromQuery();
         if (!beforeTypes.SetEquals(_selectedWorkTypes)
             || !string.Equals(beforeQuery, _searchQuery, StringComparison.Ordinal)
             || beforeMinutes != _maxTravelMinutes
-            || !string.Equals(beforeTransport, _selectedTransport, StringComparison.OrdinalIgnoreCase))
+            || !string.Equals(beforeTransport, _selectedTransport, StringComparison.OrdinalIgnoreCase)
+            || beforeMinHours != _minHoursPerWeek
+            || beforeMaxHours != _maxHoursPerWeek)
         {
             showMapOnMobile = true;
             if (_mapReady)
@@ -809,6 +858,69 @@
             var t when t.Equals("OV", StringComparison.OrdinalIgnoreCase) => "OV",
             _ => _selectedTransport
         };
+    }
+
+    private void ApplyHoursFromQuery()
+    {
+        var uri = Navigation.ToAbsoluteUri(Navigation.Uri);
+        var query = QueryHelpers.ParseQuery(uri.Query);
+        int? min = null;
+        int? max = null;
+        if (query.TryGetValue("minHours", out var minValues)
+            && int.TryParse(minValues.FirstOrDefault()?.Trim(), out var minParsed))
+        {
+            min = minParsed;
+        }
+
+        if (query.TryGetValue("maxHours", out var maxValues)
+            && int.TryParse(maxValues.FirstOrDefault()?.Trim(), out var maxParsed))
+        {
+            max = maxParsed;
+        }
+
+        if (min is null && max is null)
+        {
+            return;
+        }
+
+        SetHoursRange(min ?? _minHoursPerWeek, max ?? _maxHoursPerWeek);
+    }
+
+    private void ApplyHoursFromProfile(CandidatePreferences prefs)
+    {
+        // Query params already applied in OnInitializedAsync win over profile defaults.
+        var uri = Navigation.ToAbsoluteUri(Navigation.Uri);
+        var query = QueryHelpers.ParseQuery(uri.Query);
+        if (query.ContainsKey("minHours") || query.ContainsKey("maxHours"))
+        {
+            return;
+        }
+
+        if (prefs.MinHoursPerWeek is null && prefs.MaxHoursPerWeek is null)
+        {
+            return;
+        }
+
+        var min = prefs.MinHoursPerWeek is decimal profileMin
+            ? (int)Math.Round(profileMin, MidpointRounding.AwayFromZero)
+            : DefaultMinHoursPerWeek;
+        var max = prefs.MaxHoursPerWeek is decimal profileMax
+            ? (int)Math.Round(profileMax, MidpointRounding.AwayFromZero)
+            : DefaultMaxHoursPerWeek;
+        SetHoursRange(min, max);
+    }
+
+    private void SetHoursRange(int min, int max)
+    {
+        min = Math.Clamp(min, DefaultMinHoursPerWeek, DefaultMaxHoursPerWeek);
+        max = Math.Clamp(max, DefaultMinHoursPerWeek, DefaultMaxHoursPerWeek);
+        if (max < min)
+        {
+            (min, max) = (max, min);
+        }
+
+        _minHoursPerWeek = min;
+        _maxHoursPerWeek = max;
     }
 
     private async Task LoadBranchOptionsAsync()
@@ -975,7 +1087,9 @@
                 _ageYears is null ? null : _minHourlyWage,
                 _ageYears is null ? null : _maxHourlyWage,
                 _selectedWorkTypes.Count == 0 ? null : _selectedWorkTypes,
-                _searchQuery);
+                _searchQuery,
+                _minHoursPerWeek,
+                _maxHoursPerWeek);
 
             // Stale/far stored origin + default proximity can wipe the catalog; show all until filters tighten.
             if (items.Count == 0 && ShouldFallbackFromEmptyProximity)
@@ -990,7 +1104,9 @@
                     _ageYears is null ? null : _minHourlyWage,
                     _ageYears is null ? null : _maxHourlyWage,
                     _selectedWorkTypes.Count == 0 ? null : _selectedWorkTypes,
-                    _searchQuery);
+                    _searchQuery,
+                    _minHoursPerWeek,
+                    _maxHoursPerWeek);
             }
 
             _vacancies = items.ToList();
@@ -1307,6 +1423,62 @@
         }
     }
 
+    private void OnMinHoursSliderInput(ChangeEventArgs e)
+    {
+        if (int.TryParse(e.Value?.ToString(), out var value))
+        {
+            var min = Math.Clamp(value, DefaultMinHoursPerWeek, DefaultMaxHoursPerWeek);
+            _minHoursPerWeek = min;
+            if (_maxHoursPerWeek < min)
+            {
+                _maxHoursPerWeek = min;
+            }
+        }
+    }
+
+    private void OnMaxHoursSliderInput(ChangeEventArgs e)
+    {
+        if (int.TryParse(e.Value?.ToString(), out var value))
+        {
+            var max = Math.Clamp(value, DefaultMinHoursPerWeek, DefaultMaxHoursPerWeek);
+            _maxHoursPerWeek = max;
+            if (_minHoursPerWeek > max)
+            {
+                _minHoursPerWeek = max;
+            }
+        }
+    }
+
+    private async Task OnMinHoursChanged(ChangeEventArgs e)
+    {
+        if (int.TryParse(e.Value?.ToString(), out var value))
+        {
+            var min = Math.Clamp(value, DefaultMinHoursPerWeek, DefaultMaxHoursPerWeek);
+            _minHoursPerWeek = min;
+            if (_maxHoursPerWeek < min)
+            {
+                _maxHoursPerWeek = min;
+            }
+
+            await ReloadFiltersIfAppliedAsync();
+        }
+    }
+
+    private async Task OnMaxHoursChanged(ChangeEventArgs e)
+    {
+        if (int.TryParse(e.Value?.ToString(), out var value))
+        {
+            var max = Math.Clamp(value, DefaultMinHoursPerWeek, DefaultMaxHoursPerWeek);
+            _maxHoursPerWeek = max;
+            if (_minHoursPerWeek > max)
+            {
+                _minHoursPerWeek = max;
+            }
+
+            await ReloadFiltersIfAppliedAsync();
+        }
+    }
+
     private async Task OnTransportChanged(ChangeEventArgs e)
     {
         _selectedTransport = e.Value?.ToString() ?? "Fiets";
@@ -1546,6 +1718,8 @@
         _snapMaxTravelMinutes = _maxTravelMinutes;
         _snapRadiusKm = _radiusKm;
         _snapSelectedTransport = _selectedTransport;
+        _snapMinHoursPerWeek = _minHoursPerWeek;
+        _snapMaxHoursPerWeek = _maxHoursPerWeek;
         _snapAgeYears = _ageYears;
         _snapMinHourlyWage = _minHourlyWage;
         _snapMaxHourlyWage = _maxHourlyWage;
@@ -1557,6 +1731,8 @@
         _maxTravelMinutes = _snapMaxTravelMinutes;
         _radiusKm = _snapRadiusKm;
         _selectedTransport = _snapSelectedTransport;
+        _minHoursPerWeek = _snapMinHoursPerWeek;
+        _maxHoursPerWeek = _snapMaxHoursPerWeek;
         _ageYears = _snapAgeYears;
         _minHourlyWage = _snapMinHourlyWage;
         _maxHourlyWage = _snapMaxHourlyWage;
@@ -1639,6 +1815,8 @@
         _maxTravelMinutes = 30;
         _selectedTransport = "Fiets";
         _radiusKm = 15;
+        _minHoursPerWeek = DefaultMinHoursPerWeek;
+        _maxHoursPerWeek = DefaultMaxHoursPerWeek;
         if (!_filtersOpen)
         {
             await PersistAgeAsync();
