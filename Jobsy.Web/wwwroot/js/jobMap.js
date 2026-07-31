@@ -327,9 +327,6 @@ window.jobMap = (function () {
         const detailHref = "/vacancies/" + encodeURIComponent(v.id);
         const applyHref = detailHref + "#apply";
         const wage = wageInlineHtml(v);
-        const footerLogo = (hasImage && v.logoUrl)
-            ? "<img class=\"map-popup__logo\" src=\"" + escapeAttr(v.logoUrl) + "\" alt=\"\" loading=\"lazy\" />"
-            : "";
 
         return (
             "<div class=\"map-popup\">" +
@@ -350,12 +347,9 @@ window.jobMap = (function () {
                         (wage || "<p class=\"map-popup__wage map-popup__wage--empty\">&nbsp;</p>") +
                         specsHtml(v) +
                         "<div class=\"map-popup__footer\">" +
-                            "<div class=\"map-popup__footer-meta\">" +
-                                "<a class=\"map-popup__company map-popup__cta\" href=\"" + detailHref + "\" data-job-id=\"" + escapeAttr(v.id) + "\">" +
-                                    escapeHtml(v.company) +
-                                "</a>" +
-                                footerLogo +
-                            "</div>" +
+                            "<a class=\"map-popup__company map-popup__cta\" href=\"" + detailHref + "\" data-job-id=\"" + escapeAttr(v.id) + "\">" +
+                                escapeHtml(v.company) +
+                            "</a>" +
                             "<a class=\"map-popup__apply map-popup__cta\" href=\"" + applyHref + "\" data-job-id=\"" + escapeAttr(v.id) + "\">Solliciteer</a>" +
                         "</div>" +
                     "</div>" +
