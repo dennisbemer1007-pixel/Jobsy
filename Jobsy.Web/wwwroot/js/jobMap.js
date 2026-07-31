@@ -715,8 +715,8 @@ window.jobMap = (function () {
             closePopupOnClick: true
         });
 
-        // Light Carto basemap — CSS filter in app.css applies Jobsy blue tint
-        L.tileLayer("https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png", {
+        // Carto Voyager — vivid water/parks/roads without a washed-out light basemap
+        L.tileLayer("https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png", {
             maxZoom: 19,
             attribution: "&copy; <a href=\"https://www.openstreetmap.org/copyright\">OpenStreetMap</a> &copy; <a href=\"https://carto.com/attributions\">CARTO</a>"
         }).addTo(map);
