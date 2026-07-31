@@ -2312,7 +2312,7 @@ a {
     display: block;
 }
 
-/* Animated brand lobster: occasional blink + subtle claw wiggle */
+/* Brand lobster mascot — gentle float when animated */
 .lobsy-logo {
     display: block;
     position: relative;
@@ -2323,124 +2323,36 @@ a {
     height: 56px;
 }
 
-.lobsy-logo__svg {
+.lobsy-logo__img {
     display: block;
     width: 100%;
     height: 100%;
-    overflow: visible;
+    object-fit: contain;
+    background: transparent;
+    user-select: none;
+    -webkit-user-drag: none;
 }
 
-.lobsy-logo__lid {
-    fill: #01154b;
-    opacity: 0;
-    transform-box: fill-box;
-    transform-origin: 50% 50%;
-    transform: scaleY(0);
-    pointer-events: none;
+.lobsy-logo--animate .lobsy-logo__img {
+    animation: lobsy-float 4.8s ease-in-out infinite;
+    transform-origin: 50% 70%;
 }
 
-.lobsy-logo__claw {
-    transform-box: view-box;
-    transform: rotate(0deg);
-    pointer-events: none;
-}
-
-.lobsy-logo__claw--left {
-    transform-origin: 38.5% 36%;
-}
-
-.lobsy-logo__claw--right {
-    transform-origin: 61.5% 36%;
-}
-
-.lobsy-logo--animate .lobsy-logo__lid--left {
-    animation: lobsy-blink 5.8s ease-in-out infinite;
-}
-
-.lobsy-logo--animate .lobsy-logo__lid--right {
-    animation: lobsy-blink 5.8s ease-in-out infinite;
-    animation-delay: 0.05s;
-}
-
-.lobsy-logo--animate .lobsy-logo__claw--left {
-    animation: lobsy-claw-left 8.5s ease-in-out infinite;
-}
-
-.lobsy-logo--animate .lobsy-logo__claw--right {
-    animation: lobsy-claw-right 8.5s ease-in-out infinite;
-    animation-delay: 0.4s;
-}
-
-@keyframes lobsy-blink {
+@keyframes lobsy-float {
     0%,
-    84%,
     100% {
-        opacity: 0;
-        transform: scaleY(0);
+        transform: translateY(0) rotate(0deg);
     }
-    86%,
-    88% {
-        opacity: 1;
-        transform: scaleY(1);
+    40% {
+        transform: translateY(-2px) rotate(-1.5deg);
     }
-    89.5% {
-        opacity: 0;
-        transform: scaleY(0);
-    }
-    91%,
-    92.5% {
-        opacity: 1;
-        transform: scaleY(1);
-    }
-    94% {
-        opacity: 0;
-        transform: scaleY(0);
-    }
-}
-
-@keyframes lobsy-claw-left {
-    0%,
-    55%,
-    100% {
-        transform: rotate(0deg);
-    }
-    60% {
-        transform: rotate(-7deg);
-    }
-    68% {
-        transform: rotate(4deg);
-    }
-    75% {
-        transform: rotate(-3deg);
-    }
-    82% {
-        transform: rotate(0deg);
-    }
-}
-
-@keyframes lobsy-claw-right {
-    0%,
-    55%,
-    100% {
-        transform: rotate(0deg);
-    }
-    60% {
-        transform: rotate(7deg);
-    }
-    68% {
-        transform: rotate(-4deg);
-    }
-    75% {
-        transform: rotate(3deg);
-    }
-    82% {
-        transform: rotate(0deg);
+    70% {
+        transform: translateY(1px) rotate(1deg);
     }
 }
 
 @media (prefers-reduced-motion: reduce) {
-    .lobsy-logo--animate .lobsy-logo__lid,
-    .lobsy-logo--animate .lobsy-logo__claw {
+    .lobsy-logo--animate .lobsy-logo__img {
         animation: none !important;
     }
 }
@@ -4756,101 +4668,66 @@ a.engagement-btn {
     width: 56px;
     height: 56px;
     background: transparent;
-}
-
-.lobsy-coach__svg {
-    display: block;
-    width: 100%;
-    height: 100%;
     overflow: visible;
 }
 
-.lobsy-coach__lid {
-    fill: #01154b;
-    opacity: 0;
-    transform-box: fill-box;
-    transform-origin: 50% 50%;
-    transform: scaleY(0);
+.lobsy-coach__img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    background: transparent;
+    user-select: none;
+    -webkit-user-drag: none;
+}
+
+.lobsy-coach__flag-badge {
+    position: absolute;
+    left: -6%;
+    top: 18%;
+    width: 38%;
+    aspect-ratio: 100 / 66;
+    transform: rotate(-14deg);
     pointer-events: none;
-}
-
-.lobsy-coach__claw {
-    transform-box: view-box;
-    transform: rotate(0deg);
-    pointer-events: none;
-}
-
-.lobsy-coach__claw--hold {
-    transform-origin: 38.5% 36%;
-}
-
-.lobsy-coach__claw--snap {
-    transform-origin: 61.5% 36%;
+    border-radius: 3px;
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(18, 32, 51, 0.28);
+    background: #fff;
 }
 
 .lobsy-coach__flag {
-    /* soft paper edge */
-    filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.25));
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
 }
 
-.lobsy-coach--animate .lobsy-coach__lid--left {
-    animation: lobsy-blink 5.8s ease-in-out infinite;
+.lobsy-coach--animate .lobsy-coach__img {
+    animation: lobsy-float 4.8s ease-in-out infinite;
+    transform-origin: 50% 70%;
 }
 
-.lobsy-coach--animate .lobsy-coach__lid--right {
-    animation: lobsy-blink 5.8s ease-in-out infinite;
-    animation-delay: 0.05s;
+.lobsy-coach--animate .lobsy-coach__flag-badge {
+    animation: lobsy-flag-wave 5.6s ease-in-out infinite;
+    transform-origin: 0% 80%;
 }
 
-.lobsy-coach--animate .lobsy-coach__claw--hold {
-    animation: lobsy-claw-hold 7.5s ease-in-out infinite;
-}
-
-.lobsy-coach--animate .lobsy-coach__claw--snap {
-    animation: lobsy-claw-snap 6.2s ease-in-out infinite;
-    animation-delay: 0.55s;
-}
-
-@keyframes lobsy-claw-hold {
+@keyframes lobsy-flag-wave {
     0%,
-    62%,
     100% {
-        transform: rotate(0deg);
+        transform: rotate(-14deg) translateY(0);
     }
-    68% {
-        transform: rotate(-3deg);
+    45% {
+        transform: rotate(-10deg) translateY(-1px);
     }
-    76% {
-        transform: rotate(2deg);
-    }
-    84% {
-        transform: rotate(0deg);
-    }
-}
-
-@keyframes lobsy-claw-snap {
-    0%,
-    58%,
-    100% {
-        transform: rotate(0deg);
-    }
-    62% {
-        transform: rotate(10deg);
-    }
-    66% {
-        transform: rotate(-2deg);
-    }
-    70% {
-        transform: rotate(8deg);
-    }
-    74% {
-        transform: rotate(0deg);
+    75% {
+        transform: rotate(-16deg) translateY(1px);
     }
 }
 
 @media (prefers-reduced-motion: reduce) {
-    .lobsy-coach--animate .lobsy-coach__lid,
-    .lobsy-coach--animate .lobsy-coach__claw {
+    .lobsy-coach--animate .lobsy-coach__img,
+    .lobsy-coach--animate .lobsy-coach__flag-badge {
         animation: none !important;
     }
 }

@@ -15,7 +15,7 @@ window.vacancyDetailMap = (function () {
         return L.divIcon({
             className: "vacancy-detail-marker",
             html:
-                "<img class=\"vacancy-detail-marker__img\" src=\"/images/brand/lobsy.png\" alt=\"\" width=\"48\" height=\"48\" />",
+                "<img class=\"vacancy-detail-marker__img\" src=\"/images/brand/lobsy.png?v=20260731-purple\" alt=\"\" width=\"48\" height=\"48\" />",
             iconSize: [48, 52],
             iconAnchor: [24, 50],
             popupAnchor: [0, -44]

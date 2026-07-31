@@ -1,18 +1,27 @@
 @namespace Jobsy.Web.Components
+@using System.Threading
 
 <span class="lobsy-mark @(Compact ? "lobsy-mark--compact" : null)" aria-hidden="true">
     <svg viewBox="0 0 24 24" width="@(Compact ? "14" : "18")" height="@(Compact ? "14" : "18")" fill="none" focusable="false">
-        @* Stylized map-pin with a soft claw tip — Lobsy brand wink *@
+        @* Compact map-pin mark aligned with the Lobsy mascot silhouette *@
+        <defs>
+            <linearGradient id="@GradId" x1="12" y1="2" x2="12" y2="22" gradientUnits="userSpaceOnUse">
+                <stop offset="0%" stop-color="#b57cff" />
+                <stop offset="55%" stop-color="#e8438c" />
+                <stop offset="100%" stop-color="#f04a2a" />
+            </linearGradient>
+        </defs>
         <path class="lobsy-mark__pin"
               d="M12 2.6c-3.5 0-6.3 2.7-6.3 6.1 0 4.4 5.1 10.2 5.9 11.1a.6.6 0 0 0 .9 0c.8-.9 5.9-6.7 5.9-11.1 0-3.4-2.8-6.1-6.4-6.1Z"
-              fill="currentColor" />
+              fill="@($"url(#{GradId})")" />
         <circle class="lobsy-mark__eye" cx="12" cy="8.6" r="2.15" fill="#fff" opacity="0.95" />
-        <path class="lobsy-mark__claw"
-              d="M8.2 3.4c-.9-.7-2.2-.6-2.9.2-.4.5-.4 1.2-.1 1.7.6-.2 1.2-.2 1.8 0 .4-1 1-1.5 1.2-1.9Z"
-              fill="currentColor" opacity="0.85" />
     </svg>
 </span>
 
 @code {
+    private static int _seq;
+    private readonly string _id = Interlocked.Increment(ref _seq).ToString();
+    private string GradId => $"lobsy-mark-grad-{_id}";
+
     [Parameter] public bool Compact { get; set; }
 }
