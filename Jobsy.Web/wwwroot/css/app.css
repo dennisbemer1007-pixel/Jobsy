@@ -7619,6 +7619,34 @@ button.linkish:hover {
     right: 36px !important;
 }
 
+@media (max-width: 768px) {
+    .leaflet-popup.job-map-popup a.leaflet-popup-close-button {
+        top: -12px !important;
+        right: -10px !important;
+        width: 32px !important;
+        height: 32px !important;
+        line-height: 32px !important;
+        font-size: 20px !important;
+    }
+
+    .leaflet-popup.job-map-popup > .map-popup__wage-info {
+        top: -12px !important;
+        right: 30px !important;
+        width: 32px !important;
+        height: 32px !important;
+    }
+
+    .leaflet-popup.job-map-popup--cluster a.leaflet-popup-close-button {
+        top: 0 !important;
+        right: 0 !important;
+    }
+
+    .leaflet-popup.job-map-popup--cluster > .map-popup__wage-info {
+        top: 0 !important;
+        right: 40px !important;
+    }
+}
+
 @media (max-width: 640px) {
     .profile-employer-card__top {
         grid-template-columns: 1fr 1fr;
