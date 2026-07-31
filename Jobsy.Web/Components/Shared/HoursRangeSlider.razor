@@ -1,0 +1,125 @@
+@using Jobsy.Web.Localization
+@inject CultureState Culture
+
+<div class="hours-range @CssClass"
+     style="@TrackStyle">
+    <div class="hours-range__rail" aria-hidden="true">
+        <div class="hours-range__fill"></div>
+    </div>
+    <div class="hours-range__inputs">
+        <input type="range"
+               class="hours-range__thumb hours-range__thumb--min @(_dragging == "min" ? "is-active" : null)"
+               min="@Min"
+               max="@Max"
+               step="@Step"
+               value="@Low"
+               aria-label="@(MinLabel ?? Culture["Discovery.MinHours"])"
+               @oninput="OnLowInput"
+               @onchange="OnLowChange"
+               @onpointerdown='() => _dragging = "min"'
+               @onpointerup="ClearDragging"
+               @onpointercancel="ClearDragging" />
+        <input type="range"
+               class="hours-range__thumb hours-range__thumb--max @(_dragging == "max" ? "is-active" : null)"
+               min="@Min"
+               max="@Max"
+               step="@Step"
+               value="@High"
+               aria-label="@(MaxLabel ?? Culture["Discovery.MaxHours"])"
+               @oninput="OnHighInput"
+               @onchange="OnHighChange"
+               @onpointerdown='() => _dragging = "max"'
+               @onpointerup="ClearDragging"
+               @onpointercancel="ClearDragging" />
+    </div>
+    <div class="hours-range__value">
+        <strong>@Low – @High</strong> @(UnitLabel ?? Culture["Discovery.HoursUnit"])
+    </div>
+</div>
+
+@code {
+    [Parameter] public int Min { get; set; } = 0;
+    [Parameter] public int Max { get; set; } = 40;
+    [Parameter] public int Step { get; set; } = 1;
+    [Parameter] public int Low { get; set; }
+    [Parameter] public int High { get; set; }
+    [Parameter] public EventCallback<int> LowChanged { get; set; }
+    [Parameter] public EventCallback<int> HighChanged { get; set; }
+    [Parameter] public EventCallback RangeCommitted { get; set; }
+    [Parameter] public string? CssClass { get; set; }
+    [Parameter] public string? MinLabel { get; set; }
+    [Parameter] public string? MaxLabel { get; set; }
+    [Parameter] public string? UnitLabel { get; set; }
+
+    private string? _dragging;
+
+    private string TrackStyle
+    {
+        get
+        {
+            var span = Math.Max(1, Max - Min);
+            var lowPct = (Low - Min) * 100.0 / span;
+            var highPct = (High - Min) * 100.0 / span;
+            return $"--hours-low:{lowPct:0.###}%;--hours-high:{highPct:0.###}%;";
+        }
+    }
+
+    private async Task OnLowInput(ChangeEventArgs e)
+    {
+        if (!int.TryParse(e.Value?.ToString(), out var value))
+        {
+            return;
+        }
+
+        var low = Math.Clamp(value, Min, Max);
+        if (low > High)
+        {
+            low = High;
+        }
+
+        if (low == Low)
+        {
+            return;
+        }
+
+        await LowChanged.InvokeAsync(low);
+    }
+
+    private async Task OnHighInput(ChangeEventArgs e)
+    {
+        if (!int.TryParse(e.Value?.ToString(), out var value))
+        {
+            return;
+        }
+
+        var high = Math.Clamp(value, Min, Max);
+        if (high < Low)
+        {
+            high = Low;
+        }
+
+        if (high == High)
+        {
+            return;
+        }
+
+        await HighChanged.InvokeAsync(high);
+    }
+
+    private async Task OnLowChange(ChangeEventArgs e)
+    {
+        await OnLowInput(e);
+        ClearDragging();
+        await RangeCommitted.InvokeAsync();
+    }
+
+    private async Task OnHighChange(ChangeEventArgs e)
+    {
+        await OnHighInput(e);
+        ClearDragging();
+        await RangeCommitted.InvokeAsync();
+    }
+
+    private void ClearDragging()
+        => _dragging = null;
+}
