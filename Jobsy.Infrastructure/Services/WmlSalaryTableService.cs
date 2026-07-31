@@ -74,7 +74,7 @@ public static class WmlSalaryTableService
             return;
         }
 
-        // Existing table: keep rates stable on startup (semi-annual sync updates them).
+        // Existing table: keep known rates; fill any missing WML age bands.
         table.IsActive = true;
         table.IsSystemWml = true;
         table.Name = TableName;
@@ -83,21 +83,24 @@ public static class WmlSalaryTableService
             table.CompanyId = organizationId.Value;
         }
 
-        if (table.Rates.Count == 0)
+        var existingAges = table.Rates.Select(r => r.AgeYears).ToHashSet();
+        foreach (var rate in rates)
         {
-            foreach (var rate in rates)
+            if (existingAges.Contains(rate.AgeYears))
             {
-                table.Rates.Add(new CompanySalaryRate
-                {
-                    Id = Guid.NewGuid(),
-                    SalaryTableId = table.Id,
-                    AgeYears = rate.AgeYears,
-                    HourlyRate = rate.HourlyRate,
-                    Label = string.IsNullOrWhiteSpace(rate.Label)
-                        ? (rate.AgeYears >= 21 ? "21+" : rate.AgeYears.ToString())
-                        : rate.Label
-                });
+                continue;
             }
+
+            table.Rates.Add(new CompanySalaryRate
+            {
+                Id = Guid.NewGuid(),
+                SalaryTableId = table.Id,
+                AgeYears = rate.AgeYears,
+                HourlyRate = rate.HourlyRate,
+                Label = string.IsNullOrWhiteSpace(rate.Label)
+                    ? (rate.AgeYears >= 21 ? "21+" : rate.AgeYears.ToString())
+                    : rate.Label
+            });
         }
     }
 
@@ -128,10 +131,71 @@ public static class WmlSalaryTableService
         }
 
         await FillEmptySalaryTablesAsync(db, cancellationToken);
+        await AssignMissingVacancySalaryTablesAsync(db, cancellationToken);
     }
 
     /// <summary>
-    /// Copies current WML age rates into any active salary table that has zero rates.
+    /// Links every vacancy without a salary table to its organization's active system WML table
+    /// (must already have rates). Idempotent; skips vacancies that already have a table.
+    /// </summary>
+    public static async Task AssignMissingVacancySalaryTablesAsync(
+        JobsyDbContext db,
+        CancellationToken cancellationToken = default)
+    {
+        var missing = await db.Vacancies
+            .Include(v => v.Company)
+            .Where(v => v.SalaryTableId == null)
+            .ToListAsync(cancellationToken);
+        if (missing.Count == 0)
+        {
+            return;
+        }
+
+        var orgIds = missing
+            .Select(v => v.Company?.ParentCompanyId ?? v.CompanyId)
+            .Distinct()
+            .ToList();
+
+        foreach (var orgId in orgIds)
+        {
+            await EnsureForCompanyAsync(db, orgId, cancellationToken);
+        }
+
+        await db.SaveChangesAsync(cancellationToken);
+
+        var wmlByOrg = await db.CompanySalaryTables
+            .AsNoTracking()
+            .Where(t => t.IsSystemWml && t.IsActive && orgIds.Contains(t.CompanyId))
+            .Where(t => t.Rates.Any())
+            .Select(t => new { t.CompanyId, t.Id })
+            .ToListAsync(cancellationToken);
+
+        var tableByOrg = wmlByOrg
+            .GroupBy(t => t.CompanyId)
+            .ToDictionary(g => g.Key, g => g.OrderBy(t => t.Id).First().Id);
+
+        var assigned = 0;
+        foreach (var vacancy in missing)
+        {
+            var orgId = vacancy.Company?.ParentCompanyId ?? vacancy.CompanyId;
+            if (!tableByOrg.TryGetValue(orgId, out var tableId))
+            {
+                continue;
+            }
+
+            vacancy.SalaryTableId = tableId;
+            assigned++;
+        }
+
+        if (assigned > 0)
+        {
+            await db.SaveChangesAsync(cancellationToken);
+        }
+    }
+
+    /// <summary>
+    /// Ensures every active salary table has an hourly rate for each current WML age band (15–21+).
+    /// Existing rates are kept; only missing ages are filled from WML. Completely empty tables get a full copy.
     /// When <paramref name="organizationId"/> is set, only tables for that org (and its branches) are filled.
     /// </summary>
     public static async Task FillEmptySalaryTablesAsync(
@@ -147,7 +211,7 @@ public static class WmlSalaryTableService
 
         var query = db.CompanySalaryTables
             .Include(t => t.Rates)
-            .Where(t => t.IsActive && !t.Rates.Any());
+            .Where(t => t.IsActive);
 
         if (organizationId is Guid orgId)
         {
@@ -159,31 +223,45 @@ public static class WmlSalaryTableService
             query = query.Where(t => branchIds.Contains(t.CompanyId));
         }
 
-        var emptyTables = await query.ToListAsync(cancellationToken);
-
-        if (emptyTables.Count == 0)
+        var tables = await query.ToListAsync(cancellationToken);
+        if (tables.Count == 0)
         {
             return;
         }
 
-        foreach (var table in emptyTables)
+        var added = 0;
+        foreach (var table in tables)
         {
+            var existingAges = table.Rates.Select(r => r.AgeYears).ToHashSet();
             foreach (var rate in rates)
             {
-                db.CompanySalaryRates.Add(new CompanySalaryRate
+                if (existingAges.Contains(rate.AgeYears))
+                {
+                    continue;
+                }
+
+                var label = string.IsNullOrWhiteSpace(rate.Label)
+                    ? (rate.AgeYears >= 21 ? "21+" : rate.AgeYears.ToString())
+                    : rate.Label;
+                var row = new CompanySalaryRate
                 {
                     Id = Guid.NewGuid(),
                     SalaryTableId = table.Id,
                     AgeYears = rate.AgeYears,
                     HourlyRate = rate.HourlyRate,
-                    Label = string.IsNullOrWhiteSpace(rate.Label)
-                        ? (rate.AgeYears >= 21 ? "21+" : rate.AgeYears.ToString())
-                        : rate.Label
-                });
+                    Label = label
+                };
+                table.Rates.Add(row);
+                db.CompanySalaryRates.Add(row);
+                existingAges.Add(rate.AgeYears);
+                added++;
             }
         }
 
-        await db.SaveChangesAsync(cancellationToken);
+        if (added > 0)
+        {
+            await db.SaveChangesAsync(cancellationToken);
+        }
     }
 
     public static async Task SyncAllWmlTablesAsync(

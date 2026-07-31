@@ -1,6 +1,7 @@
 using Jobsy.Core.Entities;
 using Jobsy.Core.Enums;
 using Jobsy.Core.ValueObjects;
+using Jobsy.Infrastructure.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
@@ -49,12 +50,15 @@ internal static class WestlandVacanciesSeeder
         var endDate = today.AddMonths(4);
 
         await EnsureCompaniesAsync(db);
-        var salaryTableId = await EnsureSalaryTableAsync(db);
         await db.SaveChangesAsync();
+        var caoTableId = await EnsureSalaryTableAsync(db);
+        await db.SaveChangesAsync();
+        await WmlSalaryTableService.EnsureForAllCompaniesAsync(db);
+        var wmlByCompany = await LoadOrgWmlTableIdsAsync(db);
 
         var westlandFreshExists = await db.Companies.AnyAsync(c => c.Id == WestlandFreshId)
             || db.Companies.Local.Any(c => c.Id == WestlandFreshId);
-        var vacancies = BuildVacancies(today, endDate, salaryTableId, westlandFreshExists);
+        var vacancies = BuildVacancies(today, endDate, caoTableId, wmlByCompany, westlandFreshExists);
         db.Vacancies.AddRange(vacancies);
 
         db.PlatformLogs.Add(new PlatformLog
@@ -174,10 +178,24 @@ internal static class WestlandVacanciesSeeder
         return tableId;
     }
 
+    private static async Task<Dictionary<Guid, Guid>> LoadOrgWmlTableIdsAsync(JobsyDbContext db)
+    {
+        var rows = await db.CompanySalaryTables
+            .AsNoTracking()
+            .Where(t => t.IsSystemWml && t.IsActive && t.Rates.Any())
+            .Select(t => new { t.CompanyId, t.Id })
+            .ToListAsync();
+
+        return rows
+            .GroupBy(t => t.CompanyId)
+            .ToDictionary(g => g.Key, g => g.OrderBy(t => t.Id).First().Id);
+    }
+
     private static Vacancy[] BuildVacancies(
         DateOnly today,
         DateOnly endDate,
-        Guid? salaryTableId,
+        Guid? caoTableId,
+        IReadOnlyDictionary<Guid, Guid> wmlByCompany,
         bool westlandFreshExists)
     {
         // Locations spread across Westland (and a few edge spots for radius/travel filters).
@@ -259,6 +277,9 @@ internal static class WestlandVacanciesSeeder
             var companyName = s.CompanyN == 0
                 ? "Westland Fresh Logistics"
                 : $"Westland bedrijf {s.CompanyN}";
+            Guid? salaryTableId = s.UseSalaryTable && caoTableId is not null
+                ? caoTableId
+                : wmlByCompany.TryGetValue(companyId, out var wmlId) ? wmlId : caoTableId;
             list.Add(new Vacancy
             {
                 Id = vacancyId,
@@ -281,7 +302,7 @@ internal static class WestlandVacanciesSeeder
                 ImageUrl = MockVacancyMedia.ImageUrl(vacancyId),
                 IsHighlighted = s.Highlight,
                 MaxApplications = 8,
-                SalaryTableId = s.UseSalaryTable ? salaryTableId : null,
+                SalaryTableId = salaryTableId,
                 VideoUrl = MockVacancyMedia.VideoUrl(i)
             });
         }
