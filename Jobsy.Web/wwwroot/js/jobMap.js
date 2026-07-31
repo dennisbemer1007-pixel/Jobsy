@@ -72,19 +72,16 @@ window.jobMap = (function () {
         return (window.innerWidth || 0) <= 768;
     }
 
-    function jobPopupOptions(withWagePanel) {
+    function jobPopupOptions() {
         const vw = window.innerWidth || 360;
         const narrow = isNarrowViewport();
-        // Keep room for vacancy + wage panel side-by-side, also on small screens.
         const maxWidth = narrow
-            ? Math.max(260, Math.min(withWagePanel ? 380 : 300, vw - 20))
-            : (withWagePanel ? 460 : 340);
+            ? Math.max(260, Math.min(300, vw - 20))
+            : 340;
         return {
-            className: "job-map-popup" + (withWagePanel ? " job-map-popup--with-wages" : ""),
+            className: "job-map-popup",
             maxWidth: maxWidth,
-            minWidth: narrow
-                ? Math.min(withWagePanel ? 300 : 240, maxWidth)
-                : (withWagePanel ? 400 : 280),
+            minWidth: narrow ? Math.min(240, maxWidth) : 280,
             autoPanPadding: narrow ? [12, 56] : [36, 48],
             keepInView: true,
             closeOnClick: true,
@@ -92,9 +89,9 @@ window.jobMap = (function () {
         };
     }
 
-    function clusterPopupOptions(withWagePanel) {
+    function clusterPopupOptions() {
         // Same sizing/classes as the single-job popup; only add a cluster flag for the pager strip.
-        const opts = jobPopupOptions(withWagePanel);
+        const opts = jobPopupOptions();
         const narrow = isNarrowViewport();
         const vh = window.innerHeight || 640;
         opts.className = opts.className + " job-map-popup--cluster";
@@ -105,11 +102,11 @@ window.jobMap = (function () {
         return opts;
     }
 
-    function applyPopupOptions(popup, withWagePanel) {
+    function applyPopupOptions(popup) {
         if (!popup) {
             return;
         }
-        const opts = clusterPopupOptions(withWagePanel);
+        const opts = clusterPopupOptions();
         popup.options.className = opts.className;
         popup.options.maxWidth = opts.maxWidth;
         popup.options.minWidth = opts.minWidth;
@@ -117,10 +114,12 @@ window.jobMap = (function () {
 
         const el = typeof popup.getElement === "function" ? popup.getElement() : null;
         if (el) {
-            // Toggle only our option classes; keep Leaflet animation/utility classes intact.
             el.classList.add("job-map-popup", "job-map-popup--cluster");
-            el.classList.toggle("job-map-popup--with-wages", !!withWagePanel);
-            el.classList.remove("job-cluster-popup", "job-cluster-popup--with-wages");
+            el.classList.remove(
+                "job-map-popup--with-wages",
+                "job-cluster-popup",
+                "job-cluster-popup--with-wages"
+            );
         }
     }
 
@@ -132,10 +131,7 @@ window.jobMap = (function () {
         if (v.wageLabel) {
             return "<span class=\"map-popup__wage map-popup__wage--masked\">" + escapeHtml(v.wageLabel) + "</span>";
         }
-        if (hasWageBands(v)) {
-            // Per-age table lives in the side panel, not inline.
-            return "";
-        }
+        // Only show a concrete rate when age is selected (or a single fixed wage).
         if (v.wage == null || v.wage === "") {
             return "";
         }
@@ -149,14 +145,61 @@ window.jobMap = (function () {
         }).join("");
     }
 
-    function wagePanelHtml(v) {
-        if (!hasWageBands(v)) return "";
+    function wageInfoHtml(v) {
+        if (!hasWageBands(v)) {
+            return "";
+        }
         return (
-            "<aside class=\"map-popup__wage-panel\" aria-label=\"Uurlonen per leeftijd\">" +
-                "<p class=\"map-popup__wage-panel-title\">Uurlonen</p>" +
+            "<button type=\"button\" class=\"map-popup__wage-info\" aria-expanded=\"false\" " +
+                "aria-controls=\"wage-popover-" + escapeAttr(v.id) + "\" " +
+                "aria-label=\"Uurlonen per leeftijd\">i</button>" +
+            "<div id=\"wage-popover-" + escapeAttr(v.id) + "\" class=\"map-popup__wage-popover\" hidden>" +
+                "<p class=\"map-popup__wage-popover-title\">Uurlonen</p>" +
                 "<table class=\"map-popup__wage-table\"><tbody>" + wageTableRowsHtml(v.wageBands) + "</tbody></table>" +
-            "</aside>"
+            "</div>"
         );
+    }
+
+    function closeAllWagePopovers(root) {
+        const scope = root || document;
+        scope.querySelectorAll(".map-popup__wage-popover:not([hidden])").forEach(function (pop) {
+            pop.setAttribute("hidden", "");
+        });
+        scope.querySelectorAll(".map-popup__wage-info.is-open").forEach(function (btn) {
+            btn.classList.remove("is-open");
+            btn.setAttribute("aria-expanded", "false");
+        });
+    }
+
+    function bindWageInfoInteractions(popupEl) {
+        if (!popupEl) {
+            return;
+        }
+
+        popupEl.querySelectorAll(".map-popup__wage-info").forEach(function (btn) {
+            if (btn.dataset.boundWageInfo) {
+                return;
+            }
+            btn.dataset.boundWageInfo = "1";
+            btn.addEventListener("click", function (ev) {
+                // Keep the Leaflet vacancy popup open; only toggle the wage table.
+                L.DomEvent.stop(ev);
+                ev.preventDefault();
+                const popover = btn.parentElement
+                    ? btn.parentElement.querySelector(".map-popup__wage-popover")
+                    : null;
+                if (!popover) {
+                    return;
+                }
+                const willOpen = popover.hasAttribute("hidden");
+                closeAllWagePopovers(popupEl);
+                if (willOpen) {
+                    popover.removeAttribute("hidden");
+                    btn.classList.add("is-open");
+                    btn.setAttribute("aria-expanded", "true");
+                }
+            });
+        });
     }
 
     function travelHtml(v) {
@@ -192,10 +235,12 @@ window.jobMap = (function () {
         }
 
         const detailHref = "/vacancies/" + encodeURIComponent(v.id);
-        const rootClass = "map-popup" + (hasWageBands(v) ? " map-popup--with-wages" : "");
+        const hasInfo = hasWageBands(v);
+        const rootClass = "map-popup" + (hasInfo ? " map-popup--has-wage-info" : "");
 
         return (
             "<div class=\"" + rootClass + "\">" +
+                wageInfoHtml(v) +
                 "<div class=\"map-popup__main\">" +
                     "<div class=\"" + mediaClass + "\">" + mediaInner + "</div>" +
                     "<div class=\"map-popup__body\">" +
@@ -212,7 +257,6 @@ window.jobMap = (function () {
                         "</div>" +
                     "</div>" +
                 "</div>" +
-                wagePanelHtml(v) +
             "</div>"
         );
     }
@@ -263,6 +307,8 @@ window.jobMap = (function () {
             return;
         }
 
+        bindWageInfoInteractions(popupEl);
+
         // Match single-marker behaviour: CTA notifies open; card body is not a second nav target.
         popupEl.querySelectorAll(".map-popup__cta").forEach(function (cta) {
             if (cta.dataset.boundNav) {
@@ -291,8 +337,7 @@ window.jobMap = (function () {
                 if (!nextPage || nextPage < 1 || nextPage > pageCount) {
                     return;
                 }
-                const nextJob = jobs[nextPage - 1] || {};
-                applyPopupOptions(popup, hasWageBands(nextJob));
+                applyPopupOptions(popup);
                 popup.setContent(buildClusterSingleHtml(childMarkers, nextPage));
                 // Keep popup open on last/first page — only update content.
                 if (typeof popup.update === "function") {
@@ -312,9 +357,20 @@ window.jobMap = (function () {
         return !!(popupEl && target && popupEl.contains(target));
     }
 
+    function eventTargetInsideWagePopover(ev) {
+        const target = ev && (ev.target || ev.srcElement);
+        return !!(target && target.closest &&
+            target.closest(".map-popup__wage-info, .map-popup__wage-popover"));
+    }
+
     function closePopupsIfClickOutside(ev) {
         if (!map) {
             return;
+        }
+
+        // Clicks outside the wage popover (even inside the vacancy card) dismiss the table only.
+        if (!eventTargetInsideWagePopover(ev)) {
+            closeAllWagePopovers(map.getContainer());
         }
 
         // Clicks inside any open popup (pager, CTA, content, close btn) must stay put.
@@ -350,6 +406,12 @@ window.jobMap = (function () {
         }
     }
 
+    function closeWagePopoverIfOutside(ev) {
+        if (!eventTargetInsideWagePopover(ev)) {
+            closeAllWagePopovers();
+        }
+    }
+
     function bindOutsideClickCloser() {
         if (!map || outsideClickCloserBound) {
             return;
@@ -358,9 +420,11 @@ window.jobMap = (function () {
         // Native capture: L.DomEvent.on's 4th arg is context, not useCapture.
         // Capture still runs when markers/clusters stop Leaflet click bubbling.
         map.getContainer().addEventListener("click", closePopupsIfClickOutside, true);
+        document.addEventListener("click", closeWagePopoverIfOutside, true);
     }
 
     function unbindOutsideClickCloser() {
+        document.removeEventListener("click", closeWagePopoverIfOutside, true);
         if (!map || !outsideClickCloserBound) {
             outsideClickCloserBound = false;
             return;
@@ -382,8 +446,6 @@ window.jobMap = (function () {
     function openClusterList(clusterLayer) {
         const childMarkers = clusterLayer.getAllChildMarkers();
         const latlng = clusterLayer.getLatLng();
-        const jobs = clusterJobsFromMarkers(childMarkers);
-        const first = jobs[0] || {};
 
         if (activeClusterPopup) {
             map.closePopup(activeClusterPopup);
@@ -391,7 +453,7 @@ window.jobMap = (function () {
 
         // closeOnClick stays true for Leaflet-native path; bindOutsideClickCloser is the
         // reliable fallback when MarkerCluster swallows map preclick/click bubbling.
-        const opts = Object.assign({}, clusterPopupOptions(hasWageBands(first)), {
+        const opts = Object.assign({}, clusterPopupOptions(), {
             closeOnClick: true,
             autoClose: true,
             closeButton: true
@@ -417,6 +479,7 @@ window.jobMap = (function () {
             notifyOpen(v.id);
             const el = marker.getPopup() && marker.getPopup().getElement();
             if (!el) return;
+            bindWageInfoInteractions(el);
             const cta = el.querySelector(".map-popup__cta");
             if (cta && !cta.dataset.bound) {
                 cta.dataset.bound = "1";
@@ -713,7 +776,7 @@ window.jobMap = (function () {
                 jobData: v
             });
 
-            marker.bindPopup(buildPopupHtml(v), jobPopupOptions(hasWageBands(v)));
+            marker.bindPopup(buildPopupHtml(v), jobPopupOptions());
 
             marker.on("click", function () {
                 highlight(v.id);

@@ -1166,6 +1166,7 @@
             {
                 if (_ageYears is int age)
                 {
+                    // Show the resolved hourly rate inline when an age filter is active.
                     if (v.HourlyWage is not null)
                     {
                         dict["wage"] = (double)v.HourlyWage.Value;
@@ -1180,9 +1181,14 @@
                         dict["wage"] = (double)band.HourlyRate;
                     }
                 }
-                else if (v.WageByAge is { Count: > 0 })
+                else if (v.HourlyWage is not null && (v.WageByAge is null || v.WageByAge.Count == 0))
                 {
-                    // Leeftijd = Alle → show full wage table beside the popup.
+                    dict["wage"] = (double)v.HourlyWage.Value;
+                }
+
+                // Full age table stays behind the popup "i" info control (not inline).
+                if (v.WageByAge is { Count: > 0 })
+                {
                     dict["wageBands"] = v.WageByAge
                         .OrderBy(b => b.AgeYears)
                         .Select(b => new Dictionary<string, object?>
@@ -1192,10 +1198,6 @@
                             ["label"] = b.Label
                         })
                         .ToList();
-                }
-                else if (v.HourlyWage is not null)
-                {
-                    dict["wage"] = (double)v.HourlyWage.Value;
                 }
             }
             else

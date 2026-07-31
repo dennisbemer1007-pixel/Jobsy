@@ -2898,10 +2898,6 @@ a {
     max-width: min(340px, calc(100vw - 1.5rem));
 }
 
-.leaflet-popup.job-map-popup.job-map-popup--with-wages {
-    max-width: min(460px, calc(100vw - 1.5rem));
-}
-
 .leaflet-popup.job-map-popup .leaflet-popup-content-wrapper {
     padding: 0;
     border-radius: var(--radius);
@@ -2915,10 +2911,6 @@ a {
     min-width: 0 !important;
     width: 100% !important;
     max-width: 340px;
-}
-
-.leaflet-popup.job-map-popup.job-map-popup--with-wages .leaflet-popup-content {
-    max-width: 460px;
 }
 
 .leaflet-popup.job-map-popup--cluster .leaflet-popup-content {
@@ -2948,6 +2940,7 @@ a {
 }
 
 .map-popup {
+    position: relative;
     display: flex;
     align-items: stretch;
     min-height: 0;
@@ -3013,25 +3006,65 @@ a {
     gap: 0.15rem;
 }
 
-.map-popup__wage-panel {
-    flex: 0 0 auto;
-    min-width: 7.5rem;
-    max-width: 9.5rem;
-    padding: 0.65rem 0.7rem;
-    border-left: 1px solid var(--border);
-    background: color-mix(in srgb, var(--accent-soft) 55%, var(--surface));
-    display: flex;
-    flex-direction: column;
-    gap: 0.35rem;
+.map-popup__wage-info {
+    position: absolute;
+    top: 0.45rem;
+    right: 0.45rem;
+    z-index: 8;
+    width: 1.55rem;
+    height: 1.55rem;
+    padding: 0;
+    border: 1px solid color-mix(in srgb, var(--brand) 22%, var(--border));
+    border-radius: 999px;
+    background: var(--surface);
+    color: var(--brand);
+    font: inherit;
+    font-size: 0.78rem;
+    font-weight: 800;
+    font-style: italic;
+    line-height: 1;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 1px 4px rgba(15, 45, 92, 0.12);
 }
 
-.map-popup__wage-panel-title {
-    margin: 0;
+.map-popup__wage-info:hover,
+.map-popup__wage-info.is-open {
+    background: var(--accent-soft);
+    border-color: color-mix(in srgb, var(--brand) 40%, var(--border));
+}
+
+.map-popup__wage-popover {
+    position: absolute;
+    top: 2.2rem;
+    right: 0.45rem;
+    z-index: 9;
+    min-width: 8.5rem;
+    max-width: min(12rem, calc(100% - 0.9rem));
+    padding: 0.55rem 0.65rem;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    background: var(--surface);
+    box-shadow: var(--shadow-lg);
+}
+
+.map-popup__wage-popover[hidden] {
+    display: none !important;
+}
+
+.map-popup__wage-popover-title {
+    margin: 0 0 0.3rem;
     font-size: 0.68rem;
     font-weight: 700;
     letter-spacing: 0.04em;
     text-transform: uppercase;
     color: var(--muted);
+}
+
+.map-popup--has-wage-info .map-popup__top {
+    padding-right: 1.75rem;
 }
 
 .map-popup__top {
@@ -3159,10 +3192,6 @@ a {
         max-width: calc(100vw - 0.75rem);
     }
 
-    .leaflet-popup.job-map-popup.job-map-popup--with-wages .leaflet-popup-content {
-        max-width: calc(100vw - 0.75rem);
-    }
-
     /* Funda-style: square brand close button outside the card (top-right) */
     .leaflet-popup.job-map-popup a.leaflet-popup-close-button {
         top: -12px !important;
@@ -3181,71 +3210,35 @@ a {
         z-index: 30 !important;
     }
 
-    .map-popup:not(.map-popup--with-wages) {
+    .map-popup {
         flex-direction: column;
     }
 
-    .map-popup:not(.map-popup--with-wages) .map-popup__main {
+    .map-popup__main {
         flex-direction: column;
     }
 
-    .map-popup:not(.map-popup--with-wages) .map-popup__media {
+    .map-popup__media {
         flex: none;
         width: 100%;
         height: 96px;
     }
 
-    .map-popup:not(.map-popup--with-wages) .map-popup__media--logo-only {
+    .map-popup__media--logo-only {
         height: 72px;
     }
 
-    .map-popup:not(.map-popup--with-wages) .map-popup__media--logo-only .map-popup__logo {
+    .map-popup__media--logo-only .map-popup__logo {
         width: 44px;
         height: 44px;
-    }
-
-    /* Keep vacancy + uurlonen side-by-side in the single-job popup */
-    .map-popup.map-popup--with-wages {
-        flex-direction: row;
-        align-items: stretch;
-    }
-
-    .map-popup.map-popup--with-wages .map-popup__main {
-        flex-direction: column;
-        flex: 1 1 auto;
-        min-width: 0;
-    }
-
-    .map-popup.map-popup--with-wages .map-popup__media {
-        flex: none;
-        width: 100%;
-        height: 72px;
-    }
-
-    .map-popup.map-popup--with-wages .map-popup__media--logo-only {
-        height: 56px;
-    }
-
-    .map-popup.map-popup--with-wages .map-popup__media--logo-only .map-popup__logo {
-        width: 40px;
-        height: 40px;
     }
 
     .map-popup__body {
         padding: 0.6rem 0.7rem 0.65rem;
     }
 
-    .map-popup.map-popup--with-wages .map-popup__wage-panel {
-        flex: 0 0 auto;
-        min-width: 6.75rem;
-        max-width: 8.25rem;
-        border-left: 1px solid var(--border);
-        border-top: none;
-        padding: 0.55rem 0.55rem 0.6rem;
-    }
-
     .map-popup__top {
-        padding-right: 0.25rem;
+        padding-right: 1.75rem;
     }
 
     .map-popup__title {
@@ -3274,6 +3267,11 @@ a {
         margin-top: 0.45rem;
         padding: 0.5rem 0.65rem;
         font-size: 0.84rem;
+    }
+
+    .map-popup__wage-info {
+        top: 0.4rem;
+        right: 0.4rem;
     }
 
     .app-shell:has(.jobsy-discovery) .app-header,
