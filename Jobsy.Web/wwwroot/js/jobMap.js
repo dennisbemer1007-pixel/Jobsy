@@ -76,14 +76,15 @@ window.jobMap = (function () {
         const vw = window.innerWidth || 360;
         const narrow = isNarrowViewport();
         // Fixed width so every vacancy card matches (no content-driven resize).
+        // Mobile uses a stacked Funda card at nearly full width.
         const width = narrow
-            ? Math.max(300, Math.min(340, vw - 16))
+            ? Math.max(300, Math.min(400, vw - 20))
             : 520;
         return {
             className: "job-map-popup",
             maxWidth: width,
             minWidth: width,
-            autoPanPadding: narrow ? [12, 64] : [40, 56],
+            autoPanPadding: narrow ? [12, 72] : [40, 56],
             keepInView: true,
             closeOnClick: true,
             closeButton: true
@@ -324,6 +325,7 @@ window.jobMap = (function () {
         }
 
         const detailHref = "/vacancies/" + encodeURIComponent(v.id);
+        const applyHref = detailHref + "#apply";
         const wage = wageInlineHtml(v);
         const footerLogo = (hasImage && v.logoUrl)
             ? "<img class=\"map-popup__logo\" src=\"" + escapeAttr(v.logoUrl) + "\" alt=\"\" loading=\"lazy\" />"
@@ -348,10 +350,13 @@ window.jobMap = (function () {
                         (wage || "<p class=\"map-popup__wage map-popup__wage--empty\">&nbsp;</p>") +
                         specsHtml(v) +
                         "<div class=\"map-popup__footer\">" +
-                            "<a class=\"map-popup__company map-popup__cta\" href=\"" + detailHref + "\" data-job-id=\"" + escapeAttr(v.id) + "\">" +
-                                escapeHtml(v.company) +
-                            "</a>" +
-                            footerLogo +
+                            "<div class=\"map-popup__footer-meta\">" +
+                                "<a class=\"map-popup__company map-popup__cta\" href=\"" + detailHref + "\" data-job-id=\"" + escapeAttr(v.id) + "\">" +
+                                    escapeHtml(v.company) +
+                                "</a>" +
+                                footerLogo +
+                            "</div>" +
+                            "<a class=\"map-popup__apply map-popup__cta\" href=\"" + applyHref + "\" data-job-id=\"" + escapeAttr(v.id) + "\">Solliciteer</a>" +
                         "</div>" +
                     "</div>" +
                 "</div>" +
