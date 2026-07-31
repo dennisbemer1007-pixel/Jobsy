@@ -229,20 +229,43 @@
         @if (_filtersOpen)
         {
             <div id="discovery-filters-desktop" class="filter-bar filter-bar--desktop">
-                <fieldset class="filter-branches">
-                    <legend class="filter-branches__legend">@Culture["Discovery.WorkType"]</legend>
-                    <div class="filter-branches__options" role="group" aria-label="@Culture["Discovery.WorkType"]">
-                        @foreach (var label in _branchOptions)
+                <label class="branch-multiselect-field">
+                    @Culture["Discovery.WorkType"]
+                    <div class="branch-multiselect @(_branchMenuOpen ? "is-open" : null)">
+                        <button type="button"
+                                class="branch-multiselect__trigger"
+                                aria-haspopup="listbox"
+                                aria-expanded="@_branchMenuOpen"
+                                aria-controls="branch-multiselect-panel-desktop"
+                                @onclick="ToggleBranchMenu">
+                            <span class="branch-multiselect__value">@BranchFilterSummary</span>
+                            <span class="branch-multiselect__caret" aria-hidden="true">▾</span>
+                        </button>
+                        @if (_branchMenuOpen)
                         {
-                            <label class="filter-check">
-                                <input type="checkbox"
-                                       checked="@_selectedWorkTypes.Contains(label)"
-                                       @onchange="e => ToggleWorkTypeAsync(label, e)" />
-                                @UiLabels.WorkType(Culture, label)
-                            </label>
+                            <button type="button"
+                                    class="branch-multiselect__backdrop"
+                                    tabindex="-1"
+                                    aria-label="@Culture["Discovery.Cancel"]"
+                                    @onclick="CloseBranchMenu"></button>
+                            <div id="branch-multiselect-panel-desktop"
+                                 class="branch-multiselect__panel"
+                                 role="listbox"
+                                 aria-multiselectable="true"
+                                 aria-label="@Culture["Discovery.WorkType"]">
+                                @foreach (var label in _branchOptions)
+                                {
+                                    <label class="filter-check branch-multiselect__option">
+                                        <input type="checkbox"
+                                               checked="@_selectedWorkTypes.Contains(label)"
+                                               @onchange="e => ToggleWorkTypeAsync(label, e)" />
+                                        @UiLabels.WorkType(Culture, label)
+                                    </label>
+                                }
+                            </div>
                         }
                     </div>
-                </fieldset>
+                </label>
                 <label class="filter-required">
                     @Culture["Discovery.Age"]
                     <select value="@AgeSelectValue" @onchange="OnAgeChanged" required>
@@ -493,15 +516,38 @@
 
                 <section class="filter-section">
                     <h3>@Culture["Discovery.WorkType"]</h3>
-                    <div class="filter-branches__options" role="group" aria-label="@Culture["Discovery.WorkType"]">
-                        @foreach (var label in _branchOptions)
+                    <div class="branch-multiselect branch-multiselect--sheet @(_branchMenuOpen ? "is-open" : null)">
+                        <button type="button"
+                                class="branch-multiselect__trigger"
+                                aria-haspopup="listbox"
+                                aria-expanded="@_branchMenuOpen"
+                                aria-controls="branch-multiselect-panel-sheet"
+                                @onclick="ToggleBranchMenu">
+                            <span class="branch-multiselect__value">@BranchFilterSummary</span>
+                            <span class="branch-multiselect__caret" aria-hidden="true">▾</span>
+                        </button>
+                        @if (_branchMenuOpen)
                         {
-                            <label class="filter-check">
-                                <input type="checkbox"
-                                       checked="@_selectedWorkTypes.Contains(label)"
-                                       @onchange="e => ToggleWorkTypeAsync(label, e)" />
-                                @UiLabels.WorkType(Culture, label)
-                            </label>
+                            <button type="button"
+                                    class="branch-multiselect__backdrop"
+                                    tabindex="-1"
+                                    aria-label="@Culture["Discovery.Cancel"]"
+                                    @onclick="CloseBranchMenu"></button>
+                            <div id="branch-multiselect-panel-sheet"
+                                 class="branch-multiselect__panel"
+                                 role="listbox"
+                                 aria-multiselectable="true"
+                                 aria-label="@Culture["Discovery.WorkType"]">
+                                @foreach (var label in _branchOptions)
+                                {
+                                    <label class="filter-check branch-multiselect__option">
+                                        <input type="checkbox"
+                                               checked="@_selectedWorkTypes.Contains(label)"
+                                               @onchange="e => ToggleWorkTypeAsync(label, e)" />
+                                        @UiLabels.WorkType(Culture, label)
+                                    </label>
+                                }
+                            </div>
                         }
                     </div>
                 </section>
@@ -563,6 +609,7 @@
     private Guid? _hoveredId;
     private bool showMapOnMobile = true;
     private bool _filtersOpen;
+    private bool _branchMenuOpen;
     private bool _mapReady;
     private bool _mapInitScheduled;
     private ElementReference _mapElement;
@@ -617,6 +664,23 @@
         >= 21 => "21",
         var age => age.Value.ToString()
     };
+
+    private string BranchFilterSummary
+    {
+        get
+        {
+            if (_selectedWorkTypes.Count == 0)
+            {
+                return Culture["Discovery.WorkTypeAny"];
+            }
+
+            var labels = _selectedWorkTypes
+                .OrderBy(x => x, StringComparer.CurrentCultureIgnoreCase)
+                .Select(x => UiLabels.WorkType(Culture, x))
+                .ToList();
+            return string.Join(", ", labels);
+        }
+    }
 
     private IReadOnlyList<VacancyListItem> SortedVacancies
     {
@@ -1463,6 +1527,12 @@
         await ReloadFiltersIfAppliedAsync();
     }
 
+    private void ToggleBranchMenu()
+        => _branchMenuOpen = !_branchMenuOpen;
+
+    private void CloseBranchMenu()
+        => _branchMenuOpen = false;
+
     private async Task OnRadiusChanged(ChangeEventArgs e)
     {
         if (int.TryParse(e.Value?.ToString(), out var value))
@@ -1671,6 +1741,7 @@
             RestoreFilterSnapshot();
         }
 
+        _branchMenuOpen = false;
         _filtersOpen = false;
     }
 
@@ -1715,6 +1786,7 @@
 
         await LoadVacanciesAsync();
         CaptureFilterSnapshot();
+        _branchMenuOpen = false;
         _filtersOpen = false;
     }
 
