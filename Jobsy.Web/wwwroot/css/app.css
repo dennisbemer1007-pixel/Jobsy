@@ -3515,7 +3515,7 @@ a.map-popup__apply.map-popup__cta:visited {
 
 @media (max-width: 768px) {
     .leaflet-popup.job-map-popup {
-        width: min(360px, calc(100vw - 1.5rem));
+        width: min(340px, calc(100vw - 1.5rem));
         max-width: calc(100vw - 1.5rem);
     }
 
@@ -3559,90 +3559,88 @@ a.map-popup__apply.map-popup__cta:visited {
         right: -10px;
     }
 
-    /* Stacked Funda card — compact but still readable on phones */
+    /* Compact horizontal card on phones — much shorter than the stacked layout */
     .map-popup__main {
-        flex-direction: column;
-        height: 300px;
+        flex-direction: row;
+        height: 148px;
     }
 
     .map-popup__media {
-        flex: 0 0 118px;
-        width: 100%;
-        height: 118px;
-        min-height: 118px;
+        flex: 0 0 112px;
+        width: 112px;
+        height: 148px;
+        min-height: 148px;
     }
 
     .map-popup__media--logo-only {
-        height: 118px;
-        min-height: 118px;
+        height: 148px;
+        min-height: 148px;
     }
 
     .map-popup__media-logo {
-        width: 56px;
-        height: 56px;
+        width: 48px;
+        height: 48px;
     }
 
     .map-popup__body {
         flex: 1 1 auto;
-        height: auto;
+        height: 148px;
         min-height: 0;
-        padding: 0.65rem 0.8rem 0.7rem;
-        gap: 0.22rem;
+        padding: 0.55rem 0.65rem 0.5rem;
+        gap: 0.12rem;
         overflow: hidden;
     }
 
+    .map-popup__header {
+        gap: 0.08rem;
+    }
+
     .map-popup__title {
-        min-height: 2.2rem;
-        font-size: 1.02rem;
+        min-height: 0;
+        font-size: 0.92rem;
         line-height: 1.25;
         font-weight: 800;
         -webkit-line-clamp: 2;
     }
 
     .map-popup__wage {
-        min-height: 1.3rem;
-        font-size: 1.08rem;
+        min-height: 0;
+        font-size: 0.98rem;
     }
 
     .map-popup__wage-unit {
-        font-size: 0.78rem;
+        font-size: 0.72rem;
     }
 
     .map-popup__address {
-        min-height: 1.05rem;
-        font-size: 0.8rem;
+        min-height: 0;
+        font-size: 0.74rem;
         -webkit-line-clamp: 1;
     }
 
     .map-popup__specs {
-        flex-wrap: wrap;
-        gap: 0.3rem 0.65rem;
-        min-height: 1.15rem;
-    }
-
-    .map-popup__spec {
-        font-size: 0.74rem;
+        display: none;
     }
 
     .map-popup__footer {
-        min-height: 2.5rem;
-        padding-top: 0.35rem;
-        gap: 0.45rem;
+        min-height: 2.15rem;
+        padding-top: 0.25rem;
+        gap: 0.4rem;
         flex-shrink: 0;
     }
 
     .map-popup__company {
-        font-size: 0.84rem;
+        font-size: 0.78rem;
     }
 
     .map-popup__logo {
-        width: 30px;
-        height: 30px;
+        width: 28px;
+        height: 28px;
     }
 
     .map-popup__apply {
-        padding: 0.48rem 0.85rem;
-        font-size: 0.84rem;
+        padding: 0.4rem 0.7rem;
+        font-size: 0.78rem;
     }
 
     .app-shell:has(.jobsy-discovery) .app-header,
