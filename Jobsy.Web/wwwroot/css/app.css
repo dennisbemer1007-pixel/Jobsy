@@ -3515,8 +3515,8 @@ a.map-popup__apply.map-popup__cta:visited {
 
 @media (max-width: 768px) {
     .leaflet-popup.job-map-popup {
-        width: min(400px, calc(100vw - 1.25rem));
-        max-width: calc(100vw - 1.25rem);
+        width: min(360px, calc(100vw - 1.5rem));
+        max-width: calc(100vw - 1.5rem);
     }
 
     .leaflet-popup.job-map-popup .leaflet-popup-content {
