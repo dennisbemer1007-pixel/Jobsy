@@ -75,14 +75,14 @@ window.jobMap = (function () {
     function jobPopupOptions() {
         const vw = window.innerWidth || 360;
         const narrow = isNarrowViewport();
-        // Funda-style listing card: wider horizontal split on desktop.
-        const maxWidth = narrow
-            ? Math.max(280, Math.min(340, vw - 16))
+        // Fixed width so every vacancy card matches (no content-driven resize).
+        const width = narrow
+            ? Math.max(300, Math.min(340, vw - 16))
             : 520;
         return {
             className: "job-map-popup",
-            maxWidth: maxWidth,
-            minWidth: narrow ? Math.min(260, maxWidth) : 440,
+            maxWidth: width,
+            minWidth: width,
             autoPanPadding: narrow ? [12, 64] : [40, 56],
             keepInView: true,
             closeOnClick: true,
@@ -153,13 +153,7 @@ window.jobMap = (function () {
         return (
             "<button type=\"button\" class=\"map-popup__wage-info\" aria-expanded=\"false\" " +
                 "aria-controls=\"wage-popover-" + escapeAttr(v.id) + "\" " +
-                "aria-label=\"Uurlonen per leeftijd\">" +
-                "<svg viewBox=\"0 0 24 24\" width=\"16\" height=\"16\" aria-hidden=\"true\" focusable=\"false\">" +
-                    "<circle cx=\"12\" cy=\"12\" r=\"9\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\"/>" +
-                    "<path d=\"M12 10.5v6\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\"/>" +
-                    "<circle cx=\"12\" cy=\"7.5\" r=\"1.1\" fill=\"currentColor\"/>" +
-                "</svg>" +
-            "</button>" +
+                "aria-label=\"Uurlonen per leeftijd\">€</button>" +
             "<div id=\"wage-popover-" + escapeAttr(v.id) + "\" class=\"map-popup__wage-popover\" hidden>" +
                 "<p class=\"map-popup__wage-popover-title\">Uurlonen</p>" +
                 "<table class=\"map-popup__wage-table\"><tbody>" + wageTableRowsHtml(v.wageBands) + "</tbody></table>" +
@@ -216,9 +210,45 @@ window.jobMap = (function () {
         }
 
         if (!parts.length) {
-            return "";
+            return "<div class=\"map-popup__specs map-popup__specs--empty\" aria-hidden=\"true\"></div>";
         }
         return "<div class=\"map-popup__specs\">" + parts.join("") + "</div>";
+    }
+
+    function mountWageControls(popupEl) {
+        if (!popupEl) {
+            return;
+        }
+        const content = popupEl.querySelector(".leaflet-popup-content");
+        const btnInContent = content
+            ? content.querySelector(".map-popup__wage-info")
+            : null;
+        const popoverInContent = content
+            ? content.querySelector(".map-popup__wage-popover")
+            : null;
+
+        // Drop previously parked € controls (cluster page changes replace content only).
+        Array.prototype.slice.call(popupEl.children).forEach(function (child) {
+            if (!child.classList) {
+                return;
+            }
+            const isWageChrome = child.classList.contains("map-popup__wage-info")
+                || child.classList.contains("map-popup__wage-popover");
+            if (isWageChrome && child !== btnInContent && child !== popoverInContent) {
+                child.remove();
+            }
+        });
+
+        // Park € control next to Leaflet's close button (outside the card).
+        if (btnInContent) {
+            popupEl.appendChild(btnInContent);
+            popupEl.classList.add("job-map-popup--with-wages");
+        } else {
+            popupEl.classList.remove("job-map-popup--with-wages");
+        }
+        if (popoverInContent) {
+            popupEl.appendChild(popoverInContent);
+        }
     }
 
     function closeAllWagePopovers(root) {
@@ -237,6 +267,8 @@ window.jobMap = (function () {
             return;
         }
 
+        mountWageControls(popupEl);
+
         popupEl.querySelectorAll(".map-popup__wage-info").forEach(function (btn) {
             if (btn.dataset.boundWageInfo) {
                 return;
@@ -246,9 +278,10 @@ window.jobMap = (function () {
                 // Keep the Leaflet vacancy popup open; only toggle the wage table.
                 L.DomEvent.stop(ev);
                 ev.preventDefault();
-                const popover = btn.parentElement
-                    ? btn.parentElement.querySelector(".map-popup__wage-popover")
-                    : null;
+                const controlId = btn.getAttribute("aria-controls");
+                const popover = controlId
+                    ? popupEl.querySelector("#" + controlId)
+                    : popupEl.querySelector(".map-popup__wage-popover");
                 if (!popover) {
                     return;
                 }
@@ -291,30 +324,28 @@ window.jobMap = (function () {
         }
 
         const detailHref = "/vacancies/" + encodeURIComponent(v.id);
-        const hasInfo = hasWageBands(v);
-        const rootClass = "map-popup" + (hasInfo ? " map-popup--has-wage-info" : "");
         const wage = wageInlineHtml(v);
         const footerLogo = (hasImage && v.logoUrl)
             ? "<img class=\"map-popup__logo\" src=\"" + escapeAttr(v.logoUrl) + "\" alt=\"\" loading=\"lazy\" />"
             : "";
 
         return (
-            "<div class=\"" + rootClass + "\">" +
+            "<div class=\"map-popup\">" +
+                wageInfoHtml(v) +
                 "<div class=\"map-popup__main\">" +
                     "<a class=\"" + mediaClass + "\" href=\"" + detailHref + "\" data-job-id=\"" + escapeAttr(v.id) + "\">" +
                         mediaInner +
                     "</a>" +
                     "<div class=\"map-popup__body\">" +
-                        wageInfoHtml(v) +
                         "<div class=\"map-popup__header\">" +
                             "<a class=\"map-popup__title map-popup__cta\" href=\"" + detailHref + "\" data-job-id=\"" + escapeAttr(v.id) + "\">" +
                                 escapeHtml(v.title) +
                             "</a>" +
                             (v.address
                                 ? "<p class=\"map-popup__address\">" + escapeHtml(v.address) + "</p>"
-                                : "") +
+                                : "<p class=\"map-popup__address map-popup__address--empty\">&nbsp;</p>") +
                         "</div>" +
-                        wage +
+                        (wage || "<p class=\"map-popup__wage map-popup__wage--empty\">&nbsp;</p>") +
                         specsHtml(v) +
                         "<div class=\"map-popup__footer\">" +
                             "<a class=\"map-popup__company map-popup__cta\" href=\"" + detailHref + "\" data-job-id=\"" + escapeAttr(v.id) + "\">" +
