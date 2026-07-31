@@ -24,6 +24,17 @@ public class MatchingRulesTests
     }
 
     [Fact]
+    public void HoursFilter_MatchesOverlappingRangesAndMissingVacancyHours()
+    {
+        Assert.True(HoursRangeRules.MatchesFilter(16, 24, 0, 40));
+        Assert.True(HoursRangeRules.MatchesFilter(16, 24, 16, 24));
+        Assert.True(HoursRangeRules.MatchesFilter(8, 16, 16, 24));
+        Assert.False(HoursRangeRules.MatchesFilter(4, 8, 16, 24));
+        Assert.True(HoursRangeRules.MatchesFilter(null, null, 16, 24));
+        Assert.True(HoursRangeRules.Intersects(new HoursRange(16, 24), new HoursRange(0, 40)));
+    }
+
+    [Fact]
     public void YouthLabor_BlocksFifteenOnNightAndMoney()
     {
         var flags = new LegalTaskFlags

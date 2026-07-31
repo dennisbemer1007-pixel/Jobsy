@@ -88,6 +88,8 @@ public sealed class JobsyApiClient : IAsyncDisposable
         decimal? maxHourlyWage = null,
         IEnumerable<string>? workTypes = null,
         string? searchQuery = null,
+        int? minHoursPerWeek = null,
+        int? maxHoursPerWeek = null,
         CancellationToken ct = default)
     {
         var qs = $"transport={Uri.EscapeDataString(transport)}&maxMinutes={maxMinutes}";
@@ -115,6 +117,16 @@ public sealed class JobsyApiClient : IAsyncDisposable
         if (maxHourlyWage is not null)
         {
             qs += $"&maxHourlyWage={maxHourlyWage.Value.ToString(System.Globalization.CultureInfo.InvariantCulture)}";
+        }
+
+        if (minHoursPerWeek is not null)
+        {
+            qs += $"&minHoursPerWeek={minHoursPerWeek.Value}";
+        }
+
+        if (maxHoursPerWeek is not null)
+        {
+            qs += $"&maxHoursPerWeek={maxHoursPerWeek.Value}";
         }
 
         if (workTypes is not null)

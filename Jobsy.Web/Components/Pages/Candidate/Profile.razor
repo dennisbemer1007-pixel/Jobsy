@@ -156,43 +156,50 @@
                     </div>
                 </fieldset>
 
-                <fieldset class="profile-roles">
+                <fieldset class="vacancy-schedule profile-availability">
                     <legend>@Culture["Profile.Availability"]</legend>
-                    <label>
+                    <label class="vacancy-toggle-row">
                         <input type="checkbox" checked="@_flexibleTimes" @onchange="OnFlexibleTimesChanged" />
-                        Tijden in overleg / Variabele tijden
+                        <span>
+                            <strong>@Culture["Vacancy.FlexibleTimes"]</strong>
+                        </span>
                     </label>
-                    <table class="wage-table" style="@(_flexibleTimes ? "opacity:0.45;pointer-events:none" : null)">
-                        <thead>
-                            <tr>
-                                <th>@Culture["Profile.Day"]</th>
-                                @foreach (var slot in AvailabilitySlots)
-                                {
-                                    <th>
-                                        @UiLabels.AvailabilitySlot(Culture, slot)
-                                        <div class="muted" style="font-weight:normal;font-size:0.75rem">@DayPartMatrix.DayPartWindows[slot]</div>
-                                    </th>
-                                }
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach (var day in AvailabilityDays)
-                            {
-                                <tr>
-                                    <th>@UiLabels.Weekday(Culture, day)</th>
-                                    @foreach (var slot in AvailabilitySlots)
+                    @if (!_flexibleTimes)
+                    {
+                        <div class="vacancy-schedule__table-wrap">
+                            <table class="wage-table vacancy-schedule__table">
+                                <thead>
+                                    <tr>
+                                        <th>@Culture["Profile.Day"]</th>
+                                        @foreach (var slot in AvailabilitySlots)
+                                        {
+                                            <th>
+                                                @UiLabels.AvailabilitySlot(Culture, slot)
+                                                <div class="muted" style="font-weight:normal;font-size:0.75rem">@DayPartMatrix.DayPartWindows[slot]</div>
+                                            </th>
+                                        }
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var day in AvailabilityDays)
                                     {
-                                        var key = $"{day}:{slot}";
-                                        <td>
-                                            <input type="checkbox"
-                                                   checked="@_availability.Contains(key)"
-                                                   @onchange="e => ToggleAvailability(key, (bool)(e.Value ?? false))" />
-                                        </td>
+                                        <tr>
+                                            <th>@UiLabels.Weekday(Culture, day)</th>
+                                            @foreach (var slot in AvailabilitySlots)
+                                            {
+                                                var key = $"{day}:{slot}";
+                                                <td>
+                                                    <input type="checkbox"
+                                                           checked="@_availability.Contains(key)"
+                                                           @onchange="e => ToggleAvailability(key, (bool)(e.Value ?? false))" />
+                                                </td>
+                                            }
+                                        </tr>
                                     }
-                                </tr>
-                            }
-                        </tbody>
-                    </table>
+                                </tbody>
+                            </table>
+                        </div>
+                    }
                 </fieldset>
 
                 <fieldset class="profile-employers">
