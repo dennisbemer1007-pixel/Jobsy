@@ -3149,7 +3149,7 @@ a {
     display: flex;
     align-items: stretch;
     width: 100%;
-    height: 180px;
+    height: 212px;
     min-width: 0;
     background: var(--surface);
     border-radius: var(--radius);
@@ -3161,8 +3161,8 @@ a {
     position: relative;
     flex: 0 0 200px;
     width: 200px;
-    height: 180px;
-    min-height: 180px;
+    height: 212px;
+    min-height: 212px;
     align-self: stretch;
     background: linear-gradient(160deg, var(--accent-soft), color-mix(in srgb, var(--brand) 28%, white));
     text-decoration: none;
@@ -3221,11 +3221,11 @@ a {
     position: relative;
     flex: 1;
     min-width: 0;
-    height: 180px;
-    padding: 0.75rem 0.95rem 0.7rem;
+    height: 212px;
+    padding: 0.7rem 0.9rem 0.65rem;
     display: flex;
     flex-direction: column;
-    gap: 0.28rem;
+    gap: 0.22rem;
     overflow: hidden;
 }
 
@@ -3306,15 +3306,16 @@ a {
     align-items: flex-start;
     gap: 0.12rem;
     min-width: 0;
-    flex: 0 0 auto;
+    flex: 0 1 auto;
+    min-height: 0;
 }
 
 .map-popup__title {
     margin: 0;
     width: 100%;
     min-width: 0;
-    min-height: 2.55rem;
-    font-size: 1.12rem;
+    min-height: 2.4rem;
+    font-size: 1.08rem;
     line-height: 1.25;
     font-weight: 800;
     letter-spacing: -0.015em;
@@ -3386,9 +3387,10 @@ a {
     align-items: center;
     gap: 0.55rem 0.75rem;
     margin-top: 0.05rem;
-    min-height: 1.25rem;
+    min-height: 1.15rem;
     color: var(--muted);
     overflow: hidden;
+    flex-shrink: 1;
 }
 
 .map-popup__specs--empty {
@@ -3420,8 +3422,9 @@ a {
     justify-content: space-between;
     gap: 0.65rem;
     margin-top: auto;
-    padding-top: 0.35rem;
-    min-height: 2.5rem;
+    padding-top: 0.4rem;
+    min-height: 2.6rem;
+    flex-shrink: 0;
 }
 
 .map-popup__footer-meta {
@@ -3430,6 +3433,7 @@ a {
     gap: 0.45rem;
     min-width: 0;
     flex: 1 1 auto;
+    overflow: hidden;
 }
 
 .map-popup__company {
@@ -3451,8 +3455,8 @@ a {
 
 .map-popup__logo {
     flex-shrink: 0;
-    width: 36px;
-    height: 36px;
+    width: 32px;
+    height: 32px;
     border-radius: 6px;
     background: var(--surface);
     object-fit: contain;
@@ -3460,28 +3464,37 @@ a {
 }
 
 .map-popup__apply {
-    flex-shrink: 0;
+    flex: 0 0 auto;
     display: inline-flex;
     align-items: center;
     justify-content: center;
     margin: 0;
-    padding: 0.45rem 0.85rem;
+    padding: 0.5rem 0.9rem;
     border: none;
     border-radius: var(--radius-sm);
     background: var(--map-pin, var(--coral));
     color: #fff !important;
     font: inherit;
-    font-size: 0.84rem;
+    font-size: 0.86rem;
     font-weight: 700;
     line-height: 1.2;
     text-decoration: none !important;
     white-space: nowrap;
     box-shadow: 0 2px 8px var(--map-pin-glow, rgba(245, 74, 27, 0.35));
+    z-index: 2;
+}
+
+a.map-popup__apply.map-popup__cta {
+    color: #fff !important;
+    text-decoration: none !important;
 }
 
 .map-popup__apply:hover,
 .map-popup__apply:focus,
-.map-popup__apply:visited {
+.map-popup__apply:visited,
+a.map-popup__apply.map-popup__cta:hover,
+a.map-popup__apply.map-popup__cta:focus,
+a.map-popup__apply.map-popup__cta:visited {
     background: var(--map-pin-deep, var(--coral-deep));
     color: #fff !important;
     text-decoration: none !important;
@@ -3549,7 +3562,7 @@ a {
     /* Stacked Funda card — same hierarchy as desktop, readable on phones */
     .map-popup__main {
         flex-direction: column;
-        height: 340px;
+        height: 360px;
     }
 
     .map-popup__media {
@@ -3573,12 +3586,13 @@ a {
         flex: 1 1 auto;
         height: auto;
         min-height: 0;
-        padding: 0.85rem 1rem 0.85rem;
-        gap: 0.35rem;
+        padding: 0.85rem 1rem 0.9rem;
+        gap: 0.3rem;
+        overflow: hidden;
     }
 
     .map-popup__title {
-        min-height: 2.6rem;
+        min-height: 2.5rem;
         font-size: 1.12rem;
         line-height: 1.3;
         font-weight: 800;
@@ -3611,9 +3625,10 @@ a {
     }
 
     .map-popup__footer {
-        min-height: 2.75rem;
-        padding-top: 0.45rem;
+        min-height: 2.9rem;
+        padding-top: 0.5rem;
         gap: 0.55rem;
+        flex-shrink: 0;
     }
 
     .map-popup__company {
@@ -3621,13 +3636,13 @@ a {
     }
 
     .map-popup__logo {
-        width: 38px;
-        height: 38px;
+        width: 34px;
+        height: 34px;
     }
 
     .map-popup__apply {
-        padding: 0.55rem 0.95rem;
-        font-size: 0.9rem;
+        padding: 0.6rem 1rem;
+        font-size: 0.92rem;
     }
 
     .app-shell:has(.jobsy-discovery) .app-header,
