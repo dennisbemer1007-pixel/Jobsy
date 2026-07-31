@@ -273,15 +273,16 @@
                     <input type="number" min="5" max="90" value="@_maxTravelMinutes"
                            @onchange="OnMaxMinutesChanged" />
                 </label>
-                <label>
-                    @Culture["Discovery.MinHours"]
-                    <input type="number" min="0" max="40" value="@_minHoursPerWeek"
-                           @onchange="OnMinHoursChanged" />
-                </label>
-                <label>
-                    @Culture["Discovery.MaxHours"]
-                    <input type="number" min="0" max="40" value="@_maxHoursPerWeek"
-                           @onchange="OnMaxHoursChanged" />
+                <label class="hours-range-field">
+                    <span>@Culture["Discovery.HoursSlider"]</span>
+                    <HoursRangeSlider CssClass="hours-range--compact"
+                                      Min="0"
+                                      Max="40"
+                                      Low="_minHoursPerWeek"
+                                      High="_maxHoursPerWeek"
+                                      LowChanged="OnMinHoursSliderValue"
+                                      HighChanged="OnMaxHoursSliderValue"
+                                      RangeCommitted="CommitHoursRangeAsync" />
                 </label>
                 <label>
                     @Culture["Discovery.Transport"]
@@ -481,23 +482,13 @@
 
                 <section class="filter-section filter-section--hero">
                     <h3>@Culture["Discovery.HoursSlider"]</h3>
-                    <div class="hours-slider">
-                        <div class="hours-slider__inputs">
-                            <input type="range" min="0" max="40" step="1"
-                                   value="@_minHoursPerWeek"
-                                   aria-label="@Culture["Discovery.MinHours"]"
-                                   @oninput="OnMinHoursSliderInput"
-                                   @onchange="OnMinHoursChanged" />
-                            <input type="range" min="0" max="40" step="1"
-                                   value="@_maxHoursPerWeek"
-                                   aria-label="@Culture["Discovery.MaxHours"]"
-                                   @oninput="OnMaxHoursSliderInput"
-                                   @onchange="OnMaxHoursChanged" />
-                        </div>
-                        <div class="travel-slider__value">
-                            <strong>@_minHoursPerWeek – @_maxHoursPerWeek</strong> @Culture["Discovery.HoursUnit"]
-                        </div>
-                    </div>
+                    <HoursRangeSlider Min="0"
+                                      Max="40"
+                                      Low="_minHoursPerWeek"
+                                      High="_maxHoursPerWeek"
+                                      LowChanged="OnMinHoursSliderValue"
+                                      HighChanged="OnMaxHoursSliderValue"
+                                      RangeCommitted="CommitHoursRangeAsync" />
                 </section>
 
                 <section class="filter-section">
@@ -1423,61 +1414,28 @@
         }
     }
 
-    private void OnMinHoursSliderInput(ChangeEventArgs e)
+    private void OnMinHoursSliderValue(int value)
     {
-        if (int.TryParse(e.Value?.ToString(), out var value))
+        var min = Math.Clamp(value, DefaultMinHoursPerWeek, DefaultMaxHoursPerWeek);
+        _minHoursPerWeek = min;
+        if (_maxHoursPerWeek < min)
         {
-            var min = Math.Clamp(value, DefaultMinHoursPerWeek, DefaultMaxHoursPerWeek);
-            _minHoursPerWeek = min;
-            if (_maxHoursPerWeek < min)
-            {
-                _maxHoursPerWeek = min;
-            }
+            _maxHoursPerWeek = min;
         }
     }
 
-    private void OnMaxHoursSliderInput(ChangeEventArgs e)
+    private void OnMaxHoursSliderValue(int value)
     {
-        if (int.TryParse(e.Value?.ToString(), out var value))
+        var max = Math.Clamp(value, DefaultMinHoursPerWeek, DefaultMaxHoursPerWeek);
+        _maxHoursPerWeek = max;
+        if (_minHoursPerWeek > max)
         {
-            var max = Math.Clamp(value, DefaultMinHoursPerWeek, DefaultMaxHoursPerWeek);
-            _maxHoursPerWeek = max;
-            if (_minHoursPerWeek > max)
-            {
-                _minHoursPerWeek = max;
-            }
+            _minHoursPerWeek = max;
         }
     }
 
-    private async Task OnMinHoursChanged(ChangeEventArgs e)
-    {
-        if (int.TryParse(e.Value?.ToString(), out var value))
-        {
-            var min = Math.Clamp(value, DefaultMinHoursPerWeek, DefaultMaxHoursPerWeek);
-            _minHoursPerWeek = min;
-            if (_maxHoursPerWeek < min)
-            {
-                _maxHoursPerWeek = min;
-            }
-
-            await ReloadFiltersIfAppliedAsync();
-        }
-    }
-
-    private async Task OnMaxHoursChanged(ChangeEventArgs e)
-    {
-        if (int.TryParse(e.Value?.ToString(), out var value))
-        {
-            var max = Math.Clamp(value, DefaultMinHoursPerWeek, DefaultMaxHoursPerWeek);
-            _maxHoursPerWeek = max;
-            if (_minHoursPerWeek > max)
-            {
-                _minHoursPerWeek = max;
-            }
-
-            await ReloadFiltersIfAppliedAsync();
-        }
-    }
+    private Task CommitHoursRangeAsync()
+        => ReloadFiltersIfAppliedAsync();
 
     private async Task OnTransportChanged(ChangeEventArgs e)
     {

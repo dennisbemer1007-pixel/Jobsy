@@ -1905,39 +1905,131 @@ a {
     font-size: 0.95rem;
 }
 
-.hours-slider {
+/* Dual-handle hours filter: one rail, two thumbs */
+.hours-range {
     display: flex;
     flex-direction: column;
     gap: 0.35rem;
+    width: 100%;
+    min-width: 11rem;
 }
 
-.hours-slider__inputs {
+.hours-range__rail {
     position: relative;
-    height: 1.75rem;
-    margin: 0.35rem 0 0.15rem;
+    height: 0.35rem;
+    margin: 0.85rem 0.45rem 0;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--border) 75%, var(--muted));
 }
 
-.hours-slider__inputs input[type="range"] {
+.hours-range__fill {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: var(--hours-low, 0%);
+    right: calc(100% - var(--hours-high, 100%));
+    border-radius: inherit;
+    background: var(--brand);
+}
+
+.hours-range__inputs {
+    position: relative;
+    height: 1.5rem;
+    margin: -1.05rem 0 0;
+}
+
+.hours-range__thumb {
     position: absolute;
     left: 0;
     top: 0;
     width: 100%;
+    height: 1.5rem;
     margin: 0;
-    accent-color: var(--brand);
     background: transparent;
     pointer-events: none;
+    -webkit-appearance: none;
+    appearance: none;
 }
 
-.hours-slider__inputs input[type="range"]::-webkit-slider-thumb {
-    pointer-events: auto;
-    position: relative;
-    z-index: 2;
+.hours-range__thumb--min {
+    z-index: 3;
 }
 
-.hours-slider__inputs input[type="range"]::-moz-range-thumb {
+.hours-range__thumb--max,
+.hours-range__thumb.is-active {
+    z-index: 4;
+}
+
+.hours-range__thumb::-webkit-slider-runnable-track {
+    height: 0.35rem;
+    background: transparent;
+    border: none;
+}
+
+.hours-range__thumb::-moz-range-track {
+    height: 0.35rem;
+    background: transparent;
+    border: none;
+}
+
+.hours-range__thumb::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
     pointer-events: auto;
-    position: relative;
-    z-index: 2;
+    width: 1.15rem;
+    height: 1.15rem;
+    margin-top: calc((0.35rem - 1.15rem) / 2);
+    border: 2px solid var(--brand);
+    border-radius: 50%;
+    background: var(--surface);
+    box-shadow: var(--shadow);
+    cursor: grab;
+}
+
+.hours-range__thumb::-moz-range-thumb {
+    pointer-events: auto;
+    width: 1.15rem;
+    height: 1.15rem;
+    border: 2px solid var(--brand);
+    border-radius: 50%;
+    background: var(--surface);
+    box-shadow: var(--shadow);
+    cursor: grab;
+}
+
+.hours-range__thumb:active::-webkit-slider-thumb,
+.hours-range__thumb:active::-moz-range-thumb {
+    cursor: grabbing;
+    background: var(--accent-soft);
+}
+
+.hours-range__value {
+    margin-top: 0.15rem;
+    text-align: center;
+    color: var(--brand);
+    font-size: 0.95rem;
+}
+
+.hours-range--compact .hours-range__value {
+    font-size: 0.85rem;
+}
+
+.filter-bar .hours-range-field {
+    grid-column: span 1;
+    min-width: 12rem;
+}
+
+.filter-bar .hours-range-field > span {
+    display: block;
+    margin-bottom: 0.2rem;
+}
+
+.filter-bar .hours-range {
+    text-transform: none;
+    letter-spacing: 0;
+    font-weight: 500;
+    color: var(--text);
+    font-size: 0.9rem;
 }
 
 .profile-availability {
@@ -2177,7 +2269,7 @@ a {
     letter-spacing: 0.03em;
 }
 
-.filter-bar input:not([type="checkbox"]):not([type="radio"]),
+.filter-bar input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
 .filter-bar select {
     border: 1px solid var(--border);
     border-radius: 6px;
