@@ -105,6 +105,12 @@ public class SalaryTablesController : ControllerBase
             organizationIds = orgs.Concat(parentsOfBranches).Distinct().ToList();
         }
 
+        foreach (var organizationId in organizationIds)
+        {
+            await WmlSalaryTableService.EnsureForCompanyAsync(_db, organizationId, cancellationToken);
+            await WmlSalaryTableService.FillEmptySalaryTablesAsync(_db, cancellationToken, organizationId);
+        }
+
         var tables = await _db.CompanySalaryTables
             .AsNoTracking()
             .AsSplitQuery()
@@ -124,6 +130,21 @@ public class SalaryTablesController : ControllerBase
     [HttpGet("{id:guid}")]
     public async Task<ActionResult<SalaryTableDto>> GetById(Guid id, CancellationToken cancellationToken)
     {
+        var existing = await _db.CompanySalaryTables
+            .AsNoTracking()
+            .Where(t => t.Id == id)
+            .Select(t => new { t.Id, t.CompanyId })
+            .FirstOrDefaultAsync(cancellationToken);
+        if (existing is not null)
+        {
+            var organizationId = await WmlSalaryTableService.ResolveOrganizationIdAsync(
+                _db, existing.CompanyId, cancellationToken);
+            if (organizationId is Guid orgId)
+            {
+                await WmlSalaryTableService.FillEmptySalaryTablesAsync(_db, cancellationToken, orgId);
+            }
+        }
+
         var table = await _db.CompanySalaryTables
             .AsNoTracking()
             .AsSplitQuery()

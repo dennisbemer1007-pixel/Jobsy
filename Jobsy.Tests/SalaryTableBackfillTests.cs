@@ -51,6 +51,61 @@ public class SalaryTableBackfillTests
     }
 
     [Fact]
+    public async Task FillEmptySalaryTables_adds_missing_age_bands_without_overwriting()
+    {
+        await using var db = CreateDb();
+        var today = DateOnly.FromDateTime(DateTime.UtcNow);
+        db.MinimumWageRates.AddRange(
+            new MinimumWageRate { Id = Guid.NewGuid(), AgeYears = 15, HourlyRate = 4.22m, Label = "15", EffectiveFrom = today },
+            new MinimumWageRate { Id = Guid.NewGuid(), AgeYears = 16, HourlyRate = 4.85m, Label = "16", EffectiveFrom = today },
+            new MinimumWageRate { Id = Guid.NewGuid(), AgeYears = 17, HourlyRate = 5.55m, Label = "17", EffectiveFrom = today },
+            new MinimumWageRate { Id = Guid.NewGuid(), AgeYears = 18, HourlyRate = 7.03m, Label = "18", EffectiveFrom = today },
+            new MinimumWageRate { Id = Guid.NewGuid(), AgeYears = 19, HourlyRate = 8.44m, Label = "19", EffectiveFrom = today },
+            new MinimumWageRate { Id = Guid.NewGuid(), AgeYears = 20, HourlyRate = 11.25m, Label = "20", EffectiveFrom = today },
+            new MinimumWageRate { Id = Guid.NewGuid(), AgeYears = 21, HourlyRate = 14.06m, Label = "21+", EffectiveFrom = today });
+
+        var companyId = Guid.NewGuid();
+        db.Companies.Add(new Company
+        {
+            Id = companyId,
+            Name = "Incomplete CAO BV",
+            KvkNumber = "99887766",
+            Address = "Test 3",
+            Type = CompanyType.Employer,
+            Location = new Jobsy.Core.ValueObjects.GeoPoint(52.2, 4.2)
+        });
+
+        var tableId = Guid.NewGuid();
+        db.CompanySalaryTables.Add(new CompanySalaryTable
+        {
+            Id = tableId,
+            CompanyId = companyId,
+            Name = "CAO alleen 21+",
+            IsActive = true,
+            IsSystemWml = false
+        });
+        db.CompanySalaryRates.Add(new CompanySalaryRate
+        {
+            Id = Guid.NewGuid(),
+            SalaryTableId = tableId,
+            AgeYears = 21,
+            HourlyRate = 16.50m,
+            Label = "21+"
+        });
+        await db.SaveChangesAsync();
+
+        await WmlSalaryTableService.FillEmptySalaryTablesAsync(db);
+
+        var rates = await db.CompanySalaryRates
+            .Where(r => r.SalaryTableId == tableId)
+            .OrderBy(r => r.AgeYears)
+            .ToListAsync();
+        Assert.Equal(7, rates.Count);
+        Assert.Equal(4.22m, rates.Single(r => r.AgeYears == 15).HourlyRate);
+        Assert.Equal(16.50m, rates.Single(r => r.AgeYears == 21).HourlyRate);
+    }
+
+    [Fact]
     public async Task EnsureForAll_creates_wml_with_rates_for_new_org()
     {
         await using var db = CreateDb();
