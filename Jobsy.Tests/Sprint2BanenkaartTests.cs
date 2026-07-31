@@ -37,8 +37,22 @@ public class VacancyWageResolverTests
     }
 
     [Fact]
-    public void ResolveHourlyWage_falls_back_to_vacancy_wage_without_table()
-        => Assert.Equal(13.20m, VacancyWageResolver.ResolveHourlyWage(13.20m, null, 18));
+    public void ResolveHourlyWage_without_table_scales_flat_adult_wage_by_age()
+    {
+        // Flat HourlyWage is the 21+ rate; youth ages use default WML-style fractions.
+        Assert.Equal(6.60m, VacancyWageResolver.ResolveHourlyWage(13.20m, null, 18)); // 50%
+        Assert.Equal(4.55m, VacancyWageResolver.ResolveHourlyWage(13.20m, null, 16)); // 34.5%
+        Assert.Equal(13.20m, VacancyWageResolver.ResolveHourlyWage(13.20m, null, 21));
+        Assert.Equal(13.20m, VacancyWageResolver.ResolveHourlyWage(13.20m, null, 25));
+    }
+
+    [Fact]
+    public void ResolveHourlyWage_kokshulp_style_flat_wage_uses_youth_rate_for_filter_age()
+    {
+        // Seed vacancy …027 "Kokshulp" uses flat 14.60 without a salary table.
+        Assert.Equal(5.04m, VacancyWageResolver.ResolveHourlyWage(14.60m, null, 16)); // 34.5%
+        Assert.Equal(14.60m, VacancyWageResolver.ResolveHourlyWage(14.60m, null, 21));
+    }
 
     [Fact]
     public void GetWageBands_returns_ordered_labels()

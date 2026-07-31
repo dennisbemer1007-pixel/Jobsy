@@ -13,13 +13,22 @@ public static class VacancyWageResolver
         IEnumerable<CompanySalaryRate>? rates,
         int ageYears)
     {
+        var age = AgeRules.ClampWorkingAge(ageYears);
         var bands = rates?.ToList() ?? [];
         if (bands.Count == 0)
         {
-            return vacancyHourlyWage;
+            // Flat vacancy wage is the adult (21+) rate; scale with the same youth bands
+            // used when listing WageByAge without a company salary table.
+            var defaults = BuildDefaultYouthBands(vacancyHourlyWage);
+            var defaultMatch = defaults
+                .Where(b => b.AgeYears <= age)
+                .OrderByDescending(b => b.AgeYears)
+                .FirstOrDefault();
+            return defaultMatch.HourlyRate != 0
+                ? defaultMatch.HourlyRate
+                : defaults[0].HourlyRate;
         }
 
-        var age = AgeRules.ClampWorkingAge(ageYears);
         var match = bands
             .Where(r => r.AgeYears <= age)
             .OrderByDescending(r => r.AgeYears)
