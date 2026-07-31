@@ -128,6 +128,66 @@ public static class WmlSalaryTableService
         }
 
         await FillEmptySalaryTablesAsync(db, cancellationToken);
+        await AssignMissingVacancySalaryTablesAsync(db, cancellationToken);
+    }
+
+    /// <summary>
+    /// Links every vacancy without a salary table to its organization's active system WML table
+    /// (must already have rates). Idempotent; skips vacancies that already have a table.
+    /// </summary>
+    public static async Task AssignMissingVacancySalaryTablesAsync(
+        JobsyDbContext db,
+        CancellationToken cancellationToken = default)
+    {
+        var missing = await db.Vacancies
+            .Include(v => v.Company)
+            .Where(v => v.SalaryTableId == null)
+            .ToListAsync(cancellationToken);
+        if (missing.Count == 0)
+        {
+            return;
+        }
+
+        var orgIds = missing
+            .Select(v => v.Company?.ParentCompanyId ?? v.CompanyId)
+            .Distinct()
+            .ToList();
+
+        foreach (var orgId in orgIds)
+        {
+            await EnsureForCompanyAsync(db, orgId, cancellationToken);
+        }
+
+        await db.SaveChangesAsync(cancellationToken);
+
+        var wmlByOrg = await db.CompanySalaryTables
+            .AsNoTracking()
+            .Where(t => t.IsSystemWml && t.IsActive && orgIds.Contains(t.CompanyId))
+            .Where(t => t.Rates.Any())
+            .Select(t => new { t.CompanyId, t.Id })
+            .ToListAsync(cancellationToken);
+
+        var tableByOrg = wmlByOrg
+            .GroupBy(t => t.CompanyId)
+            .ToDictionary(g => g.Key, g => g.OrderBy(t => t.Id).First().Id);
+
+        var assigned = 0;
+        foreach (var vacancy in missing)
+        {
+            var orgId = vacancy.Company?.ParentCompanyId ?? vacancy.CompanyId;
+            if (!tableByOrg.TryGetValue(orgId, out var tableId))
+            {
+                continue;
+            }
+
+            vacancy.SalaryTableId = tableId;
+            assigned++;
+        }
+
+        if (assigned > 0)
+        {
+            await db.SaveChangesAsync(cancellationToken);
+        }
     }
 
     /// <summary>

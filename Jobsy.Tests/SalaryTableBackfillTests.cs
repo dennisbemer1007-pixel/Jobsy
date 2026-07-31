@@ -82,6 +82,84 @@ public class SalaryTableBackfillTests
         Assert.NotEmpty(table.Rates);
     }
 
+    [Fact]
+    public async Task AssignMissingVacancySalaryTables_links_null_vacancies_to_org_wml()
+    {
+        await using var db = CreateDb();
+        var today = DateOnly.FromDateTime(DateTime.UtcNow);
+        db.MinimumWageRates.AddRange(
+            new MinimumWageRate { Id = Guid.NewGuid(), AgeYears = 15, HourlyRate = 4.22m, Label = "15", EffectiveFrom = today },
+            new MinimumWageRate { Id = Guid.NewGuid(), AgeYears = 21, HourlyRate = 14.06m, Label = "21+", EffectiveFrom = today });
+
+        var orgId = Guid.NewGuid();
+        var branchId = Guid.NewGuid();
+        db.Companies.AddRange(
+            new Company
+            {
+                Id = orgId,
+                Name = "Org BV",
+                KvkNumber = "55667788",
+                Address = "Org 1",
+                Type = CompanyType.Employer,
+                Location = new Jobsy.Core.ValueObjects.GeoPoint(52, 4)
+            },
+            new Company
+            {
+                Id = branchId,
+                Name = "Vestiging",
+                KvkNumber = "55667788",
+                Address = "Vestiging 1",
+                Type = CompanyType.Employer,
+                ParentCompanyId = orgId,
+                Location = new Jobsy.Core.ValueObjects.GeoPoint(52.01, 4.01)
+            });
+
+        var withTableId = Guid.NewGuid();
+        var withoutTableId = Guid.NewGuid();
+        db.Vacancies.AddRange(
+            new Vacancy
+            {
+                Id = withTableId,
+                Title = "Heeft tabel",
+                Description = "x",
+                HourlyWage = 14m,
+                StartDate = today,
+                EndDate = today.AddMonths(1),
+                Status = VacancyStatus.Active,
+                CompanyId = orgId,
+                Location = new Jobsy.Core.ValueObjects.GeoPoint(52, 4),
+                RequiredTransport = TransportMode.Bike,
+                WorkTypes = WorkType.Winkel,
+                SalaryTableId = null
+            },
+            new Vacancy
+            {
+                Id = withoutTableId,
+                Title = "Geen tabel",
+                Description = "y",
+                HourlyWage = 13m,
+                StartDate = today,
+                EndDate = today.AddMonths(1),
+                Status = VacancyStatus.Active,
+                CompanyId = branchId,
+                Location = new Jobsy.Core.ValueObjects.GeoPoint(52.01, 4.01),
+                RequiredTransport = TransportMode.Bike,
+                WorkTypes = WorkType.Horeca,
+                SalaryTableId = null
+            });
+        await db.SaveChangesAsync();
+
+        await WmlSalaryTableService.EnsureForAllCompaniesAsync(db);
+
+        var wmlId = await db.CompanySalaryTables
+            .Where(t => t.IsSystemWml && t.CompanyId == orgId)
+            .Select(t => t.Id)
+            .SingleAsync();
+        var vacancies = await db.Vacancies.OrderBy(v => v.Title).ToListAsync();
+        Assert.All(vacancies, v => Assert.Equal(wmlId, v.SalaryTableId));
+        Assert.True(await db.CompanySalaryRates.AnyAsync(r => r.SalaryTableId == wmlId));
+    }
+
     private static JobsyDbContext CreateDb()
     {
         var options = new DbContextOptionsBuilder<JobsyDbContext>()

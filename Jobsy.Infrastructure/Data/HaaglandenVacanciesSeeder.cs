@@ -2,6 +2,7 @@ using Jobsy.Core.Entities;
 using Jobsy.Core.Enums;
 using Jobsy.Core.Rules;
 using Jobsy.Core.ValueObjects;
+using Jobsy.Infrastructure.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
@@ -51,13 +52,18 @@ internal static class HaaglandenVacanciesSeeder
         var endDate = today.AddMonths(4);
 
         await EnsureCompaniesAsync(db);
-        var salaryTableId = await db.CompanySalaryTables
-            .Where(t => t.IsActive)
-            .Select(t => (Guid?)t.Id)
-            .FirstOrDefaultAsync();
         await db.SaveChangesAsync();
+        await WmlSalaryTableService.EnsureForAllCompaniesAsync(db);
+        var wmlByCompany = await db.CompanySalaryTables
+            .AsNoTracking()
+            .Where(t => t.IsSystemWml && t.IsActive && t.Rates.Any())
+            .Select(t => new { t.CompanyId, t.Id })
+            .ToListAsync();
+        var salaryByCompany = wmlByCompany
+            .GroupBy(t => t.CompanyId)
+            .ToDictionary(g => g.Key, g => g.OrderBy(t => t.Id).First().Id);
 
-        var vacancies = BuildAllVacancies(today, endDate, salaryTableId);
+        var vacancies = BuildAllVacancies(today, endDate, salaryByCompany);
         db.Vacancies.AddRange(vacancies);
 
         db.PlatformLogs.Add(new PlatformLog
@@ -118,7 +124,10 @@ internal static class HaaglandenVacanciesSeeder
         }
     }
 
-    private static Vacancy[] BuildAllVacancies(DateOnly today, DateOnly endDate, Guid? salaryTableId)
+    private static Vacancy[] BuildAllVacancies(
+        DateOnly today,
+        DateOnly endDate,
+        IReadOnlyDictionary<Guid, Guid> salaryByCompany)
     {
         var list = new List<Vacancy>(225);
 
@@ -134,17 +143,18 @@ internal static class HaaglandenVacanciesSeeder
                 var area = city.Areas[i % city.Areas.Length];
                 var companyN = (i % city.Companies.Length) + 1;
                 var company = city.Companies[companyN - 1];
+                var companyId = CompanyId(city.Region, companyN);
 
                 var license = PickLicense(role, i, city.Region);
                 var transport = PickTransport(role, license, i);
                 var wage = PickWage(role, i);
-                var useSalaryTable = role.WorkType.HasFlag(WorkType.Winkel) && i % 5 == 0 && salaryTableId is not null;
                 var highlight = i % 19 == 0;
                 var vacancyId = VacancyId(city.Region, i + 1);
 
                 var title = BuildTitle(role, area.Name, company.Name, i, city.Name);
                 var description = BuildDescription(role, city, area, company.Name, license, wage, i);
                 var education = PickEducation(role, i);
+                salaryByCompany.TryGetValue(companyId, out var salaryTableId);
 
                 list.Add(new Vacancy
                 {
@@ -155,7 +165,7 @@ internal static class HaaglandenVacanciesSeeder
                     StartDate = today,
                     EndDate = endDate,
                     Status = VacancyStatus.Active,
-                    CompanyId = CompanyId(city.Region, companyN),
+                    CompanyId = companyId,
                     Location = new GeoPoint(
                         area.Lat + ((i % 7) - 3) * 0.0012,
                         area.Lng + ((i % 5) - 2) * 0.0015),
@@ -165,7 +175,7 @@ internal static class HaaglandenVacanciesSeeder
                     ImageUrl = MockVacancyMedia.ImageUrl(vacancyId),
                     IsHighlighted = highlight,
                     MaxApplications = 8 + (i % 5),
-                    SalaryTableId = useSalaryTable ? salaryTableId : null,
+                    SalaryTableId = salaryTableId == Guid.Empty ? null : salaryTableId,
                     RequiredDrivingLicense = DrivingLicenseLabels.Combine(
                         string.IsNullOrWhiteSpace(license) ? null : DrivingLicenseLabels.Split(license)),
                     RequiredEducation = EducationLevelLabels.Combine(
