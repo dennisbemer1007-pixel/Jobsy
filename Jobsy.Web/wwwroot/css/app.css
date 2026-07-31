@@ -3643,6 +3643,12 @@ a.map-popup__apply.map-popup__cta:visited {
         font-size: 0.78rem;
     }
 
+    .map-popup__address--empty,
+    .map-popup__wage--empty,
+    .map-popup__specs--empty {
+        display: none;
+    }
+
     .app-shell:has(.jobsy-discovery) .app-header,
     .app-shell:has(.jobsy-discovery) .app-footer {
         display: none;
