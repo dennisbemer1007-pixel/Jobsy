@@ -75,14 +75,15 @@ window.jobMap = (function () {
     function jobPopupOptions() {
         const vw = window.innerWidth || 360;
         const narrow = isNarrowViewport();
+        // Funda-style listing card: wider horizontal split on desktop.
         const maxWidth = narrow
-            ? Math.max(260, Math.min(300, vw - 20))
-            : 340;
+            ? Math.max(280, Math.min(340, vw - 16))
+            : 520;
         return {
             className: "job-map-popup",
             maxWidth: maxWidth,
-            minWidth: narrow ? Math.min(240, maxWidth) : 280,
-            autoPanPadding: narrow ? [12, 56] : [36, 48],
+            minWidth: narrow ? Math.min(260, maxWidth) : 440,
+            autoPanPadding: narrow ? [12, 64] : [40, 56],
             keepInView: true,
             closeOnClick: true,
             closeButton: true
@@ -129,13 +130,13 @@ window.jobMap = (function () {
 
     function wageInlineHtml(v) {
         if (v.wageLabel) {
-            return "<span class=\"map-popup__wage map-popup__wage--masked\">" + escapeHtml(v.wageLabel) + "</span>";
+            return "<p class=\"map-popup__wage map-popup__wage--masked\">" + escapeHtml(v.wageLabel) + "</p>";
         }
         // Only show a concrete rate when age is selected (or a single fixed wage).
         if (v.wage == null || v.wage === "") {
             return "";
         }
-        return "<span class=\"map-popup__wage\">€ " + formatWage(v.wage) + "</span>";
+        return "<p class=\"map-popup__wage\">€ " + formatWage(v.wage) + " <span class=\"map-popup__wage-unit\">/uur</span></p>";
     }
 
     function wageTableRowsHtml(bands) {
@@ -152,12 +153,72 @@ window.jobMap = (function () {
         return (
             "<button type=\"button\" class=\"map-popup__wage-info\" aria-expanded=\"false\" " +
                 "aria-controls=\"wage-popover-" + escapeAttr(v.id) + "\" " +
-                "aria-label=\"Uurlonen per leeftijd\">i</button>" +
+                "aria-label=\"Uurlonen per leeftijd\">" +
+                "<svg viewBox=\"0 0 24 24\" width=\"16\" height=\"16\" aria-hidden=\"true\" focusable=\"false\">" +
+                    "<circle cx=\"12\" cy=\"12\" r=\"9\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\"/>" +
+                    "<path d=\"M12 10.5v6\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\"/>" +
+                    "<circle cx=\"12\" cy=\"7.5\" r=\"1.1\" fill=\"currentColor\"/>" +
+                "</svg>" +
+            "</button>" +
             "<div id=\"wage-popover-" + escapeAttr(v.id) + "\" class=\"map-popup__wage-popover\" hidden>" +
                 "<p class=\"map-popup__wage-popover-title\">Uurlonen</p>" +
                 "<table class=\"map-popup__wage-table\"><tbody>" + wageTableRowsHtml(v.wageBands) + "</tbody></table>" +
             "</div>"
         );
+    }
+
+    function specIcon(kind) {
+        if (kind === "travel") {
+            return "<svg class=\"map-popup__spec-icon\" viewBox=\"0 0 24 24\" width=\"16\" height=\"16\" aria-hidden=\"true\" focusable=\"false\">" +
+                "<circle cx=\"12\" cy=\"12\" r=\"8.25\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.7\"/>" +
+                "<path d=\"M12 7.5v5l3.2 1.9\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.7\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/>" +
+                "</svg>";
+        }
+        if (kind === "work") {
+            return "<svg class=\"map-popup__spec-icon\" viewBox=\"0 0 24 24\" width=\"16\" height=\"16\" aria-hidden=\"true\" focusable=\"false\">" +
+                "<rect x=\"4\" y=\"8\" width=\"16\" height=\"11\" rx=\"1.5\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.7\"/>" +
+                "<path d=\"M9 8V6.8A1.8 1.8 0 0 1 10.8 5h2.4A1.8 1.8 0 0 1 15 6.8V8\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.7\"/>" +
+                "</svg>";
+        }
+        // transport
+        return "<svg class=\"map-popup__spec-icon\" viewBox=\"0 0 24 24\" width=\"16\" height=\"16\" aria-hidden=\"true\" focusable=\"false\">" +
+            "<path d=\"M5 15.5 7.2 8.8A2 2 0 0 1 9.1 7.5h5.8a2 2 0 0 1 1.9 1.3L19 15.5\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.7\" stroke-linecap=\"round\"/>" +
+            "<circle cx=\"8\" cy=\"16.5\" r=\"1.6\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.7\"/>" +
+            "<circle cx=\"16\" cy=\"16.5\" r=\"1.6\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.7\"/>" +
+            "</svg>";
+    }
+
+    function specsHtml(v) {
+        const parts = [];
+        if (v.travelMinutes != null) {
+            const transport = String(v.transportLabel || TRANSPORT_LABEL[v.transport] || "reistijd");
+            parts.push(
+                "<span class=\"map-popup__spec\">" + specIcon("travel") +
+                "<span>± " + escapeHtml(String(v.travelMinutes)) + " min " + escapeHtml(transport) + "</span></span>"
+            );
+        }
+
+        const workTypes = Array.isArray(v.workTypes) ? v.workTypes : [];
+        const primaryWork = workTypes[0] || v.workType || "";
+        if (primaryWork) {
+            parts.push(
+                "<span class=\"map-popup__spec\">" + specIcon("work") +
+                "<span>" + escapeHtml(String(primaryWork)) + "</span></span>"
+            );
+        }
+
+        const transports = Array.isArray(v.transport) ? v.transport : [];
+        if (transports.length) {
+            parts.push(
+                "<span class=\"map-popup__spec\">" + specIcon("transport") +
+                "<span>" + escapeHtml(transports.join(", ")) + "</span></span>"
+            );
+        }
+
+        if (!parts.length) {
+            return "";
+        }
+        return "<div class=\"map-popup__specs\">" + parts.join("") + "</div>";
     }
 
     function closeAllWagePopovers(root) {
@@ -202,58 +263,64 @@ window.jobMap = (function () {
         });
     }
 
-    function travelHtml(v) {
-        if (v.travelMinutes == null) return "";
-        const transport = escapeHtml(String(v.transportLabel || TRANSPORT_LABEL[v.transport] || "reistijd"));
-        return (
-            "<span class=\"map-popup__travel-inline\">± " + escapeHtml(String(v.travelMinutes)) + " min " + transport + "</span>"
-        );
-    }
-
     function buildPopupHtml(v) {
-        const transports = Array.isArray(v.transport) ? v.transport : [];
         const workTypes = Array.isArray(v.workTypes) ? v.workTypes : [];
-        const badges = workTypes.concat(transports)
-            .map(function (t) {
-                return "<span class=\"map-popup__badge\">" + escapeHtml(t) + "</span>";
-            })
-            .join("");
-
+        const primaryWork = workTypes[0] || v.workType || "";
         const hasImage = !!v.imageUrl;
-        const mediaClass = hasImage ? "map-popup__media" : "map-popup__media map-popup__media--logo-only";
+        const mediaClass = hasImage
+            ? "map-popup__media"
+            : "map-popup__media map-popup__media--logo-only";
 
         let mediaInner = "";
+        if (v.highlighted || primaryWork) {
+            const badgeText = v.highlighted ? "Top" : primaryWork;
+            const badgeClass = v.highlighted
+                ? "map-popup__badge"
+                : "map-popup__badge map-popup__badge--soft";
+            mediaInner +=
+                "<span class=\"" + badgeClass + "\">" + escapeHtml(String(badgeText)) + "</span>";
+        }
+
         if (hasImage) {
             mediaInner +=
                 "<img class=\"map-popup__photo\" src=\"" + escapeAttr(v.imageUrl) + "\" alt=\"\" loading=\"lazy\" />";
-        }
-
-        if (v.logoUrl) {
+        } else if (v.logoUrl) {
             mediaInner +=
-                "<img class=\"map-popup__logo\" src=\"" + escapeAttr(v.logoUrl) + "\" alt=\"" +
+                "<img class=\"map-popup__media-logo\" src=\"" + escapeAttr(v.logoUrl) + "\" alt=\"" +
                 escapeAttr(v.company) + " logo\" loading=\"lazy\" />";
         }
 
         const detailHref = "/vacancies/" + encodeURIComponent(v.id);
         const hasInfo = hasWageBands(v);
         const rootClass = "map-popup" + (hasInfo ? " map-popup--has-wage-info" : "");
+        const wage = wageInlineHtml(v);
+        const footerLogo = (hasImage && v.logoUrl)
+            ? "<img class=\"map-popup__logo\" src=\"" + escapeAttr(v.logoUrl) + "\" alt=\"\" loading=\"lazy\" />"
+            : "";
 
         return (
             "<div class=\"" + rootClass + "\">" +
-                wageInfoHtml(v) +
                 "<div class=\"map-popup__main\">" +
-                    "<div class=\"" + mediaClass + "\">" + mediaInner + "</div>" +
+                    "<a class=\"" + mediaClass + "\" href=\"" + detailHref + "\" data-job-id=\"" + escapeAttr(v.id) + "\">" +
+                        mediaInner +
+                    "</a>" +
                     "<div class=\"map-popup__body\">" +
-                        "<div class=\"map-popup__top\">" +
-                            "<h3 class=\"map-popup__title\">" + escapeHtml(v.title) + "</h3>" +
-                            travelHtml(v) +
+                        wageInfoHtml(v) +
+                        "<div class=\"map-popup__header\">" +
+                            "<a class=\"map-popup__title map-popup__cta\" href=\"" + detailHref + "\" data-job-id=\"" + escapeAttr(v.id) + "\">" +
+                                escapeHtml(v.title) +
+                            "</a>" +
+                            (v.address
+                                ? "<p class=\"map-popup__address\">" + escapeHtml(v.address) + "</p>"
+                                : "") +
                         "</div>" +
-                        "<p class=\"map-popup__company\">" + escapeHtml(v.company) + "</p>" +
-                        "<p class=\"map-popup__address\">" + escapeHtml(v.address || "") + "</p>" +
-                        wageInlineHtml(v) +
-                        (badges ? "<div class=\"map-popup__badges\">" + badges + "</div>" : "") +
-                        "<div class=\"map-popup__actions\">" +
-                            "<a class=\"map-popup__cta\" href=\"" + detailHref + "\" data-job-id=\"" + escapeAttr(v.id) + "\">Bekijk vacature</a>" +
+                        wage +
+                        specsHtml(v) +
+                        "<div class=\"map-popup__footer\">" +
+                            "<a class=\"map-popup__company map-popup__cta\" href=\"" + detailHref + "\" data-job-id=\"" + escapeAttr(v.id) + "\">" +
+                                escapeHtml(v.company) +
+                            "</a>" +
+                            footerLogo +
                         "</div>" +
                     "</div>" +
                 "</div>" +
@@ -280,7 +347,7 @@ window.jobMap = (function () {
             "<div class=\"map-popup__pager\" role=\"navigation\" aria-label=\"Vacatures op deze locatie\">" +
                 "<button type=\"button\" class=\"map-popup__pager-nav\" data-cluster-page=\"" + (current - 1) + "\"" +
                     (current <= 1 ? " disabled" : "") + " aria-label=\"Vorige vacature\">‹</button>" +
-                "<span class=\"map-popup__pager-status\">" + current + " / " + pageCount + "</span>" +
+                "<span class=\"map-popup__pager-status\">" + current + " van " + pageCount + "</span>" +
                 "<button type=\"button\" class=\"map-popup__pager-nav\" data-cluster-page=\"" + (current + 1) + "\"" +
                     (current >= pageCount ? " disabled" : "") + " aria-label=\"Volgende vacature\">›</button>" +
             "</div>"
@@ -297,8 +364,8 @@ window.jobMap = (function () {
             return "<div class=\"map-popup\"><p class=\"map-popup__company\">Geen vacatures</p></div>";
         }
 
-        // Same vacancy card as a single marker, plus an optional pager footer.
-        return buildPopupHtml(job) + buildClusterPagerHtml(current, pageCount);
+        // Funda-style: pager floats above the listing card.
+        return buildClusterPagerHtml(current, pageCount) + buildPopupHtml(job);
     }
 
     function bindClusterPopupInteractions(popup, childMarkers) {
@@ -309,8 +376,8 @@ window.jobMap = (function () {
 
         bindWageInfoInteractions(popupEl);
 
-        // Match single-marker behaviour: CTA notifies open; card body is not a second nav target.
-        popupEl.querySelectorAll(".map-popup__cta").forEach(function (cta) {
+        // Match single-marker behaviour: detail links notify open.
+        popupEl.querySelectorAll(".map-popup__cta, a.map-popup__media").forEach(function (cta) {
             if (cta.dataset.boundNav) {
                 return;
             }
@@ -480,13 +547,15 @@ window.jobMap = (function () {
             const el = marker.getPopup() && marker.getPopup().getElement();
             if (!el) return;
             bindWageInfoInteractions(el);
-            const cta = el.querySelector(".map-popup__cta");
-            if (cta && !cta.dataset.bound) {
+            el.querySelectorAll(".map-popup__cta, a.map-popup__media").forEach(function (cta) {
+                if (cta.dataset.bound) {
+                    return;
+                }
                 cta.dataset.bound = "1";
                 cta.addEventListener("click", function () {
                     notifyOpen(v.id);
                 });
-            }
+            });
         });
     }
 
