@@ -3360,8 +3360,8 @@ a {
 
 @media (max-width: 768px) {
     .leaflet-popup.job-map-popup {
-        width: min(340px, calc(100vw - 0.75rem));
-        max-width: calc(100vw - 0.75rem);
+        width: min(400px, calc(100vw - 1.25rem));
+        max-width: calc(100vw - 1.25rem);
     }
 
     .leaflet-popup.job-map-popup .leaflet-popup-content {
@@ -3372,12 +3372,12 @@ a {
     .leaflet-popup.job-map-popup a.leaflet-popup-close-button {
         top: -12px !important;
         right: -10px !important;
-        width: 30px !important;
-        height: 30px !important;
+        width: 32px !important;
+        height: 32px !important;
         padding: 0 !important;
         font-size: 20px !important;
         font-weight: 700 !important;
-        line-height: 30px !important;
+        line-height: 32px !important;
         text-align: center !important;
         color: #fff !important;
         background: var(--brand) !important;
@@ -3388,79 +3388,98 @@ a {
 
     .leaflet-popup.job-map-popup > .map-popup__wage-info {
         top: -12px;
-        right: 28px;
-        width: 30px;
-        height: 30px;
-        font-size: 1rem;
+        right: 30px;
+        width: 32px;
+        height: 32px;
+        font-size: 1.05rem;
     }
 
     .leaflet-popup.job-map-popup--cluster > .map-popup__wage-info {
         top: 0;
-        right: 38px;
+        right: 40px;
     }
 
-    /* Keep horizontal Funda split so height stays fixed on mobile too */
+    .leaflet-popup.job-map-popup > .map-popup__wage-popover {
+        top: 1.7rem;
+        right: -10px;
+    }
+
+    /* Stacked Funda card — same hierarchy as desktop, readable on phones */
     .map-popup__main {
-        flex-direction: row;
-        height: 152px;
+        flex-direction: column;
+        height: 340px;
     }
 
     .map-popup__media {
-        flex: 0 0 118px;
-        width: 118px;
-        height: 152px;
-        min-height: 152px;
+        flex: 0 0 150px;
+        width: 100%;
+        height: 150px;
+        min-height: 150px;
     }
 
     .map-popup__media--logo-only {
-        height: 152px;
-        min-height: 152px;
+        height: 150px;
+        min-height: 150px;
     }
 
     .map-popup__media-logo {
-        width: 52px;
-        height: 52px;
+        width: 72px;
+        height: 72px;
     }
 
     .map-popup__body {
-        height: 152px;
-        padding: 0.55rem 0.65rem 0.5rem;
-        gap: 0.18rem;
+        flex: 1 1 auto;
+        height: auto;
+        min-height: 0;
+        padding: 0.85rem 1rem 0.85rem;
+        gap: 0.35rem;
     }
 
     .map-popup__title {
-        min-height: 2.35rem;
-        font-size: 0.98rem;
+        min-height: 2.6rem;
+        font-size: 1.12rem;
+        line-height: 1.3;
+        font-weight: 800;
         -webkit-line-clamp: 2;
     }
 
     .map-popup__wage {
-        min-height: 1.25rem;
-        font-size: 1.02rem;
+        min-height: 1.45rem;
+        font-size: 1.18rem;
+    }
+
+    .map-popup__wage-unit {
+        font-size: 0.84rem;
     }
 
     .map-popup__address {
-        font-size: 0.76rem;
+        min-height: 1.2rem;
+        font-size: 0.88rem;
         -webkit-line-clamp: 1;
     }
 
     .map-popup__specs {
-        gap: 0.35rem 0.55rem;
-        min-height: 1.1rem;
+        flex-wrap: wrap;
+        gap: 0.45rem 0.85rem;
+        min-height: 1.35rem;
     }
 
     .map-popup__spec {
-        font-size: 0.7rem;
+        font-size: 0.82rem;
     }
 
     .map-popup__footer {
-        min-height: 2.1rem;
-        padding-top: 0.2rem;
+        min-height: 2.6rem;
+        padding-top: 0.45rem;
+    }
+
+    .map-popup__company {
+        font-size: 0.9rem;
     }
 
     .map-popup__logo {
-        width: 34px;
-        height: 34px;
+        width: 44px;
+        height: 44px;
     }
 
     .app-shell:has(.jobsy-discovery) .app-header,
