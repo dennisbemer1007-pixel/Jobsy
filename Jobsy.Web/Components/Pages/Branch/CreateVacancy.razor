@@ -620,9 +620,13 @@
         var profile = await Api.GetMyProfileAsync();
         _isIntermediary = string.Equals(profile?.Role, nameof(UserRole.Intermediary), StringComparison.OrdinalIgnoreCase);
         _companies = (await Api.GetMyCompaniesAsync()).ToList();
-        if (_companies.Count > 0)
+        if (!_isIntermediary && _companies.Count > 0)
         {
             _companyId = _companies[0].Id;
+        }
+        else if (_isIntermediary)
+        {
+            _companyId = Guid.Empty;
         }
 
         await LoadMasterdataAsync();
@@ -1096,9 +1100,21 @@
 
     private async Task SaveAsync()
     {
+        if (_isIntermediary
+            && (string.IsNullOrWhiteSpace(_selectedEstablishmentId)
+                || SelectedCompany is null
+                || string.IsNullOrWhiteSpace(SelectedCompany.KvkNumber)
+                || string.IsNullOrWhiteSpace(SelectedCompany.KvkEstablishmentId)))
+        {
+            _message = "Zoek een KVK-nummer en selecteer de vestiging van het inhuurende bedrijf.";
+            return;
+        }
+
         if (_companyId == Guid.Empty)
         {
-            _message = "Geen vestiging gekoppeld aan dit account.";
+            _message = _isIntermediary
+                ? "Selecteer eerst het inhuurende bedrijf via KVK + vestiging."
+                : "Geen vestiging gekoppeld aan dit account.";
             return;
         }
 
