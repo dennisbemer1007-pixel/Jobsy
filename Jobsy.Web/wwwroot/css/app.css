@@ -6886,17 +6886,17 @@ button.stat-card {
 
 .vacancy-toggle-row {
     display: flex;
-    gap: 0.75rem;
+    gap: 0.65rem;
     align-items: flex-start;
-    padding: 0.75rem 0.85rem;
+    padding: 0.55rem 0.7rem;
     border: 1px solid var(--border);
-    border-radius: 10px;
+    border-radius: 8px;
     background: color-mix(in srgb, var(--surface) 92%, var(--brand) 5%);
     cursor: pointer;
     text-transform: none;
     letter-spacing: normal;
     font-weight: 500;
-    margin: 0 0 0.55rem;
+    margin: 0;
 }
 
 .vacancy-toggle-row input {
