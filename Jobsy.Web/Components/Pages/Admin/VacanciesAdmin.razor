@@ -2,7 +2,6 @@
 @rendermode @(new InteractiveServerRenderMode(prerender: false))
 @attribute [Authorize(Roles = "Admin")]
 @using Jobsy.Web.Components.Admin
-@using Jobsy.Web.Navigation
 @using Microsoft.AspNetCore.WebUtilities
 @inject JobsyApiClient Api
 @inject NavigationManager Nav
@@ -59,7 +58,7 @@
         }
         else
         {
-            <div class="table-scroll">
+            <div class="table-scroll vacancy-grid">
                 <table class="data-table">
                     <thead>
                         <tr>
@@ -73,13 +72,15 @@
                             <th><button type="button" class="linkish" @onclick='() => Drill("applications")'>Applied</button></th>
                             <th><button type="button" class="linkish" @onclick='() => Drill("extensions")'>Extended</button></th>
                             <th><button type="button" class="linkish" @onclick='() => Drill("likes")'>Liked</button></th>
-                            <th>Acties</th>
+                            <th class="data-table__col--actions">@Culture["Common.Actions"]</th>
                         </tr>
                     </thead>
                     <tbody>
                         @foreach (var v in _filtered)
                         {
-                            <tr>
+                            <tr class="data-table__row--interactive"
+                                title="@Culture["VacancyAction.OpenHint"]"
+                                @ondblclick="() => OpenVacancyDetails(v)">
                                 <td class="data-table__col--wrap">
                                     <a href="/vacancies/@v.Id"><strong>@v.Title</strong></a>
                                 </td>
@@ -96,19 +97,21 @@
                                 <td><a href="@MetricHref(v, "applications")">@v.ApplicationCount</a></td>
                                 <td><a href="@MetricHref(v, "extensions")">@v.ExtensionCount</a></td>
                                 <td><a href="@MetricHref(v, "likes")">@v.LikeCount</a></td>
-                                <td class="inline-actions">
-                                    <a class="icon-btn" href="/vacancies/@v.Id" title="Bekijken" aria-label="Vacature bekijken">
-                                        @((MarkupString)ActionIcons.View)
-                                    </a>
-                                    @if (v.Status == "Active")
-                                    {
-                                        <button class="icon-btn" type="button" title="Verleng" aria-label="Vacature verlengen" disabled="@_busy" @onclick="() => ExtendAsync(v)">
-                                            @((MarkupString)ActionIcons.Extend)
-                                        </button>
-                                        <button class="icon-btn" type="button" title="Inactive" aria-label="Vacature inactief zetten" disabled="@_busy" @onclick="() => DeactivateAsync(v)">
-                                            @((MarkupString)ActionIcons.Deactivate)
-                                        </button>
-                                    }
+                                <td class="data-table__col--actions" @ondblclick:stopPropagation="true">
+                                    <RowActionsMenu>
+                                        <a class="row-actions-menu__item" role="menuitem" href="/vacancies/@v.Id">
+                                            @Culture["VacancyAction.View"]
+                                        </a>
+                                        @if (v.Status == "Active")
+                                        {
+                                            <button class="row-actions-menu__item" type="button" role="menuitem" disabled="@_busy" @onclick="() => ExtendAsync(v)">
+                                                @Culture["VacancyAction.Extend"]
+                                            </button>
+                                            <button class="row-actions-menu__item" type="button" role="menuitem" disabled="@_busy" @onclick="() => DeactivateAsync(v)">
+                                                @Culture["VacancyAction.Deactivate"]
+                                            </button>
+                                        }
+                                    </RowActionsMenu>
                                 </td>
                             </tr>
                         }
@@ -254,6 +257,9 @@
 
     private static string MetricHref(AdminVacancyItem v, string metric)
         => $"/vacancies/{v.Id}?metric={metric}";
+
+    private void OpenVacancyDetails(AdminVacancyItem vacancy)
+        => Nav.NavigateTo($"/vacancies/{vacancy.Id}");
 
     private async Task Drill(string key)
     {
