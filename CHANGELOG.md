@@ -6,6 +6,10 @@ Alle noemenswaardige wijzigingen aan dit project worden in dit bestand bijgehoud
 
 ### Added
 - Functionele specificatie matching / dagdelen / uren / Arbeidstijdenwet voor kandidaat- en werkgeverskant (`docs/FUNCTIONELE_SPECIFICATIES_MATCHING.md`), inclusief verwijzing vanuit `REQUIREMENTS.md`.
+- Admin Sales beheer (`/admin/sales`): basis tokenwaarde (€25), tokenkosten per vacaturetype (Regulier / Stageplek / Vrijwilligerswerk), standaard + First Year / Enterprise pakketten (Silver/Gold/Platinum), highlight-toeslagen.
+- Vacaturetype `VacancyKind` op create/publish; publiceerkosten volgen type (incl. nul-tarief voor vrijwilligerswerk).
+- Publieke Partner Sales-pagina (`/partner`, `/partner/{code}`) met live tarieven/pakketten, PDF-flyer (QuestPDF) en WhatsApp/mail-deelknoppen.
+- Salesmanager toolkit (`/salesmanager/toolkit`) met persoonlijke trackinglink/flyer; registratie via `?ref=` activeert gratis start-highlight op eerste vacature.
 
 ## [0.8.0] - 2026-07-25 (Sprint 8: Polish, seed, docs, cleanup)
 ### Toegevoegd

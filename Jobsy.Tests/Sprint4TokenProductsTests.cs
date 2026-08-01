@@ -67,8 +67,8 @@ public class Sprint4TokenProductsTests
         Assert.Equal(originalEnd.AddDays(VacancyProductRules.ExtendDays), vacancy.EndDate);
         Assert.False(vacancy.RequestedHighlight);
         Assert.False(vacancy.RequestedExtend);
-        // Publish 1 + Highlight 1 + Extend 1 = 3 → balance 2
-        Assert.Equal(2m, await db.TokenTransactions.Where(t => t.CompanyId == companyId).SumAsync(t => t.Amount));
+        // Publish 1 + Highlight 2 (carousel) + Extend 1 = 4 → balance 1
+        Assert.Equal(1m, await db.TokenTransactions.Where(t => t.CompanyId == companyId).SumAsync(t => t.Amount));
     }
 
     [Fact]
@@ -155,8 +155,8 @@ public class Sprint4TokenProductsTests
         Assert.NotNull(vacancy.HighlightedUntil);
         Assert.True(vacancy.HighlightedUntil > DateTime.UtcNow);
         Assert.Equal(2, await db.TokenTransactions.CountAsync(t => t.Kind == TokenTransactionKind.Spend));
-        // Grant/seed 5 − Publish 1 − Highlight 1 = 3
-        Assert.Equal(3m, await db.TokenTransactions.Where(t => t.CompanyId == companyId).SumAsync(t => t.Amount));
+        // Grant/seed 5 − Publish 1 − Highlight 2 (carousel) = 2
+        Assert.Equal(2m, await db.TokenTransactions.Where(t => t.CompanyId == companyId).SumAsync(t => t.Amount));
     }
 
     [Fact]
@@ -198,10 +198,11 @@ public class Sprint4TokenProductsTests
         Assert.True(result.Succeeded);
         Assert.True(vacancy.IsHighlighted);
         Assert.NotNull(vacancy.HighlightedUntil);
-        Assert.True(vacancy.HighlightedUntil > before.AddDays(VacancyProductRules.HighlightDays - 1));
+        Assert.True(vacancy.HighlightedUntil > before.AddDays(VacancyProductRules.DefaultHighlightCarouselDays - 1));
         Assert.Equal(1, await db.TokenTransactions.CountAsync(t =>
             t.Kind == TokenTransactionKind.Spend && t.Reason == TokenSpendReason.Highlight));
-        Assert.Equal(4m, await db.TokenTransactions.Where(t => t.CompanyId == companyId).SumAsync(t => t.Amount));
+        // Grant/seed 5 − Highlight 2 (carousel) = 3
+        Assert.Equal(3m, await db.TokenTransactions.Where(t => t.CompanyId == companyId).SumAsync(t => t.Amount));
     }
 
     [Fact]
@@ -393,6 +394,7 @@ public class Sprint4TokenProductsTests
         return new VacancyProductService(
             db,
             new TokenLedgerService(db),
+            new SalesCommercialService(db, new TokenLedgerService(db)),
             new PushNotificationServiceStub(db, NullLogger<PushNotificationServiceStub>.Instance),
             new EmailServiceStub(db, NullLogger<EmailServiceStub>.Instance),
             features,

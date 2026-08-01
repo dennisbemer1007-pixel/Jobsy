@@ -31,4 +31,5 @@ public record CreateVacancyRequest(
     bool? LegalAdultSupervisorPresent = null,
     bool? LegalHandlesMoneyOrClosing = null,
     bool? LegalHeavyOrHazardousWork = null,
-    bool ShowClientAddressOnMap = false);
+    bool ShowClientAddressOnMap = false,
+    VacancyKind Kind = VacancyKind.Regular);

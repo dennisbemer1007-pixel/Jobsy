@@ -12,7 +12,7 @@ public static class RoleNavCatalog
         new("Nav.Home", "/home", NavIcons.Home),
         new("Nav.JobMap", "/", NavIcons.Map),
         new("Nav.Vacancies", "/admin/vacancies", NavIcons.Vacancies, ["/admin/moderation"]),
-        new("Nav.Finance", "/admin/finance", NavIcons.Finance, ["/admin/tokens", "/admin/token-finance", "/admin/sales-managers"]),
+        new("Nav.Finance", "/admin/finance", NavIcons.Finance, ["/admin/tokens", "/admin/token-finance", "/admin/sales-managers", "/admin/sales"]),
         new("Nav.Companies", "/admin/companies", NavIcons.Companies),
         new("Nav.Settings", "/admin/settings", NavIcons.Settings,
             ["/admin/integrations", "/admin/users", "/admin/logging", "/admin/wages", "/admin/masterdata", "/admin/notifications", "/admin/company", "/admin/about", "/admin/api-keys"])
@@ -80,6 +80,7 @@ public static class RoleNavCatalog
     public static readonly NavItem[] SalesManager =
     [
         new("Nav.Home", "/home", NavIcons.Home, ["/salesmanager"]),
+        new("Nav.SalesToolkit", "/salesmanager/toolkit", NavIcons.Shared),
         new("Nav.Onboarding", "/salesmanager/onboarding", NavIcons.Users),
         new("Nav.Invoices", "/salesmanager/invoices", NavIcons.Tokens)
     ];

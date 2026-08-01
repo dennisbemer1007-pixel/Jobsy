@@ -1004,6 +1004,7 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
 
         branch.ReferredBySalesManagerUserId = profile.UserId;
         branch.FirstYearStartedAt = DateTime.UtcNow;
+        branch.PendingStartHighlightBonus = true;
 
         if (orgId is Guid oid)
         {
@@ -1013,6 +1014,7 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
             {
                 org.ReferredBySalesManagerUserId = profile.UserId;
                 org.FirstYearStartedAt ??= DateTime.UtcNow;
+                org.PendingStartHighlightBonus = true;
             }
         }
 

@@ -52,6 +52,9 @@ public class Vacancy
     /// <summary>Selected branch labels (comma-separated). Preferred over WorkTypes flags when set.</summary>
     public string? WorkTypeLabels { get; set; }
 
+    /// <summary>Employment category: regular, internship, or volunteer (placement pricing).</summary>
+    public VacancyKind Kind { get; set; } = VacancyKind.Regular;
+
     public string? ImageUrl { get; set; }
     public string? VideoUrl { get; set; }
     public bool IsHighlighted { get; set; }

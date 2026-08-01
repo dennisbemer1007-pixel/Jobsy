@@ -1,0 +1,149 @@
+@page "/salesmanager/toolkit"
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
+@attribute [Authorize(Roles = "SalesManager")]
+@inject JobsyApiClient Api
+@inject NavigationManager Navigation
+@inject IJSRuntime Js
+@inject CultureState Culture
+@implements IDisposable
+
+<PageTitle>@Culture["Sales.Toolkit"] · Lobsy</PageTitle>
+
+<div class="panel-page">
+    <header class="panel-header">
+        <div>
+            <h1>@Culture["Sales.Toolkit"]</h1>
+            <p class="login-lead">@Culture["Sales.ToolkitLead"]</p>
+        </div>
+    </header>
+
+    @if (_loading)
+    {
+        <p class="state-message">@Culture["Common.Loading"]</p>
+    }
+    else if (!string.IsNullOrEmpty(_error))
+    {
+        <p class="state-message error">@_error</p>
+    }
+    else if (_dashboard is not null && !_dashboard.IsOnboardingComplete)
+    {
+        <p class="state-message">Rond eerst je onboarding af om een trackingcode te ontvangen.</p>
+        <a class="login-submit" href="/salesmanager/onboarding" style="display:inline-block;text-decoration:none;text-align:center">Start onboarding</a>
+    }
+    else if (_dashboard is not null)
+    {
+        <div class="stat-grid">
+            <div class="stat-card">
+                <span class="stat-card__label">Trackingcode</span>
+                <strong class="stat-card__value">@_dashboard.TrackingCode</strong>
+            </div>
+            <div class="stat-card">
+                <span class="stat-card__label">Partnerlink</span>
+                <strong class="stat-card__value" style="font-size:0.95rem;word-break:break-all">@PartnerUrl</strong>
+            </div>
+        </div>
+
+        <section class="panel-section partner-sales__box">
+            <h2>PDF-flyer &amp; delen</h2>
+            <p class="muted">Persoonlijke A4-flyer met jouw code en actuele tarieven. Deel direct via WhatsApp of mail.</p>
+            <div class="inline-actions" style="flex-wrap:wrap;gap:0.5rem">
+                <button class="btn-compact btn-compact--primary" type="button" disabled="@_busy" @onclick="DownloadFlyerAsync">
+                    Download PDF-flyer
+                </button>
+                <button class="btn-compact" type="button" @onclick="ShareWhatsApp">Deel via WhatsApp</button>
+                <button class="btn-compact" type="button" @onclick="ShareMail">Deel via mail</button>
+                <a class="btn-compact" href="@PartnerUrl">Open partnerpagina</a>
+            </div>
+        </section>
+
+        @if (_catalog is not null)
+        {
+            <section class="panel-section">
+                <h2>Actuele tarieven</h2>
+                <p class="muted">Tokenwaarde € @_catalog.BaseTokenValueEuro.ToString("0.00") · start-highlight @_catalog.StartHighlightBonusTokens.ToString("0.##") tokens</p>
+                <div class="table-list">
+                    @foreach (var cost in _catalog.VacancyTypeCosts)
+                    {
+                        <div class="table-row">
+                            <strong>@cost.Label</strong>
+                            <span>@cost.CostTokens.ToString("0.##") tokens · € @cost.PriceEuro.ToString("0.00")</span>
+                        </div>
+                    }
+                </div>
+            </section>
+        }
+    }
+</div>
+
+@code {
+    private SalesManagerDashboard? _dashboard;
+    private PartnerSalesCatalog? _catalog;
+    private bool _loading = true;
+    private bool _busy;
+    private string? _error;
+
+    private string PartnerUrl
+    {
+        get
+        {
+            var baseUri = Navigation.BaseUri.TrimEnd('/');
+            var code = _dashboard?.TrackingCode;
+            return string.IsNullOrWhiteSpace(code)
+                ? $"{baseUri}/partner"
+                : $"{baseUri}/partner/{Uri.EscapeDataString(code)}";
+        }
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        Culture.Changed += OnCultureChanged;
+        try
+        {
+            _dashboard = await Api.GetMySalesManagerDashboardAsync();
+            _catalog = await Api.GetPartnerSalesCatalogAsync();
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private void OnCultureChanged() => InvokeAsync(StateHasChanged);
+    public void Dispose() => Culture.Changed -= OnCultureChanged;
+
+    private async Task DownloadFlyerAsync()
+    {
+        _busy = true;
+        try
+        {
+            await Api.DownloadPartnerFlyerPdfAsync(Js, _dashboard?.TrackingCode);
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private void ShareWhatsApp()
+    {
+        var text = Uri.EscapeDataString(
+            $"Lobsy partnerinfo met mijn code {_dashboard?.TrackingCode}: {PartnerUrl}");
+        Navigation.NavigateTo($"https://wa.me/?text={text}", forceLoad: true);
+    }
+
+    private void ShareMail()
+    {
+        var subject = Uri.EscapeDataString("Lobsy — partneraanbod");
+        var body = Uri.EscapeDataString(
+            $"Hoi,%0A%0AHier is het Lobsy-partneraanbod met mijn salescode {_dashboard?.TrackingCode}:%0A{PartnerUrl}%0A%0A");
+        Navigation.NavigateTo($"mailto:?subject={subject}&body={body}", forceLoad: true);
+    }
+}

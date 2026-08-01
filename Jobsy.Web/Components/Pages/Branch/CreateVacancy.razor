@@ -103,6 +103,14 @@
                 Titel
                 <input @bind="_title" @bind:event="oninput" required />
             </label>
+            <label>
+                Vacaturetype
+                <select @bind="_vacancyKind">
+                    <option value="Regular">Regulier (vaste baan / bijbaan / BBL)</option>
+                    <option value="Internship">Stageplek</option>
+                    <option value="Volunteer">Vrijwilligerswerk</option>
+                </select>
+            </label>
                 <label>
                     Omschrijving
                     <div class="richtext-toolbar" role="toolbar" aria-label="Opmaak">
@@ -494,6 +502,7 @@
 
     private ElementReference _descriptionRef;
     private string _title = "";
+    private string _vacancyKind = "Regular";
     private string _description = "";
     private string _imageUrl = "";
     private string _videoUrl = "";
@@ -758,6 +767,7 @@
             _isDuplicate = true;
             _companyId = source.CompanyId;
             _title = AppendCopySuffix(source.Title);
+            _vacancyKind = string.IsNullOrWhiteSpace(source.Kind) ? "Regular" : source.Kind;
             _description = source.Description;
             _imageUrl = source.ImageUrl ?? "";
             _videoUrl = source.VideoUrl ?? "";
@@ -1174,7 +1184,8 @@
                 _legalAdultSupervisor,
                 _legalHandlesMoney,
                 _legalHeavyWork,
-                ShowClientAddressOnMap: _isIntermediary && !_replaceWithIntermediaryIdentity));
+                ShowClientAddressOnMap: _isIntermediary && !_replaceWithIntermediaryIdentity,
+                Kind: _vacancyKind));
 
             Navigation.NavigateTo("/employer/vacancies");
         }

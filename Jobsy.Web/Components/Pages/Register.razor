@@ -153,6 +153,8 @@
 </div>
 
 @code {
+    [SupplyParameterFromQuery(Name = "ref")] public string? RefCode { get; set; }
+
     private int _step = 1;
     private bool _busy;
     private string? _error;
@@ -169,7 +171,13 @@
     private KvkEstablishmentItem? _selected;
 
     protected override void OnInitialized()
-        => Culture.Changed += OnCultureChanged;
+    {
+        Culture.Changed += OnCultureChanged;
+        if (!string.IsNullOrWhiteSpace(RefCode))
+        {
+            _salesManagerCode = RefCode.Trim().ToUpperInvariant();
+        }
+    }
 
     private void OnCultureChanged()
         => InvokeAsync(StateHasChanged);

@@ -50,4 +50,5 @@ public record VacancyListItemDto(
     int LikeCount = 0,
     string? OfferedByLabel = null,
     bool ShowClientAddressOnMap = false,
-    Guid? IntermediaryCompanyId = null);
+    Guid? IntermediaryCompanyId = null,
+    string Kind = "Regular");

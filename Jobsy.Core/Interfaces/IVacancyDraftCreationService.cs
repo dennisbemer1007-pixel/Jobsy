@@ -20,7 +20,8 @@ public sealed record VacancyDraftInput(
     int? MinimumEmployers = null,
     Guid? IntermediaryCompanyId = null,
     bool ShowClientAddressOnMap = false,
-    bool RequireEndClientKvk = false);
+    bool RequireEndClientKvk = false,
+    VacancyKind Kind = VacancyKind.Regular);
 
 public sealed record VacancyDraftCreateResult(bool Succeeded, Vacancy? Vacancy, string? ErrorMessage)
 {

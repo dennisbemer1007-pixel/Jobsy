@@ -78,6 +78,12 @@ public class Company
     /// <summary>Start of the first-year partnership window (for token commission year 1/2).</summary>
     public DateTime? FirstYearStartedAt { get; set; }
 
+    /// <summary>
+    /// When true, the next published vacancy receives one free start-highlight
+    /// (salesmanager tracking referral). Cleared after use — not a flat discount.
+    /// </summary>
+    public bool PendingStartHighlightBonus { get; set; }
+
     public ICollection<Vacancy> Vacancies { get; set; } = new List<Vacancy>();
     public ICollection<TokenTransaction> TokenTransactions { get; set; } = new List<TokenTransaction>();
     public ICollection<User> PrimaryUsers { get; set; } = new List<User>();

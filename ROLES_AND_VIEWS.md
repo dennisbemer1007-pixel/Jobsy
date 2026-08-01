@@ -14,7 +14,7 @@ Route- en capability-matrix per rol. Entry: **`/` = banenkaart**, **`/home` = ro
 | Tokens (werkgevers) | `TokenWalletChip` in header → role-specifieke tokens-URL |
 | Gedeelde UI | `MetricTile`, `DrilldownGrid`, `ShareModal`, `PublishOptionsDialog`, `BottomNav` |
 
-Publiek (naast banenkaart): `/vacancies/{id}`, `/register`, `/register/activate`, `/login`, legal pages.
+Publiek (naast banenkaart): `/vacancies/{id}`, `/register`, `/register/activate`, `/login`, `/partner` (+ `/partner/{trackingCode}`), legal pages.
 
 ---
 
@@ -109,10 +109,27 @@ Onvoldoende tokens bij publiceren → `PendingApproval` (EM/Admin keurt goed).
 | `/home` | Platform-KPI’s (incl. errors, users, company counts) + module-grid |
 | `/admin/companies` · `/admin/users` · `/admin/vacancies` | Beheer |
 | `/admin/finance` · `/admin/tokens` | Finance KPI + tokenlog / grant |
+| `/admin/sales` | Sales beheer: tokenwaarde, tarieven per vacaturetype, pakketten, highlight-toeslagen |
+| `/admin/sales-managers` | Salesmanagers, trackingcodes, suppliers |
 | `/admin/logging` · `/admin/settings` · `/admin/integrations` | Logs, pricing/PushBom/early-adapter, integratie-pings |
 | `/admin/wages` | WML + semi-annual update-stub |
 | `/admin` · `/admin/cockpit` | Redirect → `/home` |
 | `/admin/moderation` · `/masterdata` · `/notifications` | Placeholders (“later”) |
+
+---
+
+## 7. SalesManager
+*Doel: veldverkoop met trackingcode, commissies en partnerflyer.*
+
+**BottomNav:** Home · Sales-toolkit · Onboarding · Facturen
+
+| Route | Inhoud |
+|-------|--------|
+| `/home` | Dashboard: trackingcode, saldo, suppliers, commissies |
+| `/salesmanager/toolkit` | Partnerlink, PDF-flyer, WhatsApp/mail delen, actuele tarieven |
+| `/salesmanager/onboarding` | KvK/BTW/NAW + overeenkomst → trackingcode |
+| `/salesmanager/invoices` | Self-billing / uitbetalen |
+| `/partner/{code}` | Publieke partnerpagina met ingebedde salescode |
 
 ---
 

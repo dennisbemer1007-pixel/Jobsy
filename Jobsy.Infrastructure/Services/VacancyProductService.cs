@@ -15,6 +15,7 @@ public sealed class VacancyProductService : IVacancyProductService
 {
     private readonly JobsyDbContext _db;
     private readonly ITokenLedgerService _tokens;
+    private readonly ISalesCommercialService _salesCommercial;
     private readonly IPushNotificationService _push;
     private readonly IEmailService _email;
     private readonly IPlatformFeatureService _features;
@@ -24,6 +25,7 @@ public sealed class VacancyProductService : IVacancyProductService
     public VacancyProductService(
         JobsyDbContext db,
         ITokenLedgerService tokens,
+        ISalesCommercialService salesCommercial,
         IPushNotificationService push,
         IEmailService email,
         IPlatformFeatureService features,
@@ -32,6 +34,7 @@ public sealed class VacancyProductService : IVacancyProductService
     {
         _db = db;
         _tokens = tokens;
+        _salesCommercial = salesCommercial;
         _push = push;
         _email = email;
         _features = features;
@@ -57,9 +60,29 @@ public sealed class VacancyProductService : IVacancyProductService
             return Fail(vacancy, "Alleen conceptvacatures kunnen worden gepubliceerd.");
         }
 
+        var company = await _db.Companies.FirstOrDefaultAsync(c => c.Id == vacancy.CompanyId, cancellationToken);
+        var useStartHighlight = company?.PendingStartHighlightBonus == true;
+        if (useStartHighlight)
+        {
+            options = options with { Highlight = true };
+        }
+
+        var publishCost = await _salesCommercial.GetPublishCostTokensAsync(vacancy.Kind, cancellationToken);
+        var highlightCost = await _salesCommercial.GetHighlightCostTokensAsync(cancellationToken);
+        var highlightDays = await _salesCommercial.GetHighlightDaysAsync(cancellationToken);
+
         var reasons = BuildPublishReasons(options);
-        Dictionary<TokenSpendReason, decimal>? costOverrides = null;
+        var costOverrides = new Dictionary<TokenSpendReason, decimal>
+        {
+            [TokenSpendReason.Publish] = publishCost
+        };
         List<User>? pushBomCandidates = null;
+
+        if (options.Highlight)
+        {
+            // Start-highlight from sales tracking is a free product grant (not a discount).
+            costOverrides[TokenSpendReason.Highlight] = useStartHighlight ? 0m : highlightCost;
+        }
 
         if (options.PushBom)
         {
@@ -77,18 +100,17 @@ public sealed class VacancyProductService : IVacancyProductService
             }
 
             pushBomCandidates = reach.Candidates;
-            costOverrides = new Dictionary<TokenSpendReason, decimal>
-            {
-                [TokenSpendReason.PushBom] = reach.CostTokens
-            };
+            costOverrides[TokenSpendReason.PushBom] = reach.CostTokens;
         }
 
+        // Zero-cost lines (volunteer publish / free start-highlight) are applied without ledger debit.
+        var billableReasons = reasons.Where(r => costOverrides.GetValueOrDefault(r) > 0).ToList();
         var costs = await _tokens.GetCostsAsync(
-            reasons.Where(r => costOverrides is null || !costOverrides.ContainsKey(r)),
+            billableReasons.Where(r => !costOverrides.ContainsKey(r)),
             cancellationToken);
-        foreach (var reason in reasons)
+        foreach (var reason in billableReasons)
         {
-            if (costOverrides is not null && costOverrides.ContainsKey(reason))
+            if (costOverrides.ContainsKey(reason))
             {
                 continue;
             }
@@ -100,15 +122,14 @@ public sealed class VacancyProductService : IVacancyProductService
         }
 
         decimal CostOf(TokenSpendReason reason) =>
-            costOverrides is not null && costOverrides.TryGetValue(reason, out var o)
+            costOverrides.TryGetValue(reason, out var o)
                 ? o
                 : costs[reason];
 
-        var publishCost = CostOf(TokenSpendReason.Publish);
-        var totalCost = reasons.Sum(CostOf);
+        var totalCost = billableReasons.Sum(CostOf);
         var balance = await _tokens.GetBalanceAsync(vacancy.CompanyId, cancellationToken);
 
-        if (balance < publishCost)
+        if (publishCost > 0 && balance < publishCost)
         {
             return await MarkPendingApprovalAsync(vacancy, options, cancellationToken);
         }
@@ -120,30 +141,62 @@ public sealed class VacancyProductService : IVacancyProductService
                 $"Onvoldoende tokens voor geselecteerde opties. Benodigd: {totalCost}, saldo: {balance}.");
         }
 
+        async Task ApplyEffectsAsync(CancellationToken ct)
+        {
+            await _db.Entry(vacancy).ReloadAsync(ct);
+            if (vacancy.Status != VacancyStatus.Draft)
+            {
+                throw new VacancyProductConflictException(
+                    "Vacature is ondertussen al verwerkt en kan niet meer worden gepubliceerd.");
+            }
+
+            ApplyPublishEffects(vacancy, options, highlightDays);
+            if (useStartHighlight && company is not null)
+            {
+                await _db.Entry(company).ReloadAsync(ct);
+                company.PendingStartHighlightBonus = false;
+            }
+        }
+
+        if (billableReasons.Count == 0)
+        {
+            try
+            {
+                await ApplyEffectsAsync(cancellationToken);
+                ClearRequestedOptions(vacancy);
+                await _db.SaveChangesAsync(cancellationToken);
+            }
+            catch (VacancyProductConflictException ex)
+            {
+                return Fail(vacancy, ex.Message);
+            }
+
+            var freeRecipients = 0;
+            if (options.PushBom && pushBomCandidates is not null)
+            {
+                freeRecipients = await DeliverPushBomToAsync(vacancy, pushBomCandidates, cancellationToken);
+            }
+
+            return new VacancyProductOutcome(true, null, vacancy, PushBomRecipientCount: freeRecipients);
+        }
+
         TokenMultiSpendOutcome spend;
         try
         {
             spend = await _tokens.TrySpendManyAsync(
                 vacancy.CompanyId,
-                reasons,
+                billableReasons,
                 vacancyId: vacancy.Id,
                 actorUserId: actorUserId,
                 branchCompanyId: vacancy.CompanyId,
-                note: "Publish",
+                note: useStartHighlight ? "Publish + gratis start-highlight" : "Publish",
                 onSuccessBeforeCommit: async ct =>
                 {
-                    await _db.Entry(vacancy).ReloadAsync(ct);
-                    if (vacancy.Status != VacancyStatus.Draft)
-                    {
-                        throw new VacancyProductConflictException(
-                            "Vacature is ondertussen al verwerkt en kan niet meer worden gepubliceerd.");
-                    }
-
-                    ApplyPublishEffects(vacancy, options);
+                    await ApplyEffectsAsync(ct);
                     ClearRequestedOptions(vacancy);
                 },
                 costOverrides: costOverrides,
-                cancellationToken);
+                cancellationToken: cancellationToken);
         }
         catch (VacancyProductConflictException ex)
         {
@@ -219,32 +272,60 @@ public sealed class VacancyProductService : IVacancyProductService
 
         // Snapshot for spend + effects (do not re-read Requested* after Reload).
         var approveOptions = options;
-        var reasons = BuildPublishReasons(approveOptions);
+        var publishCost = await _salesCommercial.GetPublishCostTokensAsync(vacancy.Kind, cancellationToken);
+        var highlightCost = await _salesCommercial.GetHighlightCostTokensAsync(cancellationToken);
+        var highlightDays = await _salesCommercial.GetHighlightDaysAsync(cancellationToken);
+        costOverrides ??= new Dictionary<TokenSpendReason, decimal>();
+        costOverrides[TokenSpendReason.Publish] = publishCost;
+        if (approveOptions.Highlight)
+        {
+            costOverrides[TokenSpendReason.Highlight] = highlightCost;
+        }
+
+        var reasons = BuildPublishReasons(approveOptions)
+            .Where(r => costOverrides.GetValueOrDefault(r, 1m) > 0)
+            .ToList();
 
         TokenMultiSpendOutcome spend;
         try
         {
-            spend = await _tokens.TrySpendManyAsync(
-                vacancy.CompanyId,
-                reasons,
-                vacancyId: vacancy.Id,
-                actorUserId: actorUserId,
-                branchCompanyId: vacancy.CompanyId,
-                note: "Approve publish",
-                onSuccessBeforeCommit: async ct =>
+            if (reasons.Count == 0)
+            {
+                await _db.Entry(vacancy).ReloadAsync(cancellationToken);
+                if (vacancy.Status != VacancyStatus.PendingApproval)
                 {
-                    await _db.Entry(vacancy).ReloadAsync(ct);
-                    if (vacancy.Status != VacancyStatus.PendingApproval)
-                    {
-                        throw new VacancyProductConflictException(
-                            "Vacature is ondertussen al verwerkt.");
-                    }
+                    return Fail(vacancy, "Vacature is ondertussen al verwerkt.");
+                }
 
-                    ApplyPublishEffects(vacancy, approveOptions);
-                    ClearRequestedOptions(vacancy);
-                },
-                costOverrides: costOverrides,
-                cancellationToken);
+                ApplyPublishEffects(vacancy, approveOptions, highlightDays);
+                ClearRequestedOptions(vacancy);
+                await _db.SaveChangesAsync(cancellationToken);
+                spend = new TokenMultiSpendOutcome(true, null, [], await _tokens.GetBalanceAsync(vacancy.CompanyId, cancellationToken));
+            }
+            else
+            {
+                spend = await _tokens.TrySpendManyAsync(
+                    vacancy.CompanyId,
+                    reasons,
+                    vacancyId: vacancy.Id,
+                    actorUserId: actorUserId,
+                    branchCompanyId: vacancy.CompanyId,
+                    note: "Approve publish",
+                    onSuccessBeforeCommit: async ct =>
+                    {
+                        await _db.Entry(vacancy).ReloadAsync(ct);
+                        if (vacancy.Status != VacancyStatus.PendingApproval)
+                        {
+                            throw new VacancyProductConflictException(
+                                "Vacature is ondertussen al verwerkt.");
+                        }
+
+                        ApplyPublishEffects(vacancy, approveOptions, highlightDays);
+                        ClearRequestedOptions(vacancy);
+                    },
+                    costOverrides: costOverrides,
+                    cancellationToken: cancellationToken);
+            }
         }
         catch (VacancyProductConflictException ex)
         {
@@ -281,6 +362,13 @@ public sealed class VacancyProductService : IVacancyProductService
             return Fail(vacancy, "Vacature is al gehighlight.");
         }
 
+        var highlightCost = await _salesCommercial.GetHighlightCostTokensAsync(cancellationToken);
+        var highlightDays = await _salesCommercial.GetHighlightDaysAsync(cancellationToken);
+        if (highlightCost <= 0)
+        {
+            return Fail(vacancy, "Geen actieve highlight-tokenkost geconfigureerd.");
+        }
+
         TokenSpendOutcome spend;
         try
         {
@@ -305,7 +393,11 @@ public sealed class VacancyProductService : IVacancyProductService
                     }
 
                     vacancy.IsHighlighted = true;
-                    vacancy.HighlightedUntil = VacancyHighlightRules.ComputeUntil(DateTime.UtcNow);
+                    vacancy.HighlightedUntil = VacancyHighlightRules.ComputeUntil(DateTime.UtcNow, highlightDays);
+                },
+                costOverrides: new Dictionary<TokenSpendReason, decimal>
+                {
+                    [TokenSpendReason.Highlight] = highlightCost
                 },
                 cancellationToken: cancellationToken);
         }
@@ -519,14 +611,17 @@ public sealed class VacancyProductService : IVacancyProductService
         return reasons;
     }
 
-    private static void ApplyPublishEffects(Vacancy vacancy, VacancyPublishOptions options)
+    private static void ApplyPublishEffects(
+        Vacancy vacancy,
+        VacancyPublishOptions options,
+        int highlightDays = VacancyProductRules.HighlightDays)
     {
         vacancy.Status = VacancyStatus.Active;
         vacancy.PublishedAtUtc ??= DateTime.UtcNow;
         if (options.Highlight)
         {
             vacancy.IsHighlighted = true;
-            vacancy.HighlightedUntil = VacancyHighlightRules.ComputeUntil(DateTime.UtcNow);
+            vacancy.HighlightedUntil = VacancyHighlightRules.ComputeUntil(DateTime.UtcNow, highlightDays);
         }
 
         if (options.Extend)

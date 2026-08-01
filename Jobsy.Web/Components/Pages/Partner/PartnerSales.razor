@@ -1,0 +1,205 @@
+@page "/partner"
+@page "/partner/{TrackingCode?}"
+@attribute [AllowAnonymous]
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
+@inject JobsyApiClient Api
+@inject NavigationManager Navigation
+@inject IJSRuntime Js
+@inject CultureState Culture
+@implements IDisposable
+
+<PageTitle>@Culture["Partner.Title"] · Lobsy</PageTitle>
+
+<div class="panel-page panel-page--wide partner-sales">
+    <header class="partner-sales__hero">
+        <p class="partner-sales__brand">Lobsy</p>
+        <h1>@Culture["Partner.Headline"]</h1>
+        <p class="login-lead">@Culture["Partner.Lead"]</p>
+        <div class="partner-sales__cta">
+            <a class="login-submit" href="@RegisterHref" style="display:inline-block;text-decoration:none;text-align:center">
+                @Culture["Partner.RegisterCta"]
+            </a>
+            <button class="btn-compact btn-compact--primary" type="button" disabled="@_flyerBusy" @onclick="DownloadFlyerAsync">
+                @Culture["Partner.DownloadFlyer"]
+            </button>
+            <button class="btn-compact" type="button" @onclick="ShareWhatsApp">WhatsApp</button>
+            <button class="btn-compact" type="button" @onclick="ShareMail">Mail</button>
+        </div>
+        @if (!string.IsNullOrWhiteSpace(_trackingCode))
+        {
+            <p class="partner-sales__code">Salescode: <strong>@_trackingCode</strong></p>
+        }
+    </header>
+
+    @if (_loading)
+    {
+        <p class="state-message">@Culture["Common.Loading"]</p>
+    }
+    else if (!string.IsNullOrEmpty(_error))
+    {
+        <p class="state-message error">@_error</p>
+    }
+    else if (_catalog is not null)
+    {
+        <section class="panel-section">
+            <h2>@Culture["Partner.UspsTitle"]</h2>
+            <ul class="partner-sales__usps">
+                <li>@Culture["Partner.Usp1"]</li>
+                <li>@Culture["Partner.Usp2"]</li>
+                <li>@Culture["Partner.Usp3"]</li>
+                <li>@Culture.Format("Partner.Usp4", _catalog.StartHighlightBonusTokens.ToString("0.##"))</li>
+            </ul>
+        </section>
+
+        <section class="panel-section">
+            <h2>@Culture["Partner.RatesTitle"]</h2>
+            <p class="muted">
+                @Culture.Format("Partner.TokenValue", _catalog.BaseTokenValueEuro.ToString("0.00"))
+                · Highlight @_catalog.HighlightCarouselDays d: @_catalog.HighlightCarouselTokens.ToString("0.##") tokens
+                · Pulse: @_catalog.HighlightPulseTokens.ToString("0.##") tokens
+            </p>
+            <div class="table-list">
+                @foreach (var cost in _catalog.VacancyTypeCosts)
+                {
+                    <div class="table-row">
+                        <div>
+                            <strong>@cost.Label</strong>
+                            <span class="muted">@Culture["Partner.Placement"]</span>
+                        </div>
+                        <div>
+                            <strong>@cost.CostTokens.ToString("0.##") tokens</strong>
+                            <span class="muted">≈ € @cost.PriceEuro.ToString("0.00")</span>
+                        </div>
+                    </div>
+                }
+            </div>
+        </section>
+
+        @if (_catalog.Packages.Count > 0)
+        {
+            <section class="panel-section">
+                <h2>@Culture["Partner.PackagesTitle"]</h2>
+                <div class="table-list">
+                    @foreach (var pack in _catalog.Packages)
+                    {
+                        <div class="table-row">
+                            <div>
+                                <strong>@pack.Name</strong>
+                                <span class="muted">@CategoryLabel(pack.Category) · @pack.TokenAmount tokens</span>
+                                @if (!string.IsNullOrWhiteSpace(pack.Description))
+                                {
+                                    <div class="muted">@pack.Description</div>
+                                }
+                            </div>
+                            <strong>€ @pack.PriceEuro.ToString("0.00")</strong>
+                        </div>
+                    }
+                </div>
+            </section>
+        }
+
+        <section class="panel-section partner-sales__box">
+            <h2>@Culture["Partner.BonusTitle"]</h2>
+            <p>
+                @Culture.Format("Partner.BonusBody", _catalog.StartHighlightBonusTokens.ToString("0.##"))
+            </p>
+            <a class="auth-link" href="@RegisterHref">@Culture["Partner.RegisterCta"] →</a>
+        </section>
+    }
+</div>
+
+@code {
+    [Parameter] public string? TrackingCode { get; set; }
+    [SupplyParameterFromQuery(Name = "ref")] public string? RefCode { get; set; }
+
+    private PartnerSalesCatalog? _catalog;
+    private string? _trackingCode;
+    private bool _loading = true;
+    private bool _flyerBusy;
+    private string? _error;
+
+    private string RegisterHref => string.IsNullOrWhiteSpace(_trackingCode)
+        ? "/register"
+        : $"/register?ref={Uri.EscapeDataString(_trackingCode)}";
+
+    private string PartnerPageUrl
+    {
+        get
+        {
+            var baseUri = Navigation.BaseUri.TrimEnd('/');
+            return string.IsNullOrWhiteSpace(_trackingCode)
+                ? $"{baseUri}/partner"
+                : $"{baseUri}/partner/{Uri.EscapeDataString(_trackingCode)}";
+        }
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        Culture.Changed += OnCultureChanged;
+        _trackingCode = FirstNonEmpty(TrackingCode, RefCode)?.Trim().ToUpperInvariant();
+        try
+        {
+            _catalog = await Api.GetPartnerSalesCatalogAsync();
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private void OnCultureChanged() => InvokeAsync(StateHasChanged);
+    public void Dispose() => Culture.Changed -= OnCultureChanged;
+
+    private async Task DownloadFlyerAsync()
+    {
+        _flyerBusy = true;
+        try
+        {
+            await Api.DownloadPartnerFlyerPdfAsync(Js, _trackingCode);
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _flyerBusy = false;
+        }
+    }
+
+    private void ShareWhatsApp()
+    {
+        var text = Uri.EscapeDataString(
+            $"Lobsy partnerinfo — hyper-lokaal werven op reistijd. {PartnerPageUrl}");
+        Navigation.NavigateTo($"https://wa.me/?text={text}", forceLoad: true);
+    }
+
+    private void ShareMail()
+    {
+        var subject = Uri.EscapeDataString("Lobsy — partneraanbod Westland & Den Haag");
+        var body = Uri.EscapeDataString(
+            $"Hoi,%0A%0ABekijk het Lobsy-partneraanbod (reistijd-matching, tokens, pakketten):%0A{PartnerPageUrl}%0A%0A");
+        Navigation.NavigateTo($"mailto:?subject={subject}&body={body}", forceLoad: true);
+    }
+
+    private static string CategoryLabel(string category) => category switch
+    {
+        "FirstYearSupplier" => "First Year Supplier",
+        "Enterprise" => "Enterprise",
+        _ => "Standaard"
+    };
+
+    private static string? FirstNonEmpty(params string?[] values)
+    {
+        foreach (var v in values)
+        {
+            if (!string.IsNullOrWhiteSpace(v)) return v;
+        }
+
+        return null;
+    }
+}

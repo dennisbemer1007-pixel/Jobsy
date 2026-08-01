@@ -1,0 +1,253 @@
+@page "/admin/sales"
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
+@attribute [Authorize(Roles = "Admin")]
+@using Jobsy.Web.Components.Admin
+@inject JobsyApiClient Api
+@inject CultureState Culture
+@implements IDisposable
+
+<PageTitle>@Culture["Admin.SalesCommercial"] · Lobsy</PageTitle>
+
+<AdminPageShell Title="@Culture["Admin.SalesCommercial"]" Lead="@Culture["Admin.SalesCommercialLead"]">
+    <div class="admin-sublinks">
+        <a class="admin-sublink" href="/admin/finance">Financieel</a>
+        <a class="admin-sublink admin-sublink--active" href="/admin/sales">Sales beheer</a>
+        <a class="admin-sublink" href="/admin/sales-managers">Salesmanagers</a>
+        <a class="admin-sublink" href="/partner">Partnerpagina →</a>
+    </div>
+
+    @if (_loading)
+    {
+        <p class="state-message">@Culture["Common.Loading"]</p>
+    }
+    else if (!string.IsNullOrEmpty(_error))
+    {
+        <p class="state-message error">@_error</p>
+    }
+    else if (_admin is not null)
+    {
+        <section class="panel-section">
+            <h2>Basis tokenwaarde &amp; highlights</h2>
+            <p class="muted">Stuur de euro-prijs per token en de toeslagen voor Funda-carrousel / pulse-markers. Partnerflyer en salespagina lezen deze waarden live.</p>
+            <article class="company-card platform-features-card">
+                <div class="inline-actions" style="flex-wrap:wrap;gap:0.75rem">
+                    <label>
+                        € per token
+                        <input type="number" min="0" step="0.01" @bind="_admin.BaseTokenValueEuro" style="width:6rem" />
+                    </label>
+                    <label>
+                        Carrousel (tokens)
+                        <input type="number" min="0" step="0.1" @bind="_admin.HighlightCarouselTokens" style="width:5.5rem" />
+                    </label>
+                    <label>
+                        Pulse-marker (tokens)
+                        <input type="number" min="0" step="0.1" @bind="_admin.HighlightPulseTokens" style="width:5.5rem" />
+                    </label>
+                    <label>
+                        Carrousel-dagen
+                        <input type="number" min="1" max="90" @bind="_admin.HighlightCarouselDays" style="width:5rem" />
+                    </label>
+                    <label>
+                        Start-highlight bonus
+                        <input type="number" min="0" step="0.1" @bind="_admin.StartHighlightBonusTokens" style="width:5.5rem" />
+                    </label>
+                    <button class="btn-compact btn-compact--primary" type="button" disabled="@_busy" @onclick="SaveSettingsAsync">
+                        @Culture["Common.Save"]
+                    </button>
+                </div>
+            </article>
+        </section>
+
+        <section class="panel-section">
+            <h2>Token-kosten per vacature-type</h2>
+            <p class="muted">Regulier, Stageplek en Vrijwilligerswerk — inclusief gereduceerde of nul-tarieven voor maatschappelijke doelen.</p>
+            <div class="table-list">
+                @foreach (var cost in _admin.VacancyTypeCosts)
+                {
+                    <div class="table-row">
+                        <div>
+                            <strong>@cost.Label</strong>
+                            <span class="muted">≈ € @cost.PriceEuro.ToString("0.00")</span>
+                        </div>
+                        <div class="inline-actions">
+                            <input type="number" step="0.1" min="0" @bind="cost.CostTokens" style="width:5.5rem" />
+                            <label class="filter-check"><input type="checkbox" @bind="cost.IsActive" /> Actief</label>
+                            <button class="btn-compact" type="button" @onclick="() => SaveTypeCostAsync(cost)">@Culture["Common.Save"]</button>
+                        </div>
+                    </div>
+                }
+            </div>
+        </section>
+
+        <section class="panel-section">
+            <h2>Pakketten</h2>
+            <p class="muted">Standaard pakketten en First Year Supplier / Enterprise (Silver, Gold, Platinum).</p>
+            <div class="table-list">
+                @foreach (var pack in _admin.Packages)
+                {
+                    <div class="table-row" style="flex-wrap:wrap;gap:0.5rem">
+                        <div style="flex:1;min-width:10rem">
+                            <input @bind="pack.Name" placeholder="Naam" style="width:100%;margin-bottom:0.35rem" />
+                            <span class="muted">@CategoryLabel(pack.Category) · @pack.Code</span>
+                        </div>
+                        <div class="inline-actions" style="flex-wrap:wrap">
+                            <select @bind="pack.Category" style="width:9rem">
+                                <option value="Standard">Standaard</option>
+                                <option value="FirstYearSupplier">First Year</option>
+                                <option value="Enterprise">Enterprise</option>
+                            </select>
+                            <input type="number" min="0" @bind="pack.TokenAmount" style="width:4.5rem" title="Tokens" />
+                            <input type="number" min="0" step="0.01" @bind="pack.PriceEuro" style="width:5.5rem" title="Prijs €" />
+                            <input type="number" @bind="pack.SortOrder" style="width:3.5rem" title="Volgorde" />
+                            <label class="filter-check"><input type="checkbox" @bind="pack.IsActive" /> Actief</label>
+                            <button class="btn-compact" type="button" @onclick="() => SavePackageAsync(pack)">@Culture["Common.Save"]</button>
+                            <button type="button" class="icon-btn icon-btn--danger" title="Verwijderen" @onclick="() => DeletePackageAsync(pack)">
+                                @((MarkupString)ActionIcons.Trash)
+                            </button>
+                        </div>
+                    </div>
+                }
+            </div>
+            <div class="inline-actions" style="margin-top:0.75rem">
+                <button class="btn-compact" type="button" @onclick="AddPackage">+ Pakket toevoegen</button>
+            </div>
+        </section>
+
+        @if (!string.IsNullOrEmpty(_message))
+        {
+            <p class="state-message">@_message</p>
+        }
+    }
+</AdminPageShell>
+
+@code {
+    private SalesCommercialAdminModel? _admin;
+    private bool _loading = true;
+    private bool _busy;
+    private string? _error;
+    private string? _message;
+
+    protected override async Task OnInitializedAsync()
+    {
+        Culture.Changed += OnCultureChanged;
+        await ReloadAsync();
+    }
+
+    private void OnCultureChanged() => InvokeAsync(StateHasChanged);
+
+    public void Dispose() => Culture.Changed -= OnCultureChanged;
+
+    private async Task ReloadAsync()
+    {
+        _loading = true;
+        _error = null;
+        try
+        {
+            _admin = await Api.GetSalesCommercialAdminModelAsync();
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private async Task SaveSettingsAsync()
+    {
+        if (_admin is null) return;
+        _busy = true;
+        _message = null;
+        try
+        {
+            await Api.UpdateSalesCommercialSettingsAsync(
+                _admin.BaseTokenValueEuro,
+                _admin.HighlightCarouselTokens,
+                _admin.HighlightPulseTokens,
+                _admin.HighlightCarouselDays,
+                _admin.StartHighlightBonusTokens);
+            _message = "Instellingen opgeslagen.";
+            await ReloadAsync();
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private async Task SaveTypeCostAsync(VacancyTypeCostItem cost)
+    {
+        _message = null;
+        try
+        {
+            await Api.UpdateVacancyTypeCostAsync(cost.Kind, cost.CostTokens, cost.IsActive);
+            _message = $"{cost.Label} opgeslagen.";
+            await ReloadAsync();
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+    }
+
+    private void AddPackage()
+    {
+        _admin?.Packages.Add(new SalesPackageItem
+        {
+            Name = "Nieuw pakket",
+            Category = "Standard",
+            TokenAmount = 10,
+            PriceEuro = 200,
+            IsActive = true,
+            SortOrder = (_admin.Packages.Count + 1) * 10
+        });
+    }
+
+    private async Task SavePackageAsync(SalesPackageItem pack)
+    {
+        _message = null;
+        try
+        {
+            await Api.UpsertSalesPackageAsync(pack);
+            _message = $"Pakket “{pack.Name}” opgeslagen.";
+            await ReloadAsync();
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+    }
+
+    private async Task DeletePackageAsync(SalesPackageItem pack)
+    {
+        if (pack.Id == Guid.Empty)
+        {
+            _admin?.Packages.Remove(pack);
+            return;
+        }
+
+        try
+        {
+            await Api.DeleteSalesPackageAsync(pack.Id);
+            _message = "Pakket verwijderd.";
+            await ReloadAsync();
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+    }
+
+    private static string CategoryLabel(string category) => category switch
+    {
+        "FirstYearSupplier" => "First Year Supplier",
+        "Enterprise" => "Enterprise",
+        _ => "Standaard"
+    };
+}

@@ -9198,3 +9198,61 @@ a.apply-flow__secondary {
         transform: none;
     }
 }
+
+/* Partner sales page */
+.partner-sales__hero {
+  margin-bottom: 1.5rem;
+  padding: 1.5rem 1.25rem;
+  border-radius: 12px;
+  background:
+    linear-gradient(145deg, rgba(15, 45, 92, 0.08), rgba(255, 255, 255, 0.9)),
+    radial-gradient(circle at top right, rgba(15, 45, 92, 0.12), transparent 55%);
+  border: 1px solid rgba(15, 45, 92, 0.12);
+}
+
+.partner-sales__brand {
+  margin: 0 0 0.35rem;
+  font-size: clamp(1.75rem, 4vw, 2.4rem);
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  color: var(--brand, #0f2d5c);
+}
+
+.partner-sales__hero h1 {
+  margin: 0 0 0.5rem;
+  font-size: clamp(1.25rem, 3vw, 1.75rem);
+  color: var(--brand-deep, #0a2044);
+}
+
+.partner-sales__cta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 1rem;
+  align-items: center;
+}
+
+.partner-sales__code {
+  margin: 0.85rem 0 0;
+  font-size: 0.95rem;
+}
+
+.partner-sales__usps {
+  margin: 0;
+  padding-left: 1.2rem;
+  display: grid;
+  gap: 0.45rem;
+}
+
+.partner-sales__box {
+  padding: 1rem 1.1rem;
+  border-radius: 10px;
+  background: rgba(15, 45, 92, 0.06);
+  border: 1px solid rgba(15, 45, 92, 0.14);
+}
+
+@media (max-width: 640px) {
+  .partner-sales__cta .login-submit {
+    width: 100%;
+  }
+}

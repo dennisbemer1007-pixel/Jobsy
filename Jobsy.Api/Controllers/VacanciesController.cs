@@ -496,7 +496,8 @@ public class VacanciesController : ControllerBase
             ContactPreferPhone = request.OverrideContactPreference && request.DirectContactEnabled && request.ContactPreferPhone,
             ContactPreferWhatsApp = request.OverrideContactPreference && request.DirectContactEnabled && request.ContactPreferWhatsApp,
             IntermediaryCompanyId = intermediaryCompanyId,
-            ShowClientAddressOnMap = isIntermediary && request.ShowClientAddressOnMap
+            ShowClientAddressOnMap = isIntermediary && request.ShowClientAddressOnMap,
+            Kind = request.Kind
         };
 
         var hoursError = ApplyHoursAndSchedule(vacancy, request);
@@ -1294,7 +1295,8 @@ public class VacanciesController : ControllerBase
             likeCount,
             display.OfferedByLabel,
             v.ShowClientAddressOnMap,
-            v.IntermediaryCompanyId);
+            v.IntermediaryCompanyId,
+            v.Kind.ToString());
     }
 
     private static string? ApplyHoursAndSchedule(Core.Entities.Vacancy vacancy, CreateVacancyRequest request)

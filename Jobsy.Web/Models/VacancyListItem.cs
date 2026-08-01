@@ -36,6 +36,7 @@ public class VacancyListItem
     public string? OfferedByLabel { get; set; }
     public bool ShowClientAddressOnMap { get; set; }
     public Guid? IntermediaryCompanyId { get; set; }
+    public string Kind { get; set; } = "Regular";
     public string? RequiredDrivingLicense { get; set; }
     public string? RequiredEducation { get; set; }
     public int? MinimumEmployers { get; set; }

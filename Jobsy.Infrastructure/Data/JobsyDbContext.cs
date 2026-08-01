@@ -54,6 +54,9 @@ public class JobsyDbContext : DbContext
     public DbSet<SelfBillingInvoiceLine> SelfBillingInvoiceLines => Set<SelfBillingInvoiceLine>();
     public DbSet<SalesManagerPayoutCheckout> SalesManagerPayoutCheckouts => Set<SalesManagerPayoutCheckout>();
     public DbSet<MasterdataOption> MasterdataOptions => Set<MasterdataOption>();
+    public DbSet<SalesCommercialSettings> SalesCommercialSettings => Set<SalesCommercialSettings>();
+    public DbSet<VacancyTypeTokenCost> VacancyTypeTokenCosts => Set<VacancyTypeTokenCost>();
+    public DbSet<SalesPackage> SalesPackages => Set<SalesPackage>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -158,6 +161,7 @@ public class JobsyDbContext : DbContext
             entity.HasIndex(e => new { e.Status, e.PublishedAtUtc, e.CreatedAtUtc });
             entity.HasIndex(e => new { e.IsHighlighted, e.HighlightedUntil });
             entity.HasIndex(e => e.IntermediaryCompanyId);
+            entity.HasIndex(e => new { e.Status, e.Kind });
             entity.HasOne(e => e.Company)
                 .WithMany(c => c.Vacancies)
                 .HasForeignKey(e => e.CompanyId)
@@ -433,6 +437,35 @@ public class JobsyDbContext : DbContext
             entity.HasKey(e => e.Id);
             entity.Property(e => e.CostTokens).HasPrecision(10, 2);
             entity.HasIndex(e => e.Reason).IsUnique();
+        });
+
+        modelBuilder.Entity<SalesCommercialSettings>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.BaseTokenValueEuro).HasPrecision(10, 2);
+            entity.Property(e => e.HighlightCarouselTokens).HasPrecision(10, 2);
+            entity.Property(e => e.HighlightPulseTokens).HasPrecision(10, 2);
+            entity.Property(e => e.StartHighlightBonusTokens).HasPrecision(10, 2);
+        });
+
+        modelBuilder.Entity<VacancyTypeTokenCost>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.CostTokens).HasPrecision(10, 2);
+            entity.HasIndex(e => e.Kind).IsUnique();
+        });
+
+        modelBuilder.Entity<SalesPackage>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Name).HasMaxLength(128).IsRequired();
+            entity.Property(e => e.Code).HasMaxLength(32);
+            entity.Property(e => e.Description).HasMaxLength(1024);
+            entity.Property(e => e.PriceEuro).HasPrecision(10, 2);
+            entity.HasIndex(e => new { e.Category, e.SortOrder });
+            entity.HasIndex(e => e.Code)
+                .IsUnique()
+                .HasFilter("\"Code\" IS NOT NULL");
         });
 
         modelBuilder.Entity<PushBomSettings>(entity =>

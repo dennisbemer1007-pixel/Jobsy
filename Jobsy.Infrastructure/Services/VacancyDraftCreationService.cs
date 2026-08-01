@@ -204,7 +204,8 @@ public sealed class VacancyDraftCreationService : IVacancyDraftCreationService
             RequiredEducation = education,
             MinimumEmployers = input.MinimumEmployers is > 0 ? input.MinimumEmployers : null,
             IntermediaryCompanyId = input.IntermediaryCompanyId,
-            ShowClientAddressOnMap = input.IntermediaryCompanyId is not null && input.ShowClientAddressOnMap
+            ShowClientAddressOnMap = input.IntermediaryCompanyId is not null && input.ShowClientAddressOnMap,
+            Kind = input.Kind
         };
 
         _db.Vacancies.Add(vacancy);

@@ -131,6 +131,123 @@ internal static class PlatformSettingsSeeder
             logger.LogInformation("Seeded default AboutPageSettings (Wie zijn wij).");
         }
 
+        if (!await db.SalesCommercialSettings.AnyAsync())
+        {
+            db.SalesCommercialSettings.Add(new SalesCommercialSettings
+            {
+                Id = SalesCommercialService.SingletonId,
+                BaseTokenValueEuro = VacancyProductRules.DefaultBaseTokenValueEuro,
+                HighlightCarouselTokens = VacancyProductRules.DefaultHighlightCarouselTokens,
+                HighlightPulseTokens = VacancyProductRules.DefaultHighlightPulseTokens,
+                HighlightCarouselDays = VacancyProductRules.DefaultHighlightCarouselDays,
+                StartHighlightBonusTokens = VacancyProductRules.DefaultHighlightCarouselTokens,
+                UpdatedAtUtc = DateTime.UtcNow
+            });
+            logger.LogInformation("Seeded default SalesCommercialSettings (token €25 / highlight).");
+        }
+
+        if (!await db.VacancyTypeTokenCosts.AnyAsync())
+        {
+            db.VacancyTypeTokenCosts.AddRange(
+                new VacancyTypeTokenCost { Id = Guid.NewGuid(), Kind = VacancyKind.Regular, CostTokens = 1m },
+                new VacancyTypeTokenCost { Id = Guid.NewGuid(), Kind = VacancyKind.Internship, CostTokens = 0.5m },
+                new VacancyTypeTokenCost { Id = Guid.NewGuid(), Kind = VacancyKind.Volunteer, CostTokens = 0m });
+        }
+
+        if (!await db.SalesPackages.AnyAsync())
+        {
+            db.SalesPackages.AddRange(
+                new SalesPackage
+                {
+                    Id = Guid.NewGuid(),
+                    Name = "Starter",
+                    Code = "STD-STARTER",
+                    Category = SalesPackageCategory.Standard,
+                    TokenAmount = 10,
+                    PriceEuro = 200m,
+                    Description = "Instappakket voor lokale werkgevers",
+                    SortOrder = 10
+                },
+                new SalesPackage
+                {
+                    Id = Guid.NewGuid(),
+                    Name = "Groei",
+                    Code = "STD-GROEI",
+                    Category = SalesPackageCategory.Standard,
+                    TokenAmount = 50,
+                    PriceEuro = 875m,
+                    Description = "Bulkkorting t.o.v. losse tokens",
+                    SortOrder = 20
+                },
+                new SalesPackage
+                {
+                    Id = Guid.NewGuid(),
+                    Name = "Silver",
+                    Code = "FYS-SILVER",
+                    Category = SalesPackageCategory.FirstYearSupplier,
+                    TokenAmount = 40,
+                    PriceEuro = 800m,
+                    Description = "First Year Supplier — Silver",
+                    SortOrder = 10
+                },
+                new SalesPackage
+                {
+                    Id = Guid.NewGuid(),
+                    Name = "Gold",
+                    Code = "FYS-GOLD",
+                    Category = SalesPackageCategory.FirstYearSupplier,
+                    TokenAmount = 100,
+                    PriceEuro = 1800m,
+                    Description = "First Year Supplier — Gold",
+                    SortOrder = 20
+                },
+                new SalesPackage
+                {
+                    Id = Guid.NewGuid(),
+                    Name = "Platinum",
+                    Code = "FYS-PLATINUM",
+                    Category = SalesPackageCategory.FirstYearSupplier,
+                    TokenAmount = 250,
+                    PriceEuro = 4000m,
+                    Description = "First Year Supplier — Platinum",
+                    SortOrder = 30
+                },
+                new SalesPackage
+                {
+                    Id = Guid.NewGuid(),
+                    Name = "Enterprise Silver",
+                    Code = "ENT-SILVER",
+                    Category = SalesPackageCategory.Enterprise,
+                    TokenAmount = 200,
+                    PriceEuro = 3500m,
+                    Description = "Enterprise — Silver",
+                    SortOrder = 10
+                },
+                new SalesPackage
+                {
+                    Id = Guid.NewGuid(),
+                    Name = "Enterprise Gold",
+                    Code = "ENT-GOLD",
+                    Category = SalesPackageCategory.Enterprise,
+                    TokenAmount = 500,
+                    PriceEuro = 8000m,
+                    Description = "Enterprise — Gold",
+                    SortOrder = 20
+                },
+                new SalesPackage
+                {
+                    Id = Guid.NewGuid(),
+                    Name = "Enterprise Platinum",
+                    Code = "ENT-PLATINUM",
+                    Category = SalesPackageCategory.Enterprise,
+                    TokenAmount = 1000,
+                    PriceEuro = 14000m,
+                    Description = "Enterprise — Platinum",
+                    SortOrder = 30
+                });
+            logger.LogInformation("Seeded standard + First Year / Enterprise sales packages.");
+        }
+
         await db.SaveChangesAsync();
         logger.LogInformation("Ensured platform token pricing / spend costs / PushBom tiers / early-adapter rules.");
     }

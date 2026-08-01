@@ -1078,6 +1078,92 @@ public sealed class JobsyApiClient : IAsyncDisposable
         await js.InvokeVoidAsync("jobsyDownload.bytes", fileName, base64, "application/pdf");
     }
 
+    public async Task<PartnerSalesCatalog?> GetPartnerSalesCatalogAsync(CancellationToken ct = default)
+        => await _http.GetFromJsonAsync<PartnerSalesCatalog>("api/sales-commercial/catalog", ct);
+
+    public async Task<SalesCommercialAdminModel?> GetSalesCommercialAdminModelAsync(CancellationToken ct = default)
+        => await _http.GetFromJsonAsync<SalesCommercialAdminModel>("api/sales-commercial/admin", ct);
+
+    public async Task UpdateSalesCommercialSettingsAsync(
+        decimal baseTokenValueEuro,
+        decimal highlightCarouselTokens,
+        decimal highlightPulseTokens,
+        int highlightCarouselDays,
+        decimal startHighlightBonusTokens,
+        CancellationToken ct = default)
+    {
+        var response = await _http.PutAsJsonAsync(
+            "api/sales-commercial/admin/settings",
+            new
+            {
+                baseTokenValueEuro,
+                highlightCarouselTokens,
+                highlightPulseTokens,
+                highlightCarouselDays,
+                startHighlightBonusTokens
+            },
+            ct);
+        response.EnsureSuccessStatusCode();
+    }
+
+    public async Task UpdateVacancyTypeCostAsync(
+        string kind,
+        decimal costTokens,
+        bool isActive,
+        CancellationToken ct = default)
+    {
+        var response = await _http.PutAsJsonAsync(
+            "api/sales-commercial/admin/vacancy-type-costs",
+            new { kind, costTokens, isActive },
+            ct);
+        response.EnsureSuccessStatusCode();
+    }
+
+    public async Task<SalesPackageItem?> UpsertSalesPackageAsync(SalesPackageItem package, CancellationToken ct = default)
+    {
+        var response = await _http.PutAsJsonAsync(
+            "api/sales-commercial/admin/packages",
+            new
+            {
+                id = package.Id == Guid.Empty ? (Guid?)null : package.Id,
+                name = package.Name,
+                code = package.Code,
+                category = package.Category,
+                tokenAmount = package.TokenAmount,
+                priceEuro = package.PriceEuro,
+                description = package.Description,
+                isActive = package.IsActive,
+                sortOrder = package.SortOrder
+            },
+            ct);
+        response.EnsureSuccessStatusCode();
+        return await response.Content.ReadFromJsonAsync<SalesPackageItem>(cancellationToken: ct);
+    }
+
+    public async Task DeleteSalesPackageAsync(Guid id, CancellationToken ct = default)
+    {
+        var response = await _http.DeleteAsync($"api/sales-commercial/admin/packages/{id}", ct);
+        response.EnsureSuccessStatusCode();
+    }
+
+    public async Task DownloadPartnerFlyerPdfAsync(
+        Microsoft.JSInterop.IJSRuntime js,
+        string? trackingCode,
+        CancellationToken ct = default)
+    {
+        var qs = string.IsNullOrWhiteSpace(trackingCode)
+            ? "api/sales-commercial/flyer.pdf"
+            : $"api/sales-commercial/flyer.pdf?trackingCode={Uri.EscapeDataString(trackingCode.Trim())}";
+        var response = await _http.GetAsync(qs, ct);
+        response.EnsureSuccessStatusCode();
+        var bytes = await response.Content.ReadAsByteArrayAsync(ct);
+        var fileName = string.IsNullOrWhiteSpace(trackingCode)
+            ? "lobsy-partner-flyer.pdf"
+            : $"lobsy-partner-flyer-{trackingCode.Trim().ToUpperInvariant()}.pdf";
+        var base64 = Convert.ToBase64String(bytes);
+        await js.InvokeVoidAsync("jobsyDownload.bytes", fileName, base64, "application/pdf");
+    }
+
     public async Task<IReadOnlyList<VatOpenPeriodItem>> GetVatOpenPeriodsAsync(CancellationToken ct = default)
         => await _http.GetFromJsonAsync<List<VatOpenPeriodItem>>("api/vat/open-periods", ct) ?? [];
 
@@ -2008,7 +2094,8 @@ public record CreateVacancyForm(
     bool? LegalAdultSupervisorPresent = null,
     bool? LegalHandlesMoneyOrClosing = null,
     bool? LegalHeavyOrHazardousWork = null,
-    bool ShowClientAddressOnMap = false);
+    bool ShowClientAddressOnMap = false,
+    string Kind = "Regular");
 
 public record BatchVacancyForm(
     string Title,
@@ -2432,5 +2519,51 @@ public sealed class SalesManagerCostFinanceItem
     public string Status { get; set; } = string.Empty;
     public DateTime? PaidAt { get; set; }
     public string? VatDeclarationStatusLabel { get; set; }
+}
+
+public sealed class PartnerSalesCatalog
+{
+    public decimal BaseTokenValueEuro { get; set; }
+    public decimal HighlightCarouselTokens { get; set; }
+    public decimal HighlightPulseTokens { get; set; }
+    public int HighlightCarouselDays { get; set; }
+    public decimal StartHighlightBonusTokens { get; set; }
+    public List<VacancyTypeCostItem> VacancyTypeCosts { get; set; } = [];
+    public List<SalesPackageItem> Packages { get; set; } = [];
+}
+
+public sealed class SalesCommercialAdminModel
+{
+    public Guid SettingsId { get; set; }
+    public decimal BaseTokenValueEuro { get; set; }
+    public decimal HighlightCarouselTokens { get; set; }
+    public decimal HighlightPulseTokens { get; set; }
+    public int HighlightCarouselDays { get; set; }
+    public decimal StartHighlightBonusTokens { get; set; }
+    public DateTime UpdatedAtUtc { get; set; }
+    public List<VacancyTypeCostItem> VacancyTypeCosts { get; set; } = [];
+    public List<SalesPackageItem> Packages { get; set; } = [];
+}
+
+public sealed class VacancyTypeCostItem
+{
+    public string Kind { get; set; } = "Regular";
+    public string Label { get; set; } = string.Empty;
+    public decimal CostTokens { get; set; }
+    public decimal PriceEuro { get; set; }
+    public bool IsActive { get; set; } = true;
+}
+
+public sealed class SalesPackageItem
+{
+    public Guid Id { get; set; }
+    public string Name { get; set; } = string.Empty;
+    public string? Code { get; set; }
+    public string Category { get; set; } = "Standard";
+    public int TokenAmount { get; set; }
+    public decimal PriceEuro { get; set; }
+    public string? Description { get; set; }
+    public bool IsActive { get; set; } = true;
+    public int SortOrder { get; set; }
 }
 
