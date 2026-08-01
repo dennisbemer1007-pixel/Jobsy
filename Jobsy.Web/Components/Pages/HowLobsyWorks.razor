@@ -1,0 +1,61 @@
+@page "/hoe-werkt-lobsy"
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "BranchManager,RegionalManager,EnterpriseManager,Intermediary,SalesManager")]
+@using Jobsy.Core.Authorization
+@using Jobsy.Web.Help
+@using Microsoft.AspNetCore.Components.Authorization
+@inject AuthenticationStateProvider AuthState
+@inject NavigationManager Navigation
+@inject CultureState Culture
+
+<PageTitle>@(_guide is null ? Culture["Nav.HowLobsyWorks"] : Culture[_guide.TitleKey]) · Lobsy</PageTitle>
+
+@if (_guide is null)
+{
+    <div class="panel-page">
+        <p class="state-message">@Culture["Common.Loading"]</p>
+    </div>
+}
+else
+{
+    <HowLobsyGuidePanel Guide="_guide" />
+}
+
+@code {
+    private HowLobsyRoleGuides.Guide? _guide;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var state = await AuthState.GetAuthenticationStateAsync();
+        var user = state.User;
+
+        if (RoleClaimMatching.HasRole(user, JobsyRoles.SalesManager))
+        {
+            _guide = HowLobsyRoleGuides.Sales;
+        }
+        else if (RoleClaimMatching.HasRole(user, JobsyRoles.EnterpriseManager))
+        {
+            _guide = HowLobsyRoleGuides.Enterprise;
+        }
+        else if (RoleClaimMatching.HasRole(user, JobsyRoles.RegionalManager))
+        {
+            _guide = HowLobsyRoleGuides.Regional;
+        }
+        else if (RoleClaimMatching.HasRole(user, JobsyRoles.BranchManager))
+        {
+            _guide = HowLobsyRoleGuides.Branch;
+        }
+        else if (RoleClaimMatching.HasRole(user, JobsyRoles.Intermediary))
+        {
+            _guide = HowLobsyRoleGuides.Intermediary;
+        }
+        else if (RoleClaimMatching.HasRole(user, JobsyRoles.Candidate))
+        {
+            Navigation.NavigateTo(HowLobsyRoleGuides.CandidatePath, replace: true);
+        }
+        else
+        {
+            Navigation.NavigateTo("/home", replace: true);
+        }
+    }
+}

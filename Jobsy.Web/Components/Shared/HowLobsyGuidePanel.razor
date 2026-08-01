@@ -1,0 +1,87 @@
+@using System.Net
+@using Jobsy.Web.Help
+@inject CultureState Culture
+@implements IDisposable
+
+<div class="panel-page how-lobsy-page">
+    <header class="panel-header">
+        <div>
+            <h1>@Culture[Guide.TitleKey]</h1>
+            <p class="login-lead">@Culture[Guide.LeadKey]</p>
+        </div>
+    </header>
+
+    <ol class="how-lobsy-steps">
+        @foreach (var step in Guide.Steps)
+        {
+            <li class="how-lobsy-step">
+                <h2>@Culture[step.TitleKey]</h2>
+                <p>@FormatBody(step)</p>
+            </li>
+        }
+    </ol>
+
+    <div class="inline-actions how-lobsy-actions">
+        @if (OnPrimaryClick.HasDelegate)
+        {
+            <button type="button" class="login-submit" disabled="@Busy" @onclick="HandlePrimaryAsync">
+                @(Busy ? "…" : Culture[Guide.Primary.LabelKey])
+            </button>
+        }
+        else
+        {
+            <a class="login-submit" href="@Guide.Primary.Href" style="text-decoration:none;display:inline-flex;align-items:center;">
+                @Culture[Guide.Primary.LabelKey]
+            </a>
+        }
+
+        @if (Guide.Secondary is not null)
+        {
+            <a class="auth-link" href="@Guide.Secondary.Href">@Culture[Guide.Secondary.LabelKey]</a>
+        }
+    </div>
+
+    @if (!string.IsNullOrEmpty(Message))
+    {
+        <p class="state-message">@Message</p>
+    }
+</div>
+
+@code {
+    [Parameter, EditorRequired] public HowLobsyRoleGuides.Guide Guide { get; set; } = null!;
+    [Parameter] public bool Busy { get; set; }
+    [Parameter] public string? Message { get; set; }
+    [Parameter] public EventCallback OnPrimaryClick { get; set; }
+
+    protected override void OnInitialized()
+        => Culture.Changed += OnCultureChanged;
+
+    private void OnCultureChanged()
+        => InvokeAsync(StateHasChanged);
+
+    public void Dispose()
+        => Culture.Changed -= OnCultureChanged;
+
+    private Task HandlePrimaryAsync() => OnPrimaryClick.InvokeAsync();
+
+    private MarkupString FormatBody(HowLobsyRoleGuides.Step step)
+    {
+        if (step.Links.Length == 0)
+        {
+            return new MarkupString(WebUtility.HtmlEncode(Culture[step.BodyKey]));
+        }
+
+        var args = new object[step.Links.Length];
+        for (var i = 0; i < step.Links.Length; i++)
+        {
+            var link = step.Links[i];
+            var label = WebUtility.HtmlEncode(Culture[link.LabelKey]);
+            // Candidate step 4 uses Apply.Title as emphasis, not a real href.
+            args[i] = link.Href is "#" or ""
+                ? $"<strong>{label}</strong>"
+                : $"<a href=\"{link.Href}\">{label}</a>";
+        }
+
+        return new MarkupString(Culture.Format(step.BodyKey, args));
+    }
+}

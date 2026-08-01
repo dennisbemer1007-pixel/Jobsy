@@ -33,6 +33,7 @@ public static class RoleNavCatalog
     public static readonly NavItem[] Enterprise =
     [
         new("Nav.Home", "/home", NavIcons.Home),
+        new("Nav.HowLobsyWorks", "/hoe-werkt-lobsy", NavIcons.Info),
         new("Nav.JobMap", "/", NavIcons.Map),
         new("Nav.Vacancies", "/employer/vacancies", NavIcons.Vacancies, ["/branch/vacancies/new", "/branch/applicants"]),
         new("Nav.SalaryTables", "/employer/salary-tables", NavIcons.Wages),
@@ -50,6 +51,7 @@ public static class RoleNavCatalog
     public static readonly NavItem[] Regional =
     [
         new("Nav.Home", "/home", NavIcons.Home),
+        new("Nav.HowLobsyWorks", "/hoe-werkt-lobsy", NavIcons.Info),
         new("Nav.JobMap", "/", NavIcons.Map),
         new("Nav.Vacancies", "/employer/vacancies", NavIcons.Vacancies, ["/regional", "/branch/applicants"]),
         new("Nav.MyBranches", "/regional/branches", NavIcons.Branches, ["/employer/takeovers"])
@@ -58,6 +60,7 @@ public static class RoleNavCatalog
     public static readonly NavItem[] Branch =
     [
         new("Nav.Home", "/home", NavIcons.Home),
+        new("Nav.HowLobsyWorks", "/hoe-werkt-lobsy", NavIcons.Info),
         new("Nav.JobMap", "/", NavIcons.Map),
         new("Nav.Vacancies", "/branch/vacancies", NavIcons.Vacancies, ["/employer/vacancies", "/branch/vacancies/new", "/branch/applicants"]),
         new("Nav.MyTokens", "/branch/tokens", NavIcons.Tokens),
@@ -70,6 +73,7 @@ public static class RoleNavCatalog
     public static readonly NavItem[] Intermediary =
     [
         new("Nav.Home", "/home", NavIcons.Home),
+        new("Nav.HowLobsyWorks", "/hoe-werkt-lobsy", NavIcons.Info),
         new("Nav.JobMap", "/", NavIcons.Map),
         new("Nav.Vacancies", "/employer/vacancies", NavIcons.Vacancies, ["/branch/vacancies/new", "/branch/applicants"]),
         new("Nav.Clients", "/intermediary", NavIcons.Companies),
@@ -80,6 +84,7 @@ public static class RoleNavCatalog
     public static readonly NavItem[] SalesManager =
     [
         new("Nav.Home", "/home", NavIcons.Home, ["/salesmanager"]),
+        new("Nav.HowLobsyWorks", "/hoe-werkt-lobsy", NavIcons.Info),
         new("Nav.SalesToolkit", "/salesmanager/toolkit", NavIcons.Shared),
         new("Nav.Onboarding", "/salesmanager/onboarding", NavIcons.Users),
         new("Nav.Invoices", "/salesmanager/invoices", NavIcons.Tokens)

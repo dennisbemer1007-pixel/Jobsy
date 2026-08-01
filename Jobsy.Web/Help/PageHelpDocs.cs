@@ -99,6 +99,18 @@ public static class PageHelpDocs
             "Je ziet kerncijfers bovenaan en KPI’s gegroepeerd in categorieën (groei, engagement, marketing, systeem). Kies een periode, open een categorie en klik een tegel voor drilldown.",
             "Overzicht houden en snel naar vacatures, tokens, sollicitaties of beheer gaan."),
 
+        ["/hoe-werkt-lobsy"] = new(
+            "Hoe werkt Lobsy",
+            "Uitleg over Lobsy afgestemd op jouw rol (vestiging, regio, bedrijf, intermediair of sales).",
+            "Lees de stappen, volg de links naar de juiste modules en gebruik de knoppen onderaan om meteen aan de slag te gaan.",
+            "Snel begrijpen wat jij in Lobsy doet en waar je de belangrijkste acties vindt."),
+
+        ["/candidate/hoe-werkt-lobsy"] = new(
+            "Hoe werkt Lobsy (kandidaat)",
+            "Stapsgewijze uitleg voor kandidaten: banenkaart, profiel, bewaren, solliciteren en opvolging.",
+            "Lees de stappen en ga daarna door naar de banenkaart of je profiel. Eerste keer afronden markeert de uitleg als gezien.",
+            "Weten hoe je een baan vindt en solliciteert zonder te verdwalen."),
+
         ["/candidate/liked"] = new(
             "Bewaard",
             "Vacatures die je hebt geliket of bewaard.",

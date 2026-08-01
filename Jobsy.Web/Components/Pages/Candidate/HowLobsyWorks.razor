@@ -1,74 +1,21 @@
 @page "/candidate/hoe-werkt-lobsy"
 @rendermode @(new InteractiveServerRenderMode(prerender: false))
 @attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Candidate,BranchManager,RegionalManager,EnterpriseManager,Intermediary,Admin")]
-@using Jobsy.Web.Localization
+@using Jobsy.Web.Help
 @inject JobsyApiClient Api
 @inject NavigationManager Navigation
 @inject CultureState Culture
-@implements IDisposable
 
-<PageTitle>@Culture["HowLobsy.Title"] · Lobsy</PageTitle>
+<PageTitle>@Culture[HowLobsyRoleGuides.Candidate.TitleKey] · Lobsy</PageTitle>
 
-<div class="panel-page how-lobsy-page">
-    <header class="panel-header">
-        <div>
-            <h1>@Culture["HowLobsy.Title"]</h1>
-            <p class="login-lead">@Culture["HowLobsy.Lead"]</p>
-        </div>
-    </header>
-
-    <ol class="how-lobsy-steps">
-        <li class="how-lobsy-step">
-            <h2>@Culture["HowLobsy.Step1Title"]</h2>
-            <p>@((MarkupString)Culture.Format("HowLobsy.Step1Body", $"<a href=\"/\">{System.Net.WebUtility.HtmlEncode(Culture["Nav.JobMap"])}</a>"))</p>
-        </li>
-        <li class="how-lobsy-step">
-            <h2>@Culture["HowLobsy.Step2Title"]</h2>
-            <p>@((MarkupString)Culture.Format("HowLobsy.Step2Body", $"<a href=\"/candidate/profile\">{System.Net.WebUtility.HtmlEncode(Culture["Nav.Profile"])}</a>"))</p>
-        </li>
-        <li class="how-lobsy-step">
-            <h2>@Culture["HowLobsy.Step3Title"]</h2>
-            <p>@((MarkupString)Culture.Format("HowLobsy.Step3Body", $"<a href=\"/candidate/liked\">{System.Net.WebUtility.HtmlEncode(Culture["Nav.Saved"])}</a>", $"<a href=\"/candidate/shared\">{System.Net.WebUtility.HtmlEncode(Culture["Nav.Shared"])}</a>"))</p>
-        </li>
-        <li class="how-lobsy-step">
-            <h2>@Culture["HowLobsy.Step4Title"]</h2>
-            <p>@((MarkupString)Culture.Format("HowLobsy.Step4Body", $"<strong>{System.Net.WebUtility.HtmlEncode(Culture["Apply.Title"])}</strong>"))</p>
-        </li>
-        <li class="how-lobsy-step">
-            <h2>@Culture["HowLobsy.Step5Title"]</h2>
-            <p>@((MarkupString)Culture.Format("HowLobsy.Step5Body", $"<a href=\"/candidate/applications\">{System.Net.WebUtility.HtmlEncode(Culture["Nav.MyApplications"])}</a>"))</p>
-        </li>
-        <li class="how-lobsy-step">
-            <h2>@Culture["HowLobsy.Step6Title"]</h2>
-            <p>@Culture["HowLobsy.Step6Body"]</p>
-        </li>
-    </ol>
-
-    <div class="inline-actions how-lobsy-actions">
-        <button type="button" class="login-submit" disabled="@_busy" @onclick="FinishAsync">
-            @(_busy ? "…" : Culture["HowLobsy.ToMap"])
-        </button>
-        <a class="auth-link" href="/candidate/profile">@Culture["HowLobsy.ToProfile"]</a>
-    </div>
-
-    @if (!string.IsNullOrEmpty(_message))
-    {
-        <p class="state-message">@_message</p>
-    }
-</div>
+<HowLobsyGuidePanel Guide="HowLobsyRoleGuides.Candidate"
+                    Busy="_busy"
+                    Message="_message"
+                    OnPrimaryClick="FinishAsync" />
 
 @code {
     private bool _busy;
     private string? _message;
-
-    protected override void OnInitialized()
-        => Culture.Changed += OnCultureChanged;
-
-    private void OnCultureChanged()
-        => InvokeAsync(StateHasChanged);
-
-    public void Dispose()
-        => Culture.Changed -= OnCultureChanged;
 
     private async Task FinishAsync()
     {

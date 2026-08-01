@@ -87,6 +87,30 @@ public class RoleNavCatalogTests
         Assert.Contains(items, i => i.Href == "/candidate/applications");
     }
 
+    [Theory]
+    [InlineData(JobsyRoles.BranchManager)]
+    [InlineData(JobsyRoles.RegionalManager)]
+    [InlineData(JobsyRoles.EnterpriseManager)]
+    [InlineData(JobsyRoles.Intermediary)]
+    [InlineData(JobsyRoles.SalesManager)]
+    public void ForUser_non_admin_roles_get_how_lobsy_nav(string role)
+    {
+        var identity = new ClaimsIdentity([new Claim(ClaimTypes.Role, role)], "test");
+        var items = RoleNavCatalog.ForUser(new ClaimsPrincipal(identity));
+        Assert.Contains(items, i => i.Href == "/hoe-werkt-lobsy");
+        Assert.DoesNotContain(items, i => i.Href == "/candidate/hoe-werkt-lobsy");
+    }
+
+    [Fact]
+    public void ForUser_admin_does_not_get_how_lobsy_nav()
+    {
+        var identity = new ClaimsIdentity([new Claim(ClaimTypes.Role, JobsyRoles.Admin)], "test");
+        var items = RoleNavCatalog.ForUser(new ClaimsPrincipal(identity));
+        Assert.DoesNotContain(items, i => i.TitleKey == "Nav.HowLobsyWorks");
+        Assert.DoesNotContain(items, i => i.Href == "/hoe-werkt-lobsy");
+        Assert.DoesNotContain(items, i => i.Href == "/candidate/hoe-werkt-lobsy");
+    }
+
     [Fact]
     public void IsActive_matches_extra_path_prefix()
     {
