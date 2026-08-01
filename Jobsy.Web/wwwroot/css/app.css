@@ -2985,7 +2985,7 @@ a {
     }
 }
 
-/* Funda-style highlighted vacancies carousel above the map */
+/* Funda-style highlighted vacancies carousel above the map / mobile list */
 .highlight-carousel {
     flex: 0 0 auto;
     display: flex;
@@ -2998,6 +2998,11 @@ a {
         color-mix(in srgb, var(--surface) 92%, transparent) 100%
     );
     border-bottom: 1px solid color-mix(in srgb, #e8a317 22%, var(--border));
+}
+
+/* List-pane carousel is mobile-only; map carousel covers desktop + mobile map. */
+.highlight-carousel--list {
+    display: none;
 }
 
 .highlight-carousel__title {
@@ -3023,7 +3028,7 @@ a {
     flex: 0 0 min(220px, 72vw);
     scroll-snap-align: start;
     display: grid;
-    grid-template-columns: 44px 1fr;
+    grid-template-columns: 56px 1fr;
     gap: 0.55rem;
     align-items: center;
     padding: 0.55rem 0.65rem;
@@ -3044,9 +3049,32 @@ a {
     box-shadow: 0 6px 16px color-mix(in srgb, #e8a317 22%, transparent);
 }
 
+.highlight-carousel__media {
+    width: 56px;
+    height: 56px;
+    border-radius: 10px;
+    object-fit: cover;
+    background: color-mix(in srgb, var(--brand) 8%, var(--surface));
+}
+
+.highlight-carousel__media--logo {
+    object-fit: contain;
+    padding: 0.2rem;
+}
+
+.highlight-carousel__media--placeholder {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    color: var(--brand);
+    font-size: 0.95rem;
+}
+
+/* Back-compat if older markup still uses __logo */
 .highlight-carousel__logo {
-    width: 44px;
-    height: 44px;
+    width: 56px;
+    height: 56px;
     border-radius: 10px;
     object-fit: cover;
     background: color-mix(in srgb, var(--brand) 8%, var(--surface));
@@ -4112,6 +4140,10 @@ a.map-popup__apply.map-popup__cta:visited {
     .funda-layout.show-map .vacancy-pane {
         visibility: hidden;
         pointer-events: none;
+    }
+
+    .jobsy-discovery.show-list .highlight-carousel--list {
+        display: flex;
     }
 
     .filter-bar--desktop {
