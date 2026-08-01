@@ -53,4 +53,29 @@ public class DutchInterviewAnswerHeuristicsTests
         Assert.False(string.IsNullOrWhiteSpace(quote));
         Assert.Contains("Toen", quote, StringComparison.OrdinalIgnoreCase);
     }
+
+    [Theory]
+    [InlineData("Haha ik plan mijn route alsof mijn leven ervan afhangt, echt waar.")]
+    [InlineData("Ik ben een magazijn-ninja 😂 en check daarna alles nog een keer.")]
+    [InlineData("Half serieus: ik rijd met een knipoog, maar wel altijd op tijd.")]
+    public void LooksLightHumor_detects_playful_answers(string answer)
+    {
+        Assert.True(DutchInterviewAnswerHeuristics.LooksLightHumor(answer));
+        Assert.False(DutchInterviewAnswerHeuristics.LooksInsulting(answer));
+    }
+
+    [Theory]
+    [InlineData("Toen het druk was, hielp ik eerst de klant en daarna de voorraad.")]
+    [InlineData("Ik woon dichtbij en kom op de fiets.")]
+    public void LooksLightHumor_false_for_serious_answers(string answer)
+    {
+        Assert.False(DutchInterviewAnswerHeuristics.LooksLightHumor(answer));
+    }
+
+    [Fact]
+    public void LooksLightHumor_never_true_when_insulting()
+    {
+        Assert.True(DutchInterviewAnswerHeuristics.LooksInsulting("haha je bent een idioot"));
+        Assert.False(DutchInterviewAnswerHeuristics.LooksLightHumor("haha je bent een idioot"));
+    }
 }

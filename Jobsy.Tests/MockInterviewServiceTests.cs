@@ -227,6 +227,45 @@ public class MockInterviewServiceTests
     }
 
     [Fact]
+    public void ScriptedFallback_receives_funny_answer_warmly_but_keeps_feedback()
+    {
+        var vacancy = new MockInterviewVacancyContext(
+            Guid.NewGuid(),
+            "Bezorgmedewerker",
+            "Je bezorgt bestellingen in de buurt per fiets. Klantvriendelijk en op tijd zijn is belangrijk.",
+            "FietsExpress",
+            null,
+            new DateOnly(2026, 8, 1),
+            ["Fiets"],
+            14.50m,
+            []);
+
+        var history = new List<MockInterviewMessage>
+        {
+            new("assistant", "Vraag: Hoe plan jij een route?"),
+            new("user", "Haha ik plan mijn route alsof mijn leven ervan afhangt, en check daarna of alles klopt.")
+        };
+
+        var reply = MockInterviewService.ScriptedFallback.NextReply(vacancy, history);
+
+        Assert.Contains("Sterk:", reply, StringComparison.Ordinal);
+        Assert.Contains("Tip:", reply, StringComparison.Ordinal);
+        Assert.Contains("Vraag:", reply, StringComparison.Ordinal);
+        Assert.DoesNotContain("Let op:", reply, StringComparison.Ordinal);
+        Assert.True(
+            reply.Contains("Haha", StringComparison.OrdinalIgnoreCase)
+            || reply.Contains("knipoog", StringComparison.OrdinalIgnoreCase)
+            || reply.Contains("Glimlach", StringComparison.OrdinalIgnoreCase)
+            || reply.Contains("vrolijk", StringComparison.OrdinalIgnoreCase),
+            reply);
+        Assert.True(
+            reply.Contains("serieus", StringComparison.OrdinalIgnoreCase)
+            || reply.Contains("voorbeeld", StringComparison.OrdinalIgnoreCase)
+            || reply.Contains("recruiter", StringComparison.OrdinalIgnoreCase),
+            reply);
+    }
+
+    [Fact]
     public void ScriptedFallback_opens_with_quoted_vacancy_duty()
     {
         var vacancy = new MockInterviewVacancyContext(

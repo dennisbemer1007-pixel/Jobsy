@@ -30,6 +30,14 @@ public static class DutchInterviewAnswerHeuristics
         "situatie", "daarom"
     ];
 
+    private static readonly string[] LightHumorMarkers =
+    [
+        "grapje", "half serieus", "serieus niet", "met een knipoog", "knipoog",
+        "superkracht", "superheld", "ninja", "batman", "alsof mijn leven",
+        "met mijn ogen dicht", "ik kan vliegen", "magisch", "wow wow",
+        "haha", "hahaha", "hihi", "hehe", "lol", "lmao", "rofl", "xd", ":d", ";)"
+    ];
+
     public static bool LooksInsulting(string? answer)
     {
         if (string.IsNullOrWhiteSpace(answer))
@@ -40,6 +48,32 @@ public static class DutchInterviewAnswerHeuristics
         var normalized = Normalize(answer);
         return InsultMarkers.Any(m => normalized.Contains(Normalize(m), StringComparison.Ordinal))
                || SoftRudeMarkers.Any(m => normalized.Contains(Normalize(m), StringComparison.Ordinal));
+    }
+
+    /// <summary>
+    /// Light playful humor (laugh markers, wink, gentle exaggeration).
+    /// Never true when the answer is insulting — insults stay strict.
+    /// </summary>
+    public static bool LooksLightHumor(string? answer)
+    {
+        if (string.IsNullOrWhiteSpace(answer) || LooksInsulting(answer))
+        {
+            return false;
+        }
+
+        var text = answer.Trim();
+        if (ContainsAnyEmoji(text, "😂", "😅", "😄", "😁", "😉", "🤭"))
+        {
+            return true;
+        }
+
+        var normalized = Normalize(text);
+        if (Regex.IsMatch(normalized, @"\b(ha(ha)+|hi(hi)+|he(he)+|lol|lmao|rofl)\b"))
+        {
+            return true;
+        }
+
+        return LightHumorMarkers.Any(m => normalized.Contains(Normalize(m), StringComparison.Ordinal));
     }
 
     public static string FriendlyToneRedirect(string? vacancyHook = null)
@@ -148,6 +182,9 @@ public static class DutchInterviewAnswerHeuristics
 
         return q;
     }
+
+    private static bool ContainsAnyEmoji(string text, params string[] emojis)
+        => emojis.Any(e => text.Contains(e, StringComparison.Ordinal));
 
     private static string Normalize(string value)
         => Regex.Replace(value.ToLowerInvariant(), @"\s+", " ").Trim();

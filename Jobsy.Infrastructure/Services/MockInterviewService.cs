@@ -53,10 +53,16 @@ public sealed class MockInterviewService : IMockInterviewService
         - Vary tips: sometimes STAR, tone, vacancy task link, or a rewrite example.
         - If the answer is vague/short: stay on the same theme with a soft follow-up as "{questionLabel} ".
 
+        Tone — serious base, light humor only when THEY start it:
+        - Default voice: warm, serious coach. Do NOT force jokes or comedian energy.
+        - If their answer is playfully funny (wink, light exaggeration, laugh) and NOT rude: acknowledge it warmly in one short phrase, then still give solid feedback and a real practice question.
+        - Your own humor: at most one short friendly wink per reply, never sarcasm about the vacancy or their skills.
+        - Insults / rude language: stay firm and redirect — NEVER laugh that off or mirror the insult.
+
         Reply structure AFTER each candidate answer (required, except the opening turn):
         1) Optional line "{cautionLabel} " — ONLY for insulting/rude language. Friendly, no shaming.
-        2) Line "{strongLabel} " — what went well, with a short quote from THEIR answer.
-        3) Line "{tipLabel} " — one concrete improvement.
+        2) Line "{strongLabel} " — what went well, with a short quote from THEIR answer. (If they were playfully funny: one warm wink here is OK.)
+        3) Line "{tipLabel} " — one concrete improvement (always keep this useful, even after a funny answer).
         4) Optional line "{rewriteLabel} " — one rewritten example sentence (max ~35 words).
         5) Blank line, then "{questionLabel} " + exactly one next practice question.
 
@@ -216,16 +222,35 @@ public sealed class MockInterviewService : IMockInterviewService
             var gapHint = candidate?.Gaps is { Count: > 0 }
                 ? " If a listed profile↔vacancy gap has not been discussed yet, make the next question about one gap (curious coaching, not gatekeeping)."
                 : " Prefer the next question about another concrete detail from the vacancy text.";
+            string coachingHint;
+            if (DutchInterviewAnswerHeuristics.LooksInsulting(lastUser))
+            {
+                coachingHint =
+                    $"My tone may have been too sharp: start with '{labels.Caution} ' (friendly, no shaming), " +
+                    $"then {labels.Tip.TrimEnd(':')} + '{labels.Rewrite} ' with a polite rewrite, and ask the same practice question again. " +
+                    "Do NOT laugh this off.";
+            }
+            else if (DutchInterviewAnswerHeuristics.LooksLightHumor(lastUser))
+            {
+                coachingHint =
+                    $"My answer was playfully funny: in '{labels.Strong} ' acknowledge that warmly with one short wink, " +
+                    $"then still give a concrete '{labels.Tip} ' that keeps the practice useful. " +
+                    $"Add '{labels.Rewrite} ' if my answer was vague or short. Stay mostly serious overall.";
+            }
+            else
+            {
+                coachingHint =
+                    $"Use {labels.Strong.TrimEnd(':')} + {labels.Tip.TrimEnd(':')}, and add '{labels.Rewrite} ' if my answer was vague or short. " +
+                    "Stay warm and serious — no forced jokes.";
+            }
+
             messages.Add(new
             {
                 role = "user",
                 content =
                     $"Reply now as coach in {labels.LanguageName} to my last answer above. " +
                     "Quote or paraphrase something from my text. " +
-                    (DutchInterviewAnswerHeuristics.LooksInsulting(lastUser)
-                        ? $"My tone may have been too sharp: start with '{labels.Caution} ' (friendly, no shaming), " +
-                          $"then {labels.Tip.TrimEnd(':')} + '{labels.Rewrite} ' with a polite rewrite, and ask the same practice question again. "
-                        : $"Use {labels.Strong.TrimEnd(':')} + {labels.Tip.TrimEnd(':')}, and add '{labels.Rewrite} ' if my answer was vague or short. ") +
+                    coachingHint + " " +
                     gapHint + " " +
                     $"End with exactly one '{labels.Question} '."
             });
@@ -521,13 +546,20 @@ public sealed class MockInterviewService : IMockInterviewService
 
             if (useEnglish)
             {
+                var playful = DutchInterviewAnswerHeuristics.LooksLightHumor(answer);
                 var rewriteLine = DutchInterviewAnswerHeuristics.LooksVague(answer)
                     || !DutchInterviewAnswerHeuristics.HasStarCue(answer)
                     ? $"\n{labels.Rewrite} \"For example with {plan.PrimaryHook}: when [situation], I did [action], and that led to [result].\""
                     : string.Empty;
+                var strongEn = playful
+                    ? "Ha, that lands with a smile — and there is still something solid we can build on."
+                    : "You shared something we can build on.";
+                var tipEn = playful
+                    ? $"Keep the wink if you want, but add one serious example about: {plan.PrimaryHook}."
+                    : $"Link your answer explicitly to: {plan.PrimaryHook}.";
                 return
-                    $"{labels.Strong} You shared something we can build on.\n" +
-                    $"{labels.Tip} Link your answer explicitly to: {plan.PrimaryHook}.{rewriteLine}";
+                    $"{labels.Strong} {strongEn}\n" +
+                    $"{labels.Tip} {tipEn}{rewriteLine}";
             }
 
             var strong = BuildStrong(answer, plan, userTurnIndex);
@@ -545,6 +577,15 @@ public sealed class MockInterviewService : IMockInterviewService
         {
             var quote = DutchInterviewAnswerHeuristics.ExtractQuote(answer);
             var quoteBit = string.IsNullOrWhiteSpace(quote) ? null : $" (“{quote}”)";
+            var playful = DutchInterviewAnswerHeuristics.LooksLightHumor(answer);
+
+            if (playful)
+            {
+                return Pick(userTurnIndex, answer,
+                    $"Haha, dat komt vrolijk over{quoteBit}. Leuk — en er zit ook iets in waar een recruiter mee verder kan.",
+                    $"Glimlach van hier{quoteBit}. Mooi dat je ontspannen blijft; nu zetten we er één serieus detail bij.",
+                    $"Dat mag best met een knipoog{quoteBit}. Fijn — laten we het tegelijk ook inhoudelijk scherp maken.");
+            }
 
             if (answer.Length < 12)
             {
@@ -588,6 +629,14 @@ public sealed class MockInterviewService : IMockInterviewService
 
         private static string BuildTip(string answer, InterviewPlan plan, int userTurnIndex)
         {
+            if (DutchInterviewAnswerHeuristics.LooksLightHumor(answer))
+            {
+                return Pick(userTurnIndex, answer,
+                    $"Houd de knipoog, maar zet er één serieus voorbeeld naast over {plan.PrimaryHook}.",
+                    $"Leuk, en nu de recruiter-versie: situatie → wat jij deed bij {plan.PrimaryHook} → resultaat.",
+                    $"Na de grap: één zin waarom dit past bij {plan.Company} en {plan.PrimaryHook}.");
+            }
+
             if (answer.Length < 25)
             {
                 return Pick(userTurnIndex, answer,
