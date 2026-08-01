@@ -6833,6 +6833,45 @@ button.stat-card {
     align-items: start;
 }
 
+.vacancy-editor .login-form {
+    gap: 0.55rem;
+}
+
+.vacancy-editor .login-form > label {
+    text-transform: none;
+    letter-spacing: normal;
+    font-size: 0.84rem;
+    font-weight: 600;
+    color: var(--text);
+}
+
+.vacancy-editor .login-form fieldset {
+    min-width: 0;
+}
+
+.vacancy-editor .login-form fieldset legend {
+    text-transform: none;
+    letter-spacing: normal;
+    font-size: 0.92rem;
+    font-weight: 650;
+    color: var(--text);
+    padding: 0 0.2rem;
+}
+
+.vacancy-editor .profile-roles {
+    gap: 0.35rem;
+    padding: 0.65rem 0.8rem;
+}
+
+.vacancy-editor .profile-roles label,
+.vacancy-editor .profile-min-employers label {
+    text-transform: none;
+    letter-spacing: normal;
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: var(--text);
+}
+
 @media (max-width: 900px) {
     .vacancy-editor__grid {
         grid-template-columns: 1fr;
@@ -6840,23 +6879,24 @@ button.stat-card {
 }
 
 .vacancy-field-hint {
-    margin: 0 0 0.65rem;
-    line-height: 1.4;
+    margin: 0;
+    line-height: 1.35;
+    font-size: 0.82rem;
 }
 
 .vacancy-toggle-row {
     display: flex;
-    gap: 0.75rem;
+    gap: 0.65rem;
     align-items: flex-start;
-    padding: 0.75rem 0.85rem;
+    padding: 0.55rem 0.7rem;
     border: 1px solid var(--border);
-    border-radius: 10px;
+    border-radius: 8px;
     background: color-mix(in srgb, var(--surface) 92%, var(--brand) 5%);
     cursor: pointer;
     text-transform: none;
     letter-spacing: normal;
     font-weight: 500;
-    margin: 0 0 0.55rem;
+    margin: 0;
 }
 
 .vacancy-toggle-row input {
@@ -6879,34 +6919,80 @@ button.stat-card {
 .vacancy-hours,
 .vacancy-schedule,
 .vacancy-legal,
-.vacancy-contact {
+.vacancy-contact,
+.vacancy-intermediary {
     border: 1px solid var(--border);
     border-radius: 10px;
-    padding: 0.75rem 1rem;
+    padding: 0.65rem 0.8rem;
     margin: 0;
     display: flex;
     flex-direction: column;
-    gap: 0.35rem;
+    gap: 0.4rem;
 }
 
 .vacancy-hours legend,
 .vacancy-schedule legend,
 .vacancy-legal legend,
-.vacancy-contact legend {
-    padding: 0 0.25rem;
-    font-size: 0.85rem;
-    font-weight: 600;
+.vacancy-contact legend,
+.vacancy-intermediary legend {
+    padding: 0 0.2rem;
+    font-size: 0.92rem;
+    font-weight: 650;
+    text-transform: none;
+    letter-spacing: normal;
+    color: var(--text);
 }
 
 .vacancy-hours__row {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 0.75rem;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: end;
+    gap: 0.55rem 0.65rem;
+}
+
+.vacancy-hours__title {
+    flex: 0 0 auto;
+    align-self: center;
+    font-size: 0.92rem;
+    font-weight: 650;
+    color: var(--text);
+    margin-right: 0.15rem;
+}
+
+.vacancy-hours__row label {
+    flex: 0 1 6.5rem;
+    min-width: 5.5rem;
+    margin: 0;
+    text-transform: none;
+    letter-spacing: normal;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--muted);
+}
+
+.vacancy-hours__row input[type="number"] {
+    width: 100%;
+    min-width: 0;
+    padding: 0.45rem 0.55rem;
+}
+
+.vacancy-hours__sep {
+    align-self: end;
+    padding-bottom: 0.55rem;
+    color: var(--muted);
+    font-weight: 600;
+}
+
+.vacancy-hours__meta {
+    align-self: center;
+    margin-left: auto;
+    font-size: 0.8rem;
 }
 
 @media (max-width: 560px) {
-    .vacancy-hours__row {
-        grid-template-columns: 1fr;
+    .vacancy-hours__meta {
+        margin-left: 0;
+        flex: 1 1 100%;
     }
 }
 
@@ -6939,21 +7025,21 @@ button.stat-card {
 .vacancy-legal__list {
     display: flex;
     flex-direction: column;
-    gap: 0.45rem;
-    margin: 0.15rem 0 0;
+    gap: 0.35rem;
+    margin: 0;
     padding: 0;
     list-style: none;
 }
 
 .vacancy-legal__item {
     display: grid;
-    grid-template-columns: 1.25rem minmax(0, 1fr) 1.6rem;
-    column-gap: 0.7rem;
-    row-gap: 0.35rem;
+    grid-template-columns: 1.15rem minmax(0, 1fr) 1.45rem;
+    column-gap: 0.6rem;
+    row-gap: 0.3rem;
     align-items: start;
-    padding: 0.7rem 0.8rem;
+    padding: 0.55rem 0.65rem;
     border: 1px solid var(--border);
-    border-radius: 10px;
+    border-radius: 8px;
     background: var(--surface);
 }
 
@@ -6973,13 +7059,11 @@ button.stat-card {
 .vacancy-legal__text {
     margin: 0;
     min-width: 0;
-    display: flex;
-    flex-direction: column;
-    gap: 0.1rem;
-    text-transform: none;
+    display: block;
+    text-transform: none !important;
     letter-spacing: normal;
     font-weight: 500;
-    font-size: 0.92rem;
+    font-size: 0.9rem;
     line-height: 1.35;
     color: var(--text);
     cursor: pointer;
@@ -7021,22 +7105,6 @@ button.stat-card {
     padding: 0.45rem 0.55rem;
     border-radius: 8px;
     background: color-mix(in srgb, var(--surface) 88%, var(--brand) 8%);
-}
-
-.vacancy-intermediary {
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 0.75rem 1rem;
-    margin: 0 0 0.25rem;
-    display: flex;
-    flex-direction: column;
-    gap: 0.65rem;
-}
-
-.vacancy-intermediary legend {
-    padding: 0 0.25rem;
-    font-size: 0.85rem;
-    font-weight: 600;
 }
 
 .vacancy-intermediary__kvk-row {
