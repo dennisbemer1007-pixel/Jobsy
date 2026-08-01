@@ -6,6 +6,7 @@ public class CompanySummary
     public string Name { get; set; } = string.Empty;
     public string Address { get; set; } = string.Empty;
     public string KvkNumber { get; set; } = string.Empty;
+    public string? KvkEstablishmentId { get; set; }
     public decimal TokenBalance { get; set; }
     public int ActiveVacancies { get; set; }
     public Guid? ParentCompanyId { get; set; }

@@ -615,6 +615,26 @@ public sealed class JobsyApiClient : IAsyncDisposable
         return await response.Content.ReadFromJsonAsync<CompanySummary>(cancellationToken: ct);
     }
 
+    public async Task<CompanySummary?> RegisterIntermediaryClientFromKvkAsync(
+        string kvkNumber,
+        string kvkEstablishmentId,
+        CancellationToken ct = default)
+    {
+        var response = await _http.PostAsJsonAsync("api/companies/intermediary-clients/from-kvk", new
+        {
+            kvkNumber,
+            kvkEstablishmentId
+        }, ct);
+
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException(TryExtractMessage(body) ?? body);
+        }
+
+        return await response.Content.ReadFromJsonAsync<CompanySummary>(cancellationToken: ct);
+    }
+
     public async Task<IReadOnlyList<KvkEstablishmentItem>> GetKvkEstablishmentsAsync(
         string kvkNumber,
         CancellationToken ct = default)
@@ -1987,7 +2007,8 @@ public record CreateVacancyForm(
     bool? LegalNightShift23To06 = null,
     bool? LegalAdultSupervisorPresent = null,
     bool? LegalHandlesMoneyOrClosing = null,
-    bool? LegalHeavyOrHazardousWork = null);
+    bool? LegalHeavyOrHazardousWork = null,
+    bool ShowClientAddressOnMap = false);
 
 public record BatchVacancyForm(
     string Title,
@@ -1997,7 +2018,8 @@ public record BatchVacancyForm(
     DateOnly EndDate,
     TransportMode RequiredTransport,
     string[] WorkTypes,
-    Guid[] CompanyIds);
+    Guid[] CompanyIds,
+    bool ShowClientAddressOnMap = false);
 
 public sealed class CsvImportRowForm
 {
@@ -2016,6 +2038,9 @@ public sealed class CsvImportRowForm
     public string? DrivingLicense { get; set; }
     public string? Education { get; set; }
     public string? MinimumEmployers { get; set; }
+    public string? KvkNumber { get; set; }
+    public string? KvkEstablishmentId { get; set; }
+    public string? ShowClientAddressOnMap { get; set; }
 }
 
 public sealed class CsvImportResult

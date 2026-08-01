@@ -65,6 +65,21 @@ public class ExternalVacanciesController : ControllerBase
             return NotFound(new { message = "Bedrijf niet gevonden." });
         }
 
+        var apiKeyCompanyId = GetApiKeyCompanyId();
+        var apiKeyCompany = apiKeyCompanyId is Guid keyCompanyId
+            ? await _db.Companies.AsNoTracking().FirstOrDefaultAsync(c => c.Id == keyCompanyId, cancellationToken)
+            : null;
+        var isIntermediary = apiKeyCompany?.Type == CompanyType.Intermediary;
+        Guid? intermediaryCompanyId = isIntermediary ? apiKeyCompany!.Id : null;
+        if (isIntermediary)
+        {
+            var kvkError = IntermediaryVacancyRules.ValidateEndClientKvk(company, callerIsIntermediary: true);
+            if (kvkError is not null)
+            {
+                return BadRequest(new { message = kvkError });
+            }
+        }
+
         if (request.SalaryTableId is not Guid tableId)
         {
             return BadRequest(new { message = "Salaristabel is verplicht." });
@@ -168,7 +183,9 @@ public class ExternalVacanciesController : ControllerBase
             RequiredEducation = string.IsNullOrWhiteSpace(request.RequiredEducation)
                 ? null
                 : request.RequiredEducation.Trim(),
-            MinimumEmployers = request.MinimumEmployers is > 0 ? request.MinimumEmployers : null
+            MinimumEmployers = request.MinimumEmployers is > 0 ? request.MinimumEmployers : null,
+            IntermediaryCompanyId = intermediaryCompanyId,
+            ShowClientAddressOnMap = isIntermediary && request.ShowClientAddressOnMap
         };
 
         _db.Vacancies.Add(vacancy);
@@ -355,6 +372,12 @@ public class ExternalVacanciesController : ControllerBase
 
     private static ExternalVacancyStatusDto ToStatusDto(Core.Entities.Vacancy v) =>
         new(v.Id, v.CompanyId, v.Title, v.Status.ToString(), v.CreatedVia.ToString(), v.StartDate, v.EndDate);
+
+    private Guid? GetApiKeyCompanyId()
+    {
+        var raw = User.FindFirst(JobsyClaimTypes.CompanyId)?.Value;
+        return Guid.TryParse(raw, out var companyId) ? companyId : null;
+    }
 
     private static string[] NormalizeBranchLabels(IEnumerable<string>? labels) =>
         (labels ?? [])

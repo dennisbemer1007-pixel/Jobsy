@@ -211,6 +211,7 @@ public class VacanciesController : ControllerBase
         var vacancy = await _db.Vacancies
             .AsNoTracking()
             .Include(v => v.Company)
+            .Include(v => v.IntermediaryCompany)
             .Include(v => v.SalaryTable!)
                 .ThenInclude(t => t.Rates)
             .FirstOrDefaultAsync(v => v.Id == id, cancellationToken);
@@ -254,7 +255,12 @@ public class VacanciesController : ControllerBase
             return Ok(Array.Empty<VacancyListItemDto>());
         }
 
-        var query = _db.Vacancies.AsNoTracking().AsSplitQuery().Include(v => v.Company).AsQueryable();
+        var query = _db.Vacancies
+            .AsNoTracking()
+            .AsSplitQuery()
+            .Include(v => v.Company)
+            .Include(v => v.IntermediaryCompany)
+            .AsQueryable();
 
         if (accessible is not null)
         {
@@ -333,6 +339,27 @@ public class VacanciesController : ControllerBase
         if (company is null)
         {
             return NotFound(new { message = "Bedrijf niet gevonden." });
+        }
+
+        var isIntermediary = _companyAuth.GetPrimaryRole(User) == UserRole.Intermediary;
+        Guid? intermediaryCompanyId = null;
+        Company? intermediaryCompany = null;
+        if (isIntermediary)
+        {
+            var kvkError = IntermediaryVacancyRules.ValidateEndClientKvk(company, callerIsIntermediary: true);
+            if (kvkError is not null)
+            {
+                return BadRequest(new { message = kvkError });
+            }
+
+            intermediaryCompanyId = await ResolveIntermediaryOrganizationIdAsync(cancellationToken);
+            if (intermediaryCompanyId is null)
+            {
+                return BadRequest(new { message = "Intermediair-organisatie niet gevonden voor deze gebruiker." });
+            }
+
+            intermediaryCompany = await _db.Companies.AsNoTracking()
+                .FirstOrDefaultAsync(c => c.Id == intermediaryCompanyId.Value, cancellationToken);
         }
 
         if (request.SalaryTableId is not Guid tableId)
@@ -467,7 +494,9 @@ public class VacanciesController : ControllerBase
             DirectContactEnabled = request.OverrideContactPreference && request.DirectContactEnabled,
             ContactPreferMail = request.OverrideContactPreference && request.DirectContactEnabled && request.ContactPreferMail,
             ContactPreferPhone = request.OverrideContactPreference && request.DirectContactEnabled && request.ContactPreferPhone,
-            ContactPreferWhatsApp = request.OverrideContactPreference && request.DirectContactEnabled && request.ContactPreferWhatsApp
+            ContactPreferWhatsApp = request.OverrideContactPreference && request.DirectContactEnabled && request.ContactPreferWhatsApp,
+            IntermediaryCompanyId = intermediaryCompanyId,
+            ShowClientAddressOnMap = isIntermediary && request.ShowClientAddressOnMap
         };
 
         var hoursError = ApplyHoursAndSchedule(vacancy, request);
@@ -482,6 +511,7 @@ public class VacanciesController : ControllerBase
         await _db.SaveChangesAsync(cancellationToken);
 
         vacancy.Company = company;
+        vacancy.IntermediaryCompany = intermediaryCompany;
         return CreatedAtAction(nameof(GetById), new { id = vacancy.Id }, MapToDto(vacancy, showWage: true));
     }
 
@@ -666,6 +696,21 @@ public class VacanciesController : ControllerBase
             return BadRequest(new { message = "Een of meer branches zijn ongeldig of niet actief." });
         }
 
+        var isIntermediary = _companyAuth.GetPrimaryRole(User) == UserRole.Intermediary;
+        Guid? intermediaryCompanyId = null;
+        Company? intermediaryCompany = null;
+        if (isIntermediary)
+        {
+            intermediaryCompanyId = await ResolveIntermediaryOrganizationIdAsync(cancellationToken);
+            if (intermediaryCompanyId is null)
+            {
+                return BadRequest(new { message = "Intermediair-organisatie niet gevonden voor deze gebruiker." });
+            }
+
+            intermediaryCompany = await _db.Companies.AsNoTracking()
+                .FirstOrDefaultAsync(c => c.Id == intermediaryCompanyId.Value, cancellationToken);
+        }
+
         var created = new List<Core.Entities.Vacancy>();
         foreach (var companyId in request.CompanyIds.Distinct())
         {
@@ -682,6 +727,15 @@ public class VacanciesController : ControllerBase
             if (company is null)
             {
                 continue;
+            }
+
+            if (isIntermediary)
+            {
+                var kvkError = IntermediaryVacancyRules.ValidateEndClientKvk(company, callerIsIntermediary: true);
+                if (kvkError is not null)
+                {
+                    return BadRequest(new { message = $"{company.Name}: {kvkError}" });
+                }
             }
 
             var organizationId = company.ParentCompanyId ?? company.Id;
@@ -729,10 +783,13 @@ public class VacanciesController : ControllerBase
                 RequiredTransport = request.RequiredTransport,
                 WorkTypes = WorkTypeLabels.Combine(branchLabels),
                 WorkTypeLabels = WorkTypeLabels.CombineStored(branchLabels),
-                SalaryTableId = salaryTable.Id
+                SalaryTableId = salaryTable.Id,
+                IntermediaryCompanyId = intermediaryCompanyId,
+                ShowClientAddressOnMap = isIntermediary && request.ShowClientAddressOnMap
             };
             _db.Vacancies.Add(vacancy);
             vacancy.Company = company;
+            vacancy.IntermediaryCompany = intermediaryCompany;
             created.Add(vacancy);
         }
 
@@ -859,6 +916,7 @@ public class VacanciesController : ControllerBase
     private async Task<Core.Entities.Vacancy?> LoadManagedVacancyAsync(Guid id, CancellationToken cancellationToken)
         => await _db.Vacancies
             .Include(v => v.Company)
+            .Include(v => v.IntermediaryCompany)
             .FirstOrDefaultAsync(v => v.Id == id, cancellationToken);
 
     private async Task<ActionResult?> EnsureCompanyAccessAsync(Guid companyId, CancellationToken cancellationToken)
@@ -872,6 +930,39 @@ public class VacanciesController : ControllerBase
         {
             return Forbid();
         }
+    }
+
+    private async Task<Guid?> ResolveIntermediaryOrganizationIdAsync(CancellationToken cancellationToken)
+    {
+        var actor = await _users.FindByPrincipalAsync(User, cancellationToken);
+        if (actor?.CompanyId is not Guid companyId)
+        {
+            return null;
+        }
+
+        var company = await _db.Companies.AsNoTracking()
+            .FirstOrDefaultAsync(c => c.Id == companyId, cancellationToken);
+        if (company is null)
+        {
+            return null;
+        }
+
+        if (company.Type == CompanyType.Intermediary)
+        {
+            return company.Id;
+        }
+
+        if (company.ParentCompanyId is Guid parentId)
+        {
+            var parent = await _db.Companies.AsNoTracking()
+                .FirstOrDefaultAsync(c => c.Id == parentId, cancellationToken);
+            if (parent?.Type == CompanyType.Intermediary)
+            {
+                return parent.Id;
+            }
+        }
+
+        return null;
     }
 
     private VacancyProductActionResultDto ToProductResult(VacancyProductOutcome result) => new(
@@ -937,6 +1028,7 @@ public class VacanciesController : ControllerBase
                 .AsNoTracking()
                 .AsSplitQuery()
                 .Include(v => v.Company)
+                .Include(v => v.IntermediaryCompany)
                 .Include(v => v.SalaryTable!)
                     .ThenInclude(t => t.Rates)
                 .Where(v => ids.Contains(v.Id))
@@ -948,6 +1040,7 @@ public class VacanciesController : ControllerBase
             .AsNoTracking()
             .AsSplitQuery()
             .Include(v => v.Company)
+            .Include(v => v.IntermediaryCompany)
             .Include(v => v.SalaryTable!)
                 .ThenInclude(t => t.Rates)
             .Where(v =>
@@ -1151,6 +1244,7 @@ public class VacanciesController : ControllerBase
         }
 
         var featured = VacancyHighlightRules.IsActive(v.IsHighlighted, v.HighlightedUntil, DateTime.UtcNow);
+        var display = IntermediaryVacancyRules.ResolvePublicDisplay(v, v.Company, v.IntermediaryCompany);
 
         return new VacancyListItemDto(
             v.Id,
@@ -1161,12 +1255,12 @@ public class VacanciesController : ControllerBase
             v.EndDate,
             v.Status.ToString(),
             v.CompanyId,
-            v.Company?.Name ?? "Onbekend bedrijf",
-            v.Company?.Address ?? string.Empty,
-            v.Company?.LogoUrl,
+            display.DisplayName,
+            display.DisplayAddress,
+            display.DisplayLogoUrl,
             v.ImageUrl,
-            v.Location?.Latitude ?? 0,
-            v.Location?.Longitude ?? 0,
+            display.Latitude,
+            display.Longitude,
             TransportLabels.Expand(v.RequiredTransport),
             showWage,
             travelMinutes,
@@ -1197,7 +1291,10 @@ public class VacanciesController : ControllerBase
             v.LegalHandlesMoneyOrClosing,
             v.LegalHeavyOrHazardousWork,
             shareCount,
-            likeCount);
+            likeCount,
+            display.OfferedByLabel,
+            v.ShowClientAddressOnMap,
+            v.IntermediaryCompanyId);
     }
 
     private static string? ApplyHoursAndSchedule(Core.Entities.Vacancy vacancy, CreateVacancyRequest request)

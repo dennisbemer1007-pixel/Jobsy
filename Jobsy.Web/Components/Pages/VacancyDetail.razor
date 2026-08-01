@@ -79,6 +79,10 @@
                     <h1>@_vacancy.Title</h1>
                     <p class="company">@_vacancy.CompanyName</p>
                     <p class="address">@_vacancy.CompanyAddress</p>
+                    @if (!string.IsNullOrWhiteSpace(_vacancy.OfferedByLabel))
+                    {
+                        <p class="muted" style="margin:0.25rem 0 0">@_vacancy.OfferedByLabel</p>
+                    }
                 </div>
                 @if (_vacancy.WageVisible && _vacancy.WageByAge is { Count: > 0 })
                 {

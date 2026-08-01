@@ -30,4 +30,5 @@ public record CreateVacancyRequest(
     bool? LegalNightShift23To06 = null,
     bool? LegalAdultSupervisorPresent = null,
     bool? LegalHandlesMoneyOrClosing = null,
-    bool? LegalHeavyOrHazardousWork = null);
+    bool? LegalHeavyOrHazardousWork = null,
+    bool ShowClientAddressOnMap = false);

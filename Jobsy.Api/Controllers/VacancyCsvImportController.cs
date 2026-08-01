@@ -14,7 +14,7 @@ namespace Jobsy.Api.Controllers;
 /// <summary>CSV batch import of vacancy drafts for organisations with the feature enabled.</summary>
 [ApiController]
 [Route("api/vacancies/csv-import")]
-[Authorize(Roles = $"{JobsyRoles.EnterpriseManager},{JobsyRoles.Admin}")]
+[Authorize(Roles = $"{JobsyRoles.Intermediary},{JobsyRoles.EnterpriseManager},{JobsyRoles.Admin}")]
 [EnableRateLimiting("public-write")]
 [RequestSizeLimit(10 * 1024 * 1024)]
 public class VacancyCsvImportController : ControllerBase
@@ -27,17 +27,20 @@ public class VacancyCsvImportController : ControllerBase
     private readonly JobsyDbContext _db;
     private readonly ICompanyAuthorizationService _companyAuth;
     private readonly IVacancyDraftCreationService _drafts;
+    private readonly IUserLookupService _users;
     private readonly ILogger<VacancyCsvImportController> _logger;
 
     public VacancyCsvImportController(
         JobsyDbContext db,
         ICompanyAuthorizationService companyAuth,
         IVacancyDraftCreationService drafts,
+        IUserLookupService users,
         ILogger<VacancyCsvImportController> logger)
     {
         _db = db;
         _companyAuth = companyAuth;
         _drafts = drafts;
+        _users = users;
         _logger = logger;
     }
 
@@ -68,7 +71,13 @@ public class VacancyCsvImportController : ControllerBase
         var touchedCompanies = new HashSet<Guid>();
         foreach (var row in request.Rows.OrderBy(r => r.RowNumber))
         {
-            var result = await ProcessRowAsync(request.CompanyId, gate.OrgId, row, cancellationToken);
+            var result = await ProcessRowAsync(
+                request.CompanyId,
+                gate.OrgId,
+                gate.IsIntermediary,
+                gate.IntermediaryCompanyId,
+                row,
+                cancellationToken);
             results.Add(result);
             if (result.Success)
             {
@@ -102,7 +111,13 @@ public class VacancyCsvImportController : ControllerBase
             return gate.Result;
         }
 
-        var result = await ProcessRowAsync(request.CompanyId, gate.OrgId, request.Row, cancellationToken);
+        var result = await ProcessRowAsync(
+            request.CompanyId,
+            gate.OrgId,
+            gate.IsIntermediary,
+            gate.IntermediaryCompanyId,
+            request.Row,
+            cancellationToken);
         if (result.Success)
         {
             var companyId = VacancyCsvParser.TryParseGuid(request.Row.CompanyId) ?? request.CompanyId;
@@ -112,7 +127,7 @@ public class VacancyCsvImportController : ControllerBase
         return Ok(result);
     }
 
-    private async Task<(ActionResult? Result, Guid OrgId)> EnsureCsvImportAllowedAsync(
+    private async Task<(ActionResult? Result, Guid OrgId, bool IsIntermediary, Guid? IntermediaryCompanyId)> EnsureCsvImportAllowedAsync(
         Guid companyId,
         CancellationToken cancellationToken)
     {
@@ -122,14 +137,36 @@ public class VacancyCsvImportController : ControllerBase
         }
         catch (Core.Exceptions.ForbiddenCompanyAccessException)
         {
-            return (Forbid(), Guid.Empty);
+            return (Forbid(), Guid.Empty, false, null);
         }
 
         var company = await _db.Companies.AsNoTracking()
             .FirstOrDefaultAsync(c => c.Id == companyId, cancellationToken);
         if (company is null)
         {
-            return (NotFound(new { message = "Bedrijf niet gevonden." }), Guid.Empty);
+            return (NotFound(new { message = "Bedrijf niet gevonden." }), Guid.Empty, false, null);
+        }
+
+        var isIntermediary = _companyAuth.GetPrimaryRole(User) == UserRole.Intermediary;
+        if (isIntermediary)
+        {
+            var intermediaryCompanyId = await ResolveIntermediaryOrganizationIdAsync(cancellationToken);
+            if (intermediaryCompanyId is null)
+            {
+                return (BadRequest(new { message = "Intermediair-organisatie niet gevonden voor deze gebruiker." }), Guid.Empty, true, null);
+            }
+
+            var intermediaryOrg = await _db.Companies.AsNoTracking()
+                .FirstOrDefaultAsync(c => c.Id == intermediaryCompanyId.Value, cancellationToken);
+            if (intermediaryOrg is null || !intermediaryOrg.CsvBatchImportEnabled)
+            {
+                return (BadRequest(new
+                {
+                    message = "CSV Batch Import is niet ingeschakeld voor deze intermediair-organisatie. Schakel dit in bij Bedrijfsgegevens."
+                }), Guid.Empty, true, intermediaryCompanyId);
+            }
+
+            return (null, intermediaryCompanyId.Value, true, intermediaryCompanyId);
         }
 
         var orgId = company.ParentCompanyId ?? company.Id;
@@ -141,15 +178,17 @@ public class VacancyCsvImportController : ControllerBase
             return (BadRequest(new
             {
                 message = "CSV Batch Import is niet ingeschakeld voor deze organisatie. Schakel dit in bij Bedrijfsgegevens."
-            }), Guid.Empty);
+            }), Guid.Empty, false, null);
         }
 
-        return (null, orgId);
+        return (null, orgId, false, null);
     }
 
     private async Task<CsvImportRowResultDto> ProcessRowAsync(
         Guid defaultCompanyId,
         Guid allowedOrgId,
+        bool isIntermediary,
+        Guid? intermediaryCompanyId,
         CsvImportRowRequest row,
         CancellationToken cancellationToken)
     {
@@ -227,12 +266,33 @@ public class VacancyCsvImportController : ControllerBase
             }
 
             var targetOrgId = target.ParentCompanyId ?? target.Id;
-            if (targetOrgId != allowedOrgId)
+            if (!isIntermediary && targetOrgId != allowedOrgId)
             {
                 return Fail(
                     row.RowNumber,
                     data,
                     "Vestiging hoort niet bij de organisatie waarvoor CSV-import is ingeschakeld.");
+            }
+
+            if (isIntermediary)
+            {
+                var kvkError = IntermediaryVacancyRules.ValidateEndClientKvk(target, callerIsIntermediary: true);
+                if (kvkError is not null)
+                {
+                    return Fail(row.RowNumber, data, kvkError);
+                }
+
+                if (!string.IsNullOrWhiteSpace(row.KvkNumber)
+                    && !string.Equals(row.KvkNumber.Trim(), target.KvkNumber, StringComparison.OrdinalIgnoreCase))
+                {
+                    return Fail(row.RowNumber, data, "KVK-nummer komt niet overeen met het gekozen inhurende bedrijf.");
+                }
+
+                if (!string.IsNullOrWhiteSpace(row.KvkEstablishmentId)
+                    && !string.Equals(row.KvkEstablishmentId.Trim(), target.KvkEstablishmentId, StringComparison.OrdinalIgnoreCase))
+                {
+                    return Fail(row.RowNumber, data, "Vestigingsnummer komt niet overeen met het gekozen inhurende bedrijf.");
+                }
             }
 
             if (!TransportModeParser.TryParseMany(row.Transport, out var transport, out var transportError))
@@ -263,6 +323,13 @@ public class VacancyCsvImportController : ControllerBase
                 minimumEmployers = minEmp;
             }
 
+            var showClientAddressOnMap = false;
+            if (!string.IsNullOrWhiteSpace(row.ShowClientAddressOnMap)
+                && !TryParseBoolean(row.ShowClientAddressOnMap, out showClientAddressOnMap))
+            {
+                return Fail(row.RowNumber, data, "Toon opdrachtgever adres is ongeldig (gebruik true/false, ja/nee of 1/0).");
+            }
+
             var created = await _drafts.CreateDraftAsync(
                 new VacancyDraftInput(
                     companyId,
@@ -278,7 +345,10 @@ public class VacancyCsvImportController : ControllerBase
                     row.Video,
                     row.DrivingLicense,
                     row.Education,
-                    minimumEmployers),
+                    minimumEmployers,
+                    intermediaryCompanyId,
+                    showClientAddressOnMap,
+                    isIntermediary),
                 VacancySource.Csv,
                 cancellationToken);
 
@@ -317,7 +387,10 @@ public class VacancyCsvImportController : ControllerBase
             row.Transport,
             row.DrivingLicense,
             row.Education,
-            row.MinimumEmployers);
+            row.MinimumEmployers,
+            row.KvkNumber,
+            row.KvkEstablishmentId,
+            row.ShowClientAddressOnMap);
 
     /// <summary>Shrink Base64 payloads on success only — failed rows keep full data for inline repair.</summary>
     private static CsvImportRowRequest TruncateHeavyFields(CsvImportRowRequest row) =>
@@ -347,6 +420,62 @@ public class VacancyCsvImportController : ControllerBase
 
     private static CsvImportRowResultDto Fail(int rowNumber, CsvImportRowRequest data, string message) =>
         new(rowNumber, false, null, message, TruncateHeavyFields(data));
+
+    private static bool TryParseBoolean(string? value, out bool parsed)
+    {
+        parsed = false;
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            return true;
+        }
+
+        var normalized = value.Trim().ToLowerInvariant();
+        if (normalized is "true" or "1" or "yes" or "y" or "ja" or "j")
+        {
+            parsed = true;
+            return true;
+        }
+
+        if (normalized is "false" or "0" or "no" or "n" or "nee")
+        {
+            return true;
+        }
+
+        return false;
+    }
+
+    private async Task<Guid?> ResolveIntermediaryOrganizationIdAsync(CancellationToken cancellationToken)
+    {
+        var actor = await _users.FindByPrincipalAsync(User, cancellationToken);
+        if (actor?.CompanyId is not Guid companyId)
+        {
+            return null;
+        }
+
+        var company = await _db.Companies.AsNoTracking()
+            .FirstOrDefaultAsync(c => c.Id == companyId, cancellationToken);
+        if (company is null)
+        {
+            return null;
+        }
+
+        if (company.Type == CompanyType.Intermediary)
+        {
+            return company.Id;
+        }
+
+        if (company.ParentCompanyId is Guid parentId)
+        {
+            var parent = await _db.Companies.AsNoTracking()
+                .FirstOrDefaultAsync(c => c.Id == parentId, cancellationToken);
+            if (parent?.Type == CompanyType.Intermediary)
+            {
+                return parent.Id;
+            }
+        }
+
+        return null;
+    }
 
     private static CsvImportResultDto ToResult(IReadOnlyList<CsvImportRowResultDto> rows)
     {

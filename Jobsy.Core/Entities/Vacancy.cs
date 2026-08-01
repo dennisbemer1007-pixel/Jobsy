@@ -15,6 +15,19 @@ public class Vacancy
     public Guid CompanyId { get; set; }
     public Company Company { get; set; } = null!;
 
+    /// <summary>
+    /// When set, this vacancy was posted by an intermediary for an end-client (<see cref="CompanyId"/>).
+    /// End-client KVK/establishment always remain on <see cref="Company"/> for admin / travel / SROI.
+    /// </summary>
+    public Guid? IntermediaryCompanyId { get; set; }
+    public Company? IntermediaryCompany { get; set; }
+
+    /// <summary>
+    /// When false (default): banenkaart shows intermediary name + address.
+    /// When true: banenkaart shows end-client name + address.
+    /// </summary>
+    public bool ShowClientAddressOnMap { get; set; }
+
     /// <summary>Whether the vacancy was created via the UI, external API, or CSV import.</summary>
     public VacancySource CreatedVia { get; set; } = VacancySource.Manual;
 

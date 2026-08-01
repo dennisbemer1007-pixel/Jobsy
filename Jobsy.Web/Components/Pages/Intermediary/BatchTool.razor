@@ -42,15 +42,26 @@
         </fieldset>
 
         <fieldset class="batch-locations">
-            <legend>Locaties</legend>
+            <legend>Locaties (opdrachtgevers met KVK + vestiging)</legend>
             @foreach (var c in _companies)
             {
                 <label class="checkbox-row">
                     <input type="checkbox" checked="@_selected.Contains(c.Id)" @onchange="e => Toggle(c.Id, e)" />
-                    @c.Name
+                    <span>
+                        @c.Name
+                        <span class="muted"> · KVK @c.KvkNumber · @c.KvkEstablishmentId</span>
+                    </span>
                 </label>
             }
         </fieldset>
+
+        <label class="vacancy-toggle-row">
+            <input type="checkbox" @bind="_replaceWithIntermediaryIdentity" />
+            <span>
+                <strong>Vervang bedrijfsnaam en adres door die van het intermediair</strong>
+                <span class="muted">Op de banenkaart; opdrachtgever blijft bekend voor admin/SROI</span>
+            </span>
+        </label>
 
         <button class="login-submit" type="submit" disabled="@_saving">Uitzetten op @_selected.Count locaties</button>
     </form>
@@ -71,10 +82,14 @@
     private List<string> _branchOptions = WorkTypeLabels.All.ToList();
     private bool _saving;
     private string? _message;
+    private bool _replaceWithIntermediaryIdentity = true;
 
     protected override async Task OnInitializedAsync()
     {
-        _companies = (await Api.GetMyCompaniesAsync()).ToList();
+        _companies = (await Api.GetMyCompaniesAsync())
+            .Where(c => !string.IsNullOrWhiteSpace(c.KvkNumber)
+                        && !string.IsNullOrWhiteSpace(c.KvkEstablishmentId))
+            .ToList();
         _selected = _companies.Select(c => c.Id).ToHashSet();
         try
         {
@@ -151,7 +166,8 @@
                 today.AddMonths(2),
                 TransportMode.Bike | TransportMode.PublicTransport,
                 branchLabels,
-                _selected.ToArray()));
+                _selected.ToArray(),
+                ShowClientAddressOnMap: !_replaceWithIntermediaryIdentity));
             _message = $"{created.Count} concept-vacatures aangemaakt.";
         }
         catch (VacancyModerationException ex)

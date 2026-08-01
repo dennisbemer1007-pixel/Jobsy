@@ -17,7 +17,10 @@ public sealed record VacancyDraftInput(
     string? VideoUrl = null,
     string? RequiredDrivingLicense = null,
     string? RequiredEducation = null,
-    int? MinimumEmployers = null);
+    int? MinimumEmployers = null,
+    Guid? IntermediaryCompanyId = null,
+    bool ShowClientAddressOnMap = false,
+    bool RequireEndClientKvk = false);
 
 public sealed record VacancyDraftCreateResult(bool Succeeded, Vacancy? Vacancy, string? ErrorMessage)
 {

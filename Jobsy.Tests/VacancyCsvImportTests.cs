@@ -80,6 +80,22 @@ public class VacancyCsvParserTests
         Assert.Equal("Kassière", result.Rows[0].Fields[VacancyCsvSchema.Title]);
     }
 
+    [Fact]
+    public void Parse_maps_intermediary_kvk_aliases()
+    {
+        var tableId = Guid.NewGuid();
+        var csv =
+            "titel,omschrijving,startdatum,einddatum,branches,salaristabel_id,kvk,kvk_vestiging_id,show_client_address\n" +
+            $"Hulp,Omschrijving,2026-08-01,2026-12-31,Winkel,{tableId},12345678,12345678_0001,true\n";
+
+        var result = VacancyCsvParser.Parse(csv);
+
+        Assert.True(result.Succeeded, result.ErrorMessage);
+        Assert.Equal("12345678", result.Rows[0].Fields[VacancyCsvSchema.KvkNumber]);
+        Assert.Equal("12345678_0001", result.Rows[0].Fields[VacancyCsvSchema.KvkEstablishmentId]);
+        Assert.Equal("true", result.Rows[0].Fields[VacancyCsvSchema.ShowClientAddressOnMap]);
+    }
+
     [Theory]
     [InlineData("2026-08-01")]
     [InlineData("01-08-2026")]

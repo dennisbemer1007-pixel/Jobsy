@@ -157,10 +157,15 @@ public class JobsyDbContext : DbContext
             entity.HasIndex(e => new { e.CompanyId, e.Status });
             entity.HasIndex(e => new { e.Status, e.PublishedAtUtc, e.CreatedAtUtc });
             entity.HasIndex(e => new { e.IsHighlighted, e.HighlightedUntil });
+            entity.HasIndex(e => e.IntermediaryCompanyId);
             entity.HasOne(e => e.Company)
                 .WithMany(c => c.Vacancies)
                 .HasForeignKey(e => e.CompanyId)
                 .OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne(e => e.IntermediaryCompany)
+                .WithMany()
+                .HasForeignKey(e => e.IntermediaryCompanyId)
+                .OnDelete(DeleteBehavior.SetNull);
             entity.HasOne(e => e.SalaryTable)
                 .WithMany(t => t.Vacancies)
                 .HasForeignKey(e => e.SalaryTableId)
