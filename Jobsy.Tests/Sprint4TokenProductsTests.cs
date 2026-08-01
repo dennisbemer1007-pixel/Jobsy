@@ -160,6 +160,51 @@ public class Sprint4TokenProductsTests
     }
 
     [Fact]
+    public async Task Highlight_rejects_while_active_window_is_open()
+    {
+        await using var db = CreateDb();
+        var (companyId, vacancyId) = await SeedDraftVacancyAsync(db, tokenBalance: 5);
+        SeedSpendCosts(db);
+        var vacancy = await db.Vacancies.Include(v => v.Company).SingleAsync(v => v.Id == vacancyId);
+        vacancy.Status = VacancyStatus.Active;
+        vacancy.IsHighlighted = true;
+        vacancy.HighlightedUntil = DateTime.UtcNow.AddDays(7);
+        await db.SaveChangesAsync();
+
+        var sut = CreateProducts(db);
+        var result = await sut.HighlightAsync(vacancy, actorUserId: null);
+
+        Assert.False(result.Succeeded);
+        Assert.Contains("al gehighlight", result.ErrorMessage, StringComparison.OrdinalIgnoreCase);
+        Assert.Equal(5m, await db.TokenTransactions.Where(t => t.CompanyId == companyId).SumAsync(t => t.Amount));
+    }
+
+    [Fact]
+    public async Task Highlight_renewal_after_expiry_extends_window_and_spends()
+    {
+        await using var db = CreateDb();
+        var (companyId, vacancyId) = await SeedDraftVacancyAsync(db, tokenBalance: 5);
+        SeedSpendCosts(db);
+        var vacancy = await db.Vacancies.Include(v => v.Company).SingleAsync(v => v.Id == vacancyId);
+        vacancy.Status = VacancyStatus.Active;
+        vacancy.IsHighlighted = true;
+        vacancy.HighlightedUntil = DateTime.UtcNow.AddMinutes(-5);
+        await db.SaveChangesAsync();
+
+        var sut = CreateProducts(db);
+        var before = DateTime.UtcNow;
+        var result = await sut.HighlightAsync(vacancy, actorUserId: null);
+
+        Assert.True(result.Succeeded);
+        Assert.True(vacancy.IsHighlighted);
+        Assert.NotNull(vacancy.HighlightedUntil);
+        Assert.True(vacancy.HighlightedUntil > before.AddDays(VacancyProductRules.HighlightDays - 1));
+        Assert.Equal(1, await db.TokenTransactions.CountAsync(t =>
+            t.Kind == TokenTransactionKind.Spend && t.Reason == TokenSpendReason.Highlight));
+        Assert.Equal(4m, await db.TokenTransactions.Where(t => t.CompanyId == companyId).SumAsync(t => t.Amount));
+    }
+
+    [Fact]
     public async Task PushBom_notifies_only_OpenForWork_within_10km()
     {
         await using var db = CreateDb();

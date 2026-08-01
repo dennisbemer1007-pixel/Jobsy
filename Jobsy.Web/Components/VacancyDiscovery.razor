@@ -424,7 +424,7 @@
     </aside>
 
     <section class="map-pane">
-        @if (HighlightedVacancies.Count > 0)
+        @if (!_loading && HighlightedVacancies.Count > 0)
         {
             <aside class="highlight-carousel" aria-label="@Culture["Discovery.Featured"]">
                 <p class="highlight-carousel__title">@Culture["Discovery.Featured"]</p>
@@ -1191,6 +1191,9 @@
     {
         _loading = true;
         _error = null;
+        // Force a paint so the featured carousel / list leave the previous result set
+        // before the next discover response arrives.
+        await InvokeAsync(StateHasChanged);
         try
         {
             var items = await Api.DiscoverVacanciesAsync(
@@ -1290,6 +1293,7 @@
                 ["workTypes"] = v.WorkTypes,
                 ["workType"] = primaryType,
                 ["highlighted"] = v.IsHighlighted,
+                ["featuredLabel"] = Culture["Discovery.Featured"],
                 ["travelMinutes"] = v.TravelMinutes,
                 ["transportLabel"] = UiLabels.TransportVerb(Culture, _selectedTransport)
             };

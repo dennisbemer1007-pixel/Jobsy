@@ -275,7 +275,8 @@ public sealed class VacancyProductService : IVacancyProductService
             return Fail(vacancy, "Alleen actieve vacatures kunnen worden gehighlight.");
         }
 
-        if (vacancy.IsHighlighted)
+        // Allow renewal after HighlightedUntil expires even if the legacy flag remains true.
+        if (VacancyHighlightRules.IsActive(vacancy.IsHighlighted, vacancy.HighlightedUntil, DateTime.UtcNow))
         {
             return Fail(vacancy, "Vacature is al gehighlight.");
         }
@@ -293,7 +294,11 @@ public sealed class VacancyProductService : IVacancyProductService
                 onSuccessBeforeCommit: async ct =>
                 {
                     await _db.Entry(vacancy).ReloadAsync(ct);
-                    if (vacancy.Status != VacancyStatus.Active || vacancy.IsHighlighted)
+                    if (vacancy.Status != VacancyStatus.Active
+                        || VacancyHighlightRules.IsActive(
+                            vacancy.IsHighlighted,
+                            vacancy.HighlightedUntil,
+                            DateTime.UtcNow))
                     {
                         throw new VacancyProductConflictException(
                             "Vacature kan niet meer worden gehighlight.");

@@ -330,7 +330,8 @@ window.jobMap = (function () {
 
         let mediaInner = "";
         if (v.highlighted || primaryWork) {
-            const badgeText = v.highlighted ? "Uitgelicht" : primaryWork;
+            const featuredLabel = v.featuredLabel || "Uitgelicht";
+            const badgeText = v.highlighted ? featuredLabel : primaryWork;
             const badgeClass = v.highlighted
                 ? "map-popup__badge map-popup__badge--featured"
                 : "map-popup__badge map-popup__badge--soft";
