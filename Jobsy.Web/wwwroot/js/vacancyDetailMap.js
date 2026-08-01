@@ -65,6 +65,16 @@ window.vacancyDetailMap = (function () {
             dispose();
         }
 
+        // Detail map host must have a non-zero box before Leaflet measures it.
+        // (Shared .job-map "height:auto" used to collapse this to 0px.)
+        if (el.clientHeight < 40) {
+            el.style.position = "absolute";
+            el.style.inset = "0";
+            el.style.width = "100%";
+            el.style.height = "100%";
+            el.style.minHeight = "200px";
+        }
+
         map = L.map(el, {
             zoomControl: true,
             scrollWheelZoom: false,
@@ -93,8 +103,10 @@ window.vacancyDetailMap = (function () {
         }
 
         map.setView([useLat, useLng], 15);
+        invalidate();
+        recenter();
 
-        [50, 200, 400, 800].forEach(function (ms) {
+        [50, 200, 400, 800, 1600].forEach(function (ms) {
             setTimeout(function () {
                 invalidate();
                 recenter();
