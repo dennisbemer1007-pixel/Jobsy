@@ -1,5 +1,6 @@
 using Jobsy.Core.Entities;
 using Jobsy.Core.Enums;
+using Jobsy.Core.Rules;
 using Jobsy.Core.ValueObjects;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
@@ -195,6 +196,7 @@ internal static class Sprint8MetricsSeeder
         if (orderpicker is not null)
         {
             orderpicker.IsHighlighted = true;
+            orderpicker.HighlightedUntil ??= DateTime.UtcNow.AddDays(VacancyProductRules.HighlightDays);
             if (orderpicker.ExtensionCount < 1)
             {
                 orderpicker.ExtensionCount = 1;
@@ -226,7 +228,7 @@ internal static class Sprint8MetricsSeeder
         // Publish / highlight / pushbom / extend across periods.
         await AppendTxAsync(db, WestlandId, -1m, TokenTransactionKind.Spend, TokenSpendReason.Publish,
             "Publish seed", now.AddDays(-22), OrderpickerVacancyId);
-        await AppendTxAsync(db, WestlandId, -0.5m, TokenTransactionKind.Spend, TokenSpendReason.Highlight,
+        await AppendTxAsync(db, WestlandId, -1m, TokenTransactionKind.Spend, TokenSpendReason.Highlight,
             "Highlight seed", now.AddDays(-21), OrderpickerVacancyId);
         await AppendTxAsync(db, WestlandId, -2m, TokenTransactionKind.Spend, TokenSpendReason.PushBom,
             "PushBom seed", now.AddDays(-12), OrderpickerVacancyId);
@@ -242,7 +244,7 @@ internal static class Sprint8MetricsSeeder
 
         await AppendTxAsync(db, SupermarketId, -1m, TokenTransactionKind.Spend, TokenSpendReason.Publish,
             "Publish seed", now.AddHours(-10), RetailVacancyId);
-        await AppendTxAsync(db, SupermarketId, -0.5m, TokenTransactionKind.Spend, TokenSpendReason.Highlight,
+        await AppendTxAsync(db, SupermarketId, -1m, TokenTransactionKind.Spend, TokenSpendReason.Highlight,
             "Highlight seed", now.AddHours(-8), RetailVacancyId);
 
         if (await db.Companies.AnyAsync(c => c.Id == IntermediaryCompanyId))

@@ -300,6 +300,7 @@ public sealed class VacancyProductService : IVacancyProductService
                     }
 
                     vacancy.IsHighlighted = true;
+                    vacancy.HighlightedUntil = VacancyHighlightRules.ComputeUntil(DateTime.UtcNow);
                 },
                 cancellationToken: cancellationToken);
         }
@@ -520,6 +521,7 @@ public sealed class VacancyProductService : IVacancyProductService
         if (options.Highlight)
         {
             vacancy.IsHighlighted = true;
+            vacancy.HighlightedUntil = VacancyHighlightRules.ComputeUntil(DateTime.UtcNow);
         }
 
         if (options.Extend)

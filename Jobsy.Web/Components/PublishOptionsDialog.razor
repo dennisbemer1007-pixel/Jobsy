@@ -24,7 +24,7 @@
                 <input type="checkbox" @bind="_highlight" />
                 <span>
                     @Culture["Employer.Highlight"]
-                    <em>+@_costs.GetValueOrDefault("Highlight", 0.5m).ToString("0.##") token</em>
+                    <em>+@_costs.GetValueOrDefault("Highlight", 1m).ToString("0.##") token</em>
                 </span>
             </label>
             <label class="publish-option">
@@ -122,7 +122,7 @@
 
     private decimal TotalCost =>
         _costs.GetValueOrDefault("Publish", 1m)
-        + (_highlight ? _costs.GetValueOrDefault("Highlight", 0.5m) : 0)
+        + (_highlight ? _costs.GetValueOrDefault("Highlight", 1m) : 0)
         + PushBomCost
         + (_extend ? _costs.GetValueOrDefault("Extend", 1m) : 0);
 
@@ -161,7 +161,7 @@
                 _costs = new Dictionary<string, decimal>(StringComparer.OrdinalIgnoreCase)
                 {
                     ["Publish"] = 1m,
-                    ["Highlight"] = 0.5m,
+                    ["Highlight"] = 1m,
                     ["PushBom"] = 3m,
                     ["Extend"] = 1m
                 };

@@ -39,11 +39,21 @@ window.jobMap = (function () {
         return "●";
     }
 
-    function createIcon(highlighted, workType) {
+    function createIcon(featured, selected, workType) {
         const glyph = workTypeGlyph(workType);
+        const classes = ["job-marker"];
+        if (featured) {
+            classes.push("job-marker--featured");
+        }
+        if (selected) {
+            classes.push("job-marker--active");
+        }
+        const pulse = featured
+            ? "<span class=\"job-marker__pulse\" aria-hidden=\"true\"></span>"
+            : "";
         return L.divIcon({
-            className: highlighted ? "job-marker job-marker--active" : "job-marker",
-            html: "<span class=\"job-marker__glyph\" aria-hidden=\"true\">" + glyph + "</span>",
+            className: classes.join(" "),
+            html: pulse + "<span class=\"job-marker__glyph\" aria-hidden=\"true\">" + glyph + "</span>",
             iconSize: [34, 34],
             iconAnchor: [17, 17],
             popupAnchor: [0, -18]
@@ -56,9 +66,16 @@ window.jobMap = (function () {
         if (count >= 10) sizeClass = "job-cluster--lg";
         else if (count >= 4) sizeClass = "job-cluster--md";
 
+        const children = typeof cluster.getAllChildMarkers === "function"
+            ? cluster.getAllChildMarkers()
+            : [];
+        const hasFeatured = children.some(function (m) {
+            return m && m.options && m.options.jobData && m.options.jobData.highlighted;
+        });
+
         return L.divIcon({
             html: "<div><span>" + count + "</span></div>",
-            className: "job-cluster " + sizeClass,
+            className: "job-cluster " + sizeClass + (hasFeatured ? " job-cluster--featured" : ""),
             iconSize: L.point(44, 44)
         });
     }
@@ -313,9 +330,9 @@ window.jobMap = (function () {
 
         let mediaInner = "";
         if (v.highlighted || primaryWork) {
-            const badgeText = v.highlighted ? "Top" : primaryWork;
+            const badgeText = v.highlighted ? "Uitgelicht" : primaryWork;
             const badgeClass = v.highlighted
-                ? "map-popup__badge"
+                ? "map-popup__badge map-popup__badge--featured"
                 : "map-popup__badge map-popup__badge--soft";
             mediaInner +=
                 "<span class=\"" + badgeClass + "\">" + escapeHtml(String(badgeText)) + "</span>";
@@ -372,7 +389,13 @@ window.jobMap = (function () {
             .map(function (marker) {
                 return marker.options.jobData;
             })
-            .filter(Boolean);
+            .filter(Boolean)
+            // Featured (highlighted) vacancies always appear first in the cluster pager/list.
+            .sort(function (a, b) {
+                const ah = a.highlighted ? 1 : 0;
+                const bh = b.highlighted ? 1 : 0;
+                return bh - ah;
+            });
     }
 
     function buildClusterPagerHtml(current, pageCount) {
@@ -877,9 +900,11 @@ window.jobMap = (function () {
             const workType = Array.isArray(v.workTypes) && v.workTypes.length
                 ? v.workTypes[0]
                 : (v.workType || "");
+            const featured = !!v.highlighted;
             const marker = L.marker([lat, lng], {
-                icon: createIcon(false, workType),
-                jobData: v
+                icon: createIcon(featured, false, workType),
+                jobData: v,
+                zIndexOffset: featured ? 1000 : 0
             });
 
             marker.bindPopup(buildPopupHtml(v), jobPopupOptions());
@@ -967,7 +992,10 @@ window.jobMap = (function () {
             const workType = Array.isArray(data.workTypes) && data.workTypes.length
                 ? data.workTypes[0]
                 : (data.workType || "");
-            marker.setIcon(createIcon(key === id, workType));
+            const featured = !!data.highlighted;
+            const selected = id != null && key === String(id);
+            marker.setIcon(createIcon(featured, selected, workType));
+            marker.setZIndexOffset(featured || selected ? 1000 : 0);
         });
     }
 

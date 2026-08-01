@@ -61,12 +61,14 @@ public class Sprint4TokenProductsTests
         Assert.True(result.Succeeded);
         Assert.Equal(VacancyStatus.Active, vacancy.Status);
         Assert.True(vacancy.IsHighlighted);
+        Assert.NotNull(vacancy.HighlightedUntil);
+        Assert.True(vacancy.HighlightedUntil > DateTime.UtcNow);
         Assert.Equal(1, vacancy.ExtensionCount);
         Assert.Equal(originalEnd.AddDays(VacancyProductRules.ExtendDays), vacancy.EndDate);
         Assert.False(vacancy.RequestedHighlight);
         Assert.False(vacancy.RequestedExtend);
-        // Publish 1 + Highlight 0.5 + Extend 1 = 2.5 → balance 2.5
-        Assert.Equal(2.5m, await db.TokenTransactions.Where(t => t.CompanyId == companyId).SumAsync(t => t.Amount));
+        // Publish 1 + Highlight 1 + Extend 1 = 3 → balance 2
+        Assert.Equal(2m, await db.TokenTransactions.Where(t => t.CompanyId == companyId).SumAsync(t => t.Amount));
     }
 
     [Fact]
@@ -150,8 +152,11 @@ public class Sprint4TokenProductsTests
         Assert.False(result.PendingApproval);
         Assert.Equal(VacancyStatus.Active, vacancy.Status);
         Assert.True(vacancy.IsHighlighted);
+        Assert.NotNull(vacancy.HighlightedUntil);
+        Assert.True(vacancy.HighlightedUntil > DateTime.UtcNow);
         Assert.Equal(2, await db.TokenTransactions.CountAsync(t => t.Kind == TokenTransactionKind.Spend));
-        Assert.Equal(3.5m, await db.TokenTransactions.Where(t => t.CompanyId == companyId).SumAsync(t => t.Amount));
+        // Grant/seed 5 − Publish 1 − Highlight 1 = 3
+        Assert.Equal(3m, await db.TokenTransactions.Where(t => t.CompanyId == companyId).SumAsync(t => t.Amount));
     }
 
     [Fact]
@@ -354,7 +359,7 @@ public class Sprint4TokenProductsTests
     {
         db.TokenSpendCosts.AddRange(
             new TokenSpendCost { Id = Guid.NewGuid(), Reason = TokenSpendReason.Publish, CostTokens = 1m, IsActive = true },
-            new TokenSpendCost { Id = Guid.NewGuid(), Reason = TokenSpendReason.Highlight, CostTokens = 0.5m, IsActive = true },
+            new TokenSpendCost { Id = Guid.NewGuid(), Reason = TokenSpendReason.Highlight, CostTokens = VacancyProductRules.DefaultHighlightCostTokens, IsActive = true },
             new TokenSpendCost { Id = Guid.NewGuid(), Reason = TokenSpendReason.PushBom, CostTokens = 3m, IsActive = true },
             new TokenSpendCost { Id = Guid.NewGuid(), Reason = TokenSpendReason.Extend, CostTokens = 1m, IsActive = true });
 

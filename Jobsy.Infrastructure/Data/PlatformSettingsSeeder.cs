@@ -25,9 +25,24 @@ internal static class PlatformSettingsSeeder
         {
             db.TokenSpendCosts.AddRange(
                 new TokenSpendCost { Id = Guid.NewGuid(), Reason = TokenSpendReason.Publish, CostTokens = 1m },
-                new TokenSpendCost { Id = Guid.NewGuid(), Reason = TokenSpendReason.Highlight, CostTokens = 0.5m },
+                new TokenSpendCost
+                {
+                    Id = Guid.NewGuid(),
+                    Reason = TokenSpendReason.Highlight,
+                    CostTokens = VacancyProductRules.DefaultHighlightCostTokens
+                },
                 new TokenSpendCost { Id = Guid.NewGuid(), Reason = TokenSpendReason.PushBom, CostTokens = 3m },
                 new TokenSpendCost { Id = Guid.NewGuid(), Reason = TokenSpendReason.Extend, CostTokens = 1m });
+        }
+        else
+        {
+            // Raise legacy 0.5 highlight pricing into the 1–2 token product band.
+            var highlightCost = await db.TokenSpendCosts
+                .FirstOrDefaultAsync(c => c.Reason == TokenSpendReason.Highlight && c.IsActive);
+            if (highlightCost is not null && highlightCost.CostTokens < 1m)
+            {
+                highlightCost.CostTokens = VacancyProductRules.DefaultHighlightCostTokens;
+            }
         }
 
         if (!await db.EarlyAdapterRules.AnyAsync())
