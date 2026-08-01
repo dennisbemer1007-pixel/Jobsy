@@ -18,11 +18,16 @@ public sealed class MockInterviewController : ControllerBase
 {
     private readonly JobsyDbContext _db;
     private readonly IMockInterviewService _interviews;
+    private readonly IUserLookupService _users;
 
-    public MockInterviewController(JobsyDbContext db, IMockInterviewService interviews)
+    public MockInterviewController(
+        JobsyDbContext db,
+        IMockInterviewService interviews,
+        IUserLookupService users)
     {
         _db = db;
         _interviews = interviews;
+        _users = users;
     }
 
     /// <summary>
@@ -93,14 +98,32 @@ public sealed class MockInterviewController : ControllerBase
             vacancy.Company.Address,
             vacancy.StartDate,
             TransportLabels.Expand(vacancy.RequiredTransport),
-            HourlyWage: null,
-            WorkTypeLabels.ResolveLabels(vacancy.WorkTypes, vacancy.WorkTypeLabels));
+            HourlyWage: vacancy.HourlyWage > 0 ? vacancy.HourlyWage : null,
+            WorkTypeLabels.ResolveLabels(vacancy.WorkTypes, vacancy.WorkTypeLabels),
+            vacancy.RequiredDrivingLicense,
+            vacancy.RequiredEducation,
+            vacancy.MinHoursPerWeek,
+            vacancy.MaxHoursPerWeek,
+            vacancy.MinimumEmployers);
+
+        MockInterviewCandidateContext? candidateContext = null;
+        var user = await _users.FindByPrincipalAsync(User, cancellationToken);
+        if (user is not null)
+        {
+            var preferences = MeController.ParsePreferences(user.PreferencesJson);
+            var ageYears = AgeRules.AgeYearsFromDateOfBirth(user.DateOfBirth)
+                           ?? preferences.AgeYears;
+            var match = MatchScoreCalculator.Calculate(
+                MatchingProfileMapper.BuildInput(vacancy, preferences, estimatedTravelMinutes: null, ageYears));
+            candidateContext = MockInterviewGapAnalyzer.BuildCandidateContext(preferences, vacancy, match);
+        }
 
         var history = request.Messages
             .Select(m => new MockInterviewMessage(m.Role, m.Content))
             .ToList();
 
-        var result = await _interviews.ContinueAsync(context, history, language, cancellationToken);
+        var result = await _interviews.ContinueAsync(
+            context, history, language, candidateContext, cancellationToken);
         return Ok(new MockInterviewResponseDto(result.Reply, result.UsedAi, disclaimer));
     }
 

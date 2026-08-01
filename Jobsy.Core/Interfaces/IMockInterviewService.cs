@@ -10,6 +10,7 @@ public interface IMockInterviewService
         MockInterviewVacancyContext vacancy,
         IReadOnlyList<MockInterviewMessage> history,
         string? language = null,
+        MockInterviewCandidateContext? candidate = null,
         CancellationToken cancellationToken = default);
 }
 
@@ -22,7 +23,27 @@ public sealed record MockInterviewVacancyContext(
     DateOnly StartDate,
     IReadOnlyList<string> RequiredTransport,
     decimal? HourlyWage,
-    IReadOnlyList<string> WorkTypes);
+    IReadOnlyList<string> WorkTypes,
+    string? RequiredDrivingLicense = null,
+    string? RequiredEducation = null,
+    decimal? MinHoursPerWeek = null,
+    decimal? MaxHoursPerWeek = null,
+    int? MinimumEmployers = null);
+
+/// <summary>Candidate profile signals + soft gaps for vacancy-specific coaching questions.</summary>
+public sealed record MockInterviewCandidateContext(
+    string? AboutMe,
+    IReadOnlyList<string> Educations,
+    IReadOnlyList<string> DrivingLicenses,
+    IReadOnlyList<string> EmployerSummaries,
+    string? HoursSummary,
+    IReadOnlyList<MockInterviewGap> Gaps);
+
+public sealed record MockInterviewGap(
+    string Key,
+    string Summary,
+    string Question,
+    string EnglishQuestion);
 
 public sealed record MockInterviewMessage(string Role, string Content);
 

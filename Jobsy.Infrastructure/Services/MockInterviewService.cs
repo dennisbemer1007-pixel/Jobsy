@@ -32,12 +32,24 @@ public sealed class MockInterviewService : IMockInterviewService
         - Start date: {startDate}
         - Transport: {transport}
         - Hourly wage (only if known): {wage}
+        - Hard requirements (if any): {requirements}
+        - Hours/week (if known): {hours}
         - Vacancy text:
         {description}
 
+        Candidate profile (from their Lobsy account — may be incomplete):
+        {candidateProfile}
+
+        Known profile↔vacancy gaps (soft coaching, NOT gatekeeping):
+        {mismatchGaps}
+
         Core task — vacancy-first + interactive:
-        - Pull 3–5 concrete tasks/requirements from the vacancy text.
+        - Pull 3–5 concrete tasks/requirements from the vacancy text and ASK about them.
+        - First question MUST quote or closely paraphrase a concrete sentence/task from the vacancy text.
+        - Prefer real recruiter questions ("In the vacancy it says … — how do you handle that?") over generic motivation questions.
+        - When gaps are listed: ask about 1–2 of them during the practice (curious coaching tone; help them prepare an honest answer).
         - React to details from their last answer (quote or paraphrase). No generic praise.
+        - If they skip a vacancy detail, ask a short clarifying follow-up on that detail.
         - Vary tips: sometimes STAR, tone, vacancy task link, or a rewrite example.
         - If the answer is vague/short: stay on the same theme with a soft follow-up as "{questionLabel} ".
 
@@ -84,6 +96,7 @@ public sealed class MockInterviewService : IMockInterviewService
         MockInterviewVacancyContext vacancy,
         IReadOnlyList<MockInterviewMessage> history,
         string? language = null,
+        MockInterviewCandidateContext? candidate = null,
         CancellationToken cancellationToken = default)
     {
         var lang = JobsyLanguages.Normalize(language);
@@ -97,7 +110,7 @@ public sealed class MockInterviewService : IMockInterviewService
                 var model = await ResolveModelAsync(cancellationToken);
                 var baseUrl = await ResolveBaseUrlAsync(cancellationToken);
                 var reply = await CompleteWithOpenAiAsync(
-                    vacancy, sanitized, labels, apiKey, model, baseUrl, cancellationToken);
+                    vacancy, candidate, sanitized, labels, apiKey, model, baseUrl, cancellationToken);
                 if (!string.IsNullOrWhiteSpace(reply))
                 {
                     return new MockInterviewTurnResult(reply.Trim(), UsedAi: true);
@@ -110,7 +123,7 @@ public sealed class MockInterviewService : IMockInterviewService
         }
 
         return new MockInterviewTurnResult(
-            ScriptedFallback.NextReply(vacancy, sanitized, labels),
+            ScriptedFallback.NextReply(vacancy, sanitized, labels, candidate),
             UsedAi: false);
     }
 
@@ -164,6 +177,7 @@ public sealed class MockInterviewService : IMockInterviewService
 
     private async Task<string?> CompleteWithOpenAiAsync(
         MockInterviewVacancyContext vacancy,
+        MockInterviewCandidateContext? candidate,
         IReadOnlyList<MockInterviewMessage> history,
         MockInterviewLabels.Pack labels,
         string apiKey,
@@ -171,7 +185,7 @@ public sealed class MockInterviewService : IMockInterviewService
         string baseUrl,
         CancellationToken cancellationToken)
     {
-        var system = BuildSystemPrompt(vacancy, labels);
+        var system = BuildSystemPrompt(vacancy, candidate, labels);
         var messages = new List<object>(history.Count + 2)
         {
             new { role = "system", content = system }
@@ -186,8 +200,8 @@ public sealed class MockInterviewService : IMockInterviewService
                     $"Start the practice interview in {labels.LanguageName}. " +
                     "Briefly introduce yourself as the coach-recruiter for this company, " +
                     "say this is a practice chat where you help them answer more sharply, " +
-                    "mention in one sentence a concrete task/requirement from the vacancy text, " +
-                    $"and ask your first focused question (start with '{labels.Question} '). " +
+                    "quote or closely paraphrase ONE concrete task/requirement from the vacancy text, " +
+                    $"and ask your first focused question about that task (start with '{labels.Question} '). " +
                     $"No {labels.Strong.TrimEnd(':')}/{labels.Tip.TrimEnd(':')} in this opening turn."
             });
         }
@@ -199,6 +213,9 @@ public sealed class MockInterviewService : IMockInterviewService
             }
 
             var lastUser = history.LastOrDefault(m => m.Role == "user")?.Content ?? "";
+            var gapHint = candidate?.Gaps is { Count: > 0 }
+                ? " If a listed profile↔vacancy gap has not been discussed yet, make the next question about one gap (curious coaching, not gatekeeping)."
+                : " Prefer the next question about another concrete detail from the vacancy text.";
             messages.Add(new
             {
                 role = "user",
@@ -209,6 +226,7 @@ public sealed class MockInterviewService : IMockInterviewService
                         ? $"My tone may have been too sharp: start with '{labels.Caution} ' (friendly, no shaming), " +
                           $"then {labels.Tip.TrimEnd(':')} + '{labels.Rewrite} ' with a polite rewrite, and ask the same practice question again. "
                         : $"Use {labels.Strong.TrimEnd(':')} + {labels.Tip.TrimEnd(':')}, and add '{labels.Rewrite} ' if my answer was vague or short. ") +
+                    gapHint + " " +
                     $"End with exactly one '{labels.Question} '."
             });
         }
@@ -241,7 +259,10 @@ public sealed class MockInterviewService : IMockInterviewService
         return completion?.Choices?.FirstOrDefault()?.Message?.Content;
     }
 
-    private static string BuildSystemPrompt(MockInterviewVacancyContext vacancy, MockInterviewLabels.Pack labels)
+    private static string BuildSystemPrompt(
+        MockInterviewVacancyContext vacancy,
+        MockInterviewCandidateContext? candidate,
+        MockInterviewLabels.Pack labels)
     {
         var description = HtmlSanitize.ToPlainPreview(vacancy.Description, maxLength: 3_500);
         var transport = vacancy.RequiredTransport is { Count: > 0 }
@@ -253,6 +274,14 @@ public sealed class MockInterviewService : IMockInterviewService
         var wage = vacancy.HourlyWage is null
             ? "niet getoond"
             : $"€ {vacancy.HourlyWage.Value:0.00} per uur";
+        var requirements = BuildRequirementsLine(vacancy);
+        var hours = vacancy.MinHoursPerWeek is not null && vacancy.MaxHoursPerWeek is not null
+            ? $"{vacancy.MinHoursPerWeek:0.#}–{vacancy.MaxHoursPerWeek:0.#} u/w"
+            : "niet gespecificeerd";
+        var candidateProfile = FormatCandidateProfile(candidate);
+        var mismatchGaps = candidate?.Gaps is { Count: > 0 } gaps
+            ? string.Join("\n", gaps.Select(g => $"- {g.Summary}"))
+            : "- geen duidelijke gaps gevonden (blijf vacaturetekst-vragen stellen)";
 
         static string Safe(string? value)
             => (value ?? string.Empty).Replace("{", "{{", StringComparison.Ordinal).Replace("}", "}}", StringComparison.Ordinal);
@@ -271,8 +300,54 @@ public sealed class MockInterviewService : IMockInterviewService
             .Replace("{startDate}", vacancy.StartDate.ToString("dd-MM-yyyy"), StringComparison.Ordinal)
             .Replace("{transport}", Safe(transport), StringComparison.Ordinal)
             .Replace("{wage}", Safe(wage), StringComparison.Ordinal)
+            .Replace("{requirements}", Safe(requirements), StringComparison.Ordinal)
+            .Replace("{hours}", Safe(hours), StringComparison.Ordinal)
+            .Replace("{candidateProfile}", Safe(candidateProfile), StringComparison.Ordinal)
+            .Replace("{mismatchGaps}", Safe(mismatchGaps), StringComparison.Ordinal)
             .Replace("{description}", Safe(description), StringComparison.Ordinal);
     }
+
+    private static string BuildRequirementsLine(MockInterviewVacancyContext vacancy)
+    {
+        var parts = new List<string>();
+        if (!string.IsNullOrWhiteSpace(vacancy.RequiredDrivingLicense))
+        {
+            parts.Add($"rijbewijs {vacancy.RequiredDrivingLicense.Trim()}");
+        }
+
+        if (!string.IsNullOrWhiteSpace(vacancy.RequiredEducation))
+        {
+            parts.Add($"opleiding {vacancy.RequiredEducation.Trim()}");
+        }
+
+        if (vacancy.MinimumEmployers is > 0)
+        {
+            parts.Add($"min. {vacancy.MinimumEmployers} werkgever(s)");
+        }
+
+        return parts.Count == 0 ? "geen harde eisen vermeld" : string.Join("; ", parts);
+    }
+
+    private static string FormatCandidateProfile(MockInterviewCandidateContext? candidate)
+    {
+        if (candidate is null)
+        {
+            return "- (geen profielgegevens beschikbaar — stel alleen vacaturetekst-vragen)";
+        }
+
+        var lines = new List<string>
+        {
+            $"- About me: {(string.IsNullOrWhiteSpace(candidate.AboutMe) ? "(leeg)" : Truncate(candidate.AboutMe!, 280))}",
+            $"- Licenses: {(candidate.DrivingLicenses.Count == 0 ? "(niet ingevuld)" : string.Join(", ", candidate.DrivingLicenses))}",
+            $"- Education: {(candidate.Educations.Count == 0 ? "(niet ingevuld)" : string.Join(", ", candidate.Educations))}",
+            $"- Employers: {(candidate.EmployerSummaries.Count == 0 ? "(geen)" : string.Join("; ", candidate.EmployerSummaries))}",
+            $"- Hours preference: {(string.IsNullOrWhiteSpace(candidate.HoursSummary) ? "(niet ingevuld)" : candidate.HoursSummary)}"
+        };
+        return string.Join("\n", lines);
+    }
+
+    private static string Truncate(string value, int max)
+        => value.Length <= max ? value : value[..(max - 1)].TrimEnd() + "…";
 
     private async Task<string?> ResolveApiKeyAsync(CancellationToken cancellationToken)
     {
@@ -339,7 +414,8 @@ public sealed class MockInterviewService : IMockInterviewService
         public static string NextReply(
             MockInterviewVacancyContext vacancy,
             IReadOnlyList<MockInterviewMessage> history,
-            MockInterviewLabels.Pack? labels = null)
+            MockInterviewLabels.Pack? labels = null,
+            MockInterviewCandidateContext? candidate = null)
         {
             var requested = labels ?? MockInterviewLabels.For("nl");
             // Scripted path is fully authored in NL + EN. Other UI languages get English
@@ -347,7 +423,7 @@ public sealed class MockInterviewService : IMockInterviewService
             var useEnglish = !string.Equals(requested.LanguageCode, "nl", StringComparison.OrdinalIgnoreCase);
             labels = useEnglish ? MockInterviewLabels.For("en") : requested;
 
-            var plan = InterviewPlan.FromVacancy(vacancy);
+            var plan = InterviewPlan.FromVacancy(vacancy, candidate);
             var userTurns = history.Count(m => m.Role == "user");
 
             if (history.Count == 0)
@@ -356,16 +432,18 @@ public sealed class MockInterviewService : IMockInterviewService
                 {
                     return
                         $"Hi! I'll help you practice for {plan.Title} at {plan.Company}. " +
-                        "This is a Lobsy practice chat — not a real interview, but with questions from the vacancy.\n\n" +
+                        "This is a Lobsy practice chat — not a real interview, but with questions from the vacancy text" +
+                        (plan.HasGapQuestions ? " and your profile fit" : "") + ".\n\n" +
                         $"Key themes I see: {plan.ThemeSummary}.\n\n" +
-                        $"{labels.Question} {EnglishQuestion(plan, 0)}";
+                        $"{labels.Question} {PickQuestion(plan, 0, useEnglish: true)}";
                 }
 
                 return
                     $"Hoi! Ik help je oefenen voor {plan.Title} bij {plan.Company}. " +
-                    "Dit is een oefengesprek via Lobsy — geen echt gesprek, wél met vragen uit de vacature.\n\n" +
+                    "Dit is een oefengesprek via Lobsy — geen echt gesprek, wél met vragen uit de vacaturetekst" +
+                    (plan.HasGapQuestions ? " én over verschillen met jouw profiel" : "") + ".\n\n" +
                     $"In de tekst zie ik vooral: {plan.ThemeSummary}.\n\n" +
-                    $"{labels.Question} {plan.Questions[0]}";
+                    $"{labels.Question} {PickQuestion(plan, 0, useEnglish: false)}";
             }
 
             var lastUser = history.LastOrDefault(m => m.Role == "user")?.Content?.Trim() ?? "";
@@ -401,24 +479,20 @@ public sealed class MockInterviewService : IMockInterviewService
                 questionIndex = 0;
             }
 
-            var question = useEnglish
-                ? EnglishQuestion(plan, questionIndex)
-                : plan.Questions[questionIndex];
-
+            var question = PickQuestion(plan, questionIndex, useEnglish);
             return $"{coaching}\n\n{labels.Question} {question}";
         }
 
-        private static string EnglishQuestion(InterviewPlan plan, int index)
+        private static string PickQuestion(InterviewPlan plan, int index, bool useEnglish)
         {
-            var hook = plan.PrimaryHook;
-            return (index % 5) switch
+            if (index < 0 || index >= plan.Questions.Count)
             {
-                0 => $"What draws you to {plan.Title} at {plan.Company}? Mention something concrete from the vacancy (e.g. {hook}).",
-                1 => $"Give one concrete example (school, sports, side job, internship) that helps you with: {hook}.",
-                2 => $"It's busy around {hook} and someone asks for something else at the same time. What do you do first, and why?",
-                3 => $"How will you get to work reliably, and when can you start around {plan.Themes.LastOrDefault()?.Label ?? "the start date"}?",
-                _ => "Last practice question: what would you ask the employer about this vacancy — and why is that a smart question?"
-            };
+                return useEnglish
+                    ? "Last practice question: what would you ask the employer about this vacancy — and why is that a smart question?"
+                    : "Laatste oefenvraag: welke vraag zou jij zelf aan de werkgever stellen over deze vacature — en waarom is die vraag slim?";
+            }
+
+            return useEnglish ? plan.EnglishQuestions[index] : plan.Questions[index];
         }
 
         private static string BuildCoaching(
@@ -577,7 +651,11 @@ public sealed class MockInterviewService : IMockInterviewService
             => needles.Any(n => text.Contains(n, StringComparison.OrdinalIgnoreCase));
     }
 
-    internal sealed record InterviewTheme(string Keyword, string Label, string Question);
+    internal sealed record InterviewTheme(
+        string Keyword,
+        string Label,
+        string Question,
+        string EnglishQuestion);
 
     internal sealed class InterviewPlan
     {
@@ -587,8 +665,12 @@ public sealed class MockInterviewService : IMockInterviewService
         public required string ThemeSummary { get; init; }
         public required IReadOnlyList<InterviewTheme> Themes { get; init; }
         public required IReadOnlyList<string> Questions { get; init; }
+        public required IReadOnlyList<string> EnglishQuestions { get; init; }
+        public bool HasGapQuestions { get; init; }
 
-        public static InterviewPlan FromVacancy(MockInterviewVacancyContext vacancy)
+        public static InterviewPlan FromVacancy(
+            MockInterviewVacancyContext vacancy,
+            MockInterviewCandidateContext? candidate = null)
         {
             var company = string.IsNullOrWhiteSpace(vacancy.CompanyName) ? "ons bedrijf" : vacancy.CompanyName.Trim();
             var title = string.IsNullOrWhiteSpace(vacancy.Title) ? "deze functie" : vacancy.Title.Trim();
@@ -599,38 +681,67 @@ public sealed class MockInterviewService : IMockInterviewService
             var transport = transportModes.FirstOrDefault() ?? "fiets of OV";
 
             var themes = new List<InterviewTheme>();
+            var snippets = ExtractDutySnippets(plain, max: 3);
+            var snippet = snippets.FirstOrDefault() ?? title.ToLowerInvariant();
+
+            // Lead with a question that quotes the vacancy text when we have a duty sentence.
+            if (snippets.Count > 0)
+            {
+                var quote = snippets[0];
+                AddTheme(
+                    themes,
+                    "vacaturetekst",
+                    "taken uit de vacaturetekst",
+                    $"In de vacature staat: „{Capitalize(quote)}”. Hoe pak jij dat aan — graag met een kort voorbeeld?",
+                    $"The vacancy says: \"{Capitalize(quote)}\". How would you handle that — with a short example?");
+            }
 
             // Domain cues from typical Westland / youth job ads
             TryAddMatch(haystack, themes, "klant", "klantcontact",
-                $"In de vacature komt klantcontact terug. Vertel hoe jij met een lastige of drukke klant omgaat — graag met een voorbeeld.");
+                "In de vacature komt klantcontact terug. Vertel hoe jij met een lastige of drukke klant omgaat — graag met een voorbeeld.",
+                "Customer contact comes up in the vacancy. Tell how you handle a difficult or busy customer — with an example.");
             TryAddMatch(haystack, themes, "gast", "gasten/horeca",
-                $"Er staat werk met gasten in de tekst. Hoe zorg jij dat gasten zich welkom voelen, ook als het druk is?");
+                "Er staat werk met gasten in de tekst. Hoe zorg jij dat gasten zich welkom voelen, ook als het druk is?",
+                "The text mentions working with guests. How do you make guests feel welcome, even when it is busy?");
             TryAddMatch(haystack, themes, "kassa", "kassa/afrekenen",
-                $"Afrekenen of kassa komt terug. Hoe blijf jij vriendelijk én nauwkeurig als er een rij staat?");
+                "Afrekenen of kassa komt terug. Hoe blijf jij vriendelijk én nauwkeurig als er een rij staat?",
+                "Checkout/till work comes up. How do you stay friendly and accurate when there is a queue?");
             TryAddMatch(haystack, themes, "magazijn", "magazijnwerk",
-                $"Magazijnwerk hoort bij de rol. Hoe ga jij om met tillen, tempo en netjes werken?");
+                "Magazijnwerk hoort bij de rol. Hoe ga jij om met tillen, tempo en netjes werken?",
+                "Warehouse work is part of the role. How do you handle lifting, pace, and working neatly?");
             TryAddMatch(haystack, themes, "inpak", "inpakken/orderpick",
-                $"Inpakken of orders verzamelen staat in de vacature. Hoe zorg jij dat je snel wérkt zonder fouten?");
+                "Inpakken of orders verzamelen staat in de vacature. Hoe zorg jij dat je snel wérkt zonder fouten?",
+                "Packing or picking orders is in the vacancy. How do you work quickly without mistakes?");
             TryAddMatch(haystack, themes, "bezorg", "bezorgen",
-                $"Bezorgen speelt een rol. Hoe plan jij een route en wat doe je als iets niet lukt (weer, adres, vertraging)?");
+                "Bezorgen speelt een rol. Hoe plan jij een route en wat doe je als iets niet lukt (weer, adres, vertraging)?",
+                "Delivery plays a role. How do you plan a route, and what do you do when something goes wrong?");
             TryAddMatch(haystack, themes, "schoonmaak", "schoonmaak",
-                $"Schoonmaak staat in de tekst. Hoe controleer jij of iets écht schoon/klaar is?");
+                "Schoonmaak staat in de tekst. Hoe controleer jij of iets écht schoon/klaar is?",
+                "Cleaning is in the text. How do you check that something is truly clean/ready?");
             TryAddMatch(haystack, themes, "team", "samenwerken",
-                $"Samenwerken is belangrijk hier. Vertel over een moment waarop je een collega hielp of om hulp vroeg.");
+                "Samenwerken is belangrijk hier. Vertel over een moment waarop je een collega hielp of om hulp vroeg.",
+                "Teamwork matters here. Tell about a moment you helped a colleague or asked for help.");
             TryAddMatch(haystack, themes, "collega", "samenwerken",
-                $"De vacature noemt collega’s. Hoe ga jij om met feedback van een leidinggevende of teamgenoot?");
+                "De vacature noemt collega’s. Hoe ga jij om met feedback van een leidinggevende of teamgenoot?",
+                "The vacancy mentions colleagues. How do you handle feedback from a manager or teammate?");
             TryAddMatch(haystack, themes, "verantwoord", "verantwoordelijkheid",
-                $"Er wordt verantwoordelijkheid gevraagd. Geef een voorbeeld waarin jij iets zelf oppakte zonder dat iemand erachteraan hoefde.");
+                "Er wordt verantwoordelijkheid gevraagd. Geef een voorbeeld waarin jij iets zelf oppakte zonder dat iemand erachteraan hoefde.",
+                "Responsibility is asked for. Give an example where you took something on without someone chasing you.");
             TryAddMatch(haystack, themes, "weekend", "beschikbaarheid in weekenden",
-                $"Weekenden komen terug. Hoe ziet jouw beschikbaarheid eruit, en hoe combineer je dat met school/andere plannen?");
+                "Weekenden komen terug. Hoe ziet jouw beschikbaarheid eruit, en hoe combineer je dat met school/andere plannen?",
+                "Weekends come up. What does your availability look like, and how do you combine that with school/other plans?");
             TryAddMatch(haystack, themes, "avond", "avonddiensten",
-                $"Avondwerk speelt mee. Past dat bij jou, en hoe zorg je dat je fit en op tijd bent?");
+                "Avondwerk speelt mee. Past dat bij jou, en hoe zorg je dat je fit en op tijd bent?",
+                "Evening work is involved. Does that fit you, and how do you stay fit and on time?");
             TryAddMatch(haystack, themes, "flexibel", "flexibiliteit",
-                $"Flexibiliteit staat in de vacature. Kun je een voorbeeld geven waarin je snel schakelde toen plannen veranderden?");
+                "Flexibiliteit staat in de vacature. Kun je een voorbeeld geven waarin je snel schakelde toen plannen veranderden?",
+                "Flexibility is in the vacancy. Can you give an example where you adapted quickly when plans changed?");
             TryAddMatch(haystack, themes, "tuinbouw", "tuinbouw/productie",
-                $"Tuinbouw of productie hoort bij de rol. Hoe ga jij om met herhalend werk en tempo op de werkvloer?");
+                "Tuinbouw of productie hoort bij de rol. Hoe ga jij om met herhalend werk en tempo op de werkvloer?",
+                "Horticulture or production is part of the role. How do you handle repetitive work and pace on the floor?");
             TryAddMatch(haystack, themes, "kas", "werk in de kas",
-                $"Werk in/rond de kas komt terug. Wat spreekt jou daarin aan, en hoe houd je het vol op een drukke dag?");
+                "Werk in/rond de kas komt terug. Wat spreekt jou daarin aan, en hoe houd je het vol op een drukke dag?",
+                "Greenhouse work comes up. What appeals to you about that, and how do you keep going on a busy day?");
 
             foreach (var wt in workTypes)
             {
@@ -638,70 +749,125 @@ public sealed class MockInterviewService : IMockInterviewService
                 if (key.Contains("horeca", StringComparison.Ordinal))
                 {
                     AddTheme(themes, "horeca", "horeca",
-                        $"Dit is een horecarol. Hoe blijf jij vriendelijk als het tegelijk druk én warm is achter de bar/in de zaak?");
+                        "Dit is een horecarol. Hoe blijf jij vriendelijk als het tegelijk druk én warm is achter de bar/in de zaak?",
+                        "This is a hospitality role. How do you stay friendly when it is both busy and hot behind the bar/in the venue?");
                 }
                 else if (key.Contains("logistiek", StringComparison.Ordinal))
                 {
                     AddTheme(themes, "logistiek", "logistiek",
-                        $"Logistiek staat centraal. Hoe voorkom jij fouten bij tellen, labels of orders?");
+                        "Logistiek staat centraal. Hoe voorkom jij fouten bij tellen, labels of orders?",
+                        "Logistics is central. How do you prevent mistakes with counting, labels, or orders?");
                 }
                 else if (key.Contains("winkel", StringComparison.Ordinal) || key.Contains("retail", StringComparison.Ordinal))
                 {
                     AddTheme(themes, "winkel", "winkelwerk",
-                        $"Winkelwerk hoort erbij. Wat doe je als een klant iets zoekt dat je niet meteen kunt vinden?");
+                        "Winkelwerk hoort erbij. Wat doe je als een klant iets zoekt dat je niet meteen kunt vinden?",
+                        "Shop work is part of it. What do you do when a customer looks for something you cannot find right away?");
                 }
             }
 
-            // Snippet-based hook from description
-            var snippet = ExtractDutySnippet(plain) ?? title.ToLowerInvariant();
+            // Second quoted duty if available and distinct.
+            if (snippets.Count > 1)
+            {
+                var quote2 = snippets[1];
+                AddTheme(
+                    themes,
+                    "vacaturetekst-2",
+                    "tweede taak uit de tekst",
+                    $"Nog iets uit de tekst: „{Capitalize(quote2)}”. Wat zou jij als eerste doen als dit op je bord komt?",
+                    $"Another line from the text: \"{Capitalize(quote2)}\". What would you do first if this landed on your plate?");
+            }
 
             if (themes.Count == 0)
             {
                 themes.Add(new InterviewTheme(
                     "motivatie",
                     "motivatie voor deze rol",
-                    $"Waarom past {title} bij jou — noem iets uit de vacaturetekst dat je aanspreekt."));
+                    $"Waarom past {title} bij jou — noem iets uit de vacaturetekst dat je aanspreekt.",
+                    $"Why does {title} fit you — mention something from the vacancy text that appeals to you."));
             }
 
-            while (themes.Count < 4)
+            while (themes.Count < 3)
             {
                 themes.Add(themes.Count switch
                 {
                     1 => new InterviewTheme(
                         "ervaring",
                         "ervaring of school",
-                        $"Welke ervaring (school, sport, bijbaan, stage) helpt jou bij {snippet}? Geef één concreet voorbeeld."),
+                        $"Welke ervaring (school, sport, bijbaan, stage) helpt jou bij {snippet}? Geef één concreet voorbeeld.",
+                        $"Which experience (school, sports, side job, internship) helps you with {snippet}? Give one concrete example."),
                     2 => new InterviewTheme(
-                        "vervoer",
-                        "reistijd/vervoer",
-                        $"In de vacature past vervoer als {transport}. Hoe kom jij meestal naar het werk, en hoe betrouwbaar is dat?"),
-                    3 => new InterviewTheme(
                         "drukte",
                         "werken onder druk",
-                        $"Stel: het is druk rond {snippet} en iemand vraagt tegelijk iets anders. Wat doe je eerst, en waarom?"),
+                        $"Stel: het is druk rond {snippet} en iemand vraagt tegelijk iets anders. Wat doe je eerst, en waarom?",
+                        $"Imagine it is busy around {snippet} and someone asks for something else at the same time. What do you do first, and why?"),
                     _ => new InterviewTheme(
-                        "start",
-                        "beschikbaarheid",
-                        $"Wanneer kun je starten (rond {vacancy.StartDate:dd-MM}) en hoeveel uur per week past bij jou?")
+                        "vervoer",
+                        "reistijd/vervoer",
+                        $"In de vacature past vervoer als {transport}. Hoe kom jij meestal naar het werk, en hoe betrouwbaar is dat?",
+                        $"The vacancy fits transport like {transport}. How do you usually get to work, and how reliable is that?")
                 });
             }
 
-            // Always end with candidate questions
-            var questions = themes.Take(4).Select(t => t.Question).ToList();
+            // Insert profile↔vacancy gap questions before the closer (max 2).
+            var gapThemes = new List<InterviewTheme>();
+            foreach (var gap in (candidate?.Gaps ?? []).Take(2))
+            {
+                gapThemes.Add(new InterviewTheme(
+                    $"gap-{gap.Key}",
+                    gap.Key switch
+                    {
+                        "license" => "rijbewijs vs. vacature",
+                        "education" => "opleiding vs. vacature",
+                        "employers" => "ervaring vs. vacature",
+                        "hours" or "hours-unknown" => "uren vs. vacature",
+                        "schedule" => "beschikbaarheid vs. vacature",
+                        "about-me" => "profielverhaal",
+                        _ => "profiel vs. vacature"
+                    },
+                    gap.Question,
+                    gap.EnglishQuestion));
+            }
+
+            // Build final question list: up to 3 vacancy themes, then gaps, pad if needed, then closer.
+            var selected = themes.Take(3).ToList();
+            foreach (var gap in gapThemes)
+            {
+                if (selected.All(t => t.Keyword != gap.Keyword))
+                {
+                    selected.Add(gap);
+                }
+            }
+
+            var pad = 0;
+            while (selected.Count < 4)
+            {
+                pad++;
+                selected.Add(new InterviewTheme(
+                    $"start-{pad}",
+                    "beschikbaarheid",
+                    $"Wanneer kun je starten (rond {vacancy.StartDate:dd-MM}) en hoeveel uur per week past bij jou voor {title}?",
+                    $"When can you start (around {vacancy.StartDate:dd-MM}) and how many hours per week fit you for {title}?"));
+            }
+
+            var questions = selected.Select(t => t.Question).ToList();
+            var englishQuestions = selected.Select(t => t.EnglishQuestion).ToList();
             questions.Add(
                 "Laatste oefenvraag: welke vraag zou jij zelf aan de werkgever stellen over deze vacature — en waarom is die vraag slim?");
+            englishQuestions.Add(
+                "Last practice question: what would you ask the employer about this vacancy — and why is that a smart question?");
 
-            var primary = themes[0];
-            var summary = string.Join(", ", themes.Take(3).Select(t => t.Label));
-
+            var summaryParts = selected.Take(4).Select(t => t.Label).ToList();
             return new InterviewPlan
             {
                 Title = title,
                 Company = company,
                 PrimaryHook = snippet,
-                ThemeSummary = summary,
-                Themes = themes,
-                Questions = questions
+                ThemeSummary = string.Join(", ", summaryParts),
+                Themes = selected,
+                Questions = questions,
+                EnglishQuestions = englishQuestions,
+                HasGapQuestions = gapThemes.Count > 0
             };
         }
 
@@ -710,21 +876,23 @@ public sealed class MockInterviewService : IMockInterviewService
             List<InterviewTheme> themes,
             string keyword,
             string label,
-            string question)
+            string question,
+            string englishQuestion)
         {
             if (!haystack.Contains(keyword, StringComparison.Ordinal))
             {
                 return;
             }
 
-            AddTheme(themes, keyword, label, question);
+            AddTheme(themes, keyword, label, question, englishQuestion);
         }
 
         private static void AddTheme(
             List<InterviewTheme> themes,
             string keyword,
             string label,
-            string question)
+            string question,
+            string englishQuestion)
         {
             if (themes.Any(t => t.Label.Equals(label, StringComparison.OrdinalIgnoreCase)
                                 || t.Keyword.Equals(keyword, StringComparison.OrdinalIgnoreCase)))
@@ -732,30 +900,28 @@ public sealed class MockInterviewService : IMockInterviewService
                 return;
             }
 
-            themes.Add(new InterviewTheme(keyword, label, question));
+            themes.Add(new InterviewTheme(keyword, label, question, englishQuestion));
         }
 
-        private static string? ExtractDutySnippet(string plain)
+        private static IReadOnlyList<string> ExtractDutySnippets(string plain, int max)
         {
-            if (string.IsNullOrWhiteSpace(plain))
+            if (string.IsNullOrWhiteSpace(plain) || max <= 0)
             {
-                return null;
+                return [];
             }
 
             var sentences = Regex.Split(plain, @"(?<=[\.\!\?\n])\s+")
                 .Select(s => s.Trim().TrimStart('-', '•', '*', ' '))
-                .Where(s => s.Length is >= 28 and <= 140)
+                .Where(s => s.Length is >= 24 and <= 160)
                 .ToList();
 
-            var duty = sentences.FirstOrDefault(s =>
-                ContainsDutyVerb(s));
-            if (!string.IsNullOrWhiteSpace(duty))
+            var duty = sentences.Where(ContainsDutyVerb).Select(TrimSnippet).Where(s => s.Length >= 20).ToList();
+            if (duty.Count == 0 && sentences.Count > 0)
             {
-                return TrimSnippet(duty);
+                duty.Add(TrimSnippet(sentences[0]));
             }
 
-            var first = sentences.FirstOrDefault() ?? plain.Trim();
-            return TrimSnippet(first);
+            return duty.Distinct(StringComparer.OrdinalIgnoreCase).Take(max).ToList();
         }
 
         private static bool ContainsDutyVerb(string s)
@@ -764,18 +930,30 @@ public sealed class MockInterviewService : IMockInterviewService
             return lower.Contains("je ") || lower.Contains("jij ")
                 || lower.Contains("zorgen") || lower.Contains("helpen")
                 || lower.Contains("werken") || lower.Contains("verantwoordelijk")
-                || lower.Contains("taken") || lower.Contains("opdracht");
+                || lower.Contains("taken") || lower.Contains("opdracht")
+                || lower.Contains("you ") || lower.Contains("will ");
         }
 
         private static string TrimSnippet(string value)
         {
             var cleaned = Regex.Replace(value, @"\s+", " ").Trim();
-            if (cleaned.Length > 90)
+            if (cleaned.Length > 100)
             {
-                cleaned = cleaned[..87].TrimEnd(',', '.', ';', ' ') + "…";
+                cleaned = cleaned[..97].TrimEnd(',', '.', ';', ' ') + "…";
             }
 
-            return cleaned.ToLowerInvariant();
+            return cleaned;
+        }
+
+        private static string Capitalize(string value)
+        {
+            if (string.IsNullOrWhiteSpace(value))
+            {
+                return value;
+            }
+
+            var trimmed = value.Trim();
+            return char.ToUpperInvariant(trimmed[0]) + trimmed[1..];
         }
     }
 }

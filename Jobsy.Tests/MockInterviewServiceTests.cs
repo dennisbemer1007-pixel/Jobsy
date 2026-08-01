@@ -1,5 +1,8 @@
+using Jobsy.Core.Contracts;
+using Jobsy.Core.Entities;
 using Jobsy.Core.Interfaces;
 using Jobsy.Core.Localization;
+using Jobsy.Core.Rules;
 using Jobsy.Infrastructure.Services;
 
 namespace Jobsy.Tests;
@@ -221,5 +224,126 @@ public class MockInterviewServiceTests
 
         Assert.Contains("Question:", reply, StringComparison.Ordinal);
         Assert.Contains("Hi!", reply, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void ScriptedFallback_opens_with_quoted_vacancy_duty()
+    {
+        var vacancy = new MockInterviewVacancyContext(
+            Guid.NewGuid(),
+            "Magazijnmedewerker",
+            "Je werkt in het magazijn: inpakken van orders en laden van karren. Tempo en netjes werken zijn belangrijk.",
+            "Bakkerij De Zon",
+            null,
+            new DateOnly(2026, 8, 1),
+            ["Fiets"],
+            null,
+            ["Logistiek"]);
+
+        var reply = MockInterviewService.ScriptedFallback.NextReply(vacancy, []);
+
+        Assert.Contains("Vraag:", reply, StringComparison.Ordinal);
+        Assert.Contains("In de vacature staat:", reply, StringComparison.Ordinal);
+        Assert.Contains("magazijn", reply, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public void ScriptedFallback_asks_about_license_gap_with_candidate_profile()
+    {
+        var vacancy = new MockInterviewVacancyContext(
+            Guid.NewGuid(),
+            "Bezorgmedewerker",
+            "Je bezorgt bestellingen per auto bij klanten in de buurt. Klantvriendelijk en op tijd zijn is belangrijk.",
+            "FietsExpress",
+            null,
+            new DateOnly(2026, 8, 1),
+            ["Auto"],
+            14.50m,
+            [],
+            RequiredDrivingLicense: "B");
+
+        var entity = new Vacancy
+        {
+            Id = vacancy.VacancyId,
+            Title = vacancy.Title,
+            Description = vacancy.Description,
+            RequiredDrivingLicense = "B",
+            HourlyWage = 14.50m,
+            StartDate = vacancy.StartDate,
+            EndDate = vacancy.StartDate.AddMonths(3),
+            CompanyId = Guid.NewGuid()
+        };
+        var prefs = new CandidatePreferencesDto(
+            Roles: ["logistiek"],
+            MaxTravelMinutes: 30,
+            PreferredTransport: "Auto",
+            DrivingLicenses: [],
+            Educations: ["MBO 2"]);
+        var candidate = MockInterviewGapAnalyzer.BuildCandidateContext(prefs, entity);
+
+        Assert.Contains(candidate.Gaps, g => g.Key == "license");
+
+        var opening = MockInterviewService.ScriptedFallback.NextReply(vacancy, [], candidate: candidate);
+        Assert.Contains("Vraag:", opening, StringComparison.Ordinal);
+
+        // After first answer, progress until a gap question appears.
+        var history = new List<MockInterviewMessage>
+        {
+            new("assistant", opening),
+            new("user", "Ik vind bezorgen leuk en woon dichtbij, ik plan mijn route vooraf.")
+        };
+        string? gapReply = null;
+        for (var i = 0; i < 4; i++)
+        {
+            var reply = MockInterviewService.ScriptedFallback.NextReply(vacancy, history, candidate: candidate);
+            if (reply.Contains("rijbewijs", StringComparison.OrdinalIgnoreCase))
+            {
+                gapReply = reply;
+                break;
+            }
+
+            history.Add(new("assistant", reply));
+            history.Add(new("user", $"Ik heb ervaring met tempo en klanten, voorbeeld {i + 1}."));
+        }
+
+        Assert.NotNull(gapReply);
+        Assert.Contains("rijbewijs", gapReply, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("Vraag:", gapReply, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void GapAnalyzer_detects_hours_and_education_mismatches()
+    {
+        var vacancy = new Vacancy
+        {
+            Id = Guid.NewGuid(),
+            Title = "Kassamedewerker",
+            Description = "Je werkt zelfstandig aan de kassa en helpt klanten.",
+            RequiredEducation = "MBO",
+            MinHoursPerWeek = 24,
+            MaxHoursPerWeek = 32,
+            HourlyWage = 13m,
+            StartDate = new DateOnly(2026, 8, 1),
+            EndDate = new DateOnly(2026, 12, 1),
+            CompanyId = Guid.NewGuid()
+        };
+        var prefs = new CandidatePreferencesDto(
+            Roles: ["winkel"],
+            MaxTravelMinutes: 20,
+            PreferredTransport: "Fiets",
+            Educations: ["VMBO"],
+            MinHoursPerWeek: 8,
+            MaxHoursPerWeek: 12,
+            AboutMe: "Ik help graag mensen.");
+
+        var candidate = MockInterviewGapAnalyzer.BuildCandidateContext(prefs, vacancy);
+
+        Assert.Contains(candidate.Gaps, g => g.Key == "education");
+        Assert.Contains(candidate.Gaps, g => g.Key == "hours");
+        Assert.All(candidate.Gaps, g =>
+        {
+            Assert.False(string.IsNullOrWhiteSpace(g.Question));
+            Assert.False(string.IsNullOrWhiteSpace(g.EnglishQuestion));
+        });
     }
 }
