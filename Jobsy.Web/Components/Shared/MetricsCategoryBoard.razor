@@ -1,0 +1,146 @@
+@using Jobsy.Web.Dashboard
+@using Jobsy.Web.Models
+
+@* Categorized KPI board: hero strip + category tabs. *@
+
+@if (Metrics.Count > 0)
+{
+    var hero = MetricDashboardCatalog.HeroMetrics(Metrics, m => m.Key);
+    var groups = MetricDashboardCatalog.GroupPresent(Metrics, m => m.Key);
+    var activeId = ResolveActiveCategory(groups);
+
+    @if (hero.Count > 0)
+    {
+        <section class="dash-hero" aria-label="Kerncijfers">
+            <div class="dash-hero__grid">
+                @foreach (var metric in hero)
+                {
+                    <MetricTile Label="@metric.Label"
+                                FormattedValue="@FormatValue(metric)"
+                                Emphasis="true"
+                                Warning="@MetricDashboardCatalog.IsWarning(metric.Key, metric.Value)"
+                                Progress="@ProgressFor(metric)"
+                                Selected="@(SelectedKey == metric.Key)"
+                                OnClick="() => OnMetricClick.InvokeAsync(metric)" />
+                }
+            </div>
+        </section>
+    }
+
+    @if (groups.Count > 1)
+    {
+        <div class="dash-cat-tabs" role="tablist" aria-label="KPI-categorieën">
+            @foreach (var (category, items) in groups)
+            {
+                <button type="button"
+                        class="dash-cat-tab @(activeId == category.Id ? "dash-cat-tab--active" : null)"
+                        role="tab"
+                        aria-selected="@(activeId == category.Id)"
+                        @onclick="() => SelectCategory(category.Id)">
+                    <span class="dash-cat-tab__label">@category.Title</span>
+                    <span class="dash-cat-tab__count">@items.Count</span>
+                </button>
+            }
+        </div>
+    }
+
+    @foreach (var (category, items) in groups)
+    {
+        if (groups.Count > 1 && activeId != category.Id)
+        {
+            continue;
+        }
+
+        <section class="dash-section" aria-labelledby="dash-cat-@category.Id">
+            <header class="dash-section__header">
+                <div>
+                    <h2 id="dash-cat-@category.Id">@category.Title</h2>
+                    <p class="dash-section__lead">@category.Lead</p>
+                </div>
+            </header>
+
+            <div class="stat-grid dash-stat-grid">
+                @foreach (var metric in items)
+                {
+                    var isHeroDup = hero.Any(h => string.Equals(h.Key, metric.Key, StringComparison.OrdinalIgnoreCase));
+                    <MetricTile Label="@metric.Label"
+                                FormattedValue="@FormatValue(metric)"
+                                Emphasis="@(!isHeroDup && MetricDashboardCatalog.IsPrimary(metric.Key))"
+                                Warning="@MetricDashboardCatalog.IsWarning(metric.Key, metric.Value)"
+                                Progress="@ProgressFor(metric)"
+                                Selected="@(SelectedKey == metric.Key)"
+                                OnClick="() => OnMetricClick.InvokeAsync(metric)" />
+                }
+            </div>
+        </section>
+    }
+}
+
+@if (ChildContent is not null)
+{
+    <div class="dash-quicklinks">
+        <h2 class="dash-quicklinks__title">Snelle links</h2>
+        <div class="stat-grid dash-stat-grid dash-stat-grid--links">
+            @ChildContent
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public IReadOnlyList<MetricCount> Metrics { get; set; } = [];
+    [Parameter] public string? SelectedKey { get; set; }
+    [Parameter] public EventCallback<MetricCount> OnMetricClick { get; set; }
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+    [Parameter] public Func<MetricCount, string>? ValueFormatter { get; set; }
+
+    private string? _categoryId;
+
+    private string ResolveActiveCategory(IReadOnlyList<(MetricDashboardCatalog.Category Category, IReadOnlyList<MetricCount> Metrics)> groups)
+    {
+        if (groups.Count == 0)
+        {
+            return "growth";
+        }
+
+        if (_categoryId is not null && groups.Any(g => g.Category.Id == _categoryId))
+        {
+            return _categoryId;
+        }
+
+        if (SelectedKey is not null)
+        {
+            var fromSelection = MetricDashboardCatalog.CategoryIdFor(SelectedKey);
+            if (fromSelection is not null && groups.Any(g => g.Category.Id == fromSelection))
+            {
+                return fromSelection;
+            }
+        }
+
+        return groups[0].Category.Id;
+    }
+
+    private void SelectCategory(string id)
+    {
+        _categoryId = id;
+    }
+
+    private string FormatValue(MetricCount metric)
+        => ValueFormatter?.Invoke(metric) ?? DefaultFormat(metric);
+
+    private static string DefaultFormat(MetricCount metric)
+    {
+        if (MetricDashboardCatalog.IsPercent(metric.Key))
+        {
+            return metric.Value.ToString("0.#") + "%";
+        }
+
+        return metric.Key.StartsWith("tokens_", StringComparison.OrdinalIgnoreCase)
+            ? metric.Value.ToString("0.##")
+            : metric.Value.ToString("0");
+    }
+
+    private static double? ProgressFor(MetricCount metric)
+        => MetricDashboardCatalog.IsPercent(metric.Key)
+            ? (double)Math.Clamp(metric.Value, 0, 100)
+            : null;
+}

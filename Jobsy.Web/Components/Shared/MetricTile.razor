@@ -1,17 +1,50 @@
 @* Shared clickable KPI tile for role dashboards. *@
 
 <button type="button"
-        class="stat-card stat-card--link @(Selected ? "stat-card--selected" : null)"
+        class="@CssClass"
         @onclick="HandleClickAsync">
-    <span class="stat-card__label">@Label</span>
+    <span class="stat-card__top">
+        <span class="stat-card__label">@Label</span>
+        @if (ShowWarningDot)
+        {
+            <span class="stat-card__status stat-card__status--warn" title="Aandacht vereist" aria-hidden="true"></span>
+        }
+        else if (Emphasis)
+        {
+            <span class="stat-card__status stat-card__status--ok" aria-hidden="true"></span>
+        }
+    </span>
     <strong class="stat-card__value">@FormattedValue</strong>
+    @if (Progress is >= 0 and <= 100)
+    {
+        <span class="stat-card__meter" aria-hidden="true">
+            <span class="stat-card__meter-fill" style="width:@Progress.Value.ToString("0.#", System.Globalization.CultureInfo.InvariantCulture)%"></span>
+        </span>
+    }
 </button>
 
 @code {
     [Parameter] public string Label { get; set; } = string.Empty;
     [Parameter] public string FormattedValue { get; set; } = "0";
     [Parameter] public bool Selected { get; set; }
+    [Parameter] public bool Emphasis { get; set; }
+    [Parameter] public bool Warning { get; set; }
+    [Parameter] public double? Progress { get; set; }
     [Parameter] public EventCallback OnClick { get; set; }
+
+    private bool ShowWarningDot => Warning;
+
+    private string CssClass
+    {
+        get
+        {
+            var classes = "stat-card stat-card--link";
+            if (Selected) classes += " stat-card--selected";
+            if (Emphasis) classes += " stat-card--emphasis";
+            if (Warning) classes += " stat-card--warning";
+            return classes;
+        }
+    }
 
     private Task HandleClickAsync() => OnClick.InvokeAsync();
 }

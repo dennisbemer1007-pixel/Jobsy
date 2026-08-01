@@ -1,15 +1,16 @@
 @using Jobsy.Web.Components.Shared
+@using Jobsy.Web.Dashboard
 @inject JobsyApiClient Api
 @inject CultureState Culture
 @implements IDisposable
 
-<div class="panel-page">
-    <header class="panel-header">
+<div class="panel-page panel-page--dashboard">
+    <header class="panel-header panel-header--dashboard">
         <div>
             <h1>Platform dashboard</h1>
             <p class="login-lead">KPI’s over het hele platform — klik een tegel voor drilldown. Modules via Settings of Financieel in de navigatie.</p>
         </div>
-        <div class="period-tabs" role="tablist" aria-label="Periode">
+        <div class="period-tabs period-tabs--compact" role="tablist" aria-label="Periode">
             @foreach (var p in Periods)
             {
                 <button type="button"
@@ -34,15 +35,10 @@
     }
     else
     {
-        <div class="stat-grid">
-            @foreach (var metric in _metrics)
-            {
-                <MetricTile Label="@metric.Label"
-                            FormattedValue="@FormatValue(metric)"
-                            Selected="@(_selectedKey == metric.Key)"
-                            OnClick="() => SelectMetricAsync(metric.Key)" />
-            }
-        </div>
+        <MetricsCategoryBoard Metrics="_metrics"
+                              SelectedKey="_selectedKey"
+                              ValueFormatter="FormatValue"
+                              OnMetricClick="SelectMetricAsync" />
 
         @if (_selectedKey is not null)
         {
@@ -89,7 +85,7 @@
 
     private static string FormatValue(MetricCount metric)
     {
-        if (string.Equals(metric.Key, "reengagement_reactivated", StringComparison.OrdinalIgnoreCase))
+        if (MetricDashboardCatalog.IsPercent(metric.Key))
         {
             return metric.Value.ToString("0.#") + "%";
         }
@@ -110,17 +106,17 @@
         }
     }
 
-    private async Task SelectMetricAsync(string key)
+    private async Task SelectMetricAsync(MetricCount metric)
     {
-        if (_selectedKey == key)
+        if (_selectedKey == metric.Key)
         {
             _selectedKey = null;
             _drilldown = [];
             return;
         }
 
-        _selectedKey = key;
-        await LoadDrilldownAsync(key);
+        _selectedKey = metric.Key;
+        await LoadDrilldownAsync(metric.Key);
     }
 
     private async Task LoadSummaryAsync()

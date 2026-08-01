@@ -1,5 +1,6 @@
 @using Jobsy.Core.Authorization
 @using Jobsy.Web.Components.Shared
+@using Jobsy.Web.Dashboard
 @using Microsoft.AspNetCore.Components.Authorization
 @inject JobsyApiClient Api
 @inject NavigationManager Navigation
@@ -7,13 +8,13 @@
 @inject CultureState Culture
 @implements IDisposable
 
-<div class="panel-page">
-    <header class="panel-header">
+<div class="panel-page panel-page--dashboard">
+    <header class="panel-header panel-header--dashboard">
         <div>
             <h1>@Title</h1>
             <p class="login-lead">@Lead</p>
         </div>
-        <div class="period-tabs" role="tablist" aria-label="@Culture["Common.Period"]">
+        <div class="period-tabs period-tabs--compact" role="tablist" aria-label="@Culture["Common.Period"]">
             @foreach (var p in PeriodKeys)
             {
                 <button type="button"
@@ -38,36 +39,32 @@
     }
     else
     {
-        <div class="stat-grid">
-            @foreach (var metric in _metrics)
-            {
-                <MetricTile Label="@metric.Label"
-                            FormattedValue="@FormatValue(metric)"
-                            OnClick="() => OpenMetricAsync(metric)" />
-            }
-            <a class="stat-card stat-card--link" href="@TokensHref">
+        <MetricsCategoryBoard Metrics="_metrics"
+                              ValueFormatter="FormatValue"
+                              OnMetricClick="OpenMetricAsync">
+            <a class="stat-card stat-card--link stat-card--nav" href="@TokensHref">
                 <span class="stat-card__label">@Culture["Common.Tokens"]</span>
                 <strong class="stat-card__value">→</strong>
             </a>
-            <a class="stat-card stat-card--link" href="@VacanciesHref">
+            <a class="stat-card stat-card--link stat-card--nav" href="@VacanciesHref">
                 <span class="stat-card__label">@Culture["Employer.DashboardVacancies"]</span>
                 <strong class="stat-card__value">→</strong>
             </a>
             @if (_showMyApplications)
             {
-                <a class="stat-card stat-card--link" href="/candidate/applications">
+                <a class="stat-card stat-card--link stat-card--nav" href="/candidate/applications">
                     <span class="stat-card__label">@Culture["Employer.DashboardApplications"]</span>
                     <strong class="stat-card__value">→</strong>
                 </a>
             }
             @if (!string.IsNullOrEmpty(ExtraHref))
             {
-                <a class="stat-card stat-card--link" href="@ExtraHref">
+                <a class="stat-card stat-card--link stat-card--nav" href="@ExtraHref">
                     <span class="stat-card__label">@ExtraLabel</span>
                     <strong class="stat-card__value">→</strong>
                 </a>
             }
-        </div>
+        </MetricsCategoryBoard>
     }
 </div>
 
@@ -115,9 +112,16 @@
         => Culture.Changed -= OnCultureChanged;
 
     private static string FormatValue(MetricCount metric)
-        => metric.Key.StartsWith("tokens_", StringComparison.OrdinalIgnoreCase)
+    {
+        if (MetricDashboardCatalog.IsPercent(metric.Key))
+        {
+            return metric.Value.ToString("0.#") + "%";
+        }
+
+        return metric.Key.StartsWith("tokens_", StringComparison.OrdinalIgnoreCase)
             ? metric.Value.ToString("0.##")
             : metric.Value.ToString("0");
+    }
 
     private async Task SetPeriodAsync(string period)
     {

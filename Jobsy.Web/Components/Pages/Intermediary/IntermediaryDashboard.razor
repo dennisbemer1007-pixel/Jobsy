@@ -4,13 +4,13 @@
 @inject JobsyApiClient Api
 @inject CultureState Culture
 
-<PageTitle>Intermediair Dashboard · Lobsy</PageTitle>
+<PageTitle>Opdrachtgevers · Lobsy</PageTitle>
 
-<div class="panel-page">
-    <header class="panel-header">
+<div class="panel-page panel-page--dashboard">
+    <header class="panel-header panel-header--dashboard">
         <div>
-            <h1>Intermediair Dashboard</h1>
-            <p class="login-lead">Werven voor meerdere externe opdrachtgevers.</p>
+            <h1>Opdrachtgevers</h1>
+            <p class="login-lead">Actieve vacatures en tokens per gekoppelde opdrachtgever. KPI’s staan op het intermediair dashboard.</p>
         </div>
         <a class="login-submit" href="/intermediary/batch" style="text-decoration:none;display:inline-flex;align-items:center;">Batch-tool</a>
     </header>
@@ -19,30 +19,53 @@
     {
         <p class="state-message">@Culture["Common.Loading"]</p>
     }
+    else if (_companies.Count == 0)
+    {
+        <p class="state-message">Nog geen opdrachtgevers gekoppeld.</p>
+    }
     else
     {
-        <div class="stat-grid">
-            @foreach (var c in _companies)
-            {
-                <div class="stat-card">
-                    <span class="stat-card__label">@c.Name</span>
-                    <strong class="stat-card__value">@c.ActiveVacancies</strong>
-                    <span class="muted">@c.TokenBalance tokens</span>
+        <section class="dash-section" aria-labelledby="intermediary-companies-heading">
+            <header class="dash-section__header">
+                <div>
+                    <h2 id="intermediary-companies-heading">Gekoppelde bedrijven</h2>
+                    <p class="dash-section__lead">@_companies.Count opdrachtgever@(_companies.Count == 1 ? "" : "s") · @_totalActive actieve vacature@(_totalActive == 1 ? "" : "s").</p>
                 </div>
-            }
-        </div>
+            </header>
+            <div class="stat-grid intermediary-company-grid">
+                @foreach (var c in _companies)
+                {
+                    <div class="stat-card intermediary-company-card @(c.ActiveVacancies > 0 ? "stat-card--emphasis" : null)">
+                        <span class="stat-card__top">
+                            <span class="stat-card__label">@c.Name</span>
+                            <span class="stat-card__status @(c.ActiveVacancies > 0 ? "stat-card__status--ok" : null)" aria-hidden="true"></span>
+                        </span>
+                        <strong class="stat-card__value">@c.ActiveVacancies</strong>
+                        <span class="intermediary-company-card__meta muted">
+                            <span class="intermediary-company-card__dot @(c.ActiveVacancies > 0 ? "intermediary-company-card__dot--active" : null)" aria-hidden="true"></span>
+                            @c.TokenBalance.ToString("0.##") tokens
+                        </span>
+                    </div>
+                }
+            </div>
+        </section>
     }
 </div>
 
 @code {
     private List<CompanySummary> _companies = [];
     private bool _loading = true;
+    private int _totalActive;
 
     protected override async Task OnInitializedAsync()
     {
         try
         {
-            _companies = (await Api.GetMyCompaniesAsync()).ToList();
+            _companies = (await Api.GetMyCompaniesAsync())
+                .OrderByDescending(c => c.ActiveVacancies)
+                .ThenBy(c => c.Name)
+                .ToList();
+            _totalActive = _companies.Sum(c => c.ActiveVacancies);
         }
         finally
         {

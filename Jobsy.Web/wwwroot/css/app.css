@@ -6537,6 +6537,299 @@ button.stat-card {
     color: inherit;
 }
 
+/* —— Role dashboards: calm SaaS hierarchy —— */
+.panel-page--dashboard {
+    max-width: 1120px;
+}
+
+.panel-header--dashboard {
+    align-items: flex-start;
+    margin-bottom: 1rem;
+    gap: 0.85rem;
+}
+
+.panel-header--dashboard .login-lead {
+    max-width: 36rem;
+}
+
+.period-tabs--compact {
+    gap: 0.25rem;
+    padding: 0.2rem;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    background: color-mix(in srgb, var(--brand) 3%, var(--surface));
+}
+
+.period-tabs--compact .period-tab {
+    border: none;
+    background: transparent;
+    border-radius: 7px;
+    padding: 0.35rem 0.65rem;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--muted);
+}
+
+.period-tabs--compact .period-tab--active {
+    background: var(--surface);
+    color: var(--brand);
+    box-shadow: 0 1px 2px rgba(15, 45, 92, 0.08);
+    border-color: transparent;
+}
+
+.dash-hero {
+    margin: 0 0 1.25rem;
+}
+
+.dash-hero__grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 0.75rem;
+}
+
+.dash-cat-tabs {
+    display: flex;
+    flex-wrap: nowrap;
+    gap: 0.4rem;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+    margin: 0 0 1rem;
+    padding-bottom: 0.15rem;
+}
+
+.dash-cat-tab {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    flex: 0 0 auto;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--muted);
+    border-radius: 999px;
+    padding: 0.4rem 0.75rem;
+    font: inherit;
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+.dash-cat-tab:hover {
+    border-color: color-mix(in srgb, var(--brand) 28%, var(--border));
+    color: var(--brand);
+}
+
+.dash-cat-tab--active {
+    border-color: color-mix(in srgb, var(--brand) 35%, var(--border));
+    background: color-mix(in srgb, var(--brand) 7%, var(--surface));
+    color: var(--brand);
+}
+
+.dash-cat-tab__count {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 1.25rem;
+    height: 1.25rem;
+    padding: 0 0.3rem;
+    border-radius: 999px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    background: color-mix(in srgb, var(--brand) 10%, var(--surface));
+    color: var(--brand);
+}
+
+.dash-section {
+    margin: 0 0 1.5rem;
+}
+
+.dash-section__header {
+    margin-bottom: 0.75rem;
+}
+
+.dash-section__header h2 {
+    margin: 0;
+    font-size: 1.05rem;
+    color: var(--brand);
+}
+
+.dash-section__lead {
+    margin: 0.25rem 0 0;
+    font-size: 0.88rem;
+    color: var(--muted);
+    line-height: 1.4;
+}
+
+.dash-stat-grid {
+    grid-template-columns: repeat(auto-fill, minmax(168px, 1fr));
+}
+
+.dash-stat-grid--links {
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+}
+
+.dash-quicklinks {
+    margin-top: 0.5rem;
+    padding-top: 1.25rem;
+    border-top: 1px solid color-mix(in srgb, var(--border) 85%, transparent);
+}
+
+.dash-quicklinks__title {
+    margin: 0 0 0.75rem;
+    font-size: 0.95rem;
+    color: var(--brand);
+}
+
+.stat-card__top {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 0.5rem;
+}
+
+.stat-card__status {
+    width: 0.5rem;
+    height: 0.5rem;
+    border-radius: 50%;
+    margin-top: 0.2rem;
+    flex-shrink: 0;
+    background: color-mix(in srgb, var(--brand) 35%, var(--border));
+}
+
+.stat-card__status--ok {
+    background: color-mix(in srgb, var(--brand) 55%, #3d7a5f);
+}
+
+.stat-card__status--warn {
+    background: var(--danger);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--danger) 18%, transparent);
+}
+
+.stat-card--emphasis {
+    border-color: color-mix(in srgb, var(--brand) 22%, var(--border));
+    background: linear-gradient(
+        165deg,
+        color-mix(in srgb, var(--brand) 6%, var(--surface)) 0%,
+        var(--surface) 70%
+    );
+}
+
+.stat-card--emphasis .stat-card__value {
+    font-size: 1.7rem;
+    letter-spacing: -0.02em;
+    color: var(--brand-deep);
+}
+
+.stat-card--warning {
+    border-color: color-mix(in srgb, var(--danger) 45%, var(--border));
+    background: linear-gradient(
+        165deg,
+        var(--danger-soft) 0%,
+        var(--surface) 75%
+    );
+}
+
+.stat-card--warning .stat-card__label {
+    color: var(--danger);
+}
+
+.stat-card--warning .stat-card__value {
+    color: var(--danger);
+}
+
+.stat-card--nav {
+    min-height: 4.5rem;
+    justify-content: space-between;
+}
+
+.stat-card__meter {
+    display: block;
+    margin-top: 0.35rem;
+    height: 0.28rem;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--brand) 10%, var(--border));
+    overflow: hidden;
+}
+
+.stat-card__meter-fill {
+    display: block;
+    height: 100%;
+    border-radius: inherit;
+    background: color-mix(in srgb, var(--brand) 75%, #3d7a5f);
+}
+
+.intermediary-company-grid {
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+}
+
+.intermediary-company-card__meta {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    margin-top: 0.15rem;
+    font-size: 0.82rem;
+    color: var(--muted);
+}
+
+.intermediary-company-card__dot {
+    width: 0.45rem;
+    height: 0.45rem;
+    border-radius: 50%;
+    background: color-mix(in srgb, var(--brand) 40%, var(--border));
+    flex-shrink: 0;
+}
+
+.intermediary-company-card__dot--active {
+    background: #2f6f4e;
+}
+
+@media (max-width: 900px) {
+    .dash-hero__grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 640px) {
+    .period-tabs--compact {
+        width: 100%;
+        display: flex;
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .period-tabs--compact .period-tab {
+        flex: 0 0 auto;
+        padding: 0.4rem 0.7rem;
+    }
+
+    .dash-hero__grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 0.55rem;
+    }
+
+    .dash-cat-tabs {
+        margin-left: -0.15rem;
+        margin-right: -0.15rem;
+        padding-left: 0.15rem;
+        padding-right: 0.15rem;
+    }
+
+    .dash-section__header h2 {
+        font-size: 0.98rem;
+    }
+
+    .dash-stat-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 0.5rem;
+    }
+
+    .stat-card--emphasis .stat-card__value {
+        font-size: 1.35rem;
+    }
+}
+
 .table-row--link {
     text-decoration: none;
     color: inherit;

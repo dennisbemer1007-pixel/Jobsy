@@ -96,7 +96,7 @@ public static class PageHelpDocs
         ["/home"] = new(
             "Home / dashboard",
             "Startscherm na inloggen, afgestemd op jouw rol.",
-            "Je ziet KPI’s (voor admin o.a. API/CSV-gebruik, ongepubliceerde concepten en we-missen-je conversie), snelle links en taken. Klik een tegel voor drilldown.",
+            "Je ziet kerncijfers bovenaan en KPI’s gegroepeerd in categorieën (groei, engagement, marketing, systeem). Kies een periode, open een categorie en klik een tegel voor drilldown.",
             "Overzicht houden en snel naar vacatures, tokens, sollicitaties of beheer gaan."),
 
         ["/candidate/liked"] = new(
