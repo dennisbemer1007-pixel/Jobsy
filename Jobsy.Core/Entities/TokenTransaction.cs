@@ -10,7 +10,7 @@ public class TokenTransaction
 
     /// <summary>
     /// Positive for purchase/grant/goodwill/in; negative for spend/out.
-    /// Supports half-tokens (e.g. highlight = -0.5).
+    /// Fractional tokens are supported (highlight spends typically 1–2 tokens).
     /// </summary>
     public decimal Amount { get; set; }
 

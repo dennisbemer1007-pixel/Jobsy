@@ -174,6 +174,9 @@ internal static class HaaglandenVacanciesSeeder
                     WorkTypeLabels = string.Join(", ", WorkTypeLabels.Expand(role.WorkType).Take(2)),
                     ImageUrl = MockVacancyMedia.ImageUrl(vacancyId),
                     IsHighlighted = highlight,
+                    HighlightedUntil = highlight
+                        ? DateTime.UtcNow.AddDays(VacancyProductRules.HighlightDays)
+                        : null,
                     MaxApplications = 8 + (i % 5),
                     SalaryTableId = salaryTableId == Guid.Empty ? null : salaryTableId,
                     RequiredDrivingLicense = DrivingLicenseLabels.Combine(

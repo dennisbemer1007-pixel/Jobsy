@@ -22,6 +22,7 @@ public record VacancyListItemDto(
     int? TravelMinutes = null,
     double? DistanceKm = null,
     bool IsHighlighted = false,
+    DateTime? HighlightedUntil = null,
     int ExtensionCount = 0,
     string? VideoUrl = null,
     Guid? SalaryTableId = null,

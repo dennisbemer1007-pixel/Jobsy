@@ -1150,6 +1150,8 @@ public class VacanciesController : ControllerBase
             }
         }
 
+        var featured = VacancyHighlightRules.IsActive(v.IsHighlighted, v.HighlightedUntil, DateTime.UtcNow);
+
         return new VacancyListItemDto(
             v.Id,
             v.Title,
@@ -1169,7 +1171,8 @@ public class VacanciesController : ControllerBase
             showWage,
             travelMinutes,
             distanceKm,
-            v.IsHighlighted,
+            featured,
+            featured ? v.HighlightedUntil : null,
             v.ExtensionCount,
             v.VideoUrl,
             v.SalaryTableId,

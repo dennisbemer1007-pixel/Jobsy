@@ -23,6 +23,7 @@ public class VacancyListItem
     public int? TravelMinutes { get; set; }
     public double? DistanceKm { get; set; }
     public bool IsHighlighted { get; set; }
+    public DateTime? HighlightedUntil { get; set; }
     public int ExtensionCount { get; set; }
     public List<WageByAgeItem> WageByAge { get; set; } = [];
     public int? ResolvedForAge { get; set; }

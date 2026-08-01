@@ -156,6 +156,7 @@ public class JobsyDbContext : DbContext
             entity.HasIndex(e => new { e.Status, e.EndDate, e.StartDate });
             entity.HasIndex(e => new { e.CompanyId, e.Status });
             entity.HasIndex(e => new { e.Status, e.PublishedAtUtc, e.CreatedAtUtc });
+            entity.HasIndex(e => new { e.IsHighlighted, e.HighlightedUntil });
             entity.HasOne(e => e.Company)
                 .WithMany(c => c.Vacancies)
                 .HasForeignKey(e => e.CompanyId)

@@ -395,7 +395,7 @@
                            style="@(string.IsNullOrWhiteSpace(vacancy.ImageUrl) ? null : $"background-image:url('{vacancy.ImageUrl}')")">
                             @if (vacancy.IsHighlighted)
                             {
-                                <span class="job-card__badge">@Culture["Discovery.Top"]</span>
+                                <span class="job-card__badge">@Culture["Discovery.Featured"]</span>
                             }
                             else if (vacancy.WorkTypes.Length > 0)
                             {
@@ -424,6 +424,47 @@
     </aside>
 
     <section class="map-pane">
+        @if (!_loading && HighlightedVacancies.Count > 0)
+        {
+            <aside class="highlight-carousel" aria-label="@Culture["Discovery.Featured"]">
+                <p class="highlight-carousel__title">@Culture["Discovery.Featured"]</p>
+                <div class="highlight-carousel__track" role="list">
+                    @foreach (var vacancy in HighlightedVacancies)
+                    {
+                        var travelText = FormatCarouselTravel(vacancy);
+                        <button type="button"
+                                class="highlight-carousel__card @(_hoveredId == vacancy.Id ? "is-active" : null)"
+                                role="listitem"
+                                @onmouseenter="() => OnHover(vacancy.Id)"
+                                @onmouseleave="() => OnHover(null)"
+                                @onclick="() => OnSelect(vacancy.Id)">
+                            @if (!string.IsNullOrWhiteSpace(vacancy.CompanyLogoUrl))
+                            {
+                                <img class="highlight-carousel__logo"
+                                     src="@vacancy.CompanyLogoUrl"
+                                     alt=""
+                                     loading="lazy" />
+                            }
+                            else
+                            {
+                                <span class="highlight-carousel__logo highlight-carousel__logo--placeholder" aria-hidden="true">
+                                    @(vacancy.CompanyName.Length > 0 ? vacancy.CompanyName[0].ToString().ToUpperInvariant() : "L")
+                                </span>
+                            }
+                            <span class="highlight-carousel__body">
+                                <span class="highlight-carousel__badge">@Culture["Discovery.Featured"]</span>
+                                <span class="highlight-carousel__title-text">@vacancy.Title</span>
+                                <span class="highlight-carousel__meta">@vacancy.CompanyName</span>
+                                @if (!string.IsNullOrEmpty(travelText))
+                                {
+                                    <span class="highlight-carousel__travel">@travelText</span>
+                                }
+                            </span>
+                        </button>
+                    }
+                </div>
+            </aside>
+        }
         <div @ref="_mapElement" id="job-map" class="job-map"></div>
     </section>
 
@@ -682,6 +723,13 @@
         }
     }
 
+    private IReadOnlyList<VacancyListItem> HighlightedVacancies
+        => _vacancies
+            .Where(v => v.IsHighlighted)
+            .OrderBy(v => v.TravelMinutes ?? int.MaxValue)
+            .ThenBy(v => v.Title, StringComparer.CurrentCultureIgnoreCase)
+            .ToList();
+
     private IReadOnlyList<VacancyListItem> SortedVacancies
     {
         get
@@ -707,6 +755,19 @@
             };
             return sorted.ToList();
         }
+    }
+
+    private string FormatCarouselTravel(VacancyListItem vacancy)
+    {
+        if (vacancy.TravelMinutes is not int minutes || minutes <= 0)
+        {
+            return string.Empty;
+        }
+
+        return Culture.Format(
+            "Discovery.TravelModeMinutes",
+            minutes,
+            UiLabels.TransportVerb(Culture, _selectedTransport));
     }
 
     private string EffectiveSortMode =>
@@ -1130,6 +1191,9 @@
     {
         _loading = true;
         _error = null;
+        // Force a paint so the featured carousel / list leave the previous result set
+        // before the next discover response arrives.
+        await InvokeAsync(StateHasChanged);
         try
         {
             var items = await Api.DiscoverVacanciesAsync(
@@ -1187,6 +1251,11 @@
                 {
                     await Js.InvokeVoidAsync("jobMap.setTravelOptions", TravelMapOptions());
                 }
+
+                // Carousel above the map changes the pane height — refresh Leaflet sizing.
+                await InvokeAsync(StateHasChanged);
+                await Task.Delay(80);
+                await Js.InvokeVoidAsync("jobMap.invalidate");
             }
         }
         catch (Exception ex)
@@ -1224,6 +1293,7 @@
                 ["workTypes"] = v.WorkTypes,
                 ["workType"] = primaryType,
                 ["highlighted"] = v.IsHighlighted,
+                ["featuredLabel"] = Culture["Discovery.Featured"],
                 ["travelMinutes"] = v.TravelMinutes,
                 ["transportLabel"] = UiLabels.TransportVerb(Culture, _selectedTransport)
             };

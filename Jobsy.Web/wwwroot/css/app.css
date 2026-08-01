@@ -2819,6 +2819,8 @@ a {
 
 .map-pane {
     position: relative;
+    display: flex;
+    flex-direction: column;
     min-height: 0;
     min-width: 0;
     height: 100%;
@@ -2826,12 +2828,20 @@ a {
 }
 
 .job-map {
-    position: absolute;
-    inset: 0;
+    position: relative;
+    flex: 1 1 auto;
+    min-height: 0;
     width: 100%;
-    height: 100%;
+    height: auto;
     z-index: 1;
     background: var(--map-land);
+}
+
+.map-pane:not(:has(.highlight-carousel)) .job-map {
+    position: absolute;
+    inset: 0;
+    flex: none;
+    height: 100%;
 }
 
 /* Let clicks beside a popup hit the map (pane can grow with transforms). */
@@ -2915,6 +2925,185 @@ a {
     background: transparent;
     border: none;
     cursor: pointer;
+}
+
+.job-marker__pulse {
+    position: absolute;
+    inset: -6px;
+    border-radius: 50%;
+    border: 2px solid color-mix(in srgb, #e8a317 75%, #fff);
+    background: color-mix(in srgb, #e8a317 18%, transparent);
+    animation: job-marker-pulse 2.8s ease-in-out infinite;
+    pointer-events: none;
+    z-index: 0;
+}
+
+.job-marker__glyph {
+    position: relative;
+    z-index: 1;
+}
+
+.job-marker--featured .job-marker__glyph {
+    background: linear-gradient(145deg, #f0b429, #d4890a);
+    box-shadow:
+        0 0 0 3px color-mix(in srgb, #e8a317 28%, transparent),
+        0 4px 14px rgba(212, 137, 10, 0.35);
+}
+
+.leaflet-marker-icon.job-marker--featured {
+    z-index: 650 !important;
+}
+
+.job-cluster--featured div {
+    background: linear-gradient(145deg, #f0b429, #d4890a);
+    box-shadow:
+        0 0 0 3px color-mix(in srgb, #e8a317 30%, transparent),
+        0 4px 14px rgba(212, 137, 10, 0.35);
+}
+
+.map-popup__badge--featured {
+    background: linear-gradient(145deg, #f0b429, #d4890a);
+    color: #1a1204;
+}
+
+@keyframes job-marker-pulse {
+    0%,
+    100% {
+        transform: scale(0.92);
+        opacity: 0.55;
+    }
+    50% {
+        transform: scale(1.28);
+        opacity: 0.12;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .job-marker__pulse {
+        animation: none;
+        opacity: 0.35;
+    }
+}
+
+/* Funda-style highlighted vacancies carousel above the map */
+.highlight-carousel {
+    flex: 0 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 0.45rem;
+    padding: 0.65rem 0.75rem 0.35rem;
+    background: linear-gradient(
+        180deg,
+        color-mix(in srgb, #e8a317 10%, var(--surface)) 0%,
+        color-mix(in srgb, var(--surface) 92%, transparent) 100%
+    );
+    border-bottom: 1px solid color-mix(in srgb, #e8a317 22%, var(--border));
+}
+
+.highlight-carousel__title {
+    margin: 0;
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: color-mix(in srgb, #a87008 70%, var(--brand));
+}
+
+.highlight-carousel__track {
+    display: flex;
+    gap: 0.65rem;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+    padding: 0.15rem 0.1rem 0.45rem;
+    scrollbar-width: thin;
+}
+
+.highlight-carousel__card {
+    flex: 0 0 min(220px, 72vw);
+    scroll-snap-align: start;
+    display: grid;
+    grid-template-columns: 44px 1fr;
+    gap: 0.55rem;
+    align-items: center;
+    padding: 0.55rem 0.65rem;
+    border: 1px solid color-mix(in srgb, #e8a317 28%, var(--border));
+    border-radius: 12px;
+    background: var(--surface);
+    box-shadow: 0 2px 10px color-mix(in srgb, #e8a317 12%, transparent);
+    cursor: pointer;
+    text-align: left;
+    color: inherit;
+    transition: border-color 160ms ease, transform 160ms ease, box-shadow 160ms ease;
+}
+
+.highlight-carousel__card:hover,
+.highlight-carousel__card.is-active {
+    border-color: #d4890a;
+    transform: translateY(-1px);
+    box-shadow: 0 6px 16px color-mix(in srgb, #e8a317 22%, transparent);
+}
+
+.highlight-carousel__logo {
+    width: 44px;
+    height: 44px;
+    border-radius: 10px;
+    object-fit: cover;
+    background: color-mix(in srgb, var(--brand) 8%, var(--surface));
+}
+
+.highlight-carousel__logo--placeholder {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    color: var(--brand);
+    font-size: 0.95rem;
+}
+
+.highlight-carousel__body {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+}
+
+.highlight-carousel__badge {
+    align-self: flex-start;
+    font-size: 0.65rem;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    padding: 0.12rem 0.4rem;
+    border-radius: 999px;
+    background: linear-gradient(145deg, #f0b429, #d4890a);
+    color: #1a1204;
+}
+
+.highlight-carousel__title-text {
+    margin: 0;
+    font-size: 0.88rem;
+    font-weight: 700;
+    line-height: 1.25;
+    color: var(--brand);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.highlight-carousel__meta,
+.highlight-carousel__travel {
+    margin: 0;
+    font-size: 0.75rem;
+    color: var(--muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.highlight-carousel__travel {
+    color: color-mix(in srgb, #a87008 55%, var(--muted));
+    font-weight: 600;
 }
 
 .job-marker__pin {

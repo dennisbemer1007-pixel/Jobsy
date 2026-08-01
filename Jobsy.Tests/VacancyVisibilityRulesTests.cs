@@ -25,13 +25,14 @@ public class VacancyVisibilityRulesTests
         var costs = new Dictionary<TokenSpendReason, decimal>
         {
             [TokenSpendReason.Publish] = 1m,
-            [TokenSpendReason.Highlight] = 0.5m,
+            [TokenSpendReason.Highlight] = VacancyProductRules.DefaultHighlightCostTokens,
             [TokenSpendReason.PushBom] = 3m,
             [TokenSpendReason.Extend] = 1m
         };
 
         Assert.Equal(1m, costs[TokenSpendReason.Publish]);
-        Assert.Equal(0.5m, costs[TokenSpendReason.Highlight]);
+        Assert.Equal(1m, costs[TokenSpendReason.Highlight]);
+        Assert.InRange(costs[TokenSpendReason.Highlight], 1m, 2m);
         Assert.True(costs.Values.All(v => v > 0));
     }
 

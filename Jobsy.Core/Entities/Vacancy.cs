@@ -42,6 +42,13 @@ public class Vacancy
     public string? ImageUrl { get; set; }
     public string? VideoUrl { get; set; }
     public bool IsHighlighted { get; set; }
+
+    /// <summary>
+    /// UTC expiry of the paid highlight. When in the past, the vacancy is no longer treated as featured
+    /// on the banenkaart (carousel / pulse marker), even if <see cref="IsHighlighted"/> is still true.
+    /// </summary>
+    public DateTime? HighlightedUntil { get; set; }
+
     public int ExtensionCount { get; set; }
 
     /// <summary>Options requested while waiting for PendingApproval (applied on approve).</summary>

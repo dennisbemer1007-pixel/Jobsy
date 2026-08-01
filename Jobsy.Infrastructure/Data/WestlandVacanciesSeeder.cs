@@ -1,5 +1,6 @@
 using Jobsy.Core.Entities;
 using Jobsy.Core.Enums;
+using Jobsy.Core.Rules;
 using Jobsy.Core.ValueObjects;
 using Jobsy.Infrastructure.Services;
 using Microsoft.EntityFrameworkCore;
@@ -301,6 +302,9 @@ internal static class WestlandVacanciesSeeder
                 WorkTypes = s.Types,
                 ImageUrl = MockVacancyMedia.ImageUrl(vacancyId),
                 IsHighlighted = s.Highlight,
+                HighlightedUntil = s.Highlight
+                    ? DateTime.UtcNow.AddDays(VacancyProductRules.HighlightDays)
+                    : null,
                 MaxApplications = 8,
                 SalaryTableId = salaryTableId,
                 VideoUrl = MockVacancyMedia.VideoUrl(i)
