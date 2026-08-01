@@ -217,6 +217,26 @@ window.jobsyGeo = (function () {
         return false;
     }
 
+    const HIGHLIGHT_SEED_KEY = "jobsy.highlightShuffleSeed";
+
+    /// Stable per browser-tab session seed for randomizing featured vacancy order.
+    function getOrCreateHighlightSeed() {
+        try {
+            const raw = sessionStorage.getItem(HIGHLIGHT_SEED_KEY);
+            if (raw != null && raw !== "") {
+                const n = Number.parseInt(raw, 10);
+                if (Number.isFinite(n)) {
+                    return n >>> 0;
+                }
+            }
+            const seed = (Math.random() * 0xffffffff) >>> 0;
+            sessionStorage.setItem(HIGHLIGHT_SEED_KEY, String(seed));
+            return seed;
+        } catch {
+            return (Math.random() * 0xffffffff) >>> 0;
+        }
+    }
+
     return {
         getStoredOrigin,
         setStoredOrigin,
@@ -233,6 +253,7 @@ window.jobsyGeo = (function () {
         requestLocation,
         scrollToId,
         openShare,
-        copyText
+        copyText,
+        getOrCreateHighlightSeed
     };
 })();

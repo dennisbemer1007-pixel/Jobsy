@@ -622,6 +622,7 @@
     private bool _loading = true;
     private string? _error;
     private Guid? _hoveredId;
+    private uint _highlightShuffleSeed;
     private bool showMapOnMobile = true;
     private bool _filtersOpen;
     private bool _branchMenuOpen;
@@ -698,11 +699,31 @@
     }
 
     private IReadOnlyList<VacancyListItem> HighlightedVacancies
-        => _vacancies
-            .Where(v => v.IsHighlighted)
-            .OrderBy(v => v.TravelMinutes ?? int.MaxValue)
-            .ThenBy(v => v.Title, StringComparer.CurrentCultureIgnoreCase)
-            .ToList();
+    {
+        get
+        {
+            IEnumerable<VacancyListItem> query = _vacancies.Where(v => v.IsHighlighted);
+
+            // With an address/origin: only featured jobs inside the active travel/radius filter.
+            // Without an address: show all featured vacancies in the current result set.
+            if (_origin is not null)
+            {
+                query = query.Where(v =>
+                    v.TravelMinutes is int minutes
+                    && minutes > 0
+                    && minutes <= _maxTravelMinutes
+                    && (v.DistanceKm is null || v.DistanceKm <= _radiusKm));
+            }
+
+            return query
+                .OrderBy(v => HighlightShuffleRank(v.Id))
+                .ThenBy(v => v.Title, StringComparer.CurrentCultureIgnoreCase)
+                .ToList();
+        }
+    }
+
+    private uint HighlightShuffleRank(Guid id)
+        => HighlightShuffleRules.Rank(_highlightShuffleSeed, id);
 
     private IReadOnlyList<VacancyListItem> SortedVacancies
     {
@@ -1073,6 +1094,15 @@
         {
             try
             {
+                _highlightShuffleSeed = await Js.InvokeAsync<uint>("jobsyGeo.getOrCreateHighlightSeed");
+            }
+            catch
+            {
+                _highlightShuffleSeed = (uint)Random.Shared.NextInt64(0, uint.MaxValue);
+            }
+
+            try
+            {
                 // Candidate age comes from profile (DOB). Only use localStorage for anonymous / no DOB.
                 if (_ageYears is null)
                 {
@@ -1129,7 +1159,8 @@
             var options = new Dictionary<string, object?>
             {
                 ["dotNetRef"] = _dotNetRef,
-                ["travel"] = TravelMapOptions()
+                ["travel"] = TravelMapOptions(),
+                ["highlightSeed"] = _highlightShuffleSeed
             };
             if (_origin is not null)
             {
@@ -1267,6 +1298,7 @@
                 ["workTypes"] = v.WorkTypes,
                 ["workType"] = primaryType,
                 ["highlighted"] = v.IsHighlighted,
+                ["highlightRank"] = v.IsHighlighted ? HighlightShuffleRank(v.Id) : 0u,
                 ["featuredLabel"] = Culture["Discovery.Featured"],
                 ["travelMinutes"] = v.TravelMinutes,
                 ["transportLabel"] = UiLabels.TransportVerb(Culture, _selectedTransport)

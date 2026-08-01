@@ -8,6 +8,7 @@ window.jobMap = (function () {
     let activeClusterPopup = null;
     let openCallback = null;
     let outsideClickCloserBound = false;
+    let highlightSeed = 0;
 
     const SPEED_M_PER_MIN = {
         // Keep in sync with MockRoutingService SpeedsKmPerHour
@@ -385,17 +386,41 @@ window.jobMap = (function () {
 
     const CLUSTER_PAGE_SIZE = 1;
 
+    function highlightShuffleRank(id, explicitRank) {
+        if (Number.isFinite(explicitRank)) {
+            return explicitRank >>> 0;
+        }
+        let h = highlightSeed >>> 0;
+        const s = String(id || "");
+        for (let i = 0; i < s.length; i++) {
+            h ^= s.charCodeAt(i);
+            h = Math.imul(h, 16777619);
+        }
+        return h >>> 0;
+    }
+
     function clusterJobsFromMarkers(childMarkers) {
         return childMarkers
             .map(function (marker) {
                 return marker.options.jobData;
             })
             .filter(Boolean)
-            // Featured (highlighted) vacancies always appear first in the cluster pager/list.
+            // Featured (highlighted) vacancies always appear first; among featured use session shuffle.
             .sort(function (a, b) {
                 const ah = a.highlighted ? 1 : 0;
                 const bh = b.highlighted ? 1 : 0;
-                return bh - ah;
+                if (bh !== ah) {
+                    return bh - ah;
+                }
+                if (ah) {
+                    const ra = highlightShuffleRank(a.id, a.highlightRank);
+                    const rb = highlightShuffleRank(b.id, b.highlightRank);
+                    if (ra !== rb) {
+                        return ra - rb;
+                    }
+                    return String(a.title || "").localeCompare(String(b.title || ""), "nl");
+                }
+                return 0;
             });
     }
 
@@ -769,6 +794,9 @@ window.jobMap = (function () {
 
         openCallback = options && options.dotNetRef ? options.dotNetRef : null;
         normalizeTravelOptions(options && options.travel);
+        highlightSeed = options && Number.isFinite(Number(options.highlightSeed))
+            ? (Number(options.highlightSeed) >>> 0)
+            : 0;
 
         map = L.map(el, {
             zoomControl: true,
