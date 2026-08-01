@@ -59,6 +59,25 @@ public sealed class VacancyDraftCreationService : IVacancyDraftCreationService
             return VacancyDraftCreateResult.Fail("Bedrijf/vestiging niet gevonden.");
         }
 
+        if (input.RequireEndClientKvk)
+        {
+            var kvkError = IntermediaryVacancyRules.ValidateEndClientKvk(company, callerIsIntermediary: true);
+            if (kvkError is not null)
+            {
+                return VacancyDraftCreateResult.Fail(kvkError);
+            }
+        }
+
+        if (input.IntermediaryCompanyId is Guid intermediaryCompanyId)
+        {
+            var intermediaryExists = await _db.Companies.AsNoTracking()
+                .AnyAsync(c => c.Id == intermediaryCompanyId && c.Type == CompanyType.Intermediary, cancellationToken);
+            if (!intermediaryExists)
+            {
+                return VacancyDraftCreateResult.Fail("Intermediair-organisatie niet gevonden.");
+            }
+        }
+
         var organizationId = company.ParentCompanyId ?? company.Id;
         var salaryTable = await _db.CompanySalaryTables
             .Include(t => t.Rates)
@@ -183,7 +202,9 @@ public sealed class VacancyDraftCreationService : IVacancyDraftCreationService
             SalaryTableId = input.SalaryTableId,
             RequiredDrivingLicense = drivingLicense,
             RequiredEducation = education,
-            MinimumEmployers = input.MinimumEmployers is > 0 ? input.MinimumEmployers : null
+            MinimumEmployers = input.MinimumEmployers is > 0 ? input.MinimumEmployers : null,
+            IntermediaryCompanyId = input.IntermediaryCompanyId,
+            ShowClientAddressOnMap = input.IntermediaryCompanyId is not null && input.ShowClientAddressOnMap
         };
 
         _db.Vacancies.Add(vacancy);

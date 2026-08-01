@@ -64,7 +64,8 @@ public class CompaniesController : ControllerBase
                 c.ContactPreferWhatsApp,
                 c.ContactEmail,
                 c.ContactPhone,
-                c.ContactWhatsApp))
+                c.ContactWhatsApp,
+                c.KvkEstablishmentId))
             .ToListAsync(cancellationToken);
 
         return Ok(companies);
@@ -153,6 +154,59 @@ public class CompaniesController : ControllerBase
             }
         }
 
+        await _db.SaveChangesAsync(cancellationToken);
+
+        return CreatedAtAction(nameof(GetMine), MapSummary(company, 0, 0));
+    }
+
+    /// <summary>
+    /// Registers or links a KVK establishment as an intermediary end-client.
+    /// </summary>
+    [HttpPost("intermediary-clients/from-kvk")]
+    [Authorize(Roles = $"{JobsyRoles.Intermediary},{JobsyRoles.Admin}")]
+    public async Task<ActionResult<CompanySummaryDto>> RegisterIntermediaryClientFromKvk(
+        [FromBody] RegisterEstablishmentRequest request,
+        CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrWhiteSpace(request.KvkNumber) || string.IsNullOrWhiteSpace(request.KvkEstablishmentId))
+        {
+            return BadRequest(new { message = "KVK-nummer en vestigings-id zijn verplicht." });
+        }
+
+        var kvkNumber = request.KvkNumber.Trim();
+        var kvkEstablishmentId = request.KvkEstablishmentId.Trim();
+        var establishments = await _kvk.GetEstablishmentsAsync(kvkNumber, cancellationToken);
+        var match = establishments.FirstOrDefault(e =>
+            e.KvkEstablishmentId.Equals(kvkEstablishmentId, StringComparison.OrdinalIgnoreCase));
+        if (match is null)
+        {
+            return NotFound(new { message = "Vestiging niet gevonden in KVK-stub." });
+        }
+
+        var existing = await _db.Companies
+            .FirstOrDefaultAsync(c => c.KvkEstablishmentId == match.KvkEstablishmentId, cancellationToken);
+        if (existing is not null)
+        {
+            await EnsureActorMembershipAsync(existing.Id, cancellationToken);
+            await _db.SaveChangesAsync(cancellationToken);
+            return Ok(await ToSummaryAsync(existing, cancellationToken));
+        }
+
+        var company = new Company
+        {
+            Id = Guid.NewGuid(),
+            Name = match.Name,
+            KvkNumber = match.KvkNumber,
+            KvkEstablishmentId = match.KvkEstablishmentId,
+            Address = match.Address,
+            Location = new GeoPoint(match.Latitude, match.Longitude),
+            Type = CompanyType.Employer,
+            ParentCompanyId = null
+        };
+
+        _db.Companies.Add(company);
+        await Jobsy.Infrastructure.Services.WmlSalaryTableService.EnsureForCompanyAsync(_db, company.Id, cancellationToken);
+        await EnsureActorMembershipAsync(company.Id, cancellationToken);
         await _db.SaveChangesAsync(cancellationToken);
 
         return CreatedAtAction(nameof(GetMine), MapSummary(company, 0, 0));
@@ -315,5 +369,22 @@ public class CompaniesController : ControllerBase
             company.ContactPreferWhatsApp,
             company.ContactEmail,
             company.ContactPhone,
-            company.ContactWhatsApp);
+            company.ContactWhatsApp,
+            company.KvkEstablishmentId);
+
+    private async Task EnsureActorMembershipAsync(Guid companyId, CancellationToken cancellationToken)
+    {
+        var actor = await _users.FindByPrincipalAsync(User, cancellationToken);
+        if (actor is null)
+        {
+            return;
+        }
+
+        var alreadyMember = await _db.UserCompanies.AnyAsync(
+            uc => uc.UserId == actor.Id && uc.CompanyId == companyId, cancellationToken);
+        if (!alreadyMember)
+        {
+            _db.UserCompanies.Add(new UserCompany { UserId = actor.Id, CompanyId = companyId });
+        }
+    }
 }

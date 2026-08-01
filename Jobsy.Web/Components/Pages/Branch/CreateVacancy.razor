@@ -30,7 +30,64 @@
 
     <div class="vacancy-editor__grid">
         <form class="login-form" @onsubmit="SaveAsync" @onsubmit:preventDefault>
-            @if (_companies.Count > 1)
+            @if (_isIntermediary)
+            {
+                <fieldset class="vacancy-intermediary">
+                    <legend>Inhuurend bedrijf (verplicht)</legend>
+                    <p class="muted vacancy-field-hint">
+                        Zoek op KVK-nummer en selecteer de vestiging van de opdrachtgever.
+                    </p>
+                    <div class="vacancy-intermediary__kvk-row">
+                        <label>
+                            KVK-nummer
+                            <input @bind="_clientKvkNumber"
+                                   @bind:event="oninput"
+                                   maxlength="20"
+                                   inputmode="numeric"
+                                   placeholder="12345678"
+                                   required />
+                        </label>
+                        <button type="button"
+                                class="provider-btn"
+                                disabled="@(_kvkBusy || string.IsNullOrWhiteSpace(_clientKvkNumber))"
+                                @onclick="LookupClientKvkAsync">
+                            @(_kvkBusy ? "Zoeken…" : "Zoek vestigingen")
+                        </button>
+                    </div>
+                    @if (_clientEstablishments.Count > 0)
+                    {
+                        <label>
+                            Vestiging
+                            <select @bind="_selectedEstablishmentId" @bind:after="OnClientEstablishmentChangedAsync" required>
+                                <option value="">— Kies vestiging —</option>
+                                @foreach (var e in _clientEstablishments)
+                                {
+                                    <option value="@e.KvkEstablishmentId">@e.Name · @e.Address</option>
+                                }
+                            </select>
+                        </label>
+                    }
+                    @if (SelectedCompany is not null)
+                    {
+                        <p class="muted" style="margin:0;font-size:0.85rem">
+                            Geselecteerd: <strong>@SelectedCompany.Name</strong>
+                            · KVK @SelectedCompany.KvkNumber
+                            @if (!string.IsNullOrWhiteSpace(SelectedCompany.KvkEstablishmentId))
+                            {
+                                <text> · vestiging @SelectedCompany.KvkEstablishmentId</text>
+                            }
+                        </p>
+                    }
+                    <label class="vacancy-toggle-row">
+                        <input type="checkbox" @bind="_replaceWithIntermediaryIdentity" />
+                        <span>
+                            <strong>Vervang bedrijfsnaam en adres door die van het intermediair</strong>
+                            <span class="muted">Op de banenkaart en vacaturekaartjes; opdrachtgever blijft bekend voor admin/SROI</span>
+                        </span>
+                    </label>
+                </fieldset>
+            }
+            else if (_companies.Count > 1)
             {
                 <label>
                     Vestiging
@@ -264,32 +321,33 @@
             <fieldset class="vacancy-legal">
                 <legend>Werkzaamheden &amp; wetgeving</legend>
                 <p class="muted vacancy-field-hint">Deze vinkjes bepalen automatisch of jongeren (15–17) mogen solliciteren. Geen aparte minimumleeftijd nodig.</p>
-                @foreach (var flag in LegalTaskFlags.Catalog)
-                {
-                    var isOn = GetLegalFlag(flag.Code);
-                    <label class="vacancy-legal__row" title="@flag.Tooltip">
-                        <input type="checkbox"
-                               checked="@isOn"
-                               @onchange="e => SetLegalFlag(flag.Code, e)" />
-                        <span class="vacancy-legal__copy">
-                            <span class="vacancy-legal__label">
-                                @flag.Label
-                                <button type="button"
-                                        class="vacancy-legal__info"
-                                        title="@flag.Tooltip"
-                                        aria-label="Toelichting"
-                                        @onclick="() => ToggleLegalTip(flag.Code)"
-                                        @onclick:preventDefault>
-                                    i
-                                </button>
-                            </span>
-                            @if (_openLegalTip == flag.Code)
+                <ul class="vacancy-legal__list">
+                    @foreach (var flag in LegalTaskFlags.Catalog)
+                    {
+                        var isOn = GetLegalFlag(flag.Code);
+                        var tipOpen = _openLegalTip == flag.Code;
+                        <li class="vacancy-legal__item @(tipOpen ? "is-open" : null)">
+                            <input id="@($"legal-{flag.Code}")"
+                                   class="vacancy-legal__check"
+                                   type="checkbox"
+                                   checked="@isOn"
+                                   @onchange="e => SetLegalFlag(flag.Code, e)" />
+                            <label class="vacancy-legal__text" for="@($"legal-{flag.Code}")">@flag.Label</label>
+                            <button type="button"
+                                    class="vacancy-legal__info"
+                                    title="@flag.Tooltip"
+                                    aria-label="@($"Toelichting: {flag.Label}")"
+                                    aria-expanded="@tipOpen"
+                                    @onclick="() => ToggleLegalTip(flag.Code)">
+                                i
+                            </button>
+                            @if (tipOpen)
                             {
                                 <span class="vacancy-legal__tip">@flag.Tooltip</span>
                             }
-                        </span>
-                    </label>
-                }
+                        </li>
+                    }
+                </ul>
             </fieldset>
 
             <fieldset class="vacancy-contact">
@@ -451,6 +509,11 @@
     private string _transport = "Bike";
     private int? _minimumEmployers;
     private string? _align;
+    private bool _isIntermediary;
+    private string _clientKvkNumber = "";
+    private string _selectedEstablishmentId = "";
+    private bool _kvkBusy;
+    private bool _replaceWithIntermediaryIdentity = true;
     private HashSet<string> _selectedWorkTypes = new(StringComparer.OrdinalIgnoreCase);
     private HashSet<string> _selectedLicenses = new(StringComparer.OrdinalIgnoreCase);
     private HashSet<string> _selectedEducationLevels = new(StringComparer.OrdinalIgnoreCase);
@@ -466,6 +529,7 @@
     private string? _moderationSuggestion;
     private Guid _companyId;
     private List<CompanySummary> _companies = [];
+    private List<KvkEstablishmentItem> _clientEstablishments = [];
     private List<SalaryTableItem> _salaryTables = [];
     private bool _overrideContact;
     private bool _vacancyDirectContact;
@@ -553,6 +617,8 @@
 
     protected override async Task OnInitializedAsync()
     {
+        var profile = await Api.GetMyProfileAsync();
+        _isIntermediary = string.Equals(profile?.Role, nameof(UserRole.Intermediary), StringComparison.OrdinalIgnoreCase);
         _companies = (await Api.GetMyCompaniesAsync()).ToList();
         if (_companies.Count > 0)
         {
@@ -567,6 +633,86 @@
         }
 
         await LoadSalaryTablesAsync();
+    }
+
+    private async Task LookupClientKvkAsync()
+    {
+        if (string.IsNullOrWhiteSpace(_clientKvkNumber))
+        {
+            return;
+        }
+
+        _kvkBusy = true;
+        _message = null;
+        try
+        {
+            _clientEstablishments = (await Api.GetKvkEstablishmentsAsync(_clientKvkNumber.Trim())).ToList();
+            _selectedEstablishmentId = "";
+            if (_clientEstablishments.Count == 0)
+            {
+                _message = "Geen vestigingen gevonden voor dit KVK-nummer.";
+            }
+        }
+        catch (Exception ex)
+        {
+            _message = ex.Message;
+            _clientEstablishments = [];
+        }
+        finally
+        {
+            _kvkBusy = false;
+        }
+    }
+
+    private async Task OnClientEstablishmentChangedAsync()
+    {
+        if (string.IsNullOrWhiteSpace(_selectedEstablishmentId))
+        {
+            return;
+        }
+
+        var selected = _clientEstablishments.FirstOrDefault(e =>
+            string.Equals(e.KvkEstablishmentId, _selectedEstablishmentId, StringComparison.OrdinalIgnoreCase));
+        if (selected is null)
+        {
+            return;
+        }
+
+        _kvkBusy = true;
+        _message = null;
+        try
+        {
+            var company = await Api.RegisterIntermediaryClientFromKvkAsync(
+                selected.KvkNumber,
+                selected.KvkEstablishmentId);
+            if (company is null)
+            {
+                _message = "Opdrachtgever kon niet worden gekoppeld.";
+                return;
+            }
+
+            var index = _companies.FindIndex(c => c.Id == company.Id);
+            if (index >= 0)
+            {
+                _companies[index] = company;
+            }
+            else
+            {
+                _companies.Add(company);
+            }
+
+            _companyId = company.Id;
+            _salaryTableId = "";
+            await LoadSalaryTablesAsync();
+        }
+        catch (Exception ex)
+        {
+            _message = ex.Message;
+        }
+        finally
+        {
+            _kvkBusy = false;
+        }
     }
 
     private async Task LoadMasterdataAsync()
@@ -1056,7 +1202,8 @@
                 _legalNightShift,
                 _legalAdultSupervisor,
                 _legalHandlesMoney,
-                _legalHeavyWork));
+                _legalHeavyWork,
+                ShowClientAddressOnMap: _isIntermediary && !_replaceWithIntermediaryIdentity));
 
             Navigation.NavigateTo("/employer/vacancies");
         }

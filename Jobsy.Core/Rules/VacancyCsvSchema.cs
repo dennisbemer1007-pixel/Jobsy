@@ -17,6 +17,9 @@ public static class VacancyCsvSchema
     public const string DrivingLicense = "rijbewijs";
     public const string Education = "opleiding";
     public const string MinimumEmployers = "minimum_werkgevers";
+    public const string KvkNumber = "kvk_nummer";
+    public const string KvkEstablishmentId = "vestigingsnummer";
+    public const string ShowClientAddressOnMap = "toon_opdrachtgever_adres";
 
     public static readonly string[] RequiredHeaders =
     [
@@ -71,7 +74,19 @@ public static class VacancyCsvSchema
             ["education"] = Education,
             ["minimum_werkgevers"] = MinimumEmployers,
             ["minimum_employers"] = MinimumEmployers,
-            ["minimumemployers"] = MinimumEmployers
+            ["minimumemployers"] = MinimumEmployers,
+            ["kvk_nummer"] = KvkNumber,
+            ["kvk"] = KvkNumber,
+            ["kvk_number"] = KvkNumber,
+            ["kvknumber"] = KvkNumber,
+            ["vestigingsnummer"] = KvkEstablishmentId,
+            ["kvk_vestiging_id"] = KvkEstablishmentId,
+            ["kvk_establishment_id"] = KvkEstablishmentId,
+            ["kvkestablishmentid"] = KvkEstablishmentId,
+            ["toon_opdrachtgever_adres"] = ShowClientAddressOnMap,
+            ["show_client_address"] = ShowClientAddressOnMap,
+            ["show_client_address_on_map"] = ShowClientAddressOnMap,
+            ["showclientaddressonmap"] = ShowClientAddressOnMap
         };
 
     public static string? CanonicalHeader(string? header)

@@ -21,7 +21,10 @@ public record CsvImportRowRequest(
     string? Transport = null,
     string? DrivingLicense = null,
     string? Education = null,
-    string? MinimumEmployers = null);
+    string? MinimumEmployers = null,
+    string? KvkNumber = null,
+    string? KvkEstablishmentId = null,
+    string? ShowClientAddressOnMap = null);
 
 public record CsvImportResultDto(
     int TotalRows,

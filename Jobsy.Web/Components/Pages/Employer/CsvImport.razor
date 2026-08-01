@@ -411,7 +411,10 @@
                 Transport = Get(r, VacancyCsvSchema.Transport),
                 DrivingLicense = Get(r, VacancyCsvSchema.DrivingLicense),
                 Education = Get(r, VacancyCsvSchema.Education),
-                MinimumEmployers = Get(r, VacancyCsvSchema.MinimumEmployers)
+                MinimumEmployers = Get(r, VacancyCsvSchema.MinimumEmployers),
+                KvkNumber = Get(r, VacancyCsvSchema.KvkNumber),
+                KvkEstablishmentId = Get(r, VacancyCsvSchema.KvkEstablishmentId),
+                ShowClientAddressOnMap = Get(r, VacancyCsvSchema.ShowClientAddressOnMap)
             }).ToList();
         }
         catch (Exception ex)

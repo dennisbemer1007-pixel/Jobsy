@@ -19,7 +19,8 @@ public record CompanySummaryDto(
     bool ContactPreferWhatsApp = false,
     string? ContactEmail = null,
     string? ContactPhone = null,
-    string? ContactWhatsApp = null);
+    string? ContactWhatsApp = null,
+    string? KvkEstablishmentId = null);
 
 public record TokenBalanceDto(
     Guid CompanyId,
@@ -211,4 +212,5 @@ public record BatchVacancyRequest(
     DateOnly EndDate,
     TransportMode RequiredTransport,
     string[] WorkTypes,
-    Guid[] CompanyIds);
+    Guid[] CompanyIds,
+    bool ShowClientAddressOnMap = false);
