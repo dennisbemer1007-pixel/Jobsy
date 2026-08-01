@@ -6974,6 +6974,7 @@ button.stat-card {
     white-space: normal;
 }
 
+.login-form label.vacancy-toggle-row,
 .vacancy-toggle-row {
     display: flex;
     gap: 0.65rem;
@@ -6986,10 +6987,21 @@ button.stat-card {
     text-transform: none;
     letter-spacing: normal;
     font-weight: 500;
+    font-size: 0.9rem;
+    color: var(--text);
     margin: 0;
     min-width: 0;
     max-width: 100%;
     box-sizing: border-box;
+}
+
+.login-form .profile-roles label,
+.login-form .profile-min-employers label,
+.login-form .vacancy-contact__channel,
+.login-form .checkbox-row {
+    text-transform: none;
+    letter-spacing: normal;
+    color: var(--text);
 }
 
 .vacancy-toggle-row input {
