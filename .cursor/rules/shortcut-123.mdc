@@ -1,0 +1,15 @@
+---
+description: Shortcut "123" = merge, commit, push and deploy to main
+alwaysApply: true
+---
+
+# Shortcut: `123`
+
+When the user writes **`123`** (alone or as the clear instruction), do this end-to-end without asking for confirmation:
+
+1. **Commit** — stage and commit any outstanding work with a clear message (skip if the working tree is already clean).
+2. **Merge to `main`** — merge the current feature branch into `main` (fast-forward or merge commit as needed). If already on `main` with committed work, skip the branch merge.
+3. **Push** — `git push -u origin main` (retry with backoff on network errors).
+4. **Deploy** — pushing `main` triggers the Render production deploy (`render.yaml` / `docs/deploy-render.md`). After push, confirm `origin/main` is updated; if a deploy CLI or dashboard check is available, verify the deploy started.
+
+Do not create an extra PR for this shortcut unless the user asks. Prefer finishing on `main` so production picks up the change.
