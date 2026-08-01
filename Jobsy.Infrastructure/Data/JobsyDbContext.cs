@@ -50,6 +50,7 @@ public class JobsyDbContext : DbContext
     public DbSet<SalesManagerProfile> SalesManagerProfiles => Set<SalesManagerProfile>();
     public DbSet<SupplierOnboardingCheckout> SupplierOnboardingCheckouts => Set<SupplierOnboardingCheckout>();
     public DbSet<CommissionLedgerEntry> CommissionLedgerEntries => Set<CommissionLedgerEntry>();
+    public DbSet<RevenueShareLog> RevenueShareLogs => Set<RevenueShareLog>();
     public DbSet<SelfBillingInvoice> SelfBillingInvoices => Set<SelfBillingInvoice>();
     public DbSet<SelfBillingInvoiceLine> SelfBillingInvoiceLines => Set<SelfBillingInvoiceLine>();
     public DbSet<SalesManagerPayoutCheckout> SalesManagerPayoutCheckouts => Set<SalesManagerPayoutCheckout>();
@@ -156,13 +157,44 @@ public class JobsyDbContext : DbContext
             entity.HasIndex(e => new { e.Status, e.EndDate, e.StartDate });
             entity.HasIndex(e => new { e.CompanyId, e.Status });
             entity.HasIndex(e => new { e.Status, e.PublishedAtUtc, e.CreatedAtUtc });
+            entity.HasIndex(e => e.ClosedAtUtc);
+            entity.HasIndex(e => e.IntermediaryCompanyId);
             entity.HasOne(e => e.Company)
                 .WithMany(c => c.Vacancies)
                 .HasForeignKey(e => e.CompanyId)
                 .OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne(e => e.IntermediaryCompany)
+                .WithMany()
+                .HasForeignKey(e => e.IntermediaryCompanyId)
+                .OnDelete(DeleteBehavior.SetNull);
             entity.HasOne(e => e.SalaryTable)
                 .WithMany(t => t.Vacancies)
                 .HasForeignKey(e => e.SalaryTableId)
+                .OnDelete(DeleteBehavior.SetNull);
+        });
+
+        modelBuilder.Entity<RevenueShareLog>(entity =>
+        {
+            entity.ToTable("RevenueShareLogs");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Percentage).HasPrecision(5, 2);
+            entity.Property(e => e.AmountEuro).HasPrecision(12, 2);
+            entity.Property(e => e.Tokens).HasPrecision(12, 2);
+            entity.HasIndex(e => e.TokenCheckoutId);
+            entity.HasIndex(e => new { e.TokenCheckoutId, e.RecipientKind }).IsUnique();
+            entity.HasIndex(e => e.CompanyId);
+            entity.HasIndex(e => e.CreatedAtUtc);
+            entity.HasOne(e => e.Company)
+                .WithMany()
+                .HasForeignKey(e => e.CompanyId)
+                .OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne(e => e.RecipientCompany)
+                .WithMany()
+                .HasForeignKey(e => e.RecipientCompanyId)
+                .OnDelete(DeleteBehavior.SetNull);
+            entity.HasOne(e => e.RecipientUser)
+                .WithMany()
+                .HasForeignKey(e => e.RecipientUserId)
                 .OnDelete(DeleteBehavior.SetNull);
         });
 

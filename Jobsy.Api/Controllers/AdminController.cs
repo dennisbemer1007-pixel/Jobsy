@@ -51,7 +51,11 @@ public class AdminController : ControllerBase
                 c.Address,
                 c.LogoUrl,
                 Type = c.Type.ToString(),
-                c.ParentCompanyId
+                c.ParentCompanyId,
+                c.ReferredBySalesManagerUserId,
+                SalesManagerName = c.ReferredBySalesManagerUser != null
+                    ? c.ReferredBySalesManagerUser.FullName
+                    : null
             })
             .ToListAsync(cancellationToken);
 
@@ -132,7 +136,9 @@ public class AdminController : ControllerBase
                 vac?.Active ?? 0,
                 vac?.Total ?? 0,
                 applicationCounts.GetValueOrDefault(c.Id),
-                tokenBalances.GetValueOrDefault(c.Id));
+                tokenBalances.GetValueOrDefault(c.Id),
+                c.ReferredBySalesManagerUserId,
+                c.SalesManagerName);
         }));
     }
 

@@ -16,7 +16,7 @@ public sealed class TokenPurchaseFulfillmentService : ITokenPurchaseFulfillmentS
     private readonly IPaymentService _payments;
     private readonly ITokenPurchaseInvoiceService _invoices;
     private readonly IVatBufferTransferService _vatBuffer;
-    private readonly ICommissionLedgerService _commissions;
+    private readonly IRevenueShareService _revenueShare;
     private readonly IHostEnvironment _environment;
     private readonly ILogger<TokenPurchaseFulfillmentService> _logger;
 
@@ -26,7 +26,7 @@ public sealed class TokenPurchaseFulfillmentService : ITokenPurchaseFulfillmentS
         IPaymentService payments,
         ITokenPurchaseInvoiceService invoices,
         IVatBufferTransferService vatBuffer,
-        ICommissionLedgerService commissions,
+        IRevenueShareService revenueShare,
         IHostEnvironment environment,
         ILogger<TokenPurchaseFulfillmentService> logger)
     {
@@ -35,7 +35,7 @@ public sealed class TokenPurchaseFulfillmentService : ITokenPurchaseFulfillmentS
         _payments = payments;
         _invoices = invoices;
         _vatBuffer = vatBuffer;
-        _commissions = commissions;
+        _revenueShare = revenueShare;
         _environment = environment;
         _logger = logger;
     }
@@ -159,7 +159,7 @@ public sealed class TokenPurchaseFulfillmentService : ITokenPurchaseFulfillmentS
 
         await LinkCheckoutAndTransactionAsync(session, entry, invoice, cancellationToken);
         await _vatBuffer.QueueForInvoiceAsync(invoice, cancellationToken);
-        await TryCreditCommissionAsync(session, cancellationToken);
+        await TryApplyRevenueShareAsync(session, entry.Id, cancellationToken);
 
         return await BuildResultAsync(session, invoice.Id, alreadyFulfilled: true, cancellationToken);
     }
@@ -209,7 +209,7 @@ public sealed class TokenPurchaseFulfillmentService : ITokenPurchaseFulfillmentS
 
         await LinkCheckoutAndTransactionAsync(session, entry, invoice, cancellationToken);
         await _vatBuffer.QueueForInvoiceAsync(invoice, cancellationToken);
-        await TryCreditCommissionAsync(session, cancellationToken);
+        await TryApplyRevenueShareAsync(session, entry.Id, cancellationToken);
 
         _logger.LogInformation(
             "Token purchase fulfilled: checkout {CheckoutId}, invoice {InvoiceNumber}, VAT {VatCents}c",
@@ -263,20 +263,27 @@ public sealed class TokenPurchaseFulfillmentService : ITokenPurchaseFulfillmentS
         session.TokenPurchaseInvoiceId = invoice.Id;
     }
 
-    private async Task TryCreditCommissionAsync(TokenPurchaseCheckout session, CancellationToken cancellationToken)
+    private async Task TryApplyRevenueShareAsync(
+        TokenPurchaseCheckout session,
+        Guid purchaseTokenTransactionId,
+        CancellationToken cancellationToken)
     {
         var company = await _db.Companies.AsNoTracking()
             .FirstOrDefaultAsync(c => c.Id == session.CompanyId, cancellationToken);
-        if (company?.ReferredBySalesManagerUserId is Guid smId)
+        if (company is null)
         {
-            await _commissions.TryCreditTokenCommissionAsync(
-                smId,
-                session.CompanyId,
-                session.Id,
-                session.AmountEuro,
-                company.FirstYearStartedAt,
-                cancellationToken);
+            return;
         }
+
+        await _revenueShare.ApplyTokenPurchaseShareAsync(
+            session.Id,
+            session.CompanyId,
+            purchaseTokenTransactionId,
+            session.PackSize,
+            session.AmountEuro,
+            company.ReferredBySalesManagerUserId,
+            company.FirstYearStartedAt,
+            cancellationToken);
     }
 
     private async Task<TokenPurchaseFulfillmentResult> BuildResultAsync(

@@ -49,7 +49,8 @@ public static class MetricsKeys
         "site_visits", "site_visits_unique",
         "companies_with_api", "companies_with_csv",
         "unpublished_vacancies",
-        "reengagement_emails_sent", "reengagement_reactivated"
+        "reengagement_emails_sent", "reengagement_reactivated",
+        "avg_vacancy_lead_time_days"
     };
 }
 

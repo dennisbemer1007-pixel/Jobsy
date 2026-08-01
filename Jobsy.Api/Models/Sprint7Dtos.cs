@@ -61,7 +61,8 @@ public record LocalLoginResponse(
     Guid? CompanyId,
     IReadOnlyList<Guid> CompanyIds,
     bool ShowCandidateHowTo = false,
-    bool HasCandidateApplications = false);
+    bool HasCandidateApplications = false,
+    bool HasSalesReferral = false);
 
 public record EnsureExternalUserRequest(string Email, string? FullName);
 
@@ -73,7 +74,8 @@ public record EnsureExternalUserResponse(
     IReadOnlyList<Guid> CompanyIds,
     bool IsNewUser,
     bool ShowCandidateHowTo,
-    bool HasCandidateApplications);
+    bool HasCandidateApplications,
+    bool HasSalesReferral = false);
 
 public record ExternalProvidersStatusResponse(bool Entra, bool Google);
 

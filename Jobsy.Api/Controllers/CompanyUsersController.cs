@@ -17,7 +17,7 @@ namespace Jobsy.Api.Controllers;
 
 [ApiController]
 [Route("api/company-users")]
-[Authorize(Roles = $"{JobsyRoles.EnterpriseManager},{JobsyRoles.Admin}")]
+[Authorize(Roles = $"{JobsyRoles.EnterpriseManager},{JobsyRoles.Intermediary},{JobsyRoles.Admin}")]
 public class CompanyUsersController : ControllerBase
 {
     private static readonly UserRole[] EmployerRoleFilter =
@@ -111,6 +111,33 @@ public class CompanyUsersController : ControllerBase
         }
 
         var callerRole = _companyAuth.IsAdmin(User) ? UserRole.Admin : caller.Role;
+
+        // Intermediair team invite: always peer Intermediary on the same organisatie + gedeelde memberships.
+        if (callerRole == UserRole.Intermediary)
+        {
+            if (caller.CompanyId is null)
+            {
+                return BadRequest(new { message = "Intermediair-organisatie ontbreekt op je account." });
+            }
+
+            var sharedMemberships = await _db.UserCompanies.AsNoTracking()
+                .Where(m => m.UserId == caller.Id)
+                .Select(m => m.CompanyId)
+                .ToListAsync(cancellationToken);
+            if (!sharedMemberships.Contains(caller.CompanyId.Value))
+            {
+                sharedMemberships.Add(caller.CompanyId.Value);
+            }
+
+            request = request with
+            {
+                Role = UserRole.Intermediary,
+                PrimaryCompanyId = caller.CompanyId,
+                MembershipCompanyIds = sharedMemberships.Distinct().ToArray(),
+                RegionId = null
+            };
+        }
+
         if (!EmployerInviteRules.CanAssignRole(callerRole, request.Role))
         {
             return BadRequest(new { message = "Je mag deze rol niet toekennen." });

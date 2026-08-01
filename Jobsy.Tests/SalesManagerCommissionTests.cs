@@ -83,8 +83,8 @@ public class SalesManagerCommissionTests
 
         Assert.NotNull(first);
         Assert.Equal(first!.Id, second!.Id);
-        Assert.Equal(4.00m, first.AmountExVat);
-        Assert.Equal(4.00m, await ledger.GetBalanceExVatAsync(smId));
+        Assert.Equal(2.00m, first.AmountExVat); // 5% revenue-share
+        Assert.Equal(2.00m, await ledger.GetBalanceExVatAsync(smId));
     }
 
     [Fact]

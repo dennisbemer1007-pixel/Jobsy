@@ -9,12 +9,12 @@
 @inject CultureState Culture
 @implements IDisposable
 
-<PageTitle>@Culture["Employer.MyTokens"] · Lobsy</PageTitle>
+<PageTitle>@(_hasSalesReferral ? Culture["Nav.BalanceAndTracking"] : Culture["Employer.MyTokens"]) · Lobsy</PageTitle>
 
 <div class="panel-page">
     <header class="panel-header">
         <div>
-            <h1>@Culture["Employer.MyTokens"]</h1>
+            <h1>@(_hasSalesReferral ? Culture["Nav.BalanceAndTracking"] : Culture["Employer.MyTokens"])</h1>
             <p class="login-lead">@_lead</p>
         </div>
         @if (_canAllocate)
@@ -46,6 +46,18 @@
                 <strong class="stat-card__value">@_balances.Sum(b => b.Balance).ToString("0.##")</strong>
             </div>
         </div>
+
+        @if (_hasSalesReferral)
+        {
+            <section class="panel-section">
+                <h2>Tracking &amp; revenue-share</h2>
+                <p class="muted">
+                    Je bedrijf is gekoppeld via een salesmanager-trackingcode.
+                    Bij tokenaankopen geldt de verdeling: 15% ambassadeur-tegoed, 5% salesmanager-commissie, 80% platform.
+                    Ambassadeur-tegoed wordt automatisch bijgeschreven op dit saldo.
+                </p>
+            </section>
+        }
 
         <section class="panel-section">
             <h2>Saldo per vestiging</h2>
@@ -248,6 +260,7 @@
     private bool _canManageTokenFlags;
     private bool _isBranchManager;
     private bool _hasOrgHierarchy;
+    private bool _hasSalesReferral;
     private string? _error;
     private string? _message;
     private string _lead = "Token-saldo en logs.";
@@ -277,6 +290,7 @@
             var state = await AuthState.GetAuthenticationStateAsync();
             var user = state.User;
             _isBranchManager = user.IsInRole("BranchManager");
+            _hasSalesReferral = user.HasClaim(Jobsy.Core.Authorization.JobsyClaimTypes.HasSalesReferral, "1");
             _canAllocate = user.IsInRole("EnterpriseManager") || user.IsInRole("Admin");
             _canManageTokenFlags = _canAllocate;
             _canPurchaseIntoPot = user.IsInRole("EnterpriseManager") || user.IsInRole("Admin");

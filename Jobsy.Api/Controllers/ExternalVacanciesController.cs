@@ -1,6 +1,7 @@
 using Jobsy.Api.Authorization;
 using Jobsy.Api.Models;
 using Jobsy.Core.Authorization;
+using Jobsy.Core.Entities;
 using Jobsy.Core.Enums;
 using Jobsy.Core.Interfaces;
 using Jobsy.Core.Rules;
@@ -63,6 +64,21 @@ public class ExternalVacanciesController : ControllerBase
         if (company is null)
         {
             return NotFound(new { message = "Bedrijf niet gevonden." });
+        }
+
+        var apiKeyCompanyId = User.FindFirst(JobsyClaimTypes.CompanyId)?.Value;
+        Company? apiKeyCompany = null;
+        if (Guid.TryParse(apiKeyCompanyId, out var keyCompanyGuid))
+        {
+            apiKeyCompany = await _db.Companies.AsNoTracking()
+                .FirstOrDefaultAsync(c => c.Id == keyCompanyGuid, cancellationToken);
+        }
+
+        var apiIsIntermediary = apiKeyCompany?.Type == CompanyType.Intermediary;
+        var kvkError = IntermediaryVacancyRules.ValidateEndClientKvk(company, apiIsIntermediary);
+        if (kvkError is not null)
+        {
+            return BadRequest(new { message = kvkError });
         }
 
         if (request.SalaryTableId is not Guid tableId)
@@ -168,7 +184,11 @@ public class ExternalVacanciesController : ControllerBase
             RequiredEducation = string.IsNullOrWhiteSpace(request.RequiredEducation)
                 ? null
                 : request.RequiredEducation.Trim(),
-            MinimumEmployers = request.MinimumEmployers is > 0 ? request.MinimumEmployers : null
+            MinimumEmployers = request.MinimumEmployers is > 0 ? request.MinimumEmployers : null,
+            IntermediaryCompanyId = apiIsIntermediary
+                ? (apiKeyCompany!.ParentCompanyId ?? apiKeyCompany.Id)
+                : null,
+            ShowClientAddressOnMap = apiIsIntermediary && request.ShowClientAddressOnMap
         };
 
         _db.Vacancies.Add(vacancy);

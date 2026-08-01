@@ -64,7 +64,8 @@ public class CompaniesController : ControllerBase
                 c.ContactPreferWhatsApp,
                 c.ContactEmail,
                 c.ContactPhone,
-                c.ContactWhatsApp))
+                c.ContactWhatsApp,
+                c.KvkEstablishmentId))
             .ToListAsync(cancellationToken);
 
         return Ok(companies);
@@ -315,5 +316,6 @@ public class CompaniesController : ControllerBase
             company.ContactPreferWhatsApp,
             company.ContactEmail,
             company.ContactPhone,
-            company.ContactWhatsApp);
+            company.ContactWhatsApp,
+            company.KvkEstablishmentId);
 }

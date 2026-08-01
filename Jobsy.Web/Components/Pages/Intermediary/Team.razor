@@ -1,0 +1,127 @@
+@page "/intermediary/team"
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Intermediary")]
+@inject JobsyApiClient Api
+@inject CultureState Culture
+@implements IDisposable
+
+<PageTitle>Team · Lobsy</PageTitle>
+
+<div class="panel-page">
+    <header class="panel-header">
+        <div>
+            <h1>Team</h1>
+            <p class="login-lead">Nodig collega’s uit op hetzelfde intermediair-account. Vacatures en tokensaldo worden gedeeld.</p>
+        </div>
+    </header>
+
+    @if (_loading)
+    {
+        <p class="state-message">@Culture["Common.Loading"]</p>
+    }
+    else if (!string.IsNullOrEmpty(_error))
+    {
+        <p class="state-message error">@_error</p>
+    }
+    else
+    {
+        <div class="table-list">
+            @foreach (var u in _users.Where(u => u.Role == "Intermediary"))
+            {
+                <div class="table-row">
+                    <div>
+                        <strong>@u.FullName</strong>
+                        <span class="muted">
+                            @u.Email · @(u.CompanyName ?? "—")
+                            @if (!u.IsActive)
+                            {
+                                <text> · inactief</text>
+                            }
+                        </span>
+                    </div>
+                </div>
+            }
+        </div>
+
+        <section class="panel-section">
+            <h2>Collega uitnodigen</h2>
+            <form class="login-form" style="max-width:480px" @onsubmit="InviteAsync" @onsubmit:preventDefault>
+                <label>
+                    E-mail
+                    <input type="email" @bind="_email" required />
+                </label>
+                <label>
+                    Naam
+                    <input @bind="_fullName" required />
+                </label>
+                <button class="login-submit" type="submit" disabled="@_busy">Uitnodigen</button>
+            </form>
+        </section>
+
+        @if (!string.IsNullOrEmpty(_message))
+        {
+            <p class="state-message">@_message</p>
+        }
+    }
+</div>
+
+@code {
+    private List<CompanyUserItem> _users = [];
+    private bool _loading = true;
+    private bool _busy;
+    private string? _error;
+    private string? _message;
+    private string _email = "";
+    private string _fullName = "";
+
+    protected override void OnInitialized()
+        => Culture.Changed += OnCultureChanged;
+
+    private void OnCultureChanged()
+        => InvokeAsync(StateHasChanged);
+
+    public void Dispose()
+        => Culture.Changed -= OnCultureChanged;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            _users = (await Api.GetCompanyUsersAsync()).ToList();
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private async Task InviteAsync()
+    {
+        _busy = true;
+        _message = null;
+        try
+        {
+            await Api.InviteCompanyUserAsync(new InviteUserForm(
+                _email,
+                _fullName,
+                "Intermediary",
+                PrimaryCompanyId: null));
+            _users = (await Api.GetCompanyUsersAsync()).ToList();
+            _email = "";
+            _fullName = "";
+            _message = "Uitnodiging verstuurd. Na registratie deelt je collega vacatures en saldo.";
+        }
+        catch (Exception ex)
+        {
+            _message = ex.Message;
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+}

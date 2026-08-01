@@ -42,15 +42,20 @@
         </fieldset>
 
         <fieldset class="batch-locations">
-            <legend>Locaties</legend>
+            <legend>Locaties (KVK-vestigingen eindklant)</legend>
             @foreach (var c in _companies)
             {
                 <label class="checkbox-row">
                     <input type="checkbox" checked="@_selected.Contains(c.Id)" @onchange="e => Toggle(c.Id, e)" />
-                    @c.Name
+                    @c.Name · KVK @c.KvkNumber
                 </label>
             }
         </fieldset>
+
+        <label class="publish-option">
+            <input type="checkbox" @bind="_showClientAddressOnMap" />
+            <span>Open kaart: toon echte eindklant-adressen op de banenkaart (standaard afgeschermd)</span>
+        </label>
 
         <button class="login-submit" type="submit" disabled="@_saving">Uitzetten op @_selected.Count locaties</button>
     </form>
@@ -71,10 +76,14 @@
     private List<string> _branchOptions = WorkTypeLabels.All.ToList();
     private bool _saving;
     private string? _message;
+    private bool _showClientAddressOnMap;
 
     protected override async Task OnInitializedAsync()
     {
-        _companies = (await Api.GetMyCompaniesAsync()).ToList();
+        _companies = (await Api.GetMyCompaniesAsync())
+            .Where(c => !string.IsNullOrWhiteSpace(c.KvkNumber)
+                        && !string.IsNullOrWhiteSpace(c.KvkEstablishmentId))
+            .ToList();
         _selected = _companies.Select(c => c.Id).ToHashSet();
         try
         {
@@ -151,7 +160,8 @@
                 today.AddMonths(2),
                 TransportMode.Bike | TransportMode.PublicTransport,
                 branchLabels,
-                _selected.ToArray()));
+                _selected.ToArray(),
+                _showClientAddressOnMap));
             _message = $"{created.Count} concept-vacatures aangemaakt.";
         }
         catch (VacancyModerationException ex)

@@ -111,12 +111,12 @@ public class TokenBillingVatBufferTests
         var invoices = new TokenPurchaseInvoiceService(db, companySettings);
         var vatBuffer = new VatBufferTransferService(db, companySettings, NullLogger<VatBufferTransferService>.Instance);
         var payments = new MolliePaymentStub(db, new FakeFeatures(), NullLogger<MolliePaymentStub>.Instance);
-        var commissions = new FakeCommissions();
+        var revenueShare = new FakeRevenueShare();
         var ledger = new TokenLedgerService(db);
         var env = new FakeHostEnvironment { EnvironmentName = Environments.Development };
 
         var fulfillment = new TokenPurchaseFulfillmentService(
-            db, ledger, payments, invoices, vatBuffer, commissions, env,
+            db, ledger, payments, invoices, vatBuffer, revenueShare, env,
             NullLogger<TokenPurchaseFulfillmentService>.Instance);
 
         var result = await fulfillment.TryFulfillPaidCheckoutAsync(checkoutId);
@@ -161,49 +161,23 @@ public class TokenBillingVatBufferTests
             => GetAsync(cancellationToken);
     }
 
-    private sealed class FakeCommissions : ICommissionLedgerService
+    private sealed class FakeRevenueShare : IRevenueShareService
     {
-        public Task<decimal> GetBalanceExVatAsync(Guid salesManagerUserId, CancellationToken cancellationToken = default)
-            => Task.FromResult(0m);
-
-        public Task<decimal> GetUninvoicedBalanceExVatAsync(Guid salesManagerUserId, CancellationToken cancellationToken = default)
-            => Task.FromResult(0m);
-
-        public Task<IReadOnlyList<CommissionLedgerEntry>> ListEntriesAsync(
-            Guid salesManagerUserId,
-            CancellationToken cancellationToken = default)
-            => Task.FromResult<IReadOnlyList<CommissionLedgerEntry>>([]);
-
-        public Task<CommissionLedgerEntry?> TryCreditFounderBonusAsync(
-            Guid salesManagerUserId,
-            Guid companyId,
-            string paymentId,
-            int? firstYearSlot,
-            CancellationToken cancellationToken = default)
-            => Task.FromResult<CommissionLedgerEntry?>(null);
-
-        public Task<CommissionLedgerEntry?> TryCreditTokenCommissionAsync(
-            Guid salesManagerUserId,
-            Guid companyId,
+        public Task ApplyTokenPurchaseShareAsync(
             Guid tokenCheckoutId,
+            Guid companyId,
+            Guid? purchaseTokenTransactionId,
+            int packSize,
             decimal purchaseAmountEuro,
+            Guid? salesManagerUserId,
             DateTime? firstYearStartedAt,
-            CancellationToken cancellationToken = default)
-            => Task.FromResult<CommissionLedgerEntry?>(null);
-
-        public Task AttachEntriesToInvoiceAsync(
-            Guid invoiceId,
-            IReadOnlyList<Guid> entryIds,
             CancellationToken cancellationToken = default)
             => Task.CompletedTask;
 
-        public Task<CommissionLedgerEntry> RecordPayoutAsync(
-            Guid salesManagerUserId,
-            Guid invoiceId,
-            decimal amountExVat,
-            decimal vatAmount,
+        public Task<IReadOnlyList<RevenueShareLog>> ListForCompanyAsync(
+            Guid companyId,
             CancellationToken cancellationToken = default)
-            => throw new NotSupportedException();
+            => Task.FromResult<IReadOnlyList<RevenueShareLog>>([]);
     }
 
     private sealed class FakeHostEnvironment : IHostEnvironment

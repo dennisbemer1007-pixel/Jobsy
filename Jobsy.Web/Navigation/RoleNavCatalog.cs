@@ -73,9 +73,13 @@ public static class RoleNavCatalog
         new("Nav.JobMap", "/", NavIcons.Map),
         new("Nav.Vacancies", "/employer/vacancies", NavIcons.Vacancies, ["/branch/vacancies/new", "/branch/applicants"]),
         new("Nav.Clients", "/intermediary", NavIcons.Companies),
+        new("Nav.Team", "/intermediary/team", NavIcons.Users),
         new("Nav.BatchTool", "/intermediary/batch", NavIcons.Batch),
         new("Nav.Tokens", "/employer/tokens", NavIcons.Tokens)
     ];
+
+    public static readonly NavItem BalanceAndTracking =
+        new("Nav.BalanceAndTracking", "/employer/tokens", NavIcons.Tokens, ["/branch/tokens"]);
 
     public static readonly NavItem[] SalesManager =
     [
@@ -108,7 +112,7 @@ public static class RoleNavCatalog
 
         if (RoleClaimMatching.HasRole(user, JobsyRoles.EnterpriseManager))
         {
-            return WithOptionalCandidateApplications(Enterprise, user);
+            return WithSalesReferralNav(WithOptionalCandidateApplications(Enterprise, user), user);
         }
 
         if (RoleClaimMatching.HasRole(user, JobsyRoles.RegionalManager))
@@ -118,7 +122,7 @@ public static class RoleNavCatalog
 
         if (RoleClaimMatching.HasRole(user, JobsyRoles.BranchManager))
         {
-            return WithOptionalCandidateApplications(Branch, user);
+            return WithSalesReferralNav(WithOptionalCandidateApplications(Branch, user), user);
         }
 
         if (RoleClaimMatching.HasRole(user, JobsyRoles.Intermediary))
@@ -127,6 +131,23 @@ public static class RoleNavCatalog
         }
 
         return Anonymous;
+    }
+
+    private static IReadOnlyList<NavItem> WithSalesReferralNav(
+        IReadOnlyList<NavItem> baseItems,
+        ClaimsPrincipal user)
+    {
+        if (!user.HasClaim(JobsyClaimTypes.HasSalesReferral, "1"))
+        {
+            return baseItems;
+        }
+
+        // Replace Tokens / Mijn tokens with "Mijn Saldo & Tracking" for referred entrepreneurs.
+        return baseItems
+            .Select(item => item.Href is "/employer/tokens" or "/branch/tokens"
+                ? BalanceAndTracking with { Href = item.Href, ExtraActivePaths = item.ExtraActivePaths }
+                : item)
+            .ToList();
     }
 
     private static IReadOnlyList<NavItem> WithOptionalCandidateApplications(

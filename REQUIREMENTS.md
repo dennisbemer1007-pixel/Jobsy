@@ -53,6 +53,16 @@ Volledige functionele specificatie voor kandidaat- en werkgeverskant:
 
 → **[`docs/FUNCTIONELE_SPECIFICATIES_MATCHING.md`](docs/FUNCTIONELE_SPECIFICATIES_MATCHING.md)**
 
+## 4c. Intermediair, salesmanager revenue-share & doorlooptijd-KPI
+
+→ **[`docs/FUNCTIONELE_SPECIFICATIES_INTERMEDIAIR_SALES_KPI.md`](docs/FUNCTIONELE_SPECIFICATIES_INTERMEDIAIR_SALES_KPI.md)**
+
+Kernpunten:
+- **Intermediair-team:** collega’s uitnodigen op dezelfde organisatie; gedeelde vacatures/saldo
+- **KVK verplicht** bij intermediair-vacatures (UI/CSV/API); flexibele adresweergave + “Aangeboden door …”
+- **Revenue-share 15%/5%/80%** op tokenaankopen van referred companies + `RevenueShareLogs`
+- **Admin:** Salesmanager-kolom op bedrijven; KPI gem. doorlooptijd vacatures
+
 Kernpunten:
 - **Dagdelen-matrix** (vacature + profiel) met vaste blokken Ochtend/Middag/Avond/Nacht en optie **“Tijden in overleg”** (handmatig of auto bij lege API/CSV/ATS-import)
 - **Verplichte uren** min/max per week + automatische urencategorie (bijbaan/parttime/fulltime)

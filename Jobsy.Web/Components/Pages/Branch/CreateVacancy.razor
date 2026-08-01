@@ -4,6 +4,7 @@
 @inject JobsyApiClient Api
 @inject NavigationManager Navigation
 @inject IJSRuntime Js
+@inject AuthenticationStateProvider AuthState
 @inject CultureState Culture
 @implements IDisposable
 @using Jobsy.Core.Enums
@@ -30,16 +31,31 @@
 
     <div class="vacancy-editor__grid">
         <form class="login-form" @onsubmit="SaveAsync" @onsubmit:preventDefault>
-            @if (_companies.Count > 1)
+            @if (_companies.Count > 1 || _isIntermediary)
             {
                 <label>
-                    Vestiging
-                    <select @bind="_companyId" @bind:after="LoadSalaryTablesAsync">
+                    @(_isIntermediary ? "Inhuurend bedrijf (KVK-vestiging)" : "Vestiging")
+                    <select @bind="_companyId" @bind:after="LoadSalaryTablesAsync" required="@_isIntermediary">
                         @foreach (var c in _companies)
                         {
-                            <option value="@c.Id">@c.Name</option>
+                            <option value="@c.Id">@c.Name@(!string.IsNullOrWhiteSpace(c.KvkNumber) ? $" · KVK {c.KvkNumber}" : "")</option>
                         }
                     </select>
+                </label>
+            }
+            @if (_isIntermediary && SelectedCompany is not null)
+            {
+                <p class="muted" style="margin:0 0 0.75rem;font-size:0.85rem">
+                    KVK @SelectedCompany.KvkNumber
+                    @if (!string.IsNullOrWhiteSpace(SelectedCompany.KvkEstablishmentId))
+                    {
+                        <text> · vestiging @SelectedCompany.KvkEstablishmentId</text>
+                    }
+                    · @SelectedCompany.Address
+                </p>
+                <label class="publish-option">
+                    <input type="checkbox" @bind="_showClientAddressOnMap" />
+                    <span>Open kaart: toon het echte adres en de bedrijfsnaam van de eindklant op de banenkaart (standaard afgeschermd via uitzendbureau)</span>
                 </label>
             }
             <label>
@@ -482,6 +498,8 @@
     private bool _legalHandlesMoney;
     private bool _legalHeavyWork;
     private string? _openLegalTip;
+    private bool _isIntermediary;
+    private bool _showClientAddressOnMap;
 
     private CompanySummary? SelectedCompany =>
         _companies.FirstOrDefault(c => c.Id == _companyId);
@@ -553,7 +571,19 @@
 
     protected override async Task OnInitializedAsync()
     {
+        var auth = await AuthState.GetAuthenticationStateAsync();
+        _isIntermediary = auth.User.IsInRole("Intermediary");
+
         _companies = (await Api.GetMyCompaniesAsync()).ToList();
+        if (_isIntermediary)
+        {
+            // End-client vestigingen only (KVK-backed employers), not the intermediary org itself.
+            _companies = _companies
+                .Where(c => !string.IsNullOrWhiteSpace(c.KvkNumber)
+                            && !string.IsNullOrWhiteSpace(c.KvkEstablishmentId))
+                .ToList();
+        }
+
         if (_companies.Count > 0)
         {
             _companyId = _companies[0].Id;
@@ -1056,7 +1086,8 @@
                 _legalNightShift,
                 _legalAdultSupervisor,
                 _legalHandlesMoney,
-                _legalHeavyWork));
+                _legalHeavyWork,
+                _showClientAddressOnMap));
 
             Navigation.NavigateTo("/employer/vacancies");
         }

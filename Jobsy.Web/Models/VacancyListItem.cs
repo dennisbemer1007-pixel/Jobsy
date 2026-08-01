@@ -46,6 +46,9 @@ public class VacancyListItem
     public bool? LegalAdultSupervisorPresent { get; set; }
     public bool? LegalHandlesMoneyOrClosing { get; set; }
     public bool? LegalHeavyOrHazardousWork { get; set; }
+    public string? OfferedByLabel { get; set; }
+    public bool ShowClientAddressOnMap { get; set; }
+    public Guid? IntermediaryCompanyId { get; set; }
 }
 
 public sealed class WageByAgeItem

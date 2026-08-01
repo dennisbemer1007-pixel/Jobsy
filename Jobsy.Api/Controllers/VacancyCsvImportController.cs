@@ -14,7 +14,7 @@ namespace Jobsy.Api.Controllers;
 /// <summary>CSV batch import of vacancy drafts for organisations with the feature enabled.</summary>
 [ApiController]
 [Route("api/vacancies/csv-import")]
-[Authorize(Roles = $"{JobsyRoles.EnterpriseManager},{JobsyRoles.Admin}")]
+[Authorize(Roles = $"{JobsyRoles.EnterpriseManager},{JobsyRoles.Intermediary},{JobsyRoles.Admin}")]
 [EnableRateLimiting("public-write")]
 [RequestSizeLimit(10 * 1024 * 1024)]
 public class VacancyCsvImportController : ControllerBase
@@ -227,12 +227,30 @@ public class VacancyCsvImportController : ControllerBase
             }
 
             var targetOrgId = target.ParentCompanyId ?? target.Id;
-            if (targetOrgId != allowedOrgId)
+            var isIntermediaryImport = User.IsInRole(JobsyRoles.Intermediary)
+                && !User.IsInRole(JobsyRoles.Admin)
+                && !User.IsInRole(JobsyRoles.EnterpriseManager);
+            if (!isIntermediaryImport && targetOrgId != allowedOrgId)
             {
                 return Fail(
                     row.RowNumber,
                     data,
                     "Vestiging hoort niet bij de organisatie waarvoor CSV-import is ingeschakeld.");
+            }
+
+            var kvkError = IntermediaryVacancyRules.ValidateEndClientKvk(target, isIntermediaryImport);
+            if (kvkError is not null)
+            {
+                return Fail(row.RowNumber, data, kvkError);
+            }
+
+            Guid? intermediaryCompanyId = null;
+            if (isIntermediaryImport)
+            {
+                intermediaryCompanyId = await _db.Companies.AsNoTracking()
+                    .Where(c => c.Id == allowedOrgId && c.Type == CompanyType.Intermediary)
+                    .Select(c => (Guid?)c.Id)
+                    .FirstOrDefaultAsync(cancellationToken);
             }
 
             if (!TransportModeParser.TryParseMany(row.Transport, out var transport, out var transportError))
@@ -278,7 +296,10 @@ public class VacancyCsvImportController : ControllerBase
                     row.Video,
                     row.DrivingLicense,
                     row.Education,
-                    minimumEmployers),
+                    minimumEmployers,
+                    IntermediaryCompanyId: intermediaryCompanyId,
+                    ShowClientAddressOnMap: false,
+                    RequireEndClientKvk: isIntermediaryImport),
                 VacancySource.Csv,
                 cancellationToken);
 

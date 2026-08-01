@@ -444,6 +444,7 @@ public sealed class VacancyProductService : IVacancyProductService
         }
 
         vacancy.Status = VacancyStatus.Archived;
+        vacancy.ClosedAtUtc ??= DateTime.UtcNow;
         await _db.SaveChangesAsync(cancellationToken);
         return new VacancyProductOutcome(true, null, vacancy);
     }

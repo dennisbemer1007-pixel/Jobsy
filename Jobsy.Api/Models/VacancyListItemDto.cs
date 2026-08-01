@@ -46,4 +46,7 @@ public record VacancyListItemDto(
     bool? LegalHandlesMoneyOrClosing = null,
     bool? LegalHeavyOrHazardousWork = null,
     int ShareCount = 0,
-    int LikeCount = 0);
+    int LikeCount = 0,
+    string? OfferedByLabel = null,
+    bool ShowClientAddressOnMap = false,
+    Guid? IntermediaryCompanyId = null);

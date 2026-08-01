@@ -84,7 +84,8 @@ public class AuthController : ControllerBase
             user.CompanyId,
             flags.CompanyIds,
             flags.ShowCandidateHowTo,
-            flags.HasCandidateApplications));
+            flags.HasCandidateApplications,
+            flags.HasSalesReferral));
     }
 
     /// <summary>
@@ -158,7 +159,8 @@ public class AuthController : ControllerBase
             flags.CompanyIds,
             isNew,
             flags.ShowCandidateHowTo,
-            flags.HasCandidateApplications));
+            flags.HasCandidateApplications,
+            flags.HasSalesReferral));
     }
 
     /// <summary>
@@ -250,7 +252,7 @@ public class AuthController : ControllerBase
                && CryptographicOperations.FixedTimeEquals(expectedBytes, providedBytes);
     }
 
-    private async Task<(IReadOnlyList<Guid> CompanyIds, bool ShowCandidateHowTo, bool HasCandidateApplications)>
+    private async Task<(IReadOnlyList<Guid> CompanyIds, bool ShowCandidateHowTo, bool HasCandidateApplications, bool HasSalesReferral)>
         BuildFlagsAsync(User user, CancellationToken cancellationToken)
     {
         var companyIds = user.CompanyMemberships.Select(m => m.CompanyId).Distinct().ToList();
@@ -262,6 +264,10 @@ public class AuthController : ControllerBase
         var hasApps = await _db.Applications.AsNoTracking()
             .AnyAsync(a => a.CandidateUserId == user.Id, cancellationToken);
 
+        var hasSalesReferral = user.CompanyId is Guid companyId
+            && await _db.Companies.AsNoTracking()
+                .AnyAsync(c => c.Id == companyId && c.ReferredBySalesManagerUserId != null, cancellationToken);
+
         // Eerste login ooit → Hoe werkt Lobsy; daarna → banenkaart (nav blijft beschikbaar).
         var isFirstLogin = user.LastLoginAtUtc is null;
         var showHowTo = user.Role == UserRole.Candidate && isFirstLogin;
@@ -269,6 +275,6 @@ public class AuthController : ControllerBase
         user.LastLoginAtUtc = DateTime.UtcNow;
         await _db.SaveChangesAsync(cancellationToken);
 
-        return (companyIds, showHowTo, hasApps);
+        return (companyIds, showHowTo, hasApps, hasSalesReferral);
     }
 }

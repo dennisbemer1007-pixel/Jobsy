@@ -1987,7 +1987,8 @@ public record CreateVacancyForm(
     bool? LegalNightShift23To06 = null,
     bool? LegalAdultSupervisorPresent = null,
     bool? LegalHandlesMoneyOrClosing = null,
-    bool? LegalHeavyOrHazardousWork = null);
+    bool? LegalHeavyOrHazardousWork = null,
+    bool ShowClientAddressOnMap = false);
 
 public record BatchVacancyForm(
     string Title,
@@ -1997,7 +1998,8 @@ public record BatchVacancyForm(
     DateOnly EndDate,
     TransportMode RequiredTransport,
     string[] WorkTypes,
-    Guid[] CompanyIds);
+    Guid[] CompanyIds,
+    bool ShowClientAddressOnMap = false);
 
 public sealed class CsvImportRowForm
 {

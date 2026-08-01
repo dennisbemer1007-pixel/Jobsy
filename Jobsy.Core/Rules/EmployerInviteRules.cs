@@ -33,6 +33,12 @@ public static class EmployerInviteRules
             return true;
         }
 
+        // Intermediairs may invite colleague intermediairs on the same organization.
+        if (callerRole == UserRole.Intermediary && targetRole == UserRole.Intermediary)
+        {
+            return true;
+        }
+
         return Rank(callerRole) > Rank(targetRole);
     }
 

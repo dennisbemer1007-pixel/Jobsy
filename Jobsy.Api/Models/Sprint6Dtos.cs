@@ -14,7 +14,9 @@ public record AdminCompanyDetailDto(
     int ActiveVacancyCount,
     int TotalVacancyCount,
     int ApplicationCount,
-    decimal TokenBalance);
+    decimal TokenBalance,
+    Guid? SalesManagerUserId = null,
+    string? SalesManagerName = null);
 
 public record AdminUserDetailDto(
     Guid Id,
