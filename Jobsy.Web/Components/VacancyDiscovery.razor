@@ -380,6 +380,12 @@
                     </select>
                 </label>
             </div>
+            <HighlightVacancyCarousel Vacancies="HighlightedVacancies"
+                                      ActiveId="_hoveredId"
+                                      ModifierClass="highlight-carousel--list"
+                                      FormatTravel="FormatCarouselTravel"
+                                      OnHover="OnHover"
+                                      OnSelect="OnCarouselSelect" />
             <div class="vacancy-list vacancy-list--cards">
                 @foreach (var vacancy in SortedVacancies)
                 {
@@ -424,46 +430,14 @@
     </aside>
 
     <section class="map-pane">
-        @if (!_loading && HighlightedVacancies.Count > 0)
+        @if (!_loading)
         {
-            <aside class="highlight-carousel" aria-label="@Culture["Discovery.Featured"]">
-                <p class="highlight-carousel__title">@Culture["Discovery.Featured"]</p>
-                <div class="highlight-carousel__track" role="list">
-                    @foreach (var vacancy in HighlightedVacancies)
-                    {
-                        var travelText = FormatCarouselTravel(vacancy);
-                        <button type="button"
-                                class="highlight-carousel__card @(_hoveredId == vacancy.Id ? "is-active" : null)"
-                                role="listitem"
-                                @onmouseenter="() => OnHover(vacancy.Id)"
-                                @onmouseleave="() => OnHover(null)"
-                                @onclick="() => OnSelect(vacancy.Id)">
-                            @if (!string.IsNullOrWhiteSpace(vacancy.CompanyLogoUrl))
-                            {
-                                <img class="highlight-carousel__logo"
-                                     src="@vacancy.CompanyLogoUrl"
-                                     alt=""
-                                     loading="lazy" />
-                            }
-                            else
-                            {
-                                <span class="highlight-carousel__logo highlight-carousel__logo--placeholder" aria-hidden="true">
-                                    @(vacancy.CompanyName.Length > 0 ? vacancy.CompanyName[0].ToString().ToUpperInvariant() : "L")
-                                </span>
-                            }
-                            <span class="highlight-carousel__body">
-                                <span class="highlight-carousel__badge">@Culture["Discovery.Featured"]</span>
-                                <span class="highlight-carousel__title-text">@vacancy.Title</span>
-                                <span class="highlight-carousel__meta">@vacancy.CompanyName</span>
-                                @if (!string.IsNullOrEmpty(travelText))
-                                {
-                                    <span class="highlight-carousel__travel">@travelText</span>
-                                }
-                            </span>
-                        </button>
-                    }
-                </div>
-            </aside>
+            <HighlightVacancyCarousel Vacancies="HighlightedVacancies"
+                                      ActiveId="_hoveredId"
+                                      ModifierClass="highlight-carousel--map"
+                                      FormatTravel="FormatCarouselTravel"
+                                      OnHover="OnHover"
+                                      OnSelect="OnCarouselSelect" />
         }
         <div @ref="_mapElement" id="job-map" class="job-map"></div>
     </section>
@@ -1755,6 +1729,23 @@
         {
             await Js.InvokeVoidAsync("jobMap.focus", id.ToString());
         }
+    }
+
+    private async Task OnCarouselSelect(Guid id)
+    {
+        // From mobile list view, jump to the map so focus/popup is visible.
+        if (!showMapOnMobile)
+        {
+            showMapOnMobile = true;
+            await InvokeAsync(StateHasChanged);
+            if (_mapReady)
+            {
+                await Task.Delay(50);
+                await Js.InvokeVoidAsync("jobMap.invalidate");
+            }
+        }
+
+        await OnSelect(id);
     }
 
     [JSInvokable]

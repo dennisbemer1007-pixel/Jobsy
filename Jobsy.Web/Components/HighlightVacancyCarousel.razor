@@ -1,0 +1,59 @@
+@inject CultureState Culture
+
+@if (Vacancies.Count > 0)
+{
+    <aside class="highlight-carousel @ModifierClass" aria-label="@Culture["Discovery.Featured"]">
+        <p class="highlight-carousel__title">@Culture["Discovery.Featured"]</p>
+        <div class="highlight-carousel__track" role="list">
+            @foreach (var vacancy in Vacancies)
+            {
+                var travelText = FormatTravel?.Invoke(vacancy) ?? string.Empty;
+                <button type="button"
+                        class="highlight-carousel__card @(ActiveId == vacancy.Id ? "is-active" : null)"
+                        role="listitem"
+                        @onmouseenter="() => OnHover.InvokeAsync(vacancy.Id)"
+                        @onmouseleave="() => OnHover.InvokeAsync(null)"
+                        @onclick="() => OnSelect.InvokeAsync(vacancy.Id)">
+                    @if (!string.IsNullOrWhiteSpace(vacancy.ImageUrl))
+                    {
+                        <img class="highlight-carousel__media"
+                             src="@vacancy.ImageUrl"
+                             alt=""
+                             loading="lazy" />
+                    }
+                    else if (!string.IsNullOrWhiteSpace(vacancy.CompanyLogoUrl))
+                    {
+                        <img class="highlight-carousel__media highlight-carousel__media--logo"
+                             src="@vacancy.CompanyLogoUrl"
+                             alt=""
+                             loading="lazy" />
+                    }
+                    else
+                    {
+                        <span class="highlight-carousel__media highlight-carousel__media--placeholder" aria-hidden="true">
+                            @(vacancy.CompanyName.Length > 0 ? vacancy.CompanyName[0].ToString().ToUpperInvariant() : "L")
+                        </span>
+                    }
+                    <span class="highlight-carousel__body">
+                        <span class="highlight-carousel__badge">@Culture["Discovery.Featured"]</span>
+                        <span class="highlight-carousel__title-text">@vacancy.Title</span>
+                        <span class="highlight-carousel__meta">@vacancy.CompanyName</span>
+                        @if (!string.IsNullOrEmpty(travelText))
+                        {
+                            <span class="highlight-carousel__travel">@travelText</span>
+                        }
+                    </span>
+                </button>
+            }
+        </div>
+    </aside>
+}
+
+@code {
+    [Parameter] public IReadOnlyList<VacancyListItem> Vacancies { get; set; } = [];
+    [Parameter] public Guid? ActiveId { get; set; }
+    [Parameter] public string? ModifierClass { get; set; }
+    [Parameter] public Func<VacancyListItem, string>? FormatTravel { get; set; }
+    [Parameter] public EventCallback<Guid?> OnHover { get; set; }
+    [Parameter] public EventCallback<Guid> OnSelect { get; set; }
+}
