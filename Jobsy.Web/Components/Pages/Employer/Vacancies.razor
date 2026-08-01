@@ -4,7 +4,6 @@
 @attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "BranchManager,RegionalManager,EnterpriseManager,Intermediary,Admin")]
 @using Jobsy.Core.Rules
 @using Jobsy.Web.Localization
-@using Jobsy.Web.Navigation
 @using Microsoft.AspNetCore.Components.Authorization
 @using Microsoft.AspNetCore.WebUtilities
 @inject JobsyApiClient Api
@@ -84,7 +83,7 @@
     }
     else
     {
-        <div class="table-scroll">
+        <div class="table-scroll vacancy-grid">
             <table class="data-table">
                 <thead>
                     <tr>
@@ -98,13 +97,15 @@
                         <th>Applied</th>
                         <th>Extended</th>
                         <th>Liked</th>
-                        <th>Acties</th>
+                        <th class="data-table__col--actions">@Culture["Common.Actions"]</th>
                     </tr>
                 </thead>
                 <tbody>
                     @foreach (var v in _filtered)
                     {
-                        <tr>
+                        <tr class="data-table__row--interactive"
+                            title="@Culture["VacancyAction.OpenHint"]"
+                            @ondblclick="() => OpenVacancyDetails(v)">
                             <td class="data-table__col--wrap">
                                 <a href="@($"/vacancies/{v.Id}")"><strong>@v.Title</strong></a>
                                 @if (v.IsHighlighted)
@@ -125,55 +126,57 @@
                             <td><a href="@MetricHref(v, "applications")">@v.ApplicationCount</a></td>
                             <td><a href="@MetricHref(v, "extensions")">@v.ExtensionCount</a></td>
                             <td><a href="@MetricHref(v, "likes")">@v.LikeCount</a></td>
-                            <td class="inline-actions">
-                                <a class="icon-btn" href="@($"/vacancies/{v.Id}")" title="Bekijken" aria-label="Vacature bekijken">
-                                    @((MarkupString)ActionIcons.View)
-                                </a>
-                                @if (_canManageVacancy)
-                                {
-                                    <button class="icon-btn" type="button" title="Contactvoorkeur" aria-label="Contactvoorkeur" @onclick="() => OpenContactPref(v)">
-                                        @((MarkupString)ActionIcons.Contact)
-                                    </button>
-                                    <a class="icon-btn" href="@($"/branch/vacancies/new?from={v.Id}")" title="Dupliceren" aria-label="Vacature dupliceren">
-                                        @((MarkupString)ActionIcons.Duplicate)
+                            <td class="data-table__col--actions" @ondblclick:stopPropagation="true">
+                                <RowActionsMenu>
+                                    <a class="row-actions-menu__item" role="menuitem" href="@($"/vacancies/{v.Id}")">
+                                        @Culture["VacancyAction.View"]
                                     </a>
-                                }
-                                @if (_canManageVacancy && v.Status == "Draft")
-                                {
-                                    <button class="icon-btn" type="button" title="Publiceer" aria-label="Vacature publiceren" @onclick="() => OpenPublish(v)">
-                                        @((MarkupString)ActionIcons.Publish)
-                                    </button>
-                                }
-                                @if (v.Status == "PendingApproval" && _canApprovePublish)
-                                {
-                                    <button class="icon-btn" type="button" title="Goedkeuren" aria-label="Publicatie goedkeuren" @onclick="() => ApproveAsync(v.Id)">
-                                        @((MarkupString)ActionIcons.Approve)
-                                    </button>
-                                }
-                                @if (_canManageVacancy && v.Status == "Active")
-                                {
-                                    @if (!v.IsHighlighted)
+                                    @if (_canManageVacancy)
                                     {
-                                        <button class="icon-btn" type="button" title="Highlight" aria-label="Vacature highlighten" @onclick="() => HighlightAsync(v.Id)">
-                                            @((MarkupString)ActionIcons.Highlight)
+                                        <button class="row-actions-menu__item" type="button" role="menuitem" @onclick="() => OpenContactPref(v)">
+                                            @Culture["VacancyAction.Contact"]
+                                        </button>
+                                        <a class="row-actions-menu__item" role="menuitem" href="@($"/branch/vacancies/new?from={v.Id}")">
+                                            @Culture["VacancyAction.Duplicate"]
+                                        </a>
+                                    }
+                                    @if (_canManageVacancy && v.Status == "Draft")
+                                    {
+                                        <button class="row-actions-menu__item" type="button" role="menuitem" @onclick="() => OpenPublish(v)">
+                                            @Culture["VacancyAction.Publish"]
                                         </button>
                                     }
-                                    <button class="icon-btn" type="button" title="PushBom" aria-label="PushBom versturen" @onclick="() => OpenPushBom(v)">
-                                        @((MarkupString)ActionIcons.Bomb)
-                                    </button>
-                                    <button class="icon-btn" type="button" title="Verleng" aria-label="Vacature verlengen" @onclick="() => ExtendAsync(v.Id)">
-                                        @((MarkupString)ActionIcons.Extend)
-                                    </button>
-                                    <button class="icon-btn" type="button" title="Inactive" aria-label="Vacature inactief zetten" @onclick="() => DeactivateAsync(v.Id)">
-                                        @((MarkupString)ActionIcons.Deactivate)
-                                    </button>
-                                }
-                                @if (_canManageVacancy && v.Status == "Archived")
-                                {
-                                    <button class="icon-btn" type="button" title="Heractiveer (+verlengen)" aria-label="Vacature heractiveren en verlengen" @onclick="() => ExtendAsync(v.Id)">
-                                        @((MarkupString)ActionIcons.Reactivate)
-                                    </button>
-                                }
+                                    @if (v.Status == "PendingApproval" && _canApprovePublish)
+                                    {
+                                        <button class="row-actions-menu__item" type="button" role="menuitem" @onclick="() => ApproveAsync(v.Id)">
+                                            @Culture["VacancyAction.Approve"]
+                                        </button>
+                                    }
+                                    @if (_canManageVacancy && v.Status == "Active")
+                                    {
+                                        @if (!v.IsHighlighted)
+                                        {
+                                            <button class="row-actions-menu__item" type="button" role="menuitem" @onclick="() => HighlightAsync(v.Id)">
+                                                @Culture["VacancyAction.Highlight"]
+                                            </button>
+                                        }
+                                        <button class="row-actions-menu__item" type="button" role="menuitem" @onclick="() => OpenPushBom(v)">
+                                            @Culture["VacancyAction.PushBom"]
+                                        </button>
+                                        <button class="row-actions-menu__item" type="button" role="menuitem" @onclick="() => ExtendAsync(v.Id)">
+                                            @Culture["VacancyAction.Extend"]
+                                        </button>
+                                        <button class="row-actions-menu__item" type="button" role="menuitem" @onclick="() => DeactivateAsync(v.Id)">
+                                            @Culture["VacancyAction.Deactivate"]
+                                        </button>
+                                    }
+                                    @if (_canManageVacancy && v.Status == "Archived")
+                                    {
+                                        <button class="row-actions-menu__item" type="button" role="menuitem" @onclick="() => ExtendAsync(v.Id)">
+                                            @Culture["VacancyAction.Reactivate"]
+                                        </button>
+                                    }
+                                </RowActionsMenu>
                             </td>
                         </tr>
                     }
@@ -435,6 +438,9 @@
         vacancy.WageByAge ??= new List<WageByAgeItem>();
         return vacancy;
     }
+
+    private void OpenVacancyDetails(VacancyListItem vacancy)
+        => Navigation.NavigateTo($"/vacancies/{vacancy.Id}");
 
     private void OpenPublish(VacancyListItem vacancy)
     {

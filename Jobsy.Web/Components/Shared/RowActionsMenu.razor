@@ -1,0 +1,42 @@
+@using Jobsy.Web.Localization
+@using Jobsy.Web.Navigation
+@inject CultureState Culture
+
+<div class="row-actions-menu @( _open ? "is-open" : null)" @onfocusout="OnFocusOut">
+    <button type="button"
+            class="icon-btn row-actions-menu__toggle"
+            aria-haspopup="menu"
+            aria-expanded="@_open"
+            aria-label="@(AriaLabel ?? Culture["Common.Actions"])"
+            title="@(AriaLabel ?? Culture["Common.Actions"])"
+            @onclick="Toggle"
+            @onclick:stopPropagation="true">
+        @((MarkupString)ActionIcons.More)
+    </button>
+    @if (_open)
+    {
+        <div class="row-actions-menu__panel" role="menu" @onclick="Close" @onclick:stopPropagation="true">
+            @ChildContent
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+    [Parameter] public string? AriaLabel { get; set; }
+
+    private bool _open;
+
+    private void Toggle()
+        => _open = !_open;
+
+    private void Close()
+        => _open = false;
+
+    private async Task OnFocusOut(FocusEventArgs _)
+    {
+        await Task.Delay(150);
+        _open = false;
+        await InvokeAsync(StateHasChanged);
+    }
+}
