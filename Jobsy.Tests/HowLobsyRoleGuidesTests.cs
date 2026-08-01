@@ -31,4 +31,15 @@ public sealed class HowLobsyRoleGuidesTests
     [Fact]
     public void ForRole_admin_has_no_guide()
         => Assert.Null(HowLobsyRoleGuides.ForRole(JobsyRoles.Admin));
+
+    [Fact]
+    public void BuildSalesGuide_uses_personal_partner_path_when_code_present()
+    {
+        var withCode = HowLobsyRoleGuides.BuildSalesGuide("SM-ABC");
+        var partnerStep = withCode.Steps[2];
+        Assert.Equal("/partner/SM-ABC", partnerStep.Links[0].Href);
+
+        var withoutCode = HowLobsyRoleGuides.BuildSalesGuide(null);
+        Assert.Equal("/salesmanager/toolkit", withoutCode.Steps[2].Links[0].Href);
+    }
 }

@@ -79,7 +79,7 @@
             // Candidate step 4 uses Apply.Title as emphasis, not a real href.
             args[i] = link.Href is "#" or ""
                 ? $"<strong>{label}</strong>"
-                : $"<a href=\"{link.Href}\">{label}</a>";
+                : $"<a href=\"{WebUtility.HtmlEncode(link.Href)}\">{label}</a>";
         }
 
         return new MarkupString(Culture.Format(step.BodyKey, args));

@@ -5,6 +5,7 @@
 @using Jobsy.Web.Help
 @using Microsoft.AspNetCore.Components.Authorization
 @inject AuthenticationStateProvider AuthState
+@inject JobsyApiClient Api
 @inject NavigationManager Navigation
 @inject CultureState Culture
 
@@ -31,7 +32,7 @@ else
 
         if (RoleClaimMatching.HasRole(user, JobsyRoles.SalesManager))
         {
-            _guide = HowLobsyRoleGuides.Sales;
+            _guide = HowLobsyRoleGuides.BuildSalesGuide(await TryGetSalesTrackingCodeAsync());
         }
         else if (RoleClaimMatching.HasRole(user, JobsyRoles.EnterpriseManager))
         {
@@ -49,13 +50,23 @@ else
         {
             _guide = HowLobsyRoleGuides.Intermediary;
         }
-        else if (RoleClaimMatching.HasRole(user, JobsyRoles.Candidate))
-        {
-            Navigation.NavigateTo(HowLobsyRoleGuides.CandidatePath, replace: true);
-        }
         else
         {
             Navigation.NavigateTo("/home", replace: true);
+        }
+    }
+
+    private async Task<string?> TryGetSalesTrackingCodeAsync()
+    {
+        try
+        {
+            var dashboard = await Api.GetMySalesManagerDashboardAsync();
+            return dashboard?.TrackingCode;
+        }
+        catch
+        {
+            // Guide still works; partner step falls back to toolkit.
+            return null;
         }
     }
 }

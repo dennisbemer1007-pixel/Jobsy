@@ -117,16 +117,30 @@ public static class HowLobsyRoleGuides
         new("/intermediary/batch", "HowLobsy.Intermediary.PrimaryCta"),
         new("/home", "HowLobsy.Intermediary.SecondaryCta"));
 
-    public static readonly Guide Sales = new(
-        "HowLobsy.Sales.Title",
-        "HowLobsy.Sales.Lead",
-        [
-            new("HowLobsy.Sales.Step1Title", "HowLobsy.Sales.Step1Body", [new("/salesmanager/onboarding", "Nav.Onboarding")]),
-            new("HowLobsy.Sales.Step2Title", "HowLobsy.Sales.Step2Body", [new("/salesmanager/toolkit", "Nav.SalesToolkit")]),
-            new("HowLobsy.Sales.Step3Title", "HowLobsy.Sales.Step3Body", [new("/partner", "HowLobsy.Sales.PartnerLabel")]),
-            new("HowLobsy.Sales.Step4Title", "HowLobsy.Sales.Step4Body", [new("/home", "Nav.Home")]),
-            new("HowLobsy.Sales.Step5Title", "HowLobsy.Sales.Step5Body", [new("/salesmanager/invoices", "Nav.Invoices")])
-        ],
-        new("/salesmanager/toolkit", "HowLobsy.Sales.PrimaryCta"),
-        new("/home", "HowLobsy.Sales.SecondaryCta"));
+    public static readonly Guide Sales = BuildSalesGuide(trackingCode: null);
+
+    /// <summary>
+    /// Sales guide with a personal <c>/partner/{trackingCode}</c> deep link when available;
+    /// otherwise falls back to the toolkit where the coded partner URL is shown.
+    /// </summary>
+    public static Guide BuildSalesGuide(string? trackingCode)
+    {
+        var code = trackingCode?.Trim();
+        var partnerHref = string.IsNullOrWhiteSpace(code)
+            ? "/salesmanager/toolkit"
+            : $"/partner/{Uri.EscapeDataString(code)}";
+
+        return new(
+            "HowLobsy.Sales.Title",
+            "HowLobsy.Sales.Lead",
+            [
+                new("HowLobsy.Sales.Step1Title", "HowLobsy.Sales.Step1Body", [new("/salesmanager/onboarding", "Nav.Onboarding")]),
+                new("HowLobsy.Sales.Step2Title", "HowLobsy.Sales.Step2Body", [new("/salesmanager/toolkit", "Nav.SalesToolkit")]),
+                new("HowLobsy.Sales.Step3Title", "HowLobsy.Sales.Step3Body", [new(partnerHref, "HowLobsy.Sales.PartnerLabel")]),
+                new("HowLobsy.Sales.Step4Title", "HowLobsy.Sales.Step4Body", [new("/home", "Nav.Home")]),
+                new("HowLobsy.Sales.Step5Title", "HowLobsy.Sales.Step5Body", [new("/salesmanager/invoices", "Nav.Invoices")])
+            ],
+            new("/salesmanager/toolkit", "HowLobsy.Sales.PrimaryCta"),
+            new("/home", "HowLobsy.Sales.SecondaryCta"));
+    }
 }
