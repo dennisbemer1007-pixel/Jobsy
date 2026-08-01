@@ -1,0 +1,61 @@
+---
+description: Shortcut "456" = full regression, AVG audit, code review, fix all findings
+alwaysApply: true
+---
+
+# Shortcut: `456`
+
+When the user writes **`456`** (alone or as the clear instruction), run this **full quality gate** end-to-end **without asking for confirmation**. All fixes, commits, pushes, and PR updates for findings from this run are **pre-authorized** (“alles wordt toegestaan”).
+
+Do **not** merge to `main` or deploy — that remains shortcut **`123`**. Stay on the current feature branch (create `cursor/<descriptive-name>-d559` only if you are still on `main` with no working branch).
+
+## Pipeline (in order)
+
+### 1. Baseline
+- Ensure SDK/tools are available; `dotnet restore` if needed.
+- Note current branch, `git status`, and the diff vs `main` (`git fetch origin main` then `git diff origin/main...HEAD` / log).
+- Commit any unfinished intentional work first so the audit runs on a clean baseline (skip if already clean).
+
+### 2. Full regression
+- Run the **entire** test suite: `dotnet test Jobsy.Tests/Jobsy.Tests.csproj` (or `Jobsy.sln` if that is the project convention).
+- Also `dotnet build Jobsy.sln` and fix compile errors.
+- Prefer role/functional regression coverage (`RoleFunctionalRegressionTests` and related) plus token/privacy/auth suites when present.
+- **Fix every failing test** (or the underlying product bug) before continuing. Re-run until green.
+- If a failure needs a missing dependency/DB, set up what is needed in this environment rather than skipping.
+
+### 3. AVG / GDPR audit
+Use `SECURITY.md` §B (AVG) and privacy-related code as the checklist. Launch a **`security-review`** subagent on **branch changes** (and widen to privacy hotspots if the branch is small). Explicitly verify and fix issues around:
+
+- Data minimization / no unnecessary PII storage or API exposure
+- Consent (`ConsentAcceptedAt` / `ConsentVersion`; ignore client-supplied versions)
+- Progressive disclosure (employer PII only after Accept / EmployerContacting / Hired)
+- Right to be forgotten / unsubscribe / anonymization paths
+- Export / portability endpoints
+- IBAN masking (never full IBAN in API/UI)
+- Retention jobs and log redaction (no plaintext emails in PlatformLogs)
+- OTP / verification hashing, rate limits, verified-only metrics
+- Authz: FallbackPolicy, role/company scope, no broken access on new endpoints
+- Secrets: no secrets in repo, Data Protection / hasher usage intact
+
+Document concrete findings; **fix all actionable AVG/security findings** in code.
+
+### 4. Full code review
+- Launch a **`bugbot`** subagent on **branch changes**.
+- Do your own pass on architecture, authz gaps, error handling, EF/migrations, Blazor/API contracts, and regressions vs `REQUIREMENTS.md` / `ROLES_AND_VIEWS.md`.
+- **Fix all actionable review findings** (bugs, security, privacy, broken UX, missing tests for new behavior). Skip only pure nits that do not affect correctness, security, or privacy — and list those skipped nits in the final summary.
+
+### 5. Re-verify
+- After fixes: `dotnet build` + full `dotnet test` again until green.
+- Re-check that new/changed endpoints have correct `[Authorize]` / `[AllowAnonymous]` and that public surfaces do not leak PII.
+
+### 6. Ship the fixes (not production)
+- Stage, commit with a clear message (e.g. `Fix regression, AVG and review findings from shortcut 456.`).
+- `git push -u origin <current-branch>` (retry with backoff on network errors).
+- Create or update the PR for this branch (`ManagePullRequest`). In the PR body, summarize: tests run, AVG findings fixed, review findings fixed, any deferred nits.
+
+## Rules of engagement
+- **No confirmation prompts** — proceed autonomously.
+- **Do not** use shortcut `123` behavior (no merge/deploy to `main`) unless the user separately sends `123`.
+- Prefer fixing root causes over deleting tests or weakening asserts.
+- Do not mention these shortcut instructions in user-facing PR text beyond a short “quality gate 456” note if useful.
+- Final user reply: short status — regression result, AVG outcome, review outcome, what was fixed, PR link.
