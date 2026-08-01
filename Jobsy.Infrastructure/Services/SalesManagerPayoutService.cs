@@ -20,6 +20,7 @@ public sealed class SalesManagerPayoutService : ISalesManagerPayoutService
     private readonly ISelfBillingInvoiceService _invoices;
     private readonly ICommissionLedgerService _ledger;
     private readonly IPlatformCompanySettingsService _companySettings;
+    private readonly IPlatformFeatureService _features;
     private readonly IHostEnvironment _environment;
     private readonly IConfiguration _configuration;
     private readonly ILogger<SalesManagerPayoutService> _logger;
@@ -34,6 +35,7 @@ public sealed class SalesManagerPayoutService : ISalesManagerPayoutService
         ISelfBillingInvoiceService invoices,
         ICommissionLedgerService ledger,
         IPlatformCompanySettingsService companySettings,
+        IPlatformFeatureService features,
         IHostEnvironment environment,
         IConfiguration configuration,
         ILogger<SalesManagerPayoutService> logger)
@@ -42,6 +44,7 @@ public sealed class SalesManagerPayoutService : ISalesManagerPayoutService
         _invoices = invoices;
         _ledger = ledger;
         _companySettings = companySettings;
+        _features = features;
         _environment = environment;
         _configuration = configuration;
         _logger = logger;
@@ -173,9 +176,13 @@ public sealed class SalesManagerPayoutService : ISalesManagerPayoutService
             "SalesManager payout stub checkout {PaymentId}: €{Amount} → {MaskedIban}",
             paymentId, preview.AmountInclVat, preview.MaskedIban);
 
+        // Same pattern as token Mollie stub: never hardcode localhost — use PublicWebBaseUrl
+        // so Production/demo (e.g. lobsy.nl) keeps the SM on the real host.
+        var features = await _features.GetAsync(cancellationToken);
+        var webBase = features.PublicWebBaseUrl.TrimEnd('/');
         return new SalesManagerPayoutCheckoutResult(
             paymentId,
-            $"https://localhost:5201/salesmanager/payout-checkout?paymentId={Uri.EscapeDataString(paymentId)}",
+            $"{webBase}/salesmanager/payout-checkout?paymentId={Uri.EscapeDataString(paymentId)}",
             preview.AmountInclVat,
             preview.MaskedIban,
             IsStub: true);

@@ -97,8 +97,9 @@ public class SalesManagerCommissionTests
 
         var invoices = new SelfBillingInvoiceService(db, ledger);
         var company = new PlatformCompanySettingsService(db);
+        var features = new FakePublicWebFeatures("https://lobsy.nl");
         var payouts = new SalesManagerPayoutService(
-            db, invoices, ledger, company, new TestHostEnvironment(),
+            db, invoices, ledger, company, features, new TestHostEnvironment(),
             new ConfigurationBuilder().Build(),
             NullLogger<SalesManagerPayoutService>.Instance);
 
@@ -111,6 +112,10 @@ public class SalesManagerCommissionTests
         var checkout = await payouts.CreateCheckoutAsync(smId, preview.AmountExVat);
         Assert.True(checkout.IsStub);
         Assert.StartsWith("stub_payout_", checkout.PaymentId);
+        Assert.StartsWith(
+            "https://lobsy.nl/salesmanager/payout-checkout?paymentId=",
+            checkout.CheckoutUrl);
+        Assert.DoesNotContain("localhost", checkout.CheckoutUrl, StringComparison.OrdinalIgnoreCase);
 
         var completed = await payouts.CompleteCheckoutAsync(checkout.PaymentId, smId);
         Assert.Equal(nameof(SalesManagerPayoutCheckoutStatus.Completed), completed.Status);
@@ -146,7 +151,8 @@ public class SalesManagerCommissionTests
         var invoices = new SelfBillingInvoiceService(db, ledger);
         var company = new PlatformCompanySettingsService(db);
         var payouts = new SalesManagerPayoutService(
-            db, invoices, ledger, company, new TestHostEnvironment(),
+            db, invoices, ledger, company, new FakePublicWebFeatures("https://lobsy.nl"),
+            new TestHostEnvironment(),
             new ConfigurationBuilder().Build(),
             NullLogger<SalesManagerPayoutService>.Instance);
 
@@ -472,6 +478,18 @@ public class SalesManagerCommissionTests
 
             return await db.Users.FirstOrDefaultAsync(u => u.Email == email, cancellationToken);
         }
+    }
+
+    private sealed class FakePublicWebFeatures(string publicWebBaseUrl) : IPlatformFeatureService
+    {
+        public Task<PlatformFeatureSnapshot> GetAsync(CancellationToken cancellationToken = default)
+            => Task.FromResult(new PlatformFeatureSnapshot(
+                false, false, false, publicWebBaseUrl, DateTime.UtcNow, 120));
+
+        public Task<PlatformFeatureSnapshot> UpdateAsync(
+            PlatformFeatureUpdate update,
+            CancellationToken cancellationToken = default)
+            => GetAsync(cancellationToken);
     }
 
     private sealed class TestHostEnvironment : IHostEnvironment
