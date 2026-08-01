@@ -135,6 +135,99 @@ public class SalesCommercialServiceTests
         Assert.Equal((byte)'F', bytes[3]);
     }
 
+    [Fact]
+    public async Task Public_catalog_is_read_only_without_seed_writes()
+    {
+        await using var db = CreateDb();
+        var sut = new SalesCommercialService(db, new TokenLedgerService(db));
+
+        var catalog = await sut.GetPublicCatalogAsync();
+
+        Assert.Equal(25m, catalog.BaseTokenValueEuro);
+        Assert.Equal(0, await db.SalesCommercialSettings.CountAsync());
+        Assert.Equal(0, await db.VacancyTypeTokenCosts.CountAsync());
+        Assert.Contains(catalog.VacancyTypeCosts, c => c.Kind == "Volunteer");
+    }
+
+    [Fact]
+    public async Task Concurrent_start_highlight_consume_is_one_shot()
+    {
+        await using var db = CreateDb();
+        SeedCommercial(db);
+        SeedSpendCosts(db);
+
+        var company = new Company
+        {
+            Id = Guid.NewGuid(),
+            Name = "Bonus BV",
+            KvkNumber = "12345678",
+            Address = "Teststraat 1",
+            Location = new GeoPoint(52.0, 4.3),
+            PendingStartHighlightBonus = true
+        };
+        db.Companies.Add(company);
+        db.TokenTransactions.Add(new TokenTransaction
+        {
+            Id = Guid.NewGuid(),
+            CompanyId = company.Id,
+            Amount = 10,
+            Kind = TokenTransactionKind.Grant,
+            OldBalance = 0,
+            NewBalance = 10,
+            CreatedAt = DateTime.UtcNow,
+            Note = "seed"
+        });
+
+        Vacancy MakeDraft(string title) => new()
+        {
+            Id = Guid.NewGuid(),
+            Title = title,
+            Description = "Test",
+            HourlyWage = 14.5m,
+            StartDate = DateOnly.FromDateTime(DateTime.UtcNow),
+            EndDate = DateOnly.FromDateTime(DateTime.UtcNow).AddMonths(2),
+            Status = VacancyStatus.Draft,
+            CompanyId = company.Id,
+            Company = company,
+            Location = company.Location,
+            RequiredTransport = TransportMode.Bike,
+            Kind = VacancyKind.Regular
+        };
+
+        var a = MakeDraft("A");
+        var b = MakeDraft("B");
+        db.Vacancies.AddRange(a, b);
+        await db.SaveChangesAsync();
+
+        var features = new PlatformFeatureService(
+            db,
+            Microsoft.Extensions.Options.Options.Create(new Core.Options.JobsyFeatureOptions()),
+            new Microsoft.Extensions.Configuration.ConfigurationBuilder().Build());
+        VacancyProductService Products() => new(
+            db,
+            new TokenLedgerService(db),
+            new SalesCommercialService(db, new TokenLedgerService(db)),
+            new PushNotificationServiceStub(db, Microsoft.Extensions.Logging.Abstractions.NullLogger<PushNotificationServiceStub>.Instance),
+            new EmailServiceStub(db, Microsoft.Extensions.Logging.Abstractions.NullLogger<EmailServiceStub>.Instance),
+            features,
+            new MockRoutingService(),
+            Microsoft.Extensions.Logging.Abstractions.NullLogger<VacancyProductService>.Instance);
+
+        var first = await Products().PublishAsync(a, new VacancyPublishOptions(), null);
+        Assert.True(first.Succeeded, first.ErrorMessage);
+        Assert.True(first.Vacancy!.IsHighlighted);
+
+        // Second publish must not get another free highlight (bonus already consumed).
+        var second = await Products().PublishAsync(b, new VacancyPublishOptions(Highlight: true), null);
+        Assert.True(second.Succeeded, second.ErrorMessage);
+        Assert.True(second.Vacancy!.IsHighlighted);
+
+        var balance = await new TokenLedgerService(db).GetBalanceAsync(company.Id);
+        // First: publish 1 + free highlight. Second: publish 1 + paid highlight 2 → spent 4, balance 6.
+        Assert.Equal(6m, balance);
+        Assert.False((await db.Companies.AsNoTracking().SingleAsync(c => c.Id == company.Id)).PendingStartHighlightBonus);
+    }
+
     private static JobsyDbContext CreateDb()
     {
         var options = new DbContextOptionsBuilder<JobsyDbContext>()

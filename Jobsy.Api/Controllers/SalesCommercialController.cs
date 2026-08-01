@@ -1,16 +1,20 @@
+using System.Text.RegularExpressions;
 using Jobsy.Api.Models;
 using Jobsy.Core.Authorization;
 using Jobsy.Core.Entities;
 using Jobsy.Core.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 
 namespace Jobsy.Api.Controllers;
 
 [ApiController]
 [Route("api/sales-commercial")]
-public class SalesCommercialController : ControllerBase
+public partial class SalesCommercialController : ControllerBase
 {
+    private static readonly Regex TrackingCodePattern = TrackingCodeRegex();
+
     private readonly ISalesCommercialService _sales;
     private readonly IPartnerFlyerPdfService _flyerPdf;
 
@@ -23,21 +27,27 @@ public class SalesCommercialController : ControllerBase
     /// <summary>Public partner catalog (rates + packages) for the sales landing page.</summary>
     [HttpGet("catalog")]
     [AllowAnonymous]
+    [EnableRateLimiting("public-write")]
     public async Task<ActionResult<PartnerSalesCatalogDto>> GetCatalog(CancellationToken cancellationToken)
         => Ok(await _sales.GetPublicCatalogAsync(cancellationToken));
 
     /// <summary>Printable A4 flyer PDF with optional salesmanager tracking code.</summary>
     [HttpGet("flyer.pdf")]
     [AllowAnonymous]
+    [EnableRateLimiting("public-pdf")]
     public async Task<IActionResult> GetFlyerPdf(
         [FromQuery] string? trackingCode,
         CancellationToken cancellationToken)
     {
-        var bytes = await _flyerPdf.RenderAsync(trackingCode, cancellationToken);
-        var fileName = string.IsNullOrWhiteSpace(trackingCode)
-            ? "lobsy-partner-flyer.pdf"
-            : $"lobsy-partner-flyer-{trackingCode.Trim().ToUpperInvariant()}.pdf";
-        return File(bytes, "application/pdf", fileName);
+        var normalized = NormalizeTrackingCode(trackingCode);
+        if (trackingCode is not null && normalized is null)
+        {
+            return BadRequest(new { message = "Ongeldige salescode. Gebruik het formaat SM-XXXXXX." });
+        }
+
+        var bytes = await _flyerPdf.RenderAsync(normalized, cancellationToken);
+        // Fixed download name — never embed untrusted query text in Content-Disposition.
+        return File(bytes, "application/pdf", "lobsy-partner-flyer.pdf");
     }
 
     [HttpGet("admin")]
@@ -160,4 +170,18 @@ public class SalesCommercialController : ControllerBase
         await _sales.DeletePackageAsync(id, cancellationToken);
         return NoContent();
     }
+
+    private static string? NormalizeTrackingCode(string? trackingCode)
+    {
+        if (string.IsNullOrWhiteSpace(trackingCode))
+        {
+            return null;
+        }
+
+        var normalized = trackingCode.Trim().ToUpperInvariant();
+        return TrackingCodePattern.IsMatch(normalized) ? normalized : null;
+    }
+
+    [GeneratedRegex(@"^SM-[A-Z0-9]{6}$", RegexOptions.CultureInvariant)]
+    private static partial Regex TrackingCodeRegex();
 }

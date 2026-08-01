@@ -1157,11 +1157,8 @@ public sealed class JobsyApiClient : IAsyncDisposable
         var response = await _http.GetAsync(qs, ct);
         response.EnsureSuccessStatusCode();
         var bytes = await response.Content.ReadAsByteArrayAsync(ct);
-        var fileName = string.IsNullOrWhiteSpace(trackingCode)
-            ? "lobsy-partner-flyer.pdf"
-            : $"lobsy-partner-flyer-{trackingCode.Trim().ToUpperInvariant()}.pdf";
         var base64 = Convert.ToBase64String(bytes);
-        await js.InvokeVoidAsync("jobsyDownload.bytes", fileName, base64, "application/pdf");
+        await js.InvokeVoidAsync("jobsyDownload.bytes", "lobsy-partner-flyer.pdf", base64, "application/pdf");
     }
 
     public async Task<IReadOnlyList<VatOpenPeriodItem>> GetVatOpenPeriodsAsync(CancellationToken ct = default)

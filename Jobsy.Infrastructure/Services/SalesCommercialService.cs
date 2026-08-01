@@ -39,15 +39,49 @@ public sealed class SalesCommercialService : ISalesCommercialService
 
     public async Task<PartnerSalesCatalogDto> GetPublicCatalogAsync(CancellationToken cancellationToken = default)
     {
-        var admin = await GetAdminAsync(cancellationToken);
+        // Read-only: never insert defaults from anonymous traffic (seed/admin paths own writes).
+        var settings = await _db.SalesCommercialSettings.AsNoTracking()
+            .OrderBy(s => s.Id)
+            .FirstOrDefaultAsync(cancellationToken) ?? CreateDefaultSettings();
+
+        var typeCosts = await _db.VacancyTypeTokenCosts.AsNoTracking()
+            .Where(c => c.IsActive)
+            .OrderBy(c => c.Kind)
+            .ToListAsync(cancellationToken);
+
+        if (typeCosts.Count == 0)
+        {
+            typeCosts = DefaultTypeCosts
+                .Select(d => new VacancyTypeTokenCost
+                {
+                    Id = Guid.Empty,
+                    Kind = d.Kind,
+                    CostTokens = d.Cost,
+                    IsActive = true
+                })
+                .ToList();
+        }
+
+        var packages = await _db.SalesPackages.AsNoTracking()
+            .Where(p => p.IsActive)
+            .OrderBy(p => p.Category)
+            .ThenBy(p => p.SortOrder)
+            .ThenBy(p => p.Name)
+            .ToListAsync(cancellationToken);
+
         return new PartnerSalesCatalogDto(
-            admin.BaseTokenValueEuro,
-            admin.HighlightCarouselTokens,
-            admin.HighlightPulseTokens,
-            admin.HighlightCarouselDays,
-            admin.StartHighlightBonusTokens,
-            admin.VacancyTypeCosts.Where(c => c.IsActive).ToList(),
-            admin.Packages.Where(p => p.IsActive).ToList());
+            settings.BaseTokenValueEuro,
+            settings.HighlightCarouselTokens,
+            settings.HighlightPulseTokens,
+            settings.HighlightCarouselDays,
+            settings.StartHighlightBonusTokens,
+            typeCosts.Select(c => new VacancyTypeCostDto(
+                c.Kind.ToString(),
+                VacancyKindLabels.ToDutch(c.Kind),
+                c.CostTokens,
+                Math.Round(c.CostTokens * settings.BaseTokenValueEuro, 2),
+                c.IsActive)).ToList(),
+            packages.Select(MapPackage).ToList());
     }
 
     public async Task<SalesCommercialAdminDto> GetAdminAsync(CancellationToken cancellationToken = default)
@@ -161,8 +195,9 @@ public sealed class SalesCommercialService : ISalesCommercialService
     public async Task<decimal> GetPublishCostTokensAsync(VacancyKind kind, CancellationToken cancellationToken = default)
     {
         await EnsureVacancyTypeCostsAsync(cancellationToken);
+        // Pricing always follows the configured type row (IsActive only hides it from the public catalog).
         var row = await _db.VacancyTypeTokenCosts.AsNoTracking()
-            .FirstOrDefaultAsync(c => c.Kind == kind && c.IsActive, cancellationToken);
+            .FirstOrDefaultAsync(c => c.Kind == kind, cancellationToken);
         if (row is not null)
         {
             return row.CostTokens;

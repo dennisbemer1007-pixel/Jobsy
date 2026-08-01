@@ -1004,6 +1004,7 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
 
         branch.ReferredBySalesManagerUserId = profile.UserId;
         branch.FirstYearStartedAt = DateTime.UtcNow;
+        // Only the publishing vestiging gets the one-time start-highlight (not the org pot).
         branch.PendingStartHighlightBonus = true;
 
         if (orgId is Guid oid)
@@ -1014,7 +1015,6 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
             {
                 org.ReferredBySalesManagerUserId = profile.UserId;
                 org.FirstYearStartedAt ??= DateTime.UtcNow;
-                org.PendingStartHighlightBonus = true;
             }
         }
 

@@ -136,7 +136,11 @@
     protected override async Task OnInitializedAsync()
     {
         Culture.Changed += OnCultureChanged;
-        _trackingCode = FirstNonEmpty(TrackingCode, RefCode)?.Trim().ToUpperInvariant();
+        var raw = FirstNonEmpty(TrackingCode, RefCode)?.Trim().ToUpperInvariant();
+        _trackingCode = raw is not null
+                        && System.Text.RegularExpressions.Regex.IsMatch(raw, @"^SM-[A-Z0-9]{6}$")
+            ? raw
+            : null;
         try
         {
             _catalog = await Api.GetPartnerSalesCatalogAsync();

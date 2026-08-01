@@ -1,3 +1,4 @@
+using System.Data;
 using System.Text.Json;
 using Jobsy.Core.Entities;
 using Jobsy.Core.Enums;
@@ -151,10 +152,9 @@ public sealed class VacancyProductService : IVacancyProductService
             }
 
             ApplyPublishEffects(vacancy, options, highlightDays);
-            if (useStartHighlight && company is not null)
+            if (useStartHighlight)
             {
-                await _db.Entry(company).ReloadAsync(ct);
-                company.PendingStartHighlightBonus = false;
+                await ConsumeStartHighlightBonusOrThrowAsync(vacancy.CompanyId, ct);
             }
         }
 
@@ -162,9 +162,12 @@ public sealed class VacancyProductService : IVacancyProductService
         {
             try
             {
-                await ApplyEffectsAsync(cancellationToken);
-                ClearRequestedOptions(vacancy);
-                await _db.SaveChangesAsync(cancellationToken);
+                await ExecuteInSerializableAsync(async () =>
+                {
+                    await ApplyEffectsAsync(cancellationToken);
+                    ClearRequestedOptions(vacancy);
+                    await _db.SaveChangesAsync(cancellationToken);
+                }, cancellationToken);
             }
             catch (VacancyProductConflictException ex)
             {
@@ -271,6 +274,14 @@ public sealed class VacancyProductService : IVacancyProductService
         }
 
         // Snapshot for spend + effects (do not re-read Requested* after Reload).
+        var company = await _db.Companies.AsNoTracking()
+            .FirstOrDefaultAsync(c => c.Id == vacancy.CompanyId, cancellationToken);
+        var useStartHighlight = company?.PendingStartHighlightBonus == true;
+        if (useStartHighlight)
+        {
+            options = options with { Highlight = true };
+        }
+
         var approveOptions = options;
         var publishCost = await _salesCommercial.GetPublishCostTokensAsync(vacancy.Kind, cancellationToken);
         var highlightCost = await _salesCommercial.GetHighlightCostTokensAsync(cancellationToken);
@@ -279,27 +290,39 @@ public sealed class VacancyProductService : IVacancyProductService
         costOverrides[TokenSpendReason.Publish] = publishCost;
         if (approveOptions.Highlight)
         {
-            costOverrides[TokenSpendReason.Highlight] = highlightCost;
+            costOverrides[TokenSpendReason.Highlight] = useStartHighlight ? 0m : highlightCost;
         }
 
         var reasons = BuildPublishReasons(approveOptions)
             .Where(r => costOverrides.GetValueOrDefault(r, 1m) > 0)
             .ToList();
 
+        async Task ApplyApproveEffectsAsync(CancellationToken ct)
+        {
+            await _db.Entry(vacancy).ReloadAsync(ct);
+            if (vacancy.Status != VacancyStatus.PendingApproval)
+            {
+                throw new VacancyProductConflictException("Vacature is ondertussen al verwerkt.");
+            }
+
+            ApplyPublishEffects(vacancy, approveOptions, highlightDays);
+            ClearRequestedOptions(vacancy);
+            if (useStartHighlight)
+            {
+                await ConsumeStartHighlightBonusOrThrowAsync(vacancy.CompanyId, ct);
+            }
+        }
+
         TokenMultiSpendOutcome spend;
         try
         {
             if (reasons.Count == 0)
             {
-                await _db.Entry(vacancy).ReloadAsync(cancellationToken);
-                if (vacancy.Status != VacancyStatus.PendingApproval)
+                await ExecuteInSerializableAsync(async () =>
                 {
-                    return Fail(vacancy, "Vacature is ondertussen al verwerkt.");
-                }
-
-                ApplyPublishEffects(vacancy, approveOptions, highlightDays);
-                ClearRequestedOptions(vacancy);
-                await _db.SaveChangesAsync(cancellationToken);
+                    await ApplyApproveEffectsAsync(cancellationToken);
+                    await _db.SaveChangesAsync(cancellationToken);
+                }, cancellationToken);
                 spend = new TokenMultiSpendOutcome(true, null, [], await _tokens.GetBalanceAsync(vacancy.CompanyId, cancellationToken));
             }
             else
@@ -310,19 +333,8 @@ public sealed class VacancyProductService : IVacancyProductService
                     vacancyId: vacancy.Id,
                     actorUserId: actorUserId,
                     branchCompanyId: vacancy.CompanyId,
-                    note: "Approve publish",
-                    onSuccessBeforeCommit: async ct =>
-                    {
-                        await _db.Entry(vacancy).ReloadAsync(ct);
-                        if (vacancy.Status != VacancyStatus.PendingApproval)
-                        {
-                            throw new VacancyProductConflictException(
-                                "Vacature is ondertussen al verwerkt.");
-                        }
-
-                        ApplyPublishEffects(vacancy, approveOptions, highlightDays);
-                        ClearRequestedOptions(vacancy);
-                    },
+                    note: useStartHighlight ? "Approve publish + gratis start-highlight" : "Approve publish",
+                    onSuccessBeforeCommit: ApplyApproveEffectsAsync,
                     costOverrides: costOverrides,
                     cancellationToken: cancellationToken);
             }
@@ -647,6 +659,64 @@ public sealed class VacancyProductService : IVacancyProductService
         vacancy.RequestedHighlight = false;
         vacancy.RequestedPushBom = false;
         vacancy.RequestedExtend = false;
+    }
+
+    /// <summary>
+    /// Atomically consumes the one-time sales start-highlight. Fails closed on races.
+    /// </summary>
+    private async Task ConsumeStartHighlightBonusOrThrowAsync(Guid companyId, CancellationToken cancellationToken)
+    {
+        if (_db.Database.IsRelational())
+        {
+            var affected = await _db.Companies
+                .Where(c => c.Id == companyId && c.PendingStartHighlightBonus)
+                .ExecuteUpdateAsync(
+                    setters => setters.SetProperty(c => c.PendingStartHighlightBonus, false),
+                    cancellationToken);
+
+            if (affected == 0)
+            {
+                throw new VacancyProductConflictException(
+                    "De gratis start-highlight is ondertussen al gebruikt. Publiceer opnieuw (highlight kost dan tokens).");
+            }
+
+            return;
+        }
+
+        // InMemory provider (tests): tracked update under the caller's transaction.
+        var company = await _db.Companies.FirstOrDefaultAsync(c => c.Id == companyId, cancellationToken);
+        if (company is null || !company.PendingStartHighlightBonus)
+        {
+            throw new VacancyProductConflictException(
+                "De gratis start-highlight is ondertussen al gebruikt. Publiceer opnieuw (highlight kost dan tokens).");
+        }
+
+        company.PendingStartHighlightBonus = false;
+    }
+
+    private async Task ExecuteInSerializableAsync(Func<Task> action, CancellationToken cancellationToken)
+    {
+        var strategy = _db.Database.CreateExecutionStrategy();
+        await strategy.ExecuteAsync(async () =>
+        {
+            if (!_db.Database.IsRelational())
+            {
+                await action();
+                return;
+            }
+
+            await using var tx = await _db.Database.BeginTransactionAsync(IsolationLevel.Serializable, cancellationToken);
+            try
+            {
+                await action();
+                await tx.CommitAsync(cancellationToken);
+            }
+            catch
+            {
+                await tx.RollbackAsync(cancellationToken);
+                throw;
+            }
+        });
     }
 
     private async Task<PushBomReach> BuildPushBomReachAsync(

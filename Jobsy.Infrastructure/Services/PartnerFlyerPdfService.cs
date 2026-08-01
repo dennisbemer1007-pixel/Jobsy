@@ -35,7 +35,7 @@ public sealed class PartnerFlyerPdfService : IPartnerFlyerPdfService
         var platform = await _companySettings.GetAsync(cancellationToken);
         var logo = _companySettings.GetBrandLogoPng();
         var culture = CultureInfo.GetCultureInfo("nl-NL");
-        var code = string.IsNullOrWhiteSpace(trackingCode) ? null : trackingCode.Trim().ToUpperInvariant();
+        var code = NormalizeTrackingCode(trackingCode);
         var brand = string.IsNullOrWhiteSpace(platform.CompanyName) ? "Lobsy" : platform.CompanyName.Trim();
         var registerHint = code is null
             ? "Registreer via lobsy.nl/register"
@@ -181,4 +181,20 @@ public sealed class PartnerFlyerPdfService : IPartnerFlyerPdfService
         nameof(Core.Enums.SalesPackageCategory.Enterprise) => "Enterprise",
         _ => "Standaard"
     };
+
+    private static string? NormalizeTrackingCode(string? trackingCode)
+    {
+        if (string.IsNullOrWhiteSpace(trackingCode))
+        {
+            return null;
+        }
+
+        var normalized = trackingCode.Trim().ToUpperInvariant();
+        return System.Text.RegularExpressions.Regex.IsMatch(
+            normalized,
+            @"^SM-[A-Z0-9]{6}$",
+            System.Text.RegularExpressions.RegexOptions.CultureInvariant)
+            ? normalized
+            : null;
+    }
 }
