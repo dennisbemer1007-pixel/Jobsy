@@ -6626,6 +6626,24 @@ button.stat-card {
     color: var(--brand);
 }
 
+.dash-cat-tab--warn {
+    border-color: color-mix(in srgb, var(--danger) 40%, var(--border));
+}
+
+.dash-cat-tab--warn.dash-cat-tab--active {
+    background: color-mix(in srgb, var(--danger-soft) 70%, var(--surface));
+    color: var(--danger);
+}
+
+.dash-cat-tab__warn-dot {
+    width: 0.45rem;
+    height: 0.45rem;
+    border-radius: 50%;
+    background: var(--danger);
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--danger) 16%, transparent);
+    flex-shrink: 0;
+}
+
 .dash-cat-tab__count {
     display: inline-flex;
     align-items: center;
@@ -6638,6 +6656,11 @@ button.stat-card {
     font-weight: 700;
     background: color-mix(in srgb, var(--brand) 10%, var(--surface));
     color: var(--brand);
+}
+
+.dash-cat-tab--warn .dash-cat-tab__count {
+    background: color-mix(in srgb, var(--danger) 12%, var(--surface));
+    color: var(--danger);
 }
 
 .dash-section {

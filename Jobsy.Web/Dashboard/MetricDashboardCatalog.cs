@@ -5,6 +5,8 @@ namespace Jobsy.Web.Dashboard;
 /// </summary>
 public static class MetricDashboardCatalog
 {
+    public const string OtherCategoryId = "other";
+
     public sealed record Category(string Id, string Title, string Lead, string[] Keys);
 
     public static readonly Category[] Categories =
@@ -92,6 +94,31 @@ public static class MetricDashboardCatalog
         return null;
     }
 
+    /// <summary>
+    /// Resolves a category id for a metric key, including the dynamic "Overig" bucket when present.
+    /// </summary>
+    public static string? CategoryIdFor<T>(
+        string key,
+        IReadOnlyList<(Category Category, IReadOnlyList<T> Metrics)> groups,
+        Func<T, string> keySelector)
+    {
+        var known = CategoryIdFor(key);
+        if (known is not null)
+        {
+            return known;
+        }
+
+        foreach (var (category, metrics) in groups)
+        {
+            if (metrics.Any(m => string.Equals(keySelector(m), key, StringComparison.OrdinalIgnoreCase)))
+            {
+                return category.Id;
+            }
+        }
+
+        return null;
+    }
+
     public static IReadOnlyList<(Category Category, IReadOnlyList<T> Metrics)> GroupPresent<T>(
         IEnumerable<T> metrics,
         Func<T, string> keySelector)
@@ -129,14 +156,18 @@ public static class MetricDashboardCatalog
         if (orphaned.Count > 0)
         {
             result.Add((
-                new Category("other", "Overig", "Overige meetwaarden.", orphaned.Select(keySelector).ToArray()),
+                new Category(OtherCategoryId, "Overig", "Overige meetwaarden.", orphaned.Select(keySelector).ToArray()),
                 orphaned));
         }
 
         return result;
     }
 
-    public static IReadOnlyList<T> HeroMetrics<T>(IEnumerable<T> metrics, Func<T, string> keySelector, int max = 4)
+    public static IReadOnlyList<T> HeroMetrics<T>(
+        IEnumerable<T> metrics,
+        Func<T, string> keySelector,
+        Func<T, decimal> valueSelector,
+        int max = 4)
     {
         var preferred = new[]
         {
@@ -148,7 +179,8 @@ public static class MetricDashboardCatalog
             "errors"
         };
 
-        var byKey = metrics
+        var list = metrics as IList<T> ?? metrics.ToList();
+        var byKey = list
             .GroupBy(m => keySelector(m), StringComparer.OrdinalIgnoreCase)
             .ToDictionary(g => g.Key, g => g.First(), StringComparer.OrdinalIgnoreCase);
 
@@ -166,6 +198,27 @@ public static class MetricDashboardCatalog
             }
         }
 
+        // Non-zero errors must always surface in the hero so warning styling is never buried.
+        if (byKey.TryGetValue("errors", out var errors)
+            && IsWarning("errors", valueSelector(errors))
+            && !hero.Any(h => string.Equals(keySelector(h), "errors", StringComparison.OrdinalIgnoreCase)))
+        {
+            if (hero.Count >= max)
+            {
+                hero[^1] = errors;
+            }
+            else
+            {
+                hero.Add(errors);
+            }
+        }
+
         return hero;
     }
+
+    public static bool CategoryHasWarning<T>(
+        IReadOnlyList<T> metrics,
+        Func<T, string> keySelector,
+        Func<T, decimal> valueSelector)
+        => metrics.Any(m => IsWarning(keySelector(m), valueSelector(m)));
 }

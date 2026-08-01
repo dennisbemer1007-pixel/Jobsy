@@ -5,7 +5,7 @@
 
 @if (Metrics.Count > 0)
 {
-    var hero = MetricDashboardCatalog.HeroMetrics(Metrics, m => m.Key);
+    var hero = MetricDashboardCatalog.HeroMetrics(Metrics, m => m.Key, m => m.Value);
     var groups = MetricDashboardCatalog.GroupPresent(Metrics, m => m.Key);
     var activeId = ResolveActiveCategory(groups);
 
@@ -32,12 +32,17 @@
         <div class="dash-cat-tabs" role="tablist" aria-label="KPI-categorieën">
             @foreach (var (category, items) in groups)
             {
+                var warn = MetricDashboardCatalog.CategoryHasWarning(items, m => m.Key, m => m.Value);
                 <button type="button"
-                        class="dash-cat-tab @(activeId == category.Id ? "dash-cat-tab--active" : null)"
+                        class="dash-cat-tab @(activeId == category.Id ? "dash-cat-tab--active" : null) @(warn ? "dash-cat-tab--warn" : null)"
                         role="tab"
                         aria-selected="@(activeId == category.Id)"
                         @onclick="() => SelectCategory(category.Id)">
                     <span class="dash-cat-tab__label">@category.Title</span>
+                    @if (warn)
+                    {
+                        <span class="dash-cat-tab__warn-dot" title="Aandacht vereist" aria-hidden="true"></span>
+                    }
                     <span class="dash-cat-tab__count">@items.Count</span>
                 </button>
             }
@@ -94,6 +99,27 @@
     [Parameter] public Func<MetricCount, string>? ValueFormatter { get; set; }
 
     private string? _categoryId;
+    private string? _lastSelectedKey;
+    private bool _manualCategory;
+
+    protected override void OnParametersSet()
+    {
+        if (string.Equals(_lastSelectedKey, SelectedKey, StringComparison.OrdinalIgnoreCase))
+        {
+            return;
+        }
+
+        _lastSelectedKey = SelectedKey;
+        _manualCategory = false;
+
+        if (SelectedKey is null)
+        {
+            return;
+        }
+
+        var groups = MetricDashboardCatalog.GroupPresent(Metrics, m => m.Key);
+        _categoryId = MetricDashboardCatalog.CategoryIdFor(SelectedKey, groups, m => m.Key);
+    }
 
     private string ResolveActiveCategory(IReadOnlyList<(MetricDashboardCatalog.Category Category, IReadOnlyList<MetricCount> Metrics)> groups)
     {
@@ -102,18 +128,26 @@
             return "growth";
         }
 
-        if (_categoryId is not null && groups.Any(g => g.Category.Id == _categoryId))
+        // Manual tab wins only until the parent selection changes.
+        if (_manualCategory
+            && _categoryId is not null
+            && groups.Any(g => g.Category.Id == _categoryId))
         {
             return _categoryId;
         }
 
         if (SelectedKey is not null)
         {
-            var fromSelection = MetricDashboardCatalog.CategoryIdFor(SelectedKey);
+            var fromSelection = MetricDashboardCatalog.CategoryIdFor(SelectedKey, groups, m => m.Key);
             if (fromSelection is not null && groups.Any(g => g.Category.Id == fromSelection))
             {
                 return fromSelection;
             }
+        }
+
+        if (_categoryId is not null && groups.Any(g => g.Category.Id == _categoryId))
+        {
+            return _categoryId;
         }
 
         return groups[0].Category.Id;
@@ -122,6 +156,7 @@
     private void SelectCategory(string id)
     {
         _categoryId = id;
+        _manualCategory = true;
     }
 
     private string FormatValue(MetricCount metric)
