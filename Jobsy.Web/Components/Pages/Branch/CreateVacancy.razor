@@ -188,15 +188,6 @@
                     </table>
                 </div>
             }
-            <label>
-                Vervoer
-                <select @bind="_transport">
-                    <option value="Bike">Fiets</option>
-                    <option value="Car">Auto</option>
-                    <option value="PublicTransport">OV</option>
-                    <option value="Bike,Car">Fiets + Auto</option>
-                </select>
-            </label>
             <fieldset class="profile-roles">
                 <legend>Branche (max @WorkTypeLabels.MaxPerVacancy)</legend>
                 @foreach (var label in _branchOptions)
@@ -254,22 +245,23 @@
             </fieldset>
 
             <fieldset class="vacancy-hours">
-                <legend>Uren per week</legend>
-                <p class="muted vacancy-field-hint">Geef het aantal uren aan waarvoor deze vacature beschikbaar is.</p>
+                <legend class="visually-hidden">Uren per week</legend>
                 <div class="vacancy-hours__row">
+                    <span class="vacancy-hours__title">Uren per week</span>
                     <label>
-                        Minimum
+                        Min
                         <input type="number" min="1" max="60" step="0.5" @bind="_minHours" @bind:event="oninput" />
                     </label>
+                    <span class="vacancy-hours__sep" aria-hidden="true">–</span>
                     <label>
-                        Maximum
+                        Max
                         <input type="number" min="1" max="60" step="0.5" @bind="_maxHours" @bind:event="oninput" />
                     </label>
+                    @if (_minHours is decimal minH && _maxHours is decimal maxH && maxH >= minH)
+                    {
+                        <span class="vacancy-hours__meta muted">@HoursRangeRules.CategoryLabel(new HoursRange(minH, maxH).Category)</span>
+                    }
                 </div>
-                @if (_minHours is decimal minH && _maxHours is decimal maxH && maxH >= minH)
-                {
-                    <p class="muted">Categorie: @HoursRangeRules.CategoryLabel(new HoursRange(minH, maxH).Category)</p>
-                }
             </fieldset>
 
             <fieldset class="vacancy-schedule">
@@ -320,7 +312,7 @@
 
             <fieldset class="vacancy-legal">
                 <legend>Werkzaamheden &amp; wetgeving</legend>
-                <p class="muted vacancy-field-hint">Deze vinkjes bepalen automatisch of jongeren (15–17) mogen solliciteren. Geen aparte minimumleeftijd nodig.</p>
+                <p class="muted vacancy-field-hint">Bepaalt automatisch of jongeren (15–17) mogen solliciteren.</p>
                 <ul class="vacancy-legal__list">
                     @foreach (var flag in LegalTaskFlags.Catalog)
                     {
@@ -506,7 +498,6 @@
     private string _imageUrl = "";
     private string _videoUrl = "";
     private string _salaryTableId = "";
-    private string _transport = "Bike";
     private int? _minimumEmployers;
     private string? _align;
     private bool _isIntermediary;
@@ -771,7 +762,6 @@
             _imageUrl = source.ImageUrl ?? "";
             _videoUrl = source.VideoUrl ?? "";
             _salaryTableId = source.SalaryTableId?.ToString() ?? "";
-            _transport = MapTransportToFormValue(source.RequiredTransport);
             _selectedWorkTypes = source.WorkTypes.ToHashSet(StringComparer.OrdinalIgnoreCase);
             _selectedLicenses = DrivingLicenseLabels.Split(source.RequiredDrivingLicense)
                 .ToHashSet(StringComparer.OrdinalIgnoreCase);
@@ -818,33 +808,6 @@
         return title.EndsWith(suffix, StringComparison.OrdinalIgnoreCase)
             ? title
             : title + suffix;
-    }
-
-    private static string MapTransportToFormValue(string[] required)
-    {
-        static bool Has(string[] values, params string[] aliases) =>
-            aliases.Any(a => values.Contains(a, StringComparer.OrdinalIgnoreCase));
-
-        var hasBike = Has(required, TransportLabels.Bike, nameof(TransportMode.Bike));
-        var hasCar = Has(required, TransportLabels.Car, nameof(TransportMode.Car));
-        var hasOv = Has(required, TransportLabels.PublicTransport, nameof(TransportMode.PublicTransport));
-
-        if (hasBike && hasCar)
-        {
-            return "Bike,Car";
-        }
-
-        if (hasCar)
-        {
-            return "Car";
-        }
-
-        if (hasOv)
-        {
-            return "PublicTransport";
-        }
-
-        return "Bike";
     }
 
     private void ToggleWorkType(string label, ChangeEventArgs e)
@@ -1181,14 +1144,6 @@
         _message = null;
         try
         {
-            var mode = _transport switch
-            {
-                "Car" => TransportMode.Car,
-                "PublicTransport" => TransportMode.PublicTransport,
-                "Bike,Car" => TransportMode.Bike | TransportMode.Car,
-                _ => TransportMode.Bike
-            };
-
             var today = DateOnly.FromDateTime(DateTime.Today);
             await Api.CreateVacancyAsync(new CreateVacancyForm(
                 _companyId,
@@ -1197,7 +1152,7 @@
                 adultRate.HourlyRate,
                 today,
                 today.AddMonths(3),
-                mode,
+                TransportMode.Bike,
                 branchLabels,
                 string.IsNullOrWhiteSpace(_imageUrl) ? null : _imageUrl.Trim(),
                 string.IsNullOrWhiteSpace(_videoUrl) ? null : _videoUrl.Trim(),
