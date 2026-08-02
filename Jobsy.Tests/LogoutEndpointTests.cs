@@ -32,10 +32,18 @@ public class LogoutEndpointTests
         });
         builder.WebHost.UseTestServer();
         builder.Services.AddJobsyAuthentication(builder.Configuration, builder.Environment);
+        builder.Services.AddSingleton<Jobsy.Web.Security.ISessionTimeoutProvider>(
+            new FixedSessionTimeoutProvider());
 
         var app = builder.Build();
         app.MapJobsyAuthEndpoints();
         await app.StartAsync();
         return app;
+    }
+
+    private sealed class FixedSessionTimeoutProvider : Jobsy.Web.Security.ISessionTimeoutProvider
+    {
+        public Task<int> GetInactivityTimeoutMinutesAsync(CancellationToken cancellationToken = default)
+            => Task.FromResult(30);
     }
 }

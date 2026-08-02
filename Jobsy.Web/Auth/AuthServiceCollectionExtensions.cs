@@ -401,8 +401,9 @@ public static class AuthServiceCollectionExtensions
         }).AllowAnonymous().DisableAntiforgery();
 
         // Same-origin proxy for the browser idle timer (avoids cross-origin API CORS issues).
-        app.MapGet("/account/session-security", async (ISessionTimeoutProvider timeouts, CancellationToken ct) =>
+        app.MapGet("/account/session-security", async (HttpContext http, CancellationToken ct) =>
         {
+            var timeouts = http.RequestServices.GetRequiredService<ISessionTimeoutProvider>();
             var minutes = await timeouts.GetInactivityTimeoutMinutesAsync(ct);
             return Results.Json(new { inactivityTimeoutMinutes = minutes });
         }).AllowAnonymous().DisableAntiforgery();
