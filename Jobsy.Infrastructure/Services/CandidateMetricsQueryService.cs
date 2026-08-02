@@ -98,7 +98,7 @@ public sealed class CandidateMetricsQueryService : ICandidateMetricsQueryService
             return buckets;
         }
 
-        var spanTicks = Math.Max((to - from).TotalTicks, TimeSpan.FromHours(1).Ticks);
+        var spanTicks = Math.Max((to - from).Ticks, TimeSpan.FromHours(1).Ticks);
         var bucketTicks = spanTicks / bucketCount;
 
         foreach (var stamp in stamps)

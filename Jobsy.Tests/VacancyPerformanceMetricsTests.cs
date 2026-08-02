@@ -93,6 +93,7 @@ public sealed class VacancyPerformanceMetricsTests
         CompanyId = companyId,
         Status = VacancyStatus.Active,
         HourlyWage = 14,
+        Location = new GeoPoint(52, 4),
         StartDate = DateOnly.FromDateTime(DateTime.UtcNow),
         EndDate = DateOnly.FromDateTime(DateTime.UtcNow.AddDays(30))
     };

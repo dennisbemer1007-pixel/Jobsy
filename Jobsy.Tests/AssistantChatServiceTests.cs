@@ -571,6 +571,13 @@ public class AssistantChatServiceTests
             string period,
             CancellationToken cancellationToken = default)
             => Task.FromResult<IReadOnlyList<MetricDrilldownItemDto>>([]);
+
+        public Task<VacancyPerformanceBoardDto> GetVacancyPerformanceAsync(
+            IReadOnlyCollection<Guid>? companyIds,
+            string period,
+            int take = 3,
+            CancellationToken cancellationToken = default)
+            => Task.FromResult(new VacancyPerformanceBoardDto(period, [], []));
     }
 
     private sealed class StubCandidateMetrics : ICandidateMetricsQueryService
