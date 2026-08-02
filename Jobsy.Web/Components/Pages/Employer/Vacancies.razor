@@ -2,7 +2,6 @@
 @page "/branch/vacancies"
 @rendermode @(new InteractiveServerRenderMode(prerender: false))
 @attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "BranchManager,RegionalManager,EnterpriseManager,Intermediary,Admin")]
-@using Jobsy.Core.Rules
 @using Jobsy.Web.Localization
 @using Microsoft.AspNetCore.Components.Authorization
 @using Microsoft.AspNetCore.WebUtilities
@@ -36,37 +35,15 @@
                 · <button type="button" class="auth-link" style="border:none;background:none;padding:0;cursor:pointer" @onclick="ClearSalaryTableFilter">@Culture["Employer.ClearFilter"]</button>
             </p>
         }
-        <label class="filter-required">
-            @Culture["Employer.JobType"]
-            <select @bind="_workTypeFilter" @bind:after="ApplyFilters">
-                <option value="">@Culture["Employer.AllSectors"]</option>
-                @foreach (var label in _branchOptions)
-                {
-                    <option value="@label">@UiLabels.WorkType(Culture, label)</option>
-                }
-            </select>
+        <label class="filter-bar__query">
+            @Culture["Common.Search"]
+            <input type="search"
+                   @bind="_searchQuery"
+                   @bind:event="oninput"
+                   @bind:after="ApplyFilters"
+                   placeholder="@Culture["Vacancy.SearchCompanyOrTitlePlaceholder"]" />
         </label>
-        <label class="filter-required">
-            @Culture["Employer.WageByAge"]
-            <select @bind="_ageFilter" @bind:after="ApplyFilters">
-                <option value="">@Culture["Employer.AllAges"]</option>
-                @for (var age = 15; age <= 21; age++)
-                {
-                    <option value="@age">@(age == 21 ? "21+" : age.ToString())</option>
-                }
-            </select>
-        </label>
-        @if (!string.IsNullOrEmpty(_ageFilter))
-        {
-            <label>
-                @Culture["Employer.MinWage"]
-                <input type="number" min="0" step="0.50" @bind="_minWage" @bind:after="ApplyFilters" />
-            </label>
-            <label>
-                @Culture["Employer.MaxWage"]
-                <input type="number" min="0" step="0.50" @bind="_maxWage" @bind:after="ApplyFilters" />
-            </label>
-        }
+        <span class="muted">@_filtered.Count van @_vacancies.Count</span>
     </div>
 
     @if (_loading)
@@ -90,6 +67,22 @@
                         <th class="data-table__col--wrap">@Culture["Admin.Title"]</th>
                         <th class="data-table__col--wrap">@Culture["Admin.Company"]</th>
                         <th>@Culture["Admin.Status"]</th>
+                        <th>
+                            <button type="button"
+                                    class="data-table__sort"
+                                    aria-sort="@SortAria("start")"
+                                    @onclick='() => ToggleSort("start")'>
+                                @Culture["Vacancy.PlacementDate"]
+                            </button>
+                        </th>
+                        <th>
+                            <button type="button"
+                                    class="data-table__sort"
+                                    aria-sort="@SortAria("end")"
+                                    @onclick='() => ToggleSort("end")'>
+                                @Culture["Vacancy.Deadline"]
+                            </button>
+                        </th>
                         <th>Bron</th>
                         <th>Getoond</th>
                         <th>Clicks</th>
@@ -115,6 +108,8 @@
                             </td>
                             <td class="data-table__col--wrap">@v.CompanyName</td>
                             <td>@v.Status</td>
+                            <td>@v.StartDate.ToString("dd-MM-yyyy")</td>
+                            <td>@v.EndDate.ToString("dd-MM-yyyy")</td>
                             <td>
                                 <span class="source-badge source-badge--@VacancySourceDisplay.CssModifier(v.CreatedVia)">
                                     @VacancySourceDisplay.Label(v.CreatedVia)
@@ -270,11 +265,9 @@
     private bool _contactMail;
     private bool _contactPhone;
     private bool _contactWhatsApp;
-    private string _workTypeFilter = "";
-    private List<string> _branchOptions = WorkTypeLabels.All.ToList();
-    private string _ageFilter = "";
-    private decimal? _minWage;
-    private decimal? _maxWage;
+    private string _searchQuery = "";
+    private string _sortColumn = "start";
+    private bool _sortAscending;
     private Guid? _salaryTableFilter;
     private string? _salaryTableFilterName;
 
@@ -305,19 +298,6 @@
                 || user.IsInRole("EnterpriseManager")
                 || user.IsInRole("Intermediary")
                 || user.IsInRole("Admin");
-            try
-            {
-                var options = await Api.GetMasterdataAsync(MasterdataCategories.Branch);
-                var branches = options.Select(o => o.Label).Where(l => !string.IsNullOrWhiteSpace(l)).ToList();
-                if (branches.Count > 0)
-                {
-                    _branchOptions = branches;
-                }
-            }
-            catch
-            {
-                // keep fallback
-            }
 
             _vacancies = (await Api.GetManagedVacanciesAsync()).Select(NormalizeVacancy).ToList();
 
@@ -355,38 +335,47 @@
             query = query.Where(v => v.SalaryTableId == tableId);
         }
 
-        if (!string.IsNullOrWhiteSpace(_workTypeFilter))
-        {
-            query = query.Where(v => (v.WorkTypes ?? Array.Empty<string>()).Any(w =>
-                string.Equals(w, _workTypeFilter, StringComparison.OrdinalIgnoreCase)));
-        }
-
-        if (int.TryParse(_ageFilter, out var age))
+        if (!string.IsNullOrWhiteSpace(_searchQuery))
         {
             query = query.Where(v =>
-            {
-                var wage = ResolveWage(v, age);
-                if (wage is null)
-                {
-                    return false;
-                }
-
-                if (_minWage is decimal min && wage < min)
-                {
-                    return false;
-                }
-
-                if (_maxWage is decimal max && wage > max)
-                {
-                    return false;
-                }
-
-                return true;
-            });
+                v.Title.Contains(_searchQuery, StringComparison.OrdinalIgnoreCase)
+                || v.CompanyName.Contains(_searchQuery, StringComparison.OrdinalIgnoreCase));
         }
 
+        query = ApplySort(query);
         _filtered = query.ToList();
     }
+
+    private void ToggleSort(string column)
+    {
+        if (string.Equals(_sortColumn, column, StringComparison.Ordinal))
+        {
+            _sortAscending = !_sortAscending;
+        }
+        else
+        {
+            _sortColumn = column;
+            _sortAscending = true;
+        }
+
+        ApplyFilters();
+    }
+
+    private string? SortAria(string column)
+        => string.Equals(_sortColumn, column, StringComparison.Ordinal)
+            ? (_sortAscending ? "ascending" : "descending")
+            : null;
+
+    private IEnumerable<VacancyListItem> ApplySort(IEnumerable<VacancyListItem> query)
+        => _sortColumn switch
+        {
+            "end" => _sortAscending
+                ? query.OrderBy(v => v.EndDate).ThenBy(v => v.Title)
+                : query.OrderByDescending(v => v.EndDate).ThenBy(v => v.Title),
+            _ => _sortAscending
+                ? query.OrderBy(v => v.StartDate).ThenBy(v => v.Title)
+                : query.OrderByDescending(v => v.StartDate).ThenBy(v => v.Title)
+        };
 
     private void ClearSalaryTableFilter()
     {
@@ -394,23 +383,6 @@
         _salaryTableFilterName = null;
         Navigation.NavigateTo("/employer/vacancies", replace: true);
         ApplyFilters();
-    }
-
-    private static decimal? ResolveWage(VacancyListItem v, int age)
-    {
-        if (v.HourlyWage is not null)
-        {
-            return v.HourlyWage;
-        }
-
-        if (v.WageByAge is { Count: > 0 })
-        {
-            return v.WageByAge
-                .OrderBy(b => Math.Abs(b.AgeYears - age))
-                .FirstOrDefault()?.HourlyRate;
-        }
-
-        return null;
     }
 
     private static string MetricHref(VacancyListItem v, string metric)

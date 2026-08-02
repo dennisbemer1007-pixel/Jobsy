@@ -8234,6 +8234,11 @@ button.stat-card {
     flex: 0 1 12rem;
 }
 
+.panel-page .filter-bar label.filter-bar__query {
+    flex: 1 1 18rem;
+    max-width: 32rem;
+}
+
 .panel-page .filter-bar .muted,
 .panel-page .filter-bar .filter-check {
     align-self: center;
@@ -8325,6 +8330,11 @@ button.stat-card {
     background: color-mix(in srgb, var(--accent-soft) 55%, var(--surface));
 }
 
+/* Open row must stack above other sticky action cells so their dots don't cover the menu. */
+.data-table tbody tr:has(.row-actions-menu.is-open) > td.data-table__col--actions {
+    z-index: 60;
+}
+
 .table-scroll:has(.row-actions-menu.is-open) {
     overflow: visible;
 }
@@ -8335,6 +8345,10 @@ button.stat-card {
     justify-content: flex-end;
 }
 
+.row-actions-menu.is-open {
+    z-index: 60;
+}
+
 .row-actions-menu__toggle {
     flex-shrink: 0;
 }
@@ -8343,7 +8357,7 @@ button.stat-card {
     position: absolute;
     top: calc(100% + 0.3rem);
     right: 0;
-    z-index: 40;
+    z-index: 70;
     min-width: 12.5rem;
     max-width: min(18rem, calc(100vw - 2rem));
     padding: 0.35rem;
@@ -8353,6 +8367,45 @@ button.stat-card {
     border-radius: 10px;
     background: var(--surface);
     box-shadow: var(--shadow-lg);
+}
+
+button.data-table__sort {
+    appearance: none;
+    border: none;
+    background: none;
+    padding: 0;
+    margin: 0;
+    font: inherit;
+    font-size: inherit;
+    font-weight: inherit;
+    letter-spacing: inherit;
+    text-transform: inherit;
+    color: inherit;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+}
+
+button.data-table__sort:hover,
+button.data-table__sort:focus-visible {
+    color: var(--brand);
+    outline: none;
+}
+
+button.data-table__sort[aria-sort="ascending"]::after,
+button.data-table__sort[aria-sort="descending"]::after {
+    font-size: 0.85em;
+    font-weight: 700;
+    color: var(--brand);
+}
+
+button.data-table__sort[aria-sort="ascending"]::after {
+    content: "↑";
+}
+
+button.data-table__sort[aria-sort="descending"]::after {
+    content: "↓";
 }
 
 .vacancy-grid tbody tr:nth-last-child(-n+3) .row-actions-menu__panel {
@@ -8421,6 +8474,7 @@ html[dir="rtl"] .row-actions-menu__item {
         right: 0.75rem;
         bottom: calc(4.5rem + env(safe-area-inset-bottom, 0px));
         left: 0.75rem;
+        z-index: 80;
         min-width: 0;
         max-width: none;
         max-height: min(60dvh, 22rem);
