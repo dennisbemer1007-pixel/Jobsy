@@ -91,16 +91,16 @@ Onvoldoende tokens bij publiceren → `PendingApproval` (EM/Admin keurt goed).
 ---
 
 ## 5. Intermediary
-*Doel: batch-hiring voor externe opdrachtgevers.*
+*Doel: werven voor externe opdrachtgevers.*
 
-**BottomNav:** Home · Banenkaart · Vacatures · Opdrachtgevers · Team · Batch-tool · Tokens
+**BottomNav:** Home · Hoe werkt Lobsy · Banenkaart · Vacatures · Bedrijvenoverzicht · Team · Tokens
 
 | Route | Inhoud |
 |-------|--------|
 | `/home` | KPI-dashboard (zelfde metric-tiles als employers) |
-| `/intermediary` | Overzicht gekoppelde bedrijven |
+| `/intermediary` | Bedrijvenoverzicht: prestaties per gekoppelde opdrachtgever |
 | `/intermediary/team` | Collega’s uitnodigen (zelfde organisatie) |
-| `/intermediary/batch` | Multi-locatie publicatie (KVK-eindklant + adresweergave) |
+| `/employer/vacancies` | Vacatures per opdrachtgever |
 | `/branch/vacancies/new` | Vacature met verplichte KVK-vestiging + open/afgeschermde kaart |
 | `/employer/tokens` | Token-saldo |
 

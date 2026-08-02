@@ -99,7 +99,6 @@ public static class RoleNavCatalog
         new("Nav.Vacancies", "/employer/vacancies", NavIcons.Vacancies, ["/branch/vacancies/new", "/branch/applicants"]),
         new("Nav.Clients", "/intermediary", NavIcons.Companies),
         new("Nav.Team", "/intermediary/team", NavIcons.Users),
-        new("Nav.BatchTool", "/intermediary/batch", NavIcons.Batch),
         new("Nav.Tokens", "/employer/tokens", NavIcons.Tokens)
     ];
 

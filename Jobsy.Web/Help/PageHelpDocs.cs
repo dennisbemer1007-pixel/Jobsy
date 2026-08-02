@@ -231,12 +231,6 @@ public static class PageHelpDocs
             "Bekijk vacatures, openstaande sollicitaties, conversie, tokens, boosts en snelle acties per bedrijf.",
             "Stuur op gezondheid per opdrachtgever zonder vestigingen of regio’s."),
 
-        ["/intermediary/batch"] = new(
-            "Batch-vacatures",
-            "Meerdere vacatures in één flow publiceren of beheren.",
-            "Gebruik de batch-tool om efficiënt vacatures voor opdrachtgevers te plaatsen.",
-            "Volume-publicatie zonder per vacature alles opnieuw te doen."),
-
         ["/salesmanager/onboarding"] = new(
             "Sales onboarding",
             "Profiel en gegevens van de salesmanager afronden.",

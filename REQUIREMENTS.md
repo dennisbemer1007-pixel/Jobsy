@@ -22,7 +22,7 @@ Jobsy is een hyper-lokale job-matching applicatie gericht op de regionale arbeid
 | **BranchManager** | Beheert vacatures/tokens voor één vestiging |
 | **RegionalManager** | Overzicht over meerdere vestigingen in een regio |
 | **EnterpriseManager** | Organisatiebreed: regio’s, gebruikers, tokens, overnames |
-| **Intermediary** | Batch-werving voor meerdere externe opdrachtgevers |
+| **Intermediary** | Werven voor meerdere externe opdrachtgevers |
 | **Admin** | Platformbeheer: bedrijven, finance, WML, settings, logging |
 
 ### Kernentiteiten (niet exhaustief)

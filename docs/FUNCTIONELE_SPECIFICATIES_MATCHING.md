@@ -562,7 +562,7 @@ Geen `Active`/`PendingApproval`-publicatie zonder:
 
 ### 9.3 Intermediair / enterprise / admin
 
-- Zelfde vacaturevelden bij batch/CSV namens opdrachtgevers.
+- Zelfde vacaturevelden bij CSV-import namens opdrachtgevers.
 - Admin: optioneel platform settings voor urencategorie-drempels en match-gewichten (niet MVP-blokkerend).
 
 ---
