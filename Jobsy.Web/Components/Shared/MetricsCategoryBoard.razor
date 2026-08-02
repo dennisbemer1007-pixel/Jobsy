@@ -197,6 +197,11 @@
             return metric.Value.ToString("0.#") + "%";
         }
 
+        if (MetricDashboardCatalog.IsMinutes(metric.Key))
+        {
+            return metric.Value.ToString("0.#") + " min";
+        }
+
         return metric.Key.StartsWith("tokens_", StringComparison.OrdinalIgnoreCase)
             ? metric.Value.ToString("0.##")
             : metric.Value.ToString("0");
@@ -209,9 +214,41 @@
 
     private static string? HintFor(MetricCount metric, double? ring)
     {
+        if (metric.Key.Equals("applications_pending", StringComparison.OrdinalIgnoreCase))
+        {
+            return metric.Value > 0 ? "Nog geen reactie" : "Alles beantwoord";
+        }
+
+        if (metric.Key.Equals("tokens_balance", StringComparison.OrdinalIgnoreCase))
+        {
+            return MetricDashboardCatalog.IsWarning(metric.Key, metric.Value)
+                ? "Saldo bijna op"
+                : "Beschikbaar saldo";
+        }
+
+        if (metric.Key.Equals("avg_travel_minutes", StringComparison.OrdinalIgnoreCase))
+        {
+            return metric.Value > 0 ? "Hyperlokaal bereik" : "Nog geen matches";
+        }
+
+        if (metric.Key.Equals("active_boosts", StringComparison.OrdinalIgnoreCase))
+        {
+            return "Actieve highlights";
+        }
+
         if (ring is null)
         {
             return null;
+        }
+
+        if (metric.Key.Equals("conversion_rate", StringComparison.OrdinalIgnoreCase))
+        {
+            return "Clicks → sollicitaties";
+        }
+
+        if (metric.Key.Equals("top_transport_share", StringComparison.OrdinalIgnoreCase))
+        {
+            return "Meest gekozen vervoer";
         }
 
         if (metric.Key.Equals("applications", StringComparison.OrdinalIgnoreCase))

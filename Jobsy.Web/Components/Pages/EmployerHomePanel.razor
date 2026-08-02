@@ -89,6 +89,11 @@
             return metric.Value.ToString("0.#") + "%";
         }
 
+        if (MetricDashboardCatalog.IsMinutes(metric.Key))
+        {
+            return metric.Value.ToString("0.#") + " min";
+        }
+
         return metric.Key.StartsWith("tokens_", StringComparison.OrdinalIgnoreCase)
             ? metric.Value.ToString("0.##")
             : metric.Value.ToString("0");
@@ -149,10 +154,12 @@
 
     private string ListHrefFor(string key) => key.ToLowerInvariant() switch
     {
-        "applications" => ApplicationsHref,
+        "applications" or "applications_pending" or "conversion_rate"
+            or "avg_travel_minutes" or "top_transport_share" => ApplicationsHref,
         "impressions" or "clicks" => VacanciesHref,
-        "active_vacancies" or "active_vacancies_employers" or "active_vacancies_intermediaries" => VacanciesHref,
-        "tokens_purchased" or "tokens_spent" or "pushboms" or "extensions" => TokensHref,
+        "active_vacancies" or "active_vacancies_employers" or "active_vacancies_intermediaries"
+            or "active_boosts" => VacanciesHref,
+        "tokens_purchased" or "tokens_spent" or "tokens_balance" or "pushboms" or "extensions" => TokensHref,
         _ => VacanciesHref
     };
 }

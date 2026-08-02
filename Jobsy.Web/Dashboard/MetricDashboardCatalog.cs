@@ -7,6 +7,12 @@ public static class MetricDashboardCatalog
 {
     public const string OtherCategoryId = "other";
 
+    /// <summary>
+    /// Remaining token balance at or below this threshold shows a warning
+    /// (aligned with a typical PushBom spend).
+    /// </summary>
+    public const decimal LowTokenBalanceThreshold = 3m;
+
     public sealed record Category(string Id, string Title, string Lead, string[] Keys);
 
     public static readonly Category[] Categories =
@@ -14,8 +20,10 @@ public static class MetricDashboardCatalog
         new(
             "growth",
             "Kernplatform",
-            "Actieve vacatures, gebruikers, bedrijven en kernconversie.",
+            "Openstaande acties, conversie, vacatures, tokens en kerncijfers.",
             [
+                "applications_pending",
+                "conversion_rate",
                 "active_vacancies",
                 "active_vacancies_employers",
                 "active_vacancies_intermediaries",
@@ -25,19 +33,23 @@ public static class MetricDashboardCatalog
                 "companies_intermediaries",
                 "applications",
                 "clicks",
+                "tokens_balance",
                 "tokens_purchased",
                 "tokens_spent"
             ]),
         new(
             "engagement",
             "Engagement",
-            "Delen, likes, pushboms, verlengingen en bereik.",
+            "Boosts, pushboms, bereik en matchprofiel (reistijd/vervoer).",
             [
-                "shares",
-                "likes",
+                "active_boosts",
                 "pushboms",
                 "extensions",
+                "shares",
+                "likes",
                 "impressions",
+                "avg_travel_minutes",
+                "top_transport_share",
                 "site_visits",
                 "site_visits_unique"
             ]),
@@ -64,11 +76,15 @@ public static class MetricDashboardCatalog
     /// <summary>Keys that deserve larger visual weight in the hero / category grids.</summary>
     public static readonly HashSet<string> PrimaryKeys = new(StringComparer.OrdinalIgnoreCase)
     {
+        "applications_pending",
+        "tokens_balance",
+        "conversion_rate",
         "active_vacancies",
         "companies_employers",
         "users_active",
         "applications",
         "clicks",
+        "active_boosts",
         "errors"
     };
 
@@ -76,10 +92,18 @@ public static class MetricDashboardCatalog
         => PrimaryKeys.Contains(key);
 
     public static bool IsWarning(string key, decimal value)
-        => string.Equals(key, "errors", StringComparison.OrdinalIgnoreCase) && value > 0;
+        => (string.Equals(key, "errors", StringComparison.OrdinalIgnoreCase) && value > 0)
+           || (string.Equals(key, "applications_pending", StringComparison.OrdinalIgnoreCase) && value > 0)
+           || (string.Equals(key, "tokens_balance", StringComparison.OrdinalIgnoreCase)
+               && value < LowTokenBalanceThreshold);
 
     public static bool IsPercent(string key)
-        => string.Equals(key, "reengagement_reactivated", StringComparison.OrdinalIgnoreCase);
+        => string.Equals(key, "reengagement_reactivated", StringComparison.OrdinalIgnoreCase)
+           || string.Equals(key, "conversion_rate", StringComparison.OrdinalIgnoreCase)
+           || string.Equals(key, "top_transport_share", StringComparison.OrdinalIgnoreCase);
+
+    public static bool IsMinutes(string key)
+        => string.Equals(key, "avg_travel_minutes", StringComparison.OrdinalIgnoreCase);
 
     /// <summary>Keys that render a compact sparkline when trend points are available.</summary>
     public static bool SupportsSparkline(string key)
@@ -118,6 +142,14 @@ public static class MetricDashboardCatalog
             && purchased > 0)
         {
             return (double)Math.Clamp(100m * value / purchased, 0, 100);
+        }
+
+        if (key.Equals("tokens_balance", StringComparison.OrdinalIgnoreCase)
+            && map.TryGetValue("tokens_purchased", out var periodPurchased)
+            && periodPurchased > 0)
+        {
+            // Visual fill: remaining vs period purchases (capped). Not a burn-down.
+            return (double)Math.Clamp(100m * value / periodPurchased, 0, 100);
         }
 
         if (key.Equals("clicks", StringComparison.OrdinalIgnoreCase)
@@ -220,7 +252,11 @@ public static class MetricDashboardCatalog
     {
         var preferred = new[]
         {
+            "applications_pending",
+            "tokens_balance",
+            "conversion_rate",
             "active_vacancies",
+            "active_boosts",
             "companies_employers",
             "users_active",
             "applications",
@@ -247,18 +283,31 @@ public static class MetricDashboardCatalog
             }
         }
 
-        // Non-zero errors must always surface in the hero so warning styling is never buried.
-        if (byKey.TryGetValue("errors", out var errors)
-            && IsWarning("errors", valueSelector(errors))
-            && !hero.Any(h => string.Equals(keySelector(h), "errors", StringComparison.OrdinalIgnoreCase)))
+        // Warning tiles must always surface in the hero so styling is never buried.
+        foreach (var key in new[] { "errors", "applications_pending", "tokens_balance" })
         {
+            if (!byKey.TryGetValue(key, out var metric))
+            {
+                continue;
+            }
+
+            if (!IsWarning(key, valueSelector(metric)))
+            {
+                continue;
+            }
+
+            if (hero.Any(h => string.Equals(keySelector(h), key, StringComparison.OrdinalIgnoreCase)))
+            {
+                continue;
+            }
+
             if (hero.Count >= max)
             {
-                hero[^1] = errors;
+                hero[^1] = metric;
             }
             else
             {
-                hero.Add(errors);
+                hero.Add(metric);
             }
         }
 

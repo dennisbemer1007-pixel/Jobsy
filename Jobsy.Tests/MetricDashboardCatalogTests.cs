@@ -24,19 +24,22 @@ public sealed class MetricDashboardCatalogTests
     }
 
     [Fact]
-    public void HeroMetrics_prefers_core_platform_keys()
+    public void HeroMetrics_prefers_operations_and_core_keys()
     {
         var metrics = new List<MetricCount>
         {
             new() { Key = "likes", Label = "Likes", Value = 1 },
             new() { Key = "applications", Label = "Apps", Value = 3 },
             new() { Key = "active_vacancies", Label = "Actief", Value = 9 },
-            new() { Key = "clicks", Label = "Clicks", Value = 5 }
+            new() { Key = "clicks", Label = "Clicks", Value = 5 },
+            new() { Key = "applications_pending", Label = "Open", Value = 0 },
+            new() { Key = "tokens_balance", Label = "Saldo", Value = 12 },
+            new() { Key = "conversion_rate", Label = "Conversie", Value = 20 }
         };
 
         var hero = MetricDashboardCatalog.HeroMetrics(metrics, m => m.Key, m => m.Value, max: 3);
 
-        Assert.Equal(new[] { "active_vacancies", "applications", "clicks" }, hero.Select(m => m.Key));
+        Assert.Equal(new[] { "applications_pending", "tokens_balance", "conversion_rate" }, hero.Select(m => m.Key));
     }
 
     [Fact]
@@ -76,11 +79,15 @@ public sealed class MetricDashboardCatalogTests
     }
 
     [Fact]
-    public void IsWarning_only_for_nonzero_errors()
+    public void IsWarning_for_errors_pending_apps_and_low_token_balance()
     {
         Assert.True(MetricDashboardCatalog.IsWarning("errors", 1));
         Assert.False(MetricDashboardCatalog.IsWarning("errors", 0));
         Assert.False(MetricDashboardCatalog.IsWarning("applications", 99));
+        Assert.True(MetricDashboardCatalog.IsWarning("applications_pending", 2));
+        Assert.False(MetricDashboardCatalog.IsWarning("applications_pending", 0));
+        Assert.True(MetricDashboardCatalog.IsWarning("tokens_balance", 2.9m));
+        Assert.False(MetricDashboardCatalog.IsWarning("tokens_balance", 3m));
     }
 
     [Fact]

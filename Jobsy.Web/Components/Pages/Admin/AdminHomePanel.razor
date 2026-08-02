@@ -94,6 +94,11 @@
             return metric.Value.ToString("0.#") + "%";
         }
 
+        if (MetricDashboardCatalog.IsMinutes(metric.Key))
+        {
+            return metric.Value.ToString("0.#") + " min";
+        }
+
         return metric.Key.StartsWith("tokens_", StringComparison.OrdinalIgnoreCase)
             ? metric.Value.ToString("0.##")
             : metric.Value.ToString("0");
@@ -180,10 +185,12 @@
         "companies_with_api" => "/admin/api-keys",
         "companies_with_csv" or "reengagement_emails_sent" or "reengagement_reactivated" => "/admin/companies",
         "users_open_for_work" or "users_active" => "/admin/users",
-        "tokens_purchased" or "tokens_spent" or "pushboms" or "extensions" => "/admin/finance?tab=tokenlog",
+        "tokens_purchased" or "tokens_spent" or "tokens_balance" or "pushboms" or "extensions"
+            => "/admin/finance?tab=tokenlog",
         "active_vacancies" or "active_vacancies_employers" or "active_vacancies_intermediaries"
-            or "applications" or "impressions" or "clicks" or "shares" or "likes"
-            or "unpublished_vacancies" => "/admin/vacancies",
+            or "active_boosts" or "applications" or "applications_pending" or "conversion_rate"
+            or "impressions" or "clicks" or "shares" or "likes" or "unpublished_vacancies"
+            or "avg_travel_minutes" or "top_transport_share" => "/admin/vacancies",
         "site_visits" or "site_visits_unique" => "/admin/vacancies",
         _ => "/admin/vacancies"
     };

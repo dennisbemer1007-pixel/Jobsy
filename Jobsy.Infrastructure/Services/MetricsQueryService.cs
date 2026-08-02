@@ -1,6 +1,7 @@
 using Jobsy.Core.Contracts;
 using Jobsy.Core.Enums;
 using Jobsy.Core.Interfaces;
+using Jobsy.Core.Rules;
 using Jobsy.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 
@@ -48,6 +49,13 @@ public sealed class MetricsQueryService : IMetricsQueryService
                         && a.CreatedAt >= from && a.CreatedAt <= to)
             .CountAsync(cancellationToken);
 
+        // Point-in-time backlog: verified applications still waiting for employer reaction.
+        var applicationsPending = await _db.Applications.AsNoTracking()
+            .Where(a => vacancyIds.Contains(a.VacancyId)
+                        && a.EmailVerifiedAt != null
+                        && a.Status == ApplicationStatus.Pending)
+            .CountAsync(cancellationToken);
+
         var clicks = await _db.VacancyClicks.AsNoTracking()
             .Where(c => vacancyIds.Contains(c.VacancyId) && c.CreatedAt >= from && c.CreatedAt <= to)
             .CountAsync(cancellationToken);
@@ -55,6 +63,10 @@ public sealed class MetricsQueryService : IMetricsQueryService
         var impressions = await _db.VacancySearchImpressions.AsNoTracking()
             .Where(i => vacancyIds.Contains(i.VacancyId) && i.CreatedAt >= from && i.CreatedAt <= to)
             .CountAsync(cancellationToken);
+
+        var conversionRate = clicks <= 0
+            ? 0m
+            : Math.Round(100m * applications / clicks, 1);
 
         var shares = await _db.VacancyShares.AsNoTracking()
             .Where(s => vacancyIds.Contains(s.VacancyId) && s.CreatedAt >= from && s.CreatedAt <= to)
@@ -74,6 +86,45 @@ public sealed class MetricsQueryService : IMetricsQueryService
             .Where(t => companyIds == null || companyIds.Contains(t.CompanyId))
             .CountAsync(cancellationToken);
 
+        var tokensBalance = await SumTokenBalanceAsync(companyIds, cancellationToken);
+
+        var utcNow = DateTime.UtcNow;
+        var highlightedRows = await vacancyQuery
+            .Where(v => v.Status == VacancyStatus.Active && v.IsHighlighted)
+            .Select(v => new { v.IsHighlighted, v.HighlightedUntil })
+            .ToListAsync(cancellationToken);
+        var activeBoosts = highlightedRows.Count(v =>
+            VacancyHighlightRules.IsActive(v.IsHighlighted, v.HighlightedUntil, utcNow));
+
+        var matchRows = await _db.Applications.AsNoTracking()
+            .Where(a => vacancyIds.Contains(a.VacancyId)
+                        && a.EmailVerifiedAt != null
+                        && a.CreatedAt >= from && a.CreatedAt <= to)
+            .Select(a => new { a.EstimatedTravelMinutes, a.PreferredTransport })
+            .ToListAsync(cancellationToken);
+
+        var travelSamples = matchRows.Where(a => a.EstimatedTravelMinutes > 0).ToList();
+        var avgTravelMinutes = travelSamples.Count == 0
+            ? 0m
+            : Math.Round((decimal)travelSamples.Average(a => a.EstimatedTravelMinutes), 1);
+
+        var transportSamples = matchRows
+            .Where(a => !string.IsNullOrWhiteSpace(a.PreferredTransport))
+            .Select(a => a.PreferredTransport.Trim())
+            .ToList();
+        var topTransport = transportSamples
+            .GroupBy(t => t, StringComparer.OrdinalIgnoreCase)
+            .Select(g => new { Mode = g.First(), Count = g.Count() })
+            .OrderByDescending(g => g.Count)
+            .ThenBy(g => g.Mode, StringComparer.OrdinalIgnoreCase)
+            .FirstOrDefault();
+        var topTransportShare = topTransport is null || transportSamples.Count == 0
+            ? 0m
+            : Math.Round(100m * topTransport.Count / transportSamples.Count, 0);
+        var topTransportLabel = topTransport is null
+            ? "Vervoer matches"
+            : $"Vervoer matches ({NormalizeTransportLabel(topTransport.Mode)})";
+
         var errors = await _db.PlatformLogs.AsNoTracking()
             .Where(l => l.Level == PlatformLogLevel.Error && l.CreatedAt >= from && l.CreatedAt <= to)
             .CountAsync(cancellationToken);
@@ -90,6 +141,7 @@ public sealed class MetricsQueryService : IMetricsQueryService
 
         var metrics = new List<MetricCountDto>
         {
+            new("tokens_balance", "Resterend tokenbudget", periodKey, tokensBalance),
             new("tokens_purchased", "Aangeschafte tokens", periodKey, purchased),
             new("tokens_spent", "Gebruikte tokens", periodKey, spent),
             new("active_vacancies", "Actieve vacatures", periodKey, activeVacancies),
@@ -97,14 +149,19 @@ public sealed class MetricsQueryService : IMetricsQueryService
             new("active_vacancies_intermediaries", "Actieve vacatures (intermediairs)", periodKey, intermediaryVacancies),
             new("users_open_for_work", "Open for work", periodKey, openForWork),
             new("users_active", "Actieve gebruikers", periodKey, allUsers),
+            new("applications_pending", "Openstaande sollicitaties", periodKey, applicationsPending),
             new("applications", "Sollicitaties", periodKey, applications),
+            new("conversion_rate", "Conversie sollicitaties", periodKey, conversionRate),
             new("impressions", "Getoond na zoekactie", periodKey, impressions),
             new("clicks", "Vacatureclicks", periodKey, clicks),
             new("shares", "Gedeelde vacatures", periodKey, shares),
             new("likes", "Gelikete vacatures", periodKey, likes),
             new("errors", "Errors", periodKey, errors),
+            new("active_boosts", "Actieve boosts", periodKey, activeBoosts),
             new("pushboms", "Pushboms", periodKey, pushBoms),
             new("extensions", "Verlengingen", periodKey, extensions),
+            new("avg_travel_minutes", "Gem. reistijd matches", periodKey, avgTravelMinutes),
+            new("top_transport_share", topTransportLabel, periodKey, topTransportShare),
             new("companies_employers", "Bedrijven", periodKey, employers),
             new("companies_intermediaries", "Intermediairs", periodKey, intermediaries)
         };
@@ -263,7 +320,10 @@ public sealed class MetricsQueryService : IMetricsQueryService
         return key.ToLowerInvariant() switch
         {
             "tokens_purchased" or "tokens_spent" => await TokenDrilldownAsync(key, from, to, companyIds, cancellationToken),
-            "applications" => await ApplicationsDrilldownAsync(vacancyIds, from, to, cancellationToken),
+            "tokens_balance" => await TokenBalanceDrilldownAsync(companyIds, cancellationToken),
+            "applications" => await ApplicationsDrilldownAsync(vacancyIds, from, to, pendingOnly: false, cancellationToken),
+            "applications_pending" => await ApplicationsDrilldownAsync(vacancyIds, from: null, to: null, pendingOnly: true, cancellationToken),
+            "conversion_rate" => await ApplicationsDrilldownAsync(vacancyIds, from, to, pendingOnly: false, cancellationToken),
             "impressions" => (await _db.VacancySearchImpressions.AsNoTracking()
                     .Where(i => vacancyIds.Contains(i.VacancyId) && i.CreatedAt >= from && i.CreatedAt <= to)
                     .OrderByDescending(i => i.CreatedAt)
@@ -304,6 +364,9 @@ public sealed class MetricsQueryService : IMetricsQueryService
                 .ToListAsync(cancellationToken),
             "pushboms" => await TokenReasonDrilldownAsync(TokenSpendReason.PushBom, from, to, companyIds, cancellationToken),
             "extensions" => await TokenReasonDrilldownAsync(TokenSpendReason.Extend, from, to, companyIds, cancellationToken),
+            "active_boosts" => await ActiveBoostsDrilldownAsync(companyIds, cancellationToken),
+            "avg_travel_minutes" or "top_transport_share" =>
+                await MatchTravelDrilldownAsync(vacancyIds, from, to, cancellationToken),
             "active_vacancies" => await ActiveVacanciesDrilldownAsync(companyIds, type: null, cancellationToken),
             "active_vacancies_employers" => await ActiveVacanciesDrilldownAsync(companyIds, CompanyType.Employer, cancellationToken),
             "active_vacancies_intermediaries" => await ActiveVacanciesDrilldownAsync(companyIds, CompanyType.Intermediary, cancellationToken),
@@ -567,14 +630,25 @@ public sealed class MetricsQueryService : IMetricsQueryService
 
     private async Task<List<MetricDrilldownItemDto>> ApplicationsDrilldownAsync(
         IReadOnlyCollection<Guid> vacancyIds,
-        DateTime from,
-        DateTime to,
+        DateTime? from,
+        DateTime? to,
+        bool pendingOnly,
         CancellationToken ct)
     {
-        var rows = await _db.Applications.AsNoTracking()
-            .Where(a => vacancyIds.Contains(a.VacancyId)
-                        && a.EmailVerifiedAt != null
-                        && a.CreatedAt >= from && a.CreatedAt <= to)
+        var query = _db.Applications.AsNoTracking()
+            .Where(a => vacancyIds.Contains(a.VacancyId) && a.EmailVerifiedAt != null);
+
+        if (pendingOnly)
+        {
+            query = query.Where(a => a.Status == ApplicationStatus.Pending);
+        }
+
+        if (from is DateTime fromUtc && to is DateTime toUtc)
+        {
+            query = query.Where(a => a.CreatedAt >= fromUtc && a.CreatedAt <= toUtc);
+        }
+
+        var rows = await query
             .OrderByDescending(a => a.CreatedAt)
             .Select(a => new
             {
@@ -599,6 +673,145 @@ public sealed class MetricsQueryService : IMetricsQueryService
             var subtitle = $"{a.VacancyTitle} · {a.Status}";
             return new MetricDrilldownItemDto(a.Id, title, subtitle, a.CreatedAt, null);
         }).ToList();
+    }
+
+    private async Task<List<MetricDrilldownItemDto>> TokenBalanceDrilldownAsync(
+        IReadOnlyCollection<Guid>? companyIds,
+        CancellationToken ct)
+    {
+        var query = _db.TokenTransactions.AsNoTracking().AsQueryable();
+        if (companyIds is not null)
+        {
+            query = query.Where(t => companyIds.Contains(t.CompanyId));
+        }
+
+        return await query
+            .OrderByDescending(t => t.CreatedAt)
+            .Take(100)
+            .Select(t => new MetricDrilldownItemDto(
+                t.Id,
+                t.Company.Name,
+                $"{t.Kind} · {t.Reason}",
+                t.CreatedAt,
+                t.Amount))
+            .ToListAsync(ct);
+    }
+
+    private async Task<List<MetricDrilldownItemDto>> ActiveBoostsDrilldownAsync(
+        IReadOnlyCollection<Guid>? companyIds,
+        CancellationToken ct)
+    {
+        var utcNow = DateTime.UtcNow;
+        var query = _db.Vacancies.AsNoTracking()
+            .Where(v => v.Status == VacancyStatus.Active && v.IsHighlighted);
+        if (companyIds is not null)
+        {
+            query = query.Where(v => companyIds.Contains(v.CompanyId));
+        }
+
+        var rows = await query
+            .Select(v => new
+            {
+                v.Id,
+                v.Title,
+                CompanyName = v.Company.Name,
+                v.IsHighlighted,
+                v.HighlightedUntil,
+                v.CreatedAtUtc
+            })
+            .ToListAsync(ct);
+
+        return rows
+            .Where(v => VacancyHighlightRules.IsActive(v.IsHighlighted, v.HighlightedUntil, utcNow))
+            .OrderBy(v => v.HighlightedUntil ?? DateTime.MaxValue)
+            .Select(v => new MetricDrilldownItemDto(
+                v.Id,
+                v.Title,
+                v.HighlightedUntil is DateTime until
+                    ? $"{v.CompanyName} · highlight tot {until.ToUniversalTime():dd-MM-yyyy}"
+                    : $"{v.CompanyName} · highlight actief",
+                v.CreatedAtUtc,
+                null))
+            .ToList();
+    }
+
+    private async Task<List<MetricDrilldownItemDto>> MatchTravelDrilldownAsync(
+        IReadOnlyCollection<Guid> vacancyIds,
+        DateTime from,
+        DateTime to,
+        CancellationToken ct)
+    {
+        var rows = await _db.Applications.AsNoTracking()
+            .Where(a => vacancyIds.Contains(a.VacancyId)
+                        && a.EmailVerifiedAt != null
+                        && a.CreatedAt >= from && a.CreatedAt <= to)
+            .OrderByDescending(a => a.CreatedAt)
+            .Select(a => new
+            {
+                a.Id,
+                a.CandidateCity,
+                a.Status,
+                VacancyTitle = a.Vacancy.Title,
+                a.PreferredTransport,
+                a.EstimatedTravelMinutes,
+                a.CreatedAt
+            })
+            .ToListAsync(ct);
+
+        return rows.Select(a =>
+        {
+            var city = string.IsNullOrWhiteSpace(a.CandidateCity) ? "Kandidaat" : a.CandidateCity;
+            var transport = string.IsNullOrWhiteSpace(a.PreferredTransport)
+                ? "onbekend"
+                : NormalizeTransportLabel(a.PreferredTransport);
+            var subtitle = $"{a.VacancyTitle} · {transport} · {a.EstimatedTravelMinutes} min";
+            return new MetricDrilldownItemDto(a.Id, city, subtitle, a.CreatedAt, a.EstimatedTravelMinutes);
+        }).ToList();
+    }
+
+    private async Task<decimal> SumTokenBalanceAsync(
+        IReadOnlyCollection<Guid>? companyIds,
+        CancellationToken ct)
+    {
+        var query = _db.TokenTransactions.AsNoTracking().AsQueryable();
+        if (companyIds is not null)
+        {
+            query = query.Where(t => companyIds.Contains(t.CompanyId));
+        }
+
+        return await query.SumAsync(t => (decimal?)t.Amount, ct) ?? 0m;
+    }
+
+    private static string NormalizeTransportLabel(string transport)
+    {
+        var value = transport.Trim();
+        if (value.Equals("Bike", StringComparison.OrdinalIgnoreCase)
+            || value.Equals("Fiets", StringComparison.OrdinalIgnoreCase))
+        {
+            return "Fiets";
+        }
+
+        if (value.Equals("Car", StringComparison.OrdinalIgnoreCase)
+            || value.Equals("Auto", StringComparison.OrdinalIgnoreCase))
+        {
+            return "Auto";
+        }
+
+        if (value.Equals("Transit", StringComparison.OrdinalIgnoreCase)
+            || value.Equals("OV", StringComparison.OrdinalIgnoreCase)
+            || value.Equals("PublicTransport", StringComparison.OrdinalIgnoreCase))
+        {
+            return "OV";
+        }
+
+        if (value.Equals("Walk", StringComparison.OrdinalIgnoreCase)
+            || value.Equals("Lopend", StringComparison.OrdinalIgnoreCase)
+            || value.Equals("Walking", StringComparison.OrdinalIgnoreCase))
+        {
+            return "Lopend";
+        }
+
+        return value;
     }
 
     private async Task<List<MetricDrilldownItemDto>> ActiveVacanciesDrilldownAsync(

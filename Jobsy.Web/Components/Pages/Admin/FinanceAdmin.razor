@@ -2,6 +2,7 @@
 @rendermode @(new InteractiveServerRenderMode(prerender: false))
 @attribute [Authorize(Roles = "Admin")]
 @using Jobsy.Web.Components.Admin
+@using Jobsy.Web.Dashboard
 @using Microsoft.AspNetCore.WebUtilities
 @inject JobsyApiClient Api
 @inject NavigationManager Nav
@@ -52,7 +53,8 @@
                                 FormattedValue="@FormatValue(m)"
                                 Sparkline="@m.Sparkline"
                                 Selected="@(_selectedKey == m.Key)"
-                                Emphasis="@(m.Key is "tokens_purchased" or "tokens_spent")"
+                                Emphasis="@(m.Key is "tokens_balance" or "tokens_purchased" or "tokens_spent")"
+                                Warning="@(m.Key == "tokens_balance" && MetricDashboardCatalog.IsWarning(m.Key, m.Value))"
                                 OnClick="() => SelectMetricAsync(m.Key)" />
                 }
             </div>
@@ -172,7 +174,7 @@
 
     private static readonly HashSet<string> FinanceKeys = new(StringComparer.OrdinalIgnoreCase)
     {
-        "tokens_purchased", "tokens_spent", "pushboms", "extensions"
+        "tokens_balance", "tokens_purchased", "tokens_spent", "pushboms", "extensions"
     };
 
     private string _tab = "kpi";
