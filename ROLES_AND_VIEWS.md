@@ -22,7 +22,7 @@ Publiek (naast banenkaart): `/vacancies/{id}`, `/register`, `/register/activate`
 ## 1. Candidate
 *Doel: snel een baan vinden op reistijd/vervoer.*
 
-**BottomNav:** Home · Banenkaart · Sollicitaties · Gedeeld · Geliked · Profiel
+**BottomNav:** Zoeken · Bewaard · Sollicitaties · Profiel · Hoe werkt Lobsy
 
 | Route | Inhoud |
 |-------|--------|
@@ -38,7 +38,7 @@ Publiek (naast banenkaart): `/vacancies/{id}`, `/register`, `/register/activate`
 ## 2. BranchManager
 *Doel: lokaal werven voor één vestiging.*
 
-**BottomNav:** Home · Banenkaart · Vacatures · Mijn tokens · Overnames
+**BottomNav:** Home · Banenkaart · Vacatures · Mijn tokens · Bedrijfsgegevens · Overnames · Hoe werkt Lobsy
 
 | Route | Inhoud |
 |-------|--------|
@@ -57,7 +57,7 @@ Onvoldoende tokens bij publiceren → `PendingApproval` (EM/Admin keurt goed).
 ## 3. RegionalManager
 *Doel: overzicht over vestigingen in de regio.*
 
-**BottomNav:** Home · Banenkaart · Vacatures · Mijn vestigingen
+**BottomNav:** Home · Banenkaart · Vacatures · Mijn vestigingen · Hoe werkt Lobsy
 
 | Route | Inhoud |
 |-------|--------|
@@ -71,9 +71,9 @@ Onvoldoende tokens bij publiceren → `PendingApproval` (EM/Admin keurt goed).
 ## 4. EnterpriseManager (Bedrijfsmanager)
 *Doel: organisatiebreed beheer met strikte mobile/desktop-scheiding.*
 
-**Mobile/PWA BottomNav (operationeel):** Home · Hoe werkt Lobsy · Banenkaart · Vacatures · Tokens · Gebruikers  
+**Mobile/PWA BottomNav (operationeel):** Home · Banenkaart · Vacatures · Tokens · Gebruikers · Hoe werkt Lobsy  
 
-**Desktop BottomNav:** bovenstaande + **Organisatie** (desktop-only hub)
+**Desktop BottomNav:** bovenstaande (met **Organisatie** desktop-only vóór Hoe werkt Lobsy)
 
 | Route | Inhoud | Scherm |
 |-------|--------|--------|
@@ -93,7 +93,7 @@ Onvoldoende tokens bij publiceren → `PendingApproval` (EM/Admin keurt goed).
 ## 5. Intermediary
 *Doel: werven voor externe opdrachtgevers.*
 
-**BottomNav:** Home · Hoe werkt Lobsy · Banenkaart · Vacatures · Bedrijvenoverzicht · Team · Tokens
+**BottomNav:** Home · Banenkaart · Vacatures · Bedrijvenoverzicht · Team · Tokens · Hoe werkt Lobsy
 
 | Route | Inhoud |
 |-------|--------|
@@ -107,7 +107,7 @@ Onvoldoende tokens bij publiceren → `PendingApproval` (EM/Admin keurt goed).
 ## 5b. SalesManager
 *Doel: acquisitie via trackingcodes + commissie / revenue-share.*
 
-**BottomNav:** Home · Onboarding · Facturen
+**BottomNav:** Home · Sales-toolkit · Referrals · Onboarding · Facturen · Hoe werkt Lobsy
 
 | Route | Inhoud |
 |-------|--------|

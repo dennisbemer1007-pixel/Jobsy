@@ -21,10 +21,10 @@ public static class RoleNavCatalog
     public static readonly NavItem[] Candidate =
     [
         new("Nav.Search", "/", NavIcons.Search),
-        new("Nav.HowLobsyWorks", "/candidate/hoe-werkt-lobsy", NavIcons.Info),
         new("Nav.Saved", "/candidate/liked", NavIcons.Liked, ["/candidate/shared"]),
         new("Nav.MyApplications", "/candidate/applications", NavIcons.Applications),
-        new("Nav.Profile", "/candidate/profile", NavIcons.Profile, ["/home"])
+        new("Nav.Profile", "/candidate/profile", NavIcons.Profile, ["/home"]),
+        new("Nav.HowLobsyWorks", "/candidate/hoe-werkt-lobsy", NavIcons.Info)
     ];
 
     public static readonly NavItem MyApplicationsReadOnly =
@@ -37,7 +37,6 @@ public static class RoleNavCatalog
     public static readonly NavItem[] Enterprise =
     [
         new("Nav.Home", "/home", NavIcons.Home),
-        new("Nav.HowLobsyWorks", "/hoe-werkt-lobsy", NavIcons.Info),
         new("Nav.JobMap", "/", NavIcons.Map),
         new("Nav.Vacancies", "/employer/vacancies", NavIcons.Vacancies, ["/branch/vacancies/new", "/branch/applicants"]),
         new("Nav.Tokens", "/employer/tokens", NavIcons.Tokens, ["/regional/tokens", "/admin/tokens", "/branch/tokens"]),
@@ -51,7 +50,8 @@ public static class RoleNavCatalog
                 "/employer/company",
                 "/employer/csv-import"
             ],
-            DesktopOnly: true)
+            DesktopOnly: true),
+        new("Nav.HowLobsyWorks", "/hoe-werkt-lobsy", NavIcons.Info)
     ];
 
     public static readonly NavItem CsvImport =
@@ -72,21 +72,21 @@ public static class RoleNavCatalog
     public static readonly NavItem[] Regional =
     [
         new("Nav.Home", "/home", NavIcons.Home),
-        new("Nav.HowLobsyWorks", "/hoe-werkt-lobsy", NavIcons.Info),
         new("Nav.JobMap", "/", NavIcons.Map),
         new("Nav.Vacancies", "/employer/vacancies", NavIcons.Vacancies, ["/regional", "/branch/applicants"]),
-        new("Nav.MyBranches", "/regional/branches", NavIcons.Branches, ["/employer/takeovers"])
+        new("Nav.MyBranches", "/regional/branches", NavIcons.Branches, ["/employer/takeovers"]),
+        new("Nav.HowLobsyWorks", "/hoe-werkt-lobsy", NavIcons.Info)
     ];
 
     public static readonly NavItem[] Branch =
     [
         new("Nav.Home", "/home", NavIcons.Home),
-        new("Nav.HowLobsyWorks", "/hoe-werkt-lobsy", NavIcons.Info),
         new("Nav.JobMap", "/", NavIcons.Map),
         new("Nav.Vacancies", "/branch/vacancies", NavIcons.Vacancies, ["/employer/vacancies", "/branch/vacancies/new", "/branch/applicants"]),
         new("Nav.MyTokens", "/branch/tokens", NavIcons.Tokens),
         new("Nav.CompanyDetails", "/employer/company", NavIcons.Companies),
-        new("Nav.Takeovers", "/employer/takeovers", NavIcons.Branches)
+        new("Nav.Takeovers", "/employer/takeovers", NavIcons.Branches),
+        new("Nav.HowLobsyWorks", "/hoe-werkt-lobsy", NavIcons.Info)
     ];
 
     public static readonly NavItem Takeovers = new("Nav.Takeovers", "/employer/takeovers", NavIcons.Branches);
@@ -94,12 +94,12 @@ public static class RoleNavCatalog
     public static readonly NavItem[] Intermediary =
     [
         new("Nav.Home", "/home", NavIcons.Home),
-        new("Nav.HowLobsyWorks", "/hoe-werkt-lobsy", NavIcons.Info),
         new("Nav.JobMap", "/", NavIcons.Map),
         new("Nav.Vacancies", "/employer/vacancies", NavIcons.Vacancies, ["/branch/vacancies/new", "/branch/applicants"]),
         new("Nav.Clients", "/intermediary", NavIcons.Companies),
         new("Nav.Team", "/intermediary/team", NavIcons.Users),
-        new("Nav.Tokens", "/employer/tokens", NavIcons.Tokens)
+        new("Nav.Tokens", "/employer/tokens", NavIcons.Tokens),
+        new("Nav.HowLobsyWorks", "/hoe-werkt-lobsy", NavIcons.Info)
     ];
 
     public static readonly NavItem BalanceAndTracking =
@@ -108,11 +108,11 @@ public static class RoleNavCatalog
     public static readonly NavItem[] SalesManager =
     [
         new("Nav.Home", "/home", NavIcons.Home, ["/salesmanager"]),
-        new("Nav.HowLobsyWorks", "/hoe-werkt-lobsy", NavIcons.Info),
         new("Nav.SalesToolkit", "/salesmanager/toolkit", NavIcons.Shared),
         new("Nav.SalesReferrals", "/salesmanager/referrals", NavIcons.Users),
         new("Nav.Onboarding", "/salesmanager/onboarding", NavIcons.Users),
-        new("Nav.Invoices", "/salesmanager/invoices", NavIcons.Tokens)
+        new("Nav.Invoices", "/salesmanager/invoices", NavIcons.Tokens),
+        new("Nav.HowLobsyWorks", "/hoe-werkt-lobsy", NavIcons.Info)
     ];
 
     public static IReadOnlyList<NavItem> ForUser(ClaimsPrincipal? user)
@@ -129,35 +129,64 @@ public static class RoleNavCatalog
 
         if (RoleClaimMatching.HasRole(user, JobsyRoles.SalesManager))
         {
-            return SalesManager;
+            return WithHowLobsyLast(SalesManager);
         }
 
         if (RoleClaimMatching.HasRole(user, JobsyRoles.Candidate))
         {
-            return Candidate;
+            return WithHowLobsyLast(Candidate);
         }
 
         if (RoleClaimMatching.HasRole(user, JobsyRoles.EnterpriseManager))
         {
-            return WithSalesReferralNav(WithOptionalCandidateApplications(Enterprise, user), user);
+            return WithHowLobsyLast(WithSalesReferralNav(WithOptionalCandidateApplications(Enterprise, user), user));
         }
 
         if (RoleClaimMatching.HasRole(user, JobsyRoles.RegionalManager))
         {
-            return WithOptionalCandidateApplications(Regional, user);
+            return WithHowLobsyLast(WithOptionalCandidateApplications(Regional, user));
         }
 
         if (RoleClaimMatching.HasRole(user, JobsyRoles.BranchManager))
         {
-            return WithSalesReferralNav(WithOptionalCandidateApplications(Branch, user), user);
+            return WithHowLobsyLast(WithSalesReferralNav(WithOptionalCandidateApplications(Branch, user), user));
         }
 
         if (RoleClaimMatching.HasRole(user, JobsyRoles.Intermediary))
         {
-            return WithOptionalCandidateApplications(Intermediary, user);
+            return WithHowLobsyLast(WithOptionalCandidateApplications(Intermediary, user));
         }
 
         return Anonymous;
+    }
+
+    /// <summary>
+    /// Keeps "Hoe werkt Lobsy" as the rightmost bottom-nav item after optional nav appends.
+    /// </summary>
+    internal static IReadOnlyList<NavItem> WithHowLobsyLast(IReadOnlyList<NavItem> items)
+    {
+        NavItem? how = null;
+        List<NavItem>? rest = null;
+        foreach (var item in items)
+        {
+            if (string.Equals(item.TitleKey, "Nav.HowLobsyWorks", StringComparison.Ordinal))
+            {
+                how = item;
+                continue;
+            }
+
+            rest ??= new List<NavItem>(items.Count);
+            rest.Add(item);
+        }
+
+        if (how is null)
+        {
+            return items;
+        }
+
+        rest ??= [];
+        rest.Add(how);
+        return rest;
     }
 
     private static IReadOnlyList<NavItem> WithSalesReferralNav(

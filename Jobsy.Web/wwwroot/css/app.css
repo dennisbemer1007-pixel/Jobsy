@@ -10402,6 +10402,18 @@ a.apply-flow__secondary {
     padding: 0.35rem 0.55rem;
 }
 
+.lobsy-assistant__disclaimer {
+    margin: 0;
+    padding: 0.45rem 0.85rem 0.75rem;
+    font-size: 0.72rem;
+    line-height: 1.35;
+    color: var(--muted, #6b7280);
+}
+
+.lobsy-assistant__disclaimer a {
+    white-space: nowrap;
+}
+
 .lobsy-assistant__compose {
     display: flex;
     flex-direction: column;

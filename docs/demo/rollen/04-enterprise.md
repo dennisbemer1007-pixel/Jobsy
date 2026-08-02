@@ -21,7 +21,7 @@ De enterprise-manager is de centrale beheerder van een organisatie. Naast vacatu
 
 ### Bottom-navigatie
 
-**Mobiel/PWA:** Home · Hoe werkt Lobsy · Banenkaart · Vacatures · Tokens · Gebruikers  
+**Mobiel/PWA:** Home · Banenkaart · Vacatures · Tokens · Gebruikers · Hoe werkt Lobsy  
 
 **Desktop:** bovenstaande + **Organisatie** (hub voor salaristabellen, vestigingen, regio’s, bedrijfsgegevens, CSV, overnames)
 

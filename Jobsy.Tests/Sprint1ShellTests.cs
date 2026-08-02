@@ -99,6 +99,26 @@ public class RoleNavCatalogTests
         var items = RoleNavCatalog.ForUser(new ClaimsPrincipal(identity));
         Assert.Contains(items, i => i.Href == "/hoe-werkt-lobsy");
         Assert.DoesNotContain(items, i => i.Href == "/candidate/hoe-werkt-lobsy");
+        Assert.Equal("Nav.HowLobsyWorks", items[^1].TitleKey);
+    }
+
+    [Fact]
+    public void ForUser_candidate_keeps_how_lobsy_rightmost()
+    {
+        var identity = new ClaimsIdentity([new Claim(ClaimTypes.Role, JobsyRoles.Candidate)], "test");
+        var items = RoleNavCatalog.ForUser(new ClaimsPrincipal(identity));
+        Assert.Equal("/candidate/hoe-werkt-lobsy", items[^1].Href);
+    }
+
+    [Fact]
+    public void ForUser_optional_applications_do_not_push_how_lobsy_left()
+    {
+        var identity = new ClaimsIdentity("test");
+        identity.AddClaim(new Claim(ClaimTypes.Role, JobsyRoles.BranchManager));
+        identity.AddClaim(new Claim(JobsyClaimTypes.HasCandidateApplications, "1"));
+        var items = RoleNavCatalog.ForUser(new ClaimsPrincipal(identity));
+        Assert.Contains(items, i => i.Href == "/candidate/applications");
+        Assert.Equal("Nav.HowLobsyWorks", items[^1].TitleKey);
     }
 
     [Fact]

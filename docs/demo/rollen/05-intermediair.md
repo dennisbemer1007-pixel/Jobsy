@@ -18,7 +18,7 @@ De intermediair werft niet voor één eigen vestiging, maar voor **gekoppelde op
 
 ### Bottom-navigatie
 
-Home · Hoe werkt Lobsy · Banenkaart · Vacatures · Opdrachtgevers · Tokens
+Home · Banenkaart · Vacatures · Opdrachtgevers · Tokens · Hoe werkt Lobsy
 
 ### Printscreens
 

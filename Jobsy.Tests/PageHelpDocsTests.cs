@@ -20,8 +20,16 @@ public class PageHelpDocsTests
     [InlineData("/candidate/applications", "Mijn sollicitaties")]
     [InlineData("/employer/tokens", "Tokens")]
     [InlineData("/employer/company", "Bedrijfsgegevens")]
+    [InlineData("/employer/organization", "Organisatie")]
     [InlineData("/admin/integrations", "Beheer · Integraties")]
     [InlineData("/branch/vacancies/new", "Vacature plaatsen")]
+    [InlineData("/branch/vacancies", "Vacatures (vestiging)")]
+    [InlineData("/salesmanager/toolkit", "Sales-toolkit")]
+    [InlineData("/intermediary/team", "Team (intermediair)")]
+    [InlineData("/wie-zijn-wij", "Wie zijn wij")]
+    [InlineData("/privacy", "Privacyverklaring")]
+    [InlineData("/algemene-voorwaarden", "Algemene voorwaarden")]
+    [InlineData("/gebruiksvoorwaarden", "Gebruiksvoorwaarden")]
     public void Known_paths_return_titled_docs(string path, string title)
     {
         var doc = PageHelpDocs.TryGet(path);

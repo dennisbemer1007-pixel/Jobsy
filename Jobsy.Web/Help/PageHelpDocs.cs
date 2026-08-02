@@ -132,7 +132,7 @@ public static class PageHelpDocs
         ["/candidate/profile"] = new(
             "Mijn profiel",
             "Jouw kandidaatgegevens voor matching en solliciteren.",
-            "Vul interesses, opleiding, rijbewijzen, voorkeuren en locatie in. Wijzigingen helpen filters op de banenkaart en harde eisen bij sollicitaties.",
+            "Vul interesses, opleiding, rijbewijzen, voorkeuren, locatie, uren per week en beschikbaarheid/dagdelen in (of tijden in overleg). Geboortedatum is nodig voor leeftijdsloon en wettelijke taakchecks. Wijzigingen verbeteren matchscores en filters.",
             "Betere matches en sneller solliciteren met volledige gegevens."),
 
         ["/employer/vacancies"] = new(
@@ -140,6 +140,12 @@ public static class PageHelpDocs
             "Beheer van vacatures van jouw organisatie of vestiging, inclusief concepten uit CSV-import of API.",
             "Bekijk status en herkomst (Handmatig, CSV of API). Concepten publiceer je hier — daar wordt het tokenverbruik verwerkt. Afhankelijk van rol kun je publiceren, pauzeren of nieuwe vacatures plaatsen.",
             "Openstaande banen beheren, importeren afronden en opvolgen."),
+
+        ["/branch/vacancies"] = new(
+            "Vacatures (vestiging)",
+            "Beheer van vacatures van jouw vestiging, inclusief concepten.",
+            "Bekijk status, publiceer of pauzeer. Bij publiceren kies je tokenproducten (basis, highlight, PushBom, verlengen).",
+            "Lokale banen beheren en opvolgen."),
 
         ["/employer/tokens"] = new(
             "Tokens",
@@ -210,14 +216,20 @@ public static class PageHelpDocs
         ["/branch/vacancies/new"] = new(
             "Vacature plaatsen",
             "Nieuwe vacature aanmaken voor een vestiging.",
-            "Vul titel, eisen, loon, locatie en masterdata-keuzes in. Publiceren kan tokens kosten en kan door moderatie gaan.",
+            "Vul titel, eisen, loon, locatie, uren/week, roosters/dagdelen en de wettelijke taakvinkjes (i-knoppen) in. Die vinkjes sturen automatisch of 15–17-jarigen mogen solliciteren. Publiceren kan tokens kosten en kan door moderatie gaan.",
             "Banen zichtbaar maken op de banenkaart voor kandidaten."),
 
         ["/branch/applicants"] = new(
             "Sollicitanten",
             "Binnenkomende sollicitaties op jouw vacatures.",
-            "Filter en open kandidaten, bekijk status en vervolgstappen.",
+            "Filter en open kandidaten, bekijk matchscore/status en vervolgstappen. Contactgegevens (PII) verschijnen pas na acceptatie of contactstatus.",
             "Selectie en opvolging van sollicitaties door managers."),
+
+        ["/employer/organization"] = new(
+            "Organisatie",
+            "Desktop-hub voor zwaar organisatiebeheer.",
+            "Open vestigingen, regio’s, salaristabellen, bedrijfsgegevens, CSV-import en overnames. Op mobiel zie je een desktop-melding.",
+            "Structuur en masterdata van de organisatie beheren zonder de mobiele ops-nav te overbelasten."),
 
         ["/regional/tokens"] = new(
             "Tokencontrole (regio)",
@@ -230,6 +242,36 @@ public static class PageHelpDocs
             "Prestaties per gekoppelde opdrachtgever voor intermediairs.",
             "Bekijk vacatures, openstaande sollicitaties, conversie, tokens, boosts en snelle acties per bedrijf.",
             "Stuur op gezondheid per opdrachtgever zonder vestigingen of regio’s."),
+
+        ["/intermediary/team"] = new(
+            "Team (intermediair)",
+            "Collega’s binnen jouw intermediair-organisatie.",
+            "Nodig teamleden uit en bekijk wie toegang heeft tot opdrachtgevers en vacatures.",
+            "Samenwerken zonder accounts buiten je organisatie te delen."),
+
+        ["/salesmanager"] = new(
+            "Salesdashboard",
+            "Overzicht van trackingcode, referrals en commissiesaldo.",
+            "Bekijk je performance, open toolkit of referrals en rond onboarding af als dat nog openstaat.",
+            "Snel zien waar je staat in acquisitie en uitbetaling."),
+
+        ["/salesmanager/toolkit"] = new(
+            "Sales-toolkit",
+            "Materialen en links om ondernemers te werven met jouw trackingcode.",
+            "Kopieer je partnerlink, deel materialen en volg hoe prospects instappen.",
+            "Acquisitie versnellen met consistente Lobsy-boodschap."),
+
+        ["/salesmanager/referrals"] = new(
+            "Sales-aanbevelingen",
+            "Nieuwe salesmanagers aandragen (tier-afhankelijk).",
+            "Deel referral-opties en volg wie via jou is aangemeld.",
+            "Netwerk laten meegroeien binnen de commissiestructuur."),
+
+        ["/partner"] = new(
+            "Partner / tracking",
+            "Publieke landingspagina via sales-trackingcode.",
+            "Prospects komen hier via een saleslink en starten registratie of oriëntatie.",
+            "Salesmanagers koppelen acquisitie aan hun trackingcode."),
 
         ["/salesmanager/onboarding"] = new(
             "Sales onboarding",
@@ -285,17 +327,35 @@ public static class PageHelpDocs
             "Bekijk relevante geld-/tokenstromen en rapportages.",
             "Inzicht voor exploitatie en controle."),
 
+        ["/admin/token-finance"] = new(
+            "Beheer · Tokenfinance",
+            "Detail van tokenstromen en financiële mutaties.",
+            "Analyseer aankopen, grants en correcties in samenhang met finance.",
+            "Controle en reconciliatie van tokens versus betalingen."),
+
         ["/admin/tokens"] = new(
             "Beheer · Tokens",
             "Centrale tokenadministratie.",
             "Ken tokens toe aan bedrijven en bekijk saldi.",
             "Demo’s, credits of correcties uitvoeren."),
 
+        ["/admin/sales"] = new(
+            "Beheer · Sales commercieel",
+            "Commerciële salesinstellingen en overzicht.",
+            "Beheer sales-gerelateerde platforminstellingen en rapportages.",
+            "Saleskanaal en commissiestructuur ondersteunen."),
+
         ["/admin/sales-managers"] = new(
             "Beheer · Salesmanagers",
             "Salesmanager-accounts en status.",
             "Beheer onboarding, koppelingen en overzicht van salesmanagers.",
             "Het saleskanaal operationeel houden."),
+
+        ["/admin"] = new(
+            "Beheer · Start",
+            "Ingang tot het admin-domein.",
+            "Ga via de navigatie naar vacatures, finance, bedrijven of settings.",
+            "Platformbeheer starten."),
 
         ["/admin/moderation"] = new(
             "Beheer · Moderatie",
@@ -359,7 +419,7 @@ public static class PageHelpDocs
 
         ["/privacy"] = new(
             "Privacyverklaring",
-            "Uitleg welke gegevens Lobsy verwerkt.",
+            "Uitleg welke gegevens Lobsy verwerkt, inclusief matching, AI en jeugdige-arbeidschecks.",
             "Lees de tekst; voor inzage/export ga je naar ‘Mijn gegevens’ als je bent ingelogd.",
             "Transparantie en AVG-informatie."),
 
@@ -371,15 +431,21 @@ public static class PageHelpDocs
 
         ["/gebruiksvoorwaarden"] = new(
             "Gebruiksvoorwaarden",
-            "Voorwaarden voor kandidaten die Lobsy gebruiken.",
-            "Lees de afspraken over gebruik van het platform.",
+            "Voorwaarden en disclaimer voor kandidaten/bezoekers, inclusief AI en matchscores.",
+            "Lees de afspraken over gebruik van het platform, chatbot en matching.",
             "Duidelijkheid over rechten en plichten als werkzoeker."),
 
         ["/algemene-voorwaarden"] = new(
             "Algemene voorwaarden",
-            "Voorwaarden voor ondernemers/werkgevers.",
-            "Lees de AV over tokens, publicatie en aansprakelijkheid.",
-            "Juridische basis voor zakelijk gebruik van Lobsy.")
+            "Voorwaarden voor ondernemers/werkgevers, inclusief tokens, matching en taakvinkjes.",
+            "Lees de AV over tokens, publicatie, jeugdige arbeid en aansprakelijkheid.",
+            "Juridische basis voor zakelijk gebruik van Lobsy."),
+
+        ["/wie-zijn-wij"] = new(
+            "Wie zijn wij",
+            "Het verhaal en contactkader achter Lobsy.",
+            "Lees wie Lobsy is; inhoud kan door admins worden bijgewerkt.",
+            "Context en vertrouwen in het platform.")
     };
 
     private static readonly (string Prefix, Doc Doc)[] Prefixes =
@@ -387,7 +453,7 @@ public static class PageHelpDocs
         ("/vacancies/", new(
             "Vacaturedetail",
             "Details van één vacature op de banenkaart.",
-            "Bekijk eisen, loon en locatie. Solliciteer als kandidaat (met eventuele harde eisen), of bewaar/deel. Managers zien geen solliciteer-CTA.",
+            "Bekijk eisen, loon, uren/dagdelen en locatie. Solliciteer als kandidaat (met eventuele harde eisen en wettelijke checks), of bewaar/deel. Managers zien geen solliciteer-CTA.",
             "Een baan beoordelen en solliciteren of delen.")),
 
         ("/home/metrics/", new(
@@ -395,6 +461,8 @@ public static class PageHelpDocs
             "Uitgesplitste cijfers achter een dashboard-KPI.",
             "Bekijk de onderliggende lijst of grafiek bij de gekozen metric-key.",
             "Dieper analyseren waarom een KPI zo staat.")),
+
+        ("/partner/", Exact["/partner"]),
 
         ("/employer/salary-tables/", Exact["/employer/salary-tables"])
     ];

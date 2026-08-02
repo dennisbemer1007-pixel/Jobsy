@@ -8,7 +8,7 @@
     <header class="panel-header">
         <div>
             <h1>@Culture["Legal.Privacy"]</h1>
-            <p class="login-lead">Laatst bijgewerkt: 29 juli 2026</p>
+            <p class="login-lead">Laatst bijgewerkt: 2 augustus 2026</p>
         </div>
     </header>
 
@@ -35,8 +35,8 @@
             <p>Afhankelijk van je rol verwerken we onder meer:</p>
             <ul>
                 <li><strong>Accountgegevens:</strong> naam, e-mailadres, inloggegevens en (indien van toepassing) telefoonnummer.</li>
-                <li><strong>Kandidaten:</strong> geboortedatum (voor leeftijdsloon), voorkeursvervoer, locatiegegevens voor reistijdschattingen, likes, sollicitaties (inclusief een snapshot van voorkeuren/opleiding/rijbewijs na sollicitatie), e-mailverificatie (OTP) en eventuele authenticator-bevestigingen.</li>
-                <li><strong>Ondernemers:</strong> KVK-gegevens, vestigingsgegevens, contactpersonen, contactvoorkeuren (e-mail/telefoon/WhatsApp voor contact ná sollicitatie), gebruikersrollen, API-koppelingen (alleen gehashte keys) en token-/betalingsgerelateerde transactiegegevens.</li>
+                <li><strong>Kandidaten:</strong> geboortedatum (voor leeftijdsloon en wettelijke taakchecks), voorkeursvervoer, locatiegegevens voor reistijdschattingen, gewenste uren per week, beschikbaarheid/dagdelen (of “tijden in overleg”), likes, sollicitaties (inclusief snapshot van voorkeuren/opleiding/rijbewijs, matchscore en optionele motivatie), e-mailverificatie (OTP) en eventuele authenticator-bevestigingen.</li>
+                <li><strong>Ondernemers:</strong> KVK-gegevens, vestigingsgegevens, contactpersonen, contactvoorkeuren (e-mail/telefoon/WhatsApp voor contact ná sollicitatie), vacaturegegevens (uren, roosters/dagdelen, wettelijke taakvinkjes voor jeugdige arbeid), gebruikersrollen, API-koppelingen (alleen gehashte keys) en token-/betalingsgerelateerde transactiegegevens.</li>
                 <li><strong>Salesmanagers:</strong> KvK/BTW/NAW, gemaskeerde IBAN voor uitbetaling, trackingcode, commissieboekingen en self-billingfacturen (fiscale bewaarplicht).</li>
                 <li><strong>Technische gegevens:</strong> sessie-cookie <code>Jobsy.Auth</code>; taalvoorkeur-cookie <code>Jobsy.Culture</code>; een anonieme engagement-sleutel in <code>sessionStorage</code> (per tab); klik-, like- en deelstatistieken op vacatures; sitebezoeken (pad + optionele user-koppeling); beveiligingslogs en noodzakelijke cookies voor inloggen en werking van de dienst.</li>
                 <li><strong>Communicatie:</strong> berichten of bevestigingen die via het platform of e-mail (Resend) worden verstuurd. Ontvangers worden in logs geredacteerd. API-credentials kunnen éénmalig per e-mail worden verstuurd op verzoek van de bedrijfsmanager.</li>
@@ -51,7 +51,7 @@
         <section>
             <h2>3. Doeleinden en grondslagen</h2>
             <ul>
-                <li><strong>Uitvoering van de overeenkomst:</strong> account, matching op reistijd, sollicitaties, vacaturepublicatie, tokengebruik en (optioneel) direct contact na een succesvolle sollicitatie.</li>
+                <li><strong>Uitvoering van de overeenkomst:</strong> account, matching op reistijd/uren/dagdelen, wettelijke geschiktheidschecks bij solliciteren, sollicitaties, vacaturepublicatie, tokengebruik en (optioneel) direct contact na een succesvolle sollicitatie.</li>
                 <li><strong>Gerechtvaardigd belang:</strong> beveiliging, fraudepreventie, platformverbetering, moderatie van vacatureteksten, en incidentele re-engagementberichten aan inactieve organisaties (maximaal één keer).</li>
                 <li><strong>Toestemming:</strong> waar we daarom vragen (bijvoorbeeld bij akkoord met voorwaarden of optionele functies).</li>
                 <li><strong>Wettelijke verplichting:</strong> bijvoorbeeld bewaarplichten rondom betalingen of verzoeken van bevoegde autoriteiten.</li>
@@ -76,12 +76,29 @@
         </section>
 
         <section>
-            <h2>5. Locatie en reistijd</h2>
+            <h2>5. Locatie, reistijd en matching</h2>
             <p>
                 Locatiegegevens gebruiken we alleen na een expliciete actie van jou (bijvoorbeeld het delen
                 van je positie of het opslaan van een herkomstlocatie). Deze gegevens gebruiken we om vacatures
                 te rangschikken en reistijden te tonen. Je kunt locatiegegevens beperken of wissen via de
                 beschikbare account- of apparaatinstellingen waar dat technisch wordt ondersteund.
+            </p>
+            <p>
+                Voor matchingspercentages combineren we reistijd met uren- en dagdelenoverlap (en waar relevant
+                wettelijke taakgeschiktheid op basis van geboortedatum). Scores zijn informatieve schattingen
+                om jou en werkgevers te helpen; zij vormen geen besluit tot aanname of afwijzing.
+            </p>
+        </section>
+
+        <section>
+            <h2>5a. Jeugdige arbeid en taakvinkjes</h2>
+            <p>
+                Werkgevers geven via taakvinkjes feitelijke kenmerken van werkzaamheden aan (bijvoorbeeld werken
+                na 19:00, nachtdienst, toezicht, omgaan met geld/sluiten, zwaar of gevaarlijk werk). Lobsy gebruikt
+                die kenmerken samen met je geboortedatum om sollicitaties te blokkeren die volgens de
+                Arbeidstijdenwet/arboregels voor 15–17-jarigen niet zijn toegestaan. Er wordt geen minimumleeftijd
+                als vacaturelabel aan werkgevers gevraagd; filtering gebeurt op taakniveau. Werkgevers blijven
+                zelf verantwoordelijk voor naleving van arbeidswetgeving.
             </p>
         </section>
 
