@@ -143,7 +143,7 @@ Gekoppelde ondernemers (via trackingcode) krijgen nav **“Mijn Saldo & Tracking
 ## 7. SalesManager
 *Doel: veldverkoop met trackingcode, commissies en partnerflyer.*
 
-**BottomNav:** Home · Sales-toolkit · Onboarding · Facturen
+**BottomNav:** Home · Sales-toolkit · Referrals · Onboarding · Facturen · Hoe werkt Lobsy
 
 | Route | Inhoud |
 |-------|--------|
