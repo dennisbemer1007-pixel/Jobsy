@@ -118,21 +118,10 @@
     </div>
 }
 
-@if (ChildContent is not null)
-{
-    <div class="dash-quicklinks">
-        <h2 class="dash-quicklinks__title">Snelle links</h2>
-        <div class="bento-quicklinks">
-            @ChildContent
-        </div>
-    </div>
-}
-
 @code {
     [Parameter] public IReadOnlyList<MetricCount> Metrics { get; set; } = [];
     [Parameter] public string? SelectedKey { get; set; }
     [Parameter] public EventCallback<MetricCount> OnMetricClick { get; set; }
-    [Parameter] public RenderFragment? ChildContent { get; set; }
     [Parameter] public Func<MetricCount, string>? ValueFormatter { get; set; }
     [Parameter] public bool ShowVacancyPerformance { get; set; }
     [Parameter] public VacancyPerformanceBoard? VacancyPerformance { get; set; }

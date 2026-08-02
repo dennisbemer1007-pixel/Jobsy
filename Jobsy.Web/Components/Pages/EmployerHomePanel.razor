@@ -1,10 +1,7 @@
-@using Jobsy.Core.Authorization
 @using Jobsy.Web.Components.Shared
 @using Jobsy.Web.Dashboard
-@using Microsoft.AspNetCore.Components.Authorization
 @inject JobsyApiClient Api
 @inject NavigationManager Navigation
-@inject AuthenticationStateProvider AuthState
 @inject CultureState Culture
 @implements IDisposable
 
@@ -44,30 +41,7 @@
                               ShowVacancyPerformance="true"
                               VacancyPerformance="_vacancyBoard"
                               VacancyHrefPrefix="/vacancies"
-                              OnMetricClick="OpenMetricAsync">
-            <a class="stat-card stat-card--link stat-card--nav stat-card--tile" href="@TokensHref">
-                <span class="stat-card__label">@Culture["Common.Tokens"]</span>
-                <strong class="stat-card__value">→</strong>
-            </a>
-            <a class="stat-card stat-card--link stat-card--nav stat-card--tile" href="@VacanciesHref">
-                <span class="stat-card__label">@Culture["Employer.DashboardVacancies"]</span>
-                <strong class="stat-card__value">→</strong>
-            </a>
-            @if (_showMyApplications)
-            {
-                <a class="stat-card stat-card--link stat-card--nav stat-card--tile" href="/candidate/applications">
-                    <span class="stat-card__label">@Culture["Employer.DashboardApplications"]</span>
-                    <strong class="stat-card__value">→</strong>
-                </a>
-            }
-            @if (!string.IsNullOrEmpty(ExtraHref))
-            {
-                <a class="stat-card stat-card--link stat-card--nav stat-card--tile" href="@ExtraHref">
-                    <span class="stat-card__label">@ExtraLabel</span>
-                    <strong class="stat-card__value">→</strong>
-                </a>
-            }
-        </MetricsCategoryBoard>
+                              OnMetricClick="OpenMetricAsync" />
     }
 </div>
 
@@ -79,12 +53,9 @@
     [Parameter] public string VacanciesHref { get; set; } = "/employer/vacancies";
     [Parameter] public string TokensHref { get; set; } = "/employer/tokens";
     [Parameter] public string ApplicationsHref { get; set; } = "/branch/applicants";
-    [Parameter] public string? ExtraHref { get; set; }
-    [Parameter] public string ExtraLabel { get; set; } = "Meer";
 
     private string _period = "week";
     private bool _loading = true;
-    private bool _showMyApplications;
     private string? _error;
     private List<MetricCount> _metrics = [];
     private VacancyPerformanceBoard? _vacancyBoard;
@@ -103,11 +74,7 @@
         => Culture.Changed += OnCultureChanged;
 
     protected override async Task OnInitializedAsync()
-    {
-        var state = await AuthState.GetAuthenticationStateAsync();
-        _showMyApplications = state.User.HasClaim(JobsyClaimTypes.HasCandidateApplications, "1");
-        await LoadSummaryAsync();
-    }
+        => await LoadSummaryAsync();
 
     private void OnCultureChanged()
         => InvokeAsync(StateHasChanged);

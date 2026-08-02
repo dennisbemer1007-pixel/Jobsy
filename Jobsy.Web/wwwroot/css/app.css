@@ -6773,26 +6773,6 @@ button.stat-card {
     line-height: 1.35;
 }
 
-.dash-quicklinks {
-    margin-top: 1rem;
-    padding-top: 1rem;
-    border-top: 1px solid color-mix(in srgb, var(--border) 85%, transparent);
-}
-
-.dash-quicklinks__title {
-    margin: 0 0 0.65rem;
-    font-size: 0.92rem;
-    color: var(--brand);
-}
-
-.bento-quicklinks,
-.bento-quicklinks--inline {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(min(100%, 140px), 1fr));
-    gap: 0.55rem;
-    align-items: stretch;
-}
-
 /* Uniform tile chrome */
 .stat-card--tile {
     width: 100%;
@@ -7259,9 +7239,7 @@ button.stat-card {
 
     .bento-hero,
     .bento-cell--hero-row,
-    .bento-metrics,
-    .bento-quicklinks,
-    .bento-quicklinks--inline {
+    .bento-metrics {
         grid-template-columns: repeat(2, minmax(0, 1fr));
         gap: 0.6rem;
     }
