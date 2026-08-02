@@ -128,13 +128,25 @@ public sealed class RevenueShareService : IRevenueShareService
 
         if (ambassadorTokens > 0)
         {
-            await _tokens.GrantForCheckoutAsync(
-                companyId,
-                ambassadorTokens,
-                tokenCheckoutId,
-                actorUserId: null,
-                note: $"Revenue-share ambassadeur 15% ({tokenCheckoutId:N})",
-                cancellationToken);
+            var noteFragment = tokenCheckoutId.ToString("N");
+            var legacyGrantExists = await _db.TokenTransactions.AsNoTracking()
+                .AnyAsync(
+                    t => t.CompanyId == companyId
+                         && t.Kind == TokenTransactionKind.Grant
+                         && t.TokenPurchaseCheckoutId == null
+                         && t.Note != null
+                         && t.Note.Contains(noteFragment),
+                    cancellationToken);
+            if (!legacyGrantExists)
+            {
+                await _tokens.GrantForCheckoutAsync(
+                    companyId,
+                    ambassadorTokens,
+                    tokenCheckoutId,
+                    actorUserId: null,
+                    note: $"Revenue-share ambassadeur 15% ({noteFragment})",
+                    cancellationToken);
+            }
         }
 
         if (smEuro > 0)
@@ -303,17 +315,21 @@ public sealed class RevenueShareService : IRevenueShareService
 
         if (ambassador is null or <= 0)
         {
-            // Fallback: grant row may exist from a prior attempt even without the log.
-            var existingGrant = await _db.TokenTransactions.AsNoTracking()
-                .AnyAsync(
-                    t => t.TokenPurchaseCheckoutId == tokenCheckoutId
-                         && t.Kind == TokenTransactionKind.Grant,
-                    cancellationToken);
-            if (existingGrant)
-            {
-                return;
-            }
+            return;
+        }
 
+        // Legacy grants (pre-checkout-id) used a note containing the checkout N-format id.
+        var legacyNoteFragment = tokenCheckoutId.ToString("N");
+        var legacyGrantExists = await _db.TokenTransactions.AsNoTracking()
+            .AnyAsync(
+                t => t.CompanyId == companyId
+                     && t.Kind == TokenTransactionKind.Grant
+                     && t.TokenPurchaseCheckoutId == null
+                     && t.Note != null
+                     && t.Note.Contains(legacyNoteFragment),
+                cancellationToken);
+        if (legacyGrantExists)
+        {
             return;
         }
 
@@ -322,7 +338,7 @@ public sealed class RevenueShareService : IRevenueShareService
             ambassador.Value,
             tokenCheckoutId,
             actorUserId: null,
-            note: $"Revenue-share ambassadeur 15% ({tokenCheckoutId:N})",
+            note: $"Revenue-share ambassadeur 15% ({legacyNoteFragment})",
             cancellationToken);
     }
 

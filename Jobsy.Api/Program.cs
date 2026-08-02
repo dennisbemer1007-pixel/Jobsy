@@ -22,8 +22,16 @@ if (!string.IsNullOrWhiteSpace(sentryDsn))
     });
 }
 
-Jobsy.Core.Security.VerificationCodes.ConfigurePepper(
-    builder.Configuration["VerificationCodes:Pepper"]);
+var otpPepper = builder.Configuration["VerificationCodes:Pepper"];
+if (!builder.Environment.IsDevelopment()
+    && string.IsNullOrWhiteSpace(otpPepper))
+{
+    throw new InvalidOperationException(
+        "VerificationCodes:Pepper is required outside Development. " +
+        "Set VerificationCodes__Pepper to a long random secret per environment.");
+}
+
+Jobsy.Core.Security.VerificationCodes.ConfigurePepper(otpPepper);
 
 builder.Services.Configure<ForwardedHeadersOptions>(options =>
 {

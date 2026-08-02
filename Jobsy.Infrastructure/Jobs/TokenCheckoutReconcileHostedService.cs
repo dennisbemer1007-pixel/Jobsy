@@ -10,7 +10,8 @@ namespace Jobsy.Infrastructure.Jobs;
 
 /// <summary>
 /// Reprocesses paid/partially-fulfilled token checkouts when the Mollie webhook or redirect
-/// failed mid-flight (tokens/invoice/commission missing). Safe: fulfillment is idempotent.
+/// failed mid-flight (tokens/invoice/commission missing). Also retries aged Pending sessions
+/// in case Mollie was paid but status never flipped. Safe: fulfillment is idempotent.
 /// </summary>
 public sealed class TokenCheckoutReconcileHostedService : BackgroundService
 {
@@ -60,10 +61,14 @@ public sealed class TokenCheckoutReconcileHostedService : BackgroundService
         var fulfillment = scope.ServiceProvider.GetRequiredService<ITokenPurchaseFulfillmentService>();
 
         var cutoff = DateTime.UtcNow - MinAge;
+        // Include aged Pending: Mollie may have captured payment while our session stayed Pending
+        // (webhook GetPaymentStatus race / transient provider error).
         var candidates = await db.TokenPurchaseCheckouts.AsNoTracking()
             .Where(c =>
                 c.CreatedAt <= cutoff
-                && (c.Status == TokenPurchaseCheckoutStatus.Paid
+                && c.Status != TokenPurchaseCheckoutStatus.Cancelled
+                && (c.Status == TokenPurchaseCheckoutStatus.Pending
+                    || c.Status == TokenPurchaseCheckoutStatus.Paid
                     || (c.Status == TokenPurchaseCheckoutStatus.Credited
                         && (c.TokenTransactionId == null || c.TokenPurchaseInvoiceId == null))))
             .OrderBy(c => c.CreatedAt)

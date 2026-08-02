@@ -11,6 +11,17 @@ namespace Jobsy.Infrastructure.Data.Migrations
     {
         protected override void Up(MigrationBuilder migrationBuilder)
         {
+            // Deduplicate any pre-index race rows (keep oldest Id per checkout+kind).
+            migrationBuilder.Sql(
+                """
+                DELETE FROM "TokenTransactions" t
+                USING "TokenTransactions" newer
+                WHERE t."TokenPurchaseCheckoutId" IS NOT NULL
+                  AND newer."TokenPurchaseCheckoutId" = t."TokenPurchaseCheckoutId"
+                  AND newer."Kind" = t."Kind"
+                  AND newer."Id" > t."Id";
+                """);
+
             migrationBuilder.DropIndex(
                 name: "IX_TokenTransactions_TokenPurchaseCheckoutId",
                 table: "TokenTransactions");

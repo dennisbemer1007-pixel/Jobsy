@@ -50,8 +50,9 @@ services:
       # Partner Swagger off by default in Production; set true if needed.
       - key: Swagger__Enabled
         value: "false"
+      - key: VerificationCodes__Pepper
+        generateValue: true
       # Optional: set Sentry__Dsn in the Render dashboard for exception monitoring.
-      # Optional: set VerificationCodes__Pepper to a deploy-time OTP pepper.
       - key: ConnectionStrings__JobsyDb
         fromDatabase:
           name: jobsy-db
