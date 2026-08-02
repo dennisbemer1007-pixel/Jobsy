@@ -110,6 +110,7 @@ public static class RoleNavCatalog
         new("Nav.Home", "/home", NavIcons.Home, ["/salesmanager"]),
         new("Nav.HowLobsyWorks", "/hoe-werkt-lobsy", NavIcons.Info),
         new("Nav.SalesToolkit", "/salesmanager/toolkit", NavIcons.Shared),
+        new("Nav.SalesReferrals", "/salesmanager/referrals", NavIcons.Users),
         new("Nav.Onboarding", "/salesmanager/onboarding", NavIcons.Users),
         new("Nav.Invoices", "/salesmanager/invoices", NavIcons.Tokens)
     ];

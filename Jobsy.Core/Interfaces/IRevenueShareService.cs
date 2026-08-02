@@ -5,7 +5,8 @@ namespace Jobsy.Core.Interfaces;
 public interface IRevenueShareService
 {
     /// <summary>
-    /// Applies 15%/5%/80% revenue share after a referred company token purchase is credited.
+    /// Applies revenue share after a referred company token purchase is credited:
+    /// ambassador tokens + direct SM commission (within window) + optional indirect SM + platform remainder.
     /// Idempotent on <paramref name="tokenCheckoutId"/>.
     /// </summary>
     Task ApplyTokenPurchaseShareAsync(

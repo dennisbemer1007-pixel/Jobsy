@@ -48,6 +48,7 @@ public class JobsyDbContext : DbContext
     public DbSet<EstablishmentTakeoverRequest> EstablishmentTakeoverRequests => Set<EstablishmentTakeoverRequest>();
     public DbSet<LocalAuthCredential> LocalAuthCredentials => Set<LocalAuthCredential>();
     public DbSet<SalesManagerProfile> SalesManagerProfiles => Set<SalesManagerProfile>();
+    public DbSet<SalesManagerApplication> SalesManagerApplications => Set<SalesManagerApplication>();
     public DbSet<SupplierOnboardingCheckout> SupplierOnboardingCheckouts => Set<SupplierOnboardingCheckout>();
     public DbSet<CommissionLedgerEntry> CommissionLedgerEntries => Set<CommissionLedgerEntry>();
     public DbSet<RevenueShareLog> RevenueShareLogs => Set<RevenueShareLog>();
@@ -473,6 +474,8 @@ public class JobsyDbContext : DbContext
             entity.Property(e => e.HighlightCarouselTokens).HasPrecision(10, 2);
             entity.Property(e => e.HighlightPulseTokens).HasPrecision(10, 2);
             entity.Property(e => e.StartHighlightBonusTokens).HasPrecision(10, 2);
+            entity.Property(e => e.DirectCommissionRate).HasPrecision(5, 4);
+            entity.Property(e => e.IndirectCommissionRate).HasPrecision(5, 4);
         });
 
         modelBuilder.Entity<VacancyTypeTokenCost>(entity =>
@@ -726,10 +729,41 @@ public class JobsyDbContext : DbContext
             entity.HasIndex(e => e.TrackingCode)
                 .IsUnique()
                 .HasFilter("\"TrackingCode\" IS NOT NULL");
+            entity.HasIndex(e => e.ReferredBySalesManagerUserId);
             entity.HasOne(e => e.User)
                 .WithOne()
                 .HasForeignKey<SalesManagerProfile>(e => e.UserId)
                 .OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne(e => e.ReferredBySalesManagerUser)
+                .WithMany()
+                .HasForeignKey(e => e.ReferredBySalesManagerUserId)
+                .OnDelete(DeleteBehavior.SetNull);
+        });
+
+        modelBuilder.Entity<SalesManagerApplication>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.ReferrerTrackingCode).HasMaxLength(32).IsRequired();
+            entity.Property(e => e.CandidateEmail).HasMaxLength(256).IsRequired();
+            entity.Property(e => e.CandidateFullName).HasMaxLength(256).IsRequired();
+            entity.Property(e => e.Motivation).HasMaxLength(1000).IsRequired();
+            entity.Property(e => e.RejectionReason).HasMaxLength(500);
+            entity.HasIndex(e => e.Status);
+            entity.HasIndex(e => e.CreatedAtUtc);
+            entity.HasIndex(e => e.CandidateEmail);
+            entity.HasIndex(e => new { e.CandidateEmail, e.Status });
+            entity.HasOne(e => e.ReferrerSalesManagerUser)
+                .WithMany()
+                .HasForeignKey(e => e.ReferrerSalesManagerUserId)
+                .OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne(e => e.ReviewedByAdminUser)
+                .WithMany()
+                .HasForeignKey(e => e.ReviewedByAdminUserId)
+                .OnDelete(DeleteBehavior.SetNull);
+            entity.HasOne(e => e.ProvisionedUser)
+                .WithMany()
+                .HasForeignKey(e => e.ProvisionedUserId)
+                .OnDelete(DeleteBehavior.SetNull);
         });
 
         modelBuilder.Entity<SupplierOnboardingCheckout>(entity =>
@@ -757,7 +791,8 @@ public class JobsyDbContext : DbContext
             entity.HasIndex(e => e.SourcePaymentId)
                 .IsUnique()
                 .HasFilter("\"SourcePaymentId\" IS NOT NULL");
-            entity.HasIndex(e => e.SourceTokenCheckoutId)
+            // Direct + indirect commissions may share a checkout; uniqueness is per SM + kind.
+            entity.HasIndex(e => new { e.SourceTokenCheckoutId, e.SalesManagerUserId, e.Kind })
                 .IsUnique()
                 .HasFilter("\"SourceTokenCheckoutId\" IS NOT NULL");
             // At most one founder bonus per referred supplier company.

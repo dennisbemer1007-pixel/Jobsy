@@ -11,15 +11,18 @@ public sealed class RevenueShareService : IRevenueShareService
     private readonly JobsyDbContext _db;
     private readonly ITokenLedgerService _tokens;
     private readonly ICommissionLedgerService _commissions;
+    private readonly ISalesCommercialService _commercial;
 
     public RevenueShareService(
         JobsyDbContext db,
         ITokenLedgerService tokens,
-        ICommissionLedgerService commissions)
+        ICommissionLedgerService commissions,
+        ISalesCommercialService commercial)
     {
         _db = db;
         _tokens = tokens;
         _commissions = commissions;
+        _commercial = commercial;
     }
 
     public async Task ApplyTokenPurchaseShareAsync(
@@ -48,13 +51,38 @@ public sealed class RevenueShareService : IRevenueShareService
             return;
         }
 
+        var settings = await _commercial.GetSettingsAsync(cancellationToken);
+        var directRate = settings.DirectCommissionRate;
+        var indirectRateConfigured = settings.IndirectCommissionRate;
+        var durationDays = settings.CommissionDurationDays > 0
+            ? settings.CommissionDurationDays
+            : SalesCommissionRules.DefaultCommissionDurationDays;
+
+        var asOf = DateTime.UtcNow;
+        var withinWindow = SalesCommissionRules.IsWithinCommissionWindow(
+            firstYearStartedAt, asOf, durationDays);
+
+        Guid? referringSmId = null;
+        if (withinWindow)
+        {
+            referringSmId = await _db.SalesManagerProfiles.AsNoTracking()
+                .Where(p => p.UserId == salesManagerUserId.Value)
+                .Select(p => p.ReferredBySalesManagerUserId)
+                .FirstOrDefaultAsync(cancellationToken);
+        }
+
+        var appliedDirectRate = withinWindow ? Math.Max(0m, directRate) : 0m;
+        var appliedIndirectRate = referringSmId is not null && withinWindow
+            ? Math.Max(0m, indirectRateConfigured)
+            : 0m;
+
         var ambassadorTokens = SalesCommissionRules.AmbassadorTokens(packSize);
         var ambassadorEuro = SalesCommissionRules.ShareEuro(
             purchaseAmountEuro, SalesCommissionRules.AmbassadorShareRate);
-        var smEuro = SalesCommissionRules.ShareEuro(
-            purchaseAmountEuro, SalesCommissionRules.SalesManagerShareRate);
-        var platformEuro = SalesCommissionRules.ShareEuro(
-            purchaseAmountEuro, SalesCommissionRules.PlatformShareRate);
+        var smEuro = SalesCommissionRules.ShareEuro(purchaseAmountEuro, appliedDirectRate);
+        var indirectEuro = SalesCommissionRules.ShareEuro(purchaseAmountEuro, appliedIndirectRate);
+        var platformRate = SalesCommissionRules.PlatformShareRate(appliedDirectRate, appliedIndirectRate);
+        var platformEuro = SalesCommissionRules.ShareEuro(purchaseAmountEuro, platformRate);
 
         if (ambassadorTokens > 0)
         {
@@ -74,12 +102,28 @@ public sealed class RevenueShareService : IRevenueShareService
                 tokenCheckoutId,
                 purchaseAmountEuro,
                 firstYearStartedAt,
+                directRate,
+                durationDays,
+                cancellationToken);
+        }
+
+        if (indirectEuro > 0 && referringSmId is Guid parentSmId)
+        {
+            await _commissions.TryCreditIndirectTokenCommissionAsync(
+                parentSmId,
+                companyId,
+                tokenCheckoutId,
+                purchaseAmountEuro,
+                firstYearStartedAt,
+                indirectRateConfigured,
+                durationDays,
                 cancellationToken);
         }
 
         var now = DateTime.UtcNow;
-        _db.RevenueShareLogs.AddRange(
-            new RevenueShareLog
+        var logs = new List<RevenueShareLog>
+        {
+            new()
             {
                 Id = Guid.NewGuid(),
                 TokenCheckoutId = tokenCheckoutId,
@@ -92,7 +136,7 @@ public sealed class RevenueShareService : IRevenueShareService
                 Tokens = ambassadorTokens,
                 CreatedAtUtc = now
             },
-            new RevenueShareLog
+            new()
             {
                 Id = Guid.NewGuid(),
                 TokenCheckoutId = tokenCheckoutId,
@@ -100,23 +144,43 @@ public sealed class RevenueShareService : IRevenueShareService
                 CompanyId = companyId,
                 RecipientUserId = salesManagerUserId,
                 RecipientKind = RevenueShareRecipientKind.SalesManager,
-                Percentage = SalesCommissionRules.SalesManagerShareRate * 100m,
+                Percentage = appliedDirectRate * 100m,
                 AmountEuro = smEuro,
                 Tokens = null,
                 CreatedAtUtc = now
             },
-            new RevenueShareLog
+            new()
             {
                 Id = Guid.NewGuid(),
                 TokenCheckoutId = tokenCheckoutId,
                 TokenTransactionId = purchaseTokenTransactionId,
                 CompanyId = companyId,
                 RecipientKind = RevenueShareRecipientKind.Platform,
-                Percentage = SalesCommissionRules.PlatformShareRate * 100m,
+                Percentage = platformRate * 100m,
                 AmountEuro = platformEuro,
                 Tokens = null,
                 CreatedAtUtc = now
+            }
+        };
+
+        if (referringSmId is Guid indirectUserId && appliedIndirectRate > 0)
+        {
+            logs.Add(new RevenueShareLog
+            {
+                Id = Guid.NewGuid(),
+                TokenCheckoutId = tokenCheckoutId,
+                TokenTransactionId = purchaseTokenTransactionId,
+                CompanyId = companyId,
+                RecipientUserId = indirectUserId,
+                RecipientKind = RevenueShareRecipientKind.IndirectSalesManager,
+                Percentage = appliedIndirectRate * 100m,
+                AmountEuro = indirectEuro,
+                Tokens = null,
+                CreatedAtUtc = now
             });
+        }
+
+        _db.RevenueShareLogs.AddRange(logs);
 
         try
         {

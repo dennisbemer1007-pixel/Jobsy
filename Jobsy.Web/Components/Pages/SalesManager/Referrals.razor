@@ -1,0 +1,157 @@
+@page "/salesmanager/referrals"
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
+@attribute [Authorize(Roles = "SalesManager")]
+@inject JobsyApiClient Api
+@inject CultureState Culture
+@implements IDisposable
+
+<PageTitle>@Culture["Sales.Referrals"] · Lobsy</PageTitle>
+
+<section class="panel-page">
+    <header class="panel-header">
+        <div>
+            <h1>@Culture["Sales.Referrals"]</h1>
+            <p class="login-lead">@Culture["Sales.ReferralsLead"]</p>
+        </div>
+        <a class="auth-link" href="/home">← Dashboard</a>
+    </header>
+
+    @if (_loading)
+    {
+        <p class="state-message">@Culture["Common.Loading"]</p>
+    }
+    else if (!string.IsNullOrEmpty(_error))
+    {
+        <p class="state-message error">@_error</p>
+    }
+    else if (_dashboard is not null && !_dashboard.IsOnboardingComplete)
+    {
+        <p class="state-message">Rond eerst je onboarding af om een trackingcode te ontvangen.</p>
+        <a class="login-submit" href="/salesmanager/onboarding" style="display:inline-block;text-decoration:none;text-align:center">Start onboarding</a>
+    }
+    else if (_dashboard is not null && !_dashboard.CanRecruitSalesManagers)
+    {
+        <section class="panel-section">
+            <p class="state-message">
+                Jouw account is via een referral aangemaakt. Je kunt ondernemers werven met je trackingcode,
+                maar geen nieuwe salesmanagers aanbevelen (maximaal één wervingslaag).
+            </p>
+            <p class="muted">Jouw trackingcode: <strong>@_dashboard.TrackingCode</strong></p>
+        </section>
+    }
+    else
+    {
+        <section class="panel-section">
+            <h2>Nieuwe salesmanager aanbevelen</h2>
+            <p class="muted">
+                Gebruik je trackingcode <strong>@_dashboard?.TrackingCode</strong>. Admin beoordeelt elke aanbeveling voordat een account wordt aangemaakt.
+            </p>
+            <form class="login-form" style="max-width:520px" @onsubmit="SubmitAsync" @onsubmit:preventDefault>
+                <label>Naam kandidaat <input @bind="_name" required maxlength="256" /></label>
+                <label>E-mail kandidaat <input type="email" @bind="_email" required maxlength="256" /></label>
+                <label>
+                    Korte motivatie
+                    <textarea @bind="_motivation" required minlength="10" maxlength="1000" rows="4"
+                              placeholder="Waarom is deze persoon een goede salesmanager?"></textarea>
+                </label>
+                <button class="login-submit" type="submit" disabled="@_busy">Indienen ter goedkeuring</button>
+            </form>
+            @if (!string.IsNullOrEmpty(_message))
+            {
+                <p class="state-message">@_message</p>
+            }
+        </section>
+
+        <section class="panel-section">
+            <h2>Mijn aanbevelingen</h2>
+            @if (_apps.Count == 0)
+            {
+                <p class="muted">Nog geen aanbevelingen ingediend.</p>
+            }
+            else
+            {
+                <div class="table-list">
+                    @foreach (var app in _apps)
+                    {
+                        <div class="table-row">
+                            <div>
+                                <strong>@app.CandidateFullName</strong>
+                                <div class="muted">@app.CandidateEmail · @app.Status · @app.CreatedAtUtc.ToLocalTime().ToString("g")</div>
+                                <div class="muted">@app.Motivation</div>
+                                @if (!string.IsNullOrEmpty(app.RejectionReason))
+                                {
+                                    <div class="muted">Reden afwijzing: @app.RejectionReason</div>
+                                }
+                            </div>
+                            <span>@app.ReferrerTrackingCode</span>
+                        </div>
+                    }
+                </div>
+            }
+        </section>
+    }
+</section>
+
+@code {
+    private SalesManagerDashboard? _dashboard;
+    private List<SalesManagerApplicationItem> _apps = [];
+    private string _name = "";
+    private string _email = "";
+    private string _motivation = "";
+    private string? _error;
+    private string? _message;
+    private bool _loading = true;
+    private bool _busy;
+
+    protected override void OnInitialized() => Culture.Changed += OnCultureChanged;
+    private void OnCultureChanged() => InvokeAsync(StateHasChanged);
+    public void Dispose() => Culture.Changed -= OnCultureChanged;
+
+    protected override async Task OnInitializedAsync() => await ReloadAsync();
+
+    private async Task ReloadAsync()
+    {
+        _loading = true;
+        _error = null;
+        try
+        {
+            _dashboard = await Api.GetMySalesManagerDashboardAsync();
+            if (_dashboard?.CanRecruitSalesManagers == true && _dashboard.IsOnboardingComplete)
+            {
+                _apps = await Api.GetMySalesManagerApplicationsAsync();
+            }
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private async Task SubmitAsync()
+    {
+        _busy = true;
+        _error = null;
+        _message = null;
+        try
+        {
+            await Api.SubmitSalesManagerApplicationAsync(_email.Trim(), _name.Trim(), _motivation.Trim());
+            _message = "Aanbeveling ingediend. Admin beoordeelt deze voordat een account wordt aangemaakt.";
+            _name = "";
+            _email = "";
+            _motivation = "";
+            _apps = await Api.GetMySalesManagerApplicationsAsync();
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+}

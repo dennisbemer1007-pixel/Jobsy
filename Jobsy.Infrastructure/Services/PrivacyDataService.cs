@@ -509,6 +509,7 @@ public sealed class PrivacyDataService : IPrivacyDataService
             {
                 CommissionEntryKind.FounderBonus => "Founder-bonus (geanonimiseerd)",
                 CommissionEntryKind.TokenCommission => "Tokencommissie (geanonimiseerd)",
+                CommissionEntryKind.IndirectTokenCommission => "Indirecte commissie (geanonimiseerd)",
                 CommissionEntryKind.Payout => "Self-billing uitbetaling",
                 _ => "Aanpassing (geanonimiseerd)"
             };
@@ -521,6 +522,40 @@ public sealed class PrivacyDataService : IPrivacyDataService
         foreach (var company in referred)
         {
             company.ReferredBySalesManagerUserId = null;
+        }
+
+        // Detach SM→SM hierarchy links and scrub pending/closed applications.
+        var referredProfiles = await _db.SalesManagerProfiles
+            .Where(p => p.ReferredBySalesManagerUserId == user.Id)
+            .ToListAsync(cancellationToken);
+        foreach (var child in referredProfiles)
+        {
+            child.ReferredBySalesManagerUserId = null;
+            child.CanRecruitSalesManagers = false;
+            child.UpdatedAt = DateTime.UtcNow;
+        }
+
+        if (salesProfile is not null)
+        {
+            salesProfile.ReferredBySalesManagerUserId = null;
+            salesProfile.CanRecruitSalesManagers = false;
+        }
+
+        var smApplications = await _db.SalesManagerApplications
+            .Where(a => a.ReferrerSalesManagerUserId == user.Id
+                        || a.ProvisionedUserId == user.Id
+                        || a.ReviewedByAdminUserId == user.Id)
+            .ToListAsync(cancellationToken);
+        foreach (var smApp in smApplications)
+        {
+            smApp.CandidateFullName = "Verwijderde kandidaat";
+            smApp.CandidateEmail = $"deleted-{smApp.Id:N}@anonymized.local";
+            smApp.Motivation = "Geanonimiseerd";
+            smApp.RejectionReason = null;
+            if (smApp.ReviewedByAdminUserId == user.Id)
+            {
+                smApp.ReviewedByAdminUserId = null;
+            }
         }
 
         user.Email = anonymizedEmail;

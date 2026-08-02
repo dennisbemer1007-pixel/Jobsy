@@ -21,6 +21,19 @@ public class SalesManagerProfile
     /// <summary>Unique referral code; null until onboarding + agreement are complete.</summary>
     public string? TrackingCode { get; set; }
 
+    /// <summary>
+    /// Salesmanager who recommended this account (null for Admin-created / tier-0 managers).
+    /// Hierarchy is one tier deep: referred managers cannot recruit further.
+    /// </summary>
+    public Guid? ReferredBySalesManagerUserId { get; set; }
+    public User? ReferredBySalesManagerUser { get; set; }
+
+    /// <summary>
+    /// Whether this salesmanager may submit recommendations for new salesmanagers.
+    /// Admin-created managers default to true; referred (tier-1) managers are false.
+    /// </summary>
+    public bool CanRecruitSalesManagers { get; set; } = true;
+
     public DateTime? AgreementSignedAt { get; set; }
     public string? AgreementVersion { get; set; }
     public DateTime? OnboardingCompletedAt { get; set; }

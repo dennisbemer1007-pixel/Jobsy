@@ -112,6 +112,7 @@ Onvoldoende tokens bij publiceren → `PendingApproval` (EM/Admin keurt goed).
 | Route | Inhoud |
 |-------|--------|
 | `/home` / `/salesmanager` | Dashboard, trackingcode, commissiesaldo |
+| `/salesmanager/referrals` | Aanbevelingen voor nieuwe salesmanagers (alleen tier-0) |
 | `/salesmanager/onboarding` | Bedrijfsgegevens + overeenkomst → trackingcode |
 | `/salesmanager/invoices` | Self-billing / uitbetaling |
 
@@ -130,8 +131,8 @@ Gekoppelde ondernemers (via trackingcode) krijgen nav **“Mijn Saldo & Tracking
 | `/home` | Platform-KPI’s (Bento, sparklines/ringen, Top/Flop vacatures) + drilldown |
 | `/admin/companies` · `/admin/users` · `/admin/vacancies` | Beheer |
 | `/admin/finance` · `/admin/tokens` | Finance KPI + tokenlog / grant |
-| `/admin/sales` | Sales beheer: tokenwaarde, tarieven per vacaturetype, pakketten, highlight-toeslagen |
-| `/admin/sales-managers` | Salesmanagers, trackingcodes, suppliers |
+| `/admin/sales` | Sales beheer: tokenwaarde, commissie-% (direct/indirect), duur, tarieven, pakketten, highlights |
+| `/admin/sales-managers` | Salesmanagers, aanbevelingen (approve/reject), trackingcodes, suppliers |
 | `/admin/logging` · `/admin/settings` · `/admin/integrations` | Logs, pricing/PushBom/early-adapter, integratie-pings |
 | `/admin/wages` | WML + semi-annual update-stub |
 | `/admin` · `/admin/cockpit` | Redirect → `/home` |
@@ -148,6 +149,7 @@ Gekoppelde ondernemers (via trackingcode) krijgen nav **“Mijn Saldo & Tracking
 |-------|--------|
 | `/home` | Dashboard: trackingcode, saldo, suppliers, commissies |
 | `/salesmanager/toolkit` | Partnerlink, PDF-flyer, WhatsApp/mail delen, actuele tarieven |
+| `/salesmanager/referrals` | SM-aanbevelingen indienen / status (tier-0 only) |
 | `/salesmanager/onboarding` | KvK/BTW/NAW + overeenkomst → trackingcode |
 | `/salesmanager/invoices` | Self-billing / uitbetalen |
 | `/partner/{code}` | Publieke partnerpagina met ingebedde salescode |

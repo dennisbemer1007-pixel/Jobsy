@@ -20,13 +20,32 @@ public interface ICommissionLedgerService
         int? firstYearSlot,
         CancellationToken cancellationToken = default);
 
-    /// <summary>Credits token commission after token checkout Credited. Idempotent on checkout id.</summary>
+    /// <summary>
+    /// Credits direct token commission after token checkout Credited.
+    /// Idempotent on (checkout id, salesmanager, kind).
+    /// </summary>
     Task<CommissionLedgerEntry?> TryCreditTokenCommissionAsync(
         Guid salesManagerUserId,
         Guid companyId,
         Guid tokenCheckoutId,
         decimal purchaseAmountEuro,
         DateTime? firstYearStartedAt,
+        decimal? directRate = null,
+        int? durationDays = null,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Credits passive indirect commission to the referring salesmanager.
+    /// Idempotent on (checkout id, salesmanager, kind).
+    /// </summary>
+    Task<CommissionLedgerEntry?> TryCreditIndirectTokenCommissionAsync(
+        Guid referringSalesManagerUserId,
+        Guid companyId,
+        Guid tokenCheckoutId,
+        decimal purchaseAmountEuro,
+        DateTime? firstYearStartedAt,
+        decimal? indirectRate = null,
+        int? durationDays = null,
         CancellationToken cancellationToken = default);
 
     Task AttachEntriesToInvoiceAsync(

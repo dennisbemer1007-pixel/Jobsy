@@ -32,5 +32,7 @@ public enum CommissionEntryKind
     FounderBonus = 0,
     TokenCommission = 1,
     Payout = 2,
-    Adjustment = 3
+    Adjustment = 3,
+    /// <summary>Passive referral bonus for the SM who referred the primary salesmanager.</summary>
+    IndirectTokenCommission = 4
 }

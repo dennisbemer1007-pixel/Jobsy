@@ -212,5 +212,7 @@ public sealed class SalesManagerOnboardingService : ISalesManagerOnboardingServi
             profile?.AgreementSignedAt,
             profile?.AgreementVersion,
             profile?.OnboardingCompletedAt,
-            profile?.IsOnboardingComplete == true);
+            profile?.IsOnboardingComplete == true,
+            profile?.CanRecruitSalesManagers ?? true,
+            profile?.ReferredBySalesManagerUserId);
 }

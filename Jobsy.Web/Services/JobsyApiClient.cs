@@ -1090,6 +1090,9 @@ public sealed class JobsyApiClient : IAsyncDisposable
         decimal highlightPulseTokens,
         int highlightCarouselDays,
         decimal startHighlightBonusTokens,
+        decimal? directCommissionRate = null,
+        decimal? indirectCommissionRate = null,
+        int? commissionDurationDays = null,
         CancellationToken ct = default)
     {
         var response = await _http.PutAsJsonAsync(
@@ -1100,7 +1103,10 @@ public sealed class JobsyApiClient : IAsyncDisposable
                 highlightCarouselTokens,
                 highlightPulseTokens,
                 highlightCarouselDays,
-                startHighlightBonusTokens
+                startHighlightBonusTokens,
+                directCommissionRate,
+                indirectCommissionRate,
+                commissionDurationDays
             },
             ct);
         response.EnsureSuccessStatusCode();
@@ -1852,6 +1858,70 @@ public sealed class JobsyApiClient : IAsyncDisposable
         return await response.Content.ReadFromJsonAsync<SalesManagerInviteResult>(cancellationToken: ct);
     }
 
+    public async Task<SalesManagerApplicationItem?> SubmitSalesManagerApplicationAsync(
+        string candidateEmail,
+        string candidateFullName,
+        string motivation,
+        CancellationToken ct = default)
+    {
+        var response = await _http.PostAsJsonAsync(
+            "api/sales-managers/me/applications",
+            new { candidateEmail, candidateFullName, motivation },
+            ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException(ExtractMessage(body) ?? "Aanbeveling indienen mislukt.");
+        }
+
+        return await response.Content.ReadFromJsonAsync<SalesManagerApplicationItem>(cancellationToken: ct);
+    }
+
+    public async Task<List<SalesManagerApplicationItem>> GetMySalesManagerApplicationsAsync(
+        CancellationToken ct = default)
+        => await _http.GetFromJsonAsync<List<SalesManagerApplicationItem>>(
+               "api/sales-managers/me/applications", ct) ?? [];
+
+    public async Task<List<SalesManagerApplicationItem>> GetSalesManagerApplicationsAsync(
+        bool pendingOnly = true,
+        CancellationToken ct = default)
+        => await _http.GetFromJsonAsync<List<SalesManagerApplicationItem>>(
+               $"api/sales-managers/applications?pendingOnly={pendingOnly.ToString().ToLowerInvariant()}",
+               ct) ?? [];
+
+    public async Task<SalesManagerApplicationItem?> ApproveSalesManagerApplicationAsync(
+        Guid applicationId,
+        CancellationToken ct = default)
+    {
+        var response = await _http.PostAsync(
+            $"api/sales-managers/applications/{applicationId:D}/approve", null, ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException(ExtractMessage(body) ?? "Goedkeuren mislukt.");
+        }
+
+        return await response.Content.ReadFromJsonAsync<SalesManagerApplicationItem>(cancellationToken: ct);
+    }
+
+    public async Task<SalesManagerApplicationItem?> RejectSalesManagerApplicationAsync(
+        Guid applicationId,
+        string? reason = null,
+        CancellationToken ct = default)
+    {
+        var response = await _http.PostAsJsonAsync(
+            $"api/sales-managers/applications/{applicationId:D}/reject",
+            new { reason },
+            ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException(ExtractMessage(body) ?? "Afwijzen mislukt.");
+        }
+
+        return await response.Content.ReadFromJsonAsync<SalesManagerApplicationItem>(cancellationToken: ct);
+    }
+
     public async Task<List<SalesManagerListItem>> GetSalesManagersAsync(CancellationToken ct = default)
         => await _http.GetFromJsonAsync<List<SalesManagerListItem>>("api/sales-managers", ct) ?? [];
 
@@ -2265,6 +2335,8 @@ public sealed class SalesManagerListItem
     public bool IsOnboardingComplete { get; set; }
     public decimal BalanceExVat { get; set; }
     public int SupplierCount { get; set; }
+    public bool CanRecruitSalesManagers { get; set; } = true;
+    public Guid? ReferredBySalesManagerUserId { get; set; }
 }
 
 public sealed class SalesManagerDashboard
@@ -2281,6 +2353,26 @@ public sealed class SalesManagerDashboard
     public List<ReferredSupplierItem> Suppliers { get; set; } = [];
     public List<CommissionEntryItem> RecentLedger { get; set; } = [];
     public List<SelfBillingInvoiceItem> Invoices { get; set; } = [];
+    public bool CanRecruitSalesManagers { get; set; } = true;
+    public Guid? ReferredBySalesManagerUserId { get; set; }
+}
+
+public sealed class SalesManagerApplicationItem
+{
+    public Guid Id { get; set; }
+    public Guid ReferrerSalesManagerUserId { get; set; }
+    public string ReferrerFullName { get; set; } = string.Empty;
+    public string ReferrerEmail { get; set; } = string.Empty;
+    public string ReferrerTrackingCode { get; set; } = string.Empty;
+    public string CandidateEmail { get; set; } = string.Empty;
+    public string CandidateFullName { get; set; } = string.Empty;
+    public string Motivation { get; set; } = string.Empty;
+    public string Status { get; set; } = string.Empty;
+    public DateTime CreatedAtUtc { get; set; }
+    public DateTime? ReviewedAtUtc { get; set; }
+    public Guid? ProvisionedUserId { get; set; }
+    public string? RejectionReason { get; set; }
+    public string? TemporaryPassword { get; set; }
 }
 
 public sealed class ReferredSupplierItem
@@ -2529,6 +2621,9 @@ public sealed class SalesCommercialAdminModel
     public DateTime UpdatedAtUtc { get; set; }
     public List<VacancyTypeCostItem> VacancyTypeCosts { get; set; } = [];
     public List<SalesPackageItem> Packages { get; set; } = [];
+    public decimal DirectCommissionRate { get; set; } = 0.15m;
+    public decimal IndirectCommissionRate { get; set; } = 0.03m;
+    public int CommissionDurationDays { get; set; } = 365;
 }
 
 public sealed class VacancyTypeCostItem

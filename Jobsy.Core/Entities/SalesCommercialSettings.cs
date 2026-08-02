@@ -25,5 +25,22 @@ public class SalesCommercialSettings
     /// </summary>
     public decimal StartHighlightBonusTokens { get; set; } = 2m;
 
+    /// <summary>
+    /// Direct commission rate for the primary salesmanager on platform earnings
+    /// from each onboarded entrepreneur (default 15%). Configurable by Admin.
+    /// </summary>
+    public decimal DirectCommissionRate { get; set; } = 0.15m;
+
+    /// <summary>
+    /// Passive referral bonus for the salesmanager who referred the primary salesmanager
+    /// (default 3%). Configurable by Admin. Applies only when a referrer exists.
+    /// </summary>
+    public decimal IndirectCommissionRate { get; set; } = 0.03m;
+
+    /// <summary>
+    /// Maximum duration (days) commission accrues for an onboarded entrepreneur (default 365 = 1 year).
+    /// </summary>
+    public int CommissionDurationDays { get; set; } = 365;
+
     public DateTime UpdatedAtUtc { get; set; } = DateTime.UtcNow;
 }

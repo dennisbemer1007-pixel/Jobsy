@@ -69,6 +69,9 @@ public partial class SalesCommercialController : ControllerBase
                 request.HighlightPulseTokens,
                 request.HighlightCarouselDays,
                 request.StartHighlightBonusTokens,
+                request.DirectCommissionRate,
+                request.IndirectCommissionRate,
+                request.CommissionDurationDays,
                 cancellationToken);
             return Ok(new
             {
@@ -78,6 +81,9 @@ public partial class SalesCommercialController : ControllerBase
                 settings.HighlightPulseTokens,
                 settings.HighlightCarouselDays,
                 settings.StartHighlightBonusTokens,
+                settings.DirectCommissionRate,
+                settings.IndirectCommissionRate,
+                settings.CommissionDurationDays,
                 settings.UpdatedAtUtc
             });
         }

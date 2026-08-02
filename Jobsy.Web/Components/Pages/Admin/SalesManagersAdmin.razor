@@ -16,7 +16,8 @@
         <a class="admin-sublink admin-sublink--active" href="/admin/sales-managers" aria-current="page">Salesmanagers</a>
     </div>
     <section class="panel-section">
-        <h2>Uitnodigen</h2>
+        <h2>Direct uitnodigen (Admin)</h2>
+        <p class="muted">Alleen Admin kan initiële (tier-0) salesmanagers aanmaken die zelf mogen werven.</p>
         <form class="login-form" style="max-width:480px" @onsubmit="InviteAsync" @onsubmit:preventDefault>
             <label>Naam <input @bind="_inviteName" required /></label>
             <label>E-mail <input type="email" @bind="_inviteEmail" required /></label>
@@ -40,6 +41,41 @@
     else
     {
         <section class="panel-section">
+            <h2>Openstaande aanbevelingen</h2>
+            <p class="muted">Salesmanagers kunnen kandidaten voordragen; goedkeuring door Admin is verplicht vóór accountprovisioning.</p>
+            @if (_applications.Count == 0)
+            {
+                <p class="muted">Geen openstaande aanbevelingen.</p>
+            }
+            else
+            {
+                <div class="table-list">
+                    @foreach (var app in _applications)
+                    {
+                        <div class="table-row" style="flex-wrap:wrap;gap:0.75rem">
+                            <div style="flex:1;min-width:14rem">
+                                <strong>@app.CandidateFullName</strong>
+                                <div class="muted">@app.CandidateEmail</div>
+                                <div class="muted">Via @app.ReferrerFullName (@app.ReferrerTrackingCode)</div>
+                                <div>@app.Motivation</div>
+                            </div>
+                            <div class="inline-actions">
+                                <button type="button" class="btn-compact btn-compact--primary" disabled="@_busy"
+                                        @onclick="() => ApproveAsync(app.Id)">Goedkeuren</button>
+                                <button type="button" class="btn-compact" disabled="@_busy"
+                                        @onclick="() => RejectAsync(app.Id)">Afwijzen</button>
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+            @if (!string.IsNullOrEmpty(_applicationResult))
+            {
+                <p class="state-message">@_applicationResult</p>
+            }
+        </section>
+
+        <section class="panel-section">
             <h2>Overzicht</h2>
             <div class="table-list">
                 @foreach (var sm in _list)
@@ -47,7 +83,10 @@
                     <button type="button" class="table-row table-row--link" @onclick="() => SelectAsync(sm.UserId)">
                         <div>
                             <strong>@sm.FullName</strong>
-                            <div class="muted">@sm.Email · @(sm.TrackingCode ?? "geen code") · @sm.SupplierCount suppliers</div>
+                            <div class="muted">
+                                @sm.Email · @(sm.TrackingCode ?? "geen code") · @sm.SupplierCount suppliers
+                                · @(sm.CanRecruitSalesManagers ? "mag werven" : "referral (geen werving)")
+                            </div>
                         </div>
                         <span>€ @sm.BalanceExVat.ToString("0.00")</span>
                     </button>
@@ -111,10 +150,12 @@
 
 @code {
     private List<SalesManagerListItem> _list = [];
+    private List<SalesManagerApplicationItem> _applications = [];
     private SalesManagerDashboard? _selected;
     private string _inviteName = "";
     private string _inviteEmail = "";
     private string? _inviteResult;
+    private string? _applicationResult;
     private string? _error;
     private bool _loading = true;
     private bool _busy;
@@ -137,6 +178,7 @@
         try
         {
             _list = await Api.GetSalesManagersAsync();
+            _applications = await Api.GetSalesManagerApplicationsAsync(pendingOnly: true);
         }
         catch (Exception ex)
         {
@@ -145,6 +187,52 @@
         finally
         {
             _loading = false;
+        }
+    }
+
+    private async Task ApproveAsync(Guid applicationId)
+    {
+        _busy = true;
+        _error = null;
+        _applicationResult = null;
+        try
+        {
+            var result = await Api.ApproveSalesManagerApplicationAsync(applicationId);
+            _applicationResult = result is null
+                ? "Goedgekeurd."
+                : string.IsNullOrEmpty(result.TemporaryPassword)
+                    ? $"Goedgekeurd: {result.CandidateEmail}. Account is aangemaakt (wachtwoord via e-mail-stub)."
+                    : $"Goedgekeurd: {result.CandidateEmail}. Tijdelijk wachtwoord (Development): {result.TemporaryPassword}";
+            await ReloadListAsync();
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private async Task RejectAsync(Guid applicationId)
+    {
+        _busy = true;
+        _error = null;
+        _applicationResult = null;
+        try
+        {
+            await Api.RejectSalesManagerApplicationAsync(applicationId, "Afgewezen door admin");
+            _applicationResult = "Aanbeveling afgewezen.";
+            await ReloadListAsync();
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _busy = false;
         }
     }
 

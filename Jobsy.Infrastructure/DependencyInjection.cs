@@ -134,6 +134,7 @@ public static class DependencyInjection
         services.AddScoped<IAboutPageSettingsService, AboutPageSettingsService>();
         services.AddScoped<ICompanyRegistrationService, CompanyRegistrationService>();
         services.AddScoped<ISalesManagerInviteService, SalesManagerInviteService>();
+        services.AddScoped<ISalesManagerApplicationService, SalesManagerApplicationService>();
         services.AddScoped<ISalesManagerOnboardingService, SalesManagerOnboardingService>();
         services.AddScoped<ICommissionLedgerService, CommissionLedgerService>();
         services.AddScoped<IRevenueShareService, RevenueShareService>();

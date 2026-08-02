@@ -22,7 +22,9 @@ public sealed record SalesManagerDashboardDto(
     decimal OutstandingIssuedExVat,
     IReadOnlyList<ReferredSupplierDto> Suppliers,
     IReadOnlyList<CommissionEntryDto> RecentLedger,
-    IReadOnlyList<SelfBillingInvoiceDto> Invoices);
+    IReadOnlyList<SelfBillingInvoiceDto> Invoices,
+    bool CanRecruitSalesManagers = true,
+    Guid? ReferredBySalesManagerUserId = null);
 
 public sealed record ReferredSupplierDto(
     Guid CompanyId,
@@ -61,4 +63,6 @@ public sealed record SalesManagerListItemDto(
     string? TrackingCode,
     bool IsOnboardingComplete,
     decimal BalanceExVat,
-    int SupplierCount);
+    int SupplierCount,
+    bool CanRecruitSalesManagers = true,
+    Guid? ReferredBySalesManagerUserId = null);

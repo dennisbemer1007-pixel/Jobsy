@@ -7,7 +7,10 @@ public record UpdateSalesCommercialSettingsRequest(
     decimal HighlightCarouselTokens,
     decimal HighlightPulseTokens,
     int HighlightCarouselDays,
-    decimal StartHighlightBonusTokens);
+    decimal StartHighlightBonusTokens,
+    decimal? DirectCommissionRate = null,
+    decimal? IndirectCommissionRate = null,
+    int? CommissionDurationDays = null);
 
 public record UpdateVacancyTypeCostRequest(
     VacancyKind Kind,

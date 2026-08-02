@@ -5,6 +5,8 @@ Alle noemenswaardige wijzigingen aan dit project worden in dit bestand bijgehoud
 ## [Unreleased]
 
 ### Added
+- Salesmanager multi-level referral (één laag): Admin maakt tier-0 aan; tier-0 dient aanbevelingen in; Admin keurt goed vóór provisioning; tier-1 kan niet verder werven.
+- Configureerbare commissies (defaults 15% direct / 3% indirect, max. 1 jaar per ondernemer) op `/admin/sales`; ledger + `RevenueShareLogs` voor indirecte bonus.
 - Bedrijfsregistratie: gekozen wachtwoord bij submit, e-mailverificatie, daarna dual login (e-mail/wachtwoord of Microsoft Entra met hetzelfde adres).
 - Automatische KVK/SBI-roltoekenning: SBI `78*` → Intermediair; overig Organization-scope → Bedrijfsmanager (EnterpriseManager).
 - Quality gate 456: takeover e-mailverificatie vóór inbox/approve; pending `PasswordHash` gewist bij cancel/reject/expiry/anonymize; intermediair-takeover detacht van employer-org.

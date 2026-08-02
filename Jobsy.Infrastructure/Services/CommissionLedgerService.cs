@@ -103,25 +103,84 @@ public sealed class CommissionLedgerService : ICommissionLedgerService
         }
     }
 
-    public async Task<CommissionLedgerEntry?> TryCreditTokenCommissionAsync(
+    public Task<CommissionLedgerEntry?> TryCreditTokenCommissionAsync(
         Guid salesManagerUserId,
         Guid companyId,
         Guid tokenCheckoutId,
         decimal purchaseAmountEuro,
         DateTime? firstYearStartedAt,
+        decimal? directRate = null,
+        int? durationDays = null,
         CancellationToken cancellationToken = default)
     {
-        var rate = SalesCommissionRules.TokenCommissionRate(firstYearStartedAt, DateTime.UtcNow);
+        var rate = SalesCommissionRules.TokenCommissionRate(
+            firstYearStartedAt,
+            DateTime.UtcNow,
+            directRate ?? SalesCommissionRules.DefaultDirectCommissionRate,
+            durationDays ?? SalesCommissionRules.DefaultCommissionDurationDays);
+
+        return CreditCheckoutCommissionAsync(
+            salesManagerUserId,
+            companyId,
+            tokenCheckoutId,
+            purchaseAmountEuro,
+            rate,
+            CommissionEntryKind.TokenCommission,
+            "Directe commissie",
+            cancellationToken);
+    }
+
+    public Task<CommissionLedgerEntry?> TryCreditIndirectTokenCommissionAsync(
+        Guid referringSalesManagerUserId,
+        Guid companyId,
+        Guid tokenCheckoutId,
+        decimal purchaseAmountEuro,
+        DateTime? firstYearStartedAt,
+        decimal? indirectRate = null,
+        int? durationDays = null,
+        CancellationToken cancellationToken = default)
+    {
+        var rate = SalesCommissionRules.IndirectCommissionRate(
+            firstYearStartedAt,
+            DateTime.UtcNow,
+            indirectRate ?? SalesCommissionRules.DefaultIndirectCommissionRate,
+            durationDays ?? SalesCommissionRules.DefaultCommissionDurationDays);
+
+        return CreditCheckoutCommissionAsync(
+            referringSalesManagerUserId,
+            companyId,
+            tokenCheckoutId,
+            purchaseAmountEuro,
+            rate,
+            CommissionEntryKind.IndirectTokenCommission,
+            "Indirecte referral-bonus",
+            cancellationToken);
+    }
+
+    private async Task<CommissionLedgerEntry?> CreditCheckoutCommissionAsync(
+        Guid salesManagerUserId,
+        Guid companyId,
+        Guid tokenCheckoutId,
+        decimal purchaseAmountEuro,
+        decimal? rate,
+        CommissionEntryKind kind,
+        string notePrefix,
+        CancellationToken cancellationToken)
+    {
         if (rate is null || purchaseAmountEuro <= 0)
         {
             return null;
         }
 
-        if (await _db.CommissionLedgerEntries.AnyAsync(
-                e => e.SourceTokenCheckoutId == tokenCheckoutId, cancellationToken))
+        var existing = await _db.CommissionLedgerEntries
+            .FirstOrDefaultAsync(
+                e => e.SourceTokenCheckoutId == tokenCheckoutId
+                     && e.SalesManagerUserId == salesManagerUserId
+                     && e.Kind == kind,
+                cancellationToken);
+        if (existing is not null)
         {
-            return await _db.CommissionLedgerEntries
-                .FirstAsync(e => e.SourceTokenCheckoutId == tokenCheckoutId, cancellationToken);
+            return existing;
         }
 
         var amountEx = decimal.Round(purchaseAmountEuro * rate.Value, 2, MidpointRounding.AwayFromZero);
@@ -134,18 +193,30 @@ public sealed class CommissionLedgerService : ICommissionLedgerService
         {
             Id = Guid.NewGuid(),
             SalesManagerUserId = salesManagerUserId,
-            Kind = CommissionEntryKind.TokenCommission,
+            Kind = kind,
             AmountExVat = amountEx,
             VatAmount = SalesCommissionRules.VatOn(amountEx),
             VatRate = SalesCommissionRules.VatRate,
-            Note = $"Revenue-share salesmanager {(rate.Value * 100):0}% over €{purchaseAmountEuro:0.00}",
+            Note = $"{notePrefix} {(rate.Value * 100):0.##}% over €{purchaseAmountEuro:0.00}",
             CompanyId = companyId,
             SourceTokenCheckoutId = tokenCheckoutId,
             CreatedAt = DateTime.UtcNow
         };
         _db.CommissionLedgerEntries.Add(entry);
-        await _db.SaveChangesAsync(cancellationToken);
-        return entry;
+        try
+        {
+            await _db.SaveChangesAsync(cancellationToken);
+            return entry;
+        }
+        catch (DbUpdateException)
+        {
+            return await _db.CommissionLedgerEntries
+                .FirstOrDefaultAsync(
+                    e => e.SourceTokenCheckoutId == tokenCheckoutId
+                         && e.SalesManagerUserId == salesManagerUserId
+                         && e.Kind == kind,
+                    cancellationToken);
+        }
     }
 
     public async Task AttachEntriesToInvoiceAsync(

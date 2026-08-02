@@ -12,6 +12,7 @@ namespace Jobsy.Api.Controllers;
 public class SalesManagersController : ControllerBase
 {
     private readonly ISalesManagerInviteService _invite;
+    private readonly ISalesManagerApplicationService _applications;
     private readonly ISalesManagerOnboardingService _onboarding;
     private readonly ISalesManagerDashboardService _dashboard;
     private readonly ISelfBillingInvoiceService _invoices;
@@ -22,6 +23,7 @@ public class SalesManagersController : ControllerBase
 
     public SalesManagersController(
         ISalesManagerInviteService invite,
+        ISalesManagerApplicationService applications,
         ISalesManagerOnboardingService onboarding,
         ISalesManagerDashboardService dashboard,
         ISelfBillingInvoiceService invoices,
@@ -31,6 +33,7 @@ public class SalesManagersController : ControllerBase
         IHostEnvironment environment)
     {
         _invite = invite;
+        _applications = applications;
         _onboarding = onboarding;
         _dashboard = dashboard;
         _invoices = invoices;
@@ -48,7 +51,11 @@ public class SalesManagersController : ControllerBase
     {
         try
         {
-            var result = await _invite.InviteAsync(request.Email, request.FullName, cancellationToken);
+            var result = await _invite.InviteAsync(
+                request.Email,
+                request.FullName,
+                referredBySalesManagerUserId: null,
+                cancellationToken);
             // Temp password only returned in Development (also emailed via stub). Avoid leaking in prod HTTP logs.
             return Ok(new SalesManagerInviteResponse(
                 result.UserId,
@@ -71,6 +78,124 @@ public class SalesManagersController : ControllerBase
     [Authorize(Policy = JobsyPolicies.RequireAdmin)]
     public async Task<ActionResult<IEnumerable<SalesManagerListItemDto>>> List(CancellationToken cancellationToken)
         => Ok(await _dashboard.ListSalesManagersAsync(cancellationToken));
+
+    [HttpPost("me/applications")]
+    [Authorize(Policy = JobsyPolicies.RequireSalesManager)]
+    public async Task<ActionResult<SalesManagerApplicationDto>> SubmitApplication(
+        [FromBody] SubmitSalesManagerApplicationRequest request,
+        CancellationToken cancellationToken)
+    {
+        var user = await _users.FindByPrincipalAsync(User, cancellationToken);
+        if (user is null)
+        {
+            return Unauthorized();
+        }
+
+        try
+        {
+            var dto = await _applications.SubmitAsync(
+                user.Id,
+                request.CandidateEmail,
+                request.CandidateFullName,
+                request.Motivation,
+                cancellationToken);
+            return Ok(dto);
+        }
+        catch (ArgumentException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+    }
+
+    [HttpGet("me/applications")]
+    [Authorize(Policy = JobsyPolicies.RequireSalesManager)]
+    public async Task<ActionResult<IEnumerable<SalesManagerApplicationDto>>> ListMyApplications(
+        CancellationToken cancellationToken)
+    {
+        var user = await _users.FindByPrincipalAsync(User, cancellationToken);
+        if (user is null)
+        {
+            return Unauthorized();
+        }
+
+        return Ok(await _applications.ListMineAsync(user.Id, cancellationToken));
+    }
+
+    [HttpGet("applications")]
+    [Authorize(Policy = JobsyPolicies.RequireAdmin)]
+    public async Task<ActionResult<IEnumerable<SalesManagerApplicationDto>>> ListApplications(
+        [FromQuery] bool pendingOnly = true,
+        CancellationToken cancellationToken = default)
+    {
+        var list = pendingOnly
+            ? await _applications.ListPendingAsync(cancellationToken)
+            : await _applications.ListAllAsync(cancellationToken);
+        return Ok(list);
+    }
+
+    [HttpPost("applications/{applicationId:guid}/approve")]
+    [Authorize(Policy = JobsyPolicies.RequireAdmin)]
+    public async Task<ActionResult<SalesManagerApplicationDto>> ApproveApplication(
+        Guid applicationId,
+        CancellationToken cancellationToken)
+    {
+        var admin = await _users.FindByPrincipalAsync(User, cancellationToken);
+        if (admin is null)
+        {
+            return Unauthorized();
+        }
+
+        try
+        {
+            var dto = await _applications.ApproveAsync(applicationId, admin.Id, cancellationToken);
+            if (!_environment.IsDevelopment())
+            {
+                dto = dto with { TemporaryPassword = null };
+            }
+
+            return Ok(dto);
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(new { message = ex.Message });
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+    }
+
+    [HttpPost("applications/{applicationId:guid}/reject")]
+    [Authorize(Policy = JobsyPolicies.RequireAdmin)]
+    public async Task<ActionResult<SalesManagerApplicationDto>> RejectApplication(
+        Guid applicationId,
+        [FromBody] RejectSalesManagerApplicationRequest? request,
+        CancellationToken cancellationToken)
+    {
+        var admin = await _users.FindByPrincipalAsync(User, cancellationToken);
+        if (admin is null)
+        {
+            return Unauthorized();
+        }
+
+        try
+        {
+            return Ok(await _applications.RejectAsync(
+                applicationId, admin.Id, request?.Reason, cancellationToken));
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(new { message = ex.Message });
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+    }
 
     [HttpGet("me/dashboard")]
     [Authorize(Policy = JobsyPolicies.RequireSalesManager)]
@@ -391,6 +516,13 @@ public record SalesManagerInviteResponse(
     string FullName,
     string? TemporaryPassword,
     bool CreatedNewUser);
+
+public record SubmitSalesManagerApplicationRequest(
+    string CandidateEmail,
+    string CandidateFullName,
+    string Motivation);
+
+public record RejectSalesManagerApplicationRequest(string? Reason = null);
 
 public record UpdateSalesManagerProfileRequest(
     string CompanyName,

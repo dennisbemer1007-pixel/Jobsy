@@ -2,7 +2,8 @@ namespace Jobsy.Core.Rules;
 
 /// <summary>
 /// Pure commission / revenue-share rules for the salesmanager network (ex-VAT amounts).
-/// Token purchases by referred companies split: 15% ambassador, 5% salesmanager, 80% platform.
+/// Defaults: ambassador 15% tokens, direct SM 15% (1 year), indirect referring SM 3%, platform remainder.
+/// Rates and duration are Admin-configurable via <c>SalesCommercialSettings</c>; these constants are defaults.
 /// </summary>
 public static class SalesCommissionRules
 {
@@ -11,20 +12,26 @@ public static class SalesCommissionRules
     public const decimal FounderBonusRate = 0.20m;
     public const int MaxFounderSlots = 10;
 
-    /// <summary>Ambassador (Ondernemer 1) share of token purchase value → company tegoed.</summary>
+    /// <summary>Ambassador (Ondernemer) share of token purchase value → company tegoed.</summary>
     public const decimal AmbassadorShareRate = 0.15m;
 
-    /// <summary>Salesmanager commission on token purchase value.</summary>
-    public const decimal SalesManagerShareRate = 0.05m;
+    /// <summary>Default direct commission for the primary salesmanager (Admin-configurable).</summary>
+    public const decimal DefaultDirectCommissionRate = 0.15m;
 
-    /// <summary>Platform remainder after ambassador + salesmanager shares.</summary>
-    public const decimal PlatformShareRate = 0.80m;
+    /// <summary>Default passive referral bonus for the referring salesmanager (Admin-configurable).</summary>
+    public const decimal DefaultIndirectCommissionRate = 0.03m;
 
-    /// <summary>Legacy alias — fixed 5% salesmanager share (year windows removed).</summary>
-    public const decimal Year1TokenCommissionRate = SalesManagerShareRate;
+    /// <summary>Default commission duration in days for an onboarded entrepreneur (1 year).</summary>
+    public const int DefaultCommissionDurationDays = 365;
 
-    /// <summary>Legacy alias — fixed 5% salesmanager share (year windows removed).</summary>
-    public const decimal Year2TokenCommissionRate = SalesManagerShareRate;
+    /// <summary>Legacy alias for the default direct SM share.</summary>
+    public const decimal SalesManagerShareRate = DefaultDirectCommissionRate;
+
+    /// <summary>Legacy alias — year-1 window uses the configurable direct rate.</summary>
+    public const decimal Year1TokenCommissionRate = DefaultDirectCommissionRate;
+
+    /// <summary>Legacy alias — after the commission window no ongoing SM share.</summary>
+    public const decimal Year2TokenCommissionRate = 0m;
 
     public const string CurrentAgreementVersion = "2026-07-27-sm-mediation";
 
@@ -43,14 +50,61 @@ public static class SalesCommissionRules
         decimal.Round(packSize * AmbassadorShareRate, 2, MidpointRounding.AwayFromZero);
 
     /// <summary>
-    /// Salesmanager token commission rate. Fixed 5% for referred companies (no year window).
-    /// <paramref name="firstYearStartedAt"/> retained for call-site compatibility; ignored.
+    /// Whether commission still accrues for a referred entrepreneur at <paramref name="asOfUtc"/>.
+    /// Window starts at <paramref name="firstYearStartedAt"/> and lasts <paramref name="durationDays"/> (default 365).
     /// </summary>
-    public static decimal? TokenCommissionRate(DateTime? firstYearStartedAt, DateTime asOfUtc)
+    public static bool IsWithinCommissionWindow(
+        DateTime? firstYearStartedAt,
+        DateTime asOfUtc,
+        int durationDays = DefaultCommissionDurationDays)
     {
-        _ = asOfUtc;
-        // Only referred suppliers with a partnership start receive ongoing token commission.
-        return firstYearStartedAt is null ? null : SalesManagerShareRate;
+        if (firstYearStartedAt is null || durationDays <= 0)
+        {
+            return false;
+        }
+
+        var end = firstYearStartedAt.Value.AddDays(durationDays);
+        return asOfUtc < end;
+    }
+
+    /// <summary>
+    /// Direct salesmanager token commission rate when inside the configured window; otherwise null.
+    /// </summary>
+    public static decimal? TokenCommissionRate(
+        DateTime? firstYearStartedAt,
+        DateTime asOfUtc,
+        decimal directRate = DefaultDirectCommissionRate,
+        int durationDays = DefaultCommissionDurationDays)
+    {
+        if (!IsWithinCommissionWindow(firstYearStartedAt, asOfUtc, durationDays))
+        {
+            return null;
+        }
+
+        return directRate < 0 ? null : directRate;
+    }
+
+    /// <summary>
+    /// Indirect (referring) salesmanager rate when inside the window and a positive rate is configured.
+    /// </summary>
+    public static decimal? IndirectCommissionRate(
+        DateTime? firstYearStartedAt,
+        DateTime asOfUtc,
+        decimal indirectRate = DefaultIndirectCommissionRate,
+        int durationDays = DefaultCommissionDurationDays)
+    {
+        if (indirectRate <= 0 || !IsWithinCommissionWindow(firstYearStartedAt, asOfUtc, durationDays))
+        {
+            return null;
+        }
+
+        return indirectRate;
+    }
+
+    public static decimal PlatformShareRate(decimal directRate, decimal indirectRate = 0m)
+    {
+        var remainder = 1m - AmbassadorShareRate - Math.Max(0m, directRate) - Math.Max(0m, indirectRate);
+        return remainder < 0 ? 0m : remainder;
     }
 
     public static bool IsEligibleFounderSlot(int? slot) =>

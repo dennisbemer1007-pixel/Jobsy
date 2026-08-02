@@ -113,7 +113,10 @@ public sealed class SalesCommercialService : ISalesCommercialService
                 c.CostTokens,
                 Math.Round(c.CostTokens * settings.BaseTokenValueEuro, 2),
                 c.IsActive)).ToList(),
-            packages.Select(MapPackage).ToList());
+            packages.Select(MapPackage).ToList(),
+            settings.DirectCommissionRate,
+            settings.IndirectCommissionRate,
+            settings.CommissionDurationDays);
     }
 
     public async Task<SalesCommercialSettings> UpdateSettingsAsync(
@@ -122,6 +125,9 @@ public sealed class SalesCommercialService : ISalesCommercialService
         decimal highlightPulseTokens,
         int highlightCarouselDays,
         decimal startHighlightBonusTokens,
+        decimal? directCommissionRate = null,
+        decimal? indirectCommissionRate = null,
+        int? commissionDurationDays = null,
         CancellationToken cancellationToken = default)
     {
         if (baseTokenValueEuro < 0
@@ -137,12 +143,50 @@ public sealed class SalesCommercialService : ISalesCommercialService
             throw new ArgumentException("Highlight-duur moet tussen 1 en 90 dagen liggen.");
         }
 
+        if (directCommissionRate is < 0 or > 1)
+        {
+            throw new ArgumentException("Directe commissie moet tussen 0 en 100% liggen.");
+        }
+
+        if (indirectCommissionRate is < 0 or > 1)
+        {
+            throw new ArgumentException("Indirecte commissie moet tussen 0 en 100% liggen.");
+        }
+
+        if (commissionDurationDays is < 1 or > 3650)
+        {
+            throw new ArgumentException("Commissieduur moet tussen 1 en 3650 dagen liggen.");
+        }
+
+        if (directCommissionRate is decimal d
+            && indirectCommissionRate is decimal i
+            && d + i + SalesCommissionRules.AmbassadorShareRate > 1m)
+        {
+            throw new ArgumentException(
+                "Som van ambassadeur- (15%), directe en indirecte commissie mag niet boven 100% uitkomen.");
+        }
+
         var settings = await GetSettingsAsync(cancellationToken);
         settings.BaseTokenValueEuro = baseTokenValueEuro;
         settings.HighlightCarouselTokens = highlightCarouselTokens;
         settings.HighlightPulseTokens = highlightPulseTokens;
         settings.HighlightCarouselDays = highlightCarouselDays;
         settings.StartHighlightBonusTokens = startHighlightBonusTokens;
+        if (directCommissionRate is not null)
+        {
+            settings.DirectCommissionRate = directCommissionRate.Value;
+        }
+
+        if (indirectCommissionRate is not null)
+        {
+            settings.IndirectCommissionRate = indirectCommissionRate.Value;
+        }
+
+        if (commissionDurationDays is not null)
+        {
+            settings.CommissionDurationDays = commissionDurationDays.Value;
+        }
+
         settings.UpdatedAtUtc = DateTime.UtcNow;
 
         // Keep legacy TokenSpendCost.Highlight in sync for admin settings screens.
@@ -304,6 +348,9 @@ public sealed class SalesCommercialService : ISalesCommercialService
         HighlightPulseTokens = VacancyProductRules.DefaultHighlightPulseTokens,
         HighlightCarouselDays = VacancyProductRules.DefaultHighlightCarouselDays,
         StartHighlightBonusTokens = VacancyProductRules.DefaultHighlightCarouselTokens,
+        DirectCommissionRate = SalesCommissionRules.DefaultDirectCommissionRate,
+        IndirectCommissionRate = SalesCommissionRules.DefaultIndirectCommissionRate,
+        CommissionDurationDays = SalesCommissionRules.DefaultCommissionDurationDays,
         UpdatedAtUtc = DateTime.UtcNow
     };
 

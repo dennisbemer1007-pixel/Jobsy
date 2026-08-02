@@ -1,7 +1,8 @@
 namespace Jobsy.Core.Entities;
 
 /// <summary>
-/// Immutable financial log for token-purchase revenue share (15% / 5% / 80%).
+/// Immutable financial log for token-purchase revenue share
+/// (ambassador + direct SM + optional indirect SM + platform remainder).
 /// </summary>
 public class RevenueShareLog
 {
@@ -43,5 +44,6 @@ public enum RevenueShareRecipientKind
 {
     Ambassador = 0,
     SalesManager = 1,
-    Platform = 2
+    Platform = 2,
+    IndirectSalesManager = 3
 }

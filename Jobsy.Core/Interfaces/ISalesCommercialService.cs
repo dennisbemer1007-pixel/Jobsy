@@ -39,7 +39,10 @@ public sealed record SalesCommercialAdminDto(
     decimal StartHighlightBonusTokens,
     DateTime UpdatedAtUtc,
     IReadOnlyList<VacancyTypeCostDto> VacancyTypeCosts,
-    IReadOnlyList<SalesPackageDto> Packages);
+    IReadOnlyList<SalesPackageDto> Packages,
+    decimal DirectCommissionRate = 0.15m,
+    decimal IndirectCommissionRate = 0.03m,
+    int CommissionDurationDays = 365);
 
 public interface ISalesCommercialService
 {
@@ -55,6 +58,9 @@ public interface ISalesCommercialService
         decimal highlightPulseTokens,
         int highlightCarouselDays,
         decimal startHighlightBonusTokens,
+        decimal? directCommissionRate = null,
+        decimal? indirectCommissionRate = null,
+        int? commissionDurationDays = null,
         CancellationToken cancellationToken = default);
 
     Task<VacancyTypeTokenCost> UpdateVacancyTypeCostAsync(

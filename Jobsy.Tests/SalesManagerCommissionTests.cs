@@ -66,7 +66,7 @@ public class SalesManagerCommissionTests
     }
 
     [Fact]
-    public async Task Token_commission_year1_is_10_percent_and_idempotent()
+    public async Task Token_commission_year1_is_15_percent_and_idempotent()
     {
         await using var db = CreateDb();
         var (smId, companyId) = await SeedReferredCompanyAsync(db, slot: 1);
@@ -83,8 +83,8 @@ public class SalesManagerCommissionTests
 
         Assert.NotNull(first);
         Assert.Equal(first!.Id, second!.Id);
-        Assert.Equal(2.00m, first.AmountExVat); // 5% revenue-share
-        Assert.Equal(2.00m, await ledger.GetBalanceExVatAsync(smId));
+        Assert.Equal(6.00m, first.AmountExVat); // 15% direct commission
+        Assert.Equal(6.00m, await ledger.GetBalanceExVatAsync(smId));
     }
 
     [Fact]

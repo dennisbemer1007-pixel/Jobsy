@@ -60,7 +60,8 @@ Volledige functionele specificatie voor kandidaat- en werkgeverskant:
 Kernpunten:
 - **Intermediair-team:** collega’s uitnodigen op dezelfde organisatie; gedeelde vacatures/saldo
 - **KVK verplicht** bij intermediair-vacatures (UI/CSV/API); flexibele adresweergave + “Aangeboden door …”
-- **Revenue-share 15%/5%/80%** op tokenaankopen van referred companies + `RevenueShareLogs`
+- **Salesmanager-hiërarchie:** Admin maakt tier-0 aan; tier-0 kan SM-aanbevelingen indienen; Admin keurt goed; tier-1 mag niet verder werven
+- **Revenue-share (defaults):** ambassadeur 15% tokens + direct SM 15% + indirect referring SM 3% (≤ 1 jaar, Admin-configureerbaar) + `RevenueShareLogs`
 - **Admin:** Salesmanager-kolom op bedrijven; KPI gem. doorlooptijd vacatures
 
 Kernpunten:

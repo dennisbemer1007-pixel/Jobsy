@@ -28,6 +28,7 @@ public sealed class SalesManagerInviteService : ISalesManagerInviteService
     public async Task<SalesManagerInviteResult> InviteAsync(
         string email,
         string fullName,
+        Guid? referredBySalesManagerUserId = null,
         CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrWhiteSpace(email) || string.IsNullOrWhiteSpace(fullName))
@@ -37,6 +38,27 @@ public sealed class SalesManagerInviteService : ISalesManagerInviteService
 
         var normalizedEmail = email.Trim().ToLowerInvariant();
         var name = fullName.Trim();
+        var canRecruit = referredBySalesManagerUserId is null;
+
+        if (referredBySalesManagerUserId is Guid referrerId)
+        {
+            var referrer = await _db.SalesManagerProfiles
+                .AsNoTracking()
+                .FirstOrDefaultAsync(p => p.UserId == referrerId, cancellationToken)
+                ?? throw new InvalidOperationException("Verwijzende salesmanager niet gevonden.");
+
+            if (!referrer.CanRecruitSalesManagers)
+            {
+                throw new InvalidOperationException(
+                    "Deze salesmanager mag geen nieuwe salesmanagers aanbrengen (maximaal één wervingslaag).");
+            }
+
+            if (referrer.ReferredBySalesManagerUserId is not null)
+            {
+                throw new InvalidOperationException(
+                    "Doorverwezen salesmanagers kunnen zelf geen nieuwe salesmanagers werven.");
+            }
+        }
 
         var existing = await _db.Users
             .FirstOrDefaultAsync(u => u.Email.ToLower() == normalizedEmail, cancellationToken);
@@ -104,16 +126,34 @@ public sealed class SalesManagerInviteService : ISalesManagerInviteService
 
         var profile = await _db.SalesManagerProfiles
             .FirstOrDefaultAsync(p => p.UserId == user.Id, cancellationToken);
+        var now = DateTime.UtcNow;
         if (profile is null)
         {
-            var now = DateTime.UtcNow;
-            _db.SalesManagerProfiles.Add(new SalesManagerProfile
+            profile = new SalesManagerProfile
             {
                 Id = Guid.NewGuid(),
                 UserId = user.Id,
                 CreatedAt = now,
-                UpdatedAt = now
-            });
+                UpdatedAt = now,
+                CanRecruitSalesManagers = canRecruit,
+                ReferredBySalesManagerUserId = referredBySalesManagerUserId
+            };
+            _db.SalesManagerProfiles.Add(profile);
+        }
+        else
+        {
+            // Preserve an existing hierarchy link; Admin re-invite of a referred SM stays non-recruiting.
+            if (referredBySalesManagerUserId is not null)
+            {
+                profile.ReferredBySalesManagerUserId ??= referredBySalesManagerUserId;
+                profile.CanRecruitSalesManagers = false;
+            }
+            else if (profile.ReferredBySalesManagerUserId is null)
+            {
+                profile.CanRecruitSalesManagers = true;
+            }
+
+            profile.UpdatedAt = now;
         }
 
         _db.PlatformLogs.Add(new PlatformLog
@@ -121,7 +161,9 @@ public sealed class SalesManagerInviteService : ISalesManagerInviteService
             Id = Guid.NewGuid(),
             Level = PlatformLogLevel.Info,
             Category = "SalesManager",
-            Message = $"Salesmanager invited: {EmailServiceStub.RedactEmail(normalizedEmail)}",
+            Message = referredBySalesManagerUserId is null
+                ? $"Salesmanager invited (admin): {EmailServiceStub.RedactEmail(normalizedEmail)}"
+                : $"Salesmanager invited (referral approved): {EmailServiceStub.RedactEmail(normalizedEmail)}",
             CreatedAt = DateTime.UtcNow
         });
 
@@ -141,11 +183,20 @@ public sealed class SalesManagerInviteService : ISalesManagerInviteService
             "SalesManagerInvite"), cancellationToken);
 
         _logger.LogInformation(
-            "Invited salesmanager {Email} ({UserId})",
+            "Invited salesmanager {Email} ({UserId}) canRecruit={CanRecruit} referredBy={ReferredBy}",
             EmailServiceStub.RedactEmail(normalizedEmail),
-            user.Id);
+            user.Id,
+            profile.CanRecruitSalesManagers,
+            referredBySalesManagerUserId);
 
-        return new SalesManagerInviteResult(user.Id, normalizedEmail, name, temporaryPassword, createdNew);
+        return new SalesManagerInviteResult(
+            user.Id,
+            normalizedEmail,
+            name,
+            temporaryPassword,
+            createdNew,
+            profile.CanRecruitSalesManagers,
+            profile.ReferredBySalesManagerUserId);
     }
 
     private static string GenerateTemporaryPassword()

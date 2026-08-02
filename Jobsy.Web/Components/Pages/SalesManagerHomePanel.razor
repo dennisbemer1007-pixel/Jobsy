@@ -8,10 +8,16 @@
             <h1>@Culture["Sales.Dashboard"]</h1>
             <p class="login-lead">@Culture["Sales.DashboardLead"]</p>
         </div>
-        @if (_dashboard is not null && !_dashboard.IsOnboardingComplete)
-        {
-            <a class="auth-link" href="/salesmanager/onboarding">@Culture["Sales.Onboarding"]</a>
-        }
+        <div class="inline-actions" style="gap:0.75rem;flex-wrap:wrap">
+            @if (_dashboard is not null && !_dashboard.IsOnboardingComplete)
+            {
+                <a class="auth-link" href="/salesmanager/onboarding">@Culture["Sales.Onboarding"]</a>
+            }
+            else if (_dashboard?.CanRecruitSalesManagers == true)
+            {
+                <a class="auth-link" href="/salesmanager/referrals">@Culture["Sales.Referrals"]</a>
+            }
+        </div>
     </header>
 
     @if (_loading)

@@ -141,9 +141,41 @@ internal static class PlatformSettingsSeeder
                 HighlightPulseTokens = VacancyProductRules.DefaultHighlightPulseTokens,
                 HighlightCarouselDays = VacancyProductRules.DefaultHighlightCarouselDays,
                 StartHighlightBonusTokens = VacancyProductRules.DefaultHighlightCarouselTokens,
+                DirectCommissionRate = SalesCommissionRules.DefaultDirectCommissionRate,
+                IndirectCommissionRate = SalesCommissionRules.DefaultIndirectCommissionRate,
+                CommissionDurationDays = SalesCommissionRules.DefaultCommissionDurationDays,
                 UpdatedAtUtc = DateTime.UtcNow
             });
-            logger.LogInformation("Seeded default SalesCommercialSettings (token €25 / highlight).");
+            logger.LogInformation("Seeded default SalesCommercialSettings (token €25 / highlight / SM commissions).");
+        }
+        else
+        {
+            // Backfill commission defaults on existing singleton rows (pre-referral migration).
+            var existing = await db.SalesCommercialSettings.OrderBy(s => s.Id).FirstAsync();
+            var touched = false;
+            if (existing.DirectCommissionRate <= 0)
+            {
+                existing.DirectCommissionRate = SalesCommissionRules.DefaultDirectCommissionRate;
+                touched = true;
+            }
+
+            if (existing.IndirectCommissionRate < 0)
+            {
+                existing.IndirectCommissionRate = SalesCommissionRules.DefaultIndirectCommissionRate;
+                touched = true;
+            }
+
+            if (existing.CommissionDurationDays <= 0)
+            {
+                existing.CommissionDurationDays = SalesCommissionRules.DefaultCommissionDurationDays;
+                touched = true;
+            }
+
+            if (touched)
+            {
+                existing.UpdatedAtUtc = DateTime.UtcNow;
+                logger.LogInformation("Backfilled SalesCommercialSettings commission defaults.");
+            }
         }
 
         if (!await db.VacancyTypeTokenCosts.AnyAsync())

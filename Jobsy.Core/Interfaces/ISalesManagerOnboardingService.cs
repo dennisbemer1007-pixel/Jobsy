@@ -43,4 +43,6 @@ public sealed record SalesManagerProfileDto(
     DateTime? AgreementSignedAt,
     string? AgreementVersion,
     DateTime? OnboardingCompletedAt,
-    bool IsOnboardingComplete);
+    bool IsOnboardingComplete,
+    bool CanRecruitSalesManagers = true,
+    Guid? ReferredBySalesManagerUserId = null);

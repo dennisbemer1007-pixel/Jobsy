@@ -92,7 +92,9 @@ public sealed class SalesManagerDashboardService : ISalesManagerDashboardService
                 i.Status.ToString(),
                 i.CreatedAt,
                 i.IssuedAt,
-                i.PaidAt)).ToList());
+                i.PaidAt)).ToList(),
+            profile?.CanRecruitSalesManagers ?? true,
+            profile?.ReferredBySalesManagerUserId);
     }
 
     public async Task<IReadOnlyList<SalesManagerListItemDto>> ListSalesManagersAsync(
@@ -131,7 +133,9 @@ public sealed class SalesManagerDashboardService : ISalesManagerDashboardService
                 profile?.TrackingCode,
                 profile?.IsOnboardingComplete ?? false,
                 balances.GetValueOrDefault(user.Id),
-                supplierCounts.GetValueOrDefault(user.Id));
+                supplierCounts.GetValueOrDefault(user.Id),
+                profile?.CanRecruitSalesManagers ?? true,
+                profile?.ReferredBySalesManagerUserId);
         }).ToList();
     }
 }
