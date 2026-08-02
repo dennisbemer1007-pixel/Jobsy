@@ -87,6 +87,32 @@ public class KvkServiceStubTests
         }
     }
 
+    [Fact]
+    public async Task Intermediary_kvk_exposes_sbi_78()
+    {
+        await using var db = CreateDb();
+        var sut = new KvkServiceStub(db);
+
+        var company = await sut.GetByKvkNumberAsync("55667788");
+        Assert.NotNull(company);
+        Assert.Contains(company!.EffectiveSbiCodes, c => c.StartsWith("78", StringComparison.Ordinal));
+
+        var establishments = await sut.GetEstablishmentsAsync("55667788");
+        Assert.All(establishments, e =>
+            Assert.Contains(e.EffectiveSbiCodes, c => c.StartsWith("78", StringComparison.Ordinal)));
+    }
+
+    [Fact]
+    public async Task Employer_kvk_does_not_use_sbi_78()
+    {
+        await using var db = CreateDb();
+        var sut = new KvkServiceStub(db);
+
+        var company = await sut.GetByKvkNumberAsync("12345678");
+        Assert.NotNull(company);
+        Assert.DoesNotContain(company!.EffectiveSbiCodes, c => c.StartsWith("78", StringComparison.Ordinal));
+    }
+
     private static JobsyDbContext CreateDb()
     {
         var options = new DbContextOptionsBuilder<JobsyDbContext>()

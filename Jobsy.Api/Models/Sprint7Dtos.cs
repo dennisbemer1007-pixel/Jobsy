@@ -11,7 +11,8 @@ public record SubmitRegistrationRequest(
     string? ContactPhone = null,
     bool AcceptedTerms = false,
     string? ConsentVersion = null,
-    string? SalesManagerTrackingCode = null);
+    string? SalesManagerTrackingCode = null,
+    string? Password = null);
 
 public record RegistrationSubmitResponse(
     Guid RegistrationId,
@@ -30,7 +31,8 @@ public record RegistrationActivationResponse(
     IReadOnlyList<Guid> CompanyIds,
     string? TemporaryPassword,
     Guid? OrganizationCompanyId,
-    Guid? BranchCompanyId);
+    Guid? BranchCompanyId,
+    bool UsedChosenPassword = false);
 
 public record TakeoverInboxItemDto(
     Guid TakeoverId,

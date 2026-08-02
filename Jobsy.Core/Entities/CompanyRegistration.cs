@@ -22,6 +22,18 @@ public class CompanyRegistration
     public string? ContactPhone { get; set; }
 
     public string ActivationToken { get; set; } = string.Empty;
+
+    /// <summary>
+    /// PBKDF2 hash of the password chosen at registration (cleared after activation/takeover approve).
+    /// </summary>
+    public string? PasswordHash { get; set; }
+
+    /// <summary>Primary SBI code captured from KVK at submit (for audit / role assignment).</summary>
+    public string? PrimarySbiCode { get; set; }
+
+    /// <summary>True when KVK SBI starts with 78 (employment/recruitment agency).</summary>
+    public bool IsIntermediarySbi { get; set; }
+
     public CompanyRegistrationStatus Status { get; set; } = CompanyRegistrationStatus.PendingActivation;
 
     public Guid? CreatedUserId { get; set; }

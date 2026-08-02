@@ -31,7 +31,11 @@
             <p class="state-message">@Culture.Format("Register.Activated", _result.FullName)</p>
             <p class="muted">@Culture["Register.WelcomeToken"]</p>
             <p class="muted">@Culture.Format("Register.Role", _result.Role)</p>
-            @if (!string.IsNullOrWhiteSpace(_result.TemporaryPassword))
+            @if (_result.UsedChosenPassword)
+            {
+                <p class="muted">@Culture["Register.LoginWithChosenPassword"]</p>
+            }
+            else if (!string.IsNullOrWhiteSpace(_result.TemporaryPassword))
             {
                 <p class="muted">@Culture["Register.TempPasswordDev"] <code>@_result.TemporaryPassword</code></p>
             }
@@ -39,6 +43,7 @@
             {
                 <p class="muted">@Culture["Register.TempPasswordEmail"]</p>
             }
+            <p class="muted">@Culture["Register.DualAuthHint"]</p>
             <a class="login-submit" href="/login" style="display:inline-block;text-align:center;text-decoration:none;margin-top:1rem">
                 @Culture["Register.GoLogin"]
             </a>

@@ -14,7 +14,11 @@ public interface IKvkService
 public record KvkCompanyResult(
     string KvkNumber,
     string Name,
-    string Address);
+    string Address,
+    IReadOnlyList<string>? SbiCodes = null)
+{
+    public IReadOnlyList<string> EffectiveSbiCodes => SbiCodes ?? Array.Empty<string>();
+}
 
 public record KvkEstablishmentResult(
     string KvkNumber,
@@ -24,4 +28,8 @@ public record KvkEstablishmentResult(
     string Address,
     double Latitude,
     double Longitude,
-    bool IsInUse);
+    bool IsInUse,
+    IReadOnlyList<string>? SbiCodes = null)
+{
+    public IReadOnlyList<string> EffectiveSbiCodes => SbiCodes ?? Array.Empty<string>();
+}

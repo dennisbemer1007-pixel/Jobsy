@@ -200,6 +200,14 @@ public class KvkEstablishmentItem
     public double Latitude { get; set; }
     public double Longitude { get; set; }
     public bool IsInUse { get; set; }
+    public List<string>? SbiCodes { get; set; }
+
+    public bool IsIntermediarySbi =>
+        SbiCodes?.Any(s =>
+        {
+            var digits = new string((s ?? "").Where(char.IsDigit).ToArray());
+            return digits.StartsWith("78", StringComparison.Ordinal);
+        }) == true;
 }
 
 public class RegistrationSubmitResult
@@ -223,6 +231,7 @@ public class RegistrationActivationResult
     public string? TemporaryPassword { get; set; }
     public Guid? OrganizationCompanyId { get; set; }
     public Guid? BranchCompanyId { get; set; }
+    public bool UsedChosenPassword { get; set; }
 }
 
 public class TakeoverInboxItem

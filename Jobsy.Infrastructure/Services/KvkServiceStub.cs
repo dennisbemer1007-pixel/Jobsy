@@ -28,6 +28,22 @@ public sealed class KvkServiceStub : IKvkService
             ["99001122"] = "Transport & Koel BV"
         };
 
+    /// <summary>Primary SBI codes per KVK (78* = uitzend/arbeidsbemiddeling).</summary>
+    private static readonly IReadOnlyDictionary<string, string[]> SbiCodesByKvk =
+        new Dictionary<string, string[]>(StringComparer.OrdinalIgnoreCase)
+        {
+            ["12345678"] = ["5229"], // Overige dienstverlening voor vervoer
+            ["87654321"] = ["5610"], // Restaurants
+            ["11223344"] = ["4711"], // Supermarkten
+            ["55667788"] = ["7820"], // Uitzendbureaus (SBI 78 → Intermediair)
+            ["33445566"] = ["8710"], // Verpleeghuizen
+            ["44556677"] = ["4120"], // Algemene burgerlijke en utiliteitsbouw
+            ["66778899"] = ["5610"], // Restaurants
+            ["77889900"] = ["6201"], // Ontwikkelen van software
+            ["88990011"] = ["4622"], // Groothandel in bloemen en planten
+            ["99001122"] = ["4941"]  // Goederenvervoer over de weg
+        };
+
     private static readonly IReadOnlyList<KvkEstablishmentResult> Catalog =
     [
         // Westland Fresh Logistics — multi-site werkgever (bestaand demo)
@@ -56,7 +72,7 @@ public sealed class KvkServiceStub : IKvkService
         new("11223344", "0004", "11223344_0004", "Supermarkt De Fred — Delft",
             "Brabanstraat 5, Delft", 51.9990, 4.3590, false),
 
-        // Demo Intermediair — meerdere vestigingen
+        // Demo Intermediair — meerdere vestigingen (SBI 7820)
         new("55667788", "0001", "55667788_0001", "Demo Intermediair Flex — Binckhorst",
             "Binckhorstlaan 36, Den Haag", 52.0680, 4.3350, false),
         new("55667788", "0002", "55667788_0002", "Demo Intermediair Flex — Rotterdam",
@@ -134,7 +150,7 @@ public sealed class KvkServiceStub : IKvkService
             : StripBranchSuffix(match.Name);
 
         return Task.FromResult<KvkCompanyResult?>(
-            new KvkCompanyResult(normalized, legalName, match.Address));
+            new KvkCompanyResult(normalized, legalName, match.Address, SbiCodesFor(normalized)));
     }
 
     public async Task<IReadOnlyList<KvkEstablishmentResult>> GetEstablishmentsAsync(
@@ -153,9 +169,10 @@ public sealed class KvkServiceStub : IKvkService
             .Select(c => c.KvkEstablishmentId!)
             .ToListAsync(cancellationToken);
 
+        var sbi = SbiCodesFor(normalized);
         return Catalog
             .Where(c => c.KvkNumber.Equals(normalized, StringComparison.OrdinalIgnoreCase))
-            .Select(c => c with { IsInUse = inUse.Contains(c.KvkEstablishmentId) })
+            .Select(c => c with { IsInUse = inUse.Contains(c.KvkEstablishmentId), SbiCodes = sbi })
             .OrderBy(c => c.EstablishmentNumber, StringComparer.Ordinal)
             .ToList();
     }
@@ -171,6 +188,9 @@ public sealed class KvkServiceStub : IKvkService
         var digits = Regex.Replace(raw.Trim(), @"\D", string.Empty);
         return digits.Length == 8 ? digits : null;
     }
+
+    private static string[] SbiCodesFor(string kvkNumber)
+        => SbiCodesByKvk.TryGetValue(kvkNumber, out var codes) ? codes : [];
 
     private static string StripBranchSuffix(string name)
     {

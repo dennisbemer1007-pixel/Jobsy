@@ -32,7 +32,7 @@
                     @Culture["Register.KvkNumber"]
                     <input @bind="_kvkNumber" placeholder="@Culture["Register.KvkPlaceholder"]" required maxlength="20" />
                 </label>
-                <p class="muted">Stub-KVK’s: 12345678, 87654321, 11223344, 55667788</p>
+                <p class="muted">Stub-KVK’s: 12345678 (werkgever), 55667788 (intermediair SBI 78)</p>
                 <button class="login-submit" type="submit" disabled="@_busy">@Culture["Register.SearchEstablishments"]</button>
             </form>
         }
@@ -47,6 +47,10 @@
                         <div>
                             <strong>@e.Name</strong>
                             <span class="muted">@e.Address · @e.KvkEstablishmentId</span>
+                            @if (e.SbiCodes is { Count: > 0 })
+                            {
+                                <span class="muted"> · SBI @string.Join(", ", e.SbiCodes)</span>
+                            }
                         </div>
                         <span class="@(e.IsInUse ? "badge-warn" : "badge-ok")">
                             @(e.IsInUse ? Culture["Register.InUse"] : Culture["Register.Available"])
@@ -56,42 +60,53 @@
             </div>
             <div class="wizard-actions">
                 <button class="provider-btn" type="button" @onclick="() => _step = 1">@Culture["Common.Back"]</button>
-                <button class="login-submit" type="button" disabled="@(_selected is null)" @onclick="() => _step = 3">
+                <button class="login-submit" type="button" disabled="@(_selected is null)" @onclick="GoToScopeOrContact">
                     @Culture["Common.Next"]
                 </button>
             </div>
         }
         else if (_step == 3)
         {
-            <fieldset class="scope-fieldset">
-                <legend>@Culture["Register.ScopeLegend"]</legend>
-                <label class="scope-option">
-                    <input type="radio" name="scope" checked="@(_scope == "BranchOnly")"
-                           @onchange="@(() => _scope = "BranchOnly")" />
-                    <span>
-                        <strong>@Culture["Register.ScopeBranch"]</strong>
-                        <span class="muted">@Culture["Register.ScopeBranchHint"]</span>
-                    </span>
-                </label>
-                <label class="scope-option">
-                    <input type="radio" name="scope" checked="@(_scope == "Organization")"
-                           @onchange="@(() => _scope = "Organization")" />
-                    <span>
-                        <strong>@Culture["Register.ScopeOrg"]</strong>
-                        <span class="muted">@Culture["Register.ScopeOrgHint"]</span>
-                    </span>
-                </label>
-            </fieldset>
-
-            @if (_selected?.IsInUse == true)
+            @if (_selected?.IsIntermediarySbi == true)
             {
-                <p class="state-message">@Culture["Register.AlreadyRegistered"]</p>
+                <p class="state-message">@Culture["Register.IntermediaryRoleHint"]</p>
+                <div class="wizard-actions">
+                    <button class="provider-btn" type="button" @onclick="() => _step = 2">@Culture["Common.Back"]</button>
+                    <button class="login-submit" type="button" @onclick="() => _step = 4">@Culture["Common.Next"]</button>
+                </div>
             }
+            else
+            {
+                <fieldset class="scope-fieldset">
+                    <legend>@Culture["Register.ScopeLegend"]</legend>
+                    <label class="scope-option">
+                        <input type="radio" name="scope" checked="@(_scope == "Organization")"
+                               @onchange="@(() => _scope = "Organization")" />
+                        <span>
+                            <strong>@Culture["Register.ScopeOrg"]</strong>
+                            <span class="muted">@Culture["Register.ScopeOrgHint"]</span>
+                        </span>
+                    </label>
+                    <label class="scope-option">
+                        <input type="radio" name="scope" checked="@(_scope == "BranchOnly")"
+                               @onchange="@(() => _scope = "BranchOnly")" />
+                        <span>
+                            <strong>@Culture["Register.ScopeBranch"]</strong>
+                            <span class="muted">@Culture["Register.ScopeBranchHint"]</span>
+                        </span>
+                    </label>
+                </fieldset>
 
-            <div class="wizard-actions">
-                <button class="provider-btn" type="button" @onclick="() => _step = 2">@Culture["Common.Back"]</button>
-                <button class="login-submit" type="button" @onclick="() => _step = 4">@Culture["Common.Next"]</button>
-            </div>
+                @if (_selected?.IsInUse == true)
+                {
+                    <p class="state-message">@Culture["Register.AlreadyRegistered"]</p>
+                }
+
+                <div class="wizard-actions">
+                    <button class="provider-btn" type="button" @onclick="() => _step = 2">@Culture["Common.Back"]</button>
+                    <button class="login-submit" type="button" @onclick="() => _step = 4">@Culture["Common.Next"]</button>
+                </div>
+            }
         }
         else if (_step == 4)
         {
@@ -102,8 +117,17 @@
                 </label>
                 <label>
                     @Culture["Common.Email"]
-                    <input type="email" @bind="_contactEmail" required maxlength="256" />
+                    <input type="email" @bind="_contactEmail" required maxlength="256" autocomplete="username" />
                 </label>
+                <label>
+                    @Culture["Register.Password"]
+                    <input type="password" @bind="_password" required minlength="8" maxlength="128" autocomplete="new-password" />
+                </label>
+                <label>
+                    @Culture["Register.PasswordConfirm"]
+                    <input type="password" @bind="_passwordConfirm" required minlength="8" maxlength="128" autocomplete="new-password" />
+                </label>
+                <p class="muted">@Culture["Register.PasswordHint"]</p>
                 <label>
                     @Culture["Common.Phone"] (@Culture["Common.Optional"])
                     <input @bind="_contactPhone" maxlength="64" />
@@ -113,7 +137,7 @@
                     <input @bind="_salesManagerCode" maxlength="32" placeholder="SM-XXXXXX" />
                 </label>
                 <p class="muted">@Culture["Register.SalesCodeHint"]</p>
-                <p class="muted">@Culture.Format("Register.Chosen", _selected?.Name ?? "", _scope)</p>
+                <p class="muted">@Culture.Format("Register.Chosen", _selected?.Name ?? "", RolePreviewLabel())</p>
                 <label class="profile-toggle legal-consent">
                     <input type="checkbox" @bind="_acceptedTerms" required />
                     <span>
@@ -134,12 +158,12 @@
             <p class="state-message">@_message</p>
             @if (!string.IsNullOrEmpty(_activationUrl))
             {
-                <p class="muted">Stub activatielink (alleen zichtbaar als ExposeRegistrationActivationLinks aan staat):</p>
+                <p class="muted">Stub verificatielink (alleen zichtbaar als ExposeRegistrationActivationLinks aan staat):</p>
                 <p><a class="auth-link" href="@_activationUrl">@_activationUrl</a></p>
             }
             else
             {
-                <p class="muted">Check PlatformLogs / e-mail-stub voor de activatielink.</p>
+                <p class="muted">@Culture["Register.CheckEmail"]</p>
             }
             <a class="login-submit" href="/login" style="display:inline-block;text-align:center;text-decoration:none;margin-top:1rem">
                 @Culture["Register.GoLogin"]
@@ -161,10 +185,12 @@
     private string? _message;
     private string? _activationUrl;
     private string _kvkNumber = "12345678";
-    private string _scope = "BranchOnly";
+    private string _scope = "Organization";
     private string _contactName = "";
     private string _contactEmail = "";
     private string _contactPhone = "";
+    private string _password = "";
+    private string _passwordConfirm = "";
     private string _salesManagerCode = "";
     private bool _acceptedTerms;
     private List<KvkEstablishmentItem> _establishments = [];
@@ -215,6 +241,33 @@
 
     private void SelectEstablishment(KvkEstablishmentItem e) => _selected = e;
 
+    private void GoToScopeOrContact()
+    {
+        if (_selected is null)
+        {
+            return;
+        }
+
+        if (_selected.IsIntermediarySbi)
+        {
+            _scope = "Organization";
+        }
+
+        _step = 3;
+    }
+
+    private string RolePreviewLabel()
+    {
+        if (_selected?.IsIntermediarySbi == true)
+        {
+            return Culture["Register.RoleIntermediary"];
+        }
+
+        return _scope == "Organization"
+            ? Culture["Register.RoleEnterprise"]
+            : Culture["Register.RoleBranch"];
+    }
+
     private async Task SubmitAsync()
     {
         if (_selected is null)
@@ -229,6 +282,18 @@
             return;
         }
 
+        if (string.IsNullOrWhiteSpace(_password) || _password.Length < 8)
+        {
+            _error = Culture["Register.PasswordTooShort"];
+            return;
+        }
+
+        if (!string.Equals(_password, _passwordConfirm, StringComparison.Ordinal))
+        {
+            _error = Culture["Register.PasswordMismatch"];
+            return;
+        }
+
         _busy = true;
         _error = null;
         try
@@ -236,17 +301,20 @@
             var result = await Api.SubmitRegistrationAsync(
                 _selected.KvkNumber,
                 _selected.KvkEstablishmentId,
-                _scope,
+                _selected.IsIntermediarySbi ? "Organization" : _scope,
                 _contactName.Trim(),
                 _contactEmail.Trim(),
                 string.IsNullOrWhiteSpace(_contactPhone) ? null : _contactPhone.Trim(),
                 acceptedTerms: true,
                 salesManagerTrackingCode: string.IsNullOrWhiteSpace(_salesManagerCode)
                     ? null
-                    : _salesManagerCode.Trim());
+                    : _salesManagerCode.Trim(),
+                password: _password);
 
             _message = result.Message;
             _activationUrl = result.ActivationUrl;
+            _password = "";
+            _passwordConfirm = "";
             _step = 5;
         }
         catch (Exception ex)

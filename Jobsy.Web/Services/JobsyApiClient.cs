@@ -655,6 +655,7 @@ public sealed class JobsyApiClient : IAsyncDisposable
         bool acceptedTerms = false,
         string? consentVersion = null,
         string? salesManagerTrackingCode = null,
+        string? password = null,
         CancellationToken ct = default)
     {
         var response = await _http.PostAsJsonAsync("api/registration", new
@@ -667,7 +668,8 @@ public sealed class JobsyApiClient : IAsyncDisposable
             contactPhone,
             acceptedTerms,
             consentVersion = consentVersion ?? Jobsy.Core.Privacy.PrivacyConstants.CurrentConsentVersion,
-            salesManagerTrackingCode
+            salesManagerTrackingCode,
+            password
         }, ct);
         if (!response.IsSuccessStatusCode)
         {

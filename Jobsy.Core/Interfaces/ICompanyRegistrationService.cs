@@ -44,7 +44,8 @@ public sealed record RegistrationSubmitRequest(
     string? ContactPhone,
     bool AcceptedTerms = false,
     string? ConsentVersion = null,
-    string? SalesManagerTrackingCode = null);
+    string? SalesManagerTrackingCode = null,
+    string? Password = null);
 
 public sealed record RegistrationSubmitResult(
     Guid RegistrationId,
@@ -61,10 +62,14 @@ public sealed record RegistrationActivationResult(
     string Role,
     Guid? CompanyId,
     IReadOnlyList<Guid> CompanyIds,
-    /// <summary>One-time temporary password (service layer only; API must not echo outside Development).</summary>
+    /// <summary>
+    /// Legacy one-time temporary password when none was chosen at register
+    /// (service layer only; API must not echo outside Development). Empty when the user set a password.
+    /// </summary>
     string TemporaryPassword,
     Guid? OrganizationCompanyId,
-    Guid? BranchCompanyId);
+    Guid? BranchCompanyId,
+    bool UsedChosenPassword = false);
 
 public sealed record TakeoverInboxItem(
     Guid TakeoverId,

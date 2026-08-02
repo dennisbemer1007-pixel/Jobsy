@@ -25,7 +25,8 @@ public class Sprint7RegistrationTests
             "Nova Manager",
             "nova.branch@jobsy.local",
             null,
-            AcceptedTerms: true));
+            AcceptedTerms: true,
+            Password: "TestPass1!"));
 
         Assert.False(submit.RequiresTakeover);
         Assert.Equal(CompanyRegistrationStatus.PendingActivation, submit.Status);
@@ -41,9 +42,15 @@ public class Sprint7RegistrationTests
         Assert.Equal("BranchManager", activated.Role);
         Assert.NotNull(activated.BranchCompanyId);
         Assert.Null(activated.OrganizationCompanyId);
-        Assert.False(string.IsNullOrWhiteSpace(activated.TemporaryPassword));
+        Assert.True(activated.UsedChosenPassword);
+        Assert.Equal(string.Empty, activated.TemporaryPassword);
         Assert.Equal(1, await db.Companies.CountAsync(c => c.KvkEstablishmentId == "99990001_0001"));
-        Assert.True(await db.LocalAuthCredentials.AnyAsync(c => c.Email == "nova.branch@jobsy.local"));
+        var credential = await db.LocalAuthCredentials.SingleAsync(c => c.Email == "nova.branch@jobsy.local");
+        Assert.True(Jobsy.Infrastructure.Security.JobsyPasswordHasher.Verify("TestPass1!", credential.PasswordHash));
+        Assert.Null(await db.CompanyRegistrations
+            .Where(r => r.Id == submit.RegistrationId)
+            .Select(r => r.PasswordHash)
+            .SingleAsync());
         Assert.True(await db.PlatformLogs.AnyAsync(l =>
             l.Category == "RegistrationCredentials"
             || (l.Category == "Email" && l.Message.Contains("Je Jobsy-account is actief"))));
@@ -80,7 +87,8 @@ public class Sprint7RegistrationTests
             "Org Manager",
             "welcome.org@jobsy.local",
             null,
-            AcceptedTerms: true));
+            AcceptedTerms: true,
+            Password: "TestPass1!"));
 
         var token = await db.CompanyRegistrations
             .Where(r => r.Id == submit.RegistrationId)
@@ -114,12 +122,91 @@ public class Sprint7RegistrationTests
 
         var submit = await sut.SubmitAsync(new RegistrationSubmitRequest(
             "99990001", "99990001_0001", RegistrationScope.BranchOnly,
-            "A", "hidden.url@jobsy.local", null, AcceptedTerms: true));
+            "A", "hidden.url@jobsy.local", null, AcceptedTerms: true,
+            Password: "TestPass1!"));
 
         Assert.Null(submit.ActivationUrl);
         Assert.False(string.IsNullOrEmpty(
             await db.CompanyRegistrations.Where(r => r.Id == submit.RegistrationId)
                 .Select(r => r.ActivationToken).SingleAsync()));
+    }
+
+    [Fact]
+    public async Task Submit_requires_password()
+    {
+        await using var db = CreateDb();
+        var sut = CreateService(db);
+
+        var ex = await Assert.ThrowsAsync<ArgumentException>(() => sut.SubmitAsync(
+            new RegistrationSubmitRequest(
+                "99990001", "99990001_0001", RegistrationScope.BranchOnly,
+                "A", "nopass@jobsy.local", null, AcceptedTerms: true)));
+        Assert.Contains("Wachtwoord", ex.Message, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public async Task Activate_sbi_78_assigns_intermediary_role_and_company_type()
+    {
+        await using var db = CreateDb();
+        var sut = CreateService(db);
+
+        var submit = await sut.SubmitAsync(new RegistrationSubmitRequest(
+            "99990078",
+            "99990078_0001",
+            RegistrationScope.BranchOnly, // ignored for SBI 78
+            "Flex Owner",
+            "flex.owner@jobsy.local",
+            null,
+            AcceptedTerms: true,
+            Password: "Intermed1!"));
+
+        Assert.Contains("Intermediair", submit.Message, StringComparison.OrdinalIgnoreCase);
+
+        var pending = await db.CompanyRegistrations.SingleAsync(r => r.Id == submit.RegistrationId);
+        Assert.True(pending.IsIntermediarySbi);
+        Assert.Equal("7820", pending.PrimarySbiCode);
+        Assert.Equal(RegistrationScope.Organization, pending.Scope);
+
+        var activated = await sut.ActivateAsync(pending.ActivationToken);
+        Assert.Equal("Intermediary", activated.Role);
+        Assert.True(activated.UsedChosenPassword);
+
+        var company = await db.Companies.SingleAsync(c => c.Id == activated.BranchCompanyId);
+        Assert.Equal(CompanyType.Intermediary, company.Type);
+        Assert.Null(company.ParentCompanyId);
+        Assert.Equal(0, await db.Companies.CountAsync(c => c.ParentCompanyId == company.Id));
+    }
+
+    [Fact]
+    public async Task Activate_non_sbi_78_organization_assigns_enterprise_manager()
+    {
+        await using var db = CreateDb();
+        var sut = CreateService(db);
+
+        var submit = await sut.SubmitAsync(new RegistrationSubmitRequest(
+            "99990002",
+            "99990002_0001",
+            RegistrationScope.Organization,
+            "Org Boss",
+            "org.boss@jobsy.local",
+            null,
+            AcceptedTerms: true,
+            Password: "Bedrijf1!"));
+
+        Assert.Contains("Bedrijfsmanager", submit.Message, StringComparison.OrdinalIgnoreCase);
+
+        var token = await db.CompanyRegistrations
+            .Where(r => r.Id == submit.RegistrationId)
+            .Select(r => r.ActivationToken)
+            .SingleAsync();
+        var activated = await sut.ActivateAsync(token);
+
+        Assert.Equal("EnterpriseManager", activated.Role);
+        var org = await db.Companies.SingleAsync(c => c.Id == activated.OrganizationCompanyId);
+        Assert.Equal(CompanyType.Employer, org.Type);
+        var reg = await db.CompanyRegistrations.SingleAsync(r => r.Id == submit.RegistrationId);
+        Assert.Equal("5229", reg.PrimarySbiCode);
+        Assert.False(reg.IsIntermediarySbi);
     }
 
     [Fact]
@@ -135,7 +222,8 @@ public class Sprint7RegistrationTests
             "Org Manager",
             "nova.org@jobsy.local",
             null,
-            AcceptedTerms: true));
+            AcceptedTerms: true,
+            Password: "TestPass1!"));
 
         var token = await db.CompanyRegistrations
             .Where(r => r.Id == submit.RegistrationId)
@@ -158,11 +246,13 @@ public class Sprint7RegistrationTests
 
         await sut.SubmitAsync(new RegistrationSubmitRequest(
             "99990002", "99990002_0002", RegistrationScope.BranchOnly,
-            "Sibling Pending", "sibling.pending@jobsy.local", null, AcceptedTerms: true));
+            "Sibling Pending", "sibling.pending@jobsy.local", null, AcceptedTerms: true,
+            Password: "TestPass1!"));
 
         var orgSubmit = await sut.SubmitAsync(new RegistrationSubmitRequest(
             "99990002", "99990002_0001", RegistrationScope.Organization,
-            "Org Manager", "org.skip@jobsy.local", null, AcceptedTerms: true));
+            "Org Manager", "org.skip@jobsy.local", null, AcceptedTerms: true,
+            Password: "TestPass1!"));
 
         var token = await db.CompanyRegistrations.Where(r => r.Id == orgSubmit.RegistrationId)
             .Select(r => r.ActivationToken).SingleAsync();
@@ -181,12 +271,14 @@ public class Sprint7RegistrationTests
 
         await sut.SubmitAsync(new RegistrationSubmitRequest(
             "99990004", "99990004_0001", RegistrationScope.BranchOnly,
-            "A", "a@jobsy.local", null, AcceptedTerms: true));
+            "A", "a@jobsy.local", null, AcceptedTerms: true,
+            Password: "TestPass1!"));
 
         await Assert.ThrowsAsync<InvalidOperationException>(() => sut.SubmitAsync(
             new RegistrationSubmitRequest(
                 "99990004", "99990004_0001", RegistrationScope.BranchOnly,
-                "B", "b2@jobsy.local", null, AcceptedTerms: true)));
+                "B", "b2@jobsy.local", null, AcceptedTerms: true,
+            Password: "TestPass1!")));
     }
 
     [Fact]
@@ -235,7 +327,8 @@ public class Sprint7RegistrationTests
             "Requester",
             "requester@jobsy.local",
             null,
-            AcceptedTerms: true));
+            AcceptedTerms: true,
+            Password: "TestPass1!"));
 
         Assert.True(submit.RequiresTakeover);
         Assert.Equal(CompanyRegistrationStatus.TakeoverPending, submit.Status);
@@ -299,7 +392,8 @@ public class Sprint7RegistrationTests
         var sut = CreateService(db);
         var submit = await sut.SubmitAsync(new RegistrationSubmitRequest(
             "99990005", "99990005_0001", RegistrationScope.Organization,
-            "Req", "req.org@jobsy.local", null, AcceptedTerms: true));
+            "Req", "req.org@jobsy.local", null, AcceptedTerms: true,
+            Password: "TestPass1!"));
         var takeoverId = await db.EstablishmentTakeoverRequests
             .Where(t => t.RegistrationId == submit.RegistrationId).Select(t => t.Id).SingleAsync();
 
@@ -315,14 +409,16 @@ public class Sprint7RegistrationTests
 
         var first = await sut.SubmitAsync(new RegistrationSubmitRequest(
             "99990004", "99990004_0001", RegistrationScope.BranchOnly,
-            "A", "a@jobsy.local", null, AcceptedTerms: true));
+            "A", "a@jobsy.local", null, AcceptedTerms: true,
+            Password: "TestPass1!"));
         var token = await db.CompanyRegistrations.Where(r => r.Id == first.RegistrationId)
             .Select(r => r.ActivationToken).SingleAsync();
         await sut.ActivateAsync(token);
 
         var second = await sut.SubmitAsync(new RegistrationSubmitRequest(
             "99990004", "99990004_0001", RegistrationScope.BranchOnly,
-            "B", "b@jobsy.local", null, AcceptedTerms: true));
+            "B", "b@jobsy.local", null, AcceptedTerms: true,
+            Password: "TestPass1!"));
         Assert.True(second.RequiresTakeover);
     }
 
@@ -371,7 +467,8 @@ public class Sprint7RegistrationTests
         var sut = CreateService(db);
         var submit = await sut.SubmitAsync(new RegistrationSubmitRequest(
             "99990006", "99990006_0001", RegistrationScope.Organization,
-            "New EM", "new.em@jobsy.local", null, AcceptedTerms: true));
+            "New EM", "new.em@jobsy.local", null, AcceptedTerms: true,
+            Password: "TestPass1!"));
         var takeoverId = await db.EstablishmentTakeoverRequests
             .Where(t => t.RegistrationId == submit.RegistrationId).Select(t => t.Id).SingleAsync();
 
@@ -417,6 +514,17 @@ public class Sprint7RegistrationTests
     {
         private readonly JobsyDbContext _db;
 
+        private static readonly Dictionary<string, string[]> SbiByKvk = new(StringComparer.Ordinal)
+        {
+            ["99990001"] = ["4711"],
+            ["99990002"] = ["5229"],
+            ["99990003"] = ["5610"],
+            ["99990004"] = ["4120"],
+            ["99990005"] = ["8710"],
+            ["99990006"] = ["6201"],
+            ["99990078"] = ["7820"]
+        };
+
         private static readonly KvkEstablishmentResult[] Catalog =
         [
             new("99990001", "0001", "99990001_0001", "Nova Branch", "Straat 1", 52, 4, false),
@@ -425,7 +533,8 @@ public class Sprint7RegistrationTests
             new("99990003", "0001", "99990003_0001", "Conflict Branch", "Straat 4", 52.3, 4.3, false),
             new("99990004", "0001", "99990004_0001", "Dup Branch", "Straat 5", 52.4, 4.4, false),
             new("99990005", "0001", "99990005_0001", "BM Branch", "Straat 6", 52.5, 4.5, false),
-            new("99990006", "0001", "99990006_0001", "Child", "Straat 7", 52.6, 4.6, false)
+            new("99990006", "0001", "99990006_0001", "Child", "Straat 7", 52.6, 4.6, false),
+            new("99990078", "0001", "99990078_0001", "Flex Agency", "Straat 8", 52.7, 4.7, false)
         ];
 
         public TestKvkService(JobsyDbContext db) => _db = db;
@@ -435,9 +544,14 @@ public class Sprint7RegistrationTests
             CancellationToken cancellationToken = default)
         {
             var match = Catalog.FirstOrDefault(c => c.KvkNumber == kvkNumber);
-            return Task.FromResult(match is null
-                ? null
-                : new KvkCompanyResult(match.KvkNumber, match.Name, match.Address));
+            if (match is null)
+            {
+                return Task.FromResult<KvkCompanyResult?>(null);
+            }
+
+            SbiByKvk.TryGetValue(kvkNumber, out var sbi);
+            return Task.FromResult<KvkCompanyResult?>(
+                new KvkCompanyResult(match.KvkNumber, match.Name, match.Address, sbi));
         }
 
         public async Task<IReadOnlyList<KvkEstablishmentResult>> GetEstablishmentsAsync(
@@ -449,9 +563,10 @@ public class Sprint7RegistrationTests
                 .Select(c => c.KvkEstablishmentId!)
                 .ToListAsync(cancellationToken);
 
+            SbiByKvk.TryGetValue(kvkNumber, out var sbi);
             return Catalog
                 .Where(c => c.KvkNumber == kvkNumber)
-                .Select(c => c with { IsInUse = inUse.Contains(c.KvkEstablishmentId) })
+                .Select(c => c with { IsInUse = inUse.Contains(c.KvkEstablishmentId), SbiCodes = sbi })
                 .ToList();
         }
     }

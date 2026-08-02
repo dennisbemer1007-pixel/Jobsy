@@ -43,7 +43,7 @@ Jobsy is een hyper-lokale job-matching applicatie gericht op de regionale arbeid
 - **PushBom:** OpenForWork-kandidaten binnen radius/reistijd; pricing tiers uit settings
 - **Tokens:** Mollie-stub checkout (EM koopt in organisatiopot via radio-pakketten), admin grant, uitgifte aan aangevinkte vestigingen
 - **Employer suite:** vacature-editor, regio’s, vestigingen (KVK), gebruikers-invite, salaristabellen, sollicitanten
-- **Registratie:** KVK-stub → vestiging → activatie; conflict → takeover/org-merge
+- **Registratie:** KVK-stub (+ SBI) → vestiging → wachtwoord → e-mailverificatie; na activatie dual auth (wachtwoord of Entra, zelfde e-mail); SBI `78*` → Intermediair, anders Bedrijfsmanager bij organisatiescope; conflict → takeover/org-merge
 - **Admin suite:** bedrijven, users, vacatures, finance/tokenlog, logging, settings, integratie-pings, WML (incl. halfjaarlijkse update-stub)
 - **Mockdata:** rijke seed (engagement, spends, logs, statusmix) zodat dashboards gevuld zijn
 

@@ -68,6 +68,8 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
             throw new ArgumentException("Je moet akkoord gaan met de voorwaarden en privacyverklaring.");
         }
 
+        RegistrationPasswordRules.Validate(request.Password);
+
         string? trackingCode = null;
         if (!string.IsNullOrWhiteSpace(request.SalesManagerTrackingCode))
         {
@@ -92,6 +94,13 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
         {
             throw new KeyNotFoundException("Vestiging niet gevonden in KVK-stub.");
         }
+
+        var kvkCompany = await _kvk.GetByKvkNumberAsync(kvkNumber, cancellationToken);
+        var sbiCodes = kvkCompany?.EffectiveSbiCodes.Count > 0
+            ? kvkCompany.EffectiveSbiCodes
+            : match.EffectiveSbiCodes;
+        var isIntermediarySbi = KvkSbiClassification.IsIntermediary(sbiCodes);
+        var primarySbi = KvkSbiClassification.PrimarySbiCode(sbiCodes);
 
         // Soft enumeration resistance: same generic message for existing email.
         if (await _db.Users.AnyAsync(u => u.Email.ToLower() == email, cancellationToken)
@@ -121,6 +130,9 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
                 "Er loopt al een openstaande registratie voor deze vestiging.");
         }
 
+        // Intermediairs (SBI 78*) always register as a single intermediary organisation.
+        var scope = isIntermediarySbi ? RegistrationScope.Organization : request.Scope;
+
         var registration = new CompanyRegistration
         {
             Id = Guid.NewGuid(),
@@ -130,13 +142,16 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
             EstablishmentAddress = match.Address,
             Latitude = match.Latitude,
             Longitude = match.Longitude,
-            Scope = request.Scope,
+            Scope = scope,
             ContactName = name,
             ContactEmail = email,
             ContactPhone = string.IsNullOrWhiteSpace(request.ContactPhone)
                 ? null
                 : request.ContactPhone.Trim(),
             ActivationToken = Convert.ToHexString(RandomNumberGenerator.GetBytes(32)),
+            PasswordHash = JobsyPasswordHasher.Hash(request.Password!),
+            PrimarySbiCode = primarySbi,
+            IsIntermediarySbi = isIntermediarySbi,
             ConsentAcceptedAt = DateTime.UtcNow,
             ConsentVersion = PrivacyConstants.CurrentConsentVersion,
             SalesManagerTrackingCode = trackingCode,
@@ -183,11 +198,17 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
         var activationUrl = BuildActivationUrl(registration.ActivationToken, features.PublicWebBaseUrl);
         await SendActivationEmailAsync(registration, activationUrl, cancellationToken);
 
+        var roleHint = isIntermediarySbi
+            ? "Na verificatie krijg je de rol Intermediair (SBI 78)."
+            : scope == RegistrationScope.Organization
+                ? "Na verificatie krijg je de rol Bedrijfsmanager."
+                : "Na verificatie krijg je de rol Filiaalmanager.";
+
         return new RegistrationSubmitResult(
             registration.Id,
             registration.Status,
             RequiresTakeover: false,
-            Message: "Controleer je e-mail voor de activatielink (stub).",
+            Message: $"Controleer je e-mail voor de verificatielink (stub). {roleHint}",
             ActivationUrl: features.ExposeRegistrationActivationLinks ? activationUrl : null);
     }
 
@@ -236,9 +257,10 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
                 "Deze vestiging is ondertussen al geregistreerd. Dien opnieuw een overnameverzoek in.");
         }
 
-        var temporaryPassword = GenerateTemporaryPassword();
+        var passwordHash = ResolvePasswordHash(registration, out var temporaryPassword);
+        var usedChosenPassword = temporaryPassword is null;
         var (user, orgId, branchId) = await ProvisionCompaniesAndUserAsync(
-            registration, temporaryPassword, cancellationToken);
+            registration, passwordHash, cancellationToken);
 
         registration.Status = CompanyRegistrationStatus.Activated;
         registration.ActivatedAt = DateTime.UtcNow;
@@ -247,13 +269,15 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
         registration.CreatedBranchCompanyId = branchId;
         // One-time token: clear so replay cannot re-fetch credentials.
         registration.ActivationToken = string.Empty;
+        registration.PasswordHash = null;
 
         _db.PlatformLogs.Add(new PlatformLog
         {
             Id = Guid.NewGuid(),
             Level = PlatformLogLevel.Info,
             Category = "Registration",
-            Message = $"Company registration activated: {registration.KvkEstablishmentId} ({registration.Scope})",
+            Message =
+                $"Company registration activated: {registration.KvkEstablishmentId} ({registration.Scope}, SBI {registration.PrimarySbiCode ?? "-"}, intermediary={registration.IsIntermediarySbi})",
             CreatedAt = DateTime.UtcNow
         });
 
@@ -274,7 +298,8 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
 
         _logger.LogInformation("Activated registration {Id} for {Email}", registration.Id, EmailServiceStub.RedactEmail(registration.ContactEmail));
 
-        return await BuildActivationResultAsync(registration, temporaryPassword, cancellationToken);
+        return await BuildActivationResultAsync(
+            registration, temporaryPassword ?? string.Empty, usedChosenPassword, cancellationToken);
     }
 
     /// <summary>
@@ -397,12 +422,18 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
         }
 
         var target = takeover.TargetCompany;
-        var temporaryPassword = GenerateTemporaryPassword();
+        var passwordHash = ResolvePasswordHash(registration, out var temporaryPassword);
 
         Guid? orgId;
         Guid branchId = target.Id;
 
-        if (registration.Scope == RegistrationScope.Organization)
+        if (registration.IsIntermediarySbi)
+        {
+            // Takeover of an existing vestiging by an SBI-78 registrant: promote target to Intermediary.
+            target.Type = CompanyType.Intermediary;
+            orgId = target.ParentCompanyId;
+        }
+        else if (registration.Scope == RegistrationScope.Organization)
         {
             if (target.ParentCompanyId is Guid existingParentId)
             {
@@ -448,11 +479,9 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
             orgId = target.ParentCompanyId;
         }
 
-        var role = registration.Scope == RegistrationScope.Organization
-            ? UserRole.EnterpriseManager
-            : UserRole.BranchManager;
+        var role = ResolveRegistrationRole(registration);
 
-        var user = await CreateRegistrationUserAsync(registration, role, orgId ?? branchId, temporaryPassword, cancellationToken);
+        var user = await CreateRegistrationUserAsync(registration, role, orgId ?? branchId, passwordHash, cancellationToken);
         await EnsureMembershipAsync(user.Id, branchId, cancellationToken);
         if (orgId is Guid oid)
         {
@@ -509,6 +538,7 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
         registration.CreatedOrganizationCompanyId = orgId;
         registration.CreatedBranchCompanyId = branchId;
         registration.ActivationToken = string.Empty;
+        registration.PasswordHash = null;
 
         // Preserve salesmanager referral captured at submit time.
         await ApplySalesManagerReferralAsync(registration, target, orgId, cancellationToken);
@@ -530,6 +560,17 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
         var features = await _features.GetAsync(cancellationToken);
         var loginUrl = features.PublicWebBaseUrl.TrimEnd('/') + "/login";
         var safeName = WebUtility.HtmlEncode(registration.ContactName);
+        var passwordBlock = temporaryPassword is null
+            ? """
+              <p>Log in met het wachtwoord dat je bij registratie hebt gekozen, of via
+              <strong>Microsoft Entra</strong> met hetzelfde geverifieerde e-mailadres.</p>
+              """
+            : $"""
+               <p>Log in met <code>{WebUtility.HtmlEncode(registration.ContactEmail)}</code>.
+               Je eenmalige tijdelijke wachtwoord (bewaar dit veilig; het wordt niet opnieuw getoond):</p>
+               <p><code>{WebUtility.HtmlEncode(temporaryPassword)}</code></p>
+               <p><em>Wijzig dit wachtwoord zo snel mogelijk.</em></p>
+               """;
         await _email.SendAsync(new EmailMessage(
             registration.ContactEmail,
             "Overname goedgekeurd — Jobsy",
@@ -538,11 +579,9 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
              <p>Je overnameverzoek voor <strong>{WebUtility.HtmlEncode(target.Name)}</strong> is goedgekeurd.</p>
              <p>Tokens, vacatures en geschiedenis blijven gekoppeld aan de vestiging
              {(orgId is not null ? "onder de organisatie" : "")}.</p>
-             <p>Log in met <code>{WebUtility.HtmlEncode(registration.ContactEmail)}</code>.
-             Je eenmalige tijdelijke wachtwoord (bewaar dit veilig; het wordt niet opnieuw getoond):</p>
-             <p><code>{WebUtility.HtmlEncode(temporaryPassword)}</code></p>
+             {passwordBlock}
              <p><a href="{WebUtility.HtmlEncode(loginUrl)}">Naar inloggen</a></p>
-             <p><em>Wijzig dit wachtwoord zo snel mogelijk. Stub — geen echte mail.</em></p>
+             <p><em>Stub — geen echte mail.</em></p>
              """,
             "TakeoverApproved"), cancellationToken);
 
@@ -610,13 +649,29 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
 
     private async Task<(User User, Guid? OrgId, Guid BranchId)> ProvisionCompaniesAndUserAsync(
         CompanyRegistration registration,
-        string password,
+        string passwordHash,
         CancellationToken cancellationToken)
     {
         Guid? orgId = null;
         Company branch;
 
-        if (registration.Scope == RegistrationScope.Organization)
+        if (registration.IsIntermediarySbi)
+        {
+            var kvkCompany = await _kvk.GetByKvkNumberAsync(registration.KvkNumber, cancellationToken);
+            branch = new Company
+            {
+                Id = Guid.NewGuid(),
+                Name = kvkCompany?.Name ?? registration.EstablishmentName,
+                KvkNumber = registration.KvkNumber,
+                KvkEstablishmentId = registration.KvkEstablishmentId,
+                Address = registration.EstablishmentAddress,
+                Location = new GeoPoint(registration.Latitude, registration.Longitude),
+                Type = CompanyType.Intermediary
+            };
+            _db.Companies.Add(branch);
+            await WmlSalaryTableService.EnsureForCompanyAsync(_db, branch.Id, cancellationToken);
+        }
+        else if (registration.Scope == RegistrationScope.Organization)
         {
             var kvkCompany = await _kvk.GetByKvkNumberAsync(registration.KvkNumber, cancellationToken);
             var org = new Company
@@ -668,12 +723,10 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
 
         await ApplySalesManagerReferralAsync(registration, branch, orgId, cancellationToken);
 
-        var role = registration.Scope == RegistrationScope.Organization
-            ? UserRole.EnterpriseManager
-            : UserRole.BranchManager;
+        var role = ResolveRegistrationRole(registration);
 
         var primaryCompanyId = orgId ?? branch.Id;
-        var user = await CreateRegistrationUserAsync(registration, role, primaryCompanyId, password, cancellationToken);
+        var user = await CreateRegistrationUserAsync(registration, role, primaryCompanyId, passwordHash, cancellationToken);
         await EnsureMembershipAsync(user.Id, branch.Id, cancellationToken);
         if (orgId is Guid oid)
         {
@@ -690,6 +743,19 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
         }
 
         return (user, orgId, branch.Id);
+    }
+
+    private static UserRole ResolveRegistrationRole(CompanyRegistration registration)
+    {
+        if (registration.IsIntermediarySbi)
+        {
+            return UserRole.Intermediary;
+        }
+
+        // Non-SBI 78: Organization → Bedrijfsmanager; BranchOnly → Filiaalmanager.
+        return registration.Scope == RegistrationScope.Organization
+            ? UserRole.EnterpriseManager
+            : UserRole.BranchManager;
     }
 
     private async Task ClaimSiblingEstablishmentsAsync(
@@ -751,7 +817,7 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
         CompanyRegistration registration,
         UserRole role,
         Guid primaryCompanyId,
-        string temporaryPassword,
+        string passwordHash,
         CancellationToken cancellationToken)
     {
         var email = registration.ContactEmail.Trim().ToLowerInvariant();
@@ -779,7 +845,7 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
             Id = Guid.NewGuid(),
             UserId = user.Id,
             Email = email,
-            PasswordHash = JobsyPasswordHasher.Hash(temporaryPassword)
+            PasswordHash = passwordHash
         });
 
         return user;
@@ -845,6 +911,7 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
     private async Task<RegistrationActivationResult> BuildActivationResultAsync(
         CompanyRegistration registration,
         string temporaryPassword,
+        bool usedChosenPassword,
         CancellationToken cancellationToken)
     {
         var user = registration.CreatedUserId is Guid uid
@@ -872,7 +939,8 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
             companyIds,
             temporaryPassword,
             registration.CreatedOrganizationCompanyId,
-            registration.CreatedBranchCompanyId);
+            registration.CreatedBranchCompanyId,
+            usedChosenPassword);
     }
 
     private async Task NotifyTakeoverRequestedAsync(
@@ -931,14 +999,21 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
         CancellationToken cancellationToken)
     {
         var safeName = WebUtility.HtmlEncode(registration.ContactName);
+        var roleLabel = registration.IsIntermediarySbi
+            ? "Intermediair"
+            : registration.Scope == RegistrationScope.Organization
+                ? "Bedrijfsmanager"
+                : "Filiaalmanager";
         await _email.SendAsync(new EmailMessage(
             registration.ContactEmail,
-            "Activeer je Jobsy-account",
+            "Bevestig je e-mailadres — Jobsy",
             $"""
              <p>Hoi {safeName},</p>
-             <p>Bevestig je registratie voor <strong>{WebUtility.HtmlEncode(registration.EstablishmentName)}</strong>
-             (scope: {WebUtility.HtmlEncode(registration.Scope.ToString())}).</p>
-             <p><a href="{WebUtility.HtmlEncode(activationUrl)}">Account activeren</a></p>
+             <p>Bevestig je e-mailadres om je bedrijfsregistratie voor
+             <strong>{WebUtility.HtmlEncode(registration.EstablishmentName)}</strong> te activeren
+             (rol: {WebUtility.HtmlEncode(roleLabel)}
+             {(string.IsNullOrEmpty(registration.PrimarySbiCode) ? "" : $", SBI {WebUtility.HtmlEncode(registration.PrimarySbiCode)}")}).</p>
+             <p><a href="{WebUtility.HtmlEncode(activationUrl)}">E-mailadres bevestigen</a></p>
              <p>Stub-link: <code>{WebUtility.HtmlEncode(activationUrl)}</code></p>
              <p><em>Stub — geen echte mail.</em></p>
              """,
@@ -947,26 +1022,51 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
 
     private async Task SendActivatedCredentialsEmailAsync(
         CompanyRegistration registration,
-        string temporaryPassword,
+        string? temporaryPassword,
         CancellationToken cancellationToken)
     {
         var features = await _features.GetAsync(cancellationToken);
         var loginUrl = features.PublicWebBaseUrl.TrimEnd('/') + "/login";
         var safeName = WebUtility.HtmlEncode(registration.ContactName);
+        var passwordBlock = temporaryPassword is null
+            ? """
+              <p>Log in met het wachtwoord dat je bij registratie hebt gekozen, of via
+              <strong>Microsoft Entra</strong> (zelfde geverifieerde e-mailadres).</p>
+              """
+            : $"""
+               <p>Gebruik dit eenmalige tijdelijke wachtwoord (niet opnieuw zichtbaar in de app):</p>
+               <p><code>{WebUtility.HtmlEncode(temporaryPassword)}</code></p>
+               <p><em>Wijzig dit wachtwoord zo snel mogelijk.</em></p>
+               """;
         await _email.SendAsync(new EmailMessage(
             registration.ContactEmail,
             "Je Jobsy-account is actief",
             $"""
              <p>Hoi {safeName},</p>
              <p>Je account voor <strong>{WebUtility.HtmlEncode(registration.EstablishmentName)}</strong> is geactiveerd.</p>
-             <p>Log bij voorkeur in met <strong>Google</strong> of <strong>Microsoft</strong> op
-             <code>{WebUtility.HtmlEncode(registration.ContactEmail)}</code>.</p>
-             <p>Of gebruik dit eenmalige tijdelijke wachtwoord (niet opnieuw zichtbaar in de app):</p>
-             <p><code>{WebUtility.HtmlEncode(temporaryPassword)}</code></p>
+             <p>Je kunt inloggen met e-mail/wachtwoord of met <strong>Microsoft Entra</strong> /
+             Google op <code>{WebUtility.HtmlEncode(registration.ContactEmail)}</code>.</p>
+             {passwordBlock}
              <p><a href="{WebUtility.HtmlEncode(loginUrl)}">Naar inloggen</a></p>
-             <p><em>Wijzig dit wachtwoord zo snel mogelijk. Stub — geen echte mail.</em></p>
+             <p><em>Stub — geen echte mail.</em></p>
              """,
             "RegistrationCredentials"), cancellationToken);
+    }
+
+    /// <summary>
+    /// Uses the password hash stored at submit when present; otherwise generates a temporary password
+    /// (legacy / takeover edge cases). Returns the hash and optional plaintext for e-mail only.
+    /// </summary>
+    private static string ResolvePasswordHash(CompanyRegistration registration, out string? temporaryPassword)
+    {
+        if (!string.IsNullOrWhiteSpace(registration.PasswordHash))
+        {
+            temporaryPassword = null;
+            return registration.PasswordHash;
+        }
+
+        temporaryPassword = GenerateTemporaryPassword();
+        return JobsyPasswordHasher.Hash(temporaryPassword);
     }
 
     private static string GenerateTemporaryPassword()
