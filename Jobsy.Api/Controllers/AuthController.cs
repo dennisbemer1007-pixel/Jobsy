@@ -90,6 +90,7 @@ public class AuthController : ControllerBase
 
     /// <summary>
     /// Upserts an external (Google/Entra) identity into Jobsy Users.
+    /// Prefers Provider+Subject (Entra OID) over e-mail so IdP e-mail drift does not orphan accounts.
     /// New users become Candidate; invited managers keep their DB role.
     /// Requires the shared JobsyAuth development/provision secret (server-to-server).
     /// </summary>
@@ -114,12 +115,37 @@ public class AuthController : ControllerBase
         var fullName = string.IsNullOrWhiteSpace(request.FullName)
             ? email
             : request.FullName.Trim();
+        var provider = NormalizeExternalProvider(request.Provider);
+        var subject = string.IsNullOrWhiteSpace(request.ProviderSubject)
+            ? null
+            : request.ProviderSubject.Trim();
 
-        var user = await _db.Users
-            .Include(u => u.CompanyMemberships)
-            .FirstOrDefaultAsync(u => u.Email.ToLower() == email, cancellationToken);
-
+        User? user = null;
         var isNew = false;
+
+        // 1) Stable IdP subject wins (survives e-mail / UPN changes).
+        if (provider is not null && subject is not null)
+        {
+            var link = await _db.UserExternalLogins
+                .Include(l => l.User!)
+                .ThenInclude(u => u.CompanyMemberships)
+                .FirstOrDefaultAsync(
+                    l => l.Provider == provider && l.ProviderSubject == subject,
+                    cancellationToken);
+            if (link?.User is not null)
+            {
+                user = link.User;
+            }
+        }
+
+        // 2) First-time bind: match verified e-mail to an existing Lobsy user, then store OID.
+        if (user is null)
+        {
+            user = await _db.Users
+                .Include(u => u.CompanyMemberships)
+                .FirstOrDefaultAsync(u => u.Email.ToLower() == email, cancellationToken);
+        }
+
         if (user is null)
         {
             isNew = true;
@@ -146,9 +172,15 @@ public class AuthController : ControllerBase
                 && fullName != email)
             {
                 user.FullName = fullName;
-                await _db.SaveChangesAsync(cancellationToken);
             }
         }
+
+        if (provider is not null && subject is not null)
+        {
+            await EnsureExternalLoginBoundAsync(user.Id, provider, subject, email, cancellationToken);
+        }
+
+        await _db.SaveChangesAsync(cancellationToken);
 
         var flags = await BuildFlagsAsync(user, cancellationToken);
         return Ok(new EnsureExternalUserResponse(
@@ -161,6 +193,64 @@ public class AuthController : ControllerBase
             flags.ShowCandidateHowTo,
             flags.HasCandidateApplications,
             flags.HasSalesReferral));
+    }
+
+    private static string? NormalizeExternalProvider(string? provider)
+    {
+        if (string.IsNullOrWhiteSpace(provider))
+        {
+            return null;
+        }
+
+        return provider.Trim().ToLowerInvariant() switch
+        {
+            "entra" or "microsoft" or "microsoftentra" or "oidc" => "entra",
+            "google" or "googleentra" => "google",
+            var p => p
+        };
+    }
+
+    private async Task EnsureExternalLoginBoundAsync(
+        Guid userId,
+        string provider,
+        string subject,
+        string emailAtLink,
+        CancellationToken cancellationToken)
+    {
+        var existing = await _db.UserExternalLogins
+            .FirstOrDefaultAsync(
+                l => l.Provider == provider && l.ProviderSubject == subject,
+                cancellationToken);
+        if (existing is not null)
+        {
+            if (existing.UserId != userId)
+            {
+                // Subject already bound to another account — do not steal the link.
+                return;
+            }
+
+            return;
+        }
+
+        // One subject per provider+user (re-bind if the same user signs in again with a new OID — rare).
+        var priorForUser = await _db.UserExternalLogins
+            .Where(l => l.UserId == userId && l.Provider == provider)
+            .ToListAsync(cancellationToken);
+        if (priorForUser.Count > 0)
+        {
+            // Keep the first OID binding; ignore later subjects for the same provider.
+            return;
+        }
+
+        _db.UserExternalLogins.Add(new UserExternalLogin
+        {
+            Id = Guid.NewGuid(),
+            UserId = userId,
+            Provider = provider,
+            ProviderSubject = subject,
+            EmailAtLink = emailAtLink,
+            LinkedAtUtc = DateTime.UtcNow
+        });
     }
 
     /// <summary>

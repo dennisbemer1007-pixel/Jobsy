@@ -124,6 +124,7 @@ public static class DependencyInjection
         services.AddScoped<IPaymentService, MolliePaymentService>();
 
         services.AddScoped<IKvkService, KvkServiceStub>();
+        services.AddScoped<IKvkVerificationRetryService, KvkVerificationRetryService>();
         services.AddScoped<EmailServiceStub>();
         services.AddScoped<IEmailService, SmtpEmailService>();
         services.AddScoped<IPushNotificationService, PushNotificationServiceStub>();
@@ -153,6 +154,7 @@ public static class DependencyInjection
         services.AddHostedService<DraftVacancyCleanupHostedService>();
         services.AddHostedService<CompanyReengagementHostedService>();
         services.AddHostedService<VatBufferTransferHostedService>();
+        services.AddHostedService<KvkVerificationRetryHostedService>();
 
         return services;
     }

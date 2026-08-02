@@ -639,11 +639,26 @@ public sealed class JobsyApiClient : IAsyncDisposable
         => await _http.GetFromJsonAsync<List<KvkEstablishmentItem>>(
             $"api/kvk/{Uri.EscapeDataString(kvkNumber)}/establishments", ct) ?? [];
 
+    public async Task<KvkEstablishmentsLookupResult> LookupRegistrationEstablishmentsAsync(
+        string kvkNumber,
+        CancellationToken ct = default)
+        => await _http.GetFromJsonAsync<KvkEstablishmentsLookupResult>(
+               $"api/registration/kvk/{Uri.EscapeDataString(kvkNumber)}/establishments", ct)
+           ?? new KvkEstablishmentsLookupResult { Status = "NotFound" };
+
     public async Task<IReadOnlyList<KvkEstablishmentItem>> GetRegistrationEstablishmentsAsync(
         string kvkNumber,
         CancellationToken ct = default)
-        => await _http.GetFromJsonAsync<List<KvkEstablishmentItem>>(
-            $"api/registration/kvk/{Uri.EscapeDataString(kvkNumber)}/establishments", ct) ?? [];
+    {
+        var lookup = await LookupRegistrationEstablishmentsAsync(kvkNumber, ct);
+        if (lookup.IsUnavailable)
+        {
+            throw new InvalidOperationException(
+                lookup.Message ?? "KVK-dienst is tijdelijk niet beschikbaar.");
+        }
+
+        return lookup.Establishments;
+    }
 
     public async Task<RegistrationSubmitResult> SubmitRegistrationAsync(
         string kvkNumber,
@@ -656,6 +671,13 @@ public sealed class JobsyApiClient : IAsyncDisposable
         string? consentVersion = null,
         string? salesManagerTrackingCode = null,
         string? password = null,
+        bool allowPendingKvkVerification = false,
+        string? manualEstablishmentName = null,
+        string? manualEstablishmentAddress = null,
+        string? manualEstablishmentNumber = null,
+        double? manualLatitude = null,
+        double? manualLongitude = null,
+        bool? manualIsIntermediarySbi = null,
         CancellationToken ct = default)
     {
         var response = await _http.PostAsJsonAsync("api/registration", new
@@ -669,7 +691,14 @@ public sealed class JobsyApiClient : IAsyncDisposable
             acceptedTerms,
             consentVersion = consentVersion ?? Jobsy.Core.Privacy.PrivacyConstants.CurrentConsentVersion,
             salesManagerTrackingCode,
-            password
+            password,
+            allowPendingKvkVerification,
+            manualEstablishmentName,
+            manualEstablishmentAddress,
+            manualEstablishmentNumber,
+            manualLatitude,
+            manualLongitude,
+            manualIsIntermediarySbi
         }, ct);
         if (!response.IsSuccessStatusCode)
         {

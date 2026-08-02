@@ -677,16 +677,27 @@ public class Sprint7RegistrationTests
             string kvkNumber,
             CancellationToken cancellationToken = default)
         {
+            var lookup = await LookupEstablishmentsAsync(kvkNumber, cancellationToken);
+            return lookup.Establishments;
+        }
+
+        public async Task<KvkEstablishmentsLookup> LookupEstablishmentsAsync(
+            string kvkNumber,
+            CancellationToken cancellationToken = default)
+        {
             var inUse = await _db.Companies.AsNoTracking()
                 .Where(c => c.KvkNumber == kvkNumber && c.KvkEstablishmentId != null)
                 .Select(c => c.KvkEstablishmentId!)
                 .ToListAsync(cancellationToken);
 
             SbiByKvk.TryGetValue(kvkNumber, out var sbi);
-            return Catalog
+            var items = Catalog
                 .Where(c => c.KvkNumber == kvkNumber)
                 .Select(c => c with { IsInUse = inUse.Contains(c.KvkEstablishmentId), SbiCodes = sbi })
                 .ToList();
+            return items.Count == 0
+                ? KvkEstablishmentsLookup.NotFound()
+                : KvkEstablishmentsLookup.Ok(items);
         }
     }
 }

@@ -1,0 +1,19 @@
+@* Non-interactive placeholder matching MetricTile chrome for Bento loading states. *@
+
+<div class="stat-card stat-card--tile stat-card--skeleton size-@Size"
+     aria-hidden="true">
+    <div class="stat-card__body">
+        <span class="skeleton-line skeleton-line--label"></span>
+        <span class="skeleton-line skeleton-line--value"></span>
+        <span class="skeleton-line skeleton-line--hint"></span>
+    </div>
+    @if (ShowRing)
+    {
+        <span class="skeleton-ring"></span>
+    }
+</div>
+
+@code {
+    [Parameter] public string Size { get; set; } = "default";
+    [Parameter] public bool ShowRing { get; set; }
+}

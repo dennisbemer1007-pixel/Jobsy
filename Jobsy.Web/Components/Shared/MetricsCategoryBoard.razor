@@ -3,7 +3,55 @@
 
 @* Bento KPI board: equal hero grid + category tabs + optional Top/Flop tables. *@
 
-@if (Metrics.Count > 0)
+@if (Loading && Metrics.Count == 0)
+{
+    <div class="bento-grid @(ShowVacancyPerformance ? "bento-grid--with-rank" : null)" aria-busy="true" aria-label="Dashboard laden">
+        <div class="bento-grid__main">
+            <div class="bento-hero" style="--bento-hero-cols:@HeroSkeletonCount">
+                @for (var i = 0; i < HeroSkeletonCount; i++)
+                {
+                    <MetricTileSkeleton Size="@(i == 0 ? "featured" : "default")" ShowRing="@(i % 2 == 1)" />
+                }
+            </div>
+            <section class="bento-cell bento-cell--category">
+                <header class="dash-section__header dash-section__header--compact">
+                    <div>
+                        <span class="skeleton-line skeleton-line--title"></span>
+                        <span class="skeleton-line skeleton-line--lead"></span>
+                    </div>
+                </header>
+                <div class="bento-metrics">
+                    @for (var i = 0; i < BodySkeletonCount; i++)
+                    {
+                        <MetricTileSkeleton Size="compact" />
+                    }
+                </div>
+            </section>
+        </div>
+        @if (ShowVacancyPerformance)
+        {
+            <aside class="bento-grid__side">
+                <div class="bento-rank" aria-hidden="true">
+                    <div class="bento-rank__card">
+                        <span class="skeleton-line skeleton-line--label"></span>
+                        @for (var i = 0; i < 3; i++)
+                        {
+                            <span class="skeleton-line skeleton-line--row"></span>
+                        }
+                    </div>
+                    <div class="bento-rank__card">
+                        <span class="skeleton-line skeleton-line--label"></span>
+                        @for (var i = 0; i < 3; i++)
+                        {
+                            <span class="skeleton-line skeleton-line--row"></span>
+                        }
+                    </div>
+                </div>
+            </aside>
+        }
+    </div>
+}
+else if (Metrics.Count > 0)
 {
     var hero = MetricDashboardCatalog.HeroMetrics(Metrics, m => m.Key, m => m.Value);
     var groups = MetricDashboardCatalog.GroupPresent(Metrics, m => m.Key);
@@ -126,6 +174,9 @@
     [Parameter] public bool ShowVacancyPerformance { get; set; }
     [Parameter] public VacancyPerformanceBoard? VacancyPerformance { get; set; }
     [Parameter] public string VacancyHrefPrefix { get; set; } = "/vacancies";
+    [Parameter] public bool Loading { get; set; }
+    [Parameter] public int HeroSkeletonCount { get; set; } = 4;
+    [Parameter] public int BodySkeletonCount { get; set; } = 6;
 
     private string? _categoryId;
     private string? _lastSelectedKey;

@@ -36,6 +36,32 @@
                 <button class="login-submit" type="submit" disabled="@_busy">@Culture["Register.SearchEstablishments"]</button>
             </form>
         }
+        else if (_step == 2 && _kvkUnavailable)
+        {
+            <p class="state-message">@_error ?? "KVK-dienst is tijdelijk niet beschikbaar. Vul je vestiging handmatig in — verificatie volgt automatisch later."</p>
+            <form class="login-form" @onsubmit="ContinuePendingKvk" @onsubmit:preventDefault>
+                <label>
+                    Vestigingsnaam
+                    <input @bind="_manualName" required maxlength="256" />
+                </label>
+                <label>
+                    Adres
+                    <input @bind="_manualAddress" required maxlength="512" />
+                </label>
+                <label>
+                    Vestigingsnummer
+                    <input @bind="_manualEstablishmentNumber" required maxlength="16" placeholder="0001" />
+                </label>
+                <label class="profile-toggle">
+                    <input type="checkbox" @bind="_manualIsIntermediary" />
+                    <span>Dit is een uitzend-/arbeidsbemiddelingsbureau (SBI 78)</span>
+                </label>
+                <div class="wizard-actions">
+                    <button class="provider-btn" type="button" @onclick="() => { _step = 1; _kvkUnavailable = false; _error = null; }">@Culture["Common.Back"]</button>
+                    <button class="login-submit" type="submit" disabled="@_busy">Doorgaan (KVK in afwachting)</button>
+                </div>
+            </form>
+        }
         else if (_step == 2)
         {
             <div class="table-list">
@@ -193,6 +219,12 @@
     private string _passwordConfirm = "";
     private string _salesManagerCode = "";
     private bool _acceptedTerms;
+    private bool _kvkUnavailable;
+    private bool _pendingKvk;
+    private string _manualName = "";
+    private string _manualAddress = "";
+    private string _manualEstablishmentNumber = "0001";
+    private bool _manualIsIntermediary;
     private List<KvkEstablishmentItem> _establishments = [];
     private KvkEstablishmentItem? _selected;
 
@@ -217,12 +249,24 @@
     {
         _busy = true;
         _error = null;
+        _kvkUnavailable = false;
+        _pendingKvk = false;
         try
         {
-            _establishments = (await Api.GetRegistrationEstablishmentsAsync(_kvkNumber.Trim())).ToList();
+            var lookup = await Api.LookupRegistrationEstablishmentsAsync(_kvkNumber.Trim());
+            if (lookup.IsUnavailable)
+            {
+                _kvkUnavailable = true;
+                _error = lookup.Message;
+                _selected = null;
+                _step = 2;
+                return;
+            }
+
+            _establishments = lookup.Establishments;
             if (_establishments.Count == 0)
             {
-                _error = "Geen vestigingen gevonden voor dit KVK-nummer.";
+                _error = lookup.Message ?? "Geen vestigingen gevonden voor dit KVK-nummer.";
                 return;
             }
 
@@ -237,6 +281,42 @@
         {
             _busy = false;
         }
+    }
+
+    private void ContinuePendingKvk()
+    {
+        if (string.IsNullOrWhiteSpace(_manualName)
+            || string.IsNullOrWhiteSpace(_manualAddress)
+            || string.IsNullOrWhiteSpace(_manualEstablishmentNumber))
+        {
+            _error = "Vul vestigingsnaam, adres en vestigingsnummer in.";
+            return;
+        }
+
+        var kvk = new string(_kvkNumber.Where(char.IsDigit).ToArray());
+        var est = _manualEstablishmentNumber.Trim();
+        var digits = new string(est.Where(char.IsDigit).ToArray());
+        if (digits.Length is > 0 and <= 4)
+        {
+            est = digits.PadLeft(4, '0');
+        }
+
+        _selected = new KvkEstablishmentItem
+        {
+            KvkNumber = kvk,
+            EstablishmentNumber = est,
+            KvkEstablishmentId = $"{kvk}_{est}",
+            Name = _manualName.Trim(),
+            Address = _manualAddress.Trim(),
+            Latitude = 52.1326,
+            Longitude = 5.2913,
+            IsInUse = false,
+            SbiCodes = _manualIsIntermediary ? ["7820"] : null
+        };
+        _pendingKvk = true;
+        _error = null;
+        _scope = _manualIsIntermediary ? "BranchOnly" : _scope;
+        _step = 3;
     }
 
     private void SelectEstablishment(KvkEstablishmentItem e) => _selected = e;
@@ -310,7 +390,14 @@
                 salesManagerTrackingCode: string.IsNullOrWhiteSpace(_salesManagerCode)
                     ? null
                     : _salesManagerCode.Trim(),
-                password: _password);
+                password: _password,
+                allowPendingKvkVerification: _pendingKvk,
+                manualEstablishmentName: _pendingKvk ? _selected.Name : null,
+                manualEstablishmentAddress: _pendingKvk ? _selected.Address : null,
+                manualEstablishmentNumber: _pendingKvk ? _selected.EstablishmentNumber : null,
+                manualLatitude: _pendingKvk ? _selected.Latitude : null,
+                manualLongitude: _pendingKvk ? _selected.Longitude : null,
+                manualIsIntermediarySbi: _pendingKvk ? _selected.IsIntermediarySbi : null);
 
             _message = result.Message;
             _activationUrl = result.ActivationUrl;

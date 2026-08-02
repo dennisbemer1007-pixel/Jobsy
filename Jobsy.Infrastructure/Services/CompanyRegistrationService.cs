@@ -87,18 +87,44 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
             }
         }
 
-        var establishments = await _kvk.GetEstablishmentsAsync(kvkNumber, cancellationToken);
-        var match = establishments.FirstOrDefault(e =>
-            e.KvkEstablishmentId.Equals(establishmentId, StringComparison.OrdinalIgnoreCase));
-        if (match is null)
+        var lookup = await _kvk.LookupEstablishmentsAsync(kvkNumber, cancellationToken);
+        KvkEstablishmentResult match;
+        var kvkVerificationStatus = KvkVerificationStatus.Verified;
+        IReadOnlyList<string> sbiCodes;
+
+        if (lookup.Status == KvkLookupStatus.Unavailable)
         {
-            throw new KeyNotFoundException("Vestiging niet gevonden in KVK-stub.");
+            if (!request.AllowPendingKvkVerification)
+            {
+                throw new InvalidOperationException(
+                    lookup.Message
+                    ?? "KVK-dienst is tijdelijk niet beschikbaar. Probeer later opnieuw of kies doorgaan met verificatie in afwachting.");
+            }
+
+            match = BuildPendingEstablishmentSnapshot(request, kvkNumber, establishmentId);
+            kvkVerificationStatus = KvkVerificationStatus.Pending;
+            sbiCodes = request.ManualIsIntermediarySbi == true ? ["7820"] : [];
+        }
+        else if (lookup.Status == KvkLookupStatus.NotFound)
+        {
+            throw new KeyNotFoundException("Vestiging niet gevonden in KVK.");
+        }
+        else
+        {
+            var found = lookup.Establishments.FirstOrDefault(e =>
+                e.KvkEstablishmentId.Equals(establishmentId, StringComparison.OrdinalIgnoreCase));
+            if (found is null)
+            {
+                throw new KeyNotFoundException("Vestiging niet gevonden in KVK.");
+            }
+
+            match = found;
+            var kvkCompany = await _kvk.GetByKvkNumberAsync(kvkNumber, cancellationToken);
+            sbiCodes = kvkCompany?.EffectiveSbiCodes.Count > 0
+                ? kvkCompany.EffectiveSbiCodes
+                : match.EffectiveSbiCodes;
         }
 
-        var kvkCompany = await _kvk.GetByKvkNumberAsync(kvkNumber, cancellationToken);
-        var sbiCodes = kvkCompany?.EffectiveSbiCodes.Count > 0
-            ? kvkCompany.EffectiveSbiCodes
-            : match.EffectiveSbiCodes;
         var isIntermediarySbi = KvkSbiClassification.IsIntermediary(sbiCodes);
         var primarySbi = KvkSbiClassification.PrimarySbiCode(sbiCodes);
 
@@ -153,6 +179,7 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
             PasswordHash = JobsyPasswordHasher.Hash(request.Password!),
             PrimarySbiCode = primarySbi,
             IsIntermediarySbi = isIntermediarySbi,
+            KvkVerificationStatus = kvkVerificationStatus,
             ConsentAcceptedAt = DateTime.UtcNow,
             ConsentVersion = PrivacyConstants.CurrentConsentVersion,
             SalesManagerTrackingCode = trackingCode,
@@ -208,11 +235,15 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
                 ? "Na verificatie krijg je de rol Bedrijfsmanager."
                 : "Na verificatie krijg je de rol Filiaalmanager.";
 
+        var kvkHint = kvkVerificationStatus == KvkVerificationStatus.Pending
+            ? " Je account staat intern op KVK-verificatie in afwachting; we controleren dit automatisch zodra de KVK-dienst weer bereikbaar is."
+            : string.Empty;
+
         return new RegistrationSubmitResult(
             registration.Id,
             registration.Status,
             RequiresTakeover: false,
-            Message: $"Controleer je e-mail voor de verificatielink (stub). {roleHint}",
+            Message: $"Controleer je e-mail voor de verificatielink (stub). {roleHint}{kvkHint}",
             ActivationUrl: features.ExposeRegistrationActivationLinks ? activationUrl : null);
     }
 
@@ -697,6 +728,7 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
                 Location = new GeoPoint(registration.Latitude, registration.Longitude),
                 Type = CompanyType.Intermediary
             };
+            ApplyKvkVerificationState(branch, registration);
             _db.Companies.Add(branch);
             await WmlSalaryTableService.EnsureForCompanyAsync(_db, branch.Id, cancellationToken);
         }
@@ -713,6 +745,7 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
                 Location = new GeoPoint(registration.Latitude, registration.Longitude),
                 Type = CompanyType.Employer
             };
+            ApplyKvkVerificationState(org, registration);
             _db.Companies.Add(org);
             orgId = org.Id;
             await WmlSalaryTableService.EnsureForCompanyAsync(_db, org.Id, cancellationToken);
@@ -728,11 +761,16 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
                 Type = CompanyType.Employer,
                 ParentCompanyId = org.Id
             };
+            ApplyKvkVerificationState(branch, registration);
             _db.Companies.Add(branch);
             await WmlSalaryTableService.EnsureForCompanyAsync(_db, branch.Id, cancellationToken);
 
-            await ClaimSiblingEstablishmentsAsync(
-                registration.KvkNumber, org.Id, branch.Id, cancellationToken);
+            // Sibling claim only when KVK is verified — pending registrations skip auto-claim.
+            if (registration.KvkVerificationStatus == KvkVerificationStatus.Verified)
+            {
+                await ClaimSiblingEstablishmentsAsync(
+                    registration.KvkNumber, org.Id, branch.Id, cancellationToken);
+            }
         }
         else
         {
@@ -746,6 +784,7 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
                 Location = new GeoPoint(registration.Latitude, registration.Longitude),
                 Type = CompanyType.Employer
             };
+            ApplyKvkVerificationState(branch, registration);
             _db.Companies.Add(branch);
             await WmlSalaryTableService.EnsureForCompanyAsync(_db, branch.Id, cancellationToken);
         }
@@ -1210,6 +1249,7 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
         branch.FirstYearStartedAt = DateTime.UtcNow;
         // Only the publishing vestiging gets the one-time start-highlight (not the org pot).
         branch.PendingStartHighlightBonus = true;
+        await SnapshotCommissionTermsAsync(branch, profile.UserId, cancellationToken);
 
         if (orgId is Guid oid)
         {
@@ -1219,6 +1259,7 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
             {
                 org.ReferredBySalesManagerUserId = profile.UserId;
                 org.FirstYearStartedAt ??= DateTime.UtcNow;
+                await SnapshotCommissionTermsAsync(org, profile.UserId, cancellationToken);
             }
         }
 
@@ -1241,5 +1282,112 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
                 branch.FirstYearSupplierSlot = next;
             }
         }
+    }
+
+    private async Task SnapshotCommissionTermsAsync(
+        Company company,
+        Guid directSalesManagerUserId,
+        CancellationToken cancellationToken)
+    {
+        if (company.CommissionTermsSnapshottedAtUtc is not null)
+        {
+            return;
+        }
+
+        var settings = await _db.SalesCommercialSettings
+            .AsNoTracking()
+            .OrderBy(s => s.Id)
+            .FirstOrDefaultAsync(cancellationToken);
+
+        var directRate = settings?.DirectCommissionRate
+                         ?? SalesCommissionRules.DefaultDirectCommissionRate;
+        var indirectRate = settings?.IndirectCommissionRate
+                           ?? SalesCommissionRules.DefaultIndirectCommissionRate;
+        var durationDays = settings?.CommissionDurationDays > 0
+            ? settings.CommissionDurationDays
+            : SalesCommissionRules.DefaultCommissionDurationDays;
+
+        var upline = await _db.SalesManagerProfiles.AsNoTracking()
+            .Where(p => p.UserId == directSalesManagerUserId)
+            .Select(p => p.ReferredBySalesManagerUserId)
+            .FirstOrDefaultAsync(cancellationToken);
+
+        company.CommissionIndirectSalesManagerUserId = upline;
+        company.CommissionDirectRateSnapshot = Math.Max(0m, directRate);
+        company.CommissionIndirectRateSnapshot = Math.Max(0m, indirectRate);
+        company.CommissionDurationDaysSnapshot = durationDays;
+        company.CommissionTermsSnapshottedAtUtc = DateTime.UtcNow;
+    }
+
+    private static void ApplyKvkVerificationState(Company company, CompanyRegistration registration)
+    {
+        company.KvkVerificationStatus = registration.KvkVerificationStatus;
+        if (registration.KvkVerificationStatus == KvkVerificationStatus.Verified)
+        {
+            company.KvkVerifiedAtUtc = DateTime.UtcNow;
+        }
+        else
+        {
+            company.KvkLastVerificationAttemptAtUtc = DateTime.UtcNow;
+            company.KvkVerificationAttempts = 0;
+        }
+    }
+
+    private static KvkEstablishmentResult BuildPendingEstablishmentSnapshot(
+        RegistrationSubmitRequest request,
+        string kvkNumber,
+        string establishmentId)
+    {
+        var name = request.ManualEstablishmentName?.Trim();
+        var address = request.ManualEstablishmentAddress?.Trim();
+        var establishmentNumber = request.ManualEstablishmentNumber?.Trim();
+
+        if (string.IsNullOrWhiteSpace(name)
+            || string.IsNullOrWhiteSpace(address)
+            || string.IsNullOrWhiteSpace(establishmentNumber))
+        {
+            throw new ArgumentException(
+                "Bij KVK-storing zijn vestigingsnaam, adres en vestigingsnummer verplicht.");
+        }
+
+        // Normalize establishment number to 4 digits when numeric.
+        var digits = new string(establishmentNumber.Where(char.IsDigit).ToArray());
+        if (digits.Length is > 0 and <= 4)
+        {
+            establishmentNumber = digits.PadLeft(4, '0');
+        }
+
+        var normalizedKvk = new string(kvkNumber.Where(char.IsDigit).ToArray());
+        if (normalizedKvk.Length != 8)
+        {
+            throw new ArgumentException("KVK-nummer moet 8 cijfers zijn.");
+        }
+
+        var composedId = $"{normalizedKvk}_{establishmentNumber}";
+        if (!string.IsNullOrWhiteSpace(establishmentId)
+            && !establishmentId.Equals(composedId, StringComparison.OrdinalIgnoreCase)
+            && !establishmentId.Equals(establishmentNumber, StringComparison.OrdinalIgnoreCase))
+        {
+            // Prefer explicit client id when it already matches KVK_vestiging form.
+            if (establishmentId.Contains('_', StringComparison.Ordinal))
+            {
+                composedId = establishmentId.Trim();
+            }
+        }
+
+        // Default NL centroid when the user cannot geocode during an outage.
+        var lat = request.ManualLatitude ?? 52.1326;
+        var lng = request.ManualLongitude ?? 5.2913;
+
+        return new KvkEstablishmentResult(
+            normalizedKvk,
+            establishmentNumber,
+            composedId,
+            name,
+            address,
+            lat,
+            lng,
+            IsInUse: false,
+            SbiCodes: request.ManualIsIntermediarySbi == true ? ["7820"] : null);
     }
 }

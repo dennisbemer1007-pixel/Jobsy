@@ -459,6 +459,15 @@ public static class AuthServiceCollectionExtensions
         }
 
         var fullName = identity.FindFirst(ClaimTypes.Name)?.Value ?? email;
+        // Prefer Entra OID / OIDC sub over e-mail for stable account binding.
+        var providerSubject = identity.FindFirst("oid")?.Value
+                              ?? identity.FindFirst("http://schemas.microsoft.com/identity/claims/objectidentifier")?.Value
+                              ?? identity.FindFirst(ClaimTypes.NameIdentifier)?.Value
+                              ?? identity.FindFirst("sub")?.Value;
+        var authScheme = identity.AuthenticationType ?? "";
+        var provider = authScheme.Contains("Google", StringComparison.OrdinalIgnoreCase)
+            ? "google"
+            : "entra";
         var config = http.RequestServices.GetRequiredService<IConfiguration>();
         var factory = http.RequestServices.GetRequiredService<IHttpClientFactory>();
 
@@ -474,7 +483,13 @@ public static class AuthServiceCollectionExtensions
             var secret = config["JobsyAuth:ExternalProvisionSecret"];
             using var request = new HttpRequestMessage(HttpMethod.Post, "api/auth/ensure-external")
             {
-                Content = JsonContent.Create(new { email, fullName })
+                Content = JsonContent.Create(new
+                {
+                    email,
+                    fullName,
+                    provider,
+                    providerSubject
+                })
             };
             if (!string.IsNullOrWhiteSpace(secret))
             {

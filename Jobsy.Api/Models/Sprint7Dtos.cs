@@ -12,7 +12,19 @@ public record SubmitRegistrationRequest(
     bool AcceptedTerms = false,
     string? ConsentVersion = null,
     string? SalesManagerTrackingCode = null,
-    string? Password = null);
+    string? Password = null,
+    bool AllowPendingKvkVerification = false,
+    string? ManualEstablishmentName = null,
+    string? ManualEstablishmentAddress = null,
+    string? ManualEstablishmentNumber = null,
+    double? ManualLatitude = null,
+    double? ManualLongitude = null,
+    bool? ManualIsIntermediarySbi = null);
+
+public record KvkEstablishmentsLookupResponse(
+    string Status,
+    string? Message,
+    IReadOnlyList<Jobsy.Core.Interfaces.KvkEstablishmentResult> Establishments);
 
 public record RegistrationSubmitResponse(
     Guid RegistrationId,
@@ -67,7 +79,13 @@ public record LocalLoginResponse(
     bool HasCandidateApplications = false,
     bool HasSalesReferral = false);
 
-public record EnsureExternalUserRequest(string Email, string? FullName);
+public record EnsureExternalUserRequest(
+    string Email,
+    string? FullName,
+    /// <summary>IdP key: <c>entra</c> or <c>google</c>.</summary>
+    string? Provider = null,
+    /// <summary>Stable subject (Entra OID / OIDC sub).</summary>
+    string? ProviderSubject = null);
 
 public record EnsureExternalUserResponse(
     string Email,

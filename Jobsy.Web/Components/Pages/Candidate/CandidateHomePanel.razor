@@ -31,7 +31,16 @@
     }
     else if (_loading && _metrics.Count == 0)
     {
-        <p class="state-message">@Culture["Common.Loading"]</p>
+        <div class="bento-grid" aria-busy="true" aria-label="@Culture["Common.Loading"]">
+            <div class="bento-grid__main">
+                <div class="bento-hero" style="--bento-hero-cols:4">
+                    <MetricTileSkeleton Size="featured" />
+                    <MetricTileSkeleton Size="default" ShowRing="true" />
+                    <MetricTileSkeleton Size="default" />
+                    <MetricTileSkeleton Size="default" ShowRing="true" />
+                </div>
+            </div>
+        </div>
     }
     else
     {

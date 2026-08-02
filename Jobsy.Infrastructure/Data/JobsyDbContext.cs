@@ -11,7 +11,15 @@ public class JobsyDbContext : DbContext
     {
     }
 
+    /// <summary>
+    /// When non-null, company-scoped entities (Vacancy, Application, TokenTransaction)
+    /// are auto-filtered to these company IDs. Null disables the filter (admin, public, jobs).
+    /// Set per-request by <see cref="Jobsy.Infrastructure.Services.CompanyTenantScopeInitializer"/>.
+    /// </summary>
+    public HashSet<Guid>? EnforceCompanyScopeIds { get; set; }
+
     public DbSet<User> Users => Set<User>();
+    public DbSet<UserExternalLogin> UserExternalLogins => Set<UserExternalLogin>();
     public DbSet<Company> Companies => Set<Company>();
     public DbSet<UserCompany> UserCompanies => Set<UserCompany>();
     public DbSet<Vacancy> Vacancies => Set<Vacancy>();
@@ -92,6 +100,21 @@ public class JobsyDbContext : DbContext
                 .OnDelete(DeleteBehavior.SetNull);
         });
 
+        modelBuilder.Entity<UserExternalLogin>(entity =>
+        {
+            entity.ToTable("UserExternalLogins");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Provider).HasMaxLength(64).IsRequired();
+            entity.Property(e => e.ProviderSubject).HasMaxLength(256).IsRequired();
+            entity.Property(e => e.EmailAtLink).HasMaxLength(256);
+            entity.HasIndex(e => new { e.Provider, e.ProviderSubject }).IsUnique();
+            entity.HasIndex(e => new { e.UserId, e.Provider }).IsUnique();
+            entity.HasOne(e => e.User)
+                .WithMany(u => u.ExternalLogins)
+                .HasForeignKey(e => e.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
         modelBuilder.Entity<UserCompany>(entity =>
         {
             entity.HasKey(e => new { e.UserId, e.CompanyId });
@@ -116,11 +139,14 @@ public class JobsyDbContext : DbContext
             entity.Property(e => e.ContactEmail).HasMaxLength(256);
             entity.Property(e => e.ContactPhone).HasMaxLength(64);
             entity.Property(e => e.ContactWhatsApp).HasMaxLength(64);
+            entity.Property(e => e.CommissionDirectRateSnapshot).HasPrecision(5, 4);
+            entity.Property(e => e.CommissionIndirectRateSnapshot).HasPrecision(5, 4);
             entity.Property(e => e.Location)
                 .HasConversion(new GeoPointConverter())
                 .HasColumnType("geometry(Point, 4326)");
             entity.HasIndex(e => e.Location).HasMethod("GIST");
             entity.HasIndex(e => e.KvkEstablishmentId).IsUnique();
+            entity.HasIndex(e => e.KvkVerificationStatus);
             entity.HasOne(e => e.ParentCompany)
                 .WithMany(c => c.ChildCompanies)
                 .HasForeignKey(e => e.ParentCompanyId)
@@ -128,6 +154,10 @@ public class JobsyDbContext : DbContext
             entity.HasOne(e => e.ReferredBySalesManagerUser)
                 .WithMany()
                 .HasForeignKey(e => e.ReferredBySalesManagerUserId)
+                .OnDelete(DeleteBehavior.SetNull);
+            entity.HasOne(e => e.CommissionIndirectSalesManagerUser)
+                .WithMany()
+                .HasForeignKey(e => e.CommissionIndirectSalesManagerUserId)
                 .OnDelete(DeleteBehavior.SetNull);
             entity.HasIndex(e => e.ReferredBySalesManagerUserId);
             entity.HasIndex(e => e.FirstYearSupplierSlot)
@@ -137,6 +167,13 @@ public class JobsyDbContext : DbContext
 
         modelBuilder.Entity<Vacancy>(entity =>
         {
+            // Defense-in-depth tenant filter: off when EnforceCompanyScopeIds is null
+            // (public listings, admin, background jobs). Intermediaries also match via IntermediaryCompanyId.
+            entity.HasQueryFilter(v =>
+                EnforceCompanyScopeIds == null
+                || EnforceCompanyScopeIds.Contains(v.CompanyId)
+                || (v.IntermediaryCompanyId != null
+                    && EnforceCompanyScopeIds.Contains(v.IntermediaryCompanyId.Value)));
             entity.HasKey(e => e.Id);
             entity.Property(e => e.Title).HasMaxLength(256).IsRequired();
             entity.Property(e => e.Description).HasMaxLength(20000).IsRequired();
@@ -226,6 +263,9 @@ public class JobsyDbContext : DbContext
 
         modelBuilder.Entity<TokenTransaction>(entity =>
         {
+            entity.HasQueryFilter(t =>
+                EnforceCompanyScopeIds == null
+                || EnforceCompanyScopeIds.Contains(t.CompanyId));
             entity.HasKey(e => e.Id);
             entity.Property(e => e.Amount).HasPrecision(10, 2);
             entity.Property(e => e.OldBalance).HasPrecision(10, 2);

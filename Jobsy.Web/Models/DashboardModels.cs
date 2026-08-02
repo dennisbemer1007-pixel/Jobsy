@@ -190,6 +190,16 @@ public class CheckoutResult
     public bool IsStub { get; set; }
 }
 
+public class KvkEstablishmentsLookupResult
+{
+    public string Status { get; set; } = "Ok";
+    public string? Message { get; set; }
+    public List<KvkEstablishmentItem> Establishments { get; set; } = [];
+
+    public bool IsUnavailable =>
+        Status.Equals("Unavailable", StringComparison.OrdinalIgnoreCase);
+}
+
 public class KvkEstablishmentItem
 {
     public string KvkNumber { get; set; } = string.Empty;

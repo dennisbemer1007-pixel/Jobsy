@@ -35,6 +35,11 @@ public class CompanyRegistration
     public bool IsIntermediarySbi { get; set; }
 
     /// <summary>
+    /// Verified when KVK matched at submit; Pending when the user continued during API outage.
+    /// </summary>
+    public KvkVerificationStatus KvkVerificationStatus { get; set; } = KvkVerificationStatus.Verified;
+
+    /// <summary>
     /// Set when the contact e-mail was confirmed (activation or takeover e-mail verification).
     /// Takeover approve requires this so a chosen password is never applied to an unverified address.
     /// </summary>

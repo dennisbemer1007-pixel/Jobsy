@@ -41,18 +41,23 @@ public class RegistrationController : ControllerBase
     }
 
     /// <summary>
-    /// Public KVK establishment lookup for the registration wizard (includes IsInUse).
+    /// Public KVK establishment lookup for the registration wizard.
+    /// Returns Status = Ok | NotFound | Unavailable so the UI can offer a pending-KVK fallback.
     /// </summary>
     [HttpGet("kvk/{kvkNumber}/establishments")]
     [AllowAnonymous]
     [EnableRateLimiting("public-write")]
-    public async Task<ActionResult<IEnumerable<KvkEstablishmentResult>>> GetEstablishments(
+    public async Task<ActionResult<KvkEstablishmentsLookupResponse>> GetEstablishments(
         string kvkNumber,
         CancellationToken cancellationToken)
     {
-        var items = await _kvk.GetEstablishmentsAsync(kvkNumber, cancellationToken);
+        var lookup = await _kvk.LookupEstablishmentsAsync(kvkNumber, cancellationToken);
         // Hide occupancy to anonymous callers (same redaction as KvkController).
-        return Ok(items.Select(i => i with { IsInUse = false }));
+        var items = lookup.Establishments.Select(i => i with { IsInUse = false }).ToList();
+        return Ok(new KvkEstablishmentsLookupResponse(
+            lookup.Status.ToString(),
+            lookup.Message,
+            items));
     }
 
     [HttpPost]
@@ -75,7 +80,14 @@ public class RegistrationController : ControllerBase
                     request.AcceptedTerms,
                     request.ConsentVersion,
                     request.SalesManagerTrackingCode,
-                    request.Password),
+                    request.Password,
+                    request.AllowPendingKvkVerification,
+                    request.ManualEstablishmentName,
+                    request.ManualEstablishmentAddress,
+                    request.ManualEstablishmentNumber,
+                    request.ManualLatitude,
+                    request.ManualLongitude,
+                    request.ManualIsIntermediarySbi),
                 cancellationToken);
 
             return Ok(new RegistrationSubmitResponse(

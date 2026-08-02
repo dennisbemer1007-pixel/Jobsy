@@ -157,10 +157,32 @@ public sealed class KvkServiceStub : IKvkService
         string kvkNumber,
         CancellationToken cancellationToken = default)
     {
+        var lookup = await LookupEstablishmentsAsync(kvkNumber, cancellationToken);
+        if (lookup.Status == KvkLookupStatus.Unavailable)
+        {
+            throw new Jobsy.Core.Exceptions.KvkServiceUnavailableException(lookup.Message ?? "KVK unavailable");
+        }
+
+        return lookup.Establishments;
+    }
+
+    public async Task<KvkEstablishmentsLookup> LookupEstablishmentsAsync(
+        string kvkNumber,
+        CancellationToken cancellationToken = default)
+    {
+        // Test/demo hook: simulate API downtime without a live KVK client.
+        if (string.Equals(
+                Environment.GetEnvironmentVariable("JOBSY_KVK_FORCE_UNAVAILABLE"),
+                "1",
+                StringComparison.Ordinal))
+        {
+            return KvkEstablishmentsLookup.Unavailable();
+        }
+
         var normalized = NormalizeKvkNumber(kvkNumber);
         if (normalized is null)
         {
-            return Array.Empty<KvkEstablishmentResult>();
+            return KvkEstablishmentsLookup.NotFound();
         }
 
         var inUse = await _db.Companies
@@ -170,11 +192,15 @@ public sealed class KvkServiceStub : IKvkService
             .ToListAsync(cancellationToken);
 
         var sbi = SbiCodesFor(normalized);
-        return Catalog
+        var items = Catalog
             .Where(c => c.KvkNumber.Equals(normalized, StringComparison.OrdinalIgnoreCase))
             .Select(c => c with { IsInUse = inUse.Contains(c.KvkEstablishmentId), SbiCodes = sbi })
             .OrderBy(c => c.EstablishmentNumber, StringComparer.Ordinal)
             .ToList();
+
+        return items.Count == 0
+            ? KvkEstablishmentsLookup.NotFound()
+            : KvkEstablishmentsLookup.Ok(items);
     }
 
     /// <summary>Accepteert spaties/streepjes; verwacht 8 cijfers.</summary>

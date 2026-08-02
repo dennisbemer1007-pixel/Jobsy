@@ -45,7 +45,18 @@ public sealed record RegistrationSubmitRequest(
     bool AcceptedTerms = false,
     string? ConsentVersion = null,
     string? SalesManagerTrackingCode = null,
-    string? Password = null);
+    string? Password = null,
+    /// <summary>
+    /// When true and the KVK API is unavailable, continue with manual establishment data
+    /// and mark the account as KVK-verificatie in afwachting.
+    /// </summary>
+    bool AllowPendingKvkVerification = false,
+    string? ManualEstablishmentName = null,
+    string? ManualEstablishmentAddress = null,
+    string? ManualEstablishmentNumber = null,
+    double? ManualLatitude = null,
+    double? ManualLongitude = null,
+    bool? ManualIsIntermediarySbi = null);
 
 public sealed record RegistrationSubmitResult(
     Guid RegistrationId,

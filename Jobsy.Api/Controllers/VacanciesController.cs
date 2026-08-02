@@ -229,9 +229,10 @@ public class VacanciesController : ControllerBase
         }
 
         // Drafts / pending / archived: only for authenticated employers with company access (or admin).
+        // Intermediaries may also access via IntermediaryCompanyId (end-client CompanyId alone is insufficient).
         if (User.Identity?.IsAuthenticated == true
             && (_companyAuth.IsAdmin(User) || _companyAuth.IsEmployer(User))
-            && await _companyAuth.CanAccessCompanyAsync(User, vacancy.CompanyId, cancellationToken))
+            && await CanManageVacancyAsync(vacancy, cancellationToken))
         {
             // Employers always see wage on managed vacancies.
             return Ok(await MapWithOptionalRouteAsync(vacancy, originLat, originLng, transport, showWage: true, age, cancellationToken));
@@ -255,6 +256,9 @@ public class VacanciesController : ControllerBase
             return Ok(Array.Empty<VacancyListItemDto>());
         }
 
+        // Defense-in-depth: enable EF tenant filter for this manage request.
+        CompanyTenantScope.Enforce(_db, accessible);
+
         var query = _db.Vacancies
             .AsNoTracking()
             .AsSplitQuery()
@@ -264,7 +268,10 @@ public class VacanciesController : ControllerBase
 
         if (accessible is not null)
         {
-            query = query.Where(v => accessible.Contains(v.CompanyId));
+            // End-client company OR intermediary org that posted the vacancy.
+            query = query.Where(v =>
+                accessible.Contains(v.CompanyId)
+                || (v.IntermediaryCompanyId != null && accessible.Contains(v.IntermediaryCompanyId.Value)));
         }
 
         var vacancies = await query.OrderBy(v => v.Title).ToListAsync(cancellationToken);
@@ -799,6 +806,34 @@ public class VacanciesController : ControllerBase
         {
             return Forbid();
         }
+    }
+
+    private async Task<bool> CanManageVacancyAsync(Vacancy vacancy, CancellationToken cancellationToken)
+    {
+        if (await _companyAuth.CanAccessCompanyAsync(User, vacancy.CompanyId, cancellationToken))
+        {
+            return true;
+        }
+
+        if (vacancy.IntermediaryCompanyId is Guid intermediaryId
+            && await _companyAuth.CanAccessCompanyAsync(User, intermediaryId, cancellationToken))
+        {
+            return true;
+        }
+
+        return false;
+    }
+
+    private async Task<ActionResult?> EnsureVacancyManageAccessAsync(
+        Vacancy vacancy,
+        CancellationToken cancellationToken)
+    {
+        if (await CanManageVacancyAsync(vacancy, cancellationToken))
+        {
+            return null;
+        }
+
+        return Forbid();
     }
 
     private async Task<Guid?> ResolveIntermediaryOrganizationIdAsync(CancellationToken cancellationToken)

@@ -558,6 +558,15 @@ public sealed class PrivacyDataService : IPrivacyDataService
             }
         }
 
+        // Drop external IdP bindings so OID/sub cannot re-attach to an anonymized account.
+        var externalLogins = await _db.UserExternalLogins
+            .Where(l => l.UserId == user.Id)
+            .ToListAsync(cancellationToken);
+        if (externalLogins.Count > 0)
+        {
+            _db.UserExternalLogins.RemoveRange(externalLogins);
+        }
+
         user.Email = anonymizedEmail;
         user.FullName = "Verwijderde gebruiker";
         user.DateOfBirth = null;

@@ -30,13 +30,10 @@
     {
         <p class="state-message error">@_error</p>
     }
-    else if (_loading && _metrics.Count == 0)
-    {
-        <p class="state-message">@Culture["Common.Loading"]</p>
-    }
     else
     {
         <MetricsCategoryBoard Metrics="_metrics"
+                              Loading="@(_loading && _metrics.Count == 0)"
                               ValueFormatter="FormatValue"
                               ShowVacancyPerformance="true"
                               VacancyPerformance="_vacancyBoard"

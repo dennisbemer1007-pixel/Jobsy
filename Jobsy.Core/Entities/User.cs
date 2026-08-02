@@ -59,4 +59,7 @@ public class User
     /// Extra company memberships for RegionalManager, EnterpriseManager and Intermediary.
     /// </summary>
     public ICollection<UserCompany> CompanyMemberships { get; set; } = new List<UserCompany>();
+
+    /// <summary>External IdP bindings (Entra OID, Google sub, …).</summary>
+    public ICollection<UserExternalLogin> ExternalLogins { get; set; } = new List<UserExternalLogin>();
 }

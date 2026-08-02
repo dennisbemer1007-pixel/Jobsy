@@ -14,6 +14,16 @@ public class Company
     /// </summary>
     public string? KvkEstablishmentId { get; set; }
 
+    /// <summary>
+    /// Verified = KVK matched at registration; Pending = API was down (retry job);
+    /// Failed = retries exhausted / rejected.
+    /// </summary>
+    public KvkVerificationStatus KvkVerificationStatus { get; set; } = KvkVerificationStatus.Verified;
+
+    public DateTime? KvkVerifiedAtUtc { get; set; }
+    public DateTime? KvkLastVerificationAttemptAtUtc { get; set; }
+    public int KvkVerificationAttempts { get; set; }
+
     public string Address { get; set; } = string.Empty;
     public string? LogoUrl { get; set; }
     public GeoPoint Location { get; set; } = null!;
@@ -71,6 +81,24 @@ public class Company
     /// <summary>Salesmanager who referred this supplier (via tracking code).</summary>
     public Guid? ReferredBySalesManagerUserId { get; set; }
     public User? ReferredBySalesManagerUser { get; set; }
+
+    /// <summary>
+    /// Indirect (upline) salesmanager snapshotted at activation — not re-resolved live later.
+    /// </summary>
+    public Guid? CommissionIndirectSalesManagerUserId { get; set; }
+    public User? CommissionIndirectSalesManagerUser { get; set; }
+
+    /// <summary>Direct commission rate frozen when the referral became active (e.g. 0.15).</summary>
+    public decimal? CommissionDirectRateSnapshot { get; set; }
+
+    /// <summary>Indirect commission rate frozen when the referral became active (e.g. 0.03).</summary>
+    public decimal? CommissionIndirectRateSnapshot { get; set; }
+
+    /// <summary>Commission window length in days frozen at activation.</summary>
+    public int? CommissionDurationDaysSnapshot { get; set; }
+
+    /// <summary>When commission terms (SM, upline, rates, duration) were snapshotted.</summary>
+    public DateTime? CommissionTermsSnapshottedAtUtc { get; set; }
 
     /// <summary>Platform-wide founder slot 1–10 when eligible; null otherwise.</summary>
     public int? FirstYearSupplierSlot { get; set; }

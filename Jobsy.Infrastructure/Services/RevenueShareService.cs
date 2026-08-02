@@ -51,24 +51,67 @@ public sealed class RevenueShareService : IRevenueShareService
             return;
         }
 
-        var settings = await _commercial.GetSettingsAsync(cancellationToken);
-        var directRate = settings.DirectCommissionRate;
-        var indirectRateConfigured = settings.IndirectCommissionRate;
-        var durationDays = settings.CommissionDurationDays > 0
-            ? settings.CommissionDurationDays
-            : SalesCommissionRules.DefaultCommissionDurationDays;
+        // Prefer historical snapshot frozen at entrepreneur activation so admin tariff
+        // changes never rewrite existing referral contracts.
+        var company = await _db.Companies.AsNoTracking()
+            .Where(c => c.Id == companyId)
+            .Select(c => new
+            {
+                c.CommissionIndirectSalesManagerUserId,
+                c.CommissionDirectRateSnapshot,
+                c.CommissionIndirectRateSnapshot,
+                c.CommissionDurationDaysSnapshot,
+                c.CommissionTermsSnapshottedAtUtc
+            })
+            .FirstOrDefaultAsync(cancellationToken);
+
+        decimal directRate;
+        decimal indirectRateConfigured;
+        int durationDays;
+        Guid? referringSmId;
+
+        if (company?.CommissionTermsSnapshottedAtUtc is not null
+            && company.CommissionDirectRateSnapshot is not null)
+        {
+            directRate = company.CommissionDirectRateSnapshot.Value;
+            indirectRateConfigured = company.CommissionIndirectRateSnapshot ?? 0m;
+            durationDays = company.CommissionDurationDaysSnapshot is > 0
+                ? company.CommissionDurationDaysSnapshot.Value
+                : SalesCommissionRules.DefaultCommissionDurationDays;
+            referringSmId = company.CommissionIndirectSalesManagerUserId;
+        }
+        else
+        {
+            // Legacy companies without a snapshot: fall back to live settings + live upline once,
+            // then freeze on the company row for subsequent purchases.
+            var settings = await _commercial.GetSettingsAsync(cancellationToken);
+            directRate = settings.DirectCommissionRate;
+            indirectRateConfigured = settings.IndirectCommissionRate;
+            durationDays = settings.CommissionDurationDays > 0
+                ? settings.CommissionDurationDays
+                : SalesCommissionRules.DefaultCommissionDurationDays;
+
+            referringSmId = await _db.SalesManagerProfiles.AsNoTracking()
+                .Where(p => p.UserId == salesManagerUserId.Value)
+                .Select(p => p.ReferredBySalesManagerUserId)
+                .FirstOrDefaultAsync(cancellationToken);
+
+            await FreezeLegacyCommissionTermsAsync(
+                companyId,
+                referringSmId,
+                directRate,
+                indirectRateConfigured,
+                durationDays,
+                cancellationToken);
+        }
 
         var asOf = DateTime.UtcNow;
         var withinWindow = SalesCommissionRules.IsWithinCommissionWindow(
             firstYearStartedAt, asOf, durationDays);
 
-        Guid? referringSmId = null;
-        if (withinWindow)
+        if (!withinWindow)
         {
-            referringSmId = await _db.SalesManagerProfiles.AsNoTracking()
-                .Where(p => p.UserId == salesManagerUserId.Value)
-                .Select(p => p.ReferredBySalesManagerUserId)
-                .FirstOrDefaultAsync(cancellationToken);
+            referringSmId = null;
         }
 
         var appliedDirectRate = withinWindow ? Math.Max(0m, directRate) : 0m;
@@ -102,7 +145,7 @@ public sealed class RevenueShareService : IRevenueShareService
                 tokenCheckoutId,
                 purchaseAmountEuro,
                 firstYearStartedAt,
-                directRate,
+                appliedDirectRate,
                 durationDays,
                 cancellationToken);
         }
@@ -115,7 +158,7 @@ public sealed class RevenueShareService : IRevenueShareService
                 tokenCheckoutId,
                 purchaseAmountEuro,
                 firstYearStartedAt,
-                indirectRateConfigured,
+                appliedIndirectRate,
                 durationDays,
                 cancellationToken);
         }
@@ -201,5 +244,27 @@ public sealed class RevenueShareService : IRevenueShareService
             .Where(l => l.CompanyId == companyId || l.RecipientCompanyId == companyId)
             .OrderByDescending(l => l.CreatedAtUtc)
             .ToListAsync(cancellationToken);
+    }
+
+    private async Task FreezeLegacyCommissionTermsAsync(
+        Guid companyId,
+        Guid? indirectSalesManagerUserId,
+        decimal directRate,
+        decimal indirectRate,
+        int durationDays,
+        CancellationToken cancellationToken)
+    {
+        var tracked = await _db.Companies.FirstOrDefaultAsync(c => c.Id == companyId, cancellationToken);
+        if (tracked is null || tracked.CommissionTermsSnapshottedAtUtc is not null)
+        {
+            return;
+        }
+
+        tracked.CommissionIndirectSalesManagerUserId = indirectSalesManagerUserId;
+        tracked.CommissionDirectRateSnapshot = Math.Max(0m, directRate);
+        tracked.CommissionIndirectRateSnapshot = Math.Max(0m, indirectRate);
+        tracked.CommissionDurationDaysSnapshot = durationDays;
+        tracked.CommissionTermsSnapshottedAtUtc = DateTime.UtcNow;
+        await _db.SaveChangesAsync(cancellationToken);
     }
 }
