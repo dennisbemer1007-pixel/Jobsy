@@ -154,6 +154,13 @@
         if (expiring) {
             return;
         }
+        // Already on the login screen — do not bounce through logout again (login loop).
+        try {
+            var path = window.location.pathname || "";
+            if (/^\/login\/?$/i.test(path)) {
+                return;
+            }
+        } catch (e) { }
         expiring = true;
         saveCriticalDrafts();
         var target = "/account/logout?reason=session-expired";

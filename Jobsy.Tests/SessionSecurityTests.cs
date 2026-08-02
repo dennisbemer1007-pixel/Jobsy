@@ -100,18 +100,46 @@ public class SessionSecurityTests
     }
 
     [Fact]
-    public async Task Middleware_expires_when_last_activity_cookie_missing()
+    public async Task Middleware_stamps_when_last_activity_cookie_missing()
     {
         var http = CreateAuthedContext("/admin/settings", "admin@jobsy.local");
         var authService = new FakeAuthService();
         ReplaceAuthService(http, authService);
 
-        var middleware = new SessionInactivityMiddleware(_ => Task.CompletedTask);
+        var nextCalled = false;
+        var middleware = new SessionInactivityMiddleware(_ =>
+        {
+            nextCalled = true;
+            return Task.CompletedTask;
+        });
         await middleware.InvokeAsync(http, new FixedTimeoutProvider(30));
 
-        Assert.True(authService.SignedOut);
-        Assert.Equal(StatusCodes.Status302Found, http.Response.StatusCode);
-        Assert.Contains("session-expired", http.Response.Headers.Location.ToString());
+        Assert.False(authService.SignedOut);
+        Assert.True(nextCalled);
+        Assert.Contains(
+            http.Response.Headers.SetCookie,
+            v => v is not null
+                 && v.Contains(SessionInactivityMiddleware.LastActivityCookieName, StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public async Task Middleware_skips_account_login_when_stale_auth_has_no_activity_cookie()
+    {
+        var http = CreateAuthedContext("/account/login", "admin@jobsy.local");
+        var authService = new FakeAuthService();
+        ReplaceAuthService(http, authService);
+
+        var nextCalled = false;
+        var middleware = new SessionInactivityMiddleware(_ =>
+        {
+            nextCalled = true;
+            return Task.CompletedTask;
+        });
+        await middleware.InvokeAsync(http, new FixedTimeoutProvider(30));
+
+        Assert.False(authService.SignedOut);
+        Assert.True(nextCalled);
+        Assert.NotEqual(StatusCodes.Status302Found, http.Response.StatusCode);
     }
 
     [Fact]

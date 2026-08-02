@@ -37,6 +37,20 @@
 
         if (state.User.Identity?.IsAuthenticated != true)
         {
+            if (_started)
+            {
+                try
+                {
+                    await Js.InvokeVoidAsync("lobsySessionIdle.stop");
+                }
+                catch
+                {
+                    // Circuit may already be tearing down.
+                }
+
+                _started = false;
+            }
+
             return;
         }
 

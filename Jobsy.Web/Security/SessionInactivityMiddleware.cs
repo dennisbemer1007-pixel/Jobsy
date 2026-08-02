@@ -37,12 +37,27 @@ public sealed class SessionInactivityMiddleware
 
         var timeoutMinutes = await timeoutProvider.GetInactivityTimeoutMinutesAsync(context.RequestAborted);
         var now = DateTimeOffset.UtcNow;
+        var hasActivityCookie = context.Request.Cookies.ContainsKey(LastActivityCookieName);
         var lastActivity = SessionActivityCookie.TryRead(context);
 
-        // Missing / invalid / forged activity cookie on an authenticated request is treated as expired
-        // so clients cannot reset or extend the idle clock by mutating Jobsy.LastActivity.
-        if (lastActivity is null
-            || now - lastActivity.Value > TimeSpan.FromMinutes(timeoutMinutes))
+        if (lastActivity is null)
+        {
+            if (hasActivityCookie)
+            {
+                // Present but unreadable (tampered / future / key mismatch) → force re-auth.
+                await ExpireSessionAsync(context);
+                return;
+            }
+
+            // Truly missing: recover by stamping. This covers the post-login race and avoids
+            // blocking POST /account/login when an old auth cookie is still present.
+            // Deleting the cookie is equivalent to an activity ping (same as /account/session-activity).
+            SessionActivityCookie.Stamp(context, now);
+            await _next(context);
+            return;
+        }
+
+        if (now - lastActivity.Value > TimeSpan.FromMinutes(timeoutMinutes))
         {
             await ExpireSessionAsync(context);
             return;
@@ -63,6 +78,9 @@ public sealed class SessionInactivityMiddleware
             || path.StartsWith("/favicon", StringComparison.OrdinalIgnoreCase)
             || string.Equals(path, "/account/logout", StringComparison.OrdinalIgnoreCase)
             || string.Equals(path, "/account/session-security", StringComparison.OrdinalIgnoreCase)
+            // Login must always be reachable even when a stale auth cookie is still present.
+            || string.Equals(path, "/account/login", StringComparison.OrdinalIgnoreCase)
+            || string.Equals(path, "/account/demo-login", StringComparison.OrdinalIgnoreCase)
             || path.StartsWith("/account/external", StringComparison.OrdinalIgnoreCase)
             || path.StartsWith("/signin-", StringComparison.OrdinalIgnoreCase)
             || path.StartsWith("/login", StringComparison.OrdinalIgnoreCase))
@@ -90,7 +108,9 @@ public sealed class SessionInactivityMiddleware
         if (!string.IsNullOrWhiteSpace(returnUrl)
             && returnUrl != "/"
             && !returnUrl.StartsWith("/login", StringComparison.OrdinalIgnoreCase)
-            && !returnUrl.StartsWith("/account/session-activity", StringComparison.OrdinalIgnoreCase))
+            && !returnUrl.StartsWith("/account/session-activity", StringComparison.OrdinalIgnoreCase)
+            && !returnUrl.StartsWith("/account/login", StringComparison.OrdinalIgnoreCase)
+            && !returnUrl.StartsWith("/account/demo-login", StringComparison.OrdinalIgnoreCase))
         {
             target += "&returnUrl=" + Uri.EscapeDataString(returnUrl);
         }
