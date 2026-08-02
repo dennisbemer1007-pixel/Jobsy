@@ -2,6 +2,8 @@
 @page "/employer/salary-tables/{TableId:guid}"
 @rendermode @(new InteractiveServerRenderMode(prerender: false))
 @attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "EnterpriseManager,Admin")]
+@using Jobsy.Web.Components.Employer
+@using Jobsy.Web.Components.Shared
 @inject JobsyApiClient Api
 @inject NavigationManager Navigation
 @inject CultureState Culture
@@ -9,7 +11,13 @@
 
 <PageTitle>@Culture["Employer.SalaryTables"] · Lobsy</PageTitle>
 
-<div class="panel-page">
+<div class="panel-page panel-page--desktop-preferred">
+    <AuthorizeView Roles="EnterpriseManager">
+        <Authorized>
+            <DesktopPreferredNotice />
+            <EnterpriseOrgSubnav />
+        </Authorized>
+    </AuthorizeView>
     <header class="panel-header">
         <div>
             <h1>@Culture["Employer.SalaryTables"]</h1>

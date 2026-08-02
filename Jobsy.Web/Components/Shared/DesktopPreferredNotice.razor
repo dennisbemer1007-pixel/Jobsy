@@ -1,0 +1,20 @@
+@using Jobsy.Web.Localization
+@inject CultureState Culture
+@implements IDisposable
+
+<aside class="desktop-preferred-notice" role="note">
+    <strong>@Culture["DesktopPreferred.Title"]</strong>
+    <p>@Culture["DesktopPreferred.Lead"]</p>
+    <a class="auth-link" href="/home">@Culture["DesktopPreferred.BackHome"]</a>
+</aside>
+
+@code {
+    protected override void OnInitialized()
+        => Culture.Changed += OnCultureChanged;
+
+    private void OnCultureChanged()
+        => InvokeAsync(StateHasChanged);
+
+    public void Dispose()
+        => Culture.Changed -= OnCultureChanged;
+}

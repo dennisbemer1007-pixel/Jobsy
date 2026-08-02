@@ -68,20 +68,25 @@ Onvoldoende tokens bij publiceren → `PendingApproval` (EM/Admin keurt goed).
 
 ---
 
-## 4. EnterpriseManager
-*Doel: organisatiebreed beheer.*
+## 4. EnterpriseManager (Bedrijfsmanager)
+*Doel: organisatiebreed beheer met strikte mobile/desktop-scheiding.*
 
-**BottomNav:** Home · Banenkaart · Vacatures · Salaristabellen · Tokens · Vestigingen · Regio’s · Gebruikers
+**Mobile/PWA BottomNav (operationeel):** Home · Hoe werkt Lobsy · Banenkaart · Vacatures · Tokens · Gebruikers  
 
-| Route | Inhoud |
-|-------|--------|
-| `/home` | Bedrijfs-KPI’s |
-| `/employer/vacancies` | Vacaturebeheer + approve-publish |
-| `/employer/tokens` | Pot-aankoop (radio pakketten), vestiging-opt-in, uitgifte, logs |
-| `/employer/branches` · `/employer/regions` | Vestigingen / regio’s |
-| `/employer/users` | Invite-by-email + rollen |
-| `/employer/salary-tables` | CAO/schalen voor vacatures |
-| `/employer/takeovers` | Goedkeuren/afwijzen → org-merge |
+**Desktop BottomNav:** bovenstaande + **Organisatie** (desktop-only hub)
+
+| Route | Inhoud | Scherm |
+|-------|--------|--------|
+| `/home` | Bedrijfs-KPI’s | Mobiel + desktop |
+| `/employer/vacancies` | Vacaturebeheer + approve-publish | Mobiel + desktop |
+| `/employer/tokens` | Pot-aankoop, uitgifte, logs | Mobiel + desktop |
+| `/employer/users` | Basis gebruikerslijst / invites | Mobiel + desktop |
+| `/employer/organization` | Hub voor zwaar org-beheer | Desktop (melding op mobiel) |
+| `/employer/salary-tables` | CAO/schalen voor vacatures | Desktop-preferred |
+| `/employer/branches` · `/employer/regions` | Vestigingen / regio’s | Desktop-preferred |
+| `/employer/company` | Bedrijfsgegevens | Desktop-preferred |
+| `/employer/csv-import` | Bulk CSV-import | Desktop-preferred |
+| `/employer/takeovers` | Goedkeuren/afwijzen → org-merge | Desktop-preferred |
 
 ---
 

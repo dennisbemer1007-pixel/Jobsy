@@ -2,6 +2,8 @@
 @page "/regional/branches"
 @rendermode @(new InteractiveServerRenderMode(prerender: false))
 @attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "RegionalManager,EnterpriseManager")]
+@using Jobsy.Web.Components.Employer
+@using Jobsy.Web.Components.Shared
 @inject JobsyApiClient Api
 @inject CultureState Culture
 @implements IDisposable
@@ -9,6 +11,12 @@
 <PageTitle>@Culture["Employer.Branches"] · Lobsy</PageTitle>
 
 <div class="panel-page">
+    <AuthorizeView Roles="EnterpriseManager">
+        <Authorized>
+            <DesktopPreferredNotice />
+            <EnterpriseOrgSubnav />
+        </Authorized>
+    </AuthorizeView>
     <header class="panel-header">
         <div>
             <h1>@Culture["Employer.Branches"]</h1>

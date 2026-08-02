@@ -16,9 +16,10 @@
         {
             var title = Culture[item.TitleKey];
             var active = RoleNavCatalog.IsActive(item, Navigation.ToBaseRelativePath(Navigation.Uri), _items);
-            <a class="bottom-nav__item @(active ? "is-active" : null)"
+            <a class="bottom-nav__item @(active ? "is-active" : null) @(item.DesktopOnly ? "bottom-nav__item--desktop-only" : null)"
                href="@item.Href"
                title="@title"
+               data-desktop-only="@(item.DesktopOnly ? "true" : null)"
                aria-current="@(active ? "page" : null)">
                 <span class="bottom-nav__icon" aria-hidden="true">
                     @((MarkupString)item.Svg)
@@ -110,10 +111,10 @@
             }
         }
 
-        if (RoleClaimMatching.HasRole(state.User, JobsyRoles.EnterpriseManager)
-            || RoleClaimMatching.HasRole(state.User, JobsyRoles.Admin))
+        // CSV import is no longer a bottom-nav item (Enterprise uses Organization hub).
+        // Defensive filter if a catalog still exposes the route and the company has CSV disabled.
+        if (catalog.Any(i => string.Equals(i.Href, RoleNavCatalog.CsvImport.Href, StringComparison.OrdinalIgnoreCase)))
         {
-            // Refresh on init, navigation, and explicit NavRefresh (CSV toggle on Bedrijfsgegevens).
             if (forceRoleApis || rolesChanged || !_roleFlagsLoaded)
             {
                 await RefreshCsvImportFlagAsync();
@@ -125,12 +126,6 @@
                     .Where(i => !string.Equals(i.Href, RoleNavCatalog.CsvImport.Href, StringComparison.OrdinalIgnoreCase))
                     .ToList();
             }
-        }
-        else
-        {
-            catalog = catalog
-                .Where(i => !string.Equals(i.Href, RoleNavCatalog.CsvImport.Href, StringComparison.OrdinalIgnoreCase))
-                .ToList();
         }
 
         _roleFlagsLoaded = true;

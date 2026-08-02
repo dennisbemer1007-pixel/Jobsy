@@ -1,6 +1,8 @@
 @page "/employer/regions"
 @rendermode @(new InteractiveServerRenderMode(prerender: false))
 @attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "EnterpriseManager,Admin")]
+@using Jobsy.Web.Components.Employer
+@using Jobsy.Web.Components.Shared
 @using Jobsy.Web.Navigation
 @inject JobsyApiClient Api
 @inject CultureState Culture
@@ -8,7 +10,13 @@
 
 <PageTitle>@Culture["Employer.Regions"] · Lobsy</PageTitle>
 
-<div class="panel-page">
+<div class="panel-page panel-page--desktop-preferred">
+    <AuthorizeView Roles="EnterpriseManager">
+        <Authorized>
+            <DesktopPreferredNotice />
+            <EnterpriseOrgSubnav />
+        </Authorized>
+    </AuthorizeView>
     <header class="panel-header">
         <div>
             <h1>@Culture["Employer.Regions"]</h1>

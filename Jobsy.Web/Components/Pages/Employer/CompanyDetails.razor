@@ -1,6 +1,8 @@
 @page "/employer/company"
 @rendermode @(new InteractiveServerRenderMode(prerender: false))
 @attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "BranchManager,EnterpriseManager,Admin")]
+@using Jobsy.Web.Components.Employer
+@using Jobsy.Web.Components.Shared
 @inject JobsyApiClient Api
 @inject IJSRuntime Js
 @inject BottomNavRefreshService NavRefresh
@@ -9,6 +11,12 @@
 <PageTitle>Bedrijfsgegevens · Lobsy</PageTitle>
 
 <div class="panel-page company-details">
+    <AuthorizeView Roles="EnterpriseManager">
+        <Authorized>
+            <DesktopPreferredNotice />
+            <EnterpriseOrgSubnav />
+        </Authorized>
+    </AuthorizeView>
     <header class="panel-header">
         <div>
             <h1>Bedrijfsgegevens</h1>

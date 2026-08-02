@@ -1,0 +1,63 @@
+@using Jobsy.Web.Localization
+@using Jobsy.Web.Navigation
+@inject NavigationManager Navigation
+@inject CultureState Culture
+@inject JobsyApiClient Api
+@implements IDisposable
+
+<nav class="admin-sublinks admin-sublinks--desktop-preferred" aria-label="@Culture["Nav.Organization"]">
+    @foreach (var item in _modules)
+    {
+        var title = Culture[item.TitleKey];
+        var active = RoleNavCatalog.IsActive(item, Navigation.ToBaseRelativePath(Navigation.Uri), _modules);
+        <a class="admin-sublink @(active ? "admin-sublink--active" : null)"
+           href="@item.Href"
+           aria-current="@(active ? "page" : null)">
+            @title
+        </a>
+    }
+</nav>
+
+@code {
+    private IReadOnlyList<NavItem> _modules = EnterpriseNavItems.OrganizationModules;
+
+    protected override async Task OnInitializedAsync()
+    {
+        Navigation.LocationChanged += OnLocationChanged;
+        Culture.Changed += OnCultureChanged;
+        await RefreshModulesAsync();
+    }
+
+    private async Task RefreshModulesAsync()
+    {
+        var modules = EnterpriseNavItems.OrganizationModules.AsEnumerable();
+        try
+        {
+            var companies = await Api.GetMyCompaniesAsync();
+            if (!companies.Any(c => c.CsvBatchImportEnabled))
+            {
+                modules = modules.Where(m =>
+                    !string.Equals(m.Href, RoleNavCatalog.CsvImport.Href, StringComparison.OrdinalIgnoreCase));
+            }
+        }
+        catch
+        {
+            modules = modules.Where(m =>
+                !string.Equals(m.Href, RoleNavCatalog.CsvImport.Href, StringComparison.OrdinalIgnoreCase));
+        }
+
+        _modules = modules.ToList();
+    }
+
+    private void OnLocationChanged(object? sender, LocationChangedEventArgs e)
+        => InvokeAsync(StateHasChanged);
+
+    private void OnCultureChanged()
+        => InvokeAsync(StateHasChanged);
+
+    public void Dispose()
+    {
+        Navigation.LocationChanged -= OnLocationChanged;
+        Culture.Changed -= OnCultureChanged;
+    }
+}

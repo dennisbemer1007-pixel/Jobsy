@@ -4,7 +4,8 @@ public sealed record NavItem(
     string TitleKey,
     string Href,
     string Svg,
-    string[]? ExtraActivePaths = null);
+    string[]? ExtraActivePaths = null,
+    bool DesktopOnly = false);
 
 public static class NavIcons
 {

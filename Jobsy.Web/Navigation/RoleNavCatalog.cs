@@ -30,23 +30,44 @@ public static class RoleNavCatalog
     public static readonly NavItem MyApplicationsReadOnly =
         new("Nav.MyApplications", "/candidate/applications", NavIcons.Applications);
 
+    /// <summary>
+    /// Bedrijfsmanager: mobile/PWA keeps daily ops (home, vacancies, tokens, users).
+    /// Heavy org administration lives under the desktop-only Organization hub.
+    /// </summary>
     public static readonly NavItem[] Enterprise =
     [
         new("Nav.Home", "/home", NavIcons.Home),
         new("Nav.HowLobsyWorks", "/hoe-werkt-lobsy", NavIcons.Info),
         new("Nav.JobMap", "/", NavIcons.Map),
         new("Nav.Vacancies", "/employer/vacancies", NavIcons.Vacancies, ["/branch/vacancies/new", "/branch/applicants"]),
-        new("Nav.SalaryTables", "/employer/salary-tables", NavIcons.Wages),
         new("Nav.Tokens", "/employer/tokens", NavIcons.Tokens, ["/regional/tokens", "/admin/tokens", "/branch/tokens"]),
-        new("Nav.Branches", "/employer/branches", NavIcons.Branches, ["/employer/takeovers"]),
-        new("Nav.Regions", "/employer/regions", NavIcons.Regions),
         new("Nav.Users", "/employer/users", NavIcons.Users),
-        new("Nav.CsvImport", "/employer/csv-import", NavIcons.Batch),
-        new("Nav.CompanyDetails", "/employer/company", NavIcons.Companies)
+        new("Nav.Organization", "/employer/organization", NavIcons.Settings,
+            [
+                "/employer/salary-tables",
+                "/employer/branches",
+                "/employer/takeovers",
+                "/employer/regions",
+                "/employer/company",
+                "/employer/csv-import"
+            ],
+            DesktopOnly: true)
     ];
 
     public static readonly NavItem CsvImport =
         new("Nav.CsvImport", "/employer/csv-import", NavIcons.Batch);
+
+    public static readonly NavItem Organization =
+        new("Nav.Organization", "/employer/organization", NavIcons.Settings,
+            [
+                "/employer/salary-tables",
+                "/employer/branches",
+                "/employer/takeovers",
+                "/employer/regions",
+                "/employer/company",
+                "/employer/csv-import"
+            ],
+            DesktopOnly: true);
 
     public static readonly NavItem[] Regional =
     [

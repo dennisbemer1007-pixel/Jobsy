@@ -1,0 +1,88 @@
+@page "/employer/organization"
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "EnterpriseManager")]
+@using Jobsy.Web.Components.Employer
+@using Jobsy.Web.Components.Shared
+@using Jobsy.Web.Navigation
+@inject JobsyApiClient Api
+@inject CultureState Culture
+@implements IDisposable
+
+<PageTitle>@Culture["Nav.Organization"] · Lobsy</PageTitle>
+
+<div class="panel-page">
+    <DesktopPreferredNotice />
+    <EnterpriseOrgSubnav />
+
+    <header class="panel-header">
+        <div>
+            <h1>@Culture["Nav.Organization"]</h1>
+            <p class="login-lead">@Culture["Organization.Lead"]</p>
+        </div>
+    </header>
+
+    @if (_loading)
+    {
+        <p class="state-message">@Culture["Common.Loading"]</p>
+    }
+    else
+    {
+        <div class="org-module-grid" aria-label="@Culture["Nav.Organization"]">
+            @foreach (var item in _modules.Where(m => m.Href != "/employer/organization"))
+            {
+                <a class="org-module-card" href="@item.Href">
+                    <span class="org-module-card__icon" aria-hidden="true">@((MarkupString)item.Svg)</span>
+                    <span class="org-module-card__title">@Culture[item.TitleKey]</span>
+                    <span class="org-module-card__lead">@LeadFor(item.Href)</span>
+                </a>
+            }
+        </div>
+    }
+</div>
+
+@code {
+    private IReadOnlyList<NavItem> _modules = EnterpriseNavItems.OrganizationModules;
+    private bool _loading = true;
+
+    protected override void OnInitialized()
+        => Culture.Changed += OnCultureChanged;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var modules = EnterpriseNavItems.OrganizationModules.AsEnumerable();
+        try
+        {
+            var companies = await Api.GetMyCompaniesAsync();
+            if (!companies.Any(c => c.CsvBatchImportEnabled))
+            {
+                modules = modules.Where(m =>
+                    !string.Equals(m.Href, RoleNavCatalog.CsvImport.Href, StringComparison.OrdinalIgnoreCase));
+            }
+        }
+        catch
+        {
+            modules = modules.Where(m =>
+                !string.Equals(m.Href, RoleNavCatalog.CsvImport.Href, StringComparison.OrdinalIgnoreCase));
+        }
+
+        _modules = modules.ToList();
+        _loading = false;
+    }
+
+    private void OnCultureChanged()
+        => InvokeAsync(StateHasChanged);
+
+    public void Dispose()
+        => Culture.Changed -= OnCultureChanged;
+
+    private string LeadFor(string href) => href.ToLowerInvariant() switch
+    {
+        "/employer/company" => Culture["Organization.LeadCompany"],
+        "/employer/branches" => Culture["Organization.LeadBranches"],
+        "/employer/regions" => Culture["Organization.LeadRegions"],
+        "/employer/salary-tables" => Culture["Organization.LeadSalary"],
+        "/employer/csv-import" => Culture["Organization.LeadCsv"],
+        "/employer/takeovers" => Culture["Organization.LeadTakeovers"],
+        _ => Culture["Organization.Lead"]
+    };
+}

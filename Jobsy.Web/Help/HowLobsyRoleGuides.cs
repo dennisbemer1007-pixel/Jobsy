@@ -88,17 +88,9 @@ public static class HowLobsyRoleGuides
             new("HowLobsy.Enterprise.Step1Title", "HowLobsy.Enterprise.Step1Body", [new("/home", "Nav.Home")]),
             new("HowLobsy.Enterprise.Step2Title", "HowLobsy.Enterprise.Step2Body", [new("/employer/vacancies", "Nav.Vacancies")]),
             new("HowLobsy.Enterprise.Step3Title", "HowLobsy.Enterprise.Step3Body", [new("/employer/tokens", "Nav.Tokens")]),
-            new("HowLobsy.Enterprise.Step4Title", "HowLobsy.Enterprise.Step4Body",
-            [
-                new("/employer/branches", "Nav.Branches"),
-                new("/employer/regions", "Nav.Regions")
-            ]),
-            new("HowLobsy.Enterprise.Step5Title", "HowLobsy.Enterprise.Step5Body", [new("/employer/users", "Nav.Users")]),
-            new("HowLobsy.Enterprise.Step6Title", "HowLobsy.Enterprise.Step6Body",
-            [
-                new("/employer/salary-tables", "Nav.SalaryTables"),
-                new("/employer/company", "Nav.CompanyDetails")
-            ])
+            new("HowLobsy.Enterprise.Step4Title", "HowLobsy.Enterprise.Step4Body", [new("/employer/users", "Nav.Users")]),
+            new("HowLobsy.Enterprise.Step5Title", "HowLobsy.Enterprise.Step5Body", [new("/employer/organization", "Nav.Organization")]),
+            new("HowLobsy.Enterprise.Step6Title", "HowLobsy.Enterprise.Step6Body", [new("/employer/organization", "Nav.Organization")])
         ],
         new("/employer/vacancies", "HowLobsy.Enterprise.PrimaryCta"),
         new("/home", "HowLobsy.Enterprise.SecondaryCta"));

@@ -138,6 +138,31 @@ public class RoleNavCatalogTests
         var identity = new ClaimsIdentity([new Claim(ClaimTypes.Role, JobsyRoles.BranchManager)], "test");
         Assert.Equal("/branch/tokens", RoleNavCatalog.TokensHrefFor(new ClaimsPrincipal(identity)));
     }
+
+    [Fact]
+    public void ForUser_enterprise_keeps_ops_nav_and_desktop_organization_hub()
+    {
+        var identity = new ClaimsIdentity([new Claim(ClaimTypes.Role, JobsyRoles.EnterpriseManager)], "test");
+        var items = RoleNavCatalog.ForUser(new ClaimsPrincipal(identity));
+
+        Assert.Contains(items, i => i.Href == "/home");
+        Assert.Contains(items, i => i.Href == "/employer/vacancies");
+        Assert.Contains(items, i => i.Href == "/employer/tokens");
+        Assert.Contains(items, i => i.Href == "/employer/users");
+        Assert.Contains(items, i => i.Href == "/employer/organization" && i.DesktopOnly);
+
+        Assert.DoesNotContain(items, i => i.Href == "/employer/salary-tables");
+        Assert.DoesNotContain(items, i => i.Href == "/employer/branches");
+        Assert.DoesNotContain(items, i => i.Href == "/employer/regions");
+        Assert.DoesNotContain(items, i => i.Href == "/employer/csv-import");
+        Assert.DoesNotContain(items, i => i.Href == "/employer/company");
+
+        var org = items.First(i => i.Href == "/employer/organization");
+        Assert.True(RoleNavCatalog.IsActive(org, "employer/salary-tables", items));
+        Assert.True(RoleNavCatalog.IsActive(org, "employer/csv-import", items));
+        Assert.True(RoleNavCatalog.IsActive(org, "employer/branches", items));
+        Assert.False(RoleNavCatalog.IsActive(org, "employer/users", items));
+    }
 }
 
 public class RoleClaimMatchingTests

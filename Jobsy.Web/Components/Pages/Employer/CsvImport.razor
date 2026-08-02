@@ -3,11 +3,19 @@
 @attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "EnterpriseManager,Admin")]
 @inject JobsyApiClient Api
 @using Jobsy.Core.Rules
+@using Jobsy.Web.Components.Employer
+@using Jobsy.Web.Components.Shared
 @using Microsoft.AspNetCore.Components.Forms
 
 <PageTitle>CSV Import · Lobsy</PageTitle>
 
-<div class="panel-page csv-import-page">
+<div class="panel-page csv-import-page panel-page--desktop-preferred">
+    <AuthorizeView Roles="EnterpriseManager">
+        <Authorized>
+            <DesktopPreferredNotice />
+            <EnterpriseOrgSubnav />
+        </Authorized>
+    </AuthorizeView>
     <header class="panel-header">
         <div>
             <h1>CSV Import</h1>

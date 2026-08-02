@@ -96,7 +96,10 @@ public class LocalizationTests
             "Sales.Onboarding",
             "Sales.Invoices",
             "PushBom.Title",
-            "GrantTokens.Title"
+            "GrantTokens.Title",
+            "Nav.Organization",
+            "DesktopPreferred.Title",
+            "Organization.Lead"
         ];
 
         foreach (var key in sampleKeys)
