@@ -288,7 +288,8 @@ public class SettingsController : ControllerBase
                     request.AuthenticatorEnabled,
                     request.ExposeRegistrationActivationLinks,
                     request.PublicWebBaseUrl,
-                    request.InactiveCompanyDays),
+                    request.InactiveCompanyDays,
+                    request.SessionInactivityTimeoutMinutes),
                 cancellationToken);
             return Ok(ToFeatureDto(snap));
         }
@@ -296,6 +297,18 @@ public class SettingsController : ControllerBase
         {
             return BadRequest(new { message = ex.Message });
         }
+    }
+
+    /// <summary>
+    /// Public session-security policy for web idle timers and cookie middleware.
+    /// Timeout duration is not sensitive; kept anonymous so the UI can bootstrap before auth.
+    /// </summary>
+    [HttpGet("session-security")]
+    [AllowAnonymous]
+    public async Task<ActionResult<SessionSecurityDto>> GetSessionSecurity(CancellationToken cancellationToken)
+    {
+        var snap = await _features.GetAsync(cancellationToken);
+        return Ok(new SessionSecurityDto(snap.SessionInactivityTimeoutMinutes));
     }
 
     [HttpGet("company")]
@@ -406,7 +419,8 @@ public class SettingsController : ControllerBase
             snap.ExposeRegistrationActivationLinks,
             snap.PublicWebBaseUrl,
             snap.UpdatedAtUtc,
-            snap.InactiveCompanyDays);
+            snap.InactiveCompanyDays,
+            snap.SessionInactivityTimeoutMinutes);
 
     private static PlatformCompanyDto ToCompanyDto(PlatformCompanySnapshot snap) =>
         new(

@@ -30,7 +30,7 @@
     </header>
 
     <div class="vacancy-editor__grid">
-        <form class="login-form" @onsubmit="SaveAsync" @onsubmit:preventDefault>
+        <form class="login-form" data-session-draft="true" @onsubmit="SaveAsync" @onsubmit:preventDefault>
             @if (_isIntermediary)
             {
                 <fieldset class="vacancy-intermediary">

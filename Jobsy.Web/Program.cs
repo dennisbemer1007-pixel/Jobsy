@@ -20,6 +20,9 @@ builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
 builder.Services.AddJobsyAuthentication(builder.Configuration, builder.Environment);
+builder.Services.AddMemoryCache();
+builder.Services.AddHttpClient("JobsySessionSecurity");
+builder.Services.AddSingleton<Jobsy.Web.Security.ISessionTimeoutProvider, Jobsy.Web.Security.SessionTimeoutProvider>();
 builder.Services.AddScoped<CultureState>();
 builder.Services.AddScoped<TokenBalanceCache>();
 builder.Services.AddScoped<Jobsy.Web.Navigation.BottomNavRefreshService>();
@@ -69,6 +72,7 @@ app.Use(async (context, next) =>
 app.UseExternalAuthCallbackCredentials();
 
 app.UseAuthentication();
+app.UseSessionInactivity();
 app.UseAuthorization();
 app.UseAntiforgery();
 

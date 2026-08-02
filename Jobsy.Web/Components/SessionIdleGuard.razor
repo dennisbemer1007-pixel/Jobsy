@@ -1,0 +1,68 @@
+@using Jobsy.Core.Rules
+@using Jobsy.Web.Security
+@using Microsoft.AspNetCore.Components.Authorization
+@inject AuthenticationStateProvider AuthState
+@inject ISessionTimeoutProvider TimeoutProvider
+@inject IConfiguration Configuration
+@inject IJSRuntime Js
+@inject NavigationManager Navigation
+@implements IAsyncDisposable
+
+@code {
+    private bool _started;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender || _started)
+        {
+            return;
+        }
+
+        var state = await AuthState.GetAuthenticationStateAsync();
+        if (state.User.Identity?.IsAuthenticated != true)
+        {
+            return;
+        }
+
+        _started = true;
+        var minutes = await TimeoutProvider.GetInactivityTimeoutMinutesAsync();
+        minutes = SessionSecurityRules.ClampTimeoutMinutes(minutes);
+        var apiBase = Configuration["ApiBaseUrl"] ?? "http://localhost:5200/";
+
+        try
+        {
+            await Js.InvokeVoidAsync("lobsySessionIdle.start", new
+            {
+                timeoutMinutes = minutes,
+                apiBaseUrl = apiBase
+            });
+            Navigation.LocationChanged += OnLocationChanged;
+        }
+        catch
+        {
+            // JS not ready / prerender — ignore; middleware still enforces.
+            _started = false;
+        }
+    }
+
+    private void OnLocationChanged(object? sender, Microsoft.AspNetCore.Components.Routing.LocationChangedEventArgs e)
+    {
+        _ = Js.InvokeVoidAsync("lobsySessionIdle.markActivity");
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        Navigation.LocationChanged -= OnLocationChanged;
+        if (_started)
+        {
+            try
+            {
+                await Js.InvokeVoidAsync("lobsySessionIdle.stop");
+            }
+            catch
+            {
+                // Circuit shutting down.
+            }
+        }
+    }
+}

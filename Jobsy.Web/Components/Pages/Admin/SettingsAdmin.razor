@@ -69,6 +69,15 @@
                     De mail gaat maximaal één keer per bedrijf (harde stop), tenzij een admin het veld reset.
                 </p>
 
+                <label>
+                    Sessietime-out bij inactiviteit (minuten)
+                    <input type="number" min="5" max="480" step="1" @bind="_features.SessionInactivityTimeoutMinutes" />
+                </label>
+                <p class="muted">
+                    Standaard 30 minuten. Geldt direct voor alle rollen (bedrijfsmanagers, salesmanagers, admins):
+                    cookie-middleware én browser idle-timer lezen deze waarde dynamisch. Bij time-out wordt de sessie beëindigd en moet opnieuw worden ingelogd.
+                </p>
+
                 <div class="inline-actions" style="margin-top:0.75rem">
                     <button class="btn-compact btn-compact--primary" type="button" disabled="@_featureBusy" @onclick="SaveFeaturesAsync">@Culture["Common.Save"]</button>
                 </div>

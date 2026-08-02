@@ -176,6 +176,7 @@
             _errorMessage = error.ToString() switch
             {
                 "invalid" => Culture["Login.ErrorInvalid"],
+                "session-expired" => Culture["Login.ErrorSessionExpired"],
                 "entra-not-configured" => Culture["Login.ErrorEntra"],
                 "entra-failed" => Culture["Login.ErrorEntraFailed"],
                 "google-not-configured" => Culture["Login.ErrorGoogle"],

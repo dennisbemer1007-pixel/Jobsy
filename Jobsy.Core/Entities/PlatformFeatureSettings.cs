@@ -22,5 +22,11 @@ public class PlatformFeatureSettings
     /// </summary>
     public int InactiveCompanyDays { get; set; } = 120;
 
+    /// <summary>
+    /// Interactive session inactivity timeout in minutes (cookie + UI idle timer).
+    /// Default 30 minutes; admin-configurable.
+    /// </summary>
+    public int SessionInactivityTimeoutMinutes { get; set; } = 30;
+
     public DateTime UpdatedAtUtc { get; set; } = DateTime.UtcNow;
 }

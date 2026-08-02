@@ -2320,6 +2320,7 @@ public sealed class PlatformFeatureItem
     public string PublicWebBaseUrl { get; set; } = "http://localhost:5201";
     public DateTime? UpdatedAtUtc { get; set; }
     public int InactiveCompanyDays { get; set; } = 120;
+    public int SessionInactivityTimeoutMinutes { get; set; } = 30;
 }
 
 public sealed class PlatformCompanyItem

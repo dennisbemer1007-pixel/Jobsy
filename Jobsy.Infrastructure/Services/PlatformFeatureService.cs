@@ -50,6 +50,8 @@ public sealed class PlatformFeatureService : IPlatformFeatureService
         row.AuthenticatorEnabled = update.AuthenticatorEnabled;
         row.ExposeRegistrationActivationLinks = update.ExposeRegistrationActivationLinks;
         row.InactiveCompanyDays = Math.Clamp(update.InactiveCompanyDays, 30, 730);
+        row.SessionInactivityTimeoutMinutes =
+            SessionSecurityRules.ClampTimeoutMinutes(update.SessionInactivityTimeoutMinutes);
         if (!string.IsNullOrWhiteSpace(update.PublicWebBaseUrl))
         {
             var normalized = JobsyPublicUrl.NormalizeOrigin(update.PublicWebBaseUrl);
@@ -127,6 +129,9 @@ public sealed class PlatformFeatureService : IPlatformFeatureService
                 ? configBase
                 : JobsyPublicUrl.NormalizeOrigin(row.PublicWebBaseUrl),
             row?.UpdatedAtUtc,
-            row?.InactiveCompanyDays is > 0 ? row.InactiveCompanyDays : 120);
+            row?.InactiveCompanyDays is > 0 ? row.InactiveCompanyDays : 120,
+            SessionSecurityRules.ClampTimeoutMinutes(
+                row?.SessionInactivityTimeoutMinutes
+                ?? SessionSecurityRules.DefaultInactivityTimeoutMinutes));
     }
 }

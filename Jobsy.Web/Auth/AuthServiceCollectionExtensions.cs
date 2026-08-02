@@ -2,8 +2,11 @@ using System.Net.Http.Json;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
+using System.Globalization;
 using Jobsy.Core;
 using Jobsy.Core.Authorization;
+using Jobsy.Core.Rules;
+using Jobsy.Web.Security;
 using Microsoft.AspNetCore.Antiforgery;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
@@ -45,14 +48,29 @@ public static class AuthServiceCollectionExtensions
                 options.LoginPath = "/login";
                 options.LogoutPath = "/account/logout";
                 options.AccessDeniedPath = "/access-denied";
+                // Sliding cookie ceiling; fine-grained inactivity is enforced by SessionInactivityMiddleware
+                // using the admin-configured SessionInactivityTimeoutMinutes value.
                 options.SlidingExpiration = true;
-                options.ExpireTimeSpan = TimeSpan.FromHours(8);
+                options.ExpireTimeSpan = TimeSpan.FromMinutes(SessionSecurityRules.MaxInactivityTimeoutMinutes);
                 options.Cookie.Name = "Jobsy.Auth";
                 options.Cookie.HttpOnly = true;
                 options.Cookie.SameSite = SameSiteMode.Lax;
                 options.Cookie.SecurePolicy = secureAlways
                     ? CookieSecurePolicy.Always
                     : CookieSecurePolicy.SameAsRequest;
+                options.Events.OnSigningIn = context =>
+                {
+                    context.Properties.IsPersistent = true;
+                    context.Properties.AllowRefresh = true;
+                    if (context.Properties.ExpiresUtc is null)
+                    {
+                        context.Properties.ExpiresUtc = DateTimeOffset.UtcNow.AddMinutes(
+                            SessionSecurityRules.MaxInactivityTimeoutMinutes);
+                    }
+
+                    StampLastActivity(context.HttpContext);
+                    return Task.CompletedTask;
+                };
             });
 
         // Always register schemes so Integraties credentials can activate login without env vars.
@@ -252,11 +270,8 @@ public static class AuthServiceCollectionExtensions
             await http.SignInAsync(
                 CookieAuthenticationDefaults.AuthenticationScheme,
                 principal,
-                new AuthenticationProperties
-                {
-                    IsPersistent = true,
-                    ExpiresUtc = DateTimeOffset.UtcNow.AddHours(8)
-                });
+                CreateSessionAuthProperties());
+            StampLastActivity(http);
 
             return Results.Redirect(AuthRedirects.SafeLocalUrl(returnUrl));
         });
@@ -294,11 +309,8 @@ public static class AuthServiceCollectionExtensions
             await http.SignInAsync(
                 CookieAuthenticationDefaults.AuthenticationScheme,
                 principal,
-                new AuthenticationProperties
-                {
-                    IsPersistent = true,
-                    ExpiresUtc = DateTimeOffset.UtcNow.AddHours(8)
-                });
+                CreateSessionAuthProperties());
+            StampLastActivity(http);
 
             return Results.Redirect(AuthRedirects.SafeLocalUrl(returnUrl));
         });
@@ -363,9 +375,60 @@ public static class AuthServiceCollectionExtensions
                 await antiforgery.ValidateRequestAsync(http);
             }
 
+            var reason = http.Request.Query["reason"].ToString();
             await http.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+            http.Response.Cookies.Delete(
+                SessionInactivityMiddleware.LastActivityCookieName,
+                new CookieOptions { Path = "/" });
+
+            if (string.Equals(reason, "session-expired", StringComparison.OrdinalIgnoreCase))
+            {
+                return Results.Redirect(SessionInactivityMiddleware.SessionExpiredPath);
+            }
+
             return Results.Redirect("/");
         });
+
+        // Idle-timer beacon (no antiforgery): refreshes LastActivity for authenticated users only.
+        app.MapMethods("/account/session-activity", ["GET", "POST"], (HttpContext http) =>
+        {
+            if (http.User.Identity?.IsAuthenticated == true)
+            {
+                StampLastActivity(http);
+            }
+
+            return Results.NoContent();
+        }).AllowAnonymous().DisableAntiforgery();
+    }
+
+    private static AuthenticationProperties CreateSessionAuthProperties() =>
+        new()
+        {
+            IsPersistent = true,
+            AllowRefresh = true,
+            ExpiresUtc = DateTimeOffset.UtcNow.AddMinutes(SessionSecurityRules.MaxInactivityTimeoutMinutes)
+        };
+
+    private static void StampLastActivity(HttpContext http)
+    {
+        var now = DateTimeOffset.UtcNow;
+        var secure = http.Request.IsHttps
+                     || string.Equals(
+                         http.Request.Headers["X-Forwarded-Proto"],
+                         "https",
+                         StringComparison.OrdinalIgnoreCase);
+        http.Response.Cookies.Append(
+            SessionInactivityMiddleware.LastActivityCookieName,
+            now.ToUnixTimeSeconds().ToString(CultureInfo.InvariantCulture),
+            new CookieOptions
+            {
+                HttpOnly = true,
+                Secure = secure,
+                SameSite = SameSiteMode.Lax,
+                IsEssential = true,
+                Expires = now.AddHours(12),
+                Path = "/"
+            });
     }
 
     private static ClaimsPrincipal CreateLocalPrincipal(DemoUserOptions user)

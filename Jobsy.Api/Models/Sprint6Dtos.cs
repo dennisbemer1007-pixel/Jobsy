@@ -115,7 +115,8 @@ public record UpdatePlatformFeatureRequest(
     bool AuthenticatorEnabled,
     bool ExposeRegistrationActivationLinks,
     string? PublicWebBaseUrl,
-    int InactiveCompanyDays = 120);
+    int InactiveCompanyDays = 120,
+    int SessionInactivityTimeoutMinutes = 30);
 
 public record PlatformFeatureDto(
     bool VacancyContentModerationEnabled,
@@ -123,7 +124,10 @@ public record PlatformFeatureDto(
     bool ExposeRegistrationActivationLinks,
     string PublicWebBaseUrl,
     DateTime? UpdatedAtUtc,
-    int InactiveCompanyDays = 120);
+    int InactiveCompanyDays = 120,
+    int SessionInactivityTimeoutMinutes = 30);
+
+public record SessionSecurityDto(int InactivityTimeoutMinutes);
 
 public record SemiAnnualWageUpdateResultDto(
     DateOnly EffectiveFrom,
