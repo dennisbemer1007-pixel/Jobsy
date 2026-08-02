@@ -1,52 +1,62 @@
-Functioneel Testplan: Jobsy (MVP)
+# Functioneel Testplan: Lobsy / Jobsy
 
-1\. Doel
+## 1. Doel
 
-Valideer de kritieke user-flows: Inloggen, Vacature plaatsen (incl. Token-check), en Vacature vindbaarheid (Kaart-interface).
+Valideer de kritieke user-flows: registratie & onboarding (Company Manager / Salesmanager / Admin), prepaid tokens (“geen tokens, geen actie”), Mollie checkout/webhook, commissieverdeling, en dynamische session inactivity timeout.
 
+## 2. Automatisering (xUnit)
 
+Playwright UI-flows uit eerdere MVP-notities zijn nog niet in-repo; de actuele regressie zit in `Jobsy.Tests` (EF InMemory + `WebApplicationFactory`, geen Postgres vereist).
 
-2\. Test-scenario's (Automatisering met Playwright \& xUnit)
+### A. End-to-end kernketen
 
-A. Backend \& Business Logic (xUnit)
+| Suite | Dekking |
+|-------|---------|
+| `CoreFunctionalFlowE2ETests` | SM-hiërarchie (upline + direct) → Company Manager registratie + e-mailverificatie + referral → billing preference iDEAL/creditcard → empty balance blokkeert publish/highlight/PushBom/extend → Exact Match + bulk packs → Mollie stub checkout + pending action → webhook fulfillment (tokens + auto-publish + 15%/3% commissie) → Admin session timeout 5/30 min + graceful re-auth |
+| `CoreFunctionalFlowApiTests` | HTTP: 402 InsufficientTokens, `top-up-quote`, billing-preference, checkout + pending Publish, afwijzing ongeldige betaalmethode, Admin `platform-features` session timeout + anonieme `session-security` |
 
-TokenServiceTest: Test of een nieuwe geregistreerde ondernemer direct 1 token krijgt.
+### B. Gerelateerde suites
 
+| Domein | Bestanden |
+|--------|-----------|
+| Registratie | `Sprint7RegistrationTests`, `RegistrationPasswordRulesTests` |
+| Prepaid / Mollie | `PrepaidTokenCheckoutTests`, `MolliePaymentMethodTests`, `MolliePaymentServiceTests`, `MollieWebhookCommissionSettlementTests`, `TokenPurchaseFulfillmentIdempotencyTests` |
+| Commissies / SM | `SalesCommissionRulesTests`, `SalesManagerCommissionTests`, `SalesManagerReferralHierarchyTests`, `RevenueShareServiceTests` |
+| Session security | `SessionSecurityTests` |
+| Rol-regressie | `RoleFunctionalRegressionTests` |
+| Token producten | `Sprint4TokenProductsTests`, `TokenLedgerServiceTests` |
 
+## 3. Scenario-mapping (handmatige QA ↔ geautomatiseerd)
 
-VacancyVisibilityTest: Test of een vacature met StartDate: 01-11 en EndDate: 31-01 correct verschijnt in de "Active" list op 1 januari.
+### Role-based registration & onboarding
 
+1. **Company Manager** — register + e-mail activate + welcome token + billing preference iDEAL/CC → `CoreFunctionalFlowE2ETests`, `Sprint7RegistrationTests`, `CoreFunctionalFlowApiTests` (billing).
+2. **Salesmanager** — invite/upline referral, tracking code, dashboard 15%/3% visibility via commercial settings + ledger balances → `CoreFunctionalFlowE2ETests`, `SalesManagerReferralHierarchyTests`, `SalesManagerCommissionTests`.
+3. **Admin** — platform features session timeout → `CoreFunctionalFlowApiTests`, `SessionSecurityTests`, `CoreFunctionalFlowE2ETests`.
 
+### “No tokens, no action” + Mollie webhook
 
-AuthServiceTest: Test of MS Entra ID claims correct worden omgezet naar rollen (Kandidaat/Manager/Admin).
+1. Empty balance → InsufficientTokens / HTTP 402 + in-context quote (Exact Match + bulk) + iDEAL/CC.
+2. Paid webhook → token credit + pending Publish/Highlight auto-exec + idempotent replay.
 
+### Automated commission distribution
 
+1. Direct 15% + upline 3% on paid fulfillment; 1-year window hard stop; dashboard balances.
 
-B. UI/UX Flow (Playwright - Browser simulatie)
+### Security & dynamic session timeout
 
-RegistratieFlow: Ga naar login -> MS Entra redirect -> Terugkeer naar Dashboard -> Check: "1 Token beschikbaar" banner aanwezig.
+1. Default 30 min; Admin custom (5–480); idle → sign-out → `/login?error=session-expired` (+ returnUrl); opt-in form drafts via `sessionIdle.js`.
 
+## 4. Uitvoeren
 
+```bash
+cd /workspace
+dotnet restore Jobsy.sln
+dotnet build Jobsy.sln
+dotnet test Jobsy.Tests/Jobsy.Tests.csproj
 
-VacaturePlaatsFlow:
+# Gerichte kernketen:
+dotnet test Jobsy.Tests/Jobsy.Tests.csproj --filter "FullyQualifiedName~CoreFunctionalFlow"
+```
 
-
-
-Klik "Plaats vacature".
-
-
-
-Vul formulier in.
-
-
-
-Bevestig (check: Token-saldo wordt 0).
-
-
-
-Check: Vacature verschijnt direct op de kaart-interface.
-
-
-
-ZoekFlow: Gebruik de filter "Reistijd" -> Check: Alleen markers binnen opgegeven straal blijven zichtbaar op de OpenStreetMap kaart.
-
+**Env:** meeste tests gebruiken EF InMemory / TestServer. Live Mollie wordt gemockt; `LiveApiSmokeTests` kan een draaiende API vereisen.
