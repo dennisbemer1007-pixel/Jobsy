@@ -195,6 +195,8 @@
                       OnClose="ClosePushBom"
                       OnConfirmed="OnPushBomConfirmed" />
 
+<TokenTopUpDialog IsOpen="_topUpOpen" Info="_topUpInfo" OnClose="CloseTopUp" />
+
 @if (_contactOpen && _contactVacancy is not null)
 {
     <div class="share-modal-backdrop" @onclick="CloseContactPref"></div>
@@ -256,6 +258,8 @@
     private VacancyListItem? _publishVacancy;
     private bool _pushBomOpen;
     private VacancyListItem? _pushBomVacancy;
+    private bool _topUpOpen;
+    private InsufficientTokensInfo? _topUpInfo;
     private bool _contactOpen;
     private VacancyListItem? _contactVacancy;
     private bool _contactBusy;
@@ -295,6 +299,22 @@
             if (query.TryGetValue("q", out var q) && !string.IsNullOrWhiteSpace(q))
             {
                 _searchQuery = q.ToString().Trim();
+            }
+
+            if (query.TryGetValue("paidAction", out var paidAction) && !string.IsNullOrWhiteSpace(paidAction))
+            {
+                _message = paidAction.ToString() switch
+                {
+                    "Publish" => "Betaling gelukt — vacature is gepubliceerd.",
+                    "Highlight" => "Betaling gelukt — vacature is gehighlight.",
+                    "PushBom" => "Betaling gelukt — PushBom is verstuurd.",
+                    "Extend" => "Betaling gelukt — vacature is verlengd.",
+                    _ => "Betaling gelukt — actie uitgevoerd."
+                };
+            }
+            else if (query.TryGetValue("paidActionError", out var paidErr) && !string.IsNullOrWhiteSpace(paidErr))
+            {
+                _message = $"Tokens bijgeschreven, maar actie mislukt: {paidErr}";
             }
 
             var state = await AuthState.GetAuthenticationStateAsync();
@@ -449,6 +469,10 @@
             await RefreshAsync();
             _message = "Publicatie goedgekeurd.";
         }
+        catch (InsufficientTokensException ex)
+        {
+            OpenTopUp(ex.Info);
+        }
         catch (Exception ex)
         {
             _message = ex.Message;
@@ -462,6 +486,10 @@
             await Api.HighlightVacancyAsync(id);
             await RefreshAsync();
             _message = "Vacature gehighlight.";
+        }
+        catch (InsufficientTokensException ex)
+        {
+            OpenTopUp(ex.Info);
         }
         catch (Exception ex)
         {
@@ -496,10 +524,28 @@
             await RefreshAsync();
             _message = "Vacature verlengd (+14 dagen).";
         }
+        catch (InsufficientTokensException ex)
+        {
+            OpenTopUp(ex.Info);
+        }
         catch (Exception ex)
         {
             _message = ex.Message;
         }
+    }
+
+    private void OpenTopUp(InsufficientTokensInfo info)
+    {
+        _topUpInfo = info;
+        _topUpOpen = true;
+        _message = info.Message;
+    }
+
+    private Task CloseTopUp()
+    {
+        _topUpOpen = false;
+        _topUpInfo = null;
+        return Task.CompletedTask;
     }
 
     private async Task DeactivateAsync(Guid id)

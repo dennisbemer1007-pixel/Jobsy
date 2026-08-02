@@ -8,7 +8,8 @@ public interface IVacancyProductService
         Vacancy vacancy,
         VacancyPublishOptions options,
         Guid? actorUserId,
-        CancellationToken cancellationToken = default);
+        CancellationToken cancellationToken = default,
+        bool allowPendingApproval = true);
 
     Task<VacancyProductOutcome> ApprovePublishAsync(
         Vacancy vacancy,
@@ -49,7 +50,11 @@ public sealed record VacancyProductOutcome(
     string? ErrorMessage,
     Vacancy Vacancy,
     bool PendingApproval = false,
-    int PushBomRecipientCount = 0);
+    int PushBomRecipientCount = 0,
+    bool InsufficientTokens = false,
+    decimal RequiredTokens = 0m,
+    decimal Balance = 0m,
+    Guid? SpendCompanyId = null);
 
 public sealed record PushBomPreview(
     int CandidateCount,

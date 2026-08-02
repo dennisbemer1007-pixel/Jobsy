@@ -80,6 +80,7 @@ public class TokenPurchaseFulfillmentIdempotencyTests
             new TokenPurchaseInvoiceService(db, companySettings),
             new VatBufferTransferService(db, companySettings, NullLogger<VatBufferTransferService>.Instance),
             new FakeRevenueShare(),
+            new FakePendingActions(),
             new FakeHostEnvironment(),
             NullLogger<TokenPurchaseFulfillmentService>.Instance);
     }
@@ -99,6 +100,27 @@ public class TokenPurchaseFulfillmentIdempotencyTests
 
         public Task<PlatformFeatureSnapshot> UpdateAsync(PlatformFeatureUpdate update, CancellationToken cancellationToken = default)
             => GetAsync(cancellationToken);
+    }
+
+    private sealed class FakePendingActions : IPendingTokenActionService
+    {
+        public Task<PendingTokenAction> AttachAsync(
+            Guid checkoutId,
+            Guid spendCompanyId,
+            Guid vacancyId,
+            PendingTokenActionKind actionKind,
+            bool optionHighlight,
+            bool optionPushBom,
+            bool optionExtend,
+            decimal requiredTokens,
+            Guid? actorUserId,
+            CancellationToken cancellationToken = default)
+            => throw new NotSupportedException();
+
+        public Task<PendingTokenActionExecutionResult?> TryExecuteForCheckoutAsync(
+            Guid checkoutId,
+            CancellationToken cancellationToken = default)
+            => Task.FromResult<PendingTokenActionExecutionResult?>(null);
     }
 
     private sealed class FakeRevenueShare : IRevenueShareService

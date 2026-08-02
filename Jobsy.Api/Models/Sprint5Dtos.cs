@@ -6,16 +6,52 @@ public record TokenPackDto(int PackSize, decimal PriceEuro);
 
 public record TokenSpendCostDto(string Reason, decimal CostTokens);
 
-public record CreateCheckoutRequest(Guid CompanyId, int PackSize);
+public record CreateCheckoutRequest(
+    Guid CompanyId,
+    int PackSize,
+    PendingActionCheckoutRequest? PendingAction = null);
+
+/// <summary>Deferred vacancy product action executed after Mollie fulfillment.</summary>
+public record PendingActionCheckoutRequest(
+    Guid VacancyId,
+    string Action,
+    bool Highlight = false,
+    bool PushBom = false,
+    bool Extend = false,
+    decimal? RequiredTokens = null);
 
 public record CheckoutResultDto(
     string PaymentId,
     string CheckoutUrl,
     int PackSize,
     decimal AmountEuro,
-    bool IsStub);
+    bool IsStub,
+    Guid CheckoutId = default);
 
 public record CompleteCheckoutRequest(string? PaymentId = null, Guid? CheckoutId = null);
+
+public record CompleteCheckoutResultDto(
+    Guid CompanyId,
+    string CompanyName,
+    decimal Balance,
+    Guid CheckoutId,
+    PendingActionResultDto? PendingAction = null);
+
+public record PendingActionResultDto(
+    Guid VacancyId,
+    string Action,
+    bool Succeeded,
+    string? Message,
+    int PushBomRecipientCount = 0);
+
+public record TokenTopUpQuoteDto(
+    Guid CompanyId,
+    decimal Balance,
+    decimal RequiredTokens,
+    decimal Deficit,
+    int ExactMatchTokens,
+    decimal ExactMatchPriceEuro,
+    IReadOnlyList<TokenPackDto> BulkPacks);
 
 public record AllocateTokensRequest(Guid FromCompanyId, Guid ToCompanyId, decimal Amount, string? Note = null);
 

@@ -228,12 +228,7 @@ public sealed class JobsyApiClient : IAsyncDisposable
             "api/vacancies/publish",
             new { vacancyId, highlight, pushBom, extend },
             ct);
-        if (!response.IsSuccessStatusCode)
-        {
-            var body = await response.Content.ReadAsStringAsync(ct);
-            throw new InvalidOperationException(body);
-        }
-
+        await ThrowIfVacancyProductFailedAsync(response, ct);
         return await response.Content.ReadFromJsonAsync<VacancyProductActionResult>(cancellationToken: ct);
     }
 
@@ -258,13 +253,29 @@ public sealed class JobsyApiClient : IAsyncDisposable
     private async Task<VacancyProductActionResult?> PostVacancyProductAsync(string url, CancellationToken ct)
     {
         var response = await _http.PostAsync(url, null, ct);
-        if (!response.IsSuccessStatusCode)
+        await ThrowIfVacancyProductFailedAsync(response, ct);
+        return await response.Content.ReadFromJsonAsync<VacancyProductActionResult>(cancellationToken: ct);
+    }
+
+    private static async Task ThrowIfVacancyProductFailedAsync(HttpResponseMessage response, CancellationToken ct)
+    {
+        if (response.IsSuccessStatusCode)
         {
-            var body = await response.Content.ReadAsStringAsync(ct);
-            throw new InvalidOperationException(body);
+            return;
         }
 
-        return await response.Content.ReadFromJsonAsync<VacancyProductActionResult>(cancellationToken: ct);
+        var body = await response.Content.ReadAsStringAsync(ct);
+        if ((int)response.StatusCode == 402)
+        {
+            var info = TryDeserialize<InsufficientTokensInfo>(body);
+            if (info is not null
+                && string.Equals(info.Code, "InsufficientTokens", StringComparison.OrdinalIgnoreCase))
+            {
+                throw new InsufficientTokensException(info);
+            }
+        }
+
+        throw new InvalidOperationException(TryExtractMessage(body) ?? body);
     }
 
     public async Task RecordClickAsync(Guid vacancyId, string? anonymousKey = null, CancellationToken ct = default)
@@ -806,9 +817,26 @@ public sealed class JobsyApiClient : IAsyncDisposable
         return await _http.GetFromJsonAsync<List<TokenLogItem>>(url, ct) ?? [];
     }
 
-    public async Task<CheckoutResult?> CreateTokenCheckoutAsync(Guid companyId, int packSize, CancellationToken ct = default)
+    public async Task<TokenTopUpQuote?> GetTokenTopUpQuoteAsync(
+        Guid companyId,
+        decimal requiredTokens,
+        CancellationToken ct = default)
     {
-        var response = await _http.PostAsJsonAsync("api/tokens/checkout", new { companyId, packSize }, ct);
+        var url =
+            $"api/tokens/top-up-quote?companyId={companyId:D}&requiredTokens={requiredTokens.ToString(System.Globalization.CultureInfo.InvariantCulture)}";
+        return await _http.GetFromJsonAsync<TokenTopUpQuote>(url, ct);
+    }
+
+    public async Task<CheckoutResult?> CreateTokenCheckoutAsync(
+        Guid companyId,
+        int packSize,
+        PendingActionCheckoutRequest? pendingAction = null,
+        CancellationToken ct = default)
+    {
+        var response = await _http.PostAsJsonAsync(
+            "api/tokens/checkout",
+            new { companyId, packSize, pendingAction },
+            ct);
         if (!response.IsSuccessStatusCode)
         {
             var body = await response.Content.ReadAsStringAsync(ct);
@@ -818,7 +846,7 @@ public sealed class JobsyApiClient : IAsyncDisposable
         return await response.Content.ReadFromJsonAsync<CheckoutResult>(cancellationToken: ct);
     }
 
-    public async Task CompleteTokenCheckoutAsync(
+    public async Task<CompleteCheckoutResult?> CompleteTokenCheckoutAsync(
         string paymentId,
         CancellationToken ct = default)
     {
@@ -831,9 +859,11 @@ public sealed class JobsyApiClient : IAsyncDisposable
             var body = await response.Content.ReadAsStringAsync(ct);
             throw new InvalidOperationException(string.IsNullOrWhiteSpace(body) ? response.ReasonPhrase : body);
         }
+
+        return await response.Content.ReadFromJsonAsync<CompleteCheckoutResult>(cancellationToken: ct);
     }
 
-    public async Task CompleteTokenCheckoutBySessionAsync(
+    public async Task<CompleteCheckoutResult?> CompleteTokenCheckoutBySessionAsync(
         Guid checkoutId,
         CancellationToken ct = default)
     {
@@ -846,6 +876,8 @@ public sealed class JobsyApiClient : IAsyncDisposable
             var body = await response.Content.ReadAsStringAsync(ct);
             throw new InvalidOperationException(string.IsNullOrWhiteSpace(body) ? response.ReasonPhrase : body);
         }
+
+        return await response.Content.ReadFromJsonAsync<CompleteCheckoutResult>(cancellationToken: ct);
     }
 
     public async Task AllocateTokensAsync(
@@ -1872,6 +1904,26 @@ public sealed class JobsyApiClient : IAsyncDisposable
         return null;
     }
 
+    private static T? TryDeserialize<T>(string body)
+    {
+        if (string.IsNullOrWhiteSpace(body))
+        {
+            return default;
+        }
+
+        try
+        {
+            return JsonSerializer.Deserialize<T>(body, new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true
+            });
+        }
+        catch (JsonException)
+        {
+            return default;
+        }
+    }
+
     public async Task<SalesManagerInviteResult?> InviteSalesManagerAsync(
         string email,
         string fullName,
@@ -2152,6 +2204,17 @@ public sealed class VacancyModerationException : Exception
 
     public string Warning { get; }
     public string Suggestion { get; }
+}
+
+public sealed class InsufficientTokensException : Exception
+{
+    public InsufficientTokensException(InsufficientTokensInfo info)
+        : base(info.Message)
+    {
+        Info = info;
+    }
+
+    public InsufficientTokensInfo Info { get; }
 }
 
 public sealed class VacancyModerationFeedback

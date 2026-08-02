@@ -3,12 +3,13 @@
 @attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "BranchManager,EnterpriseManager,Intermediary,Admin")]
 @inject JobsyApiClient Api
 @inject NavigationManager Navigation
+@inject TokenBalanceCache TokenBalances
 
 <PageTitle>Betaling · Lobsy</PageTitle>
 
 <div class="panel-page">
     <h1>Betaling afronden</h1>
-    <p class="login-lead">We controleren bij Mollie of de betaling is gelukt en schrijven je tokens bij.</p>
+    <p class="login-lead">We controleren bij Mollie of de betaling is gelukt, schrijven je tokens bij en voeren eventuele openstaande actie uit.</p>
 
     @if (_loading)
     {
@@ -57,17 +58,33 @@
         _message = null;
         try
         {
+            CompleteCheckoutResult? result = null;
             if (_checkoutId is Guid checkoutId)
             {
-                await Api.CompleteTokenCheckoutBySessionAsync(checkoutId);
+                result = await Api.CompleteTokenCheckoutBySessionAsync(checkoutId);
             }
             else if (!string.IsNullOrWhiteSpace(_paymentId))
             {
-                await Api.CompleteTokenCheckoutAsync(_paymentId);
+                result = await Api.CompleteTokenCheckoutAsync(_paymentId);
             }
             else
             {
                 _message = "Geen checkout-gegevens in de return-URL.";
+                return;
+            }
+
+            TokenBalances.Invalidate();
+
+            if (result?.PendingAction is { Succeeded: true })
+            {
+                Navigation.NavigateTo($"/employer/vacancies?paidAction={Uri.EscapeDataString(result.PendingAction.Action)}");
+                return;
+            }
+
+            if (result?.PendingAction is { Succeeded: false })
+            {
+                Navigation.NavigateTo(
+                    $"/employer/vacancies?paidActionError={Uri.EscapeDataString(result.PendingAction.Message ?? "Actie mislukt")}");
                 return;
             }
 

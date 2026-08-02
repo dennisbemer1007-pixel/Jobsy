@@ -116,7 +116,7 @@ public class TokenBillingVatBufferTests
         var env = new FakeHostEnvironment { EnvironmentName = Environments.Development };
 
         var fulfillment = new TokenPurchaseFulfillmentService(
-            db, ledger, payments, invoices, vatBuffer, revenueShare, env,
+            db, ledger, payments, invoices, vatBuffer, revenueShare, new FakePendingActions(), env,
             NullLogger<TokenPurchaseFulfillmentService>.Instance);
 
         var result = await fulfillment.TryFulfillPaidCheckoutAsync(checkoutId);
@@ -159,6 +159,27 @@ public class TokenBillingVatBufferTests
 
         public Task<PlatformFeatureSnapshot> UpdateAsync(PlatformFeatureUpdate update, CancellationToken cancellationToken = default)
             => GetAsync(cancellationToken);
+    }
+
+    private sealed class FakePendingActions : IPendingTokenActionService
+    {
+        public Task<PendingTokenAction> AttachAsync(
+            Guid checkoutId,
+            Guid spendCompanyId,
+            Guid vacancyId,
+            PendingTokenActionKind actionKind,
+            bool optionHighlight,
+            bool optionPushBom,
+            bool optionExtend,
+            decimal requiredTokens,
+            Guid? actorUserId,
+            CancellationToken cancellationToken = default)
+            => throw new NotSupportedException();
+
+        public Task<PendingTokenActionExecutionResult?> TryExecuteForCheckoutAsync(
+            Guid checkoutId,
+            CancellationToken cancellationToken = default)
+            => Task.FromResult<PendingTokenActionExecutionResult?>(null);
     }
 
     private sealed class FakeRevenueShare : IRevenueShareService

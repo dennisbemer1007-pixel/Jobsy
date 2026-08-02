@@ -166,7 +166,8 @@ public sealed class MolliePaymentService : IPaymentService
             checkoutUrl,
             packSize,
             price,
-            IsStub: false);
+            IsStub: false,
+            CheckoutId: checkoutId);
     }
 
     public async Task<PaymentStatusResult> GetPaymentStatusAsync(

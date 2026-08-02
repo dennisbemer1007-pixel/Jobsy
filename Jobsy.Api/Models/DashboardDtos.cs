@@ -204,3 +204,17 @@ public record VacancyProductActionResultDto(
     string? Message = null,
     int PushBomRecipientCount = 0);
 
+/// <summary>Structured 402 body when a prepaid token top-up is required.</summary>
+public record InsufficientTokensDto(
+    string Code,
+    string Message,
+    Guid CompanyId,
+    Guid VacancyId,
+    string Action,
+    decimal RequiredTokens,
+    decimal Balance,
+    decimal Deficit,
+    bool Highlight = false,
+    bool PushBom = false,
+    bool Extend = false);
+

@@ -17,7 +17,8 @@ public record PaymentCheckoutResult(
     string CheckoutUrl,
     int PackSize,
     decimal AmountEuro,
-    bool IsStub);
+    bool IsStub,
+    Guid CheckoutId = default);
 
 public record PaymentStatusResult(
     string PaymentId,

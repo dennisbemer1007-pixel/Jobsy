@@ -39,9 +39,10 @@ Jobsy is een hyper-lokale job-matching applicatie gericht op de regionale arbeid
 ## 4. Kernfunctionaliteiten (MVP & Demo)
 - **Banenkaart (`/`):** Funda split-screen (lijst + OpenStreetMap), reistijd/afstand via PostGIS + OSRM
 - **Role dashboards (`/home`):** doorklikbare KPI’s (dag/week/maand) + drilldown voor kandidaat, werkgever en admin
-- **Token-producten:** publiceren / highlight / PushBom / verlengen; onvoldoende saldo → `PendingApproval` (EM/Admin keurt goed)
+- **Token-producten:** publiceren / highlight / PushBom / verlengen; prepaid “no tokens, no action”
+- **Onvoldoende saldo:** blokkeer actie + in-context Mollie-checkout (exact match of bulkapakket); na webhook/return → tokens bijschrijven én pending actie uitvoeren. Vestigingsmanagers zonder kooprecht blijven op `PendingApproval`
 - **PushBom:** OpenForWork-kandidaten binnen radius/reistijd; pricing tiers uit settings
-- **Tokens:** Mollie-stub checkout (EM koopt in organisatiopot via radio-pakketten), admin grant, uitgifte aan aangevinkte vestigingen
+- **Tokens:** live Mollie (Dev-stub zonder API-key); EM koopt in organisatiopot; geen automatische incasso; admin grant; uitgifte aan vestigingen
 - **Employer suite:** vacature-editor, regio’s, vestigingen (KVK), gebruikers-invite, salaristabellen, sollicitanten
 - **Registratie:** KVK-stub (+ SBI) → vestiging → wachtwoord → e-mailverificatie; na activatie dual auth (wachtwoord of Entra, zelfde e-mail); SBI `78*` → Intermediair, anders Bedrijfsmanager bij organisatiescope; conflict → takeover/org-merge
 - **Admin suite:** bedrijven, users, vacatures, finance/tokenlog, logging, settings, integratie-pings, WML (incl. halfjaarlijkse update-stub)
@@ -82,7 +83,7 @@ Kernpunten:
 
 ## 6. Externe Koppelingen (stubs voor demo)
 - **KVK API** — vestigingen/registratie
-- **Mollie** — token-aankoop (`/tokens/checkout-stub`)
+- **Mollie** — prepaid token-aankoop (live API; Development stub op `/tokens/checkout-stub`)
 - **Mail** — activatie/invite/notificaties
 - **OpenAI** — content-moderatie / mock interview (feature-flagged)
 - Feature flags o.a. `JobsyFeatures:*` (activation-link exposure, Authenticator, stubs)

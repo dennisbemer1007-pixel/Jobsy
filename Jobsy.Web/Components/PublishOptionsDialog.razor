@@ -99,11 +99,14 @@
     </div>
 }
 
+<TokenTopUpDialog IsOpen="_topUpOpen" Info="_topUpInfo" OnClose="CloseTopUp" />
+
 @code {
     [Parameter] public bool IsOpen { get; set; }
     [Parameter] public VacancyListItem? Vacancy { get; set; }
     [Parameter] public EventCallback OnClose { get; set; }
     [Parameter] public EventCallback<VacancyProductActionResult?> OnPublished { get; set; }
+    [Parameter] public EventCallback<InsufficientTokensInfo> OnInsufficientTokens { get; set; }
 
     private bool _highlight;
     private bool _pushBom;
@@ -114,6 +117,8 @@
     private string? _previewError;
     private PushBomPreview? _preview;
     private Dictionary<string, decimal> _costs = new(StringComparer.OrdinalIgnoreCase);
+    private bool _topUpOpen;
+    private InsufficientTokensInfo? _topUpInfo;
 
     private decimal PushBomCost =>
         _pushBom && _preview is { HasPricing: true, CandidateCount: > 0 }
@@ -239,6 +244,19 @@
             await OnPublished.InvokeAsync(result);
             await Close();
         }
+        catch (InsufficientTokensException ex)
+        {
+            _topUpInfo = ex.Info;
+            // Ensure publish options are preserved on the checkout payload.
+            _topUpInfo.Highlight = _highlight;
+            _topUpInfo.PushBom = _pushBom;
+            _topUpInfo.Extend = _extend;
+            _topUpOpen = true;
+            if (OnInsufficientTokens.HasDelegate)
+            {
+                await OnInsufficientTokens.InvokeAsync(_topUpInfo);
+            }
+        }
         catch (Exception ex)
         {
             _error = ex.Message;
@@ -247,5 +265,12 @@
         {
             _busy = false;
         }
+    }
+
+    private Task CloseTopUp()
+    {
+        _topUpOpen = false;
+        _topUpInfo = null;
+        return Task.CompletedTask;
     }
 }

@@ -47,7 +47,10 @@
                     <p class="muted">Huidig saldo: @_preview.TokenBalance.ToString("0.##") token(s)</p>
                     @if (!_preview.CanAfford)
                     {
-                        <p class="state-message error">Onvoldoende tokens om PushBom te activeren.</p>
+                        <p class="state-message error">Je tokens zijn op — koop tokens om PushBom te activeren.</p>
+                        <button type="button" class="btn-compact btn-compact--primary" style="margin-top:0.5rem" @onclick="OpenTopUpFromPreview">
+                            Tokens kopen
+                        </button>
                     }
                 }
             }
@@ -67,6 +70,8 @@
     </div>
 }
 
+<TokenTopUpDialog IsOpen="_topUpOpen" Info="_topUpInfo" OnClose="CloseTopUp" />
+
 @code {
     [Parameter] public bool IsOpen { get; set; }
     [Parameter] public VacancyListItem? Vacancy { get; set; }
@@ -79,6 +84,8 @@
     private string? _error;
     private PushBomPreview? _preview;
     private Guid? _loadedForVacancyId;
+    private bool _topUpOpen;
+    private InsufficientTokensInfo? _topUpInfo;
 
     private bool ConfirmDisabled =>
         _busy
@@ -153,6 +160,11 @@
             await OnConfirmed.InvokeAsync(result);
             await Close();
         }
+        catch (InsufficientTokensException ex)
+        {
+            _topUpInfo = ex.Info;
+            _topUpOpen = true;
+        }
         catch (Exception ex)
         {
             _error = ex.Message;
@@ -161,5 +173,32 @@
         {
             _busy = false;
         }
+    }
+
+    private void OpenTopUpFromPreview()
+    {
+        if (Vacancy is null || _preview is null)
+        {
+            return;
+        }
+
+        _topUpInfo = new InsufficientTokensInfo
+        {
+            Message = "Je tokens zijn op. Koop tokens om PushBom te activeren.",
+            CompanyId = Vacancy.CompanyId,
+            VacancyId = Vacancy.Id,
+            Action = "PushBom",
+            RequiredTokens = _preview.CostTokens,
+            Balance = _preview.TokenBalance,
+            Deficit = Math.Max(0m, _preview.CostTokens - _preview.TokenBalance)
+        };
+        _topUpOpen = true;
+    }
+
+    private Task CloseTopUp()
+    {
+        _topUpOpen = false;
+        _topUpInfo = null;
+        return Task.CompletedTask;
     }
 }

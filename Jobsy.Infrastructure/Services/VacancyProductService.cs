@@ -47,7 +47,8 @@ public sealed class VacancyProductService : IVacancyProductService
         Vacancy vacancy,
         VacancyPublishOptions options,
         Guid? actorUserId,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default,
+        bool allowPendingApproval = true)
     {
         if (vacancy.Status == VacancyStatus.PendingApproval)
         {
@@ -137,13 +138,24 @@ public sealed class VacancyProductService : IVacancyProductService
 
         if (publishCost > 0 && balance < publishCost)
         {
-            return await MarkPendingApprovalAsync(vacancy, options, cancellationToken);
+            if (allowPendingApproval)
+            {
+                return await MarkPendingApprovalAsync(vacancy, options, cancellationToken);
+            }
+
+            return InsufficientTokens(
+                vacancy,
+                Math.Max(totalCost, publishCost),
+                balance,
+                "Je tokens zijn op. Koop tokens om te publiceren.");
         }
 
         if (balance < totalCost)
         {
-            return Fail(
+            return InsufficientTokens(
                 vacancy,
+                totalCost,
+                balance,
                 $"Onvoldoende tokens voor geselecteerde opties. Benodigd: {totalCost}, saldo: {balance}.");
         }
 
@@ -216,7 +228,25 @@ public sealed class VacancyProductService : IVacancyProductService
             if (spend.ErrorMessage?.Contains("Onvoldoende", StringComparison.OrdinalIgnoreCase) == true
                 && spend.Balance < publishCost)
             {
-                return await MarkPendingApprovalAsync(vacancy, options, cancellationToken);
+                if (allowPendingApproval)
+                {
+                    return await MarkPendingApprovalAsync(vacancy, options, cancellationToken);
+                }
+
+                return InsufficientTokens(
+                    vacancy,
+                    totalCost,
+                    spend.Balance,
+                    "Je tokens zijn op. Koop tokens om te publiceren.");
+            }
+
+            if (spend.ErrorMessage?.Contains("Onvoldoende", StringComparison.OrdinalIgnoreCase) == true)
+            {
+                return InsufficientTokens(
+                    vacancy,
+                    totalCost,
+                    spend.Balance,
+                    spend.ErrorMessage);
             }
 
             return Fail(vacancy, spend.ErrorMessage ?? "Tokenafschrijving mislukt.");
@@ -357,6 +387,16 @@ public sealed class VacancyProductService : IVacancyProductService
 
         if (!spend.Succeeded)
         {
+            if (spend.ErrorMessage?.Contains("Onvoldoende", StringComparison.OrdinalIgnoreCase) == true)
+            {
+                var needed = reasons.Sum(r => costOverrides.GetValueOrDefault(r, 0m));
+                return InsufficientTokens(
+                    vacancy,
+                    needed > 0 ? needed : spend.Balance + 1,
+                    spend.Balance,
+                    spend.ErrorMessage);
+            }
+
             return Fail(vacancy, spend.ErrorMessage ?? "Goedkeuring mislukt.");
         }
 
@@ -429,9 +469,21 @@ public sealed class VacancyProductService : IVacancyProductService
             return Fail(vacancy, ex.Message);
         }
 
-        return spend.Succeeded
-            ? new VacancyProductOutcome(true, null, vacancy)
-            : Fail(vacancy, spend.ErrorMessage ?? "Highlight mislukt.");
+        if (spend.Succeeded)
+        {
+            return new VacancyProductOutcome(true, null, vacancy);
+        }
+
+        if (spend.ErrorMessage?.Contains("Onvoldoende", StringComparison.OrdinalIgnoreCase) == true)
+        {
+            return InsufficientTokens(
+                vacancy,
+                highlightCost,
+                spend.Balance,
+                "Je tokens zijn op. Koop tokens om te highlighten.");
+        }
+
+        return Fail(vacancy, spend.ErrorMessage ?? "Highlight mislukt.");
     }
 
     public async Task<PushBomPreview> PreviewPushBomAsync(
@@ -504,6 +556,15 @@ public sealed class VacancyProductService : IVacancyProductService
 
         if (!spend.Succeeded)
         {
+            if (spend.ErrorMessage?.Contains("Onvoldoende", StringComparison.OrdinalIgnoreCase) == true)
+            {
+                return InsufficientTokens(
+                    vacancy,
+                    reach.CostTokens,
+                    spend.Balance,
+                    "Je tokens zijn op. Koop tokens om PushBom te activeren.");
+            }
+
             return Fail(vacancy, spend.ErrorMessage ?? "PushBom mislukt.");
         }
 
@@ -549,9 +610,22 @@ public sealed class VacancyProductService : IVacancyProductService
             return Fail(vacancy, ex.Message);
         }
 
-        return spend.Succeeded
-            ? new VacancyProductOutcome(true, null, vacancy)
-            : Fail(vacancy, spend.ErrorMessage ?? "Verlengen mislukt.");
+        if (spend.Succeeded)
+        {
+            return new VacancyProductOutcome(true, null, vacancy);
+        }
+
+        if (spend.ErrorMessage?.Contains("Onvoldoende", StringComparison.OrdinalIgnoreCase) == true)
+        {
+            var extendCost = await _tokens.GetCostAsync(TokenSpendReason.Extend, cancellationToken) ?? 1m;
+            return InsufficientTokens(
+                vacancy,
+                extendCost,
+                spend.Balance,
+                "Je tokens zijn op. Koop tokens om te verlengen.");
+        }
+
+        return Fail(vacancy, spend.ErrorMessage ?? "Verlengen mislukt.");
     }
 
     public async Task<VacancyProductOutcome> DeactivateAsync(
@@ -1062,6 +1136,20 @@ public sealed class VacancyProductService : IVacancyProductService
 
     private static VacancyProductOutcome Fail(Vacancy vacancy, string message)
         => new(false, message, vacancy);
+
+    private static VacancyProductOutcome InsufficientTokens(
+        Vacancy vacancy,
+        decimal requiredTokens,
+        decimal balance,
+        string message)
+        => new(
+            false,
+            message,
+            vacancy,
+            InsufficientTokens: true,
+            RequiredTokens: requiredTokens,
+            Balance: balance,
+            SpendCompanyId: vacancy.CompanyId);
 
     private sealed record PushBomReach(
         List<User> Candidates,

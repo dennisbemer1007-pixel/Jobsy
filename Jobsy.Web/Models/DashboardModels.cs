@@ -188,6 +188,61 @@ public class CheckoutResult
     public int PackSize { get; set; }
     public decimal AmountEuro { get; set; }
     public bool IsStub { get; set; }
+    public Guid CheckoutId { get; set; }
+}
+
+public class CompleteCheckoutResult
+{
+    public Guid CompanyId { get; set; }
+    public string CompanyName { get; set; } = string.Empty;
+    public decimal Balance { get; set; }
+    public Guid CheckoutId { get; set; }
+    public PendingActionResult? PendingAction { get; set; }
+}
+
+public class PendingActionResult
+{
+    public Guid VacancyId { get; set; }
+    public string Action { get; set; } = string.Empty;
+    public bool Succeeded { get; set; }
+    public string? Message { get; set; }
+    public int PushBomRecipientCount { get; set; }
+}
+
+public class TokenTopUpQuote
+{
+    public Guid CompanyId { get; set; }
+    public decimal Balance { get; set; }
+    public decimal RequiredTokens { get; set; }
+    public decimal Deficit { get; set; }
+    public int ExactMatchTokens { get; set; }
+    public decimal ExactMatchPriceEuro { get; set; }
+    public List<TokenPackItem> BulkPacks { get; set; } = [];
+}
+
+public class InsufficientTokensInfo
+{
+    public string Code { get; set; } = "InsufficientTokens";
+    public string Message { get; set; } = string.Empty;
+    public Guid CompanyId { get; set; }
+    public Guid VacancyId { get; set; }
+    public string Action { get; set; } = string.Empty;
+    public decimal RequiredTokens { get; set; }
+    public decimal Balance { get; set; }
+    public decimal Deficit { get; set; }
+    public bool Highlight { get; set; }
+    public bool PushBom { get; set; }
+    public bool Extend { get; set; }
+}
+
+public class PendingActionCheckoutRequest
+{
+    public Guid VacancyId { get; set; }
+    public string Action { get; set; } = string.Empty;
+    public bool Highlight { get; set; }
+    public bool PushBom { get; set; }
+    public bool Extend { get; set; }
+    public decimal? RequiredTokens { get; set; }
 }
 
 public class KvkEstablishmentsLookupResult

@@ -30,6 +30,9 @@ public class TokenPurchaseCheckout
     public Guid? TokenTransactionId { get; set; }
     public Guid? TokenPurchaseInvoiceId { get; set; }
     public TokenPurchaseInvoice? Invoice { get; set; }
+
+    /// <summary>Optional vacancy action to run automatically after paid fulfillment.</summary>
+    public PendingTokenAction? PendingAction { get; set; }
 }
 
 public enum TokenPurchaseCheckoutStatus

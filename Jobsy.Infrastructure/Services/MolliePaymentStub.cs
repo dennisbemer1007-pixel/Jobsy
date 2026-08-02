@@ -53,10 +53,11 @@ public sealed class MolliePaymentStub : IPaymentService
         };
 
         var paymentId = $"stub_pay_{Guid.NewGuid():N}";
+        var checkoutId = Guid.NewGuid();
         var (exVat, vat, total) = TokenVatPricing.SplitInclVatEuros(price);
         _db.TokenPurchaseCheckouts.Add(new TokenPurchaseCheckout
         {
-            Id = Guid.NewGuid(),
+            Id = checkoutId,
             PaymentId = paymentId,
             CompanyId = companyId,
             PackSize = packSize,
@@ -77,10 +78,11 @@ public sealed class MolliePaymentStub : IPaymentService
         var webBase = features.PublicWebBaseUrl.TrimEnd('/');
         return new PaymentCheckoutResult(
             paymentId,
-            $"{webBase}/tokens/checkout-stub?paymentId={Uri.EscapeDataString(paymentId)}",
+            $"{webBase}/tokens/checkout-stub?paymentId={Uri.EscapeDataString(paymentId)}&checkoutId={checkoutId:D}",
             packSize,
             price,
-            IsStub: true);
+            IsStub: true,
+            CheckoutId: checkoutId);
     }
 
     public async Task<PaymentStatusResult> GetPaymentStatusAsync(

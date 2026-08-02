@@ -17,6 +17,7 @@ public sealed class TokenPurchaseFulfillmentService : ITokenPurchaseFulfillmentS
     private readonly ITokenPurchaseInvoiceService _invoices;
     private readonly IVatBufferTransferService _vatBuffer;
     private readonly IRevenueShareService _revenueShare;
+    private readonly IPendingTokenActionService _pendingActions;
     private readonly IHostEnvironment _environment;
     private readonly ILogger<TokenPurchaseFulfillmentService> _logger;
 
@@ -27,6 +28,7 @@ public sealed class TokenPurchaseFulfillmentService : ITokenPurchaseFulfillmentS
         ITokenPurchaseInvoiceService invoices,
         IVatBufferTransferService vatBuffer,
         IRevenueShareService revenueShare,
+        IPendingTokenActionService pendingActions,
         IHostEnvironment environment,
         ILogger<TokenPurchaseFulfillmentService> logger)
     {
@@ -36,6 +38,7 @@ public sealed class TokenPurchaseFulfillmentService : ITokenPurchaseFulfillmentS
         _invoices = invoices;
         _vatBuffer = vatBuffer;
         _revenueShare = revenueShare;
+        _pendingActions = pendingActions;
         _environment = environment;
         _logger = logger;
     }
@@ -63,14 +66,18 @@ public sealed class TokenPurchaseFulfillmentService : ITokenPurchaseFulfillmentS
         // Already fully fulfilled.
         if (session.TokenPurchaseInvoiceId is Guid existingInvoiceId)
         {
-            return await BuildResultAsync(session, existingInvoiceId, alreadyFulfilled: true, cancellationToken);
+            var already = await BuildResultAsync(session, existingInvoiceId, alreadyFulfilled: true, cancellationToken);
+            var pendingAlready = await TryRunPendingActionAsync(session.Id, cancellationToken);
+            return already with { PendingAction = pendingAlready };
         }
 
         // Credited / partial — repair forward without double-crediting.
         if (session.Status == TokenPurchaseCheckoutStatus.Credited
             || session.TokenTransactionId is not null)
         {
-            return await RepairIncompleteFulfillmentAsync(session, actorUserId, cancellationToken);
+            var repaired = await RepairIncompleteFulfillmentAsync(session, actorUserId, cancellationToken);
+            var pendingRepaired = await TryRunPendingActionAsync(session.Id, cancellationToken);
+            return repaired with { PendingAction = pendingRepaired };
         }
 
         if (allowDevStubMarkPaid
@@ -215,6 +222,8 @@ public sealed class TokenPurchaseFulfillmentService : ITokenPurchaseFulfillmentS
             "Token purchase fulfilled: checkout {CheckoutId}, invoice {InvoiceNumber}, VAT {VatCents}c",
             session.Id, invoice.InvoiceNumber, invoice.VatAmountCents);
 
+        var pending = await TryRunPendingActionAsync(session.Id, cancellationToken);
+
         return new TokenPurchaseFulfillmentResult(
             session.Id,
             session.CompanyId,
@@ -223,7 +232,27 @@ public sealed class TokenPurchaseFulfillmentService : ITokenPurchaseFulfillmentS
             entry.Id,
             invoice.Id,
             invoice.InvoiceNumber,
-            AlreadyFulfilled: false);
+            AlreadyFulfilled: false,
+            PendingAction: pending);
+    }
+
+    private async Task<PendingTokenActionExecutionResult?> TryRunPendingActionAsync(
+        Guid checkoutId,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            return await _pendingActions.TryExecuteForCheckoutAsync(checkoutId, cancellationToken);
+        }
+        catch (Exception ex)
+        {
+            // Tokens are already credited — do not fail the purchase fulfillment.
+            _logger.LogWarning(
+                ex,
+                "Pending vacancy action after checkout {CheckoutId} failed; tokens remain credited",
+                checkoutId);
+            return null;
+        }
     }
 
     private async Task LinkCheckoutAndTransactionAsync(

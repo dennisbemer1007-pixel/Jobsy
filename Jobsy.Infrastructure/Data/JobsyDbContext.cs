@@ -49,6 +49,7 @@ public class JobsyDbContext : DbContext
     public DbSet<AboutPageSettings> AboutPageSettings => Set<AboutPageSettings>();
     public DbSet<PlatformLog> PlatformLogs => Set<PlatformLog>();
     public DbSet<TokenPurchaseCheckout> TokenPurchaseCheckouts => Set<TokenPurchaseCheckout>();
+    public DbSet<PendingTokenAction> PendingTokenActions => Set<PendingTokenAction>();
     public DbSet<TokenPurchaseInvoice> TokenPurchaseInvoices => Set<TokenPurchaseInvoice>();
     public DbSet<VatBufferTransfer> VatBufferTransfers => Set<VatBufferTransfer>();
     public DbSet<VatDeclaration> VatDeclarations => Set<VatDeclaration>();
@@ -619,6 +620,28 @@ public class JobsyDbContext : DbContext
             entity.HasOne(e => e.Company)
                 .WithMany()
                 .HasForeignKey(e => e.CompanyId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<PendingTokenAction>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.RequiredTokens).HasPrecision(18, 2);
+            entity.Property(e => e.ErrorMessage).HasMaxLength(500);
+            entity.HasIndex(e => e.TokenPurchaseCheckoutId).IsUnique();
+            entity.HasIndex(e => e.VacancyId);
+            entity.HasIndex(e => e.Status);
+            entity.HasOne(e => e.Checkout)
+                .WithOne(c => c.PendingAction)
+                .HasForeignKey<PendingTokenAction>(e => e.TokenPurchaseCheckoutId)
+                .OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne(e => e.Company)
+                .WithMany()
+                .HasForeignKey(e => e.CompanyId)
+                .OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne(e => e.Vacancy)
+                .WithMany()
+                .HasForeignKey(e => e.VacancyId)
                 .OnDelete(DeleteBehavior.Cascade);
         });
 

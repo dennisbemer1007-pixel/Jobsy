@@ -15,12 +15,15 @@ namespace Jobsy.Api.Controllers;
 [Route("api/tokens")]
 public class TokensController : ControllerBase
 {
+    private const int MaxExactMatchTokens = 500;
+
     private readonly JobsyDbContext _db;
     private readonly ICompanyAuthorizationService _companyAuth;
     private readonly ITokenLedgerService _tokenLedger;
     private readonly IPaymentService _payments;
     private readonly IUserLookupService _users;
     private readonly ITokenPurchaseFulfillmentService _fulfillment;
+    private readonly IPendingTokenActionService _pendingActions;
 
     public TokensController(
         JobsyDbContext db,
@@ -28,7 +31,8 @@ public class TokensController : ControllerBase
         ITokenLedgerService tokenLedger,
         IPaymentService payments,
         IUserLookupService users,
-        ITokenPurchaseFulfillmentService fulfillment)
+        ITokenPurchaseFulfillmentService fulfillment,
+        IPendingTokenActionService pendingActions)
     {
         _db = db;
         _companyAuth = companyAuth;
@@ -36,6 +40,7 @@ public class TokensController : ControllerBase
         _payments = payments;
         _users = users;
         _fulfillment = fulfillment;
+        _pendingActions = pendingActions;
     }
 
     [HttpGet("balance")]
@@ -91,6 +96,68 @@ public class TokensController : ControllerBase
         return Ok(costs);
     }
 
+    /// <summary>
+    /// Quote for in-context top-up: exact-match tokens needed + bulk packs.
+    /// </summary>
+    [HttpGet("top-up-quote")]
+    [Authorize(Roles = JobsyRoles.TokenPurchaseRoles)]
+    public async Task<ActionResult<TokenTopUpQuoteDto>> GetTopUpQuote(
+        [FromQuery] Guid companyId,
+        [FromQuery] decimal requiredTokens,
+        CancellationToken cancellationToken)
+    {
+        if (companyId == Guid.Empty || requiredTokens <= 0)
+        {
+            return BadRequest(new { message = "companyId en requiredTokens zijn verplicht." });
+        }
+
+        try
+        {
+            await _companyAuth.EnsureCanAccessCompanyAsync(User, companyId, cancellationToken);
+        }
+        catch (Core.Exceptions.ForbiddenCompanyAccessException)
+        {
+            return Forbid();
+        }
+
+        var balance = await _tokenLedger.GetBalanceAsync(companyId, cancellationToken);
+        var deficit = Math.Max(0m, requiredTokens - balance);
+        var exactMatch = deficit <= 0
+            ? 0
+            : (int)Math.Clamp(Math.Ceiling(deficit), 1, MaxExactMatchTokens);
+
+        var packs = await _db.TokenPricings.AsNoTracking()
+            .Where(p => p.IsActive)
+            .OrderBy(p => p.PackSize)
+            .Select(p => new TokenPackDto(p.PackSize, p.PriceEuro))
+            .ToListAsync(cancellationToken);
+
+        if (packs.Count == 0)
+        {
+            packs =
+            [
+                new TokenPackDto(1, 5.00m),
+                new TokenPackDto(5, 22.50m),
+                new TokenPackDto(10, 40.00m),
+                new TokenPackDto(50, 175.00m),
+                new TokenPackDto(100, 300.00m)
+            ];
+        }
+
+        var exactPrice = exactMatch <= 0
+            ? 0m
+            : await ResolvePackPriceAsync(exactMatch, cancellationToken);
+
+        return Ok(new TokenTopUpQuoteDto(
+            companyId,
+            balance,
+            requiredTokens,
+            deficit,
+            exactMatch,
+            exactPrice,
+            packs));
+    }
+
     [HttpPost("checkout")]
     [Authorize(Roles = JobsyRoles.TokenPurchaseRoles)]
     [RequireCompanyAccess]
@@ -98,16 +165,9 @@ public class TokensController : ControllerBase
         [FromBody] CreateCheckoutRequest request,
         CancellationToken cancellationToken)
     {
-        if (request.PackSize <= 0)
+        if (request.PackSize <= 0 || request.PackSize > MaxExactMatchTokens)
         {
-            return BadRequest(new { message = "PackSize must be positive." });
-        }
-
-        var packExists = await _db.TokenPricings.AsNoTracking()
-            .AnyAsync(p => p.IsActive && p.PackSize == request.PackSize, cancellationToken);
-        if (!packExists && request.PackSize is not (1 or 5 or 10 or 50 or 100))
-        {
-            return BadRequest(new { message = "Onbekend tokenpakket." });
+            return BadRequest(new { message = $"PackSize moet tussen 1 en {MaxExactMatchTokens} liggen." });
         }
 
         var company = await _db.Companies.AsNoTracking()
@@ -126,6 +186,7 @@ public class TokensController : ControllerBase
         }
 
         var purchaseTargetId = request.CompanyId;
+        var spendCompanyId = request.CompanyId;
         var isEnterprise = User.IsInRole(JobsyRoles.EnterpriseManager);
         var isBranch = User.IsInRole(JobsyRoles.BranchManager);
         var isAdmin = _companyAuth.IsAdmin(User);
@@ -171,17 +232,65 @@ public class TokensController : ControllerBase
             }
         }
 
+        PendingTokenActionKind? pendingKind = null;
+        if (request.PendingAction is { } pendingReq)
+        {
+            if (!TryParsePendingAction(pendingReq.Action, out var kind))
+            {
+                return BadRequest(new { message = "Onbekende pending action." });
+            }
+
+            pendingKind = kind;
+            var vacancy = await _db.Vacancies.AsNoTracking()
+                .FirstOrDefaultAsync(v => v.Id == pendingReq.VacancyId, cancellationToken);
+            if (vacancy is null)
+            {
+                return NotFound(new { message = "Vacature niet gevonden." });
+            }
+
+            try
+            {
+                await _companyAuth.EnsureCanAccessCompanyAsync(User, vacancy.CompanyId, cancellationToken);
+            }
+            catch (Core.Exceptions.ForbiddenCompanyAccessException)
+            {
+                return Forbid();
+            }
+
+            spendCompanyId = vacancy.CompanyId;
+        }
+
         var result = await _payments.CreateTokenPurchaseCheckoutAsync(
             purchaseTargetId,
             request.PackSize,
             cancellationToken);
+
+        if (pendingKind is PendingTokenActionKind actionKind && request.PendingAction is { } attach)
+        {
+            var actor = await _users.FindByPrincipalAsync(User, cancellationToken);
+            var required = attach.RequiredTokens is > 0
+                ? attach.RequiredTokens.Value
+                : request.PackSize;
+            await _pendingActions.AttachAsync(
+                result.CheckoutId != Guid.Empty ? result.CheckoutId : await LookupCheckoutIdAsync(result.PaymentId, cancellationToken),
+                spendCompanyId,
+                attach.VacancyId,
+                actionKind,
+                attach.Highlight,
+                attach.PushBom,
+                attach.Extend,
+                required,
+                actor?.Id,
+                cancellationToken);
+        }
 
         return Ok(new CheckoutResultDto(
             result.PaymentId,
             result.CheckoutUrl,
             result.PackSize,
             result.AmountEuro,
-            result.IsStub));
+            result.IsStub,
+            result.CheckoutId));
     }
 
     /// <summary>
@@ -191,7 +300,7 @@ public class TokensController : ControllerBase
     /// </summary>
     [HttpPost("checkout/complete")]
     [Authorize(Roles = JobsyRoles.TokenPurchaseRoles)]
-    public async Task<ActionResult<TokenBalanceDto>> CompleteCheckout(
+    public async Task<ActionResult<CompleteCheckoutResultDto>> CompleteCheckout(
         [FromBody] CompleteCheckoutRequest request,
         CancellationToken cancellationToken)
     {
@@ -244,7 +353,23 @@ public class TokensController : ControllerBase
             return BadRequest(new { message = "Betaling is nog niet afgerond." });
         }
 
-        return Ok(new TokenBalanceDto(result.CompanyId, result.CompanyName, result.NewBalance));
+        PendingActionResultDto? pendingDto = null;
+        if (result.PendingAction is { } pending)
+        {
+            pendingDto = new PendingActionResultDto(
+                pending.VacancyId,
+                pending.ActionKind.ToString(),
+                pending.Succeeded,
+                pending.Message,
+                pending.PushBomRecipientCount);
+        }
+
+        return Ok(new CompleteCheckoutResultDto(
+            result.CompanyId,
+            result.CompanyName,
+            result.NewBalance,
+            result.CheckoutId,
+            pendingDto));
     }
 
     [HttpPost("allocate")]
@@ -389,4 +514,48 @@ public class TokensController : ControllerBase
         [FromBody] GrantTokensRequest request,
         CancellationToken cancellationToken)
         => await Grant(request, cancellationToken);
+
+    private async Task<Guid> LookupCheckoutIdAsync(string paymentId, CancellationToken cancellationToken)
+    {
+        var id = await _db.TokenPurchaseCheckouts.AsNoTracking()
+            .Where(c => c.PaymentId == paymentId)
+            .Select(c => c.Id)
+            .FirstOrDefaultAsync(cancellationToken);
+        if (id == Guid.Empty)
+        {
+            throw new InvalidOperationException("Checkout-sessie niet gevonden na aanmaken.");
+        }
+
+        return id;
+    }
+
+    private async Task<decimal> ResolvePackPriceAsync(int packSize, CancellationToken cancellationToken)
+    {
+        var priced = await _db.TokenPricings.AsNoTracking()
+            .Where(p => p.IsActive && p.PackSize == packSize)
+            .Select(p => (decimal?)p.PriceEuro)
+            .FirstOrDefaultAsync(cancellationToken);
+
+        return priced ?? packSize switch
+        {
+            1 => 5.00m,
+            5 => 22.50m,
+            10 => 40.00m,
+            50 => 175.00m,
+            100 => 300.00m,
+            _ => packSize * 5.00m
+        };
+    }
+
+    private static bool TryParsePendingAction(string? action, out PendingTokenActionKind kind)
+    {
+        kind = default;
+        if (string.IsNullOrWhiteSpace(action))
+        {
+            return false;
+        }
+
+        return Enum.TryParse(action.Trim(), ignoreCase: true, out kind)
+               && Enum.IsDefined(kind);
+    }
 }

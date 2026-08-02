@@ -1,0 +1,210 @@
+@inject JobsyApiClient Api
+@inject NavigationManager Navigation
+@inject CultureState Culture
+
+@if (IsOpen)
+{
+    <div class="share-modal-backdrop" @onclick="Close"></div>
+    <div class="share-modal publish-modal token-topup-modal" role="dialog" aria-modal="true" aria-labelledby="token-topup-title">
+        <div class="share-modal__header">
+            <h2 id="token-topup-title">Tokens op</h2>
+            <button type="button" class="share-modal__close" @onclick="Close" aria-label="@Culture["Common.Close"]">×</button>
+        </div>
+
+        <p class="share-modal__lead">
+            @(string.IsNullOrWhiteSpace(ActionLabel) ? "Deze actie" : ActionLabel)
+            vereist tokens. Je saldo is ontoereikend — zonder tokens geen actie.
+        </p>
+
+        @if (_loading)
+        {
+            <p class="muted">Opties laden…</p>
+        }
+        else if (!string.IsNullOrEmpty(_loadError))
+        {
+            <p class="state-message error">@_loadError</p>
+        }
+        else if (_quote is not null)
+        {
+            <p class="muted">
+                Benodigd: <strong>@_quote.RequiredTokens.ToString("0.##")</strong>
+                · saldo: <strong>@_quote.Balance.ToString("0.##")</strong>
+                · tekort: <strong>@_quote.Deficit.ToString("0.##")</strong>
+            </p>
+
+            <fieldset class="token-topup-options">
+                <legend>Betaalopties (prepaid via Mollie)</legend>
+
+                @if (_quote.ExactMatchTokens > 0)
+                {
+                    <label class="publish-option">
+                        <input type="radio" name="topup-pack" checked="@(_selectedPack == _quote.ExactMatchTokens)"
+                               @onchange="() => SelectPack(_quote.ExactMatchTokens)" />
+                        <span>
+                            Exact wat je nodig hebt
+                            <em>@_quote.ExactMatchTokens token(s) · € @_quote.ExactMatchPriceEuro.ToString("0.00")</em>
+                        </span>
+                    </label>
+                }
+
+                @foreach (var pack in _quote.BulkPacks)
+                {
+                    <label class="publish-option">
+                        <input type="radio" name="topup-pack" checked="@(_selectedPack == pack.PackSize)"
+                               @onchange="() => SelectPack(pack.PackSize)" />
+                        <span>
+                            Pakket @pack.PackSize
+                            <em>@pack.PackSize tokens · € @pack.PriceEuro.ToString("0.00")</em>
+                        </span>
+                    </label>
+                }
+            </fieldset>
+
+            <p class="muted" style="margin-top:0.75rem">
+                Geen automatische incasso — je betaalt alleen dit pakket. Na betaling wordt je actie direct uitgevoerd.
+            </p>
+        }
+
+        <div class="inline-actions" style="margin-top:1rem">
+            <button type="button" class="btn-compact btn-compact--primary" disabled="@ConfirmDisabled" @onclick="PayAsync">
+                @(_busy ? Culture["Common.Busy"] : "Betaal via Mollie")
+            </button>
+            <button type="button" class="btn-compact" disabled="@_busy" @onclick="Close">@Culture["Common.Cancel"]</button>
+        </div>
+
+        @if (!string.IsNullOrEmpty(_error))
+        {
+            <p class="state-message error">@_error</p>
+        }
+    </div>
+}
+
+@code {
+    [Parameter] public bool IsOpen { get; set; }
+    [Parameter] public InsufficientTokensInfo? Info { get; set; }
+    [Parameter] public EventCallback OnClose { get; set; }
+
+    private bool _loading;
+    private bool _busy;
+    private string? _loadError;
+    private string? _error;
+    private TokenTopUpQuote? _quote;
+    private int _selectedPack;
+    private Guid? _loadedFor;
+
+    private string ActionLabel => Info?.Action switch
+    {
+        "Publish" => "Publiceren",
+        "Highlight" => "Highlighten",
+        "PushBom" => "PushBom",
+        "Extend" => "Verlengen",
+        _ => Info?.Action ?? "Deze actie"
+    };
+
+    private bool ConfirmDisabled =>
+        _busy || _loading || _quote is null || _selectedPack <= 0 || Info is null;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (!IsOpen || Info is null)
+        {
+            return;
+        }
+
+        if (_loadedFor == Info.VacancyId && _quote is not null)
+        {
+            return;
+        }
+
+        await LoadQuoteAsync();
+    }
+
+    private async Task LoadQuoteAsync()
+    {
+        if (Info is null)
+        {
+            return;
+        }
+
+        _loading = true;
+        _loadError = null;
+        _error = null;
+        _quote = null;
+        _loadedFor = Info.VacancyId;
+        try
+        {
+            _quote = await Api.GetTokenTopUpQuoteAsync(Info.CompanyId, Info.RequiredTokens);
+            if (_quote is null)
+            {
+                _loadError = "Kon betaalopties niet laden.";
+                return;
+            }
+
+            _selectedPack = _quote.ExactMatchTokens > 0
+                ? _quote.ExactMatchTokens
+                : _quote.BulkPacks.FirstOrDefault()?.PackSize ?? 0;
+        }
+        catch (Exception ex)
+        {
+            _loadError = ex.Message;
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private void SelectPack(int packSize) => _selectedPack = packSize;
+
+    private Task Close()
+    {
+        _error = null;
+        _loadError = null;
+        _quote = null;
+        _loadedFor = null;
+        _selectedPack = 0;
+        return OnClose.InvokeAsync();
+    }
+
+    private async Task PayAsync()
+    {
+        if (Info is null || ConfirmDisabled)
+        {
+            return;
+        }
+
+        _busy = true;
+        _error = null;
+        try
+        {
+            var result = await Api.CreateTokenCheckoutAsync(
+                Info.CompanyId,
+                _selectedPack,
+                new PendingActionCheckoutRequest
+                {
+                    VacancyId = Info.VacancyId,
+                    Action = Info.Action,
+                    Highlight = Info.Highlight,
+                    PushBom = Info.PushBom,
+                    Extend = Info.Extend,
+                    RequiredTokens = Info.RequiredTokens
+                });
+
+            if (result is null || string.IsNullOrWhiteSpace(result.CheckoutUrl))
+            {
+                _error = "Checkout starten mislukt.";
+                return;
+            }
+
+            Navigation.NavigateTo(result.CheckoutUrl, forceLoad: true);
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+}

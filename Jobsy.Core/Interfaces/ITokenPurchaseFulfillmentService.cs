@@ -26,4 +26,5 @@ public sealed record TokenPurchaseFulfillmentResult(
     Guid TokenTransactionId,
     Guid InvoiceId,
     string InvoiceNumber,
-    bool AlreadyFulfilled);
+    bool AlreadyFulfilled,
+    PendingTokenActionExecutionResult? PendingAction = null);

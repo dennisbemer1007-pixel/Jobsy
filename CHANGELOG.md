@@ -5,6 +5,7 @@ Alle noemenswaardige wijzigingen aan dit project worden in dit bestand bijgehoud
 ## [Unreleased]
 
 ### Added
+- Prepaid token checkout (“no tokens, no action”): bij onvoldoende saldo blokkeert publish/highlight/PushBom/extend met in-context Mollie-top-up (exact match + bulkapakketten); na webhook/return worden tokens bijgeschreven en de pending actie automatisch uitgevoerd (`PendingTokenAction`).
 - Salesmanager multi-level referral (één laag): Admin maakt tier-0 aan; tier-0 dient aanbevelingen in; Admin keurt goed vóór provisioning; tier-1 kan niet verder werven.
 - Configureerbare commissies (defaults 15% direct / 3% indirect, max. 1 jaar per ondernemer) op `/admin/sales`; ledger + `RevenueShareLogs` voor indirecte bonus.
 - Bedrijfsregistratie: gekozen wachtwoord bij submit, e-mailverificatie, daarna dual login (e-mail/wachtwoord of Microsoft Entra met hetzelfde adres).

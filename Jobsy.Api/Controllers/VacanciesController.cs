@@ -544,11 +544,23 @@ public class VacanciesController : ControllerBase
         }
 
         var actor = await _users.FindByPrincipalAsync(User, cancellationToken);
+        var canPurchase = await CanPurchaseTokensForCompanyAsync(vacancy.CompanyId, cancellationToken);
         var result = await _products.PublishAsync(
             vacancy,
             new VacancyPublishOptions(request.Highlight, request.PushBom, request.Extend),
             actor?.Id,
-            cancellationToken);
+            cancellationToken,
+            allowPendingApproval: !canPurchase);
+
+        if (result.InsufficientTokens)
+        {
+            return PaymentRequired(ToInsufficientTokensDto(
+                result,
+                "Publish",
+                request.Highlight,
+                request.PushBom,
+                request.Extend));
+        }
 
         if (!result.Succeeded)
         {
@@ -578,6 +590,16 @@ public class VacanciesController : ControllerBase
 
         var actor = await _users.FindByPrincipalAsync(User, cancellationToken);
         var result = await _products.ApprovePublishAsync(vacancy, actor?.Id, cancellationToken);
+        if (result.InsufficientTokens)
+        {
+            return PaymentRequired(ToInsufficientTokensDto(
+                result,
+                "Publish",
+                vacancy.RequestedHighlight,
+                vacancy.RequestedPushBom,
+                vacancy.RequestedExtend));
+        }
+
         if (!result.Succeeded)
         {
             return BadRequest(new { message = result.ErrorMessage });
@@ -592,7 +614,11 @@ public class VacanciesController : ControllerBase
         Guid id,
         CancellationToken cancellationToken)
     {
-        return await RunProductAsync(id, (v, actorId, ct) => _products.HighlightAsync(v, actorId, ct), cancellationToken);
+        return await RunProductAsync(
+            id,
+            (v, actorId, ct) => _products.HighlightAsync(v, actorId, ct),
+            cancellationToken,
+            actionName: "Highlight");
     }
 
     [HttpGet("{id:guid}/pushbom/preview")]
@@ -634,7 +660,11 @@ public class VacanciesController : ControllerBase
         Guid id,
         CancellationToken cancellationToken)
     {
-        return await RunProductAsync(id, (v, actorId, ct) => _products.PushBomAsync(v, actorId, ct), cancellationToken);
+        return await RunProductAsync(
+            id,
+            (v, actorId, ct) => _products.PushBomAsync(v, actorId, ct),
+            cancellationToken,
+            actionName: "PushBom");
     }
 
     [HttpPost("{id:guid}/extend")]
@@ -643,7 +673,11 @@ public class VacanciesController : ControllerBase
         Guid id,
         CancellationToken cancellationToken)
     {
-        return await RunProductAsync(id, (v, actorId, ct) => _products.ExtendAsync(v, actorId, ct), cancellationToken);
+        return await RunProductAsync(
+            id,
+            (v, actorId, ct) => _products.ExtendAsync(v, actorId, ct),
+            cancellationToken,
+            actionName: "Extend");
     }
 
     [HttpPost("{id:guid}/inactive")]
@@ -765,7 +799,8 @@ public class VacanciesController : ControllerBase
     private async Task<ActionResult<VacancyProductActionResultDto>> RunProductAsync(
         Guid vacancyId,
         Func<Core.Entities.Vacancy, Guid?, CancellationToken, Task<VacancyProductOutcome>> action,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        string actionName = "Action")
     {
         var vacancy = await LoadManagedVacancyAsync(vacancyId, cancellationToken);
         if (vacancy is null)
@@ -781,12 +816,69 @@ public class VacanciesController : ControllerBase
 
         var actor = await _users.FindByPrincipalAsync(User, cancellationToken);
         var result = await action(vacancy, actor?.Id, cancellationToken);
+        if (result.InsufficientTokens)
+        {
+            return PaymentRequired(ToInsufficientTokensDto(result, actionName));
+        }
+
         if (!result.Succeeded)
         {
             return BadRequest(new { message = result.ErrorMessage });
         }
 
         return Ok(ToProductResult(result));
+    }
+
+    private ObjectResult PaymentRequired(InsufficientTokensDto body)
+        => StatusCode(StatusCodes.Status402PaymentRequired, body);
+
+    private static InsufficientTokensDto ToInsufficientTokensDto(
+        VacancyProductOutcome result,
+        string action,
+        bool highlight = false,
+        bool pushBom = false,
+        bool extend = false)
+    {
+        var required = result.RequiredTokens;
+        var balance = result.Balance;
+        var deficit = Math.Max(0m, required - balance);
+        return new InsufficientTokensDto(
+            "InsufficientTokens",
+            result.ErrorMessage ?? "Je tokens zijn op. Koop tokens om door te gaan.",
+            result.SpendCompanyId ?? result.Vacancy.CompanyId,
+            result.Vacancy.Id,
+            action,
+            required,
+            balance,
+            deficit,
+            highlight,
+            pushBom,
+            extend);
+    }
+
+    /// <summary>
+    /// Prepaid checkout is offered when the caller may buy tokens for this company.
+    /// Branch managers with enterprise-managed tokens keep the PendingApproval path instead.
+    /// </summary>
+    private async Task<bool> CanPurchaseTokensForCompanyAsync(Guid companyId, CancellationToken cancellationToken)
+    {
+        if (_companyAuth.IsAdmin(User)
+            || User.IsInRole(JobsyRoles.EnterpriseManager)
+            || User.IsInRole(JobsyRoles.Intermediary))
+        {
+            return true;
+        }
+
+        if (!User.IsInRole(JobsyRoles.BranchManager))
+        {
+            return false;
+        }
+
+        var managedByEnterprise = await _db.Companies.AsNoTracking()
+            .Where(c => c.Id == companyId)
+            .Select(c => c.TokensManagedByEnterprise)
+            .FirstOrDefaultAsync(cancellationToken);
+        return !managedByEnterprise;
     }
 
     private async Task<Core.Entities.Vacancy?> LoadManagedVacancyAsync(Guid id, CancellationToken cancellationToken)

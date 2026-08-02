@@ -103,6 +103,7 @@ public static class DependencyInjection
         services.AddScoped<ITokenLedgerService, TokenLedgerService>();
         services.AddScoped<ITokenPurchaseInvoiceService, TokenPurchaseInvoiceService>();
         services.AddScoped<IVatBufferTransferService, VatBufferTransferService>();
+        services.AddScoped<IPendingTokenActionService, PendingTokenActionService>();
         services.AddScoped<ITokenPurchaseFulfillmentService, TokenPurchaseFulfillmentService>();
         services.AddScoped<ITokenFinanceQueryService, TokenFinanceQueryService>();
         services.AddScoped<IVatDeclarationService, VatDeclarationService>();

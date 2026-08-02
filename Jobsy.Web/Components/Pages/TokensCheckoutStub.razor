@@ -4,12 +4,13 @@
 @inject JobsyApiClient Api
 @inject NavigationManager Navigation
 @inject CultureState Culture
+@inject TokenBalanceCache TokenBalances
 
 <PageTitle>Checkout stub · Lobsy</PageTitle>
 
 <div class="panel-page">
     <h1>Mollie checkout (stub)</h1>
-    <p class="login-lead">Simuleer een geslaagde betaling. Tokens worden bijgeschreven op basis van de server-side checkout-sessie.</p>
+    <p class="login-lead">Simuleer een geslaagde betaling. Tokens worden bijgeschreven en een gekoppelde actie wordt direct uitgevoerd.</p>
 
     @if (_loading)
     {
@@ -42,6 +43,7 @@
     private bool _loading = true;
     private bool _busy;
     private string _paymentId = "";
+    private Guid? _checkoutId;
     private string? _message;
 
     protected override void OnInitialized()
@@ -49,12 +51,17 @@
         var uri = Navigation.ToAbsoluteUri(Navigation.Uri);
         var query = Microsoft.AspNetCore.WebUtilities.QueryHelpers.ParseQuery(uri.Query);
         _paymentId = query.TryGetValue("paymentId", out var pid) ? pid.ToString() : "";
+        if (query.TryGetValue("checkoutId", out var cid) && Guid.TryParse(cid.ToString(), out var checkoutId))
+        {
+            _checkoutId = checkoutId;
+        }
+
         _loading = false;
     }
 
     private async Task CompleteAsync()
     {
-        if (string.IsNullOrWhiteSpace(_paymentId))
+        if (string.IsNullOrWhiteSpace(_paymentId) && _checkoutId is null)
         {
             _message = "Ongeldige checkout-parameters.";
             return;
@@ -63,7 +70,31 @@
         _busy = true;
         try
         {
-            await Api.CompleteTokenCheckoutAsync(_paymentId);
+            CompleteCheckoutResult? result = null;
+            if (_checkoutId is Guid checkoutId)
+            {
+                result = await Api.CompleteTokenCheckoutBySessionAsync(checkoutId);
+            }
+            else
+            {
+                result = await Api.CompleteTokenCheckoutAsync(_paymentId);
+            }
+
+            TokenBalances.Invalidate();
+
+            if (result?.PendingAction is { Succeeded: true })
+            {
+                Navigation.NavigateTo($"/employer/vacancies?paidAction={Uri.EscapeDataString(result.PendingAction.Action)}");
+                return;
+            }
+
+            if (result?.PendingAction is { Succeeded: false })
+            {
+                Navigation.NavigateTo(
+                    $"/employer/vacancies?paidActionError={Uri.EscapeDataString(result.PendingAction.Message ?? "Actie mislukt")}");
+                return;
+            }
+
             Navigation.NavigateTo("/employer/tokens");
         }
         catch (Exception ex)
