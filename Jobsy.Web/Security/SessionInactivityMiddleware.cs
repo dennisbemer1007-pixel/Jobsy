@@ -40,8 +40,10 @@ public sealed class SessionInactivityMiddleware
         var now = DateTimeOffset.UtcNow;
         var lastActivity = ReadLastActivity(context);
 
-        if (lastActivity is DateTimeOffset last
-            && now - last > TimeSpan.FromMinutes(timeoutMinutes))
+        // Missing activity cookie on an authenticated request is treated as expired so clients
+        // cannot reset the idle clock by deleting Jobsy.LastActivity.
+        if (lastActivity is null
+            || now - lastActivity.Value > TimeSpan.FromMinutes(timeoutMinutes))
         {
             await ExpireSessionAsync(context);
             return;

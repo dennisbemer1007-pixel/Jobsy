@@ -109,6 +109,30 @@ public class SessionSecurityTests
     }
 
     [Fact]
+    public async Task Middleware_expires_when_last_activity_cookie_missing()
+    {
+        var timeout = new FixedTimeoutProvider(30);
+        var http = new DefaultHttpContext();
+        http.User = new ClaimsPrincipal(new ClaimsIdentity(
+            [new Claim(ClaimTypes.Name, "admin@jobsy.local")],
+            CookieAuthenticationDefaults.AuthenticationScheme));
+        http.Request.Path = "/admin/settings";
+        http.Response.Body = new MemoryStream();
+
+        var authService = new FakeAuthService();
+        http.RequestServices = new ServiceCollection()
+            .AddSingleton<IAuthenticationService>(authService)
+            .BuildServiceProvider();
+
+        var middleware = new SessionInactivityMiddleware(_ => Task.CompletedTask);
+        await middleware.InvokeAsync(http, timeout);
+
+        Assert.True(authService.SignedOut);
+        Assert.Equal(StatusCodes.Status302Found, http.Response.StatusCode);
+        Assert.Contains("session-expired", http.Response.Headers.Location.ToString());
+    }
+
+    [Fact]
     public async Task Middleware_refreshes_last_activity_when_within_timeout()
     {
         var timeout = new FixedTimeoutProvider(30);
