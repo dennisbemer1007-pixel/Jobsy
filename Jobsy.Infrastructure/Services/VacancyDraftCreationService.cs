@@ -59,13 +59,11 @@ public sealed class VacancyDraftCreationService : IVacancyDraftCreationService
             return VacancyDraftCreateResult.Fail("Bedrijf/vestiging niet gevonden.");
         }
 
-        if (input.RequireEndClientKvk)
+        var requireKvk = input.RequireEndClientKvk || input.IntermediaryCompanyId is not null;
+        var kvkError = IntermediaryVacancyRules.ValidateEndClientKvk(company, requireKvk);
+        if (kvkError is not null)
         {
-            var kvkError = IntermediaryVacancyRules.ValidateEndClientKvk(company, callerIsIntermediary: true);
-            if (kvkError is not null)
-            {
-                return VacancyDraftCreateResult.Fail(kvkError);
-            }
+            return VacancyDraftCreateResult.Fail(kvkError);
         }
 
         if (input.IntermediaryCompanyId is Guid intermediaryCompanyId)

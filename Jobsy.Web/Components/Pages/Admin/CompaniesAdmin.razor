@@ -49,6 +49,7 @@
                         <th>Totaal vacatures</th>
                         <th>Sollicitaties</th>
                         <th>Tokens</th>
+                        <th>Salesmanager</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -70,6 +71,16 @@
                                     <a href="/admin/finance?tab=tokenlog">@c.TokenBalance.ToString("0.##")</a>
                                     <button class="btn-compact" type="button" @onclick="() => OpenGrant(c)">+ Tokens</button>
                                 </div>
+                            </td>
+                            <td>
+                                @if (!string.IsNullOrWhiteSpace(c.SalesManagerName))
+                                {
+                                    <a href="/admin/sales-managers">@c.SalesManagerName</a>
+                                }
+                                else
+                                {
+                                    <span class="muted">—</span>
+                                }
                             </td>
                         </tr>
                     }

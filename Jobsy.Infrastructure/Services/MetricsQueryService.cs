@@ -208,6 +208,23 @@ public sealed class MetricsQueryService : IMetricsQueryService
                 reengagementSent == 0
                     ? 0
                     : Math.Round(100m * reengagementReactivated / reengagementSent, 1)));
+
+            var avgLeadTimeDays = await AverageVacancyLeadTimeDaysAsync(from, to, cancellationToken);
+            // Insert as a primary admin meter near vacancy KPIs.
+            var activeIdx = metrics.FindIndex(m => m.Key == "active_vacancies");
+            var leadMetric = new MetricCountDto(
+                "avg_vacancy_lead_time_days",
+                "Gem. doorlooptijd vacatures (dagen)",
+                periodKey,
+                avgLeadTimeDays);
+            if (activeIdx >= 0)
+            {
+                metrics.Insert(activeIdx + 1, leadMetric);
+            }
+            else
+            {
+                metrics.Add(leadMetric);
+            }
         }
 
         if (!includePlatformOnly)
@@ -383,8 +400,83 @@ public sealed class MetricsQueryService : IMetricsQueryService
             "unpublished_vacancies" => await UnpublishedVacanciesDrilldownAsync(cancellationToken),
             "reengagement_emails_sent" => await ReengagementSentDrilldownAsync(cancellationToken),
             "reengagement_reactivated" => await ReengagementReactivatedDrilldownAsync(cancellationToken),
+            "avg_vacancy_lead_time_days" => await VacancyLeadTimeDrilldownAsync(from, to, cancellationToken),
             _ => Array.Empty<MetricDrilldownItemDto>()
         };
+    }
+
+    /// <summary>
+    /// AVG(ClosedAt − CreatedAt) in days for vacancies closed/fulfilled in the period.
+    /// Uses ClosedAtUtc when set; falls back to EndDate for legacy archived rows.
+    /// </summary>
+    private async Task<decimal> AverageVacancyLeadTimeDaysAsync(
+        DateTime from,
+        DateTime to,
+        CancellationToken cancellationToken)
+    {
+        var rows = await _db.Vacancies.AsNoTracking()
+            .Where(v => v.Status == VacancyStatus.Archived || v.Status == VacancyStatus.Fulfilled)
+            .Where(v => v.ClosedAtUtc != null
+                        ? v.ClosedAtUtc >= from && v.ClosedAtUtc <= to
+                        : v.EndDate >= DateOnly.FromDateTime(from) && v.EndDate <= DateOnly.FromDateTime(to))
+            .Select(v => new { v.CreatedAtUtc, v.ClosedAtUtc, v.EndDate })
+            .ToListAsync(cancellationToken);
+
+        if (rows.Count == 0)
+        {
+            return 0m;
+        }
+
+        var totalDays = rows.Sum(r =>
+        {
+            var closed = r.ClosedAtUtc ?? r.EndDate.ToDateTime(TimeOnly.MinValue, DateTimeKind.Utc);
+            var start = r.CreatedAtUtc.Kind == DateTimeKind.Unspecified
+                ? DateTime.SpecifyKind(r.CreatedAtUtc, DateTimeKind.Utc)
+                : r.CreatedAtUtc.ToUniversalTime();
+            return Math.Max(0, (closed.ToUniversalTime() - start).TotalDays);
+        });
+
+        return Math.Round((decimal)(totalDays / rows.Count), 1);
+    }
+
+    private async Task<IReadOnlyList<MetricDrilldownItemDto>> VacancyLeadTimeDrilldownAsync(
+        DateTime from,
+        DateTime to,
+        CancellationToken cancellationToken)
+    {
+        var rows = await _db.Vacancies.AsNoTracking()
+            .Where(v => v.Status == VacancyStatus.Archived || v.Status == VacancyStatus.Fulfilled)
+            .Where(v => v.ClosedAtUtc != null
+                        ? v.ClosedAtUtc >= from && v.ClosedAtUtc <= to
+                        : v.EndDate >= DateOnly.FromDateTime(from) && v.EndDate <= DateOnly.FromDateTime(to))
+            .OrderByDescending(v => v.ClosedAtUtc ?? v.CreatedAtUtc)
+            .Select(v => new
+            {
+                v.Id,
+                v.Title,
+                CompanyName = v.Company.Name,
+                v.CreatedAtUtc,
+                v.ClosedAtUtc,
+                v.EndDate,
+                Status = v.Status.ToString()
+            })
+            .Take(100)
+            .ToListAsync(cancellationToken);
+
+        return rows.Select(v =>
+        {
+            var closed = v.ClosedAtUtc ?? v.EndDate.ToDateTime(TimeOnly.MinValue, DateTimeKind.Utc);
+            var start = v.CreatedAtUtc.Kind == DateTimeKind.Unspecified
+                ? DateTime.SpecifyKind(v.CreatedAtUtc, DateTimeKind.Utc)
+                : v.CreatedAtUtc.ToUniversalTime();
+            var days = Math.Round(Math.Max(0, (closed.ToUniversalTime() - start).TotalDays), 1);
+            return new MetricDrilldownItemDto(
+                v.Id,
+                v.Title,
+                $"{v.CompanyName} · {v.Status} · {days:0.#} dagen",
+                closed.ToUniversalTime(),
+                (decimal)days);
+        }).ToList();
     }
 
     private async Task<int> CountReengagementReactivatedAsync(CancellationToken ct)

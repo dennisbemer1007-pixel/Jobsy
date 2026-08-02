@@ -99,6 +99,11 @@
             return metric.Value.ToString("0.#") + " min";
         }
 
+        if (string.Equals(metric.Key, "avg_vacancy_lead_time_days", StringComparison.OrdinalIgnoreCase))
+        {
+            return metric.Value.ToString("0.#") + " d";
+        }
+
         return metric.Key.StartsWith("tokens_", StringComparison.OrdinalIgnoreCase)
             ? metric.Value.ToString("0.##")
             : metric.Value.ToString("0");
@@ -190,7 +195,7 @@
         "active_vacancies" or "active_vacancies_employers" or "active_vacancies_intermediaries"
             or "active_boosts" or "applications" or "applications_pending" or "conversion_rate"
             or "impressions" or "clicks" or "shares" or "likes" or "unpublished_vacancies"
-            or "avg_travel_minutes" or "top_transport_share" => "/admin/vacancies",
+            or "avg_travel_minutes" or "top_transport_share" or "avg_vacancy_lead_time_days" => "/admin/vacancies",
         "site_visits" or "site_visits_unique" => "/admin/vacancies",
         _ => "/admin/vacancies"
     };

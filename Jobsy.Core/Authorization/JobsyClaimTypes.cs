@@ -10,4 +10,7 @@ public static class JobsyClaimTypes
 
     /// <summary>Set when the user has personal candidate applications (e.g. after promotion to manager).</summary>
     public const string HasCandidateApplications = "has_candidate_applications";
+
+    /// <summary>Set when the user's primary company was referred via a salesmanager tracking code.</summary>
+    public const string HasSalesReferral = "has_sales_referral";
 }

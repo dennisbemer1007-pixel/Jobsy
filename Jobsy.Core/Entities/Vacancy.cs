@@ -23,8 +23,8 @@ public class Vacancy
     public Company? IntermediaryCompany { get; set; }
 
     /// <summary>
-    /// When false (default): banenkaart shows intermediary name + address.
-    /// When true: banenkaart shows end-client name + address.
+    /// When false (default / afgeschermd): banenkaart shows intermediary name + address.
+    /// When true (open kaart): banenkaart shows end-client name + address.
     /// </summary>
     public bool ShowClientAddressOnMap { get; set; }
 
@@ -39,6 +39,11 @@ public class Vacancy
     /// only those drafts are eligible for automatic cleanup.
     /// </summary>
     public DateTime? PublishedAtUtc { get; set; }
+
+    /// <summary>
+    /// When the vacancy was closed (Archived) or fulfilled. Used for doorlooptijd KPI.
+    /// </summary>
+    public DateTime? ClosedAtUtc { get; set; }
 
     /// <summary>When the 30-day draft cleanup warning e-mail was sent (once).</summary>
     public DateTime? DraftCleanupWarningSentAtUtc { get; set; }

@@ -372,6 +372,8 @@ public class AdminCompanyItem
     public int TotalVacancyCount { get; set; }
     public int ApplicationCount { get; set; }
     public decimal TokenBalance { get; set; }
+    public Guid? SalesManagerUserId { get; set; }
+    public string? SalesManagerName { get; set; }
 }
 
 public class AdminUserItem

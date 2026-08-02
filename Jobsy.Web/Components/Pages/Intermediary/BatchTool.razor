@@ -56,7 +56,7 @@
         </fieldset>
 
         <label class="vacancy-toggle-row">
-            <input type="checkbox" @bind="_replaceWithIntermediaryIdentity" />
+            <input type="checkbox" @bind="_hideClientAddressOnMap" />
             <span>
                 <strong>Vervang bedrijfsnaam en adres door die van het intermediair</strong>
                 <span class="muted">Op de banenkaart; opdrachtgever blijft bekend voor admin/SROI</span>
@@ -82,7 +82,7 @@
     private List<string> _branchOptions = WorkTypeLabels.All.ToList();
     private bool _saving;
     private string? _message;
-    private bool _replaceWithIntermediaryIdentity = true;
+    private bool _hideClientAddressOnMap = true;
 
     protected override async Task OnInitializedAsync()
     {
@@ -167,7 +167,7 @@
                 TransportMode.Bike | TransportMode.PublicTransport,
                 branchLabels,
                 _selected.ToArray(),
-                ShowClientAddressOnMap: !_replaceWithIntermediaryIdentity));
+                ShowClientAddressOnMap: !_hideClientAddressOnMap));
             _message = $"{created.Count} concept-vacatures aangemaakt.";
         }
         catch (VacancyModerationException ex)

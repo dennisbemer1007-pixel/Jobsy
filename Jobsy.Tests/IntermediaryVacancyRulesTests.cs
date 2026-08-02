@@ -27,7 +27,7 @@ public class IntermediaryVacancyRulesTests
     }
 
     [Fact]
-    public void ResolvePublicDisplay_uses_intermediary_when_client_address_hidden()
+    public void ResolvePublicDisplay_masks_end_client_by_default()
     {
         var client = new Company
         {
@@ -61,7 +61,7 @@ public class IntermediaryVacancyRulesTests
         Assert.Equal("Uitzendbureau", display.DisplayName);
         Assert.Equal("Bureauweg 9", display.DisplayAddress);
         Assert.Equal(52.0, display.Latitude);
-        Assert.Contains("Uitzendbureau", display.OfferedByLabel);
+        Assert.Equal("Aangeboden door Uitzendbureau", display.OfferedByLabel);
     }
 
     [Fact]
@@ -88,6 +88,7 @@ public class IntermediaryVacancyRulesTests
             CompanyId = client.Id,
             Company = client,
             IntermediaryCompanyId = intermediary.Id,
+            IntermediaryCompany = intermediary,
             ShowClientAddressOnMap = true,
             Location = client.Location,
             Title = "t",
@@ -98,5 +99,6 @@ public class IntermediaryVacancyRulesTests
         Assert.Equal("Opdrachtgever BV", display.DisplayName);
         Assert.Equal("Klantstraat 1", display.DisplayAddress);
         Assert.Equal(52.1, display.Latitude);
+        Assert.Equal("Aangeboden door Uitzendbureau", display.OfferedByLabel);
     }
 }

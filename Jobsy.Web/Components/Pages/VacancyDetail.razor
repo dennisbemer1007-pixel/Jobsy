@@ -77,7 +77,7 @@
             <div class="detail-card__top">
                 <div>
                     <h1>@_vacancy.Title</h1>
-                    <p class="company">@_vacancy.CompanyName</p>
+                    <p class="company">@(string.IsNullOrWhiteSpace(_vacancy.OfferedByLabel) ? _vacancy.CompanyName : _vacancy.OfferedByLabel)</p>
                     <p class="address">@_vacancy.CompanyAddress</p>
                     @if (!string.IsNullOrWhiteSpace(_vacancy.OfferedByLabel))
                     {
@@ -875,6 +875,7 @@
                 ["lng"] = lng,
                 ["title"] = _vacancy.Title,
                 ["company"] = _vacancy.CompanyName,
+                ["offeredBy"] = _vacancy.OfferedByLabel,
                 ["address"] = _vacancy.CompanyAddress
             });
             _mapReady = true;

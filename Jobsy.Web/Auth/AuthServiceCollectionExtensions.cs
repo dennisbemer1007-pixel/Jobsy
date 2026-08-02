@@ -546,6 +546,11 @@ public static class AuthServiceCollectionExtensions
             identity.RemoveClaim(existing);
         }
 
+        foreach (var existing in identity.FindAll(JobsyClaimTypes.HasSalesReferral).ToList())
+        {
+            identity.RemoveClaim(existing);
+        }
+
         foreach (var existing in identity.FindAll("show_candidate_how_to").ToList())
         {
             identity.RemoveClaim(existing);
@@ -566,6 +571,11 @@ public static class AuthServiceCollectionExtensions
         if (profile.HasCandidateApplications)
         {
             identity.AddClaim(new Claim(JobsyClaimTypes.HasCandidateApplications, "1"));
+        }
+
+        if (profile.HasSalesReferral)
+        {
+            identity.AddClaim(new Claim(JobsyClaimTypes.HasSalesReferral, "1"));
         }
 
         if (profile.ShowCandidateHowTo)
@@ -616,6 +626,7 @@ public static class AuthServiceCollectionExtensions
         public List<Guid>? CompanyIds { get; set; }
         public bool ShowCandidateHowTo { get; set; }
         public bool HasCandidateApplications { get; set; }
+        public bool HasSalesReferral { get; set; }
         public bool IsNewUser { get; set; }
     }
 

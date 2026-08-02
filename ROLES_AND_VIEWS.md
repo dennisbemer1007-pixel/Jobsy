@@ -93,14 +93,29 @@ Onvoldoende tokens bij publiceren → `PendingApproval` (EM/Admin keurt goed).
 ## 5. Intermediary
 *Doel: batch-hiring voor externe opdrachtgevers.*
 
-**BottomNav:** Home · Banenkaart · Opdrachtgevers · Batch-tool · Tokens
+**BottomNav:** Home · Banenkaart · Vacatures · Opdrachtgevers · Team · Batch-tool · Tokens
 
 | Route | Inhoud |
 |-------|--------|
 | `/home` | KPI-dashboard (zelfde metric-tiles als employers) |
 | `/intermediary` | Overzicht gekoppelde bedrijven |
-| `/intermediary/batch` | Multi-locatie publicatie |
+| `/intermediary/team` | Collega’s uitnodigen (zelfde organisatie) |
+| `/intermediary/batch` | Multi-locatie publicatie (KVK-eindklant + adresweergave) |
+| `/branch/vacancies/new` | Vacature met verplichte KVK-vestiging + open/afgeschermde kaart |
 | `/employer/tokens` | Token-saldo |
+
+## 5b. SalesManager
+*Doel: acquisitie via trackingcodes + commissie / revenue-share.*
+
+**BottomNav:** Home · Onboarding · Facturen
+
+| Route | Inhoud |
+|-------|--------|
+| `/home` / `/salesmanager` | Dashboard, trackingcode, commissiesaldo |
+| `/salesmanager/onboarding` | Bedrijfsgegevens + overeenkomst → trackingcode |
+| `/salesmanager/invoices` | Self-billing / uitbetaling |
+
+Gekoppelde ondernemers (via trackingcode) krijgen nav **“Mijn Saldo & Tracking”** → `/employer/tokens` of `/branch/tokens`.
 
 ---
 

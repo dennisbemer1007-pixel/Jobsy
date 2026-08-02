@@ -3,6 +3,7 @@ using System;
 using Jobsy.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using NetTopologySuite.Geometries;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
@@ -12,9 +13,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Jobsy.Infrastructure.Data.Migrations
 {
     [DbContext(typeof(JobsyDbContext))]
-    partial class JobsyDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260801082738_IntermediarySalesRevenueShareKpis")]
+    partial class IntermediarySalesRevenueShareKpis
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -376,9 +379,6 @@ namespace Jobsy.Infrastructure.Data.Migrations
 
                     b.Property<Guid?>("ParentCompanyId")
                         .HasColumnType("uuid");
-
-                    b.Property<bool>("PendingStartHighlightBonus")
-                        .HasColumnType("boolean");
 
                     b.Property<DateTime?>("ReengagementEmailSentAtUtc")
                         .HasColumnType("timestamp with time zone");
@@ -1115,39 +1115,6 @@ namespace Jobsy.Infrastructure.Data.Migrations
                     b.ToTable("RevenueShareLogs", (string)null);
                 });
 
-            modelBuilder.Entity("Jobsy.Core.Entities.SalesCommercialSettings", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<decimal>("BaseTokenValueEuro")
-                        .HasPrecision(10, 2)
-                        .HasColumnType("numeric(10,2)");
-
-                    b.Property<int>("HighlightCarouselDays")
-                        .HasColumnType("integer");
-
-                    b.Property<decimal>("HighlightCarouselTokens")
-                        .HasPrecision(10, 2)
-                        .HasColumnType("numeric(10,2)");
-
-                    b.Property<decimal>("HighlightPulseTokens")
-                        .HasPrecision(10, 2)
-                        .HasColumnType("numeric(10,2)");
-
-                    b.Property<decimal>("StartHighlightBonusTokens")
-                        .HasPrecision(10, 2)
-                        .HasColumnType("numeric(10,2)");
-
-                    b.Property<DateTime>("UpdatedAtUtc")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("SalesCommercialSettings");
-                });
-
             modelBuilder.Entity("Jobsy.Core.Entities.SalesManagerPayoutCheckout", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1272,52 +1239,6 @@ namespace Jobsy.Infrastructure.Data.Migrations
                         .IsUnique();
 
                     b.ToTable("SalesManagerProfiles");
-                });
-
-            modelBuilder.Entity("Jobsy.Core.Entities.SalesPackage", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<int>("Category")
-                        .HasColumnType("integer");
-
-                    b.Property<string>("Code")
-                        .HasMaxLength(32)
-                        .HasColumnType("character varying(32)");
-
-                    b.Property<string>("Description")
-                        .HasMaxLength(1024)
-                        .HasColumnType("character varying(1024)");
-
-                    b.Property<bool>("IsActive")
-                        .HasColumnType("boolean");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(128)
-                        .HasColumnType("character varying(128)");
-
-                    b.Property<decimal>("PriceEuro")
-                        .HasPrecision(10, 2)
-                        .HasColumnType("numeric(10,2)");
-
-                    b.Property<int>("SortOrder")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("TokenAmount")
-                        .HasColumnType("integer");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("Code")
-                        .IsUnique()
-                        .HasFilter("\"Code\" IS NOT NULL");
-
-                    b.HasIndex("Category", "SortOrder");
-
-                    b.ToTable("SalesPackages");
                 });
 
             modelBuilder.Entity("Jobsy.Core.Entities.SelfBillingInvoice", b =>
@@ -1929,9 +1850,6 @@ namespace Jobsy.Infrastructure.Data.Migrations
                     b.Property<Guid?>("FulfilledByApplicationId")
                         .HasColumnType("uuid");
 
-                    b.Property<DateTime?>("HighlightedUntil")
-                        .HasColumnType("timestamp with time zone");
-
                     b.Property<decimal>("HourlyWage")
                         .HasPrecision(8, 2)
                         .HasColumnType("numeric(8,2)");
@@ -1945,9 +1863,6 @@ namespace Jobsy.Infrastructure.Data.Migrations
 
                     b.Property<bool>("IsHighlighted")
                         .HasColumnType("boolean");
-
-                    b.Property<int>("Kind")
-                        .HasColumnType("integer");
 
                     b.Property<bool?>("LegalAdultSupervisorPresent")
                         .HasColumnType("boolean");
@@ -2054,12 +1969,8 @@ namespace Jobsy.Infrastructure.Data.Migrations
 
                     b.HasIndex("CompanyId", "Status");
 
-                    b.HasIndex("IsHighlighted", "HighlightedUntil");
-
                     b.HasIndex("MinHoursPerWeek", "MaxHoursPerWeek")
                         .HasDatabaseName("IX_Vacancies_HoursPerWeek");
-
-                    b.HasIndex("Status", "Kind");
 
                     b.HasIndex("Status", "EndDate", "StartDate");
 
@@ -2182,30 +2093,6 @@ namespace Jobsy.Infrastructure.Data.Migrations
                     b.HasIndex("VacancyId");
 
                     b.ToTable("VacancyShares");
-                });
-
-            modelBuilder.Entity("Jobsy.Core.Entities.VacancyTypeTokenCost", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<decimal>("CostTokens")
-                        .HasPrecision(10, 2)
-                        .HasColumnType("numeric(10,2)");
-
-                    b.Property<bool>("IsActive")
-                        .HasColumnType("boolean");
-
-                    b.Property<int>("Kind")
-                        .HasColumnType("integer");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("Kind")
-                        .IsUnique();
-
-                    b.ToTable("VacancyTypeTokenCosts");
                 });
 
             modelBuilder.Entity("Jobsy.Core.Entities.VatBufferTransfer", b =>

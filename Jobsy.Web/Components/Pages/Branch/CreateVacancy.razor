@@ -4,6 +4,7 @@
 @inject JobsyApiClient Api
 @inject NavigationManager Navigation
 @inject IJSRuntime Js
+@inject AuthenticationStateProvider AuthState
 @inject CultureState Culture
 @implements IDisposable
 @using Jobsy.Core.Enums
@@ -44,8 +45,7 @@
                                    @bind:event="oninput"
                                    maxlength="20"
                                    inputmode="numeric"
-                                   placeholder="12345678"
-                                   required />
+                                   placeholder="12345678" />
                         </label>
                         <button type="button"
                                 class="provider-btn"
@@ -58,11 +58,23 @@
                     {
                         <label>
                             Vestiging
-                            <select @bind="_selectedEstablishmentId" @bind:after="OnClientEstablishmentChangedAsync" required>
+                            <select @bind="_selectedEstablishmentId" @bind:after="OnClientEstablishmentChangedAsync">
                                 <option value="">— Kies vestiging —</option>
                                 @foreach (var e in _clientEstablishments)
                                 {
                                     <option value="@e.KvkEstablishmentId">@e.Name · @e.Address</option>
+                                }
+                            </select>
+                        </label>
+                    }
+                    @if (_companies.Count > 0)
+                    {
+                        <label>
+                            Bekende opdrachtgever
+                            <select @bind="_companyId" @bind:after="LoadSalaryTablesAsync" required>
+                                @foreach (var c in _companies)
+                                {
+                                    <option value="@c.Id">@c.Name@(!string.IsNullOrWhiteSpace(c.KvkNumber) ? $" · KVK {c.KvkNumber}" : "")</option>
                                 }
                             </select>
                         </label>
@@ -79,7 +91,7 @@
                         </p>
                     }
                     <label class="vacancy-toggle-row">
-                        <input type="checkbox" @bind="_replaceWithIntermediaryIdentity" />
+                        <input type="checkbox" @bind="_hideClientAddressOnMap" />
                         <span>
                             <strong>Vervang bedrijfsnaam en adres door die van het intermediair</strong>
                             <span class="muted">Op de banenkaart en vacaturekaartjes; opdrachtgever blijft bekend voor admin/SROI</span>
@@ -91,10 +103,10 @@
             {
                 <label>
                     Vestiging
-                    <select @bind="_companyId" @bind:after="LoadSalaryTablesAsync">
+                    <select @bind="_companyId" @bind:after="LoadSalaryTablesAsync" required>
                         @foreach (var c in _companies)
                         {
-                            <option value="@c.Id">@c.Name</option>
+                            <option value="@c.Id">@c.Name@(!string.IsNullOrWhiteSpace(c.KvkNumber) ? $" · KVK {c.KvkNumber}" : "")</option>
                         }
                     </select>
                 </label>
@@ -513,7 +525,7 @@
     private string _clientKvkNumber = "";
     private string _selectedEstablishmentId = "";
     private bool _kvkBusy;
-    private bool _replaceWithIntermediaryIdentity = true;
+    private bool _hideClientAddressOnMap = true;
     private HashSet<string> _selectedWorkTypes = new(StringComparer.OrdinalIgnoreCase);
     private HashSet<string> _selectedLicenses = new(StringComparer.OrdinalIgnoreCase);
     private HashSet<string> _selectedEducationLevels = new(StringComparer.OrdinalIgnoreCase);
@@ -618,9 +630,21 @@
     protected override async Task OnInitializedAsync()
     {
         var profile = await Api.GetMyProfileAsync();
-        _isIntermediary = string.Equals(profile?.Role, nameof(UserRole.Intermediary), StringComparison.OrdinalIgnoreCase);
+        var auth = await AuthState.GetAuthenticationStateAsync();
+        _isIntermediary = string.Equals(profile?.Role, nameof(UserRole.Intermediary), StringComparison.OrdinalIgnoreCase)
+            || auth.User.IsInRole("Intermediary");
+
         _companies = (await Api.GetMyCompaniesAsync()).ToList();
-        if (!_isIntermediary && _companies.Count > 0)
+        if (_isIntermediary)
+        {
+            // End-client vestigingen only (KVK-backed employers), not the intermediary org itself.
+            _companies = _companies
+                .Where(c => !string.IsNullOrWhiteSpace(c.KvkNumber)
+                            && !string.IsNullOrWhiteSpace(c.KvkEstablishmentId))
+                .ToList();
+        }
+
+        if (_companies.Count > 0)
         {
             _companyId = _companies[0].Id;
         }
@@ -1074,12 +1098,11 @@
     private async Task SaveAsync()
     {
         if (_isIntermediary
-            && (string.IsNullOrWhiteSpace(_selectedEstablishmentId)
-                || SelectedCompany is null
+            && (SelectedCompany is null
                 || string.IsNullOrWhiteSpace(SelectedCompany.KvkNumber)
                 || string.IsNullOrWhiteSpace(SelectedCompany.KvkEstablishmentId)))
         {
-            _message = "Zoek een KVK-nummer en selecteer de vestiging van het inhuurende bedrijf.";
+            _message = "Zoek een KVK-nummer en selecteer een KVK-vestiging van het inhuurende bedrijf.";
             return;
         }
 
@@ -1184,7 +1207,7 @@
                 _legalAdultSupervisor,
                 _legalHandlesMoney,
                 _legalHeavyWork,
-                ShowClientAddressOnMap: _isIntermediary && !_replaceWithIntermediaryIdentity,
+                ShowClientAddressOnMap: _isIntermediary && !_hideClientAddressOnMap,
                 Kind: _vacancyKind));
 
             Navigation.NavigateTo("/employer/vacancies");

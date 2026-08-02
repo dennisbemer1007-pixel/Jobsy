@@ -374,7 +374,7 @@ window.jobMap = (function () {
                         specsHtml(v) +
                         "<div class=\"map-popup__footer\">" +
                             "<a class=\"map-popup__company map-popup__cta\" href=\"" + detailHref + "\" data-job-id=\"" + escapeAttr(v.id) + "\">" +
-                                escapeHtml(v.company) +
+                                escapeHtml(v.offeredBy || v.company) +
                             "</a>" +
                             (v.offeredBy
                                 ? "<p class=\"map-popup__offered-by\">" + escapeHtml(String(v.offeredBy)) + "</p>"

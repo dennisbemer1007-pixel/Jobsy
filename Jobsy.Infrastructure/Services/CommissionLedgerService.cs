@@ -138,7 +138,7 @@ public sealed class CommissionLedgerService : ICommissionLedgerService
             AmountExVat = amountEx,
             VatAmount = SalesCommissionRules.VatOn(amountEx),
             VatRate = SalesCommissionRules.VatRate,
-            Note = $"Tokencommissie {(rate.Value * 100):0}% over €{purchaseAmountEuro:0.00}",
+            Note = $"Revenue-share salesmanager {(rate.Value * 100):0}% over €{purchaseAmountEuro:0.00}",
             CompanyId = companyId,
             SourceTokenCheckoutId = tokenCheckoutId,
             CreatedAt = DateTime.UtcNow

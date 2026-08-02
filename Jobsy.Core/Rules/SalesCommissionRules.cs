@@ -1,7 +1,8 @@
 namespace Jobsy.Core.Rules;
 
 /// <summary>
-/// Pure commission rules for the salesmanager network (ex-VAT amounts).
+/// Pure commission / revenue-share rules for the salesmanager network (ex-VAT amounts).
+/// Token purchases by referred companies split: 15% ambassador, 5% salesmanager, 80% platform.
 /// </summary>
 public static class SalesCommissionRules
 {
@@ -9,8 +10,22 @@ public static class SalesCommissionRules
     public const decimal FirstYearOnboardingEuro = 2500.00m;
     public const decimal FounderBonusRate = 0.20m;
     public const int MaxFounderSlots = 10;
-    public const decimal Year1TokenCommissionRate = 0.10m;
-    public const decimal Year2TokenCommissionRate = 0.05m;
+
+    /// <summary>Ambassador (Ondernemer 1) share of token purchase value → company tegoed.</summary>
+    public const decimal AmbassadorShareRate = 0.15m;
+
+    /// <summary>Salesmanager commission on token purchase value.</summary>
+    public const decimal SalesManagerShareRate = 0.05m;
+
+    /// <summary>Platform remainder after ambassador + salesmanager shares.</summary>
+    public const decimal PlatformShareRate = 0.80m;
+
+    /// <summary>Legacy alias — fixed 5% salesmanager share (year windows removed).</summary>
+    public const decimal Year1TokenCommissionRate = SalesManagerShareRate;
+
+    /// <summary>Legacy alias — fixed 5% salesmanager share (year windows removed).</summary>
+    public const decimal Year2TokenCommissionRate = SalesManagerShareRate;
+
     public const string CurrentAgreementVersion = "2026-07-27-sm-mediation";
 
     public static decimal FounderBonusExVat =>
@@ -21,36 +36,21 @@ public static class SalesCommissionRules
 
     public static decimal InclVat(decimal amountExVat) => amountExVat + VatOn(amountExVat);
 
+    public static decimal ShareEuro(decimal purchaseAmountEuro, decimal rate) =>
+        decimal.Round(purchaseAmountEuro * rate, 2, MidpointRounding.AwayFromZero);
+
+    public static decimal AmbassadorTokens(int packSize) =>
+        decimal.Round(packSize * AmbassadorShareRate, 2, MidpointRounding.AwayFromZero);
+
     /// <summary>
-    /// Token commission rate based on supplier first-year start. Year 1 = first 12 months, year 2 = next 12 months.
-    /// After year 2: null (no commission).
+    /// Salesmanager token commission rate. Fixed 5% for referred companies (no year window).
+    /// <paramref name="firstYearStartedAt"/> retained for call-site compatibility; ignored.
     /// </summary>
     public static decimal? TokenCommissionRate(DateTime? firstYearStartedAt, DateTime asOfUtc)
     {
-        if (firstYearStartedAt is null)
-        {
-            return null;
-        }
-
-        var start = firstYearStartedAt.Value;
-        if (asOfUtc < start)
-        {
-            return null;
-        }
-
-        var year1End = start.AddYears(1);
-        if (asOfUtc < year1End)
-        {
-            return Year1TokenCommissionRate;
-        }
-
-        var year2End = start.AddYears(2);
-        if (asOfUtc < year2End)
-        {
-            return Year2TokenCommissionRate;
-        }
-
-        return null;
+        _ = asOfUtc;
+        // Only referred suppliers with a partnership start receive ongoing token commission.
+        return firstYearStartedAt is null ? null : SalesManagerShareRate;
     }
 
     public static bool IsEligibleFounderSlot(int? slot) =>

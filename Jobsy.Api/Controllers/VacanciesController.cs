@@ -341,21 +341,23 @@ public class VacanciesController : ControllerBase
             return NotFound(new { message = "Bedrijf niet gevonden." });
         }
 
-        var isIntermediary = _companyAuth.GetPrimaryRole(User) == UserRole.Intermediary;
+        var actor = await _users.FindByPrincipalAsync(User, cancellationToken);
+        var isIntermediary = actor?.Role == UserRole.Intermediary
+            || User.IsInRole(JobsyRoles.Intermediary);
+        var kvkError = IntermediaryVacancyRules.ValidateEndClientKvk(company, isIntermediary);
+        if (kvkError is not null)
+        {
+            return BadRequest(new { message = kvkError });
+        }
+
         Guid? intermediaryCompanyId = null;
         Company? intermediaryCompany = null;
         if (isIntermediary)
         {
-            var kvkError = IntermediaryVacancyRules.ValidateEndClientKvk(company, callerIsIntermediary: true);
-            if (kvkError is not null)
-            {
-                return BadRequest(new { message = kvkError });
-            }
-
-            intermediaryCompanyId = await ResolveIntermediaryOrganizationIdAsync(cancellationToken);
+            intermediaryCompanyId = await ResolveIntermediaryOrganizationIdAsync(actor, cancellationToken);
             if (intermediaryCompanyId is null)
             {
-                return BadRequest(new { message = "Intermediair-organisatie niet gevonden voor deze gebruiker." });
+                return BadRequest(new { message = "Intermediair-organisatie ontbreekt op je account." });
             }
 
             intermediaryCompany = await _db.Companies.AsNoTracking()
@@ -697,19 +699,21 @@ public class VacanciesController : ControllerBase
             return BadRequest(new { message = "Een of meer branches zijn ongeldig of niet actief." });
         }
 
-        var isIntermediary = _companyAuth.GetPrimaryRole(User) == UserRole.Intermediary;
-        Guid? intermediaryCompanyId = null;
-        Company? intermediaryCompany = null;
-        if (isIntermediary)
+        var batchActor = await _users.FindByPrincipalAsync(User, cancellationToken);
+        var batchIsIntermediary = batchActor?.Role == UserRole.Intermediary
+            || User.IsInRole(JobsyRoles.Intermediary);
+        Guid? batchIntermediaryOrgId = null;
+        Company? batchIntermediaryCompany = null;
+        if (batchIsIntermediary)
         {
-            intermediaryCompanyId = await ResolveIntermediaryOrganizationIdAsync(cancellationToken);
-            if (intermediaryCompanyId is null)
+            batchIntermediaryOrgId = await ResolveIntermediaryOrganizationIdAsync(batchActor, cancellationToken);
+            if (batchIntermediaryOrgId is null)
             {
-                return BadRequest(new { message = "Intermediair-organisatie niet gevonden voor deze gebruiker." });
+                return BadRequest(new { message = "Intermediair-organisatie ontbreekt op je account." });
             }
 
-            intermediaryCompany = await _db.Companies.AsNoTracking()
-                .FirstOrDefaultAsync(c => c.Id == intermediaryCompanyId.Value, cancellationToken);
+            batchIntermediaryCompany = await _db.Companies.AsNoTracking()
+                .FirstOrDefaultAsync(c => c.Id == batchIntermediaryOrgId.Value, cancellationToken);
         }
 
         var created = new List<Core.Entities.Vacancy>();
@@ -730,13 +734,10 @@ public class VacanciesController : ControllerBase
                 continue;
             }
 
-            if (isIntermediary)
+            var kvkError = IntermediaryVacancyRules.ValidateEndClientKvk(company, batchIsIntermediary);
+            if (kvkError is not null)
             {
-                var kvkError = IntermediaryVacancyRules.ValidateEndClientKvk(company, callerIsIntermediary: true);
-                if (kvkError is not null)
-                {
-                    return BadRequest(new { message = $"{company.Name}: {kvkError}" });
-                }
+                return BadRequest(new { message = $"{kvkError} ({company.Name})" });
             }
 
             var organizationId = company.ParentCompanyId ?? company.Id;
@@ -785,16 +786,27 @@ public class VacanciesController : ControllerBase
                 WorkTypes = WorkTypeLabels.Combine(branchLabels),
                 WorkTypeLabels = WorkTypeLabels.CombineStored(branchLabels),
                 SalaryTableId = salaryTable.Id,
-                IntermediaryCompanyId = intermediaryCompanyId,
-                ShowClientAddressOnMap = isIntermediary && request.ShowClientAddressOnMap
+                IntermediaryCompanyId = batchIntermediaryOrgId,
+                ShowClientAddressOnMap = batchIsIntermediary && request.ShowClientAddressOnMap
             };
             _db.Vacancies.Add(vacancy);
             vacancy.Company = company;
-            vacancy.IntermediaryCompany = intermediaryCompany;
+            vacancy.IntermediaryCompany = batchIntermediaryCompany;
             created.Add(vacancy);
         }
 
         await _db.SaveChangesAsync(cancellationToken);
+
+        if (batchIntermediaryOrgId is Guid intermediaryOrgId)
+        {
+            var intermediary = await _db.Companies.AsNoTracking()
+                .FirstOrDefaultAsync(c => c.Id == intermediaryOrgId, cancellationToken);
+            foreach (var v in created)
+            {
+                v.IntermediaryCompany = intermediary;
+            }
+        }
+
         return Ok(created.Select(v => MapToDto(v, showWage: true)));
     }
 
@@ -1297,6 +1309,32 @@ public class VacanciesController : ControllerBase
             v.ShowClientAddressOnMap,
             v.IntermediaryCompanyId,
             v.Kind.ToString());
+    }
+
+    private async Task<Guid?> ResolveIntermediaryOrganizationIdAsync(
+        User? actor,
+        CancellationToken cancellationToken)
+    {
+        if (actor?.CompanyId is Guid primaryId)
+        {
+            var primary = await _db.Companies.AsNoTracking()
+                .FirstOrDefaultAsync(c => c.Id == primaryId, cancellationToken);
+            if (primary?.Type == CompanyType.Intermediary)
+            {
+                return primary.ParentCompanyId ?? primary.Id;
+            }
+        }
+
+        var accessible = await _companyAuth.GetAccessibleCompanyIdsAsync(User, cancellationToken);
+        if (accessible is null || accessible.Count == 0)
+        {
+            return null;
+        }
+
+        return await _db.Companies.AsNoTracking()
+            .Where(c => accessible.Contains(c.Id) && c.Type == CompanyType.Intermediary)
+            .Select(c => (Guid?)(c.ParentCompanyId ?? c.Id))
+            .FirstOrDefaultAsync(cancellationToken);
     }
 
     private static string? ApplyHoursAndSchedule(Core.Entities.Vacancy vacancy, CreateVacancyRequest request)

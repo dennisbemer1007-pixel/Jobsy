@@ -1,6 +1,7 @@
 using Jobsy.Api.Authorization;
 using Jobsy.Api.Models;
 using Jobsy.Core.Authorization;
+using Jobsy.Core.Entities;
 using Jobsy.Core.Enums;
 using Jobsy.Core.Interfaces;
 using Jobsy.Core.Rules;
@@ -69,15 +70,26 @@ public class ExternalVacanciesController : ControllerBase
         var apiKeyCompany = apiKeyCompanyId is Guid keyCompanyId
             ? await _db.Companies.AsNoTracking().FirstOrDefaultAsync(c => c.Id == keyCompanyId, cancellationToken)
             : null;
-        var isIntermediary = apiKeyCompany?.Type == CompanyType.Intermediary;
-        Guid? intermediaryCompanyId = isIntermediary ? apiKeyCompany!.Id : null;
-        if (isIntermediary)
+        Guid? intermediaryCompanyId = null;
+        if (apiKeyCompany?.Type == CompanyType.Intermediary)
         {
-            var kvkError = IntermediaryVacancyRules.ValidateEndClientKvk(company, callerIsIntermediary: true);
-            if (kvkError is not null)
+            intermediaryCompanyId = apiKeyCompany.ParentCompanyId ?? apiKeyCompany.Id;
+        }
+        else if (apiKeyCompany?.ParentCompanyId is Guid parentId)
+        {
+            var parent = await _db.Companies.AsNoTracking()
+                .FirstOrDefaultAsync(c => c.Id == parentId, cancellationToken);
+            if (parent?.Type == CompanyType.Intermediary)
             {
-                return BadRequest(new { message = kvkError });
+                intermediaryCompanyId = parent.Id;
             }
+        }
+
+        var apiIsIntermediary = intermediaryCompanyId is not null;
+        var kvkError = IntermediaryVacancyRules.ValidateEndClientKvk(company, apiIsIntermediary);
+        if (kvkError is not null)
+        {
+            return BadRequest(new { message = kvkError });
         }
 
         if (request.SalaryTableId is not Guid tableId)
@@ -185,7 +197,7 @@ public class ExternalVacanciesController : ControllerBase
                 : request.RequiredEducation.Trim(),
             MinimumEmployers = request.MinimumEmployers is > 0 ? request.MinimumEmployers : null,
             IntermediaryCompanyId = intermediaryCompanyId,
-            ShowClientAddressOnMap = isIntermediary && request.ShowClientAddressOnMap
+            ShowClientAddressOnMap = apiIsIntermediary && request.ShowClientAddressOnMap
         };
 
         _db.Vacancies.Add(vacancy);

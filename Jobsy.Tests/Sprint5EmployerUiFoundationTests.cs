@@ -101,6 +101,8 @@ public class Sprint5EmployerUiFoundationTests
     {
         Assert.True(EmployerInviteRules.CanAssignRole(UserRole.EnterpriseManager, UserRole.EnterpriseManager));
         Assert.True(EmployerInviteRules.CanAssignRole(UserRole.EnterpriseManager, UserRole.BranchManager));
+        Assert.True(EmployerInviteRules.CanAssignRole(UserRole.Intermediary, UserRole.Intermediary));
+        Assert.False(EmployerInviteRules.CanAssignRole(UserRole.Intermediary, UserRole.EnterpriseManager));
         Assert.False(EmployerInviteRules.CanAssignRole(UserRole.BranchManager, UserRole.RegionalManager));
 
         var accessible = new HashSet<Guid> { Guid.Parse("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa") };

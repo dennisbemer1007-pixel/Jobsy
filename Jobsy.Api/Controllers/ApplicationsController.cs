@@ -744,6 +744,7 @@ public class ApplicationsController : ControllerBase
         }
 
         vacancy.Status = VacancyStatus.Fulfilled;
+        vacancy.ClosedAtUtc ??= DateTime.UtcNow;
         vacancy.FulfilledByApplicationId = chosen.Id;
         chosen.Status = ApplicationStatus.Hired;
         chosen.RespondedAt = DateTime.UtcNow;

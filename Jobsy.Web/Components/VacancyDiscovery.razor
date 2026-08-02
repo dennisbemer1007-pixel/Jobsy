@@ -420,7 +420,7 @@
                             </div>
                         </a>
                         <div class="job-card__footer">
-                            <p class="job-card__company">@vacancy.CompanyName</p>
+                            <p class="job-card__company">@(string.IsNullOrWhiteSpace(vacancy.OfferedByLabel) ? vacancy.CompanyName : vacancy.OfferedByLabel)</p>
                             <p class="job-card__location">@vacancy.CompanyAddress</p>
                         </div>
                     </article>
@@ -1289,6 +1289,7 @@
                 ["id"] = v.Id.ToString(),
                 ["title"] = v.Title,
                 ["company"] = v.CompanyName,
+                ["offeredBy"] = v.OfferedByLabel,
                 ["address"] = v.CompanyAddress,
                 ["offeredBy"] = v.OfferedByLabel,
                 ["logoUrl"] = v.CompanyLogoUrl,

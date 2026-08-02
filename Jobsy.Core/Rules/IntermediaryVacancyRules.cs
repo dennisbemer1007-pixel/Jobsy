@@ -37,7 +37,7 @@ public static class IntermediaryVacancyRules
     }
 
     /// <summary>
-    /// Public map/list display: intermediary identity vs end-client identity.
+    /// Public map/list display: masked intermediary identity vs open end-client identity.
     /// Always keep end-client <see cref="Vacancy.CompanyId"/> for admin / travel / SROI.
     /// When <see cref="Vacancy.ShowClientAddressOnMap"/> is false, show intermediary name/address.
     /// </summary>
