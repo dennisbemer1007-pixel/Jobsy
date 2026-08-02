@@ -161,36 +161,43 @@
         }
     }
 
-    function resolveTimeoutUrl() {
-        var base = (apiBaseUrl || "").replace(/\/?$/, "/");
-        if (!base) {
-            return "/api/settings/session-security";
-        }
-        return base + "api/settings/session-security";
-    }
-
     function refreshTimeout() {
-        fetch(resolveTimeoutUrl(), { credentials: "omit" })
-            .then(function (r) {
-                if (!r.ok) {
-                    throw new Error("timeout fetch failed");
-                }
-                return r.json();
-            })
-            .then(function (data) {
-                var minutes = Number(data && data.inactivityTimeoutMinutes);
-                if (!Number.isFinite(minutes) || minutes < 5) {
-                    minutes = DEFAULT_MINUTES;
-                }
-                if (minutes > 480) {
-                    minutes = 480;
-                }
-                if (minutes !== timeoutMinutes) {
-                    timeoutMinutes = minutes;
-                    scheduleIdle();
-                }
-            })
-            .catch(function () { });
+        // Prefer same-origin web proxy; fall back to API base when provided.
+        var urls = ["/account/session-security"];
+        if (apiBaseUrl) {
+            urls.push(String(apiBaseUrl).replace(/\/?$/, "/") + "api/settings/session-security");
+        }
+
+        function tryNext(index) {
+            if (index >= urls.length) {
+                return;
+            }
+            fetch(urls[index], { credentials: "same-origin" })
+                .then(function (r) {
+                    if (!r.ok) {
+                        throw new Error("timeout fetch failed");
+                    }
+                    return r.json();
+                })
+                .then(function (data) {
+                    var minutes = Number(data && data.inactivityTimeoutMinutes);
+                    if (!Number.isFinite(minutes) || minutes < 5) {
+                        minutes = DEFAULT_MINUTES;
+                    }
+                    if (minutes > 480) {
+                        minutes = 480;
+                    }
+                    if (minutes !== timeoutMinutes) {
+                        timeoutMinutes = minutes;
+                        scheduleIdle();
+                    }
+                })
+                .catch(function () {
+                    tryNext(index + 1);
+                });
+        }
+
+        tryNext(0);
     }
 
     function bindActivity() {

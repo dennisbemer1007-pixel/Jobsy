@@ -399,6 +399,13 @@ public static class AuthServiceCollectionExtensions
 
             return Results.NoContent();
         }).AllowAnonymous().DisableAntiforgery();
+
+        // Same-origin proxy for the browser idle timer (avoids cross-origin API CORS issues).
+        app.MapGet("/account/session-security", async (ISessionTimeoutProvider timeouts, CancellationToken ct) =>
+        {
+            var minutes = await timeouts.GetInactivityTimeoutMinutesAsync(ct);
+            return Results.Json(new { inactivityTimeoutMinutes = minutes });
+        }).AllowAnonymous().DisableAntiforgery();
     }
 
     private static AuthenticationProperties CreateSessionAuthProperties() =>

@@ -157,6 +157,20 @@ public class SessionSecurityTests
         Assert.Contains("/login?error=session-expired", context.Response.Headers.Location.ToString());
     }
 
+    [Fact]
+    public async Task Session_security_endpoint_returns_configured_timeout()
+    {
+        await using var app = await CreateWebAppAsync(timeoutMinutes: 42);
+        var server = app.GetTestServer();
+        var client = server.CreateClient();
+
+        var response = await client.GetAsync("/account/session-security");
+        response.EnsureSuccessStatusCode();
+        var json = await response.Content.ReadAsStringAsync();
+        Assert.Contains("42", json);
+        Assert.Contains("inactivityTimeoutMinutes", json, StringComparison.OrdinalIgnoreCase);
+    }
+
     private static async Task<WebApplication> CreateWebAppAsync(int timeoutMinutes)
     {
         var builder = WebApplication.CreateBuilder(new WebApplicationOptions

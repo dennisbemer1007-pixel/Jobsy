@@ -61,6 +61,7 @@ public sealed class SessionInactivityMiddleware
             || path.StartsWith("/_blazor", StringComparison.OrdinalIgnoreCase)
             || path.StartsWith("/favicon", StringComparison.OrdinalIgnoreCase)
             || string.Equals(path, "/account/logout", StringComparison.OrdinalIgnoreCase)
+            || string.Equals(path, "/account/session-security", StringComparison.OrdinalIgnoreCase)
             || path.StartsWith("/account/external", StringComparison.OrdinalIgnoreCase)
             || path.StartsWith("/signin-", StringComparison.OrdinalIgnoreCase)
             || path.StartsWith("/login", StringComparison.OrdinalIgnoreCase))
