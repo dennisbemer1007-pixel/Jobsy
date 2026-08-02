@@ -54,8 +54,7 @@ const roles = [
     email: 'intermediair@jobsy.local',
     shots: [
       { name: '05-intermediair-home', url: '/home' },
-      { name: '05-intermediair-opdrachtgevers', url: '/intermediary' },
-      { name: '05-intermediair-batch', url: '/intermediary/batch' },
+      { name: '05-intermediair-bedrijvenoverzicht', url: '/intermediary' },
       { name: '05-intermediair-tokens', url: '/employer/tokens' },
     ],
   },
