@@ -5,6 +5,7 @@
     var DEFAULT_MINUTES = 30;
     var REFRESH_MS = 60 * 1000;
     var ACTIVITY_THROTTLE_MS = 5 * 1000;
+    var SENSITIVE_RE = /(iban|password|passwd|secret|token|cvv|ssn|bsn|vat|btw|credit.?card|card.?number)/i;
 
     var timeoutMinutes = DEFAULT_MINUTES;
     var idleTimer = null;
@@ -13,38 +14,46 @@
     var started = false;
     var expiring = false;
     var apiBaseUrl = "";
+    var userKey = "anon";
 
     function draftKey() {
-        return STORAGE_PREFIX + (window.location.pathname || "/");
+        return STORAGE_PREFIX + userKey + ":" + (window.location.pathname || "/");
+    }
+
+    function isSensitiveField(el) {
+        var type = (el.type || "").toLowerCase();
+        if (type === "password" || type === "file" || type === "hidden") {
+            return true;
+        }
+        var identity = [el.name, el.id, el.getAttribute("autocomplete"), el.getAttribute("aria-label")]
+            .filter(Boolean)
+            .join(" ");
+        return SENSITIVE_RE.test(identity);
     }
 
     function saveCriticalDrafts() {
         try {
-            var forms = document.querySelectorAll(
-                "form[data-session-draft], .vacancy-editor form, form.login-form, .panel-page form.login-form"
-            );
+            // Opt-in only — never scrape arbitrary login-form PII (IBAN, registration, etc.).
+            var forms = document.querySelectorAll('form[data-session-draft="true"]');
             if (!forms.length) {
                 return;
             }
 
-            var payload = { savedAt: Date.now(), fields: {} };
+            var payload = { savedAt: Date.now(), userKey: userKey, fields: {} };
             forms.forEach(function (form, formIndex) {
                 var fields = form.querySelectorAll("input, textarea, select");
                 fields.forEach(function (el, fieldIndex) {
-                    if (!el || el.disabled) {
+                    if (!el || el.disabled || isSensitiveField(el)) {
                         return;
                     }
                     var type = (el.type || "").toLowerCase();
-                    if (type === "password" || type === "file" || type === "hidden") {
-                        return;
-                    }
                     if (type === "checkbox" || type === "radio") {
                         if (!el.checked) {
                             return;
                         }
                     }
                     var key = el.name || el.id || ("f" + formIndex + "_" + fieldIndex);
-                    if (!key) {
+                    if (!key || SENSITIVE_RE.test(key)) {
                         return;
                     }
                     payload.fields[key] = {
@@ -75,10 +84,14 @@
             if (!payload || !payload.fields) {
                 return;
             }
+            if (payload.userKey && payload.userKey !== userKey) {
+                sessionStorage.removeItem(draftKey());
+                return;
+            }
 
             Object.keys(payload.fields).forEach(function (key) {
                 var item = payload.fields[key];
-                if (!item) {
+                if (!item || SENSITIVE_RE.test(key) || SENSITIVE_RE.test(item.name || "") || SENSITIVE_RE.test(item.id || "")) {
                     return;
                 }
                 var el = null;
@@ -90,7 +103,7 @@
                         '[name="' + item.name.replace(/"/g, '\\"') + '"]'
                     );
                 }
-                if (!el) {
+                if (!el || isSensitiveField(el)) {
                     return;
                 }
                 var type = (item.type || el.type || "").toLowerCase();
@@ -107,6 +120,23 @@
         }
     }
 
+    function clearDrafts() {
+        try {
+            var keys = [];
+            for (var i = 0; i < sessionStorage.length; i++) {
+                var k = sessionStorage.key(i);
+                if (k && k.indexOf(STORAGE_PREFIX) === 0) {
+                    keys.push(k);
+                }
+            }
+            keys.forEach(function (k) {
+                sessionStorage.removeItem(k);
+            });
+        } catch (e) {
+            // Ignore.
+        }
+    }
+
     function clearIdleTimer() {
         if (idleTimer) {
             clearTimeout(idleTimer);
@@ -118,6 +148,20 @@
         clearIdleTimer();
         var ms = Math.max(1, timeoutMinutes) * 60 * 1000;
         idleTimer = setTimeout(onIdle, ms);
+    }
+
+    function forceSessionExpiredLogout() {
+        if (expiring) {
+            return;
+        }
+        expiring = true;
+        saveCriticalDrafts();
+        var target = "/account/logout?reason=session-expired";
+        try {
+            window.location.href = target;
+        } catch (e) {
+            window.location.assign(target);
+        }
     }
 
     function onActivity() {
@@ -132,37 +176,26 @@
         lastActivityFlush = now;
         scheduleIdle();
         try {
-            // Lightweight beacon so server LastActivity cookie stays fresh during Blazor circuits.
-            if (navigator.sendBeacon) {
-                navigator.sendBeacon("/account/session-activity");
-            } else {
-                fetch("/account/session-activity", {
-                    method: "POST",
-                    credentials: "same-origin",
-                    keepalive: true
-                }).catch(function () { });
-            }
+            fetch("/account/session-activity", {
+                method: "POST",
+                credentials: "same-origin",
+                headers: { "Accept": "application/json" },
+                keepalive: true
+            }).then(function (r) {
+                if (r.status === 401 || r.headers.get("X-Jobsy-Session") === "expired") {
+                    forceSessionExpiredLogout();
+                }
+            }).catch(function () { });
         } catch (e) {
             // Ignore.
         }
     }
 
     function onIdle() {
-        if (expiring) {
-            return;
-        }
-        expiring = true;
-        saveCriticalDrafts();
-        var target = "/account/logout?reason=session-expired";
-        try {
-            window.location.href = target;
-        } catch (e) {
-            window.location.assign(target);
-        }
+        forceSessionExpiredLogout();
     }
 
     function refreshTimeout() {
-        // Prefer same-origin web proxy; fall back to API base when provided.
         var urls = ["/account/session-security"];
         if (apiBaseUrl) {
             urls.push(String(apiBaseUrl).replace(/\/?$/, "/") + "api/settings/session-security");
@@ -201,6 +234,10 @@
     }
 
     function bindActivity() {
+        if (bindActivity._bound) {
+            return;
+        }
+        bindActivity._bound = true;
         ["click", "mousedown", "keydown", "touchstart", "scroll", "mousemove"].forEach(function (evt) {
             document.addEventListener(evt, onActivity, { passive: true, capture: true });
         });
@@ -212,6 +249,17 @@
         window.addEventListener("lobsy:navigation", onActivity);
     }
 
+    // Clear drafts when landing on login after expiry (shared-browser hygiene).
+    try {
+        if (/[?&]error=session-expired\b/.test(window.location.search || "")) {
+            // Keep opt-in vacancy drafts for the same browser user; drop nothing globally here —
+            // identity-bound keys already prevent cross-user restore. Still scrub if anon.
+            if (userKey === "anon") {
+                clearDrafts();
+            }
+        }
+    } catch (e) { }
+
     window.lobsySessionIdle = {
         start: function (options) {
             options = options || {};
@@ -221,11 +269,15 @@
             if (options.apiBaseUrl) {
                 apiBaseUrl = String(options.apiBaseUrl);
             }
+            if (options.userKey) {
+                userKey = String(options.userKey);
+            }
             if (started) {
                 scheduleIdle();
                 return;
             }
             started = true;
+            expiring = false;
             bindActivity();
             restoreCriticalDrafts();
             scheduleIdle();
@@ -251,8 +303,28 @@
                 scheduleIdle();
             }
         },
+        setUserKey: function (key) {
+            userKey = key ? String(key) : "anon";
+        },
         saveDrafts: saveCriticalDrafts,
         restoreDrafts: restoreCriticalDrafts,
-        markActivity: onActivity
+        clearDrafts: clearDrafts,
+        markActivity: onActivity,
+        expireNow: forceSessionExpiredLogout,
+        checkSession: function () {
+            return fetch("/account/session-activity", {
+                method: "GET",
+                credentials: "same-origin",
+                headers: { "Accept": "application/json" }
+            }).then(function (r) {
+                if (r.status === 401 || r.headers.get("X-Jobsy-Session") === "expired") {
+                    forceSessionExpiredLogout();
+                    return false;
+                }
+                return true;
+            }).catch(function () {
+                return true;
+            });
+        }
     };
 })();

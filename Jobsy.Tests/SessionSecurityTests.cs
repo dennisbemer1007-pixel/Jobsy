@@ -1,4 +1,3 @@
-using System.Globalization;
 using System.Security.Claims;
 using Jobsy.Core.Interfaces;
 using Jobsy.Core.Options;
@@ -10,6 +9,7 @@ using Jobsy.Web.Security;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.EntityFrameworkCore;
@@ -83,25 +83,16 @@ public class SessionSecurityTests
     [Fact]
     public async Task Middleware_expires_idle_authenticated_session()
     {
-        var expiredUnix = DateTimeOffset.UtcNow.AddMinutes(-45).ToUnixTimeSeconds()
-            .ToString(CultureInfo.InvariantCulture);
-
-        var timeout = new FixedTimeoutProvider(30);
-        var http = new DefaultHttpContext();
-        http.User = new ClaimsPrincipal(new ClaimsIdentity(
-            [new Claim(ClaimTypes.Name, "admin@jobsy.local"), new Claim(ClaimTypes.Role, "Admin")],
-            CookieAuthenticationDefaults.AuthenticationScheme));
-        http.Request.Path = "/admin/settings";
-        http.Request.Headers.Cookie = $"{SessionInactivityMiddleware.LastActivityCookieName}={expiredUnix}";
-        http.Response.Body = new MemoryStream();
+        var http = CreateAuthedContext("/admin/settings", "admin@jobsy.local");
+        SessionActivityCookie.Stamp(http, DateTimeOffset.UtcNow.AddMinutes(-45));
+        // Move stamped cookie from response to request for the middleware read path.
+        CopySetCookieToRequest(http);
 
         var authService = new FakeAuthService();
-        http.RequestServices = new ServiceCollection()
-            .AddSingleton<IAuthenticationService>(authService)
-            .BuildServiceProvider();
+        ReplaceAuthService(http, authService);
 
         var middleware = new SessionInactivityMiddleware(_ => Task.CompletedTask);
-        await middleware.InvokeAsync(http, timeout);
+        await middleware.InvokeAsync(http, new FixedTimeoutProvider(30));
 
         Assert.True(authService.SignedOut);
         Assert.Equal(StatusCodes.Status302Found, http.Response.StatusCode);
@@ -111,21 +102,12 @@ public class SessionSecurityTests
     [Fact]
     public async Task Middleware_expires_when_last_activity_cookie_missing()
     {
-        var timeout = new FixedTimeoutProvider(30);
-        var http = new DefaultHttpContext();
-        http.User = new ClaimsPrincipal(new ClaimsIdentity(
-            [new Claim(ClaimTypes.Name, "admin@jobsy.local")],
-            CookieAuthenticationDefaults.AuthenticationScheme));
-        http.Request.Path = "/admin/settings";
-        http.Response.Body = new MemoryStream();
-
+        var http = CreateAuthedContext("/admin/settings", "admin@jobsy.local");
         var authService = new FakeAuthService();
-        http.RequestServices = new ServiceCollection()
-            .AddSingleton<IAuthenticationService>(authService)
-            .BuildServiceProvider();
+        ReplaceAuthService(http, authService);
 
         var middleware = new SessionInactivityMiddleware(_ => Task.CompletedTask);
-        await middleware.InvokeAsync(http, timeout);
+        await middleware.InvokeAsync(http, new FixedTimeoutProvider(30));
 
         Assert.True(authService.SignedOut);
         Assert.Equal(StatusCodes.Status302Found, http.Response.StatusCode);
@@ -133,21 +115,29 @@ public class SessionSecurityTests
     }
 
     [Fact]
+    public async Task Middleware_expires_forged_plaintext_or_future_activity_cookie()
+    {
+        var http = CreateAuthedContext("/admin/settings", "admin@jobsy.local");
+        var future = DateTimeOffset.UtcNow.AddHours(6).ToUnixTimeSeconds();
+        http.Request.Headers.Cookie = $"{SessionInactivityMiddleware.LastActivityCookieName}={future}";
+
+        var authService = new FakeAuthService();
+        ReplaceAuthService(http, authService);
+
+        var middleware = new SessionInactivityMiddleware(_ => Task.CompletedTask);
+        await middleware.InvokeAsync(http, new FixedTimeoutProvider(30));
+
+        Assert.True(authService.SignedOut);
+        Assert.Contains("session-expired", http.Response.Headers.Location.ToString());
+    }
+
+    [Fact]
     public async Task Middleware_refreshes_last_activity_when_within_timeout()
     {
-        var timeout = new FixedTimeoutProvider(30);
-        var http = new DefaultHttpContext();
-        http.User = new ClaimsPrincipal(new ClaimsIdentity(
-            [new Claim(ClaimTypes.Name, "sm@jobsy.local")],
-            CookieAuthenticationDefaults.AuthenticationScheme));
-        http.Request.Path = "/sales/toolkit";
-        var recent = DateTimeOffset.UtcNow.AddMinutes(-5).ToUnixTimeSeconds()
-            .ToString(CultureInfo.InvariantCulture);
-        http.Request.Headers.Cookie = $"{SessionInactivityMiddleware.LastActivityCookieName}={recent}";
-        http.Response.Body = new MemoryStream();
-        http.RequestServices = new ServiceCollection()
-            .AddSingleton<IAuthenticationService>(new FakeAuthService())
-            .BuildServiceProvider();
+        var http = CreateAuthedContext("/sales/toolkit", "sm@jobsy.local");
+        SessionActivityCookie.Stamp(http, DateTimeOffset.UtcNow.AddMinutes(-5));
+        CopySetCookieToRequest(http);
+        ReplaceAuthService(http, new FakeAuthService());
 
         var nextCalled = false;
         var middleware = new SessionInactivityMiddleware(_ =>
@@ -155,13 +145,31 @@ public class SessionSecurityTests
             nextCalled = true;
             return Task.CompletedTask;
         });
-        await middleware.InvokeAsync(http, timeout);
+        await middleware.InvokeAsync(http, new FixedTimeoutProvider(30));
 
         Assert.True(nextCalled);
         Assert.Contains(
             http.Response.Headers.SetCookie,
             v => v is not null
                  && v.Contains(SessionInactivityMiddleware.LastActivityCookieName, StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void Activity_cookie_is_bound_to_subject()
+    {
+        var http = CreateAuthedContext("/home", "alice@jobsy.local");
+        SessionActivityCookie.Stamp(http, DateTimeOffset.UtcNow.AddMinutes(-1));
+        CopySetCookieToRequest(http);
+
+        // Swap identity — protected payload subject no longer matches.
+        http.User = new ClaimsPrincipal(new ClaimsIdentity(
+            [
+                new Claim(ClaimTypes.NameIdentifier, "bob@jobsy.local"),
+                new Claim(ClaimTypes.Email, "bob@jobsy.local")
+            ],
+            CookieAuthenticationDefaults.AuthenticationScheme));
+
+        Assert.Null(SessionActivityCookie.TryRead(http));
     }
 
     [Fact]
@@ -195,6 +203,53 @@ public class SessionSecurityTests
         Assert.Contains("inactivityTimeoutMinutes", json, StringComparison.OrdinalIgnoreCase);
     }
 
+    private static DefaultHttpContext CreateAuthedContext(string path, string email)
+    {
+        var services = new ServiceCollection();
+        services.AddDataProtection().SetApplicationName("Jobsy.Tests.Session");
+        services.AddSingleton<IAuthenticationService>(new FakeAuthService());
+        var sp = services.BuildServiceProvider();
+
+        var http = new DefaultHttpContext
+        {
+            RequestServices = sp
+        };
+        http.Request.Path = path;
+        http.Response.Body = new MemoryStream();
+        http.User = new ClaimsPrincipal(new ClaimsIdentity(
+            [
+                new Claim(ClaimTypes.NameIdentifier, email),
+                new Claim(ClaimTypes.Email, email),
+                new Claim(ClaimTypes.Name, email),
+                new Claim(ClaimTypes.Role, "Admin")
+            ],
+            CookieAuthenticationDefaults.AuthenticationScheme));
+        return http;
+    }
+
+    private static void ReplaceAuthService(HttpContext http, FakeAuthService authService)
+    {
+        var existingDp = http.RequestServices.GetRequiredService<IDataProtectionProvider>();
+        var services = new ServiceCollection();
+        services.AddSingleton(existingDp);
+        services.AddSingleton<IAuthenticationService>(authService);
+        http.RequestServices = services.BuildServiceProvider();
+    }
+
+    private static void CopySetCookieToRequest(HttpContext http)
+    {
+        var setCookie = http.Response.Headers.SetCookie.FirstOrDefault(v =>
+            v is not null && v.Contains(SessionInactivityMiddleware.LastActivityCookieName, StringComparison.Ordinal));
+        Assert.False(string.IsNullOrWhiteSpace(setCookie));
+        var segment = setCookie!.Split(';', 2)[0];
+        var eq = segment.IndexOf('=');
+        Assert.True(eq > 0);
+        var name = segment[..eq];
+        var value = segment[(eq + 1)..];
+        http.Request.Headers.Cookie = $"{name}={value}";
+        http.Response.Headers.SetCookie = new Microsoft.Extensions.Primitives.StringValues();
+    }
+
     private static async Task<WebApplication> CreateWebAppAsync(int timeoutMinutes)
     {
         var builder = WebApplication.CreateBuilder(new WebApplicationOptions
@@ -202,6 +257,7 @@ public class SessionSecurityTests
             EnvironmentName = Environments.Development
         });
         builder.WebHost.UseTestServer();
+        builder.Services.AddDataProtection().SetApplicationName("Jobsy.Tests.SessionWeb");
         builder.Services.AddJobsyAuthentication(builder.Configuration, builder.Environment);
         builder.Services.AddSingleton<ISessionTimeoutProvider>(new FixedTimeoutProvider(timeoutMinutes));
 

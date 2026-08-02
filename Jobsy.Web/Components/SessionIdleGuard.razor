@@ -10,49 +10,113 @@
 
 @code {
     private bool _started;
+    private bool _hooksAttached;
+    private CancellationTokenSource? _pollCts;
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        if (!firstRender || _started)
+        await TryStartAsync();
+    }
+
+    private async Task TryStartAsync()
+    {
+        if (_started)
         {
             return;
         }
 
-        var state = await AuthState.GetAuthenticationStateAsync();
+        AuthenticationState state;
+        try
+        {
+            state = await AuthState.GetAuthenticationStateAsync();
+        }
+        catch
+        {
+            return;
+        }
+
         if (state.User.Identity?.IsAuthenticated != true)
         {
             return;
         }
 
-        _started = true;
         var minutes = await TimeoutProvider.GetInactivityTimeoutMinutesAsync();
         minutes = SessionSecurityRules.ClampTimeoutMinutes(minutes);
         var apiBase = Configuration["ApiBaseUrl"] ?? "http://localhost:5200/";
+        var userKey = SessionActivityCookie.ResolveSubject(state.User) ?? "user";
 
         try
         {
             await Js.InvokeVoidAsync("lobsySessionIdle.start", new
             {
                 timeoutMinutes = minutes,
-                apiBaseUrl = apiBase
+                apiBaseUrl = apiBase,
+                userKey
             });
-            Navigation.LocationChanged += OnLocationChanged;
+            _started = true;
+            if (!_hooksAttached)
+            {
+                Navigation.LocationChanged += OnLocationChanged;
+                _hooksAttached = true;
+            }
+
+            _pollCts?.Cancel();
+            _pollCts = new CancellationTokenSource();
+            _ = PollSessionAsync(_pollCts.Token);
         }
         catch
         {
-            // JS not ready / prerender — ignore; middleware still enforces.
+            // JS not ready / prerender — retry on a later render.
             _started = false;
+        }
+    }
+
+    private async Task PollSessionAsync(CancellationToken ct)
+    {
+        while (!ct.IsCancellationRequested)
+        {
+            try
+            {
+                await Task.Delay(TimeSpan.FromSeconds(45), ct);
+                var ok = await Js.InvokeAsync<bool>("lobsySessionIdle.checkSession");
+                if (!ok)
+                {
+                    return;
+                }
+            }
+            catch (OperationCanceledException)
+            {
+                return;
+            }
+            catch
+            {
+                // Transient JS/circuit — keep polling / allow TryStart on next render.
+                _started = false;
+            }
         }
     }
 
     private void OnLocationChanged(object? sender, Microsoft.AspNetCore.Components.Routing.LocationChangedEventArgs e)
     {
         _ = Js.InvokeVoidAsync("lobsySessionIdle.markActivity");
+        _ = TryStartAsync();
     }
 
     public async ValueTask DisposeAsync()
     {
-        Navigation.LocationChanged -= OnLocationChanged;
+        if (_hooksAttached)
+        {
+            Navigation.LocationChanged -= OnLocationChanged;
+            _hooksAttached = false;
+        }
+
+        if (_pollCts is not null)
+        {
+            await _pollCts.CancelAsync();
+            _pollCts.Dispose();
+            _pollCts = null;
+        }
+
         if (_started)
         {
             try

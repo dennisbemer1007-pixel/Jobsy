@@ -2,7 +2,6 @@ using System.Net.Http.Json;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
-using System.Globalization;
 using Jobsy.Core;
 using Jobsy.Core.Authorization;
 using Jobsy.Core.Rules;
@@ -377,9 +376,7 @@ public static class AuthServiceCollectionExtensions
 
             var reason = http.Request.Query["reason"].ToString();
             await http.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
-            http.Response.Cookies.Delete(
-                SessionInactivityMiddleware.LastActivityCookieName,
-                new CookieOptions { Path = "/" });
+            SessionActivityCookie.Clear(http);
 
             if (string.Equals(reason, "session-expired", StringComparison.OrdinalIgnoreCase))
             {
@@ -390,14 +387,18 @@ public static class AuthServiceCollectionExtensions
         });
 
         // Idle-timer beacon (no antiforgery): refreshes LastActivity for authenticated users only.
+        // Returns JSON 401 when middleware already expired the session (Accept: application/json).
         app.MapMethods("/account/session-activity", ["GET", "POST"], (HttpContext http) =>
         {
-            if (http.User.Identity?.IsAuthenticated == true)
+            if (http.User.Identity?.IsAuthenticated != true)
             {
-                StampLastActivity(http);
+                return Results.Json(
+                    new { ok = false, reason = "session-expired" },
+                    statusCode: StatusCodes.Status401Unauthorized);
             }
 
-            return Results.NoContent();
+            StampLastActivity(http);
+            return Results.Json(new { ok = true });
         }).AllowAnonymous().DisableAntiforgery();
 
         // Same-origin proxy for the browser idle timer (avoids cross-origin API CORS issues).
@@ -418,26 +419,7 @@ public static class AuthServiceCollectionExtensions
         };
 
     private static void StampLastActivity(HttpContext http)
-    {
-        var now = DateTimeOffset.UtcNow;
-        var secure = http.Request.IsHttps
-                     || string.Equals(
-                         http.Request.Headers["X-Forwarded-Proto"],
-                         "https",
-                         StringComparison.OrdinalIgnoreCase);
-        http.Response.Cookies.Append(
-            SessionInactivityMiddleware.LastActivityCookieName,
-            now.ToUnixTimeSeconds().ToString(CultureInfo.InvariantCulture),
-            new CookieOptions
-            {
-                HttpOnly = true,
-                Secure = secure,
-                SameSite = SameSiteMode.Lax,
-                IsEssential = true,
-                Expires = now.AddHours(12),
-                Path = "/"
-            });
-    }
+        => SessionActivityCookie.Stamp(http, DateTimeOffset.UtcNow);
 
     private static ClaimsPrincipal CreateLocalPrincipal(DemoUserOptions user)
     {

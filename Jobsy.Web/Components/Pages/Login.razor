@@ -11,6 +11,7 @@
 @inject NavigationManager Navigation
 @inject IHttpContextAccessor HttpContextAccessor
 @inject CultureState Culture
+@inject IJSRuntime Js
 @implements IDisposable
 
 <PageTitle>@Culture["Login.Title"] · Lobsy</PageTitle>
@@ -134,6 +135,7 @@
     private string _returnUrl = "/home";
     private string _dismissUrl = AuthRedirects.BanenkaartPath;
     private string? _errorMessage;
+    private bool _sessionExpiredNotice;
     private bool _entraEnabled;
     private bool _googleEnabled;
     private string _antiforgeryFieldName = string.Empty;
@@ -173,7 +175,9 @@
 
         if (query.TryGetValue("error", out var error))
         {
-            _errorMessage = error.ToString() switch
+            var code = error.ToString();
+            _sessionExpiredNotice = string.Equals(code, "session-expired", StringComparison.OrdinalIgnoreCase);
+            _errorMessage = code switch
             {
                 "invalid" => Culture["Login.ErrorInvalid"],
                 "session-expired" => Culture["Login.ErrorSessionExpired"],
@@ -184,6 +188,24 @@
                 "unknown-provider" => Culture["Login.ErrorProvider"],
                 _ => Culture["Login.ErrorGeneric"]
             };
+        }
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender || !_sessionExpiredNotice)
+        {
+            return;
+        }
+
+        try
+        {
+            // Shared-browser hygiene: drop any prior draft blobs after forced expiry.
+            await Js.InvokeVoidAsync("lobsySessionIdle.clearDrafts");
+        }
+        catch
+        {
+            // Script may not be ready on static render.
         }
     }
 

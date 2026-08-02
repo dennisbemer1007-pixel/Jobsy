@@ -1,5 +1,6 @@
 using Jobsy.Web.Auth;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -31,6 +32,7 @@ public class LogoutEndpointTests
             EnvironmentName = Environments.Development
         });
         builder.WebHost.UseTestServer();
+        builder.Services.AddDataProtection().SetApplicationName("Jobsy.Tests.Logout");
         builder.Services.AddJobsyAuthentication(builder.Configuration, builder.Environment);
         builder.Services.AddSingleton<Jobsy.Web.Security.ISessionTimeoutProvider>(
             new FixedSessionTimeoutProvider());

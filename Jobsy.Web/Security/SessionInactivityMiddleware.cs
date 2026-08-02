@@ -1,4 +1,3 @@
-using System.Globalization;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 
@@ -6,7 +5,7 @@ namespace Jobsy.Web.Security;
 
 /// <summary>
 /// Enforces admin-configured inactivity timeout for interactive cookie sessions.
-/// Tracks last activity in an HttpOnly cookie and signs out when idle.
+/// Tracks last activity in a Data Protection–sealed HttpOnly cookie and signs out when idle.
 /// </summary>
 public sealed class SessionInactivityMiddleware
 {
@@ -31,17 +30,17 @@ public sealed class SessionInactivityMiddleware
         var user = context.User;
         if (user?.Identity?.IsAuthenticated != true)
         {
-            ClearLastActivity(context);
+            SessionActivityCookie.Clear(context);
             await _next(context);
             return;
         }
 
         var timeoutMinutes = await timeoutProvider.GetInactivityTimeoutMinutesAsync(context.RequestAborted);
         var now = DateTimeOffset.UtcNow;
-        var lastActivity = ReadLastActivity(context);
+        var lastActivity = SessionActivityCookie.TryRead(context);
 
-        // Missing activity cookie on an authenticated request is treated as expired so clients
-        // cannot reset the idle clock by deleting Jobsy.LastActivity.
+        // Missing / invalid / forged activity cookie on an authenticated request is treated as expired
+        // so clients cannot reset or extend the idle clock by mutating Jobsy.LastActivity.
         if (lastActivity is null
             || now - lastActivity.Value > TimeSpan.FromMinutes(timeoutMinutes))
         {
@@ -49,7 +48,7 @@ public sealed class SessionInactivityMiddleware
             return;
         }
 
-        WriteLastActivity(context, now);
+        SessionActivityCookie.Stamp(context, now);
         await _next(context);
     }
 
@@ -74,47 +73,10 @@ public sealed class SessionInactivityMiddleware
         return false;
     }
 
-    private static DateTimeOffset? ReadLastActivity(HttpContext context)
-    {
-        if (!context.Request.Cookies.TryGetValue(LastActivityCookieName, out var raw)
-            || string.IsNullOrWhiteSpace(raw))
-        {
-            return null;
-        }
-
-        if (long.TryParse(raw, NumberStyles.Integer, CultureInfo.InvariantCulture, out var unix))
-        {
-            return DateTimeOffset.FromUnixTimeSeconds(unix);
-        }
-
-        if (DateTimeOffset.TryParse(raw, CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind, out var parsed))
-        {
-            return parsed.ToUniversalTime();
-        }
-
-        return null;
-    }
-
-    private static void WriteLastActivity(HttpContext context, DateTimeOffset utcNow)
-    {
-        context.Response.Cookies.Append(
-            LastActivityCookieName,
-            utcNow.ToUnixTimeSeconds().ToString(CultureInfo.InvariantCulture),
-            BuildCookieOptions(context, utcNow.AddHours(12)));
-    }
-
-    private static void ClearLastActivity(HttpContext context)
-    {
-        if (context.Request.Cookies.ContainsKey(LastActivityCookieName))
-        {
-            context.Response.Cookies.Delete(LastActivityCookieName, BuildCookieOptions(context, DateTimeOffset.UtcNow));
-        }
-    }
-
     private static async Task ExpireSessionAsync(HttpContext context)
     {
         await context.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
-        ClearLastActivity(context);
+        SessionActivityCookie.Clear(context);
 
         if (IsApiOrJsonRequest(context))
         {
@@ -127,7 +89,8 @@ public sealed class SessionInactivityMiddleware
         var target = SessionExpiredPath;
         if (!string.IsNullOrWhiteSpace(returnUrl)
             && returnUrl != "/"
-            && !returnUrl.StartsWith("/login", StringComparison.OrdinalIgnoreCase))
+            && !returnUrl.StartsWith("/login", StringComparison.OrdinalIgnoreCase)
+            && !returnUrl.StartsWith("/account/session-activity", StringComparison.OrdinalIgnoreCase))
         {
             target += "&returnUrl=" + Uri.EscapeDataString(returnUrl);
         }
@@ -137,31 +100,14 @@ public sealed class SessionInactivityMiddleware
 
     private static bool IsApiOrJsonRequest(HttpContext context)
     {
-        if (context.Request.Path.StartsWithSegments("/api"))
+        if (context.Request.Path.StartsWithSegments("/api")
+            || context.Request.Path.StartsWithSegments("/account/session-activity"))
         {
             return true;
         }
 
         var accept = context.Request.Headers.Accept.ToString();
         return accept.Contains("application/json", StringComparison.OrdinalIgnoreCase);
-    }
-
-    private static CookieOptions BuildCookieOptions(HttpContext context, DateTimeOffset expires)
-    {
-        var secure = context.Request.IsHttps
-                     || string.Equals(
-                         context.Request.Headers["X-Forwarded-Proto"],
-                         "https",
-                         StringComparison.OrdinalIgnoreCase);
-        return new CookieOptions
-        {
-            HttpOnly = true,
-            Secure = secure,
-            SameSite = SameSiteMode.Lax,
-            IsEssential = true,
-            Expires = expires,
-            Path = "/"
-        };
     }
 }
 

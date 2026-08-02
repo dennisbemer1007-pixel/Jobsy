@@ -131,10 +131,21 @@ public sealed class JobsyApiAuthHandler : DelegatingHandler
 
     private async Task<ClaimsPrincipal> ResolveUserAsync()
     {
-        var httpUser = _httpContextAccessor.HttpContext?.User;
+        var httpContext = _httpContextAccessor.HttpContext;
+        var httpUser = httpContext?.User;
+
+        // Prefer the live HTTP cookie principal. If this request already lost auth
+        // (session inactivity middleware signed out), do not resurrect credentials
+        // from a stale Blazor circuit AuthenticationStateProvider cache.
         if (httpUser?.Identity?.IsAuthenticated == true)
         {
             return httpUser;
+        }
+
+        if (httpContext is not null
+            && !httpContext.Request.Cookies.ContainsKey("Jobsy.Auth"))
+        {
+            return new ClaimsPrincipal(new ClaimsIdentity());
         }
 
         try
