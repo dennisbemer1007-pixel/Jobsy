@@ -102,11 +102,10 @@ public static class HowLobsyRoleGuides
             new("HowLobsy.Intermediary.Step1Title", "HowLobsy.Intermediary.Step1Body", [new("/home", "Nav.Home")]),
             new("HowLobsy.Intermediary.Step2Title", "HowLobsy.Intermediary.Step2Body", [new("/intermediary", "Nav.Clients")]),
             new("HowLobsy.Intermediary.Step3Title", "HowLobsy.Intermediary.Step3Body", [new("/employer/vacancies", "Nav.Vacancies")]),
-            new("HowLobsy.Intermediary.Step4Title", "HowLobsy.Intermediary.Step4Body", [new("/intermediary/batch", "Nav.BatchTool")]),
-            new("HowLobsy.Intermediary.Step5Title", "HowLobsy.Intermediary.Step5Body", [new("/employer/tokens", "Nav.Tokens")]),
-            new("HowLobsy.Intermediary.Step6Title", "HowLobsy.Intermediary.Step6Body", [new("/", "Nav.JobMap")])
+            new("HowLobsy.Intermediary.Step4Title", "HowLobsy.Intermediary.Step4Body", [new("/employer/tokens", "Nav.Tokens")]),
+            new("HowLobsy.Intermediary.Step5Title", "HowLobsy.Intermediary.Step5Body", [new("/", "Nav.JobMap")])
         ],
-        new("/intermediary/batch", "HowLobsy.Intermediary.PrimaryCta"),
+        new("/employer/vacancies", "HowLobsy.Intermediary.PrimaryCta"),
         new("/home", "HowLobsy.Intermediary.SecondaryCta"));
 
     public static readonly Guide Sales = BuildSalesGuide(trackingCode: null);

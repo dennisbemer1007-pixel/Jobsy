@@ -1,50 +1,41 @@
-# Rol: Intermediair
+# Rol: Intermediair (Intermediary)
 
-**Account:** `intermediair@jobsy.local` / `Jobsy123!`  
-**Doel:** batch-hiring voor meerdere opdrachtgevers / client-bedrijven.
+**Account:** `intermediary@jobsy.local` / `Jobsy123!`  
+**Doel:** werven voor meerdere opdrachtgevers / client-bedrijven.
 
 ## Werkbeschrijving
 
-De intermediair werft niet voor één eigen vestiging, maar voor **gekoppelde opdrachtgevers**. Kern is de batch-tool: multi-locatie publicatie vanuit één flow, met een gedeelde tokenwallet.
+De intermediair werft niet voor één eigen vestiging, maar voor **gekoppelde opdrachtgevers**. Kern is het opdrachtgeversoverzicht plus vacature- en tokenbeheer per client.
 
 ### Kerntaken
 
 | Taak | Waar | Toelichting |
 |------|------|-------------|
-| KPI-dashboard | `/home` | Activiteit over gekoppelde bedrijven |
-| Opdrachtgevers | `/intermediary` | Overzicht client-bedrijven |
-| Batch publiceren | `/intermediary/batch` | Multi-locatie in één keer |
-| Tokens | `/employer/tokens` | Gedeelde wallet |
+| KPI-dashboard | `/home` | Resultaten over gekoppelde opdrachtgevers |
+| Opdrachtgevers | `/intermediary` | Actieve vacatures en tokens per client |
+| Vacatures | `/employer/vacancies` | Publiceren/beheren namens opdrachtgevers |
+| Tokens | `/employer/tokens` | Saldo en logs |
 
 ### Bottom-navigatie
 
-Home · Banenkaart · Opdrachtgevers · Batch-tool · Tokens
+Home · Hoe werkt Lobsy · Banenkaart · Vacatures · Opdrachtgevers · Tokens
 
 ### Printscreens
 
 ![Intermediair home](../screenshots/05-intermediair-home.png)
 
-*Dashboard intermediair.*
+*Intermediair dashboard.*
 
 ![Opdrachtgevers](../screenshots/05-intermediair-opdrachtgevers.png)
 
-*Gekoppelde opdrachtgevers.*
-
-![Batch-tool](../screenshots/05-intermediair-batch.png)
-
-*Batch / multi-locatie publicatie.*
-
-![Tokens](../screenshots/05-intermediair-tokens.png)
-
-*Gedeelde tokenwallet.*
+*Gekoppelde opdrachtgevers met vacatures en tokens.*
 
 ---
 
-## Demo-script (± 3 min)
+## Demo-script (± 3–4 min)
 
-1. Log in als `intermediair@jobsy.local`.  
-2. **Home**: KPI’s over opdrachtgevers.  
-3. **Opdrachtgevers**: welke client-bedrijven gekoppeld zijn.  
-4. **Batch-tool**: “één flow, meerdere locaties”.  
-5. **Tokens**: gedeelde wallet.  
-6. Contrast: “Filiaal = één vestiging; intermediair = veel opdrachtgevers.”
+1. Log in als `intermediary@jobsy.local`.  
+2. **Home**: KPI’s over gekoppelde opdrachtgevers.  
+3. **Opdrachtgevers**: overzicht per client.  
+4. **Vacatures**: publiceren/beheren namens een opdrachtgever.  
+5. Afronden: “Intermediair bedient meerdere opdrachtgevers vanuit één account.”

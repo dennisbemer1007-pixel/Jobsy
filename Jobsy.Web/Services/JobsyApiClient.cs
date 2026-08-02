@@ -217,30 +217,6 @@ public sealed class JobsyApiClient : IAsyncDisposable
         return await response.Content.ReadFromJsonAsync<VacancyListItem>(cancellationToken: ct);
     }
 
-    public async Task<IReadOnlyList<VacancyListItem>> CreateBatchAsync(BatchVacancyForm form, CancellationToken ct = default)
-    {
-        var response = await _http.PostAsJsonAsync("api/vacancies/batch", form, ct);
-        if (response.StatusCode == System.Net.HttpStatusCode.UnprocessableEntity)
-        {
-            var feedback = await response.Content.ReadFromJsonAsync<VacancyModerationFeedback>(cancellationToken: ct);
-            if (feedback is not null &&
-                string.Equals(feedback.Code, Jobsy.Core.Interfaces.VacancyModerationCodes.ContentModeration, StringComparison.Ordinal))
-            {
-                throw new VacancyModerationException(
-                    feedback.Message ?? "De vacaturetekst vraagt om een aanpassing.",
-                    feedback.Suggestion ?? "Pas de tekst aan en probeer opnieuw.");
-            }
-        }
-
-        if (!response.IsSuccessStatusCode)
-        {
-            var body = await response.Content.ReadAsStringAsync(ct);
-            throw new InvalidOperationException(TryExtractMessage(body) ?? body);
-        }
-
-        return await response.Content.ReadFromJsonAsync<List<VacancyListItem>>(cancellationToken: ct) ?? [];
-    }
-
     public async Task<VacancyProductActionResult?> PublishVacancyAsync(
         Guid vacancyId,
         bool highlight = false,
@@ -2109,17 +2085,6 @@ public record CreateVacancyForm(
     bool? LegalHeavyOrHazardousWork = null,
     bool ShowClientAddressOnMap = false,
     string Kind = "Regular");
-
-public record BatchVacancyForm(
-    string Title,
-    string Description,
-    decimal HourlyWage,
-    DateOnly StartDate,
-    DateOnly EndDate,
-    TransportMode RequiredTransport,
-    string[] WorkTypes,
-    Guid[] CompanyIds,
-    bool ShowClientAddressOnMap = false);
 
 public sealed class CsvImportRowForm
 {

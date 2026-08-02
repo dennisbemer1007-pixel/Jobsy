@@ -163,6 +163,19 @@ public class RoleNavCatalogTests
         Assert.True(RoleNavCatalog.IsActive(org, "employer/branches", items));
         Assert.False(RoleNavCatalog.IsActive(org, "employer/users", items));
     }
+
+    [Fact]
+    public void ForUser_intermediary_has_no_batch_tool()
+    {
+        var identity = new ClaimsIdentity([new Claim(ClaimTypes.Role, JobsyRoles.Intermediary)], "test");
+        var items = RoleNavCatalog.ForUser(new ClaimsPrincipal(identity));
+
+        Assert.Contains(items, i => i.Href == "/intermediary");
+        Assert.Contains(items, i => i.Href == "/employer/vacancies");
+        Assert.Contains(items, i => i.Href == "/employer/tokens");
+        Assert.DoesNotContain(items, i => i.Href == "/intermediary/batch");
+        Assert.DoesNotContain(items, i => i.TitleKey == "Nav.BatchTool");
+    }
 }
 
 public class RoleClaimMatchingTests

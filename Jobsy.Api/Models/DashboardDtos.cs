@@ -204,13 +204,3 @@ public record VacancyProductActionResultDto(
     string? Message = null,
     int PushBomRecipientCount = 0);
 
-public record BatchVacancyRequest(
-    string Title,
-    string Description,
-    decimal HourlyWage,
-    DateOnly StartDate,
-    DateOnly EndDate,
-    TransportMode RequiredTransport,
-    string[] WorkTypes,
-    Guid[] CompanyIds,
-    bool ShowClientAddressOnMap = false);

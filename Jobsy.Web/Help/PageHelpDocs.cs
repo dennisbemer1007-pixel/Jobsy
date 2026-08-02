@@ -228,14 +228,8 @@ public static class PageHelpDocs
         ["/intermediary"] = new(
             "Intermediair dashboard",
             "Overzicht voor uitzenders/intermediairs en hun opdrachtgevers.",
-            "KPI’s, snelle links naar batch-tool, tokens en sollicitaties.",
+            "KPI’s, opdrachtgevers, vacatures, tokens en sollicitaties.",
             "Meerdere opdrachtgevers bedienen vanuit één account."),
-
-        ["/intermediary/batch"] = new(
-            "Batch-vacatures",
-            "Meerdere vacatures in één flow publiceren of beheren.",
-            "Gebruik de batch-tool om efficiënt vacatures voor opdrachtgevers te plaatsen.",
-            "Volume-publicatie zonder per vacature alles opnieuw te doen."),
 
         ["/salesmanager/onboarding"] = new(
             "Sales onboarding",

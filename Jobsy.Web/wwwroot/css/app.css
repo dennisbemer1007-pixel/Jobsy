@@ -475,12 +475,6 @@ a {
     margin: 0;
 }
 
-.batch-locations {
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 0.75rem 1rem;
-}
-
 .checkbox-row {
     display: flex;
     align-items: center;
