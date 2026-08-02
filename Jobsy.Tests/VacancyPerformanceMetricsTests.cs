@@ -51,6 +51,31 @@ public sealed class VacancyPerformanceMetricsTests
         Assert.Single(board.Flop);
         Assert.Equal(cold.Id, board.Flop[0].VacancyId);
         Assert.Equal(1, board.Flop[0].Clicks);
+        Assert.DoesNotContain(board.Flop, f => f.VacancyId == hot.Id);
+    }
+
+    [Fact]
+    public async Task GetVacancyPerformance_leaves_flop_empty_when_too_few_vacancies()
+    {
+        await using var db = CreateDb();
+        var company = new Company
+        {
+            Id = Guid.NewGuid(),
+            Name = "Small Co",
+            Type = CompanyType.Employer,
+            KvkNumber = "87654321",
+            Address = "Test",
+            Location = new GeoPoint(52, 4)
+        };
+        db.Companies.Add(company);
+        db.Vacancies.Add(MakeVacancy(company.Id, "Only one"));
+        await db.SaveChangesAsync();
+
+        var service = new MetricsQueryService(db);
+        var board = await service.GetVacancyPerformanceAsync([company.Id], "week", take: 3);
+
+        Assert.Single(board.Top);
+        Assert.Empty(board.Flop);
     }
 
     [Fact]

@@ -154,16 +154,24 @@
         _error = null;
         try
         {
-            var metricsTask = Api.GetEmployerMetricsSummaryAsync(_period);
-            var perfTask = Api.GetVacancyPerformanceAsync(_period);
-            await Task.WhenAll(metricsTask, perfTask);
-            _metrics = (await metricsTask).ToList();
-            _vacancyBoard = await perfTask;
+            _metrics = (await Api.GetEmployerMetricsSummaryAsync(_period)).ToList();
         }
         catch (Exception ex)
         {
             _error = ex.Message;
             _metrics = [];
+            _vacancyBoard = null;
+            _loading = false;
+            return;
+        }
+
+        try
+        {
+            _vacancyBoard = await Api.GetVacancyPerformanceAsync(_period);
+        }
+        catch
+        {
+            // KPI tiles stay available when Top/Flop fails independently.
             _vacancyBoard = null;
         }
         finally

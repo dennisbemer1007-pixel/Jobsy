@@ -73,6 +73,7 @@ public class RoleFunctionalRegressionTests : IClassFixture<RoleFunctionalWebAppF
         Assert.Equal(HttpStatusCode.Unauthorized, (await client.GetAsync("api/applications")).StatusCode);
         Assert.Equal(HttpStatusCode.Unauthorized, (await client.GetAsync("api/vacancies/manage")).StatusCode);
         Assert.Equal(HttpStatusCode.Unauthorized, (await client.GetAsync("api/metrics/summary?period=day")).StatusCode);
+        Assert.Equal(HttpStatusCode.Unauthorized, (await client.GetAsync("api/metrics/vacancy-performance?period=day")).StatusCode);
         Assert.Equal(HttpStatusCode.Unauthorized, (await client.GetAsync("api/integrations/health")).StatusCode);
 
         var apply = await client.PostAsJsonAsync("api/applications", new
@@ -231,6 +232,7 @@ public class RoleFunctionalRegressionTests : IClassFixture<RoleFunctionalWebAppF
         Assert.Equal(HttpStatusCode.Forbidden, (await client.GetAsync("api/applications")).StatusCode);
         Assert.Equal(HttpStatusCode.Forbidden, (await client.GetAsync("api/vacancies/manage")).StatusCode);
         Assert.Equal(HttpStatusCode.Forbidden, (await client.GetAsync("api/metrics/summary?period=day")).StatusCode);
+        Assert.Equal(HttpStatusCode.Forbidden, (await client.GetAsync("api/metrics/vacancy-performance?period=day")).StatusCode);
         Assert.Equal(HttpStatusCode.Forbidden, (await client.GetAsync("api/integrations/health")).StatusCode);
     }
 
@@ -289,6 +291,17 @@ public class RoleFunctionalRegressionTests : IClassFixture<RoleFunctionalWebAppF
     }
 
     [Fact]
+    public async Task Employer_can_load_vacancy_performance_board()
+    {
+        var client = EmployerClient();
+        var response = await client.GetAsync("api/metrics/vacancy-performance?period=week&take=3");
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var body = await response.Content.ReadAsStringAsync();
+        Assert.Contains("top", body, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("flop", body, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
     public void Employer_role_capabilities_match_policy_matrix()
     {
         Assert.True(JobsyRoles.CanManageVacancyLifecycle(UserRole.BranchManager));
@@ -308,6 +321,9 @@ public class RoleFunctionalRegressionTests : IClassFixture<RoleFunctionalWebAppF
 
         var metrics = await client.GetAsync("api/metrics/summary?period=day");
         Assert.Equal(HttpStatusCode.OK, metrics.StatusCode);
+
+        var vacancyPerf = await client.GetAsync("api/metrics/vacancy-performance?period=day&take=3");
+        Assert.Equal(HttpStatusCode.OK, vacancyPerf.StatusCode);
 
         var health = await client.GetAsync("api/integrations/health");
         Assert.Equal(HttpStatusCode.OK, health.StatusCode);

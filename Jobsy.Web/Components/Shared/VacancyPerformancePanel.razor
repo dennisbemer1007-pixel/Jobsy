@@ -46,9 +46,17 @@
             <h3>Top 3 slechtst bekeken</h3>
             <p>Minste views / clicks</p>
         </header>
-        @if (Board is null || Board.Flop.Count == 0)
+        @if (Board is null)
         {
             <p class="bento-rank__empty muted">Nog geen data in deze periode.</p>
+        }
+        else if (Board.Flop.Count == 0)
+        {
+            <p class="bento-rank__empty muted">
+                @(Board.Top.Count > 0
+                    ? "Te weinig actieve vacatures voor een aparte flop-lijst."
+                    : "Nog geen data in deze periode.")
+            </p>
         }
         else
         {
