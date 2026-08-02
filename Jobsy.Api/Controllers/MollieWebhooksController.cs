@@ -71,7 +71,7 @@ public sealed class MollieWebhooksController : ControllerBase
                     if (result is not null)
                     {
                         _logger.LogInformation(
-                            "Mollie webhook fulfilled checkout {CheckoutId} method={Method} → invoice {InvoiceNumber}",
+                            "Mollie webhook fulfilled checkout {CheckoutId} method={Method} → invoice {InvoiceNumber} (tokens + commission settlement)",
                             result.CheckoutId, status.Method ?? "unknown", result.InvoiceNumber);
                     }
                 }

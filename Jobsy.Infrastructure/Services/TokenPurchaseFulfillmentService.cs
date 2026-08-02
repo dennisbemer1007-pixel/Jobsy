@@ -63,9 +63,15 @@ public sealed class TokenPurchaseFulfillmentService : ITokenPurchaseFulfillmentS
             return null;
         }
 
-        // Already fully fulfilled.
+        // Already fully fulfilled — still retry commission settlement (idempotent) so a
+        // transient failure after invoice never leaves salesmanagers without credit.
         if (session.TokenPurchaseInvoiceId is Guid existingInvoiceId)
         {
+            if (session.TokenTransactionId is Guid creditedTxId)
+            {
+                await TryApplyRevenueShareAsync(session, creditedTxId, cancellationToken);
+            }
+
             var already = await BuildResultAsync(session, existingInvoiceId, alreadyFulfilled: true, cancellationToken);
             var pendingAlready = await TryRunPendingActionAsync(session.Id, cancellationToken);
             return already with { PendingAction = pendingAlready };
@@ -292,6 +298,11 @@ public sealed class TokenPurchaseFulfillmentService : ITokenPurchaseFulfillmentS
         session.TokenPurchaseInvoiceId = invoice.Id;
     }
 
+    /// <summary>
+    /// Real-time commission settlement triggered from Mollie webhook / checkout complete.
+    /// Uses ex-BTW purchase base; direct + upline credits land on the commission ledger immediately.
+    /// Failures are logged (not fatal) — retry on subsequent webhook/complete via already-fulfilled path.
+    /// </summary>
     private async Task TryApplyRevenueShareAsync(
         TokenPurchaseCheckout session,
         Guid purchaseTokenTransactionId,
@@ -304,15 +315,41 @@ public sealed class TokenPurchaseFulfillmentService : ITokenPurchaseFulfillmentS
             return;
         }
 
-        await _revenueShare.ApplyTokenPurchaseShareAsync(
-            session.Id,
-            session.CompanyId,
-            purchaseTokenTransactionId,
-            session.PackSize,
-            session.AmountEuro,
-            company.ReferredBySalesManagerUserId,
-            company.FirstYearStartedAt,
-            cancellationToken);
+        EnsureMoneyFields(session);
+        var purchaseExVatEuro = TokenVatPricing.FromCents(session.AmountExVatCents);
+        if (purchaseExVatEuro <= 0 && session.AmountEuro > 0)
+        {
+            // Legacy sessions without cents: derive ex-BTW from incl. total.
+            purchaseExVatEuro = TokenVatPricing.FromCents(
+                TokenVatPricing.SplitInclVatEuros(session.AmountEuro).ExVatCents);
+        }
+
+        try
+        {
+            await _revenueShare.ApplyTokenPurchaseShareAsync(
+                session.Id,
+                session.CompanyId,
+                purchaseTokenTransactionId,
+                session.PackSize,
+                purchaseExVatEuro,
+                company.ReferredBySalesManagerUserId,
+                company.FirstYearStartedAt,
+                cancellationToken);
+
+            if (company.ReferredBySalesManagerUserId is Guid smId)
+            {
+                _logger.LogInformation(
+                    "Commission settlement applied for checkout {CheckoutId}: company {CompanyId}, SM {SalesManagerId}, exVat €{ExVat}",
+                    session.Id, session.CompanyId, smId, purchaseExVatEuro);
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(
+                ex,
+                "Commission settlement failed for checkout {CheckoutId} (tokens/invoice remain; will retry on next webhook/complete)",
+                session.Id);
+        }
     }
 
     private async Task<TokenPurchaseFulfillmentResult> BuildResultAsync(

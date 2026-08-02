@@ -197,7 +197,7 @@ public sealed class CommissionLedgerService : ICommissionLedgerService
             AmountExVat = amountEx,
             VatAmount = SalesCommissionRules.VatOn(amountEx),
             VatRate = SalesCommissionRules.VatRate,
-            Note = $"{notePrefix} {(rate.Value * 100):0.##}% over €{purchaseAmountEuro:0.00}",
+            Note = $"{notePrefix} {(rate.Value * 100):0.##}% over €{purchaseAmountEuro:0.00} ex BTW",
             CompanyId = companyId,
             SourceTokenCheckoutId = tokenCheckoutId,
             CreatedAt = DateTime.UtcNow

@@ -130,7 +130,7 @@ public class TokenPurchaseFulfillmentIdempotencyTests
             Guid companyId,
             Guid? purchaseTokenTransactionId,
             int packSize,
-            decimal purchaseAmountEuro,
+            decimal purchaseAmountExVatEuro,
             Guid? salesManagerUserId,
             DateTime? firstYearStartedAt,
             CancellationToken cancellationToken = default)

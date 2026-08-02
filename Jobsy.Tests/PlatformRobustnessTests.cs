@@ -220,7 +220,7 @@ public class PlatformRobustnessTests
         var checkoutId = Guid.NewGuid();
         await share.ApplyTokenPurchaseShareAsync(
             checkoutId, companyId, Guid.NewGuid(),
-            packSize: 10, purchaseAmountEuro: 100m, smId, DateTime.UtcNow.AddMonths(-1));
+            packSize: 10, purchaseAmountExVatEuro: 100m, smId, DateTime.UtcNow.AddMonths(-1));
 
         var logs = await db.RevenueShareLogs.Where(l => l.TokenCheckoutId == checkoutId).ToListAsync();
         Assert.Contains(logs, l => l.RecipientKind == RevenueShareRecipientKind.SalesManager && l.AmountEuro == 15m);

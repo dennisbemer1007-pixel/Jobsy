@@ -140,7 +140,7 @@ public class SalesManagerReferralHierarchyTests
 
         var checkoutId = Guid.NewGuid();
         await share.ApplyTokenPurchaseShareAsync(
-            checkoutId, companyId, null, packSize: 10, purchaseAmountEuro: 100m,
+            checkoutId, companyId, null, packSize: 10, purchaseAmountExVatEuro: 100m,
             childId, now.AddMonths(-2));
 
         Assert.Equal(15.00m, await commissions.GetBalanceExVatAsync(childId));

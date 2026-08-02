@@ -5,8 +5,10 @@ namespace Jobsy.Core.Interfaces;
 public interface IRevenueShareService
 {
     /// <summary>
-    /// Applies revenue share after a referred company token purchase is credited:
-    /// ambassador tokens + direct SM commission (within window) + optional indirect SM + platform remainder.
+    /// Applies automated settlement after a referred company's Mollie token purchase is credited:
+    /// ambassador tokens + direct SM commission (default 15%, within 1-year window) +
+    /// optional indirect/upline SM (default 3%) + platform remainder.
+    /// <paramref name="purchaseAmountExVatEuro"/> is the ex-BTW purchase base.
     /// Idempotent on <paramref name="tokenCheckoutId"/>.
     /// </summary>
     Task ApplyTokenPurchaseShareAsync(
@@ -14,7 +16,7 @@ public interface IRevenueShareService
         Guid companyId,
         Guid? purchaseTokenTransactionId,
         int packSize,
-        decimal purchaseAmountEuro,
+        decimal purchaseAmountExVatEuro,
         Guid? salesManagerUserId,
         DateTime? firstYearStartedAt,
         CancellationToken cancellationToken = default);

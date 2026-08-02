@@ -60,7 +60,7 @@ public class RevenueShareServiceTests
             companyId,
             purchaseTxId,
             packSize: 10,
-            purchaseAmountEuro: 100m,
+            purchaseAmountExVatEuro: 100m,
             smId,
             DateTime.UtcNow.AddMonths(-1));
 
@@ -70,7 +70,7 @@ public class RevenueShareServiceTests
             companyId,
             purchaseTxId,
             packSize: 10,
-            purchaseAmountEuro: 100m,
+            purchaseAmountExVatEuro: 100m,
             smId,
             DateTime.UtcNow.AddMonths(-1));
 

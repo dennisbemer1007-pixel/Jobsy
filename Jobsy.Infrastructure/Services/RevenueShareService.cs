@@ -30,12 +30,12 @@ public sealed class RevenueShareService : IRevenueShareService
         Guid companyId,
         Guid? purchaseTokenTransactionId,
         int packSize,
-        decimal purchaseAmountEuro,
+        decimal purchaseAmountExVatEuro,
         Guid? salesManagerUserId,
         DateTime? firstYearStartedAt,
         CancellationToken cancellationToken = default)
     {
-        if (purchaseAmountEuro <= 0 || packSize <= 0)
+        if (purchaseAmountExVatEuro <= 0 || packSize <= 0)
         {
             return;
         }
@@ -106,6 +106,7 @@ public sealed class RevenueShareService : IRevenueShareService
         }
 
         var asOf = DateTime.UtcNow;
+        // Hard stop: no SM commissions after the entrepreneur's 1-year window (from FirstYearStartedAt).
         var withinWindow = SalesCommissionRules.IsWithinCommissionWindow(
             firstYearStartedAt, asOf, durationDays);
 
@@ -121,11 +122,11 @@ public sealed class RevenueShareService : IRevenueShareService
 
         var ambassadorTokens = SalesCommissionRules.AmbassadorTokens(packSize);
         var ambassadorEuro = SalesCommissionRules.ShareEuro(
-            purchaseAmountEuro, SalesCommissionRules.AmbassadorShareRate);
-        var smEuro = SalesCommissionRules.ShareEuro(purchaseAmountEuro, appliedDirectRate);
-        var indirectEuro = SalesCommissionRules.ShareEuro(purchaseAmountEuro, appliedIndirectRate);
+            purchaseAmountExVatEuro, SalesCommissionRules.AmbassadorShareRate);
+        var smEuro = SalesCommissionRules.ShareEuro(purchaseAmountExVatEuro, appliedDirectRate);
+        var indirectEuro = SalesCommissionRules.ShareEuro(purchaseAmountExVatEuro, appliedIndirectRate);
         var platformRate = SalesCommissionRules.PlatformShareRate(appliedDirectRate, appliedIndirectRate);
-        var platformEuro = SalesCommissionRules.ShareEuro(purchaseAmountEuro, platformRate);
+        var platformEuro = SalesCommissionRules.ShareEuro(purchaseAmountExVatEuro, platformRate);
 
         if (ambassadorTokens > 0)
         {
@@ -143,7 +144,7 @@ public sealed class RevenueShareService : IRevenueShareService
                 salesManagerUserId.Value,
                 companyId,
                 tokenCheckoutId,
-                purchaseAmountEuro,
+                purchaseAmountExVatEuro,
                 firstYearStartedAt,
                 appliedDirectRate,
                 durationDays,
@@ -156,7 +157,7 @@ public sealed class RevenueShareService : IRevenueShareService
                 parentSmId,
                 companyId,
                 tokenCheckoutId,
-                purchaseAmountEuro,
+                purchaseAmountExVatEuro,
                 firstYearStartedAt,
                 appliedIndirectRate,
                 durationDays,
