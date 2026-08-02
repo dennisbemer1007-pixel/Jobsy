@@ -117,6 +117,14 @@ public class TokensController : ControllerBase
             return NotFound(new { message = "Bedrijf niet gevonden." });
         }
 
+        if (!Jobsy.Core.Rules.KvkVerificationRules.CanPublishOrSpend(company.KvkVerificationStatus))
+        {
+            return BadRequest(new
+            {
+                message = Jobsy.Core.Rules.KvkVerificationRules.BlockedMessage(company.KvkVerificationStatus)
+            });
+        }
+
         var purchaseTargetId = request.CompanyId;
         var isEnterprise = User.IsInRole(JobsyRoles.EnterpriseManager);
         var isBranch = User.IsInRole(JobsyRoles.BranchManager);

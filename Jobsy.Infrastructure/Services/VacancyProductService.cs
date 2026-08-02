@@ -62,6 +62,11 @@ public sealed class VacancyProductService : IVacancyProductService
         }
 
         var company = await _db.Companies.FirstOrDefaultAsync(c => c.Id == vacancy.CompanyId, cancellationToken);
+        if (company is not null && !KvkVerificationRules.CanPublishOrSpend(company.KvkVerificationStatus))
+        {
+            return Fail(vacancy, KvkVerificationRules.BlockedMessage(company.KvkVerificationStatus));
+        }
+
         var useStartHighlight = company?.PendingStartHighlightBonus == true;
         if (useStartHighlight)
         {
@@ -234,6 +239,12 @@ public sealed class VacancyProductService : IVacancyProductService
         if (vacancy.Status != VacancyStatus.PendingApproval)
         {
             return Fail(vacancy, "Alleen vacatures met status PendingApproval kunnen worden goedgekeurd.");
+        }
+
+        var kvkBlock = await EnsureKvkAllowsPublishOrSpendAsync(vacancy.CompanyId, vacancy, cancellationToken);
+        if (kvkBlock is not null)
+        {
+            return kvkBlock;
         }
 
         var options = new VacancyPublishOptions(
@@ -1030,6 +1041,23 @@ public sealed class VacancyProductService : IVacancyProductService
     {
         var features = await _features.GetAsync(cancellationToken);
         return features.PublicWebBaseUrl.TrimEnd('/') + relativePath;
+    }
+
+    private async Task<VacancyProductOutcome?> EnsureKvkAllowsPublishOrSpendAsync(
+        Guid companyId,
+        Vacancy vacancy,
+        CancellationToken cancellationToken)
+    {
+        var status = await _db.Companies.AsNoTracking()
+            .Where(c => c.Id == companyId)
+            .Select(c => c.KvkVerificationStatus)
+            .FirstOrDefaultAsync(cancellationToken);
+        if (!KvkVerificationRules.CanPublishOrSpend(status))
+        {
+            return Fail(vacancy, KvkVerificationRules.BlockedMessage(status));
+        }
+
+        return null;
     }
 
     private static VacancyProductOutcome Fail(Vacancy vacancy, string message)

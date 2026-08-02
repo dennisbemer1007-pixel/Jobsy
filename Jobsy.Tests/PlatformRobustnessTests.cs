@@ -86,9 +86,21 @@ public class PlatformRobustnessTests
         });
         await db.SaveChangesAsync();
 
+        var registration = new CompanyRegistrationService(
+            db,
+            new KvkServiceStub(db),
+            new EmailServiceStub(db, NullLogger<EmailServiceStub>.Instance),
+            new TokenLedgerService(db),
+            new PlatformFeatureService(
+                db,
+                Microsoft.Extensions.Options.Options.Create(new Jobsy.Core.Options.JobsyFeatureOptions()),
+                new ConfigurationBuilder().Build()),
+            NullLogger<CompanyRegistrationService>.Instance);
+
         var retry = new KvkVerificationRetryService(
             db,
             new KvkServiceStub(db),
+            registration,
             NullLogger<KvkVerificationRetryService>.Instance);
 
         var verified = await retry.RetryPendingAsync();
@@ -98,6 +110,60 @@ public class PlatformRobustnessTests
         Assert.Equal(KvkVerificationStatus.Verified, company.KvkVerificationStatus);
         Assert.NotNull(company.KvkVerifiedAtUtc);
         Assert.Contains("Westland", company.Name, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public async Task Pending_kvk_blocks_publish()
+    {
+        await using var db = CreateDb();
+        var companyId = Guid.NewGuid();
+        var today = DateOnly.FromDateTime(DateTime.UtcNow);
+        db.Companies.Add(new Company
+        {
+            Id = companyId,
+            Name = "Pending Co",
+            KvkNumber = "88887777",
+            KvkEstablishmentId = "88887777_0001",
+            Address = "A",
+            Location = new GeoPoint(52, 4),
+            KvkVerificationStatus = KvkVerificationStatus.Pending
+        });
+        var vacancy = new Vacancy
+        {
+            Id = Guid.NewGuid(),
+            CompanyId = companyId,
+            Title = "Draft",
+            Description = "d",
+            Status = VacancyStatus.Draft,
+            HourlyWage = 14,
+            StartDate = today,
+            EndDate = today.AddMonths(1),
+            Location = new GeoPoint(52, 4)
+        };
+        db.Vacancies.Add(vacancy);
+        await db.SaveChangesAsync();
+
+        var features = new PlatformFeatureService(
+            db,
+            Microsoft.Extensions.Options.Options.Create(new Jobsy.Core.Options.JobsyFeatureOptions()),
+            new ConfigurationBuilder().Build());
+        var products = new VacancyProductService(
+            db,
+            new TokenLedgerService(db),
+            new SalesCommercialService(db, new TokenLedgerService(db)),
+            new PushNotificationServiceStub(db, NullLogger<PushNotificationServiceStub>.Instance),
+            new EmailServiceStub(db, NullLogger<EmailServiceStub>.Instance),
+            features,
+            new MockRoutingService(),
+            NullLogger<VacancyProductService>.Instance);
+
+        var result = await products.PublishAsync(
+            vacancy,
+            new VacancyPublishOptions(false, false, false),
+            actorUserId: null);
+
+        Assert.False(result.Succeeded);
+        Assert.Contains("KVK-verificatie", result.ErrorMessage, StringComparison.OrdinalIgnoreCase);
     }
 
     [Fact]

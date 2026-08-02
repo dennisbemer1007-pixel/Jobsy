@@ -101,9 +101,11 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
                     ?? "KVK-dienst is tijdelijk niet beschikbaar. Probeer later opnieuw of kies doorgaan met verificatie in afwachting.");
             }
 
-            match = BuildPendingEstablishmentSnapshot(request, kvkNumber, establishmentId);
+            // Never trust client-declared SBI/intermediary during an outage — always Employer
+            // until the retry job confirms SBI 78* from KVK.
+            match = BuildPendingEstablishmentSnapshot(request, kvkNumber);
             kvkVerificationStatus = KvkVerificationStatus.Pending;
-            sbiCodes = request.ManualIsIntermediarySbi == true ? ["7820"] : [];
+            sbiCodes = [];
         }
         else if (lookup.Status == KvkLookupStatus.NotFound)
         {
@@ -871,7 +873,9 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
                 Address = est.Address,
                 Location = new GeoPoint(est.Latitude, est.Longitude),
                 Type = CompanyType.Employer,
-                ParentCompanyId = orgId
+                ParentCompanyId = orgId,
+                KvkVerificationStatus = KvkVerificationStatus.Verified,
+                KvkVerifiedAtUtc = DateTime.UtcNow
             };
             _db.Companies.Add(sibling);
             await WmlSalaryTableService.EnsureForCompanyAsync(_db, sibling.Id, cancellationToken);
@@ -1335,8 +1339,7 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
 
     private static KvkEstablishmentResult BuildPendingEstablishmentSnapshot(
         RegistrationSubmitRequest request,
-        string kvkNumber,
-        string establishmentId)
+        string kvkNumber)
     {
         var name = request.ManualEstablishmentName?.Trim();
         var address = request.ManualEstablishmentAddress?.Trim();
@@ -1363,17 +1366,9 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
             throw new ArgumentException("KVK-nummer moet 8 cijfers zijn.");
         }
 
+        // Always derive establishment id server-side — never accept a client override
+        // that could squat on another vestiging during an outage.
         var composedId = $"{normalizedKvk}_{establishmentNumber}";
-        if (!string.IsNullOrWhiteSpace(establishmentId)
-            && !establishmentId.Equals(composedId, StringComparison.OrdinalIgnoreCase)
-            && !establishmentId.Equals(establishmentNumber, StringComparison.OrdinalIgnoreCase))
-        {
-            // Prefer explicit client id when it already matches KVK_vestiging form.
-            if (establishmentId.Contains('_', StringComparison.Ordinal))
-            {
-                composedId = establishmentId.Trim();
-            }
-        }
 
         // Default NL centroid when the user cannot geocode during an outage.
         var lat = request.ManualLatitude ?? 52.1326;
@@ -1388,6 +1383,17 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
             lat,
             lng,
             IsInUse: false,
-            SbiCodes: request.ManualIsIntermediarySbi == true ? ["7820"] : null);
+            SbiCodes: null);
     }
+
+    /// <summary>
+    /// After a deferred KVK verification succeeds for an organisation branch,
+    /// claim free sibling vestigingen under the parent (same as verified activation).
+    /// </summary>
+    internal async Task ClaimSiblingEstablishmentsForOrgAsync(
+        string kvkNumber,
+        Guid orgId,
+        Guid excludeBranchId,
+        CancellationToken cancellationToken)
+        => await ClaimSiblingEstablishmentsAsync(kvkNumber, orgId, excludeBranchId, cancellationToken);
 }

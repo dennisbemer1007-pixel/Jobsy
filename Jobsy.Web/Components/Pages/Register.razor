@@ -52,10 +52,7 @@
                     Vestigingsnummer
                     <input @bind="_manualEstablishmentNumber" required maxlength="16" placeholder="0001" />
                 </label>
-                <label class="profile-toggle">
-                    <input type="checkbox" @bind="_manualIsIntermediary" />
-                    <span>Dit is een uitzend-/arbeidsbemiddelingsbureau (SBI 78)</span>
-                </label>
+                <p class="muted">Intermediair-rol (SBI 78) wordt pas toegekend nadat KVK-verificatie slaagt — niet handmatig tijdens een storing.</p>
                 <div class="wizard-actions">
                     <button class="provider-btn" type="button" @onclick="() => { _step = 1; _kvkUnavailable = false; _error = null; }">@Culture["Common.Back"]</button>
                     <button class="login-submit" type="submit" disabled="@_busy">Doorgaan (KVK in afwachting)</button>
@@ -224,7 +221,6 @@
     private string _manualName = "";
     private string _manualAddress = "";
     private string _manualEstablishmentNumber = "0001";
-    private bool _manualIsIntermediary;
     private List<KvkEstablishmentItem> _establishments = [];
     private KvkEstablishmentItem? _selected;
 
@@ -311,11 +307,10 @@
             Latitude = 52.1326,
             Longitude = 5.2913,
             IsInUse = false,
-            SbiCodes = _manualIsIntermediary ? ["7820"] : null
+            SbiCodes = null
         };
         _pendingKvk = true;
         _error = null;
-        _scope = _manualIsIntermediary ? "BranchOnly" : _scope;
         _step = 3;
     }
 
@@ -397,7 +392,7 @@
                 manualEstablishmentNumber: _pendingKvk ? _selected.EstablishmentNumber : null,
                 manualLatitude: _pendingKvk ? _selected.Latitude : null,
                 manualLongitude: _pendingKvk ? _selected.Longitude : null,
-                manualIsIntermediarySbi: _pendingKvk ? _selected.IsIntermediarySbi : null);
+                manualIsIntermediarySbi: null);
 
             _message = result.Message;
             _activationUrl = result.ActivationUrl;

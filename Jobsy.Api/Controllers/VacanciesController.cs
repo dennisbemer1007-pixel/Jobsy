@@ -537,7 +537,7 @@ public class VacanciesController : ControllerBase
             return NotFound();
         }
 
-        var access = await EnsureCompanyAccessAsync(vacancy.CompanyId, cancellationToken);
+        var access = await EnsureVacancyManageAccessAsync(vacancy, cancellationToken);
         if (access is not null)
         {
             return access;
@@ -570,7 +570,7 @@ public class VacanciesController : ControllerBase
             return NotFound();
         }
 
-        var access = await EnsureCompanyAccessAsync(vacancy.CompanyId, cancellationToken);
+        var access = await EnsureVacancyManageAccessAsync(vacancy, cancellationToken);
         if (access is not null)
         {
             return access;
@@ -607,7 +607,7 @@ public class VacanciesController : ControllerBase
             return NotFound();
         }
 
-        var access = await EnsureCompanyAccessAsync(vacancy.CompanyId, cancellationToken);
+        var access = await EnsureVacancyManageAccessAsync(vacancy, cancellationToken);
         if (access is not null)
         {
             return access;
@@ -658,7 +658,7 @@ public class VacanciesController : ControllerBase
             return NotFound();
         }
 
-        var access = await EnsureCompanyAccessAsync(vacancy.CompanyId, cancellationToken);
+        var access = await EnsureVacancyManageAccessAsync(vacancy, cancellationToken);
         if (access is not null)
         {
             return access;
@@ -688,7 +688,7 @@ public class VacanciesController : ControllerBase
             return NotFound();
         }
 
-        var access = await EnsureCompanyAccessAsync(vacancy.CompanyId, cancellationToken);
+        var access = await EnsureVacancyManageAccessAsync(vacancy, cancellationToken);
         if (access is not null)
         {
             return access;
@@ -710,7 +710,7 @@ public class VacanciesController : ControllerBase
             return NotFound();
         }
 
-        var access = await EnsureCompanyAccessAsync(vacancy.CompanyId, cancellationToken);
+        var access = await EnsureVacancyManageAccessAsync(vacancy, cancellationToken);
         if (access is not null)
         {
             return access;
@@ -773,7 +773,7 @@ public class VacanciesController : ControllerBase
             return NotFound();
         }
 
-        var access = await EnsureCompanyAccessAsync(vacancy.CompanyId, cancellationToken);
+        var access = await EnsureVacancyManageAccessAsync(vacancy, cancellationToken);
         if (access is not null)
         {
             return access;

@@ -1,5 +1,8 @@
+using Jobsy.Core.Entities;
 using Jobsy.Core.Enums;
 using Jobsy.Core.Interfaces;
+using Jobsy.Core.Rules;
+using Jobsy.Core.ValueObjects;
 using Jobsy.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
@@ -12,15 +15,18 @@ public sealed class KvkVerificationRetryService : IKvkVerificationRetryService
 
     private readonly JobsyDbContext _db;
     private readonly IKvkService _kvk;
+    private readonly CompanyRegistrationService _registration;
     private readonly ILogger<KvkVerificationRetryService> _logger;
 
     public KvkVerificationRetryService(
         JobsyDbContext db,
         IKvkService kvk,
+        CompanyRegistrationService registration,
         ILogger<KvkVerificationRetryService> logger)
     {
         _db = db;
         _kvk = kvk;
+        _registration = registration;
         _logger = logger;
     }
 
@@ -72,13 +78,64 @@ public sealed class KvkVerificationRetryService : IKvkVerificationRetryService
                 continue;
             }
 
+            // Ownership: if another company already owns this establishment, do not auto-verify.
+            var occupiedByOther = await _db.Companies.AsNoTracking()
+                .AnyAsync(
+                    c => c.Id != company.Id
+                         && c.KvkEstablishmentId == company.KvkEstablishmentId
+                         && c.KvkVerificationStatus == KvkVerificationStatus.Verified,
+                    cancellationToken);
+            if (occupiedByOther || match.IsInUse)
+            {
+                // IsInUse may include this company itself — re-check excluding self.
+                var otherOwner = await _db.Companies.AsNoTracking()
+                    .Where(c => c.KvkEstablishmentId == company.KvkEstablishmentId && c.Id != company.Id)
+                    .Select(c => c.Id)
+                    .FirstOrDefaultAsync(cancellationToken);
+                if (otherOwner != Guid.Empty)
+                {
+                    company.KvkVerificationStatus = KvkVerificationStatus.Failed;
+                    _logger.LogWarning(
+                        "KVK verification rejected for company {CompanyId}: establishment {Establishment} already owned",
+                        company.Id, company.KvkEstablishmentId);
+                    continue;
+                }
+            }
+
             company.Name = match.Name;
             company.Address = match.Address;
-            company.Location = new Core.ValueObjects.GeoPoint(match.Latitude, match.Longitude);
+            company.Location = new GeoPoint(match.Latitude, match.Longitude);
             company.KvkVerificationStatus = KvkVerificationStatus.Verified;
             company.KvkVerifiedAtUtc = DateTime.UtcNow;
-            verified++;
 
+            var kvkCompany = await _kvk.GetByKvkNumberAsync(company.KvkNumber, cancellationToken);
+            var sbiCodes = kvkCompany?.EffectiveSbiCodes.Count > 0
+                ? kvkCompany.EffectiveSbiCodes
+                : match.EffectiveSbiCodes;
+            await ApplyVerifiedSbiClassificationAsync(company, sbiCodes, cancellationToken);
+
+            if (company.ParentCompanyId is Guid orgId)
+            {
+                var org = await _db.Companies.FirstOrDefaultAsync(c => c.Id == orgId, cancellationToken);
+                if (org is not null)
+                {
+                    org.KvkVerificationStatus = KvkVerificationStatus.Verified;
+                    org.KvkVerifiedAtUtc ??= DateTime.UtcNow;
+                    if (kvkCompany is not null)
+                    {
+                        org.Name = kvkCompany.Name;
+                        org.Address = kvkCompany.Address;
+                    }
+
+                    await _registration.ClaimSiblingEstablishmentsForOrgAsync(
+                        company.KvkNumber, orgId, company.Id, cancellationToken);
+
+                    // Membership for newly claimed siblings for the org's enterprise managers.
+                    await EnsureOrgMembershipsForSiblingsAsync(orgId, cancellationToken);
+                }
+            }
+
+            verified++;
             _logger.LogInformation(
                 "KVK verification succeeded for company {CompanyId} ({Establishment})",
                 company.Id, company.KvkEstablishmentId);
@@ -86,5 +143,74 @@ public sealed class KvkVerificationRetryService : IKvkVerificationRetryService
 
         await _db.SaveChangesAsync(cancellationToken);
         return verified;
+    }
+
+    private async Task ApplyVerifiedSbiClassificationAsync(
+        Company company,
+        IReadOnlyList<string> sbiCodes,
+        CancellationToken cancellationToken)
+    {
+        var isIntermediary = KvkSbiClassification.IsIntermediary(sbiCodes);
+        if (!isIntermediary)
+        {
+            return;
+        }
+
+        // Promote pending employer → intermediary only after KVK confirms SBI 78*.
+        if (company.Type != CompanyType.Intermediary)
+        {
+            company.Type = CompanyType.Intermediary;
+            company.ParentCompanyId = null;
+        }
+
+        var users = await _db.Users
+            .Where(u => u.CompanyId == company.Id
+                        && (u.Role == UserRole.BranchManager
+                            || u.Role == UserRole.EnterpriseManager
+                            || u.Role == UserRole.RegionalManager))
+            .ToListAsync(cancellationToken);
+        foreach (var user in users)
+        {
+            user.Role = UserRole.Intermediary;
+        }
+    }
+
+    private async Task EnsureOrgMembershipsForSiblingsAsync(
+        Guid orgId,
+        CancellationToken cancellationToken)
+    {
+        var managers = await _db.Users
+            .Where(u => u.Role == UserRole.EnterpriseManager && u.CompanyId == orgId)
+            .Select(u => u.Id)
+            .ToListAsync(cancellationToken);
+        if (managers.Count == 0)
+        {
+            return;
+        }
+
+        var childIds = await _db.Companies
+            .Where(c => c.ParentCompanyId == orgId)
+            .Select(c => c.Id)
+            .ToListAsync(cancellationToken);
+        childIds.AddRange(_db.Companies.Local
+            .Where(c => c.ParentCompanyId == orgId)
+            .Select(c => c.Id));
+
+        foreach (var managerId in managers.Distinct())
+        {
+            foreach (var childId in childIds.Distinct())
+            {
+                var exists = await _db.UserCompanies
+                    .AnyAsync(m => m.UserId == managerId && m.CompanyId == childId, cancellationToken);
+                if (!exists && !_db.UserCompanies.Local.Any(m => m.UserId == managerId && m.CompanyId == childId))
+                {
+                    _db.UserCompanies.Add(new UserCompany
+                    {
+                        UserId = managerId,
+                        CompanyId = childId
+                    });
+                }
+            }
+        }
     }
 }

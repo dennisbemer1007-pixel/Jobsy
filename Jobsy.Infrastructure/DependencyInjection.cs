@@ -133,7 +133,8 @@ public static class DependencyInjection
         services.AddScoped<IPlatformFeatureService, PlatformFeatureService>();
         services.AddScoped<IPlatformCompanySettingsService, PlatformCompanySettingsService>();
         services.AddScoped<IAboutPageSettingsService, AboutPageSettingsService>();
-        services.AddScoped<ICompanyRegistrationService, CompanyRegistrationService>();
+        services.AddScoped<CompanyRegistrationService>();
+        services.AddScoped<ICompanyRegistrationService>(sp => sp.GetRequiredService<CompanyRegistrationService>());
         services.AddScoped<ISalesManagerInviteService, SalesManagerInviteService>();
         services.AddScoped<ISalesManagerApplicationService, SalesManagerApplicationService>();
         services.AddScoped<ISalesManagerOnboardingService, SalesManagerOnboardingService>();

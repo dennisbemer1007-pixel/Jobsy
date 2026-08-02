@@ -3,6 +3,7 @@
 ## A. OWASP Top 10 (Applicatiebeveiliging)
 - **Injection Prevention:** Altijd gebruikmaken van *Entity Framework Core* (geen handgeschreven, onveilige SQL-queries).
 - **Broken Access Control:** Strenge *Policy-based Authorization* + DB-backed rollen/company-scope. Development header-auth gebruikt alleen DB-rollen. Opt-in EF tenant filters (`CompanyTenantScope` / `EnforceCompanyScopeIds`) op Vacancy/TokenTransaction; vacaturebeheer checkt ook `IntermediaryCompanyId`.
+- **KVK pending:** Registratie tijdens KVK-storing mag concepten klaarzetten, maar publiceren/tokenaankopen vereisen `KvkVerificationStatus.Verified`. Client mag geen Intermediair-rol claimen tijdens storing; SBI 78* volgt pas na retry. Establishment-id wordt server-side afgeleid.
 - **Cryptographic Failures:** Wachtwoorden via PBKDF2 (`JobsyPasswordHasher`); integratiesecrets via ASP.NET Data Protection (`ISecretProtector`); provision-secrets via constant-time compare.
 - **Security Misconfiguration:** Secure/HttpOnly/SameSite cookies; security headers; rate limiting op auth/public writes; FallbackPolicy RequireAuthenticatedUser.
 - **External provision:** `/api/auth/ensure-external` vereist `X-Jobsy-Provision-Secret` buiten Development (fail-closed zonder secret).

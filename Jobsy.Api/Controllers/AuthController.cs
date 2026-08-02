@@ -177,6 +177,11 @@ public class AuthController : ControllerBase
 
         if (provider is not null && subject is not null)
         {
+            // First-time OID bind to an existing privileged account is only allowed when the
+            // verified e-mail from the IdP matches the stored Lobsy e-mail exactly (already
+            // enforced above via email lookup). Refuse bind when the subject is already linked
+            // elsewhere (anti link-stealing). Residual risk requires compromising the
+            // ExternalProvisionSecret — treated as full server trust.
             await EnsureExternalLoginBoundAsync(user.Id, provider, subject, email, cancellationToken);
         }
 
