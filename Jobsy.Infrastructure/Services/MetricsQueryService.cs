@@ -426,7 +426,13 @@ public sealed class MetricsQueryService : IMetricsQueryService
             var conversion = clicks <= 0
                 ? 0m
                 : Math.Round(100m * applications / clicks, 1);
-            var transport = transportByCompany.GetValueOrDefault(c.Id);
+            string? topTransport = null;
+            var topTransportShare = 0m;
+            if (transportByCompany.TryGetValue(c.Id, out var transport))
+            {
+                topTransport = transport.Mode;
+                topTransportShare = transport.Share;
+            }
 
             return new ClientPerformanceRowDto(
                 c.Id,
@@ -437,8 +443,8 @@ public sealed class MetricsQueryService : IMetricsQueryService
                 applications,
                 conversion,
                 travelByCompany.GetValueOrDefault(c.Id),
-                transport.Mode,
-                transport.Share,
+                topTransport,
+                topTransportShare,
                 tokenBalances.GetValueOrDefault(c.Id),
                 boostCounts.GetValueOrDefault(c.Id),
                 expiringCounts.GetValueOrDefault(c.Id));
