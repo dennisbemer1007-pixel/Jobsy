@@ -59,6 +59,27 @@ public record VacancyPerformanceBoardDto(
     IReadOnlyList<VacancyPerformanceItemDto> Top,
     IReadOnlyList<VacancyPerformanceItemDto> Flop);
 
+/// <summary>Per-client company performance row for intermediary Bedrijvenoverzicht.</summary>
+public record ClientPerformanceRowDto(
+    Guid CompanyId,
+    string CompanyName,
+    int ActiveVacancies,
+    int ApplicationsPending,
+    int Clicks,
+    int Applications,
+    decimal ConversionRate,
+    decimal AvgTravelMinutes,
+    string? TopTransportMode,
+    decimal TopTransportShare,
+    decimal TokenBalance,
+    int ActiveBoosts,
+    int ExpiringWithin5Days);
+
+/// <summary>Client performance board for intermediary (and scoped employer) dashboards.</summary>
+public record ClientPerformanceBoardDto(
+    string Period,
+    IReadOnlyList<ClientPerformanceRowDto> Clients);
+
 /// <summary>Platform-wide KPI keys only returned for Admin metrics summaries/drilldowns.</summary>
 public static class MetricsKeys
 {

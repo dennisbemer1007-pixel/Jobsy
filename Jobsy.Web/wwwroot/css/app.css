@@ -7245,6 +7245,161 @@ button.stat-card {
     background: #2f6f4e;
 }
 
+.client-perf-bento {
+    margin-top: 0.25rem;
+}
+
+.client-perf-section {
+    margin-top: 1.25rem;
+}
+
+.client-perf-table-wrap {
+    overflow-x: auto;
+    border: 1px solid color-mix(in srgb, var(--border) 85%, transparent);
+    border-radius: 1rem;
+    background:
+        linear-gradient(165deg, color-mix(in srgb, var(--surface) 92%, #fff) 0%, var(--surface) 100%);
+}
+
+.client-perf-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9rem;
+    min-width: 920px;
+}
+
+.client-perf-table th,
+.client-perf-table td {
+    padding: 0.75rem 0.85rem;
+    text-align: left;
+    vertical-align: middle;
+    border-bottom: 1px solid color-mix(in srgb, var(--border) 70%, transparent);
+}
+
+.client-perf-table thead th {
+    font-size: 0.72rem;
+    font-weight: 650;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--muted);
+    background: color-mix(in srgb, var(--surface) 70%, var(--bg));
+    white-space: nowrap;
+}
+
+.client-perf-table__num {
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+}
+
+.client-perf-table__company {
+    font-weight: 650;
+    max-width: 12rem;
+}
+
+.client-perf-table__name {
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.client-perf-table__match {
+    font-size: 0.84rem;
+    white-space: nowrap;
+}
+
+.client-perf-table__alert {
+    color: color-mix(in srgb, var(--danger, #b33) 80%, #222);
+    font-weight: 650;
+}
+
+.client-perf-row--danger {
+    background: color-mix(in srgb, var(--danger, #b33) 6%, transparent);
+}
+
+.client-perf-row--warn {
+    background: color-mix(in srgb, #c45c26 7%, transparent);
+}
+
+.client-perf-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    font-size: 0.72rem;
+    font-weight: 650;
+    letter-spacing: 0.02em;
+    padding: 0.2rem 0.55rem;
+    border-radius: 0.4rem;
+    white-space: nowrap;
+}
+
+.client-perf-badge::before {
+    content: "";
+    width: 0.45rem;
+    height: 0.45rem;
+    border-radius: 50%;
+    background: currentColor;
+}
+
+.client-perf-badge--ok {
+    color: #2f6f4e;
+    background: color-mix(in srgb, #2f6f4e 14%, transparent);
+}
+
+.client-perf-badge--warn {
+    color: #a85a1a;
+    background: color-mix(in srgb, #c45c26 16%, transparent);
+}
+
+.client-perf-badge--danger {
+    color: color-mix(in srgb, var(--danger, #b33) 90%, #400);
+    background: color-mix(in srgb, var(--danger, #b33) 14%, transparent);
+}
+
+.client-perf-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+}
+
+.client-perf-action {
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-decoration: none;
+    color: var(--brand);
+    padding: 0.22rem 0.5rem;
+    border-radius: 0.35rem;
+    border: 1px solid color-mix(in srgb, var(--brand) 28%, var(--border));
+    background: color-mix(in srgb, var(--surface) 80%, #fff);
+    white-space: nowrap;
+}
+
+.client-perf-action:hover {
+    background: color-mix(in srgb, var(--brand) 10%, var(--surface));
+}
+
+.client-perf-action--emphasis {
+    color: #fff;
+    border-color: transparent;
+    background: color-mix(in srgb, var(--brand) 88%, #1a1a1a);
+}
+
+.client-perf-action--emphasis:hover {
+    background: color-mix(in srgb, var(--brand) 72%, #1a1a1a);
+}
+
+@media (max-width: 900px) {
+    .client-perf-table {
+        font-size: 0.84rem;
+    }
+
+    .client-perf-table th,
+    .client-perf-table td {
+        padding: 0.6rem 0.65rem;
+    }
+}
+
 /* Legacy alias used by sales/candidate panels */
 .bento-cell--hero-row {
     display: grid;

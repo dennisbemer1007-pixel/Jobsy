@@ -495,6 +495,12 @@ public sealed class JobsyApiClient : IAsyncDisposable
             $"api/metrics/vacancy-performance?{qs}", ct);
     }
 
+    public async Task<ClientPerformanceBoard?> GetClientPerformanceAsync(
+        string period = "week",
+        CancellationToken ct = default)
+        => await _http.GetFromJsonAsync<ClientPerformanceBoard>(
+            $"api/metrics/client-performance?period={Uri.EscapeDataString(period)}", ct);
+
     public async Task<IReadOnlyList<ApplicationItem>> GetMyApplicationsAsync(CancellationToken ct = default)
         => await _http.GetFromJsonAsync<List<ApplicationItem>>("api/me/applications", ct) ?? [];
 

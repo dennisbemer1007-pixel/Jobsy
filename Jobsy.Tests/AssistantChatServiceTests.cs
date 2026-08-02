@@ -578,6 +578,12 @@ public class AssistantChatServiceTests
             int take = 3,
             CancellationToken cancellationToken = default)
             => Task.FromResult(new VacancyPerformanceBoardDto(period, [], []));
+
+        public Task<ClientPerformanceBoardDto> GetClientPerformanceAsync(
+            IReadOnlyCollection<Guid>? companyIds,
+            string period,
+            CancellationToken cancellationToken = default)
+            => Task.FromResult(new ClientPerformanceBoardDto(period, []));
     }
 
     private sealed class StubCandidateMetrics : ICandidateMetricsQueryService

@@ -193,6 +193,29 @@ public sealed class VacancyPerformanceBoard
     public List<VacancyPerformanceItem> Flop { get; set; } = [];
 }
 
+public sealed class ClientPerformanceRow
+{
+    public Guid CompanyId { get; set; }
+    public string CompanyName { get; set; } = string.Empty;
+    public int ActiveVacancies { get; set; }
+    public int ApplicationsPending { get; set; }
+    public int Clicks { get; set; }
+    public int Applications { get; set; }
+    public decimal ConversionRate { get; set; }
+    public decimal AvgTravelMinutes { get; set; }
+    public string? TopTransportMode { get; set; }
+    public decimal TopTransportShare { get; set; }
+    public decimal TokenBalance { get; set; }
+    public int ActiveBoosts { get; set; }
+    public int ExpiringWithin5Days { get; set; }
+}
+
+public sealed class ClientPerformanceBoard
+{
+    public string Period { get; set; } = string.Empty;
+    public List<ClientPerformanceRow> Clients { get; set; } = [];
+}
+
 public sealed class CandidateEngagementItem
 {
     public Guid Id { get; set; }
