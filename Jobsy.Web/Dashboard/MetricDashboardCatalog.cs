@@ -13,7 +13,7 @@ public static class MetricDashboardCatalog
     [
         new(
             "growth",
-            "Kernplatform & Groei",
+            "Kernplatform",
             "Actieve vacatures, gebruikers, bedrijven en kernconversie.",
             [
                 "active_vacancies",
@@ -30,7 +30,7 @@ public static class MetricDashboardCatalog
             ]),
         new(
             "engagement",
-            "Engagement & Activiteit",
+            "Engagement",
             "Delen, likes, pushboms, verlengingen en bereik.",
             [
                 "shares",
@@ -43,7 +43,7 @@ public static class MetricDashboardCatalog
             ]),
         new(
             "marketing",
-            "Marketing & Retentie",
+            "Marketing",
             "We-missen-je campagnes en conversie.",
             [
                 "reengagement_emails_sent",
@@ -51,7 +51,7 @@ public static class MetricDashboardCatalog
             ]),
         new(
             "system",
-            "Systeem & Beheer",
+            "Systeem",
             "Fouten, concepten en integratiekoppelingen.",
             [
                 "errors",

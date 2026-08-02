@@ -1,4 +1,4 @@
-@* Shared clickable KPI tile for role dashboards (bento size variants). *@
+@* Shared clickable KPI tile for role dashboards (equal-height bento cells). *@
 
 <button type="button"
         class="@CssClass"
@@ -28,15 +28,16 @@
         {
             <MetricRing Progress="RingProgress.Value"
                         CenterLabel="@RingLabel"
-                        SizePx="@(Size == "featured" ? 64 : 48)"
+                        SizePx="@RingSize"
                         Warning="Warning"
                         CssClass="@(Warning ? "metric-ring--warn" : null)" />
         }
         else if (Sparkline is { Count: > 1 })
         {
             <MetricSparkline Points="Sparkline"
-                             Width="@(Size == "featured" ? 96 : 72)"
-                             Height="@(Size == "featured" ? 34 : 26)" />
+                             Width="@SparkWidth"
+                             Height="@SparkHeight"
+                             CssClass="stat-card__spark" />
         }
     </span>
 
@@ -65,11 +66,21 @@
 
     private bool ShowWarningDot => Warning;
 
+    private int RingSize => Size switch
+    {
+        "featured" => 44,
+        "compact" => 36,
+        _ => 40
+    };
+
+    private int SparkWidth => Size == "featured" ? 72 : 56;
+    private int SparkHeight => Size == "featured" ? 28 : 22;
+
     private string CssClass
     {
         get
         {
-            var classes = "stat-card stat-card--link";
+            var classes = "stat-card stat-card--link stat-card--tile";
             if (Selected) classes += " stat-card--selected";
             if (Emphasis) classes += " stat-card--emphasis";
             if (Warning) classes += " stat-card--warning";

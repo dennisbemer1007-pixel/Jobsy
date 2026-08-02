@@ -1,6 +1,6 @@
 @* Circular progress ring for ratio metrics (conversion, token usage, percent). *@
 
-<span class="metric-ring @CssClass" style="--ring-size:@SizePx; --ring-progress:@Clamped.ToString("0.#", Inv)" aria-hidden="true">
+<span class="metric-ring @CssClass" style="--ring-size:@(SizePx)px; --ring-progress:@Clamped.ToString("0.#", Inv)" aria-hidden="true">
     <svg class="metric-ring__svg" viewBox="0 0 36 36">
         <circle class="metric-ring__track" cx="18" cy="18" r="15.5" />
         <circle class="metric-ring__value"

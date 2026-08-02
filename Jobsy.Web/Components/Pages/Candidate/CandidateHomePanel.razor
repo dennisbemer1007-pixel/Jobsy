@@ -37,30 +37,16 @@
     {
         <div class="bento-grid">
             <div class="bento-grid__main">
-                @{
-                    var featured = _metrics.FirstOrDefault();
-                    var rest = _metrics.Skip(1).ToList();
-                }
-                @if (featured is not null)
+                @if (_metrics.Count > 0)
                 {
-                    <div class="bento-cell bento-cell--featured">
-                        <MetricTile Label="@UiLabels.MetricKey(Culture, featured.Key)"
-                                    FormattedValue="@featured.Value.ToString("0")"
-                                    Size="featured"
-                                    Emphasis="true"
-                                    Sparkline="@featured.Sparkline"
-                                    Selected="@(_selectedKey == featured.Key)"
-                                    OnClick="() => SelectMetricAsync(featured.Key)" />
-                    </div>
-                }
-
-                @if (rest.Count > 0)
-                {
-                    <div class="bento-cell bento-cell--hero-row">
-                        @foreach (var metric in rest)
+                    <div class="bento-hero" style="--bento-hero-cols:@Math.Min(_metrics.Count, 4)" aria-label="Kerncijfers">
+                        @for (var i = 0; i < _metrics.Count; i++)
                         {
+                            var metric = _metrics[i];
                             <MetricTile Label="@UiLabels.MetricKey(Culture, metric.Key)"
                                         FormattedValue="@metric.Value.ToString("0")"
+                                        Size="@(i == 0 ? "featured" : "default")"
+                                        Emphasis="@(i == 0)"
                                         Sparkline="@metric.Sparkline"
                                         Selected="@(_selectedKey == metric.Key)"
                                         OnClick="() => SelectMetricAsync(metric.Key)" />
@@ -69,11 +55,11 @@
                 }
 
                 <div class="bento-quicklinks bento-quicklinks--inline">
-                    <a class="stat-card stat-card--link stat-card--nav" href="/candidate/profile">
+                    <a class="stat-card stat-card--link stat-card--nav stat-card--tile" href="/candidate/profile">
                         <span class="stat-card__label">@Culture["Nav.Profile"]</span>
                         <strong class="stat-card__value">→</strong>
                     </a>
-                    <a class="stat-card stat-card--link stat-card--nav" href="/">
+                    <a class="stat-card stat-card--link stat-card--nav stat-card--tile" href="/">
                         <span class="stat-card__label">@Culture["Metrics.ToMap"]</span>
                         <strong class="stat-card__value">→</strong>
                     </a>

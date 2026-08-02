@@ -45,24 +45,24 @@
                               VacancyPerformance="_vacancyBoard"
                               VacancyHrefPrefix="/vacancies"
                               OnMetricClick="OpenMetricAsync">
-            <a class="stat-card stat-card--link stat-card--nav" href="@TokensHref">
+            <a class="stat-card stat-card--link stat-card--nav stat-card--tile" href="@TokensHref">
                 <span class="stat-card__label">@Culture["Common.Tokens"]</span>
                 <strong class="stat-card__value">→</strong>
             </a>
-            <a class="stat-card stat-card--link stat-card--nav" href="@VacanciesHref">
+            <a class="stat-card stat-card--link stat-card--nav stat-card--tile" href="@VacanciesHref">
                 <span class="stat-card__label">@Culture["Employer.DashboardVacancies"]</span>
                 <strong class="stat-card__value">→</strong>
             </a>
             @if (_showMyApplications)
             {
-                <a class="stat-card stat-card--link stat-card--nav" href="/candidate/applications">
+                <a class="stat-card stat-card--link stat-card--nav stat-card--tile" href="/candidate/applications">
                     <span class="stat-card__label">@Culture["Employer.DashboardApplications"]</span>
                     <strong class="stat-card__value">→</strong>
                 </a>
             }
             @if (!string.IsNullOrEmpty(ExtraHref))
             {
-                <a class="stat-card stat-card--link stat-card--nav" href="@ExtraHref">
+                <a class="stat-card stat-card--link stat-card--nav stat-card--tile" href="@ExtraHref">
                     <span class="stat-card__label">@ExtraLabel</span>
                     <strong class="stat-card__value">→</strong>
                 </a>

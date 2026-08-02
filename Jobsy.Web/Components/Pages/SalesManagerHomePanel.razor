@@ -31,8 +31,13 @@
     {
         <div class="bento-grid">
             <div class="bento-grid__main">
-                <div class="bento-cell bento-cell--featured">
-                    <div class="stat-card stat-card--emphasis stat-card--featured">
+                @{
+                    var uninvoiced = (double)_dashboard.UninvoicedExVat;
+                    var balance = (double)Math.Max(_dashboard.BalanceExVat, 0.01m);
+                    var ring = Math.Clamp(100d * uninvoiced / (balance + uninvoiced), 0, 100);
+                }
+                <div class="bento-hero" style="--bento-hero-cols:4" aria-label="Kerncijfers">
+                    <div class="stat-card stat-card--tile stat-card--emphasis stat-card--featured">
                         <span class="stat-card__top">
                             <span class="stat-card__label">Saldo excl. BTW</span>
                             <span class="stat-card__status stat-card__status--ok" aria-hidden="true"></span>
@@ -42,30 +47,40 @@
                                 <strong class="stat-card__value">€ @_dashboard.BalanceExVat.ToString("0.00")</strong>
                                 <span class="stat-card__hint">incl. BTW € @_dashboard.BalanceInclVat.ToString("0.00")</span>
                             </span>
-                            @{
-                                var uninvoiced = (double)_dashboard.UninvoicedExVat;
-                                var balance = (double)Math.Max(_dashboard.BalanceExVat, 0.01m);
-                                var ring = Math.Clamp(100d * uninvoiced / (balance + uninvoiced), 0, 100);
-                            }
                             <MetricRing Progress="ring"
                                         CenterLabel="@($"{ring:0}%")"
-                                        SizePx="64" />
+                                        SizePx="40" />
                         </span>
                     </div>
-                </div>
-
-                <div class="bento-cell bento-cell--hero-row">
-                    <div class="stat-card">
-                        <span class="stat-card__label">Trackingcode</span>
-                        <strong class="stat-card__value" style="font-size:1.15rem;letter-spacing:0.04em">@_dashboard.TrackingCode</strong>
+                    <div class="stat-card stat-card--tile">
+                        <span class="stat-card__top">
+                            <span class="stat-card__label">Trackingcode</span>
+                        </span>
+                        <span class="stat-card__body">
+                            <span class="stat-card__main">
+                                <strong class="stat-card__value" style="font-size:1.05rem;letter-spacing:0.03em">@_dashboard.TrackingCode</strong>
+                            </span>
+                        </span>
                     </div>
-                    <div class="stat-card">
-                        <span class="stat-card__label">Niet gefactureerd</span>
-                        <strong class="stat-card__value">€ @_dashboard.UninvoicedExVat.ToString("0.00")</strong>
+                    <div class="stat-card stat-card--tile">
+                        <span class="stat-card__top">
+                            <span class="stat-card__label">Niet gefactureerd</span>
+                        </span>
+                        <span class="stat-card__body">
+                            <span class="stat-card__main">
+                                <strong class="stat-card__value">€ @_dashboard.UninvoicedExVat.ToString("0.00")</strong>
+                            </span>
+                        </span>
                     </div>
-                    <div class="stat-card">
-                        <span class="stat-card__label">Suppliers</span>
-                        <strong class="stat-card__value">@_dashboard.Suppliers.Count</strong>
+                    <div class="stat-card stat-card--tile">
+                        <span class="stat-card__top">
+                            <span class="stat-card__label">Suppliers</span>
+                        </span>
+                        <span class="stat-card__body">
+                            <span class="stat-card__main">
+                                <strong class="stat-card__value">@_dashboard.Suppliers.Count</strong>
+                            </span>
+                        </span>
                     </div>
                 </div>
 
@@ -124,11 +139,11 @@
                 </div>
 
                 <div class="bento-quicklinks bento-quicklinks--inline">
-                    <a class="stat-card stat-card--link stat-card--nav" href="/salesmanager/toolkit">
+                    <a class="stat-card stat-card--link stat-card--nav stat-card--tile" href="/salesmanager/toolkit">
                         <span class="stat-card__label">Sales-toolkit &amp; flyer</span>
                         <strong class="stat-card__value">→</strong>
                     </a>
-                    <a class="stat-card stat-card--link stat-card--nav" href="/salesmanager/invoices">
+                    <a class="stat-card stat-card--link stat-card--nav stat-card--tile" href="/salesmanager/invoices">
                         <span class="stat-card__label">Facturen &amp; uitbetalen</span>
                         <strong class="stat-card__value">→</strong>
                     </a>
