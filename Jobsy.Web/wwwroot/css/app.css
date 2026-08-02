@@ -8234,6 +8234,11 @@ button.stat-card {
     flex: 0 1 12rem;
 }
 
+.panel-page .filter-bar label.filter-bar__query {
+    flex: 1 1 18rem;
+    max-width: 32rem;
+}
+
 .panel-page .filter-bar .muted,
 .panel-page .filter-bar .filter-check {
     align-self: center;
