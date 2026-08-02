@@ -60,28 +60,17 @@
                 }
             </fieldset>
 
-            <fieldset class="token-topup-options" style="margin-top:0.75rem">
-                <legend>Betaalmethode</legend>
-                <label class="publish-option">
-                    <input type="radio" name="topup-method" checked="@(_paymentMethod == "ideal")"
-                           @onchange="@(() => _paymentMethod = "ideal")" />
-                    <span>iDEAL <em>Direct via je bank</em></span>
-                </label>
-                <label class="publish-option">
-                    <input type="radio" name="topup-method" checked="@(_paymentMethod == "creditcard")"
-                           @onchange="@(() => _paymentMethod = "creditcard")" />
-                    <span>Creditcard <em>Visa / Mastercard</em></span>
-                </label>
-            </fieldset>
-
-            <p class="muted" style="margin-top:0.75rem">
-                Geen automatische incasso — je betaalt alleen dit pakket. Na betaling (webhook) worden tokens bijgeschreven en wordt je actie direct uitgevoerd.
-            </p>
+            <PaymentMethodPicker @bind-SelectedMethod="_paymentMethod"
+                                 @bind-RememberPreference="_rememberPaymentMethod"
+                                 ShowRememberPreference="true"
+                                 Compact="true"
+                                 Disabled="_busy"
+                                 Lead="Kies iDEAL of creditcard voordat je naar Mollie gaat. Na betaling schrijft de webhook tokens bij en voert je actie (publiceren, PushBom, …) direct uit." />
         }
 
         <div class="inline-actions" style="margin-top:1rem">
             <button type="button" class="btn-compact btn-compact--primary" disabled="@ConfirmDisabled" @onclick="PayAsync">
-                @(_busy ? Culture["Common.Busy"] : (_paymentMethod == "creditcard" ? "Betaal met creditcard" : "Betaal met iDEAL"))
+                @(_busy ? Culture["Common.Busy"] : (_paymentMethod == "creditcard" ? "Doorgaan met creditcard" : "Doorgaan met iDEAL"))
             </button>
             <button type="button" class="btn-compact" disabled="@_busy" @onclick="Close">@Culture["Common.Cancel"]</button>
         </div>
@@ -105,6 +94,7 @@
     private TokenTopUpQuote? _quote;
     private int _selectedPack;
     private string _paymentMethod = "ideal";
+    private bool _rememberPaymentMethod;
     private Guid? _loadedFor;
 
     private string ActionLabel => Info?.Action switch
@@ -117,7 +107,8 @@
     };
 
     private bool ConfirmDisabled =>
-        _busy || _loading || _quote is null || _selectedPack <= 0 || Info is null;
+        _busy || _loading || _quote is null || _selectedPack <= 0 || Info is null
+        || _paymentMethod is not ("ideal" or "creditcard");
 
     protected override async Task OnParametersSetAsync()
     {
@@ -207,6 +198,11 @@
         _error = null;
         try
         {
+            if (_rememberPaymentMethod)
+            {
+                await Api.UpdateBillingPreferenceAsync(Info.CompanyId, _paymentMethod);
+            }
+
             var result = await Api.CreateTokenCheckoutAsync(
                 Info.CompanyId,
                 _selectedPack,

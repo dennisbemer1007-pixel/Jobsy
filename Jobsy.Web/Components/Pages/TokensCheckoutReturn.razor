@@ -9,7 +9,11 @@
 
 <div class="panel-page">
     <h1>Betaling afronden</h1>
-    <p class="login-lead">We controleren bij Mollie of de betaling is gelukt, schrijven je tokens bij en voeren eventuele openstaande actie uit.</p>
+    <p class="login-lead">
+        We controleren bij Mollie of je iDEAL- of creditcardbetaling is gelukt.
+        Tokens worden bijgeschreven (vaak al via de realtime webhook) en eventuele openstaande actie
+        (publiceren, highlight, PushBom, verlengen) wordt uitgevoerd.
+    </p>
 
     @if (_loading)
     {

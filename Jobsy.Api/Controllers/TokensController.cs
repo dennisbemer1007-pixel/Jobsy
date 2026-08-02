@@ -170,12 +170,13 @@ public class TokensController : ControllerBase
             return BadRequest(new { message = $"PackSize moet tussen 1 en {MaxExactMatchTokens} liggen." });
         }
 
+        // Checkout UI always sends an explicit choice; empty falls back to company preference / iDEAL+CC list.
         if (!string.IsNullOrWhiteSpace(request.PaymentMethod)
             && !Jobsy.Core.Rules.MolliePaymentMethods.IsSupported(request.PaymentMethod))
         {
             return BadRequest(new
             {
-                message = "Ongeldige betaalmethode. Kies iDEAL of creditcard."
+                message = "Ongeldige betaalmethode. Kies iDEAL of creditcard voordat je naar Mollie gaat."
             });
         }
 

@@ -179,36 +179,16 @@
             <section class="panel-section company-details__card">
                 <h2>Facturatie &amp; betalen</h2>
                 <p class="muted company-details__lead">
-                    Kies je voorkeursbetaalmethode voor tokenaankopen via Mollie (iDEAL of creditcard).
-                    Betalingen zijn prepaid — geen automatische incasso. Na betaling schrijft de Mollie-webhook
-                    tokens direct bij.
+                    Stel een standaardbetaalmethode in voor snellere tokenaankopen.
+                    Bij elke checkout kun je nog steeds expliciet iDEAL of creditcard kiezen voordat je naar Mollie gaat.
+                    Betalingen zijn prepaid — geen automatische incasso. De Mollie-webhook schrijft tokens direct bij.
                 </p>
 
-                <fieldset class="scope-fieldset" disabled="@_busy">
-                    <legend>Voorkeursbetaalmethode</legend>
-                    <div class="token-pack-options" role="radiogroup" aria-label="Betaalmethode">
-                        <label class="scope-option">
-                            <input type="radio"
-                                   name="billing-method"
-                                   checked="@(_preferredPaymentMethod == "ideal")"
-                                   @onchange="@(() => SelectPreferredMethod("ideal"))" />
-                            <span>
-                                <strong>iDEAL</strong>
-                                <span class="muted">Direct via je bank</span>
-                            </span>
-                        </label>
-                        <label class="scope-option">
-                            <input type="radio"
-                                   name="billing-method"
-                                   checked="@(_preferredPaymentMethod == "creditcard")"
-                                   @onchange="@(() => SelectPreferredMethod("creditcard"))" />
-                            <span>
-                                <strong>Creditcard</strong>
-                                <span class="muted">Visa / Mastercard via Mollie</span>
-                            </span>
-                        </label>
-                    </div>
-                </fieldset>
+                <PaymentMethodPicker @bind-SelectedMethod="_preferredPaymentMethod"
+                                     ShowRememberPreference="false"
+                                     Disabled="_busy"
+                                     Legend="Voorkeursbetaalmethode"
+                                     Lead="Deze keuze wordt vooraf geselecteerd bij token top-ups; je kunt per aankoop nog wisselen." />
 
                 <div class="inline-actions company-details__actions">
                     <button class="login-submit" type="button" disabled="@_busy" @onclick="SaveBillingPreferenceAsync">
@@ -706,8 +686,6 @@
             ? "creditcard"
             : "ideal";
     }
-
-    private void SelectPreferredMethod(string method) => _preferredPaymentMethod = method;
 
     private async Task LoadBillingHistoryAsync()
     {

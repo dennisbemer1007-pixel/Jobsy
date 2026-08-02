@@ -9036,6 +9036,32 @@ button.linkish:hover {
     background: color-mix(in srgb, var(--brand) 6%, transparent);
 }
 
+.payment-method-picker {
+    margin: 0.75rem 0 0.25rem;
+}
+
+.payment-method-picker__lead {
+    margin: 0.35rem 0 0.65rem;
+    font-size: 0.92rem;
+}
+
+.payment-method-picker__remember {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.55rem;
+    margin-top: 0.85rem;
+    cursor: pointer;
+    font-size: 0.92rem;
+}
+
+.payment-method-picker__remember input {
+    margin-top: 0.2rem;
+}
+
+.payment-method-picker--compact .payment-method-picker__remember {
+    margin-top: 0.65rem;
+}
+
 .badge-ok,
 .badge-warn {
     font-size: 0.78rem;

@@ -129,24 +129,13 @@
                             }
                         </div>
                     </fieldset>
-                    <fieldset class="scope-fieldset">
-                        <legend>Betaalmethode</legend>
-                        <div class="token-pack-options" role="radiogroup" aria-label="Betaalmethode">
-                            <label class="scope-option">
-                                <input type="radio" name="pay-method-pot" checked="@(_paymentMethod == "ideal")"
-                                       @onchange="@(() => _paymentMethod = "ideal")" />
-                                <span><strong>iDEAL</strong><span class="muted">Direct via je bank</span></span>
-                            </label>
-                            <label class="scope-option">
-                                <input type="radio" name="pay-method-pot" checked="@(_paymentMethod == "creditcard")"
-                                       @onchange="@(() => _paymentMethod = "creditcard")" />
-                                <span><strong>Creditcard</strong><span class="muted">Visa / Mastercard</span></span>
-                            </label>
-                        </div>
-                    </fieldset>
-                    <p class="muted">Prepaid via Mollie — geen automatische incasso. Saldo wordt direct bijgeschreven na betaling.</p>
-                    <button class="login-submit" type="submit" disabled="@(_busy || _pot is null || _packs.Count == 0)">
-                        Naar checkout
+                    <PaymentMethodPicker @bind-SelectedMethod="_paymentMethod"
+                                         @bind-RememberPreference="_rememberPaymentMethod"
+                                         ShowRememberPreference="true"
+                                         Disabled="_busy" />
+                    <p class="muted">Na succesvolle betaling werkt Mollie’s webhook je saldo en openstaande acties direct bij.</p>
+                    <button class="login-submit" type="submit" disabled="@(_busy || _pot is null || _packs.Count == 0 || string.IsNullOrWhiteSpace(_paymentMethod))">
+                        @CheckoutButtonLabel
                     </button>
                 </form>
             </section>
@@ -186,24 +175,13 @@
                             }
                         </div>
                     </fieldset>
-                    <fieldset class="scope-fieldset">
-                        <legend>Betaalmethode</legend>
-                        <div class="token-pack-options" role="radiogroup" aria-label="Betaalmethode">
-                            <label class="scope-option">
-                                <input type="radio" name="pay-method-own" checked="@(_paymentMethod == "ideal")"
-                                       @onchange="@(() => _paymentMethod = "ideal")" />
-                                <span><strong>iDEAL</strong><span class="muted">Direct via je bank</span></span>
-                            </label>
-                            <label class="scope-option">
-                                <input type="radio" name="pay-method-own" checked="@(_paymentMethod == "creditcard")"
-                                       @onchange="@(() => _paymentMethod = "creditcard")" />
-                                <span><strong>Creditcard</strong><span class="muted">Visa / Mastercard</span></span>
-                            </label>
-                        </div>
-                    </fieldset>
-                    <p class="muted">Prepaid via Mollie — geen automatische incasso. Saldo wordt direct bijgeschreven na betaling.</p>
-                    <button class="login-submit" type="submit" disabled="@(_busy || _checkoutCompanyId == Guid.Empty || _packs.Count == 0)">
-                        Naar checkout
+                    <PaymentMethodPicker @bind-SelectedMethod="_paymentMethod"
+                                         @bind-RememberPreference="_rememberPaymentMethod"
+                                         ShowRememberPreference="true"
+                                         Disabled="_busy" />
+                    <p class="muted">Na succesvolle betaling werkt Mollie’s webhook je saldo en openstaande acties direct bij.</p>
+                    <button class="login-submit" type="submit" disabled="@(_busy || _checkoutCompanyId == Guid.Empty || _packs.Count == 0 || string.IsNullOrWhiteSpace(_paymentMethod))">
+                        @CheckoutButtonLabel
                     </button>
                 </form>
             </section>
@@ -299,7 +277,11 @@
     private Guid _checkoutCompanyId;
     private int _packSize = 5;
     private string _paymentMethod = "ideal";
+    private bool _rememberPaymentMethod;
     private Guid _toCompanyId;
+
+    private string CheckoutButtonLabel =>
+        _paymentMethod == "creditcard" ? "Doorgaan met creditcard" : "Doorgaan met iDEAL";
     private decimal _allocateAmount = 1;
     private string _logFilter = "";
 
@@ -463,10 +445,21 @@
 
     private async Task StartCheckoutAsync(Guid companyId)
     {
+        if (_paymentMethod is not ("ideal" or "creditcard"))
+        {
+            _message = "Kies eerst iDEAL of creditcard.";
+            return;
+        }
+
         _busy = true;
         _message = null;
         try
         {
+            if (_rememberPaymentMethod)
+            {
+                await Api.UpdateBillingPreferenceAsync(companyId, _paymentMethod);
+            }
+
             var result = await Api.CreateTokenCheckoutAsync(
                 companyId,
                 _packSize,

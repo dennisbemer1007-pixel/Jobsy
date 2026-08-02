@@ -1,0 +1,100 @@
+@*
+  Explicit iDEAL vs creditcard choice before Mollie Hosted Checkout.
+  Prefills from company preference; optional "remember" for frictionless future top-ups.
+*@
+
+<div class="payment-method-picker @(Compact ? "payment-method-picker--compact" : null)">
+    <fieldset class="@(Compact ? "token-topup-options" : "scope-fieldset")" disabled="@Disabled">
+        <legend>@Legend</legend>
+        @if (!string.IsNullOrWhiteSpace(Lead))
+        {
+            <p class="muted payment-method-picker__lead">@Lead</p>
+        }
+
+        <div class="@(Compact ? null : "token-pack-options")"
+             role="radiogroup"
+             aria-label="Betaalmethode">
+            <label class="@(Compact ? "publish-option" : "scope-option")">
+                <input type="radio"
+                       name="@_radioName"
+                       checked="@(SelectedMethod == Ideal)"
+                       disabled="@Disabled"
+                       @onchange="SelectIdealAsync" />
+                @if (Compact)
+                {
+                    <span>iDEAL <em>Direct online via je bank (Mollie)</em></span>
+                }
+                else
+                {
+                    <span>
+                        <strong>iDEAL</strong>
+                        <span class="muted">Direct online via je bank (Mollie)</span>
+                    </span>
+                }
+            </label>
+            <label class="@(Compact ? "publish-option" : "scope-option")">
+                <input type="radio"
+                       name="@_radioName"
+                       checked="@(SelectedMethod == CreditCard)"
+                       disabled="@Disabled"
+                       @onchange="SelectCreditCardAsync" />
+                @if (Compact)
+                {
+                    <span>Creditcard <em>Visa / Mastercard via Mollie</em></span>
+                }
+                else
+                {
+                    <span>
+                        <strong>Creditcard</strong>
+                        <span class="muted">Visa / Mastercard via Mollie</span>
+                    </span>
+                }
+            </label>
+        </div>
+
+        @if (ShowRememberPreference)
+        {
+            <label class="payment-method-picker__remember">
+                <input type="checkbox"
+                       checked="@RememberPreference"
+                       disabled="@Disabled"
+                       @onchange="OnRememberChanged" />
+                <span>Onthoud als voorkeur voor volgende tokenaankopen</span>
+            </label>
+        }
+    </fieldset>
+</div>
+
+@code {
+    private const string Ideal = "ideal";
+    private const string CreditCard = "creditcard";
+
+    private readonly string _radioName = $"pay-method-{Guid.NewGuid():N}";
+
+    [Parameter] public string SelectedMethod { get; set; } = Ideal;
+    [Parameter] public EventCallback<string> SelectedMethodChanged { get; set; }
+
+    [Parameter] public bool RememberPreference { get; set; }
+    [Parameter] public EventCallback<bool> RememberPreferenceChanged { get; set; }
+
+    [Parameter] public bool ShowRememberPreference { get; set; } = true;
+    [Parameter] public bool Compact { get; set; }
+    [Parameter] public bool Disabled { get; set; }
+
+    [Parameter] public string Legend { get; set; } = "Betaalmethode";
+
+    [Parameter] public string Lead { get; set; } =
+        "Kies iDEAL of creditcard voordat je naar de Mollie-betaalomgeving gaat. Prepaid — geen automatische incasso.";
+
+    private Task SelectIdealAsync() => SelectedMethodChanged.InvokeAsync(Ideal);
+
+    private Task SelectCreditCardAsync() => SelectedMethodChanged.InvokeAsync(CreditCard);
+
+    private Task OnRememberChanged(ChangeEventArgs e)
+    {
+        var value = e.Value is bool b && b
+            || string.Equals(e.Value?.ToString(), "true", StringComparison.OrdinalIgnoreCase)
+            || string.Equals(e.Value?.ToString(), "on", StringComparison.OrdinalIgnoreCase);
+        return RememberPreferenceChanged.InvokeAsync(value);
+    }
+}
