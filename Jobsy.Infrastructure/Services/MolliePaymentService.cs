@@ -63,13 +63,15 @@ public sealed class MolliePaymentService : IPaymentService
     public async Task<PaymentCheckoutResult> CreateTokenPurchaseCheckoutAsync(
         Guid companyId,
         int packSize,
+        string? paymentMethod = null,
         CancellationToken cancellationToken = default)
     {
         if (!await TryGetApiKeyAsync(cancellationToken))
         {
             if (_environment.IsDevelopment())
             {
-                return await _stub.CreateTokenPurchaseCheckoutAsync(companyId, packSize, cancellationToken);
+                return await _stub.CreateTokenPurchaseCheckoutAsync(
+                    companyId, packSize, paymentMethod, cancellationToken);
             }
 
             throw new InvalidOperationException(
@@ -81,10 +83,11 @@ public sealed class MolliePaymentService : IPaymentService
             throw new ArgumentOutOfRangeException(nameof(packSize));
         }
 
-        _ = await _db.Companies.AsNoTracking()
+        var company = await _db.Companies.AsNoTracking()
                 .FirstOrDefaultAsync(c => c.Id == companyId, cancellationToken)
             ?? throw new InvalidOperationException("Company not found.");
 
+        var resolvedMethod = ResolvePaymentMethod(paymentMethod, company.PreferredPaymentMethod);
         var price = await ResolvePackPriceAsync(packSize, cancellationToken);
         var money = TokenVatPricing.SplitInclVatEuros(price);
         var checkoutId = Guid.NewGuid();
@@ -94,6 +97,17 @@ public sealed class MolliePaymentService : IPaymentService
         var webhookUrl = ResolveWebhookUrl();
 
         var amountValue = price.ToString("0.00", CultureInfo.InvariantCulture);
+        var metadata = new Dictionary<string, string>
+        {
+            ["checkoutId"] = checkoutId.ToString("D"),
+            ["companyId"] = companyId.ToString("D"),
+            ["packSize"] = packSize.ToString(CultureInfo.InvariantCulture)
+        };
+        if (resolvedMethod is not null)
+        {
+            metadata["paymentMethod"] = resolvedMethod;
+        }
+
         var createBody = new Dictionary<string, object?>
         {
             ["amount"] = new Dictionary<string, string>
@@ -103,16 +117,23 @@ public sealed class MolliePaymentService : IPaymentService
             },
             ["description"] = $"Lobsy tokens ({packSize})",
             ["redirectUrl"] = redirectUrl,
-            ["metadata"] = new Dictionary<string, string>
-            {
-                ["checkoutId"] = checkoutId.ToString("D"),
-                ["companyId"] = companyId.ToString("D"),
-                ["packSize"] = packSize.ToString(CultureInfo.InvariantCulture)
-            }
+            ["metadata"] = metadata
         };
+        // String = skip to that method; array = Mollie shows only iDEAL + creditcard.
+        createBody["method"] = resolvedMethod is not null
+            ? resolvedMethod
+            : MolliePaymentMethods.PrimaryMethods.ToArray();
+
         if (!string.IsNullOrWhiteSpace(webhookUrl))
         {
+            // Required for instant token credit after paid (incl. credit card) without waiting for redirect.
             createBody["webhookUrl"] = webhookUrl;
+        }
+        else
+        {
+            _logger.LogWarning(
+                "Mollie webhook URL unavailable for company {CompanyId}; fulfillment relies on redirect return.",
+                companyId);
         }
 
         MolliePaymentResponse payment;
@@ -142,6 +163,7 @@ public sealed class MolliePaymentService : IPaymentService
             throw new InvalidOperationException("Mollie gaf geen checkout-URL terug.");
         }
 
+        var storedMethod = MolliePaymentMethods.NormalizeOrNull(payment.Method) ?? resolvedMethod;
         _db.TokenPurchaseCheckouts.Add(new TokenPurchaseCheckout
         {
             Id = checkoutId,
@@ -152,14 +174,15 @@ public sealed class MolliePaymentService : IPaymentService
             AmountExVatCents = money.ExVatCents,
             VatAmountCents = money.VatCents,
             TotalAmountCents = money.TotalCents,
+            PaymentMethod = storedMethod,
             Status = TokenPurchaseCheckoutStatus.Pending,
             CreatedAt = DateTime.UtcNow
         });
         await _db.SaveChangesAsync(cancellationToken);
 
         _logger.LogInformation(
-            "Mollie checkout for company {CompanyId}: {Pack} tokens = €{Price} ({PaymentId})",
-            companyId, packSize, price, payment.Id);
+            "Mollie checkout for company {CompanyId}: {Pack} tokens = €{Price} method={Method} webhook={HasWebhook} ({PaymentId})",
+            companyId, packSize, price, storedMethod, !string.IsNullOrWhiteSpace(webhookUrl), payment.Id);
 
         return new PaymentCheckoutResult(
             payment.Id,
@@ -167,7 +190,8 @@ public sealed class MolliePaymentService : IPaymentService
             packSize,
             price,
             IsStub: false,
-            CheckoutId: checkoutId);
+            CheckoutId: checkoutId,
+            PaymentMethod: storedMethod);
     }
 
     public async Task<PaymentStatusResult> GetPaymentStatusAsync(
@@ -224,20 +248,48 @@ public sealed class MolliePaymentService : IPaymentService
 
         var status = string.IsNullOrWhiteSpace(payment.Status) ? "unknown" : payment.Status.Trim().ToLowerInvariant();
         var isPaid = status is "paid";
+        var method = MolliePaymentMethods.NormalizeOrNull(payment.Method);
+        var dirty = false;
+
+        if (method is not null && !string.Equals(session.PaymentMethod, method, StringComparison.Ordinal))
+        {
+            session.PaymentMethod = method;
+            dirty = true;
+        }
 
         if (isPaid && session.Status == TokenPurchaseCheckoutStatus.Pending)
         {
             session.Status = TokenPurchaseCheckoutStatus.Paid;
-            await _db.SaveChangesAsync(cancellationToken);
+            dirty = true;
         }
         else if (status is "canceled" or "cancelled" or "expired" or "failed"
                  && session.Status == TokenPurchaseCheckoutStatus.Pending)
         {
             session.Status = TokenPurchaseCheckoutStatus.Cancelled;
+            dirty = true;
+        }
+
+        if (dirty)
+        {
             await _db.SaveChangesAsync(cancellationToken);
         }
 
-        return new PaymentStatusResult(paymentId, status, IsPaid: isPaid);
+        return new PaymentStatusResult(
+            paymentId,
+            status,
+            IsPaid: isPaid,
+            Method: method ?? session.PaymentMethod);
+    }
+
+    private static string? ResolvePaymentMethod(string? requested, string? companyPreferred)
+    {
+        var fromRequest = MolliePaymentMethods.NormalizeOrNull(requested);
+        if (fromRequest is not null)
+        {
+            return fromRequest;
+        }
+
+        return MolliePaymentMethods.NormalizeOrNull(companyPreferred);
     }
 
     private async Task<decimal> ResolvePackPriceAsync(int packSize, CancellationToken cancellationToken)
@@ -355,6 +407,7 @@ public sealed class MolliePaymentService : IPaymentService
     {
         public string? Id { get; set; }
         public string? Status { get; set; }
+        public string? Method { get; set; }
 
         [JsonPropertyName("_links")]
         public MollieLinks? Links { get; set; }

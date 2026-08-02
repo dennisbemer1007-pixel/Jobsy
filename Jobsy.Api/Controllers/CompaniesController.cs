@@ -22,17 +22,20 @@ public class CompaniesController : ControllerBase
     private readonly ICompanyAuthorizationService _companyAuth;
     private readonly IKvkService _kvk;
     private readonly IUserLookupService _users;
+    private readonly ITokenPurchaseInvoiceService _invoices;
 
     public CompaniesController(
         JobsyDbContext db,
         ICompanyAuthorizationService companyAuth,
         IKvkService kvk,
-        IUserLookupService users)
+        IUserLookupService users,
+        ITokenPurchaseInvoiceService invoices)
     {
         _db = db;
         _companyAuth = companyAuth;
         _kvk = kvk;
         _users = users;
+        _invoices = invoices;
     }
 
     [HttpGet("mine")]
@@ -65,7 +68,8 @@ public class CompaniesController : ControllerBase
                 c.ContactEmail,
                 c.ContactPhone,
                 c.ContactWhatsApp,
-                c.KvkEstablishmentId))
+                c.KvkEstablishmentId,
+                c.PreferredPaymentMethod))
             .ToListAsync(cancellationToken);
 
         return Ok(companies);
@@ -341,6 +345,202 @@ public class CompaniesController : ControllerBase
         return Ok(await ToSummaryAsync(company, cancellationToken));
     }
 
+    /// <summary>
+    /// Preferred Mollie payment method for token top-ups (iDEAL or creditcard).
+    /// Stored on the organisation / vestiging and preselected at checkout.
+    /// </summary>
+    [HttpPut("{companyId:guid}/billing-preference")]
+    [Authorize(Roles = JobsyRoles.TokenPurchaseRoles)]
+    public async Task<ActionResult<CompanySummaryDto>> UpdateBillingPreference(
+        Guid companyId,
+        [FromBody] UpdateBillingPreferenceRequest request,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            await _companyAuth.EnsureCanAccessCompanyAsync(User, companyId, cancellationToken);
+        }
+        catch (Core.Exceptions.ForbiddenCompanyAccessException)
+        {
+            return Forbid();
+        }
+
+        var company = await _db.Companies.FirstOrDefaultAsync(c => c.Id == companyId, cancellationToken);
+        if (company is null)
+        {
+            return NotFound(new { message = "Bedrijf niet gevonden." });
+        }
+
+        if (string.IsNullOrWhiteSpace(request.PreferredPaymentMethod))
+        {
+            company.PreferredPaymentMethod = null;
+        }
+        else
+        {
+            var method = MolliePaymentMethods.NormalizeOrNull(request.PreferredPaymentMethod);
+            if (method is null)
+            {
+                return BadRequest(new { message = "Ongeldige betaalmethode. Kies iDEAL of creditcard." });
+            }
+
+            company.PreferredPaymentMethod = method;
+        }
+
+        await _db.SaveChangesAsync(cancellationToken);
+        return Ok(await ToSummaryAsync(company, cancellationToken));
+    }
+
+    /// <summary>
+    /// Token purchase invoices / billing history for a company (and its org pot when applicable).
+    /// </summary>
+    [HttpGet("{companyId:guid}/billing-history")]
+    [Authorize(Roles = JobsyRoles.TokenPurchaseRoles)]
+    public async Task<ActionResult<IEnumerable<CompanyBillingHistoryItemDto>>> GetBillingHistory(
+        Guid companyId,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            await _companyAuth.EnsureCanAccessCompanyAsync(User, companyId, cancellationToken);
+        }
+        catch (Core.Exceptions.ForbiddenCompanyAccessException)
+        {
+            return Forbid();
+        }
+
+        var company = await _db.Companies.AsNoTracking()
+            .FirstOrDefaultAsync(c => c.Id == companyId, cancellationToken);
+        if (company is null)
+        {
+            return NotFound(new { message = "Bedrijf niet gevonden." });
+        }
+
+        // Include org-pot purchases when viewing a vestiging under EM token management.
+        var companyIds = new HashSet<Guid> { companyId };
+        if (company.ParentCompanyId is Guid parentId)
+        {
+            companyIds.Add(parentId);
+        }
+
+        var childIds = await _db.Companies.AsNoTracking()
+            .Where(c => c.ParentCompanyId == companyId)
+            .Select(c => c.Id)
+            .ToListAsync(cancellationToken);
+        foreach (var id in childIds)
+        {
+            companyIds.Add(id);
+        }
+
+        var rows = await _db.TokenPurchaseInvoices.AsNoTracking()
+            .Where(i => companyIds.Contains(i.CompanyId))
+            .OrderByDescending(i => i.IssuedAt)
+            .Take(100)
+            .Select(i => new
+            {
+                i.Id,
+                i.InvoiceNumber,
+                i.TokenPurchaseCheckoutId,
+                Method = i.Checkout.PaymentMethod,
+                i.PackSize,
+                i.AmountExVatCents,
+                i.VatAmountCents,
+                i.TotalAmountCents,
+                i.IssuedAt
+            })
+            .ToListAsync(cancellationToken);
+
+        return Ok(rows.Select(r => new CompanyBillingHistoryItemDto(
+            r.Id,
+            r.InvoiceNumber,
+            r.TokenPurchaseCheckoutId,
+            r.Method,
+            MolliePaymentMethods.DisplayName(r.Method),
+            r.PackSize,
+            TokenVatPricing.FromCents(r.AmountExVatCents),
+            TokenVatPricing.FromCents(r.VatAmountCents),
+            TokenVatPricing.FromCents(r.TotalAmountCents),
+            r.IssuedAt,
+            "Betaald")));
+    }
+
+    [HttpGet("{companyId:guid}/billing/invoices/{invoiceId:guid}/pdf")]
+    [Authorize(Roles = JobsyRoles.TokenPurchaseRoles)]
+    public async Task<IActionResult> DownloadBillingInvoicePdf(
+        Guid companyId,
+        Guid invoiceId,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            await _companyAuth.EnsureCanAccessCompanyAsync(User, companyId, cancellationToken);
+        }
+        catch (Core.Exceptions.ForbiddenCompanyAccessException)
+        {
+            return Forbid();
+        }
+
+        var invoice = await _invoices.GetAsync(invoiceId, cancellationToken);
+        if (invoice is null)
+        {
+            return NotFound(new { message = "Factuur niet gevonden." });
+        }
+
+        if (!await CanViewInvoiceForCompanyAsync(companyId, invoice.CompanyId, cancellationToken))
+        {
+            return Forbid();
+        }
+
+        try
+        {
+            var pdf = await _invoices.RenderPdfAsync(invoiceId, cancellationToken);
+            return File(pdf, "application/pdf", $"{invoice.InvoiceNumber}.pdf");
+        }
+        catch (KeyNotFoundException)
+        {
+            return NotFound(new { message = "Factuur niet gevonden." });
+        }
+    }
+
+    /// <summary>
+    /// Invoice may belong to the selected company, its org pot, or a child vestiging.
+    /// </summary>
+    private async Task<bool> CanViewInvoiceForCompanyAsync(
+        Guid viewingCompanyId,
+        Guid invoiceCompanyId,
+        CancellationToken cancellationToken)
+    {
+        if (viewingCompanyId == invoiceCompanyId)
+        {
+            return true;
+        }
+
+        var viewing = await _db.Companies.AsNoTracking()
+            .FirstOrDefaultAsync(c => c.Id == viewingCompanyId, cancellationToken);
+        var billed = await _db.Companies.AsNoTracking()
+            .FirstOrDefaultAsync(c => c.Id == invoiceCompanyId, cancellationToken);
+        if (viewing is null || billed is null)
+        {
+            return false;
+        }
+
+        // Same hierarchy: parent↔child within one organisation.
+        if (viewing.ParentCompanyId == billed.Id || billed.ParentCompanyId == viewing.Id)
+        {
+            try
+            {
+                await _companyAuth.EnsureCanAccessCompanyAsync(User, invoiceCompanyId, cancellationToken);
+                return true;
+            }
+            catch (Core.Exceptions.ForbiddenCompanyAccessException)
+            {
+                // Vestiging may see org-pot invoices even without direct parent membership listing.
+                return viewing.ParentCompanyId == invoiceCompanyId;
+            }
+        }
+
+        return false;
+    }
+
     private async Task<CompanySummaryDto> ToSummaryAsync(Company company, CancellationToken cancellationToken)
     {
         var balance = await _db.TokenTransactions.AsNoTracking()
@@ -370,7 +570,8 @@ public class CompaniesController : ControllerBase
             company.ContactEmail,
             company.ContactPhone,
             company.ContactWhatsApp,
-            company.KvkEstablishmentId);
+            company.KvkEstablishmentId,
+            company.PreferredPaymentMethod);
 
     private async Task EnsureActorMembershipAsync(Guid companyId, CancellationToken cancellationToken)
     {

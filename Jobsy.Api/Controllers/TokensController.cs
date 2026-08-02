@@ -170,6 +170,15 @@ public class TokensController : ControllerBase
             return BadRequest(new { message = $"PackSize moet tussen 1 en {MaxExactMatchTokens} liggen." });
         }
 
+        if (!string.IsNullOrWhiteSpace(request.PaymentMethod)
+            && !Jobsy.Core.Rules.MolliePaymentMethods.IsSupported(request.PaymentMethod))
+        {
+            return BadRequest(new
+            {
+                message = "Ongeldige betaalmethode. Kies iDEAL of creditcard."
+            });
+        }
+
         var company = await _db.Companies.AsNoTracking()
             .FirstOrDefaultAsync(c => c.Id == request.CompanyId, cancellationToken);
         if (company is null)
@@ -263,6 +272,7 @@ public class TokensController : ControllerBase
         var result = await _payments.CreateTokenPurchaseCheckoutAsync(
             purchaseTargetId,
             request.PackSize,
+            request.PaymentMethod,
             cancellationToken);
 
         if (pendingKind is PendingTokenActionKind actionKind && request.PendingAction is { } attach)
@@ -290,7 +300,8 @@ public class TokensController : ControllerBase
             result.PackSize,
             result.AmountEuro,
             result.IsStub,
-            result.CheckoutId));
+            result.CheckoutId,
+            result.PaymentMethod));
     }
 
     /// <summary>

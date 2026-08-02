@@ -20,7 +20,23 @@ public record CompanySummaryDto(
     string? ContactEmail = null,
     string? ContactPhone = null,
     string? ContactWhatsApp = null,
-    string? KvkEstablishmentId = null);
+    string? KvkEstablishmentId = null,
+    string? PreferredPaymentMethod = null);
+
+public record UpdateBillingPreferenceRequest(string? PreferredPaymentMethod);
+
+public record CompanyBillingHistoryItemDto(
+    Guid InvoiceId,
+    string InvoiceNumber,
+    Guid CheckoutId,
+    string? PaymentMethod,
+    string PaymentMethodLabel,
+    int PackSize,
+    decimal AmountExVatEuro,
+    decimal VatAmountEuro,
+    decimal TotalAmountEuro,
+    DateTime IssuedAt,
+    string Status);
 
 public record TokenBalanceDto(
     Guid CompanyId,

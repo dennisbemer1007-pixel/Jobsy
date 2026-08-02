@@ -23,6 +23,11 @@ public class TokenPurchaseCheckout
     /// <summary>Total incl. BTW in whole cents.</summary>
     public int TotalAmountCents { get; set; }
 
+    /// <summary>
+    /// Mollie method used for this checkout (<c>ideal</c>, <c>creditcard</c>, or null when unspecified).
+    /// </summary>
+    public string? PaymentMethod { get; set; }
+
     public TokenPurchaseCheckoutStatus Status { get; set; } = TokenPurchaseCheckoutStatus.Pending;
     public DateTime CreatedAt { get; set; }
     public DateTime? CreditedAt { get; set; }

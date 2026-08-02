@@ -409,6 +409,10 @@ namespace Jobsy.Infrastructure.Data.Migrations
                     b.Property<bool>("PendingStartHighlightBonus")
                         .HasColumnType("boolean");
 
+                    b.Property<string>("PreferredPaymentMethod")
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)");
+
                     b.Property<DateTime?>("ReengagementEmailSentAtUtc")
                         .HasColumnType("timestamp with time zone");
 
@@ -1753,6 +1757,10 @@ namespace Jobsy.Infrastructure.Data.Migrations
                         .IsRequired()
                         .HasMaxLength(80)
                         .HasColumnType("character varying(80)");
+
+                    b.Property<string>("PaymentMethod")
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)");
 
                     b.Property<int>("Status")
                         .HasColumnType("integer");

@@ -26,6 +26,7 @@ public sealed class MolliePaymentStub : IPaymentService
     public async Task<PaymentCheckoutResult> CreateTokenPurchaseCheckoutAsync(
         Guid companyId,
         int packSize,
+        string? paymentMethod = null,
         CancellationToken cancellationToken = default)
     {
         if (packSize <= 0)
@@ -33,9 +34,13 @@ public sealed class MolliePaymentStub : IPaymentService
             throw new ArgumentOutOfRangeException(nameof(packSize));
         }
 
-        _ = await _db.Companies.AsNoTracking()
+        var company = await _db.Companies.AsNoTracking()
                 .FirstOrDefaultAsync(c => c.Id == companyId, cancellationToken)
             ?? throw new InvalidOperationException("Company not found.");
+
+        var resolvedMethod = MolliePaymentMethods.NormalizeOrNull(paymentMethod)
+            ?? MolliePaymentMethods.NormalizeOrNull(company.PreferredPaymentMethod)
+            ?? MolliePaymentMethods.Ideal;
 
         var priced = await _db.TokenPricings.AsNoTracking()
             .Where(p => p.IsActive && p.PackSize == packSize)
@@ -65,24 +70,28 @@ public sealed class MolliePaymentStub : IPaymentService
             AmountExVatCents = exVat,
             VatAmountCents = vat,
             TotalAmountCents = total,
+            PaymentMethod = resolvedMethod,
             Status = TokenPurchaseCheckoutStatus.Pending,
             CreatedAt = DateTime.UtcNow
         });
         await _db.SaveChangesAsync(cancellationToken);
 
         _logger.LogInformation(
-            "Mollie stub checkout for company {CompanyId}: {Pack} tokens = €{Price} ({PaymentId})",
-            companyId, packSize, price, paymentId);
+            "Mollie stub checkout for company {CompanyId}: {Pack} tokens = €{Price} method={Method} ({PaymentId})",
+            companyId, packSize, price, resolvedMethod, paymentId);
 
         var features = await _features.GetAsync(cancellationToken);
         var webBase = features.PublicWebBaseUrl.TrimEnd('/');
+        var checkoutUrl =
+            $"{webBase}/tokens/checkout-stub?paymentId={Uri.EscapeDataString(paymentId)}&checkoutId={checkoutId:D}&method={Uri.EscapeDataString(resolvedMethod)}";
         return new PaymentCheckoutResult(
             paymentId,
-            $"{webBase}/tokens/checkout-stub?paymentId={Uri.EscapeDataString(paymentId)}&checkoutId={checkoutId:D}",
+            checkoutUrl,
             packSize,
             price,
             IsStub: true,
-            CheckoutId: checkoutId);
+            CheckoutId: checkoutId,
+            PaymentMethod: resolvedMethod);
     }
 
     public async Task<PaymentStatusResult> GetPaymentStatusAsync(

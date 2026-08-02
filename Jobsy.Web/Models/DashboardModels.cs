@@ -19,6 +19,22 @@ public class CompanySummary
     public string? ContactEmail { get; set; }
     public string? ContactPhone { get; set; }
     public string? ContactWhatsApp { get; set; }
+    public string? PreferredPaymentMethod { get; set; }
+}
+
+public class CompanyBillingHistoryItem
+{
+    public Guid InvoiceId { get; set; }
+    public string InvoiceNumber { get; set; } = string.Empty;
+    public Guid CheckoutId { get; set; }
+    public string? PaymentMethod { get; set; }
+    public string PaymentMethodLabel { get; set; } = string.Empty;
+    public int PackSize { get; set; }
+    public decimal AmountExVatEuro { get; set; }
+    public decimal VatAmountEuro { get; set; }
+    public decimal TotalAmountEuro { get; set; }
+    public DateTime IssuedAt { get; set; }
+    public string Status { get; set; } = string.Empty;
 }
 
 public class CompanyApiKeyItem
@@ -189,6 +205,7 @@ public class CheckoutResult
     public decimal AmountEuro { get; set; }
     public bool IsStub { get; set; }
     public Guid CheckoutId { get; set; }
+    public string? PaymentMethod { get; set; }
 }
 
 public class CompleteCheckoutResult

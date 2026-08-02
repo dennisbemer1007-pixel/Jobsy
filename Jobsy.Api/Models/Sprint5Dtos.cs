@@ -6,10 +6,12 @@ public record TokenPackDto(int PackSize, decimal PriceEuro);
 
 public record TokenSpendCostDto(string Reason, decimal CostTokens);
 
+/// <param name="PaymentMethod">Mollie method: ideal or creditcard. Falls back to company preference, then iDEAL.</param>
 public record CreateCheckoutRequest(
     Guid CompanyId,
     int PackSize,
-    PendingActionCheckoutRequest? PendingAction = null);
+    PendingActionCheckoutRequest? PendingAction = null,
+    string? PaymentMethod = null);
 
 /// <summary>Deferred vacancy product action executed after Mollie fulfillment.</summary>
 public record PendingActionCheckoutRequest(
@@ -26,7 +28,8 @@ public record CheckoutResultDto(
     int PackSize,
     decimal AmountEuro,
     bool IsStub,
-    Guid CheckoutId = default);
+    Guid CheckoutId = default,
+    string? PaymentMethod = null);
 
 public record CompleteCheckoutRequest(string? PaymentId = null, Guid? CheckoutId = null);
 

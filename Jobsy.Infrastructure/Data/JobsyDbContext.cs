@@ -140,6 +140,7 @@ public class JobsyDbContext : DbContext
             entity.Property(e => e.ContactEmail).HasMaxLength(256);
             entity.Property(e => e.ContactPhone).HasMaxLength(64);
             entity.Property(e => e.ContactWhatsApp).HasMaxLength(64);
+            entity.Property(e => e.PreferredPaymentMethod).HasMaxLength(32);
             entity.Property(e => e.CommissionDirectRateSnapshot).HasPrecision(5, 4);
             entity.Property(e => e.CommissionIndirectRateSnapshot).HasPrecision(5, 4);
             entity.Property(e => e.Location)
@@ -615,6 +616,7 @@ public class JobsyDbContext : DbContext
         {
             entity.HasKey(e => e.Id);
             entity.Property(e => e.PaymentId).HasMaxLength(80).IsRequired();
+            entity.Property(e => e.PaymentMethod).HasMaxLength(32);
             entity.Property(e => e.AmountEuro).HasPrecision(10, 2);
             entity.HasIndex(e => e.PaymentId).IsUnique();
             entity.HasOne(e => e.Company)

@@ -42,7 +42,7 @@ Jobsy is een hyper-lokale job-matching applicatie gericht op de regionale arbeid
 - **Token-producten:** publiceren / highlight / PushBom / verlengen; prepaid “no tokens, no action”
 - **Onvoldoende saldo:** blokkeer actie + in-context Mollie-checkout (exact match of bulkapakket); na webhook/return → tokens bijschrijven én pending actie uitvoeren. Vestigingsmanagers zonder kooprecht blijven op `PendingApproval`
 - **PushBom:** OpenForWork-kandidaten binnen radius/reistijd; pricing tiers uit settings
-- **Tokens:** live Mollie (Dev-stub zonder API-key); EM koopt in organisatiopot; geen automatische incasso; admin grant; uitgifte aan vestigingen
+- **Tokens:** live Mollie iDEAL + creditcard (Dev-stub zonder API-key); EM koopt in organisatiopot; geen automatische incasso; webhook → instant saldo/pending actie; bedrijfsprofiel: betaalvoorkeur + factuurhistorie; admin grant; uitgifte aan vestigingen
 - **Employer suite:** vacature-editor, regio’s, vestigingen (KVK), gebruikers-invite, salaristabellen, sollicitanten
 - **Registratie:** KVK-stub (+ SBI) → vestiging → wachtwoord → e-mailverificatie; na activatie dual auth (wachtwoord of Entra, zelfde e-mail); SBI `78*` → Intermediair, anders Bedrijfsmanager bij organisatiescope; conflict → takeover/org-merge
 - **Admin suite:** bedrijven, users, vacatures, finance/tokenlog, logging, settings, integratie-pings, WML (incl. halfjaarlijkse update-stub)

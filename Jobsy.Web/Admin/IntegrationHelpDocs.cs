@@ -23,10 +23,10 @@ public static class IntegrationHelpDocs
     };
 
     private static readonly Doc Mollie = new(
-        Summary: "Betaaldienst voor iDEAL en andere methoden.",
-        UsedFor: "Tokenpakketten kopen door werkgevers/intermediairs. Met een opgeslagen API-key start checkout echte Mollie-betalingen; zonder key blijft Development op de lokale stub.",
-        WhereToGetKey: "Mollie Dashboard → Developers → API keys. Gebruik eerst een test-key (begint met test_), later live_ voor echte betalingen.",
-        Tip: "Base URL: https://api.mollie.com/v2/ (of leeg laten). Zet PublicWebBaseUrl goed (Admin → Platform) zodat Mollie na betaling terugstuurt naar Lobsy. Webhooks gaan naar de API (/api/webhooks/mollie).",
+        Summary: "Betaaldienst voor iDEAL en creditcard (prepaid token-aankopen).",
+        UsedFor: "Tokenpakketten kopen door werkgevers/intermediairs via iDEAL of creditcard. Met een opgeslagen API-key start checkout echte Mollie-betalingen; zonder key blijft Development op de lokale stub. Webhooks schrijven tokens direct bij na betaling.",
+        WhereToGetKey: "Mollie Dashboard → Developers → API keys. Gebruik eerst een test-key (begint met test_), later live_ voor echte betalingen. Activeer iDEAL én creditcard in je Mollie-profiel.",
+        Tip: "Base URL: https://api.mollie.com/v2/ (of leeg laten). Zet PublicApiBaseUrl / PublicWebBaseUrl goed zodat Mollie webhooks (/api/webhooks/mollie) en redirect-return werken — nodig voor instant creditcard/iDEAL top-ups.",
         DocsUrl: "https://my.mollie.com/dashboard/developers/api-keys",
         DocsUrlLabel: "Mollie API keys");
 

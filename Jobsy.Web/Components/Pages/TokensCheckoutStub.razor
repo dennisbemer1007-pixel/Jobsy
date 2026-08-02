@@ -10,7 +10,7 @@
 
 <div class="panel-page">
     <h1>Mollie checkout (stub)</h1>
-    <p class="login-lead">Simuleer een geslaagde betaling. Tokens worden bijgeschreven en een gekoppelde actie wordt direct uitgevoerd.</p>
+    <p class="login-lead">Simuleer een geslaagde betaling (@_methodLabel). Tokens worden bijgeschreven en een gekoppelde actie wordt direct uitgevoerd.</p>
 
     @if (_loading)
     {
@@ -23,11 +23,15 @@
                 <span class="stat-card__label">Payment</span>
                 <strong class="stat-card__value" style="font-size:1rem">@_paymentId</strong>
             </div>
+            <div class="stat-card">
+                <span class="stat-card__label">Methode</span>
+                <strong class="stat-card__value" style="font-size:1rem">@_methodLabel</strong>
+            </div>
         </div>
 
         <div class="inline-actions" style="margin-top:1.5rem">
             <button class="login-submit" type="button" disabled="@_busy || string.IsNullOrWhiteSpace(_paymentId)" @onclick="CompleteAsync">
-                @(_busy ? "Bezig…" : "Betaal (stub)")
+                @(_busy ? "Bezig…" : $"Betaal met {_methodLabel} (stub)")
             </button>
             <a class="auth-link" href="/employer/tokens">@Culture["Common.Cancel"]</a>
         </div>
@@ -44,7 +48,11 @@
     private bool _busy;
     private string _paymentId = "";
     private Guid? _checkoutId;
+    private string _method = "ideal";
     private string? _message;
+
+    private string _methodLabel =>
+        string.Equals(_method, "creditcard", StringComparison.OrdinalIgnoreCase) ? "Creditcard" : "iDEAL";
 
     protected override void OnInitialized()
     {
@@ -54,6 +62,11 @@
         if (query.TryGetValue("checkoutId", out var cid) && Guid.TryParse(cid.ToString(), out var checkoutId))
         {
             _checkoutId = checkoutId;
+        }
+
+        if (query.TryGetValue("method", out var method) && !string.IsNullOrWhiteSpace(method))
+        {
+            _method = method.ToString();
         }
 
         _loading = false;

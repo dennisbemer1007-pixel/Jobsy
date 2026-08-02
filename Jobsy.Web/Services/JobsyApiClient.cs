@@ -831,11 +831,12 @@ public sealed class JobsyApiClient : IAsyncDisposable
         Guid companyId,
         int packSize,
         PendingActionCheckoutRequest? pendingAction = null,
+        string? paymentMethod = null,
         CancellationToken ct = default)
     {
         var response = await _http.PostAsJsonAsync(
             "api/tokens/checkout",
-            new { companyId, packSize, pendingAction },
+            new { companyId, packSize, pendingAction, paymentMethod },
             ct);
         if (!response.IsSuccessStatusCode)
         {
@@ -965,6 +966,51 @@ public sealed class JobsyApiClient : IAsyncDisposable
         }
 
         return await response.Content.ReadFromJsonAsync<CompanySummary>(cancellationToken: ct);
+    }
+
+    public async Task<CompanySummary?> UpdateBillingPreferenceAsync(
+        Guid companyId,
+        string? preferredPaymentMethod,
+        CancellationToken ct = default)
+    {
+        var response = await _http.PutAsJsonAsync(
+            $"api/companies/{companyId}/billing-preference",
+            new { preferredPaymentMethod },
+            ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException(TryExtractMessage(body) ?? body);
+        }
+
+        return await response.Content.ReadFromJsonAsync<CompanySummary>(cancellationToken: ct);
+    }
+
+    public async Task<IReadOnlyList<CompanyBillingHistoryItem>> GetCompanyBillingHistoryAsync(
+        Guid companyId,
+        CancellationToken ct = default)
+        => await _http.GetFromJsonAsync<List<CompanyBillingHistoryItem>>(
+            $"api/companies/{companyId}/billing-history", ct) ?? [];
+
+    public async Task DownloadCompanyBillingInvoicePdfAsync(
+        Guid companyId,
+        Guid invoiceId,
+        string invoiceNumber,
+        IJSRuntime js,
+        CancellationToken ct = default)
+    {
+        var response = await _http.GetAsync(
+            $"api/companies/{companyId}/billing/invoices/{invoiceId:D}/pdf", ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException(TryExtractMessage(body) ?? body);
+        }
+
+        var bytes = await response.Content.ReadAsByteArrayAsync(ct);
+        var fileName = string.IsNullOrWhiteSpace(invoiceNumber) ? $"{invoiceId:N}.pdf" : $"{invoiceNumber}.pdf";
+        var base64 = Convert.ToBase64String(bytes);
+        await js.InvokeVoidAsync("jobsyDownload.bytes", fileName, base64, "application/pdf");
     }
 
     public async Task<VacancyContactPreferenceItem?> GetVacancyContactPreferenceAsync(

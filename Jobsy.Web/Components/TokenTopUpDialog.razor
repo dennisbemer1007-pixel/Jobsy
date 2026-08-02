@@ -33,7 +33,7 @@
             </p>
 
             <fieldset class="token-topup-options">
-                <legend>Betaalopties (prepaid via Mollie)</legend>
+                <legend>Tokenpakket (prepaid via Mollie)</legend>
 
                 @if (_quote.ExactMatchTokens > 0)
                 {
@@ -60,14 +60,28 @@
                 }
             </fieldset>
 
+            <fieldset class="token-topup-options" style="margin-top:0.75rem">
+                <legend>Betaalmethode</legend>
+                <label class="publish-option">
+                    <input type="radio" name="topup-method" checked="@(_paymentMethod == "ideal")"
+                           @onchange="@(() => _paymentMethod = "ideal")" />
+                    <span>iDEAL <em>Direct via je bank</em></span>
+                </label>
+                <label class="publish-option">
+                    <input type="radio" name="topup-method" checked="@(_paymentMethod == "creditcard")"
+                           @onchange="@(() => _paymentMethod = "creditcard")" />
+                    <span>Creditcard <em>Visa / Mastercard</em></span>
+                </label>
+            </fieldset>
+
             <p class="muted" style="margin-top:0.75rem">
-                Geen automatische incasso — je betaalt alleen dit pakket. Na betaling wordt je actie direct uitgevoerd.
+                Geen automatische incasso — je betaalt alleen dit pakket. Na betaling (webhook) worden tokens bijgeschreven en wordt je actie direct uitgevoerd.
             </p>
         }
 
         <div class="inline-actions" style="margin-top:1rem">
             <button type="button" class="btn-compact btn-compact--primary" disabled="@ConfirmDisabled" @onclick="PayAsync">
-                @(_busy ? Culture["Common.Busy"] : "Betaal via Mollie")
+                @(_busy ? Culture["Common.Busy"] : (_paymentMethod == "creditcard" ? "Betaal met creditcard" : "Betaal met iDEAL"))
             </button>
             <button type="button" class="btn-compact" disabled="@_busy" @onclick="Close">@Culture["Common.Cancel"]</button>
         </div>
@@ -90,6 +104,7 @@
     private string? _error;
     private TokenTopUpQuote? _quote;
     private int _selectedPack;
+    private string _paymentMethod = "ideal";
     private Guid? _loadedFor;
 
     private string ActionLabel => Info?.Action switch
@@ -143,6 +158,21 @@
             _selectedPack = _quote.ExactMatchTokens > 0
                 ? _quote.ExactMatchTokens
                 : _quote.BulkPacks.FirstOrDefault()?.PackSize ?? 0;
+
+            try
+            {
+                var companies = await Api.GetMyCompaniesAsync();
+                var company = companies.FirstOrDefault(c => c.Id == Info.CompanyId)
+                    ?? companies.FirstOrDefault(c => c.Id == Info.CompanyId || c.ParentCompanyId is null);
+                _paymentMethod = string.Equals(
+                    company?.PreferredPaymentMethod, "creditcard", StringComparison.OrdinalIgnoreCase)
+                    ? "creditcard"
+                    : "ideal";
+            }
+            catch
+            {
+                _paymentMethod = "ideal";
+            }
         }
         catch (Exception ex)
         {
@@ -188,7 +218,8 @@
                     PushBom = Info.PushBom,
                     Extend = Info.Extend,
                     RequiredTokens = Info.RequiredTokens
-                });
+                },
+                paymentMethod: _paymentMethod);
 
             if (result is null || string.IsNullOrWhiteSpace(result.CheckoutUrl))
             {

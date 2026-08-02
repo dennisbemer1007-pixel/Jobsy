@@ -48,10 +48,11 @@ public sealed class MollieWebhooksController : ControllerBase
         try
         {
             var paymentId = id.Trim();
+            // Poll Mollie (works for iDEAL and creditcard); marks session Paid then fulfills immediately.
             var status = await _payments.GetPaymentStatusAsync(paymentId, cancellationToken);
             _logger.LogInformation(
-                "Mollie webhook {PaymentId}: status={Status}, paid={Paid}",
-                status.PaymentId, status.Status, status.IsPaid);
+                "Mollie webhook {PaymentId}: status={Status}, paid={Paid}, method={Method}",
+                status.PaymentId, status.Status, status.IsPaid, status.Method ?? "unknown");
 
             if (status.IsPaid)
             {
@@ -70,8 +71,8 @@ public sealed class MollieWebhooksController : ControllerBase
                     if (result is not null)
                     {
                         _logger.LogInformation(
-                            "Mollie webhook fulfilled checkout {CheckoutId} → invoice {InvoiceNumber}",
-                            result.CheckoutId, result.InvoiceNumber);
+                            "Mollie webhook fulfilled checkout {CheckoutId} method={Method} → invoice {InvoiceNumber}",
+                            result.CheckoutId, status.Method ?? "unknown", result.InvoiceNumber);
                     }
                 }
             }

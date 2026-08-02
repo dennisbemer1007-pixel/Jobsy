@@ -20,7 +20,7 @@
     <header class="panel-header">
         <div>
             <h1>Bedrijfsgegevens</h1>
-            <p class="login-lead">Organisatie, contactvoorkeur, CSV-import en API-koppeling — alles op één plek.</p>
+            <p class="login-lead">Organisatie, contactvoorkeur, facturatie, CSV-import en API-koppeling — alles op één plek.</p>
         </div>
     </header>
 
@@ -173,6 +173,85 @@
                 @if (_feedbackSection == FeedbackSection.Contact && !string.IsNullOrEmpty(_message))
                 {
                     <p class="state-message @(_messageIsError ? "error" : null)">@_message</p>
+                }
+            </section>
+
+            <section class="panel-section company-details__card">
+                <h2>Facturatie &amp; betalen</h2>
+                <p class="muted company-details__lead">
+                    Kies je voorkeursbetaalmethode voor tokenaankopen via Mollie (iDEAL of creditcard).
+                    Betalingen zijn prepaid — geen automatische incasso. Na betaling schrijft de Mollie-webhook
+                    tokens direct bij.
+                </p>
+
+                <fieldset class="scope-fieldset" disabled="@_busy">
+                    <legend>Voorkeursbetaalmethode</legend>
+                    <div class="token-pack-options" role="radiogroup" aria-label="Betaalmethode">
+                        <label class="scope-option">
+                            <input type="radio"
+                                   name="billing-method"
+                                   checked="@(_preferredPaymentMethod == "ideal")"
+                                   @onchange="@(() => SelectPreferredMethod("ideal"))" />
+                            <span>
+                                <strong>iDEAL</strong>
+                                <span class="muted">Direct via je bank</span>
+                            </span>
+                        </label>
+                        <label class="scope-option">
+                            <input type="radio"
+                                   name="billing-method"
+                                   checked="@(_preferredPaymentMethod == "creditcard")"
+                                   @onchange="@(() => SelectPreferredMethod("creditcard"))" />
+                            <span>
+                                <strong>Creditcard</strong>
+                                <span class="muted">Visa / Mastercard via Mollie</span>
+                            </span>
+                        </label>
+                    </div>
+                </fieldset>
+
+                <div class="inline-actions company-details__actions">
+                    <button class="login-submit" type="button" disabled="@_busy" @onclick="SaveBillingPreferenceAsync">
+                        Betaalvoorkeur opslaan
+                    </button>
+                </div>
+                @if (_feedbackSection == FeedbackSection.Billing && !string.IsNullOrEmpty(_message))
+                {
+                    <p class="state-message @(_messageIsError ? "error" : null)">@_message</p>
+                }
+
+                <h3 style="margin-top:1.5rem">Factuurhistorie</h3>
+                @if (_billingLoading)
+                {
+                    <p class="muted">Facturen laden…</p>
+                }
+                else if (_billingHistory.Count == 0)
+                {
+                    <p class="muted">Nog geen tokenaankopen. Koop tokens via Tokens — je facturen verschijnen hier.</p>
+                }
+                else
+                {
+                    <div class="table-list">
+                        @foreach (var row in _billingHistory)
+                        {
+                            <div class="table-row">
+                                <div>
+                                    <strong>@row.InvoiceNumber</strong>
+                                    <span class="muted">
+                                        · @row.PackSize tokens · @row.PaymentMethodLabel
+                                        · € @row.TotalAmountEuro.ToString("0.00")
+                                        · @row.IssuedAt.ToLocalTime().ToString("dd-MM-yyyy HH:mm")
+                                    </span>
+                                </div>
+                                <button type="button"
+                                        class="btn-compact"
+                                        disabled="@_busy"
+                                        @onclick="() => DownloadInvoiceAsync(row)">
+                                    PDF
+                                </button>
+                            </div>
+                        }
+                    </div>
                 }
             </section>
 
@@ -453,6 +532,7 @@
     {
         None,
         Contact,
+        Billing,
         Csv,
         Api
     }
@@ -486,6 +566,9 @@
     private string _contactEmail = "";
     private string _contactPhone = "";
     private string _contactWhatsApp = "";
+    private string _preferredPaymentMethod = "ideal";
+    private List<CompanyBillingHistoryItem> _billingHistory = [];
+    private bool _billingLoading;
     private bool _keyCopied;
     private bool _endpointCopied;
     private bool _keyCopyFailed;
@@ -601,6 +684,8 @@
             _activeKey = _keys.FirstOrDefault(k => k.IsActive);
             _inactiveKeys = _keys.Where(k => !k.IsActive).ToList();
         }
+
+        await LoadBillingHistoryAsync();
     }
 
     private void SyncContactFormFromOrg()
@@ -617,6 +702,93 @@
         _contactEmail = _org.ContactEmail ?? "";
         _contactPhone = _org.ContactPhone ?? "";
         _contactWhatsApp = _org.ContactWhatsApp ?? "";
+        _preferredPaymentMethod = string.Equals(_org.PreferredPaymentMethod, "creditcard", StringComparison.OrdinalIgnoreCase)
+            ? "creditcard"
+            : "ideal";
+    }
+
+    private void SelectPreferredMethod(string method) => _preferredPaymentMethod = method;
+
+    private async Task LoadBillingHistoryAsync()
+    {
+        if (_org is null)
+        {
+            _billingHistory = [];
+            return;
+        }
+
+        _billingLoading = true;
+        try
+        {
+            _billingHistory = (await Api.GetCompanyBillingHistoryAsync(_org.Id)).ToList();
+        }
+        catch
+        {
+            _billingHistory = [];
+        }
+        finally
+        {
+            _billingLoading = false;
+        }
+    }
+
+    private async Task SaveBillingPreferenceAsync()
+    {
+        if (_org is null || _busy)
+        {
+            return;
+        }
+
+        _busy = true;
+        ClearFeedback();
+        try
+        {
+            var updated = await Api.UpdateBillingPreferenceAsync(_org.Id, _preferredPaymentMethod);
+            if (updated is not null)
+            {
+                var idx = _organizations.FindIndex(o => o.Id == updated.Id);
+                if (idx >= 0)
+                {
+                    _organizations[idx] = updated;
+                }
+
+                _org = updated;
+                SyncContactFormFromOrg();
+                SetFeedback(FeedbackSection.Billing, "Betaalvoorkeur opgeslagen.");
+            }
+        }
+        catch (Exception ex)
+        {
+            SetFeedback(FeedbackSection.Billing, ex.Message, isError: true);
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private async Task DownloadInvoiceAsync(CompanyBillingHistoryItem row)
+    {
+        if (_org is null || _busy)
+        {
+            return;
+        }
+
+        _busy = true;
+        ClearFeedback();
+        try
+        {
+            await Api.DownloadCompanyBillingInvoicePdfAsync(_org.Id, row.InvoiceId, row.InvoiceNumber, Js);
+            SetFeedback(FeedbackSection.Billing, $"Factuur {row.InvoiceNumber} gedownload.");
+        }
+        catch (Exception ex)
+        {
+            SetFeedback(FeedbackSection.Billing, ex.Message, isError: true);
+        }
+        finally
+        {
+            _busy = false;
+        }
     }
 
     private void OnDirectContactToggle(ChangeEventArgs e)

@@ -52,6 +52,12 @@ public class Company
     public bool CsvBatchImportEnabled { get; set; }
 
     /// <summary>
+    /// Preferred Mollie payment method for token top-ups (<c>ideal</c> or <c>creditcard</c>).
+    /// Used as the default at checkout; managers can override per purchase.
+    /// </summary>
+    public string? PreferredPaymentMethod { get; set; }
+
+    /// <summary>
     /// Hard stop: when set, a "We missen je" re-engagement e-mail was already sent once for this account.
     /// Never auto-send again unless an admin clears this field.
     /// </summary>
