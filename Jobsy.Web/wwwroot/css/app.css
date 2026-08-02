@@ -2810,8 +2810,14 @@ a {
     background: var(--map-land, #e8eef5);
 }
 
+<<<<<<< HEAD
 .vacancy-location__map,
 .vacancy-location__map.vacancy-detail-map {
+=======
+/* Must beat later .job-map (relative/height:auto) used on banenkaart + highlight carousel. */
+.vacancy-location__map.job-map,
+.vacancy-location__map {
+>>>>>>> origin/cursor/fix-vacancy-detail-map-d559
     position: absolute;
     inset: 0;
     flex: none;
