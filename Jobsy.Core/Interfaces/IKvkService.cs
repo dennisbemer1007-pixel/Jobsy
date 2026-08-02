@@ -49,27 +49,6 @@ public sealed record KvkEstablishmentsLookup(
             message ?? "KVK-dienst is tijdelijk niet beschikbaar. Je kunt doorgaan; verificatie volgt later.");
 }
 
-public static class KvkServiceLookup
-{
-    public static async Task<KvkEstablishmentsLookup> FromGetEstablishmentsAsync(
-        IKvkService kvk,
-        string kvkNumber,
-        CancellationToken cancellationToken = default)
-    {
-        try
-        {
-            var items = await kvk.GetEstablishmentsAsync(kvkNumber, cancellationToken);
-            return items.Count == 0
-                ? KvkEstablishmentsLookup.NotFound()
-                : KvkEstablishmentsLookup.Ok(items);
-        }
-        catch (KvkServiceUnavailableException ex)
-        {
-            return KvkEstablishmentsLookup.Unavailable(ex.Message);
-        }
-    }
-}
-
 public record KvkCompanyResult(
     string KvkNumber,
     string Name,

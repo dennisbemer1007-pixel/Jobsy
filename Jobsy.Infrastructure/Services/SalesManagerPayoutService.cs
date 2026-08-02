@@ -577,5 +577,5 @@ public sealed class SalesManagerPayoutService : ISalesManagerPayoutService
 
     private bool AllowStubPayouts() =>
         _environment.IsDevelopment()
-        || _configuration.GetValue("JobsyAuth:AllowDevelopmentAuth", false);
+        || _configuration.GetValue("JobsyAuth:AllowStubPayments", false);
 }

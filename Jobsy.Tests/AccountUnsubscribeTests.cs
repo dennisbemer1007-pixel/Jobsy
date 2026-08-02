@@ -72,6 +72,7 @@ public class AccountUnsubscribeTests
             PreferredTransport = "Bike",
             Status = ApplicationStatus.Pending,
             SnapshotAboutMe = "Persoonlijke bio",
+            Motivation = "Ik wil graag werken",
             CreatedAt = DateTime.UtcNow
         });
         db.VacancyLikes.Add(new VacancyLike
@@ -130,6 +131,7 @@ public class AccountUnsubscribeTests
         var app = await db.Applications.SingleAsync(a => a.VacancyId == vacancyId);
         Assert.Null(app.CandidateUserId);
         Assert.Null(app.SnapshotAboutMe);
+        Assert.Null(app.Motivation);
         Assert.StartsWith("deleted-", app.CandidateEmail);
 
         Assert.Equal(0, await db.VacancyLikes.CountAsync(l => l.UserId == candidateId));

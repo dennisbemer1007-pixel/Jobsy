@@ -10,8 +10,10 @@ using Microsoft.AspNetCore.Antiforgery;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
+using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Components.Server;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Protocols.OpenIdConnect;
@@ -273,7 +275,7 @@ public static class AuthServiceCollectionExtensions
             StampLastActivity(http);
 
             return Results.Redirect(AuthRedirects.SafeLocalUrl(returnUrl));
-        });
+        }).RequireRateLimiting("auth");
 
         // Demo one-click login resolves password server-side so credentials stay out of HTML.
         app.MapPost("/account/demo-login", async (
@@ -312,7 +314,7 @@ public static class AuthServiceCollectionExtensions
             StampLastActivity(http);
 
             return Results.Redirect(AuthRedirects.SafeLocalUrl(returnUrl));
-        });
+        }).RequireRateLimiting("auth");
 
         app.MapGet("/account/external/{provider}", async (
             string provider,

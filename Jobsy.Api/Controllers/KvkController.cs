@@ -5,12 +5,14 @@ using Jobsy.Core.Interfaces;
 using Jobsy.Infrastructure.Data;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 
 namespace Jobsy.Api.Controllers;
 
 [ApiController]
 [Route("api/kvk")]
+[EnableRateLimiting("public-write")]
 public class KvkController : ControllerBase
 {
     private readonly IKvkService _kvk;

@@ -84,7 +84,23 @@ window.jobsyGeo = (function () {
         sessionStorage.removeItem(AGE_KEY);
     }
 
+    function analyticsAllowed() {
+        try {
+            if (window.jobsyCookieConsent && typeof window.jobsyCookieConsent.allowsAnalytics === "function") {
+                return !!window.jobsyCookieConsent.allowsAnalytics();
+            }
+            return (localStorage.getItem("Jobsy.CookieConsent") || "").toLowerCase() === "analytics";
+        } catch {
+            return false;
+        }
+    }
+
     function getOrCreateAnonymousKey() {
+        // Do not create/persist engagement keys before analytics consent (ePrivacy).
+        if (!analyticsAllowed()) {
+            return null;
+        }
+
         let key = null;
         try {
             key = localStorage.getItem(ANON_KEY) || sessionStorage.getItem(ANON_KEY);

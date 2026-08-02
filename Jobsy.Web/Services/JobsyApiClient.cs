@@ -74,9 +74,6 @@ public sealed class JobsyApiClient : IAsyncDisposable
         }
     }
 
-    public async Task<IReadOnlyList<VacancyListItem>> GetActiveVacanciesAsync(CancellationToken ct = default)
-        => await _http.GetFromJsonAsync<List<VacancyListItem>>("api/vacancies", ct) ?? [];
-
     public async Task<IReadOnlyList<VacancyListItem>> DiscoverVacanciesAsync(
         double? originLat,
         double? originLng,
@@ -567,19 +564,6 @@ public sealed class JobsyApiClient : IAsyncDisposable
         }
     }
 
-    public async Task DeactivateActiveCompanyApiKeyAsync(Guid companyId, CancellationToken ct = default)
-    {
-        var response = await _http.PostAsync(
-            $"api/companies/{companyId}/api-keys/deactivate-active",
-            null,
-            ct);
-        if (!response.IsSuccessStatusCode)
-        {
-            var body = await response.Content.ReadAsStringAsync(ct);
-            throw new InvalidOperationException(TryExtractMessage(body) ?? body);
-        }
-    }
-
     public async Task<EmailApiKeyResultItem?> EmailCompanyApiKeyCredentialsAsync(
         Guid companyId,
         CancellationToken ct = default)
@@ -663,20 +647,6 @@ public sealed class JobsyApiClient : IAsyncDisposable
         => await _http.GetFromJsonAsync<KvkEstablishmentsLookupResult>(
                $"api/registration/kvk/{Uri.EscapeDataString(kvkNumber)}/establishments", ct)
            ?? new KvkEstablishmentsLookupResult { Status = "NotFound" };
-
-    public async Task<IReadOnlyList<KvkEstablishmentItem>> GetRegistrationEstablishmentsAsync(
-        string kvkNumber,
-        CancellationToken ct = default)
-    {
-        var lookup = await LookupRegistrationEstablishmentsAsync(kvkNumber, ct);
-        if (lookup.IsUnavailable)
-        {
-            throw new InvalidOperationException(
-                lookup.Message ?? "KVK-dienst is tijdelijk niet beschikbaar.");
-        }
-
-        return lookup.Establishments;
-    }
 
     public async Task<RegistrationSubmitResult> SubmitRegistrationAsync(
         string kvkNumber,
@@ -1141,12 +1111,6 @@ public sealed class JobsyApiClient : IAsyncDisposable
         var url = BuildTokenFinanceUrl("api/tokens/finance/vat-transfers", year, quarter);
         return await _http.GetFromJsonAsync<List<VatBufferTransferItem>>(url, ct) ?? [];
     }
-
-    public string GetTokenPurchasesExportUrl(int? year = null, int? quarter = null)
-        => BuildTokenFinanceUrl("api/tokens/finance/purchases/export", year, quarter);
-
-    public string GetTokenGoodwillExportUrl(int? year = null, int? quarter = null)
-        => BuildTokenFinanceUrl("api/tokens/finance/goodwill/export", year, quarter);
 
     public async Task DownloadTokenPurchasesCsvAsync(
         Microsoft.JSInterop.IJSRuntime js,
@@ -1813,9 +1777,6 @@ public sealed class JobsyApiClient : IAsyncDisposable
 
         return await response.Content.ReadFromJsonAsync<SemiAnnualWageUpdateResult>(cancellationToken: ct);
     }
-
-    public async Task<WageCheckResult?> CheckWageAsync(decimal hourlyWage, int ageYears = 21, CancellationToken ct = default)
-        => await _http.GetFromJsonAsync<WageCheckResult>($"api/wages/check?hourlyWage={hourlyWage}&ageYears={ageYears}", ct);
 
     public async Task<IReadOnlyList<IntegrationHealthItem>> GetIntegrationHealthAsync(CancellationToken ct = default)
         => await _http.GetFromJsonAsync<List<IntegrationHealthItem>>("api/integrations/health", ct) ?? [];

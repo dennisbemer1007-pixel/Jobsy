@@ -116,3 +116,37 @@ dan is `ConnectionStrings__JobsyDb` leeg of geen echte Postgres-string — mockd
 | `RENDER_EXTERNAL_URL` | Stabiele cross-service HTTP (ook op free bruikbaar) |
 | `ConnectionStrings__JobsyDb` op **web én api** | Data Protection-keys in Postgres (antiforgery/auth cookies na redeploy) |
 | `JobsyAuth__AllowDevelopmentAuth` | Demo-logins zonder Entra (niet voor echte productie) |
+
+## Database backups (productie)
+
+Render **Basic Postgres** (`jobsy-db`) maakt dagelijkse automatische backups (zie Dashboard → `jobsy-db` → **Backups**). Voor echte productie:
+
+1. Bevestig in het Dashboard dat daily backups aan staan en noteer de retentie.
+2. Plan minstens één restore-drill (nieuwe DB vanuit backup → connection string tijdelijk op staging).
+3. Voor strengere RPO: upgrade naar een plan met Point-in-Time Recovery (PITR) en/of periodieke `pg_dump` naar offsite storage.
+4. Documenteer RPO/RTO en wie restore mag uitvoeren in jullie ops-runbook.
+
+## Transactionele e-mail (Resend) + SPF/DKIM
+
+Lobsy stuurt mail via **Resend** (SMTP-fallback). Voor productie:
+
+1. Voeg het verzenddomein toe in Resend (bijv. `lobsy.nl`) en verifieer DNS.
+2. Zet de door Resend aangeleverde **SPF** en **DKIM** records; start **DMARC** met `p=none` en verhoog later.
+3. Zet in Admin → Integraties een From-adres op het geverifieerde domein (niet `onboarding@resend.dev`).
+4. Test met Admin “testmail”; mislukte sends landen in PlatformLogs (e-mail geredacteerd).
+
+## Sentry & webhook-ops
+
+1. Maak een Sentry project en zet `Sentry__Dsn` op `jobsy-api` én `jobsy-web`.
+2. Mollie webhook-fouten geven **503** (Mollie retries) en schrijven PlatformLog categorie `MollieWebhook`.
+3. `TokenCheckoutReconcileHostedService` herstelt betaalde checkouts zonder credit/factuur (idempotent).
+4. Optioneel: zet `VerificationCodes__Pepper` op een lange random string per omgeving.
+
+## Echte productie vs publieke demo
+
+| Flag | Demo (Render blueprint) | Echte productie |
+|------|-------------------------|-----------------|
+| `JobsyAuth__AllowDevelopmentAuth` | `true` | `false` + Entra/Google |
+| `JobsyAuth__AllowStubPayments` | `true` | `false` + live Mollie |
+| `Swagger__Enabled` | `false` | `false` (of tijdelijk `true` voor partners) |
+| `Seed:Enabled` | via AllowDevelopmentAuth | `false` |

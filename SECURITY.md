@@ -26,10 +26,14 @@
 
 ## C. Security Headers & Error Handling (Middleware)
 De ASP.NET Core pipeline stuurt standaard:
-- `Content-Security-Policy` (API)
+- `Content-Security-Policy` (API + Web; Blazor-compatible op Web)
 - `X-Content-Type-Options: nosniff`
 - `X-Frame-Options: DENY`
 - `Referrer-Policy`, `Permissions-Policy`
 - HSTS buiten Development
 - `ExceptionHandlingMiddleware` — generieke ProblemDetails naar clients; stacktraces/PII blijven server-side
-- **Swagger:** standaard aan (`/swagger`); alleen uit te zetten via `Swagger:Enabled=false`. Buiten Development is “Try it out” uitgeschakeld.
+- **Swagger:** standaard aan in Development; buiten Development uit tenzij `Swagger:Enabled=true`. “Try it out” blijft uit buiten Development.
+- **Sentry:** optioneel via `Sentry:Dsn` / `Sentry__Dsn` (API + Web); geen PII (`SendDefaultPii=false`).
+- **OTP pepper:** optioneel deploy-secret `VerificationCodes:Pepper` (fallback ingebouwde pepper blijft verifieerbaar tijdens rollout).
+- **Stub payouts:** alleen Development of expliciet `JobsyAuth:AllowStubPayments=true` (niet meer gekoppeld aan AllowDevelopmentAuth).
+- **Cookie consent:** banner + `Jobsy.CookieConsent` in localStorage; anonieme site-analytics pas na “Accepteer analytics”.

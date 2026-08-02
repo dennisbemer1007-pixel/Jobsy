@@ -38,12 +38,20 @@ services:
         value: "*"
       - key: JobsyAuth__AllowDevelopmentAuth
         value: "true"
+      # Stub Mollie payouts for the public demo only — keep false for real production money paths.
+      - key: JobsyAuth__AllowStubPayments
+        value: "true"
       - key: JobsyAuth__DevelopmentAuthSecret
         generateValue: true
       - key: JobsyAuth__ExternalProvisionSecret
         generateValue: true
       - key: JobsyFeatures__ExposeRegistrationActivationLinks
         value: "false"
+      # Partner Swagger off by default in Production; set true if needed.
+      - key: Swagger__Enabled
+        value: "false"
+      # Optional: set Sentry__Dsn in the Render dashboard for exception monitoring.
+      # Optional: set VerificationCodes__Pepper to a deploy-time OTP pepper.
       - key: ConnectionStrings__JobsyDb
         fromDatabase:
           name: jobsy-db

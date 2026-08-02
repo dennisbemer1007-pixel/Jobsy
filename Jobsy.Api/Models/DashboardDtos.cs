@@ -140,20 +140,6 @@ public record UpsertWageRateRequest(
     string Label,
     DateOnly EffectiveFrom);
 
-public record AdminCompanyDto(
-    Guid Id,
-    string Name,
-    string KvkNumber,
-    string Address,
-    string? LogoUrl);
-
-public record AdminUserDto(
-    Guid Id,
-    string Email,
-    string FullName,
-    string Role,
-    Guid? CompanyId);
-
 public record MeAccessDto(
     string? Role,
     bool IsAdmin,

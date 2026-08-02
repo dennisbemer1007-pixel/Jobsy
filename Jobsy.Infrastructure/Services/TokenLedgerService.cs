@@ -71,6 +71,61 @@ public sealed class TokenLedgerService : ITokenLedgerService
             cancellationToken);
     }
 
+    public async Task<TokenTransaction> GrantForCheckoutAsync(
+        Guid companyId,
+        decimal amount,
+        Guid tokenPurchaseCheckoutId,
+        Guid? actorUserId = null,
+        string? note = null,
+        CancellationToken cancellationToken = default)
+    {
+        if (amount <= 0)
+        {
+            throw new ArgumentOutOfRangeException(nameof(amount), "Grant amount must be positive.");
+        }
+
+        var existing = await _db.TokenTransactions
+            .FirstOrDefaultAsync(
+                t => t.TokenPurchaseCheckoutId == tokenPurchaseCheckoutId
+                     && t.Kind == TokenTransactionKind.Grant,
+                cancellationToken);
+        if (existing is not null)
+        {
+            return existing;
+        }
+
+        try
+        {
+            return await CreditAsync(
+                companyId,
+                amount,
+                TokenTransactionKind.Grant,
+                actorUserId,
+                note ?? "Grant",
+                amountExVatCents: 0,
+                vatAmountCents: 0,
+                totalAmountCents: 0,
+                checkoutId: tokenPurchaseCheckoutId,
+                invoiceId: null,
+                cancellationToken);
+        }
+        catch (DbUpdateException) when (_db.Database.IsRelational())
+        {
+            // Unique (Kind=Grant, TokenPurchaseCheckoutId) race — reload winner.
+            var raced = await _db.TokenTransactions
+                .FirstOrDefaultAsync(
+                    t => t.TokenPurchaseCheckoutId == tokenPurchaseCheckoutId
+                         && t.Kind == TokenTransactionKind.Grant,
+                    cancellationToken);
+            if (raced is not null)
+            {
+                return raced;
+            }
+
+            throw;
+        }
+    }
+
     public async Task<TokenTransaction> GrantGoodwillAsync(
         Guid companyId,
         decimal amount,

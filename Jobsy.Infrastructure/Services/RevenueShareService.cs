@@ -1,4 +1,5 @@
 using Jobsy.Core.Entities;
+using Jobsy.Core.Enums;
 using Jobsy.Core.Interfaces;
 using Jobsy.Core.Rules;
 using Jobsy.Infrastructure.Data;
@@ -46,78 +47,29 @@ public sealed class RevenueShareService : IRevenueShareService
             return;
         }
 
-        if (await _db.RevenueShareLogs.AnyAsync(l => l.TokenCheckoutId == tokenCheckoutId, cancellationToken))
+        var existingKinds = await _db.RevenueShareLogs.AsNoTracking()
+            .Where(l => l.TokenCheckoutId == tokenCheckoutId)
+            .Select(l => l.RecipientKind)
+            .ToListAsync(cancellationToken);
+
+        // Fully settled (ambassador log present) — repair grant if needed and exit.
+        if (existingKinds.Contains(RevenueShareRecipientKind.Ambassador))
         {
+            await EnsureAmbassadorGrantFromLogsAsync(tokenCheckoutId, companyId, cancellationToken);
             return;
         }
 
-        // Prefer historical snapshot frozen at entrepreneur activation so admin tariff
-        // changes never rewrite existing referral contracts.
-        var company = await _db.Companies.AsNoTracking()
-            .Where(c => c.Id == companyId)
-            .Select(c => new
-            {
-                c.CommissionIndirectSalesManagerUserId,
-                c.CommissionDirectRateSnapshot,
-                c.CommissionIndirectRateSnapshot,
-                c.CommissionDurationDaysSnapshot,
-                c.CommissionTermsSnapshottedAtUtc
-            })
-            .FirstOrDefaultAsync(cancellationToken);
-
-        decimal directRate;
-        decimal indirectRateConfigured;
-        int durationDays;
-        Guid? referringSmId;
-
-        if (company?.CommissionTermsSnapshottedAtUtc is not null
-            && company.CommissionDirectRateSnapshot is not null)
-        {
-            directRate = company.CommissionDirectRateSnapshot.Value;
-            indirectRateConfigured = company.CommissionIndirectRateSnapshot ?? 0m;
-            durationDays = company.CommissionDurationDaysSnapshot is > 0
-                ? company.CommissionDurationDaysSnapshot.Value
-                : SalesCommissionRules.DefaultCommissionDurationDays;
-            referringSmId = company.CommissionIndirectSalesManagerUserId;
-        }
-        else
-        {
-            // Legacy companies without a snapshot: fall back to live settings + live upline once,
-            // then freeze on the company row for subsequent purchases.
-            var settings = await _commercial.GetSettingsAsync(cancellationToken);
-            directRate = settings.DirectCommissionRate;
-            indirectRateConfigured = settings.IndirectCommissionRate;
-            durationDays = settings.CommissionDurationDays > 0
-                ? settings.CommissionDurationDays
-                : SalesCommissionRules.DefaultCommissionDurationDays;
-
-            referringSmId = await _db.SalesManagerProfiles.AsNoTracking()
-                .Where(p => p.UserId == salesManagerUserId.Value)
-                .Select(p => p.ReferredBySalesManagerUserId)
-                .FirstOrDefaultAsync(cancellationToken);
-
-            await FreezeLegacyCommissionTermsAsync(
-                companyId,
-                referringSmId,
-                directRate,
-                indirectRateConfigured,
-                durationDays,
-                cancellationToken);
-        }
+        var terms = await ResolveCommissionTermsAsync(
+            companyId, salesManagerUserId.Value, cancellationToken);
 
         var asOf = DateTime.UtcNow;
-        // Hard stop: no SM commissions after the entrepreneur's 1-year window (from FirstYearStartedAt).
         var withinWindow = SalesCommissionRules.IsWithinCommissionWindow(
-            firstYearStartedAt, asOf, durationDays);
+            firstYearStartedAt, asOf, terms.DurationDays);
 
-        if (!withinWindow)
-        {
-            referringSmId = null;
-        }
-
-        var appliedDirectRate = withinWindow ? Math.Max(0m, directRate) : 0m;
+        var referringSmId = withinWindow ? terms.ReferringSmId : null;
+        var appliedDirectRate = withinWindow ? Math.Max(0m, terms.DirectRate) : 0m;
         var appliedIndirectRate = referringSmId is not null && withinWindow
-            ? Math.Max(0m, indirectRateConfigured)
+            ? Math.Max(0m, terms.IndirectRate)
             : 0m;
 
         var ambassadorTokens = SalesCommissionRules.AmbassadorTokens(packSize);
@@ -127,12 +79,59 @@ public sealed class RevenueShareService : IRevenueShareService
         var indirectEuro = SalesCommissionRules.ShareEuro(purchaseAmountExVatEuro, appliedIndirectRate);
         var platformRate = SalesCommissionRules.PlatformShareRate(appliedDirectRate, appliedIndirectRate);
         var platformEuro = SalesCommissionRules.ShareEuro(purchaseAmountExVatEuro, platformRate);
+        var now = DateTime.UtcNow;
+
+        var claimed = existingKinds.Contains(RevenueShareRecipientKind.Platform);
+        if (!claimed)
+        {
+            // Atomic claim via Platform marker (unique on TokenCheckoutId + RecipientKind).
+            var platformClaim = new RevenueShareLog
+            {
+                Id = Guid.NewGuid(),
+                TokenCheckoutId = tokenCheckoutId,
+                TokenTransactionId = purchaseTokenTransactionId,
+                CompanyId = companyId,
+                RecipientKind = RevenueShareRecipientKind.Platform,
+                Percentage = platformRate * 100m,
+                AmountEuro = platformEuro,
+                Tokens = null,
+                CreatedAtUtc = now
+            };
+
+            _db.RevenueShareLogs.Add(platformClaim);
+            try
+            {
+                await _db.SaveChangesAsync(cancellationToken);
+                claimed = true;
+            }
+            catch (DbUpdateException)
+            {
+                _db.Entry(platformClaim).State = EntityState.Detached;
+                // Another worker claimed — if they already finished, exit; else continue repair.
+                if (await _db.RevenueShareLogs.AsNoTracking().AnyAsync(
+                        l => l.TokenCheckoutId == tokenCheckoutId
+                             && l.RecipientKind == RevenueShareRecipientKind.Ambassador,
+                        cancellationToken))
+                {
+                    await EnsureAmbassadorGrantFromLogsAsync(tokenCheckoutId, companyId, cancellationToken);
+                    return;
+                }
+
+                claimed = true;
+            }
+        }
+
+        if (!claimed)
+        {
+            return;
+        }
 
         if (ambassadorTokens > 0)
         {
-            await _tokens.GrantAsync(
+            await _tokens.GrantForCheckoutAsync(
                 companyId,
                 ambassadorTokens,
+                tokenCheckoutId,
                 actorUserId: null,
                 note: $"Revenue-share ambassadeur 15% ({tokenCheckoutId:N})",
                 cancellationToken);
@@ -147,7 +146,7 @@ public sealed class RevenueShareService : IRevenueShareService
                 purchaseAmountExVatEuro,
                 firstYearStartedAt,
                 appliedDirectRate,
-                durationDays,
+                terms.DurationDays,
                 cancellationToken);
         }
 
@@ -160,11 +159,10 @@ public sealed class RevenueShareService : IRevenueShareService
                 purchaseAmountExVatEuro,
                 firstYearStartedAt,
                 appliedIndirectRate,
-                durationDays,
+                terms.DurationDays,
                 cancellationToken);
         }
 
-        var now = DateTime.UtcNow;
         var logs = new List<RevenueShareLog>
         {
             new()
@@ -190,18 +188,6 @@ public sealed class RevenueShareService : IRevenueShareService
                 RecipientKind = RevenueShareRecipientKind.SalesManager,
                 Percentage = appliedDirectRate * 100m,
                 AmountEuro = smEuro,
-                Tokens = null,
-                CreatedAtUtc = now
-            },
-            new()
-            {
-                Id = Guid.NewGuid(),
-                TokenCheckoutId = tokenCheckoutId,
-                TokenTransactionId = purchaseTokenTransactionId,
-                CompanyId = companyId,
-                RecipientKind = RevenueShareRecipientKind.Platform,
-                Percentage = platformRate * 100m,
-                AmountEuro = platformEuro,
                 Tokens = null,
                 CreatedAtUtc = now
             }
@@ -232,7 +218,10 @@ public sealed class RevenueShareService : IRevenueShareService
         }
         catch (DbUpdateException)
         {
-            // Concurrent duplicate — unique index on (TokenCheckoutId, RecipientKind).
+            foreach (var log in logs)
+            {
+                _db.Entry(log).State = EntityState.Detached;
+            }
         }
     }
 
@@ -245,6 +234,96 @@ public sealed class RevenueShareService : IRevenueShareService
             .Where(l => l.CompanyId == companyId || l.RecipientCompanyId == companyId)
             .OrderByDescending(l => l.CreatedAtUtc)
             .ToListAsync(cancellationToken);
+    }
+
+    private async Task<(decimal DirectRate, decimal IndirectRate, int DurationDays, Guid? ReferringSmId)>
+        ResolveCommissionTermsAsync(
+            Guid companyId,
+            Guid salesManagerUserId,
+            CancellationToken cancellationToken)
+    {
+        var company = await _db.Companies.AsNoTracking()
+            .Where(c => c.Id == companyId)
+            .Select(c => new
+            {
+                c.CommissionIndirectSalesManagerUserId,
+                c.CommissionDirectRateSnapshot,
+                c.CommissionIndirectRateSnapshot,
+                c.CommissionDurationDaysSnapshot,
+                c.CommissionTermsSnapshottedAtUtc
+            })
+            .FirstOrDefaultAsync(cancellationToken);
+
+        if (company?.CommissionTermsSnapshottedAtUtc is not null
+            && company.CommissionDirectRateSnapshot is not null)
+        {
+            return (
+                company.CommissionDirectRateSnapshot.Value,
+                company.CommissionIndirectRateSnapshot ?? 0m,
+                company.CommissionDurationDaysSnapshot is > 0
+                    ? company.CommissionDurationDaysSnapshot.Value
+                    : SalesCommissionRules.DefaultCommissionDurationDays,
+                company.CommissionIndirectSalesManagerUserId);
+        }
+
+        var settings = await _commercial.GetSettingsAsync(cancellationToken);
+        var directRate = settings.DirectCommissionRate;
+        var indirectRate = settings.IndirectCommissionRate;
+        var durationDays = settings.CommissionDurationDays > 0
+            ? settings.CommissionDurationDays
+            : SalesCommissionRules.DefaultCommissionDurationDays;
+
+        var referringSmId = await _db.SalesManagerProfiles.AsNoTracking()
+            .Where(p => p.UserId == salesManagerUserId)
+            .Select(p => p.ReferredBySalesManagerUserId)
+            .FirstOrDefaultAsync(cancellationToken);
+
+        await FreezeLegacyCommissionTermsAsync(
+            companyId,
+            referringSmId,
+            directRate,
+            indirectRate,
+            durationDays,
+            cancellationToken);
+
+        return (directRate, indirectRate, durationDays, referringSmId);
+    }
+
+    private async Task EnsureAmbassadorGrantFromLogsAsync(
+        Guid tokenCheckoutId,
+        Guid companyId,
+        CancellationToken cancellationToken)
+    {
+        var ambassador = await _db.RevenueShareLogs.AsNoTracking()
+            .Where(l => l.TokenCheckoutId == tokenCheckoutId
+                        && l.RecipientKind == RevenueShareRecipientKind.Ambassador
+                        && l.Tokens > 0)
+            .Select(l => l.Tokens)
+            .FirstOrDefaultAsync(cancellationToken);
+
+        if (ambassador is null or <= 0)
+        {
+            // Fallback: grant row may exist from a prior attempt even without the log.
+            var existingGrant = await _db.TokenTransactions.AsNoTracking()
+                .AnyAsync(
+                    t => t.TokenPurchaseCheckoutId == tokenCheckoutId
+                         && t.Kind == TokenTransactionKind.Grant,
+                    cancellationToken);
+            if (existingGrant)
+            {
+                return;
+            }
+
+            return;
+        }
+
+        await _tokens.GrantForCheckoutAsync(
+            companyId,
+            ambassador.Value,
+            tokenCheckoutId,
+            actorUserId: null,
+            note: $"Revenue-share ambassadeur 15% ({tokenCheckoutId:N})",
+            cancellationToken);
     }
 
     private async Task FreezeLegacyCommissionTermsAsync(

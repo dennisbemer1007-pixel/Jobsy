@@ -156,6 +156,7 @@ public static class DependencyInjection
         services.AddHostedService<DraftVacancyCleanupHostedService>();
         services.AddHostedService<CompanyReengagementHostedService>();
         services.AddHostedService<VatBufferTransferHostedService>();
+        services.AddHostedService<TokenCheckoutReconcileHostedService>();
         services.AddHostedService<KvkVerificationRetryHostedService>();
 
         return services;

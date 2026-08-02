@@ -10,6 +10,21 @@ using Microsoft.AspNetCore.RateLimiting;
 
 var builder = WebApplication.CreateBuilder(args);
 
+var sentryDsn = builder.Configuration["Sentry:Dsn"];
+if (!string.IsNullOrWhiteSpace(sentryDsn))
+{
+    builder.WebHost.UseSentry(options =>
+    {
+        options.Dsn = sentryDsn;
+        options.SendDefaultPii = false;
+        options.TracesSampleRate = 0;
+        options.Environment = builder.Environment.EnvironmentName;
+    });
+}
+
+Jobsy.Core.Security.VerificationCodes.ConfigurePepper(
+    builder.Configuration["VerificationCodes:Pepper"]);
+
 builder.Services.Configure<ForwardedHeadersOptions>(options =>
 {
     options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
@@ -146,9 +161,9 @@ app.Use(async (context, next) =>
 });
 
 // Partner docs for the external vacancy API (X-API-Key). Scoped to /api/external/vacancies.
-// Always on by default so /swagger stays reachable in every environment (including production).
-// Opt out only when needed (e.g. integration tests): Swagger:Enabled=false.
-var swaggerEnabled = builder.Configuration.GetValue("Swagger:Enabled", true);
+// Default: on in Development, off elsewhere. Override with Swagger:Enabled=true|false.
+var swaggerEnabled = builder.Configuration.GetValue<bool?>("Swagger:Enabled")
+    ?? builder.Environment.IsDevelopment();
 if (swaggerEnabled)
 {
     app.UseSwagger();

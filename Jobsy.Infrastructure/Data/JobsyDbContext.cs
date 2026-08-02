@@ -299,6 +299,11 @@ public class JobsyDbContext : DbContext
                 .OnDelete(DeleteBehavior.SetNull);
             entity.HasIndex(e => e.CreatedAt);
             entity.HasIndex(e => e.Kind);
+            // At most one ledger row per (checkout, kind) — blocks double purchase/grant races.
+            entity.HasIndex(e => new { e.TokenPurchaseCheckoutId, e.Kind })
+                .IsUnique()
+                .HasFilter("\"TokenPurchaseCheckoutId\" IS NOT NULL")
+                .HasDatabaseName("IX_TokenTransactions_Checkout_Kind");
         });
 
         modelBuilder.Entity<Application>(entity =>

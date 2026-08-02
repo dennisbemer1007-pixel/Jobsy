@@ -1967,11 +1967,14 @@ namespace Jobsy.Infrastructure.Data.Migrations
 
                     b.HasIndex("Kind");
 
-                    b.HasIndex("TokenPurchaseCheckoutId");
-
                     b.HasIndex("TokenPurchaseInvoiceId");
 
                     b.HasIndex("VacancyId");
+
+                    b.HasIndex("TokenPurchaseCheckoutId", "Kind")
+                        .IsUnique()
+                        .HasDatabaseName("IX_TokenTransactions_Checkout_Kind")
+                        .HasFilter("\"TokenPurchaseCheckoutId\" IS NOT NULL");
 
                     b.ToTable("TokenTransactions");
                 });

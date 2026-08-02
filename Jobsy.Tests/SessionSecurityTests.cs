@@ -11,6 +11,7 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -288,8 +289,20 @@ public class SessionSecurityTests
         builder.Services.AddDataProtection().SetApplicationName("Jobsy.Tests.SessionWeb");
         builder.Services.AddJobsyAuthentication(builder.Configuration, builder.Environment);
         builder.Services.AddSingleton<ISessionTimeoutProvider>(new FixedTimeoutProvider(timeoutMinutes));
+        builder.Services.AddRateLimiter(options =>
+        {
+            options.AddPolicy("auth", httpContext =>
+                System.Threading.RateLimiting.RateLimitPartition.GetFixedWindowLimiter(
+                    httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+                    _ => new System.Threading.RateLimiting.FixedWindowRateLimiterOptions
+                    {
+                        PermitLimit = 1000,
+                        Window = TimeSpan.FromMinutes(1)
+                    }));
+        });
 
         var app = builder.Build();
+        app.UseRateLimiter();
         app.UseAuthentication();
         app.UseSessionInactivity();
         app.MapJobsyAuthEndpoints();

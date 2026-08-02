@@ -560,12 +560,6 @@ public sealed class AssistantChatService : IAssistantChatService
         return new AssistantChatResult(sb.ToString().Trim(), false, actions);
     }
 
-    private async Task<AssistantChatResult> CandidateStatsAsync(
-        AssistantChatContext context,
-        string period,
-        CancellationToken cancellationToken)
-        => await CandidateProfileAsync(context, period, cancellationToken);
-
     private async Task<AssistantChatResult> CandidateProfileAsync(
         AssistantChatContext context,
         string period,

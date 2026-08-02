@@ -1,15 +1,30 @@
+using System.Threading.RateLimiting;
 using Jobsy.Web.Auth;
 using Jobsy.Web.Components;
 using Jobsy.Web.Localization;
 using Jobsy.Web.Security;
 using Jobsy.Web.Services;
 using Microsoft.AspNetCore.HttpOverrides;
+using Microsoft.AspNetCore.RateLimiting;
 
 var builder = WebApplication.CreateBuilder(args);
+
+var sentryDsn = builder.Configuration["Sentry:Dsn"];
+if (!string.IsNullOrWhiteSpace(sentryDsn))
+{
+    builder.WebHost.UseSentry(options =>
+    {
+        options.Dsn = sentryDsn;
+        options.SendDefaultPii = false;
+        options.TracesSampleRate = 0;
+        options.Environment = builder.Environment.EnvironmentName;
+    });
+}
 
 builder.Services.Configure<ForwardedHeadersOptions>(options =>
 {
     options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
+    options.ForwardLimit = 1;
     options.KnownNetworks.Clear();
     options.KnownProxies.Clear();
 });
@@ -41,6 +56,20 @@ builder.Services.AddHttpClient<IGeocodingClient, NominatimGeocodingClient>(clien
 builder.Services.AddScoped(sp =>
     new JobsyApiClient(JobsyApiClientFactory.Create(sp, builder.Configuration)));
 
+builder.Services.AddRateLimiter(options =>
+{
+    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+    options.AddPolicy("auth", httpContext =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+            _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = 20,
+                Window = TimeSpan.FromMinutes(1),
+                QueueLimit = 0
+            }));
+});
+
 var app = builder.Build();
 
 app.UseForwardedHeaders();
@@ -65,8 +94,22 @@ app.Use(async (context, next) =>
     context.Response.Headers["X-Frame-Options"] = "DENY";
     context.Response.Headers["Referrer-Policy"] = "strict-origin-when-cross-origin";
     context.Response.Headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=(self)";
+    // Blazor Server needs inline scripts/styles and websockets; keep frame/base locked down.
+    context.Response.Headers["Content-Security-Policy"] =
+        "default-src 'self'; " +
+        "base-uri 'self'; " +
+        "frame-ancestors 'none'; " +
+        "object-src 'none'; " +
+        "img-src 'self' data: https: blob:; " +
+        "font-src 'self' data:; " +
+        "style-src 'self' 'unsafe-inline' https://unpkg.com; " +
+        "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://unpkg.com; " +
+        "connect-src 'self' wss: ws: https:; " +
+        "worker-src 'self' blob:;";
     await next();
 });
+
+app.UseRateLimiter();
 
 // Apply Integraties ClientId/Secret before OIDC/Google redeem the auth code on callback.
 app.UseExternalAuthCallbackCredentials();

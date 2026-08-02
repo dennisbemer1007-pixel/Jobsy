@@ -75,9 +75,9 @@ public sealed class SalesManagerOnboardingService : ISalesManagerOnboardingServi
         var user = await _db.Users.FirstOrDefaultAsync(u => u.Id == userId, cancellationToken)
             ?? throw new KeyNotFoundException("Gebruiker niet gevonden.");
 
-        var version = string.IsNullOrWhiteSpace(agreementVersion)
-            ? SalesCommissionRules.CurrentAgreementVersion
-            : agreementVersion.Trim();
+        // Ignore client-supplied versions (same pattern as consent) — server stamps current.
+        _ = agreementVersion;
+        var version = SalesCommissionRules.CurrentAgreementVersion;
 
         var profile = await EnsureProfileAsync(userId, cancellationToken);
         if (!HasRequiredBusinessData(profile))

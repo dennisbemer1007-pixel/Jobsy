@@ -21,6 +21,18 @@ public interface ITokenLedgerService
         CancellationToken cancellationToken = default);
 
     /// <summary>
+    /// Idempotent grant keyed by <paramref name="tokenPurchaseCheckoutId"/> (unique DB index on Grant+checkout).
+    /// Concurrent callers receive the same ledger row instead of double-crediting.
+    /// </summary>
+    Task<TokenTransaction> GrantForCheckoutAsync(
+        Guid companyId,
+        decimal amount,
+        Guid tokenPurchaseCheckoutId,
+        Guid? actorUserId = null,
+        string? note = null,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// Admin goodwill / service compensation. Token balance increases; monetary value is € 0,00 (no BTW/omzet).
     /// <paramref name="note"/> (reason) is required.
     /// </summary>

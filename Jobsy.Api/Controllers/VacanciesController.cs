@@ -887,19 +887,6 @@ public class VacanciesController : ControllerBase
             .Include(v => v.IntermediaryCompany)
             .FirstOrDefaultAsync(v => v.Id == id, cancellationToken);
 
-    private async Task<ActionResult?> EnsureCompanyAccessAsync(Guid companyId, CancellationToken cancellationToken)
-    {
-        try
-        {
-            await _companyAuth.EnsureCanAccessCompanyAsync(User, companyId, cancellationToken);
-            return null;
-        }
-        catch (ForbiddenCompanyAccessException)
-        {
-            return Forbid();
-        }
-    }
-
     private async Task<bool> CanManageVacancyAsync(Vacancy vacancy, CancellationToken cancellationToken)
     {
         if (await _companyAuth.CanAccessCompanyAsync(User, vacancy.CompanyId, cancellationToken))

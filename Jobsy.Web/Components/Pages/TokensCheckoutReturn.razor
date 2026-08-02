@@ -17,13 +17,21 @@
 
     @if (_loading)
     {
-        <p class="state-message">Betaling controleren…</p>
+        <p class="state-message" aria-live="polite">
+            @(_attempt <= 1
+                ? "Betaling controleren…"
+                : "Tokens worden bijgeschreven… even geduld terwijl we de betaling afronden.")
+        </p>
+        @if (_attempt > 1)
+        {
+            <p class="muted">Poging @_attempt van @_maxAttempts</p>
+        }
     }
     else if (!string.IsNullOrEmpty(_message))
     {
         <p class="state-message error">@_message</p>
         <div class="inline-actions" style="margin-top:1.5rem">
-            <button class="login-submit" type="button" disabled="@_busy" @onclick="CompleteAsync">
+            <button class="login-submit" type="button" disabled="@_busy" @onclick="() => CompleteAsync(resetAttempts: true)">
                 @(_busy ? "Bezig…" : "Opnieuw proberen")
             </button>
             <a class="auth-link" href="/employer/tokens">Terug naar tokens</a>
@@ -32,11 +40,15 @@
 </div>
 
 @code {
+    private const int _maxAttempts = 30;
+    private static readonly TimeSpan PollDelay = TimeSpan.FromSeconds(2);
+
     private bool _loading = true;
     private bool _busy;
     private string? _paymentId;
     private Guid? _checkoutId;
     private string? _message;
+    private int _attempt;
 
     protected override async Task OnInitializedAsync()
     {
@@ -53,46 +65,80 @@
             _checkoutId = checkoutId;
         }
 
-        await CompleteAsync();
+        await CompleteAsync(resetAttempts: true);
     }
 
-    private async Task CompleteAsync()
+    private async Task CompleteAsync(bool resetAttempts = false)
     {
         _busy = true;
         _message = null;
+        _loading = true;
+        if (resetAttempts)
+        {
+            _attempt = 0;
+        }
+
         try
         {
-            CompleteCheckoutResult? result = null;
-            if (_checkoutId is Guid checkoutId)
-            {
-                result = await Api.CompleteTokenCheckoutBySessionAsync(checkoutId);
-            }
-            else if (!string.IsNullOrWhiteSpace(_paymentId))
-            {
-                result = await Api.CompleteTokenCheckoutAsync(_paymentId);
-            }
-            else
+            if (_checkoutId is null && string.IsNullOrWhiteSpace(_paymentId))
             {
                 _message = "Geen checkout-gegevens in de return-URL.";
                 return;
             }
 
-            TokenBalances.Invalidate();
-
-            if (result?.PendingAction is { Succeeded: true })
+            while (_attempt < _maxAttempts)
             {
-                Navigation.NavigateTo($"/employer/vacancies?paidAction={Uri.EscapeDataString(result.PendingAction.Action)}");
-                return;
+                _attempt++;
+                StateHasChanged();
+
+                CompleteCheckoutResult? result = null;
+                try
+                {
+                    if (_checkoutId is Guid checkoutId)
+                    {
+                        result = await Api.CompleteTokenCheckoutBySessionAsync(checkoutId);
+                    }
+                    else
+                    {
+                        result = await Api.CompleteTokenCheckoutAsync(_paymentId!);
+                    }
+                }
+                catch (Exception ex) when (IsPendingPayment(ex))
+                {
+                    // Payment / webhook may still be settling — keep polling.
+                    result = null;
+                }
+
+                if (result is not null)
+                {
+                    TokenBalances.Invalidate();
+
+                    if (result.PendingAction is { Succeeded: true })
+                    {
+                        Navigation.NavigateTo($"/employer/vacancies?paidAction={Uri.EscapeDataString(result.PendingAction.Action)}");
+                        return;
+                    }
+
+                    if (result.PendingAction is { Succeeded: false })
+                    {
+                        Navigation.NavigateTo(
+                            $"/employer/vacancies?paidActionError={Uri.EscapeDataString(result.PendingAction.Message ?? "Actie mislukt")}");
+                        return;
+                    }
+
+                    Navigation.NavigateTo("/employer/tokens");
+                    return;
+                }
+
+                if (_attempt < _maxAttempts)
+                {
+                    await Task.Delay(PollDelay);
+                }
             }
 
-            if (result?.PendingAction is { Succeeded: false })
-            {
-                Navigation.NavigateTo(
-                    $"/employer/vacancies?paidActionError={Uri.EscapeDataString(result.PendingAction.Message ?? "Actie mislukt")}");
-                return;
-            }
-
-            Navigation.NavigateTo("/employer/tokens");
+            _message =
+                "De betaling is nog niet bevestigd of wordt nog verwerkt. " +
+                "Probeer het zo opnieuw — tokens verschijnen automatisch zodra Mollie bevestigt.";
         }
         catch (Exception ex)
         {
@@ -103,5 +149,18 @@
             _loading = false;
             _busy = false;
         }
+    }
+
+    private static bool IsPendingPayment(Exception ex)
+    {
+        if (ex is HttpRequestException)
+        {
+            return true;
+        }
+
+        var message = ex.Message ?? string.Empty;
+        return message.Contains("nog niet afgerond", StringComparison.OrdinalIgnoreCase)
+               || message.Contains("not paid", StringComparison.OrdinalIgnoreCase)
+               || message.Contains("429", StringComparison.OrdinalIgnoreCase);
     }
 }

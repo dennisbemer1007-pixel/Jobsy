@@ -37,6 +37,7 @@
     <BottomNav HasItemsChanged="OnBottomNavItemsChanged" />
     <LobsyAssistantChat HasBottomNav="_hasBottomNav" />
     <ConsentReacceptDialog />
+    <CookieConsentBanner OnConsentChanged="OnCookieConsentChanged" />
     <SessionIdleGuard />
 </div>
 
@@ -53,22 +54,32 @@
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        if (!firstRender || _siteVisitRecorded)
+        if (_siteVisitRecorded)
         {
             return;
         }
 
-        _siteVisitRecorded = true;
         try
         {
+            if (!await CookieConsentBanner.AllowsAnalyticsAsync(Js))
+            {
+                // Wait until the user accepts analytics (banner choice).
+                return;
+            }
+
+            _siteVisitRecorded = true;
             var path = new Uri(Navigation.Uri).AbsolutePath;
             await Api.RecordSiteVisitOnceAsync(Js, path);
         }
         catch
         {
             // Analytics must not block the app shell.
+            _siteVisitRecorded = true;
         }
     }
+
+    private Task OnCookieConsentChanged()
+        => InvokeAsync(StateHasChanged);
 
     private Task OnBottomNavItemsChanged(bool hasItems)
     {

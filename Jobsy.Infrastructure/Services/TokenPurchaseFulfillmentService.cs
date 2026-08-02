@@ -193,17 +193,31 @@ public sealed class TokenPurchaseFulfillmentService : ITokenPurchaseFulfillmentS
                 ? "Mollie stub"
                 : "Mollie";
 
-            entry = await _tokenLedger.RecordPurchaseAsync(
-                session.CompanyId,
-                session.PackSize,
-                session.AmountExVatCents,
-                session.VatAmountCents,
-                session.TotalAmountCents,
-                session.Id,
-                invoiceId: null,
-                actorUserId,
-                $"{notePrefix} {session.PaymentId}",
-                cancellationToken);
+            try
+            {
+                entry = await _tokenLedger.RecordPurchaseAsync(
+                    session.CompanyId,
+                    session.PackSize,
+                    session.AmountExVatCents,
+                    session.VatAmountCents,
+                    session.TotalAmountCents,
+                    session.Id,
+                    invoiceId: null,
+                    actorUserId,
+                    $"{notePrefix} {session.PaymentId}",
+                    cancellationToken);
+            }
+            catch (DbUpdateException) when (_db.Database.IsRelational())
+            {
+                // Unique purchase-per-checkout race with concurrent webhook/redirect.
+                entry = await _db.TokenTransactions
+                    .FirstOrDefaultAsync(t => t.TokenPurchaseCheckoutId == session.Id
+                                              && t.Kind == TokenTransactionKind.Purchase, cancellationToken);
+                if (entry is null)
+                {
+                    throw;
+                }
+            }
         }
 
         TokenPurchaseInvoice invoice;

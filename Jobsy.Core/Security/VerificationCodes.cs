@@ -13,10 +13,20 @@ public static class VerificationCodes
     public const int HashLength = 64;
 
     /// <summary>
-    /// Application-level pepper mixed into OTP hashes. Not a substitute for a deploy-time secret,
-    /// but prevents unsalted 6-digit brute-force from a DB dump alone.
+    /// Built-in fallback pepper mixed into OTP hashes when no deploy-time secret is configured.
+    /// Prefer <see cref="ConfigurePepper"/> / env <c>VerificationCodes__Pepper</c> in production.
     /// </summary>
     private const string ApplicationPepper = "Jobsy.VerificationOtp.v1";
+
+    private static string? _configuredPepper;
+
+    /// <summary>Optional deploy-time pepper (call once at startup from configuration).</summary>
+    public static void ConfigurePepper(string? pepper)
+    {
+        _configuredPepper = string.IsNullOrWhiteSpace(pepper) ? null : pepper.Trim();
+    }
+
+    private static string EffectivePepper => _configuredPepper ?? ApplicationPepper;
 
     public static string CreateNumericCode(int digits = 6)
     {
@@ -34,7 +44,7 @@ public static class VerificationCodes
     public static string Hash(string plaintextCode)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(plaintextCode);
-        return HashWithPepper(plaintextCode.Trim(), ApplicationPepper);
+        return HashWithPepper(plaintextCode.Trim(), EffectivePepper);
     }
 
     /// <summary>HMAC-SHA256 hex using the given pepper (tests / future config injection).</summary>
@@ -83,6 +93,13 @@ public static class VerificationCodes
         }
 
         if (FixedTimeEquals(storedHash, Hash(submittedPlaintext)))
+        {
+            return true;
+        }
+
+        // Transition: configured pepper may differ from the built-in fallback used before rollout.
+        if (_configuredPepper is not null
+            && FixedTimeEquals(storedHash, HashWithPepper(submittedPlaintext, ApplicationPepper)))
         {
             return true;
         }

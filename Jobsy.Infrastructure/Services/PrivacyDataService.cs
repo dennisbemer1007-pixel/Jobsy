@@ -52,6 +52,7 @@ public sealed class PrivacyDataService : IPrivacyDataService
                 a.SnapshotDrivingLicenses,
                 a.SnapshotEducations,
                 a.SnapshotAboutMe,
+                a.Motivation,
                 a.CandidateEmployerCount,
                 EmailVerified = a.EmailVerifiedAt != null
             })
@@ -410,6 +411,7 @@ public sealed class PrivacyDataService : IPrivacyDataService
             app.SnapshotDrivingLicenses = null;
             app.SnapshotEducations = null;
             app.SnapshotAboutMe = null;
+            app.Motivation = null;
             app.CandidateEmployerCount = 0;
             app.EmailVerificationCode = null;
             app.EmailVerificationExpiresAt = null;

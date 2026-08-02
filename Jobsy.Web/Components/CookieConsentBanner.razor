@@ -1,0 +1,87 @@
+@inject IJSRuntime Js
+
+@if (_visible)
+{
+    <div class="cookie-consent" role="dialog" aria-labelledby="cookie-consent-title" aria-live="polite">
+        <div class="cookie-consent__inner">
+            <div class="cookie-consent__copy">
+                <h2 id="cookie-consent-title" class="cookie-consent__title">Cookies &amp; privacy</h2>
+                <p class="cookie-consent__text">
+                    We gebruiken noodzakelijke cookies voor inloggen en sessiebeveiliging.
+                    Optioneel meten we anonieme sitebezoeken om Lobsy te verbeteren.
+                    Meer info in de <a href="/privacy" class="auth-link">privacyverklaring</a>.
+                </p>
+            </div>
+            <div class="cookie-consent__actions">
+                <button type="button" class="btn-compact" disabled="@_busy" @onclick="() => SaveAsync(false)">
+                    Alleen noodzakelijk
+                </button>
+                <button type="button" class="btn-compact btn-compact--primary" disabled="@_busy" @onclick="() => SaveAsync(true)">
+                    Accepteer analytics
+                </button>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public EventCallback OnConsentChanged { get; set; }
+
+    private bool _visible;
+    private bool _busy;
+    private bool _checked;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender || _checked)
+        {
+            return;
+        }
+
+        _checked = true;
+        try
+        {
+            var existing = await Js.InvokeAsync<string>("jobsyCookieConsent.get");
+            if (string.IsNullOrWhiteSpace(existing))
+            {
+                _visible = true;
+                StateHasChanged();
+            }
+        }
+        catch
+        {
+            _visible = true;
+            StateHasChanged();
+        }
+    }
+
+    private async Task SaveAsync(bool analyticsAllowed)
+    {
+        _busy = true;
+        try
+        {
+            await Js.InvokeVoidAsync("jobsyCookieConsent.set", analyticsAllowed ? "analytics" : "necessary");
+            _visible = false;
+            if (OnConsentChanged.HasDelegate)
+            {
+                await OnConsentChanged.InvokeAsync();
+            }
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    public static async Task<bool> AllowsAnalyticsAsync(IJSRuntime js)
+    {
+        try
+        {
+            return await js.InvokeAsync<bool>("jobsyCookieConsent.allowsAnalytics");
+        }
+        catch
+        {
+            return false;
+        }
+    }
+}
