@@ -60,6 +60,23 @@ public class MetricsController : ControllerBase
         return Ok(items);
     }
 
+    [HttpGet("vacancy-performance")]
+    public async Task<ActionResult<VacancyPerformanceBoardDto>> GetVacancyPerformance(
+        [FromQuery] string period = "week",
+        [FromQuery] Guid? companyId = null,
+        [FromQuery] int take = 3,
+        CancellationToken cancellationToken = default)
+    {
+        var companyIds = await ResolveCompanyFilterAsync(companyId, cancellationToken);
+        if (companyIds is not null && companyIds.Count == 0)
+        {
+            return Forbid();
+        }
+
+        var board = await _metrics.GetVacancyPerformanceAsync(companyIds, period, take, cancellationToken);
+        return Ok(board);
+    }
+
     private async Task<IReadOnlyCollection<Guid>?> ResolveCompanyFilterAsync(
         Guid? companyId,
         CancellationToken ct)

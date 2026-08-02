@@ -30,7 +30,12 @@ public static class MetricsPeriodParser
     }
 }
 
-public record MetricCountDto(string Key, string Label, string Period, decimal Value);
+public record MetricCountDto(
+    string Key,
+    string Label,
+    string Period,
+    decimal Value,
+    IReadOnlyList<decimal>? Sparkline = null);
 
 public record MetricDrilldownItemDto(
     Guid Id,
@@ -38,6 +43,21 @@ public record MetricDrilldownItemDto(
     string? Subtitle,
     DateTime CreatedAt,
     decimal? Amount = null);
+
+/// <summary>Per-vacancy performance row for Top/Flop dashboard tables.</summary>
+public record VacancyPerformanceItemDto(
+    Guid VacancyId,
+    string Title,
+    string CompanyName,
+    int Impressions,
+    int Clicks,
+    int Applications);
+
+/// <summary>Ranked vacancy performance board for a metrics period.</summary>
+public record VacancyPerformanceBoardDto(
+    string Period,
+    IReadOnlyList<VacancyPerformanceItemDto> Top,
+    IReadOnlyList<VacancyPerformanceItemDto> Flop);
 
 /// <summary>Platform-wide KPI keys only returned for Admin metrics summaries/drilldowns.</summary>
 public static class MetricsKeys

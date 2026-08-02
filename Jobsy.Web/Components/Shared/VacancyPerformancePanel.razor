@@ -1,0 +1,95 @@
+@using Jobsy.Web.Models
+
+@* Compact Top / Flop vacancy tables for the dashboard bento grid. *@
+
+<section class="bento-rank" aria-label="Vacature prestaties">
+    <article class="bento-rank__card">
+        <header class="bento-rank__header">
+            <h3>Top 3 best bekeken</h3>
+            <p>Meeste views / clicks</p>
+        </header>
+        @if (Board is null || Board.Top.Count == 0)
+        {
+            <p class="bento-rank__empty muted">Nog geen data in deze periode.</p>
+        }
+        else
+        {
+            <ol class="bento-rank__list">
+                @{
+                    var max = Math.Max(1, Board.Top.Max(x => x.Clicks));
+                }
+                @foreach (var row in Board.Top)
+                {
+                    var pct = 100.0 * row.Clicks / max;
+                    <li class="bento-rank__row">
+                        <a class="bento-rank__link" href="@HrefFor(row.VacancyId)">
+                            <div class="bento-rank__meta">
+                                <strong class="bento-rank__title">@row.Title</strong>
+                                <span class="bento-rank__sub muted">@row.CompanyName · @row.Impressions views</span>
+                            </div>
+                            <div class="bento-rank__metric">
+                                <span class="bento-rank__value">@row.Clicks</span>
+                                <span class="bento-rank__bar" aria-hidden="true">
+                                    <span class="bento-rank__bar-fill bento-rank__bar-fill--good"
+                                          style="width:@pct.ToString("0.#", Inv)%"></span>
+                                </span>
+                            </div>
+                        </a>
+                    </li>
+                }
+            </ol>
+        }
+    </article>
+
+    <article class="bento-rank__card bento-rank__card--flop">
+        <header class="bento-rank__header">
+            <h3>Top 3 slechtst bekeken</h3>
+            <p>Minste views / clicks</p>
+        </header>
+        @if (Board is null || Board.Flop.Count == 0)
+        {
+            <p class="bento-rank__empty muted">Nog geen data in deze periode.</p>
+        }
+        else
+        {
+            <ol class="bento-rank__list">
+                @{
+                    var maxFlop = Math.Max(1, Board.Flop.Max(x => x.Clicks));
+                    var globalMax = Board.Top.Count > 0
+                        ? Math.Max(maxFlop, Board.Top.Max(x => x.Clicks))
+                        : maxFlop;
+                    globalMax = Math.Max(1, globalMax);
+                }
+                @foreach (var row in Board.Flop)
+                {
+                    var pct = 100.0 * row.Clicks / globalMax;
+                    <li class="bento-rank__row">
+                        <a class="bento-rank__link" href="@HrefFor(row.VacancyId)">
+                            <div class="bento-rank__meta">
+                                <strong class="bento-rank__title">@row.Title</strong>
+                                <span class="bento-rank__sub muted">@row.CompanyName · @row.Impressions views</span>
+                            </div>
+                            <div class="bento-rank__metric">
+                                <span class="bento-rank__value">@row.Clicks</span>
+                                <span class="bento-rank__bar" aria-hidden="true">
+                                    <span class="bento-rank__bar-fill bento-rank__bar-fill--warn"
+                                          style="width:@Math.Max(pct, 4).ToString("0.#", Inv)%"></span>
+                                </span>
+                            </div>
+                        </a>
+                    </li>
+                }
+            </ol>
+        }
+    </article>
+</section>
+
+@code {
+    private static readonly System.Globalization.CultureInfo Inv =
+        System.Globalization.CultureInfo.InvariantCulture;
+
+    [Parameter] public VacancyPerformanceBoard? Board { get; set; }
+    [Parameter] public string VacancyHrefPrefix { get; set; } = "/vacancies";
+
+    private string HrefFor(Guid id) => $"{VacancyHrefPrefix.TrimEnd('/')}/{id}";
+}

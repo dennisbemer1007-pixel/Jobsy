@@ -38,6 +38,9 @@
         <MetricsCategoryBoard Metrics="_metrics"
                               SelectedKey="_selectedKey"
                               ValueFormatter="FormatValue"
+                              ShowVacancyPerformance="true"
+                              VacancyPerformance="_vacancyBoard"
+                              VacancyHrefPrefix="/vacancies"
                               OnMetricClick="SelectMetricAsync" />
 
         @if (_selectedKey is not null)
@@ -67,6 +70,7 @@
     private string? _error;
     private List<MetricCount> _metrics = [];
     private List<MetricDrilldownItem> _drilldown = [];
+    private VacancyPerformanceBoard? _vacancyBoard;
 
     private string SelectedLabel =>
         _metrics.FirstOrDefault(m => m.Key == _selectedKey)?.Label ?? _selectedKey ?? "";
@@ -125,12 +129,17 @@
         _error = null;
         try
         {
-            _metrics = (await Api.GetEmployerMetricsSummaryAsync(_period)).ToList();
+            var metricsTask = Api.GetEmployerMetricsSummaryAsync(_period);
+            var perfTask = Api.GetVacancyPerformanceAsync(_period);
+            await Task.WhenAll(metricsTask, perfTask);
+            _metrics = (await metricsTask).ToList();
+            _vacancyBoard = await perfTask;
         }
         catch (Exception ex)
         {
             _error = ex.Message;
             _metrics = [];
+            _vacancyBoard = null;
         }
         finally
         {

@@ -1,31 +1,17 @@
 @using Jobsy.Web.Dashboard
 @using Jobsy.Web.Models
 
-@* Categorized KPI board: hero strip + category tabs. *@
+@* Bento KPI board: featured hero + category tabs + optional Top/Flop tables. *@
 
 @if (Metrics.Count > 0)
 {
     var hero = MetricDashboardCatalog.HeroMetrics(Metrics, m => m.Key, m => m.Value);
     var groups = MetricDashboardCatalog.GroupPresent(Metrics, m => m.Key);
     var activeId = ResolveActiveCategory(groups);
-
-    @if (hero.Count > 0)
-    {
-        <section class="dash-hero" aria-label="Kerncijfers">
-            <div class="dash-hero__grid">
-                @foreach (var metric in hero)
-                {
-                    <MetricTile Label="@metric.Label"
-                                FormattedValue="@FormatValue(metric)"
-                                Emphasis="true"
-                                Warning="@MetricDashboardCatalog.IsWarning(metric.Key, metric.Value)"
-                                Progress="@ProgressFor(metric)"
-                                Selected="@(SelectedKey == metric.Key)"
-                                OnClick="() => OnMetricClick.InvokeAsync(metric)" />
-                }
-            </div>
-        </section>
-    }
+    var heroKeys = hero.Select(h => h.Key).ToHashSet(StringComparer.OrdinalIgnoreCase);
+    var allPairs = Metrics.Select(m => (m.Key, m.Value)).ToList();
+    var featured = hero.FirstOrDefault();
+    var sideHero = hero.Skip(1).ToList();
 
     @if (groups.Count > 1)
     {
@@ -49,43 +35,113 @@
         </div>
     }
 
-    @foreach (var (category, items) in groups)
-    {
-        if (groups.Count > 1 && activeId != category.Id)
-        {
-            continue;
-        }
-
-        <section class="dash-section" aria-labelledby="dash-cat-@category.Id">
-            <header class="dash-section__header">
-                <div>
-                    <h2 id="dash-cat-@category.Id">@category.Title</h2>
-                    <p class="dash-section__lead">@category.Lead</p>
+    <div class="bento-grid @(ShowVacancyPerformance ? "bento-grid--with-rank" : null)">
+        <div class="bento-grid__main">
+            @if (featured is not null)
+            {
+                <div class="bento-cell bento-cell--featured">
+                    @{
+                        var featuredRing = MetricDashboardCatalog.RatioProgress(featured.Key, featured.Value, allPairs);
+                    }
+                    <MetricTile Label="@featured.Label"
+                                FormattedValue="@FormatValue(featured)"
+                                Hint="@HintFor(featured, featuredRing)"
+                                Emphasis="true"
+                                Size="featured"
+                                Warning="@MetricDashboardCatalog.IsWarning(featured.Key, featured.Value)"
+                                Progress="@ProgressFor(featured)"
+                                RingProgress="featuredRing"
+                                RingLabel="@(featuredRing is not null ? featuredRing.Value.ToString("0") + "%" : null)"
+                                Sparkline="@(featuredRing is null ? featured.Sparkline : null)"
+                                Selected="@(SelectedKey == featured.Key)"
+                                OnClick="() => OnMetricClick.InvokeAsync(featured)" />
                 </div>
-            </header>
+            }
 
-            <div class="stat-grid dash-stat-grid">
-                @foreach (var metric in items)
+            @if (sideHero.Count > 0)
+            {
+                <div class="bento-cell bento-cell--hero-row">
+                    @foreach (var metric in sideHero)
+                    {
+                        var ring = MetricDashboardCatalog.RatioProgress(metric.Key, metric.Value, allPairs);
+                        <MetricTile Label="@metric.Label"
+                                    FormattedValue="@FormatValue(metric)"
+                                    Hint="@HintFor(metric, ring)"
+                                    Emphasis="true"
+                                    Warning="@MetricDashboardCatalog.IsWarning(metric.Key, metric.Value)"
+                                    Progress="@ProgressFor(metric)"
+                                    RingProgress="ring"
+                                    RingLabel="@(ring is not null ? ring.Value.ToString("0") + "%" : null)"
+                                    Sparkline="@(ring is null ? metric.Sparkline : null)"
+                                    Selected="@(SelectedKey == metric.Key)"
+                                    OnClick="() => OnMetricClick.InvokeAsync(metric)" />
+                    }
+                </div>
+            }
+
+            @foreach (var (category, items) in groups)
+            {
+                if (groups.Count > 1 && activeId != category.Id)
                 {
-                    var isHeroDup = hero.Any(h => string.Equals(h.Key, metric.Key, StringComparison.OrdinalIgnoreCase));
-                    <MetricTile Label="@metric.Label"
-                                FormattedValue="@FormatValue(metric)"
-                                Emphasis="@(!isHeroDup && MetricDashboardCatalog.IsPrimary(metric.Key))"
-                                Warning="@MetricDashboardCatalog.IsWarning(metric.Key, metric.Value)"
-                                Progress="@ProgressFor(metric)"
-                                Selected="@(SelectedKey == metric.Key)"
-                                OnClick="() => OnMetricClick.InvokeAsync(metric)" />
+                    continue;
                 }
-            </div>
-        </section>
-    }
+
+                var bodyItems = items
+                    .Where(m => !heroKeys.Contains(m.Key))
+                    .ToList();
+
+                <section class="bento-cell bento-cell--category" aria-labelledby="dash-cat-@category.Id">
+                    <header class="dash-section__header dash-section__header--compact">
+                        <div>
+                            <h2 id="dash-cat-@category.Id">@category.Title</h2>
+                            <p class="dash-section__lead">@category.Lead</p>
+                        </div>
+                    </header>
+
+                    @if (bodyItems.Count == 0)
+                    {
+                        <p class="muted bento-empty">Kerncijfers staan bovenaan — wissel van tab voor meer metrics.</p>
+                    }
+                    else
+                    {
+                        <div class="bento-metrics">
+                            @foreach (var metric in bodyItems)
+                            {
+                                var ring = MetricDashboardCatalog.RatioProgress(metric.Key, metric.Value, allPairs);
+                                <MetricTile Label="@metric.Label"
+                                            FormattedValue="@FormatValue(metric)"
+                                            Hint="@HintFor(metric, ring)"
+                                            Size="compact"
+                                            Emphasis="@MetricDashboardCatalog.IsPrimary(metric.Key)"
+                                            Warning="@MetricDashboardCatalog.IsWarning(metric.Key, metric.Value)"
+                                            Progress="@ProgressFor(metric)"
+                                            RingProgress="@(MetricDashboardCatalog.IsPercent(metric.Key) ? ring : null)"
+                                            RingLabel="@(MetricDashboardCatalog.IsPercent(metric.Key) && ring is not null ? ring.Value.ToString("0") + "%" : null)"
+                                            Sparkline="@metric.Sparkline"
+                                            Selected="@(SelectedKey == metric.Key)"
+                                            OnClick="() => OnMetricClick.InvokeAsync(metric)" />
+                            }
+                        </div>
+                    }
+                </section>
+            }
+        </div>
+
+        @if (ShowVacancyPerformance)
+        {
+            <aside class="bento-grid__side">
+                <VacancyPerformancePanel Board="VacancyPerformance"
+                                         VacancyHrefPrefix="@VacancyHrefPrefix" />
+            </aside>
+        }
+    </div>
 }
 
 @if (ChildContent is not null)
 {
     <div class="dash-quicklinks">
         <h2 class="dash-quicklinks__title">Snelle links</h2>
-        <div class="stat-grid dash-stat-grid dash-stat-grid--links">
+        <div class="bento-quicklinks">
             @ChildContent
         </div>
     </div>
@@ -97,6 +153,9 @@
     [Parameter] public EventCallback<MetricCount> OnMetricClick { get; set; }
     [Parameter] public RenderFragment? ChildContent { get; set; }
     [Parameter] public Func<MetricCount, string>? ValueFormatter { get; set; }
+    [Parameter] public bool ShowVacancyPerformance { get; set; }
+    [Parameter] public VacancyPerformanceBoard? VacancyPerformance { get; set; }
+    [Parameter] public string VacancyHrefPrefix { get; set; } = "/vacancies";
 
     private string? _categoryId;
     private string? _lastSelectedKey;
@@ -128,7 +187,6 @@
             return "growth";
         }
 
-        // Manual tab wins only until the parent selection changes.
         if (_manualCategory
             && _categoryId is not null
             && groups.Any(g => g.Category.Id == _categoryId))
@@ -178,4 +236,34 @@
         => MetricDashboardCatalog.IsPercent(metric.Key)
             ? (double)Math.Clamp(metric.Value, 0, 100)
             : null;
+
+    private static string? HintFor(MetricCount metric, double? ring)
+    {
+        if (ring is null)
+        {
+            return null;
+        }
+
+        if (metric.Key.Equals("applications", StringComparison.OrdinalIgnoreCase))
+        {
+            return $"Conversie {ring.Value:0}%";
+        }
+
+        if (metric.Key.Equals("clicks", StringComparison.OrdinalIgnoreCase))
+        {
+            return $"CTR {ring.Value:0}%";
+        }
+
+        if (metric.Key.Equals("tokens_spent", StringComparison.OrdinalIgnoreCase))
+        {
+            return $"t.o.v. aankoop {ring.Value:0}%";
+        }
+
+        if (MetricDashboardCatalog.IsPercent(metric.Key))
+        {
+            return "Conversie";
+        }
+
+        return null;
+    }
 }

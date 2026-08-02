@@ -16,4 +16,10 @@ public interface IMetricsQueryService
         IReadOnlyCollection<Guid>? companyIds,
         string period,
         CancellationToken cancellationToken = default);
+
+    Task<VacancyPerformanceBoardDto> GetVacancyPerformanceAsync(
+        IReadOnlyCollection<Guid>? companyIds,
+        string period,
+        int take = 3,
+        CancellationToken cancellationToken = default);
 }

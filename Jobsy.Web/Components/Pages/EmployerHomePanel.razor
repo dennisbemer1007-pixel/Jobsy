@@ -41,6 +41,9 @@
     {
         <MetricsCategoryBoard Metrics="_metrics"
                               ValueFormatter="FormatValue"
+                              ShowVacancyPerformance="true"
+                              VacancyPerformance="_vacancyBoard"
+                              VacancyHrefPrefix="/vacancies"
                               OnMetricClick="OpenMetricAsync">
             <a class="stat-card stat-card--link stat-card--nav" href="@TokensHref">
                 <span class="stat-card__label">@Culture["Common.Tokens"]</span>
@@ -84,6 +87,7 @@
     private bool _showMyApplications;
     private string? _error;
     private List<MetricCount> _metrics = [];
+    private VacancyPerformanceBoard? _vacancyBoard;
 
     private string PeriodLabel(string key) => key switch
     {
@@ -150,12 +154,17 @@
         _error = null;
         try
         {
-            _metrics = (await Api.GetEmployerMetricsSummaryAsync(_period)).ToList();
+            var metricsTask = Api.GetEmployerMetricsSummaryAsync(_period);
+            var perfTask = Api.GetVacancyPerformanceAsync(_period);
+            await Task.WhenAll(metricsTask, perfTask);
+            _metrics = (await metricsTask).ToList();
+            _vacancyBoard = await perfTask;
         }
         catch (Exception ex)
         {
             _error = ex.Message;
             _metrics = [];
+            _vacancyBoard = null;
         }
         finally
         {

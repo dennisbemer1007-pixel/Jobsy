@@ -479,6 +479,22 @@ public sealed class JobsyApiClient : IAsyncDisposable
             $"api/metrics/drilldown/{Uri.EscapeDataString(key)}?{qs}", ct) ?? [];
     }
 
+    public async Task<VacancyPerformanceBoard?> GetVacancyPerformanceAsync(
+        string period = "week",
+        Guid? companyId = null,
+        int take = 3,
+        CancellationToken ct = default)
+    {
+        var qs = $"period={Uri.EscapeDataString(period)}&take={take}";
+        if (companyId is not null)
+        {
+            qs += $"&companyId={companyId}";
+        }
+
+        return await _http.GetFromJsonAsync<VacancyPerformanceBoard>(
+            $"api/metrics/vacancy-performance?{qs}", ct);
+    }
+
     public async Task<IReadOnlyList<ApplicationItem>> GetMyApplicationsAsync(CancellationToken ct = default)
         => await _http.GetFromJsonAsync<List<ApplicationItem>>("api/me/applications", ct) ?? [];
 

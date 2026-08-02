@@ -12,7 +12,8 @@ Route- en capability-matrix per rol. Entry: **`/` = banenkaart**, **`/home` = ro
 | Logout | → `/` |
 | Auth | Entra + Google + lokale/demo + registratie-activatie |
 | Tokens (werkgevers) | `TokenWalletChip` in header → role-specifieke tokens-URL |
-| Gedeelde UI | `MetricTile`, `DrilldownGrid`, `ShareModal`, `PublishOptionsDialog`, `BottomNav` |
+| Gedeelde UI | `MetricTile`, `MetricsCategoryBoard` (Bento), `VacancyPerformancePanel`, `DrilldownGrid`, `ShareModal`, `PublishOptionsDialog`, `BottomNav` |
+| Dashboard layout | Compacte periode-scroller · categorie-tabs · Bento-grid met featured KPI, sparklines/ringen · Top/Flop 3 vacatures (employer/admin) |
 
 Publiek (naast banenkaart): `/vacancies/{id}`, `/register`, `/register/activate`, `/login`, `/partner` (+ `/partner/{trackingCode}`), legal pages.
 
@@ -41,7 +42,7 @@ Publiek (naast banenkaart): `/vacancies/{id}`, `/register`, `/register/activate`
 
 | Route | Inhoud |
 |-------|--------|
-| `/home` | Vestiging-KPI’s + drilldown |
+| `/home` | Vestiging-KPI’s (Bento) + Top/Flop vacatures + drilldown |
 | `/employer/vacancies` | Beheer + publiceren (basis/highlight/PushBom/verlengen) |
 | `/branch/vacancies/new` | Nieuwe vacature |
 | `/branch/applicants` | Sollicitanten; PII pas na Accept |
@@ -106,7 +107,7 @@ Onvoldoende tokens bij publiceren → `PendingApproval` (EM/Admin keurt goed).
 
 | Route | Inhoud |
 |-------|--------|
-| `/home` | Platform-KPI’s (incl. errors, users, company counts) + module-grid |
+| `/home` | Platform-KPI’s (Bento, sparklines/ringen, Top/Flop vacatures) + drilldown |
 | `/admin/companies` · `/admin/users` · `/admin/vacancies` | Beheer |
 | `/admin/finance` · `/admin/tokens` | Finance KPI + tokenlog / grant |
 | `/admin/sales` | Sales beheer: tokenwaarde, tarieven per vacaturetype, pakketten, highlight-toeslagen |

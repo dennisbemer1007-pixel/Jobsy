@@ -2,8 +2,8 @@
 @inject JobsyApiClient Api
 @inject CultureState Culture
 
-<section class="panel-page">
-    <header class="panel-header">
+<section class="panel-page panel-page--dashboard">
+    <header class="panel-header panel-header--dashboard">
         <div>
             <h1>@Culture["Sales.Dashboard"]</h1>
             <p class="login-lead">@Culture["Sales.DashboardLead"]</p>
@@ -29,69 +29,112 @@
     }
     else if (_dashboard is not null)
     {
-        <div class="stat-grid">
-            <div class="stat-card">
-                <span class="stat-card__label">Trackingcode</span>
-                <strong class="stat-card__value">@_dashboard.TrackingCode</strong>
-            </div>
-            <div class="stat-card">
-                <span class="stat-card__label">Saldo excl. BTW</span>
-                <strong class="stat-card__value">€ @_dashboard.BalanceExVat.ToString("0.00")</strong>
-            </div>
-            <div class="stat-card">
-                <span class="stat-card__label">Saldo incl. BTW</span>
-                <strong class="stat-card__value">€ @_dashboard.BalanceInclVat.ToString("0.00")</strong>
-            </div>
-            <div class="stat-card">
-                <span class="stat-card__label">Niet gefactureerd</span>
-                <strong class="stat-card__value">€ @_dashboard.UninvoicedExVat.ToString("0.00")</strong>
+        <div class="bento-grid">
+            <div class="bento-grid__main">
+                <div class="bento-cell bento-cell--featured">
+                    <div class="stat-card stat-card--emphasis stat-card--featured">
+                        <span class="stat-card__top">
+                            <span class="stat-card__label">Saldo excl. BTW</span>
+                            <span class="stat-card__status stat-card__status--ok" aria-hidden="true"></span>
+                        </span>
+                        <span class="stat-card__body">
+                            <span class="stat-card__main">
+                                <strong class="stat-card__value">€ @_dashboard.BalanceExVat.ToString("0.00")</strong>
+                                <span class="stat-card__hint">incl. BTW € @_dashboard.BalanceInclVat.ToString("0.00")</span>
+                            </span>
+                            @{
+                                var uninvoiced = (double)_dashboard.UninvoicedExVat;
+                                var balance = (double)Math.Max(_dashboard.BalanceExVat, 0.01m);
+                                var ring = Math.Clamp(100d * uninvoiced / (balance + uninvoiced), 0, 100);
+                            }
+                            <MetricRing Progress="ring"
+                                        CenterLabel="@($"{ring:0}%")"
+                                        SizePx="64" />
+                        </span>
+                    </div>
+                </div>
+
+                <div class="bento-cell bento-cell--hero-row">
+                    <div class="stat-card">
+                        <span class="stat-card__label">Trackingcode</span>
+                        <strong class="stat-card__value" style="font-size:1.15rem;letter-spacing:0.04em">@_dashboard.TrackingCode</strong>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-card__label">Niet gefactureerd</span>
+                        <strong class="stat-card__value">€ @_dashboard.UninvoicedExVat.ToString("0.00")</strong>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-card__label">Suppliers</span>
+                        <strong class="stat-card__value">@_dashboard.Suppliers.Count</strong>
+                    </div>
+                </div>
+
+                <div class="bento-cell bento-cell--split">
+                    <article class="bento-rank__card">
+                        <header class="bento-rank__header">
+                            <h3>Gekoppelde suppliers</h3>
+                            <p>Ondernemers via jouw code</p>
+                        </header>
+                        @if (_dashboard.Suppliers.Count == 0)
+                        {
+                            <p class="bento-rank__empty muted">Nog geen ondernemers via jouw code.</p>
+                        }
+                        else
+                        {
+                            <ol class="bento-rank__list">
+                                @foreach (var s in _dashboard.Suppliers.Take(6))
+                                {
+                                    <li class="bento-rank__row">
+                                        <div class="bento-rank__meta">
+                                            <strong class="bento-rank__title">@s.Name</strong>
+                                            <span class="bento-rank__sub muted">KvK @s.KvkNumber · slot @(s.FirstYearSupplierSlot?.ToString() ?? "—")</span>
+                                        </div>
+                                        <span class="bento-rank__value" style="min-width:auto">@(s.HasPaidOnboarding ? "€2500" : "Open")</span>
+                                    </li>
+                                }
+                            </ol>
+                        }
+                    </article>
+
+                    <article class="bento-rank__card">
+                        <header class="bento-rank__header">
+                            <h3>Recente commissies</h3>
+                            <p>Laatste ledgerregels</p>
+                        </header>
+                        @if (_dashboard.RecentLedger.Count == 0)
+                        {
+                            <p class="bento-rank__empty muted">Nog geen commissies.</p>
+                        }
+                        else
+                        {
+                            <ol class="bento-rank__list">
+                                @foreach (var e in _dashboard.RecentLedger.Take(6))
+                                {
+                                    <li class="bento-rank__row">
+                                        <div class="bento-rank__meta">
+                                            <strong class="bento-rank__title">@e.Kind</strong>
+                                            <span class="bento-rank__sub muted">@(e.CompanyName ?? "—") · @e.CreatedAt.ToLocalTime().ToString("g")</span>
+                                        </div>
+                                        <span class="bento-rank__value" style="min-width:auto">€ @e.AmountExVat.ToString("0.00")</span>
+                                    </li>
+                                }
+                            </ol>
+                        }
+                    </article>
+                </div>
+
+                <div class="bento-quicklinks bento-quicklinks--inline">
+                    <a class="stat-card stat-card--link stat-card--nav" href="/salesmanager/toolkit">
+                        <span class="stat-card__label">Sales-toolkit &amp; flyer</span>
+                        <strong class="stat-card__value">→</strong>
+                    </a>
+                    <a class="stat-card stat-card--link stat-card--nav" href="/salesmanager/invoices">
+                        <span class="stat-card__label">Facturen &amp; uitbetalen</span>
+                        <strong class="stat-card__value">→</strong>
+                    </a>
+                </div>
             </div>
         </div>
-
-        <section class="panel-section">
-            <h2>Gekoppelde suppliers</h2>
-            @if (_dashboard.Suppliers.Count == 0)
-            {
-                <p class="muted">Nog geen ondernemers via jouw code.</p>
-            }
-            else
-            {
-                <div class="table-list">
-                    @foreach (var s in _dashboard.Suppliers)
-                    {
-                        <div class="table-row">
-                            <div>
-                                <strong>@s.Name</strong>
-                                <div class="muted">KvK @s.KvkNumber · slot @(s.FirstYearSupplierSlot?.ToString() ?? "—")</div>
-                            </div>
-                            <span>@(s.HasPaidOnboarding ? "€2500 betaald" : "Onboarding open")</span>
-                        </div>
-                    }
-                </div>
-            }
-        </section>
-
-        <section class="panel-section">
-            <h2>Recente commissies</h2>
-            <div class="table-list">
-                @foreach (var e in _dashboard.RecentLedger.Take(20))
-                {
-                    <div class="table-row">
-                        <div>
-                            <strong>@e.Kind</strong>
-                            <div class="muted">@(e.CompanyName ?? "—") · @e.CreatedAt.ToLocalTime().ToString("g")</div>
-                        </div>
-                        <span>€ @e.AmountExVat.ToString("0.00")</span>
-                    </div>
-                }
-            </div>
-        </section>
-
-        <p>
-            <a class="auth-link" href="/salesmanager/toolkit">Sales-toolkit &amp; flyer</a>
-            ·
-            <a class="auth-link" href="/salesmanager/invoices">Facturen &amp; uitbetalen</a>
-        </p>
     }
 </section>
 

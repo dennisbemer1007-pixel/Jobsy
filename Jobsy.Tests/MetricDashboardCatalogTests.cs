@@ -84,6 +84,24 @@ public sealed class MetricDashboardCatalogTests
     }
 
     [Fact]
+    public void RatioProgress_computes_conversion_and_token_usage()
+    {
+        var all = new (string Key, decimal Value)[]
+        {
+            ("clicks", 100),
+            ("applications", 25),
+            ("impressions", 200),
+            ("tokens_purchased", 40),
+            ("tokens_spent", 10)
+        };
+
+        Assert.Equal(25, MetricDashboardCatalog.RatioProgress("applications", 25, all));
+        Assert.Equal(50, MetricDashboardCatalog.RatioProgress("clicks", 100, all));
+        Assert.Equal(25, MetricDashboardCatalog.RatioProgress("tokens_spent", 10, all));
+        Assert.Null(MetricDashboardCatalog.RatioProgress("shares", 3, all));
+    }
+
+    [Fact]
     public void CategoryHasWarning_detects_error_tile()
     {
         var metrics = new List<MetricCount>

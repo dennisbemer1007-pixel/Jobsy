@@ -1,0 +1,65 @@
+@* Compact SVG sparkline for KPI trend movement. *@
+
+@if (Points is { Count: > 1 })
+{
+    <svg class="metric-sparkline @CssClass"
+         viewBox="0 0 @Width @Height"
+         width="@Width"
+         height="@Height"
+         aria-hidden="true"
+         focusable="false">
+        <polyline class="metric-sparkline__line"
+                  fill="none"
+                  points="@PolylinePoints" />
+        <circle class="metric-sparkline__dot"
+                cx="@LastX.ToString("0.##", Inv)"
+                cy="@LastY.ToString("0.##", Inv)"
+                r="1.8" />
+    </svg>
+}
+
+@code {
+    private static readonly System.Globalization.CultureInfo Inv =
+        System.Globalization.CultureInfo.InvariantCulture;
+
+    [Parameter] public IReadOnlyList<decimal>? Points { get; set; }
+    [Parameter] public string? CssClass { get; set; }
+    [Parameter] public int Width { get; set; } = 72;
+    [Parameter] public int Height { get; set; } = 28;
+
+    private string PolylinePoints { get; set; } = string.Empty;
+    private double LastX { get; set; }
+    private double LastY { get; set; }
+
+    protected override void OnParametersSet()
+    {
+        if (Points is null || Points.Count < 2)
+        {
+            PolylinePoints = string.Empty;
+            return;
+        }
+
+        var max = Points.Max();
+        var min = Points.Min();
+        var range = Math.Max((double)(max - min), 1d);
+        var padY = 3d;
+        var usableH = Height - padY * 2;
+        var stepX = Points.Count == 1 ? 0 : (Width - 2d) / (Points.Count - 1);
+
+        var parts = new string[Points.Count];
+        for (var i = 0; i < Points.Count; i++)
+        {
+            var x = 1 + i * stepX;
+            var norm = ((double)Points[i] - (double)min) / range;
+            var y = Height - padY - norm * usableH;
+            parts[i] = $"{x.ToString("0.##", Inv)},{y.ToString("0.##", Inv)}";
+            if (i == Points.Count - 1)
+            {
+                LastX = x;
+                LastY = y;
+            }
+        }
+
+        PolylinePoints = string.Join(' ', parts);
+    }
+}

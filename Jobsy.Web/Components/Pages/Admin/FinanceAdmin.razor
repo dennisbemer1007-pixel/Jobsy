@@ -22,11 +22,13 @@
 
     @if (_tab == "kpi")
     {
-        <div class="period-tabs" role="tablist" aria-label="Periode" style="margin:1rem 0">
+        <div class="period-tabs period-tabs--compact" role="tablist" aria-label="Periode" style="margin:1rem 0">
             @foreach (var p in Periods)
             {
                 <button type="button"
                         class="period-tab @(_period == p.Key ? "period-tab--active" : null)"
+                        role="tab"
+                        aria-selected="@(_period == p.Key)"
                         @onclick="() => SetPeriodAsync(p.Key)">
                     @p.Label
                 </button>
@@ -43,15 +45,15 @@
         }
         else
         {
-            <div class="stat-grid">
+            <div class="bento-metrics">
                 @foreach (var m in _metrics.Where(IsFinanceMetric))
                 {
-                    <button type="button"
-                            class="stat-card stat-card--link @(_selectedKey == m.Key ? "stat-card--selected" : null)"
-                            @onclick="() => SelectMetricAsync(m.Key)">
-                        <span class="stat-card__label">@m.Label</span>
-                        <strong class="stat-card__value">@FormatValue(m)</strong>
-                    </button>
+                    <MetricTile Label="@m.Label"
+                                FormattedValue="@FormatValue(m)"
+                                Sparkline="@m.Sparkline"
+                                Selected="@(_selectedKey == m.Key)"
+                                Emphasis="@(m.Key is "tokens_purchased" or "tokens_spent")"
+                                OnClick="() => SelectMetricAsync(m.Key)" />
                 }
             </div>
 

@@ -158,7 +158,121 @@ public sealed class MetricsQueryService : IMetricsQueryService
             metrics = metrics.Where(m => !MetricsKeys.PlatformOnly.Contains(m.Key)).ToList();
         }
 
-        return metrics;
+        return await AttachSparklinesAsync(
+            metrics,
+            vacancyIds,
+            from,
+            to,
+            metricsPeriod,
+            includePlatformOnly,
+            companyIds,
+            cancellationToken);
+    }
+
+    public async Task<VacancyPerformanceBoardDto> GetVacancyPerformanceAsync(
+        IReadOnlyCollection<Guid>? companyIds,
+        string period,
+        int take = 3,
+        CancellationToken cancellationToken = default)
+    {
+        take = Math.Clamp(take, 1, 10);
+        var metricsPeriod = MetricsPeriodParser.Parse(period);
+        var (from, to) = MetricsPeriodParser.ResolveRange(metricsPeriod);
+        var periodKey = metricsPeriod.ToString().ToLowerInvariant();
+
+        var vacancyQuery = _db.Vacancies.AsNoTracking()
+            .Where(v => v.Status == VacancyStatus.Active);
+        if (companyIds is not null)
+        {
+            vacancyQuery = vacancyQuery.Where(v => companyIds.Contains(v.CompanyId));
+        }
+
+        var vacancies = await vacancyQuery
+            .Select(v => new { v.Id, v.Title, CompanyName = v.Company.Name })
+            .ToListAsync(cancellationToken);
+
+        if (vacancies.Count == 0)
+        {
+            return new VacancyPerformanceBoardDto(periodKey, [], []);
+        }
+
+        var vacancyIds = vacancies.Select(v => v.Id).ToList();
+
+        var clickCounts = await _db.VacancyClicks.AsNoTracking()
+            .Where(c => vacancyIds.Contains(c.VacancyId) && c.CreatedAt >= from && c.CreatedAt <= to)
+            .GroupBy(c => c.VacancyId)
+            .Select(g => new { VacancyId = g.Key, Count = g.Count() })
+            .ToDictionaryAsync(x => x.VacancyId, x => x.Count, cancellationToken);
+
+        var impressionCounts = await _db.VacancySearchImpressions.AsNoTracking()
+            .Where(i => vacancyIds.Contains(i.VacancyId) && i.CreatedAt >= from && i.CreatedAt <= to)
+            .GroupBy(i => i.VacancyId)
+            .Select(g => new { VacancyId = g.Key, Count = g.Count() })
+            .ToDictionaryAsync(x => x.VacancyId, x => x.Count, cancellationToken);
+
+        var applicationCounts = await _db.Applications.AsNoTracking()
+            .Where(a => vacancyIds.Contains(a.VacancyId)
+                        && a.EmailVerifiedAt != null
+                        && a.CreatedAt >= from && a.CreatedAt <= to)
+            .GroupBy(a => a.VacancyId)
+            .Select(g => new { VacancyId = g.Key, Count = g.Count() })
+            .ToDictionaryAsync(x => x.VacancyId, x => x.Count, cancellationToken);
+
+        var ranked = vacancies
+            .Select(v =>
+            {
+                clickCounts.TryGetValue(v.Id, out var clicks);
+                impressionCounts.TryGetValue(v.Id, out var impressions);
+                applicationCounts.TryGetValue(v.Id, out var applications);
+                return new VacancyPerformanceItemDto(
+                    v.Id,
+                    v.Title,
+                    v.CompanyName,
+                    impressions,
+                    clicks,
+                    applications);
+            })
+            .OrderByDescending(v => v.Clicks)
+            .ThenByDescending(v => v.Impressions)
+            .ThenByDescending(v => v.Applications)
+            .ThenBy(v => v.Title, StringComparer.OrdinalIgnoreCase)
+            .ToList();
+
+        var top = ranked.Take(take).ToList();
+        var flop = ranked
+            .OrderBy(v => v.Clicks)
+            .ThenBy(v => v.Impressions)
+            .ThenBy(v => v.Applications)
+            .ThenBy(v => v.Title, StringComparer.OrdinalIgnoreCase)
+            .Take(take)
+            .ToList();
+
+        // Avoid identical Top/Flop rows when the set is tiny.
+        if (ranked.Count > take)
+        {
+            var topIds = top.Select(t => t.VacancyId).ToHashSet();
+            flop = ranked
+                .OrderBy(v => v.Clicks)
+                .ThenBy(v => v.Impressions)
+                .ThenBy(v => v.Applications)
+                .ThenBy(v => v.Title, StringComparer.OrdinalIgnoreCase)
+                .Where(v => !topIds.Contains(v.VacancyId))
+                .Take(take)
+                .ToList();
+
+            if (flop.Count < take)
+            {
+                flop = ranked
+                    .OrderBy(v => v.Clicks)
+                    .ThenBy(v => v.Impressions)
+                    .ThenBy(v => v.Applications)
+                    .ThenBy(v => v.Title, StringComparer.OrdinalIgnoreCase)
+                    .Take(take)
+                    .ToList();
+            }
+        }
+
+        return new VacancyPerformanceBoardDto(periodKey, top, flop);
     }
 
     public async Task<IReadOnlyList<MetricDrilldownItemDto>> GetDrilldownAsync(
@@ -612,5 +726,149 @@ public sealed class MetricsQueryService : IMetricsQueryService
         }
 
         return await query.SumAsync(t => (decimal?)t.Amount, ct) ?? 0m;
+    }
+
+    private static readonly HashSet<string> SparklineKeys = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "clicks", "impressions", "applications", "shares", "likes",
+        "site_visits", "site_visits_unique", "tokens_purchased", "tokens_spent"
+    };
+
+    private async Task<List<MetricCountDto>> AttachSparklinesAsync(
+        List<MetricCountDto> metrics,
+        List<Guid> vacancyIds,
+        DateTime from,
+        DateTime to,
+        MetricsPeriod period,
+        bool includePlatformOnly,
+        IReadOnlyCollection<Guid>? companyIds,
+        CancellationToken ct)
+    {
+        var bucketCount = SparklineBucketCount(period);
+        var result = new List<MetricCountDto>(metrics.Count);
+
+        foreach (var metric in metrics)
+        {
+            if (!SparklineKeys.Contains(metric.Key))
+            {
+                result.Add(metric);
+                continue;
+            }
+
+            var points = await LoadSparklinePointsAsync(
+                metric.Key,
+                vacancyIds,
+                from,
+                to,
+                bucketCount,
+                includePlatformOnly,
+                companyIds,
+                ct);
+            result.Add(metric with { Sparkline = points });
+        }
+
+        return result;
+    }
+
+    private async Task<IReadOnlyList<decimal>> LoadSparklinePointsAsync(
+        string key,
+        List<Guid> vacancyIds,
+        DateTime from,
+        DateTime to,
+        int bucketCount,
+        bool includePlatformOnly,
+        IReadOnlyCollection<Guid>? companyIds,
+        CancellationToken ct)
+    {
+        List<DateTime> stamps = key.ToLowerInvariant() switch
+        {
+            "clicks" => await _db.VacancyClicks.AsNoTracking()
+                .Where(c => vacancyIds.Contains(c.VacancyId) && c.CreatedAt >= from && c.CreatedAt <= to)
+                .Select(c => c.CreatedAt)
+                .ToListAsync(ct),
+            "impressions" => await _db.VacancySearchImpressions.AsNoTracking()
+                .Where(i => vacancyIds.Contains(i.VacancyId) && i.CreatedAt >= from && i.CreatedAt <= to)
+                .Select(i => i.CreatedAt)
+                .ToListAsync(ct),
+            "applications" => await _db.Applications.AsNoTracking()
+                .Where(a => vacancyIds.Contains(a.VacancyId)
+                            && a.EmailVerifiedAt != null
+                            && a.CreatedAt >= from && a.CreatedAt <= to)
+                .Select(a => a.CreatedAt)
+                .ToListAsync(ct),
+            "shares" => await _db.VacancyShares.AsNoTracking()
+                .Where(s => vacancyIds.Contains(s.VacancyId) && s.CreatedAt >= from && s.CreatedAt <= to)
+                .Select(s => s.CreatedAt)
+                .ToListAsync(ct),
+            "likes" => await _db.VacancyLikes.AsNoTracking()
+                .Where(l => vacancyIds.Contains(l.VacancyId) && l.CreatedAt >= from && l.CreatedAt <= to)
+                .Select(l => l.CreatedAt)
+                .ToListAsync(ct),
+            "site_visits" when includePlatformOnly => await _db.SiteVisits.AsNoTracking()
+                .Where(v => v.CreatedAt >= from && v.CreatedAt <= to)
+                .Select(v => v.CreatedAt)
+                .ToListAsync(ct),
+            "site_visits_unique" when includePlatformOnly => await _db.SiteVisits.AsNoTracking()
+                .Where(v => v.CreatedAt >= from && v.CreatedAt <= to)
+                .Select(v => v.CreatedAt)
+                .ToListAsync(ct),
+            "tokens_purchased" => await _db.TokenTransactions.AsNoTracking()
+                .Where(t => t.Kind == TokenTransactionKind.Purchase && t.CreatedAt >= from && t.CreatedAt <= to)
+                .Where(t => companyIds == null || companyIds.Contains(t.CompanyId))
+                .Select(t => t.CreatedAt)
+                .ToListAsync(ct),
+            "tokens_spent" => await _db.TokenTransactions.AsNoTracking()
+                .Where(t => t.Kind == TokenTransactionKind.Spend && t.CreatedAt >= from && t.CreatedAt <= to)
+                .Where(t => companyIds == null || companyIds.Contains(t.CompanyId))
+                .Select(t => t.CreatedAt)
+                .ToListAsync(ct),
+            _ => []
+        };
+
+        return BucketTimestamps(stamps, from, to, bucketCount);
+    }
+
+    private static int SparklineBucketCount(MetricsPeriod period) => period switch
+    {
+        MetricsPeriod.Day => 12,
+        MetricsPeriod.Week => 7,
+        MetricsPeriod.Month => 10,
+        MetricsPeriod.Quarter => 12,
+        MetricsPeriod.Year => 12,
+        _ => 7
+    };
+
+    private static IReadOnlyList<decimal> BucketTimestamps(
+        IReadOnlyList<DateTime> stamps,
+        DateTime from,
+        DateTime to,
+        int bucketCount)
+    {
+        var buckets = new decimal[bucketCount];
+        if (bucketCount <= 0)
+        {
+            return buckets;
+        }
+
+        var spanTicks = Math.Max((to - from).TotalTicks, TimeSpan.FromHours(1).Ticks);
+        var bucketTicks = spanTicks / bucketCount;
+
+        foreach (var stamp in stamps)
+        {
+            var offset = (stamp - from).Ticks;
+            var index = (int)(offset / bucketTicks);
+            if (index < 0)
+            {
+                index = 0;
+            }
+            else if (index >= bucketCount)
+            {
+                index = bucketCount - 1;
+            }
+
+            buckets[index] += 1;
+        }
+
+        return buckets;
     }
 }

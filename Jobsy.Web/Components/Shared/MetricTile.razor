@@ -1,4 +1,4 @@
-@* Shared clickable KPI tile for role dashboards. *@
+@* Shared clickable KPI tile for role dashboards (bento size variants). *@
 
 <button type="button"
         class="@CssClass"
@@ -14,8 +14,33 @@
             <span class="stat-card__status stat-card__status--ok" aria-hidden="true"></span>
         }
     </span>
-    <strong class="stat-card__value">@FormattedValue</strong>
-    @if (Progress is >= 0 and <= 100)
+
+    <span class="stat-card__body">
+        <span class="stat-card__main">
+            <strong class="stat-card__value">@FormattedValue</strong>
+            @if (!string.IsNullOrEmpty(Hint))
+            {
+                <span class="stat-card__hint">@Hint</span>
+            }
+        </span>
+
+        @if (RingProgress is >= 0 and <= 100)
+        {
+            <MetricRing Progress="RingProgress.Value"
+                        CenterLabel="@RingLabel"
+                        SizePx="@(Size == "featured" ? 64 : 48)"
+                        Warning="Warning"
+                        CssClass="@(Warning ? "metric-ring--warn" : null)" />
+        }
+        else if (Sparkline is { Count: > 1 })
+        {
+            <MetricSparkline Points="Sparkline"
+                             Width="@(Size == "featured" ? 96 : 72)"
+                             Height="@(Size == "featured" ? 34 : 26)" />
+        }
+    </span>
+
+    @if (Progress is >= 0 and <= 100 && RingProgress is null)
     {
         <span class="stat-card__meter" aria-hidden="true">
             <span class="stat-card__meter-fill" style="width:@Progress.Value.ToString("0.#", System.Globalization.CultureInfo.InvariantCulture)%"></span>
@@ -26,10 +51,16 @@
 @code {
     [Parameter] public string Label { get; set; } = string.Empty;
     [Parameter] public string FormattedValue { get; set; } = "0";
+    [Parameter] public string? Hint { get; set; }
     [Parameter] public bool Selected { get; set; }
     [Parameter] public bool Emphasis { get; set; }
     [Parameter] public bool Warning { get; set; }
     [Parameter] public double? Progress { get; set; }
+    [Parameter] public double? RingProgress { get; set; }
+    [Parameter] public string? RingLabel { get; set; }
+    [Parameter] public IReadOnlyList<decimal>? Sparkline { get; set; }
+    /// <summary>compact | default | featured</summary>
+    [Parameter] public string Size { get; set; } = "default";
     [Parameter] public EventCallback OnClick { get; set; }
 
     private bool ShowWarningDot => Warning;
@@ -42,6 +73,8 @@
             if (Selected) classes += " stat-card--selected";
             if (Emphasis) classes += " stat-card--emphasis";
             if (Warning) classes += " stat-card--warning";
+            if (Size == "featured") classes += " stat-card--featured";
+            if (Size == "compact") classes += " stat-card--compact";
             return classes;
         }
     }

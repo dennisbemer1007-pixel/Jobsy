@@ -164,6 +164,7 @@ public sealed class MetricCount
     public string Label { get; set; } = string.Empty;
     public string Period { get; set; } = string.Empty;
     public decimal Value { get; set; }
+    public List<decimal>? Sparkline { get; set; }
 }
 
 public sealed class MetricDrilldownItem
@@ -173,6 +174,23 @@ public sealed class MetricDrilldownItem
     public string? Subtitle { get; set; }
     public DateTime CreatedAt { get; set; }
     public decimal? Amount { get; set; }
+}
+
+public sealed class VacancyPerformanceItem
+{
+    public Guid VacancyId { get; set; }
+    public string Title { get; set; } = string.Empty;
+    public string CompanyName { get; set; } = string.Empty;
+    public int Impressions { get; set; }
+    public int Clicks { get; set; }
+    public int Applications { get; set; }
+}
+
+public sealed class VacancyPerformanceBoard
+{
+    public string Period { get; set; } = string.Empty;
+    public List<VacancyPerformanceItem> Top { get; set; } = [];
+    public List<VacancyPerformanceItem> Flop { get; set; } = [];
 }
 
 public sealed class CandidateEngagementItem

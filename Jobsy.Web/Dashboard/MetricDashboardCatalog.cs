@@ -81,6 +81,55 @@ public static class MetricDashboardCatalog
     public static bool IsPercent(string key)
         => string.Equals(key, "reengagement_reactivated", StringComparison.OrdinalIgnoreCase);
 
+    /// <summary>Keys that render a compact sparkline when trend points are available.</summary>
+    public static bool SupportsSparkline(string key)
+        => key.Equals("clicks", StringComparison.OrdinalIgnoreCase)
+           || key.Equals("impressions", StringComparison.OrdinalIgnoreCase)
+           || key.Equals("applications", StringComparison.OrdinalIgnoreCase)
+           || key.Equals("shares", StringComparison.OrdinalIgnoreCase)
+           || key.Equals("likes", StringComparison.OrdinalIgnoreCase)
+           || key.Equals("site_visits", StringComparison.OrdinalIgnoreCase)
+           || key.Equals("site_visits_unique", StringComparison.OrdinalIgnoreCase)
+           || key.StartsWith("tokens_", StringComparison.OrdinalIgnoreCase);
+
+    /// <summary>
+    /// Ratio progress (0–100) for ring/meter visuals: conversion, token usage, reengagement.
+    /// </summary>
+    public static double? RatioProgress(string key, decimal value, IEnumerable<(string Key, decimal Value)> all)
+    {
+        if (IsPercent(key))
+        {
+            return (double)Math.Clamp(value, 0, 100);
+        }
+
+        var map = all
+            .GroupBy(m => m.Key, StringComparer.OrdinalIgnoreCase)
+            .ToDictionary(g => g.Key, g => g.First().Value, StringComparer.OrdinalIgnoreCase);
+
+        if (key.Equals("applications", StringComparison.OrdinalIgnoreCase)
+            && map.TryGetValue("clicks", out var clicks)
+            && clicks > 0)
+        {
+            return (double)Math.Clamp(100m * value / clicks, 0, 100);
+        }
+
+        if (key.Equals("tokens_spent", StringComparison.OrdinalIgnoreCase)
+            && map.TryGetValue("tokens_purchased", out var purchased)
+            && purchased > 0)
+        {
+            return (double)Math.Clamp(100m * value / purchased, 0, 100);
+        }
+
+        if (key.Equals("clicks", StringComparison.OrdinalIgnoreCase)
+            && map.TryGetValue("impressions", out var impressions)
+            && impressions > 0)
+        {
+            return (double)Math.Clamp(100m * value / impressions, 0, 100);
+        }
+
+        return null;
+    }
+
     public static string? CategoryIdFor(string key)
     {
         foreach (var category in Categories)
