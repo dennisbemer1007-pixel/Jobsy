@@ -311,6 +311,170 @@ public sealed class MetricsQueryService : IMetricsQueryService
         return new VacancyPerformanceBoardDto(periodKey, top, flop);
     }
 
+    public async Task<ClientPerformanceBoardDto> GetClientPerformanceAsync(
+        IReadOnlyCollection<Guid>? companyIds,
+        string period,
+        CancellationToken cancellationToken = default)
+    {
+        var metricsPeriod = MetricsPeriodParser.Parse(period);
+        var (from, to) = MetricsPeriodParser.ResolveRange(metricsPeriod);
+        var periodKey = metricsPeriod.ToString().ToLowerInvariant();
+        var utcNow = DateTime.UtcNow;
+        var today = DateOnly.FromDateTime(utcNow);
+        var expireUntil = today.AddDays(5);
+
+        var companiesQuery = _db.Companies.AsNoTracking().AsQueryable();
+        if (companyIds is not null)
+        {
+            companiesQuery = companiesQuery.Where(c => companyIds.Contains(c.Id));
+        }
+        else
+        {
+            // Platform-wide: end-client employers (intermediaries manage companies, not branches).
+            companiesQuery = companiesQuery.Where(c => c.Type == CompanyType.Employer);
+        }
+
+        var companies = await companiesQuery
+            .Select(c => new { c.Id, c.Name })
+            .OrderBy(c => c.Name)
+            .ToListAsync(cancellationToken);
+
+        if (companies.Count == 0)
+        {
+            return new ClientPerformanceBoardDto(periodKey, []);
+        }
+
+        var ids = companies.Select(c => c.Id).ToList();
+
+        var activeVacancyCounts = await _db.Vacancies.AsNoTracking()
+            .Where(v => ids.Contains(v.CompanyId) && v.Status == VacancyStatus.Active)
+            .GroupBy(v => v.CompanyId)
+            .Select(g => new { CompanyId = g.Key, Count = g.Count() })
+            .ToDictionaryAsync(x => x.CompanyId, x => x.Count, cancellationToken);
+
+        var expiringCounts = await _db.Vacancies.AsNoTracking()
+            .Where(v => ids.Contains(v.CompanyId)
+                        && v.Status == VacancyStatus.Active
+                        && v.EndDate >= today
+                        && v.EndDate <= expireUntil)
+            .GroupBy(v => v.CompanyId)
+            .Select(g => new { CompanyId = g.Key, Count = g.Count() })
+            .ToDictionaryAsync(x => x.CompanyId, x => x.Count, cancellationToken);
+
+        var boostRows = await _db.Vacancies.AsNoTracking()
+            .Where(v => ids.Contains(v.CompanyId) && v.Status == VacancyStatus.Active && v.IsHighlighted)
+            .Select(v => new { v.CompanyId, v.IsHighlighted, v.HighlightedUntil })
+            .ToListAsync(cancellationToken);
+        var boostCounts = boostRows
+            .Where(v => VacancyHighlightRules.IsActive(v.IsHighlighted, v.HighlightedUntil, utcNow))
+            .GroupBy(v => v.CompanyId)
+            .ToDictionary(g => g.Key, g => g.Count());
+
+        var applicationCounts = await _db.Applications.AsNoTracking()
+            .Where(a => ids.Contains(a.Vacancy.CompanyId)
+                        && a.EmailVerifiedAt != null
+                        && a.CreatedAt >= from && a.CreatedAt <= to)
+            .GroupBy(a => a.Vacancy.CompanyId)
+            .Select(g => new { CompanyId = g.Key, Count = g.Count() })
+            .ToDictionaryAsync(x => x.CompanyId, x => x.Count, cancellationToken);
+
+        var pendingCounts = await _db.Applications.AsNoTracking()
+            .Where(a => ids.Contains(a.Vacancy.CompanyId)
+                        && a.EmailVerifiedAt != null
+                        && a.Status == ApplicationStatus.Pending)
+            .GroupBy(a => a.Vacancy.CompanyId)
+            .Select(g => new { CompanyId = g.Key, Count = g.Count() })
+            .ToDictionaryAsync(x => x.CompanyId, x => x.Count, cancellationToken);
+
+        var clickCounts = await _db.VacancyClicks.AsNoTracking()
+            .Where(c => ids.Contains(c.Vacancy.CompanyId)
+                        && c.CreatedAt >= from && c.CreatedAt <= to)
+            .GroupBy(c => c.Vacancy.CompanyId)
+            .Select(g => new { CompanyId = g.Key, Count = g.Count() })
+            .ToDictionaryAsync(x => x.CompanyId, x => x.Count, cancellationToken);
+
+        var matchRows = await _db.Applications.AsNoTracking()
+            .Where(a => ids.Contains(a.Vacancy.CompanyId)
+                        && a.EmailVerifiedAt != null
+                        && a.CreatedAt >= from && a.CreatedAt <= to)
+            .Select(a => new
+            {
+                a.Vacancy.CompanyId,
+                a.EstimatedTravelMinutes,
+                a.PreferredTransport
+            })
+            .ToListAsync(cancellationToken);
+
+        var travelByCompany = matchRows
+            .Where(a => a.EstimatedTravelMinutes > 0)
+            .GroupBy(a => a.CompanyId)
+            .ToDictionary(
+                g => g.Key,
+                g => Math.Round((decimal)g.Average(a => a.EstimatedTravelMinutes), 1));
+
+        var transportByCompany = matchRows
+            .Where(a => !string.IsNullOrWhiteSpace(a.PreferredTransport))
+            .GroupBy(a => a.CompanyId)
+            .ToDictionary(
+                g => g.Key,
+                g =>
+                {
+                    var samples = g.Select(a => a.PreferredTransport.Trim()).ToList();
+                    var top = samples
+                        .GroupBy(t => t, StringComparer.OrdinalIgnoreCase)
+                        .Select(tg => new { Mode = tg.First(), Count = tg.Count() })
+                        .OrderByDescending(tg => tg.Count)
+                        .ThenBy(tg => tg.Mode, StringComparer.OrdinalIgnoreCase)
+                        .First();
+                    var share = Math.Round(100m * top.Count / samples.Count, 0);
+                    return (Mode: NormalizeTransportLabel(top.Mode), Share: share);
+                });
+
+        var tokenBalances = await _db.TokenTransactions.AsNoTracking()
+            .Where(t => ids.Contains(t.CompanyId))
+            .GroupBy(t => t.CompanyId)
+            .Select(g => new { CompanyId = g.Key, Balance = g.Sum(t => t.Amount) })
+            .ToDictionaryAsync(x => x.CompanyId, x => x.Balance, cancellationToken);
+
+        var rows = companies.Select(c =>
+        {
+            var clicks = clickCounts.GetValueOrDefault(c.Id);
+            var applications = applicationCounts.GetValueOrDefault(c.Id);
+            var conversion = clicks <= 0
+                ? 0m
+                : Math.Round(100m * applications / clicks, 1);
+            string? topTransport = null;
+            var topTransportShare = 0m;
+            if (transportByCompany.TryGetValue(c.Id, out var transport))
+            {
+                topTransport = transport.Mode;
+                topTransportShare = transport.Share;
+            }
+
+            return new ClientPerformanceRowDto(
+                c.Id,
+                c.Name,
+                activeVacancyCounts.GetValueOrDefault(c.Id),
+                pendingCounts.GetValueOrDefault(c.Id),
+                clicks,
+                applications,
+                conversion,
+                travelByCompany.GetValueOrDefault(c.Id),
+                topTransport,
+                topTransportShare,
+                tokenBalances.GetValueOrDefault(c.Id),
+                boostCounts.GetValueOrDefault(c.Id),
+                expiringCounts.GetValueOrDefault(c.Id));
+        })
+        .OrderByDescending(r => r.ApplicationsPending)
+        .ThenByDescending(r => r.ExpiringWithin5Days)
+        .ThenByDescending(r => r.ActiveVacancies)
+        .ThenBy(r => r.CompanyName, StringComparer.OrdinalIgnoreCase)
+        .ToList();
+
+        return new ClientPerformanceBoardDto(periodKey, rows);
+    }
+
     public async Task<IReadOnlyList<MetricDrilldownItemDto>> GetDrilldownAsync(
         string key,
         bool includePlatformOnly,

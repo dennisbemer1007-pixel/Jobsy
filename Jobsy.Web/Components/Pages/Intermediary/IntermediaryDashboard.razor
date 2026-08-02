@@ -1,71 +1,241 @@
 @page "/intermediary"
 @rendermode @(new InteractiveServerRenderMode(prerender: false))
 @attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Intermediary")]
+@using Jobsy.Web.Dashboard
 @inject JobsyApiClient Api
 @inject CultureState Culture
+@implements IDisposable
 
-<PageTitle>Opdrachtgevers · Lobsy</PageTitle>
+<PageTitle>Bedrijvenoverzicht · Lobsy</PageTitle>
 
 <div class="panel-page panel-page--dashboard">
     <header class="panel-header panel-header--dashboard">
         <div>
-            <h1>Opdrachtgevers</h1>
-            <p class="login-lead">Actieve vacatures en tokens per gekoppelde opdrachtgever. KPI’s staan op het intermediair dashboard.</p>
+            <h1>Bedrijvenoverzicht</h1>
+            <p class="login-lead">Prestaties per opdrachtgever: werving, conversie, tokens en acties die aandacht vragen.</p>
         </div>
-        <a class="login-submit" href="/intermediary/batch" style="text-decoration:none;display:inline-flex;align-items:center;">Batch-tool</a>
+        <div class="period-tabs period-tabs--compact" role="tablist" aria-label="@Culture["Common.Period"]">
+            @foreach (var p in PeriodKeys)
+            {
+                <button type="button"
+                        class="period-tab @(_period == p ? "period-tab--active" : null)"
+                        role="tab"
+                        aria-selected="@(_period == p)"
+                        disabled="@_loading"
+                        @onclick="() => SetPeriodAsync(p)">
+                    @PeriodLabel(p)
+                </button>
+            }
+        </div>
     </header>
 
-    @if (_loading)
+    @if (_error is not null)
+    {
+        <p class="state-message error">@_error</p>
+    }
+    else if (_loading && _clients.Count == 0)
     {
         <p class="state-message">@Culture["Common.Loading"]</p>
     }
-    else if (_companies.Count == 0)
+    else if (_clients.Count == 0)
     {
         <p class="state-message">Nog geen opdrachtgevers gekoppeld.</p>
     }
     else
     {
-        <section class="dash-section" aria-labelledby="intermediary-companies-heading">
-            <header class="dash-section__header">
-                <div>
-                    <h2 id="intermediary-companies-heading">Gekoppelde bedrijven</h2>
-                    <p class="dash-section__lead">@_companies.Count opdrachtgever@(_companies.Count == 1 ? "" : "s") · @_totalActive actieve vacature@(_totalActive == 1 ? "" : "s").</p>
+        <div class="bento-grid client-perf-bento">
+            <div class="bento-grid__main">
+                <div class="bento-hero" style="--bento-hero-cols: 4">
+                    <article class="stat-card stat-card--tile">
+                        <span class="stat-card__label">Opdrachtgevers</span>
+                        <strong class="stat-card__value">@_clients.Count</strong>
+                    </article>
+                    <article class="stat-card stat-card--tile">
+                        <span class="stat-card__label">Actieve vacatures</span>
+                        <strong class="stat-card__value">@_totalActive</strong>
+                    </article>
+                    <article class="stat-card stat-card--tile @(_totalPending > 0 ? "stat-card--warn" : null)">
+                        <span class="stat-card__label">Openstaande sollicitaties</span>
+                        <strong class="stat-card__value">@_totalPending</strong>
+                    </article>
+                    <article class="stat-card stat-card--tile @(_actionRequiredCount > 0 ? "stat-card--warn" : null)">
+                        <span class="stat-card__label">Actie nodig</span>
+                        <strong class="stat-card__value">@_actionRequiredCount</strong>
+                    </article>
                 </div>
-            </header>
-            <div class="stat-grid intermediary-company-grid">
-                @foreach (var c in _companies)
-                {
-                    <div class="stat-card intermediary-company-card @(c.ActiveVacancies > 0 ? "stat-card--emphasis" : null)">
-                        <span class="stat-card__top">
-                            <span class="stat-card__label">@c.Name</span>
-                            <span class="stat-card__status @(c.ActiveVacancies > 0 ? "stat-card__status--ok" : null)" aria-hidden="true"></span>
-                        </span>
-                        <strong class="stat-card__value">@c.ActiveVacancies</strong>
-                        <span class="intermediary-company-card__meta muted">
-                            <span class="intermediary-company-card__dot @(c.ActiveVacancies > 0 ? "intermediary-company-card__dot--active" : null)" aria-hidden="true"></span>
-                            @c.TokenBalance.ToString("0.##") tokens
-                        </span>
+
+                <section class="dash-section client-perf-section" aria-labelledby="client-perf-heading">
+                    <header class="dash-section__header">
+                        <div>
+                            <h2 id="client-perf-heading">Prestaties per bedrijf</h2>
+                            <p class="dash-section__lead">
+                                Werving, kwaliteit en gezondheid per gekoppelde opdrachtgever
+                                (@PeriodLabel(_period).ToLowerInvariant()).
+                            </p>
+                        </div>
+                    </header>
+
+                    <div class="client-perf-table-wrap">
+                        <table class="client-perf-table">
+                            <thead>
+                                <tr>
+                                    <th scope="col">Bedrijf</th>
+                                    <th scope="col">Status</th>
+                                    <th scope="col" class="client-perf-table__num">Vacatures</th>
+                                    <th scope="col" class="client-perf-table__num">Open</th>
+                                    <th scope="col" class="client-perf-table__num">Clicks</th>
+                                    <th scope="col" class="client-perf-table__num">Sollicitaties</th>
+                                    <th scope="col" class="client-perf-table__num">Conversie</th>
+                                    <th scope="col">Match</th>
+                                    <th scope="col" class="client-perf-table__num">Tokens</th>
+                                    <th scope="col" class="client-perf-table__num">Boosts</th>
+                                    <th scope="col" class="client-perf-table__num">Verloopt</th>
+                                    <th scope="col">Acties</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var row in _clients)
+                                {
+                                    var badge = ClientPerformanceStatus.Resolve(
+                                        row.ApplicationsPending,
+                                        row.ExpiringWithin5Days,
+                                        row.TokenBalance);
+                                    var badgeMod = ClientPerformanceStatus.CssModifier(badge);
+                                    <tr class="client-perf-row client-perf-row--@badgeMod">
+                                        <th scope="row" class="client-perf-table__company">
+                                            <span class="client-perf-table__name">@row.CompanyName</span>
+                                        </th>
+                                        <td>
+                                            <span class="client-perf-badge client-perf-badge--@badgeMod">
+                                                @ClientPerformanceStatus.LabelNl(badge)
+                                            </span>
+                                        </td>
+                                        <td class="client-perf-table__num">@row.ActiveVacancies</td>
+                                        <td class="client-perf-table__num @(row.ApplicationsPending > 0 ? "client-perf-table__alert" : null)">
+                                            @row.ApplicationsPending
+                                        </td>
+                                        <td class="client-perf-table__num">@row.Clicks</td>
+                                        <td class="client-perf-table__num">@row.Applications</td>
+                                        <td class="client-perf-table__num">@row.ConversionRate.ToString("0.#")%</td>
+                                        <td class="client-perf-table__match">
+                                            @if (row.AvgTravelMinutes > 0 || !string.IsNullOrWhiteSpace(row.TopTransportMode))
+                                            {
+                                                <span>@row.AvgTravelMinutes.ToString("0.#") min</span>
+                                                @if (!string.IsNullOrWhiteSpace(row.TopTransportMode))
+                                                {
+                                                    <span class="muted"> · @row.TopTransportMode @row.TopTransportShare.ToString("0")%</span>
+                                                }
+                                            }
+                                            else
+                                            {
+                                                <span class="muted">—</span>
+                                            }
+                                        </td>
+                                        <td class="client-perf-table__num @(row.TokenBalance < MetricDashboardCatalog.LowTokenBalanceThreshold ? "client-perf-table__alert" : null)">
+                                            @row.TokenBalance.ToString("0.##")
+                                        </td>
+                                        <td class="client-perf-table__num">@row.ActiveBoosts</td>
+                                        <td class="client-perf-table__num @(row.ExpiringWithin5Days > 0 ? "client-perf-table__alert" : null)">
+                                            @row.ExpiringWithin5Days
+                                        </td>
+                                        <td>
+                                            <div class="client-perf-actions">
+                                                <a class="client-perf-action"
+                                                   href="@($"/employer/vacancies?q={Uri.EscapeDataString(row.CompanyName)}")">
+                                                    Vacatures
+                                                </a>
+                                                <a class="client-perf-action" href="/branch/applicants">
+                                                    Sollicitaties
+                                                </a>
+                                                <a class="client-perf-action client-perf-action--emphasis"
+                                                   href="/employer/tokens">
+                                                    Boost
+                                                </a>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
                     </div>
-                }
+                </section>
             </div>
-        </section>
+        </div>
     }
 </div>
 
 @code {
-    private List<CompanySummary> _companies = [];
+    private static readonly string[] PeriodKeys = ["day", "week", "month", "quarter", "year"];
+
+    private string _period = "week";
     private bool _loading = true;
+    private string? _error;
+    private List<ClientPerformanceRow> _clients = [];
     private int _totalActive;
+    private int _totalPending;
+    private int _actionRequiredCount;
+
+    private string PeriodLabel(string key) => key switch
+    {
+        "day" => Culture["Metrics.Day"],
+        "week" => Culture["Metrics.Week"],
+        "month" => Culture["Metrics.Month"],
+        "quarter" => Culture["Metrics.Quarter"],
+        "year" => Culture["Metrics.Year"],
+        _ => key
+    };
+
+    protected override void OnInitialized()
+        => Culture.Changed += OnCultureChanged;
 
     protected override async Task OnInitializedAsync()
+        => await LoadAsync();
+
+    private void OnCultureChanged()
+        => InvokeAsync(StateHasChanged);
+
+    public void Dispose()
+        => Culture.Changed -= OnCultureChanged;
+
+    private async Task SetPeriodAsync(string period)
     {
+        if (_period == period)
+        {
+            return;
+        }
+
+        _period = period;
+        await LoadAsync();
+    }
+
+    private async Task LoadAsync()
+    {
+        _loading = true;
+        _error = null;
         try
         {
-            _companies = (await Api.GetMyCompaniesAsync())
-                .OrderByDescending(c => c.ActiveVacancies)
-                .ThenBy(c => c.Name)
-                .ToList();
-            _totalActive = _companies.Sum(c => c.ActiveVacancies);
+            var board = await Api.GetClientPerformanceAsync(_period);
+            _clients = board?.Clients
+                .OrderByDescending(c => c.ApplicationsPending)
+                .ThenByDescending(c => c.ExpiringWithin5Days)
+                .ThenByDescending(c => c.ActiveVacancies)
+                .ThenBy(c => c.CompanyName)
+                .ToList() ?? [];
+            _totalActive = _clients.Sum(c => c.ActiveVacancies);
+            _totalPending = _clients.Sum(c => c.ApplicationsPending);
+            _actionRequiredCount = _clients.Count(c =>
+                ClientPerformanceStatus.Resolve(
+                    c.ApplicationsPending,
+                    c.ExpiringWithin5Days,
+                    c.TokenBalance) == ClientPerformanceBadge.ActionRequired);
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+            _clients = [];
+            _totalActive = 0;
+            _totalPending = 0;
+            _actionRequiredCount = 0;
         }
         finally
         {

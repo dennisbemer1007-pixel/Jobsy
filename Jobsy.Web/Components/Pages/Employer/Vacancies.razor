@@ -285,10 +285,16 @@
         try
         {
             var uri = Navigation.ToAbsoluteUri(Navigation.Uri);
-            if (QueryHelpers.ParseQuery(uri.Query).TryGetValue("salaryTableId", out var raw)
+            var query = QueryHelpers.ParseQuery(uri.Query);
+            if (query.TryGetValue("salaryTableId", out var raw)
                 && Guid.TryParse(raw, out var tableId))
             {
                 _salaryTableFilter = tableId;
+            }
+
+            if (query.TryGetValue("q", out var q) && !string.IsNullOrWhiteSpace(q))
+            {
+                _searchQuery = q.ToString().Trim();
             }
 
             var state = await AuthState.GetAuthenticationStateAsync();

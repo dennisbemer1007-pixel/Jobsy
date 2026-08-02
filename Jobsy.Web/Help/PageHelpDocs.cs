@@ -226,10 +226,10 @@ public static class PageHelpDocs
             "Regionale sturing zonder per vestiging te hoeven inloggen."),
 
         ["/intermediary"] = new(
-            "Intermediair dashboard",
-            "Overzicht voor uitzenders/intermediairs en hun opdrachtgevers.",
-            "KPI’s, snelle links naar batch-tool, tokens en sollicitaties.",
-            "Meerdere opdrachtgevers bedienen vanuit één account."),
+            "Bedrijvenoverzicht",
+            "Prestaties per gekoppelde opdrachtgever voor intermediairs.",
+            "Bekijk vacatures, openstaande sollicitaties, conversie, tokens, boosts en snelle acties per bedrijf.",
+            "Stuur op gezondheid per opdrachtgever zonder vestigingen of regio’s."),
 
         ["/intermediary/batch"] = new(
             "Batch-vacatures",

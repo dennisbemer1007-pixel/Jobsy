@@ -102,7 +102,7 @@ public static class UiStrings
             ["Nav.MyBranches"] = "Mijn vestigingen",
             ["Nav.MyTokens"] = "Mijn tokens",
             ["Nav.Takeovers"] = "Overnames",
-            ["Nav.Clients"] = "Opdrachtgevers",
+            ["Nav.Clients"] = "Bedrijvenoverzicht",
             ["Nav.BatchTool"] = "Batch-tool",
             ["Nav.CsvImport"] = "CSV Import",
             ["Nav.Integrations"] = "API koppelingen",

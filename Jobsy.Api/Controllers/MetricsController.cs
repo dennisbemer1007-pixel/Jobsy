@@ -77,6 +77,21 @@ public class MetricsController : ControllerBase
         return Ok(board);
     }
 
+    [HttpGet("client-performance")]
+    public async Task<ActionResult<ClientPerformanceBoardDto>> GetClientPerformance(
+        [FromQuery] string period = "week",
+        CancellationToken cancellationToken = default)
+    {
+        var companyIds = await ResolveCompanyFilterAsync(companyId: null, cancellationToken);
+        if (companyIds is not null && companyIds.Count == 0)
+        {
+            return Forbid();
+        }
+
+        var board = await _metrics.GetClientPerformanceAsync(companyIds, period, cancellationToken);
+        return Ok(board);
+    }
+
     private async Task<IReadOnlyCollection<Guid>?> ResolveCompanyFilterAsync(
         Guid? companyId,
         CancellationToken ct)

@@ -22,4 +22,9 @@ public interface IMetricsQueryService
         string period,
         int take = 3,
         CancellationToken cancellationToken = default);
+
+    Task<ClientPerformanceBoardDto> GetClientPerformanceAsync(
+        IReadOnlyCollection<Guid>? companyIds,
+        string period,
+        CancellationToken cancellationToken = default);
 }
