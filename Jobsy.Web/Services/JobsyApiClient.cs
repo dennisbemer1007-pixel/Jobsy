@@ -286,13 +286,18 @@ public sealed class JobsyApiClient : IAsyncDisposable
 
     /// <summary>
     /// Records a click once per vacancy per browser tab (sessionStorage dedupe).
-    /// Always includes a stable anonymousKey; the API uses it only when no DB user is resolved.
+    /// Requires analytics cookie consent (authenticated and anonymous).
     /// </summary>
     public async Task RecordClickOnceAsync(
         IJSRuntime js,
         Guid vacancyId,
         CancellationToken ct = default)
     {
+        if (!await AllowsAnalyticsAsync(js))
+        {
+            return;
+        }
+
         var claimed = await js.InvokeAsync<bool>("jobsyGeo.tryClaimClick", vacancyId.ToString());
         if (!claimed)
         {
@@ -308,6 +313,11 @@ public sealed class JobsyApiClient : IAsyncDisposable
         IEnumerable<Guid> vacancyIds,
         CancellationToken ct = default)
     {
+        if (!await AllowsAnalyticsAsync(js))
+        {
+            return;
+        }
+
         var ids = vacancyIds.Where(id => id != Guid.Empty).Distinct().ToList();
         if (ids.Count == 0)
         {
@@ -327,6 +337,11 @@ public sealed class JobsyApiClient : IAsyncDisposable
         string? path = null,
         CancellationToken ct = default)
     {
+        if (!await AllowsAnalyticsAsync(js))
+        {
+            return;
+        }
+
         var claimed = await js.InvokeAsync<bool>("jobsyGeo.tryClaimSiteVisit");
         if (!claimed)
         {
@@ -339,6 +354,19 @@ public sealed class JobsyApiClient : IAsyncDisposable
             new { anonymousKey = anonKey, path },
             ct);
         response.EnsureSuccessStatusCode();
+    }
+
+    /// <summary>ePrivacy: optional engagement metrics only after analytics consent.</summary>
+    private static async Task<bool> AllowsAnalyticsAsync(IJSRuntime js)
+    {
+        try
+        {
+            return await js.InvokeAsync<bool>("jobsyCookieConsent.allowsAnalytics");
+        }
+        catch
+        {
+            return false;
+        }
     }
 
     public async Task<bool> GetLikedAsync(Guid vacancyId, CancellationToken ct = default)

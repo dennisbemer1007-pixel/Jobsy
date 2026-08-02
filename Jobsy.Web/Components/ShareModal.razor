@@ -118,7 +118,10 @@
         {
             try
             {
-                await Api.ShareVacancyAsync(Vacancy.Id, ShareChannel.Other);
+                if (await CookieConsentBanner.AllowsAnalyticsAsync(Js))
+                {
+                    await Api.ShareVacancyAsync(Vacancy.Id, ShareChannel.Other);
+                }
             }
             catch
             {
@@ -157,10 +160,13 @@
         _message = null;
         try
         {
-            // Recording is optional analytics; sharing itself must work without login.
+            // Recording is optional analytics; sharing itself must work without login/consent.
             try
             {
-                await Api.ShareVacancyAsync(Vacancy.Id, channel);
+                if (await CookieConsentBanner.AllowsAnalyticsAsync(Js))
+                {
+                    await Api.ShareVacancyAsync(Vacancy.Id, channel);
+                }
             }
             catch
             {
