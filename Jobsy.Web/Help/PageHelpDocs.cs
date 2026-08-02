@@ -420,7 +420,7 @@ public static class PageHelpDocs
         ["/privacy"] = new(
             "Privacyverklaring",
             "Uitleg welke gegevens Lobsy verwerkt, inclusief matching, AI en jeugdige-arbeidschecks.",
-            "Lees de tekst; voor inzage/export ga je naar ‘Mijn gegevens’ als je bent ingelogd.",
+            "Lees de tekst; voor inzage/export ga je naar ‘Mijn gegevens’ als je bent ingelogd. Bij een nieuwe consentversie vragen we ondernemers opnieuw om akkoord.",
             "Transparantie en AVG-informatie."),
 
         ["/privacy/data"] = new(

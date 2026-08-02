@@ -6,6 +6,7 @@ using Jobsy.Core.Authorization;
 using Jobsy.Core.Entities;
 using Jobsy.Core.Enums;
 using Jobsy.Core.Interfaces;
+using Jobsy.Core.Privacy;
 using Jobsy.Core.Rules;
 using Jobsy.Core.ValueObjects;
 using Jobsy.Infrastructure.Data;
@@ -98,6 +99,39 @@ public class RoleFunctionalRegressionTests : IClassFixture<RoleFunctionalWebAppF
     }
 
     // ─── Kandidaat ──────────────────────────────────────────────────────────
+
+    [Fact]
+    public async Task Employer_with_outdated_consent_must_reaccept_current_version()
+    {
+        using (var scope = _factory.Services.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<JobsyDbContext>();
+            var employer = await db.Users.FirstAsync(u => u.Id == _factory.EmployerId);
+            employer.ConsentVersion = "2026-07-29";
+            employer.TermsAcceptedAt = DateTime.UtcNow.AddDays(-30);
+            await db.SaveChangesAsync();
+        }
+
+        var client = EmployerClient();
+        var before = await client.GetFromJsonAsync<JsonElement>("api/me/profile", JsonOpts);
+        Assert.True(before.GetProperty("needsConsentReaccept").GetBoolean());
+        Assert.Equal("2026-07-29", before.GetProperty("consentVersion").GetString());
+        Assert.Equal(PrivacyConstants.CurrentConsentVersion, before.GetProperty("currentConsentVersion").GetString());
+
+        var accept = await client.PostAsync("api/me/accept-consent", null);
+        Assert.Equal(HttpStatusCode.OK, accept.StatusCode);
+        var after = await accept.Content.ReadFromJsonAsync<JsonElement>(JsonOpts);
+        Assert.False(after.GetProperty("needsConsentReaccept").GetBoolean());
+        Assert.Equal(PrivacyConstants.CurrentConsentVersion, after.GetProperty("consentVersion").GetString());
+    }
+
+    [Fact]
+    public async Task Candidate_profile_does_not_require_account_consent_reaccept()
+    {
+        var client = CandidateClient();
+        var me = await client.GetFromJsonAsync<JsonElement>("api/me/profile", JsonOpts);
+        Assert.False(me.GetProperty("needsConsentReaccept").GetBoolean());
+    }
 
     [Fact]
     public async Task Candidate_can_load_profile_and_update_hours_schedule()

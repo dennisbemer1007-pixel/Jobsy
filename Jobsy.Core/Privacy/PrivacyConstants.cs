@@ -1,3 +1,5 @@
+using Jobsy.Core.Enums;
+
 namespace Jobsy.Core.Privacy;
 
 public static class PrivacyConstants
@@ -11,4 +13,14 @@ public static class PrivacyConstants
 
     /// <summary>Unverified application drafts (OTP pending) are purged after this many hours.</summary>
     public const int UnverifiedApplicationRetentionHours = 48;
+
+    public static bool IsCurrentConsent(string? consentVersion)
+        => string.Equals(consentVersion, CurrentConsentVersion, StringComparison.Ordinal);
+
+    /// <summary>
+    /// Employer/sales/admin accounts must re-accept after a consent-version bump.
+    /// Candidates re-consent per application (server-stamped), so they are not blocked here.
+    /// </summary>
+    public static bool RequiresAccountConsentReaccept(UserRole role, string? consentVersion)
+        => role != UserRole.Candidate && !IsCurrentConsent(consentVersion);
 }

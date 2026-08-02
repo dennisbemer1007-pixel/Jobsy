@@ -1,5 +1,6 @@
 using Jobsy.Core.Entities;
 using Jobsy.Core.Enums;
+using Jobsy.Core.Privacy;
 using Jobsy.Core.ValueObjects;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
@@ -151,6 +152,8 @@ internal static class DemoUsersSeeder
 
     private static async Task<int> EnsureUserAsync(JobsyDbContext db, User template)
     {
+        StampDemoConsent(template);
+
         var email = template.Email.ToLowerInvariant();
         var existing = await db.Users.FirstOrDefaultAsync(u => u.Email.ToLower() == email);
         if (existing is not null)
@@ -171,6 +174,9 @@ internal static class DemoUsersSeeder
                 existing.CompanyId = companyId;
             }
 
+            // Demo accounts stay on the current consent version so version bumps don't block the public demo.
+            StampDemoConsent(existing);
+
             return 0;
         }
 
@@ -182,6 +188,17 @@ internal static class DemoUsersSeeder
 
         db.Users.Add(template);
         return 1;
+    }
+
+    private static void StampDemoConsent(User user)
+    {
+        if (user.Role == UserRole.Candidate)
+        {
+            return;
+        }
+
+        user.TermsAcceptedAt ??= DateTime.UtcNow;
+        user.ConsentVersion = PrivacyConstants.CurrentConsentVersion;
     }
 
     private static async Task EnsureMembershipAsync(JobsyDbContext db, Guid userId, Guid companyId)

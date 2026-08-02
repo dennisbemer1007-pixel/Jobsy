@@ -73,6 +73,9 @@ public sealed class MeProfile
     public bool AuthenticatorEnabled { get; set; }
     public double? HomeLatitude { get; set; }
     public double? HomeLongitude { get; set; }
+    public string? ConsentVersion { get; set; }
+    public bool NeedsConsentReaccept { get; set; }
+    public string CurrentConsentVersion { get; set; } = string.Empty;
 }
 
 public sealed class CandidatePreferences

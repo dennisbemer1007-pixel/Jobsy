@@ -12,7 +12,7 @@
 
 ## B. AVG / GDPR (Privacy by Design)
 - **Data Minimization:** Alleen opslaan wat strikt noodzakelijk is voor de match en sollicitatie.
-- **Consent:** Server-side vastgelegd (`ConsentAcceptedAt` / `ConsentVersion` = `PrivacyConstants.CurrentConsentVersion`); clientversies worden genegeerd.
+- **Consent:** Server-side vastgelegd (`ConsentAcceptedAt` / `ConsentVersion` = `PrivacyConstants.CurrentConsentVersion`); clientversies worden genegeerd. Bij bump van `CurrentConsentVersion` moeten niet-kandidaat-accounts opnieuw akkoord gaan (`NeedsConsentReaccept` + `POST /api/me/accept-consent` + blocking UI). Kandidaten herbevestigen per sollicitatie.
 - **Progressive disclosure:** Werkgevers zien kandidaat-PII (incl. stad, afstand, work-permit, snapshots) pas na acceptatie (`Accepted` / `EmployerContacting` / `Hired`); motivatie en match-% zijn pre-accept zichtbaar.
 - **Right to be Forgotten:** `IPrivacyDataService` + geverifieerde uitschrijving (`request-unsubscribe` / `confirm-unsubscribe`) via UI `/privacy/data` en `/candidate/profile` — reden + e-mailverificatiecode, daarna blokkeren en anonimiseren (snapshots, verificatiecodes, site visits, registratiecontact, IBAN/MaskedIban). Admin ziet de reden-code in platform logs (categorie `Unsubscribe`); free-text `ReasonOther` wordt niet gelogd. `POST /api/privacy/delete-account` vereist dezelfde verificatiecode.
 - **Data portability:** `/api/privacy/export` (applications+snapshots, engagement, registraties, sales payouts/ledger/invoices).

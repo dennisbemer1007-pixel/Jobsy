@@ -173,7 +173,10 @@ public record MeProfileDto(
     CandidatePreferencesDto Preferences,
     bool AuthenticatorEnabled,
     double? HomeLatitude = null,
-    double? HomeLongitude = null);
+    double? HomeLongitude = null,
+    string? ConsentVersion = null,
+    bool NeedsConsentReaccept = false,
+    string CurrentConsentVersion = "");
 
 public record UpdateDateOfBirthRequest(DateOnly DateOfBirth);
 

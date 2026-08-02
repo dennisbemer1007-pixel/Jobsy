@@ -1,0 +1,158 @@
+@using Microsoft.AspNetCore.Components.Authorization
+@using Jobsy.Core.Authorization
+@inject JobsyApiClient Api
+@inject CultureState Culture
+@inject AuthenticationStateProvider AuthState
+@implements IDisposable
+
+@if (_open)
+{
+    <div class="share-modal-backdrop consent-reaccept-backdrop" aria-hidden="true"></div>
+    <div class="share-modal publish-modal consent-reaccept-modal"
+         role="dialog"
+         aria-modal="true"
+         aria-labelledby="consent-reaccept-title">
+        <div class="share-modal__header">
+            <h2 id="consent-reaccept-title">@Culture["Consent.ReacceptTitle"]</h2>
+        </div>
+
+        <p class="share-modal__lead">@Culture["Consent.ReacceptLead"]</p>
+        <p class="muted">@Culture["Consent.ReacceptVersion"] @_currentVersion</p>
+
+        <ul class="consent-reaccept__links">
+            <li>
+                <a class="auth-link" href="/privacy" target="_blank" rel="noopener">@Culture["Footer.Privacy"]</a>
+            </li>
+            <li>
+                <a class="auth-link" href="/algemene-voorwaarden" target="_blank" rel="noopener">@Culture["Footer.Terms"]</a>
+            </li>
+            <li>
+                <a class="auth-link" href="/gebruiksvoorwaarden" target="_blank" rel="noopener">@Culture["Footer.Usage"]</a>
+            </li>
+        </ul>
+
+        <label class="consent-reaccept__check">
+            <input type="checkbox" disabled="@_busy" @bind="_accepted" />
+            <span>@Culture["Consent.ReacceptCheckbox"]</span>
+        </label>
+
+        @if (!string.IsNullOrEmpty(_error))
+        {
+            <p class="state-message error">@_error</p>
+        }
+
+        <div class="inline-actions" style="margin-top:1rem">
+            <button type="button"
+                    class="btn-compact btn-compact--primary"
+                    disabled="@(_busy || !_accepted)"
+                    @onclick="AcceptAsync">
+                @(_busy ? Culture["Common.Busy"] : Culture["Consent.ReacceptConfirm"])
+            </button>
+        </div>
+    </div>
+}
+
+@code {
+    private bool _open;
+    private bool _busy;
+    private bool _accepted;
+    private bool _checked;
+    private string _currentVersion = Jobsy.Core.Privacy.PrivacyConstants.CurrentConsentVersion;
+    private string? _error;
+
+    protected override void OnInitialized()
+    {
+        Culture.Changed += OnCultureChanged;
+        AuthState.AuthenticationStateChanged += OnAuthChanged;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender && _checked)
+        {
+            return;
+        }
+
+        var wasOpen = _open;
+        await RefreshAsync();
+        if (_open != wasOpen)
+        {
+            await InvokeAsync(StateHasChanged);
+        }
+    }
+
+    private async void OnAuthChanged(Task<AuthenticationState> _)
+    {
+        _checked = false;
+        await InvokeAsync(async () =>
+        {
+            await RefreshAsync();
+            StateHasChanged();
+        });
+    }
+
+    private void OnCultureChanged()
+        => InvokeAsync(StateHasChanged);
+
+    private async Task RefreshAsync()
+    {
+        _checked = true;
+        try
+        {
+            var state = await AuthState.GetAuthenticationStateAsync();
+            if (state.User.Identity?.IsAuthenticated != true
+                || RoleClaimMatching.HasRole(state.User, JobsyRoles.Candidate))
+            {
+                _open = false;
+                return;
+            }
+
+            var profile = await Api.GetMyProfileAsync();
+            _open = profile?.NeedsConsentReaccept == true;
+            _currentVersion = string.IsNullOrWhiteSpace(profile?.CurrentConsentVersion)
+                ? Jobsy.Core.Privacy.PrivacyConstants.CurrentConsentVersion
+                : profile!.CurrentConsentVersion;
+            if (!_open)
+            {
+                _accepted = false;
+                _error = null;
+            }
+        }
+        catch
+        {
+            // Consent gate must not break the shell if profile is temporarily unavailable.
+            _open = false;
+        }
+    }
+
+    private async Task AcceptAsync()
+    {
+        if (!_accepted || _busy)
+        {
+            return;
+        }
+
+        _busy = true;
+        _error = null;
+        try
+        {
+            var profile = await Api.AcceptConsentAsync();
+            _open = profile?.NeedsConsentReaccept == true;
+            _accepted = false;
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    public void Dispose()
+    {
+        Culture.Changed -= OnCultureChanged;
+        AuthState.AuthenticationStateChanged -= OnAuthChanged;
+    }
+}

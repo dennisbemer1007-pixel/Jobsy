@@ -10414,6 +10414,34 @@ a.apply-flow__secondary {
     white-space: nowrap;
 }
 
+.consent-reaccept-backdrop {
+    z-index: 80;
+}
+
+.consent-reaccept-modal {
+    z-index: 81;
+    max-width: 32rem;
+}
+
+.consent-reaccept__links {
+    margin: 0.75rem 0 1rem;
+    padding-left: 1.1rem;
+    display: grid;
+    gap: 0.35rem;
+}
+
+.consent-reaccept__check {
+    display: flex;
+    gap: 0.55rem;
+    align-items: flex-start;
+    font-size: 0.92rem;
+    line-height: 1.4;
+}
+
+.consent-reaccept__check input {
+    margin-top: 0.2rem;
+}
+
 .lobsy-assistant__compose {
     display: flex;
     flex-direction: column;

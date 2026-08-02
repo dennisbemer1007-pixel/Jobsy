@@ -5,9 +5,11 @@ using Jobsy.Core.Authorization;
 using Jobsy.Core.Contracts;
 using Jobsy.Core.Interfaces;
 using Jobsy.Core.Localization;
+using Jobsy.Core.Privacy;
 using Jobsy.Infrastructure.Data;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 
 namespace Jobsy.Api.Controllers;
@@ -420,6 +422,34 @@ public class MeController : ControllerBase
         return Task.FromResult(JobsyLanguages.Default);
     }
 
+    /// <summary>
+    /// Stamp the current privacy/terms consent version on the signed-in account.
+    /// Client-supplied versions are ignored (AVG integrity).
+    /// </summary>
+    [HttpPost("accept-consent")]
+    [EnableRateLimiting("auth")]
+    public async Task<ActionResult<MeProfileDto>> AcceptConsent(CancellationToken cancellationToken)
+    {
+        var lookup = await _users.FindByPrincipalAsync(User, cancellationToken);
+        if (lookup is null)
+        {
+            return NotFound(new { message = "Gebruiker niet gevonden in Jobsy." });
+        }
+
+        var user = await _db.Users.FirstOrDefaultAsync(u => u.Id == lookup.Id, cancellationToken);
+        if (user is null || !user.IsActive)
+        {
+            return NotFound(new { message = "Gebruiker niet gevonden in Jobsy." });
+        }
+
+        user.TermsAcceptedAt = DateTime.UtcNow;
+        user.ConsentVersion = PrivacyConstants.CurrentConsentVersion;
+        await _db.SaveChangesAsync(cancellationToken);
+
+        var features = await _features.GetAsync(cancellationToken);
+        return Ok(ToProfileDto(user, features.AuthenticatorEnabled));
+    }
+
     private MeProfileDto ToProfileDto(Core.Entities.User user, bool authenticatorEnabled) => new(
         user.Id,
         user.Email,
@@ -431,7 +461,10 @@ public class MeController : ControllerBase
         ParsePreferences(user.PreferencesJson),
         authenticatorEnabled,
         user.HomeLocation?.Latitude,
-        user.HomeLocation?.Longitude);
+        user.HomeLocation?.Longitude,
+        user.ConsentVersion,
+        PrivacyConstants.RequiresAccountConsentReaccept(user.Role, user.ConsentVersion),
+        PrivacyConstants.CurrentConsentVersion);
 
     public static CandidatePreferencesDto ParsePreferences(string? json)
     {

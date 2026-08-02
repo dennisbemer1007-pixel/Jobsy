@@ -390,6 +390,13 @@ public sealed class JobsyApiClient : IAsyncDisposable
         }
     }
 
+    public async Task<MeProfile?> AcceptConsentAsync(CancellationToken ct = default)
+    {
+        var response = await _http.PostAsync("api/me/accept-consent", null, ct);
+        response.EnsureSuccessStatusCode();
+        return await response.Content.ReadFromJsonAsync<MeProfile>(cancellationToken: ct);
+    }
+
     public async Task<MeProfile?> UpdateDateOfBirthAsync(DateOnly dateOfBirth, CancellationToken ct = default)
     {
         var response = await _http.PutAsJsonAsync("api/me/date-of-birth", new { dateOfBirth }, ct);
