@@ -456,6 +456,7 @@ public sealed class PrivacyDataService : IPrivacyDataService
             registration.ContactEmail = anonymizedEmail;
             registration.ContactPhone = null;
             registration.ActivationToken = string.Empty;
+            registration.PasswordHash = null;
             registration.SalesManagerTrackingCode = null;
         }
 

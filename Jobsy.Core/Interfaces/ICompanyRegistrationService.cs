@@ -69,7 +69,12 @@ public sealed record RegistrationActivationResult(
     string TemporaryPassword,
     Guid? OrganizationCompanyId,
     Guid? BranchCompanyId,
-    bool UsedChosenPassword = false);
+    bool UsedChosenPassword = false,
+    /// <summary>
+    /// True when the token only confirmed the contact e-mail for a pending takeover
+    /// (no user provisioned yet; owner must still approve).
+    /// </summary>
+    bool EmailVerifiedAwaitingTakeover = false);
 
 public sealed record TakeoverInboxItem(
     Guid TakeoverId,

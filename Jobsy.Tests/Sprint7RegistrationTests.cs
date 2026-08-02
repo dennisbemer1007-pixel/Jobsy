@@ -145,6 +145,31 @@ public class Sprint7RegistrationTests
     }
 
     [Fact]
+    public async Task Expired_activation_clears_pending_password_hash()
+    {
+        await using var db = CreateDb();
+        var sut = CreateService(db);
+
+        var submit = await sut.SubmitAsync(new RegistrationSubmitRequest(
+            "99990001", "99990001_0001", RegistrationScope.BranchOnly,
+            "A", "expired.pass@jobsy.local", null, AcceptedTerms: true,
+            Password: "TestPass1!"));
+
+        var registration = await db.CompanyRegistrations.SingleAsync(r => r.Id == submit.RegistrationId);
+        Assert.False(string.IsNullOrWhiteSpace(registration.PasswordHash));
+        var token = registration.ActivationToken;
+        registration.CreatedAt = DateTime.UtcNow - CompanyRegistrationService.ActivationTokenTtl - TimeSpan.FromMinutes(1);
+        await db.SaveChangesAsync();
+
+        await Assert.ThrowsAsync<InvalidOperationException>(() => sut.ActivateAsync(token));
+
+        var expired = await db.CompanyRegistrations.SingleAsync(r => r.Id == submit.RegistrationId);
+        Assert.Equal(CompanyRegistrationStatus.Cancelled, expired.Status);
+        Assert.Null(expired.PasswordHash);
+        Assert.Equal(string.Empty, expired.ActivationToken);
+    }
+
+    [Fact]
     public async Task Activate_sbi_78_assigns_intermediary_role_and_company_type()
     {
         await using var db = CreateDb();
@@ -165,7 +190,7 @@ public class Sprint7RegistrationTests
         var pending = await db.CompanyRegistrations.SingleAsync(r => r.Id == submit.RegistrationId);
         Assert.True(pending.IsIntermediarySbi);
         Assert.Equal("7820", pending.PrimarySbiCode);
-        Assert.Equal(RegistrationScope.Organization, pending.Scope);
+        Assert.Equal(RegistrationScope.BranchOnly, pending.Scope);
 
         var activated = await sut.ActivateAsync(pending.ActivationToken);
         Assert.Equal("Intermediary", activated.Role);
@@ -332,11 +357,19 @@ public class Sprint7RegistrationTests
 
         Assert.True(submit.RequiresTakeover);
         Assert.Equal(CompanyRegistrationStatus.TakeoverPending, submit.Status);
+        Assert.False(string.IsNullOrWhiteSpace(submit.ActivationUrl));
 
+        // Unverified takeover must not be approvable / listed.
         var takeoverId = await db.EstablishmentTakeoverRequests
             .Where(t => t.RegistrationId == submit.RegistrationId)
             .Select(t => t.Id)
             .SingleAsync();
+        await Assert.ThrowsAsync<InvalidOperationException>(() => sut.ApproveTakeoverAsync(
+            takeoverId, ownerId, UserRole.EnterpriseManager, [existingId], isAdmin: false));
+        Assert.Empty(await sut.ListPendingTakeoversAsync([existingId], isAdmin: false));
+
+        await VerifyTakeoverEmailAsync(db, sut, submit.RegistrationId);
+        Assert.Single(await sut.ListPendingTakeoversAsync([existingId], isAdmin: false));
 
         var decision = await sut.ApproveTakeoverAsync(
             takeoverId,
@@ -394,6 +427,7 @@ public class Sprint7RegistrationTests
             "99990005", "99990005_0001", RegistrationScope.Organization,
             "Req", "req.org@jobsy.local", null, AcceptedTerms: true,
             Password: "TestPass1!"));
+        await VerifyTakeoverEmailAsync(db, sut, submit.RegistrationId);
         var takeoverId = await db.EstablishmentTakeoverRequests
             .Where(t => t.RegistrationId == submit.RegistrationId).Select(t => t.Id).SingleAsync();
 
@@ -469,6 +503,7 @@ public class Sprint7RegistrationTests
             "99990006", "99990006_0001", RegistrationScope.Organization,
             "New EM", "new.em@jobsy.local", null, AcceptedTerms: true,
             Password: "TestPass1!"));
+        await VerifyTakeoverEmailAsync(db, sut, submit.RegistrationId);
         var takeoverId = await db.EstablishmentTakeoverRequests
             .Where(t => t.RegistrationId == submit.RegistrationId).Select(t => t.Id).SingleAsync();
 
@@ -478,6 +513,90 @@ public class Sprint7RegistrationTests
         Assert.Equal(parentId, decision.OrganizationCompanyId);
         Assert.Equal(1, await db.Companies.CountAsync(c =>
             c.KvkNumber == "99990006" && c.KvkEstablishmentId == null));
+    }
+
+    [Fact]
+    public async Task Intermediary_takeover_detaches_from_employer_org_and_assigns_intermediary()
+    {
+        await using var db = CreateDb();
+        var parentId = Guid.NewGuid();
+        var branchId = Guid.NewGuid();
+        db.Companies.AddRange(
+            new Company
+            {
+                Id = parentId,
+                Name = "Employer Org",
+                KvkNumber = "99990078",
+                Address = "HQ",
+                Location = new GeoPoint(52, 4),
+                Type = CompanyType.Employer
+            },
+            new Company
+            {
+                Id = branchId,
+                Name = "Employer Branch",
+                KvkNumber = "99990078",
+                KvkEstablishmentId = "99990078_0001",
+                Address = "Branch",
+                Location = new GeoPoint(52.1, 4.1),
+                Type = CompanyType.Employer,
+                ParentCompanyId = parentId
+            });
+        var bmId = Guid.NewGuid();
+        db.Users.Add(new User
+        {
+            Id = bmId,
+            Email = "bm.flex@jobsy.local",
+            FullName = "BM",
+            Role = UserRole.BranchManager,
+            CompanyId = branchId,
+            IsActive = true
+        });
+        db.UserCompanies.Add(new UserCompany { UserId = bmId, CompanyId = branchId });
+        await db.SaveChangesAsync();
+
+        var sut = CreateService(db);
+        var submit = await sut.SubmitAsync(new RegistrationSubmitRequest(
+            "99990078", "99990078_0001", RegistrationScope.Organization,
+            "Flex Boss", "flex.takeover@jobsy.local", null, AcceptedTerms: true,
+            Password: "Intermed1!"));
+        Assert.True(submit.RequiresTakeover);
+
+        await VerifyTakeoverEmailAsync(db, sut, submit.RegistrationId);
+        var takeoverId = await db.EstablishmentTakeoverRequests
+            .Where(t => t.RegistrationId == submit.RegistrationId)
+            .Select(t => t.Id)
+            .SingleAsync();
+
+        // Branch manager can approve (scope is BranchOnly for SBI 78).
+        var decision = await sut.ApproveTakeoverAsync(
+            takeoverId, bmId, UserRole.BranchManager, [branchId], isAdmin: false);
+        Assert.Equal(TakeoverRequestStatus.Approved, decision.Status);
+
+        var company = await db.Companies.SingleAsync(c => c.Id == branchId);
+        Assert.Equal(CompanyType.Intermediary, company.Type);
+        Assert.Null(company.ParentCompanyId);
+
+        var user = await db.Users.SingleAsync(u => u.Email == "flex.takeover@jobsy.local");
+        Assert.Equal(UserRole.Intermediary, user.Role);
+        Assert.Equal(branchId, user.CompanyId);
+    }
+
+    private static async Task VerifyTakeoverEmailAsync(
+        JobsyDbContext db,
+        CompanyRegistrationService sut,
+        Guid registrationId)
+    {
+        var token = await db.CompanyRegistrations
+            .Where(r => r.Id == registrationId)
+            .Select(r => r.ActivationToken)
+            .SingleAsync();
+        var verified = await sut.ActivateAsync(token);
+        Assert.True(verified.EmailVerifiedAwaitingTakeover);
+        Assert.NotNull(await db.CompanyRegistrations
+            .Where(r => r.Id == registrationId)
+            .Select(r => r.ContactEmailVerifiedAt)
+            .SingleAsync());
     }
 
     private static CompanyRegistrationService CreateService(

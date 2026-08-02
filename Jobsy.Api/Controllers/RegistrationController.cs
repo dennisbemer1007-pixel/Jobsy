@@ -127,7 +127,8 @@ public class RegistrationController : ControllerBase
                     : null,
                 result.OrganizationCompanyId,
                 result.BranchCompanyId,
-                result.UsedChosenPassword));
+                result.UsedChosenPassword,
+                result.EmailVerifiedAwaitingTakeover));
         }
         catch (ArgumentException ex)
         {

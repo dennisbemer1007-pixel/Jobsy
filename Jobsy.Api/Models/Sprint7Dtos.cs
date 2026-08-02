@@ -32,7 +32,8 @@ public record RegistrationActivationResponse(
     string? TemporaryPassword,
     Guid? OrganizationCompanyId,
     Guid? BranchCompanyId,
-    bool UsedChosenPassword = false);
+    bool UsedChosenPassword = false,
+    bool EmailVerifiedAwaitingTakeover = false);
 
 public record TakeoverInboxItemDto(
     Guid TakeoverId,

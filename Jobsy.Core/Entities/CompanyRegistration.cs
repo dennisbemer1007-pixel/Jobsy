@@ -34,6 +34,12 @@ public class CompanyRegistration
     /// <summary>True when KVK SBI starts with 78 (employment/recruitment agency).</summary>
     public bool IsIntermediarySbi { get; set; }
 
+    /// <summary>
+    /// Set when the contact e-mail was confirmed (activation or takeover e-mail verification).
+    /// Takeover approve requires this so a chosen password is never applied to an unverified address.
+    /// </summary>
+    public DateTime? ContactEmailVerifiedAt { get; set; }
+
     public CompanyRegistrationStatus Status { get; set; } = CompanyRegistrationStatus.PendingActivation;
 
     public Guid? CreatedUserId { get; set; }

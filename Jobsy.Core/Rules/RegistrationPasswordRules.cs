@@ -22,5 +22,10 @@ public static class RegistrationPasswordRules
         {
             throw new ArgumentException($"Wachtwoord mag maximaal {MaxLength} tekens zijn.");
         }
+
+        if (!password.Any(char.IsLetter) || !password.Any(char.IsDigit))
+        {
+            throw new ArgumentException("Wachtwoord moet minimaal één letter en één cijfer bevatten.");
+        }
     }
 }

@@ -20,7 +20,7 @@
 - **Demo:** `JobsyAuth:AllowDevelopmentAuth` + DemoUsers zijn bewust voor de publieke demo; seed draait alleen bij Development / `Seed:Enabled` / AllowDevelopmentAuth. Demo one-click login zet geen wachtwoorden in HTML. Buiten Development mag header-auth alleen `@jobsy.local` demo-accounts (incl. Admin/SalesManager). OAuth client-secrets vereisen een aparte `JobsyAuth:ExternalProvisionSecret` (nooit DevelopmentAuthSecret als fallback).
 - **Verification OTPs:** Sollicitatie- en unsubscribe-codes via `RandomNumberGenerator` + HMAC-SHA256 met application pepper (`VerificationCodes.Hash`); legacy unsalted SHA-256 blijft verifieerbaar tijdens rollout. Max 5 foute pogingen per code + rate limit policy `otp-verify` (10/min, keyed op user+IP).
 - **Verified applications only:** Werkgeversmetrics/counts/drilldowns en kandidaat-sollicitatielijsten tellen alleen `EmailVerifiedAt != null`.
-- **Registration activate:** Tijdelijk wachtwoord gaat alleen per e-mail; API/UI echo’t hem buiten Development niet.
+- **Registration activate:** Gekozen wachtwoord (PBKDF2) bij submit; activatie bevestigt e-mail. Takeover vereist e-mailverificatie vóór inbox/approve. Tijdelijk wachtwoord (legacy) alleen per e-mail; API/UI echo’t hem buiten Development niet. Pending `PasswordHash` wordt gewist bij activate/reject/cancel/expiry/anonymize.
 
 ## C. Security Headers & Error Handling (Middleware)
 De ASP.NET Core pipeline stuurt standaard:

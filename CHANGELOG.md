@@ -7,6 +7,7 @@ Alle noemenswaardige wijzigingen aan dit project worden in dit bestand bijgehoud
 ### Added
 - Bedrijfsregistratie: gekozen wachtwoord bij submit, e-mailverificatie, daarna dual login (e-mail/wachtwoord of Microsoft Entra met hetzelfde adres).
 - Automatische KVK/SBI-roltoekenning: SBI `78*` → Intermediair; overig Organization-scope → Bedrijfsmanager (EnterpriseManager).
+- Quality gate 456: takeover e-mailverificatie vóór inbox/approve; pending `PasswordHash` gewist bij cancel/reject/expiry/anonymize; intermediair-takeover detacht van employer-org.
 - Functionele specificatie matching / dagdelen / uren / Arbeidstijdenwet voor kandidaat- en werkgeverskant (`docs/FUNCTIONELE_SPECIFICATIES_MATCHING.md`), inclusief verwijzing vanuit `REQUIREMENTS.md`.
 - Admin Sales beheer (`/admin/sales`): basis tokenwaarde (€25), tokenkosten per vacaturetype (Regulier / Stageplek / Vrijwilligerswerk), standaard + First Year / Enterprise pakketten (Silver/Gold/Platinum), highlight-toeslagen.
 - Vacaturetype `VacancyKind` op create/publish; publiceerkosten volgen type (incl. nul-tarief voor vrijwilligerswerk).

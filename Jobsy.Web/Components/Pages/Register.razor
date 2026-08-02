@@ -250,7 +250,8 @@
 
         if (_selected.IsIntermediarySbi)
         {
-            _scope = "Organization";
+            // Server forces BranchOnly for Intermediair (single company, no employer org tree).
+            _scope = "BranchOnly";
         }
 
         _step = 3;
@@ -301,7 +302,7 @@
             var result = await Api.SubmitRegistrationAsync(
                 _selected.KvkNumber,
                 _selected.KvkEstablishmentId,
-                _selected.IsIntermediarySbi ? "Organization" : _scope,
+                _selected.IsIntermediarySbi ? "BranchOnly" : _scope,
                 _contactName.Trim(),
                 _contactEmail.Trim(),
                 string.IsNullOrWhiteSpace(_contactPhone) ? null : _contactPhone.Trim(),

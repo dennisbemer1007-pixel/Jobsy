@@ -657,6 +657,7 @@ public class JobsyDbContext : DbContext
             entity.Property(e => e.ActivationToken).HasMaxLength(128).IsRequired();
             entity.Property(e => e.PasswordHash).HasMaxLength(512);
             entity.Property(e => e.PrimarySbiCode).HasMaxLength(16);
+            entity.Property(e => e.ContactEmailVerifiedAt);
             entity.Property(e => e.ConsentVersion).HasMaxLength(32);
             entity.Property(e => e.SalesManagerTrackingCode).HasMaxLength(32);
             entity.HasIndex(e => e.ActivationToken).IsUnique();

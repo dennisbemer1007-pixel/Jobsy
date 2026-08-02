@@ -232,6 +232,7 @@ public class RegistrationActivationResult
     public Guid? OrganizationCompanyId { get; set; }
     public Guid? BranchCompanyId { get; set; }
     public bool UsedChosenPassword { get; set; }
+    public bool EmailVerifiedAwaitingTakeover { get; set; }
 }
 
 public class TakeoverInboxItem
