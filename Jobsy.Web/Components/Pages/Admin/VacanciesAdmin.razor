@@ -23,26 +23,11 @@
     {
         <div class="filter-bar">
             <label>
-                @Culture["Admin.Company"]
-                <input type="search" @bind="_companyFilter" @bind:event="oninput" placeholder="@Culture["Admin.CompanyPlaceholder"]" />
-            </label>
-            <label>
-                @Culture["Admin.Title"]
-                <input type="search" @bind="_titleFilter" @bind:event="oninput" placeholder="@Culture["Admin.VacancyTitlePlaceholder"]" />
-            </label>
-            <label>
-                @Culture["Admin.Status"]
-                <select @bind="_statusFilter">
-                    <option value="">@Culture["Admin.All"]</option>
-                    <option value="Active">@Culture["VacancyStatus.Active"]</option>
-                    <option value="Draft">@Culture["VacancyStatus.Draft"]</option>
-                    <option value="Archived">@Culture["VacancyStatus.Archived"]</option>
-                    <option value="PendingApproval">Pending</option>
-                </select>
-            </label>
-            <label class="filter-check">
-                <input type="checkbox" @bind="_extendedOnly" />
-                Alleen verlengd
+                @Culture["Common.Search"]
+                <input type="search"
+                       @bind="_searchQuery"
+                       @bind:event="oninput"
+                       placeholder="@Culture["Vacancy.SearchCompanyOrTitlePlaceholder"]" />
             </label>
             <span class="muted">@_filtered.Count van @_vacancies.Count</span>
         </div>
@@ -65,6 +50,22 @@
                             <th class="data-table__col--wrap">@Culture["Admin.Title"]</th>
                             <th class="data-table__col--wrap">@Culture["Admin.Company"]</th>
                             <th>@Culture["Admin.Status"]</th>
+                            <th>
+                                <button type="button"
+                                        class="data-table__sort"
+                                        aria-sort="@SortAria("start")"
+                                        @onclick='() => ToggleSort("start")'>
+                                    @Culture["Vacancy.PlacementDate"]
+                                </button>
+                            </th>
+                            <th>
+                                <button type="button"
+                                        class="data-table__sort"
+                                        aria-sort="@SortAria("end")"
+                                        @onclick='() => ToggleSort("end")'>
+                                    @Culture["Vacancy.Deadline"]
+                                </button>
+                            </th>
                             <th>Bron</th>
                             <th><button type="button" class="linkish" @onclick='() => Drill("impressions")'>Getoond</button></th>
                             <th><button type="button" class="linkish" @onclick='() => Drill("clicks")'>Clicks</button></th>
@@ -86,6 +87,8 @@
                                 </td>
                                 <td class="data-table__col--wrap">@v.CompanyName <span class="muted">(@v.CompanyType)</span></td>
                                 <td>@v.Status</td>
+                                <td>@v.StartDate.ToString("dd-MM-yyyy")</td>
+                                <td>@v.EndDate.ToString("dd-MM-yyyy")</td>
                                 <td>
                                     <span class="source-badge source-badge--@VacancySourceDisplay.CssModifier(v.CreatedVia)">
                                         @VacancySourceDisplay.Label(v.CreatedVia)
@@ -154,8 +157,9 @@
 
 @code {
     private List<AdminVacancyItem> _vacancies = [];
-    private string _companyFilter = "";
-    private string _titleFilter = "";
+    private string _searchQuery = "";
+    private string _sortColumn = "start";
+    private bool _sortAscending;
     private string _statusFilter = "";
     private bool _extendedOnly;
     private bool _sortByApplications;
@@ -227,14 +231,11 @@
             q = q.Where(v => v.CompanyId == cid);
         }
 
-        if (!string.IsNullOrWhiteSpace(_companyFilter))
+        if (!string.IsNullOrWhiteSpace(_searchQuery))
         {
-            q = q.Where(v => v.CompanyName.Contains(_companyFilter, StringComparison.OrdinalIgnoreCase));
-        }
-
-        if (!string.IsNullOrWhiteSpace(_titleFilter))
-        {
-            q = q.Where(v => v.Title.Contains(_titleFilter, StringComparison.OrdinalIgnoreCase));
+            q = q.Where(v =>
+                v.CompanyName.Contains(_searchQuery, StringComparison.OrdinalIgnoreCase)
+                || v.Title.Contains(_searchQuery, StringComparison.OrdinalIgnoreCase));
         }
 
         if (!string.IsNullOrWhiteSpace(_statusFilter))
@@ -249,11 +250,41 @@
 
         if (_sortByApplications)
         {
-            q = q.OrderByDescending(v => v.ApplicationCount).ThenBy(v => v.Title);
+            return q.OrderByDescending(v => v.ApplicationCount).ThenBy(v => v.Title);
         }
 
-        return q;
+        return ApplySort(q);
     }
+
+    private void ToggleSort(string column)
+    {
+        _sortByApplications = false;
+        if (string.Equals(_sortColumn, column, StringComparison.Ordinal))
+        {
+            _sortAscending = !_sortAscending;
+        }
+        else
+        {
+            _sortColumn = column;
+            _sortAscending = true;
+        }
+    }
+
+    private string? SortAria(string column)
+        => !_sortByApplications && string.Equals(_sortColumn, column, StringComparison.Ordinal)
+            ? (_sortAscending ? "ascending" : "descending")
+            : null;
+
+    private IEnumerable<AdminVacancyItem> ApplySort(IEnumerable<AdminVacancyItem> query)
+        => _sortColumn switch
+        {
+            "end" => _sortAscending
+                ? query.OrderBy(v => v.EndDate).ThenBy(v => v.Title)
+                : query.OrderByDescending(v => v.EndDate).ThenBy(v => v.Title),
+            _ => _sortAscending
+                ? query.OrderBy(v => v.StartDate).ThenBy(v => v.Title)
+                : query.OrderByDescending(v => v.StartDate).ThenBy(v => v.Title)
+        };
 
     private static string MetricHref(AdminVacancyItem v, string metric)
         => $"/vacancies/{v.Id}?metric={metric}";
