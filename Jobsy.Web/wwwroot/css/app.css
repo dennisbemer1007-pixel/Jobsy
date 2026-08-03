@@ -4651,6 +4651,71 @@ html[dir="rtl"] .language-selector__menu {
     display: flex;
     align-items: center;
     gap: 0.75rem;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+}
+
+.raamflyer-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem 0.65rem;
+}
+
+.raamflyer-actions .login-submit {
+    width: auto;
+    min-height: 2.4rem;
+    padding: 0.45rem 0.9rem;
+    font-size: 0.9rem;
+}
+
+.raamflyer-actions .login-submit--secondary {
+    background: transparent;
+    color: var(--brand-navy, #0f2d5c);
+    border: 1px solid color-mix(in srgb, var(--brand-navy, #0f2d5c) 35%, transparent);
+}
+
+.raamflyer-scope {
+    display: inline-flex;
+    border: 1px solid color-mix(in srgb, var(--brand-navy, #0f2d5c) 22%, transparent);
+    border-radius: 8px;
+    overflow: hidden;
+    background: #fff;
+}
+
+.raamflyer-scope__btn {
+    border: 0;
+    background: transparent;
+    color: var(--brand-navy, #0f2d5c);
+    padding: 0.4rem 0.7rem;
+    font-size: 0.85rem;
+    cursor: pointer;
+    min-height: 2.4rem;
+}
+
+.raamflyer-scope__btn.is-active {
+    background: var(--brand-navy, #0f2d5c);
+    color: #fff;
+}
+
+.raamflyer-branch select,
+.raamflyer-format select {
+    min-height: 2.4rem;
+    border-radius: 8px;
+    border: 1px solid color-mix(in srgb, var(--brand-navy, #0f2d5c) 22%, transparent);
+    padding: 0.35rem 0.55rem;
+    background: #fff;
+    max-width: 14rem;
+}
+
+.raamflyer-format select {
+    max-width: 5rem;
+}
+
+.raamflyer-error {
+    flex-basis: 100%;
+    margin: 0;
+    font-size: 0.85rem;
 }
 
 .table-row__actions {

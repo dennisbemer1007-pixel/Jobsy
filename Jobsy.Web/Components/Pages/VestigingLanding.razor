@@ -1,0 +1,39 @@
+@page "/vestiging/{CompanyId:guid}"
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
+@inject JobsyApiClient Api
+@inject NavigationManager Navigation
+
+<PageTitle>Vacatures · Lobsy</PageTitle>
+
+<div class="panel-page vestiging-landing">
+    <p class="state-message">@_message</p>
+</div>
+
+@code {
+    [Parameter] public Guid CompanyId { get; set; }
+
+    private string _message = "Even geduld — we openen de juiste vacatures…";
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var route = await Api.GetBranchFlyerRouteAsync(CompanyId);
+            var path = string.IsNullOrWhiteSpace(route?.RedirectPath)
+                ? $"/?company={CompanyId:D}"
+                : route.RedirectPath;
+
+            _message = path.StartsWith("/vacancies/", StringComparison.OrdinalIgnoreCase)
+                ? "Je wordt doorgestuurd naar de vacature…"
+                : "Je wordt doorgestuurd naar de vacaturekaart…";
+
+            await InvokeAsync(StateHasChanged);
+            Navigation.NavigateTo(path, replace: true);
+        }
+        catch
+        {
+            _message = "Doorsturen naar de vacaturekaart…";
+            Navigation.NavigateTo($"/?company={CompanyId:D}", replace: true);
+        }
+    }
+}
