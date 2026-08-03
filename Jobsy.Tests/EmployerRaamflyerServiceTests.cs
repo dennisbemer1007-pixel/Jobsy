@@ -96,6 +96,29 @@ public class EmployerRaamflyerServiceTests
     }
 
     [Fact]
+    public async Task Render_A3_Branch_Lists_Up_To_Eight_Vacancies()
+    {
+        await using var db = CreateDb();
+        var companyId = Guid.NewGuid();
+        SeedCompany(db, companyId, "Filiaal A3");
+        for (var i = 1; i <= 9; i++)
+        {
+            SeedVacancy(db, Guid.NewGuid(), companyId, $"Functie {i:00}");
+        }
+
+        await db.SaveChangesAsync();
+
+        var sut = CreateSut(db);
+        var bytes = await sut.RenderBranchFlyerAsync(companyId, RaamflyerFormat.A3);
+
+        Assert.True(bytes.Length > 500);
+        Assert.Equal(1, PdfPageCounter.Count(bytes));
+        var text = System.Text.Encoding.Latin1.GetString(bytes);
+        Assert.DoesNotContain("Korte link", text, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("/vestiging/", text, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
     public async Task Resolve_Unknown_Company_Throws()
     {
         await using var db = CreateDb();

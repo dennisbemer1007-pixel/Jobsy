@@ -118,14 +118,32 @@ public class SalesCommercialServiceTests
     }
 
     [Fact]
-    public async Task Flyer_pdf_renders_bytes()
+    public async Task Flyer_pdf_renders_single_page_with_full_catalog()
     {
         await using var db = CreateDb();
         SeedCommercial(db);
+        for (var i = 1; i <= 8; i++)
+        {
+            db.SalesPackages.Add(new SalesPackage
+            {
+                Id = Guid.NewGuid(),
+                Name = $"Pakket {i}",
+                Code = $"STD-P{i:00}",
+                Category = SalesPackageCategory.Standard,
+                TokenAmount = 10 * i,
+                PriceEuro = 200m * i,
+                IsActive = true,
+                SortOrder = i
+            });
+        }
+
+        await db.SaveChangesAsync();
+
         var companySettings = new PlatformCompanySettingsService(db);
         var flyer = new PartnerFlyerPdfService(
             new SalesCommercialService(db, new TokenLedgerService(db)),
-            companySettings);
+            companySettings,
+            new FlyerFakeFeatures());
 
         var bytes = await flyer.RenderAsync("SM-DEMO01");
         Assert.True(bytes.Length > 500);
@@ -138,6 +156,17 @@ public class SalesCommercialServiceTests
         var text = System.Text.Encoding.Latin1.GetString(bytes);
         Assert.DoesNotContain("lobsy.nl/register", text, StringComparison.OrdinalIgnoreCase);
         Assert.DoesNotContain("/register?ref=", text, StringComparison.OrdinalIgnoreCase);
+    }
+
+    private sealed class FlyerFakeFeatures : IPlatformFeatureService
+    {
+        public Task<PlatformFeatureSnapshot> GetAsync(CancellationToken cancellationToken = default)
+            => Task.FromResult(new PlatformFeatureSnapshot(false, false, false, "https://lobsy.nl", null));
+
+        public Task<PlatformFeatureSnapshot> UpdateAsync(
+            PlatformFeatureUpdate update,
+            CancellationToken cancellationToken = default)
+            => throw new NotSupportedException();
     }
 
     [Fact]

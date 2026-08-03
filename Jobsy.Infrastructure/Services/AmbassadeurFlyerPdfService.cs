@@ -1,5 +1,6 @@
 using System.Globalization;
 using System.Text.RegularExpressions;
+using Jobsy.Core;
 using Jobsy.Core.Interfaces;
 using Jobsy.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
@@ -72,7 +73,7 @@ public sealed class AmbassadeurFlyerPdfService : IAmbassadeurFlyerPdfService
         var features = await _features.GetAsync(cancellationToken);
         var logo = _companySettings.GetBrandLogoPng();
         var brand = string.IsNullOrWhiteSpace(platform.CompanyName) ? "Lobsy" : platform.CompanyName.Trim();
-        var baseUrl = features.PublicWebBaseUrl.TrimEnd('/');
+        var baseUrl = JobsyPublicUrl.NormalizeOrigin(features.PublicWebBaseUrl).TrimEnd('/');
 
         return kind == AmbassadeurFlyerKind.Candidate
             ? RenderCandidateFlyer(brand, logo, code, baseUrl)

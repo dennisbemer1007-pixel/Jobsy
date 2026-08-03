@@ -170,7 +170,7 @@ public sealed class EmployerRaamflyerService : IEmployerRaamflyerService
                         && v.EndDate >= today)
             .OrderBy(v => v.Title)
             .Select(v => v.Title)
-            .Take(6)
+            .Take(8)
             .ToListAsync(cancellationToken);
     }
 
