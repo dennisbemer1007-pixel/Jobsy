@@ -1,3 +1,5 @@
+using System.Text;
+using System.Text.RegularExpressions;
 using Jobsy.Core.Entities;
 using Jobsy.Core.Enums;
 using Jobsy.Core.Interfaces;
@@ -10,7 +12,7 @@ namespace Jobsy.Tests;
 public class AmbassadeurFlyerPdfServiceTests
 {
     [Fact]
-    public async Task Render_Candidate_And_Entrepreneur_Flyers_Produce_Pdf_Bytes()
+    public async Task Render_Candidate_And_Entrepreneur_Flyers_Produce_Single_Page_Pdfs()
     {
         await using var db = CreateDb();
         var userId = Guid.NewGuid();
@@ -44,7 +46,7 @@ public class AmbassadeurFlyerPdfServiceTests
 
         var service = new AmbassadeurFlyerPdfService(
             db,
-            new FakeSalesCommercial(),
+            new FakeSalesCommercial(packageCount: 8),
             new FakeCompanySettings(),
             new FakeFeatures());
 
@@ -56,6 +58,15 @@ public class AmbassadeurFlyerPdfServiceTests
         Assert.Equal((byte)'%', candidate[0]);
         Assert.Equal((byte)'P', candidate[1]);
         Assert.Equal((byte)'%', entrepreneur[0]);
+        Assert.Equal(1, PdfPageCounter.Count(candidate));
+        Assert.Equal(1, PdfPageCounter.Count(entrepreneur));
+
+        var candidateText = Encoding.Latin1.GetString(candidate);
+        var entrepreneurText = Encoding.Latin1.GetString(entrepreneur);
+        Assert.DoesNotContain("/werven/", candidateText, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("/register", entrepreneurText, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("lobsy.nl/werven", candidateText, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("lobsy.nl/register", entrepreneurText, StringComparison.OrdinalIgnoreCase);
     }
 
     private static JobsyDbContext CreateDb()
@@ -68,14 +79,37 @@ public class AmbassadeurFlyerPdfServiceTests
 
     private sealed class FakeSalesCommercial : ISalesCommercialService
     {
+        private readonly int _packageCount;
+
+        public FakeSalesCommercial(int packageCount) => _packageCount = packageCount;
+
         public Task<SalesCommercialSettings> GetSettingsAsync(CancellationToken cancellationToken = default)
             => Task.FromResult(new SalesCommercialSettings());
 
         public Task<PartnerSalesCatalogDto> GetPublicCatalogAsync(CancellationToken cancellationToken = default)
-            => Task.FromResult(new PartnerSalesCatalogDto(
+        {
+            var packages = Enumerable.Range(1, _packageCount)
+                .Select(i => new SalesPackageDto(
+                    Guid.NewGuid(),
+                    $"Pakket {i}",
+                    $"P{i}",
+                    "Standard",
+                    10 * i,
+                    100m * i,
+                    "Demo",
+                    true,
+                    i))
+                .ToList();
+
+            return Task.FromResult(new PartnerSalesCatalogDto(
                 25m, 2m, 1m, 7, 2m,
-                [new VacancyTypeCostDto("Regular", "Regulier", 1m, 25m, true)],
-                [new SalesPackageDto(Guid.NewGuid(), "Starter", "ST", "pack", 10, 250m, "Demo", true, 1)]));
+                [
+                    new VacancyTypeCostDto("Regular", "Regulier", 1m, 25m, true),
+                    new VacancyTypeCostDto("Internship", "Stage", 0.5m, 12.5m, true),
+                    new VacancyTypeCostDto("Volunteer", "Vrijwillig", 0m, 0m, true)
+                ],
+                packages));
+        }
 
         public Task<SalesCommercialAdminDto> GetAdminAsync(CancellationToken cancellationToken = default)
             => throw new NotSupportedException();
@@ -141,5 +175,18 @@ public class AmbassadeurFlyerPdfServiceTests
             PlatformFeatureUpdate update,
             CancellationToken cancellationToken = default)
             => throw new NotSupportedException();
+    }
+}
+
+internal static class PdfPageCounter
+{
+    private static readonly Regex PageObject = new(
+        @"/Type\s*/Page(?!\s*s)",
+        RegexOptions.Compiled);
+
+    public static int Count(byte[] pdf)
+    {
+        var text = Encoding.Latin1.GetString(pdf);
+        return PageObject.Matches(text).Count;
     }
 }

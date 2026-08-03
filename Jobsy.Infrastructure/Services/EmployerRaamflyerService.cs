@@ -17,8 +17,13 @@ public sealed class EmployerRaamflyerService : IEmployerRaamflyerService
     private static readonly Color BrandNavy = Color.FromHex("#0f2d5c");
     private static readonly Color BrandDeep = Color.FromHex("#0a2044");
     private static readonly Color SoftSky = Color.FromHex("#dceef8");
+    private static readonly Color SoftMint = Color.FromHex("#e8f5ef");
     private static readonly Color AccentTeal = Color.FromHex("#1a7a6d");
+    private static readonly Color AccentCoral = Color.FromHex("#c45c3e");
     private static readonly Color WarmSand = Color.FromHex("#f7f1e6");
+    private static readonly Color SoftCoral = Color.FromHex("#f8e8e2");
+    private static readonly Color SoftGold = Color.FromHex("#f3e6c8");
+    private static readonly Color Slate = Color.FromHex("#2c3a4a");
 
     private readonly JobsyDbContext _db;
     private readonly IPlatformFeatureService _features;
@@ -61,7 +66,6 @@ public sealed class EmployerRaamflyerService : IEmployerRaamflyerService
             .Select(v => v.Id)
             .ToListAsync(cancellationToken);
 
-        // Stable poster QR: /vestiging/{id} resolves at scan-time (1→vacancy, 2+→map cluster).
         var posterUrl = $"{baseUrl}/vestiging/{companyId:D}";
         var shortUrl = ShortenDisplay(posterUrl, baseUrl);
 
@@ -125,7 +129,6 @@ public sealed class EmployerRaamflyerService : IEmployerRaamflyerService
         var platformBrand = string.IsNullOrWhiteSpace(platform.CompanyName) ? "Lobsy" : platform.CompanyName.Trim();
         var logo = _companySettings.GetBrandLogoPng();
 
-        // Overview QR: map filtered to all listed companies (comma-separated).
         var csv = string.Join(',', companyIds.Select(id => id.ToString("N")));
         var url = $"{baseUrl}/?companies={Uri.EscapeDataString(csv)}";
         var target = new RaamflyerQrTarget(
@@ -139,7 +142,7 @@ public sealed class EmployerRaamflyerService : IEmployerRaamflyerService
             .Where(c => companyIds.Contains(c.Id))
             .OrderBy(c => c.Name)
             .Select(c => c.Name)
-            .Take(12)
+            .Take(8)
             .ToListAsync(cancellationToken);
 
         var employerName = string.IsNullOrWhiteSpace(title) ? "onze vestigingen" : title.Trim();
@@ -167,7 +170,7 @@ public sealed class EmployerRaamflyerService : IEmployerRaamflyerService
                         && v.EndDate >= today)
             .OrderBy(v => v.Title)
             .Select(v => v.Title)
-            .Take(8)
+            .Take(6)
             .ToListAsync(cancellationToken);
     }
 
@@ -218,20 +221,23 @@ public sealed class EmployerRaamflyerService : IEmployerRaamflyerService
         var qrPng = RenderQrPng(target.AbsoluteUrl);
         var culture = CultureInfo.GetCultureInfo("nl-NL");
         var displayName = string.IsNullOrWhiteSpace(employerName) ? "ons" : employerName.Trim();
-        var headline = $"Kom werken bij {displayName} dichtbij huis!";
+        var headline = $"Kom werken bij {displayName}";
         var sub = isOverview
-            ? "Scan de QR-code en bekijk alle openstaande functies in onze vestigingen."
+            ? "Je bent uitgenodigd — scan de QR en bekijk openstaande functies bij onze vestigingen."
             : target.Kind switch
             {
                 RaamflyerQrKind.VacancyDetail =>
-                    "Scan en solliciteer direct op onze openstaande functie.",
+                    "Je bent uitgenodigd — scan en solliciteer direct op onze openstaande functie.",
                 RaamflyerQrKind.MapCompanyCluster =>
-                    $"Scan voor {target.ActiveVacancyCount} openstaande functies bij deze vestiging.",
-                _ => "Scan voor actuele vacatures bij deze vestiging."
+                    $"Je bent uitgenodigd — scan voor {target.ActiveVacancyCount} openstaande functies bij deze vestiging.",
+                _ => "Je bent uitgenodigd — scan voor actuele vacatures bij deze vestiging."
             };
 
-        var pad = format == RaamflyerFormat.A3 ? 40f : 32f;
-        var titleSize = format == RaamflyerFormat.A3 ? 34f : 28f;
+        var pad = format == RaamflyerFormat.A3 ? 32f : 26f;
+        var titleSize = format == RaamflyerFormat.A3 ? 32f : 26f;
+        var listLimit = format == RaamflyerFormat.A3 ? 8 : 6;
+        var qrBox = format == RaamflyerFormat.A3 ? 180f : 150f;
+        var qrImage = format == RaamflyerFormat.A3 ? 150f : 124f;
 
         return Document.Create(container =>
         {
@@ -239,102 +245,124 @@ public sealed class EmployerRaamflyerService : IEmployerRaamflyerService
             {
                 page.Size(pageSize);
                 page.Margin(0);
-                page.DefaultTextStyle(x => x.FontSize(format == RaamflyerFormat.A3 ? 13 : 11).FontColor(BrandDeep));
+                page.DefaultTextStyle(x => x.FontSize(format == RaamflyerFormat.A3 ? 12 : 10).FontColor(BrandDeep));
 
                 page.Content().Column(root =>
                 {
                     root.Item().Background(BrandNavy).Padding(pad).Column(hero =>
                     {
-                        hero.Spacing(10);
+                        hero.Spacing(6);
                         hero.Item().Row(row =>
                         {
                             if (logo is { Length: > 0 })
                             {
-                                row.ConstantItem(format == RaamflyerFormat.A3 ? 72 : 56)
-                                    .Height(format == RaamflyerFormat.A3 ? 52 : 40)
+                                row.ConstantItem(format == RaamflyerFormat.A3 ? 60 : 48)
+                                    .Height(format == RaamflyerFormat.A3 ? 42 : 32)
                                     .Image(logo).FitArea();
-                                row.ConstantItem(14);
+                                row.ConstantItem(10);
                             }
 
                             row.RelativeItem().AlignMiddle().Column(brandCol =>
                             {
                                 brandCol.Item().Text(platformBrand)
-                                    .FontSize(format == RaamflyerFormat.A3 ? 26 : 20)
+                                    .FontSize(format == RaamflyerFormat.A3 ? 24 : 18)
                                     .Bold().FontColor(Colors.White);
                                 brandCol.Item().Text(displayName)
-                                    .FontSize(format == RaamflyerFormat.A3 ? 16 : 13)
+                                    .FontSize(format == RaamflyerFormat.A3 ? 14 : 12)
                                     .FontColor(SoftSky);
                             });
+
+                            row.ConstantItem(format == RaamflyerFormat.A3 ? 110 : 92)
+                                .AlignMiddle().AlignRight()
+                                .Background(AccentCoral).PaddingHorizontal(9).PaddingVertical(5)
+                                .Text("Raamflyer").FontSize(9).Bold().FontColor(Colors.White);
                         });
 
-                        hero.Item().PaddingTop(16).Text(headline)
+                        hero.Item().PaddingTop(10).Text("Uitnodiging")
+                            .FontSize(format == RaamflyerFormat.A3 ? 14 : 12)
+                            .FontColor(SoftGold);
+                        hero.Item().Text(headline)
                             .FontSize(titleSize)
                             .Bold().FontColor(Colors.White);
+                        hero.Item().Text("dichtbij huis!")
+                            .FontSize(format == RaamflyerFormat.A3 ? 20 : 16)
+                            .Bold().FontColor(SoftSky);
 
                         if (!string.IsNullOrWhiteSpace(locationLine))
                         {
-                            hero.Item().Text(locationLine).FontSize(10).FontColor(Colors.White);
+                            hero.Item().PaddingTop(4).Text(locationLine)
+                                .FontSize(format == RaamflyerFormat.A3 ? 11 : 9)
+                                .FontColor(Colors.White);
                         }
                     });
 
-                    root.Item().Padding(pad).Column(body =>
+                    root.Item().Height(5).Background(AccentTeal);
+
+                    root.Item().Background(SoftSky).Padding(pad).Column(body =>
                     {
-                        body.Spacing(14);
-                        body.Item().Text(sub).FontSize(format == RaamflyerFormat.A3 ? 14 : 12);
+                        body.Spacing(10);
+                        body.Item().Text(sub)
+                            .FontSize(format == RaamflyerFormat.A3 ? 13 : 11);
 
                         body.Item().Row(row =>
                         {
-                            row.RelativeItem().PaddingRight(16).Column(left =>
+                            row.RelativeItem().PaddingRight(12).Column(left =>
                             {
-                                left.Spacing(8);
-                                left.Item().Text(isOverview ? "Vestigingen" : "Openstaande functies")
-                                    .FontSize(14).Bold().FontColor(BrandNavy);
+                                left.Spacing(6);
+                                left.Item().Text(isOverview ? "Onze vestigingen" : "Openstaande functies")
+                                    .FontSize(format == RaamflyerFormat.A3 ? 14 : 13)
+                                    .Bold().FontColor(BrandNavy);
 
                                 if (lines.Count == 0)
                                 {
-                                    left.Item().Text("Binnenkort nieuwe vacatures — houd de QR in de gaten.")
-                                        .FontColor(Colors.Grey.Darken2);
+                                    left.Item().Background(WarmSand).Padding(10)
+                                        .Text("Binnenkort nieuwe vacatures — houd de QR in de gaten.")
+                                        .FontColor(Slate);
                                 }
                                 else
                                 {
-                                    foreach (var line in lines.Take(8))
-                                    {
-                                        left.Item().Text($"• {line}");
-                                    }
+                                    left.Item().Background(Colors.White).Border(1).BorderColor(AccentTeal)
+                                        .Padding(10).Column(list =>
+                                        {
+                                            list.Spacing(3);
+                                            foreach (var line in lines.Take(listLimit))
+                                            {
+                                                list.Item().Text($"• {line}");
+                                            }
+                                        });
                                 }
 
-                                left.Item().PaddingTop(12).Background(WarmSand).Padding(12).Column(box =>
+                                left.Item().Background(SoftCoral).Padding(10).Text(t =>
                                 {
-                                    box.Spacing(4);
-                                    box.Item().Text("Korte link").FontSize(9).FontColor(AccentTeal);
-                                    box.Item().Text(target.ShortDisplayUrl)
-                                        .FontSize(format == RaamflyerFormat.A3 ? 14 : 12)
-                                        .Bold().FontColor(BrandNavy);
+                                    t.Span("Tip voor managers: ").Bold().FontColor(AccentCoral);
+                                    t.Span(
+                                        "print op A4/A3, hang in de etalage of bij de kassa. " +
+                                        "Alleen scannen — geen getypte link nodig.").FontColor(Slate);
                                 });
                             });
 
-                            row.ConstantItem(format == RaamflyerFormat.A3 ? 180 : 150).Column(qr =>
-                            {
-                                qr.Item().Border(2).BorderColor(AccentTeal).Padding(10).Column(inner =>
+                            row.ConstantItem(qrBox).Background(SoftGold).Border(2).BorderColor(AccentTeal)
+                                .Padding(10).Column(qr =>
                                 {
-                                    inner.Item().Height(format == RaamflyerFormat.A3 ? 160 : 130)
-                                        .Image(qrPng).FitArea();
-                                    inner.Item().PaddingTop(8).AlignCenter()
+                                    qr.Item().AlignCenter().Text("Solliciteer hier")
+                                        .FontSize(10).Bold().FontColor(AccentTeal);
+                                    qr.Item().PaddingTop(6).Height(qrImage).Image(qrPng).FitArea();
+                                    qr.Item().PaddingTop(6).AlignCenter()
                                         .Text("Scan met je telefoon")
-                                        .FontSize(9).FontColor(AccentTeal);
+                                        .FontSize(9).Bold().FontColor(BrandNavy);
                                 });
-                            });
                         });
 
-                        body.Item().Background(SoftSky).Padding(12).Text(
+                        body.Item().Background(SoftMint).Padding(10).Text(
                             $"{platformBrand} matcht op reistijd — vacatures dichtbij in Westland & Den Haag.");
                     });
 
-                    root.Item().Background(BrandDeep).Padding(12).AlignCenter().Text(txt =>
-                    {
-                        txt.Span($"{platformBrand} · raamflyer · {DateTime.UtcNow.ToString("d", culture)}")
-                            .FontSize(8).FontColor(Colors.White);
-                    });
+                    root.Item().ExtendVertical().AlignBottom().Background(BrandDeep)
+                        .PaddingVertical(10).AlignCenter().Text(txt =>
+                        {
+                            txt.Span($"{platformBrand} · raamflyer · {DateTime.UtcNow.ToString("d", culture)}")
+                                .FontSize(8).FontColor(Colors.White);
+                        });
                 });
             });
         }).GeneratePdf();
@@ -345,7 +373,6 @@ public sealed class EmployerRaamflyerService : IEmployerRaamflyerService
         using var generator = new QRCodeGenerator();
         using var data = generator.CreateQrCode(payload, QRCodeGenerator.ECCLevel.Q);
         var png = new PngByteQRCode(data);
-        // Higher module size keeps the QR sharp on A3 window prints.
         return png.GetGraphic(20);
     }
 }

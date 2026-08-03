@@ -133,6 +133,11 @@ public class SalesCommercialServiceTests
         Assert.Equal((byte)'P', bytes[1]);
         Assert.Equal((byte)'D', bytes[2]);
         Assert.Equal((byte)'F', bytes[3]);
+        Assert.Equal(1, PdfPageCounter.Count(bytes));
+
+        var text = System.Text.Encoding.Latin1.GetString(bytes);
+        Assert.DoesNotContain("lobsy.nl/register", text, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("/register?ref=", text, StringComparison.OrdinalIgnoreCase);
     }
 
     [Fact]

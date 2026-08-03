@@ -87,6 +87,12 @@ public class EmployerRaamflyerServiceTests
         Assert.Equal((byte)'%', branch[0]);
         Assert.Equal((byte)'P', branch[1]);
         Assert.Equal((byte)'%', overview[0]);
+        Assert.Equal(1, PdfPageCounter.Count(branch));
+        Assert.Equal(1, PdfPageCounter.Count(overview));
+
+        var branchText = System.Text.Encoding.Latin1.GetString(branch);
+        Assert.DoesNotContain("Korte link", branchText, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("/vestiging/", branchText, StringComparison.OrdinalIgnoreCase);
     }
 
     [Fact]
