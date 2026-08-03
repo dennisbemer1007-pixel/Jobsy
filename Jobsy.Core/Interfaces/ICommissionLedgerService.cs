@@ -48,6 +48,20 @@ public interface ICommissionLedgerService
         int? durationDays = null,
         CancellationToken cancellationToken = default);
 
+    /// <summary>
+    /// Credits Ambassadeur token commission (ledger beneficiary = Ambassadeur user id).
+    /// Idempotent on (checkout id, ambassadeur, TokenCommission).
+    /// </summary>
+    Task<CommissionLedgerEntry?> TryCreditAmbassadeurTokenCommissionAsync(
+        Guid ambassadeurUserId,
+        Guid companyId,
+        Guid tokenCheckoutId,
+        decimal purchaseAmountEuro,
+        DateTime? firstYearStartedAt,
+        decimal rate,
+        int? durationDays = null,
+        CancellationToken cancellationToken = default);
+
     Task AttachEntriesToInvoiceAsync(
         Guid invoiceId,
         IReadOnlyList<Guid> entryIds,

@@ -55,14 +55,12 @@ public sealed class SalesManagerPayoutService : ISalesManagerPayoutService
         decimal? requestedAmountExVat = null,
         CancellationToken cancellationToken = default)
     {
-        var profile = await _db.SalesManagerProfiles
-            .AsNoTracking()
-            .FirstOrDefaultAsync(p => p.UserId == salesManagerUserId, cancellationToken);
+        var profile = await ResolvePayoutProfileAsync(salesManagerUserId, cancellationToken);
 
         if (profile is null)
         {
             return new SalesManagerPayoutPreviewDto(
-                0, 0, 0, 0, null, "—", false, "Salesmanager-profiel ontbreekt.");
+                0, 0, 0, 0, null, "—", false, "Profiel ontbreekt.");
         }
 
         var masked = ISalesManagerPayoutService.MaskIban(profile.Iban);
@@ -180,9 +178,10 @@ public sealed class SalesManagerPayoutService : ISalesManagerPayoutService
         // so Production/demo (e.g. lobsy.nl) keeps the SM on the real host.
         var features = await _features.GetAsync(cancellationToken);
         var webBase = features.PublicWebBaseUrl.TrimEnd('/');
+        var checkoutPath = await ResolvePayoutCheckoutPathAsync(salesManagerUserId, cancellationToken);
         return new SalesManagerPayoutCheckoutResult(
             paymentId,
-            $"{webBase}/salesmanager/payout-checkout?paymentId={Uri.EscapeDataString(paymentId)}",
+            $"{webBase}/{checkoutPath}?paymentId={Uri.EscapeDataString(paymentId)}",
             preview.AmountInclVat,
             preview.MaskedIban,
             IsStub: true);
@@ -574,6 +573,44 @@ public sealed class SalesManagerPayoutService : ISalesManagerPayoutService
                 .PaddingVertical(5)
                 .PaddingHorizontal(4);
     }
+
+    private async Task<PayoutProfile?> ResolvePayoutProfileAsync(
+        Guid userId,
+        CancellationToken cancellationToken)
+    {
+        var sm = await _db.SalesManagerProfiles
+            .AsNoTracking()
+            .FirstOrDefaultAsync(p => p.UserId == userId, cancellationToken);
+        if (sm is not null)
+        {
+            return new PayoutProfile(sm.Iban, sm.IsOnboardingComplete);
+        }
+
+        var am = await _db.AmbassadeurProfiles
+            .AsNoTracking()
+            .FirstOrDefaultAsync(p => p.UserId == userId, cancellationToken);
+        if (am is not null)
+        {
+            return new PayoutProfile(am.Iban, am.IsOnboardingComplete);
+        }
+
+        return null;
+    }
+
+    private async Task<string> ResolvePayoutCheckoutPathAsync(
+        Guid userId,
+        CancellationToken cancellationToken)
+    {
+        var role = await _db.Users.AsNoTracking()
+            .Where(u => u.Id == userId)
+            .Select(u => u.Role)
+            .FirstOrDefaultAsync(cancellationToken);
+        return role == UserRole.Ambassadeur
+            ? "ambassadeur/payout-checkout"
+            : "salesmanager/payout-checkout";
+    }
+
+    private sealed record PayoutProfile(string? Iban, bool IsOnboardingComplete);
 
     private bool AllowStubPayouts() =>
         _environment.IsDevelopment()

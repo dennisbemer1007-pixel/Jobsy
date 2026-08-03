@@ -201,6 +201,7 @@ public class ExternalAuthAndInvitePromotionTests
         var credentials = new IntegrationCredentialService(db, new PassthroughSecretProtector());
         return new AuthController(
             db, config, credentials,
+            new AmbassadeurAttributionService(db, new AmbassadeurSettingsService(db), Microsoft.Extensions.Logging.Abstractions.NullLogger<AmbassadeurAttributionService>.Instance),
             new StubHostEnvironment { EnvironmentName = Environments.Development });
     }
 

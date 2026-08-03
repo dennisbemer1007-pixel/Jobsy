@@ -34,6 +34,7 @@
     private IReadOnlyList<NavItem> _items = RoleNavCatalog.Anonymous;
     private bool _hasTakeoverActions;
     private bool _salesOnboardingComplete;
+    private bool _ambassadeurOnboardingComplete;
     private bool _csvImportEnabled;
     private bool _roleFlagsLoaded;
     private string? _lastRoleFingerprint;
@@ -111,6 +112,22 @@
             }
         }
 
+        if (RoleClaimMatching.HasRole(state.User, JobsyRoles.Ambassadeur)
+            && !RoleClaimMatching.HasRole(state.User, JobsyRoles.Admin))
+        {
+            if (forceRoleApis || rolesChanged || !_roleFlagsLoaded)
+            {
+                await RefreshAmbassadeurOnboardingFlagAsync();
+            }
+
+            if (_ambassadeurOnboardingComplete)
+            {
+                catalog = catalog
+                    .Where(i => !string.Equals(i.Href, "/ambassadeur/onboarding", StringComparison.OrdinalIgnoreCase))
+                    .ToList();
+            }
+        }
+
         // CSV import is no longer a bottom-nav item (Enterprise uses Organization hub).
         // Defensive filter if a catalog still exposes the route and the company has CSV disabled.
         if (catalog.Any(i => string.Equals(i.Href, RoleNavCatalog.CsvImport.Href, StringComparison.OrdinalIgnoreCase)))
@@ -161,6 +178,19 @@
         catch
         {
             _salesOnboardingComplete = false;
+        }
+    }
+
+    private async Task RefreshAmbassadeurOnboardingFlagAsync()
+    {
+        try
+        {
+            var dash = await Api.GetMyAmbassadeurDashboardAsync();
+            _ambassadeurOnboardingComplete = dash?.IsOnboardingComplete == true;
+        }
+        catch
+        {
+            _ambassadeurOnboardingComplete = false;
         }
     }
 

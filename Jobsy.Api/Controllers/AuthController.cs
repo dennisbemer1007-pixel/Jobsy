@@ -21,17 +21,20 @@ public class AuthController : ControllerBase
     private readonly JobsyDbContext _db;
     private readonly IConfiguration _configuration;
     private readonly IIntegrationCredentialService _credentials;
+    private readonly IAmbassadeurAttributionService _ambassadeurAttribution;
     private readonly IHostEnvironment _environment;
 
     public AuthController(
         JobsyDbContext db,
         IConfiguration configuration,
         IIntegrationCredentialService credentials,
+        IAmbassadeurAttributionService ambassadeurAttribution,
         IHostEnvironment environment)
     {
         _db = db;
         _configuration = configuration;
         _credentials = credentials;
+        _ambassadeurAttribution = ambassadeurAttribution;
         _environment = environment;
     }
 
@@ -159,6 +162,12 @@ public class AuthController : ControllerBase
             };
             _db.Users.Add(user);
             await _db.SaveChangesAsync(cancellationToken);
+
+            if (!string.IsNullOrWhiteSpace(request.ReferralCode))
+            {
+                await _ambassadeurAttribution.TryAttributeCandidateAsync(
+                    user.Id, request.ReferralCode, cancellationToken);
+            }
         }
         else
         {
@@ -172,6 +181,15 @@ public class AuthController : ControllerBase
                 && fullName != email)
             {
                 user.FullName = fullName;
+            }
+
+            // First login after invite may still carry a referral cookie — attribute once if unset.
+            if (user.Role == UserRole.Candidate
+                && user.ReferredByAmbassadeurUserId is null
+                && !string.IsNullOrWhiteSpace(request.ReferralCode))
+            {
+                await _ambassadeurAttribution.TryAttributeCandidateAsync(
+                    user.Id, request.ReferralCode, cancellationToken);
             }
         }
 

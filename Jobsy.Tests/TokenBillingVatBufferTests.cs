@@ -116,7 +116,7 @@ public class TokenBillingVatBufferTests
         var env = new FakeHostEnvironment { EnvironmentName = Environments.Development };
 
         var fulfillment = new TokenPurchaseFulfillmentService(
-            db, ledger, payments, invoices, vatBuffer, revenueShare, new FakePendingActions(), env,
+            db, ledger, payments, invoices, vatBuffer, revenueShare, new CommissionLedgerService(db), new FakePendingActions(), env,
             NullLogger<TokenPurchaseFulfillmentService>.Instance);
 
         var result = await fulfillment.TryFulfillPaidCheckoutAsync(checkoutId);

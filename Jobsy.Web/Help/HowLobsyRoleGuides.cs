@@ -29,6 +29,7 @@ public static class HowLobsyRoleGuides
         JobsyRoles.EnterpriseManager => Enterprise,
         JobsyRoles.Intermediary => Intermediary,
         JobsyRoles.SalesManager => Sales,
+        JobsyRoles.Ambassadeur => Ambassadeur,
         _ => null
     };
 
@@ -110,6 +111,8 @@ public static class HowLobsyRoleGuides
 
     public static readonly Guide Sales = BuildSalesGuide(trackingCode: null);
 
+    public static readonly Guide Ambassadeur = BuildAmbassadeurGuide(trackingCode: null);
+
     /// <summary>
     /// Sales guide with a personal <c>/partner/{trackingCode}</c> deep link when available;
     /// otherwise falls back to the toolkit where the coded partner URL is shown.
@@ -132,6 +135,27 @@ public static class HowLobsyRoleGuides
                 new("HowLobsy.Sales.Step5Title", "HowLobsy.Sales.Step5Body", [new("/salesmanager/invoices", "Nav.Invoices")])
             ],
             new("/salesmanager/toolkit", "HowLobsy.Sales.PrimaryCta"),
+            new("/home", "HowLobsy.Sales.SecondaryCta"));
+    }
+
+    public static Guide BuildAmbassadeurGuide(string? trackingCode)
+    {
+        var code = trackingCode?.Trim();
+        var wervenHref = string.IsNullOrWhiteSpace(code)
+            ? "/ambassadeur/toolkit"
+            : $"/werven/{Uri.EscapeDataString(code)}";
+
+        return new(
+            "HowLobsy.Sales.Title",
+            "HowLobsy.Sales.Lead",
+            [
+                new("HowLobsy.Sales.Step1Title", "HowLobsy.Sales.Step1Body", [new("/ambassadeur/onboarding", "Nav.Onboarding")]),
+                new("HowLobsy.Sales.Step2Title", "HowLobsy.Sales.Step2Body", [new("/ambassadeur/toolkit", "Nav.AmbassadeurToolkit")]),
+                new("HowLobsy.Sales.Step3Title", "HowLobsy.Sales.Step3Body", [new(wervenHref, "HowLobsy.Sales.PartnerLabel")]),
+                new("HowLobsy.Sales.Step4Title", "HowLobsy.Sales.Step4Body", [new("/home", "Nav.Home")]),
+                new("HowLobsy.Sales.Step5Title", "HowLobsy.Sales.Step5Body", [new("/ambassadeur/finance", "Nav.AmbassadeurFinance")])
+            ],
+            new("/ambassadeur/toolkit", "HowLobsy.Sales.PrimaryCta"),
             new("/home", "HowLobsy.Sales.SecondaryCta"));
     }
 }

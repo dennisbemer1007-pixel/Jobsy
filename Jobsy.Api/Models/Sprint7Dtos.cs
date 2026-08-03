@@ -85,7 +85,9 @@ public record EnsureExternalUserRequest(
     /// <summary>IdP key: <c>entra</c> or <c>google</c>.</summary>
     string? Provider = null,
     /// <summary>Stable subject (Entra OID / OIDC sub).</summary>
-    string? ProviderSubject = null);
+    string? ProviderSubject = null,
+    /// <summary>Optional Ambassadeur tracking code (AM-…) for new candidates.</summary>
+    string? ReferralCode = null);
 
 public record EnsureExternalUserResponse(
     string Email,

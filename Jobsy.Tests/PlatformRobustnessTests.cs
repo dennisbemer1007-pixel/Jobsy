@@ -358,6 +358,7 @@ public class PlatformRobustnessTests
             db,
             config,
             new IntegrationCredentialService(db, new PassthroughSecretProtector()),
+            new AmbassadeurAttributionService(db, new AmbassadeurSettingsService(db), Microsoft.Extensions.Logging.Abstractions.NullLogger<AmbassadeurAttributionService>.Instance),
             new TestHostEnvironment());
     }
 

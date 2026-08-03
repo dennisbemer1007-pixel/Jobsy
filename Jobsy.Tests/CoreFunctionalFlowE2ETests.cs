@@ -622,6 +622,7 @@ public class CoreFunctionalFlowE2ETests
             new TokenPurchaseInvoiceService(db, companySettings),
             new VatBufferTransferService(db, companySettings, NullLogger<VatBufferTransferService>.Instance),
             revenueShare,
+            new CommissionLedgerService(db),
             pending,
             new FakeHostEnvironment(),
             NullLogger<TokenPurchaseFulfillmentService>.Instance);

@@ -1,0 +1,38 @@
+@page "/werven/{TrackingCode}"
+@page "/ambassadeur/ref/{TrackingCode}"
+@inject NavigationManager Navigation
+@inject IHttpContextAccessor HttpContextAccessor
+
+<div class="panel-page">
+    <p class="state-message">Je wordt doorgestuurd naar Lobsy…</p>
+</div>
+
+@code {
+    [Parameter] public string TrackingCode { get; set; } = "";
+
+    protected override void OnInitialized()
+    {
+        var code = (TrackingCode ?? "").Trim().ToUpperInvariant();
+        var http = HttpContextAccessor.HttpContext;
+        if (http is not null && !string.IsNullOrWhiteSpace(code))
+        {
+            http.Response.Cookies.Append(
+                "lobsy_ambassadeur_ref",
+                code,
+                new CookieOptions
+                {
+                    HttpOnly = true,
+                    IsEssential = true,
+                    SameSite = SameSiteMode.Lax,
+                    Secure = http.Request.IsHttps,
+                    MaxAge = TimeSpan.FromDays(30),
+                    Path = "/"
+                });
+        }
+
+        var login = string.IsNullOrWhiteSpace(code)
+            ? "/login"
+            : $"/login?ref={Uri.EscapeDataString(code)}";
+        Navigation.NavigateTo(login, replace: true);
+    }
+}

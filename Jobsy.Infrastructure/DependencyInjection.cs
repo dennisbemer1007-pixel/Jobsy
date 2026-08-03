@@ -139,6 +139,12 @@ public static class DependencyInjection
         services.AddScoped<ISalesManagerInviteService, SalesManagerInviteService>();
         services.AddScoped<ISalesManagerApplicationService, SalesManagerApplicationService>();
         services.AddScoped<ISalesManagerOnboardingService, SalesManagerOnboardingService>();
+        services.AddScoped<IAmbassadeurInviteService, AmbassadeurInviteService>();
+        services.AddScoped<IAmbassadeurOnboardingService, AmbassadeurOnboardingService>();
+        services.AddScoped<IAmbassadeurSettingsService, AmbassadeurSettingsService>();
+        services.AddScoped<IAmbassadeurAttributionService, AmbassadeurAttributionService>();
+        services.AddScoped<IAmbassadeurDashboardService, AmbassadeurDashboardService>();
+        services.AddScoped<IAmbassadeurFlyerPdfService, AmbassadeurFlyerPdfService>();
         services.AddScoped<ICommissionLedgerService, CommissionLedgerService>();
         services.AddScoped<IRevenueShareService, RevenueShareService>();
         services.AddScoped<ISupplierOnboardingPaymentService, SupplierOnboardingPaymentService>();

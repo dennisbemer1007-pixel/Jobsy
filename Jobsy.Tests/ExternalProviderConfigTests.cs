@@ -73,6 +73,7 @@ public class ExternalProviderConfigTests
             .Build();
         return new AuthController(
             db, config, credentials,
+            new AmbassadeurAttributionService(db, new AmbassadeurSettingsService(db), Microsoft.Extensions.Logging.Abstractions.NullLogger<AmbassadeurAttributionService>.Instance),
             new StubHostEnvironment { EnvironmentName = Environments.Development });
     }
 

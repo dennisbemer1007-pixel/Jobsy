@@ -80,6 +80,7 @@ public class TokenPurchaseFulfillmentIdempotencyTests
             new TokenPurchaseInvoiceService(db, companySettings),
             new VatBufferTransferService(db, companySettings, NullLogger<VatBufferTransferService>.Instance),
             new FakeRevenueShare(),
+            new CommissionLedgerService(db),
             new FakePendingActions(),
             new FakeHostEnvironment(),
             NullLogger<TokenPurchaseFulfillmentService>.Instance);

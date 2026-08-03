@@ -3,6 +3,11 @@ namespace Jobsy.Core.Entities;
 public class CommissionLedgerEntry
 {
     public Guid Id { get; set; }
+
+    /// <summary>
+    /// Beneficiary user id for SalesManager or Ambassadeur commission rows.
+    /// Named historically for SalesManager; Ambassadeur payouts reuse the same ledger.
+    /// </summary>
     public Guid SalesManagerUserId { get; set; }
     public User SalesManagerUser { get; set; } = null!;
 

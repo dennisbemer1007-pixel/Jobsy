@@ -285,7 +285,7 @@ public class SalesManagerCommissionTests
                 AcceptedTerms: true,
                 SalesManagerTrackingCode: "SM-NOPE01",
                 Password: "TestPass1!")));
-        Assert.Contains("salesmanager-code", ex.Message, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("trackingcode", ex.Message, StringComparison.OrdinalIgnoreCase);
         Assert.Equal(0, await db.CompanyRegistrations.CountAsync(r => r.ContactEmail == "nova.badcode@jobsy.local"));
     }
 

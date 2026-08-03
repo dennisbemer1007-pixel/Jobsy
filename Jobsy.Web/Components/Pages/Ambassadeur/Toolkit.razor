@@ -1,0 +1,153 @@
+@page "/ambassadeur/toolkit"
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
+@attribute [Authorize(Roles = "Ambassadeur")]
+@inject JobsyApiClient Api
+@inject NavigationManager Navigation
+@inject IJSRuntime Js
+@inject CultureState Culture
+
+<PageTitle>@Culture["Ambassadeur.Toolkit"] · Lobsy</PageTitle>
+
+<div class="panel-page">
+    <header class="panel-header">
+        <div>
+            <h1>@Culture["Ambassadeur.Toolkit"]</h1>
+            <p class="login-lead">@Culture["Ambassadeur.ToolkitLead"]</p>
+        </div>
+    </header>
+
+    @if (_loading)
+    {
+        <p class="state-message">@Culture["Common.Loading"]</p>
+    }
+    else if (!string.IsNullOrEmpty(_error))
+    {
+        <p class="state-message error">@_error</p>
+    }
+    else if (_dashboard is not null && !_dashboard.IsOnboardingComplete)
+    {
+        <p class="state-message">Rond eerst je onboarding af om een trackingcode te ontvangen.</p>
+        <a class="login-submit" href="/ambassadeur/onboarding" style="display:inline-block;text-decoration:none;text-align:center">Start onboarding</a>
+    }
+    else if (_dashboard is not null)
+    {
+        <div class="stat-grid">
+            <div class="stat-card">
+                <span class="stat-card__label">Trackingcode</span>
+                <strong class="stat-card__value">@_dashboard.TrackingCode</strong>
+            </div>
+            <div class="stat-card">
+                <span class="stat-card__label">Deelbare kandidatenlink</span>
+                <strong class="stat-card__value" style="font-size:0.95rem;word-break:break-all">@CandidateUrl</strong>
+            </div>
+        </div>
+
+        <section class="panel-section partner-sales__box">
+            <h2>Kandidaten-flyer</h2>
+            <p class="muted">
+                Laagdrempelige A4 voor lokale banenzoekers in Westland &amp; Den Haag — focus op werken dichtbij
+                (max reistijd). Inclusief unieke QR naar kandidaat-registratie met jouw trackingcode.
+            </p>
+            <div class="inline-actions" style="flex-wrap:wrap;gap:0.5rem">
+                <button class="btn-compact btn-compact--primary" type="button" disabled="@_busy" @onclick="DownloadCandidateFlyerAsync">
+                    Download kandidaten-flyer
+                </button>
+                <button class="btn-compact" type="button" @onclick="CopyLinkAsync">Kopieer trackinglink</button>
+            </div>
+        </section>
+
+        <section class="panel-section partner-sales__box">
+            <h2>Ondernemers-flyer</h2>
+            <p class="muted">
+                Zakelijke pitch met USP’s (reistijd-matching, clusterpopups) en actuele pakketten/tarieven.
+                QR opent het ondernemersformulier met jouw code vooraf ingevuld voor een gratis start-highlight.
+            </p>
+            <div class="inline-actions" style="flex-wrap:wrap;gap:0.5rem">
+                <button class="btn-compact btn-compact--primary" type="button" disabled="@_busy" @onclick="DownloadEntrepreneurFlyerAsync">
+                    Download ondernemers-flyer
+                </button>
+                <a class="btn-compact" href="@EntrepreneurUrl">Open registratie met code</a>
+            </div>
+        </section>
+    }
+</div>
+
+@code {
+    private AmbassadeurDashboard? _dashboard;
+    private bool _loading = true;
+    private bool _busy;
+    private string? _error;
+
+    private string CandidateUrl
+    {
+        get
+        {
+            var baseUri = Navigation.BaseUri.TrimEnd('/');
+            var code = _dashboard?.TrackingCode;
+            return string.IsNullOrWhiteSpace(code)
+                ? $"{baseUri}/werven"
+                : $"{baseUri}/werven/{Uri.EscapeDataString(code)}";
+        }
+    }
+
+    private string EntrepreneurUrl
+    {
+        get
+        {
+            var baseUri = Navigation.BaseUri.TrimEnd('/');
+            var code = _dashboard?.TrackingCode;
+            return string.IsNullOrWhiteSpace(code)
+                ? $"{baseUri}/register"
+                : $"{baseUri}/register?ref={Uri.EscapeDataString(code)}";
+        }
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            _dashboard = await Api.GetMyAmbassadeurDashboardAsync();
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private Task DownloadCandidateFlyerAsync() => DownloadAsync("candidate");
+    private Task DownloadEntrepreneurFlyerAsync() => DownloadAsync("entrepreneur");
+
+    private async Task DownloadAsync(string kind)
+    {
+        _busy = true;
+        _error = null;
+        try
+        {
+            await Api.DownloadAmbassadeurFlyerPdfAsync(Js, kind);
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private async Task CopyLinkAsync()
+    {
+        try
+        {
+            await Js.InvokeVoidAsync("navigator.clipboard.writeText", CandidateUrl);
+        }
+        catch
+        {
+            // ignore
+        }
+    }
+}

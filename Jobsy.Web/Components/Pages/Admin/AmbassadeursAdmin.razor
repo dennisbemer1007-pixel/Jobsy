@@ -1,0 +1,213 @@
+@page "/admin/ambassadeurs"
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
+@attribute [Authorize(Roles = "Admin")]
+@inject JobsyApiClient Api
+@inject CultureState Culture
+
+<PageTitle>@Culture["Admin.Ambassadeurs"] · Lobsy</PageTitle>
+
+<AdminPageShell Title="@Culture["Admin.Ambassadeurs"]" Lead="@Culture["Admin.AmbassadeursLead"]">
+    @if (!string.IsNullOrEmpty(_error))
+    {
+        <p class="state-message error">@_error</p>
+    }
+    @if (!string.IsNullOrEmpty(_message))
+    {
+        <p class="state-message">@_message</p>
+    }
+
+    <section class="panel-section">
+        <h2>Commissie-instellingen</h2>
+        @if (_settings is not null)
+        {
+            <form class="login-form" style="max-width:420px" @onsubmit="SaveSettingsAsync" @onsubmit:preventDefault>
+                <label>Drempel (# kandidaten) <input type="number" min="1" @bind="_threshold" /></label>
+                <label>% per drempel <input type="number" step="0.1" min="0" @bind="_percentPer" /></label>
+                <label>Maximum % <input type="number" step="0.1" min="5" @bind="_maxPct" /></label>
+                <button class="login-submit" type="submit" disabled="@_busy">Opslaan</button>
+            </form>
+        }
+    </section>
+
+    <section class="panel-section">
+        <h2>Ambassadeur uitnodigen</h2>
+        <form class="login-form" style="max-width:420px" @onsubmit="InviteAsync" @onsubmit:preventDefault>
+            <label>Naam <input @bind="_inviteName" required /></label>
+            <label>E-mail <input type="email" @bind="_inviteEmail" required /></label>
+            <button class="login-submit" type="submit" disabled="@_busy">Uitnodigen</button>
+        </form>
+    </section>
+
+    <section class="panel-section">
+        <h2>Overzicht</h2>
+        @if (_loading)
+        {
+            <p class="state-message">@Culture["Common.Loading"]</p>
+        }
+        else if (_list.Count == 0)
+        {
+            <p class="muted">Nog geen ambassadeurs.</p>
+        }
+        else
+        {
+            <div class="table-list">
+                @foreach (var am in _list)
+                {
+                    <div class="table-row">
+                        <div>
+                            <strong>@am.FullName</strong>
+                            <div class="muted">
+                                @am.Email
+                                · @(am.TrackingCode ?? "geen code")
+                                · @(am.IsOnboardingComplete ? "onboarding ok" : "onboarding open")
+                                · @am.RegisteredCandidates kandidaten
+                                · @am.CurrentCommissionPercentage.ToString("0.##")%
+                                · saldo € @am.BalanceExVat.ToString("0.00")
+                            </div>
+                        </div>
+                        <div class="inline-actions">
+                            <input style="width:5rem" type="number" step="0.1" placeholder="override %"
+                                   @bind="_overrideInputs[am.UserId]" />
+                            <button class="btn-compact" type="button" disabled="@_busy"
+                                    @onclick="() => SetOverrideAsync(am.UserId)">Set override</button>
+                            <button class="btn-compact" type="button" disabled="@_busy"
+                                    @onclick="() => ClearOverrideAsync(am.UserId)">Clear</button>
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+    </section>
+</AdminPageShell>
+
+@code {
+    private List<AmbassadeurListItem> _list = [];
+    private AmbassadeurSettingsDto? _settings;
+    private readonly Dictionary<Guid, decimal?> _overrideInputs = new();
+    private bool _loading = true;
+    private bool _busy;
+    private string? _error;
+    private string? _message;
+    private string _inviteEmail = "";
+    private string _inviteName = "";
+    private int _threshold = 50;
+    private decimal _percentPer = 1m;
+    private decimal _maxPct = 15m;
+
+    protected override async Task OnInitializedAsync() => await ReloadAsync();
+
+    private async Task ReloadAsync()
+    {
+        _loading = true;
+        _error = null;
+        try
+        {
+            _settings = await Api.GetAmbassadeurSettingsAsync();
+            if (_settings is not null)
+            {
+                _threshold = _settings.CandidateThreshold;
+                _percentPer = _settings.PercentPerThreshold;
+                _maxPct = _settings.MaxCommissionPercentage;
+            }
+
+            _list = await Api.GetAmbassadeursAsync();
+            foreach (var am in _list)
+            {
+                _overrideInputs.TryAdd(am.UserId, null);
+            }
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private async Task SaveSettingsAsync()
+    {
+        _busy = true;
+        _error = null;
+        try
+        {
+            _settings = await Api.UpdateAmbassadeurSettingsAsync(_threshold, _percentPer, _maxPct);
+            _message = "Instellingen opgeslagen.";
+            await ReloadAsync();
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private async Task InviteAsync()
+    {
+        _busy = true;
+        _error = null;
+        try
+        {
+            var result = await Api.InviteAmbassadeurAsync(_inviteEmail.Trim(), _inviteName.Trim());
+            _message = result is null
+                ? "Uitnodiging verstuurd."
+                : $"Uitgenodigd: {result.Email}" + (string.IsNullOrWhiteSpace(result.TemporaryPassword)
+                    ? ""
+                    : $" (tijdelijk wachtwoord: {result.TemporaryPassword})");
+            _inviteEmail = "";
+            _inviteName = "";
+            await ReloadAsync();
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private async Task SetOverrideAsync(Guid userId)
+    {
+        _busy = true;
+        try
+        {
+            _overrideInputs.TryGetValue(userId, out var value);
+            await Api.SetAmbassadeurCommissionOverrideAsync(userId, value);
+            _message = "Override opgeslagen.";
+            await ReloadAsync();
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private async Task ClearOverrideAsync(Guid userId)
+    {
+        _busy = true;
+        try
+        {
+            await Api.SetAmbassadeurCommissionOverrideAsync(userId, null);
+            _message = "Override gewist.";
+            await ReloadAsync();
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+}

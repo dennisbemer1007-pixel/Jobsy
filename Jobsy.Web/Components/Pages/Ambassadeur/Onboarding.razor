@@ -1,0 +1,207 @@
+@page "/ambassadeur/onboarding"
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
+@attribute [Authorize(Roles = "Ambassadeur")]
+@inject JobsyApiClient Api
+@inject CultureState Culture
+
+<PageTitle>@Culture["Ambassadeur.Onboarding"] · Lobsy</PageTitle>
+
+<div class="panel-page">
+    <header class="panel-header">
+        <div>
+            <h1>@Culture["Ambassadeur.Onboarding"]</h1>
+            <p class="login-lead">@Culture["Ambassadeur.OnboardingLead"]</p>
+        </div>
+    </header>
+
+    @if (_loading)
+    {
+        <p class="state-message">@Culture["Common.Loading"]</p>
+    }
+    else if (_profile?.IsOnboardingComplete == true)
+    {
+        <div class="partner-sales__box" style="max-width:520px">
+            <p class="state-message" style="margin:0">Onboarding afgerond. Jouw trackingcode:</p>
+            <p class="stat-card__value">@_profile.TrackingCode</p>
+            <p class="muted">
+                Huidige commissie: @_profile.CurrentCommissionPercentage.ToString("0.##")%
+                (basis @_profile.BaseCommissionPercentage.ToString("0.##")% · max @_profile.MaxCommissionPercentage.ToString("0.##")%).
+            </p>
+            <p class="muted">Deel je link of flyers via de toolkit. Financiële uitbetaling werkt hetzelfde als bij salesmanagers.</p>
+            <div class="inline-actions" style="gap:0.5rem;margin-top:0.75rem">
+                <a class="btn-compact btn-compact--primary" href="/home">Naar dashboard</a>
+                <a class="btn-compact" href="/ambassadeur/toolkit">Open toolkit</a>
+            </div>
+        </div>
+    }
+    else
+    {
+        <ol class="table-list" style="max-width:520px;margin-bottom:1rem" aria-label="Onboarding stappen">
+            <li class="table-row">
+                <strong>Stap 1</strong>
+                <span class="@(_step >= 1 ? "" : "muted")">Bedrijfsgegevens (KvK, BTW, NAW, IBAN)</span>
+            </li>
+            <li class="table-row">
+                <strong>Stap 2</strong>
+                <span class="@(_step >= 2 ? "" : "muted")">Bemiddelingsovereenkomst ondertekenen</span>
+            </li>
+            <li class="table-row">
+                <strong>Stap 3</strong>
+                <span class="muted">Trackingcode ontvangen &amp; flyers delen</span>
+            </li>
+        </ol>
+
+        @if (!string.IsNullOrEmpty(_error))
+        {
+            <p class="state-message error">@_error</p>
+        }
+        @if (!string.IsNullOrEmpty(_message))
+        {
+            <p class="state-message">@_message</p>
+        }
+
+        <section class="panel-section" style="max-width:520px">
+            <h2>Welkom als Ambassadeur</h2>
+            <p class="muted">
+                Je werft kandidaten met een unieke trackinglink en optioneel ondernemers met een gratis start-highlight.
+                Commissie start op 5% en stijgt automatisch per drempel (standaard +1% per 50 kandidaten).
+            </p>
+        </section>
+
+        <form class="login-form" style="max-width:520px" @onsubmit="SaveProfileAsync" @onsubmit:preventDefault>
+            <h2 style="font-size:1.1rem;margin:0 0 0.5rem">Stap 1 · Gegevens</h2>
+            <label>Bedrijfsnaam <input @bind="_form.CompanyName" required maxlength="256" /></label>
+            <label>KvK-nummer <input @bind="_form.KvkNumber" required maxlength="20" placeholder="12345678" /></label>
+            <label>BTW-nummer <input @bind="_form.VatNumber" required maxlength="32" placeholder="NL123456789B01" /></label>
+            <label>Adres <input @bind="_form.Address" required maxlength="512" /></label>
+            <label>Postcode <input @bind="_form.PostalCode" required maxlength="16" /></label>
+            <label>Plaats <input @bind="_form.City" required maxlength="128" /></label>
+            <label>Land <input @bind="_form.Country" maxlength="64" /></label>
+            <label>
+                IBAN (voor uitbetaling)
+                <input @bind="_form.Iban" maxlength="34"
+                       placeholder="@(string.IsNullOrWhiteSpace(_profile?.Iban) ? "NL.." : _profile.Iban)" />
+            </label>
+            @if (!string.IsNullOrWhiteSpace(_profile?.Iban))
+            {
+                <p class="muted">Huidige rekening: @_profile.Iban (vul alleen in om te wijzigen)</p>
+            }
+            <button class="login-submit" type="submit" disabled="@_busy">Gegevens opslaan</button>
+        </form>
+
+        <section class="panel-section" style="margin-top:1.5rem;max-width:520px">
+            <h2>Stap 2 · Bemiddelingsovereenkomst</h2>
+            <p class="muted">
+                Door te ondertekenen bevestig je dat de opgegeven KvK- en BTW-gegevens juist zijn en ga je akkoord
+                met de Lobsy-bemiddelingsovereenkomst voor Ambassadeurs (self-billing, 21% BTW, gelaagde commissie).
+            </p>
+            <button class="login-submit" type="button" disabled="@(_busy || !_canSign)" @onclick="SignAsync">
+                Ondertekenen &amp; trackingcode genereren
+            </button>
+            @if (!_canSign && _profile?.AgreementSignedAt is null)
+            {
+                <p class="muted">Sla eerst je bedrijfsgegevens op om te kunnen ondertekenen.</p>
+            }
+        </section>
+    }
+</div>
+
+@code {
+    private AmbassadeurProfile? _profile;
+    private AmbassadeurProfileForm _form = new();
+    private bool _loading = true;
+    private bool _busy;
+    private bool _canSign;
+    private int _step = 1;
+    private string? _error;
+    private string? _message;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            _profile = await Api.GetMyAmbassadeurProfileAsync();
+            if (_profile is not null)
+            {
+                _form = new AmbassadeurProfileForm
+                {
+                    CompanyName = _profile.CompanyName ?? "",
+                    KvkNumber = _profile.KvkNumber ?? "",
+                    VatNumber = _profile.VatNumber ?? "",
+                    Address = _profile.Address ?? "",
+                    PostalCode = _profile.PostalCode ?? "",
+                    City = _profile.City ?? "",
+                    Country = _profile.Country ?? "NL",
+                    Iban = null
+                };
+                _canSign = HasBusinessData(_form) && _profile.AgreementSignedAt is null;
+                _step = _profile.AgreementSignedAt is not null ? 2 : (HasBusinessData(_form) ? 2 : 1);
+            }
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private async Task SaveProfileAsync()
+    {
+        _busy = true;
+        _error = null;
+        _message = null;
+        try
+        {
+            _profile = await Api.UpdateMyAmbassadeurProfileAsync(_form);
+            _canSign = _profile is not null && !_profile.IsOnboardingComplete && _profile.AgreementSignedAt is null;
+            _step = 2;
+            _message = "Gegevens opgeslagen. Ga verder met ondertekenen.";
+            if (_profile?.IsOnboardingComplete == true)
+            {
+                _message = $"Onboarding compleet. Code: {_profile.TrackingCode}";
+            }
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private async Task SignAsync()
+    {
+        _busy = true;
+        _error = null;
+        try
+        {
+            _profile = await Api.SignAmbassadeurAgreementAsync();
+            _message = _profile?.IsOnboardingComplete == true
+                ? $"Overeenkomst ondertekend. Trackingcode: {_profile.TrackingCode}"
+                : "Overeenkomst ondertekend.";
+            _canSign = false;
+            _step = 3;
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private static bool HasBusinessData(AmbassadeurProfileForm f) =>
+        !string.IsNullOrWhiteSpace(f.CompanyName)
+        && !string.IsNullOrWhiteSpace(f.KvkNumber)
+        && !string.IsNullOrWhiteSpace(f.VatNumber)
+        && !string.IsNullOrWhiteSpace(f.Address)
+        && !string.IsNullOrWhiteSpace(f.PostalCode)
+        && !string.IsNullOrWhiteSpace(f.City);
+}

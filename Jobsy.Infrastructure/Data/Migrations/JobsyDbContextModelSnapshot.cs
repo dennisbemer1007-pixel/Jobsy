@@ -51,6 +51,112 @@ namespace Jobsy.Infrastructure.Data.Migrations
                     b.ToTable("AboutPageSettings");
                 });
 
+            modelBuilder.Entity("Jobsy.Core.Entities.AmbassadeurProfile", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Address")
+                        .HasMaxLength(512)
+                        .HasColumnType("character varying(512)");
+
+                    b.Property<DateTime?>("AgreementSignedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("AgreementVersion")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<decimal>("BaseCommissionPercentage")
+                        .HasPrecision(5, 2)
+                        .HasColumnType("numeric(5,2)");
+
+                    b.Property<string>("City")
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)");
+
+                    b.Property<decimal?>("CommissionPercentageOverride")
+                        .HasPrecision(5, 2)
+                        .HasColumnType("numeric(5,2)");
+
+                    b.Property<string>("CompanyName")
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
+                    b.Property<string>("Country")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Iban")
+                        .HasMaxLength(34)
+                        .HasColumnType("character varying(34)");
+
+                    b.Property<string>("KvkNumber")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<DateTime?>("OnboardingCompletedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("PostalCode")
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)");
+
+                    b.Property<string>("TrackingCode")
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("VatNumber")
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TrackingCode")
+                        .IsUnique()
+                        .HasFilter("\"TrackingCode\" IS NOT NULL");
+
+                    b.HasIndex("UserId")
+                        .IsUnique();
+
+                    b.ToTable("AmbassadeurProfiles");
+                });
+
+            modelBuilder.Entity("Jobsy.Core.Entities.AmbassadeurSettings", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("CandidateThreshold")
+                        .HasColumnType("integer");
+
+                    b.Property<decimal>("MaxCommissionPercentage")
+                        .HasPrecision(5, 2)
+                        .HasColumnType("numeric(5,2)");
+
+                    b.Property<decimal>("PercentPerThreshold")
+                        .HasPrecision(5, 2)
+                        .HasColumnType("numeric(5,2)");
+
+                    b.Property<DateTime>("UpdatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("AmbassadeurSettings");
+                });
+
             modelBuilder.Entity("Jobsy.Core.Entities.ApiKey", b =>
                 {
                     b.Property<Guid>("Id")
@@ -313,6 +419,10 @@ namespace Jobsy.Infrastructure.Data.Migrations
                         .HasMaxLength(512)
                         .HasColumnType("character varying(512)");
 
+                    b.Property<decimal?>("CommissionAmbassadeurRateSnapshot")
+                        .HasPrecision(5, 4)
+                        .HasColumnType("numeric(5,4)");
+
                     b.Property<decimal?>("CommissionDirectRateSnapshot")
                         .HasPrecision(5, 4)
                         .HasColumnType("numeric(5,4)");
@@ -416,6 +526,9 @@ namespace Jobsy.Infrastructure.Data.Migrations
                     b.Property<DateTime?>("ReengagementEmailSentAtUtc")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<Guid?>("ReferredByAmbassadeurUserId")
+                        .HasColumnType("uuid");
+
                     b.Property<Guid?>("ReferredBySalesManagerUserId")
                         .HasColumnType("uuid");
 
@@ -443,6 +556,8 @@ namespace Jobsy.Infrastructure.Data.Migrations
                     NpgsqlIndexBuilderExtensions.HasMethod(b.HasIndex("Location"), "GIST");
 
                     b.HasIndex("ParentCompanyId");
+
+                    b.HasIndex("ReferredByAmbassadeurUserId");
 
                     b.HasIndex("ReferredBySalesManagerUserId");
 
@@ -2027,6 +2142,13 @@ namespace Jobsy.Infrastructure.Data.Migrations
                         .HasMaxLength(8000)
                         .HasColumnType("character varying(8000)");
 
+                    b.Property<string>("ReferredByAmbassadeurTrackingCode")
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)");
+
+                    b.Property<Guid?>("ReferredByAmbassadeurUserId")
+                        .HasColumnType("uuid");
+
                     b.Property<int>("Role")
                         .HasColumnType("integer");
 
@@ -2061,6 +2183,8 @@ namespace Jobsy.Infrastructure.Data.Migrations
                     b.HasIndex("HomeLocation");
 
                     NpgsqlIndexBuilderExtensions.HasMethod(b.HasIndex("HomeLocation"), "GIST");
+
+                    b.HasIndex("ReferredByAmbassadeurUserId");
 
                     b.HasIndex("OpenForWork", "IsActive", "Role")
                         .HasDatabaseName("IX_Users_OpenForWork_IsActive_Role")
@@ -2593,6 +2717,17 @@ namespace Jobsy.Infrastructure.Data.Migrations
                     b.ToTable("VatDeclarations");
                 });
 
+            modelBuilder.Entity("Jobsy.Core.Entities.AmbassadeurProfile", b =>
+                {
+                    b.HasOne("Jobsy.Core.Entities.User", "User")
+                        .WithOne()
+                        .HasForeignKey("Jobsy.Core.Entities.AmbassadeurProfile", "UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("Jobsy.Core.Entities.ApiKey", b =>
                 {
                     b.HasOne("Jobsy.Core.Entities.Company", "Company")
@@ -2659,6 +2794,11 @@ namespace Jobsy.Infrastructure.Data.Migrations
                         .HasForeignKey("ParentCompanyId")
                         .OnDelete(DeleteBehavior.Restrict);
 
+                    b.HasOne("Jobsy.Core.Entities.User", "ReferredByAmbassadeurUser")
+                        .WithMany()
+                        .HasForeignKey("ReferredByAmbassadeurUserId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
                     b.HasOne("Jobsy.Core.Entities.User", "ReferredBySalesManagerUser")
                         .WithMany()
                         .HasForeignKey("ReferredBySalesManagerUserId")
@@ -2667,6 +2807,8 @@ namespace Jobsy.Infrastructure.Data.Migrations
                     b.Navigation("CommissionIndirectSalesManagerUser");
 
                     b.Navigation("ParentCompany");
+
+                    b.Navigation("ReferredByAmbassadeurUser");
 
                     b.Navigation("ReferredBySalesManagerUser");
                 });
@@ -3067,7 +3209,14 @@ namespace Jobsy.Infrastructure.Data.Migrations
                         .HasForeignKey("CompanyId")
                         .OnDelete(DeleteBehavior.SetNull);
 
+                    b.HasOne("Jobsy.Core.Entities.User", "ReferredByAmbassadeurUser")
+                        .WithMany()
+                        .HasForeignKey("ReferredByAmbassadeurUserId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
                     b.Navigation("Company");
+
+                    b.Navigation("ReferredByAmbassadeurUser");
                 });
 
             modelBuilder.Entity("Jobsy.Core.Entities.UserCompany", b =>

@@ -92,6 +92,14 @@ public static class AuthorizationExtensions
                 policy.RequireAuthenticatedUser()
                     .RequireRole(JobsyRoles.Admin, JobsyRoles.SalesManager));
 
+            options.AddPolicy(JobsyPolicies.RequireAmbassadeur, policy =>
+                policy.RequireAuthenticatedUser()
+                    .RequireRole(JobsyRoles.Ambassadeur));
+
+            options.AddPolicy(JobsyPolicies.RequireAdminOrAmbassadeur, policy =>
+                policy.RequireAuthenticatedUser()
+                    .RequireRole(JobsyRoles.Admin, JobsyRoles.Ambassadeur));
+
             options.AddPolicy(JobsyPolicies.RequireApiKey, policy =>
                 policy.AddAuthenticationSchemes(ApiKeyAuthDefaults.AuthenticationScheme)
                     .RequireAuthenticatedUser());

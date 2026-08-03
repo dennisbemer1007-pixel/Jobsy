@@ -14,6 +14,7 @@ public static class JobsyRoles
     public const string Intermediary = nameof(UserRole.Intermediary);
     public const string Admin = nameof(UserRole.Admin);
     public const string SalesManager = nameof(UserRole.SalesManager);
+    public const string Ambassadeur = nameof(UserRole.Ambassadeur);
 
     public static readonly string[] EmployerRoles =
     [

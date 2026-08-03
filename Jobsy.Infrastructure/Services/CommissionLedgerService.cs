@@ -157,6 +157,38 @@ public sealed class CommissionLedgerService : ICommissionLedgerService
             cancellationToken);
     }
 
+    public Task<CommissionLedgerEntry?> TryCreditAmbassadeurTokenCommissionAsync(
+        Guid ambassadeurUserId,
+        Guid companyId,
+        Guid tokenCheckoutId,
+        decimal purchaseAmountEuro,
+        DateTime? firstYearStartedAt,
+        decimal rate,
+        int? durationDays = null,
+        CancellationToken cancellationToken = default)
+    {
+        if (rate <= 0)
+        {
+            return Task.FromResult<CommissionLedgerEntry?>(null);
+        }
+
+        var windowDays = durationDays ?? SalesCommissionRules.DefaultCommissionDurationDays;
+        if (!SalesCommissionRules.IsWithinCommissionWindow(firstYearStartedAt, DateTime.UtcNow, windowDays))
+        {
+            return Task.FromResult<CommissionLedgerEntry?>(null);
+        }
+
+        return CreditCheckoutCommissionAsync(
+            ambassadeurUserId,
+            companyId,
+            tokenCheckoutId,
+            purchaseAmountEuro,
+            rate,
+            CommissionEntryKind.TokenCommission,
+            "Ambassadeur-commissie",
+            cancellationToken);
+    }
+
     private async Task<CommissionLedgerEntry?> CreditCheckoutCommissionAsync(
         Guid salesManagerUserId,
         Guid companyId,

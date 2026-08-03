@@ -88,6 +88,15 @@ public class Company
     public Guid? ReferredBySalesManagerUserId { get; set; }
     public User? ReferredBySalesManagerUser { get; set; }
 
+    /// <summary>Ambassadeur who referred this supplier (entrepreneur flyer / AM- tracking code).</summary>
+    public Guid? ReferredByAmbassadeurUserId { get; set; }
+    public User? ReferredByAmbassadeurUser { get; set; }
+
+    /// <summary>
+    /// Ambassadeur commission rate (0–1) frozen when the Ambassadeur referral became active.
+    /// </summary>
+    public decimal? CommissionAmbassadeurRateSnapshot { get; set; }
+
     /// <summary>
     /// Indirect (upline) salesmanager snapshotted at activation — not re-resolved live later.
     /// </summary>

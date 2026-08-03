@@ -1,6 +1,7 @@
 using Jobsy.Core.Entities;
 using Jobsy.Core.Enums;
 using Jobsy.Core.Privacy;
+using Jobsy.Core.Rules;
 using Jobsy.Core.ValueObjects;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
@@ -129,6 +130,19 @@ internal static class DemoUsersSeeder
 
         await EnsureSalesManagerProfileAsync(db, salesManagerId);
 
+        var ambassadeurId = Guid.Parse("aaaaaaaa-7777-7777-7777-777777777777");
+        added += await EnsureUserAsync(db, new User
+        {
+            Id = ambassadeurId,
+            Email = "ambassadeur@jobsy.local",
+            FullName = "Demo Ambassadeur",
+            Role = UserRole.Ambassadeur,
+            CompanyId = null,
+            IsActive = true
+        });
+
+        await EnsureAmbassadeurProfileAsync(db, ambassadeurId);
+
         await EnsureMembershipAsync(db, branchManagerId, WestlandId);
         await EnsureMembershipAsync(db, regionalManagerId, CafeId);
         await EnsureMembershipAsync(db, regionalManagerId, SupermarketId);
@@ -252,5 +266,52 @@ internal static class DemoUsersSeeder
             CreatedAt = now,
             UpdatedAt = now
         });
+    }
+
+    private static async Task EnsureAmbassadeurProfileAsync(JobsyDbContext db, Guid userId)
+    {
+        if (!await db.Users.AnyAsync(u => u.Id == userId))
+        {
+            return;
+        }
+
+        if (await db.AmbassadeurProfiles.AnyAsync(p => p.UserId == userId))
+        {
+            return;
+        }
+
+        var now = DateTime.UtcNow;
+        db.AmbassadeurProfiles.Add(new AmbassadeurProfile
+        {
+            Id = Guid.Parse("aaaaaaaa-7777-8888-9999-777777777777"),
+            UserId = userId,
+            CompanyName = "Demo Ambassadeur BV",
+            KvkNumber = "11223344",
+            VatNumber = "NL11223344B01",
+            Address = "Ambassadeurlaan 5",
+            PostalCode = "2671CD",
+            City = "Naaldwijk",
+            Country = "NL",
+            Iban = "NL91ABNA0417164300",
+            TrackingCode = "AM-DEMO01",
+            BaseCommissionPercentage = 5.0m,
+            AgreementSignedAt = now,
+            AgreementVersion = AmbassadeurCommissionRules.CurrentAgreementVersion,
+            OnboardingCompletedAt = now,
+            CreatedAt = now,
+            UpdatedAt = now
+        });
+
+        if (!await db.AmbassadeurSettings.AnyAsync())
+        {
+            db.AmbassadeurSettings.Add(new AmbassadeurSettings
+            {
+                Id = Guid.Parse("a1b2c3d4-e5f6-7890-abcd-ef1234567890"),
+                CandidateThreshold = AmbassadeurCommissionRules.DefaultCandidateThreshold,
+                PercentPerThreshold = AmbassadeurCommissionRules.DefaultPercentPerThreshold,
+                MaxCommissionPercentage = AmbassadeurCommissionRules.DefaultMaxCommissionPercentage,
+                UpdatedAtUtc = now
+            });
+        }
     }
 }

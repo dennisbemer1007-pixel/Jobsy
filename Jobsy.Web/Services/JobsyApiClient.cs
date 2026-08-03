@@ -1273,6 +1273,177 @@ public sealed class JobsyApiClient : IAsyncDisposable
         await js.InvokeVoidAsync("jobsyDownload.bytes", "lobsy-partner-flyer.pdf", base64, "application/pdf");
     }
 
+    public async Task DownloadAmbassadeurFlyerPdfAsync(
+        Microsoft.JSInterop.IJSRuntime js,
+        string kind,
+        CancellationToken ct = default)
+    {
+        var response = await _http.GetAsync($"api/ambassadeurs/me/flyers/{Uri.EscapeDataString(kind)}", ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException(ExtractMessage(body) ?? "Flyer downloaden mislukt.");
+        }
+
+        var bytes = await response.Content.ReadAsByteArrayAsync(ct);
+        var fileName = kind.Contains("entrepreneur", StringComparison.OrdinalIgnoreCase)
+            ? "lobsy-ondernemersflyer.pdf"
+            : "lobsy-kandidatenflyer.pdf";
+        var base64 = Convert.ToBase64String(bytes);
+        await js.InvokeVoidAsync("jobsyDownload.bytes", fileName, base64, "application/pdf");
+    }
+
+    public async Task<AmbassadeurInviteResult?> InviteAmbassadeurAsync(
+        string email,
+        string fullName,
+        CancellationToken ct = default)
+    {
+        var response = await _http.PostAsJsonAsync("api/ambassadeurs/invite", new { email, fullName }, ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException(ExtractMessage(body) ?? "Uitnodigen mislukt.");
+        }
+
+        return await response.Content.ReadFromJsonAsync<AmbassadeurInviteResult>(cancellationToken: ct);
+    }
+
+    public async Task<List<AmbassadeurListItem>> GetAmbassadeursAsync(CancellationToken ct = default)
+        => await _http.GetFromJsonAsync<List<AmbassadeurListItem>>("api/ambassadeurs", ct) ?? [];
+
+    public async Task<AmbassadeurSettingsDto?> GetAmbassadeurSettingsAsync(CancellationToken ct = default)
+        => await _http.GetFromJsonAsync<AmbassadeurSettingsDto>("api/ambassadeurs/settings", ct);
+
+    public async Task<AmbassadeurSettingsDto?> UpdateAmbassadeurSettingsAsync(
+        int candidateThreshold,
+        decimal percentPerThreshold,
+        decimal maxCommissionPercentage,
+        CancellationToken ct = default)
+    {
+        var response = await _http.PutAsJsonAsync(
+            "api/ambassadeurs/settings",
+            new { candidateThreshold, percentPerThreshold, maxCommissionPercentage },
+            ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException(ExtractMessage(body) ?? "Instellingen opslaan mislukt.");
+        }
+
+        return await response.Content.ReadFromJsonAsync<AmbassadeurSettingsDto>(cancellationToken: ct);
+    }
+
+    public async Task SetAmbassadeurCommissionOverrideAsync(
+        Guid userId,
+        decimal? percentageOverride,
+        CancellationToken ct = default)
+    {
+        var response = await _http.PutAsJsonAsync(
+            $"api/ambassadeurs/{userId:D}/commission-override",
+            new { percentageOverride },
+            ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException(ExtractMessage(body) ?? "Override opslaan mislukt.");
+        }
+    }
+
+    public async Task<AmbassadeurDashboard?> GetMyAmbassadeurDashboardAsync(CancellationToken ct = default)
+    {
+        var response = await _http.GetAsync("api/ambassadeurs/me/dashboard", ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException(
+                ExtractMessage(body) ?? $"Ambassadeur-dashboard mislukt ({(int)response.StatusCode}).");
+        }
+
+        return await response.Content.ReadFromJsonAsync<AmbassadeurDashboard>(cancellationToken: ct);
+    }
+
+    public async Task<AmbassadeurProfile?> GetMyAmbassadeurProfileAsync(CancellationToken ct = default)
+    {
+        var response = await _http.GetAsync("api/ambassadeurs/me/profile", ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException(ExtractMessage(body) ?? "Ambassadeur-profiel mislukt.");
+        }
+
+        return await response.Content.ReadFromJsonAsync<AmbassadeurProfile>(cancellationToken: ct);
+    }
+
+    public async Task<AmbassadeurProfile?> UpdateMyAmbassadeurProfileAsync(
+        AmbassadeurProfileForm form,
+        CancellationToken ct = default)
+    {
+        var response = await _http.PutAsJsonAsync("api/ambassadeurs/me/profile", form, ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException(ExtractMessage(body) ?? "Profiel opslaan mislukt.");
+        }
+
+        return await response.Content.ReadFromJsonAsync<AmbassadeurProfile>(cancellationToken: ct);
+    }
+
+    public async Task<AmbassadeurProfile?> SignAmbassadeurAgreementAsync(CancellationToken ct = default)
+    {
+        var response = await _http.PostAsJsonAsync("api/ambassadeurs/me/sign-agreement", new { }, ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException(ExtractMessage(body) ?? "Ondertekenen mislukt.");
+        }
+
+        return await response.Content.ReadFromJsonAsync<AmbassadeurProfile>(cancellationToken: ct);
+    }
+
+    public async Task<SalesManagerPayoutPreview?> GetMyAmbassadeurPayoutPreviewAsync(
+        decimal? amountExVat = null,
+        CancellationToken ct = default)
+    {
+        var url = amountExVat is null
+            ? "api/ambassadeurs/me/payouts/preview"
+            : $"api/ambassadeurs/me/payouts/preview?amountExVat={amountExVat.Value.ToString(System.Globalization.CultureInfo.InvariantCulture)}";
+        return await _http.GetFromJsonAsync<SalesManagerPayoutPreview>(url, ct);
+    }
+
+    public async Task<SalesManagerPayoutCheckoutResult?> CreateMyAmbassadeurPayoutCheckoutAsync(
+        decimal amountExVat,
+        CancellationToken ct = default)
+    {
+        var response = await _http.PostAsJsonAsync(
+            "api/ambassadeurs/me/payouts/checkout",
+            new { amountExVat },
+            ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException(ExtractMessage(body) ?? "Uitbetaling starten mislukt.");
+        }
+
+        return await response.Content.ReadFromJsonAsync<SalesManagerPayoutCheckoutResult>(cancellationToken: ct);
+    }
+
+    public async Task<SalesManagerPayoutCompleteResult?> CompleteMyAmbassadeurPayoutCheckoutAsync(
+        string paymentId,
+        CancellationToken ct = default)
+    {
+        var response = await _http.PostAsJsonAsync(
+            "api/ambassadeurs/me/payouts/complete",
+            new { paymentId },
+            ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException(ExtractMessage(body) ?? "Uitbetaling afronden mislukt.");
+        }
+
+        return await response.Content.ReadFromJsonAsync<SalesManagerPayoutCompleteResult>(cancellationToken: ct);
+    }
+
     public async Task<IReadOnlyList<VatOpenPeriodItem>> GetVatOpenPeriodsAsync(CancellationToken ct = default)
         => await _http.GetFromJsonAsync<List<VatOpenPeriodItem>>("api/vat/open-periods", ct) ?? [];
 
@@ -2490,6 +2661,105 @@ public sealed class SalesManagerDashboard
     public List<SelfBillingInvoiceItem> Invoices { get; set; } = [];
     public bool CanRecruitSalesManagers { get; set; } = true;
     public Guid? ReferredBySalesManagerUserId { get; set; }
+}
+
+public sealed class AmbassadeurInviteResult
+{
+    public Guid UserId { get; set; }
+    public string Email { get; set; } = string.Empty;
+    public string FullName { get; set; } = string.Empty;
+    public string TemporaryPassword { get; set; } = string.Empty;
+    public bool CreatedNew { get; set; }
+}
+
+public sealed class AmbassadeurListItem
+{
+    public Guid UserId { get; set; }
+    public string Email { get; set; } = string.Empty;
+    public string FullName { get; set; } = string.Empty;
+    public string? TrackingCode { get; set; }
+    public bool IsOnboardingComplete { get; set; }
+    public int RegisteredCandidates { get; set; }
+    public decimal CurrentCommissionPercentage { get; set; }
+    public decimal BalanceExVat { get; set; }
+}
+
+public sealed class AmbassadeurSettingsDto
+{
+    public int CandidateThreshold { get; set; }
+    public decimal PercentPerThreshold { get; set; }
+    public decimal MaxCommissionPercentage { get; set; }
+    public DateTime UpdatedAtUtc { get; set; }
+}
+
+public sealed class AmbassadeurDashboard
+{
+    public Guid UserId { get; set; }
+    public string Email { get; set; } = string.Empty;
+    public string FullName { get; set; } = string.Empty;
+    public string? TrackingCode { get; set; }
+    public bool IsOnboardingComplete { get; set; }
+    public int RegisteredCandidates { get; set; }
+    public int CandidateApplications { get; set; }
+    public decimal BaseCommissionPercentage { get; set; }
+    public decimal CurrentCommissionPercentage { get; set; }
+    public decimal MaxCommissionPercentage { get; set; }
+    public decimal? CommissionPercentageOverride { get; set; }
+    public int CandidateThreshold { get; set; }
+    public decimal PercentPerThreshold { get; set; }
+    public int CandidatesUntilNextTier { get; set; }
+    public decimal BalanceExVat { get; set; }
+    public decimal BalanceInclVat { get; set; }
+    public decimal UninvoicedExVat { get; set; }
+    public decimal OutstandingIssuedExVat { get; set; }
+    public List<ReferredCandidateItem> RecentCandidates { get; set; } = [];
+    public List<ReferredSupplierItem> Suppliers { get; set; } = [];
+    public List<CommissionEntryItem> RecentLedger { get; set; } = [];
+    public List<SelfBillingInvoiceItem> Invoices { get; set; } = [];
+}
+
+public sealed class ReferredCandidateItem
+{
+    public Guid UserId { get; set; }
+    public string FullName { get; set; } = string.Empty;
+    public DateTime? RegisteredAt { get; set; }
+    public int ApplicationCount { get; set; }
+}
+
+public sealed class AmbassadeurProfile
+{
+    public Guid UserId { get; set; }
+    public string Email { get; set; } = string.Empty;
+    public string FullName { get; set; } = string.Empty;
+    public string? CompanyName { get; set; }
+    public string? KvkNumber { get; set; }
+    public string? VatNumber { get; set; }
+    public string? Address { get; set; }
+    public string? PostalCode { get; set; }
+    public string? City { get; set; }
+    public string? Country { get; set; }
+    public string? Iban { get; set; }
+    public string? TrackingCode { get; set; }
+    public decimal BaseCommissionPercentage { get; set; }
+    public decimal CurrentCommissionPercentage { get; set; }
+    public decimal MaxCommissionPercentage { get; set; }
+    public decimal? CommissionPercentageOverride { get; set; }
+    public DateTime? AgreementSignedAt { get; set; }
+    public string? AgreementVersion { get; set; }
+    public DateTime? OnboardingCompletedAt { get; set; }
+    public bool IsOnboardingComplete { get; set; }
+}
+
+public sealed class AmbassadeurProfileForm
+{
+    public string CompanyName { get; set; } = "";
+    public string KvkNumber { get; set; } = "";
+    public string VatNumber { get; set; } = "";
+    public string Address { get; set; } = "";
+    public string PostalCode { get; set; } = "";
+    public string City { get; set; } = "";
+    public string Country { get; set; } = "NL";
+    public string? Iban { get; set; }
 }
 
 public sealed class SalesManagerApplicationItem

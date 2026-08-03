@@ -118,6 +118,21 @@ Onvoldoende tokens bij publiceren → `PendingApproval` (EM/Admin keurt goed).
 
 Gekoppelde ondernemers (via trackingcode) krijgen nav **“Mijn Saldo & Tracking”** → `/employer/tokens` of `/branch/tokens`.
 
+## 5c. Ambassadeur
+*Doel: kandidaten werven via trackingcode + gelaagde commissie; ondernemersflyer met gratis start-highlight.*
+
+**BottomNav:** Home · Toolkit · Financieel · Onboarding · Hoe werkt Lobsy
+
+| Route | Inhoud |
+|-------|--------|
+| `/home` / `/ambassadeur` | Dashboard: KPI kandidaten + sollicitaties, commissie%, trackinglink |
+| `/ambassadeur/toolkit` | Deelbare link, kandidaten-flyer + ondernemers-flyer (QR) |
+| `/ambassadeur/finance` | Commissies per transactie / uitbetalen |
+| `/ambassadeur/onboarding` | KvK/BTW/NAW + overeenkomst → trackingcode `AM-…` |
+| `/werven/{code}` | Publieke landing → login met Ambassadeur-referral cookie |
+
+Admin: `/admin/ambassadeurs` — uitnodigen, drempels (50 / +1% / max), commissie-override.
+
 ---
 
 ## 6. Admin
@@ -133,6 +148,7 @@ Gekoppelde ondernemers (via trackingcode) krijgen nav **“Mijn Saldo & Tracking
 | `/admin/finance` · `/admin/tokens` | Finance KPI + tokenlog / grant |
 | `/admin/sales` | Sales beheer: tokenwaarde, commissie-% (direct/indirect), duur, tarieven, pakketten, highlights |
 | `/admin/sales-managers` | Salesmanagers, aanbevelingen (approve/reject), trackingcodes, suppliers |
+| `/admin/ambassadeurs` | Ambassadeurs, commissiedrempels, overrides, trackingcodes |
 | `/admin/logging` · `/admin/settings` · `/admin/integrations` | Logs, pricing/PushBom/early-adapter, integratie-pings |
 | `/admin/wages` | WML + semi-annual update-stub |
 | `/admin` · `/admin/cockpit` | Redirect → `/home` |
