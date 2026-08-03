@@ -17,6 +17,7 @@ public sealed class TokenPurchaseFulfillmentService : ITokenPurchaseFulfillmentS
     private readonly ITokenPurchaseInvoiceService _invoices;
     private readonly IVatBufferTransferService _vatBuffer;
     private readonly IRevenueShareService _revenueShare;
+    private readonly ICommissionLedgerService _commissions;
     private readonly IPendingTokenActionService _pendingActions;
     private readonly IHostEnvironment _environment;
     private readonly ILogger<TokenPurchaseFulfillmentService> _logger;
@@ -28,6 +29,7 @@ public sealed class TokenPurchaseFulfillmentService : ITokenPurchaseFulfillmentS
         ITokenPurchaseInvoiceService invoices,
         IVatBufferTransferService vatBuffer,
         IRevenueShareService revenueShare,
+        ICommissionLedgerService commissions,
         IPendingTokenActionService pendingActions,
         IHostEnvironment environment,
         ILogger<TokenPurchaseFulfillmentService> logger)
@@ -38,6 +40,7 @@ public sealed class TokenPurchaseFulfillmentService : ITokenPurchaseFulfillmentS
         _invoices = invoices;
         _vatBuffer = vatBuffer;
         _revenueShare = revenueShare;
+        _commissions = commissions;
         _pendingActions = pendingActions;
         _environment = environment;
         _logger = logger;
@@ -349,6 +352,21 @@ public sealed class TokenPurchaseFulfillmentService : ITokenPurchaseFulfillmentS
                 company.ReferredBySalesManagerUserId,
                 company.FirstYearStartedAt,
                 cancellationToken);
+
+            if (company.ReferredByAmbassadeurUserId is Guid ambassadeurId
+                && company.CommissionAmbassadeurRateSnapshot is decimal amRate
+                && amRate > 0)
+            {
+                await _commissions.TryCreditAmbassadeurTokenCommissionAsync(
+                    ambassadeurId,
+                    session.CompanyId,
+                    session.Id,
+                    purchaseExVatEuro,
+                    company.FirstYearStartedAt,
+                    amRate,
+                    company.CommissionDurationDaysSnapshot,
+                    cancellationToken);
+            }
 
             if (company.ReferredBySalesManagerUserId is Guid smId)
             {

@@ -57,6 +57,8 @@ public class JobsyDbContext : DbContext
     public DbSet<EstablishmentTakeoverRequest> EstablishmentTakeoverRequests => Set<EstablishmentTakeoverRequest>();
     public DbSet<LocalAuthCredential> LocalAuthCredentials => Set<LocalAuthCredential>();
     public DbSet<SalesManagerProfile> SalesManagerProfiles => Set<SalesManagerProfile>();
+    public DbSet<AmbassadeurProfile> AmbassadeurProfiles => Set<AmbassadeurProfile>();
+    public DbSet<AmbassadeurSettings> AmbassadeurSettings => Set<AmbassadeurSettings>();
     public DbSet<SalesManagerApplication> SalesManagerApplications => Set<SalesManagerApplication>();
     public DbSet<SupplierOnboardingCheckout> SupplierOnboardingCheckouts => Set<SupplierOnboardingCheckout>();
     public DbSet<CommissionLedgerEntry> CommissionLedgerEntries => Set<CommissionLedgerEntry>();
@@ -85,12 +87,14 @@ public class JobsyDbContext : DbContext
             entity.Property(e => e.UnsubscribeVerificationCode).HasMaxLength(64);
             entity.Property(e => e.UnsubscribeReasonCode).HasMaxLength(64);
             entity.Property(e => e.UnsubscribeReasonOther).HasMaxLength(1000);
+            entity.Property(e => e.ReferredByAmbassadeurTrackingCode).HasMaxLength(32);
             entity.Property(e => e.HomeLocation)
                 .HasConversion(new NullableGeoPointConverter())
                 .HasColumnType("geometry(Point, 4326)")
                 .IsRequired(false);
             entity.HasIndex(e => e.HomeLocation).HasMethod("GIST");
             entity.HasIndex(e => e.Email).IsUnique();
+            entity.HasIndex(e => e.ReferredByAmbassadeurUserId);
             // PushBom + OpenForWork metrics hot path.
             entity.HasIndex(e => new { e.OpenForWork, e.IsActive, e.Role })
                 .HasDatabaseName("IX_Users_OpenForWork_IsActive_Role")
@@ -98,6 +102,10 @@ public class JobsyDbContext : DbContext
             entity.HasOne(e => e.Company)
                 .WithMany(c => c.PrimaryUsers)
                 .HasForeignKey(e => e.CompanyId)
+                .OnDelete(DeleteBehavior.SetNull);
+            entity.HasOne(e => e.ReferredByAmbassadeurUser)
+                .WithMany()
+                .HasForeignKey(e => e.ReferredByAmbassadeurUserId)
                 .OnDelete(DeleteBehavior.SetNull);
         });
 
@@ -143,6 +151,7 @@ public class JobsyDbContext : DbContext
             entity.Property(e => e.PreferredPaymentMethod).HasMaxLength(32);
             entity.Property(e => e.CommissionDirectRateSnapshot).HasPrecision(5, 4);
             entity.Property(e => e.CommissionIndirectRateSnapshot).HasPrecision(5, 4);
+            entity.Property(e => e.CommissionAmbassadeurRateSnapshot).HasPrecision(5, 4);
             entity.Property(e => e.Location)
                 .HasConversion(new GeoPointConverter())
                 .HasColumnType("geometry(Point, 4326)");
@@ -157,11 +166,16 @@ public class JobsyDbContext : DbContext
                 .WithMany()
                 .HasForeignKey(e => e.ReferredBySalesManagerUserId)
                 .OnDelete(DeleteBehavior.SetNull);
+            entity.HasOne(e => e.ReferredByAmbassadeurUser)
+                .WithMany()
+                .HasForeignKey(e => e.ReferredByAmbassadeurUserId)
+                .OnDelete(DeleteBehavior.SetNull);
             entity.HasOne(e => e.CommissionIndirectSalesManagerUser)
                 .WithMany()
                 .HasForeignKey(e => e.CommissionIndirectSalesManagerUserId)
                 .OnDelete(DeleteBehavior.SetNull);
             entity.HasIndex(e => e.ReferredBySalesManagerUserId);
+            entity.HasIndex(e => e.ReferredByAmbassadeurUserId);
             entity.HasIndex(e => e.FirstYearSupplierSlot)
                 .IsUnique()
                 .HasFilter("\"FirstYearSupplierSlot\" IS NOT NULL");
@@ -808,6 +822,38 @@ public class JobsyDbContext : DbContext
                 .WithMany()
                 .HasForeignKey(e => e.ReferredBySalesManagerUserId)
                 .OnDelete(DeleteBehavior.SetNull);
+        });
+
+        modelBuilder.Entity<AmbassadeurProfile>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.CompanyName).HasMaxLength(256);
+            entity.Property(e => e.KvkNumber).HasMaxLength(20);
+            entity.Property(e => e.VatNumber).HasMaxLength(32);
+            entity.Property(e => e.Address).HasMaxLength(512);
+            entity.Property(e => e.PostalCode).HasMaxLength(16);
+            entity.Property(e => e.City).HasMaxLength(128);
+            entity.Property(e => e.Country).HasMaxLength(64);
+            entity.Property(e => e.Iban).HasMaxLength(34);
+            entity.Property(e => e.TrackingCode).HasMaxLength(32);
+            entity.Property(e => e.AgreementVersion).HasMaxLength(64);
+            entity.Property(e => e.BaseCommissionPercentage).HasPrecision(5, 2);
+            entity.Property(e => e.CommissionPercentageOverride).HasPrecision(5, 2);
+            entity.HasIndex(e => e.UserId).IsUnique();
+            entity.HasIndex(e => e.TrackingCode)
+                .IsUnique()
+                .HasFilter("\"TrackingCode\" IS NOT NULL");
+            entity.HasOne(e => e.User)
+                .WithOne()
+                .HasForeignKey<AmbassadeurProfile>(e => e.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<AmbassadeurSettings>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.PercentPerThreshold).HasPrecision(5, 2);
+            entity.Property(e => e.MaxCommissionPercentage).HasPrecision(5, 2);
         });
 
         modelBuilder.Entity<SalesManagerApplication>(entity =>

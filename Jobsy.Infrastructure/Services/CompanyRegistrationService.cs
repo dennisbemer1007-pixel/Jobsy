@@ -74,16 +74,22 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
         if (!string.IsNullOrWhiteSpace(request.SalesManagerTrackingCode))
         {
             trackingCode = request.SalesManagerTrackingCode.Trim().ToUpperInvariant();
-            var validCode = await _db.SalesManagerProfiles.AsNoTracking().AnyAsync(
+            var validSm = await _db.SalesManagerProfiles.AsNoTracking().AnyAsync(
                 p => p.TrackingCode != null
                      && p.TrackingCode.ToUpper() == trackingCode
                      && p.OnboardingCompletedAt != null
                      && p.AgreementSignedAt != null,
                 cancellationToken);
-            if (!validCode)
+            var validAm = !validSm && await _db.AmbassadeurProfiles.AsNoTracking().AnyAsync(
+                p => p.TrackingCode != null
+                     && p.TrackingCode.ToUpper() == trackingCode
+                     && p.OnboardingCompletedAt != null
+                     && p.AgreementSignedAt != null,
+                cancellationToken);
+            if (!validSm && !validAm)
             {
                 throw new ArgumentException(
-                    "Deze salesmanager-code is onbekend of nog niet actief. Laat het veld leeg of vul een geldige code in.");
+                    "Deze trackingcode is onbekend of nog niet actief. Laat het veld leeg of vul een geldige code in.");
             }
         }
 
@@ -1234,6 +1240,13 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
         }
 
         var code = registration.SalesManagerTrackingCode.Trim().ToUpperInvariant();
+
+        if (code.StartsWith(AmbassadeurCommissionRules.TrackingCodePrefix, StringComparison.Ordinal))
+        {
+            await ApplyAmbassadeurReferralAsync(code, branch, orgId, cancellationToken);
+            return;
+        }
+
         var profile = await _db.SalesManagerProfiles
             .FirstOrDefaultAsync(
                 p => p.TrackingCode != null
@@ -1243,6 +1256,12 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
 
         if (profile is null)
         {
+            // Ambassadeur codes may also be stored without AM- prefix edge cases — try Ambassadeur.
+            if (await ApplyAmbassadeurReferralAsync(code, branch, orgId, cancellationToken))
+            {
+                return;
+            }
+
             _logger.LogWarning(
                 "Unknown or incomplete salesmanager tracking code {Code} on registration {Id}",
                 code, registration.Id);
@@ -1286,6 +1305,62 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
                 branch.FirstYearSupplierSlot = next;
             }
         }
+    }
+
+    private async Task<bool> ApplyAmbassadeurReferralAsync(
+        string code,
+        Company branch,
+        Guid? orgId,
+        CancellationToken cancellationToken)
+    {
+        var profile = await _db.AmbassadeurProfiles
+            .FirstOrDefaultAsync(
+                p => p.TrackingCode != null
+                     && p.TrackingCode.ToUpper() == code
+                     && p.OnboardingCompletedAt != null,
+                cancellationToken);
+        if (profile is null)
+        {
+            return false;
+        }
+
+        var settings = await _db.AmbassadeurSettings.AsNoTracking().FirstOrDefaultAsync(cancellationToken);
+        var threshold = settings?.CandidateThreshold ?? AmbassadeurCommissionRules.DefaultCandidateThreshold;
+        var percentPer = settings?.PercentPerThreshold ?? AmbassadeurCommissionRules.DefaultPercentPerThreshold;
+        var maxPct = settings?.MaxCommissionPercentage ?? AmbassadeurCommissionRules.DefaultMaxCommissionPercentage;
+        var candidateCount = await _db.Users.AsNoTracking()
+            .CountAsync(u => u.ReferredByAmbassadeurUserId == profile.UserId, cancellationToken);
+        var percentage = AmbassadeurCommissionRules.ResolveCurrentPercentage(
+            candidateCount,
+            profile.BaseCommissionPercentage,
+            threshold,
+            percentPer,
+            maxPct,
+            profile.CommissionPercentageOverride);
+        var rate = AmbassadeurCommissionRules.PercentageToRate(percentage);
+
+        branch.ReferredByAmbassadeurUserId = profile.UserId;
+        branch.FirstYearStartedAt ??= DateTime.UtcNow;
+        branch.PendingStartHighlightBonus = true;
+        branch.CommissionAmbassadeurRateSnapshot = rate;
+        branch.CommissionDurationDaysSnapshot ??= SalesCommissionRules.DefaultCommissionDurationDays;
+        branch.CommissionTermsSnapshottedAtUtc ??= DateTime.UtcNow;
+
+        if (orgId is Guid oid)
+        {
+            var org = await _db.Companies.FirstOrDefaultAsync(c => c.Id == oid, cancellationToken)
+                      ?? _db.Companies.Local.FirstOrDefault(c => c.Id == oid);
+            if (org is not null)
+            {
+                org.ReferredByAmbassadeurUserId = profile.UserId;
+                org.FirstYearStartedAt ??= DateTime.UtcNow;
+                org.CommissionAmbassadeurRateSnapshot ??= rate;
+                org.CommissionDurationDaysSnapshot ??= SalesCommissionRules.DefaultCommissionDurationDays;
+                org.CommissionTermsSnapshottedAtUtc ??= DateTime.UtcNow;
+            }
+        }
+
+        return true;
     }
 
     private async Task SnapshotCommissionTermsAsync(

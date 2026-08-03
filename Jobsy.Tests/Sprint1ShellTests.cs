@@ -93,6 +93,7 @@ public class RoleNavCatalogTests
     [InlineData(JobsyRoles.EnterpriseManager)]
     [InlineData(JobsyRoles.Intermediary)]
     [InlineData(JobsyRoles.SalesManager)]
+    [InlineData(JobsyRoles.Ambassadeur)]
     public void ForUser_non_admin_roles_get_how_lobsy_nav(string role)
     {
         var identity = new ClaimsIdentity([new Claim(ClaimTypes.Role, role)], "test");

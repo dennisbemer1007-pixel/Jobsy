@@ -337,6 +337,7 @@ public class MollieWebhookCommissionSettlementTests
             new TokenPurchaseInvoiceService(db, companySettings),
             new VatBufferTransferService(db, companySettings, NullLogger<VatBufferTransferService>.Instance),
             revenueShare,
+            new CommissionLedgerService(db),
             new NoopPendingActions(),
             new FakeHostEnvironment(),
             NullLogger<TokenPurchaseFulfillmentService>.Instance);

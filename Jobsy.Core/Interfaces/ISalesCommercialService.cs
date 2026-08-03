@@ -84,3 +84,17 @@ public interface IPartnerFlyerPdfService
 {
     Task<byte[]> RenderAsync(string? trackingCode, CancellationToken cancellationToken = default);
 }
+
+public enum AmbassadeurFlyerKind
+{
+    Candidate = 0,
+    Entrepreneur = 1
+}
+
+public interface IAmbassadeurFlyerPdfService
+{
+    Task<byte[]> RenderAsync(
+        string trackingCode,
+        AmbassadeurFlyerKind kind,
+        CancellationToken cancellationToken = default);
+}

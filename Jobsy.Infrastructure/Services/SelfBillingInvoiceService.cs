@@ -22,11 +22,10 @@ public sealed class SelfBillingInvoiceService : ISelfBillingInvoiceService
         decimal? maxAmountExVat = null,
         CancellationToken cancellationToken = default)
     {
-        var profile = await _db.SalesManagerProfiles
-            .FirstOrDefaultAsync(p => p.UserId == salesManagerUserId, cancellationToken)
-            ?? throw new InvalidOperationException("Salesmanager-profiel ontbreekt.");
+        var billing = await ResolveBillingIdentityAsync(salesManagerUserId, cancellationToken)
+            ?? throw new InvalidOperationException("Profiel ontbreekt voor self-billing.");
 
-        if (!profile.IsOnboardingComplete)
+        if (!billing.IsOnboardingComplete)
         {
             throw new InvalidOperationException("Onboarding moet compleet zijn vóór self-billing.");
         }
@@ -92,10 +91,10 @@ public sealed class SelfBillingInvoiceService : ISelfBillingInvoiceService
             Id = invoiceId,
             SalesManagerUserId = salesManagerUserId,
             InvoiceNumber = invoiceNumber,
-            SalesManagerCompanyName = profile.CompanyName ?? "",
-            SalesManagerKvkNumber = profile.KvkNumber ?? "",
-            SalesManagerVatNumber = profile.VatNumber ?? "",
-            SalesManagerAddress = FormatAddress(profile),
+            SalesManagerCompanyName = billing.CompanyName,
+            SalesManagerKvkNumber = billing.KvkNumber,
+            SalesManagerVatNumber = billing.VatNumber,
+            SalesManagerAddress = billing.FormattedAddress,
             SubtotalExVat = subtotal,
             VatAmount = vat,
             TotalInclVat = subtotal + vat,
@@ -352,13 +351,56 @@ public sealed class SelfBillingInvoiceService : ISelfBillingInvoiceService
         return $"{prefix}{seq:D4}";
     }
 
-    private static string FormatAddress(SalesManagerProfile profile) =>
+    private static string FormatAddress(string? address, string? postalCode, string? city, string? country) =>
         string.Join(", ", new[]
         {
-            profile.Address,
-            $"{profile.PostalCode} {profile.City}".Trim(),
-            profile.Country
+            address,
+            $"{postalCode} {city}".Trim(),
+            country
         }.Where(s => !string.IsNullOrWhiteSpace(s)));
+
+    private async Task<BillingIdentity?> ResolveBillingIdentityAsync(
+        Guid userId,
+        CancellationToken cancellationToken)
+    {
+        var sm = await _db.SalesManagerProfiles
+            .AsNoTracking()
+            .FirstOrDefaultAsync(p => p.UserId == userId, cancellationToken);
+        if (sm is not null)
+        {
+            return new BillingIdentity(
+                sm.CompanyName ?? "",
+                sm.KvkNumber ?? "",
+                sm.VatNumber ?? "",
+                FormatAddress(sm.Address, sm.PostalCode, sm.City, sm.Country),
+                sm.IsOnboardingComplete,
+                sm.Iban);
+        }
+
+        var am = await _db.AmbassadeurProfiles
+            .AsNoTracking()
+            .FirstOrDefaultAsync(p => p.UserId == userId, cancellationToken);
+        if (am is not null)
+        {
+            return new BillingIdentity(
+                am.CompanyName ?? "",
+                am.KvkNumber ?? "",
+                am.VatNumber ?? "",
+                FormatAddress(am.Address, am.PostalCode, am.City, am.Country),
+                am.IsOnboardingComplete,
+                am.Iban);
+        }
+
+        return null;
+    }
+
+    private sealed record BillingIdentity(
+        string CompanyName,
+        string KvkNumber,
+        string VatNumber,
+        string FormattedAddress,
+        bool IsOnboardingComplete,
+        string? Iban);
 
     private sealed record SelectedLedgerAmount(
         CommissionLedgerEntry Entry,

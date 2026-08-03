@@ -11,5 +11,7 @@ public enum UserRole
     EnterpriseManager = 3,
     Intermediary = 4,
     Admin = 5,
-    SalesManager = 6
+    SalesManager = 6,
+    /// <summary>Candidate-acquisition partner with tiered commission and flyers.</summary>
+    Ambassadeur = 7
 }

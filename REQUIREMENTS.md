@@ -62,6 +62,7 @@ Kernpunten:
 - **Intermediair-team:** collega’s uitnodigen op dezelfde organisatie; gedeelde vacatures/saldo
 - **KVK verplicht** bij intermediair-vacatures (UI/CSV/API); flexibele adresweergave + “Aangeboden door …”
 - **Salesmanager-hiërarchie:** Admin maakt tier-0 aan; tier-0 kan SM-aanbevelingen indienen; Admin keurt goed; tier-1 mag niet verder werven
+- **Ambassadeur-rol:** onboarding als Salesmanager; trackingcode `AM-…`; KPI’s (kandidaten + sollicitaties); gelaagde commissie (basis 5%, +1% per 50 kandidaten, Admin-max); kandidaten- + ondernemersflyer (QR); commissie op tokenaankopen referred ondernemers; self-billing uitbetaling
 - **Revenue-share / commissie-settlement (realtime via Mollie-webhook):** bij betaalde tokenaankoop van een referred ondernemer → direct SM **15%** + upline SM **3%** van ex-BTW bedrag op `CommissionLedger` (dashboardsaldo), ambassadeur **15%** tokens; strikt ≤ **1 jaar** vanaf `FirstYearStartedAt` (Admin-configureerbaar); idempotent + retry op webhook/complete; `RevenueShareLogs`
 - **Admin:** Salesmanager-kolom op bedrijven; KPI gem. doorlooptijd vacatures
 

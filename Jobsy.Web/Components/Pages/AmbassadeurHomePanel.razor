@@ -1,0 +1,219 @@
+@using Jobsy.Web.Services
+@inject JobsyApiClient Api
+@inject CultureState Culture
+@inject IJSRuntime Js
+@inject NavigationManager Navigation
+
+<section class="panel-page panel-page--dashboard">
+    <header class="panel-header panel-header--dashboard">
+        <div>
+            <h1>@Culture["Ambassadeur.Dashboard"]</h1>
+            <p class="login-lead">@Culture["Ambassadeur.DashboardLead"]</p>
+        </div>
+        <div class="inline-actions" style="gap:0.75rem;flex-wrap:wrap">
+            @if (_dashboard is not null && !_dashboard.IsOnboardingComplete)
+            {
+                <a class="auth-link" href="/ambassadeur/onboarding">@Culture["Ambassadeur.Onboarding"]</a>
+            }
+            else
+            {
+                <a class="auth-link" href="/ambassadeur/toolkit">Toolkit</a>
+                <a class="auth-link" href="/ambassadeur/finance">Financieel</a>
+            }
+        </div>
+    </header>
+
+    @if (_loading)
+    {
+        <p class="state-message">@Culture["Common.Loading"]</p>
+    }
+    else if (!string.IsNullOrEmpty(_error))
+    {
+        <p class="state-message error">@_error</p>
+    }
+    else if (_dashboard is not null && !_dashboard.IsOnboardingComplete)
+    {
+        <p class="state-message">Rond eerst je onboarding af om een trackingcode te ontvangen.</p>
+        <a class="login-submit" href="/ambassadeur/onboarding" style="display:inline-block;text-decoration:none;text-align:center">Start onboarding</a>
+    }
+    else if (_dashboard is not null)
+    {
+        <div class="bento-grid">
+            <div class="bento-grid__main">
+                <div class="bento-hero" style="--bento-hero-cols:4" aria-label="Kerncijfers">
+                    <div class="stat-card stat-card--tile stat-card--emphasis stat-card--featured">
+                        <span class="stat-card__top">
+                            <span class="stat-card__label">Geregistreerde kandidaten</span>
+                        </span>
+                        <span class="stat-card__body">
+                            <span class="stat-card__main">
+                                <strong class="stat-card__value">@_dashboard.RegisteredCandidates</strong>
+                                <span class="stat-card__hint">KPI 1</span>
+                            </span>
+                        </span>
+                    </div>
+                    <div class="stat-card stat-card--tile">
+                        <span class="stat-card__top">
+                            <span class="stat-card__label">Sollicitaties</span>
+                        </span>
+                        <span class="stat-card__body">
+                            <span class="stat-card__main">
+                                <strong class="stat-card__value">@_dashboard.CandidateApplications</strong>
+                                <span class="stat-card__hint">KPI 2 · via jouw kandidaten</span>
+                            </span>
+                        </span>
+                    </div>
+                    <div class="stat-card stat-card--tile">
+                        <span class="stat-card__top">
+                            <span class="stat-card__label">Commissie</span>
+                        </span>
+                        <span class="stat-card__body">
+                            <span class="stat-card__main">
+                                <strong class="stat-card__value">@_dashboard.CurrentCommissionPercentage.ToString("0.##")%</strong>
+                                <span class="stat-card__hint">
+                                    basis @_dashboard.BaseCommissionPercentage.ToString("0.##")% · max @_dashboard.MaxCommissionPercentage.ToString("0.##")%
+                                    @if (_dashboard.CommissionPercentageOverride is not null)
+                                    {
+                                        <text> · override</text>
+                                    }
+                                </span>
+                            </span>
+                        </span>
+                    </div>
+                    <div class="stat-card stat-card--tile">
+                        <span class="stat-card__top">
+                            <span class="stat-card__label">Trackingcode</span>
+                        </span>
+                        <span class="stat-card__body">
+                            <span class="stat-card__main">
+                                <strong class="stat-card__value" style="font-size:1.05rem;letter-spacing:0.03em">@_dashboard.TrackingCode</strong>
+                                <button class="btn-compact" type="button" style="margin-top:0.35rem" @onclick="CopyLinkAsync">Kopieer link</button>
+                            </span>
+                        </span>
+                    </div>
+                </div>
+
+                <div class="bento-hero" style="--bento-hero-cols:3;margin-top:0.75rem" aria-label="Financieel">
+                    <div class="stat-card stat-card--tile">
+                        <span class="stat-card__top"><span class="stat-card__label">Saldo excl. BTW</span></span>
+                        <span class="stat-card__body">
+                            <strong class="stat-card__value">€ @_dashboard.BalanceExVat.ToString("0.00")</strong>
+                        </span>
+                    </div>
+                    <div class="stat-card stat-card--tile">
+                        <span class="stat-card__top"><span class="stat-card__label">Niet gefactureerd</span></span>
+                        <span class="stat-card__body">
+                            <strong class="stat-card__value">€ @_dashboard.UninvoicedExVat.ToString("0.00")</strong>
+                        </span>
+                    </div>
+                    <div class="stat-card stat-card--tile">
+                        <span class="stat-card__top"><span class="stat-card__label">Volgende tier</span></span>
+                        <span class="stat-card__body">
+                            <strong class="stat-card__value">@_dashboard.CandidatesUntilNextTier</strong>
+                            <span class="stat-card__hint">kandidaten · drempel @_dashboard.CandidateThreshold (+@_dashboard.PercentPerThreshold.ToString("0.##")%)</span>
+                        </span>
+                    </div>
+                </div>
+
+                <div class="bento-cell bento-cell--split">
+                    <article class="bento-rank__card">
+                        <header class="bento-rank__header">
+                            <h3>Recente kandidaten</h3>
+                            <p>Via jouw trackingcode</p>
+                        </header>
+                        @if (_dashboard.RecentCandidates.Count == 0)
+                        {
+                            <p class="bento-rank__empty muted">Nog geen kandidaten via jouw code.</p>
+                        }
+                        else
+                        {
+                            <ol class="bento-rank__list">
+                                @foreach (var c in _dashboard.RecentCandidates.Take(6))
+                                {
+                                    <li class="bento-rank__row">
+                                        <div class="bento-rank__meta">
+                                            <strong class="bento-rank__title">@c.FullName</strong>
+                                            <span class="bento-rank__sub muted">@c.ApplicationCount sollicitaties</span>
+                                        </div>
+                                    </li>
+                                }
+                            </ol>
+                        }
+                    </article>
+
+                    <article class="bento-rank__card">
+                        <header class="bento-rank__header">
+                            <h3>Recente commissies</h3>
+                            <p>Per transactie / token</p>
+                        </header>
+                        @if (_dashboard.RecentLedger.Count == 0)
+                        {
+                            <p class="bento-rank__empty muted">Nog geen commissies.</p>
+                        }
+                        else
+                        {
+                            <ol class="bento-rank__list">
+                                @foreach (var e in _dashboard.RecentLedger.Take(6))
+                                {
+                                    <li class="bento-rank__row">
+                                        <div class="bento-rank__meta">
+                                            <strong class="bento-rank__title">@e.Kind</strong>
+                                            <span class="bento-rank__sub muted">@(e.CompanyName ?? "—") · @e.CreatedAt.ToLocalTime().ToString("g")</span>
+                                        </div>
+                                        <span class="bento-rank__value" style="min-width:auto">€ @e.AmountExVat.ToString("0.00")</span>
+                                    </li>
+                                }
+                            </ol>
+                        }
+                    </article>
+                </div>
+            </div>
+        </div>
+    }
+</section>
+
+@code {
+    private AmbassadeurDashboard? _dashboard;
+    private bool _loading = true;
+    private string? _error;
+
+    private string TrackingUrl
+    {
+        get
+        {
+            var baseUri = Navigation.BaseUri.TrimEnd('/');
+            var code = _dashboard?.TrackingCode;
+            return string.IsNullOrWhiteSpace(code)
+                ? baseUri
+                : $"{baseUri}/werven/{Uri.EscapeDataString(code)}";
+        }
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            _dashboard = await Api.GetMyAmbassadeurDashboardAsync();
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private async Task CopyLinkAsync()
+    {
+        try
+        {
+            await Js.InvokeVoidAsync("navigator.clipboard.writeText", TrackingUrl);
+        }
+        catch
+        {
+            // Clipboard may be blocked; ignore.
+        }
+    }
+}

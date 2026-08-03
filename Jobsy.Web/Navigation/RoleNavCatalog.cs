@@ -12,7 +12,7 @@ public static class RoleNavCatalog
         new("Nav.Home", "/home", NavIcons.Home),
         new("Nav.JobMap", "/", NavIcons.Map),
         new("Nav.Vacancies", "/admin/vacancies", NavIcons.Vacancies, ["/admin/moderation"]),
-        new("Nav.Finance", "/admin/finance", NavIcons.Finance, ["/admin/tokens", "/admin/token-finance", "/admin/sales-managers", "/admin/sales"]),
+        new("Nav.Finance", "/admin/finance", NavIcons.Finance, ["/admin/tokens", "/admin/token-finance", "/admin/sales-managers", "/admin/ambassadeurs", "/admin/sales"]),
         new("Nav.Companies", "/admin/companies", NavIcons.Companies),
         new("Nav.Settings", "/admin/settings", NavIcons.Settings,
             ["/admin/integrations", "/admin/users", "/admin/logging", "/admin/wages", "/admin/masterdata", "/admin/notifications", "/admin/company", "/admin/about", "/admin/api-keys"])
@@ -115,6 +115,15 @@ public static class RoleNavCatalog
         new("Nav.HowLobsyWorks", "/hoe-werkt-lobsy", NavIcons.Info)
     ];
 
+    public static readonly NavItem[] Ambassadeur =
+    [
+        new("Nav.Home", "/home", NavIcons.Home, ["/ambassadeur"]),
+        new("Nav.AmbassadeurToolkit", "/ambassadeur/toolkit", NavIcons.Shared),
+        new("Nav.AmbassadeurFinance", "/ambassadeur/finance", NavIcons.Tokens),
+        new("Nav.Onboarding", "/ambassadeur/onboarding", NavIcons.Users),
+        new("Nav.HowLobsyWorks", "/hoe-werkt-lobsy", NavIcons.Info)
+    ];
+
     public static IReadOnlyList<NavItem> ForUser(ClaimsPrincipal? user)
     {
         if (user?.Identity?.IsAuthenticated != true)
@@ -130,6 +139,11 @@ public static class RoleNavCatalog
         if (RoleClaimMatching.HasRole(user, JobsyRoles.SalesManager))
         {
             return WithHowLobsyLast(SalesManager);
+        }
+
+        if (RoleClaimMatching.HasRole(user, JobsyRoles.Ambassadeur))
+        {
+            return WithHowLobsyLast(Ambassadeur);
         }
 
         if (RoleClaimMatching.HasRole(user, JobsyRoles.Candidate))

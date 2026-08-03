@@ -56,6 +56,15 @@ public class User
     public string? UnsubscribeReasonOther { get; set; }
 
     /// <summary>
+    /// Ambassadeur who referred this candidate (via tracking code at registration / first login).
+    /// </summary>
+    public Guid? ReferredByAmbassadeurUserId { get; set; }
+    public User? ReferredByAmbassadeurUser { get; set; }
+
+    /// <summary>Tracking code used at attribution time (audit / display).</summary>
+    public string? ReferredByAmbassadeurTrackingCode { get; set; }
+
+    /// <summary>
     /// Extra company memberships for RegionalManager, EnterpriseManager and Intermediary.
     /// </summary>
     public ICollection<UserCompany> CompanyMemberships { get; set; } = new List<UserCompany>();

@@ -536,6 +536,13 @@ public static class AuthServiceCollectionExtensions
             client.Timeout = TimeSpan.FromSeconds(10);
 
             var secret = config["JobsyAuth:ExternalProvisionSecret"];
+            string? referralCode = null;
+            if (http.Request.Cookies.TryGetValue("lobsy_ambassadeur_ref", out var cookieRef)
+                && !string.IsNullOrWhiteSpace(cookieRef))
+            {
+                referralCode = cookieRef.Trim();
+            }
+
             using var request = new HttpRequestMessage(HttpMethod.Post, "api/auth/ensure-external")
             {
                 Content = JsonContent.Create(new
@@ -543,7 +550,8 @@ public static class AuthServiceCollectionExtensions
                     email,
                     fullName,
                     provider,
-                    providerSubject
+                    providerSubject,
+                    referralCode
                 })
             };
             if (!string.IsNullOrWhiteSpace(secret))
@@ -708,6 +716,7 @@ public static class AuthServiceCollectionExtensions
         "intermediary" or "intermediair" => "Intermediary",
         "admin" or "administrator" => "Admin",
         "salesmanager" or "sales" => "SalesManager",
+        "ambassadeur" or "ambassador" => "Ambassadeur",
         _ => "Candidate"
     };
 }
