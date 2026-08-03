@@ -1266,24 +1266,25 @@
         try
         {
             // Raamflyer deep-links must show the vestiging even when the visitor's
-            // stored origin would otherwise filter those jobs out by travel time.
-            var useOrigin = _origin is not null && _companyFocusIds is null;
+            // travel/profile filters would otherwise hide those jobs.
+            var companyFocus = _companyFocusIds is { Count: > 0 };
+            var useOrigin = _origin is not null && !companyFocus;
             var items = await Api.DiscoverVacanciesAsync(
                 useOrigin ? _origin!.Latitude : null,
                 useOrigin ? _origin!.Longitude : null,
                 _selectedTransport,
                 _maxTravelMinutes,
                 useOrigin ? _radiusKm : null,
-                _ageYears,
-                _ageYears is null ? null : _minHourlyWage,
-                _ageYears is null ? null : _maxHourlyWage,
-                _selectedWorkTypes.Count == 0 ? null : _selectedWorkTypes,
-                _searchQuery,
-                _minHoursPerWeek,
-                _maxHoursPerWeek);
+                companyFocus ? null : _ageYears,
+                companyFocus || _ageYears is null ? null : _minHourlyWage,
+                companyFocus || _ageYears is null ? null : _maxHourlyWage,
+                companyFocus || _selectedWorkTypes.Count == 0 ? null : _selectedWorkTypes,
+                companyFocus ? null : _searchQuery,
+                companyFocus ? null : _minHoursPerWeek,
+                companyFocus ? null : _maxHoursPerWeek);
 
             // Stale/far stored origin + default proximity can wipe the catalog; show all until filters tighten.
-            if (items.Count == 0 && ShouldFallbackFromEmptyProximity && _companyFocusIds is null)
+            if (items.Count == 0 && ShouldFallbackFromEmptyProximity && !companyFocus)
             {
                 items = await Api.DiscoverVacanciesAsync(
                     originLat: null,
@@ -1301,10 +1302,10 @@
             }
 
             _vacancies = items.ToList();
-            if (_companyFocusIds is { Count: > 0 })
+            if (companyFocus)
             {
                 _vacancies = _vacancies
-                    .Where(v => _companyFocusIds.Contains(v.CompanyId))
+                    .Where(v => _companyFocusIds!.Contains(v.CompanyId))
                     .ToList();
             }
 

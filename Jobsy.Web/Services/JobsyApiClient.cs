@@ -2855,8 +2855,5 @@ public sealed class SalesPackageItem
 public sealed class BranchFlyerRouteDto
 {
     public string RedirectPath { get; set; } = "/";
-    public string Kind { get; set; } = string.Empty;
-    public int ActiveVacancyCount { get; set; }
-    public Guid? SingleVacancyId { get; set; }
 }
 

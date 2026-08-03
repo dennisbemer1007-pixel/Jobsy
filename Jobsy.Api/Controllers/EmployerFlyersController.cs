@@ -3,6 +3,7 @@ using Jobsy.Core.Exceptions;
 using Jobsy.Core.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 
 namespace Jobsy.Api.Controllers;
 
@@ -23,9 +24,11 @@ public sealed class EmployerFlyersController : ControllerBase
 
     /// <summary>
     /// Public QR resolver: 1 open vacancy → detail path; otherwise map with company focus.
+    /// Returns only the redirect path (no vacancy counts/IDs) to limit reconnaissance.
     /// </summary>
     [HttpGet("public/branches/{companyId:guid}/route")]
     [AllowAnonymous]
+    [EnableRateLimiting("public-pdf")]
     public async Task<ActionResult<BranchFlyerRouteDto>> ResolvePublicRoute(
         Guid companyId,
         CancellationToken cancellationToken)
@@ -38,11 +41,7 @@ public sealed class EmployerFlyersController : ControllerBase
                 ? $"/vacancies/{vacancyId:D}"
                 : $"/?company={companyId:D}";
 
-            return Ok(new BranchFlyerRouteDto(
-                redirectPath,
-                target.Kind.ToString(),
-                target.ActiveVacancyCount,
-                target.SingleVacancyId));
+            return Ok(new BranchFlyerRouteDto(redirectPath));
         }
         catch (KeyNotFoundException)
         {
@@ -52,6 +51,7 @@ public sealed class EmployerFlyersController : ControllerBase
 
     [HttpGet("branch/{companyId:guid}.pdf")]
     [Authorize(Policy = JobsyPolicies.RequireAdminOrEmployer)]
+    [EnableRateLimiting("public-pdf")]
     public async Task<IActionResult> DownloadBranchFlyer(
         Guid companyId,
         [FromQuery] string format = "A4",
@@ -81,6 +81,7 @@ public sealed class EmployerFlyersController : ControllerBase
 
     [HttpGet("overview.pdf")]
     [Authorize(Policy = JobsyPolicies.RequireAdminOrEmployer)]
+    [EnableRateLimiting("public-pdf")]
     public async Task<IActionResult> DownloadOverviewFlyer(
         [FromQuery] string? title = null,
         [FromQuery] string format = "A4",
@@ -132,8 +133,4 @@ public sealed class EmployerFlyersController : ControllerBase
             : RaamflyerFormat.A4;
 }
 
-public sealed record BranchFlyerRouteDto(
-    string RedirectPath,
-    string Kind,
-    int ActiveVacancyCount,
-    Guid? SingleVacancyId);
+public sealed record BranchFlyerRouteDto(string RedirectPath);

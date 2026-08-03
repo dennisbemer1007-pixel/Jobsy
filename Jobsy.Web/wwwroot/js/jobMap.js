@@ -1112,13 +1112,9 @@ window.jobMap = (function () {
         map.fitBounds(group.getBounds().pad(0.45), { maxZoom: 16, animate: true });
         setTimeout(function () {
             invalidate();
-            const first = markers[0];
-            const parent = clusterGroup.getVisibleParent(first);
-            if (parent && parent !== first && typeof parent.getAllChildMarkers === "function") {
-                openClusterList(parent);
-            } else {
-                openCompanyClusterPopup(markers);
-            }
+            // Always open a company-scoped popup — never the geographic cluster parent,
+            // which can include vacancies from other employers at nearby coordinates.
+            openCompanyClusterPopup(markers);
         }, 450);
     }
 

@@ -6,7 +6,7 @@
 <PageTitle>Vacatures · Lobsy</PageTitle>
 
 <div class="panel-page vestiging-landing">
-    <p class="state-message">@(_message)</p>
+    <p class="state-message">@_message</p>
 </div>
 
 @code {
@@ -23,15 +23,9 @@
                 ? $"/?company={CompanyId:D}"
                 : route.RedirectPath;
 
-            if (route is not null
-                && string.Equals(route.Kind, "VacancyDetail", StringComparison.OrdinalIgnoreCase))
-            {
-                _message = "Je wordt doorgestuurd naar de vacature…";
-            }
-            else
-            {
-                _message = "Je wordt doorgestuurd naar de vacaturekaart…";
-            }
+            _message = path.StartsWith("/vacancies/", StringComparison.OrdinalIgnoreCase)
+                ? "Je wordt doorgestuurd naar de vacature…"
+                : "Je wordt doorgestuurd naar de vacaturekaart…";
 
             await InvokeAsync(StateHasChanged);
             Navigation.NavigateTo(path, replace: true);
