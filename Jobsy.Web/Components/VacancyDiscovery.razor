@@ -649,6 +649,10 @@
     private decimal? _snapMaxHourlyWage;
     /// <summary>Hidden keyword filter from assistant (?q=); not a primary UI control.</summary>
     private string? _searchQuery;
+    /// <summary>Deep-link from raamflyer QR (?company= / ?companies=).</summary>
+    private HashSet<Guid>? _companyFocusIds;
+    private Guid? _mapFocusCompanyId;
+    private bool _pendingCompanyMapFocus;
     private List<string> _branchOptions = WorkTypeLabels.All.ToList();
     private string _sortMode = "title";
     private bool _sortChosenByUser;
@@ -811,6 +815,7 @@
         ApplyTravelFromQuery();
         ApplyTransportFromQuery();
         ApplyHoursFromQuery();
+        ApplyCompanyFocusFromQuery();
         try
         {
             await LoadBranchOptionsAsync();
@@ -871,17 +876,25 @@
         var beforeTransport = _selectedTransport;
         var beforeMinHours = _minHoursPerWeek;
         var beforeMaxHours = _maxHoursPerWeek;
+        var beforeCompanies = _companyFocusIds is null
+            ? ""
+            : string.Join(',', _companyFocusIds.OrderBy(x => x));
         ApplyWorkTypeFromQuery();
         ApplySearchQueryFromQuery();
         ApplyTravelFromQuery();
         ApplyTransportFromQuery();
         ApplyHoursFromQuery();
+        ApplyCompanyFocusFromQuery();
+        var afterCompanies = _companyFocusIds is null
+            ? ""
+            : string.Join(',', _companyFocusIds.OrderBy(x => x));
         if (!beforeTypes.SetEquals(_selectedWorkTypes)
             || !string.Equals(beforeQuery, _searchQuery, StringComparison.Ordinal)
             || beforeMinutes != _maxTravelMinutes
             || !string.Equals(beforeTransport, _selectedTransport, StringComparison.OrdinalIgnoreCase)
             || beforeMinHours != _minHoursPerWeek
-            || beforeMaxHours != _maxHoursPerWeek)
+            || beforeMaxHours != _maxHoursPerWeek
+            || !string.Equals(beforeCompanies, afterCompanies, StringComparison.Ordinal))
         {
             showMapOnMobile = true;
             if (_mapReady)
@@ -892,6 +905,56 @@
             await LoadVacanciesAsync();
             await InvokeAsync(StateHasChanged);
         }
+    }
+
+    private void ApplyCompanyFocusFromQuery()
+    {
+        var uri = Navigation.ToAbsoluteUri(Navigation.Uri);
+        var query = QueryHelpers.ParseQuery(uri.Query);
+        var ids = new HashSet<Guid>();
+
+        if (query.TryGetValue("company", out var singleValues))
+        {
+            foreach (var raw in singleValues)
+            {
+                if (Guid.TryParse(raw, out var id))
+                {
+                    ids.Add(id);
+                }
+            }
+        }
+
+        if (query.TryGetValue("companies", out var multiValues))
+        {
+            foreach (var raw in multiValues)
+            {
+                if (string.IsNullOrWhiteSpace(raw))
+                {
+                    continue;
+                }
+
+                foreach (var part in raw.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
+                {
+                    if (Guid.TryParse(part, out var id))
+                    {
+                        ids.Add(id);
+                    }
+                }
+            }
+        }
+
+        if (ids.Count == 0)
+        {
+            _companyFocusIds = null;
+            _mapFocusCompanyId = null;
+            _pendingCompanyMapFocus = false;
+            return;
+        }
+
+        _companyFocusIds = ids;
+        _mapFocusCompanyId = ids.Count == 1 ? ids.First() : null;
+        _pendingCompanyMapFocus = _mapFocusCompanyId is not null;
+        showMapOnMobile = true;
     }
 
     private void ApplyWorkTypeFromQuery()
@@ -1175,6 +1238,7 @@
             _mapReady = true;
             await Task.Delay(80);
             await Js.InvokeVoidAsync("jobMap.invalidate");
+            await TryFocusCompanyOnMapAsync();
         }
         catch (JSDisconnectedException)
         {
@@ -1201,12 +1265,15 @@
         await InvokeAsync(StateHasChanged);
         try
         {
+            // Raamflyer deep-links must show the vestiging even when the visitor's
+            // stored origin would otherwise filter those jobs out by travel time.
+            var useOrigin = _origin is not null && _companyFocusIds is null;
             var items = await Api.DiscoverVacanciesAsync(
-                _origin?.Latitude,
-                _origin?.Longitude,
+                useOrigin ? _origin!.Latitude : null,
+                useOrigin ? _origin!.Longitude : null,
                 _selectedTransport,
                 _maxTravelMinutes,
-                _origin is null ? null : _radiusKm,
+                useOrigin ? _radiusKm : null,
                 _ageYears,
                 _ageYears is null ? null : _minHourlyWage,
                 _ageYears is null ? null : _maxHourlyWage,
@@ -1216,7 +1283,7 @@
                 _maxHoursPerWeek);
 
             // Stale/far stored origin + default proximity can wipe the catalog; show all until filters tighten.
-            if (items.Count == 0 && ShouldFallbackFromEmptyProximity)
+            if (items.Count == 0 && ShouldFallbackFromEmptyProximity && _companyFocusIds is null)
             {
                 items = await Api.DiscoverVacanciesAsync(
                     originLat: null,
@@ -1234,6 +1301,13 @@
             }
 
             _vacancies = items.ToList();
+            if (_companyFocusIds is { Count: > 0 })
+            {
+                _vacancies = _vacancies
+                    .Where(v => _companyFocusIds.Contains(v.CompanyId))
+                    .ToList();
+            }
+
             if (_vacancies.Count > 0)
             {
                 try
@@ -1248,7 +1322,7 @@
             if (_mapReady)
             {
                 await Js.InvokeVoidAsync("jobMap.setVacancies", BuildMarkers());
-                if (_origin is not null)
+                if (_origin is not null && _companyFocusIds is null)
                 {
                     await Js.InvokeVoidAsync("jobMap.setOrigin", _origin.Latitude, _origin.Longitude, TravelMapOptions());
                 }
@@ -1261,6 +1335,11 @@
                 await InvokeAsync(StateHasChanged);
                 await Task.Delay(80);
                 await Js.InvokeVoidAsync("jobMap.invalidate");
+                await TryFocusCompanyOnMapAsync();
+            }
+            else
+            {
+                _pendingCompanyMapFocus = _mapFocusCompanyId is not null;
             }
         }
         catch (Exception ex)
@@ -1289,9 +1368,9 @@
                 ["id"] = v.Id.ToString(),
                 ["title"] = v.Title,
                 ["company"] = v.CompanyName,
+                ["companyId"] = v.CompanyId.ToString("D"),
                 ["offeredBy"] = v.OfferedByLabel,
                 ["address"] = v.CompanyAddress,
-                ["offeredBy"] = v.OfferedByLabel,
                 ["logoUrl"] = v.CompanyLogoUrl,
                 ["imageUrl"] = v.ImageUrl,
                 ["lat"] = v.Latitude,
@@ -1762,6 +1841,24 @@
         if (_mapReady)
         {
             await Js.InvokeVoidAsync("jobMap.focus", id.ToString());
+        }
+    }
+
+    private async Task TryFocusCompanyOnMapAsync()
+    {
+        if (!_mapReady || !_pendingCompanyMapFocus || _mapFocusCompanyId is not Guid companyId)
+        {
+            return;
+        }
+
+        _pendingCompanyMapFocus = false;
+        try
+        {
+            await Js.InvokeVoidAsync("jobMap.focusCompany", companyId.ToString("D"));
+        }
+        catch
+        {
+            // Map helper may be unavailable during circuit teardown.
         }
     }
 

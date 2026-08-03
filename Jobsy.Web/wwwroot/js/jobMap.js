@@ -1044,6 +1044,82 @@ window.jobMap = (function () {
         });
     }
 
+    function normalizeCompanyId(value) {
+        return String(value ?? "").toLowerCase().replace(/[{}-]/g, "");
+    }
+
+    function openCompanyClusterPopup(childMarkers) {
+        if (!map || !childMarkers || childMarkers.length === 0) {
+            return;
+        }
+
+        const latlng = childMarkers[0].getLatLng();
+        if (activeClusterPopup) {
+            map.closePopup(activeClusterPopup);
+        }
+
+        const opts = Object.assign({}, clusterPopupOptions(), {
+            closeOnClick: true,
+            autoClose: true,
+            closeButton: true
+        });
+
+        activeClusterPopup = L.popup(opts)
+            .setLatLng(latlng)
+            .setContent(buildClusterSingleHtml(childMarkers, 1))
+            .openOn(map);
+
+        const opened = activeClusterPopup;
+        opened.on("remove", function () {
+            if (activeClusterPopup === opened) {
+                activeClusterPopup = null;
+            }
+        });
+
+        bindClusterPopupInteractions(activeClusterPopup, childMarkers);
+    }
+
+    /**
+     * Deep-link helper for raamflyer QR: center on a vestiging and open the cluster
+     * popup when 2+ vacancies share that company.
+     */
+    function focusCompany(companyId) {
+        if (!map || !clusterGroup || companyId == null || companyId === "") {
+            return;
+        }
+
+        const wanted = normalizeCompanyId(companyId);
+        const markers = [];
+        Object.keys(markersById).forEach(function (key) {
+            const marker = markersById[key];
+            const data = marker.options.jobData || {};
+            if (normalizeCompanyId(data.companyId) === wanted) {
+                markers.push(marker);
+            }
+        });
+
+        if (markers.length === 0) {
+            return;
+        }
+
+        if (markers.length === 1) {
+            focus(markers[0].options.jobData && markers[0].options.jobData.id);
+            return;
+        }
+
+        const group = L.featureGroup(markers);
+        map.fitBounds(group.getBounds().pad(0.35), { maxZoom: 15, animate: true });
+        setTimeout(function () {
+            const first = markers[0];
+            const parent = clusterGroup.getVisibleParent(first);
+            if (parent && parent !== first && typeof parent.getAllChildMarkers === "function") {
+                openClusterList(parent);
+            } else {
+                openCompanyClusterPopup(markers);
+            }
+        }, 350);
+    }
+
     function dispose() {
         window.removeEventListener("resize", invalidate);
         activeClusterPopup = null;
@@ -1082,6 +1158,7 @@ window.jobMap = (function () {
         clearOrigin,
         highlight,
         focus,
+        focusCompany,
         dispose,
         invalidate
     };

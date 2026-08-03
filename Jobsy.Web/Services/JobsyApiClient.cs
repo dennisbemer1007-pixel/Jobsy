@@ -1273,6 +1273,75 @@ public sealed class JobsyApiClient : IAsyncDisposable
         await js.InvokeVoidAsync("jobsyDownload.bytes", "lobsy-partner-flyer.pdf", base64, "application/pdf");
     }
 
+    public async Task<BranchFlyerRouteDto?> GetBranchFlyerRouteAsync(
+        Guid companyId,
+        CancellationToken ct = default)
+        => await _http.GetFromJsonAsync<BranchFlyerRouteDto>(
+            $"api/employer-flyers/public/branches/{companyId:D}/route",
+            ct);
+
+    public async Task DownloadBranchRaamflyerPdfAsync(
+        Microsoft.JSInterop.IJSRuntime js,
+        Guid companyId,
+        string format = "A4",
+        CancellationToken ct = default)
+    {
+        var qs = $"api/employer-flyers/branch/{companyId:D}.pdf?format={Uri.EscapeDataString(format)}";
+        var response = await _http.GetAsync(qs, ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException(ExtractMessage(body) ?? "Raamflyer downloaden mislukt.");
+        }
+
+        var bytes = await response.Content.ReadAsByteArrayAsync(ct);
+        var size = string.Equals(format, "A3", StringComparison.OrdinalIgnoreCase) ? "A3" : "A4";
+        var base64 = Convert.ToBase64String(bytes);
+        await js.InvokeVoidAsync(
+            "jobsyDownload.bytes",
+            $"lobsy-raamflyer-{size}.pdf",
+            base64,
+            "application/pdf");
+    }
+
+    public async Task DownloadOverviewRaamflyerPdfAsync(
+        Microsoft.JSInterop.IJSRuntime js,
+        string? title = null,
+        string format = "A4",
+        IEnumerable<Guid>? companyIds = null,
+        CancellationToken ct = default)
+    {
+        var qs = $"api/employer-flyers/overview.pdf?format={Uri.EscapeDataString(format)}";
+        if (!string.IsNullOrWhiteSpace(title))
+        {
+            qs += $"&title={Uri.EscapeDataString(title.Trim())}";
+        }
+
+        if (companyIds is not null)
+        {
+            foreach (var id in companyIds)
+            {
+                qs += $"&companyIds={id:D}";
+            }
+        }
+
+        var response = await _http.GetAsync(qs, ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException(ExtractMessage(body) ?? "Overzichtsflyer downloaden mislukt.");
+        }
+
+        var bytes = await response.Content.ReadAsByteArrayAsync(ct);
+        var size = string.Equals(format, "A3", StringComparison.OrdinalIgnoreCase) ? "A3" : "A4";
+        var base64 = Convert.ToBase64String(bytes);
+        await js.InvokeVoidAsync(
+            "jobsyDownload.bytes",
+            $"lobsy-overzicht-raamflyer-{size}.pdf",
+            base64,
+            "application/pdf");
+    }
+
     public async Task<IReadOnlyList<VatOpenPeriodItem>> GetVatOpenPeriodsAsync(CancellationToken ct = default)
         => await _http.GetFromJsonAsync<List<VatOpenPeriodItem>>("api/vat/open-periods", ct) ?? [];
 
@@ -2781,5 +2850,13 @@ public sealed class SalesPackageItem
     public string? Description { get; set; }
     public bool IsActive { get; set; } = true;
     public int SortOrder { get; set; }
+}
+
+public sealed class BranchFlyerRouteDto
+{
+    public string RedirectPath { get; set; } = "/";
+    public string Kind { get; set; } = string.Empty;
+    public int ActiveVacancyCount { get; set; }
+    public Guid? SingleVacancyId { get; set; }
 }
 

@@ -1,8 +1,10 @@
 @using Jobsy.Web.Components.Shared
 @using Jobsy.Web.Dashboard
+@using Jobsy.Web.Models
 @inject JobsyApiClient Api
 @inject NavigationManager Navigation
 @inject CultureState Culture
+@inject IJSRuntime Js
 @implements IDisposable
 
 <div class="panel-page panel-page--dashboard">
@@ -11,18 +13,56 @@
             <h1>@Title</h1>
             <p class="login-lead">@Lead</p>
         </div>
-        <div class="period-tabs period-tabs--compact" role="tablist" aria-label="@Culture["Common.Period"]">
-            @foreach (var p in PeriodKeys)
+        <div class="panel-header__actions">
+            @if (EnableRaamflyer)
             {
-                <button type="button"
-                        class="period-tab @(_period == p ? "period-tab--active" : null)"
-                        role="tab"
-                        aria-selected="@(_period == p)"
-                        disabled="@_loading"
-                        @onclick="() => SetPeriodAsync(p)">
-                    @PeriodLabel(p)
-                </button>
+                <div class="raamflyer-actions">
+                    @if (AllowOverviewRaamflyer && _companies.Count > 1)
+                    {
+                        <button type="button"
+                                class="login-submit login-submit--secondary"
+                                disabled="@(_flyerBusy || _loadingCompanies)"
+                                @onclick="DownloadOverviewAsync">
+                            @(_flyerBusy && _flyerMode == "overview" ? "Bezig…" : "Download overzichtsflyer")
+                        </button>
+                    }
+                    @if (_companies.Count > 1)
+                    {
+                        <label class="raamflyer-branch">
+                            <span class="visually-hidden">Vestiging</span>
+                            <select @bind="_selectedCompanyId" disabled="@(_flyerBusy || _loadingCompanies)">
+                                @foreach (var c in _companies)
+                                {
+                                    <option value="@c.Id.ToString("D")">@c.Name</option>
+                                }
+                            </select>
+                        </label>
+                    }
+                    <button type="button"
+                            class="login-submit"
+                            disabled="@(_flyerBusy || _loadingCompanies || !Guid.TryParse(_selectedCompanyId, out _))"
+                            @onclick="DownloadBranchAsync">
+                        @(_flyerBusy && _flyerMode == "branch" ? "Bezig…" : "Download Raamflyer")
+                    </button>
+                    @if (!string.IsNullOrWhiteSpace(_flyerError))
+                    {
+                        <p class="state-message error raamflyer-error">@_flyerError</p>
+                    }
+                </div>
             }
+            <div class="period-tabs period-tabs--compact" role="tablist" aria-label="@Culture["Common.Period"]">
+                @foreach (var p in PeriodKeys)
+                {
+                    <button type="button"
+                            class="period-tab @(_period == p ? "period-tab--active" : null)"
+                            role="tab"
+                            aria-selected="@(_period == p)"
+                            disabled="@_loading"
+                            @onclick="() => SetPeriodAsync(p)">
+                        @PeriodLabel(p)
+                    </button>
+                }
+            </div>
         </div>
     </header>
 
@@ -50,12 +90,21 @@
     [Parameter] public string VacanciesHref { get; set; } = "/employer/vacancies";
     [Parameter] public string TokensHref { get; set; } = "/employer/tokens";
     [Parameter] public string ApplicationsHref { get; set; } = "/branch/applicants";
+    [Parameter] public bool EnableRaamflyer { get; set; }
+    [Parameter] public bool AllowOverviewRaamflyer { get; set; }
 
     private string _period = "week";
     private bool _loading = true;
     private string? _error;
     private List<MetricCount> _metrics = [];
     private VacancyPerformanceBoard? _vacancyBoard;
+
+    private List<CompanySummary> _companies = [];
+    private string _selectedCompanyId = "";
+    private bool _loadingCompanies;
+    private bool _flyerBusy;
+    private string? _flyerMode;
+    private string? _flyerError;
 
     private string PeriodLabel(string key) => key switch
     {
@@ -71,7 +120,14 @@
         => Culture.Changed += OnCultureChanged;
 
     protected override async Task OnInitializedAsync()
-        => await LoadSummaryAsync();
+    {
+        if (EnableRaamflyer)
+        {
+            await LoadCompaniesAsync();
+        }
+
+        await LoadSummaryAsync();
+    }
 
     private void OnCultureChanged()
         => InvokeAsync(StateHasChanged);
@@ -115,6 +171,93 @@
                  + $"&overview={Uri.EscapeDataString(overview)}";
         Navigation.NavigateTo($"/home/metrics/{Uri.EscapeDataString(metric.Key)}?{qs}");
         return Task.CompletedTask;
+    }
+
+    private async Task LoadCompaniesAsync()
+    {
+        _loadingCompanies = true;
+        _flyerError = null;
+        try
+        {
+            _companies = (await Api.GetMyCompaniesAsync())
+                .OrderBy(c => c.ParentCompanyId is null ? 0 : 1)
+                .ThenBy(c => c.Name)
+                .ToList();
+            if (_companies.Count > 0
+                && (string.IsNullOrWhiteSpace(_selectedCompanyId)
+                    || _companies.All(c => c.Id.ToString("D") != _selectedCompanyId)))
+            {
+                // Prefer a vestiging (child) when available — filiaal raamflyer.
+                var branch = _companies.FirstOrDefault(c => c.ParentCompanyId is not null)
+                             ?? _companies[0];
+                _selectedCompanyId = branch.Id.ToString("D");
+            }
+        }
+        catch (Exception ex)
+        {
+            _flyerError = ex.Message;
+            _companies = [];
+        }
+        finally
+        {
+            _loadingCompanies = false;
+        }
+    }
+
+    private async Task DownloadBranchAsync()
+    {
+        if (!Guid.TryParse(_selectedCompanyId, out var companyId) || _flyerBusy)
+        {
+            return;
+        }
+
+        _flyerBusy = true;
+        _flyerMode = "branch";
+        _flyerError = null;
+        try
+        {
+            await Api.DownloadBranchRaamflyerPdfAsync(Js, companyId, "A4");
+        }
+        catch (Exception ex)
+        {
+            _flyerError = ex.Message;
+        }
+        finally
+        {
+            _flyerBusy = false;
+            _flyerMode = null;
+        }
+    }
+
+    private async Task DownloadOverviewAsync()
+    {
+        if (_flyerBusy || _companies.Count == 0)
+        {
+            return;
+        }
+
+        _flyerBusy = true;
+        _flyerMode = "overview";
+        _flyerError = null;
+        try
+        {
+            await Api.DownloadOverviewRaamflyerPdfAsync(
+                Js,
+                title: Title.Contains("Regio", StringComparison.OrdinalIgnoreCase)
+                    ? "Vacatures in onze regio"
+                    : "Vacatures bij onze vestigingen",
+                format: "A4",
+                companyIds: _companies.Select(c => c.Id));
+        }
+        catch (Exception ex)
+        {
+            _flyerError = ex.Message;
+        }
+        finally
+        {
+            _flyerBusy = false;
+            _flyerMode = null;
+        }
     }
 
     private async Task LoadSummaryAsync()

@@ -21,19 +21,34 @@
 
 <AuthorizeView Roles="@JobsyRoles.BranchManager">
     <Authorized>
-        <EmployerHomePanel Title="Vestiging dashboard" Lead="Jouw vacatures en tokens in één oogopslag." VacanciesHref="/branch/vacancies" TokensHref="/branch/tokens" />
+        <EmployerHomePanel Title="Vestiging dashboard"
+                           Lead="Jouw vacatures en tokens in één oogopslag."
+                           VacanciesHref="/branch/vacancies"
+                           TokensHref="/branch/tokens"
+                           EnableRaamflyer="true" />
     </Authorized>
 </AuthorizeView>
 
 <AuthorizeView Roles="@JobsyRoles.RegionalManager">
     <Authorized>
-        <EmployerHomePanel Title="Regio dashboard" Lead="KPI’s en alleen-lezen inzicht in vacatures, sollicitaties, tokens en vestigingen." VacanciesHref="/employer/vacancies" TokensHref="/employer/tokens" ApplicationsHref="/branch/applicants" />
+        <EmployerHomePanel Title="Regio dashboard"
+                           Lead="KPI’s en alleen-lezen inzicht in vacatures, sollicitaties, tokens en vestigingen."
+                           VacanciesHref="/employer/vacancies"
+                           TokensHref="/employer/tokens"
+                           ApplicationsHref="/branch/applicants"
+                           EnableRaamflyer="true"
+                           AllowOverviewRaamflyer="true" />
     </Authorized>
 </AuthorizeView>
 
 <AuthorizeView Roles="@JobsyRoles.EnterpriseManager">
     <Authorized>
-        <EmployerHomePanel Title="Bedrijf dashboard" Lead="Vacatures, tokens, vestigingen en regio’s." VacanciesHref="/employer/vacancies" TokensHref="/employer/tokens" />
+        <EmployerHomePanel Title="Bedrijf dashboard"
+                           Lead="Vacatures, tokens, vestigingen en regio’s."
+                           VacanciesHref="/employer/vacancies"
+                           TokensHref="/employer/tokens"
+                           EnableRaamflyer="true"
+                           AllowOverviewRaamflyer="true" />
     </Authorized>
 </AuthorizeView>
 

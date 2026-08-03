@@ -1,0 +1,31 @@
+@page "/vestiging/{CompanyId:guid}"
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
+@inject JobsyApiClient Api
+@inject NavigationManager Navigation
+
+<div class="panel-page">
+    <p class="state-message">@(_error ?? "Je wordt doorgestuurd…")</p>
+</div>
+
+@code {
+    [Parameter] public Guid CompanyId { get; set; }
+
+    private string? _error;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var route = await Api.GetBranchFlyerRouteAsync(CompanyId);
+            var path = string.IsNullOrWhiteSpace(route?.RedirectPath)
+                ? $"/?company={CompanyId:D}"
+                : route.RedirectPath;
+            Navigation.NavigateTo(path, replace: true);
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+            Navigation.NavigateTo($"/?company={CompanyId:D}", replace: true);
+        }
+    }
+}
