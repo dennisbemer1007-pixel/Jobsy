@@ -4,8 +4,6 @@
 @using Jobsy.Web.Localization
 @using Microsoft.AspNetCore.Antiforgery
 @using Microsoft.AspNetCore.WebUtilities
-@using Microsoft.Extensions.Options
-@inject IOptions<AuthOptions> AuthOptions
 @inject IExternalAuthCredentialSource ExternalAuth
 @inject IAntiforgery Antiforgery
 @inject NavigationManager Navigation
@@ -89,7 +87,7 @@
             <input type="hidden" name="returnUrl" value="@_returnUrl" />
             <label>
                 @Culture["Login.Email"]
-                <input type="email" name="email" required autocomplete="username" placeholder="kandidaat@jobsy.local" />
+                <input type="email" name="email" required autocomplete="username" placeholder="naam@voorbeeld.nl" />
             </label>
             <label>
                 @Culture["Login.Password"]
@@ -97,28 +95,6 @@
             </label>
             <button type="submit" class="login-submit">@Culture["Login.Submit"]</button>
         </form>
-
-        @if (_demoUsers.Count > 0)
-        {
-            <details class="login-demo" open>
-                <summary>@Culture["Login.DemoTitle"]</summary>
-                <div class="login-demo__list">
-                    @foreach (var user in _demoUsers)
-                    {
-                        <form method="post" action="/account/demo-login" class="login-demo__form">
-                            <input type="hidden" name="@_antiforgeryFieldName" value="@_antiforgeryToken" />
-                            <input type="hidden" name="returnUrl" value="@_returnUrl" />
-                            <input type="hidden" name="email" value="@user.Email" />
-                            <button type="submit" class="login-demo__btn">
-                                <span class="login-demo__role">@RoleLabel(user.Role)</span>
-                                <span class="login-demo__email">@user.Email</span>
-                            </button>
-                        </form>
-                    }
-                </div>
-                <p class="login-demo__hint">@Culture["Login.DemoHint"]</p>
-            </details>
-        }
 
         <div class="login-register">
             <p class="login-register__lead">@Culture["Login.RegisterLead"]</p>
@@ -140,7 +116,6 @@
     private bool _googleEnabled;
     private string _antiforgeryFieldName = string.Empty;
     private string _antiforgeryToken = string.Empty;
-    private IReadOnlyList<DemoUserOptions> _demoUsers = [];
 
     [CascadingParameter]
     private HttpContext? HttpContext { get; set; }
@@ -157,8 +132,6 @@
             _antiforgeryToken = tokens.RequestToken ?? string.Empty;
         }
 
-        var auth = AuthOptions.Value;
-        _demoUsers = auth.DemoUsers;
         _entraEnabled = await ExternalAuth.IsEntraConfiguredAsync();
         _googleEnabled = await ExternalAuth.IsGoogleConfiguredAsync();
 
@@ -233,18 +206,6 @@
 
     private void OnCultureChanged()
         => InvokeAsync(StateHasChanged);
-
-    private string RoleLabel(string role) => role switch
-    {
-        "Candidate" => Culture["Role.Candidate"],
-        "BranchManager" => Culture["Role.BranchManager"],
-        "RegionalManager" => Culture["Role.RegionalManager"],
-        "EnterpriseManager" => Culture["Role.EnterpriseManager"],
-        "Intermediary" => Culture["Role.Intermediary"],
-        "Admin" => Culture["Role.Admin"],
-        "SalesManager" => Culture["Role.SalesManager"],
-        _ => role
-    };
 
     public void Dispose()
         => Culture.Changed -= OnCultureChanged;
