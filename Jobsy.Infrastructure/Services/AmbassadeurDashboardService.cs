@@ -129,7 +129,7 @@ public sealed class AmbassadeurDashboardService : IAmbassadeurDashboardService
             uninvoiced,
             outstandingIssued,
             recentCandidates.Select(c => new ReferredCandidateDto(
-                c.Id, c.FullName, null, c.ApplicationCount)).ToList(),
+                c.Id, Initials(c.FullName), null, c.ApplicationCount)).ToList(),
             suppliers.Select(s => new ReferredSupplierDto(
                 s.Id, s.Name, s.KvkNumber, s.FirstYearSupplierSlot, s.FirstYearStartedAt, s.HasPaid)).ToList(),
             ledger.Take(50).Select(e => new CommissionEntryDto(
@@ -202,5 +202,25 @@ public sealed class AmbassadeurDashboardService : IAmbassadeurDashboardService
                 current,
                 balances.GetValueOrDefault(user.Id));
         }).ToList();
+    }
+
+    /// <summary>Display-safe label for referred candidates (no full names on the dashboard).</summary>
+    internal static string Initials(string? fullName)
+    {
+        if (string.IsNullOrWhiteSpace(fullName))
+        {
+            return "?";
+        }
+
+        var parts = fullName.Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        if (parts.Length == 1)
+        {
+            var single = parts[0];
+            return single.Length <= 2
+                ? single.ToUpperInvariant()
+                : $"{char.ToUpperInvariant(single[0])}.";
+        }
+
+        return $"{char.ToUpperInvariant(parts[0][0])}.{char.ToUpperInvariant(parts[^1][0])}.";
     }
 }

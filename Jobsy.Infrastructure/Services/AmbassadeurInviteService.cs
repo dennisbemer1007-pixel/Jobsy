@@ -58,6 +58,9 @@ public sealed class AmbassadeurInviteService : IAmbassadeurInviteService
             existing.Role = UserRole.Ambassadeur;
             existing.IsActive = true;
             existing.CompanyId = null;
+            // Role elevation collects commercial NAW/KvK/IBAN — require fresh terms acceptance.
+            existing.TermsAcceptedAt = null;
+            existing.ConsentVersion = null;
             user = existing;
             createdNew = false;
 

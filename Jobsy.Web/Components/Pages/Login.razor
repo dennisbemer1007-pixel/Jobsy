@@ -189,6 +189,28 @@
                 _ => Culture["Login.ErrorGeneric"]
             };
         }
+
+        // Persist Ambassadeur referral from ?ref= so OAuth ensure-external can attribute.
+        if (query.TryGetValue("ref", out var refValues))
+        {
+            var refCode = refValues.FirstOrDefault()?.Trim().ToUpperInvariant() ?? "";
+            if (Jobsy.Core.Rules.AmbassadeurCommissionRules.IsAmbassadeurTrackingCode(refCode)
+                && http is not null)
+            {
+                http.Response.Cookies.Append(
+                    "lobsy_ambassadeur_ref",
+                    refCode,
+                    new CookieOptions
+                    {
+                        HttpOnly = true,
+                        IsEssential = true,
+                        SameSite = SameSiteMode.Lax,
+                        Secure = http.Request.IsHttps,
+                        MaxAge = TimeSpan.FromDays(30),
+                        Path = "/"
+                    });
+            }
+        }
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)

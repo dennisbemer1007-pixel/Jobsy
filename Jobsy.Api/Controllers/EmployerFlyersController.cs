@@ -36,11 +36,9 @@ public sealed class EmployerFlyersController : ControllerBase
         try
         {
             var target = await _flyers.ResolveBranchQrTargetAsync(companyId, cancellationToken);
-            var redirectPath = target.Kind == RaamflyerQrKind.VacancyDetail
-                               && target.SingleVacancyId is Guid vacancyId
-                ? $"/vacancies/{vacancyId:D}"
-                : $"/?company={companyId:D}";
-
+            // Never expose vacancy IDs on this anonymous probe surface; the map deep-link
+            // auto-opens the single vacancy (or cluster) after load.
+            var redirectPath = $"/?company={companyId:D}";
             return Ok(new BranchFlyerRouteDto(redirectPath));
         }
         catch (KeyNotFoundException)

@@ -1307,6 +1307,13 @@
                 _vacancies = _vacancies
                     .Where(v => _companyFocusIds!.Contains(v.CompanyId))
                     .ToList();
+
+                // Scenario A: exactly one open vacancy at the focused vestiging → open detail + apply.
+                if (_companyFocusIds!.Count == 1 && _vacancies.Count == 1)
+                {
+                    Navigation.NavigateTo($"/vacancies/{_vacancies[0].Id:D}", replace: true);
+                    return;
+                }
             }
 
             if (_vacancies.Count > 0)

@@ -3,6 +3,7 @@ using Jobsy.Core.Interfaces;
 using Jobsy.Core.Rules;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 
 namespace Jobsy.Api.Controllers;
 
@@ -321,6 +322,7 @@ public class AmbassadeursController : ControllerBase
 
     [HttpGet("me/flyers/{kind}")]
     [Authorize(Policy = JobsyPolicies.RequireAmbassadeur)]
+    [EnableRateLimiting("public-pdf")]
     public async Task<IActionResult> DownloadFlyer(string kind, CancellationToken cancellationToken)
     {
         var user = await _users.FindByPrincipalAsync(User, cancellationToken);
