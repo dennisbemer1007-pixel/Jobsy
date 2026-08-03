@@ -3,14 +3,16 @@
 @inject JobsyApiClient Api
 @inject NavigationManager Navigation
 
-<div class="panel-page">
-    <p class="state-message">@(_error ?? "Je wordt doorgestuurd…")</p>
+<PageTitle>Vacatures · Lobsy</PageTitle>
+
+<div class="panel-page vestiging-landing">
+    <p class="state-message">@(_message)</p>
 </div>
 
 @code {
     [Parameter] public Guid CompanyId { get; set; }
 
-    private string? _error;
+    private string _message = "Even geduld — we openen de juiste vacatures…";
 
     protected override async Task OnInitializedAsync()
     {
@@ -20,11 +22,23 @@
             var path = string.IsNullOrWhiteSpace(route?.RedirectPath)
                 ? $"/?company={CompanyId:D}"
                 : route.RedirectPath;
+
+            if (route is not null
+                && string.Equals(route.Kind, "VacancyDetail", StringComparison.OrdinalIgnoreCase))
+            {
+                _message = "Je wordt doorgestuurd naar de vacature…";
+            }
+            else
+            {
+                _message = "Je wordt doorgestuurd naar de vacaturekaart…";
+            }
+
+            await InvokeAsync(StateHasChanged);
             Navigation.NavigateTo(path, replace: true);
         }
-        catch (Exception ex)
+        catch
         {
-            _error = ex.Message;
+            _message = "Doorsturen naar de vacaturekaart…";
             Navigation.NavigateTo($"/?company={CompanyId:D}", replace: true);
         }
     }

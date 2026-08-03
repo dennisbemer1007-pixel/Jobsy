@@ -16,17 +16,26 @@
         <div class="panel-header__actions">
             @if (EnableRaamflyer)
             {
-                <div class="raamflyer-actions">
+                <div class="raamflyer-actions" aria-label="Raamflyer downloaden">
                     @if (AllowOverviewRaamflyer && _companies.Count > 1)
                     {
-                        <button type="button"
-                                class="login-submit login-submit--secondary"
-                                disabled="@(_flyerBusy || _loadingCompanies)"
-                                @onclick="DownloadOverviewAsync">
-                            @(_flyerBusy && _flyerMode == "overview" ? "Bezig…" : "Download overzichtsflyer")
-                        </button>
+                        <div class="raamflyer-scope" role="group" aria-label="Flyerscope">
+                            <button type="button"
+                                    class="raamflyer-scope__btn @(_scope == FlyerScope.Branch ? "is-active" : null)"
+                                    disabled="@(_flyerBusy || _loadingCompanies)"
+                                    @onclick="() => _scope = FlyerScope.Branch">
+                                Per vestiging
+                            </button>
+                            <button type="button"
+                                    class="raamflyer-scope__btn @(_scope == FlyerScope.Overview ? "is-active" : null)"
+                                    disabled="@(_flyerBusy || _loadingCompanies)"
+                                    @onclick="() => _scope = FlyerScope.Overview">
+                                Alle vestigingen
+                            </button>
+                        </div>
                     }
-                    @if (_companies.Count > 1)
+
+                    @if (_scope == FlyerScope.Branch && _companies.Count > 1)
                     {
                         <label class="raamflyer-branch">
                             <span class="visually-hidden">Vestiging</span>
@@ -38,12 +47,22 @@
                             </select>
                         </label>
                     }
+
+                    <label class="raamflyer-format">
+                        <span class="visually-hidden">Formaat</span>
+                        <select @bind="_format" disabled="@_flyerBusy">
+                            <option value="A4">A4</option>
+                            <option value="A3">A3</option>
+                        </select>
+                    </label>
+
                     <button type="button"
                             class="login-submit"
-                            disabled="@(_flyerBusy || _loadingCompanies || !Guid.TryParse(_selectedCompanyId, out _))"
-                            @onclick="DownloadBranchAsync">
-                        @(_flyerBusy && _flyerMode == "branch" ? "Bezig…" : "Download Raamflyer")
+                            disabled="@(_flyerBusy || _loadingCompanies || (_scope == FlyerScope.Branch && !Guid.TryParse(_selectedCompanyId, out _)))"
+                            @onclick="DownloadAsync">
+                        @(_flyerBusy ? "Bezig…" : "Download Raamflyer PDF")
                     </button>
+
                     @if (!string.IsNullOrWhiteSpace(_flyerError))
                     {
                         <p class="state-message error raamflyer-error">@_flyerError</p>
@@ -83,6 +102,8 @@
 </div>
 
 @code {
+    private enum FlyerScope { Branch, Overview }
+
     private static readonly string[] PeriodKeys = ["day", "week", "month", "quarter", "year"];
 
     [Parameter] public string Title { get; set; } = "Dashboard";
@@ -101,9 +122,10 @@
 
     private List<CompanySummary> _companies = [];
     private string _selectedCompanyId = "";
+    private string _format = "A4";
+    private FlyerScope _scope = FlyerScope.Branch;
     private bool _loadingCompanies;
     private bool _flyerBusy;
-    private string? _flyerMode;
     private string? _flyerError;
 
     private string PeriodLabel(string key) => key switch
@@ -192,6 +214,11 @@
                              ?? _companies[0];
                 _selectedCompanyId = branch.Id.ToString("D");
             }
+
+            if (!AllowOverviewRaamflyer || _companies.Count <= 1)
+            {
+                _scope = FlyerScope.Branch;
+            }
         }
         catch (Exception ex)
         {
@@ -204,19 +231,34 @@
         }
     }
 
+    private async Task DownloadAsync()
+    {
+        if (_flyerBusy)
+        {
+            return;
+        }
+
+        if (_scope == FlyerScope.Overview)
+        {
+            await DownloadOverviewAsync();
+            return;
+        }
+
+        await DownloadBranchAsync();
+    }
+
     private async Task DownloadBranchAsync()
     {
-        if (!Guid.TryParse(_selectedCompanyId, out var companyId) || _flyerBusy)
+        if (!Guid.TryParse(_selectedCompanyId, out var companyId))
         {
             return;
         }
 
         _flyerBusy = true;
-        _flyerMode = "branch";
         _flyerError = null;
         try
         {
-            await Api.DownloadBranchRaamflyerPdfAsync(Js, companyId, "A4");
+            await Api.DownloadBranchRaamflyerPdfAsync(Js, companyId, _format);
         }
         catch (Exception ex)
         {
@@ -225,28 +267,26 @@
         finally
         {
             _flyerBusy = false;
-            _flyerMode = null;
         }
     }
 
     private async Task DownloadOverviewAsync()
     {
-        if (_flyerBusy || _companies.Count == 0)
+        if (_companies.Count == 0)
         {
             return;
         }
 
         _flyerBusy = true;
-        _flyerMode = "overview";
         _flyerError = null;
         try
         {
             await Api.DownloadOverviewRaamflyerPdfAsync(
                 Js,
                 title: Title.Contains("Regio", StringComparison.OrdinalIgnoreCase)
-                    ? "Vacatures in onze regio"
-                    : "Vacatures bij onze vestigingen",
-                format: "A4",
+                    ? "onze regio"
+                    : "onze vestigingen",
+                format: _format,
                 companyIds: _companies.Select(c => c.Id));
         }
         catch (Exception ex)
@@ -256,7 +296,6 @@
         finally
         {
             _flyerBusy = false;
-            _flyerMode = null;
         }
     }
 

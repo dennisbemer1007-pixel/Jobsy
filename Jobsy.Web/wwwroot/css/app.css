@@ -4675,13 +4675,41 @@ html[dir="rtl"] .language-selector__menu {
     border: 1px solid color-mix(in srgb, var(--brand-navy, #0f2d5c) 35%, transparent);
 }
 
-.raamflyer-branch select {
+.raamflyer-scope {
+    display: inline-flex;
+    border: 1px solid color-mix(in srgb, var(--brand-navy, #0f2d5c) 22%, transparent);
+    border-radius: 8px;
+    overflow: hidden;
+    background: #fff;
+}
+
+.raamflyer-scope__btn {
+    border: 0;
+    background: transparent;
+    color: var(--brand-navy, #0f2d5c);
+    padding: 0.4rem 0.7rem;
+    font-size: 0.85rem;
+    cursor: pointer;
+    min-height: 2.4rem;
+}
+
+.raamflyer-scope__btn.is-active {
+    background: var(--brand-navy, #0f2d5c);
+    color: #fff;
+}
+
+.raamflyer-branch select,
+.raamflyer-format select {
     min-height: 2.4rem;
     border-radius: 8px;
     border: 1px solid color-mix(in srgb, var(--brand-navy, #0f2d5c) 22%, transparent);
     padding: 0.35rem 0.55rem;
     background: #fff;
     max-width: 14rem;
+}
+
+.raamflyer-format select {
+    max-width: 5rem;
 }
 
 .raamflyer-error {

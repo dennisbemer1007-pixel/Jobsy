@@ -1852,8 +1852,14 @@
         }
 
         _pendingCompanyMapFocus = false;
+        showMapOnMobile = true;
         try
         {
+            // Let the mobile map pane finish layout before opening the cluster popup.
+            await InvokeAsync(StateHasChanged);
+            await Task.Delay(120);
+            await Js.InvokeVoidAsync("jobMap.invalidate");
+            await Task.Delay(220);
             await Js.InvokeVoidAsync("jobMap.focusCompany", companyId.ToString("D"));
         }
         catch

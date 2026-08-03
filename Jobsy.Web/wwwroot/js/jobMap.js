@@ -1107,9 +1107,11 @@ window.jobMap = (function () {
             return;
         }
 
+        invalidate();
         const group = L.featureGroup(markers);
-        map.fitBounds(group.getBounds().pad(0.35), { maxZoom: 15, animate: true });
+        map.fitBounds(group.getBounds().pad(0.45), { maxZoom: 16, animate: true });
         setTimeout(function () {
+            invalidate();
             const first = markers[0];
             const parent = clusterGroup.getVisibleParent(first);
             if (parent && parent !== first && typeof parent.getAllChildMarkers === "function") {
@@ -1117,7 +1119,7 @@ window.jobMap = (function () {
             } else {
                 openCompanyClusterPopup(markers);
             }
-        }, 350);
+        }, 450);
     }
 
     function dispose() {
