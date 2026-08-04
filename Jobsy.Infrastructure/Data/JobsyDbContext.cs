@@ -67,6 +67,8 @@ public class JobsyDbContext : DbContext
     public DbSet<SelfBillingInvoiceLine> SelfBillingInvoiceLines => Set<SelfBillingInvoiceLine>();
     public DbSet<SalesManagerPayoutCheckout> SalesManagerPayoutCheckouts => Set<SalesManagerPayoutCheckout>();
     public DbSet<MasterdataOption> MasterdataOptions => Set<MasterdataOption>();
+    public DbSet<ExclusivitySetting> ExclusivitySettings => Set<ExclusivitySetting>();
+    public DbSet<ExclusivityEducation> ExclusivityEducations => Set<ExclusivityEducation>();
     public DbSet<SalesCommercialSettings> SalesCommercialSettings => Set<SalesCommercialSettings>();
     public DbSet<VacancyTypeTokenCost> VacancyTypeTokenCosts => Set<VacancyTypeTokenCost>();
     public DbSet<SalesPackage> SalesPackages => Set<SalesPackage>();
@@ -218,6 +220,7 @@ public class JobsyDbContext : DbContext
             entity.HasIndex(e => e.ClosedAtUtc);
             entity.HasIndex(e => e.IntermediaryCompanyId);
             entity.HasIndex(e => new { e.Status, e.Kind });
+            entity.HasIndex(e => e.ExclusivitySettingId);
             entity.HasOne(e => e.Company)
                 .WithMany(c => c.Vacancies)
                 .HasForeignKey(e => e.CompanyId)
@@ -229,6 +232,10 @@ public class JobsyDbContext : DbContext
             entity.HasOne(e => e.SalaryTable)
                 .WithMany(t => t.Vacancies)
                 .HasForeignKey(e => e.SalaryTableId)
+                .OnDelete(DeleteBehavior.SetNull);
+            entity.HasOne(e => e.ExclusivitySetting)
+                .WithMany(s => s.Vacancies)
+                .HasForeignKey(e => e.ExclusivitySettingId)
                 .OnDelete(DeleteBehavior.SetNull);
         });
 
@@ -336,6 +343,11 @@ public class JobsyDbContext : DbContext
             entity.Property(e => e.SnapshotEducations).HasMaxLength(512);
             entity.Property(e => e.SnapshotAboutMe).HasMaxLength(1024);
             entity.Property(e => e.Motivation).HasMaxLength(500);
+            entity.Property(e => e.StudentNumber).HasMaxLength(64);
+            entity.Property(e => e.SchoolEmail).HasMaxLength(256);
+            entity.Property(e => e.StudyProgram).HasMaxLength(256);
+            entity.Property(e => e.StudyYear).HasMaxLength(64);
+            entity.Property(e => e.ExclusivityValidationStatus).HasMaxLength(32);
             entity.Property(e => e.MatchBreakdownJson).HasMaxLength(4000);
             entity.HasIndex(e => e.MatchPercent);
             entity.HasIndex(e => e.ViaSafetyNet)
@@ -990,6 +1002,34 @@ public class JobsyDbContext : DbContext
             entity.Property(e => e.Label).HasMaxLength(128).IsRequired();
             entity.HasIndex(e => new { e.Category, e.Value }).IsUnique();
             entity.HasIndex(e => new { e.Category, e.SortOrder });
+        });
+
+        modelBuilder.Entity<ExclusivitySetting>(entity =>
+        {
+            entity.ToTable("ExclusivitySettings");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Name).HasMaxLength(256).IsRequired();
+            entity.Property(e => e.SchoolDomain).HasMaxLength(256);
+            entity.Property(e => e.StudentNumberPattern).HasMaxLength(512);
+            entity.HasIndex(e => e.SortOrder);
+            entity.HasIndex(e => e.SchoolDomain)
+                .IsUnique()
+                .HasFilter("\"SchoolDomain\" IS NOT NULL");
+            entity.HasIndex(e => e.IsOpenOption)
+                .IsUnique()
+                .HasFilter("\"IsOpenOption\" = TRUE");
+        });
+
+        modelBuilder.Entity<ExclusivityEducation>(entity =>
+        {
+            entity.ToTable("ExclusivityEducations");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Name).HasMaxLength(256).IsRequired();
+            entity.HasIndex(e => new { e.ExclusivitySettingId, e.SortOrder });
+            entity.HasOne(e => e.ExclusivitySetting)
+                .WithMany(s => s.Educations)
+                .HasForeignKey(e => e.ExclusivitySettingId)
+                .OnDelete(DeleteBehavior.Cascade);
         });
     }
 }

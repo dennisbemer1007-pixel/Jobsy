@@ -264,6 +264,10 @@ namespace Jobsy.Infrastructure.Data.Migrations
                     b.Property<int>("EstimatedTravelMinutes")
                         .HasColumnType("integer");
 
+                    b.Property<string>("ExclusivityValidationStatus")
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)");
+
                     b.Property<string>("MatchBreakdownJson")
                         .HasMaxLength(4000)
                         .HasColumnType("character varying(4000)");
@@ -287,6 +291,10 @@ namespace Jobsy.Infrastructure.Data.Migrations
                     b.Property<DateTime?>("RespondedAt")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<string>("SchoolEmail")
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
                     b.Property<string>("SnapshotAboutMe")
                         .HasMaxLength(1024)
                         .HasColumnType("character varying(1024)");
@@ -305,6 +313,18 @@ namespace Jobsy.Infrastructure.Data.Migrations
 
                     b.Property<int>("Status")
                         .HasColumnType("integer");
+
+                    b.Property<string>("StudentNumber")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<string>("StudyProgram")
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
+                    b.Property<string>("StudyYear")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
 
                     b.Property<Guid>("VacancyId")
                         .HasColumnType("uuid");
@@ -862,6 +882,82 @@ namespace Jobsy.Infrastructure.Data.Migrations
                     b.HasIndex("TargetCompanyId");
 
                     b.ToTable("EstablishmentTakeoverRequests");
+                });
+
+            modelBuilder.Entity("Jobsy.Core.Entities.ExclusivityEducation", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("ExclusivitySettingId")
+                        .HasColumnType("uuid");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
+                    b.Property<int>("SortOrder")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ExclusivitySettingId", "SortOrder");
+
+                    b.ToTable("ExclusivityEducations", (string)null);
+                });
+
+            modelBuilder.Entity("Jobsy.Core.Entities.ExclusivitySetting", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("IsOpenOption")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
+                    b.Property<string>("SchoolDomain")
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
+                    b.Property<int>("SortOrder")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("StudentNumberPattern")
+                        .HasMaxLength(512)
+                        .HasColumnType("character varying(512)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("IsOpenOption")
+                        .IsUnique()
+                        .HasFilter("\"IsOpenOption\" = TRUE");
+
+                    b.HasIndex("SchoolDomain")
+                        .IsUnique()
+                        .HasFilter("\"SchoolDomain\" IS NOT NULL");
+
+                    b.HasIndex("SortOrder");
+
+                    b.ToTable("ExclusivitySettings", (string)null);
                 });
 
             modelBuilder.Entity("Jobsy.Core.Entities.IntegrationCredential", b =>
@@ -2288,6 +2384,9 @@ namespace Jobsy.Infrastructure.Data.Migrations
                     b.Property<DateOnly>("EndDate")
                         .HasColumnType("date");
 
+                    b.Property<Guid?>("ExclusivitySettingId")
+                        .HasColumnType("uuid");
+
                     b.Property<int>("ExtensionCount")
                         .HasColumnType("integer");
 
@@ -2415,6 +2514,8 @@ namespace Jobsy.Infrastructure.Data.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("ClosedAtUtc");
+
+                    b.HasIndex("ExclusivitySettingId");
 
                     b.HasIndex("IntermediaryCompanyId");
 
@@ -2915,6 +3016,17 @@ namespace Jobsy.Infrastructure.Data.Migrations
                     b.Navigation("TargetCompany");
                 });
 
+            modelBuilder.Entity("Jobsy.Core.Entities.ExclusivityEducation", b =>
+                {
+                    b.HasOne("Jobsy.Core.Entities.ExclusivitySetting", "ExclusivitySetting")
+                        .WithMany("Educations")
+                        .HasForeignKey("ExclusivitySettingId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("ExclusivitySetting");
+                });
+
             modelBuilder.Entity("Jobsy.Core.Entities.LocalAuthCredential", b =>
                 {
                     b.HasOne("Jobsy.Core.Entities.User", "User")
@@ -3257,6 +3369,11 @@ namespace Jobsy.Infrastructure.Data.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("Jobsy.Core.Entities.ExclusivitySetting", "ExclusivitySetting")
+                        .WithMany("Vacancies")
+                        .HasForeignKey("ExclusivitySettingId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
                     b.HasOne("Jobsy.Core.Entities.Company", "IntermediaryCompany")
                         .WithMany()
                         .HasForeignKey("IntermediaryCompanyId")
@@ -3268,6 +3385,8 @@ namespace Jobsy.Infrastructure.Data.Migrations
                         .OnDelete(DeleteBehavior.SetNull);
 
                     b.Navigation("Company");
+
+                    b.Navigation("ExclusivitySetting");
 
                     b.Navigation("IntermediaryCompany");
 
@@ -3399,6 +3518,13 @@ namespace Jobsy.Infrastructure.Data.Migrations
                     b.Navigation("ChangeLogs");
 
                     b.Navigation("Rates");
+
+                    b.Navigation("Vacancies");
+                });
+
+            modelBuilder.Entity("Jobsy.Core.Entities.ExclusivitySetting", b =>
+                {
+                    b.Navigation("Educations");
 
                     b.Navigation("Vacancies");
                 });

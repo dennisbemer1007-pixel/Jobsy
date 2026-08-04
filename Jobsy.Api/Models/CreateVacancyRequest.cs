@@ -32,4 +32,5 @@ public record CreateVacancyRequest(
     bool? LegalHandlesMoneyOrClosing = null,
     bool? LegalHeavyOrHazardousWork = null,
     bool ShowClientAddressOnMap = false,
-    VacancyKind Kind = VacancyKind.Regular);
+    VacancyKind Kind = VacancyKind.Regular,
+    Guid? ExclusivitySettingId = null);

@@ -159,6 +159,7 @@ public static class DependencyInjection
         services.AddScoped<IAssistantChatService, AssistantChatService>();
         services.AddScoped<ITranslationService, OpenAiTranslationService>();
         services.AddScoped<IPrivacyDataService, PrivacyDataService>();
+        services.AddScoped<IExclusivitySettingService, ExclusivitySettingService>();
         services.AddHostedService<DataRetentionHostedService>();
         services.AddHostedService<DraftVacancyCleanupHostedService>();
         services.AddHostedService<CompanyReengagementHostedService>();

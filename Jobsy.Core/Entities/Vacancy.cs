@@ -60,6 +60,13 @@ public class Vacancy
     /// <summary>Employment category: regular, internship, or volunteer (placement pricing).</summary>
     public VacancyKind Kind { get; set; } = VacancyKind.Regular;
 
+    /// <summary>
+    /// Stage-exclusiviteit (masterdata). Alleen relevant bij <see cref="VacancyKind.Internship"/>.
+    /// Null / open-optie = zichtbaar en solliciteerbaar voor iedereen.
+    /// </summary>
+    public Guid? ExclusivitySettingId { get; set; }
+    public ExclusivitySetting? ExclusivitySetting { get; set; }
+
     public string? ImageUrl { get; set; }
     public string? VideoUrl { get; set; }
     public bool IsHighlighted { get; set; }

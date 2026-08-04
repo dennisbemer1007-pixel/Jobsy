@@ -164,11 +164,28 @@ public class ApplicationsController : ControllerBase
         var vacancy = await _db.Vacancies
             .Include(v => v.Company)
                 .ThenInclude(c => c.ParentCompany)
+            .Include(v => v.ExclusivitySetting!)
+                .ThenInclude(s => s.Educations)
             .FirstOrDefaultAsync(v => v.Id == request.VacancyId, cancellationToken);
 
         if (vacancy is null)
         {
             return NotFound();
+        }
+
+        if (vacancy.Kind == VacancyKind.Internship
+            && vacancy.ExclusivitySetting is { } exclusivity
+            && ExclusivityRules.RequiresApplicantExtras(exclusivity))
+        {
+            var exclusivityError = ExclusivityRules.ValidateApplicantExtras(
+                exclusivity,
+                request.StudentNumber,
+                request.SchoolEmail,
+                request.StudyProgram);
+            if (exclusivityError is not null)
+            {
+                return BadRequest(new { message = exclusivityError });
+            }
         }
 
         var today = DateOnly.FromDateTime(DateTime.UtcNow);
@@ -325,6 +342,29 @@ public class ApplicationsController : ControllerBase
         application.MatchBreakdownJson = Truncate(matchJson, 4000);
         application.ViaSafetyNet = GuldenMiddenwegRules.RequiresSafetyNetConfirmation(match)
                                    && request.ConfirmLowMatchSafetyNet;
+
+        if (vacancy.Kind == VacancyKind.Internship
+            && vacancy.ExclusivitySetting is { } excl
+            && ExclusivityRules.RequiresApplicantExtras(excl))
+        {
+            application.StudentNumber = Truncate(request.StudentNumber?.Trim(), 64);
+            application.SchoolEmail = Truncate(request.SchoolEmail?.Trim().ToLowerInvariant(), 256);
+            application.StudyProgram = Truncate(request.StudyProgram?.Trim(), 256);
+            application.StudyYear = Truncate(
+                string.IsNullOrWhiteSpace(request.StudyYear) ? null : request.StudyYear.Trim(),
+                64);
+            application.ExclusivityValidationStatus = "Ok";
+        }
+        else
+        {
+            application.StudentNumber = null;
+            application.SchoolEmail = null;
+            application.StudyProgram = null;
+            application.StudyYear = null;
+            application.ExclusivityValidationStatus = vacancy.Kind == VacancyKind.Internship
+                ? "NotApplicable"
+                : null;
+        }
 
         if (!isVerificationAttempt)
         {

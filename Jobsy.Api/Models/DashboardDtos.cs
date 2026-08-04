@@ -98,7 +98,11 @@ public record ApplyRequest(
     bool WorkPermitConfirmed = false,
     string? VerificationCode = null,
     string? Motivation = null,
-    bool ConfirmLowMatchSafetyNet = false);
+    bool ConfirmLowMatchSafetyNet = false,
+    string? StudentNumber = null,
+    string? SchoolEmail = null,
+    string? StudyProgram = null,
+    string? StudyYear = null);
 
 public record ReactToApplicationRequest(ApplicationStatus Status);
 

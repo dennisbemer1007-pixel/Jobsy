@@ -35,6 +35,21 @@ public class Application
     /// <summary>Optional free-text motivation on apply (separate from SnapshotAboutMe).</summary>
     public string? Motivation { get; set; }
 
+    /// <summary>Studentnummer (verplicht bij exclusieve stageplek).</summary>
+    public string? StudentNumber { get; set; }
+
+    /// <summary>School e-mailadres (verplicht bij exclusieve stageplek).</summary>
+    public string? SchoolEmail { get; set; }
+
+    /// <summary>Opleiding (verplicht bij exclusieve stageplek).</summary>
+    public string? StudyProgram { get; set; }
+
+    /// <summary>Leerjaar (optioneel bij exclusieve stageplek).</summary>
+    public string? StudyYear { get; set; }
+
+    /// <summary>Uitkomst van exclusiviteitsvalidatie: Ok / Failed / NotApplicable.</summary>
+    public string? ExclusivityValidationStatus { get; set; }
+
     /// <summary>True when candidate proceeded despite match score &lt; 50% (Gulden Middenweg).</summary>
     public bool ViaSafetyNet { get; set; }
 

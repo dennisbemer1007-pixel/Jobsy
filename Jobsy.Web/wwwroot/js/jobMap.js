@@ -330,9 +330,11 @@ window.jobMap = (function () {
             : "map-popup__media map-popup__media--logo-only";
 
         let mediaInner = "";
-        if (v.highlighted || primaryWork) {
+        if (v.highlighted || v.exclusivityBadge || primaryWork) {
             const featuredLabel = v.featuredLabel || "Uitgelicht";
-            const badgeText = v.highlighted ? featuredLabel : primaryWork;
+            const badgeText = v.highlighted
+                ? featuredLabel
+                : (v.exclusivityBadge || primaryWork);
             const badgeClass = v.highlighted
                 ? "map-popup__badge map-popup__badge--featured"
                 : "map-popup__badge map-popup__badge--soft";

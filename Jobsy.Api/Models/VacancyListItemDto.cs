@@ -51,4 +51,10 @@ public record VacancyListItemDto(
     string? OfferedByLabel = null,
     bool ShowClientAddressOnMap = false,
     Guid? IntermediaryCompanyId = null,
-    string Kind = "Regular");
+    string Kind = "Regular",
+    Guid? ExclusivitySettingId = null,
+    string? ExclusivityName = null,
+    bool ExclusivityIsOpen = true,
+    string? ExclusivitySchoolDomain = null,
+    string? ExclusivityStudentNumberPattern = null,
+    IReadOnlyList<string>? ExclusivityEducations = null);

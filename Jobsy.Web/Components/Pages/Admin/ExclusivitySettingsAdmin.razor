@@ -1,0 +1,243 @@
+@page "/admin/exclusivity"
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
+@attribute [Authorize(Roles = "Admin")]
+@using Jobsy.Web.Components.Admin
+@using Jobsy.Web.Navigation
+@inject JobsyApiClient Api
+@inject CultureState Culture
+@implements IDisposable
+
+<PageTitle>@Culture["Admin.Exclusivity"] · Lobsy</PageTitle>
+
+<AdminPageShell Title="@Culture["Admin.Exclusivity"]" Lead="@Culture["Admin.ExclusivityLead"]" ShowSettingsNav="true">
+    @if (_loading)
+    {
+        <p class="state-message">@Culture["Common.Loading"]</p>
+    }
+    else
+    {
+        <div class="table-list">
+            @foreach (var item in _items.OrderBy(i => i.SortOrder).ThenBy(i => i.Name))
+            {
+                <div class="table-row masterdata-row">
+                    <div class="masterdata-row__fields" style="grid-template-columns: 1.4fr 1fr 1fr 0.5fr;">
+                        <label>
+                            Naam
+                            <input @bind="item.Name" @bind:event="oninput" disabled="@(_busyId == item.Id)" />
+                        </label>
+                        <label>
+                            Schooldomein
+                            <input @bind="item.SchoolDomain" @bind:event="oninput" placeholder="student.school.nl" disabled="@(_busyId == item.Id || item.IsOpenOption)" />
+                        </label>
+                        <label>
+                            Studentnummerpatroon (regex)
+                            <input @bind="item.StudentNumberPattern" @bind:event="oninput" placeholder="^\d{7,8}$" disabled="@(_busyId == item.Id || item.IsOpenOption)" />
+                        </label>
+                        <label class="masterdata-row__sort">
+                            Volgorde
+                            <input type="number" min="0" @bind="item.SortOrder" @bind:event="oninput" disabled="@(_busyId == item.Id)" />
+                        </label>
+                    </div>
+                    <label style="display:block;margin:0.5rem 0;">
+                        Opleidingen (één per regel)
+                        <textarea rows="3"
+                                  @bind="_educationDrafts[item.Id]"
+                                  @bind:event="oninput"
+                                  disabled="@(_busyId == item.Id || item.IsOpenOption)"></textarea>
+                    </label>
+                    <div class="masterdata-row__flags">
+                        <label>
+                            <input type="checkbox" @bind="item.IsActive" disabled="@(_busyId == item.Id)" />
+                            Actief
+                        </label>
+                        <label>
+                            <input type="checkbox" @bind="item.IsOpenOption" disabled="@(_busyId == item.Id)" />
+                            Open voor iedereen
+                        </label>
+                    </div>
+                    <div class="inline-actions">
+                        <button class="provider-btn" type="button" disabled="@(_busyId == item.Id)" @onclick="() => SaveAsync(item)">@Culture["Common.Save"]</button>
+                        <button type="button" class="icon-btn icon-btn--danger" title="Verwijderen" aria-label="Item verwijderen" disabled="@(_busyId == item.Id || item.IsOpenOption)" @onclick="() => DeleteAsync(item)">
+                            @((MarkupString)ActionIcons.Trash)
+                        </button>
+                    </div>
+                </div>
+            }
+        </div>
+
+        <div class="masterdata-add">
+            <h3>@Culture["Common.Add"]</h3>
+            <div class="masterdata-row__fields" style="grid-template-columns: 1fr 1fr 1fr;">
+                <label>
+                    Naam
+                    <input @bind="_newName" placeholder="Exclusief voor …" />
+                </label>
+                <label>
+                    Schooldomein
+                    <input @bind="_newDomain" placeholder="student.school.nl" />
+                </label>
+                <label>
+                    Studentnummerpatroon
+                    <input @bind="_newPattern" placeholder="^\d{7,8}$" />
+                </label>
+            </div>
+            <label style="display:block;margin:0.5rem 0;">
+                Opleidingen (één per regel)
+                <textarea rows="3" @bind="_newEducations"></textarea>
+            </label>
+            <label>
+                <input type="checkbox" @bind="_newIsOpen" />
+                Open voor iedereen
+            </label>
+            <button class="login-submit" type="button" disabled="@_creating" @onclick="CreateAsync">@Culture["Common.Add"]</button>
+        </div>
+
+        @if (!string.IsNullOrEmpty(_message))
+        {
+            <p class="state-message">@_message</p>
+        }
+        @if (!string.IsNullOrEmpty(_error))
+        {
+            <p class="login-error">@_error</p>
+        }
+    }
+</AdminPageShell>
+
+@code {
+    private List<ExclusivitySettingItem> _items = [];
+    private readonly Dictionary<Guid, string> _educationDrafts = new();
+    private bool _loading = true;
+    private Guid? _busyId;
+    private bool _creating;
+    private string? _message;
+    private string? _error;
+    private string _newName = "";
+    private string _newDomain = "";
+    private string _newPattern = "";
+    private string _newEducations = "";
+    private bool _newIsOpen;
+
+    protected override async Task OnInitializedAsync()
+    {
+        Culture.Changed += OnCultureChanged;
+        await ReloadAsync();
+    }
+
+    private void OnCultureChanged() => InvokeAsync(StateHasChanged);
+
+    public void Dispose() => Culture.Changed -= OnCultureChanged;
+
+    private async Task ReloadAsync()
+    {
+        _loading = true;
+        _error = null;
+        try
+        {
+            _items = (await Api.GetExclusivitySettingsAsync(admin: true)).ToList();
+            _educationDrafts.Clear();
+            foreach (var item in _items)
+            {
+                _educationDrafts[item.Id] = string.Join('\n', item.Educations.OrderBy(e => e.SortOrder).Select(e => e.Name));
+            }
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private static List<string> ParseEducations(string? raw)
+        => (raw ?? "")
+            .Split(['\n', '\r', ';'], StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            .Where(s => !string.IsNullOrWhiteSpace(s))
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToList();
+
+    private async Task SaveAsync(ExclusivitySettingItem item)
+    {
+        _busyId = item.Id;
+        _error = null;
+        _message = null;
+        try
+        {
+            await Api.UpdateExclusivitySettingAsync(item.Id, new ExclusivitySettingForm
+            {
+                Name = item.Name,
+                SchoolDomain = item.SchoolDomain,
+                StudentNumberPattern = item.StudentNumberPattern,
+                IsActive = item.IsActive,
+                IsOpenOption = item.IsOpenOption,
+                SortOrder = item.SortOrder,
+                Educations = ParseEducations(_educationDrafts.GetValueOrDefault(item.Id))
+            });
+            _message = "Opgeslagen.";
+            await ReloadAsync();
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _busyId = null;
+        }
+    }
+
+    private async Task DeleteAsync(ExclusivitySettingItem item)
+    {
+        _busyId = item.Id;
+        _error = null;
+        try
+        {
+            await Api.DeleteExclusivitySettingAsync(item.Id);
+            _message = "Verwijderd.";
+            await ReloadAsync();
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _busyId = null;
+        }
+    }
+
+    private async Task CreateAsync()
+    {
+        _creating = true;
+        _error = null;
+        try
+        {
+            await Api.CreateExclusivitySettingAsync(new ExclusivitySettingForm
+            {
+                Name = _newName,
+                SchoolDomain = _newDomain,
+                StudentNumberPattern = _newPattern,
+                IsActive = true,
+                IsOpenOption = _newIsOpen,
+                SortOrder = (_items.Count == 0 ? 0 : _items.Max(i => i.SortOrder) + 10),
+                Educations = ParseEducations(_newEducations)
+            });
+            _newName = "";
+            _newDomain = "";
+            _newPattern = "";
+            _newEducations = "";
+            _newIsOpen = false;
+            _message = "Toegevoegd.";
+            await ReloadAsync();
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _creating = false;
+        }
+    }
+}

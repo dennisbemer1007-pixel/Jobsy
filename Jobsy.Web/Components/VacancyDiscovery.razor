@@ -403,6 +403,12 @@
                             {
                                 <span class="job-card__badge">@Culture["Discovery.Featured"]</span>
                             }
+                            else if (!string.IsNullOrWhiteSpace(vacancy.ExclusivityName)
+                                     && string.Equals(vacancy.Kind, "Internship", StringComparison.OrdinalIgnoreCase)
+                                     && !vacancy.ExclusivityIsOpen)
+                            {
+                                <span class="job-card__badge job-card__badge--soft">@vacancy.ExclusivityName</span>
+                            }
                             else if (vacancy.WorkTypes.Length > 0)
                             {
                                 <span class="job-card__badge job-card__badge--soft">@UiLabels.WorkType(Culture, vacancy.WorkTypes[0])</span>
@@ -1389,6 +1395,11 @@
                 ["highlighted"] = v.IsHighlighted,
                 ["highlightRank"] = v.IsHighlighted ? HighlightShuffleRank(v.Id) : 0u,
                 ["featuredLabel"] = Culture["Discovery.Featured"],
+                ["exclusivityBadge"] = !v.ExclusivityIsOpen
+                    && string.Equals(v.Kind, "Internship", StringComparison.OrdinalIgnoreCase)
+                    && !string.IsNullOrWhiteSpace(v.ExclusivityName)
+                    ? v.ExclusivityName
+                    : null,
                 ["travelMinutes"] = v.TravelMinutes,
                 ["transportLabel"] = UiLabels.TransportVerb(Culture, _selectedTransport)
             };

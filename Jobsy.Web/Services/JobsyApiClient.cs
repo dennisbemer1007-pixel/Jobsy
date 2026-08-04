@@ -74,6 +74,53 @@ public sealed class JobsyApiClient : IAsyncDisposable
         }
     }
 
+    public async Task<IReadOnlyList<ExclusivitySettingItem>> GetExclusivitySettingsAsync(
+        bool admin = false,
+        CancellationToken ct = default)
+    {
+        var url = admin ? "api/exclusivity-settings/admin" : "api/exclusivity-settings";
+        return await _http.GetFromJsonAsync<List<ExclusivitySettingItem>>(url, ct) ?? [];
+    }
+
+    public async Task<ExclusivitySettingItem?> CreateExclusivitySettingAsync(
+        ExclusivitySettingForm form,
+        CancellationToken ct = default)
+    {
+        var response = await _http.PostAsJsonAsync("api/exclusivity-settings", form, ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException(TryExtractMessage(body) ?? body);
+        }
+
+        return await response.Content.ReadFromJsonAsync<ExclusivitySettingItem>(cancellationToken: ct);
+    }
+
+    public async Task<ExclusivitySettingItem?> UpdateExclusivitySettingAsync(
+        Guid id,
+        ExclusivitySettingForm form,
+        CancellationToken ct = default)
+    {
+        var response = await _http.PutAsJsonAsync($"api/exclusivity-settings/{id}", form, ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException(TryExtractMessage(body) ?? body);
+        }
+
+        return await response.Content.ReadFromJsonAsync<ExclusivitySettingItem>(cancellationToken: ct);
+    }
+
+    public async Task DeleteExclusivitySettingAsync(Guid id, CancellationToken ct = default)
+    {
+        var response = await _http.DeleteAsync($"api/exclusivity-settings/{id}", ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException(TryExtractMessage(body) ?? body);
+        }
+    }
+
     public async Task<IReadOnlyList<VacancyListItem>> DiscoverVacanciesAsync(
         double? originLat,
         double? originLng,
@@ -1711,6 +1758,10 @@ public sealed class JobsyApiClient : IAsyncDisposable
         string? consentVersion = null,
         string? motivation = null,
         bool confirmLowMatchSafetyNet = false,
+        string? studentNumber = null,
+        string? schoolEmail = null,
+        string? studyProgram = null,
+        string? studyYear = null,
         CancellationToken ct = default)
     {
         var response = await _http.PostAsJsonAsync("api/applications", new
@@ -1724,7 +1775,11 @@ public sealed class JobsyApiClient : IAsyncDisposable
             verificationCode,
             consentVersion = consentVersion ?? Jobsy.Core.Privacy.PrivacyConstants.CurrentConsentVersion,
             motivation,
-            confirmLowMatchSafetyNet
+            confirmLowMatchSafetyNet,
+            studentNumber,
+            schoolEmail,
+            studyProgram,
+            studyYear
         }, ct);
         if (!response.IsSuccessStatusCode)
         {
@@ -2536,7 +2591,8 @@ public record CreateVacancyForm(
     bool? LegalHandlesMoneyOrClosing = null,
     bool? LegalHeavyOrHazardousWork = null,
     bool ShowClientAddressOnMap = false,
-    string Kind = "Regular");
+    string Kind = "Regular",
+    Guid? ExclusivitySettingId = null);
 
 public sealed class CsvImportRowForm
 {
@@ -2599,6 +2655,37 @@ public sealed class MasterdataOptionForm
     public bool? IsActive { get; set; }
     public bool? ShowOnCandidate { get; set; }
     public bool? ShowOnVacancy { get; set; }
+}
+
+public sealed class ExclusivityEducationItem
+{
+    public Guid Id { get; set; }
+    public string Name { get; set; } = string.Empty;
+    public int SortOrder { get; set; }
+    public bool IsActive { get; set; } = true;
+}
+
+public sealed class ExclusivitySettingItem
+{
+    public Guid Id { get; set; }
+    public string Name { get; set; } = string.Empty;
+    public string? SchoolDomain { get; set; }
+    public string? StudentNumberPattern { get; set; }
+    public bool IsActive { get; set; } = true;
+    public bool IsOpenOption { get; set; }
+    public int SortOrder { get; set; }
+    public List<ExclusivityEducationItem> Educations { get; set; } = [];
+}
+
+public sealed class ExclusivitySettingForm
+{
+    public string Name { get; set; } = string.Empty;
+    public string? SchoolDomain { get; set; }
+    public string? StudentNumberPattern { get; set; }
+    public bool IsActive { get; set; } = true;
+    public bool IsOpenOption { get; set; }
+    public int SortOrder { get; set; }
+    public List<string>? Educations { get; set; }
 }
 
 public sealed class IntegrationHealthItem

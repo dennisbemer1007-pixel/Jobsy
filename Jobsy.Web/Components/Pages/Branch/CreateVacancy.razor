@@ -117,12 +117,28 @@
             </label>
             <label>
                 Vacaturetype
-                <select @bind="_vacancyKind">
+                <select @bind="_vacancyKind" @bind:after="OnVacancyKindChanged">
                     <option value="Regular">Regulier (vaste baan / bijbaan / BBL)</option>
                     <option value="Internship">Stageplek</option>
                     <option value="Volunteer">Vrijwilligerswerk</option>
                 </select>
             </label>
+            @if (_vacancyKind == "Internship")
+            {
+                <label>
+                    Exclusiviteit
+                    <select @bind="_exclusivitySettingId">
+                        @foreach (var opt in _exclusivityOptions)
+                        {
+                            <option value="@opt.Id.ToString()">@opt.Name</option>
+                        }
+                    </select>
+                </label>
+                @if (SelectedExclusivity is { IsOpenOption: false } exclusive)
+                {
+                    <p class="muted">Deze stageplek wordt zichtbaar voor iedereen, maar alleen studenten van @exclusive.Name kunnen solliciteren.</p>
+                }
+            }
                 <label>
                     Omschrijving
                     <div class="richtext-toolbar" role="toolbar" aria-label="Opmaak">
@@ -515,6 +531,8 @@
     private ElementReference _descriptionRef;
     private string _title = "";
     private string _vacancyKind = "Regular";
+    private string _exclusivitySettingId = "";
+    private List<ExclusivitySettingItem> _exclusivityOptions = [];
     private string _description = "";
     private string _imageUrl = "";
     private string _videoUrl = "";
@@ -743,6 +761,25 @@
         }
     }
 
+    private ExclusivitySettingItem? SelectedExclusivity
+        => _exclusivityOptions.FirstOrDefault(o => o.Id.ToString() == _exclusivitySettingId);
+
+    private void OnVacancyKindChanged()
+    {
+        if (_vacancyKind != "Internship")
+        {
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(_exclusivitySettingId)
+            || _exclusivityOptions.All(o => o.Id.ToString() != _exclusivitySettingId))
+        {
+            var open = _exclusivityOptions.FirstOrDefault(o => o.IsOpenOption)
+                       ?? _exclusivityOptions.FirstOrDefault();
+            _exclusivitySettingId = open?.Id.ToString() ?? "";
+        }
+    }
+
     private async Task LoadMasterdataAsync()
     {
         try
@@ -769,6 +806,16 @@
         {
             // keep built-in fallbacks
         }
+
+        try
+        {
+            _exclusivityOptions = (await Api.GetExclusivitySettingsAsync()).ToList();
+            OnVacancyKindChanged();
+        }
+        catch
+        {
+            _exclusivityOptions = [];
+        }
     }
 
     private async Task PrefillFromAsync(Guid sourceId)
@@ -792,6 +839,8 @@
             _companyId = source.CompanyId;
             _title = AppendCopySuffix(source.Title);
             _vacancyKind = string.IsNullOrWhiteSpace(source.Kind) ? "Regular" : source.Kind;
+            _exclusivitySettingId = source.ExclusivitySettingId?.ToString() ?? "";
+            OnVacancyKindChanged();
             _description = source.Description;
             _imageUrl = source.ImageUrl ?? "";
             _videoUrl = source.VideoUrl ?? "";
@@ -1208,7 +1257,11 @@
                 _legalHandlesMoney,
                 _legalHeavyWork,
                 ShowClientAddressOnMap: _isIntermediary && !_hideClientAddressOnMap,
-                Kind: _vacancyKind));
+                Kind: _vacancyKind,
+                ExclusivitySettingId: _vacancyKind == "Internship"
+                    && Guid.TryParse(_exclusivitySettingId, out var exclId)
+                    ? exclId
+                    : null));
 
             Navigation.NavigateTo("/employer/vacancies");
         }

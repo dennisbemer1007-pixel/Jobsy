@@ -37,6 +37,12 @@ public class VacancyListItem
     public bool ShowClientAddressOnMap { get; set; }
     public Guid? IntermediaryCompanyId { get; set; }
     public string Kind { get; set; } = "Regular";
+    public Guid? ExclusivitySettingId { get; set; }
+    public string? ExclusivityName { get; set; }
+    public bool ExclusivityIsOpen { get; set; } = true;
+    public string? ExclusivitySchoolDomain { get; set; }
+    public string? ExclusivityStudentNumberPattern { get; set; }
+    public List<string> ExclusivityEducations { get; set; } = [];
     public string? RequiredDrivingLicense { get; set; }
     public string? RequiredEducation { get; set; }
     public int? MinimumEmployers { get; set; }

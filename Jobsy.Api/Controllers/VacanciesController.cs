@@ -212,6 +212,8 @@ public class VacanciesController : ControllerBase
             .AsNoTracking()
             .Include(v => v.Company)
             .Include(v => v.IntermediaryCompany)
+            .Include(v => v.ExclusivitySetting!)
+                .ThenInclude(s => s.Educations)
             .Include(v => v.SalaryTable!)
                 .ThenInclude(t => t.Rates)
             .FirstOrDefaultAsync(v => v.Id == id, cancellationToken);
@@ -264,6 +266,8 @@ public class VacanciesController : ControllerBase
             .AsSplitQuery()
             .Include(v => v.Company)
             .Include(v => v.IntermediaryCompany)
+            .Include(v => v.ExclusivitySetting!)
+                .ThenInclude(s => s.Educations)
             .AsQueryable();
 
         if (accessible is not null)
@@ -477,6 +481,17 @@ public class VacanciesController : ControllerBase
             }
         }
 
+        var exclusivityError = await ResolveExclusivitySettingIdAsync(
+            request.Kind,
+            request.ExclusivitySettingId,
+            cancellationToken);
+        if (exclusivityError.Error is not null)
+        {
+            return BadRequest(new { message = exclusivityError.Error });
+        }
+
+        var exclusivitySettingId = exclusivityError.SettingId;
+
         var vacancy = new Core.Entities.Vacancy
         {
             Id = Guid.NewGuid(),
@@ -506,7 +521,8 @@ public class VacanciesController : ControllerBase
             ContactPreferWhatsApp = request.OverrideContactPreference && request.DirectContactEnabled && request.ContactPreferWhatsApp,
             IntermediaryCompanyId = intermediaryCompanyId,
             ShowClientAddressOnMap = isIntermediary && request.ShowClientAddressOnMap,
-            Kind = request.Kind
+            Kind = request.Kind,
+            ExclusivitySettingId = exclusivitySettingId
         };
 
         var hoursError = ApplyHoursAndSchedule(vacancy, request);
@@ -885,6 +901,8 @@ public class VacanciesController : ControllerBase
         => await _db.Vacancies
             .Include(v => v.Company)
             .Include(v => v.IntermediaryCompany)
+            .Include(v => v.ExclusivitySetting!)
+                .ThenInclude(s => s.Educations)
             .FirstOrDefaultAsync(v => v.Id == id, cancellationToken);
 
     private async Task<bool> CanManageVacancyAsync(Vacancy vacancy, CancellationToken cancellationToken)
@@ -1024,6 +1042,8 @@ public class VacanciesController : ControllerBase
             .AsSplitQuery()
             .Include(v => v.Company)
             .Include(v => v.IntermediaryCompany)
+            .Include(v => v.ExclusivitySetting!)
+                .ThenInclude(s => s.Educations)
             .Include(v => v.SalaryTable!)
                 .ThenInclude(t => t.Rates)
             .Where(v =>
@@ -1278,7 +1298,61 @@ public class VacanciesController : ControllerBase
             display.OfferedByLabel,
             v.ShowClientAddressOnMap,
             v.IntermediaryCompanyId,
-            v.Kind.ToString());
+            v.Kind.ToString(),
+            v.ExclusivitySettingId,
+            v.ExclusivitySetting?.Name,
+            v.ExclusivitySetting?.IsOpenOption ?? true,
+            v.ExclusivitySetting?.SchoolDomain,
+            v.ExclusivitySetting?.StudentNumberPattern,
+            v.ExclusivitySetting?.Educations
+                .Where(e => e.IsActive)
+                .OrderBy(e => e.SortOrder)
+                .Select(e => e.Name)
+                .ToList());
+    }
+
+    private async Task<(Guid? SettingId, string? Error)> ResolveExclusivitySettingIdAsync(
+        VacancyKind kind,
+        Guid? requestedId,
+        CancellationToken cancellationToken)
+    {
+        if (kind != VacancyKind.Internship)
+        {
+            return (null, null);
+        }
+
+        if (!await _db.ExclusivitySettings.AnyAsync(cancellationToken))
+        {
+            _db.ExclusivitySettings.Add(new Core.Entities.ExclusivitySetting
+            {
+                Id = ExclusivityRules.DefaultOpenOptionId,
+                Name = ExclusivityRules.DefaultOpenName,
+                IsActive = true,
+                IsOpenOption = true,
+                SortOrder = 0,
+                CreatedAt = DateTime.UtcNow
+            });
+            await _db.SaveChangesAsync(cancellationToken);
+        }
+
+        if (requestedId is Guid id)
+        {
+            var setting = await _db.ExclusivitySettings.AsNoTracking()
+                .FirstOrDefaultAsync(s => s.Id == id && s.IsActive, cancellationToken);
+            if (setting is null)
+            {
+                return (null, "Ongeldige of inactieve exclusiviteitsinstelling.");
+            }
+
+            return (setting.Id, null);
+        }
+
+        var openId = await _db.ExclusivitySettings.AsNoTracking()
+            .Where(s => s.IsOpenOption && s.IsActive)
+            .Select(s => (Guid?)s.Id)
+            .FirstOrDefaultAsync(cancellationToken)
+            ?? ExclusivityRules.DefaultOpenOptionId;
+        return (openId, null);
     }
 
     private async Task<Guid?> ResolveIntermediaryOrganizationIdAsync(

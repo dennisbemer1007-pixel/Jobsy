@@ -77,6 +77,11 @@
             <div class="detail-card__top">
                 <div>
                     <h1>@_vacancy.Title</h1>
+                    @if (string.Equals(_vacancy.Kind, "Internship", StringComparison.OrdinalIgnoreCase)
+                        && !string.IsNullOrWhiteSpace(_vacancy.ExclusivityName))
+                    {
+                        <p class="job-card__badge job-card__badge--soft" style="display:inline-block;margin:0.35rem 0 0">@_vacancy.ExclusivityName</p>
+                    }
                     <p class="company">@(string.IsNullOrWhiteSpace(_vacancy.OfferedByLabel) ? _vacancy.CompanyName : _vacancy.OfferedByLabel)</p>
                     <p class="address">@_vacancy.CompanyAddress</p>
                     @if (!string.IsNullOrWhiteSpace(_vacancy.OfferedByLabel))
@@ -447,6 +452,39 @@
 
                                 <section class="apply-section">
                                     <h3 class="apply-section__title">@Culture["Apply.Confirmations"]</h3>
+                                    @if (RequiresExclusivityExtras)
+                                    {
+                                        <p class="muted">@_vacancy!.ExclusivityName — vul je schoolgegevens in om te solliciteren.</p>
+                                        <label class="apply-field">
+                                            <span>Studentnummer</span>
+                                            <input @bind="_studentNumber" @bind:event="oninput" maxlength="64" required />
+                                        </label>
+                                        <label class="apply-field">
+                                            <span>School e-mailadres</span>
+                                            <input type="email" @bind="_schoolEmail" @bind:event="oninput" maxlength="256" required />
+                                        </label>
+                                        <label class="apply-field">
+                                            <span>Opleiding</span>
+                                            @if (_vacancy.ExclusivityEducations.Count > 0)
+                                            {
+                                                <select @bind="_studyProgram">
+                                                    <option value="">— Kies opleiding —</option>
+                                                    @foreach (var edu in _vacancy.ExclusivityEducations)
+                                                    {
+                                                        <option value="@edu">@edu</option>
+                                                    }
+                                                </select>
+                                            }
+                                            else
+                                            {
+                                                <input @bind="_studyProgram" @bind:event="oninput" maxlength="256" required />
+                                            }
+                                        </label>
+                                        <label class="apply-field">
+                                            <span>Leerjaar (optioneel)</span>
+                                            <input @bind="_studyYear" @bind:event="oninput" maxlength="64" />
+                                        </label>
+                                    }
                                     @if (_authenticatorEnabled)
                                     {
                                         <label class="apply-check">
@@ -494,12 +532,23 @@
                                     </div>
                                 }
 
-                                <button class="login-submit apply-flow__primary"
-                                        type="button"
-                                        disabled="@(_applying || !_acceptedTerms || !_workPermitConfirmed || _showSafetyNet)"
-                                        @onclick="ApplyAsync">
-                                    @(_applying ? Culture["Apply.Busy"] : Culture["Apply.Submit"])
-                                </button>
+                                @if (RequiresExclusivityExtras && ExclusivityBlocksApply)
+                                {
+                                    <button class="login-submit apply-flow__primary"
+                                            type="button"
+                                            disabled>
+                                        Alleen toegankelijk voor studenten van @_vacancy!.ExclusivityName
+                                    </button>
+                                }
+                                else
+                                {
+                                    <button class="login-submit apply-flow__primary"
+                                            type="button"
+                                            disabled="@(_applying || !_acceptedTerms || !_workPermitConfirmed || _showSafetyNet || (RequiresExclusivityExtras && !ExclusivityFieldsReady))"
+                                            @onclick="ApplyAsync">
+                                        @(_applying ? Culture["Apply.Busy"] : Culture["Apply.Submit"])
+                                    </button>
+                                }
                                 <p class="apply-flow__hint">@Culture["Apply.EmailCodeHint"]</p>
                             </div>
                         }
@@ -568,6 +617,10 @@
     private bool _enteredVerifyThisSession;
     private string _verificationCode = string.Empty;
     private string _motivation = string.Empty;
+    private string _studentNumber = string.Empty;
+    private string _schoolEmail = string.Empty;
+    private string _studyProgram = string.Empty;
+    private string _studyYear = string.Empty;
     private bool _showSafetyNet;
     private string? _safetyNetMessage;
     private int? _safetyNetPercent;
@@ -577,6 +630,47 @@
     private bool _openingRoute;
     private Guid? _mappedVacancyId;
     private Guid? _loadedVacancyId;
+
+    private bool RequiresExclusivityExtras
+        => _vacancy is not null
+           && string.Equals(_vacancy.Kind, "Internship", StringComparison.OrdinalIgnoreCase)
+           && !_vacancy.ExclusivityIsOpen
+           && !string.IsNullOrWhiteSpace(_vacancy.ExclusivityName);
+
+    private bool ExclusivityFieldsReady
+        => !string.IsNullOrWhiteSpace(_studentNumber)
+           && !string.IsNullOrWhiteSpace(_schoolEmail)
+           && !string.IsNullOrWhiteSpace(_studyProgram);
+
+    /// <summary>
+    /// Soft UI block when school domain is known and entered school e-mail clearly mismatches.
+    /// </summary>
+    private bool ExclusivityBlocksApply
+    {
+        get
+        {
+            if (!RequiresExclusivityExtras || string.IsNullOrWhiteSpace(_vacancy?.ExclusivitySchoolDomain))
+            {
+                return false;
+            }
+
+            if (string.IsNullOrWhiteSpace(_schoolEmail))
+            {
+                return false;
+            }
+
+            var domain = _vacancy!.ExclusivitySchoolDomain!.Trim().TrimStart('@').ToLowerInvariant();
+            var email = _schoolEmail.Trim().ToLowerInvariant();
+            var at = email.LastIndexOf('@');
+            if (at < 0)
+            {
+                return true;
+            }
+
+            var mailDomain = email[(at + 1)..];
+            return !string.Equals(mailDomain, domain, StringComparison.Ordinal);
+        }
+    }
 
     private string LoginUrl =>
         $"/login?returnUrl={Uri.EscapeDataString($"/vacancies/{Id}")}";
@@ -1224,7 +1318,11 @@
                 acceptedTerms: true,
                 workPermitConfirmed: true,
                 motivation: string.IsNullOrWhiteSpace(_motivation) ? null : _motivation.Trim(),
-                confirmLowMatchSafetyNet: _confirmSafetyNet);
+                confirmLowMatchSafetyNet: _confirmSafetyNet,
+                studentNumber: RequiresExclusivityExtras ? _studentNumber.Trim() : null,
+                schoolEmail: RequiresExclusivityExtras ? _schoolEmail.Trim() : null,
+                studyProgram: RequiresExclusivityExtras ? _studyProgram.Trim() : null,
+                studyYear: RequiresExclusivityExtras && !string.IsNullOrWhiteSpace(_studyYear) ? _studyYear.Trim() : null);
             if (result?.RequiresSafetyNetConfirmation == true)
             {
                 _showSafetyNet = true;
@@ -1291,7 +1389,11 @@
                 acceptedTerms: true,
                 workPermitConfirmed: true,
                 verificationCode: _verificationCode.Trim(),
-                motivation: string.IsNullOrWhiteSpace(_motivation) ? null : _motivation.Trim());
+                motivation: string.IsNullOrWhiteSpace(_motivation) ? null : _motivation.Trim(),
+                studentNumber: RequiresExclusivityExtras ? _studentNumber.Trim() : null,
+                schoolEmail: RequiresExclusivityExtras ? _schoolEmail.Trim() : null,
+                studyProgram: RequiresExclusivityExtras ? _studyProgram.Trim() : null,
+                studyYear: RequiresExclusivityExtras && !string.IsNullOrWhiteSpace(_studyYear) ? _studyYear.Trim() : null);
 
             _applied = result?.RequiresVerification != true;
             _awaitingVerification = result?.RequiresVerification == true;
