@@ -471,20 +471,38 @@
                                       OnSelect="OnCarouselSelect" />
         }
         <div @ref="_mapElement" id="job-map" class="job-map"></div>
-        @if (_categories.Count > 0)
+        @if (_categories.Any(c => c.ShowInLegend && c.IsActive))
         {
-            <aside class="map-legend" aria-label="Legenda vacaturecategorieën">
-                <h3 class="map-legend__title">Legenda</h3>
-                <ul class="map-legend__list">
-                    @foreach (var cat in _categories.Where(c => c.ShowInLegend && c.IsActive))
-                    {
-                        <li class="map-legend__item">
-                            <span class="map-legend__swatch" style="--category-color:@cat.ColorHex" aria-hidden="true"></span>
-                            <span>@cat.Name</span>
-                        </li>
-                    }
-                </ul>
-            </aside>
+            <div class="map-legend @(_legendOpen ? "is-open" : null)">
+                <button type="button"
+                        class="map-legend__toggle"
+                        aria-expanded="@_legendOpen"
+                        aria-controls="map-legend-panel"
+                        title="@(_legendOpen ? "Legenda verbergen" : "Legenda")"
+                        @onclick="ToggleLegend">
+                    <span class="map-legend__toggle-dots" aria-hidden="true">
+                        @foreach (var cat in _categories.Where(c => c.ShowInLegend && c.IsActive).Take(4))
+                        {
+                            <i style="--category-color:@cat.ColorHex"></i>
+                        }
+                    </span>
+                    <span class="visually-hidden">Legenda</span>
+                </button>
+                @if (_legendOpen)
+                {
+                    <aside id="map-legend-panel" class="map-legend__panel" aria-label="Legenda vacaturecategorieën">
+                        <ul class="map-legend__list">
+                            @foreach (var cat in _categories.Where(c => c.ShowInLegend && c.IsActive))
+                            {
+                                <li class="map-legend__item">
+                                    <span class="map-legend__swatch" style="--category-color:@cat.ColorHex" aria-hidden="true"></span>
+                                    <span>@cat.Name</span>
+                                </li>
+                            }
+                        </ul>
+                    </aside>
+                }
+            </div>
         }
     </section>
 
@@ -702,6 +720,7 @@
     private uint _highlightShuffleSeed;
     private bool showMapOnMobile = true;
     private bool _filtersOpen;
+    private bool _legendOpen;
     private bool _branchMenuOpen;
     private bool _mapReady;
     private bool _mapInitScheduled;
@@ -1789,6 +1808,9 @@
         _selectedTransport = e.Value?.ToString() ?? "Fiets";
         await ReloadFiltersIfAppliedAsync();
     }
+
+    private void ToggleLegend()
+        => _legendOpen = !_legendOpen;
 
     private static bool ShowsSuitableFor65Plus(VacancyListItem vacancy)
         => VacancyCategoryDefaults.MatchesSuitableFor65PlusFilter(vacancy.CategoryId, vacancy.SuitableFor65Plus);
