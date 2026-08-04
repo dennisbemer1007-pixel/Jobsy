@@ -57,4 +57,14 @@ public record VacancyListItemDto(
     bool ExclusivityIsOpen = true,
     string? ExclusivitySchoolDomain = null,
     string? ExclusivityStudentNumberPattern = null,
-    IReadOnlyList<string>? ExclusivityEducations = null);
+    IReadOnlyList<string>? ExclusivityEducations = null,
+    Guid? CategoryId = null,
+    string? CategoryName = null,
+    string? CategoryColorHex = null,
+    bool CategoryHighlightAvailable = true,
+    bool CategoryPushBomAvailable = true,
+    decimal? CategoryPublishCostTokens = null,
+    decimal? CategoryHighlightCostTokens = null,
+    decimal? CategoryPushBomCostTokens = null,
+    bool CategoryUseTierPushBomPricing = true,
+    IReadOnlyDictionary<string, string>? CategoryFields = null);

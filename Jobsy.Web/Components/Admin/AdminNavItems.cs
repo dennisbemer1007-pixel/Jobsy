@@ -14,6 +14,7 @@ public static class AdminNavItems
         new("Nav.CompanyDetails", "/admin/company", NavIcons.Companies),
         new("Nav.AboutPage", "/admin/about", NavIcons.Info),
         new("Nav.Masterdata", "/admin/masterdata", NavIcons.Masterdata),
+        new("Nav.VacancyCategories", "/admin/vacancy-categories", NavIcons.Masterdata),
         new("Nav.Exclusivity", "/admin/exclusivity", NavIcons.Masterdata),
         new("Nav.Integrations", "/admin/integrations", NavIcons.Api),
         new("Nav.ApiKeys", "/admin/api-keys", NavIcons.Api),

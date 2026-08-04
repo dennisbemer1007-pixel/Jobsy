@@ -58,6 +58,7 @@ public static class JobsyDbSeeder
                 await MediaBackfillSeeder.BackfillMediaAsync(db, logger);
                 await PlatformSettingsSeeder.SeedPlatformSettingsAsync(db, logger);
                 await MasterdataSeeder.SeedAsync(db, logger);
+                await VacancyCategorySeeder.SeedAsync(db, logger);
                 await Sprint8MetricsSeeder.SeedRichMetricsAsync(db, logger);
                 await SalesManagerDemoSeeder.SeedAsync(db, logger);
                 await WestlandVacanciesSeeder.SeedWestlandBanenkaartAsync(db, logger);
@@ -82,6 +83,7 @@ public static class JobsyDbSeeder
             await ApplicationsAndWagesSeeder.SeedApplicationsAndWagesAsync(db, logger);
             await PlatformSettingsSeeder.SeedPlatformSettingsAsync(db, logger);
             await MasterdataSeeder.SeedAsync(db, logger);
+            await VacancyCategorySeeder.SeedAsync(db, logger);
             await Sprint0DemoSeeder.SeedSprint0DemoAsync(db, logger);
             await Sprint8MetricsSeeder.SeedRichMetricsAsync(db, logger);
             await SalesManagerDemoSeeder.SeedAsync(db, logger);

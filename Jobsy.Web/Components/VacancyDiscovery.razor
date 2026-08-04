@@ -266,6 +266,18 @@
                         }
                     </div>
                 </label>
+                <div class="category-filter category-filter--desktop" role="group" aria-label="Categorie">
+                    @foreach (var cat in _categories.Where(c => c.ShowInMapFilter && c.IsActive))
+                    {
+                        <label class="filter-check category-filter__option">
+                            <input type="checkbox"
+                                   checked="@_selectedCategoryIds.Contains(cat.Id)"
+                                   @onchange="e => ToggleCategoryAsync(cat.Id, e)" />
+                            <span class="category-filter__swatch" style="--category-color:@cat.ColorHex" aria-hidden="true"></span>
+                            <span class="category-filter__name">@cat.Name</span>
+                        </label>
+                    }
+                </div>
                 <label class="filter-required">
                     @Culture["Discovery.Age"]
                     <select value="@AgeSelectValue" @onchange="OnAgeChanged" required>
@@ -446,6 +458,21 @@
                                       OnSelect="OnCarouselSelect" />
         }
         <div @ref="_mapElement" id="job-map" class="job-map"></div>
+        @if (_categories.Count > 0)
+        {
+            <aside class="map-legend" aria-label="Legenda vacaturecategorieën">
+                <h3 class="map-legend__title">Legenda</h3>
+                <ul class="map-legend__list">
+                    @foreach (var cat in _categories.Where(c => c.ShowInLegend && c.IsActive))
+                    {
+                        <li class="map-legend__item">
+                            <span class="map-legend__swatch" style="--category-color:@cat.ColorHex" aria-hidden="true"></span>
+                            <span>@cat.Name</span>
+                        </li>
+                    }
+                </ul>
+            </aside>
+        }
     </section>
 
     @if (_filtersOpen)
@@ -573,6 +600,23 @@
                     </div>
                 </section>
 
+
+                <section class="filter-section">
+                    <h3>Categorie</h3>
+                    <div class="category-filter">
+                        @foreach (var cat in _categories.Where(c => c.ShowInMapFilter && c.IsActive))
+                        {
+                            <label class="filter-check category-filter__option">
+                                <input type="checkbox"
+                                       checked="@_selectedCategoryIds.Contains(cat.Id)"
+                                       @onchange="e => ToggleCategoryAsync(cat.Id, e)" />
+                                <span class="category-filter__swatch" style="--category-color:@cat.ColorHex" aria-hidden="true"></span>
+                                @cat.Name
+                            </label>
+                        }
+                    </div>
+                </section>
+
                 <section class="filter-section">
                     <h3>@Culture["Discovery.Age"] · @Culture["Discovery.HourlyWageShort"]</h3>
                     <label>
@@ -644,7 +688,10 @@
     private int _minHoursPerWeek = DefaultMinHoursPerWeek;
     private int _maxHoursPerWeek = DefaultMaxHoursPerWeek;
     private readonly HashSet<string> _selectedWorkTypes = new(StringComparer.OrdinalIgnoreCase);
+    private readonly HashSet<Guid> _selectedCategoryIds = [];
+    private List<VacancyCategoryItem> _categories = [];
     private HashSet<string> _snapSelectedWorkTypes = new(StringComparer.OrdinalIgnoreCase);
+    private HashSet<Guid> _snapSelectedCategoryIds = [];
     private int _snapMaxTravelMinutes = 30;
     private int _snapRadiusKm = 15;
     private string _snapSelectedTransport = "Fiets";
@@ -784,6 +831,7 @@
         {
             var n = 0;
             if (_selectedWorkTypes.Count > 0) n++;
+            if (_selectedCategoryIds.Count > 0) n++;
             if (!string.IsNullOrWhiteSpace(_searchQuery)) n++;
             if (_ageYears is not null) n++;
             if (_minHourlyWage is not null) n++;
@@ -803,6 +851,7 @@
     private bool ShouldFallbackFromEmptyProximity =>
         _origin is not null
         && _selectedWorkTypes.Count == 0
+        && _selectedCategoryIds.Count == 0
         && string.IsNullOrWhiteSpace(_searchQuery)
         && _minHourlyWage is null
         && _maxHourlyWage is null
@@ -1118,6 +1167,19 @@
         {
             // keep built-in fallback
         }
+
+        try
+        {
+            _categories = (await Api.GetVacancyCategoriesAsync())
+                .Where(c => c.IsActive)
+                .OrderBy(c => c.SortOrder)
+                .ThenBy(c => c.Name)
+                .ToList();
+        }
+        catch
+        {
+            _categories = [];
+        }
     }
 
     private async void OnCultureChanged()
@@ -1287,7 +1349,8 @@
                 companyFocus || _selectedWorkTypes.Count == 0 ? null : _selectedWorkTypes,
                 companyFocus ? null : _searchQuery,
                 companyFocus ? null : _minHoursPerWeek,
-                companyFocus ? null : _maxHoursPerWeek);
+                companyFocus ? null : _maxHoursPerWeek,
+                companyFocus || _selectedCategoryIds.Count == 0 ? null : _selectedCategoryIds);
 
             // Stale/far stored origin + default proximity can wipe the catalog; show all until filters tighten.
             if (items.Count == 0 && ShouldFallbackFromEmptyProximity && !companyFocus)
@@ -1304,7 +1367,8 @@
                     _selectedWorkTypes.Count == 0 ? null : _selectedWorkTypes,
                     _searchQuery,
                     _minHoursPerWeek,
-                    _maxHoursPerWeek);
+                    _maxHoursPerWeek,
+                    _selectedCategoryIds.Count == 0 ? null : _selectedCategoryIds);
             }
 
             _vacancies = items.ToList();
@@ -1392,6 +1456,10 @@
                 ["transport"] = v.RequiredTransport,
                 ["workTypes"] = v.WorkTypes,
                 ["workType"] = primaryType,
+                ["categoryId"] = v.CategoryId?.ToString("D"),
+                ["categoryName"] = v.CategoryName,
+                ["categoryColor"] = v.CategoryColorHex,
+                ["pushBomActive"] = false,
                 ["highlighted"] = v.IsHighlighted,
                 ["highlightRank"] = v.IsHighlighted ? HighlightShuffleRank(v.Id) : 0u,
                 ["featuredLabel"] = Culture["Discovery.Featured"],
@@ -1686,6 +1754,23 @@
         await ReloadFiltersIfAppliedAsync();
     }
 
+    private async Task ToggleCategoryAsync(Guid categoryId, ChangeEventArgs e)
+    {
+        var selected = e.Value is bool b
+            ? b
+            : bool.TryParse(e.Value?.ToString(), out var parsed) && parsed;
+        if (selected)
+        {
+            _selectedCategoryIds.Add(categoryId);
+        }
+        else
+        {
+            _selectedCategoryIds.Remove(categoryId);
+        }
+
+        await ReloadFiltersIfAppliedAsync();
+    }
+
     private async Task ToggleWorkTypeAsync(string label, ChangeEventArgs e)
     {
         var selected = e.Value is bool b
@@ -1973,6 +2058,7 @@
         _snapMinHourlyWage = _minHourlyWage;
         _snapMaxHourlyWage = _maxHourlyWage;
         _snapSelectedWorkTypes = _selectedWorkTypes.ToHashSet(StringComparer.OrdinalIgnoreCase);
+        _snapSelectedCategoryIds = _selectedCategoryIds.ToHashSet();
     }
 
     private void RestoreFilterSnapshot()
@@ -1986,9 +2072,14 @@
         _minHourlyWage = _snapMinHourlyWage;
         _maxHourlyWage = _snapMaxHourlyWage;
         _selectedWorkTypes.Clear();
+        _selectedCategoryIds.Clear();
         foreach (var type in _snapSelectedWorkTypes)
         {
             _selectedWorkTypes.Add(type);
+        }
+        foreach (var id in _snapSelectedCategoryIds)
+        {
+            _selectedCategoryIds.Add(id);
         }
     }
 
@@ -2058,6 +2149,7 @@
     private async Task ClearAllFiltersAsync()
     {
         _selectedWorkTypes.Clear();
+        _selectedCategoryIds.Clear();
         _searchQuery = null;
         _ageYears = null;
         _minHourlyWage = null;

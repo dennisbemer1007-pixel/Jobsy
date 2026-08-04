@@ -28,7 +28,8 @@ Jobsy is een hyper-lokale job-matching applicatie gericht op de regionale arbeid
 ### Kernentiteiten (niet exhaustief)
 - **User** — Email, FullName, Role, HomeLocation, OpenForWork, prefs, early-adapter
 - **Company** — KVK + `KvkEstablishmentId`, hierarchy (`ParentCompanyId`), `CompanyType` (Employer/Intermediary)
-- **Vacancy** — Status (`Draft` / `Active` / `Archived` / `PendingApproval`), media, highlight, extensions, requested publish-opties, salary table
+- **Vacancy** — Status (`Draft` / `Active` / `Archived` / `PendingApproval`), media, highlight, extensions, requested publish-opties, salary table, **VacancyCategory** (kleur, tokenprijs, highlight/PushBom-beschikbaarheid, extra aanmaakvelden)
+- **VacancyCategory** — Admin-beheerbare categorieën; sturen kaartfilter, legenda, create-dropdown en tokenlogica
 - **TokenTransaction** — typed ledger (`Purchase` / `Spend` / `Grant` / `Allocation`) + `TokenSpendReason` (Publish/Highlight/PushBom/Extend)
 - **Application** — progressive PII tot Accept
 - **Engagement** — VacancyClick / Like / Share

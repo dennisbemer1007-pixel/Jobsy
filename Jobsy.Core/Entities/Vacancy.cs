@@ -60,6 +60,16 @@ public class Vacancy
     /// <summary>Employment category: regular, internship, or volunteer (placement pricing).</summary>
     public VacancyKind Kind { get; set; } = VacancyKind.Regular;
 
+    /// <summary>Admin-managed vacancy category (color, tokens, extra fields). Preferred over <see cref="Kind"/>.</summary>
+    public Guid? CategoryId { get; set; }
+    public VacancyCategory? Category { get; set; }
+
+    /// <summary>
+    /// JSON object of extra field values for the selected category
+    /// (keys from <c>VacancyCategoryExtraFields</c>).
+    /// </summary>
+    public string? CategoryFieldsJson { get; set; }
+
     /// <summary>
     /// Stage-exclusiviteit (masterdata). Alleen relevant bij <see cref="VacancyKind.Internship"/>.
     /// Null / open-optie = zichtbaar en solliciteerbaar voor iedereen.

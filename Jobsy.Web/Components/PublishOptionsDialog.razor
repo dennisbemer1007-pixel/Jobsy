@@ -17,23 +17,29 @@
                 <input type="checkbox" checked disabled />
                 <span>
                     @Culture["Employer.PublishBase"]
-                    <em>@_costs.GetValueOrDefault("Publish", 1m).ToString("0.##") token</em>
+                    <em>@PublishCost.ToString("0.##") token</em>
                 </span>
             </label>
-            <label class="publish-option">
-                <input type="checkbox" @bind="_highlight" />
-                <span>
-                    @Culture["Employer.Highlight"]
-                    <em>+@_costs.GetValueOrDefault("Highlight", 1m).ToString("0.##") token</em>
-                </span>
-            </label>
-            <label class="publish-option">
-                <input type="checkbox" checked="@_pushBom" @onchange="OnPushBomChanged" />
-                <span>
-                    @Culture["Employer.PushBom"]
-                    <em>@Culture["Employer.PushBomHint"]</em>
-                </span>
-            </label>
+            @if (HighlightAvailable)
+            {
+                <label class="publish-option">
+                    <input type="checkbox" @bind="_highlight" />
+                    <span>
+                        @Culture["Employer.Highlight"]
+                        <em>+@HighlightCost.ToString("0.##") token</em>
+                    </span>
+                </label>
+            }
+            @if (PushBomAvailable)
+            {
+                <label class="publish-option">
+                    <input type="checkbox" checked="@_pushBom" @onchange="OnPushBomChanged" />
+                    <span>
+                        @Culture["Employer.PushBom"]
+                        <em>@Culture["Employer.PushBomHint"]</em>
+                    </span>
+                </label>
+            }
             <label class="publish-option">
                 <input type="checkbox" @bind="_extend" />
                 <span>
@@ -120,15 +126,29 @@
     private bool _topUpOpen;
     private InsufficientTokensInfo? _topUpInfo;
 
+    private decimal PublishCost =>
+        Vacancy?.CategoryPublishCostTokens
+        ?? _costs.GetValueOrDefault("Publish", 1m);
+
+    private decimal HighlightCost =>
+        Vacancy?.CategoryHighlightCostTokens
+        ?? _costs.GetValueOrDefault("Highlight", 1m);
+
+    private bool HighlightAvailable =>
+        Vacancy is null || Vacancy.CategoryHighlightAvailable;
+
+    private bool PushBomAvailable =>
+        Vacancy is null || Vacancy.CategoryPushBomAvailable;
+
     private decimal PushBomCost =>
         _pushBom && _preview is { HasPricing: true, CandidateCount: > 0 }
-            ? _preview.CostTokens
+            ? (Vacancy?.CategoryPushBomCostTokens ?? _preview.CostTokens)
             : 0;
 
     private decimal TotalCost =>
-        _costs.GetValueOrDefault("Publish", 1m)
-        + (_highlight ? _costs.GetValueOrDefault("Highlight", 1m) : 0)
-        + PushBomCost
+        PublishCost
+        + (_highlight && HighlightAvailable ? HighlightCost : 0)
+        + (PushBomAvailable ? PushBomCost : 0)
         + (_extend ? _costs.GetValueOrDefault("Extend", 1m) : 0);
 
     private bool ConfirmDisabled =>
@@ -238,8 +258,8 @@
         {
             var result = await Api.PublishVacancyAsync(
                 Vacancy.Id,
-                highlight: _highlight,
-                pushBom: _pushBom,
+                highlight: _highlight && HighlightAvailable,
+                pushBom: _pushBom && PushBomAvailable,
                 extend: _extend);
             await OnPublished.InvokeAsync(result);
             await Close();

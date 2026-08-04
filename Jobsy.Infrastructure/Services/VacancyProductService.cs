@@ -17,6 +17,7 @@ public sealed class VacancyProductService : IVacancyProductService
     private readonly JobsyDbContext _db;
     private readonly ITokenLedgerService _tokens;
     private readonly ISalesCommercialService _salesCommercial;
+    private readonly IVacancyCategoryService _categories;
     private readonly IPushNotificationService _push;
     private readonly IEmailService _email;
     private readonly IPlatformFeatureService _features;
@@ -27,6 +28,7 @@ public sealed class VacancyProductService : IVacancyProductService
         JobsyDbContext db,
         ITokenLedgerService tokens,
         ISalesCommercialService salesCommercial,
+        IVacancyCategoryService categories,
         IPushNotificationService push,
         IEmailService email,
         IPlatformFeatureService features,
@@ -36,6 +38,7 @@ public sealed class VacancyProductService : IVacancyProductService
         _db = db;
         _tokens = tokens;
         _salesCommercial = salesCommercial;
+        _categories = categories;
         _push = push;
         _email = email;
         _features = features;
@@ -74,8 +77,19 @@ public sealed class VacancyProductService : IVacancyProductService
             options = options with { Highlight = true };
         }
 
-        var publishCost = await _salesCommercial.GetPublishCostTokensAsync(vacancy.Kind, cancellationToken);
-        var highlightCost = await _salesCommercial.GetHighlightCostTokensAsync(cancellationToken);
+        var pricing = await ResolveCategoryPricingAsync(vacancy, cancellationToken);
+        if (options.Highlight && !pricing.HighlightAvailable && !useStartHighlight)
+        {
+            return Fail(vacancy, "Highlight is niet beschikbaar voor deze vacaturecategorie.");
+        }
+
+        if (options.PushBom && !pricing.PushBomAvailable)
+        {
+            return Fail(vacancy, "PushBom is niet beschikbaar voor deze vacaturecategorie.");
+        }
+
+        var publishCost = pricing.PublishCostTokens;
+        var highlightCost = pricing.HighlightCostTokens;
         var highlightDays = await _salesCommercial.GetHighlightDaysAsync(cancellationToken);
 
         var reasons = BuildPublishReasons(options);
@@ -324,8 +338,21 @@ public sealed class VacancyProductService : IVacancyProductService
         }
 
         var approveOptions = options;
-        var publishCost = await _salesCommercial.GetPublishCostTokensAsync(vacancy.Kind, cancellationToken);
-        var highlightCost = await _salesCommercial.GetHighlightCostTokensAsync(cancellationToken);
+        var pricing = await ResolveCategoryPricingAsync(vacancy, cancellationToken);
+        if (approveOptions.Highlight && !pricing.HighlightAvailable && !useStartHighlight)
+        {
+            approveOptions = approveOptions with { Highlight = false };
+        }
+
+        if (approveOptions.PushBom && !pricing.PushBomAvailable)
+        {
+            approveOptions = approveOptions with { PushBom = false };
+            pushBomCandidates = null;
+            costOverrides?.Remove(TokenSpendReason.PushBom);
+        }
+
+        var publishCost = pricing.PublishCostTokens;
+        var highlightCost = pricing.HighlightCostTokens;
         var highlightDays = await _salesCommercial.GetHighlightDaysAsync(cancellationToken);
         costOverrides ??= new Dictionary<TokenSpendReason, decimal>();
         costOverrides[TokenSpendReason.Publish] = publishCost;
@@ -425,7 +452,13 @@ public sealed class VacancyProductService : IVacancyProductService
             return Fail(vacancy, "Vacature is al gehighlight.");
         }
 
-        var highlightCost = await _salesCommercial.GetHighlightCostTokensAsync(cancellationToken);
+        var pricing = await ResolveCategoryPricingAsync(vacancy, cancellationToken);
+        if (!pricing.HighlightAvailable)
+        {
+            return Fail(vacancy, "Highlight is niet beschikbaar voor deze vacaturecategorie.");
+        }
+
+        var highlightCost = pricing.HighlightCostTokens;
         var highlightDays = await _salesCommercial.GetHighlightDaysAsync(cancellationToken);
         if (highlightCost <= 0)
         {
@@ -507,6 +540,12 @@ public sealed class VacancyProductService : IVacancyProductService
         if (vacancy.Status != VacancyStatus.Active)
         {
             return Fail(vacancy, "PushBom is alleen beschikbaar voor actieve vacatures.");
+        }
+
+        var pricing = await ResolveCategoryPricingAsync(vacancy, cancellationToken);
+        if (!pricing.PushBomAvailable)
+        {
+            return Fail(vacancy, "PushBom is niet beschikbaar voor deze vacaturecategorie.");
         }
 
         var reach = await BuildPushBomReachAsync(vacancy, cancellationToken);
@@ -805,6 +844,11 @@ public sealed class VacancyProductService : IVacancyProductService
         });
     }
 
+    private async Task<VacancyCategoryPricing> ResolveCategoryPricingAsync(
+        Vacancy vacancy,
+        CancellationToken cancellationToken)
+        => await _categories.ResolvePricingAsync(vacancy.CategoryId, vacancy.Kind, cancellationToken);
+
     private async Task<PushBomReach> BuildPushBomReachAsync(
         Vacancy vacancy,
         CancellationToken cancellationToken)
@@ -859,35 +903,51 @@ public sealed class VacancyProductService : IVacancyProductService
             suitable.Add(candidate);
         }
 
-        var tiers = await _db.PushBomPricingTiers.AsNoTracking()
-            .Where(t => t.IsActive)
-            .ToListAsync(cancellationToken);
-
-        var tierCost = PushBomPricingRules.ResolveCost(tiers, suitable.Count);
+        var pricing = await ResolveCategoryPricingAsync(vacancy, cancellationToken);
         decimal costTokens;
         var hasPricing = false;
-        if (tierCost is decimal fromTier)
+
+        if (!pricing.PushBomAvailable)
         {
-            costTokens = fromTier;
+            costTokens = 0;
+            hasPricing = false;
+        }
+        else if (pricing.PushBomCostTokens is decimal fixedCost)
+        {
+            // Category-configured fixed PushBom price (0 = free upgrade when available).
+            costTokens = fixedCost;
             hasPricing = suitable.Count > 0;
         }
-        else if (suitable.Count > 0)
+        else
         {
-            // Fallback to flat TokenSpendCost when no tier matches.
-            var flat = await _tokens.GetCostAsync(TokenSpendReason.PushBom, cancellationToken);
-            if (flat is decimal flatCost && flatCost > 0)
+            var tiers = await _db.PushBomPricingTiers.AsNoTracking()
+                .Where(t => t.IsActive)
+                .ToListAsync(cancellationToken);
+
+            var tierCost = PushBomPricingRules.ResolveCost(tiers, suitable.Count);
+            if (tierCost is decimal fromTier)
             {
-                costTokens = flatCost;
-                hasPricing = true;
+                costTokens = fromTier;
+                hasPricing = suitable.Count > 0;
+            }
+            else if (suitable.Count > 0)
+            {
+                // Fallback to flat TokenSpendCost when no tier matches.
+                var flat = await _tokens.GetCostAsync(TokenSpendReason.PushBom, cancellationToken);
+                if (flat is decimal flatCost && flatCost > 0)
+                {
+                    costTokens = flatCost;
+                    hasPricing = true;
+                }
+                else
+                {
+                    costTokens = 0;
+                }
             }
             else
             {
                 costTokens = 0;
             }
-        }
-        else
-        {
-            costTokens = 0;
         }
 
         return new PushBomReach(

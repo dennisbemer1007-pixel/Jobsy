@@ -71,6 +71,7 @@ public class JobsyDbContext : DbContext
     public DbSet<ExclusivityEducation> ExclusivityEducations => Set<ExclusivityEducation>();
     public DbSet<SalesCommercialSettings> SalesCommercialSettings => Set<SalesCommercialSettings>();
     public DbSet<VacancyTypeTokenCost> VacancyTypeTokenCosts => Set<VacancyTypeTokenCost>();
+    public DbSet<VacancyCategory> VacancyCategories => Set<VacancyCategory>();
     public DbSet<SalesPackage> SalesPackages => Set<SalesPackage>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -221,6 +222,9 @@ public class JobsyDbContext : DbContext
             entity.HasIndex(e => e.IntermediaryCompanyId);
             entity.HasIndex(e => new { e.Status, e.Kind });
             entity.HasIndex(e => e.ExclusivitySettingId);
+            entity.HasIndex(e => e.CategoryId);
+            entity.HasIndex(e => new { e.Status, e.CategoryId });
+            entity.Property(e => e.CategoryFieldsJson).HasMaxLength(8000);
             entity.HasOne(e => e.Company)
                 .WithMany(c => c.Vacancies)
                 .HasForeignKey(e => e.CompanyId)
@@ -237,6 +241,26 @@ public class JobsyDbContext : DbContext
                 .WithMany(s => s.Vacancies)
                 .HasForeignKey(e => e.ExclusivitySettingId)
                 .OnDelete(DeleteBehavior.SetNull);
+            entity.HasOne(e => e.Category)
+                .WithMany(c => c.Vacancies)
+                .HasForeignKey(e => e.CategoryId)
+                .OnDelete(DeleteBehavior.SetNull);
+        });
+
+        modelBuilder.Entity<VacancyCategory>(entity =>
+        {
+            entity.ToTable("VacancyCategories");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Slug).HasMaxLength(64).IsRequired();
+            entity.Property(e => e.Name).HasMaxLength(128).IsRequired();
+            entity.Property(e => e.ColorHex).HasMaxLength(7).IsRequired();
+            entity.Property(e => e.PublishCostTokens).HasPrecision(10, 2);
+            entity.Property(e => e.HighlightCostTokens).HasPrecision(10, 2);
+            entity.Property(e => e.PushBomCostTokens).HasPrecision(10, 2);
+            entity.Property(e => e.ExtraFieldsJson).HasMaxLength(2000).IsRequired();
+            entity.HasIndex(e => e.Slug).IsUnique();
+            entity.HasIndex(e => new { e.IsActive, e.SortOrder });
+            entity.HasIndex(e => e.PlacementKind);
         });
 
         modelBuilder.Entity<RevenueShareLog>(entity =>

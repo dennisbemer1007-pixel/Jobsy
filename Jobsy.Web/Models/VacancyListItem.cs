@@ -43,6 +43,16 @@ public class VacancyListItem
     public string? ExclusivitySchoolDomain { get; set; }
     public string? ExclusivityStudentNumberPattern { get; set; }
     public List<string> ExclusivityEducations { get; set; } = [];
+    public Guid? CategoryId { get; set; }
+    public string? CategoryName { get; set; }
+    public string? CategoryColorHex { get; set; }
+    public bool CategoryHighlightAvailable { get; set; } = true;
+    public bool CategoryPushBomAvailable { get; set; } = true;
+    public decimal? CategoryPublishCostTokens { get; set; }
+    public decimal? CategoryHighlightCostTokens { get; set; }
+    public decimal? CategoryPushBomCostTokens { get; set; }
+    public bool CategoryUseTierPushBomPricing { get; set; } = true;
+    public Dictionary<string, string> CategoryFields { get; set; } = new(StringComparer.OrdinalIgnoreCase);
     public string? RequiredDrivingLicense { get; set; }
     public string? RequiredEducation { get; set; }
     public int? MinimumEmployers { get; set; }

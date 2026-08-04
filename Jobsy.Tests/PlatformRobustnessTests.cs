@@ -151,6 +151,7 @@ public class PlatformRobustnessTests
             db,
             new TokenLedgerService(db),
             new SalesCommercialService(db, new TokenLedgerService(db)),
+            new VacancyCategoryService(db),
             new PushNotificationServiceStub(db, NullLogger<PushNotificationServiceStub>.Instance),
             new EmailServiceStub(db, NullLogger<EmailServiceStub>.Instance),
             features,

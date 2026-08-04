@@ -33,4 +33,6 @@ public record CreateVacancyRequest(
     bool? LegalHeavyOrHazardousWork = null,
     bool ShowClientAddressOnMap = false,
     VacancyKind Kind = VacancyKind.Regular,
-    Guid? ExclusivitySettingId = null);
+    Guid? ExclusivitySettingId = null,
+    Guid? CategoryId = null,
+    Dictionary<string, string>? CategoryFields = null);

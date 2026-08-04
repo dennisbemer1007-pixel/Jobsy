@@ -1,5 +1,12 @@
 # Changelog: Jobsy
 
+## Vacaturecategorieën (flexibel)
+
+- Admin-beheerbare **VacancyCategory** (naam, kleur, tokenprijs, highlight/PushBom, extra velden)
+- Standaardcategorieën: Uitzendbureau, Regulier, Highlight, Inclusief, Vrijwilligerswerk, Stageplekken, 65+
+- Dynamische create-dropdown + extra velden; kaartfilter, legenda en pin-kleuren; tokenlogica per categorie
+
+
 Alle noemenswaardige wijzigingen aan dit project worden in dit bestand bijgehouden.
 
 ## [Unreleased]

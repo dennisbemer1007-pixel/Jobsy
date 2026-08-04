@@ -40,7 +40,7 @@ window.jobMap = (function () {
         return "●";
     }
 
-    function createIcon(featured, selected, workType) {
+    function createIcon(featured, selected, workType, categoryColor) {
         const glyph = workTypeGlyph(workType);
         const classes = ["job-marker"];
         if (featured) {
@@ -52,9 +52,15 @@ window.jobMap = (function () {
         const pulse = featured
             ? "<span class=\"job-marker__pulse\" aria-hidden=\"true\"></span>"
             : "";
+        const color = (categoryColor && /^#[0-9A-Fa-f]{6}$/.test(categoryColor))
+            ? categoryColor
+            : "";
+        const style = color
+            ? " style=\"--map-pin:" + color + ";--map-pin-deep:" + color + ";--map-pin-glow:" + color + "66\""
+            : "";
         return L.divIcon({
             className: classes.join(" "),
-            html: pulse + "<span class=\"job-marker__glyph\" aria-hidden=\"true\">" + glyph + "</span>",
+            html: pulse + "<span class=\"job-marker__glyph\"" + style + " aria-hidden=\"true\">" + glyph + "</span>",
             iconSize: [34, 34],
             iconAnchor: [17, 17],
             popupAnchor: [0, -18]
@@ -330,11 +336,11 @@ window.jobMap = (function () {
             : "map-popup__media map-popup__media--logo-only";
 
         let mediaInner = "";
-        if (v.highlighted || v.exclusivityBadge || primaryWork) {
+        if (v.highlighted || v.exclusivityBadge || v.categoryName || primaryWork) {
             const featuredLabel = v.featuredLabel || "Uitgelicht";
             const badgeText = v.highlighted
                 ? featuredLabel
-                : (v.exclusivityBadge || primaryWork);
+                : (v.categoryName || v.exclusivityBadge || primaryWork);
             const badgeClass = v.highlighted
                 ? "map-popup__badge map-popup__badge--featured"
                 : "map-popup__badge map-popup__badge--soft";
@@ -367,10 +373,14 @@ window.jobMap = (function () {
                             "<a class=\"map-popup__title map-popup__cta\" href=\"" + detailHref + "\" data-job-id=\"" + escapeAttr(v.id) + "\">" +
                                 escapeHtml(v.title) +
                             "</a>" +
+                            (v.categoryName
+                                ? "<p class=\"map-popup__category\">" + escapeHtml(v.categoryName) + "</p>"
+                                : "") +
                             (v.address
                                 ? "<p class=\"map-popup__address\">" + escapeHtml(v.address) + "</p>"
                                 : "<p class=\"map-popup__address map-popup__address--empty\">&nbsp;</p>") +
                             travelLineHtml(v) +
+                            categoryStatusHtml(v) +
                         "</div>" +
                         (wage || "<p class=\"map-popup__wage map-popup__wage--empty\">&nbsp;</p>") +
                         specsHtml(v) +
@@ -387,6 +397,20 @@ window.jobMap = (function () {
                 "</div>" +
             "</div>"
         );
+    }
+
+    function categoryStatusHtml(v) {
+        const parts = [];
+        if (v.highlighted) {
+            parts.push(v.featuredLabel || "Highlight actief");
+        }
+        if (v.pushBomActive) {
+            parts.push("PushBom actief");
+        }
+        if (parts.length === 0) {
+            return "";
+        }
+        return "<p class=\"map-popup__status\">" + escapeHtml(parts.join(" · ")) + "</p>";
     }
 
     const CLUSTER_PAGE_SIZE = 1;
@@ -936,7 +960,7 @@ window.jobMap = (function () {
                 : (v.workType || "");
             const featured = !!v.highlighted;
             const marker = L.marker([lat, lng], {
-                icon: createIcon(featured, false, workType),
+                icon: createIcon(featured, false, workType, v.categoryColor),
                 jobData: v,
                 zIndexOffset: featured ? 1000 : 0
             });
@@ -1028,7 +1052,7 @@ window.jobMap = (function () {
                 : (data.workType || "");
             const featured = !!data.highlighted;
             const selected = id != null && key === String(id);
-            marker.setIcon(createIcon(featured, selected, workType));
+            marker.setIcon(createIcon(featured, selected, workType, data.categoryColor));
             marker.setZIndexOffset(featured || selected ? 1000 : 0);
         });
     }

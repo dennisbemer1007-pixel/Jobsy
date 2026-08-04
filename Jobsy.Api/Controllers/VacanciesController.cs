@@ -30,6 +30,7 @@ public class VacanciesController : ControllerBase
     private readonly ISalaryService _salary;
     private readonly IVacancyContentModerationService _moderation;
     private readonly ITranslationService _translation;
+    private readonly IVacancyCategoryService _categories;
 
     public VacanciesController(
         JobsyDbContext db,
@@ -39,7 +40,8 @@ public class VacanciesController : ControllerBase
         IUserLookupService users,
         ISalaryService salary,
         IVacancyContentModerationService moderation,
-        ITranslationService translation)
+        ITranslationService translation,
+        IVacancyCategoryService categories)
     {
         _db = db;
         _companyAuth = companyAuth;
@@ -49,6 +51,7 @@ public class VacanciesController : ControllerBase
         _salary = salary;
         _moderation = moderation;
         _translation = translation;
+        _categories = categories;
     }
 
     /// <summary>
@@ -95,6 +98,7 @@ public class VacanciesController : ControllerBase
         [FromQuery] int? maxHoursPerWeek = null,
         [FromQuery] string[]? workType = null,
         [FromQuery] string? q = null,
+        [FromQuery] Guid[]? categoryId = null,
         CancellationToken cancellationToken = default)
     {
         maxMinutes = Math.Clamp(maxMinutes, 5, 90);
@@ -120,7 +124,14 @@ public class VacanciesController : ControllerBase
 
         var vacancies = await LoadActiveVacanciesAsync(origin, reachKm, cancellationToken);
 
+        var categoryFilter = categoryId?
+            .Where(id => id != Guid.Empty)
+            .Distinct()
+            .ToHashSet();
+
         var workTypeFiltered = vacancies
+            .Where(v => categoryFilter is null || categoryFilter.Count == 0
+                || (v.CategoryId is Guid cid && categoryFilter.Contains(cid)))
             .Where(v => WorkTypeLabels.MatchesFilter(v.WorkTypes, v.WorkTypeLabels, workType))
             .Where(v => VacancyTextSearch.Matches(v, q))
             .Where(v => HoursRangeRules.MatchesFilter(
@@ -212,6 +223,7 @@ public class VacanciesController : ControllerBase
             .AsNoTracking()
             .Include(v => v.Company)
             .Include(v => v.IntermediaryCompany)
+            .Include(v => v.Category)
             .Include(v => v.ExclusivitySetting!)
                 .ThenInclude(s => s.Educations)
             .Include(v => v.SalaryTable!)
@@ -266,6 +278,7 @@ public class VacanciesController : ControllerBase
             .AsSplitQuery()
             .Include(v => v.Company)
             .Include(v => v.IntermediaryCompany)
+            .Include(v => v.Category)
             .Include(v => v.ExclusivitySetting!)
                 .ThenInclude(s => s.Educations)
             .AsQueryable();
@@ -481,8 +494,17 @@ public class VacanciesController : ControllerBase
             }
         }
 
+        var categoryResolve = await ResolveCategoryAsync(request.CategoryId, request.Kind, cancellationToken);
+        if (categoryResolve.Error is not null)
+        {
+            return BadRequest(new { message = categoryResolve.Error });
+        }
+
+        var category = categoryResolve.Category!;
+        var categoryFieldsJson = SerializeCategoryFields(category, request.CategoryFields);
+
         var exclusivityError = await ResolveExclusivitySettingIdAsync(
-            request.Kind,
+            category.PlacementKind,
             request.ExclusivitySettingId,
             cancellationToken);
         if (exclusivityError.Error is not null)
@@ -521,8 +543,10 @@ public class VacanciesController : ControllerBase
             ContactPreferWhatsApp = request.OverrideContactPreference && request.DirectContactEnabled && request.ContactPreferWhatsApp,
             IntermediaryCompanyId = intermediaryCompanyId,
             ShowClientAddressOnMap = isIntermediary && request.ShowClientAddressOnMap,
-            Kind = request.Kind,
-            ExclusivitySettingId = exclusivitySettingId
+            Kind = category.PlacementKind,
+            CategoryId = category.Id,
+            CategoryFieldsJson = categoryFieldsJson,
+            ExclusivitySettingId = category.PlacementKind == VacancyKind.Internship ? exclusivitySettingId : null
         };
 
         var hoursError = ApplyHoursAndSchedule(vacancy, request);
@@ -901,6 +925,7 @@ public class VacanciesController : ControllerBase
         => await _db.Vacancies
             .Include(v => v.Company)
             .Include(v => v.IntermediaryCompany)
+            .Include(v => v.Category)
             .Include(v => v.ExclusivitySetting!)
                 .ThenInclude(s => s.Educations)
             .FirstOrDefaultAsync(v => v.Id == id, cancellationToken);
@@ -1030,6 +1055,9 @@ public class VacanciesController : ControllerBase
                 .AsSplitQuery()
                 .Include(v => v.Company)
                 .Include(v => v.IntermediaryCompany)
+                .Include(v => v.Category)
+                .Include(v => v.ExclusivitySetting!)
+                    .ThenInclude(s => s.Educations)
                 .Include(v => v.SalaryTable!)
                     .ThenInclude(t => t.Rates)
                 .Where(v => ids.Contains(v.Id))
@@ -1042,6 +1070,7 @@ public class VacanciesController : ControllerBase
             .AsSplitQuery()
             .Include(v => v.Company)
             .Include(v => v.IntermediaryCompany)
+            .Include(v => v.Category)
             .Include(v => v.ExclusivitySetting!)
                 .ThenInclude(s => s.Educations)
             .Include(v => v.SalaryTable!)
@@ -1309,7 +1338,87 @@ public class VacanciesController : ControllerBase
                 .Where(e => e.IsActive)
                 .OrderBy(e => e.SortOrder)
                 .Select(e => e.Name)
-                .ToList());
+                .ToList(),
+            v.CategoryId,
+            v.Category?.Name,
+            v.Category?.ColorHex,
+            v.Category is null || (v.Category.HighlightAvailable && !v.Category.IsAlwaysFree),
+            v.Category is null || (v.Category.PushBomAvailable && !v.Category.IsAlwaysFree),
+            v.Category is null ? null : (v.Category.IsAlwaysFree ? 0m : v.Category.PublishCostTokens),
+            v.Category is null ? null : (v.Category.IsAlwaysFree ? 0m : v.Category.HighlightCostTokens),
+            v.Category?.PushBomCostTokens,
+            v.Category is null || (v.Category.PushBomAvailable && !v.Category.IsAlwaysFree && v.Category.PushBomCostTokens is null),
+            DeserializeCategoryFields(v.CategoryFieldsJson));
+    }
+
+    private async Task<(Core.Entities.VacancyCategory? Category, string? Error)> ResolveCategoryAsync(
+        Guid? categoryId,
+        VacancyKind fallbackKind,
+        CancellationToken cancellationToken)
+    {
+        await _categories.EnsureDefaultsAsync(cancellationToken);
+
+        if (categoryId is Guid id)
+        {
+            var entity = await _categories.GetEntityAsync(id, cancellationToken);
+            if (entity is null || !entity.IsActive)
+            {
+                return (null, "Ongeldige of inactieve vacaturecategorie.");
+            }
+
+            return (entity, null);
+        }
+
+        var defaultId = VacancyCategoryDefaults.ResolveDefaultId(fallbackKind);
+        var fallback = await _categories.GetEntityAsync(defaultId, cancellationToken);
+        if (fallback is null)
+        {
+            return (null, "Standaard vacaturecategorie ontbreekt.");
+        }
+
+        return (fallback, null);
+    }
+
+    private static string? SerializeCategoryFields(
+        Core.Entities.VacancyCategory category,
+        Dictionary<string, string>? values)
+    {
+        var allowed = VacancyCategoryExtraFields.DeserializeKeys(category.ExtraFieldsJson);
+        if (allowed.Count == 0)
+        {
+            return null;
+        }
+
+        var map = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        if (values is not null)
+        {
+            foreach (var key in allowed)
+            {
+                if (values.TryGetValue(key, out var raw) && !string.IsNullOrWhiteSpace(raw))
+                {
+                    map[key] = raw.Trim();
+                }
+            }
+        }
+
+        return map.Count == 0 ? null : System.Text.Json.JsonSerializer.Serialize(map);
+    }
+
+    private static IReadOnlyDictionary<string, string>? DeserializeCategoryFields(string? json)
+    {
+        if (string.IsNullOrWhiteSpace(json))
+        {
+            return null;
+        }
+
+        try
+        {
+            return System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, string>>(json);
+        }
+        catch
+        {
+            return null;
+        }
     }
 
     private async Task<(Guid? SettingId, string? Error)> ResolveExclusivitySettingIdAsync(

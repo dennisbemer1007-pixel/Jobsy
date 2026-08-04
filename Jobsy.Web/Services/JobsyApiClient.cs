@@ -134,6 +134,7 @@ public sealed class JobsyApiClient : IAsyncDisposable
         string? searchQuery = null,
         int? minHoursPerWeek = null,
         int? maxHoursPerWeek = null,
+        IEnumerable<Guid>? categoryIds = null,
         CancellationToken ct = default)
     {
         var qs = $"transport={Uri.EscapeDataString(transport)}&maxMinutes={maxMinutes}";
@@ -178,6 +179,14 @@ public sealed class JobsyApiClient : IAsyncDisposable
             foreach (var workType in WorkTypeLabels.NormalizeFilterLabels(workTypes))
             {
                 qs += $"&workType={Uri.EscapeDataString(workType)}";
+            }
+        }
+
+        if (categoryIds is not null)
+        {
+            foreach (var id in categoryIds.Where(x => x != Guid.Empty).Distinct())
+            {
+                qs += $"&categoryId={id:D}";
             }
         }
 
@@ -1276,6 +1285,43 @@ public sealed class JobsyApiClient : IAsyncDisposable
             new { kind, costTokens, isActive },
             ct);
         response.EnsureSuccessStatusCode();
+    }
+
+    public async Task<IReadOnlyList<VacancyCategoryItem>> GetVacancyCategoriesAsync(CancellationToken ct = default)
+        => await _http.GetFromJsonAsync<List<VacancyCategoryItem>>("api/vacancy-categories", ct) ?? [];
+
+    public async Task<IReadOnlyList<VacancyCategoryItem>> GetVacancyCategoriesAdminAsync(CancellationToken ct = default)
+        => await _http.GetFromJsonAsync<List<VacancyCategoryItem>>("api/vacancy-categories/admin", ct) ?? [];
+
+    public async Task<IReadOnlyList<VacancyCategoryFieldItem>> GetVacancyCategoryFieldCatalogAsync(CancellationToken ct = default)
+        => await _http.GetFromJsonAsync<List<VacancyCategoryFieldItem>>("api/vacancy-categories/field-catalog", ct) ?? [];
+
+    public async Task<VacancyCategoryItem?> CreateVacancyCategoryAsync(VacancyCategoryForm form, CancellationToken ct = default)
+    {
+        var response = await _http.PostAsJsonAsync("api/vacancy-categories", form, ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            return null;
+        }
+
+        return await response.Content.ReadFromJsonAsync<VacancyCategoryItem>(cancellationToken: ct);
+    }
+
+    public async Task<VacancyCategoryItem?> UpdateVacancyCategoryAsync(Guid id, VacancyCategoryForm form, CancellationToken ct = default)
+    {
+        var response = await _http.PutAsJsonAsync($"api/vacancy-categories/{id}", form, ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            return null;
+        }
+
+        return await response.Content.ReadFromJsonAsync<VacancyCategoryItem>(cancellationToken: ct);
+    }
+
+    public async Task<bool> DeleteVacancyCategoryAsync(Guid id, CancellationToken ct = default)
+    {
+        var response = await _http.DeleteAsync($"api/vacancy-categories/{id}", ct);
+        return response.IsSuccessStatusCode;
     }
 
     public async Task<SalesPackageItem?> UpsertSalesPackageAsync(SalesPackageItem package, CancellationToken ct = default)
@@ -2592,7 +2638,9 @@ public record CreateVacancyForm(
     bool? LegalHeavyOrHazardousWork = null,
     bool ShowClientAddressOnMap = false,
     string Kind = "Regular",
-    Guid? ExclusivitySettingId = null);
+    Guid? ExclusivitySettingId = null,
+    Guid? CategoryId = null,
+    Dictionary<string, string>? CategoryFields = null);
 
 public sealed class CsvImportRowForm
 {
@@ -3194,6 +3242,53 @@ public sealed class VacancyTypeCostItem
     public decimal CostTokens { get; set; }
     public decimal PriceEuro { get; set; }
     public bool IsActive { get; set; } = true;
+}
+
+public sealed class VacancyCategoryItem
+{
+    public Guid Id { get; set; }
+    public string Slug { get; set; } = string.Empty;
+    public string Name { get; set; } = string.Empty;
+    public string ColorHex { get; set; } = "#F54A1B";
+    public decimal PublishCostTokens { get; set; }
+    public bool HighlightAvailable { get; set; } = true;
+    public decimal HighlightCostTokens { get; set; }
+    public bool PushBomAvailable { get; set; } = true;
+    public decimal? PushBomCostTokens { get; set; }
+    public bool IsAlwaysFree { get; set; }
+    public string PlacementKind { get; set; } = "Regular";
+    public List<string> ExtraFields { get; set; } = [];
+    public List<VacancyCategoryFieldItem> ExtraFieldDefinitions { get; set; } = [];
+    public int SortOrder { get; set; }
+    public bool IsActive { get; set; } = true;
+    public bool ShowInMapFilter { get; set; } = true;
+    public bool ShowInLegend { get; set; } = true;
+}
+
+public sealed class VacancyCategoryFieldItem
+{
+    public string Key { get; set; } = string.Empty;
+    public string Label { get; set; } = string.Empty;
+    public string InputType { get; set; } = "text";
+    public List<string>? Options { get; set; }
+}
+
+public sealed class VacancyCategoryForm
+{
+    public string Name { get; set; } = string.Empty;
+    public string ColorHex { get; set; } = "#F54A1B";
+    public decimal PublishCostTokens { get; set; } = 1m;
+    public bool HighlightAvailable { get; set; } = true;
+    public decimal HighlightCostTokens { get; set; } = 2m;
+    public bool PushBomAvailable { get; set; } = true;
+    public decimal? PushBomCostTokens { get; set; }
+    public bool IsAlwaysFree { get; set; }
+    public string PlacementKind { get; set; } = "Regular";
+    public List<string> ExtraFields { get; set; } = [];
+    public int? SortOrder { get; set; }
+    public bool? IsActive { get; set; }
+    public bool? ShowInMapFilter { get; set; } = true;
+    public bool? ShowInLegend { get; set; } = true;
 }
 
 public sealed class SalesPackageItem

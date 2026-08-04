@@ -1,0 +1,323 @@
+@page "/admin/vacancy-categories"
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
+@attribute [Authorize(Roles = "Admin")]
+@using Jobsy.Web.Components.Admin
+@using Jobsy.Web.Navigation
+@inject JobsyApiClient Api
+@inject CultureState Culture
+@implements IDisposable
+
+<PageTitle>@Culture["Admin.VacancyCategories"] · Lobsy</PageTitle>
+
+<AdminPageShell Title="@Culture["Admin.VacancyCategories"]" Lead="@Culture["Admin.VacancyCategoriesLead"]" ShowSettingsNav="true">
+    @if (_loading)
+    {
+        <p class="state-message">@Culture["Common.Loading"]</p>
+    }
+    else
+    {
+        <div class="table-list">
+            @foreach (var item in _items.OrderBy(i => i.SortOrder).ThenBy(i => i.Name))
+            {
+                <div class="table-row masterdata-row vacancy-category-row">
+                    <div class="masterdata-row__fields" style="grid-template-columns: 1.4fr 0.7fr 0.7fr 0.5fr;">
+                        <label>
+                            Naam
+                            <input @bind="item.Name" @bind:event="oninput" disabled="@(_busyId == item.Id)" />
+                        </label>
+                        <label>
+                            Kleur
+                            <input type="color" @bind="item.ColorHex" @bind:event="oninput" disabled="@(_busyId == item.Id)" aria-label="Kleur" />
+                        </label>
+                        <label>
+                            Tokens plaatsen
+                            <input type="number" min="0" step="0.5" @bind="item.PublishCostTokens" @bind:event="oninput" disabled="@(_busyId == item.Id || item.IsAlwaysFree)" />
+                        </label>
+                        <label class="masterdata-row__sort">
+                            Volgorde
+                            <input type="number" min="0" @bind="item.SortOrder" @bind:event="oninput" disabled="@(_busyId == item.Id)" />
+                        </label>
+                    </div>
+
+                    <div class="masterdata-row__flags">
+                        <label>
+                            <input type="checkbox" @bind="item.IsActive" disabled="@(_busyId == item.Id)" />
+                            Actief
+                        </label>
+                        <label>
+                            <input type="checkbox" @bind="item.IsAlwaysFree" disabled="@(_busyId == item.Id)" />
+                            Altijd gratis (vrijwilligers)
+                        </label>
+                        <label>
+                            <input type="checkbox" @bind="item.HighlightAvailable" disabled="@(_busyId == item.Id || item.IsAlwaysFree)" />
+                            Highlight beschikbaar
+                        </label>
+                        <label>
+                            Tokens highlight
+                            <input type="number" min="0" step="0.5" @bind="item.HighlightCostTokens" @bind:event="oninput" disabled="@(_busyId == item.Id || item.IsAlwaysFree || !item.HighlightAvailable)" />
+                        </label>
+                        <label>
+                            <input type="checkbox" @bind="item.PushBomAvailable" disabled="@(_busyId == item.Id || item.IsAlwaysFree)" />
+                            PushBom beschikbaar
+                        </label>
+                        <label>
+                            Tokens PushBom
+                            <input type="number" min="0" step="0.5"
+                                   value="@(item.PushBomCostTokens?.ToString(System.Globalization.CultureInfo.InvariantCulture) ?? "")"
+                                   @onchange="e => OnPushBomCostChanged(item, e)"
+                                   disabled="@(_busyId == item.Id || item.IsAlwaysFree || !item.PushBomAvailable)"
+                                   placeholder="leeg = bereikprijs" />
+                        </label>
+                        <label>
+                            <input type="checkbox" @bind="item.ShowInMapFilter" disabled="@(_busyId == item.Id)" />
+                            Kaartfilter
+                        </label>
+                        <label>
+                            <input type="checkbox" @bind="item.ShowInLegend" disabled="@(_busyId == item.Id)" />
+                            Legenda
+                        </label>
+                    </div>
+
+                    <fieldset class="vacancy-category-fields">
+                        <legend>Extra velden bij aanmaak</legend>
+                        <div class="vacancy-category-fields__grid">
+                            @foreach (var field in _fieldCatalog)
+                            {
+                                <label>
+                                    <input type="checkbox"
+                                           checked="@item.ExtraFields.Contains(field.Key, StringComparer.OrdinalIgnoreCase)"
+                                           disabled="@(_busyId == item.Id)"
+                                           @onchange="e => ToggleField(item, field.Key, e)" />
+                                    @field.Label
+                                </label>
+                            }
+                        </div>
+                    </fieldset>
+
+                    <div class="inline-actions">
+                        <button class="provider-btn" type="button" disabled="@(_busyId == item.Id)" @onclick="() => SaveAsync(item)">@Culture["Common.Save"]</button>
+                        <button type="button" class="icon-btn icon-btn--danger" title="Verwijderen" aria-label="Categorie verwijderen" disabled="@(_busyId == item.Id)" @onclick="() => DeleteAsync(item)">
+                            @((MarkupString)ActionIcons.Trash)
+                        </button>
+                    </div>
+                </div>
+            }
+        </div>
+
+        <div class="masterdata-add">
+            <h3>@Culture["Common.Add"]</h3>
+            <div class="masterdata-row__fields" style="grid-template-columns: 1.4fr 0.7fr 0.7fr;">
+                <label>
+                    Naam
+                    <input @bind="_new.Name" placeholder="Nieuwe categorie" />
+                </label>
+                <label>
+                    Kleur
+                    <input type="color" @bind="_new.ColorHex" />
+                </label>
+                <label>
+                    Tokens plaatsen
+                    <input type="number" min="0" step="0.5" @bind="_new.PublishCostTokens" />
+                </label>
+            </div>
+            <button class="login-submit" type="button" disabled="@_creating" @onclick="CreateAsync">@Culture["Common.Add"]</button>
+        </div>
+
+        @if (!string.IsNullOrEmpty(_message))
+        {
+            <p class="state-message @(_error ? "error" : null)">@_message</p>
+        }
+    }
+</AdminPageShell>
+
+@code {
+    private bool _loading = true;
+    private bool _creating;
+    private bool _error;
+    private string? _message;
+    private Guid? _busyId;
+    private List<VacancyCategoryItem> _items = [];
+    private List<VacancyCategoryFieldItem> _fieldCatalog = [];
+    private VacancyCategoryForm _new = new() { ColorHex = "#F54A1B", PublishCostTokens = 1m, HighlightCostTokens = 2m };
+
+    protected override void OnInitialized()
+        => Culture.Changed += OnCultureChanged;
+
+    private void OnCultureChanged()
+        => InvokeAsync(StateHasChanged);
+
+    public void Dispose()
+        => Culture.Changed -= OnCultureChanged;
+
+    protected override async Task OnInitializedAsync()
+        => await ReloadAsync();
+
+    private async Task ReloadAsync()
+    {
+        _loading = true;
+        try
+        {
+            _fieldCatalog = (await Api.GetVacancyCategoryFieldCatalogAsync()).ToList();
+            _items = (await Api.GetVacancyCategoriesAdminAsync()).ToList();
+        }
+        catch (Exception ex)
+        {
+            _error = true;
+            _message = ex.Message;
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private static void ToggleField(VacancyCategoryItem item, string key, ChangeEventArgs e)
+    {
+        var on = e.Value is bool b ? b : string.Equals(e.Value?.ToString(), "true", StringComparison.OrdinalIgnoreCase);
+        if (on)
+        {
+            if (!item.ExtraFields.Contains(key, StringComparer.OrdinalIgnoreCase))
+            {
+                item.ExtraFields.Add(key);
+            }
+        }
+        else
+        {
+            item.ExtraFields.RemoveAll(x => string.Equals(x, key, StringComparison.OrdinalIgnoreCase));
+        }
+    }
+
+    private static void OnPushBomCostChanged(VacancyCategoryItem item, ChangeEventArgs e)
+    {
+        var raw = e.Value?.ToString();
+        if (string.IsNullOrWhiteSpace(raw))
+        {
+            item.PushBomCostTokens = null;
+            return;
+        }
+
+        if (decimal.TryParse(raw, System.Globalization.NumberStyles.Number, System.Globalization.CultureInfo.InvariantCulture, out var value)
+            || decimal.TryParse(raw, out value))
+        {
+            item.PushBomCostTokens = value;
+        }
+    }
+
+    private async Task SaveAsync(VacancyCategoryItem item)
+    {
+        _busyId = item.Id;
+        _message = null;
+        try
+        {
+            var form = ToForm(item);
+            var updated = await Api.UpdateVacancyCategoryAsync(item.Id, form);
+            if (updated is null)
+            {
+                _error = true;
+                _message = "Opslaan mislukt.";
+                return;
+            }
+
+            var idx = _items.FindIndex(i => i.Id == item.Id);
+            if (idx >= 0)
+            {
+                _items[idx] = updated;
+            }
+
+            _error = false;
+            _message = "Categorie opgeslagen.";
+        }
+        catch (Exception ex)
+        {
+            _error = true;
+            _message = ex.Message;
+        }
+        finally
+        {
+            _busyId = null;
+        }
+    }
+
+    private async Task DeleteAsync(VacancyCategoryItem item)
+    {
+        _busyId = item.Id;
+        _message = null;
+        try
+        {
+            if (!await Api.DeleteVacancyCategoryAsync(item.Id))
+            {
+                _error = true;
+                _message = "Verwijderen mislukt.";
+                return;
+            }
+
+            await ReloadAsync();
+            _error = false;
+            _message = "Categorie verwijderd of gedeactiveerd.";
+        }
+        catch (Exception ex)
+        {
+            _error = true;
+            _message = ex.Message;
+        }
+        finally
+        {
+            _busyId = null;
+        }
+    }
+
+    private async Task CreateAsync()
+    {
+        if (string.IsNullOrWhiteSpace(_new.Name))
+        {
+            _error = true;
+            _message = "Naam is verplicht.";
+            return;
+        }
+
+        _creating = true;
+        _message = null;
+        try
+        {
+            var created = await Api.CreateVacancyCategoryAsync(_new);
+            if (created is null)
+            {
+                _error = true;
+                _message = "Aanmaken mislukt.";
+                return;
+            }
+
+            _new = new VacancyCategoryForm { ColorHex = "#F54A1B", PublishCostTokens = 1m, HighlightCostTokens = 2m };
+            await ReloadAsync();
+            _error = false;
+            _message = "Categorie toegevoegd.";
+        }
+        catch (Exception ex)
+        {
+            _error = true;
+            _message = ex.Message;
+        }
+        finally
+        {
+            _creating = false;
+        }
+    }
+
+    private static VacancyCategoryForm ToForm(VacancyCategoryItem item) => new()
+    {
+        Name = item.Name,
+        ColorHex = item.ColorHex,
+        PublishCostTokens = item.PublishCostTokens,
+        HighlightAvailable = item.HighlightAvailable,
+        HighlightCostTokens = item.HighlightCostTokens,
+        PushBomAvailable = item.PushBomAvailable,
+        PushBomCostTokens = item.PushBomCostTokens,
+        IsAlwaysFree = item.IsAlwaysFree,
+        PlacementKind = item.PlacementKind,
+        ExtraFields = item.ExtraFields.ToList(),
+        SortOrder = item.SortOrder,
+        IsActive = item.IsActive,
+        ShowInMapFilter = item.ShowInMapFilter,
+        ShowInLegend = item.ShowInLegend
+    };
+}
