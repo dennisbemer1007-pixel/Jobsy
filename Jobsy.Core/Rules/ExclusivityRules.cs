@@ -12,7 +12,7 @@ public static class ExclusivityRules
     public static readonly Guid DefaultOpenOptionId = Guid.Parse("a0000000-0000-4000-8000-000000000001");
 
     public static bool RequiresApplicantExtras(ExclusivitySetting? setting)
-        => setting is { IsActive: true, IsOpenOption: false };
+        => setting is { IsOpenOption: false };
 
     public static string BadgeText(ExclusivitySetting? setting)
         => setting is null || setting.IsOpenOption
@@ -32,7 +32,8 @@ public static class ExclusivityRules
         }
 
         var email = schoolEmail.Trim().ToLowerInvariant();
-        if (!email.Contains('@') || email.StartsWith('@') || email.EndsWith('@'))
+        var at = email.LastIndexOf('@');
+        if (at <= 0 || at == email.Length - 1 || email.Count(c => c == '@') != 1)
         {
             return $"Deze stageplek is exclusief voor studenten van {setting.Name}. Gebruik je school‑e-mailadres.";
         }
@@ -42,17 +43,12 @@ public static class ExclusivityRules
             return null;
         }
 
+        // Exact domain match only (no evil.{domain} / parent-suffix tricks).
         var domain = setting.SchoolDomain.Trim().TrimStart('@').ToLowerInvariant();
-        if (!email.EndsWith("@" + domain, StringComparison.Ordinal)
-            && !email.EndsWith("." + domain, StringComparison.Ordinal))
+        var mailDomain = email[(at + 1)..];
+        if (!string.Equals(mailDomain, domain, StringComparison.Ordinal))
         {
-            // Accept exact domain match after @ only.
-            var at = email.LastIndexOf('@');
-            var mailDomain = at >= 0 ? email[(at + 1)..] : "";
-            if (!string.Equals(mailDomain, domain, StringComparison.Ordinal))
-            {
-                return $"Deze stageplek is exclusief voor studenten van {setting.Name}. Gebruik je school‑e-mailadres.";
-            }
+            return $"Deze stageplek is exclusief voor studenten van {setting.Name}. Gebruik je school‑e-mailadres.";
         }
 
         return null;

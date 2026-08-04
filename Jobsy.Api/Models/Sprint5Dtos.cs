@@ -168,4 +168,14 @@ public record EmployerApplicationDto(
     string? MatchBreakdownJson = null,
     bool ViaSafetyNet = false,
     string? Motivation = null,
-    bool LegalEligible = true);
+    bool LegalEligible = true,
+    /// <summary>Null until Accepted — progressive disclosure (stage exclusivity).</summary>
+    string? StudentNumber = null,
+    /// <summary>Null until Accepted — progressive disclosure (stage exclusivity).</summary>
+    string? SchoolEmail = null,
+    /// <summary>Null until Accepted — progressive disclosure (stage exclusivity).</summary>
+    string? StudyProgram = null,
+    /// <summary>Null until Accepted — progressive disclosure (stage exclusivity).</summary>
+    string? StudyYear = null,
+    /// <summary>Null until Accepted — progressive disclosure (stage exclusivity).</summary>
+    string? ExclusivityValidationStatus = null);

@@ -306,6 +306,9 @@ public class RoleFunctionalRegressionTests : IClassFixture<RoleFunctionalWebAppF
         Assert.Null(pending.DistanceKm);
         Assert.False(pending.WorkPermitConfirmed); // gated until accept
         Assert.Equal("Sterke motivatie voor deze rol.", pending.Motivation);
+        Assert.Null(pending.StudentNumber);
+        Assert.Null(pending.SchoolEmail);
+        Assert.Null(pending.StudyProgram);
 
         var accepted = Assert.Single(list!, a => a.Id == _factory.AcceptedApplicationId);
         Assert.True(accepted.PiiRevealed);

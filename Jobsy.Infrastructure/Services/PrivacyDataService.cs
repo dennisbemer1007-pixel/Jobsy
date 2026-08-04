@@ -53,6 +53,11 @@ public sealed class PrivacyDataService : IPrivacyDataService
                 a.SnapshotEducations,
                 a.SnapshotAboutMe,
                 a.Motivation,
+                a.StudentNumber,
+                a.SchoolEmail,
+                a.StudyProgram,
+                a.StudyYear,
+                a.ExclusivityValidationStatus,
                 a.CandidateEmployerCount,
                 EmailVerified = a.EmailVerifiedAt != null
             })
@@ -412,6 +417,11 @@ public sealed class PrivacyDataService : IPrivacyDataService
             app.SnapshotEducations = null;
             app.SnapshotAboutMe = null;
             app.Motivation = null;
+            app.StudentNumber = null;
+            app.SchoolEmail = null;
+            app.StudyProgram = null;
+            app.StudyYear = null;
+            app.ExclusivityValidationStatus = null;
             app.CandidateEmployerCount = 0;
             app.EmailVerificationCode = null;
             app.EmailVerificationExpiresAt = null;

@@ -167,6 +167,11 @@ public class EmployerApplicationItem
     public bool ViaSafetyNet { get; set; }
     public string? Motivation { get; set; }
     public bool LegalEligible { get; set; } = true;
+    public string? StudentNumber { get; set; }
+    public string? SchoolEmail { get; set; }
+    public string? StudyProgram { get; set; }
+    public string? StudyYear { get; set; }
+    public string? ExclusivityValidationStatus { get; set; }
 }
 
 public class TokenPackItem

@@ -80,6 +80,18 @@
                             {
                                 <span class="muted">Opleiding: @a.SnapshotEducations</span>
                             }
+                            @if (!string.IsNullOrWhiteSpace(a.SchoolEmail))
+                            {
+                                <span class="muted">School-e-mail: @a.SchoolEmail</span>
+                            }
+                            @if (!string.IsNullOrWhiteSpace(a.StudentNumber))
+                            {
+                                <span class="muted">Studentnummer: @a.StudentNumber</span>
+                            }
+                            @if (!string.IsNullOrWhiteSpace(a.StudyProgram))
+                            {
+                                <span class="muted">Stage-opleiding: @a.StudyProgram@(string.IsNullOrWhiteSpace(a.StudyYear) ? "" : $" · jaar {a.StudyYear}")</span>
+                            }
                             @if (a.CandidateEmployerCount > 0)
                             {
                                 <span class="muted">Eerdere werkgevers: @a.CandidateEmployerCount</span>

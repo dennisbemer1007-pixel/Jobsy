@@ -89,7 +89,12 @@ public class ApplicationsController : ControllerBase
                 a.MatchPercent,
                 a.MatchBreakdownJson,
                 a.ViaSafetyNet,
-                a.Motivation
+                a.Motivation,
+                a.StudentNumber,
+                a.SchoolEmail,
+                a.StudyProgram,
+                a.StudyYear,
+                a.ExclusivityValidationStatus
             })
             .ToListAsync(cancellationToken);
 
@@ -124,7 +129,12 @@ public class ApplicationsController : ControllerBase
                 a.ViaSafetyNet,
                 // Motivation is candidate-authored for the employer — show after verified apply (pre-accept OK).
                 a.Motivation,
-                LegalEligible: true);
+                LegalEligible: true,
+                revealed ? a.StudentNumber : null,
+                revealed ? a.SchoolEmail : null,
+                revealed ? a.StudyProgram : null,
+                revealed ? a.StudyYear : null,
+                revealed ? a.ExclusivityValidationStatus : null);
         }));
     }
 
@@ -847,7 +857,13 @@ public class ApplicationsController : ControllerBase
             a.MatchPercent,
             a.MatchBreakdownJson,
             a.ViaSafetyNet,
-            a.Motivation);
+            a.Motivation,
+            LegalEligible: true,
+            revealed ? a.StudentNumber : null,
+            revealed ? a.SchoolEmail : null,
+            revealed ? a.StudyProgram : null,
+            revealed ? a.StudyYear : null,
+            revealed ? a.ExclusivityValidationStatus : null);
     }
 
     private async Task SendVerificationCodeAsync(

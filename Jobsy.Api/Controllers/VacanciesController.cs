@@ -1302,8 +1302,9 @@ public class VacanciesController : ControllerBase
             v.ExclusivitySettingId,
             v.ExclusivitySetting?.Name,
             v.ExclusivitySetting?.IsOpenOption ?? true,
+            // Domain needed for apply UX; student-number regex stays server-side only.
             v.ExclusivitySetting?.SchoolDomain,
-            v.ExclusivitySetting?.StudentNumberPattern,
+            ExclusivityStudentNumberPattern: null,
             v.ExclusivitySetting?.Educations
                 .Where(e => e.IsActive)
                 .OrderBy(e => e.SortOrder)
