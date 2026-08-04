@@ -10,6 +10,7 @@ using Jobsy.Core.Privacy;
 using Jobsy.Core.Rules;
 using Jobsy.Core.ValueObjects;
 using Jobsy.Infrastructure.Data;
+using Jobsy.Infrastructure.Services;
 using Jobsy.Web.Navigation;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
@@ -62,6 +63,41 @@ public class RoleFunctionalRegressionTests : IClassFixture<RoleFunctionalWebAppF
 
         var kvk = await client.GetAsync("api/kvk/12345678/establishments");
         Assert.Equal(HttpStatusCode.OK, kvk.StatusCode);
+    }
+
+    [Fact]
+    public async Task Guest_discover_filters_categories_and_suitable_for_65plus_without_leaking_internals()
+    {
+        var client = _factory.CreateClient();
+
+        var categories = await client.GetFromJsonAsync<List<JsonElement>>("api/vacancy-categories", JsonOpts);
+        Assert.NotNull(categories);
+        Assert.True(categories!.Count >= 7);
+        Assert.Contains(categories, c => c.GetProperty("slug").GetString() == "regulier");
+
+        var filter65 = await client.GetAsync("api/vacancies/discover?suitableFor65Plus=true&transport=Fiets&maxMinutes=90");
+        Assert.Equal(HttpStatusCode.OK, filter65.StatusCode);
+        var items65 = await filter65.Content.ReadFromJsonAsync<List<JsonElement>>(JsonOpts);
+        Assert.NotNull(items65);
+        Assert.Contains(items65!, v => v.GetProperty("id").GetGuid() == _factory.VacancyId);
+        Assert.Contains(items65!, v => v.GetProperty("id").GetGuid() == _factory.NightShiftVacancyId);
+        Assert.DoesNotContain(items65!, v => v.GetProperty("id").GetGuid() == _factory.LowMatchVacancyId);
+
+        var byCategory = await client.GetAsync(
+            $"api/vacancies/discover?categoryId={VacancyCategoryDefaults.RegulierId:D}&transport=Fiets&maxMinutes=90");
+        Assert.Equal(HttpStatusCode.OK, byCategory.StatusCode);
+        var regulier = await byCategory.Content.ReadFromJsonAsync<List<JsonElement>>(JsonOpts);
+        Assert.Contains(regulier!, v => v.GetProperty("id").GetGuid() == _factory.VacancyId);
+        Assert.All(regulier!, v =>
+        {
+            Assert.False(v.TryGetProperty("categoryFields", out var fields) && fields.ValueKind is JsonValueKind.Object);
+            Assert.True(!v.TryGetProperty("categoryPublishCostTokens", out var cost)
+                        || cost.ValueKind is JsonValueKind.Null
+                        || cost.ValueKind is JsonValueKind.Undefined);
+        });
+
+        Assert.Equal(HttpStatusCode.Unauthorized,
+            (await client.GetAsync("api/vacancy-categories/admin")).StatusCode);
     }
 
     [Fact]
@@ -260,6 +296,21 @@ public class RoleFunctionalRegressionTests : IClassFixture<RoleFunctionalWebAppF
     }
 
     [Fact]
+    public async Task Candidate_can_browse_categories_and_65plus_filter()
+    {
+        var client = CandidateClient();
+        var categories = await client.GetFromJsonAsync<List<JsonElement>>("api/vacancy-categories", JsonOpts);
+        Assert.NotNull(categories);
+        Assert.Contains(categories!, c => c.GetProperty("slug").GetString() == "65plus");
+
+        var discover = await client.GetAsync("api/vacancies/discover?suitableFor65Plus=true&transport=Fiets&maxMinutes=90");
+        Assert.Equal(HttpStatusCode.OK, discover.StatusCode);
+        var items = await discover.Content.ReadFromJsonAsync<List<JsonElement>>(JsonOpts);
+        Assert.Contains(items!, v => v.GetProperty("suitableFor65Plus").GetBoolean()
+            || v.GetProperty("categoryId").GetGuid() == VacancyCategoryDefaults.SeniorLightId);
+    }
+
+    [Fact]
     public async Task Candidate_cannot_access_employer_or_admin_endpoints()
     {
         var client = CandidateClient();
@@ -320,6 +371,29 @@ public class RoleFunctionalRegressionTests : IClassFixture<RoleFunctionalWebAppF
     }
 
     [Fact]
+    public async Task Employer_managed_vacancies_expose_category_pricing_and_admin_categories_are_forbidden()
+    {
+        var client = EmployerClient();
+        var managed = await client.GetFromJsonAsync<List<JsonElement>>("api/vacancies/manage", JsonOpts);
+        Assert.NotNull(managed);
+        var first = Assert.Single(managed!, v => v.GetProperty("id").GetGuid() == _factory.VacancyId);
+        Assert.Equal(VacancyCategoryDefaults.RegulierId, first.GetProperty("categoryId").GetGuid());
+        Assert.True(first.GetProperty("suitableFor65Plus").GetBoolean());
+        Assert.True(first.TryGetProperty("categoryPublishCostTokens", out var cost)
+                    && cost.ValueKind == JsonValueKind.Number);
+
+        Assert.Equal(HttpStatusCode.Forbidden,
+            (await client.GetAsync("api/vacancy-categories/admin")).StatusCode);
+        Assert.Equal(HttpStatusCode.Forbidden,
+            (await client.PostAsJsonAsync("api/vacancy-categories", new
+            {
+                name = "Hack",
+                colorHex = "#112233",
+                publishCostTokens = 0
+            })).StatusCode);
+    }
+
+    [Fact]
     public async Task Employer_cannot_access_admin_integrations()
     {
         var client = EmployerClient();
@@ -350,6 +424,19 @@ public class RoleFunctionalRegressionTests : IClassFixture<RoleFunctionalWebAppF
     }
 
     // ─── Admin ──────────────────────────────────────────────────────────────
+
+    [Fact]
+    public async Task Admin_can_manage_vacancy_categories()
+    {
+        var client = AdminClient();
+        var list = await client.GetFromJsonAsync<List<JsonElement>>("api/vacancy-categories/admin", JsonOpts);
+        Assert.NotNull(list);
+        Assert.True(list!.Count >= 7);
+
+        var catalog = await client.GetFromJsonAsync<List<JsonElement>>("api/vacancy-categories/field-catalog", JsonOpts);
+        Assert.NotNull(catalog);
+        Assert.Contains(catalog!, f => f.GetProperty("key").GetString() == "contractType");
+    }
 
     [Fact]
     public async Task Admin_can_load_metrics_and_integrations()
@@ -516,6 +603,9 @@ public sealed class RoleFunctionalWebAppFactory : WebApplicationFactory<Program>
             return;
         }
 
+        var categories = new VacancyCategoryService(db);
+        categories.EnsureDefaultsAsync().GetAwaiter().GetResult();
+
         var today = DateOnly.FromDateTime(DateTime.UtcNow);
         db.Companies.Add(new Company
         {
@@ -630,7 +720,9 @@ public sealed class RoleFunctionalWebAppFactory : WebApplicationFactory<Program>
                 LegalAdultSupervisorPresent = true,
                 LegalHandlesMoneyOrClosing = false,
                 LegalHeavyOrHazardousWork = false,
-                MaxApplications = 10
+                MaxApplications = 10,
+                CategoryId = VacancyCategoryDefaults.RegulierId,
+                SuitableFor65Plus = true
             },
             new Vacancy
             {
@@ -668,7 +760,8 @@ public sealed class RoleFunctionalWebAppFactory : WebApplicationFactory<Program>
                 LegalAdultSupervisorPresent = true,
                 LegalHandlesMoneyOrClosing = false,
                 LegalHeavyOrHazardousWork = false,
-                MaxApplications = 10
+                MaxApplications = 10,
+                CategoryId = VacancyCategoryDefaults.InternshipId
             },
             new Vacancy
             {
@@ -695,7 +788,8 @@ public sealed class RoleFunctionalWebAppFactory : WebApplicationFactory<Program>
                 LegalAdultSupervisorPresent = true,
                 LegalHandlesMoneyOrClosing = false,
                 LegalHeavyOrHazardousWork = false,
-                MaxApplications = 10
+                MaxApplications = 10,
+                CategoryId = VacancyCategoryDefaults.SeniorLightId
             });
 
         db.Applications.AddRange(

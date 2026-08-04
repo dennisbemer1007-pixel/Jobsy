@@ -30,6 +30,16 @@ public static class JobsyDbSeeder
                 "No EF migrations found. Using EnsureCreated. Run: dotnet ef migrations add InitialCreate -p Jobsy.Infrastructure -s Jobsy.Api");
             await db.Database.EnsureCreatedAsync();
         }
+
+        // Always ensure vacancy categories + backfill CategoryId after migrate (also when Seed:Enabled=false).
+        try
+        {
+            await VacancyCategorySeeder.SeedAsync(db, logger);
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(ex, "Vacancy category ensure/backfill after migrate failed; continuing.");
+        }
     }
 
     public static async Task SeedDataAsync(IServiceProvider services)

@@ -341,7 +341,8 @@ public class VacanciesController : ControllerBase
                     applicationCount: applicationCounts.GetValueOrDefault(v.Id),
                     shareCount: shareCounts.GetValueOrDefault(v.Id),
                     likeCount: likeCounts.GetValueOrDefault(v.Id),
-                    includeDescription: false));
+                    includeDescription: false,
+                    includeCategoryInternals: true));
             }
             catch
             {
@@ -504,6 +505,15 @@ public class VacanciesController : ControllerBase
         }
 
         var category = categoryResolve.Category!;
+        // Prevent token bypass: free (volunteer) categories cannot be combined with Kind=Regular.
+        if (category.IsAlwaysFree && request.Kind == VacancyKind.Regular)
+        {
+            return BadRequest(new
+            {
+                message = "Gratis/vrijwilligerscategorie is niet bedoeld voor reguliere betaalde vacatures. Kies een passende categorie."
+            });
+        }
+
         var categoryFieldsJson = SerializeCategoryFields(category, request.CategoryFields);
         var suitableFor65Plus = category.Id == VacancyCategoryDefaults.RegulierId && request.SuitableFor65Plus;
 
@@ -567,7 +577,7 @@ public class VacanciesController : ControllerBase
 
         vacancy.Company = company;
         vacancy.IntermediaryCompany = intermediaryCompany;
-        return CreatedAtAction(nameof(GetById), new { id = vacancy.Id }, MapToDto(vacancy, showWage: true));
+        return CreatedAtAction(nameof(GetById), new { id = vacancy.Id }, MapToDto(vacancy, showWage: true, includeCategoryInternals: true));
     }
 
     [HttpPost("publish")]
@@ -997,7 +1007,7 @@ public class VacanciesController : ControllerBase
     }
 
     private VacancyProductActionResultDto ToProductResult(VacancyProductOutcome result) => new(
-        MapToDto(result.Vacancy, showWage: true),
+        MapToDto(result.Vacancy, showWage: true, includeCategoryInternals: true),
         result.PendingApproval,
         result.ErrorMessage,
         result.PushBomRecipientCount);
@@ -1101,12 +1111,18 @@ public class VacanciesController : ControllerBase
         string targetLanguage,
         int? ageYears,
         bool includeDescription,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        bool includeCategoryInternals = false)
     {
         var mapped = new List<VacancyListItemDto>(vacancies.Count);
         foreach (var v in vacancies)
         {
-            mapped.Add(MapToDto(v, showWage, ageYears, includeDescription: includeDescription));
+            mapped.Add(MapToDto(
+                v,
+                showWage,
+                ageYears,
+                includeDescription: includeDescription,
+                includeCategoryInternals: includeCategoryInternals));
         }
 
         return await TranslateManyAsync(mapped, targetLanguage, cancellationToken);
@@ -1253,7 +1269,8 @@ public class VacanciesController : ControllerBase
         int applicationCount = 0,
         bool includeDescription = true,
         int shareCount = 0,
-        int likeCount = 0)
+        int likeCount = 0,
+        bool includeCategoryInternals = false)
     {
         decimal? hourly = null;
         IReadOnlyList<WageByAgeDto>? wageByAge = null;
@@ -1347,13 +1364,21 @@ public class VacanciesController : ControllerBase
             v.CategoryId,
             v.Category?.Name,
             v.Category?.ColorHex,
-            v.Category is null || (v.Category.HighlightAvailable && !v.Category.IsAlwaysFree),
-            v.Category is null || (v.Category.PushBomAvailable && !v.Category.IsAlwaysFree),
-            v.Category is null ? null : (v.Category.IsAlwaysFree ? 0m : v.Category.PublishCostTokens),
-            v.Category is null ? null : (v.Category.IsAlwaysFree ? 0m : v.Category.HighlightCostTokens),
-            v.Category?.PushBomCostTokens,
-            v.Category is null || (v.Category.PushBomAvailable && !v.Category.IsAlwaysFree && v.Category.PushBomCostTokens is null),
-            DeserializeCategoryFields(v.CategoryFieldsJson),
+            includeCategoryInternals
+                && (v.Category is null || (v.Category.HighlightAvailable && !v.Category.IsAlwaysFree)),
+            includeCategoryInternals
+                && (v.Category is null || (v.Category.PushBomAvailable && !v.Category.IsAlwaysFree)),
+            includeCategoryInternals
+                ? (v.Category is null ? null : (v.Category.IsAlwaysFree ? 0m : v.Category.PublishCostTokens))
+                : null,
+            includeCategoryInternals
+                ? (v.Category is null ? null : (v.Category.IsAlwaysFree ? 0m : v.Category.HighlightCostTokens))
+                : null,
+            includeCategoryInternals ? v.Category?.PushBomCostTokens : null,
+            includeCategoryInternals
+                && (v.Category is null
+                    || (v.Category.PushBomAvailable && !v.Category.IsAlwaysFree && v.Category.PushBomCostTokens is null)),
+            includeCategoryInternals ? DeserializeCategoryFields(v.CategoryFieldsJson) : null,
             v.SuitableFor65Plus);
     }
 
@@ -1377,9 +1402,22 @@ public class VacanciesController : ControllerBase
 
         var defaultId = VacancyCategoryDefaults.ResolveDefaultId(fallbackKind);
         var fallback = await _categories.GetEntityAsync(defaultId, cancellationToken);
-        if (fallback is null)
+        if (fallback is null || !fallback.IsActive)
         {
-            return (null, "Standaard vacaturecategorie ontbreekt.");
+            // Prefer any active category with the same placement kind, else any active category.
+            var active = await _db.VacancyCategories
+                .AsNoTracking()
+                .Where(c => c.IsActive)
+                .OrderBy(c => c.PlacementKind == fallbackKind ? 0 : 1)
+                .ThenBy(c => c.SortOrder)
+                .ThenBy(c => c.Name)
+                .FirstOrDefaultAsync(cancellationToken);
+            if (active is null)
+            {
+                return (null, "Geen actieve vacaturecategorie beschikbaar.");
+            }
+
+            return (active, null);
         }
 
         return (fallback, null);
