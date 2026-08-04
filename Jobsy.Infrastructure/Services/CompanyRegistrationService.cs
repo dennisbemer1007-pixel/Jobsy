@@ -6,6 +6,7 @@ using Jobsy.Core.Enums;
 using Jobsy.Core.Interfaces;
 using Jobsy.Core.Privacy;
 using Jobsy.Core.Rules;
+using Jobsy.Core.Security;
 using Jobsy.Core.ValueObjects;
 using Jobsy.Infrastructure.Data;
 using Jobsy.Infrastructure.Security;
@@ -16,7 +17,9 @@ namespace Jobsy.Infrastructure.Services;
 
 public sealed class CompanyRegistrationService : ICompanyRegistrationService
 {
-    public static readonly TimeSpan ActivationTokenTtl = TimeSpan.FromHours(48);
+    /// <summary>Confirmation OTP / pending registration window (10 minutes).</summary>
+    public static readonly TimeSpan ActivationTokenTtl =
+        TimeSpan.FromMinutes(PrivacyConstants.UnconfirmedRegistrationRetentionMinutes);
 
     /// <summary>Ledger note for the one-time registration welcome grant (1 token).</summary>
     public const string WelcomeTokenNote = "Welkomsttoken toegekend bij accountactivatie";
@@ -136,17 +139,31 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
         var isIntermediarySbi = KvkSbiClassification.IsIntermediary(sbiCodes);
         var primarySbi = KvkSbiClassification.PrimarySbiCode(sbiCodes);
 
-        // Soft enumeration resistance: same generic message for existing email.
-        if (await _db.Users.AnyAsync(u => u.Email.ToLower() == email, cancellationToken)
-            || await _db.LocalAuthCredentials.AnyAsync(c => c.Email == email, cancellationToken)
-            || await _db.CompanyRegistrations.AnyAsync(
-                r => r.ContactEmail == email
-                     && (r.Status == CompanyRegistrationStatus.PendingActivation
-                         || r.Status == CompanyRegistrationStatus.TakeoverPending),
-                cancellationToken))
+        // Soft enumeration: never show a red conflict for known e-mails.
+        // Pending same address → resend OTP; known account → decoy success (no mail).
+        var pendingSameEmail = await _db.CompanyRegistrations
+            .Where(r => r.ContactEmail == email
+                        && (r.Status == CompanyRegistrationStatus.PendingActivation
+                            || r.Status == CompanyRegistrationStatus.TakeoverPending))
+            .OrderByDescending(r => r.CreatedAt)
+            .FirstOrDefaultAsync(cancellationToken);
+
+        if (pendingSameEmail is not null)
         {
-            throw new InvalidOperationException(
-                "Als dit e-mailadres nog niet bekend is, ontvang je zo een bevestiging. Zo niet, probeer in te loggen of een ander adres.");
+            return await ResendConfirmationCodeAsync(pendingSameEmail, cancellationToken);
+        }
+
+        if (await _db.Users.AnyAsync(u => u.Email.ToLower() == email, cancellationToken)
+            || await _db.LocalAuthCredentials.AnyAsync(c => c.Email == email, cancellationToken))
+        {
+            return new RegistrationSubmitResult(
+                Guid.NewGuid(),
+                CompanyRegistrationStatus.PendingActivation,
+                RequiresTakeover: false,
+                Message:
+                "We hebben een bevestigingscode gestuurd als dit e-mailadres nog niet bekend is. Bevestig binnen 10 minuten.",
+                ActivationUrl: null,
+                VerificationExpiresAt: DateTime.UtcNow.Add(ActivationTokenTtl));
         }
 
         var existing = await _db.Companies
@@ -194,6 +211,8 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
             CreatedAt = DateTime.UtcNow
         };
 
+        var plaintextCode = AssignConfirmationCode(registration);
+
         if (existing is not null || match.IsInUse)
         {
             if (existing is null)
@@ -215,33 +234,55 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
             _db.EstablishmentTakeoverRequests.Add(takeover);
             await _db.SaveChangesAsync(cancellationToken);
 
-            // AVG/auth: verify requester e-mail before owners see the takeover or credentials are applied.
+            try
+            {
+                await SendTakeoverEmailVerificationAsync(registration, existing, plaintextCode, cancellationToken);
+            }
+            catch (Exception ex) when (ex is not OperationCanceledException)
+            {
+                await DeleteRegistrationCascadeAsync(registration.Id, cancellationToken);
+                _logger.LogError(ex, "Takeover confirmation e-mail failed for {Id}", registration.Id);
+                throw new InvalidOperationException(
+                    "Kon de bevestigingsmail niet versturen. Controleer de e-mailinstellingen of probeer later opnieuw.");
+            }
+
             var featuresTakeover = await _features.GetAsync(cancellationToken);
             var verifyUrl = BuildActivationUrl(registration.ActivationToken, featuresTakeover.PublicWebBaseUrl);
-            await SendTakeoverEmailVerificationAsync(registration, existing, verifyUrl, cancellationToken);
 
             return new RegistrationSubmitResult(
                 registration.Id,
                 registration.Status,
                 RequiresTakeover: true,
                 Message:
-                "Deze vestiging is al geregistreerd. Bevestig eerst je e-mailadres; daarna sturen we het overnameverzoek naar de huidige eigenaar.",
-                ActivationUrl: featuresTakeover.ExposeRegistrationActivationLinks ? verifyUrl : null);
+                "Deze vestiging is al geregistreerd. Vul de bevestigingscode uit je e-mail in (geldig 10 minuten); daarna sturen we het overnameverzoek naar de huidige eigenaar.",
+                ActivationUrl: featuresTakeover.ExposeRegistrationActivationLinks ? verifyUrl : null,
+                VerificationExpiresAt: registration.EmailVerificationExpiresAt);
         }
 
         registration.Status = CompanyRegistrationStatus.PendingActivation;
         _db.CompanyRegistrations.Add(registration);
         await _db.SaveChangesAsync(cancellationToken);
 
+        try
+        {
+            await SendActivationEmailAsync(registration, plaintextCode, cancellationToken);
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            await DeleteRegistrationCascadeAsync(registration.Id, cancellationToken);
+            _logger.LogError(ex, "Registration confirmation e-mail failed for {Id}", registration.Id);
+            throw new InvalidOperationException(
+                "Kon de bevestigingsmail niet versturen. Controleer de e-mailinstellingen of probeer later opnieuw.");
+        }
+
         var features = await _features.GetAsync(cancellationToken);
         var activationUrl = BuildActivationUrl(registration.ActivationToken, features.PublicWebBaseUrl);
-        await SendActivationEmailAsync(registration, activationUrl, cancellationToken);
 
         var roleHint = isIntermediarySbi
-            ? "Na verificatie krijg je de rol Intermediair (SBI 78)."
+            ? "Na bevestiging krijg je de rol Intermediair (SBI 78)."
             : scope == RegistrationScope.Organization
-                ? "Na verificatie krijg je de rol Bedrijfsmanager."
-                : "Na verificatie krijg je de rol Filiaalmanager.";
+                ? "Na bevestiging krijg je de rol Bedrijfsmanager."
+                : "Na bevestiging krijg je de rol Filiaalmanager.";
 
         var kvkHint = kvkVerificationStatus == KvkVerificationStatus.Pending
             ? " Je account staat intern op KVK-verificatie in afwachting; we controleren dit automatisch zodra de KVK-dienst weer bereikbaar is."
@@ -251,8 +292,78 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
             registration.Id,
             registration.Status,
             RequiresTakeover: false,
-            Message: $"Controleer je e-mail voor de verificatielink (stub). {roleHint}{kvkHint}",
-            ActivationUrl: features.ExposeRegistrationActivationLinks ? activationUrl : null);
+            Message: $"We hebben een bevestigingscode naar je e-mail gestuurd. Vul die hieronder in (geldig 10 minuten). {roleHint}{kvkHint}",
+            ActivationUrl: features.ExposeRegistrationActivationLinks ? activationUrl : null,
+            VerificationExpiresAt: registration.EmailVerificationExpiresAt);
+    }
+
+    public async Task<RegistrationActivationResult> ConfirmAsync(
+        Guid registrationId,
+        string verificationCode,
+        CancellationToken cancellationToken = default)
+    {
+        if (registrationId == Guid.Empty)
+        {
+            throw new ArgumentException("Registratie ontbreekt.");
+        }
+
+        if (string.IsNullOrWhiteSpace(verificationCode))
+        {
+            throw new ArgumentException("Bevestigingscode ontbreekt.");
+        }
+
+        var registration = await _db.CompanyRegistrations
+            .FirstOrDefaultAsync(r => r.Id == registrationId, cancellationToken);
+
+        if (registration is null)
+        {
+            throw new KeyNotFoundException(
+                "Ongeldige of verlopen bevestigingscode. Registreer opnieuw.");
+        }
+
+        if (registration.Status == CompanyRegistrationStatus.Activated
+            || registration.Status == CompanyRegistrationStatus.TakeoverApproved)
+        {
+            throw new InvalidOperationException("Deze registratie is al bevestigd.");
+        }
+
+        if (IsConfirmationExpired(registration))
+        {
+            await DeleteRegistrationCascadeAsync(registration.Id, cancellationToken);
+            throw new InvalidOperationException(
+                "De bevestigingstermijn is verlopen. De aanvraag is verwijderd — registreer opnieuw.");
+        }
+
+        if (string.IsNullOrWhiteSpace(registration.EmailVerificationCode))
+        {
+            throw new InvalidOperationException(
+                "Geen openstaande bevestigingscode. Registreer opnieuw.");
+        }
+
+        if (registration.EmailVerificationFailedAttempts >= VerificationCodes.MaxFailedAttempts)
+        {
+            await DeleteRegistrationCascadeAsync(registration.Id, cancellationToken);
+            throw new InvalidOperationException(
+                "Te veel onjuiste pogingen. De aanvraag is verwijderd — registreer opnieuw.");
+        }
+
+        if (!VerificationCodes.MatchesHash(registration.EmailVerificationCode, verificationCode.Trim()))
+        {
+            var attempts = registration.EmailVerificationFailedAttempts;
+            var lockedOut = VerificationCodes.RegisterFailedAttempt(ref attempts);
+            registration.EmailVerificationFailedAttempts = attempts;
+            if (lockedOut)
+            {
+                await DeleteRegistrationCascadeAsync(registration.Id, cancellationToken);
+                throw new InvalidOperationException(
+                    "Te veel onjuiste pogingen. De aanvraag is verwijderd — registreer opnieuw.");
+            }
+
+            await _db.SaveChangesAsync(cancellationToken);
+            throw new InvalidOperationException("Onjuiste bevestigingscode. Probeer opnieuw.");
+        }
+
+        return await CompleteConfirmationAsync(registration, cancellationToken);
     }
 
     public async Task<RegistrationActivationResult> ActivateAsync(
@@ -277,14 +388,41 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
             throw new InvalidOperationException("Deze activatielink is al gebruikt.");
         }
 
-        if (DateTime.UtcNow - registration.CreatedAt > ActivationTokenTtl)
+        if (IsConfirmationExpired(registration))
         {
-            registration.Status = CompanyRegistrationStatus.Cancelled;
-            ClearPendingSecrets(registration);
-            await _db.SaveChangesAsync(cancellationToken);
-            throw new InvalidOperationException("Deze activatielink is verlopen. Registreer opnieuw.");
+            await DeleteRegistrationCascadeAsync(registration.Id, cancellationToken);
+            throw new InvalidOperationException(
+                "Deze activatielink is verlopen. De aanvraag is verwijderd — registreer opnieuw.");
         }
 
+        return await CompleteConfirmationAsync(registration, cancellationToken);
+    }
+
+    public async Task<int> PurgeExpiredUnconfirmedAsync(CancellationToken cancellationToken = default)
+    {
+        var cutoff = DateTime.UtcNow;
+        var expiredIds = await _db.CompanyRegistrations
+            .Where(r =>
+                (r.Status == CompanyRegistrationStatus.PendingActivation
+                 || r.Status == CompanyRegistrationStatus.TakeoverPending)
+                && ((r.EmailVerificationExpiresAt != null && r.EmailVerificationExpiresAt < cutoff)
+                    || (r.EmailVerificationExpiresAt == null
+                        && r.CreatedAt < cutoff - ActivationTokenTtl)))
+            .Select(r => r.Id)
+            .ToListAsync(cancellationToken);
+
+        foreach (var id in expiredIds)
+        {
+            await DeleteRegistrationCascadeAsync(id, cancellationToken);
+        }
+
+        return expiredIds.Count;
+    }
+
+    private async Task<RegistrationActivationResult> CompleteConfirmationAsync(
+        CompanyRegistration registration,
+        CancellationToken cancellationToken)
+    {
         if (registration.Status == CompanyRegistrationStatus.TakeoverPending)
         {
             return await CompleteTakeoverEmailVerificationAsync(registration, cancellationToken);
@@ -342,7 +480,10 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
 
         await SendActivatedCredentialsEmailAsync(registration, temporaryPassword, cancellationToken);
 
-        _logger.LogInformation("Activated registration {Id} for {Email}", registration.Id, EmailServiceStub.RedactEmail(registration.ContactEmail));
+        _logger.LogInformation(
+            "Activated registration {Id} for {Email}",
+            registration.Id,
+            EmailServiceStub.RedactEmail(registration.ContactEmail));
 
         return await BuildActivationResultAsync(
             registration, temporaryPassword ?? string.Empty, usedChosenPassword, cancellationToken);
@@ -1041,6 +1182,9 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
         registration.ContactEmailVerifiedAt = DateTime.UtcNow;
         // One-time verification token; password hash stays until approve/reject.
         registration.ActivationToken = string.Empty;
+        registration.EmailVerificationCode = null;
+        registration.EmailVerificationExpiresAt = null;
+        registration.EmailVerificationFailedAttempts = 0;
 
         await _db.SaveChangesAsync(cancellationToken);
         await NotifyTakeoverRequestedAsync(registration, takeover.TargetCompany, cancellationToken);
@@ -1068,20 +1212,20 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
     private async Task SendTakeoverEmailVerificationAsync(
         CompanyRegistration registration,
         Company existing,
-        string verifyUrl,
+        string plaintextCode,
         CancellationToken cancellationToken)
     {
         var safeName = WebUtility.HtmlEncode(registration.ContactName);
+        var safeCode = WebUtility.HtmlEncode(plaintextCode);
         await _email.SendAsync(new EmailMessage(
             registration.ContactEmail,
-            "Bevestig je e-mail voor overnameverzoek — Jobsy",
+            "Bevestigingscode overnameverzoek — Lobsy",
             $"""
              <p>Hoi {safeName},</p>
              <p>Vestiging <strong>{WebUtility.HtmlEncode(existing.Name)}</strong> is al geregistreerd.
-             Bevestig eerst je e-mailadres. Daarna sturen we het overnameverzoek naar de huidige eigenaar.</p>
-             <p><a href="{WebUtility.HtmlEncode(verifyUrl)}">E-mailadres bevestigen</a></p>
-             <p>Stub-link: <code>{WebUtility.HtmlEncode(verifyUrl)}</code></p>
-             <p><em>Stub — geen echte mail.</em></p>
+             Bevestig eerst je e-mailadres met deze code (geldig 10 minuten):</p>
+             <p style="font-size:1.5rem;font-weight:700;letter-spacing:0.2em"><code>{safeCode}</code></p>
+             <p>Daarna sturen we het overnameverzoek naar de huidige eigenaar.</p>
              """,
             "TakeoverEmailVerification"), cancellationToken);
     }
@@ -1110,7 +1254,7 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
         {
             await _email.SendAsync(new EmailMessage(
                 ownerEmail,
-                "Overnameverzoek vestiging — Jobsy",
+                "Overnameverzoek vestiging — Lobsy",
                 $"""
                  <p>Er is een overnameverzoek voor <strong>{WebUtility.HtmlEncode(existing.Name)}</strong>
                  ({WebUtility.HtmlEncode(existing.KvkEstablishmentId ?? "")}).</p>
@@ -1118,7 +1262,6 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
                  ({WebUtility.HtmlEncode(registration.ContactEmail)}),
                  scope: {WebUtility.HtmlEncode(registration.Scope.ToString())}.</p>
                  <p><a href="{WebUtility.HtmlEncode(inboxUrl)}">Bekijk verzoeken</a></p>
-                 <p><em>Stub — geen echte mail.</em></p>
                  """,
                 "TakeoverRequest"), cancellationToken);
         }
@@ -1126,22 +1269,22 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
         var safeName = WebUtility.HtmlEncode(registration.ContactName);
         await _email.SendAsync(new EmailMessage(
             registration.ContactEmail,
-            "Overnameverzoek ingediend — Jobsy",
+            "Overnameverzoek ingediend — Lobsy",
             $"""
              <p>Hoi {safeName},</p>
              <p>Vestiging <strong>{WebUtility.HtmlEncode(existing.Name)}</strong> is al in gebruik.
              We hebben een overnameverzoek gestuurd naar de huidige eigenaar.</p>
-             <p><em>Stub — geen echte mail.</em></p>
              """,
             "TakeoverSubmitted"), cancellationToken);
     }
 
     private async Task SendActivationEmailAsync(
         CompanyRegistration registration,
-        string activationUrl,
+        string plaintextCode,
         CancellationToken cancellationToken)
     {
         var safeName = WebUtility.HtmlEncode(registration.ContactName);
+        var safeCode = WebUtility.HtmlEncode(plaintextCode);
         var roleLabel = registration.IsIntermediarySbi
             ? "Intermediair"
             : registration.Scope == RegistrationScope.Organization
@@ -1149,16 +1292,15 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
                 : "Filiaalmanager";
         await _email.SendAsync(new EmailMessage(
             registration.ContactEmail,
-            "Bevestig je e-mailadres — Jobsy",
+            "Bevestigingscode — Lobsy",
             $"""
              <p>Hoi {safeName},</p>
              <p>Bevestig je e-mailadres om je bedrijfsregistratie voor
              <strong>{WebUtility.HtmlEncode(registration.EstablishmentName)}</strong> te activeren
              (rol: {WebUtility.HtmlEncode(roleLabel)}
              {(string.IsNullOrEmpty(registration.PrimarySbiCode) ? "" : $", SBI {WebUtility.HtmlEncode(registration.PrimarySbiCode)}")}).</p>
-             <p><a href="{WebUtility.HtmlEncode(activationUrl)}">E-mailadres bevestigen</a></p>
-             <p>Stub-link: <code>{WebUtility.HtmlEncode(activationUrl)}</code></p>
-             <p><em>Stub — geen echte mail.</em></p>
+             <p>Je bevestigingscode (geldig 10 minuten):</p>
+             <p style="font-size:1.5rem;font-weight:700;letter-spacing:0.2em"><code>{safeCode}</code></p>
              """,
             "RegistrationActivation"), cancellationToken);
     }
@@ -1183,7 +1325,7 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
                """;
         await _email.SendAsync(new EmailMessage(
             registration.ContactEmail,
-            "Je Jobsy-account is actief",
+            "Je Lobsy-account is actief",
             $"""
              <p>Hoi {safeName},</p>
              <p>Je account voor <strong>{WebUtility.HtmlEncode(registration.EstablishmentName)}</strong> is geactiveerd.</p>
@@ -1191,7 +1333,6 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
              Google op <code>{WebUtility.HtmlEncode(registration.ContactEmail)}</code>.</p>
              {passwordBlock}
              <p><a href="{WebUtility.HtmlEncode(loginUrl)}">Naar inloggen</a></p>
-             <p><em>Stub — geen echte mail.</em></p>
              """,
             "RegistrationCredentials"), cancellationToken);
     }
@@ -1220,6 +1361,99 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
     {
         registration.ActivationToken = string.Empty;
         registration.PasswordHash = null;
+        registration.EmailVerificationCode = null;
+        registration.EmailVerificationExpiresAt = null;
+        registration.EmailVerificationFailedAttempts = 0;
+    }
+
+    private static string AssignConfirmationCode(CompanyRegistration registration)
+    {
+        var code = VerificationCodes.CreateNumericCode();
+        registration.EmailVerificationCode = VerificationCodes.Hash(code);
+        registration.EmailVerificationExpiresAt = DateTime.UtcNow.Add(ActivationTokenTtl);
+        registration.EmailVerificationFailedAttempts = 0;
+        return code;
+    }
+
+    private static bool IsConfirmationExpired(CompanyRegistration registration)
+    {
+        if (registration.EmailVerificationExpiresAt is DateTime expires)
+        {
+            return DateTime.UtcNow > expires;
+        }
+
+        return DateTime.UtcNow - registration.CreatedAt > ActivationTokenTtl;
+    }
+
+    private async Task<RegistrationSubmitResult> ResendConfirmationCodeAsync(
+        CompanyRegistration registration,
+        CancellationToken cancellationToken)
+    {
+        var plaintextCode = AssignConfirmationCode(registration);
+        // Refresh opaque token so old e-mail links (if any) stop working.
+        registration.ActivationToken = Convert.ToHexString(RandomNumberGenerator.GetBytes(32));
+        await _db.SaveChangesAsync(cancellationToken);
+
+        try
+        {
+            if (registration.Status == CompanyRegistrationStatus.TakeoverPending)
+            {
+                var takeover = await _db.EstablishmentTakeoverRequests
+                    .Include(t => t.TargetCompany)
+                    .FirstOrDefaultAsync(t => t.RegistrationId == registration.Id, cancellationToken);
+                if (takeover?.TargetCompany is not null)
+                {
+                    await SendTakeoverEmailVerificationAsync(
+                        registration, takeover.TargetCompany, plaintextCode, cancellationToken);
+                }
+                else
+                {
+                    await SendActivationEmailAsync(registration, plaintextCode, cancellationToken);
+                }
+            }
+            else
+            {
+                await SendActivationEmailAsync(registration, plaintextCode, cancellationToken);
+            }
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            _logger.LogError(ex, "Resend confirmation e-mail failed for {Id}", registration.Id);
+            throw new InvalidOperationException(
+                "Kon de bevestigingsmail niet versturen. Probeer later opnieuw.");
+        }
+
+        var features = await _features.GetAsync(cancellationToken);
+        var activationUrl = BuildActivationUrl(registration.ActivationToken, features.PublicWebBaseUrl);
+        return new RegistrationSubmitResult(
+            registration.Id,
+            registration.Status,
+            RequiresTakeover: registration.Status == CompanyRegistrationStatus.TakeoverPending,
+            Message:
+            "We hebben een nieuwe bevestigingscode naar je e-mail gestuurd. Vul die hieronder in (geldig 10 minuten).",
+            ActivationUrl: features.ExposeRegistrationActivationLinks ? activationUrl : null,
+            VerificationExpiresAt: registration.EmailVerificationExpiresAt);
+    }
+
+    private async Task DeleteRegistrationCascadeAsync(Guid registrationId, CancellationToken cancellationToken)
+    {
+        var takeovers = await _db.EstablishmentTakeoverRequests
+            .Where(t => t.RegistrationId == registrationId)
+            .ToListAsync(cancellationToken);
+        if (takeovers.Count > 0)
+        {
+            _db.EstablishmentTakeoverRequests.RemoveRange(takeovers);
+        }
+
+        var registration = await _db.CompanyRegistrations
+            .FirstOrDefaultAsync(r => r.Id == registrationId, cancellationToken);
+        if (registration is not null)
+        {
+            _db.CompanyRegistrations.Remove(registration);
+        }
+
+        await _db.SaveChangesAsync(cancellationToken);
+        _logger.LogInformation("Deleted unconfirmed registration {Id}", registrationId);
     }
 
     private static string GenerateTemporaryPassword()

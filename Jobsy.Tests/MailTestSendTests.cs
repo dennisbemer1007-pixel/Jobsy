@@ -4,6 +4,7 @@ using Jobsy.Core.Options;
 using Jobsy.Infrastructure.Data;
 using Jobsy.Infrastructure.Services;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 
@@ -83,6 +84,7 @@ public class MailTestSendTests
             new EmailServiceStub(db, NullLogger<EmailServiceStub>.Instance),
             db,
             new FakeHttpClientFactory(),
+            new FakeHostEnvironment { EnvironmentName = Environments.Development },
             NullLogger<SmtpEmailService>.Instance);
         return new IntegrationHealthStub(
             credentials,
@@ -95,5 +97,14 @@ public class MailTestSendTests
     private sealed class FakeHttpClientFactory : IHttpClientFactory
     {
         public HttpClient CreateClient(string name) => new();
+    }
+
+    private sealed class FakeHostEnvironment : IHostEnvironment
+    {
+        public string EnvironmentName { get; set; } = Environments.Development;
+        public string ApplicationName { get; set; } = "Jobsy.Tests";
+        public string ContentRootPath { get; set; } = ".";
+        public Microsoft.Extensions.FileProviders.IFileProvider ContentRootFileProvider { get; set; }
+            = new Microsoft.Extensions.FileProviders.NullFileProvider();
     }
 }

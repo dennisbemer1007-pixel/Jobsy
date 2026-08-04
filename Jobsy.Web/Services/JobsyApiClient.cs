@@ -726,6 +726,25 @@ public sealed class JobsyApiClient : IAsyncDisposable
                ?? throw new InvalidOperationException("Lege registratierespons.");
     }
 
+    public async Task<RegistrationActivationResult> ConfirmRegistrationAsync(
+        Guid registrationId,
+        string verificationCode,
+        CancellationToken ct = default)
+    {
+        var response = await _http.PostAsJsonAsync(
+            $"api/registration/{registrationId:D}/confirm",
+            new { verificationCode },
+            ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException(ExtractMessage(body) ?? response.ReasonPhrase ?? "Bevestiging mislukt.");
+        }
+
+        return await response.Content.ReadFromJsonAsync<RegistrationActivationResult>(cancellationToken: ct)
+               ?? throw new InvalidOperationException("Lege bevestigingsrespons.");
+    }
+
     public async Task<RegistrationActivationResult> ActivateRegistrationAsync(
         string token,
         CancellationToken ct = default)

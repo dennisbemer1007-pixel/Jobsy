@@ -145,7 +145,7 @@ public class Sprint7RegistrationTests
     }
 
     [Fact]
-    public async Task Expired_activation_clears_pending_password_hash()
+    public async Task Expired_activation_deletes_unconfirmed_registration()
     {
         await using var db = CreateDb();
         var sut = CreateService(db);
@@ -159,14 +159,84 @@ public class Sprint7RegistrationTests
         Assert.False(string.IsNullOrWhiteSpace(registration.PasswordHash));
         var token = registration.ActivationToken;
         registration.CreatedAt = DateTime.UtcNow - CompanyRegistrationService.ActivationTokenTtl - TimeSpan.FromMinutes(1);
+        registration.EmailVerificationExpiresAt = DateTime.UtcNow - TimeSpan.FromMinutes(1);
         await db.SaveChangesAsync();
 
         await Assert.ThrowsAsync<InvalidOperationException>(() => sut.ActivateAsync(token));
 
-        var expired = await db.CompanyRegistrations.SingleAsync(r => r.Id == submit.RegistrationId);
-        Assert.Equal(CompanyRegistrationStatus.Cancelled, expired.Status);
-        Assert.Null(expired.PasswordHash);
-        Assert.Equal(string.Empty, expired.ActivationToken);
+        Assert.Equal(0, await db.CompanyRegistrations.CountAsync(r => r.Id == submit.RegistrationId));
+    }
+
+    [Fact]
+    public async Task Confirm_with_email_code_activates_account()
+    {
+        await using var db = CreateDb();
+        var capture = new CapturingEmailService(db);
+        var sut = CreateService(db, email: capture);
+
+        var submit = await sut.SubmitAsync(new RegistrationSubmitRequest(
+            "99990001", "99990001_0001", RegistrationScope.BranchOnly,
+            "Code User", "code.user@jobsy.local", null, AcceptedTerms: true,
+            Password: "TestPass1!"));
+
+        Assert.NotNull(submit.VerificationExpiresAt);
+        Assert.Contains("bevestigingscode", submit.Message, StringComparison.OrdinalIgnoreCase);
+
+        var code = capture.LastNumericCode
+                   ?? throw new InvalidOperationException("Geen bevestigingscode in e-mail.");
+
+        var activated = await sut.ConfirmAsync(submit.RegistrationId, code);
+        Assert.Equal("BranchManager", activated.Role);
+        Assert.True(activated.UsedChosenPassword);
+        Assert.Null(await db.CompanyRegistrations
+            .Where(r => r.Id == submit.RegistrationId)
+            .Select(r => r.EmailVerificationCode)
+            .SingleAsync());
+    }
+
+    [Fact]
+    public async Task Submit_known_email_returns_soft_success_without_red_conflict()
+    {
+        await using var db = CreateDb();
+        db.Users.Add(new User
+        {
+            Id = Guid.NewGuid(),
+            Email = "taken@jobsy.local",
+            FullName = "Taken",
+            Role = UserRole.Candidate,
+            IsActive = true
+        });
+        await db.SaveChangesAsync();
+
+        var sut = CreateService(db);
+        var submit = await sut.SubmitAsync(new RegistrationSubmitRequest(
+            "99990001", "99990001_0001", RegistrationScope.BranchOnly,
+            "X", "taken@jobsy.local", null, AcceptedTerms: true,
+            Password: "TestPass1!"));
+
+        Assert.Equal(CompanyRegistrationStatus.PendingActivation, submit.Status);
+        Assert.Contains("bevestigingscode", submit.Message, StringComparison.OrdinalIgnoreCase);
+        Assert.Equal(0, await db.CompanyRegistrations.CountAsync(r => r.ContactEmail == "taken@jobsy.local"));
+    }
+
+    [Fact]
+    public async Task Purge_removes_expired_unconfirmed_registrations()
+    {
+        await using var db = CreateDb();
+        var sut = CreateService(db);
+
+        var submit = await sut.SubmitAsync(new RegistrationSubmitRequest(
+            "99990001", "99990001_0001", RegistrationScope.BranchOnly,
+            "A", "purge.me@jobsy.local", null, AcceptedTerms: true,
+            Password: "TestPass1!"));
+
+        var reg = await db.CompanyRegistrations.SingleAsync(r => r.Id == submit.RegistrationId);
+        reg.EmailVerificationExpiresAt = DateTime.UtcNow.AddMinutes(-1);
+        await db.SaveChangesAsync();
+
+        var removed = await sut.PurgeExpiredUnconfirmedAsync();
+        Assert.Equal(1, removed);
+        Assert.Equal(0, await db.CompanyRegistrations.CountAsync());
     }
 
     [Fact]
@@ -601,7 +671,8 @@ public class Sprint7RegistrationTests
 
     private static CompanyRegistrationService CreateService(
         JobsyDbContext db,
-        bool exposeActivationLinks = true)
+        bool exposeActivationLinks = true,
+        IEmailService? email = null)
     {
         var config = new ConfigurationBuilder().Build();
         var features = new PlatformFeatureService(
@@ -615,7 +686,7 @@ public class Sprint7RegistrationTests
         return new CompanyRegistrationService(
             db,
             new TestKvkService(db),
-            new EmailServiceStub(db, NullLogger<EmailServiceStub>.Instance),
+            email ?? new EmailServiceStub(db, NullLogger<EmailServiceStub>.Instance),
             new TokenLedgerService(db),
             features,
             NullLogger<CompanyRegistrationService>.Instance);
@@ -627,6 +698,35 @@ public class Sprint7RegistrationTests
             .UseInMemoryDatabase(Guid.NewGuid().ToString())
             .Options;
         return new JobsyDbContext(options);
+    }
+
+    private sealed class CapturingEmailService : IEmailService
+    {
+        private readonly JobsyDbContext _db;
+        private readonly EmailServiceStub _inner;
+
+        public CapturingEmailService(JobsyDbContext db)
+        {
+            _db = db;
+            _inner = new EmailServiceStub(db, NullLogger<EmailServiceStub>.Instance);
+        }
+
+        public string? LastBodyHtml { get; private set; }
+        public string? LastNumericCode { get; private set; }
+
+        public async Task SendAsync(EmailMessage message, CancellationToken cancellationToken = default)
+        {
+            LastBodyHtml = message.BodyHtml;
+            var match = System.Text.RegularExpressions.Regex.Match(
+                message.BodyHtml ?? "",
+                @"\b(\d{6})\b");
+            if (match.Success)
+            {
+                LastNumericCode = match.Groups[1].Value;
+            }
+
+            await _inner.SendAsync(message, cancellationToken);
+        }
     }
 
     private sealed class TestKvkService : IKvkService

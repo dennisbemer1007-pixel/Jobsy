@@ -23,6 +23,15 @@ public class CompanyRegistration
 
     public string ActivationToken { get; set; } = string.Empty;
 
+    /// <summary>SHA-256/HMAC hash of the 6-digit e-mail confirmation OTP (cleared after use/expiry).</summary>
+    public string? EmailVerificationCode { get; set; }
+
+    /// <summary>UTC expiry for the confirmation OTP (typically 10 minutes after submit).</summary>
+    public DateTime? EmailVerificationExpiresAt { get; set; }
+
+    /// <summary>Failed OTP guesses for the current confirmation code; lockout after max attempts.</summary>
+    public int EmailVerificationFailedAttempts { get; set; }
+
     /// <summary>
     /// PBKDF2 hash of the password chosen at registration (cleared after activation/takeover approve).
     /// </summary>

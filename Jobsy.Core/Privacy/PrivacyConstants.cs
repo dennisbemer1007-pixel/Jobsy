@@ -14,6 +14,11 @@ public static class PrivacyConstants
     /// <summary>Unverified application drafts (OTP pending) are purged after this many hours.</summary>
     public const int UnverifiedApplicationRetentionHours = 48;
 
+    /// <summary>
+    /// Unconfirmed company/intermediary registrations (OTP pending) are hard-deleted after this many minutes.
+    /// </summary>
+    public const int UnconfirmedRegistrationRetentionMinutes = 10;
+
     public static bool IsCurrentConsent(string? consentVersion)
         => string.Equals(consentVersion, CurrentConsentVersion, StringComparison.Ordinal);
 

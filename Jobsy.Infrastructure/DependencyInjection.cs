@@ -160,6 +160,7 @@ public static class DependencyInjection
         services.AddScoped<ITranslationService, OpenAiTranslationService>();
         services.AddScoped<IPrivacyDataService, PrivacyDataService>();
         services.AddHostedService<DataRetentionHostedService>();
+        services.AddHostedService<UnconfirmedRegistrationCleanupHostedService>();
         services.AddHostedService<DraftVacancyCleanupHostedService>();
         services.AddHostedService<CompanyReengagementHostedService>();
         services.AddHostedService<VatBufferTransferHostedService>();

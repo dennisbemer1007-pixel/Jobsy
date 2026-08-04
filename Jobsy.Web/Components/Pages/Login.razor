@@ -98,11 +98,10 @@
 
         <div class="login-register">
             <p class="login-register__lead">@Culture["Login.RegisterLead"]</p>
-            <a class="provider-btn provider-btn--register" href="/register">@Culture["Login.RegisterCta"]</a>
-        </div>
-
-        <div class="login-modal__actions">
-            <a class="login-modal__cancel" href="@_dismissUrl">@Culture["Login.BackToMap"]</a>
+            <div class="login-register__actions">
+                <a class="provider-btn login-register__back" href="@_dismissUrl">@Culture["Login.BackToMap"]</a>
+                <a class="provider-btn provider-btn--register" href="/register">@Culture["Login.RegisterCta"]</a>
+            </div>
         </div>
     </div>
 </div>

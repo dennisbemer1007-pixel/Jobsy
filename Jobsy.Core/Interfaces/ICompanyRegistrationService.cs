@@ -9,9 +9,23 @@ public interface ICompanyRegistrationService
         RegistrationSubmitRequest request,
         CancellationToken cancellationToken = default);
 
+    /// <summary>
+    /// Confirms a pending registration with the 6-digit e-mail OTP (primary activation path).
+    /// Expired or locked registrations are deleted.
+    /// </summary>
+    Task<RegistrationActivationResult> ConfirmAsync(
+        Guid registrationId,
+        string verificationCode,
+        CancellationToken cancellationToken = default);
+
     Task<RegistrationActivationResult> ActivateAsync(
         string token,
         CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Hard-deletes pending registrations whose confirmation window has elapsed (AVG minimization).
+    /// </summary>
+    Task<int> PurgeExpiredUnconfirmedAsync(CancellationToken cancellationToken = default);
 
     Task<IReadOnlyList<TakeoverInboxItem>> ListPendingTakeoversAsync(
         IReadOnlyCollection<Guid> accessibleCompanyIds,
@@ -63,7 +77,8 @@ public sealed record RegistrationSubmitResult(
     CompanyRegistrationStatus Status,
     bool RequiresTakeover,
     string Message,
-    string? ActivationUrl);
+    string? ActivationUrl,
+    DateTime? VerificationExpiresAt = null);
 
 public sealed record RegistrationActivationResult(
     Guid RegistrationId,

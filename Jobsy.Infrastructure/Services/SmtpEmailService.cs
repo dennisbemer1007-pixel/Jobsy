@@ -7,6 +7,7 @@ using Jobsy.Core.Interfaces;
 using Jobsy.Infrastructure.Data;
 using MailKit.Net.Smtp;
 using MailKit.Security;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using MimeKit;
 
@@ -15,7 +16,7 @@ namespace Jobsy.Infrastructure.Services;
 /// <summary>
 /// Sends mail via Resend API (preferred on cloud hosts) or SMTP (MailKit).
 /// Gmail SMTP from datacenter IPs often fails with 5.7.9 WebLoginRequired even with App Passwords.
-/// Falls back to <see cref="EmailServiceStub"/> when neither path is configured.
+/// Falls back to <see cref="EmailServiceStub"/> only in Development/Testing when neither path is configured.
 /// </summary>
 public sealed class SmtpEmailService : IEmailService
 {
@@ -26,6 +27,7 @@ public sealed class SmtpEmailService : IEmailService
     private readonly EmailServiceStub _stub;
     private readonly JobsyDbContext _db;
     private readonly IHttpClientFactory _httpClientFactory;
+    private readonly IHostEnvironment _environment;
     private readonly ILogger<SmtpEmailService> _logger;
 
     public SmtpEmailService(
@@ -33,12 +35,14 @@ public sealed class SmtpEmailService : IEmailService
         EmailServiceStub stub,
         JobsyDbContext db,
         IHttpClientFactory httpClientFactory,
+        IHostEnvironment environment,
         ILogger<SmtpEmailService> logger)
     {
         _credentials = credentials;
         _stub = stub;
         _db = db;
         _httpClientFactory = httpClientFactory;
+        _environment = environment;
         _logger = logger;
     }
 
@@ -57,7 +61,15 @@ public sealed class SmtpEmailService : IEmailService
             return;
         }
 
-        await _stub.SendAsync(message, cancellationToken);
+        if (_environment.IsDevelopment()
+            || string.Equals(_environment.EnvironmentName, "Testing", StringComparison.OrdinalIgnoreCase))
+        {
+            await _stub.SendAsync(message, cancellationToken);
+            return;
+        }
+
+        throw new InvalidOperationException(
+            "E-mail is niet geconfigureerd. Stel Resend (API-key + From) of SMTP in onder Integraties, anders ontvangt niemand bevestigingsmails.");
     }
 
     private async Task SendViaResendAsync(

@@ -1,4 +1,5 @@
 @page "/register"
+@using Jobsy.Web.Auth
 @attribute [AllowAnonymous]
 @rendermode @(new InteractiveServerRenderMode(prerender: false))
 @inject JobsyApiClient Api
@@ -178,19 +179,66 @@
         }
         else if (_step == 5)
         {
-            <p class="state-message">@_message</p>
-            @if (!string.IsNullOrEmpty(_activationUrl))
+            @if (_activationResult is not null)
             {
-                <p class="muted">Stub verificatielink (alleen zichtbaar als ExposeRegistrationActivationLinks aan staat):</p>
-                <p><a class="auth-link" href="@_activationUrl">@_activationUrl</a></p>
+                @if (_activationResult.EmailVerifiedAwaitingTakeover)
+                {
+                    <p class="state-message">@Culture["Register.TakeoverEmailVerified"]</p>
+                    <p class="muted">@Culture["Register.TakeoverAwaitingOwner"]</p>
+                    <a class="login-submit" href="/login" style="display:inline-block;text-align:center;text-decoration:none;margin-top:1rem">
+                        @Culture["Register.GoLogin"]
+                    </a>
+                }
+                else
+                {
+                    <p class="state-message">@Culture.Format("Register.Activated", _activationResult.FullName)</p>
+                    <p class="muted">@Culture["Register.WelcomeToken"]</p>
+                    <p class="muted">@Culture.Format("Register.Role", _activationResult.Role)</p>
+                    <p class="muted">@Culture["Register.LoginWithChosenPassword"]</p>
+                    <p class="muted">@Culture["Register.DualAuthHint"]</p>
+                    <a class="login-submit" href="/login" style="display:inline-block;text-align:center;text-decoration:none;margin-top:1rem">
+                        @Culture["Register.GoLogin"]
+                    </a>
+                }
+            }
+            else if (_expired)
+            {
+                <p class="state-message">@Culture["Register.CodeExpired"]</p>
+                <p class="muted">@Culture["Register.RedirectingHome"]</p>
             }
             else
             {
+                <p class="state-message">@_message</p>
                 <p class="muted">@Culture["Register.CheckEmail"]</p>
+                @if (_secondsLeft > 0)
+                {
+                    <p class="muted">@Culture.Format("Register.CodeExpiresIn", FormatCountdown(_secondsLeft))</p>
+                }
+                <form class="login-form" @onsubmit="ConfirmCodeAsync" @onsubmit:preventDefault>
+                    <label>
+                        @Culture["Register.VerificationCode"]
+                        <input type="text"
+                               inputmode="numeric"
+                               pattern="[0-9]*"
+                               maxlength="6"
+                               autocomplete="one-time-code"
+                               @bind="_verificationCode"
+                               placeholder="123456"
+                               required />
+                    </label>
+                    <div class="wizard-actions">
+                        <a class="provider-btn" href="@AuthRedirects.BanenkaartPath">@Culture["Common.Back"]</a>
+                        <button class="login-submit" type="submit" disabled="@(_busy || _verificationCode.Trim().Length != 6)">
+                            @Culture["Register.ConfirmCode"]
+                        </button>
+                    </div>
+                </form>
+                @if (!string.IsNullOrEmpty(_activationUrl))
+                {
+                    <p class="muted" style="margin-top:1rem">Stub verificatielink (alleen zichtbaar als ExposeRegistrationActivationLinks aan staat):</p>
+                    <p><a class="auth-link" href="@_activationUrl">@_activationUrl</a></p>
+                }
             }
-            <a class="login-submit" href="/login" style="display:inline-block;text-align:center;text-decoration:none;margin-top:1rem">
-                @Culture["Register.GoLogin"]
-            </a>
         }
 
         <p class="muted" style="margin-top:1.25rem">
@@ -207,6 +255,13 @@
     private string? _error;
     private string? _message;
     private string? _activationUrl;
+    private Guid _registrationId;
+    private DateTime? _verificationExpiresAt;
+    private string _verificationCode = "";
+    private int _secondsLeft;
+    private bool _expired;
+    private RegistrationActivationResult? _activationResult;
+    private System.Threading.Timer? _countdownTimer;
     private string _kvkNumber = "12345678";
     private string _scope = "Organization";
     private string _contactName = "";
@@ -237,9 +292,65 @@
         => InvokeAsync(StateHasChanged);
 
     public void Dispose()
-        => Culture.Changed -= OnCultureChanged;
+    {
+        Culture.Changed -= OnCultureChanged;
+        _countdownTimer?.Dispose();
+    }
 
     private string StepClass(int n) => _step == n ? "wizard-step is-active" : "wizard-step";
+
+    private static string FormatCountdown(int seconds)
+    {
+        var m = seconds / 60;
+        var s = seconds % 60;
+        return $"{m}:{s:D2}";
+    }
+
+    private void StartCountdown(DateTime? expiresAt)
+    {
+        _countdownTimer?.Dispose();
+        _verificationExpiresAt = expiresAt ?? DateTime.UtcNow.AddMinutes(10);
+        TickCountdownSync();
+        _countdownTimer = new System.Threading.Timer(
+            _ => _ = InvokeAsync(TickCountdownAsync),
+            null,
+            TimeSpan.FromSeconds(1),
+            TimeSpan.FromSeconds(1));
+    }
+
+    private void TickCountdownSync()
+    {
+        if (_verificationExpiresAt is null || _activationResult is not null)
+        {
+            return;
+        }
+
+        var left = (int)Math.Ceiling((_verificationExpiresAt.Value - DateTime.UtcNow).TotalSeconds);
+        _secondsLeft = Math.Max(0, left);
+    }
+
+    private async Task TickCountdownAsync()
+    {
+        if (_verificationExpiresAt is null || _activationResult is not null)
+        {
+            return;
+        }
+
+        var left = (int)Math.Ceiling((_verificationExpiresAt.Value - DateTime.UtcNow).TotalSeconds);
+        _secondsLeft = Math.Max(0, left);
+        if (_secondsLeft <= 0 && !_expired)
+        {
+            _expired = true;
+            _countdownTimer?.Dispose();
+            _countdownTimer = null;
+            StateHasChanged();
+            await Task.Delay(1800);
+            Navigation.NavigateTo(AuthRedirects.BanenkaartPath, forceLoad: true);
+            return;
+        }
+
+        StateHasChanged();
+    }
 
     private async Task LookupAsync()
     {
@@ -396,13 +507,54 @@
 
             _message = result.Message;
             _activationUrl = result.ActivationUrl;
+            _registrationId = result.RegistrationId;
             _password = "";
             _passwordConfirm = "";
+            _verificationCode = "";
+            _activationResult = null;
+            _expired = false;
             _step = 5;
+            StartCountdown(result.VerificationExpiresAt);
         }
         catch (Exception ex)
         {
             _error = ex.Message;
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private async Task ConfirmCodeAsync()
+    {
+        if (_registrationId == Guid.Empty || _verificationCode.Trim().Length != 6)
+        {
+            _error = Culture["Register.CodeRequired"];
+            return;
+        }
+
+        _busy = true;
+        _error = null;
+        try
+        {
+            _activationResult = await Api.ConfirmRegistrationAsync(_registrationId, _verificationCode.Trim());
+            _countdownTimer?.Dispose();
+            _countdownTimer = null;
+            _verificationCode = "";
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+            if (ex.Message.Contains("verwijderd", StringComparison.OrdinalIgnoreCase)
+                || ex.Message.Contains("verlopen", StringComparison.OrdinalIgnoreCase))
+            {
+                _expired = true;
+                _countdownTimer?.Dispose();
+                _countdownTimer = null;
+                await Task.Delay(1800);
+                Navigation.NavigateTo(AuthRedirects.BanenkaartPath, forceLoad: true);
+            }
         }
         finally
         {
