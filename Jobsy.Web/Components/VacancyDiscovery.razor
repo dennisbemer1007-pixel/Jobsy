@@ -470,27 +470,32 @@
                                       OnHover="OnHover"
                                       OnSelect="OnCarouselSelect" />
         }
-        <div @ref="_mapElement" id="job-map" class="job-map"></div>
-        @if (_categories.Any(c => c.ShowInLegend && c.IsActive))
-        {
-            <div class="map-legend @(_legendOpen ? "is-open" : null)">
-                <button type="button"
-                        class="map-legend__toggle"
-                        aria-expanded="@_legendOpen"
-                        aria-controls="map-legend-panel"
-                        title="@(_legendOpen ? "Legenda verbergen" : "Legenda")"
-                        @onclick="ToggleLegend">
-                    <span class="map-legend__toggle-dots" aria-hidden="true">
-                        @foreach (var cat in _categories.Where(c => c.ShowInLegend && c.IsActive).Take(4))
-                        {
-                            <i style="--category-color:@cat.ColorHex"></i>
-                        }
-                    </span>
-                    <span class="visually-hidden">Legenda</span>
-                </button>
-                @if (_legendOpen)
-                {
-                    <aside id="map-legend-panel" class="map-legend__panel" aria-label="Legenda vacaturecategorieën">
+        <div class="map-stage">
+            <div @ref="_mapElement" id="job-map" class="job-map"></div>
+            @if (_categories.Any(c => c.ShowInLegend && c.IsActive))
+            {
+                <div class="map-legend @(_legendOpen ? "is-open" : null)">
+                    <button type="button"
+                            class="map-legend__toggle"
+                            aria-expanded="@(_legendOpen ? "true" : "false")"
+                            aria-controls="map-legend-panel"
+                            title="@(_legendOpen ? "Legenda verbergen" : "Legenda")"
+                            @onclick="ToggleLegend"
+                            @onclick:stopPropagation="true"
+                            @onpointerdown:stopPropagation="true">
+                        <span class="map-legend__toggle-dots" aria-hidden="true">
+                            @foreach (var cat in _categories.Where(c => c.ShowInLegend && c.IsActive).Take(4))
+                            {
+                                <i style="--category-color:@cat.ColorHex"></i>
+                            }
+                        </span>
+                        <span class="visually-hidden">@(_legendOpen ? "Legenda verbergen" : "Legenda tonen")</span>
+                    </button>
+                    <aside id="map-legend-panel"
+                           class="map-legend__panel"
+                           hidden="@(!_legendOpen)"
+                           aria-hidden="@(!_legendOpen ? "true" : "false")"
+                           aria-label="Legenda vacaturecategorieën">
                         <ul class="map-legend__list">
                             @foreach (var cat in _categories.Where(c => c.ShowInLegend && c.IsActive))
                             {
@@ -501,9 +506,9 @@
                             }
                         </ul>
                     </aside>
-                }
-            </div>
-        }
+                </div>
+            }
+        </div>
     </section>
 
     @if (_filtersOpen)
