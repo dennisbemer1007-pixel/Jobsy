@@ -13,6 +13,11 @@ public static class VacancyCategoryDefaults
     public static readonly Guid InternshipId = Guid.Parse("c1000001-0000-4000-8000-000000000006");
     public static readonly Guid SeniorLightId = Guid.Parse("c1000001-0000-4000-8000-000000000007");
 
+    /// <summary>Dark purple used for the 65+ category and the “Geschikt voor 65+” label.</summary>
+    public const string SeniorPlusColorHex = "#5B21B6";
+
+    public const string SuitableFor65PlusLabel = "Geschikt voor 65+";
+
     public sealed record SeedCategory(
         Guid Id,
         string Slug,
@@ -59,11 +64,23 @@ public static class VacancyCategoryDefaults
             [VacancyCategoryExtraFields.EducationLevel, VacancyCategoryExtraFields.InternshipDuration,
                 VacancyCategoryExtraFields.HoursPerWeek, VacancyCategoryExtraFields.InternshipType]),
 
-        new(SeniorLightId, "65plus", "65+ lichte betaalde functies", "#64748B",
+        new(SeniorLightId, "65plus", "65+ lichte betaalde functies", SeniorPlusColorHex,
             0.5m, true, 1m, true, 2m, false, VacancyKind.Regular, 70,
             [VacancyCategoryExtraFields.PhysicalLoad, VacancyCategoryExtraFields.HoursPerWeek,
                 VacancyCategoryExtraFields.ContractType])
     ];
+
+    /// <summary>True when the vacancy belongs to the dedicated 65+ category.</summary>
+    public static bool IsSeniorLightCategory(Guid? categoryId)
+        => categoryId == SeniorLightId;
+
+    /// <summary>
+    /// Matches the discovery “Geschikt voor 65+” filter:
+    /// dedicated 65+ category, or a regular vacancy with the suitability flag.
+    /// </summary>
+    public static bool MatchesSuitableFor65PlusFilter(Guid? categoryId, bool suitableFor65Plus)
+        => IsSeniorLightCategory(categoryId)
+           || (suitableFor65Plus && (categoryId is null || categoryId == RegulierId));
 
     public static Guid ResolveDefaultId(VacancyKind kind) => kind switch
     {

@@ -99,6 +99,7 @@ public class VacanciesController : ControllerBase
         [FromQuery] string[]? workType = null,
         [FromQuery] string? q = null,
         [FromQuery] Guid[]? categoryId = null,
+        [FromQuery] bool? suitableFor65Plus = null,
         CancellationToken cancellationToken = default)
     {
         maxMinutes = Math.Clamp(maxMinutes, 5, 90);
@@ -132,6 +133,8 @@ public class VacanciesController : ControllerBase
         var workTypeFiltered = vacancies
             .Where(v => categoryFilter is null || categoryFilter.Count == 0
                 || (v.CategoryId is Guid cid && categoryFilter.Contains(cid)))
+            .Where(v => suitableFor65Plus != true
+                || VacancyCategoryDefaults.MatchesSuitableFor65PlusFilter(v.CategoryId, v.SuitableFor65Plus))
             .Where(v => WorkTypeLabels.MatchesFilter(v.WorkTypes, v.WorkTypeLabels, workType))
             .Where(v => VacancyTextSearch.Matches(v, q))
             .Where(v => HoursRangeRules.MatchesFilter(
@@ -502,6 +505,7 @@ public class VacanciesController : ControllerBase
 
         var category = categoryResolve.Category!;
         var categoryFieldsJson = SerializeCategoryFields(category, request.CategoryFields);
+        var suitableFor65Plus = category.Id == VacancyCategoryDefaults.RegulierId && request.SuitableFor65Plus;
 
         var exclusivityError = await ResolveExclusivitySettingIdAsync(
             category.PlacementKind,
@@ -546,6 +550,7 @@ public class VacanciesController : ControllerBase
             Kind = category.PlacementKind,
             CategoryId = category.Id,
             CategoryFieldsJson = categoryFieldsJson,
+            SuitableFor65Plus = suitableFor65Plus,
             ExclusivitySettingId = category.PlacementKind == VacancyKind.Internship ? exclusivitySettingId : null
         };
 
@@ -1348,7 +1353,8 @@ public class VacanciesController : ControllerBase
             v.Category is null ? null : (v.Category.IsAlwaysFree ? 0m : v.Category.HighlightCostTokens),
             v.Category?.PushBomCostTokens,
             v.Category is null || (v.Category.PushBomAvailable && !v.Category.IsAlwaysFree && v.Category.PushBomCostTokens is null),
-            DeserializeCategoryFields(v.CategoryFieldsJson));
+            DeserializeCategoryFields(v.CategoryFieldsJson),
+            v.SuitableFor65Plus);
     }
 
     private async Task<(Core.Entities.VacancyCategory? Category, string? Error)> ResolveCategoryAsync(

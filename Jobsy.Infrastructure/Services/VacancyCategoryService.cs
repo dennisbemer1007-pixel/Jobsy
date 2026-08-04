@@ -54,6 +54,17 @@ public sealed class VacancyCategoryService : IVacancyCategoryService
             added = true;
         }
 
+        // Keep seeded 65+ category color aligned with label branding when already present.
+        var senior = await _db.VacancyCategories
+            .FirstOrDefaultAsync(c => c.Id == VacancyCategoryDefaults.SeniorLightId, cancellationToken);
+        if (senior is not null
+            && !string.Equals(senior.ColorHex, VacancyCategoryDefaults.SeniorPlusColorHex, StringComparison.OrdinalIgnoreCase))
+        {
+            senior.ColorHex = VacancyCategoryDefaults.SeniorPlusColorHex;
+            senior.UpdatedAtUtc = DateTime.UtcNow;
+            added = true;
+        }
+
         if (added)
         {
             await _db.SaveChangesAsync(cancellationToken);

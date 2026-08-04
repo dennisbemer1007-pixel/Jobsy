@@ -35,4 +35,5 @@ public record CreateVacancyRequest(
     VacancyKind Kind = VacancyKind.Regular,
     Guid? ExclusivitySettingId = null,
     Guid? CategoryId = null,
-    Dictionary<string, string>? CategoryFields = null);
+    Dictionary<string, string>? CategoryFields = null,
+    bool SuitableFor65Plus = false);

@@ -67,4 +67,5 @@ public record VacancyListItemDto(
     decimal? CategoryHighlightCostTokens = null,
     decimal? CategoryPushBomCostTokens = null,
     bool CategoryUseTierPushBomPricing = true,
-    IReadOnlyDictionary<string, string>? CategoryFields = null);
+    IReadOnlyDictionary<string, string>? CategoryFields = null,
+    bool SuitableFor65Plus = false);

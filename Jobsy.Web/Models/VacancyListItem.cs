@@ -53,6 +53,7 @@ public class VacancyListItem
     public decimal? CategoryPushBomCostTokens { get; set; }
     public bool CategoryUseTierPushBomPricing { get; set; } = true;
     public Dictionary<string, string> CategoryFields { get; set; } = new(StringComparer.OrdinalIgnoreCase);
+    public bool SuitableFor65Plus { get; set; }
     public string? RequiredDrivingLicense { get; set; }
     public string? RequiredEducation { get; set; }
     public int? MinimumEmployers { get; set; }

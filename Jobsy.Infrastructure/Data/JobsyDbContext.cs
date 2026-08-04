@@ -224,6 +224,7 @@ public class JobsyDbContext : DbContext
             entity.HasIndex(e => e.ExclusivitySettingId);
             entity.HasIndex(e => e.CategoryId);
             entity.HasIndex(e => new { e.Status, e.CategoryId });
+            entity.HasIndex(e => new { e.Status, e.SuitableFor65Plus });
             entity.Property(e => e.CategoryFieldsJson).HasMaxLength(8000);
             entity.HasOne(e => e.Company)
                 .WithMany(c => c.Vacancies)

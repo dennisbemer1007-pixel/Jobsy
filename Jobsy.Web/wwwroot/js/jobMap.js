@@ -376,6 +376,13 @@ window.jobMap = (function () {
                             (v.categoryName
                                 ? "<p class=\"map-popup__category\">" + escapeHtml(v.categoryName) + "</p>"
                                 : "") +
+                            (v.suitableFor65Plus
+                                ? "<p class=\"map-popup__senior65\" style=\"--senior65-color:" +
+                                  escapeAttr(v.suitableFor65PlusColor || "#5B21B6") +
+                                  "\"><span class=\"suitable65-label\" aria-hidden=\"true\"></span> " +
+                                  escapeHtml(v.suitableFor65PlusLabel || "Geschikt voor 65+") +
+                                  "</p>"
+                                : "") +
                             (v.address
                                 ? "<p class=\"map-popup__address\">" + escapeHtml(v.address) + "</p>"
                                 : "<p class=\"map-popup__address map-popup__address--empty\">&nbsp;</p>") +

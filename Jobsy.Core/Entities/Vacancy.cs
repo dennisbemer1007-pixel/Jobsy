@@ -71,6 +71,12 @@ public class Vacancy
     public string? CategoryFieldsJson { get; set; }
 
     /// <summary>
+    /// Optional label for regular vacancies that are suitable for 65+ workers.
+    /// Not a category — used for discovery filter and display badges only.
+    /// </summary>
+    public bool SuitableFor65Plus { get; set; }
+
+    /// <summary>
     /// Stage-exclusiviteit (masterdata). Alleen relevant bij <see cref="VacancyKind.Internship"/>.
     /// Null / open-optie = zichtbaar en solliciteerbaar voor iedereen.
     /// </summary>

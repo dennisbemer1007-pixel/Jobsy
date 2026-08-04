@@ -77,6 +77,20 @@
             <div class="detail-card__top">
                 <div>
                     <h1>@_vacancy.Title</h1>
+                    @if (!string.IsNullOrWhiteSpace(_vacancy.CategoryName))
+                    {
+                        <p class="vacancy-detail-category">
+                            <span class="vacancy-category-swatch" style="--category-color:@(_vacancy.CategoryColorHex ?? "#F54A1B")" aria-hidden="true"></span>
+                            @_vacancy.CategoryName
+                        </p>
+                    }
+                    @if (ShowsSuitableFor65Plus)
+                    {
+                        <p class="suitable65-label-row">
+                            <span class="suitable65-label" aria-hidden="true"></span>
+                            @VacancyCategoryDefaults.SuitableFor65PlusLabel
+                        </p>
+                    }
                     @if (string.Equals(_vacancy.Kind, "Internship", StringComparison.OrdinalIgnoreCase)
                         && !string.IsNullOrWhiteSpace(_vacancy.ExclusivityName))
                     {
@@ -587,6 +601,9 @@
     [Parameter] public Guid Id { get; set; }
 
     private VacancyListItem? _vacancy;
+    private bool ShowsSuitableFor65Plus =>
+        _vacancy is not null
+        && VacancyCategoryDefaults.MatchesSuitableFor65PlusFilter(_vacancy.CategoryId, _vacancy.SuitableFor65Plus);
     private bool _loading = true;
     private bool _applying;
     private bool _applied;

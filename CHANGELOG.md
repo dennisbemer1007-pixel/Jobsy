@@ -5,6 +5,8 @@
 - Admin-beheerbare **VacancyCategory** (naam, kleur, tokenprijs, highlight/PushBom, extra velden)
 - Standaardcategorieën: Uitzendbureau, Regulier, Highlight, Inclusief, Vrijwilligerswerk, Stageplekken, 65+
 - Dynamische create-dropdown + extra velden; kaartfilter, legenda en pin-kleuren; tokenlogica per categorie
+- **Geschikt voor 65+**: checkbox bij reguliere vacatures, label (donkerpaars), kaartfilter (65+-categorie + gevlagde regulier), popup/lijst/detail — géén legenda-item
+
 
 
 Alle noemenswaardige wijzigingen aan dit project worden in dit bestand bijgehouden.

@@ -135,6 +135,7 @@ public sealed class JobsyApiClient : IAsyncDisposable
         int? minHoursPerWeek = null,
         int? maxHoursPerWeek = null,
         IEnumerable<Guid>? categoryIds = null,
+        bool? suitableFor65Plus = null,
         CancellationToken ct = default)
     {
         var qs = $"transport={Uri.EscapeDataString(transport)}&maxMinutes={maxMinutes}";
@@ -188,6 +189,11 @@ public sealed class JobsyApiClient : IAsyncDisposable
             {
                 qs += $"&categoryId={id:D}";
             }
+        }
+
+        if (suitableFor65Plus == true)
+        {
+            qs += "&suitableFor65Plus=true";
         }
 
         if (!string.IsNullOrWhiteSpace(searchQuery))
@@ -2640,7 +2646,8 @@ public record CreateVacancyForm(
     string Kind = "Regular",
     Guid? ExclusivitySettingId = null,
     Guid? CategoryId = null,
-    Dictionary<string, string>? CategoryFields = null);
+    Dictionary<string, string>? CategoryFields = null,
+    bool SuitableFor65Plus = false);
 
 public sealed class CsvImportRowForm
 {

@@ -10843,3 +10843,53 @@ a.apply-flow__secondary {
         display: none;
     }
 }
+
+/* Geschikt voor 65+ label */
+:root {
+    --senior65-color: #5B21B6;
+}
+
+.suitable65-label,
+.suitable65-label-row .suitable65-label,
+.map-popup__senior65 .suitable65-label {
+    display: inline-block;
+    width: 0.7rem;
+    height: 0.7rem;
+    border-radius: 0.15rem;
+    background: var(--senior65-color, #5B21B6);
+    vertical-align: -0.05rem;
+    margin-right: 0.25rem;
+}
+
+.suitable65-label-row,
+.suitable65-inline,
+.map-popup__senior65 {
+    margin: 0.25rem 0 0;
+    color: var(--senior65-color, #5B21B6);
+    font-weight: 650;
+    font-size: 0.88rem;
+}
+
+.suitable65-inline {
+    color: #f3e8ff;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
+}
+
+.job-card__badge--senior65 {
+    background: var(--senior65-color, #5B21B6);
+    color: #fff;
+}
+
+.suitable65-filter {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+.vacancy-detail-category {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    margin: 0.35rem 0 0;
+    font-weight: 600;
+}
