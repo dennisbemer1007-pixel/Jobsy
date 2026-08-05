@@ -1,0 +1,119 @@
+@namespace Jobsy.Web.Components
+@inject CultureState Culture
+
+@if (IsOpen)
+{
+    <div class="@BackdropCss"
+         aria-hidden="true"
+         @onclick="OnBackdropClick"></div>
+    <div class="@DialogCss"
+         role="dialog"
+         aria-modal="true"
+         aria-labelledby="@TitleId"
+         style="@Style">
+        @if (Mood == LobsyDialogMood.Celebrate)
+        {
+            <div class="lobsy-dialog__celebrate">
+                <img src="@MascotSrc"
+                     alt="@MascotAltResolved"
+                     class="lobsy-dialog__mascot lobsy-dialog__mascot--party"
+                     width="140"
+                     height="140"
+                     draggable="false" />
+                <div class="share-modal__header lobsy-dialog__header--centered">
+                    <h2 id="@TitleId" class="lobsy-dialog__title lobsy-dialog__title--celebrate">@Title</h2>
+                    @if (ShowClose)
+                    {
+                        <button type="button"
+                                class="share-modal__close"
+                                disabled="@CloseDisabled"
+                                @onclick="CloseAsync"
+                                aria-label="@(CloseAriaLabel ?? Culture["Common.Close"])">×</button>
+                    }
+                </div>
+                @if (!string.IsNullOrWhiteSpace(Lead))
+                {
+                    <p class="share-modal__lead lobsy-dialog__lead">@Lead</p>
+                }
+            </div>
+        }
+        else
+        {
+            <div class="lobsy-dialog__banner">
+                <img src="@MascotSrc"
+                     alt="@MascotAltResolved"
+                     class="lobsy-dialog__mascot lobsy-dialog__mascot--friendly"
+                     width="72"
+                     height="72"
+                     draggable="false" />
+                <div class="lobsy-dialog__banner-text">
+                    <div class="share-modal__header">
+                        <h2 id="@TitleId" class="lobsy-dialog__title">@Title</h2>
+                        @if (ShowClose)
+                        {
+                            <button type="button"
+                                    class="share-modal__close"
+                                    disabled="@CloseDisabled"
+                                    @onclick="CloseAsync"
+                                    aria-label="@(CloseAriaLabel ?? Culture["Common.Close"])">×</button>
+                        }
+                    </div>
+                    @if (!string.IsNullOrWhiteSpace(Lead))
+                    {
+                        <p class="share-modal__lead lobsy-dialog__lead">@Lead</p>
+                    }
+                </div>
+            </div>
+        }
+
+        <div class="lobsy-dialog__body">
+            @ChildContent
+        </div>
+    </div>
+}
+
+@code {
+    private const string MascotSrc = "/images/brand/lobsy.png?v=20260731-eyes";
+
+    [Parameter] public bool IsOpen { get; set; }
+    [Parameter] public string Title { get; set; } = "";
+    [Parameter] public string TitleId { get; set; } = "lobsy-dialog-title";
+    [Parameter] public string? Lead { get; set; }
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+    [Parameter] public string? Class { get; set; }
+    [Parameter] public string? BackdropClass { get; set; }
+    [Parameter] public string? Style { get; set; }
+    [Parameter] public LobsyDialogMood Mood { get; set; } = LobsyDialogMood.Friendly;
+    [Parameter] public bool ShowClose { get; set; } = true;
+    [Parameter] public bool CloseDisabled { get; set; }
+    [Parameter] public bool CloseOnBackdrop { get; set; } = true;
+    [Parameter] public string? CloseAriaLabel { get; set; }
+    [Parameter] public string? MascotAlt { get; set; }
+    [Parameter] public EventCallback OnClose { get; set; }
+
+    private string MascotAltResolved =>
+        string.IsNullOrWhiteSpace(MascotAlt) ? "De vrolijke kreeft van Lobsy" : MascotAlt;
+
+    private string BackdropCss =>
+        string.Join(' ', new[] { "share-modal-backdrop", "lobsy-dialog-backdrop", BackdropClass }
+            .Where(static s => !string.IsNullOrWhiteSpace(s)));
+
+    private string DialogCss =>
+        string.Join(' ', new[]
+        {
+            "share-modal",
+            "lobsy-dialog",
+            Mood == LobsyDialogMood.Celebrate ? "lobsy-dialog--celebrate" : "lobsy-dialog--friendly",
+            Class
+        }.Where(static s => !string.IsNullOrWhiteSpace(s)));
+
+    private async Task OnBackdropClick()
+    {
+        if (CloseOnBackdrop && !CloseDisabled)
+        {
+            await CloseAsync();
+        }
+    }
+
+    private Task CloseAsync() => OnClose.InvokeAsync();
+}

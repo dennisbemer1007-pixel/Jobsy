@@ -84,16 +84,17 @@
 
 @if (_showCelebration && !_readOnly)
 {
-    <div class="share-modal-backdrop"></div>
-    <div class="share-modal" role="dialog" aria-modal="true" aria-labelledby="hired-title">
-        <div class="share-modal__header">
-            <h2 id="hired-title">@Culture["Apps.CongratsTitle"]</h2>
-        </div>
-        <p>@Culture["Apps.CongratsBody"]</p>
-        <div class="inline-actions" style="margin-top:1rem">
-            <button type="button" class="login-submit" @onclick="() => _showCelebration = false">@Culture["Common.Close"]</button>
-        </div>
-    </div>
+    <LobsyFriendlyDialog IsOpen="true"
+                         Title="@Culture["Apps.CongratsTitle"]"
+                         TitleId="hired-title"
+                         Mood="@LobsyDialogMood.Celebrate"
+                         ShowClose="false"
+                         CloseOnBackdrop="false">
+        <p class="csv-celebrate__score">@Culture["Apps.CongratsBody"]</p>
+<div class="inline-actions" style="justify-content:center">
+                <button type="button" class="login-submit" @onclick="() => _showCelebration = false">@Culture["Common.Close"]</button>
+            </div>
+</LobsyFriendlyDialog>
 }
 
 @code {

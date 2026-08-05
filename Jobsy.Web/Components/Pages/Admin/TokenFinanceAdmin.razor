@@ -309,13 +309,12 @@
 
 @if (_wizardOpen)
 {
-    <div class="share-modal-backdrop" @onclick="CloseWizard"></div>
-    <div class="share-modal" role="dialog" aria-modal="true" aria-labelledby="vat-wizard-title" style="max-width:32rem">
-        <div class="share-modal__header">
-            <h2 id="vat-wizard-title">BTW aangifte genereren</h2>
-            <button type="button" class="share-modal__close" @onclick="CloseWizard" aria-label="@Culture["Common.Close"]">×</button>
-        </div>
-        <p class="share-modal__lead">Selecteer een openstaand kwartaal. Na bevestiging worden omzet- en inkoopregels verwerkt en een PDF opgeslagen.</p>
+    <LobsyFriendlyDialog IsOpen="true"
+                         Title="BTW aangifte genereren"
+                         TitleId="vat-wizard-title"
+                         Lead="Selecteer een openstaand kwartaal. Na bevestiging worden omzet- en inkoopregels verwerkt en een PDF opgeslagen."
+                         Style="max-width:32rem"
+                         OnClose="CloseWizard">
 
         <div class="login-form" style="display:grid;gap:0.75rem">
             <label>
@@ -372,7 +371,7 @@
                 <button type="button" class="btn-compact" disabled="@_wizardBusy" @onclick="CloseWizard">Annuleren</button>
             </div>
         </div>
-    </div>
+    </LobsyFriendlyDialog>
 }
 
 @code {

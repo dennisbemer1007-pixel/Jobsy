@@ -578,13 +578,12 @@
 
 @if (_moderationOpen)
 {
-    <div class="share-modal-backdrop" @onclick="CloseModeration"></div>
-    <div class="share-modal moderation-modal" role="dialog" aria-modal="true" aria-labelledby="moderation-title">
-        <div class="share-modal__header">
-            <h2 id="moderation-title">Even aanpassen</h2>
-            <button type="button" class="share-modal__close" @onclick="CloseModeration" aria-label="@Culture["Common.Close"]">×</button>
-        </div>
-        <p class="share-modal__lead">We hebben de tekst bekeken voordat we opslaan.</p>
+    <LobsyFriendlyDialog IsOpen="true"
+                         Title="Even aanpassen"
+                         TitleId="moderation-title"
+                         Lead="We hebben de tekst bekeken voordat we opslaan."
+                         Class="moderation-modal"
+                         OnClose="CloseModeration">
         <p class="moderation-modal__warning">@_moderationWarning</p>
         @if (!string.IsNullOrWhiteSpace(_moderationSuggestion))
         {
@@ -593,10 +592,10 @@
                 <p>@_moderationSuggestion</p>
             </div>
         }
-        <div class="inline-actions" style="margin-top:1rem">
-            <button type="button" class="login-submit" @onclick="CloseModeration">Tekst aanpassen</button>
-        </div>
-    </div>
+<div class="inline-actions">
+                <button type="button" class="login-submit" @onclick="CloseModeration">Tekst aanpassen</button>
+            </div>
+</LobsyFriendlyDialog>
 }
 
 @code {

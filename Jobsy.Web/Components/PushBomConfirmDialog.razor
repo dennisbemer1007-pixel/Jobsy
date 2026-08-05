@@ -1,74 +1,68 @@
 @inject JobsyApiClient Api
 @inject CultureState Culture
 
-@if (IsOpen && Vacancy is not null)
-{
-    <div class="share-modal-backdrop" @onclick="Close"></div>
-    <div class="share-modal publish-modal" role="dialog" aria-modal="true" aria-labelledby="pushbom-modal-title">
-        <div class="share-modal__header">
-            <h2 id="pushbom-modal-title">@Culture["PushBom.Title"]</h2>
-            <button type="button" class="share-modal__close" @onclick="Close" aria-label="@Culture["Common.Close"]">×</button>
-        </div>
-        <p class="share-modal__lead">@Vacancy.Title · @Vacancy.CompanyName</p>
-
-        <div class="pushbom-preview" aria-live="polite">
-            @if (_loading)
+<LobsyFriendlyDialog IsOpen="@(IsOpen && Vacancy is not null)"
+                     Title="@Culture["PushBom.Title"]"
+                     TitleId="pushbom-modal-title"
+                     Lead="@(Vacancy is null ? null : $"{Vacancy.Title} · {Vacancy.CompanyName}")"
+                     Class="publish-modal"
+                     OnClose="Close">
+    <div class="pushbom-preview" aria-live="polite">
+        @if (_loading)
+        {
+            <p class="muted">@Culture["Employer.ReachCalculating"]</p>
+        }
+        else if (!string.IsNullOrEmpty(_loadError))
+        {
+            <p class="state-message error">@_loadError</p>
+        }
+        else if (_preview is not null)
+        {
+            <p class="pushbom-preview__count">
+                <strong>@_preview.CandidateCount</strong>
+                @( _preview.CandidateCount == 1 ? "geschikte kandidaat" : "geschikte kandidaten" )
+                in bereik
+            </p>
+            <p class="muted">
+                Binnen @_preview.RadiusKm.ToString("0.#") km en @_preview.MaxTravelMinutes min reistijd
+                (Open for work)
+            </p>
+            @if (_preview.CandidateCount == 0)
             {
-                <p class="muted">@Culture["Employer.ReachCalculating"]</p>
+                <p class="state-message error">Geen bereik — PushBom kan niet worden geactiveerd. Geen tokens worden afgeschreven.</p>
             }
-            else if (!string.IsNullOrEmpty(_loadError))
+            else if (!_preview.HasPricing)
             {
-                <p class="state-message error">@_loadError</p>
+                <p class="state-message error">Geen tokenprijs voor dit bereik geconfigureerd (admin settings).</p>
             }
-            else if (_preview is not null)
+            else
             {
-                <p class="pushbom-preview__count">
-                    <strong>@_preview.CandidateCount</strong>
-                    @( _preview.CandidateCount == 1 ? "geschikte kandidaat" : "geschikte kandidaten" )
-                    in bereik
+                <p class="pushbom-preview__cost">
+                    Dit kost <strong>@_preview.CostTokens.ToString("0.##")</strong> token(s)
                 </p>
-                <p class="muted">
-                    Binnen @_preview.RadiusKm.ToString("0.#") km en @_preview.MaxTravelMinutes min reistijd
-                    (Open for work)
-                </p>
-                @if (_preview.CandidateCount == 0)
+                <p class="muted">Huidig saldo: @_preview.TokenBalance.ToString("0.##") token(s)</p>
+                @if (!_preview.CanAfford)
                 {
-                    <p class="state-message error">Geen bereik — PushBom kan niet worden geactiveerd. Geen tokens worden afgeschreven.</p>
-                }
-                else if (!_preview.HasPricing)
-                {
-                    <p class="state-message error">Geen tokenprijs voor dit bereik geconfigureerd (admin settings).</p>
-                }
-                else
-                {
-                    <p class="pushbom-preview__cost">
-                        Dit kost <strong>@_preview.CostTokens.ToString("0.##")</strong> token(s)
-                    </p>
-                    <p class="muted">Huidig saldo: @_preview.TokenBalance.ToString("0.##") token(s)</p>
-                    @if (!_preview.CanAfford)
-                    {
-                        <p class="state-message error">Je tokens zijn op — koop tokens om PushBom te activeren.</p>
-                        <button type="button" class="btn-compact btn-compact--primary" style="margin-top:0.5rem" @onclick="OpenTopUpFromPreview">
-                            Tokens kopen
-                        </button>
-                    }
+                    <p class="state-message error">Je tokens zijn op — koop tokens om PushBom te activeren.</p>
+                    <button type="button" class="btn-compact btn-compact--primary" style="margin-top:0.5rem" @onclick="OpenTopUpFromPreview">
+                        Tokens kopen
+                    </button>
                 }
             }
-        </div>
+        }
+    </div>
 
-        <div class="inline-actions" style="margin-top:1rem">
+    @if (!string.IsNullOrEmpty(_error))
+    {
+        <p class="state-message error">@_error</p>
+    }
+<div class="inline-actions">
             <button type="button" class="btn-compact btn-compact--primary" disabled="@ConfirmDisabled" @onclick="ConfirmAsync">
                 @(_busy ? Culture["Common.Busy"] : Culture["PushBom.Confirm"])
             </button>
             <button type="button" class="btn-compact" disabled="@_busy" @onclick="Close">@Culture["Common.Cancel"]</button>
         </div>
-
-        @if (!string.IsNullOrEmpty(_error))
-        {
-            <p class="state-message error">@_error</p>
-        }
-    </div>
-}
+</LobsyFriendlyDialog>
 
 <TokenTopUpDialog IsOpen="_topUpOpen" Info="_topUpInfo" OnClose="CloseTopUp" />
 

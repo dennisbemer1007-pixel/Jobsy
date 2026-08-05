@@ -6,14 +6,14 @@
 
 @if (IsOpen && Vacancy is not null)
 {
-    <div class="share-modal-backdrop" @onclick="Close"></div>
-    <div class="mock-interview-modal" role="dialog" aria-modal="true" aria-labelledby="mock-interview-title" tabindex="-1" @onkeydown="OnModalKeyDown">
+    <div class="share-modal-backdrop lobsy-dialog-backdrop" @onclick="Close"></div>
+    <div class="mock-interview-modal lobsy-dialog" role="dialog" aria-modal="true" aria-labelledby="mock-interview-title" tabindex="-1" @onkeydown="OnModalKeyDown">
         <div class="share-modal__header">
             <div class="mock-interview-modal__brand">
-                <LobsyCoachAvatar Class="mock-interview-modal__avatar" Language="@Culture.Language" Alt="Lobsy" />
+                <LobsyCoachAvatar Class="mock-interview-modal__avatar" Language="@Culture.Language" Alt="De vrolijke kreeft van Lobsy" />
                 <div>
                     <h2 id="mock-interview-title">@Culture["MockInterview.Title"]</h2>
-                    <p class="share-modal__lead">@Vacancy.Title · @Vacancy.CompanyName</p>
+                    <p class="share-modal__lead lobsy-dialog__lead">@Vacancy.Title · @Vacancy.CompanyName</p>
                 </div>
             </div>
             <button type="button" class="share-modal__close" @onclick="Close" aria-label="@Culture["MockInterview.Close"]">×</button>

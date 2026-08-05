@@ -2,85 +2,78 @@
 @inject NavigationManager Navigation
 @inject CultureState Culture
 
-@if (IsOpen)
-{
-    <div class="share-modal-backdrop" @onclick="Close"></div>
-    <div class="share-modal publish-modal token-topup-modal" role="dialog" aria-modal="true" aria-labelledby="token-topup-title">
-        <div class="share-modal__header">
-            <h2 id="token-topup-title">Tokens op</h2>
-            <button type="button" class="share-modal__close" @onclick="Close" aria-label="@Culture["Common.Close"]">×</button>
-        </div>
-
-        <p class="share-modal__lead">
+<LobsyFriendlyDialog IsOpen="IsOpen"
+                     Title="Even bijtanken"
+                     TitleId="token-topup-title"
+                     Class="publish-modal token-topup-modal"
+                     OnClose="Close">
+<p class="share-modal__lead lobsy-dialog__lead">
             @(string.IsNullOrWhiteSpace(ActionLabel) ? "Deze actie" : ActionLabel)
-            vereist tokens. Je saldo is ontoereikend — zonder tokens geen actie.
+            vraagt om tokens. Geen stress — kies een pakket en we helpen je meteen verder.
+        </p>
+@if (_loading)
+    {
+        <p class="muted">Opties laden…</p>
+    }
+    else if (!string.IsNullOrEmpty(_loadError))
+    {
+        <p class="state-message error">@_loadError</p>
+    }
+    else if (_quote is not null)
+    {
+        <p class="muted">
+            Benodigd: <strong>@_quote.RequiredTokens.ToString("0.##")</strong>
+            · saldo: <strong>@_quote.Balance.ToString("0.##")</strong>
+            · tekort: <strong>@_quote.Deficit.ToString("0.##")</strong>
         </p>
 
-        @if (_loading)
-        {
-            <p class="muted">Opties laden…</p>
-        }
-        else if (!string.IsNullOrEmpty(_loadError))
-        {
-            <p class="state-message error">@_loadError</p>
-        }
-        else if (_quote is not null)
-        {
-            <p class="muted">
-                Benodigd: <strong>@_quote.RequiredTokens.ToString("0.##")</strong>
-                · saldo: <strong>@_quote.Balance.ToString("0.##")</strong>
-                · tekort: <strong>@_quote.Deficit.ToString("0.##")</strong>
-            </p>
+        <fieldset class="token-topup-options">
+            <legend>Tokenpakket (prepaid via Mollie)</legend>
 
-            <fieldset class="token-topup-options">
-                <legend>Tokenpakket (prepaid via Mollie)</legend>
+            @if (_quote.ExactMatchTokens > 0)
+            {
+                <label class="publish-option">
+                    <input type="radio" name="topup-pack" checked="@(_selectedPack == _quote.ExactMatchTokens)"
+                           @onchange="() => SelectPack(_quote.ExactMatchTokens)" />
+                    <span>
+                        Exact wat je nodig hebt
+                        <em>@_quote.ExactMatchTokens token(s) · € @_quote.ExactMatchPriceEuro.ToString("0.00")</em>
+                    </span>
+                </label>
+            }
 
-                @if (_quote.ExactMatchTokens > 0)
-                {
-                    <label class="publish-option">
-                        <input type="radio" name="topup-pack" checked="@(_selectedPack == _quote.ExactMatchTokens)"
-                               @onchange="() => SelectPack(_quote.ExactMatchTokens)" />
-                        <span>
-                            Exact wat je nodig hebt
-                            <em>@_quote.ExactMatchTokens token(s) · € @_quote.ExactMatchPriceEuro.ToString("0.00")</em>
-                        </span>
-                    </label>
-                }
+            @foreach (var pack in _quote.BulkPacks)
+            {
+                <label class="publish-option">
+                    <input type="radio" name="topup-pack" checked="@(_selectedPack == pack.PackSize)"
+                           @onchange="() => SelectPack(pack.PackSize)" />
+                    <span>
+                        Pakket @pack.PackSize
+                        <em>@pack.PackSize tokens · € @pack.PriceEuro.ToString("0.00")</em>
+                    </span>
+                </label>
+            }
+        </fieldset>
 
-                @foreach (var pack in _quote.BulkPacks)
-                {
-                    <label class="publish-option">
-                        <input type="radio" name="topup-pack" checked="@(_selectedPack == pack.PackSize)"
-                               @onchange="() => SelectPack(pack.PackSize)" />
-                        <span>
-                            Pakket @pack.PackSize
-                            <em>@pack.PackSize tokens · € @pack.PriceEuro.ToString("0.00")</em>
-                        </span>
-                    </label>
-                }
-            </fieldset>
+        <PaymentMethodPicker @bind-SelectedMethod="_paymentMethod"
+                             @bind-RememberPreference="_rememberPaymentMethod"
+                             ShowRememberPreference="true"
+                             Compact="true"
+                             Disabled="_busy"
+                             Lead="Kies iDEAL of creditcard voordat je naar Mollie gaat. Na betaling schrijft de webhook tokens bij en voert je actie (publiceren, PushBom, …) direct uit." />
+    }
 
-            <PaymentMethodPicker @bind-SelectedMethod="_paymentMethod"
-                                 @bind-RememberPreference="_rememberPaymentMethod"
-                                 ShowRememberPreference="true"
-                                 Compact="true"
-                                 Disabled="_busy"
-                                 Lead="Kies iDEAL of creditcard voordat je naar Mollie gaat. Na betaling schrijft de webhook tokens bij en voert je actie (publiceren, PushBom, …) direct uit." />
-        }
-
-        <div class="inline-actions" style="margin-top:1rem">
+    @if (!string.IsNullOrEmpty(_error))
+    {
+        <p class="state-message error">@_error</p>
+    }
+<div class="inline-actions">
             <button type="button" class="btn-compact btn-compact--primary" disabled="@ConfirmDisabled" @onclick="PayAsync">
                 @(_busy ? Culture["Common.Busy"] : (_paymentMethod == "creditcard" ? "Doorgaan met creditcard" : "Doorgaan met iDEAL"))
             </button>
             <button type="button" class="btn-compact" disabled="@_busy" @onclick="Close">@Culture["Common.Cancel"]</button>
         </div>
-
-        @if (!string.IsNullOrEmpty(_error))
-        {
-            <p class="state-message error">@_error</p>
-        }
-    </div>
-}
+</LobsyFriendlyDialog>
 
 @code {
     [Parameter] public bool IsOpen { get; set; }

@@ -2,108 +2,102 @@
 @inject CultureState Culture
 @implements IDisposable
 
-@if (IsOpen && Vacancy is not null)
-{
-    <div class="share-modal-backdrop" @onclick="Close"></div>
-    <div class="share-modal publish-modal" role="dialog" aria-modal="true" aria-labelledby="publish-modal-title">
-        <div class="share-modal__header">
-            <h2 id="publish-modal-title">@Culture["Employer.Publish"]</h2>
-            <button type="button" class="share-modal__close" @onclick="Close" aria-label="@Culture["Common.Close"]">×</button>
-        </div>
-        <p class="share-modal__lead">@Vacancy.Title · @Vacancy.CompanyName</p>
-
-        <div class="publish-options">
-            <label class="publish-option">
-                <input type="checkbox" checked disabled />
-                <span>
-                    @Culture["Employer.PublishBase"]
-                    <em>@PublishCost.ToString("0.##") token</em>
-                </span>
-            </label>
-            @if (HighlightAvailable)
-            {
-                <label class="publish-option">
-                    <input type="checkbox" @bind="_highlight" />
-                    <span>
-                        @Culture["Employer.Highlight"]
-                        <em>+@HighlightCost.ToString("0.##") token</em>
-                    </span>
-                </label>
-            }
-            @if (PushBomAvailable)
-            {
-                <label class="publish-option">
-                    <input type="checkbox" checked="@_pushBom" @onchange="OnPushBomChanged" />
-                    <span>
-                        @Culture["Employer.PushBom"]
-                        <em>@Culture["Employer.PushBomHint"]</em>
-                    </span>
-                </label>
-            }
-            <label class="publish-option">
-                <input type="checkbox" @bind="_extend" />
-                <span>
-                    @Culture["Employer.Extend"]
-                    <em>+@_costs.GetValueOrDefault("Extend", 1m).ToString("0.##") token</em>
-                </span>
-            </label>
-        </div>
-
-        @if (_pushBom)
+<LobsyFriendlyDialog IsOpen="@(IsOpen && Vacancy is not null)"
+                     Title="@Culture["Employer.Publish"]"
+                     TitleId="publish-modal-title"
+                     Lead="@(Vacancy is null ? null : $"{Vacancy.Title} · {Vacancy.CompanyName}")"
+                     Class="publish-modal"
+                     OnClose="Close">
+    <div class="publish-options">
+        <label class="publish-option">
+            <input type="checkbox" checked disabled />
+            <span>
+                @Culture["Employer.PublishBase"]
+                <em>@PublishCost.ToString("0.##") token</em>
+            </span>
+        </label>
+        @if (HighlightAvailable)
         {
-            <div class="pushbom-preview" aria-live="polite">
-                @if (_previewLoading)
-                {
-                    <p class="muted">@Culture["Employer.ReachCalculating"]</p>
-                }
-                else if (!string.IsNullOrEmpty(_previewError))
-                {
-                    <p class="state-message error">@_previewError</p>
-                }
-                else if (_preview is not null)
-                {
-                    <p class="pushbom-preview__count">
-                        <strong>@_preview.CandidateCount</strong>
-                        @( _preview.CandidateCount == 1 ? "geschikte kandidaat" : "geschikte kandidaten" )
-                        in bereik
-                    </p>
-                    <p class="muted">
-                        Binnen @_preview.RadiusKm.ToString("0.#") km en @_preview.MaxTravelMinutes min reistijd
-                    </p>
-                    @if (_preview.CandidateCount == 0)
-                    {
-                        <p class="state-message error">Geen bereik — PushBom kan niet worden geactiveerd.</p>
-                    }
-                    else if (!_preview.HasPricing)
-                    {
-                        <p class="state-message error">Geen tokenprijs voor dit bereik geconfigureerd.</p>
-                    }
-                    else
-                    {
-                        <p class="pushbom-preview__cost">
-                            Kost <strong>@_preview.CostTokens.ToString("0.##")</strong> token(s)
-                            · saldo @_preview.TokenBalance.ToString("0.##")
-                        </p>
-                    }
-                }
-            </div>
+            <label class="publish-option">
+                <input type="checkbox" @bind="_highlight" />
+                <span>
+                    @Culture["Employer.Highlight"]
+                    <em>+@HighlightCost.ToString("0.##") token</em>
+                </span>
+            </label>
         }
+        @if (PushBomAvailable)
+        {
+            <label class="publish-option">
+                <input type="checkbox" checked="@_pushBom" @onchange="OnPushBomChanged" />
+                <span>
+                    @Culture["Employer.PushBom"]
+                    <em>@Culture["Employer.PushBomHint"]</em>
+                </span>
+            </label>
+        }
+        <label class="publish-option">
+            <input type="checkbox" @bind="_extend" />
+            <span>
+                @Culture["Employer.Extend"]
+                <em>+@_costs.GetValueOrDefault("Extend", 1m).ToString("0.##") token</em>
+            </span>
+        </label>
+    </div>
 
-        <p class="muted">Totaal: <strong>@TotalCost.ToString("0.##")</strong> token(s)</p>
+    @if (_pushBom)
+    {
+        <div class="pushbom-preview" aria-live="polite">
+            @if (_previewLoading)
+            {
+                <p class="muted">@Culture["Employer.ReachCalculating"]</p>
+            }
+            else if (!string.IsNullOrEmpty(_previewError))
+            {
+                <p class="state-message error">@_previewError</p>
+            }
+            else if (_preview is not null)
+            {
+                <p class="pushbom-preview__count">
+                    <strong>@_preview.CandidateCount</strong>
+                    @( _preview.CandidateCount == 1 ? "geschikte kandidaat" : "geschikte kandidaten" )
+                    in bereik
+                </p>
+                <p class="muted">
+                    Binnen @_preview.RadiusKm.ToString("0.#") km en @_preview.MaxTravelMinutes min reistijd
+                </p>
+                @if (_preview.CandidateCount == 0)
+                {
+                    <p class="state-message error">Geen bereik — PushBom kan niet worden geactiveerd.</p>
+                }
+                else if (!_preview.HasPricing)
+                {
+                    <p class="state-message error">Geen tokenprijs voor dit bereik geconfigureerd.</p>
+                }
+                else
+                {
+                    <p class="pushbom-preview__cost">
+                        Kost <strong>@_preview.CostTokens.ToString("0.##")</strong> token(s)
+                        · saldo @_preview.TokenBalance.ToString("0.##")
+                    </p>
+                }
+            }
+        </div>
+    }
 
-        <div class="inline-actions" style="margin-top:1rem">
+    <p class="muted">Totaal: <strong>@TotalCost.ToString("0.##")</strong> token(s)</p>
+
+    @if (!string.IsNullOrEmpty(_error))
+    {
+        <p class="state-message error">@_error</p>
+    }
+<div class="inline-actions">
             <button type="button" class="btn-compact btn-compact--primary" disabled="@ConfirmDisabled" @onclick="ConfirmAsync">
                 @(_busy ? Culture["Common.Busy"] : Culture["Employer.Publish"])
             </button>
             <button type="button" class="btn-compact" disabled="@_busy" @onclick="Close">@Culture["Common.Cancel"]</button>
         </div>
-
-        @if (!string.IsNullOrEmpty(_error))
-        {
-            <p class="state-message error">@_error</p>
-        }
-    </div>
-}
+</LobsyFriendlyDialog>
 
 <TokenTopUpDialog IsOpen="_topUpOpen" Info="_topUpInfo" OnClose="CloseTopUp" />
 

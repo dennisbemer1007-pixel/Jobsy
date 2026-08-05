@@ -401,18 +401,16 @@
 
 @if (_showKeyModal && _generated is not null)
 {
-    <div class="share-modal-backdrop" @onclick="CloseKeyModal"></div>
-    <div class="share-modal api-key-modal" role="dialog" aria-modal="true" aria-labelledby="api-key-modal-title">
-        <div class="share-modal__header">
-            <h2 id="api-key-modal-title">API-key gegenereerd</h2>
-            <button type="button" class="share-modal__close" @onclick="CloseKeyModal" aria-label="Sluiten">×</button>
-        </div>
-        <p class="share-modal__lead api-key-modal__lead">
-            <strong>Let op:</strong> deze sleutel is slechts één keer zichtbaar. Kopieer en bewaar hem veilig.
-            Gebruik daarna niet “Verzend via e-mail” — dat maakt een andere key aan.
-        </p>
-
-        <label class="api-key-modal__label" for="api-key-value">API-key</label>
+    <LobsyFriendlyDialog IsOpen="true"
+                         Title="API-key gegenereerd"
+                         TitleId="api-key-modal-title"
+                         Class="api-key-modal"
+                         OnClose="CloseKeyModal">
+<p class="share-modal__lead api-key-modal__lead lobsy-dialog__lead">
+                <strong>Let op:</strong> deze sleutel is slechts één keer zichtbaar. Kopieer en bewaar hem veilig.
+                Gebruik daarna niet “Verzend via e-mail” — dat maakt een andere key aan.
+            </p>
+<label class="api-key-modal__label" for="api-key-value">API-key</label>
         <div class="api-key-modal__row">
             <pre id="api-key-value"
                  class="api-key-modal__value"
@@ -457,47 +455,45 @@
         {
             <p class="state-message @(_keyCopyFailed ? "error" : null)">@_keyCopyMessage</p>
         }
-        <div class="inline-actions" style="margin-top:1rem">
-            <button class="login-submit" type="button" @onclick="CloseKeyModal">Ik heb de key bewaard</button>
-        </div>
-    </div>
+<div class="inline-actions">
+                <button class="login-submit" type="button" @onclick="CloseKeyModal">Ik heb de key bewaard</button>
+            </div>
+</LobsyFriendlyDialog>
 }
 
 @if (_confirmEmail)
 {
-    <div class="share-modal-backdrop" @onclick="CancelEmail"></div>
-    <div class="share-modal api-key-modal" role="dialog" aria-modal="true" aria-labelledby="api-email-modal-title">
-        <div class="share-modal__header">
-            <h2 id="api-email-modal-title">Credentials e-mailen?</h2>
-            <button type="button" class="share-modal__close" @onclick="CancelEmail" aria-label="Sluiten">×</button>
-        </div>
-        <p class="share-modal__lead api-key-modal__lead">
-            Dit deactiveert de huidige API-key en stuurt een <strong>nieuwe</strong> key naar jouw account-e-mail.
-            De oude key werkt daarna niet meer.
-        </p>
-        <div class="inline-actions" style="margin-top:1rem">
-            <button class="login-submit" type="button" disabled="@_busy" @onclick="EmailCredentialsAsync">Bevestigen</button>
-            <button class="btn-compact" type="button" disabled="@_busy" @onclick="CancelEmail">Annuleren</button>
-        </div>
-    </div>
+    <LobsyFriendlyDialog IsOpen="true"
+                         Title="Credentials e-mailen?"
+                         TitleId="api-email-modal-title"
+                         Class="api-key-modal"
+                         OnClose="CancelEmail">
+<p class="share-modal__lead api-key-modal__lead lobsy-dialog__lead">
+                Dit deactiveert de huidige API-key en stuurt een <strong>nieuwe</strong> key naar jouw account-e-mail.
+                De oude key werkt daarna niet meer.
+            </p>
+<div class="inline-actions">
+                <button class="login-submit" type="button" disabled="@_busy" @onclick="EmailCredentialsAsync">Bevestigen</button>
+                <button class="btn-compact" type="button" disabled="@_busy" @onclick="CancelEmail">Annuleren</button>
+            </div>
+</LobsyFriendlyDialog>
 }
 
 @if (_confirmGenerate)
 {
-    <div class="share-modal-backdrop" @onclick="CancelGenerate"></div>
-    <div class="share-modal api-key-modal" role="dialog" aria-modal="true" aria-labelledby="api-generate-modal-title">
-        <div class="share-modal__header">
-            <h2 id="api-generate-modal-title">Nieuwe API-key genereren?</h2>
-            <button type="button" class="share-modal__close" @onclick="CancelGenerate" aria-label="Sluiten">×</button>
-        </div>
-        <p class="share-modal__lead api-key-modal__lead">
-            Dit deactiveert de huidige API-key. De nieuwe sleutel zie je één keer in het volgende scherm.
-        </p>
-        <div class="inline-actions" style="margin-top:1rem">
-            <button class="login-submit" type="button" disabled="@_busy" @onclick="GenerateAsync">Bevestigen</button>
-            <button class="btn-compact" type="button" disabled="@_busy" @onclick="CancelGenerate">Annuleren</button>
-        </div>
-    </div>
+    <LobsyFriendlyDialog IsOpen="true"
+                         Title="Nieuwe API-key genereren?"
+                         TitleId="api-generate-modal-title"
+                         Class="api-key-modal"
+                         OnClose="CancelGenerate">
+<p class="share-modal__lead api-key-modal__lead lobsy-dialog__lead">
+                Dit deactiveert de huidige API-key. De nieuwe sleutel zie je één keer in het volgende scherm.
+            </p>
+<div class="inline-actions">
+                <button class="login-submit" type="button" disabled="@_busy" @onclick="GenerateAsync">Bevestigen</button>
+                <button class="btn-compact" type="button" disabled="@_busy" @onclick="CancelGenerate">Annuleren</button>
+            </div>
+</LobsyFriendlyDialog>
 }
 
 @code {

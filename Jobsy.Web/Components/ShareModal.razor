@@ -5,51 +5,46 @@
 @inject CultureState Culture
 @implements IDisposable
 
-@if (IsOpen && Vacancy is not null)
-{
-    <div class="share-modal-backdrop" @onclick="Close"></div>
-    <div class="share-modal" role="dialog" aria-modal="true" aria-labelledby="share-modal-title">
-        <div class="share-modal__header">
-            <h2 id="share-modal-title">@Culture["Share.Title"]</h2>
-            <button type="button" class="share-modal__close" @onclick="Close" aria-label="@Culture["Common.Close"]">×</button>
-        </div>
-        <p class="share-modal__lead">@Vacancy.Title · @Vacancy.CompanyName</p>
-        <div class="share-modal__channels" role="group" aria-label="@Culture["Share.Channels"]">
-            @foreach (var channel in Channels)
-            {
-                <button type="button"
-                        class="share-modal__icon-btn share-modal__icon-btn--@channel.Css"
-                        title="@channel.Label"
-                        aria-label="@channel.Label"
-                        @onclick="() => ShareAsync(channel.Channel)">
-                    @((MarkupString)channel.Svg)
-                </button>
-            }
+<LobsyFriendlyDialog IsOpen="@(IsOpen && Vacancy is not null)"
+                     Title="@Culture["Share.Title"]"
+                     TitleId="share-modal-title"
+                     Lead="@(Vacancy is null ? null : $"{Vacancy.Title} · {Vacancy.CompanyName}")"
+                     OnClose="Close">
+    <div class="share-modal__channels" role="group" aria-label="@Culture["Share.Channels"]">
+        @foreach (var channel in Channels)
+        {
             <button type="button"
-                    class="share-modal__icon-btn share-modal__icon-btn--copy @(_copied ? "is-copied" : null)"
-                    title="@(_copied ? Culture["Share.Copied"] : Culture["Share.CopyLink"])"
-                    aria-label="@(_copied ? Culture["Share.Copied"] : Culture["Share.CopyLink"])"
-                    @onclick="CopyLinkAsync">
-                @if (_copied)
-                {
-                    @((MarkupString)CheckSvg)
-                }
-                else
-                {
-                    @((MarkupString)CopySvg)
-                }
+                    class="share-modal__icon-btn share-modal__icon-btn--@channel.Css"
+                    title="@channel.Label"
+                    aria-label="@channel.Label"
+                    @onclick="() => ShareAsync(channel.Channel)">
+                @((MarkupString)channel.Svg)
             </button>
-        </div>
-        @if (!string.IsNullOrEmpty(_message))
-        {
-            <p class="state-message">@_message</p>
         }
-        @if (!string.IsNullOrEmpty(_error))
-        {
-            <p class="state-message error">@_error</p>
-        }
+        <button type="button"
+                class="share-modal__icon-btn share-modal__icon-btn--copy @(_copied ? "is-copied" : null)"
+                title="@(_copied ? Culture["Share.Copied"] : Culture["Share.CopyLink"])"
+                aria-label="@(_copied ? Culture["Share.Copied"] : Culture["Share.CopyLink"])"
+                @onclick="CopyLinkAsync">
+            @if (_copied)
+            {
+                @((MarkupString)CheckSvg)
+            }
+            else
+            {
+                @((MarkupString)CopySvg)
+            }
+        </button>
     </div>
-}
+    @if (!string.IsNullOrEmpty(_message))
+    {
+        <p class="state-message">@_message</p>
+    }
+    @if (!string.IsNullOrEmpty(_error))
+    {
+        <p class="state-message error">@_error</p>
+    }
+</LobsyFriendlyDialog>
 
 @code {
     private const string CopySvg =

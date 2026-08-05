@@ -100,13 +100,11 @@
 
 @if (_modalOpen)
 {
-    <div class="share-modal-backdrop" @onclick="CloseModal"></div>
-    <div class="share-modal" role="dialog" aria-modal="true" aria-labelledby="am-payout-title"
-         style="width:min(28rem, calc(100vw - 2rem));max-width:calc(100vw - 2rem)">
-        <div class="share-modal__header">
-            <h2 id="am-payout-title">Bedrag laten uitkeren</h2>
-            <button type="button" class="share-modal__close" @onclick="CloseModal" aria-label="@Culture["Common.Close"]">×</button>
-        </div>
+    <LobsyFriendlyDialog IsOpen="true"
+                         Title="Bedrag laten uitkeren"
+                         TitleId="am-payout-title"
+                         Style="width:min(28rem, calc(100vw - 2rem));max-width:calc(100vw - 2rem)"
+                         OnClose="CloseModal">
         @if (_preview is null)
         {
             <p class="state-message">@Culture["Common.Loading"]</p>
@@ -138,7 +136,7 @@
                 <button type="button" class="btn-compact" @onclick="CloseModal">Annuleren</button>
             </div>
         }
-    </div>
+    </LobsyFriendlyDialog>
 }
 
 @code {

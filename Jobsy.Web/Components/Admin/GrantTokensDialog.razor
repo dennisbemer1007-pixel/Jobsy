@@ -1,42 +1,37 @@
 @inject JobsyApiClient Api
 @inject CultureState Culture
 
-@if (IsOpen && Company is not null)
-{
-    <div class="share-modal-backdrop" @onclick="Close"></div>
-    <div class="share-modal" role="dialog" aria-modal="true" aria-labelledby="grant-tokens-title">
-        <div class="share-modal__header">
-            <h2 id="grant-tokens-title">Goodwill / Compensatie</h2>
-            <button type="button" class="share-modal__close" @onclick="Close" aria-label="@Culture["Common.Close"]">×</button>
+<LobsyFriendlyDialog IsOpen="@(IsOpen && Company is not null)"
+                     Title="Goodwill / Compensatie"
+                     TitleId="grant-tokens-title"
+                     Lead="@(Company is null ? null : $"{Company.Name} · saldo {Company.TokenBalance.ToString("0.##")}")"
+                     OnClose="Close">
+    <p class="muted" style="margin:0 0 0.75rem">Administratieve waarde € 0,00 — geen BTW of omzet. Token-saldo loopt wel op.</p>
+
+    <form class="login-form" @onsubmit="ConfirmAsync" @onsubmit:preventDefault>
+        <label>
+            Aantal tokens
+            <input type="number" min="0.5" max="1000" step="0.5" @bind="_amount" required />
+        </label>
+        <label>
+            Reden (verplicht — zichtbaar in auditlog)
+            <textarea @bind="_note" rows="3" maxlength="512" required
+                      placeholder="bijv. Compensatie storing / serviceherstel / supportticket #…"></textarea>
+        </label>
+
+        <div class="inline-actions" style="margin-top:1rem">
+            <button type="submit" class="btn-compact btn-compact--primary" disabled="@_busy">
+                @(_busy ? Culture["Common.Busy"] : "Goodwill toekennen")
+            </button>
+            <button type="button" class="btn-compact" disabled="@_busy" @onclick="Close">@Culture["Common.Cancel"]</button>
         </div>
-        <p class="share-modal__lead">@Company.Name · saldo @Company.TokenBalance.ToString("0.##")</p>
-        <p class="muted" style="margin:0 0 0.75rem">Administratieve waarde € 0,00 — geen BTW of omzet. Token-saldo loopt wel op.</p>
+    </form>
 
-        <form class="login-form" @onsubmit="ConfirmAsync" @onsubmit:preventDefault>
-            <label>
-                Aantal tokens
-                <input type="number" min="0.5" max="1000" step="0.5" @bind="_amount" required />
-            </label>
-            <label>
-                Reden (verplicht — zichtbaar in auditlog)
-                <textarea @bind="_note" rows="3" maxlength="512" required
-                          placeholder="bijv. Compensatie storing / serviceherstel / supportticket #…"></textarea>
-            </label>
-
-            <div class="inline-actions" style="margin-top:1rem">
-                <button type="submit" class="btn-compact btn-compact--primary" disabled="@_busy">
-                    @(_busy ? Culture["Common.Busy"] : "Goodwill toekennen")
-                </button>
-                <button type="button" class="btn-compact" disabled="@_busy" @onclick="Close">@Culture["Common.Cancel"]</button>
-            </div>
-        </form>
-
-        @if (!string.IsNullOrEmpty(_error))
-        {
-            <p class="state-message error">@_error</p>
-        }
-    </div>
-}
+    @if (!string.IsNullOrEmpty(_error))
+    {
+        <p class="state-message error">@_error</p>
+    }
+</LobsyFriendlyDialog>
 
 @code {
     [Parameter] public bool IsOpen { get; set; }

@@ -1879,6 +1879,21 @@ a {
     padding: 0.65rem 0.85rem 0.35rem;
 }
 
+.filter-sheet__mascot {
+    width: 2.35rem;
+    height: 2.35rem;
+    object-fit: contain;
+    flex: 0 0 auto;
+    filter: drop-shadow(0 4px 8px color-mix(in srgb, var(--brand) 20%, transparent));
+    animation: lobsy-dialog-bob 1.8s ease-in-out infinite alternate;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .filter-sheet__mascot {
+        animation: none;
+    }
+}
+
 .filter-sheet__header h2 {
     margin: 0;
     display: inline-flex;
@@ -5092,8 +5107,11 @@ a.engagement-btn {
 .share-modal-backdrop {
     position: fixed;
     inset: 0;
-    background: color-mix(in srgb, var(--brand) 28%, rgba(15, 23, 42, 0.45));
+    background:
+        radial-gradient(ellipse at 50% 20%, color-mix(in srgb, var(--brand) 35%, transparent), transparent 55%),
+        color-mix(in srgb, var(--brand) 22%, rgba(15, 23, 42, 0.48));
     z-index: 80;
+    animation: lobsy-dialog-fade-in 0.18s ease-out;
 }
 
 .share-modal {
@@ -5104,11 +5122,19 @@ a.engagement-btn {
     z-index: 81;
     width: max-content;
     max-width: calc(100vw - 2rem);
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    box-shadow: var(--shadow-lg);
-    padding: 0.75rem 0.85rem 0.85rem;
+    background:
+        linear-gradient(
+            165deg,
+            color-mix(in srgb, var(--brand) 8%, var(--surface)) 0%,
+            var(--surface) 42%,
+            var(--surface) 100%);
+    border: 1px solid color-mix(in srgb, var(--brand) 16%, var(--border));
+    border-radius: 18px;
+    box-shadow:
+        0 18px 40px color-mix(in srgb, var(--brand) 18%, transparent),
+        var(--shadow-lg);
+    padding: 0.9rem 1rem 1rem;
+    animation: lobsy-dialog-pop-in 0.22s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .share-modal__header {
@@ -5120,7 +5146,10 @@ a.engagement-btn {
 
 .share-modal__header h2 {
     margin: 0;
-    font-size: 0.95rem;
+    font-size: 1.05rem;
+    font-weight: 700;
+    letter-spacing: -0.015em;
+    color: var(--brand-ink, var(--text));
 }
 
 .share-modal__close {
@@ -5131,16 +5160,140 @@ a.engagement-btn {
     cursor: pointer;
     color: var(--muted);
     padding: 0.1rem 0.25rem;
+    border-radius: 999px;
+}
+
+.share-modal__close:hover:not(:disabled) {
+    background: color-mix(in srgb, var(--brand) 10%, transparent);
+    color: var(--text);
 }
 
 .share-modal__lead {
     margin: 0.2rem 0 0.65rem;
     color: var(--muted);
-    font-size: 0.78rem;
-    max-width: 16rem;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    font-size: 0.84rem;
+    line-height: 1.45;
+    max-width: 22rem;
+    white-space: normal;
+}
+
+/* Friendly lobster dialog shell */
+.lobsy-dialog {
+    min-width: min(18rem, calc(100vw - 2rem));
+}
+
+.lobsy-dialog__banner {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    margin-bottom: 0.35rem;
+}
+
+.lobsy-dialog__banner-text {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.lobsy-dialog__celebrate {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 0.55rem;
+    margin-bottom: 0.35rem;
+}
+
+.lobsy-dialog__header--centered {
+    width: 100%;
+    justify-content: center;
+    position: relative;
+}
+
+.lobsy-dialog__header--centered .share-modal__close {
+    position: absolute;
+    right: 0;
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+.lobsy-dialog__title--celebrate {
+    font-size: 1.45rem !important;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+}
+
+.lobsy-dialog__mascot {
+    object-fit: contain;
+    flex: 0 0 auto;
+    filter: drop-shadow(0 8px 14px color-mix(in srgb, var(--brand, #0b6e4f) 22%, transparent));
+    user-select: none;
+}
+
+.lobsy-dialog__mascot--friendly {
+    width: 3.6rem;
+    height: 3.6rem;
+    animation: lobsy-dialog-bob 1.6s ease-in-out infinite alternate;
+}
+
+.lobsy-dialog__mascot--party {
+    width: 7.5rem;
+    height: 7.5rem;
+    animation: csv-lobster-party 0.9s ease-in-out infinite alternate;
+}
+
+.lobsy-dialog__lead {
+    margin: 0.15rem 0 0;
+    max-width: none;
+    white-space: normal;
+}
+
+.lobsy-dialog__lead .share-modal__lead,
+.lobsy-dialog .share-modal__lead {
+    max-width: none;
+    white-space: normal;
+}
+
+.lobsy-dialog__body {
+    margin-top: 0.35rem;
+}
+
+.lobsy-dialog__footer {
+    margin-top: 1rem;
+}
+
+.lobsy-dialog--celebrate {
+    max-width: min(28rem, calc(100vw - 2rem));
+    padding: 1.1rem 1.15rem 1.2rem;
+}
+
+@keyframes lobsy-dialog-fade-in {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes lobsy-dialog-pop-in {
+    from {
+        opacity: 0;
+        transform: translate(-50%, -46%) scale(0.96);
+    }
+    to {
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1);
+    }
+}
+
+@keyframes lobsy-dialog-bob {
+    from { transform: translateY(0) rotate(-4deg); }
+    to { transform: translateY(-5px) rotate(4deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .share-modal-backdrop,
+    .share-modal,
+    .lobsy-dialog__mascot--friendly,
+    .lobsy-dialog__mascot--party {
+        animation: none;
+    }
 }
 
 .share-modal__channels {
@@ -10814,6 +10967,21 @@ a.apply-flow__secondary {
   gap: 1rem;
   align-items: center;
   justify-content: space-between;
+}
+
+.cookie-consent__mascot {
+  width: 3.25rem;
+  height: 3.25rem;
+  object-fit: contain;
+  flex: 0 0 auto;
+  filter: drop-shadow(0 6px 12px rgba(0, 0, 0, 0.28));
+  animation: lobsy-dialog-bob 1.8s ease-in-out infinite alternate;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cookie-consent__mascot {
+    animation: none;
+  }
 }
 
 .cookie-consent__title {

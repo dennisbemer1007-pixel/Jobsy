@@ -231,37 +231,34 @@
 
 @if (_showCelebrate && _lastImport is not null)
 {
-    <div class="share-modal-backdrop" @onclick="CloseCelebrate"></div>
-    <div class="share-modal csv-celebrate-modal" role="dialog" aria-modal="true" aria-labelledby="csv-celebrate-title">
-        <div class="share-modal__header">
-            <h2 id="csv-celebrate-title">Feest! Import verwerkt</h2>
-            <button type="button" class="share-modal__close" @onclick="CloseCelebrate" aria-label="Sluiten">×</button>
-        </div>
-        <div class="csv-celebrate">
-            <img src="/images/brand/lobsy.png?v=20260731-eyes" alt="De vrolijke kreeft van Lobsy" class="csv-celebrate__mascot" width="120" height="120" />
-            <p class="csv-celebrate__score">
-                <strong>@_lastImport.SuccessCount</strong> van <strong>@_lastImport.TotalRows</strong> rijen succesvol verwerkt.
+    <LobsyFriendlyDialog IsOpen="true"
+                         Title="Feest! Import verwerkt"
+                         TitleId="csv-celebrate-title"
+                         Mood="@LobsyDialogMood.Celebrate"
+                         Class="csv-celebrate-modal"
+                         OnClose="CloseCelebrate">
+        <p class="csv-celebrate__score">
+            <strong>@_lastImport.SuccessCount</strong> van <strong>@_lastImport.TotalRows</strong> rijen succesvol verwerkt.
+        </p>
+        <p class="share-modal__lead lobsy-dialog__lead">
+            @_lastImport.PublishHint
+        </p>
+        @if (_lastImport.FailedCount > 0)
+        {
+            <p class="muted">
+                Mislukte rijen staan in het overzicht hieronder. Pas de velden aan en klik op
+                <strong>Opnieuw aanbieden</strong> — dan valideren we die rij opnieuw en schrijven we hem alsnog in als concept.
             </p>
-            <p class="share-modal__lead">
-                @_lastImport.PublishHint
-            </p>
-            @if (_lastImport.FailedCount > 0)
-            {
-                <p class="muted">
-                    Mislukte rijen staan in het overzicht hieronder. Pas de velden aan en klik op
-                    <strong>Opnieuw aanbieden</strong> — dan valideren we die rij opnieuw en schrijven we hem alsnog in als concept.
-                </p>
-            }
-            else
-            {
-                <p class="muted">Alle rijen zijn gelukt. Ga naar Vacatures om te publiceren.</p>
-            }
-        </div>
-        <div class="inline-actions" style="margin-top:1rem">
-            <a class="login-submit" href="/employer/vacancies" style="text-decoration:none;display:inline-flex;align-items:center;">Naar vacatures</a>
-            <button class="btn-compact" type="button" @onclick="CloseCelebrate">Sluiten</button>
-        </div>
-    </div>
+        }
+        else
+        {
+            <p class="muted">Alle rijen zijn gelukt. Ga naar Vacatures om te publiceren.</p>
+        }
+<div class="inline-actions" style="justify-content:center">
+                <a class="login-submit" href="/employer/vacancies" style="text-decoration:none;display:inline-flex;align-items:center;">Naar vacatures</a>
+                <button class="btn-compact" type="button" @onclick="CloseCelebrate">Sluiten</button>
+            </div>
+</LobsyFriendlyDialog>
 }
 
 @code {

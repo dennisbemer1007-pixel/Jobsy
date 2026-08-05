@@ -199,13 +199,11 @@
 
 @if (_contactOpen && _contactVacancy is not null)
 {
-    <div class="share-modal-backdrop" @onclick="CloseContactPref"></div>
-    <div class="share-modal" role="dialog" aria-modal="true" aria-labelledby="contact-pref-title">
-        <div class="share-modal__header">
-            <h2 id="contact-pref-title">Voorkeur voor contact</h2>
-            <button type="button" class="share-modal__close" @onclick="CloseContactPref" aria-label="Sluiten">×</button>
-        </div>
-        <p class="share-modal__lead">@_contactVacancy.Title</p>
+    <LobsyFriendlyDialog IsOpen="true"
+                         Title="Voorkeur voor contact"
+                         TitleId="contact-pref-title"
+                         Lead="@_contactVacancy.Title"
+                         OnClose="CloseContactPref">
         <p class="muted">Overschrijf de bedrijfsinstellingen voor deze vacature. Contactgegevens komen uit het bedrijfsprofiel.</p>
         <label class="checkbox-row">
             <input type="checkbox" @bind="_contactOverride" @bind:after="OnContactOverrideChanged" disabled="@_contactBusy" />
@@ -239,11 +237,11 @@
         {
             <p class="state-message error">@_contactError</p>
         }
-        <div class="inline-actions" style="margin-top:1rem">
-            <button type="button" class="login-submit" disabled="@_contactBusy" @onclick="SaveContactPrefAsync">Opslaan</button>
-            <button type="button" class="btn-compact" disabled="@_contactBusy" @onclick="CloseContactPref">Annuleren</button>
-        </div>
-    </div>
+<div class="inline-actions">
+                <button type="button" class="login-submit" disabled="@_contactBusy" @onclick="SaveContactPrefAsync">Opslaan</button>
+                <button type="button" class="btn-compact" disabled="@_contactBusy" @onclick="CloseContactPref">Annuleren</button>
+            </div>
+</LobsyFriendlyDialog>
 }
 
 @code {

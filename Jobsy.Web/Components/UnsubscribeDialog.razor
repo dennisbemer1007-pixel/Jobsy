@@ -8,23 +8,24 @@
 
 @if (IsOpen)
 {
-    <div class="share-modal-backdrop" @onclick="CloseAsync"></div>
-    <div class="share-modal publish-modal unsubscribe-modal" role="dialog" aria-modal="true" aria-labelledby="unsubscribe-modal-title">
-        <div class="share-modal__header">
-            <h2 id="unsubscribe-modal-title">@Culture["Unsubscribe.Title"]</h2>
-            <button type="button" class="share-modal__close" @onclick="CloseAsync" aria-label="@Culture["Unsubscribe.Close"]" disabled="@_busy">×</button>
-        </div>
-
+    <LobsyFriendlyDialog IsOpen="IsOpen"
+                         Title="@Culture["Unsubscribe.Title"]"
+                         TitleId="unsubscribe-modal-title"
+                         Class="publish-modal unsubscribe-modal"
+                         ShowClose="true"
+                         CloseDisabled="_busy"
+                         CloseAriaLabel="@Culture["Unsubscribe.Close"]"
+                         OnClose="CloseAsync">
         @if (_completed)
         {
-            <p class="share-modal__lead">@Culture["Unsubscribe.Completed"]</p>
+            <p class="share-modal__lead lobsy-dialog__lead">@Culture["Unsubscribe.Completed"]</p>
             <form id="unsubscribe-logout" method="post" action="/account/logout">
                 <input type="hidden" name="__RequestVerificationToken" value="@_antiforgeryToken" />
             </form>
         }
         else if (_awaitingVerification)
         {
-            <p class="share-modal__lead">
+            <p class="share-modal__lead lobsy-dialog__lead">
                 @Culture["Unsubscribe.VerifyLead"]
             </p>
             <label class="apply-code-field">
@@ -56,7 +57,7 @@
         }
         else
         {
-            <p class="share-modal__lead">
+            <p class="share-modal__lead lobsy-dialog__lead">
                 @Culture["Unsubscribe.Lead"]
             </p>
             <label>
@@ -99,7 +100,7 @@
         {
             <p class="state-message">@_info</p>
         }
-    </div>
+    </LobsyFriendlyDialog>
 }
 
 @code {

@@ -45,15 +45,18 @@
     }
     else if (_result is not null)
     {
-        <div class="share-modal-backdrop register-celebrate-backdrop"></div>
-        <div class="share-modal csv-celebrate-modal register-celebrate-modal" role="dialog" aria-modal="true" aria-labelledby="register-celebrate-title">
-            <div class="csv-celebrate">
-                <img src="/images/brand/lobsy.png?v=20260731-eyes" alt="De vrolijke kreeft van Lobsy" class="csv-celebrate__mascot" width="140" height="140" />
-                <h2 id="register-celebrate-title" class="register-celebrate__title">@Culture["Register.CelebrateTitle"]</h2>
-                <p class="csv-celebrate__score">
+        <LobsyFriendlyDialog IsOpen="true"
+                             Title="@Culture["Register.CelebrateTitle"]"
+                             TitleId="register-celebrate-title"
+                             Mood="@LobsyDialogMood.Celebrate"
+                             Class="csv-celebrate-modal register-celebrate-modal"
+                             BackdropClass="register-celebrate-backdrop"
+                             ShowClose="false"
+                             CloseOnBackdrop="false">
+<p class="csv-celebrate__score">
                     @Culture.Format("Register.CelebrateLead", _result.FullName)
                 </p>
-                <p class="share-modal__lead">
+                <p class="share-modal__lead lobsy-dialog__lead">
                     @if (_result.WelcomeTokenGranted)
                     {
                         @Culture["Register.CelebrateToken"]
@@ -67,25 +70,24 @@
                         @Culture["Register.CelebrateReady"]
                     }
                 </p>
-                @if (_result.UsedChosenPassword)
-                {
-                    <p class="muted">@Culture["Register.LoginWithChosenPassword"]</p>
-                }
-                else if (!string.IsNullOrWhiteSpace(_result.TemporaryPassword))
-                {
-                    <p class="muted">@Culture["Register.TempPasswordDev"] <code>@_result.TemporaryPassword</code></p>
-                }
-                else
-                {
-                    <p class="muted">@Culture["Register.TempPasswordEmail"]</p>
-                }
-            </div>
-            <div class="inline-actions" style="margin-top:1.25rem;justify-content:center;">
-                <a class="login-submit" href="/login" style="text-decoration:none;display:inline-flex;align-items:center;">
-                    @Culture["Register.GoLogin"]
-                </a>
-            </div>
-        </div>
+@if (_result.UsedChosenPassword)
+            {
+                <p class="muted">@Culture["Register.LoginWithChosenPassword"]</p>
+            }
+            else if (!string.IsNullOrWhiteSpace(_result.TemporaryPassword))
+            {
+                <p class="muted">@Culture["Register.TempPasswordDev"] <code>@_result.TemporaryPassword</code></p>
+            }
+            else
+            {
+                <p class="muted">@Culture["Register.TempPasswordEmail"]</p>
+            }
+<div class="inline-actions" style="justify-content:center;">
+                    <a class="login-submit" href="/login" style="text-decoration:none;display:inline-flex;align-items:center;">
+                        @Culture["Register.GoLogin"]
+                    </a>
+                </div>
+</LobsyFriendlyDialog>
     }
 </div>
 

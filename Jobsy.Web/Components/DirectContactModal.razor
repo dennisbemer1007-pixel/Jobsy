@@ -2,15 +2,14 @@
 @using Jobsy.Web.Models
 @inject CultureState Culture
 
-@if (IsOpen && Contact is not null && Contact.Available)
-{
-    <div class="share-modal-backdrop" @onclick="Close"></div>
-    <div class="share-modal direct-contact-modal" role="dialog" aria-modal="true" aria-labelledby="direct-contact-title">
-        <div class="share-modal__header">
-            <h2 id="direct-contact-title">@Culture["Apply.DirectContactTitle"]</h2>
-            <button type="button" class="share-modal__close" @onclick="Close" aria-label="@Culture["Common.Close"]">×</button>
-        </div>
-        <p class="share-modal__lead">@Culture["Apply.DirectContactLead"]</p>
+<LobsyFriendlyDialog IsOpen="@(IsOpen && Contact is not null && Contact.Available)"
+                     Title="@Culture["Apply.DirectContactTitle"]"
+                     TitleId="direct-contact-title"
+                     Lead="@Culture["Apply.DirectContactLead"]"
+                     Class="direct-contact-modal"
+                     OnClose="Close">
+    @if (Contact is not null)
+    {
         <div class="direct-contact-modal__actions" role="group" aria-label="@Culture["Apply.DirectContactChannels"]">
             @if (Contact.OfferWhatsApp && !string.IsNullOrWhiteSpace(Contact.WhatsAppUrl))
             {
@@ -36,11 +35,11 @@
                 </a>
             }
         </div>
-        <div class="inline-actions" style="margin-top:1rem">
+    }
+<div class="inline-actions">
             <button type="button" class="btn-compact" @onclick="Close">@Culture["Common.Close"]</button>
         </div>
-    </div>
-}
+</LobsyFriendlyDialog>
 
 @code {
     [Parameter] public bool IsOpen { get; set; }
