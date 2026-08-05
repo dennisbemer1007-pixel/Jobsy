@@ -2812,6 +2812,8 @@ public sealed class PlatformFeatureItem
     public int InactiveCompanyDays { get; set; } = 120;
     public int SessionInactivityTimeoutMinutes { get; set; } = 30;
     public DateOnly? FreePublishUntil { get; set; }
+    /// <summary>When true with null FreePublishUntil, admin turned the launch promo off.</summary>
+    public bool ClearFreePublishUntil { get; set; }
 }
 
 public sealed class FreePublishStatusItem

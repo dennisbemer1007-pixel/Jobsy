@@ -40,6 +40,7 @@ public sealed class PlatformFeatureService : IPlatformFeatureService
         CancellationToken cancellationToken = default)
     {
         var row = await _db.PlatformFeatureSettings.FirstOrDefaultAsync(cancellationToken);
+        var isNew = row is null;
         if (row is null)
         {
             row = new PlatformFeatureSettings { Id = SingletonId };
@@ -52,7 +53,20 @@ public sealed class PlatformFeatureService : IPlatformFeatureService
         row.InactiveCompanyDays = Math.Clamp(update.InactiveCompanyDays, 30, 730);
         row.SessionInactivityTimeoutMinutes =
             SessionSecurityRules.ClampTimeoutMinutes(update.SessionInactivityTimeoutMinutes);
-        row.FreePublishUntil = update.FreePublishUntil;
+        // Explicit clear → null. Explicit date → set. Otherwise preserve (or launch default on insert)
+        // so session-timeout-only PUTs do not silently disable the free-publish promo.
+        if (update.ClearFreePublishUntil)
+        {
+            row.FreePublishUntil = null;
+        }
+        else if (update.FreePublishUntil is DateOnly until)
+        {
+            row.FreePublishUntil = until;
+        }
+        else if (isNew)
+        {
+            row.FreePublishUntil = FreePublishRules.DefaultUntil;
+        }
         if (!string.IsNullOrWhiteSpace(update.PublicWebBaseUrl))
         {
             var normalized = JobsyPublicUrl.NormalizeOrigin(update.PublicWebBaseUrl);

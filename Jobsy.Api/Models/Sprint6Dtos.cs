@@ -117,7 +117,8 @@ public record UpdatePlatformFeatureRequest(
     string? PublicWebBaseUrl,
     int InactiveCompanyDays = 120,
     int SessionInactivityTimeoutMinutes = 30,
-    DateOnly? FreePublishUntil = null);
+    DateOnly? FreePublishUntil = null,
+    bool ClearFreePublishUntil = false);
 
 public record PlatformFeatureDto(
     bool VacancyContentModerationEnabled,

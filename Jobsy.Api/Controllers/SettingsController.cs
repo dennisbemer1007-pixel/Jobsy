@@ -291,7 +291,8 @@ public class SettingsController : ControllerBase
                     request.PublicWebBaseUrl,
                     request.InactiveCompanyDays,
                     request.SessionInactivityTimeoutMinutes,
-                    request.FreePublishUntil),
+                    request.FreePublishUntil,
+                    request.ClearFreePublishUntil),
                 cancellationToken);
             return Ok(ToFeatureDto(snap));
         }

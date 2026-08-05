@@ -140,7 +140,9 @@ public class RegistrationController : ControllerBase
                 result.OrganizationCompanyId,
                 result.BranchCompanyId,
                 result.UsedChosenPassword,
-                result.EmailVerifiedAwaitingTakeover));
+                result.EmailVerifiedAwaitingTakeover,
+                result.WelcomeTokenGranted,
+                result.FreePublishUntil));
         }
         catch (ArgumentException ex)
         {

@@ -28,6 +28,16 @@ public class FreePublishRulesTests
     }
 
     [Fact]
+    public void IsActive_uses_europe_amsterdam_calendar_day()
+    {
+        var until = new DateOnly(2026, 11, 18);
+        // 22:30 UTC on 18 Nov = 23:30 CET → still 18 Nov Amsterdam → active
+        Assert.True(FreePublishRules.IsActive(until, new DateTime(2026, 11, 18, 22, 30, 0, DateTimeKind.Utc)));
+        // 23:00 UTC on 18 Nov = 00:00 CET on 19 Nov → promo ended
+        Assert.False(FreePublishRules.IsActive(until, new DateTime(2026, 11, 18, 23, 0, 0, DateTimeKind.Utc)));
+    }
+
+    [Fact]
     public void EffectivePublishCost_zeros_during_promo_only()
     {
         Assert.Equal(0m, FreePublishRules.EffectivePublishCost(1m, FreePublishRules.DefaultUntil, new DateTime(2026, 11, 18, 0, 0, 0, DateTimeKind.Utc)));
@@ -302,13 +312,39 @@ public class FreePublishProductTests
             FreePublishUntil: new DateOnly(2026, 12, 31)));
 
         Assert.Equal(new DateOnly(2026, 12, 31), updated.FreePublishUntil);
+
+        // Partial update without date or clear flag must preserve the promo end date.
+        var preserved = await sut.UpdateAsync(new PlatformFeatureUpdate(
+            VacancyContentModerationEnabled: true,
+            AuthenticatorEnabled: false,
+            ExposeRegistrationActivationLinks: false,
+            PublicWebBaseUrl: "http://localhost:5201",
+            SessionInactivityTimeoutMinutes: 15));
+        Assert.Equal(new DateOnly(2026, 12, 31), preserved.FreePublishUntil);
+        Assert.Equal(15, preserved.SessionInactivityTimeoutMinutes);
+
         var cleared = await sut.UpdateAsync(new PlatformFeatureUpdate(
             VacancyContentModerationEnabled: true,
             AuthenticatorEnabled: false,
             ExposeRegistrationActivationLinks: false,
             PublicWebBaseUrl: "http://localhost:5201",
-            FreePublishUntil: null));
+            FreePublishUntil: null,
+            ClearFreePublishUntil: true));
         Assert.Null(cleared.FreePublishUntil);
+    }
+
+    [Fact]
+    public async Task First_platform_feature_insert_defaults_free_publish_until()
+    {
+        await using var db = CreateDb();
+        var sut = CreateFeatures(db);
+        var created = await sut.UpdateAsync(new PlatformFeatureUpdate(
+            VacancyContentModerationEnabled: true,
+            AuthenticatorEnabled: false,
+            ExposeRegistrationActivationLinks: false,
+            PublicWebBaseUrl: "http://localhost:5201",
+            SessionInactivityTimeoutMinutes: 30));
+        Assert.Equal(FreePublishRules.DefaultUntil, created.FreePublishUntil);
     }
 
     private static void SeedFreePublish(JobsyDbContext db, DateOnly? freeUntil)

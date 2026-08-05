@@ -83,8 +83,9 @@
                     <input type="date" @bind="_freePublishUntilInput" @bind:format="yyyy-MM-dd" />
                 </label>
                 <p class="muted">
-                    Tot en met deze datum is het plaatsen van vacatures (alle types: vestiging, organisatie, intermediair) gratis.
-                    Highlight en PushBom blijven altijd betaald. Leeg = promo uit (normale publicatietarieven).
+                    Tot en met deze datum (kalenderdag Europe/Amsterdam) is het plaatsen van vacatures
+                    (alle types: vestiging, organisatie, intermediair) gratis.
+                    Highlight en PushBom blijven altijd betaald. Leeg + opslaan = promo uit (normale publicatietarieven).
                     Welkomsttokens worden tijdens deze periode niet toegekend.
                 </p>
                 <div class="inline-actions" style="margin-top:0.35rem">
@@ -300,7 +301,9 @@
             _features.FreePublishUntil = _freePublishUntilInput is DateTime d
                 ? DateOnly.FromDateTime(d)
                 : null;
+            _features.ClearFreePublishUntil = _features.FreePublishUntil is null;
             _features = await Api.SavePlatformFeaturesAsync(_features) ?? _features;
+            _features.ClearFreePublishUntil = false;
             SyncFreePublishInputFromFeatures();
             _message = "Platform features opgeslagen.";
         }

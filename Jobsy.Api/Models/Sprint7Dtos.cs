@@ -45,7 +45,9 @@ public record RegistrationActivationResponse(
     Guid? OrganizationCompanyId,
     Guid? BranchCompanyId,
     bool UsedChosenPassword = false,
-    bool EmailVerifiedAwaitingTakeover = false);
+    bool EmailVerifiedAwaitingTakeover = false,
+    bool WelcomeTokenGranted = false,
+    DateOnly? FreePublishUntil = null);
 
 public record TakeoverInboxItemDto(
     Guid TakeoverId,
