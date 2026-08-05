@@ -343,10 +343,10 @@ window.jobMap = (function () {
             );
         }
         if (v.typeBadgeLabel) {
-            const color = v.typeBadgeColor || v.categoryColor || "#64748b";
+            const color = safeBadgeColor(v.typeBadgeColor || v.categoryColor);
             badges.push(
                 "<span class=\"map-popup__badge map-popup__badge--type\" style=\"--badge-color:" +
-                escapeAttr(String(color)) +
+                escapeAttr(color) +
                 "\">" +
                 escapeHtml(String(v.typeBadgeLabel)) +
                 "</span>"
@@ -1176,6 +1176,11 @@ window.jobMap = (function () {
 
     function escapeAttr(value) {
         return escapeHtml(value).replaceAll("'", "&#39;");
+    }
+
+    function safeBadgeColor(color) {
+        const s = String(color ?? "").trim();
+        return /^#[0-9A-Fa-f]{6}$/.test(s) ? s : "#64748b";
     }
 
     return {
