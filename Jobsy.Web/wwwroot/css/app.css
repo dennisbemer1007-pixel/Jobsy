@@ -9135,6 +9135,10 @@ button.linkish:hover {
     line-height: 1.45;
 }
 
+.scope-fieldset--compact {
+    margin-bottom: 1rem;
+}
+
 .register-result {
     display: flex;
     flex-direction: column;

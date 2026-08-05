@@ -187,6 +187,32 @@
             {
                 <p class="state-message register-claim-intro">@Culture["Register.ClaimFormIntro"]</p>
                 <p class="muted">@Culture.Format("Register.ChosenCompany", _selected?.Name ?? "")</p>
+                @if (_selected?.IsIntermediarySbi == true)
+                {
+                    <p class="muted">@Culture["Register.IntermediaryRoleHint"]</p>
+                }
+                else
+                {
+                    <fieldset class="scope-fieldset scope-fieldset--compact">
+                        <legend>@Culture["Register.ScopeLegend"]</legend>
+                        <label class="scope-option">
+                            <input type="radio" name="claim-scope" checked="@(_scope == "BranchOnly")"
+                                   @onchange="@(() => _scope = "BranchOnly")" />
+                            <span>
+                                <strong>@Culture["Register.ScopeBranch"]</strong>
+                                <span class="muted">@Culture["Register.ScopeBranchHint"]</span>
+                            </span>
+                        </label>
+                        <label class="scope-option">
+                            <input type="radio" name="claim-scope" checked="@(_scope == "Organization")"
+                                   @onchange="@(() => _scope = "Organization")" />
+                            <span>
+                                <strong>@Culture["Register.ScopeOrg"]</strong>
+                                <span class="muted">@Culture["Register.ScopeOrgHint"]</span>
+                            </span>
+                        </label>
+                    </fieldset>
+                }
             }
             <form class="login-form" @onsubmit="SubmitAsync" @onsubmit:preventDefault>
                 <label>
@@ -210,13 +236,17 @@
                     @Culture["Common.Phone"] (@Culture["Common.Optional"])
                     <input @bind="_contactPhone" maxlength="64" />
                 </label>
+                <label>
+                    @Culture["Register.SalesCode"] (@Culture["Common.Optional"])
+                    <input @bind="_salesManagerCode" maxlength="32" placeholder="SM-XXXXXX" />
+                </label>
+                <p class="muted">@Culture["Register.SalesCodeHint"]</p>
                 @if (!_claimMode)
                 {
-                    <label>
-                        @Culture["Register.SalesCode"] (@Culture["Common.Optional"])
-                        <input @bind="_salesManagerCode" maxlength="32" placeholder="SM-XXXXXX" />
-                    </label>
-                    <p class="muted">@Culture["Register.SalesCodeHint"]</p>
+                    <p class="muted">@Culture.Format("Register.Chosen", _selected?.Name ?? "", ScopePreviewLabel())</p>
+                }
+                else if (_selected?.IsIntermediarySbi != true)
+                {
                     <p class="muted">@Culture.Format("Register.Chosen", _selected?.Name ?? "", ScopePreviewLabel())</p>
                 }
                 <label class="profile-toggle legal-consent">
@@ -423,6 +453,7 @@
         _selected = e;
         _claimMode = true;
         _claimExpandedId = null;
+        // Default to this vestiging; non-intermediary claim form still offers Organization.
         _scope = "BranchOnly";
         _error = null;
         _step = 4;
@@ -519,7 +550,7 @@
         _error = null;
         try
         {
-            var scope = _claimMode || _selected.IsIntermediarySbi
+            var scope = _selected.IsIntermediarySbi
                 ? "BranchOnly"
                 : _scope;
 
@@ -531,7 +562,7 @@
                 _contactEmail.Trim(),
                 string.IsNullOrWhiteSpace(_contactPhone) ? null : _contactPhone.Trim(),
                 acceptedTerms: true,
-                salesManagerTrackingCode: _claimMode || string.IsNullOrWhiteSpace(_salesManagerCode)
+                salesManagerTrackingCode: string.IsNullOrWhiteSpace(_salesManagerCode)
                     ? null
                     : _salesManagerCode.Trim(),
                 password: _password,
