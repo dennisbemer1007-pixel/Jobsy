@@ -136,6 +136,7 @@ public sealed class JobsyApiClient : IAsyncDisposable
         int? maxHoursPerWeek = null,
         IEnumerable<Guid>? categoryIds = null,
         bool? suitableFor65Plus = null,
+        IEnumerable<Guid>? companyIds = null,
         CancellationToken ct = default)
     {
         var qs = $"transport={Uri.EscapeDataString(transport)}&maxMinutes={maxMinutes}";
@@ -188,6 +189,14 @@ public sealed class JobsyApiClient : IAsyncDisposable
             foreach (var id in categoryIds.Where(x => x != Guid.Empty).Distinct())
             {
                 qs += $"&categoryId={id:D}";
+            }
+        }
+
+        if (companyIds is not null)
+        {
+            foreach (var id in companyIds.Where(x => x != Guid.Empty).Distinct())
+            {
+                qs += $"&companyId={id:D}";
             }
         }
 
@@ -1549,6 +1558,39 @@ public sealed class JobsyApiClient : IAsyncDisposable
         => await _http.GetFromJsonAsync<BranchFlyerRouteDto>(
             $"api/employer-flyers/public/branches/{companyId:D}/route",
             ct);
+
+    public async Task<PublicCompanyPage?> GetPublicCompanyByKvkAsync(
+        string kvkNumber,
+        CancellationToken ct = default)
+    {
+        var response = await _http.GetAsync(
+            $"api/public/companies/{Uri.EscapeDataString(kvkNumber.Trim())}",
+            ct);
+        if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
+        {
+            return null;
+        }
+
+        response.EnsureSuccessStatusCode();
+        return await response.Content.ReadFromJsonAsync<PublicCompanyPage>(cancellationToken: ct);
+    }
+
+    public async Task<PublicCompanyPage?> GetPublicCompanyByVestigingAsync(
+        string kvkNumber,
+        string vestigingsnummer,
+        CancellationToken ct = default)
+    {
+        var response = await _http.GetAsync(
+            $"api/public/companies/{Uri.EscapeDataString(kvkNumber.Trim())}/{Uri.EscapeDataString(vestigingsnummer.Trim())}",
+            ct);
+        if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
+        {
+            return null;
+        }
+
+        response.EnsureSuccessStatusCode();
+        return await response.Content.ReadFromJsonAsync<PublicCompanyPage>(cancellationToken: ct);
+    }
 
     public async Task DownloadBranchRaamflyerPdfAsync(
         Microsoft.JSInterop.IJSRuntime js,
@@ -3326,5 +3368,30 @@ public sealed class SalesPackageItem
 public sealed class BranchFlyerRouteDto
 {
     public string RedirectPath { get; set; } = "/";
+}
+
+public sealed class PublicCompanyPage
+{
+    public string KvkNumber { get; set; } = string.Empty;
+    public string? Vestigingsnummer { get; set; }
+    public string Name { get; set; } = string.Empty;
+    public string Address { get; set; } = string.Empty;
+    public string? LogoUrl { get; set; }
+    public double Latitude { get; set; }
+    public double Longitude { get; set; }
+    public List<Guid> CompanyIds { get; set; } = [];
+    public List<PublicCompanyBranch>? Branches { get; set; }
+}
+
+public sealed class PublicCompanyBranch
+{
+    public Guid CompanyId { get; set; }
+    public string Name { get; set; } = string.Empty;
+    public string Address { get; set; } = string.Empty;
+    public string? LogoUrl { get; set; }
+    public double Latitude { get; set; }
+    public double Longitude { get; set; }
+    public string? Vestigingsnummer { get; set; }
+    public string? PublicPath { get; set; }
 }
 

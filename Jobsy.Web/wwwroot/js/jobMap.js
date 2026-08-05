@@ -359,6 +359,9 @@ window.jobMap = (function () {
 
         const detailHref = "/vacancies/" + encodeURIComponent(v.id);
         const applyHref = detailHref + "#apply";
+        const companyHref = v.companyHref
+            ? String(v.companyHref)
+            : detailHref;
         const wage = wageInlineHtml(v);
 
         return (
@@ -392,8 +395,9 @@ window.jobMap = (function () {
                         (wage || "<p class=\"map-popup__wage map-popup__wage--empty\">&nbsp;</p>") +
                         specsHtml(v) +
                         "<div class=\"map-popup__footer\">" +
-                            "<a class=\"map-popup__company map-popup__cta\" href=\"" + detailHref + "\" data-job-id=\"" + escapeAttr(v.id) + "\">" +
-                                escapeHtml(v.offeredBy || v.company) +
+                            "<a class=\"map-popup__company map-popup__cta\" href=\"" + escapeAttr(companyHref) + "\"" +
+                                (companyHref === detailHref ? " data-job-id=\"" + escapeAttr(v.id) + "\"" : "") + ">" +
+                                escapeHtml(v.company) +
                             "</a>" +
                             (v.offeredBy
                                 ? "<p class=\"map-popup__offered-by\">" + escapeHtml(String(v.offeredBy)) + "</p>"

@@ -1,0 +1,379 @@
+@page "/{KvkNumber:regex(^\\d{{8}}$)}"
+@page "/{KvkNumber:regex(^\\d{{8}}$)}/{Vestigingsnummer:regex(^\\d{{1,12}}$)}"
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
+@attribute [AllowAnonymous]
+@inject JobsyApiClient Api
+@inject IJSRuntime Js
+@inject CultureState Culture
+@inject NavigationManager Navigation
+@using Jobsy.Core.Rules
+@implements IAsyncDisposable
+
+<PageTitle>@(_page?.Name ?? Culture["BranchPage.Title"]) · Lobsy</PageTitle>
+
+<div class="jobsy-discovery jobsy-discovery--branch @(showMapOnMobile ? "show-map" : "show-list")">
+    <div class="jobsy-chrome jobsy-chrome--branch">
+        <header class="jobsy-chrome__header">
+            <a class="jobsy-logo" href="/" aria-label="Lobsy">
+                <LobsyLogo Class="jobsy-logo__img" Alt="Lobsy" />
+                <span class="jobsy-logo__mark">Lobsy</span>
+            </a>
+            <div class="jobsy-chrome__header-actions">
+                <LanguageSelector />
+                <AuthHeader />
+            </div>
+        </header>
+
+        <div class="branch-page__intro">
+            <a class="back-link" href="/">@Culture["Vacancy.BackToMap"]</a>
+            @if (_page is not null)
+            {
+                <div class="branch-page__identity">
+                    @if (!string.IsNullOrWhiteSpace(_page.LogoUrl))
+                    {
+                        <img class="branch-page__logo" src="@_page.LogoUrl" alt="" />
+                    }
+                    <div>
+                        <h1 class="branch-page__title">@_page.Name</h1>
+                        @if (!string.IsNullOrWhiteSpace(_page.Address))
+                        {
+                            <p class="branch-page__address">@_page.Address</p>
+                        }
+                        <p class="branch-page__meta">
+                            @if (!string.IsNullOrWhiteSpace(_page.Vestigingsnummer))
+                            {
+                                <span>@Culture.Format("BranchPage.VacancyCount", _vacancies.Count)</span>
+                            }
+                            else
+                            {
+                                <span>@Culture.Format("BranchPage.OrgVacancyCount", _vacancies.Count)</span>
+                            }
+                        </p>
+                    </div>
+                </div>
+            }
+        </div>
+
+        <div class="jobsy-chrome__actions" role="toolbar" aria-label="@Culture["Discovery.Map"]">
+            <button type="button" class="jobsy-action jobsy-action--toggle" @onclick="ToggleMobileView">
+                @if (showMapOnMobile)
+                {
+                    <span class="jobsy-action__icon" aria-hidden="true">@((MarkupString)NavIcons.List)</span>
+                    <span>@Culture["Discovery.List"]</span>
+                }
+                else
+                {
+                    <span class="jobsy-action__icon" aria-hidden="true">@((MarkupString)NavIcons.Map)</span>
+                    <span>@Culture["Discovery.Map"]</span>
+                }
+            </button>
+        </div>
+    </div>
+
+    <aside class="vacancy-pane">
+        @if (_loading)
+        {
+            <p class="state-message">@Culture["Common.Loading"]</p>
+        }
+        else if (!string.IsNullOrEmpty(_error))
+        {
+            <p class="state-message error">@_error</p>
+        }
+        else if (_page is null)
+        {
+            <p class="state-message error">@Culture["BranchPage.NotFound"]</p>
+        }
+        else if (_vacancies.Count == 0)
+        {
+            <p class="state-message">@Culture["BranchPage.NoVacancies"]</p>
+            @if (_page.Branches is { Count: > 1 })
+            {
+                <ul class="branch-page__branches">
+                    @foreach (var branch in _page.Branches.Where(b => !string.IsNullOrWhiteSpace(b.PublicPath)))
+                    {
+                        <li>
+                            <a href="@branch.PublicPath">@branch.Name</a>
+                            <span class="muted">@branch.Address</span>
+                        </li>
+                    }
+                </ul>
+            }
+        }
+        else
+        {
+            @if (_page.Branches is { Count: > 1 })
+            {
+                <nav class="branch-page__branches" aria-label="@Culture["BranchPage.Branches"]">
+                    <p class="branch-page__branches-title">@Culture["BranchPage.Branches"]</p>
+                    <ul>
+                        @foreach (var branch in _page.Branches.Where(b => !string.IsNullOrWhiteSpace(b.PublicPath)))
+                        {
+                            <li>
+                                <a href="@branch.PublicPath">@branch.Name</a>
+                            </li>
+                        }
+                    </ul>
+                </nav>
+            }
+            <div class="vacancy-list vacancy-list--cards">
+                @foreach (var vacancy in _vacancies)
+                {
+                    <article class="job-card @(_hoveredId == vacancy.Id ? "is-hovered" : null) @(vacancy.IsHighlighted ? "job-card--highlight" : null)"
+                             @onmouseenter="() => OnHover(vacancy.Id)"
+                             @onmouseleave="() => OnHover(null)"
+                             @onclick="() => OnSelect(vacancy.Id)">
+                        <a class="job-card__media" href="@($"/vacancies/{vacancy.Id}")" @onclick:stopPropagation="true"
+                           style="@(string.IsNullOrWhiteSpace(vacancy.ImageUrl) ? null : $"background-image:url('{vacancy.ImageUrl}')")">
+                            @if (vacancy.IsHighlighted)
+                            {
+                                <span class="job-card__badge">@Culture["Discovery.Featured"]</span>
+                            }
+                            else if (!string.IsNullOrWhiteSpace(vacancy.ExclusivityName)
+                                     && string.Equals(vacancy.Kind, "Internship", StringComparison.OrdinalIgnoreCase)
+                                     && !vacancy.ExclusivityIsOpen)
+                            {
+                                <span class="job-card__badge job-card__badge--soft">@vacancy.ExclusivityName</span>
+                            }
+                            else if (ShowsSuitableFor65Plus(vacancy))
+                            {
+                                <span class="job-card__badge job-card__badge--senior65">@VacancyCategoryDefaults.SuitableFor65PlusLabel</span>
+                            }
+                            else if (vacancy.WorkTypes.Length > 0)
+                            {
+                                <span class="job-card__badge job-card__badge--soft">@UiLabels.WorkType(Culture, vacancy.WorkTypes[0])</span>
+                            }
+                            <div class="job-card__overlay">
+                                <h2>@vacancy.Title</h2>
+                                @if (ShowsSuitableFor65Plus(vacancy))
+                                {
+                                    <p class="suitable65-inline">@VacancyCategoryDefaults.SuitableFor65PlusLabel</p>
+                                }
+                            </div>
+                        </a>
+                        <div class="job-card__footer">
+                            <p class="job-card__company">@(string.IsNullOrWhiteSpace(vacancy.OfferedByLabel) ? vacancy.CompanyName : vacancy.OfferedByLabel)</p>
+                            <p class="job-card__location">@vacancy.CompanyAddress</p>
+                        </div>
+                    </article>
+                }
+            </div>
+        }
+    </aside>
+
+    <section class="map-pane map-pane--branch">
+        <div class="map-stage">
+            <div @ref="_mapElement" id="branch-job-map" class="job-map"></div>
+        </div>
+    </section>
+</div>
+
+@code {
+    [Parameter] public string KvkNumber { get; set; } = string.Empty;
+    [Parameter] public string? Vestigingsnummer { get; set; }
+
+    private ElementReference _mapElement;
+    private PublicCompanyPage? _page;
+    private List<VacancyListItem> _vacancies = [];
+    private bool _loading = true;
+    private string? _error;
+    private bool showMapOnMobile;
+    private bool _mapReady;
+    private bool _mapInitScheduled;
+    private Guid? _hoveredId;
+    private readonly uint _highlightShuffleSeed = (uint)Random.Shared.NextInt64();
+    private DotNetObjectReference<CompanyPublicPage>? _dotNetRef;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        _loading = true;
+        _error = null;
+        _page = null;
+        _vacancies = [];
+        _mapReady = false;
+        _mapInitScheduled = false;
+
+        try
+        {
+            var kvk = CompanyPublicPaths.NormalizeKvkNumber(KvkNumber);
+            if (kvk is null)
+            {
+                _error = Culture["BranchPage.NotFound"];
+                return;
+            }
+
+            if (!string.IsNullOrWhiteSpace(Vestigingsnummer))
+            {
+                _page = await Api.GetPublicCompanyByVestigingAsync(kvk, Vestigingsnummer);
+            }
+            else
+            {
+                _page = await Api.GetPublicCompanyByKvkAsync(kvk);
+            }
+
+            if (_page is null || _page.CompanyIds.Count == 0)
+            {
+                return;
+            }
+
+            _vacancies = (await Api.DiscoverVacanciesAsync(
+                originLat: null,
+                originLng: null,
+                transport: "Fiets",
+                maxMinutes: 30,
+                radiusKm: null,
+                companyIds: _page.CompanyIds)).ToList();
+
+            if (_vacancies.Count > 0)
+            {
+                try
+                {
+                    await Api.RecordImpressionsAsync(Js, _vacancies.Select(v => v.Id));
+                }
+                catch
+                {
+                    // Analytics must not block the page.
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            _error = Culture.Format("Discovery.LoadFailed", ex.Message);
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (_loading || _page is null || _mapReady || _mapInitScheduled)
+        {
+            return;
+        }
+
+        _mapInitScheduled = true;
+        try
+        {
+            _dotNetRef ??= DotNetObjectReference.Create(this);
+            var markers = BuildMarkers();
+            var options = new Dictionary<string, object?>
+            {
+                ["dotNetRef"] = _dotNetRef,
+                ["highlightSeed"] = _highlightShuffleSeed
+            };
+            await Js.InvokeVoidAsync("jobMap.init", "branch-job-map", markers, options);
+            _mapReady = true;
+            await Task.Delay(80);
+            await Js.InvokeVoidAsync("jobMap.invalidate");
+            if (_page.CompanyIds.Count == 1)
+            {
+                await Js.InvokeVoidAsync("jobMap.focusCompany", _page.CompanyIds[0].ToString("D"));
+            }
+        }
+        catch (JSDisconnectedException)
+        {
+            _mapInitScheduled = false;
+        }
+        catch
+        {
+            _mapInitScheduled = false;
+        }
+    }
+
+    private List<Dictionary<string, object?>> BuildMarkers() =>
+        _vacancies.Select(v =>
+        {
+            var primaryType = v.WorkTypes.FirstOrDefault() ?? "";
+            var companyHref = !string.IsNullOrWhiteSpace(v.KvkNumber) && !string.IsNullOrWhiteSpace(v.Vestigingsnummer)
+                ? $"/{v.KvkNumber}/{v.Vestigingsnummer}"
+                : null;
+            return new Dictionary<string, object?>
+            {
+                ["id"] = v.Id.ToString(),
+                ["title"] = v.Title,
+                ["company"] = v.CompanyName,
+                ["companyId"] = v.CompanyId.ToString("D"),
+                ["companyHref"] = companyHref,
+                ["offeredBy"] = v.OfferedByLabel,
+                ["address"] = v.CompanyAddress,
+                ["logoUrl"] = v.CompanyLogoUrl,
+                ["imageUrl"] = v.ImageUrl,
+                ["lat"] = v.Latitude,
+                ["lng"] = v.Longitude,
+                ["transport"] = v.RequiredTransport,
+                ["workTypes"] = v.WorkTypes,
+                ["workType"] = primaryType,
+                ["categoryId"] = v.CategoryId?.ToString("D"),
+                ["categoryName"] = v.CategoryName,
+                ["categoryColor"] = v.CategoryColorHex,
+                ["suitableFor65Plus"] = ShowsSuitableFor65Plus(v),
+                ["suitableFor65PlusLabel"] = VacancyCategoryDefaults.SuitableFor65PlusLabel,
+                ["suitableFor65PlusColor"] = VacancyCategoryDefaults.SeniorPlusColorHex,
+                ["highlighted"] = v.IsHighlighted,
+                ["highlightRank"] = v.IsHighlighted ? HighlightShuffleRules.Rank(_highlightShuffleSeed, v.Id) : 0u,
+                ["featuredLabel"] = Culture["Discovery.Featured"],
+                ["exclusivityBadge"] = !v.ExclusivityIsOpen
+                    && string.Equals(v.Kind, "Internship", StringComparison.OrdinalIgnoreCase)
+                    && !string.IsNullOrWhiteSpace(v.ExclusivityName)
+                    ? v.ExclusivityName
+                    : null
+            };
+        }).ToList();
+
+    private void ToggleMobileView() => showMapOnMobile = !showMapOnMobile;
+
+    private async Task OnHover(Guid? id)
+    {
+        _hoveredId = id;
+        if (_mapReady)
+        {
+            try { await Js.InvokeVoidAsync("jobMap.highlight", id?.ToString()); }
+            catch { /* ignore */ }
+        }
+    }
+
+    private async Task OnSelect(Guid id)
+    {
+        _hoveredId = id;
+        if (_mapReady)
+        {
+            try { await Js.InvokeVoidAsync("jobMap.focus", id.ToString()); }
+            catch { /* ignore */ }
+        }
+    }
+
+    [JSInvokable]
+    public async Task OnMapVacancyOpened(string id)
+    {
+        if (!Guid.TryParse(id, out var vacancyId))
+        {
+            return;
+        }
+
+        try
+        {
+            await Api.RecordClickOnceAsync(Js, vacancyId);
+        }
+        catch
+        {
+            // tracking must not break UX
+        }
+    }
+
+    [JSInvokable]
+    public Task OnMapLocateClicked() => Task.CompletedTask;
+
+    private static bool ShowsSuitableFor65Plus(VacancyListItem vacancy)
+        => VacancyCategoryDefaults.MatchesSuitableFor65PlusFilter(vacancy.CategoryId, vacancy.SuitableFor65Plus);
+
+    public async ValueTask DisposeAsync()
+    {
+        _dotNetRef?.Dispose();
+        if (_mapReady)
+        {
+            try { await Js.InvokeVoidAsync("jobMap.dispose"); }
+            catch { /* ignore */ }
+        }
+    }
+}

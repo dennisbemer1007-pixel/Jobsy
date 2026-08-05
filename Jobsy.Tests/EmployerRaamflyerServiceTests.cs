@@ -26,7 +26,7 @@ public class EmployerRaamflyerServiceTests
         Assert.Equal(RaamflyerQrKind.VacancyDetail, target.Kind);
         Assert.Equal(1, target.ActiveVacancyCount);
         Assert.Equal(vacancyId, target.SingleVacancyId);
-        Assert.Contains($"/vestiging/{companyId:D}", target.AbsoluteUrl, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("/12345678/0001", target.AbsoluteUrl, StringComparison.OrdinalIgnoreCase);
     }
 
     [Fact]
@@ -45,7 +45,7 @@ public class EmployerRaamflyerServiceTests
         Assert.Equal(RaamflyerQrKind.MapCompanyCluster, target.Kind);
         Assert.Equal(2, target.ActiveVacancyCount);
         Assert.Null(target.SingleVacancyId);
-        Assert.Contains($"/vestiging/{companyId:D}", target.AbsoluteUrl, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("/12345678/0001", target.AbsoluteUrl, StringComparison.OrdinalIgnoreCase);
     }
 
     [Fact]
@@ -146,6 +146,7 @@ public class EmployerRaamflyerServiceTests
             Name = name,
             Address = "Voorbeeldstraat 1, Naaldwijk",
             KvkNumber = "12345678",
+            KvkEstablishmentId = "12345678_0001",
             Location = new GeoPoint(51.99, 4.21),
             Type = CompanyType.Employer
         });
