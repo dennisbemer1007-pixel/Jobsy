@@ -16,7 +16,8 @@
         <div class="wizard-steps" aria-label="@Culture["Register.Steps"]">
             <span class="@StepClass(1)">@Culture["Register.StepKvk"]</span>
             <span class="@StepClass(2)">@Culture["Register.StepBranch"]</span>
-            <span class="@StepClass(3)">@Culture["Register.StepContact"]</span>
+            <span class="@StepClass(3)">@Culture["Register.StepScope"]</span>
+            <span class="@StepClass(4)">@Culture["Register.StepContact"]</span>
         </div>
 
         @if (!string.IsNullOrEmpty(_error))
@@ -87,24 +88,55 @@
                 </button>
             </div>
         }
-        else if (_step == 3 && _selected?.IsIntermediarySbi == true)
+        else if (_step == 3)
         {
-            <p class="state-message">@Culture["Register.IntermediaryRoleHint"]</p>
-            @if (_selected?.IsInUse == true)
+            @if (_selected?.IsIntermediarySbi == true)
             {
-                <p class="state-message">@Culture["Register.AlreadyRegistered"]</p>
+                <p class="state-message">@Culture["Register.IntermediaryRoleHint"]</p>
+                @if (_selected?.IsInUse == true)
+                {
+                    <p class="state-message">@Culture["Register.AlreadyRegistered"]</p>
+                }
+                <div class="wizard-actions">
+                    <button class="provider-btn" type="button" @onclick="() => _step = 2">@Culture["Common.Back"]</button>
+                    <button class="login-submit" type="button" @onclick="() => _step = 4">@Culture["Common.Next"]</button>
+                </div>
             }
-            <div class="wizard-actions">
-                <button class="provider-btn" type="button" @onclick="() => _step = 2">@Culture["Common.Back"]</button>
-                <button class="login-submit" type="button" @onclick="() => _step = 4">@Culture["Common.Next"]</button>
-            </div>
+            else
+            {
+                <fieldset class="scope-fieldset">
+                    <legend>@Culture["Register.ScopeLegend"]</legend>
+                    <label class="scope-option">
+                        <input type="radio" name="scope" checked="@(_scope == "Organization")"
+                               @onchange="@(() => _scope = "Organization")" />
+                        <span>
+                            <strong>@Culture["Register.ScopeOrg"]</strong>
+                            <span class="muted">@Culture["Register.ScopeOrgHint"]</span>
+                        </span>
+                    </label>
+                    <label class="scope-option">
+                        <input type="radio" name="scope" checked="@(_scope == "BranchOnly")"
+                               @onchange="@(() => _scope = "BranchOnly")" />
+                        <span>
+                            <strong>@Culture["Register.ScopeBranch"]</strong>
+                            <span class="muted">@Culture["Register.ScopeBranchHint"]</span>
+                        </span>
+                    </label>
+                </fieldset>
+
+                @if (_selected?.IsInUse == true)
+                {
+                    <p class="state-message">@Culture["Register.AlreadyRegistered"]</p>
+                }
+
+                <div class="wizard-actions">
+                    <button class="provider-btn" type="button" @onclick="() => _step = 2">@Culture["Common.Back"]</button>
+                    <button class="login-submit" type="button" @onclick="() => _step = 4">@Culture["Common.Next"]</button>
+                </div>
+            }
         }
         else if (_step == 4)
         {
-            @if (_selected?.IsInUse == true && _selected?.IsIntermediarySbi != true)
-            {
-                <p class="state-message">@Culture["Register.AlreadyRegistered"]</p>
-            }
             <form class="login-form" @onsubmit="SubmitAsync" @onsubmit:preventDefault>
                 <label>
                     @Culture["Common.Name"]
@@ -132,7 +164,7 @@
                     <input @bind="_salesManagerCode" maxlength="32" placeholder="SM-XXXXXX" />
                 </label>
                 <p class="muted">@Culture["Register.SalesCodeHint"]</p>
-                <p class="muted">@Culture.Format("Register.ChosenCompany", _selected?.Name ?? "")</p>
+                <p class="muted">@Culture.Format("Register.Chosen", _selected?.Name ?? "", ScopePreviewLabel())</p>
                 <label class="profile-toggle legal-consent">
                     <input type="checkbox" @bind="_acceptedTerms" required />
                     <span>
@@ -143,7 +175,7 @@
                     </span>
                 </label>
                 <div class="wizard-actions">
-                    <button class="provider-btn" type="button" @onclick="BackFromContact">@Culture["Common.Back"]</button>
+                    <button class="provider-btn" type="button" @onclick="() => _step = 3">@Culture["Common.Back"]</button>
                     <button class="login-submit" type="submit" disabled="@(_busy || !_acceptedTerms)">@Culture["Register.Submit"]</button>
                 </div>
             </form>
@@ -180,6 +212,7 @@
     private string? _message;
     private string? _activationUrl;
     private string _kvkNumber = "12345678";
+    private string _scope = "Organization";
     private string _contactName = "";
     private string _contactEmail = "";
     private string _contactPhone = "";
@@ -210,18 +243,7 @@
     public void Dispose()
         => Culture.Changed -= OnCultureChanged;
 
-    private string StepClass(int n)
-    {
-        // Visual steps: 1=KVK, 2=vestiging, 3=contact (internal 3=intermediair-hint, 4=contact form).
-        var active = n switch
-        {
-            1 => _step == 1,
-            2 => _step == 2,
-            3 => _step is 3 or 4,
-            _ => false
-        };
-        return active ? "wizard-step is-active" : "wizard-step";
-    }
+    private string StepClass(int n) => _step == n ? "wizard-step is-active" : "wizard-step";
 
     private async Task LookupAsync()
     {
@@ -293,7 +315,7 @@
         };
         _pendingKvk = true;
         _error = null;
-        _step = 4; // Non-intermediary pending-KVK always Bedrijfsmanager; SBI follows after retry.
+        _step = 3;
     }
 
     private void SelectEstablishment(KvkEstablishmentItem e) => _selected = e;
@@ -305,12 +327,26 @@
             return;
         }
 
-        // Intermediair: short hint step. Everyone else: Bedrijfsmanager, skip scope.
-        _step = _selected.IsIntermediarySbi ? 3 : 4;
+        if (_selected.IsIntermediarySbi)
+        {
+            // Server forces BranchOnly for Intermediair (single company, no employer org tree).
+            _scope = "BranchOnly";
+        }
+
+        _step = 3;
     }
 
-    private void BackFromContact()
-        => _step = _selected?.IsIntermediarySbi == true ? 3 : 2;
+    private string ScopePreviewLabel()
+    {
+        if (_selected?.IsIntermediarySbi == true)
+        {
+            return Culture["Register.ScopeIntermediary"];
+        }
+
+        return _scope == "Organization"
+            ? Culture["Register.ScopeOrg"]
+            : Culture["Register.ScopeBranch"];
+    }
 
     private async Task SubmitAsync()
     {
@@ -345,8 +381,7 @@
             var result = await Api.SubmitRegistrationAsync(
                 _selected.KvkNumber,
                 _selected.KvkEstablishmentId,
-                // Server forces Organization for employers and BranchOnly for intermediair.
-                _selected.IsIntermediarySbi ? "BranchOnly" : "Organization",
+                _selected.IsIntermediarySbi ? "BranchOnly" : _scope,
                 _contactName.Trim(),
                 _contactEmail.Trim(),
                 string.IsNullOrWhiteSpace(_contactPhone) ? null : _contactPhone.Trim(),

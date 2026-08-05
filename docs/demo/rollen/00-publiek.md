@@ -15,7 +15,7 @@ Zonder login kun je vacatures bekijken. Solliciteren, liken en delen vragen om e
 | Banenkaart | `/` | Zoeken + kaart |
 | Vacaturedetail | `/vacancies/{id}` | Inhoud, solliciteren (na login) |
 | Inloggen | `/login` | Entra / Google / demo e-mail |
-| Registreren | `/register` | Bedrijf via KVK-stub + wachtwoord; SBI 78 → Intermediair, anders altijd Bedrijfsmanager (org; kan filiaalmanagers uitnodigen) |
+| Registreren | `/register` | Bedrijf via KVK-stub + wachtwoord; SBI 78 → Intermediair; anders Bedrijfsmanager (Organization = org, BranchOnly = vestiging-als-bedrijf; kan vestigingsmanagers uitnodigen) |
 
 ### Printscreens
 

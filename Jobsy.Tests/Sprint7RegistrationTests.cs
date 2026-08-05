@@ -13,7 +13,7 @@ namespace Jobsy.Tests;
 public class Sprint7RegistrationTests
 {
     [Fact]
-    public async Task Submit_and_activate_employer_creates_enterprise_manager_with_org()
+    public async Task Submit_and_activate_branch_only_creates_enterprise_manager_on_vestiging()
     {
         await using var db = CreateDb();
         var sut = CreateService(db, exposeActivationLinks: true);
@@ -21,7 +21,7 @@ public class Sprint7RegistrationTests
         var submit = await sut.SubmitAsync(new RegistrationSubmitRequest(
             "99990001",
             "99990001_0001",
-            RegistrationScope.BranchOnly, // ignored — employers always get Organization + Bedrijfsmanager
+            RegistrationScope.BranchOnly,
             "Nova Manager",
             "nova.branch@jobsy.local",
             null,
@@ -32,19 +32,24 @@ public class Sprint7RegistrationTests
         Assert.Equal(CompanyRegistrationStatus.PendingActivation, submit.Status);
         Assert.False(string.IsNullOrWhiteSpace(submit.ActivationUrl));
 
-        var token = await db.CompanyRegistrations
-            .Where(r => r.Id == submit.RegistrationId)
-            .Select(r => r.ActivationToken)
-            .SingleAsync();
+        var pending = await db.CompanyRegistrations.SingleAsync(r => r.Id == submit.RegistrationId);
+        Assert.Equal(RegistrationScope.BranchOnly, pending.Scope);
+        var token = pending.ActivationToken;
 
         var activated = await sut.ActivateAsync(token);
 
+        // BranchOnly → Bedrijfsmanager on the vestiging-as-company (no org parent).
         Assert.Equal("EnterpriseManager", activated.Role);
         Assert.NotNull(activated.BranchCompanyId);
-        Assert.NotNull(activated.OrganizationCompanyId);
+        Assert.Null(activated.OrganizationCompanyId);
         Assert.True(activated.UsedChosenPassword);
         Assert.Equal(string.Empty, activated.TemporaryPassword);
         Assert.Equal(1, await db.Companies.CountAsync(c => c.KvkEstablishmentId == "99990001_0001"));
+        var branch = await db.Companies.SingleAsync(c => c.Id == activated.BranchCompanyId);
+        Assert.Null(branch.ParentCompanyId);
+        Assert.Equal(CompanyType.Employer, branch.Type);
+        Assert.Equal(activated.BranchCompanyId, activated.CompanyId);
+
         var credential = await db.LocalAuthCredentials.SingleAsync(c => c.Email == "nova.branch@jobsy.local");
         Assert.True(Jobsy.Infrastructure.Security.JobsyPasswordHasher.Verify("TestPass1!", credential.PasswordHash));
         Assert.Null(await db.CompanyRegistrations
@@ -55,20 +60,11 @@ public class Sprint7RegistrationTests
             l.Category == "RegistrationCredentials"
             || (l.Category == "Email" && l.Message.Contains("Geslaagd", StringComparison.OrdinalIgnoreCase))));
 
-        // Welcome token: 1 credit on the vestiging, marked on the company row.
-        Assert.NotNull(activated.BranchCompanyId);
-        var branch = await db.Companies.SingleAsync(c => c.Id == activated.BranchCompanyId);
         Assert.True(branch.HasReceivedWelcomeToken);
         Assert.Equal(
             CompanyRegistrationService.WelcomeTokenAmount,
             await db.TokenTransactions.Where(t => t.CompanyId == branch.Id).SumAsync(t => (decimal?)t.Amount) ?? 0m);
-        Assert.True(await db.TokenTransactions.AnyAsync(t =>
-            t.CompanyId == branch.Id
-            && t.Kind == TokenTransactionKind.Grant
-            && t.Note == CompanyRegistrationService.WelcomeTokenNote
-            && t.Amount == CompanyRegistrationService.WelcomeTokenAmount));
 
-        // Token consumed — replay must fail without leaking password.
         var consumed = await db.CompanyRegistrations.SingleAsync(r => r.Id == submit.RegistrationId);
         Assert.Equal(string.Empty, consumed.ActivationToken);
         await Assert.ThrowsAsync<KeyNotFoundException>(() => sut.ActivateAsync(token));

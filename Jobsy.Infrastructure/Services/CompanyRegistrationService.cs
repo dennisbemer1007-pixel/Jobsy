@@ -165,8 +165,9 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
         }
 
         // Intermediairs (SBI 78*) provision a single Intermediary company (no employer org tree).
-        // All other employers register as Bedrijfsmanager with organization scope (can invite filiaalmanagers).
-        var scope = isIntermediarySbi ? RegistrationScope.BranchOnly : RegistrationScope.Organization;
+        // Employers keep the chosen scope: Organization = org tree; BranchOnly = vestiging-as-company.
+        // Both employer scopes get Bedrijfsmanager (can invite vestigingsmanagers).
+        var scope = isIntermediarySbi ? RegistrationScope.BranchOnly : request.Scope;
 
         var registration = new CompanyRegistration
         {
@@ -834,7 +835,7 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
             return UserRole.Intermediary;
         }
 
-        // Non-SBI 78 employers always become Bedrijfsmanager (can invite filiaalmanagers).
+        // Non-SBI 78: always Bedrijfsmanager (Organization = org tree; BranchOnly = vestiging-as-company).
         return UserRole.EnterpriseManager;
     }
 

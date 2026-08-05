@@ -79,6 +79,7 @@ public class CoreFunctionalFlowE2ETests
 
         var activated = await registration.ActivateAsync(activationToken);
         Assert.Equal("EnterpriseManager", activated.Role);
+        Assert.Null(activated.OrganizationCompanyId);
         Assert.NotNull(activated.BranchCompanyId);
 
         var company = await db.Companies.SingleAsync(c => c.Id == activated.BranchCompanyId);
