@@ -57,14 +57,18 @@ public static class IntermediaryVacancyRules
             ? $"Aangeboden door {intermediary.Name}"
             : null;
 
+        // Pin always follows the vacancy workplace when coordinates exist.
+        var workplaceLat = vacancy.Location?.Latitude;
+        var workplaceLng = vacancy.Location?.Longitude;
+
         if (intermediary is not null && !vacancy.ShowClientAddressOnMap)
         {
             return (
                 intermediary.Name,
                 intermediary.Address,
                 intermediary.LogoUrl,
-                intermediary.Location?.Latitude ?? endClient?.Location?.Latitude ?? 0,
-                intermediary.Location?.Longitude ?? endClient?.Location?.Longitude ?? 0,
+                workplaceLat ?? intermediary.Location?.Latitude ?? endClient?.Location?.Latitude ?? 0,
+                workplaceLng ?? intermediary.Location?.Longitude ?? endClient?.Location?.Longitude ?? 0,
                 offeredBy);
         }
 
@@ -72,8 +76,8 @@ public static class IntermediaryVacancyRules
             endClient?.Name ?? "Onbekend bedrijf",
             endClient?.Address ?? string.Empty,
             endClient?.LogoUrl,
-            vacancy.Location?.Latitude ?? endClient?.Location?.Latitude ?? 0,
-            vacancy.Location?.Longitude ?? endClient?.Location?.Longitude ?? 0,
+            workplaceLat ?? endClient?.Location?.Latitude ?? 0,
+            workplaceLng ?? endClient?.Location?.Longitude ?? 0,
             offeredBy);
     }
 

@@ -21,12 +21,12 @@ public class SuitableFor65PlusRulesTests
     }
 
     [Fact]
-    public void Unflagged_regular_and_other_categories_do_not_match()
+    public void Unflagged_regular_does_not_match_but_flag_does_for_any_category()
     {
         Assert.False(VacancyCategoryDefaults.MatchesSuitableFor65PlusFilter(
             VacancyCategoryDefaults.RegulierId,
             suitableFor65Plus: false));
-        Assert.False(VacancyCategoryDefaults.MatchesSuitableFor65PlusFilter(
+        Assert.True(VacancyCategoryDefaults.MatchesSuitableFor65PlusFilter(
             VacancyCategoryDefaults.InternshipId,
             suitableFor65Plus: true));
         Assert.False(VacancyCategoryDefaults.MatchesSuitableFor65PlusFilter(
@@ -47,16 +47,18 @@ public class SuitableFor65PlusRulesTests
     }
 
     [Fact]
-    public void Selecting_65plus_category_includes_flagged_regulier_vacancies()
+    public void Selecting_65plus_category_includes_flagged_vacancies()
     {
         var filter = new HashSet<Guid> { VacancyCategoryDefaults.SeniorLightId };
         Assert.True(VacancyCategoryDefaults.MatchesSelectedCategories(
             VacancyCategoryDefaults.SeniorLightId, false, filter));
         Assert.True(VacancyCategoryDefaults.MatchesSelectedCategories(
             VacancyCategoryDefaults.RegulierId, true, filter));
+        Assert.True(VacancyCategoryDefaults.MatchesSelectedCategories(
+            VacancyCategoryDefaults.UitzendbureauId, true, filter));
         Assert.False(VacancyCategoryDefaults.MatchesSelectedCategories(
             VacancyCategoryDefaults.RegulierId, false, filter));
         Assert.False(VacancyCategoryDefaults.MatchesSelectedCategories(
-            VacancyCategoryDefaults.InternshipId, true, filter));
+            VacancyCategoryDefaults.InternshipId, false, filter));
     }
 }

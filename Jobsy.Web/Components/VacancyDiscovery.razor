@@ -431,10 +431,6 @@
                             }
                             <div class="job-card__overlay">
                                 <h2>@vacancy.Title</h2>
-                                @if (ShowsSuitableFor65Plus(vacancy))
-                                {
-                                    <p class="suitable65-inline">@VacancyCategoryDefaults.SuitableFor65PlusLabel</p>
-                                }
                                 <p class="job-card__travel">
                                     <LobsyMark Compact="true" />
                                     <span>@travelText · @UiLabels.TransportVerb(Culture, _selectedTransport)</span>
@@ -885,13 +881,12 @@
     }
 
     /// <summary>
-    /// Work-type / wage filters that should still empty the list when no matches exist.
-    /// Default proximity + a far stored origin falls back to the full catalog.
+    /// Default travel/origin can wipe the catalog when the stored home is far away.
+    /// Fall back to the full filtered set (keeping category / work-type / age filters)
+    /// only while proximity controls are still at their defaults.
     /// </summary>
     private bool ShouldFallbackFromEmptyProximity =>
         _origin is not null
-        && _selectedWorkTypes.Count == 0
-        && _selectedCategoryIds.Count == 0
         && string.IsNullOrWhiteSpace(_searchQuery)
         && _minHourlyWage is null
         && _maxHourlyWage is null
@@ -1504,7 +1499,9 @@
                 ["workType"] = primaryType,
                 ["categoryId"] = v.CategoryId?.ToString("D"),
                 ["categoryName"] = v.CategoryName,
-                ["categoryColor"] = v.CategoryColorHex,
+                ["categoryColor"] = ShowsSuitableFor65Plus(v)
+                    ? VacancyCategoryDefaults.SeniorPlusColorHex
+                    : v.CategoryColorHex,
                 ["suitableFor65Plus"] = ShowsSuitableFor65Plus(v),
                 ["suitableFor65PlusLabel"] = VacancyCategoryDefaults.SuitableFor65PlusLabel,
                 ["suitableFor65PlusColor"] = VacancyCategoryDefaults.SeniorPlusColorHex,

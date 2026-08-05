@@ -77,7 +77,8 @@
             <div class="detail-card__top">
                 <div>
                     <h1>@_vacancy.Title</h1>
-                    @if (!string.IsNullOrWhiteSpace(_vacancy.CategoryName))
+                    @if (!string.IsNullOrWhiteSpace(_vacancy.CategoryName)
+                         && !VacancyCategoryDefaults.IsSeniorLightCategory(_vacancy.CategoryId))
                     {
                         <p class="vacancy-detail-category">
                             <span class="vacancy-category-swatch" style="--category-color:@(_vacancy.CategoryColorHex ?? "#F54A1B")" aria-hidden="true"></span>
@@ -112,7 +113,7 @@
                         <p class="muted" style="margin:0.25rem 0 0">@_vacancy.OfferedByLabel</p>
                     }
                 </div>
-                @if (_vacancy.WageVisible && _vacancy.WageByAge is { Count: > 0 })
+                @if (_vacancy.WageVisible && _ageYears is null && _vacancy.WageByAge is { Count: > 0 })
                 {
                     <aside class="detail-wage-panel" aria-label="@Culture["Vacancy.WagesByAge"]">
                         <p class="detail-wage-panel__title">@Culture["Vacancy.Wages"]</p>
@@ -288,7 +289,7 @@
             {
                 <section class="vacancy-location" aria-label="@Culture["Vacancy.LocationMap"]">
                     <div class="vacancy-location__map-wrap">
-                        <div id="vacancy-detail-map" class="vacancy-location__map vacancy-detail-map job-map"></div>
+                        <div id="vacancy-detail-map" class="vacancy-location__map vacancy-detail-map"></div>
                     </div>
                     <div class="vacancy-location__actions">
                         <label class="vacancy-location__transport">
@@ -854,11 +855,11 @@
         Culture.Changed += OnCultureChanged;
     }
 
-    protected override async Task OnParametersSetAsync()
+    protected override Task OnParametersSetAsync()
     {
         if (_loadedVacancyId == Id)
         {
-            return;
+            return Task.CompletedTask;
         }
 
         ResetApplyUiState();
@@ -867,9 +868,15 @@
         _liked = false;
         _clickRecorded = false;
         _vacancy = null;
-        await LoadAsync(origin: null);
-        await LoadLikeAsync();
+        _ageYears = null;
+        _mapReady = false;
+        _mappedVacancyId = null;
+        _pendingInitialHydration = true;
+        // Age + origin are resolved in OnAfterRender (JS + profile) before the first wage-aware load.
+        return Task.CompletedTask;
     }
+
+    private bool _pendingInitialHydration;
 
     private void ResetApplyUiState()
     {
@@ -919,31 +926,59 @@
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        if (firstRender && _vacancy is not null && !_clickRecorded)
+        if (_pendingInitialHydration)
         {
-            _clickRecorded = true;
+            _pendingInitialHydration = false;
             try
             {
-                var dict = await Js.InvokeAsync<Dictionary<string, double>?>("jobsyGeo.getStoredOrigin");
                 OriginPoint? origin = null;
-                if (dict is not null && dict.TryGetValue("lat", out var lat) && dict.TryGetValue("lng", out var lng))
-                {
-                    origin = new OriginPoint { Latitude = lat, Longitude = lng };
-                }
-
                 try
                 {
-                    _ageYears = await Js.InvokeAsync<int?>("jobsyGeo.getStoredAge");
+                    var dict = await Js.InvokeAsync<Dictionary<string, double>?>("jobsyGeo.getStoredOrigin");
+                    if (dict is not null && dict.TryGetValue("lat", out var lat) && dict.TryGetValue("lng", out var lng))
+                    {
+                        origin = new OriginPoint { Latitude = lat, Longitude = lng };
+                    }
                 }
                 catch
                 {
-                    _ageYears = null;
+                    // optional
+                }
+
+                _ageYears = await ResolveAgeYearsAsync();
+
+                // Prefer profile geboortedatum over session filter when the candidate is logged in.
+                try
+                {
+                    var auth = await AuthState.GetAuthenticationStateAsync();
+                    if (auth.User.Identity?.IsAuthenticated == true
+                        && RoleClaimMatching.HasRole(auth.User, JobsyRoles.Candidate))
+                    {
+                        var profile = await SafeProfileAsync();
+                        if (profile?.DateOfBirth is DateOnly dob
+                            && AgeRules.AgeYearsFromDateOfBirth(dob) is int fromDob)
+                        {
+                            _dobInput = dob;
+                            _ageYears = AgeRules.ClampFilterAge(fromDob);
+                            try { await Js.InvokeVoidAsync("jobsyGeo.setStoredAge", _ageYears.Value); }
+                            catch { /* ignore */ }
+                        }
+                    }
+                }
+                catch
+                {
+                    // profile optional
                 }
 
                 await LoadAsync(origin);
+                await LoadLikeAsync();
                 await InvokeAsync(StateHasChanged);
 
-                await Api.RecordClickOnceAsync(Js, Id);
+                if (!_clickRecorded)
+                {
+                    _clickRecorded = true;
+                    await Api.RecordClickOnceAsync(Js, Id);
+                }
 
                 var uri = Navigation.ToAbsoluteUri(Navigation.Uri);
                 if (uri.Fragment.Equals("#apply", StringComparison.OrdinalIgnoreCase))
@@ -957,11 +992,34 @@
             }
             catch
             {
-                // non-fatal
+                _loading = false;
+                await InvokeAsync(StateHasChanged);
             }
         }
 
         await EnsureDetailMapAsync();
+    }
+
+    /// <summary>
+    /// Age for wages: stored banenkaart filter age, else none (“Alle” → full table).
+    /// Profile DOB is applied after LoadLike when available.
+    /// </summary>
+    private async Task<int?> ResolveAgeYearsAsync()
+    {
+        try
+        {
+            var stored = await Js.InvokeAsync<int?>("jobsyGeo.getStoredAge");
+            if (stored is int age)
+            {
+                return AgeRules.ClampFilterAge(age);
+            }
+        }
+        catch
+        {
+            // ignore
+        }
+
+        return null;
     }
 
     private async Task EnsureDetailMapAsync()
@@ -986,13 +1044,11 @@
 
         try
         {
-            // Pass invariant strings so JS never misreads culture-formatted decimals.
-            var lat = _vacancy!.Latitude.ToString(System.Globalization.CultureInfo.InvariantCulture);
-            var lng = _vacancy.Longitude.ToString(System.Globalization.CultureInfo.InvariantCulture);
+            // Pass numbers (JSON) so Leaflet gets exact coords without culture parsing.
             await Js.InvokeVoidAsync("vacancyDetailMap.init", "vacancy-detail-map", new Dictionary<string, object?>
             {
-                ["lat"] = lat,
-                ["lng"] = lng,
+                ["lat"] = _vacancy!.Latitude,
+                ["lng"] = _vacancy.Longitude,
                 ["title"] = _vacancy.Title,
                 ["company"] = _vacancy.CompanyName,
                 ["offeredBy"] = _vacancy.OfferedByLabel,

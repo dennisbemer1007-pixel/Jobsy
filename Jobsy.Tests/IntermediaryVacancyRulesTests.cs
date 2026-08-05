@@ -60,8 +60,47 @@ public class IntermediaryVacancyRulesTests
         var display = IntermediaryVacancyRules.ResolvePublicDisplay(vacancy, client, intermediary);
         Assert.Equal("Uitzendbureau", display.DisplayName);
         Assert.Equal("Bureauweg 9", display.DisplayAddress);
-        Assert.Equal(52.0, display.Latitude);
+        // Pin stays on the vacancy workplace even when the name/address are masked.
+        Assert.Equal(52.1, display.Latitude);
+        Assert.Equal(4.3, display.Longitude);
         Assert.Equal("Aangeboden door Uitzendbureau", display.OfferedByLabel);
+    }
+
+    [Fact]
+    public void ResolvePublicDisplay_masked_uses_vacancy_coords_over_intermediary_hq()
+    {
+        var client = new Company
+        {
+            Id = Guid.NewGuid(),
+            Name = "Opdrachtgever BV",
+            Address = "Klantstraat 1",
+            Location = new GeoPoint(52.1, 4.3)
+        };
+        var intermediary = new Company
+        {
+            Id = Guid.NewGuid(),
+            Name = "Uitzendbureau",
+            Address = "Bureauweg 9",
+            Location = new GeoPoint(52.0, 4.2),
+            Type = CompanyType.Intermediary
+        };
+        var vacancy = new Vacancy
+        {
+            Id = Guid.NewGuid(),
+            CompanyId = client.Id,
+            Company = client,
+            IntermediaryCompanyId = intermediary.Id,
+            IntermediaryCompany = intermediary,
+            ShowClientAddressOnMap = false,
+            Location = new GeoPoint(51.99, 4.25),
+            Title = "t",
+            Description = "d"
+        };
+
+        var display = IntermediaryVacancyRules.ResolvePublicDisplay(vacancy, client, intermediary);
+        Assert.Equal("Uitzendbureau", display.DisplayName);
+        Assert.Equal(51.99, display.Latitude);
+        Assert.Equal(4.25, display.Longitude);
     }
 
     [Fact]

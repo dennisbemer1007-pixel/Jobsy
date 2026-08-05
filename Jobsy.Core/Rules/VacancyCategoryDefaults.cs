@@ -80,11 +80,10 @@ public static class VacancyCategoryDefaults
 
     /// <summary>
     /// Matches the unified “Geschikt voor 65+” vacancy type:
-    /// dedicated 65+ category, or a regular vacancy with the suitability flag.
+    /// dedicated 65+ category, or any vacancy with the suitability flag.
     /// </summary>
     public static bool MatchesSuitableFor65PlusFilter(Guid? categoryId, bool suitableFor65Plus)
-        => IsSeniorLightCategory(categoryId)
-           || (suitableFor65Plus && (categoryId is null || categoryId == RegulierId));
+        => IsSeniorLightCategory(categoryId) || suitableFor65Plus;
 
     /// <summary>
     /// Discovery category multi-select. Selecting the 65+ type also includes

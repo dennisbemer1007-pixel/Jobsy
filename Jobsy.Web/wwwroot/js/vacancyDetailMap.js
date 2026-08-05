@@ -12,13 +12,14 @@ window.vacancyDetailMap = (function () {
     };
 
     function createLobsyIcon() {
+        // Square lobster art; anchor near the feet so the pin sits on the lat/lng.
         return L.divIcon({
             className: "vacancy-detail-marker",
             html:
                 "<img class=\"vacancy-detail-marker__img\" src=\"/images/brand/lobsy.png?v=20260731-eyes\" alt=\"\" width=\"48\" height=\"48\" />",
-            iconSize: [48, 52],
-            iconAnchor: [24, 50],
-            popupAnchor: [0, -44]
+            iconSize: [48, 48],
+            iconAnchor: [24, 44],
+            popupAnchor: [0, -40]
         });
     }
 
@@ -102,11 +103,14 @@ window.vacancyDetailMap = (function () {
             );
         }
 
-        map.setView([useLat, useLng], 15);
+        map.setView([useLat, useLng], 15, { animate: false });
+        if (marker) {
+            marker.setLatLng([useLat, useLng]);
+        }
         invalidate();
         recenter();
 
-        [50, 200, 400, 800, 1600].forEach(function (ms) {
+        [50, 150, 300, 600, 1200].forEach(function (ms) {
             setTimeout(function () {
                 invalidate();
                 recenter();
