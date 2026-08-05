@@ -1522,6 +1522,124 @@ a {
     position: relative;
 }
 
+/* Vestiging / ondernemer public page: list-first with a smaller map. */
+.jobsy-discovery--branch {
+    grid-template-columns: minmax(320px, 58%) minmax(240px, 42%);
+    grid-template-rows: auto 1fr;
+}
+
+.jobsy-discovery--branch .jobsy-chrome--branch {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    grid-column: 1 / -1;
+    padding: 0.75rem 1rem 0.5rem;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface);
+}
+
+@media (min-width: 769px) {
+    .jobsy-discovery--branch .jobsy-chrome__header,
+    .jobsy-discovery--branch .jobsy-chrome__actions {
+        display: none;
+    }
+
+    .jobsy-discovery--branch .jobsy-chrome--branch {
+        padding-top: 0.35rem;
+    }
+}
+
+.branch-page__intro {
+    display: flex;
+    flex-direction: column;
+    gap: 0.55rem;
+}
+
+.branch-page__identity {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.85rem;
+}
+
+.branch-page__logo {
+    width: 3rem;
+    height: 3rem;
+    object-fit: contain;
+    border-radius: 0.55rem;
+    background: #fff;
+    border: 1px solid var(--border);
+    flex-shrink: 0;
+}
+
+.branch-page__title {
+    margin: 0;
+    font-size: 1.35rem;
+    line-height: 1.25;
+    font-weight: 700;
+    color: var(--text);
+}
+
+.branch-page__address,
+.branch-page__meta {
+    margin: 0.2rem 0 0;
+    color: var(--muted);
+    font-size: 0.92rem;
+}
+
+.branch-page__branches {
+    list-style: none;
+    margin: 0 0 1rem;
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid var(--border);
+}
+
+.branch-page__branches ul {
+    list-style: none;
+    margin: 0.35rem 0 0;
+    padding: 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.45rem 0.85rem;
+}
+
+.branch-page__branches-title {
+    margin: 0;
+    font-size: 0.8rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--muted);
+}
+
+.branch-page__branches a {
+    color: var(--secondary);
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.branch-page__branches a:hover {
+    text-decoration: underline;
+}
+
+.map-pane--branch {
+    min-height: 0;
+}
+
+.jobsy-discovery--branch .map-pane--branch .map-stage {
+    min-height: 220px;
+}
+
+.detail-card .company-link {
+    color: inherit;
+    font-weight: 700;
+    text-decoration: none;
+}
+
+.detail-card .company-link:hover {
+    color: var(--secondary);
+    text-decoration: underline;
+}
+
 .jobsy-chrome {
     display: none;
 }

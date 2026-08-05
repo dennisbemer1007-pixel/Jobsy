@@ -36,9 +36,20 @@ public sealed class EmployerFlyersController : ControllerBase
         try
         {
             var target = await _flyers.ResolveBranchQrTargetAsync(companyId, cancellationToken);
-            // Never expose vacancy IDs on this anonymous probe surface; the map deep-link
-            // auto-opens the single vacancy (or cluster) after load.
-            var redirectPath = $"/?company={companyId:D}";
+            // Prefer the stable public employer URL from the QR target (KVK path when known).
+            var absolute = target.AbsoluteUrl ?? string.Empty;
+            string redirectPath;
+            if (Uri.TryCreate(absolute, UriKind.Absolute, out var uri)
+                && !string.IsNullOrWhiteSpace(uri.AbsolutePath)
+                && uri.AbsolutePath != "/")
+            {
+                redirectPath = uri.PathAndQuery;
+            }
+            else
+            {
+                redirectPath = $"/?company={companyId:D}";
+            }
+
             return Ok(new BranchFlyerRouteDto(redirectPath));
         }
         catch (KeyNotFoundException)

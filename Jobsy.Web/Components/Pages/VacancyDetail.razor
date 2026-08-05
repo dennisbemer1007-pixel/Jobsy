@@ -96,7 +96,16 @@
                     {
                         <p class="job-card__badge job-card__badge--soft" style="display:inline-block;margin:0.35rem 0 0">@_vacancy.ExclusivityName</p>
                     }
-                    <p class="company">@(string.IsNullOrWhiteSpace(_vacancy.OfferedByLabel) ? _vacancy.CompanyName : _vacancy.OfferedByLabel)</p>
+                    <p class="company">
+                        @if (!string.IsNullOrWhiteSpace(_vacancy.KvkNumber) && !string.IsNullOrWhiteSpace(_vacancy.Vestigingsnummer))
+                        {
+                            <a class="company-link" href="@($"/{_vacancy.KvkNumber}/{_vacancy.Vestigingsnummer}")">@_vacancy.CompanyName</a>
+                        }
+                        else
+                        {
+                            @_vacancy.CompanyName
+                        }
+                    </p>
                     <p class="address">@_vacancy.CompanyAddress</p>
                     @if (!string.IsNullOrWhiteSpace(_vacancy.OfferedByLabel))
                     {

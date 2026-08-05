@@ -1504,6 +1504,9 @@
                 ["title"] = v.Title,
                 ["company"] = v.CompanyName,
                 ["companyId"] = v.CompanyId.ToString("D"),
+                ["companyHref"] = !string.IsNullOrWhiteSpace(v.KvkNumber) && !string.IsNullOrWhiteSpace(v.Vestigingsnummer)
+                    ? $"/{v.KvkNumber}/{v.Vestigingsnummer}"
+                    : null,
                 ["offeredBy"] = v.OfferedByLabel,
                 ["address"] = v.CompanyAddress,
                 ["logoUrl"] = v.CompanyLogoUrl,

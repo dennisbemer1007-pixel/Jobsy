@@ -3,6 +3,7 @@ using Jobsy.Core;
 using Jobsy.Core.Entities;
 using Jobsy.Core.Enums;
 using Jobsy.Core.Interfaces;
+using Jobsy.Core.Rules;
 using Jobsy.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using QRCoder;
@@ -48,12 +49,9 @@ public sealed class EmployerRaamflyerService : IEmployerRaamflyerService
         Guid companyId,
         CancellationToken cancellationToken = default)
     {
-        var exists = await _db.Companies.AsNoTracking()
-            .AnyAsync(c => c.Id == companyId, cancellationToken);
-        if (!exists)
-        {
-            throw new KeyNotFoundException("Vestiging niet gevonden.");
-        }
+        var company = await _db.Companies.AsNoTracking()
+            .FirstOrDefaultAsync(c => c.Id == companyId, cancellationToken)
+            ?? throw new KeyNotFoundException("Vestiging niet gevonden.");
 
         var baseUrl = await GetBaseUrlAsync(cancellationToken);
         var today = DateOnly.FromDateTime(DateTime.UtcNow);
@@ -66,7 +64,10 @@ public sealed class EmployerRaamflyerService : IEmployerRaamflyerService
             .Select(v => v.Id)
             .ToListAsync(cancellationToken);
 
-        var posterUrl = $"{baseUrl}/vestiging/{companyId:D}";
+        var publicPath = CompanyPublicPaths.TryBuildPath(company.KvkNumber, company.KvkEstablishmentId);
+        var posterUrl = publicPath is not null
+            ? $"{baseUrl.TrimEnd('/')}{publicPath}"
+            : $"{baseUrl.TrimEnd('/')}/vestiging/{companyId:D}";
         var shortUrl = ShortenDisplay(posterUrl, baseUrl);
 
         if (activeIds.Count == 1)

@@ -54,6 +54,10 @@ public class VacancyListItem
     public bool CategoryUseTierPushBomPricing { get; set; } = true;
     public Dictionary<string, string> CategoryFields { get; set; } = new(StringComparer.OrdinalIgnoreCase);
     public bool SuitableFor65Plus { get; set; }
+    /// <summary>Public page path segment (8-digit KvK) when known.</summary>
+    public string? KvkNumber { get; set; }
+    /// <summary>Public page path segment (vestigingsnummer) when known.</summary>
+    public string? Vestigingsnummer { get; set; }
     public string? RequiredDrivingLicense { get; set; }
     public string? RequiredEducation { get; set; }
     public int? MinimumEmployers { get; set; }

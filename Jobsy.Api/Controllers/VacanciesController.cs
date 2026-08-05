@@ -100,6 +100,7 @@ public class VacanciesController : ControllerBase
         [FromQuery] string? q = null,
         [FromQuery] Guid[]? categoryId = null,
         [FromQuery] bool? suitableFor65Plus = null,
+        [FromQuery] Guid[]? companyId = null,
         CancellationToken cancellationToken = default)
     {
         maxMinutes = Math.Clamp(maxMinutes, 5, 90);
@@ -124,6 +125,15 @@ public class VacanciesController : ControllerBase
         }
 
         var vacancies = await LoadActiveVacanciesAsync(origin, reachKm, cancellationToken);
+
+        var companyFilter = companyId?
+            .Where(id => id != Guid.Empty)
+            .Distinct()
+            .ToHashSet();
+        if (companyFilter is { Count: > 0 })
+        {
+            vacancies = vacancies.Where(v => companyFilter.Contains(v.CompanyId)).ToList();
+        }
 
         var categoryFilter = categoryId?
             .Where(id => id != Guid.Empty)
@@ -1379,7 +1389,11 @@ public class VacanciesController : ControllerBase
                 && (v.Category is null
                     || (v.Category.PushBomAvailable && !v.Category.IsAlwaysFree && v.Category.PushBomCostTokens is null)),
             includeCategoryInternals ? DeserializeCategoryFields(v.CategoryFieldsJson) : null,
-            v.SuitableFor65Plus);
+            v.SuitableFor65Plus,
+            CompanyPublicPaths.NormalizeKvkNumber(v.Company?.KvkNumber),
+            CompanyPublicPaths.TryParseVestigingsnummer(
+                v.Company?.KvkEstablishmentId,
+                CompanyPublicPaths.NormalizeKvkNumber(v.Company?.KvkNumber)));
     }
 
     private async Task<(Core.Entities.VacancyCategory? Category, string? Error)> ResolveCategoryAsync(
