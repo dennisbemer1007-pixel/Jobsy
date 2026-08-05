@@ -144,8 +144,10 @@ public class VacanciesController : ControllerBase
             .ToHashSet();
 
         var workTypeFiltered = vacancies
-            .Where(v => categoryFilter is null || categoryFilter.Count == 0
-                || (v.CategoryId is Guid cid && categoryFilter.Contains(cid)))
+            .Where(v => VacancyCategoryDefaults.MatchesSelectedCategories(
+                v.CategoryId,
+                v.SuitableFor65Plus,
+                categoryFilter))
             .Where(v => suitableFor65Plus != true
                 || VacancyCategoryDefaults.MatchesSuitableFor65PlusFilter(v.CategoryId, v.SuitableFor65Plus))
             .Where(v => WorkTypeLabels.MatchesFilter(v.WorkTypes, v.WorkTypeLabels, workType))

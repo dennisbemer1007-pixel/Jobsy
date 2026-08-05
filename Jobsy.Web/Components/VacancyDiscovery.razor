@@ -278,11 +278,6 @@
                         </label>
                     }
                 </div>
-                <label class="filter-check suitable65-filter">
-                    <input type="checkbox" checked="@_suitableFor65PlusFilter" @onchange="OnSuitableFor65PlusChanged" />
-                    <span class="suitable65-label" aria-hidden="true"></span>
-                    Geschikt voor 65+
-                </label>
                 <label class="filter-required">
                     @Culture["Discovery.Age"]
                     <select value="@AgeSelectValue" @onchange="OnAgeChanged" required>
@@ -552,10 +547,6 @@
                     {
                         <button type="button" class="filter-tag" @onclick="() => ClearWorkTypeAsync(workType)">@UiLabels.WorkType(Culture, workType) ×</button>
                     }
-                    @if (_suitableFor65PlusFilter)
-                    {
-                        <button type="button" class="filter-tag" @onclick="ClearSuitableFor65PlusAsync">Geschikt voor 65+ ×</button>
-                    }
                     @if (!string.IsNullOrWhiteSpace(_searchQuery))
                     {
                         <button type="button" class="filter-tag" @onclick="ClearSearchQueryAsync">“@_searchQuery” ×</button>
@@ -664,15 +655,6 @@
                     </div>
                 </section>
 
-                <section class="filter-section">
-                    <h3>Doelgroep</h3>
-                    <label class="filter-check suitable65-filter">
-                        <input type="checkbox" checked="@_suitableFor65PlusFilter" @onchange="OnSuitableFor65PlusChanged" />
-                        <span class="suitable65-label" aria-hidden="true"></span>
-                        Geschikt voor 65+
-                    </label>
-                </section>
-
 
                 <section class="filter-section">
                     <h3>@Culture["Discovery.Age"] · @Culture["Discovery.HourlyWageShort"]</h3>
@@ -747,11 +729,9 @@
     private int _maxHoursPerWeek = DefaultMaxHoursPerWeek;
     private readonly HashSet<string> _selectedWorkTypes = new(StringComparer.OrdinalIgnoreCase);
     private readonly HashSet<Guid> _selectedCategoryIds = [];
-    private bool _suitableFor65PlusFilter;
     private List<VacancyCategoryItem> _categories = [];
     private HashSet<string> _snapSelectedWorkTypes = new(StringComparer.OrdinalIgnoreCase);
     private HashSet<Guid> _snapSelectedCategoryIds = [];
-    private bool _snapSuitableFor65PlusFilter;
     private int _snapMaxTravelMinutes = 30;
     private int _snapRadiusKm = 15;
     private string _snapSelectedTransport = "Fiets";
@@ -892,7 +872,6 @@
             var n = 0;
             if (_selectedWorkTypes.Count > 0) n++;
             if (_selectedCategoryIds.Count > 0) n++;
-            if (_suitableFor65PlusFilter) n++;
             if (!string.IsNullOrWhiteSpace(_searchQuery)) n++;
             if (_ageYears is not null) n++;
             if (_minHourlyWage is not null) n++;
@@ -913,7 +892,6 @@
         _origin is not null
         && _selectedWorkTypes.Count == 0
         && _selectedCategoryIds.Count == 0
-        && !_suitableFor65PlusFilter
         && string.IsNullOrWhiteSpace(_searchQuery)
         && _minHourlyWage is null
         && _maxHourlyWage is null
@@ -1413,7 +1391,7 @@
                 companyFocus ? null : _minHoursPerWeek,
                 companyFocus ? null : _maxHoursPerWeek,
                 companyFocus || _selectedCategoryIds.Count == 0 ? null : _selectedCategoryIds,
-                companyFocus ? null : (_suitableFor65PlusFilter ? true : null));
+                suitableFor65Plus: null);
 
             // Stale/far stored origin + default proximity can wipe the catalog; show all until filters tighten.
             if (items.Count == 0 && ShouldFallbackFromEmptyProximity && !companyFocus)
@@ -1432,7 +1410,7 @@
                     _minHoursPerWeek,
                     _maxHoursPerWeek,
                     _selectedCategoryIds.Count == 0 ? null : _selectedCategoryIds,
-                    _suitableFor65PlusFilter ? true : null);
+                    suitableFor65Plus: null);
             }
 
             _vacancies = items.ToList();
@@ -1844,14 +1822,6 @@
             kind);
     }
 
-    private async Task OnSuitableFor65PlusChanged(ChangeEventArgs e)
-    {
-        _suitableFor65PlusFilter = e.Value is bool b
-            ? b
-            : bool.TryParse(e.Value?.ToString(), out var parsed) && parsed;
-        await ReloadFiltersIfAppliedAsync();
-    }
-
     private async Task ToggleCategoryAsync(Guid categoryId, ChangeEventArgs e)
     {
         var selected = e.Value is bool b
@@ -2157,7 +2127,6 @@
         _snapMaxHourlyWage = _maxHourlyWage;
         _snapSelectedWorkTypes = _selectedWorkTypes.ToHashSet(StringComparer.OrdinalIgnoreCase);
         _snapSelectedCategoryIds = _selectedCategoryIds.ToHashSet();
-        _snapSuitableFor65PlusFilter = _suitableFor65PlusFilter;
     }
 
     private void RestoreFilterSnapshot()
@@ -2180,7 +2149,6 @@
         {
             _selectedCategoryIds.Add(id);
         }
-        _suitableFor65PlusFilter = _snapSuitableFor65PlusFilter;
     }
 
     private async Task ApplySearch()
@@ -2196,12 +2164,6 @@
         CaptureFilterSnapshot();
         _branchMenuOpen = false;
         _filtersOpen = false;
-    }
-
-    private async Task ClearSuitableFor65PlusAsync()
-    {
-        _suitableFor65PlusFilter = false;
-        await LoadVacanciesAsync();
     }
 
     private async Task ClearWorkTypeAsync(string label)
@@ -2256,7 +2218,6 @@
     {
         _selectedWorkTypes.Clear();
         _selectedCategoryIds.Clear();
-        _suitableFor65PlusFilter = false;
         _searchQuery = null;
         _ageYears = null;
         _minHourlyWage = null;

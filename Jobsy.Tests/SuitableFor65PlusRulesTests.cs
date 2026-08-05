@@ -35,7 +35,7 @@ public class SuitableFor65PlusRulesTests
     }
 
     [Fact]
-    public void Senior_plus_brand_color_is_dark_purple()
+    public void Senior_plus_brand_color_and_name_are_geschikt_voor_65plus()
     {
         Assert.Equal("#5B21B6", VacancyCategoryDefaults.SeniorPlusColorHex);
         var senior = Assert.Single(
@@ -43,5 +43,20 @@ public class SuitableFor65PlusRulesTests
             c => c.Id == VacancyCategoryDefaults.SeniorLightId);
         Assert.Equal(VacancyCategoryDefaults.SeniorPlusColorHex, senior.ColorHex);
         Assert.Equal("Geschikt voor 65+", VacancyCategoryDefaults.SuitableFor65PlusLabel);
+        Assert.Equal(VacancyCategoryDefaults.SuitableFor65PlusLabel, senior.Name);
+    }
+
+    [Fact]
+    public void Selecting_65plus_category_includes_flagged_regulier_vacancies()
+    {
+        var filter = new HashSet<Guid> { VacancyCategoryDefaults.SeniorLightId };
+        Assert.True(VacancyCategoryDefaults.MatchesSelectedCategories(
+            VacancyCategoryDefaults.SeniorLightId, false, filter));
+        Assert.True(VacancyCategoryDefaults.MatchesSelectedCategories(
+            VacancyCategoryDefaults.RegulierId, true, filter));
+        Assert.False(VacancyCategoryDefaults.MatchesSelectedCategories(
+            VacancyCategoryDefaults.RegulierId, false, filter));
+        Assert.False(VacancyCategoryDefaults.MatchesSelectedCategories(
+            VacancyCategoryDefaults.InternshipId, true, filter));
     }
 }

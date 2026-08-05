@@ -6,7 +6,7 @@ namespace Jobsy.Tests;
 public class VacancyCategoryDefaultsPopupBadgeTests
 {
     [Fact]
-    public void ResolveMapPopupTypeBadge_returns_stage_volunteer_inclusief()
+    public void ResolveMapPopupTypeBadge_returns_stage_volunteer_inclusief_uitzend()
     {
         Assert.Equal(
             ("Stageplek", "#0EA5E9"),
@@ -17,6 +17,9 @@ public class VacancyCategoryDefaultsPopupBadgeTests
         Assert.Equal(
             ("Inclusieve vacature", "#8B5CF6"),
             VacancyCategoryDefaults.ResolveMapPopupTypeBadge(VacancyCategoryDefaults.InclusiefId, false));
+        Assert.Equal(
+            (VacancyCategoryDefaults.UitzendbureauLabel, VacancyCategoryDefaults.UitzendbureauColorHex),
+            VacancyCategoryDefaults.ResolveMapPopupTypeBadge(VacancyCategoryDefaults.UitzendbureauId, false));
     }
 
     [Fact]
@@ -31,10 +34,9 @@ public class VacancyCategoryDefaultsPopupBadgeTests
     }
 
     [Fact]
-    public void ResolveMapPopupTypeBadge_regular_and_uitzend_have_no_label()
+    public void ResolveMapPopupTypeBadge_regular_and_highlight_have_no_label()
     {
         Assert.Equal((null, null), VacancyCategoryDefaults.ResolveMapPopupTypeBadge(VacancyCategoryDefaults.RegulierId, false));
-        Assert.Equal((null, null), VacancyCategoryDefaults.ResolveMapPopupTypeBadge(VacancyCategoryDefaults.UitzendbureauId, false));
         Assert.Equal((null, null), VacancyCategoryDefaults.ResolveMapPopupTypeBadge(VacancyCategoryDefaults.HighlightId, false));
     }
 

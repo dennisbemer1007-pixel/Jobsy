@@ -54,15 +54,54 @@ public sealed class VacancyCategoryService : IVacancyCategoryService
             added = true;
         }
 
-        // Keep seeded 65+ category color aligned with label branding when already present.
+        // Keep seeded 65+ category name/color aligned with “Geschikt voor 65+” branding.
         var senior = await _db.VacancyCategories
             .FirstOrDefaultAsync(c => c.Id == VacancyCategoryDefaults.SeniorLightId, cancellationToken);
-        if (senior is not null
-            && !string.Equals(senior.ColorHex, VacancyCategoryDefaults.SeniorPlusColorHex, StringComparison.OrdinalIgnoreCase))
+        if (senior is not null)
         {
-            senior.ColorHex = VacancyCategoryDefaults.SeniorPlusColorHex;
-            senior.UpdatedAtUtc = DateTime.UtcNow;
-            added = true;
+            var seniorTouched = false;
+            if (!string.Equals(senior.ColorHex, VacancyCategoryDefaults.SeniorPlusColorHex, StringComparison.OrdinalIgnoreCase))
+            {
+                senior.ColorHex = VacancyCategoryDefaults.SeniorPlusColorHex;
+                seniorTouched = true;
+            }
+
+            if (!string.Equals(senior.Name, VacancyCategoryDefaults.SuitableFor65PlusLabel, StringComparison.Ordinal))
+            {
+                senior.Name = VacancyCategoryDefaults.SuitableFor65PlusLabel;
+                seniorTouched = true;
+            }
+
+            if (seniorTouched)
+            {
+                senior.UpdatedAtUtc = DateTime.UtcNow;
+                added = true;
+            }
+        }
+
+        // Keep Uitzendbureau display name/color stable.
+        var uitzend = await _db.VacancyCategories
+            .FirstOrDefaultAsync(c => c.Id == VacancyCategoryDefaults.UitzendbureauId, cancellationToken);
+        if (uitzend is not null)
+        {
+            var uitzendTouched = false;
+            if (!string.Equals(uitzend.Name, VacancyCategoryDefaults.UitzendbureauLabel, StringComparison.Ordinal))
+            {
+                uitzend.Name = VacancyCategoryDefaults.UitzendbureauLabel;
+                uitzendTouched = true;
+            }
+
+            if (!string.Equals(uitzend.ColorHex, VacancyCategoryDefaults.UitzendbureauColorHex, StringComparison.OrdinalIgnoreCase))
+            {
+                uitzend.ColorHex = VacancyCategoryDefaults.UitzendbureauColorHex;
+                uitzendTouched = true;
+            }
+
+            if (uitzendTouched)
+            {
+                uitzend.UpdatedAtUtc = DateTime.UtcNow;
+                added = true;
+            }
         }
 
         if (added)

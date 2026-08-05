@@ -16,7 +16,11 @@ public static class VacancyCategoryDefaults
     /// <summary>Dark purple used for the 65+ category and the “Geschikt voor 65+” label.</summary>
     public const string SeniorPlusColorHex = "#5B21B6";
 
+    /// <summary>Display name for the 65+ vacancy type (category + map badge).</summary>
     public const string SuitableFor65PlusLabel = "Geschikt voor 65+";
+
+    public const string UitzendbureauLabel = "Uitzendbureau";
+    public const string UitzendbureauColorHex = "#2563EB";
 
     public sealed record SeedCategory(
         Guid Id,
@@ -35,7 +39,7 @@ public static class VacancyCategoryDefaults
 
     public static readonly IReadOnlyList<SeedCategory> All =
     [
-        new(UitzendbureauId, "uitzendbureau", "Uitzendbureau", "#2563EB",
+        new(UitzendbureauId, "uitzendbureau", UitzendbureauLabel, UitzendbureauColorHex,
             1m, true, 2m, true, 3m, false, VacancyKind.Regular, 10,
             [VacancyCategoryExtraFields.ContractType, VacancyCategoryExtraFields.HoursPerWeek,
                 VacancyCategoryExtraFields.ExperienceLevel]),
@@ -64,7 +68,7 @@ public static class VacancyCategoryDefaults
             [VacancyCategoryExtraFields.EducationLevel, VacancyCategoryExtraFields.InternshipDuration,
                 VacancyCategoryExtraFields.HoursPerWeek, VacancyCategoryExtraFields.InternshipType]),
 
-        new(SeniorLightId, "65plus", "65+ lichte betaalde functies", SeniorPlusColorHex,
+        new(SeniorLightId, "65plus", SuitableFor65PlusLabel, SeniorPlusColorHex,
             0.5m, true, 1m, true, 2m, false, VacancyKind.Regular, 70,
             [VacancyCategoryExtraFields.PhysicalLoad, VacancyCategoryExtraFields.HoursPerWeek,
                 VacancyCategoryExtraFields.ContractType])
@@ -75,7 +79,7 @@ public static class VacancyCategoryDefaults
         => categoryId == SeniorLightId;
 
     /// <summary>
-    /// Matches the discovery “Geschikt voor 65+” filter:
+    /// Matches the unified “Geschikt voor 65+” vacancy type:
     /// dedicated 65+ category, or a regular vacancy with the suitability flag.
     /// </summary>
     public static bool MatchesSuitableFor65PlusFilter(Guid? categoryId, bool suitableFor65Plus)
@@ -83,7 +87,35 @@ public static class VacancyCategoryDefaults
            || (suitableFor65Plus && (categoryId is null || categoryId == RegulierId));
 
     /// <summary>
-    /// Short map-popup type label (legend colors). Regular / uitzend / highlight get no label.
+    /// Discovery category multi-select. Selecting the 65+ type also includes
+    /// Regulier vacancies marked <c>SuitableFor65Plus</c>.
+    /// </summary>
+    public static bool MatchesSelectedCategories(
+        Guid? categoryId,
+        bool suitableFor65Plus,
+        IReadOnlyCollection<Guid>? selectedCategoryIds)
+    {
+        if (selectedCategoryIds is null || selectedCategoryIds.Count == 0)
+        {
+            return true;
+        }
+
+        if (categoryId is Guid cid && selectedCategoryIds.Contains(cid))
+        {
+            return true;
+        }
+
+        if (selectedCategoryIds.Contains(SeniorLightId)
+            && MatchesSuitableFor65PlusFilter(categoryId, suitableFor65Plus))
+        {
+            return true;
+        }
+
+        return false;
+    }
+
+    /// <summary>
+    /// Short map-popup type label (legend colors). Regulier / highlight get no label.
     /// “Uitgelicht” is rendered separately and always stacks above this badge when active.
     /// </summary>
     public static (string? Label, string? ColorHex) ResolveMapPopupTypeBadge(
@@ -104,6 +136,11 @@ public static class VacancyCategoryDefaults
         if (categoryId == InclusiefId)
         {
             return ("Inclusieve vacature", "#8B5CF6");
+        }
+
+        if (categoryId == UitzendbureauId)
+        {
+            return (UitzendbureauLabel, UitzendbureauColorHex);
         }
 
         if (MatchesSuitableFor65PlusFilter(categoryId, suitableFor65Plus))
