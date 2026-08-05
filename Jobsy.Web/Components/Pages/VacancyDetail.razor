@@ -972,6 +972,21 @@
 
                 await LoadAsync(origin);
                 await LoadLikeAsync();
+
+                // LoadLike may populate DOB when the early profile fetch missed — align wages once.
+                if (_dobInput is DateOnly dob
+                    && AgeRules.AgeYearsFromDateOfBirth(dob) is int fromDob)
+                {
+                    var clamped = AgeRules.ClampFilterAge(fromDob);
+                    if (_ageYears != clamped)
+                    {
+                        _ageYears = clamped;
+                        try { await Js.InvokeVoidAsync("jobsyGeo.setStoredAge", clamped); }
+                        catch { /* ignore */ }
+                        await LoadAsync(origin);
+                    }
+                }
+
                 await InvokeAsync(StateHasChanged);
 
                 if (!_clickRecorded)
