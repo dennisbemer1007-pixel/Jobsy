@@ -386,6 +386,7 @@ public class Sprint4TokenProductsTests
 
     private static IVacancyProductService CreateProducts(JobsyDbContext db)
     {
+        DisableFreePublishPromo(db);
         var features = new PlatformFeatureService(
             db,
             Microsoft.Extensions.Options.Options.Create(new Jobsy.Core.Options.JobsyFeatureOptions()),
@@ -401,6 +402,27 @@ public class Sprint4TokenProductsTests
             features,
             new MockRoutingService(),
             NullLogger<VacancyProductService>.Instance);
+    }
+
+    private static void DisableFreePublishPromo(JobsyDbContext db)
+    {
+        var row = db.PlatformFeatureSettings.Local.FirstOrDefault()
+                  ?? db.PlatformFeatureSettings.FirstOrDefault();
+        if (row is null)
+        {
+            db.PlatformFeatureSettings.Add(new PlatformFeatureSettings
+            {
+                Id = Guid.Parse("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"),
+                FreePublishUntil = null,
+                UpdatedAtUtc = DateTime.UtcNow
+            });
+        }
+        else
+        {
+            row.FreePublishUntil = null;
+        }
+
+        db.SaveChanges();
     }
 
     private static void SeedSpendCosts(JobsyDbContext db)

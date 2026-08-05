@@ -16,7 +16,9 @@ public sealed record PlatformFeatureSnapshot(
     string PublicWebBaseUrl,
     DateTime? UpdatedAtUtc,
     int InactiveCompanyDays = 120,
-    int SessionInactivityTimeoutMinutes = 30);
+    int SessionInactivityTimeoutMinutes = 30,
+    /// <summary>Inclusive last day publish is free; null = promo off.</summary>
+    DateOnly? FreePublishUntil = null);
 
 public sealed record PlatformFeatureUpdate(
     bool VacancyContentModerationEnabled,
@@ -24,4 +26,5 @@ public sealed record PlatformFeatureUpdate(
     bool ExposeRegistrationActivationLinks,
     string? PublicWebBaseUrl,
     int InactiveCompanyDays = 120,
-    int SessionInactivityTimeoutMinutes = 30);
+    int SessionInactivityTimeoutMinutes = 30,
+    DateOnly? FreePublishUntil = null);

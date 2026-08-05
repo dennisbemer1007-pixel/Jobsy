@@ -151,6 +151,14 @@ public class PrepaidTokenCheckoutTests
 
     private static IVacancyProductService CreateProducts(JobsyDbContext db)
     {
+        db.PlatformFeatureSettings.Add(new PlatformFeatureSettings
+        {
+            Id = Guid.Parse("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"),
+            FreePublishUntil = null,
+            UpdatedAtUtc = DateTime.UtcNow
+        });
+        db.SaveChanges();
+
         var features = new PlatformFeatureService(
             db,
             Microsoft.Extensions.Options.Options.Create(new Jobsy.Core.Options.JobsyFeatureOptions()),

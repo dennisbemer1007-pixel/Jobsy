@@ -295,6 +295,12 @@ public sealed class CoreFunctionalFlowApiFactory : WebApplicationFactory<Program
         }
 
         var today = DateOnly.FromDateTime(DateTime.UtcNow);
+        db.PlatformFeatureSettings.Add(new PlatformFeatureSettings
+        {
+            Id = Guid.Parse("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"),
+            FreePublishUntil = null,
+            UpdatedAtUtc = DateTime.UtcNow
+        });
         db.Companies.Add(new Company
         {
             Id = CompanyId,
@@ -305,7 +311,8 @@ public sealed class CoreFunctionalFlowApiFactory : WebApplicationFactory<Program
             Location = new GeoPoint(52.0, 4.2),
             Type = CompanyType.Employer,
             TokensManagedByEnterprise = false,
-            PreferredPaymentMethod = MolliePaymentMethods.Ideal
+            PreferredPaymentMethod = MolliePaymentMethods.Ideal,
+            KvkVerificationStatus = KvkVerificationStatus.Verified
         });
 
         db.Users.AddRange(

@@ -359,21 +359,23 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
                 ex);
         }
 
-        await GrantWelcomeTokenAsync(branchId, user.Id, cancellationToken);
+        var welcomeGranted = await GrantWelcomeTokenAsync(branchId, user.Id, cancellationToken);
 
         await SendActivatedCredentialsEmailAsync(registration, temporaryPassword, cancellationToken);
 
         _logger.LogInformation("Activated registration {Id} for {Email}", registration.Id, EmailServiceStub.RedactEmail(registration.ContactEmail));
 
         return await BuildActivationResultAsync(
-            registration, temporaryPassword ?? string.Empty, usedChosenPassword, cancellationToken);
+            registration, temporaryPassword ?? string.Empty, usedChosenPassword, welcomeGranted, cancellationToken);
     }
 
     /// <summary>
     /// Credits 1 welcome token on the registered vestiging so the first publish is free.
+    /// Skipped during the free-publish promo (publish is already free until that date).
     /// Idempotent via <see cref="Company.HasReceivedWelcomeToken"/>.
+    /// Returns whether a ledger credit was granted.
     /// </summary>
-    private async Task GrantWelcomeTokenAsync(
+    private async Task<bool> GrantWelcomeTokenAsync(
         Guid branchCompanyId,
         Guid actorUserId,
         CancellationToken cancellationToken)
@@ -381,7 +383,20 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
         var company = await _db.Companies.FirstAsync(c => c.Id == branchCompanyId, cancellationToken);
         if (company.HasReceivedWelcomeToken)
         {
-            return;
+            return false;
+        }
+
+        var features = await _features.GetAsync(cancellationToken);
+        if (FreePublishRules.IsActive(features.FreePublishUntil, DateTime.UtcNow))
+        {
+            // Mark as received without granting — no delayed welcome token after the promo ends.
+            company.HasReceivedWelcomeToken = true;
+            await _db.SaveChangesAsync(cancellationToken);
+            _logger.LogInformation(
+                "Skipped welcome token for company {CompanyId} (free publish until {Until})",
+                branchCompanyId,
+                features.FreePublishUntil);
+            return false;
         }
 
         company.HasReceivedWelcomeToken = true;
@@ -406,6 +421,7 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
             "Granted welcome token to company {CompanyId} for user {UserId}",
             branchCompanyId,
             actorUserId);
+        return true;
     }
 
     public async Task<IReadOnlyList<TakeoverInboxItem>> ListPendingTakeoversAsync(
@@ -1009,6 +1025,7 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
         CompanyRegistration registration,
         string temporaryPassword,
         bool usedChosenPassword,
+        bool welcomeTokenGranted,
         CancellationToken cancellationToken)
     {
         var user = registration.CreatedUserId is Guid uid
@@ -1026,6 +1043,11 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
             companyIds.Insert(0, primary);
         }
 
+        var features = await _features.GetAsync(cancellationToken);
+        var freeUntil = FreePublishRules.IsActive(features.FreePublishUntil, DateTime.UtcNow)
+            ? features.FreePublishUntil
+            : null;
+
         return new RegistrationActivationResult(
             registration.Id,
             user.Id,
@@ -1037,7 +1059,9 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
             temporaryPassword,
             registration.CreatedOrganizationCompanyId,
             registration.CreatedBranchCompanyId,
-            usedChosenPassword);
+            usedChosenPassword,
+            WelcomeTokenGranted: welcomeTokenGranted,
+            FreePublishUntil: freeUntil);
     }
 
     private async Task<RegistrationActivationResult> CompleteTakeoverEmailVerificationAsync(

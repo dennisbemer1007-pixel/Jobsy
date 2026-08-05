@@ -78,6 +78,19 @@
                     cookie-middleware én browser idle-timer lezen deze waarde dynamisch. Bij time-out wordt de sessie beëindigd en moet opnieuw worden ingelogd.
                 </p>
 
+                <label>
+                    Gratis publiceren t/m (datum)
+                    <input type="date" @bind="_freePublishUntilInput" @bind:format="yyyy-MM-dd" />
+                </label>
+                <p class="muted">
+                    Tot en met deze datum is het plaatsen van vacatures (alle types: vestiging, organisatie, intermediair) gratis.
+                    Highlight en PushBom blijven altijd betaald. Leeg = promo uit (normale publicatietarieven).
+                    Welkomsttokens worden tijdens deze periode niet toegekend.
+                </p>
+                <div class="inline-actions" style="margin-top:0.35rem">
+                    <button class="btn-compact" type="button" @onclick="ClearFreePublishUntil">Promo uitzetten</button>
+                </div>
+
                 <div class="inline-actions" style="margin-top:0.75rem">
                     <button class="btn-compact btn-compact--primary" type="button" disabled="@_featureBusy" @onclick="SaveFeaturesAsync">@Culture["Common.Save"]</button>
                 </div>
@@ -217,6 +230,7 @@
     private List<IntegrationHealthItem> _health = [];
     private List<IntegrationCredentialItem> _credentials = [];
     private PlatformFeatureItem _features = new();
+    private DateTime? _freePublishUntilInput;
     private bool _loading = true;
     private bool _pingBusy;
     private bool _featureBusy;
@@ -242,6 +256,7 @@
             _pushBomSettings = _settings?.PushBomSettings ?? new PushBomSettingsItem();
             _pushBomTiers = _settings?.PushBomPricingTiers?.ToList() ?? [];
             _features = await Api.GetPlatformFeaturesAsync() ?? new PlatformFeatureItem();
+            SyncFreePublishInputFromFeatures();
             await ReloadIntegrationsAsync();
         }
         catch (Exception ex)
@@ -252,6 +267,15 @@
         {
             _loading = false;
         }
+    }
+
+    private void SyncFreePublishInputFromFeatures()
+        => _freePublishUntilInput = _features.FreePublishUntil?.ToDateTime(TimeOnly.MinValue);
+
+    private void ClearFreePublishUntil()
+    {
+        _freePublishUntilInput = null;
+        _features.FreePublishUntil = null;
     }
 
     private async Task ReloadIntegrationsAsync()
@@ -273,7 +297,11 @@
         _featureBusy = true;
         try
         {
+            _features.FreePublishUntil = _freePublishUntilInput is DateTime d
+                ? DateOnly.FromDateTime(d)
+                : null;
             _features = await Api.SavePlatformFeaturesAsync(_features) ?? _features;
+            SyncFreePublishInputFromFeatures();
             _message = "Platform features opgeslagen.";
         }
         catch (Exception ex)

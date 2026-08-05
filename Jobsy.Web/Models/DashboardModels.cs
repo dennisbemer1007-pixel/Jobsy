@@ -320,6 +320,8 @@ public class RegistrationActivationResult
     public Guid? BranchCompanyId { get; set; }
     public bool UsedChosenPassword { get; set; }
     public bool EmailVerifiedAwaitingTakeover { get; set; }
+    public bool WelcomeTokenGranted { get; set; }
+    public DateOnly? FreePublishUntil { get; set; }
 }
 
 public class TakeoverInboxItem

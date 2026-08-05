@@ -1250,6 +1250,9 @@ namespace Jobsy.Infrastructure.Data.Migrations
                     b.Property<bool>("ExposeRegistrationActivationLinks")
                         .HasColumnType("boolean");
 
+                    b.Property<DateOnly?>("FreePublishUntil")
+                        .HasColumnType("date");
+
                     b.Property<int>("InactiveCompanyDays")
                         .HasColumnType("integer");
 

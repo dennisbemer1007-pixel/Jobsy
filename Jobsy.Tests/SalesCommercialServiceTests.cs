@@ -85,6 +85,14 @@ public class SalesCommercialServiceTests
         });
         await db.SaveChangesAsync();
 
+        db.PlatformFeatureSettings.Add(new PlatformFeatureSettings
+        {
+            Id = Guid.Parse("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"),
+            FreePublishUntil = null,
+            UpdatedAtUtc = DateTime.UtcNow
+        });
+        await db.SaveChangesAsync();
+
         var features = new PlatformFeatureService(
             db,
             Microsoft.Extensions.Options.Options.Create(new Core.Options.JobsyFeatureOptions()),
@@ -232,6 +240,12 @@ public class SalesCommercialServiceTests
         var a = MakeDraft("A");
         var b = MakeDraft("B");
         db.Vacancies.AddRange(a, b);
+        db.PlatformFeatureSettings.Add(new PlatformFeatureSettings
+        {
+            Id = Guid.Parse("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"),
+            FreePublishUntil = null,
+            UpdatedAtUtc = DateTime.UtcNow
+        });
         await db.SaveChangesAsync();
 
         var features = new PlatformFeatureService(

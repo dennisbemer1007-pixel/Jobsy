@@ -2212,6 +2212,9 @@ public sealed class JobsyApiClient : IAsyncDisposable
     public async Task<PlatformFeatureItem?> GetPlatformFeaturesAsync(CancellationToken ct = default)
         => await _http.GetFromJsonAsync<PlatformFeatureItem>("api/settings/platform-features", ct);
 
+    public async Task<FreePublishStatusItem?> GetFreePublishStatusAsync(CancellationToken ct = default)
+        => await _http.GetFromJsonAsync<FreePublishStatusItem>("api/settings/free-publish", ct);
+
     public async Task<PlatformFeatureItem?> SavePlatformFeaturesAsync(
         PlatformFeatureItem features,
         CancellationToken ct = default)
@@ -2808,6 +2811,13 @@ public sealed class PlatformFeatureItem
     public DateTime? UpdatedAtUtc { get; set; }
     public int InactiveCompanyDays { get; set; } = 120;
     public int SessionInactivityTimeoutMinutes { get; set; } = 30;
+    public DateOnly? FreePublishUntil { get; set; }
+}
+
+public sealed class FreePublishStatusItem
+{
+    public bool IsActive { get; set; }
+    public DateOnly? FreePublishUntil { get; set; }
 }
 
 public sealed class PlatformCompanyItem

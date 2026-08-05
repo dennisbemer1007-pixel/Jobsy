@@ -28,5 +28,12 @@ public class PlatformFeatureSettings
     /// </summary>
     public int SessionInactivityTimeoutMinutes { get; set; } = 30;
 
+    /// <summary>
+    /// Inclusive last calendar day (UTC date) on which publishing a vacancy costs 0 tokens.
+    /// Highlight and PushBom stay paid. Null = promo off (normal publish rates).
+    /// Seeded default: 2026-11-18.
+    /// </summary>
+    public DateOnly? FreePublishUntil { get; set; }
+
     public DateTime UpdatedAtUtc { get; set; } = DateTime.UtcNow;
 }

@@ -88,7 +88,10 @@ public sealed class VacancyProductService : IVacancyProductService
             return Fail(vacancy, "PushBom is niet beschikbaar voor deze vacaturecategorie.");
         }
 
-        var publishCost = pricing.PublishCostTokens;
+        var publishCost = FreePublishRules.EffectivePublishCost(
+            pricing.PublishCostTokens,
+            (await _features.GetAsync(cancellationToken)).FreePublishUntil,
+            DateTime.UtcNow);
         var highlightCost = pricing.HighlightCostTokens;
         var highlightDays = await _salesCommercial.GetHighlightDaysAsync(cancellationToken);
 
@@ -351,7 +354,10 @@ public sealed class VacancyProductService : IVacancyProductService
             costOverrides?.Remove(TokenSpendReason.PushBom);
         }
 
-        var publishCost = pricing.PublishCostTokens;
+        var publishCost = FreePublishRules.EffectivePublishCost(
+            pricing.PublishCostTokens,
+            (await _features.GetAsync(cancellationToken)).FreePublishUntil,
+            DateTime.UtcNow);
         var highlightCost = pricing.HighlightCostTokens;
         var highlightDays = await _salesCommercial.GetHighlightDaysAsync(cancellationToken);
         costOverrides ??= new Dictionary<TokenSpendReason, decimal>();

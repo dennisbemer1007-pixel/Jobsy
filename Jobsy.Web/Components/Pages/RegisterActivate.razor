@@ -54,7 +54,18 @@
                     @Culture.Format("Register.CelebrateLead", _result.FullName)
                 </p>
                 <p class="share-modal__lead">
-                    @Culture["Register.CelebrateToken"]
+                    @if (_result.WelcomeTokenGranted)
+                    {
+                        @Culture["Register.CelebrateToken"]
+                    }
+                    else if (_result.FreePublishUntil is DateOnly until)
+                    {
+                        @Culture.Format("Register.CelebrateFreePublish", until.ToString("dd-MM-yyyy"))
+                    }
+                    else
+                    {
+                        @Culture["Register.CelebrateReady"]
+                    }
                 </p>
                 @if (_result.UsedChosenPassword)
                 {

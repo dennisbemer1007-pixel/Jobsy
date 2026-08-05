@@ -3,6 +3,7 @@ using Jobsy.Core.Authorization;
 using Jobsy.Core.Entities;
 using Jobsy.Core.Enums;
 using Jobsy.Core.Interfaces;
+using Jobsy.Core.Rules;
 using Jobsy.Infrastructure.Data;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -289,7 +290,8 @@ public class SettingsController : ControllerBase
                     request.ExposeRegistrationActivationLinks,
                     request.PublicWebBaseUrl,
                     request.InactiveCompanyDays,
-                    request.SessionInactivityTimeoutMinutes),
+                    request.SessionInactivityTimeoutMinutes,
+                    request.FreePublishUntil),
                 cancellationToken);
             return Ok(ToFeatureDto(snap));
         }
@@ -297,6 +299,18 @@ public class SettingsController : ControllerBase
         {
             return BadRequest(new { message = ex.Message });
         }
+    }
+
+    /// <summary>
+    /// Public promo status: whether vacancy publish is free (Highlight/PushBom remain paid).
+    /// </summary>
+    [HttpGet("free-publish")]
+    [AllowAnonymous]
+    public async Task<ActionResult<FreePublishStatusDto>> GetFreePublishStatus(CancellationToken cancellationToken)
+    {
+        var snap = await _features.GetAsync(cancellationToken);
+        var active = FreePublishRules.IsActive(snap.FreePublishUntil, DateTime.UtcNow);
+        return Ok(new FreePublishStatusDto(active, snap.FreePublishUntil));
     }
 
     /// <summary>
@@ -420,7 +434,8 @@ public class SettingsController : ControllerBase
             snap.PublicWebBaseUrl,
             snap.UpdatedAtUtc,
             snap.InactiveCompanyDays,
-            snap.SessionInactivityTimeoutMinutes);
+            snap.SessionInactivityTimeoutMinutes,
+            snap.FreePublishUntil);
 
     private static PlatformCompanyDto ToCompanyDto(PlatformCompanySnapshot snap) =>
         new(

@@ -567,6 +567,7 @@ public class CoreFunctionalFlowE2ETests
 
     private static CompanyRegistrationService CreateRegistrationService(JobsyDbContext db)
     {
+        EnsurePaidPublishPeriod(db, exposeActivationLinks: true);
         var config = new ConfigurationBuilder().Build();
         var features = new PlatformFeatureService(
             db,
@@ -582,14 +583,40 @@ public class CoreFunctionalFlowE2ETests
             NullLogger<CompanyRegistrationService>.Instance);
     }
 
-    private static IPlatformFeatureService CreateFeatures(JobsyDbContext db) =>
-        new PlatformFeatureService(
+    private static IPlatformFeatureService CreateFeatures(JobsyDbContext db)
+    {
+        EnsurePaidPublishPeriod(db, exposeActivationLinks: true);
+        return new PlatformFeatureService(
             db,
-            Options.Create(new JobsyFeatureOptions()),
+            Options.Create(new JobsyFeatureOptions { ExposeRegistrationActivationLinks = true }),
             new ConfigurationBuilder().AddInMemoryCollection(new Dictionary<string, string?>
             {
                 ["PublicWebBaseUrl"] = "http://localhost:5201"
             }).Build());
+    }
+
+    private static void EnsurePaidPublishPeriod(JobsyDbContext db, bool exposeActivationLinks = true)
+    {
+        var row = db.PlatformFeatureSettings.Local.FirstOrDefault()
+                  ?? db.PlatformFeatureSettings.FirstOrDefault();
+        if (row is null)
+        {
+            db.PlatformFeatureSettings.Add(new PlatformFeatureSettings
+            {
+                Id = Guid.Parse("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"),
+                ExposeRegistrationActivationLinks = exposeActivationLinks,
+                FreePublishUntil = null,
+                UpdatedAtUtc = DateTime.UtcNow
+            });
+        }
+        else
+        {
+            row.FreePublishUntil = null;
+            row.ExposeRegistrationActivationLinks = exposeActivationLinks;
+        }
+
+        db.SaveChanges();
+    }
 
     private static IVacancyProductService CreateProducts(JobsyDbContext db)
     {

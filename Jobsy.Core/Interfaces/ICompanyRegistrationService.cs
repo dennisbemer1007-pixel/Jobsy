@@ -85,7 +85,11 @@ public sealed record RegistrationActivationResult(
     /// True when the token only confirmed the contact e-mail for a pending takeover
     /// (no user provisioned yet; owner must still approve).
     /// </summary>
-    bool EmailVerifiedAwaitingTakeover = false);
+    bool EmailVerifiedAwaitingTakeover = false,
+    /// <summary>True when the one-time welcome ledger credit was granted.</summary>
+    bool WelcomeTokenGranted = false,
+    /// <summary>Inclusive free-publish end date when the promo is active at activation time.</summary>
+    DateOnly? FreePublishUntil = null);
 
 public sealed record TakeoverInboxItem(
     Guid TakeoverId,

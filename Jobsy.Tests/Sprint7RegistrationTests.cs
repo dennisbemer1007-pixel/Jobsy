@@ -624,6 +624,7 @@ public class Sprint7RegistrationTests
         JobsyDbContext db,
         bool exposeActivationLinks = true)
     {
+        EnsurePaidPublishPeriod(db, exposeActivationLinks);
         var config = new ConfigurationBuilder().Build();
         var features = new PlatformFeatureService(
             db,
@@ -640,6 +641,29 @@ public class Sprint7RegistrationTests
             new TokenLedgerService(db),
             features,
             NullLogger<CompanyRegistrationService>.Instance);
+    }
+
+    private static void EnsurePaidPublishPeriod(JobsyDbContext db, bool exposeActivationLinks = true)
+    {
+        var row = db.PlatformFeatureSettings.Local.FirstOrDefault()
+                  ?? db.PlatformFeatureSettings.FirstOrDefault();
+        if (row is null)
+        {
+            db.PlatformFeatureSettings.Add(new PlatformFeatureSettings
+            {
+                Id = Guid.Parse("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"),
+                ExposeRegistrationActivationLinks = exposeActivationLinks,
+                FreePublishUntil = null,
+                UpdatedAtUtc = DateTime.UtcNow
+            });
+        }
+        else
+        {
+            row.FreePublishUntil = null;
+            row.ExposeRegistrationActivationLinks = exposeActivationLinks;
+        }
+
+        db.SaveChanges();
     }
 
     private static JobsyDbContext CreateDb()

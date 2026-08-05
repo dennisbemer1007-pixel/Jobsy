@@ -52,6 +52,7 @@ public sealed class PlatformFeatureService : IPlatformFeatureService
         row.InactiveCompanyDays = Math.Clamp(update.InactiveCompanyDays, 30, 730);
         row.SessionInactivityTimeoutMinutes =
             SessionSecurityRules.ClampTimeoutMinutes(update.SessionInactivityTimeoutMinutes);
+        row.FreePublishUntil = update.FreePublishUntil;
         if (!string.IsNullOrWhiteSpace(update.PublicWebBaseUrl))
         {
             var normalized = JobsyPublicUrl.NormalizeOrigin(update.PublicWebBaseUrl);
@@ -121,6 +122,11 @@ public sealed class PlatformFeatureService : IPlatformFeatureService
     {
         var configBase = JobsyPublicUrl.NormalizeOrigin(
             _configuration["PublicWebBaseUrl"] ?? "http://localhost:5201");
+        // No DB row yet → launch default (free publish until 18-11-2026).
+        // Explicit null on an existing row means admin turned the promo off.
+        var freeUntil = row is null
+            ? FreePublishRules.DefaultUntil
+            : row.FreePublishUntil;
         return new PlatformFeatureSnapshot(
             row?.VacancyContentModerationEnabled ?? _options.VacancyContentModerationEnabled,
             row?.AuthenticatorEnabled ?? _options.AuthenticatorEnabled,
@@ -132,6 +138,7 @@ public sealed class PlatformFeatureService : IPlatformFeatureService
             row?.InactiveCompanyDays is > 0 ? row.InactiveCompanyDays : 120,
             SessionSecurityRules.ClampTimeoutMinutes(
                 row?.SessionInactivityTimeoutMinutes
-                ?? SessionSecurityRules.DefaultInactivityTimeoutMinutes));
+                ?? SessionSecurityRules.DefaultInactivityTimeoutMinutes),
+            freeUntil);
     }
 }

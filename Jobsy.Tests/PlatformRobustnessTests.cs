@@ -143,6 +143,14 @@ public class PlatformRobustnessTests
         db.Vacancies.Add(vacancy);
         await db.SaveChangesAsync();
 
+        db.PlatformFeatureSettings.Add(new PlatformFeatureSettings
+        {
+            Id = Guid.Parse("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"),
+            FreePublishUntil = null,
+            UpdatedAtUtc = DateTime.UtcNow
+        });
+        await db.SaveChangesAsync();
+
         var features = new PlatformFeatureService(
             db,
             Microsoft.Extensions.Options.Options.Create(new Jobsy.Core.Options.JobsyFeatureOptions()),

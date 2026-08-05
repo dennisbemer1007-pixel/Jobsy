@@ -31,6 +31,7 @@ public class VacanciesController : ControllerBase
     private readonly IVacancyContentModerationService _moderation;
     private readonly ITranslationService _translation;
     private readonly IVacancyCategoryService _categories;
+    private readonly IPlatformFeatureService _features;
 
     public VacanciesController(
         JobsyDbContext db,
@@ -41,7 +42,8 @@ public class VacanciesController : ControllerBase
         ISalaryService salary,
         IVacancyContentModerationService moderation,
         ITranslationService translation,
-        IVacancyCategoryService categories)
+        IVacancyCategoryService categories,
+        IPlatformFeatureService features)
     {
         _db = db;
         _companyAuth = companyAuth;
@@ -52,6 +54,7 @@ public class VacanciesController : ControllerBase
         _moderation = moderation;
         _translation = translation;
         _categories = categories;
+        _features = features;
     }
 
     /// <summary>
@@ -328,6 +331,7 @@ public class VacanciesController : ControllerBase
             .Select(g => new { VacancyId = g.Key, Count = g.Count() })
             .ToDictionaryAsync(x => x.VacancyId, x => x.Count, cancellationToken);
 
+        var freePublishUntil = (await _features.GetAsync(cancellationToken)).FreePublishUntil;
         var mapped = new List<VacancyListItemDto>(vacancies.Count);
         foreach (var v in vacancies)
         {
@@ -342,7 +346,8 @@ public class VacanciesController : ControllerBase
                     shareCount: shareCounts.GetValueOrDefault(v.Id),
                     likeCount: likeCounts.GetValueOrDefault(v.Id),
                     includeDescription: false,
-                    includeCategoryInternals: true));
+                    includeCategoryInternals: true,
+                    freePublishUntil: freePublishUntil));
             }
             catch
             {
@@ -577,7 +582,11 @@ public class VacanciesController : ControllerBase
 
         vacancy.Company = company;
         vacancy.IntermediaryCompany = intermediaryCompany;
-        return CreatedAtAction(nameof(GetById), new { id = vacancy.Id }, MapToDto(vacancy, showWage: true, includeCategoryInternals: true));
+        var freePublishUntil = (await _features.GetAsync(cancellationToken)).FreePublishUntil;
+        return CreatedAtAction(
+            nameof(GetById),
+            new { id = vacancy.Id },
+            MapToDto(vacancy, showWage: true, includeCategoryInternals: true, freePublishUntil: freePublishUntil));
     }
 
     [HttpPost("publish")]
@@ -622,7 +631,7 @@ public class VacanciesController : ControllerBase
             return BadRequest(new { message = result.ErrorMessage });
         }
 
-        return Ok(ToProductResult(result));
+        return Ok(await ToProductResultAsync(result, cancellationToken));
     }
 
     [HttpPost("{id:guid}/approve-publish")]
@@ -660,7 +669,7 @@ public class VacanciesController : ControllerBase
             return BadRequest(new { message = result.ErrorMessage });
         }
 
-        return Ok(ToProductResult(result));
+        return Ok(await ToProductResultAsync(result, cancellationToken));
     }
 
     [HttpPost("{id:guid}/highlight")]
@@ -759,7 +768,7 @@ public class VacanciesController : ControllerBase
             return BadRequest(new { message = result.ErrorMessage });
         }
 
-        return Ok(ToProductResult(result));
+        return Ok(await ToProductResultAsync(result, cancellationToken));
     }
 
     /// <summary>
@@ -881,7 +890,7 @@ public class VacanciesController : ControllerBase
             return BadRequest(new { message = result.ErrorMessage });
         }
 
-        return Ok(ToProductResult(result));
+        return Ok(await ToProductResultAsync(result, cancellationToken));
     }
 
     private ObjectResult PaymentRequired(InsufficientTokensDto body)
@@ -1006,11 +1015,21 @@ public class VacanciesController : ControllerBase
         return null;
     }
 
-    private VacancyProductActionResultDto ToProductResult(VacancyProductOutcome result) => new(
-        MapToDto(result.Vacancy, showWage: true, includeCategoryInternals: true),
-        result.PendingApproval,
-        result.ErrorMessage,
-        result.PushBomRecipientCount);
+    private async Task<VacancyProductActionResultDto> ToProductResultAsync(
+        VacancyProductOutcome result,
+        CancellationToken cancellationToken)
+    {
+        var freePublishUntil = (await _features.GetAsync(cancellationToken)).FreePublishUntil;
+        return new(
+            MapToDto(
+                result.Vacancy,
+                showWage: true,
+                includeCategoryInternals: true,
+                freePublishUntil: freePublishUntil),
+            result.PendingApproval,
+            result.ErrorMessage,
+            result.PushBomRecipientCount);
+    }
 
     private async Task<bool> CanViewerSeeWageAsync(CancellationToken cancellationToken)
     {
@@ -1115,6 +1134,12 @@ public class VacanciesController : ControllerBase
         bool includeCategoryInternals = false)
     {
         var mapped = new List<VacancyListItemDto>(vacancies.Count);
+        DateOnly? freePublishUntil = null;
+        if (includeCategoryInternals)
+        {
+            freePublishUntil = (await _features.GetAsync(cancellationToken)).FreePublishUntil;
+        }
+
         foreach (var v in vacancies)
         {
             mapped.Add(MapToDto(
@@ -1122,7 +1147,8 @@ public class VacanciesController : ControllerBase
                 showWage,
                 ageYears,
                 includeDescription: includeDescription,
-                includeCategoryInternals: includeCategoryInternals));
+                includeCategoryInternals: includeCategoryInternals,
+                freePublishUntil: freePublishUntil));
         }
 
         return await TranslateManyAsync(mapped, targetLanguage, cancellationToken);
@@ -1270,7 +1296,8 @@ public class VacanciesController : ControllerBase
         bool includeDescription = true,
         int shareCount = 0,
         int likeCount = 0,
-        bool includeCategoryInternals = false)
+        bool includeCategoryInternals = false,
+        DateOnly? freePublishUntil = null)
     {
         decimal? hourly = null;
         IReadOnlyList<WageByAgeDto>? wageByAge = null;
@@ -1299,6 +1326,17 @@ public class VacanciesController : ControllerBase
 
         var featured = VacancyHighlightRules.IsActive(v.IsHighlighted, v.HighlightedUntil, DateTime.UtcNow);
         var display = IntermediaryVacancyRules.ResolvePublicDisplay(v, v.Company, v.IntermediaryCompany);
+
+        decimal? publishCostTokens = null;
+        if (includeCategoryInternals)
+        {
+            decimal? basePublish = v.Category is null
+                ? null
+                : (v.Category.IsAlwaysFree ? 0m : v.Category.PublishCostTokens);
+            publishCostTokens = basePublish is null
+                ? null
+                : FreePublishRules.EffectivePublishCost(basePublish.Value, freePublishUntil, DateTime.UtcNow);
+        }
 
         return new VacancyListItemDto(
             v.Id,
@@ -1368,9 +1406,7 @@ public class VacanciesController : ControllerBase
                 && (v.Category is null || (v.Category.HighlightAvailable && !v.Category.IsAlwaysFree)),
             includeCategoryInternals
                 && (v.Category is null || (v.Category.PushBomAvailable && !v.Category.IsAlwaysFree)),
-            includeCategoryInternals
-                ? (v.Category is null ? null : (v.Category.IsAlwaysFree ? 0m : v.Category.PublishCostTokens))
-                : null,
+            publishCostTokens,
             includeCategoryInternals
                 ? (v.Category is null ? null : (v.Category.IsAlwaysFree ? 0m : v.Category.HighlightCostTokens))
                 : null,
