@@ -1,22 +1,45 @@
 using System.Security.Cryptography;
 using System.Text;
 
-namespace Jobsy.Infrastructure.Security;
+namespace Jobsy.Core.Security;
 
 /// <summary>
 /// HMAC-signed session proof issued after local-login / external ensure.
 /// Lets Production DevelopmentAuth accept non-demo emails without opening
-/// header spoofing when only the shared secret is known.
+/// header spoofing when only the shared DevelopmentAuth secret is known.
 /// Format: <c>base64url(email|userId|exp).base64url(hmac)</c>
 /// </summary>
 public static class JobsyLocalSessionToken
 {
-    public static string Create(string email, Guid userId, string secret, TimeSpan lifetime)
+    /// <summary>
+    /// Absolute lifetime of a token; refreshed on session-activity so idle users
+    /// stay in sync with the sliding cookie without minting an 8h bearer.
+    /// </summary>
+    public static readonly TimeSpan DefaultLifetime = TimeSpan.FromMinutes(60);
+
+    /// <summary>
+    /// Prefer a dedicated signing key so a leaked DevelopmentAuthSecret alone
+    /// cannot forge non-demo session tokens. Falls back to DevelopmentAuthSecret for local DX.
+    /// </summary>
+    public static string? ResolveSigningKey(string? localSessionSigningKey, string? developmentAuthSecret)
+    {
+        if (!string.IsNullOrWhiteSpace(localSessionSigningKey))
+        {
+            return localSessionSigningKey.Trim();
+        }
+
+        return string.IsNullOrWhiteSpace(developmentAuthSecret)
+            ? null
+            : developmentAuthSecret.Trim();
+    }
+
+    public static string Create(string email, Guid userId, string secret, TimeSpan? lifetime = null)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(email);
         ArgumentException.ThrowIfNullOrWhiteSpace(secret);
 
-        var exp = DateTimeOffset.UtcNow.Add(lifetime).ToUnixTimeSeconds();
+        var ttl = lifetime ?? DefaultLifetime;
+        var exp = DateTimeOffset.UtcNow.Add(ttl).ToUnixTimeSeconds();
         var payload = $"{email.Trim().ToLowerInvariant()}|{userId:N}|{exp}";
         var payloadBytes = Encoding.UTF8.GetBytes(payload);
         var sig = Sign(payloadBytes, secret);
@@ -28,9 +51,23 @@ public static class JobsyLocalSessionToken
         string secret,
         out string email,
         out Guid userId)
+        => TryReadSignedPayload(token, secret, ignoreExpiry: false, out email, out userId, out _);
+
+    /// <summary>
+    /// Signature-valid payload read for cookie refresh (allows expired tokens so
+    /// session-activity can mint a new absolute expiry while the cookie is still live).
+    /// </summary>
+    public static bool TryReadSignedPayload(
+        string? token,
+        string secret,
+        bool ignoreExpiry,
+        out string email,
+        out Guid userId,
+        out long expUnix)
     {
         email = string.Empty;
         userId = Guid.Empty;
+        expUnix = 0;
 
         if (string.IsNullOrWhiteSpace(token) || string.IsNullOrWhiteSpace(secret))
         {
@@ -66,12 +103,12 @@ public static class JobsyLocalSessionToken
         var fields = payload.Split('|', 3);
         if (fields.Length != 3
             || !Guid.TryParseExact(fields[1], "N", out userId)
-            || !long.TryParse(fields[2], out var expUnix))
+            || !long.TryParse(fields[2], out expUnix))
         {
             return false;
         }
 
-        if (DateTimeOffset.UtcNow.ToUnixTimeSeconds() > expUnix)
+        if (!ignoreExpiry && DateTimeOffset.UtcNow.ToUnixTimeSeconds() > expUnix)
         {
             return false;
         }

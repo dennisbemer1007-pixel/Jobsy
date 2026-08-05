@@ -111,7 +111,7 @@ public class Sprint7RegistrationTests
     }
 
     [Fact]
-    public async Task Submit_exposes_activation_url_when_mail_is_stubbed_even_if_flag_off()
+    public async Task Submit_hides_activation_url_when_flag_off_even_if_mail_stubbed()
     {
         await using var db = CreateDb();
         var sut = CreateService(db, exposeActivationLinks: false);
@@ -121,11 +121,12 @@ public class Sprint7RegistrationTests
             "A", "hidden.url@jobsy.local", null, AcceptedTerms: true,
             Password: "TestPass1!"));
 
-        // Stub delivery → always return the link so the registrant is not locked out.
-        Assert.False(string.IsNullOrWhiteSpace(submit.ActivationUrl));
+        // AVG: anonymous submit must not leak the activation token when the flag is off.
+        Assert.Null(submit.ActivationUrl);
         Assert.False(string.IsNullOrEmpty(
             await db.CompanyRegistrations.Where(r => r.Id == submit.RegistrationId)
                 .Select(r => r.ActivationToken).SingleAsync()));
+        Assert.Contains("e-mail", submit.Message, StringComparison.OrdinalIgnoreCase);
     }
 
     [Fact]

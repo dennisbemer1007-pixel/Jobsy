@@ -227,10 +227,10 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
                 RequiresTakeover: true,
                 Message: takeoverMail.DeliveredViaProvider
                     ? "Deze vestiging is al geregistreerd. Bevestig eerst je e-mailadres; daarna sturen we het overnameverzoek naar de huidige eigenaar."
-                    : "Deze vestiging is al geregistreerd. We konden geen e-mail afleveren — gebruik de verificatielink hieronder.",
-                ActivationUrl: featuresTakeover.ExposeRegistrationActivationLinks || !takeoverMail.DeliveredViaProvider
-                    ? verifyUrl
-                    : null);
+                    : featuresTakeover.ExposeRegistrationActivationLinks
+                        ? "Deze vestiging is al geregistreerd. We konden geen e-mail afleveren — gebruik de verificatielink hieronder."
+                        : "Deze vestiging is al geregistreerd. Bevestig je e-mailadres via de mail (check ook spam). Lukt dat niet, neem contact op met support.",
+                ActivationUrl: featuresTakeover.ExposeRegistrationActivationLinks ? verifyUrl : null);
         }
 
         registration.Status = CompanyRegistrationStatus.PendingActivation;
@@ -249,16 +249,30 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
             ? " Je account staat intern op KVK-verificatie in afwachting; we controleren dit automatisch zodra de KVK-dienst weer bereikbaar is."
             : string.Empty;
 
-        // Always return the activation link when mail was only stubbed so the registrant is not locked out.
-        var exposeLink = features.ExposeRegistrationActivationLinks || !mailDelivery.DeliveredViaProvider;
+        // AVG/auth: never return the activation URL on anonymous submit unless the
+        // explicit demo/admin flag is on — otherwise email verification is bypassable.
+        var exposeLink = features.ExposeRegistrationActivationLinks;
+
+        string message;
+        if (mailDelivery.DeliveredViaProvider)
+        {
+            message = $"Controleer je e-mail voor de verificatielink. {roleHint}{kvkHint}";
+        }
+        else if (exposeLink)
+        {
+            message = $"We konden geen e-mail afleveren — gebruik de verificatielink hieronder. {roleHint}{kvkHint}";
+        }
+        else
+        {
+            message =
+                $"Controleer je e-mail voor de verificatielink (inclusief spam). {roleHint}{kvkHint}";
+        }
 
         return new RegistrationSubmitResult(
             registration.Id,
             registration.Status,
             RequiresTakeover: false,
-            Message: mailDelivery.DeliveredViaProvider
-                ? $"Controleer je e-mail voor de verificatielink. {roleHint}{kvkHint}"
-                : $"We konden geen e-mail afleveren — gebruik de verificatielink hieronder. {roleHint}{kvkHint}",
+            Message: message,
             ActivationUrl: exposeLink ? activationUrl : null);
     }
 

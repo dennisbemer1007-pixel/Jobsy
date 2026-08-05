@@ -5,9 +5,9 @@ using Jobsy.Core.Authorization;
 using Jobsy.Core.Entities;
 using Jobsy.Core.Enums;
 using Jobsy.Core.Interfaces;
+using Jobsy.Core.Security;
 using Jobsy.Infrastructure.Data;
 using Jobsy.Infrastructure.Security;
-using Jobsy.Core.Rules;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
@@ -225,17 +225,15 @@ public class AuthController : ControllerBase
 
     private string? CreateLocalSessionToken(string email, Guid userId)
     {
-        var secret = _configuration["JobsyAuth:DevelopmentAuthSecret"];
+        var secret = JobsyLocalSessionToken.ResolveSigningKey(
+            _configuration["JobsyAuth:LocalSessionSigningKey"],
+            _configuration["JobsyAuth:DevelopmentAuthSecret"]);
         if (string.IsNullOrWhiteSpace(secret))
         {
             return null;
         }
 
-        return JobsyLocalSessionToken.Create(
-            email,
-            userId,
-            secret,
-            TimeSpan.FromMinutes(SessionSecurityRules.MaxInactivityTimeoutMinutes));
+        return JobsyLocalSessionToken.Create(email, userId, secret);
     }
 
     private static string? NormalizeExternalProvider(string? provider)

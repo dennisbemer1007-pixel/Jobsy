@@ -15,15 +15,16 @@ Indicatie kosten: ~$14/mo web + Postgres-compute/storage (prorata per seconde). 
 
 De Blueprint houdt `JobsyAuth__AllowDevelopmentAuth=true` zodat demo-login via de Web UI werkt, maar:
 
-- Buiten Development accepteert header-auth `@jobsy.local` demo-accounts met de gedeelde secret; echte registratie-/OAuth-gebruikers sturen ook `X-Jobsy-Local-Session` (HMAC na login).
+- Buiten Development accepteert header-auth `@jobsy.local` demo-accounts met de gedeelde secret; echte registratie-/OAuth-gebruikers sturen ook `X-Jobsy-Local-Session` (HMAC met `LocalSessionSigningKey`, vernieuwd bij session-activity).
 - OAuth client-secrets vereisen een aparte `JobsyAuth__ExternalProvisionSecret` (niet dezelfde DevelopmentAuthSecret; Web gebruikt geen DevelopmentAuthSecret-fallback meer).
 - Custom domain: `PublicWebBaseUrl=https://lobsy.nl` + CORS voor `lobsy.nl` / `www.lobsy.nl`.
 
 - `JobsyAuth__DevelopmentAuthSecret` wordt gegenereerd op `jobsy-api` en gedeeld met `jobsy-web`. Alleen requests met die secret-header worden geaccepteerd — spoofing van `X-Jobsy-Email` vanaf het internet werkt niet meer.
+- `JobsyAuth__LocalSessionSigningKey` wordt apart gegenereerd en gedeeld voor HMAC-sessietokens van niet-demo gebruikers.
 - `JobsyAuth__ExternalProvisionSecret` wordt apart gegenereerd en gedeeld met `jobsy-web` voor OAuth credential-provisioning.
 - `JobsyFeatures__ExposeRegistrationActivationLinks=false` (geen activatie-URL in API-responses).
 
-Na Blueprint sync: controleer dat beide services dezelfde `JobsyAuth__DevelopmentAuthSecret` én `JobsyAuth__ExternalProvisionSecret` hebben.
+Na Blueprint sync: controleer dat beide services dezelfde `JobsyAuth__DevelopmentAuthSecret`, `JobsyAuth__LocalSessionSigningKey` én `JobsyAuth__ExternalProvisionSecret` hebben.
 
 ## Eenmalig: code + Blueprint
 

@@ -1,4 +1,4 @@
-using Jobsy.Infrastructure.Security;
+using Jobsy.Core.Security;
 
 namespace Jobsy.Tests;
 
@@ -36,7 +36,7 @@ public class JobsyLocalSessionTokenTests
     }
 
     [Fact]
-    public void Validate_rejects_expired_token()
+    public void Validate_rejects_expired_token_but_read_allows_refresh()
     {
         var userId = Guid.NewGuid();
         var token = JobsyLocalSessionToken.Create(
@@ -46,5 +46,21 @@ public class JobsyLocalSessionTokenTests
             TimeSpan.FromSeconds(-5));
 
         Assert.False(JobsyLocalSessionToken.TryValidate(token, "secret", out _, out _));
+        Assert.True(JobsyLocalSessionToken.TryReadSignedPayload(
+            token, "secret", ignoreExpiry: true, out var email, out var id, out _));
+        Assert.Equal("user@example.com", email);
+        Assert.Equal(userId, id);
+    }
+
+    [Fact]
+    public void ResolveSigningKey_prefers_dedicated_key()
+    {
+        Assert.Equal(
+            "dedicated",
+            JobsyLocalSessionToken.ResolveSigningKey("dedicated", "dev-secret"));
+        Assert.Equal(
+            "dev-secret",
+            JobsyLocalSessionToken.ResolveSigningKey(null, "dev-secret"));
+        Assert.Null(JobsyLocalSessionToken.ResolveSigningKey(null, null));
     }
 }

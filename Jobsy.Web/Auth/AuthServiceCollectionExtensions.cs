@@ -5,6 +5,7 @@ using System.Text;
 using Jobsy.Core;
 using Jobsy.Core.Authorization;
 using Jobsy.Core.Rules;
+using Jobsy.Core.Security;
 using Jobsy.Web.Security;
 using Microsoft.AspNetCore.Antiforgery;
 using Microsoft.AspNetCore.Authentication;
@@ -389,8 +390,9 @@ public static class AuthServiceCollectionExtensions
         });
 
         // Idle-timer beacon (no antiforgery): refreshes LastActivity for authenticated users only.
+        // Also slides the local-session HMAC so API auth stays valid while the cookie is alive.
         // Returns JSON 401 when middleware already expired the session (Accept: application/json).
-        app.MapMethods("/account/session-activity", ["GET", "POST"], (HttpContext http) =>
+        app.MapMethods("/account/session-activity", ["GET", "POST"], async (HttpContext http) =>
         {
             if (http.User.Identity?.IsAuthenticated != true)
             {
@@ -400,6 +402,7 @@ public static class AuthServiceCollectionExtensions
             }
 
             StampLastActivity(http);
+            await RefreshLocalSessionCookieAsync(http);
             return Results.Json(new { ok = true });
         }).AllowAnonymous().DisableAntiforgery();
 
@@ -422,6 +425,65 @@ public static class AuthServiceCollectionExtensions
 
     private static void StampLastActivity(HttpContext http)
         => SessionActivityCookie.Stamp(http, DateTimeOffset.UtcNow);
+
+    /// <summary>
+    /// Re-mints <see cref="JobsyClaimTypes.LocalSession"/> on activity so absolute HMAC
+    /// expiry cannot outpace the sliding cookie for non-demo Production users.
+    /// </summary>
+    private static async Task RefreshLocalSessionCookieAsync(HttpContext http)
+    {
+        if (http.User.Identity is not ClaimsIdentity identity || !identity.IsAuthenticated)
+        {
+            return;
+        }
+
+        var existing = identity.FindFirst(JobsyClaimTypes.LocalSession)?.Value;
+        if (string.IsNullOrWhiteSpace(existing))
+        {
+            return;
+        }
+
+        var config = http.RequestServices.GetRequiredService<IConfiguration>();
+        var key = JobsyLocalSessionToken.ResolveSigningKey(
+            config["JobsyAuth:LocalSessionSigningKey"],
+            config["JobsyAuth:DevelopmentAuthSecret"]);
+        if (string.IsNullOrWhiteSpace(key))
+        {
+            return;
+        }
+
+        // Allow refresh of recently expired tokens while the auth cookie is still valid.
+        if (!JobsyLocalSessionToken.TryReadSignedPayload(
+                existing,
+                key,
+                ignoreExpiry: true,
+                out var email,
+                out var userId,
+                out _))
+        {
+            return;
+        }
+
+        var cookieEmail = identity.FindFirst(ClaimTypes.Email)?.Value
+                          ?? identity.FindFirst("email")?.Value;
+        if (string.IsNullOrWhiteSpace(cookieEmail)
+            || !string.Equals(cookieEmail, email, StringComparison.OrdinalIgnoreCase))
+        {
+            return;
+        }
+
+        var fresh = JobsyLocalSessionToken.Create(email, userId, key);
+        foreach (var claim in identity.FindAll(JobsyClaimTypes.LocalSession).ToList())
+        {
+            identity.RemoveClaim(claim);
+        }
+
+        identity.AddClaim(new Claim(JobsyClaimTypes.LocalSession, fresh));
+        await http.SignInAsync(
+            CookieAuthenticationDefaults.AuthenticationScheme,
+            http.User,
+            CreateSessionAuthProperties());
+    }
 
     private static ClaimsPrincipal CreateLocalPrincipal(DemoUserOptions user)
     {

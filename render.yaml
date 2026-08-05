@@ -43,6 +43,8 @@ services:
         value: "true"
       - key: JobsyAuth__DevelopmentAuthSecret
         generateValue: true
+      - key: JobsyAuth__LocalSessionSigningKey
+        generateValue: true
       - key: JobsyAuth__ExternalProvisionSecret
         generateValue: true
       - key: JobsyFeatures__ExposeRegistrationActivationLinks
@@ -94,6 +96,11 @@ services:
           name: jobsy-api
           type: web
           envVarKey: JobsyAuth__DevelopmentAuthSecret
+      - key: JobsyAuth__LocalSessionSigningKey
+        fromService:
+          name: jobsy-api
+          type: web
+          envVarKey: JobsyAuth__LocalSessionSigningKey
       - key: JobsyAuth__ExternalProvisionSecret
         fromService:
           name: jobsy-api

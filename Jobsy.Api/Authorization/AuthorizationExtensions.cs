@@ -4,8 +4,8 @@ using System.Text;
 using System.Text.Encodings.Web;
 using Jobsy.Core.Authorization;
 using Jobsy.Core.Enums;
+using Jobsy.Core.Security;
 using Jobsy.Infrastructure.Data;
-using Jobsy.Infrastructure.Security;
 using Jobsy.Infrastructure.Services;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -171,16 +171,18 @@ public sealed class DevelopmentAuthHandler : AuthenticationHandler<Authenticatio
 
         // Outside Development, header-auth for non-demo emails requires a HMAC session
         // proof issued at local-login / external ensure (X-Jobsy-Local-Session).
-        // Demo @jobsy.local accounts still work with the shared secret alone.
+        // Demo @jobsy.local accounts still work with the DevelopmentAuth secret alone.
         if (!_environment.IsDevelopment()
             && !email.EndsWith("@jobsy.local", StringComparison.OrdinalIgnoreCase))
         {
-            var configuredSecret = _configuration["JobsyAuth:DevelopmentAuthSecret"];
-            if (string.IsNullOrEmpty(configuredSecret)
+            var sessionKey = JobsyLocalSessionToken.ResolveSigningKey(
+                _configuration["JobsyAuth:LocalSessionSigningKey"],
+                _configuration["JobsyAuth:DevelopmentAuthSecret"]);
+            if (string.IsNullOrEmpty(sessionKey)
                 || !Request.Headers.TryGetValue("X-Jobsy-Local-Session", out var sessionValues)
                 || !JobsyLocalSessionToken.TryValidate(
                     sessionValues.FirstOrDefault(),
-                    configuredSecret,
+                    sessionKey,
                     out var tokenEmail,
                     out var tokenUserId)
                 || !string.Equals(tokenEmail, email, StringComparison.OrdinalIgnoreCase)
