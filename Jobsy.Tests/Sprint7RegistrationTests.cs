@@ -130,6 +130,29 @@ public class Sprint7RegistrationTests
     }
 
     [Fact]
+    public async Task Lookup_marks_existing_establishment_as_in_use()
+    {
+        await using var db = CreateDb();
+        db.Companies.Add(new Company
+        {
+            Id = Guid.NewGuid(),
+            Name = "Taken Branch",
+            KvkNumber = "99990002",
+            KvkEstablishmentId = "99990002_0001",
+            Address = "A",
+            Location = new GeoPoint(52, 4),
+            Type = CompanyType.Employer
+        });
+        await db.SaveChangesAsync();
+
+        var kvk = new TestKvkService(db);
+        var lookup = await kvk.LookupEstablishmentsAsync("99990002");
+        Assert.Equal(KvkLookupStatus.Ok, lookup.Status);
+        Assert.True(lookup.Establishments.Single(e => e.KvkEstablishmentId == "99990002_0001").IsInUse);
+        Assert.False(lookup.Establishments.Single(e => e.KvkEstablishmentId == "99990002_0002").IsInUse);
+    }
+
+    [Fact]
     public async Task Submit_requires_password()
     {
         await using var db = CreateDb();

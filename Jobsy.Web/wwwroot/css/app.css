@@ -9038,6 +9038,10 @@ button.linkish:hover {
     max-width: 560px;
 }
 
+.register-brand {
+    margin-bottom: 0.85rem;
+}
+
 .wizard-steps {
     display: flex;
     flex-wrap: wrap;
@@ -9060,18 +9064,122 @@ button.linkish:hover {
     margin-top: 1rem;
 }
 
+.register-establishment-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.45rem;
+}
+
 .register-choice {
     width: 100%;
     text-align: left;
     cursor: pointer;
     background: transparent;
     border: 1px solid transparent;
-    border-radius: 8px;
+    border-radius: 0;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.15rem;
+}
+
+.register-choice__main {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 0.75rem;
+    width: 100%;
 }
 
 .register-choice.is-selected {
     border-color: var(--accent);
     background: color-mix(in srgb, var(--accent) 10%, transparent);
+}
+
+.register-choice--unavailable {
+    cursor: default;
+    opacity: 0.92;
+    border-color: color-mix(in srgb, var(--border) 80%, transparent);
+    background: color-mix(in srgb, var(--muted) 6%, var(--surface));
+}
+
+.register-claim-link {
+    display: inline-block;
+    margin-top: 0.45rem;
+    padding: 0;
+    border: 0;
+    background: none;
+    color: var(--brand);
+    font: inherit;
+    font-size: 0.86rem;
+    text-decoration: underline;
+    text-underline-offset: 0.15em;
+    cursor: pointer;
+}
+
+.register-claim-link:hover {
+    color: color-mix(in srgb, var(--brand) 75%, #000);
+}
+
+.register-claim-panel {
+    margin-top: 0.65rem;
+    padding: 0.75rem 0.8rem;
+    border-radius: 8px;
+    border: 1px dashed color-mix(in srgb, var(--brand) 35%, var(--border));
+    background: color-mix(in srgb, var(--brand) 5%, var(--surface));
+}
+
+.register-claim-panel__text,
+.register-claim-intro {
+    margin: 0 0 0.35rem;
+    font-size: 0.92rem;
+    line-height: 1.45;
+}
+
+.register-result {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 0.35rem;
+    padding: 0.35rem 0.25rem 0.5rem;
+}
+
+.register-result__mascot {
+    width: 120px;
+    height: 120px;
+    object-fit: contain;
+    animation: register-mascot-bob 1.8s ease-in-out infinite;
+}
+
+.register-result__title {
+    margin: 0.35rem 0 0;
+    font-size: 1.55rem;
+    letter-spacing: -0.02em;
+    color: var(--brand);
+}
+
+.register-result__lead {
+    margin: 0.35rem 0 0;
+    max-width: 34rem;
+    line-height: 1.5;
+    color: var(--text);
+}
+
+.login-submit--compact {
+    width: auto;
+    min-width: 0;
+    padding-inline: 1.1rem;
+}
+
+@keyframes register-mascot-bob {
+    from { transform: translateY(0); }
+    to { transform: translateY(-6px); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .register-result__mascot {
+        animation: none;
+    }
 }
 
 .scope-fieldset {

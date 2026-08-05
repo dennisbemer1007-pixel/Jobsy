@@ -226,10 +226,10 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
                 registration.Status,
                 RequiresTakeover: true,
                 Message: takeoverMail.DeliveredViaProvider
-                    ? "Deze vestiging is al geregistreerd. Bevestig eerst je e-mailadres; daarna sturen we het overnameverzoek naar de huidige eigenaar."
+                    ? "Top — bevestig eerst je e-mail. Daarna sturen we je verzoek door naar de huidige beheerder; Lobsy-support kan meekijken."
                     : featuresTakeover.ExposeRegistrationActivationLinks
-                        ? "Deze vestiging is al geregistreerd. We konden geen e-mail afleveren — gebruik de verificatielink hieronder."
-                        : "Deze vestiging is al geregistreerd. Bevestig je e-mailadres via de mail (check ook spam). Lukt dat niet, neem contact op met support.",
+                        ? "We konden geen e-mail afleveren. Gebruik de verificatielink hieronder; daarna behandelen we je claim."
+                        : "Bevestig je e-mail via de mail (check ook spam). Daarna sturen we je verzoek door. Hulp nodig? Neem contact op met support.",
                 ActivationUrl: featuresTakeover.ExposeRegistrationActivationLinks ? verifyUrl : null);
         }
 

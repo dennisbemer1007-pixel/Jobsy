@@ -52,12 +52,12 @@ public class RegistrationController : ControllerBase
         CancellationToken cancellationToken)
     {
         var lookup = await _kvk.LookupEstablishmentsAsync(kvkNumber, cancellationToken);
-        // Hide occupancy to anonymous callers (same redaction as KvkController).
-        var items = lookup.Establishments.Select(i => i with { IsInUse = false }).ToList();
+        // Registration wizard needs IsInUse so claimed vestigingen show as unavailable.
+        // Boolean occupancy only — never owner/contact PII (that stays behind auth/takeover).
         return Ok(new KvkEstablishmentsLookupResponse(
             lookup.Status.ToString(),
             lookup.Message,
-            items));
+            lookup.Establishments));
     }
 
     [HttpPost]

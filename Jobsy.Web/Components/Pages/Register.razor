@@ -4,21 +4,30 @@
 @inject JobsyApiClient Api
 @inject NavigationManager Navigation
 @inject CultureState Culture
+@inject IHostEnvironment HostEnvironment
 @implements IDisposable
 
 <PageTitle>@Culture["Page.RegisterTitle"]</PageTitle>
 
 <div class="login-page">
     <div class="login-card register-card">
-        <h1>@Culture["Register.CompanyTitle"]</h1>
-        <p class="login-lead">@Culture["Register.Lead"]</p>
-
-        <div class="wizard-steps" aria-label="@Culture["Register.Steps"]">
-            <span class="@StepClass(1)">@Culture["Register.StepKvk"]</span>
-            <span class="@StepClass(2)">@Culture["Register.StepBranch"]</span>
-            <span class="@StepClass(3)">@Culture["Register.StepScope"]</span>
-            <span class="@StepClass(4)">@Culture["Register.StepContact"]</span>
+        <div class="login-brand register-brand">
+            <LobsyLogo Class="login-brand__logo" Alt="Lobsy" />
+            <span class="login-brand__name">Lobsy</span>
         </div>
+
+        @if (_step < 5)
+        {
+            <h1>@Culture["Register.CompanyTitle"]</h1>
+            <p class="login-lead">@Culture["Register.Lead"]</p>
+
+            <div class="wizard-steps" aria-label="@Culture["Register.Steps"]">
+                <span class="@StepClass(1)">@Culture["Register.StepKvk"]</span>
+                <span class="@StepClass(2)">@Culture["Register.StepBranch"]</span>
+                <span class="@StepClass(3)">@Culture["Register.StepScope"]</span>
+                <span class="@StepClass(4)">@Culture["Register.StepContact"]</span>
+            </div>
+        }
 
         @if (!string.IsNullOrEmpty(_error))
         {
@@ -32,7 +41,10 @@
                     @Culture["Register.KvkNumber"]
                     <input @bind="_kvkNumber" placeholder="@Culture["Register.KvkPlaceholder"]" required maxlength="20" />
                 </label>
-                <p class="muted">Stub-KVK’s: 12345678 (werkgever), 55667788 (intermediair SBI 78)</p>
+                @if (HostEnvironment.IsDevelopment())
+                {
+                    <p class="muted">Stub-KVK’s: 12345678 (werkgever), 55667788 (intermediair SBI 78)</p>
+                }
                 <button class="login-submit" type="submit" disabled="@_busy">@Culture["Register.SearchEstablishments"]</button>
             </form>
         }
@@ -61,29 +73,72 @@
         }
         else if (_step == 2)
         {
-            <div class="table-list">
+            <div class="table-list register-establishment-list">
                 @foreach (var e in _establishments)
                 {
-                    <button type="button"
-                            class="table-row register-choice @(_selected?.KvkEstablishmentId == e.KvkEstablishmentId ? "is-selected" : null)"
-                            @onclick="() => SelectEstablishment(e)">
-                        <div>
-                            <strong>@e.Name</strong>
-                            <span class="muted">@e.Address · @e.KvkEstablishmentId</span>
-                            @if (e.SbiCodes is { Count: > 0 })
+                    @if (e.IsInUse)
+                    {
+                        <div class="table-row register-choice register-choice--unavailable">
+                            <div class="register-choice__main">
+                                <div>
+                                    <strong>@e.Name</strong>
+                                    <span class="muted">@e.Address · @e.KvkEstablishmentId</span>
+                                    @if (e.SbiCodes is { Count: > 0 })
+                                    {
+                                        <span class="muted"> · SBI @string.Join(", ", e.SbiCodes)</span>
+                                    }
+                                </div>
+                                <span class="badge-warn">@Culture["Register.InUse"]</span>
+                            </div>
+                            @if (string.Equals(_claimExpandedId, e.KvkEstablishmentId, StringComparison.Ordinal))
                             {
-                                <span class="muted"> · SBI @string.Join(", ", e.SbiCodes)</span>
+                                <div class="register-claim-panel">
+                                    <p class="register-claim-panel__text">@Culture["Register.ClaimHint"]</p>
+                                    <div class="wizard-actions">
+                                        <button type="button" class="login-submit login-submit--compact" @onclick="() => StartClaim(e)">
+                                            @Culture["Register.ClaimContinue"]
+                                        </button>
+                                        <button type="button" class="provider-btn" @onclick="() => _claimExpandedId = null">
+                                            @Culture["Common.Cancel"]
+                                        </button>
+                                    </div>
+                                </div>
+                            }
+                            else
+                            {
+                                <button type="button"
+                                        class="register-claim-link"
+                                        @onclick="() => ExpandClaim(e.KvkEstablishmentId)">
+                                    @Culture["Register.ClaimLink"]
+                                </button>
                             }
                         </div>
-                        <span class="@(e.IsInUse ? "badge-warn" : "badge-ok")">
-                            @(e.IsInUse ? Culture["Register.InUse"] : Culture["Register.Available"])
-                        </span>
-                    </button>
+                    }
+                    else
+                    {
+                        <button type="button"
+                                class="table-row register-choice @(_selected?.KvkEstablishmentId == e.KvkEstablishmentId && !_claimMode ? "is-selected" : null)"
+                                @onclick="() => SelectEstablishment(e)">
+                            <div class="register-choice__main">
+                                <div>
+                                    <strong>@e.Name</strong>
+                                    <span class="muted">@e.Address · @e.KvkEstablishmentId</span>
+                                    @if (e.SbiCodes is { Count: > 0 })
+                                    {
+                                        <span class="muted"> · SBI @string.Join(", ", e.SbiCodes)</span>
+                                    }
+                                </div>
+                                <span class="badge-ok">@Culture["Register.Available"]</span>
+                            </div>
+                        </button>
+                    }
                 }
             </div>
             <div class="wizard-actions">
-                <button class="provider-btn" type="button" @onclick="() => _step = 1">@Culture["Common.Back"]</button>
-                <button class="login-submit" type="button" disabled="@(_selected is null)" @onclick="GoToScopeOrContact">
+                <button class="provider-btn" type="button" @onclick="BackToKvk">@Culture["Common.Back"]</button>
+                <button class="login-submit" type="button"
+                        disabled="@(_selected is null || _selected.IsInUse || _claimMode)"
+                        @onclick="GoToScopeOrContact">
                     @Culture["Common.Next"]
                 </button>
             </div>
@@ -93,12 +148,8 @@
             @if (_selected?.IsIntermediarySbi == true)
             {
                 <p class="state-message">@Culture["Register.IntermediaryRoleHint"]</p>
-                @if (_selected?.IsInUse == true)
-                {
-                    <p class="state-message">@Culture["Register.AlreadyRegistered"]</p>
-                }
                 <div class="wizard-actions">
-                    <button class="provider-btn" type="button" @onclick="() => _step = 2">@Culture["Common.Back"]</button>
+                    <button class="provider-btn" type="button" @onclick="BackToBranch">@Culture["Common.Back"]</button>
                     <button class="login-submit" type="button" @onclick="() => _step = 4">@Culture["Common.Next"]</button>
                 </div>
             }
@@ -124,19 +175,19 @@
                     </label>
                 </fieldset>
 
-                @if (_selected?.IsInUse == true)
-                {
-                    <p class="state-message">@Culture["Register.AlreadyRegistered"]</p>
-                }
-
                 <div class="wizard-actions">
-                    <button class="provider-btn" type="button" @onclick="() => _step = 2">@Culture["Common.Back"]</button>
+                    <button class="provider-btn" type="button" @onclick="BackToBranch">@Culture["Common.Back"]</button>
                     <button class="login-submit" type="button" @onclick="() => _step = 4">@Culture["Common.Next"]</button>
                 </div>
             }
         }
         else if (_step == 4)
         {
+            @if (_claimMode)
+            {
+                <p class="state-message register-claim-intro">@Culture["Register.ClaimFormIntro"]</p>
+                <p class="muted">@Culture.Format("Register.ChosenCompany", _selected?.Name ?? "")</p>
+            }
             <form class="login-form" @onsubmit="SubmitAsync" @onsubmit:preventDefault>
                 <label>
                     @Culture["Common.Name"]
@@ -159,12 +210,15 @@
                     @Culture["Common.Phone"] (@Culture["Common.Optional"])
                     <input @bind="_contactPhone" maxlength="64" />
                 </label>
-                <label>
-                    @Culture["Register.SalesCode"] (@Culture["Common.Optional"])
-                    <input @bind="_salesManagerCode" maxlength="32" placeholder="SM-XXXXXX" />
-                </label>
-                <p class="muted">@Culture["Register.SalesCodeHint"]</p>
-                <p class="muted">@Culture.Format("Register.Chosen", _selected?.Name ?? "", ScopePreviewLabel())</p>
+                @if (!_claimMode)
+                {
+                    <label>
+                        @Culture["Register.SalesCode"] (@Culture["Common.Optional"])
+                        <input @bind="_salesManagerCode" maxlength="32" placeholder="SM-XXXXXX" />
+                    </label>
+                    <p class="muted">@Culture["Register.SalesCodeHint"]</p>
+                    <p class="muted">@Culture.Format("Register.Chosen", _selected?.Name ?? "", ScopePreviewLabel())</p>
+                }
                 <label class="profile-toggle legal-consent">
                     <input type="checkbox" @bind="_acceptedTerms" required />
                     <span>
@@ -175,31 +229,52 @@
                     </span>
                 </label>
                 <div class="wizard-actions">
-                    <button class="provider-btn" type="button" @onclick="() => _step = 3">@Culture["Common.Back"]</button>
-                    <button class="login-submit" type="submit" disabled="@(_busy || !_acceptedTerms)">@Culture["Register.Submit"]</button>
+                    <button class="provider-btn" type="button" @onclick="BackFromContact">@Culture["Common.Back"]</button>
+                    <button class="login-submit" type="submit" disabled="@(_busy || !_acceptedTerms)">
+                        @(_claimMode ? Culture["Register.ClaimSubmit"] : Culture["Register.Submit"])
+                    </button>
                 </div>
             </form>
         }
         else if (_step == 5)
         {
-            <p class="state-message">@_message</p>
-            @if (!string.IsNullOrEmpty(_activationUrl))
-            {
-                <p class="muted">@Culture["Register.ActivationLinkHint"]</p>
-                <p><a class="auth-link" href="@_activationUrl">@_activationUrl</a></p>
-            }
-            else
-            {
-                <p class="muted">@Culture["Register.CheckEmail"]</p>
-            }
-            <a class="login-submit" href="/login" style="display:inline-block;text-align:center;text-decoration:none;margin-top:1rem">
-                @Culture["Register.GoLogin"]
-            </a>
+            <div class="register-result" role="status">
+                <img src="/images/brand/lobsy.png?v=20260731-eyes"
+                     alt=""
+                     class="register-result__mascot"
+                     width="120"
+                     height="120" />
+                <h1 class="register-result__title">
+                    @(_requiresTakeover ? Culture["Register.ClaimResultTitle"] : Culture["Register.ResultTitle"])
+                </h1>
+                <p class="register-result__lead">@_message</p>
+                @if (!string.IsNullOrEmpty(_activationUrl))
+                {
+                    <p class="muted">@Culture["Register.ActivationLinkHint"]</p>
+                    <a class="login-submit login-submit--compact"
+                       href="@_activationUrl"
+                       style="display:inline-flex;text-decoration:none;margin-top:0.35rem">
+                        @Culture["Register.OpenActivationLink"]
+                    </a>
+                }
+                else
+                {
+                    <p class="muted">@Culture["Register.CheckEmail"]</p>
+                }
+                <a class="login-submit"
+                   href="/login"
+                   style="display:inline-flex;text-align:center;text-decoration:none;margin-top:1.15rem">
+                    @Culture["Register.GoLogin"]
+                </a>
+            </div>
         }
 
-        <p class="muted" style="margin-top:1.25rem">
-            Al een account? <a class="auth-link" href="/login">@Culture["Auth.Login"]</a>
-        </p>
+        @if (_step < 5)
+        {
+            <p class="muted" style="margin-top:1.25rem">
+                Al een account? <a class="auth-link" href="/login">@Culture["Auth.Login"]</a>
+            </p>
+        }
     </div>
 </div>
 
@@ -211,6 +286,9 @@
     private string? _error;
     private string? _message;
     private string? _activationUrl;
+    private bool _requiresTakeover;
+    private bool _claimMode;
+    private string? _claimExpandedId;
     private string _kvkNumber = "12345678";
     private string _scope = "Organization";
     private string _contactName = "";
@@ -251,6 +329,8 @@
         _error = null;
         _kvkUnavailable = false;
         _pendingKvk = false;
+        _claimMode = false;
+        _claimExpandedId = null;
         try
         {
             var lookup = await Api.LookupRegistrationEstablishmentsAsync(_kvkNumber.Trim());
@@ -314,15 +394,75 @@
             SbiCodes = null
         };
         _pendingKvk = true;
+        _claimMode = false;
         _error = null;
         _step = 3;
     }
 
-    private void SelectEstablishment(KvkEstablishmentItem e) => _selected = e;
+    private void SelectEstablishment(KvkEstablishmentItem e)
+    {
+        if (e.IsInUse)
+        {
+            return;
+        }
+
+        _selected = e;
+        _claimMode = false;
+        _claimExpandedId = null;
+        _error = null;
+    }
+
+    private void ExpandClaim(string kvkEstablishmentId)
+    {
+        _claimExpandedId = kvkEstablishmentId;
+        _error = null;
+    }
+
+    private void StartClaim(KvkEstablishmentItem e)
+    {
+        _selected = e;
+        _claimMode = true;
+        _claimExpandedId = null;
+        _scope = "BranchOnly";
+        _error = null;
+        _step = 4;
+    }
+
+    private void BackToKvk()
+    {
+        _step = 1;
+        _claimMode = false;
+        _claimExpandedId = null;
+        _selected = null;
+        _error = null;
+    }
+
+    private void BackToBranch()
+    {
+        _step = 2;
+        _claimMode = false;
+        _claimExpandedId = null;
+        if (_selected?.IsInUse == true)
+        {
+            _selected = null;
+        }
+    }
+
+    private void BackFromContact()
+    {
+        if (_claimMode)
+        {
+            _step = 2;
+            _claimExpandedId = _selected?.KvkEstablishmentId;
+            return;
+        }
+
+        _step = 3;
+    }
 
     private void GoToScopeOrContact()
     {
-        if (_selected is null)
+        if (_selected is null || _selected.IsInUse)
         {
             return;
         }
@@ -333,6 +473,7 @@
             _scope = "BranchOnly";
         }
 
+        _claimMode = false;
         _step = 3;
     }
 
@@ -378,15 +519,19 @@
         _error = null;
         try
         {
+            var scope = _claimMode || _selected.IsIntermediarySbi
+                ? "BranchOnly"
+                : _scope;
+
             var result = await Api.SubmitRegistrationAsync(
                 _selected.KvkNumber,
                 _selected.KvkEstablishmentId,
-                _selected.IsIntermediarySbi ? "BranchOnly" : _scope,
+                scope,
                 _contactName.Trim(),
                 _contactEmail.Trim(),
                 string.IsNullOrWhiteSpace(_contactPhone) ? null : _contactPhone.Trim(),
                 acceptedTerms: true,
-                salesManagerTrackingCode: string.IsNullOrWhiteSpace(_salesManagerCode)
+                salesManagerTrackingCode: _claimMode || string.IsNullOrWhiteSpace(_salesManagerCode)
                     ? null
                     : _salesManagerCode.Trim(),
                 password: _password,
@@ -400,6 +545,7 @@
 
             _message = result.Message;
             _activationUrl = result.ActivationUrl;
+            _requiresTakeover = result.RequiresTakeover;
             _password = "";
             _passwordConfirm = "";
             _step = 5;
