@@ -42,22 +42,37 @@ public sealed class SmtpEmailService : IEmailService
         _logger = logger;
     }
 
-    public async Task SendAsync(EmailMessage message, CancellationToken cancellationToken = default)
+    public async Task<EmailDeliveryResult> SendAsync(EmailMessage message, CancellationToken cancellationToken = default)
     {
         var secrets = await _credentials.GetSecretsAsync(IntegrationKey.Mail, cancellationToken);
         if (TryResolveResend(secrets, out var resend))
         {
-            await SendViaResendAsync(message, resend, cancellationToken);
-            return;
+            try
+            {
+                await SendViaResendAsync(message, resend, cancellationToken);
+                return EmailDeliveryResult.Provider;
+            }
+            catch (Exception ex) when (ex is not OperationCanceledException)
+            {
+                // Fall through to SMTP or stub so registration / notifications are not hard-failed.
+                _logger.LogWarning(ex, "Resend failed; trying SMTP or stub fallback.");
+            }
         }
 
         if (TryResolveSmtp(secrets, out var settings))
         {
-            await SendViaSmtpAsync(message, settings, cancellationToken);
-            return;
+            try
+            {
+                await SendViaSmtpAsync(message, settings, cancellationToken);
+                return EmailDeliveryResult.Provider;
+            }
+            catch (Exception ex) when (ex is not OperationCanceledException)
+            {
+                _logger.LogWarning(ex, "SMTP failed; falling back to email stub.");
+            }
         }
 
-        await _stub.SendAsync(message, cancellationToken);
+        return await _stub.SendAsync(message, cancellationToken);
     }
 
     private async Task SendViaResendAsync(

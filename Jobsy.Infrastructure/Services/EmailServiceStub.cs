@@ -19,7 +19,7 @@ public sealed class EmailServiceStub : IEmailService
         _logger = logger;
     }
 
-    public async Task SendAsync(EmailMessage message, CancellationToken cancellationToken = default)
+    public async Task<EmailDeliveryResult> SendAsync(EmailMessage message, CancellationToken cancellationToken = default)
     {
         var redactedTo = RedactEmail(message.To);
         _logger.LogInformation(
@@ -37,12 +37,15 @@ public sealed class EmailServiceStub : IEmailService
                 To = redactedTo,
                 message.Subject,
                 Category = message.Category,
-                BodyLength = message.BodyHtml?.Length ?? 0
+                BodyLength = message.BodyHtml?.Length ?? 0,
+                Provider = "Stub",
+                Sent = false
             }),
             CreatedAt = DateTime.UtcNow
         });
 
         await _db.SaveChangesAsync(cancellationToken);
+        return EmailDeliveryResult.Stub;
     }
 
     public static string RedactEmail(string email)

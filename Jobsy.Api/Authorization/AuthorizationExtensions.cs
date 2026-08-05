@@ -5,6 +5,7 @@ using System.Text.Encodings.Web;
 using Jobsy.Core.Authorization;
 using Jobsy.Core.Enums;
 using Jobsy.Infrastructure.Data;
+using Jobsy.Infrastructure.Security;
 using Jobsy.Infrastructure.Services;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -168,15 +169,29 @@ public sealed class DevelopmentAuthHandler : AuthenticationHandler<Authenticatio
             return AuthenticateResult.Fail("Unknown or inactive user for Development auth.");
         }
 
-        // Outside Development, header-auth may only impersonate demo (@jobsy.local) accounts —
-        // prevents using the demo secret to assume arbitrary production identities.
+        // Outside Development, header-auth for non-demo emails requires a HMAC session
+        // proof issued at local-login / external ensure (X-Jobsy-Local-Session).
+        // Demo @jobsy.local accounts still work with the shared secret alone.
         if (!_environment.IsDevelopment()
             && !email.EndsWith("@jobsy.local", StringComparison.OrdinalIgnoreCase))
         {
-            Logger.LogWarning(
-                "Development auth rejected non-demo email outside Development {Email}",
-                EmailServiceStub.RedactEmail(email));
-            return AuthenticateResult.Fail("Development auth outside Development is limited to @jobsy.local demo users.");
+            var configuredSecret = _configuration["JobsyAuth:DevelopmentAuthSecret"];
+            if (string.IsNullOrEmpty(configuredSecret)
+                || !Request.Headers.TryGetValue("X-Jobsy-Local-Session", out var sessionValues)
+                || !JobsyLocalSessionToken.TryValidate(
+                    sessionValues.FirstOrDefault(),
+                    configuredSecret,
+                    out var tokenEmail,
+                    out var tokenUserId)
+                || !string.Equals(tokenEmail, email, StringComparison.OrdinalIgnoreCase)
+                || tokenUserId != dbUser.Id)
+            {
+                Logger.LogWarning(
+                    "Development auth rejected non-demo email without valid local session {Email}",
+                    EmailServiceStub.RedactEmail(email));
+                return AuthenticateResult.Fail(
+                    "Local session token required for non-demo users outside Development.");
+            }
         }
 
         var name = Request.Headers["X-Jobsy-Name"].FirstOrDefault() ?? dbUser.FullName;

@@ -165,8 +165,8 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
         }
 
         // Intermediairs (SBI 78*) provision a single Intermediary company (no employer org tree).
-        // Keep BranchOnly scope so takeover approval stays reachable for vestigingsmanagers.
-        var scope = isIntermediarySbi ? RegistrationScope.BranchOnly : request.Scope;
+        // All other employers register as Bedrijfsmanager with organization scope (can invite filiaalmanagers).
+        var scope = isIntermediarySbi ? RegistrationScope.BranchOnly : RegistrationScope.Organization;
 
         var registration = new CompanyRegistration
         {
@@ -218,15 +218,18 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
             // AVG/auth: verify requester e-mail before owners see the takeover or credentials are applied.
             var featuresTakeover = await _features.GetAsync(cancellationToken);
             var verifyUrl = BuildActivationUrl(registration.ActivationToken, featuresTakeover.PublicWebBaseUrl);
-            await SendTakeoverEmailVerificationAsync(registration, existing, verifyUrl, cancellationToken);
+            var takeoverMail = await SendTakeoverEmailVerificationAsync(registration, existing, verifyUrl, cancellationToken);
 
             return new RegistrationSubmitResult(
                 registration.Id,
                 registration.Status,
                 RequiresTakeover: true,
-                Message:
-                "Deze vestiging is al geregistreerd. Bevestig eerst je e-mailadres; daarna sturen we het overnameverzoek naar de huidige eigenaar.",
-                ActivationUrl: featuresTakeover.ExposeRegistrationActivationLinks ? verifyUrl : null);
+                Message: takeoverMail.DeliveredViaProvider
+                    ? "Deze vestiging is al geregistreerd. Bevestig eerst je e-mailadres; daarna sturen we het overnameverzoek naar de huidige eigenaar."
+                    : "Deze vestiging is al geregistreerd. We konden geen e-mail afleveren — gebruik de verificatielink hieronder.",
+                ActivationUrl: featuresTakeover.ExposeRegistrationActivationLinks || !takeoverMail.DeliveredViaProvider
+                    ? verifyUrl
+                    : null);
         }
 
         registration.Status = CompanyRegistrationStatus.PendingActivation;
@@ -235,24 +238,27 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
 
         var features = await _features.GetAsync(cancellationToken);
         var activationUrl = BuildActivationUrl(registration.ActivationToken, features.PublicWebBaseUrl);
-        await SendActivationEmailAsync(registration, activationUrl, cancellationToken);
+        var mailDelivery = await SendActivationEmailAsync(registration, activationUrl, cancellationToken);
 
         var roleHint = isIntermediarySbi
-            ? "Na verificatie krijg je de rol Intermediair (SBI 78)."
-            : scope == RegistrationScope.Organization
-                ? "Na verificatie krijg je de rol Bedrijfsmanager."
-                : "Na verificatie krijg je de rol Filiaalmanager.";
+            ? "Na verificatie kun je direct aan de slag als intermediair."
+            : "Na verificatie kun je direct aan de slag — je eerste token is gratis.";
 
         var kvkHint = kvkVerificationStatus == KvkVerificationStatus.Pending
             ? " Je account staat intern op KVK-verificatie in afwachting; we controleren dit automatisch zodra de KVK-dienst weer bereikbaar is."
             : string.Empty;
 
+        // Always return the activation link when mail was only stubbed so the registrant is not locked out.
+        var exposeLink = features.ExposeRegistrationActivationLinks || !mailDelivery.DeliveredViaProvider;
+
         return new RegistrationSubmitResult(
             registration.Id,
             registration.Status,
             RequiresTakeover: false,
-            Message: $"Controleer je e-mail voor de verificatielink (stub). {roleHint}{kvkHint}",
-            ActivationUrl: features.ExposeRegistrationActivationLinks ? activationUrl : null);
+            Message: mailDelivery.DeliveredViaProvider
+                ? $"Controleer je e-mail voor de verificatielink. {roleHint}{kvkHint}"
+                : $"We konden geen e-mail afleveren — gebruik de verificatielink hieronder. {roleHint}{kvkHint}",
+            ActivationUrl: exposeLink ? activationUrl : null);
     }
 
     public async Task<RegistrationActivationResult> ActivateAsync(
@@ -639,7 +645,7 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
                """;
         await _email.SendAsync(new EmailMessage(
             registration.ContactEmail,
-            "Overname goedgekeurd — Jobsy",
+            "Overname goedgekeurd — Lobsy",
             $"""
              <p>Hoi {safeName},</p>
              <p>Je overnameverzoek voor <strong>{WebUtility.HtmlEncode(target.Name)}</strong> is goedgekeurd.</p>
@@ -647,7 +653,7 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
              {(orgId is not null ? "onder de organisatie" : "")}.</p>
              {passwordBlock}
              <p><a href="{WebUtility.HtmlEncode(loginUrl)}">Naar inloggen</a></p>
-             <p><em>Stub — geen echte mail.</em></p>
+             <p>Groetjes van de vrolijke kreeft 🦞<br/>Team Lobsy</p>
              """,
             "TakeoverApproved"), cancellationToken);
 
@@ -697,11 +703,11 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
         var safeName = WebUtility.HtmlEncode(takeover.Registration.ContactName);
         await _email.SendAsync(new EmailMessage(
             takeover.Registration.ContactEmail,
-            "Overname afgewezen — Jobsy",
+            "Overname afgewezen — Lobsy",
             $"""
              <p>Hoi {safeName},</p>
              <p>Je overnameverzoek voor <strong>{WebUtility.HtmlEncode(takeover.TargetCompany.Name)}</strong> is afgewezen.</p>
-             <p><em>Stub — geen echte mail.</em></p>
+             <p>Groetjes van de vrolijke kreeft 🦞<br/>Team Lobsy</p>
              """,
             "TakeoverRejected"), cancellationToken);
 
@@ -828,10 +834,8 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
             return UserRole.Intermediary;
         }
 
-        // Non-SBI 78: Organization → Bedrijfsmanager; BranchOnly → Filiaalmanager.
-        return registration.Scope == RegistrationScope.Organization
-            ? UserRole.EnterpriseManager
-            : UserRole.BranchManager;
+        // Non-SBI 78 employers always become Bedrijfsmanager (can invite filiaalmanagers).
+        return UserRole.EnterpriseManager;
     }
 
     private async Task ClaimSiblingEstablishmentsAsync(
@@ -1065,23 +1069,22 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
             EmailVerifiedAwaitingTakeover: true);
     }
 
-    private async Task SendTakeoverEmailVerificationAsync(
+    private async Task<EmailDeliveryResult> SendTakeoverEmailVerificationAsync(
         CompanyRegistration registration,
         Company existing,
         string verifyUrl,
         CancellationToken cancellationToken)
     {
         var safeName = WebUtility.HtmlEncode(registration.ContactName);
-        await _email.SendAsync(new EmailMessage(
+        return await _email.SendAsync(new EmailMessage(
             registration.ContactEmail,
-            "Bevestig je e-mail voor overnameverzoek — Jobsy",
+            "Bevestig je e-mail voor overnameverzoek — Lobsy",
             $"""
              <p>Hoi {safeName},</p>
              <p>Vestiging <strong>{WebUtility.HtmlEncode(existing.Name)}</strong> is al geregistreerd.
              Bevestig eerst je e-mailadres. Daarna sturen we het overnameverzoek naar de huidige eigenaar.</p>
              <p><a href="{WebUtility.HtmlEncode(verifyUrl)}">E-mailadres bevestigen</a></p>
-             <p>Stub-link: <code>{WebUtility.HtmlEncode(verifyUrl)}</code></p>
-             <p><em>Stub — geen echte mail.</em></p>
+             <p>Groetjes van de vrolijke kreeft 🦞<br/>Team Lobsy</p>
              """,
             "TakeoverEmailVerification"), cancellationToken);
     }
@@ -1110,15 +1113,14 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
         {
             await _email.SendAsync(new EmailMessage(
                 ownerEmail,
-                "Overnameverzoek vestiging — Jobsy",
+                "Overnameverzoek vestiging — Lobsy",
                 $"""
                  <p>Er is een overnameverzoek voor <strong>{WebUtility.HtmlEncode(existing.Name)}</strong>
                  ({WebUtility.HtmlEncode(existing.KvkEstablishmentId ?? "")}).</p>
                  <p>Aanvrager: {WebUtility.HtmlEncode(registration.ContactName)}
-                 ({WebUtility.HtmlEncode(registration.ContactEmail)}),
-                 scope: {WebUtility.HtmlEncode(registration.Scope.ToString())}.</p>
+                 ({WebUtility.HtmlEncode(registration.ContactEmail)}).</p>
                  <p><a href="{WebUtility.HtmlEncode(inboxUrl)}">Bekijk verzoeken</a></p>
-                 <p><em>Stub — geen echte mail.</em></p>
+                 <p>Groetjes van de vrolijke kreeft 🦞<br/>Team Lobsy</p>
                  """,
                 "TakeoverRequest"), cancellationToken);
         }
@@ -1126,39 +1128,33 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
         var safeName = WebUtility.HtmlEncode(registration.ContactName);
         await _email.SendAsync(new EmailMessage(
             registration.ContactEmail,
-            "Overnameverzoek ingediend — Jobsy",
+            "Overnameverzoek ingediend — Lobsy",
             $"""
              <p>Hoi {safeName},</p>
              <p>Vestiging <strong>{WebUtility.HtmlEncode(existing.Name)}</strong> is al in gebruik.
              We hebben een overnameverzoek gestuurd naar de huidige eigenaar.</p>
-             <p><em>Stub — geen echte mail.</em></p>
+             <p>Groetjes van de vrolijke kreeft 🦞<br/>Team Lobsy</p>
              """,
             "TakeoverSubmitted"), cancellationToken);
     }
 
-    private async Task SendActivationEmailAsync(
+    private async Task<EmailDeliveryResult> SendActivationEmailAsync(
         CompanyRegistration registration,
         string activationUrl,
         CancellationToken cancellationToken)
     {
         var safeName = WebUtility.HtmlEncode(registration.ContactName);
-        var roleLabel = registration.IsIntermediarySbi
-            ? "Intermediair"
-            : registration.Scope == RegistrationScope.Organization
-                ? "Bedrijfsmanager"
-                : "Filiaalmanager";
-        await _email.SendAsync(new EmailMessage(
+        return await _email.SendAsync(new EmailMessage(
             registration.ContactEmail,
-            "Bevestig je e-mailadres — Jobsy",
+            "Bevestig je e-mailadres — Lobsy",
             $"""
              <p>Hoi {safeName},</p>
-             <p>Bevestig je e-mailadres om je bedrijfsregistratie voor
-             <strong>{WebUtility.HtmlEncode(registration.EstablishmentName)}</strong> te activeren
-             (rol: {WebUtility.HtmlEncode(roleLabel)}
-             {(string.IsNullOrEmpty(registration.PrimarySbiCode) ? "" : $", SBI {WebUtility.HtmlEncode(registration.PrimarySbiCode)}")}).</p>
+             <p>Welkom bij Lobsy! Bevestig je e-mailadres om je bedrijfsregistratie voor
+             <strong>{WebUtility.HtmlEncode(registration.EstablishmentName)}</strong> te activeren.</p>
+             <p>Na bevestiging kun je direct aan de slag — je eerste token is helemaal gratis,
+             zodat je meteen een vacature kunt plaatsen.</p>
              <p><a href="{WebUtility.HtmlEncode(activationUrl)}">E-mailadres bevestigen</a></p>
-             <p>Stub-link: <code>{WebUtility.HtmlEncode(activationUrl)}</code></p>
-             <p><em>Stub — geen echte mail.</em></p>
+             <p>Groetjes van de vrolijke kreeft 🦞<br/>Team Lobsy</p>
              """,
             "RegistrationActivation"), cancellationToken);
     }
@@ -1174,7 +1170,7 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
         var passwordBlock = temporaryPassword is null
             ? """
               <p>Log in met het wachtwoord dat je bij registratie hebt gekozen, of via
-              <strong>Microsoft Entra</strong> (zelfde geverifieerde e-mailadres).</p>
+              <strong>Microsoft Entra</strong> / Google met hetzelfde geverifieerde e-mailadres.</p>
               """
             : $"""
                <p>Gebruik dit eenmalige tijdelijke wachtwoord (niet opnieuw zichtbaar in de app):</p>
@@ -1183,15 +1179,17 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
                """;
         await _email.SendAsync(new EmailMessage(
             registration.ContactEmail,
-            "Je Jobsy-account is actief",
+            "Geslaagd — je Lobsy-account is actief!",
             $"""
              <p>Hoi {safeName},</p>
-             <p>Je account voor <strong>{WebUtility.HtmlEncode(registration.EstablishmentName)}</strong> is geactiveerd.</p>
+             <p>Geslaagd! Je account voor <strong>{WebUtility.HtmlEncode(registration.EstablishmentName)}</strong>
+             is geactiveerd. Je kunt direct aan de slag.</p>
+             <p>Je hebt van ons je eerste token helemaal gratis gekregen — daarmee plaats je meteen je eerste vacature.</p>
              <p>Je kunt inloggen met e-mail/wachtwoord of met <strong>Microsoft Entra</strong> /
              Google op <code>{WebUtility.HtmlEncode(registration.ContactEmail)}</code>.</p>
              {passwordBlock}
              <p><a href="{WebUtility.HtmlEncode(loginUrl)}">Naar inloggen</a></p>
-             <p><em>Stub — geen echte mail.</em></p>
+             <p>Groetjes van de vrolijke kreeft 🦞<br/>Team Lobsy</p>
              """,
             "RegistrationCredentials"), cancellationToken);
     }

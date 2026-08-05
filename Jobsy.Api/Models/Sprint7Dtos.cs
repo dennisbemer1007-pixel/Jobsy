@@ -77,7 +77,9 @@ public record LocalLoginResponse(
     IReadOnlyList<Guid> CompanyIds,
     bool ShowCandidateHowTo = false,
     bool HasCandidateApplications = false,
-    bool HasSalesReferral = false);
+    bool HasSalesReferral = false,
+    /// <summary>HMAC session proof for Production DevelopmentAuth (non-demo emails).</summary>
+    string? SessionToken = null);
 
 public record EnsureExternalUserRequest(
     string Email,
@@ -98,7 +100,8 @@ public record EnsureExternalUserResponse(
     bool IsNewUser,
     bool ShowCandidateHowTo,
     bool HasCandidateApplications,
-    bool HasSalesReferral = false);
+    bool HasSalesReferral = false,
+    string? SessionToken = null);
 
 public record ExternalProvidersStatusResponse(bool Entra, bool Google);
 

@@ -78,7 +78,7 @@ public class CoreFunctionalFlowE2ETests
         Assert.False(string.IsNullOrWhiteSpace(activationToken));
 
         var activated = await registration.ActivateAsync(activationToken);
-        Assert.Equal("BranchManager", activated.Role);
+        Assert.Equal("EnterpriseManager", activated.Role);
         Assert.NotNull(activated.BranchCompanyId);
 
         var company = await db.Companies.SingleAsync(c => c.Id == activated.BranchCompanyId);
@@ -652,7 +652,7 @@ public class CoreFunctionalFlowE2ETests
                 new Claim(ClaimTypes.NameIdentifier, email),
                 new Claim(ClaimTypes.Email, email),
                 new Claim(ClaimTypes.Name, email),
-                new Claim(ClaimTypes.Role, "BranchManager")
+                new Claim(ClaimTypes.Role, "EnterpriseManager")
             ],
             CookieAuthenticationDefaults.AuthenticationScheme));
         return http;

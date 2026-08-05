@@ -75,6 +75,12 @@ public sealed class JobsyApiAuthHandler : DelegatingHandler
             {
                 request.Headers.TryAddWithoutValidation("X-Jobsy-CompanyIds", companyIds);
             }
+
+            var localSession = user.FindFirst(JobsyClaimTypes.LocalSession)?.Value;
+            if (!string.IsNullOrWhiteSpace(localSession))
+            {
+                request.Headers.TryAddWithoutValidation("X-Jobsy-Local-Session", localSession);
+            }
         }
 
         try

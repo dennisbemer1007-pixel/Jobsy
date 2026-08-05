@@ -255,16 +255,16 @@ public class CompanyApiKeyServiceTests
     {
         public List<EmailMessage> Messages { get; } = [];
 
-        public Task SendAsync(EmailMessage message, CancellationToken cancellationToken = default)
+        public Task<EmailDeliveryResult> SendAsync(EmailMessage message, CancellationToken cancellationToken = default)
         {
             Messages.Add(message);
-            return Task.CompletedTask;
+            return Task.FromResult(EmailDeliveryResult.Stub);
         }
     }
 
     private sealed class FailingEmailService : IEmailService
     {
-        public Task SendAsync(EmailMessage message, CancellationToken cancellationToken = default)
+        public Task<EmailDeliveryResult> SendAsync(EmailMessage message, CancellationToken cancellationToken = default)
             => throw new InvalidOperationException("SMTP down");
     }
 }

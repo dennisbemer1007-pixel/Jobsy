@@ -13,7 +13,7 @@ namespace Jobsy.Tests;
 public class Sprint7RegistrationTests
 {
     [Fact]
-    public async Task Submit_and_activate_branch_only_creates_unique_establishment()
+    public async Task Submit_and_activate_employer_creates_enterprise_manager_with_org()
     {
         await using var db = CreateDb();
         var sut = CreateService(db, exposeActivationLinks: true);
@@ -21,7 +21,7 @@ public class Sprint7RegistrationTests
         var submit = await sut.SubmitAsync(new RegistrationSubmitRequest(
             "99990001",
             "99990001_0001",
-            RegistrationScope.BranchOnly,
+            RegistrationScope.BranchOnly, // ignored — employers always get Organization + Bedrijfsmanager
             "Nova Manager",
             "nova.branch@jobsy.local",
             null,
@@ -39,9 +39,9 @@ public class Sprint7RegistrationTests
 
         var activated = await sut.ActivateAsync(token);
 
-        Assert.Equal("BranchManager", activated.Role);
+        Assert.Equal("EnterpriseManager", activated.Role);
         Assert.NotNull(activated.BranchCompanyId);
-        Assert.Null(activated.OrganizationCompanyId);
+        Assert.NotNull(activated.OrganizationCompanyId);
         Assert.True(activated.UsedChosenPassword);
         Assert.Equal(string.Empty, activated.TemporaryPassword);
         Assert.Equal(1, await db.Companies.CountAsync(c => c.KvkEstablishmentId == "99990001_0001"));
@@ -53,7 +53,7 @@ public class Sprint7RegistrationTests
             .SingleAsync());
         Assert.True(await db.PlatformLogs.AnyAsync(l =>
             l.Category == "RegistrationCredentials"
-            || (l.Category == "Email" && l.Message.Contains("Je Jobsy-account is actief"))));
+            || (l.Category == "Email" && l.Message.Contains("Geslaagd", StringComparison.OrdinalIgnoreCase))));
 
         // Welcome token: 1 credit on the vestiging, marked on the company row.
         Assert.NotNull(activated.BranchCompanyId);
@@ -115,17 +115,18 @@ public class Sprint7RegistrationTests
     }
 
     [Fact]
-    public async Task Submit_hides_activation_url_when_flag_off()
+    public async Task Submit_exposes_activation_url_when_mail_is_stubbed_even_if_flag_off()
     {
         await using var db = CreateDb();
         var sut = CreateService(db, exposeActivationLinks: false);
 
         var submit = await sut.SubmitAsync(new RegistrationSubmitRequest(
-            "99990001", "99990001_0001", RegistrationScope.BranchOnly,
+            "99990001", "99990001_0001", RegistrationScope.Organization,
             "A", "hidden.url@jobsy.local", null, AcceptedTerms: true,
             Password: "TestPass1!"));
 
-        Assert.Null(submit.ActivationUrl);
+        // Stub delivery → always return the link so the registrant is not locked out.
+        Assert.False(string.IsNullOrWhiteSpace(submit.ActivationUrl));
         Assert.False(string.IsNullOrEmpty(
             await db.CompanyRegistrations.Where(r => r.Id == submit.RegistrationId)
                 .Select(r => r.ActivationToken).SingleAsync()));
@@ -185,7 +186,7 @@ public class Sprint7RegistrationTests
             AcceptedTerms: true,
             Password: "Intermed1!"));
 
-        Assert.Contains("Intermediair", submit.Message, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("intermediair", submit.Message, StringComparison.OrdinalIgnoreCase);
 
         var pending = await db.CompanyRegistrations.SingleAsync(r => r.Id == submit.RegistrationId);
         Assert.True(pending.IsIntermediarySbi);
@@ -218,7 +219,7 @@ public class Sprint7RegistrationTests
             AcceptedTerms: true,
             Password: "Bedrijf1!"));
 
-        Assert.Contains("Bedrijfsmanager", submit.Message, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("gratis", submit.Message, StringComparison.OrdinalIgnoreCase);
 
         var token = await db.CompanyRegistrations
             .Where(r => r.Id == submit.RegistrationId)

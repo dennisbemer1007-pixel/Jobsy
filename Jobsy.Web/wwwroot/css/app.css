@@ -9330,6 +9330,22 @@ button.linkish:hover {
     }
 }
 
+.register-celebrate-modal {
+    z-index: 40;
+}
+
+.register-celebrate-backdrop {
+    z-index: 39;
+}
+
+.register-celebrate__title {
+    margin: 0.35rem 0 0;
+    font-size: 1.65rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    color: var(--brand-ink, #1a2b3c);
+}
+
 /* —— Legal pages & footer —— */
 .legal-page {
     max-width: 720px;

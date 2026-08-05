@@ -9,38 +9,53 @@
 <PageTitle>@Culture["Page.ActivateTitle"]</PageTitle>
 
 <div class="login-page">
-    <div class="login-card">
-        <h1>@Culture["Page.ActivateTitle"]</h1>
-
-        @if (_loading)
-        {
+    @if (_loading)
+    {
+        <div class="login-card">
+            <h1>@Culture["Page.ActivateTitle"]</h1>
             <p class="state-message">@Culture["Register.Activating"]</p>
-        }
-        else if (_missingToken)
-        {
+        </div>
+    }
+    else if (_missingToken)
+    {
+        <div class="login-card">
+            <h1>@Culture["Page.ActivateTitle"]</h1>
             <p class="login-error">@Culture["Register.NoToken"]</p>
             <a class="auth-link" href="/register">@Culture["Register.Retry"]</a>
-        }
-        else if (!string.IsNullOrEmpty(_error))
-        {
+        </div>
+    }
+    else if (!string.IsNullOrEmpty(_error))
+    {
+        <div class="login-card">
+            <h1>@Culture["Page.ActivateTitle"]</h1>
             <p class="login-error">@_error</p>
             <a class="auth-link" href="/register">@Culture["Register.Retry"]</a>
-        }
-        else if (_result is not null)
-        {
-            @if (_result.EmailVerifiedAwaitingTakeover)
-            {
-                <p class="state-message">@Culture["Register.TakeoverEmailVerified"]</p>
-                <p class="muted">@Culture["Register.TakeoverAwaitingOwner"]</p>
-                <a class="login-submit" href="/login" style="display:inline-block;text-align:center;text-decoration:none;margin-top:1rem">
-                    @Culture["Register.GoLogin"]
-                </a>
-            }
-            else
-            {
-                <p class="state-message">@Culture.Format("Register.Activated", _result.FullName)</p>
-                <p class="muted">@Culture["Register.WelcomeToken"]</p>
-                <p class="muted">@Culture.Format("Register.Role", _result.Role)</p>
+        </div>
+    }
+    else if (_result is not null && _result.EmailVerifiedAwaitingTakeover)
+    {
+        <div class="login-card">
+            <h1>@Culture["Page.ActivateTitle"]</h1>
+            <p class="state-message">@Culture["Register.TakeoverEmailVerified"]</p>
+            <p class="muted">@Culture["Register.TakeoverAwaitingOwner"]</p>
+            <a class="login-submit" href="/login" style="display:inline-block;text-align:center;text-decoration:none;margin-top:1rem">
+                @Culture["Register.GoLogin"]
+            </a>
+        </div>
+    }
+    else if (_result is not null)
+    {
+        <div class="share-modal-backdrop register-celebrate-backdrop"></div>
+        <div class="share-modal csv-celebrate-modal register-celebrate-modal" role="dialog" aria-modal="true" aria-labelledby="register-celebrate-title">
+            <div class="csv-celebrate">
+                <img src="/images/brand/lobsy.png?v=20260731-eyes" alt="De vrolijke kreeft van Lobsy" class="csv-celebrate__mascot" width="140" height="140" />
+                <h2 id="register-celebrate-title" class="register-celebrate__title">@Culture["Register.CelebrateTitle"]</h2>
+                <p class="csv-celebrate__score">
+                    @Culture.Format("Register.CelebrateLead", _result.FullName)
+                </p>
+                <p class="share-modal__lead">
+                    @Culture["Register.CelebrateToken"]
+                </p>
                 @if (_result.UsedChosenPassword)
                 {
                     <p class="muted">@Culture["Register.LoginWithChosenPassword"]</p>
@@ -53,13 +68,14 @@
                 {
                     <p class="muted">@Culture["Register.TempPasswordEmail"]</p>
                 }
-                <p class="muted">@Culture["Register.DualAuthHint"]</p>
-                <a class="login-submit" href="/login" style="display:inline-block;text-align:center;text-decoration:none;margin-top:1rem">
+            </div>
+            <div class="inline-actions" style="margin-top:1.25rem;justify-content:center;">
+                <a class="login-submit" href="/login" style="text-decoration:none;display:inline-flex;align-items:center;">
                     @Culture["Register.GoLogin"]
                 </a>
-            }
-        }
-    </div>
+            </div>
+        </div>
+    }
 </div>
 
 @code {

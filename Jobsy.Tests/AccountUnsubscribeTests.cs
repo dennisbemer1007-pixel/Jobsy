@@ -357,10 +357,10 @@ public class AccountUnsubscribeTests
     {
         public List<EmailMessage> Messages { get; } = [];
 
-        public Task SendAsync(EmailMessage message, CancellationToken cancellationToken = default)
+        public Task<EmailDeliveryResult> SendAsync(EmailMessage message, CancellationToken cancellationToken = default)
         {
             Messages.Add(message);
-            return Task.CompletedTask;
+            return Task.FromResult(EmailDeliveryResult.Provider);
         }
     }
 

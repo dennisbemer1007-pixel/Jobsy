@@ -98,9 +98,19 @@ public sealed class IntegrationHealthStub : IIntegrationHealthService
 
         try
         {
-            await _email.SendAsync(
+            var delivery = await _email.SendAsync(
                 new EmailMessage(trimmed, "Lobsy testmail", body, "MailTest"),
                 cancellationToken);
+
+            if (!delivery.DeliveredViaProvider)
+            {
+                var failMessage =
+                    "Testmail niet afgeleverd via Resend/SMTP (providerfout — zie PlatformLogs). " +
+                    "Bericht is alleen als stub gelogd.";
+                await _credentials.SavePingResultAsync(IntegrationKey.Mail, false, failMessage, cancellationToken);
+                return new SendTestMailResult(false, true, failMessage);
+            }
+
             var via = resendReady
                 ? "Resend API"
                 : $"{smtp.Host}:{smtp.Port}";

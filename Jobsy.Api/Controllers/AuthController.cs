@@ -7,6 +7,7 @@ using Jobsy.Core.Enums;
 using Jobsy.Core.Interfaces;
 using Jobsy.Infrastructure.Data;
 using Jobsy.Infrastructure.Security;
+using Jobsy.Core.Rules;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
@@ -80,6 +81,7 @@ public class AuthController : ControllerBase
         }
 
         var flags = await BuildFlagsAsync(user, cancellationToken);
+        var sessionToken = CreateLocalSessionToken(user.Email, user.Id);
         return Ok(new LocalLoginResponse(
             user.Email,
             user.FullName,
@@ -88,7 +90,8 @@ public class AuthController : ControllerBase
             flags.CompanyIds,
             flags.ShowCandidateHowTo,
             flags.HasCandidateApplications,
-            flags.HasSalesReferral));
+            flags.HasSalesReferral,
+            sessionToken));
     }
 
     /// <summary>
@@ -206,6 +209,7 @@ public class AuthController : ControllerBase
         await _db.SaveChangesAsync(cancellationToken);
 
         var flags = await BuildFlagsAsync(user, cancellationToken);
+        var sessionToken = CreateLocalSessionToken(user.Email, user.Id);
         return Ok(new EnsureExternalUserResponse(
             user.Email,
             user.FullName,
@@ -215,7 +219,23 @@ public class AuthController : ControllerBase
             isNew,
             flags.ShowCandidateHowTo,
             flags.HasCandidateApplications,
-            flags.HasSalesReferral));
+            flags.HasSalesReferral,
+            sessionToken));
+    }
+
+    private string? CreateLocalSessionToken(string email, Guid userId)
+    {
+        var secret = _configuration["JobsyAuth:DevelopmentAuthSecret"];
+        if (string.IsNullOrWhiteSpace(secret))
+        {
+            return null;
+        }
+
+        return JobsyLocalSessionToken.Create(
+            email,
+            userId,
+            secret,
+            TimeSpan.FromMinutes(SessionSecurityRules.MaxInactivityTimeoutMinutes));
     }
 
     private static string? NormalizeExternalProvider(string? provider)

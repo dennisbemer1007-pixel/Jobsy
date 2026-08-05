@@ -629,6 +629,11 @@ public static class AuthServiceCollectionExtensions
             identity.RemoveClaim(existing);
         }
 
+        foreach (var existing in identity.FindAll(JobsyClaimTypes.LocalSession).ToList())
+        {
+            identity.RemoveClaim(existing);
+        }
+
         foreach (var existing in identity.FindAll("show_candidate_how_to").ToList())
         {
             identity.RemoveClaim(existing);
@@ -654,6 +659,11 @@ public static class AuthServiceCollectionExtensions
         if (profile.HasSalesReferral)
         {
             identity.AddClaim(new Claim(JobsyClaimTypes.HasSalesReferral, "1"));
+        }
+
+        if (!string.IsNullOrWhiteSpace(profile.SessionToken))
+        {
+            identity.AddClaim(new Claim(JobsyClaimTypes.LocalSession, profile.SessionToken));
         }
 
         if (profile.ShowCandidateHowTo)
@@ -706,6 +716,7 @@ public static class AuthServiceCollectionExtensions
         public bool HasCandidateApplications { get; set; }
         public bool HasSalesReferral { get; set; }
         public bool IsNewUser { get; set; }
+        public string? SessionToken { get; set; }
     }
 
     private static string NormalizeRole(string role) => role.Trim().ToLowerInvariant() switch

@@ -1,6 +1,6 @@
 @page "/branch"
 @rendermode @(new InteractiveServerRenderMode(prerender: false))
-@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "BranchManager")]
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "BranchManager,EnterpriseManager")]
 @inject NavigationManager Navigation
 
 @code {
