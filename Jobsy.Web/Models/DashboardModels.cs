@@ -304,6 +304,7 @@ public class RegistrationSubmitResult
     public bool RequiresTakeover { get; set; }
     public string Message { get; set; } = string.Empty;
     public string? ActivationUrl { get; set; }
+    public DateTime? VerificationExpiresAt { get; set; }
 }
 
 public class RegistrationActivationResult

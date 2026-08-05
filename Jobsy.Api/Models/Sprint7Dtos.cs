@@ -31,7 +31,10 @@ public record RegistrationSubmitResponse(
     string Status,
     bool RequiresTakeover,
     string Message,
-    string? ActivationUrl);
+    string? ActivationUrl,
+    DateTime? VerificationExpiresAt = null);
+
+public record ConfirmRegistrationRequest(string VerificationCode);
 
 public record RegistrationActivationResponse(
     Guid RegistrationId,

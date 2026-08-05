@@ -779,6 +779,9 @@ public class JobsyDbContext : DbContext
             entity.Property(e => e.ContactEmail).HasMaxLength(256).IsRequired();
             entity.Property(e => e.ContactPhone).HasMaxLength(64);
             entity.Property(e => e.ActivationToken).HasMaxLength(128).IsRequired();
+            entity.Property(e => e.EmailVerificationCode).HasMaxLength(64);
+            entity.Property(e => e.EmailVerificationExpiresAt);
+            entity.Property(e => e.EmailVerificationFailedAttempts);
             entity.Property(e => e.PasswordHash).HasMaxLength(512);
             entity.Property(e => e.PrimarySbiCode).HasMaxLength(16);
             entity.Property(e => e.ContactEmailVerifiedAt);
@@ -787,6 +790,7 @@ public class JobsyDbContext : DbContext
             entity.HasIndex(e => e.ActivationToken).IsUnique();
             entity.HasIndex(e => e.ContactEmail);
             entity.HasIndex(e => e.CreatedAt);
+            entity.HasIndex(e => e.EmailVerificationExpiresAt);
             entity.HasOne(e => e.CreatedUser)
                 .WithMany()
                 .HasForeignKey(e => e.CreatedUserId)

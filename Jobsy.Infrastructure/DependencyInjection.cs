@@ -162,6 +162,7 @@ public static class DependencyInjection
         services.AddScoped<IPrivacyDataService, PrivacyDataService>();
         services.AddScoped<IExclusivitySettingService, ExclusivitySettingService>();
         services.AddHostedService<DataRetentionHostedService>();
+        services.AddHostedService<UnconfirmedRegistrationCleanupHostedService>();
         services.AddHostedService<DraftVacancyCleanupHostedService>();
         services.AddHostedService<CompanyReengagementHostedService>();
         services.AddHostedService<VatBufferTransferHostedService>();

@@ -898,26 +898,14 @@ a {
         gap: 0.5rem;
     }
 
+    .login-modal__dialog .login-register__actions {
+        gap: 0.5rem;
+    }
+
     .login-modal__close {
         width: 2.25rem;
         height: 2.25rem;
         font-size: 1.35rem;
-    }
-
-    .login-modal__actions {
-        position: sticky;
-        bottom: 0;
-        margin-top: auto;
-        padding: 0.85rem 0 calc(0.25rem + env(safe-area-inset-bottom, 0px));
-        background: linear-gradient(to top, var(--surface) 70%, transparent);
-        border-top: none;
-    }
-
-    .login-modal__cancel {
-        width: 100%;
-        min-height: 2.65rem;
-        background: var(--surface);
-        border-color: color-mix(in srgb, var(--brand) 35%, var(--border));
     }
 }
 
@@ -9333,7 +9321,7 @@ button.linkish:hover {
 
 .wizard-actions {
     display: flex;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
     gap: 0.65rem;
     align-items: center;
     margin-top: 1rem;
@@ -9343,6 +9331,33 @@ button.linkish:hover {
     display: flex;
     flex-direction: column;
     gap: 0.45rem;
+}
+
+.wizard-actions .provider-btn,
+.wizard-actions .login-submit,
+.wizard-actions a.provider-btn {
+    width: auto;
+    flex: 1 1 0;
+    min-width: 0;
+    margin-top: 0;
+    text-decoration: none;
+}
+
+.login-register__actions {
+    display: flex;
+    flex-wrap: nowrap;
+    gap: 0.65rem;
+    align-items: stretch;
+}
+
+.login-register__actions .provider-btn {
+    width: auto;
+    flex: 1 1 0;
+    min-width: 0;
+}
+
+.login-register__back {
+    background: transparent;
 }
 
 .register-choice {

@@ -95,7 +95,8 @@ public class RegistrationController : ControllerBase
                 result.Status.ToString(),
                 result.RequiresTakeover,
                 result.Message,
-                result.ActivationUrl));
+                result.ActivationUrl,
+                result.VerificationExpiresAt));
         }
         catch (ArgumentException ex)
         {
@@ -115,6 +116,37 @@ public class RegistrationController : ControllerBase
         }
     }
 
+    [HttpPost("{id:guid}/confirm")]
+    [AllowAnonymous]
+    [EnableRateLimiting("auth")]
+    public async Task<ActionResult<RegistrationActivationResponse>> Confirm(
+        Guid id,
+        [FromBody] ConfirmRegistrationRequest request,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            var result = await _registration.ConfirmAsync(id, request.VerificationCode, cancellationToken);
+            return Ok(ToActivationResponse(result));
+        }
+        catch (ArgumentException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(new { message = ex.Message });
+        }
+        catch (InvalidOperationException ex)
+        {
+            return Conflict(new { message = ex.Message });
+        }
+        catch (DbUpdateException)
+        {
+            return Conflict(new { message = "Bevestiging conflict — probeer opnieuw." });
+        }
+    }
+
     [HttpPost("activate")]
     [AllowAnonymous]
     [EnableRateLimiting("auth")]
@@ -125,24 +157,7 @@ public class RegistrationController : ControllerBase
         try
         {
             var result = await _registration.ActivateAsync(token, cancellationToken);
-            return Ok(new RegistrationActivationResponse(
-                result.RegistrationId,
-                result.UserId,
-                result.Email,
-                result.FullName,
-                result.Role,
-                result.CompanyId,
-                result.CompanyIds,
-                // Never echo credentials outside Development — temp password is e-mailed only.
-                _environment.IsDevelopment() && !result.UsedChosenPassword
-                    ? result.TemporaryPassword
-                    : null,
-                result.OrganizationCompanyId,
-                result.BranchCompanyId,
-                result.UsedChosenPassword,
-                result.EmailVerifiedAwaitingTakeover,
-                result.WelcomeTokenGranted,
-                result.FreePublishUntil));
+            return Ok(ToActivationResponse(result));
         }
         catch (ArgumentException ex)
         {
@@ -325,4 +340,24 @@ public class RegistrationController : ControllerBase
             ActivationUrl = $"{baseUrl}/register/activate?token={Uri.EscapeDataString(reg.ActivationToken)}"
         });
     }
+
+    private RegistrationActivationResponse ToActivationResponse(RegistrationActivationResult result)
+        => new(
+            result.RegistrationId,
+            result.UserId,
+            result.Email,
+            result.FullName,
+            result.Role,
+            result.CompanyId,
+            result.CompanyIds,
+            // Never echo credentials outside Development — temp password is e-mailed only.
+            _environment.IsDevelopment() && !result.UsedChosenPassword
+                ? result.TemporaryPassword
+                : null,
+            result.OrganizationCompanyId,
+            result.BranchCompanyId,
+            result.UsedChosenPassword,
+            result.EmailVerifiedAwaitingTakeover,
+            result.WelcomeTokenGranted,
+            result.FreePublishUntil);
 }

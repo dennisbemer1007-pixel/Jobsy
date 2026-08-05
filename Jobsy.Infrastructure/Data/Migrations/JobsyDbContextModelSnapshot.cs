@@ -634,6 +634,16 @@ namespace Jobsy.Infrastructure.Data.Migrations
                     b.Property<Guid?>("CreatedUserId")
                         .HasColumnType("uuid");
 
+                    b.Property<string>("EmailVerificationCode")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<DateTime?>("EmailVerificationExpiresAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("EmailVerificationFailedAttempts")
+                        .HasColumnType("integer");
+
                     b.Property<string>("EstablishmentAddress")
                         .IsRequired()
                         .HasMaxLength(512)
@@ -698,6 +708,8 @@ namespace Jobsy.Infrastructure.Data.Migrations
                     b.HasIndex("CreatedOrganizationCompanyId");
 
                     b.HasIndex("CreatedUserId");
+
+                    b.HasIndex("EmailVerificationExpiresAt");
 
                     b.ToTable("CompanyRegistrations");
                 });
