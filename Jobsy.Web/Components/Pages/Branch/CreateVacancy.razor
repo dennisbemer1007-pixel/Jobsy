@@ -115,50 +115,63 @@
                 Titel
                 <input @bind="_title" @bind:event="oninput" required />
             </label>
-            <label>
-                Categorie
-                <select @bind="_categoryId" @bind:after="OnCategoryChanged" required>
-                    @if (_categories.Count == 0)
-                    {
-                        <option value="">Laden…</option>
-                    }
-                    else
-                    {
-                        @foreach (var cat in _categories)
-                        {
-                            <option value="@cat.Id.ToString()">@cat.Name</option>
-                        }
-                    }
-                </select>
-            </label>
-            @if (SelectedCategory is { } selectedCategory)
+            @if (_isIntermediary)
             {
                 <div class="vacancy-category-summary" aria-live="polite">
-                    <span class="vacancy-category-swatch" style="--category-color:@selectedCategory.ColorHex" aria-hidden="true"></span>
+                    <span class="vacancy-category-swatch" style="--category-color:@(SelectedCategory?.ColorHex ?? VacancyCategoryDefaults.UitzendbureauColorHex)" aria-hidden="true"></span>
                     <div>
-                        <strong>@selectedCategory.Name</strong>
-                        <p class="muted">
-                            @if (selectedCategory.IsAlwaysFree)
-                            {
-                                <span>Gratis plaatsen · geen highlight/PushBom</span>
-                            }
-                            else
-                            {
-                                <span>@selectedCategory.PublishCostTokens.ToString("0.##") token om te plaatsen</span>
-                                @if (selectedCategory.HighlightAvailable)
-                                {
-                                    <span> · Highlight +@selectedCategory.HighlightCostTokens.ToString("0.##")</span>
-                                }
-                                @if (selectedCategory.PushBomAvailable)
-                                {
-                                    <span> · PushBom beschikbaar</span>
-                                }
-                            }
-                        </p>
+                        <strong>@(SelectedCategory?.Name ?? VacancyCategoryDefaults.UitzendbureauLabel)</strong>
+                        <p class="muted">Vacaturetype voor intermediairs staat vast op Uitzendbureau.</p>
                     </div>
                 </div>
             }
-            @if (SelectedCategory?.PlacementKind == "Internship")
+            else
+            {
+                <label>
+                    Categorie
+                    <select @bind="_categoryId" @bind:after="OnCategoryChanged" required>
+                        @if (_categories.Count == 0)
+                        {
+                            <option value="">Laden…</option>
+                        }
+                        else
+                        {
+                            @foreach (var cat in _categories)
+                            {
+                                <option value="@cat.Id.ToString()">@cat.Name</option>
+                            }
+                        }
+                    </select>
+                </label>
+                @if (SelectedCategory is { } selectedCategory)
+                {
+                    <div class="vacancy-category-summary" aria-live="polite">
+                        <span class="vacancy-category-swatch" style="--category-color:@selectedCategory.ColorHex" aria-hidden="true"></span>
+                        <div>
+                            <strong>@selectedCategory.Name</strong>
+                            <p class="muted">
+                                @if (selectedCategory.IsAlwaysFree)
+                                {
+                                    <span>Gratis plaatsen · geen highlight/PushBom</span>
+                                }
+                                else
+                                {
+                                    <span>@selectedCategory.PublishCostTokens.ToString("0.##") token om te plaatsen</span>
+                                    @if (selectedCategory.HighlightAvailable)
+                                    {
+                                        <span> · Highlight +@selectedCategory.HighlightCostTokens.ToString("0.##")</span>
+                                    }
+                                    @if (selectedCategory.PushBomAvailable)
+                                    {
+                                        <span> · PushBom beschikbaar</span>
+                                    }
+                                }
+                            </p>
+                        </div>
+                    </div>
+                }
+            }
+            @if (!_isIntermediary && SelectedCategory?.PlacementKind == "Internship")
             {
                 <label>
                     Exclusiviteit
@@ -174,7 +187,7 @@
                     <p class="muted">Deze stageplek wordt zichtbaar voor iedereen, maar alleen studenten van @exclusive.Name kunnen solliciteren.</p>
                 }
             }
-            @if (SelectedCategory?.Slug == "regulier")
+            @if (!_isIntermediary && SelectedCategory?.Slug == "regulier")
             {
                 <label class="filter-check">
                     <input type="checkbox" @bind="_suitableFor65Plus" />
@@ -182,7 +195,7 @@
                 </label>
                 <p class="muted">Vacature blijft “Reguliere vacature” en valt onder het vacaturetype Geschikt voor 65+ in filters en op de kaart.</p>
             }
-            @if (SelectedCategory?.ExtraFieldDefinitions is { Count: > 0 } fields)
+            @if (!_isIntermediary && SelectedCategory?.ExtraFieldDefinitions is { Count: > 0 } fields)
             {
                 <fieldset class="vacancy-category-extra">
                     <legend>Extra gegevens voor @SelectedCategory.Name</legend>
@@ -954,7 +967,11 @@
         try
         {
             _categories = (await Api.GetVacancyCategoriesAsync()).ToList();
-            if (string.IsNullOrWhiteSpace(_categoryId) || _categories.All(c => c.Id.ToString() != _categoryId))
+            if (_isIntermediary)
+            {
+                ApplyIntermediaryCategory();
+            }
+            else if (string.IsNullOrWhiteSpace(_categoryId) || _categories.All(c => c.Id.ToString() != _categoryId))
             {
                 var preferred = _categories.FirstOrDefault(c => c.Slug == "regulier")
                     ?? _categories.FirstOrDefault();
@@ -965,7 +982,21 @@
         catch
         {
             _categories = [];
+            if (_isIntermediary)
+            {
+                ApplyIntermediaryCategory();
+            }
         }
+    }
+
+    private void ApplyIntermediaryCategory()
+    {
+        var uitzend = _categories.FirstOrDefault(c => c.Id == VacancyCategoryDefaults.UitzendbureauId)
+            ?? _categories.FirstOrDefault(c => c.Slug == "uitzendbureau");
+        _categoryId = uitzend?.Id.ToString() ?? VacancyCategoryDefaults.UitzendbureauId.ToString("D");
+        _suitableFor65Plus = false;
+        _exclusivitySettingId = "";
+        _categoryFields = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
     }
 
     private async Task PrefillFromAsync(Guid sourceId)
@@ -988,14 +1019,21 @@
             _isDuplicate = true;
             _companyId = source.CompanyId;
             _title = AppendCopySuffix(source.Title);
-            _categoryId = source.CategoryId?.ToString()
-                ?? _categories.FirstOrDefault(c => string.Equals(c.PlacementKind, source.Kind, StringComparison.OrdinalIgnoreCase))?.Id.ToString()
-                ?? _categoryId;
-            _exclusivitySettingId = source.ExclusivitySettingId?.ToString() ?? "";
-            _categoryFields = source.CategoryFields is { Count: > 0 }
-                ? new Dictionary<string, string>(source.CategoryFields, StringComparer.OrdinalIgnoreCase)
-                : new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
-            _suitableFor65Plus = source.SuitableFor65Plus;
+            if (_isIntermediary)
+            {
+                ApplyIntermediaryCategory();
+            }
+            else
+            {
+                _categoryId = source.CategoryId?.ToString()
+                    ?? _categories.FirstOrDefault(c => string.Equals(c.PlacementKind, source.Kind, StringComparison.OrdinalIgnoreCase))?.Id.ToString()
+                    ?? _categoryId;
+                _exclusivitySettingId = source.ExclusivitySettingId?.ToString() ?? "";
+                _categoryFields = source.CategoryFields is { Count: > 0 }
+                    ? new Dictionary<string, string>(source.CategoryFields, StringComparer.OrdinalIgnoreCase)
+                    : new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+                _suitableFor65Plus = source.SuitableFor65Plus;
+            }
             OnCategoryChanged();
             _description = source.Description;
             _imageUrl = source.ImageUrl ?? "";
@@ -1382,6 +1420,11 @@
         _message = null;
         try
         {
+            if (_isIntermediary)
+            {
+                ApplyIntermediaryCategory();
+            }
+
             var today = DateOnly.FromDateTime(DateTime.Today);
             await Api.CreateVacancyAsync(new CreateVacancyForm(
                 _companyId,

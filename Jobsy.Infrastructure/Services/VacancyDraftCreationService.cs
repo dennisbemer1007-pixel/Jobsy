@@ -177,6 +177,11 @@ public sealed class VacancyDraftCreationService : IVacancyDraftCreationService
             return VacancyDraftCreateResult.Fail(moderation.Warning ?? "Inhoud is niet toegestaan.");
         }
 
+        var isIntermediaryPlacement = input.IntermediaryCompanyId is not null;
+        var kind = isIntermediaryPlacement ? VacancyKind.Regular : input.Kind;
+        var categoryId = IntermediaryVacancyRules.ResolveCategoryId(isIntermediaryPlacement, null)
+            ?? VacancyCategoryDefaults.ResolveDefaultId(kind);
+
         var vacancy = new Vacancy
         {
             Id = Guid.NewGuid(),
@@ -203,7 +208,9 @@ public sealed class VacancyDraftCreationService : IVacancyDraftCreationService
             MinimumEmployers = input.MinimumEmployers is > 0 ? input.MinimumEmployers : null,
             IntermediaryCompanyId = input.IntermediaryCompanyId,
             ShowClientAddressOnMap = input.IntermediaryCompanyId is not null && input.ShowClientAddressOnMap,
-            Kind = input.Kind
+            Kind = kind,
+            CategoryId = categoryId,
+            SuitableFor65Plus = false
         };
 
         _db.Vacancies.Add(vacancy);

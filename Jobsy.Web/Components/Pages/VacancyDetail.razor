@@ -974,10 +974,10 @@
                 await LoadLikeAsync();
 
                 // LoadLike may populate DOB when the early profile fetch missed — align wages once.
-                if (_dobInput is DateOnly dob
-                    && AgeRules.AgeYearsFromDateOfBirth(dob) is int fromDob)
+                if (_dobInput is DateOnly likedDob
+                    && AgeRules.AgeYearsFromDateOfBirth(likedDob) is int likedAge)
                 {
-                    var clamped = AgeRules.ClampFilterAge(fromDob);
+                    var clamped = AgeRules.ClampFilterAge(likedAge);
                     if (_ageYears != clamped)
                     {
                         _ageYears = clamped;

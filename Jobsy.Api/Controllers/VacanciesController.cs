@@ -515,7 +515,10 @@ public class VacanciesController : ControllerBase
             }
         }
 
-        var categoryResolve = await ResolveCategoryAsync(request.CategoryId, request.Kind, cancellationToken);
+        var categoryResolve = await ResolveCategoryAsync(
+            IntermediaryVacancyRules.ResolveCategoryId(isIntermediary, request.CategoryId),
+            isIntermediary ? VacancyKind.Regular : request.Kind,
+            cancellationToken);
         if (categoryResolve.Error is not null)
         {
             return BadRequest(new { message = categoryResolve.Error });
@@ -523,7 +526,7 @@ public class VacanciesController : ControllerBase
 
         var category = categoryResolve.Category!;
         // Prevent token bypass: free (volunteer) categories cannot be combined with Kind=Regular.
-        if (category.IsAlwaysFree && request.Kind == VacancyKind.Regular)
+        if (category.IsAlwaysFree && request.Kind == VacancyKind.Regular && !isIntermediary)
         {
             return BadRequest(new
             {
@@ -531,8 +534,10 @@ public class VacanciesController : ControllerBase
             });
         }
 
-        var categoryFieldsJson = SerializeCategoryFields(category, request.CategoryFields);
-        var suitableFor65Plus = category.Id == VacancyCategoryDefaults.RegulierId && request.SuitableFor65Plus;
+        var categoryFieldsJson = SerializeCategoryFields(category, isIntermediary ? null : request.CategoryFields);
+        var suitableFor65Plus = !isIntermediary
+            && category.Id == VacancyCategoryDefaults.RegulierId
+            && request.SuitableFor65Plus;
 
         var exclusivityError = await ResolveExclusivitySettingIdAsync(
             category.PlacementKind,

@@ -197,7 +197,11 @@ public class ExternalVacanciesController : ControllerBase
                 : request.RequiredEducation.Trim(),
             MinimumEmployers = request.MinimumEmployers is > 0 ? request.MinimumEmployers : null,
             IntermediaryCompanyId = intermediaryCompanyId,
-            ShowClientAddressOnMap = apiIsIntermediary && request.ShowClientAddressOnMap
+            ShowClientAddressOnMap = apiIsIntermediary && request.ShowClientAddressOnMap,
+            Kind = VacancyKind.Regular,
+            CategoryId = IntermediaryVacancyRules.ResolveCategoryId(apiIsIntermediary, request.CategoryId)
+                ?? VacancyCategoryDefaults.ResolveDefaultId(VacancyKind.Regular),
+            SuitableFor65Plus = false
         };
 
         _db.Vacancies.Add(vacancy);

@@ -82,4 +82,11 @@ public static class IntermediaryVacancyRules
     }
 
     public static bool IsIntermediaryRole(UserRole role) => role == UserRole.Intermediary;
+
+    /// <summary>
+    /// Intermediaries may only place vacancies as type Uitzendbureau.
+    /// Client-supplied category ids are ignored when <paramref name="isIntermediary"/> is true.
+    /// </summary>
+    public static Guid? ResolveCategoryId(bool isIntermediary, Guid? requestedCategoryId)
+        => isIntermediary ? VacancyCategoryDefaults.UitzendbureauId : requestedCategoryId;
 }

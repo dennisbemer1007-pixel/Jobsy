@@ -140,4 +140,19 @@ public class IntermediaryVacancyRulesTests
         Assert.Equal(52.1, display.Latitude);
         Assert.Equal("Aangeboden door Uitzendbureau", display.OfferedByLabel);
     }
+
+    [Fact]
+    public void ResolveCategoryId_forces_uitzendbureau_for_intermediaries()
+    {
+        Assert.Equal(
+            VacancyCategoryDefaults.UitzendbureauId,
+            IntermediaryVacancyRules.ResolveCategoryId(true, VacancyCategoryDefaults.RegulierId));
+        Assert.Equal(
+            VacancyCategoryDefaults.UitzendbureauId,
+            IntermediaryVacancyRules.ResolveCategoryId(true, null));
+        Assert.Equal(
+            VacancyCategoryDefaults.InternshipId,
+            IntermediaryVacancyRules.ResolveCategoryId(false, VacancyCategoryDefaults.InternshipId));
+        Assert.Null(IntermediaryVacancyRules.ResolveCategoryId(false, null));
+    }
 }
