@@ -138,6 +138,158 @@ public class FreePublishProductTests
     }
 
     [Fact]
+    public async Task Full_flow_register_publish_free_highlight_costs_tokens()
+    {
+        await using var db = CreateDb();
+        SeedFreePublish(db, FreePublishRules.DefaultUntil);
+        SeedSpendCosts(db);
+
+        // 1) Aanmelden + activeren tijdens gratis-periode → geen welkomsttoken
+        var registration = CreateRegistration(db);
+        var submit = await registration.SubmitAsync(new RegistrationSubmitRequest(
+            "99990013",
+            "99990013_0001",
+            RegistrationScope.BranchOnly,
+            "Flow Manager",
+            "flow.full@jobsy.local",
+            null,
+            AcceptedTerms: true,
+            Password: "TestPass1!"));
+        Assert.False(submit.RequiresTakeover);
+        Assert.Equal(CompanyRegistrationStatus.PendingActivation, submit.Status);
+
+        var activationToken = await db.CompanyRegistrations
+            .Where(r => r.Id == submit.RegistrationId)
+            .Select(r => r.ActivationToken)
+            .SingleAsync();
+        var activated = await registration.ActivateAsync(activationToken!);
+        Assert.False(activated.WelcomeTokenGranted);
+        Assert.Equal(FreePublishRules.DefaultUntil, activated.FreePublishUntil);
+        Assert.Equal("EnterpriseManager", activated.Role);
+
+        var companyId = activated.BranchCompanyId!.Value;
+        var company = await db.Companies.SingleAsync(c => c.Id == companyId);
+        Assert.Equal(KvkVerificationStatus.Verified, company.KvkVerificationStatus);
+        Assert.Equal(0m, await BalanceAsync(db, companyId));
+
+        var products = CreateProducts(db);
+
+        // 2) Vacature plaatsen zonder extras → gratis (saldo blijft 0)
+        var draft1 = await SeedDraftForCompanyAsync(db, companyId, "Gratis basaal");
+        var publishFree = await products.PublishAsync(
+            draft1,
+            new VacancyPublishOptions(),
+            actorUserId: activated.UserId);
+        Assert.True(publishFree.Succeeded, publishFree.ErrorMessage);
+        Assert.Equal(VacancyStatus.Active, draft1.Status);
+        Assert.False(draft1.IsHighlighted);
+        Assert.Equal(0m, await BalanceAsync(db, companyId));
+        Assert.DoesNotContain(
+            await db.TokenTransactions.Where(t => t.CompanyId == companyId).ToListAsync(),
+            t => t.Kind == TokenTransactionKind.Spend);
+
+        // 3) Highlight bij publiceren zonder saldo → onvoldoende tokens (highlight kost wél)
+        var draft2 = await SeedDraftForCompanyAsync(db, companyId, "Wil highlight");
+        var blocked = await products.PublishAsync(
+            draft2,
+            new VacancyPublishOptions(Highlight: true),
+            actorUserId: activated.UserId);
+        Assert.False(blocked.Succeeded);
+        Assert.True(blocked.InsufficientTokens);
+        Assert.Equal(VacancyStatus.Draft, draft2.Status);
+        Assert.Equal(0m, await BalanceAsync(db, companyId));
+
+        // 4) Tokens kopen/grant → publiceren mét highlight: alleen highlight-tokens (2) afgeschreven
+        await GrantTokensAsync(db, companyId, 5m);
+        Assert.Equal(5m, await BalanceAsync(db, companyId));
+
+        var withHighlight = await products.PublishAsync(
+            draft2,
+            new VacancyPublishOptions(Highlight: true),
+            actorUserId: activated.UserId);
+        Assert.True(withHighlight.Succeeded, withHighlight.ErrorMessage);
+        Assert.Equal(VacancyStatus.Active, draft2.Status);
+        Assert.True(draft2.IsHighlighted);
+        Assert.NotNull(draft2.HighlightedUntil);
+        Assert.Equal(3m, await BalanceAsync(db, companyId)); // 5 - 2 highlight
+
+        var spends = await db.TokenTransactions
+            .Where(t => t.CompanyId == companyId && t.Kind == TokenTransactionKind.Spend)
+            .ToListAsync();
+        Assert.DoesNotContain(spends, t => t.Reason == TokenSpendReason.Publish);
+        Assert.Contains(spends, t => t.Reason == TokenSpendReason.Highlight && t.Amount == -2m);
+
+        // 5) Losse HighlightAsync op een actieve vacature zonder highlight → kost opnieuw tokens
+        var draft3 = await SeedDraftForCompanyAsync(db, companyId, "Later highlighten");
+        var published = await products.PublishAsync(
+            draft3,
+            new VacancyPublishOptions(),
+            actorUserId: activated.UserId);
+        Assert.True(published.Succeeded, published.ErrorMessage);
+        Assert.Equal(3m, await BalanceAsync(db, companyId));
+
+        var highlightOnly = await products.HighlightAsync(draft3, activated.UserId);
+        Assert.True(highlightOnly.Succeeded, highlightOnly.ErrorMessage);
+        Assert.True(draft3.IsHighlighted);
+        Assert.Equal(1m, await BalanceAsync(db, companyId)); // 3 - 2
+        Assert.Contains(
+            await db.TokenTransactions
+                .Where(t => t.CompanyId == companyId && t.Kind == TokenTransactionKind.Spend)
+                .ToListAsync(),
+            t => t.Reason == TokenSpendReason.Highlight && t.VacancyId == draft3.Id && t.Amount == -2m);
+    }
+
+    [Fact]
+    public async Task Intermediary_and_organization_publish_also_free_during_promo()
+    {
+        await using var db = CreateDb();
+        SeedFreePublish(db, FreePublishRules.DefaultUntil);
+        SeedSpendCosts(db);
+        var products = CreateProducts(db);
+
+        // Intermediair-vacature (end-client company)
+        var (clientId, clientVacancyId) = await SeedDraftVacancyAsync(db, tokenBalance: 0m);
+        var clientVacancy = await db.Vacancies.Include(v => v.Company).SingleAsync(v => v.Id == clientVacancyId);
+        clientVacancy.IntermediaryCompanyId = Guid.NewGuid();
+        await db.SaveChangesAsync();
+
+        var intermediaryPublish = await products.PublishAsync(
+            clientVacancy,
+            new VacancyPublishOptions(),
+            actorUserId: null);
+        Assert.True(intermediaryPublish.Succeeded, intermediaryPublish.ErrorMessage);
+        Assert.Equal(0m, await BalanceAsync(db, clientId));
+
+        // Organisatie-scope registratie + gratis publish
+        var registration = CreateRegistration(db);
+        var submit = await registration.SubmitAsync(new RegistrationSubmitRequest(
+            "99990014",
+            "99990014_0001",
+            RegistrationScope.Organization,
+            "Org Manager",
+            "flow.org@jobsy.local",
+            null,
+            AcceptedTerms: true,
+            Password: "TestPass1!"));
+        var token = await db.CompanyRegistrations
+            .Where(r => r.Id == submit.RegistrationId)
+            .Select(r => r.ActivationToken)
+            .SingleAsync();
+        var activated = await registration.ActivateAsync(token!);
+        Assert.False(activated.WelcomeTokenGranted);
+        Assert.NotNull(activated.OrganizationCompanyId);
+        Assert.NotNull(activated.BranchCompanyId);
+
+        var orgDraft = await SeedDraftForCompanyAsync(db, activated.BranchCompanyId!.Value, "Org gratis");
+        var orgPublish = await products.PublishAsync(
+            orgDraft,
+            new VacancyPublishOptions(),
+            actorUserId: activated.UserId);
+        Assert.True(orgPublish.Succeeded, orgPublish.ErrorMessage);
+        Assert.Equal(0m, await BalanceAsync(db, activated.BranchCompanyId!.Value));
+    }
+
+    [Fact]
     public async Task Admin_can_update_free_publish_until()
     {
         await using var db = CreateDb();
@@ -165,6 +317,7 @@ public class FreePublishProductTests
         {
             Id = Guid.Parse("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"),
             VacancyContentModerationEnabled = true,
+            ExposeRegistrationActivationLinks = true,
             FreePublishUntil = freeUntil,
             UpdatedAtUtc = DateTime.UtcNow
         });
@@ -184,20 +337,38 @@ public class FreePublishProductTests
     private static async Task<(Guid CompanyId, Guid VacancyId)> SeedDraftVacancyAsync(JobsyDbContext db, decimal tokenBalance)
     {
         var companyId = Guid.NewGuid();
-        var vacancyId = Guid.NewGuid();
-        db.Companies.Add(new Company
+        var vacancy = await SeedDraftForCompanyAsync(db, companyId, "Demo", createCompany: true);
+        if (tokenBalance > 0)
         {
-            Id = companyId,
-            Name = "Promo Co",
-            KvkNumber = "1",
-            Address = "a",
-            Location = new GeoPoint(51.98, 4.22),
-            KvkVerificationStatus = KvkVerificationStatus.Verified
-        });
-        db.Vacancies.Add(new Vacancy
+            await GrantTokensAsync(db, companyId, tokenBalance);
+        }
+
+        return (companyId, vacancy.Id);
+    }
+
+    private static async Task<Vacancy> SeedDraftForCompanyAsync(
+        JobsyDbContext db,
+        Guid companyId,
+        string title,
+        bool createCompany = false)
+    {
+        if (createCompany && !await db.Companies.AnyAsync(c => c.Id == companyId))
         {
-            Id = vacancyId,
-            Title = "Demo",
+            db.Companies.Add(new Company
+            {
+                Id = companyId,
+                Name = "Promo Co",
+                KvkNumber = "1",
+                Address = "a",
+                Location = new GeoPoint(51.98, 4.22),
+                KvkVerificationStatus = KvkVerificationStatus.Verified
+            });
+        }
+
+        var vacancy = new Vacancy
+        {
+            Id = Guid.NewGuid(),
+            Title = title,
             Description = "Demo",
             HourlyWage = 14,
             StartDate = DateOnly.FromDateTime(DateTime.UtcNow.AddDays(-1)),
@@ -207,24 +378,32 @@ public class FreePublishProductTests
             Location = new GeoPoint(51.98, 4.22),
             RequiredTransport = TransportMode.Bike,
             CategoryId = VacancyCategoryDefaults.RegulierId
-        });
-        if (tokenBalance > 0)
-        {
-            db.TokenTransactions.Add(new TokenTransaction
-            {
-                Id = Guid.NewGuid(),
-                CompanyId = companyId,
-                Amount = tokenBalance,
-                Kind = TokenTransactionKind.Grant,
-                OldBalance = 0,
-                NewBalance = tokenBalance,
-                CreatedAt = DateTime.UtcNow
-            });
-        }
-
+        };
+        db.Vacancies.Add(vacancy);
         await db.SaveChangesAsync();
-        return (companyId, vacancyId);
+        return await db.Vacancies.Include(v => v.Company).SingleAsync(v => v.Id == vacancy.Id);
     }
+
+    private static async Task GrantTokensAsync(JobsyDbContext db, Guid companyId, decimal amount)
+    {
+        var balance = await BalanceAsync(db, companyId);
+        db.TokenTransactions.Add(new TokenTransaction
+        {
+            Id = Guid.NewGuid(),
+            CompanyId = companyId,
+            Amount = amount,
+            Kind = TokenTransactionKind.Grant,
+            OldBalance = balance,
+            NewBalance = balance + amount,
+            CreatedAt = DateTime.UtcNow,
+            Note = "test grant"
+        });
+        await db.SaveChangesAsync();
+    }
+
+    private static Task<decimal> BalanceAsync(JobsyDbContext db, Guid companyId)
+        => db.TokenTransactions.Where(t => t.CompanyId == companyId).SumAsync(t => (decimal?)t.Amount)
+            .ContinueWith(t => t.Result ?? 0m);
 
     private static JobsyDbContext CreateDb()
     {
