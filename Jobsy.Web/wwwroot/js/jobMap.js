@@ -333,7 +333,6 @@ window.jobMap = (function () {
             ? "map-popup__media"
             : "map-popup__media map-popup__media--logo-only";
 
-        let mediaInner = "";
         const badges = [];
         if (v.highlighted) {
             badges.push(
@@ -352,10 +351,11 @@ window.jobMap = (function () {
                 "</span>"
             );
         }
-        if (badges.length > 0) {
-            mediaInner += "<div class=\"map-popup__badges\">" + badges.join("") + "</div>";
-        }
+        const badgesHtml = badges.length > 0
+            ? "<div class=\"map-popup__badges\">" + badges.join("") + "</div>"
+            : "";
 
+        let mediaInner = "";
         if (hasImage) {
             mediaInner +=
                 "<img class=\"map-popup__photo\" src=\"" + escapeAttr(v.imageUrl) + "\" alt=\"\" loading=\"lazy\" />";
@@ -376,6 +376,7 @@ window.jobMap = (function () {
             "<div class=\"map-popup\">" +
                 wageInfoHtml(v) +
                 "<div class=\"map-popup__main\">" +
+                    badgesHtml +
                     "<a class=\"" + mediaClass + "\" href=\"" + detailHref + "\" data-job-id=\"" + escapeAttr(v.id) + "\">" +
                         mediaInner +
                     "</a>" +
