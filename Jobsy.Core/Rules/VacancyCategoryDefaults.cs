@@ -82,6 +82,38 @@ public static class VacancyCategoryDefaults
         => IsSeniorLightCategory(categoryId)
            || (suitableFor65Plus && (categoryId is null || categoryId == RegulierId));
 
+    /// <summary>
+    /// Short map-popup type label (legend colors). Regular / uitzend / highlight get no label.
+    /// “Uitgelicht” is rendered separately and always stacks above this badge when active.
+    /// </summary>
+    public static (string? Label, string? ColorHex) ResolveMapPopupTypeBadge(
+        Guid? categoryId,
+        bool suitableFor65Plus,
+        VacancyKind? kind = null)
+    {
+        if (categoryId == InternshipId || kind == VacancyKind.Internship)
+        {
+            return ("Stageplek", "#0EA5E9");
+        }
+
+        if (categoryId == VolunteerId || kind == VacancyKind.Volunteer)
+        {
+            return ("Vrijwilligers", "#10B981");
+        }
+
+        if (categoryId == InclusiefId)
+        {
+            return ("Inclusieve vacature", "#8B5CF6");
+        }
+
+        if (MatchesSuitableFor65PlusFilter(categoryId, suitableFor65Plus))
+        {
+            return (SuitableFor65PlusLabel, SeniorPlusColorHex);
+        }
+
+        return (null, null);
+    }
+
     public static Guid ResolveDefaultId(VacancyKind kind) => kind switch
     {
         VacancyKind.Internship => InternshipId,

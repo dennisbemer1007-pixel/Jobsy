@@ -3247,6 +3247,29 @@ a {
 .map-popup__badge--featured {
     background: linear-gradient(145deg, #f0b429, #d4890a);
     color: #1a1204;
+    position: static;
+    max-width: 100%;
+}
+
+.map-popup__badges {
+    position: absolute;
+    top: 0.45rem;
+    left: 0.45rem;
+    z-index: 2;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.28rem;
+    max-width: calc(100% - 0.9rem);
+    pointer-events: none;
+}
+
+.map-popup__badge--type {
+    position: static;
+    max-width: 100%;
+    background: var(--badge-color, #64748b);
+    color: #fff;
+    box-shadow: 0 1px 4px color-mix(in srgb, var(--badge-color, #64748b) 35%, transparent);
 }
 
 @keyframes job-marker-pulse {
@@ -3701,7 +3724,7 @@ a {
     padding: 0.22rem 0.5rem;
     background: var(--coral);
     color: #fff;
-    font-size: 0.7rem;
+    font-size: 0.68rem;
     font-weight: 700;
     line-height: 1.2;
     border-radius: 3px;
@@ -3709,6 +3732,10 @@ a {
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+}
+
+.map-popup__badges .map-popup__badge {
+    position: static;
 }
 
 .map-popup__badge--soft {
@@ -4093,74 +4120,98 @@ a.map-popup__apply.map-popup__cta:visited {
         right: -10px;
     }
 
-    /* Compact horizontal card — title, address and travel stay visible */
+    /* Compact horizontal card — keep title/address/travel + Solliciteer visible */
     .map-popup__main {
         flex-direction: row;
-        height: 190px;
+        height: auto;
+        min-height: 168px;
+        max-height: min(52vh, 280px);
     }
 
     .map-popup__media {
-        flex: 0 0 108px;
-        width: 108px;
-        height: 190px;
-        min-height: 190px;
+        flex: 0 0 96px;
+        width: 96px;
+        align-self: stretch;
+        height: auto;
+        min-height: 168px;
     }
 
     .map-popup__media--logo-only {
-        height: 190px;
-        min-height: 190px;
+        height: auto;
+        min-height: 168px;
     }
 
     .map-popup__media-logo {
-        width: 44px;
-        height: 44px;
+        width: 40px;
+        height: 40px;
+    }
+
+    .map-popup__badges {
+        top: 0.35rem;
+        left: 0.35rem;
+        gap: 0.2rem;
+        max-width: calc(100% - 0.7rem);
+    }
+
+    .map-popup__badge {
+        font-size: 0.62rem;
+        padding: 0.16rem 0.38rem;
     }
 
     .map-popup__body {
         flex: 1 1 auto;
-        height: 190px;
-        min-height: 0;
-        padding: 0.5rem 0.6rem 0.45rem;
-        gap: 0.1rem;
+        height: auto;
+        min-height: 168px;
+        max-height: min(52vh, 280px);
+        padding: 0.45rem 0.55rem 0.4rem;
+        gap: 0.12rem;
         overflow: hidden;
     }
 
     .map-popup__header {
-        gap: 0.1rem;
-        flex: 0 0 auto;
+        gap: 0.08rem;
+        flex: 1 1 auto;
         min-height: 0;
+        overflow: hidden;
     }
 
     .map-popup__title {
-        min-height: 3.3rem;
-        font-size: 0.95rem;
+        min-height: 0;
+        max-height: 2.6rem;
+        font-size: 0.9rem;
         line-height: 1.2;
         font-weight: 800;
-        -webkit-line-clamp: 3;
-        flex-shrink: 0;
+        -webkit-line-clamp: 2;
+        flex-shrink: 1;
+    }
+
+    .map-popup__category,
+    .map-popup__senior65,
+    .map-popup__status {
+        display: none;
     }
 
     .map-popup__address {
-        min-height: 1.05rem;
-        font-size: 0.76rem;
+        min-height: 0;
+        font-size: 0.72rem;
         -webkit-line-clamp: 1;
         flex-shrink: 0;
     }
 
     .map-popup__travel {
-        min-height: 1.1rem;
-        font-size: 0.76rem;
+        min-height: 0;
+        font-size: 0.72rem;
         flex-shrink: 0;
     }
 
     .map-popup__wage {
         min-height: 0;
-        font-size: 0.92rem;
-        flex-shrink: 1;
+        font-size: 0.86rem;
+        flex-shrink: 0;
     }
 
     .map-popup__wage-unit {
-        font-size: 0.7rem;
+        font-size: 0.68rem;
     }
 
     .map-popup__specs {
@@ -4168,14 +4219,25 @@ a.map-popup__apply.map-popup__cta:visited {
     }
 
     .map-popup__footer {
-        min-height: 2.1rem;
+        min-height: 2rem;
         padding-top: 0.2rem;
-        gap: 0.35rem;
+        gap: 0.4rem;
         flex-shrink: 0;
+        margin-top: auto;
+        align-items: center;
+    }
+
+    .map-popup__footer-meta {
+        min-width: 0;
+        flex: 1 1 auto;
     }
 
     .map-popup__company {
-        font-size: 0.74rem;
+        font-size: 0.72rem;
+    }
+
+    .map-popup__offered-by {
+        display: none;
     }
 
     .map-popup__logo {
@@ -4184,8 +4246,10 @@ a.map-popup__apply.map-popup__cta:visited {
     }
 
     .map-popup__apply {
-        padding: 0.38rem 0.65rem;
+        flex: 0 0 auto;
+        padding: 0.4rem 0.7rem;
         font-size: 0.76rem;
+        white-space: nowrap;
     }
 
     .map-popup__address--empty,

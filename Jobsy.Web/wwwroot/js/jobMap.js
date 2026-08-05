@@ -108,7 +108,7 @@ window.jobMap = (function () {
             className: "job-map-popup",
             maxWidth: width,
             minWidth: width,
-            autoPanPadding: narrow ? [12, 56] : [40, 56],
+            autoPanPadding: narrow ? [14, 88] : [40, 56],
             keepInView: true,
             closeOnClick: true,
             closeButton: true
@@ -123,7 +123,7 @@ window.jobMap = (function () {
         opts.className = opts.className + " job-map-popup--cluster";
         // Slightly more vertical padding so the pager + close button stay on-screen.
         opts.autoPanPadding = narrow
-            ? [12, Math.max(64, Math.round(vh * 0.08))]
+            ? [14, Math.max(96, Math.round(vh * 0.12))]
             : [36, 56];
         return opts;
     }
@@ -328,24 +328,32 @@ window.jobMap = (function () {
     }
 
     function buildPopupHtml(v) {
-        const workTypes = Array.isArray(v.workTypes) ? v.workTypes : [];
-        const primaryWork = workTypes[0] || v.workType || "";
         const hasImage = !!v.imageUrl;
         const mediaClass = hasImage
             ? "map-popup__media"
             : "map-popup__media map-popup__media--logo-only";
 
         let mediaInner = "";
-        if (v.highlighted || v.exclusivityBadge || v.categoryName || primaryWork) {
-            const featuredLabel = v.featuredLabel || "Uitgelicht";
-            const badgeText = v.highlighted
-                ? featuredLabel
-                : (v.categoryName || v.exclusivityBadge || primaryWork);
-            const badgeClass = v.highlighted
-                ? "map-popup__badge map-popup__badge--featured"
-                : "map-popup__badge map-popup__badge--soft";
-            mediaInner +=
-                "<span class=\"" + badgeClass + "\">" + escapeHtml(String(badgeText)) + "</span>";
+        const badges = [];
+        if (v.highlighted) {
+            badges.push(
+                "<span class=\"map-popup__badge map-popup__badge--featured\">" +
+                escapeHtml(String(v.featuredLabel || "Uitgelicht")) +
+                "</span>"
+            );
+        }
+        if (v.typeBadgeLabel) {
+            const color = v.typeBadgeColor || v.categoryColor || "#64748b";
+            badges.push(
+                "<span class=\"map-popup__badge map-popup__badge--type\" style=\"--badge-color:" +
+                escapeAttr(String(color)) +
+                "\">" +
+                escapeHtml(String(v.typeBadgeLabel)) +
+                "</span>"
+            );
+        }
+        if (badges.length > 0) {
+            mediaInner += "<div class=\"map-popup__badges\">" + badges.join("") + "</div>";
         }
 
         if (hasImage) {
@@ -376,32 +384,24 @@ window.jobMap = (function () {
                             "<a class=\"map-popup__title map-popup__cta\" href=\"" + detailHref + "\" data-job-id=\"" + escapeAttr(v.id) + "\">" +
                                 escapeHtml(v.title) +
                             "</a>" +
-                            (v.categoryName
-                                ? "<p class=\"map-popup__category\">" + escapeHtml(v.categoryName) + "</p>"
-                                : "") +
-                            (v.suitableFor65Plus
-                                ? "<p class=\"map-popup__senior65\" style=\"--senior65-color:" +
-                                  escapeAttr(v.suitableFor65PlusColor || "#5B21B6") +
-                                  "\"><span class=\"suitable65-label\" aria-hidden=\"true\"></span> " +
-                                  escapeHtml(v.suitableFor65PlusLabel || "Geschikt voor 65+") +
-                                  "</p>"
-                                : "") +
                             (v.address
                                 ? "<p class=\"map-popup__address\">" + escapeHtml(v.address) + "</p>"
                                 : "<p class=\"map-popup__address map-popup__address--empty\">&nbsp;</p>") +
                             travelLineHtml(v) +
-                            categoryStatusHtml(v) +
+                            pushBomStatusHtml(v) +
                         "</div>" +
                         (wage || "<p class=\"map-popup__wage map-popup__wage--empty\">&nbsp;</p>") +
                         specsHtml(v) +
                         "<div class=\"map-popup__footer\">" +
-                            "<a class=\"map-popup__company map-popup__cta\" href=\"" + escapeAttr(companyHref) + "\"" +
-                                (companyHref === detailHref ? " data-job-id=\"" + escapeAttr(v.id) + "\"" : "") + ">" +
-                                escapeHtml(v.company) +
-                            "</a>" +
-                            (v.offeredBy
-                                ? "<p class=\"map-popup__offered-by\">" + escapeHtml(String(v.offeredBy)) + "</p>"
-                                : "") +
+                            "<div class=\"map-popup__footer-meta\">" +
+                                "<a class=\"map-popup__company map-popup__cta\" href=\"" + escapeAttr(companyHref) + "\"" +
+                                    (companyHref === detailHref ? " data-job-id=\"" + escapeAttr(v.id) + "\"" : "") + ">" +
+                                    escapeHtml(v.company) +
+                                "</a>" +
+                                (v.offeredBy
+                                    ? "<p class=\"map-popup__offered-by\">" + escapeHtml(String(v.offeredBy)) + "</p>"
+                                    : "") +
+                            "</div>" +
                             "<a class=\"map-popup__apply map-popup__cta\" href=\"" + applyHref + "\" data-job-id=\"" + escapeAttr(v.id) + "\">Solliciteer</a>" +
                         "</div>" +
                     "</div>" +
@@ -410,18 +410,11 @@ window.jobMap = (function () {
         );
     }
 
-    function categoryStatusHtml(v) {
-        const parts = [];
-        if (v.highlighted) {
-            parts.push(v.featuredLabel || "Highlight actief");
-        }
-        if (v.pushBomActive) {
-            parts.push("PushBom actief");
-        }
-        if (parts.length === 0) {
+    function pushBomStatusHtml(v) {
+        if (!v.pushBomActive) {
             return "";
         }
-        return "<p class=\"map-popup__status\">" + escapeHtml(parts.join(" · ")) + "</p>";
+        return "<p class=\"map-popup__status\">PushBom actief</p>";
     }
 
     const CLUSTER_PAGE_SIZE = 1;

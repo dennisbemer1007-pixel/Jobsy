@@ -288,6 +288,7 @@
             var companyHref = !string.IsNullOrWhiteSpace(v.KvkNumber) && !string.IsNullOrWhiteSpace(v.Vestigingsnummer)
                 ? $"/{v.KvkNumber}/{v.Vestigingsnummer}"
                 : null;
+            var typeBadge = ResolveTypeBadge(v);
             return new Dictionary<string, object?>
             {
                 ["id"] = v.Id.ToString(),
@@ -310,6 +311,8 @@
                 ["suitableFor65Plus"] = ShowsSuitableFor65Plus(v),
                 ["suitableFor65PlusLabel"] = VacancyCategoryDefaults.SuitableFor65PlusLabel,
                 ["suitableFor65PlusColor"] = VacancyCategoryDefaults.SeniorPlusColorHex,
+                ["typeBadgeLabel"] = typeBadge.Label,
+                ["typeBadgeColor"] = typeBadge.ColorHex,
                 ["highlighted"] = v.IsHighlighted,
                 ["highlightRank"] = v.IsHighlighted ? HighlightShuffleRules.Rank(_highlightShuffleSeed, v.Id) : 0u,
                 ["featuredLabel"] = Culture["Discovery.Featured"],
@@ -366,6 +369,17 @@
 
     private static bool ShowsSuitableFor65Plus(VacancyListItem vacancy)
         => VacancyCategoryDefaults.MatchesSuitableFor65PlusFilter(vacancy.CategoryId, vacancy.SuitableFor65Plus);
+
+    private static (string? Label, string? ColorHex) ResolveTypeBadge(VacancyListItem vacancy)
+    {
+        VacancyKind? kind = Enum.TryParse<VacancyKind>(vacancy.Kind, ignoreCase: true, out var parsed)
+            ? parsed
+            : null;
+        return VacancyCategoryDefaults.ResolveMapPopupTypeBadge(
+            vacancy.CategoryId,
+            vacancy.SuitableFor65Plus,
+            kind);
+    }
 
     public async ValueTask DisposeAsync()
     {
