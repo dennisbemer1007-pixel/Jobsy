@@ -281,7 +281,7 @@ internal static class WestlandVacanciesSeeder
             Guid? salaryTableId = s.UseSalaryTable && caoTableId is not null
                 ? caoTableId
                 : wmlByCompany.TryGetValue(companyId, out var wmlId) ? wmlId : caoTableId;
-            list.Add(new Vacancy
+            var vacancy = new Vacancy
             {
                 Id = vacancyId,
                 Title = s.Title,
@@ -308,7 +308,9 @@ internal static class WestlandVacanciesSeeder
                 MaxApplications = 8,
                 SalaryTableId = salaryTableId,
                 VideoUrl = MockVacancyMedia.VideoUrl(i)
-            });
+            };
+            SeedVacancyCategoryMix.Apply(vacancy, i + 1, keepExistingHighlight: true);
+            list.Add(vacancy);
         }
 
         return list.ToArray();

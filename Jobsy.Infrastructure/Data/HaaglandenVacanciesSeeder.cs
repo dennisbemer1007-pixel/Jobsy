@@ -186,6 +186,7 @@ internal static class HaaglandenVacanciesSeeder
                         forVacancy: true),
                     VideoUrl = MockVacancyMedia.VideoUrl(city.Region * 1000 + i)
                 });
+                SeedVacancyCategoryMix.Apply(list[^1], i + 1, keepExistingHighlight: true);
             }
         }
 

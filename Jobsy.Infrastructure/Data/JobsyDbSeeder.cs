@@ -73,6 +73,7 @@ public static class JobsyDbSeeder
                 await SalesManagerDemoSeeder.SeedAsync(db, logger);
                 await WestlandVacanciesSeeder.SeedWestlandBanenkaartAsync(db, logger);
                 await HaaglandenVacanciesSeeder.SeedHaaglandenBanenkaartAsync(db, logger);
+                await SeedVacancyCategoryMix.EnsureAsync(db, logger);
                 // Re-run media backfill after banenkaart seeds so every vacancy has image/video/copy.
                 await MediaBackfillSeeder.BackfillMediaAsync(db, logger);
                 // EnsureForAll also fills empty tables and assigns missing vacancy salary tables.
@@ -99,6 +100,7 @@ public static class JobsyDbSeeder
             await SalesManagerDemoSeeder.SeedAsync(db, logger);
             await WestlandVacanciesSeeder.SeedWestlandBanenkaartAsync(db, logger);
             await HaaglandenVacanciesSeeder.SeedHaaglandenBanenkaartAsync(db, logger);
+            await SeedVacancyCategoryMix.EnsureAsync(db, logger);
             await MediaBackfillSeeder.BackfillMediaAsync(db, logger);
             // EnsureForAll also fills empty tables and assigns missing vacancy salary tables.
             await WmlSalaryTableService.EnsureForAllCompaniesAsync(db);

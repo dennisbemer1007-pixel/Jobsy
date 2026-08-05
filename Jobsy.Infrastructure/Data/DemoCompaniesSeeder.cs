@@ -1,5 +1,6 @@
 using Jobsy.Core.Entities;
 using Jobsy.Core.Enums;
+using Jobsy.Core.Rules;
 using Jobsy.Core.ValueObjects;
 using Microsoft.Extensions.Logging;
 
@@ -96,7 +97,10 @@ internal static class DemoCompaniesSeeder
                 RequiredTransport = TransportMode.Bike | TransportMode.Car,
                 WorkTypes = WorkType.Logistiek | WorkType.Tuinbouw,
                 ImageUrl = MockVacancyMedia.ImageUrl(Guid.Parse("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa")),
-                VideoUrl = MockVacancyMedia.VideoUrl(0)
+                VideoUrl = MockVacancyMedia.VideoUrl(0),
+                CategoryId = VacancyCategoryDefaults.RegulierId,
+                Kind = VacancyKind.Regular,
+                SuitableFor65Plus = true
             },
             new Vacancy
             {
@@ -118,7 +122,9 @@ internal static class DemoCompaniesSeeder
                 RequiredTransport = TransportMode.Walking | TransportMode.Bike | TransportMode.PublicTransport,
                 WorkTypes = WorkType.Horeca,
                 ImageUrl = MockVacancyMedia.ImageUrl(Guid.Parse("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb")),
-                VideoUrl = MockVacancyMedia.VideoUrl(1)
+                VideoUrl = MockVacancyMedia.VideoUrl(1),
+                CategoryId = VacancyCategoryDefaults.InclusiefId,
+                Kind = VacancyKind.Regular
             },
             new Vacancy
             {
@@ -140,7 +146,9 @@ internal static class DemoCompaniesSeeder
                 RequiredTransport = TransportMode.Bike | TransportMode.PublicTransport,
                 WorkTypes = WorkType.Winkel,
                 ImageUrl = MockVacancyMedia.ImageUrl(Guid.Parse("cccccccc-cccc-cccc-cccc-cccccccccccc")),
-                VideoUrl = MockVacancyMedia.VideoUrl(2)
+                VideoUrl = MockVacancyMedia.VideoUrl(2),
+                CategoryId = VacancyCategoryDefaults.InternshipId,
+                Kind = VacancyKind.Internship
             }
         };
 

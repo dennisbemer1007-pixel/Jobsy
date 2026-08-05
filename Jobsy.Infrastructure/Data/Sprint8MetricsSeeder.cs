@@ -94,7 +94,9 @@ internal static class Sprint8MetricsSeeder
             WorkTypes = WorkType.Winkel,
             MaxApplications = 10,
             ImageUrl = MockVacancyMedia.ImageUrl(IntermediaryVacancyId),
-            VideoUrl = MockVacancyMedia.VideoUrl(IntermediaryVacancyId)
+            VideoUrl = MockVacancyMedia.VideoUrl(IntermediaryVacancyId),
+            CategoryId = VacancyCategoryDefaults.UitzendbureauId,
+            Kind = VacancyKind.Regular
         });
     }
 
@@ -128,7 +130,9 @@ internal static class Sprint8MetricsSeeder
                 WorkTypes = WorkType.Tuinbouw,
                 MaxApplications = 5,
                 ImageUrl = MockVacancyMedia.ImageUrl(DraftVacancyId),
-                VideoUrl = MockVacancyMedia.VideoUrl(DraftVacancyId)
+                VideoUrl = MockVacancyMedia.VideoUrl(DraftVacancyId),
+                CategoryId = VacancyCategoryDefaults.VolunteerId,
+                Kind = VacancyKind.Volunteer
             });
         }
 
@@ -157,7 +161,9 @@ internal static class Sprint8MetricsSeeder
                 RequestedPushBom = true,
                 MaxApplications = 5,
                 ImageUrl = MockVacancyMedia.ImageUrl(PendingVacancyId),
-                VideoUrl = MockVacancyMedia.VideoUrl(PendingVacancyId)
+                VideoUrl = MockVacancyMedia.VideoUrl(PendingVacancyId),
+                CategoryId = VacancyCategoryDefaults.HighlightId,
+                Kind = VacancyKind.Regular
             });
         }
 
@@ -185,7 +191,9 @@ internal static class Sprint8MetricsSeeder
                 WorkTypes = WorkType.Horeca,
                 MaxApplications = 5,
                 ImageUrl = MockVacancyMedia.ImageUrl(ArchivedVacancyId),
-                VideoUrl = MockVacancyMedia.VideoUrl(ArchivedVacancyId)
+                VideoUrl = MockVacancyMedia.VideoUrl(ArchivedVacancyId),
+                CategoryId = VacancyCategoryDefaults.SeniorLightId,
+                Kind = VacancyKind.Regular
             });
         }
     }
