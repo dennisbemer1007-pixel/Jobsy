@@ -6,6 +6,7 @@
                      TitleId="pushbom-modal-title"
                      Lead="@(Vacancy is null ? null : $"{Vacancy.Title} · {Vacancy.CompanyName}")"
                      Class="publish-modal"
+                     CloseDisabled="_busy"
                      OnClose="Close">
     <div class="pushbom-preview" aria-live="polite">
         @if (_loading)

@@ -7,6 +7,7 @@
                      TitleId="publish-modal-title"
                      Lead="@(Vacancy is null ? null : $"{Vacancy.Title} · {Vacancy.CompanyName}")"
                      Class="publish-modal"
+                     CloseDisabled="_busy"
                      OnClose="Close">
     <div class="publish-options">
         <label class="publish-option">

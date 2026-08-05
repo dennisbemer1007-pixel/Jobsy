@@ -5282,6 +5282,10 @@ a.engagement-btn {
     }
 }
 
+.share-modal.lobsy-dialog {
+    animation-fill-mode: both;
+}
+
 @keyframes lobsy-dialog-bob {
     from { transform: translateY(0) rotate(-4deg); }
     to { transform: translateY(-5px) rotate(4deg); }

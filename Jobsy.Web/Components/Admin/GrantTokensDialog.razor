@@ -5,6 +5,7 @@
                      Title="Goodwill / Compensatie"
                      TitleId="grant-tokens-title"
                      Lead="@(Company is null ? null : $"{Company.Name} · saldo {Company.TokenBalance.ToString("0.##")}")"
+                     CloseDisabled="_busy"
                      OnClose="Close">
     <p class="muted" style="margin:0 0 0.75rem">Administratieve waarde € 0,00 — geen BTW of omzet. Token-saldo loopt wel op.</p>
 
