@@ -116,7 +116,7 @@
                         <div class="token-pack-options" role="radiogroup" aria-label="Tokenpakket">
                             @foreach (var p in _packs)
                             {
-                                <label class="scope-option">
+                                <label class="scope-option token-pack-option @(_packSize == p.PackSize ? "is-selected" : null)">
                                     <input type="radio"
                                            name="token-pack"
                                            checked="@(_packSize == p.PackSize)"
@@ -124,6 +124,7 @@
                                     <span>
                                         <strong>@p.PackSize tokens</strong>
                                         <span class="muted">€ @p.PriceEuro.ToString("0.00")</span>
+                                        <small>@PricePerToken(p)</small>
                                     </span>
                                 </label>
                             }
@@ -162,7 +163,7 @@
                         <div class="token-pack-options" role="radiogroup" aria-label="Tokenpakket">
                             @foreach (var p in _packs)
                             {
-                                <label class="scope-option">
+                                <label class="scope-option token-pack-option @(_packSize == p.PackSize ? "is-selected" : null)">
                                     <input type="radio"
                                            name="token-pack-own"
                                            checked="@(_packSize == p.PackSize)"
@@ -170,6 +171,7 @@
                                     <span>
                                         <strong>@p.PackSize tokens</strong>
                                         <span class="muted">€ @p.PriceEuro.ToString("0.00")</span>
+                                        <small>@PricePerToken(p)</small>
                                     </span>
                                 </label>
                             }
@@ -282,6 +284,11 @@
 
     private string CheckoutButtonLabel =>
         _paymentMethod == "creditcard" ? "Doorgaan met creditcard" : "Doorgaan met iDEAL";
+
+    private static string PricePerToken(TokenPackItem pack) =>
+        pack.PackSize <= 0
+            ? "Prijs per token onbekend"
+            : $"€ {(pack.PriceEuro / pack.PackSize):0.00} per token";
     private decimal _allocateAmount = 1;
     private string _logFilter = "";
 

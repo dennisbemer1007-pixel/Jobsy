@@ -21,6 +21,7 @@ public record CompanySummaryDto(
     string? ContactPhone = null,
     string? ContactWhatsApp = null,
     string? KvkEstablishmentId = null,
+    KvkVerificationStatus KvkVerificationStatus = KvkVerificationStatus.Verified,
     string? PreferredPaymentMethod = null);
 
 public record UpdateBillingPreferenceRequest(string? PreferredPaymentMethod);

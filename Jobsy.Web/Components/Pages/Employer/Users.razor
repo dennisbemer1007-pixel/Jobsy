@@ -3,6 +3,7 @@
 @attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "EnterpriseManager,Admin")]
 @using Jobsy.Web.Navigation
 @inject JobsyApiClient Api
+@inject AuthenticationStateProvider AuthState
 @inject CultureState Culture
 @implements IDisposable
 
@@ -62,10 +63,10 @@
                     <label>
                         Rol
                         <select @bind="_editRole">
-                            <option value="EnterpriseManager">Bedrijfsmanager</option>
-                            <option value="RegionalManager">Regiomanager</option>
-                            <option value="BranchManager">Vestigingsmanager</option>
-                            <option value="Intermediary">Intermediair</option>
+                            @foreach (var option in RoleOptions)
+                            {
+                                <option value="@option.Value">@option.Label</option>
+                            }
                         </select>
                     </label>
                     <label>
@@ -116,10 +117,10 @@
                 <label>
                     Rol
                     <select @bind="_role">
-                        <option value="EnterpriseManager">Bedrijfsmanager</option>
-                        <option value="RegionalManager">Regiomanager</option>
-                        <option value="BranchManager">Vestigingsmanager</option>
-                        <option value="Intermediary">Intermediair</option>
+                        @foreach (var option in RoleOptions)
+                        {
+                            <option value="@option.Value">@option.Label</option>
+                        }
                     </select>
                 </label>
                 <label>
@@ -168,12 +169,31 @@
     private string _fullName = "";
     private string _role = "BranchManager";
     private string _primaryCompanyId = "";
+    private bool _isAdmin;
 
     private CompanyUserItem? _editing;
     private string _editFullName = "";
     private string _editRole = "BranchManager";
     private string _editPrimaryCompanyId = "";
     private bool _editIsActive = true;
+
+    private static readonly (string Value, string Label)[] AdminRoleOptions =
+    [
+        ("EnterpriseManager", "Bedrijfsmanager"),
+        ("RegionalManager", "Regiomanager"),
+        ("BranchManager", "Vestigingsmanager"),
+        ("Intermediary", "Intermediair")
+    ];
+
+    private static readonly (string Value, string Label)[] EnterpriseRoleOptions =
+    [
+        ("EnterpriseManager", "Bedrijfsmanager"),
+        ("RegionalManager", "Regiomanager"),
+        ("BranchManager", "Vestigingsmanager")
+    ];
+
+    private IReadOnlyList<(string Value, string Label)> RoleOptions =>
+        _isAdmin ? AdminRoleOptions : EnterpriseRoleOptions;
 
     protected override void OnInitialized()
         => Culture.Changed += OnCultureChanged;
@@ -188,8 +208,11 @@
     {
         try
         {
+            var state = await AuthState.GetAuthenticationStateAsync();
+            _isAdmin = state.User.IsInRole("Admin");
             _companies = (await Api.GetMyCompaniesAsync()).ToList();
             _users = (await Api.GetCompanyUsersAsync()).ToList();
+            EnsureInviteRoleAllowed();
             if (_companies.Count > 0)
             {
                 _primaryCompanyId = _companies[0].Id.ToString();
@@ -209,7 +232,7 @@
     {
         _editing = user;
         _editFullName = user.FullName;
-        _editRole = user.Role;
+        _editRole = IsRoleAllowed(user.Role) ? user.Role : RoleOptions[0].Value;
         _editPrimaryCompanyId = user.CompanyId?.ToString() ?? "";
         _editIsActive = user.IsActive;
         _editMemberships = user.MembershipCompanyIds.ToHashSet();
@@ -220,6 +243,17 @@
     {
         _editing = null;
         _editMemberships = [];
+    }
+
+    private bool IsRoleAllowed(string role) =>
+        RoleOptions.Any(option => string.Equals(option.Value, role, StringComparison.Ordinal));
+
+    private void EnsureInviteRoleAllowed()
+    {
+        if (!IsRoleAllowed(_role))
+        {
+            _role = RoleOptions[0].Value;
+        }
     }
 
     private void ToggleMembership(Guid id, bool selected)

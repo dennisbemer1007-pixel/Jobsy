@@ -1,6 +1,7 @@
 @page "/employer/company"
 @rendermode @(new InteractiveServerRenderMode(prerender: false))
 @attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "BranchManager,EnterpriseManager,Admin")]
+@using Jobsy.Core.Enums
 @using Jobsy.Web.Components.Employer
 @using Jobsy.Web.Components.Shared
 @inject JobsyApiClient Api
@@ -84,6 +85,32 @@
                         <strong class="stat-card__value">@_org.ActiveVacancies</strong>
                     </div>
                 </div>
+            </section>
+
+            <section class="panel-section company-details__card company-details__kvk">
+                <h2>KVK-gegevens</h2>
+                <dl class="company-details__kvk-grid">
+                    <div>
+                        <dt>Bedrijfsnaam</dt>
+                        <dd>@_org.Name</dd>
+                    </div>
+                    <div>
+                        <dt>KVK-nummer</dt>
+                        <dd>@(string.IsNullOrWhiteSpace(_org.KvkNumber) ? "—" : _org.KvkNumber)</dd>
+                    </div>
+                    <div>
+                        <dt>Vestigingsnummer</dt>
+                        <dd>@FormatVestigingsnummer(_org.KvkEstablishmentId)</dd>
+                    </div>
+                    <div>
+                        <dt>Adres</dt>
+                        <dd>@(string.IsNullOrWhiteSpace(_org.Address) ? "—" : _org.Address)</dd>
+                    </div>
+                    <div>
+                        <dt>Verificatiestatus</dt>
+                        <dd>@KvkStatusLabel(_org.KvkVerificationStatus)</dd>
+                    </div>
+                </dl>
             </section>
 
             <section class="panel-section company-details__card">
@@ -555,6 +582,25 @@
 
     private string ExampleRequestCurl => ExternalApiDocsCopy.ExampleRequestCurl(_vacanciesEndpoint);
     private static string ExampleResponseJson => ExternalApiDocsCopy.ExampleResponseJson;
+
+    private static string FormatVestigingsnummer(string? establishmentId)
+    {
+        if (string.IsNullOrWhiteSpace(establishmentId))
+        {
+            return "—";
+        }
+
+        var parts = establishmentId.Split('_', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        return parts.Length > 1 ? parts[^1] : establishmentId;
+    }
+
+    private static string KvkStatusLabel(KvkVerificationStatus status) => status switch
+    {
+        KvkVerificationStatus.Verified => "Geverifieerd",
+        KvkVerificationStatus.Pending => "In behandeling",
+        KvkVerificationStatus.Failed => "Niet geverifieerd",
+        _ => status.ToString()
+    };
 
     protected override async Task OnInitializedAsync()
     {

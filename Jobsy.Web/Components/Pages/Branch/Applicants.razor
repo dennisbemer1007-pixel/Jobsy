@@ -49,119 +49,177 @@
             }
         </div>
 
-        <div class="applicants-list">
-            @foreach (var a in FilteredItems)
-            {
-                var otherPending = CountOtherOpen(a);
-                <article class="applicant-card status-@a.Status.ToLowerInvariant()">
-                    <div class="applicant-card__top">
-                        <div class="applicant-card__identity">
-                            @if (a.PiiRevealed)
-                            {
-                                <h2>@a.CandidateName</h2>
-                                <p class="muted">@a.CandidateEmail</p>
-                            }
-                            else
-                            {
-                                <h2>@Culture["Employer.AnonymousCandidate"]</h2>
-                                <p class="muted">@Culture["Employer.AcceptToReveal"]</p>
-                            }
-                        </div>
-                        <div class="applicant-card__meta">
-                            @if (a.MatchPercent is int matchPct)
-                            {
-                                <span class="match-score match-score--@(MatchBand(matchPct, a.ViaSafetyNet))">@matchPct%</span>
-                            }
-                            <span class="status-pill status-pill--@a.Status.ToLowerInvariant()">@UiLabels.ApplicationStatus(Culture, a.Status)</span>
-                        </div>
-                    </div>
-
-                    <p class="applicant-card__vacancy">
-                        <strong>@a.VacancyTitle</strong>
-                        @if (!string.IsNullOrWhiteSpace(a.CompanyName))
-                        {
-                            <span class="muted"> · @a.CompanyName</span>
-                        }
-                    </p>
-
-                    <dl class="applicant-card__facts">
-                        <div>
-                            <dt>@Culture["Employer.FactMotivation"]</dt>
-                            <dd>@(string.IsNullOrWhiteSpace(a.Motivation) ? "—" : a.Motivation)</dd>
-                        </div>
-                        <div>
-                            <dt>@Culture["Employer.FactDistance"]</dt>
-                            <dd>
-                                @if (a.DistanceKm is double km)
+        <div class="table-scroll applicants-grid">
+            <table class="data-table applicants-grid__table">
+                <thead>
+                    <tr>
+                        <th class="applicants-grid__col--expand"><span class="visually-hidden">Details</span></th>
+                        <th class="data-table__col--wrap">Kandidaat</th>
+                        <th class="data-table__col--wrap">Vacature</th>
+                        <th>Afstand</th>
+                        <th>Match</th>
+                        <th>Status</th>
+                        <th>Ontvangen</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var a in FilteredItems)
+                    {
+                        var expanded = _expandedIds.Contains(a.Id);
+                        var otherPending = CountOtherOpen(a);
+                        <tr class="data-table__row--interactive applicants-grid__row status-@a.Status.ToLowerInvariant() @(expanded ? "is-expanded" : null)"
+                            @onclick="() => ToggleExpanded(a.Id)"
+                            aria-expanded="@expanded">
+                            <td class="applicants-grid__expand-cell">
+                                <button type="button"
+                                        class="applicants-grid__expand"
+                                        title="Details"
+                                        aria-label="Sollicitatie details"
+                                        @onclick="() => ToggleExpanded(a.Id)"
+                                        @onclick:stopPropagation="true">
+                                    @(expanded ? "−" : "+")
+                                </button>
+                            </td>
+                            <td class="data-table__col--wrap">
+                                <strong>@DisplayCandidateName(a)</strong>
+                                <span class="muted">@DisplayCandidateSubtext(a)</span>
+                            </td>
+                            <td class="data-table__col--wrap">
+                                <strong>@a.VacancyTitle</strong>
+                                @if (!string.IsNullOrWhiteSpace(a.CompanyName))
                                 {
-                                    <text>@km.ToString("0.#") km</text>
+                                    <span class="muted">@a.CompanyName</span>
+                                }
+                            </td>
+                            <td>@FormatTravel(a)</td>
+                            <td>
+                                @if (a.MatchPercent is int matchPct)
+                                {
+                                    <span class="match-score match-score--@(MatchBand(matchPct, a.ViaSafetyNet))">@matchPct%</span>
                                 }
                                 else
                                 {
-                                    <text>—</text>
+                                    <span class="muted">—</span>
                                 }
-                                <span class="muted"> · ± @a.EstimatedTravelMinutes min (@UiLabels.Transport(Culture, a.PreferredTransport))</span>
-                            </dd>
-                        </div>
-                        <div>
-                            <dt>@Culture["Employer.FactAvailability"]</dt>
-                            <dd>@(string.IsNullOrWhiteSpace(a.AvailabilitySummary) ? "—" : a.AvailabilitySummary)</dd>
-                        </div>
-                        <div>
-                            <dt>@Culture["Employer.FactAge"]</dt>
-                            <dd>@(a.CandidateAgeYears is int age ? $"{age}" : "—")</dd>
-                        </div>
-                    </dl>
-
-                    @if (a.PiiRevealed)
-                    {
-                        <div class="applicant-card__contact muted">
-                            @if (!string.IsNullOrWhiteSpace(a.CandidatePhone))
-                            {
-                                <span>@a.CandidatePhone@(a.WhatsAppContactAllowed ? " · WhatsApp ok" : "")</span>
-                            }
-                            @if (!string.IsNullOrWhiteSpace(a.CandidateCity))
-                            {
-                                <span>@a.CandidateCity</span>
-                            }
-                            @if (!string.IsNullOrWhiteSpace(a.CandidateAddress))
-                            {
-                                <span>@a.CandidateAddress</span>
-                            }
-                        </div>
+                            </td>
+                            <td><span class="status-pill status-pill--@a.Status.ToLowerInvariant()">@UiLabels.ApplicationStatus(Culture, a.Status)</span></td>
+                            <td>@a.CreatedAt.ToLocalTime().ToString("dd-MM-yyyy HH:mm")</td>
+                        </tr>
+                        @if (expanded)
+                        {
+                            <tr class="applicants-grid__details-row status-@a.Status.ToLowerInvariant()">
+                                <td colspan="7">
+                                    <div class="applicants-grid__details">
+                                        <section>
+                                            <h3>@Culture["Employer.FactMotivation"]</h3>
+                                            <p>@(string.IsNullOrWhiteSpace(a.Motivation) ? "—" : a.Motivation)</p>
+                                        </section>
+                                        <section>
+                                            <h3>@Culture["Employer.FactAvailability"]</h3>
+                                            <p>@(string.IsNullOrWhiteSpace(a.AvailabilitySummary) ? "—" : a.AvailabilitySummary)</p>
+                                            @if (!string.IsNullOrWhiteSpace(a.PreferencesSummary))
+                                            {
+                                                <p class="muted">@a.PreferencesSummary</p>
+                                            }
+                                        </section>
+                                        <section>
+                                            <h3>Kandidaatprofiel</h3>
+                                            <dl class="applicants-grid__facts">
+                                                <div>
+                                                    <dt>@Culture["Employer.FactDistance"]</dt>
+                                                    <dd>@FormatTravel(a)</dd>
+                                                </div>
+                                                <div>
+                                                    <dt>@Culture["Employer.FactAge"]</dt>
+                                                    <dd>@(a.CandidateAgeYears is int age ? $"{age}" : "—")</dd>
+                                                </div>
+                                                @if (!string.IsNullOrWhiteSpace(a.SnapshotDrivingLicenses))
+                                                {
+                                                    <div>
+                                                        <dt>Rijbewijs</dt>
+                                                        <dd>@a.SnapshotDrivingLicenses</dd>
+                                                    </div>
+                                                }
+                                                @if (!string.IsNullOrWhiteSpace(a.SnapshotEducations))
+                                                {
+                                                    <div>
+                                                        <dt>Opleiding</dt>
+                                                        <dd>@a.SnapshotEducations</dd>
+                                                    </div>
+                                                }
+                                                @if (!string.IsNullOrWhiteSpace(a.SnapshotAboutMe))
+                                                {
+                                                    <div class="applicants-grid__fact--wide">
+                                                        <dt>Over kandidaat</dt>
+                                                        <dd>@a.SnapshotAboutMe</dd>
+                                                    </div>
+                                                }
+                                            </dl>
+                                        </section>
+                                        <section>
+                                            <h3>Contact</h3>
+                                            @if (a.PiiRevealed)
+                                            {
+                                                <div class="applicant-card__contact muted">
+                                                    @if (!string.IsNullOrWhiteSpace(a.CandidateEmail))
+                                                    {
+                                                        <span>@a.CandidateEmail</span>
+                                                    }
+                                                    @if (!string.IsNullOrWhiteSpace(a.CandidatePhone))
+                                                    {
+                                                        <span>@a.CandidatePhone@(a.WhatsAppContactAllowed ? " · WhatsApp ok" : "")</span>
+                                                    }
+                                                    @if (!string.IsNullOrWhiteSpace(a.CandidateCity))
+                                                    {
+                                                        <span>@a.CandidateCity</span>
+                                                    }
+                                                    @if (!string.IsNullOrWhiteSpace(a.CandidateAddress))
+                                                    {
+                                                        <span>@a.CandidateAddress</span>
+                                                    }
+                                                </div>
+                                            }
+                                            else
+                                            {
+                                                <p class="muted">@Culture["Employer.AcceptToReveal"]</p>
+                                            }
+                                        </section>
+                                        <div class="applicant-card__actions applicants-grid__actions">
+                                            @if (_canReact && a.Status == "Pending")
+                                            {
+                                                <button type="button" class="engagement-btn engagement-btn--primary" disabled="@_busyId.HasValue" @onclick="() => ReactAsync(a.Id, AcceptedStatus)" @onclick:stopPropagation="true">
+                                                    @Culture["Employer.Accept"]
+                                                </button>
+                                                <button type="button" class="engagement-btn" disabled="@_busyId.HasValue" @onclick="() => OpenRejectConfirm(a)" @onclick:stopPropagation="true">
+                                                    @Culture["Employer.Reject"]
+                                                </button>
+                                            }
+                                            @if (_canReact && a.Status == "Accepted")
+                                            {
+                                                <button type="button" class="engagement-btn engagement-btn--primary" disabled="@_busyId.HasValue" @onclick="() => MarkContactAsync(a.Id)" @onclick:stopPropagation="true">
+                                                    @Culture["Employer.Invite"]
+                                                </button>
+                                            }
+                                            @if (_canReact && (a.Status == "Accepted" || a.Status == "EmployerContacting"))
+                                            {
+                                                <button type="button" class="engagement-btn engagement-btn--primary" disabled="@_busyId.HasValue" @onclick="() => OpenMatchConfirm(a, otherPending)" @onclick:stopPropagation="true">
+                                                    @Culture["Employer.Match"]
+                                                </button>
+                                            }
+                                            @if (a.CvPdfAvailable || a.PiiRevealed)
+                                            {
+                                                <button type="button" class="engagement-btn" disabled="@_busyId.HasValue" @onclick="() => DownloadCvAsync(a.Id)" @onclick:stopPropagation="true">
+                                                    @Culture["Employer.DownloadLobsyCv"]
+                                                </button>
+                                            }
+                                        </div>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
                     }
-
-                    <div class="applicant-card__actions">
-                        @if (_canReact && a.Status == "Pending")
-                        {
-                            <button type="button" class="engagement-btn engagement-btn--primary" disabled="@_busyId.HasValue" @onclick="() => ReactAsync(a.Id, AcceptedStatus)">
-                                @Culture["Employer.Accept"]
-                            </button>
-                            <button type="button" class="engagement-btn" disabled="@_busyId.HasValue" @onclick="() => OpenRejectConfirm(a)">
-                                @Culture["Employer.Reject"]
-                            </button>
-                        }
-                        @if (_canReact && a.Status == "Accepted")
-                        {
-                            <button type="button" class="engagement-btn engagement-btn--primary" disabled="@_busyId.HasValue" @onclick="() => MarkContactAsync(a.Id)">
-                                @Culture["Employer.Invite"]
-                            </button>
-                        }
-                        @if (_canReact && (a.Status == "Accepted" || a.Status == "EmployerContacting"))
-                        {
-                            <button type="button" class="engagement-btn engagement-btn--primary" disabled="@_busyId.HasValue" @onclick="() => OpenMatchConfirm(a, otherPending)">
-                                @Culture["Employer.Match"]
-                            </button>
-                        }
-                        @if (a.CvPdfAvailable || a.PiiRevealed)
-                        {
-                            <button type="button" class="engagement-btn" disabled="@_busyId.HasValue" @onclick="() => DownloadCvAsync(a.Id)">
-                                @Culture["Employer.DownloadLobsyCv"]
-                            </button>
-                        }
-                    </div>
-                </article>
-            }
+                </tbody>
+            </table>
         </div>
 
         @if (!string.IsNullOrEmpty(_message))
@@ -231,7 +289,8 @@
     private Guid? _busyId;
     private string? _message;
     private bool _messageIsError;
-    private string _statusFilter = "open";
+    private string _statusFilter = "all";
+    private readonly HashSet<Guid> _expandedIds = [];
 
     private EmployerApplicationItem? _rejectTarget;
     private EmployerApplicationItem? _matchTarget;
@@ -241,24 +300,68 @@
 
     private IEnumerable<(string Key, string Label)> StatusFilters =>
     [
+        ("all", Culture["Employer.FilterAll"]),
         ("open", Culture["Employer.FilterOpen"]),
         ("accepted", Culture["Employer.FilterAccepted"]),
         ("matched", Culture["Employer.FilterMatched"]),
-        ("rejected", Culture["Employer.FilterRejected"]),
-        ("all", Culture["Employer.FilterAll"])
+        ("rejected", Culture["Employer.FilterRejected"])
     ];
 
-    private IEnumerable<EmployerApplicationItem> FilteredItems => _statusFilter switch
-    {
-        "open" => _items.Where(a => a.Status is "Pending"),
-        "accepted" => _items.Where(a => a.Status is "Accepted" or "EmployerContacting"),
-        "matched" => _items.Where(a => a.Status is "Hired"),
-        "rejected" => _items.Where(a => a.Status is "Rejected" or "FilledElsewhere"),
-        _ => _items
-    };
+    private IEnumerable<EmployerApplicationItem> FilteredItems =>
+        (_statusFilter switch
+        {
+            "open" => _items.Where(a => a.Status is "Pending"),
+            "accepted" => _items.Where(a => a.Status is "Accepted" or "EmployerContacting"),
+            "matched" => _items.Where(a => a.Status is "Hired"),
+            "rejected" => _items.Where(a => a.Status is "Rejected" or "FilledElsewhere"),
+            _ => _items
+        })
+        .OrderBy(a => StatusSortRank(a.Status))
+        .ThenByDescending(a => a.CreatedAt)
+        .ThenBy(a => a.VacancyTitle, StringComparer.CurrentCultureIgnoreCase);
 
     private static string MatchBand(int percent, bool viaSafetyNet)
         => viaSafetyNet || percent < 50 ? "red" : percent >= 70 ? "green" : "orange";
+
+    private static int StatusSortRank(string status) => status switch
+    {
+        "Pending" => 0,
+        "Accepted" or "EmployerContacting" => 1,
+        _ => 2
+    };
+
+    private void ToggleExpanded(Guid id)
+    {
+        if (!_expandedIds.Add(id))
+        {
+            _expandedIds.Remove(id);
+        }
+    }
+
+    private string DisplayCandidateName(EmployerApplicationItem item) =>
+        item.PiiRevealed && !string.IsNullOrWhiteSpace(item.CandidateName)
+            ? item.CandidateName
+            : Culture["Employer.AnonymousCandidate"];
+
+    private string DisplayCandidateSubtext(EmployerApplicationItem item)
+    {
+        if (!item.PiiRevealed)
+        {
+            return Culture["Employer.AcceptToReveal"];
+        }
+
+        return string.IsNullOrWhiteSpace(item.CandidateEmail)
+            ? "—"
+            : item.CandidateEmail;
+    }
+
+    private string FormatTravel(EmployerApplicationItem item)
+    {
+        var travel = $"± {item.EstimatedTravelMinutes} min ({UiLabels.Transport(Culture, item.PreferredTransport)})";
+        return item.DistanceKm is double km
+            ? $"{km.ToString("0.#")} km · {travel}"
+            : travel;
+    }
 
     private int CountFor(string key) => key switch
     {

@@ -369,6 +369,20 @@
                            @onchange="OnRadiusChanged" />
                 </label>
                 <div class="filter-bar__actions">
+                    @if (_canShowMyVacancies)
+                    {
+                        <button type="button"
+                                class="filter-bar__focus @(_myVacanciesOnly ? "is-active" : null)"
+                                disabled="@_myVacanciesLoading"
+                                @onclick="ToggleMyVacanciesAsync"
+                                aria-pressed="@_myVacanciesOnly">
+                            @(_myVacanciesLoading ? "Laden…" : "Toon mijn vacatures")
+                        </button>
+                    }
+                    @if (!string.IsNullOrWhiteSpace(_myVacanciesError))
+                    {
+                        <p class="state-message error filter-bar__error">@_myVacanciesError</p>
+                    }
                     @if (ActiveFilterCount > 0)
                     {
                         <button type="button"
@@ -602,6 +616,25 @@
             }
 
             <div class="filter-sheet__body">
+                @if (_canShowMyVacancies)
+                {
+                    <section class="filter-section filter-section--focus">
+                        <h3>Vacatures</h3>
+                        <button type="button"
+                                class="filter-sheet__focus @(_myVacanciesOnly ? "is-active" : null)"
+                                disabled="@_myVacanciesLoading"
+                                @onclick="ToggleMyVacanciesAsync"
+                                aria-pressed="@_myVacanciesOnly">
+                            @(_myVacanciesLoading ? "Laden…" : "Toon mijn vacatures")
+                        </button>
+                        <p class="muted">Toon alleen actieve open vacatures van bedrijven die jij beheert.</p>
+                        @if (!string.IsNullOrWhiteSpace(_myVacanciesError))
+                        {
+                            <p class="state-message error">@_myVacanciesError</p>
+                        }
+                    </section>
+                }
+
                 <section class="filter-section">
                     <h3>@Culture["Discovery.Keyword"]</h3>
                     <label class="filter-sheet__query">
@@ -804,6 +837,7 @@
     private List<VacancyCategoryItem> _categories = [];
     private HashSet<string> _snapSelectedWorkTypes = new(StringComparer.OrdinalIgnoreCase);
     private HashSet<Guid> _snapSelectedCategoryIds = [];
+    private HashSet<Guid>? _snapMyVacancyCompanyIds;
     private int _snapMaxTravelMinutes = 30;
     private int _snapRadiusKm = 15;
     private string _snapSelectedTransport = "Fiets";
@@ -813,6 +847,7 @@
     private decimal? _snapMinHourlyWage;
     private decimal? _snapMaxHourlyWage;
     private string? _snapSearchQuery;
+    private bool _snapMyVacanciesOnly;
     /// <summary>Free-text filter: company name, vacancy title, description (?q=).</summary>
     private string? _searchQuery;
     /// <summary>In-progress text in the keyword field (debounced into <see cref="_searchQuery"/>).</summary>
@@ -820,6 +855,8 @@
     private CancellationTokenSource? _searchDebounceCts;
     /// <summary>Deep-link from raamflyer QR (?company= / ?companies=).</summary>
     private HashSet<Guid>? _companyFocusIds;
+    private HashSet<Guid>? _queryCompanyFocusIds;
+    private HashSet<Guid>? _myVacancyCompanyIds;
     private Guid? _mapFocusCompanyId;
     private bool _pendingCompanyMapFocus;
     private List<string> _branchOptions = WorkTypeLabels.All.ToList();
@@ -831,6 +868,10 @@
     private decimal? _minHourlyWage;
     private decimal? _maxHourlyWage;
     private bool _isCandidate;
+    private bool _canShowMyVacancies;
+    private bool _myVacanciesOnly;
+    private bool _myVacanciesLoading;
+    private string? _myVacanciesError;
     private CandidatePreferences? _candidatePrefs;
     private OriginPoint? _origin;
     private string _addressQuery = string.Empty;
@@ -988,6 +1029,7 @@
             if (_minHourlyWage is not null) n++;
             if (_maxHourlyWage is not null) n++;
             if (_minHoursPerWeek != DefaultMinHoursPerWeek || _maxHoursPerWeek != DefaultMaxHoursPerWeek) n++;
+            if (_myVacanciesOnly) n++;
             if (_origin is not null && _maxTravelMinutes != 30) n++;
             if (_origin is not null && _selectedTransport != "Fiets") n++;
             if (_origin is not null && _radiusKm != 15) n++;
@@ -1025,7 +1067,12 @@
         {
             await LoadBranchOptionsAsync();
             var state = await AuthState.GetAuthenticationStateAsync();
-            _isCandidate = state.User.IsInRole("Candidate");
+            var user = state.User;
+            _isCandidate = user.IsInRole("Candidate");
+            _canShowMyVacancies = user.IsInRole("EnterpriseManager")
+                || user.IsInRole("RegionalManager")
+                || user.IsInRole("BranchManager")
+                || user.IsInRole("Intermediary");
             if (_isCandidate)
             {
                 var profile = await Api.GetMyProfileAsync();
@@ -1150,16 +1197,28 @@
 
         if (ids.Count == 0)
         {
-            _companyFocusIds = null;
-            _mapFocusCompanyId = null;
-            _pendingCompanyMapFocus = false;
+            _queryCompanyFocusIds = null;
+            ApplyEffectiveCompanyFocus();
             return;
         }
 
-        _companyFocusIds = ids;
-        _mapFocusCompanyId = ids.Count == 1 ? ids.First() : null;
+        _queryCompanyFocusIds = ids;
+        ApplyEffectiveCompanyFocus();
+    }
+
+    private void ApplyEffectiveCompanyFocus()
+    {
+        var ids = _myVacanciesOnly
+            ? _myVacancyCompanyIds
+            : _queryCompanyFocusIds;
+
+        _companyFocusIds = ids is { Count: > 0 } ? ids.ToHashSet() : null;
+        _mapFocusCompanyId = _companyFocusIds?.Count == 1 ? _companyFocusIds.First() : null;
         _pendingCompanyMapFocus = _mapFocusCompanyId is not null;
-        showMapOnMobile = true;
+        if (_companyFocusIds is not null)
+        {
+            showMapOnMobile = true;
+        }
     }
 
     private void ApplyWorkTypeFromQuery()
@@ -1489,7 +1548,8 @@
         {
             // Raamflyer deep-links must show the vestiging even when the visitor's
             // travel/profile filters would otherwise hide those jobs.
-            var companyFocus = _companyFocusIds is { Count: > 0 };
+            var companyFocus = _companyFocusIds is { Count: > 0 } || _myVacanciesOnly;
+            var queryCompanyFocus = !_myVacanciesOnly && _queryCompanyFocusIds is { Count: > 0 };
             var useOrigin = _origin is not null && !companyFocus;
             var items = await Api.DiscoverVacanciesAsync(
                 useOrigin ? _origin!.Latitude : null,
@@ -1505,7 +1565,8 @@
                 companyFocus ? null : _minHoursPerWeek,
                 companyFocus ? null : _maxHoursPerWeek,
                 companyFocus || _selectedCategoryIds.Count == 0 ? null : _selectedCategoryIds,
-                suitableFor65Plus: null);
+                suitableFor65Plus: null,
+                companyIds: _companyFocusIds);
 
             if (generation != _loadGeneration)
             {
@@ -1529,7 +1590,8 @@
                     _minHoursPerWeek,
                     _maxHoursPerWeek,
                     _selectedCategoryIds.Count == 0 ? null : _selectedCategoryIds,
-                    suitableFor65Plus: null);
+                    suitableFor65Plus: null,
+                    companyIds: _companyFocusIds);
 
                 if (generation != _loadGeneration)
                 {
@@ -1540,12 +1602,14 @@
             _vacancies = items.ToList();
             if (companyFocus)
             {
-                _vacancies = _vacancies
-                    .Where(v => _companyFocusIds!.Contains(v.CompanyId))
-                    .ToList();
+                _vacancies = _companyFocusIds is { Count: > 0 }
+                    ? _vacancies
+                        .Where(v => _companyFocusIds.Contains(v.CompanyId))
+                        .ToList()
+                    : [];
 
                 // Scenario A: exactly one open vacancy at the focused vestiging → open detail + apply.
-                if (_companyFocusIds!.Count == 1 && _vacancies.Count == 1)
+                if (queryCompanyFocus && _companyFocusIds!.Count == 1 && _vacancies.Count == 1)
                 {
                     Navigation.NavigateTo($"/vacancies/{_vacancies[0].Id:D}", replace: true);
                     return;
@@ -1964,6 +2028,50 @@
     private Task CommitHoursRangeAsync()
         => ReloadFiltersIfAppliedAsync();
 
+    private async Task ToggleMyVacanciesAsync()
+    {
+        if (!_canShowMyVacancies)
+        {
+            return;
+        }
+
+        _myVacanciesError = null;
+        if (_myVacanciesOnly)
+        {
+            _myVacanciesOnly = false;
+            _myVacancyCompanyIds = null;
+            ApplyEffectiveCompanyFocus();
+            await LoadVacanciesAsync();
+            return;
+        }
+
+        _myVacanciesLoading = true;
+        try
+        {
+            var managed = await Api.GetManagedVacanciesAsync();
+            _myVacancyCompanyIds = managed
+                .Where(IsActiveOpenManagedVacancy)
+                .Select(v => v.CompanyId)
+                .Where(id => id != Guid.Empty)
+                .ToHashSet();
+            _myVacanciesOnly = true;
+            ApplyEffectiveCompanyFocus();
+            await LoadVacanciesAsync();
+        }
+        catch (Exception ex)
+        {
+            _myVacanciesError = ex.Message;
+        }
+        finally
+        {
+            _myVacanciesLoading = false;
+        }
+    }
+
+    private static bool IsActiveOpenManagedVacancy(VacancyListItem vacancy) =>
+        string.Equals(vacancy.Status, "Active", StringComparison.OrdinalIgnoreCase)
+        && vacancy.FulfilledByApplicationId is null;
+
     private async Task OnTransportChanged(ChangeEventArgs e)
     {
         _selectedTransport = e.Value?.ToString() ?? "Fiets";
@@ -2370,6 +2478,8 @@
         _snapSearchQuery = _searchQuery;
         _snapSelectedWorkTypes = _selectedWorkTypes.ToHashSet(StringComparer.OrdinalIgnoreCase);
         _snapSelectedCategoryIds = _selectedCategoryIds.ToHashSet();
+        _snapMyVacanciesOnly = _myVacanciesOnly;
+        _snapMyVacancyCompanyIds = _myVacancyCompanyIds?.ToHashSet();
     }
 
     private void RestoreFilterSnapshot()
@@ -2384,6 +2494,9 @@
         _maxHourlyWage = _snapMaxHourlyWage;
         _searchQuery = _snapSearchQuery;
         _searchDraft = _snapSearchQuery;
+        _myVacanciesOnly = _snapMyVacanciesOnly;
+        _myVacancyCompanyIds = _snapMyVacancyCompanyIds?.ToHashSet();
+        ApplyEffectiveCompanyFocus();
         _selectedWorkTypes.Clear();
         _selectedCategoryIds.Clear();
         foreach (var type in _snapSelectedWorkTypes)
@@ -2484,6 +2597,10 @@
         _radiusKm = 15;
         _minHoursPerWeek = DefaultMinHoursPerWeek;
         _maxHoursPerWeek = DefaultMaxHoursPerWeek;
+        _myVacanciesOnly = false;
+        _myVacancyCompanyIds = null;
+        _myVacanciesError = null;
+        ApplyEffectiveCompanyFocus();
         if (!_filtersOpen)
         {
             await PersistAgeAsync();

@@ -710,6 +710,19 @@
         }
     }
 
+    private void ApplyCompanyContactDefaults()
+    {
+        if (_editVacancyId is not null || _isDuplicate || SelectedCompany is not { } company)
+        {
+            return;
+        }
+
+        _vacancyDirectContact = company.DirectContactEnabled;
+        _vacancyPreferMail = company.DirectContactEnabled && company.ContactPreferMail;
+        _vacancyPreferPhone = company.DirectContactEnabled && company.ContactPreferPhone;
+        _vacancyPreferWhatsApp = company.DirectContactEnabled && company.ContactPreferWhatsApp;
+    }
+
     private SalaryTableItem? SelectedSalaryTable =>
         Guid.TryParse(_salaryTableId, out var sid)
             ? _salaryTables.FirstOrDefault(t => t.Id == sid)
@@ -1285,6 +1298,8 @@
                               || t.Name.Equals("WML", StringComparison.OrdinalIgnoreCase));
                 _salaryTableId = wml?.Id.ToString() ?? _salaryTables.FirstOrDefault()?.Id.ToString() ?? "";
             }
+
+            ApplyCompanyContactDefaults();
         }
         catch
         {
