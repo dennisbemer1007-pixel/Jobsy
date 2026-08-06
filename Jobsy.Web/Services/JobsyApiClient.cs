@@ -1458,6 +1458,72 @@ public sealed class JobsyApiClient : IAsyncDisposable
     public async Task<PartnerAffiliateToolkitModel?> GetPartnerAffiliateToolkitAsync(CancellationToken ct = default)
         => await _http.GetFromJsonAsync<PartnerAffiliateToolkitModel>("api/partner-affiliate/toolkit", ct);
 
+    public async Task<List<SelfBillingInvoiceItem>> GetPartnerAffiliateInvoicesAsync(CancellationToken ct = default)
+        => await _http.GetFromJsonAsync<List<SelfBillingInvoiceItem>>("api/partner-affiliate/me/invoices", ct) ?? [];
+
+    public async Task<SalesManagerPayoutPreview?> GetPartnerAffiliatePayoutPreviewAsync(
+        decimal? amountExVat = null,
+        CancellationToken ct = default)
+    {
+        var url = amountExVat is null
+            ? "api/partner-affiliate/me/payouts/preview"
+            : $"api/partner-affiliate/me/payouts/preview?amountExVat={amountExVat.Value.ToString(System.Globalization.CultureInfo.InvariantCulture)}";
+        return await _http.GetFromJsonAsync<SalesManagerPayoutPreview>(url, ct);
+    }
+
+    public async Task<SalesManagerPayoutCheckoutResult?> CreatePartnerAffiliatePayoutCheckoutAsync(
+        decimal amountExVat,
+        CancellationToken ct = default)
+    {
+        var response = await _http.PostAsJsonAsync(
+            "api/partner-affiliate/me/payouts/checkout",
+            new { amountExVat },
+            ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException(ExtractMessage(body) ?? "Uitbetaling starten mislukt.");
+        }
+
+        return await response.Content.ReadFromJsonAsync<SalesManagerPayoutCheckoutResult>(cancellationToken: ct);
+    }
+
+    public async Task<SalesManagerPayoutCompleteResult?> CompletePartnerAffiliatePayoutCheckoutAsync(
+        string paymentId,
+        CancellationToken ct = default)
+    {
+        var response = await _http.PostAsJsonAsync(
+            "api/partner-affiliate/me/payouts/complete",
+            new { paymentId },
+            ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException(ExtractMessage(body) ?? "Uitbetaling afronden mislukt.");
+        }
+
+        return await response.Content.ReadFromJsonAsync<SalesManagerPayoutCompleteResult>(cancellationToken: ct);
+    }
+
+    public async Task DownloadPartnerAffiliateInvoiceAsync(
+        Guid invoiceId,
+        string invoiceNumber,
+        IJSRuntime js,
+        CancellationToken ct = default)
+    {
+        var response = await _http.GetAsync($"api/partner-affiliate/me/invoices/{invoiceId}/download", ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException(ExtractMessage(body) ?? "Download mislukt.");
+        }
+
+        var bytes = await response.Content.ReadAsByteArrayAsync(ct);
+        var fileName = string.IsNullOrWhiteSpace(invoiceNumber) ? $"{invoiceId:N}.pdf" : $"{invoiceNumber}.pdf";
+        var base64 = Convert.ToBase64String(bytes);
+        await js.InvokeVoidAsync("jobsyDownload.bytes", fileName, base64, "application/pdf");
+    }
+
     public async Task DownloadAmbassadeurFlyerPdfAsync(
         Microsoft.JSInterop.IJSRuntime js,
         string kind,

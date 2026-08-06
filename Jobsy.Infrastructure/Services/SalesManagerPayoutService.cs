@@ -605,9 +605,12 @@ public sealed class SalesManagerPayoutService : ISalesManagerPayoutService
             .Where(u => u.Id == userId)
             .Select(u => u.Role)
             .FirstOrDefaultAsync(cancellationToken);
-        return role == UserRole.Ambassadeur
-            ? "ambassadeur/payout-checkout"
-            : "salesmanager/payout-checkout";
+        return role switch
+        {
+            UserRole.Ambassadeur => "ambassadeur/payout-checkout",
+            UserRole.EnterpriseManager or UserRole.Intermediary => "employer/sales/payout-checkout",
+            _ => "salesmanager/payout-checkout"
+        };
     }
 
     private sealed record PayoutProfile(string? Iban, bool IsOnboardingComplete);

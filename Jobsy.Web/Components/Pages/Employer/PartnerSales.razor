@@ -1,0 +1,636 @@
+@page "/employer/sales"
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
+@attribute [Authorize(Roles = "EnterpriseManager,Intermediary")]
+@inject JobsyApiClient Api
+@inject NavigationManager Nav
+@inject IJSRuntime Js
+@inject CultureState Culture
+@implements IDisposable
+
+<PageTitle>Sales · Lobsy</PageTitle>
+
+<div class="panel-page panel-page--wide">
+    <header class="panel-header">
+        <div>
+            <h1>Sales</h1>
+            <p class="login-lead">Deel je partnerlink, volg tokenaankopen en bekijk je commissie-uitbetalingen.</p>
+        </div>
+        @if (_tab == "invoices")
+        {
+            <button class="login-submit" type="button" disabled="@_busy" @onclick="OpenPayoutModalAsync">
+                Uitbetalen
+            </button>
+        }
+    </header>
+
+    <div class="admin-sublinks" role="tablist" aria-label="Sales onderdelen">
+        <button type="button" class="admin-sublink @ActiveTabClass("toolkit")" role="tab" aria-selected="@(_tab == "toolkit")" @onclick='() => SetTab("toolkit")'>
+            Sales-toolkit
+        </button>
+        <button type="button" class="admin-sublink @ActiveTabClass("tokenlog")" role="tab" aria-selected="@(_tab == "tokenlog")" @onclick='() => SetTab("tokenlog")'>
+            Tokenlogging
+        </button>
+        <button type="button" class="admin-sublink @ActiveTabClass("invoices")" role="tab" aria-selected="@(_tab == "invoices")" @onclick='() => SetTab("invoices")'>
+            Facturen
+        </button>
+        <button type="button" class="admin-sublink @ActiveTabClass("explain")" role="tab" aria-selected="@(_tab == "explain")" @onclick='() => SetTab("explain")'>
+            Uitleg
+        </button>
+    </div>
+
+    @if (!string.IsNullOrEmpty(_error))
+    {
+        <p class="state-message error">@_error</p>
+    }
+    @if (!string.IsNullOrEmpty(_message))
+    {
+        <p class="state-message">@_message</p>
+    }
+
+    @if (_loading)
+    {
+        <p class="state-message">@Culture["Common.Loading"]</p>
+    }
+    else if (_me is null)
+    {
+        <p class="state-message error">Partnerprofiel kon niet worden geladen.</p>
+    }
+    else if (_tab == "toolkit")
+    {
+        <section class="panel-section">
+            <h2>Sales-toolkit</h2>
+            <p class="muted">Gebruik je trackingcode of partnerlink. Nieuwe bedrijven die via jouw link registreren worden aan jouw salesprofiel gekoppeld.</p>
+
+            <div class="stat-grid">
+                <div class="stat-card">
+                    <span class="stat-card__label">Trackingcode</span>
+                    <strong class="stat-card__value">@TrackingCode</strong>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-card__label">Commissie</span>
+                    <strong class="stat-card__value">@FormatPercentage(CommissionRate)</strong>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-card__label">Aangebrachte bedrijven</span>
+                    <strong class="stat-card__value">@_me.ReferredCompanyCount</strong>
+                </div>
+            </div>
+        </section>
+
+        <section class="panel-section partner-sales__box">
+            <h2>Links en flyer</h2>
+            <div class="table-list">
+                <div class="table-row">
+                    <div>
+                        <strong>Partnerlink</strong>
+                        <div class="muted" style="word-break:break-all">@PartnerUrl</div>
+                    </div>
+                    <a class="btn-compact" href="@PartnerUrl" target="_blank" rel="noopener">Open</a>
+                </div>
+                <div class="table-row">
+                    <div>
+                        <strong>Registratie-URL</strong>
+                        <div class="muted" style="word-break:break-all">@RegisterUrl</div>
+                    </div>
+                    <a class="btn-compact" href="@RegisterUrl" target="_blank" rel="noopener">Open</a>
+                </div>
+            </div>
+
+            <div class="inline-actions" style="flex-wrap:wrap;gap:0.5rem;margin-top:1rem">
+                @if (!string.IsNullOrWhiteSpace(_toolkit?.FlyerUrl))
+                {
+                    <a class="btn-compact btn-compact--primary" href="@_toolkit.FlyerUrl" target="_blank" rel="noopener">
+                        Download flyer
+                    </a>
+                }
+                <button class="btn-compact" type="button" @onclick="ShareWhatsApp">Deel via WhatsApp</button>
+                <button class="btn-compact" type="button" @onclick="ShareMail">Deel via mail</button>
+            </div>
+        </section>
+    }
+    else if (_tab == "tokenlog")
+    {
+        <section class="panel-section">
+            <h2>Tokenlogging</h2>
+            <p class="muted">Alle commissieboekingen voor tokenaankopen en uitbetalingen via jouw partnercode.</p>
+
+            <div class="stat-grid">
+                <div class="stat-card">
+                    <span class="stat-card__label">Beschikbaar saldo excl. BTW</span>
+                    <strong class="stat-card__value">€ @AvailableBalanceExVat.ToString("0.00")</strong>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-card__label">Saldo incl. BTW</span>
+                    <strong class="stat-card__value">€ @Math.Max(0m, _me.BalanceInclVat).ToString("0.00")</strong>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-card__label">Saldo volgens logging</span>
+                    <strong class="stat-card__value">€ @TokenLogBalanceExVat.ToString("0.00")</strong>
+                </div>
+            </div>
+
+            @if (_tokenRows.Count == 0)
+            {
+                <p class="muted">Nog geen tokenlog-regels.</p>
+            }
+            else
+            {
+                <div class="table-scroll">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Bedrijf</th>
+                                <th>Datum</th>
+                                <th>Tokens gekocht</th>
+                                <th>Verdiensten (ex BTW)</th>
+                                <th>Uitbetaling</th>
+                                <th class="data-table__col--wrap">Soort / note</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var row in _tokenRows)
+                            {
+                                <tr>
+                                    <td>@(row.CompanyName ?? "—")</td>
+                                    <td>@row.DateUtc.ToLocalTime().ToString("dd-MM-yyyy HH:mm")</td>
+                                    <td>@(row.TokensBought > 0 ? row.TokensBought.ToString() : "—")</td>
+                                    <td>€ @row.EarningsExVat.ToString("0.00")</td>
+                                    <td>€ @row.PayoutExVat.ToString("0.00")</td>
+                                    <td class="data-table__col--wrap">
+                                        <strong>@KindLabel(row.Kind)</strong>
+                                        @if (!string.IsNullOrWhiteSpace(row.Note))
+                                        {
+                                            <div class="muted">@row.Note</div>
+                                        }
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                        <tfoot>
+                            <tr>
+                                <th colspan="2">Totaal / saldo</th>
+                                <th>@TotalTokensBought</th>
+                                <th>€ @TotalEarningsExVat.ToString("0.00")</th>
+                                <th>€ @TotalPayoutExVat.ToString("0.00")</th>
+                                <th class="data-table__col--wrap">
+                                    Saldo: € @TokenLogBalanceExVat.ToString("0.00") excl. BTW · beschikbaar: € @AvailableBalanceExVat.ToString("0.00")
+                                </th>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            }
+        </section>
+    }
+    else if (_tab == "invoices")
+    {
+        <section class="panel-section">
+            <div class="panel-header" style="padding:0;margin-bottom:0.75rem">
+                <div>
+                    <h2>Facturen</h2>
+                    <p class="muted">Self-billing facturen die voor jouw partnercommissie zijn aangemaakt.</p>
+                </div>
+                <button class="btn-compact btn-compact--primary" type="button" disabled="@_busy" @onclick="OpenPayoutModalAsync">
+                    Uitbetalen
+                </button>
+            </div>
+
+            <p class="muted">
+                Beschikbaar saldo excl. BTW: <strong>€ @AvailableBalanceExVat.ToString("0.00")</strong>.
+                Uitbetalingen vereisen een geldig IBAN/onboardingprofiel; als dat nog ontbreekt helpt Lobsy-support met de eerste uitbetaling.
+            </p>
+
+            @if (_invoices.Count == 0)
+            {
+                <p class="muted">Nog geen facturen. Start een uitbetaling zodra je saldo en betaalgegevens klaarstaan.</p>
+            }
+            else
+            {
+                <div class="table-list">
+                    @foreach (var inv in _invoices)
+                    {
+                        <div class="table-row">
+                            <div>
+                                <strong>@inv.InvoiceNumber</strong>
+                                <div class="muted">@inv.Status · @inv.CreatedAt.ToLocalTime().ToString("g")</div>
+                            </div>
+                            <div class="inline-actions">
+                                <span>€ @inv.TotalInclVat.ToString("0.00") incl. BTW</span>
+                                <button class="provider-btn" type="button" disabled="@_busy"
+                                        @onclick="() => DownloadInvoiceAsync(inv)">Download PDF</button>
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+        </section>
+    }
+    else
+    {
+        <section class="panel-section">
+            <h2>Zo werkt partnersales</h2>
+            <ol class="partner-sales__usps">
+                <li><strong>Trackingcode:</strong> je krijgt automatisch een persoonlijke code, zoals @TrackingCode.</li>
+                <li><strong>Delen:</strong> deel je partnerlink, registratie-URL of flyer met bedrijven in je netwerk.</li>
+                <li><strong>Registratie:</strong> een bedrijf registreert via jouw link of vult jouw code in tijdens registratie.</li>
+                <li><strong>Tokenaankopen:</strong> zodra dat bedrijf tokens koopt, wordt de aankoop aan jouw salesprofiel gekoppeld.</li>
+                <li><strong>Commissie:</strong> je ontvangt @FormatPercentage(CommissionRate) commissie over de tokenaankoop excl. BTW.</li>
+                <li><strong>Uitbetaling:</strong> je saldo wordt als self-billing factuur uitbetaald zodra er saldo en betaalgegevens beschikbaar zijn.</li>
+            </ol>
+        </section>
+    }
+</div>
+
+@if (_modalOpen)
+{
+    <LobsyFriendlyDialog IsOpen="true"
+                         Title="Partnercommissie uitbetalen"
+                         TitleId="partner-payout-title"
+                         Style="width:min(28rem, calc(100vw - 2rem));max-width:calc(100vw - 2rem)"
+                         OnClose="CloseModal">
+        @if (_preview is null)
+        {
+            <p class="state-message">@Culture["Common.Loading"]</p>
+        }
+        else if (!_preview.CanPayout && _preview.AvailableExVat <= 0)
+        {
+            <p class="share-modal__lead" style="white-space:normal;max-width:none">@PartnerPayoutBlockMessage</p>
+            @if (AvailableBalanceExVat > 0)
+            {
+                <p class="muted">Je saldo blijft zichtbaar in tokenlogging. Neem contact op met Lobsy-support om IBAN/onboarding voor partneruitbetalingen te regelen.</p>
+            }
+            <div class="inline-actions" style="margin-top:1rem">
+                <button type="button" class="btn-compact" @onclick="CloseModal">Sluiten</button>
+            </div>
+        }
+        else
+        {
+            <p class="share-modal__lead" style="white-space:normal;max-width:none">
+                Kies welk deel van je openstaande partnercommissie je nu wilt laten uitbetalen.
+                Na afronding verschijnt de self-billing factuur in dit overzicht.
+            </p>
+            <p><strong>Rekening:</strong> @_preview.MaskedIban</p>
+            <p class="muted">Beschikbaar: € @_preview.AvailableExVat.ToString("0.00") excl. BTW
+                (€ @InclVat(_preview.AvailableExVat).ToString("0.00") incl. BTW)</p>
+
+            <label class="login-form" style="display:block;margin-top:0.85rem">
+                Bedrag excl. BTW
+                <input type="number"
+                       min="0.01"
+                       max="@_preview.AvailableExVat.ToString(System.Globalization.CultureInfo.InvariantCulture)"
+                       step="0.01"
+                       inputmode="decimal"
+                       value="@_amountInput"
+                       @oninput="OnAmountInput"
+                       disabled="@_busy" />
+            </label>
+            <div class="inline-actions" style="margin-top:0.5rem">
+                <button type="button" class="btn-compact" disabled="@_busy" @onclick="SetFullAmount">Alles</button>
+            </div>
+
+            @if (_selectedAmountExVat is decimal amount && amount > 0)
+            {
+                <p style="margin-top:0.85rem">
+                    <strong>Je laat uitbetalen:</strong>
+                    € @InclVat(amount).ToString("0.00") incl. BTW
+                    <span class="muted">(€ @amount.ToString("0.00") + € @VatOn(amount).ToString("0.00") BTW)</span>
+                </p>
+            }
+
+            @if (!string.IsNullOrEmpty(_preview.BlockReason) && !_preview.CanPayout && _preview.AvailableExVat > 0)
+            {
+                <p class="state-message error">@_preview.BlockReason</p>
+            }
+
+            <div class="inline-actions" style="margin-top:1rem">
+                <button type="button" class="login-submit"
+                        disabled="@(_busy || !CanConfirm)"
+                        @onclick="ConfirmPayoutAsync">
+                    @(_busy ? "Bezig..." : "Bevestigen via Mollie")
+                </button>
+                <button type="button" class="btn-compact" disabled="@_busy" @onclick="CloseModal">@Culture["Common.Cancel"]</button>
+            </div>
+        }
+        @if (!string.IsNullOrEmpty(_modalError))
+        {
+            <p class="state-message error">@_modalError</p>
+        }
+    </LobsyFriendlyDialog>
+}
+
+@code {
+    private PartnerAffiliateMeModel? _me;
+    private PartnerAffiliateToolkitModel? _toolkit;
+    private List<PartnerAffiliateTokenLogRowModel> _tokenRows = [];
+    private List<SelfBillingInvoiceItem> _invoices = [];
+    private SalesManagerPayoutPreview? _preview;
+    private string _tab = "toolkit";
+    private string _amountInput = "";
+    private decimal? _selectedAmountExVat;
+    private bool _loading = true;
+    private bool _busy;
+    private bool _modalOpen;
+    private string? _error;
+    private string? _message;
+    private string? _modalError;
+
+    private string TrackingCode => FirstNonEmpty(_toolkit?.TrackingCode, _me?.TrackingCode) ?? "—";
+    private decimal CommissionRate => _toolkit?.CommissionRate ?? _me?.CommissionRate ?? 0m;
+    private decimal AvailableBalanceExVat => Math.Max(0m, _me?.BalanceExVat ?? 0m);
+    private decimal TokenLogBalanceExVat => _tokenRows.Sum(r => r.EarningsExVat - r.PayoutExVat);
+    private int TotalTokensBought => _tokenRows.Sum(r => Math.Max(0, r.TokensBought));
+    private decimal TotalEarningsExVat => _tokenRows.Sum(r => Math.Max(0m, r.EarningsExVat));
+    private decimal TotalPayoutExVat => _tokenRows.Sum(r => Math.Max(0m, r.PayoutExVat));
+    private string PartnerPayoutBlockMessage => string.IsNullOrWhiteSpace(_preview?.BlockReason)
+        ? "Uitbetalingen via support: er is nog geen IBAN/onboardingprofiel beschikbaar voor partneruitbetalingen."
+        : _preview.BlockReason;
+
+    private string PartnerUrl => FirstNonEmpty(_toolkit?.PartnerPageUrl, BuildPartnerUrl())!;
+    private string RegisterUrl => FirstNonEmpty(_toolkit?.RegisterUrl, BuildRegisterUrl())!;
+
+    private bool CanConfirm =>
+        _preview is { CanPayout: true, AvailableExVat: > 0 }
+        && _selectedAmountExVat is decimal a
+        && a > 0
+        && a <= _preview.AvailableExVat;
+
+    protected override void OnInitialized()
+        => Culture.Changed += OnCultureChanged;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var qs = Microsoft.AspNetCore.WebUtilities.QueryHelpers.ParseQuery(Nav.ToAbsoluteUri(Nav.Uri).Query);
+        if (qs.TryGetValue("tab", out var tab) && IsKnownTab(tab.ToString()))
+        {
+            _tab = tab.ToString();
+        }
+
+        if (qs.TryGetValue("paid", out var paid) && !string.IsNullOrWhiteSpace(paid))
+        {
+            _message = $"Uitbetaling afgerond. Factuur {paid} is beschikbaar om te downloaden.";
+            _tab = "invoices";
+        }
+
+        await LoadAsync();
+    }
+
+    private async Task LoadAsync()
+    {
+        _loading = true;
+        _error = null;
+        try
+        {
+            _me = await Api.GetPartnerAffiliateMeAsync();
+            _toolkit = await Api.GetPartnerAffiliateToolkitAsync();
+            _tokenRows = (await Api.GetPartnerAffiliateTokenLogAsync()).ToList();
+            _invoices = await Api.GetPartnerAffiliateInvoicesAsync();
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private void OnCultureChanged() => InvokeAsync(StateHasChanged);
+    public void Dispose() => Culture.Changed -= OnCultureChanged;
+
+    private void SetTab(string tab)
+    {
+        if (IsKnownTab(tab))
+        {
+            _tab = tab;
+            _error = null;
+            _message = null;
+        }
+    }
+
+    private string ActiveTabClass(string tab) => _tab == tab ? "admin-sublink--active" : "";
+
+    private async Task OpenPayoutModalAsync()
+    {
+        _modalOpen = true;
+        _modalError = null;
+        _preview = null;
+        _amountInput = "";
+        _selectedAmountExVat = null;
+        _error = null;
+        _message = null;
+        try
+        {
+            _preview = await Api.GetPartnerAffiliatePayoutPreviewAsync();
+            if (_preview is { AvailableExVat: > 0 })
+            {
+                SetAmount(_preview.AvailableExVat);
+                await RefreshPreviewAsync();
+            }
+        }
+        catch (Exception ex)
+        {
+            _modalError = ex.Message;
+        }
+    }
+
+    private void CloseModal()
+    {
+        if (_busy)
+        {
+            return;
+        }
+
+        _modalOpen = false;
+        _modalError = null;
+    }
+
+    private async Task OnAmountInput(ChangeEventArgs e)
+    {
+        _amountInput = e.Value?.ToString() ?? "";
+        if (TryParseAmount(_amountInput, out var amount))
+        {
+            _selectedAmountExVat = amount;
+            await RefreshPreviewAsync();
+        }
+        else
+        {
+            _selectedAmountExVat = null;
+            if (_preview is not null)
+            {
+                _preview.CanPayout = false;
+                _preview.BlockReason = "Voer een geldig bedrag in (bijv. 100,00).";
+            }
+        }
+    }
+
+    private async Task SetFullAmount()
+    {
+        if (_preview is null || _preview.AvailableExVat <= 0)
+        {
+            return;
+        }
+
+        SetAmount(_preview.AvailableExVat);
+        await RefreshPreviewAsync();
+    }
+
+    private void SetAmount(decimal amountExVat)
+    {
+        var rounded = decimal.Round(amountExVat, 2, MidpointRounding.AwayFromZero);
+        _selectedAmountExVat = rounded;
+        _amountInput = rounded.ToString("0.00", System.Globalization.CultureInfo.GetCultureInfo("nl-NL"));
+    }
+
+    private async Task RefreshPreviewAsync()
+    {
+        if (_selectedAmountExVat is not decimal amount)
+        {
+            return;
+        }
+
+        try
+        {
+            var available = _preview?.AvailableExVat;
+            _preview = await Api.GetPartnerAffiliatePayoutPreviewAsync(amount);
+            if (_preview is not null && available is decimal keepAvailable && keepAvailable > _preview.AvailableExVat)
+            {
+                _preview.AvailableExVat = keepAvailable;
+            }
+        }
+        catch (Exception ex)
+        {
+            _modalError = ex.Message;
+        }
+    }
+
+    private async Task ConfirmPayoutAsync()
+    {
+        if (_selectedAmountExVat is not decimal amount || amount <= 0)
+        {
+            _modalError = "Kies een bedrag om uit te betalen.";
+            return;
+        }
+
+        _busy = true;
+        _modalError = null;
+        try
+        {
+            var checkout = await Api.CreatePartnerAffiliatePayoutCheckoutAsync(amount);
+            if (checkout is null || string.IsNullOrWhiteSpace(checkout.CheckoutUrl))
+            {
+                throw new InvalidOperationException("Geen Mollie-checkout ontvangen.");
+            }
+
+            _modalOpen = false;
+            Nav.NavigateTo(checkout.CheckoutUrl, forceLoad: false);
+        }
+        catch (Exception ex)
+        {
+            _modalError = ex.Message;
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private async Task DownloadInvoiceAsync(SelfBillingInvoiceItem inv)
+    {
+        _busy = true;
+        _error = null;
+        try
+        {
+            await Api.DownloadPartnerAffiliateInvoiceAsync(inv.Id, inv.InvoiceNumber, Js);
+            _message = $"Factuur {inv.InvoiceNumber} (PDF) gedownload.";
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private void ShareWhatsApp()
+    {
+        var text = Uri.EscapeDataString(
+            $"Lobsy partnerinfo met mijn code {TrackingCode}: {PartnerUrl}");
+        Nav.NavigateTo($"https://wa.me/?text={text}", forceLoad: true);
+    }
+
+    private void ShareMail()
+    {
+        var subject = Uri.EscapeDataString("Lobsy - partneraanbod");
+        var body = Uri.EscapeDataString(
+            $"Hoi,%0A%0AHier is het Lobsy-partneraanbod met mijn salescode {TrackingCode}:%0A{PartnerUrl}%0A%0ARegistreren kan direct via:%0A{RegisterUrl}%0A%0A");
+        Nav.NavigateTo($"mailto:?subject={subject}&body={body}", forceLoad: true);
+    }
+
+    private string BuildPartnerUrl()
+    {
+        var baseUri = Nav.BaseUri.TrimEnd('/');
+        return TrackingCode == "—"
+            ? $"{baseUri}/partner"
+            : $"{baseUri}/partner/{Uri.EscapeDataString(TrackingCode)}";
+    }
+
+    private string BuildRegisterUrl()
+    {
+        var baseUri = Nav.BaseUri.TrimEnd('/');
+        return TrackingCode == "—"
+            ? $"{baseUri}/register"
+            : $"{baseUri}/register?ref={Uri.EscapeDataString(TrackingCode)}";
+    }
+
+    private static string? FirstNonEmpty(params string?[] values)
+    {
+        foreach (var value in values)
+        {
+            if (!string.IsNullOrWhiteSpace(value))
+            {
+                return value;
+            }
+        }
+
+        return null;
+    }
+
+    private static bool IsKnownTab(string? tab)
+        => tab is "toolkit" or "tokenlog" or "invoices" or "explain";
+
+    private static string FormatPercentage(decimal rate)
+        => $"{(rate * 100m).ToString("0.##")}%";
+
+    private static string KindLabel(string kind) => kind switch
+    {
+        "TokenCommission" => "Tokencommissie",
+        "Payout" => "Uitbetaling",
+        "Adjustment" => "Correctie",
+        _ => kind
+    };
+
+    private static decimal VatOn(decimal amountExVat)
+        => decimal.Round(amountExVat * 0.21m, 2, MidpointRounding.AwayFromZero);
+
+    private static decimal InclVat(decimal amountExVat) => amountExVat + VatOn(amountExVat);
+
+    private static bool TryParseAmount(string? raw, out decimal amount)
+    {
+        amount = 0;
+        if (string.IsNullOrWhiteSpace(raw))
+        {
+            return false;
+        }
+
+        var normalized = raw.Trim().Replace(',', '.');
+        return decimal.TryParse(
+                   normalized,
+                   System.Globalization.NumberStyles.Number,
+                   System.Globalization.CultureInfo.InvariantCulture,
+                   out amount)
+               && amount > 0;
+    }
+}
