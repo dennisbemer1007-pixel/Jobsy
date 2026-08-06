@@ -303,6 +303,10 @@ namespace Jobsy.Infrastructure.Data.Migrations
                         .HasMaxLength(4000)
                         .HasColumnType("character varying(4000)");
 
+                    b.Property<string>("SnapshotCertificatesJson")
+                        .HasMaxLength(4000)
+                        .HasColumnType("character varying(4000)");
+
                     b.Property<string>("SnapshotDrivingLicenses")
                         .HasMaxLength(512)
                         .HasColumnType("character varying(512)");
@@ -320,6 +324,9 @@ namespace Jobsy.Infrastructure.Data.Migrations
                     b.Property<string>("SnapshotPhoneNumber")
                         .HasMaxLength(32)
                         .HasColumnType("character varying(32)");
+
+                    b.Property<bool>("SnapshotShowAddressOnCv")
+                        .HasColumnType("boolean");
 
                     b.Property<bool>("SnapshotWhatsAppAllowed")
                         .HasColumnType("boolean");

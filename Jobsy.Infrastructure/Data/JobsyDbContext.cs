@@ -372,6 +372,7 @@ public class JobsyDbContext : DbContext
             entity.Property(e => e.SnapshotEducations).HasMaxLength(512);
             entity.Property(e => e.SnapshotAboutMe).HasMaxLength(1024);
             entity.Property(e => e.SnapshotPhoneNumber).HasMaxLength(32);
+            entity.Property(e => e.SnapshotCertificatesJson).HasMaxLength(4000);
             entity.Property(e => e.Motivation).HasMaxLength(500);
             entity.Property(e => e.StudentNumber).HasMaxLength(64);
             entity.Property(e => e.SchoolEmail).HasMaxLength(256);

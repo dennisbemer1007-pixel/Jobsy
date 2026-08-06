@@ -438,6 +438,10 @@ public class ApplicationsController : ControllerBase
                                               && !string.IsNullOrWhiteSpace(candidate.PhoneNumber);
         application.SnapshotHomeLatitude = candidate.HomeLocation?.Latitude;
         application.SnapshotHomeLongitude = candidate.HomeLocation?.Longitude;
+        application.SnapshotCertificatesJson = Truncate(
+            LobsyCvModelFactory.SerializeCertificatesSnapshot(preferences.Certificates),
+            4000);
+        application.SnapshotShowAddressOnCv = preferences.ShowAddressOnCv != false;
         application.CandidateName = CandidateNameRules.ComposeFullName(
             candidate.FirstName, candidate.LastName, candidate.FullName);
         application.Motivation = Truncate(string.IsNullOrWhiteSpace(request.Motivation) ? null : request.Motivation.Trim(), 500);
@@ -963,15 +967,17 @@ public class ApplicationsController : ControllerBase
     }
 
     private static LobsyCvModel BuildApplicationCvModel(Core.Entities.Application application, bool includePii)
-        => LobsyCvModelFactory.FromApplicationSnapshot(
+    {
+        var showAddress = includePii && application.SnapshotShowAddressOnCv;
+        return LobsyCvModelFactory.FromApplicationSnapshot(
             application.CandidateName,
             includePii ? application.CandidateEmail : null,
             includePii ? application.SnapshotPhoneNumber : null,
             includePii && application.SnapshotWhatsAppAllowed,
             application.CandidateCity,
-            includePii ? application.CandidateAddress : null,
-            application.SnapshotHomeLatitude,
-            application.SnapshotHomeLongitude,
+            showAddress ? application.CandidateAddress : null,
+            showAddress ? application.SnapshotHomeLatitude : null,
+            showAddress ? application.SnapshotHomeLongitude : null,
             application.SnapshotAboutMe,
             application.Motivation,
             application.PreferredTransport,
@@ -979,14 +985,16 @@ public class ApplicationsController : ControllerBase
             application.SnapshotAvailabilityJson,
             application.SnapshotDrivingLicenses,
             application.SnapshotEducations,
+            application.SnapshotCertificatesJson,
             application.CandidateEmployerCount,
             application.MatchPercent,
             application.Vacancy.Title,
             application.Vacancy.Company.Name,
             application.ConsentVersion,
             DateTime.UtcNow,
-            includeFullAddress: includePii,
+            includeFullAddress: showAddress,
             includeContactDetails: includePii);
+    }
 
     private async Task SendVerificationCodeAsync(
         Core.Entities.User candidate,

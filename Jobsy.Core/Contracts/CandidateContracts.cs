@@ -15,13 +15,20 @@ public record CandidatePreferencesDto(
     string? HomeAddress = null,
     decimal? MinHoursPerWeek = null,
     decimal? MaxHoursPerWeek = null,
-    bool? FlexibleTimes = null);
+    bool? FlexibleTimes = null,
+    IReadOnlyList<CandidateCertificateDto>? Certificates = null,
+    /// <summary>When false, Lobsy-CV omits address text and map (AVG).</summary>
+    bool? ShowAddressOnCv = null);
 
 public record CandidateEmployerHistoryDto(
     string EmployerName,
     string? Role = null,
     int? Years = null,
     string? Description = null);
+
+public record CandidateCertificateDto(
+    string Name,
+    int? Year = null);
 
 public record CandidateVacancyEngagementDto(
     Guid Id,

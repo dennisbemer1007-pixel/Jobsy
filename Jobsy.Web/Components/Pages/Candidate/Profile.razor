@@ -118,6 +118,11 @@
                         </ul>
                     }
                     <p class="profile-address__hint">@Culture["Profile.AddressHint"]</p>
+                    <label class="profile-address-cv">
+                        <input type="checkbox" @bind="_showAddressOnCv" />
+                        @Culture["Profile.ShowAddressOnCv"]
+                    </label>
+                    <p class="profile-address__hint">@Culture["Profile.ShowAddressOnCvHint"]</p>
                 </div>
 
                 <label>
@@ -290,6 +295,47 @@
                     }
                 </fieldset>
 
+                <fieldset class="profile-certificates">
+                    <legend>@Culture["Profile.Certificates"]</legend>
+                    @for (var i = 0; i < _certificates.Count; i++)
+                    {
+                        var idx = i;
+                        <div class="profile-cert-row">
+                            <label class="profile-cert-row__year">
+                                <span class="visually-hidden">@Culture["Profile.CertificateYear"]</span>
+                                <input type="number"
+                                       min="1950"
+                                       max="2100"
+                                       placeholder="@Culture["Profile.CertificateYear"]"
+                                       @bind="_certificates[idx].Year" />
+                            </label>
+                            <label class="profile-cert-row__name">
+                                <span class="visually-hidden">@Culture["Profile.CertificateName"]</span>
+                                <input type="text"
+                                       maxlength="200"
+                                       placeholder="@Culture["Profile.CertificateName"]"
+                                       @bind="_certificates[idx].Name" />
+                            </label>
+                            <button type="button"
+                                    class="icon-btn icon-btn--danger"
+                                    title="@Culture["Profile.RemoveCertificate"]"
+                                    aria-label="@Culture["Profile.RemoveCertificate"]"
+                                    @onclick="() => RemoveCertificate(idx)">
+                                @((MarkupString)ActionIcons.Trash)
+                            </button>
+                        </div>
+                    }
+                    <button type="button"
+                            class="icon-btn icon-btn--add"
+                            title="@Culture["Profile.AddCertificate"]"
+                            aria-label="@Culture["Profile.AddCertificate"]"
+                            @onclick="AddCertificate">
+                        <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round">
+                            <path d="M12 5v14" /><path d="M5 12h14" />
+                        </svg>
+                    </button>
+                </fieldset>
+
                 @if (_authenticatorEnabled)
                 {
                     <p class="login-lead">@Culture["Profile.AuthenticatorHint"]</p>
@@ -359,6 +405,8 @@
     private readonly HashSet<string> _selectedEducations = new(StringComparer.OrdinalIgnoreCase);
     private readonly HashSet<string> _availability = new(StringComparer.OrdinalIgnoreCase);
     private readonly List<CandidateEmployerHistory> _employers = [];
+    private readonly List<CandidateCertificate> _certificates = [];
+    private bool _showAddressOnCv = true;
     private List<string> _branchOptions = WorkTypeLabels.All.ToList();
     private List<string> _licenseOptions = DrivingLicenseLabels.All.ToList();
     private List<string> _educationOptions = EducationLevelLabels.ProfileAll.ToList();
@@ -437,6 +485,9 @@
             _flexibleTimes = prefs.FlexibleTimes == true;
             _employers.Clear();
             _employers.AddRange(prefs.Employers ?? []);
+            _certificates.Clear();
+            _certificates.AddRange(prefs.Certificates ?? []);
+            _showAddressOnCv = prefs.ShowAddressOnCv != false;
             _selectedEducations.Clear();
             foreach (var education in prefs.Educations ?? [])
             {
@@ -565,6 +616,8 @@
 
     private void AddEmployer() => _employers.Add(new CandidateEmployerHistory());
     private void RemoveEmployer(int index) => _employers.RemoveAt(index);
+    private void AddCertificate() => _certificates.Add(new CandidateCertificate());
+    private void RemoveCertificate(int index) => _certificates.RemoveAt(index);
 
     private void ToggleEducation(string level, bool selected)
     {
@@ -743,7 +796,17 @@
                     HomeAddress = homeAddressToSave,
                     MinHoursPerWeek = _minHours,
                     MaxHoursPerWeek = _maxHours,
-                    FlexibleTimes = _flexibleTimes
+                    FlexibleTimes = _flexibleTimes,
+                    Certificates = _certificates
+                        .Where(c => !string.IsNullOrWhiteSpace(c.Name))
+                        .Select(c => new CandidateCertificate
+                        {
+                            Name = c.Name.Trim(),
+                            Year = c.Year is >= 1950 and <= 2100 ? c.Year : null
+                        })
+                        .Take(30)
+                        .ToList(),
+                    ShowAddressOnCv = _showAddressOnCv
                 },
                 homeLatitude: clearHome || !_homeLocationDirty ? null : _homeLat,
                 homeLongitude: clearHome || !_homeLocationDirty ? null : _homeLng,

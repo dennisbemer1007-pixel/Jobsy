@@ -2391,6 +2391,44 @@ a {
     white-space: nowrap;
 }
 
+.branch-multiselect__value.is-selected {
+    font-weight: 600;
+}
+
+.branch-multiselect__chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.3rem;
+    margin-top: 0.35rem;
+    min-width: 0;
+}
+
+.branch-multiselect__chip {
+    display: inline-flex;
+    align-items: center;
+    max-width: 100%;
+    gap: 0.25rem;
+    padding: 0.15rem 0.45rem;
+    border: 1px solid color-mix(in srgb, var(--accent) 35%, var(--border));
+    border-radius: 4px;
+    background: color-mix(in srgb, var(--accent-soft) 55%, var(--surface));
+    color: var(--text);
+    font-size: 0.78rem;
+    font-weight: 550;
+    line-height: 1.25;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.branch-multiselect__chip-swatch {
+    width: 0.55rem;
+    height: 0.55rem;
+    border-radius: 2px;
+    background: var(--category-color, var(--accent));
+    flex-shrink: 0;
+}
+
 .branch-multiselect__caret {
     flex-shrink: 0;
     color: var(--muted);
@@ -10250,6 +10288,70 @@ button.linkish:hover {
     align-self: flex-start;
 }
 
+.profile-address-cv {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.55rem;
+    margin: 0.65rem 0 0;
+    font-size: 0.92rem;
+    font-weight: 500;
+    line-height: 1.35;
+    text-transform: none;
+    letter-spacing: normal;
+}
+
+.profile-address-cv input {
+    margin-top: 0.2rem;
+    flex-shrink: 0;
+}
+
+.profile-certificates {
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 0.85rem 1rem 1rem;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.45rem;
+    min-width: 0;
+    max-width: 100%;
+    box-sizing: border-box;
+}
+
+.profile-certificates legend {
+    padding: 0 0.25rem;
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
+.profile-cert-row {
+    display: grid;
+    grid-template-columns: 5.5rem minmax(0, 1fr) auto;
+    gap: 0.45rem;
+    align-items: center;
+    min-width: 0;
+}
+
+.profile-cert-row__year,
+.profile-cert-row__name {
+    display: block;
+    margin: 0;
+    min-width: 0;
+}
+
+.profile-cert-row input {
+    width: 100%;
+    min-width: 0;
+    margin: 0;
+    padding: 0.4rem 0.5rem;
+    font-size: 0.92rem;
+}
+
+.profile-certificates > .icon-btn--add {
+    align-self: flex-start;
+    margin-top: 0.25rem;
+}
+
 .icon-btn {
     display: inline-flex;
     align-items: center;
@@ -10436,6 +10538,15 @@ button.linkish:hover {
         justify-self: end;
         align-self: end;
     }
+
+    .profile-cert-row {
+        grid-template-columns: 4.75rem minmax(0, 1fr) auto;
+        gap: 0.35rem;
+    }
+
+    .profile-certificates {
+        padding: 0.6rem 0.7rem;
+    }
 }
 
 /* Vacature-aanmaken + klantprofiel: teksten volledig leesbaar op mobiel */
@@ -10485,6 +10596,7 @@ button.linkish:hover {
     .vacancy-contact,
     .vacancy-intermediary,
     .profile-employers,
+    .profile-certificates,
     .profile-min-employers {
         padding: 0.6rem 0.7rem;
     }

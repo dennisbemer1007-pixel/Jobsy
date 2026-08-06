@@ -238,7 +238,7 @@
                                 aria-expanded="@_branchMenuOpen"
                                 aria-controls="branch-multiselect-panel-desktop"
                                 @onclick="ToggleBranchMenu">
-                            <span class="branch-multiselect__value">@BranchFilterSummary</span>
+                            <span class="branch-multiselect__value @(_selectedWorkTypes.Count > 0 ? "is-selected" : null)">@BranchFilterSummary</span>
                             <span class="branch-multiselect__caret" aria-hidden="true">▾</span>
                         </button>
                         @if (_branchMenuOpen)
@@ -265,19 +265,66 @@
                             </div>
                         }
                     </div>
-                </label>
-                <div class="category-filter category-filter--desktop" role="group" aria-label="Categorie">
-                    @foreach (var cat in _categories.Where(c => c.ShowInMapFilter && c.IsActive))
+                    @if (_selectedWorkTypes.Count > 0)
                     {
-                        <label class="filter-check category-filter__option">
-                            <input type="checkbox"
-                                   checked="@_selectedCategoryIds.Contains(cat.Id)"
-                                   @onchange="e => ToggleCategoryAsync(cat.Id, e)" />
-                            <span class="category-filter__swatch" style="--category-color:@cat.ColorHex" aria-hidden="true"></span>
-                            <span class="category-filter__name">@cat.Name</span>
-                        </label>
+                        <div class="branch-multiselect__chips" aria-label="@Culture["Discovery.WorkType"]">
+                            @foreach (var workType in _selectedWorkTypes.OrderBy(x => x, StringComparer.CurrentCultureIgnoreCase))
+                            {
+                                <span class="branch-multiselect__chip">@UiLabels.WorkType(Culture, workType)</span>
+                            }
+                        </div>
                     }
-                </div>
+                </label>
+                <label class="branch-multiselect-field">
+                    @Culture["Discovery.VacancyType"]
+                    <div class="branch-multiselect @(_categoryMenuOpen ? "is-open" : null)">
+                        <button type="button"
+                                class="branch-multiselect__trigger"
+                                aria-haspopup="listbox"
+                                aria-expanded="@_categoryMenuOpen"
+                                aria-controls="category-multiselect-panel-desktop"
+                                @onclick="ToggleCategoryMenu">
+                            <span class="branch-multiselect__value @(_selectedCategoryIds.Count > 0 ? "is-selected" : null)">@CategoryFilterSummary</span>
+                            <span class="branch-multiselect__caret" aria-hidden="true">▾</span>
+                        </button>
+                        @if (_categoryMenuOpen)
+                        {
+                            <button type="button"
+                                    class="branch-multiselect__backdrop"
+                                    tabindex="-1"
+                                    aria-label="@Culture["Discovery.Cancel"]"
+                                    @onclick="CloseCategoryMenu"></button>
+                            <div id="category-multiselect-panel-desktop"
+                                 class="branch-multiselect__panel"
+                                 role="listbox"
+                                 aria-multiselectable="true"
+                                 aria-label="@Culture["Discovery.VacancyType"]">
+                                @foreach (var cat in _categories.Where(c => c.ShowInMapFilter && c.IsActive))
+                                {
+                                    <label class="filter-check branch-multiselect__option">
+                                        <input type="checkbox"
+                                               checked="@_selectedCategoryIds.Contains(cat.Id)"
+                                               @onchange="e => ToggleCategoryAsync(cat.Id, e)" />
+                                        <span class="category-filter__swatch" style="--category-color:@cat.ColorHex" aria-hidden="true"></span>
+                                        <span>@cat.Name</span>
+                                    </label>
+                                }
+                            </div>
+                        }
+                    </div>
+                    @if (_selectedCategoryIds.Count > 0)
+                    {
+                        <div class="branch-multiselect__chips" aria-label="@Culture["Discovery.VacancyType"]">
+                            @foreach (var cat in SelectedCategories)
+                            {
+                                <span class="branch-multiselect__chip">
+                                    <span class="branch-multiselect__chip-swatch" style="--category-color:@cat.ColorHex" aria-hidden="true"></span>
+                                    @cat.Name
+                                </span>
+                            }
+                        </div>
+                    }
+                </label>
                 <label class="filter-required">
                     @Culture["Discovery.Age"]
                     <select value="@AgeSelectValue" @onchange="OnAgeChanged" required>
@@ -543,6 +590,10 @@
                     {
                         <button type="button" class="filter-tag" @onclick="() => ClearWorkTypeAsync(workType)">@UiLabels.WorkType(Culture, workType) ×</button>
                     }
+                    @foreach (var cat in SelectedCategories)
+                    {
+                        <button type="button" class="filter-tag" @onclick="() => ClearCategoryAsync(cat.Id)">@cat.Name ×</button>
+                    }
                     @if (!string.IsNullOrWhiteSpace(_searchQuery))
                     {
                         <button type="button" class="filter-tag" @onclick="ClearSearchQueryAsync">“@_searchQuery” ×</button>
@@ -605,7 +656,7 @@
                                 aria-expanded="@_branchMenuOpen"
                                 aria-controls="branch-multiselect-panel-sheet"
                                 @onclick="ToggleBranchMenu">
-                            <span class="branch-multiselect__value">@BranchFilterSummary</span>
+                            <span class="branch-multiselect__value @(_selectedWorkTypes.Count > 0 ? "is-selected" : null)">@BranchFilterSummary</span>
                             <span class="branch-multiselect__caret" aria-hidden="true">▾</span>
                         </button>
                         @if (_branchMenuOpen)
@@ -632,23 +683,67 @@
                             </div>
                         }
                     </div>
+                    @if (_selectedWorkTypes.Count > 0)
+                    {
+                        <div class="branch-multiselect__chips">
+                            @foreach (var workType in _selectedWorkTypes.OrderBy(x => x, StringComparer.CurrentCultureIgnoreCase))
+                            {
+                                <span class="branch-multiselect__chip">@UiLabels.WorkType(Culture, workType)</span>
+                            }
+                        </div>
+                    }
                 </section>
 
 
                 <section class="filter-section">
-                    <h3>Categorie</h3>
-                    <div class="category-filter">
-                        @foreach (var cat in _categories.Where(c => c.ShowInMapFilter && c.IsActive))
+                    <h3>@Culture["Discovery.VacancyType"]</h3>
+                    <div class="branch-multiselect branch-multiselect--sheet @(_categoryMenuOpen ? "is-open" : null)">
+                        <button type="button"
+                                class="branch-multiselect__trigger"
+                                aria-haspopup="listbox"
+                                aria-expanded="@_categoryMenuOpen"
+                                aria-controls="category-multiselect-panel-sheet"
+                                @onclick="ToggleCategoryMenu">
+                            <span class="branch-multiselect__value @(_selectedCategoryIds.Count > 0 ? "is-selected" : null)">@CategoryFilterSummary</span>
+                            <span class="branch-multiselect__caret" aria-hidden="true">▾</span>
+                        </button>
+                        @if (_categoryMenuOpen)
                         {
-                            <label class="filter-check category-filter__option">
-                                <input type="checkbox"
-                                       checked="@_selectedCategoryIds.Contains(cat.Id)"
-                                       @onchange="e => ToggleCategoryAsync(cat.Id, e)" />
-                                <span class="category-filter__swatch" style="--category-color:@cat.ColorHex" aria-hidden="true"></span>
-                                @cat.Name
-                            </label>
+                            <button type="button"
+                                    class="branch-multiselect__backdrop"
+                                    tabindex="-1"
+                                    aria-label="@Culture["Discovery.Cancel"]"
+                                    @onclick="CloseCategoryMenu"></button>
+                            <div id="category-multiselect-panel-sheet"
+                                 class="branch-multiselect__panel"
+                                 role="listbox"
+                                 aria-multiselectable="true"
+                                 aria-label="@Culture["Discovery.VacancyType"]">
+                                @foreach (var cat in _categories.Where(c => c.ShowInMapFilter && c.IsActive))
+                                {
+                                    <label class="filter-check branch-multiselect__option">
+                                        <input type="checkbox"
+                                               checked="@_selectedCategoryIds.Contains(cat.Id)"
+                                               @onchange="e => ToggleCategoryAsync(cat.Id, e)" />
+                                        <span class="category-filter__swatch" style="--category-color:@cat.ColorHex" aria-hidden="true"></span>
+                                        @cat.Name
+                                    </label>
+                                }
+                            </div>
                         }
                     </div>
+                    @if (_selectedCategoryIds.Count > 0)
+                    {
+                        <div class="branch-multiselect__chips">
+                            @foreach (var cat in SelectedCategories)
+                            {
+                                <span class="branch-multiselect__chip">
+                                    <span class="branch-multiselect__chip-swatch" style="--category-color:@cat.ColorHex" aria-hidden="true"></span>
+                                    @cat.Name
+                                </span>
+                            }
+                        </div>
+                    }
                 </section>
 
 
@@ -712,6 +807,7 @@
     private bool _filtersOpen;
     private bool _legendOpen;
     private bool _branchMenuOpen;
+    private bool _categoryMenuOpen;
     private bool _mapReady;
     private bool _mapInitScheduled;
     private ElementReference _mapElement;
@@ -783,13 +879,38 @@
                 return Culture["Discovery.WorkTypeAny"];
             }
 
-            var labels = _selectedWorkTypes
-                .OrderBy(x => x, StringComparer.CurrentCultureIgnoreCase)
-                .Select(x => UiLabels.WorkType(Culture, x))
-                .ToList();
-            return string.Join(", ", labels);
+            if (_selectedWorkTypes.Count == 1)
+            {
+                return UiLabels.WorkType(Culture, _selectedWorkTypes.First());
+            }
+
+            return Culture.Format("Discovery.SelectedCount", _selectedWorkTypes.Count);
         }
     }
+
+    private string CategoryFilterSummary
+    {
+        get
+        {
+            if (_selectedCategoryIds.Count == 0)
+            {
+                return Culture["Discovery.VacancyTypeAny"];
+            }
+
+            var selected = SelectedCategories.ToList();
+            if (selected.Count == 1)
+            {
+                return selected[0].Name;
+            }
+
+            return Culture.Format("Discovery.SelectedCount", selected.Count);
+        }
+    }
+
+    private IEnumerable<VacancyCategoryItem> SelectedCategories =>
+        _categories
+            .Where(c => _selectedCategoryIds.Contains(c.Id))
+            .OrderBy(c => c.Name, StringComparer.CurrentCultureIgnoreCase);
 
     private IReadOnlyList<VacancyListItem> HighlightedVacancies
     {
@@ -1298,7 +1419,8 @@
                     }
                     else
                     {
-                        await FillAddressFromCoordinatesAsync(stored.Lat, stored.Lng, persistLabel: true);
+                        // Do not block first discover on reverse-geocode latency.
+                        _ = FillAddressFromCoordinatesAsync(stored.Lat, stored.Lng, persistLabel: true);
                     }
                 }
             }
@@ -1423,17 +1545,7 @@
                 }
             }
 
-            if (_vacancies.Count > 0)
-            {
-                try
-                {
-                    await Api.RecordImpressionsAsync(Js, _vacancies.Select(v => v.Id));
-                }
-                catch
-                {
-                    // Analytics must not block discovery.
-                }
-            }
+            // Paint map markers immediately; impressions are fire-and-forget analytics.
             if (_mapReady)
             {
                 await Js.InvokeVoidAsync("jobMap.setVacancies", BuildMarkers());
@@ -1446,15 +1558,18 @@
                     await Js.InvokeVoidAsync("jobMap.setTravelOptions", TravelMapOptions());
                 }
 
-                // Carousel above the map changes the pane height — refresh Leaflet sizing.
                 await InvokeAsync(StateHasChanged);
-                await Task.Delay(80);
-                await Js.InvokeVoidAsync("jobMap.invalidate");
-                await TryFocusCompanyOnMapAsync();
+                _ = RefreshMapSizeAsync();
+                _ = TryFocusCompanyOnMapAsync();
             }
             else
             {
                 _pendingCompanyMapFocus = _mapFocusCompanyId is not null;
+            }
+
+            if (_vacancies.Count > 0)
+            {
+                _ = RecordImpressionsSafeAsync();
             }
         }
         catch (Exception ex)
@@ -1471,6 +1586,31 @@
         if (!_mapReady && !_mapInitScheduled)
         {
             await InvokeAsync(StateHasChanged);
+        }
+    }
+
+    private async Task RecordImpressionsSafeAsync()
+    {
+        try
+        {
+            await Api.RecordImpressionsAsync(Js, _vacancies.Select(v => v.Id));
+        }
+        catch
+        {
+            // Analytics must not block discovery.
+        }
+    }
+
+    private async Task RefreshMapSizeAsync()
+    {
+        try
+        {
+            await Task.Delay(80);
+            await Js.InvokeVoidAsync("jobMap.invalidate");
+        }
+        catch
+        {
+            // Map may have been disposed during navigation.
         }
     }
 
@@ -1854,10 +1994,28 @@
     }
 
     private void ToggleBranchMenu()
-        => _branchMenuOpen = !_branchMenuOpen;
+    {
+        _branchMenuOpen = !_branchMenuOpen;
+        if (_branchMenuOpen)
+        {
+            _categoryMenuOpen = false;
+        }
+    }
 
     private void CloseBranchMenu()
         => _branchMenuOpen = false;
+
+    private void ToggleCategoryMenu()
+    {
+        _categoryMenuOpen = !_categoryMenuOpen;
+        if (_categoryMenuOpen)
+        {
+            _branchMenuOpen = false;
+        }
+    }
+
+    private void CloseCategoryMenu()
+        => _categoryMenuOpen = false;
 
     private async Task OnRadiusChanged(ChangeEventArgs e)
     {
@@ -2109,6 +2267,7 @@
         }
 
         _branchMenuOpen = false;
+        _categoryMenuOpen = false;
         _filtersOpen = false;
     }
 
@@ -2160,12 +2319,19 @@
         await LoadVacanciesAsync();
         CaptureFilterSnapshot();
         _branchMenuOpen = false;
+        _categoryMenuOpen = false;
         _filtersOpen = false;
     }
 
     private async Task ClearWorkTypeAsync(string label)
     {
         _selectedWorkTypes.Remove(label);
+        await ReloadFiltersIfAppliedAsync();
+    }
+
+    private async Task ClearCategoryAsync(Guid categoryId)
+    {
+        _selectedCategoryIds.Remove(categoryId);
         await ReloadFiltersIfAppliedAsync();
     }
 

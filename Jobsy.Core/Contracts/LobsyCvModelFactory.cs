@@ -27,18 +27,24 @@ public static class LobsyCvModelFactory
             .Select(e => new LobsyCvEmployerEntry(e.EmployerName, e.Role, e.Years, e.Description))
             .ToList();
 
+        var certificates = (preferences.Certificates ?? Array.Empty<CandidateCertificateDto>())
+            .Where(c => !string.IsNullOrWhiteSpace(c.Name))
+            .Select(c => new LobsyCvCertificateEntry(c.Name.Trim(), c.Year is >= 1950 and <= 2100 ? c.Year : null))
+            .ToList();
+
         var flexible = preferences.FlexibleTimes == true;
         var slots = NormalizeSlots(preferences.Availability);
+        var showAddress = preferences.ShowAddressOnCv != false;
 
         return new LobsyCvModel(
             FullName: fullName,
             Email: email,
             PhoneNumber: phoneNumber,
             WhatsAppContactAllowed: whatsAppContactAllowed,
-            City: ExtractCity(preferences.HomeAddress),
-            Address: preferences.HomeAddress,
-            Latitude: latitude,
-            Longitude: longitude,
+            City: showAddress ? ExtractCity(preferences.HomeAddress) : null,
+            Address: showAddress ? preferences.HomeAddress : null,
+            Latitude: showAddress ? latitude : null,
+            Longitude: showAddress ? longitude : null,
             AboutMe: preferences.AboutMe,
             Motivation: motivation,
             PreferredTransport: preferences.PreferredTransport,
@@ -52,12 +58,13 @@ public static class LobsyCvModelFactory
             DrivingLicenses: preferences.DrivingLicenses?.ToList() ?? [],
             Educations: preferences.Educations?.ToList() ?? [],
             Employers: employers,
+            Certificates: certificates,
             MatchPercent: matchPercent,
             VacancyTitle: vacancyTitle,
             CompanyName: companyName,
             GeneratedAtUtc: generatedAtUtc,
             ConsentVersion: consentVersion ?? PrivacyConstants.CurrentConsentVersion,
-            IncludeFullAddress: true,
+            IncludeFullAddress: showAddress,
             IncludeContactDetails: true);
     }
 
@@ -77,6 +84,7 @@ public static class LobsyCvModelFactory
         string? availabilityJson,
         string? drivingLicensesCsv,
         string? educationsCsv,
+        string? certificatesJson,
         int employerCount,
         int? matchPercent,
         string? vacancyTitle,
@@ -89,6 +97,7 @@ public static class LobsyCvModelFactory
         var licenses = SplitCsv(drivingLicensesCsv);
         var educations = SplitCsv(educationsCsv);
         var availability = ParseAvailabilityPayload(availabilityJson);
+        var certificates = ParseCertificatesJson(certificatesJson);
 
         var about = aboutMe;
         if (employerCount > 0)
@@ -97,15 +106,17 @@ public static class LobsyCvModelFactory
             about = string.IsNullOrWhiteSpace(about) ? note : $"{about}\n\n{note}";
         }
 
+        var showAddress = includeFullAddress;
+
         return new LobsyCvModel(
             FullName: fullName,
             Email: email,
             PhoneNumber: phoneNumber,
             WhatsAppContactAllowed: whatsAppContactAllowed,
-            City: city,
-            Address: address,
-            Latitude: latitude,
-            Longitude: longitude,
+            City: showAddress ? city : null,
+            Address: showAddress ? address : null,
+            Latitude: showAddress ? latitude : null,
+            Longitude: showAddress ? longitude : null,
             AboutMe: about,
             Motivation: motivation,
             PreferredTransport: preferredTransport,
@@ -119,13 +130,79 @@ public static class LobsyCvModelFactory
             DrivingLicenses: licenses,
             Educations: educations,
             Employers: [],
+            Certificates: certificates,
             MatchPercent: matchPercent,
             VacancyTitle: vacancyTitle,
             CompanyName: companyName,
             GeneratedAtUtc: generatedAtUtc,
             ConsentVersion: consentVersion ?? PrivacyConstants.CurrentConsentVersion,
-            IncludeFullAddress: includeFullAddress,
+            IncludeFullAddress: showAddress,
             IncludeContactDetails: includeContactDetails);
+    }
+
+    public static string SerializeCertificatesSnapshot(IEnumerable<CandidateCertificateDto>? certificates)
+    {
+        var items = (certificates ?? [])
+            .Where(c => !string.IsNullOrWhiteSpace(c.Name))
+            .Select(c => new
+            {
+                name = c.Name.Trim(),
+                year = c.Year is >= 1950 and <= 2100 ? c.Year : null
+            })
+            .Take(30)
+            .ToArray();
+        return JsonSerializer.Serialize(items);
+    }
+
+    public static List<LobsyCvCertificateEntry> ParseCertificatesJson(string? json)
+    {
+        if (string.IsNullOrWhiteSpace(json))
+        {
+            return [];
+        }
+
+        try
+        {
+            using var doc = JsonDocument.Parse(json);
+            if (doc.RootElement.ValueKind != JsonValueKind.Array)
+            {
+                return [];
+            }
+
+            var list = new List<LobsyCvCertificateEntry>();
+            foreach (var item in doc.RootElement.EnumerateArray())
+            {
+                if (item.ValueKind != JsonValueKind.Object)
+                {
+                    continue;
+                }
+
+                var name = item.TryGetProperty("name", out var nameEl) && nameEl.ValueKind == JsonValueKind.String
+                    ? nameEl.GetString()?.Trim()
+                    : null;
+                if (string.IsNullOrWhiteSpace(name))
+                {
+                    continue;
+                }
+
+                int? year = null;
+                if (item.TryGetProperty("year", out var yearEl)
+                    && yearEl.ValueKind == JsonValueKind.Number
+                    && yearEl.TryGetInt32(out var y)
+                    && y is >= 1950 and <= 2100)
+                {
+                    year = y;
+                }
+
+                list.Add(new LobsyCvCertificateEntry(name, year));
+            }
+
+            return list;
+        }
+        catch (JsonException)
+        {
+            return [];
+        }
     }
 
     public static string SerializeAvailabilitySnapshot(

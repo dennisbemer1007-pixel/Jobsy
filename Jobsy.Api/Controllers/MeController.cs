@@ -127,7 +127,9 @@ public class MeController : ControllerBase
             existing.HomeAddress,
             existing.MinHoursPerWeek,
             existing.MaxHoursPerWeek,
-            existing.FlexibleTimes);
+            existing.FlexibleTimes,
+            existing.Certificates,
+            existing.ShowAddressOnCv);
 
         await _db.SaveChangesAsync(cancellationToken);
         var features = await _features.GetAsync(cancellationToken);
@@ -280,7 +282,9 @@ public class MeController : ControllerBase
                 request.Preferences.HomeAddress,
                 request.Preferences.MinHoursPerWeek,
                 request.Preferences.MaxHoursPerWeek,
-                request.Preferences.FlexibleTimes);
+                request.Preferences.FlexibleTimes,
+                request.Preferences.Certificates,
+                request.Preferences.ShowAddressOnCv);
         }
 
         await _db.SaveChangesAsync(cancellationToken);
@@ -770,6 +774,49 @@ public class MeController : ControllerBase
                 flexibleTimes = flexibleEl.GetBoolean();
             }
 
+            var certificates = new List<CandidateCertificateDto>();
+            if (root.TryGetProperty("certificates", out var certificatesEl) && certificatesEl.ValueKind == JsonValueKind.Array)
+            {
+                foreach (var item in certificatesEl.EnumerateArray())
+                {
+                    if (item.ValueKind != JsonValueKind.Object)
+                    {
+                        continue;
+                    }
+
+                    var name = item.TryGetProperty("name", out var nameEl) && nameEl.ValueKind == JsonValueKind.String
+                        ? nameEl.GetString()?.Trim()
+                        : null;
+                    if (string.IsNullOrWhiteSpace(name))
+                    {
+                        continue;
+                    }
+
+                    if (name.Length > 200)
+                    {
+                        name = name[..200];
+                    }
+
+                    int? year = null;
+                    if (item.TryGetProperty("year", out var yearEl)
+                        && yearEl.ValueKind == JsonValueKind.Number
+                        && yearEl.TryGetInt32(out var y)
+                        && y is >= 1950 and <= 2100)
+                    {
+                        year = y;
+                    }
+
+                    certificates.Add(new CandidateCertificateDto(name, year));
+                }
+            }
+
+            bool? showAddressOnCv = null;
+            if (root.TryGetProperty("showAddressOnCv", out var showAddrEl)
+                && (showAddrEl.ValueKind is JsonValueKind.True or JsonValueKind.False))
+            {
+                showAddressOnCv = showAddrEl.GetBoolean();
+            }
+
             return new CandidatePreferencesDto(
                 roles,
                 maxTravel,
@@ -784,7 +831,9 @@ public class MeController : ControllerBase
                 homeAddress,
                 minHours,
                 maxHours,
-                flexibleTimes);
+                flexibleTimes,
+                certificates,
+                showAddressOnCv);
         }
         catch (Exception)
         {
@@ -806,6 +855,8 @@ public class MeController : ControllerBase
         null,
         null,
         null,
+        null,
+        [],
         null);
 
     public static string SerializePreferences(
@@ -822,7 +873,9 @@ public class MeController : ControllerBase
         string? homeAddress = null,
         decimal? minHoursPerWeek = null,
         decimal? maxHoursPerWeek = null,
-        bool? flexibleTimes = null)
+        bool? flexibleTimes = null,
+        IEnumerable<CandidateCertificateDto>? certificates = null,
+        bool? showAddressOnCv = null)
     {
         var trimmedHome = string.IsNullOrWhiteSpace(homeAddress) ? null : homeAddress.Trim();
         if (trimmedHome is { Length: > 256 })
@@ -873,7 +926,26 @@ public class MeController : ControllerBase
             homeAddress = trimmedHome,
             minHoursPerWeek,
             maxHoursPerWeek,
-            flexibleTimes
+            flexibleTimes,
+            certificates = certificates?
+                .Where(c => !string.IsNullOrWhiteSpace(c.Name))
+                .Select(c =>
+                {
+                    var name = c.Name.Trim();
+                    if (name.Length > 200)
+                    {
+                        name = name[..200];
+                    }
+
+                    return new
+                    {
+                        name,
+                        year = c.Year is >= 1950 and <= 2100 ? c.Year : null
+                    };
+                })
+                .Take(30)
+                .ToArray(),
+            showAddressOnCv
         }, JsonOptions);
     }
 }

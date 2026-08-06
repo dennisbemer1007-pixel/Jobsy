@@ -44,6 +44,12 @@ public class Application
     /// <summary>Home longitude at apply for Lobsy-CV map card.</summary>
     public double? SnapshotHomeLongitude { get; set; }
 
+    /// <summary>JSON array of { name, year } certificates/courses at apply.</summary>
+    public string? SnapshotCertificatesJson { get; set; }
+
+    /// <summary>Whether the candidate allows address/map on the Lobsy-CV.</summary>
+    public bool SnapshotShowAddressOnCv { get; set; } = true;
+
     /// <summary>Optional free-text motivation on apply (separate from SnapshotAboutMe).</summary>
     public string? Motivation { get; set; }
 

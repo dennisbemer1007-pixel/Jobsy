@@ -23,6 +23,7 @@ public sealed record LobsyCvModel(
     IReadOnlyList<string> DrivingLicenses,
     IReadOnlyList<string> Educations,
     IReadOnlyList<LobsyCvEmployerEntry> Employers,
+    IReadOnlyList<LobsyCvCertificateEntry> Certificates,
     int? MatchPercent,
     string? VacancyTitle,
     string? CompanyName,
@@ -36,3 +37,7 @@ public sealed record LobsyCvEmployerEntry(
     string? Role,
     int? Years,
     string? Description);
+
+public sealed record LobsyCvCertificateEntry(
+    string Name,
+    int? Year);

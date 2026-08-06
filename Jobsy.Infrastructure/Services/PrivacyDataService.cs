@@ -420,6 +420,8 @@ public sealed class PrivacyDataService : IPrivacyDataService
             app.SnapshotWhatsAppAllowed = false;
             app.SnapshotHomeLatitude = null;
             app.SnapshotHomeLongitude = null;
+            app.SnapshotCertificatesJson = null;
+            app.SnapshotShowAddressOnCv = false;
             app.Motivation = null;
             app.StudentNumber = null;
             app.SchoolEmail = null;

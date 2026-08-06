@@ -127,7 +127,12 @@ public class VacanciesController : ControllerBase
             reachKm = TravelReach.MaxCrowFliesKm(mode, maxMinutes, radiusKm);
         }
 
-        var vacancies = await LoadActiveVacanciesAsync(origin, reachKm, cancellationToken);
+        var vacancies = await LoadActiveVacanciesAsync(
+            origin,
+            reachKm,
+            cancellationToken,
+            includeExclusivityEducations: false,
+            includeSalaryRates: showWage);
 
         var companyFilter = companyId?
             .Where(id => id != Guid.Empty)
@@ -1067,7 +1072,9 @@ public class VacanciesController : ControllerBase
     private async Task<List<Core.Entities.Vacancy>> LoadActiveVacanciesAsync(
         Core.ValueObjects.GeoPoint? origin,
         double? reachKm,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        bool includeExclusivityEducations = true,
+        bool includeSalaryRates = true)
     {
         var today = DateOnly.FromDateTime(DateTime.UtcNow);
 
@@ -1101,31 +1108,13 @@ public class VacanciesController : ControllerBase
                 return [];
             }
 
-            return await _db.Vacancies
-                .AsNoTracking()
-                .AsSplitQuery()
-                .Include(v => v.Company)
-                .Include(v => v.IntermediaryCompany)
-                .Include(v => v.Category)
-                .Include(v => v.ExclusivitySetting!)
-                    .ThenInclude(s => s.Educations)
-                .Include(v => v.SalaryTable!)
-                    .ThenInclude(t => t.Rates)
+            return await BuildActiveVacancyQuery(includeExclusivityEducations, includeSalaryRates)
                 .Where(v => ids.Contains(v.Id))
                 .OrderBy(v => v.Title)
                 .ToListAsync(cancellationToken);
         }
 
-        var all = await _db.Vacancies
-            .AsNoTracking()
-            .AsSplitQuery()
-            .Include(v => v.Company)
-            .Include(v => v.IntermediaryCompany)
-            .Include(v => v.Category)
-            .Include(v => v.ExclusivitySetting!)
-                .ThenInclude(s => s.Educations)
-            .Include(v => v.SalaryTable!)
-                .ThenInclude(t => t.Rates)
+        var all = await BuildActiveVacancyQuery(includeExclusivityEducations, includeSalaryRates)
             .Where(v =>
                 v.Status == VacancyStatus.Active
                 && v.StartDate <= today
@@ -1139,6 +1128,33 @@ public class VacanciesController : ControllerBase
         }
 
         return all;
+    }
+
+    private IQueryable<Core.Entities.Vacancy> BuildActiveVacancyQuery(
+        bool includeExclusivityEducations,
+        bool includeSalaryRates)
+    {
+        IQueryable<Core.Entities.Vacancy> query = _db.Vacancies
+            .AsNoTracking()
+            .AsSplitQuery()
+            .Include(v => v.Company)
+            .Include(v => v.IntermediaryCompany)
+            .Include(v => v.Category)
+            .Include(v => v.ExclusivitySetting!);
+
+        if (includeExclusivityEducations)
+        {
+            query = query.Include(v => v.ExclusivitySetting!)
+                .ThenInclude(s => s.Educations);
+        }
+
+        if (includeSalaryRates)
+        {
+            query = query.Include(v => v.SalaryTable!)
+                .ThenInclude(t => t.Rates);
+        }
+
+        return query;
     }
 
     private async Task<List<VacancyListItemDto>> MapManyToDtoAsync(
@@ -1411,7 +1427,7 @@ public class VacanciesController : ControllerBase
             // Domain needed for apply UX; student-number regex stays server-side only.
             v.ExclusivitySetting?.SchoolDomain,
             ExclusivityStudentNumberPattern: null,
-            v.ExclusivitySetting?.Educations
+            v.ExclusivitySetting?.Educations?
                 .Where(e => e.IsActive)
                 .OrderBy(e => e.SortOrder)
                 .Select(e => e.Name)

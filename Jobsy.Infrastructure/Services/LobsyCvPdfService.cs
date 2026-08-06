@@ -222,15 +222,24 @@ public sealed class LobsyCvPdfService : ILobsyCvPdfService
                             loc.Spacing(4);
                             loc.Item().Text("Locatie").FontSize(9).Bold().FontColor(BrandNavy);
 
+                            // Map only when coordinates are present (candidate opted in via ShowAddressOnCv).
                             if (mapPng is { Length: > 0 })
                             {
                                 loc.Item().Height(92).Image(mapPng).FitArea();
                             }
+                            else if (!string.IsNullOrWhiteSpace(model.City))
+                            {
+                                loc.Item().Height(48).Background(Colors.White).AlignMiddle().AlignCenter()
+                                    .Text(model.City!)
+                                    .FontSize(9).FontColor(BrandDeep);
+                            }
                             else
                             {
                                 loc.Item().Height(48).Background(Colors.White).AlignMiddle().AlignCenter()
-                                    .Text(model.City ?? "—")
-                                    .FontSize(9).FontColor(BrandDeep);
+                                    .Text(model.IncludeContactDetails
+                                        ? "Niet op CV"
+                                        : "Adres na acceptatie")
+                                    .FontSize(8).FontColor(Muted);
                             }
 
                             if (model.IncludeFullAddress && !string.IsNullOrWhiteSpace(model.Address))
@@ -240,10 +249,6 @@ public sealed class LobsyCvPdfService : ILobsyCvPdfService
                             else if (!string.IsNullOrWhiteSpace(model.City))
                             {
                                 loc.Item().Text(model.City!).FontSize(8).Bold().FontColor(BrandNavy);
-                            }
-                            else
-                            {
-                                loc.Item().Text("Adres na acceptatie").FontSize(7.5f).FontColor(Muted);
                             }
                         });
                     });
@@ -314,6 +319,28 @@ public sealed class LobsyCvPdfService : ILobsyCvPdfService
                                     if (!string.IsNullOrWhiteSpace(employer.Description))
                                     {
                                         card.Item().Text(employer.Description!).FontSize(8).FontColor(Slate);
+                                    }
+                                });
+                            }
+                        });
+                    }
+
+                    if (model.Certificates.Count > 0)
+                    {
+                        body.Item().Column(certs =>
+                        {
+                            certs.Spacing(3);
+                            certs.Item().Text("Certificaten & cursussen").FontSize(11).Bold().FontColor(BrandNavy);
+                            foreach (var cert in model.Certificates)
+                            {
+                                certs.Item().Row(row =>
+                                {
+                                    row.RelativeItem().Text(cert.Name).FontSize(9).FontColor(BrandNavy);
+                                    if (cert.Year is int year)
+                                    {
+                                        row.ConstantItem(40).AlignRight()
+                                            .Text(year.ToString(CultureInfo.InvariantCulture))
+                                            .FontSize(9).FontColor(Muted);
                                     }
                                 });
                             }
