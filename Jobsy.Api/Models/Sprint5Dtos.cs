@@ -178,4 +178,6 @@ public record EmployerApplicationDto(
     /// <summary>Null until Accepted — progressive disclosure (stage exclusivity).</summary>
     string? StudyYear = null,
     /// <summary>Null until Accepted — progressive disclosure (stage exclusivity).</summary>
-    string? ExclusivityValidationStatus = null);
+    string? ExclusivityValidationStatus = null,
+    /// <summary>True when employer may download Lobsy-CV PDF (= PiiRevealed).</summary>
+    bool CvPdfAvailable = false);

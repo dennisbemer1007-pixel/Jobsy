@@ -7,6 +7,7 @@
 @inject JobsyApiClient Api
 @inject CultureState Culture
 @inject AuthenticationStateProvider AuthState
+@inject IJSRuntime Js
 @implements IDisposable
 
 <PageTitle>@Culture["Nav.MyApplications"] · Lobsy</PageTitle>
@@ -61,13 +62,22 @@
                     </a>
                     <div class="application-row__meta">
                         <span class="status-pill status-pill--@a.Status.ToLowerInvariant()">@UiLabels.ApplicationStatus(Culture, a.Status)</span>
+                        @if (!_readOnly)
+                        {
+                            <button type="button"
+                                    class="btn-compact"
+                                    disabled="@(_busyId == a.Id)"
+                                    @onclick="() => DownloadCvAsync(a)">
+                                @(_busyId == a.Id && _pdfBusy ? "…" : Culture["Apps.DownloadLobsyCv"])
+                            </button>
+                        }
                         @if (!_readOnly && CanWithdraw(a.Status))
                         {
                             <button type="button"
                                     class="btn-compact"
                                     disabled="@(_busyId == a.Id)"
                                     @onclick="() => WithdrawAsync(a)">
-                                @(_busyId == a.Id ? "…" : Culture["Apps.Withdraw"])
+                                @(_busyId == a.Id && !_pdfBusy ? "…" : Culture["Apps.Withdraw"])
                             </button>
                         }
                     </div>
@@ -105,6 +115,7 @@
     private bool _showCelebration;
     private string _tab = "all";
     private Guid? _busyId;
+    private bool _pdfBusy;
     private string? _message;
 
     protected override void OnInitialized()
@@ -187,6 +198,7 @@
         }
 
         _busyId = item.Id;
+        _pdfBusy = false;
         _message = null;
         try
         {
@@ -202,6 +214,31 @@
         finally
         {
             _busyId = null;
+        }
+    }
+
+    private async Task DownloadCvAsync(ApplicationItem item)
+    {
+        if (_readOnly)
+        {
+            return;
+        }
+
+        _busyId = item.Id;
+        _pdfBusy = true;
+        _message = null;
+        try
+        {
+            await Api.DownloadApplicationLobsyCvPdfAsync(item.Id, Js);
+        }
+        catch (Exception ex)
+        {
+            _message = ex.Message;
+        }
+        finally
+        {
+            _busyId = null;
+            _pdfBusy = false;
         }
     }
 }

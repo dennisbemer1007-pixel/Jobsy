@@ -146,6 +146,7 @@ public static class DependencyInjection
         services.AddScoped<IAmbassadeurAttributionService, AmbassadeurAttributionService>();
         services.AddScoped<IAmbassadeurDashboardService, AmbassadeurDashboardService>();
         services.AddScoped<IAmbassadeurFlyerPdfService, AmbassadeurFlyerPdfService>();
+        services.AddScoped<ILobsyCvPdfService, LobsyCvPdfService>();
         services.AddScoped<ICommissionLedgerService, CommissionLedgerService>();
         services.AddScoped<IRevenueShareService, RevenueShareService>();
         services.AddScoped<ISupplierOnboardingPaymentService, SupplierOnboardingPaymentService>();

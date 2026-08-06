@@ -172,6 +172,7 @@ public class EmployerApplicationItem
     public string? StudyProgram { get; set; }
     public string? StudyYear { get; set; }
     public string? ExclusivityValidationStatus { get; set; }
+    public bool CvPdfAvailable { get; set; }
 }
 
 public class TokenPackItem

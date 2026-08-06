@@ -370,6 +370,7 @@ public class RoleFunctionalRegressionTests : IClassFixture<RoleFunctionalWebAppF
         Assert.Equal(_factory.VacancyId, pending.VacancyId);
         Assert.NotNull(pending.MatchPercent);
         Assert.False(pending.PiiRevealed);
+        Assert.False(pending.CvPdfAvailable);
         Assert.Null(pending.CandidateName);
         Assert.Null(pending.CandidateEmail);
         Assert.Null(pending.CandidateCity);
@@ -382,6 +383,7 @@ public class RoleFunctionalRegressionTests : IClassFixture<RoleFunctionalWebAppF
 
         var accepted = Assert.Single(list!, a => a.Id == _factory.AcceptedApplicationId);
         Assert.True(accepted.PiiRevealed);
+        Assert.True(accepted.CvPdfAvailable);
         Assert.Equal("Kandidaat Test", accepted.CandidateName);
         Assert.NotNull(accepted.CandidateEmail);
         Assert.NotNull(accepted.CandidateCity);

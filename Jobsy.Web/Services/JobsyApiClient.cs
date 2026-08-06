@@ -486,6 +486,41 @@ public sealed class JobsyApiClient : IAsyncDisposable
         }
     }
 
+    public async Task DownloadMyLobsyCvPdfAsync(IJSRuntime js, CancellationToken ct = default)
+    {
+        var response = await _http.GetAsync("api/me/lobsy-cv.pdf", ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException(ExtractMessage(body) ?? "Lobsy-CV downloaden mislukt.");
+        }
+
+        var bytes = await response.Content.ReadAsByteArrayAsync(ct);
+        var fileName = response.Content.Headers.ContentDisposition?.FileName?.Trim('"')
+                       ?? $"Lobsy-CV-{DateTime.UtcNow:yyyyMMdd}.pdf";
+        var base64 = Convert.ToBase64String(bytes);
+        await js.InvokeVoidAsync("jobsyDownload.bytes", fileName, base64, "application/pdf");
+    }
+
+    public async Task DownloadApplicationLobsyCvPdfAsync(
+        Guid applicationId,
+        IJSRuntime js,
+        CancellationToken ct = default)
+    {
+        var response = await _http.GetAsync($"api/applications/{applicationId:D}/lobsy-cv.pdf", ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException(ExtractMessage(body) ?? "Lobsy-CV downloaden mislukt.");
+        }
+
+        var bytes = await response.Content.ReadAsByteArrayAsync(ct);
+        var fileName = response.Content.Headers.ContentDisposition?.FileName?.Trim('"')
+                       ?? $"Lobsy-CV-{DateTime.UtcNow:yyyyMMdd}.pdf";
+        var base64 = Convert.ToBase64String(bytes);
+        await js.InvokeVoidAsync("jobsyDownload.bytes", fileName, base64, "application/pdf");
+    }
+
     public async Task<MeProfile?> AcceptConsentAsync(CancellationToken ct = default)
     {
         var response = await _http.PostAsync("api/me/accept-consent", null, ct);

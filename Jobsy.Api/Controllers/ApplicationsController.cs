@@ -27,6 +27,7 @@ public class ApplicationsController : ControllerBase
     private readonly IEmailService _email;
     private readonly IPushNotificationService _push;
     private readonly IPlatformFeatureService _features;
+    private readonly ILobsyCvPdfService _lobsyCvPdf;
 
     public ApplicationsController(
         JobsyDbContext db,
@@ -34,7 +35,8 @@ public class ApplicationsController : ControllerBase
         IUserLookupService users,
         IEmailService email,
         IPushNotificationService push,
-        IPlatformFeatureService features)
+        IPlatformFeatureService features,
+        ILobsyCvPdfService lobsyCvPdf)
     {
         _db = db;
         _companyAuth = companyAuth;
@@ -42,6 +44,7 @@ public class ApplicationsController : ControllerBase
         _email = email;
         _push = push;
         _features = features;
+        _lobsyCvPdf = lobsyCvPdf;
     }
 
     [HttpGet]
@@ -100,7 +103,7 @@ public class ApplicationsController : ControllerBase
 
         return Ok(rows.Select(a =>
         {
-            var revealed = a.Status is ApplicationStatus.Accepted or ApplicationStatus.EmployerContacting or ApplicationStatus.Hired;
+            var revealed = ApplicationRules.IsPiiRevealed(a.Status);
             return new EmployerApplicationDto(
                 a.Id,
                 a.VacancyId,
@@ -134,8 +137,85 @@ public class ApplicationsController : ControllerBase
                 revealed ? a.SchoolEmail : null,
                 revealed ? a.StudyProgram : null,
                 revealed ? a.StudyYear : null,
-                revealed ? a.ExclusivityValidationStatus : null);
+                revealed ? a.ExclusivityValidationStatus : null,
+                CvPdfAvailable: revealed);
         }));
+    }
+
+    /// <summary>
+    /// Lobsy-CV PDF for an application.
+    /// Candidate (owner): allowed for verified applications (snapshot).
+    /// Employer: only when PiiRevealed (Accepted / EmployerContacting / Hired).
+    /// </summary>
+    [HttpGet("{id:guid}/lobsy-cv.pdf")]
+    [Authorize]
+    [EnableRateLimiting("public-pdf")]
+    public async Task<IActionResult> DownloadLobsyCv(Guid id, CancellationToken cancellationToken)
+    {
+        var caller = await _users.FindByPrincipalAsync(User, cancellationToken);
+        if (caller is null || !caller.IsActive)
+        {
+            return Unauthorized();
+        }
+
+        var application = await _db.Applications
+            .AsNoTracking()
+            .Include(a => a.Vacancy)
+                .ThenInclude(v => v.Company)
+            .FirstOrDefaultAsync(a => a.Id == id, cancellationToken);
+        if (application is null)
+        {
+            return NotFound();
+        }
+
+        var isOwner = LobsyCvAccessRules.CanCandidateDownloadOwnApplication(
+            caller.Id,
+            application.CandidateUserId,
+            caller.Email,
+            application.CandidateEmail);
+
+        if (isOwner)
+        {
+            if (application.EmailVerifiedAt is null)
+            {
+                return BadRequest(new
+                {
+                    code = "cv_not_verified",
+                    message = "Bevestig eerst je sollicitatie met de verificatiecode voordat je het Lobsy-CV kunt downloaden."
+                });
+            }
+
+            var model = BuildApplicationCvModel(application, includePii: true);
+            var pdf = await _lobsyCvPdf.RenderAsync(model, cancellationToken);
+            return File(pdf, "application/pdf", _lobsyCvPdf.BuildFileName(model));
+        }
+
+        if (!_companyAuth.IsEmployer(User) && !_companyAuth.IsAdmin(User))
+        {
+            return Forbid();
+        }
+
+        try
+        {
+            await _companyAuth.EnsureCanAccessCompanyAsync(User, application.Vacancy.CompanyId, cancellationToken);
+        }
+        catch (Core.Exceptions.ForbiddenCompanyAccessException)
+        {
+            return Forbid();
+        }
+
+        if (!LobsyCvAccessRules.CanEmployerDownloadCv(application.Status, application.EmailVerifiedAt))
+        {
+            return StatusCode((int)HttpStatusCode.Forbidden, new
+            {
+                code = "cv_not_released",
+                message = "Het Lobsy-CV is pas beschikbaar nadat je de sollicitatie hebt geaccepteerd."
+            });
+        }
+
+        var employerModel = BuildApplicationCvModel(application, includePii: true);
+        var employerPdf = await _lobsyCvPdf.RenderAsync(employerModel, cancellationToken);
+        return File(employerPdf, "application/pdf", _lobsyCvPdf.BuildFileName(employerModel));
     }
 
     [HttpPost]
@@ -830,7 +910,7 @@ public class ApplicationsController : ControllerBase
 
     private static EmployerApplicationDto MapEmployerDto(Core.Entities.Application a)
     {
-        var revealed = a.Status is ApplicationStatus.Accepted or ApplicationStatus.EmployerContacting or ApplicationStatus.Hired;
+        var revealed = ApplicationRules.IsPiiRevealed(a.Status);
         return new EmployerApplicationDto(
             a.Id,
             a.VacancyId,
@@ -863,8 +943,31 @@ public class ApplicationsController : ControllerBase
             revealed ? a.SchoolEmail : null,
             revealed ? a.StudyProgram : null,
             revealed ? a.StudyYear : null,
-            revealed ? a.ExclusivityValidationStatus : null);
+            revealed ? a.ExclusivityValidationStatus : null,
+            CvPdfAvailable: revealed);
     }
+
+    private static LobsyCvModel BuildApplicationCvModel(Core.Entities.Application application, bool includePii)
+        => LobsyCvModelFactory.FromApplicationSnapshot(
+            application.CandidateName,
+            includePii ? application.CandidateEmail : null,
+            application.CandidateCity,
+            includePii ? application.CandidateAddress : null,
+            application.SnapshotAboutMe,
+            application.Motivation,
+            application.PreferredTransport,
+            application.EstimatedTravelMinutes,
+            application.SnapshotAvailabilityJson,
+            application.SnapshotDrivingLicenses,
+            application.SnapshotEducations,
+            application.CandidateEmployerCount,
+            application.MatchPercent,
+            application.Vacancy.Title,
+            application.Vacancy.Company.Name,
+            application.ConsentVersion,
+            DateTime.UtcNow,
+            includeFullAddress: includePii,
+            includeContactEmail: includePii);
 
     private async Task SendVerificationCodeAsync(
         Core.Entities.User candidate,

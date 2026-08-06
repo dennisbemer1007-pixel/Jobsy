@@ -6,6 +6,7 @@
 @inject IGeocodingClient Geocoder
 @inject NavigationManager Navigation
 @inject CultureState Culture
+@inject IJSRuntime Js
 @using Jobsy.Web.Localization
 @using Jobsy.Web.Navigation
 @implements IAsyncDisposable
@@ -268,6 +269,10 @@
                 <button class="login-submit" type="button" disabled="@_saving" @onclick="SaveAsync">
                     @Culture["Common.Save"]
                 </button>
+                <button class="engagement-btn" type="button" disabled="@(_saving || _pdfBusy)" @onclick="DownloadLobsyCvAsync">
+                    @(_pdfBusy ? Culture["Common.Loading"] : Culture["Profile.DownloadLobsyCv"])
+                </button>
+                <p class="profile-address__hint">@Culture["Profile.LobsyCvHint"]</p>
                 @if (!string.IsNullOrEmpty(_message))
                 {
                     <p class="state-message">@_message</p>
@@ -302,6 +307,7 @@
 
     private bool _loading = true;
     private bool _saving;
+    private bool _pdfBusy;
     private bool _openForWork;
     private bool _authenticatorEnabled;
     private bool _unsubscribeOpen;
@@ -720,6 +726,25 @@
         finally
         {
             _saving = false;
+        }
+    }
+
+    private async Task DownloadLobsyCvAsync()
+    {
+        _pdfBusy = true;
+        _message = null;
+        try
+        {
+            await Api.DownloadMyLobsyCvPdfAsync(Js);
+            _message = Culture["Profile.LobsyCvDownloaded"];
+        }
+        catch (Exception ex)
+        {
+            _message = ex.Message;
+        }
+        finally
+        {
+            _pdfBusy = false;
         }
     }
 

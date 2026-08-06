@@ -24,4 +24,8 @@ public static class ApplicationRules
     /// </summary>
     public static bool IsListedForCandidate(DateTime? emailVerifiedAt)
         => emailVerifiedAt is not null;
+
+    /// <summary>Employer sees candidate PII (and Lobsy-CV PDF) after Accept.</summary>
+    public static bool IsPiiRevealed(ApplicationStatus status)
+        => LobsyCvAccessRules.IsPiiRevealed(status);
 }

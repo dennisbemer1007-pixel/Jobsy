@@ -4,6 +4,7 @@
 @inject JobsyApiClient Api
 @inject AuthenticationStateProvider AuthState
 @inject CultureState Culture
+@inject IJSRuntime Js
 @implements IDisposable
 
 <PageTitle>@Culture["Employer.Applicants"] · Lobsy</PageTitle>
@@ -121,6 +122,15 @@
                                 Markeer als vervuld
                             </button>
                         }
+                        @if (a.CvPdfAvailable || a.PiiRevealed)
+                        {
+                            <button type="button"
+                                    class="engagement-btn"
+                                    disabled="@_busyId.HasValue"
+                                    @onclick="() => DownloadCvAsync(a.Id)">
+                                @Culture["Employer.DownloadLobsyCv"]
+                            </button>
+                        }
                         <span class="status-pill status-pill--@a.Status.ToLowerInvariant()">@UiLabels.ApplicationStatus(Culture, a.Status)</span>
                     </div>
                 </div>
@@ -229,6 +239,24 @@
             await Api.FulfillVacancyAsync(vacancyId, applicationId);
             _items = (await Api.GetApplicationsAsync()).ToList();
             _message = "Vacature gemarkeerd als vervuld; overige kandidaten zijn geïnformeerd.";
+        }
+        catch (Exception ex)
+        {
+            _message = ex.Message;
+        }
+        finally
+        {
+            _busyId = null;
+        }
+    }
+
+    private async Task DownloadCvAsync(Guid applicationId)
+    {
+        _busyId = applicationId;
+        _message = null;
+        try
+        {
+            await Api.DownloadApplicationLobsyCvPdfAsync(applicationId, Js);
         }
         catch (Exception ex)
         {

@@ -31,6 +31,7 @@ public class MeController : ControllerBase
     private readonly JobsyDbContext _db;
     private readonly IPlatformFeatureService _features;
     private readonly ITranslationService _translation;
+    private readonly ILobsyCvPdfService _lobsyCvPdf;
     private const string VacancySourceLanguage = "nl";
 
     public MeController(
@@ -38,13 +39,15 @@ public class MeController : ControllerBase
         IUserLookupService users,
         JobsyDbContext db,
         IPlatformFeatureService features,
-        ITranslationService translation)
+        ITranslationService translation,
+        ILobsyCvPdfService lobsyCvPdf)
     {
         _companyAuth = companyAuth;
         _users = users;
         _db = db;
         _features = features;
         _translation = translation;
+        _lobsyCvPdf = lobsyCvPdf;
     }
 
     [HttpGet("access")]
@@ -420,6 +423,41 @@ public class MeController : ControllerBase
         }
 
         return Task.FromResult(JobsyLanguages.Default);
+    }
+
+    /// <summary>
+    /// Live Lobsy-CV PDF from the signed-in candidate profile (always allowed for the owner).
+    /// Employers never use this endpoint — they use application snapshot PDF after Accept.
+    /// </summary>
+    [HttpGet("lobsy-cv.pdf")]
+    [Authorize(Policy = JobsyPolicies.RequireCandidate)]
+    [EnableRateLimiting("public-pdf")]
+    public async Task<IActionResult> DownloadMyLobsyCv(CancellationToken cancellationToken)
+    {
+        var lookup = await _users.FindByPrincipalAsync(User, cancellationToken);
+        if (lookup is null)
+        {
+            return NotFound(new { message = "Gebruiker niet gevonden in Jobsy." });
+        }
+
+        var user = await _db.Users.AsNoTracking()
+            .FirstOrDefaultAsync(u => u.Id == lookup.Id, cancellationToken);
+        if (user is null || !user.IsActive)
+        {
+            return NotFound(new { message = "Gebruiker niet gevonden in Jobsy." });
+        }
+
+        var preferences = ParsePreferences(user.PreferencesJson);
+        var model = LobsyCvModelFactory.FromLiveProfile(
+            user.FullName,
+            user.Email,
+            preferences,
+            DateTime.UtcNow,
+            user.ConsentVersion ?? PrivacyConstants.CurrentConsentVersion);
+
+        var pdf = await _lobsyCvPdf.RenderAsync(model, cancellationToken);
+        var fileName = _lobsyCvPdf.BuildFileName(model);
+        return File(pdf, "application/pdf", fileName);
     }
 
     /// <summary>
