@@ -2460,9 +2460,13 @@ a {
 }
 
 .branch-multiselect__option {
-    display: flex;
+    display: flex !important;
+    flex-direction: row !important;
+    flex-wrap: nowrap;
     align-items: center;
-    gap: 0.4rem;
+    justify-content: flex-start;
+    gap: 0.45rem;
+    width: 100%;
     margin: 0;
     padding: 0.28rem 0.4rem;
     border-radius: 4px;
@@ -2472,10 +2476,25 @@ a {
     font-size: 0.82rem;
     font-weight: 500;
     line-height: 1.25;
+    cursor: pointer;
 }
 
 .branch-multiselect__option:hover {
     background: color-mix(in srgb, var(--accent-soft) 70%, var(--surface));
+}
+
+.branch-multiselect__option input[type="checkbox"] {
+    flex: 0 0 auto;
+    width: 0.95rem;
+    height: 0.95rem;
+    margin: 0;
+    align-self: center;
+    accent-color: var(--accent);
+}
+
+.branch-multiselect__option > span,
+.branch-multiselect__option .category-filter__swatch {
+    flex: 0 0 auto;
 }
 
 .branch-multiselect__option .category-filter__swatch {
@@ -2677,6 +2696,25 @@ a {
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.03em;
+}
+
+/* Multiselect options must stay checkbox + label on one row (not stacked). */
+.filter-bar label.branch-multiselect__option,
+.filter-section label.branch-multiselect__option,
+.filter-bar .filter-check.branch-multiselect__option,
+.filter-section .filter-check.branch-multiselect__option {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    align-items: center;
+    gap: 0.45rem;
+    margin: 0;
+    padding: 0.28rem 0.4rem;
+    font-size: 0.82rem;
+    font-weight: 500;
+    text-transform: none;
+    letter-spacing: normal;
+    color: var(--text);
 }
 
 .filter-bar input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
