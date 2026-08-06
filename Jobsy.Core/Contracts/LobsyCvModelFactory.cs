@@ -140,18 +140,40 @@ public static class LobsyCvModelFactory
             IncludeContactDetails: includeContactDetails);
     }
 
-    public static string SerializeCertificatesSnapshot(IEnumerable<CandidateCertificateDto>? certificates)
+    public static string SerializeCertificatesSnapshot(
+        IEnumerable<CandidateCertificateDto>? certificates,
+        int maxLength = 4000)
     {
         var items = (certificates ?? [])
             .Where(c => !string.IsNullOrWhiteSpace(c.Name))
-            .Select(c => new
+            .Select(c =>
             {
-                name = c.Name.Trim(),
-                year = c.Year is >= 1950 and <= 2100 ? c.Year : null
+                var name = c.Name.Trim();
+                if (name.Length > 200)
+                {
+                    name = name[..200];
+                }
+
+                return new
+                {
+                    name,
+                    year = c.Year is >= 1950 and <= 2100 ? c.Year : null
+                };
             })
             .Take(30)
-            .ToArray();
-        return JsonSerializer.Serialize(items);
+            .ToList();
+
+        // Drop trailing entries until JSON fits the DB column — never mid-string truncate.
+        while (true)
+        {
+            var json = JsonSerializer.Serialize(items);
+            if (json.Length <= maxLength || items.Count == 0)
+            {
+                return json;
+            }
+
+            items.RemoveAt(items.Count - 1);
+        }
     }
 
     public static List<LobsyCvCertificateEntry> ParseCertificatesJson(string? json)

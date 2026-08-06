@@ -140,6 +140,22 @@ public class LobsyCvPdfServiceTests
         Assert.Equal('%', (char)pdf[0]);
     }
 
+    [Fact]
+    public void Serialize_certificates_snapshot_stays_valid_under_max_length()
+    {
+        var longName = new string('A', 200);
+        var certs = Enumerable.Range(0, 30)
+            .Select(i => new CandidateCertificateDto($"{longName}-{i}", 2000 + (i % 20)))
+            .ToList();
+
+        var json = LobsyCvModelFactory.SerializeCertificatesSnapshot(certs, maxLength: 4000);
+        Assert.True(json.Length <= 4000);
+
+        var parsed = LobsyCvModelFactory.ParseCertificatesJson(json);
+        Assert.NotEmpty(parsed);
+        Assert.All(parsed, c => Assert.False(string.IsNullOrWhiteSpace(c.Name)));
+    }
+
     private sealed class FakeCompanySettings : IPlatformCompanySettingsService
     {
         public Task<PlatformCompanySnapshot> GetAsync(CancellationToken cancellationToken = default)

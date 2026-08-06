@@ -438,9 +438,8 @@ public class ApplicationsController : ControllerBase
                                               && !string.IsNullOrWhiteSpace(candidate.PhoneNumber);
         application.SnapshotHomeLatitude = candidate.HomeLocation?.Latitude;
         application.SnapshotHomeLongitude = candidate.HomeLocation?.Longitude;
-        application.SnapshotCertificatesJson = Truncate(
-            LobsyCvModelFactory.SerializeCertificatesSnapshot(preferences.Certificates),
-            4000);
+        application.SnapshotCertificatesJson =
+            LobsyCvModelFactory.SerializeCertificatesSnapshot(preferences.Certificates, maxLength: 4000);
         application.SnapshotShowAddressOnCv = preferences.ShowAddressOnCv != false;
         application.CandidateName = CandidateNameRules.ComposeFullName(
             candidate.FirstName, candidate.LastName, candidate.FullName);

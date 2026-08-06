@@ -72,6 +72,8 @@ public class AccountUnsubscribeTests
             PreferredTransport = "Bike",
             Status = ApplicationStatus.Pending,
             SnapshotAboutMe = "Persoonlijke bio",
+            SnapshotCertificatesJson = """[{"name":"BHV","year":2024}]""",
+            SnapshotShowAddressOnCv = true,
             Motivation = "Ik wil graag werken",
             CreatedAt = DateTime.UtcNow
         });
@@ -131,6 +133,8 @@ public class AccountUnsubscribeTests
         var app = await db.Applications.SingleAsync(a => a.VacancyId == vacancyId);
         Assert.Null(app.CandidateUserId);
         Assert.Null(app.SnapshotAboutMe);
+        Assert.Null(app.SnapshotCertificatesJson);
+        Assert.False(app.SnapshotShowAddressOnCv);
         Assert.Null(app.Motivation);
         Assert.StartsWith("deleted-", app.CandidateEmail);
 
@@ -145,6 +149,72 @@ public class AccountUnsubscribeTests
         Assert.DoesNotContain("Ik wil even stoppen met zoeken", confirmLog.Message);
         Assert.Contains("toelichting aanwezig", confirmLog.Message);
         Assert.Contains(candidateId.ToString(), confirmLog.Message);
+    }
+
+    [Fact]
+    public async Task Export_includes_certificate_snapshot_and_address_on_cv_flag()
+    {
+        await using var db = CreateDb();
+        var candidateId = Guid.NewGuid();
+        var vacancyId = Guid.NewGuid();
+        var companyId = Guid.NewGuid();
+        const string email = "export-certs@test.nl";
+
+        db.Companies.Add(new Company
+        {
+            Id = companyId,
+            Name = "Export Co",
+            Address = "Straat 1",
+            KvkNumber = "999",
+            Location = new GeoPoint(52, 4)
+        });
+        db.Users.Add(new User
+        {
+            Id = candidateId,
+            Email = email,
+            FullName = "Export Kandidaat",
+            Role = UserRole.Candidate,
+            IsActive = true
+        });
+        db.Vacancies.Add(new Vacancy
+        {
+            Id = vacancyId,
+            CompanyId = companyId,
+            Title = "Export vacature",
+            Description = "x",
+            HourlyWage = 14m,
+            StartDate = DateOnly.FromDateTime(DateTime.UtcNow),
+            EndDate = DateOnly.FromDateTime(DateTime.UtcNow.AddDays(30)),
+            Status = VacancyStatus.Active,
+            Location = new GeoPoint(52, 4),
+            RequiredTransport = TransportMode.Bike
+        });
+        db.Applications.Add(new Application
+        {
+            Id = Guid.NewGuid(),
+            VacancyId = vacancyId,
+            CandidateUserId = candidateId,
+            CandidateName = "Export Kandidaat",
+            CandidateEmail = email,
+            CandidateAddress = "Voorstraat 1, Naaldwijk",
+            CandidateCity = "Naaldwijk",
+            PreferredTransport = "Bike",
+            Status = ApplicationStatus.Pending,
+            SnapshotCertificatesJson = """[{"name":"BHV","year":2024}]""",
+            SnapshotShowAddressOnCv = false,
+            CreatedAt = DateTime.UtcNow
+        });
+        await db.SaveChangesAsync();
+
+        var privacy = CreatePrivacy(db);
+        var export = await privacy.ExportAsync(CreatePrincipal(email));
+        var json = System.Text.Json.JsonSerializer.Serialize(export);
+
+        Assert.Contains("SnapshotCertificatesJson", json);
+        Assert.Contains("BHV", json);
+        Assert.Contains("SnapshotShowAddressOnCv", json);
+        Assert.Contains("CandidateAddress", json);
+        Assert.Contains("Voorstraat 1", json);
     }
 
     [Fact]

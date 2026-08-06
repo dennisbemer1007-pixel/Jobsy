@@ -1419,8 +1419,8 @@
                     }
                     else
                     {
-                        // Do not block first discover on reverse-geocode latency.
-                        _ = FillAddressFromCoordinatesAsync(stored.Lat, stored.Lng, persistLabel: true);
+                        // Do not block first discover on reverse-geocode latency; refresh UI when done.
+                        _ = ResolveLaunchAddressAsync(stored.Lat, stored.Lng);
                     }
                 }
             }
@@ -1837,6 +1837,19 @@
         }
 
         return string.IsNullOrWhiteSpace(_addressQuery) ? null : _addressQuery;
+    }
+
+    private async Task ResolveLaunchAddressAsync(double lat, double lng)
+    {
+        try
+        {
+            await FillAddressFromCoordinatesAsync(lat, lng, persistLabel: true);
+            await InvokeAsync(StateHasChanged);
+        }
+        catch
+        {
+            // Address label is optional; origin already set for discover.
+        }
     }
 
     private async Task ApplyOriginAsync(double lat, double lng, string? label)
