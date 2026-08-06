@@ -5,17 +5,24 @@ namespace Jobsy.Tests;
 public class WestlandTeaserContactsTests
 {
     [Fact]
-    public void BuildWhatsAppUrl_UsesConfiguredDigits()
+    public void TryBuildWhatsAppUrl_UsesConfiguredDigits()
     {
-        var url = WestlandTeaserContacts.BuildWhatsAppUrl("+31 6 1234 5678");
+        var url = WestlandTeaserContacts.TryBuildWhatsAppUrl("+31 6 1234 5678");
+        Assert.NotNull(url);
         Assert.StartsWith("https://wa.me/31612345678?text=", url);
         Assert.Contains(Uri.EscapeDataString(WestlandTeaserContacts.DefaultWhatsAppMessage), url);
     }
 
     [Fact]
-    public void BuildWhatsAppUrl_FallsBackWhenEmpty()
+    public void TryBuildWhatsAppUrl_ReturnsNullWhenEmpty()
     {
-        var url = WestlandTeaserContacts.BuildWhatsAppUrl("  ");
-        Assert.StartsWith($"https://wa.me/{WestlandTeaserContacts.DefaultWhatsAppE164}?text=", url);
+        Assert.Null(WestlandTeaserContacts.TryBuildWhatsAppUrl("  "));
+        Assert.Null(WestlandTeaserContacts.TryBuildWhatsAppUrl(null));
+    }
+
+    [Fact]
+    public void TryBuildWhatsAppUrl_RejectsPlaceholderNumber()
+    {
+        Assert.Null(WestlandTeaserContacts.TryBuildWhatsAppUrl("31600000000"));
     }
 }

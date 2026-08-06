@@ -5,8 +5,9 @@ using Microsoft.JSInterop;
 namespace Jobsy.Web.RegionHosting;
 
 /// <summary>
-/// Holds the active regional CNAME host for the current browser session.
-/// Resolved from the request hostname; persisted in localStorage for soft continuity.
+/// Holds the active regional CNAME host for the current browser hostname only.
+/// Persists the matched hostname in localStorage for analytics continuity, but never
+/// applies another region's branding when the current host has no RegionHost.
 /// </summary>
 public sealed class RegionHostState
 {
@@ -40,35 +41,23 @@ public sealed class RegionHostState
         {
             var host = new Uri(_nav.Uri).Host;
             var resolved = await _api.ResolveRegionHostAsync(host);
-            if (resolved is null)
-            {
-                // Soft fallback: last known regional host from localStorage (field-specific branding continuity).
-                try
-                {
-                    var stored = await _js.InvokeAsync<string?>("localStorage.getItem", StorageKey);
-                    if (!string.IsNullOrWhiteSpace(stored)
-                        && !string.Equals(stored, host, StringComparison.OrdinalIgnoreCase))
-                    {
-                        resolved = await _api.ResolveRegionHostAsync(stored);
-                    }
-                }
-                catch
-                {
-                    // localStorage may be unavailable
-                }
-            }
-
             Current = resolved;
-            if (resolved is not null)
+
+            try
             {
-                try
+                if (resolved is not null)
                 {
                     await _js.InvokeVoidAsync("localStorage.setItem", StorageKey, resolved.Hostname);
                 }
-                catch
+                else
                 {
-                    // ignore
+                    // Clear stale regional branding when visiting apex / unknown hosts.
+                    await _js.InvokeVoidAsync("localStorage.removeItem", StorageKey);
                 }
+            }
+            catch
+            {
+                // localStorage may be unavailable
             }
 
             Changed?.Invoke();

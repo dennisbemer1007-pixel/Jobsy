@@ -8,10 +8,7 @@
 
 <PageTitle>Lobsy komt naar het Westland — live 18 november</PageTitle>
 <HeadContent>
-    <meta name="description" content="Lobsy: hyperlokale vacatures in het Westland. Tot 18 november gratis vacatures plaatsen. Vrijwilligerswerk en stages 3 jaar gratis. Praat met Dennis via WhatsApp." />
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@500;600;700;800&family=Source+Sans+3:ital,wght@0,400;0,600;0,700;1,400;1,600&display=swap" rel="stylesheet" />
+    <meta name="description" content="Lobsy: hyperlokale vacatures in het Westland. Tot 18 november gratis vacatures plaatsen. Vrijwilligerswerk en stages 3 jaar gratis." />
 </HeadContent>
 
 <div class="wl-teaser">
@@ -43,12 +40,15 @@
                     <span class="wl-btn__emoji" aria-hidden="true">🦞</span>
                     Zet je vacature gratis online
                 </a>
-                <a class="wl-btn wl-btn--whatsapp" href="@_whatsAppUrl" target="_blank" rel="noopener noreferrer">
-                    <span class="wl-btn__icon" aria-hidden="true">
-                        <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor" aria-hidden="true"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.435 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
-                    </span>
-                    WhatsApp Dennis
-                </a>
+                @if (_whatsAppUrl is not null)
+                {
+                    <a class="wl-btn wl-btn--whatsapp" href="@_whatsAppUrl" target="_blank" rel="noopener noreferrer">
+                        <span class="wl-btn__icon" aria-hidden="true">
+                            <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor" aria-hidden="true"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.435 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+                        </span>
+                        WhatsApp Dennis
+                    </a>
+                }
             </div>
         </div>
     </section>
@@ -68,13 +68,16 @@
                 ondernemers en werkzoekenden écht met elkaar verbindt — op basis van <strong>reistijd en vervoer</strong>.
                 Van bakker tot uitzendbureau, van kas tot kassa. Ons-kent-ons, maar dan modern.
             </p>
-            <p class="wl-intro__whatsapp-note">
-                Prangende vraag? App me gerust op WhatsApp.
-                <strong>Tijdens werktijden reageer ik zo snel mogelijk</strong> — beloofd.
-            </p>
-            <a class="wl-text-link" href="@_whatsAppUrl" target="_blank" rel="noopener noreferrer">
-                Stuur Dennis een WhatsApp →
-            </a>
+            @if (_whatsAppUrl is not null)
+            {
+                <p class="wl-intro__whatsapp-note">
+                    Prangende vraag? App me gerust op WhatsApp.
+                    <strong>Tijdens werktijden reageer ik zo snel mogelijk</strong> — beloofd.
+                </p>
+                <a class="wl-text-link" href="@_whatsAppUrl" target="_blank" rel="noopener noreferrer">
+                    Stuur Dennis een WhatsApp →
+                </a>
+            }
         </div>
         <figure class="wl-portrait">
             <div class="wl-portrait__frame">
@@ -198,9 +201,12 @@
                 <span class="wl-btn__emoji" aria-hidden="true">🦞</span>
                 Registreren &amp; vacature plaatsen
             </a>
-            <a class="wl-btn wl-btn--whatsapp" href="@_whatsAppUrl" target="_blank" rel="noopener noreferrer">
-                WhatsApp — ik help je graag
-            </a>
+            @if (_whatsAppUrl is not null)
+            {
+                <a class="wl-btn wl-btn--whatsapp" href="@_whatsAppUrl" target="_blank" rel="noopener noreferrer">
+                    WhatsApp — ik help je graag
+                </a>
+            }
         </div>
         <p class="wl-finale__fine">
             <a href="/">Naar de banenkaart</a>
@@ -211,17 +217,17 @@
 </div>
 
 @code {
-    private string _whatsAppUrl = WestlandTeaserContacts.BuildWhatsAppUrl(null);
+    private string? _whatsAppUrl;
     private bool _portraitMissing;
 
     protected override void OnInitialized()
     {
-        var configured = Config["TeaserLanding:WhatsAppE164"];
-        _whatsAppUrl = WestlandTeaserContacts.BuildWhatsAppUrl(configured);
+        _whatsAppUrl = WestlandTeaserContacts.TryBuildWhatsAppUrl(Config["TeaserLanding:WhatsAppE164"]);
     }
 
-    private void OnPortraitError()
+    private async Task OnPortraitError()
     {
         _portraitMissing = true;
+        await InvokeAsync(StateHasChanged);
     }
 }

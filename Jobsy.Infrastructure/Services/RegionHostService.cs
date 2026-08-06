@@ -92,10 +92,27 @@ public sealed class RegionHostService : IRegionHostService
         entity.AddressLabel = Clamp(upsert.AddressLabel, RegionHostRules.MaxAddressLength);
         entity.Latitude = upsert.Latitude;
         entity.Longitude = upsert.Longitude;
-        entity.BackgroundImageUrl = Clamp(upsert.BackgroundImageUrl, RegionHostRules.MaxBackgroundUrlLength);
+        entity.BackgroundImageUrl = NormalizeBackgroundUrl(upsert.BackgroundImageUrl);
         entity.IsActive = upsert.IsActive;
         entity.UpdatedAtUtc = DateTime.UtcNow;
         return entity;
+    }
+
+    private static string? NormalizeBackgroundUrl(string? value)
+    {
+        var trimmed = Clamp(value, RegionHostRules.MaxBackgroundUrlLength);
+        if (trimmed is null)
+        {
+            return null;
+        }
+
+        if (trimmed.StartsWith("/images/", StringComparison.OrdinalIgnoreCase)
+            || trimmed.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
+        {
+            return trimmed;
+        }
+
+        throw new ArgumentException("Achtergrond-URL moet https://… of /images/… zijn.");
     }
 
     private async Task EnsureUniqueHostnameAsync(string hostname, Guid? excludeId, CancellationToken cancellationToken)
