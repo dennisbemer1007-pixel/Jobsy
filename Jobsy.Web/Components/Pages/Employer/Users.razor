@@ -28,25 +28,32 @@
     else
     {
         <div class="table-list">
-            @foreach (var u in _users)
+            @if (_users.Count == 0)
             {
-                <div class="table-row">
-                    <div>
-                        <strong>@u.FullName</strong>
-                        <span class="muted">
-                            @u.Email · @RoleLabel(u.Role) · @(u.CompanyName ?? "—")
-                            @if (!u.IsActive)
-                            {
-                                <text> · inactief</text>
-                            }
-                        </span>
+                <p class="muted">Nog geen gebruikers in deze organisatie. Verstuur hieronder de eerste uitnodiging.</p>
+            }
+            else
+            {
+                @foreach (var u in _users)
+                {
+                    <div class="table-row">
+                        <div>
+                            <strong>@u.FullName</strong>
+                            <span class="muted">
+                                @u.Email · @RoleLabel(u.Role) · @(u.CompanyName ?? "—")
+                                @if (!u.IsActive)
+                                {
+                                    <text> · inactief</text>
+                                }
+                            </span>
+                        </div>
+                        <div class="table-row__actions">
+                            <button type="button" class="icon-btn" title="Bewerken" aria-label="Gebruiker bewerken" disabled="@_busy" @onclick="() => StartEdit(u)">
+                                @((MarkupString)ActionIcons.Edit)
+                            </button>
+                        </div>
                     </div>
-                    <div class="table-row__actions">
-                        <button type="button" class="icon-btn" title="Bewerken" aria-label="Gebruiker bewerken" disabled="@_busy" @onclick="() => StartEdit(u)">
-                            @((MarkupString)ActionIcons.Edit)
-                        </button>
-                    </div>
-                </div>
+                }
             }
         </div>
 

@@ -376,7 +376,7 @@
                                 disabled="@_myVacanciesLoading"
                                 @onclick="ToggleMyVacanciesAsync"
                                 aria-pressed="@_myVacanciesOnly">
-                            @(_myVacanciesLoading ? "Laden…" : "Toon mijn vacatures")
+                            @MyVacanciesToggleLabel
                         </button>
                     }
                     @if (!string.IsNullOrWhiteSpace(_myVacanciesError))
@@ -625,7 +625,7 @@
                                 disabled="@_myVacanciesLoading"
                                 @onclick="ToggleMyVacanciesAsync"
                                 aria-pressed="@_myVacanciesOnly">
-                            @(_myVacanciesLoading ? "Laden…" : "Toon mijn vacatures")
+                            @MyVacanciesToggleLabel
                         </button>
                         <p class="muted">Toon alleen actieve open vacatures van bedrijven die jij beheert.</p>
                         @if (!string.IsNullOrWhiteSpace(_myVacanciesError))
@@ -1016,6 +1016,12 @@
 
     private string EffectiveSortMode =>
         _sortMode == "distance" && _origin is null ? "title" : _sortMode;
+
+    private string MyVacanciesToggleLabel => _myVacanciesLoading
+        ? "Laden…"
+        : _myVacanciesOnly
+            ? "Verberg mijn vacatures"
+            : "Toon mijn vacatures";
 
     private int ActiveFilterCount
     {
@@ -2054,6 +2060,15 @@
                 .Select(v => v.CompanyId)
                 .Where(id => id != Guid.Empty)
                 .ToHashSet();
+            if (_myVacancyCompanyIds.Count == 0)
+            {
+                _myVacancyCompanyIds = null;
+                _myVacanciesOnly = false;
+                _myVacanciesError = "Je beheert geen actieve open vacatures.";
+                ApplyEffectiveCompanyFocus();
+                return;
+            }
+
             _myVacanciesOnly = true;
             ApplyEffectiveCompanyFocus();
             await LoadVacanciesAsync();

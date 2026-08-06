@@ -919,6 +919,14 @@ public class JobsyDbContext : DbContext
         modelBuilder.Entity<PartnerAffiliateProfile>(entity =>
         {
             entity.HasKey(e => e.Id);
+            entity.Property(e => e.CompanyName).HasMaxLength(256);
+            entity.Property(e => e.KvkNumber).HasMaxLength(20);
+            entity.Property(e => e.VatNumber).HasMaxLength(32);
+            entity.Property(e => e.Address).HasMaxLength(512);
+            entity.Property(e => e.PostalCode).HasMaxLength(16);
+            entity.Property(e => e.City).HasMaxLength(128);
+            entity.Property(e => e.Country).HasMaxLength(64);
+            entity.Property(e => e.Iban).HasMaxLength(34);
             entity.Property(e => e.TrackingCode).HasMaxLength(32).IsRequired();
             entity.HasIndex(e => e.UserId).IsUnique();
             entity.HasIndex(e => e.TrackingCode).IsUnique();

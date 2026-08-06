@@ -29,12 +29,14 @@ public sealed class CommissionLedgerService : ICommissionLedgerService
         Guid salesManagerUserId,
         CancellationToken cancellationToken = default)
     {
-        return await _db.CommissionLedgerEntries
+        var positiveUninvoiced = await _db.CommissionLedgerEntries
             .AsNoTracking()
             .Where(e => e.SalesManagerUserId == salesManagerUserId
                         && e.SelfBillingInvoiceId == null
                         && e.AmountExVat > 0)
             .SumAsync(e => (decimal?)e.AmountExVat, cancellationToken) ?? 0m;
+        var balance = await GetBalanceExVatAsync(salesManagerUserId, cancellationToken);
+        return Math.Max(0m, Math.Min(positiveUninvoiced, balance));
     }
 
     public async Task<IReadOnlyList<CommissionLedgerEntry>> ListEntriesAsync(
@@ -194,10 +196,18 @@ public sealed class CommissionLedgerService : ICommissionLedgerService
         Guid companyId,
         Guid tokenCheckoutId,
         decimal purchaseAmountEuro,
+        DateTime? firstYearStartedAt,
         decimal rate,
+        int? durationDays = null,
         CancellationToken cancellationToken = default)
     {
         if (rate <= 0)
+        {
+            return Task.FromResult<CommissionLedgerEntry?>(null);
+        }
+
+        var windowDays = durationDays ?? SalesCommissionRules.DefaultCommissionDurationDays;
+        if (!SalesCommissionRules.IsWithinCommissionWindow(firstYearStartedAt, DateTime.UtcNow, windowDays))
         {
             return Task.FromResult<CommissionLedgerEntry?>(null);
         }

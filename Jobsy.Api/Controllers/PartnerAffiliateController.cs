@@ -66,6 +66,46 @@ public class PartnerAffiliateController : ControllerBase
         return dto is null ? NotFound() : Ok(dto);
     }
 
+    [HttpGet("me/billing")]
+    public async Task<ActionResult<PartnerAffiliateBillingDto>> GetBilling(CancellationToken cancellationToken)
+    {
+        var user = await _users.FindByPrincipalAsync(User, cancellationToken);
+        if (user is null)
+        {
+            return Unauthorized();
+        }
+
+        var dto = await _partners.GetBillingAsync(user.Id, cancellationToken);
+        return dto is null ? NotFound() : Ok(dto);
+    }
+
+    [HttpPut("me/billing")]
+    public async Task<ActionResult<PartnerAffiliateBillingDto>> UpdateBilling(
+        [FromBody] PartnerAffiliateBillingUpdateRequest request,
+        CancellationToken cancellationToken)
+    {
+        var user = await _users.FindByPrincipalAsync(User, cancellationToken);
+        if (user is null)
+        {
+            return Unauthorized();
+        }
+
+        var dto = await _partners.UpdateBillingAsync(
+            user.Id,
+            new PartnerAffiliateBillingUpdate(
+                request.CompanyName,
+                request.KvkNumber,
+                request.VatNumber,
+                request.Address,
+                request.PostalCode,
+                request.City,
+                request.Country,
+                request.Iban,
+                request.ClearIban),
+            cancellationToken);
+        return Ok(dto);
+    }
+
     [HttpGet("me/invoices")]
     public async Task<ActionResult<IEnumerable<SelfBillingInvoiceDto>>> ListMyInvoices(
         CancellationToken cancellationToken)
@@ -195,3 +235,14 @@ public class PartnerAffiliateController : ControllerBase
 public record CreatePartnerAffiliatePayoutCheckoutRequest(decimal? AmountExVat);
 
 public record CompletePartnerAffiliatePayoutRequest(string PaymentId);
+
+public record PartnerAffiliateBillingUpdateRequest(
+    string? CompanyName,
+    string? KvkNumber,
+    string? VatNumber,
+    string? Address,
+    string? PostalCode,
+    string? City,
+    string? Country,
+    string? Iban,
+    bool ClearIban = false);

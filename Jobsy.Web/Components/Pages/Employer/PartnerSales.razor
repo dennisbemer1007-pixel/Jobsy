@@ -112,26 +112,34 @@
     {
         <section class="panel-section">
             <h2>Tokenlogging</h2>
-            <p class="muted">Alle commissieboekingen voor tokenaankopen en uitbetalingen via jouw partnercode.</p>
+            <p class="muted">Alle commissieboekingen voor tokenaankopen en uitbetalingen via jouw partnercode. Het uitbetaalbare saldo hieronder is leidend voor uitbetalingen.</p>
 
             <div class="stat-grid">
                 <div class="stat-card">
-                    <span class="stat-card__label">Beschikbaar saldo excl. BTW</span>
+                    <span class="stat-card__label">Uitbetaalbaar saldo excl. BTW</span>
                     <strong class="stat-card__value">€ @AvailableBalanceExVat.ToString("0.00")</strong>
                 </div>
                 <div class="stat-card">
-                    <span class="stat-card__label">Saldo incl. BTW</span>
+                    <span class="stat-card__label">Uitbetaalbaar saldo incl. BTW</span>
                     <strong class="stat-card__value">€ @Math.Max(0m, _me.BalanceInclVat).ToString("0.00")</strong>
                 </div>
                 <div class="stat-card">
-                    <span class="stat-card__label">Saldo volgens logging</span>
+                    <span class="stat-card__label">Openstaand volgens tokenlog</span>
                     <strong class="stat-card__value">€ @TokenLogBalanceExVat.ToString("0.00")</strong>
                 </div>
             </div>
+            @if (HasTokenLogBalanceDifference)
+            {
+                <p class="state-message">
+                    Let op: de tokenlog telt € @TokenLogBalanceExVat.ToString("0.00") excl. BTW,
+                    terwijl het uitbetaalbare saldo € @AvailableBalanceExVat.ToString("0.00") is.
+                    Verschil: € @Math.Abs(TokenLogBalanceDifferenceExVat).ToString("0.00"). Uitbetalingen, facturen of correcties kunnen dit verklaren.
+                </p>
+            }
 
             @if (_tokenRows.Count == 0)
             {
-                <p class="muted">Nog geen tokenlog-regels.</p>
+                <p class="muted">Nog geen tokenlog-regels. Zodra een gekoppeld bedrijf tokens koopt of er een uitbetaling/correctie plaatsvindt, verschijnen de regels hier.</p>
             }
             else
             {
@@ -168,12 +176,12 @@
                         </tbody>
                         <tfoot>
                             <tr>
-                                <th colspan="2">Totaal / saldo</th>
+                                <th colspan="2">Totaal tokenlog</th>
                                 <th>@TotalTokensBought</th>
                                 <th>€ @TotalEarningsExVat.ToString("0.00")</th>
                                 <th>€ @TotalPayoutExVat.ToString("0.00")</th>
                                 <th class="data-table__col--wrap">
-                                    Saldo: € @TokenLogBalanceExVat.ToString("0.00") excl. BTW · beschikbaar: € @AvailableBalanceExVat.ToString("0.00")
+                                    Openstaand volgens log: € @TokenLogBalanceExVat.ToString("0.00") excl. BTW · uitbetaalbaar saldo: € @AvailableBalanceExVat.ToString("0.00")
                                 </th>
                             </tr>
                         </tfoot>
@@ -196,13 +204,51 @@
             </div>
 
             <p class="muted">
-                Beschikbaar saldo excl. BTW: <strong>€ @AvailableBalanceExVat.ToString("0.00")</strong>.
-                Uitbetalingen vereisen een geldig IBAN/onboardingprofiel; als dat nog ontbreekt helpt Lobsy-support met de eerste uitbetaling.
+                Uitbetaalbaar saldo excl. BTW: <strong>€ @AvailableBalanceExVat.ToString("0.00")</strong>.
+                Vul hieronder je factuurgegevens en IBAN in om zelf uit te betalen.
             </p>
+
+            <form class="login-form" style="max-width:36rem;margin-bottom:1.25rem" @onsubmit="SaveBillingAsync" @onsubmit:preventDefault>
+                <h3 style="margin:0 0 0.5rem">Factuur- en uitbetalingsgegevens</h3>
+                <p class="muted">IBAN wordt gemaskeerd opgeslagen in de UI; alleen Lobsy gebruikt het voor self-billing.</p>
+                <label>
+                    Bedrijfsnaam
+                    <input @bind="_billingCompanyName" maxlength="200" />
+                </label>
+                <div class="inline-actions" style="gap:0.75rem;align-items:flex-end">
+                    <label style="flex:1">
+                        KVK
+                        <input @bind="_billingKvk" maxlength="20" />
+                    </label>
+                    <label style="flex:1">
+                        BTW-nummer
+                        <input @bind="_billingVat" maxlength="32" />
+                    </label>
+                </div>
+                <label>
+                    Adres
+                    <input @bind="_billingAddress" maxlength="300" />
+                </label>
+                <div class="inline-actions" style="gap:0.75rem;align-items:flex-end">
+                    <label style="flex:1">
+                        Postcode
+                        <input @bind="_billingPostal" maxlength="20" />
+                    </label>
+                    <label style="flex:1">
+                        Plaats
+                        <input @bind="_billingCity" maxlength="120" />
+                    </label>
+                </div>
+                <label>
+                    IBAN @(string.IsNullOrWhiteSpace(_billingMaskedIban) || _billingMaskedIban == "—" ? "" : $"(huidig: {_billingMaskedIban})")
+                    <input @bind="_billingIban" maxlength="34" placeholder="NL91 ABNA 0417 1643 00" autocomplete="off" />
+                </label>
+                <button class="login-submit" type="submit" disabled="@_busy">Gegevens opslaan</button>
+            </form>
 
             @if (_invoices.Count == 0)
             {
-                <p class="muted">Nog geen facturen. Start een uitbetaling zodra je saldo en betaalgegevens klaarstaan.</p>
+                <p class="muted">Nog geen facturen. Start een uitbetaling zodra je saldo en IBAN klaarstaan.</p>
             }
             else
             {
@@ -252,7 +298,7 @@
         {
             <p class="state-message">@Culture["Common.Loading"]</p>
         }
-        else if (!_preview.CanPayout && _preview.AvailableExVat <= 0)
+        else if (!_preview.CanPayout)
         {
             <p class="share-modal__lead" style="white-space:normal;max-width:none">@PartnerPayoutBlockMessage</p>
             @if (AvailableBalanceExVat > 0)
@@ -333,16 +379,26 @@
     private string? _error;
     private string? _message;
     private string? _modalError;
+    private string _billingCompanyName = "";
+    private string _billingKvk = "";
+    private string _billingVat = "";
+    private string _billingAddress = "";
+    private string _billingPostal = "";
+    private string _billingCity = "";
+    private string _billingIban = "";
+    private string _billingMaskedIban = "—";
 
     private string TrackingCode => FirstNonEmpty(_toolkit?.TrackingCode, _me?.TrackingCode) ?? "—";
     private decimal CommissionRate => _toolkit?.CommissionRate ?? _me?.CommissionRate ?? 0m;
     private decimal AvailableBalanceExVat => Math.Max(0m, _me?.BalanceExVat ?? 0m);
     private decimal TokenLogBalanceExVat => _tokenRows.Sum(r => r.EarningsExVat - r.PayoutExVat);
+    private decimal TokenLogBalanceDifferenceExVat => decimal.Round(TokenLogBalanceExVat - AvailableBalanceExVat, 2, MidpointRounding.AwayFromZero);
+    private bool HasTokenLogBalanceDifference => Math.Abs(TokenLogBalanceDifferenceExVat) >= 0.01m;
     private int TotalTokensBought => _tokenRows.Sum(r => Math.Max(0, r.TokensBought));
     private decimal TotalEarningsExVat => _tokenRows.Sum(r => Math.Max(0m, r.EarningsExVat));
     private decimal TotalPayoutExVat => _tokenRows.Sum(r => Math.Max(0m, r.PayoutExVat));
     private string PartnerPayoutBlockMessage => string.IsNullOrWhiteSpace(_preview?.BlockReason)
-        ? "Uitbetalingen via support: er is nog geen IBAN/onboardingprofiel beschikbaar voor partneruitbetalingen."
+        ? "Vul eerst je IBAN in bij Facturen om zelf uit te betalen."
         : _preview.BlockReason;
 
     private string PartnerUrl => FirstNonEmpty(_toolkit?.PartnerPageUrl, BuildPartnerUrl())!;
@@ -384,6 +440,7 @@
             _toolkit = await Api.GetPartnerAffiliateToolkitAsync();
             _tokenRows = (await Api.GetPartnerAffiliateTokenLogAsync()).ToList();
             _invoices = await Api.GetPartnerAffiliateInvoicesAsync();
+            await LoadBillingIntoFormAsync();
         }
         catch (Exception ex)
         {
@@ -392,6 +449,60 @@
         finally
         {
             _loading = false;
+        }
+    }
+
+    private async Task LoadBillingIntoFormAsync()
+    {
+        var billing = await Api.GetPartnerAffiliateBillingAsync();
+        if (billing is null)
+        {
+            return;
+        }
+
+        _billingCompanyName = billing.CompanyName ?? "";
+        _billingKvk = billing.KvkNumber ?? "";
+        _billingVat = billing.VatNumber ?? "";
+        _billingAddress = billing.Address ?? "";
+        _billingPostal = billing.PostalCode ?? "";
+        _billingCity = billing.City ?? "";
+        _billingMaskedIban = billing.MaskedIban;
+        _billingIban = "";
+    }
+
+    private async Task SaveBillingAsync()
+    {
+        _busy = true;
+        _error = null;
+        _message = null;
+        try
+        {
+            var updated = await Api.UpdatePartnerAffiliateBillingAsync(new PartnerAffiliateBillingForm
+            {
+                CompanyName = _billingCompanyName,
+                KvkNumber = _billingKvk,
+                VatNumber = _billingVat,
+                Address = _billingAddress,
+                PostalCode = _billingPostal,
+                City = _billingCity,
+                Country = "NL",
+                Iban = _billingIban
+            });
+            if (updated is not null)
+            {
+                _billingMaskedIban = updated.MaskedIban;
+                _billingIban = "";
+            }
+
+            _message = "Factuurgegevens opgeslagen. Je kunt nu uitbetalen als er saldo is.";
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _busy = false;
         }
     }
 

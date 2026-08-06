@@ -1469,6 +1469,25 @@ public sealed class JobsyApiClient : IAsyncDisposable
     public async Task<PartnerAffiliateToolkitModel?> GetPartnerAffiliateToolkitAsync(CancellationToken ct = default)
         => await _http.GetFromJsonAsync<PartnerAffiliateToolkitModel>("api/partner-affiliate/toolkit", ct);
 
+    public async Task<PartnerAffiliateBillingModel?> GetPartnerAffiliateBillingAsync(CancellationToken ct = default)
+        => await _http.GetFromJsonAsync<PartnerAffiliateBillingModel>("api/partner-affiliate/me/billing", ct);
+
+    public async Task<PartnerAffiliateBillingModel?> UpdatePartnerAffiliateBillingAsync(
+        PartnerAffiliateBillingForm form,
+        CancellationToken ct = default)
+    {
+        var response = await _http.PutAsJsonAsync("api/partner-affiliate/me/billing", form, ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException(string.IsNullOrWhiteSpace(body)
+                ? $"Factuurgegevens opslaan mislukt ({(int)response.StatusCode})."
+                : body);
+        }
+
+        return await response.Content.ReadFromJsonAsync<PartnerAffiliateBillingModel>(cancellationToken: ct);
+    }
+
     public async Task<List<SelfBillingInvoiceItem>> GetPartnerAffiliateInvoicesAsync(CancellationToken ct = default)
         => await _http.GetFromJsonAsync<List<SelfBillingInvoiceItem>>("api/partner-affiliate/me/invoices", ct) ?? [];
 
@@ -3564,6 +3583,32 @@ public sealed class PartnerAffiliateToolkitModel
     public string PartnerPageUrl { get; set; } = string.Empty;
     public string RegisterUrl { get; set; } = string.Empty;
     public string FlyerUrl { get; set; } = string.Empty;
+}
+
+public sealed class PartnerAffiliateBillingModel
+{
+    public string? CompanyName { get; set; }
+    public string? KvkNumber { get; set; }
+    public string? VatNumber { get; set; }
+    public string? Address { get; set; }
+    public string? PostalCode { get; set; }
+    public string? City { get; set; }
+    public string Country { get; set; } = "NL";
+    public string MaskedIban { get; set; } = "—";
+    public bool HasIban { get; set; }
+}
+
+public sealed class PartnerAffiliateBillingForm
+{
+    public string? CompanyName { get; set; }
+    public string? KvkNumber { get; set; }
+    public string? VatNumber { get; set; }
+    public string? Address { get; set; }
+    public string? PostalCode { get; set; }
+    public string? City { get; set; }
+    public string? Country { get; set; }
+    public string? Iban { get; set; }
+    public bool ClearIban { get; set; }
 }
 
 public sealed class VacancyTypeCostItem

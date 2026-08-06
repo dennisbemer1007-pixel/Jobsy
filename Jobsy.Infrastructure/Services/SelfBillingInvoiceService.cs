@@ -46,7 +46,17 @@ public sealed class SelfBillingInvoiceService : ISelfBillingInvoiceService
             throw new InvalidOperationException("Geen openstaand tegoed om te factureren.");
         }
 
-        var available = decimal.Round(entries.Sum(e => e.AmountExVat), 2, MidpointRounding.AwayFromZero);
+        var positiveUninvoiced = decimal.Round(entries.Sum(e => e.AmountExVat), 2, MidpointRounding.AwayFromZero);
+        var ledgerBalance = decimal.Round(
+            await _ledger.GetBalanceExVatAsync(salesManagerUserId, cancellationToken),
+            2,
+            MidpointRounding.AwayFromZero);
+        var available = Math.Max(0m, Math.Min(positiveUninvoiced, ledgerBalance));
+        if (available <= 0)
+        {
+            throw new InvalidOperationException("Geen openstaand tegoed om te factureren.");
+        }
+
         decimal target;
         if (maxAmountExVat is null)
         {
@@ -391,6 +401,25 @@ public sealed class SelfBillingInvoiceService : ISelfBillingInvoiceService
                 am.Iban);
         }
 
+        var partner = await _db.PartnerAffiliateProfiles
+            .AsNoTracking()
+            .Include(p => p.User)
+            .ThenInclude(u => u.Company)
+            .FirstOrDefaultAsync(p => p.UserId == userId, cancellationToken);
+        if (partner is not null)
+        {
+            var company = partner.User.Company;
+            return new BillingIdentity(
+                FirstNonEmpty(partner.CompanyName, company?.Name) ?? "",
+                FirstNonEmpty(partner.KvkNumber, company?.KvkNumber) ?? "",
+                partner.VatNumber ?? "",
+                FirstNonEmpty(
+                    FormatAddress(partner.Address, partner.PostalCode, partner.City, partner.Country),
+                    company?.Address) ?? "",
+                partner.IsOnboardingComplete,
+                partner.Iban);
+        }
+
         return null;
     }
 
@@ -406,4 +435,7 @@ public sealed class SelfBillingInvoiceService : ISelfBillingInvoiceService
         CommissionLedgerEntry Entry,
         decimal AmountExVat,
         bool IsPartial);
+
+    private static string? FirstNonEmpty(params string?[] values)
+        => values.FirstOrDefault(v => !string.IsNullOrWhiteSpace(v));
 }

@@ -8525,6 +8525,12 @@ button.stat-card {
     background: color-mix(in srgb, var(--accent-soft) 55%, var(--surface));
 }
 
+.applicants-grid__row:focus-visible td {
+    outline: 2px solid var(--brand);
+    outline-offset: -2px;
+    background: color-mix(in srgb, var(--accent-soft) 60%, var(--surface));
+}
+
 .data-table tbody tr.applicants-grid__details-row:hover td {
     background: var(--surface);
 }
@@ -10145,6 +10151,11 @@ button.linkish:hover {
     border-radius: 10px;
     background: var(--surface);
     transition: background 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.token-pack-options > .muted {
+    grid-column: 1 / -1;
+    margin: 0;
 }
 
 .token-pack-options .scope-option:hover {

@@ -41,6 +41,7 @@ public sealed class PartnerAffiliateService : IPartnerAffiliateService
         }
 
         var user = await _db.Users
+            .Include(u => u.Company)
             .FirstOrDefaultAsync(u => u.Id == userId, cancellationToken)
             ?? throw new KeyNotFoundException("Gebruiker niet gevonden.");
 
@@ -50,6 +51,10 @@ public sealed class PartnerAffiliateService : IPartnerAffiliateService
         {
             Id = Guid.NewGuid(),
             UserId = user.Id,
+            CompanyName = user.Company?.Name,
+            KvkNumber = user.Company?.KvkNumber,
+            Address = user.Company?.Address,
+            Country = "NL",
             TrackingCode = await GenerateUniqueTrackingCodeAsync(prefix, cancellationToken),
             CreatedAtUtc = now,
             UpdatedAtUtc = now
@@ -97,8 +102,16 @@ public sealed class PartnerAffiliateService : IPartnerAffiliateService
             return false;
         }
 
+        // Block self-referral / related-party attribution (same user company or same KVK family).
+        if (await IsRelatedPartyReferralAsync(profile.UserId, company, cancellationToken))
+        {
+            return false;
+        }
+
         company.ReferredByPartnerUserId = profile.UserId;
         company.FirstYearStartedAt ??= DateTime.UtcNow;
+        company.CommissionDurationDaysSnapshot ??=
+            (await _commercial.GetSettingsAsync(cancellationToken)).CommissionDurationDays;
         return true;
     }
 
@@ -121,13 +134,22 @@ public sealed class PartnerAffiliateService : IPartnerAffiliateService
             return null;
         }
 
+        var company = await _db.Companies.AsNoTracking()
+            .FirstOrDefaultAsync(c => c.Id == companyId, cancellationToken);
+        if (company is null || company.ReferredByPartnerUserId != partnerUserId)
+        {
+            return null;
+        }
+
         var settings = await _commercial.GetSettingsAsync(cancellationToken);
         return await _ledger.TryCreditPartnerTokenCommissionAsync(
             partnerUserId,
             companyId,
             tokenCheckoutId,
             purchaseAmountExVatEuro,
+            company.FirstYearStartedAt,
             Math.Max(0m, settings.PartnerCommissionRate),
+            company.CommissionDurationDaysSnapshot ?? settings.CommissionDurationDays,
             cancellationToken);
     }
 
@@ -175,7 +197,7 @@ public sealed class PartnerAffiliateService : IPartnerAffiliateService
         var entries = await _db.CommissionLedgerEntries.AsNoTracking()
             .Include(e => e.Company)
             .Where(e => e.SalesManagerUserId == userId
-                        && (e.Kind == CommissionEntryKind.TokenCommission || e.Kind == CommissionEntryKind.Payout))
+                        && e.AmountExVat != 0)
             .OrderByDescending(e => e.CreatedAt)
             .ToListAsync(cancellationToken);
 
@@ -192,15 +214,14 @@ public sealed class PartnerAffiliateService : IPartnerAffiliateService
         return entries.Select(entry =>
         {
             checkouts.TryGetValue(entry.SourceTokenCheckoutId ?? Guid.Empty, out var checkout);
-            var isPayout = entry.Kind == CommissionEntryKind.Payout;
             return new PartnerAffiliateTokenLogRowDto(
                 entry.Id,
                 entry.CompanyId,
                 entry.Company?.Name,
                 entry.CreatedAt,
-                isPayout ? 0 : checkout?.PackSize ?? 0,
-                isPayout ? 0m : Math.Max(0m, entry.AmountExVat),
-                isPayout ? Math.Abs(entry.AmountExVat) : 0m,
+                entry.AmountExVat > 0 ? checkout?.PackSize ?? 0 : 0,
+                Math.Max(0m, entry.AmountExVat),
+                Math.Max(0m, -entry.AmountExVat),
                 entry.Kind.ToString(),
                 entry.Note);
         }).ToList();
@@ -226,6 +247,126 @@ public sealed class PartnerAffiliateService : IPartnerAffiliateService
 
     public static bool IsPartnerTrackingCode(string? trackingCode) =>
         NormalizePartnerTrackingCode(trackingCode) is not null;
+
+    public async Task<PartnerAffiliateBillingDto?> GetBillingAsync(
+        Guid userId,
+        CancellationToken cancellationToken = default)
+    {
+        var profile = await EnsureProfileAsync(userId, cancellationToken);
+        return new PartnerAffiliateBillingDto(
+            profile.CompanyName,
+            profile.KvkNumber,
+            profile.VatNumber,
+            profile.Address,
+            profile.PostalCode,
+            profile.City,
+            profile.Country ?? "NL",
+            ISalesManagerPayoutService.MaskIban(profile.Iban),
+            !string.IsNullOrWhiteSpace(profile.Iban));
+    }
+
+    public async Task<PartnerAffiliateBillingDto> UpdateBillingAsync(
+        Guid userId,
+        PartnerAffiliateBillingUpdate update,
+        CancellationToken cancellationToken = default)
+    {
+        var profile = await EnsureProfileAsync(userId, cancellationToken);
+        profile.CompanyName = NormalizeOptional(update.CompanyName, 200);
+        profile.KvkNumber = NormalizeOptional(update.KvkNumber, 20);
+        profile.VatNumber = NormalizeOptional(update.VatNumber, 32);
+        profile.Address = NormalizeOptional(update.Address, 300);
+        profile.PostalCode = NormalizeOptional(update.PostalCode, 20);
+        profile.City = NormalizeOptional(update.City, 120);
+        profile.Country = string.IsNullOrWhiteSpace(update.Country) ? "NL" : update.Country.Trim().ToUpperInvariant();
+
+        var iban = NormalizeIban(update.Iban);
+        if (iban is not null)
+        {
+            profile.Iban = iban;
+        }
+        else if (string.IsNullOrWhiteSpace(update.Iban) && update.ClearIban)
+        {
+            profile.Iban = null;
+        }
+
+        profile.UpdatedAtUtc = DateTime.UtcNow;
+        await _db.SaveChangesAsync(cancellationToken);
+        return (await GetBillingAsync(userId, cancellationToken))!;
+    }
+
+    private async Task<bool> IsRelatedPartyReferralAsync(
+        Guid partnerUserId,
+        Company company,
+        CancellationToken cancellationToken)
+    {
+        var partner = await _db.Users.AsNoTracking()
+            .Include(u => u.Company)
+            .FirstOrDefaultAsync(u => u.Id == partnerUserId, cancellationToken);
+        if (partner is null)
+        {
+            return true;
+        }
+
+        if (partner.CompanyId == company.Id
+            || (company.ParentCompanyId is Guid parent && partner.CompanyId == parent)
+            || (partner.Company?.ParentCompanyId is Guid partnerParent
+                && (partnerParent == company.Id || partnerParent == company.ParentCompanyId)))
+        {
+            return true;
+        }
+
+        var partnerOrgIds = await _db.UserCompanies.AsNoTracking()
+            .Where(uc => uc.UserId == partnerUserId)
+            .Select(uc => uc.CompanyId)
+            .ToListAsync(cancellationToken);
+        if (partner.CompanyId is Guid primary)
+        {
+            partnerOrgIds.Add(primary);
+        }
+
+        if (partnerOrgIds.Contains(company.Id)
+            || (company.ParentCompanyId is Guid companyParent && partnerOrgIds.Contains(companyParent)))
+        {
+            return true;
+        }
+
+        var partnerKvk = NormalizeKvk(partner.Company?.KvkNumber);
+        var companyKvk = NormalizeKvk(company.KvkNumber);
+        return partnerKvk is not null && companyKvk is not null && partnerKvk == companyKvk;
+    }
+
+    private static string? NormalizeKvk(string? kvk)
+    {
+        if (string.IsNullOrWhiteSpace(kvk))
+        {
+            return null;
+        }
+
+        var digits = new string(kvk.Where(char.IsDigit).ToArray());
+        return digits.Length >= 8 ? digits[..8] : null;
+    }
+
+    private static string? NormalizeOptional(string? value, int maxLen)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            return null;
+        }
+
+        var trimmed = value.Trim();
+        return trimmed.Length <= maxLen ? trimmed : trimmed[..maxLen];
+    }
+
+    private static string? NormalizeIban(string? iban)
+    {
+        if (string.IsNullOrWhiteSpace(iban))
+        {
+            return null;
+        }
+
+        var compact = new string(iban.Where(c => !char.IsWhiteSpace(c)).ToArray()).ToUpperInvariant();
+        return compact.Length is >= 15 and <= 34 ? compact : null;
+    }
 
     private async Task<string> GenerateUniqueTrackingCodeAsync(
         string prefix,

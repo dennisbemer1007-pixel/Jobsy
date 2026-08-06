@@ -35,6 +35,8 @@
     }
     else
     {
+        var filteredItems = FilteredItems.ToList();
+
         <div class="applicants-filters" role="tablist" aria-label="@Culture["Employer.Applicants"]">
             @foreach (var filter in StatusFilters)
             {
@@ -49,6 +51,12 @@
             }
         </div>
 
+        @if (filteredItems.Count == 0)
+        {
+            <p class="state-message">Geen sollicitaties binnen dit filter.</p>
+        }
+        else
+        {
         <div class="table-scroll applicants-grid">
             <table class="data-table applicants-grid__table">
                 <thead>
@@ -63,20 +71,28 @@
                     </tr>
                 </thead>
                 <tbody>
-                    @foreach (var a in FilteredItems)
+                    @foreach (var a in filteredItems)
                     {
                         var expanded = _expandedIds.Contains(a.Id);
                         var otherPending = CountOtherOpen(a);
+                        var detailsId = $"application-details-{a.Id:N}";
                         <tr class="data-table__row--interactive applicants-grid__row status-@a.Status.ToLowerInvariant() @(expanded ? "is-expanded" : null)"
                             @onclick="() => ToggleExpanded(a.Id)"
-                            aria-expanded="@expanded">
+                            @onkeydown="e => ToggleExpandedFromKeyboard(e, a.Id)"
+                            tabindex="0"
+                            aria-expanded="@expanded"
+                            aria-controls="@detailsId"
+                            aria-label="@($"{(expanded ? "Verberg" : "Toon")} details voor {DisplayCandidateName(a)} bij {a.VacancyTitle}")">
                             <td class="applicants-grid__expand-cell">
                                 <button type="button"
                                         class="applicants-grid__expand"
-                                        title="Details"
-                                        aria-label="Sollicitatie details"
+                                        title="@(expanded ? "Details verbergen" : "Details tonen")"
+                                        aria-label="@(expanded ? "Sollicitatie details verbergen" : "Sollicitatie details tonen")"
+                                        aria-expanded="@expanded"
+                                        aria-controls="@detailsId"
                                         @onclick="() => ToggleExpanded(a.Id)"
-                                        @onclick:stopPropagation="true">
+                                        @onclick:stopPropagation="true"
+                                        @onkeydown:stopPropagation="true">
                                     @(expanded ? "−" : "+")
                                 </button>
                             </td>
@@ -109,7 +125,7 @@
                         {
                             <tr class="applicants-grid__details-row status-@a.Status.ToLowerInvariant()">
                                 <td colspan="7">
-                                    <div class="applicants-grid__details">
+                                    <div id="@detailsId" class="applicants-grid__details">
                                         <section>
                                             <h3>@Culture["Employer.FactMotivation"]</h3>
                                             <p>@(string.IsNullOrWhiteSpace(a.Motivation) ? "—" : a.Motivation)</p>
@@ -221,6 +237,7 @@
                 </tbody>
             </table>
         </div>
+        }
 
         @if (!string.IsNullOrEmpty(_message))
         {
@@ -335,6 +352,14 @@
         if (!_expandedIds.Add(id))
         {
             _expandedIds.Remove(id);
+        }
+    }
+
+    private void ToggleExpandedFromKeyboard(KeyboardEventArgs e, Guid id)
+    {
+        if (e.Key is "Enter" or "NumpadEnter" or " ")
+        {
+            ToggleExpanded(id);
         }
     }
 

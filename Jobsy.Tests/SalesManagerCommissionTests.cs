@@ -351,6 +351,170 @@ public class SalesManagerCommissionTests
     }
 
     [Fact]
+    public async Task Partner_affiliate_rejects_same_kvk_self_referral()
+    {
+        await using var db = CreateDb();
+        var partnerId = Guid.NewGuid();
+        var partnerCompanyId = Guid.NewGuid();
+        db.Companies.Add(new Company
+        {
+            Id = partnerCompanyId,
+            Name = "Partner Org",
+            KvkNumber = "55556666",
+            KvkEstablishmentId = "55556666_0001",
+            Address = "A",
+            Location = new GeoPoint(52, 4),
+            Type = CompanyType.Employer
+        });
+        db.Users.Add(new User
+        {
+            Id = partnerId,
+            Email = "self.partner@jobsy.local",
+            FullName = "Self Partner",
+            Role = UserRole.EnterpriseManager,
+            CompanyId = partnerCompanyId,
+            IsActive = true
+        });
+        db.PartnerAffiliateProfiles.Add(new PartnerAffiliateProfile
+        {
+            Id = Guid.NewGuid(),
+            UserId = partnerId,
+            TrackingCode = "BM-SELF23",
+            CreatedAtUtc = DateTime.UtcNow,
+            UpdatedAtUtc = DateTime.UtcNow
+        });
+        await db.SaveChangesAsync();
+
+        var partners = CreatePartnerAffiliateService(db);
+        var target = new Company
+        {
+            Id = Guid.NewGuid(),
+            Name = "Same KVK co",
+            KvkNumber = "55556666",
+            KvkEstablishmentId = "55556666_0002",
+            Address = "B",
+            Location = new GeoPoint(52, 4),
+            Type = CompanyType.Employer
+        };
+        Assert.False(await partners.ApplyReferralAsync(target, "BM-SELF23"));
+        Assert.Null(target.ReferredByPartnerUserId);
+    }
+
+    [Fact]
+    public async Task Partner_affiliate_commission_stops_outside_window()
+    {
+        await using var db = CreateDb();
+        var (partnerId, companyId) = await SeedPartnerAffiliateAsync(db, iban: null);
+        var company = await db.Companies.SingleAsync(c => c.Id == companyId);
+        company.FirstYearStartedAt = DateTime.UtcNow.AddDays(-400);
+        company.CommissionDurationDaysSnapshot = 365;
+        await db.SaveChangesAsync();
+
+        var partners = CreatePartnerAffiliateService(db);
+        var entry = await partners.TryCreditTokenCommissionAsync(
+            partnerId, companyId, Guid.NewGuid(), 100m);
+        Assert.Null(entry);
+        Assert.Equal(0m, await new CommissionLedgerService(db).GetBalanceExVatAsync(partnerId));
+    }
+
+    [Fact]
+    public async Task Partner_affiliate_token_log_rows_sum_to_mine_balance_including_adjustments()
+    {
+        await using var db = CreateDb();
+        var (partnerId, companyId) = await SeedPartnerAffiliateAsync(db, iban: "NL91ABNA0417164300");
+        var ledger = new CommissionLedgerService(db);
+        await ledger.TryCreditPartnerTokenCommissionAsync(
+            partnerId, companyId, Guid.NewGuid(), 100m, DateTime.UtcNow.AddDays(-1), 0.05m);
+        db.CommissionLedgerEntries.Add(new CommissionLedgerEntry
+        {
+            Id = Guid.NewGuid(),
+            SalesManagerUserId = partnerId,
+            Kind = CommissionEntryKind.Adjustment,
+            AmountExVat = -2.00m,
+            VatAmount = -SalesCommissionRules.VatOn(2.00m),
+            VatRate = SalesCommissionRules.VatRate,
+            Note = "Correctie partnercommissie",
+            CreatedAt = DateTime.UtcNow
+        });
+        await db.SaveChangesAsync();
+
+        var partners = CreatePartnerAffiliateService(db);
+        var mine = await partners.GetMineAsync(partnerId);
+        var rows = await partners.GetTokenLogAsync(partnerId);
+
+        Assert.NotNull(mine);
+        var tokenLogBalance = rows.Sum(r => r.EarningsExVat - r.PayoutExVat);
+        Assert.Equal(mine!.BalanceExVat, tokenLogBalance);
+        Assert.Equal(await ledger.GetBalanceExVatAsync(partnerId), tokenLogBalance);
+    }
+
+    [Fact]
+    public async Task Partner_affiliate_missing_iban_blocks_preview_with_clear_available_balance()
+    {
+        await using var db = CreateDb();
+        var (partnerId, companyId) = await SeedPartnerAffiliateAsync(db, iban: null);
+        var ledger = new CommissionLedgerService(db);
+        await ledger.TryCreditPartnerTokenCommissionAsync(
+            partnerId, companyId, Guid.NewGuid(), 100m, DateTime.UtcNow.AddDays(-1), 0.05m);
+        var payouts = CreatePayoutService(db, ledger);
+
+        var preview = await payouts.GetPreviewAsync(partnerId);
+
+        Assert.False(preview.CanPayout);
+        Assert.Equal(5.00m, preview.AvailableExVat);
+        Assert.Null(preview.Iban);
+        Assert.Equal("—", preview.MaskedIban);
+        Assert.Contains("IBAN", preview.BlockReason, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public async Task Partner_affiliate_payout_uses_partner_profile_and_never_goes_negative()
+    {
+        await using var db = CreateDb();
+        var (partnerId, companyId) = await SeedPartnerAffiliateAsync(db, iban: "NL91ABNA0417164300");
+        var ledger = new CommissionLedgerService(db);
+        await ledger.TryCreditPartnerTokenCommissionAsync(
+            partnerId, companyId, Guid.NewGuid(), 200m, DateTime.UtcNow.AddDays(-1), 0.05m);
+        db.CommissionLedgerEntries.Add(new CommissionLedgerEntry
+        {
+            Id = Guid.NewGuid(),
+            SalesManagerUserId = partnerId,
+            Kind = CommissionEntryKind.Adjustment,
+            AmountExVat = -8.00m,
+            VatAmount = -SalesCommissionRules.VatOn(8.00m),
+            VatRate = SalesCommissionRules.VatRate,
+            Note = "Correctie partnercommissie",
+            CreatedAt = DateTime.UtcNow
+        });
+        await db.SaveChangesAsync();
+        var payouts = CreatePayoutService(db, ledger);
+
+        var preview = await payouts.GetPreviewAsync(partnerId);
+        Assert.True(preview.CanPayout);
+        Assert.Equal(2.00m, preview.AvailableExVat);
+        Assert.Equal("NL**4300", preview.MaskedIban);
+        Assert.Null(preview.Iban);
+        await Assert.ThrowsAsync<InvalidOperationException>(
+            () => payouts.CreateCheckoutAsync(partnerId, 2.01m));
+
+        var checkout = await payouts.CreateCheckoutAsync(partnerId, preview.AmountExVat);
+        Assert.Contains("/employer/sales/payout-checkout", checkout.CheckoutUrl);
+        var completed = await payouts.CompleteCheckoutAsync(checkout.PaymentId, partnerId);
+
+        Assert.Equal(nameof(SalesManagerPayoutCheckoutStatus.Completed), completed.Status);
+        Assert.Equal(0m, await ledger.GetBalanceExVatAsync(partnerId));
+        Assert.Equal(0m, await ledger.GetUninvoicedBalanceExVatAsync(partnerId));
+
+        var invoice = await db.SelfBillingInvoices.SingleAsync(i => i.Id == completed.InvoiceId);
+        Assert.Equal("Partner BV", invoice.SalesManagerCompanyName);
+        Assert.Equal("12345678", invoice.SalesManagerKvkNumber);
+        Assert.Equal("NL123456789B01", invoice.SalesManagerVatNumber);
+
+        var rows = await CreatePartnerAffiliateService(db).GetTokenLogAsync(partnerId);
+        Assert.Equal(0m, rows.Sum(r => r.EarningsExVat - r.PayoutExVat));
+    }
+
+    [Fact]
     public async Task Privacy_export_and_anonymize_cover_salesmanager_pii()
     {
         await using var db = CreateDb();
@@ -438,6 +602,29 @@ public class SalesManagerCommissionTests
         new(db, new CommissionLedgerService(db), new TestHostEnvironment(),
             NullLogger<SupplierOnboardingPaymentService>.Instance);
 
+    private static PartnerAffiliateService CreatePartnerAffiliateService(JobsyDbContext db) =>
+        new(
+            db,
+            new SalesCommercialService(db, new TokenLedgerService(db)),
+            new CommissionLedgerService(db),
+            new FakePublicWebFeatures("https://lobsy.nl"));
+
+    private static SalesManagerPayoutService CreatePayoutService(
+        JobsyDbContext db,
+        CommissionLedgerService ledger)
+    {
+        var invoices = new SelfBillingInvoiceService(db, ledger);
+        return new SalesManagerPayoutService(
+            db,
+            invoices,
+            ledger,
+            new PlatformCompanySettingsService(db),
+            new FakePublicWebFeatures("https://lobsy.nl"),
+            new TestHostEnvironment(),
+            new ConfigurationBuilder().Build(),
+            NullLogger<SalesManagerPayoutService>.Instance);
+    }
+
     private static CompanyRegistrationService CreateRegistrationService(JobsyDbContext db)
     {
         var config = new ConfigurationBuilder().Build();
@@ -507,6 +694,53 @@ public class SalesManagerCommissionTests
         });
         await db.SaveChangesAsync();
         return (smId, companyId);
+    }
+
+    private static async Task<(Guid PartnerId, Guid CompanyId)> SeedPartnerAffiliateAsync(
+        JobsyDbContext db,
+        string? iban)
+    {
+        var partnerId = Guid.NewGuid();
+        var companyId = Guid.NewGuid();
+        var now = DateTime.UtcNow;
+        db.Users.Add(new User
+        {
+            Id = partnerId,
+            Email = "partner@jobsy.local",
+            FullName = "Partner User",
+            Role = UserRole.EnterpriseManager,
+            IsActive = true
+        });
+        db.PartnerAffiliateProfiles.Add(new PartnerAffiliateProfile
+        {
+            Id = Guid.NewGuid(),
+            UserId = partnerId,
+            CompanyName = "Partner BV",
+            KvkNumber = "12345678",
+            VatNumber = "NL123456789B01",
+            Address = "Partnerstraat 1",
+            PostalCode = "2671AB",
+            City = "Naaldwijk",
+            Country = "NL",
+            Iban = iban,
+            TrackingCode = "BM-PART23",
+            CreatedAtUtc = now,
+            UpdatedAtUtc = now
+        });
+        db.Companies.Add(new Company
+        {
+            Id = companyId,
+            Name = "Partner referred co",
+            KvkNumber = "99998888",
+            KvkEstablishmentId = "99998888_0001",
+            Address = "Klantstraat 1",
+            Location = new GeoPoint(52, 4),
+            Type = CompanyType.Employer,
+            ReferredByPartnerUserId = partnerId,
+            FirstYearStartedAt = now
+        });
+        await db.SaveChangesAsync();
+        return (partnerId, companyId);
     }
 
     private static ClaimsPrincipal CreatePrincipal(string email, Guid userId)

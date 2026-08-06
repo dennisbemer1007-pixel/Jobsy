@@ -65,13 +65,16 @@ public interface ICommissionLedgerService
     /// <summary>
     /// Credits Bedrijfsmanager/Intermediair partner commission on token purchases.
     /// Idempotent on (checkout id, partner user, TokenCommission).
+    /// Only accrues while <paramref name="firstYearStartedAt"/> is within the commission window.
     /// </summary>
     Task<CommissionLedgerEntry?> TryCreditPartnerTokenCommissionAsync(
         Guid partnerUserId,
         Guid companyId,
         Guid tokenCheckoutId,
         decimal purchaseAmountEuro,
+        DateTime? firstYearStartedAt,
         decimal rate,
+        int? durationDays = null,
         CancellationToken cancellationToken = default);
 
     Task AttachEntriesToInvoiceAsync(

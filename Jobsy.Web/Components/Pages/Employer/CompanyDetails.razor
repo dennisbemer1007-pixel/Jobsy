@@ -110,6 +110,10 @@
                         <dd>@KvkStatusLabel(_org.KvkVerificationStatus)</dd>
                     </div>
                 </dl>
+                @if (KvkStatusHint(_org.KvkVerificationStatus) is { Length: > 0 } kvkHint)
+                {
+                    <p class="muted company-details__lead">@kvkHint</p>
+                }
             </section>
 
             <section class="panel-section company-details__card">
@@ -600,6 +604,14 @@
         "Failed" => "Niet geverifieerd",
         null or "" => "—",
         _ => status
+    };
+
+    private static string? KvkStatusHint(string? status) => status switch
+    {
+        "Pending" => "We controleren de KVK-gegevens nog. Je kunt intussen verder werken; controleer later of de verificatie is afgerond.",
+        "Failed" => "Controleer het KVK-nummer, vestigingsnummer en adres. Neem contact op met support als deze gegevens wel kloppen.",
+        null or "" => "Er is nog geen KVK-verificatiestatus bekend voor deze organisatie of vestiging.",
+        _ => null
     };
 
     protected override async Task OnInitializedAsync()

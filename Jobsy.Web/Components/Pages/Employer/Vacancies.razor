@@ -56,7 +56,20 @@
     }
     else if (_filtered.Count == 0)
     {
-        <p class="state-message">@Culture["Discovery.NoneWithoutOrigin"]</p>
+        @if (_vacancies.Count == 0)
+        {
+            <p class="state-message">
+                Nog geen vacatures.
+                @if (_canManageVacancy)
+                {
+                    <a class="auth-link" href="/branch/vacancies/new">@Culture["Employer.NewVacancy"]</a>
+                }
+            </p>
+        }
+        else
+        {
+            <p class="state-message">Geen vacatures gevonden voor deze zoekopdracht of filter.</p>
+        }
     }
     else
     {
@@ -115,12 +128,12 @@
                                     @VacancySourceDisplay.Label(v.CreatedVia)
                                 </span>
                             </td>
-                            <td><a href="@MetricHref(v, "impressions")">@v.ImpressionCount</a></td>
-                            <td><a href="@MetricHref(v, "clicks")">@v.ClickCount</a></td>
-                            <td><a href="@MetricHref(v, "shares")">@v.ShareCount</a></td>
-                            <td><a href="@MetricHref(v, "applications")">@v.ApplicationCount</a></td>
-                            <td><a href="@MetricHref(v, "extensions")">@v.ExtensionCount</a></td>
-                            <td><a href="@MetricHref(v, "likes")">@v.LikeCount</a></td>
+                            <td><a href="@MetricHref(v, "impressions")" aria-label="@MetricLabel(v, "Getoond", v.ImpressionCount)">@v.ImpressionCount</a></td>
+                            <td><a href="@MetricHref(v, "clicks")" aria-label="@MetricLabel(v, "Clicks", v.ClickCount)">@v.ClickCount</a></td>
+                            <td><a href="@MetricHref(v, "shares")" aria-label="@MetricLabel(v, "Gedeeld", v.ShareCount)">@v.ShareCount</a></td>
+                            <td><a href="@MetricHref(v, "applications")" aria-label="@MetricLabel(v, "Gesolliciteerd", v.ApplicationCount)">@v.ApplicationCount</a></td>
+                            <td><a href="@MetricHref(v, "extensions")" aria-label="@MetricLabel(v, "Verlengd", v.ExtensionCount)">@v.ExtensionCount</a></td>
+                            <td><a href="@MetricHref(v, "likes")" aria-label="@MetricLabel(v, "Bewaard", v.LikeCount)">@v.LikeCount</a></td>
                             <td class="data-table__col--actions" @ondblclick:stopPropagation="true">
                                 <RowActionsMenu>
                                     <a class="row-actions-menu__item" role="menuitem" href="@($"/vacancies/{v.Id}")">
@@ -417,6 +430,9 @@
 
     private static string MetricHref(VacancyListItem v, string metric)
         => $"/vacancies/{v.Id}?metric={metric}";
+
+    private static string MetricLabel(VacancyListItem v, string label, int count)
+        => $"{label} voor {v.Title}: {count}";
 
     private async Task RefreshAsync()
     {

@@ -518,12 +518,12 @@
                 }
             </fieldset>
             <button class="login-submit" type="submit" disabled="@_saving">
-                @Culture["Employer.SaveDraft"]
+                @(_saving ? "Opslaan…" : Culture["Employer.SaveDraft"])
             </button>
         </form>
 
-        <aside class="vacancy-preview" aria-label="Preview-tegel">
-            <h2>Preview</h2>
+        <aside class="vacancy-preview" aria-label="Voorbeeldtegel">
+            <h2>Voorbeeld</h2>
             <article class="vacancy-card vacancy-card--preview">
                 @if (SafeImageUrl is not null)
                 {
@@ -1086,10 +1086,28 @@
             var contact = await Api.GetVacancyContactPreferenceAsync(sourceId);
             if (contact is not null)
             {
-                _vacancyDirectContact = contact.DirectContactEnabled;
-                _vacancyPreferMail = contact.ContactPreferMail;
-                _vacancyPreferPhone = contact.ContactPreferPhone;
-                _vacancyPreferWhatsApp = contact.ContactPreferWhatsApp;
+                if (contact.OverrideContactPreference)
+                {
+                    _vacancyDirectContact = contact.DirectContactEnabled;
+                    _vacancyPreferMail = contact.ContactPreferMail;
+                    _vacancyPreferPhone = contact.ContactPreferPhone;
+                    _vacancyPreferWhatsApp = contact.ContactPreferWhatsApp;
+                }
+                else if (SelectedCompany is { } company)
+                {
+                    // Inherited company defaults: show effective channels, not empty vacancy flags.
+                    _vacancyDirectContact = company.DirectContactEnabled;
+                    _vacancyPreferMail = company.DirectContactEnabled && company.ContactPreferMail;
+                    _vacancyPreferPhone = company.DirectContactEnabled && company.ContactPreferPhone;
+                    _vacancyPreferWhatsApp = company.DirectContactEnabled && company.ContactPreferWhatsApp;
+                }
+                else
+                {
+                    _vacancyDirectContact = contact.DirectContactEnabled;
+                    _vacancyPreferMail = contact.ContactPreferMail;
+                    _vacancyPreferPhone = contact.ContactPreferPhone;
+                    _vacancyPreferWhatsApp = contact.ContactPreferWhatsApp;
+                }
             }
         }
         catch (Exception ex)

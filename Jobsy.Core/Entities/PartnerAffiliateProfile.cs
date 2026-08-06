@@ -12,10 +12,21 @@ public class PartnerAffiliateProfile
     public Guid UserId { get; set; }
     public User User { get; set; } = null!;
 
+    public string? CompanyName { get; set; }
+    public string? KvkNumber { get; set; }
+    public string? VatNumber { get; set; }
+    public string? Address { get; set; }
+    public string? PostalCode { get; set; }
+    public string? City { get; set; }
+    public string? Country { get; set; } = "NL";
+    public string? Iban { get; set; }
+
     public string TrackingCode { get; set; } = string.Empty;
 
     public DateTime CreatedAtUtc { get; set; }
     public DateTime UpdatedAtUtc { get; set; }
+
+    public bool IsOnboardingComplete => !string.IsNullOrWhiteSpace(TrackingCode);
 
     public static string PrefixForRole(UserRole role) => role switch
     {

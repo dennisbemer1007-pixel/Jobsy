@@ -35,6 +35,15 @@ public interface IPartnerAffiliateService
     Task<PartnerAffiliateToolkitDto?> GetToolkitAsync(
         Guid userId,
         CancellationToken cancellationToken = default);
+
+    Task<PartnerAffiliateBillingDto?> GetBillingAsync(
+        Guid userId,
+        CancellationToken cancellationToken = default);
+
+    Task<PartnerAffiliateBillingDto> UpdateBillingAsync(
+        Guid userId,
+        PartnerAffiliateBillingUpdate update,
+        CancellationToken cancellationToken = default);
 }
 
 public sealed record PartnerAffiliateMeDto(
@@ -77,3 +86,25 @@ public sealed record PartnerAffiliateToolkitDto(
     string PartnerPageUrl,
     string RegisterUrl,
     string FlyerUrl);
+
+public sealed record PartnerAffiliateBillingDto(
+    string? CompanyName,
+    string? KvkNumber,
+    string? VatNumber,
+    string? Address,
+    string? PostalCode,
+    string? City,
+    string Country,
+    string MaskedIban,
+    bool HasIban);
+
+public sealed record PartnerAffiliateBillingUpdate(
+    string? CompanyName,
+    string? KvkNumber,
+    string? VatNumber,
+    string? Address,
+    string? PostalCode,
+    string? City,
+    string? Country,
+    string? Iban,
+    bool ClearIban = false);

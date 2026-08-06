@@ -154,6 +154,14 @@ public sealed class PrivacyDataService : IPrivacyDataService
             .Where(p => p.UserId == user.Id)
             .Select(p => new
             {
+                p.CompanyName,
+                p.KvkNumber,
+                p.VatNumber,
+                p.Address,
+                p.PostalCode,
+                p.City,
+                p.Country,
+                p.Iban,
                 p.TrackingCode,
                 p.CreatedAtUtc,
                 p.UpdatedAtUtc
@@ -520,6 +528,14 @@ public sealed class PrivacyDataService : IPrivacyDataService
             .FirstOrDefaultAsync(p => p.UserId == user.Id, cancellationToken);
         if (partnerProfile is not null)
         {
+            partnerProfile.CompanyName = "Verwijderde partner";
+            partnerProfile.KvkNumber = null;
+            partnerProfile.VatNumber = null;
+            partnerProfile.Address = null;
+            partnerProfile.PostalCode = null;
+            partnerProfile.City = null;
+            partnerProfile.Country = null;
+            partnerProfile.Iban = null;
             partnerProfile.TrackingCode = $"DEL-{partnerProfile.Id:N}"[..32];
             partnerProfile.UpdatedAtUtc = DateTime.UtcNow;
         }

@@ -114,19 +114,26 @@
                     <fieldset class="scope-fieldset">
                         <legend>Pakket</legend>
                         <div class="token-pack-options" role="radiogroup" aria-label="Tokenpakket">
-                            @foreach (var p in _packs)
+                            @if (_packs.Count == 0)
                             {
-                                <label class="scope-option token-pack-option @(_packSize == p.PackSize ? "is-selected" : null)">
-                                    <input type="radio"
-                                           name="token-pack"
-                                           checked="@(_packSize == p.PackSize)"
-                                           @onchange="() => _packSize = p.PackSize" />
-                                    <span>
-                                        <strong>@p.PackSize tokens</strong>
-                                        <span class="muted">€ @p.PriceEuro.ToString("0.00")</span>
-                                        <small>@PricePerToken(p)</small>
-                                    </span>
-                                </label>
+                                <p class="muted">Geen tokenpakketten beschikbaar. Probeer het later opnieuw of neem contact op met support.</p>
+                            }
+                            else
+                            {
+                                @foreach (var p in _packs)
+                                {
+                                    <label class="scope-option token-pack-option @(_packSize == p.PackSize ? "is-selected" : null)">
+                                        <input type="radio"
+                                               name="token-pack"
+                                               checked="@(_packSize == p.PackSize)"
+                                               @onchange="() => _packSize = p.PackSize" />
+                                        <span>
+                                            <strong>@p.PackSize tokens</strong>
+                                            <span class="muted">€ @p.PriceEuro.ToString("0.00")</span>
+                                            <small>@PricePerToken(p)</small>
+                                        </span>
+                                    </label>
+                                }
                             }
                         </div>
                     </fieldset>
@@ -161,19 +168,26 @@
                     <fieldset class="scope-fieldset">
                         <legend>Pakket</legend>
                         <div class="token-pack-options" role="radiogroup" aria-label="Tokenpakket">
-                            @foreach (var p in _packs)
+                            @if (_packs.Count == 0)
                             {
-                                <label class="scope-option token-pack-option @(_packSize == p.PackSize ? "is-selected" : null)">
-                                    <input type="radio"
-                                           name="token-pack-own"
-                                           checked="@(_packSize == p.PackSize)"
-                                           @onchange="() => _packSize = p.PackSize" />
-                                    <span>
-                                        <strong>@p.PackSize tokens</strong>
-                                        <span class="muted">€ @p.PriceEuro.ToString("0.00")</span>
-                                        <small>@PricePerToken(p)</small>
-                                    </span>
-                                </label>
+                                <p class="muted">Geen tokenpakketten beschikbaar. Probeer het later opnieuw of neem contact op met support.</p>
+                            }
+                            else
+                            {
+                                @foreach (var p in _packs)
+                                {
+                                    <label class="scope-option token-pack-option @(_packSize == p.PackSize ? "is-selected" : null)">
+                                        <input type="radio"
+                                               name="token-pack-own"
+                                               checked="@(_packSize == p.PackSize)"
+                                               @onchange="() => _packSize = p.PackSize" />
+                                        <span>
+                                            <strong>@p.PackSize tokens</strong>
+                                            <span class="muted">€ @p.PriceEuro.ToString("0.00")</span>
+                                            <small>@PricePerToken(p)</small>
+                                        </span>
+                                    </label>
+                                }
                             }
                         </div>
                     </fieldset>
@@ -240,15 +254,22 @@
                 <button class="provider-btn" type="submit" disabled="@_busy">Filter</button>
             </form>
             <div class="table-list">
-                @foreach (var log in _logs)
+                @if (_logs.Count == 0)
                 {
-                    <div class="table-row">
-                        <div>
-                            <strong>@log.CompanyName</strong>
-                            <span class="muted">@log.Kind / @log.Reason · @log.Note</span>
+                    <p class="muted">Geen tokenlogs gevonden@(string.IsNullOrWhiteSpace(_logFilter) ? "." : " voor dit filter.")</p>
+                }
+                else
+                {
+                    @foreach (var log in _logs)
+                    {
+                        <div class="table-row">
+                            <div>
+                                <strong>@log.CompanyName</strong>
+                                <span class="muted">@log.Kind / @log.Reason · @log.Note</span>
+                            </div>
+                            <span>@log.Amount.ToString("+0.##;-0.##") · @log.CreatedAt.ToLocalTime().ToString("dd-MM HH:mm")</span>
                         </div>
-                        <span>@log.Amount.ToString("+0.##;-0.##") · @log.CreatedAt.ToLocalTime().ToString("dd-MM HH:mm")</span>
-                    </div>
+                    }
                 }
             </div>
         </section>

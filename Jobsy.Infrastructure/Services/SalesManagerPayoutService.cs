@@ -64,23 +64,23 @@ public sealed class SalesManagerPayoutService : ISalesManagerPayoutService
         }
 
         var masked = ISalesManagerPayoutService.MaskIban(profile.Iban);
+        var available = await _ledger.GetUninvoicedBalanceExVatAsync(salesManagerUserId, cancellationToken);
+        available = decimal.Round(available, 2, MidpointRounding.AwayFromZero);
 
         if (!profile.IsOnboardingComplete)
         {
             return new SalesManagerPayoutPreviewDto(
-                0, 0, 0, 0, null, masked,
+                available, 0, 0, 0, null, masked,
                 false, "Onboarding moet compleet zijn vóór uitbetaling.");
         }
 
         if (string.IsNullOrWhiteSpace(profile.Iban))
         {
             return new SalesManagerPayoutPreviewDto(
-                0, 0, 0, 0, null, "—", false,
+                available, 0, 0, 0, null, "—", false,
                 "Vul eerst je IBAN in bij onboarding om uit te laten betalen.");
         }
 
-        var available = await _ledger.GetUninvoicedBalanceExVatAsync(salesManagerUserId, cancellationToken);
-        available = decimal.Round(available, 2, MidpointRounding.AwayFromZero);
         if (available <= 0)
         {
             return new SalesManagerPayoutPreviewDto(
@@ -592,6 +592,14 @@ public sealed class SalesManagerPayoutService : ISalesManagerPayoutService
         if (am is not null)
         {
             return new PayoutProfile(am.Iban, am.IsOnboardingComplete);
+        }
+
+        var partner = await _db.PartnerAffiliateProfiles
+            .AsNoTracking()
+            .FirstOrDefaultAsync(p => p.UserId == userId, cancellationToken);
+        if (partner is not null)
+        {
+            return new PayoutProfile(partner.Iban, partner.IsOnboardingComplete);
         }
 
         return null;

@@ -556,5 +556,16 @@ public sealed class TokenPurchaseFulfillmentService : ITokenPurchaseFulfillmentS
             Guid userId,
             CancellationToken cancellationToken = default)
             => Task.FromResult<PartnerAffiliateToolkitDto?>(null);
+
+        public Task<PartnerAffiliateBillingDto?> GetBillingAsync(
+            Guid userId,
+            CancellationToken cancellationToken = default)
+            => Task.FromResult<PartnerAffiliateBillingDto?>(null);
+
+        public Task<PartnerAffiliateBillingDto> UpdateBillingAsync(
+            Guid userId,
+            PartnerAffiliateBillingUpdate update,
+            CancellationToken cancellationToken = default)
+            => throw new NotSupportedException();
     }
 }
