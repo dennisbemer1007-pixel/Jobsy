@@ -1480,9 +1480,25 @@ public sealed class JobsyApiClient : IAsyncDisposable
         if (!response.IsSuccessStatusCode)
         {
             var body = await response.Content.ReadAsStringAsync(ct);
-            throw new InvalidOperationException(string.IsNullOrWhiteSpace(body)
-                ? $"Factuurgegevens opslaan mislukt ({(int)response.StatusCode})."
-                : body);
+            throw new InvalidOperationException(TryExtractMessage(body)
+                ?? (string.IsNullOrWhiteSpace(body)
+                    ? $"Factuurgegevens opslaan mislukt ({(int)response.StatusCode})."
+                    : body));
+        }
+
+        return await response.Content.ReadFromJsonAsync<PartnerAffiliateBillingModel>(cancellationToken: ct);
+    }
+
+    public async Task<PartnerAffiliateBillingModel?> SignPartnerAffiliateAgreementAsync(CancellationToken ct = default)
+    {
+        var response = await _http.PostAsync("api/partner-affiliate/me/agreement", null, ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException(TryExtractMessage(body)
+                ?? (string.IsNullOrWhiteSpace(body)
+                    ? $"Overeenkomst ondertekenen mislukt ({(int)response.StatusCode})."
+                    : body));
         }
 
         return await response.Content.ReadFromJsonAsync<PartnerAffiliateBillingModel>(cancellationToken: ct);
@@ -3596,6 +3612,8 @@ public sealed class PartnerAffiliateBillingModel
     public string Country { get; set; } = "NL";
     public string MaskedIban { get; set; } = "—";
     public bool HasIban { get; set; }
+    public bool AgreementSigned { get; set; }
+    public string? AgreementVersion { get; set; }
 }
 
 public sealed class PartnerAffiliateBillingForm

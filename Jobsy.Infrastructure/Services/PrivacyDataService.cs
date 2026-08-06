@@ -163,6 +163,8 @@ public sealed class PrivacyDataService : IPrivacyDataService
                 p.Country,
                 p.Iban,
                 p.TrackingCode,
+                p.AgreementSignedAt,
+                p.AgreementVersion,
                 p.CreatedAtUtc,
                 p.UpdatedAtUtc
             })
@@ -536,6 +538,8 @@ public sealed class PrivacyDataService : IPrivacyDataService
             partnerProfile.City = null;
             partnerProfile.Country = null;
             partnerProfile.Iban = null;
+            partnerProfile.AgreementSignedAt = null;
+            partnerProfile.AgreementVersion = null;
             partnerProfile.TrackingCode = $"DEL-{partnerProfile.Id:N}"[..32];
             partnerProfile.UpdatedAtUtc = DateTime.UtcNow;
         }

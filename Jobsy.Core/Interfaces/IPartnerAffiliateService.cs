@@ -44,6 +44,10 @@ public interface IPartnerAffiliateService
         Guid userId,
         PartnerAffiliateBillingUpdate update,
         CancellationToken cancellationToken = default);
+
+    Task<PartnerAffiliateBillingDto> SignAgreementAsync(
+        Guid userId,
+        CancellationToken cancellationToken = default);
 }
 
 public sealed record PartnerAffiliateMeDto(
@@ -96,7 +100,9 @@ public sealed record PartnerAffiliateBillingDto(
     string? City,
     string Country,
     string MaskedIban,
-    bool HasIban);
+    bool HasIban,
+    bool AgreementSigned,
+    string? AgreementVersion);
 
 public sealed record PartnerAffiliateBillingUpdate(
     string? CompanyName,

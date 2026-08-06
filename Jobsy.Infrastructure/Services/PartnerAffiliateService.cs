@@ -253,16 +253,7 @@ public sealed class PartnerAffiliateService : IPartnerAffiliateService
         CancellationToken cancellationToken = default)
     {
         var profile = await EnsureProfileAsync(userId, cancellationToken);
-        return new PartnerAffiliateBillingDto(
-            profile.CompanyName,
-            profile.KvkNumber,
-            profile.VatNumber,
-            profile.Address,
-            profile.PostalCode,
-            profile.City,
-            profile.Country ?? "NL",
-            ISalesManagerPayoutService.MaskIban(profile.Iban),
-            !string.IsNullOrWhiteSpace(profile.Iban));
+        return MapBilling(profile);
     }
 
     public async Task<PartnerAffiliateBillingDto> UpdateBillingAsync(
@@ -279,20 +270,52 @@ public sealed class PartnerAffiliateService : IPartnerAffiliateService
         profile.City = NormalizeOptional(update.City, 120);
         profile.Country = string.IsNullOrWhiteSpace(update.Country) ? "NL" : update.Country.Trim().ToUpperInvariant();
 
-        var iban = NormalizeIban(update.Iban);
-        if (iban is not null)
+        if (!string.IsNullOrWhiteSpace(update.Iban))
         {
+            var iban = NormalizeIban(update.Iban);
+            if (iban is null)
+            {
+                throw new ArgumentException("Ongeldig IBAN. Controleer het rekeningnummer en probeer opnieuw.");
+            }
+
             profile.Iban = iban;
         }
-        else if (string.IsNullOrWhiteSpace(update.Iban) && update.ClearIban)
+        else if (update.ClearIban)
         {
             profile.Iban = null;
         }
 
         profile.UpdatedAtUtc = DateTime.UtcNow;
         await _db.SaveChangesAsync(cancellationToken);
-        return (await GetBillingAsync(userId, cancellationToken))!;
+        return MapBilling(profile);
     }
+
+    public async Task<PartnerAffiliateBillingDto> SignAgreementAsync(
+        Guid userId,
+        CancellationToken cancellationToken = default)
+    {
+        var profile = await EnsureProfileAsync(userId, cancellationToken);
+        // Always stamp server-controlled version; ignore any client-supplied value.
+        profile.AgreementSignedAt = DateTime.UtcNow;
+        profile.AgreementVersion = SalesCommissionRules.CurrentPartnerAgreementVersion;
+        profile.UpdatedAtUtc = DateTime.UtcNow;
+        await _db.SaveChangesAsync(cancellationToken);
+        return MapBilling(profile);
+    }
+
+    private static PartnerAffiliateBillingDto MapBilling(PartnerAffiliateProfile profile) =>
+        new(
+            profile.CompanyName,
+            profile.KvkNumber,
+            profile.VatNumber,
+            profile.Address,
+            profile.PostalCode,
+            profile.City,
+            profile.Country ?? "NL",
+            ISalesManagerPayoutService.MaskIban(profile.Iban),
+            !string.IsNullOrWhiteSpace(profile.Iban),
+            profile.AgreementSignedAt.HasValue,
+            profile.AgreementVersion);
 
     private async Task<bool> IsRelatedPartyReferralAsync(
         Guid partnerUserId,

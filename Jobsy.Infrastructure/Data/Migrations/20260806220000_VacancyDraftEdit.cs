@@ -18,6 +18,14 @@ namespace Jobsy.Infrastructure.Data.Migrations
                 nullable: false,
                 defaultValue: true);
 
+            // Existing drafts were never moderated under the new flag — require a fresh check before publish.
+            migrationBuilder.Sql(
+                """
+                UPDATE "Vacancies"
+                SET "ContentModerationPassed" = FALSE
+                WHERE "Status" = 0;
+                """);
+
             migrationBuilder.Sql(
                 """
                 UPDATE "VacancyCategories"

@@ -38,6 +38,9 @@ public static class SalesCommissionRules
 
     public const string CurrentAgreementVersion = "2026-07-27-sm-mediation";
 
+    /// <summary>Partner affiliate (BM/IM) mediation agreement version — server-controlled.</summary>
+    public const string CurrentPartnerAgreementVersion = "2026-08-06-partner-mediation";
+
     public static decimal FounderBonusExVat =>
         decimal.Round(FirstYearOnboardingEuro * FounderBonusRate, 2, MidpointRounding.AwayFromZero);
 

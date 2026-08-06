@@ -351,6 +351,38 @@ public class SalesManagerCommissionTests
     }
 
     [Fact]
+    public async Task Partner_affiliate_rejects_invalid_iban_and_requires_agreement_for_payout()
+    {
+        await using var db = CreateDb();
+        var (partnerId, companyId) = await SeedPartnerAffiliateAsync(db, iban: null);
+        var profile = await db.PartnerAffiliateProfiles.SingleAsync(p => p.UserId == partnerId);
+        profile.AgreementSignedAt = null;
+        profile.AgreementVersion = null;
+        await db.SaveChangesAsync();
+
+        var partners = CreatePartnerAffiliateService(db);
+        await Assert.ThrowsAsync<ArgumentException>(() => partners.UpdateBillingAsync(
+            partnerId,
+            new PartnerAffiliateBillingUpdate(null, null, null, null, null, null, "NL", "NOT-AN-IBAN")));
+
+        var ledger = new CommissionLedgerService(db);
+        await ledger.TryCreditPartnerTokenCommissionAsync(
+            partnerId, companyId, Guid.NewGuid(), 100m, DateTime.UtcNow.AddDays(-1), 0.05m);
+        var payouts = CreatePayoutService(db, ledger);
+        var blocked = await payouts.GetPreviewAsync(partnerId);
+        Assert.False(blocked.CanPayout);
+        Assert.Contains("onboarding", blocked.BlockReason!, StringComparison.OrdinalIgnoreCase);
+
+        await partners.SignAgreementAsync(partnerId);
+        await partners.UpdateBillingAsync(
+            partnerId,
+            new PartnerAffiliateBillingUpdate("Partner BV", "12345678", null, "Straat 1", "2671AB", "Naaldwijk", "NL", "NL91ABNA0417164300"));
+        var preview = await payouts.GetPreviewAsync(partnerId);
+        Assert.True(preview.CanPayout);
+        Assert.Equal(5.00m, preview.AvailableExVat);
+    }
+
+    [Fact]
     public async Task Partner_affiliate_rejects_same_kvk_self_referral()
     {
         await using var db = CreateDb();
@@ -724,6 +756,8 @@ public class SalesManagerCommissionTests
             Country = "NL",
             Iban = iban,
             TrackingCode = "BM-PART23",
+            AgreementSignedAt = now,
+            AgreementVersion = SalesCommissionRules.CurrentPartnerAgreementVersion,
             CreatedAtUtc = now,
             UpdatedAtUtc = now
         });

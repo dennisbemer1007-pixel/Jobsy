@@ -928,6 +928,7 @@ public class JobsyDbContext : DbContext
             entity.Property(e => e.Country).HasMaxLength(64);
             entity.Property(e => e.Iban).HasMaxLength(34);
             entity.Property(e => e.TrackingCode).HasMaxLength(32).IsRequired();
+            entity.Property(e => e.AgreementVersion).HasMaxLength(64);
             entity.HasIndex(e => e.UserId).IsUnique();
             entity.HasIndex(e => e.TrackingCode).IsUnique();
             entity.HasOne(e => e.User)

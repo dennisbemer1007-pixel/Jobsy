@@ -210,7 +210,20 @@
 
             <form class="login-form" style="max-width:36rem;margin-bottom:1.25rem" @onsubmit="SaveBillingAsync" @onsubmit:preventDefault>
                 <h3 style="margin:0 0 0.5rem">Factuur- en uitbetalingsgegevens</h3>
-                <p class="muted">IBAN wordt gemaskeerd opgeslagen in de UI; alleen Lobsy gebruikt het voor self-billing.</p>
+                <p class="muted">IBAN wordt gemaskeerd getoond; alleen Lobsy gebruikt het voor self-billing.</p>
+                <label class="checkbox-row" style="margin-bottom:0.75rem">
+                    <input type="checkbox"
+                           checked="@_billingAgreementSigned"
+                           disabled="@(_busy || _billingAgreementSigned)"
+                           @onchange="OnAgreementChangedAsync" />
+                    <span>
+                        Ik ga akkoord met de partner-bemiddelingsovereenkomst
+                        @if (_billingAgreementSigned)
+                        {
+                            <span class="muted"> · ondertekend</span>
+                        }
+                    </span>
+                </label>
                 <label>
                     Bedrijfsnaam
                     <input @bind="_billingCompanyName" maxlength="200" />
@@ -387,6 +400,7 @@
     private string _billingCity = "";
     private string _billingIban = "";
     private string _billingMaskedIban = "—";
+    private bool _billingAgreementSigned;
 
     private string TrackingCode => FirstNonEmpty(_toolkit?.TrackingCode, _me?.TrackingCode) ?? "—";
     private decimal CommissionRate => _toolkit?.CommissionRate ?? _me?.CommissionRate ?? 0m;
@@ -468,6 +482,34 @@
         _billingCity = billing.City ?? "";
         _billingMaskedIban = billing.MaskedIban;
         _billingIban = "";
+        _billingAgreementSigned = billing.AgreementSigned;
+    }
+
+    private async Task OnAgreementChangedAsync(ChangeEventArgs e)
+    {
+        var on = e.Value is bool b && b || e.Value?.ToString() == "on";
+        if (!on || _billingAgreementSigned)
+        {
+            return;
+        }
+
+        _busy = true;
+        _error = null;
+        _message = null;
+        try
+        {
+            var updated = await Api.SignPartnerAffiliateAgreementAsync();
+            _billingAgreementSigned = updated?.AgreementSigned == true;
+            _message = "Overeenkomst ondertekend. Vul je IBAN in om uit te betalen.";
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _busy = false;
+        }
     }
 
     private async Task SaveBillingAsync()
@@ -477,6 +519,11 @@
         _message = null;
         try
         {
+            if (!_billingAgreementSigned)
+            {
+                throw new InvalidOperationException("Onderteken eerst de partner-bemiddelingsovereenkomst.");
+            }
+
             var updated = await Api.UpdatePartnerAffiliateBillingAsync(new PartnerAffiliateBillingForm
             {
                 CompanyName = _billingCompanyName,
@@ -491,6 +538,7 @@
             if (updated is not null)
             {
                 _billingMaskedIban = updated.MaskedIban;
+                _billingAgreementSigned = updated.AgreementSigned;
                 _billingIban = "";
             }
 

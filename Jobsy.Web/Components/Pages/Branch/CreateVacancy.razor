@@ -710,6 +710,26 @@
         }
     }
 
+    /// <summary>
+    /// Only persist a vacancy-level override when the UI differs from company defaults.
+    /// Matching company settings keeps inheritance (and company contact validation) intact.
+    /// </summary>
+    private bool ShouldOverrideContactPreference()
+    {
+        if (SelectedCompany is not { } company)
+        {
+            return true;
+        }
+
+        var companyMail = company.DirectContactEnabled && company.ContactPreferMail;
+        var companyPhone = company.DirectContactEnabled && company.ContactPreferPhone;
+        var companyWhatsApp = company.DirectContactEnabled && company.ContactPreferWhatsApp;
+        return _vacancyDirectContact != company.DirectContactEnabled
+               || _vacancyPreferMail != companyMail
+               || _vacancyPreferPhone != companyPhone
+               || _vacancyPreferWhatsApp != companyWhatsApp;
+    }
+
     private void ApplyCompanyContactDefaults()
     {
         if (_editVacancyId is not null || _isDuplicate || SelectedCompany is not { } company)
@@ -1488,7 +1508,7 @@
                 DrivingLicenseLabels.Combine(_selectedLicenses),
                 EducationLevelLabels.Combine(_selectedEducationLevels, forVacancy: true),
                 _minimumEmployers is int min && _minEmployerOptions.Contains(min) ? min : null,
-                true,
+                ShouldOverrideContactPreference(),
                 _vacancyDirectContact,
                 _vacancyPreferMail,
                 _vacancyPreferPhone,

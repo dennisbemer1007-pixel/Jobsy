@@ -90,19 +90,39 @@ public class PartnerAffiliateController : ControllerBase
             return Unauthorized();
         }
 
-        var dto = await _partners.UpdateBillingAsync(
-            user.Id,
-            new PartnerAffiliateBillingUpdate(
-                request.CompanyName,
-                request.KvkNumber,
-                request.VatNumber,
-                request.Address,
-                request.PostalCode,
-                request.City,
-                request.Country,
-                request.Iban,
-                request.ClearIban),
-            cancellationToken);
+        try
+        {
+            var dto = await _partners.UpdateBillingAsync(
+                user.Id,
+                new PartnerAffiliateBillingUpdate(
+                    request.CompanyName,
+                    request.KvkNumber,
+                    request.VatNumber,
+                    request.Address,
+                    request.PostalCode,
+                    request.City,
+                    request.Country,
+                    request.Iban,
+                    request.ClearIban),
+                cancellationToken);
+            return Ok(dto);
+        }
+        catch (ArgumentException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+    }
+
+    [HttpPost("me/agreement")]
+    public async Task<ActionResult<PartnerAffiliateBillingDto>> SignAgreement(CancellationToken cancellationToken)
+    {
+        var user = await _users.FindByPrincipalAsync(User, cancellationToken);
+        if (user is null)
+        {
+            return Unauthorized();
+        }
+
+        var dto = await _partners.SignAgreementAsync(user.Id, cancellationToken);
         return Ok(dto);
     }
 

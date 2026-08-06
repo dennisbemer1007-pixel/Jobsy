@@ -170,6 +170,13 @@ namespace Jobsy.Infrastructure.Data.Migrations
                         .HasMaxLength(512)
                         .HasColumnType("character varying(512)");
 
+                    b.Property<DateTime?>("AgreementSignedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("AgreementVersion")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
                     b.Property<string>("City")
                         .HasMaxLength(128)
                         .HasColumnType("character varying(128)");

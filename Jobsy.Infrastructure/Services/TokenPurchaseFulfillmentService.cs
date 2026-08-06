@@ -567,5 +567,10 @@ public sealed class TokenPurchaseFulfillmentService : ITokenPurchaseFulfillmentS
             PartnerAffiliateBillingUpdate update,
             CancellationToken cancellationToken = default)
             => throw new NotSupportedException();
+
+        public Task<PartnerAffiliateBillingDto> SignAgreementAsync(
+            Guid userId,
+            CancellationToken cancellationToken = default)
+            => throw new NotSupportedException();
     }
 }
