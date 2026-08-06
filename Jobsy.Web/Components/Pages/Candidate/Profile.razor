@@ -37,14 +37,14 @@
                     <span>@Culture["Profile.OpenForWork"]</span>
                 </label>
 
-                <fieldset class="profile-roles">
+                <fieldset class="profile-contact">
                     <legend>@Culture["Profile.ContactDetails"]</legend>
-                    <div class="profile-employer-card__top">
-                        <label class="profile-employer-card__field profile-employer-card__field--employer">
+                    <div class="profile-contact__names">
+                        <label>
                             @Culture["Profile.FirstName"]
                             <input type="text" maxlength="128" @bind="_firstName" autocomplete="given-name" />
                         </label>
-                        <label class="profile-employer-card__field profile-employer-card__field--role">
+                        <label>
                             @Culture["Profile.LastName"]
                             <input type="text" maxlength="128" @bind="_lastName" autocomplete="family-name" />
                         </label>

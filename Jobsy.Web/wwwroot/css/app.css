@@ -8208,6 +8208,7 @@ button.stat-card {
 .profile-form input[type="date"],
 .profile-form input[type="number"],
 .profile-form input[type="text"],
+.profile-form input[type="tel"],
 .profile-form select,
 .profile-form textarea {
     font: inherit;
@@ -8268,6 +8269,59 @@ button.stat-card {
     min-width: 0;
     max-width: 100%;
     box-sizing: border-box;
+}
+
+.profile-contact {
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 0.85rem 1rem;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    min-width: 0;
+    max-width: 100%;
+    box-sizing: border-box;
+}
+
+.profile-contact legend {
+    padding: 0 0.25rem;
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
+.profile-contact__names {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.75rem;
+    min-width: 0;
+}
+
+.profile-contact__names label,
+.profile-contact > label:not(.profile-toggle) {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    font-size: 0.88rem;
+    font-weight: 600;
+    min-width: 0;
+    text-transform: none;
+    overflow-wrap: normal;
+    word-break: normal;
+}
+
+.profile-contact input[type="text"],
+.profile-contact input[type="tel"] {
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.profile-contact .profile-toggle {
+    margin-top: 0.15rem;
+}
+
+.profile-contact .profile-address__hint {
+    margin: 0;
 }
 
 .profile-roles legend {
@@ -10415,6 +10469,10 @@ button.linkish:hover {
     .profile-roles {
         grid-template-columns: repeat(2, minmax(0, 1fr));
         padding: 0.65rem 0.7rem;
+    }
+
+    .profile-contact__names {
+        grid-template-columns: 1fr;
     }
 
     .profile-roles--wide {

@@ -8,7 +8,7 @@ using SixLabors.ImageSharp.Processing;
 namespace Jobsy.Infrastructure.Services;
 
 /// <summary>
-/// Composites OpenStreetMap raster tiles into a static map PNG with a pin.
+/// Composites OpenStreetMap raster tiles into a static map PNG with a Lobsy logo pin.
 /// Fails soft (null) when tiles cannot be fetched — PDF still renders without the map.
 /// </summary>
 public sealed class OsmTileMapImageService : ICandidateMapImageService
@@ -31,6 +31,7 @@ public sealed class OsmTileMapImageService : ICandidateMapImageService
         int width = 640,
         int height = 280,
         int zoom = 15,
+        byte[]? markerLogoPng = null,
         CancellationToken cancellationToken = default)
     {
         if (latitude is < -85 or > 85 || longitude is < -180 or > 180)
@@ -98,7 +99,7 @@ public sealed class OsmTileMapImageService : ICandidateMapImageService
                 return null;
             }
 
-            DrawPin(canvas, width / 2, height / 2);
+            DrawMarker(canvas, width / 2, height / 2, markerLogoPng);
 
             await using var ms = new MemoryStream();
             await canvas.SaveAsPngAsync(ms, cancellationToken);
@@ -111,24 +112,39 @@ public sealed class OsmTileMapImageService : ICandidateMapImageService
         }
     }
 
-    private static void DrawPin(Image<Rgba32> canvas, int cx, int cy)
+    private static void DrawMarker(Image<Rgba32> canvas, int cx, int cy, byte[]? markerLogoPng)
     {
-        var coral = new Rgba32(196, 92, 62);
         var white = new Rgba32(255, 255, 255);
-        FillCircle(canvas, cx, cy - 8, 11, white);
-        FillCircle(canvas, cx, cy - 8, 7, coral);
-        for (var y = cy - 4; y <= cy + 12; y++)
+        var navy = new Rgba32(15, 45, 92);
+
+        // Soft halo behind the brand mark (same spirit as map pins on the job map).
+        FillCircle(canvas, cx, cy, 18, white);
+        FillCircle(canvas, cx, cy, 16, navy);
+
+        if (markerLogoPng is { Length: > 0 })
         {
-            var t = (y - (cy - 4)) / 16f;
-            var half = (int)Math.Round(7 * (1 - t));
-            for (var x = cx - half; x <= cx + half; x++)
+            try
             {
-                if ((uint)x < (uint)canvas.Width && (uint)y < (uint)canvas.Height)
+                using var logo = Image.Load<Rgba32>(markerLogoPng);
+                const int markSize = 26;
+                logo.Mutate(ctx => ctx.Resize(new ResizeOptions
                 {
-                    canvas[x, y] = coral;
-                }
+                    Size = new Size(markSize, markSize),
+                    Mode = ResizeMode.Max
+                }));
+
+                var destX = cx - logo.Width / 2;
+                var destY = cy - logo.Height / 2;
+                canvas.Mutate(ctx => ctx.DrawImage(logo, new Point(destX, destY), 1f));
+                return;
+            }
+            catch
+            {
+                // Fall through to simple pin.
             }
         }
+
+        FillCircle(canvas, cx, cy, 6, white);
     }
 
     private static void FillCircle(Image<Rgba32> canvas, int cx, int cy, int radius, Rgba32 color)

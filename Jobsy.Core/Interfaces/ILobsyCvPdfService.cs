@@ -20,5 +20,6 @@ public interface ICandidateMapImageService
         int width = 640,
         int height = 280,
         int zoom = 15,
+        byte[]? markerLogoPng = null,
         CancellationToken cancellationToken = default);
 }

@@ -61,7 +61,14 @@ public sealed class LobsyCvPdfService : ILobsyCvPdfService
         byte[]? mapPng = null;
         if (model.Latitude is double lat && model.Longitude is double lng)
         {
-            mapPng = await _mapImages.RenderAsync(lat, lng, cancellationToken: cancellationToken);
+            mapPng = await _mapImages.RenderAsync(
+                lat,
+                lng,
+                width: 360,
+                height: 160,
+                zoom: 15,
+                markerLogoPng: logo,
+                cancellationToken: cancellationToken);
         }
 
         return Document.Create(container =>
@@ -180,71 +187,65 @@ public sealed class LobsyCvPdfService : ILobsyCvPdfService
                         });
                     }
 
-                    // Map card + address
-                    body.Item().Border(1).BorderColor(Line).Column(mapCard =>
-                    {
-                        mapCard.Item().Background(SoftSky).PaddingHorizontal(10).PaddingVertical(6)
-                            .Text("Waar ik woon").FontSize(11).Bold().FontColor(BrandNavy);
-
-                        if (mapPng is { Length: > 0 })
-                        {
-                            mapCard.Item().Height(148).Image(mapPng).FitUnproportionally();
-                        }
-                        else
-                        {
-                            mapCard.Item().Height(72).Background(SoftSky).AlignMiddle().AlignCenter()
-                                .Text(model.City ?? "Locatie op de kaart")
-                                .FontSize(12).FontColor(BrandDeep);
-                        }
-
-                        mapCard.Item().Background(Colors.White).Padding(10).Column(addr =>
-                        {
-                            addr.Spacing(2);
-                            if (model.IncludeFullAddress && !string.IsNullOrWhiteSpace(model.Address))
-                            {
-                                addr.Item().Text(model.Address!).FontSize(10).Bold().FontColor(BrandNavy);
-                            }
-                            else if (!string.IsNullOrWhiteSpace(model.City))
-                            {
-                                addr.Item().Text(model.City!).FontSize(10).Bold().FontColor(BrandNavy);
-                            }
-                            else
-                            {
-                                addr.Item().Text("Adres volgt na acceptatie").FontSize(9).FontColor(Muted);
-                            }
-
-                            if (model.Latitude is double la && model.Longitude is double lo)
-                            {
-                                addr.Item().Text($"{la.ToString("0.00000", CultureInfo.InvariantCulture)}, {lo.ToString("0.00000", CultureInfo.InvariantCulture)}")
-                                    .FontSize(8).FontColor(Muted);
-                            }
-                        });
-                    });
-
                     Section(body, "Over mij", model.AboutMe);
                     Section(body, "Motivatie", model.Motivation);
 
-                    body.Item().Column(avail =>
+                    body.Item().Row(split =>
                     {
-                        avail.Spacing(6);
-                        avail.Item().Text("Beschikbaarheid").FontSize(12).Bold().FontColor(BrandNavy);
+                        split.RelativeItem().Background(SoftSky).Padding(8).Column(avail =>
+                        {
+                            avail.Spacing(4);
+                            avail.Item().Text("Beschikbaarheid").FontSize(9).Bold().FontColor(BrandNavy);
 
-                        var hours = FormatHours(model.MinHoursPerWeek, model.MaxHoursPerWeek);
-                        if (!string.IsNullOrWhiteSpace(hours))
-                        {
-                            avail.Item().Text($"Uren per week: {hours}").FontSize(9).FontColor(Muted);
-                        }
+                            var hours = FormatHours(model.MinHoursPerWeek, model.MaxHoursPerWeek);
+                            if (!string.IsNullOrWhiteSpace(hours))
+                            {
+                                avail.Item().Text($"{hours} u/week").FontSize(8).FontColor(Muted);
+                            }
 
-                        if (model.FlexibleTimes)
+                            if (model.FlexibleTimes)
+                            {
+                                avail.Item().Background(WarmSand).Padding(6)
+                                    .Text("Tijden in overleg")
+                                    .FontSize(8).FontColor(BrandDeep);
+                            }
+                            else
+                            {
+                                DrawAvailabilityMatrix(avail, model.AvailabilitySlots);
+                            }
+                        });
+
+                        split.ConstantItem(8);
+
+                        split.RelativeItem().Background(SoftCoral).Padding(8).Column(loc =>
                         {
-                            avail.Item().Background(WarmSand).Padding(10)
-                                .Text("Tijden in overleg — flexibel inzetbaar.")
-                                .FontSize(10).FontColor(BrandDeep);
-                        }
-                        else
-                        {
-                            DrawAvailabilityMatrix(avail, model.AvailabilitySlots);
-                        }
+                            loc.Spacing(4);
+                            loc.Item().Text("Locatie").FontSize(9).Bold().FontColor(BrandNavy);
+
+                            if (mapPng is { Length: > 0 })
+                            {
+                                loc.Item().Height(92).Image(mapPng).FitArea();
+                            }
+                            else
+                            {
+                                loc.Item().Height(48).Background(Colors.White).AlignMiddle().AlignCenter()
+                                    .Text(model.City ?? "—")
+                                    .FontSize(9).FontColor(BrandDeep);
+                            }
+
+                            if (model.IncludeFullAddress && !string.IsNullOrWhiteSpace(model.Address))
+                            {
+                                loc.Item().Text(model.Address!).FontSize(8).Bold().FontColor(BrandNavy);
+                            }
+                            else if (!string.IsNullOrWhiteSpace(model.City))
+                            {
+                                loc.Item().Text(model.City!).FontSize(8).Bold().FontColor(BrandNavy);
+                            }
+                            else
+                            {
+                                loc.Item().Text("Adres na acceptatie").FontSize(7.5f).FontColor(Muted);
+                            }
+                        });
                     });
 
                     body.Item().Row(travel =>
@@ -288,27 +289,31 @@ public sealed class LobsyCvPdfService : ILobsyCvPdfService
                     {
                         body.Item().Column(exp =>
                         {
-                            exp.Spacing(5);
-                            exp.Item().Text("Werkervaring").FontSize(12).Bold().FontColor(BrandNavy);
+                            exp.Spacing(3);
+                            exp.Item().Text("Werkervaring").FontSize(11).Bold().FontColor(BrandNavy);
                             foreach (var employer in model.Employers)
                             {
-                                exp.Item().BorderBottom(0.5f).BorderColor(Line).PaddingBottom(5).Column(card =>
+                                exp.Item().Background(SoftSky).Padding(7).Column(card =>
                                 {
-                                    var title = employer.EmployerName;
-                                    if (!string.IsNullOrWhiteSpace(employer.Role))
+                                    card.Spacing(1);
+                                    card.Item().Row(row =>
                                     {
-                                        title += $" — {employer.Role}";
-                                    }
+                                        var title = employer.EmployerName;
+                                        if (!string.IsNullOrWhiteSpace(employer.Role))
+                                        {
+                                            title += $" — {employer.Role}";
+                                        }
 
-                                    card.Item().Text(title).Bold();
-                                    if (employer.Years is int years)
-                                    {
-                                        card.Item().Text($"{years} jaar").FontSize(8).FontColor(Muted);
-                                    }
-
+                                        row.RelativeItem().Text(title).FontSize(9).Bold().FontColor(BrandNavy);
+                                        if (employer.Years is int years)
+                                        {
+                                            row.ConstantItem(42).AlignRight()
+                                                .Text($"{years} jr").FontSize(8).FontColor(Muted);
+                                        }
+                                    });
                                     if (!string.IsNullOrWhiteSpace(employer.Description))
                                     {
-                                        card.Item().Text(employer.Description!).FontSize(9);
+                                        card.Item().Text(employer.Description!).FontSize(8).FontColor(Slate);
                                     }
                                 });
                             }
@@ -342,7 +347,7 @@ public sealed class LobsyCvPdfService : ILobsyCvPdfService
         var hasAny = map.Values.Any(v => v is { Length: > 0 });
         if (!hasAny)
         {
-            avail.Item().Text("Nog niet ingevuld").FontSize(9).FontColor(Muted);
+            avail.Item().Text("Nog niet ingevuld").FontSize(8).FontColor(Muted);
             return;
         }
 
@@ -350,7 +355,7 @@ public sealed class LobsyCvPdfService : ILobsyCvPdfService
         {
             table.ColumnsDefinition(columns =>
             {
-                columns.ConstantColumn(36);
+                columns.ConstantColumn(22);
                 foreach (var _ in DayPartMatrix.DayPartCodes)
                 {
                     columns.RelativeColumn();
@@ -359,21 +364,19 @@ public sealed class LobsyCvPdfService : ILobsyCvPdfService
 
             table.Header(header =>
             {
-                header.Cell().Element(CellHeader).Text("Dag").FontSize(7).Bold();
+                header.Cell().Element(CellHeader).Text("").FontSize(6);
                 foreach (var part in DayPartMatrix.DayPartCodes)
                 {
-                    var window = DayPartMatrix.DayPartWindows.TryGetValue(part, out var w) ? w : part;
-                    header.Cell().Element(CellHeader).AlignCenter().Column(c =>
-                    {
-                        c.Item().AlignCenter().Text(part).FontSize(7).Bold();
-                        c.Item().AlignCenter().Text(window).FontSize(6).FontColor(Muted);
-                    });
+                    // Compact: first letter only to keep the matrix small beside the map.
+                    var shortLabel = part.Length > 0 ? part[..1] : part;
+                    header.Cell().Element(CellHeader).AlignCenter()
+                        .Text(shortLabel).FontSize(6).Bold();
                 }
             });
 
             foreach (var day in DayPartMatrix.DayCodes)
             {
-                table.Cell().Element(CellBody).Text(day).FontSize(8).Bold();
+                table.Cell().Element(CellBody).AlignMiddle().Text(day).FontSize(6.5f).Bold();
                 map.TryGetValue(day, out var selected);
                 selected ??= [];
                 foreach (var part in DayPartMatrix.DayPartCodes)
@@ -381,22 +384,25 @@ public sealed class LobsyCvPdfService : ILobsyCvPdfService
                     var on = selected.Contains(part, StringComparer.OrdinalIgnoreCase);
                     table.Cell().Element(c => CellSlot(c, on))
                         .AlignCenter().AlignMiddle()
-                        .Text(on ? "●" : "·")
-                        .FontSize(9)
+                        .Text(on ? "●" : "")
+                        .FontSize(6.5f)
                         .FontColor(on ? Colors.White : Muted);
                 }
             }
         });
+
+        avail.Item().Text("O=ochtend · M=middag · A=avond · N=nacht")
+            .FontSize(6.5f).FontColor(Muted);
     }
 
     private static IContainer CellHeader(IContainer container)
-        => container.Background(SoftSky).Border(0.5f).BorderColor(Line).Padding(3);
+        => container.Background(Colors.White).Border(0.4f).BorderColor(Line).Padding(1.5f);
 
     private static IContainer CellBody(IContainer container)
-        => container.Background(Colors.White).Border(0.5f).BorderColor(Line).Padding(3);
+        => container.Background(Colors.White).Border(0.4f).BorderColor(Line).Padding(1.5f);
 
     private static IContainer CellSlot(IContainer container, bool on)
-        => container.Background(on ? CellOn : CellOff).Border(0.5f).BorderColor(Line).PaddingVertical(4);
+        => container.Background(on ? CellOn : Colors.White).Border(0.4f).BorderColor(Line).PaddingVertical(2);
 
     private static void Section(ColumnDescriptor body, string title, string? content)
     {
