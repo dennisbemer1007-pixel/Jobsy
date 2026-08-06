@@ -1,0 +1,33 @@
+@inherits LayoutComponentBase
+@using Jobsy.Web.Localization
+@inject CultureState Culture
+@implements IDisposable
+
+<div class="teaser-shell" dir="@(Culture.IsRightToLeft ? "rtl" : null)">
+    <header class="teaser-shell__bar">
+        <a class="teaser-shell__brand" href="/westland" aria-label="Lobsy">
+            <LobsyLogo Class="teaser-shell__logo" Alt="" Animate="false" />
+            <span class="teaser-shell__name">Lobsy</span>
+        </a>
+        <nav class="teaser-shell__nav" aria-label="Snelle links">
+            <a class="teaser-shell__link" href="/register">Registreren</a>
+            <a class="teaser-shell__link teaser-shell__link--quiet" href="/login">Inloggen</a>
+        </nav>
+    </header>
+    <main class="teaser-shell__main">
+        @Body
+    </main>
+</div>
+
+@code {
+    protected override async Task OnInitializedAsync()
+    {
+        Culture.Changed += OnCultureChanged;
+        await Culture.InitializeAsync();
+        await Culture.SyncDocumentAsync();
+    }
+
+    private void OnCultureChanged() => InvokeAsync(StateHasChanged);
+
+    public void Dispose() => Culture.Changed -= OnCultureChanged;
+}

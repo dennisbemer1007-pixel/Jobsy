@@ -15,7 +15,7 @@ Route- en capability-matrix per rol. Entry: **`/` = banenkaart**, **`/home` = ro
 | Gedeelde UI | `MetricTile`, `MetricsCategoryBoard` (Bento), `VacancyPerformancePanel`, `DrilldownGrid`, `ShareModal`, `PublishOptionsDialog`, `BottomNav` |
 | Dashboard layout | Compacte periode-scroller · categorie-tabs · Bento-grid met featured KPI, sparklines/ringen · Top/Flop 3 vacatures (employer/admin) |
 
-Publiek (naast banenkaart): `/vacancies/{id}`, `/{kvknummer}` (ondernemer), `/{kvknummer}/{vestigingsnummer}` (vestiging), `/vestiging/{companyId}` (QR-landing → publieke vestigings-URL), `/register`, `/register/activate`, `/login`, `/partner` (+ `/partner/{trackingCode}`), legal pages.
+Publiek (naast banenkaart): `/vacancies/{id}`, `/{kvknummer}` (ondernemer), `/{kvknummer}/{vestigingsnummer}` (vestiging), `/vestiging/{companyId}` (QR-landing → publieke vestigings-URL), `/westland` · `/lancering` (teaser live 18 nov), `/register`, `/register/activate`, `/login`, `/partner` (+ `/partner/{trackingCode}`), legal pages.
 
 ---
 

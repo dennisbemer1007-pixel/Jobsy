@@ -11480,3 +11480,742 @@ a.apply-flow__secondary {
     margin: 0.35rem 0 0;
     font-weight: 600;
 }
+
+/* ===== Westland teaser landing (/westland · /lancering) ===== */
+.teaser-shell {
+    --wl-ink: #0c243f;
+    --wl-ink-soft: #3d536c;
+    --wl-foam: #f3f7f4;
+    --wl-glass: #d7e8dc;
+    --wl-coral: #f54a1b;
+    --wl-coral-deep: #d93a12;
+    --wl-navy: #0f2d5c;
+    --wl-wa: #128c7e;
+    --wl-wa-deep: #0b6b60;
+    --wl-display: "Outfit", "Segoe UI", sans-serif;
+    --wl-body: "Source Sans 3", "Segoe UI", sans-serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    background: var(--wl-foam);
+    color: var(--wl-ink);
+    font-family: var(--wl-body);
+}
+
+.teaser-shell__bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.65rem 1.25rem;
+    background: color-mix(in srgb, #fffcfa 88%, var(--wl-glass));
+    border-bottom: 1px solid color-mix(in srgb, var(--wl-navy) 12%, transparent);
+    position: sticky;
+    top: 0;
+    z-index: 30;
+    backdrop-filter: blur(10px);
+}
+
+.teaser-shell__brand {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.55rem;
+    color: var(--wl-navy);
+    font-family: var(--wl-display);
+    font-weight: 700;
+    letter-spacing: -0.02em;
+}
+
+.teaser-shell__logo {
+    width: 2.1rem;
+    height: 2.1rem;
+}
+
+.teaser-shell__logo .lobsy-logo__img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+.teaser-shell__name {
+    font-size: 1.2rem;
+}
+
+.teaser-shell__nav {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.teaser-shell__link {
+    font-weight: 600;
+    color: var(--wl-navy);
+    padding: 0.4rem 0.75rem;
+    border-radius: 999px;
+}
+
+.teaser-shell__link:hover {
+    background: color-mix(in srgb, var(--wl-navy) 8%, transparent);
+}
+
+.teaser-shell__link--quiet {
+    color: var(--wl-ink-soft);
+    font-weight: 500;
+}
+
+.teaser-shell__main {
+    flex: 1;
+}
+
+.wl-teaser {
+    overflow-x: clip;
+}
+
+.wl-kicker {
+    margin: 0 0 0.55rem;
+    font-family: var(--wl-display);
+    font-size: 0.85rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--wl-coral);
+}
+
+.wl-kicker--on-dark {
+    color: color-mix(in srgb, #fff 70%, var(--wl-coral));
+}
+
+/* Hero */
+.wl-hero {
+    position: relative;
+    min-height: min(100svh, 52rem);
+    display: grid;
+    align-items: end;
+    color: #fffcfa;
+    isolation: isolate;
+}
+
+.wl-hero__media {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    overflow: hidden;
+}
+
+.wl-hero__img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center 40%;
+    transform: scale(1.06);
+    animation: wl-hero-drift 22s ease-in-out infinite alternate;
+}
+
+.wl-hero__veil {
+    position: absolute;
+    inset: 0;
+    background:
+        linear-gradient(180deg, rgba(8, 24, 44, 0.28) 0%, rgba(8, 24, 44, 0.55) 42%, rgba(8, 24, 44, 0.88) 100%),
+        linear-gradient(90deg, rgba(8, 24, 44, 0.45) 0%, transparent 55%);
+}
+
+.wl-hero__content {
+    position: relative;
+    z-index: 1;
+    max-width: 44rem;
+    padding: clamp(2.5rem, 8vw, 5.5rem) clamp(1.25rem, 4vw, 3rem) clamp(2.75rem, 7vw, 4.5rem);
+    animation: wl-rise 0.9s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.wl-hero__brand {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.65rem;
+    margin: 0 0 1.1rem;
+    font-family: var(--wl-display);
+    font-size: clamp(1.85rem, 4.5vw, 2.75rem);
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    line-height: 1;
+}
+
+.wl-hero__mark {
+    width: clamp(2.6rem, 6vw, 3.4rem);
+    height: clamp(2.6rem, 6vw, 3.4rem);
+    filter: drop-shadow(0 6px 16px rgba(0, 0, 0, 0.35));
+}
+
+.wl-hero__mark .lobsy-logo__img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+.wl-hero__title {
+    margin: 0 0 1rem;
+    font-family: var(--wl-display);
+    font-size: clamp(2rem, 5.5vw, 3.35rem);
+    font-weight: 800;
+    letter-spacing: -0.035em;
+    line-height: 1.08;
+    text-wrap: balance;
+}
+
+.wl-hero__title-accent {
+    color: #ffb39a;
+}
+
+.wl-hero__lead {
+    margin: 0 0 1.6rem;
+    max-width: 34rem;
+    font-size: clamp(1.05rem, 2.2vw, 1.25rem);
+    line-height: 1.45;
+    color: color-mix(in srgb, #fffcfa 88%, transparent);
+}
+
+.wl-hero__cta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+}
+
+.wl-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.45rem;
+    min-height: 3rem;
+    padding: 0.75rem 1.25rem;
+    border-radius: 999px;
+    font-family: var(--wl-display);
+    font-size: 1.02rem;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    border: 2px solid transparent;
+    transition: transform 0.18s ease, background 0.18s ease, box-shadow 0.18s ease;
+}
+
+.wl-btn:hover {
+    transform: translateY(-2px);
+}
+
+.wl-btn:active {
+    transform: translateY(0);
+}
+
+.wl-btn--primary {
+    background: var(--wl-coral);
+    color: #fff;
+    box-shadow: 0 10px 28px rgba(245, 74, 27, 0.35);
+    animation: wl-cta-glow 2.8s ease-in-out infinite;
+}
+
+.wl-btn--primary:hover {
+    background: var(--wl-coral-deep);
+}
+
+.wl-btn--on-dark {
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.28);
+}
+
+.wl-btn--whatsapp {
+    background: color-mix(in srgb, #fffcfa 12%, transparent);
+    color: #fffcfa;
+    border-color: color-mix(in srgb, #fffcfa 45%, transparent);
+    backdrop-filter: blur(6px);
+}
+
+.wl-btn--whatsapp:hover {
+    background: color-mix(in srgb, #fffcfa 22%, transparent);
+}
+
+.wl-finale .wl-btn--whatsapp,
+.wl-intro .wl-btn--whatsapp {
+    background: var(--wl-wa);
+    color: #fff;
+    border-color: transparent;
+}
+
+.wl-finale .wl-btn--whatsapp:hover,
+.wl-intro .wl-btn--whatsapp:hover {
+    background: var(--wl-wa-deep);
+}
+
+.wl-btn__emoji {
+    font-size: 1.15em;
+    line-height: 1;
+    animation: wl-lobster-bob 2.4s ease-in-out infinite;
+}
+
+.wl-btn__icon {
+    display: inline-flex;
+}
+
+/* Intro + portrait */
+.wl-intro {
+    display: grid;
+    gap: clamp(1.75rem, 4vw, 3rem);
+    grid-template-columns: 1.15fr 0.85fr;
+    align-items: start;
+    max-width: 68rem;
+    margin: 0 auto;
+    padding: clamp(3rem, 7vw, 5rem) clamp(1.25rem, 4vw, 2.5rem);
+    animation: wl-rise 1s 0.12s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.wl-intro__copy h2 {
+    margin: 0 0 1rem;
+    font-family: var(--wl-display);
+    font-size: clamp(1.75rem, 3.5vw, 2.35rem);
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    color: var(--wl-navy);
+}
+
+.wl-intro__copy p {
+    margin: 0 0 1rem;
+    font-size: 1.08rem;
+    line-height: 1.55;
+    color: var(--wl-ink-soft);
+}
+
+.wl-intro__copy strong {
+    color: var(--wl-ink);
+}
+
+.wl-intro__whatsapp-note {
+    padding: 0.85rem 0;
+    border-top: 1px solid color-mix(in srgb, var(--wl-navy) 12%, transparent);
+    border-bottom: 1px solid color-mix(in srgb, var(--wl-navy) 12%, transparent);
+}
+
+.wl-text-link {
+    display: inline-block;
+    margin-top: 0.35rem;
+    font-weight: 700;
+    color: var(--wl-wa);
+    text-decoration: underline;
+    text-underline-offset: 0.18em;
+}
+
+.wl-portrait {
+    margin: 0;
+}
+
+.wl-portrait__frame {
+    position: relative;
+    aspect-ratio: 4 / 5;
+    overflow: hidden;
+    border-radius: 1.25rem 1.25rem 0.35rem 1.25rem;
+    background: var(--wl-navy);
+    box-shadow: 0 24px 48px rgba(15, 45, 92, 0.18);
+}
+
+.wl-portrait__img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center top;
+}
+
+.wl-portrait__fallback {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    place-content: center;
+    gap: 0.5rem;
+    text-align: center;
+    color: #fffcfa;
+    background: radial-gradient(circle at 40% 30%, var(--wl-coral), var(--wl-navy) 70%);
+}
+
+.wl-portrait__initials {
+    font-family: var(--wl-display);
+    font-size: 3.5rem;
+    font-weight: 800;
+}
+
+.wl-portrait__hint {
+    font-size: 0.85rem;
+    opacity: 0.85;
+    padding: 0 1rem;
+}
+
+.wl-portrait__caption {
+    margin-top: 1rem;
+}
+
+.wl-portrait__quote {
+    margin: 0;
+    font-family: var(--wl-display);
+    font-size: 1.15rem;
+    font-weight: 600;
+    font-style: italic;
+    line-height: 1.4;
+    color: var(--wl-navy);
+    text-wrap: pretty;
+}
+
+.wl-portrait__sign {
+    margin: 0.65rem 0 0;
+    font-size: 0.95rem;
+    color: var(--wl-ink-soft);
+}
+
+/* Launch band */
+.wl-launch {
+    position: relative;
+    background:
+        linear-gradient(135deg, #0a2044 0%, #123a5c 48%, #1a4d4a 100%);
+    color: #fffcfa;
+    overflow: hidden;
+}
+
+.wl-launch::before {
+    content: "";
+    position: absolute;
+    inset: auto -10% -40% 40%;
+    height: 80%;
+    background: radial-gradient(circle, rgba(245, 74, 27, 0.35), transparent 65%);
+    pointer-events: none;
+}
+
+.wl-launch__inner {
+    position: relative;
+    max-width: 42rem;
+    margin: 0 auto;
+    padding: clamp(3.25rem, 8vw, 5.5rem) clamp(1.25rem, 4vw, 2.5rem);
+    text-align: center;
+}
+
+.wl-launch__date {
+    display: grid;
+    gap: 0.15rem;
+    margin: 0 0 1.25rem;
+    font-family: var(--wl-display);
+    line-height: 0.95;
+}
+
+.wl-launch__day {
+    font-size: clamp(4.5rem, 16vw, 7.5rem);
+    font-weight: 800;
+    letter-spacing: -0.05em;
+    color: #ffb39a;
+}
+
+.wl-launch__month {
+    font-size: clamp(1.75rem, 4vw, 2.5rem);
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    text-transform: lowercase;
+}
+
+.wl-launch__year {
+    font-size: clamp(1.1rem, 2.5vw, 1.35rem);
+    font-weight: 600;
+    opacity: 0.85;
+}
+
+.wl-launch__lead {
+    margin: 0 0 1.5rem;
+    font-size: 1.15rem;
+    line-height: 1.5;
+    text-wrap: pretty;
+}
+
+.wl-launch__perks {
+    list-style: none;
+    margin: 0 0 1.75rem;
+    padding: 0;
+    display: grid;
+    gap: 0.85rem;
+    text-align: left;
+}
+
+.wl-launch__perks li {
+    padding: 0.85rem 0 0.85rem 1rem;
+    border-left: 3px solid var(--wl-coral);
+    background: color-mix(in srgb, #fffcfa 6%, transparent);
+    line-height: 1.45;
+}
+
+/* Rates — typographic, not card chrome */
+.wl-rates {
+    max-width: 68rem;
+    margin: 0 auto;
+    padding: clamp(3rem, 7vw, 5rem) clamp(1.25rem, 4vw, 2.5rem);
+}
+
+.wl-rates__header {
+    max-width: 40rem;
+    margin-bottom: 2rem;
+}
+
+.wl-rates__header h2 {
+    margin: 0 0 0.75rem;
+    font-family: var(--wl-display);
+    font-size: clamp(1.75rem, 3.5vw, 2.35rem);
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    color: var(--wl-navy);
+}
+
+.wl-rates__lead {
+    margin: 0;
+    font-size: 1.08rem;
+    line-height: 1.5;
+    color: var(--wl-ink-soft);
+}
+
+.wl-rates__grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0;
+    border-top: 1px solid color-mix(in srgb, var(--wl-navy) 14%, transparent);
+    border-bottom: 1px solid color-mix(in srgb, var(--wl-navy) 14%, transparent);
+}
+
+.wl-rate {
+    padding: 1.5rem 1.25rem 1.75rem;
+    border-right: 1px solid color-mix(in srgb, var(--wl-navy) 14%, transparent);
+}
+
+.wl-rate:last-child {
+    border-right: none;
+}
+
+.wl-rate__title {
+    margin: 0 0 0.75rem;
+    font-family: var(--wl-display);
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: var(--wl-navy);
+}
+
+.wl-rate__price {
+    margin: 0 0 0.5rem;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0.35rem;
+}
+
+.wl-rate__amount {
+    font-family: var(--wl-display);
+    font-size: 2.15rem;
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    color: var(--wl-ink);
+}
+
+.wl-rate__unit {
+    color: var(--wl-ink-soft);
+    font-size: 0.95rem;
+}
+
+.wl-rate__note {
+    margin: 0;
+    color: var(--wl-ink-soft);
+    font-size: 0.98rem;
+}
+
+.wl-rate__list {
+    margin: 0;
+    display: grid;
+    gap: 0.85rem;
+}
+
+.wl-rate__row {
+    display: grid;
+    gap: 0.15rem;
+}
+
+.wl-rate__row dt {
+    font-weight: 700;
+    color: var(--wl-ink);
+}
+
+.wl-rate__row dd {
+    margin: 0;
+    color: var(--wl-ink-soft);
+}
+
+.wl-rate__bonus {
+    display: inline-block;
+    margin-left: 0.25rem;
+    color: var(--wl-coral-deep);
+    font-weight: 700;
+}
+
+.wl-rate--deal {
+    background: color-mix(in srgb, var(--wl-glass) 55%, transparent);
+}
+
+.wl-rate__badge {
+    margin: 0 0 0.45rem;
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--wl-coral-deep);
+}
+
+.wl-rate__deal-points {
+    margin: 0.75rem 0 0;
+    padding-left: 1.1rem;
+    color: var(--wl-ink-soft);
+    line-height: 1.45;
+}
+
+.wl-rates__nuance {
+    margin-top: 2rem;
+    padding: 1.25rem 0 0;
+    border-top: 1px dashed color-mix(in srgb, var(--wl-navy) 22%, transparent);
+}
+
+.wl-rates__nuance h3 {
+    margin: 0 0 0.65rem;
+    font-family: var(--wl-display);
+    font-size: 1.1rem;
+    color: var(--wl-navy);
+}
+
+.wl-rates__nuance ul {
+    margin: 0;
+    padding-left: 1.15rem;
+    color: var(--wl-ink-soft);
+    line-height: 1.5;
+}
+
+.wl-rates__nuance li + li {
+    margin-top: 0.4rem;
+}
+
+/* Finale */
+.wl-finale {
+    text-align: center;
+    padding: clamp(3rem, 8vw, 5rem) clamp(1.25rem, 4vw, 2.5rem) clamp(4rem, 9vw, 6rem);
+    background:
+        linear-gradient(180deg, transparent, color-mix(in srgb, var(--wl-glass) 70%, transparent));
+}
+
+.wl-finale h2 {
+    margin: 0 0 0.75rem;
+    font-family: var(--wl-display);
+    font-size: clamp(1.85rem, 4vw, 2.5rem);
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    color: var(--wl-navy);
+}
+
+.wl-finale > p {
+    margin: 0 auto 1.5rem;
+    max-width: 34rem;
+    font-size: 1.1rem;
+    line-height: 1.5;
+    color: var(--wl-ink-soft);
+}
+
+.wl-finale__cta {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.75rem;
+}
+
+.wl-finale__fine {
+    margin: 1.5rem 0 0;
+    font-size: 0.95rem;
+    color: var(--wl-ink-soft);
+}
+
+.wl-finale__fine a {
+    color: var(--wl-navy);
+    font-weight: 600;
+    text-decoration: underline;
+    text-underline-offset: 0.15em;
+}
+
+@keyframes wl-hero-drift {
+    from { transform: scale(1.06) translate3d(0, 0, 0); }
+    to { transform: scale(1.12) translate3d(-1.5%, -1%, 0); }
+}
+
+@keyframes wl-rise {
+    from {
+        opacity: 0;
+        transform: translate3d(0, 1.25rem, 0);
+    }
+    to {
+        opacity: 1;
+        transform: translate3d(0, 0, 0);
+    }
+}
+
+@keyframes wl-cta-glow {
+    0%, 100% { box-shadow: 0 10px 28px rgba(245, 74, 27, 0.32); }
+    50% { box-shadow: 0 14px 36px rgba(245, 74, 27, 0.48); }
+}
+
+@keyframes wl-lobster-bob {
+    0%, 100% { transform: translateY(0) rotate(0deg); }
+    50% { transform: translateY(-2px) rotate(-8deg); }
+}
+
+@media (max-width: 900px) {
+    .wl-intro {
+        grid-template-columns: 1fr;
+    }
+
+    .wl-portrait {
+        order: -1;
+        max-width: 22rem;
+        margin-inline: auto;
+        width: 100%;
+    }
+
+    .wl-rates__grid {
+        grid-template-columns: 1fr;
+    }
+
+    .wl-rate {
+        border-right: none;
+        border-bottom: 1px solid color-mix(in srgb, var(--wl-navy) 14%, transparent);
+    }
+
+    .wl-rate:last-child {
+        border-bottom: none;
+    }
+}
+
+@media (max-width: 560px) {
+    .wl-hero {
+        min-height: min(100svh, 40rem);
+        align-items: end;
+    }
+
+    .wl-hero__cta,
+    .wl-finale__cta {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .wl-btn {
+        width: 100%;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .wl-hero__img,
+    .wl-hero__content,
+    .wl-intro,
+    .wl-btn--primary,
+    .wl-btn__emoji {
+        animation: none !important;
+    }
+
+    .wl-hero__img {
+        transform: none;
+    }
+}
