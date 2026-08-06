@@ -374,7 +374,9 @@ public class RoleFunctionalRegressionTests : IClassFixture<RoleFunctionalWebAppF
         Assert.Null(pending.CandidateName);
         Assert.Null(pending.CandidateEmail);
         Assert.Null(pending.CandidateCity);
-        Assert.Null(pending.DistanceKm);
+        Assert.Equal(4.2, pending.DistanceKm);
+        Assert.Equal(19, pending.CandidateAgeYears);
+        Assert.False(string.IsNullOrWhiteSpace(pending.AvailabilitySummary));
         Assert.False(pending.WorkPermitConfirmed); // gated until accept
         Assert.Equal("Sterke motivatie voor deze rol.", pending.Motivation);
         Assert.Null(pending.StudentNumber);
@@ -825,6 +827,8 @@ public sealed class RoleFunctionalWebAppFactory : WebApplicationFactory<Program>
                 PreferredTransport = "Fiets",
                 EstimatedTravelMinutes = 18,
                 DistanceKm = 4.2,
+                CandidateAgeYears = 19,
+                SnapshotAvailabilityJson = """{"flexibleTimes":false,"slots":{"ma":["avond"],"di":["avond"]},"minHours":8,"maxHours":16}""",
                 Status = ApplicationStatus.Pending,
                 EmailVerifiedAt = DateTime.UtcNow.AddHours(-1),
                 WorkPermitConfirmed = true,

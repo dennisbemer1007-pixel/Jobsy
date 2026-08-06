@@ -227,6 +227,9 @@ namespace Jobsy.Infrastructure.Data.Migrations
                     b.Property<int>("CandidateEmployerCount")
                         .HasColumnType("integer");
 
+                    b.Property<int?>("CandidateAgeYears")
+                        .HasColumnType("integer");
+
                     b.Property<string>("CandidateName")
                         .IsRequired()
                         .HasMaxLength(256)

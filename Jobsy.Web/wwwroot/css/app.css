@@ -8239,6 +8239,252 @@ button.stat-card {
     border-color: transparent;
 }
 
+.status-pill--employercontacting {
+    color: var(--brand);
+    background: var(--accent-soft);
+    border-color: transparent;
+}
+
+.status-pill--hired {
+    color: #0f766e;
+    background: color-mix(in srgb, #14b8a6 18%, var(--surface));
+    border-color: transparent;
+}
+
+.status-pill--filledelsewhere {
+    color: var(--muted);
+    background: color-mix(in srgb, var(--border) 55%, var(--surface));
+    border-color: transparent;
+}
+
+.applicants-page__header {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 0.75rem 1.25rem;
+    margin-bottom: 0.75rem;
+}
+
+.applicants-page__hint {
+    max-width: 22rem;
+    margin: 0;
+    font-size: 0.88rem;
+    line-height: 1.4;
+}
+
+.applicants-filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    margin: 0 0 1rem;
+}
+
+.applicants-filters__btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    padding: 0.35rem 0.75rem;
+    background: var(--surface);
+    color: var(--secondary);
+    font: inherit;
+    font-size: 0.86rem;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.applicants-filters__btn.is-active {
+    border-color: color-mix(in srgb, var(--brand) 45%, var(--border));
+    background: color-mix(in srgb, var(--accent-soft) 70%, var(--surface));
+    color: var(--brand);
+}
+
+.applicants-filters__count {
+    min-width: 1.25rem;
+    padding: 0.05rem 0.35rem;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--border) 55%, var(--surface));
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-align: center;
+}
+
+.applicants-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.85rem;
+}
+
+.applicant-card {
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1rem 1.1rem;
+    background: var(--surface);
+    display: flex;
+    flex-direction: column;
+    gap: 0.7rem;
+}
+
+.applicant-card__top {
+    display: flex;
+    justify-content: space-between;
+    gap: 0.75rem;
+    align-items: flex-start;
+}
+
+.applicant-card__identity h2 {
+    margin: 0;
+    font-size: 1.05rem;
+}
+
+.applicant-card__identity .muted {
+    margin: 0.15rem 0 0;
+    font-size: 0.86rem;
+}
+
+.applicant-card__meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+    align-items: center;
+    justify-content: flex-end;
+}
+
+.applicant-card__vacancy {
+    margin: 0;
+    font-size: 0.92rem;
+}
+
+.applicant-card__facts {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.55rem 1rem;
+    margin: 0;
+}
+
+.applicant-card__facts dt {
+    margin: 0;
+    font-size: 0.72rem;
+    font-weight: 650;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    color: var(--muted);
+}
+
+.applicant-card__facts dd {
+    margin: 0.15rem 0 0;
+    font-size: 0.9rem;
+    line-height: 1.35;
+}
+
+.applicant-card__contact {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem 0.85rem;
+    font-size: 0.86rem;
+}
+
+.applicant-card__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.45rem;
+    padding-top: 0.15rem;
+}
+
+.engagement-btn--primary {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #fff;
+}
+
+.engagement-btn--primary:hover {
+    background: var(--accent-hover);
+    border-color: var(--accent-hover);
+    color: #fff;
+}
+
+.engagement-btn--danger {
+    color: var(--danger);
+    border-color: color-mix(in srgb, var(--danger) 40%, var(--border));
+}
+
+.confirm-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 80;
+    display: grid;
+    place-items: center;
+    padding: 1rem;
+}
+
+.confirm-modal__backdrop {
+    position: absolute;
+    inset: 0;
+    border: none;
+    margin: 0;
+    padding: 0;
+    background: rgba(15, 23, 42, 0.45);
+    cursor: pointer;
+}
+
+.confirm-modal__dialog {
+    position: relative;
+    z-index: 1;
+    width: min(28rem, 100%);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 1.15rem 1.25rem;
+    background: var(--surface);
+    box-shadow: var(--shadow-lg);
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.confirm-modal__dialog h2 {
+    margin: 0;
+    font-size: 1.15rem;
+}
+
+.confirm-modal__dialog p {
+    margin: 0;
+    color: var(--secondary);
+    line-height: 1.45;
+}
+
+.confirm-modal__check {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.55rem;
+    font-size: 0.92rem;
+    line-height: 1.35;
+    cursor: pointer;
+}
+
+.confirm-modal__check input {
+    margin-top: 0.2rem;
+}
+
+.confirm-modal__actions {
+    display: flex;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    padding-top: 0.25rem;
+}
+
+@media (max-width: 640px) {
+    .applicant-card__facts {
+        grid-template-columns: 1fr;
+    }
+
+    .applicants-page__header {
+        flex-direction: column;
+    }
+}
+
 .profile-form {
     display: flex;
     flex-direction: column;

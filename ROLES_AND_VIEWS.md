@@ -38,14 +38,14 @@ Publiek (naast banenkaart): `/vacancies/{id}`, `/{kvknummer}` (ondernemer), `/{k
 ## 2. BranchManager
 *Doel: lokaal werven voor één vestiging.*
 
-**BottomNav:** Home · Banenkaart · Vacatures · Mijn tokens · Bedrijfsgegevens · Overnames · Hoe werkt Lobsy
+**BottomNav:** Home · Banenkaart · Vacatures · Sollicitaties · Mijn tokens · Bedrijfsgegevens · Overnames · Hoe werkt Lobsy
 
 | Route | Inhoud |
 |-------|--------|
 | `/home` | Vestiging-KPI’s (Bento) + Top/Flop vacatures + drilldown |
 | `/employer/vacancies` | Beheer + publiceren (basis/highlight/PushBom/verlengen) |
 | `/branch/vacancies/new` | Nieuwe vacature |
-| `/branch/applicants` | Sollicitanten; PII pas na Accept |
+| `/branch/applicants` | Sollicitaties; pre-accept: motivatie/afstand/beschikbaarheid/leeftijd; PII + Lobsy-CV na Accept; daarna uitnodigen / matchen / weigeren |
 | `/branch/tokens` | Saldo / logs |
 | `/employer/takeovers` | Inbox overnames |
 | `/branch` | Redirect → `/home` |
@@ -71,7 +71,7 @@ Onvoldoende tokens bij publiceren → `PendingApproval` (EM/Admin keurt goed).
 ## 4. EnterpriseManager (Bedrijfsmanager)
 *Doel: organisatiebreed beheer met strikte mobile/desktop-scheiding.*
 
-**Mobile/PWA BottomNav (operationeel):** Home · Banenkaart · Vacatures · Tokens · Gebruikers · Hoe werkt Lobsy  
+**Mobile/PWA BottomNav (operationeel):** Home · Banenkaart · Vacatures · Sollicitaties · Tokens · Gebruikers · Hoe werkt Lobsy  
 
 **Desktop BottomNav:** bovenstaande (met **Organisatie** desktop-only vóór Hoe werkt Lobsy)
 
@@ -79,6 +79,7 @@ Onvoldoende tokens bij publiceren → `PendingApproval` (EM/Admin keurt goed).
 |-------|--------|--------|
 | `/home` | Bedrijfs-KPI’s | Mobiel + desktop |
 | `/employer/vacancies` | Vacaturebeheer + approve-publish | Mobiel + desktop |
+| `/branch/applicants` | Sollicitaties (zelfde flow als filiaalmanager) | Mobiel + desktop |
 | `/employer/tokens` | Pot-aankoop, uitgifte, logs | Mobiel + desktop |
 | `/employer/users` | Basis gebruikerslijst / invites | Mobiel + desktop |
 | `/employer/organization` | Hub voor zwaar org-beheer | Desktop (melding op mobiel) |

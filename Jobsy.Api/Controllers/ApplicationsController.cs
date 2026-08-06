@@ -99,13 +99,15 @@ public class ApplicationsController : ControllerBase
                 a.StudyYear,
                 a.ExclusivityValidationStatus,
                 a.SnapshotPhoneNumber,
-                a.SnapshotWhatsAppAllowed
+                a.SnapshotWhatsAppAllowed,
+                a.CandidateAgeYears
             })
             .ToListAsync(cancellationToken);
 
         return Ok(rows.Select(a =>
         {
             var revealed = ApplicationRules.IsPiiRevealed(a.Status);
+            var availability = LobsyCvModelFactory.ParseAvailabilityPayload(a.SnapshotAvailabilityJson);
             return new EmployerApplicationDto(
                 a.Id,
                 a.VacancyId,
@@ -117,7 +119,8 @@ public class ApplicationsController : ControllerBase
                 a.Status.ToString(),
                 a.RespondedAt,
                 revealed ? a.CandidateCity : null,
-                revealed ? a.DistanceKm : null,
+                // Distance without address/city is allowed pre-accept for screening.
+                a.DistanceKm,
                 ApplicationPreferenceRedaction.RedactForEmployer(a.PreferencesSummary, revealed),
                 revealed ? a.CandidateName : null,
                 revealed ? a.CandidateEmail : null,
@@ -142,7 +145,11 @@ public class ApplicationsController : ControllerBase
                 revealed ? a.ExclusivityValidationStatus : null,
                 CvPdfAvailable: revealed,
                 CandidatePhone: revealed ? a.SnapshotPhoneNumber : null,
-                WhatsAppContactAllowed: revealed && a.SnapshotWhatsAppAllowed);
+                WhatsAppContactAllowed: revealed && a.SnapshotWhatsAppAllowed,
+                CandidateAgeYears: a.CandidateAgeYears,
+                AvailabilitySummary: LobsyCvModelFactory.FormatAvailability(
+                    availability.Slots,
+                    availability.FlexibleTimes));
         }));
     }
 
@@ -416,6 +423,7 @@ public class ApplicationsController : ControllerBase
         application.PreferredTransport = request.PreferredTransport;
         application.EstimatedTravelMinutes = request.EstimatedTravelMinutes;
         application.DistanceKm = distanceKm;
+        application.CandidateAgeYears = ageYears;
         // Compact summary only — full prefs JSON easily exceeds varchar(1024) and broke Apply.
         application.PreferencesSummary = BuildCompactPreferencesSummary(preferences);
         application.ConsentAcceptedAt = DateTime.UtcNow;
@@ -791,26 +799,48 @@ public class ApplicationsController : ControllerBase
         var candidateName = Html(application.CandidateName);
         var title = Html(application.Vacancy.Title);
         var company = Html(application.Vacancy.Company.Name);
-        var subject = $"Update op je sollicitatie: {application.Vacancy.Title}";
-        var body = $"""
-            <p>Hoi {candidateName},</p>
-            <p>De werkgever heeft gereageerd ({statusLabel}) op je sollicitatie voor
-            <strong>{title}</strong> bij {company}.</p>
-            <p><a href="{Html(deepLink)}">Open vacature</a></p>
-            """;
 
-        await _email.SendAsync(new EmailMessage(
-            application.CandidateEmail,
-            subject,
-            body,
-            "EmployerReaction"), cancellationToken);
+        if (request.Status == ApplicationStatus.Rejected)
+        {
+            await _email.SendAsync(new EmailMessage(
+                application.CandidateEmail,
+                $"Update op je sollicitatie: {application.Vacancy.Title}",
+                $"""
+                <p>Hoi {candidateName},</p>
+                <p>Bedankt voor je interesse in <strong>{title}</strong> bij {company}.</p>
+                <p>Helaas is de keuze dit keer niet op jou gevallen. We wensen je veel succes met je verdere zoektocht!</p>
+                <p><a href="{Html(deepLink)}">Bekijk andere vacatures op Lobsy</a></p>
+                """,
+                "EmployerReaction"), cancellationToken);
 
-        await _push.SendAsync(new PushMessage(
-            application.CandidateEmail,
-            "Reactie op je sollicitatie",
-            $"{application.Vacancy.Company.Name}: {statusLabel} — {application.Vacancy.Title}",
-            deepLink,
-            "EmployerReaction"), cancellationToken);
+            await _push.SendAsync(new PushMessage(
+                application.CandidateEmail,
+                "Update op je sollicitatie",
+                $"{application.Vacancy.Company.Name}: helaas niet geselecteerd voor {application.Vacancy.Title}",
+                deepLink,
+                "EmployerReaction"), cancellationToken);
+        }
+        else
+        {
+            await _email.SendAsync(new EmailMessage(
+                application.CandidateEmail,
+                $"Goed nieuws over je sollicitatie: {application.Vacancy.Title}",
+                $"""
+                <p>Hoi {candidateName},</p>
+                <p>Goed nieuws! De werkgever heeft positief gereageerd op je sollicitatie voor
+                <strong>{title}</strong> bij {company}.</p>
+                <p>Je kunt binnenkort contact of een uitnodiging verwachten.</p>
+                <p><a href="{Html(deepLink)}">Open vacature</a></p>
+                """,
+                "EmployerReaction"), cancellationToken);
+
+            await _push.SendAsync(new PushMessage(
+                application.CandidateEmail,
+                "Positief nieuws over je sollicitatie",
+                $"{application.Vacancy.Company.Name}: positief — {application.Vacancy.Title}",
+                deepLink,
+                "EmployerReaction"), cancellationToken);
+        }
 
         return Ok(MapEmployerDto(application));
     }
@@ -863,8 +893,15 @@ public class ApplicationsController : ControllerBase
 
     [HttpPost("vacancies/{vacancyId:guid}/fulfill/{applicationId:guid}")]
     [Authorize(Roles = JobsyRoles.ApplicationReactRoles)]
-    public async Task<ActionResult> FulfillVacancy(Guid vacancyId, Guid applicationId, CancellationToken cancellationToken)
+    public async Task<ActionResult> FulfillVacancy(
+        Guid vacancyId,
+        Guid applicationId,
+        [FromBody] FulfillVacancyRequest? request,
+        CancellationToken cancellationToken)
     {
+        var rejectOthers = request?.RejectOtherApplications ?? true;
+        var closeVacancy = request?.CloseVacancy ?? true;
+
         var vacancy = await _db.Vacancies
             .Include(v => v.Company)
             .FirstOrDefaultAsync(v => v.Id == vacancyId, cancellationToken);
@@ -889,19 +926,37 @@ public class ApplicationsController : ControllerBase
             return BadRequest(new { message = "Alleen geverifieerde sollicitaties kunnen op vervuld worden gezet." });
         }
 
-        vacancy.Status = VacancyStatus.Fulfilled;
-        vacancy.ClosedAtUtc ??= DateTime.UtcNow;
-        vacancy.FulfilledByApplicationId = chosen.Id;
+        if (!ApplicationRules.IsPiiRevealed(chosen.Status) && chosen.Status != ApplicationStatus.Hired)
+        {
+            return BadRequest(new { message = "Matchen kan pas na acceptatie van de kandidaat." });
+        }
+
         chosen.Status = ApplicationStatus.Hired;
         chosen.RespondedAt = DateTime.UtcNow;
 
-        var others = await _db.Applications
-            .Where(a => a.VacancyId == vacancyId && a.Id != chosen.Id && a.EmailVerifiedAt != null)
-            .ToListAsync(cancellationToken);
-        foreach (var other in others)
+        if (closeVacancy)
         {
-            other.Status = ApplicationStatus.FilledElsewhere;
-            other.RespondedAt = DateTime.UtcNow;
+            vacancy.Status = VacancyStatus.Fulfilled;
+            vacancy.ClosedAtUtc ??= DateTime.UtcNow;
+            vacancy.FulfilledByApplicationId = chosen.Id;
+        }
+
+        List<Core.Entities.Application> others = [];
+        if (rejectOthers)
+        {
+            others = await _db.Applications
+                .Where(a => a.VacancyId == vacancyId
+                            && a.Id != chosen.Id
+                            && a.EmailVerifiedAt != null
+                            && a.Status != ApplicationStatus.Rejected
+                            && a.Status != ApplicationStatus.FilledElsewhere
+                            && a.Status != ApplicationStatus.Hired)
+                .ToListAsync(cancellationToken);
+            foreach (var other in others)
+            {
+                other.Status = ApplicationStatus.FilledElsewhere;
+                other.RespondedAt = DateTime.UtcNow;
+            }
         }
 
         await _db.SaveChangesAsync(cancellationToken);
@@ -917,16 +972,26 @@ public class ApplicationsController : ControllerBase
             await _email.SendAsync(new EmailMessage(
                 other.CandidateEmail,
                 $"Update sollicitatie: {vacancy.Title}",
-                $"<p>Bedankt voor je sollicitatie op <strong>{Html(vacancy.Title)}</strong>.</p><p>De keuze is helaas op een andere kandidaat gevallen.</p>",
+                $"""
+                <p>Hoi {Html(other.CandidateName)},</p>
+                <p>Bedankt voor je sollicitatie op <strong>{Html(vacancy.Title)}</strong> bij {Html(vacancy.Company.Name)}.</p>
+                <p>Helaas is de keuze op een andere kandidaat gevallen. We wensen je veel succes!</p>
+                """,
                 "ApplicationFilledElsewhere"), cancellationToken);
         }
 
-        return Ok();
+        return Ok(new
+        {
+            hiredApplicationId = chosen.Id,
+            vacancyClosed = closeVacancy,
+            rejectedOtherCount = others.Count
+        });
     }
 
     private static EmployerApplicationDto MapEmployerDto(Core.Entities.Application a)
     {
         var revealed = ApplicationRules.IsPiiRevealed(a.Status);
+        var availability = LobsyCvModelFactory.ParseAvailabilityPayload(a.SnapshotAvailabilityJson);
         return new EmployerApplicationDto(
             a.Id,
             a.VacancyId,
@@ -938,7 +1003,7 @@ public class ApplicationsController : ControllerBase
             a.Status.ToString(),
             a.RespondedAt,
             revealed ? a.CandidateCity : null,
-            revealed ? a.DistanceKm : null,
+            a.DistanceKm,
             ApplicationPreferenceRedaction.RedactForEmployer(a.PreferencesSummary, revealed),
             revealed ? a.CandidateName : null,
             revealed ? a.CandidateEmail : null,
@@ -962,7 +1027,11 @@ public class ApplicationsController : ControllerBase
             revealed ? a.ExclusivityValidationStatus : null,
             CvPdfAvailable: revealed,
             CandidatePhone: revealed ? a.SnapshotPhoneNumber : null,
-            WhatsAppContactAllowed: revealed && a.SnapshotWhatsAppAllowed);
+            WhatsAppContactAllowed: revealed && a.SnapshotWhatsAppAllowed,
+            CandidateAgeYears: a.CandidateAgeYears,
+            AvailabilitySummary: LobsyCvModelFactory.FormatAvailability(
+                availability.Slots,
+                availability.FlexibleTimes));
     }
 
     private static LobsyCvModel BuildApplicationCvModel(Core.Entities.Application application, bool includePii)

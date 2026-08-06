@@ -17,6 +17,8 @@ public class Application
     public int EstimatedTravelMinutes { get; set; }
     public double? DistanceKm { get; set; }
     public string? PreferencesSummary { get; set; }
+    /// <summary>Age at apply (years). Safe to show to employers before Accept.</summary>
+    public int? CandidateAgeYears { get; set; }
     public ApplicationStatus Status { get; set; } = ApplicationStatus.Pending;
     public DateTime? ConsentAcceptedAt { get; set; }
     public string? ConsentVersion { get; set; }

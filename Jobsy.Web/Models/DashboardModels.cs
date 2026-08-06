@@ -175,6 +175,8 @@ public class EmployerApplicationItem
     public bool CvPdfAvailable { get; set; }
     public string? CandidatePhone { get; set; }
     public bool WhatsAppContactAllowed { get; set; }
+    public int? CandidateAgeYears { get; set; }
+    public string? AvailabilitySummary { get; set; }
 }
 
 public class TokenPackItem

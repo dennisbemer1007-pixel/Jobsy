@@ -77,6 +77,19 @@ public class RoleNavCatalogTests
     }
 
     [Fact]
+    public void ForUser_branch_and_enterprise_get_applications_nav()
+    {
+        foreach (var role in new[] { JobsyRoles.BranchManager, JobsyRoles.EnterpriseManager })
+        {
+            var identity = new ClaimsIdentity([new Claim(ClaimTypes.Role, role)], "test");
+            var items = RoleNavCatalog.ForUser(new ClaimsPrincipal(identity));
+            Assert.Contains(items, i => i.Href == "/branch/applicants" && i.TitleKey == "Nav.Applications");
+            var vacancies = items.First(i => i.TitleKey == "Nav.Vacancies");
+            Assert.DoesNotContain("/branch/applicants", vacancies.ExtraActivePaths ?? []);
+        }
+    }
+
+    [Fact]
     public void ForUser_branch_manager_with_candidate_apps_gets_applications_nav()
     {
         var identity = new ClaimsIdentity("test");

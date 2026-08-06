@@ -9,9 +9,21 @@
 
 <PageTitle>@Culture["Employer.Applicants"] · Lobsy</PageTitle>
 
-<div class="panel-page">
-    <h1>@Culture["Employer.Applicants"]</h1>
-    <p class="login-lead">@Culture["Employer.ApplicantsLead"]</p>
+<div class="panel-page applicants-page">
+    <header class="applicants-page__header">
+        <div>
+            <h1>@Culture["Employer.Applicants"]</h1>
+            <p class="login-lead">@Culture["Employer.ApplicantsLead"]</p>
+        </div>
+        @if (_canReact)
+        {
+            <p class="applicants-page__hint muted">@Culture["Employer.ApplicantsPrivacyHint"]</p>
+        }
+        else
+        {
+            <p class="applicants-page__hint muted">@Culture["Employer.ApplicantsReadOnly"]</p>
+        }
+    </header>
 
     @if (_loading)
     {
@@ -19,139 +31,195 @@
     }
     else if (_items.Count == 0)
     {
-        <p class="state-message">Nog geen reacties.</p>
+        <p class="state-message">@Culture["Employer.ApplicantsEmpty"]</p>
     }
     else
     {
-        <div class="table-list">
-            @foreach (var a in _items)
+        <div class="applicants-filters" role="tablist" aria-label="@Culture["Employer.Applicants"]">
+            @foreach (var filter in StatusFilters)
             {
-                <div class="table-row">
-                    <div>
-                        @if (a.MatchPercent is int matchPct)
-                        {
-                            <strong class="match-score match-score--@(MatchBand(matchPct, a.ViaSafetyNet))">@matchPct%</strong>
-                            @if (a.ViaSafetyNet)
+                <button type="button"
+                        class="applicants-filters__btn @(_statusFilter == filter.Key ? "is-active" : null)"
+                        role="tab"
+                        aria-selected="@(_statusFilter == filter.Key)"
+                        @onclick="() => _statusFilter = filter.Key">
+                    @filter.Label
+                    <span class="applicants-filters__count">@CountFor(filter.Key)</span>
+                </button>
+            }
+        </div>
+
+        <div class="applicants-list">
+            @foreach (var a in FilteredItems)
+            {
+                var otherPending = CountOtherOpen(a);
+                <article class="applicant-card status-@a.Status.ToLowerInvariant()">
+                    <div class="applicant-card__top">
+                        <div class="applicant-card__identity">
+                            @if (a.PiiRevealed)
                             {
-                                <span class="status-pill">Vangnet</span>
+                                <h2>@a.CandidateName</h2>
+                                <p class="muted">@a.CandidateEmail</p>
                             }
-                        }
-                        @if (a.PiiRevealed)
+                            else
+                            {
+                                <h2>@Culture["Employer.AnonymousCandidate"]</h2>
+                                <p class="muted">@Culture["Employer.AcceptToReveal"]</p>
+                            }
+                        </div>
+                        <div class="applicant-card__meta">
+                            @if (a.MatchPercent is int matchPct)
+                            {
+                                <span class="match-score match-score--@(MatchBand(matchPct, a.ViaSafetyNet))">@matchPct%</span>
+                            }
+                            <span class="status-pill status-pill--@a.Status.ToLowerInvariant()">@UiLabels.ApplicationStatus(Culture, a.Status)</span>
+                        </div>
+                    </div>
+
+                    <p class="applicant-card__vacancy">
+                        <strong>@a.VacancyTitle</strong>
+                        @if (!string.IsNullOrWhiteSpace(a.CompanyName))
                         {
-                            <strong>@a.CandidateName</strong>
-                            <span class="muted">@a.CandidateEmail</span>
+                            <span class="muted"> · @a.CompanyName</span>
+                        }
+                    </p>
+
+                    <dl class="applicant-card__facts">
+                        <div>
+                            <dt>@Culture["Employer.FactMotivation"]</dt>
+                            <dd>@(string.IsNullOrWhiteSpace(a.Motivation) ? "—" : a.Motivation)</dd>
+                        </div>
+                        <div>
+                            <dt>@Culture["Employer.FactDistance"]</dt>
+                            <dd>
+                                @if (a.DistanceKm is double km)
+                                {
+                                    <text>@km.ToString("0.#") km</text>
+                                }
+                                else
+                                {
+                                    <text>—</text>
+                                }
+                                <span class="muted"> · ± @a.EstimatedTravelMinutes min (@UiLabels.Transport(Culture, a.PreferredTransport))</span>
+                            </dd>
+                        </div>
+                        <div>
+                            <dt>@Culture["Employer.FactAvailability"]</dt>
+                            <dd>@(string.IsNullOrWhiteSpace(a.AvailabilitySummary) ? "—" : a.AvailabilitySummary)</dd>
+                        </div>
+                        <div>
+                            <dt>@Culture["Employer.FactAge"]</dt>
+                            <dd>@(a.CandidateAgeYears is int age ? $"{age}" : "—")</dd>
+                        </div>
+                    </dl>
+
+                    @if (a.PiiRevealed)
+                    {
+                        <div class="applicant-card__contact muted">
                             @if (!string.IsNullOrWhiteSpace(a.CandidatePhone))
                             {
-                                <span class="muted">
-                                    @a.CandidatePhone
-                                    @if (a.WhatsAppContactAllowed)
-                                    {
-                                        <text> · WhatsApp ok</text>
-                                    }
-                                </span>
-                            }
-                            @if (!string.IsNullOrWhiteSpace(a.CandidateAddress))
-                            {
-                                <span class="muted">@a.CandidateAddress</span>
+                                <span>@a.CandidatePhone@(a.WhatsAppContactAllowed ? " · WhatsApp ok" : "")</span>
                             }
                             @if (!string.IsNullOrWhiteSpace(a.CandidateCity))
                             {
-                                <span class="muted">@a.CandidateCity</span>
+                                <span>@a.CandidateCity</span>
                             }
-                            <span class="muted">
-                                @(a.DistanceKm is not null ? $"{a.DistanceKm:0.#} km" : "afstand onbekend")
-                                · @a.PreferredTransport · @a.EstimatedTravelMinutes min
-                            </span>
-                        }
-                        else
-                        {
-                            <strong>Kandidaat</strong>
-                            <span class="muted">@a.PreferredTransport · @a.EstimatedTravelMinutes min</span>
-                            @if (!string.IsNullOrWhiteSpace(a.PreferencesSummary))
+                            @if (!string.IsNullOrWhiteSpace(a.CandidateAddress))
                             {
-                                <span class="muted">Voorkeuren: @a.PreferencesSummary</span>
+                                <span>@a.CandidateAddress</span>
                             }
-                        }
-                        @if (!string.IsNullOrWhiteSpace(a.Motivation))
-                        {
-                            <span class="muted"><em>Motivatie:</em> @a.Motivation</span>
-                        }
-                        @if (a.PiiRevealed)
-                        {
-                            <span class="muted">Werkvergunning: @(a.WorkPermitConfirmed ? "Bevestigd" : "Onbekend")</span>
-                            <span class="muted">Wettelijk: kandidaat voldoet aan de taakeisen</span>
-                        }
-                        @if (a.PiiRevealed)
-                        {
-                            @if (!string.IsNullOrWhiteSpace(a.SnapshotDrivingLicenses))
-                            {
-                                <span class="muted">Rijbewijs: @a.SnapshotDrivingLicenses</span>
-                            }
-                            @if (!string.IsNullOrWhiteSpace(a.SnapshotEducations))
-                            {
-                                <span class="muted">Opleiding: @a.SnapshotEducations</span>
-                            }
-                            @if (!string.IsNullOrWhiteSpace(a.SchoolEmail))
-                            {
-                                <span class="muted">School-e-mail: @a.SchoolEmail</span>
-                            }
-                            @if (!string.IsNullOrWhiteSpace(a.StudentNumber))
-                            {
-                                <span class="muted">Studentnummer: @a.StudentNumber</span>
-                            }
-                            @if (!string.IsNullOrWhiteSpace(a.StudyProgram))
-                            {
-                                <span class="muted">Stage-opleiding: @a.StudyProgram@(string.IsNullOrWhiteSpace(a.StudyYear) ? "" : $" · jaar {a.StudyYear}")</span>
-                            }
-                            @if (a.CandidateEmployerCount > 0)
-                            {
-                                <span class="muted">Eerdere werkgevers: @a.CandidateEmployerCount</span>
-                            }
-                        }
-                        <span class="muted">@a.VacancyTitle · @UiLabels.ApplicationStatus(Culture, a.Status)</span>
-                    </div>
-                    <div class="inline-actions">
+                        </div>
+                    }
+
+                    <div class="applicant-card__actions">
                         @if (_canReact && a.Status == "Pending")
                         {
-                            <button type="button" class="engagement-btn" disabled="@_busyId.HasValue" @onclick="() => ReactAsync(a.Id, AcceptedStatus)">
-                                Accepteer
+                            <button type="button" class="engagement-btn engagement-btn--primary" disabled="@_busyId.HasValue" @onclick="() => ReactAsync(a.Id, AcceptedStatus)">
+                                @Culture["Employer.Accept"]
                             </button>
-                            <button type="button" class="engagement-btn" disabled="@_busyId.HasValue" @onclick="() => ReactAsync(a.Id, RejectedStatus)">
-                                Wijs af
+                            <button type="button" class="engagement-btn" disabled="@_busyId.HasValue" @onclick="() => OpenRejectConfirm(a)">
+                                @Culture["Employer.Reject"]
                             </button>
                         }
                         @if (_canReact && a.Status == "Accepted")
                         {
-                            <button type="button" class="engagement-btn" disabled="@_busyId.HasValue" @onclick="() => MarkContactAsync(a.Id)">
-                                Contact met kandidaat
+                            <button type="button" class="engagement-btn engagement-btn--primary" disabled="@_busyId.HasValue" @onclick="() => MarkContactAsync(a.Id)">
+                                @Culture["Employer.Invite"]
                             </button>
                         }
                         @if (_canReact && (a.Status == "Accepted" || a.Status == "EmployerContacting"))
                         {
-                            <button type="button" class="engagement-btn" disabled="@_busyId.HasValue" @onclick="() => FulfillAsync(a.VacancyId, a.Id)">
-                                Markeer als vervuld
+                            <button type="button" class="engagement-btn engagement-btn--primary" disabled="@_busyId.HasValue" @onclick="() => OpenMatchConfirm(a, otherPending)">
+                                @Culture["Employer.Match"]
                             </button>
                         }
                         @if (a.CvPdfAvailable || a.PiiRevealed)
                         {
-                            <button type="button"
-                                    class="engagement-btn"
-                                    disabled="@_busyId.HasValue"
-                                    @onclick="() => DownloadCvAsync(a.Id)">
+                            <button type="button" class="engagement-btn" disabled="@_busyId.HasValue" @onclick="() => DownloadCvAsync(a.Id)">
                                 @Culture["Employer.DownloadLobsyCv"]
                             </button>
                         }
-                        <span class="status-pill status-pill--@a.Status.ToLowerInvariant()">@UiLabels.ApplicationStatus(Culture, a.Status)</span>
                     </div>
-                </div>
+                </article>
             }
         </div>
+
         @if (!string.IsNullOrEmpty(_message))
         {
-            <p class="state-message">@_message</p>
+            <p class="state-message @(_messageIsError ? "error" : null)">@_message</p>
         }
     }
 </div>
+
+@if (_rejectTarget is not null)
+{
+    <div class="confirm-modal" role="dialog" aria-modal="true" aria-labelledby="reject-title">
+        <button type="button" class="confirm-modal__backdrop" @onclick="CloseDialogs" aria-label="@Culture["Common.Close"]"></button>
+        <div class="confirm-modal__dialog">
+            <h2 id="reject-title">@Culture["Employer.RejectConfirmTitle"]</h2>
+            <p>@Culture["Employer.RejectConfirmBody"]</p>
+            <div class="confirm-modal__actions">
+                <button type="button" class="engagement-btn" @onclick="CloseDialogs">@Culture["Common.Cancel"]</button>
+                <button type="button" class="engagement-btn engagement-btn--danger" disabled="@_busyId.HasValue" @onclick="ConfirmRejectAsync">
+                    @Culture["Employer.Reject"]
+                </button>
+            </div>
+        </div>
+    </div>
+}
+
+@if (_matchTarget is not null)
+{
+    <div class="confirm-modal" role="dialog" aria-modal="true" aria-labelledby="match-title">
+        <button type="button" class="confirm-modal__backdrop" @onclick="CloseDialogs" aria-label="@Culture["Common.Close"]"></button>
+        <div class="confirm-modal__dialog">
+            <h2 id="match-title">@Culture["Employer.MatchConfirmTitle"]</h2>
+            <p>@Culture.Format("Employer.MatchConfirmBody", _matchTarget.CandidateName ?? Culture["Employer.AnonymousCandidate"], _matchTarget.VacancyTitle)</p>
+
+            <label class="confirm-modal__check">
+                <input type="checkbox" @bind="_matchRejectOthers" />
+                <span>
+                    @Culture["Employer.MatchRejectOthers"]
+                    @if (_matchOtherCount > 0)
+                    {
+                        <span class="muted"> (@Culture.Format("Employer.MatchRejectOthersCount", _matchOtherCount))</span>
+                    }
+                </span>
+            </label>
+            <label class="confirm-modal__check">
+                <input type="checkbox" @bind="_matchCloseVacancy" />
+                <span>@Culture["Employer.MatchCloseVacancy"]</span>
+            </label>
+
+            <div class="confirm-modal__actions">
+                <button type="button" class="engagement-btn" @onclick="CloseDialogs">@Culture["Common.Cancel"]</button>
+                <button type="button" class="engagement-btn engagement-btn--primary" disabled="@_busyId.HasValue" @onclick="ConfirmMatchAsync">
+                    @Culture["Employer.MatchConfirm"]
+                </button>
+            </div>
+        </div>
+    </div>
+}
 
 @code {
     private const string AcceptedStatus = "Accepted";
@@ -162,9 +230,49 @@
     private bool _canReact;
     private Guid? _busyId;
     private string? _message;
+    private bool _messageIsError;
+    private string _statusFilter = "open";
+
+    private EmployerApplicationItem? _rejectTarget;
+    private EmployerApplicationItem? _matchTarget;
+    private int _matchOtherCount;
+    private bool _matchRejectOthers = true;
+    private bool _matchCloseVacancy = true;
+
+    private IEnumerable<(string Key, string Label)> StatusFilters =>
+    [
+        ("open", Culture["Employer.FilterOpen"]),
+        ("accepted", Culture["Employer.FilterAccepted"]),
+        ("matched", Culture["Employer.FilterMatched"]),
+        ("rejected", Culture["Employer.FilterRejected"]),
+        ("all", Culture["Employer.FilterAll"])
+    ];
+
+    private IEnumerable<EmployerApplicationItem> FilteredItems => _statusFilter switch
+    {
+        "open" => _items.Where(a => a.Status is "Pending"),
+        "accepted" => _items.Where(a => a.Status is "Accepted" or "EmployerContacting"),
+        "matched" => _items.Where(a => a.Status is "Hired"),
+        "rejected" => _items.Where(a => a.Status is "Rejected" or "FilledElsewhere"),
+        _ => _items
+    };
 
     private static string MatchBand(int percent, bool viaSafetyNet)
         => viaSafetyNet || percent < 50 ? "red" : percent >= 70 ? "green" : "orange";
+
+    private int CountFor(string key) => key switch
+    {
+        "open" => _items.Count(a => a.Status is "Pending"),
+        "accepted" => _items.Count(a => a.Status is "Accepted" or "EmployerContacting"),
+        "matched" => _items.Count(a => a.Status is "Hired"),
+        "rejected" => _items.Count(a => a.Status is "Rejected" or "FilledElsewhere"),
+        _ => _items.Count
+    };
+
+    private int CountOtherOpen(EmployerApplicationItem current) =>
+        _items.Count(a => a.VacancyId == current.VacancyId
+                          && a.Id != current.Id
+                          && a.Status is "Pending" or "Accepted" or "EmployerContacting");
 
     protected override void OnInitialized()
         => Culture.Changed += OnCultureChanged;
@@ -193,6 +301,50 @@
         }
     }
 
+    private void CloseDialogs()
+    {
+        _rejectTarget = null;
+        _matchTarget = null;
+    }
+
+    private void OpenRejectConfirm(EmployerApplicationItem item)
+        => _rejectTarget = item;
+
+    private void OpenMatchConfirm(EmployerApplicationItem item, int otherCount)
+    {
+        _matchTarget = item;
+        _matchOtherCount = otherCount;
+        _matchRejectOthers = true;
+        _matchCloseVacancy = true;
+    }
+
+    private async Task ConfirmRejectAsync()
+    {
+        if (_rejectTarget is null)
+        {
+            return;
+        }
+
+        var id = _rejectTarget.Id;
+        CloseDialogs();
+        await ReactAsync(id, RejectedStatus);
+    }
+
+    private async Task ConfirmMatchAsync()
+    {
+        if (_matchTarget is null)
+        {
+            return;
+        }
+
+        var vacancyId = _matchTarget.VacancyId;
+        var applicationId = _matchTarget.Id;
+        var rejectOthers = _matchRejectOthers;
+        var closeVacancy = _matchCloseVacancy;
+        CloseDialogs();
+        await FulfillAsync(vacancyId, applicationId, rejectOthers, closeVacancy);
+    }
+
     private async Task ReactAsync(Guid id, string status)
     {
         if (!_canReact)
@@ -202,17 +354,19 @@
 
         _busyId = id;
         _message = null;
+        _messageIsError = false;
         try
         {
             await Api.ReactToApplicationAsync(id, status);
             _items = (await Api.GetApplicationsAsync()).ToList();
-            _message = status == "Accepted"
-                ? "Geaccepteerd — PII zichtbaar, stub e-mail/push verstuurd."
-                : "Afgewezen — stub e-mail/push verstuurd.";
+            _message = status == AcceptedStatus
+                ? Culture["Employer.AcceptedToast"]
+                : Culture["Employer.RejectedToast"];
         }
         catch (Exception ex)
         {
             _message = ex.Message;
+            _messageIsError = true;
         }
         finally
         {
@@ -224,15 +378,17 @@
     {
         _busyId = id;
         _message = null;
+        _messageIsError = false;
         try
         {
             await Api.MarkEmployerContactAsync(id);
             _items = (await Api.GetApplicationsAsync()).ToList();
-            _message = "Status bijgewerkt naar: Werkgever neemt contact op.";
+            _message = Culture["Employer.InvitedToast"];
         }
         catch (Exception ex)
         {
             _message = ex.Message;
+            _messageIsError = true;
         }
         finally
         {
@@ -240,19 +396,21 @@
         }
     }
 
-    private async Task FulfillAsync(Guid vacancyId, Guid applicationId)
+    private async Task FulfillAsync(Guid vacancyId, Guid applicationId, bool rejectOthers, bool closeVacancy)
     {
         _busyId = applicationId;
         _message = null;
+        _messageIsError = false;
         try
         {
-            await Api.FulfillVacancyAsync(vacancyId, applicationId);
+            await Api.FulfillVacancyAsync(vacancyId, applicationId, rejectOthers, closeVacancy);
             _items = (await Api.GetApplicationsAsync()).ToList();
-            _message = "Vacature gemarkeerd als vervuld; overige kandidaten zijn geïnformeerd.";
+            _message = Culture["Employer.MatchedToast"];
         }
         catch (Exception ex)
         {
             _message = ex.Message;
+            _messageIsError = true;
         }
         finally
         {
@@ -264,6 +422,7 @@
     {
         _busyId = applicationId;
         _message = null;
+        _messageIsError = false;
         try
         {
             await Api.DownloadApplicationLobsyCvPdfAsync(applicationId, Js);
@@ -271,6 +430,7 @@
         catch (Exception ex)
         {
             _message = ex.Message;
+            _messageIsError = true;
         }
         finally
         {

@@ -149,6 +149,7 @@ public record EmployerApplicationDto(
     string Status,
     DateTime? RespondedAt,
     string? CandidateCity,
+    /// <summary>Crow-flies distance — visible before Accept (no address/city).</summary>
     double? DistanceKm,
     string? PreferencesSummary,
     /// <summary>Null until Accepted — progressive disclosure.</summary>
@@ -184,4 +185,12 @@ public record EmployerApplicationDto(
     /// <summary>Null until Accepted — phone from apply snapshot.</summary>
     string? CandidatePhone = null,
     /// <summary>WhatsApp contact allowed (only meaningful when CandidatePhone is revealed).</summary>
-    bool WhatsAppContactAllowed = false);
+    bool WhatsAppContactAllowed = false,
+    /// <summary>Age at apply — visible before Accept.</summary>
+    int? CandidateAgeYears = null,
+    /// <summary>Formatted availability — visible before Accept.</summary>
+    string? AvailabilitySummary = null);
+
+public record FulfillVacancyRequest(
+    bool RejectOtherApplications = true,
+    bool CloseVacancy = true);

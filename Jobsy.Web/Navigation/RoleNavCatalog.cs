@@ -38,7 +38,8 @@ public static class RoleNavCatalog
     [
         new("Nav.Home", "/home", NavIcons.Home),
         new("Nav.JobMap", "/", NavIcons.Map),
-        new("Nav.Vacancies", "/employer/vacancies", NavIcons.Vacancies, ["/branch/vacancies/new", "/branch/applicants"]),
+        new("Nav.Vacancies", "/employer/vacancies", NavIcons.Vacancies, ["/branch/vacancies/new"]),
+        new("Nav.Applications", "/branch/applicants", NavIcons.Applications),
         new("Nav.Tokens", "/employer/tokens", NavIcons.Tokens, ["/regional/tokens", "/admin/tokens", "/branch/tokens"]),
         new("Nav.Users", "/employer/users", NavIcons.Users),
         new("Nav.Organization", "/employer/organization", NavIcons.Settings,
@@ -82,7 +83,8 @@ public static class RoleNavCatalog
     [
         new("Nav.Home", "/home", NavIcons.Home),
         new("Nav.JobMap", "/", NavIcons.Map),
-        new("Nav.Vacancies", "/branch/vacancies", NavIcons.Vacancies, ["/employer/vacancies", "/branch/vacancies/new", "/branch/applicants"]),
+        new("Nav.Vacancies", "/branch/vacancies", NavIcons.Vacancies, ["/employer/vacancies", "/branch/vacancies/new"]),
+        new("Nav.Applications", "/branch/applicants", NavIcons.Applications),
         new("Nav.MyTokens", "/branch/tokens", NavIcons.Tokens),
         new("Nav.CompanyDetails", "/employer/company", NavIcons.Companies),
         new("Nav.Takeovers", "/employer/takeovers", NavIcons.Branches),

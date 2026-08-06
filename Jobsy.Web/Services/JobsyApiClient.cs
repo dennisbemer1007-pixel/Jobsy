@@ -2086,9 +2086,17 @@ public sealed class JobsyApiClient : IAsyncDisposable
         }
     }
 
-    public async Task FulfillVacancyAsync(Guid vacancyId, Guid applicationId, CancellationToken ct = default)
+    public async Task FulfillVacancyAsync(
+        Guid vacancyId,
+        Guid applicationId,
+        bool rejectOtherApplications = true,
+        bool closeVacancy = true,
+        CancellationToken ct = default)
     {
-        var response = await _http.PostAsync($"api/applications/vacancies/{vacancyId}/fulfill/{applicationId}", null, ct);
+        var response = await _http.PostAsJsonAsync(
+            $"api/applications/vacancies/{vacancyId}/fulfill/{applicationId}",
+            new { rejectOtherApplications, closeVacancy },
+            ct);
         if (!response.IsSuccessStatusCode)
         {
             var body = await response.Content.ReadAsStringAsync(ct);
