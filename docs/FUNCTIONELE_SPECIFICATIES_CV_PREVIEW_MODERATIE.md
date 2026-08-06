@@ -1,6 +1,6 @@
 # Functionele & technische specificatie: Lobsy-CV preview, PDF-vrijgave & AI-profielcoach
 
-**Status:** ontwerp (implementatieklaar)  
+**Status:** deels geïmplementeerd (live PDF-preview + download; werkgever na Accept)  
 **Scope:** sollicitatieproces (kandidaat + werkgever)  
 **AVG-anker:** `SECURITY.md` §B — progressive disclosure tot Accept  
 **Bestaande bouwstenen:** `ApplicationsController` (PiiRevealed), QuestPDF-flyers, `VacancyContentModerationService` (OpenAI + heuristics), apply-flow in `VacancyDetail.razor`, `/branch/applicants`
