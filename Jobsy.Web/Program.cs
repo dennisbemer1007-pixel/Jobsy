@@ -101,8 +101,8 @@ app.Use(async (context, next) =>
         "frame-ancestors 'none'; " +
         "object-src 'none'; " +
         "img-src 'self' data: https: blob:; " +
-        "font-src 'self' data:; " +
-        "style-src 'self' 'unsafe-inline' https://unpkg.com; " +
+        "font-src 'self' data: https://fonts.gstatic.com; " +
+        "style-src 'self' 'unsafe-inline' https://unpkg.com https://fonts.googleapis.com; " +
         "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://unpkg.com; " +
         "connect-src 'self' wss: ws: https:; " +
         "worker-src 'self' blob:;";

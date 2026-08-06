@@ -79,6 +79,7 @@ Kernpunten:
 
 ## 5. Navigatie & entry points
 - **Anoniem** → banenkaart `/` (BottomNav: Banenkaart, Registreren, Inloggen)
+- **Westland-teaser** → `/westland` (alias `/lancering`): livedatum 18 nov, gratis periode, tarieven, WhatsApp Dennis
 - **Na login** vanaf `/` of `/banen` → dashboard `/home`
 - **Logout** → `/`
 - Gedeelde UI: `BottomNav`, `TokenWalletChip`, `MetricTile`, `DrilldownGrid`, `ShareModal`, `PublishOptionsDialog`
