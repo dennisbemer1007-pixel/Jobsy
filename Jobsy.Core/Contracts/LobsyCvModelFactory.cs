@@ -122,6 +122,15 @@ public static class LobsyCvModelFactory
         // Dutch addresses often end with "1234 AB City" or "City".
         var last = parts[^1];
         var tokens = last.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        if (tokens.Length >= 3
+            && tokens[0].Length == 4
+            && tokens[0].All(char.IsDigit)
+            && tokens[1].Length is >= 1 and <= 4
+            && tokens[1].All(char.IsLetter))
+        {
+            return string.Join(' ', tokens.Skip(2));
+        }
+
         if (tokens.Length >= 2 && tokens[0].Length >= 4 && char.IsDigit(tokens[0][0]))
         {
             return string.Join(' ', tokens.Skip(1));
