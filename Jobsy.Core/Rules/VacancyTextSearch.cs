@@ -17,16 +17,23 @@ public static class VacancyTextSearch
         "driver", "worker", "helper", "assistant"
     ];
 
-    public static bool Matches(Vacancy vacancy, string? query) =>
-        MatchesText(
+    public static bool Matches(Vacancy vacancy, string? query)
+    {
+        // Align with banenkaart: never match on a masked end-client company name.
+        var display = IntermediaryVacancyRules.ResolvePublicDisplay(
+            vacancy,
+            vacancy.Company,
+            vacancy.IntermediaryCompany);
+        return MatchesText(
             vacancy.Title,
             vacancy.Description,
             vacancy.WorkTypeLabels,
             vacancy.RequiredDrivingLicense,
             vacancy.RequiredEducation,
             query,
-            companyName: vacancy.Company?.Name,
-            intermediaryName: vacancy.IntermediaryCompany?.Name);
+            companyName: display.DisplayName,
+            intermediaryName: display.OfferedByLabel);
+    }
 
     public static bool MatchesText(
         string? title,

@@ -842,6 +842,7 @@
     private DotNetObjectReference<VacancyDiscovery>? _dotNetRef;
     private CancellationTokenSource? _suggestCts;
     private int _suggestGeneration;
+    private int _loadGeneration;
 
     /// <summary>
     /// Always maps to an existing &lt;option&gt;: "all", 15–20, or "21" (21+).
@@ -1478,6 +1479,7 @@
 
     private async Task LoadVacanciesAsync()
     {
+        var generation = ++_loadGeneration;
         _loading = true;
         _error = null;
         // Force a paint so the featured carousel / list leave the previous result set
@@ -1505,6 +1507,11 @@
                 companyFocus || _selectedCategoryIds.Count == 0 ? null : _selectedCategoryIds,
                 suitableFor65Plus: null);
 
+            if (generation != _loadGeneration)
+            {
+                return;
+            }
+
             // Stale/far stored origin + default proximity can wipe the catalog; show all until filters tighten.
             if (items.Count == 0 && ShouldFallbackFromEmptyProximity && !companyFocus)
             {
@@ -1523,6 +1530,11 @@
                     _maxHoursPerWeek,
                     _selectedCategoryIds.Count == 0 ? null : _selectedCategoryIds,
                     suitableFor65Plus: null);
+
+                if (generation != _loadGeneration)
+                {
+                    return;
+                }
             }
 
             _vacancies = items.ToList();
@@ -1569,16 +1581,24 @@
         }
         catch (Exception ex)
         {
+            if (generation != _loadGeneration)
+            {
+                return;
+            }
+
             _error = Culture.Format("Discovery.LoadFailed", ex.Message);
             _vacancies = [];
         }
         finally
         {
-            _loading = false;
+            if (generation == _loadGeneration)
+            {
+                _loading = false;
+            }
         }
 
         // Map init is gated on !_loading in OnAfterRenderAsync — nudge a re-render after load.
-        if (!_mapReady && !_mapInitScheduled)
+        if (generation == _loadGeneration && !_mapReady && !_mapInitScheduled)
         {
             await InvokeAsync(StateHasChanged);
         }
@@ -2316,6 +2336,8 @@
     private async Task CloseFiltersAsync()
     {
         var wasOpen = _filtersOpen;
+        // Drop pending keyword debounce so Cancel cannot re-apply a dismissed draft.
+        _searchDebounceCts?.Cancel();
         if (wasOpen)
         {
             RestoreFilterSnapshot();

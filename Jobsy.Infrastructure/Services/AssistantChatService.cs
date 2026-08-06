@@ -262,6 +262,8 @@ public sealed class AssistantChatService : IAssistantChatService
         {
             // Prefilter must stay looser than VacancyTextSearch: compound job titles
             // like "heftruckchauffeur" also match titles containing the root "heftruck".
+            // Company matching uses the same public-display rules as the banenkaart
+            // (masked end-client names are not searchable).
             var t = token;
             var root = TryJobRoot(token);
             if (root is null)
@@ -271,7 +273,10 @@ public sealed class AssistantChatService : IAssistantChatService
                     || v.Description.ToLower().Contains(t)
                     || (v.WorkTypeLabels != null && v.WorkTypeLabels.ToLower().Contains(t))
                     || (v.RequiredDrivingLicense != null && v.RequiredDrivingLicense.ToLower().Contains(t))
-                    || (v.RequiredEducation != null && v.RequiredEducation.ToLower().Contains(t)));
+                    || (v.RequiredEducation != null && v.RequiredEducation.ToLower().Contains(t))
+                    || ((v.IntermediaryCompanyId == null || v.ShowClientAddressOnMap)
+                        && v.Company.Name.ToLower().Contains(t))
+                    || (v.IntermediaryCompany != null && v.IntermediaryCompany.Name.ToLower().Contains(t)));
             }
             else
             {
@@ -283,7 +288,11 @@ public sealed class AssistantChatService : IAssistantChatService
                     || v.Description.ToLower().Contains(r)
                     || (v.WorkTypeLabels != null && (v.WorkTypeLabels.ToLower().Contains(t) || v.WorkTypeLabels.ToLower().Contains(r)))
                     || (v.RequiredDrivingLicense != null && (v.RequiredDrivingLicense.ToLower().Contains(t) || v.RequiredDrivingLicense.ToLower().Contains(r)))
-                    || (v.RequiredEducation != null && (v.RequiredEducation.ToLower().Contains(t) || v.RequiredEducation.ToLower().Contains(r))));
+                    || (v.RequiredEducation != null && (v.RequiredEducation.ToLower().Contains(t) || v.RequiredEducation.ToLower().Contains(r)))
+                    || ((v.IntermediaryCompanyId == null || v.ShowClientAddressOnMap)
+                        && (v.Company.Name.ToLower().Contains(t) || v.Company.Name.ToLower().Contains(r)))
+                    || (v.IntermediaryCompany != null
+                        && (v.IntermediaryCompany.Name.ToLower().Contains(t) || v.IntermediaryCompany.Name.ToLower().Contains(r))));
             }
         }
 
@@ -296,7 +305,14 @@ public sealed class AssistantChatService : IAssistantChatService
                 v.Id,
                 v.Title,
                 loadDescription ? v.Description : string.Empty,
-                v.Company.Name,
+                // Public display name (masks end client when ShowClientAddressOnMap is false).
+                v.IntermediaryCompanyId != null && !v.ShowClientAddressOnMap && v.IntermediaryCompany != null
+                    ? v.IntermediaryCompany.Name
+                    : v.Company.Name,
+                // When open kaart, intermediary is also public via "Aangeboden door …".
+                v.IntermediaryCompanyId != null && v.ShowClientAddressOnMap && v.IntermediaryCompany != null
+                    ? v.IntermediaryCompany.Name
+                    : null,
                 v.WorkTypes,
                 v.WorkTypeLabels,
                 v.RequiredDrivingLicense,
@@ -317,7 +333,8 @@ public sealed class AssistantChatService : IAssistantChatService
                 v.RequiredDrivingLicense,
                 v.RequiredEducation,
                 searchQuery,
-                companyName: v.Company))
+                companyName: v.Company,
+                intermediaryName: v.ExtraPublicCompanyName))
             .ToList();
 
         var count = matched.Count;
@@ -437,6 +454,7 @@ public sealed class AssistantChatService : IAssistantChatService
         string Title,
         string Description,
         string Company,
+        string? ExtraPublicCompanyName,
         WorkType WorkTypes,
         string? WorkTypeLabels,
         string? RequiredDrivingLicense,

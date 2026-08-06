@@ -183,6 +183,46 @@ public class AssistantChatServiceTests
     }
 
     [Fact]
+    public void VacancyTextSearch_does_not_match_masked_end_client_name()
+    {
+        var client = new Company
+        {
+            Id = Guid.NewGuid(),
+            Name = "Albert Heijn Westland",
+            Address = "Klantstraat 1",
+            Location = new GeoPoint(52.1, 4.3)
+        };
+        var intermediary = new Company
+        {
+            Id = Guid.NewGuid(),
+            Name = "Randstad Logistics",
+            Address = "Bureauweg 9",
+            Location = new GeoPoint(52.0, 4.2),
+            Type = CompanyType.Intermediary
+        };
+        var vacancy = new Vacancy
+        {
+            Id = Guid.NewGuid(),
+            Title = "Vakkenvuller",
+            Description = "Avonddienst",
+            CompanyId = client.Id,
+            Company = client,
+            IntermediaryCompanyId = intermediary.Id,
+            IntermediaryCompany = intermediary,
+            ShowClientAddressOnMap = false,
+            Location = client.Location,
+            WorkTypeLabels = "Retail"
+        };
+
+        Assert.False(VacancyTextSearch.Matches(vacancy, "heijn"));
+        Assert.True(VacancyTextSearch.Matches(vacancy, "randstad"));
+
+        vacancy.ShowClientAddressOnMap = true;
+        Assert.True(VacancyTextSearch.Matches(vacancy, "heijn"));
+        Assert.True(VacancyTextSearch.Matches(vacancy, "randstad"));
+    }
+
+    [Fact]
     public async Task Candidate_horeca_search_sets_filters_action()
     {
         await using var db = CreateDb();
