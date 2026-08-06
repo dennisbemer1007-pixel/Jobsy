@@ -16,6 +16,7 @@ public sealed class KvkVerificationRetryService : IKvkVerificationRetryService
     private readonly JobsyDbContext _db;
     private readonly IKvkService _kvk;
     private readonly CompanyRegistrationService _registration;
+    private readonly IPartnerAffiliateService _partnerAffiliates;
     private readonly ILogger<KvkVerificationRetryService> _logger;
 
     public KvkVerificationRetryService(
@@ -23,10 +24,33 @@ public sealed class KvkVerificationRetryService : IKvkVerificationRetryService
         IKvkService kvk,
         CompanyRegistrationService registration,
         ILogger<KvkVerificationRetryService> logger)
+        : this(
+            db,
+            kvk,
+            registration,
+            new PartnerAffiliateService(
+                db,
+                new SalesCommercialService(db, new TokenLedgerService(db)),
+                new CommissionLedgerService(db),
+                new PlatformFeatureService(
+                    db,
+                    Microsoft.Extensions.Options.Options.Create(new Jobsy.Core.Options.JobsyFeatureOptions()),
+                    new Microsoft.Extensions.Configuration.ConfigurationBuilder().Build())),
+            logger)
+    {
+    }
+
+    public KvkVerificationRetryService(
+        JobsyDbContext db,
+        IKvkService kvk,
+        CompanyRegistrationService registration,
+        IPartnerAffiliateService partnerAffiliates,
+        ILogger<KvkVerificationRetryService> logger)
     {
         _db = db;
         _kvk = kvk;
         _registration = registration;
+        _partnerAffiliates = partnerAffiliates;
         _logger = logger;
     }
 
@@ -172,6 +196,12 @@ public sealed class KvkVerificationRetryService : IKvkVerificationRetryService
         foreach (var user in users)
         {
             user.Role = UserRole.Intermediary;
+        }
+
+        await _db.SaveChangesAsync(cancellationToken);
+        foreach (var user in users)
+        {
+            await _partnerAffiliates.EnsureProfileAsync(user.Id, cancellationToken);
         }
     }
 

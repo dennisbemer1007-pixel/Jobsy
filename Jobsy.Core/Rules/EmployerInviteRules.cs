@@ -27,16 +27,18 @@ public static class EmployerInviteRules
             return true;
         }
 
-        // Bedrijfsmanagers may invite peer bedrijfsmanagers for the same organization.
-        if (callerRole == UserRole.EnterpriseManager && targetRole == UserRole.EnterpriseManager)
+        // Bedrijfsmanagers may invite only EM, Regional and Branch roles for their organization.
+        if (callerRole == UserRole.EnterpriseManager)
         {
-            return true;
+            return targetRole is UserRole.EnterpriseManager
+                or UserRole.RegionalManager
+                or UserRole.BranchManager;
         }
 
-        // Intermediairs may invite colleague intermediairs on the same organization.
-        if (callerRole == UserRole.Intermediary && targetRole == UserRole.Intermediary)
+        // Intermediairs may invite only colleague intermediairs on the same organization.
+        if (callerRole == UserRole.Intermediary)
         {
-            return true;
+            return targetRole == UserRole.Intermediary;
         }
 
         return Rank(callerRole) > Rank(targetRole);

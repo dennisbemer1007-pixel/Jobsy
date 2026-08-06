@@ -59,6 +59,7 @@ public class JobsyDbContext : DbContext
     public DbSet<LocalAuthCredential> LocalAuthCredentials => Set<LocalAuthCredential>();
     public DbSet<SalesManagerProfile> SalesManagerProfiles => Set<SalesManagerProfile>();
     public DbSet<AmbassadeurProfile> AmbassadeurProfiles => Set<AmbassadeurProfile>();
+    public DbSet<PartnerAffiliateProfile> PartnerAffiliateProfiles => Set<PartnerAffiliateProfile>();
     public DbSet<AmbassadeurSettings> AmbassadeurSettings => Set<AmbassadeurSettings>();
     public DbSet<SalesManagerApplication> SalesManagerApplications => Set<SalesManagerApplication>();
     public DbSet<SupplierOnboardingCheckout> SupplierOnboardingCheckouts => Set<SupplierOnboardingCheckout>();
@@ -177,12 +178,17 @@ public class JobsyDbContext : DbContext
                 .WithMany()
                 .HasForeignKey(e => e.ReferredByAmbassadeurUserId)
                 .OnDelete(DeleteBehavior.SetNull);
+            entity.HasOne(e => e.ReferredByPartnerUser)
+                .WithMany()
+                .HasForeignKey(e => e.ReferredByPartnerUserId)
+                .OnDelete(DeleteBehavior.SetNull);
             entity.HasOne(e => e.CommissionIndirectSalesManagerUser)
                 .WithMany()
                 .HasForeignKey(e => e.CommissionIndirectSalesManagerUserId)
                 .OnDelete(DeleteBehavior.SetNull);
             entity.HasIndex(e => e.ReferredBySalesManagerUserId);
             entity.HasIndex(e => e.ReferredByAmbassadeurUserId);
+            entity.HasIndex(e => e.ReferredByPartnerUserId);
             entity.HasIndex(e => e.FirstYearSupplierSlot)
                 .IsUnique()
                 .HasFilter("\"FirstYearSupplierSlot\" IS NOT NULL");
@@ -591,6 +597,7 @@ public class JobsyDbContext : DbContext
             entity.Property(e => e.StartHighlightBonusTokens).HasPrecision(10, 2);
             entity.Property(e => e.DirectCommissionRate).HasPrecision(5, 4);
             entity.Property(e => e.IndirectCommissionRate).HasPrecision(5, 4);
+            entity.Property(e => e.PartnerCommissionRate).HasPrecision(5, 4);
         });
 
         modelBuilder.Entity<VacancyTypeTokenCost>(entity =>
@@ -804,6 +811,7 @@ public class JobsyDbContext : DbContext
             entity.Property(e => e.ContactEmailVerifiedAt);
             entity.Property(e => e.ConsentVersion).HasMaxLength(32);
             entity.Property(e => e.SalesManagerTrackingCode).HasMaxLength(32);
+            entity.Property(e => e.PartnerTrackingCode).HasMaxLength(32);
             entity.HasIndex(e => e.ActivationToken).IsUnique();
             entity.HasIndex(e => e.ContactEmail);
             entity.HasIndex(e => e.CreatedAt);
@@ -904,6 +912,18 @@ public class JobsyDbContext : DbContext
             entity.HasOne(e => e.User)
                 .WithOne()
                 .HasForeignKey<AmbassadeurProfile>(e => e.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<PartnerAffiliateProfile>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.TrackingCode).HasMaxLength(32).IsRequired();
+            entity.HasIndex(e => e.UserId).IsUnique();
+            entity.HasIndex(e => e.TrackingCode).IsUnique();
+            entity.HasOne(e => e.User)
+                .WithOne()
+                .HasForeignKey<PartnerAffiliateProfile>(e => e.UserId)
                 .OnDelete(DeleteBehavior.Cascade);
         });
 

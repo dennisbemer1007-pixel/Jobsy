@@ -100,9 +100,12 @@ public class Sprint5EmployerUiFoundationTests
     public void Invite_rules_block_peer_and_cross_scope()
     {
         Assert.True(EmployerInviteRules.CanAssignRole(UserRole.EnterpriseManager, UserRole.EnterpriseManager));
+        Assert.True(EmployerInviteRules.CanAssignRole(UserRole.EnterpriseManager, UserRole.RegionalManager));
         Assert.True(EmployerInviteRules.CanAssignRole(UserRole.EnterpriseManager, UserRole.BranchManager));
+        Assert.False(EmployerInviteRules.CanAssignRole(UserRole.EnterpriseManager, UserRole.Intermediary));
         Assert.True(EmployerInviteRules.CanAssignRole(UserRole.Intermediary, UserRole.Intermediary));
         Assert.False(EmployerInviteRules.CanAssignRole(UserRole.Intermediary, UserRole.EnterpriseManager));
+        Assert.False(EmployerInviteRules.CanAssignRole(UserRole.Intermediary, UserRole.BranchManager));
         Assert.False(EmployerInviteRules.CanAssignRole(UserRole.BranchManager, UserRole.RegionalManager));
 
         var accessible = new HashSet<Guid> { Guid.Parse("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa") };

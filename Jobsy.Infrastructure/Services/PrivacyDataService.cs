@@ -123,6 +123,7 @@ public sealed class PrivacyDataService : IPrivacyDataService
                 r.ConsentAcceptedAt,
                 r.ConsentVersion,
                 r.SalesManagerTrackingCode,
+                r.PartnerTrackingCode,
                 r.CreatedAt,
                 r.ActivatedAt
             })
@@ -146,6 +147,16 @@ public sealed class PrivacyDataService : IPrivacyDataService
                 p.OnboardingCompletedAt,
                 p.CreatedAt,
                 p.UpdatedAt
+            })
+            .FirstOrDefaultAsync(cancellationToken);
+
+        var partnerProfile = await _db.PartnerAffiliateProfiles.AsNoTracking()
+            .Where(p => p.UserId == user.Id)
+            .Select(p => new
+            {
+                p.TrackingCode,
+                p.CreatedAtUtc,
+                p.UpdatedAtUtc
             })
             .FirstOrDefaultAsync(cancellationToken);
 
@@ -243,6 +254,7 @@ public sealed class PrivacyDataService : IPrivacyDataService
             SiteVisits = siteVisits,
             CompanyRegistrations = registrations,
             SalesManagerProfile = salesProfile,
+            PartnerAffiliateProfile = partnerProfile,
             CommissionLedger = commissionEntries,
             SelfBillingInvoices = invoices,
             SalesManagerPayouts = payouts
@@ -480,6 +492,7 @@ public sealed class PrivacyDataService : IPrivacyDataService
             registration.ActivationToken = string.Empty;
             registration.PasswordHash = null;
             registration.SalesManagerTrackingCode = null;
+            registration.PartnerTrackingCode = null;
         }
 
         // AVG: anonymize salesmanager business PII; keep financial rows for fiscal retention
@@ -501,6 +514,14 @@ public sealed class PrivacyDataService : IPrivacyDataService
             salesProfile.AgreementVersion = null;
             salesProfile.OnboardingCompletedAt = null;
             salesProfile.UpdatedAt = DateTime.UtcNow;
+        }
+
+        var partnerProfile = await _db.PartnerAffiliateProfiles
+            .FirstOrDefaultAsync(p => p.UserId == user.Id, cancellationToken);
+        if (partnerProfile is not null)
+        {
+            partnerProfile.TrackingCode = $"DEL-{partnerProfile.Id:N}"[..32];
+            partnerProfile.UpdatedAtUtc = DateTime.UtcNow;
         }
 
         var payouts = await _db.SalesManagerPayoutCheckouts
@@ -544,6 +565,14 @@ public sealed class PrivacyDataService : IPrivacyDataService
         foreach (var company in referred)
         {
             company.ReferredBySalesManagerUserId = null;
+        }
+
+        var partnerReferred = await _db.Companies
+            .Where(c => c.ReferredByPartnerUserId == user.Id)
+            .ToListAsync(cancellationToken);
+        foreach (var company in partnerReferred)
+        {
+            company.ReferredByPartnerUserId = null;
         }
 
         // Detach SM→SM hierarchy links and scrub pending/closed applications.

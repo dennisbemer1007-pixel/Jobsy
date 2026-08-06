@@ -42,7 +42,8 @@ public sealed record SalesCommercialAdminDto(
     IReadOnlyList<SalesPackageDto> Packages,
     decimal DirectCommissionRate = 0.15m,
     decimal IndirectCommissionRate = 0.03m,
-    int CommissionDurationDays = 365);
+    int CommissionDurationDays = 365,
+    decimal PartnerCommissionRate = 0.05m);
 
 public interface ISalesCommercialService
 {
@@ -61,6 +62,7 @@ public interface ISalesCommercialService
         decimal? directCommissionRate = null,
         decimal? indirectCommissionRate = null,
         int? commissionDurationDays = null,
+        decimal? partnerCommissionRate = null,
         CancellationToken cancellationToken = default);
 
     Task<VacancyTypeTokenCost> UpdateVacancyTypeCostAsync(

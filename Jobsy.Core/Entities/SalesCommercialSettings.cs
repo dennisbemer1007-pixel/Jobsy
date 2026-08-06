@@ -38,6 +38,11 @@ public class SalesCommercialSettings
     public decimal IndirectCommissionRate { get; set; } = 0.03m;
 
     /// <summary>
+    /// Commission rate for partner affiliates (Bedrijfsmanager / Intermediair) on token purchases (default 5%).
+    /// </summary>
+    public decimal PartnerCommissionRate { get; set; } = 0.05m;
+
+    /// <summary>
     /// Maximum duration (days) commission accrues for an onboarded entrepreneur (default 365 = 1 year).
     /// </summary>
     public int CommissionDurationDays { get; set; } = 365;

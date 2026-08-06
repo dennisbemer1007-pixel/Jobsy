@@ -116,7 +116,8 @@ public sealed class SalesCommercialService : ISalesCommercialService
             packages.Select(MapPackage).ToList(),
             settings.DirectCommissionRate,
             settings.IndirectCommissionRate,
-            settings.CommissionDurationDays);
+            settings.CommissionDurationDays,
+            settings.PartnerCommissionRate);
     }
 
     public async Task<SalesCommercialSettings> UpdateSettingsAsync(
@@ -128,6 +129,7 @@ public sealed class SalesCommercialService : ISalesCommercialService
         decimal? directCommissionRate = null,
         decimal? indirectCommissionRate = null,
         int? commissionDurationDays = null,
+        decimal? partnerCommissionRate = null,
         CancellationToken cancellationToken = default)
     {
         if (baseTokenValueEuro < 0
@@ -158,6 +160,11 @@ public sealed class SalesCommercialService : ISalesCommercialService
             throw new ArgumentException("Commissieduur moet tussen 1 en 3650 dagen liggen.");
         }
 
+        if (partnerCommissionRate is < 0 or > 1)
+        {
+            throw new ArgumentException("Partnercommissie moet tussen 0 en 100% liggen.");
+        }
+
         if (directCommissionRate is decimal d
             && indirectCommissionRate is decimal i
             && d + i + SalesCommissionRules.AmbassadorShareRate > 1m)
@@ -185,6 +192,11 @@ public sealed class SalesCommercialService : ISalesCommercialService
         if (commissionDurationDays is not null)
         {
             settings.CommissionDurationDays = commissionDurationDays.Value;
+        }
+
+        if (partnerCommissionRate is not null)
+        {
+            settings.PartnerCommissionRate = partnerCommissionRate.Value;
         }
 
         settings.UpdatedAtUtc = DateTime.UtcNow;
@@ -351,6 +363,7 @@ public sealed class SalesCommercialService : ISalesCommercialService
         DirectCommissionRate = SalesCommissionRules.DefaultDirectCommissionRate,
         IndirectCommissionRate = SalesCommissionRules.DefaultIndirectCommissionRate,
         CommissionDurationDays = SalesCommissionRules.DefaultCommissionDurationDays,
+        PartnerCommissionRate = SalesCommissionRules.DefaultPartnerCommissionRate,
         UpdatedAtUtc = DateTime.UtcNow
     };
 

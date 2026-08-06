@@ -12,6 +12,7 @@ public record SubmitRegistrationRequest(
     bool AcceptedTerms = false,
     string? ConsentVersion = null,
     string? SalesManagerTrackingCode = null,
+    string? PartnerTrackingCode = null,
     string? Password = null,
     bool AllowPendingKvkVerification = false,
     string? ManualEstablishmentName = null,

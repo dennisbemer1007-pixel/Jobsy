@@ -189,6 +189,30 @@ public sealed class CommissionLedgerService : ICommissionLedgerService
             cancellationToken);
     }
 
+    public Task<CommissionLedgerEntry?> TryCreditPartnerTokenCommissionAsync(
+        Guid partnerUserId,
+        Guid companyId,
+        Guid tokenCheckoutId,
+        decimal purchaseAmountEuro,
+        decimal rate,
+        CancellationToken cancellationToken = default)
+    {
+        if (rate <= 0)
+        {
+            return Task.FromResult<CommissionLedgerEntry?>(null);
+        }
+
+        return CreditCheckoutCommissionAsync(
+            partnerUserId,
+            companyId,
+            tokenCheckoutId,
+            purchaseAmountEuro,
+            rate,
+            CommissionEntryKind.TokenCommission,
+            "Partnercommissie",
+            cancellationToken);
+    }
+
     private async Task<CommissionLedgerEntry?> CreditCheckoutCommissionAsync(
         Guid salesManagerUserId,
         Guid companyId,

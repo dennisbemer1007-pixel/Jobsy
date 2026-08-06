@@ -18,6 +18,7 @@ public sealed class TokenPurchaseFulfillmentService : ITokenPurchaseFulfillmentS
     private readonly IVatBufferTransferService _vatBuffer;
     private readonly IRevenueShareService _revenueShare;
     private readonly ICommissionLedgerService _commissions;
+    private readonly IPartnerAffiliateService _partnerAffiliates;
     private readonly IPendingTokenActionService _pendingActions;
     private readonly IHostEnvironment _environment;
     private readonly ILogger<TokenPurchaseFulfillmentService> _logger;
@@ -33,6 +34,33 @@ public sealed class TokenPurchaseFulfillmentService : ITokenPurchaseFulfillmentS
         IPendingTokenActionService pendingActions,
         IHostEnvironment environment,
         ILogger<TokenPurchaseFulfillmentService> logger)
+        : this(
+            db,
+            tokenLedger,
+            payments,
+            invoices,
+            vatBuffer,
+            revenueShare,
+            commissions,
+            new NoopPartnerAffiliateService(),
+            pendingActions,
+            environment,
+            logger)
+    {
+    }
+
+    public TokenPurchaseFulfillmentService(
+        JobsyDbContext db,
+        ITokenLedgerService tokenLedger,
+        IPaymentService payments,
+        ITokenPurchaseInvoiceService invoices,
+        IVatBufferTransferService vatBuffer,
+        IRevenueShareService revenueShare,
+        ICommissionLedgerService commissions,
+        IPartnerAffiliateService partnerAffiliates,
+        IPendingTokenActionService pendingActions,
+        IHostEnvironment environment,
+        ILogger<TokenPurchaseFulfillmentService> logger)
     {
         _db = db;
         _tokenLedger = tokenLedger;
@@ -41,6 +69,7 @@ public sealed class TokenPurchaseFulfillmentService : ITokenPurchaseFulfillmentS
         _vatBuffer = vatBuffer;
         _revenueShare = revenueShare;
         _commissions = commissions;
+        _partnerAffiliates = partnerAffiliates;
         _pendingActions = pendingActions;
         _environment = environment;
         _logger = logger;
@@ -374,6 +403,20 @@ public sealed class TokenPurchaseFulfillmentService : ITokenPurchaseFulfillmentS
                     "Commission settlement applied for checkout {CheckoutId}: company {CompanyId}, SM {SalesManagerId}, exVat €{ExVat}",
                     session.Id, session.CompanyId, smId, purchaseExVatEuro);
             }
+
+            if (company.ReferredByPartnerUserId is Guid partnerId)
+            {
+                await _partnerAffiliates.TryCreditTokenCommissionAsync(
+                    partnerId,
+                    session.CompanyId,
+                    session.Id,
+                    purchaseExVatEuro,
+                    cancellationToken);
+
+                _logger.LogInformation(
+                    "Partner commission settlement applied for checkout {CheckoutId}: company {CompanyId}, partner {PartnerUserId}, exVat €{ExVat}",
+                    session.Id, session.CompanyId, partnerId, purchaseExVatEuro);
+            }
         }
         catch (Exception ex)
         {
@@ -471,5 +514,47 @@ public sealed class TokenPurchaseFulfillmentService : ITokenPurchaseFulfillmentS
         session.AmountExVatCents = ex;
         session.VatAmountCents = vat;
         session.TotalAmountCents = total;
+    }
+
+    private sealed class NoopPartnerAffiliateService : IPartnerAffiliateService
+    {
+        public Task<PartnerAffiliateProfile> EnsureProfileAsync(
+            Guid userId,
+            CancellationToken cancellationToken = default)
+            => throw new NotSupportedException();
+
+        public Task<PartnerAffiliateProfile?> ResolveByTrackingCodeAsync(
+            string? trackingCode,
+            CancellationToken cancellationToken = default)
+            => Task.FromResult<PartnerAffiliateProfile?>(null);
+
+        public Task<bool> ApplyReferralAsync(
+            Company company,
+            string? trackingCode,
+            CancellationToken cancellationToken = default)
+            => Task.FromResult(false);
+
+        public Task<CommissionLedgerEntry?> TryCreditTokenCommissionAsync(
+            Guid partnerUserId,
+            Guid companyId,
+            Guid tokenCheckoutId,
+            decimal purchaseAmountExVatEuro,
+            CancellationToken cancellationToken = default)
+            => Task.FromResult<CommissionLedgerEntry?>(null);
+
+        public Task<PartnerAffiliateMeDto?> GetMineAsync(
+            Guid userId,
+            CancellationToken cancellationToken = default)
+            => Task.FromResult<PartnerAffiliateMeDto?>(null);
+
+        public Task<IReadOnlyList<PartnerAffiliateTokenLogRowDto>> GetTokenLogAsync(
+            Guid userId,
+            CancellationToken cancellationToken = default)
+            => Task.FromResult<IReadOnlyList<PartnerAffiliateTokenLogRowDto>>([]);
+
+        public Task<PartnerAffiliateToolkitDto?> GetToolkitAsync(
+            Guid userId,
+            CancellationToken cancellationToken = default)
+            => Task.FromResult<PartnerAffiliateToolkitDto?>(null);
     }
 }

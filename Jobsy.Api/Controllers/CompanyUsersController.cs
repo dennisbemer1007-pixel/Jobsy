@@ -33,6 +33,7 @@ public class CompanyUsersController : ControllerBase
     private readonly IEmailService _email;
     private readonly IUserLookupService _users;
     private readonly IPlatformFeatureService _features;
+    private readonly IPartnerAffiliateService _partnerAffiliates;
     private readonly IWebHostEnvironment _environment;
 
     public CompanyUsersController(
@@ -41,6 +42,7 @@ public class CompanyUsersController : ControllerBase
         IEmailService email,
         IUserLookupService users,
         IPlatformFeatureService features,
+        IPartnerAffiliateService partnerAffiliates,
         IWebHostEnvironment environment)
     {
         _db = db;
@@ -48,6 +50,7 @@ public class CompanyUsersController : ControllerBase
         _email = email;
         _users = users;
         _features = features;
+        _partnerAffiliates = partnerAffiliates;
         _environment = environment;
     }
 
@@ -334,6 +337,10 @@ public class CompanyUsersController : ControllerBase
         }
 
         await _db.SaveChangesAsync(cancellationToken);
+        if (user.Role is UserRole.EnterpriseManager or UserRole.Intermediary)
+        {
+            await _partnerAffiliates.EnsureProfileAsync(user.Id, cancellationToken);
+        }
 
         var features = await _features.GetAsync(cancellationToken);
         var loginUrl = features.PublicWebBaseUrl.TrimEnd('/') + "/login";
@@ -514,6 +521,10 @@ public class CompanyUsersController : ControllerBase
         }
 
         await _db.SaveChangesAsync(cancellationToken);
+        if (user.Role is UserRole.EnterpriseManager or UserRole.Intermediary)
+        {
+            await _partnerAffiliates.EnsureProfileAsync(user.Id, cancellationToken);
+        }
 
         var loaded = await _db.Users
             .AsNoTracking()

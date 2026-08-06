@@ -59,6 +59,7 @@ public sealed record RegistrationSubmitRequest(
     bool AcceptedTerms = false,
     string? ConsentVersion = null,
     string? SalesManagerTrackingCode = null,
+    string? PartnerTrackingCode = null,
     string? Password = null,
     /// <summary>
     /// When true and the KVK API is unavailable, continue with manual establishment data

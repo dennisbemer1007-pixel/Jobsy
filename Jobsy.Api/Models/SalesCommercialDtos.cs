@@ -10,7 +10,8 @@ public record UpdateSalesCommercialSettingsRequest(
     decimal StartHighlightBonusTokens,
     decimal? DirectCommissionRate = null,
     decimal? IndirectCommissionRate = null,
-    int? CommissionDurationDays = null);
+    int? CommissionDurationDays = null,
+    decimal? PartnerCommissionRate = null);
 
 public record UpdateVacancyTypeCostRequest(
     VacancyKind Kind,

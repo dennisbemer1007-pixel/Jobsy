@@ -31,6 +31,7 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
     private readonly IEmailService _email;
     private readonly ITokenLedgerService _ledger;
     private readonly IPlatformFeatureService _features;
+    private readonly IPartnerAffiliateService _partnerAffiliates;
     private readonly ILogger<CompanyRegistrationService> _logger;
 
     public CompanyRegistrationService(
@@ -40,12 +41,36 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
         ITokenLedgerService ledger,
         IPlatformFeatureService features,
         ILogger<CompanyRegistrationService> logger)
+        : this(
+            db,
+            kvk,
+            email,
+            ledger,
+            features,
+            new PartnerAffiliateService(
+                db,
+                new SalesCommercialService(db, ledger),
+                new CommissionLedgerService(db),
+                features),
+            logger)
+    {
+    }
+
+    public CompanyRegistrationService(
+        JobsyDbContext db,
+        IKvkService kvk,
+        IEmailService email,
+        ITokenLedgerService ledger,
+        IPlatformFeatureService features,
+        IPartnerAffiliateService partnerAffiliates,
+        ILogger<CompanyRegistrationService> logger)
     {
         _db = db;
         _kvk = kvk;
         _email = email;
         _ledger = ledger;
         _features = features;
+        _partnerAffiliates = partnerAffiliates;
         _logger = logger;
     }
 
@@ -74,26 +99,37 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
         RegistrationPasswordRules.Validate(request.Password);
 
         string? trackingCode = null;
+        string? partnerTrackingCode = null;
         if (!string.IsNullOrWhiteSpace(request.SalesManagerTrackingCode))
         {
             trackingCode = request.SalesManagerTrackingCode.Trim().ToUpperInvariant();
-            var validSm = await _db.SalesManagerProfiles.AsNoTracking().AnyAsync(
-                p => p.TrackingCode != null
-                     && p.TrackingCode.ToUpper() == trackingCode
-                     && p.OnboardingCompletedAt != null
-                     && p.AgreementSignedAt != null,
-                cancellationToken);
-            var validAm = !validSm && await _db.AmbassadeurProfiles.AsNoTracking().AnyAsync(
-                p => p.TrackingCode != null
-                     && p.TrackingCode.ToUpper() == trackingCode
-                     && p.OnboardingCompletedAt != null
-                     && p.AgreementSignedAt != null,
-                cancellationToken);
-            if (!validSm && !validAm)
+            if (PartnerAffiliateService.IsPartnerTrackingCode(trackingCode))
             {
-                throw new ArgumentException(
-                    "Deze trackingcode is onbekend of nog niet actief. Laat het veld leeg of vul een geldige code in.");
+                partnerTrackingCode = trackingCode;
+                trackingCode = null;
             }
+        }
+
+        if (!string.IsNullOrWhiteSpace(request.PartnerTrackingCode))
+        {
+            if (partnerTrackingCode is not null || trackingCode is not null)
+            {
+                throw new ArgumentException("Vul maximaal één trackingcode in.");
+            }
+
+            partnerTrackingCode = request.PartnerTrackingCode.Trim().ToUpperInvariant();
+        }
+
+        if (trackingCode is not null)
+        {
+            await ValidateSalesOrAmbassadeurTrackingCodeAsync(trackingCode, cancellationToken);
+        }
+
+        if (partnerTrackingCode is not null
+            && await _partnerAffiliates.ResolveByTrackingCodeAsync(partnerTrackingCode, cancellationToken) is null)
+        {
+            throw new ArgumentException(
+                "Deze trackingcode is onbekend of nog niet actief. Laat het veld leeg of vul een geldige code in.");
         }
 
         var lookup = await _kvk.LookupEstablishmentsAsync(kvkNumber, cancellationToken);
@@ -209,6 +245,7 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
             ConsentAcceptedAt = DateTime.UtcNow,
             ConsentVersion = PrivacyConstants.CurrentConsentVersion,
             SalesManagerTrackingCode = trackingCode,
+            PartnerTrackingCode = partnerTrackingCode,
             CreatedAt = DateTime.UtcNow
         };
 
@@ -476,6 +513,8 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
                 "Kon vestiging niet activeren (mogelijk al geregistreerd). Probeer opnieuw of dien een overnameverzoek in.",
                 ex);
         }
+
+        await _partnerAffiliates.EnsureProfileAsync(user.Id, cancellationToken);
 
         var welcomeGranted = await GrantWelcomeTokenAsync(branchId, user.Id, cancellationToken);
 
@@ -766,6 +805,7 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
 
         // Preserve salesmanager referral captured at submit time.
         await ApplySalesManagerReferralAsync(registration, target, orgId, cancellationToken);
+        await ApplyPartnerReferralAsync(registration, target, orgId, cancellationToken);
 
         _db.PlatformLogs.Add(new PlatformLog
         {
@@ -780,6 +820,7 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
         });
 
         await _db.SaveChangesAsync(cancellationToken);
+        await _partnerAffiliates.EnsureProfileAsync(user.Id, cancellationToken);
 
         var features = await _features.GetAsync(cancellationToken);
         var loginUrl = features.PublicWebBaseUrl.TrimEnd('/') + "/login";
@@ -956,6 +997,7 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
         }
 
         await ApplySalesManagerReferralAsync(registration, branch, orgId, cancellationToken);
+        await ApplyPartnerReferralAsync(registration, branch, orgId, cancellationToken);
 
         var role = ResolveRegistrationRole(registration);
 
@@ -1493,6 +1535,29 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
     private static string BuildActivationUrl(string token, string publicWebBaseUrl)
         => $"{publicWebBaseUrl.TrimEnd('/')}/register/activate?token={Uri.EscapeDataString(token)}";
 
+    private async Task ValidateSalesOrAmbassadeurTrackingCodeAsync(
+        string trackingCode,
+        CancellationToken cancellationToken)
+    {
+        var validSm = await _db.SalesManagerProfiles.AsNoTracking().AnyAsync(
+            p => p.TrackingCode != null
+                 && p.TrackingCode.ToUpper() == trackingCode
+                 && p.OnboardingCompletedAt != null
+                 && p.AgreementSignedAt != null,
+            cancellationToken);
+        var validAm = !validSm && await _db.AmbassadeurProfiles.AsNoTracking().AnyAsync(
+            p => p.TrackingCode != null
+                 && p.TrackingCode.ToUpper() == trackingCode
+                 && p.OnboardingCompletedAt != null
+                 && p.AgreementSignedAt != null,
+            cancellationToken);
+        if (!validSm && !validAm)
+        {
+            throw new ArgumentException(
+                "Deze trackingcode is onbekend of nog niet actief. Laat het veld leeg of vul een geldige code in.");
+        }
+    }
+
     private async Task ApplySalesManagerReferralAsync(
         CompanyRegistration registration,
         Company branch,
@@ -1626,6 +1691,38 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
         }
 
         return true;
+    }
+
+    private async Task ApplyPartnerReferralAsync(
+        CompanyRegistration registration,
+        Company branch,
+        Guid? orgId,
+        CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrWhiteSpace(registration.PartnerTrackingCode))
+        {
+            return;
+        }
+
+        var applied = await _partnerAffiliates.ApplyReferralAsync(
+            branch, registration.PartnerTrackingCode, cancellationToken);
+        if (!applied)
+        {
+            _logger.LogWarning(
+                "Unknown or already claimed partner tracking code {Code} on registration {Id}",
+                registration.PartnerTrackingCode, registration.Id);
+            return;
+        }
+
+        if (orgId is Guid oid)
+        {
+            var org = await _db.Companies.FirstOrDefaultAsync(c => c.Id == oid, cancellationToken)
+                      ?? _db.Companies.Local.FirstOrDefault(c => c.Id == oid);
+            if (org is not null)
+            {
+                await _partnerAffiliates.ApplyReferralAsync(org, registration.PartnerTrackingCode, cancellationToken);
+            }
+        }
     }
 
     private async Task SnapshotCommissionTermsAsync(

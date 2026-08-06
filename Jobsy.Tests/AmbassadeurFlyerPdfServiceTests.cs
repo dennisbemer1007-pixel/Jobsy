@@ -123,6 +123,7 @@ public class AmbassadeurFlyerPdfServiceTests
             decimal? directCommissionRate = null,
             decimal? indirectCommissionRate = null,
             int? commissionDurationDays = null,
+            decimal? partnerCommissionRate = null,
             CancellationToken cancellationToken = default)
             => throw new NotSupportedException();
 

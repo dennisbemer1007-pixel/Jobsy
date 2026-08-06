@@ -92,6 +92,10 @@ public class Company
     public Guid? ReferredByAmbassadeurUserId { get; set; }
     public User? ReferredByAmbassadeurUser { get; set; }
 
+    /// <summary>Partner affiliate (Bedrijfsmanager or Intermediair) who referred this supplier.</summary>
+    public Guid? ReferredByPartnerUserId { get; set; }
+    public User? ReferredByPartnerUser { get; set; }
+
     /// <summary>
     /// Ambassadeur commission rate (0–1) frozen when the Ambassadeur referral became active.
     /// </summary>

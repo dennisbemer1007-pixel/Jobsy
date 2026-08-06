@@ -81,6 +81,11 @@
                         <input type="number" min="1" max="3650" step="1"
                                @bind="_admin.CommissionDurationDays" style="width:5.5rem" />
                     </label>
+                    <label>
+                        Partner %
+                        <input type="number" min="0" max="100" step="0.1"
+                               @bind="_partnerPct" style="width:5.5rem" />
+                    </label>
                     <button class="btn-compact btn-compact--primary" type="button" disabled="@_busy" @onclick="SaveSettingsAsync">
                         @Culture["Common.Save"]
                     </button>
@@ -154,6 +159,7 @@
     private SalesCommercialAdminModel? _admin;
     private decimal _directPct = 15m;
     private decimal _indirectPct = 3m;
+    private decimal _partnerPct = 5m;
     private bool _loading = true;
     private bool _busy;
     private string? _error;
@@ -180,6 +186,7 @@
             {
                 _directPct = Math.Round(_admin.DirectCommissionRate * 100m, 2);
                 _indirectPct = Math.Round(_admin.IndirectCommissionRate * 100m, 2);
+                _partnerPct = Math.Round(_admin.PartnerCommissionRate * 100m, 2);
             }
         }
         catch (Exception ex)
@@ -207,7 +214,8 @@
                 _admin.StartHighlightBonusTokens,
                 Math.Round(_directPct / 100m, 4),
                 Math.Round(_indirectPct / 100m, 4),
-                _admin.CommissionDurationDays);
+                _admin.CommissionDurationDays,
+                Math.Round(_partnerPct / 100m, 4));
             _message = "Instellingen opgeslagen.";
             await ReloadAsync();
         }

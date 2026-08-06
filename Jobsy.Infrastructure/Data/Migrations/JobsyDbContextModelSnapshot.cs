@@ -157,6 +157,37 @@ namespace Jobsy.Infrastructure.Data.Migrations
                     b.ToTable("AmbassadeurSettings");
                 });
 
+            modelBuilder.Entity("Jobsy.Core.Entities.PartnerAffiliateProfile", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("TrackingCode")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)");
+
+                    b.Property<DateTime>("UpdatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TrackingCode")
+                        .IsUnique();
+
+                    b.HasIndex("UserId")
+                        .IsUnique();
+
+                    b.ToTable("PartnerAffiliateProfiles");
+                });
+
             modelBuilder.Entity("Jobsy.Core.Entities.ApiKey", b =>
                 {
                     b.Property<Guid>("Id")
@@ -572,6 +603,9 @@ namespace Jobsy.Infrastructure.Data.Migrations
                     b.Property<Guid?>("ReferredByAmbassadeurUserId")
                         .HasColumnType("uuid");
 
+                    b.Property<Guid?>("ReferredByPartnerUserId")
+                        .HasColumnType("uuid");
+
                     b.Property<Guid?>("ReferredBySalesManagerUserId")
                         .HasColumnType("uuid");
 
@@ -601,6 +635,8 @@ namespace Jobsy.Infrastructure.Data.Migrations
                     b.HasIndex("ParentCompanyId");
 
                     b.HasIndex("ReferredByAmbassadeurUserId");
+
+                    b.HasIndex("ReferredByPartnerUserId");
 
                     b.HasIndex("ReferredBySalesManagerUserId");
 
@@ -702,6 +738,10 @@ namespace Jobsy.Infrastructure.Data.Migrations
                     b.Property<string>("PasswordHash")
                         .HasMaxLength(512)
                         .HasColumnType("character varying(512)");
+
+                    b.Property<string>("PartnerTrackingCode")
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)");
 
                     b.Property<string>("PrimarySbiCode")
                         .HasMaxLength(16)
@@ -1562,6 +1602,10 @@ namespace Jobsy.Infrastructure.Data.Migrations
                         .HasColumnType("numeric(10,2)");
 
                     b.Property<decimal>("IndirectCommissionRate")
+                        .HasPrecision(5, 4)
+                        .HasColumnType("numeric(5,4)");
+
+                    b.Property<decimal>("PartnerCommissionRate")
                         .HasPrecision(5, 4)
                         .HasColumnType("numeric(5,4)");
 
@@ -3029,6 +3073,17 @@ namespace Jobsy.Infrastructure.Data.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("Jobsy.Core.Entities.PartnerAffiliateProfile", b =>
+                {
+                    b.HasOne("Jobsy.Core.Entities.User", "User")
+                        .WithOne()
+                        .HasForeignKey("Jobsy.Core.Entities.PartnerAffiliateProfile", "UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("Jobsy.Core.Entities.ApiKey", b =>
                 {
                     b.HasOne("Jobsy.Core.Entities.Company", "Company")
@@ -3100,6 +3155,11 @@ namespace Jobsy.Infrastructure.Data.Migrations
                         .HasForeignKey("ReferredByAmbassadeurUserId")
                         .OnDelete(DeleteBehavior.SetNull);
 
+                    b.HasOne("Jobsy.Core.Entities.User", "ReferredByPartnerUser")
+                        .WithMany()
+                        .HasForeignKey("ReferredByPartnerUserId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
                     b.HasOne("Jobsy.Core.Entities.User", "ReferredBySalesManagerUser")
                         .WithMany()
                         .HasForeignKey("ReferredBySalesManagerUserId")
@@ -3110,6 +3170,8 @@ namespace Jobsy.Infrastructure.Data.Migrations
                     b.Navigation("ParentCompany");
 
                     b.Navigation("ReferredByAmbassadeurUser");
+
+                    b.Navigation("ReferredByPartnerUser");
 
                     b.Navigation("ReferredBySalesManagerUser");
                 });

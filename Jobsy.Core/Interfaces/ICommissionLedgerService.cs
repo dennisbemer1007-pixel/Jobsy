@@ -62,6 +62,18 @@ public interface ICommissionLedgerService
         int? durationDays = null,
         CancellationToken cancellationToken = default);
 
+    /// <summary>
+    /// Credits Bedrijfsmanager/Intermediair partner commission on token purchases.
+    /// Idempotent on (checkout id, partner user, TokenCommission).
+    /// </summary>
+    Task<CommissionLedgerEntry?> TryCreditPartnerTokenCommissionAsync(
+        Guid partnerUserId,
+        Guid companyId,
+        Guid tokenCheckoutId,
+        decimal purchaseAmountEuro,
+        decimal rate,
+        CancellationToken cancellationToken = default);
+
     Task AttachEntriesToInvoiceAsync(
         Guid invoiceId,
         IReadOnlyList<Guid> entryIds,

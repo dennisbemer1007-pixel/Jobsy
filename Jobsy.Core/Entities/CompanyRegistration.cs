@@ -69,6 +69,9 @@ public class CompanyRegistration
     /// <summary>Optional salesmanager tracking code captured at submit.</summary>
     public string? SalesManagerTrackingCode { get; set; }
 
+    /// <summary>Optional partner affiliate tracking code (BM-/IM-) captured at submit.</summary>
+    public string? PartnerTrackingCode { get; set; }
+
     public DateTime CreatedAt { get; set; }
     public DateTime? ActivatedAt { get; set; }
 

@@ -80,6 +80,7 @@ public class RegistrationController : ControllerBase
                     request.AcceptedTerms,
                     request.ConsentVersion,
                     request.SalesManagerTrackingCode,
+                    request.PartnerTrackingCode,
                     request.Password,
                     request.AllowPendingKvkVerification,
                     request.ManualEstablishmentName,

@@ -21,6 +21,9 @@ public static class SalesCommissionRules
     /// <summary>Default passive referral bonus for the referring salesmanager (Admin-configurable).</summary>
     public const decimal DefaultIndirectCommissionRate = 0.03m;
 
+    /// <summary>Default commission for partner affiliates (Bedrijfsmanager / Intermediair).</summary>
+    public const decimal DefaultPartnerCommissionRate = 0.05m;
+
     /// <summary>Default commission duration in days for an onboarded entrepreneur (1 year).</summary>
     public const int DefaultCommissionDurationDays = 365;
 

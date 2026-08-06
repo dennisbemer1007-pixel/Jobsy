@@ -290,6 +290,67 @@ public class SalesManagerCommissionTests
     }
 
     [Fact]
+    public async Task Registration_with_partner_tracking_code_links_company_and_credits_token_commission()
+    {
+        await using var db = CreateDb();
+        var partnerId = Guid.NewGuid();
+        db.Users.Add(new User
+        {
+            Id = partnerId,
+            Email = "bm.partner@jobsy.local",
+            FullName = "BM Partner",
+            Role = UserRole.EnterpriseManager,
+            IsActive = true
+        });
+        db.PartnerAffiliateProfiles.Add(new PartnerAffiliateProfile
+        {
+            Id = Guid.NewGuid(),
+            UserId = partnerId,
+            TrackingCode = "BM-TEST23",
+            CreatedAtUtc = DateTime.UtcNow,
+            UpdatedAtUtc = DateTime.UtcNow
+        });
+        await db.SaveChangesAsync();
+
+        var registration = CreateRegistrationService(db);
+        var submit = await registration.SubmitAsync(new RegistrationSubmitRequest(
+            "99990001",
+            "99990001_0001",
+            RegistrationScope.BranchOnly,
+            "Nova",
+            "nova.bm@jobsy.local",
+            null,
+            AcceptedTerms: true,
+            PartnerTrackingCode: "BM-TEST23",
+            Password: "TestPass1!"));
+
+        var token = await db.CompanyRegistrations
+            .Where(r => r.Id == submit.RegistrationId)
+            .Select(r => r.ActivationToken)
+            .SingleAsync();
+        var activated = await registration.ActivateAsync(token);
+
+        var branch = await db.Companies.SingleAsync(c => c.Id == activated.BranchCompanyId);
+        Assert.Equal(partnerId, branch.ReferredByPartnerUserId);
+        Assert.Null(branch.ReferredBySalesManagerUserId);
+
+        var partners = new PartnerAffiliateService(
+            db,
+            new SalesCommercialService(db, new TokenLedgerService(db)),
+            new CommissionLedgerService(db),
+            new FakePublicWebFeatures("https://lobsy.nl"));
+        var entry = await partners.TryCreditTokenCommissionAsync(
+            partnerId,
+            branch.Id,
+            Guid.NewGuid(),
+            100m);
+
+        Assert.NotNull(entry);
+        Assert.Equal(5.00m, entry!.AmountExVat);
+        Assert.Equal(5.00m, await new CommissionLedgerService(db).GetBalanceExVatAsync(partnerId));
+    }
+
+    [Fact]
     public async Task Privacy_export_and_anonymize_cover_salesmanager_pii()
     {
         await using var db = CreateDb();

@@ -243,7 +243,7 @@ public sealed class PartnerFlyerPdfService : IPartnerFlyerPdfService
         var normalized = trackingCode.Trim().ToUpperInvariant();
         return System.Text.RegularExpressions.Regex.IsMatch(
             normalized,
-            @"^SM-[A-Z0-9]{6}$",
+            @"^(SM|BM|IM)-[A-Z0-9]{6}$",
             System.Text.RegularExpressions.RegexOptions.CultureInvariant)
             ? normalized
             : null;

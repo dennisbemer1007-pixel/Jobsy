@@ -42,7 +42,7 @@ public partial class SalesCommercialController : ControllerBase
         var normalized = NormalizeTrackingCode(trackingCode);
         if (trackingCode is not null && normalized is null)
         {
-            return BadRequest(new { message = "Ongeldige salescode. Gebruik het formaat SM-XXXXXX." });
+            return BadRequest(new { message = "Ongeldige salescode. Gebruik het formaat SM-, BM- of IM-XXXXXX." });
         }
 
         var bytes = await _flyerPdf.RenderAsync(normalized, cancellationToken);
@@ -72,6 +72,7 @@ public partial class SalesCommercialController : ControllerBase
                 request.DirectCommissionRate,
                 request.IndirectCommissionRate,
                 request.CommissionDurationDays,
+                request.PartnerCommissionRate,
                 cancellationToken);
             return Ok(new
             {
@@ -84,6 +85,7 @@ public partial class SalesCommercialController : ControllerBase
                 settings.DirectCommissionRate,
                 settings.IndirectCommissionRate,
                 settings.CommissionDurationDays,
+                settings.PartnerCommissionRate,
                 settings.UpdatedAtUtc
             });
         }
@@ -188,6 +190,6 @@ public partial class SalesCommercialController : ControllerBase
         return TrackingCodePattern.IsMatch(normalized) ? normalized : null;
     }
 
-    [GeneratedRegex(@"^SM-[A-Z0-9]{6}$", RegexOptions.CultureInvariant)]
+    [GeneratedRegex(@"^(SM|BM|IM)-[A-Z0-9]{6}$", RegexOptions.CultureInvariant)]
     private static partial Regex TrackingCodeRegex();
 }

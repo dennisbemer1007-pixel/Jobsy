@@ -239,7 +239,7 @@
                 </label>
                 <label>
                     @Culture["Register.SalesCode"] (@Culture["Common.Optional"])
-                    <input @bind="_salesManagerCode" maxlength="32" placeholder="SM-XXXXXX" />
+                    <input @bind="_salesManagerCode" maxlength="32" placeholder="SM-/AM-/BM-/IM-XXXXXX" />
                 </label>
                 <p class="muted">@Culture["Register.SalesCodeHint"]</p>
                 @if (!_claimMode)
@@ -679,9 +679,8 @@
                 _contactEmail.Trim(),
                 string.IsNullOrWhiteSpace(_contactPhone) ? null : _contactPhone.Trim(),
                 acceptedTerms: true,
-                salesManagerTrackingCode: string.IsNullOrWhiteSpace(_salesManagerCode)
-                    ? null
-                    : _salesManagerCode.Trim(),
+                salesManagerTrackingCode: NormalizeSalesOrAmbassadeurCode(_salesManagerCode),
+                partnerTrackingCode: NormalizePartnerCode(_salesManagerCode),
                 password: _password,
                 allowPendingKvkVerification: _pendingKvk,
                 manualEstablishmentName: _pendingKvk ? _selected.Name : null,
@@ -748,4 +747,25 @@
             _busy = false;
         }
     }
+
+    private static string? NormalizePartnerCode(string? value)
+    {
+        var code = NormalizeCode(value);
+        return code is not null
+               && (code.StartsWith("BM-", StringComparison.Ordinal) || code.StartsWith("IM-", StringComparison.Ordinal))
+            ? code
+            : null;
+    }
+
+    private static string? NormalizeSalesOrAmbassadeurCode(string? value)
+    {
+        var code = NormalizeCode(value);
+        return code is not null
+               && (code.StartsWith("SM-", StringComparison.Ordinal) || code.StartsWith("AM-", StringComparison.Ordinal))
+            ? code
+            : null;
+    }
+
+    private static string? NormalizeCode(string? value) =>
+        string.IsNullOrWhiteSpace(value) ? null : value.Trim().ToUpperInvariant();
 }

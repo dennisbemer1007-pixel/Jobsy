@@ -156,6 +156,7 @@ public static class DependencyInjection
         services.AddScoped<ISalesManagerPayoutService, SalesManagerPayoutService>();
         services.AddScoped<ISalesManagerDashboardService, SalesManagerDashboardService>();
         services.AddScoped<ISalesCommercialService, SalesCommercialService>();
+        services.AddScoped<IPartnerAffiliateService, PartnerAffiliateService>();
         services.AddScoped<IVacancyCategoryService, VacancyCategoryService>();
         services.AddScoped<IPartnerFlyerPdfService, PartnerFlyerPdfService>();
         services.AddScoped<IEmployerRaamflyerService, EmployerRaamflyerService>();

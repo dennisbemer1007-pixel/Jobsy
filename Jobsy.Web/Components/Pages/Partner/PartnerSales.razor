@@ -138,7 +138,7 @@
         Culture.Changed += OnCultureChanged;
         var raw = FirstNonEmpty(TrackingCode, RefCode)?.Trim().ToUpperInvariant();
         _trackingCode = raw is not null
-                        && System.Text.RegularExpressions.Regex.IsMatch(raw, @"^SM-[A-Z0-9]{6}$")
+                        && System.Text.RegularExpressions.Regex.IsMatch(raw, @"^(SM|BM|IM)-[A-Z0-9]{6}$")
             ? raw
             : null;
         try

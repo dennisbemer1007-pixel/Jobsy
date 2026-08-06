@@ -800,6 +800,7 @@ public sealed class JobsyApiClient : IAsyncDisposable
         bool acceptedTerms = false,
         string? consentVersion = null,
         string? salesManagerTrackingCode = null,
+        string? partnerTrackingCode = null,
         string? password = null,
         bool allowPendingKvkVerification = false,
         string? manualEstablishmentName = null,
@@ -821,6 +822,7 @@ public sealed class JobsyApiClient : IAsyncDisposable
             acceptedTerms,
             consentVersion = consentVersion ?? Jobsy.Core.Privacy.PrivacyConstants.CurrentConsentVersion,
             salesManagerTrackingCode,
+            partnerTrackingCode,
             password,
             allowPendingKvkVerification,
             manualEstablishmentName,
@@ -1332,6 +1334,7 @@ public sealed class JobsyApiClient : IAsyncDisposable
         decimal? directCommissionRate = null,
         decimal? indirectCommissionRate = null,
         int? commissionDurationDays = null,
+        decimal? partnerCommissionRate = null,
         CancellationToken ct = default)
     {
         var response = await _http.PutAsJsonAsync(
@@ -1345,7 +1348,8 @@ public sealed class JobsyApiClient : IAsyncDisposable
                 startHighlightBonusTokens,
                 directCommissionRate,
                 indirectCommissionRate,
-                commissionDurationDays
+                commissionDurationDays,
+                partnerCommissionRate
             },
             ct);
         response.EnsureSuccessStatusCode();
@@ -1442,6 +1446,17 @@ public sealed class JobsyApiClient : IAsyncDisposable
         var base64 = Convert.ToBase64String(bytes);
         await js.InvokeVoidAsync("jobsyDownload.bytes", "lobsy-partner-flyer.pdf", base64, "application/pdf");
     }
+
+    public async Task<PartnerAffiliateMeModel?> GetPartnerAffiliateMeAsync(CancellationToken ct = default)
+        => await _http.GetFromJsonAsync<PartnerAffiliateMeModel>("api/partner-affiliate/me", ct);
+
+    public async Task<IReadOnlyList<PartnerAffiliateTokenLogRowModel>> GetPartnerAffiliateTokenLogAsync(
+        CancellationToken ct = default)
+        => await _http.GetFromJsonAsync<List<PartnerAffiliateTokenLogRowModel>>(
+            "api/partner-affiliate/token-log", ct) ?? [];
+
+    public async Task<PartnerAffiliateToolkitModel?> GetPartnerAffiliateToolkitAsync(CancellationToken ct = default)
+        => await _http.GetFromJsonAsync<PartnerAffiliateToolkitModel>("api/partner-affiliate/toolkit", ct);
 
     public async Task DownloadAmbassadeurFlyerPdfAsync(
         Microsoft.JSInterop.IJSRuntime js,
@@ -3422,6 +3437,56 @@ public sealed class SalesCommercialAdminModel
     public decimal DirectCommissionRate { get; set; } = 0.15m;
     public decimal IndirectCommissionRate { get; set; } = 0.03m;
     public int CommissionDurationDays { get; set; } = 365;
+    public decimal PartnerCommissionRate { get; set; } = 0.05m;
+}
+
+public sealed class PartnerAffiliateMeModel
+{
+    public Guid UserId { get; set; }
+    public string Email { get; set; } = string.Empty;
+    public string FullName { get; set; } = string.Empty;
+    public string Role { get; set; } = string.Empty;
+    public string TrackingCode { get; set; } = string.Empty;
+    public decimal CommissionRate { get; set; }
+    public decimal BalanceExVat { get; set; }
+    public decimal BalanceInclVat { get; set; }
+    public int ReferredCompanyCount { get; set; }
+    public List<PartnerAffiliateLedgerSummaryModel> RecentLedger { get; set; } = [];
+}
+
+public sealed class PartnerAffiliateLedgerSummaryModel
+{
+    public Guid Id { get; set; }
+    public string Kind { get; set; } = string.Empty;
+    public decimal AmountExVat { get; set; }
+    public decimal VatAmount { get; set; }
+    public string? Note { get; set; }
+    public Guid? CompanyId { get; set; }
+    public string? CompanyName { get; set; }
+    public DateTime CreatedAt { get; set; }
+    public Guid? InvoiceId { get; set; }
+}
+
+public sealed class PartnerAffiliateTokenLogRowModel
+{
+    public Guid LedgerEntryId { get; set; }
+    public Guid? CompanyId { get; set; }
+    public string? CompanyName { get; set; }
+    public DateTime DateUtc { get; set; }
+    public int TokensBought { get; set; }
+    public decimal EarningsExVat { get; set; }
+    public decimal PayoutExVat { get; set; }
+    public string Kind { get; set; } = string.Empty;
+    public string? Note { get; set; }
+}
+
+public sealed class PartnerAffiliateToolkitModel
+{
+    public string TrackingCode { get; set; } = string.Empty;
+    public decimal CommissionRate { get; set; }
+    public string PartnerPageUrl { get; set; } = string.Empty;
+    public string RegisterUrl { get; set; } = string.Empty;
+    public string FlyerUrl { get; set; } = string.Empty;
 }
 
 public sealed class VacancyTypeCostItem
