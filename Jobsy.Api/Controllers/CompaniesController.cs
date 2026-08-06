@@ -69,7 +69,7 @@ public class CompaniesController : ControllerBase
                 c.ContactPhone,
                 c.ContactWhatsApp,
                 c.KvkEstablishmentId,
-                c.KvkVerificationStatus,
+                c.KvkVerificationStatus.ToString(),
                 c.PreferredPaymentMethod))
             .ToListAsync(cancellationToken);
 
@@ -572,7 +572,7 @@ public class CompaniesController : ControllerBase
             company.ContactPhone,
             company.ContactWhatsApp,
             company.KvkEstablishmentId,
-            company.KvkVerificationStatus,
+            company.KvkVerificationStatus.ToString(),
             company.PreferredPaymentMethod);
 
     private async Task EnsureActorMembershipAsync(Guid companyId, CancellationToken cancellationToken)

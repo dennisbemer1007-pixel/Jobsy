@@ -1,5 +1,3 @@
-using Jobsy.Core.Enums;
-
 namespace Jobsy.Web.Models;
 
 public class CompanySummary
@@ -9,7 +7,7 @@ public class CompanySummary
     public string Address { get; set; } = string.Empty;
     public string KvkNumber { get; set; } = string.Empty;
     public string? KvkEstablishmentId { get; set; }
-    public KvkVerificationStatus KvkVerificationStatus { get; set; } = KvkVerificationStatus.Verified;
+    public string KvkVerificationStatus { get; set; } = "Verified";
     public decimal TokenBalance { get; set; }
     public int ActiveVacancies { get; set; }
     public Guid? ParentCompanyId { get; set; }
