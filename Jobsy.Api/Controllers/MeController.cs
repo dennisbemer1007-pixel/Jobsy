@@ -506,7 +506,8 @@ public class MeController : ControllerBase
             user.HomeLocation?.Latitude,
             user.HomeLocation?.Longitude,
             DateTime.UtcNow,
-            user.ConsentVersion ?? PrivacyConstants.CurrentConsentVersion);
+            user.ConsentVersion ?? PrivacyConstants.CurrentConsentVersion,
+            dateOfBirth: user.DateOfBirth);
 
         var pdf = await _lobsyCvPdf.RenderAsync(model, cancellationToken);
         var fileName = _lobsyCvPdf.BuildFileName(model);

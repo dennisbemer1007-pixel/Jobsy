@@ -300,6 +300,9 @@ namespace Jobsy.Infrastructure.Data.Migrations
                     b.Property<int?>("CandidateAgeYears")
                         .HasColumnType("integer");
 
+                    b.Property<DateOnly?>("SnapshotDateOfBirth")
+                        .HasColumnType("date");
+
                     b.Property<string>("CandidateName")
                         .IsRequired()
                         .HasMaxLength(256)

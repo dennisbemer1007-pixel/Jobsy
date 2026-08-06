@@ -448,6 +448,7 @@ public sealed class PrivacyDataService : IPrivacyDataService
             app.SnapshotHomeLongitude = null;
             app.SnapshotCertificatesJson = null;
             app.SnapshotShowAddressOnCv = false;
+            app.SnapshotDateOfBirth = null;
             app.Motivation = null;
             app.StudentNumber = null;
             app.SchoolEmail = null;

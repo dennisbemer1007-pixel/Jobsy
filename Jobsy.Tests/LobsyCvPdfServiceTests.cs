@@ -1,6 +1,7 @@
 using Jobsy.Core.Contracts;
 using Jobsy.Core.Interfaces;
 using Jobsy.Core.Privacy;
+using Jobsy.Core.Rules;
 using Jobsy.Infrastructure.Services;
 
 namespace Jobsy.Tests;
@@ -47,9 +48,12 @@ public class LobsyCvPdfServiceTests
             51.993,
             4.209,
             DateTime.UtcNow,
-            PrivacyConstants.CurrentConsentVersion);
+            PrivacyConstants.CurrentConsentVersion,
+            dateOfBirth: new DateOnly(1998, 4, 12));
 
         Assert.True(model.IncludeFullAddress);
+        Assert.Equal(new DateOnly(1998, 4, 12), model.DateOfBirth);
+        Assert.Equal(AgeRules.AgeYearsFromDateOfBirth(new DateOnly(1998, 4, 12)), model.AgeYears);
         Assert.Equal(2, model.Certificates.Count);
         Assert.NotNull(model.Latitude);
         Assert.Equal("2022-03", model.Employers[0].StartMonth);
@@ -133,11 +137,15 @@ public class LobsyCvPdfServiceTests
             PrivacyConstants.CurrentConsentVersion,
             DateTime.UtcNow,
             includeFullAddress: true,
-            includeContactDetails: true);
+            includeContactDetails: true,
+            dateOfBirth: new DateOnly(2000, 1, 15),
+            ageYears: 26);
 
         Assert.Single(model.Certificates);
         Assert.Equal("VCA", model.Certificates[0].Name);
         Assert.Equal(2021, model.Certificates[0].Year);
+        Assert.Equal(new DateOnly(2000, 1, 15), model.DateOfBirth);
+        Assert.Equal(26, model.AgeYears);
 
         var pdf = await service.RenderAsync(model);
         Assert.True(pdf.Length > 500);

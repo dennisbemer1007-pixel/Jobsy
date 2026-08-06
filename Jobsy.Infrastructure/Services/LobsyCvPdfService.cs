@@ -120,6 +120,15 @@ public sealed class LobsyCvPdfService : ILobsyCvPdfService
                                 .FontSize(9).FontColor(AccentCoral);
                             person.Item().Text(string.IsNullOrWhiteSpace(model.FullName) ? "Kandidaat" : model.FullName)
                                 .FontSize(24).Bold().FontColor(BrandNavy);
+                            var ageLine = FormatDateOfBirthAndAge(
+                                model.IncludeContactDetails ? model.DateOfBirth : null,
+                                model.AgeYears,
+                                culture);
+                            if (!string.IsNullOrWhiteSpace(ageLine))
+                            {
+                                person.Item().PaddingTop(2).Text(ageLine)
+                                    .FontSize(10).FontColor(Slate);
+                            }
                             if (!string.IsNullOrWhiteSpace(model.City))
                             {
                                 person.Item().Text($"Klaar voor werk dichtbij {model.City}")
@@ -178,6 +187,28 @@ public sealed class LobsyCvPdfService : ILobsyCvPdfService
                                         .FontSize(10).Bold();
                                 });
                             });
+                            if (model.DateOfBirth is DateOnly dob || model.AgeYears is int)
+                            {
+                                contact.Item().PaddingTop(4).Row(row =>
+                                {
+                                    row.RelativeItem().Column(col =>
+                                    {
+                                        col.Item().Text("Geboortedatum").FontSize(8).FontColor(Muted);
+                                        col.Item().Text(model.DateOfBirth is DateOnly d
+                                                ? d.ToString("d MMMM yyyy", culture)
+                                                : "—")
+                                            .FontSize(10).Bold();
+                                    });
+                                    row.RelativeItem().Column(col =>
+                                    {
+                                        col.Item().Text("Leeftijd").FontSize(8).FontColor(Muted);
+                                        col.Item().Text(model.AgeYears is int age
+                                                ? $"{age} jaar"
+                                                : "—")
+                                            .FontSize(10).Bold();
+                                    });
+                                });
+                            }
                             if (model.WhatsAppContactAllowed && !string.IsNullOrWhiteSpace(model.PhoneNumber))
                             {
                                 contact.Item().PaddingTop(2)
@@ -461,6 +492,21 @@ public sealed class LobsyCvPdfService : ILobsyCvPdfService
         }
 
         return (min ?? max)!.Value.ToString("0.#", CultureInfo.GetCultureInfo("nl-NL"));
+    }
+
+    private static string? FormatDateOfBirthAndAge(DateOnly? dateOfBirth, int? ageYears, CultureInfo culture)
+    {
+        if (dateOfBirth is DateOnly dob && ageYears is int age)
+        {
+            return $"{dob.ToString("d MMMM yyyy", culture)} · {age} jaar";
+        }
+
+        if (dateOfBirth is DateOnly onlyDob)
+        {
+            return onlyDob.ToString("d MMMM yyyy", culture);
+        }
+
+        return ageYears is int onlyAge ? $"{onlyAge} jaar" : null;
     }
 
     private static string Initials(string? fullName)

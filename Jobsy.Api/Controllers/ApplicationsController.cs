@@ -424,6 +424,7 @@ public class ApplicationsController : ControllerBase
         application.EstimatedTravelMinutes = request.EstimatedTravelMinutes;
         application.DistanceKm = distanceKm;
         application.CandidateAgeYears = ageYears;
+        application.SnapshotDateOfBirth = candidate.DateOfBirth;
         // Compact summary only — full prefs JSON easily exceeds varchar(1024) and broke Apply.
         application.PreferencesSummary = BuildCompactPreferencesSummary(preferences);
         application.ConsentAcceptedAt = DateTime.UtcNow;
@@ -1068,7 +1069,9 @@ public class ApplicationsController : ControllerBase
             application.ConsentVersion,
             DateTime.UtcNow,
             includeFullAddress: showAddress,
-            includeContactDetails: includePii);
+            includeContactDetails: includePii,
+            dateOfBirth: includePii ? application.SnapshotDateOfBirth : null,
+            ageYears: application.CandidateAgeYears);
     }
 
     private async Task SendVerificationCodeAsync(

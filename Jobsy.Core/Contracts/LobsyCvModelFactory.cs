@@ -21,7 +21,8 @@ public static class LobsyCvModelFactory
         string? vacancyTitle = null,
         string? companyName = null,
         int? estimatedTravelMinutes = null,
-        int? matchPercent = null)
+        int? matchPercent = null,
+        DateOnly? dateOfBirth = null)
     {
         var employers = (preferences.Employers ?? Array.Empty<CandidateEmployerHistoryDto>())
             .Where(e => !string.IsNullOrWhiteSpace(e.EmployerName))
@@ -42,6 +43,7 @@ public static class LobsyCvModelFactory
         var flexible = preferences.FlexibleTimes == true;
         var slots = NormalizeSlots(preferences.Availability);
         var showAddress = preferences.ShowAddressOnCv != false;
+        var ageYears = AgeRules.AgeYearsFromDateOfBirth(dateOfBirth);
 
         return new LobsyCvModel(
             FullName: fullName,
@@ -69,6 +71,8 @@ public static class LobsyCvModelFactory
             MatchPercent: matchPercent,
             VacancyTitle: vacancyTitle,
             CompanyName: companyName,
+            DateOfBirth: dateOfBirth,
+            AgeYears: ageYears,
             GeneratedAtUtc: generatedAtUtc,
             ConsentVersion: consentVersion ?? PrivacyConstants.CurrentConsentVersion,
             IncludeFullAddress: showAddress,
@@ -99,7 +103,9 @@ public static class LobsyCvModelFactory
         string? consentVersion,
         DateTime generatedAtUtc,
         bool includeFullAddress,
-        bool includeContactDetails)
+        bool includeContactDetails,
+        DateOnly? dateOfBirth = null,
+        int? ageYears = null)
     {
         var licenses = SplitCsv(drivingLicensesCsv);
         var educations = SplitCsv(educationsCsv);
@@ -114,6 +120,7 @@ public static class LobsyCvModelFactory
         }
 
         var showAddress = includeFullAddress;
+        var resolvedAge = ageYears ?? AgeRules.AgeYearsFromDateOfBirth(dateOfBirth);
 
         return new LobsyCvModel(
             FullName: fullName,
@@ -141,6 +148,8 @@ public static class LobsyCvModelFactory
             MatchPercent: matchPercent,
             VacancyTitle: vacancyTitle,
             CompanyName: companyName,
+            DateOfBirth: dateOfBirth,
+            AgeYears: resolvedAge,
             GeneratedAtUtc: generatedAtUtc,
             ConsentVersion: consentVersion ?? PrivacyConstants.CurrentConsentVersion,
             IncludeFullAddress: showAddress,

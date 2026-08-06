@@ -27,6 +27,8 @@ public sealed record LobsyCvModel(
     int? MatchPercent,
     string? VacancyTitle,
     string? CompanyName,
+    DateOnly? DateOfBirth,
+    int? AgeYears,
     DateTime GeneratedAtUtc,
     string ConsentVersion,
     bool IncludeFullAddress,
