@@ -31,8 +31,7 @@ public class VacancyVisibilityRulesTests
         };
 
         Assert.Equal(1m, costs[TokenSpendReason.Publish]);
-        Assert.Equal(1m, costs[TokenSpendReason.Highlight]);
-        Assert.InRange(costs[TokenSpendReason.Highlight], 1m, 2m);
+        Assert.Equal(2m, costs[TokenSpendReason.Highlight]);
         Assert.True(costs.Values.All(v => v > 0));
     }
 

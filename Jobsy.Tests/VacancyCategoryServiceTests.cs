@@ -15,8 +15,12 @@ public class VacancyCategoryServiceTests
         var sut = new VacancyCategoryService(db);
 
         var active = await sut.GetActiveAsync();
+        var all = await sut.GetAllAdminAsync();
 
-        Assert.Equal(7, active.Count);
+        Assert.Equal(6, active.Count);
+        Assert.Equal(7, all.Count);
+        Assert.DoesNotContain(active, c => c.Slug == "highlight");
+        Assert.Contains(all, c => c.Slug == "highlight" && !c.IsActive && !c.ShowInMapFilter);
         var volunteer = Assert.Single(active, c => c.Slug == "vrijwilligerswerk");
         Assert.True(volunteer.IsAlwaysFree);
         Assert.Equal(0m, volunteer.PublishCostTokens);

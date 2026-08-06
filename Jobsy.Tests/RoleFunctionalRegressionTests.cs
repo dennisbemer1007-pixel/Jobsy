@@ -72,7 +72,8 @@ public class RoleFunctionalRegressionTests : IClassFixture<RoleFunctionalWebAppF
 
         var categories = await client.GetFromJsonAsync<List<JsonElement>>("api/vacancy-categories", JsonOpts);
         Assert.NotNull(categories);
-        Assert.True(categories!.Count >= 7);
+        Assert.True(categories!.Count >= 6);
+        Assert.DoesNotContain(categories, c => c.GetProperty("slug").GetString() == "highlight");
         Assert.Contains(categories, c => c.GetProperty("slug").GetString() == "regulier");
         Assert.Contains(categories, c =>
             c.GetProperty("slug").GetString() == "65plus"

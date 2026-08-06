@@ -315,6 +315,27 @@ public sealed class CoreFunctionalFlowApiFactory : WebApplicationFactory<Program
             KvkVerificationStatus = KvkVerificationStatus.Verified
         });
 
+        var salaryTableId = Guid.Parse("d2000000-0000-0000-0000-000000000030");
+        var rateId = Guid.Parse("d2000000-0000-0000-0000-000000000031");
+        db.CompanySalaryTables.Add(new CompanySalaryTable
+        {
+            Id = salaryTableId,
+            CompanyId = CompanyId,
+            Name = "Flow WML",
+            IsActive = true,
+            IsSystemWml = true,
+            Rates =
+            {
+                new CompanySalaryRate
+                {
+                    Id = rateId,
+                    SalaryTableId = salaryTableId,
+                    AgeYears = 21,
+                    HourlyRate = 14.50m
+                }
+            }
+        });
+
         db.Users.AddRange(
             new User
             {
@@ -348,10 +369,12 @@ public sealed class CoreFunctionalFlowApiFactory : WebApplicationFactory<Program
             RequiredTransport = TransportMode.Bike,
             WorkTypes = WorkType.Winkel,
             WorkTypeLabels = "Winkel",
+            SalaryTableId = salaryTableId,
             MinHoursPerWeek = 12,
             MaxHoursPerWeek = 24,
             FlexibleTimes = true,
-            MaxApplications = 10
+            MaxApplications = 10,
+            CategoryId = VacancyCategoryDefaults.RegulierId
         });
 
         db.TokenSpendCosts.AddRange(
