@@ -417,6 +417,22 @@ public class RoleFunctionalRegressionTests : IClassFixture<RoleFunctionalWebAppF
     }
 
     [Fact]
+    public async Task Employer_cannot_fulfill_pending_application_before_accept()
+    {
+        var client = EmployerClient();
+        var response = await client.PostAsJsonAsync(
+            $"api/applications/vacancies/{_factory.VacancyId}/fulfill/{_factory.PendingApplicationId}",
+            new { rejectOtherApplications = true, closeVacancy = true });
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+
+        var apps = await client.GetFromJsonAsync<List<EmployerApplicationDto>>("api/applications", JsonOpts);
+        var pending = Assert.Single(apps!, a => a.Id == _factory.PendingApplicationId);
+        Assert.Equal("Pending", pending.Status);
+        Assert.False(pending.PiiRevealed);
+        Assert.Null(pending.CandidateName);
+    }
+
+    [Fact]
     public async Task Employer_cannot_access_admin_integrations()
     {
         var client = EmployerClient();

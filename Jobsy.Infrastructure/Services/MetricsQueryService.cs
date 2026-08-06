@@ -919,13 +919,11 @@ public sealed class MetricsQueryService : IMetricsQueryService
 
         return rows.Select(a =>
         {
-            // Progressive disclosure: names only after employer acceptance (same as applicants API).
-            var reveal = a.Status is ApplicationStatus.Accepted
-                or ApplicationStatus.EmployerContacting
-                or ApplicationStatus.Hired;
-            var title = reveal
+            // Progressive disclosure: no name/city until employer acceptance (same as applicants API).
+            var reveal = ApplicationRules.IsPiiRevealed(a.Status);
+            var title = reveal && !string.IsNullOrWhiteSpace(a.CandidateName)
                 ? a.CandidateName
-                : (string.IsNullOrWhiteSpace(a.CandidateCity) ? "Kandidaat" : a.CandidateCity);
+                : "Kandidaat";
             var subtitle = $"{a.VacancyTitle} · {a.Status}";
             return new MetricDrilldownItemDto(a.Id, title, subtitle, a.CreatedAt, null);
         }).ToList();
@@ -1005,6 +1003,7 @@ public sealed class MetricsQueryService : IMetricsQueryService
             .Select(a => new
             {
                 a.Id,
+                a.CandidateName,
                 a.CandidateCity,
                 a.Status,
                 VacancyTitle = a.Vacancy.Title,
@@ -1016,12 +1015,17 @@ public sealed class MetricsQueryService : IMetricsQueryService
 
         return rows.Select(a =>
         {
-            var city = string.IsNullOrWhiteSpace(a.CandidateCity) ? "Kandidaat" : a.CandidateCity;
+            var reveal = ApplicationRules.IsPiiRevealed(a.Status);
+            var title = reveal
+                ? (!string.IsNullOrWhiteSpace(a.CandidateName)
+                    ? a.CandidateName
+                    : (string.IsNullOrWhiteSpace(a.CandidateCity) ? "Kandidaat" : a.CandidateCity))
+                : "Kandidaat";
             var transport = string.IsNullOrWhiteSpace(a.PreferredTransport)
                 ? "onbekend"
                 : NormalizeTransportLabel(a.PreferredTransport);
             var subtitle = $"{a.VacancyTitle} · {transport} · {a.EstimatedTravelMinutes} min";
-            return new MetricDrilldownItemDto(a.Id, city, subtitle, a.CreatedAt, a.EstimatedTravelMinutes);
+            return new MetricDrilldownItemDto(a.Id, title, subtitle, a.CreatedAt, a.EstimatedTravelMinutes);
         }).ToList();
     }
 

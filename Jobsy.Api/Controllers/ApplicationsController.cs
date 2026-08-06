@@ -926,7 +926,14 @@ public class ApplicationsController : ControllerBase
             return BadRequest(new { message = "Alleen geverifieerde sollicitaties kunnen op vervuld worden gezet." });
         }
 
-        if (!ApplicationRules.IsPiiRevealed(chosen.Status) && chosen.Status != ApplicationStatus.Hired)
+        if (chosen.Status is ApplicationStatus.Hired
+            or ApplicationStatus.Rejected
+            or ApplicationStatus.FilledElsewhere)
+        {
+            return BadRequest(new { message = "Deze sollicitatie is al afgerond." });
+        }
+
+        if (chosen.Status is not (ApplicationStatus.Accepted or ApplicationStatus.EmployerContacting))
         {
             return BadRequest(new { message = "Matchen kan pas na acceptatie van de kandidaat." });
         }

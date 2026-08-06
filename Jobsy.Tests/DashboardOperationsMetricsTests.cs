@@ -141,6 +141,17 @@ public sealed class DashboardOperationsMetricsTests
             "applications_pending", includePlatformOnly: false, companyIds: [companyId], period: "month");
         Assert.Equal(2, pendingDrill.Count);
         Assert.All(pendingDrill, item => Assert.Contains("Pending", item.Subtitle ?? "", StringComparison.Ordinal));
+        // AVG: never leak city/name before Accept in drilldowns.
+        Assert.All(pendingDrill, item => Assert.Equal("Kandidaat", item.Title));
+        Assert.DoesNotContain(pendingDrill, item =>
+            string.Equals(item.Title, "Delft", StringComparison.OrdinalIgnoreCase)
+            || string.Equals(item.Title, "Rijswijk", StringComparison.OrdinalIgnoreCase)
+            || string.Equals(item.Title, "Den Haag", StringComparison.OrdinalIgnoreCase));
+
+        var travelDrill = await sut.GetDrilldownAsync(
+            "avg_travel_minutes", includePlatformOnly: false, companyIds: [companyId], period: "month");
+        Assert.NotEmpty(travelDrill);
+        Assert.Contains(travelDrill, item => item.Title == "Kandidaat");
 
         var boostDrill = await sut.GetDrilldownAsync(
             "active_boosts", includePlatformOnly: false, companyIds: [companyId], period: "month");
