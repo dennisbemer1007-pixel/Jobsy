@@ -417,6 +417,11 @@ Volgorde:
 ### 6.4 Relatie tot bestaande soft gates
 Bestaande eisen (availability/AboutMe/werkervaring vóór solliciteren) blijven waar zinvol; uren min/max worden onderdeel van de profielgate. Motivatie is **niet** verplicht.
 
+### 6.5 Lobsy-CV preview & AI-profielcoach
+Vóór OTP: optionele **Lobsy-CV PDF-preview** + lichte **profielcoach** (tips op tekstkwaliteit/beschikbaarheid). Werkgevers zien die PDF pas na Accept. Volledige specificatie:
+
+→ **[`FUNCTIONELE_SPECIFICATIES_CV_PREVIEW_MODERATIE.md`](FUNCTIONELE_SPECIFICATIES_CV_PREVIEW_MODERATIE.md)**
+
 ---
 
 ## 7. Matchingspercentage in het werkgeversdashboard
@@ -445,6 +450,7 @@ Werkgever ziet (privacyregels progressive disclosure respecteren — reis/uren/d
 | Dagdelen | Overlapmatrix of “Tijden in overleg” |
 | Wettelijk | Bevestiging: “Kandidaat voldoet aan de wettelijke taakeisen voor deze vacature” (boolean; geen geboortedatum tonen) |
 | Motivatie | Optioneel bericht **prominent** indien ingevuld |
+| Lobsy-CV PDF | **Alleen na Accept** (zelfde progressive disclosure als PII/snapshots) |
 
 ### 7.4 Slim sorteren
 

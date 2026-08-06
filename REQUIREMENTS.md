@@ -31,7 +31,7 @@ Jobsy is een hyper-lokale job-matching applicatie gericht op de regionale arbeid
 - **Vacancy** — Status (`Draft` / `Active` / `Archived` / `PendingApproval`), media, highlight, extensions, requested publish-opties, salary table, **VacancyCategory** (kleur, tokenprijs, highlight/PushBom-beschikbaarheid, extra aanmaakvelden)
 - **VacancyCategory** — Admin-beheerbare categorieën; sturen kaartfilter, legenda, create-dropdown en tokenlogica
 - **TokenTransaction** — typed ledger (`Purchase` / `Spend` / `Grant` / `Allocation`) + `TokenSpendReason` (Publish/Highlight/PushBom/Extend)
-- **Application** — progressive PII tot Accept
+- **Application** — progressive PII tot Accept; Lobsy-CV PDF pas na Accept (zie §4d)
 - **Engagement** — VacancyClick / Like / Share
 - **Region** / **CompanySalaryTable** / **TokenPurchaseCheckout**
 - **CompanyRegistration** / **EstablishmentTakeoverRequest** / **LocalAuthCredential**
@@ -67,6 +67,19 @@ Kernpunten:
 - **Revenue-share / commissie-settlement (realtime via Mollie-webhook):** bij betaalde tokenaankoop van een referred ondernemer → direct SM **15%** + upline SM **3%** van ex-BTW bedrag op `CommissionLedger` (dashboardsaldo), ambassadeur **15%** tokens; strikt ≤ **1 jaar** vanaf `FirstYearStartedAt` (Admin-configureerbaar); idempotent + retry op webhook/complete; `RevenueShareLogs`
 - **Admin:** Salesmanager-kolom op bedrijven; KPI gem. doorlooptijd vacatures
 
+## 4d. Lobsy-CV preview, PDF-vrijgave & AI-profielcoach
+
+→ **[`docs/FUNCTIONELE_SPECIFICATIES_CV_PREVIEW_MODERATIE.md`](docs/FUNCTIONELE_SPECIFICATIES_CV_PREVIEW_MODERATIE.md)**
+
+Kernpunten:
+- **Voorbeeld-PDF** vóór verzenden: kandidaat inzage/download van automatisch Lobsy-CV (QuestPDF uit profiel + optionele motivatie)
+- **AVG / progressive disclosure:** werkgever (intermediair, bedrijfs-/vestigingsmanager) ziet PDF **pas na Accept** (`Accepted` / `EmployerContacting` / `Hired`); endpoint enforce’t zelfde `PiiRevealed`-regel
+- **AI-profielcoach:** lichte moderatie/feedback (heuristics + optionele OpenAI) op AboutMe/motivatie — spelling/taal, te korte velden, beschikbaarheid/match-tips; soft tips blokkeren niet, PII-in-tekst wel
+
+## 4e. Matching — kernpunten (samenvatting)
+
+→ Zie ook §4b / matching-spec.
+
 Kernpunten:
 - **Dagdelen-matrix** (vacature + profiel) met vaste blokken Ochtend/Middag/Avond/Nacht en optie **“Tijden in overleg”** (handmatig of auto bij lege API/CSV/ATS-import)
 - **Verplichte uren** min/max per week + automatische urencategorie (bijbaan/parttime/fulltime)
@@ -87,5 +100,5 @@ Kernpunten:
 - **KVK API** — vestigingen/registratie
 - **Mollie** — prepaid token-aankoop (live API; Development stub op `/tokens/checkout-stub`)
 - **Mail** — activatie/invite/notificaties
-- **OpenAI** — content-moderatie / mock interview (feature-flagged)
+- **OpenAI** — vacature-contentmoderatie / mock interview / kandidaat-profielcoach (feature-flagged)
 - Feature flags o.a. `JobsyFeatures:*` (activation-link exposure, Authenticator, stubs)
