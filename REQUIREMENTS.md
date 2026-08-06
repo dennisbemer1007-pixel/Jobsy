@@ -67,6 +67,18 @@ Kernpunten:
 - **Revenue-share / commissie-settlement (realtime via Mollie-webhook):** bij betaalde tokenaankoop van een referred ondernemer → direct SM **15%** + upline SM **3%** van ex-BTW bedrag op `CommissionLedger` (dashboardsaldo), ambassadeur **15%** tokens; strikt ≤ **1 jaar** vanaf `FirstYearStartedAt` (Admin-configureerbaar); idempotent + retry op webhook/complete; `RevenueShareLogs`
 - **Admin:** Salesmanager-kolom op bedrijven; KPI gem. doorlooptijd vacatures
 
+## 4d. Admin lancerings-KPI-dashboard (Westland-campagne)
+
+→ **[`docs/FUNCTIONELE_SPECIFICATIES_ADMIN_LAUNCH_KPI.md`](docs/FUNCTIONELE_SPECIFICATIES_ADMIN_LAUNCH_KPI.md)**
+
+Kernpunten:
+- **Teaser-kliks** totaal + uniek op `/westland`, met **UTM/QR-kanalen** (`TeaserEngagementEvents`)
+- **Pre-18 nov:** gratis vacatures, Westland-ondernemers, stages & vrijwilligerswerk
+- **Tokens:** pakketten, jaardeal €3.000, saldo vs verbruik
+- **UI:** `/admin/launch` met MetricTiles, timeseries, UTM-tabel, ~20s refresh
+
+## 4e. Matching — kernpunten (samenvatting)
+
 Kernpunten:
 - **Dagdelen-matrix** (vacature + profiel) met vaste blokken Ochtend/Middag/Avond/Nacht en optie **“Tijden in overleg”** (handmatig of auto bij lege API/CSV/ATS-import)
 - **Verplichte uren** min/max per week + automatische urencategorie (bijbaan/parttime/fulltime)
