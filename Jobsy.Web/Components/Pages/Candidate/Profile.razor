@@ -241,6 +241,7 @@
 
                 <fieldset class="profile-employers">
                     <legend>@Culture["Profile.Experience"]</legend>
+                    <p class="profile-employers__hint">@Culture["Profile.EmployerDatesHint"]</p>
                     @for (var i = 0; i < _employers.Count; i++)
                     {
                         var idx = i;
@@ -254,10 +255,6 @@
                                     <span>@Culture["Profile.Role"]</span>
                                     <input placeholder="@Culture["Profile.RolePlaceholder"]" @bind="_employers[idx].Role" />
                                 </label>
-                                <label class="profile-employer-card__field profile-employer-card__field--years">
-                                    <span>@Culture["Profile.Years"]</span>
-                                    <input type="number" min="0" max="80" placeholder="0" @bind="_employers[idx].Years" />
-                                </label>
                                 <button type="button"
                                         class="icon-btn icon-btn--danger"
                                         title="@Culture["Profile.RemoveEmployer"]"
@@ -265,6 +262,25 @@
                                         @onclick="() => RemoveEmployer(idx)">
                                     @((MarkupString)ActionIcons.Trash)
                                 </button>
+                            </div>
+                            <div class="profile-employer-card__dates">
+                                <label class="profile-employer-card__field profile-employer-card__field--start">
+                                    <span>@Culture["Profile.EmployerFrom"]</span>
+                                    <input type="month"
+                                           min="1950-01"
+                                           max="2100-12"
+                                           value="@(_employers[idx].StartMonth ?? "")"
+                                           @onchange="e => SetEmployerStartMonth(idx, e.Value?.ToString())" />
+                                </label>
+                                <label class="profile-employer-card__field profile-employer-card__field--end">
+                                    <span>@Culture["Profile.EmployerTo"]</span>
+                                    <input type="month"
+                                           min="1950-01"
+                                           max="2100-12"
+                                           value="@(_employers[idx].EndMonth ?? "")"
+                                           @onchange="e => SetEmployerEndMonth(idx, e.Value?.ToString())" />
+                                </label>
+                                <p class="profile-employer-card__dates-hint">@Culture["Profile.EmployerToHint"]</p>
                             </div>
                             <label class="profile-employer-card__field profile-employer-card__field--description">
                                 <span>@Culture["Profile.WhatDidYouDo"]</span>
@@ -616,6 +632,53 @@
 
     private void AddEmployer() => _employers.Add(new CandidateEmployerHistory());
     private void RemoveEmployer(int index) => _employers.RemoveAt(index);
+
+    private void SetEmployerStartMonth(int index, string? value)
+    {
+        if (index < 0 || index >= _employers.Count)
+        {
+            return;
+        }
+
+        var normalized = NormalizeMonthInput(value);
+        _employers[index].StartMonth = normalized;
+        if (normalized is not null
+            && !string.IsNullOrWhiteSpace(_employers[index].EndMonth)
+            && string.CompareOrdinal(_employers[index].EndMonth, normalized) < 0)
+        {
+            _employers[index].EndMonth = null;
+        }
+    }
+
+    private void SetEmployerEndMonth(int index, string? value)
+    {
+        if (index < 0 || index >= _employers.Count)
+        {
+            return;
+        }
+
+        var normalized = NormalizeMonthInput(value);
+        if (normalized is not null
+            && !string.IsNullOrWhiteSpace(_employers[index].StartMonth)
+            && string.CompareOrdinal(normalized, _employers[index].StartMonth) < 0)
+        {
+            normalized = null;
+        }
+
+        _employers[index].EndMonth = normalized;
+    }
+
+    private static string? NormalizeMonthInput(string? value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            return null;
+        }
+
+        var trimmed = value.Trim();
+        return trimmed.Length >= 7 ? trimmed[..7] : trimmed;
+    }
+
     private void AddCertificate() => _certificates.Add(new CandidateCertificate());
     private void RemoveCertificate(int index) => _certificates.RemoveAt(index);
 
@@ -785,7 +848,18 @@
                     AboutMe = string.IsNullOrWhiteSpace(_aboutMe) ? null : _aboutMe.Trim(),
                     DrivingLicenses = _selectedLicenses.OrderBy(x => x).ToList(),
                     Availability = BuildAvailability(),
-                    Employers = _employers.Where(e => !string.IsNullOrWhiteSpace(e.EmployerName)).ToList(),
+                    Employers = _employers
+                        .Where(e => !string.IsNullOrWhiteSpace(e.EmployerName))
+                        .Select(e => new CandidateEmployerHistory
+                        {
+                            EmployerName = e.EmployerName.Trim(),
+                            Role = string.IsNullOrWhiteSpace(e.Role) ? null : e.Role.Trim(),
+                            Years = e.Years,
+                            StartMonth = string.IsNullOrWhiteSpace(e.StartMonth) ? null : e.StartMonth.Trim(),
+                            EndMonth = string.IsNullOrWhiteSpace(e.EndMonth) ? null : e.EndMonth.Trim(),
+                            Description = string.IsNullOrWhiteSpace(e.Description) ? null : e.Description.Trim()
+                        })
+                        .ToList(),
                     Educations = _selectedEducations
                         .OrderBy(x =>
                         {

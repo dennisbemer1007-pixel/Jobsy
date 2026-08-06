@@ -20,7 +20,7 @@ public class LobsyCvPdfServiceTests
             Educations: ["MBO"],
             Employers:
             [
-                new CandidateEmployerHistoryDto("Café Test", "Bediening", 1, "Borden afruimen")
+                new CandidateEmployerHistoryDto("Café Test", "Bediening", 1, "Borden afruimen", "2022-03", null)
             ],
             Availability: new Dictionary<string, string[]>
             {
@@ -52,6 +52,10 @@ public class LobsyCvPdfServiceTests
         Assert.True(model.IncludeFullAddress);
         Assert.Equal(2, model.Certificates.Count);
         Assert.NotNull(model.Latitude);
+        Assert.Equal("2022-03", model.Employers[0].StartMonth);
+        Assert.Null(model.Employers[0].EndMonth);
+        Assert.Equal("mrt 2022 – heden", LobsyCvModelFactory.FormatEmployerPeriod(
+            model.Employers[0].StartMonth, model.Employers[0].EndMonth, model.Employers[0].Years));
 
         var pdf = await service.RenderAsync(model);
         Assert.True(pdf.Length > 500);
@@ -138,6 +142,17 @@ public class LobsyCvPdfServiceTests
         var pdf = await service.RenderAsync(model);
         Assert.True(pdf.Length > 500);
         Assert.Equal('%', (char)pdf[0]);
+    }
+
+    [Fact]
+    public void Format_employer_period_supports_range_and_legacy_years()
+    {
+        Assert.Equal("jan 2020 – dec 2021", LobsyCvModelFactory.FormatEmployerPeriod("2020-01", "2021-12"));
+        Assert.Equal("mrt 2022 – heden", LobsyCvModelFactory.FormatEmployerPeriod("2022-03", null));
+        Assert.Equal("3 jr", LobsyCvModelFactory.FormatEmployerPeriod(null, null, 3));
+        Assert.Null(LobsyCvModelFactory.FormatEmployerPeriod(null, null, null));
+        Assert.Equal("2020-01", LobsyCvModelFactory.NormalizeMonth("2020-01-15"));
+        Assert.Null(LobsyCvModelFactory.NormalizeMonth("bad"));
     }
 
     [Fact]

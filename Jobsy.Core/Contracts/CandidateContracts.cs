@@ -24,7 +24,10 @@ public record CandidateEmployerHistoryDto(
     string EmployerName,
     string? Role = null,
     int? Years = null,
-    string? Description = null);
+    string? Description = null,
+    /// <summary>Start month as yyyy-MM. End empty means currently employed.</summary>
+    string? StartMonth = null,
+    string? EndMonth = null);
 
 public record CandidateCertificateDto(
     string Name,

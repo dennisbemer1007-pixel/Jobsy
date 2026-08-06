@@ -129,6 +129,9 @@ public sealed class CandidateEmployerHistory
     public string EmployerName { get; set; } = string.Empty;
     public string? Role { get; set; }
     public int? Years { get; set; }
+    /// <summary>yyyy-MM for &lt;input type="month"&gt;. Empty end = currently employed.</summary>
+    public string? StartMonth { get; set; }
+    public string? EndMonth { get; set; }
     public string? Description { get; set; }
 }
 

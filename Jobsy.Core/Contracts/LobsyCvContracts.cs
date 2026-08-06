@@ -36,7 +36,9 @@ public sealed record LobsyCvEmployerEntry(
     string EmployerName,
     string? Role,
     int? Years,
-    string? Description);
+    string? Description,
+    string? StartMonth = null,
+    string? EndMonth = null);
 
 public sealed record LobsyCvCertificateEntry(
     string Name,

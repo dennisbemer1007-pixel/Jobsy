@@ -310,10 +310,12 @@ public sealed class LobsyCvPdfService : ILobsyCvPdfService
                                         }
 
                                         row.RelativeItem().Text(title).FontSize(9).Bold().FontColor(BrandNavy);
-                                        if (employer.Years is int years)
+                                        var period = LobsyCvModelFactory.FormatEmployerPeriod(
+                                            employer.StartMonth, employer.EndMonth, employer.Years);
+                                        if (!string.IsNullOrWhiteSpace(period))
                                         {
-                                            row.ConstantItem(42).AlignRight()
-                                                .Text($"{years} jr").FontSize(8).FontColor(Muted);
+                                            row.ConstantItem(88).AlignRight()
+                                                .Text(period).FontSize(8).FontColor(Muted);
                                         }
                                     });
                                     if (!string.IsNullOrWhiteSpace(employer.Description))

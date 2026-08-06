@@ -24,7 +24,14 @@ public static class LobsyCvModelFactory
         int? matchPercent = null)
     {
         var employers = (preferences.Employers ?? Array.Empty<CandidateEmployerHistoryDto>())
-            .Select(e => new LobsyCvEmployerEntry(e.EmployerName, e.Role, e.Years, e.Description))
+            .Where(e => !string.IsNullOrWhiteSpace(e.EmployerName))
+            .Select(e => new LobsyCvEmployerEntry(
+                e.EmployerName.Trim(),
+                string.IsNullOrWhiteSpace(e.Role) ? null : e.Role.Trim(),
+                e.Years,
+                string.IsNullOrWhiteSpace(e.Description) ? null : e.Description.Trim(),
+                NormalizeMonth(e.StartMonth),
+                NormalizeMonth(e.EndMonth)))
             .ToList();
 
         var certificates = (preferences.Certificates ?? Array.Empty<CandidateCertificateDto>())
@@ -225,6 +232,70 @@ public static class LobsyCvModelFactory
         {
             return [];
         }
+    }
+
+    public static string? FormatEmployerPeriod(string? startMonth, string? endMonth, int? yearsFallback = null)
+    {
+        var start = NormalizeMonth(startMonth);
+        var end = NormalizeMonth(endMonth);
+
+        if (start is null && end is null)
+        {
+            return yearsFallback is > 0 ? $"{yearsFallback} jr" : null;
+        }
+
+        var startLabel = start is null ? "—" : FormatMonthLabel(start);
+        if (end is null)
+        {
+            return $"{startLabel} – heden";
+        }
+
+        return $"{startLabel} – {FormatMonthLabel(end)}";
+    }
+
+    /// <summary>Normalizes yyyy-MM or yyyy-MM-dd to yyyy-MM; returns null when invalid.</summary>
+    public static string? NormalizeMonth(string? value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            return null;
+        }
+
+        var trimmed = value.Trim();
+        if (trimmed.Length >= 7
+            && trimmed[4] == '-'
+            && int.TryParse(trimmed.AsSpan(0, 4), out var year)
+            && int.TryParse(trimmed.AsSpan(5, 2), out var month)
+            && year is >= 1950 and <= 2100
+            && month is >= 1 and <= 12)
+        {
+            return $"{year:D4}-{month:D2}";
+        }
+
+        return null;
+    }
+
+    private static string FormatMonthLabel(string yyyyMm)
+    {
+        var year = yyyyMm[..4];
+        var month = int.Parse(yyyyMm.AsSpan(5, 2));
+        var label = month switch
+        {
+            1 => "jan",
+            2 => "feb",
+            3 => "mrt",
+            4 => "apr",
+            5 => "mei",
+            6 => "jun",
+            7 => "jul",
+            8 => "aug",
+            9 => "sep",
+            10 => "okt",
+            11 => "nov",
+            12 => "dec",
+            _ => yyyyMm[5..]
+        };
+        return $"{label} {year}";
     }
 
     public static string SerializeAvailabilitySnapshot(

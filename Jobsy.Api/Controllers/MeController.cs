@@ -716,11 +716,22 @@ public class MeController : ControllerBase
                         }
                     }
 
+                    var startMonth = ReadEmployerMonth(item, "startMonth", "startDate");
+                    var endMonth = ReadEmployerMonth(item, "endMonth", "endDate");
+                    if (startMonth is not null
+                        && endMonth is not null
+                        && string.CompareOrdinal(endMonth, startMonth) < 0)
+                    {
+                        endMonth = null;
+                    }
+
                     employers.Add(new CandidateEmployerHistoryDto(
                         name.Trim(),
                         string.IsNullOrWhiteSpace(role) ? null : role.Trim(),
                         years,
-                        description));
+                        description,
+                        startMonth,
+                        endMonth));
                 }
             }
 
@@ -841,6 +852,42 @@ public class MeController : ControllerBase
         }
     }
 
+    private static string? ReadEmployerMonth(JsonElement item, string primaryName, string alternateName)
+    {
+        if (item.TryGetProperty(primaryName, out var primary) && primary.ValueKind == JsonValueKind.String)
+        {
+            var normalized = LobsyCvModelFactory.NormalizeMonth(primary.GetString());
+            if (normalized is not null)
+            {
+                return normalized;
+            }
+        }
+
+        if (item.TryGetProperty(alternateName, out var alternate) && alternate.ValueKind == JsonValueKind.String)
+        {
+            return LobsyCvModelFactory.NormalizeMonth(alternate.GetString());
+        }
+
+        return null;
+    }
+
+    private static string? NormalizeEmployerEndMonth(string? startMonth, string? endMonth)
+    {
+        var start = LobsyCvModelFactory.NormalizeMonth(startMonth);
+        var end = LobsyCvModelFactory.NormalizeMonth(endMonth);
+        if (end is null)
+        {
+            return null;
+        }
+
+        if (start is not null && string.CompareOrdinal(end, start) < 0)
+        {
+            return null;
+        }
+
+        return end;
+    }
+
     private static CandidatePreferencesDto EmptyPreferences() => new(
         [],
         null,
@@ -914,7 +961,9 @@ public class MeController : ControllerBase
                         employerName = e.EmployerName.Trim(),
                         role = string.IsNullOrWhiteSpace(e.Role) ? null : e.Role.Trim(),
                         years = e.Years is >= 0 and <= 80 ? e.Years : null,
-                        description
+                        description,
+                        startMonth = LobsyCvModelFactory.NormalizeMonth(e.StartMonth),
+                        endMonth = NormalizeEmployerEndMonth(e.StartMonth, e.EndMonth)
                     };
                 })
                 .ToArray(),
