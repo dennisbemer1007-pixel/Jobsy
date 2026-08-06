@@ -5,7 +5,8 @@ using Jobsy.Core.Entities;
 namespace Jobsy.Core.Rules;
 
 /// <summary>
-/// Keyword matching for banenkaart / assistant vacancy search (title, description, requirements).
+/// Keyword matching for banenkaart / assistant vacancy search
+/// (title, description, company name, requirements).
 /// Matching is literal: every user search token must appear in the vacancy text.
 /// </summary>
 public static class VacancyTextSearch
@@ -23,7 +24,9 @@ public static class VacancyTextSearch
             vacancy.WorkTypeLabels,
             vacancy.RequiredDrivingLicense,
             vacancy.RequiredEducation,
-            query);
+            query,
+            companyName: vacancy.Company?.Name,
+            intermediaryName: vacancy.IntermediaryCompany?.Name);
 
     public static bool MatchesText(
         string? title,
@@ -31,7 +34,9 @@ public static class VacancyTextSearch
         string? workTypeLabels,
         string? license,
         string? education,
-        string? query)
+        string? query,
+        string? companyName = null,
+        string? intermediaryName = null)
     {
         var tokens = GetRequiredTokens(query);
         if (tokens.Count == 0)
@@ -40,7 +45,8 @@ public static class VacancyTextSearch
         }
 
         // Keep spaces so whole words like "chauffeur" match inside titles.
-        var haystack = Normalize($"{title} {description} {workTypeLabels} {license} {education}");
+        var haystack = Normalize(
+            $"{title} {description} {workTypeLabels} {license} {education} {companyName} {intermediaryName}");
         return tokens.All(token => TokenAppearsIn(haystack, token));
     }
 

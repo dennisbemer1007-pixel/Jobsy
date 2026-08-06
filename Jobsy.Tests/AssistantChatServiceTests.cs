@@ -153,6 +153,36 @@ public class AssistantChatServiceTests
     }
 
     [Fact]
+    public void VacancyTextSearch_matches_company_name()
+    {
+        Assert.True(VacancyTextSearch.MatchesText(
+            "Vakkenvuller",
+            "Avonddienst in de winkel",
+            "Retail",
+            null,
+            null,
+            "ahold",
+            companyName: "Albert Heijn Westland"));
+        Assert.True(VacancyTextSearch.MatchesText(
+            "Magazijnmedewerker",
+            "Orderpicken",
+            "Logistiek",
+            null,
+            null,
+            "randstad",
+            companyName: "DC Delft",
+            intermediaryName: "Randstad Logistics"));
+        Assert.False(VacancyTextSearch.MatchesText(
+            "Barista",
+            "Koffiebar",
+            "Horeca",
+            null,
+            null,
+            "ahold",
+            companyName: "Café Haven"));
+    }
+
+    [Fact]
     public async Task Candidate_horeca_search_sets_filters_action()
     {
         await using var db = CreateDb();

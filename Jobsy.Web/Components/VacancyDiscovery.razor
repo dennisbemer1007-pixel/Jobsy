@@ -229,8 +229,17 @@
         @if (_filtersOpen)
         {
             <div id="discovery-filters-desktop" class="filter-bar filter-bar--desktop">
-                <label class="branch-multiselect-field">
-                    @Culture["Discovery.WorkType"]
+                <label class="filter-bar__query">
+                    @Culture["Discovery.Keyword"]
+                    <input type="search"
+                           autocomplete="off"
+                           placeholder="@Culture["Discovery.KeywordPlaceholder"]"
+                           value="@(_searchDraft ?? _searchQuery ?? "")"
+                           @oninput="OnSearchInput"
+                           @onkeydown="OnSearchKeyDown" />
+                </label>
+                <div class="branch-multiselect-field">
+                    <span class="branch-multiselect-field__label">@Culture["Discovery.WorkType"]</span>
                     <div class="branch-multiselect @(_branchMenuOpen ? "is-open" : null)">
                         <button type="button"
                                 class="branch-multiselect__trigger"
@@ -265,18 +274,9 @@
                             </div>
                         }
                     </div>
-                    @if (_selectedWorkTypes.Count > 0)
-                    {
-                        <div class="branch-multiselect__chips" aria-label="@Culture["Discovery.WorkType"]">
-                            @foreach (var workType in _selectedWorkTypes.OrderBy(x => x, StringComparer.CurrentCultureIgnoreCase))
-                            {
-                                <span class="branch-multiselect__chip">@UiLabels.WorkType(Culture, workType)</span>
-                            }
-                        </div>
-                    }
-                </label>
-                <label class="branch-multiselect-field">
-                    @Culture["Discovery.VacancyType"]
+                </div>
+                <div class="branch-multiselect-field">
+                    <span class="branch-multiselect-field__label">@Culture["Discovery.VacancyType"]</span>
                     <div class="branch-multiselect @(_categoryMenuOpen ? "is-open" : null)">
                         <button type="button"
                                 class="branch-multiselect__trigger"
@@ -312,19 +312,7 @@
                             </div>
                         }
                     </div>
-                    @if (_selectedCategoryIds.Count > 0)
-                    {
-                        <div class="branch-multiselect__chips" aria-label="@Culture["Discovery.VacancyType"]">
-                            @foreach (var cat in SelectedCategories)
-                            {
-                                <span class="branch-multiselect__chip">
-                                    <span class="branch-multiselect__chip-swatch" style="--category-color:@cat.ColorHex" aria-hidden="true"></span>
-                                    @cat.Name
-                                </span>
-                            }
-                        </div>
-                    }
-                </label>
+                </div>
                 <label class="filter-required">
                     @Culture["Discovery.Age"]
                     <select value="@AgeSelectValue" @onchange="OnAgeChanged" required>
@@ -551,7 +539,7 @@
 
     @if (_filtersOpen)
     {
-        <div class="filter-sheet-backdrop" @onclick="CloseFilters"></div>
+        <div class="filter-sheet-backdrop" @onclick="CloseFiltersAsync"></div>
         <div id="discovery-filters" class="filter-sheet" role="dialog" aria-modal="true" aria-labelledby="filter-sheet-title">
             <div class="filter-sheet__header">
                 <img src="/images/brand/lobsy.png?v=20260731-eyes"
@@ -579,7 +567,7 @@
                             <span aria-hidden="true">@((MarkupString)NavIcons.ClearFilters)</span>
                         </button>
                     }
-                    <button type="button" class="share-modal__close" @onclick="CloseFilters" aria-label="@Culture["Common.Close"]">×</button>
+                    <button type="button" class="share-modal__close" @onclick="CloseFiltersAsync" aria-label="@Culture["Common.Close"]">×</button>
                 </div>
             </div>
 
@@ -614,6 +602,19 @@
             }
 
             <div class="filter-sheet__body">
+                <section class="filter-section">
+                    <h3>@Culture["Discovery.Keyword"]</h3>
+                    <label class="filter-sheet__query">
+                        <span class="visually-hidden">@Culture["Discovery.Keyword"]</span>
+                        <input type="search"
+                               autocomplete="off"
+                               placeholder="@Culture["Discovery.KeywordPlaceholder"]"
+                               value="@(_searchDraft ?? _searchQuery ?? "")"
+                               @oninput="OnSearchInput"
+                               @onkeydown="OnSearchKeyDown" />
+                    </label>
+                </section>
+
                 <section class="filter-section filter-section--hero">
                     <h3>@Culture["Discovery.TravelSlider"]</h3>
                     <div class="travel-slider">
@@ -683,15 +684,6 @@
                             </div>
                         }
                     </div>
-                    @if (_selectedWorkTypes.Count > 0)
-                    {
-                        <div class="branch-multiselect__chips">
-                            @foreach (var workType in _selectedWorkTypes.OrderBy(x => x, StringComparer.CurrentCultureIgnoreCase))
-                            {
-                                <span class="branch-multiselect__chip">@UiLabels.WorkType(Culture, workType)</span>
-                            }
-                        </div>
-                    }
                 </section>
 
 
@@ -732,18 +724,6 @@
                             </div>
                         }
                     </div>
-                    @if (_selectedCategoryIds.Count > 0)
-                    {
-                        <div class="branch-multiselect__chips">
-                            @foreach (var cat in SelectedCategories)
-                            {
-                                <span class="branch-multiselect__chip">
-                                    <span class="branch-multiselect__chip-swatch" style="--category-color:@cat.ColorHex" aria-hidden="true"></span>
-                                    @cat.Name
-                                </span>
-                            }
-                        </div>
-                    }
                 </section>
 
 
@@ -786,7 +766,7 @@
             </div>
 
             <div class="filter-sheet__footer">
-                <button type="button" class="filter-sheet__cancel" @onclick="CloseFilters">
+                <button type="button" class="filter-sheet__cancel" @onclick="CloseFiltersAsync">
                     @Culture["Discovery.Cancel"]
                 </button>
                 <button type="button" class="filter-sheet__apply" @onclick="ApplySearch">
@@ -832,8 +812,12 @@
     private int? _snapAgeYears;
     private decimal? _snapMinHourlyWage;
     private decimal? _snapMaxHourlyWage;
-    /// <summary>Hidden keyword filter from assistant (?q=); not a primary UI control.</summary>
+    private string? _snapSearchQuery;
+    /// <summary>Free-text filter: company name, vacancy title, description (?q=).</summary>
     private string? _searchQuery;
+    /// <summary>In-progress text in the keyword field (debounced into <see cref="_searchQuery"/>).</summary>
+    private string? _searchDraft;
+    private CancellationTokenSource? _searchDebounceCts;
     /// <summary>Deep-link from raamflyer QR (?company= / ?companies=).</summary>
     private HashSet<Guid>? _companyFocusIds;
     private Guid? _mapFocusCompanyId;
@@ -879,12 +863,11 @@
                 return Culture["Discovery.WorkTypeAny"];
             }
 
-            if (_selectedWorkTypes.Count == 1)
-            {
-                return UiLabels.WorkType(Culture, _selectedWorkTypes.First());
-            }
-
-            return Culture.Format("Discovery.SelectedCount", _selectedWorkTypes.Count);
+            var labels = _selectedWorkTypes
+                .OrderBy(x => x, StringComparer.CurrentCultureIgnoreCase)
+                .Select(x => UiLabels.WorkType(Culture, x))
+                .ToList();
+            return FormatMultiSelectSummary(labels);
         }
     }
 
@@ -897,14 +880,24 @@
                 return Culture["Discovery.VacancyTypeAny"];
             }
 
-            var selected = SelectedCategories.ToList();
-            if (selected.Count == 1)
-            {
-                return selected[0].Name;
-            }
-
-            return Culture.Format("Discovery.SelectedCount", selected.Count);
+            var labels = SelectedCategories.Select(c => c.Name).ToList();
+            return FormatMultiSelectSummary(labels);
         }
+    }
+
+    private string FormatMultiSelectSummary(IReadOnlyList<string> labels)
+    {
+        if (labels.Count == 1)
+        {
+            return labels[0];
+        }
+
+        if (labels.Count == 2)
+        {
+            return $"{labels[0]}, {labels[1]}";
+        }
+
+        return Culture.Format("Discovery.SelectedMore", labels[0], labels.Count - 1);
     }
 
     private IEnumerable<VacancyCategoryItem> SelectedCategories =>
@@ -1199,11 +1192,13 @@
         if (!QueryHelpers.ParseQuery(uri.Query).TryGetValue("q", out var values))
         {
             _searchQuery = null;
+            _searchDraft = null;
             return;
         }
 
         var raw = values.FirstOrDefault()?.Trim();
         _searchQuery = string.IsNullOrWhiteSpace(raw) ? null : raw;
+        _searchDraft = _searchQuery;
     }
 
     private void ApplyTravelFromQuery()
@@ -2079,12 +2074,6 @@
 
     private async Task ReloadFiltersIfAppliedAsync()
     {
-        // While the filter sheet/bar is open, edits stay pending until Toepassen/Zoeken.
-        if (_filtersOpen)
-        {
-            return;
-        }
-
         if (_mapReady)
         {
             try { await Js.InvokeVoidAsync("jobMap.setTravelOptions", TravelMapOptions()); }
@@ -2092,6 +2081,58 @@
         }
 
         await LoadVacanciesAsync();
+    }
+
+    private void OnSearchInput(ChangeEventArgs e)
+    {
+        _searchDraft = e.Value?.ToString() ?? string.Empty;
+        _ = DebounceSearchAsync();
+    }
+
+    private async Task OnSearchKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key is not ("Enter" or "NumpadEnter"))
+        {
+            return;
+        }
+
+        await CommitSearchAsync(immediate: true);
+    }
+
+    private async Task DebounceSearchAsync()
+    {
+        _searchDebounceCts?.Cancel();
+        _searchDebounceCts?.Dispose();
+        var cts = new CancellationTokenSource();
+        _searchDebounceCts = cts;
+        try
+        {
+            await Task.Delay(350, cts.Token);
+            await CommitSearchAsync(immediate: false);
+        }
+        catch (TaskCanceledException)
+        {
+            // Newer keystroke superseded this debounce.
+        }
+    }
+
+    private async Task CommitSearchAsync(bool immediate)
+    {
+        if (immediate)
+        {
+            _searchDebounceCts?.Cancel();
+        }
+
+        var next = string.IsNullOrWhiteSpace(_searchDraft) ? null : _searchDraft.Trim();
+        if (string.Equals(_searchQuery, next, StringComparison.Ordinal))
+        {
+            _searchDraft = _searchQuery;
+            return;
+        }
+
+        _searchQuery = next;
+        _searchDraft = next;
+        await ReloadFiltersIfAppliedAsync();
     }
 
     private async Task PersistAgeAsync()
@@ -2264,7 +2305,7 @@
     {
         if (_filtersOpen)
         {
-            CloseFilters();
+            _ = CloseFiltersAsync();
             return;
         }
 
@@ -2272,9 +2313,10 @@
         _filtersOpen = true;
     }
 
-    private void CloseFilters()
+    private async Task CloseFiltersAsync()
     {
-        if (_filtersOpen)
+        var wasOpen = _filtersOpen;
+        if (wasOpen)
         {
             RestoreFilterSnapshot();
         }
@@ -2282,6 +2324,11 @@
         _branchMenuOpen = false;
         _categoryMenuOpen = false;
         _filtersOpen = false;
+
+        if (wasOpen)
+        {
+            await ReloadFiltersIfAppliedAsync();
+        }
     }
 
     private void CaptureFilterSnapshot()
@@ -2294,6 +2341,7 @@
         _snapAgeYears = _ageYears;
         _snapMinHourlyWage = _minHourlyWage;
         _snapMaxHourlyWage = _maxHourlyWage;
+        _snapSearchQuery = _searchQuery;
         _snapSelectedWorkTypes = _selectedWorkTypes.ToHashSet(StringComparer.OrdinalIgnoreCase);
         _snapSelectedCategoryIds = _selectedCategoryIds.ToHashSet();
     }
@@ -2308,6 +2356,8 @@
         _ageYears = _snapAgeYears;
         _minHourlyWage = _snapMinHourlyWage;
         _maxHourlyWage = _snapMaxHourlyWage;
+        _searchQuery = _snapSearchQuery;
+        _searchDraft = _snapSearchQuery;
         _selectedWorkTypes.Clear();
         _selectedCategoryIds.Clear();
         foreach (var type in _snapSelectedWorkTypes)
@@ -2322,6 +2372,7 @@
 
     private async Task ApplySearch()
     {
+        await CommitSearchAsync(immediate: true);
         await PersistAgeAsync();
         if (_mapReady)
         {
@@ -2350,7 +2401,9 @@
 
     private async Task ClearSearchQueryAsync()
     {
+        _searchDebounceCts?.Cancel();
         _searchQuery = null;
+        _searchDraft = null;
         var uri = Navigation.ToAbsoluteUri(Navigation.Uri);
         var parsed = QueryHelpers.ParseQuery(uri.Query);
         if (parsed.ContainsKey("q"))
@@ -2392,9 +2445,11 @@
 
     private async Task ClearAllFiltersAsync()
     {
+        _searchDebounceCts?.Cancel();
         _selectedWorkTypes.Clear();
         _selectedCategoryIds.Clear();
         _searchQuery = null;
+        _searchDraft = null;
         _ageYears = null;
         _minHourlyWage = null;
         _maxHourlyWage = null;
@@ -2430,6 +2485,8 @@
         Navigation.LocationChanged -= OnLocationChanged;
         _suggestCts?.Cancel();
         _suggestCts?.Dispose();
+        _searchDebounceCts?.Cancel();
+        _searchDebounceCts?.Dispose();
         _dotNetRef?.Dispose();
         if (_mapReady)
         {

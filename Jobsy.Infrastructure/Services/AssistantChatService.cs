@@ -311,7 +311,13 @@ public sealed class AssistantChatService : IAssistantChatService
 
         var matched = filtered
             .Where(v => VacancyTextSearch.MatchesText(
-                v.Title, v.Description, v.WorkTypeLabels, v.RequiredDrivingLicense, v.RequiredEducation, searchQuery))
+                v.Title,
+                v.Description,
+                v.WorkTypeLabels,
+                v.RequiredDrivingLicense,
+                v.RequiredEducation,
+                searchQuery,
+                companyName: v.Company))
             .ToList();
 
         var count = matched.Count;

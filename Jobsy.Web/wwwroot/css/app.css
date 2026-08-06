@@ -2348,6 +2348,17 @@ a {
 .branch-multiselect-field {
     position: relative;
     min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.branch-multiselect-field__label {
+    font-size: 0.72rem;
+    color: var(--muted);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
 }
 
 .branch-multiselect {
@@ -2359,13 +2370,16 @@ a {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 0.45rem;
+    gap: 0.35rem;
     width: 100%;
+    min-height: 2rem;
     border: 1px solid var(--border);
     border-radius: 6px;
-    padding: 0.45rem 0.55rem;
+    padding: 0.3rem 0.45rem;
     font: inherit;
+    font-size: 0.84rem;
     font-weight: 500;
+    line-height: 1.25;
     text-transform: none;
     letter-spacing: 0;
     color: var(--text);
@@ -2396,43 +2410,21 @@ a {
 }
 
 .branch-multiselect__chips {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.3rem;
-    margin-top: 0.35rem;
-    min-width: 0;
+    display: none;
 }
 
 .branch-multiselect__chip {
-    display: inline-flex;
-    align-items: center;
-    max-width: 100%;
-    gap: 0.25rem;
-    padding: 0.15rem 0.45rem;
-    border: 1px solid color-mix(in srgb, var(--accent) 35%, var(--border));
-    border-radius: 4px;
-    background: color-mix(in srgb, var(--accent-soft) 55%, var(--surface));
-    color: var(--text);
-    font-size: 0.78rem;
-    font-weight: 550;
-    line-height: 1.25;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    display: none;
 }
 
 .branch-multiselect__chip-swatch {
-    width: 0.55rem;
-    height: 0.55rem;
-    border-radius: 2px;
-    background: var(--category-color, var(--accent));
-    flex-shrink: 0;
+    display: none;
 }
 
 .branch-multiselect__caret {
     flex-shrink: 0;
     color: var(--muted);
-    font-size: 0.75rem;
+    font-size: 0.7rem;
     line-height: 1;
 }
 
@@ -2449,44 +2441,67 @@ a {
 
 .branch-multiselect__panel {
     position: absolute;
-    top: calc(100% + 0.3rem);
+    top: calc(100% + 0.2rem);
     left: 0;
     right: 0;
     z-index: 45;
-    max-height: min(16rem, 50vh);
+    max-height: min(12.5rem, 42vh);
     overflow-x: hidden;
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
-    padding: 0.4rem;
+    padding: 0.25rem;
     border: 1px solid var(--border);
-    border-radius: var(--radius-sm);
+    border-radius: 6px;
     background: var(--surface);
     box-shadow: var(--shadow-lg);
     display: flex;
     flex-direction: column;
-    gap: 0.15rem;
+    gap: 0;
 }
 
 .branch-multiselect__option {
     display: flex;
     align-items: center;
-    gap: 0.5rem;
+    gap: 0.4rem;
     margin: 0;
-    padding: 0.45rem 0.5rem;
-    border-radius: 6px;
+    padding: 0.28rem 0.4rem;
+    border-radius: 4px;
     text-transform: none;
     letter-spacing: normal;
     color: var(--text);
-    font-size: 0.9rem;
+    font-size: 0.82rem;
     font-weight: 500;
+    line-height: 1.25;
 }
 
 .branch-multiselect__option:hover {
     background: color-mix(in srgb, var(--accent-soft) 70%, var(--surface));
 }
 
+.branch-multiselect__option .category-filter__swatch {
+    width: 0.65rem;
+    height: 0.65rem;
+    margin-top: 0;
+    border-radius: 2px;
+}
+
 .branch-multiselect--sheet .branch-multiselect__panel {
-    max-height: min(14rem, 40vh);
+    max-height: min(11rem, 36vh);
+}
+
+.filter-bar__query {
+    grid-column: 1 / -1;
+}
+
+.filter-sheet__query input {
+    width: 100%;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 0.45rem 0.55rem;
+    font: inherit;
+    font-size: 0.9rem;
+    color: var(--text);
+    background: var(--surface);
 }
 
 .filter-branches {
@@ -2538,8 +2553,8 @@ a {
 .filter-bar {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    gap: 0.75rem;
-    padding: 0.9rem 1rem;
+    gap: 0.55rem 0.65rem;
+    padding: 0.7rem 0.85rem;
     border-bottom: 1px solid var(--border);
     background: color-mix(in srgb, var(--accent-soft) 55%, var(--surface));
     align-items: start;
