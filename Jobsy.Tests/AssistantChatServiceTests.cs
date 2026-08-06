@@ -161,7 +161,7 @@ public class AssistantChatServiceTests
             "Retail",
             null,
             null,
-            "ahold",
+            "heijn",
             companyName: "Albert Heijn Westland"));
         Assert.True(VacancyTextSearch.MatchesText(
             "Magazijnmedewerker",
@@ -178,7 +178,7 @@ public class AssistantChatServiceTests
             "Horeca",
             null,
             null,
-            "ahold",
+            "heijn",
             companyName: "Café Haven"));
     }
 
