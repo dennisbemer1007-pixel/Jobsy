@@ -10869,6 +10869,41 @@ button.linkish:hover {
     font: inherit;
 }
 
+.apply-field textarea {
+    width: 100%;
+    min-height: 5.5rem;
+    padding: 0.7rem 0.8rem;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border);
+    background: var(--surface);
+    font: inherit;
+    font-weight: 400;
+    line-height: 1.45;
+    resize: vertical;
+}
+
+.apply-field--motivation textarea {
+    min-height: 7.5rem;
+}
+
+.apply-fields-grid {
+    display: grid;
+    gap: 0.75rem;
+}
+
+.apply-field input[type="text"],
+.apply-field input[type="email"],
+.apply-field input:not([type]) {
+    width: 100%;
+    min-height: 2.75rem;
+    padding: 0.65rem 0.75rem;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border);
+    background: var(--surface);
+    font: inherit;
+    font-weight: 400;
+}
+
 .apply-check {
     display: flex;
     align-items: flex-start;
@@ -10959,12 +10994,111 @@ a.apply-flow__secondary {
 
 @media (min-width: 769px) {
     .apply-flow {
-        max-width: 28rem;
+        max-width: none;
+        width: 100%;
+        margin-top: 1.75rem;
+    }
+
+    .apply-flow__header {
+        margin-bottom: 1rem;
+    }
+
+    .apply-flow__title {
+        font-size: 1.4rem;
+        letter-spacing: -0.01em;
+    }
+
+    .apply-flow__lead {
+        max-width: 46rem;
+        font-size: 0.98rem;
+        line-height: 1.45;
+    }
+
+    .apply-steps {
+        gap: 0.55rem;
+        margin-bottom: 1.25rem;
+        max-width: 48rem;
     }
 
     .apply-steps__label {
-        font-size: 0.74rem;
+        font-size: 0.8rem;
         white-space: normal;
+    }
+
+    .apply-steps__num {
+        width: 1.9rem;
+        height: 1.9rem;
+        font-size: 0.84rem;
+    }
+
+    .apply-panel {
+        padding: 1.45rem 1.7rem 1.55rem;
+        gap: 1.25rem;
+    }
+
+    .apply-section {
+        gap: 0.85rem;
+    }
+
+    .apply-section__title {
+        font-size: 0.78rem;
+    }
+
+    .apply-fields-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 0.85rem 1.1rem;
+    }
+
+    .apply-section > .apply-field:not(.apply-field--motivation) select {
+        max-width: 22rem;
+    }
+
+    .apply-field--motivation textarea {
+        min-height: 10.5rem;
+        font-size: 1rem;
+        padding: 0.9rem 1rem;
+    }
+
+    .apply-check {
+        padding: 0.85rem 1rem;
+        font-size: 0.95rem;
+    }
+
+    .apply-flow__primary,
+    a.apply-flow__primary {
+        width: auto;
+        min-width: 16rem;
+        max-width: 24rem;
+        align-self: flex-start;
+        padding-left: 1.35rem;
+        padding-right: 1.35rem;
+    }
+
+    .apply-flow__secondary,
+    a.apply-flow__secondary {
+        width: auto;
+        min-width: 12rem;
+        max-width: 22rem;
+        align-self: flex-start;
+    }
+
+    .apply-flow__hint {
+        text-align: left;
+        max-width: 36rem;
+    }
+
+    .apply-code-field {
+        max-width: 22rem;
+    }
+}
+
+@media (min-width: 1024px) {
+    .apply-panel {
+        padding: 1.65rem 2rem 1.75rem;
+    }
+
+    .apply-flow__title {
+        font-size: 1.5rem;
     }
 }
 

@@ -479,35 +479,37 @@
                                     @if (RequiresExclusivityExtras)
                                     {
                                         <p class="muted">@_vacancy!.ExclusivityName — vul je schoolgegevens in om te solliciteren.</p>
-                                        <label class="apply-field">
-                                            <span>Studentnummer</span>
-                                            <input @bind="_studentNumber" @bind:event="oninput" maxlength="64" required />
-                                        </label>
-                                        <label class="apply-field">
-                                            <span>School e-mailadres</span>
-                                            <input type="email" @bind="_schoolEmail" @bind:event="oninput" maxlength="256" required />
-                                        </label>
-                                        <label class="apply-field">
-                                            <span>Opleiding</span>
-                                            @if (_vacancy.ExclusivityEducations.Count > 0)
-                                            {
-                                                <select @bind="_studyProgram">
-                                                    <option value="">— Kies opleiding —</option>
-                                                    @foreach (var edu in _vacancy.ExclusivityEducations)
-                                                    {
-                                                        <option value="@edu">@edu</option>
-                                                    }
-                                                </select>
-                                            }
-                                            else
-                                            {
-                                                <input @bind="_studyProgram" @bind:event="oninput" maxlength="256" required />
-                                            }
-                                        </label>
-                                        <label class="apply-field">
-                                            <span>Leerjaar (optioneel)</span>
-                                            <input @bind="_studyYear" @bind:event="oninput" maxlength="64" />
-                                        </label>
+                                        <div class="apply-fields-grid">
+                                            <label class="apply-field">
+                                                <span>Studentnummer</span>
+                                                <input @bind="_studentNumber" @bind:event="oninput" maxlength="64" required />
+                                            </label>
+                                            <label class="apply-field">
+                                                <span>School e-mailadres</span>
+                                                <input type="email" @bind="_schoolEmail" @bind:event="oninput" maxlength="256" required />
+                                            </label>
+                                            <label class="apply-field">
+                                                <span>Opleiding</span>
+                                                @if (_vacancy.ExclusivityEducations.Count > 0)
+                                                {
+                                                    <select @bind="_studyProgram">
+                                                        <option value="">— Kies opleiding —</option>
+                                                        @foreach (var edu in _vacancy.ExclusivityEducations)
+                                                        {
+                                                            <option value="@edu">@edu</option>
+                                                        }
+                                                    </select>
+                                                }
+                                                else
+                                                {
+                                                    <input @bind="_studyProgram" @bind:event="oninput" maxlength="256" required />
+                                                }
+                                            </label>
+                                            <label class="apply-field">
+                                                <span>Leerjaar (optioneel)</span>
+                                                <input @bind="_studyYear" @bind:event="oninput" maxlength="64" />
+                                            </label>
+                                        </div>
                                     }
                                     @if (_authenticatorEnabled)
                                     {
@@ -529,10 +531,10 @@
                                         <input type="checkbox" @bind="_workPermitConfirmed" />
                                         <span>@Culture["Apply.WorkPermit"]</span>
                                     </label>
-                                    <label class="apply-field">
+                                    <label class="apply-field apply-field--motivation">
                                         <span>Waarom wil jij hier graag aan de slag? (Optioneel – een kort berichtje laat een goede indruk achter en vergroot je kansen!)</span>
                                         <textarea maxlength="500"
-                                                  rows="3"
+                                                  rows="6"
                                                   @bind="_motivation"
                                                   @bind:event="oninput"
                                                   placeholder="Optioneel, max. 500 tekens"></textarea>
