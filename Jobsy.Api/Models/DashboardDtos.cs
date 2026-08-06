@@ -166,7 +166,11 @@ public record MeProfileDto(
     double? HomeLongitude = null,
     string? ConsentVersion = null,
     bool NeedsConsentReaccept = false,
-    string CurrentConsentVersion = "");
+    string CurrentConsentVersion = "",
+    string? FirstName = null,
+    string? LastName = null,
+    string? PhoneNumber = null,
+    bool WhatsAppContactAllowed = false);
 
 public record UpdateDateOfBirthRequest(DateOnly DateOfBirth);
 
@@ -176,7 +180,11 @@ public record UpdateCandidateProfileRequest(
     CandidatePreferencesDto? Preferences,
     double? HomeLatitude = null,
     double? HomeLongitude = null,
-    bool ClearHomeLocation = false);
+    bool ClearHomeLocation = false,
+    string? FirstName = null,
+    string? LastName = null,
+    string? PhoneNumber = null,
+    bool? WhatsAppContactAllowed = null);
 
 public record UpdateLanguageRequest(string Language);
 

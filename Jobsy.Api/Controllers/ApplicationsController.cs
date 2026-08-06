@@ -97,7 +97,9 @@ public class ApplicationsController : ControllerBase
                 a.SchoolEmail,
                 a.StudyProgram,
                 a.StudyYear,
-                a.ExclusivityValidationStatus
+                a.ExclusivityValidationStatus,
+                a.SnapshotPhoneNumber,
+                a.SnapshotWhatsAppAllowed
             })
             .ToListAsync(cancellationToken);
 
@@ -138,7 +140,9 @@ public class ApplicationsController : ControllerBase
                 revealed ? a.StudyProgram : null,
                 revealed ? a.StudyYear : null,
                 revealed ? a.ExclusivityValidationStatus : null,
-                CvPdfAvailable: revealed);
+                CvPdfAvailable: revealed,
+                CandidatePhone: revealed ? a.SnapshotPhoneNumber : null,
+                WhatsAppContactAllowed: revealed && a.SnapshotWhatsAppAllowed);
         }));
     }
 
@@ -406,7 +410,9 @@ public class ApplicationsController : ControllerBase
             Status = ApplicationStatus.Pending
         };
 
-        application.CandidateCity = ExtractCityHint(candidate);
+        application.CandidateCity = LobsyCvModelFactory.ExtractCity(preferences.HomeAddress)
+                                    ?? ExtractCityHint(candidate);
+        application.CandidateAddress = Truncate(preferences.HomeAddress, 512);
         application.PreferredTransport = request.PreferredTransport;
         application.EstimatedTravelMinutes = request.EstimatedTravelMinutes;
         application.DistanceKm = distanceKm;
@@ -417,8 +423,8 @@ public class ApplicationsController : ControllerBase
         application.ConsentVersion = PrivacyConstants.CurrentConsentVersion;
         application.WorkPermitConfirmed = request.WorkPermitConfirmed;
         application.SnapshotAvailabilityJson = Truncate(
-            preferences.Availability is null ? null : JsonSerializer.Serialize(preferences.Availability),
-            2048);
+            LobsyCvModelFactory.SerializeAvailabilitySnapshot(preferences),
+            4000);
         application.SnapshotDrivingLicenses = Truncate(
             preferences.DrivingLicenses is null ? null : string.Join(", ", preferences.DrivingLicenses),
             512);
@@ -427,6 +433,13 @@ public class ApplicationsController : ControllerBase
             512);
         application.SnapshotAboutMe = Truncate(preferences.AboutMe, 1024);
         application.CandidateEmployerCount = preferences.Employers?.Count ?? 0;
+        application.SnapshotPhoneNumber = Truncate(candidate.PhoneNumber, 32);
+        application.SnapshotWhatsAppAllowed = candidate.WhatsAppContactAllowed
+                                              && !string.IsNullOrWhiteSpace(candidate.PhoneNumber);
+        application.SnapshotHomeLatitude = candidate.HomeLocation?.Latitude;
+        application.SnapshotHomeLongitude = candidate.HomeLocation?.Longitude;
+        application.CandidateName = CandidateNameRules.ComposeFullName(
+            candidate.FirstName, candidate.LastName, candidate.FullName);
         application.Motivation = Truncate(string.IsNullOrWhiteSpace(request.Motivation) ? null : request.Motivation.Trim(), 500);
         application.MatchPercent = match.TotalPercent;
         application.MatchBreakdownJson = Truncate(matchJson, 4000);
@@ -944,15 +957,21 @@ public class ApplicationsController : ControllerBase
             revealed ? a.StudyProgram : null,
             revealed ? a.StudyYear : null,
             revealed ? a.ExclusivityValidationStatus : null,
-            CvPdfAvailable: revealed);
+            CvPdfAvailable: revealed,
+            CandidatePhone: revealed ? a.SnapshotPhoneNumber : null,
+            WhatsAppContactAllowed: revealed && a.SnapshotWhatsAppAllowed);
     }
 
     private static LobsyCvModel BuildApplicationCvModel(Core.Entities.Application application, bool includePii)
         => LobsyCvModelFactory.FromApplicationSnapshot(
             application.CandidateName,
             includePii ? application.CandidateEmail : null,
+            includePii ? application.SnapshotPhoneNumber : null,
+            includePii && application.SnapshotWhatsAppAllowed,
             application.CandidateCity,
             includePii ? application.CandidateAddress : null,
+            application.SnapshotHomeLatitude,
+            application.SnapshotHomeLongitude,
             application.SnapshotAboutMe,
             application.Motivation,
             application.PreferredTransport,
@@ -967,7 +986,7 @@ public class ApplicationsController : ControllerBase
             application.ConsentVersion,
             DateTime.UtcNow,
             includeFullAddress: includePii,
-            includeContactEmail: includePii);
+            includeContactDetails: includePii);
 
     private async Task SendVerificationCodeAsync(
         Core.Entities.User candidate,

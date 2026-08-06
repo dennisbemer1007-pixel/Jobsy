@@ -37,6 +37,35 @@
                     <span>@Culture["Profile.OpenForWork"]</span>
                 </label>
 
+                <fieldset class="profile-roles">
+                    <legend>@Culture["Profile.ContactDetails"]</legend>
+                    <div class="profile-employer-card__top">
+                        <label class="profile-employer-card__field profile-employer-card__field--employer">
+                            @Culture["Profile.FirstName"]
+                            <input type="text" maxlength="128" @bind="_firstName" autocomplete="given-name" />
+                        </label>
+                        <label class="profile-employer-card__field profile-employer-card__field--role">
+                            @Culture["Profile.LastName"]
+                            <input type="text" maxlength="128" @bind="_lastName" autocomplete="family-name" />
+                        </label>
+                    </div>
+                    <label>
+                        @Culture["Profile.Phone"]
+                        <input type="tel"
+                               maxlength="32"
+                               placeholder="@Culture["Profile.PhonePlaceholder"]"
+                               @bind="_phoneNumber"
+                               autocomplete="tel" />
+                    </label>
+                    <label class="profile-toggle">
+                        <input type="checkbox"
+                               disabled="@string.IsNullOrWhiteSpace(_phoneNumber)"
+                               @bind="_whatsAppAllowed" />
+                        <span>@Culture["Profile.WhatsAppAllowed"]</span>
+                    </label>
+                    <p class="profile-address__hint">@Culture["Profile.ContactHint"]</p>
+                </fieldset>
+
                 <label>
                     @Culture["Profile.DateOfBirth"]
                     <input type="date" @bind="_dobInput" />
@@ -309,6 +338,10 @@
     private bool _saving;
     private bool _pdfBusy;
     private bool _openForWork;
+    private string _firstName = "";
+    private string _lastName = "";
+    private string _phoneNumber = "";
+    private bool _whatsAppAllowed;
     private bool _authenticatorEnabled;
     private bool _unsubscribeOpen;
     private DateOnly? _dobInput;
@@ -361,6 +394,10 @@
             var prefs = profile.Preferences ?? new CandidatePreferences();
             _dobInput = profile.DateOfBirth;
             _openForWork = profile.OpenForWork;
+            _firstName = profile.FirstName ?? "";
+            _lastName = profile.LastName ?? "";
+            _phoneNumber = profile.PhoneNumber ?? "";
+            _whatsAppAllowed = profile.WhatsAppContactAllowed;
             _authenticatorEnabled = profile.AuthenticatorEnabled;
             _homeLat = profile.HomeLatitude;
             _homeLng = profile.HomeLongitude;
@@ -710,7 +747,11 @@
                 },
                 homeLatitude: clearHome || !_homeLocationDirty ? null : _homeLat,
                 homeLongitude: clearHome || !_homeLocationDirty ? null : _homeLng,
-                clearHomeLocation: clearHome);
+                clearHomeLocation: clearHome,
+                firstName: _firstName.Trim(),
+                lastName: _lastName.Trim(),
+                phoneNumber: string.IsNullOrWhiteSpace(_phoneNumber) ? "" : _phoneNumber.Trim(),
+                whatsAppContactAllowed: _whatsAppAllowed && !string.IsNullOrWhiteSpace(_phoneNumber));
             _homeLocationDirty = false;
             _message = Culture["Profile.Saved"];
             if (!string.IsNullOrWhiteSpace(_returnUrl))

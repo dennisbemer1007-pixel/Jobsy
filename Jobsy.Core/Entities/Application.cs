@@ -32,6 +32,18 @@ public class Application
     public string? SnapshotAboutMe { get; set; }
     public int CandidateEmployerCount { get; set; }
 
+    /// <summary>Phone snapshot at apply (released with PII after Accept).</summary>
+    public string? SnapshotPhoneNumber { get; set; }
+
+    /// <summary>WhatsApp contact consent snapshot at apply.</summary>
+    public bool SnapshotWhatsAppAllowed { get; set; }
+
+    /// <summary>Home latitude at apply for Lobsy-CV map card.</summary>
+    public double? SnapshotHomeLatitude { get; set; }
+
+    /// <summary>Home longitude at apply for Lobsy-CV map card.</summary>
+    public double? SnapshotHomeLongitude { get; set; }
+
     /// <summary>Optional free-text motivation on apply (separate from SnapshotAboutMe).</summary>
     public string? Motivation { get; set; }
 

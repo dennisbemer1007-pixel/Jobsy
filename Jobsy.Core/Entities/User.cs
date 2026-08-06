@@ -8,6 +8,19 @@ public class User
     public Guid Id { get; set; }
     public string Email { get; set; } = string.Empty;
     public string FullName { get; set; } = string.Empty;
+
+    /// <summary>Optional given name; when set with LastName, FullName is kept in sync.</summary>
+    public string? FirstName { get; set; }
+
+    /// <summary>Optional family name; when set with FirstName, FullName is kept in sync.</summary>
+    public string? LastName { get; set; }
+
+    /// <summary>Candidate phone (E.164 or NL local). Shared with employers only post-Accept via CV/PII.</summary>
+    public string? PhoneNumber { get; set; }
+
+    /// <summary>Candidate consents that employers may contact via WhatsApp on the phone number.</summary>
+    public bool WhatsAppContactAllowed { get; set; }
+
     public UserRole Role { get; set; }
 
     /// <summary>

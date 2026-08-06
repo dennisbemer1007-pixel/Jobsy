@@ -6,6 +6,7 @@ using Jobsy.Core.Contracts;
 using Jobsy.Core.Interfaces;
 using Jobsy.Core.Localization;
 using Jobsy.Core.Privacy;
+using Jobsy.Core.Rules;
 using Jobsy.Infrastructure.Data;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -165,6 +166,50 @@ public class MeController : ControllerBase
         if (request.OpenForWork is not null)
         {
             user.OpenForWork = request.OpenForWork.Value;
+        }
+
+        if (request.FirstName is not null || request.LastName is not null)
+        {
+            var first = request.FirstName is null
+                ? user.FirstName
+                : (string.IsNullOrWhiteSpace(request.FirstName) ? null : request.FirstName.Trim());
+            var last = request.LastName is null
+                ? user.LastName
+                : (string.IsNullOrWhiteSpace(request.LastName) ? null : request.LastName.Trim());
+
+            if (first is { Length: > 128 } || last is { Length: > 128 })
+            {
+                return BadRequest(new { message = "Voor- of achternaam is te lang." });
+            }
+
+            user.FirstName = first;
+            user.LastName = last;
+            var composed = CandidateNameRules.ComposeFullName(first, last, user.FullName);
+            if (!string.IsNullOrWhiteSpace(composed))
+            {
+                user.FullName = composed.Length > 256 ? composed[..256] : composed;
+            }
+        }
+
+        if (request.PhoneNumber is not null)
+        {
+            var phone = CandidatePhoneRules.Normalize(request.PhoneNumber);
+            if (!CandidatePhoneRules.IsValid(phone))
+            {
+                return BadRequest(new { message = "Ongeldig telefoonnummer." });
+            }
+
+            user.PhoneNumber = phone;
+            if (phone is null)
+            {
+                user.WhatsAppContactAllowed = false;
+            }
+        }
+
+        if (request.WhatsAppContactAllowed is not null)
+        {
+            user.WhatsAppContactAllowed = request.WhatsAppContactAllowed.Value
+                                          && !string.IsNullOrWhiteSpace(user.PhoneNumber);
         }
 
         if (request.ClearHomeLocation)
@@ -451,7 +496,11 @@ public class MeController : ControllerBase
         var model = LobsyCvModelFactory.FromLiveProfile(
             user.FullName,
             user.Email,
+            user.PhoneNumber,
+            user.WhatsAppContactAllowed,
             preferences,
+            user.HomeLocation?.Latitude,
+            user.HomeLocation?.Longitude,
             DateTime.UtcNow,
             user.ConsentVersion ?? PrivacyConstants.CurrentConsentVersion);
 
@@ -502,7 +551,11 @@ public class MeController : ControllerBase
         user.HomeLocation?.Longitude,
         user.ConsentVersion,
         PrivacyConstants.RequiresAccountConsentReaccept(user.Role, user.ConsentVersion),
-        PrivacyConstants.CurrentConsentVersion);
+        PrivacyConstants.CurrentConsentVersion,
+        CandidateNameRules.DisplayFirstName(user.FirstName, user.FullName),
+        CandidateNameRules.DisplayLastName(user.LastName, user.FullName),
+        user.PhoneNumber,
+        user.WhatsAppContactAllowed);
 
     public static CandidatePreferencesDto ParsePreferences(string? json)
     {

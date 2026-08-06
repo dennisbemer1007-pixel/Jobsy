@@ -180,4 +180,8 @@ public record EmployerApplicationDto(
     /// <summary>Null until Accepted — progressive disclosure (stage exclusivity).</summary>
     string? ExclusivityValidationStatus = null,
     /// <summary>True when employer may download Lobsy-CV PDF (= PiiRevealed).</summary>
-    bool CvPdfAvailable = false);
+    bool CvPdfAvailable = false,
+    /// <summary>Null until Accepted — phone from apply snapshot.</summary>
+    string? CandidatePhone = null,
+    /// <summary>WhatsApp contact allowed (only meaningful when CandidatePhone is revealed).</summary>
+    bool WhatsAppContactAllowed = false);

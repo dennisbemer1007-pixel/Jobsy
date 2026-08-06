@@ -173,6 +173,8 @@ public class EmployerApplicationItem
     public string? StudyYear { get; set; }
     public string? ExclusivityValidationStatus { get; set; }
     public bool CvPdfAvailable { get; set; }
+    public string? CandidatePhone { get; set; }
+    public bool WhatsAppContactAllowed { get; set; }
 }
 
 public class TokenPackItem

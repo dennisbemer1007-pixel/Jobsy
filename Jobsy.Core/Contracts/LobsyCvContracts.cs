@@ -4,8 +4,12 @@ namespace Jobsy.Core.Contracts;
 public sealed record LobsyCvModel(
     string FullName,
     string? Email,
+    string? PhoneNumber,
+    bool WhatsAppContactAllowed,
     string? City,
     string? Address,
+    double? Latitude,
+    double? Longitude,
     string? AboutMe,
     string? Motivation,
     string? PreferredTransport,
@@ -15,6 +19,7 @@ public sealed record LobsyCvModel(
     decimal? MaxHoursPerWeek,
     bool FlexibleTimes,
     string? AvailabilitySummary,
+    IReadOnlyDictionary<string, string[]>? AvailabilitySlots,
     IReadOnlyList<string> DrivingLicenses,
     IReadOnlyList<string> Educations,
     IReadOnlyList<LobsyCvEmployerEntry> Employers,
@@ -24,7 +29,7 @@ public sealed record LobsyCvModel(
     DateTime GeneratedAtUtc,
     string ConsentVersion,
     bool IncludeFullAddress,
-    bool IncludeContactEmail);
+    bool IncludeContactDetails);
 
 public sealed record LobsyCvEmployerEntry(
     string EmployerName,

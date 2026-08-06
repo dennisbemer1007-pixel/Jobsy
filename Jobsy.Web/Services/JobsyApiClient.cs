@@ -549,6 +549,10 @@ public sealed class JobsyApiClient : IAsyncDisposable
         double? homeLatitude = null,
         double? homeLongitude = null,
         bool clearHomeLocation = false,
+        string? firstName = null,
+        string? lastName = null,
+        string? phoneNumber = null,
+        bool? whatsAppContactAllowed = null,
         CancellationToken ct = default)
     {
         var response = await _http.PutAsJsonAsync("api/me/profile", new
@@ -558,7 +562,11 @@ public sealed class JobsyApiClient : IAsyncDisposable
             preferences,
             homeLatitude,
             homeLongitude,
-            clearHomeLocation
+            clearHomeLocation,
+            firstName,
+            lastName,
+            phoneNumber,
+            whatsAppContactAllowed
         }, ct);
         response.EnsureSuccessStatusCode();
         return await response.Content.ReadFromJsonAsync<MeProfile>(cancellationToken: ct);

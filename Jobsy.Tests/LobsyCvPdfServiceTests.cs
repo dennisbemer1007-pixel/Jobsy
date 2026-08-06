@@ -10,7 +10,7 @@ public class LobsyCvPdfServiceTests
     [Fact]
     public async Task Render_live_profile_produces_pdf_bytes()
     {
-        var service = new LobsyCvPdfService(new FakeCompanySettings());
+        var service = new LobsyCvPdfService(new FakeCompanySettings(), new FakeMapImages());
         var prefs = new CandidatePreferencesDto(
             Roles: ["horeca"],
             MaxTravelMinutes: 30,
@@ -22,15 +22,24 @@ public class LobsyCvPdfServiceTests
             [
                 new CandidateEmployerHistoryDto("Café Test", "Bediening", 1, "Borden afruimen")
             ],
+            Availability: new Dictionary<string, string[]>
+            {
+                ["Ma"] = ["Ochtend", "Middag"],
+                ["Wo"] = ["Avond"]
+            },
             MinHoursPerWeek: 8,
             MaxHoursPerWeek: 16,
-            FlexibleTimes: true,
+            FlexibleTimes: false,
             HomeAddress: "Voorstraat 1, 2671 AB Naaldwijk");
 
         var model = LobsyCvModelFactory.FromLiveProfile(
             "Ada Candidate",
             "ada@test.local",
+            "06 12345678",
+            true,
             prefs,
+            51.993,
+            4.209,
             DateTime.UtcNow,
             PrivacyConstants.CurrentConsentVersion);
 
@@ -50,17 +59,21 @@ public class LobsyCvPdfServiceTests
     [Fact]
     public async Task Render_application_snapshot_includes_vacancy_context()
     {
-        var service = new LobsyCvPdfService(new FakeCompanySettings());
+        var service = new LobsyCvPdfService(new FakeCompanySettings(), new FakeMapImages());
         var model = LobsyCvModelFactory.FromApplicationSnapshot(
             "Bert Bijbaan",
             "bert@test.local",
+            "0612345678",
+            true,
             "Westland",
             "Straat 2, Westland",
+            52.0,
+            4.2,
             "Hardwerker",
             "Graag bij jullie starten",
             "OV",
             25,
-            """{"flexibleTimes":true}""",
+            """{"flexibleTimes":true,"minHoursPerWeek":8,"maxHoursPerWeek":20,"slots":{}}""",
             "B,AM",
             "Havo",
             2,
@@ -70,7 +83,7 @@ public class LobsyCvPdfServiceTests
             PrivacyConstants.CurrentConsentVersion,
             DateTime.UtcNow,
             includeFullAddress: true,
-            includeContactEmail: true);
+            includeContactDetails: true);
 
         var pdf = await service.RenderAsync(model);
         Assert.True(pdf.Length > 500);
@@ -91,5 +104,17 @@ public class LobsyCvPdfServiceTests
         public byte[] GetBrandLogoPng() => [];
 
         public byte[] GetBrandWatermarkPng() => [];
+    }
+
+    private sealed class FakeMapImages : ICandidateMapImageService
+    {
+        public Task<byte[]?> RenderAsync(
+            double latitude,
+            double longitude,
+            int width = 640,
+            int height = 280,
+            int zoom = 15,
+            CancellationToken cancellationToken = default)
+            => Task.FromResult<byte[]?>(null);
     }
 }

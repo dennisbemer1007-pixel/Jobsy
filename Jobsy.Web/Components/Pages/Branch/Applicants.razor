@@ -40,6 +40,16 @@
                         {
                             <strong>@a.CandidateName</strong>
                             <span class="muted">@a.CandidateEmail</span>
+                            @if (!string.IsNullOrWhiteSpace(a.CandidatePhone))
+                            {
+                                <span class="muted">
+                                    @a.CandidatePhone
+                                    @if (a.WhatsAppContactAllowed)
+                                    {
+                                        <text> · WhatsApp ok</text>
+                                    }
+                                </span>
+                            }
                             @if (!string.IsNullOrWhiteSpace(a.CandidateAddress))
                             {
                                 <span class="muted">@a.CandidateAddress</span>

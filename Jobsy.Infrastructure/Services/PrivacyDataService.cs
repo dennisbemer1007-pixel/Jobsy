@@ -416,6 +416,10 @@ public sealed class PrivacyDataService : IPrivacyDataService
             app.SnapshotDrivingLicenses = null;
             app.SnapshotEducations = null;
             app.SnapshotAboutMe = null;
+            app.SnapshotPhoneNumber = null;
+            app.SnapshotWhatsAppAllowed = false;
+            app.SnapshotHomeLatitude = null;
+            app.SnapshotHomeLongitude = null;
             app.Motivation = null;
             app.StudentNumber = null;
             app.SchoolEmail = null;
@@ -581,6 +585,10 @@ public sealed class PrivacyDataService : IPrivacyDataService
 
         user.Email = anonymizedEmail;
         user.FullName = "Verwijderde gebruiker";
+        user.FirstName = null;
+        user.LastName = null;
+        user.PhoneNumber = null;
+        user.WhatsAppContactAllowed = false;
         user.DateOfBirth = null;
         user.HomeLocation = null;
         user.PreferencesJson = null;

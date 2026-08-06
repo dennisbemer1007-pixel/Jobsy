@@ -147,6 +147,8 @@ public static class DependencyInjection
         services.AddScoped<IAmbassadeurDashboardService, AmbassadeurDashboardService>();
         services.AddScoped<IAmbassadeurFlyerPdfService, AmbassadeurFlyerPdfService>();
         services.AddScoped<ILobsyCvPdfService, LobsyCvPdfService>();
+        services.AddScoped<ICandidateMapImageService, OsmTileMapImageService>();
+        services.AddHttpClient("OsmTiles", OsmTileMapImageService.ConfigureHttpClient);
         services.AddScoped<ICommissionLedgerService, CommissionLedgerService>();
         services.AddScoped<IRevenueShareService, RevenueShareService>();
         services.AddScoped<ISupplierOnboardingPaymentService, SupplierOnboardingPaymentService>();

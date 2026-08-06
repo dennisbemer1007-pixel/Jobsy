@@ -10,7 +10,11 @@ public static class LobsyCvModelFactory
     public static LobsyCvModel FromLiveProfile(
         string fullName,
         string? email,
+        string? phoneNumber,
+        bool whatsAppContactAllowed,
         CandidatePreferencesDto preferences,
+        double? latitude,
+        double? longitude,
         DateTime generatedAtUtc,
         string? consentVersion = null,
         string? motivation = null,
@@ -23,11 +27,18 @@ public static class LobsyCvModelFactory
             .Select(e => new LobsyCvEmployerEntry(e.EmployerName, e.Role, e.Years, e.Description))
             .ToList();
 
+        var flexible = preferences.FlexibleTimes == true;
+        var slots = NormalizeSlots(preferences.Availability);
+
         return new LobsyCvModel(
             FullName: fullName,
             Email: email,
+            PhoneNumber: phoneNumber,
+            WhatsAppContactAllowed: whatsAppContactAllowed,
             City: ExtractCity(preferences.HomeAddress),
             Address: preferences.HomeAddress,
+            Latitude: latitude,
+            Longitude: longitude,
             AboutMe: preferences.AboutMe,
             Motivation: motivation,
             PreferredTransport: preferences.PreferredTransport,
@@ -35,8 +46,9 @@ public static class LobsyCvModelFactory
             EstimatedTravelMinutes: estimatedTravelMinutes,
             MinHoursPerWeek: preferences.MinHoursPerWeek,
             MaxHoursPerWeek: preferences.MaxHoursPerWeek,
-            FlexibleTimes: preferences.FlexibleTimes == true,
-            AvailabilitySummary: FormatAvailability(preferences.Availability, preferences.FlexibleTimes == true),
+            FlexibleTimes: flexible,
+            AvailabilitySummary: FormatAvailability(slots, flexible),
+            AvailabilitySlots: slots,
             DrivingLicenses: preferences.DrivingLicenses?.ToList() ?? [],
             Educations: preferences.Educations?.ToList() ?? [],
             Employers: employers,
@@ -46,14 +58,18 @@ public static class LobsyCvModelFactory
             GeneratedAtUtc: generatedAtUtc,
             ConsentVersion: consentVersion ?? PrivacyConstants.CurrentConsentVersion,
             IncludeFullAddress: true,
-            IncludeContactEmail: true);
+            IncludeContactDetails: true);
     }
 
     public static LobsyCvModel FromApplicationSnapshot(
         string fullName,
         string? email,
+        string? phoneNumber,
+        bool whatsAppContactAllowed,
         string? city,
         string? address,
+        double? latitude,
+        double? longitude,
         string? aboutMe,
         string? motivation,
         string preferredTransport,
@@ -68,10 +84,11 @@ public static class LobsyCvModelFactory
         string? consentVersion,
         DateTime generatedAtUtc,
         bool includeFullAddress,
-        bool includeContactEmail)
+        bool includeContactDetails)
     {
         var licenses = SplitCsv(drivingLicensesCsv);
         var educations = SplitCsv(educationsCsv);
+        var availability = ParseAvailabilityPayload(availabilityJson);
 
         var about = aboutMe;
         if (employerCount > 0)
@@ -83,17 +100,22 @@ public static class LobsyCvModelFactory
         return new LobsyCvModel(
             FullName: fullName,
             Email: email,
+            PhoneNumber: phoneNumber,
+            WhatsAppContactAllowed: whatsAppContactAllowed,
             City: city,
             Address: address,
+            Latitude: latitude,
+            Longitude: longitude,
             AboutMe: about,
             Motivation: motivation,
             PreferredTransport: preferredTransport,
             MaxTravelMinutes: null,
             EstimatedTravelMinutes: estimatedTravelMinutes,
-            MinHoursPerWeek: null,
-            MaxHoursPerWeek: null,
-            FlexibleTimes: false,
-            AvailabilitySummary: FormatAvailabilityJson(availabilityJson),
+            MinHoursPerWeek: availability.MinHours,
+            MaxHoursPerWeek: availability.MaxHours,
+            FlexibleTimes: availability.FlexibleTimes,
+            AvailabilitySummary: FormatAvailability(availability.Slots, availability.FlexibleTimes),
+            AvailabilitySlots: availability.Slots,
             DrivingLicenses: licenses,
             Educations: educations,
             Employers: [],
@@ -103,7 +125,20 @@ public static class LobsyCvModelFactory
             GeneratedAtUtc: generatedAtUtc,
             ConsentVersion: consentVersion ?? PrivacyConstants.CurrentConsentVersion,
             IncludeFullAddress: includeFullAddress,
-            IncludeContactEmail: includeContactEmail);
+            IncludeContactDetails: includeContactDetails);
+    }
+
+    public static string SerializeAvailabilitySnapshot(
+        CandidatePreferencesDto preferences)
+    {
+        var slots = NormalizeSlots(preferences.Availability);
+        return JsonSerializer.Serialize(new
+        {
+            flexibleTimes = preferences.FlexibleTimes == true,
+            minHoursPerWeek = preferences.MinHoursPerWeek,
+            maxHoursPerWeek = preferences.MaxHoursPerWeek,
+            slots
+        });
     }
 
     public static string? ExtractCity(string? homeAddress)
@@ -119,7 +154,6 @@ public static class LobsyCvModelFactory
             return null;
         }
 
-        // Dutch addresses often end with "1234 AB City" or "City".
         var last = parts[^1];
         var tokens = last.Split(' ', StringSplitOptions.RemoveEmptyEntries);
         if (tokens.Length >= 3
@@ -172,22 +206,37 @@ public static class LobsyCvModelFactory
         return sb.Length == 0 ? null : sb.ToString();
     }
 
-    public static string? FormatAvailabilityJson(string? json)
+    public static AvailabilityPayload ParseAvailabilityPayload(string? json)
     {
         if (string.IsNullOrWhiteSpace(json))
         {
-            return null;
+            return AvailabilityPayload.Empty;
         }
 
         try
         {
             using var doc = JsonDocument.Parse(json);
             var root = doc.RootElement;
+            var flexible = root.ValueKind == JsonValueKind.Object
+                           && root.TryGetProperty("flexibleTimes", out var flex)
+                           && flex.ValueKind == JsonValueKind.True;
+
+            decimal? minHours = null;
             if (root.ValueKind == JsonValueKind.Object
-                && root.TryGetProperty("flexibleTimes", out var flex)
-                && flex.ValueKind == JsonValueKind.True)
+                && root.TryGetProperty("minHoursPerWeek", out var minEl)
+                && minEl.ValueKind == JsonValueKind.Number
+                && minEl.TryGetDecimal(out var minVal))
             {
-                return "Tijden in overleg";
+                minHours = minVal;
+            }
+
+            decimal? maxHours = null;
+            if (root.ValueKind == JsonValueKind.Object
+                && root.TryGetProperty("maxHoursPerWeek", out var maxEl)
+                && maxEl.ValueKind == JsonValueKind.Number
+                && maxEl.TryGetDecimal(out var maxVal))
+            {
+                maxHours = maxVal;
             }
 
             var slotsEl = root.ValueKind == JsonValueKind.Object
@@ -195,37 +244,73 @@ public static class LobsyCvModelFactory
                 ? s
                 : root;
 
-            if (slotsEl.ValueKind != JsonValueKind.Object)
-            {
-                return json.Length > 200 ? json[..200] : json;
-            }
-
-            var map = new Dictionary<string, string[]>(StringComparer.OrdinalIgnoreCase);
-            foreach (var prop in slotsEl.EnumerateObject())
-            {
-                if (prop.Value.ValueKind != JsonValueKind.Array)
-                {
-                    continue;
-                }
-
-                var parts = prop.Value.EnumerateArray()
-                    .Where(x => x.ValueKind == JsonValueKind.String)
-                    .Select(x => x.GetString())
-                    .Where(x => !string.IsNullOrWhiteSpace(x))
-                    .Select(x => x!.Trim())
-                    .ToArray();
-                if (parts.Length > 0)
-                {
-                    map[prop.Name] = parts;
-                }
-            }
-
-            return FormatAvailability(map, flexibleTimes: false) ?? (json.Length > 200 ? json[..200] : json);
+            var map = ReadSlotsObject(slotsEl);
+            return new AvailabilityPayload(flexible, map, minHours, maxHours);
         }
         catch (JsonException)
         {
-            return json.Length > 200 ? json[..200] : json;
+            return AvailabilityPayload.Empty;
         }
+    }
+
+    private static IReadOnlyDictionary<string, string[]>? NormalizeSlots(
+        IReadOnlyDictionary<string, string[]>? availability)
+    {
+        if (availability is null || availability.Count == 0)
+        {
+            return null;
+        }
+
+        var map = new Dictionary<string, string[]>(StringComparer.OrdinalIgnoreCase);
+        foreach (var day in DayPartMatrix.DayCodes)
+        {
+            if (!availability.TryGetValue(day, out var slots) || slots.Length == 0)
+            {
+                continue;
+            }
+
+            map[day] = slots
+                .Where(x => !string.IsNullOrWhiteSpace(x))
+                .Select(DayPartMatrix.NormalizeDayPartCode)
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .ToArray();
+        }
+
+        return map.Count == 0 ? null : map;
+    }
+
+    private static Dictionary<string, string[]> ReadSlotsObject(JsonElement slotsEl)
+    {
+        var map = new Dictionary<string, string[]>(StringComparer.OrdinalIgnoreCase);
+        if (slotsEl.ValueKind != JsonValueKind.Object)
+        {
+            return map;
+        }
+
+        foreach (var prop in slotsEl.EnumerateObject())
+        {
+            if (prop.Value.ValueKind != JsonValueKind.Array)
+            {
+                continue;
+            }
+
+            var parts = prop.Value.EnumerateArray()
+                .Where(x => x.ValueKind == JsonValueKind.String)
+                .Select(x => x.GetString())
+                .Where(x => !string.IsNullOrWhiteSpace(x))
+                .Select(x => DayPartMatrix.NormalizeDayPartCode(x!.Trim()))
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .ToArray();
+            if (parts.Length > 0)
+            {
+                var day = DayPartMatrix.IsValidDayCode(prop.Name)
+                    ? DayPartMatrix.NormalizeDayCode(prop.Name)
+                    : prop.Name;
+                map[day] = parts;
+            }
+        }
+
+        return map;
     }
 
     private static List<string> SplitCsv(string? csv)
@@ -238,5 +323,15 @@ public static class LobsyCvModelFactory
         return csv.Split([',', ';', '|'], StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries)
             .Distinct(StringComparer.OrdinalIgnoreCase)
             .ToList();
+    }
+
+    public sealed record AvailabilityPayload(
+        bool FlexibleTimes,
+        IReadOnlyDictionary<string, string[]> Slots,
+        decimal? MinHours,
+        decimal? MaxHours)
+    {
+        public static AvailabilityPayload Empty { get; } =
+            new(false, new Dictionary<string, string[]>(StringComparer.OrdinalIgnoreCase), null, null);
     }
 }
