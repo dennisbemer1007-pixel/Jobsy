@@ -12217,5 +12217,198 @@ a.apply-flow__secondary {
 
     .wl-hero__img {
         transform: none;
-    }
+
+/* ===== CNAME admin help (? checklist) ===== */
+.cname-admin__header {
+    align-items: flex-start;
 }
+
+.cname-admin__title-row {
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+}
+
+.cname-admin__title-row h2 {
+    margin: 0;
+}
+
+.cname-help-btn {
+    width: 1.85rem;
+    height: 1.85rem;
+    border-radius: 999px;
+    border: 1.5px solid color-mix(in srgb, var(--brand) 35%, var(--border));
+    background: color-mix(in srgb, var(--brand) 8%, var(--surface));
+    color: var(--brand);
+    font-weight: 800;
+    font-size: 1rem;
+    line-height: 1;
+    cursor: pointer;
+    flex-shrink: 0;
+}
+
+.cname-help-btn:hover,
+.cname-help-btn[aria-expanded="true"] {
+    background: var(--brand);
+    color: #fff;
+    border-color: var(--brand);
+}
+
+.cname-admin__form label {
+    display: block;
+    margin-top: 0.75rem;
+}
+
+.cname-admin__form input[type="text"],
+.cname-admin__form input:not([type]) {
+    width: 100%;
+    margin-top: 0.25rem;
+}
+
+.cname-help-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(12, 24, 40, 0.45);
+    z-index: 80;
+}
+
+.cname-help-panel {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 81;
+    width: min(40rem, calc(100vw - 1.5rem));
+    max-height: min(88vh, 44rem);
+    overflow: auto;
+    background: var(--surface);
+    color: var(--text);
+    border-radius: 1rem;
+    box-shadow: var(--shadow-lg);
+    padding: 1.25rem 1.35rem 1.1rem;
+}
+
+.cname-help-panel__head {
+    display: flex;
+    gap: 0.75rem;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: 1rem;
+}
+
+.cname-help-panel__kicker {
+    margin: 0 0 0.25rem;
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--coral);
+}
+
+.cname-help-panel__head h2 {
+    margin: 0;
+    font-size: 1.35rem;
+    color: var(--brand);
+}
+
+.cname-help-panel__lead {
+    margin: 0.4rem 0 0;
+    color: var(--muted);
+    line-height: 1.45;
+}
+
+.cname-help-panel__close {
+    border: none;
+    background: transparent;
+    font-size: 1.5rem;
+    line-height: 1;
+    cursor: pointer;
+    color: var(--muted);
+    padding: 0.15rem 0.35rem;
+}
+
+.cname-help-steps {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: 0.85rem;
+}
+
+.cname-help-step {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 0.75rem;
+    padding: 0.75rem 0.15rem;
+    border-top: 1px solid color-mix(in srgb, var(--brand) 12%, var(--border));
+}
+
+.cname-help-step:first-child {
+    border-top: none;
+    padding-top: 0;
+}
+
+.cname-help-step__badge {
+    width: 1.75rem;
+    height: 1.75rem;
+    border-radius: 999px;
+    display: grid;
+    place-items: center;
+    background: var(--brand);
+    color: #fff;
+    font-weight: 800;
+    font-size: 0.85rem;
+}
+
+.cname-help-step__body h3 {
+    margin: 0.1rem 0 0.35rem;
+    font-size: 1.05rem;
+    color: var(--brand-deep);
+}
+
+.cname-help-step__body p {
+    margin: 0 0 0.45rem;
+    color: var(--muted);
+    line-height: 1.45;
+}
+
+.cname-help-step__body ul {
+    margin: 0;
+    padding-left: 1.1rem;
+    color: var(--text);
+    line-height: 1.45;
+}
+
+.cname-help-step__body li + li {
+    margin-top: 0.25rem;
+}
+
+.cname-help-step__body code {
+    font-size: 0.88em;
+    background: color-mix(in srgb, var(--brand) 8%, var(--pearl-shine));
+    padding: 0.05rem 0.3rem;
+    border-radius: 0.3rem;
+}
+
+.cname-help-step__ok {
+    color: var(--success) !important;
+}
+
+.cname-help-panel__foot {
+    margin-top: 1rem;
+    padding-top: 0.85rem;
+    border-top: 1px solid var(--border);
+    display: flex;
+    justify-content: flex-end;
+}
+
+@media (max-width: 560px) {
+    .cname-help-panel {
+        top: auto;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        transform: none;
+        width: 100%;
+        max-height: 92vh;
+        border-radius: 1rem 1rem 0 0;
