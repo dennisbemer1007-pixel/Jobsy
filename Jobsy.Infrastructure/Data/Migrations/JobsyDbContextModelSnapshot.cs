@@ -2517,6 +2517,11 @@ namespace Jobsy.Infrastructure.Data.Migrations
                     b.Property<bool>("ContactPreferWhatsApp")
                         .HasColumnType("boolean");
 
+                    b.Property<bool>("ContentModerationPassed")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(true);
+
                     b.Property<DateTime>("CreatedAtUtc")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("timestamp with time zone")

@@ -20,7 +20,10 @@ public class VacancyCategoriesController : ControllerBase
     [HttpGet]
     [AllowAnonymous]
     public async Task<ActionResult<IReadOnlyList<VacancyCategoryDto>>> GetActive(CancellationToken cancellationToken)
-        => Ok(await _categories.GetActiveAsync(cancellationToken));
+        => Ok((await _categories.GetActiveAsync(cancellationToken))
+            .Where(c => c.Id != VacancyCategoryDefaults.HighlightId
+                        && !string.Equals(c.Slug, "highlight", StringComparison.OrdinalIgnoreCase))
+            .ToList());
 
     [HttpGet("field-catalog")]
     [Authorize(Policy = JobsyPolicies.RequireAdmin)]

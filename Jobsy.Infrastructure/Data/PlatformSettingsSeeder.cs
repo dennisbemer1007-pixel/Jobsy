@@ -36,10 +36,10 @@ internal static class PlatformSettingsSeeder
         }
         else
         {
-            // Raise legacy 0.5 highlight pricing into the 1–2 token product band.
+            // Raise legacy highlight pricing into the current 2-token product price.
             var highlightCost = await db.TokenSpendCosts
                 .FirstOrDefaultAsync(c => c.Reason == TokenSpendReason.Highlight && c.IsActive);
-            if (highlightCost is not null && highlightCost.CostTokens < 1m)
+            if (highlightCost is not null && highlightCost.CostTokens < VacancyProductRules.DefaultHighlightCostTokens)
             {
                 highlightCost.CostTokens = VacancyProductRules.DefaultHighlightCostTokens;
             }

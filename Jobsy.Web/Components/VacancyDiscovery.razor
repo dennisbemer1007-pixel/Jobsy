@@ -1323,7 +1323,7 @@
         try
         {
             _categories = (await Api.GetVacancyCategoriesAsync())
-                .Where(c => c.IsActive)
+                .Where(c => c.IsActive && !IsHighlightCategory(c))
                 .OrderBy(c => c.SortOrder)
                 .ThenBy(c => c.Name)
                 .ToList();
@@ -1975,6 +1975,10 @@
 
     private static bool ShowsSuitableFor65Plus(VacancyListItem vacancy)
         => VacancyCategoryDefaults.MatchesSuitableFor65PlusFilter(vacancy.CategoryId, vacancy.SuitableFor65Plus);
+
+    private static bool IsHighlightCategory(VacancyCategoryItem category)
+        => category.Id == VacancyCategoryDefaults.HighlightId
+            || string.Equals(category.Slug, "highlight", StringComparison.OrdinalIgnoreCase);
 
     private static (string? Label, string? ColorHex) ResolveTypeBadge(VacancyListItem vacancy)
     {

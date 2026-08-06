@@ -385,6 +385,42 @@ public class VacanciesController : ControllerBase
         [FromBody] CreateVacancyRequest request,
         CancellationToken cancellationToken)
     {
+        return await SaveDraftAsync(request, existing: null, cancellationToken);
+    }
+
+    [HttpPut("{id:guid}")]
+    [Authorize(Roles = JobsyRoles.VacancyLifecycleRoles)]
+    [RequireCompanyAccess]
+    public async Task<ActionResult<VacancyListItemDto>> Update(
+        Guid id,
+        [FromBody] CreateVacancyRequest request,
+        CancellationToken cancellationToken)
+    {
+        var vacancy = await LoadManagedVacancyAsync(id, cancellationToken);
+        if (vacancy is null)
+        {
+            return NotFound();
+        }
+
+        var access = await EnsureVacancyManageAccessAsync(vacancy, cancellationToken);
+        if (access is not null)
+        {
+            return access;
+        }
+
+        if (vacancy.Status != VacancyStatus.Draft)
+        {
+            return BadRequest(new { message = "Alleen conceptvacatures kunnen worden bewerkt." });
+        }
+
+        return await SaveDraftAsync(request, vacancy, cancellationToken);
+    }
+
+    private async Task<ActionResult<VacancyListItemDto>> SaveDraftAsync(
+        CreateVacancyRequest request,
+        Core.Entities.Vacancy? existing,
+        CancellationToken cancellationToken)
+    {
         var company = await _db.Companies.FirstOrDefaultAsync(c => c.Id == request.CompanyId, cancellationToken);
         if (company is null)
         {
@@ -447,9 +483,7 @@ public class VacanciesController : ControllerBase
             adultRate = salaryTable.Rates.Max(r => r.HourlyRate);
         }
 
-        // Prefer explicit wage only when no table adult rate could be resolved; otherwise table wins.
         var hourlyWage = adultRate > 0 ? adultRate : request.HourlyWage;
-
         if (!_salary.MeetsMinimumWage(hourlyWage, ageYears: 21))
         {
             return BadRequest(new { message = "Uurloon ligt onder het wettelijk minimumloon (21+)." });
@@ -481,17 +515,6 @@ public class VacanciesController : ControllerBase
         if (request.VideoUrl is not null && videoUrl is null)
         {
             return BadRequest(new { message = "Ongeldige video-URL (alleen http/https)." });
-        }
-
-        var moderation = await _moderation.CheckAsync(request.Title, request.Description, cancellationToken);
-        if (!moderation.IsAllowed)
-        {
-            return UnprocessableEntity(new
-            {
-                code = VacancyModerationCodes.ContentModeration,
-                message = moderation.Warning,
-                suggestion = moderation.Suggestion
-            });
         }
 
         if (request.OverrideContactPreference)
@@ -530,7 +553,6 @@ public class VacanciesController : ControllerBase
         }
 
         var category = categoryResolve.Category!;
-        // Prevent token bypass: free (volunteer) categories cannot be combined with Kind=Regular.
         if (category.IsAlwaysFree && request.Kind == VacancyKind.Regular && !isIntermediary)
         {
             return BadRequest(new
@@ -540,6 +562,13 @@ public class VacanciesController : ControllerBase
         }
 
         var categoryFieldsJson = SerializeCategoryFields(category, isIntermediary ? null : request.CategoryFields);
+        if (!isIntermediary
+            && category.Id == VacancyCategoryDefaults.InclusiefId
+            && !HasCategoryField(categoryFieldsJson, VacancyCategoryExtraFields.TargetGroup))
+        {
+            return BadRequest(new { message = "Doelgroep is verplicht voor inclusieve vacatures." });
+        }
+
         var suitableFor65Plus = !isIntermediary
             && category.Id == VacancyCategoryDefaults.RegulierId
             && request.SuitableFor65Plus;
@@ -553,43 +582,51 @@ public class VacanciesController : ControllerBase
             return BadRequest(new { message = exclusivityError.Error });
         }
 
-        var exclusivitySettingId = exclusivityError.SettingId;
+        var moderation = await _moderation.CheckAsync(request.Title, request.Description, cancellationToken);
+        var moderationWarning = moderation.IsAllowed
+            ? null
+            : moderation.Warning ?? "De vacaturetekst vraagt om een aanpassing voordat je kunt publiceren.";
 
-        var vacancy = new Core.Entities.Vacancy
+        var vacancy = existing ?? new Core.Entities.Vacancy
         {
             Id = Guid.NewGuid(),
-            Title = request.Title,
-            Description = request.Description,
-            HourlyWage = hourlyWage,
-            StartDate = request.StartDate,
-            EndDate = request.EndDate,
             Status = VacancyStatus.Draft,
-            CompanyId = request.CompanyId,
             CreatedVia = VacancySource.Manual,
-            CreatedAtUtc = DateTime.UtcNow,
-            Location = company.Location,
-            RequiredTransport = request.RequiredTransport,
-            WorkTypes = WorkTypeLabels.Combine(branchLabels),
-            WorkTypeLabels = WorkTypeLabels.CombineStored(branchLabels),
-            ImageUrl = imageUrl,
-            VideoUrl = videoUrl,
-            SalaryTableId = tableId,
-            RequiredDrivingLicense = string.IsNullOrWhiteSpace(request.RequiredDrivingLicense) ? null : request.RequiredDrivingLicense.Trim(),
-            RequiredEducation = string.IsNullOrWhiteSpace(request.RequiredEducation) ? null : request.RequiredEducation.Trim(),
-            MinimumEmployers = request.MinimumEmployers is > 0 ? request.MinimumEmployers : null,
-            OverrideContactPreference = request.OverrideContactPreference,
-            DirectContactEnabled = request.OverrideContactPreference && request.DirectContactEnabled,
-            ContactPreferMail = request.OverrideContactPreference && request.DirectContactEnabled && request.ContactPreferMail,
-            ContactPreferPhone = request.OverrideContactPreference && request.DirectContactEnabled && request.ContactPreferPhone,
-            ContactPreferWhatsApp = request.OverrideContactPreference && request.DirectContactEnabled && request.ContactPreferWhatsApp,
-            IntermediaryCompanyId = intermediaryCompanyId,
-            ShowClientAddressOnMap = isIntermediary && request.ShowClientAddressOnMap,
-            Kind = category.PlacementKind,
-            CategoryId = category.Id,
-            CategoryFieldsJson = categoryFieldsJson,
-            SuitableFor65Plus = suitableFor65Plus,
-            ExclusivitySettingId = category.PlacementKind == VacancyKind.Internship ? exclusivitySettingId : null
+            CreatedAtUtc = DateTime.UtcNow
         };
+
+        vacancy.Title = request.Title;
+        vacancy.Description = request.Description;
+        vacancy.HourlyWage = hourlyWage;
+        vacancy.StartDate = request.StartDate;
+        vacancy.EndDate = request.EndDate;
+        vacancy.CompanyId = request.CompanyId;
+        vacancy.Location = company.Location;
+        vacancy.RequiredTransport = request.RequiredTransport;
+        vacancy.WorkTypes = WorkTypeLabels.Combine(branchLabels);
+        vacancy.WorkTypeLabels = WorkTypeLabels.CombineStored(branchLabels);
+        vacancy.ImageUrl = imageUrl;
+        vacancy.VideoUrl = videoUrl;
+        vacancy.SalaryTableId = tableId;
+        vacancy.RequiredDrivingLicense = string.IsNullOrWhiteSpace(request.RequiredDrivingLicense) ? null : request.RequiredDrivingLicense.Trim();
+        vacancy.RequiredEducation = string.IsNullOrWhiteSpace(request.RequiredEducation) ? null : request.RequiredEducation.Trim();
+        vacancy.MinimumEmployers = request.MinimumEmployers is > 0 ? request.MinimumEmployers : null;
+        vacancy.OverrideContactPreference = request.OverrideContactPreference;
+        vacancy.DirectContactEnabled = request.OverrideContactPreference && request.DirectContactEnabled;
+        vacancy.ContactPreferMail = request.OverrideContactPreference && request.DirectContactEnabled && request.ContactPreferMail;
+        vacancy.ContactPreferPhone = request.OverrideContactPreference && request.DirectContactEnabled && request.ContactPreferPhone;
+        vacancy.ContactPreferWhatsApp = request.OverrideContactPreference && request.DirectContactEnabled && request.ContactPreferWhatsApp;
+        vacancy.IntermediaryCompanyId = intermediaryCompanyId;
+        vacancy.ShowClientAddressOnMap = isIntermediary && request.ShowClientAddressOnMap;
+        vacancy.Kind = category.PlacementKind;
+        vacancy.CategoryId = category.Id;
+        vacancy.Category = category;
+        vacancy.CategoryFieldsJson = categoryFieldsJson;
+        vacancy.SuitableFor65Plus = suitableFor65Plus;
+        vacancy.ExclusivitySettingId = category.PlacementKind == VacancyKind.Internship
+            ? exclusivityError.SettingId
+            : null;
+        vacancy.ContentModerationPassed = moderation.IsAllowed;
 
         var hoursError = ApplyHoursAndSchedule(vacancy, request);
         if (hoursError is not null)
@@ -599,16 +636,26 @@ public class VacanciesController : ControllerBase
 
         ApplyLegalFlags(vacancy, request);
 
-        _db.Vacancies.Add(vacancy);
+        if (existing is null)
+        {
+            _db.Vacancies.Add(vacancy);
+        }
+
         await _db.SaveChangesAsync(cancellationToken);
 
         vacancy.Company = company;
         vacancy.IntermediaryCompany = intermediaryCompany;
         var freePublishUntil = (await _features.GetAsync(cancellationToken)).FreePublishUntil;
-        return CreatedAtAction(
-            nameof(GetById),
-            new { id = vacancy.Id },
-            MapToDto(vacancy, showWage: true, includeCategoryInternals: true, freePublishUntil: freePublishUntil));
+        var dto = MapToDto(
+            vacancy,
+            showWage: true,
+            includeCategoryInternals: true,
+            freePublishUntil: freePublishUntil,
+            moderationWarning: moderationWarning);
+
+        return existing is null
+            ? CreatedAtAction(nameof(GetById), new { id = vacancy.Id }, dto)
+            : Ok(dto);
     }
 
     [HttpPost("publish")]
@@ -627,6 +674,11 @@ public class VacanciesController : ControllerBase
         if (access is not null)
         {
             return access;
+        }
+
+        if (VacancyDraftCompletenessRules.IsIncomplete(vacancy))
+        {
+            return BadRequest(new { message = "Conceptvacature is incompleet en kan nog niet worden gepubliceerd." });
         }
 
         var actor = await _users.FindByPrincipalAsync(User, cancellationToken);
@@ -1330,7 +1382,8 @@ public class VacanciesController : ControllerBase
         int shareCount = 0,
         int likeCount = 0,
         bool includeCategoryInternals = false,
-        DateOnly? freePublishUntil = null)
+        DateOnly? freePublishUntil = null,
+        string? moderationWarning = null)
     {
         decimal? hourly = null;
         IReadOnlyList<WageByAgeDto>? wageByAge = null;
@@ -1370,6 +1423,11 @@ public class VacanciesController : ControllerBase
                 ? null
                 : FreePublishRules.EffectivePublishCost(basePublish.Value, freePublishUntil, DateTime.UtcNow);
         }
+
+        var isIncomplete = v.Status == VacancyStatus.Draft && VacancyDraftCompletenessRules.IsIncomplete(v);
+        var displayStatus = v.Status == VacancyStatus.Draft && isIncomplete
+            ? "DraftIncomplete"
+            : v.Status.ToString();
 
         return new VacancyListItemDto(
             v.Id,
@@ -1452,7 +1510,11 @@ public class VacanciesController : ControllerBase
             CompanyPublicPaths.NormalizeKvkNumber(v.Company?.KvkNumber),
             CompanyPublicPaths.TryParseVestigingsnummer(
                 v.Company?.KvkEstablishmentId,
-                CompanyPublicPaths.NormalizeKvkNumber(v.Company?.KvkNumber)));
+                CompanyPublicPaths.NormalizeKvkNumber(v.Company?.KvkNumber)),
+            v.ContentModerationPassed,
+            isIncomplete,
+            displayStatus,
+            moderationWarning);
     }
 
     private async Task<(Core.Entities.VacancyCategory? Category, string? Error)> ResolveCategoryAsync(
@@ -1537,6 +1599,10 @@ public class VacanciesController : ControllerBase
             return null;
         }
     }
+
+    private static bool HasCategoryField(string? json, string key)
+        => DeserializeCategoryFields(json)?.TryGetValue(key, out var value) == true
+            && !string.IsNullOrWhiteSpace(value);
 
     private async Task<(Guid? SettingId, string? Error)> ResolveExclusivitySettingIdAsync(
         VacancyKind kind,

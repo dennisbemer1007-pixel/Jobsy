@@ -26,6 +26,8 @@ public sealed class VacancyCategoryService : IVacancyCategoryService
 
         foreach (var seed in VacancyCategoryDefaults.All)
         {
+            var isHighlightCategory = seed.Id == VacancyCategoryDefaults.HighlightId
+                || string.Equals(seed.Slug, "highlight", StringComparison.OrdinalIgnoreCase);
             if (existingSlugs.Contains(seed.Slug, StringComparer.OrdinalIgnoreCase))
             {
                 continue;
@@ -46,12 +48,48 @@ public sealed class VacancyCategoryService : IVacancyCategoryService
                 ExtraFieldsJson = VacancyCategoryExtraFields.SerializeKeys(seed.ExtraFields),
                 PlacementKind = seed.PlacementKind,
                 SortOrder = seed.SortOrder,
-                IsActive = true,
-                ShowInMapFilter = true,
-                ShowInLegend = true,
+                IsActive = !isHighlightCategory,
+                ShowInMapFilter = !isHighlightCategory,
+                ShowInLegend = !isHighlightCategory,
                 CreatedAtUtc = DateTime.UtcNow
             });
             added = true;
+        }
+
+        var highlight = await _db.VacancyCategories
+            .FirstOrDefaultAsync(c => c.Id == VacancyCategoryDefaults.HighlightId || c.Slug == "highlight", cancellationToken);
+        if (highlight is not null)
+        {
+            var highlightTouched = false;
+            if (highlight.IsActive)
+            {
+                highlight.IsActive = false;
+                highlightTouched = true;
+            }
+
+            if (highlight.ShowInMapFilter)
+            {
+                highlight.ShowInMapFilter = false;
+                highlightTouched = true;
+            }
+
+            if (highlight.ShowInLegend)
+            {
+                highlight.ShowInLegend = false;
+                highlightTouched = true;
+            }
+
+            if (highlight.HighlightCostTokens < VacancyProductRules.DefaultHighlightCostTokens)
+            {
+                highlight.HighlightCostTokens = VacancyProductRules.DefaultHighlightCostTokens;
+                highlightTouched = true;
+            }
+
+            if (highlightTouched)
+            {
+                highlight.UpdatedAtUtc = DateTime.UtcNow;
+                added = true;
+            }
         }
 
         // Keep seeded 65+ category name/color aligned with “Geschikt voor 65+” branding.

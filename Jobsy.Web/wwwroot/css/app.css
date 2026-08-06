@@ -9201,6 +9201,10 @@ button.stat-card {
     background: var(--surface);
 }
 
+.vacancy-legal__item--plain {
+    grid-template-columns: 1.15rem minmax(0, 1fr);
+}
+
 .vacancy-legal__item.is-open {
     border-color: color-mix(in srgb, var(--brand) 28%, var(--border));
     background: color-mix(in srgb, var(--surface) 92%, var(--brand) 6%);

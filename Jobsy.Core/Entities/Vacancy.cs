@@ -108,6 +108,11 @@ public class Vacancy
     public Guid? SalaryTableId { get; set; }
     public CompanySalaryTable? SalaryTable { get; set; }
 
+    /// <summary>
+    /// False when content moderation flagged the draft; publishing remains blocked until the text passes.
+    /// </summary>
+    public bool ContentModerationPassed { get; set; } = true;
+
     /// <summary>Minimum hours/week for this role (matching + filters).</summary>
     public decimal? MinHoursPerWeek { get; set; }
 

@@ -211,6 +211,7 @@ public class JobsyDbContext : DbContext
             entity.Property(e => e.VideoUrl).HasMaxLength(1024);
             entity.Property(e => e.RequiredDrivingLicense).HasMaxLength(256);
             entity.Property(e => e.RequiredEducation).HasMaxLength(256);
+            entity.Property(e => e.ContentModerationPassed).HasDefaultValue(true);
             entity.Property(e => e.WorkTypeLabels).HasMaxLength(512);
             entity.Property(e => e.CreatedAtUtc).HasDefaultValueSql("CURRENT_TIMESTAMP");
             entity.Property(e => e.MinHoursPerWeek).HasPrecision(5, 1);

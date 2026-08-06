@@ -72,6 +72,10 @@ public class VacancyListItem
     public bool? LegalAdultSupervisorPresent { get; set; }
     public bool? LegalHandlesMoneyOrClosing { get; set; }
     public bool? LegalHeavyOrHazardousWork { get; set; }
+    public bool ContentModerationPassed { get; set; } = true;
+    public bool IsIncomplete { get; set; }
+    public string? DisplayStatus { get; set; }
+    public string? ModerationWarning { get; set; }
 }
 
 public sealed class WageByAgeItem

@@ -1,6 +1,7 @@
 using Jobsy.Core.Entities;
 using Jobsy.Core.Enums;
 using Jobsy.Core.Interfaces;
+using Jobsy.Core.Rules;
 using Jobsy.Core.ValueObjects;
 using Jobsy.Infrastructure.Data;
 using Jobsy.Infrastructure.Services;
@@ -156,6 +157,36 @@ public class VacancyDraftCreationServiceTests
         Assert.Contains("Rijbewijs", result.ErrorMessage);
     }
 
+    [Fact]
+    public async Task CreateDraft_with_moderation_failure_persists_incomplete_draft()
+    {
+        await using var db = CreateDb();
+        var companyId = Guid.NewGuid();
+        var tableId = Guid.NewGuid();
+        SeedCompanyWithTable(db, companyId, tableId);
+        await db.SaveChangesAsync();
+
+        var sut = new VacancyDraftCreationService(db, new AlwaysOkSalary(), new RejectModeration());
+        var result = await sut.CreateDraftAsync(
+            new VacancyDraftInput(
+                companyId,
+                "Titel",
+                "Omschrijving",
+                0,
+                DateOnly.FromDateTime(DateTime.UtcNow),
+                DateOnly.FromDateTime(DateTime.UtcNow.AddMonths(1)),
+                TransportMode.Bike,
+                ["Winkel"],
+                tableId),
+            VacancySource.Csv);
+
+        Assert.True(result.Succeeded, result.ErrorMessage);
+        Assert.NotNull(result.Vacancy);
+        Assert.False(result.Vacancy!.ContentModerationPassed);
+        Assert.True(VacancyDraftCompletenessRules.IsIncomplete(result.Vacancy));
+        Assert.Equal(1, await db.Vacancies.CountAsync());
+    }
+
     private static JobsyDbContext CreateDb()
     {
         var options = new DbContextOptionsBuilder<JobsyDbContext>()
@@ -207,5 +238,14 @@ public class VacancyDraftCreationServiceTests
             string description,
             CancellationToken cancellationToken = default)
             => Task.FromResult(VacancyContentModerationResult.Allowed());
+    }
+
+    private sealed class RejectModeration : IVacancyContentModerationService
+    {
+        public Task<VacancyContentModerationResult> CheckAsync(
+            string title,
+            string description,
+            CancellationToken cancellationToken = default)
+            => Task.FromResult(new VacancyContentModerationResult(false, "Niet toegestaan."));
     }
 }

@@ -172,10 +172,6 @@ public sealed class VacancyDraftCreationService : IVacancyDraftCreationService
         }
 
         var moderation = await _moderation.CheckAsync(input.Title, input.Description, cancellationToken);
-        if (!moderation.IsAllowed)
-        {
-            return VacancyDraftCreateResult.Fail(moderation.Warning ?? "Inhoud is niet toegestaan.");
-        }
 
         var isIntermediaryPlacement = input.IntermediaryCompanyId is not null;
         var kind = isIntermediaryPlacement ? VacancyKind.Regular : input.Kind;
@@ -210,7 +206,8 @@ public sealed class VacancyDraftCreationService : IVacancyDraftCreationService
             ShowClientAddressOnMap = input.IntermediaryCompanyId is not null && input.ShowClientAddressOnMap,
             Kind = kind,
             CategoryId = categoryId,
-            SuitableFor65Plus = false
+            SuitableFor65Plus = false,
+            ContentModerationPassed = moderation.IsAllowed
         };
 
         _db.Vacancies.Add(vacancy);

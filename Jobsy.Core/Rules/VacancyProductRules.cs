@@ -11,8 +11,8 @@ public static class VacancyProductRules
     /// <summary>Default 1-week Funda carousel highlight window from sales commercial settings.</summary>
     public const int DefaultHighlightCarouselDays = 7;
 
-    /// <summary>Default highlight token cost when no admin TokenSpendCosts row exists (1–2 tokens).</summary>
-    public const decimal DefaultHighlightCostTokens = 1m;
+    /// <summary>Default highlight token cost when no admin TokenSpendCosts row exists.</summary>
+    public const decimal DefaultHighlightCostTokens = 2m;
 
     /// <summary>Default list price per token for partner sales materials.</summary>
     public const decimal DefaultBaseTokenValueEuro = 25m;

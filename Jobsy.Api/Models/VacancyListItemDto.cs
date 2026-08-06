@@ -70,4 +70,8 @@ public record VacancyListItemDto(
     IReadOnlyDictionary<string, string>? CategoryFields = null,
     bool SuitableFor65Plus = false,
     string? KvkNumber = null,
-    string? Vestigingsnummer = null);
+    string? Vestigingsnummer = null,
+    bool ContentModerationPassed = true,
+    bool IsIncomplete = false,
+    string? DisplayStatus = null,
+    string? ModerationWarning = null);

@@ -10,14 +10,18 @@
 @using Jobsy.Core.Enums
 @using Jobsy.Core.Rules
 
-<PageTitle>@(_isDuplicate ? Culture["Employer.DuplicateVacancy"] : Culture["Employer.CreateVacancy"]) · Lobsy</PageTitle>
+<PageTitle>@PageHeading · Lobsy</PageTitle>
 
 <div class="panel-page vacancy-editor">
     <header class="panel-header">
         <div>
-            <h1>@(_isDuplicate ? Culture["Employer.DuplicateVacancy"] : Culture["Employer.CreateVacancy"])</h1>
+            <h1>@PageHeading</h1>
             <p class="login-lead">
-                @if (_isDuplicate)
+                @if (_editVacancyId is not null)
+                {
+                    <text>Werk het concept bij. Publiceren kan zodra alle verplichte onderdelen compleet zijn.</text>
+                }
+                else if (_isDuplicate)
                 {
                     <text>Gegevens zijn overgenomen uit de bronvacature. Pas aan waar nodig en sla op als concept — publiceren via de vacaturelijst.</text>
                 }
@@ -143,33 +147,6 @@
                         }
                     </select>
                 </label>
-                @if (SelectedCategory is { } selectedCategory)
-                {
-                    <div class="vacancy-category-summary" aria-live="polite">
-                        <span class="vacancy-category-swatch" style="--category-color:@selectedCategory.ColorHex" aria-hidden="true"></span>
-                        <div>
-                            <strong>@selectedCategory.Name</strong>
-                            <p class="muted">
-                                @if (selectedCategory.IsAlwaysFree)
-                                {
-                                    <span>Gratis plaatsen · geen highlight/PushBom</span>
-                                }
-                                else
-                                {
-                                    <span>@selectedCategory.PublishCostTokens.ToString("0.##") token om te plaatsen</span>
-                                    @if (selectedCategory.HighlightAvailable)
-                                    {
-                                        <span> · Highlight +@selectedCategory.HighlightCostTokens.ToString("0.##")</span>
-                                    }
-                                    @if (selectedCategory.PushBomAvailable)
-                                    {
-                                        <span> · PushBom beschikbaar</span>
-                                    }
-                                }
-                            </p>
-                        </div>
-                    </div>
-                }
             }
             @if (!_isIntermediary && SelectedCategory?.PlacementKind == "Internship")
             {
@@ -187,19 +164,11 @@
                     <p class="muted">Deze stageplek wordt zichtbaar voor iedereen, maar alleen studenten van @exclusive.Name kunnen solliciteren.</p>
                 }
             }
-            @if (!_isIntermediary && SelectedCategory?.Slug == "regulier")
-            {
-                <label class="filter-check">
-                    <input type="checkbox" @bind="_suitableFor65Plus" />
-                    Geschikt voor 65+
-                </label>
-                <p class="muted">Vacature blijft “Reguliere vacature” en valt onder het vacaturetype Geschikt voor 65+ in filters en op de kaart.</p>
-            }
             @if (!_isIntermediary && SelectedCategory?.ExtraFieldDefinitions is { Count: > 0 } fields)
             {
                 <fieldset class="vacancy-category-extra">
                     <legend>Extra gegevens voor @SelectedCategory.Name</legend>
-                    @foreach (var field in fields)
+                    @foreach (var field in fields.Where(f => !IsLegalStyleCategoryField(f.Key)))
                     {
                         @if (field.InputType == "boolean")
                         {
@@ -476,13 +445,36 @@
                             }
                         </li>
                     }
+                    @if (ShowSuitableFor65PlusLegal)
+                    {
+                        <li class="vacancy-legal__item vacancy-legal__item--plain">
+                            <input id="legal-suitable-65"
+                                   class="vacancy-legal__check"
+                                   type="checkbox"
+                                   @bind="_suitableFor65Plus" />
+                            <label class="vacancy-legal__text" for="legal-suitable-65">
+                                Geschikt voor 65+
+                                <span class="muted">Vacature blijft regulier en krijgt de 65+ filter/badge.</span>
+                            </label>
+                        </li>
+                    }
+                    @if (ShowJobCoachLegal)
+                    {
+                        <li class="vacancy-legal__item vacancy-legal__item--plain">
+                            <input id="legal-jobcoach"
+                                   class="vacancy-legal__check"
+                                   type="checkbox"
+                                   checked="@(string.Equals(GetCategoryField(VacancyCategoryExtraFields.JobCoachAvailable), "ja", StringComparison.OrdinalIgnoreCase))"
+                                   @onchange="e => SetCategoryBool(VacancyCategoryExtraFields.JobCoachAvailable, e)" />
+                            <label class="vacancy-legal__text" for="legal-jobcoach">Jobcoach beschikbaar</label>
+                        </li>
+                    }
                 </ul>
             </fieldset>
 
             <fieldset class="vacancy-contact">
                 <legend>Voorkeur voor contact</legend>
                 <p class="muted vacancy-field-hint">
-                    Standaard gelden de bedrijfsinstellingen.
                     Directe contactopties (WhatsApp/telefoon) verschijnen voor kandidaten pas na een succesvolle sollicitatie.
                 </p>
                 @if (SelectedCompany is not null)
@@ -494,39 +486,35 @@
                             : "direct contact uit")
                     </p>
                 }
-                <label class="vacancy-toggle-row">
-                    <input type="checkbox" @bind="_overrideContact" @bind:after="OnOverrideContactChanged" />
-                    <span>
-                        <strong>Afwijkende contactvoorkeur voor deze vacature</strong>
-                        <span class="muted">Overschrijf de standaardinstelling van het bedrijf</span>
-                    </span>
-                </label>
-                @if (_overrideContact)
-                {
-                    <label class="vacancy-toggle-row">
-                        <input type="checkbox" @bind="_vacancyDirectContact" @bind:after="OnVacancyDirectContactChanged" />
-                        <span>
-                            <strong>Direct contact gewenst</strong>
+                <ul class="vacancy-legal__list">
+                    <li class="vacancy-legal__item vacancy-legal__item--plain">
+                        <input id="vacancy-direct-contact"
+                               class="vacancy-legal__check"
+                               type="checkbox"
+                               @bind="_vacancyDirectContact"
+                               @bind:after="OnVacancyDirectContactChanged" />
+                        <label class="vacancy-legal__text" for="vacancy-direct-contact">
+                            Direct contact gewenst
                             <span class="muted">Mail, telefoon of WhatsApp tonen na sollicitatie</span>
-                        </span>
-                    </label>
-                    @if (_vacancyDirectContact)
-                    {
-                        <div class="vacancy-contact__channels" role="group" aria-label="Contactkanalen">
-                            <label class="vacancy-contact__channel">
-                                <input type="checkbox" @bind="_vacancyPreferMail" />
-                                Mail
-                            </label>
-                            <label class="vacancy-contact__channel">
-                                <input type="checkbox" @bind="_vacancyPreferPhone" />
-                                Telefoon
-                            </label>
-                            <label class="vacancy-contact__channel">
-                                <input type="checkbox" @bind="_vacancyPreferWhatsApp" />
-                                WhatsApp
-                            </label>
-                        </div>
-                    }
+                        </label>
+                    </li>
+                </ul>
+                @if (_vacancyDirectContact)
+                {
+                    <div class="vacancy-contact__channels" role="group" aria-label="Contactkanalen">
+                        <label class="vacancy-contact__channel">
+                            <input type="checkbox" @bind="_vacancyPreferMail" />
+                            Mail
+                        </label>
+                        <label class="vacancy-contact__channel">
+                            <input type="checkbox" @bind="_vacancyPreferPhone" />
+                            Telefoon
+                        </label>
+                        <label class="vacancy-contact__channel">
+                            <input type="checkbox" @bind="_vacancyPreferWhatsApp" />
+                            WhatsApp
+                        </label>
+                    </div>
                 }
             </fieldset>
             <button class="login-submit" type="submit" disabled="@_saving">
@@ -628,6 +616,9 @@
     [SupplyParameterFromQuery(Name = "from")]
     public Guid? From { get; set; }
 
+    [SupplyParameterFromQuery(Name = "edit")]
+    public Guid? Edit { get; set; }
+
     private ElementReference _descriptionRef;
     private string _title = "";
     private string _categoryId = "";
@@ -660,11 +651,13 @@
     private bool _moderationOpen;
     private string? _moderationWarning;
     private string? _moderationSuggestion;
+    private Guid? _editVacancyId;
+    private DateOnly? _draftStartDate;
+    private DateOnly? _draftEndDate;
     private Guid _companyId;
     private List<CompanySummary> _companies = [];
     private List<KvkEstablishmentItem> _clientEstablishments = [];
     private List<SalaryTableItem> _salaryTables = [];
-    private bool _overrideContact;
     private bool _vacancyDirectContact;
     private bool _vacancyPreferMail;
     private bool _vacancyPreferPhone;
@@ -686,22 +679,25 @@
     private string SelectedCompanyName =>
         SelectedCompany?.Name ?? "Vestiging";
 
+    private string PageHeading =>
+        _editVacancyId is not null
+            ? "Vacature bewerken"
+            : (_isDuplicate ? Culture["Employer.DuplicateVacancy"] : Culture["Employer.CreateVacancy"]);
+
+    private bool ShowSuitableFor65PlusLegal =>
+        !_isIntermediary && string.Equals(SelectedCategory?.Slug, "regulier", StringComparison.OrdinalIgnoreCase);
+
+    private bool ShowJobCoachLegal =>
+        !_isIntermediary && string.Equals(SelectedCategory?.Slug, "inclusief", StringComparison.OrdinalIgnoreCase);
+
+    private static bool IsLegalStyleCategoryField(string key)
+        => string.Equals(key, VacancyCategoryExtraFields.JobCoachAvailable, StringComparison.OrdinalIgnoreCase);
+
     private static IEnumerable<string> CompanyChannelLabels(CompanySummary c)
     {
         if (c.ContactPreferMail) yield return "Mail";
         if (c.ContactPreferPhone) yield return "Telefoon";
         if (c.ContactPreferWhatsApp) yield return "WhatsApp";
-    }
-
-    private void OnOverrideContactChanged()
-    {
-        if (!_overrideContact)
-        {
-            _vacancyDirectContact = false;
-            _vacancyPreferMail = false;
-            _vacancyPreferPhone = false;
-            _vacancyPreferWhatsApp = false;
-        }
     }
 
     private void OnVacancyDirectContactChanged()
@@ -776,9 +772,13 @@
 
         await LoadMasterdataAsync();
 
-        if (From is Guid sourceId)
+        if (Edit is Guid editId)
         {
-            await PrefillFromAsync(sourceId);
+            await PrefillFromAsync(editId, duplicate: false);
+        }
+        else if (From is Guid sourceId)
+        {
+            await PrefillFromAsync(sourceId, duplicate: true);
         }
 
         await LoadSalaryTablesAsync();
@@ -967,6 +967,10 @@
         try
         {
             _categories = (await Api.GetVacancyCategoriesAsync()).ToList();
+            _categories = _categories
+                .Where(c => c.Id != VacancyCategoryDefaults.HighlightId
+                            && !string.Equals(c.Slug, "highlight", StringComparison.OrdinalIgnoreCase))
+                .ToList();
             if (_isIntermediary)
             {
                 ApplyIntermediaryCategory();
@@ -999,7 +1003,7 @@
         _categoryFields = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
     }
 
-    private async Task PrefillFromAsync(Guid sourceId)
+    private async Task PrefillFromAsync(Guid sourceId, bool duplicate)
     {
         try
         {
@@ -1016,9 +1020,12 @@
                 return;
             }
 
-            _isDuplicate = true;
+            _editVacancyId = duplicate ? null : source.Id;
+            _isDuplicate = duplicate;
             _companyId = source.CompanyId;
-            _title = AppendCopySuffix(source.Title);
+            _title = duplicate ? AppendCopySuffix(source.Title) : source.Title;
+            _draftStartDate = duplicate ? null : source.StartDate;
+            _draftEndDate = duplicate ? null : source.EndDate;
             if (_isIntermediary)
             {
                 ApplyIntermediaryCategory();
@@ -1066,7 +1073,6 @@
             var contact = await Api.GetVacancyContactPreferenceAsync(sourceId);
             if (contact is not null)
             {
-                _overrideContact = contact.OverrideContactPreference;
                 _vacancyDirectContact = contact.DirectContactEnabled;
                 _vacancyPreferMail = contact.ContactPreferMail;
                 _vacancyPreferPhone = contact.ContactPreferPhone;
@@ -1387,13 +1393,19 @@
             return;
         }
 
-        if (_overrideContact
-            && _vacancyDirectContact
+        if (_vacancyDirectContact
             && !_vacancyPreferMail
             && !_vacancyPreferPhone
             && !_vacancyPreferWhatsApp)
         {
             _message = "Kies minstens één contactoptie (Mail, Telefoon of WhatsApp).";
+            return;
+        }
+
+        if (ShowJobCoachLegal
+            && string.IsNullOrWhiteSpace(GetCategoryField(VacancyCategoryExtraFields.TargetGroup)))
+        {
+            _message = "Doelgroep is verplicht voor inclusieve vacatures.";
             return;
         }
 
@@ -1426,13 +1438,15 @@
             }
 
             var today = DateOnly.FromDateTime(DateTime.Today);
-            await Api.CreateVacancyAsync(new CreateVacancyForm(
+            var startDate = _editVacancyId is not null ? _draftStartDate ?? today : today;
+            var endDate = _editVacancyId is not null ? _draftEndDate ?? startDate.AddMonths(3) : today.AddMonths(3);
+            var form = new CreateVacancyForm(
                 _companyId,
                 _title,
                 _description,
                 adultRate.HourlyRate,
-                today,
-                today.AddMonths(3),
+                startDate,
+                endDate,
                 TransportMode.Bike,
                 branchLabels,
                 string.IsNullOrWhiteSpace(_imageUrl) ? null : _imageUrl.Trim(),
@@ -1441,7 +1455,7 @@
                 DrivingLicenseLabels.Combine(_selectedLicenses),
                 EducationLevelLabels.Combine(_selectedEducationLevels, forVacancy: true),
                 _minimumEmployers is int min && _minEmployerOptions.Contains(min) ? min : null,
-                _overrideContact,
+                true,
                 _vacancyDirectContact,
                 _vacancyPreferMail,
                 _vacancyPreferPhone,
@@ -1463,9 +1477,15 @@
                     : null,
                 CategoryId: Guid.TryParse(_categoryId, out var catId) ? catId : null,
                 CategoryFields: _categoryFields.Count > 0 ? new Dictionary<string, string>(_categoryFields) : null,
-                SuitableFor65Plus: SelectedCategory?.Slug == "regulier" && _suitableFor65Plus));
+                SuitableFor65Plus: SelectedCategory?.Slug == "regulier" && _suitableFor65Plus);
 
-            Navigation.NavigateTo("/employer/vacancies");
+            var saved = _editVacancyId is Guid editId
+                ? await Api.UpdateVacancyAsync(editId, form)
+                : await Api.CreateVacancyAsync(form);
+
+            Navigation.NavigateTo(string.IsNullOrWhiteSpace(saved?.ModerationWarning)
+                ? "/employer/vacancies"
+                : "/employer/vacancies?moderationWarning=1");
         }
         catch (VacancyModerationException ex)
         {

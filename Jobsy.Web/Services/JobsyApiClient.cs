@@ -264,6 +264,17 @@ public sealed class JobsyApiClient : IAsyncDisposable
     public async Task<VacancyListItem?> CreateVacancyAsync(CreateVacancyForm form, CancellationToken ct = default)
     {
         var response = await _http.PostAsJsonAsync("api/vacancies", form, ct);
+        return await ReadVacancySaveResponseAsync(response, ct);
+    }
+
+    public async Task<VacancyListItem?> UpdateVacancyAsync(Guid id, CreateVacancyForm form, CancellationToken ct = default)
+    {
+        var response = await _http.PutAsJsonAsync($"api/vacancies/{id}", form, ct);
+        return await ReadVacancySaveResponseAsync(response, ct);
+    }
+
+    private static async Task<VacancyListItem?> ReadVacancySaveResponseAsync(HttpResponseMessage response, CancellationToken ct)
+    {
         if (response.StatusCode == System.Net.HttpStatusCode.UnprocessableEntity)
         {
             var feedback = await response.Content.ReadFromJsonAsync<VacancyModerationFeedback>(cancellationToken: ct);

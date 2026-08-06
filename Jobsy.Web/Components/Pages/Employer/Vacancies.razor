@@ -86,10 +86,10 @@
                         <th>Bron</th>
                         <th>Getoond</th>
                         <th>Clicks</th>
-                        <th>Shared</th>
-                        <th>Applied</th>
-                        <th>Extended</th>
-                        <th>Liked</th>
+                        <th>Gedeeld</th>
+                        <th>Gesolliciteerd</th>
+                        <th>Verlengd</th>
+                        <th>Bewaard</th>
                         <th class="data-table__col--actions">@Culture["Common.Actions"]</th>
                     </tr>
                 </thead>
@@ -107,7 +107,7 @@
                                 }
                             </td>
                             <td class="data-table__col--wrap">@v.CompanyName</td>
-                            <td>@v.Status</td>
+                            <td>@StatusLabel(v)</td>
                             <td>@v.StartDate.ToString("dd-MM-yyyy")</td>
                             <td>@v.EndDate.ToString("dd-MM-yyyy")</td>
                             <td>
@@ -131,15 +131,24 @@
                                         <button class="row-actions-menu__item" type="button" role="menuitem" @onclick="() => OpenContactPref(v)">
                                             @Culture["VacancyAction.Contact"]
                                         </button>
-                                        <a class="row-actions-menu__item" role="menuitem" href="@($"/branch/vacancies/new?from={v.Id}")">
-                                            @Culture["VacancyAction.Duplicate"]
-                                        </a>
+                                        @if (!IsIncompleteDraft(v))
+                                        {
+                                            <a class="row-actions-menu__item" role="menuitem" href="@($"/branch/vacancies/new?from={v.Id}")">
+                                                @Culture["VacancyAction.Duplicate"]
+                                            </a>
+                                        }
                                     }
                                     @if (_canManageVacancy && v.Status == "Draft")
                                     {
-                                        <button class="row-actions-menu__item" type="button" role="menuitem" @onclick="() => OpenPublish(v)">
-                                            @Culture["VacancyAction.Publish"]
-                                        </button>
+                                        <a class="row-actions-menu__item" role="menuitem" href="@($"/branch/vacancies/new?edit={v.Id}")">
+                                            Bewerken
+                                        </a>
+                                        @if (!IsIncompleteDraft(v))
+                                        {
+                                            <button class="row-actions-menu__item" type="button" role="menuitem" @onclick="() => OpenPublish(v)">
+                                                @Culture["VacancyAction.Publish"]
+                                            </button>
+                                        }
                                     }
                                     @if (v.Status == "PendingApproval" && _canApprovePublish)
                                     {
@@ -204,34 +213,27 @@
                          TitleId="contact-pref-title"
                          Lead="@_contactVacancy.Title"
                          OnClose="CloseContactPref">
-        <p class="muted">Overschrijf de bedrijfsinstellingen voor deze vacature. Contactgegevens komen uit het bedrijfsprofiel.</p>
-        <label class="checkbox-row">
-            <input type="checkbox" @bind="_contactOverride" @bind:after="OnContactOverrideChanged" disabled="@_contactBusy" />
-            Afwijkende contactvoorkeur voor deze vacature
+        <p class="muted">Contactgegevens komen uit het bedrijfsprofiel.</p>
+        <label class="checkbox-row" style="margin-top:0.5rem">
+            <input type="checkbox" @bind="_contactDirect" @bind:after="OnContactDirectChanged" disabled="@_contactBusy" />
+            Direct contact gewenst (WhatsApp / Telefoon / Mail)
         </label>
-        @if (_contactOverride)
+        @if (_contactDirect)
         {
-            <label class="checkbox-row" style="margin-top:0.5rem">
-                <input type="checkbox" @bind="_contactDirect" @bind:after="OnContactDirectChanged" disabled="@_contactBusy" />
-                Direct contact gewenst (WhatsApp / Telefoon / Mail)
-            </label>
-            @if (_contactDirect)
-            {
-                <div style="margin-top:0.5rem;display:grid;gap:0.35rem">
-                    <label class="checkbox-row">
-                        <input type="checkbox" @bind="_contactMail" disabled="@_contactBusy" />
-                        Mail
-                    </label>
-                    <label class="checkbox-row">
-                        <input type="checkbox" @bind="_contactPhone" disabled="@_contactBusy" />
-                        Telefoon
-                    </label>
-                    <label class="checkbox-row">
-                        <input type="checkbox" @bind="_contactWhatsApp" disabled="@_contactBusy" />
-                        WhatsApp
-                    </label>
-                </div>
-            }
+            <div style="margin-top:0.5rem;display:grid;gap:0.35rem">
+                <label class="checkbox-row">
+                    <input type="checkbox" @bind="_contactMail" disabled="@_contactBusy" />
+                    Mail
+                </label>
+                <label class="checkbox-row">
+                    <input type="checkbox" @bind="_contactPhone" disabled="@_contactBusy" />
+                    Telefoon
+                </label>
+                <label class="checkbox-row">
+                    <input type="checkbox" @bind="_contactWhatsApp" disabled="@_contactBusy" />
+                    WhatsApp
+                </label>
+            </div>
         }
         @if (!string.IsNullOrEmpty(_contactError))
         {
@@ -262,7 +264,6 @@
     private VacancyListItem? _contactVacancy;
     private bool _contactBusy;
     private string? _contactError;
-    private bool _contactOverride;
     private bool _contactDirect;
     private bool _contactMail;
     private bool _contactPhone;
@@ -313,6 +314,11 @@
             else if (query.TryGetValue("paidActionError", out var paidErr) && !string.IsNullOrWhiteSpace(paidErr))
             {
                 _message = $"Tokens bijgeschreven, maar actie mislukt: {paidErr}";
+            }
+            else if (query.TryGetValue("moderationWarning", out var moderationWarning)
+                     && !string.IsNullOrWhiteSpace(moderationWarning))
+            {
+                _message = "Concept opgeslagen. De vacaturetekst moet nog worden aangepast voordat je kunt publiceren.";
             }
 
             var state = await AuthState.GetAuthenticationStateAsync();
@@ -432,8 +438,26 @@
         vacancy.WorkTypes ??= Array.Empty<string>();
         vacancy.RequiredTransport ??= Array.Empty<string>();
         vacancy.WageByAge ??= new List<WageByAgeItem>();
+        vacancy.DisplayStatus ??= vacancy.IsIncomplete && string.Equals(vacancy.Status, "Draft", StringComparison.OrdinalIgnoreCase)
+            ? "DraftIncomplete"
+            : vacancy.Status;
         return vacancy;
     }
+
+    private string StatusLabel(VacancyListItem vacancy)
+    {
+        var key = string.IsNullOrWhiteSpace(vacancy.DisplayStatus)
+            ? vacancy.Status
+            : vacancy.DisplayStatus;
+        var localized = Culture[$"VacancyStatus.{key}"];
+        return string.Equals(localized, $"VacancyStatus.{key}", StringComparison.Ordinal)
+            ? key
+            : localized;
+    }
+
+    private static bool IsIncompleteDraft(VacancyListItem vacancy)
+        => string.Equals(vacancy.Status, "Draft", StringComparison.OrdinalIgnoreCase)
+            && vacancy.IsIncomplete;
 
     private void OpenVacancyDetails(VacancyListItem vacancy)
         => Navigation.NavigateTo($"/vacancies/{vacancy.Id}");
@@ -569,7 +593,6 @@
         try
         {
             var pref = await Api.GetVacancyContactPreferenceAsync(vacancy.Id);
-            _contactOverride = pref?.OverrideContactPreference ?? false;
             _contactDirect = pref?.DirectContactEnabled ?? false;
             _contactMail = pref?.ContactPreferMail ?? false;
             _contactPhone = pref?.ContactPreferPhone ?? false;
@@ -592,17 +615,6 @@
         _contactError = null;
     }
 
-    private void OnContactOverrideChanged()
-    {
-        if (!_contactOverride)
-        {
-            _contactDirect = false;
-            _contactMail = false;
-            _contactPhone = false;
-            _contactWhatsApp = false;
-        }
-    }
-
     private void OnContactDirectChanged()
     {
         if (!_contactDirect)
@@ -620,8 +632,7 @@
             return;
         }
 
-        if (_contactOverride
-            && _contactDirect
+        if (_contactDirect
             && !_contactMail
             && !_contactPhone
             && !_contactWhatsApp)
@@ -636,7 +647,7 @@
         {
             await Api.UpdateVacancyContactPreferenceAsync(
                 _contactVacancy.Id,
-                _contactOverride,
+                true,
                 _contactDirect,
                 _contactMail,
                 _contactPhone,
