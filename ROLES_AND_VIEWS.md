@@ -150,6 +150,7 @@ Admin: `/admin/ambassadeurs` — uitnodigen, drempels (50 / +1% / max), commissi
 | `/admin/sales-managers` | Salesmanagers, aanbevelingen (approve/reject), trackingcodes, suppliers |
 | `/admin/ambassadeurs` | Ambassadeurs, commissiedrempels, overrides, trackingcodes |
 | `/admin/logging` · `/admin/settings` · `/admin/integrations` | Logs, pricing/PushBom/early-adapter, integratie-pings |
+| `/admin/cnames` | CNAME / regio-hosts (hostname, branding, adres-autocomplete) + checklist-hulp (?) |
 | `/admin/masterdata` · `/admin/vacancy-categories` · `/admin/exclusivity` | Keuzelijsten, vacaturecategorieën (kleur/tokens/extra velden), stage-exclusiviteit |
 | `/admin/wages` | WML + semi-annual update-stub |
 | `/admin` · `/admin/cockpit` | Redirect → `/home` |

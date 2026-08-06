@@ -2,6 +2,7 @@
 @using Jobsy.Web.Localization
 @inject CultureState Culture
 @inject JobsyApiClient Api
+@inject Jobsy.Web.RegionHosting.RegionHostState RegionHost
 @inject IJSRuntime Js
 @inject NavigationManager Navigation
 @implements IDisposable
@@ -16,8 +17,8 @@
             <a class="brand" href="/" aria-label="Lobsy">
                 <LobsyLogo Class="brand__logo" Alt="Lobsy" />
                 <span class="brand__text">
-                    <span class="brand__name">Lobsy</span>
-                    <span class="brand-tagline">@Culture["Brand.Tagline"]</span>
+                    <span class="brand__name">@(RegionHost.Current?.DisplayName ?? "Lobsy")</span>
+                    <span class="brand-tagline">@(RegionHost.Current?.Slogan ?? Culture["Brand.Tagline"])</span>
                 </span>
             </a>
         </div>
@@ -50,6 +51,7 @@
         Culture.Changed += OnCultureChanged;
         await Culture.InitializeAsync();
         await Culture.SyncDocumentAsync();
+        await RegionHost.EnsureInitializedAsync();
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)

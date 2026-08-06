@@ -33,6 +33,7 @@ public class JobsyDbContext : DbContext
     public DbSet<SiteVisit> SiteVisits => Set<SiteVisit>();
     public DbSet<Region> Regions => Set<Region>();
     public DbSet<RegionCompany> RegionCompanies => Set<RegionCompany>();
+    public DbSet<RegionHost> RegionHosts => Set<RegionHost>();
     public DbSet<CompanySalaryTable> CompanySalaryTables => Set<CompanySalaryTable>();
     public DbSet<CompanySalaryRate> CompanySalaryRates => Set<CompanySalaryRate>();
     public DbSet<CompanySalaryTableAllowedBranch> CompanySalaryTableAllowedBranches => Set<CompanySalaryTableAllowedBranch>();
@@ -499,6 +500,17 @@ public class JobsyDbContext : DbContext
                 .WithMany(c => c.RegionMemberships)
                 .HasForeignKey(e => e.CompanyId)
                 .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<RegionHost>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Hostname).HasMaxLength(RegionHostRules.MaxHostnameLength).IsRequired();
+            entity.Property(e => e.DisplayName).HasMaxLength(RegionHostRules.MaxDisplayNameLength).IsRequired();
+            entity.Property(e => e.Slogan).HasMaxLength(RegionHostRules.MaxSloganLength);
+            entity.Property(e => e.AddressLabel).HasMaxLength(RegionHostRules.MaxAddressLength);
+            entity.Property(e => e.BackgroundImageUrl).HasMaxLength(RegionHostRules.MaxBackgroundUrlLength);
+            entity.HasIndex(e => e.Hostname).IsUnique();
         });
 
         modelBuilder.Entity<CompanySalaryTable>(entity =>

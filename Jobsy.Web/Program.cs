@@ -39,6 +39,7 @@ builder.Services.AddMemoryCache();
 builder.Services.AddHttpClient("JobsySessionSecurity");
 builder.Services.AddSingleton<Jobsy.Web.Security.ISessionTimeoutProvider, Jobsy.Web.Security.SessionTimeoutProvider>();
 builder.Services.AddScoped<CultureState>();
+builder.Services.AddScoped<Jobsy.Web.RegionHosting.RegionHostState>();
 builder.Services.AddScoped<TokenBalanceCache>();
 builder.Services.AddScoped<Jobsy.Web.Navigation.BottomNavRefreshService>();
 builder.Services.AddHttpClient<IGeocodingClient, NominatimGeocodingClient>(client =>

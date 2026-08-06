@@ -2327,6 +2327,64 @@ public sealed class JobsyApiClient : IAsyncDisposable
         return await response.Content.ReadFromJsonAsync<AboutPageItem>(cancellationToken: ct);
     }
 
+    public async Task<IReadOnlyList<RegionHostItem>> GetRegionHostsAsync(CancellationToken ct = default)
+    {
+        var rows = await _http.GetFromJsonAsync<List<RegionHostItem>>("api/region-hosts", ct);
+        return rows ?? [];
+    }
+
+    public async Task<RegionHostItem?> ResolveRegionHostAsync(string? host = null, CancellationToken ct = default)
+    {
+        var url = string.IsNullOrWhiteSpace(host)
+            ? "api/region-hosts/resolve"
+            : $"api/region-hosts/resolve?host={Uri.EscapeDataString(host)}";
+        try
+        {
+            return await _http.GetFromJsonAsync<RegionHostItem>(url, ct);
+        }
+        catch (HttpRequestException ex) when (ex.StatusCode == HttpStatusCode.NotFound)
+        {
+            return null;
+        }
+    }
+
+    public async Task<RegionHostItem> CreateRegionHostAsync(RegionHostUpsertPayload payload, CancellationToken ct = default)
+    {
+        var response = await _http.PostAsJsonAsync("api/region-hosts", payload, ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException(TryExtractMessage(body) ?? body);
+        }
+
+        return (await response.Content.ReadFromJsonAsync<RegionHostItem>(cancellationToken: ct))!;
+    }
+
+    public async Task<RegionHostItem> UpdateRegionHostAsync(
+        Guid id,
+        RegionHostUpsertPayload payload,
+        CancellationToken ct = default)
+    {
+        var response = await _http.PutAsJsonAsync($"api/region-hosts/{id}", payload, ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException(TryExtractMessage(body) ?? body);
+        }
+
+        return (await response.Content.ReadFromJsonAsync<RegionHostItem>(cancellationToken: ct))!;
+    }
+
+    public async Task DeleteRegionHostAsync(Guid id, CancellationToken ct = default)
+    {
+        var response = await _http.DeleteAsync($"api/region-hosts/{id}", ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException(TryExtractMessage(body) ?? body);
+        }
+    }
+
     public ValueTask DisposeAsync()
     {
         _http.Dispose();
@@ -3414,3 +3472,28 @@ public sealed class PublicCompanyBranch
     public string? PublicPath { get; set; }
 }
 
+
+public sealed class RegionHostItem
+{
+    public Guid Id { get; set; }
+    public string Hostname { get; set; } = string.Empty;
+    public string DisplayName { get; set; } = string.Empty;
+    public string? Slogan { get; set; }
+    public string? AddressLabel { get; set; }
+    public double? Latitude { get; set; }
+    public double? Longitude { get; set; }
+    public string? BackgroundImageUrl { get; set; }
+    public bool IsActive { get; set; }
+    public DateTime CreatedAtUtc { get; set; }
+    public DateTime UpdatedAtUtc { get; set; }
+}
+
+public sealed record RegionHostUpsertPayload(
+    string Hostname,
+    string DisplayName,
+    string? Slogan,
+    string? AddressLabel,
+    double? Latitude,
+    double? Longitude,
+    string? BackgroundImageUrl,
+    bool IsActive = true);

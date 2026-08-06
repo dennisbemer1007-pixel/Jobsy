@@ -1,0 +1,130 @@
+@namespace Jobsy.Web.Components.Admin
+
+@* Friendly checklist: how to wire a new regional CNAME end-to-end. *@
+@if (IsOpen)
+{
+    <div class="cname-help-backdrop" @onclick="Close" aria-hidden="true"></div>
+    <aside class="cname-help-panel"
+           role="dialog"
+           aria-modal="true"
+           aria-labelledby="cname-help-title"
+           id="cname-help-panel">
+        <header class="cname-help-panel__head">
+            <div>
+                <p class="cname-help-panel__kicker">Checklist</p>
+                <h2 id="cname-help-title">Nieuw CNAME-subdomein inrichten</h2>
+                <p class="cname-help-panel__lead">
+                    Volg deze stappen voor bijvoorbeeld <strong>westland.lobsy.nl</strong>.
+                    Werkt hetzelfde voor elk regio-subdomein.
+                </p>
+            </div>
+            <button type="button" class="cname-help-panel__close" @onclick="Close" aria-label="Sluiten">×</button>
+        </header>
+
+        <ol class="cname-help-steps">
+            <li class="cname-help-step">
+                <div class="cname-help-step__badge" aria-hidden="true">1</div>
+                <div class="cname-help-step__body">
+                    <h3>DNS bij Yourhosting</h3>
+                    <p>Stuur het subdomein naar Render.</p>
+                    <ul>
+                        <li>Log in op je <strong>Yourhosting</strong>-dashboard.</li>
+                        <li>Open de DNS-instellingen van <strong>lobsy.nl</strong>.</li>
+                        <li>Voeg een record toe:
+                            <ul>
+                                <li><strong>Type:</strong> CNAME</li>
+                                <li><strong>Naam / Host:</strong> <code>westland</code> (of jouw subdomein)</li>
+                                <li><strong>Waarde / Target:</strong> <code>jobsy-web.onrender.com</code></li>
+                                <li><strong>TTL:</strong> standaard (bijv. 3600)</li>
+                            </ul>
+                        </li>
+                        <li>Sla op en wacht tot DNS is doorgezet.</li>
+                    </ul>
+                </div>
+            </li>
+
+            <li class="cname-help-step">
+                <div class="cname-help-step__badge" aria-hidden="true">2</div>
+                <div class="cname-help-step__body">
+                    <h3>Koppelen in Render (hosting &amp; SSL)</h3>
+                    <p>Laat de server het verkeer herkennen en beveiligen.</p>
+                    <ul>
+                        <li>Open in Render je <strong>web service</strong>.</li>
+                        <li>Ga naar <strong>Settings → Custom Domains</strong>.</li>
+                        <li>Klik <strong>Add Custom Domain</strong> en vul in: <code>westland.lobsy.nl</code>.</li>
+                        <li>Wacht tot de status <strong>Active</strong> is (Let’s Encrypt SSL — kan enkele minuten duren).</li>
+                    </ul>
+                </div>
+            </li>
+
+            <li class="cname-help-step">
+                <div class="cname-help-step__badge" aria-hidden="true">3</div>
+                <div class="cname-help-step__body">
+                    <h3>Microsoft Entra ID (login / SSO)</h3>
+                    <p>Voorkom dat inloggen faalt door een onbekende redirect-URL.</p>
+                    <ul>
+                        <li>Open <strong>Microsoft Entra ID → App registrations</strong> → jouw Lobsy-app.</li>
+                        <li>Ga naar <strong>Authentication</strong>.</li>
+                        <li>Voeg onder <strong>Web → Redirect URIs</strong> toe:<br />
+                            <code>https://westland.lobsy.nl/signin-entra</code>
+                        </li>
+                        <li>Sla op. (Google OAuth: idem met <code>/signin-google</code> indien gebruikt.)</li>
+                    </ul>
+                </div>
+            </li>
+
+            <li class="cname-help-step">
+                <div class="cname-help-step__badge" aria-hidden="true">4</div>
+                <div class="cname-help-step__body">
+                    <h3>Mollie (betalingen)</h3>
+                    <p>Zorg dat return-URL’s na betaling terugkomen op het juiste subdomein.</p>
+                    <ul>
+                        <li>Log in op het <strong>Mollie Dashboard</strong>.</li>
+                        <li>Voeg <code>https://westland.lobsy.nl</code> toe als extra website / geautoriseerd domein in je profiel.</li>
+                        <li>In Lobsy gebruiken checkouts al dynamisch de actieve host voor return-URL’s
+                            (bijv. <code>https://westland.lobsy.nl/tokens/checkout-return</code>).</li>
+                    </ul>
+                </div>
+            </li>
+
+            <li class="cname-help-step">
+                <div class="cname-help-step__badge" aria-hidden="true">5</div>
+                <div class="cname-help-step__body">
+                    <h3>OpenAI &amp; overige API’s</h3>
+                    <p class="cname-help-step__ok"><strong>Geen actie nodig.</strong> OpenAI loopt server-side via je bestaande API-sleutel en hangt niet aan het browserdomein.</p>
+                </div>
+            </li>
+
+            <li class="cname-help-step">
+                <div class="cname-help-step__badge" aria-hidden="true">6</div>
+                <div class="cname-help-step__body">
+                    <h3>Afronden in dit Lobsy-scherm</h3>
+                    <p>Maak de regio zichtbaar in de app.</p>
+                    <ul>
+                        <li>Voeg hieronder de hostname toe: <code>westland.lobsy.nl</code>.</li>
+                        <li>Vul het <strong>adres</strong> in (autocomplete) voor kaartfocus.</li>
+                        <li>Optioneel: slogan en achtergrond-URL.</li>
+                        <li>Zet op <strong>Actief</strong> en sla op.</li>
+                    </ul>
+                </div>
+            </li>
+        </ol>
+
+        <footer class="cname-help-panel__foot">
+            <button type="button" class="btn-compact btn-compact--primary" @onclick="Close">Begrepen, ik ga aan de slag</button>
+        </footer>
+    </aside>
+}
+
+@code {
+    [Parameter] public bool IsOpen { get; set; }
+    [Parameter] public EventCallback<bool> IsOpenChanged { get; set; }
+
+    private async Task Close()
+    {
+        if (IsOpenChanged.HasDelegate)
+        {
+            await IsOpenChanged.InvokeAsync(false);
+        }
+    }
+}

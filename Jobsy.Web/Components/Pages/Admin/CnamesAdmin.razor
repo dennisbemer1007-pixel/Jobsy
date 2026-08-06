@@ -1,0 +1,398 @@
+@page "/admin/cnames"
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
+@attribute [Authorize(Roles = "Admin")]
+@using Jobsy.Web.Components.Admin
+@inject JobsyApiClient Api
+@inject IGeocodingClient Geocoder
+@inject CultureState Culture
+@implements IDisposable
+
+<PageTitle>@Culture["Admin.Cnames"] · Lobsy</PageTitle>
+
+<AdminPageShell Title="@Culture["Admin.Cnames"]" Lead="@Culture["Admin.CnamesLead"]" ShowSettingsNav="true">
+    <section class="panel-section cname-admin">
+        <div class="panel-header cname-admin__header">
+            <div class="cname-admin__title-row">
+                <h2>CNAME / regio-hosts</h2>
+                <button type="button"
+                        class="cname-help-btn"
+                        title="Hoe richt ik een nieuw CNAME-subdomein in?"
+                        aria-label="Hulp: CNAME-subdomein inrichten"
+                        aria-expanded="@_helpOpen"
+                        aria-controls="cname-help-panel"
+                        @onclick="() => _helpOpen = true">
+                    ?
+                </button>
+            </div>
+            <button class="btn-compact" type="button" disabled="@_loading" @onclick="ReloadAsync">Vernieuwen</button>
+        </div>
+
+        <p class="muted">
+            Koppel subdomeinen zoals <code>westland.lobsy.nl</code> aan regionale branding, kaartfocus en campagne-KPI’s.
+            DNS, Render, Entra en Mollie regel je buiten Lobsy — klik op <strong>?</strong> voor de checklist.
+        </p>
+
+        @if (!string.IsNullOrEmpty(_error))
+        {
+            <p class="state-message error">@_error</p>
+        }
+        @if (!string.IsNullOrEmpty(_message))
+        {
+            <p class="state-message">@_message</p>
+        }
+
+        <article class="company-card cname-admin__form">
+            <h3>@(_editId is null ? "Nieuwe regio-host" : "Regio-host bewerken")</h3>
+
+            <label>
+                Hostname (CNAME)
+                <input @bind="_form.Hostname" @bind:event="oninput"
+                       placeholder="westland.lobsy.nl"
+                       maxlength="253"
+                       autocomplete="off" />
+            </label>
+
+            <label>
+                Weergavenaam
+                <input @bind="_form.DisplayName" @bind:event="oninput"
+                       placeholder="Westland"
+                       maxlength="128" />
+            </label>
+
+            <label>
+                Slogan (optioneel)
+                <input @bind="_form.Slogan" @bind:event="oninput"
+                       placeholder="Werk dichterbij in het Westland"
+                       maxlength="256" />
+            </label>
+
+            <div class="profile-address">
+                <label for="cname-address">Adres (kaartfocus)</label>
+                <div class="address-field">
+                    <input id="cname-address"
+                           type="text"
+                           autocomplete="off"
+                           placeholder="Bijv. Naaldwijk, Nederland"
+                           value="@_form.AddressLabel"
+                           @oninput="OnAddressInputAsync"
+                           @onfocus="() => _showSuggestions = true" />
+                    @if (!string.IsNullOrWhiteSpace(_form.AddressLabel) || _form.Latitude is not null)
+                    {
+                        <button type="button" class="engagement-btn address-field__clear" @onclick="ClearAddress">Wis</button>
+                    }
+                </div>
+                @if (_showSuggestions)
+                {
+                    <ul class="address-suggestions" role="listbox">
+                        @if (_suggesting)
+                        {
+                            <li class="address-suggestions__status">@Culture["Common.Loading"]</li>
+                        }
+                        else if (_suggestions.Count == 0 && (_form.AddressLabel?.Trim().Length ?? 0) >= 3)
+                        {
+                            <li class="address-suggestions__status">Geen adressen gevonden</li>
+                        }
+                        else
+                        {
+                            @foreach (var suggestion in _suggestions)
+                            {
+                                <li>
+                                    <button type="button"
+                                            class="address-suggestions__item"
+                                            @onclick="() => SelectSuggestion(suggestion)">
+                                        @suggestion.Label
+                                    </button>
+                                </li>
+                            }
+                        }
+                    </ul>
+                }
+                @if (_form.Latitude is not null && _form.Longitude is not null)
+                {
+                    <p class="muted">Coördinaten: @_form.Latitude?.ToString("0.####") · @_form.Longitude?.ToString("0.####")</p>
+                }
+            </div>
+
+            <label>
+                Achtergrond-URL (optioneel)
+                <input @bind="_form.BackgroundImageUrl" @bind:event="oninput"
+                       placeholder="https://… of /images/…"
+                       maxlength="1024" />
+            </label>
+
+            <label class="filter-check">
+                <input type="checkbox" @bind="_form.IsActive" />
+                Actief
+            </label>
+
+            <div class="inline-actions" style="margin-top:0.75rem">
+                <button class="btn-compact btn-compact--primary" type="button" disabled="@_busy" @onclick="SaveAsync">
+                    @Culture["Common.Save"]
+                </button>
+                @if (_editId is not null)
+                {
+                    <button class="btn-compact" type="button" disabled="@_busy" @onclick="ResetForm">Annuleren</button>
+                }
+            </div>
+        </article>
+
+        @if (_loading)
+        {
+            <p class="state-message">@Culture["Common.Loading"]</p>
+        }
+        else if (_items.Count == 0)
+        {
+            <p class="state-message">Nog geen CNAME-hosts. Voeg hierboven je eerste regio toe.</p>
+        }
+        else
+        {
+            <div class="table-list" style="margin-top:1rem">
+                @foreach (var item in _items)
+                {
+                    <div class="table-row">
+                        <div>
+                            <strong>@item.DisplayName</strong>
+                            <span class="muted"><code>@item.Hostname</code></span>
+                            @if (!string.IsNullOrWhiteSpace(item.AddressLabel))
+                            {
+                                <span class="muted">@item.AddressLabel</span>
+                            }
+                            @if (!string.IsNullOrWhiteSpace(item.Slogan))
+                            {
+                                <span class="muted">@item.Slogan</span>
+                            }
+                            <span class="status-pill @(item.IsActive ? "status-pill--accepted" : null)">
+                                @(item.IsActive ? "Actief" : "Uit")
+                            </span>
+                        </div>
+                        <div class="inline-actions">
+                            <button type="button" class="btn-compact" disabled="@_busy" @onclick="() => Edit(item)">Bewerken</button>
+                            <button type="button" class="btn-compact" disabled="@_busy" @onclick="() => DeleteAsync(item)">Verwijderen</button>
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+    </section>
+</AdminPageShell>
+
+<CnameSetupHelpPanel @bind-IsOpen="_helpOpen" />
+
+@code {
+    private readonly List<RegionHostItem> _items = [];
+    private RegionHostForm _form = new();
+    private Guid? _editId;
+    private bool _loading = true;
+    private bool _busy;
+    private bool _helpOpen;
+    private string? _error;
+    private string? _message;
+
+    private readonly List<AddressSuggestion> _suggestions = [];
+    private bool _showSuggestions;
+    private bool _suggesting;
+    private CancellationTokenSource? _suggestCts;
+
+    protected override void OnInitialized()
+        => Culture.Changed += OnCultureChanged;
+
+    protected override async Task OnInitializedAsync()
+        => await ReloadAsync();
+
+    private void OnCultureChanged() => InvokeAsync(StateHasChanged);
+
+    public void Dispose()
+    {
+        Culture.Changed -= OnCultureChanged;
+        _suggestCts?.Cancel();
+        _suggestCts?.Dispose();
+    }
+
+    private async Task ReloadAsync()
+    {
+        _loading = true;
+        _error = null;
+        try
+        {
+            var rows = await Api.GetRegionHostsAsync();
+            _items.Clear();
+            _items.AddRange(rows);
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private void Edit(RegionHostItem item)
+    {
+        _editId = item.Id;
+        _form = new RegionHostForm
+        {
+            Hostname = item.Hostname,
+            DisplayName = item.DisplayName,
+            Slogan = item.Slogan ?? "",
+            AddressLabel = item.AddressLabel ?? "",
+            Latitude = item.Latitude,
+            Longitude = item.Longitude,
+            BackgroundImageUrl = item.BackgroundImageUrl ?? "",
+            IsActive = item.IsActive
+        };
+        _message = null;
+        _error = null;
+    }
+
+    private void ResetForm()
+    {
+        _editId = null;
+        _form = new();
+        _suggestions.Clear();
+        _showSuggestions = false;
+    }
+
+    private void ClearAddress()
+    {
+        _form.AddressLabel = "";
+        _form.Latitude = null;
+        _form.Longitude = null;
+        _suggestions.Clear();
+        _showSuggestions = false;
+    }
+
+    private async Task OnAddressInputAsync(ChangeEventArgs e)
+    {
+        _form.AddressLabel = e.Value?.ToString() ?? "";
+        _form.Latitude = null;
+        _form.Longitude = null;
+        _showSuggestions = true;
+
+        _suggestCts?.Cancel();
+        _suggestCts?.Dispose();
+        _suggestCts = new CancellationTokenSource();
+        var token = _suggestCts.Token;
+
+        var q = _form.AddressLabel.Trim();
+        if (q.Length < 3)
+        {
+            _suggestions.Clear();
+            _suggesting = false;
+            return;
+        }
+
+        _suggesting = true;
+        try
+        {
+            await Task.Delay(280, token);
+            var results = await Geocoder.SuggestAsync(q, token);
+            if (token.IsCancellationRequested) return;
+            _suggestions.Clear();
+            _suggestions.AddRange(results);
+        }
+        catch (OperationCanceledException)
+        {
+            // superseded
+        }
+        catch
+        {
+            _suggestions.Clear();
+        }
+        finally
+        {
+            if (!token.IsCancellationRequested)
+            {
+                _suggesting = false;
+            }
+        }
+    }
+
+    private void SelectSuggestion(AddressSuggestion suggestion)
+    {
+        _form.AddressLabel = suggestion.Label;
+        _form.Latitude = suggestion.Latitude;
+        _form.Longitude = suggestion.Longitude;
+        _suggestions.Clear();
+        _showSuggestions = false;
+    }
+
+    private async Task SaveAsync()
+    {
+        _busy = true;
+        _error = null;
+        _message = null;
+        try
+        {
+            var payload = new RegionHostUpsertPayload(
+                _form.Hostname,
+                _form.DisplayName,
+                string.IsNullOrWhiteSpace(_form.Slogan) ? null : _form.Slogan,
+                string.IsNullOrWhiteSpace(_form.AddressLabel) ? null : _form.AddressLabel,
+                _form.Latitude,
+                _form.Longitude,
+                string.IsNullOrWhiteSpace(_form.BackgroundImageUrl) ? null : _form.BackgroundImageUrl,
+                _form.IsActive);
+
+            if (_editId is Guid id)
+            {
+                await Api.UpdateRegionHostAsync(id, payload);
+                _message = "Regio-host bijgewerkt.";
+            }
+            else
+            {
+                await Api.CreateRegionHostAsync(payload);
+                _message = "Regio-host toegevoegd.";
+            }
+
+            ResetForm();
+            await ReloadAsync();
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private async Task DeleteAsync(RegionHostItem item)
+    {
+        _busy = true;
+        _error = null;
+        try
+        {
+            await Api.DeleteRegionHostAsync(item.Id);
+            if (_editId == item.Id)
+            {
+                ResetForm();
+            }
+
+            _message = $"‘{item.Hostname}’ verwijderd.";
+            await ReloadAsync();
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private sealed class RegionHostForm
+    {
+        public string Hostname { get; set; } = "";
+        public string DisplayName { get; set; } = "";
+        public string Slogan { get; set; } = "";
+        public string AddressLabel { get; set; } = "";
+        public double? Latitude { get; set; }
+        public double? Longitude { get; set; }
+        public string BackgroundImageUrl { get; set; } = "";
+        public bool IsActive { get; set; } = true;
+    }
+}
