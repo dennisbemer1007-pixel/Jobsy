@@ -6,12 +6,13 @@
 @inject NavigationManager Navigation
 @inject AuthenticationStateProvider AuthState
 @inject Jobsy.Web.Services.TokenBalanceCache TokenBalances
+@inject IJSRuntime Js
 @inject CultureState Culture
 @implements IDisposable
 
 <PageTitle>@(_hasSalesReferral ? Culture["Nav.BalanceAndTracking"] : Culture["Employer.MyTokens"]) · Lobsy</PageTitle>
 
-<div class="panel-page">
+<div class="panel-page @(_isPartnerAffiliate ? "panel-page--wide" : null)">
     <header class="panel-header">
         <div>
             <h1>@(_hasSalesReferral ? Culture["Nav.BalanceAndTracking"] : Culture["Employer.MyTokens"])</h1>
@@ -23,6 +24,23 @@
         }
     </header>
 
+    @if (_isPartnerAffiliate && !_loading)
+    {
+        <div class="admin-sublinks" role="tablist" aria-label="Tokens onderdelen">
+            <button type="button" class="admin-sublink @ActiveTabClass("balance")" role="tab" aria-selected="@(_tab == "balance")" @onclick='() => SetTab("balance")'>
+                Saldo &amp; logs
+            </button>
+            <button type="button" class="admin-sublink @ActiveTabClass("toolkit")" role="tab" aria-selected="@(_tab == "toolkit")" @onclick='() => SetTab("toolkit")'>
+                Trackingcode &amp; flyer
+            </button>
+        </div>
+    }
+
+    @if (!string.IsNullOrEmpty(_message) && _tab == "toolkit")
+    {
+        <p class="state-message">@_message</p>
+    }
+
     @if (_loading)
     {
         <p class="state-message">@Culture["Common.Loading"]</p>
@@ -30,6 +48,72 @@
     else if (!string.IsNullOrEmpty(_error))
     {
         <p class="state-message error">@_error</p>
+    }
+    else if (_tab == "toolkit" && _isPartnerAffiliate)
+    {
+        <section class="panel-section">
+            <h2>Trackingcode &amp; flyer</h2>
+            <p class="muted">Deel je unieke code. Nieuwe bedrijven die via jouw link registreren worden aan jouw salesprofiel gekoppeld. Bij inzet van hun welkomsttoken ontvang jij 0,5 token.</p>
+
+            <div class="stat-grid">
+                <div class="stat-card">
+                    <span class="stat-card__label">Trackingcode</span>
+                    <strong class="stat-card__value">@TrackingCode</strong>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-card__label">Aangedragen</span>
+                    <strong class="stat-card__value">@(_partnerMe?.ReferredCompanyCount ?? 0)</strong>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-card__label">Verdiende referraltokens</span>
+                    <strong class="stat-card__value">@((_partnerMe?.ReferralTokensEarned ?? 0m).ToString("0.##"))</strong>
+                </div>
+            </div>
+        </section>
+
+        <section class="panel-section">
+            <h2>Links en flyer</h2>
+            <div class="table-list">
+                <div class="table-row">
+                    <div>
+                        <strong>Partnerlink</strong>
+                        <div class="muted" style="word-break:break-all">@PartnerUrl</div>
+                    </div>
+                    <div class="inline-actions" style="gap:0.35rem">
+                        <button class="btn-compact" type="button" @onclick="() => CopyAsync(PartnerUrl)">Kopieer</button>
+                        <a class="btn-compact" href="@PartnerUrl" target="_blank" rel="noopener">Open</a>
+                    </div>
+                </div>
+                <div class="table-row">
+                    <div>
+                        <strong>Registratie-URL</strong>
+                        <div class="muted" style="word-break:break-all">@RegisterUrl</div>
+                    </div>
+                    <div class="inline-actions" style="gap:0.35rem">
+                        <button class="btn-compact" type="button" @onclick="() => CopyAsync(RegisterUrl)">Kopieer</button>
+                        <a class="btn-compact" href="@RegisterUrl" target="_blank" rel="noopener">Open</a>
+                    </div>
+                </div>
+                <div class="table-row">
+                    <div>
+                        <strong>Trackingcode</strong>
+                        <div class="muted">@TrackingCode</div>
+                    </div>
+                    <button class="btn-compact" type="button" @onclick="() => CopyAsync(TrackingCode)">Kopieer</button>
+                </div>
+            </div>
+
+            <div class="inline-actions" style="flex-wrap:wrap;gap:0.5rem;margin-top:1rem">
+                @if (!string.IsNullOrWhiteSpace(_toolkit?.FlyerUrl))
+                {
+                    <a class="btn-compact btn-compact--primary" href="@_toolkit.FlyerUrl" target="_blank" rel="noopener">
+                        Download flyer
+                    </a>
+                }
+                <button class="btn-compact" type="button" @onclick="ShareWhatsApp">Deel via WhatsApp</button>
+                <button class="btn-compact" type="button" @onclick="ShareMail">Deel via mail</button>
+            </div>
+        </section>
     }
     else
     {
@@ -294,6 +378,8 @@
     private bool _isBranchManager;
     private bool _hasOrgHierarchy;
     private bool _hasSalesReferral;
+    private bool _isPartnerAffiliate;
+    private string _tab = "balance";
     private string? _error;
     private string? _message;
     private string _lead = "Token-saldo en logs.";
@@ -302,6 +388,12 @@
     private string _paymentMethod = "ideal";
     private bool _rememberPaymentMethod;
     private Guid _toCompanyId;
+    private PartnerAffiliateMeModel? _partnerMe;
+    private PartnerAffiliateToolkitModel? _toolkit;
+
+    private string TrackingCode => FirstNonEmpty(_toolkit?.TrackingCode, _partnerMe?.TrackingCode) ?? "—";
+    private string PartnerUrl => FirstNonEmpty(_toolkit?.PartnerPageUrl, BuildPartnerUrl())!;
+    private string RegisterUrl => FirstNonEmpty(_toolkit?.RegisterUrl, BuildRegisterUrl())!;
 
     private string CheckoutButtonLabel =>
         _paymentMethod == "creditcard" ? "Doorgaan met creditcard" : "Doorgaan met iDEAL";
@@ -338,6 +430,14 @@
             _canManageTokenFlags = _canAllocate;
             _canPurchaseIntoPot = user.IsInRole("EnterpriseManager") || user.IsInRole("Admin");
             var isIntermediary = user.IsInRole("Intermediary");
+            _isPartnerAffiliate = user.IsInRole("EnterpriseManager") || isIntermediary;
+
+            var qs = Microsoft.AspNetCore.WebUtilities.QueryHelpers.ParseQuery(
+                Navigation.ToAbsoluteUri(Navigation.Uri).Query);
+            if (qs.TryGetValue("tab", out var tab) && tab.ToString() == "toolkit" && _isPartnerAffiliate)
+            {
+                _tab = "toolkit";
+            }
 
             await ReloadBalancesAsync();
             _packs = (await Api.GetTokenPacksAsync()).ToList();
@@ -360,6 +460,11 @@
             await LoadPreferredPaymentMethodAsync();
             _lead = ResolveLead();
             _logs = (await Api.GetTokenLogsAsync()).ToList();
+
+            if (_isPartnerAffiliate)
+            {
+                await LoadPartnerToolkitAsync();
+            }
         }
         catch (Exception ex)
         {
@@ -371,8 +476,97 @@
         }
     }
 
+    private async Task LoadPartnerToolkitAsync()
+    {
+        try
+        {
+            _partnerMe = await Api.GetPartnerAffiliateMeAsync();
+            _toolkit = await Api.GetPartnerAffiliateToolkitAsync();
+        }
+        catch (Exception ex)
+        {
+            // Toolkit is optional on Tokens; keep saldo usable if partner API fails.
+            _message = $"Trackingcode laden mislukt: {ex.Message}";
+        }
+    }
+
+    private void SetTab(string tab)
+    {
+        _tab = tab;
+        _message = null;
+    }
+
+    private string ActiveTabClass(string tab) => _tab == tab ? "admin-sublink--active" : "";
+
+    private async Task CopyAsync(string? value)
+    {
+        if (string.IsNullOrWhiteSpace(value) || value == "—")
+        {
+            return;
+        }
+
+        try
+        {
+            await Js.InvokeVoidAsync("navigator.clipboard.writeText", value);
+            _message = "Gekopieerd naar klembord.";
+        }
+        catch
+        {
+            _message = value;
+        }
+    }
+
+    private void ShareWhatsApp()
+    {
+        var text = Uri.EscapeDataString(
+            $"Meld je aan bij Lobsy met mijn code {TrackingCode}: {RegisterUrl}");
+        Navigation.NavigateTo($"https://wa.me/?text={text}", forceLoad: true);
+    }
+
+    private void ShareMail()
+    {
+        var subject = Uri.EscapeDataString("Lobsy - aanmelden via mijn partnercode");
+        var body = Uri.EscapeDataString(
+            $"Hoi,%0A%0AHier is mijn Lobsy-partnerlink met code {TrackingCode}:%0A{PartnerUrl}%0A%0ARegistreren kan direct via:%0A{RegisterUrl}%0A%0A");
+        Navigation.NavigateTo($"mailto:?subject={subject}&body={body}", forceLoad: true);
+    }
+
+    private string BuildPartnerUrl()
+    {
+        var baseUri = Navigation.BaseUri.TrimEnd('/');
+        return TrackingCode == "—"
+            ? $"{baseUri}/partner"
+            : $"{baseUri}/partner/{Uri.EscapeDataString(TrackingCode)}";
+    }
+
+    private string BuildRegisterUrl()
+    {
+        var baseUri = Navigation.BaseUri.TrimEnd('/');
+        return TrackingCode == "—"
+            ? $"{baseUri}/register"
+            : $"{baseUri}/register?ref={Uri.EscapeDataString(TrackingCode)}";
+    }
+
+    private static string? FirstNonEmpty(params string?[] values)
+    {
+        foreach (var value in values)
+        {
+            if (!string.IsNullOrWhiteSpace(value))
+            {
+                return value;
+            }
+        }
+
+        return null;
+    }
+
     private string ResolveLead()
     {
+        if (_isPartnerAffiliate)
+        {
+            return "Token-saldo, logs en je partner-trackingcode / flyer.";
+        }
+
         if (_canPurchaseIntoPot || _canAllocate)
         {
             return "Koop tokens in de organisatiopot en geef ze uit aan vestigingen waar jij tokenbeheer doet.";
