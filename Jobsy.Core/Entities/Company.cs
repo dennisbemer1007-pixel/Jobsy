@@ -97,6 +97,25 @@ public class Company
     public User? ReferredByPartnerUser { get; set; }
 
     /// <summary>
+    /// Partner referral reward lifecycle. Set to <see cref="PartnerReferralStatus.Pending"/> when
+    /// attributed via a BM-/IM- tracking code; becomes <see cref="PartnerReferralStatus.Rewarded"/>
+    /// once when the referred company spends its welcome token.
+    /// </summary>
+    public PartnerReferralStatus PartnerReferralStatus { get; set; } = PartnerReferralStatus.None;
+
+    /// <summary>When the partner tracking attribution was applied.</summary>
+    public DateTime? PartnerReferredAtUtc { get; set; }
+
+    /// <summary>When the partner received the 0.5 welcome-spend referral bonus.</summary>
+    public DateTime? PartnerReferralRewardedAtUtc { get; set; }
+
+    /// <summary>
+    /// True when a welcome token was actually credited on the ledger (not skipped during free-publish promo).
+    /// Used to detect welcome-token spend for partner referral rewards.
+    /// </summary>
+    public bool WelcomeTokenLedgerCredited { get; set; }
+
+    /// <summary>
     /// Ambassadeur commission rate (0–1) frozen when the Ambassadeur referral became active.
     /// </summary>
     public decimal? CommissionAmbassadeurRateSnapshot { get; set; }

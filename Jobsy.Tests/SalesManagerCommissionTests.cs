@@ -10,6 +10,7 @@ using Jobsy.Infrastructure.Data;
 using Jobsy.Infrastructure.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -290,16 +291,28 @@ public class SalesManagerCommissionTests
     }
 
     [Fact]
-    public async Task Registration_with_partner_tracking_code_links_company_and_credits_token_commission()
+    public async Task Registration_with_partner_tracking_code_links_company_as_pending_referral()
     {
         await using var db = CreateDb();
+        var partnerCompanyId = Guid.NewGuid();
         var partnerId = Guid.NewGuid();
+        db.Companies.Add(new Company
+        {
+            Id = partnerCompanyId,
+            Name = "BM Org",
+            KvkNumber = "11112222",
+            KvkEstablishmentId = "11112222_0001",
+            Address = "A",
+            Location = new GeoPoint(52, 4),
+            Type = CompanyType.Employer
+        });
         db.Users.Add(new User
         {
             Id = partnerId,
             Email = "bm.partner@jobsy.local",
             FullName = "BM Partner",
             Role = UserRole.EnterpriseManager,
+            CompanyId = partnerCompanyId,
             IsActive = true
         });
         db.PartnerAffiliateProfiles.Add(new PartnerAffiliateProfile
@@ -333,53 +346,80 @@ public class SalesManagerCommissionTests
         var branch = await db.Companies.SingleAsync(c => c.Id == activated.BranchCompanyId);
         Assert.Equal(partnerId, branch.ReferredByPartnerUserId);
         Assert.Null(branch.ReferredBySalesManagerUserId);
+        Assert.Equal(PartnerReferralStatus.Pending, branch.PartnerReferralStatus);
+        Assert.True(branch.WelcomeTokenLedgerCredited);
+        Assert.Equal(1m, await new TokenLedgerService(db).GetBalanceAsync(branch.Id));
 
-        var partners = new PartnerAffiliateService(
-            db,
-            new SalesCommercialService(db, new TokenLedgerService(db)),
-            new CommissionLedgerService(db),
-            new FakePublicWebFeatures("https://lobsy.nl"));
-        var entry = await partners.TryCreditTokenCommissionAsync(
-            partnerId,
-            branch.Id,
-            Guid.NewGuid(),
-            100m);
-
-        Assert.NotNull(entry);
-        Assert.Equal(5.00m, entry!.AmountExVat);
-        Assert.Equal(5.00m, await new CommissionLedgerService(db).GetBalanceExVatAsync(partnerId));
+        var partners = CreatePartnerAffiliateService(db);
+        var mine = await partners.GetMineAsync(partnerId);
+        Assert.NotNull(mine);
+        Assert.Equal(1, mine!.ReferredCompanyCount);
+        Assert.Equal(1, mine.PendingReferralCount);
+        Assert.Equal(0m, mine.ReferralTokensEarned);
+        Assert.Contains(mine.Referrals, r => r.StatusLabel == "Welkomsttoken nog beschikbaar");
     }
 
     [Fact]
-    public async Task Partner_affiliate_rejects_invalid_iban_and_requires_agreement_for_payout()
+    public async Task Partner_referral_rewards_half_token_once_on_welcome_spend()
     {
         await using var db = CreateDb();
-        var (partnerId, companyId) = await SeedPartnerAffiliateAsync(db, iban: null);
-        var profile = await db.PartnerAffiliateProfiles.SingleAsync(p => p.UserId == partnerId);
-        profile.AgreementSignedAt = null;
-        profile.AgreementVersion = null;
+        var (partnerId, partnerCompanyId, referredCompanyId) = await SeedPartnerAffiliateAsync(db);
+
+        db.TokenSpendCosts.Add(new TokenSpendCost
+        {
+            Id = Guid.NewGuid(),
+            Reason = TokenSpendReason.Publish,
+            CostTokens = 1m,
+            IsActive = true
+        });
         await db.SaveChangesAsync();
 
-        var partners = CreatePartnerAffiliateService(db);
-        await Assert.ThrowsAsync<ArgumentException>(() => partners.UpdateBillingAsync(
-            partnerId,
-            new PartnerAffiliateBillingUpdate(null, null, null, null, null, null, "NL", "NOT-AN-IBAN")));
+        var services = new ServiceCollection()
+            .AddScoped<IPartnerAffiliateService>(_ => CreatePartnerAffiliateService(db))
+            .BuildServiceProvider();
+        var ledger = new TokenLedgerService(db, services);
 
-        var ledger = new CommissionLedgerService(db);
-        await ledger.TryCreditPartnerTokenCommissionAsync(
-            partnerId, companyId, Guid.NewGuid(), 100m, DateTime.UtcNow.AddDays(-1), 0.05m);
-        var payouts = CreatePayoutService(db, ledger);
-        var blocked = await payouts.GetPreviewAsync(partnerId);
-        Assert.False(blocked.CanPayout);
-        Assert.Contains("onboarding", blocked.BlockReason!, StringComparison.OrdinalIgnoreCase);
+        var spend = await ledger.TrySpendAsync(referredCompanyId, TokenSpendReason.Publish);
+        Assert.True(spend.Succeeded);
 
-        await partners.SignAgreementAsync(partnerId);
-        await partners.UpdateBillingAsync(
-            partnerId,
-            new PartnerAffiliateBillingUpdate("Partner BV", "12345678", null, "Straat 1", "2671AB", "Naaldwijk", "NL", "NL91ABNA0417164300"));
-        var preview = await payouts.GetPreviewAsync(partnerId);
-        Assert.True(preview.CanPayout);
-        Assert.Equal(5.00m, preview.AvailableExVat);
+        var referred = await db.Companies.SingleAsync(c => c.Id == referredCompanyId);
+        Assert.Equal(PartnerReferralStatus.Rewarded, referred.PartnerReferralStatus);
+        Assert.NotNull(referred.PartnerReferralRewardedAtUtc);
+        Assert.Equal(0.5m, await ledger.GetBalanceAsync(partnerCompanyId));
+
+        // Second spend must not double-credit.
+        await ledger.GrantAsync(referredCompanyId, 1m, note: "top-up");
+        var second = await ledger.TrySpendAsync(referredCompanyId, TokenSpendReason.Publish);
+        Assert.True(second.Succeeded);
+        Assert.Equal(0.5m, await ledger.GetBalanceAsync(partnerCompanyId));
+
+        var mine = await CreatePartnerAffiliateService(db).GetMineAsync(partnerId);
+        Assert.Equal(0.5m, mine!.ReferralTokensEarned);
+        Assert.Equal(1, mine.RewardedReferralCount);
+        Assert.Contains(mine.Referrals, r => r.StatusLabel == "Actief - Bonus toegekend");
+    }
+
+    [Fact]
+    public async Task Partner_referral_does_not_reward_without_welcome_ledger_credit()
+    {
+        await using var db = CreateDb();
+        var (_, partnerCompanyId, referredCompanyId) = await SeedPartnerAffiliateAsync(db);
+        var referred = await db.Companies.SingleAsync(c => c.Id == referredCompanyId);
+        referred.WelcomeTokenLedgerCredited = false;
+        await db.SaveChangesAsync();
+
+        db.TokenSpendCosts.Add(new TokenSpendCost
+        {
+            Id = Guid.NewGuid(),
+            Reason = TokenSpendReason.Publish,
+            CostTokens = 1m,
+            IsActive = true
+        });
+        await ledgerGrantAndSpendAsync(db, referredCompanyId, partnerCompanyId);
+
+        referred = await db.Companies.SingleAsync(c => c.Id == referredCompanyId);
+        Assert.Equal(PartnerReferralStatus.Pending, referred.PartnerReferralStatus);
+        Assert.Equal(0m, await new TokenLedgerService(db).GetBalanceAsync(partnerCompanyId));
     }
 
     [Fact]
@@ -432,118 +472,19 @@ public class SalesManagerCommissionTests
         Assert.Null(target.ReferredByPartnerUserId);
     }
 
-    [Fact]
-    public async Task Partner_affiliate_commission_stops_outside_window()
+    private static async Task ledgerGrantAndSpendAsync(
+        JobsyDbContext db,
+        Guid referredCompanyId,
+        Guid partnerCompanyId)
     {
-        await using var db = CreateDb();
-        var (partnerId, companyId) = await SeedPartnerAffiliateAsync(db, iban: null);
-        var company = await db.Companies.SingleAsync(c => c.Id == companyId);
-        company.FirstYearStartedAt = DateTime.UtcNow.AddDays(-400);
-        company.CommissionDurationDaysSnapshot = 365;
-        await db.SaveChangesAsync();
-
-        var partners = CreatePartnerAffiliateService(db);
-        var entry = await partners.TryCreditTokenCommissionAsync(
-            partnerId, companyId, Guid.NewGuid(), 100m);
-        Assert.Null(entry);
-        Assert.Equal(0m, await new CommissionLedgerService(db).GetBalanceExVatAsync(partnerId));
-    }
-
-    [Fact]
-    public async Task Partner_affiliate_token_log_rows_sum_to_mine_balance_including_adjustments()
-    {
-        await using var db = CreateDb();
-        var (partnerId, companyId) = await SeedPartnerAffiliateAsync(db, iban: "NL91ABNA0417164300");
-        var ledger = new CommissionLedgerService(db);
-        await ledger.TryCreditPartnerTokenCommissionAsync(
-            partnerId, companyId, Guid.NewGuid(), 100m, DateTime.UtcNow.AddDays(-1), 0.05m);
-        db.CommissionLedgerEntries.Add(new CommissionLedgerEntry
-        {
-            Id = Guid.NewGuid(),
-            SalesManagerUserId = partnerId,
-            Kind = CommissionEntryKind.Adjustment,
-            AmountExVat = -2.00m,
-            VatAmount = -SalesCommissionRules.VatOn(2.00m),
-            VatRate = SalesCommissionRules.VatRate,
-            Note = "Correctie partnercommissie",
-            CreatedAt = DateTime.UtcNow
-        });
-        await db.SaveChangesAsync();
-
-        var partners = CreatePartnerAffiliateService(db);
-        var mine = await partners.GetMineAsync(partnerId);
-        var rows = await partners.GetTokenLogAsync(partnerId);
-
-        Assert.NotNull(mine);
-        var tokenLogBalance = rows.Sum(r => r.EarningsExVat - r.PayoutExVat);
-        Assert.Equal(mine!.BalanceExVat, tokenLogBalance);
-        Assert.Equal(await ledger.GetBalanceExVatAsync(partnerId), tokenLogBalance);
-    }
-
-    [Fact]
-    public async Task Partner_affiliate_missing_iban_blocks_preview_with_clear_available_balance()
-    {
-        await using var db = CreateDb();
-        var (partnerId, companyId) = await SeedPartnerAffiliateAsync(db, iban: null);
-        var ledger = new CommissionLedgerService(db);
-        await ledger.TryCreditPartnerTokenCommissionAsync(
-            partnerId, companyId, Guid.NewGuid(), 100m, DateTime.UtcNow.AddDays(-1), 0.05m);
-        var payouts = CreatePayoutService(db, ledger);
-
-        var preview = await payouts.GetPreviewAsync(partnerId);
-
-        Assert.False(preview.CanPayout);
-        Assert.Equal(5.00m, preview.AvailableExVat);
-        Assert.Null(preview.Iban);
-        Assert.Equal("—", preview.MaskedIban);
-        Assert.Contains("IBAN", preview.BlockReason, StringComparison.OrdinalIgnoreCase);
-    }
-
-    [Fact]
-    public async Task Partner_affiliate_payout_uses_partner_profile_and_never_goes_negative()
-    {
-        await using var db = CreateDb();
-        var (partnerId, companyId) = await SeedPartnerAffiliateAsync(db, iban: "NL91ABNA0417164300");
-        var ledger = new CommissionLedgerService(db);
-        await ledger.TryCreditPartnerTokenCommissionAsync(
-            partnerId, companyId, Guid.NewGuid(), 200m, DateTime.UtcNow.AddDays(-1), 0.05m);
-        db.CommissionLedgerEntries.Add(new CommissionLedgerEntry
-        {
-            Id = Guid.NewGuid(),
-            SalesManagerUserId = partnerId,
-            Kind = CommissionEntryKind.Adjustment,
-            AmountExVat = -8.00m,
-            VatAmount = -SalesCommissionRules.VatOn(8.00m),
-            VatRate = SalesCommissionRules.VatRate,
-            Note = "Correctie partnercommissie",
-            CreatedAt = DateTime.UtcNow
-        });
-        await db.SaveChangesAsync();
-        var payouts = CreatePayoutService(db, ledger);
-
-        var preview = await payouts.GetPreviewAsync(partnerId);
-        Assert.True(preview.CanPayout);
-        Assert.Equal(2.00m, preview.AvailableExVat);
-        Assert.Equal("NL**4300", preview.MaskedIban);
-        Assert.Null(preview.Iban);
-        await Assert.ThrowsAsync<InvalidOperationException>(
-            () => payouts.CreateCheckoutAsync(partnerId, 2.01m));
-
-        var checkout = await payouts.CreateCheckoutAsync(partnerId, preview.AmountExVat);
-        Assert.Contains("/employer/sales/payout-checkout", checkout.CheckoutUrl);
-        var completed = await payouts.CompleteCheckoutAsync(checkout.PaymentId, partnerId);
-
-        Assert.Equal(nameof(SalesManagerPayoutCheckoutStatus.Completed), completed.Status);
-        Assert.Equal(0m, await ledger.GetBalanceExVatAsync(partnerId));
-        Assert.Equal(0m, await ledger.GetUninvoicedBalanceExVatAsync(partnerId));
-
-        var invoice = await db.SelfBillingInvoices.SingleAsync(i => i.Id == completed.InvoiceId);
-        Assert.Equal("Partner BV", invoice.SalesManagerCompanyName);
-        Assert.Equal("12345678", invoice.SalesManagerKvkNumber);
-        Assert.Equal("NL123456789B01", invoice.SalesManagerVatNumber);
-
-        var rows = await CreatePartnerAffiliateService(db).GetTokenLogAsync(partnerId);
-        Assert.Equal(0m, rows.Sum(r => r.EarningsExVat - r.PayoutExVat));
+        var services = new ServiceCollection()
+            .AddScoped<IPartnerAffiliateService>(_ => CreatePartnerAffiliateService(db))
+            .BuildServiceProvider();
+        var ledger = new TokenLedgerService(db, services);
+        await ledger.GrantAsync(referredCompanyId, 1m, note: "manual");
+        var spend = await ledger.TrySpendAsync(referredCompanyId, TokenSpendReason.Publish);
+        Assert.True(spend.Succeeded);
+        _ = partnerCompanyId;
     }
 
     [Fact]
@@ -637,8 +578,7 @@ public class SalesManagerCommissionTests
     private static PartnerAffiliateService CreatePartnerAffiliateService(JobsyDbContext db) =>
         new(
             db,
-            new SalesCommercialService(db, new TokenLedgerService(db)),
-            new CommissionLedgerService(db),
+            new TokenLedgerService(db),
             new FakePublicWebFeatures("https://lobsy.nl"));
 
     private static SalesManagerPayoutService CreatePayoutService(
@@ -665,12 +605,25 @@ public class SalesManagerCommissionTests
             Options.Create(new JobsyFeatureOptions { ExposeRegistrationActivationLinks = true }),
             config);
 
+        if (!db.PlatformFeatureSettings.Any())
+        {
+            db.PlatformFeatureSettings.Add(new PlatformFeatureSettings
+            {
+                Id = Guid.Parse("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"),
+                ExposeRegistrationActivationLinks = true,
+                FreePublishUntil = null,
+                UpdatedAtUtc = DateTime.UtcNow
+            });
+            db.SaveChanges();
+        }
+
         return new CompanyRegistrationService(
             db,
             new Sprint7KvkAdapter(db),
             new EmailServiceStub(db, NullLogger<EmailServiceStub>.Instance),
             new TokenLedgerService(db),
             features,
+            CreatePartnerAffiliateService(db),
             NullLogger<CompanyRegistrationService>.Instance);
     }
 
@@ -728,19 +681,30 @@ public class SalesManagerCommissionTests
         return (smId, companyId);
     }
 
-    private static async Task<(Guid PartnerId, Guid CompanyId)> SeedPartnerAffiliateAsync(
-        JobsyDbContext db,
-        string? iban)
+    private static async Task<(Guid PartnerId, Guid PartnerCompanyId, Guid ReferredCompanyId)> SeedPartnerAffiliateAsync(
+        JobsyDbContext db)
     {
         var partnerId = Guid.NewGuid();
-        var companyId = Guid.NewGuid();
+        var partnerCompanyId = Guid.NewGuid();
+        var referredCompanyId = Guid.NewGuid();
         var now = DateTime.UtcNow;
+        db.Companies.Add(new Company
+        {
+            Id = partnerCompanyId,
+            Name = "Partner Org",
+            KvkNumber = "12345678",
+            KvkEstablishmentId = "12345678_0001",
+            Address = "Partnerstraat 1",
+            Location = new GeoPoint(52, 4),
+            Type = CompanyType.Employer
+        });
         db.Users.Add(new User
         {
             Id = partnerId,
             Email = "partner@jobsy.local",
             FullName = "Partner User",
             Role = UserRole.EnterpriseManager,
+            CompanyId = partnerCompanyId,
             IsActive = true
         });
         db.PartnerAffiliateProfiles.Add(new PartnerAffiliateProfile
@@ -749,21 +713,13 @@ public class SalesManagerCommissionTests
             UserId = partnerId,
             CompanyName = "Partner BV",
             KvkNumber = "12345678",
-            VatNumber = "NL123456789B01",
-            Address = "Partnerstraat 1",
-            PostalCode = "2671AB",
-            City = "Naaldwijk",
-            Country = "NL",
-            Iban = iban,
             TrackingCode = "BM-PART23",
-            AgreementSignedAt = now,
-            AgreementVersion = SalesCommissionRules.CurrentPartnerAgreementVersion,
             CreatedAtUtc = now,
             UpdatedAtUtc = now
         });
         db.Companies.Add(new Company
         {
-            Id = companyId,
+            Id = referredCompanyId,
             Name = "Partner referred co",
             KvkNumber = "99998888",
             KvkEstablishmentId = "99998888_0001",
@@ -771,10 +727,25 @@ public class SalesManagerCommissionTests
             Location = new GeoPoint(52, 4),
             Type = CompanyType.Employer,
             ReferredByPartnerUserId = partnerId,
+            PartnerReferralStatus = PartnerReferralStatus.Pending,
+            PartnerReferredAtUtc = now,
+            WelcomeTokenLedgerCredited = true,
+            HasReceivedWelcomeToken = true,
             FirstYearStartedAt = now
         });
+        db.TokenTransactions.Add(new TokenTransaction
+        {
+            Id = Guid.NewGuid(),
+            CompanyId = referredCompanyId,
+            Amount = 1m,
+            Kind = TokenTransactionKind.Grant,
+            OldBalance = 0m,
+            NewBalance = 1m,
+            Note = CompanyRegistrationService.WelcomeTokenNote,
+            CreatedAt = now
+        });
         await db.SaveChangesAsync();
-        return (partnerId, companyId);
+        return (partnerId, partnerCompanyId, referredCompanyId);
     }
 
     private static ClaimsPrincipal CreatePrincipal(string email, Guid userId)

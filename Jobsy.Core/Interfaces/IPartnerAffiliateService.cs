@@ -17,35 +17,24 @@ public interface IPartnerAffiliateService
         string? trackingCode,
         CancellationToken cancellationToken = default);
 
-    Task<CommissionLedgerEntry?> TryCreditTokenCommissionAsync(
-        Guid partnerUserId,
-        Guid companyId,
-        Guid tokenCheckoutId,
-        decimal purchaseAmountExVatEuro,
+    /// <summary>
+    /// When a referred company spends tokens after receiving a welcome-token ledger credit,
+    /// marks the referral as rewarded (once) and grants 0.5 token to the partner's company wallet.
+    /// Safe to call on every spend; no-ops when not applicable.
+    /// </summary>
+    Task<bool> TryRewardOnWelcomeTokenSpendAsync(
+        Guid referredCompanyId,
         CancellationToken cancellationToken = default);
 
     Task<PartnerAffiliateMeDto?> GetMineAsync(
         Guid userId,
         CancellationToken cancellationToken = default);
 
-    Task<IReadOnlyList<PartnerAffiliateTokenLogRowDto>> GetTokenLogAsync(
+    Task<IReadOnlyList<PartnerAffiliateReferralRowDto>> GetReferralsAsync(
         Guid userId,
         CancellationToken cancellationToken = default);
 
     Task<PartnerAffiliateToolkitDto?> GetToolkitAsync(
-        Guid userId,
-        CancellationToken cancellationToken = default);
-
-    Task<PartnerAffiliateBillingDto?> GetBillingAsync(
-        Guid userId,
-        CancellationToken cancellationToken = default);
-
-    Task<PartnerAffiliateBillingDto> UpdateBillingAsync(
-        Guid userId,
-        PartnerAffiliateBillingUpdate update,
-        CancellationToken cancellationToken = default);
-
-    Task<PartnerAffiliateBillingDto> SignAgreementAsync(
         Guid userId,
         CancellationToken cancellationToken = default);
 }
@@ -56,61 +45,23 @@ public sealed record PartnerAffiliateMeDto(
     string FullName,
     string Role,
     string TrackingCode,
-    decimal CommissionRate,
-    decimal BalanceExVat,
-    decimal BalanceInclVat,
+    decimal ReferralTokensEarned,
     int ReferredCompanyCount,
-    IReadOnlyList<PartnerAffiliateLedgerSummaryDto> RecentLedger);
+    int PendingReferralCount,
+    int RewardedReferralCount,
+    IReadOnlyList<PartnerAffiliateReferralRowDto> Referrals);
 
-public sealed record PartnerAffiliateLedgerSummaryDto(
-    Guid Id,
-    string Kind,
-    decimal AmountExVat,
-    decimal VatAmount,
-    string? Note,
-    Guid? CompanyId,
-    string? CompanyName,
-    DateTime CreatedAt,
-    Guid? InvoiceId);
-
-public sealed record PartnerAffiliateTokenLogRowDto(
-    Guid LedgerEntryId,
-    Guid? CompanyId,
-    string? CompanyName,
-    DateTime DateUtc,
-    int TokensBought,
-    decimal EarningsExVat,
-    decimal PayoutExVat,
-    string Kind,
-    string? Note);
+public sealed record PartnerAffiliateReferralRowDto(
+    Guid CompanyId,
+    string CompanyName,
+    string Status,
+    string StatusLabel,
+    DateTime? ReferredAtUtc,
+    DateTime? RewardedAtUtc,
+    bool WelcomeTokenAvailable);
 
 public sealed record PartnerAffiliateToolkitDto(
     string TrackingCode,
-    decimal CommissionRate,
     string PartnerPageUrl,
     string RegisterUrl,
     string FlyerUrl);
-
-public sealed record PartnerAffiliateBillingDto(
-    string? CompanyName,
-    string? KvkNumber,
-    string? VatNumber,
-    string? Address,
-    string? PostalCode,
-    string? City,
-    string Country,
-    string MaskedIban,
-    bool HasIban,
-    bool AgreementSigned,
-    string? AgreementVersion);
-
-public sealed record PartnerAffiliateBillingUpdate(
-    string? CompanyName,
-    string? KvkNumber,
-    string? VatNumber,
-    string? Address,
-    string? PostalCode,
-    string? City,
-    string? Country,
-    string? Iban,
-    bool ClearIban = false);

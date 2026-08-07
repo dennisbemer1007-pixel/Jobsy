@@ -21,8 +21,16 @@ public static class SalesCommissionRules
     /// <summary>Default passive referral bonus for the referring salesmanager (Admin-configurable).</summary>
     public const decimal DefaultIndirectCommissionRate = 0.03m;
 
-    /// <summary>Default commission for partner affiliates (Bedrijfsmanager / Intermediair).</summary>
+    /// <summary>
+    /// Legacy default cash commission for partner affiliates — retired in favour of token rewards.
+    /// Kept for existing settings rows / migrations; no longer applied on token purchases.
+    /// </summary>
     public const decimal DefaultPartnerCommissionRate = 0.05m;
+
+    /// <summary>
+    /// Token bonus credited to the referring partner when a referred company spends its welcome token.
+    /// </summary>
+    public const decimal PartnerReferralRewardTokens = 0.5m;
 
     /// <summary>Default commission duration in days for an onboarded entrepreneur (1 year).</summary>
     public const int DefaultCommissionDurationDays = 365;

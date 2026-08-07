@@ -1461,114 +1461,13 @@ public sealed class JobsyApiClient : IAsyncDisposable
     public async Task<PartnerAffiliateMeModel?> GetPartnerAffiliateMeAsync(CancellationToken ct = default)
         => await _http.GetFromJsonAsync<PartnerAffiliateMeModel>("api/partner-affiliate/me", ct);
 
-    public async Task<IReadOnlyList<PartnerAffiliateTokenLogRowModel>> GetPartnerAffiliateTokenLogAsync(
+    public async Task<IReadOnlyList<PartnerAffiliateReferralRowModel>> GetPartnerAffiliateReferralsAsync(
         CancellationToken ct = default)
-        => await _http.GetFromJsonAsync<List<PartnerAffiliateTokenLogRowModel>>(
-            "api/partner-affiliate/token-log", ct) ?? [];
+        => await _http.GetFromJsonAsync<List<PartnerAffiliateReferralRowModel>>(
+            "api/partner-affiliate/referrals", ct) ?? [];
 
     public async Task<PartnerAffiliateToolkitModel?> GetPartnerAffiliateToolkitAsync(CancellationToken ct = default)
         => await _http.GetFromJsonAsync<PartnerAffiliateToolkitModel>("api/partner-affiliate/toolkit", ct);
-
-    public async Task<PartnerAffiliateBillingModel?> GetPartnerAffiliateBillingAsync(CancellationToken ct = default)
-        => await _http.GetFromJsonAsync<PartnerAffiliateBillingModel>("api/partner-affiliate/me/billing", ct);
-
-    public async Task<PartnerAffiliateBillingModel?> UpdatePartnerAffiliateBillingAsync(
-        PartnerAffiliateBillingForm form,
-        CancellationToken ct = default)
-    {
-        var response = await _http.PutAsJsonAsync("api/partner-affiliate/me/billing", form, ct);
-        if (!response.IsSuccessStatusCode)
-        {
-            var body = await response.Content.ReadAsStringAsync(ct);
-            throw new InvalidOperationException(TryExtractMessage(body)
-                ?? (string.IsNullOrWhiteSpace(body)
-                    ? $"Factuurgegevens opslaan mislukt ({(int)response.StatusCode})."
-                    : body));
-        }
-
-        return await response.Content.ReadFromJsonAsync<PartnerAffiliateBillingModel>(cancellationToken: ct);
-    }
-
-    public async Task<PartnerAffiliateBillingModel?> SignPartnerAffiliateAgreementAsync(CancellationToken ct = default)
-    {
-        var response = await _http.PostAsync("api/partner-affiliate/me/agreement", null, ct);
-        if (!response.IsSuccessStatusCode)
-        {
-            var body = await response.Content.ReadAsStringAsync(ct);
-            throw new InvalidOperationException(TryExtractMessage(body)
-                ?? (string.IsNullOrWhiteSpace(body)
-                    ? $"Overeenkomst ondertekenen mislukt ({(int)response.StatusCode})."
-                    : body));
-        }
-
-        return await response.Content.ReadFromJsonAsync<PartnerAffiliateBillingModel>(cancellationToken: ct);
-    }
-
-    public async Task<List<SelfBillingInvoiceItem>> GetPartnerAffiliateInvoicesAsync(CancellationToken ct = default)
-        => await _http.GetFromJsonAsync<List<SelfBillingInvoiceItem>>("api/partner-affiliate/me/invoices", ct) ?? [];
-
-    public async Task<SalesManagerPayoutPreview?> GetPartnerAffiliatePayoutPreviewAsync(
-        decimal? amountExVat = null,
-        CancellationToken ct = default)
-    {
-        var url = amountExVat is null
-            ? "api/partner-affiliate/me/payouts/preview"
-            : $"api/partner-affiliate/me/payouts/preview?amountExVat={amountExVat.Value.ToString(System.Globalization.CultureInfo.InvariantCulture)}";
-        return await _http.GetFromJsonAsync<SalesManagerPayoutPreview>(url, ct);
-    }
-
-    public async Task<SalesManagerPayoutCheckoutResult?> CreatePartnerAffiliatePayoutCheckoutAsync(
-        decimal amountExVat,
-        CancellationToken ct = default)
-    {
-        var response = await _http.PostAsJsonAsync(
-            "api/partner-affiliate/me/payouts/checkout",
-            new { amountExVat },
-            ct);
-        if (!response.IsSuccessStatusCode)
-        {
-            var body = await response.Content.ReadAsStringAsync(ct);
-            throw new InvalidOperationException(ExtractMessage(body) ?? "Uitbetaling starten mislukt.");
-        }
-
-        return await response.Content.ReadFromJsonAsync<SalesManagerPayoutCheckoutResult>(cancellationToken: ct);
-    }
-
-    public async Task<SalesManagerPayoutCompleteResult?> CompletePartnerAffiliatePayoutCheckoutAsync(
-        string paymentId,
-        CancellationToken ct = default)
-    {
-        var response = await _http.PostAsJsonAsync(
-            "api/partner-affiliate/me/payouts/complete",
-            new { paymentId },
-            ct);
-        if (!response.IsSuccessStatusCode)
-        {
-            var body = await response.Content.ReadAsStringAsync(ct);
-            throw new InvalidOperationException(ExtractMessage(body) ?? "Uitbetaling afronden mislukt.");
-        }
-
-        return await response.Content.ReadFromJsonAsync<SalesManagerPayoutCompleteResult>(cancellationToken: ct);
-    }
-
-    public async Task DownloadPartnerAffiliateInvoiceAsync(
-        Guid invoiceId,
-        string invoiceNumber,
-        IJSRuntime js,
-        CancellationToken ct = default)
-    {
-        var response = await _http.GetAsync($"api/partner-affiliate/me/invoices/{invoiceId}/download", ct);
-        if (!response.IsSuccessStatusCode)
-        {
-            var body = await response.Content.ReadAsStringAsync(ct);
-            throw new InvalidOperationException(ExtractMessage(body) ?? "Download mislukt.");
-        }
-
-        var bytes = await response.Content.ReadAsByteArrayAsync(ct);
-        var fileName = string.IsNullOrWhiteSpace(invoiceNumber) ? $"{invoiceId:N}.pdf" : $"{invoiceNumber}.pdf";
-        var base64 = Convert.ToBase64String(bytes);
-        await js.InvokeVoidAsync("jobsyDownload.bytes", fileName, base64, "application/pdf");
-    }
 
     public async Task DownloadAmbassadeurFlyerPdfAsync(
         Microsoft.JSInterop.IJSRuntime js,
@@ -3559,74 +3458,30 @@ public sealed class PartnerAffiliateMeModel
     public string FullName { get; set; } = string.Empty;
     public string Role { get; set; } = string.Empty;
     public string TrackingCode { get; set; } = string.Empty;
-    public decimal CommissionRate { get; set; }
-    public decimal BalanceExVat { get; set; }
-    public decimal BalanceInclVat { get; set; }
+    public decimal ReferralTokensEarned { get; set; }
     public int ReferredCompanyCount { get; set; }
-    public List<PartnerAffiliateLedgerSummaryModel> RecentLedger { get; set; } = [];
+    public int PendingReferralCount { get; set; }
+    public int RewardedReferralCount { get; set; }
+    public List<PartnerAffiliateReferralRowModel> Referrals { get; set; } = [];
 }
 
-public sealed class PartnerAffiliateLedgerSummaryModel
+public sealed class PartnerAffiliateReferralRowModel
 {
-    public Guid Id { get; set; }
-    public string Kind { get; set; } = string.Empty;
-    public decimal AmountExVat { get; set; }
-    public decimal VatAmount { get; set; }
-    public string? Note { get; set; }
-    public Guid? CompanyId { get; set; }
-    public string? CompanyName { get; set; }
-    public DateTime CreatedAt { get; set; }
-    public Guid? InvoiceId { get; set; }
-}
-
-public sealed class PartnerAffiliateTokenLogRowModel
-{
-    public Guid LedgerEntryId { get; set; }
-    public Guid? CompanyId { get; set; }
-    public string? CompanyName { get; set; }
-    public DateTime DateUtc { get; set; }
-    public int TokensBought { get; set; }
-    public decimal EarningsExVat { get; set; }
-    public decimal PayoutExVat { get; set; }
-    public string Kind { get; set; } = string.Empty;
-    public string? Note { get; set; }
+    public Guid CompanyId { get; set; }
+    public string CompanyName { get; set; } = string.Empty;
+    public string Status { get; set; } = string.Empty;
+    public string StatusLabel { get; set; } = string.Empty;
+    public DateTime? ReferredAtUtc { get; set; }
+    public DateTime? RewardedAtUtc { get; set; }
+    public bool WelcomeTokenAvailable { get; set; }
 }
 
 public sealed class PartnerAffiliateToolkitModel
 {
     public string TrackingCode { get; set; } = string.Empty;
-    public decimal CommissionRate { get; set; }
     public string PartnerPageUrl { get; set; } = string.Empty;
     public string RegisterUrl { get; set; } = string.Empty;
     public string FlyerUrl { get; set; } = string.Empty;
-}
-
-public sealed class PartnerAffiliateBillingModel
-{
-    public string? CompanyName { get; set; }
-    public string? KvkNumber { get; set; }
-    public string? VatNumber { get; set; }
-    public string? Address { get; set; }
-    public string? PostalCode { get; set; }
-    public string? City { get; set; }
-    public string Country { get; set; } = "NL";
-    public string MaskedIban { get; set; } = "—";
-    public bool HasIban { get; set; }
-    public bool AgreementSigned { get; set; }
-    public string? AgreementVersion { get; set; }
-}
-
-public sealed class PartnerAffiliateBillingForm
-{
-    public string? CompanyName { get; set; }
-    public string? KvkNumber { get; set; }
-    public string? VatNumber { get; set; }
-    public string? Address { get; set; }
-    public string? PostalCode { get; set; }
-    public string? City { get; set; }
-    public string? Country { get; set; }
-    public string? Iban { get; set; }
-    public bool ClearIban { get; set; }
 }
 
 public sealed class VacancyTypeCostItem

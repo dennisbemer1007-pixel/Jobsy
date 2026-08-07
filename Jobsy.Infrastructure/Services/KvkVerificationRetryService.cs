@@ -30,8 +30,7 @@ public sealed class KvkVerificationRetryService : IKvkVerificationRetryService
             registration,
             new PartnerAffiliateService(
                 db,
-                new SalesCommercialService(db, new TokenLedgerService(db)),
-                new CommissionLedgerService(db),
+                new TokenLedgerService(db),
                 new PlatformFeatureService(
                     db,
                     Microsoft.Extensions.Options.Options.Create(new Jobsy.Core.Options.JobsyFeatureOptions()),

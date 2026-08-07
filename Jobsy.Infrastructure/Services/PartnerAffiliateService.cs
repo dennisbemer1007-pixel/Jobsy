@@ -5,28 +5,31 @@ using Jobsy.Core.Interfaces;
 using Jobsy.Core.Rules;
 using Jobsy.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 
 namespace Jobsy.Infrastructure.Services;
 
 public sealed class PartnerAffiliateService : IPartnerAffiliateService
 {
+    public const string ReferralRewardNotePrefix = "Referralbonus welkomsttoken";
+
     private const string Alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
 
     private readonly JobsyDbContext _db;
-    private readonly ISalesCommercialService _commercial;
-    private readonly ICommissionLedgerService _ledger;
+    private readonly ITokenLedgerService _tokens;
     private readonly IPlatformFeatureService _features;
+    private readonly ILogger<PartnerAffiliateService> _logger;
 
     public PartnerAffiliateService(
         JobsyDbContext db,
-        ISalesCommercialService commercial,
-        ICommissionLedgerService ledger,
-        IPlatformFeatureService features)
+        ITokenLedgerService tokens,
+        IPlatformFeatureService features,
+        ILogger<PartnerAffiliateService>? logger = null)
     {
         _db = db;
-        _commercial = commercial;
-        _ledger = ledger;
+        _tokens = tokens;
         _features = features;
+        _logger = logger ?? Microsoft.Extensions.Logging.Abstractions.NullLogger<PartnerAffiliateService>.Instance;
     }
 
     public async Task<PartnerAffiliateProfile> EnsureProfileAsync(
@@ -102,55 +105,86 @@ public sealed class PartnerAffiliateService : IPartnerAffiliateService
             return false;
         }
 
-        // Block self-referral / related-party attribution (same user company or same KVK family).
         if (await IsRelatedPartyReferralAsync(profile.UserId, company, cancellationToken))
         {
             return false;
         }
 
         company.ReferredByPartnerUserId = profile.UserId;
-        company.FirstYearStartedAt ??= DateTime.UtcNow;
-        company.CommissionDurationDaysSnapshot ??=
-            (await _commercial.GetSettingsAsync(cancellationToken)).CommissionDurationDays;
+        company.PartnerReferralStatus = PartnerReferralStatus.Pending;
+        company.PartnerReferredAtUtc = DateTime.UtcNow;
+        company.PartnerReferralRewardedAtUtc = null;
         return true;
     }
 
-    public async Task<CommissionLedgerEntry?> TryCreditTokenCommissionAsync(
-        Guid partnerUserId,
-        Guid companyId,
-        Guid tokenCheckoutId,
-        decimal purchaseAmountExVatEuro,
+    public async Task<bool> TryRewardOnWelcomeTokenSpendAsync(
+        Guid referredCompanyId,
         CancellationToken cancellationToken = default)
     {
-        if (purchaseAmountExVatEuro <= 0)
+        var company = await _db.Companies
+            .FirstOrDefaultAsync(c => c.Id == referredCompanyId, cancellationToken);
+        if (company is null
+            || company.ReferredByPartnerUserId is null
+            || company.PartnerReferralStatus != PartnerReferralStatus.Pending
+            || !company.WelcomeTokenLedgerCredited)
         {
-            return null;
+            return false;
         }
 
-        var profileExists = await _db.PartnerAffiliateProfiles.AsNoTracking()
-            .AnyAsync(p => p.UserId == partnerUserId, cancellationToken);
-        if (!profileExists)
+        var partnerUserId = company.ReferredByPartnerUserId.Value;
+        var partner = await _db.Users.AsNoTracking()
+            .FirstOrDefaultAsync(u => u.Id == partnerUserId && u.IsActive, cancellationToken);
+        if (partner?.CompanyId is not Guid partnerCompanyId)
         {
-            return null;
+            _logger.LogWarning(
+                "Partner referral reward skipped for company {CompanyId}: partner {PartnerUserId} has no company wallet",
+                referredCompanyId,
+                partnerUserId);
+            return false;
         }
 
-        var company = await _db.Companies.AsNoTracking()
-            .FirstOrDefaultAsync(c => c.Id == companyId, cancellationToken);
-        if (company is null || company.ReferredByPartnerUserId != partnerUserId)
+        // Idempotency: already granted for this referred company.
+        var rewardNote = $"{ReferralRewardNotePrefix} ({referredCompanyId:N})";
+        var alreadyGranted = await _db.TokenTransactions.AsNoTracking()
+            .AnyAsync(
+                t => t.CompanyId == partnerCompanyId
+                     && t.Kind == TokenTransactionKind.Grant
+                     && t.Note == rewardNote,
+                cancellationToken);
+        if (alreadyGranted)
         {
-            return null;
+            company.PartnerReferralStatus = PartnerReferralStatus.Rewarded;
+            company.PartnerReferralRewardedAtUtc ??= DateTime.UtcNow;
+            await _db.SaveChangesAsync(cancellationToken);
+            return false;
         }
 
-        var settings = await _commercial.GetSettingsAsync(cancellationToken);
-        return await _ledger.TryCreditPartnerTokenCommissionAsync(
-            partnerUserId,
-            companyId,
-            tokenCheckoutId,
-            purchaseAmountExVatEuro,
-            company.FirstYearStartedAt,
-            Math.Max(0m, settings.PartnerCommissionRate),
-            company.CommissionDurationDaysSnapshot ?? settings.CommissionDurationDays,
+        await _tokens.GrantAsync(
+            partnerCompanyId,
+            SalesCommissionRules.PartnerReferralRewardTokens,
+            actorUserId: partnerUserId,
+            note: rewardNote,
             cancellationToken);
+
+        company.PartnerReferralStatus = PartnerReferralStatus.Rewarded;
+        company.PartnerReferralRewardedAtUtc = DateTime.UtcNow;
+        _db.PlatformLogs.Add(new PlatformLog
+        {
+            Id = Guid.NewGuid(),
+            Level = PlatformLogLevel.Info,
+            Category = "PartnerReferral",
+            Message =
+                $"Referralbonus {SalesCommissionRules.PartnerReferralRewardTokens} token toegekend aan partner {partnerUserId} voor bedrijf {referredCompanyId}",
+            CreatedAt = DateTime.UtcNow
+        });
+        await _db.SaveChangesAsync(cancellationToken);
+
+        _logger.LogInformation(
+            "Partner referral reward granted: referred company {CompanyId} → partner {PartnerUserId} (+{Tokens} tokens)",
+            referredCompanyId,
+            partnerUserId,
+            SalesCommissionRules.PartnerReferralRewardTokens);
+        return true;
     }
 
     public async Task<PartnerAffiliateMeDto?> GetMineAsync(
@@ -160,11 +194,8 @@ public sealed class PartnerAffiliateService : IPartnerAffiliateService
         var profile = await EnsureProfileAsync(userId, cancellationToken);
         var user = await _db.Users.AsNoTracking()
             .FirstAsync(u => u.Id == userId, cancellationToken);
-        var settings = await _commercial.GetSettingsAsync(cancellationToken);
-        var balance = await _ledger.GetBalanceExVatAsync(userId, cancellationToken);
-        var referredCount = await _db.Companies.AsNoTracking()
-            .CountAsync(c => c.ReferredByPartnerUserId == userId, cancellationToken);
-        var ledger = await _ledger.ListEntriesAsync(userId, cancellationToken);
+        var referrals = await GetReferralsAsync(userId, cancellationToken);
+        var tokensEarned = await SumReferralTokensEarnedAsync(userId, cancellationToken);
 
         return new PartnerAffiliateMeDto(
             user.Id,
@@ -172,59 +203,26 @@ public sealed class PartnerAffiliateService : IPartnerAffiliateService
             user.FullName,
             user.Role.ToString(),
             profile.TrackingCode,
-            settings.PartnerCommissionRate,
-            balance,
-            SalesCommissionRules.InclVat(balance),
-            referredCount,
-            ledger.Take(20).Select(e => new PartnerAffiliateLedgerSummaryDto(
-                e.Id,
-                e.Kind.ToString(),
-                e.AmountExVat,
-                e.VatAmount,
-                e.Note,
-                e.CompanyId,
-                e.Company?.Name,
-                e.CreatedAt,
-                e.SelfBillingInvoiceId)).ToList());
+            tokensEarned,
+            referrals.Count,
+            referrals.Count(r => r.Status == nameof(PartnerReferralStatus.Pending)),
+            referrals.Count(r => r.Status == nameof(PartnerReferralStatus.Rewarded)),
+            referrals);
     }
 
-    public async Task<IReadOnlyList<PartnerAffiliateTokenLogRowDto>> GetTokenLogAsync(
+    public async Task<IReadOnlyList<PartnerAffiliateReferralRowDto>> GetReferralsAsync(
         Guid userId,
         CancellationToken cancellationToken = default)
     {
         await EnsureProfileAsync(userId, cancellationToken);
 
-        var entries = await _db.CommissionLedgerEntries.AsNoTracking()
-            .Include(e => e.Company)
-            .Where(e => e.SalesManagerUserId == userId
-                        && e.AmountExVat != 0)
-            .OrderByDescending(e => e.CreatedAt)
+        var companies = await _db.Companies.AsNoTracking()
+            .Where(c => c.ReferredByPartnerUserId == userId)
+            .OrderByDescending(c => c.PartnerReferredAtUtc ?? c.FirstYearStartedAt)
+            .ThenBy(c => c.Name)
             .ToListAsync(cancellationToken);
 
-        var checkoutIds = entries
-            .Where(e => e.SourceTokenCheckoutId is not null)
-            .Select(e => e.SourceTokenCheckoutId!.Value)
-            .Distinct()
-            .ToList();
-
-        var checkouts = await _db.TokenPurchaseCheckouts.AsNoTracking()
-            .Where(c => checkoutIds.Contains(c.Id))
-            .ToDictionaryAsync(c => c.Id, cancellationToken);
-
-        return entries.Select(entry =>
-        {
-            checkouts.TryGetValue(entry.SourceTokenCheckoutId ?? Guid.Empty, out var checkout);
-            return new PartnerAffiliateTokenLogRowDto(
-                entry.Id,
-                entry.CompanyId,
-                entry.Company?.Name,
-                entry.CreatedAt,
-                entry.AmountExVat > 0 ? checkout?.PackSize ?? 0 : 0,
-                Math.Max(0m, entry.AmountExVat),
-                Math.Max(0m, -entry.AmountExVat),
-                entry.Kind.ToString(),
-                entry.Note);
-        }).ToList();
+        return companies.Select(MapReferralRow).ToList();
     }
 
     public async Task<PartnerAffiliateToolkitDto?> GetToolkitAsync(
@@ -232,14 +230,12 @@ public sealed class PartnerAffiliateService : IPartnerAffiliateService
         CancellationToken cancellationToken = default)
     {
         var profile = await EnsureProfileAsync(userId, cancellationToken);
-        var settings = await _commercial.GetSettingsAsync(cancellationToken);
         var features = await _features.GetAsync(cancellationToken);
         var baseUrl = features.PublicWebBaseUrl.TrimEnd('/');
         var escaped = Uri.EscapeDataString(profile.TrackingCode);
 
         return new PartnerAffiliateToolkitDto(
             profile.TrackingCode,
-            settings.PartnerCommissionRate,
             $"{baseUrl}/partner/{escaped}",
             $"{baseUrl}/register?ref={escaped}",
             $"{baseUrl}/api/sales-commercial/flyer.pdf?trackingCode={escaped}");
@@ -248,74 +244,56 @@ public sealed class PartnerAffiliateService : IPartnerAffiliateService
     public static bool IsPartnerTrackingCode(string? trackingCode) =>
         NormalizePartnerTrackingCode(trackingCode) is not null;
 
-    public async Task<PartnerAffiliateBillingDto?> GetBillingAsync(
-        Guid userId,
-        CancellationToken cancellationToken = default)
-    {
-        var profile = await EnsureProfileAsync(userId, cancellationToken);
-        return MapBilling(profile);
-    }
-
-    public async Task<PartnerAffiliateBillingDto> UpdateBillingAsync(
-        Guid userId,
-        PartnerAffiliateBillingUpdate update,
-        CancellationToken cancellationToken = default)
-    {
-        var profile = await EnsureProfileAsync(userId, cancellationToken);
-        profile.CompanyName = NormalizeOptional(update.CompanyName, 200);
-        profile.KvkNumber = NormalizeOptional(update.KvkNumber, 20);
-        profile.VatNumber = NormalizeOptional(update.VatNumber, 32);
-        profile.Address = NormalizeOptional(update.Address, 300);
-        profile.PostalCode = NormalizeOptional(update.PostalCode, 20);
-        profile.City = NormalizeOptional(update.City, 120);
-        profile.Country = string.IsNullOrWhiteSpace(update.Country) ? "NL" : update.Country.Trim().ToUpperInvariant();
-
-        if (!string.IsNullOrWhiteSpace(update.Iban))
+    public static string StatusLabel(PartnerReferralStatus status, bool welcomeTokenAvailable) =>
+        status switch
         {
-            var iban = NormalizeIban(update.Iban);
-            if (iban is null)
-            {
-                throw new ArgumentException("Ongeldig IBAN. Controleer het rekeningnummer en probeer opnieuw.");
-            }
+            PartnerReferralStatus.Rewarded => "Actief - Bonus toegekend",
+            PartnerReferralStatus.Pending when welcomeTokenAvailable => "Welkomsttoken nog beschikbaar",
+            PartnerReferralStatus.Pending => "Gekoppeld - wacht op welkomsttoken",
+            _ => "—"
+        };
 
-            profile.Iban = iban;
-        }
-        else if (update.ClearIban)
+    private static PartnerAffiliateReferralRowDto MapReferralRow(Company company)
+    {
+        var status = company.PartnerReferralStatus;
+        if (status == PartnerReferralStatus.None && company.ReferredByPartnerUserId is not null)
         {
-            profile.Iban = null;
+            // Legacy rows attributed before status column existed.
+            status = PartnerReferralStatus.Pending;
         }
 
-        profile.UpdatedAtUtc = DateTime.UtcNow;
-        await _db.SaveChangesAsync(cancellationToken);
-        return MapBilling(profile);
+        var welcomeAvailable = status == PartnerReferralStatus.Pending && company.WelcomeTokenLedgerCredited;
+        return new PartnerAffiliateReferralRowDto(
+            company.Id,
+            company.Name,
+            status.ToString(),
+            StatusLabel(status, welcomeAvailable),
+            company.PartnerReferredAtUtc ?? company.FirstYearStartedAt,
+            company.PartnerReferralRewardedAtUtc,
+            welcomeAvailable);
     }
 
-    public async Task<PartnerAffiliateBillingDto> SignAgreementAsync(
-        Guid userId,
-        CancellationToken cancellationToken = default)
+    private async Task<decimal> SumReferralTokensEarnedAsync(
+        Guid partnerUserId,
+        CancellationToken cancellationToken)
     {
-        var profile = await EnsureProfileAsync(userId, cancellationToken);
-        // Always stamp server-controlled version; ignore any client-supplied value.
-        profile.AgreementSignedAt = DateTime.UtcNow;
-        profile.AgreementVersion = SalesCommissionRules.CurrentPartnerAgreementVersion;
-        profile.UpdatedAtUtc = DateTime.UtcNow;
-        await _db.SaveChangesAsync(cancellationToken);
-        return MapBilling(profile);
-    }
+        var partnerCompanyId = await _db.Users.AsNoTracking()
+            .Where(u => u.Id == partnerUserId)
+            .Select(u => u.CompanyId)
+            .FirstOrDefaultAsync(cancellationToken);
+        if (partnerCompanyId is null)
+        {
+            return 0m;
+        }
 
-    private static PartnerAffiliateBillingDto MapBilling(PartnerAffiliateProfile profile) =>
-        new(
-            profile.CompanyName,
-            profile.KvkNumber,
-            profile.VatNumber,
-            profile.Address,
-            profile.PostalCode,
-            profile.City,
-            profile.Country ?? "NL",
-            ISalesManagerPayoutService.MaskIban(profile.Iban),
-            !string.IsNullOrWhiteSpace(profile.Iban),
-            profile.AgreementSignedAt.HasValue,
-            profile.AgreementVersion);
+        var prefix = ReferralRewardNotePrefix;
+        return await _db.TokenTransactions.AsNoTracking()
+            .Where(t => t.CompanyId == partnerCompanyId
+                        && t.Kind == TokenTransactionKind.Grant
+                        && t.Note != null
+                        && t.Note.StartsWith(prefix))
+            .SumAsync(t => (decimal?)t.Amount, cancellationToken) ?? 0m;
+    }
 
     private async Task<bool> IsRelatedPartyReferralAsync(
         Guid partnerUserId,
@@ -367,28 +345,6 @@ public sealed class PartnerAffiliateService : IPartnerAffiliateService
 
         var digits = new string(kvk.Where(char.IsDigit).ToArray());
         return digits.Length >= 8 ? digits[..8] : null;
-    }
-
-    private static string? NormalizeOptional(string? value, int maxLen)
-    {
-        if (string.IsNullOrWhiteSpace(value))
-        {
-            return null;
-        }
-
-        var trimmed = value.Trim();
-        return trimmed.Length <= maxLen ? trimmed : trimmed[..maxLen];
-    }
-
-    private static string? NormalizeIban(string? iban)
-    {
-        if (string.IsNullOrWhiteSpace(iban))
-        {
-            return null;
-        }
-
-        var compact = new string(iban.Where(c => !char.IsWhiteSpace(c)).ToArray()).ToUpperInvariant();
-        return compact.Length is >= 15 and <= 34 ? compact : null;
     }
 
     private async Task<string> GenerateUniqueTrackingCodeAsync(

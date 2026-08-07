@@ -4,16 +4,25 @@ using Jobsy.Core.Enums;
 using Jobsy.Core.Interfaces;
 using Jobsy.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 
 namespace Jobsy.Infrastructure.Services;
 
 public sealed class TokenLedgerService : ITokenLedgerService
 {
     private readonly JobsyDbContext _db;
+    private readonly IServiceProvider _services;
+    private readonly ILogger<TokenLedgerService> _logger;
 
-    public TokenLedgerService(JobsyDbContext db)
+    public TokenLedgerService(
+        JobsyDbContext db,
+        IServiceProvider? services = null,
+        ILogger<TokenLedgerService>? logger = null)
     {
         _db = db;
+        _services = services ?? new ServiceCollection().BuildServiceProvider();
+        _logger = logger ?? Microsoft.Extensions.Logging.Abstractions.NullLogger<TokenLedgerService>.Instance;
     }
 
     public async Task<decimal> GetBalanceAsync(Guid companyId, CancellationToken cancellationToken = default)
@@ -400,7 +409,7 @@ public sealed class TokenLedgerService : ITokenLedgerService
             return new TokenMultiSpendOutcome(false, "Minstens één spend-reden is verplicht.", [], 0);
         }
 
-        return await ExecuteInTransactionAsync(async () =>
+        var outcome = await ExecuteInTransactionAsync(async () =>
         {
             var resolved = await ResolveSpendCostsAsync(spendReasons, costOverrides, cancellationToken);
             if (resolved.ErrorMessage is not null)
@@ -457,6 +466,37 @@ public sealed class TokenLedgerService : ITokenLedgerService
             await _db.SaveChangesAsync(cancellationToken);
             return new TokenMultiSpendOutcome(true, null, entries, running);
         }, cancellationToken);
+
+        if (outcome.Succeeded)
+        {
+            await TryNotifyPartnerReferralRewardAsync(companyId, cancellationToken);
+        }
+
+        return outcome;
+    }
+
+    private async Task TryNotifyPartnerReferralRewardAsync(
+        Guid companyId,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            // Lazy resolve avoids a constructor cycle with PartnerAffiliateService → ITokenLedgerService.
+            var partners = _services.GetService<IPartnerAffiliateService>();
+            if (partners is null)
+            {
+                return;
+            }
+
+            await partners.TryRewardOnWelcomeTokenSpendAsync(companyId, cancellationToken);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(
+                ex,
+                "Partner referral reward failed after token spend for company {CompanyId}",
+                companyId);
+        }
     }
 
     private async Task<(Dictionary<TokenSpendReason, decimal>? Costs, string? ErrorMessage)> ResolveSpendCostsAsync(

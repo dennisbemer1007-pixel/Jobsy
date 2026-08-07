@@ -635,6 +635,15 @@ namespace Jobsy.Infrastructure.Data.Migrations
                     b.Property<bool>("PendingStartHighlightBonus")
                         .HasColumnType("boolean");
 
+                    b.Property<DateTime?>("PartnerReferralRewardedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("PartnerReferralStatus")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime?>("PartnerReferredAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<string>("PreferredPaymentMethod")
                         .HasMaxLength(32)
                         .HasColumnType("character varying(32)");
@@ -656,6 +665,9 @@ namespace Jobsy.Infrastructure.Data.Migrations
 
                     b.Property<int>("Type")
                         .HasColumnType("integer");
+
+                    b.Property<bool>("WelcomeTokenLedgerCredited")
+                        .HasColumnType("boolean");
 
                     b.HasKey("Id");
 

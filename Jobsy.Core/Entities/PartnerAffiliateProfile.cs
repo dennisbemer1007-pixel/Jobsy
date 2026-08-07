@@ -32,10 +32,10 @@ public class PartnerAffiliateProfile
     public DateTime CreatedAtUtc { get; set; }
     public DateTime UpdatedAtUtc { get; set; }
 
-    public bool IsOnboardingComplete =>
-        !string.IsNullOrWhiteSpace(TrackingCode)
-        && AgreementSignedAt.HasValue
-        && !string.IsNullOrWhiteSpace(AgreementVersion);
+    /// <summary>
+    /// Partner affiliates only need a tracking code; cash/self-billing onboarding is retired.
+    /// </summary>
+    public bool IsOnboardingComplete => !string.IsNullOrWhiteSpace(TrackingCode);
 
     public static string PrefixForRole(UserRole role) => role switch
     {

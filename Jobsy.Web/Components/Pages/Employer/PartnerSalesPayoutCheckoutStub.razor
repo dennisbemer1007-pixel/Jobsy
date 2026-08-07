@@ -1,84 +1,29 @@
 @page "/employer/sales/payout-checkout"
 @rendermode @(new InteractiveServerRenderMode(prerender: false))
 @attribute [Authorize(Roles = "EnterpriseManager,Intermediary")]
-@inject JobsyApiClient Api
-@inject NavigationManager Navigation
-@inject CultureState Culture
+@inject NavigationManager Nav
 
-<PageTitle>Uitbetaling stub · Lobsy</PageTitle>
+<PageTitle>Sales · Lobsy</PageTitle>
 
 <div class="panel-page">
-    <h1>Mollie uitbetaling (stub)</h1>
-    <p class="login-lead">
-        Simuleer een geslaagde partneruitbetaling naar je bankrekening.
-        Daarna wordt de self-billing factuur aangemaakt en als betaald gemarkeerd.
+    <header class="panel-header">
+        <div>
+            <h1>Uitbetalingen beëindigd</h1>
+            <p class="login-lead">
+                Partnercommissie via selfbilling is vervangen door automatische referraltokens.
+                Ga naar Sales voor je overzicht.
+            </p>
+        </div>
+    </header>
+    <p>
+        <a class="btn-compact btn-compact--primary" href="/employer/sales">Naar Sales</a>
     </p>
-
-    @if (_loading)
-    {
-        <p class="state-message">@Culture["Common.Loading"]</p>
-    }
-    else
-    {
-        <div class="stat-grid">
-            <div class="stat-card">
-                <span class="stat-card__label">Payment</span>
-                <strong class="stat-card__value" style="font-size:1rem">@_paymentId</strong>
-            </div>
-        </div>
-
-        <div class="inline-actions" style="margin-top:1.5rem">
-            <button class="login-submit" type="button" disabled="@_busy || string.IsNullOrWhiteSpace(_paymentId)" @onclick="CompleteAsync">
-                @(_busy ? "Bezig..." : "Uitbetalen (stub)")
-            </button>
-            <a class="auth-link" href="/employer/sales?tab=invoices">@Culture["Common.Cancel"]</a>
-        </div>
-
-        @if (!string.IsNullOrEmpty(_message))
-        {
-            <p class="state-message">@_message</p>
-        }
-    }
 </div>
 
 @code {
-    private bool _loading = true;
-    private bool _busy;
-    private string _paymentId = "";
-    private string? _message;
-
     protected override void OnInitialized()
     {
-        var uri = Navigation.ToAbsoluteUri(Navigation.Uri);
-        var query = Microsoft.AspNetCore.WebUtilities.QueryHelpers.ParseQuery(uri.Query);
-        _paymentId = query.TryGetValue("paymentId", out var pid) ? pid.ToString() : "";
-        _loading = false;
-    }
-
-    private async Task CompleteAsync()
-    {
-        if (string.IsNullOrWhiteSpace(_paymentId))
-        {
-            _message = "Ongeldige checkout-parameters.";
-            return;
-        }
-
-        _busy = true;
-        try
-        {
-            var result = await Api.CompletePartnerAffiliatePayoutCheckoutAsync(_paymentId);
-            var q = result is null
-                ? "?tab=invoices"
-                : $"?tab=invoices&paid={Uri.EscapeDataString(result.InvoiceNumber)}";
-            Navigation.NavigateTo($"/employer/sales{q}");
-        }
-        catch (Exception ex)
-        {
-            _message = ex.Message;
-        }
-        finally
-        {
-            _busy = false;
-        }
+        // Soft-redirect legacy payout deep-links to the token referral overview.
+        Nav.NavigateTo("/employer/sales", replace: true);
     }
 }

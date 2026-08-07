@@ -594,6 +594,9 @@ public sealed class PrivacyDataService : IPrivacyDataService
         foreach (var company in partnerReferred)
         {
             company.ReferredByPartnerUserId = null;
+            company.PartnerReferralStatus = PartnerReferralStatus.None;
+            company.PartnerReferredAtUtc = null;
+            company.PartnerReferralRewardedAtUtc = null;
         }
 
         // Detach SM→SM hierarchy links and scrub pending/closed applications.

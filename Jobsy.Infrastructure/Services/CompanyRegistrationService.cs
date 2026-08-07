@@ -49,8 +49,7 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
             features,
             new PartnerAffiliateService(
                 db,
-                new SalesCommercialService(db, ledger),
-                new CommissionLedgerService(db),
+                ledger,
                 features),
             logger)
     {
@@ -551,6 +550,7 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
         {
             // Mark as received without granting — no delayed welcome token after the promo ends.
             company.HasReceivedWelcomeToken = true;
+            company.WelcomeTokenLedgerCredited = false;
             await _db.SaveChangesAsync(cancellationToken);
             _logger.LogInformation(
                 "Skipped welcome token for company {CompanyId} (free publish until {Until})",
@@ -560,6 +560,7 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
         }
 
         company.HasReceivedWelcomeToken = true;
+        company.WelcomeTokenLedgerCredited = true;
         await _ledger.GrantAsync(
             branchCompanyId,
             WelcomeTokenAmount,
