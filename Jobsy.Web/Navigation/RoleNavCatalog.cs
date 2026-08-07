@@ -42,7 +42,6 @@ public static class RoleNavCatalog
         new("Nav.Applications", "/branch/applicants", NavIcons.Applications),
         new("Nav.Tokens", "/employer/tokens", NavIcons.Tokens, ["/regional/tokens", "/admin/tokens", "/branch/tokens"]),
         new("Nav.Users", "/employer/users", NavIcons.Users),
-        new("Nav.Sales", "/employer/sales", NavIcons.Shared),
         new("Nav.Organization", "/employer/organization", NavIcons.Settings,
             [
                 "/employer/salary-tables",
@@ -102,7 +101,6 @@ public static class RoleNavCatalog
         new("Nav.Clients", "/intermediary", NavIcons.Companies),
         new("Nav.Team", "/intermediary/team", NavIcons.Users),
         new("Nav.Tokens", "/employer/tokens", NavIcons.Tokens),
-        new("Nav.Sales", "/employer/sales", NavIcons.Shared),
         new("Nav.HowLobsyWorks", "/hoe-werkt-lobsy", NavIcons.Info)
     ];
 

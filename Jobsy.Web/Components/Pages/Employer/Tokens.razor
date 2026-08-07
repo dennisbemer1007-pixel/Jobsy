@@ -18,7 +18,7 @@
             <h1>@(_hasSalesReferral ? Culture["Nav.BalanceAndTracking"] : Culture["Employer.MyTokens"])</h1>
             <p class="login-lead">@_lead</p>
         </div>
-        @if (_canAllocate)
+        @if (_canAllocate && !_isPartnerAffiliate)
         {
             <a class="auth-link" href="/regional/tokens">Uitgebreid tokenbeheer</a>
         }
@@ -28,15 +28,24 @@
     {
         <div class="admin-sublinks" role="tablist" aria-label="Tokens onderdelen">
             <button type="button" class="admin-sublink @ActiveTabClass("balance")" role="tab" aria-selected="@(_tab == "balance")" @onclick='() => SetTab("balance")'>
-                Saldo &amp; logs
+                Saldo
+            </button>
+            <button type="button" class="admin-sublink @ActiveTabClass("logging")" role="tab" aria-selected="@(_tab == "logging")" @onclick='() => SetTab("logging")'>
+                Logging
             </button>
             <button type="button" class="admin-sublink @ActiveTabClass("toolkit")" role="tab" aria-selected="@(_tab == "toolkit")" @onclick='() => SetTab("toolkit")'>
                 Trackingcode &amp; flyer
             </button>
+            <button type="button" class="admin-sublink @ActiveTabClass("referrals")" role="tab" aria-selected="@(_tab == "referrals")" @onclick='() => SetTab("referrals")'>
+                Referral-overzicht
+            </button>
+            <button type="button" class="admin-sublink @ActiveTabClass("explain")" role="tab" aria-selected="@(_tab == "explain")" @onclick='() => SetTab("explain")'>
+                Uitleg
+            </button>
         </div>
     }
 
-    @if (!string.IsNullOrEmpty(_message) && _tab == "toolkit")
+    @if (!string.IsNullOrEmpty(_message) && ShowMessageForCurrentTab)
     {
         <p class="state-message">@_message</p>
     }
@@ -113,6 +122,74 @@
                 <button class="btn-compact" type="button" @onclick="ShareWhatsApp">Deel via WhatsApp</button>
                 <button class="btn-compact" type="button" @onclick="ShareMail">Deel via mail</button>
             </div>
+        </section>
+    }
+    else if (_tab == "logging" && _isPartnerAffiliate)
+    {
+        @RenderTokenLogs()
+    }
+    else if (_tab == "referrals" && _isPartnerAffiliate)
+    {
+        <section class="panel-section">
+            <h2>Referral-overzicht</h2>
+            <p class="muted">Bedrijven die via jouw trackingcode zijn aangemeld. Bonus (0,5 token) wordt automatisch toegekend zodra hun welkomsttoken wordt ingezet.</p>
+
+            <div class="stat-grid">
+                <div class="stat-card">
+                    <span class="stat-card__label">Verdiende referraltokens</span>
+                    <strong class="stat-card__value">@FormatTokens(_partnerMe?.ReferralTokensEarned ?? 0m)</strong>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-card__label">Aangedragen bedrijven</span>
+                    <strong class="stat-card__value">@(_partnerMe?.ReferredCompanyCount ?? 0)</strong>
+                </div>
+            </div>
+        </section>
+
+        <section class="panel-section">
+            <h2>Aangedragen bedrijven</h2>
+            @if (_referrals.Count == 0)
+            {
+                <p class="muted">Nog geen bedrijven via jouw code. Deel je trackingcode of flyer om te starten.</p>
+            }
+            else
+            {
+                <div class="table-scroll">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Bedrijf</th>
+                                <th>Status</th>
+                                <th>Aangedragen</th>
+                                <th>Bonus toegekend</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var row in _referrals)
+                            {
+                                <tr>
+                                    <td>@row.CompanyName</td>
+                                    <td>@row.StatusLabel</td>
+                                    <td>@(row.ReferredAtUtc?.ToLocalTime().ToString("dd-MM-yyyy") ?? "—")</td>
+                                    <td>@(row.RewardedAtUtc?.ToLocalTime().ToString("dd-MM-yyyy HH:mm") ?? "—")</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        </section>
+    }
+    else if (_tab == "explain" && _isPartnerAffiliate)
+    {
+        <section class="panel-section">
+            <h2>Hoe werkt het?</h2>
+            <ol class="muted" style="padding-left:1.25rem;line-height:1.6">
+                <li>Deel je unieke trackingcode, partnerlink of flyer.</li>
+                <li>Een nieuw bedrijf meldt zich aan via jouw code en wordt aan jou gekoppeld.</li>
+                <li>Het bedrijf krijgt standaard 1 welkomsttoken bij registratie.</li>
+                <li>Zodra dat welkomsttoken wordt ingezet (vacature, highlight of pushbom), ontvang jij automatisch <strong>0,5 token</strong> in je tokenwallet — eenmalig per bedrijf.</li>
+            </ol>
         </section>
     }
     else
@@ -328,39 +405,10 @@
             </section>
         }
 
-        <section class="panel-section">
-            <h2>Token-logs</h2>
-            <form class="login-form" style="max-width:420px;margin-bottom:1rem" @onsubmit="LoadLogsAsync" @onsubmit:preventDefault>
-                <label>
-                    Filter bedrijfsnaam
-                    <input @bind="_logFilter" placeholder="bijv. Fred" />
-                </label>
-                <button class="provider-btn" type="submit" disabled="@_busy">Filter</button>
-            </form>
-            <div class="table-list">
-                @if (_logs.Count == 0)
-                {
-                    <p class="muted">Geen tokenlogs gevonden@(string.IsNullOrWhiteSpace(_logFilter) ? "." : " voor dit filter.")</p>
-                }
-                else
-                {
-                    @foreach (var log in _logs)
-                    {
-                        <div class="table-row">
-                            <div>
-                                <strong>@log.CompanyName</strong>
-                                <span class="muted">@log.Kind / @log.Reason · @log.Note</span>
-                            </div>
-                            <span>@log.Amount.ToString("+0.##;-0.##") · @log.CreatedAt.ToLocalTime().ToString("dd-MM HH:mm")</span>
-                        </div>
-                    }
-                }
-            </div>
-        </section>
-
-        @if (!string.IsNullOrEmpty(_message))
+        @* Non-partner roles keep logs on the single-page saldo view; partners use the Logging tab. *@
+        @if (!_isPartnerAffiliate)
         {
-            <p class="state-message">@_message</p>
+            @RenderTokenLogs()
         }
     }
 </div>
@@ -369,6 +417,7 @@
     private List<TokenBalance> _balances = [];
     private List<TokenPackItem> _packs = [];
     private List<TokenLogItem> _logs = [];
+    private List<PartnerAffiliateReferralRowModel> _referrals = [];
     private bool _loading = true;
     private bool _busy;
     private bool _canAllocate;
@@ -394,6 +443,10 @@
     private string TrackingCode => FirstNonEmpty(_toolkit?.TrackingCode, _partnerMe?.TrackingCode) ?? "—";
     private string PartnerUrl => FirstNonEmpty(_toolkit?.PartnerPageUrl, BuildPartnerUrl())!;
     private string RegisterUrl => FirstNonEmpty(_toolkit?.RegisterUrl, BuildRegisterUrl())!;
+
+    private bool ShowMessageForCurrentTab =>
+        !_isPartnerAffiliate
+        || _tab is "balance" or "logging" or "toolkit" or "referrals";
 
     private string CheckoutButtonLabel =>
         _paymentMethod == "creditcard" ? "Doorgaan met creditcard" : "Doorgaan met iDEAL";
@@ -434,9 +487,9 @@
 
             var qs = Microsoft.AspNetCore.WebUtilities.QueryHelpers.ParseQuery(
                 Navigation.ToAbsoluteUri(Navigation.Uri).Query);
-            if (qs.TryGetValue("tab", out var tab) && tab.ToString() == "toolkit" && _isPartnerAffiliate)
+            if (qs.TryGetValue("tab", out var tab) && _isPartnerAffiliate && IsKnownPartnerTab(tab.ToString()))
             {
-                _tab = "toolkit";
+                _tab = tab.ToString();
             }
 
             await ReloadBalancesAsync();
@@ -482,6 +535,11 @@
         {
             _partnerMe = await Api.GetPartnerAffiliateMeAsync();
             _toolkit = await Api.GetPartnerAffiliateToolkitAsync();
+            _referrals = (await Api.GetPartnerAffiliateReferralsAsync()).ToList();
+            if (_partnerMe?.Referrals is { Count: > 0 } && _referrals.Count == 0)
+            {
+                _referrals = _partnerMe.Referrals;
+            }
         }
         catch (Exception ex)
         {
@@ -492,11 +550,52 @@
 
     private void SetTab(string tab)
     {
+        if (!_isPartnerAffiliate || !IsKnownPartnerTab(tab))
+        {
+            return;
+        }
+
         _tab = tab;
         _message = null;
     }
 
     private string ActiveTabClass(string tab) => _tab == tab ? "admin-sublink--active" : "";
+
+    private static bool IsKnownPartnerTab(string? tab)
+        => tab is "balance" or "logging" or "toolkit" or "referrals" or "explain";
+
+    private RenderFragment RenderTokenLogs() => __builder =>
+    {
+        <section class="panel-section">
+            <h2>Token-logs</h2>
+            <form class="login-form" style="max-width:420px;margin-bottom:1rem" @onsubmit="LoadLogsAsync" @onsubmit:preventDefault>
+                <label>
+                    Filter bedrijfsnaam
+                    <input @bind="_logFilter" placeholder="bijv. Fred" />
+                </label>
+                <button class="provider-btn" type="submit" disabled="@_busy">Filter</button>
+            </form>
+            <div class="table-list">
+                @if (_logs.Count == 0)
+                {
+                    <p class="muted">Geen tokenlogs gevonden@(string.IsNullOrWhiteSpace(_logFilter) ? "." : " voor dit filter.")</p>
+                }
+                else
+                {
+                    @foreach (var log in _logs)
+                    {
+                        <div class="table-row">
+                            <div>
+                                <strong>@log.CompanyName</strong>
+                                <span class="muted">@log.Kind / @log.Reason · @log.Note</span>
+                            </div>
+                            <span>@log.Amount.ToString("+0.##;-0.##") · @log.CreatedAt.ToLocalTime().ToString("dd-MM HH:mm")</span>
+                        </div>
+                    }
+                }
+            </div>
+        </section>
+    };
 
     private async Task CopyAsync(string? value)
     {
@@ -560,11 +659,14 @@
         return null;
     }
 
+    private static string FormatTokens(decimal amount)
+        => amount.ToString("0.##", System.Globalization.CultureInfo.GetCultureInfo("nl-NL"));
+
     private string ResolveLead()
     {
         if (_isPartnerAffiliate)
         {
-            return "Token-saldo, logs en je partner-trackingcode / flyer.";
+            return "Token-saldo, logging, referral-overzicht en je partner-trackingcode / flyer.";
         }
 
         if (_canPurchaseIntoPot || _canAllocate)
