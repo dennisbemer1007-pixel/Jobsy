@@ -2002,9 +2002,12 @@ a {
     right: 0;
     bottom: 0;
     z-index: 90;
-    max-height: min(78vh, 560px);
+    /* Prefer nearly full viewport so all filters + footer fit on phones. */
+    max-height: min(92dvh, 92vh);
+    height: auto;
     display: flex;
     flex-direction: column;
+    overflow: hidden; /* required so body can scroll inside flex layout */
     background: var(--surface);
     border-radius: 14px 14px 0 0;
     box-shadow: var(--shadow-lg);
@@ -2017,6 +2020,7 @@ a {
     justify-content: space-between;
     gap: 0.65rem;
     padding: 0.65rem 0.85rem 0.35rem;
+    flex-shrink: 0;
 }
 
 .filter-sheet__mascot {
@@ -2087,6 +2091,7 @@ a {
     gap: 0.3rem;
     align-items: center;
     padding: 0 0.85rem 0.35rem;
+    flex-shrink: 0;
 }
 
 .filter-tag {
@@ -2130,12 +2135,17 @@ a {
 }
 
 .filter-sheet__body {
+    flex: 1 1 auto;
+    min-height: 0; /* critical: allow flex child to shrink and scroll */
+    overflow-x: hidden;
     overflow-y: auto;
-    padding: 0.15rem 0.85rem 0.55rem;
+    overscroll-behavior: contain;
+    padding: 0.15rem 0.85rem 0.75rem;
     display: flex;
     flex-direction: column;
     gap: 0.65rem;
     -webkit-overflow-scrolling: touch;
+    touch-action: pan-y;
 }
 
 .filter-section h3 {
@@ -2325,9 +2335,13 @@ a {
     display: grid;
     grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.3fr);
     gap: 0.45rem;
-    padding: 0.45rem 0.85rem 0.55rem;
+    padding: 0.55rem 0.85rem 0.65rem;
     border-top: 1px solid var(--border);
     background: var(--surface);
+    flex-shrink: 0;
+    position: sticky;
+    bottom: 0;
+    z-index: 1;
 }
 
 .filter-sheet__cancel {
