@@ -1,7 +1,9 @@
 @page "/candidate/actions/withdraw-others"
 @rendermode InteractiveServer
+@using Microsoft.AspNetCore.Components.Authorization
 @inject JobsyApiClient Api
 @inject NavigationManager Navigation
+@inject AuthenticationStateProvider AuthState
 
 <PageTitle>Andere sollicitaties intrekken · Lobsy</PageTitle>
 
@@ -76,26 +78,45 @@
     private bool _error;
     private string _message = "";
     private string? _token;
+    private Guid? _hiredApplicationId;
 
-    protected override void OnInitialized()
+    protected override async Task OnInitializedAsync()
     {
         var uri = Navigation.ToAbsoluteUri(Navigation.Uri);
         var query = Microsoft.AspNetCore.WebUtilities.QueryHelpers.ParseQuery(uri.Query);
-        if (!query.TryGetValue("token", out var token) || string.IsNullOrWhiteSpace(token))
+        if (query.TryGetValue("token", out var token) && !string.IsNullOrWhiteSpace(token))
         {
-            _phase = Phase.Failed;
-            _error = true;
-            _message = "Deze link is onvolledig of verlopen.";
+            _token = token!;
+            _phase = Phase.Confirm;
             return;
         }
 
-        _token = token!;
-        _phase = Phase.Confirm;
+        if (query.TryGetValue("hiredApplicationId", out var hiredRaw)
+            && Guid.TryParse(hiredRaw, out var hiredId)
+            && hiredId != Guid.Empty)
+        {
+            var state = await AuthState.GetAuthenticationStateAsync();
+            if (state.User.Identity?.IsAuthenticated == true)
+            {
+                _hiredApplicationId = hiredId;
+                _phase = Phase.Confirm;
+                return;
+            }
+
+            _phase = Phase.Failed;
+            _error = true;
+            _message = "Log in om andere sollicitaties in te trekken, of open de link uit je e-mail.";
+            return;
+        }
+
+        _phase = Phase.Failed;
+        _error = true;
+        _message = "Deze link is onvolledig of verlopen.";
     }
 
     private async Task ConfirmAsync()
     {
-        if (string.IsNullOrWhiteSpace(_token) || _busy)
+        if (_busy || (string.IsNullOrWhiteSpace(_token) && _hiredApplicationId is null))
         {
             return;
         }
@@ -105,7 +126,9 @@
         _error = false;
         try
         {
-            var result = await Api.WithdrawOtherApplicationsViaTokenAsync(_token);
+            var result = _hiredApplicationId is Guid hiredId
+                ? await Api.WithdrawOtherApplicationsAuthenticatedAsync(hiredId)
+                : await Api.WithdrawOtherApplicationsViaTokenAsync(_token!);
             if (result?.Succeeded == true)
             {
                 _phase = Phase.Success;

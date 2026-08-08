@@ -1,6 +1,7 @@
 using Jobsy.Core.Enums;
 using Jobsy.Core.Privacy;
 using Jobsy.Infrastructure.Data;
+using Jobsy.Infrastructure.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -80,13 +81,38 @@ public sealed class DataRetentionHostedService : BackgroundService
             .Where(a => a.EmailVerifiedAt == null && a.CreatedAt < draftCutoff)
             .ExecuteDeleteAsync(cancellationToken);
 
+        var notificationCutoff = now.AddDays(-PrivacyConstants.UserNotificationRetentionDays);
+        var notificationsRemoved = await db.UserNotifications
+            .Where(n => n.CreatedAtUtc < notificationCutoff)
+            .ExecuteDeleteAsync(cancellationToken);
+
+        // Scrub legacy ActionUrls that still contain bearer tokens (forward-compatible cleanup).
+        var dirtyActionUrls = await db.UserNotifications
+            .Where(n => n.ActionUrl != null && n.ActionUrl.Contains("token="))
+            .ToListAsync(cancellationToken);
+        foreach (var row in dirtyActionUrls)
+        {
+            row.ActionUrl = UserNotificationService.SanitizeActionUrl(row.ActionUrl);
+        }
+
+        if (dirtyActionUrls.Count > 0)
+        {
+            await db.SaveChangesAsync(cancellationToken);
+        }
+
+        var tokenCutoff = now.AddDays(-PrivacyConstants.CandidateActionTokenRetentionDays);
+        var tokensRemoved = await db.CandidateActionTokens
+            .Where(t => t.ExpiresAtUtc < now
+                        || (t.UsedAtUtc != null && t.UsedAtUtc < tokenCutoff))
+            .ExecuteDeleteAsync(cancellationToken);
+
         if (logsRemoved + regsRemoved + clicksRemoved + sharesRemoved + impressionsRemoved + visitsRemoved
-            + unverifiedAppsRemoved > 0)
+            + unverifiedAppsRemoved + notificationsRemoved + tokensRemoved + dirtyActionUrls.Count > 0)
         {
             _logger.LogInformation(
-                "Retention purge: logs={Logs}, registrations={Regs}, clicks={Clicks}, shares={Shares}, impressions={Impressions}, visits={Visits}, unverifiedApps={UnverifiedApps}",
+                "Retention purge: logs={Logs}, registrations={Regs}, clicks={Clicks}, shares={Shares}, impressions={Impressions}, visits={Visits}, unverifiedApps={UnverifiedApps}, notifications={Notifications}, actionTokens={Tokens}, scrubbedActionUrls={Scrubbed}",
                 logsRemoved, regsRemoved, clicksRemoved, sharesRemoved, impressionsRemoved, visitsRemoved,
-                unverifiedAppsRemoved);
+                unverifiedAppsRemoved, notificationsRemoved, tokensRemoved, dirtyActionUrls.Count);
         }
     }
 }

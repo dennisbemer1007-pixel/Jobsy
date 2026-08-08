@@ -84,7 +84,11 @@ public sealed class VacancyEngagementReminderHostedService : BackgroundService
             var saved = await db.VacancyLikes.AsNoTracking()
                 .CountAsync(l => l.VacancyId == vacancyId, cancellationToken);
             var applications = await db.Applications.AsNoTracking()
-                .CountAsync(a => a.VacancyId == vacancyId && a.EmailVerifiedAt != null, cancellationToken);
+                .CountAsync(
+                    a => a.VacancyId == vacancyId
+                         && a.EmailVerifiedAt != null
+                         && a.Status != ApplicationStatus.Withdrawn,
+                    cancellationToken);
 
             var tip = VacancyEngagementReminderRules.BuildHeuristicTip(
                 impressions, views, shares, saved, applications);

@@ -330,7 +330,7 @@
             "open" => _items.Where(a => a.Status is "Pending"),
             "accepted" => _items.Where(a => a.Status is "Accepted" or "EmployerContacting"),
             "matched" => _items.Where(a => a.Status is "Hired"),
-            "rejected" => _items.Where(a => a.Status is "Rejected" or "FilledElsewhere"),
+            "rejected" => _items.Where(a => a.Status is "Rejected" or "FilledElsewhere" or "Withdrawn"),
             _ => _items
         })
         .OrderBy(a => StatusSortRank(a.Status))
@@ -393,7 +393,7 @@
         "open" => _items.Count(a => a.Status is "Pending"),
         "accepted" => _items.Count(a => a.Status is "Accepted" or "EmployerContacting"),
         "matched" => _items.Count(a => a.Status is "Hired"),
-        "rejected" => _items.Count(a => a.Status is "Rejected" or "FilledElsewhere"),
+        "rejected" => _items.Count(a => a.Status is "Rejected" or "FilledElsewhere" or "Withdrawn"),
         _ => _items.Count
     };
 

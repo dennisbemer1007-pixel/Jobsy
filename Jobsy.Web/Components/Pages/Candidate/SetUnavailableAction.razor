@@ -1,7 +1,9 @@
 @page "/candidate/actions/set-unavailable"
 @rendermode InteractiveServer
+@using Microsoft.AspNetCore.Components.Authorization
 @inject JobsyApiClient Api
 @inject NavigationManager Navigation
+@inject AuthenticationStateProvider AuthState
 
 <PageTitle>Niet beschikbaar · Lobsy</PageTitle>
 
@@ -77,26 +79,35 @@
     private bool _error;
     private string _message = "";
     private string? _token;
+    private bool _useSession;
 
-    protected override void OnInitialized()
+    protected override async Task OnInitializedAsync()
     {
         var uri = Navigation.ToAbsoluteUri(Navigation.Uri);
         var query = Microsoft.AspNetCore.WebUtilities.QueryHelpers.ParseQuery(uri.Query);
-        if (!query.TryGetValue("token", out var token) || string.IsNullOrWhiteSpace(token))
+        if (query.TryGetValue("token", out var token) && !string.IsNullOrWhiteSpace(token))
         {
-            _phase = Phase.Failed;
-            _error = true;
-            _message = "Deze link is onvolledig of verlopen. Open je profiel om je status handmatig te wijzigen.";
+            _token = token!;
+            _phase = Phase.Confirm;
             return;
         }
 
-        _token = token!;
-        _phase = Phase.Confirm;
+        var state = await AuthState.GetAuthenticationStateAsync();
+        if (state.User.Identity?.IsAuthenticated == true)
+        {
+            _useSession = true;
+            _phase = Phase.Confirm;
+            return;
+        }
+
+        _phase = Phase.Failed;
+        _error = true;
+        _message = "Log in om je status te wijzigen, of open de link uit je e-mail.";
     }
 
     private async Task ConfirmAsync()
     {
-        if (string.IsNullOrWhiteSpace(_token) || _busy)
+        if (_busy || (string.IsNullOrWhiteSpace(_token) && !_useSession))
         {
             return;
         }
@@ -106,7 +117,9 @@
         _error = false;
         try
         {
-            var result = await Api.SetUnavailableViaTokenAsync(_token);
+            var result = _useSession
+                ? await Api.SetUnavailableAuthenticatedAsync()
+                : await Api.SetUnavailableViaTokenAsync(_token!);
             if (result?.Succeeded == true)
             {
                 _phase = Phase.Success;
@@ -117,7 +130,7 @@
                 _phase = Phase.Failed;
                 _error = true;
                 _message = result?.Message
-                           ?? "Deze link is al gebruikt of verlopen. Pas je status aan via je profiel.";
+                           ?? "Deze actie is al gebruikt of verlopen. Pas je status aan via je profiel.";
             }
         }
         catch (Exception ex)

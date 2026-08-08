@@ -1042,7 +1042,7 @@ public sealed class VacancyProductService : IVacancyProductService
                     "PushBom",
                     $"/vacancies/{vacancy.Id}",
                     "Zet op Niet beschikbaar",
-                    action.RelativeActionPath,
+                    CandidateActionPurposes.SetUnavailableInAppPath,
                     "Vacancy",
                     vacancy.Id),
                 cancellationToken);

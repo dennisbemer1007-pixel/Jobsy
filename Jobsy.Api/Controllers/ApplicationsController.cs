@@ -297,7 +297,9 @@ public class ApplicationsController : ControllerBase
 
         var today = DateOnly.FromDateTime(DateTime.UtcNow);
         var applicationCount = await _db.Applications.CountAsync(
-            a => a.VacancyId == vacancy.Id && a.EmailVerifiedAt != null,
+            a => a.VacancyId == vacancy.Id
+                 && a.EmailVerifiedAt != null
+                 && a.Status != ApplicationStatus.Withdrawn,
             cancellationToken);
         if (!VacancyVisibilityRules.CanAcceptApplications(vacancy, today, applicationCount))
         {
@@ -316,8 +318,8 @@ public class ApplicationsController : ControllerBase
                      || a.CandidateEmail.ToLower() == candidate.Email.ToLower()),
             cancellationToken);
         if (existing is not null
-            && existing.EmailVerifiedAt is not null
-            && ApplicationRules.IsSameCandidate(candidate.Id, candidate.Email, existing.CandidateUserId, existing.CandidateEmail))
+            && ApplicationRules.IsSameCandidate(candidate.Id, candidate.Email, existing.CandidateUserId, existing.CandidateEmail)
+            && ApplicationRules.BlocksDuplicateApplication(existing.Status, existing.EmailVerifiedAt))
         {
             return BadRequest(new { message = "Je hebt al gereageerd op deze vacature." });
         }
@@ -423,6 +425,16 @@ public class ApplicationsController : ControllerBase
             CreatedAt = DateTime.UtcNow,
             Status = ApplicationStatus.Pending
         };
+
+        if (existing is not null && ApplicationRules.CanReuseWithdrawnApplication(existing.Status))
+        {
+            // Reopen withdrawn application instead of blocking re-apply.
+            application.Status = ApplicationStatus.Pending;
+            application.RespondedAt = null;
+            application.CreatedAt = DateTime.UtcNow;
+            application.CandidateUserId = candidate.Id;
+            application.CandidateEmail = candidate.Email;
+        }
 
         application.CandidateCity = LobsyCvModelFactory.ExtractCity(preferences.HomeAddress)
                                     ?? ExtractCityHint(candidate);
@@ -720,6 +732,7 @@ public class ApplicationsController : ControllerBase
         var hasVerifiedApplication = await _db.Applications.AsNoTracking().AnyAsync(
             a => a.VacancyId == vacancyId
                  && a.EmailVerifiedAt != null
+                 && a.Status != ApplicationStatus.Withdrawn
                  && (a.CandidateUserId == candidate.Id
                      || a.CandidateEmail.ToLower() == candidate.Email.ToLower()),
             cancellationToken);
@@ -1057,7 +1070,8 @@ public class ApplicationsController : ControllerBase
                             && a.EmailVerifiedAt != null
                             && a.Status != ApplicationStatus.Rejected
                             && a.Status != ApplicationStatus.FilledElsewhere
-                            && a.Status != ApplicationStatus.Hired)
+                            && a.Status != ApplicationStatus.Hired
+                            && a.Status != ApplicationStatus.Withdrawn)
                 .ToListAsync(cancellationToken);
             foreach (var other in others)
             {
@@ -1068,7 +1082,8 @@ public class ApplicationsController : ControllerBase
 
         await _db.SaveChangesAsync(cancellationToken);
 
-        string? withdrawActionPath = null;
+        string? withdrawEmailPath = null;
+        string? withdrawInAppPath = null;
         if (chosen.CandidateUserId is Guid hiredUserId)
         {
             var action = await _actionTokens.IssueAsync(
@@ -1076,12 +1091,13 @@ public class ApplicationsController : ControllerBase
                 CandidateActionPurposes.WithdrawOtherApplications,
                 chosen.Id,
                 cancellationToken: cancellationToken);
-            withdrawActionPath = action.RelativeActionPath;
+            withdrawEmailPath = action.RelativeActionPath;
+            withdrawInAppPath = CandidateActionPurposes.WithdrawOthersInAppPath(chosen.Id);
         }
 
-        var withdrawAbsolute = withdrawActionPath is null
+        var withdrawAbsolute = withdrawEmailPath is null
             ? null
-            : await BuildDeepLinkAsync(withdrawActionPath, cancellationToken);
+            : await BuildDeepLinkAsync(withdrawEmailPath, cancellationToken);
         var hiredSubject = $"Gefeliciteerd! Je bent aangenomen voor {vacancy.Title}";
         var hiredNotifyBody = $"Wat een feest — je bent aangenomen voor {vacancy.Title} bij {vacancy.Company.Name}.";
         var withdrawParagraph = withdrawAbsolute is null
@@ -1111,8 +1127,8 @@ public class ApplicationsController : ControllerBase
             "ApplicationHired",
             "/candidate/applications",
             cancellationToken,
-            actionLabel: withdrawAbsolute is null ? null : "Andere sollicitaties netjes intrekken",
-            actionUrl: withdrawActionPath);
+            actionLabel: withdrawInAppPath is null ? null : "Andere sollicitaties netjes intrekken",
+            actionUrl: withdrawInAppPath);
 
         foreach (var other in others)
         {

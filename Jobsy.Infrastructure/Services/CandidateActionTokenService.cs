@@ -78,9 +78,57 @@ public sealed class CandidateActionTokenService : ICandidateActionTokenService
                 cancellationToken);
     }
 
-    public async Task MarkUsedAsync(CandidateActionToken token, CancellationToken cancellationToken = default)
+    public async Task<CandidateActionToken?> TryConsumeAsync(
+        string plaintextToken,
+        string purpose,
+        CancellationToken cancellationToken = default)
     {
-        token.UsedAtUtc = DateTime.UtcNow;
+        if (string.IsNullOrWhiteSpace(plaintextToken) || !CandidateActionPurposes.IsKnown(purpose))
+        {
+            return null;
+        }
+
+        var hash = VerificationCodes.Hash(plaintextToken.Trim());
+        var now = DateTime.UtcNow;
+
+        // PostgreSQL (and other relational providers): atomic claim via ExecuteUpdate.
+        if (_db.Database.IsRelational())
+        {
+            var claimed = await _db.CandidateActionTokens
+                .Where(t => t.TokenHash == hash
+                            && t.Purpose == purpose
+                            && t.UsedAtUtc == null
+                            && t.ExpiresAtUtc >= now)
+                .ExecuteUpdateAsync(
+                    setters => setters.SetProperty(t => t.UsedAtUtc, now),
+                    cancellationToken);
+
+            if (claimed == 0)
+            {
+                return null;
+            }
+
+            return await _db.CandidateActionTokens.AsNoTracking()
+                .FirstOrDefaultAsync(
+                    t => t.TokenHash == hash && t.Purpose == purpose,
+                    cancellationToken);
+        }
+
+        // In-memory / test providers: single-process claim (no ExecuteUpdate support).
+        var token = await _db.CandidateActionTokens
+            .FirstOrDefaultAsync(
+                t => t.TokenHash == hash
+                     && t.Purpose == purpose
+                     && t.UsedAtUtc == null
+                     && t.ExpiresAtUtc >= now,
+                cancellationToken);
+        if (token is null)
+        {
+            return null;
+        }
+
+        token.UsedAtUtc = now;
         await _db.SaveChangesAsync(cancellationToken);
+        return token;
     }
 }

@@ -39,4 +39,30 @@ public static class ApplicationRules
     /// <summary>Employer sees candidate PII (and Lobsy-CV PDF) after Accept.</summary>
     public static bool IsPiiRevealed(ApplicationStatus status)
         => LobsyCvAccessRules.IsPiiRevealed(status);
+
+    /// <summary>
+    /// Verified applications occupy a vacancy slot, except withdrawn ones (slot freed).
+    /// </summary>
+    public static bool CountsTowardVacancyCapacity(ApplicationStatus status, DateTime? emailVerifiedAt)
+        => emailVerifiedAt is not null && status != ApplicationStatus.Withdrawn;
+
+    /// <summary>
+    /// A verified application blocks a new apply unless it was withdrawn (reusable).
+    /// </summary>
+    public static bool BlocksDuplicateApplication(ApplicationStatus status, DateTime? emailVerifiedAt)
+        => emailVerifiedAt is not null && status != ApplicationStatus.Withdrawn;
+
+    /// <summary>Withdrawn applications may be reopened on a fresh apply.</summary>
+    public static bool CanReuseWithdrawnApplication(ApplicationStatus status)
+        => status == ApplicationStatus.Withdrawn;
+
+    /// <summary>
+    /// When fulfilling a vacancy, other applications that should move to FilledElsewhere.
+    /// </summary>
+    public static bool ShouldRejectAsFilledElsewhere(ApplicationStatus status, DateTime? emailVerifiedAt)
+        => emailVerifiedAt is not null
+           && status is not (ApplicationStatus.Rejected
+               or ApplicationStatus.FilledElsewhere
+               or ApplicationStatus.Hired
+               or ApplicationStatus.Withdrawn);
 }

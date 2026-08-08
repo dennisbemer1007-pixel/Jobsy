@@ -1,4 +1,5 @@
 using Jobsy.Api.Models;
+using Jobsy.Core.Authorization;
 using Jobsy.Core.Enums;
 using Jobsy.Core.Interfaces;
 using Jobsy.Core.Rules;
@@ -13,7 +14,6 @@ namespace Jobsy.Api.Controllers;
 
 [ApiController]
 [Route("api/candidate-actions")]
-[AllowAnonymous]
 public class CandidateActionsController : ControllerBase
 {
     private readonly JobsyDbContext _db;
@@ -21,28 +21,32 @@ public class CandidateActionsController : ControllerBase
     private readonly IUserNotificationService _notifications;
     private readonly IEmailService _email;
     private readonly IPlatformFeatureService _features;
+    private readonly IUserLookupService _users;
 
     public CandidateActionsController(
         JobsyDbContext db,
         ICandidateActionTokenService tokens,
         IUserNotificationService notifications,
         IEmailService email,
-        IPlatformFeatureService features)
+        IPlatformFeatureService features,
+        IUserLookupService users)
     {
         _db = db;
         _tokens = tokens;
         _notifications = notifications;
         _email = email;
         _features = features;
+        _users = users;
     }
 
     [HttpPost("set-unavailable")]
+    [AllowAnonymous]
     [EnableRateLimiting("public-write")]
     public async Task<ActionResult<CandidateActionResultDto>> SetUnavailable(
         [FromBody] CandidateActionRequest request,
         CancellationToken cancellationToken)
     {
-        var token = await _tokens.FindValidAsync(
+        var token = await _tokens.TryConsumeAsync(
             request.Token,
             CandidateActionPurposes.SetUnavailable,
             cancellationToken);
@@ -57,30 +61,39 @@ public class CandidateActionsController : ControllerBase
             return BadRequest(new CandidateActionResultDto(false, "We konden je account niet vinden. Log in en pas je status aan via je profiel."));
         }
 
-        user.OpenForWork = false;
-        await _tokens.MarkUsedAsync(token, cancellationToken);
+        return Ok(await ApplySetUnavailableAsync(user, cancellationToken));
+    }
 
-        await _notifications.CreateAsync(
-            new NotificationCreateRequest(
-                user.Id,
-                "Je staat op Niet beschikbaar",
-                "Werkgevers zien je niet meer als open voor werk. Zet dit later weer aan in je profiel als je wilt.",
-                "SetUnavailable",
-                "/candidate/profile"),
-            cancellationToken);
+    /// <summary>Authenticated in-app CTA (no bearer token in notification URL).</summary>
+    [HttpPost("set-unavailable/me")]
+    [Authorize(Policy = JobsyPolicies.RequireCandidate)]
+    [EnableRateLimiting("public-write")]
+    public async Task<ActionResult<CandidateActionResultDto>> SetUnavailableAuthenticated(
+        CancellationToken cancellationToken)
+    {
+        var lookup = await _users.FindByPrincipalAsync(User, cancellationToken);
+        if (lookup is null)
+        {
+            return Unauthorized();
+        }
 
-        return Ok(new CandidateActionResultDto(
-            true,
-            "Je status staat nu op Niet beschikbaar. Werkgevers zien je niet meer als open voor werk."));
+        var user = await _db.Users.FirstOrDefaultAsync(u => u.Id == lookup.Id, cancellationToken);
+        if (user is null || !user.IsActive)
+        {
+            return BadRequest(new CandidateActionResultDto(false, "We konden je account niet vinden. Pas je status aan via je profiel."));
+        }
+
+        return Ok(await ApplySetUnavailableAsync(user, cancellationToken));
     }
 
     [HttpPost("withdraw-others")]
+    [AllowAnonymous]
     [EnableRateLimiting("public-write")]
     public async Task<ActionResult<CandidateActionResultDto>> WithdrawOthers(
         [FromBody] CandidateActionRequest request,
         CancellationToken cancellationToken)
     {
-        var token = await _tokens.FindValidAsync(
+        var token = await _tokens.TryConsumeAsync(
             request.Token,
             CandidateActionPurposes.WithdrawOtherApplications,
             cancellationToken);
@@ -94,10 +107,61 @@ public class CandidateActionsController : ControllerBase
             return BadRequest(new CandidateActionResultDto(false, "Actie is incompleet geconfigureerd."));
         }
 
+        return await WithdrawOthersForUserAsync(token.UserId, token.RelatedApplicationId.Value, cancellationToken);
+    }
+
+    /// <summary>Authenticated in-app CTA after hire (no bearer token in notification URL).</summary>
+    [HttpPost("withdraw-others/me")]
+    [Authorize(Policy = JobsyPolicies.RequireCandidate)]
+    [EnableRateLimiting("public-write")]
+    public async Task<ActionResult<CandidateActionResultDto>> WithdrawOthersAuthenticated(
+        [FromBody] WithdrawOthersAuthenticatedRequest request,
+        CancellationToken cancellationToken)
+    {
+        var lookup = await _users.FindByPrincipalAsync(User, cancellationToken);
+        if (lookup is null)
+        {
+            return Unauthorized();
+        }
+
+        if (request.HiredApplicationId == Guid.Empty)
+        {
+            return BadRequest(new CandidateActionResultDto(false, "Match-sollicitatie niet gevonden."));
+        }
+
+        return await WithdrawOthersForUserAsync(lookup.Id, request.HiredApplicationId, cancellationToken);
+    }
+
+    private async Task<CandidateActionResultDto> ApplySetUnavailableAsync(
+        Core.Entities.User user,
+        CancellationToken cancellationToken)
+    {
+        user.OpenForWork = false;
+        await _db.SaveChangesAsync(cancellationToken);
+
+        await _notifications.CreateAsync(
+            new NotificationCreateRequest(
+                user.Id,
+                "Je staat op Niet beschikbaar",
+                "Werkgevers zien je niet meer als open voor werk. Zet dit later weer aan in je profiel als je wilt.",
+                "SetUnavailable",
+                "/candidate/profile"),
+            cancellationToken);
+
+        return new CandidateActionResultDto(
+            true,
+            "Je status staat nu op Niet beschikbaar. Werkgevers zien je niet meer als open voor werk.");
+    }
+
+    private async Task<ActionResult<CandidateActionResultDto>> WithdrawOthersForUserAsync(
+        Guid userId,
+        Guid hiredApplicationId,
+        CancellationToken cancellationToken)
+    {
         var hired = await _db.Applications
             .Include(a => a.Vacancy).ThenInclude(v => v.Company)
             .FirstOrDefaultAsync(
-                a => a.Id == token.RelatedApplicationId.Value && a.CandidateUserId == token.UserId,
+                a => a.Id == hiredApplicationId && a.CandidateUserId == userId,
                 cancellationToken);
         if (hired is null || hired.Status != ApplicationStatus.Hired)
         {
@@ -106,7 +170,7 @@ public class CandidateActionsController : ControllerBase
 
         var others = await _db.Applications
             .Include(a => a.Vacancy).ThenInclude(v => v.Company)
-            .Where(a => a.CandidateUserId == token.UserId
+            .Where(a => a.CandidateUserId == userId
                         && a.Id != hired.Id
                         && a.EmailVerifiedAt != null
                         && a.Status != ApplicationStatus.Withdrawn
@@ -123,7 +187,6 @@ public class CandidateActionsController : ControllerBase
         }
 
         await _db.SaveChangesAsync(cancellationToken);
-        await _tokens.MarkUsedAsync(token, cancellationToken);
 
         var deepLinkBase = await BuildDeepLinkAsync("/branch/applicants", cancellationToken);
         foreach (var other in others)
@@ -171,7 +234,7 @@ public class CandidateActionsController : ControllerBase
 
         await _notifications.CreateAsync(
             new NotificationCreateRequest(
-                token.UserId,
+                userId,
                 "Andere sollicitaties netjes afgerond",
                 others.Count == 0
                     ? "Er stonden geen andere open sollicitaties meer — je bent helemaal bij."

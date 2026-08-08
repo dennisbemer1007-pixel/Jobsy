@@ -1286,6 +1286,19 @@ public sealed class JobsyApiClient : IAsyncDisposable
         return await response.Content.ReadFromJsonAsync<CandidateActionResultItem>(cancellationToken: ct);
     }
 
+    public async Task<CandidateActionResultItem?> SetUnavailableAuthenticatedAsync(
+        CancellationToken ct = default)
+    {
+        var response = await _http.PostAsync("api/candidate-actions/set-unavailable/me", null, ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException(TryExtractMessage(body) ?? body);
+        }
+
+        return await response.Content.ReadFromJsonAsync<CandidateActionResultItem>(cancellationToken: ct);
+    }
+
     public async Task<CandidateActionResultItem?> WithdrawOtherApplicationsViaTokenAsync(
         string token,
         CancellationToken ct = default)
@@ -1293,6 +1306,23 @@ public sealed class JobsyApiClient : IAsyncDisposable
         var response = await _http.PostAsJsonAsync(
             "api/candidate-actions/withdraw-others",
             new { token },
+            ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException(TryExtractMessage(body) ?? body);
+        }
+
+        return await response.Content.ReadFromJsonAsync<CandidateActionResultItem>(cancellationToken: ct);
+    }
+
+    public async Task<CandidateActionResultItem?> WithdrawOtherApplicationsAuthenticatedAsync(
+        Guid hiredApplicationId,
+        CancellationToken ct = default)
+    {
+        var response = await _http.PostAsJsonAsync(
+            "api/candidate-actions/withdraw-others/me",
+            new { hiredApplicationId },
             ct);
         if (!response.IsSuccessStatusCode)
         {

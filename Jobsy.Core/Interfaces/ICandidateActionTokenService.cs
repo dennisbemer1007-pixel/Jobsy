@@ -21,5 +21,11 @@ public interface ICandidateActionTokenService
         string purpose,
         CancellationToken cancellationToken = default);
 
-    Task MarkUsedAsync(CandidateActionToken token, CancellationToken cancellationToken = default);
+    /// <summary>
+    /// Atomically claims a valid unused token (sets UsedAtUtc). Returns null if already used/expired/invalid.
+    /// </summary>
+    Task<CandidateActionToken?> TryConsumeAsync(
+        string plaintextToken,
+        string purpose,
+        CancellationToken cancellationToken = default);
 }

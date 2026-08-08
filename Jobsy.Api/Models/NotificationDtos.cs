@@ -18,4 +18,6 @@ public record UnreadNotificationCountDto(int Count);
 
 public record CandidateActionRequest(string Token);
 
+public record WithdrawOthersAuthenticatedRequest(Guid HiredApplicationId);
+
 public record CandidateActionResultDto(bool Succeeded, string Message, int? WithdrawnCount = null);

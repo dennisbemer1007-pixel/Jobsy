@@ -27,7 +27,8 @@ public sealed class UserNotificationService : IUserNotificationService
             Category = Truncate(request.Category, 64) ?? string.Empty,
             DeepLink = Truncate(request.DeepLink, 1024),
             ActionLabel = Truncate(request.ActionLabel, 128),
-            ActionUrl = Truncate(request.ActionUrl, 1024),
+            // Never persist bearer tokens in ActionUrl (emails may keep tokenized links separately).
+            ActionUrl = Truncate(SanitizeActionUrl(request.ActionUrl), 1024),
             RelatedEntityType = Truncate(request.RelatedEntityType, 64),
             RelatedEntityId = request.RelatedEntityId,
             IsRead = false,
@@ -139,5 +140,46 @@ public sealed class UserNotificationService : IUserNotificationService
         }
 
         return value.Length <= max ? value : value[..max];
+    }
+
+    /// <summary>
+    /// Strip secret <c>token</c> query params from persisted in-app CTAs (AVG / session security).
+    /// Safe params like <c>hiredApplicationId</c> are kept.
+    /// </summary>
+    internal static string? SanitizeActionUrl(string? actionUrl)
+    {
+        if (string.IsNullOrWhiteSpace(actionUrl))
+        {
+            return actionUrl;
+        }
+
+        var trimmed = actionUrl.Trim();
+        var queryIndex = trimmed.IndexOf('?');
+        if (queryIndex < 0)
+        {
+            return trimmed;
+        }
+
+        var path = trimmed[..queryIndex];
+        var query = trimmed[(queryIndex + 1)..];
+        if (string.IsNullOrWhiteSpace(query))
+        {
+            return path;
+        }
+
+        var kept = new List<string>();
+        foreach (var part in query.Split('&', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
+        {
+            var eq = part.IndexOf('=');
+            var key = eq < 0 ? part : part[..eq];
+            if (key.Equals("token", StringComparison.OrdinalIgnoreCase))
+            {
+                continue;
+            }
+
+            kept.Add(part);
+        }
+
+        return kept.Count == 0 ? path : path + "?" + string.Join('&', kept);
     }
 }

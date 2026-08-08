@@ -234,6 +234,27 @@ public sealed class PrivacyDataService : IPrivacyDataService
             })
             .ToListAsync(cancellationToken);
 
+        // Portability: include in-app notifications (ActionUrl without bearer tokens).
+        var notifications = await _db.UserNotifications.AsNoTracking()
+            .Where(n => n.UserId == user.Id)
+            .OrderByDescending(n => n.CreatedAtUtc)
+            .Select(n => new
+            {
+                n.Id,
+                n.Title,
+                n.Body,
+                n.Category,
+                n.DeepLink,
+                n.ActionLabel,
+                n.ActionUrl,
+                n.IsRead,
+                n.CreatedAtUtc,
+                n.ReadAtUtc,
+                n.RelatedEntityType,
+                n.RelatedEntityId
+            })
+            .ToListAsync(cancellationToken);
+
         return new
         {
             ExportedAtUtc = DateTime.UtcNow,
@@ -262,6 +283,21 @@ public sealed class PrivacyDataService : IPrivacyDataService
             VacancyClicks = clicks,
             VacancySearchImpressions = impressions,
             SiteVisits = siteVisits,
+            Notifications = notifications.Select(n => new
+            {
+                n.Id,
+                n.Title,
+                n.Body,
+                n.Category,
+                n.DeepLink,
+                n.ActionLabel,
+                ActionUrl = UserNotificationService.SanitizeActionUrl(n.ActionUrl),
+                n.IsRead,
+                n.CreatedAtUtc,
+                n.ReadAtUtc,
+                n.RelatedEntityType,
+                n.RelatedEntityId
+            }),
             CompanyRegistrations = registrations,
             SalesManagerProfile = salesProfile,
             PartnerAffiliateProfile = partnerProfile,
@@ -640,6 +676,23 @@ public sealed class PrivacyDataService : IPrivacyDataService
         if (externalLogins.Count > 0)
         {
             _db.UserExternalLogins.RemoveRange(externalLogins);
+        }
+
+        // AVG: purge in-app notifications and single-use action tokens for this user.
+        var notifications = await _db.UserNotifications
+            .Where(n => n.UserId == user.Id)
+            .ToListAsync(cancellationToken);
+        if (notifications.Count > 0)
+        {
+            _db.UserNotifications.RemoveRange(notifications);
+        }
+
+        var actionTokens = await _db.CandidateActionTokens
+            .Where(t => t.UserId == user.Id)
+            .ToListAsync(cancellationToken);
+        if (actionTokens.Count > 0)
+        {
+            _db.CandidateActionTokens.RemoveRange(actionTokens);
         }
 
         user.Email = anonymizedEmail;

@@ -43,7 +43,42 @@ public class UserNotificationAndActionTokenTests
     }
 
     [Fact]
-    public async Task ActionToken_issues_and_validates_once()
+    public async Task NotificationService_strips_token_from_action_url()
+    {
+        await using var db = CreateDb();
+        var user = new User
+        {
+            Id = Guid.NewGuid(),
+            Email = "kandidaat@example.com",
+            FullName = "Kandidaat",
+            Role = UserRole.Candidate,
+            IsActive = true
+        };
+        db.Users.Add(user);
+        await db.SaveChangesAsync();
+
+        var sut = new UserNotificationService(db);
+        await sut.CreateAsync(new NotificationCreateRequest(
+            user.Id,
+            "PushBom",
+            "Body",
+            "PushBom",
+            "/vacancies/abc",
+            "Zet op Niet beschikbaar",
+            "/candidate/actions/set-unavailable?token=deadbeef"));
+
+        var list = await sut.ListForUserAsync(user.Id);
+        Assert.Equal("/candidate/actions/set-unavailable", list[0].ActionUrl);
+        Assert.DoesNotContain("token=", list[0].ActionUrl ?? string.Empty);
+
+        Assert.Equal(
+            "/candidate/actions/withdraw-others?hiredApplicationId=11111111-1111-1111-1111-111111111111",
+            UserNotificationService.SanitizeActionUrl(
+                "/candidate/actions/withdraw-others?hiredApplicationId=11111111-1111-1111-1111-111111111111&token=abc"));
+    }
+
+    [Fact]
+    public async Task ActionToken_issues_and_consumes_once()
     {
         await using var db = CreateDb();
         var user = new User
@@ -61,13 +96,15 @@ public class UserNotificationAndActionTokenTests
         var sut = new CandidateActionTokenService(db);
         var issued = await sut.IssueAsync(user.Id, CandidateActionPurposes.SetUnavailable);
         Assert.Contains("set-unavailable", issued.RelativeActionPath);
+        Assert.Contains("token=", issued.RelativeActionPath);
 
-        var found = await sut.FindValidAsync(issued.PlaintextToken, CandidateActionPurposes.SetUnavailable);
-        Assert.NotNull(found);
-        await sut.MarkUsedAsync(found!);
+        var consumed = await sut.TryConsumeAsync(issued.PlaintextToken, CandidateActionPurposes.SetUnavailable);
+        Assert.NotNull(consumed);
+        Assert.NotNull(consumed!.UsedAtUtc);
 
-        var again = await sut.FindValidAsync(issued.PlaintextToken, CandidateActionPurposes.SetUnavailable);
+        var again = await sut.TryConsumeAsync(issued.PlaintextToken, CandidateActionPurposes.SetUnavailable);
         Assert.Null(again);
+        Assert.Null(await sut.FindValidAsync(issued.PlaintextToken, CandidateActionPurposes.SetUnavailable));
     }
 
     private static JobsyDbContext CreateDb()

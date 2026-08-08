@@ -258,6 +258,9 @@ public class Sprint4TokenProductsTests
         Assert.Equal(2, db.PlatformLogs.Count(l => l.Category == "PushBom")); // e-mail + push
         Assert.Contains(db.PlatformLogs, l => l.Message.Contains("n***@jobsy.local"));
         Assert.Single(db.UserNotifications.Where(n => n.Category == "PushBom"));
+        var pushNotification = db.UserNotifications.Single(n => n.Category == "PushBom");
+        Assert.Equal("/candidate/actions/set-unavailable", pushNotification.ActionUrl);
+        Assert.DoesNotContain("token=", pushNotification.ActionUrl ?? string.Empty);
         // Tier 1–9 → 1 token (not flat 3)
         Assert.Equal(9m, await db.TokenTransactions.Where(t => t.CompanyId == companyId).SumAsync(t => t.Amount));
     }

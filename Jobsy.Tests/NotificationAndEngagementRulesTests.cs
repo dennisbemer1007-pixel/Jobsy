@@ -74,10 +74,27 @@ public class NotificationAndEngagementRulesTests
     }
 
     [Fact]
+    public void ApplicationRules_capacity_excludes_withdrawn()
+    {
+        Assert.True(ApplicationRules.CountsTowardVacancyCapacity(ApplicationStatus.Pending, DateTime.UtcNow));
+        Assert.False(ApplicationRules.CountsTowardVacancyCapacity(ApplicationStatus.Pending, null));
+        Assert.False(ApplicationRules.CountsTowardVacancyCapacity(ApplicationStatus.Withdrawn, DateTime.UtcNow));
+        Assert.True(ApplicationRules.BlocksDuplicateApplication(ApplicationStatus.Pending, DateTime.UtcNow));
+        Assert.False(ApplicationRules.BlocksDuplicateApplication(ApplicationStatus.Withdrawn, DateTime.UtcNow));
+        Assert.True(ApplicationRules.CanReuseWithdrawnApplication(ApplicationStatus.Withdrawn));
+        Assert.False(ApplicationRules.ShouldRejectAsFilledElsewhere(ApplicationStatus.Withdrawn, DateTime.UtcNow));
+        Assert.True(ApplicationRules.ShouldRejectAsFilledElsewhere(ApplicationStatus.Pending, DateTime.UtcNow));
+    }
+
+    [Fact]
     public void CandidateActionPurposes_known()
     {
         Assert.True(CandidateActionPurposes.IsKnown(CandidateActionPurposes.SetUnavailable));
         Assert.True(CandidateActionPurposes.IsKnown(CandidateActionPurposes.WithdrawOtherApplications));
         Assert.False(CandidateActionPurposes.IsKnown("Nope"));
+        Assert.Equal("/candidate/actions/set-unavailable", CandidateActionPurposes.SetUnavailableInAppPath);
+        var hiredId = Guid.Parse("11111111-1111-1111-1111-111111111111");
+        Assert.Contains(hiredId.ToString("D"), CandidateActionPurposes.WithdrawOthersInAppPath(hiredId));
+        Assert.DoesNotContain("token=", CandidateActionPurposes.WithdrawOthersInAppPath(hiredId));
     }
 }

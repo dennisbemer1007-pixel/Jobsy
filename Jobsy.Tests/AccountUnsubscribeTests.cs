@@ -91,6 +91,25 @@ public class AccountUnsubscribeTests
             Path = "/candidate/profile",
             CreatedAt = DateTime.UtcNow
         });
+        db.UserNotifications.Add(new UserNotification
+        {
+            Id = Guid.NewGuid(),
+            UserId = candidateId,
+            Title = "Test bericht",
+            Body = "Persoonlijke notificatie",
+            Category = "PushBom",
+            ActionUrl = "/candidate/actions/set-unavailable?token=secret",
+            CreatedAtUtc = DateTime.UtcNow
+        });
+        db.CandidateActionTokens.Add(new CandidateActionToken
+        {
+            Id = Guid.NewGuid(),
+            UserId = candidateId,
+            Purpose = "SetUnavailable",
+            TokenHash = VerificationCodes.Hash("abcdef"),
+            ExpiresAtUtc = DateTime.UtcNow.AddDays(7),
+            CreatedAtUtc = DateTime.UtcNow
+        });
         await db.SaveChangesAsync();
 
         var privacy = CreatePrivacy(db, out var mail);
@@ -141,6 +160,8 @@ public class AccountUnsubscribeTests
         Assert.Equal(0, await db.VacancyLikes.CountAsync(l => l.UserId == candidateId));
         Assert.Equal(0, await db.SiteVisits.CountAsync(v => v.UserId == candidateId));
         Assert.Equal(0, await db.LocalAuthCredentials.CountAsync(c => c.UserId == candidateId));
+        Assert.Equal(0, await db.UserNotifications.CountAsync(n => n.UserId == candidateId));
+        Assert.Equal(0, await db.CandidateActionTokens.CountAsync(t => t.UserId == candidateId));
 
         var confirmLog = await db.PlatformLogs
             .Where(l => l.Category == "Unsubscribe" && l.Message.Contains("bevestigd"))
@@ -204,6 +225,16 @@ public class AccountUnsubscribeTests
             SnapshotShowAddressOnCv = false,
             CreatedAt = DateTime.UtcNow
         });
+        db.UserNotifications.Add(new UserNotification
+        {
+            Id = Guid.NewGuid(),
+            UserId = candidateId,
+            Title = "Export notificatie",
+            Body = "Hallo uit export",
+            Category = "ApplicationHired",
+            ActionUrl = "/candidate/actions/withdraw-others?hiredApplicationId=11111111-1111-1111-1111-111111111111&token=secret",
+            CreatedAtUtc = DateTime.UtcNow
+        });
         await db.SaveChangesAsync();
 
         var privacy = CreatePrivacy(db);
@@ -215,6 +246,9 @@ public class AccountUnsubscribeTests
         Assert.Contains("SnapshotShowAddressOnCv", json);
         Assert.Contains("CandidateAddress", json);
         Assert.Contains("Voorstraat 1", json);
+        Assert.Contains("Notifications", json);
+        Assert.Contains("Export notificatie", json);
+        Assert.DoesNotContain("token=secret", json);
     }
 
     [Fact]

@@ -11,6 +11,12 @@ public static class PrivacyConstants
     public const int CancelledRegistrationRetentionDays = 30;
     public const int EngagementEventRetentionDays = 365;
 
+    /// <summary>In-app notifications older than this are purged (AVG retention).</summary>
+    public const int UserNotificationRetentionDays = 365;
+
+    /// <summary>Used or expired candidate action tokens older than this are purged.</summary>
+    public const int CandidateActionTokenRetentionDays = 30;
+
     /// <summary>Unverified application drafts (OTP pending) are purged after this many hours.</summary>
     public const int UnverifiedApplicationRetentionHours = 48;
 
