@@ -517,6 +517,26 @@
                     </div>
                 }
             </fieldset>
+
+            <fieldset class="vacancy-contact">
+                <legend>E-mailverificatie sollicitatie</legend>
+                <p class="muted vacancy-field-hint">
+                    Standaard uit. Alleen aanzetten als de kandidaat een code per e-mail moet bevestigen.
+                </p>
+                <ul class="vacancy-legal__list">
+                    <li class="vacancy-legal__item vacancy-legal__item--plain">
+                        <input id="vacancy-email-verification"
+                               class="vacancy-legal__check"
+                               type="checkbox"
+                               @bind="_requireEmailVerification" />
+                        <label class="vacancy-legal__text" for="vacancy-email-verification">
+                            E-mailverificatie vereisen
+                            <span class="muted">Kandidaat bevestigt sollicitatie met een code</span>
+                        </label>
+                    </li>
+                </ul>
+            </fieldset>
+
             <button class="login-submit" type="submit" disabled="@_saving">
                 @(_saving ? "Opslaan…" : Culture["Employer.SaveDraft"])
             </button>
@@ -662,6 +682,7 @@
     private bool _vacancyPreferMail;
     private bool _vacancyPreferPhone;
     private bool _vacancyPreferWhatsApp;
+    private bool _requireEmailVerification;
     private decimal? _minHours = 8;
     private decimal? _maxHours = 16;
     private bool _flexibleTimes = true;
@@ -741,6 +762,10 @@
         _vacancyPreferMail = company.DirectContactEnabled && company.ContactPreferMail;
         _vacancyPreferPhone = company.DirectContactEnabled && company.ContactPreferPhone;
         _vacancyPreferWhatsApp = company.DirectContactEnabled && company.ContactPreferWhatsApp;
+        if (_editVacancyId is null && !_isDuplicate)
+        {
+            _requireEmailVerification = company.RequireEmailVerificationForApplications;
+        }
     }
 
     private SalaryTableItem? SelectedSalaryTable =>
@@ -1076,6 +1101,7 @@
             }
             OnCategoryChanged();
             _description = source.Description;
+            _requireEmailVerification = source.RequireEmailVerification;
             _imageUrl = source.ImageUrl ?? "";
             _videoUrl = source.VideoUrl ?? "";
             _salaryTableId = source.SalaryTableId?.ToString() ?? "";
@@ -1530,7 +1556,8 @@
                     : null,
                 CategoryId: Guid.TryParse(_categoryId, out var catId) ? catId : null,
                 CategoryFields: _categoryFields.Count > 0 ? new Dictionary<string, string>(_categoryFields) : null,
-                SuitableFor65Plus: SelectedCategory?.Slug == "regulier" && _suitableFor65Plus);
+                SuitableFor65Plus: SelectedCategory?.Slug == "regulier" && _suitableFor65Plus,
+                RequireEmailVerification: _requireEmailVerification);
 
             var saved = _editVacancyId is Guid editId
                 ? await Api.UpdateVacancyAsync(editId, form)

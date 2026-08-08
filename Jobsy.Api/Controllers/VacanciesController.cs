@@ -32,6 +32,7 @@ public class VacanciesController : ControllerBase
     private readonly ITranslationService _translation;
     private readonly IVacancyCategoryService _categories;
     private readonly IPlatformFeatureService _features;
+    private readonly IUserNotificationService _notifications;
 
     public VacanciesController(
         JobsyDbContext db,
@@ -43,7 +44,8 @@ public class VacanciesController : ControllerBase
         IVacancyContentModerationService moderation,
         ITranslationService translation,
         IVacancyCategoryService categories,
-        IPlatformFeatureService features)
+        IPlatformFeatureService features,
+        IUserNotificationService notifications)
     {
         _db = db;
         _companyAuth = companyAuth;
@@ -55,6 +57,7 @@ public class VacanciesController : ControllerBase
         _translation = translation;
         _categories = categories;
         _features = features;
+        _notifications = notifications;
     }
 
     /// <summary>
@@ -408,9 +411,9 @@ public class VacanciesController : ControllerBase
             return access;
         }
 
-        if (vacancy.Status != VacancyStatus.Draft)
+        if (vacancy.Status is not (VacancyStatus.Draft or VacancyStatus.Active))
         {
-            return BadRequest(new { message = "Alleen conceptvacatures kunnen worden bewerkt." });
+            return BadRequest(new { message = "Alleen concept- of actieve vacatures kunnen worden bewerkt." });
         }
 
         return await SaveDraftAsync(request, vacancy, cancellationToken);
@@ -628,6 +631,32 @@ public class VacanciesController : ControllerBase
             : null;
         vacancy.ContentModerationPassed = moderation.IsAllowed;
 
+        if (existing is null)
+        {
+            // Inherit org default unless explicitly provided on create.
+            vacancy.RequireEmailVerification = request.RequireEmailVerification
+                ?? company.RequireEmailVerificationForApplications;
+        }
+        else if (request.RequireEmailVerification is bool requireVerify)
+        {
+            vacancy.RequireEmailVerification = requireVerify;
+        }
+
+        // Goodwill: after 14-day engagement reminder, an edit before EndDate extends deadline +7 days (once).
+        var appliedGoodwill = false;
+        if (existing is not null
+            && existing.Status == VacancyStatus.Active
+            && VacancyEngagementReminderRules.CanApplyGoodwillExtension(
+                existing.EngagementReminderSentAtUtc,
+                existing.EngagementGoodwillExtendedAtUtc,
+                existing.EndDate,
+                DateOnly.FromDateTime(DateTime.UtcNow)))
+        {
+            vacancy.EndDate = vacancy.EndDate.AddDays(VacancyEngagementReminderRules.GoodwillExtendDays);
+            vacancy.EngagementGoodwillExtendedAtUtc = DateTime.UtcNow;
+            appliedGoodwill = true;
+        }
+
         var hoursError = ApplyHoursAndSchedule(vacancy, request);
         if (hoursError is not null)
         {
@@ -642,6 +671,20 @@ public class VacanciesController : ControllerBase
         }
 
         await _db.SaveChangesAsync(cancellationToken);
+
+        if (appliedGoodwill && actor is not null)
+        {
+            await _notifications.CreateAsync(
+                new NotificationCreateRequest(
+                    actor.Id,
+                    "Deadline verlengd (goodwill)",
+                    $"Je aanpassing van '{vacancy.Title}' is opgeslagen. De einddatum is met {VacancyEngagementReminderRules.GoodwillExtendDays} dagen verlengd tot {vacancy.EndDate:dd-MM-yyyy}.",
+                    "VacancyEngagementGoodwill",
+                    $"/branch/vacancies/new?edit={vacancy.Id}",
+                    RelatedEntityType: "Vacancy",
+                    RelatedEntityId: vacancy.Id),
+                cancellationToken);
+        }
 
         vacancy.Company = company;
         vacancy.IntermediaryCompany = intermediaryCompany;
@@ -923,6 +966,51 @@ public class VacanciesController : ControllerBase
 
         await _db.SaveChangesAsync(cancellationToken);
         return Ok(ToContactPreferenceDto(vacancy));
+    }
+
+    [HttpGet("{id:guid}/email-verification")]
+    [Authorize(Roles = JobsyRoles.VacancyLifecycleRoles)]
+    public async Task<ActionResult<VacancyEmailVerificationDto>> GetEmailVerification(
+        Guid id,
+        CancellationToken cancellationToken)
+    {
+        var vacancy = await LoadManagedVacancyAsync(id, cancellationToken);
+        if (vacancy is null)
+        {
+            return NotFound();
+        }
+
+        var access = await EnsureVacancyManageAccessAsync(vacancy, cancellationToken);
+        if (access is not null)
+        {
+            return access;
+        }
+
+        return Ok(new VacancyEmailVerificationDto(vacancy.Id, vacancy.RequireEmailVerification));
+    }
+
+    [HttpPut("{id:guid}/email-verification")]
+    [Authorize(Roles = JobsyRoles.VacancyLifecycleRoles)]
+    public async Task<ActionResult<VacancyEmailVerificationDto>> UpdateEmailVerification(
+        Guid id,
+        [FromBody] UpdateVacancyEmailVerificationRequest request,
+        CancellationToken cancellationToken)
+    {
+        var vacancy = await LoadManagedVacancyAsync(id, cancellationToken);
+        if (vacancy is null)
+        {
+            return NotFound();
+        }
+
+        var access = await EnsureVacancyManageAccessAsync(vacancy, cancellationToken);
+        if (access is not null)
+        {
+            return access;
+        }
+
+        vacancy.RequireEmailVerification = request.RequireEmailVerification;
+        await _db.SaveChangesAsync(cancellationToken);
+        return Ok(new VacancyEmailVerificationDto(vacancy.Id, vacancy.RequireEmailVerification));
     }
 
     private static VacancyContactPreferenceDto ToContactPreferenceDto(Core.Entities.Vacancy vacancy) =>
@@ -1514,7 +1602,10 @@ public class VacanciesController : ControllerBase
             v.ContentModerationPassed,
             isIncomplete,
             displayStatus,
-            moderationWarning);
+            moderationWarning,
+            v.RequireEmailVerification,
+            includeCategoryInternals ? v.EngagementReminderTip : null,
+            includeCategoryInternals ? v.EngagementReminderSentAtUtc : null);
     }
 
     private async Task<(Core.Entities.VacancyCategory? Category, string? Error)> ResolveCategoryAsync(

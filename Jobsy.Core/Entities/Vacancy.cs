@@ -144,6 +144,21 @@ public class Vacancy
     public bool ContactPreferPhone { get; set; }
     public bool ContactPreferWhatsApp { get; set; }
 
+    /// <summary>
+    /// When true, candidates must verify their e-mail with an OTP before the application is final.
+    /// Defaults to false (no verification UI / flow).
+    /// </summary>
+    public bool RequireEmailVerification { get; set; }
+
+    /// <summary>When the 14-day engagement reminder e-mail/notification was sent.</summary>
+    public DateTime? EngagementReminderSentAtUtc { get; set; }
+
+    /// <summary>AI/heuristic tip included in the engagement reminder (audit / UI).</summary>
+    public string? EngagementReminderTip { get; set; }
+
+    /// <summary>When goodwill +7 days EndDate was applied after an edit following the reminder.</summary>
+    public DateTime? EngagementGoodwillExtendedAtUtc { get; set; }
+
     public ICollection<VacancyClick> Clicks { get; set; } = new List<VacancyClick>();
     public ICollection<VacancyLike> Likes { get; set; } = new List<VacancyLike>();
     public ICollection<VacancyShare> Shares { get; set; } = new List<VacancyShare>();

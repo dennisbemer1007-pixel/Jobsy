@@ -70,7 +70,8 @@ public class CompaniesController : ControllerBase
                 c.ContactWhatsApp,
                 c.KvkEstablishmentId,
                 c.KvkVerificationStatus.ToString(),
-                c.PreferredPaymentMethod))
+                c.PreferredPaymentMethod,
+                c.RequireEmailVerificationForApplications))
             .ToListAsync(cancellationToken);
 
         return Ok(companies);
@@ -290,6 +291,37 @@ public class CompaniesController : ControllerBase
         }
 
         company.CsvBatchImportEnabled = request.CsvBatchImportEnabled;
+        await _db.SaveChangesAsync(cancellationToken);
+
+        return Ok(await ToSummaryAsync(company, cancellationToken));
+    }
+
+    /// <summary>
+    /// Enable/disable e-mail verification for applications (organisation default for new vacancies).
+    /// </summary>
+    [HttpPut("{companyId:guid}/email-verification")]
+    [Authorize(Roles = $"{JobsyRoles.EnterpriseManager},{JobsyRoles.Intermediary},{JobsyRoles.BranchManager},{JobsyRoles.Admin}")]
+    public async Task<ActionResult<CompanySummaryDto>> UpdateEmailVerification(
+        Guid companyId,
+        [FromBody] UpdateEmailVerificationPreferenceRequest request,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            await _companyAuth.EnsureCanAccessCompanyAsync(User, companyId, cancellationToken);
+        }
+        catch (Core.Exceptions.ForbiddenCompanyAccessException)
+        {
+            return Forbid();
+        }
+
+        var company = await _db.Companies.FirstOrDefaultAsync(c => c.Id == companyId, cancellationToken);
+        if (company is null)
+        {
+            return NotFound(new { message = "Bedrijf niet gevonden." });
+        }
+
+        company.RequireEmailVerificationForApplications = request.RequireEmailVerificationForApplications;
         await _db.SaveChangesAsync(cancellationToken);
 
         return Ok(await ToSummaryAsync(company, cancellationToken));
@@ -573,7 +605,8 @@ public class CompaniesController : ControllerBase
             company.ContactWhatsApp,
             company.KvkEstablishmentId,
             company.KvkVerificationStatus.ToString(),
-            company.PreferredPaymentMethod);
+            company.PreferredPaymentMethod,
+            company.RequireEmailVerificationForApplications);
 
     private async Task EnsureActorMembershipAsync(Guid companyId, CancellationToken cancellationToken)
     {

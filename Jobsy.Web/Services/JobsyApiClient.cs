@@ -1086,6 +1086,24 @@ public sealed class JobsyApiClient : IAsyncDisposable
         return await response.Content.ReadFromJsonAsync<CompanySummary>(cancellationToken: ct);
     }
 
+    public async Task<CompanySummary?> UpdateEmailVerificationPreferenceAsync(
+        Guid companyId,
+        bool requireEmailVerificationForApplications,
+        CancellationToken ct = default)
+    {
+        var response = await _http.PutAsJsonAsync(
+            $"api/companies/{companyId}/email-verification",
+            new { requireEmailVerificationForApplications },
+            ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException(TryExtractMessage(body) ?? body);
+        }
+
+        return await response.Content.ReadFromJsonAsync<CompanySummary>(cancellationToken: ct);
+    }
+
     public async Task<CompanySummary?> UpdateContactPreferenceAsync(
         Guid companyId,
         bool directContactEnabled,
@@ -1204,6 +1222,90 @@ public sealed class JobsyApiClient : IAsyncDisposable
         }
 
         return await response.Content.ReadFromJsonAsync<VacancyContactPreferenceItem>(cancellationToken: ct);
+    }
+
+    public async Task<VacancyEmailVerificationItem?> UpdateVacancyEmailVerificationAsync(
+        Guid vacancyId,
+        bool requireEmailVerification,
+        CancellationToken ct = default)
+    {
+        var response = await _http.PutAsJsonAsync(
+            $"api/vacancies/{vacancyId}/email-verification",
+            new { requireEmailVerification },
+            ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException(TryExtractMessage(body) ?? body);
+        }
+
+        return await response.Content.ReadFromJsonAsync<VacancyEmailVerificationItem>(cancellationToken: ct);
+    }
+
+    public async Task<IReadOnlyList<UserNotificationItem>> GetNotificationsAsync(
+        int take = 50,
+        CancellationToken ct = default)
+        => await _http.GetFromJsonAsync<List<UserNotificationItem>>($"api/notifications?take={take}", ct) ?? [];
+
+    public async Task<int> GetUnreadNotificationCountAsync(CancellationToken ct = default)
+    {
+        var dto = await _http.GetFromJsonAsync<UnreadNotificationCountWire>("api/notifications/unread-count", ct);
+        return dto?.Count ?? 0;
+    }
+
+    public async Task<UserNotificationItem?> MarkNotificationReadAsync(Guid id, CancellationToken ct = default)
+    {
+        var response = await _http.PostAsync($"api/notifications/{id}/read", null, ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            return null;
+        }
+
+        return await response.Content.ReadFromJsonAsync<UserNotificationItem>(cancellationToken: ct);
+    }
+
+    public async Task MarkAllNotificationsReadAsync(CancellationToken ct = default)
+    {
+        await _http.PostAsync("api/notifications/read-all", null, ct);
+    }
+
+    public async Task<CandidateActionResultItem?> SetUnavailableViaTokenAsync(
+        string token,
+        CancellationToken ct = default)
+    {
+        var response = await _http.PostAsJsonAsync(
+            "api/candidate-actions/set-unavailable",
+            new { token },
+            ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException(TryExtractMessage(body) ?? body);
+        }
+
+        return await response.Content.ReadFromJsonAsync<CandidateActionResultItem>(cancellationToken: ct);
+    }
+
+    public async Task<CandidateActionResultItem?> WithdrawOtherApplicationsViaTokenAsync(
+        string token,
+        CancellationToken ct = default)
+    {
+        var response = await _http.PostAsJsonAsync(
+            "api/candidate-actions/withdraw-others",
+            new { token },
+            ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException(TryExtractMessage(body) ?? body);
+        }
+
+        return await response.Content.ReadFromJsonAsync<CandidateActionResultItem>(cancellationToken: ct);
+    }
+
+    private sealed class UnreadNotificationCountWire
+    {
+        public int Count { get; set; }
     }
 
     public async Task<CsvImportResult?> ImportVacanciesCsvAsync(
@@ -2846,7 +2948,8 @@ public record CreateVacancyForm(
     Guid? ExclusivitySettingId = null,
     Guid? CategoryId = null,
     Dictionary<string, string>? CategoryFields = null,
-    bool SuitableFor65Plus = false);
+    bool SuitableFor65Plus = false,
+    bool? RequireEmailVerification = null);
 
 public sealed class CsvImportRowForm
 {

@@ -25,6 +25,8 @@ public class JobsyDbContext : DbContext
     public DbSet<Vacancy> Vacancies => Set<Vacancy>();
     public DbSet<TokenTransaction> TokenTransactions => Set<TokenTransaction>();
     public DbSet<Application> Applications => Set<Application>();
+    public DbSet<UserNotification> UserNotifications => Set<UserNotification>();
+    public DbSet<CandidateActionToken> CandidateActionTokens => Set<CandidateActionToken>();
     public DbSet<MinimumWageRate> MinimumWageRates => Set<MinimumWageRate>();
     public DbSet<VacancyClick> VacancyClicks => Set<VacancyClick>();
     public DbSet<VacancyLike> VacancyLikes => Set<VacancyLike>();
@@ -237,6 +239,8 @@ public class JobsyDbContext : DbContext
             entity.HasIndex(e => new { e.Status, e.CategoryId });
             entity.HasIndex(e => new { e.Status, e.SuitableFor65Plus });
             entity.Property(e => e.CategoryFieldsJson).HasMaxLength(8000);
+            entity.Property(e => e.EngagementReminderTip).HasMaxLength(2000);
+            entity.HasIndex(e => new { e.Status, e.EngagementReminderSentAtUtc, e.PublishedAtUtc });
             entity.HasOne(e => e.Company)
                 .WithMany(c => c.Vacancies)
                 .HasForeignKey(e => e.CompanyId)
@@ -408,6 +412,39 @@ public class JobsyDbContext : DbContext
                 .IsUnique()
                 .HasFilter("\"CandidateUserId\" IS NOT NULL");
             entity.HasIndex(e => new { e.VacancyId, e.CandidateEmail }).IsUnique();
+        });
+
+        modelBuilder.Entity<UserNotification>(entity =>
+        {
+            entity.ToTable("UserNotifications");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Title).HasMaxLength(256).IsRequired();
+            entity.Property(e => e.Body).HasMaxLength(4000).IsRequired();
+            entity.Property(e => e.Category).HasMaxLength(64).IsRequired();
+            entity.Property(e => e.DeepLink).HasMaxLength(1024);
+            entity.Property(e => e.ActionLabel).HasMaxLength(128);
+            entity.Property(e => e.ActionUrl).HasMaxLength(1024);
+            entity.Property(e => e.RelatedEntityType).HasMaxLength(64);
+            entity.HasIndex(e => new { e.UserId, e.IsRead, e.CreatedAtUtc });
+            entity.HasIndex(e => e.CreatedAtUtc);
+            entity.HasOne(e => e.User)
+                .WithMany()
+                .HasForeignKey(e => e.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<CandidateActionToken>(entity =>
+        {
+            entity.ToTable("CandidateActionTokens");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Purpose).HasMaxLength(64).IsRequired();
+            entity.Property(e => e.TokenHash).HasMaxLength(64).IsRequired();
+            entity.HasIndex(e => e.TokenHash).IsUnique();
+            entity.HasIndex(e => new { e.UserId, e.Purpose, e.ExpiresAtUtc });
+            entity.HasOne(e => e.User)
+                .WithMany()
+                .HasForeignKey(e => e.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
         });
 
         modelBuilder.Entity<MinimumWageRate>(entity =>

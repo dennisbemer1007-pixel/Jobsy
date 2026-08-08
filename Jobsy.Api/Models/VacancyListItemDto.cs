@@ -74,4 +74,7 @@ public record VacancyListItemDto(
     bool ContentModerationPassed = true,
     bool IsIncomplete = false,
     string? DisplayStatus = null,
-    string? ModerationWarning = null);
+    string? ModerationWarning = null,
+    bool RequireEmailVerification = false,
+    string? EngagementReminderTip = null,
+    DateTime? EngagementReminderSentAtUtc = null);

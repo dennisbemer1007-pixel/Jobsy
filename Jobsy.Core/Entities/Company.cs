@@ -71,6 +71,12 @@ public class Company
     /// </summary>
     public bool DirectContactEnabled { get; set; }
 
+    /// <summary>
+    /// Default for new vacancies: require e-mail OTP verification on apply.
+    /// Always defaults to false; can be overridden per vacancy.
+    /// </summary>
+    public bool RequireEmailVerificationForApplications { get; set; }
+
     public bool ContactPreferMail { get; set; }
     public bool ContactPreferPhone { get; set; }
     public bool ContactPreferWhatsApp { get; set; }

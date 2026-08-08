@@ -76,6 +76,9 @@ public class VacancyListItem
     public bool IsIncomplete { get; set; }
     public string? DisplayStatus { get; set; }
     public string? ModerationWarning { get; set; }
+    public bool RequireEmailVerification { get; set; }
+    public string? EngagementReminderTip { get; set; }
+    public DateTime? EngagementReminderSentAtUtc { get; set; }
 }
 
 public sealed class WageByAgeItem

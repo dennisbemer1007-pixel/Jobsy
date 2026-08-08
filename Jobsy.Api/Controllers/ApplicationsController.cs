@@ -28,6 +28,8 @@ public class ApplicationsController : ControllerBase
     private readonly IPushNotificationService _push;
     private readonly IPlatformFeatureService _features;
     private readonly ILobsyCvPdfService _lobsyCvPdf;
+    private readonly IUserNotificationService _notifications;
+    private readonly ICandidateActionTokenService _actionTokens;
 
     public ApplicationsController(
         JobsyDbContext db,
@@ -36,7 +38,9 @@ public class ApplicationsController : ControllerBase
         IEmailService email,
         IPushNotificationService push,
         IPlatformFeatureService features,
-        ILobsyCvPdfService lobsyCvPdf)
+        ILobsyCvPdfService lobsyCvPdf,
+        IUserNotificationService notifications,
+        ICandidateActionTokenService actionTokens)
     {
         _db = db;
         _companyAuth = companyAuth;
@@ -45,6 +49,8 @@ public class ApplicationsController : ControllerBase
         _push = push;
         _features = features;
         _lobsyCvPdf = lobsyCvPdf;
+        _notifications = notifications;
+        _actionTokens = actionTokens;
     }
 
     [HttpGet]
@@ -353,6 +359,7 @@ public class ApplicationsController : ControllerBase
 
         var matchJson = JsonSerializer.Serialize(match);
         var isVerificationAttempt = !string.IsNullOrWhiteSpace(request.VerificationCode);
+        var requireEmailVerification = vacancy.RequireEmailVerification;
 
         // Gulden Middenweg: hold OTP until candidate confirms safety net.
         if (!isVerificationAttempt
@@ -483,6 +490,65 @@ public class ApplicationsController : ControllerBase
 
         if (!isVerificationAttempt)
         {
+            if (!requireEmailVerification)
+            {
+                // Verification disabled for this vacancy: finalize immediately (no OTP UI).
+                application.EmailVerifiedAt = DateTime.UtcNow;
+                application.EmailVerificationCode = null;
+                application.EmailVerificationExpiresAt = null;
+                application.EmailVerificationFailedAttempts = 0;
+                application.Status = ApplicationStatus.Pending;
+                if (existing is null)
+                {
+                    _db.Applications.Add(application);
+                }
+
+                try
+                {
+                    await _db.SaveChangesAsync(cancellationToken);
+                }
+                catch (DbUpdateException ex)
+                {
+                    var detail = ex.InnerException?.Message ?? ex.Message;
+                    if (detail.Contains("23505", StringComparison.Ordinal)
+                        || detail.Contains("unique", StringComparison.OrdinalIgnoreCase)
+                        || detail.Contains("duplicate", StringComparison.OrdinalIgnoreCase))
+                    {
+                        return BadRequest(new { message = "Je hebt al gereageerd op deze vacature." });
+                    }
+
+                    return BadRequest(new { message = "Sollicitatie kon niet worden opgeslagen. Probeer het opnieuw." });
+                }
+
+                await SendApplicationConfirmationAsync(
+                    candidate, vacancy, application, authenticatorStubUsed, cancellationToken);
+                await NotifyEmployersOfNewApplicationAsync(vacancy, application, cancellationToken);
+
+                var immediateDto = new ApplicationDto(
+                    application.Id,
+                    vacancy.Id,
+                    vacancy.Title,
+                    vacancy.Company.Name,
+                    application.CandidateName,
+                    application.CandidateEmail,
+                    application.PreferredTransport,
+                    application.EstimatedTravelMinutes,
+                    application.CreatedAt,
+                    application.Status.ToString(),
+                    application.RespondedAt);
+
+                return Ok(new ApplyResultDto(
+                    immediateDto,
+                    ConfirmationEmailQueued: true,
+                    authenticatorStubUsed,
+                    RequiresVerification: false,
+                    VerificationCodeSent: false,
+                    DirectContact: ToDirectContactDto(vacancy),
+                    RequiresSafetyNetConfirmation: false,
+                    MatchPercent: application.MatchPercent ?? match.TotalPercent,
+                    MatchBreakdownJson: application.MatchBreakdownJson ?? matchJson));
+            }
+
             var code = VerificationCodes.CreateNumericCode();
             application.EmailVerificationCode = VerificationCodes.Hash(code);
             application.EmailVerificationExpiresAt = DateTime.UtcNow.AddMinutes(10);
@@ -551,6 +617,11 @@ public class ApplicationsController : ControllerBase
                 MatchBreakdownJson: matchJson));
         }
 
+        if (!requireEmailVerification)
+        {
+            return BadRequest(new { message = "E-mailverificatie is voor deze vacature niet vereist." });
+        }
+
         if (existing is null)
         {
             return BadRequest(new { message = "Start eerst met Verzenden om een verificatiecode te ontvangen." });
@@ -603,20 +674,8 @@ public class ApplicationsController : ControllerBase
         existing.WorkPermitConfirmed = request.WorkPermitConfirmed;
         await _db.SaveChangesAsync(cancellationToken);
 
-        var deepLink = await BuildDeepLinkAsync("/candidate/applications", cancellationToken);
-        var name = Html(candidate.FullName);
-        var title = Html(vacancy.Title);
-        var company = Html(vacancy.Company.Name);
-        await _email.SendAsync(new EmailMessage(
-            candidate.Email,
-            $"Sollicitatie bevestigd: {vacancy.Title}",
-            $"""
-             <p>Hoi {name},</p>
-             <p>Je sollicitatie op <strong>{title}</strong> bij {company} is ontvangen.</p>
-             <p><a href="{Html(deepLink)}">Bekijk je sollicitaties</a></p>
-             {(authenticatorStubUsed ? "<p><em>Authenticator stub: verificatie gesimuleerd.</em></p>" : "")}
-             """,
-            "ApplicationConfirmation"), cancellationToken);
+        await SendApplicationConfirmationAsync(
+            candidate, vacancy, existing, authenticatorStubUsed, cancellationToken);
 
         await NotifyEmployersOfNewApplicationAsync(vacancy, existing, cancellationToken);
 
@@ -737,8 +796,18 @@ public class ApplicationsController : ControllerBase
             return BadRequest(new { message = "Alleen open sollicitaties kunnen worden ingetrokken." });
         }
 
-        _db.Applications.Remove(application);
+        application.Status = ApplicationStatus.Withdrawn;
+        application.RespondedAt = DateTime.UtcNow;
         await _db.SaveChangesAsync(cancellationToken);
+
+        var vacancy = await _db.Vacancies.AsNoTracking()
+            .Include(v => v.Company)
+            .FirstOrDefaultAsync(v => v.Id == application.VacancyId, cancellationToken);
+        if (vacancy is not null)
+        {
+            await NotifyEmployersOfWithdrawalAsync(vacancy, application, cancellationToken);
+        }
+
         return NoContent();
     }
 
@@ -795,7 +864,6 @@ public class ApplicationsController : ControllerBase
         application.Status = request.Status;
         application.RespondedAt = respondedAt;
 
-        var statusLabel = request.Status == ApplicationStatus.Accepted ? "positief" : "afwijzing";
         var deepLink = await BuildDeepLinkAsync($"/vacancies/{application.VacancyId}", cancellationToken);
         var candidateName = Html(application.CandidateName);
         var title = Html(application.Vacancy.Title);
@@ -803,9 +871,12 @@ public class ApplicationsController : ControllerBase
 
         if (request.Status == ApplicationStatus.Rejected)
         {
+            var rejectSubject = $"Update op je sollicitatie: {application.Vacancy.Title}";
+            var rejectBody =
+                $"{application.Vacancy.Company.Name}: helaas niet geselecteerd voor {application.Vacancy.Title}";
             await _email.SendAsync(new EmailMessage(
                 application.CandidateEmail,
-                $"Update op je sollicitatie: {application.Vacancy.Title}",
+                rejectSubject,
                 $"""
                 <p>Hoi {candidateName},</p>
                 <p>Bedankt voor je interesse in <strong>{title}</strong> bij {company}.</p>
@@ -817,15 +888,26 @@ public class ApplicationsController : ControllerBase
             await _push.SendAsync(new PushMessage(
                 application.CandidateEmail,
                 "Update op je sollicitatie",
-                $"{application.Vacancy.Company.Name}: helaas niet geselecteerd voor {application.Vacancy.Title}",
+                rejectBody,
                 deepLink,
                 "EmployerReaction"), cancellationToken);
+
+            await NotifyCandidateAsync(
+                application,
+                rejectSubject,
+                rejectBody,
+                "EmployerReaction",
+                $"/vacancies/{application.VacancyId}",
+                cancellationToken);
         }
         else
         {
+            var acceptSubject = $"Goed nieuws over je sollicitatie: {application.Vacancy.Title}";
+            var acceptBody =
+                $"{application.Vacancy.Company.Name}: positief — {application.Vacancy.Title}";
             await _email.SendAsync(new EmailMessage(
                 application.CandidateEmail,
-                $"Goed nieuws over je sollicitatie: {application.Vacancy.Title}",
+                acceptSubject,
                 $"""
                 <p>Hoi {candidateName},</p>
                 <p>Goed nieuws! De werkgever heeft positief gereageerd op je sollicitatie voor
@@ -838,9 +920,17 @@ public class ApplicationsController : ControllerBase
             await _push.SendAsync(new PushMessage(
                 application.CandidateEmail,
                 "Positief nieuws over je sollicitatie",
-                $"{application.Vacancy.Company.Name}: positief — {application.Vacancy.Title}",
+                acceptBody,
                 deepLink,
                 "EmployerReaction"), cancellationToken);
+
+            await NotifyCandidateAsync(
+                application,
+                acceptSubject,
+                acceptBody,
+                "EmployerReaction",
+                $"/vacancies/{application.VacancyId}",
+                cancellationToken);
         }
 
         return Ok(MapEmployerDto(application));
@@ -874,9 +964,11 @@ public class ApplicationsController : ControllerBase
         await _db.SaveChangesAsync(cancellationToken);
 
         var deepLink = await BuildDeepLinkAsync($"/vacancies/{application.VacancyId}", cancellationToken);
+        var contactSubject = $"Werkgever neemt contact op: {application.Vacancy.Title}";
+        var contactBody = $"{application.Vacancy.Company.Name} neemt contact op over {application.Vacancy.Title}";
         await _email.SendAsync(new EmailMessage(
             application.CandidateEmail,
-            $"Werkgever neemt contact op: {application.Vacancy.Title}",
+            contactSubject,
             $"""
              <p>Goed nieuws! De werkgever van <strong>{Html(application.Vacancy.Title)}</strong> neemt contact met je op.</p>
              <p><a href="{Html(deepLink)}">Open vacature</a></p>
@@ -885,9 +977,16 @@ public class ApplicationsController : ControllerBase
         await _push.SendAsync(new PushMessage(
             application.CandidateEmail,
             "Werkgever neemt contact op",
-            $"{application.Vacancy.Company.Name} neemt contact op over {application.Vacancy.Title}",
+            contactBody,
             deepLink,
             "EmployerContacting"), cancellationToken);
+        await NotifyCandidateAsync(
+            application,
+            contactSubject,
+            contactBody,
+            "EmployerContacting",
+            $"/vacancies/{application.VacancyId}",
+            cancellationToken);
 
         return Ok(MapEmployerDto(application));
     }
@@ -969,23 +1068,68 @@ public class ApplicationsController : ControllerBase
 
         await _db.SaveChangesAsync(cancellationToken);
 
+        string? withdrawActionPath = null;
+        if (chosen.CandidateUserId is Guid hiredUserId)
+        {
+            var action = await _actionTokens.IssueAsync(
+                hiredUserId,
+                CandidateActionPurposes.WithdrawOtherApplications,
+                chosen.Id,
+                cancellationToken: cancellationToken);
+            withdrawActionPath = action.RelativeActionPath;
+        }
+
+        var withdrawAbsolute = withdrawActionPath is null
+            ? null
+            : await BuildDeepLinkAsync(withdrawActionPath, cancellationToken);
+        var hiredSubject = $"Gefeliciteerd! Je bent aangenomen voor {vacancy.Title}";
+        var hiredNotifyBody = $"Je bent geselecteerd voor {vacancy.Title} bij {vacancy.Company.Name}.";
+        var withdrawParagraph = withdrawAbsolute is null
+            ? ""
+            : $"""
+               <p>Heb je nog andere sollicitaties lopen? Trek ze in, zodat die werkgevers weten dat je al bent voorzien.
+               <a href="{Html(withdrawAbsolute)}">Andere sollicitaties intrekken</a></p>
+               """;
         await _email.SendAsync(new EmailMessage(
             chosen.CandidateEmail,
-            $"Gefeliciteerd! Je bent aangenomen voor {vacancy.Title}",
-            $"<p>Gefeliciteerd! Je bent geselecteerd voor <strong>{Html(vacancy.Title)}</strong> bij {Html(vacancy.Company.Name)}.</p>",
+            hiredSubject,
+            $"""
+             <p>Gefeliciteerd! Je bent geselecteerd voor <strong>{Html(vacancy.Title)}</strong> bij {Html(vacancy.Company.Name)}.</p>
+             {withdrawParagraph}
+             """,
             "ApplicationHired"), cancellationToken);
+
+        await NotifyCandidateAsync(
+            chosen,
+            hiredSubject,
+            hiredNotifyBody,
+            "ApplicationHired",
+            "/candidate/applications",
+            cancellationToken,
+            actionLabel: withdrawAbsolute is null ? null : "Andere sollicitaties intrekken",
+            actionUrl: withdrawActionPath);
 
         foreach (var other in others)
         {
+            var otherSubject = $"Update sollicitatie: {vacancy.Title}";
+            var otherBody = $"Helaas is de keuze op een andere kandidaat gevallen voor {vacancy.Title}.";
             await _email.SendAsync(new EmailMessage(
                 other.CandidateEmail,
-                $"Update sollicitatie: {vacancy.Title}",
+                otherSubject,
                 $"""
                 <p>Hoi {Html(other.CandidateName)},</p>
                 <p>Bedankt voor je sollicitatie op <strong>{Html(vacancy.Title)}</strong> bij {Html(vacancy.Company.Name)}.</p>
                 <p>Helaas is de keuze op een andere kandidaat gevallen. We wensen je veel succes!</p>
                 """,
                 "ApplicationFilledElsewhere"), cancellationToken);
+
+            await NotifyCandidateAsync(
+                other,
+                otherSubject,
+                otherBody,
+                "ApplicationFilledElsewhere",
+                "/candidate/applications",
+                cancellationToken);
         }
 
         return Ok(new
@@ -1074,15 +1218,47 @@ public class ApplicationsController : ControllerBase
             ageYears: application.CandidateAgeYears);
     }
 
+    private async Task SendApplicationConfirmationAsync(
+        Core.Entities.User candidate,
+        Core.Entities.Vacancy vacancy,
+        Core.Entities.Application application,
+        bool authenticatorStubUsed,
+        CancellationToken cancellationToken)
+    {
+        var deepLink = await BuildDeepLinkAsync("/candidate/applications", cancellationToken);
+        var subject = $"Sollicitatie bevestigd: {vacancy.Title}";
+        var body = $"Je sollicitatie op {vacancy.Title} bij {vacancy.Company.Name} is ontvangen.";
+        await _email.SendAsync(new EmailMessage(
+            candidate.Email,
+            subject,
+            $"""
+             <p>Hoi {Html(candidate.FullName)},</p>
+             <p>Je sollicitatie op <strong>{Html(vacancy.Title)}</strong> bij {Html(vacancy.Company.Name)} is ontvangen.</p>
+             <p><a href="{Html(deepLink)}">Bekijk je sollicitaties</a></p>
+             {(authenticatorStubUsed ? "<p><em>Authenticator stub: verificatie gesimuleerd.</em></p>" : "")}
+             """,
+            "ApplicationConfirmation"), cancellationToken);
+
+        await NotifyCandidateAsync(
+            application,
+            subject,
+            body,
+            "ApplicationConfirmation",
+            "/candidate/applications",
+            cancellationToken);
+    }
+
     private async Task SendVerificationCodeAsync(
         Core.Entities.User candidate,
         Core.Entities.Vacancy vacancy,
         string code,
         CancellationToken cancellationToken)
     {
+        var subject = $"Verificatiecode voor sollicitatie: {vacancy.Title}";
+        var body = "Gebruik de 6-cijferige code in je e-mail om je sollicitatie af te ronden. De code is 10 minuten geldig.";
         await _email.SendAsync(new EmailMessage(
             candidate.Email,
-            $"Verificatiecode voor sollicitatie: {vacancy.Title}",
+            subject,
             $"""
              <p>Hoi {Html(candidate.FullName)},</p>
              <p>Gebruik deze 6-cijferige code om je sollicitatie af te ronden:</p>
@@ -1090,6 +1266,55 @@ public class ApplicationsController : ControllerBase
              <p>De code is 10 minuten geldig.</p>
              """,
             "ApplicationVerificationCode"), cancellationToken);
+
+        await _notifications.CreateAsync(
+            new NotificationCreateRequest(
+                candidate.Id,
+                subject,
+                body,
+                "ApplicationVerificationCode",
+                $"/vacancies/{vacancy.Id}"),
+            cancellationToken);
+    }
+
+    private async Task NotifyCandidateAsync(
+        Core.Entities.Application application,
+        string title,
+        string body,
+        string category,
+        string? deepLink,
+        CancellationToken cancellationToken,
+        string? actionLabel = null,
+        string? actionUrl = null)
+    {
+        if (application.CandidateUserId is not Guid userId)
+        {
+            await _notifications.CreateForEmailAsync(
+                application.CandidateEmail,
+                title,
+                body,
+                category,
+                deepLink,
+                actionLabel,
+                actionUrl,
+                "Application",
+                application.Id,
+                cancellationToken);
+            return;
+        }
+
+        await _notifications.CreateAsync(
+            new NotificationCreateRequest(
+                userId,
+                title,
+                body,
+                category,
+                deepLink,
+                actionLabel,
+                actionUrl,
+                "Application",
+                application.Id),
+            cancellationToken);
     }
 
     private async Task NotifyEmployersOfNewApplicationAsync(
@@ -1104,15 +1329,17 @@ public class ApplicationsController : ControllerBase
                 u.IsActive
                 && u.Role != UserRole.Candidate
                 && (u.CompanyId == vacancy.CompanyId || u.CompanyMemberships.Any(m => m.CompanyId == vacancy.CompanyId)))
-            .Select(u => u.Email)
+            .Select(u => new { u.Id, u.Email })
             .Distinct()
             .ToListAsync(cancellationToken);
 
-        foreach (var email in contacts)
+        var subject = $"Nieuwe sollicitatie: {vacancy.Title}";
+        var body = $"{vacancy.Company.Name}: nieuwe kandidaat voor {vacancy.Title}";
+        foreach (var contact in contacts)
         {
             await _email.SendAsync(new EmailMessage(
-                email,
-                $"Nieuwe sollicitatie: {vacancy.Title}",
+                contact.Email,
+                subject,
                 $"""
                  <p>Er is een nieuwe sollicitatie ontvangen voor <strong>{Html(vacancy.Title)}</strong>.</p>
                  <p><a href="{Html(deepLink)}">Open sollicitantenoverzicht</a></p>
@@ -1120,11 +1347,64 @@ public class ApplicationsController : ControllerBase
                 "EmployerNewApplication"), cancellationToken);
 
             await _push.SendAsync(new PushMessage(
-                email,
+                contact.Email,
                 "Nieuwe sollicitatie",
-                $"{vacancy.Company.Name}: nieuwe kandidaat voor {vacancy.Title}",
+                body,
                 deepLink,
                 "EmployerNewApplication"), cancellationToken);
+
+            await _notifications.CreateAsync(
+                new NotificationCreateRequest(
+                    contact.Id,
+                    subject,
+                    body,
+                    "EmployerNewApplication",
+                    "/branch/applicants",
+                    RelatedEntityType: "Application",
+                    RelatedEntityId: application.Id),
+                cancellationToken);
+        }
+    }
+
+    private async Task NotifyEmployersOfWithdrawalAsync(
+        Core.Entities.Vacancy vacancy,
+        Core.Entities.Application application,
+        CancellationToken cancellationToken)
+    {
+        var deepLink = await BuildDeepLinkAsync("/branch/applicants", cancellationToken);
+        var contacts = await _db.Users
+            .AsNoTracking()
+            .Where(u =>
+                u.IsActive
+                && u.Role != UserRole.Candidate
+                && (u.CompanyId == vacancy.CompanyId || u.CompanyMemberships.Any(m => m.CompanyId == vacancy.CompanyId)))
+            .Select(u => new { u.Id, u.Email })
+            .Distinct()
+            .ToListAsync(cancellationToken);
+
+        var subject = $"Sollicitatie ingetrokken: {vacancy.Title}";
+        var body = "Een kandidaat heeft de sollicitatie ingetrokken.";
+        foreach (var contact in contacts)
+        {
+            await _email.SendAsync(new EmailMessage(
+                contact.Email,
+                subject,
+                $"""
+                 <p>Een kandidaat heeft de sollicitatie op <strong>{Html(vacancy.Title)}</strong> ingetrokken.</p>
+                 <p><a href="{Html(deepLink)}">Open sollicitantenoverzicht</a></p>
+                 """,
+                "CandidateWithdrawn"), cancellationToken);
+
+            await _notifications.CreateAsync(
+                new NotificationCreateRequest(
+                    contact.Id,
+                    subject,
+                    body,
+                    "CandidateWithdrawn",
+                    "/branch/applicants",
+                    RelatedEntityType: "Application",
+                    RelatedEntityId: application.Id),
+                cancellationToken);
         }
     }
 

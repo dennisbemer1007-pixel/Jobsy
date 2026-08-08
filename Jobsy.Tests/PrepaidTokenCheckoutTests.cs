@@ -173,6 +173,8 @@ public class PrepaidTokenCheckoutTests
             new EmailServiceStub(db, NullLogger<EmailServiceStub>.Instance),
             features,
             new MockRoutingService(),
+            new UserNotificationService(db),
+            new CandidateActionTokenService(db),
             NullLogger<VacancyProductService>.Instance);
     }
 

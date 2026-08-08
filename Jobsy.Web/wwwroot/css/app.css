@@ -4747,6 +4747,150 @@ a.map-popup__apply.map-popup__cta:visited {
     flex-shrink: 0;
 }
 
+.notification-bell {
+    position: relative;
+    flex-shrink: 0;
+}
+
+.notification-bell__toggle {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.2rem;
+    height: 2.2rem;
+    border-radius: 999px;
+    border: 1.5px solid color-mix(in srgb, var(--border) 70%, var(--brand) 30%);
+    background: color-mix(in srgb, var(--surface) 88%, var(--pearl-cool) 12%);
+    color: var(--ink);
+    cursor: pointer;
+}
+
+.notification-bell__toggle:hover {
+    border-color: var(--brand);
+    color: var(--brand);
+}
+
+.notification-bell__icon {
+    display: inline-flex;
+    width: 1.15rem;
+    height: 1.15rem;
+}
+
+.notification-bell__icon svg {
+    width: 100%;
+    height: 100%;
+}
+
+.notification-bell__badge {
+    position: absolute;
+    top: -0.25rem;
+    right: -0.25rem;
+    min-width: 1.15rem;
+    height: 1.15rem;
+    padding: 0 0.28rem;
+    border-radius: 999px;
+    background: #b42318;
+    color: #fff;
+    font-size: 0.68rem;
+    font-weight: 700;
+    line-height: 1.15rem;
+    text-align: center;
+}
+
+.notification-bell__panel {
+    position: absolute;
+    top: calc(100% + 0.45rem);
+    right: 0;
+    width: min(22rem, calc(100vw - 1.5rem));
+    max-height: min(70vh, 28rem);
+    overflow: auto;
+    z-index: 80;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 0.85rem;
+    box-shadow: 0 12px 36px rgba(15, 23, 42, 0.16);
+    padding: 0.75rem;
+}
+
+.notification-bell__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.notification-bell__list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: 0.45rem;
+}
+
+.notification-bell__item {
+    border: 1px solid color-mix(in srgb, var(--border) 80%, transparent);
+    border-radius: 0.65rem;
+    padding: 0.55rem 0.6rem;
+    background: color-mix(in srgb, var(--surface) 92%, var(--pearl-cool) 8%);
+}
+
+.notification-bell__item.is-unread {
+    border-color: color-mix(in srgb, var(--brand) 45%, var(--border));
+    background: color-mix(in srgb, var(--brand) 8%, var(--surface));
+}
+
+.notification-bell__item-btn {
+    display: grid;
+    gap: 0.2rem;
+    width: 100%;
+    text-align: left;
+    border: 0;
+    background: transparent;
+    color: inherit;
+    cursor: pointer;
+    padding: 0;
+}
+
+.notification-bell__item-title {
+    font-weight: 700;
+    font-size: 0.92rem;
+}
+
+.notification-bell__item-body {
+    color: var(--muted);
+    font-size: 0.82rem;
+    line-height: 1.35;
+}
+
+.notification-bell__item-meta {
+    color: var(--muted);
+    font-size: 0.72rem;
+}
+
+.notification-bell__action {
+    display: inline-block;
+    margin-top: 0.35rem;
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--brand);
+}
+
+.notification-bell__empty {
+    margin: 0.35rem 0;
+}
+
+.candidate-action-page {
+    max-width: 36rem;
+    margin: 2rem auto;
+    padding: 1.5rem;
+}
+
+.candidate-action-page__success h2 {
+    margin-top: 0;
+}
+
 .page-help {
     position: relative;
     flex-shrink: 0;

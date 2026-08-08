@@ -18,6 +18,17 @@ public static class ApplicationRules
     public static bool CanCandidateWithdraw(ApplicationStatus status, DateTime? emailVerifiedAt)
         => emailVerifiedAt is not null && status == ApplicationStatus.Pending;
 
+    public static bool IsOpenForEmployerPipeline(ApplicationStatus status)
+        => status is ApplicationStatus.Pending
+            or ApplicationStatus.Accepted
+            or ApplicationStatus.EmployerContacting;
+
+    public static bool IsTerminal(ApplicationStatus status)
+        => status is ApplicationStatus.Rejected
+            or ApplicationStatus.Hired
+            or ApplicationStatus.FilledElsewhere
+            or ApplicationStatus.Withdrawn;
+
     /// <summary>
     /// Only e-mail-verified applications appear under Sollicitaties.
     /// Drafts waiting on a verification code are not listed and have no candidate-facing status.

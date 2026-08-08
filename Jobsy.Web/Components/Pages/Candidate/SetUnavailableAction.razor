@@ -1,0 +1,66 @@
+@page "/candidate/actions/set-unavailable"
+@rendermode InteractiveServer
+@inject JobsyApiClient Api
+@inject NavigationManager Navigation
+
+<div class="panel candidate-action-page">
+    <h1>Status bijwerken</h1>
+    @if (_busy)
+    {
+        <p class="muted">Even geduld…</p>
+    }
+    else if (_succeeded)
+    {
+        <div class="candidate-action-page__success">
+            <h2>Gelukt</h2>
+            <p>@_message</p>
+            <p class="muted">Je staat nu op <strong>Niet beschikbaar</strong>. Werkgevers zien je niet meer als open voor werk.</p>
+            <div class="inline-actions">
+                <a class="login-submit" href="/candidate/profile">Naar je profiel</a>
+                <a class="btn-compact" href="/">Naar home</a>
+            </div>
+        </div>
+    }
+    else
+    {
+        <p class="@(_error ? "state-message error" : "muted")">@_message</p>
+        <a class="btn-compact" href="/candidate/profile">Naar je profiel</a>
+    }
+</div>
+
+@code {
+    private bool _busy = true;
+    private bool _succeeded;
+    private bool _error;
+    private string _message = "Bezig met verwerken…";
+
+    protected override async Task OnInitializedAsync()
+    {
+        var uri = Navigation.ToAbsoluteUri(Navigation.Uri);
+        var query = Microsoft.AspNetCore.WebUtilities.QueryHelpers.ParseQuery(uri.Query);
+        if (!query.TryGetValue("token", out var token) || string.IsNullOrWhiteSpace(token))
+        {
+            _busy = false;
+            _error = true;
+            _message = "Ongeldige of ontbrekende link.";
+            return;
+        }
+
+        try
+        {
+            var result = await Api.SetUnavailableViaTokenAsync(token!);
+            _succeeded = result?.Succeeded == true;
+            _error = !_succeeded;
+            _message = result?.Message ?? (_succeeded ? "Status bijgewerkt." : "Actie mislukt.");
+        }
+        catch (Exception ex)
+        {
+            _error = true;
+            _message = ex.Message;
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+}

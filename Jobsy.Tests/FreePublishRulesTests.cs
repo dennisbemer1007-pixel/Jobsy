@@ -470,6 +470,8 @@ public class FreePublishProductTests
             new EmailServiceStub(db, NullLogger<EmailServiceStub>.Instance),
             CreateFeatures(db),
             new MockRoutingService(),
+            new UserNotificationService(db),
+            new CandidateActionTokenService(db),
             NullLogger<VacancyProductService>.Instance);
 
     private static CompanyRegistrationService CreateRegistration(JobsyDbContext db)

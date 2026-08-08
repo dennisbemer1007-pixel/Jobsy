@@ -1,0 +1,210 @@
+@using Microsoft.AspNetCore.Components.Authorization
+@using Jobsy.Web.Localization
+@using Jobsy.Web.Navigation
+@inject JobsyApiClient Api
+@inject NavigationManager Navigation
+@inject CultureState Culture
+@implements IDisposable
+
+<AuthorizeView>
+    <Authorized>
+        <div class="notification-bell" @onclick:stopPropagation="true">
+            <button type="button"
+                    class="notification-bell__toggle"
+                    aria-label="@($"Notificaties{(_unread > 0 ? $", {_unread} ongelezen" : "")}")"
+                    aria-expanded="@_open"
+                    @onclick="ToggleAsync">
+                <span class="notification-bell__icon" aria-hidden="true">@((MarkupString)NavIcons.Notifications)</span>
+                @if (_unread > 0)
+                {
+                    <span class="notification-bell__badge">@(_unread > 99 ? "99+" : _unread.ToString())</span>
+                }
+            </button>
+
+            @if (_open)
+            {
+                <div class="notification-bell__panel" role="dialog" aria-label="Notificaties">
+                    <div class="notification-bell__header">
+                        <strong>Notificaties</strong>
+                        @if (_unread > 0)
+                        {
+                            <button type="button" class="btn-compact" disabled="@_busy" @onclick="MarkAllReadAsync">
+                                Alles gelezen
+                            </button>
+                        }
+                    </div>
+
+                    @if (_loading)
+                    {
+                        <p class="muted notification-bell__empty">Laden…</p>
+                    }
+                    else if (_items.Count == 0)
+                    {
+                        <p class="muted notification-bell__empty">Geen notificaties.</p>
+                    }
+                    else
+                    {
+                        <ul class="notification-bell__list">
+                            @foreach (var n in _items)
+                            {
+                                <li class="notification-bell__item @(n.IsRead ? null : "is-unread")">
+                                    <button type="button" class="notification-bell__item-btn" @onclick="() => OpenAsync(n)">
+                                        <span class="notification-bell__item-title">@n.Title</span>
+                                        <span class="notification-bell__item-body">@n.Body</span>
+                                        <span class="notification-bell__item-meta">@n.CreatedAtUtc.ToLocalTime().ToString("dd-MM HH:mm")</span>
+                                    </button>
+                                    @if (!string.IsNullOrWhiteSpace(n.ActionUrl) && !string.IsNullOrWhiteSpace(n.ActionLabel))
+                                    {
+                                        <a class="notification-bell__action" href="@n.ActionUrl" @onclick="() => MarkReadQuietAsync(n)" @onclick:stopPropagation="true">
+                                            @n.ActionLabel
+                                        </a>
+                                    }
+                                </li>
+                            }
+                        </ul>
+                    }
+                </div>
+            }
+        </div>
+    </Authorized>
+</AuthorizeView>
+
+@code {
+    private bool _open;
+    private bool _loading;
+    private bool _busy;
+    private int _unread;
+    private List<UserNotificationItem> _items = [];
+    private PeriodicTimer? _timer;
+    private CancellationTokenSource? _cts;
+
+    protected override async Task OnInitializedAsync()
+    {
+        Culture.Changed += OnCultureChanged;
+        await RefreshUnreadAsync();
+        _cts = new CancellationTokenSource();
+        _timer = new PeriodicTimer(TimeSpan.FromSeconds(45));
+        _ = PollAsync(_cts.Token);
+    }
+
+    private async Task PollAsync(CancellationToken ct)
+    {
+        try
+        {
+            while (_timer is not null && await _timer.WaitForNextTickAsync(ct))
+            {
+                await RefreshUnreadAsync();
+                await InvokeAsync(StateHasChanged);
+            }
+        }
+        catch (OperationCanceledException)
+        {
+            // disposed
+        }
+    }
+
+    private async Task ToggleAsync()
+    {
+        _open = !_open;
+        if (_open)
+        {
+            await LoadListAsync();
+        }
+    }
+
+    private async Task LoadListAsync()
+    {
+        _loading = true;
+        try
+        {
+            _items = (await Api.GetNotificationsAsync()).ToList();
+            _unread = _items.Count(n => !n.IsRead);
+        }
+        catch
+        {
+            _items = [];
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private async Task RefreshUnreadAsync()
+    {
+        try
+        {
+            _unread = await Api.GetUnreadNotificationCountAsync();
+        }
+        catch
+        {
+            // Not signed in / transient — ignore.
+        }
+    }
+
+    private async Task OpenAsync(UserNotificationItem n)
+    {
+        await MarkReadQuietAsync(n);
+        _open = false;
+        if (!string.IsNullOrWhiteSpace(n.DeepLink))
+        {
+            Navigation.NavigateTo(n.DeepLink);
+        }
+    }
+
+    private async Task MarkReadQuietAsync(UserNotificationItem n)
+    {
+        if (n.IsRead)
+        {
+            return;
+        }
+
+        try
+        {
+            var updated = await Api.MarkNotificationReadAsync(n.Id);
+            if (updated is not null)
+            {
+                n.IsRead = true;
+                n.ReadAtUtc = updated.ReadAtUtc;
+                _unread = Math.Max(0, _unread - 1);
+            }
+        }
+        catch
+        {
+            // ignore
+        }
+    }
+
+    private async Task MarkAllReadAsync()
+    {
+        _busy = true;
+        try
+        {
+            await Api.MarkAllNotificationsReadAsync();
+            foreach (var n in _items)
+            {
+                n.IsRead = true;
+            }
+
+            _unread = 0;
+        }
+        catch
+        {
+            // ignore
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private void OnCultureChanged() => InvokeAsync(StateHasChanged);
+
+    public void Dispose()
+    {
+        Culture.Changed -= OnCultureChanged;
+        _cts?.Cancel();
+        _cts?.Dispose();
+        _timer?.Dispose();
+    }
+}

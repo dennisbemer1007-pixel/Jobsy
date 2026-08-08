@@ -762,7 +762,8 @@ public sealed class RoleFunctionalWebAppFactory : WebApplicationFactory<Program>
                 LegalHeavyOrHazardousWork = false,
                 MaxApplications = 10,
                 CategoryId = VacancyCategoryDefaults.RegulierId,
-                SuitableFor65Plus = true
+                SuitableFor65Plus = true,
+                RequireEmailVerification = true
             },
             new Vacancy
             {
@@ -780,6 +781,7 @@ public sealed class RoleFunctionalWebAppFactory : WebApplicationFactory<Program>
                 WorkTypeLabels = "Logistiek",
                 SalaryTableId = SalaryTableId,
                 PublishedAtUtc = DateTime.UtcNow.AddDays(-1),
+                RequireEmailVerification = true,
                 MinHoursPerWeek = 36,
                 MaxHoursPerWeek = 40,
                 ScheduleJson = JsonSerializer.Serialize(new SchedulePayload

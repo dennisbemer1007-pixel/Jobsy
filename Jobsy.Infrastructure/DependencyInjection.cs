@@ -166,10 +166,13 @@ public static class DependencyInjection
         services.AddScoped<ITranslationService, OpenAiTranslationService>();
         services.AddScoped<IPrivacyDataService, PrivacyDataService>();
         services.AddScoped<IExclusivitySettingService, ExclusivitySettingService>();
+        services.AddScoped<IUserNotificationService, UserNotificationService>();
+        services.AddScoped<ICandidateActionTokenService, CandidateActionTokenService>();
         services.AddHostedService<DataRetentionHostedService>();
         services.AddHostedService<UnconfirmedRegistrationCleanupHostedService>();
         services.AddHostedService<DraftVacancyCleanupHostedService>();
         services.AddHostedService<CompanyReengagementHostedService>();
+        services.AddHostedService<VacancyEngagementReminderHostedService>();
         services.AddHostedService<VatBufferTransferHostedService>();
         services.AddHostedService<TokenCheckoutReconcileHostedService>();
         services.AddHostedService<KvkVerificationRetryHostedService>();

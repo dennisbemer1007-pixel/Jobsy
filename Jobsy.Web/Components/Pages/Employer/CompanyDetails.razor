@@ -1,6 +1,6 @@
 @page "/employer/company"
 @rendermode @(new InteractiveServerRenderMode(prerender: false))
-@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "BranchManager,EnterpriseManager,Admin")]
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "BranchManager,EnterpriseManager,Admin,Intermediary")]
 @using Jobsy.Web.Components.Employer
 @using Jobsy.Web.Components.Shared
 @inject JobsyApiClient Api
@@ -262,6 +262,30 @@
                             </div>
                         }
                     </div>
+                }
+            </section>
+
+            <section class="panel-section company-details__card">
+                <h2>E-mailverificatie sollicitaties</h2>
+                <p class="muted company-details__lead">
+                    Standaard staat verificatie uit. Zet dit aan als kandidaten hun e-mail met een code moeten bevestigen
+                    voordat de sollicitatie binnenkomt. Per vacature kun je dit later nog aanpassen.
+                </p>
+
+                <label class="company-details__toggle">
+                    <input type="checkbox"
+                           checked="@_org.RequireEmailVerificationForApplications"
+                           disabled="@_busy"
+                           @onchange="OnEmailVerificationToggleAsync" />
+                    <span>
+                        <strong>E-mailverificatie voor sollicitaties</strong>
+                        <span class="muted">Standaard voor nieuwe vacatures (standaard uit)</span>
+                    </span>
+                </label>
+
+                @if (_feedbackSection == FeedbackSection.EmailVerification && !string.IsNullOrEmpty(_message))
+                {
+                    <p class="state-message @(_messageIsError ? "error" : null)">@_message</p>
                 }
             </section>
 
@@ -540,7 +564,8 @@
         Contact,
         Billing,
         Csv,
-        Api
+        Api,
+        EmailVerification
     }
 
     private const string CopySvg =
@@ -981,6 +1006,46 @@
         catch (Exception ex)
         {
             SetFeedback(FeedbackSection.Api, ex.Message, isError: true);
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private async Task OnEmailVerificationToggleAsync(ChangeEventArgs e)
+    {
+        if (_org is null || _busy)
+        {
+            return;
+        }
+
+        var enabled = e.Value is bool b && b || e.Value?.ToString() == "on";
+        _busy = true;
+        ClearFeedback();
+        try
+        {
+            var updated = await Api.UpdateEmailVerificationPreferenceAsync(_org.Id, enabled);
+            if (updated is not null)
+            {
+                _org.RequireEmailVerificationForApplications = updated.RequireEmailVerificationForApplications;
+                var idx = _organizations.FindIndex(o => o.Id == _org.Id);
+                if (idx >= 0)
+                {
+                    _organizations[idx].RequireEmailVerificationForApplications =
+                        updated.RequireEmailVerificationForApplications;
+                }
+
+                SetFeedback(
+                    FeedbackSection.EmailVerification,
+                    enabled
+                        ? "E-mailverificatie voor sollicitaties staat aan (standaard voor nieuwe vacatures)."
+                        : "E-mailverificatie voor sollicitaties staat uit.");
+            }
+        }
+        catch (Exception ex)
+        {
+            SetFeedback(FeedbackSection.EmailVerification, ex.Message, isError: true);
         }
         finally
         {

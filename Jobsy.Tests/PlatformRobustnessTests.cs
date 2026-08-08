@@ -164,6 +164,8 @@ public class PlatformRobustnessTests
             new EmailServiceStub(db, NullLogger<EmailServiceStub>.Instance),
             features,
             new MockRoutingService(),
+            new UserNotificationService(db),
+            new CandidateActionTokenService(db),
             NullLogger<VacancyProductService>.Instance);
 
         var result = await products.PublishAsync(

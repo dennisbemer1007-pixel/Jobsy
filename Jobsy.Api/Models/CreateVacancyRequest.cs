@@ -36,4 +36,5 @@ public record CreateVacancyRequest(
     Guid? ExclusivitySettingId = null,
     Guid? CategoryId = null,
     Dictionary<string, string>? CategoryFields = null,
-    bool SuitableFor65Plus = false);
+    bool SuitableFor65Plus = false,
+    bool? RequireEmailVerification = null);

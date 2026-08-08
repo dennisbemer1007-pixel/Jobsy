@@ -21,6 +21,7 @@ public class CompanySummary
     public string? ContactPhone { get; set; }
     public string? ContactWhatsApp { get; set; }
     public string? PreferredPaymentMethod { get; set; }
+    public bool RequireEmailVerificationForApplications { get; set; }
 }
 
 public class CompanyBillingHistoryItem
@@ -137,6 +138,35 @@ public class VacancyContactPreferenceItem
     public bool ContactPreferMail { get; set; }
     public bool ContactPreferPhone { get; set; }
     public bool ContactPreferWhatsApp { get; set; }
+}
+
+public class VacancyEmailVerificationItem
+{
+    public Guid VacancyId { get; set; }
+    public bool RequireEmailVerification { get; set; }
+}
+
+public class UserNotificationItem
+{
+    public Guid Id { get; set; }
+    public string Title { get; set; } = string.Empty;
+    public string Body { get; set; } = string.Empty;
+    public string Category { get; set; } = string.Empty;
+    public string? DeepLink { get; set; }
+    public string? ActionLabel { get; set; }
+    public string? ActionUrl { get; set; }
+    public bool IsRead { get; set; }
+    public DateTime CreatedAtUtc { get; set; }
+    public DateTime? ReadAtUtc { get; set; }
+    public string? RelatedEntityType { get; set; }
+    public Guid? RelatedEntityId { get; set; }
+}
+
+public class CandidateActionResultItem
+{
+    public bool Succeeded { get; set; }
+    public string Message { get; set; } = string.Empty;
+    public int? WithdrawnCount { get; set; }
 }
 
 public class EmployerApplicationItem

@@ -22,6 +22,8 @@ public sealed class VacancyProductService : IVacancyProductService
     private readonly IEmailService _email;
     private readonly IPlatformFeatureService _features;
     private readonly IRoutingService _routing;
+    private readonly IUserNotificationService _notifications;
+    private readonly ICandidateActionTokenService _actionTokens;
     private readonly ILogger<VacancyProductService> _logger;
 
     public VacancyProductService(
@@ -33,6 +35,8 @@ public sealed class VacancyProductService : IVacancyProductService
         IEmailService email,
         IPlatformFeatureService features,
         IRoutingService routing,
+        IUserNotificationService notifications,
+        ICandidateActionTokenService actionTokens,
         ILogger<VacancyProductService> logger)
     {
         _db = db;
@@ -43,6 +47,8 @@ public sealed class VacancyProductService : IVacancyProductService
         _email = email;
         _features = features;
         _routing = routing;
+        _notifications = notifications;
+        _actionTokens = actionTokens;
         _logger = logger;
     }
 
@@ -990,15 +996,51 @@ public sealed class VacancyProductService : IVacancyProductService
     {
         var settings = await GetPushBomSettingsAsync(cancellationToken);
         var deepLink = await BuildDeepLinkAsync($"/vacancies/{vacancy.Id}", cancellationToken);
+        var companyName = vacancy.Company?.Name ?? "Werkgever";
         foreach (var candidate in candidates)
         {
+            var action = await _actionTokens.IssueAsync(
+                candidate.Id,
+                CandidateActionPurposes.SetUnavailable,
+                cancellationToken: cancellationToken);
+            var setUnavailableLink = await BuildDeepLinkAsync(action.RelativeActionPath, cancellationToken);
+
+            var subject = $"Nieuwe vacature bij jou in de buurt: {vacancy.Title}";
+            var bodyText =
+                $"{companyName} zoekt {vacancy.Title}. Bekijk de vacature in Lobsy.";
+            var html = $"""
+                <p>Hoi {System.Net.WebUtility.HtmlEncode(candidate.FullName)},</p>
+                <p><strong>{System.Net.WebUtility.HtmlEncode(companyName)}</strong> zoekt
+                <strong>{System.Net.WebUtility.HtmlEncode(vacancy.Title)}</strong> bij jou in de buurt.</p>
+                <p><a href="{System.Net.WebUtility.HtmlEncode(deepLink)}">Bekijk de vacature</a></p>
+                <p>Niet meer op zoek naar werk?
+                <a href="{System.Net.WebUtility.HtmlEncode(setUnavailableLink)}">Zet je status op Niet beschikbaar</a>.</p>
+                """;
+
+            await _email.SendAsync(
+                new EmailMessage(candidate.Email, subject, html, "PushBom"),
+                cancellationToken);
+
             await _push.SendAsync(
                 new PushMessage(
                     candidate.Email,
-                    $"Nieuwe vacature bij jou in de buurt: {vacancy.Title}",
-                    $"{vacancy.Company?.Name ?? "Werkgever"} zoekt {vacancy.Title}. Bekijk de vacature in Jobsy.",
+                    subject,
+                    bodyText,
                     deepLink,
                     "PushBom"),
+                cancellationToken);
+
+            await _notifications.CreateAsync(
+                new NotificationCreateRequest(
+                    candidate.Id,
+                    subject,
+                    bodyText + " Niet meer op zoek? Zet je status op Niet beschikbaar.",
+                    "PushBom",
+                    $"/vacancies/{vacancy.Id}",
+                    "Zet op Niet beschikbaar",
+                    action.RelativeActionPath,
+                    "Vacancy",
+                    vacancy.Id),
                 cancellationToken);
         }
 

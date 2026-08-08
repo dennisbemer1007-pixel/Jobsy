@@ -22,7 +22,8 @@ public record CompanySummaryDto(
     string? ContactWhatsApp = null,
     string? KvkEstablishmentId = null,
     string KvkVerificationStatus = nameof(Jobsy.Core.Enums.KvkVerificationStatus.Verified),
-    string? PreferredPaymentMethod = null);
+    string? PreferredPaymentMethod = null,
+    bool RequireEmailVerificationForApplications = false);
 
 public record UpdateBillingPreferenceRequest(string? PreferredPaymentMethod);
 
@@ -50,6 +51,8 @@ public record UpdateTokenManagementRequest(bool TokensManagedByEnterprise);
 
 public record UpdateCsvBatchImportRequest(bool CsvBatchImportEnabled);
 
+public record UpdateEmailVerificationPreferenceRequest(bool RequireEmailVerificationForApplications);
+
 public record UpdateContactPreferenceRequest(
     bool DirectContactEnabled,
     bool ContactPreferMail,
@@ -67,12 +70,16 @@ public record VacancyContactPreferenceDto(
     bool ContactPreferPhone,
     bool ContactPreferWhatsApp);
 
+public record VacancyEmailVerificationDto(Guid VacancyId, bool RequireEmailVerification);
+
 public record UpdateVacancyContactPreferenceRequest(
     bool OverrideContactPreference,
     bool DirectContactEnabled = false,
     bool ContactPreferMail = false,
     bool ContactPreferPhone = false,
     bool ContactPreferWhatsApp = false);
+
+public record UpdateVacancyEmailVerificationRequest(bool RequireEmailVerification);
 
 public record GrantTokensRequest(Guid CompanyId, decimal Amount, string Note);
 

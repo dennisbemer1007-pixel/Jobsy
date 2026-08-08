@@ -144,6 +144,9 @@
                                         <button class="row-actions-menu__item" type="button" role="menuitem" @onclick="() => OpenContactPref(v)">
                                             @Culture["VacancyAction.Contact"]
                                         </button>
+                                        <button class="row-actions-menu__item" type="button" role="menuitem" @onclick="() => ToggleEmailVerificationAsync(v)">
+                                            @(v.RequireEmailVerification ? "E-mailverificatie uit" : "E-mailverificatie aan")
+                                        </button>
                                         @if (!IsIncompleteDraft(v))
                                         {
                                             <a class="row-actions-menu__item" role="menuitem" href="@($"/branch/vacancies/new?from={v.Id}")">
@@ -151,11 +154,14 @@
                                             </a>
                                         }
                                     }
-                                    @if (_canManageVacancy && v.Status == "Draft")
+                                    @if (_canManageVacancy && (v.Status == "Draft" || v.Status == "Active"))
                                     {
                                         <a class="row-actions-menu__item" role="menuitem" href="@($"/branch/vacancies/new?edit={v.Id}")">
                                             Bewerken
                                         </a>
+                                    }
+                                    @if (_canManageVacancy && v.Status == "Draft")
+                                    {
                                         @if (!IsIncompleteDraft(v))
                                         {
                                             <button class="row-actions-menu__item" type="button" role="menuitem" @onclick="() => OpenPublish(v)">
@@ -593,6 +599,27 @@
             await Api.DeactivateVacancyAsync(id);
             await RefreshAsync();
             _message = "Vacature inactief (gearchiveerd).";
+        }
+        catch (Exception ex)
+        {
+            _message = ex.Message;
+        }
+    }
+
+    private async Task ToggleEmailVerificationAsync(VacancyListItem vacancy)
+    {
+        try
+        {
+            var updated = await Api.UpdateVacancyEmailVerificationAsync(
+                vacancy.Id,
+                !vacancy.RequireEmailVerification);
+            if (updated is not null)
+            {
+                vacancy.RequireEmailVerification = updated.RequireEmailVerification;
+                _message = updated.RequireEmailVerification
+                    ? $"E-mailverificatie aan voor “{vacancy.Title}”."
+                    : $"E-mailverificatie uit voor “{vacancy.Title}”.";
+            }
         }
         catch (Exception ex)
         {

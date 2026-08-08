@@ -106,6 +106,8 @@ public class SalesCommercialServiceTests
             new EmailServiceStub(db, Microsoft.Extensions.Logging.Abstractions.NullLogger<EmailServiceStub>.Instance),
             features,
             new MockRoutingService(),
+            new UserNotificationService(db),
+            new CandidateActionTokenService(db),
             Microsoft.Extensions.Logging.Abstractions.NullLogger<VacancyProductService>.Instance);
 
         var result = await products.PublishAsync(
@@ -261,6 +263,8 @@ public class SalesCommercialServiceTests
             new EmailServiceStub(db, Microsoft.Extensions.Logging.Abstractions.NullLogger<EmailServiceStub>.Instance),
             features,
             new MockRoutingService(),
+            new UserNotificationService(db),
+            new CandidateActionTokenService(db),
             Microsoft.Extensions.Logging.Abstractions.NullLogger<VacancyProductService>.Instance);
 
         var first = await Products().PublishAsync(a, new VacancyPublishOptions(), null);

@@ -28,7 +28,8 @@ public enum ApplicationStatus
     Rejected = 2,
     EmployerContacting = 3,
     Hired = 4,
-    FilledElsewhere = 5
+    FilledElsewhere = 5,
+    Withdrawn = 6
 }
 
 public enum CompanyType
