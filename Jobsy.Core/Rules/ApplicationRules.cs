@@ -1,3 +1,4 @@
+using Jobsy.Core.Entities;
 using Jobsy.Core.Enums;
 
 namespace Jobsy.Core.Rules;
@@ -65,4 +66,40 @@ public static class ApplicationRules
                or ApplicationStatus.FilledElsewhere
                or ApplicationStatus.Hired
                or ApplicationStatus.Withdrawn);
+
+    /// <summary>
+    /// AVG minimization: strip candidate snapshots/contact extras when an application is withdrawn.
+    /// Keeps CandidateUserId / CandidateEmail / CandidateName for uniqueness and re-apply.
+    /// </summary>
+    public static void ScrubPersonalDataOnWithdraw(Application application)
+    {
+        ArgumentNullException.ThrowIfNull(application);
+
+        application.CandidateCity = null;
+        application.CandidateAddress = null;
+        application.PreferencesSummary = null;
+        application.SnapshotAvailabilityJson = null;
+        application.SnapshotDrivingLicenses = null;
+        application.SnapshotEducations = null;
+        application.SnapshotAboutMe = null;
+        application.SnapshotPhoneNumber = null;
+        application.SnapshotWhatsAppAllowed = false;
+        application.SnapshotHomeLatitude = null;
+        application.SnapshotHomeLongitude = null;
+        application.SnapshotCertificatesJson = null;
+        application.SnapshotShowAddressOnCv = false;
+        application.SnapshotDateOfBirth = null;
+        application.Motivation = null;
+        application.StudentNumber = null;
+        application.SchoolEmail = null;
+        application.StudyProgram = null;
+        application.StudyYear = null;
+        application.ExclusivityValidationStatus = null;
+        application.CandidateEmployerCount = 0;
+        application.DistanceKm = null;
+        application.MatchBreakdownJson = null;
+        application.EmailVerificationCode = null;
+        application.EmailVerificationExpiresAt = null;
+        application.EmailVerificationFailedAttempts = 0;
+    }
 }

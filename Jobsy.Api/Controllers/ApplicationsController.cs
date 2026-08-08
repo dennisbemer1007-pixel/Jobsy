@@ -811,6 +811,7 @@ public class ApplicationsController : ControllerBase
 
         application.Status = ApplicationStatus.Withdrawn;
         application.RespondedAt = DateTime.UtcNow;
+        ApplicationRules.ScrubPersonalDataOnWithdraw(application);
         await _db.SaveChangesAsync(cancellationToken);
 
         var vacancy = await _db.Vacancies.AsNoTracking()

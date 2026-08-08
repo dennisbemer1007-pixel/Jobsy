@@ -87,6 +87,25 @@ public class NotificationAndEngagementRulesTests
     }
 
     [Fact]
+    public void ApplicationRules_scrub_on_withdraw_clears_pii_snapshots()
+    {
+        var app = new Jobsy.Core.Entities.Application
+        {
+            Motivation = "x",
+            SnapshotAboutMe = "y",
+            CandidateAddress = "z",
+            CandidateName = "Keep",
+            CandidateEmail = "keep@example.com"
+        };
+        ApplicationRules.ScrubPersonalDataOnWithdraw(app);
+        Assert.Null(app.Motivation);
+        Assert.Null(app.SnapshotAboutMe);
+        Assert.Null(app.CandidateAddress);
+        Assert.Equal("Keep", app.CandidateName);
+        Assert.Equal("keep@example.com", app.CandidateEmail);
+    }
+
+    [Fact]
     public void CandidateActionPurposes_known()
     {
         Assert.True(CandidateActionPurposes.IsKnown(CandidateActionPurposes.SetUnavailable));

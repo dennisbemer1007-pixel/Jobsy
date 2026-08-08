@@ -46,6 +46,22 @@ public class CandidateActionsController : ControllerBase
         [FromBody] CandidateActionRequest request,
         CancellationToken cancellationToken)
     {
+        // Validate before consume so a leaked link cannot burn the token on a failed pre-check.
+        var preview = await _tokens.FindValidAsync(
+            request.Token,
+            CandidateActionPurposes.SetUnavailable,
+            cancellationToken);
+        if (preview is null)
+        {
+            return BadRequest(new CandidateActionResultDto(false, "Deze link is ongeldig of al gebruikt. Pas je status desnoods aan via je profiel."));
+        }
+
+        var user = await _db.Users.FirstOrDefaultAsync(u => u.Id == preview.UserId, cancellationToken);
+        if (user is null || !user.IsActive)
+        {
+            return BadRequest(new CandidateActionResultDto(false, "We konden je account niet vinden. Log in en pas je status aan via je profiel."));
+        }
+
         var token = await _tokens.TryConsumeAsync(
             request.Token,
             CandidateActionPurposes.SetUnavailable,
@@ -53,12 +69,6 @@ public class CandidateActionsController : ControllerBase
         if (token is null)
         {
             return BadRequest(new CandidateActionResultDto(false, "Deze link is ongeldig of al gebruikt. Pas je status desnoods aan via je profiel."));
-        }
-
-        var user = await _db.Users.FirstOrDefaultAsync(u => u.Id == token.UserId, cancellationToken);
-        if (user is null || !user.IsActive)
-        {
-            return BadRequest(new CandidateActionResultDto(false, "We konden je account niet vinden. Log in en pas je status aan via je profiel."));
         }
 
         return Ok(await ApplySetUnavailableAsync(user, cancellationToken));
@@ -93,18 +103,37 @@ public class CandidateActionsController : ControllerBase
         [FromBody] CandidateActionRequest request,
         CancellationToken cancellationToken)
     {
-        var token = await _tokens.TryConsumeAsync(
+        var preview = await _tokens.FindValidAsync(
             request.Token,
             CandidateActionPurposes.WithdrawOtherApplications,
             cancellationToken);
-        if (token is null)
+        if (preview is null)
         {
             return BadRequest(new CandidateActionResultDto(false, "Deze link is ongeldig of al gebruikt."));
         }
 
-        if (token.RelatedApplicationId is null)
+        if (preview.RelatedApplicationId is null)
         {
             return BadRequest(new CandidateActionResultDto(false, "Actie is incompleet geconfigureerd."));
+        }
+
+        var hiredOk = await _db.Applications.AsNoTracking().AnyAsync(
+            a => a.Id == preview.RelatedApplicationId.Value
+                 && a.CandidateUserId == preview.UserId
+                 && a.Status == ApplicationStatus.Hired,
+            cancellationToken);
+        if (!hiredOk)
+        {
+            return BadRequest(new CandidateActionResultDto(false, "Match-sollicitatie niet gevonden."));
+        }
+
+        var token = await _tokens.TryConsumeAsync(
+            request.Token,
+            CandidateActionPurposes.WithdrawOtherApplications,
+            cancellationToken);
+        if (token is null || token.RelatedApplicationId is null)
+        {
+            return BadRequest(new CandidateActionResultDto(false, "Deze link is ongeldig of al gebruikt."));
         }
 
         return await WithdrawOthersForUserAsync(token.UserId, token.RelatedApplicationId.Value, cancellationToken);
@@ -184,6 +213,7 @@ public class CandidateActionsController : ControllerBase
         {
             other.Status = ApplicationStatus.Withdrawn;
             other.RespondedAt = now;
+            ApplicationRules.ScrubPersonalDataOnWithdraw(other);
         }
 
         await _db.SaveChangesAsync(cancellationToken);

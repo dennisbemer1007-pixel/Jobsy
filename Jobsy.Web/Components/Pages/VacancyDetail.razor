@@ -1157,9 +1157,9 @@
             if (mine is not null)
             {
                 // Only verified (submitted) applications are returned — drafts awaiting a code stay out.
-                // Fresh visits therefore start at Profiel/Akkoord/Versturen unless the user just
-                // entered verify in this session (_enteredVerifyThisSession).
-                _applied = mine.Any(a => a.VacancyId == Id);
+                // Withdrawn applications may be reopened via Apply, so they must not lock the UI.
+                _applied = mine.Any(a => a.VacancyId == Id
+                                         && !string.Equals(a.Status, "Withdrawn", StringComparison.OrdinalIgnoreCase));
                 if (_applied)
                 {
                     _awaitingVerification = false;

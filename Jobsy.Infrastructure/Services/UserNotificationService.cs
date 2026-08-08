@@ -146,7 +146,7 @@ public sealed class UserNotificationService : IUserNotificationService
     /// Strip secret <c>token</c> query params from persisted in-app CTAs (AVG / session security).
     /// Safe params like <c>hiredApplicationId</c> are kept.
     /// </summary>
-    internal static string? SanitizeActionUrl(string? actionUrl)
+    public static string? SanitizeActionUrl(string? actionUrl)
     {
         if (string.IsNullOrWhiteSpace(actionUrl))
         {

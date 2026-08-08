@@ -1,5 +1,6 @@
 using Jobsy.Core.Enums;
 using Jobsy.Core.Privacy;
+using Jobsy.Core.Rules;
 using Jobsy.Infrastructure.Data;
 using Jobsy.Infrastructure.Services;
 using Microsoft.EntityFrameworkCore;
@@ -81,6 +82,27 @@ public sealed class DataRetentionHostedService : BackgroundService
             .Where(a => a.EmailVerifiedAt == null && a.CreatedAt < draftCutoff)
             .ExecuteDeleteAsync(cancellationToken);
 
+        // AVG: scrub leftover PII on soft-withdrawn applications (legacy rows + defense in depth).
+        var withdrawnWithSnapshots = await db.Applications
+            .Where(a => a.Status == ApplicationStatus.Withdrawn
+                        && (a.SnapshotAboutMe != null
+                            || a.Motivation != null
+                            || a.CandidateAddress != null
+                            || a.SnapshotPhoneNumber != null
+                            || a.SnapshotCertificatesJson != null
+                            || a.SnapshotAvailabilityJson != null))
+            .Take(500)
+            .ToListAsync(cancellationToken);
+        foreach (var app in withdrawnWithSnapshots)
+        {
+            ApplicationRules.ScrubPersonalDataOnWithdraw(app);
+        }
+
+        if (withdrawnWithSnapshots.Count > 0)
+        {
+            await db.SaveChangesAsync(cancellationToken);
+        }
+
         var notificationCutoff = now.AddDays(-PrivacyConstants.UserNotificationRetentionDays);
         var notificationsRemoved = await db.UserNotifications
             .Where(n => n.CreatedAtUtc < notificationCutoff)
@@ -107,12 +129,14 @@ public sealed class DataRetentionHostedService : BackgroundService
             .ExecuteDeleteAsync(cancellationToken);
 
         if (logsRemoved + regsRemoved + clicksRemoved + sharesRemoved + impressionsRemoved + visitsRemoved
-            + unverifiedAppsRemoved + notificationsRemoved + tokensRemoved + dirtyActionUrls.Count > 0)
+            + unverifiedAppsRemoved + notificationsRemoved + tokensRemoved + dirtyActionUrls.Count
+            + withdrawnWithSnapshots.Count > 0)
         {
             _logger.LogInformation(
-                "Retention purge: logs={Logs}, registrations={Regs}, clicks={Clicks}, shares={Shares}, impressions={Impressions}, visits={Visits}, unverifiedApps={UnverifiedApps}, notifications={Notifications}, actionTokens={Tokens}, scrubbedActionUrls={Scrubbed}",
+                "Retention purge: logs={Logs}, registrations={Regs}, clicks={Clicks}, shares={Shares}, impressions={Impressions}, visits={Visits}, unverifiedApps={UnverifiedApps}, notifications={Notifications}, actionTokens={Tokens}, scrubbedActionUrls={Scrubbed}, scrubbedWithdrawnApps={WithdrawnScrubbed}",
                 logsRemoved, regsRemoved, clicksRemoved, sharesRemoved, impressionsRemoved, visitsRemoved,
-                unverifiedAppsRemoved, notificationsRemoved, tokensRemoved, dirtyActionUrls.Count);
+                unverifiedAppsRemoved, notificationsRemoved, tokensRemoved, dirtyActionUrls.Count,
+                withdrawnWithSnapshots.Count);
         }
     }
 }

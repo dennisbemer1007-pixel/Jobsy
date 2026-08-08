@@ -42,7 +42,7 @@ public class NotificationsController : ControllerBase
             n.Category,
             n.DeepLink,
             n.ActionLabel,
-            n.ActionUrl,
+            Jobsy.Infrastructure.Services.UserNotificationService.SanitizeActionUrl(n.ActionUrl),
             n.IsRead,
             n.CreatedAtUtc,
             n.ReadAtUtc,
