@@ -3,19 +3,52 @@
 @inject JobsyApiClient Api
 @inject NavigationManager Navigation
 
+<PageTitle>Niet beschikbaar · Lobsy</PageTitle>
+
 <div class="panel candidate-action-page">
-    <h1>Status bijwerken</h1>
-    @if (_busy)
+    @if (_busy && _phase == Phase.Working)
     {
-        <p class="muted">Even geduld…</p>
+        <div class="candidate-action-page__card">
+            <p class="candidate-action-page__eyebrow">Even geduld</p>
+            <h1>Je status wordt bijgewerkt…</h1>
+            <p class="muted">Dit duurt maar een moment.</p>
+        </div>
     }
-    else if (_succeeded)
+    else if (_phase == Phase.Confirm)
     {
-        <div class="candidate-action-page__success">
-            <h2>Gelukt</h2>
+        <div class="candidate-action-page__card">
+            <p class="candidate-action-page__eyebrow">Je zoekstatus</p>
+            <h1>Zet je status op Niet beschikbaar?</h1>
+            <p>
+                Handig als je (tijdelijk) niet meer op zoek bent naar werk.
+                Werkgevers zien je dan niet meer als open voor nieuwe kansen via PushBom.
+            </p>
+            <ul class="candidate-action-page__bullets">
+                <li>Je bestaande sollicitaties blijven gewoon staan.</li>
+                <li>Je kunt dit later altijd weer aanzetten in je profiel.</li>
+            </ul>
+            @if (!string.IsNullOrEmpty(_message) && _error)
+            {
+                <p class="state-message error">@_message</p>
+            }
+            <div class="inline-actions candidate-action-page__actions">
+                <button type="button" class="login-submit" disabled="@_busy" @onclick="ConfirmAsync">
+                    Ja, zet op Niet beschikbaar
+                </button>
+                <a class="btn-compact" href="/candidate/profile">Annuleren</a>
+            </div>
+        </div>
+    }
+    else if (_phase == Phase.Success)
+    {
+        <div class="candidate-action-page__card candidate-action-page__card--success">
+            <p class="candidate-action-page__eyebrow">Gelukt</p>
+            <h1>Je staat nu op Niet beschikbaar</h1>
             <p>@_message</p>
-            <p class="muted">Je staat nu op <strong>Niet beschikbaar</strong>. Werkgevers zien je niet meer als open voor werk.</p>
-            <div class="inline-actions">
+            <p class="muted">
+                Wil je later weer openstaan voor werk? Zet <strong>Beschikbaar voor werk</strong> gewoon weer aan in je profiel.
+            </p>
+            <div class="inline-actions candidate-action-page__actions">
                 <a class="login-submit" href="/candidate/profile">Naar je profiel</a>
                 <a class="btn-compact" href="/">Naar home</a>
             </div>
@@ -23,44 +56,95 @@
     }
     else
     {
-        <p class="@(_error ? "state-message error" : "muted")">@_message</p>
-        <a class="btn-compact" href="/candidate/profile">Naar je profiel</a>
+        <div class="candidate-action-page__card">
+            <p class="candidate-action-page__eyebrow">Link niet geldig</p>
+            <h1>Deze actie lukt niet meer</h1>
+            <p class="@(_error ? "state-message error" : "muted")">@_message</p>
+            <p class="muted">Geen zorgen — je kunt je status altijd handmatig aanpassen in je profiel.</p>
+            <div class="inline-actions candidate-action-page__actions">
+                <a class="login-submit" href="/candidate/profile">Naar je profiel</a>
+                <a class="btn-compact" href="/">Naar home</a>
+            </div>
+        </div>
     }
 </div>
 
 @code {
-    private bool _busy = true;
-    private bool _succeeded;
-    private bool _error;
-    private string _message = "Bezig met verwerken…";
+    private enum Phase { Confirm, Working, Success, Failed }
 
-    protected override async Task OnInitializedAsync()
+    private Phase _phase = Phase.Confirm;
+    private bool _busy;
+    private bool _error;
+    private string _message = "";
+    private string? _token;
+
+    protected override void OnInitialized()
     {
         var uri = Navigation.ToAbsoluteUri(Navigation.Uri);
         var query = Microsoft.AspNetCore.WebUtilities.QueryHelpers.ParseQuery(uri.Query);
         if (!query.TryGetValue("token", out var token) || string.IsNullOrWhiteSpace(token))
         {
-            _busy = false;
+            _phase = Phase.Failed;
             _error = true;
-            _message = "Ongeldige of ontbrekende link.";
+            _message = "Deze link is onvolledig of verlopen. Open je profiel om je status handmatig te wijzigen.";
             return;
         }
 
+        _token = token!;
+        _phase = Phase.Confirm;
+    }
+
+    private async Task ConfirmAsync()
+    {
+        if (string.IsNullOrWhiteSpace(_token) || _busy)
+        {
+            return;
+        }
+
+        _busy = true;
+        _phase = Phase.Working;
+        _error = false;
         try
         {
-            var result = await Api.SetUnavailableViaTokenAsync(token!);
-            _succeeded = result?.Succeeded == true;
-            _error = !_succeeded;
-            _message = result?.Message ?? (_succeeded ? "Status bijgewerkt." : "Actie mislukt.");
+            var result = await Api.SetUnavailableViaTokenAsync(_token);
+            if (result?.Succeeded == true)
+            {
+                _phase = Phase.Success;
+                _message = "Werkgevers zien je nu niet meer als open voor werk. Je account blijft gewoon actief.";
+            }
+            else
+            {
+                _phase = Phase.Failed;
+                _error = true;
+                _message = result?.Message
+                           ?? "Deze link is al gebruikt of verlopen. Pas je status aan via je profiel.";
+            }
         }
         catch (Exception ex)
         {
+            _phase = Phase.Failed;
             _error = true;
-            _message = ex.Message;
+            _message = FriendlyError(ex.Message);
         }
         finally
         {
             _busy = false;
         }
+    }
+
+    private static string FriendlyError(string raw)
+    {
+        if (string.IsNullOrWhiteSpace(raw))
+        {
+            return "Er ging iets mis. Probeer het later opnieuw of pas je status aan via je profiel.";
+        }
+
+        if (raw.Contains("ongeldig", StringComparison.OrdinalIgnoreCase)
+            || raw.Contains("gebruikt", StringComparison.OrdinalIgnoreCase))
+        {
+            return "Deze link is al gebruikt of niet meer geldig. Je kunt je status alsnog wijzigen in je profiel.";
+        }
+
+        return raw;
     }
 }

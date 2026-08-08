@@ -1083,18 +1083,23 @@ public class ApplicationsController : ControllerBase
             ? null
             : await BuildDeepLinkAsync(withdrawActionPath, cancellationToken);
         var hiredSubject = $"Gefeliciteerd! Je bent aangenomen voor {vacancy.Title}";
-        var hiredNotifyBody = $"Je bent geselecteerd voor {vacancy.Title} bij {vacancy.Company.Name}.";
+        var hiredNotifyBody = $"Wat een feest — je bent aangenomen voor {vacancy.Title} bij {vacancy.Company.Name}.";
         var withdrawParagraph = withdrawAbsolute is null
             ? ""
             : $"""
-               <p>Heb je nog andere sollicitaties lopen? Trek ze in, zodat die werkgevers weten dat je al bent voorzien.
-               <a href="{Html(withdrawAbsolute)}">Andere sollicitaties intrekken</a></p>
+               <p style="margin-top:1rem;padding:0.9rem 1rem;background:#f4faf7;border-radius:0.65rem">
+               Heb je nog andere sollicitaties lopen? Trek ze in, zodat die werkgevers weten dat je al bent voorzien.
+               <br/><a href="{Html(withdrawAbsolute)}"><strong>Andere sollicitaties netjes intrekken</strong></a>
+               </p>
                """;
         await _email.SendAsync(new EmailMessage(
             chosen.CandidateEmail,
             hiredSubject,
             $"""
-             <p>Gefeliciteerd! Je bent geselecteerd voor <strong>{Html(vacancy.Title)}</strong> bij {Html(vacancy.Company.Name)}.</p>
+             <p>Hoi {Html(chosen.CandidateName)},</p>
+             <p><strong>Wat een feest!</strong> Je bent aangenomen voor
+             <strong>{Html(vacancy.Title)}</strong> bij {Html(vacancy.Company.Name)}.</p>
+             <p>Heel veel succes — en geniet van deze stap.</p>
              {withdrawParagraph}
              """,
             "ApplicationHired"), cancellationToken);
@@ -1106,7 +1111,7 @@ public class ApplicationsController : ControllerBase
             "ApplicationHired",
             "/candidate/applications",
             cancellationToken,
-            actionLabel: withdrawAbsolute is null ? null : "Andere sollicitaties intrekken",
+            actionLabel: withdrawAbsolute is null ? null : "Andere sollicitaties netjes intrekken",
             actionUrl: withdrawActionPath);
 
         foreach (var other in others)

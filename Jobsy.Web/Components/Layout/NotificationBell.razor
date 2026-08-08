@@ -11,6 +11,7 @@
         <div class="notification-bell" @onclick:stopPropagation="true">
             <button type="button"
                     class="notification-bell__toggle"
+                    title="@(_unread > 0 ? $"{_unread} ongelezen bericht{(_unread == 1 ? "" : "en")}" : "Notificaties")"
                     aria-label="@($"Notificaties{(_unread > 0 ? $", {_unread} ongelezen" : "")}")"
                     aria-expanded="@_open"
                     @onclick="ToggleAsync">
@@ -23,24 +24,42 @@
 
             @if (_open)
             {
-                <div class="notification-bell__panel" role="dialog" aria-label="Notificaties">
+                <div class="notification-bell__panel" role="dialog" aria-label="Je notificaties">
                     <div class="notification-bell__header">
-                        <strong>Notificaties</strong>
-                        @if (_unread > 0)
-                        {
-                            <button type="button" class="btn-compact" disabled="@_busy" @onclick="MarkAllReadAsync">
-                                Alles gelezen
+                        <div>
+                            <strong>Jouw berichten</strong>
+                            <p class="notification-bell__subtitle">
+                                @(_unread > 0
+                                    ? $"{_unread} ongelezen"
+                                    : "Alles bijgewerkt")
+                            </p>
+                        </div>
+                        <div class="notification-bell__header-actions">
+                            @if (_unread > 0)
+                            {
+                                <button type="button" class="btn-compact" disabled="@_busy" @onclick="MarkAllReadAsync">
+                                    Alles gelezen
+                                </button>
+                            }
+                            <button type="button"
+                                    class="notification-bell__close"
+                                    aria-label="Sluiten"
+                                    @onclick="Close">
+                                ×
                             </button>
-                        }
+                        </div>
                     </div>
 
                     @if (_loading)
                     {
-                        <p class="muted notification-bell__empty">Laden…</p>
+                        <p class="muted notification-bell__empty">Berichten laden…</p>
                     }
                     else if (_items.Count == 0)
                     {
-                        <p class="muted notification-bell__empty">Geen notificaties.</p>
+                        <div class="notification-bell__empty-state">
+                            <p class="notification-bell__empty-title">Nog geen berichten</p>
+                            <p class="muted">Updates over sollicitaties en vacatures verschijnen hier. Heel overzichtelijk.</p>
+                        </div>
                     }
                     else
                     {
@@ -49,13 +68,22 @@
                             {
                                 <li class="notification-bell__item @(n.IsRead ? null : "is-unread")">
                                     <button type="button" class="notification-bell__item-btn" @onclick="() => OpenAsync(n)">
-                                        <span class="notification-bell__item-title">@n.Title</span>
-                                        <span class="notification-bell__item-body">@n.Body</span>
-                                        <span class="notification-bell__item-meta">@n.CreatedAtUtc.ToLocalTime().ToString("dd-MM HH:mm")</span>
+                                        <span class="notification-bell__item-top">
+                                            <span class="notification-bell__item-title">@FriendlyTitle(n)</span>
+                                            @if (!n.IsRead)
+                                            {
+                                                <span class="notification-bell__dot" aria-label="Ongelezen"></span>
+                                            }
+                                        </span>
+                                        <span class="notification-bell__item-body">@FriendlyBody(n)</span>
+                                        <span class="notification-bell__item-meta">@FormatRelative(n.CreatedAtUtc)</span>
                                     </button>
                                     @if (!string.IsNullOrWhiteSpace(n.ActionUrl) && !string.IsNullOrWhiteSpace(n.ActionLabel))
                                     {
-                                        <a class="notification-bell__action" href="@n.ActionUrl" @onclick="() => MarkReadQuietAsync(n)" @onclick:stopPropagation="true">
+                                        <a class="notification-bell__action"
+                                           href="@n.ActionUrl"
+                                           @onclick="() => MarkReadQuietAsync(n)"
+                                           @onclick:stopPropagation="true">
                                             @n.ActionLabel
                                         </a>
                                     }
@@ -111,6 +139,8 @@
             await LoadListAsync();
         }
     }
+
+    private void Close() => _open = false;
 
     private async Task LoadListAsync()
     {
@@ -196,6 +226,23 @@
         {
             _busy = false;
         }
+    }
+
+    private static string FriendlyTitle(UserNotificationItem n)
+        => string.IsNullOrWhiteSpace(n.Title) ? "Nieuw bericht" : n.Title;
+
+    private static string FriendlyBody(UserNotificationItem n)
+        => string.IsNullOrWhiteSpace(n.Body) ? "Tik om te openen." : n.Body;
+
+    private static string FormatRelative(DateTime utc)
+    {
+        var local = utc.Kind == DateTimeKind.Utc ? utc.ToLocalTime() : utc;
+        var delta = DateTime.Now - local;
+        if (delta.TotalMinutes < 1) return "Zojuist";
+        if (delta.TotalMinutes < 60) return $"{(int)delta.TotalMinutes} min geleden";
+        if (delta.TotalHours < 24) return $"{(int)delta.TotalHours} uur geleden";
+        if (delta.TotalDays < 7) return $"{(int)delta.TotalDays} dag{((int)delta.TotalDays == 1 ? "" : "en")} geleden";
+        return local.ToString("dd MMM, HH:mm");
     }
 
     private void OnCultureChanged() => InvokeAsync(StateHasChanged);

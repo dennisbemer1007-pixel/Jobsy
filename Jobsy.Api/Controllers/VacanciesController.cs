@@ -677,8 +677,8 @@ public class VacanciesController : ControllerBase
             await _notifications.CreateAsync(
                 new NotificationCreateRequest(
                     actor.Id,
-                    "Deadline verlengd (goodwill)",
-                    $"Je aanpassing van '{vacancy.Title}' is opgeslagen. De einddatum is met {VacancyEngagementReminderRules.GoodwillExtendDays} dagen verlengd tot {vacancy.EndDate:dd-MM-yyyy}.",
+                    "Deadline verlengd — fijn dat je de tekst hebt aangescherpt",
+                    $"Je update van '{vacancy.Title}' is opgeslagen. Als goodwill staat de einddatum nu op {vacancy.EndDate:dd-MM-yyyy} (+{VacancyEngagementReminderRules.GoodwillExtendDays} dagen).",
                     "VacancyEngagementGoodwill",
                     $"/branch/vacancies/new?edit={vacancy.Id}",
                     RelatedEntityType: "Vacancy",

@@ -97,23 +97,26 @@ public sealed class VacancyEngagementReminderHostedService : BackgroundService
             var companyHtml = WebUtility.HtmlEncode(vacancy.Company.Name);
             var tipHtml = WebUtility.HtmlEncode(tip);
             var bodyHtml = $"""
-                <p>Je vacature <strong>{titleHtml}</strong> bij {companyHtml} staat al {VacancyEngagementReminderRules.OpenDaysBeforeReminder} dagen open.</p>
-                <p>Stand van zaken:</p>
+                <p>Hoi,</p>
+                <p>Je vacature <strong>{titleHtml}</strong> bij {companyHtml} staat al
+                {VacancyEngagementReminderRules.OpenDaysBeforeReminder} dagen open. Tijd voor een korte check-in.</p>
+                <p>Dit zien we tot nu toe:</p>
                 <ul>
-                  <li>Voorgekomen in zoekopdrachten: <strong>{impressions}</strong></li>
+                  <li>In zoekresultaten verschenen: <strong>{impressions}</strong></li>
                   <li>Bekeken: <strong>{views}</strong></li>
                   <li>Gedeeld: <strong>{shares}</strong></li>
                   <li>Bewaard: <strong>{saved}</strong></li>
-                  <li>Gesolliciteerd: <strong>{applications}</strong></li>
+                  <li>Sollicitaties: <strong>{applications}</strong></li>
                 </ul>
                 <p><strong>Tip van Lobsy:</strong> {tipHtml}</p>
-                <p>Pas je vacature aan vóór de einddatum — bij een update verlengen we de deadline als goodwill met {VacancyEngagementReminderRules.GoodwillExtendDays} dagen.</p>
-                <p><a href="{WebUtility.HtmlEncode(editLink)}">Vacature aanpassen</a></p>
+                <p>Pas de vacature aan vóór de einddatum. Bij een update verlengen we de deadline
+                als goodwill met {VacancyEngagementReminderRules.GoodwillExtendDays} dagen — zo geef je je tekst nog even de ruimte.</p>
+                <p><a href="{WebUtility.HtmlEncode(editLink)}"><strong>Vacature nu verbeteren</strong></a></p>
                 """;
 
-            var notifyTitle = $"Vacature {VacancyEngagementReminderRules.OpenDaysBeforeReminder} dagen open: {vacancy.Title}";
+            var notifyTitle = $"Even checken: {vacancy.Title} staat {VacancyEngagementReminderRules.OpenDaysBeforeReminder} dagen open";
             var notifyBody =
-                $"Zoek: {impressions}, bekeken: {views}, gedeeld: {shares}, bewaard: {saved}, sollicitaties: {applications}. Tip: {tip}";
+                $"Zoek: {impressions} · bekeken: {views} · gedeeld: {shares} · bewaard: {saved} · sollicitaties: {applications}. Tip: {tip}";
 
             var contacts = await db.Users.AsNoTracking()
                 .Where(u => u.IsActive
@@ -140,9 +143,9 @@ public sealed class VacancyEngagementReminderHostedService : BackgroundService
                         contact.Id,
                         notifyTitle,
                         notifyBody,
-                        "VacancyEngagementReminder",
+                        "VacatureEngagementReminder",
                         $"/branch/vacancies/new?edit={vacancy.Id}",
-                        "Vacature aanpassen",
+                        "Vacature nu verbeteren",
                         $"/branch/vacancies/new?edit={vacancy.Id}",
                         "Vacancy",
                         vacancy.Id),

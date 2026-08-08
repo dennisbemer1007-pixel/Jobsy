@@ -182,7 +182,7 @@
         => a.Status is "Pending";
 
     private static bool IsRejected(ApplicationItem a)
-        => a.Status is "Rejected" or "FilledElsewhere";
+        => a.Status is "Rejected" or "FilledElsewhere" or "Withdrawn";
 
     private static bool IsMatched(ApplicationItem a)
         => a.Status is "Accepted" or "EmployerContacting" or "Hired";
@@ -203,7 +203,7 @@
         try
         {
             await Api.WithdrawApplicationAsync(item.Id);
-            _items.RemoveAll(x => x.Id == item.Id);
+            item.Status = "Withdrawn";
             ApplyTab();
             _message = Culture["Apps.WithdrawnMsg"];
         }

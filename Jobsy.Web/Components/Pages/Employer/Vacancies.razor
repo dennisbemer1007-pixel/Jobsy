@@ -145,7 +145,7 @@
                                             @Culture["VacancyAction.Contact"]
                                         </button>
                                         <button class="row-actions-menu__item" type="button" role="menuitem" @onclick="() => ToggleEmailVerificationAsync(v)">
-                                            @(v.RequireEmailVerification ? "E-mailverificatie uit" : "E-mailverificatie aan")
+                                            @(v.RequireEmailVerification ? "E-mailcheck uitzetten" : "E-mailcheck aanzetten")
                                         </button>
                                         @if (!IsIncompleteDraft(v))
                                         {
@@ -617,8 +617,8 @@
             {
                 vacancy.RequireEmailVerification = updated.RequireEmailVerification;
                 _message = updated.RequireEmailVerification
-                    ? $"E-mailverificatie aan voor “{vacancy.Title}”."
-                    : $"E-mailverificatie uit voor “{vacancy.Title}”.";
+                    ? $"E-mailcheck staat aan voor “{vacancy.Title}”. Kandidaten bevestigen hun sollicitatie met een code."
+                    : $"E-mailcheck staat uit voor “{vacancy.Title}”. Solliciteren gaat weer zonder code.";
             }
         }
         catch (Exception ex)

@@ -266,10 +266,11 @@
             </section>
 
             <section class="panel-section company-details__card">
-                <h2>E-mailverificatie sollicitaties</h2>
+                <h2>E-mailcheck bij solliciteren</h2>
                 <p class="muted company-details__lead">
-                    Standaard staat verificatie uit. Zet dit aan als kandidaten hun e-mail met een code moeten bevestigen
-                    voordat de sollicitatie binnenkomt. Per vacature kun je dit later nog aanpassen.
+                    Standaard staat dit <strong>uit</strong>, zodat solliciteren zo soepel mogelijk blijft.
+                    Zet het alleen aan als je wilt dat kandidaten hun e-mail eerst met een code bevestigen.
+                    Je kunt dit later ook per vacature aanpassen.
                 </p>
 
                 <label class="company-details__toggle">
@@ -278,8 +279,8 @@
                            disabled="@_busy"
                            @onchange="OnEmailVerificationToggleAsync" />
                     <span>
-                        <strong>E-mailverificatie voor sollicitaties</strong>
-                        <span class="muted">Standaard voor nieuwe vacatures (standaard uit)</span>
+                        <strong>Vraag e-mailbevestiging bij sollicitaties</strong>
+                        <span class="muted">Nieuwe vacatures nemen deze voorkeur over (standaard: uit)</span>
                     </span>
                 </label>
 
@@ -1039,8 +1040,8 @@
                 SetFeedback(
                     FeedbackSection.EmailVerification,
                     enabled
-                        ? "E-mailverificatie voor sollicitaties staat aan (standaard voor nieuwe vacatures)."
-                        : "E-mailverificatie voor sollicitaties staat uit.");
+                        ? "Prima — nieuwe vacatures vragen voortaan om een e-mailcode bij solliciteren. Bestaande vacatures pas je apart aan."
+                        : "Oké — solliciteren blijft zonder e-mailcode. Dat is de soepelste route voor kandidaten.");
             }
         }
         catch (Exception ex)

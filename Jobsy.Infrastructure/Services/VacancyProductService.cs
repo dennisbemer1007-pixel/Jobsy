@@ -1010,11 +1010,15 @@ public sealed class VacancyProductService : IVacancyProductService
                 $"{companyName} zoekt {vacancy.Title}. Bekijk de vacature in Lobsy.";
             var html = $"""
                 <p>Hoi {System.Net.WebUtility.HtmlEncode(candidate.FullName)},</p>
-                <p><strong>{System.Net.WebUtility.HtmlEncode(companyName)}</strong> zoekt
-                <strong>{System.Net.WebUtility.HtmlEncode(vacancy.Title)}</strong> bij jou in de buurt.</p>
-                <p><a href="{System.Net.WebUtility.HtmlEncode(deepLink)}">Bekijk de vacature</a></p>
-                <p>Niet meer op zoek naar werk?
-                <a href="{System.Net.WebUtility.HtmlEncode(setUnavailableLink)}">Zet je status op Niet beschikbaar</a>.</p>
+                <p>Er staat een passende vacature bij jou in de buurt:
+                <strong>{System.Net.WebUtility.HtmlEncode(vacancy.Title)}</strong> bij
+                <strong>{System.Net.WebUtility.HtmlEncode(companyName)}</strong>.</p>
+                <p><a href="{System.Net.WebUtility.HtmlEncode(deepLink)}"><strong>Bekijk de vacature</strong></a></p>
+                <p style="margin-top:1rem;color:#555">
+                Niet meer op zoek naar werk?
+                <a href="{System.Net.WebUtility.HtmlEncode(setUnavailableLink)}">Zet je status dan op Niet beschikbaar</a>
+                — dan sturen we je geen PushBom-tips meer.
+                </p>
                 """;
 
             await _email.SendAsync(
@@ -1034,7 +1038,7 @@ public sealed class VacancyProductService : IVacancyProductService
                 new NotificationCreateRequest(
                     candidate.Id,
                     subject,
-                    bodyText + " Niet meer op zoek? Zet je status op Niet beschikbaar.",
+                    $"{bodyText} Niet meer op zoek? Zet je status op Niet beschikbaar.",
                     "PushBom",
                     $"/vacancies/{vacancy.Id}",
                     "Zet op Niet beschikbaar",

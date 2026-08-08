@@ -48,13 +48,13 @@ public class CandidateActionsController : ControllerBase
             cancellationToken);
         if (token is null)
         {
-            return BadRequest(new CandidateActionResultDto(false, "Deze link is ongeldig of al gebruikt."));
+            return BadRequest(new CandidateActionResultDto(false, "Deze link is ongeldig of al gebruikt. Pas je status desnoods aan via je profiel."));
         }
 
         var user = await _db.Users.FirstOrDefaultAsync(u => u.Id == token.UserId, cancellationToken);
         if (user is null || !user.IsActive)
         {
-            return BadRequest(new CandidateActionResultDto(false, "Account niet gevonden."));
+            return BadRequest(new CandidateActionResultDto(false, "We konden je account niet vinden. Log in en pas je status aan via je profiel."));
         }
 
         user.OpenForWork = false;
@@ -63,15 +63,15 @@ public class CandidateActionsController : ControllerBase
         await _notifications.CreateAsync(
             new NotificationCreateRequest(
                 user.Id,
-                "Status bijgewerkt",
-                "Je staat nu op Niet beschikbaar. Werkgevers zien je niet meer als open voor werk.",
+                "Je staat op Niet beschikbaar",
+                "Werkgevers zien je niet meer als open voor werk. Zet dit later weer aan in je profiel als je wilt.",
                 "SetUnavailable",
                 "/candidate/profile"),
             cancellationToken);
 
         return Ok(new CandidateActionResultDto(
             true,
-            "Je status is succesvol gezet op Niet beschikbaar."));
+            "Je status staat nu op Niet beschikbaar. Werkgevers zien je niet meer als open voor werk."));
     }
 
     [HttpPost("withdraw-others")]
@@ -139,9 +139,11 @@ public class CandidateActionsController : ControllerBase
 
             var title = $"Sollicitatie ingetrokken: {other.Vacancy.Title}";
             var body =
-                $"De kandidaat heeft deze sollicitatie ingetrokken omdat er inmiddels een andere baan is gevonden.";
+                "De kandidaat heeft deze sollicitatie ingetrokken omdat er inmiddels een andere baan is gevonden.";
             var html = $"""
-                <p>De kandidaat heeft de sollicitatie op <strong>{WebUtility.HtmlEncode(other.Vacancy.Title)}</strong> ingetrokken.</p>
+                <p>Hoi,</p>
+                <p>Goed om te weten: de kandidaat heeft de sollicitatie op
+                <strong>{WebUtility.HtmlEncode(other.Vacancy.Title)}</strong> ingetrokken.</p>
                 <p>Reden: de kandidaat heeft inmiddels een andere baan gevonden.</p>
                 <p><a href="{WebUtility.HtmlEncode(deepLinkBase)}">Open sollicitantenoverzicht</a></p>
                 """;
@@ -170,10 +172,10 @@ public class CandidateActionsController : ControllerBase
         await _notifications.CreateAsync(
             new NotificationCreateRequest(
                 token.UserId,
-                "Overige sollicitaties ingetrokken",
+                "Andere sollicitaties netjes afgerond",
                 others.Count == 0
-                    ? "Er stonden geen andere open sollicitaties meer open."
-                    : $"{others.Count} andere sollicitatie(s) zijn ingetrokken. Werkgevers zijn geïnformeerd.",
+                    ? "Er stonden geen andere open sollicitaties meer — je bent helemaal bij."
+                    : $"{others.Count} andere sollicitatie(s) zijn ingetrokken. De werkgevers zijn vriendelijk geïnformeerd.",
                 "WithdrawOtherApplications",
                 "/candidate/applications"),
             cancellationToken);
