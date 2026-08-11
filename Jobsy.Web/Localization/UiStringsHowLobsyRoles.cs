@@ -115,6 +115,23 @@ internal static class UiStringsHowLobsyRoles
         ["HowLobsy.Sales.Step5Body"] = "Vraag uitbetaling aan via {0} (self-billing). Na betaling download je de factuur als PDF.",
         ["HowLobsy.Sales.PrimaryCta"] = "Naar sales-toolkit",
         ["HowLobsy.Sales.SecondaryCta"] = "Naar dashboard →",
+
+        // —— Ambassadeur ——
+        ["HowLobsy.Ambassadeur.Title"] = "Hoe werkt Lobsy als ambassadeur?",
+        ["HowLobsy.Ambassadeur.Lead"] = "Van onboarding tot commissie — zo werf je kandidaten én ondernemers met jouw trackingcode.",
+        ["HowLobsy.Ambassadeur.Step1Title"] = "1. Rond je onboarding af",
+        ["HowLobsy.Ambassadeur.Step1Body"] = "Vul onder {0} KvK, BTW en NAW in en onderteken de overeenkomst. Daarna ontvang je jouw unieke trackingcode (AM-…).",
+        ["HowLobsy.Ambassadeur.Step2Title"] = "2. Gebruik de ambassadeur-toolkit",
+        ["HowLobsy.Ambassadeur.Step2Body"] = "In de {0} vind je je deelbare link, kandidatenflyer en ondernemersflyer (met QR) met jouw code.",
+        ["HowLobsy.Ambassadeur.Step3Title"] = "3. Deel je werven-pagina",
+        ["HowLobsy.Ambassadeur.Step3Body"] = "Stuur mensen naar jouw persoonlijke {0} (met trackingcode). Zij registreren met jouw code; jij bouwt pipeline en commissie op. Zonder code open je eerst de toolkit.",
+        ["HowLobsy.Ambassadeur.PartnerLabel"] = "werven-pagina",
+        ["HowLobsy.Ambassadeur.Step4Title"] = "4. Volg resultaat op je dashboard",
+        ["HowLobsy.Ambassadeur.Step4Body"] = "Op {0} zie je trackingcode, kandidaten-KPI’s, sollicitaties en je commissiepercentage.",
+        ["HowLobsy.Ambassadeur.Step5Title"] = "5. Financieel en uitbetaling",
+        ["HowLobsy.Ambassadeur.Step5Body"] = "Bekijk commissies per transactie en vraag uitbetaling aan via {0}.",
+        ["HowLobsy.Ambassadeur.PrimaryCta"] = "Naar toolkit",
+        ["HowLobsy.Ambassadeur.SecondaryCta"] = "Naar dashboard →",
     };
 
     private static Dictionary<string, string> En() => new(StringComparer.OrdinalIgnoreCase)
@@ -198,5 +215,22 @@ internal static class UiStringsHowLobsyRoles
         ["HowLobsy.Sales.Step5Body"] = "Request payout via {0} (self-billing). After payment, download the invoice as PDF.",
         ["HowLobsy.Sales.PrimaryCta"] = "Go to sales toolkit",
         ["HowLobsy.Sales.SecondaryCta"] = "Go to dashboard →",
+
+        // —— Ambassador ——
+        ["HowLobsy.Ambassadeur.Title"] = "How does Lobsy work for ambassadors?",
+        ["HowLobsy.Ambassadeur.Lead"] = "From onboarding to commission — grow candidates and employers with your tracking code.",
+        ["HowLobsy.Ambassadeur.Step1Title"] = "1. Finish onboarding",
+        ["HowLobsy.Ambassadeur.Step1Body"] = "Under {0} enter Chamber of Commerce, VAT and address details and sign the agreement. Then you receive your unique tracking code (AM-…).",
+        ["HowLobsy.Ambassadeur.Step2Title"] = "2. Use the ambassador toolkit",
+        ["HowLobsy.Ambassadeur.Step2Body"] = "In the {0} you find your shareable link, candidate flyer and entrepreneur flyer (with QR) with your code.",
+        ["HowLobsy.Ambassadeur.Step3Title"] = "3. Share your recruit page",
+        ["HowLobsy.Ambassadeur.Step3Body"] = "Send people to your personal {0} (with tracking code). They register with your code; you build pipeline and commission. Without a code, open the toolkit first.",
+        ["HowLobsy.Ambassadeur.PartnerLabel"] = "recruit page",
+        ["HowLobsy.Ambassadeur.Step4Title"] = "4. Track results on your dashboard",
+        ["HowLobsy.Ambassadeur.Step4Body"] = "On {0} you see tracking code, candidate KPIs, applications and your commission percentage.",
+        ["HowLobsy.Ambassadeur.Step5Title"] = "5. Finance and payout",
+        ["HowLobsy.Ambassadeur.Step5Body"] = "Review commissions per transaction and request payout via {0}.",
+        ["HowLobsy.Ambassadeur.PrimaryCta"] = "Go to toolkit",
+        ["HowLobsy.Ambassadeur.SecondaryCta"] = "Go to dashboard →",
     };
 }

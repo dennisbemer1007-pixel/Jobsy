@@ -146,16 +146,16 @@ public static class HowLobsyRoleGuides
             : $"/werven/{Uri.EscapeDataString(code)}";
 
         return new(
-            "HowLobsy.Sales.Title",
-            "HowLobsy.Sales.Lead",
+            "HowLobsy.Ambassadeur.Title",
+            "HowLobsy.Ambassadeur.Lead",
             [
-                new("HowLobsy.Sales.Step1Title", "HowLobsy.Sales.Step1Body", [new("/ambassadeur/onboarding", "Nav.Onboarding")]),
-                new("HowLobsy.Sales.Step2Title", "HowLobsy.Sales.Step2Body", [new("/ambassadeur/toolkit", "Nav.AmbassadeurToolkit")]),
-                new("HowLobsy.Sales.Step3Title", "HowLobsy.Sales.Step3Body", [new(wervenHref, "HowLobsy.Sales.PartnerLabel")]),
-                new("HowLobsy.Sales.Step4Title", "HowLobsy.Sales.Step4Body", [new("/home", "Nav.Home")]),
-                new("HowLobsy.Sales.Step5Title", "HowLobsy.Sales.Step5Body", [new("/ambassadeur/finance", "Nav.AmbassadeurFinance")])
+                new("HowLobsy.Ambassadeur.Step1Title", "HowLobsy.Ambassadeur.Step1Body", [new("/ambassadeur/onboarding", "Nav.Onboarding")]),
+                new("HowLobsy.Ambassadeur.Step2Title", "HowLobsy.Ambassadeur.Step2Body", [new("/ambassadeur/toolkit", "Nav.AmbassadeurToolkit")]),
+                new("HowLobsy.Ambassadeur.Step3Title", "HowLobsy.Ambassadeur.Step3Body", [new(wervenHref, "HowLobsy.Ambassadeur.PartnerLabel")]),
+                new("HowLobsy.Ambassadeur.Step4Title", "HowLobsy.Ambassadeur.Step4Body", [new("/home", "Nav.Home")]),
+                new("HowLobsy.Ambassadeur.Step5Title", "HowLobsy.Ambassadeur.Step5Body", [new("/ambassadeur/finance", "Nav.AmbassadeurFinance")])
             ],
-            new("/ambassadeur/toolkit", "HowLobsy.Sales.PrimaryCta"),
-            new("/home", "HowLobsy.Sales.SecondaryCta"));
+            new("/ambassadeur/toolkit", "HowLobsy.Ambassadeur.PrimaryCta"),
+            new("/home", "HowLobsy.Ambassadeur.SecondaryCta"));
     }
 }

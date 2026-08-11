@@ -519,6 +519,131 @@ public class RoleFunctionalRegressionTests : IClassFixture<RoleFunctionalWebAppF
         Assert.Equal(HttpStatusCode.Forbidden, profileUpdate.StatusCode);
     }
 
+    // ─── Branch react / hire happy + exception paths ─────────────────────────
+
+    [Fact]
+    public async Task Branch_can_accept_contact_and_hire_verified_application()
+    {
+        var (vacancyId, applicationId) = await _factory.SeedVacancyWithPendingApplicationAsync();
+        var client = EmployerClient();
+
+        var accept = await client.PostAsJsonAsync(
+            $"api/applications/{applicationId}/react",
+            new ReactToApplicationRequest(ApplicationStatus.Accepted));
+        Assert.Equal(HttpStatusCode.OK, accept.StatusCode);
+        var accepted = await accept.Content.ReadFromJsonAsync<JsonElement>(JsonOpts);
+        Assert.Equal(nameof(ApplicationStatus.Accepted), accepted.GetProperty("status").GetString());
+
+        var contact = await client.PostAsync(
+            $"api/applications/{applicationId}/contact",
+            null);
+        Assert.Equal(HttpStatusCode.OK, contact.StatusCode);
+        var contacting = await contact.Content.ReadFromJsonAsync<JsonElement>(JsonOpts);
+        Assert.Equal(nameof(ApplicationStatus.EmployerContacting), contacting.GetProperty("status").GetString());
+
+        var hire = await client.PostAsJsonAsync(
+            $"api/applications/vacancies/{vacancyId}/fulfill/{applicationId}",
+            new FulfillVacancyRequest(RejectOtherApplications: true));
+        Assert.Equal(HttpStatusCode.OK, hire.StatusCode);
+
+        var apps = await client.GetFromJsonAsync<List<JsonElement>>(
+            $"api/applications?vacancyId={vacancyId}",
+            JsonOpts);
+        Assert.NotNull(apps);
+        var hired = Assert.Single(apps!, a => a.GetProperty("id").GetGuid() == applicationId);
+        Assert.Equal(nameof(ApplicationStatus.Hired), hired.GetProperty("status").GetString());
+        Assert.True(hired.GetProperty("piiRevealed").GetBoolean());
+    }
+
+    [Fact]
+    public async Task Branch_can_reject_pending_application_and_cannot_hire_rejected()
+    {
+        var (vacancyId, pendingId) = await _factory.SeedVacancyWithPendingApplicationAsync();
+        var client = EmployerClient();
+
+        var reject = await client.PostAsJsonAsync(
+            $"api/applications/{pendingId}/react",
+            new ReactToApplicationRequest(ApplicationStatus.Rejected));
+        Assert.Equal(HttpStatusCode.OK, reject.StatusCode);
+
+        var hire = await client.PostAsJsonAsync(
+            $"api/applications/vacancies/{vacancyId}/fulfill/{pendingId}",
+            new FulfillVacancyRequest(RejectOtherApplications: false));
+        Assert.Equal(HttpStatusCode.BadRequest, hire.StatusCode);
+    }
+
+    [Fact]
+    public async Task Branch_contact_before_accept_is_rejected()
+    {
+        var (_, pendingId) = await _factory.SeedVacancyWithPendingApplicationAsync();
+        var client = EmployerClient();
+
+        var contact = await client.PostAsync($"api/applications/{pendingId}/contact", null);
+        Assert.Equal(HttpStatusCode.BadRequest, contact.StatusCode);
+    }
+
+    // ─── Extended roles: nav + smoke authz ───────────────────────────────────
+
+    [Fact]
+    public void Role_nav_catalog_covers_all_login_roles_with_how_lobsy()
+    {
+        Assert.Contains(RoleNavCatalog.Candidate, n => n.Href.Contains("hoe-werkt", StringComparison.Ordinal));
+        Assert.Contains(RoleNavCatalog.Branch, n => n.Href == "/hoe-werkt-lobsy");
+        Assert.Contains(RoleNavCatalog.Regional, n => n.Href == "/hoe-werkt-lobsy");
+        Assert.Contains(RoleNavCatalog.Enterprise, n => n.Href == "/hoe-werkt-lobsy");
+        Assert.Contains(RoleNavCatalog.Intermediary, n => n.Href == "/hoe-werkt-lobsy");
+        Assert.Contains(RoleNavCatalog.SalesManager, n => n.Href == "/hoe-werkt-lobsy");
+        Assert.Contains(RoleNavCatalog.Ambassadeur, n => n.Href == "/hoe-werkt-lobsy");
+        Assert.DoesNotContain(RoleNavCatalog.Admin, n => n.TitleKey == "Nav.HowLobsyWorks");
+
+        Assert.Contains(RoleNavCatalog.Ambassadeur, n => n.Href == "/ambassadeur/toolkit");
+        Assert.Contains(RoleNavCatalog.SalesManager, n => n.Href == "/salesmanager/toolkit");
+        Assert.Contains(RoleNavCatalog.Enterprise, n => n.Href == "/employer/organization" && n.DesktopOnly);
+    }
+
+    [Fact]
+    public async Task Regional_enterprise_intermediary_can_load_manage_and_metrics()
+    {
+        foreach (var email in new[]
+                 {
+                     _factory.RegionalEmail,
+                     _factory.EnterpriseEmail,
+                     _factory.IntermediaryEmail
+                 })
+        {
+            var client = Authed(email);
+            var manage = await client.GetAsync("api/vacancies/manage");
+            Assert.Equal(HttpStatusCode.OK, manage.StatusCode);
+            var metrics = await client.GetAsync("api/metrics/summary?period=day");
+            Assert.Equal(HttpStatusCode.OK, metrics.StatusCode);
+            var mine = await client.GetAsync("api/companies/mine");
+            Assert.Equal(HttpStatusCode.OK, mine.StatusCode);
+        }
+    }
+
+    [Fact]
+    public async Task Sales_and_ambassadeur_can_load_dashboards()
+    {
+        var sales = Authed(_factory.SalesEmail);
+        var salesDash = await sales.GetAsync("api/sales-managers/me/dashboard");
+        Assert.Equal(HttpStatusCode.OK, salesDash.StatusCode);
+
+        var amb = Authed(_factory.AmbassadeurEmail);
+        var ambDash = await amb.GetAsync("api/ambassadeurs/me/dashboard");
+        Assert.Equal(HttpStatusCode.OK, ambDash.StatusCode);
+    }
+
+    [Fact]
+    public async Task Regional_cannot_react_to_applications()
+    {
+        var (_, pendingId) = await _factory.SeedVacancyWithPendingApplicationAsync();
+        var client = Authed(_factory.RegionalEmail);
+        var react = await client.PostAsJsonAsync(
+            $"api/applications/{pendingId}/react",
+            new ReactToApplicationRequest(ApplicationStatus.Accepted));
+        Assert.Equal(HttpStatusCode.Forbidden, react.StatusCode);
+    }
+
     // ─── Cross-cutting matching rules (no HTTP) ─────────────────────────────
 
     [Fact]
@@ -565,6 +690,11 @@ public sealed class RoleFunctionalWebAppFactory : WebApplicationFactory<Program>
     public Guid CandidateId { get; } = Guid.Parse("c1000000-0000-0000-0000-000000000020");
     public Guid EmployerId { get; } = Guid.Parse("c1000000-0000-0000-0000-000000000021");
     public Guid AdminId { get; } = Guid.Parse("c1000000-0000-0000-0000-000000000022");
+    public Guid RegionalId { get; } = Guid.Parse("c1000000-0000-0000-0000-000000000023");
+    public Guid EnterpriseId { get; } = Guid.Parse("c1000000-0000-0000-0000-000000000024");
+    public Guid IntermediaryId { get; } = Guid.Parse("c1000000-0000-0000-0000-000000000025");
+    public Guid SalesId { get; } = Guid.Parse("c1000000-0000-0000-0000-000000000026");
+    public Guid AmbassadeurId { get; } = Guid.Parse("c1000000-0000-0000-0000-000000000027");
     public Guid PendingApplicationId { get; } = Guid.Parse("c1000000-0000-0000-0000-000000000030");
     public Guid AcceptedApplicationId { get; } = Guid.Parse("c1000000-0000-0000-0000-000000000031");
     public Guid SalaryTableId { get; } = Guid.Parse("c1000000-0000-0000-0000-000000000040");
@@ -572,9 +702,15 @@ public sealed class RoleFunctionalWebAppFactory : WebApplicationFactory<Program>
     public string CandidateEmail => "kandidaat@jobsy.local";
     public string EmployerEmail => "branch@jobsy.local";
     public string AdminEmail => "admin@jobsy.local";
+    public string RegionalEmail => "regio@jobsy.local";
+    public string EnterpriseEmail => "enterprise@jobsy.local";
+    public string IntermediaryEmail => "intermediair@jobsy.local";
+    public string SalesEmail => "sales@jobsy.local";
+    public string AmbassadeurEmail => "ambassadeur@jobsy.local";
 
     private readonly string _dbName = "RoleFunctional-" + Guid.NewGuid();
     private bool _seeded;
+    private int _extraSeedCounter;
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
@@ -721,7 +857,82 @@ public sealed class RoleFunctionalWebAppFactory : WebApplicationFactory<Program>
                 FullName = "Platform Admin",
                 Role = UserRole.Admin,
                 IsActive = true
+            },
+            new User
+            {
+                Id = RegionalId,
+                Email = RegionalEmail,
+                FullName = "Regional Manager",
+                Role = UserRole.RegionalManager,
+                IsActive = true,
+                CompanyId = CompanyId
+            },
+            new User
+            {
+                Id = EnterpriseId,
+                Email = EnterpriseEmail,
+                FullName = "Enterprise Manager",
+                Role = UserRole.EnterpriseManager,
+                IsActive = true,
+                CompanyId = CompanyId
+            },
+            new User
+            {
+                Id = IntermediaryId,
+                Email = IntermediaryEmail,
+                FullName = "Intermediary",
+                Role = UserRole.Intermediary,
+                IsActive = true,
+                CompanyId = CompanyId
+            },
+            new User
+            {
+                Id = SalesId,
+                Email = SalesEmail,
+                FullName = "Sales Manager",
+                Role = UserRole.SalesManager,
+                IsActive = true
+            },
+            new User
+            {
+                Id = AmbassadeurId,
+                Email = AmbassadeurEmail,
+                FullName = "Ambassadeur",
+                Role = UserRole.Ambassadeur,
+                IsActive = true
             });
+
+        db.UserCompanies.AddRange(
+            new UserCompany { UserId = RegionalId, CompanyId = CompanyId },
+            new UserCompany { UserId = EnterpriseId, CompanyId = CompanyId },
+            new UserCompany { UserId = IntermediaryId, CompanyId = CompanyId },
+            new UserCompany { UserId = EmployerId, CompanyId = CompanyId });
+
+        db.SalesManagerProfiles.Add(new SalesManagerProfile
+        {
+            Id = Guid.Parse("c1000000-0000-0000-0000-000000000050"),
+            UserId = SalesId,
+            CompanyName = "Sales Demo BV",
+            TrackingCode = "SM-TEST01",
+            AgreementSignedAt = DateTime.UtcNow.AddDays(-10),
+            AgreementVersion = "v1",
+            OnboardingCompletedAt = DateTime.UtcNow.AddDays(-10),
+            CreatedAt = DateTime.UtcNow.AddDays(-10),
+            UpdatedAt = DateTime.UtcNow
+        });
+
+        db.AmbassadeurProfiles.Add(new AmbassadeurProfile
+        {
+            Id = Guid.Parse("c1000000-0000-0000-0000-000000000051"),
+            UserId = AmbassadeurId,
+            CompanyName = "Ambassadeur Demo",
+            TrackingCode = "AM-TEST01",
+            AgreementSignedAt = DateTime.UtcNow.AddDays(-10),
+            AgreementVersion = "v1",
+            OnboardingCompletedAt = DateTime.UtcNow.AddDays(-10),
+            CreatedAt = DateTime.UtcNow.AddDays(-10),
+            UpdatedAt = DateTime.UtcNow
+        });
 
         var scheduleJson = JsonSerializer.Serialize(new SchedulePayload
         {
@@ -890,6 +1101,66 @@ public sealed class RoleFunctionalWebAppFactory : WebApplicationFactory<Program>
 
         db.SaveChanges();
         _seeded = true;
+    }
+
+    /// <summary>
+    /// Isolated vacancy + pending verified application for react/hire tests (does not mutate shared seed).
+    /// </summary>
+    public async Task<(Guid VacancyId, Guid ApplicationId)> SeedVacancyWithPendingApplicationAsync()
+    {
+        EnsureSeeded();
+        var n = Interlocked.Increment(ref _extraSeedCounter);
+        var vacancyId = Guid.NewGuid();
+        var applicationId = Guid.NewGuid();
+        var today = DateOnly.FromDateTime(DateTime.UtcNow);
+
+        await using var scope = Services.CreateAsyncScope();
+        var db = scope.ServiceProvider.GetRequiredService<JobsyDbContext>();
+        db.Vacancies.Add(new Vacancy
+        {
+            Id = vacancyId,
+            Title = $"Reactie-flow vacature {n}",
+            Description = "Geïsoleerde vacature voor accept/hire regressie.",
+            HourlyWage = 14.50m,
+            StartDate = today.AddDays(-1),
+            EndDate = today.AddMonths(1),
+            Status = VacancyStatus.Active,
+            CompanyId = CompanyId,
+            Location = new GeoPoint(52.0, 4.2),
+            RequiredTransport = TransportMode.Bike,
+            WorkTypes = WorkType.Winkel,
+            WorkTypeLabels = "Winkel",
+            SalaryTableId = SalaryTableId,
+            PublishedAtUtc = DateTime.UtcNow.AddHours(-2),
+            MinHoursPerWeek = 8,
+            MaxHoursPerWeek = 16,
+            FlexibleTimes = true,
+            FlexibleScheduleSource = nameof(FlexibleScheduleSource.Manual),
+            MaxApplications = 5,
+            CategoryId = VacancyCategoryDefaults.RegulierId,
+            RequireEmailVerification = true
+        });
+        db.Applications.Add(new Application
+        {
+            Id = applicationId,
+            VacancyId = vacancyId,
+            CandidateUserId = CandidateId,
+            CandidateName = "Kandidaat Test",
+            CandidateEmail = CandidateEmail,
+            CandidateCity = "Naaldwijk",
+            PreferredTransport = "Fiets",
+            EstimatedTravelMinutes = 10,
+            DistanceKm = 2.5,
+            CandidateAgeYears = 26,
+            Status = ApplicationStatus.Pending,
+            EmailVerifiedAt = DateTime.UtcNow.AddMinutes(-30),
+            WorkPermitConfirmed = true,
+            MatchPercent = 80,
+            Motivation = "Extra sollicitatie voor reactie-flow.",
+            CreatedAt = DateTime.UtcNow.AddMinutes(-40)
+        });
+        await db.SaveChangesAsync();
+        return (vacancyId, applicationId);
     }
 
     private sealed class AllowAllModeration : IVacancyContentModerationService

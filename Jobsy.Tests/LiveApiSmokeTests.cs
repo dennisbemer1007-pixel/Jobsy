@@ -6,10 +6,12 @@ namespace Jobsy.Tests;
 /// <summary>
 /// Live smoke checks against a running local API (http://localhost:5200).
 /// Skipped automatically when the API is not reachable.
+/// Uses the DevelopmentAuth secret from appsettings.Development.json.
 /// </summary>
 public class LiveApiSmokeTests
 {
     private const string BaseUrl = "http://localhost:5200/";
+    private const string DevSecret = "local-dev-jobsy-auth-secret";
 
     [Fact]
     public async Task Public_vacancies_endpoint_returns_ok()
@@ -37,8 +39,7 @@ public class LiveApiSmokeTests
             return;
         }
 
-        client.DefaultRequestHeaders.Add("X-Jobsy-Email", "admin@jobsy.local");
-        client.DefaultRequestHeaders.Add("X-Jobsy-Role", "Admin");
+        AddAdminAuth(client);
 
         var response = await client.GetAsync("api/metrics/summary?period=day");
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
@@ -61,8 +62,7 @@ public class LiveApiSmokeTests
         var anon = await client.GetAsync("api/integrations/health");
         Assert.Equal(HttpStatusCode.Unauthorized, anon.StatusCode);
 
-        client.DefaultRequestHeaders.Add("X-Jobsy-Email", "admin@jobsy.local");
-        client.DefaultRequestHeaders.Add("X-Jobsy-Role", "Admin");
+        AddAdminAuth(client);
         var admin = await client.GetAsync("api/integrations/health");
         Assert.Equal(HttpStatusCode.OK, admin.StatusCode);
     }
@@ -78,6 +78,14 @@ public class LiveApiSmokeTests
 
         var response = await client.GetAsync("api/kvk/12345678/establishments");
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+    }
+
+    private static void AddAdminAuth(HttpClient client)
+    {
+        client.DefaultRequestHeaders.Remove("X-Jobsy-Email");
+        client.DefaultRequestHeaders.Remove("X-Jobsy-Dev-Secret");
+        client.DefaultRequestHeaders.Add("X-Jobsy-Email", "admin@jobsy.local");
+        client.DefaultRequestHeaders.Add("X-Jobsy-Dev-Secret", DevSecret);
     }
 
     private static HttpClient CreateClient() => new() { BaseAddress = new Uri(BaseUrl), Timeout = TimeSpan.FromSeconds(3) };

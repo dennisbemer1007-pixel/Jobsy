@@ -5826,10 +5826,6 @@ a.engagement-btn {
     margin-top: 0.35rem;
 }
 
-.lobsy-dialog__footer {
-    margin-top: 1rem;
-}
-
 .lobsy-dialog--celebrate {
     max-width: min(28rem, calc(100vw - 2rem));
     padding: 1.1rem 1.15rem 1.2rem;
@@ -7062,127 +7058,6 @@ a.engagement-btn {
     line-height: 1.35;
 }
 
-/* —— Admin hub —— */
-.admin-hub {
-    width: 100%;
-    max-width: 1080px;
-    margin: 0 auto;
-    padding: 2rem 1.25rem 3rem;
-}
-
-.admin-hub__intro {
-    margin-bottom: 1.75rem;
-}
-
-.admin-hub__intro h1 {
-    margin: 0 0 0.35rem;
-    font-size: clamp(1.6rem, 2.5vw, 2rem);
-    letter-spacing: -0.02em;
-}
-
-.admin-hub__intro p {
-    margin: 0;
-    color: var(--muted);
-    font-size: 1rem;
-}
-
-.admin-hub__grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-    gap: 0.9rem;
-}
-
-.admin-tile {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 1rem;
-    min-height: 8.5rem;
-    padding: 1.15rem 1.1rem;
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    box-shadow: var(--shadow);
-    transition: border-color 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
-}
-
-.admin-tile:hover {
-    border-color: var(--accent);
-    transform: translateY(-2px);
-    box-shadow: 0 6px 16px rgba(16, 24, 40, 0.08);
-}
-
-.admin-tile:focus-visible {
-    outline: 2px solid var(--accent);
-    outline-offset: 2px;
-}
-
-.admin-tile__icon {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 2.5rem;
-    height: 2.5rem;
-    border-radius: 10px;
-    background: var(--accent-soft);
-    color: var(--brand);
-}
-
-.admin-tile__icon svg {
-    width: 1.35rem;
-    height: 1.35rem;
-}
-
-.admin-tile__label {
-    font-size: 1rem;
-    font-weight: 600;
-    line-height: 1.3;
-    color: var(--text);
-}
-
-.panel-back {
-    margin: 0 0 0.75rem;
-    font-size: 0.9rem;
-}
-
-.panel-back a {
-    color: var(--muted);
-}
-
-.panel-back a:hover {
-    color: var(--brand);
-}
-
-.cockpit-stats {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.75rem;
-    margin: 0 0 1.5rem;
-}
-
-.cockpit-stat {
-    display: flex;
-    flex-direction: column;
-    gap: 0.15rem;
-    min-width: 7rem;
-    padding: 0.9rem 1.1rem;
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-}
-
-.cockpit-stat__value {
-    font-size: 1.5rem;
-    font-weight: 700;
-    color: var(--brand);
-    line-height: 1.1;
-}
-
-.cockpit-stat__label {
-    font-size: 0.85rem;
-    color: var(--muted);
-}
-
 .admin-sublinks {
     display: flex;
     flex-direction: row;
@@ -8211,31 +8086,6 @@ button.stat-card {
     background: color-mix(in srgb, var(--danger) 70%, #c45c26);
 }
 
-.intermediary-company-grid {
-    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-}
-
-.intermediary-company-card__meta {
-    display: flex;
-    align-items: center;
-    gap: 0.4rem;
-    margin-top: 0.15rem;
-    font-size: 0.82rem;
-    color: var(--muted);
-}
-
-.intermediary-company-card__dot {
-    width: 0.45rem;
-    height: 0.45rem;
-    border-radius: 50%;
-    background: color-mix(in srgb, var(--brand) 40%, var(--border));
-    flex-shrink: 0;
-}
-
-.intermediary-company-card__dot--active {
-    background: #2f6f4e;
-}
-
 .client-perf-bento {
     margin-top: 0.25rem;
 }
@@ -8682,58 +8532,6 @@ button.stat-card {
     display: flex;
     flex-direction: column;
     gap: 0.7rem;
-}
-
-.applicant-card__top {
-    display: flex;
-    justify-content: space-between;
-    gap: 0.75rem;
-    align-items: flex-start;
-}
-
-.applicant-card__identity h2 {
-    margin: 0;
-    font-size: 1.05rem;
-}
-
-.applicant-card__identity .muted {
-    margin: 0.15rem 0 0;
-    font-size: 0.86rem;
-}
-
-.applicant-card__meta {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.35rem;
-    align-items: center;
-    justify-content: flex-end;
-}
-
-.applicant-card__vacancy {
-    margin: 0;
-    font-size: 0.92rem;
-}
-
-.applicant-card__facts {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 0.55rem 1rem;
-    margin: 0;
-}
-
-.applicant-card__facts dt {
-    margin: 0;
-    font-size: 0.72rem;
-    font-weight: 650;
-    text-transform: uppercase;
-    letter-spacing: 0.03em;
-    color: var(--muted);
-}
-
-.applicant-card__facts dd {
-    margin: 0.15rem 0 0;
-    font-size: 0.9rem;
-    line-height: 1.35;
 }
 
 .applicant-card__contact {
@@ -10632,14 +10430,6 @@ button.linkish:hover {
     gap: 0.75rem;
 }
 
-.csv-celebrate__mascot {
-    width: 7.5rem;
-    height: 7.5rem;
-    object-fit: contain;
-    animation: csv-lobster-party 0.9s ease-in-out infinite alternate;
-    filter: drop-shadow(0 8px 16px color-mix(in srgb, var(--brand, #0b6e4f) 25%, transparent));
-}
-
 .csv-celebrate__score {
     font-size: 1.15rem;
     margin: 0;
@@ -10654,26 +10444,12 @@ button.linkish:hover {
     }
 }
 
-@media (prefers-reduced-motion: reduce) {
-    .csv-celebrate__mascot {
-        animation: none;
-    }
-}
-
 .register-celebrate-modal {
     z-index: 40;
 }
 
 .register-celebrate-backdrop {
     z-index: 39;
-}
-
-.register-celebrate__title {
-    margin: 0.35rem 0 0;
-    font-size: 1.65rem;
-    font-weight: 700;
-    letter-spacing: -0.02em;
-    color: var(--brand-ink, #1a2b3c);
 }
 
 /* —— Legal pages & footer —— */

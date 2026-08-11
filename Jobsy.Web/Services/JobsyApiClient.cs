@@ -2135,19 +2135,6 @@ public sealed class JobsyApiClient : IAsyncDisposable
         return await response.Content.ReadAsStringAsync(ct);
     }
 
-    public async Task DeleteAccountAsync(string verificationCode, CancellationToken ct = default)
-    {
-        var response = await _http.PostAsJsonAsync(
-            "api/privacy/delete-account",
-            new { verificationCode },
-            ct);
-        if (!response.IsSuccessStatusCode)
-        {
-            var body = await response.Content.ReadAsStringAsync(ct);
-            throw new InvalidOperationException(ExtractMessage(body) ?? response.ReasonPhrase ?? "Verwijderen mislukt.");
-        }
-    }
-
     public async Task<IReadOnlyList<UnsubscribeReasonOption>> GetUnsubscribeReasonsAsync(CancellationToken ct = default)
     {
         var response = await _http.GetAsync("api/privacy/unsubscribe-reasons", ct);
@@ -2481,9 +2468,6 @@ public sealed class JobsyApiClient : IAsyncDisposable
 
     public async Task<PlatformFeatureItem?> GetPlatformFeaturesAsync(CancellationToken ct = default)
         => await _http.GetFromJsonAsync<PlatformFeatureItem>("api/settings/platform-features", ct);
-
-    public async Task<FreePublishStatusItem?> GetFreePublishStatusAsync(CancellationToken ct = default)
-        => await _http.GetFromJsonAsync<FreePublishStatusItem>("api/settings/free-publish", ct);
 
     public async Task<PlatformFeatureItem?> SavePlatformFeaturesAsync(
         PlatformFeatureItem features,
@@ -3146,12 +3130,6 @@ public sealed class PlatformFeatureItem
     public DateOnly? FreePublishUntil { get; set; }
     /// <summary>When true with null FreePublishUntil, admin turned the launch promo off.</summary>
     public bool ClearFreePublishUntil { get; set; }
-}
-
-public sealed class FreePublishStatusItem
-{
-    public bool IsActive { get; set; }
-    public DateOnly? FreePublishUntil { get; set; }
 }
 
 public sealed class PlatformCompanyItem

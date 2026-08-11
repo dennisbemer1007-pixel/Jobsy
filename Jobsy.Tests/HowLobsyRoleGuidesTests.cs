@@ -13,6 +13,7 @@ public sealed class HowLobsyRoleGuidesTests
     [InlineData(JobsyRoles.EnterpriseManager)]
     [InlineData(JobsyRoles.Intermediary)]
     [InlineData(JobsyRoles.SalesManager)]
+    [InlineData(JobsyRoles.Ambassadeur)]
     public void ForRole_returns_guide_with_localized_keys(string role)
     {
         var guide = HowLobsyRoleGuides.ForRole(role);
@@ -41,5 +42,16 @@ public sealed class HowLobsyRoleGuidesTests
 
         var withoutCode = HowLobsyRoleGuides.BuildSalesGuide(null);
         Assert.Equal("/salesmanager/toolkit", withoutCode.Steps[2].Links[0].Href);
+    }
+
+    [Fact]
+    public void BuildAmbassadeurGuide_uses_werven_path_when_code_present()
+    {
+        var withCode = HowLobsyRoleGuides.BuildAmbassadeurGuide("AM-DEMO01");
+        Assert.Equal("/werven/AM-DEMO01", withCode.Steps[2].Links[0].Href);
+        Assert.Equal("/ambassadeur/toolkit", withCode.Primary.Href);
+
+        var withoutCode = HowLobsyRoleGuides.BuildAmbassadeurGuide(null);
+        Assert.Equal("/ambassadeur/toolkit", withoutCode.Steps[2].Links[0].Href);
     }
 }

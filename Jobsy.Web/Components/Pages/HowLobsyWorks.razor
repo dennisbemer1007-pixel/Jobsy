@@ -1,6 +1,6 @@
 @page "/hoe-werkt-lobsy"
 @rendermode @(new InteractiveServerRenderMode(prerender: false))
-@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "BranchManager,RegionalManager,EnterpriseManager,Intermediary,SalesManager")]
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "BranchManager,RegionalManager,EnterpriseManager,Intermediary,SalesManager,Ambassadeur")]
 @using Jobsy.Core.Authorization
 @using Jobsy.Web.Help
 @using Microsoft.AspNetCore.Components.Authorization
@@ -34,6 +34,10 @@ else
         {
             _guide = HowLobsyRoleGuides.BuildSalesGuide(await TryGetSalesTrackingCodeAsync());
         }
+        else if (RoleClaimMatching.HasRole(user, JobsyRoles.Ambassadeur))
+        {
+            _guide = HowLobsyRoleGuides.BuildAmbassadeurGuide(await TryGetAmbassadeurTrackingCodeAsync());
+        }
         else if (RoleClaimMatching.HasRole(user, JobsyRoles.EnterpriseManager))
         {
             _guide = HowLobsyRoleGuides.Enterprise;
@@ -66,6 +70,19 @@ else
         catch
         {
             // Guide still works; partner step falls back to toolkit.
+            return null;
+        }
+    }
+
+    private async Task<string?> TryGetAmbassadeurTrackingCodeAsync()
+    {
+        try
+        {
+            var dashboard = await Api.GetMyAmbassadeurDashboardAsync();
+            return dashboard?.TrackingCode;
+        }
+        catch
+        {
             return null;
         }
     }

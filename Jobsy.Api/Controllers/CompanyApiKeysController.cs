@@ -83,21 +83,6 @@ public class CompanyApiKeysController : ControllerBase
         return Ok(new { message = "API-key gedeactiveerd." });
     }
 
-    [HttpPost("deactivate-active")]
-    [RequireCompanyAccess]
-    public async Task<IActionResult> DeactivateActive(
-        Guid companyId,
-        CancellationToken cancellationToken)
-    {
-        var deactivated = await _apiKeys.DeactivateForCompanyAsync(companyId, cancellationToken);
-        if (!deactivated)
-        {
-            return NotFound(new { message = "Geen actieve API-key gevonden." });
-        }
-
-        return Ok(new { message = "Actieve API-key gedeactiveerd." });
-    }
-
     /// <summary>
     /// Rotates to a new API key and e-mails it to the signed-in bedrijfsmanager.
     /// Arbitrary recipient addresses are rejected to prevent credential exfiltration.
