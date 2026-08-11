@@ -84,7 +84,8 @@ public record UpdateIntegrationCredentialRequest(
     string? BaseUrl = null,
     string? FromAddress = null,
     bool ClearApiKey = false,
-    bool ClearClientSecret = false);
+    bool ClearClientSecret = false,
+    bool UseEnvironmentCredentials = false);
 
 public record IntegrationCredentialDto(
     string Key,
@@ -108,7 +109,9 @@ public record IntegrationCredentialDto(
     bool? LastPingOk,
     string? LastPingMessage,
     DateTime? LastPingAtUtc,
-    DateTime? UpdatedAtUtc);
+    DateTime? UpdatedAtUtc,
+    bool IgnoresEnvironmentCredentials = false,
+    bool UsesEnvironmentCredentials = false);
 
 public record UpdatePlatformFeatureRequest(
     bool VacancyContentModerationEnabled,

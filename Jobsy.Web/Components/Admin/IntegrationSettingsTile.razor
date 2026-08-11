@@ -96,6 +96,14 @@
                 @if (IsMailIntegration)
                 {
                     <p class="muted">Op cloud-hosts blokkeert Gmail SMTP vaak (fout 5.7.9). Resend werkt wél: key van resend.com, From geverifieerd of tijdelijk onboarding@resend.dev.</p>
+                    @if (Credential.UsesEnvironmentCredentials)
+                    {
+                        <p class="muted">Minimaal één veld komt uit de omgeving (<code>Mail__ResendApiKey</code> / <code>Mail__FromAddress</code>). Resend is pas klaar als key én From gezet zijn.</p>
+                    }
+                    @if (Credential.IgnoresEnvironmentCredentials)
+                    {
+                        <p class="muted">Omgevingscredentials zijn uitgeschakeld na “Secrets wissen”. Plak nieuwe keys of heractiveer de omgeving hieronder.</p>
+                    }
                 }
             }
 
@@ -199,6 +207,10 @@
                 @if (Credential.HasApiKey || Credential.HasClientSecret)
                 {
                     <button class="btn-compact" type="button" disabled="@_busy" @onclick="ClearSecretsAsync" @onclick:stopPropagation="true">Secrets wissen</button>
+                }
+                @if (IsMailIntegration && Credential.IgnoresEnvironmentCredentials)
+                {
+                    <button class="btn-compact" type="button" disabled="@_busy" @onclick="UseEnvironmentAsync" @onclick:stopPropagation="true">Omgeving opnieuw gebruiken</button>
                 }
             </div>
 
@@ -385,7 +397,7 @@
         _helpOpen = !_helpOpen;
     }
 
-    private IntegrationCredentialSaveForm BuildSaveForm(bool clearSecrets = false) => new()
+    private IntegrationCredentialSaveForm BuildSaveForm(bool clearSecrets = false, bool useEnvironment = false) => new()
     {
         ApiKey = Credential.SupportsApiKey ? _apiKey : null,
         Model = Credential.SupportsModel ? _model : null,
@@ -397,7 +409,8 @@
             : null,
         FromAddress = Credential.SupportsFromAddress ? _fromAddress : null,
         ClearApiKey = clearSecrets && Credential.SupportsApiKey,
-        ClearClientSecret = clearSecrets && Credential.SupportsOAuth
+        ClearClientSecret = clearSecrets && Credential.SupportsOAuth,
+        UseEnvironmentCredentials = useEnvironment
     };
 
     private async Task SaveAsync()
@@ -434,9 +447,35 @@
             await Api.SaveIntegrationCredentialAsync(Credential.Key, BuildSaveForm(clearSecrets: true));
             _apiKey = "";
             _clientSecret = "";
+            _fromAddress = IsMailIntegration ? "" : _fromAddress;
             _dirty = false;
             _localOk = true;
-            _localMessage = "Secrets gewist.";
+            _localMessage = IsMailIntegration
+                ? "Secrets gewist. Omgevingsvariabelen voor Mail worden genegeerd tot je opnieuw opslaat of ‘Omgeving opnieuw gebruiken’ kiest."
+                : "Secrets gewist.";
+            await OnChanged.InvokeAsync();
+        }
+        catch (Exception ex)
+        {
+            _localOk = false;
+            _localMessage = ex.Message;
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private async Task UseEnvironmentAsync()
+    {
+        _busy = true;
+        _localMessage = null;
+        try
+        {
+            await Api.SaveIntegrationCredentialAsync(Credential.Key, BuildSaveForm(useEnvironment: true));
+            _dirty = false;
+            _localOk = true;
+            _localMessage = "Omgevingscredentials opnieuw actief (lege Admin-velden worden weer aangevuld).";
             await OnChanged.InvokeAsync();
         }
         catch (Exception ex)

@@ -148,6 +148,10 @@ Admin → Integraties → **Mail (Resend)** → plak API-key + From → Opslaan 
 
 DB-credentials hebben voorrang; env vult lege velden.
 
+**Secrets wissen (Admin):** wist DB-keys én schakelt env-fill uit, zodat mail echt stopt (ook als Render-env nog gezet is). Herstel met nieuwe Admin-keys, of knop **Omgeving opnieuw gebruiken**. Alleen env wissen op Render zonder die knop laat mail uitgeschakeld tot je env opnieuw activeert of keys plakt.
+
+Resend is pas operationeel als **API-key én From** beide gezet zijn (DB of env).
+
 ### DNS
 
 1. Voeg het verzenddomein toe in Resend (bijv. `lobsy.nl`) en verifieer DNS.

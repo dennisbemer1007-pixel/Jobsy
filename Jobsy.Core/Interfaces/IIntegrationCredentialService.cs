@@ -41,7 +41,9 @@ public sealed record IntegrationCredentialUpdate(
     string? BaseUrl = null,
     string? FromAddress = null,
     bool ClearApiKey = false,
-    bool ClearClientSecret = false);
+    bool ClearClientSecret = false,
+    /// <summary>Re-enable Mail env/config bootstrap after an Admin clear suppressed it.</summary>
+    bool UseEnvironmentCredentials = false);
 
 public sealed record IntegrationCredentialSecrets(
     string? ApiKey,
@@ -74,4 +76,6 @@ public sealed record IntegrationCredentialView(
     bool? LastPingOk,
     string? LastPingMessage,
     DateTime? LastPingAtUtc,
-    DateTime? UpdatedAtUtc);
+    DateTime? UpdatedAtUtc,
+    bool IgnoresEnvironmentCredentials = false,
+    bool UsesEnvironmentCredentials = false);

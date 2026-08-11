@@ -58,7 +58,7 @@ public static class IntegrationHelpDocs
         Summary: "Uitgaande e-mail via Resend API (primair). SMTP alleen als fallback.",
         UsedFor: "Registratie-activatiemail, sollicitatie-verificatiecodes, notificaties en overige platformmails — allemaal via Resend wanneer API-key + From gezet zijn.",
         WhereToGetKey: "resend.com → API Keys → Create. Plak bij ‘Resend API-key’, of zet Mail__ResendApiKey / RESEND_API_KEY op de API-service. From: geverifieerd domein (Mail__FromAddress), of tijdelijk onboarding@resend.dev (alleen naar je eigen inbox).",
-        Tip: "Resend heeft voorrang op SMTP. Op cloud-hosts faalt Gmail-SMTP vaak (5.7.9) — gebruik Resend. Env-vars vullen lege Admin-velden; opgeslagen Admin-keys gaan voor.",
+        Tip: "Resend heeft voorrang op SMTP. Op cloud-hosts faalt Gmail-SMTP vaak (5.7.9) — gebruik Resend. Env-vars vullen lege Admin-velden; opgeslagen Admin-keys gaan voor. ‘Secrets wissen’ schakelt env-fill uit tot je opnieuw opslaat of ‘Omgeving opnieuw gebruiken’ kiest. Resend is pas klaar met key én From.",
         DocsUrl: "https://resend.com/api-keys",
         DocsUrlLabel: "Resend API keys");
 

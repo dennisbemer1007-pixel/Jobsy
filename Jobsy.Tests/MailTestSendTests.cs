@@ -66,8 +66,73 @@ public class MailTestSendTests
         var view = await credentials.GetAsync(IntegrationKey.Mail);
         Assert.NotNull(view);
         Assert.True(view!.HasApiKey);
+        Assert.True(view.UsesEnvironmentCredentials);
+        Assert.False(view.IgnoresEnvironmentCredentials);
         Assert.Equal("Mail (Resend)", view.DisplayName);
         Assert.Contains("noreply@lobsy.nl", view.FromAddress);
+    }
+
+    [Fact]
+    public async Task Mail_partial_env_key_without_from_is_not_resend_ready()
+    {
+        await using var db = CreateDb();
+        var credentials = new IntegrationCredentialService(
+            db,
+            new PassthroughSecretProtector(),
+            Options.Create(new MailOptions
+            {
+                ResendApiKey = "re_only_key",
+                FromAddress = null
+            }));
+
+        var secrets = await credentials.GetSecretsAsync(IntegrationKey.Mail);
+        Assert.NotNull(secrets);
+        Assert.Equal("re_only_key", secrets!.ApiKey);
+        Assert.Null(secrets.FromAddress);
+        Assert.False(SmtpEmailService.TryResolveResend(secrets, out _));
+
+        var view = await credentials.GetAsync(IntegrationKey.Mail);
+        Assert.True(view!.HasApiKey);
+        Assert.True(string.IsNullOrWhiteSpace(view.FromAddress));
+        Assert.True(view.UsesEnvironmentCredentials);
+    }
+
+    [Fact]
+    public async Task Mail_clear_secrets_suppresses_env_until_reenabled()
+    {
+        await using var db = CreateDb();
+        var mailOptions = Options.Create(new MailOptions
+        {
+            ResendApiKey = "re_from_env",
+            FromAddress = "env@lobsy.nl"
+        });
+        var credentials = new IntegrationCredentialService(db, new PassthroughSecretProtector(), mailOptions);
+
+        Assert.True(SmtpEmailService.TryResolveResend(await credentials.GetSecretsAsync(IntegrationKey.Mail), out _));
+
+        await credentials.UpsertAsync(
+            IntegrationKey.Mail,
+            new IntegrationCredentialUpdate(ClearApiKey: true));
+
+        var afterClear = await credentials.GetSecretsAsync(IntegrationKey.Mail);
+        Assert.True(afterClear is null
+            || (string.IsNullOrWhiteSpace(afterClear.ApiKey) && string.IsNullOrWhiteSpace(afterClear.FromAddress)));
+        Assert.False(SmtpEmailService.TryResolveResend(afterClear, out _));
+
+        var view = await credentials.GetAsync(IntegrationKey.Mail);
+        Assert.True(view!.IgnoresEnvironmentCredentials);
+        Assert.False(view.HasApiKey);
+        Assert.False(view.UsesEnvironmentCredentials);
+
+        await credentials.UpsertAsync(
+            IntegrationKey.Mail,
+            new IntegrationCredentialUpdate(UseEnvironmentCredentials: true));
+
+        Assert.True(SmtpEmailService.TryResolveResend(await credentials.GetSecretsAsync(IntegrationKey.Mail), out var resend));
+        Assert.Equal("re_from_env", resend.ApiKey);
+        var reenabled = await credentials.GetAsync(IntegrationKey.Mail);
+        Assert.False(reenabled!.IgnoresEnvironmentCredentials);
+        Assert.True(reenabled.UsesEnvironmentCredentials);
     }
 
     [Fact]
@@ -92,6 +157,8 @@ public class MailTestSendTests
         var secrets = await credentials.GetSecretsAsync(IntegrationKey.Mail);
         Assert.Equal("re_from_db", secrets!.ApiKey);
         Assert.Equal("db@lobsy.nl", secrets.FromAddress);
+        var view = await credentials.GetAsync(IntegrationKey.Mail);
+        Assert.False(view!.UsesEnvironmentCredentials);
     }
 
     [Fact]

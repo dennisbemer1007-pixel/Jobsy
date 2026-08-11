@@ -417,7 +417,8 @@ public class SettingsController : ControllerBase
                     request.BaseUrl,
                     request.FromAddress,
                     request.ClearApiKey,
-                    request.ClearClientSecret),
+                    request.ClearClientSecret,
+                    request.UseEnvironmentCredentials),
                 cancellationToken);
             return Ok(ToDto(saved));
         }
@@ -476,7 +477,9 @@ public class SettingsController : ControllerBase
             view.LastPingOk,
             view.LastPingMessage,
             view.LastPingAtUtc,
-            view.UpdatedAtUtc);
+            view.UpdatedAtUtc,
+            view.IgnoresEnvironmentCredentials,
+            view.UsesEnvironmentCredentials);
 }
 
 public sealed record PlatformCompanyDto(

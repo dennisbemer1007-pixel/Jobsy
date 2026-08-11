@@ -80,10 +80,20 @@ public sealed class IntegrationCredentialService : IIntegrationCredentialService
         if (update.ClearApiKey)
         {
             row.ApiKey = null;
+            if (key == IntegrationKey.Mail)
+            {
+                // Admin "Secrets wissen" must actually disable Resend, including env bootstrap.
+                row.FromAddress = null;
+                row.IgnoreEnvironmentCredentials = true;
+            }
         }
         else if (!string.IsNullOrWhiteSpace(update.ApiKey))
         {
             row.ApiKey = _secrets.Protect(update.ApiKey.Trim());
+            if (key == IntegrationKey.Mail)
+            {
+                row.IgnoreEnvironmentCredentials = false;
+            }
         }
 
         if (update.ClearClientSecret)
@@ -118,9 +128,14 @@ public sealed class IntegrationCredentialService : IIntegrationCredentialService
             row.BaseUrl = normalized;
         }
 
-        if (update.FromAddress is not null)
+        if (update.FromAddress is not null && !update.ClearApiKey)
         {
             row.FromAddress = string.IsNullOrWhiteSpace(update.FromAddress) ? null : update.FromAddress.Trim();
+        }
+
+        if (key == IntegrationKey.Mail && update.UseEnvironmentCredentials)
+        {
+            row.IgnoreEnvironmentCredentials = false;
         }
 
         if (SupportsModel(key))
@@ -141,7 +156,8 @@ public sealed class IntegrationCredentialService : IIntegrationCredentialService
             || !string.IsNullOrWhiteSpace(update.ClientSecret)
             || update.ClientId is not null
             || update.TenantId is not null
-            || update.BaseUrl is not null)
+            || update.BaseUrl is not null
+            || update.UseEnvironmentCredentials)
         {
             row.LastPingOk = null;
             row.LastPingMessage = "Opgeslagen — nog niet getest.";
@@ -228,7 +244,7 @@ public sealed class IntegrationCredentialService : IIntegrationCredentialService
             fromAddress = string.IsNullOrWhiteSpace(row.FromAddress) ? null : row.FromAddress.Trim();
         }
 
-        if (key == IntegrationKey.Mail)
+        if (key == IntegrationKey.Mail && row?.IgnoreEnvironmentCredentials != true)
         {
             // Env/config fills gaps so Render can wire Resend without Admin first.
             apiKey ??= TrimOrNull(_mailOptions.ResendApiKey);
@@ -316,11 +332,31 @@ public sealed class IntegrationCredentialService : IIntegrationCredentialService
         var apiKeyPlain = string.IsNullOrWhiteSpace(row?.ApiKey) ? null : _secrets.Unprotect(row.ApiKey);
         var secretPlain = string.IsNullOrWhiteSpace(row?.ClientSecret) ? null : _secrets.Unprotect(row.ClientSecret);
         var fromAddress = string.IsNullOrWhiteSpace(row?.FromAddress) ? null : row!.FromAddress.Trim();
+        var ignoresEnv = key == IntegrationKey.Mail && row?.IgnoreEnvironmentCredentials == true;
+        var usedEnvKey = false;
+        var usedEnvFrom = false;
 
-        if (key == IntegrationKey.Mail)
+        if (key == IntegrationKey.Mail && !ignoresEnv)
         {
-            apiKeyPlain ??= TrimOrNull(_mailOptions.ResendApiKey);
-            fromAddress ??= TrimOrNull(_mailOptions.FromAddress);
+            if (apiKeyPlain is null)
+            {
+                var envKey = TrimOrNull(_mailOptions.ResendApiKey);
+                if (envKey is not null)
+                {
+                    apiKeyPlain = envKey;
+                    usedEnvKey = true;
+                }
+            }
+
+            if (fromAddress is null)
+            {
+                var envFrom = TrimOrNull(_mailOptions.FromAddress);
+                if (envFrom is not null)
+                {
+                    fromAddress = envFrom;
+                    usedEnvFrom = true;
+                }
+            }
         }
 
         var hasKey = !string.IsNullOrWhiteSpace(apiKeyPlain);
@@ -347,6 +383,8 @@ public sealed class IntegrationCredentialService : IIntegrationCredentialService
             row?.LastPingOk,
             row?.LastPingMessage,
             row?.LastPingAtUtc,
-            row?.UpdatedAtUtc);
+            row?.UpdatedAtUtc,
+            ignoresEnv,
+            usedEnvKey || usedEnvFrom);
     }
 }

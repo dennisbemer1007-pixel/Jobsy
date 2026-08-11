@@ -350,6 +350,12 @@ public sealed class IntegrationHealthStub : IIntegrationHealthService
 
     private static bool IsConfigured(IntegrationCredentialView view)
     {
+        // Resend needs API key + From; a partial env key alone must not look "configured".
+        if (view.Key == IntegrationKey.Mail)
+        {
+            return view.HasApiKey && !string.IsNullOrWhiteSpace(view.FromAddress);
+        }
+
         if (view.SupportsApiKey && view.HasApiKey)
         {
             return true;

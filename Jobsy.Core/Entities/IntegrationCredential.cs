@@ -16,6 +16,11 @@ public class IntegrationCredential
     public string? Model { get; set; }
     public string? BaseUrl { get; set; }
     public string? FromAddress { get; set; }
+    /// <summary>
+    /// When true, Mail env/config bootstrap (<c>Mail__*</c> / <c>RESEND_*</c>) is not merged.
+    /// Set by Admin "Secrets wissen"; cleared when a new API key is saved or env fill is re-enabled.
+    /// </summary>
+    public bool IgnoreEnvironmentCredentials { get; set; }
     public bool? LastPingOk { get; set; }
     public string? LastPingMessage { get; set; }
     public DateTime? LastPingAtUtc { get; set; }

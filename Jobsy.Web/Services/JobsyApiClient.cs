@@ -3116,6 +3116,8 @@ public sealed class IntegrationCredentialItem
     public string? LastPingMessage { get; set; }
     public DateTime? LastPingAtUtc { get; set; }
     public DateTime? UpdatedAtUtc { get; set; }
+    public bool IgnoresEnvironmentCredentials { get; set; }
+    public bool UsesEnvironmentCredentials { get; set; }
 }
 
 public sealed class IntegrationCredentialSaveForm
@@ -3129,6 +3131,7 @@ public sealed class IntegrationCredentialSaveForm
     public string? FromAddress { get; set; }
     public bool ClearApiKey { get; set; }
     public bool ClearClientSecret { get; set; }
+    public bool UseEnvironmentCredentials { get; set; }
 }
 
 public sealed class PlatformFeatureItem
