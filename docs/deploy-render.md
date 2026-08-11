@@ -129,12 +129,31 @@ Render **Basic Postgres** (`jobsy-db`) maakt dagelijkse automatische backups (zi
 
 ## Transactionele e-mail (Resend) + SPF/DKIM
 
-Lobsy stuurt mail via **Resend** (SMTP-fallback). Voor productie:
+Lobsy stuurt alle platformmails via **Resend** (`POST https://api.resend.com/emails`). SMTP is alleen fallback.
+
+### Configureren (kies één)
+
+**A. Render / omgeving (aanbevolen voor productie)**
+
+Zet op `jobsy-api`:
+
+| Env var | Voorbeeld |
+|---------|-----------|
+| `Mail__ResendApiKey` | `re_…` (of `RESEND_API_KEY`) |
+| `Mail__FromAddress` | `Lobsy <noreply@lobsy.nl>` (of `RESEND_FROM`) |
+
+**B. Admin UI**
+
+Admin → Integraties → **Mail (Resend)** → plak API-key + From → Opslaan → **Stuur testmail**.
+
+DB-credentials hebben voorrang; env vult lege velden.
+
+### DNS
 
 1. Voeg het verzenddomein toe in Resend (bijv. `lobsy.nl`) en verifieer DNS.
 2. Zet de door Resend aangeleverde **SPF** en **DKIM** records; start **DMARC** met `p=none` en verhoog later.
-3. Zet in Admin → Integraties een From-adres op het geverifieerde domein (niet `onboarding@resend.dev`).
-4. Test met Admin “testmail”; mislukte sends landen in PlatformLogs (e-mail geredacteerd).
+3. Gebruik From op het geverifieerde domein (niet langdurig `onboarding@resend.dev`).
+4. Mislukte sends landen in PlatformLogs (e-mail geredacteerd).
 
 ## Sentry & webhook-ops
 

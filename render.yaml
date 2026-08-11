@@ -75,6 +75,12 @@ services:
         value: "https://lobsy.nl"
       - key: Cors__AllowedOrigins__2
         value: "https://www.lobsy.nl"
+      # Resend transactional mail (set values in Render Dashboard — do not commit secrets).
+      # Admin → Integraties → Mail (Resend) can also store encrypted credentials in the DB.
+      - key: Mail__ResendApiKey
+        sync: false
+      - key: Mail__FromAddress
+        sync: false
 
   - type: web
     name: jobsy-web

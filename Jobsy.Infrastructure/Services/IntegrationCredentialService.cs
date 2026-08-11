@@ -1,9 +1,11 @@
 using Jobsy.Core.Entities;
 using Jobsy.Core.Enums;
 using Jobsy.Core.Interfaces;
+using Jobsy.Core.Options;
 using Jobsy.Infrastructure.Data;
 using Jobsy.Infrastructure.Security;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 
 namespace Jobsy.Infrastructure.Services;
 
@@ -13,11 +15,21 @@ public sealed class IntegrationCredentialService : IIntegrationCredentialService
 
     private readonly JobsyDbContext _db;
     private readonly ISecretProtector _secrets;
+    private readonly MailOptions _mailOptions;
 
     public IntegrationCredentialService(JobsyDbContext db, ISecretProtector secrets)
+        : this(db, secrets, Options.Create(new MailOptions()))
+    {
+    }
+
+    public IntegrationCredentialService(
+        JobsyDbContext db,
+        ISecretProtector secrets,
+        IOptions<MailOptions> mailOptions)
     {
         _db = db;
         _secrets = secrets;
+        _mailOptions = mailOptions.Value ?? new MailOptions();
     }
 
     public async Task<IntegrationCredentialView?> GetAsync(
@@ -196,20 +208,51 @@ public sealed class IntegrationCredentialService : IIntegrationCredentialService
     {
         var row = await _db.IntegrationCredentials.AsNoTracking()
             .FirstOrDefaultAsync(c => c.Key == key, cancellationToken);
-        if (row is null)
+
+        string? apiKey = null;
+        string? clientId = null;
+        string? clientSecret = null;
+        string? tenantId = null;
+        string? model = null;
+        string? baseUrl = null;
+        string? fromAddress = null;
+
+        if (row is not null)
+        {
+            apiKey = string.IsNullOrWhiteSpace(row.ApiKey) ? null : _secrets.Unprotect(row.ApiKey);
+            clientId = string.IsNullOrWhiteSpace(row.ClientId) ? null : row.ClientId.Trim();
+            clientSecret = string.IsNullOrWhiteSpace(row.ClientSecret) ? null : _secrets.Unprotect(row.ClientSecret);
+            tenantId = string.IsNullOrWhiteSpace(row.TenantId) ? null : row.TenantId.Trim();
+            model = string.IsNullOrWhiteSpace(row.Model) ? null : row.Model.Trim();
+            baseUrl = string.IsNullOrWhiteSpace(row.BaseUrl) ? null : row.BaseUrl.Trim();
+            fromAddress = string.IsNullOrWhiteSpace(row.FromAddress) ? null : row.FromAddress.Trim();
+        }
+
+        if (key == IntegrationKey.Mail)
+        {
+            // Env/config fills gaps so Render can wire Resend without Admin first.
+            apiKey ??= TrimOrNull(_mailOptions.ResendApiKey);
+            fromAddress ??= TrimOrNull(_mailOptions.FromAddress);
+        }
+
+        if (apiKey is null && clientId is null && clientSecret is null && tenantId is null
+            && model is null && baseUrl is null && fromAddress is null)
         {
             return null;
         }
 
         return new IntegrationCredentialSecrets(
-            string.IsNullOrWhiteSpace(row.ApiKey) ? null : _secrets.Unprotect(row.ApiKey),
-            string.IsNullOrWhiteSpace(row.ClientId) ? null : row.ClientId.Trim(),
-            string.IsNullOrWhiteSpace(row.ClientSecret) ? null : _secrets.Unprotect(row.ClientSecret),
-            string.IsNullOrWhiteSpace(row.TenantId) ? null : row.TenantId.Trim(),
-            string.IsNullOrWhiteSpace(row.Model) ? null : row.Model.Trim(),
-            string.IsNullOrWhiteSpace(row.BaseUrl) ? null : row.BaseUrl.Trim(),
-            string.IsNullOrWhiteSpace(row.FromAddress) ? null : row.FromAddress.Trim());
+            apiKey,
+            clientId,
+            clientSecret,
+            tenantId,
+            model,
+            baseUrl,
+            fromAddress);
     }
+
+    private static string? TrimOrNull(string? value)
+        => string.IsNullOrWhiteSpace(value) ? null : value.Trim();
 
     public static bool IsConfigurable(IntegrationKey key) => ConfigurableKeys.Contains(key);
 
@@ -237,7 +280,7 @@ public sealed class IntegrationCredentialService : IIntegrationCredentialService
         IntegrationKey.Kvk => "KVK",
         IntegrationKey.MicrosoftEntra => "Microsoft Entra",
         IntegrationKey.GoogleEntra => "Google",
-        IntegrationKey.Mail => "Mail",
+        IntegrationKey.Mail => "Mail (Resend)",
         _ => key.ToString()
     };
 
@@ -248,7 +291,7 @@ public sealed class IntegrationCredentialService : IIntegrationCredentialService
         IntegrationKey.Kvk => "KvK-handelsregister koppeling.",
         IntegrationKey.MicrosoftEntra => "Microsoft-login (OIDC).",
         IntegrationKey.GoogleEntra => "Google-login (OAuth).",
-        IntegrationKey.Mail => "Uitgaande e-mail via Resend (API) of SMTP.",
+        IntegrationKey.Mail => "Uitgaande e-mail via Resend API (SMTP alleen als fallback).",
         _ => string.Empty
     };
 
@@ -272,6 +315,14 @@ public sealed class IntegrationCredentialService : IIntegrationCredentialService
     {
         var apiKeyPlain = string.IsNullOrWhiteSpace(row?.ApiKey) ? null : _secrets.Unprotect(row.ApiKey);
         var secretPlain = string.IsNullOrWhiteSpace(row?.ClientSecret) ? null : _secrets.Unprotect(row.ClientSecret);
+        var fromAddress = string.IsNullOrWhiteSpace(row?.FromAddress) ? null : row!.FromAddress.Trim();
+
+        if (key == IntegrationKey.Mail)
+        {
+            apiKeyPlain ??= TrimOrNull(_mailOptions.ResendApiKey);
+            fromAddress ??= TrimOrNull(_mailOptions.FromAddress);
+        }
+
         var hasKey = !string.IsNullOrWhiteSpace(apiKeyPlain);
         var hasSecret = !string.IsNullOrWhiteSpace(secretPlain);
         return new IntegrationCredentialView(
@@ -286,7 +337,7 @@ public sealed class IntegrationCredentialService : IIntegrationCredentialService
             row?.TenantId,
             SupportsModel(key) ? (row?.Model ?? "gpt-4o-mini") : row?.Model,
             row?.BaseUrl,
-            row?.FromAddress,
+            fromAddress,
             SupportsApiKey(key),
             SupportsModel(key),
             SupportsOAuth(key),

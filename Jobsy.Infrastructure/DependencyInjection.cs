@@ -63,6 +63,30 @@ public static class DependencyInjection
         services.AddOptions<OpenAiOptions>()
             .Bind(configuration.GetSection(OpenAiOptions.SectionName));
 
+        services.AddOptions<MailOptions>()
+            .Bind(configuration.GetSection(MailOptions.SectionName))
+            .PostConfigure(options =>
+            {
+                // Common Resend env name when Mail__ResendApiKey is not set.
+                if (string.IsNullOrWhiteSpace(options.ResendApiKey))
+                {
+                    var alt = configuration["RESEND_API_KEY"];
+                    if (!string.IsNullOrWhiteSpace(alt))
+                    {
+                        options.ResendApiKey = alt.Trim();
+                    }
+                }
+
+                if (string.IsNullOrWhiteSpace(options.FromAddress))
+                {
+                    var alt = configuration["RESEND_FROM"] ?? configuration["Mail__From"];
+                    if (!string.IsNullOrWhiteSpace(alt))
+                    {
+                        options.FromAddress = alt.Trim();
+                    }
+                }
+            });
+
         services.AddDbContext<JobsyDbContext>(options =>
             options.UseNpgsql(connectionString, npgsql =>
             {

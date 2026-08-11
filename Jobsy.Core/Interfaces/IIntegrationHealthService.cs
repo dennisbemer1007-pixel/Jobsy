@@ -16,7 +16,7 @@ public interface IIntegrationHealthService
         IntegrationKey key,
         CancellationToken cancellationToken = default);
 
-    /// <summary>Sends a real test e-mail via the configured Mail SMTP settings.</summary>
+    /// <summary>Sends a real test e-mail via Resend (or SMTP fallback).</summary>
     Task<SendTestMailResult> SendTestMailAsync(
         string to,
         CancellationToken cancellationToken = default);

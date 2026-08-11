@@ -44,6 +44,57 @@ public class MailTestSendTests
     }
 
     [Fact]
+    public async Task Mail_env_resend_credentials_fill_empty_db_secrets()
+    {
+        await using var db = CreateDb();
+        var credentials = new IntegrationCredentialService(
+            db,
+            new PassthroughSecretProtector(),
+            Options.Create(new MailOptions
+            {
+                ResendApiKey = "re_test_key_123",
+                FromAddress = "Lobsy <noreply@lobsy.nl>"
+            }));
+
+        var secrets = await credentials.GetSecretsAsync(IntegrationKey.Mail);
+        Assert.NotNull(secrets);
+        Assert.Equal("re_test_key_123", secrets!.ApiKey);
+        Assert.Equal("Lobsy <noreply@lobsy.nl>", secrets.FromAddress);
+        Assert.True(SmtpEmailService.TryResolveResend(secrets, out var resend));
+        Assert.Equal("re_test_key_123", resend.ApiKey);
+
+        var view = await credentials.GetAsync(IntegrationKey.Mail);
+        Assert.NotNull(view);
+        Assert.True(view!.HasApiKey);
+        Assert.Equal("Mail (Resend)", view.DisplayName);
+        Assert.Contains("noreply@lobsy.nl", view.FromAddress);
+    }
+
+    [Fact]
+    public async Task Mail_db_resend_key_wins_over_env()
+    {
+        await using var db = CreateDb();
+        var credentials = new IntegrationCredentialService(
+            db,
+            new PassthroughSecretProtector(),
+            Options.Create(new MailOptions
+            {
+                ResendApiKey = "re_from_env",
+                FromAddress = "env@lobsy.nl"
+            }));
+
+        await credentials.UpsertAsync(
+            IntegrationKey.Mail,
+            new IntegrationCredentialUpdate(
+                ApiKey: "re_from_db",
+                FromAddress: "db@lobsy.nl"));
+
+        var secrets = await credentials.GetSecretsAsync(IntegrationKey.Mail);
+        Assert.Equal("re_from_db", secrets!.ApiKey);
+        Assert.Equal("db@lobsy.nl", secrets.FromAddress);
+    }
+
+    [Fact]
     public async Task Mail_save_with_host_and_port_stores_combined_base_url()
     {
         await using var db = CreateDb();

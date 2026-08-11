@@ -14,8 +14,8 @@ using MimeKit;
 namespace Jobsy.Infrastructure.Services;
 
 /// <summary>
-/// Sends mail via Resend API (preferred on cloud hosts) or SMTP (MailKit).
-/// Gmail SMTP from datacenter IPs often fails with 5.7.9 WebLoginRequired even with App Passwords.
+/// Sends mail via Resend API (<c>POST https://api.resend.com/emails</c>) as the primary path.
+/// SMTP (MailKit) is optional fallback. Gmail SMTP from datacenter IPs often fails with 5.7.9.
 /// Falls back to <see cref="EmailServiceStub"/> only in Development/Testing when neither path is configured.
 /// </summary>
 public sealed class SmtpEmailService : IEmailService

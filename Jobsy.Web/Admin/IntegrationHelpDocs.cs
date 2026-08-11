@@ -55,10 +55,10 @@ public static class IntegrationHelpDocs
         DocsUrlLabel: "Google Cloud Credentials");
 
     private static readonly Doc Mail = new(
-        Summary: "Uitgaande e-mail via Resend API (aanbevolen) of SMTP.",
-        UsedFor: "Registratie-activatiemail, sollicitatie-verificatiecodes, notificaties en overige platformmails.",
-        WhereToGetKey: "Aanbevolen: resend.com → API Keys → Create. Plak bij ‘Resend API-key’. From: geverifieerd domein, of tijdelijk onboarding@resend.dev (alleen naar je eigen inbox). Alternatief SMTP: Gmail App-wachtwoord — maar Gmail blokkeert cloud-servers vaak met fout 5.7.9.",
-        Tip: "Fout 5.7.9 WebLoginRequired = Google blokkeert de server-IP. Los dit niet op met opnieuw een App-wachtwoord; gebruik Resend. Resend heeft voorrang als API-key + From zijn ingevuld.",
+        Summary: "Uitgaande e-mail via Resend API (primair). SMTP alleen als fallback.",
+        UsedFor: "Registratie-activatiemail, sollicitatie-verificatiecodes, notificaties en overige platformmails — allemaal via Resend wanneer API-key + From gezet zijn.",
+        WhereToGetKey: "resend.com → API Keys → Create. Plak bij ‘Resend API-key’, of zet Mail__ResendApiKey / RESEND_API_KEY op de API-service. From: geverifieerd domein (Mail__FromAddress), of tijdelijk onboarding@resend.dev (alleen naar je eigen inbox).",
+        Tip: "Resend heeft voorrang op SMTP. Op cloud-hosts faalt Gmail-SMTP vaak (5.7.9) — gebruik Resend. Env-vars vullen lege Admin-velden; opgeslagen Admin-keys gaan voor.",
         DocsUrl: "https://resend.com/api-keys",
         DocsUrlLabel: "Resend API keys");
 
