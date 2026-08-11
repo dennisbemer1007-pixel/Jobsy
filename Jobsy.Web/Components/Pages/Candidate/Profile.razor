@@ -424,7 +424,6 @@
     private readonly HashSet<string> _availability = new(StringComparer.OrdinalIgnoreCase);
     private readonly List<CandidateEmployerHistory> _employers = [];
     private readonly List<CandidateCertificate> _certificates = [];
-    private bool _showAddressOnCv;
     private List<string> _branchOptions = WorkTypeLabels.All.ToList();
     private List<string> _licenseOptions = DrivingLicenseLabels.All.ToList();
     private List<string> _educationOptions = EducationLevelLabels.ProfileAll.ToList();
@@ -507,7 +506,6 @@
             _employers.AddRange(prefs.Employers ?? []);
             _certificates.Clear();
             _certificates.AddRange(prefs.Certificates ?? []);
-            _showAddressOnCv = false;
             _selectedEducations.Clear();
             foreach (var education in prefs.Educations ?? [])
             {
