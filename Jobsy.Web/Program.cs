@@ -100,6 +100,7 @@ app.Use(async (context, next) =>
         "default-src 'self'; " +
         "base-uri 'self'; " +
         "frame-ancestors 'none'; " +
+        "frame-src 'self' https://www.youtube-nocookie.com https://www.youtube.com https://player.vimeo.com https://vimeo.com; " +
         "object-src 'none'; " +
         "img-src 'self' data: https: blob:; " +
         "font-src 'self' data: https://fonts.gstatic.com; " +
