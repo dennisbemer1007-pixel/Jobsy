@@ -22,6 +22,11 @@ public class CompanySummary
     public string? ContactWhatsApp { get; set; }
     public string? PreferredPaymentMethod { get; set; }
     public bool RequireEmailVerificationForApplications { get; set; }
+    public string? HubAboutText { get; set; }
+    public string? HubCultureText { get; set; }
+    public string? HubVideoUrl { get; set; }
+    public DateTime? HubHighlightedUntil { get; set; }
+    public string? PublicPath { get; set; }
 }
 
 public class CompanyBillingHistoryItem

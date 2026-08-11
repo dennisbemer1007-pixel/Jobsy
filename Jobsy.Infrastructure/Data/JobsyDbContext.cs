@@ -159,6 +159,10 @@ public class JobsyDbContext : DbContext
             entity.Property(e => e.ContactPhone).HasMaxLength(64);
             entity.Property(e => e.ContactWhatsApp).HasMaxLength(64);
             entity.Property(e => e.PreferredPaymentMethod).HasMaxLength(32);
+            entity.Property(e => e.HubAboutText).HasMaxLength(4000);
+            entity.Property(e => e.HubCultureText).HasMaxLength(4000);
+            entity.Property(e => e.HubVideoUrl).HasMaxLength(1024);
+            entity.HasIndex(e => e.HubHighlightedUntil);
             entity.Property(e => e.CommissionDirectRateSnapshot).HasPrecision(5, 4);
             entity.Property(e => e.CommissionIndirectRateSnapshot).HasPrecision(5, 4);
             entity.Property(e => e.CommissionAmbassadeurRateSnapshot).HasPrecision(5, 4);

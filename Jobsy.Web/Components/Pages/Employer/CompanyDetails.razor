@@ -117,6 +117,47 @@
             </section>
 
             <section class="panel-section company-details__card">
+                <h2>Bedrijven-hub pagina</h2>
+                <p class="muted company-details__lead">
+                    Beheer de publieke bedrijfspagina in de Bedrijven-gids. De pagina is alleen zichtbaar
+                    zolang je minstens één actieve vacature hebt (max. 30 dagen resterende looptijd).
+                </p>
+                @if (!string.IsNullOrWhiteSpace(_org.PublicPath))
+                {
+                    <p class="muted">Publieke URL: <a class="auth-link" href="@_org.PublicPath" target="_blank" rel="noopener">@_org.PublicPath</a></p>
+                }
+                <label>
+                    Over ons
+                    <textarea rows="4" @bind="_hubAbout" @bind:event="oninput" disabled="@_busy" maxlength="4000"></textarea>
+                </label>
+                <label>
+                    Sfeer &amp; cultuur
+                    <textarea rows="3" @bind="_hubCulture" @bind:event="oninput" disabled="@_busy" maxlength="4000"></textarea>
+                </label>
+                <label>
+                    Video-link (YouTube/Vimeo)
+                    <input @bind="_hubVideo" @bind:event="oninput" disabled="@_busy" placeholder="https://…" />
+                </label>
+                <div class="inline-actions company-details__actions">
+                    <button class="login-submit" type="button" disabled="@_busy" @onclick="SaveHubPageAsync">
+                        Bedrijfspagina opslaan
+                    </button>
+                    <button class="btn-compact" type="button" disabled="@_busy" @onclick="DownloadHubQrAsync">
+                        QR-code downloaden
+                    </button>
+                    <button class="btn-compact" type="button" disabled="@(_busy || HubHighlightActive)" @onclick="HighlightHubAsync">
+                        @(HubHighlightActive
+                            ? $"Gehighlight tot {_org.HubHighlightedUntil!.Value.ToLocalTime():dd-MM}"
+                            : "Highlight (2 tokens)")
+                    </button>
+                </div>
+                @if (_feedbackSection == FeedbackSection.Hub && !string.IsNullOrEmpty(_message))
+                {
+                    <p class="state-message @(_messageIsError ? "error" : null)">@_message</p>
+                }
+            </section>
+
+            <section class="panel-section company-details__card">
                 <h2>Contactvoorkeur</h2>
                 <p class="muted company-details__lead">
                     Mag een kandidaat na een succesvolle sollicitatie direct contact opnemen?
@@ -566,7 +607,8 @@
         Billing,
         Csv,
         Api,
-        EmailVerification
+        EmailVerification,
+        Hub
     }
 
     private const string CopySvg =
@@ -599,7 +641,12 @@
     private string _contactPhone = "";
     private string _contactWhatsApp = "";
     private string _preferredPaymentMethod = "ideal";
+    private string _hubAbout = "";
+    private string _hubCulture = "";
+    private string _hubVideo = "";
     private List<CompanyBillingHistoryItem> _billingHistory = [];
+    private bool HubHighlightActive =>
+        _org?.HubHighlightedUntil is DateTime until && until > DateTime.UtcNow;
     private bool _billingLoading;
     private bool _keyCopied;
     private bool _endpointCopied;
@@ -765,6 +812,9 @@
         _preferredPaymentMethod = string.Equals(_org.PreferredPaymentMethod, "creditcard", StringComparison.OrdinalIgnoreCase)
             ? "creditcard"
             : "ideal";
+        _hubAbout = _org.HubAboutText ?? "";
+        _hubCulture = _org.HubCultureText ?? "";
+        _hubVideo = _org.HubVideoUrl ?? "";
     }
 
     private async Task LoadBillingHistoryAsync()
@@ -858,6 +908,110 @@
             _preferPhone = false;
             _preferWhatsApp = false;
         }
+    }
+
+    private async Task SaveHubPageAsync()
+    {
+        if (_org is null || _busy)
+        {
+            return;
+        }
+
+        _busy = true;
+        ClearFeedback();
+        try
+        {
+            var updated = await Api.UpdateCompanyHubPageAsync(_org.Id, _hubAbout, _hubCulture, _hubVideo);
+            if (updated is not null)
+            {
+                ReplaceOrg(updated);
+                SetFeedback(FeedbackSection.Hub, "Bedrijfspagina opgeslagen.");
+            }
+        }
+        catch (Exception ex)
+        {
+            SetFeedback(FeedbackSection.Hub, ex.Message, isError: true);
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private async Task HighlightHubAsync()
+    {
+        if (_org is null || _busy || HubHighlightActive)
+        {
+            return;
+        }
+
+        _busy = true;
+        ClearFeedback();
+        try
+        {
+            var updated = await Api.HighlightCompanyHubAsync(_org.Id);
+            if (updated is not null)
+            {
+                ReplaceOrg(updated);
+                SetFeedback(FeedbackSection.Hub, "Bedrijfspagina gehighlight in de Bedrijven-hub.");
+            }
+        }
+        catch (Exception ex)
+        {
+            SetFeedback(FeedbackSection.Hub, ex.Message, isError: true);
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private async Task DownloadHubQrAsync()
+    {
+        if (_org is null || _busy)
+        {
+            return;
+        }
+
+        _busy = true;
+        ClearFeedback();
+        try
+        {
+            var result = await Api.DownloadCompanyHubQrAsync(_org.Id);
+            if (result is null)
+            {
+                SetFeedback(FeedbackSection.Hub, "QR-code downloaden mislukt.", isError: true);
+                return;
+            }
+
+            var base64 = Convert.ToBase64String(result.Value.Bytes);
+            await Js.InvokeVoidAsync(
+                "jobsyDownload.bytes",
+                result.Value.FileName,
+                base64,
+                "image/png");
+            SetFeedback(FeedbackSection.Hub, "QR-code gedownload.");
+        }
+        catch (Exception ex)
+        {
+            SetFeedback(FeedbackSection.Hub, ex.Message, isError: true);
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private void ReplaceOrg(CompanySummary updated)
+    {
+        var idx = _organizations.FindIndex(o => o.Id == updated.Id);
+        if (idx >= 0)
+        {
+            _organizations[idx] = updated;
+        }
+
+        _org = updated;
+        SyncContactFormFromOrg();
     }
 
     private async Task SaveContactPreferenceAsync()

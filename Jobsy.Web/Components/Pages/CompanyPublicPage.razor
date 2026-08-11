@@ -51,6 +51,29 @@
                         </p>
                     </div>
                 </div>
+                @if (!string.IsNullOrWhiteSpace(_page.AboutText)
+                     || !string.IsNullOrWhiteSpace(_page.CultureText)
+                     || !string.IsNullOrWhiteSpace(_page.VideoUrl))
+                {
+                    <div class="branch-page__story">
+                        @if (!string.IsNullOrWhiteSpace(_page.AboutText))
+                        {
+                            <h2 class="branch-page__story-title">Over ons</h2>
+                            <p class="branch-page__story-body">@_page.AboutText</p>
+                        }
+                        @if (!string.IsNullOrWhiteSpace(_page.CultureText))
+                        {
+                            <h2 class="branch-page__story-title">Sfeer &amp; cultuur</h2>
+                            <p class="branch-page__story-body">@_page.CultureText</p>
+                        }
+                        @if (!string.IsNullOrWhiteSpace(_page.VideoUrl))
+                        {
+                            <p class="branch-page__story-video">
+                                <a class="auth-link" href="@_page.VideoUrl" target="_blank" rel="noopener noreferrer">Bekijk onze video</a>
+                            </p>
+                        }
+                    </div>
+                }
             }
         </div>
 

@@ -64,8 +64,9 @@ public class RoleNavCatalogTests
     {
         var identity = new ClaimsIdentity([new Claim(ClaimTypes.Role, JobsyRoles.Candidate)], "test");
         var items = RoleNavCatalog.ForUser(new ClaimsPrincipal(identity));
-        Assert.Equal(5, items.Count);
+        Assert.Equal(6, items.Count);
         Assert.Contains(items, i => i.Href == "/");
+        Assert.Contains(items, i => i.Href == "/bedrijven");
         Assert.Contains(items, i => i.Href == "/candidate/hoe-werkt-lobsy");
         Assert.Contains(items, i => i.Href == "/candidate/liked");
         Assert.Contains(items, i => i.Href == "/candidate/applications");

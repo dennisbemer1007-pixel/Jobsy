@@ -213,6 +213,35 @@ public sealed class JobsyApiClient : IAsyncDisposable
         return await _http.GetFromJsonAsync<List<VacancyListItem>>($"api/vacancies/discover?{qs}", ct) ?? [];
     }
 
+    public async Task<IReadOnlyList<CompanyHubListItem>> DiscoverCompaniesAsync(
+        double? originLat,
+        double? originLng,
+        string transport,
+        int maxMinutes,
+        double? radiusKm,
+        string? searchQuery = null,
+        CancellationToken ct = default)
+    {
+        var qs = $"transport={Uri.EscapeDataString(transport)}&maxMinutes={maxMinutes}";
+        if (originLat is not null && originLng is not null)
+        {
+            qs += $"&originLat={originLat.Value.ToString(System.Globalization.CultureInfo.InvariantCulture)}"
+                + $"&originLng={originLng.Value.ToString(System.Globalization.CultureInfo.InvariantCulture)}";
+        }
+
+        if (radiusKm is not null)
+        {
+            qs += $"&radiusKm={radiusKm.Value.ToString(System.Globalization.CultureInfo.InvariantCulture)}";
+        }
+
+        if (!string.IsNullOrWhiteSpace(searchQuery))
+        {
+            qs += $"&q={Uri.EscapeDataString(searchQuery.Trim())}";
+        }
+
+        return await _http.GetFromJsonAsync<List<CompanyHubListItem>>($"api/public/companies/discover?{qs}", ct) ?? [];
+    }
+
     public async Task<VacancyListItem?> GetVacancyAsync(
         Guid id,
         double? originLat = null,
@@ -1135,6 +1164,54 @@ public sealed class JobsyApiClient : IAsyncDisposable
         }
 
         return await response.Content.ReadFromJsonAsync<CompanySummary>(cancellationToken: ct);
+    }
+
+    public async Task<CompanySummary?> UpdateCompanyHubPageAsync(
+        Guid companyId,
+        string? aboutText,
+        string? cultureText,
+        string? videoUrl,
+        CancellationToken ct = default)
+    {
+        var response = await _http.PutAsJsonAsync(
+            $"api/companies/{companyId}/hub-page",
+            new { aboutText, cultureText, videoUrl },
+            ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException(TryExtractMessage(body) ?? body);
+        }
+
+        return await response.Content.ReadFromJsonAsync<CompanySummary>(cancellationToken: ct);
+    }
+
+    public async Task<CompanySummary?> HighlightCompanyHubAsync(Guid companyId, CancellationToken ct = default)
+    {
+        var response = await _http.PostAsync($"api/companies/{companyId}/hub-highlight", null, ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException(TryExtractMessage(body) ?? body);
+        }
+
+        return await response.Content.ReadFromJsonAsync<CompanySummary>(cancellationToken: ct);
+    }
+
+    public async Task<(byte[] Bytes, string FileName)?> DownloadCompanyHubQrAsync(
+        Guid companyId,
+        CancellationToken ct = default)
+    {
+        var response = await _http.GetAsync($"api/companies/{companyId}/hub-qr.png", ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            return null;
+        }
+
+        var bytes = await response.Content.ReadAsByteArrayAsync(ct);
+        var name = response.Content.Headers.ContentDisposition?.FileName?.Trim('"')
+                   ?? $"lobsy-bedrijf-qr-{companyId:N}.png";
+        return (bytes, name);
     }
 
     public async Task<CompanySummary?> UpdateBillingPreferenceAsync(
@@ -3702,6 +3779,28 @@ public sealed class PublicCompanyPage
     public double Longitude { get; set; }
     public List<Guid> CompanyIds { get; set; } = [];
     public List<PublicCompanyBranch>? Branches { get; set; }
+    public string? AboutText { get; set; }
+    public string? CultureText { get; set; }
+    public string? VideoUrl { get; set; }
+    public bool IsHighlighted { get; set; }
+}
+
+public sealed class CompanyHubListItem
+{
+    public Guid CompanyId { get; set; }
+    public string Name { get; set; } = string.Empty;
+    public string Address { get; set; } = string.Empty;
+    public string? LogoUrl { get; set; }
+    public double Latitude { get; set; }
+    public double Longitude { get; set; }
+    public int ActiveVacancyCount { get; set; }
+    public int? TravelMinutes { get; set; }
+    public double? DistanceKm { get; set; }
+    public bool IsHighlighted { get; set; }
+    public string PublicPath { get; set; } = string.Empty;
+    public string? ImageUrl { get; set; }
+    public string? Vestigingsnummer { get; set; }
+    public string KvkNumber { get; set; } = string.Empty;
 }
 
 public sealed class PublicCompanyBranch

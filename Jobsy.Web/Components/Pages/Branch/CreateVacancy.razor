@@ -245,13 +245,11 @@
                                     @onclick="InsertListAsync">
                                 @((MarkupString)ListSvg)
                             </button>
-                            <button type="button" class="richtext-btn" title="Link invoegen" aria-label="Link invoegen"
-                                    @onclick="InsertLinkAsync">
-                                @((MarkupString)LinkSvg)
-                            </button>
                         </div>
                     </div>
-                    <textarea @ref="_descriptionRef" rows="8" @bind="_description" @bind:event="oninput" required></textarea>
+                    <textarea @ref="_descriptionRef" rows="8" @bind="_description" @bind:event="oninput"
+                              data-no-links="true" required></textarea>
+                    <p class="muted" style="margin-top:.35rem">Links in de vacaturetekst of titel zijn niet toegestaan.</p>
                 </label>
                 <label>
                     Afbeelding-URL
@@ -1426,6 +1424,13 @@
 
     private async Task SaveAsync()
     {
+        var linkError = VacancyLinkRules.ValidateNoLinks(_title, _description);
+        if (linkError is not null)
+        {
+            _message = linkError;
+            return;
+        }
+
         if (_isIntermediary
             && (SelectedCompany is null
                 || string.IsNullOrWhiteSpace(SelectedCompany.KvkNumber)

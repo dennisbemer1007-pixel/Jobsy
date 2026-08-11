@@ -585,6 +585,12 @@ public class VacanciesController : ControllerBase
             return BadRequest(new { message = exclusivityError.Error });
         }
 
+        var linkError = VacancyLinkRules.ValidateNoLinks(request.Title, request.Description);
+        if (linkError is not null)
+        {
+            return BadRequest(new { message = linkError });
+        }
+
         var moderation = await _moderation.CheckAsync(request.Title, request.Description, cancellationToken);
         var moderationWarning = moderation.IsAllowed
             ? null

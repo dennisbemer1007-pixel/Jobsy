@@ -1,0 +1,393 @@
+@page "/bedrijven"
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
+@attribute [AllowAnonymous]
+@inject JobsyApiClient Api
+@inject IGeocodingClient Geocoder
+@inject IJSRuntime Js
+@inject CultureState Culture
+@inject NavigationManager Navigation
+@implements IAsyncDisposable
+@using Jobsy.Core.Rules
+
+<PageTitle>@Culture["Nav.Companies"] · Lobsy</PageTitle>
+
+<div class="jobsy-discovery @(showMapOnMobile ? "show-map" : "show-list") @(_filtersOpen ? "filters-open" : null)">
+    <div class="jobsy-chrome">
+        <header class="jobsy-chrome__header">
+            <a class="jobsy-logo" href="/" aria-label="Lobsy">
+                <LobsyLogo Class="jobsy-logo__img" Alt="Lobsy" />
+                <span class="jobsy-logo__mark">Lobsy</span>
+            </a>
+            <div class="jobsy-chrome__header-actions">
+                <LanguageSelector />
+                <AuthHeader />
+            </div>
+        </header>
+
+        <div class="jobsy-chrome__search">
+            <label class="visually-hidden" for="companies-address">@Culture["Discovery.Address"]</label>
+            <div class="jobsy-search @(_origin is not null ? "jobsy-search--with-clear" : null)">
+                <input id="companies-address"
+                       type="text"
+                       autocomplete="off"
+                       placeholder="@Culture["Discovery.AddressPlaceholder"]"
+                       value="@_addressQuery"
+                       @oninput="OnAddressInputAsync"
+                       @onkeydown="OnAddressKeyDown" />
+                @if (_origin is not null)
+                {
+                    <button type="button" class="jobsy-search__clear" @onclick="ClearOriginAsync"
+                            aria-label="@Culture["Common.Clear"]">@Culture["Common.Clear"]</button>
+                }
+                <button type="button" class="jobsy-search__btn" disabled="@_locating" @onclick="RequestLocationAsync"
+                        aria-label="@Culture["Discovery.UseMyLocation"]" title="@Culture["Discovery.UseMyLocation"]">
+                    <span class="jobsy-search__icon" aria-hidden="true">◎</span>
+                </button>
+            </div>
+            @if (_showSuggestions)
+            {
+                <ul class="address-suggestions" role="listbox">
+                    @foreach (var suggestion in _suggestions)
+                    {
+                        <li>
+                            <button type="button" class="address-suggestions__item"
+                                    @onclick="() => SelectSuggestionAsync(suggestion)">
+                                @suggestion.Label
+                            </button>
+                        </li>
+                    }
+                </ul>
+            }
+            @if (!string.IsNullOrEmpty(_locationError))
+            {
+                <p class="state-message error filter-bar__error">@_locationError</p>
+            }
+        </div>
+
+        <div class="jobsy-chrome__actions" role="toolbar" aria-label="@Culture["Discovery.Filters"]">
+            <button type="button" class="jobsy-action @(_filtersOpen ? "is-active" : null)" @onclick="() => _filtersOpen = !_filtersOpen">
+                <span>@Culture["Discovery.Filters"]</span>
+            </button>
+            <button type="button" class="jobsy-action jobsy-action--toggle" @onclick="() => showMapOnMobile = !showMapOnMobile">
+                <span>@(showMapOnMobile ? Culture["Discovery.List"] : Culture["Discovery.Map"])</span>
+            </button>
+        </div>
+
+        @if (_filtersOpen)
+        {
+            <div class="filter-bar" id="companies-filters">
+                <label>
+                    @Culture["Discovery.TravelMinutes"]
+                    <input type="range" min="5" max="90" step="5" @bind="_maxTravelMinutes" @bind:event="onchange" @bind:after="ReloadAsync" />
+                    <span>@_maxTravelMinutes @Culture["Discovery.Minutes"]</span>
+                </label>
+                <label>
+                    @Culture["Discovery.Transport"]
+                    <select @bind="_transport" @bind:after="ReloadAsync">
+                        <option value="Fiets">Fiets</option>
+                        <option value="Auto">Auto</option>
+                        <option value="OV">OV</option>
+                        <option value="Lopend">Lopend</option>
+                    </select>
+                </label>
+                <label>
+                    @Culture["Discovery.Radius"]
+                    <input type="range" min="1" max="50" step="1" @bind="_radiusKm" @bind:event="onchange" @bind:after="ReloadAsync" />
+                    <span>@_radiusKm km</span>
+                </label>
+                <label>
+                    Zoeken
+                    <input type="search" @bind="_query" @bind:event="oninput" @bind:after="ReloadDebouncedAsync" placeholder="Bedrijf of vacature…" />
+                </label>
+            </div>
+        }
+    </div>
+
+    <aside class="vacancy-pane">
+        <p class="branch-page__meta" style="padding:0 1rem .5rem">
+            Lokale bedrijven met actieve vacatures binnen jouw reistijd.
+        </p>
+        @if (_loading)
+        {
+            <p class="state-message">@Culture["Common.Loading"]</p>
+        }
+        else if (!string.IsNullOrEmpty(_error))
+        {
+            <p class="state-message error">@_error</p>
+        }
+        else if (_items.Count == 0)
+        {
+            <p class="state-message">Geen bedrijven in dit zoekgebied. Verruim reistijd of straal.</p>
+        }
+        else
+        {
+            <div class="vacancy-list vacancy-list--cards">
+                @foreach (var company in _items)
+                {
+                    <article class="job-card @(company.IsHighlighted ? "job-card--highlight" : null)"
+                             @onclick="() => Navigation.NavigateTo(company.PublicPath)">
+                        <a class="job-card__media" href="@company.PublicPath" @onclick:stopPropagation="true"
+                           style="@(string.IsNullOrWhiteSpace(company.ImageUrl) && string.IsNullOrWhiteSpace(company.LogoUrl)
+                               ? null
+                               : $"background-image:url('{(string.IsNullOrWhiteSpace(company.ImageUrl) ? company.LogoUrl : company.ImageUrl)}')")">
+                            @if (company.IsHighlighted)
+                            {
+                                <span class="job-card__badge">@Culture["Discovery.Featured"]</span>
+                            }
+                            else
+                            {
+                                <span class="job-card__badge job-card__badge--soft">@company.ActiveVacancyCount vacatures</span>
+                            }
+                            <div class="job-card__overlay">
+                                <h2>@company.Name</h2>
+                                @if (company.TravelMinutes is int mins)
+                                {
+                                    <p>@mins min</p>
+                                }
+                            </div>
+                        </a>
+                        <div class="job-card__footer">
+                            <p class="job-card__company">@company.Name</p>
+                            <p class="job-card__location">@company.Address</p>
+                        </div>
+                    </article>
+                }
+            </div>
+        }
+    </aside>
+
+    <section class="map-pane">
+        <div class="map-stage">
+            <div @ref="_mapElement" id="companies-hub-map" class="job-map"></div>
+        </div>
+    </section>
+</div>
+
+@code {
+    private ElementReference _mapElement;
+    private List<CompanyHubListItem> _items = [];
+    private bool _loading = true;
+    private string? _error;
+    private bool showMapOnMobile;
+    private bool _filtersOpen;
+    private bool _mapReady;
+    private bool _mapInitScheduled;
+    private bool _locating;
+    private string _addressQuery = "";
+    private string? _locationError;
+    private (double Lat, double Lng)? _origin;
+    private List<AddressSuggestion> _suggestions = [];
+    private bool _showSuggestions;
+    private int _maxTravelMinutes = 30;
+    private int _radiusKm = 15;
+    private string _transport = "Fiets";
+    private string _query = "";
+    private CancellationTokenSource? _reloadCts;
+    private DotNetObjectReference<CompanyDiscoveryPage>? _dotNetRef;
+
+    protected override async Task OnInitializedAsync() => await ReloadAsync();
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (_loading || _mapReady || _mapInitScheduled)
+        {
+            return;
+        }
+
+        _mapInitScheduled = true;
+        try
+        {
+            _dotNetRef ??= DotNetObjectReference.Create(this);
+            var markers = _items.Select(c => new Dictionary<string, object?>
+            {
+                ["id"] = c.CompanyId.ToString("D"),
+                ["title"] = c.Name,
+                ["company"] = c.Name,
+                ["companyId"] = c.CompanyId.ToString("D"),
+                ["companyHref"] = c.PublicPath,
+                ["address"] = c.Address,
+                ["logoUrl"] = c.LogoUrl,
+                ["imageUrl"] = c.ImageUrl,
+                ["lat"] = c.Latitude,
+                ["lng"] = c.Longitude,
+                ["highlighted"] = c.IsHighlighted,
+                ["featuredLabel"] = Culture["Discovery.Featured"]
+            }).ToList();
+            await Js.InvokeVoidAsync("jobMap.init", "companies-hub-map", markers, new Dictionary<string, object?>
+            {
+                ["dotNetRef"] = _dotNetRef
+            });
+            _mapReady = true;
+            if (_origin is { } o)
+            {
+                await Js.InvokeVoidAsync("jobMap.setOrigin", o.Lat, o.Lng);
+                await Js.InvokeVoidAsync("jobMap.setTravelOptions", new
+                {
+                    transport = _transport,
+                    maxMinutes = _maxTravelMinutes,
+                    radiusKm = (double)_radiusKm
+                });
+            }
+            await Js.InvokeVoidAsync("jobMap.invalidate");
+        }
+        catch (JSDisconnectedException)
+        {
+            _mapInitScheduled = false;
+        }
+        catch
+        {
+            _mapInitScheduled = false;
+        }
+    }
+
+    private async Task ReloadAsync()
+    {
+        _loading = true;
+        _error = null;
+        StateHasChanged();
+        try
+        {
+            _items = (await Api.DiscoverCompaniesAsync(
+                _origin?.Lat,
+                _origin?.Lng,
+                _transport,
+                _maxTravelMinutes,
+                _radiusKm,
+                string.IsNullOrWhiteSpace(_query) ? null : _query)).ToList();
+            if (_mapReady)
+            {
+                await Js.InvokeVoidAsync("jobMap.dispose");
+                _mapReady = false;
+                _mapInitScheduled = false;
+            }
+        }
+        catch (Exception ex)
+        {
+            _error = Culture.Format("Discovery.LoadFailed", ex.Message);
+            _items = [];
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private async Task ReloadDebouncedAsync()
+    {
+        _reloadCts?.Cancel();
+        _reloadCts = new CancellationTokenSource();
+        var token = _reloadCts.Token;
+        try
+        {
+            await Task.Delay(350, token);
+            await ReloadAsync();
+        }
+        catch (TaskCanceledException)
+        {
+            // ignore
+        }
+    }
+
+    private async Task OnAddressInputAsync(ChangeEventArgs e)
+    {
+        _addressQuery = e.Value?.ToString() ?? "";
+        _showSuggestions = _addressQuery.Trim().Length >= 3;
+        if (!_showSuggestions)
+        {
+            _suggestions = [];
+            return;
+        }
+
+        try
+        {
+            _suggestions = (await Geocoder.SuggestAsync(_addressQuery)).ToList();
+        }
+        catch
+        {
+            _suggestions = [];
+        }
+    }
+
+    private async Task OnAddressKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter" && _suggestions.Count > 0)
+        {
+            await SelectSuggestionAsync(_suggestions[0]);
+        }
+    }
+
+    private async Task SelectSuggestionAsync(AddressSuggestion suggestion)
+    {
+        _addressQuery = suggestion.Label;
+        _origin = (suggestion.Latitude, suggestion.Longitude);
+        _showSuggestions = false;
+        _suggestions = [];
+        await ReloadAsync();
+    }
+
+    private async Task ClearOriginAsync()
+    {
+        _origin = null;
+        _addressQuery = "";
+        await ReloadAsync();
+    }
+
+    private async Task RequestLocationAsync()
+    {
+        _locating = true;
+        _locationError = null;
+        try
+        {
+            var dict = await Js.InvokeAsync<Dictionary<string, double>>("jobsyGeo.requestLocation");
+            if (dict is null
+                || !dict.TryGetValue("lat", out var lat)
+                || !dict.TryGetValue("lng", out var lng))
+            {
+                _locationError = "Locatie niet beschikbaar.";
+                return;
+            }
+
+            _origin = (lat, lng);
+            _addressQuery = "Mijn locatie";
+            await ReloadAsync();
+        }
+        catch
+        {
+            _locationError = "Locatie niet beschikbaar.";
+        }
+        finally
+        {
+            _locating = false;
+        }
+    }
+
+    [JSInvokable]
+    public Task OnMapVacancyOpened(string id)
+    {
+        if (Guid.TryParse(id, out var companyId))
+        {
+            var match = _items.FirstOrDefault(c => c.CompanyId == companyId);
+            if (match is not null)
+            {
+                Navigation.NavigateTo(match.PublicPath);
+            }
+        }
+
+        return Task.CompletedTask;
+    }
+
+    [JSInvokable]
+    public Task OnMapLocateClicked() => RequestLocationAsync();
+
+    public async ValueTask DisposeAsync()
+    {
+        _reloadCts?.Cancel();
+        _reloadCts?.Dispose();
+        _dotNetRef?.Dispose();
+        if (_mapReady)
+        {
+            try { await Js.InvokeVoidAsync("jobMap.dispose"); }
+            catch { /* ignore */ }
+        }
+    }
+}

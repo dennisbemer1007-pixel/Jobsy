@@ -51,11 +51,13 @@ public class LobsyCvPdfServiceTests
             PrivacyConstants.CurrentConsentVersion,
             dateOfBirth: new DateOnly(1998, 4, 12));
 
-        Assert.True(model.IncludeFullAddress);
         Assert.Equal(new DateOnly(1998, 4, 12), model.DateOfBirth);
         Assert.Equal(AgeRules.AgeYearsFromDateOfBirth(new DateOnly(1998, 4, 12)), model.AgeYears);
         Assert.Equal(2, model.Certificates.Count);
-        Assert.NotNull(model.Latitude);
+        Assert.Null(model.Latitude);
+        Assert.Null(model.Address);
+        Assert.Null(model.City);
+        Assert.False(model.IncludeFullAddress);
         Assert.Equal("2022-03", model.Employers[0].StartMonth);
         Assert.Null(model.Employers[0].EndMonth);
         Assert.Equal("mrt 2022 – heden", LobsyCvModelFactory.FormatEmployerPeriod(
@@ -75,7 +77,7 @@ public class LobsyCvPdfServiceTests
     }
 
     [Fact]
-    public async Task Live_profile_hides_address_and_map_when_opted_out()
+    public async Task Live_profile_never_includes_candidate_home_on_cv()
     {
         var prefs = new CandidatePreferencesDto(
             Roles: [],
@@ -83,7 +85,7 @@ public class LobsyCvPdfServiceTests
             PreferredTransport: "Fiets",
             HomeAddress: "Voorstraat 1, 2671 AB Naaldwijk",
             Certificates: [new CandidateCertificateDto("EHBO", 2022)],
-            ShowAddressOnCv: false);
+            ShowAddressOnCv: true);
 
         var model = LobsyCvModelFactory.FromLiveProfile(
             "Ada Candidate",
@@ -106,6 +108,52 @@ public class LobsyCvPdfServiceTests
         var service = new LobsyCvPdfService(new FakeCompanySettings(), maps);
         var pdf = await service.RenderAsync(model);
         Assert.True(pdf.Length > 500);
+        Assert.Equal(0, maps.CallCount);
+        Assert.Equal(0, maps.ReachCallCount);
+    }
+
+    [Fact]
+    public async Task Application_cv_uses_workplace_reach_map_not_candidate_home()
+    {
+        var maps = new TrackingMapImages();
+        var service = new LobsyCvPdfService(new FakeCompanySettings(), maps);
+        var model = LobsyCvModelFactory.FromApplicationSnapshot(
+            "Bert Bijbaan",
+            "bert@test.local",
+            "0612345678",
+            true,
+            "Westland",
+            "Straat 2, Westland",
+            52.0,
+            4.2,
+            "Hardwerker",
+            "Graag bij jullie starten",
+            "Fiets",
+            5,
+            """{"flexibleTimes":true,"minHoursPerWeek":8,"maxHoursPerWeek":20,"slots":{}}""",
+            "B",
+            "Havo",
+            """[{"name":"VCA","year":2021}]""",
+            1,
+            80,
+            "Magazijnmedewerker",
+            "Demo BV",
+            PrivacyConstants.CurrentConsentVersion,
+            DateTime.UtcNow,
+            includeFullAddress: true,
+            includeContactDetails: true,
+            workplaceLatitude: 51.99,
+            workplaceLongitude: 4.21,
+            workplaceAddress: "Industrieweg 1, Naaldwijk");
+
+        Assert.Null(model.Address);
+        Assert.Null(model.Latitude);
+        Assert.Equal("Industrieweg 1, Naaldwijk", model.WorkplaceAddress);
+        Assert.Equal(5, model.ReachTravelMinutes);
+
+        var pdf = await service.RenderAsync(model);
+        Assert.True(pdf.Length > 500);
+        Assert.Equal(1, maps.ReachCallCount);
         Assert.Equal(0, maps.CallCount);
     }
 
@@ -139,13 +187,18 @@ public class LobsyCvPdfServiceTests
             includeFullAddress: true,
             includeContactDetails: true,
             dateOfBirth: new DateOnly(2000, 1, 15),
-            ageYears: 26);
+            ageYears: 26,
+            workplaceLatitude: 52.01,
+            workplaceLongitude: 4.22,
+            workplaceAddress: "Bedrijfsweg 9, Den Haag");
 
         Assert.Single(model.Certificates);
         Assert.Equal("VCA", model.Certificates[0].Name);
         Assert.Equal(2021, model.Certificates[0].Year);
         Assert.Equal(new DateOnly(2000, 1, 15), model.DateOfBirth);
         Assert.Equal(26, model.AgeYears);
+        Assert.Null(model.Address);
+        Assert.Equal("Bedrijfsweg 9, Den Haag", model.WorkplaceAddress);
 
         var pdf = await service.RenderAsync(model);
         Assert.True(pdf.Length > 500);
@@ -206,11 +259,22 @@ public class LobsyCvPdfServiceTests
             byte[]? markerLogoPng = null,
             CancellationToken cancellationToken = default)
             => Task.FromResult<byte[]?>(null);
+
+        public Task<byte[]?> RenderWorkplaceReachAsync(
+            double latitude,
+            double longitude,
+            double radiusMeters,
+            int width = 640,
+            int height = 280,
+            byte[]? markerLogoPng = null,
+            CancellationToken cancellationToken = default)
+            => Task.FromResult<byte[]?>(null);
     }
 
     private sealed class TrackingMapImages : ICandidateMapImageService
     {
         public int CallCount { get; private set; }
+        public int ReachCallCount { get; private set; }
 
         public Task<byte[]?> RenderAsync(
             double latitude,
@@ -222,6 +286,19 @@ public class LobsyCvPdfServiceTests
             CancellationToken cancellationToken = default)
         {
             CallCount++;
+            return Task.FromResult<byte[]?>(null);
+        }
+
+        public Task<byte[]?> RenderWorkplaceReachAsync(
+            double latitude,
+            double longitude,
+            double radiusMeters,
+            int width = 640,
+            int height = 280,
+            byte[]? markerLogoPng = null,
+            CancellationToken cancellationToken = default)
+        {
+            ReachCallCount++;
             return Task.FromResult<byte[]?>(null);
         }
     }
