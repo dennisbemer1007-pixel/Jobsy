@@ -20,6 +20,22 @@ public class VacancyVisibilityRulesTests
     }
 
     [Fact]
+    public void Company_hub_requires_active_vacancy_within_30_remaining_days()
+    {
+        var today = DateOnly.FromDateTime(DateTime.UtcNow);
+        var soon = CreateVacancy("Soon", VacancyStatus.Active, today);
+        soon.EndDate = today.AddDays(14);
+        var far = CreateVacancy("Far", VacancyStatus.Active, today);
+        far.EndDate = today.AddDays(45);
+        var draft = CreateVacancy("Draft", VacancyStatus.Draft, today);
+        draft.EndDate = today.AddDays(10);
+
+        Assert.True(VacancyVisibilityRules.QualifiesForCompanyHub(soon, today));
+        Assert.False(VacancyVisibilityRules.QualifiesForCompanyHub(far, today));
+        Assert.False(VacancyVisibilityRules.QualifiesForCompanyHub(draft, today));
+    }
+
+    [Fact]
     public void Token_spend_amounts_should_come_from_configured_costs()
     {
         var costs = new Dictionary<TokenSpendReason, decimal>

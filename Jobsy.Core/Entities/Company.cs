@@ -156,6 +156,18 @@ public class Company
     /// </summary>
     public bool PendingStartHighlightBonus { get; set; }
 
+    /// <summary>Short "Over ons" copy for the public Bedrijven-hub page.</summary>
+    public string? HubAboutText { get; set; }
+
+    /// <summary>Culture / atmosphere impression for the public company page.</summary>
+    public string? HubCultureText { get; set; }
+
+    /// <summary>Optional YouTube/Vimeo URL for the company page.</summary>
+    public string? HubVideoUrl { get; set; }
+
+    /// <summary>When set and in the future, the company is pinned to the top of hub search results.</summary>
+    public DateTime? HubHighlightedUntil { get; set; }
+
     public ICollection<Vacancy> Vacancies { get; set; } = new List<Vacancy>();
     public ICollection<TokenTransaction> TokenTransactions { get; set; } = new List<TokenTransaction>();
     public ICollection<User> PrimaryUsers { get; set; } = new List<User>();

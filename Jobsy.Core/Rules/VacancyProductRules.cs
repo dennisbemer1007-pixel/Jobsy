@@ -14,6 +14,12 @@ public static class VacancyProductRules
     /// <summary>Default highlight token cost when no admin TokenSpendCosts row exists.</summary>
     public const decimal DefaultHighlightCostTokens = 2m;
 
+    /// <summary>Token cost to highlight a company page in the Bedrijven-hub.</summary>
+    public const decimal CompanyHubHighlightCostTokens = 2m;
+
+    /// <summary>How long a company-hub highlight stays at the top of the search area.</summary>
+    public const int CompanyHubHighlightDays = 14;
+
     /// <summary>Default list price per token for partner sales materials.</summary>
     public const decimal DefaultBaseTokenValueEuro = 25m;
 

@@ -50,6 +50,12 @@ window.jobsyRichtext = {
 
         var before = '<a href="' + url.replace(/"/g, "&quot;") + '" target="_blank" rel="noopener">';
         var after = "</a>";
+        // Vacancy copy may not contain links — still expose the helper for other screens,
+        // but refuse to insert when the textarea is marked data-no-links="true".
+        if (textarea.getAttribute("data-no-links") === "true") {
+            window.alert("Links in de vacaturetekst zijn niet toegestaan.");
+            return null;
+        }
         var next = value.substring(0, start) + before + selected + after + value.substring(end);
         textarea.value = next;
 

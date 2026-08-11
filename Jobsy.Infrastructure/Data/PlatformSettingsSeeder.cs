@@ -32,7 +32,13 @@ internal static class PlatformSettingsSeeder
                     CostTokens = VacancyProductRules.DefaultHighlightCostTokens
                 },
                 new TokenSpendCost { Id = Guid.NewGuid(), Reason = TokenSpendReason.PushBom, CostTokens = 3m },
-                new TokenSpendCost { Id = Guid.NewGuid(), Reason = TokenSpendReason.Extend, CostTokens = 1m });
+                new TokenSpendCost { Id = Guid.NewGuid(), Reason = TokenSpendReason.Extend, CostTokens = 1m },
+                new TokenSpendCost
+                {
+                    Id = Guid.NewGuid(),
+                    Reason = TokenSpendReason.CompanyHubHighlight,
+                    CostTokens = VacancyProductRules.CompanyHubHighlightCostTokens
+                });
         }
         else
         {
@@ -42,6 +48,17 @@ internal static class PlatformSettingsSeeder
             if (highlightCost is not null && highlightCost.CostTokens < VacancyProductRules.DefaultHighlightCostTokens)
             {
                 highlightCost.CostTokens = VacancyProductRules.DefaultHighlightCostTokens;
+            }
+
+            if (!await db.TokenSpendCosts.AnyAsync(c => c.Reason == TokenSpendReason.CompanyHubHighlight))
+            {
+                db.TokenSpendCosts.Add(new TokenSpendCost
+                {
+                    Id = Guid.NewGuid(),
+                    Reason = TokenSpendReason.CompanyHubHighlight,
+                    CostTokens = VacancyProductRules.CompanyHubHighlightCostTokens,
+                    IsActive = true
+                });
             }
         }
 

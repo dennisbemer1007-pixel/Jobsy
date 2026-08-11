@@ -92,27 +92,11 @@
     }
 </div>
 
-@if (_showCelebration && !_readOnly)
-{
-    <LobsyFriendlyDialog IsOpen="true"
-                         Title="@Culture["Apps.CongratsTitle"]"
-                         TitleId="hired-title"
-                         Mood="@LobsyDialogMood.Celebrate"
-                         ShowClose="false"
-                         CloseOnBackdrop="false">
-        <p class="csv-celebrate__score">@Culture["Apps.CongratsBody"]</p>
-<div class="inline-actions" style="justify-content:center">
-                <button type="button" class="login-submit" @onclick="() => _showCelebration = false">@Culture["Common.Close"]</button>
-            </div>
-</LobsyFriendlyDialog>
-}
-
 @code {
     private List<ApplicationItem> _items = [];
     private List<ApplicationItem> _filtered = [];
     private bool _loading = true;
     private bool _readOnly;
-    private bool _showCelebration;
     private string _tab = "all";
     private Guid? _busyId;
     private bool _pdfBusy;
@@ -129,7 +113,6 @@
         try
         {
             _items = (await Api.GetMyApplicationsAsync()).ToList();
-            _showCelebration = !_readOnly && _items.Any(x => x.Status == "Hired");
             ApplyTab();
         }
         catch

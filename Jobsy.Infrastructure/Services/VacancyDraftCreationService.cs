@@ -48,6 +48,12 @@ public sealed class VacancyDraftCreationService : IVacancyDraftCreationService
             return VacancyDraftCreateResult.Fail("Omschrijving mag maximaal 20000 tekens zijn.");
         }
 
+        var linkError = VacancyLinkRules.ValidateNoLinks(input.Title, input.Description);
+        if (linkError is not null)
+        {
+            return VacancyDraftCreateResult.Fail(linkError);
+        }
+
         if (input.EndDate < input.StartDate)
         {
             return VacancyDraftCreateResult.Fail("Einddatum mag niet vóór de startdatum liggen.");

@@ -10,6 +10,7 @@ using Jobsy.Infrastructure.Data;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using QRCoder;
 
 namespace Jobsy.Api.Controllers;
 
@@ -23,19 +24,25 @@ public class CompaniesController : ControllerBase
     private readonly IKvkService _kvk;
     private readonly IUserLookupService _users;
     private readonly ITokenPurchaseInvoiceService _invoices;
+    private readonly ITokenLedgerService _tokens;
+    private readonly IPlatformFeatureService _features;
 
     public CompaniesController(
         JobsyDbContext db,
         ICompanyAuthorizationService companyAuth,
         IKvkService kvk,
         IUserLookupService users,
-        ITokenPurchaseInvoiceService invoices)
+        ITokenPurchaseInvoiceService invoices,
+        ITokenLedgerService tokens,
+        IPlatformFeatureService features)
     {
         _db = db;
         _companyAuth = companyAuth;
         _kvk = kvk;
         _users = users;
         _invoices = invoices;
+        _tokens = tokens;
+        _features = features;
     }
 
     [HttpGet("mine")]
@@ -51,13 +58,14 @@ public class CompaniesController : ControllerBase
 
         var companies = await query
             .OrderBy(c => c.Name)
-            .Select(c => new CompanySummaryDto(
+            .Select(c => new
+            {
                 c.Id,
                 c.Name,
                 c.Address,
                 c.KvkNumber,
-                c.TokenTransactions.Sum(t => t.Amount),
-                c.Vacancies.Count(v => v.Status == VacancyStatus.Active),
+                Balance = c.TokenTransactions.Sum(t => t.Amount),
+                ActiveVacancies = c.Vacancies.Count(v => v.Status == VacancyStatus.Active),
                 c.ParentCompanyId,
                 c.TokensManagedByEnterprise,
                 c.CsvBatchImportEnabled,
@@ -69,12 +77,42 @@ public class CompaniesController : ControllerBase
                 c.ContactPhone,
                 c.ContactWhatsApp,
                 c.KvkEstablishmentId,
-                c.KvkVerificationStatus.ToString(),
+                KvkVerificationStatus = c.KvkVerificationStatus.ToString(),
                 c.PreferredPaymentMethod,
-                c.RequireEmailVerificationForApplications))
+                c.RequireEmailVerificationForApplications,
+                c.HubAboutText,
+                c.HubCultureText,
+                c.HubVideoUrl,
+                c.HubHighlightedUntil
+            })
             .ToListAsync(cancellationToken);
 
-        return Ok(companies);
+        return Ok(companies.Select(c => new CompanySummaryDto(
+            c.Id,
+            c.Name,
+            c.Address,
+            c.KvkNumber,
+            c.Balance,
+            c.ActiveVacancies,
+            c.ParentCompanyId,
+            c.TokensManagedByEnterprise,
+            c.CsvBatchImportEnabled,
+            c.DirectContactEnabled,
+            c.ContactPreferMail,
+            c.ContactPreferPhone,
+            c.ContactPreferWhatsApp,
+            c.ContactEmail,
+            c.ContactPhone,
+            c.ContactWhatsApp,
+            c.KvkEstablishmentId,
+            c.KvkVerificationStatus,
+            c.PreferredPaymentMethod,
+            c.RequireEmailVerificationForApplications,
+            c.HubAboutText,
+            c.HubCultureText,
+            c.HubVideoUrl,
+            c.HubHighlightedUntil,
+            CompanyPublicPaths.TryBuildPath(c.KvkNumber, c.KvkEstablishmentId))));
     }
 
     /// <summary>
@@ -423,6 +461,140 @@ public class CompaniesController : ControllerBase
         return Ok(await ToSummaryAsync(company, cancellationToken));
     }
 
+    /// <summary>Edit Bedrijven-hub page copy (Over ons, sfeer, video).</summary>
+    [HttpPut("{companyId:guid}/hub-page")]
+    [Authorize(Roles = $"{JobsyRoles.EnterpriseManager},{JobsyRoles.BranchManager},{JobsyRoles.Intermediary},{JobsyRoles.Admin}")]
+    public async Task<ActionResult<CompanySummaryDto>> UpdateHubPage(
+        Guid companyId,
+        [FromBody] UpdateCompanyHubPageRequest request,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            await _companyAuth.EnsureCanAccessCompanyAsync(User, companyId, cancellationToken);
+        }
+        catch (Core.Exceptions.ForbiddenCompanyAccessException)
+        {
+            return Forbid();
+        }
+
+        var company = await _db.Companies.FirstOrDefaultAsync(c => c.Id == companyId, cancellationToken);
+        if (company is null)
+        {
+            return NotFound(new { message = "Bedrijf niet gevonden." });
+        }
+
+        var about = string.IsNullOrWhiteSpace(request.AboutText) ? null : request.AboutText.Trim();
+        var culture = string.IsNullOrWhiteSpace(request.CultureText) ? null : request.CultureText.Trim();
+        if (about is { Length: > 4000 } || culture is { Length: > 4000 })
+        {
+            return BadRequest(new { message = "Tekst mag maximaal 4000 tekens zijn." });
+        }
+
+        var video = HtmlSanitize.NormalizeMediaUrl(request.VideoUrl);
+        if (!string.IsNullOrWhiteSpace(request.VideoUrl) && video is null)
+        {
+            return BadRequest(new { message = "Ongeldige video-URL (alleen http/https)." });
+        }
+
+        company.HubAboutText = about;
+        company.HubCultureText = culture;
+        company.HubVideoUrl = video;
+        await _db.SaveChangesAsync(cancellationToken);
+        return Ok(await ToSummaryAsync(company, cancellationToken));
+    }
+
+    /// <summary>Spend tokens to pin the company page at the top of the Bedrijven-hub.</summary>
+    [HttpPost("{companyId:guid}/hub-highlight")]
+    [Authorize(Roles = $"{JobsyRoles.EnterpriseManager},{JobsyRoles.BranchManager},{JobsyRoles.Intermediary},{JobsyRoles.Admin}")]
+    public async Task<ActionResult<CompanySummaryDto>> HighlightHubPage(
+        Guid companyId,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            await _companyAuth.EnsureCanAccessCompanyAsync(User, companyId, cancellationToken);
+        }
+        catch (Core.Exceptions.ForbiddenCompanyAccessException)
+        {
+            return Forbid();
+        }
+
+        var company = await _db.Companies.FirstOrDefaultAsync(c => c.Id == companyId, cancellationToken);
+        if (company is null)
+        {
+            return NotFound(new { message = "Bedrijf niet gevonden." });
+        }
+
+        if (company.HubHighlightedUntil is DateTime until && until > DateTime.UtcNow)
+        {
+            return BadRequest(new { message = "Deze bedrijfspagina is al gehighlight." });
+        }
+
+        var actor = await _users.FindByPrincipalAsync(User, cancellationToken);
+        var cost = VacancyProductRules.CompanyHubHighlightCostTokens;
+        var spend = await _tokens.TrySpendAsync(
+            company.Id,
+            TokenSpendReason.CompanyHubHighlight,
+            vacancyId: null,
+            actorUserId: actor?.Id,
+            branchCompanyId: company.Id,
+            note: "Bedrijven-hub highlight",
+            onSuccessBeforeCommit: ct =>
+            {
+                company.HubHighlightedUntil = DateTime.UtcNow.AddDays(VacancyProductRules.CompanyHubHighlightDays);
+                return Task.CompletedTask;
+            },
+            costOverrides: new Dictionary<TokenSpendReason, decimal>
+            {
+                [TokenSpendReason.CompanyHubHighlight] = cost
+            },
+            cancellationToken: cancellationToken);
+
+        if (!spend.Succeeded)
+        {
+            return BadRequest(new { message = spend.ErrorMessage ?? "Highlight mislukt." });
+        }
+
+        return Ok(await ToSummaryAsync(company, cancellationToken));
+    }
+
+    /// <summary>PNG QR code linking to the public company page (for flyers / toonbank).</summary>
+    [HttpGet("{companyId:guid}/hub-qr.png")]
+    [Authorize(Roles = $"{JobsyRoles.EnterpriseManager},{JobsyRoles.BranchManager},{JobsyRoles.Intermediary},{JobsyRoles.Admin}")]
+    public async Task<IActionResult> DownloadHubQr(
+        Guid companyId,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            await _companyAuth.EnsureCanAccessCompanyAsync(User, companyId, cancellationToken);
+        }
+        catch (Core.Exceptions.ForbiddenCompanyAccessException)
+        {
+            return Forbid();
+        }
+
+        var company = await _db.Companies.AsNoTracking()
+            .FirstOrDefaultAsync(c => c.Id == companyId, cancellationToken);
+        if (company is null)
+        {
+            return NotFound(new { message = "Bedrijf niet gevonden." });
+        }
+
+        var features = await _features.GetAsync(cancellationToken);
+        var baseUrl = (features.PublicWebBaseUrl ?? "https://lobsy.nl").TrimEnd('/');
+        var path = CompanyPublicPaths.TryBuildPath(company.KvkNumber, company.KvkEstablishmentId)
+                   ?? $"/vestiging/{company.Id:D}";
+        var url = $"{baseUrl}{path}";
+
+        using var generator = new QRCodeGenerator();
+        using var data = generator.CreateQrCode(url, QRCodeGenerator.ECCLevel.Q);
+        var png = new PngByteQRCode(data).GetGraphic(20);
+        var fileName = $"lobsy-bedrijf-qr-{company.KvkNumber}.png";
+        return File(png, "image/png", fileName);
+    }
+
     /// <summary>
     /// Token purchase invoices / billing history for a company (and its org pot when applicable).
     /// </summary>
@@ -606,7 +778,12 @@ public class CompaniesController : ControllerBase
             company.KvkEstablishmentId,
             company.KvkVerificationStatus.ToString(),
             company.PreferredPaymentMethod,
-            company.RequireEmailVerificationForApplications);
+            company.RequireEmailVerificationForApplications,
+            company.HubAboutText,
+            company.HubCultureText,
+            company.HubVideoUrl,
+            company.HubHighlightedUntil,
+            CompanyPublicPaths.TryBuildPath(company.KvkNumber, company.KvkEstablishmentId));
 
     private async Task EnsureActorMembershipAsync(Guid companyId, CancellationToken cancellationToken)
     {

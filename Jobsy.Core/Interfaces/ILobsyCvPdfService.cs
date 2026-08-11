@@ -22,4 +22,16 @@ public interface ICandidateMapImageService
         int zoom = 15,
         byte[]? markerLogoPng = null,
         CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Workplace-centered map with a travel-reach circle. Zoom auto-fits the circle.
+    /// </summary>
+    Task<byte[]?> RenderWorkplaceReachAsync(
+        double latitude,
+        double longitude,
+        double radiusMeters,
+        int width = 640,
+        int height = 280,
+        byte[]? markerLogoPng = null,
+        CancellationToken cancellationToken = default);
 }

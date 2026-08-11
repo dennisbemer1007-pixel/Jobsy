@@ -59,11 +59,25 @@ public sealed class LobsyCvPdfService : ILobsyCvPdfService
         var generatedLocal = DateTime.SpecifyKind(model.GeneratedAtUtc, DateTimeKind.Utc);
 
         byte[]? mapPng = null;
-        if (model.Latitude is double lat && model.Longitude is double lng)
+        if (model.WorkplaceLatitude is double wLat && model.WorkplaceLongitude is double wLng
+            && model.ReachTravelMinutes is int reachMins and > 0)
+        {
+            var mode = TransportLabels.Parse(model.PreferredTransport ?? TransportLabels.Bike);
+            var radiusMeters = TravelReach.RingRadiusMeters(mode, reachMins);
+            mapPng = await _mapImages.RenderWorkplaceReachAsync(
+                wLat,
+                wLng,
+                radiusMeters,
+                width: 360,
+                height: 160,
+                markerLogoPng: logo,
+                cancellationToken: cancellationToken);
+        }
+        else if (model.WorkplaceLatitude is double onlyLat && model.WorkplaceLongitude is double onlyLng)
         {
             mapPng = await _mapImages.RenderAsync(
-                lat,
-                lng,
+                onlyLat,
+                onlyLng,
                 width: 360,
                 height: 160,
                 zoom: 15,
@@ -129,16 +143,8 @@ public sealed class LobsyCvPdfService : ILobsyCvPdfService
                                 person.Item().PaddingTop(2).Text(ageLine)
                                     .FontSize(10).FontColor(Slate);
                             }
-                            if (!string.IsNullOrWhiteSpace(model.City))
-                            {
-                                person.Item().Text($"Klaar voor werk dichtbij {model.City}")
-                                    .FontSize(10).FontColor(BrandDeep);
-                            }
-                            else
-                            {
-                                person.Item().Text("Klaar voor werk dichterbij dan je denkt")
-                                    .FontSize(10).FontColor(BrandDeep);
-                            }
+                            person.Item().Text("Klaar voor werk dichterbij dan je denkt")
+                                .FontSize(10).FontColor(BrandDeep);
                         });
 
                         if (!string.IsNullOrWhiteSpace(model.VacancyTitle) || model.MatchPercent is not null)
@@ -253,33 +259,29 @@ public sealed class LobsyCvPdfService : ILobsyCvPdfService
                             loc.Spacing(4);
                             loc.Item().Text("Locatie").FontSize(9).Bold().FontColor(BrandNavy);
 
-                            // Map only when coordinates are present (candidate opted in via ShowAddressOnCv).
+                            // Workplace pin + privacy reach circle (never candidate home).
                             if (mapPng is { Length: > 0 })
                             {
                                 loc.Item().Height(92).Image(mapPng).FitArea();
                             }
-                            else if (!string.IsNullOrWhiteSpace(model.City))
-                            {
-                                loc.Item().Height(48).Background(Colors.White).AlignMiddle().AlignCenter()
-                                    .Text(model.City!)
-                                    .FontSize(9).FontColor(BrandDeep);
-                            }
                             else
                             {
                                 loc.Item().Height(48).Background(Colors.White).AlignMiddle().AlignCenter()
-                                    .Text(model.IncludeContactDetails
-                                        ? "Niet op CV"
-                                        : "Adres na acceptatie")
+                                    .Text(string.IsNullOrWhiteSpace(model.WorkplaceAddress)
+                                        ? "Werkgeverslocatie"
+                                        : "Kaart niet beschikbaar")
                                     .FontSize(8).FontColor(Muted);
                             }
 
-                            if (model.IncludeFullAddress && !string.IsNullOrWhiteSpace(model.Address))
+                            if (!string.IsNullOrWhiteSpace(model.WorkplaceAddress))
                             {
-                                loc.Item().Text(model.Address!).FontSize(8).Bold().FontColor(BrandNavy);
+                                loc.Item().Text(model.WorkplaceAddress!).FontSize(8).Bold().FontColor(BrandNavy);
                             }
-                            else if (!string.IsNullOrWhiteSpace(model.City))
+
+                            var reachLabel = FormatReachLabel(model);
+                            if (!string.IsNullOrWhiteSpace(reachLabel))
                             {
-                                loc.Item().Text(model.City!).FontSize(8).Bold().FontColor(BrandNavy);
+                                loc.Item().Text(reachLabel).FontSize(8).FontColor(AccentTeal);
                             }
                         });
                     });
@@ -507,6 +509,31 @@ public sealed class LobsyCvPdfService : ILobsyCvPdfService
         }
 
         return ageYears is int onlyAge ? $"{onlyAge} jaar" : null;
+    }
+
+    private static string? FormatReachLabel(LobsyCvModel model)
+    {
+        var minutes = model.ReachTravelMinutes
+                      ?? model.EstimatedTravelMinutes
+                      ?? model.MaxTravelMinutes;
+        if (minutes is null || minutes <= 0)
+        {
+            return null;
+        }
+
+        var mins = minutes.Value;
+        var transport = string.IsNullOrWhiteSpace(model.PreferredTransport)
+            ? TransportLabels.Bike
+            : model.PreferredTransport.Trim();
+        var verb = transport switch
+        {
+            TransportLabels.Car => "rijden",
+            TransportLabels.PublicTransport => "met OV",
+            TransportLabels.Walking => "lopen",
+            _ => "fietsen"
+        };
+
+        return $"Kandidaat woont ± {mins} min {verb} van de werkgever";
     }
 
     private static string Initials(string? fullName)

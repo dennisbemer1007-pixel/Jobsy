@@ -18,7 +18,9 @@ public enum TokenSpendReason
     Publish = 1,
     Highlight = 2,
     PushBom = 3,
-    Extend = 4
+    Extend = 4,
+    /// <summary>Highlight a company page in the Bedrijven-hub.</summary>
+    CompanyHubHighlight = 5
 }
 
 public enum ApplicationStatus

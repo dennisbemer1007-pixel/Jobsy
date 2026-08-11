@@ -1210,16 +1210,23 @@ public class ApplicationsController : ControllerBase
 
     private static LobsyCvModel BuildApplicationCvModel(Core.Entities.Application application, bool includePii)
     {
-        var showAddress = includePii && application.SnapshotShowAddressOnCv;
+        var vacancy = application.Vacancy;
+        var display = IntermediaryVacancyRules.ResolvePublicDisplay(
+            vacancy,
+            vacancy.Company,
+            vacancy.IntermediaryCompany);
+        var workplaceLat = display.Latitude != 0 ? display.Latitude : vacancy.Location?.Latitude;
+        var workplaceLng = display.Longitude != 0 ? display.Longitude : vacancy.Location?.Longitude;
+
         return LobsyCvModelFactory.FromApplicationSnapshot(
             application.CandidateName,
             includePii ? application.CandidateEmail : null,
             includePii ? application.SnapshotPhoneNumber : null,
             includePii && application.SnapshotWhatsAppAllowed,
-            application.CandidateCity,
-            showAddress ? application.CandidateAddress : null,
-            showAddress ? application.SnapshotHomeLatitude : null,
-            showAddress ? application.SnapshotHomeLongitude : null,
+            city: null,
+            address: null,
+            latitude: null,
+            longitude: null,
             application.SnapshotAboutMe,
             application.Motivation,
             application.PreferredTransport,
@@ -1230,14 +1237,18 @@ public class ApplicationsController : ControllerBase
             application.SnapshotCertificatesJson,
             application.CandidateEmployerCount,
             application.MatchPercent,
-            application.Vacancy.Title,
-            application.Vacancy.Company.Name,
+            vacancy.Title,
+            display.DisplayName,
             application.ConsentVersion,
             DateTime.UtcNow,
-            includeFullAddress: showAddress,
+            includeFullAddress: false,
             includeContactDetails: includePii,
             dateOfBirth: includePii ? application.SnapshotDateOfBirth : null,
-            ageYears: application.CandidateAgeYears);
+            ageYears: application.CandidateAgeYears,
+            workplaceLatitude: workplaceLat,
+            workplaceLongitude: workplaceLng,
+            workplaceAddress: display.DisplayAddress,
+            maxTravelMinutes: null);
     }
 
     private async Task SendApplicationConfirmationAsync(

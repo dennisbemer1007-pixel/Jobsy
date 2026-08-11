@@ -23,7 +23,17 @@ public record CompanySummaryDto(
     string? KvkEstablishmentId = null,
     string KvkVerificationStatus = nameof(Jobsy.Core.Enums.KvkVerificationStatus.Verified),
     string? PreferredPaymentMethod = null,
-    bool RequireEmailVerificationForApplications = false);
+    bool RequireEmailVerificationForApplications = false,
+    string? HubAboutText = null,
+    string? HubCultureText = null,
+    string? HubVideoUrl = null,
+    DateTime? HubHighlightedUntil = null,
+    string? PublicPath = null);
+
+public record UpdateCompanyHubPageRequest(
+    string? AboutText,
+    string? CultureText,
+    string? VideoUrl);
 
 public record UpdateBillingPreferenceRequest(string? PreferredPaymentMethod);
 

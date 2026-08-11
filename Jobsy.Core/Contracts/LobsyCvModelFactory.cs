@@ -22,8 +22,15 @@ public static class LobsyCvModelFactory
         string? companyName = null,
         int? estimatedTravelMinutes = null,
         int? matchPercent = null,
-        DateOnly? dateOfBirth = null)
+        DateOnly? dateOfBirth = null,
+        double? workplaceLatitude = null,
+        double? workplaceLongitude = null,
+        string? workplaceAddress = null)
     {
+        // Home lat/lng retained in signature for call-site compatibility; never written to CV.
+        _ = latitude;
+        _ = longitude;
+
         var employers = (preferences.Employers ?? Array.Empty<CandidateEmployerHistoryDto>())
             .Where(e => !string.IsNullOrWhiteSpace(e.EmployerName))
             .Select(e => new LobsyCvEmployerEntry(
@@ -42,18 +49,19 @@ public static class LobsyCvModelFactory
 
         var flexible = preferences.FlexibleTimes == true;
         var slots = NormalizeSlots(preferences.Availability);
-        var showAddress = preferences.ShowAddressOnCv != false;
         var ageYears = AgeRules.AgeYearsFromDateOfBirth(dateOfBirth);
+        var reachMinutes = estimatedTravelMinutes ?? preferences.MaxTravelMinutes;
 
+        // Candidate home address/coords are NEVER placed on the CV (privacy).
         return new LobsyCvModel(
             FullName: fullName,
             Email: email,
             PhoneNumber: phoneNumber,
             WhatsAppContactAllowed: whatsAppContactAllowed,
-            City: showAddress ? ExtractCity(preferences.HomeAddress) : null,
-            Address: showAddress ? preferences.HomeAddress : null,
-            Latitude: showAddress ? latitude : null,
-            Longitude: showAddress ? longitude : null,
+            City: null,
+            Address: null,
+            Latitude: null,
+            Longitude: null,
             AboutMe: preferences.AboutMe,
             Motivation: motivation,
             PreferredTransport: preferences.PreferredTransport,
@@ -75,8 +83,12 @@ public static class LobsyCvModelFactory
             AgeYears: ageYears,
             GeneratedAtUtc: generatedAtUtc,
             ConsentVersion: consentVersion ?? PrivacyConstants.CurrentConsentVersion,
-            IncludeFullAddress: showAddress,
-            IncludeContactDetails: true);
+            IncludeFullAddress: false,
+            IncludeContactDetails: true,
+            WorkplaceLatitude: workplaceLatitude,
+            WorkplaceLongitude: workplaceLongitude,
+            WorkplaceAddress: string.IsNullOrWhiteSpace(workplaceAddress) ? null : workplaceAddress.Trim(),
+            ReachTravelMinutes: reachMinutes);
     }
 
     public static LobsyCvModel FromApplicationSnapshot(
@@ -105,8 +117,19 @@ public static class LobsyCvModelFactory
         bool includeFullAddress,
         bool includeContactDetails,
         DateOnly? dateOfBirth = null,
-        int? ageYears = null)
+        int? ageYears = null,
+        double? workplaceLatitude = null,
+        double? workplaceLongitude = null,
+        string? workplaceAddress = null,
+        int? maxTravelMinutes = null)
     {
+        // Candidate home fields kept for API compatibility; never rendered on CV.
+        _ = city;
+        _ = address;
+        _ = latitude;
+        _ = longitude;
+        _ = includeFullAddress;
+
         var licenses = SplitCsv(drivingLicensesCsv);
         var educations = SplitCsv(educationsCsv);
         var availability = ParseAvailabilityPayload(availabilityJson);
@@ -119,22 +142,24 @@ public static class LobsyCvModelFactory
             about = string.IsNullOrWhiteSpace(about) ? note : $"{about}\n\n{note}";
         }
 
-        var showAddress = includeFullAddress;
         var resolvedAge = ageYears ?? AgeRules.AgeYearsFromDateOfBirth(dateOfBirth);
+        var reachMinutes = estimatedTravelMinutes > 0
+            ? estimatedTravelMinutes
+            : maxTravelMinutes;
 
         return new LobsyCvModel(
             FullName: fullName,
             Email: email,
             PhoneNumber: phoneNumber,
             WhatsAppContactAllowed: whatsAppContactAllowed,
-            City: showAddress ? city : null,
-            Address: showAddress ? address : null,
-            Latitude: showAddress ? latitude : null,
-            Longitude: showAddress ? longitude : null,
+            City: null,
+            Address: null,
+            Latitude: null,
+            Longitude: null,
             AboutMe: about,
             Motivation: motivation,
             PreferredTransport: preferredTransport,
-            MaxTravelMinutes: null,
+            MaxTravelMinutes: maxTravelMinutes,
             EstimatedTravelMinutes: estimatedTravelMinutes,
             MinHoursPerWeek: availability.MinHours,
             MaxHoursPerWeek: availability.MaxHours,
@@ -152,8 +177,12 @@ public static class LobsyCvModelFactory
             AgeYears: resolvedAge,
             GeneratedAtUtc: generatedAtUtc,
             ConsentVersion: consentVersion ?? PrivacyConstants.CurrentConsentVersion,
-            IncludeFullAddress: showAddress,
-            IncludeContactDetails: includeContactDetails);
+            IncludeFullAddress: false,
+            IncludeContactDetails: includeContactDetails,
+            WorkplaceLatitude: workplaceLatitude,
+            WorkplaceLongitude: workplaceLongitude,
+            WorkplaceAddress: string.IsNullOrWhiteSpace(workplaceAddress) ? null : workplaceAddress.Trim(),
+            ReachTravelMinutes: reachMinutes);
     }
 
     public static string SerializeCertificatesSnapshot(
