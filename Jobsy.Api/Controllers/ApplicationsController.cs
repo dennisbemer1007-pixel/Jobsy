@@ -861,11 +861,35 @@ public class ApplicationsController : ControllerBase
             return BadRequest(new { message = "Op deze sollicitatie is al gereageerd." });
         }
 
-        // Tracked update (works on Postgres and InMemory test providers; avoids ExecuteUpdate).
         var respondedAt = DateTime.UtcNow;
-        application.Status = request.Status;
-        application.RespondedAt = respondedAt;
-        await _db.SaveChangesAsync(cancellationToken);
+        if (_db.Database.IsRelational())
+        {
+            // Atomic Pending→react on Postgres (race-safe).
+            var updated = await _db.Applications
+                .Where(a => a.Id == id && a.Status == ApplicationStatus.Pending)
+                .ExecuteUpdateAsync(
+                    s => s
+                        .SetProperty(a => a.Status, request.Status)
+                        .SetProperty(a => a.RespondedAt, respondedAt),
+                    cancellationToken);
+            if (updated == 0)
+            {
+                return BadRequest(new { message = "Op deze sollicitatie is al gereageerd." });
+            }
+
+            // Keep the tracked graph in sync for e-mail / push below.
+            application.Status = request.Status;
+            application.RespondedAt = respondedAt;
+            _db.Entry(application).Property(a => a.Status).IsModified = false;
+            _db.Entry(application).Property(a => a.RespondedAt).IsModified = false;
+        }
+        else
+        {
+            // InMemory test provider has no ExecuteUpdate — tracked update is enough there.
+            application.Status = request.Status;
+            application.RespondedAt = respondedAt;
+            await _db.SaveChangesAsync(cancellationToken);
+        }
 
         var deepLink = await BuildDeepLinkAsync($"/vacancies/{application.VacancyId}", cancellationToken);
         var candidateName = Html(application.CandidateName);
