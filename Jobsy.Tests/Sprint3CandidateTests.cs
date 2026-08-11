@@ -32,6 +32,21 @@ public class Sprint3CandidateTests
     }
 
     [Fact]
+    public void SerializePreferences_preserves_default_motivation()
+    {
+        var json = MeController.SerializePreferences(
+            ["horeca"],
+            30,
+            "Fiets",
+            "nl",
+            aboutMe: "Hallo",
+            defaultMotivation: "  Ik wil graag bij jullie werken.  ");
+        var prefs = MeController.ParsePreferences(json);
+        Assert.Equal("Ik wil graag bij jullie werken.", prefs.DefaultMotivation);
+        Assert.Equal("Hallo", prefs.AboutMe);
+    }
+
+    [Fact]
     public async Task Candidate_metrics_summary_counts_own_engagement()
     {
         await using var db = CreateDb();

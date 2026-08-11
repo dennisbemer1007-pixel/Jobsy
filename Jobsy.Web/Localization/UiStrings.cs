@@ -950,7 +950,7 @@ public static class UiStrings
             ["Profile.HomeAddress"] = "Home address",
             ["Profile.AddressHint"] = "Type at least 3 characters and pick an address from the suggestions.",
             ["Profile.ShowAddressOnCv"] = "Show my address and map on the Lobsy-CV",
-            ["Profile.ShowAddressOnCvHint"] = "Off = address and map stay private (GDPR). Employers will not see them on the PDF.",
+            ["Profile.ShowAddressOnCvHint"] = "Your home address never appears on the Lobsy CV. The map shows the employer with a reach circle.",
             ["Profile.MaxTravel"] = "Max. travel time (minutes)",
             ["Profile.PreferredTransport"] = "Preferred transport",
             ["Profile.Interests"] = "Areas of interest",

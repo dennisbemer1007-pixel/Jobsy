@@ -51,7 +51,11 @@ public static class LobsyCvModelFactory
         var flexible = preferences.FlexibleTimes == true;
         var slots = NormalizeSlots(preferences.Availability);
         var ageYears = AgeRules.AgeYearsFromDateOfBirth(dateOfBirth);
-        var reachMinutes = estimatedTravelMinutes ?? preferences.MaxTravelMinutes;
+        var hasWorkplace = workplaceLatitude is not null && workplaceLongitude is not null;
+        // Reach circle / "afstand tot werkgever" only when an employer location is known.
+        var reachMinutes = hasWorkplace || distanceKm is > 0
+            ? (estimatedTravelMinutes ?? preferences.MaxTravelMinutes)
+            : null;
 
         // Candidate home address/coords are NEVER placed on the CV (privacy).
         return new LobsyCvModel(

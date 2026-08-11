@@ -524,10 +524,17 @@ public sealed class LobsyCvPdfService : ILobsyCvPdfService
 
     private static string? FormatReachLabel(LobsyCvModel model)
     {
+        var hasWorkplace = model.WorkplaceLatitude is not null && model.WorkplaceLongitude is not null;
+        var km = model.DistanceKm;
+        // Never imply an employer distance on a generic profile CV without workplace context.
+        if (!hasWorkplace && (km is null or <= 0))
+        {
+            return null;
+        }
+
         var minutes = model.ReachTravelMinutes
                       ?? model.EstimatedTravelMinutes
-                      ?? model.MaxTravelMinutes;
-        var km = model.DistanceKm;
+                      ?? (hasWorkplace ? model.MaxTravelMinutes : null);
 
         if ((minutes is null or <= 0) && (km is null or <= 0))
         {

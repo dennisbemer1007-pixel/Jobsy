@@ -470,10 +470,16 @@ public class ApplicationsController : ControllerBase
         application.SnapshotHomeLongitude = candidate.HomeLocation?.Longitude;
         application.SnapshotCertificatesJson =
             LobsyCvModelFactory.SerializeCertificatesSnapshot(preferences.Certificates, maxLength: 4000);
-        application.SnapshotShowAddressOnCv = preferences.ShowAddressOnCv != false;
+        // Home address is never shown on Lobsy-CV; keep snapshot flag false for privacy consistency.
+        application.SnapshotShowAddressOnCv = false;
         application.CandidateName = CandidateNameRules.ComposeFullName(
             candidate.FirstName, candidate.LastName, candidate.FullName);
-        application.Motivation = Truncate(string.IsNullOrWhiteSpace(request.Motivation) ? null : request.Motivation.Trim(), 500);
+        var motivationText = string.IsNullOrWhiteSpace(request.Motivation)
+            ? preferences.DefaultMotivation
+            : request.Motivation.Trim();
+        application.Motivation = Truncate(
+            string.IsNullOrWhiteSpace(motivationText) ? null : motivationText.Trim(),
+            500);
         application.MatchPercent = match.TotalPercent;
         application.MatchBreakdownJson = Truncate(matchJson, 4000);
         application.ViaSafetyNet = GuldenMiddenwegRules.RequiresSafetyNetConfirmation(match)

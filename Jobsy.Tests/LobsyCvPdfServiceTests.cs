@@ -58,6 +58,10 @@ public class LobsyCvPdfServiceTests
         Assert.Null(model.Address);
         Assert.Null(model.City);
         Assert.False(model.IncludeFullAddress);
+        Assert.Null(model.WorkplaceLatitude);
+        Assert.Null(model.ReachTravelMinutes);
+        Assert.Null(model.DistanceKm);
+        Assert.Equal(30, model.MaxTravelMinutes);
         Assert.Equal("2022-03", model.Employers[0].StartMonth);
         Assert.Null(model.Employers[0].EndMonth);
         Assert.Equal("mrt 2022 – heden", LobsyCvModelFactory.FormatEmployerPeriod(
@@ -102,6 +106,7 @@ public class LobsyCvPdfServiceTests
         Assert.Null(model.City);
         Assert.Null(model.Latitude);
         Assert.Null(model.Longitude);
+        Assert.Null(model.ReachTravelMinutes);
         Assert.Single(model.Certificates);
 
         var maps = new TrackingMapImages();
@@ -110,6 +115,50 @@ public class LobsyCvPdfServiceTests
         Assert.True(pdf.Length > 500);
         Assert.Equal(0, maps.CallCount);
         Assert.Equal(0, maps.ReachCallCount);
+    }
+
+    [Fact]
+    public void Live_profile_uses_default_motivation_and_workplace_reach_only_with_employer()
+    {
+        var prefs = new CandidatePreferencesDto(
+            Roles: [],
+            MaxTravelMinutes: 25,
+            PreferredTransport: "Fiets",
+            DefaultMotivation: "Ik wil graag in de horeca werken.",
+            HomeAddress: "Geheimstraat 1");
+
+        var withoutEmployer = LobsyCvModelFactory.FromLiveProfile(
+            "Ada",
+            "ada@test.local",
+            null,
+            false,
+            prefs,
+            52.0,
+            4.2,
+            DateTime.UtcNow);
+
+        Assert.Equal("Ik wil graag in de horeca werken.", withoutEmployer.Motivation);
+        Assert.Null(withoutEmployer.ReachTravelMinutes);
+        Assert.Null(withoutEmployer.WorkplaceLatitude);
+
+        var withEmployer = LobsyCvModelFactory.FromLiveProfile(
+            "Ada",
+            "ada@test.local",
+            null,
+            false,
+            prefs,
+            52.0,
+            4.2,
+            DateTime.UtcNow,
+            workplaceLatitude: 51.99,
+            workplaceLongitude: 4.21,
+            workplaceAddress: "Bedrijfsweg 1",
+            distanceKm: 3.2,
+            estimatedTravelMinutes: 12);
+
+        Assert.Equal(12, withEmployer.ReachTravelMinutes);
+        Assert.Equal(3.2, withEmployer.DistanceKm);
+        Assert.Equal(51.99, withEmployer.WorkplaceLatitude);
     }
 
     [Fact]
