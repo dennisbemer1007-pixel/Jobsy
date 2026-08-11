@@ -118,6 +118,7 @@ public sealed class CandidatePreferences
     public string? Language { get; set; }
     public int? AgeYears { get; set; }
     public string? AboutMe { get; set; }
+    public string? DefaultMotivation { get; set; }
     public List<string> DrivingLicenses { get; set; } = [];
     public Dictionary<string, List<string>> Availability { get; set; } = new(StringComparer.OrdinalIgnoreCase);
     public List<CandidateEmployerHistory> Employers { get; set; } = [];

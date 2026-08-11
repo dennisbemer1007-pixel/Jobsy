@@ -48,7 +48,7 @@
                     <span class="provider-btn__icon" aria-hidden="true">
                         <svg viewBox="0 0 23 23" width="18" height="18"><path fill="#f25022" d="M1 1h10v10H1z"/><path fill="#7fba00" d="M12 1h10v10H12z"/><path fill="#00a4ef" d="M1 12h10v10H1z"/><path fill="#ffb900" d="M12 12h10v10H12z"/></svg>
                     </span>
-                    Microsoft Entra
+                    @Culture["Login.Microsoft"]
                 </a>
             }
             else
@@ -58,7 +58,7 @@
                     <span class="provider-btn__icon" aria-hidden="true">
                         <svg viewBox="0 0 23 23" width="18" height="18"><path fill="#f25022" d="M1 1h10v10H1z"/><path fill="#7fba00" d="M12 1h10v10H12z"/><path fill="#00a4ef" d="M1 12h10v10H1z"/><path fill="#ffb900" d="M12 12h10v10H12z"/></svg>
                     </span>
-                    Microsoft Entra
+                    @Culture["Login.Microsoft"]
                 </button>
             }
 
@@ -67,7 +67,7 @@
                 <a class="provider-btn provider-btn--google"
                    href="@($"/account/external/google?returnUrl={Uri.EscapeDataString(_returnUrl)}")">
                     <span class="provider-btn__icon provider-btn__icon--google" aria-hidden="true">G</span>
-                    Google
+                    @Culture["Login.Google"]
                 </a>
             }
             else
@@ -75,7 +75,7 @@
                 <button type="button" class="provider-btn provider-btn--google is-disabled" disabled
                         title="@Culture["Login.GoogleNotConfigured"]">
                     <span class="provider-btn__icon provider-btn__icon--google" aria-hidden="true">G</span>
-                    Google
+                    @Culture["Login.Google"]
                 </button>
             }
         </div>

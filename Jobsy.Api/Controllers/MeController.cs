@@ -120,6 +120,7 @@ public class MeController : ControllerBase
             language,
             existing.AgeYears,
             existing.AboutMe,
+            existing.DefaultMotivation,
             existing.DrivingLicenses,
             existing.Availability,
             existing.Employers,
@@ -275,6 +276,7 @@ public class MeController : ControllerBase
                 language,
                 request.Preferences.AgeYears,
                 request.Preferences.AboutMe,
+                request.Preferences.DefaultMotivation,
                 request.Preferences.DrivingLicenses,
                 request.Preferences.Availability,
                 request.Preferences.Employers,
@@ -630,6 +632,16 @@ public class MeController : ControllerBase
                 aboutMe = aboutEl.GetString();
             }
 
+            string? defaultMotivation = null;
+            if (root.TryGetProperty("defaultMotivation", out var motivEl) && motivEl.ValueKind == JsonValueKind.String)
+            {
+                defaultMotivation = motivEl.GetString();
+                if (defaultMotivation is { Length: > 500 })
+                {
+                    defaultMotivation = defaultMotivation[..500];
+                }
+            }
+
             var drivingLicenses = new List<string>();
             if (root.TryGetProperty("drivingLicenses", out var drivingEl) && drivingEl.ValueKind == JsonValueKind.Array)
             {
@@ -836,6 +848,7 @@ public class MeController : ControllerBase
                 language,
                 ageYears,
                 aboutMe,
+                defaultMotivation,
                 drivingLicenses.Distinct(StringComparer.OrdinalIgnoreCase).ToList(),
                 availability,
                 employers,
@@ -896,6 +909,7 @@ public class MeController : ControllerBase
         null,
         null,
         null,
+        null,
         [],
         new Dictionary<string, string[]>(),
         [],
@@ -914,6 +928,7 @@ public class MeController : ControllerBase
         string? language,
         int? ageYears = null,
         string? aboutMe = null,
+        string? defaultMotivation = null,
         IEnumerable<string>? drivingLicenses = null,
         IReadOnlyDictionary<string, string[]>? availability = null,
         IEnumerable<CandidateEmployerHistoryDto>? employers = null,
@@ -931,6 +946,12 @@ public class MeController : ControllerBase
             trimmedHome = trimmedHome[..256];
         }
 
+        var trimmedMotivation = string.IsNullOrWhiteSpace(defaultMotivation) ? null : defaultMotivation.Trim();
+        if (trimmedMotivation is { Length: > 500 })
+        {
+            trimmedMotivation = trimmedMotivation[..500];
+        }
+
         return JsonSerializer.Serialize(new
         {
             roles,
@@ -941,6 +962,7 @@ public class MeController : ControllerBase
                 : JobsyLanguages.Normalize(language),
             ageYears,
             aboutMe = string.IsNullOrWhiteSpace(aboutMe) ? null : aboutMe.Trim(),
+            defaultMotivation = trimmedMotivation,
             drivingLicenses = drivingLicenses?
                 .Where(x => !string.IsNullOrWhiteSpace(x))
                 .Select(x => x.Trim())

@@ -7,6 +7,8 @@ public record CandidatePreferencesDto(
     string? Language = null,
     int? AgeYears = null,
     string? AboutMe = null,
+    /// <summary>Default apply motivation; prefilled on apply, editable per vacancy.</summary>
+    string? DefaultMotivation = null,
     IReadOnlyList<string>? DrivingLicenses = null,
     // Concrete string[] values — IReadOnlyList as dictionary values can fail System.Text.Json.
     IReadOnlyDictionary<string, string[]>? Availability = null,
@@ -17,7 +19,7 @@ public record CandidatePreferencesDto(
     decimal? MaxHoursPerWeek = null,
     bool? FlexibleTimes = null,
     IReadOnlyList<CandidateCertificateDto>? Certificates = null,
-    /// <summary>When false, Lobsy-CV omits address text and map (AVG).</summary>
+    /// <summary>Legacy flag; candidate home is never shown on Lobsy-CV regardless.</summary>
     bool? ShowAddressOnCv = null);
 
 public record CandidateEmployerHistoryDto(

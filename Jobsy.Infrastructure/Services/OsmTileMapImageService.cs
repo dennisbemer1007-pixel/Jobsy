@@ -25,7 +25,7 @@ public sealed class OsmTileMapImageService : ICandidateMapImageService
         _logger = logger;
     }
 
-    public async Task<byte[]?> RenderAsync(
+    public Task<byte[]?> RenderAsync(
         double latitude,
         double longitude,
         int width = 640,
@@ -33,6 +33,47 @@ public sealed class OsmTileMapImageService : ICandidateMapImageService
         int zoom = 15,
         byte[]? markerLogoPng = null,
         CancellationToken cancellationToken = default)
+        => RenderInternalAsync(
+            latitude,
+            longitude,
+            width,
+            height,
+            zoom,
+            radiusMeters: null,
+            markerLogoPng,
+            cancellationToken);
+
+    public Task<byte[]?> RenderWorkplaceReachAsync(
+        double latitude,
+        double longitude,
+        double radiusMeters,
+        int width = 640,
+        int height = 280,
+        byte[]? markerLogoPng = null,
+        CancellationToken cancellationToken = default)
+    {
+        radiusMeters = Math.Clamp(radiusMeters, 40, 80_000);
+        var zoom = ZoomToFitRadius(latitude, radiusMeters, width, height);
+        return RenderInternalAsync(
+            latitude,
+            longitude,
+            width,
+            height,
+            zoom,
+            radiusMeters,
+            markerLogoPng,
+            cancellationToken);
+    }
+
+    private async Task<byte[]?> RenderInternalAsync(
+        double latitude,
+        double longitude,
+        int width,
+        int height,
+        int zoom,
+        double? radiusMeters,
+        byte[]? markerLogoPng,
+        CancellationToken cancellationToken)
     {
         if (latitude is < -85 or > 85 || longitude is < -180 or > 180)
         {
@@ -99,6 +140,13 @@ public sealed class OsmTileMapImageService : ICandidateMapImageService
                 return null;
             }
 
+            if (radiusMeters is double meters and > 0)
+            {
+                var radiusPx = (int)Math.Round(MetersToPixels(latitude, meters, zoom));
+                radiusPx = Math.Clamp(radiusPx, 8, Math.Min(width, height) / 2 - 4);
+                DrawReachCircle(canvas, width / 2, height / 2, radiusPx);
+            }
+
             DrawMarker(canvas, width / 2, height / 2, markerLogoPng);
 
             await using var ms = new MemoryStream();
@@ -110,6 +158,75 @@ public sealed class OsmTileMapImageService : ICandidateMapImageService
             _logger.LogWarning(ex, "Failed to render candidate map image");
             return null;
         }
+    }
+
+    /// <summary>
+    /// Chooses the highest zoom where the circle still fits inside the image with padding.
+    /// </summary>
+    internal static int ZoomToFitRadius(double latitude, double radiusMeters, int width, int height)
+    {
+        var maxPx = Math.Min(width, height) * 0.42; // leave room so the ring is clearly visible
+        for (var zoom = 17; zoom >= 10; zoom--)
+        {
+            var px = MetersToPixels(latitude, radiusMeters, zoom);
+            if (px <= maxPx)
+            {
+                return zoom;
+            }
+        }
+
+        return 10;
+    }
+
+    private static double MetersToPixels(double latitude, double meters, int zoom)
+    {
+        var metersPerPixel = 156543.03392 * Math.Cos(latitude * Math.PI / 180.0) / Math.Pow(2, zoom);
+        if (metersPerPixel <= 0)
+        {
+            return 0;
+        }
+
+        return meters / metersPerPixel;
+    }
+
+    private static void DrawReachCircle(Image<Rgba32> canvas, int cx, int cy, int radius)
+    {
+        // Leaflet-style blue reach ring (matches banenkaart isochrone look).
+        var fill = new Rgba32(51, 136, 255, 48);
+        var ring = new Rgba32(51, 136, 255, 220);
+        FillCircle(canvas, cx, cy, radius, fill);
+        StrokeCircle(canvas, cx, cy, radius, ring, thickness: 2);
+    }
+
+    private static void StrokeCircle(Image<Rgba32> canvas, int cx, int cy, int radius, Rgba32 color, int thickness)
+    {
+        var outer2 = (radius + thickness) * (radius + thickness);
+        var inner2 = Math.Max(0, radius - thickness) * Math.Max(0, radius - thickness);
+        for (var y = cy - radius - thickness; y <= cy + radius + thickness; y++)
+        {
+            for (var x = cx - radius - thickness; x <= cx + radius + thickness; x++)
+            {
+                var dx = x - cx;
+                var dy = y - cy;
+                var d2 = dx * dx + dy * dy;
+                if (d2 <= outer2 && d2 >= inner2
+                    && (uint)x < (uint)canvas.Width
+                    && (uint)y < (uint)canvas.Height)
+                {
+                    canvas[x, y] = Blend(canvas[x, y], color);
+                }
+            }
+        }
+    }
+
+    private static Rgba32 Blend(Rgba32 bottom, Rgba32 top)
+    {
+        var a = top.A / 255f;
+        return new Rgba32(
+            (byte)(top.R * a + bottom.R * (1 - a)),
+            (byte)(top.G * a + bottom.G * (1 - a)),
+            (byte)(top.B * a + bottom.B * (1 - a)),
+            255);
     }
 
     private static void DrawMarker(Image<Rgba32> canvas, int cx, int cy, byte[]? markerLogoPng)
@@ -160,7 +277,8 @@ public sealed class OsmTileMapImageService : ICandidateMapImageService
                     && (uint)x < (uint)canvas.Width
                     && (uint)y < (uint)canvas.Height)
                 {
-                    canvas[x, y] = color;
+                    var existing = canvas[x, y];
+                    canvas[x, y] = color.A < 255 ? Blend(existing, color) : color;
                 }
             }
         }

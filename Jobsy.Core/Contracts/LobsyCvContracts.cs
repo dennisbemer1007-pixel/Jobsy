@@ -32,7 +32,15 @@ public sealed record LobsyCvModel(
     DateTime GeneratedAtUtc,
     string ConsentVersion,
     bool IncludeFullAddress,
-    bool IncludeContactDetails);
+    bool IncludeContactDetails,
+    /// <summary>Workplace pin (employer). Candidate home is never plotted.</summary>
+    double? WorkplaceLatitude = null,
+    double? WorkplaceLongitude = null,
+    string? WorkplaceAddress = null,
+    /// <summary>Minutes used for the privacy reach circle / caption (usually estimated travel).</summary>
+    int? ReachTravelMinutes = null,
+    /// <summary>Crow-flies km candidate ↔ workplace; drives circle radius when set.</summary>
+    double? DistanceKm = null);
 
 public sealed record LobsyCvEmployerEntry(
     string EmployerName,

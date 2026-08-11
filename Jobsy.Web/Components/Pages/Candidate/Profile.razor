@@ -118,11 +118,7 @@
                         </ul>
                     }
                     <p class="profile-address__hint">@Culture["Profile.AddressHint"]</p>
-                    <label class="profile-address-cv">
-                        <input type="checkbox" @bind="_showAddressOnCv" />
-                        @Culture["Profile.ShowAddressOnCv"]
-                    </label>
-                    <p class="profile-address__hint">@Culture["Profile.ShowAddressOnCvHint"]</p>
+                    <p class="profile-address__hint">@Culture["Profile.CvMapPrivacyHint"]</p>
                 </div>
 
                 <label>
@@ -170,6 +166,12 @@
                 <label>
                     @Culture["Profile.AboutMe"]
                     <textarea rows="4" @bind="_aboutMe"></textarea>
+                </label>
+
+                <label>
+                    @Culture["Profile.DefaultMotivation"]
+                    <textarea rows="4" maxlength="500" @bind="_defaultMotivation"></textarea>
+                    <span class="profile-address__hint">@Culture["Profile.DefaultMotivationHint"]</span>
                 </label>
 
                 <fieldset class="vacancy-hours profile-hours">
@@ -422,11 +424,12 @@
     private readonly HashSet<string> _availability = new(StringComparer.OrdinalIgnoreCase);
     private readonly List<CandidateEmployerHistory> _employers = [];
     private readonly List<CandidateCertificate> _certificates = [];
-    private bool _showAddressOnCv = true;
+    private bool _showAddressOnCv;
     private List<string> _branchOptions = WorkTypeLabels.All.ToList();
     private List<string> _licenseOptions = DrivingLicenseLabels.All.ToList();
     private List<string> _educationOptions = EducationLevelLabels.ProfileAll.ToList();
     private string? _aboutMe;
+    private string? _defaultMotivation;
     private string? _message;
     private string? _returnUrl;
 
@@ -487,6 +490,7 @@
                 }
             }
             _aboutMe = prefs.AboutMe;
+            _defaultMotivation = prefs.DefaultMotivation;
             _availability.Clear();
             foreach (var day in prefs.Availability ?? [])
             {
@@ -503,7 +507,7 @@
             _employers.AddRange(prefs.Employers ?? []);
             _certificates.Clear();
             _certificates.AddRange(prefs.Certificates ?? []);
-            _showAddressOnCv = prefs.ShowAddressOnCv != false;
+            _showAddressOnCv = false;
             _selectedEducations.Clear();
             foreach (var education in prefs.Educations ?? [])
             {
@@ -846,6 +850,7 @@
                     MaxTravelMinutes = _maxTravel,
                     PreferredTransport = string.IsNullOrWhiteSpace(_preferredTransport) ? null : _preferredTransport,
                     AboutMe = string.IsNullOrWhiteSpace(_aboutMe) ? null : _aboutMe.Trim(),
+                    DefaultMotivation = string.IsNullOrWhiteSpace(_defaultMotivation) ? null : _defaultMotivation.Trim(),
                     DrivingLicenses = _selectedLicenses.OrderBy(x => x).ToList(),
                     Availability = BuildAvailability(),
                     Employers = _employers
@@ -880,7 +885,7 @@
                         })
                         .Take(30)
                         .ToList(),
-                    ShowAddressOnCv = _showAddressOnCv
+                    ShowAddressOnCv = false
                 },
                 homeLatitude: clearHome || !_homeLocationDirty ? null : _homeLat,
                 homeLongitude: clearHome || !_homeLocationDirty ? null : _homeLng,

@@ -532,12 +532,12 @@
                                         <span>@Culture["Apply.WorkPermit"]</span>
                                     </label>
                                     <label class="apply-field apply-field--motivation">
-                                        <span>Waarom wil jij hier graag aan de slag? (Optioneel – een kort berichtje laat een goede indruk achter en vergroot je kansen!)</span>
+                                        <span>@Culture["Apply.MotivationLabel"]</span>
                                         <textarea maxlength="500"
                                                   rows="6"
                                                   @bind="_motivation"
                                                   @bind:event="oninput"
-                                                  placeholder="Optioneel, max. 500 tekens"></textarea>
+                                                  placeholder="@Culture["Apply.MotivationPlaceholder"]"></textarea>
                                     </label>
                                 </section>
 
@@ -1142,6 +1142,11 @@
                         prefs.Educations,
                         _vacancy!.RequiredEducation);
                 _profileHasAboutMe = !string.IsNullOrWhiteSpace(prefs.AboutMe);
+                if (string.IsNullOrWhiteSpace(_motivation)
+                    && !string.IsNullOrWhiteSpace(prefs.DefaultMotivation))
+                {
+                    _motivation = prefs.DefaultMotivation!;
+                }
                 _profileReadyForApply =
                     _profileHasAvailability
                     && _profileHasLicense

@@ -18,6 +18,16 @@ public static class TravelReach
     }
 
     /// <summary>
+    /// Crow-flies meters for a travel-time circle on the CV map (no routing buffer —
+    /// matches jobMap.js ring radius so a 5-min bike circle stays readable when zoomed).
+    /// </summary>
+    public static double RingRadiusMeters(TransportMode mode, int minutes)
+    {
+        minutes = Math.Clamp(minutes, 1, 180);
+        return SpeedKmPerHour(mode) * 1000.0 / 60.0 * minutes;
+    }
+
+    /// <summary>
     /// Upper-bound crow-flies km that could still finish within <paramref name="maxMinutes"/>
     /// (includes a small buffer for non-straight routes).
     /// </summary>
