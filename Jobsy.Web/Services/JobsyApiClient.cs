@@ -2520,6 +2520,51 @@ public sealed class JobsyApiClient : IAsyncDisposable
         return await response.Content.ReadFromJsonAsync<AboutPageItem>(cancellationToken: ct);
     }
 
+    public async Task<MarketingFlyerItem?> GetMarketingFlyerAsync(CancellationToken ct = default)
+        => await _http.GetFromJsonAsync<MarketingFlyerItem>("api/settings/marketing-flyer", ct);
+
+    public async Task<MarketingFlyerItem?> SaveMarketingFlyerAsync(
+        MarketingFlyerItem flyer,
+        CancellationToken ct = default)
+    {
+        var response = await _http.PutAsJsonAsync("api/settings/marketing-flyer", flyer, ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException(TryExtractMessage(body) ?? body);
+        }
+
+        return await response.Content.ReadFromJsonAsync<MarketingFlyerItem>(cancellationToken: ct);
+    }
+
+    public async Task<MarketingFlyerItem?> ResetMarketingFlyerAsync(CancellationToken ct = default)
+    {
+        var response = await _http.PostAsync("api/settings/marketing-flyer/reset", null, ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException(TryExtractMessage(body) ?? body);
+        }
+
+        return await response.Content.ReadFromJsonAsync<MarketingFlyerItem>(cancellationToken: ct);
+    }
+
+    public async Task DownloadMarketingFlyerPdfAsync(
+        Microsoft.JSInterop.IJSRuntime js,
+        CancellationToken ct = default)
+    {
+        var response = await _http.GetAsync("api/settings/marketing-flyer.pdf", ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException(TryExtractMessage(body) ?? "Flyer downloaden mislukt.");
+        }
+
+        var bytes = await response.Content.ReadAsByteArrayAsync(ct);
+        var base64 = Convert.ToBase64String(bytes);
+        await js.InvokeVoidAsync("jobsyDownload.bytes", "lobsy-werkgeversflyer.pdf", base64, "application/pdf");
+    }
+
     public async Task<IReadOnlyList<RegionHostItem>> GetRegionHostsAsync(CancellationToken ct = default)
     {
         var rows = await _http.GetFromJsonAsync<List<RegionHostItem>>("api/region-hosts", ct);
@@ -3153,6 +3198,22 @@ public sealed class AboutPageItem
     public string Title { get; set; } = "Wie zijn wij";
     public string Lead { get; set; } = "Over Lobsy — en de mens achter de knop";
     public string BodyHtml { get; set; } = string.Empty;
+    public DateTime? UpdatedAtUtc { get; set; }
+}
+
+public sealed class MarketingFlyerItem
+{
+    public string Headline { get; set; } = string.Empty;
+    public string Subheadline { get; set; } = string.Empty;
+    public string Intro { get; set; } = string.Empty;
+    public string BulletPoints { get; set; } = string.Empty;
+    public string PromoFreeText { get; set; } = string.Empty;
+    public string PromoDiscountText { get; set; } = string.Empty;
+    public string CtaTitle { get; set; } = string.Empty;
+    public string CtaBody { get; set; } = string.Empty;
+    public string QrCaption { get; set; } = string.Empty;
+    public string QrPath { get; set; } = "/register";
+    public string FooterNote { get; set; } = string.Empty;
     public DateTime? UpdatedAtUtc { get; set; }
 }
 

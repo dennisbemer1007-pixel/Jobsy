@@ -381,6 +381,12 @@ public static class PageHelpDocs
             "Pas titel, introregel en inhoud aan. Gebruik koppen voor secties. De pagina is zichtbaar via /wie-zijn-wij.",
             "Het verhaal achter Lobsy up-to-date houden zonder code-deploys."),
 
+        ["/admin/marketing-flyer"] = new(
+            "Beheer · Werkgeversflyer",
+            "Professionele A4-flyer voor werkgevers bewerken en afdrukken.",
+            "Pas koppen, USP’s, lanceringsteksten en QR-doel aan. Download de PDF om te printen of digitaal te delen.",
+            "Werkgevers overtuigen met een logo-first flyer zonder designbureau."),
+
         ["/admin/integrations"] = new(
             "Beheer · Integraties",
             "API-koppelingen (Mollie, KVK, Entra, Google, Mail, OpenAI).",

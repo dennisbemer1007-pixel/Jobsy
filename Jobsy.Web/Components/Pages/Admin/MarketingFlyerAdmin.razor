@@ -1,0 +1,197 @@
+@page "/admin/marketing-flyer"
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
+@attribute [Authorize(Roles = "Admin")]
+@using Jobsy.Web.Components.Admin
+@inject JobsyApiClient Api
+@inject IJSRuntime Js
+@inject CultureState Culture
+@implements IDisposable
+
+<PageTitle>@Culture["Admin.MarketingFlyer"] · Lobsy</PageTitle>
+
+<AdminPageShell Title="@Culture["Admin.MarketingFlyer"]" Lead="@Culture["Admin.MarketingFlyerLead"]" ShowSettingsNav="true">
+    @if (_loading)
+    {
+        <p class="state-message">@Culture["Common.Loading"]</p>
+    }
+    else
+    {
+        <section class="panel-section">
+            <div class="panel-header">
+                <h2>@Culture["Admin.MarketingFlyerContent"]</h2>
+                <div class="inline-actions">
+                    <button class="btn-compact" type="button" disabled="@_busy" @onclick="DownloadPdfAsync">
+                        @(_busyDownload ? Culture["Admin.MarketingFlyerDownloading"] : Culture["Admin.MarketingFlyerDownload"])
+                    </button>
+                    <button class="btn-compact" type="button" disabled="@_busy" @onclick="ResetAsync">
+                        @Culture["Admin.MarketingFlyerReset"]
+                    </button>
+                    <button class="login-submit" type="button" disabled="@_busy" @onclick="SaveAsync">
+                        @(_busySave ? "Opslaan…" : Culture["Common.Save"])
+                    </button>
+                </div>
+            </div>
+
+            <p class="muted">@Culture["Admin.MarketingFlyerHint"]</p>
+
+            @if (!string.IsNullOrEmpty(_message))
+            {
+                <p class="state-message">@_message</p>
+            }
+            @if (!string.IsNullOrEmpty(_error))
+            {
+                <p class="state-message error">@_error</p>
+            }
+
+            <div class="login-form" style="max-width:48rem;margin-top:1rem;display:grid;gap:0.75rem">
+                <label>
+                    @Culture["Admin.MarketingFlyerHeadline"]
+                    <input @bind="_form.Headline" maxlength="200" />
+                </label>
+                <label>
+                    @Culture["Admin.MarketingFlyerSubheadline"]
+                    <input @bind="_form.Subheadline" maxlength="300" />
+                </label>
+                <label>
+                    @Culture["Admin.MarketingFlyerIntro"]
+                    <textarea rows="3" maxlength="600" @bind="_form.Intro"></textarea>
+                </label>
+                <label>
+                    @Culture["Admin.MarketingFlyerBullets"]
+                    <textarea rows="10" maxlength="4000" @bind="_form.BulletPoints"></textarea>
+                    <span class="profile-address__hint">@Culture["Admin.MarketingFlyerBulletsHint"]</span>
+                </label>
+                <label>
+                    @Culture["Admin.MarketingFlyerPromoFree"]
+                    <input @bind="_form.PromoFreeText" maxlength="400" />
+                </label>
+                <label>
+                    @Culture["Admin.MarketingFlyerPromoDiscount"]
+                    <input @bind="_form.PromoDiscountText" maxlength="400" />
+                </label>
+                <label>
+                    @Culture["Admin.MarketingFlyerCtaTitle"]
+                    <input @bind="_form.CtaTitle" maxlength="200" />
+                </label>
+                <label>
+                    @Culture["Admin.MarketingFlyerCtaBody"]
+                    <textarea rows="3" maxlength="500" @bind="_form.CtaBody"></textarea>
+                </label>
+                <label>
+                    @Culture["Admin.MarketingFlyerQrCaption"]
+                    <input @bind="_form.QrCaption" maxlength="200" />
+                </label>
+                <label>
+                    @Culture["Admin.MarketingFlyerQrPath"]
+                    <input @bind="_form.QrPath" maxlength="500" placeholder="/register" />
+                    <span class="profile-address__hint">@Culture["Admin.MarketingFlyerQrPathHint"]</span>
+                </label>
+                <label>
+                    @Culture["Admin.MarketingFlyerFooter"]
+                    <input @bind="_form.FooterNote" maxlength="300" />
+                </label>
+            </div>
+
+            @if (_form.UpdatedAtUtc is DateTime updated)
+            {
+                <p class="muted" style="margin-top:1rem">
+                    @Culture["Admin.MarketingFlyerUpdated"]: @updated.ToLocalTime().ToString("g")
+                </p>
+            }
+        </section>
+    }
+</AdminPageShell>
+
+@code {
+    private MarketingFlyerItem _form = new();
+    private bool _loading = true;
+    private bool _busy;
+    private bool _busySave;
+    private bool _busyDownload;
+    private string? _error;
+    private string? _message;
+
+    protected override void OnInitialized()
+        => Culture.Changed += OnCultureChanged;
+
+    private void OnCultureChanged()
+        => InvokeAsync(StateHasChanged);
+
+    public void Dispose()
+        => Culture.Changed -= OnCultureChanged;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            _form = await Api.GetMarketingFlyerAsync() ?? new MarketingFlyerItem();
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private async Task SaveAsync()
+    {
+        _busy = _busySave = true;
+        _error = null;
+        _message = null;
+        try
+        {
+            _form = await Api.SaveMarketingFlyerAsync(_form) ?? _form;
+            _message = Culture["Admin.MarketingFlyerSaved"];
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _busy = _busySave = false;
+        }
+    }
+
+    private async Task ResetAsync()
+    {
+        _busy = true;
+        _error = null;
+        _message = null;
+        try
+        {
+            _form = await Api.ResetMarketingFlyerAsync() ?? _form;
+            _message = Culture["Admin.MarketingFlyerResetDone"];
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private async Task DownloadPdfAsync()
+    {
+        _busy = _busyDownload = true;
+        _error = null;
+        try
+        {
+            await Api.DownloadMarketingFlyerPdfAsync(Js);
+            _message = Culture["Admin.MarketingFlyerDownloaded"];
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _busy = _busyDownload = false;
+        }
+    }
+}

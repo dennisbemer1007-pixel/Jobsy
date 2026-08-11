@@ -50,6 +50,7 @@ public class JobsyDbContext : DbContext
     public DbSet<PlatformFeatureSettings> PlatformFeatureSettings => Set<PlatformFeatureSettings>();
     public DbSet<PlatformCompanySettings> PlatformCompanySettings => Set<PlatformCompanySettings>();
     public DbSet<AboutPageSettings> AboutPageSettings => Set<AboutPageSettings>();
+    public DbSet<MarketingFlyerSettings> MarketingFlyerSettings => Set<MarketingFlyerSettings>();
     public DbSet<PlatformLog> PlatformLogs => Set<PlatformLog>();
     public DbSet<TokenPurchaseCheckout> TokenPurchaseCheckouts => Set<TokenPurchaseCheckout>();
     public DbSet<PendingTokenAction> PendingTokenActions => Set<PendingTokenAction>();
@@ -719,6 +720,22 @@ public class JobsyDbContext : DbContext
             entity.Property(e => e.Title).HasMaxLength(200).IsRequired();
             entity.Property(e => e.Lead).HasMaxLength(400);
             entity.Property(e => e.BodyHtml).IsRequired();
+        });
+
+        modelBuilder.Entity<MarketingFlyerSettings>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Headline).HasMaxLength(200).IsRequired();
+            entity.Property(e => e.Subheadline).HasMaxLength(300).IsRequired();
+            entity.Property(e => e.Intro).HasMaxLength(600).IsRequired();
+            entity.Property(e => e.BulletPoints).IsRequired();
+            entity.Property(e => e.PromoFreeText).HasMaxLength(400).IsRequired();
+            entity.Property(e => e.PromoDiscountText).HasMaxLength(400).IsRequired();
+            entity.Property(e => e.CtaTitle).HasMaxLength(200).IsRequired();
+            entity.Property(e => e.CtaBody).HasMaxLength(500).IsRequired();
+            entity.Property(e => e.QrCaption).HasMaxLength(200).IsRequired();
+            entity.Property(e => e.QrPath).HasMaxLength(500).IsRequired();
+            entity.Property(e => e.FooterNote).HasMaxLength(300).IsRequired();
         });
 
         modelBuilder.Entity<PlatformLog>(entity =>

@@ -7,6 +7,7 @@ using Jobsy.Core.Rules;
 using Jobsy.Infrastructure.Data;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 
 namespace Jobsy.Api.Controllers;
@@ -21,19 +22,25 @@ public class SettingsController : ControllerBase
     private readonly IPlatformFeatureService _features;
     private readonly IPlatformCompanySettingsService _companySettings;
     private readonly IAboutPageSettingsService _aboutPage;
+    private readonly IMarketingFlyerSettingsService _marketingFlyer;
+    private readonly IMarketingFlyerPdfService _marketingFlyerPdf;
 
     public SettingsController(
         JobsyDbContext db,
         IIntegrationCredentialService credentials,
         IPlatformFeatureService features,
         IPlatformCompanySettingsService companySettings,
-        IAboutPageSettingsService aboutPage)
+        IAboutPageSettingsService aboutPage,
+        IMarketingFlyerSettingsService marketingFlyer,
+        IMarketingFlyerPdfService marketingFlyerPdf)
     {
         _db = db;
         _credentials = credentials;
         _features = features;
         _companySettings = companySettings;
         _aboutPage = aboutPage;
+        _marketingFlyer = marketingFlyer;
+        _marketingFlyerPdf = marketingFlyerPdf;
     }
 
     [HttpGet("token-pricing")]
@@ -376,6 +383,65 @@ public class SettingsController : ControllerBase
         return Ok(SiteController.ToDto(snap));
     }
 
+    [HttpGet("marketing-flyer")]
+    public async Task<ActionResult<MarketingFlyerDto>> GetMarketingFlyer(CancellationToken cancellationToken)
+    {
+        var snap = await _marketingFlyer.GetAsync(cancellationToken);
+        return Ok(ToMarketingFlyerDto(snap));
+    }
+
+    [HttpPut("marketing-flyer")]
+    public async Task<ActionResult<MarketingFlyerDto>> UpdateMarketingFlyer(
+        [FromBody] UpdateMarketingFlyerRequest request,
+        CancellationToken cancellationToken)
+    {
+        var snap = await _marketingFlyer.UpdateAsync(
+            new MarketingFlyerUpdate(
+                request.Headline ?? "",
+                request.Subheadline ?? "",
+                request.Intro ?? "",
+                request.BulletPoints ?? "",
+                request.PromoFreeText ?? "",
+                request.PromoDiscountText ?? "",
+                request.CtaTitle ?? "",
+                request.CtaBody ?? "",
+                request.QrCaption ?? "",
+                request.QrPath ?? "",
+                request.FooterNote ?? ""),
+            cancellationToken);
+        return Ok(ToMarketingFlyerDto(snap));
+    }
+
+    [HttpPost("marketing-flyer/reset")]
+    public async Task<ActionResult<MarketingFlyerDto>> ResetMarketingFlyer(CancellationToken cancellationToken)
+    {
+        var snap = await _marketingFlyer.ResetToDefaultsAsync(cancellationToken);
+        return Ok(ToMarketingFlyerDto(snap));
+    }
+
+    [HttpGet("marketing-flyer.pdf")]
+    [EnableRateLimiting("public-pdf")]
+    public async Task<IActionResult> DownloadMarketingFlyerPdf(CancellationToken cancellationToken)
+    {
+        var pdf = await _marketingFlyerPdf.RenderAsync(cancellationToken);
+        return File(pdf, "application/pdf", "lobsy-werkgeversflyer.pdf");
+    }
+
+    private static MarketingFlyerDto ToMarketingFlyerDto(MarketingFlyerSnapshot snap) =>
+        new(
+            snap.Headline,
+            snap.Subheadline,
+            snap.Intro,
+            string.Join('\n', snap.BulletPoints),
+            snap.PromoFreeText,
+            snap.PromoDiscountText,
+            snap.CtaTitle,
+            snap.CtaBody,
+            snap.QrCaption,
+            snap.QrPath,
+            snap.FooterNote,
+            snap.UpdatedAtUtc);
+
     [HttpGet("integration-credentials")]
     public async Task<ActionResult<IEnumerable<IntegrationCredentialDto>>> GetIntegrationCredentials(
         CancellationToken cancellationToken)
@@ -513,3 +579,30 @@ public sealed record UpdateAboutPageRequest(
     string? Title,
     string? Lead,
     string? BodyHtml);
+
+public sealed record MarketingFlyerDto(
+    string Headline,
+    string Subheadline,
+    string Intro,
+    string BulletPoints,
+    string PromoFreeText,
+    string PromoDiscountText,
+    string CtaTitle,
+    string CtaBody,
+    string QrCaption,
+    string QrPath,
+    string FooterNote,
+    DateTime? UpdatedAtUtc);
+
+public sealed record UpdateMarketingFlyerRequest(
+    string? Headline,
+    string? Subheadline,
+    string? Intro,
+    string? BulletPoints,
+    string? PromoFreeText,
+    string? PromoDiscountText,
+    string? CtaTitle,
+    string? CtaBody,
+    string? QrCaption,
+    string? QrPath,
+    string? FooterNote);

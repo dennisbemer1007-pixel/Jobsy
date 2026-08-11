@@ -14,6 +14,7 @@ public static class AdminNavItems
         new("Nav.Cnames", "/admin/cnames", NavIcons.Settings),
         new("Nav.CompanyDetails", "/admin/company", NavIcons.Companies),
         new("Nav.AboutPage", "/admin/about", NavIcons.Info),
+        new("Nav.MarketingFlyer", "/admin/marketing-flyer", NavIcons.Info),
         new("Nav.Masterdata", "/admin/masterdata", NavIcons.Masterdata),
         new("Nav.VacancyCategories", "/admin/vacancy-categories", NavIcons.Masterdata),
         new("Nav.Exclusivity", "/admin/exclusivity", NavIcons.Masterdata),

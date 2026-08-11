@@ -131,6 +131,28 @@ internal static class PlatformSettingsSeeder
             logger.LogInformation("Seeded default AboutPageSettings (Wie zijn wij).");
         }
 
+        if (!await db.MarketingFlyerSettings.AnyAsync())
+        {
+            var defaults = MarketingFlyerSettingsService.DefaultsUpdate();
+            db.MarketingFlyerSettings.Add(new MarketingFlyerSettings
+            {
+                Id = MarketingFlyerSettingsService.SingletonId,
+                Headline = defaults.Headline,
+                Subheadline = defaults.Subheadline,
+                Intro = defaults.Intro,
+                BulletPoints = defaults.BulletPoints,
+                PromoFreeText = defaults.PromoFreeText,
+                PromoDiscountText = defaults.PromoDiscountText,
+                CtaTitle = defaults.CtaTitle,
+                CtaBody = defaults.CtaBody,
+                QrCaption = defaults.QrCaption,
+                QrPath = defaults.QrPath,
+                FooterNote = defaults.FooterNote,
+                UpdatedAtUtc = DateTime.UtcNow
+            });
+            logger.LogInformation("Seeded default MarketingFlyerSettings (werkgeversflyer).");
+        }
+
         if (!await db.SalesCommercialSettings.AnyAsync())
         {
             db.SalesCommercialSettings.Add(new SalesCommercialSettings
