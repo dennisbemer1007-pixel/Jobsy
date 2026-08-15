@@ -2,6 +2,7 @@ using System.Net;
 using System.Security.Cryptography;
 using Jobsy.Api.Models;
 using Jobsy.Core.Authorization;
+using Jobsy.Core.Email;
 using Jobsy.Core.Entities;
 using Jobsy.Core.Enums;
 using Jobsy.Core.Interfaces;
@@ -346,22 +347,30 @@ public class CompanyUsersController : ControllerBase
         var loginUrl = features.PublicWebBaseUrl.TrimEnd('/') + "/login";
         var name = WebUtility.HtmlEncode(user.FullName);
         var roleLabel = RoleLabel(user.Role);
+        var inviteHtml = EmailLayout.Wrap(
+            $"""
+             {EmailLayout.Heading($"Uitnodiging — {roleLabel}")}
+             {EmailLayout.Paragraph($"Hoi {name},")}
+             {EmailLayout.Paragraph(
+                 $"Je bent uitgenodigd als <strong>{WebUtility.HtmlEncode(roleLabel)}</strong> op Lobsy.")}
+             {EmailLayout.Paragraph(
+                 "<strong>Aanbevolen:</strong> log in met <strong>Google</strong> of <strong>Microsoft Entra</strong> " +
+                 $"op <code>{WebUtility.HtmlEncode(user.Email)}</code> — dan krijg je automatisch je managerrol.")}
+             {EmailLayout.Paragraph(
+                 "Alternatief: lokaal inloggen via het inlogscherm van Lobsy met dit eenmalige tijdelijke wachtwoord " +
+                 "(niet opnieuw zichtbaar in de app):")}
+             <p style="margin:16px 0;font-size:20px;letter-spacing:0.06em;font-weight:700;color:{EmailLayout.BrandNavy};text-align:center;"><code>{WebUtility.HtmlEncode(temporaryPassword)}</code></p>
+             {(promotedFromCandidate
+                 ? EmailLayout.Paragraph("Je eerdere sollicitaties blijven zichtbaar (alleen-lezen) in Lobsy.")
+                 : "")}
+             {EmailLayout.MutedNote("Wijzig het wachtwoord zo snel mogelijk na je eerste login.")}
+             """,
+            features.PublicWebBaseUrl,
+            preheader: $"Uitnodiging voor Lobsy ({roleLabel})");
         await _email.SendAsync(new EmailMessage(
             user.Email,
             $"Uitnodiging voor Lobsy ({roleLabel})",
-            $"""
-             <p>Hoi {name},</p>
-             <p>Je bent uitgenodigd als <strong>{WebUtility.HtmlEncode(roleLabel)}</strong> op Lobsy.</p>
-             <p><strong>Aanbevolen:</strong> log in met <strong>Google</strong> of <strong>Microsoft Entra</strong>
-             op <code>{WebUtility.HtmlEncode(user.Email)}</code> — dan krijg je automatisch je managerrol.</p>
-             <p>Alternatief: lokaal inloggen via <a href="{WebUtility.HtmlEncode(loginUrl)}">{WebUtility.HtmlEncode(loginUrl)}</a>
-             met dit eenmalige tijdelijke wachtwoord (niet opnieuw zichtbaar in de app):</p>
-             <p><code>{WebUtility.HtmlEncode(temporaryPassword)}</code></p>
-             {(promotedFromCandidate
-                 ? "<p>Je eerdere sollicitaties blijven zichtbaar (alleen-lezen) in Lobsy.</p>"
-                 : "")}
-             <p><em>Wijzig het wachtwoord zo snel mogelijk. Invite stub — geen echte mail.</em></p>
-             """,
+            inviteHtml,
             "UserInvite"), cancellationToken);
 
         var loaded = await _db.Users

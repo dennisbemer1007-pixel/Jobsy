@@ -364,6 +364,7 @@
             }
 
             ApplyFilters();
+            await TryOpenBoostFromQueryAsync(query);
         }
         catch (Exception ex)
         {
@@ -372,6 +373,47 @@
         finally
         {
             _loading = false;
+        }
+    }
+
+    /// <summary>
+    /// Deep-links from engagement e-mail: ?boost=highlight|pushbom&amp;id={vacancyId}
+    /// </summary>
+    private async Task TryOpenBoostFromQueryAsync(
+        Dictionary<string, Microsoft.Extensions.Primitives.StringValues> query)
+    {
+        if (!_canManageVacancy
+            || !query.TryGetValue("boost", out var boostRaw)
+            || !query.TryGetValue("id", out var idRaw)
+            || !Guid.TryParse(idRaw, out var boostId))
+        {
+            return;
+        }
+
+        var boost = boostRaw.ToString().Trim().ToLowerInvariant();
+        var target = _vacancies.FirstOrDefault(v => v.Id == boostId);
+        if (target is null)
+        {
+            _message = "De vacature uit de e-mail staat niet in jouw overzicht (of je hebt geen toegang).";
+            return;
+        }
+
+        if (boost is "pushbom")
+        {
+            OpenPushBom(target);
+            _message = $"PushBom voor «{target.Title}» — bevestig hieronder om te versturen.";
+            return;
+        }
+
+        if (boost is "highlight")
+        {
+            if (target.IsHighlighted)
+            {
+                _message = $"«{target.Title}» is al gehighlight.";
+                return;
+            }
+
+            await HighlightAsync(target.Id);
         }
     }
 

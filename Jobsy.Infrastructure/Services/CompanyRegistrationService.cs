@@ -1,6 +1,7 @@
 using System.Net;
 using System.Security.Cryptography;
 using Jobsy.Core.Authorization;
+using Jobsy.Core.Email;
 using Jobsy.Core.Entities;
 using Jobsy.Core.Enums;
 using Jobsy.Core.Interfaces;
@@ -827,28 +828,33 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
         var loginUrl = features.PublicWebBaseUrl.TrimEnd('/') + "/login";
         var safeName = WebUtility.HtmlEncode(registration.ContactName);
         var passwordBlock = temporaryPassword is null
-            ? """
-              <p>Log in met het wachtwoord dat je bij registratie hebt gekozen, of via
-              <strong>Microsoft Entra</strong> met hetzelfde geverifieerde e-mailadres.</p>
-              """
+            ? EmailLayout.Paragraph(
+                "Log in met het wachtwoord dat je bij registratie hebt gekozen, of via " +
+                "<strong>Microsoft Entra</strong> met hetzelfde geverifieerde e-mailadres.")
             : $"""
-               <p>Log in met <code>{WebUtility.HtmlEncode(registration.ContactEmail)}</code>.
-               Je eenmalige tijdelijke wachtwoord (bewaar dit veilig; het wordt niet opnieuw getoond):</p>
-               <p><code>{WebUtility.HtmlEncode(temporaryPassword)}</code></p>
-               <p><em>Wijzig dit wachtwoord zo snel mogelijk.</em></p>
+               {EmailLayout.Paragraph(
+                   $"Log in met <code>{WebUtility.HtmlEncode(registration.ContactEmail)}</code>. " +
+                   "Je eenmalige tijdelijke wachtwoord (bewaar dit veilig; het wordt niet opnieuw getoond):")}
+               <p style="margin:16px 0;font-size:20px;letter-spacing:0.06em;font-weight:700;color:{EmailLayout.BrandNavy};text-align:center;"><code>{WebUtility.HtmlEncode(temporaryPassword)}</code></p>
+               {EmailLayout.MutedNote("Wijzig dit wachtwoord zo snel mogelijk.")}
                """;
         await _email.SendAsync(new EmailMessage(
             registration.ContactEmail,
             "Overname goedgekeurd — Lobsy",
-            $"""
-             <p>Hoi {safeName},</p>
-             <p>Je overnameverzoek voor <strong>{WebUtility.HtmlEncode(target.Name)}</strong> is goedgekeurd.</p>
-             <p>Tokens, vacatures en geschiedenis blijven gekoppeld aan de vestiging
-             {(orgId is not null ? "onder de organisatie" : "")}.</p>
-             {passwordBlock}
-             <p><a href="{WebUtility.HtmlEncode(loginUrl)}">Naar inloggen</a></p>
-             <p>Groetjes van de vrolijke kreeft 🦞<br/>Team Lobsy</p>
-             """,
+            EmailLayout.Wrap(
+                $"""
+                 {EmailLayout.Heading("Overname goedgekeurd")}
+                 {EmailLayout.Paragraph($"Hoi {safeName},")}
+                 {EmailLayout.Paragraph(
+                     $"Je overnameverzoek voor <strong>{WebUtility.HtmlEncode(target.Name)}</strong> is goedgekeurd.")}
+                 {EmailLayout.Paragraph(
+                     "Tokens, vacatures en geschiedenis blijven gekoppeld aan de vestiging" +
+                     $"{(orgId is not null ? " onder de organisatie" : "")}.")}
+                 {passwordBlock}
+                 {EmailLayout.MutedNote($"Inloggen via Lobsy ({WebUtility.HtmlEncode(loginUrl)}).")}
+                 """,
+                features.PublicWebBaseUrl,
+                preheader: "Overname goedgekeurd"),
             "TakeoverApproved"), cancellationToken);
 
         return new TakeoverDecisionResult(
@@ -898,11 +904,15 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
         await _email.SendAsync(new EmailMessage(
             takeover.Registration.ContactEmail,
             "Overname afgewezen — Lobsy",
-            $"""
-             <p>Hoi {safeName},</p>
-             <p>Je overnameverzoek voor <strong>{WebUtility.HtmlEncode(takeover.TargetCompany.Name)}</strong> is afgewezen.</p>
-             <p>Groetjes van de vrolijke kreeft 🦞<br/>Team Lobsy</p>
-             """,
+            EmailLayout.Wrap(
+                $"""
+                 {EmailLayout.Heading("Overname afgewezen")}
+                 {EmailLayout.Paragraph($"Hoi {safeName},")}
+                 {EmailLayout.Paragraph(
+                     $"Je overnameverzoek voor <strong>{WebUtility.HtmlEncode(takeover.TargetCompany.Name)}</strong> is afgewezen.")}
+                 """,
+                publicWebBaseUrl: null,
+                preheader: "Overname afgewezen"),
             "TakeoverRejected"), cancellationToken);
 
         return new TakeoverDecisionResult(
@@ -1286,14 +1296,18 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
         await _email.SendAsync(new EmailMessage(
             registration.ContactEmail,
             "Bevestigingscode overnameverzoek — Lobsy",
-            $"""
-             <p>Hoi {safeName},</p>
-             <p>Vestiging <strong>{WebUtility.HtmlEncode(existing.Name)}</strong> is al geregistreerd.
-             Bevestig eerst je e-mailadres met deze code (geldig 10 minuten):</p>
-             <p style="font-size:1.5rem;font-weight:700;letter-spacing:0.2em"><code>{safeCode}</code></p>
-             <p>Daarna sturen we het overnameverzoek naar de huidige eigenaar.</p>
-             <p>Groetjes van de vrolijke kreeft 🦞<br/>Team Lobsy</p>
-             """,
+            EmailLayout.Wrap(
+                $"""
+                 {EmailLayout.Heading("Bevestig je e-mailadres")}
+                 {EmailLayout.Paragraph($"Hoi {safeName},")}
+                 {EmailLayout.Paragraph(
+                     $"Vestiging <strong>{WebUtility.HtmlEncode(existing.Name)}</strong> is al geregistreerd. " +
+                     "Bevestig eerst je e-mailadres met deze code (geldig 10 minuten):")}
+                 <p style="margin:16px 0;font-size:28px;letter-spacing:0.18em;font-weight:700;color:{EmailLayout.BrandNavy};text-align:center;"><code>{safeCode}</code></p>
+                 {EmailLayout.Paragraph("Daarna sturen we het overnameverzoek naar de huidige eigenaar.")}
+                 """,
+                publicWebBaseUrl: null,
+                preheader: "Bevestigingscode overnameverzoek"),
             "TakeoverEmailVerification"), cancellationToken);
     }
 
@@ -1322,14 +1336,20 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
             await _email.SendAsync(new EmailMessage(
                 ownerEmail,
                 "Overnameverzoek vestiging — Lobsy",
-                $"""
-                 <p>Er is een overnameverzoek voor <strong>{WebUtility.HtmlEncode(existing.Name)}</strong>
-                 ({WebUtility.HtmlEncode(existing.KvkEstablishmentId ?? "")}).</p>
-                 <p>Aanvrager: {WebUtility.HtmlEncode(registration.ContactName)}
-                 ({WebUtility.HtmlEncode(registration.ContactEmail)}).</p>
-                 <p><a href="{WebUtility.HtmlEncode(inboxUrl)}">Bekijk verzoeken</a></p>
-                 <p>Groetjes van de vrolijke kreeft 🦞<br/>Team Lobsy</p>
-                 """,
+                EmailLayout.Wrap(
+                    $"""
+                     {EmailLayout.Heading("Overnameverzoek")}
+                     {EmailLayout.Paragraph(
+                         $"Er is een overnameverzoek voor <strong>{WebUtility.HtmlEncode(existing.Name)}</strong> " +
+                         $"({WebUtility.HtmlEncode(existing.KvkEstablishmentId ?? "")}).")}
+                     {EmailLayout.Paragraph(
+                         $"Aanvrager: {WebUtility.HtmlEncode(registration.ContactName)} " +
+                         $"({WebUtility.HtmlEncode(registration.ContactEmail)}).")}
+                     {EmailLayout.MutedNote(
+                         $"Bekijk verzoeken in Lobsy onder Overnames ({WebUtility.HtmlEncode(inboxUrl)}).")}
+                     """,
+                    features.PublicWebBaseUrl,
+                    preheader: "Overnameverzoek vestiging"),
                 "TakeoverRequest"), cancellationToken);
         }
 
@@ -1337,12 +1357,16 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
         await _email.SendAsync(new EmailMessage(
             registration.ContactEmail,
             "Overnameverzoek ingediend — Lobsy",
-            $"""
-             <p>Hoi {safeName},</p>
-             <p>Vestiging <strong>{WebUtility.HtmlEncode(existing.Name)}</strong> is al in gebruik.
-             We hebben een overnameverzoek gestuurd naar de huidige eigenaar.</p>
-             <p>Groetjes van de vrolijke kreeft 🦞<br/>Team Lobsy</p>
-             """,
+            EmailLayout.Wrap(
+                $"""
+                 {EmailLayout.Heading("Verzoek ingediend")}
+                 {EmailLayout.Paragraph($"Hoi {safeName},")}
+                 {EmailLayout.Paragraph(
+                     $"Vestiging <strong>{WebUtility.HtmlEncode(existing.Name)}</strong> is al in gebruik. " +
+                     "We hebben een overnameverzoek gestuurd naar de huidige eigenaar.")}
+                 """,
+                features.PublicWebBaseUrl,
+                preheader: "Overnameverzoek ingediend"),
             "TakeoverSubmitted"), cancellationToken);
     }
 
@@ -1361,18 +1385,23 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
         await _email.SendAsync(new EmailMessage(
             registration.ContactEmail,
             "Bevestigingscode — Lobsy",
-            $"""
-             <p>Hoi {safeName},</p>
-             <p>Welkom bij Lobsy! Bevestig je e-mailadres om je bedrijfsregistratie voor
-             <strong>{WebUtility.HtmlEncode(registration.EstablishmentName)}</strong> te activeren
-             (rol: {WebUtility.HtmlEncode(roleLabel)}
-             {(string.IsNullOrEmpty(registration.PrimarySbiCode) ? "" : $", SBI {WebUtility.HtmlEncode(registration.PrimarySbiCode)}")}).</p>
-             <p>Na bevestiging kun je direct aan de slag — je eerste token is helemaal gratis,
-             zodat je meteen een vacature kunt plaatsen.</p>
-             <p>Je bevestigingscode (geldig 10 minuten):</p>
-             <p style="font-size:1.5rem;font-weight:700;letter-spacing:0.2em"><code>{safeCode}</code></p>
-             <p>Groetjes van de vrolijke kreeft 🦞<br/>Team Lobsy</p>
-             """,
+            EmailLayout.Wrap(
+                $"""
+                 {EmailLayout.Heading("Welkom bij Lobsy")}
+                 {EmailLayout.Paragraph($"Hoi {safeName},")}
+                 {EmailLayout.Paragraph(
+                     $"Bevestig je e-mailadres om je bedrijfsregistratie voor " +
+                     $"<strong>{WebUtility.HtmlEncode(registration.EstablishmentName)}</strong> te activeren " +
+                     $"(rol: {WebUtility.HtmlEncode(roleLabel)}" +
+                     $"{(string.IsNullOrEmpty(registration.PrimarySbiCode) ? "" : $", SBI {WebUtility.HtmlEncode(registration.PrimarySbiCode)}")}).")}
+                 {EmailLayout.Paragraph(
+                     "Na bevestiging kun je direct aan de slag — je eerste token is helemaal gratis, " +
+                     "zodat je meteen een vacature kunt plaatsen.")}
+                 {EmailLayout.Paragraph("Je bevestigingscode (geldig 10 minuten):")}
+                 <p style="margin:16px 0;font-size:28px;letter-spacing:0.18em;font-weight:700;color:{EmailLayout.BrandNavy};text-align:center;"><code>{safeCode}</code></p>
+                 """,
+                publicWebBaseUrl: null,
+                preheader: "Je Lobsy-bevestigingscode"),
             "RegistrationActivation"), cancellationToken);
     }
 
@@ -1385,29 +1414,34 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
         var loginUrl = features.PublicWebBaseUrl.TrimEnd('/') + "/login";
         var safeName = WebUtility.HtmlEncode(registration.ContactName);
         var passwordBlock = temporaryPassword is null
-            ? """
-              <p>Log in met het wachtwoord dat je bij registratie hebt gekozen, of via
-              <strong>Microsoft Entra</strong> / Google met hetzelfde geverifieerde e-mailadres.</p>
-              """
+            ? EmailLayout.Paragraph(
+                "Log in met het wachtwoord dat je bij registratie hebt gekozen, of via " +
+                "<strong>Microsoft Entra</strong> / Google met hetzelfde geverifieerde e-mailadres.")
             : $"""
-               <p>Gebruik dit eenmalige tijdelijke wachtwoord (niet opnieuw zichtbaar in de app):</p>
-               <p><code>{WebUtility.HtmlEncode(temporaryPassword)}</code></p>
-               <p><em>Wijzig dit wachtwoord zo snel mogelijk.</em></p>
+               {EmailLayout.Paragraph("Gebruik dit eenmalige tijdelijke wachtwoord (niet opnieuw zichtbaar in de app):")}
+               <p style="margin:16px 0;font-size:20px;letter-spacing:0.06em;font-weight:700;color:{EmailLayout.BrandNavy};text-align:center;"><code>{WebUtility.HtmlEncode(temporaryPassword)}</code></p>
+               {EmailLayout.MutedNote("Wijzig dit wachtwoord zo snel mogelijk.")}
                """;
         await _email.SendAsync(new EmailMessage(
             registration.ContactEmail,
             "Geslaagd — je Lobsy-account is actief!",
-            $"""
-             <p>Hoi {safeName},</p>
-             <p>Geslaagd! Je account voor <strong>{WebUtility.HtmlEncode(registration.EstablishmentName)}</strong>
-             is geactiveerd. Je kunt direct aan de slag.</p>
-             <p>Je hebt van ons je eerste token helemaal gratis gekregen — daarmee plaats je meteen je eerste vacature.</p>
-             <p>Je kunt inloggen met e-mail/wachtwoord of met <strong>Microsoft Entra</strong> /
-             Google op <code>{WebUtility.HtmlEncode(registration.ContactEmail)}</code>.</p>
-             {passwordBlock}
-             <p><a href="{WebUtility.HtmlEncode(loginUrl)}">Naar inloggen</a></p>
-             <p>Groetjes van de vrolijke kreeft 🦞<br/>Team Lobsy</p>
-             """,
+            EmailLayout.Wrap(
+                $"""
+                 {EmailLayout.Heading("Account actief")}
+                 {EmailLayout.Paragraph($"Hoi {safeName},")}
+                 {EmailLayout.Paragraph(
+                     $"Geslaagd! Je account voor <strong>{WebUtility.HtmlEncode(registration.EstablishmentName)}</strong> " +
+                     "is geactiveerd. Je kunt direct aan de slag.")}
+                 {EmailLayout.Paragraph(
+                     "Je hebt van ons je eerste token helemaal gratis gekregen — daarmee plaats je meteen je eerste vacature.")}
+                 {EmailLayout.Paragraph(
+                     "Je kunt inloggen met e-mail/wachtwoord of met <strong>Microsoft Entra</strong> / " +
+                     $"Google op <code>{WebUtility.HtmlEncode(registration.ContactEmail)}</code>.")}
+                 {passwordBlock}
+                 {EmailLayout.MutedNote($"Inloggen via Lobsy ({WebUtility.HtmlEncode(loginUrl)}).")}
+                 """,
+                features.PublicWebBaseUrl,
+                preheader: "Je Lobsy-account is actief"),
             "RegistrationCredentials"), cancellationToken);
     }
 

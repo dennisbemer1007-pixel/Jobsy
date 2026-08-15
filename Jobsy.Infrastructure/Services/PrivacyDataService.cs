@@ -2,6 +2,7 @@ using System.Net;
 using System.Security.Claims;
 using System.Text.Json;
 using Jobsy.Core.Contracts;
+using Jobsy.Core.Email;
 using Jobsy.Core.Entities;
 using Jobsy.Core.Enums;
 using Jobsy.Core.Interfaces;
@@ -372,13 +373,18 @@ public sealed class PrivacyDataService : IPrivacyDataService
         await _email.SendAsync(new EmailMessage(
             user.Email,
             "Verificatiecode voor uitschrijving bij Lobsy",
-            $"""
-             <p>Hoi {Html(user.FullName)},</p>
-             <p>Je hebt gevraagd om je Lobsy-account af te melden.</p>
-             <p>Gebruik deze 6-cijferige code om de uitschrijving te bevestigen:</p>
-             <p style="font-size:1.6rem"><strong>{Html(verificationCode)}</strong></p>
-             <p>De code is {UnsubscribeCodeTtlMinutes} minuten geldig. Heb je dit niet zelf aangevraagd? Negeer deze mail dan.</p>
-             """,
+            EmailLayout.Wrap(
+                $"""
+                 {EmailLayout.Heading("Bevestig je uitschrijving")}
+                 {EmailLayout.Paragraph($"Hoi {Html(user.FullName)},")}
+                 {EmailLayout.Paragraph("Je hebt gevraagd om je Lobsy-account af te melden.")}
+                 {EmailLayout.Paragraph("Gebruik deze 6-cijferige code om de uitschrijving te bevestigen:")}
+                 <p style="margin:16px 0;font-size:28px;letter-spacing:0.18em;font-weight:700;color:{EmailLayout.BrandNavy};text-align:center;">{Html(verificationCode)}</p>
+                 {EmailLayout.Paragraph(
+                     $"De code is {UnsubscribeCodeTtlMinutes} minuten geldig. Heb je dit niet zelf aangevraagd? Negeer deze mail dan.")}
+                 """,
+                publicWebBaseUrl: null,
+                preheader: "Je verificatiecode voor uitschrijving"),
             "AccountUnsubscribeVerification"), cancellationToken);
 
         return new RequestUnsubscribeResponse(

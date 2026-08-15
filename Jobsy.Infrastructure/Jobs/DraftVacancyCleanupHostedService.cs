@@ -1,4 +1,5 @@
 using System.Net;
+using Jobsy.Core.Email;
 using Jobsy.Core.Enums;
 using Jobsy.Core.Interfaces;
 using Jobsy.Core.Rules;
@@ -84,22 +85,28 @@ public sealed class DraftVacancyCleanupHostedService : BackgroundService
             }
 
             var deleteOn = vacancy.CreatedAtUtc.AddDays(DraftVacancyCleanupRules.DeleteAfterDays);
+            var deleteLabel = deleteOn.ToString("dd-MM-yyyy");
+            var warnHtml = EmailLayout.Wrap(
+                $"""
+                 {EmailLayout.Heading("Concept wordt binnenkort opgeruimd")}
+                 {EmailLayout.Paragraph("Hallo,")}
+                 {EmailLayout.Paragraph(
+                     $"Je concept-vacature <strong>{EmailLayout.Escape(vacancy.Title)}</strong> " +
+                     $"voor <strong>{EmailLayout.Escape(vacancy.Company.Name)}</strong> staat al " +
+                     $"{DraftVacancyCleanupRules.WarningAfterDays} dagen als concept en is nog nooit gepubliceerd.")}
+                 {EmailLayout.Paragraph(
+                     $"Als je niets doet, ruimt Lobsy dit concept automatisch op op " +
+                     $"<strong>{EmailLayout.Escape(deleteLabel)}</strong> (14 dagen vanaf deze mail).")}
+                 {EmailLayout.Paragraph(
+                     "Vacatures die je wél hebt gepubliceerd blijven altijd bewaard — ook na de deadline.")}
+                 {EmailLayout.MutedNote("Log in op Lobsy → Vacatures om dit concept te publiceren of te verwijderen.")}
+                 """,
+                baseUrl,
+                preheader: $"Concept '{vacancy.Title}' wordt over 14 dagen verwijderd");
             await email.SendAsync(new EmailMessage(
                 recipient,
                 $"Concept-vacature '{vacancy.Title}' wordt over 14 dagen verwijderd",
-                $"""
-                 <p>Hallo,</p>
-                 <p>Je concept-vacature <strong>{WebUtility.HtmlEncode(vacancy.Title)}</strong>
-                 voor <strong>{WebUtility.HtmlEncode(vacancy.Company.Name)}</strong> staat al
-                 {DraftVacancyCleanupRules.WarningAfterDays} dagen als concept en is nog nooit gepubliceerd.</p>
-                 <p>Als je niets doet, ruimt Lobsy dit concept automatisch op op
-                 <strong>{deleteOn:dd-MM-yyyy}</strong> (14 dagen vanaf deze mail).</p>
-                 <p>Vacatures die je wél hebt gepubliceerd blijven altijd bewaard — ook na de deadline.</p>
-                 <p><a href="{WebUtility.HtmlEncode(baseUrl)}/employer/vacancies"
-                    style="display:inline-block;padding:0.75rem 1.25rem;background:#0b6e4f;color:#fff;text-decoration:none;border-radius:0.5rem;font-weight:600">
-                    Publiceer of bewerk in Lobsy</a></p>
-                 <p>Groetjes van de vrolijke kreeft 🦞<br/>Team Lobsy</p>
-                 """,
+                warnHtml,
                 DraftVacancyCleanupRules.WarningEmailCategory), cancellationToken);
 
             vacancy.DraftCleanupWarningSentAtUtc = now;

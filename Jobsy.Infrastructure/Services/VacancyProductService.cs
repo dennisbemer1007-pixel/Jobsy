@@ -1,5 +1,6 @@
 using System.Data;
 using System.Text.Json;
+using Jobsy.Core.Email;
 using Jobsy.Core.Entities;
 using Jobsy.Core.Enums;
 using Jobsy.Core.Exceptions;
@@ -106,7 +107,7 @@ public sealed class VacancyProductService : IVacancyProductService
         {
             [TokenSpendReason.Publish] = publishCost
         };
-        List<User>? pushBomCandidates = null;
+        List<PushBomRecipient>? pushBomCandidates = null;
 
         if (options.Highlight)
         {
@@ -117,7 +118,7 @@ public sealed class VacancyProductService : IVacancyProductService
         if (options.PushBom)
         {
             var reach = await BuildPushBomReachAsync(vacancy, cancellationToken);
-            if (reach.Candidates.Count == 0)
+            if (reach.Recipients.Count == 0)
             {
                 return Fail(
                     vacancy,
@@ -129,7 +130,7 @@ public sealed class VacancyProductService : IVacancyProductService
                 return Fail(vacancy, "Geen PushBom-tokenprijs geconfigureerd voor dit bereik.");
             }
 
-            pushBomCandidates = reach.Candidates;
+            pushBomCandidates = reach.Recipients;
             costOverrides[TokenSpendReason.PushBom] = reach.CostTokens;
         }
 
@@ -305,13 +306,13 @@ public sealed class VacancyProductService : IVacancyProductService
             vacancy.RequestedPushBom,
             vacancy.RequestedExtend);
 
-        List<User>? pushBomCandidates = null;
+        List<PushBomRecipient>? pushBomCandidates = null;
         Dictionary<TokenSpendReason, decimal>? costOverrides = null;
 
         if (options.PushBom)
         {
             var reach = await BuildPushBomReachAsync(vacancy, cancellationToken);
-            if (reach.Candidates.Count == 0)
+            if (reach.Recipients.Count == 0)
             {
                 // Don't block approval — drop unpaid PushBom so tokens aren't wasted.
                 options = options with { PushBom = false };
@@ -325,11 +326,11 @@ public sealed class VacancyProductService : IVacancyProductService
                 _logger.LogWarning(
                     "Approve publish {VacancyId}: PushBom skipped (no pricing for {Count} candidates)",
                     vacancy.Id,
-                    reach.Candidates.Count);
+                    reach.Recipients.Count);
             }
             else
             {
-                pushBomCandidates = reach.Candidates;
+                pushBomCandidates = reach.Recipients;
                 costOverrides = new Dictionary<TokenSpendReason, decimal>
                 {
                     [TokenSpendReason.PushBom] = reach.CostTokens
@@ -537,7 +538,7 @@ public sealed class VacancyProductService : IVacancyProductService
     {
         var reach = await BuildPushBomReachAsync(vacancy, cancellationToken);
         return new PushBomPreview(
-            reach.Candidates.Count,
+            reach.Recipients.Count,
             reach.CostTokens,
             reach.RadiusKm,
             reach.MaxTravelMinutes,
@@ -561,7 +562,7 @@ public sealed class VacancyProductService : IVacancyProductService
         }
 
         var reach = await BuildPushBomReachAsync(vacancy, cancellationToken);
-        if (reach.Candidates.Count == 0)
+        if (reach.Recipients.Count == 0)
         {
             return Fail(
                 vacancy,
@@ -587,7 +588,7 @@ public sealed class VacancyProductService : IVacancyProductService
                 vacancyId: vacancy.Id,
                 actorUserId: actorUserId,
                 branchCompanyId: vacancy.CompanyId,
-                note: $"PushBom ({reach.Candidates.Count} kandidaten)",
+                note: $"PushBom ({reach.Recipients.Count} kandidaten)",
                 onSuccessBeforeCommit: async ct =>
                 {
                     await _db.Entry(vacancy).ReloadAsync(ct);
@@ -619,7 +620,7 @@ public sealed class VacancyProductService : IVacancyProductService
             return Fail(vacancy, spend.ErrorMessage ?? "PushBom mislukt.");
         }
 
-        var recipientCount = await DeliverPushBomToAsync(vacancy, reach.Candidates, cancellationToken);
+        var recipientCount = await DeliverPushBomToAsync(vacancy, reach.Recipients, cancellationToken);
         return new VacancyProductOutcome(true, null, vacancy, PushBomRecipientCount: recipientCount);
     }
 
@@ -897,7 +898,7 @@ public sealed class VacancyProductService : IVacancyProductService
             return (candidate, travelMinutes);
         }));
 
-        var suitable = new List<User>();
+        var suitable = new List<PushBomRecipient>();
         foreach (var (candidate, travelMinutes) in routed)
         {
             if (travelMinutes > settings.MaxTravelMinutes)
@@ -912,7 +913,8 @@ public sealed class VacancyProductService : IVacancyProductService
                 continue;
             }
 
-            suitable.Add(candidate);
+            var distanceKm = GeoDistance.HaversineKm(candidate.HomeLocation!, vacancy.Location);
+            suitable.Add(new PushBomRecipient(candidate, travelMinutes, distanceKm));
         }
 
         var pricing = await ResolveCategoryPricingAsync(vacancy, cancellationToken);
@@ -991,35 +993,92 @@ public sealed class VacancyProductService : IVacancyProductService
 
     private async Task<int> DeliverPushBomToAsync(
         Vacancy vacancy,
-        IReadOnlyList<User> candidates,
+        IReadOnlyList<PushBomRecipient> recipients,
         CancellationToken cancellationToken)
     {
         var settings = await GetPushBomSettingsAsync(cancellationToken);
-        var deepLink = await BuildDeepLinkAsync($"/vacancies/{vacancy.Id}", cancellationToken);
-        var companyName = vacancy.Company?.Name ?? "Werkgever";
-        foreach (var candidate in candidates)
+        var features = await _features.GetAsync(cancellationToken);
+        var baseUrl = features.PublicWebBaseUrl;
+        var deepLink = EmailLayout.VacancyUrl(baseUrl, vacancy.Id);
+        var display = IntermediaryVacancyRules.ResolvePublicDisplay(
+            vacancy,
+            vacancy.Company,
+            vacancy.IntermediaryCompany);
+        var companyName = string.IsNullOrWhiteSpace(display.DisplayName)
+            ? (vacancy.Company?.Name ?? "Werkgever")
+            : display.DisplayName;
+        var locationLabel = string.IsNullOrWhiteSpace(display.DisplayAddress)
+            ? null
+            : display.DisplayAddress.Trim();
+
+        IReadOnlyList<CompanySalaryRate>? rates = null;
+        if (vacancy.SalaryTableId is Guid tableId)
         {
+            rates = await _db.CompanySalaryRates.AsNoTracking()
+                .Where(r => r.SalaryTableId == tableId)
+                .ToListAsync(cancellationToken);
+        }
+
+        foreach (var recipient in recipients)
+        {
+            var candidate = recipient.Candidate;
             var action = await _actionTokens.IssueAsync(
                 candidate.Id,
                 CandidateActionPurposes.SetUnavailable,
                 cancellationToken: cancellationToken);
-            var setUnavailableLink = await BuildDeepLinkAsync(action.RelativeActionPath, cancellationToken);
+            var setUnavailableLink = EmailLayout.Absolute(baseUrl, action.RelativeActionPath);
+
+            var ageYears = AgeRules.AgeYearsFromDateOfBirth(candidate.DateOfBirth);
+            decimal? wage = null;
+            string? wageNote = null;
+            if (ageYears is int age)
+            {
+                wage = VacancyWageResolver.ResolveHourlyWage(vacancy.HourlyWage, rates, age);
+                wageNote = $"Uurloon (leeftijd {age})";
+            }
+            else if (vacancy.HourlyWage > 0)
+            {
+                wage = vacancy.HourlyWage;
+                wageNote = "Uurloon";
+            }
+
+            var facts = new List<(string Label, string Value)>
+            {
+                ("Functie", vacancy.Title),
+                ("Bedrijf", companyName)
+            };
+            if (!string.IsNullOrWhiteSpace(locationLabel))
+            {
+                facts.Add(("Locatie", locationLabel));
+            }
+
+            facts.Add(("Afstand", EmailLayout.FormatKm(recipient.DistanceKm)));
+            facts.Add(("Reistijd", $"{recipient.TravelMinutes} min"));
+            if (wage is decimal w && !string.IsNullOrWhiteSpace(wageNote))
+            {
+                facts.Add((wageNote, EmailLayout.FormatEuro(w)));
+            }
 
             var subject = $"Nieuwe vacature bij jou in de buurt: {vacancy.Title}";
             var bodyText =
                 $"{companyName} zoekt {vacancy.Title}. Bekijk de vacature in Lobsy.";
-            var html = $"""
-                <p>Hoi {System.Net.WebUtility.HtmlEncode(candidate.FullName)},</p>
-                <p>Er staat een passende vacature bij jou in de buurt:
-                <strong>{System.Net.WebUtility.HtmlEncode(vacancy.Title)}</strong> bij
-                <strong>{System.Net.WebUtility.HtmlEncode(companyName)}</strong>.</p>
-                <p><a href="{System.Net.WebUtility.HtmlEncode(deepLink)}"><strong>Bekijk de vacature</strong></a></p>
-                <p style="margin-top:1rem;color:#555">
-                Niet meer op zoek naar werk?
-                <a href="{System.Net.WebUtility.HtmlEncode(setUnavailableLink)}">Zet je status dan op Niet beschikbaar</a>
-                — dan sturen we je geen PushBom-tips meer.
-                </p>
-                """;
+            var inner = new System.Text.StringBuilder();
+            inner.Append(EmailLayout.Heading("Iets moois bij jou in de buurt"));
+            inner.Append(EmailLayout.Paragraph(
+                $"Hoi {EmailLayout.Escape(candidate.FullName)},"));
+            inner.Append(EmailLayout.Paragraph(
+                "Er staat een passende vacature open — op fiets- of reistijd-afstand van jou."));
+            inner.Append(EmailLayout.FactCard(facts));
+            inner.Append(EmailLayout.PrimaryButton(deepLink, "Klik hier"));
+            inner.Append(EmailLayout.MutedNote(
+                $"Niet meer op zoek naar werk? " +
+                $"<a href=\"{EmailLayout.Escape(setUnavailableLink)}\" style=\"color:{EmailLayout.AccentTeal};\">Zet je status op Niet beschikbaar</a> " +
+                "— dan sturen we je geen PushBom-tips meer."));
+
+            var html = EmailLayout.Wrap(
+                inner.ToString(),
+                baseUrl,
+                preheader: $"{vacancy.Title} bij {companyName} — {EmailLayout.FormatKm(recipient.DistanceKm)} van jou");
 
             await _email.SendAsync(
                 new EmailMessage(candidate.Email, subject, html, "PushBom"),
@@ -1051,11 +1110,11 @@ public sealed class VacancyProductService : IVacancyProductService
         _logger.LogInformation(
             "PushBom for vacancy {VacancyId}: notified {Count} OpenForWork candidates within {Km} km / {Min} min",
             vacancy.Id,
-            candidates.Count,
+            recipients.Count,
             settings.RadiusKm,
             settings.MaxTravelMinutes);
 
-        return candidates.Count;
+        return recipients.Count;
     }
 
     private async Task<List<User>> FindOpenForWorkWithinRadiusAsync(
@@ -1202,13 +1261,24 @@ public sealed class VacancyProductService : IVacancyProductService
 
         var deepLink = await BuildDeepLinkAsync("/employer/vacancies", cancellationToken);
         var companyName = vacancy.Company?.Name ?? "bedrijf";
+        var features = await _features.GetAsync(cancellationToken);
+        var pendingHtml = EmailLayout.Wrap(
+            $"""
+             {EmailLayout.Heading("Publicatieaanvraag")}
+             {EmailLayout.Paragraph(
+                 $"Vacature <strong>{EmailLayout.Escape(vacancy.Title)}</strong> bij {EmailLayout.Escape(companyName)} " +
+                 "wacht op goedkeuring (onvoldoende tokens).")}
+             {EmailLayout.Paragraph("Log in op Lobsy om de aanvraag te beoordelen onder Vacatures.")}
+             """,
+            features.PublicWebBaseUrl,
+            preheader: $"Publicatieaanvraag: {vacancy.Title}");
         foreach (var manager in managers)
         {
             await _email.SendAsync(
                 new EmailMessage(
                     manager.Email,
                     $"Publicatieaanvraag: {vacancy.Title}",
-                    $"<p>Vacature <strong>{System.Net.WebUtility.HtmlEncode(vacancy.Title)}</strong> bij {System.Net.WebUtility.HtmlEncode(companyName)} wacht op goedkeuring (onvoldoende tokens).</p><p><a href=\"{System.Net.WebUtility.HtmlEncode(deepLink)}\">Open vacaturebeheer</a></p>",
+                    pendingHtml,
                     "PendingApproval"),
                 cancellationToken);
 
@@ -1226,7 +1296,7 @@ public sealed class VacancyProductService : IVacancyProductService
     private async Task<string> BuildDeepLinkAsync(string relativePath, CancellationToken cancellationToken)
     {
         var features = await _features.GetAsync(cancellationToken);
-        return features.PublicWebBaseUrl.TrimEnd('/') + relativePath;
+        return EmailLayout.Absolute(features.PublicWebBaseUrl, relativePath);
     }
 
     private async Task<VacancyProductOutcome?> EnsureKvkAllowsPublishOrSpendAsync(
@@ -1263,8 +1333,10 @@ public sealed class VacancyProductService : IVacancyProductService
             Balance: balance,
             SpendCompanyId: vacancy.CompanyId);
 
+    private sealed record PushBomRecipient(User Candidate, int TravelMinutes, double DistanceKm);
+
     private sealed record PushBomReach(
-        List<User> Candidates,
+        List<PushBomRecipient> Recipients,
         decimal CostTokens,
         double RadiusKm,
         int MaxTravelMinutes,

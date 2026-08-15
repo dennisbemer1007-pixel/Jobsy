@@ -1,4 +1,5 @@
 using System.Net.Http.Headers;
+using Jobsy.Core.Email;
 using Jobsy.Core.Enums;
 using Jobsy.Core.Interfaces;
 using Jobsy.Core.Options;
@@ -79,9 +80,14 @@ public sealed class IntegrationHealthStub : IIntegrationHealthService
         var resendReady = SmtpEmailService.TryResolveResend(secrets, out _);
         var smtpReady = SmtpEmailService.TryResolveSmtp(secrets, out var smtp);
         var redacted = EmailServiceStub.RedactEmail(trimmed);
-        var body =
-            "<p>Dit is een testmail van Lobsy.</p>" +
-            "<p>Als je dit bericht ziet, werkt de uitgaande mailconfiguratie.</p>";
+        var body = EmailLayout.Wrap(
+            $"""
+             {EmailLayout.Heading("Testmail")}
+             {EmailLayout.Paragraph("Dit is een testmail van Lobsy.")}
+             {EmailLayout.Paragraph("Als je dit bericht ziet, werkt de uitgaande mailconfiguratie.")}
+             """,
+            publicWebBaseUrl: null,
+            preheader: "Lobsy testmail");
 
         if (!resendReady && !smtpReady)
         {

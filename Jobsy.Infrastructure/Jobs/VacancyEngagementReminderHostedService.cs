@@ -1,4 +1,5 @@
 using System.Net;
+using Jobsy.Core.Email;
 using Jobsy.Core.Enums;
 using Jobsy.Core.Interfaces;
 using Jobsy.Core.Rules;
@@ -56,7 +57,7 @@ public sealed class VacancyEngagementReminderHostedService : BackgroundService
         var snap = await features.GetAsync(cancellationToken);
         var baseUrl = string.IsNullOrWhiteSpace(snap.PublicWebBaseUrl)
             ? "https://lobsy.nl"
-            : snap.PublicWebBaseUrl.TrimEnd('/');
+            : snap.PublicWebBaseUrl;
 
         var now = DateTime.UtcNow;
         var cutoff = now.AddDays(-VacancyEngagementReminderRules.OpenDaysBeforeReminder);
@@ -96,27 +97,39 @@ public sealed class VacancyEngagementReminderHostedService : BackgroundService
             vacancy.EngagementReminderTip = tip.Length <= 2000 ? tip : tip[..2000];
             vacancy.EngagementReminderSentAtUtc = now;
 
-            var editLink = $"{baseUrl}/branch/vacancies/new?edit={vacancy.Id}";
-            var titleHtml = WebUtility.HtmlEncode(vacancy.Title);
-            var companyHtml = WebUtility.HtmlEncode(vacancy.Company.Name);
-            var tipHtml = WebUtility.HtmlEncode(tip);
-            var bodyHtml = $"""
-                <p>Hoi,</p>
-                <p>Je vacature <strong>{titleHtml}</strong> bij {companyHtml} staat al
-                {VacancyEngagementReminderRules.OpenDaysBeforeReminder} dagen open. Tijd voor een korte check-in.</p>
-                <p>Dit zien we tot nu toe:</p>
-                <ul>
-                  <li>In zoekresultaten verschenen: <strong>{impressions}</strong></li>
-                  <li>Bekeken: <strong>{views}</strong></li>
-                  <li>Gedeeld: <strong>{shares}</strong></li>
-                  <li>Bewaard: <strong>{saved}</strong></li>
-                  <li>Sollicitaties: <strong>{applications}</strong></li>
-                </ul>
-                <p><strong>Tip van Lobsy:</strong> {tipHtml}</p>
-                <p>Pas de vacature aan vóór de einddatum. Bij een update verlengen we de deadline
-                als goodwill met {VacancyEngagementReminderRules.GoodwillExtendDays} dagen — zo geef je je tekst nog even de ruimte.</p>
-                <p><a href="{WebUtility.HtmlEncode(editLink)}"><strong>Vacature nu verbeteren</strong></a></p>
+            var editLink = EmailLayout.EditVacancyUrl(baseUrl, vacancy.Id);
+            var highlightLink = EmailLayout.HighlightVacancyUrl(baseUrl, vacancy.Id);
+            var pushBomLink = EmailLayout.PushBomVacancyUrl(baseUrl, vacancy.Id);
+            var tipHtml = EmailLayout.Escape(tip);
+            var inner = $"""
+                {EmailLayout.Heading("Even checken — je vacature staat 14 dagen open")}
+                {EmailLayout.Paragraph($"Hoi,")}
+                {EmailLayout.Paragraph(
+                    $"Je vacature <strong>{EmailLayout.Escape(vacancy.Title)}</strong> bij {EmailLayout.Escape(vacancy.Company.Name)} " +
+                    $"staat al {VacancyEngagementReminderRules.OpenDaysBeforeReminder} dagen open. Tijd voor een korte check-in.")}
+                {EmailLayout.Paragraph("<strong>Dit zien we tot nu toe:</strong>")}
+                {EmailLayout.KpiList([
+                    ("In zoekresultaten", impressions.ToString()),
+                    ("Bekeken", views.ToString()),
+                    ("Gedeeld", shares.ToString()),
+                    ("Bewaard", saved.ToString()),
+                    ("Sollicitaties", applications.ToString())
+                ])}
+                {EmailLayout.Paragraph($"<strong>Tip van Lobsy:</strong> {tipHtml}")}
+                {EmailLayout.Paragraph(
+                    $"Pas de vacature aan vóór de einddatum. Bij een update verlengen we de deadline als goodwill met " +
+                    $"{VacancyEngagementReminderRules.GoodwillExtendDays} dagen — zo geef je je tekst nog even de ruimte.")}
+                {EmailLayout.PrimaryButton(editLink, "Vacature nu verbeteren")}
+                {EmailLayout.SecondaryButton(highlightLink, "Highlight deze vacature")}
+                {EmailLayout.SecondaryButton(pushBomLink, "PushBom versturen")}
+                {EmailLayout.MutedNote(
+                    "Highlight en PushBom openen je vacatureoverzicht, waar je de actie met één klik kunt afronden (tokens vereist).")}
                 """;
+
+            var bodyHtml = EmailLayout.Wrap(
+                inner,
+                baseUrl,
+                preheader: $"{vacancy.Title}: {impressions} zoek · {views} bekeken · {applications} sollicitaties");
 
             var notifyTitle = $"Even checken: {vacancy.Title} staat {VacancyEngagementReminderRules.OpenDaysBeforeReminder} dagen open";
             var notifyBody =

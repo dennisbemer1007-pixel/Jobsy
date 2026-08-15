@@ -3,6 +3,7 @@ using Jobsy.Api.Models;
 using Jobsy.Core.ValueObjects;
 using Jobsy.Core.Authorization;
 using Jobsy.Core.Contracts;
+using Jobsy.Core.Email;
 using Jobsy.Core.Enums;
 using Jobsy.Core.Interfaces;
 using Jobsy.Core.Privacy;
@@ -899,7 +900,7 @@ public class ApplicationsController : ControllerBase
             await _db.SaveChangesAsync(cancellationToken);
         }
 
-        var deepLink = await BuildDeepLinkAsync($"/vacancies/{application.VacancyId}", cancellationToken);
+        var appsLink = await BuildDeepLinkAsync("/candidate/applications", cancellationToken);
         var candidateName = Html(application.CandidateName);
         var title = Html(application.Vacancy.Title);
         var company = Html(application.Vacancy.Company.Name);
@@ -909,22 +910,28 @@ public class ApplicationsController : ControllerBase
             var rejectSubject = $"Update op je sollicitatie: {application.Vacancy.Title}";
             var rejectBody =
                 $"{application.Vacancy.Company.Name}: helaas niet geselecteerd voor {application.Vacancy.Title}";
+            var rejectHtml = EmailLayout.Wrap(
+                $"""
+                {EmailLayout.Heading("Update op je sollicitatie")}
+                {EmailLayout.Paragraph($"Hoi {candidateName},")}
+                {EmailLayout.Paragraph(
+                    $"Bedankt voor je interesse in <strong>{title}</strong> bij {company}.")}
+                {EmailLayout.Paragraph(
+                    "Helaas is de keuze dit keer niet op jou gevallen. We wensen je veel succes met je verdere zoektocht!")}
+                """,
+                (await _features.GetAsync(cancellationToken)).PublicWebBaseUrl,
+                preheader: rejectSubject);
             await _email.SendAsync(new EmailMessage(
                 application.CandidateEmail,
                 rejectSubject,
-                $"""
-                <p>Hoi {candidateName},</p>
-                <p>Bedankt voor je interesse in <strong>{title}</strong> bij {company}.</p>
-                <p>Helaas is de keuze dit keer niet op jou gevallen. We wensen je veel succes met je verdere zoektocht!</p>
-                <p><a href="{Html(deepLink)}">Bekijk andere vacatures op Lobsy</a></p>
-                """,
+                rejectHtml,
                 "EmployerReaction"), cancellationToken);
 
             await _push.SendAsync(new PushMessage(
                 application.CandidateEmail,
                 "Update op je sollicitatie",
                 rejectBody,
-                deepLink,
+                appsLink,
                 "EmployerReaction"), cancellationToken);
 
             await NotifyCandidateAsync(
@@ -932,31 +939,37 @@ public class ApplicationsController : ControllerBase
                 rejectSubject,
                 rejectBody,
                 "EmployerReaction",
-                $"/vacancies/{application.VacancyId}",
+                "/candidate/applications",
                 cancellationToken);
         }
         else
         {
-            var acceptSubject = $"Goed nieuws over je sollicitatie: {application.Vacancy.Title}";
+            var acceptSubject = $"Je sollicitatie is geaccepteerd: {application.Vacancy.Title}";
             var acceptBody =
-                $"{application.Vacancy.Company.Name}: positief — {application.Vacancy.Title}";
+                $"{application.Vacancy.Company.Name}: sollicitatie geaccepteerd — {application.Vacancy.Title}";
+            var acceptHtml = EmailLayout.Wrap(
+                $"""
+                {EmailLayout.Heading("Goed nieuws!")}
+                {EmailLayout.Paragraph($"Hoi {candidateName},")}
+                {EmailLayout.Paragraph(
+                    $"Het bedrijf heeft je sollicitatie voor <strong>{title}</strong> bij {company} geaccepteerd.")}
+                {EmailLayout.Paragraph(
+                    "Wellicht nemen ze binnenkort contact met je op. Houd je telefoon en mail in de gaten.")}
+                {EmailLayout.PrimaryButton(appsLink, "Bekijk mijn sollicitaties")}
+                """,
+                (await _features.GetAsync(cancellationToken)).PublicWebBaseUrl,
+                preheader: acceptSubject);
             await _email.SendAsync(new EmailMessage(
                 application.CandidateEmail,
                 acceptSubject,
-                $"""
-                <p>Hoi {candidateName},</p>
-                <p>Goed nieuws! De werkgever heeft positief gereageerd op je sollicitatie voor
-                <strong>{title}</strong> bij {company}.</p>
-                <p>Je kunt binnenkort contact of een uitnodiging verwachten.</p>
-                <p><a href="{Html(deepLink)}">Open vacature</a></p>
-                """,
+                acceptHtml,
                 "EmployerReaction"), cancellationToken);
 
             await _push.SendAsync(new PushMessage(
                 application.CandidateEmail,
                 "Positief nieuws over je sollicitatie",
                 acceptBody,
-                deepLink,
+                appsLink,
                 "EmployerReaction"), cancellationToken);
 
             await NotifyCandidateAsync(
@@ -964,7 +977,7 @@ public class ApplicationsController : ControllerBase
                 acceptSubject,
                 acceptBody,
                 "EmployerReaction",
-                $"/vacancies/{application.VacancyId}",
+                "/candidate/applications",
                 cancellationToken);
         }
 
@@ -998,29 +1011,35 @@ public class ApplicationsController : ControllerBase
         application.RespondedAt = DateTime.UtcNow;
         await _db.SaveChangesAsync(cancellationToken);
 
-        var deepLink = await BuildDeepLinkAsync($"/vacancies/{application.VacancyId}", cancellationToken);
+        var appsLink = await BuildDeepLinkAsync("/candidate/applications", cancellationToken);
         var contactSubject = $"Werkgever neemt contact op: {application.Vacancy.Title}";
         var contactBody = $"{application.Vacancy.Company.Name} neemt contact op over {application.Vacancy.Title}";
+        var contactHtml = EmailLayout.Wrap(
+            $"""
+             {EmailLayout.Heading("De werkgever neemt contact op")}
+             {EmailLayout.Paragraph(
+                 $"Goed nieuws! De werkgever van <strong>{Html(application.Vacancy.Title)}</strong> neemt contact met je op.")}
+             {EmailLayout.Paragraph("Houd je telefoon, mail of WhatsApp in de gaten.")}
+             """,
+            (await _features.GetAsync(cancellationToken)).PublicWebBaseUrl,
+            preheader: contactSubject);
         await _email.SendAsync(new EmailMessage(
             application.CandidateEmail,
             contactSubject,
-            $"""
-             <p>Goed nieuws! De werkgever van <strong>{Html(application.Vacancy.Title)}</strong> neemt contact met je op.</p>
-             <p><a href="{Html(deepLink)}">Open vacature</a></p>
-             """,
+            contactHtml,
             "EmployerContacting"), cancellationToken);
         await _push.SendAsync(new PushMessage(
             application.CandidateEmail,
             "Werkgever neemt contact op",
             contactBody,
-            deepLink,
+            appsLink,
             "EmployerContacting"), cancellationToken);
         await NotifyCandidateAsync(
             application,
             contactSubject,
             contactBody,
             "EmployerContacting",
-            $"/vacancies/{application.VacancyId}",
+            "/candidate/applications",
             cancellationToken);
 
         return Ok(MapEmployerDto(application));
@@ -1120,26 +1139,30 @@ public class ApplicationsController : ControllerBase
         var withdrawAbsolute = withdrawEmailPath is null
             ? null
             : await BuildDeepLinkAsync(withdrawEmailPath, cancellationToken);
+        var appsLink = await BuildDeepLinkAsync("/candidate/applications", cancellationToken);
         var hiredSubject = $"Gefeliciteerd! Je bent aangenomen voor {vacancy.Title}";
         var hiredNotifyBody = $"Wat een feest — je bent aangenomen voor {vacancy.Title} bij {vacancy.Company.Name}.";
         var withdrawParagraph = withdrawAbsolute is null
             ? ""
-            : $"""
-               <p style="margin-top:1rem;padding:0.9rem 1rem;background:#f4faf7;border-radius:0.65rem">
-               Heb je nog andere sollicitaties lopen? Trek ze in, zodat die werkgevers weten dat je al bent voorzien.
-               <br/><a href="{Html(withdrawAbsolute)}"><strong>Andere sollicitaties netjes intrekken</strong></a>
-               </p>
-               """;
+            : EmailLayout.MutedNote(
+                $"Heb je nog andere sollicitaties lopen? Trek ze in, zodat die werkgevers weten dat je al bent voorzien. " +
+                $"<a href=\"{Html(withdrawAbsolute)}\" style=\"color:{EmailLayout.AccentTeal};font-weight:650;\">Andere sollicitaties netjes intrekken</a>");
+        var hiredHtml = EmailLayout.Wrap(
+            $"""
+             {EmailLayout.Heading("Gefeliciteerd — je bent aangenomen!")}
+             {EmailLayout.Paragraph($"Hoi {Html(chosen.CandidateName)},")}
+             {EmailLayout.Paragraph(
+                 $"<strong>Wat een feest!</strong> Je bent aangenomen voor <strong>{Html(vacancy.Title)}</strong> bij {Html(vacancy.Company.Name)}.")}
+             {EmailLayout.Paragraph("Heel veel succes — en geniet van deze stap.")}
+             {EmailLayout.PrimaryButton(appsLink, "Bekijk mijn sollicitaties")}
+             {withdrawParagraph}
+             """,
+            (await _features.GetAsync(cancellationToken)).PublicWebBaseUrl,
+            preheader: hiredSubject);
         await _email.SendAsync(new EmailMessage(
             chosen.CandidateEmail,
             hiredSubject,
-            $"""
-             <p>Hoi {Html(chosen.CandidateName)},</p>
-             <p><strong>Wat een feest!</strong> Je bent aangenomen voor
-             <strong>{Html(vacancy.Title)}</strong> bij {Html(vacancy.Company.Name)}.</p>
-             <p>Heel veel succes — en geniet van deze stap.</p>
-             {withdrawParagraph}
-             """,
+            hiredHtml,
             "ApplicationHired"), cancellationToken);
 
         await NotifyCandidateAsync(
@@ -1156,14 +1179,21 @@ public class ApplicationsController : ControllerBase
         {
             var otherSubject = $"Update sollicitatie: {vacancy.Title}";
             var otherBody = $"Helaas is de keuze op een andere kandidaat gevallen voor {vacancy.Title}.";
+            var otherHtml = EmailLayout.Wrap(
+                $"""
+                {EmailLayout.Heading("Update op je sollicitatie")}
+                {EmailLayout.Paragraph($"Hoi {Html(other.CandidateName)},")}
+                {EmailLayout.Paragraph(
+                    $"Bedankt voor je sollicitatie op <strong>{Html(vacancy.Title)}</strong> bij {Html(vacancy.Company.Name)}.")}
+                {EmailLayout.Paragraph(
+                    "Helaas is de keuze op een andere kandidaat gevallen. We wensen je veel succes!")}
+                """,
+                (await _features.GetAsync(cancellationToken)).PublicWebBaseUrl,
+                preheader: otherSubject);
             await _email.SendAsync(new EmailMessage(
                 other.CandidateEmail,
                 otherSubject,
-                $"""
-                <p>Hoi {Html(other.CandidateName)},</p>
-                <p>Bedankt voor je sollicitatie op <strong>{Html(vacancy.Title)}</strong> bij {Html(vacancy.Company.Name)}.</p>
-                <p>Helaas is de keuze op een andere kandidaat gevallen. We wensen je veel succes!</p>
-                """,
+                otherHtml,
                 "ApplicationFilledElsewhere"), cancellationToken);
 
             await NotifyCandidateAsync(
@@ -1283,15 +1313,24 @@ public class ApplicationsController : ControllerBase
         var deepLink = await BuildDeepLinkAsync("/candidate/applications", cancellationToken);
         var subject = $"Sollicitatie bevestigd: {vacancy.Title}";
         var body = $"Je sollicitatie op {vacancy.Title} bij {vacancy.Company.Name} is ontvangen.";
+        var html = EmailLayout.Wrap(
+            $"""
+             {EmailLayout.Heading("Sollicitatie verstuurd!")}
+             {EmailLayout.Paragraph($"Hoi {Html(candidate.FullName)},")}
+             {EmailLayout.Paragraph(
+                 $"Je sollicitatie op <strong>{Html(vacancy.Title)}</strong> bij {Html(vacancy.Company.Name)} is ontvangen. Top!")}
+             {EmailLayout.Paragraph("Je kunt de status volgen onder Mijn sollicitaties.")}
+             {EmailLayout.PrimaryButton(deepLink, "Bekijk mijn sollicitaties")}
+             {(authenticatorStubUsed
+                 ? EmailLayout.MutedNote("<em>Authenticator stub: verificatie gesimuleerd.</em>")
+                 : "")}
+             """,
+            (await _features.GetAsync(cancellationToken)).PublicWebBaseUrl,
+            preheader: subject);
         await _email.SendAsync(new EmailMessage(
             candidate.Email,
             subject,
-            $"""
-             <p>Hoi {Html(candidate.FullName)},</p>
-             <p>Je sollicitatie op <strong>{Html(vacancy.Title)}</strong> bij {Html(vacancy.Company.Name)} is ontvangen.</p>
-             <p><a href="{Html(deepLink)}">Bekijk je sollicitaties</a></p>
-             {(authenticatorStubUsed ? "<p><em>Authenticator stub: verificatie gesimuleerd.</em></p>" : "")}
-             """,
+            html,
             "ApplicationConfirmation"), cancellationToken);
 
         await NotifyCandidateAsync(
@@ -1311,15 +1350,20 @@ public class ApplicationsController : ControllerBase
     {
         var subject = $"Verificatiecode voor sollicitatie: {vacancy.Title}";
         var body = "Gebruik de 6-cijferige code in je e-mail om je sollicitatie af te ronden. De code is 10 minuten geldig.";
+        var html = EmailLayout.Wrap(
+            $"""
+             {EmailLayout.Heading("Je verificatiecode")}
+             {EmailLayout.Paragraph($"Hoi {Html(candidate.FullName)},")}
+             {EmailLayout.Paragraph("Gebruik deze 6-cijferige code om je sollicitatie af te ronden:")}
+             <p style="margin:16px 0;font-size:28px;letter-spacing:0.18em;font-weight:700;color:{EmailLayout.BrandNavy};text-align:center;">{Html(code)}</p>
+             {EmailLayout.Paragraph("De code is 10 minuten geldig.")}
+             """,
+            (await _features.GetAsync(cancellationToken)).PublicWebBaseUrl,
+            preheader: "Je Lobsy-verificatiecode");
         await _email.SendAsync(new EmailMessage(
             candidate.Email,
             subject,
-            $"""
-             <p>Hoi {Html(candidate.FullName)},</p>
-             <p>Gebruik deze 6-cijferige code om je sollicitatie af te ronden:</p>
-             <p style="font-size:1.6rem"><strong>{Html(code)}</strong></p>
-             <p>De code is 10 minuten geldig.</p>
-             """,
+            html,
             "ApplicationVerificationCode"), cancellationToken);
 
         await _notifications.CreateAsync(
@@ -1390,15 +1434,21 @@ public class ApplicationsController : ControllerBase
 
         var subject = $"Nieuwe sollicitatie: {vacancy.Title}";
         var body = $"{vacancy.Company.Name}: nieuwe kandidaat voor {vacancy.Title}";
+        var html = EmailLayout.Wrap(
+            $"""
+             {EmailLayout.Heading("Nieuwe sollicitatie")}
+             {EmailLayout.Paragraph(
+                 $"Er is een nieuwe sollicitatie ontvangen voor <strong>{Html(vacancy.Title)}</strong>.")}
+             {EmailLayout.Paragraph("Log in op Lobsy om de kandidaat te bekijken en te reageren.")}
+             """,
+            (await _features.GetAsync(cancellationToken)).PublicWebBaseUrl,
+            preheader: subject);
         foreach (var contact in contacts)
         {
             await _email.SendAsync(new EmailMessage(
                 contact.Email,
                 subject,
-                $"""
-                 <p>Er is een nieuwe sollicitatie ontvangen voor <strong>{Html(vacancy.Title)}</strong>.</p>
-                 <p><a href="{Html(deepLink)}">Open sollicitantenoverzicht</a></p>
-                 """,
+                html,
                 "EmployerNewApplication"), cancellationToken);
 
             await _push.SendAsync(new PushMessage(
@@ -1439,15 +1489,20 @@ public class ApplicationsController : ControllerBase
 
         var subject = $"Sollicitatie ingetrokken: {vacancy.Title}";
         var body = "Een kandidaat heeft de sollicitatie ingetrokken.";
+        var html = EmailLayout.Wrap(
+            $"""
+             {EmailLayout.Heading("Sollicitatie ingetrokken")}
+             {EmailLayout.Paragraph(
+                 $"Een kandidaat heeft de sollicitatie op <strong>{Html(vacancy.Title)}</strong> ingetrokken.")}
+             """,
+            (await _features.GetAsync(cancellationToken)).PublicWebBaseUrl,
+            preheader: subject);
         foreach (var contact in contacts)
         {
             await _email.SendAsync(new EmailMessage(
                 contact.Email,
                 subject,
-                $"""
-                 <p>Een kandidaat heeft de sollicitatie op <strong>{Html(vacancy.Title)}</strong> ingetrokken.</p>
-                 <p><a href="{Html(deepLink)}">Open sollicitantenoverzicht</a></p>
-                 """,
+                html,
                 "CandidateWithdrawn"), cancellationToken);
 
             await _notifications.CreateAsync(
@@ -1510,14 +1565,8 @@ public class ApplicationsController : ControllerBase
     private async Task<string> BuildDeepLinkAsync(string relativePath, CancellationToken cancellationToken)
     {
         var features = await _features.GetAsync(cancellationToken);
-        var baseUrl = features.PublicWebBaseUrl.TrimEnd('/');
-        if (!relativePath.StartsWith('/'))
-        {
-            relativePath = "/" + relativePath;
-        }
-
-        return baseUrl + relativePath;
+        return EmailLayout.Absolute(features.PublicWebBaseUrl, relativePath);
     }
 
-    private static string Html(string? value) => WebUtility.HtmlEncode(value ?? string.Empty);
+    private static string Html(string? value) => EmailLayout.Escape(value);
 }

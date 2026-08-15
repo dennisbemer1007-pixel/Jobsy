@@ -1,4 +1,5 @@
 using System.Net;
+using Jobsy.Core.Email;
 using Jobsy.Core.Enums;
 using Jobsy.Core.Interfaces;
 using Jobsy.Core.Rules;
@@ -127,22 +128,25 @@ public sealed class CompanyReengagementHostedService : BackgroundService
 
             await email.SendAsync(new EmailMessage(
                 recipient,
-                "We missen je bij Lobsy 🦞",
-                $"""
-                 <p>Hallo team <strong>{WebUtility.HtmlEncode(org.Name)}</strong>,</p>
-                 <p>De vrolijke kreeft zwaait even vanaf de kade: we missen jullie op Lobsy.
-                 Het is al een tijdje stil — geen actieve vacatures, geen inlog, geen API-call en geen CSV-upload.</p>
-                 <p>Goed nieuws: jullie tools staan nog klaar. Gratis en nuchter, zoals je van ons gewend bent:</p>
-                 <ul>
-                   <li><strong>CSV Batch Import</strong> — veel vacatures in één keer als concept</li>
-                   <li><strong>Externe API</strong> — koppel je ATS met een API-key</li>
-                   <li>Publiceren wanneer jij wilt (tokens pas bij publicatie in Lobsy)</li>
-                 </ul>
-                 <p><a href="{WebUtility.HtmlEncode(baseUrl)}/login"
-                    style="display:inline-block;padding:0.85rem 1.4rem;background:#0b6e4f;color:#fff;text-decoration:none;border-radius:0.5rem;font-weight:700">
-                    Log in en start weer</a></p>
-                 <p>Tot snel — of tot de volgende springvloed.<br/>Team Lobsy</p>
-                 """,
+                "We missen je bij Lobsy",
+                EmailLayout.Wrap(
+                    $"""
+                     {EmailLayout.Heading("We missen je")}
+                     {EmailLayout.Paragraph(
+                         $"Hallo team <strong>{EmailLayout.Escape(org.Name)}</strong>,")}
+                     {EmailLayout.Paragraph(
+                         "Het is al een tijdje stil op Lobsy — geen actieve vacatures, geen inlog, " +
+                         "geen API-call en geen CSV-upload.")}
+                     {EmailLayout.Paragraph("Goed nieuws: jullie tools staan nog klaar:")}
+                     {EmailLayout.KpiList([
+                         ("CSV Batch Import", "Veel vacatures in één keer als concept"),
+                         ("Externe API", "Koppel je ATS met een API-key"),
+                         ("Publiceren", "Tokens pas bij publicatie in Lobsy")
+                     ])}
+                     {EmailLayout.MutedNote("Log in op Lobsy wanneer je weer wilt starten.")}
+                     """,
+                    baseUrl,
+                    preheader: "We missen je bij Lobsy"),
                 DraftVacancyCleanupRules.ReengagementEmailCategory), cancellationToken);
 
             var tracked = await db.Companies.FirstAsync(c => c.Id == org.Id, cancellationToken);

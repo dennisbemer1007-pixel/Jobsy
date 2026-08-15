@@ -1,6 +1,7 @@
 using System.Net;
 using Jobsy.Core;
 using Jobsy.Core.Authorization;
+using Jobsy.Core.Email;
 using Jobsy.Core.Entities;
 using Jobsy.Core.Interfaces;
 using Jobsy.Infrastructure.Data;
@@ -210,24 +211,29 @@ public sealed class CompanyApiKeyService : ICompanyApiKeyService
             var apiBase = ResolvePublicApiBaseUrl();
             var endpoint = apiBase + ExternalVacanciesPath;
             var swaggerUrl = apiBase + "/swagger";
+            var keyHtml = EmailLayout.Wrap(
+                $"""
+                 {EmailLayout.Heading("API-credentials")}
+                 {EmailLayout.Paragraph("Hallo,")}
+                 {EmailLayout.Paragraph(
+                     $"Hierbij de API-credentials voor <strong>{WebUtility.HtmlEncode(company.Name)}</strong>.")}
+                 {EmailLayout.FactCard([
+                     ("Endpoint", endpoint),
+                     ("Header", $"{ApiKeyAuthDefaults.HeaderName}: <jouw-api-key>"),
+                     ("API-key", plaintext),
+                     ("Prefix", entity.KeyPrefix),
+                     ("Swagger", swaggerUrl)
+                 ])}
+                 {EmailLayout.Paragraph(
+                     "<strong>Let op:</strong> deze sleutel wordt slechts één keer getoond en " +
+                     "vervangt eventuele eerdere actieve keys. Bewaar hem veilig.")}
+                 """,
+                publicWebBaseUrl: null,
+                preheader: $"API-credentials voor {company.Name}");
             await _email.SendAsync(new EmailMessage(
                 normalized,
                 $"Lobsy API-credentials voor {company.Name}",
-                $"""
-                 <p>Hallo,</p>
-                 <p>Hierbij de API-credentials voor <strong>{WebUtility.HtmlEncode(company.Name)}</strong>.</p>
-                 <p><strong>Endpoint:</strong><br/>
-                 <code>{WebUtility.HtmlEncode(endpoint)}</code></p>
-                 <p><strong>Header:</strong><br/>
-                 <code>{ApiKeyAuthDefaults.HeaderName}: &lt;jouw-api-key&gt;</code></p>
-                 <p><strong>API-key:</strong><br/>
-                 <code>{WebUtility.HtmlEncode(plaintext)}</code></p>
-                 <p>Prefix (ter herkenning): <code>{WebUtility.HtmlEncode(entity.KeyPrefix)}</code></p>
-                 <p>Bekijk request/response in Swagger:
-                 <a href="{WebUtility.HtmlEncode(swaggerUrl)}">{WebUtility.HtmlEncode(swaggerUrl)}</a></p>
-                 <p><strong>Let op:</strong> deze sleutel wordt slechts één keer getoond en
-                 vervangt eventuele eerdere actieve keys. Bewaar hem veilig.</p>
-                 """,
+                keyHtml,
                 "CompanyApiKeyCredentials"), cancellationToken);
         }
         catch (Exception ex)

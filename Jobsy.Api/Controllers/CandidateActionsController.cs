@@ -1,5 +1,6 @@
 using Jobsy.Api.Models;
 using Jobsy.Core.Authorization;
+using Jobsy.Core.Email;
 using Jobsy.Core.Enums;
 using Jobsy.Core.Interfaces;
 using Jobsy.Core.Rules;
@@ -218,7 +219,6 @@ public class CandidateActionsController : ControllerBase
 
         await _db.SaveChangesAsync(cancellationToken);
 
-        var deepLinkBase = await BuildDeepLinkAsync("/branch/applicants", cancellationToken);
         foreach (var other in others)
         {
             var contacts = await _db.Users.AsNoTracking()
@@ -233,13 +233,17 @@ public class CandidateActionsController : ControllerBase
             var title = $"Sollicitatie ingetrokken: {other.Vacancy.Title}";
             var body =
                 "De kandidaat heeft deze sollicitatie ingetrokken omdat er inmiddels een andere baan is gevonden.";
-            var html = $"""
-                <p>Hoi,</p>
-                <p>Goed om te weten: de kandidaat heeft de sollicitatie op
-                <strong>{WebUtility.HtmlEncode(other.Vacancy.Title)}</strong> ingetrokken.</p>
-                <p>Reden: de kandidaat heeft inmiddels een andere baan gevonden.</p>
-                <p><a href="{WebUtility.HtmlEncode(deepLinkBase)}">Open sollicitantenoverzicht</a></p>
-                """;
+            var html = EmailLayout.Wrap(
+                $"""
+                 {EmailLayout.Heading("Sollicitatie ingetrokken")}
+                 {EmailLayout.Paragraph("Hoi,")}
+                 {EmailLayout.Paragraph(
+                     $"Goed om te weten: de kandidaat heeft de sollicitatie op " +
+                     $"<strong>{WebUtility.HtmlEncode(other.Vacancy.Title)}</strong> ingetrokken.")}
+                 {EmailLayout.Paragraph("Reden: de kandidaat heeft inmiddels een andere baan gevonden.")}
+                 """,
+                (await _features.GetAsync(cancellationToken)).PublicWebBaseUrl,
+                preheader: title);
 
             foreach (var contact in contacts)
             {

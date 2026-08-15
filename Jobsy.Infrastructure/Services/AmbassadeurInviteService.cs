@@ -1,4 +1,5 @@
 using System.Security.Cryptography;
+using Jobsy.Core.Email;
 using Jobsy.Core.Entities;
 using Jobsy.Core.Enums;
 using Jobsy.Core.Interfaces;
@@ -139,14 +140,21 @@ public sealed class AmbassadeurInviteService : IAmbassadeurInviteService
         await _email.SendAsync(new EmailMessage(
             normalizedEmail,
             "Uitnodiging Lobsy ambassadeur",
-            $"""
-             <p>Hallo {System.Net.WebUtility.HtmlEncode(name)},</p>
-             <p>Je bent uitgenodigd als ambassadeur op Lobsy.</p>
-             <p>Log in met <strong>{System.Net.WebUtility.HtmlEncode(normalizedEmail)}</strong>
-             en tijdelijk wachtwoord <strong>{System.Net.WebUtility.HtmlEncode(temporaryPassword)}</strong>.</p>
-             <p>Vul daarna je KvK/BTW/NAW-gegevens in en onderteken de bemiddelingsovereenkomst om je trackingcode te ontvangen.</p>
-             <p><em>Invite stub — geen echte mail.</em></p>
-             """,
+            EmailLayout.Wrap(
+                $"""
+                 {EmailLayout.Heading("Uitnodiging ambassadeur")}
+                 {EmailLayout.Paragraph($"Hallo {System.Net.WebUtility.HtmlEncode(name)},")}
+                 {EmailLayout.Paragraph("Je bent uitgenodigd als ambassadeur op Lobsy.")}
+                 {EmailLayout.Paragraph(
+                     $"Log in met <strong>{System.Net.WebUtility.HtmlEncode(normalizedEmail)}</strong> " +
+                     "en dit tijdelijke wachtwoord:")}
+                 <p style="margin:16px 0;font-size:20px;letter-spacing:0.06em;font-weight:700;color:{EmailLayout.BrandNavy};text-align:center;"><code>{System.Net.WebUtility.HtmlEncode(temporaryPassword)}</code></p>
+                 {EmailLayout.Paragraph(
+                     "Vul daarna je KvK/BTW/NAW-gegevens in en onderteken de bemiddelingsovereenkomst om je trackingcode te ontvangen.")}
+                 {EmailLayout.MutedNote("Wijzig het wachtwoord zo snel mogelijk na je eerste login.")}
+                 """,
+                publicWebBaseUrl: null,
+                preheader: "Uitnodiging Lobsy ambassadeur"),
             "AmbassadeurInvite"), cancellationToken);
 
         _logger.LogInformation(
