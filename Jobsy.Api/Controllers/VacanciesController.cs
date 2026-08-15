@@ -1358,7 +1358,7 @@ public class VacanciesController : ControllerBase
             r.ExclusivityIsOpen,
             r.ExclusivitySchoolDomain,
             null,
-            r.ExclusivityEducations,
+            null,
             r.CategoryId,
             r.CategoryName,
             r.CategoryColorHex,

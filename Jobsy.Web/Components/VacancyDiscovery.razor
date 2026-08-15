@@ -884,6 +884,7 @@
     private CancellationTokenSource? _suggestCts;
     private int _suggestGeneration;
     private int _loadGeneration;
+    private bool _launchHydrationDone;
 
     /// <summary>
     /// Always maps to an existing &lt;option&gt;: "all", 15–20, or "21" (21+).
@@ -1458,11 +1459,20 @@
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        if (firstRender)
+        if (!_launchHydrationDone)
         {
             try
             {
                 _highlightShuffleSeed = await Js.InvokeAsync<uint>("jobsyGeo.getOrCreateHighlightSeed");
+            }
+            catch (JSException)
+            {
+                // Prerender / JS not ready — retry on the next interactive render.
+                return;
+            }
+            catch (InvalidOperationException)
+            {
+                return;
             }
             catch
             {
@@ -1505,11 +1515,20 @@
                     }
                 }
             }
+            catch (JSException)
+            {
+                return;
+            }
+            catch (InvalidOperationException)
+            {
+                return;
+            }
             catch
             {
                 // geolocation helpers not ready yet — still load vacancies below
             }
 
+            _launchHydrationDone = true;
             if (_origin is not null || _ageYears is not null)
             {
                 await LoadVacanciesAsync();
@@ -1683,7 +1702,10 @@
             }
 
             _error = Culture.Format("Discovery.LoadFailed", ex.Message);
-            _vacancies = [];
+            if (!hadResults)
+            {
+                _vacancies = [];
+            }
         }
         finally
         {

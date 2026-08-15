@@ -21,6 +21,7 @@ public sealed class VacancyDiscoveryIndex : IVacancyDiscoveryIndex
 
     private volatile IReadOnlyList<VacancyDiscoveryRecord>? _snapshot;
     private volatile bool _dirty = true;
+    private DateOnly _indexedForDate;
 
     public VacancyDiscoveryIndex(
         IServiceScopeFactory scopeFactory,
@@ -35,22 +36,27 @@ public sealed class VacancyDiscoveryIndex : IVacancyDiscoveryIndex
     public async Task<IReadOnlyList<VacancyDiscoveryRecord>> GetActiveAsync(
         CancellationToken cancellationToken = default)
     {
+        var today = DateOnly.FromDateTime(DateTime.UtcNow);
         var snap = _snapshot;
-        if (snap is not null && !_dirty)
+        if (snap is null || _dirty || _indexedForDate != today)
         {
-            return snap;
+            await RefreshCoreAsync(force: false, cancellationToken);
+            snap = _snapshot ?? [];
         }
 
-        await RefreshAsync(cancellationToken);
-        return _snapshot ?? [];
+        return VisibleToday(snap, today);
     }
 
-    public async Task RefreshAsync(CancellationToken cancellationToken = default)
+    public Task RefreshAsync(CancellationToken cancellationToken = default)
+        => RefreshCoreAsync(force: true, cancellationToken);
+
+    private async Task RefreshCoreAsync(bool force, CancellationToken cancellationToken)
     {
         await _refreshLock.WaitAsync(cancellationToken);
         try
         {
-            if (_snapshot is not null && !_dirty)
+            var today = DateOnly.FromDateTime(DateTime.UtcNow);
+            if (!force && _snapshot is not null && !_dirty && _indexedForDate == today)
             {
                 return;
             }
@@ -58,6 +64,7 @@ public sealed class VacancyDiscoveryIndex : IVacancyDiscoveryIndex
             _dirty = false;
             var records = await LoadActiveAsync(cancellationToken);
             _snapshot = records;
+            _indexedForDate = today;
             _logger.LogInformation("Banenkaart index refreshed with {Count} public vacancies.", records.Count);
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
@@ -89,7 +96,6 @@ public sealed class VacancyDiscoveryIndex : IVacancyDiscoveryIndex
             .Include(v => v.IntermediaryCompany)
             .Include(v => v.Category)
             .Include(v => v.ExclusivitySetting!)
-                .ThenInclude(s => s.Educations)
             .Include(v => v.SalaryTable!)
                 .ThenInclude(t => t.Rates)
             .Where(v =>
@@ -178,11 +184,7 @@ public sealed class VacancyDiscoveryIndex : IVacancyDiscoveryIndex
             vacancy.ExclusivitySetting?.Name,
             vacancy.ExclusivitySetting?.IsOpenOption ?? true,
             vacancy.ExclusivitySetting?.SchoolDomain,
-            vacancy.ExclusivitySetting?.Educations?
-                .Where(e => e.IsActive)
-                .OrderBy(e => e.SortOrder)
-                .Select(e => e.Name)
-                .ToList() ?? [],
+            [],
             vacancy.CategoryId,
             vacancy.Category?.Name,
             vacancy.Category?.ColorHex,
@@ -193,5 +195,17 @@ public sealed class VacancyDiscoveryIndex : IVacancyDiscoveryIndex
                 kvk),
             vacancy.ContentModerationPassed,
             vacancy.RequireEmailVerification);
+    }
+
+    private static IReadOnlyList<VacancyDiscoveryRecord> VisibleToday(
+        IReadOnlyList<VacancyDiscoveryRecord> records,
+        DateOnly today)
+    {
+        if (records.Count == 0 || records.All(r => VacancyVisibilityRules.IsPubliclyVisible(r, today)))
+        {
+            return records;
+        }
+
+        return records.Where(r => VacancyVisibilityRules.IsPubliclyVisible(r, today)).ToList();
     }
 }

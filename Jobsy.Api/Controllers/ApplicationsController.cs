@@ -31,6 +31,7 @@ public class ApplicationsController : ControllerBase
     private readonly ILobsyCvPdfService _lobsyCvPdf;
     private readonly IUserNotificationService _notifications;
     private readonly ICandidateActionTokenService _actionTokens;
+    private readonly IVacancyDiscoveryIndex _discoveryIndex;
 
     public ApplicationsController(
         JobsyDbContext db,
@@ -41,7 +42,8 @@ public class ApplicationsController : ControllerBase
         IPlatformFeatureService features,
         ILobsyCvPdfService lobsyCvPdf,
         IUserNotificationService notifications,
-        ICandidateActionTokenService actionTokens)
+        ICandidateActionTokenService actionTokens,
+        IVacancyDiscoveryIndex discoveryIndex)
     {
         _db = db;
         _companyAuth = companyAuth;
@@ -52,6 +54,7 @@ public class ApplicationsController : ControllerBase
         _lobsyCvPdf = lobsyCvPdf;
         _notifications = notifications;
         _actionTokens = actionTokens;
+        _discoveryIndex = discoveryIndex;
     }
 
     [HttpGet]
@@ -1122,6 +1125,10 @@ public class ApplicationsController : ControllerBase
         }
 
         await _db.SaveChangesAsync(cancellationToken);
+        if (closeVacancy)
+        {
+            _discoveryIndex.Invalidate();
+        }
 
         string? withdrawEmailPath = null;
         string? withdrawInAppPath = null;

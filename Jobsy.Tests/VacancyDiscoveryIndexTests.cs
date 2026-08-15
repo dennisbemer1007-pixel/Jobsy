@@ -55,6 +55,25 @@ public class VacancyDiscoveryQueryTests
         Assert.Equal(kok.Id, Assert.Single(filtered).Id);
     }
 
+    [Fact]
+    public void Visibility_hides_expired_indexed_rows_on_read()
+    {
+        var today = DateOnly.FromDateTime(DateTime.UtcNow);
+        var expired = Record(WorkType.Horeca, title: "Was live") with
+        {
+            StartDate = today.AddDays(-10),
+            EndDate = today.AddDays(-1)
+        };
+        var live = Record(WorkType.Horeca, title: "Nog live") with
+        {
+            StartDate = today.AddDays(-1),
+            EndDate = today.AddDays(5)
+        };
+
+        Assert.False(VacancyVisibilityRules.IsPubliclyVisible(expired, today));
+        Assert.True(VacancyVisibilityRules.IsPubliclyVisible(live, today));
+    }
+
     private static VacancyDiscoveryRecord Record(
         WorkType workType,
         string title = "Vacature",
@@ -199,5 +218,74 @@ public class VacancyDiscoveryIndexTests
         var fresh = await index.GetActiveAsync();
         Assert.Equal(2, fresh.Count);
         Assert.Contains(fresh, v => v.Id == draftId);
+    }
+
+    [Fact]
+    public async Task Scheduled_refresh_rebuilds_without_invalidate()
+    {
+        var dbName = "DiscoveryIndexForce-" + Guid.NewGuid();
+        var services = new ServiceCollection();
+        services.AddDbContext<JobsyDbContext>(o => o.UseInMemoryDatabase(dbName));
+        services.AddLogging();
+        await using var provider = services.BuildServiceProvider();
+
+        var today = DateOnly.FromDateTime(DateTime.UtcNow);
+        var companyId = Guid.NewGuid();
+        var firstId = Guid.NewGuid();
+        var secondId = Guid.NewGuid();
+
+        using (var seed = provider.CreateScope())
+        {
+            var db = seed.ServiceProvider.GetRequiredService<JobsyDbContext>();
+            db.Companies.Add(new Company
+            {
+                Id = companyId,
+                Name = "Refresh Café",
+                KvkNumber = "87654321",
+                Address = "Plein 2",
+                Location = new GeoPoint(52.07, 4.30)
+            });
+            db.Vacancies.Add(new Vacancy
+            {
+                Id = firstId,
+                Title = "Eerste",
+                Description = "d",
+                CompanyId = companyId,
+                Status = VacancyStatus.Active,
+                HourlyWage = 14,
+                Location = new GeoPoint(52.07, 4.30),
+                StartDate = today,
+                EndDate = today.AddDays(10)
+            });
+            await db.SaveChangesAsync();
+        }
+
+        var index = new VacancyDiscoveryIndex(
+            provider.GetRequiredService<IServiceScopeFactory>(),
+            NullLogger<VacancyDiscoveryIndex>.Instance);
+        Assert.Equal(firstId, Assert.Single(await index.GetActiveAsync()).Id);
+
+        using (var mutate = provider.CreateScope())
+        {
+            var db = mutate.ServiceProvider.GetRequiredService<JobsyDbContext>();
+            db.Vacancies.Add(new Vacancy
+            {
+                Id = secondId,
+                Title = "Tweede",
+                Description = "d",
+                CompanyId = companyId,
+                Status = VacancyStatus.Active,
+                HourlyWage = 14,
+                Location = new GeoPoint(52.08, 4.31),
+                StartDate = today,
+                EndDate = today.AddDays(10)
+            });
+            await db.SaveChangesAsync();
+        }
+
+        await index.RefreshAsync();
+        var afterJob = await index.GetActiveAsync();
+        Assert.Equal(2, afterJob.Count);
+        Assert.Contains(afterJob, v => v.Id == secondId);
     }
 }
