@@ -16,7 +16,7 @@ public static class EmailLayout
     public const string AccentCoral = "#c45c3e";
     public const string Pearl = "#f5f2ee";
     public const string SoftSky = "#e8eef7";
-    public const string Text = "#122033";
+    public const string Text = "#142033";
     public const string Muted = "#5a6a7d";
 
     public static string Escape(string? value)
@@ -42,7 +42,7 @@ public static class EmailLayout
     }
 
     public static string LogoUrl(string? publicWebBaseUrl)
-        => Absolute(publicWebBaseUrl, "/images/brand/lobsy.png?v=20260815");
+        => Absolute(publicWebBaseUrl, "/images/brand/lobsy.png?v=brand");
 
     public static string VacancyUrl(string? publicWebBaseUrl, Guid vacancyId)
         => Absolute(publicWebBaseUrl, $"/vacancies/{vacancyId}");
@@ -230,6 +230,15 @@ public static class EmailLayout
 
         sb.Append("</table>");
         return sb.ToString();
+    }
+
+    /// <summary>Large OTP / temporary secret display (tests extract via data-lobsy-otp).</summary>
+    public static string OtpBlock(string plaintextCode)
+    {
+        var code = Escape(plaintextCode);
+        return $"""
+            <p data-lobsy-otp="{code}" style="margin:16px 0;font-size:28px;letter-spacing:0.18em;font-weight:700;color:{BrandNavy};text-align:center;"><code>{code}</code></p>
+            """;
     }
 
     public static string FormatEuro(decimal amount)

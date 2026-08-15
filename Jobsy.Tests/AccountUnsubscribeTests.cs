@@ -437,7 +437,13 @@ public class AccountUnsubscribeTests
     {
         var html = email.Messages.LastOrDefault()?.BodyHtml
             ?? throw new InvalidOperationException("Geen e-mail verzonden.");
-        var match = System.Text.RegularExpressions.Regex.Match(html, @"\b(\d{6})\b");
+        var match = System.Text.RegularExpressions.Regex.Match(
+            html,
+            @"data-lobsy-otp=""(\d{6})""");
+        if (!match.Success)
+        {
+            match = System.Text.RegularExpressions.Regex.Match(html, @"\b(\d{6})\b");
+        }
         Assert.True(match.Success, "Geen 6-cijferige OTP in e-mail.");
         return match.Groups[1].Value;
     }

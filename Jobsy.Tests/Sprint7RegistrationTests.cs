@@ -764,7 +764,13 @@ public class Sprint7RegistrationTests
             LastBodyHtml = message.BodyHtml;
             var match = System.Text.RegularExpressions.Regex.Match(
                 message.BodyHtml ?? "",
-                @"\b(\d{6})\b");
+                @"data-lobsy-otp=""(\d{6})""");
+            if (!match.Success)
+            {
+                match = System.Text.RegularExpressions.Regex.Match(
+                    message.BodyHtml ?? "",
+                    @"\b(\d{6})\b");
+            }
             if (match.Success)
             {
                 LastNumericCode = match.Groups[1].Value;

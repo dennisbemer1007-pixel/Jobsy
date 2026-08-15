@@ -1355,7 +1355,7 @@ public class ApplicationsController : ControllerBase
              {EmailLayout.Heading("Je verificatiecode")}
              {EmailLayout.Paragraph($"Hoi {Html(candidate.FullName)},")}
              {EmailLayout.Paragraph("Gebruik deze 6-cijferige code om je sollicitatie af te ronden:")}
-             <p style="margin:16px 0;font-size:28px;letter-spacing:0.18em;font-weight:700;color:{EmailLayout.BrandNavy};text-align:center;">{Html(code)}</p>
+             {EmailLayout.OtpBlock(code)}
              {EmailLayout.Paragraph("De code is 10 minuten geldig.")}
              """,
             (await _features.GetAsync(cancellationToken)).PublicWebBaseUrl,

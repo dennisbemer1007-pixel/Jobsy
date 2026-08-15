@@ -1292,7 +1292,6 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
         CancellationToken cancellationToken)
     {
         var safeName = WebUtility.HtmlEncode(registration.ContactName);
-        var safeCode = WebUtility.HtmlEncode(plaintextCode);
         await _email.SendAsync(new EmailMessage(
             registration.ContactEmail,
             "Bevestigingscode overnameverzoek — Lobsy",
@@ -1303,7 +1302,7 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
                  {EmailLayout.Paragraph(
                      $"Vestiging <strong>{WebUtility.HtmlEncode(existing.Name)}</strong> is al geregistreerd. " +
                      "Bevestig eerst je e-mailadres met deze code (geldig 10 minuten):")}
-                 <p style="margin:16px 0;font-size:28px;letter-spacing:0.18em;font-weight:700;color:{EmailLayout.BrandNavy};text-align:center;"><code>{safeCode}</code></p>
+                 {EmailLayout.OtpBlock(plaintextCode)}
                  {EmailLayout.Paragraph("Daarna sturen we het overnameverzoek naar de huidige eigenaar.")}
                  """,
                 publicWebBaseUrl: null,
@@ -1376,7 +1375,6 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
         CancellationToken cancellationToken)
     {
         var safeName = WebUtility.HtmlEncode(registration.ContactName);
-        var safeCode = WebUtility.HtmlEncode(plaintextCode);
         var roleLabel = registration.IsIntermediarySbi
             ? "Intermediair"
             : registration.Scope == RegistrationScope.Organization
@@ -1398,7 +1396,7 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
                      "Na bevestiging kun je direct aan de slag — je eerste token is helemaal gratis, " +
                      "zodat je meteen een vacature kunt plaatsen.")}
                  {EmailLayout.Paragraph("Je bevestigingscode (geldig 10 minuten):")}
-                 <p style="margin:16px 0;font-size:28px;letter-spacing:0.18em;font-weight:700;color:{EmailLayout.BrandNavy};text-align:center;"><code>{safeCode}</code></p>
+                 {EmailLayout.OtpBlock(plaintextCode)}
                  """,
                 publicWebBaseUrl: null,
                 preheader: "Je Lobsy-bevestigingscode"),

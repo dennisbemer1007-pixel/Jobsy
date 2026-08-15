@@ -26,7 +26,8 @@ public class EmailLayoutTests
         var btn = EmailLayout.PrimaryButton("https://lobsy.nl/vacancies/abc\" onclick=x", "Klik hier");
         Assert.Contains("Klik hier", btn);
         Assert.Contains(EmailLayout.BrandNavy, btn);
-        Assert.DoesNotContain("onclick=x", btn);
+        Assert.Contains("&quot;", btn);
+        Assert.DoesNotContain("href=\"https://lobsy.nl/vacancies/abc\" onclick", btn);
         Assert.Contains("https://lobsy.nl/vacancies/abc", btn);
     }
 

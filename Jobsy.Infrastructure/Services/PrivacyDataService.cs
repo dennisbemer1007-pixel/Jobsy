@@ -379,7 +379,7 @@ public sealed class PrivacyDataService : IPrivacyDataService
                  {EmailLayout.Paragraph($"Hoi {Html(user.FullName)},")}
                  {EmailLayout.Paragraph("Je hebt gevraagd om je Lobsy-account af te melden.")}
                  {EmailLayout.Paragraph("Gebruik deze 6-cijferige code om de uitschrijving te bevestigen:")}
-                 <p style="margin:16px 0;font-size:28px;letter-spacing:0.18em;font-weight:700;color:{EmailLayout.BrandNavy};text-align:center;">{Html(verificationCode)}</p>
+                 {EmailLayout.OtpBlock(verificationCode)}
                  {EmailLayout.Paragraph(
                      $"De code is {UnsubscribeCodeTtlMinutes} minuten geldig. Heb je dit niet zelf aangevraagd? Negeer deze mail dan.")}
                  """,

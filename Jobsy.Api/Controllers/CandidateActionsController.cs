@@ -284,18 +284,4 @@ public class CandidateActionsController : ControllerBase
                 : $"{others.Count} andere sollicitatie(s) zijn succesvol ingetrokken.",
             others.Count));
     }
-
-    private async Task<string> BuildDeepLinkAsync(string relativePath, CancellationToken cancellationToken)
-    {
-        var snap = await _features.GetAsync(cancellationToken);
-        var baseUrl = string.IsNullOrWhiteSpace(snap.PublicWebBaseUrl)
-            ? "https://lobsy.nl"
-            : snap.PublicWebBaseUrl.TrimEnd('/');
-        if (!relativePath.StartsWith('/'))
-        {
-            relativePath = "/" + relativePath;
-        }
-
-        return baseUrl + relativePath;
-    }
 }
