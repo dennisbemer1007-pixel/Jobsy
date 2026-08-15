@@ -28,17 +28,20 @@ public class ExternalVacanciesController : ControllerBase
     private readonly ICompanyAuthorizationService _companyAuth;
     private readonly ISalaryService _salary;
     private readonly IVacancyContentModerationService _moderation;
+    private readonly IVacancyDiscoveryIndex _discoveryIndex;
 
     public ExternalVacanciesController(
         JobsyDbContext db,
         ICompanyAuthorizationService companyAuth,
         ISalaryService salary,
-        IVacancyContentModerationService moderation)
+        IVacancyContentModerationService moderation,
+        IVacancyDiscoveryIndex discoveryIndex)
     {
         _db = db;
         _companyAuth = companyAuth;
         _salary = salary;
         _moderation = moderation;
+        _discoveryIndex = discoveryIndex;
     }
 
     /// <summary>Create a vacancy for a company owned by this API key.</summary>
@@ -206,6 +209,7 @@ public class ExternalVacanciesController : ControllerBase
 
         _db.Vacancies.Add(vacancy);
         await _db.SaveChangesAsync(cancellationToken);
+        _discoveryIndex.Invalidate();
 
         return CreatedAtAction(nameof(GetStatus), new { id = vacancy.Id }, ToStatusDto(vacancy));
     }
@@ -366,6 +370,7 @@ public class ExternalVacanciesController : ControllerBase
         }
 
         await _db.SaveChangesAsync(cancellationToken);
+        _discoveryIndex.Invalidate();
         return Ok(ToStatusDto(vacancy));
     }
 

@@ -1,5 +1,7 @@
+using Jobsy.Core.Interfaces;
 using Jobsy.Infrastructure.Data;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 
 namespace Jobsy.Api.Jobs;
@@ -58,6 +60,17 @@ public sealed class DatabaseSeedHostedService : BackgroundService
         {
             // Keep API available (salesmanager endpoints, auth, etc.) even if demo seed flakes.
             _logger.LogError(ex, "Database seed failed during startup; API continues without full seed.");
+        }
+
+        try
+        {
+            var index = _services.GetRequiredService<IVacancyDiscoveryIndex>();
+            index.Invalidate();
+            await index.RefreshAsync(stoppingToken);
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            _logger.LogWarning(ex, "Banenkaart index refresh after seed failed; the 15s job will retry.");
         }
     }
 }

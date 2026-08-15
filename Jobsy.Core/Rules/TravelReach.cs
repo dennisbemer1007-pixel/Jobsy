@@ -1,4 +1,5 @@
 using Jobsy.Core.Enums;
+using Jobsy.Core.ValueObjects;
 
 namespace Jobsy.Core.Rules;
 
@@ -41,5 +42,25 @@ public static class TravelReach
         }
 
         return fromTime;
+    }
+
+    /// <summary>
+    /// Same Haversine + mode-speed estimate as <c>MockRoutingService</c> / discover.
+    /// Synchronous so the banenkaart can filter the in-memory index without awaiting N routes.
+    /// </summary>
+    public static (int TravelMinutes, double DistanceKm) Estimate(
+        double fromLatitude,
+        double fromLongitude,
+        double toLatitude,
+        double toLongitude,
+        TransportMode mode)
+    {
+        var distanceKm = GeoDistance.HaversineKm(
+            new GeoPoint(fromLatitude, fromLongitude),
+            new GeoPoint(toLatitude, toLongitude));
+        var speed = SpeedKmPerHour(mode);
+        var durationSeconds = (distanceKm * 1000.0) / (speed * 1000.0 / 3600.0);
+        var travelMinutes = (int)Math.Ceiling(durationSeconds / 60.0);
+        return (travelMinutes, Math.Round(distanceKm, 2));
     }
 }

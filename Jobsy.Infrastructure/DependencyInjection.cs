@@ -186,6 +186,8 @@ public static class DependencyInjection
         services.AddScoped<IVacancyCategoryService, VacancyCategoryService>();
         services.AddScoped<IPartnerFlyerPdfService, PartnerFlyerPdfService>();
         services.AddScoped<IEmployerRaamflyerService, EmployerRaamflyerService>();
+        services.AddSingleton<IVacancyDiscoveryIndex, VacancyDiscoveryIndex>();
+        services.AddHostedService<VacancyDiscoveryIndexHostedService>();
         services.AddScoped<IVacancyContentModerationService, VacancyContentModerationService>();
         services.AddScoped<IMockInterviewService, MockInterviewService>();
         services.AddScoped<IAssistantChatService, AssistantChatService>();

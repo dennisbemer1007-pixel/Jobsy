@@ -26,6 +26,7 @@ public sealed class VacancyProductService : IVacancyProductService
     private readonly IUserNotificationService _notifications;
     private readonly ICandidateActionTokenService _actionTokens;
     private readonly ILogger<VacancyProductService> _logger;
+    private readonly IVacancyDiscoveryIndex? _discoveryIndex;
 
     public VacancyProductService(
         JobsyDbContext db,
@@ -38,7 +39,8 @@ public sealed class VacancyProductService : IVacancyProductService
         IRoutingService routing,
         IUserNotificationService notifications,
         ICandidateActionTokenService actionTokens,
-        ILogger<VacancyProductService> logger)
+        ILogger<VacancyProductService> logger,
+        IVacancyDiscoveryIndex? discoveryIndex = null)
     {
         _db = db;
         _tokens = tokens;
@@ -51,6 +53,17 @@ public sealed class VacancyProductService : IVacancyProductService
         _notifications = notifications;
         _actionTokens = actionTokens;
         _logger = logger;
+        _discoveryIndex = discoveryIndex;
+    }
+
+    private VacancyProductOutcome Indexed(VacancyProductOutcome result)
+    {
+        if (result.Succeeded)
+        {
+            _discoveryIndex?.Invalidate();
+        }
+
+        return result;
     }
 
     public async Task<VacancyProductOutcome> PublishAsync(
@@ -221,7 +234,7 @@ public sealed class VacancyProductService : IVacancyProductService
                 freeRecipients = await DeliverPushBomToAsync(vacancy, pushBomCandidates, cancellationToken);
             }
 
-            return new VacancyProductOutcome(true, null, vacancy, PushBomRecipientCount: freeRecipients);
+            return Indexed(new VacancyProductOutcome(true, null, vacancy, PushBomRecipientCount: freeRecipients));
         }
 
         TokenMultiSpendOutcome spend;
@@ -282,7 +295,7 @@ public sealed class VacancyProductService : IVacancyProductService
             recipientCount = await DeliverPushBomToAsync(vacancy, pushBomCandidates, cancellationToken);
         }
 
-        return new VacancyProductOutcome(true, null, vacancy, PushBomRecipientCount: recipientCount);
+        return Indexed(new VacancyProductOutcome(true, null, vacancy, PushBomRecipientCount: recipientCount));
     }
 
     public async Task<VacancyProductOutcome> ApprovePublishAsync(
@@ -446,7 +459,7 @@ public sealed class VacancyProductService : IVacancyProductService
             recipientCount = await DeliverPushBomToAsync(vacancy, pushBomCandidates, cancellationToken);
         }
 
-        return new VacancyProductOutcome(true, null, vacancy, PushBomRecipientCount: recipientCount);
+        return Indexed(new VacancyProductOutcome(true, null, vacancy, PushBomRecipientCount: recipientCount));
     }
 
     public async Task<VacancyProductOutcome> HighlightAsync(
@@ -517,7 +530,7 @@ public sealed class VacancyProductService : IVacancyProductService
 
         if (spend.Succeeded)
         {
-            return new VacancyProductOutcome(true, null, vacancy);
+            return Indexed(new VacancyProductOutcome(true, null, vacancy));
         }
 
         if (spend.ErrorMessage?.Contains("Onvoldoende", StringComparison.OrdinalIgnoreCase) == true)
@@ -621,7 +634,7 @@ public sealed class VacancyProductService : IVacancyProductService
         }
 
         var recipientCount = await DeliverPushBomToAsync(vacancy, reach.Recipients, cancellationToken);
-        return new VacancyProductOutcome(true, null, vacancy, PushBomRecipientCount: recipientCount);
+        return Indexed(new VacancyProductOutcome(true, null, vacancy, PushBomRecipientCount: recipientCount));
     }
 
     public async Task<VacancyProductOutcome> ExtendAsync(
@@ -664,7 +677,7 @@ public sealed class VacancyProductService : IVacancyProductService
 
         if (spend.Succeeded)
         {
-            return new VacancyProductOutcome(true, null, vacancy);
+            return Indexed(new VacancyProductOutcome(true, null, vacancy));
         }
 
         if (spend.ErrorMessage?.Contains("Onvoldoende", StringComparison.OrdinalIgnoreCase) == true)
@@ -693,7 +706,7 @@ public sealed class VacancyProductService : IVacancyProductService
         vacancy.Status = VacancyStatus.Archived;
         vacancy.ClosedAtUtc ??= DateTime.UtcNow;
         await _db.SaveChangesAsync(cancellationToken);
-        return new VacancyProductOutcome(true, null, vacancy);
+        return Indexed(new VacancyProductOutcome(true, null, vacancy));
     }
 
     private async Task<VacancyProductOutcome> MarkPendingApprovalAsync(

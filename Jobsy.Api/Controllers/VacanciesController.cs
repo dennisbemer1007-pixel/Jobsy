@@ -1,6 +1,7 @@
 using Jobsy.Api.Authorization;
 using Jobsy.Api.Models;
 using Jobsy.Core.Authorization;
+using Jobsy.Core.Contracts;
 using Jobsy.Core.Entities;
 using Jobsy.Core.Enums;
 using Jobsy.Core.Exceptions;
@@ -33,6 +34,7 @@ public class VacanciesController : ControllerBase
     private readonly IVacancyCategoryService _categories;
     private readonly IPlatformFeatureService _features;
     private readonly IUserNotificationService _notifications;
+    private readonly IVacancyDiscoveryIndex _discoveryIndex;
 
     public VacanciesController(
         JobsyDbContext db,
@@ -45,7 +47,8 @@ public class VacanciesController : ControllerBase
         ITranslationService translation,
         IVacancyCategoryService categories,
         IPlatformFeatureService features,
-        IUserNotificationService notifications)
+        IUserNotificationService notifications,
+        IVacancyDiscoveryIndex discoveryIndex)
     {
         _db = db;
         _companyAuth = companyAuth;
@@ -58,6 +61,7 @@ public class VacanciesController : ControllerBase
         _categories = categories;
         _features = features;
         _notifications = notifications;
+        _discoveryIndex = discoveryIndex;
     }
 
     /// <summary>
@@ -70,15 +74,10 @@ public class VacanciesController : ControllerBase
         CancellationToken cancellationToken)
     {
         var showWage = await CanViewerSeeWageAsync(cancellationToken);
-        var targetLanguage = await ResolveTargetLanguageAsync(cancellationToken);
-        var vacancies = await LoadActiveVacanciesAsync(origin: null, reachKm: null, cancellationToken);
-        var mapped = await MapManyToDtoAsync(
-            vacancies,
-            showWage,
-            targetLanguage,
-            ageYears: null,
-            includeDescription: false,
-            cancellationToken);
+        var records = await _discoveryIndex.GetActiveAsync(cancellationToken);
+        var mapped = records
+            .Select(r => MapRecordToDto(r, showWage, ageYears: null, includeDescription: false))
+            .ToList();
         return Ok(mapped);
     }
 
@@ -120,117 +119,61 @@ public class VacanciesController : ControllerBase
         int? age = ageYears is int a ? AgeRules.ClampFilterAge(a) : null;
         var mode = TransportLabels.Parse(transport);
         var showWage = age is not null || await CanViewerSeeWageAsync(cancellationToken);
-        var targetLanguage = await ResolveTargetLanguageAsync(cancellationToken);
 
-        double? reachKm = null;
-        Core.ValueObjects.GeoPoint? origin = null;
-        if (originLat is not null && originLng is not null)
-        {
-            origin = new Core.ValueObjects.GeoPoint(originLat.Value, originLng.Value);
-            reachKm = TravelReach.MaxCrowFliesKm(mode, maxMinutes, radiusKm);
-        }
+        var records = VacancyDiscoveryQuery.Filter(
+            await _discoveryIndex.GetActiveAsync(cancellationToken),
+            companyIds: companyId,
+            categoryIds: categoryId,
+            suitableFor65Plus,
+            workTypes: workType,
+            searchQuery: q,
+            minHoursPerWeek: filterMinHours,
+            maxHoursPerWeek: filterMaxHours);
 
-        var vacancies = await LoadActiveVacanciesAsync(
-            origin,
-            reachKm,
-            cancellationToken,
-            includeExclusivityEducations: false,
-            includeSalaryRates: showWage);
-
-        var companyFilter = companyId?
-            .Where(id => id != Guid.Empty)
-            .Distinct()
-            .ToHashSet();
-        if (companyFilter is { Count: > 0 })
-        {
-            vacancies = vacancies.Where(v => companyFilter.Contains(v.CompanyId)).ToList();
-        }
-
-        var categoryFilter = categoryId?
-            .Where(id => id != Guid.Empty)
-            .Distinct()
-            .ToHashSet();
-
-        var workTypeFiltered = vacancies
-            .Where(v => VacancyCategoryDefaults.MatchesSelectedCategories(
-                v.CategoryId,
-                v.SuitableFor65Plus,
-                categoryFilter))
-            .Where(v => suitableFor65Plus != true
-                || VacancyCategoryDefaults.MatchesSuitableFor65PlusFilter(v.CategoryId, v.SuitableFor65Plus))
-            .Where(v => WorkTypeLabels.MatchesFilter(v.WorkTypes, v.WorkTypeLabels, workType))
-            .Where(v => VacancyTextSearch.Matches(v, q))
-            .Where(v => HoursRangeRules.MatchesFilter(
-                v.MinHoursPerWeek,
-                v.MaxHoursPerWeek,
-                filterMinHours,
-                filterMaxHours))
-            .ToList();
-
-        List<(Core.Entities.Vacancy Vacancy, int? TravelMinutes, double? DistanceKm)> candidates;
+        List<(VacancyDiscoveryRecord Record, int? TravelMinutes, double? DistanceKm)> candidates;
         if (originLat is null || originLng is null)
         {
-            // No origin: show all matching work-type vacancies (transport is only a routing preference once located).
-            candidates = workTypeFiltered
-                .OrderBy(v => v.Title)
-                .Select(v => (v, (int?)null, (double?)null))
+            // No origin: show all matching vacancies (transport is only a routing preference once located).
+            candidates = records
+                .OrderBy(v => v.Title, StringComparer.CurrentCultureIgnoreCase)
+                .Select(v => (Record: v, TravelMinutes: (int?)null, DistanceKm: (double?)null))
                 .ToList();
         }
         else
         {
-            var transportFiltered = workTypeFiltered
-                .Where(v => TransportLabels.MatchesRequired(TransportLabels.Expand(v.RequiredTransport), transport))
-                .ToList();
-
             var lat = originLat.Value;
             var lng = originLng.Value;
-            // Crow-flies shortlist already applied in LoadActiveVacanciesAsync when origin/reach set.
-            var nearby = transportFiltered;
-
-            var routeTasks = nearby.Select(async vacancy =>
-            {
-                var route = await _routing.GetRouteAsync(
-                    lat,
-                    lng,
-                    vacancy.Location.Latitude,
-                    vacancy.Location.Longitude,
-                    mode,
-                    cancellationToken);
-
-                var travelMinutes = (int)Math.Ceiling(route.DurationSeconds / 60.0);
-                var distanceKm = route.DistanceMeters / 1000.0;
-                return (vacancy, travelMinutes, distanceKm);
-            });
-
-            var routed = await Task.WhenAll(routeTasks);
-            candidates = routed
-                .Where(r => !(radiusKm is > 0 && r.distanceKm > radiusKm.Value))
-                .Where(r => r.travelMinutes <= maxMinutes)
-                .OrderBy(r => r.travelMinutes)
-                .ThenBy(r => r.vacancy.Title)
-                .Select(r => (r.vacancy, (int?)r.travelMinutes, (double?)Math.Round(r.distanceKm, 2)))
+            var reachKm = TravelReach.MaxCrowFliesKm(mode, maxMinutes, radiusKm);
+            candidates = records
+                .Where(v => VacancyDiscoveryQuery.MatchesTransport(v, transport))
+                .Select(v =>
+                {
+                    var (travelMinutes, distanceKm) = TravelReach.Estimate(
+                        lat, lng, v.Latitude, v.Longitude, mode);
+                    return (Record: v, TravelMinutes: (int?)travelMinutes, DistanceKm: (double?)distanceKm);
+                })
+                .Where(r => r.TravelMinutes is int minutes && minutes <= maxMinutes)
+                .Where(r => r.DistanceKm is double km && km <= reachKm)
+                .Where(r => !(radiusKm is > 0 && r.DistanceKm > radiusKm.Value))
+                .OrderBy(r => r.TravelMinutes)
+                .ThenBy(r => r.Record.Title, StringComparer.CurrentCultureIgnoreCase)
                 .ToList();
         }
 
-        // Resolve wages before translation so min/max filters avoid OpenAI work on discarded rows.
-        var wageReady = new List<(Core.Entities.Vacancy Vacancy, int? TravelMinutes, double? DistanceKm, VacancyListItemDto Dto)>(candidates.Count);
+        var results = new List<VacancyListItemDto>(candidates.Count);
         foreach (var c in candidates)
         {
-            var dto = MapToDto(c.Vacancy, showWage, age, c.TravelMinutes, c.DistanceKm, includeDescription: false);
-            if (age is not null && (minHourlyWage is not null || maxHourlyWage is not null))
+            var dto = MapRecordToDto(c.Record, showWage, age, c.TravelMinutes, c.DistanceKm, includeDescription: false);
+            if (age is not null && (minHourlyWage is not null || maxHourlyWage is not null)
+                && !VacancyDiscoveryQuery.MatchesWageFilter(dto.HourlyWage, minHourlyWage, maxHourlyWage))
             {
-                if (dto.HourlyWage is not decimal wage
-                    || (minHourlyWage is not null && wage < minHourlyWage)
-                    || (maxHourlyWage is not null && wage > maxHourlyWage))
-                {
-                    continue;
-                }
+                continue;
             }
 
-            wageReady.Add((c.Vacancy, c.TravelMinutes, c.DistanceKm, dto));
+            results.Add(dto);
         }
 
-        var results = await TranslateManyAsync(wageReady.Select(x => x.Dto).ToList(), targetLanguage, cancellationToken);
+        // Banenkaart list stays on the indexed snapshot — no OpenAI wait on open.
         return Ok(results);
     }
 
@@ -671,6 +614,7 @@ public class VacanciesController : ControllerBase
         }
 
         await _db.SaveChangesAsync(cancellationToken);
+        _discoveryIndex.Invalidate();
 
         if (appliedGoodwill && actor is not null)
         {
@@ -1181,6 +1125,7 @@ public class VacanciesController : ControllerBase
         VacancyProductOutcome result,
         CancellationToken cancellationToken)
     {
+        _discoveryIndex.Invalidate();
         var freePublishUntil = (await _features.GetAsync(cancellationToken)).FreePublishUntil;
         return new(
             MapToDto(
@@ -1455,6 +1400,130 @@ public class VacanciesController : ControllerBase
     {
         var dto = MapToDto(v, showWage, ageYears, travelMinutes, distanceKm, includeDescription: includeDescription);
         return await TranslateDtoAsync(dto, targetLanguage, cancellationToken);
+    }
+
+    private static VacancyListItemDto MapRecordToDto(
+        VacancyDiscoveryRecord r,
+        bool showWage,
+        int? ageYears = null,
+        int? travelMinutes = null,
+        double? distanceKm = null,
+        bool includeDescription = false)
+    {
+        decimal? hourly = null;
+        IReadOnlyList<WageByAgeDto>? wageByAge = null;
+        int? resolvedForAge = null;
+
+        if (showWage)
+        {
+            if (ageYears is int age)
+            {
+                hourly = VacancyWageResolver.ResolveHourlyWage(
+                    r.HourlyWage,
+                    r.SalaryRates.Count == 0
+                        ? null
+                        : r.SalaryRates.Select(b => new CompanySalaryRate
+                        {
+                            AgeYears = b.AgeYears,
+                            HourlyRate = b.HourlyRate,
+                            Label = b.Label
+                        }),
+                    age);
+                resolvedForAge = age;
+            }
+            else
+            {
+                wageByAge = VacancyWageResolver.GetWageBands(
+                        r.HourlyWage,
+                        r.SalaryRates.Count == 0
+                            ? null
+                            : r.SalaryRates.Select(b => new CompanySalaryRate
+                            {
+                                AgeYears = b.AgeYears,
+                                HourlyRate = b.HourlyRate,
+                                Label = b.Label
+                            }))
+                    .Select(b => new WageByAgeDto(b.AgeYears, b.HourlyRate, b.Label))
+                    .ToList();
+            }
+        }
+
+        var featured = VacancyHighlightRules.IsActive(r.IsHighlighted, r.HighlightedUntil, DateTime.UtcNow);
+
+        return new VacancyListItemDto(
+            r.Id,
+            r.Title,
+            includeDescription ? r.Description : string.Empty,
+            hourly,
+            r.StartDate,
+            r.EndDate,
+            r.Status.ToString(),
+            r.CompanyId,
+            r.CompanyName,
+            r.CompanyAddress,
+            r.CompanyLogoUrl,
+            r.ImageUrl,
+            r.Latitude,
+            r.Longitude,
+            r.RequiredTransportLabels,
+            showWage,
+            travelMinutes,
+            distanceKm,
+            featured,
+            featured ? r.HighlightedUntil : null,
+            r.ExtensionCount,
+            r.VideoUrl,
+            r.SalaryTableId,
+            wageByAge,
+            resolvedForAge,
+            r.WorkTypeLabelList,
+            0,
+            0,
+            0,
+            r.RequiredDrivingLicense,
+            r.RequiredEducation,
+            r.MinimumEmployers,
+            r.FulfilledByApplicationId,
+            r.CreatedVia.ToString(),
+            r.MinHoursPerWeek,
+            r.MaxHoursPerWeek,
+            r.FlexibleTimes,
+            r.ScheduleJson,
+            r.LegalWorksAfter19,
+            r.LegalNightShift23To06,
+            r.LegalAdultSupervisorPresent,
+            r.LegalHandlesMoneyOrClosing,
+            r.LegalHeavyOrHazardousWork,
+            0,
+            0,
+            r.OfferedByLabel,
+            r.ShowClientAddressOnMap,
+            r.IntermediaryCompanyId,
+            r.Kind.ToString(),
+            r.ExclusivitySettingId,
+            r.ExclusivityName,
+            r.ExclusivityIsOpen,
+            r.ExclusivitySchoolDomain,
+            null,
+            r.ExclusivityEducations,
+            r.CategoryId,
+            r.CategoryName,
+            r.CategoryColorHex,
+            false,
+            false,
+            null,
+            null,
+            null,
+            false,
+            null,
+            r.SuitableFor65Plus,
+            r.KvkNumber,
+            r.Vestigingsnummer,
+            r.ContentModerationPassed,
+            false,
+            r.Status.ToString(),
+            null,
+            r.RequireEmailVerification);
     }
 
     private static VacancyListItemDto MapToDto(
