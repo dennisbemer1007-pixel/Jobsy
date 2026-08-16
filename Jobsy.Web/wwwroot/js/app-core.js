@@ -787,6 +787,7 @@ window.jobsyMaps = (function () {
     "use strict";
 
     var pending = {};
+    var pendingPaint = {};
     var css = [
         "/lib/leaflet/leaflet.css",
         "/lib/leaflet/MarkerCluster.css",
@@ -797,10 +798,10 @@ window.jobsyMaps = (function () {
         "/lib/leaflet/leaflet.markercluster.min.js"
     ];
     var discoveryScripts = [
-        "/js/jobMap.js?v=20260816-tbt"
+        "/js/jobMap.js?v=20260816-map"
     ];
     var detailScripts = [
-        "/js/vacancyDetailMap.js?v=20260816-tbt"
+        "/js/vacancyDetailMap.js?v=20260816-map"
     ];
 
     function loadCss(href) {
@@ -869,22 +870,88 @@ window.jobsyMaps = (function () {
         return urls;
     }
 
-    return {
-        ensure: function (kind) {
-            kind = normalizeKind(kind);
-            if (isReady(kind)) {
-                return Promise.resolve();
+    function afterNextPaint(cb) {
+        var run = function () {
+            if (typeof requestIdleCallback === "function") {
+                requestIdleCallback(function () { cb(); }, { timeout: 700 });
+            } else {
+                setTimeout(cb, 120);
             }
-            if (pending[kind]) {
-                return pending[kind];
-            }
-            pending[kind] = Promise.all(css.map(loadCss)).then(function () {
-                return loadScriptsInOrder(scriptsFor(kind), 0);
-            }).catch(function (err) {
-                pending[kind] = null;
-                throw err;
+        };
+        if (typeof requestAnimationFrame === "function") {
+            requestAnimationFrame(function () {
+                requestAnimationFrame(run);
             });
+        } else {
+            run();
+        }
+    }
+
+    function whenMapSlotReady(elementId, cb) {
+        var el = elementId ? document.getElementById(elementId) : null;
+        var done = false;
+        var finish = function () {
+            if (done) {
+                return;
+            }
+            done = true;
+            if (io) {
+                io.disconnect();
+            }
+            clearTimeout(fallback);
+            afterNextPaint(cb);
+        };
+        var io = null;
+        if (el && typeof IntersectionObserver === "function") {
+            io = new IntersectionObserver(function (entries) {
+                for (var i = 0; i < entries.length; i++) {
+                    if (entries[i].isIntersecting) {
+                        finish();
+                        return;
+                    }
+                }
+            }, { rootMargin: "80px" });
+            io.observe(el);
+        }
+        var fallback = setTimeout(finish, el ? 900 : 0);
+        if (!el) {
+            finish();
+        }
+    }
+
+    function ensure(kind) {
+        kind = normalizeKind(kind);
+        if (isReady(kind)) {
+            return Promise.resolve();
+        }
+        if (pending[kind]) {
             return pending[kind];
+        }
+        pending[kind] = Promise.all(css.map(loadCss)).then(function () {
+            return loadScriptsInOrder(scriptsFor(kind), 0);
+        }).catch(function (err) {
+            pending[kind] = null;
+            throw err;
+        });
+        return pending[kind];
+    }
+
+    return {
+        ensure: ensure,
+        ensureAfterPaint: function (kind, elementId) {
+            kind = normalizeKind(kind);
+            if (isReady(kind) || pending[kind]) {
+                return ensure(kind);
+            }
+            if (pendingPaint[kind]) {
+                return pendingPaint[kind];
+            }
+            pendingPaint[kind] = new Promise(function (resolve, reject) {
+                whenMapSlotReady(elementId, function () {
+                    ensure(kind).then(resolve, reject);
+                });
+            });
+            return pendingPaint[kind];
         }
     };
 })();

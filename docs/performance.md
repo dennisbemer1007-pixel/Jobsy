@@ -12,6 +12,16 @@ LCP was een Carto-tegel (`leaflet-tile`) met **20s load delay**: de netwerkrij s
 
 Na die eerste ronde was het gewicht weg (36 requests / ~334&nbsp;KB) en LCP ~2.4s, maar de labscore bleef hangen: de homepage prerenderde **alle ~278 job cards** (~6.5k DOM-nodes, TBT 830ms) en de cookiebanner verscheen pas na JS (late LCP-tekst).
 
+## Homepage-kaart (aug 2026)
+
+De banenkaart blijft de first-paint kernervaring (geen Funda-klik-om-te-tonen):
+
+- Home prerendert de kaart-shell: NL-preview SVG + 278-cluster, zonder Leaflet/tiles.
+- Leaflet + MarkerCluster + Carto-tegels laden pas na first paint (`requestIdleCallback` / Intersection Observer).
+- Soft fade zodra de eerste tegel binnen is — geen leeg grijs vlak.
+- Cookie-banner is compact, paint-contained, en wint de LCP niet van de kaart.
+- Alleen `app.css` en de kaart-preview worden gepreload; geen Leaflet op elke pagina.
+
 ## Wat er nu in de code zit
 
 ### Images
@@ -24,11 +34,11 @@ Na die eerste ronde was het gewicht weg (36 requests / ~334&nbsp;KB) en LCP ~2.4
 
 ### JavaScript / critical path
 
-- Leaflet + MarkerCluster staan lokaal in `wwwroot/lib/leaflet/` en laden pas als een kaartpagina `jobsyMaps.ensure()` aanroept.
+- Leaflet + MarkerCluster staan lokaal in `wwwroot/lib/leaflet/` en laden pas via `jobsyMaps.ensureAfterPaint()` (discovery) of `ensure()` (detail).
 - First-party JS is gebundeld in `js/app-core.js` (geo, culture, session, cookies, download, richtext, maps-loader).
 - `jobsyMaps.ensure("discovery"|"detail")` laadt niet beide kaart-scripts op elke pagina.
-- Cookiebanner staat in de eerste HTML (compact); `html.cookie-consent-known` verbergt hem vóór paint als de keuze al bekend is.
-- `app.css` wordt gepreload. Geen webfonts (systeemstack).
+- Cookiebanner staat in de eerste HTML (compact); `html.cookie-consent-known` verbergt hem vóór paint als de keuze al bekend is. Paint-containment houdt hem buiten de LCP.
+- Alleen `app.css` (globaal) en `nl-preview.svg` (homepage `HeadContent`) worden gepreload. Geen webfonts.
 
 ### Server / edge
 

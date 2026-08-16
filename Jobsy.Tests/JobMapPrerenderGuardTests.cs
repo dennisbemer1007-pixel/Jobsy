@@ -1,16 +1,18 @@
 namespace Jobsy.Tests;
 
 /// <summary>
-/// Leaflet binds to #job-map. Prerender + hydrate replaces that node and leaves a blank map.
+/// Homepage prerenders a map shell. Leaflet binds only after hydrate + idle,
+/// so replacing the prerendered #job-map node cannot leave a dead map.
 /// </summary>
 public class JobMapPrerenderGuardTests
 {
     [Fact]
-    public void Home_disables_prerender_so_leaflet_keeps_its_map_node()
+    public void Home_prerenders_the_map_shell_without_binding_leaflet()
     {
         var home = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "Components", "Pages", "Home.razor"));
-        Assert.Contains("InteractiveServerRenderMode(prerender: false)", home);
-        Assert.DoesNotContain("prerender: true", home);
+        Assert.Contains("InteractiveServerRenderMode(prerender: true)", home);
+        Assert.DoesNotContain("prerender: false", home);
+        Assert.Contains("images/maps/nl-preview.svg", home);
     }
 
     [Fact]
@@ -30,7 +32,9 @@ public class JobMapPrerenderGuardTests
         Assert.Contains("js/app-core.js", app);
         Assert.DoesNotContain("app-core.js?v=20260816-perf\" defer", app);
         Assert.Contains("rel=\"preload\"", app);
-        Assert.Contains("lib/leaflet/leaflet.min.js", app);
+        Assert.Contains("css/app.css", app);
+        Assert.DoesNotContain("lib/leaflet/leaflet.min.js", app);
+        Assert.DoesNotContain("lib/leaflet/leaflet.css", app);
         Assert.DoesNotContain("<script src=\"https://unpkg.com/leaflet", app);
 
         var maps = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "wwwroot", "js", "maps-loader.js"));

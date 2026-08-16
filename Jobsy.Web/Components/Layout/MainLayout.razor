@@ -49,9 +49,12 @@
     </main>
 
     <BottomNav HasItemsChanged="OnBottomNavItemsChanged" />
-    <LobsyAssistantChat HasBottomNav="_hasBottomNav" />
-    <FeedbackWidget HasBottomNav="_hasBottomNav" />
-    <ConsentReacceptDialog />
+    @if (RendererInfo.IsInteractive)
+    {
+        <LobsyAssistantChat HasBottomNav="_hasBottomNav" />
+        <FeedbackWidget HasBottomNav="_hasBottomNav" />
+        <ConsentReacceptDialog />
+    }
     <CookieConsentBanner OnConsentChanged="OnCookieConsentChanged" />
     <SessionIdleGuard />
 </div>

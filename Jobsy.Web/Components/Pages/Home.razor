@@ -1,10 +1,13 @@
 @page "/"
-@* Leaflet binds to #job-map in JS. Prerender + hydrate replaces that node and leaves a dead map. *@
-@rendermode @(new InteractiveServerRenderMode(prerender: false))
+@* Prerender the map shell (placeholder + chrome). Leaflet binds only after hydrate + idle. *@
+@rendermode @(new InteractiveServerRenderMode(prerender: true))
 @inject CultureState Culture
 @implements IDisposable
 
 <PageTitle>@Culture["Page.JobMapTitle"]</PageTitle>
+<HeadContent>
+    <link rel="preload" href="images/maps/nl-preview.svg" as="image" type="image/svg+xml" fetchpriority="high" />
+</HeadContent>
 
 <VacancyDiscovery />
 

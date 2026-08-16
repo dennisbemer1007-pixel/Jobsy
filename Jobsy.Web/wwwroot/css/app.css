@@ -3280,6 +3280,62 @@ a {
     height: 100%;
 }
 
+.job-map-placeholder {
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    overflow: hidden;
+    background: var(--map-land);
+    pointer-events: none;
+    transition: opacity 320ms ease;
+}
+
+.map-stage.is-live .job-map-placeholder {
+    opacity: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .job-map-placeholder {
+        transition: none;
+    }
+}
+
+.job-map-placeholder__img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: 42% 48%;
+}
+
+.job-map-placeholder__cluster {
+    position: absolute;
+    width: 44px;
+    height: 44px;
+    transform: translate(-50%, -50%);
+    z-index: 3;
+}
+
+.job-map-placeholder__cluster--main {
+    left: 38%;
+    top: 48%;
+    width: 52px;
+    height: 52px;
+}
+
+.job-map-placeholder__cluster--ams {
+    left: 42%;
+    top: 36%;
+}
+
+.job-map-placeholder__cluster--ehv {
+    left: 48%;
+    top: 62%;
+    width: 38px;
+    height: 38px;
+}
+
 /*
  * Vacancy detail map must fill .vacancy-location__map-wrap.
  * Placed after .job-map so shared banenkaart sizing never collapses this container.
@@ -12084,6 +12140,7 @@ html.cookie-consent-known .cookie-consent {
   background: linear-gradient(180deg, rgba(15, 45, 92, 0.96), rgba(10, 32, 68, 0.98));
   color: #f7f4f0;
   box-shadow: 0 -8px 28px rgba(15, 45, 92, 0.28);
+  contain: layout paint style;
 }
 
 .cookie-consent__inner {

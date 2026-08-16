@@ -1,0 +1,102 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 800" width="600" height="800" role="img" aria-label="Kaart van Nederland">
+  <defs>
+    <linearGradient id="water" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#8ec5dc"/>
+      <stop offset="1" stop-color="#7eb6d0"/>
+    </linearGradient>
+    <linearGradient id="land" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#eef3e6"/>
+      <stop offset="1" stop-color="#e4eddf"/>
+    </linearGradient>
+    <filter id="soft" x="-2%" y="-2%" width="104%" height="104%">
+      <feDropShadow dx="0" dy="1" stdDeviation="1.2" flood-color="#5a7a88" flood-opacity=".18"/>
+    </filter>
+  </defs>
+  <rect width="600" height="800" fill="url(#water)"/>
+  <!-- North Sea texture -->
+  <g fill="#9dcee3" opacity=".35">
+    <circle cx="70" cy="180" r="18"/><circle cx="120" cy="90" r="12"/><circle cx="40" cy="320" r="16"/>
+    <circle cx="90" cy="480" r="14"/><circle cx="30" cy="600" r="20"/>
+  </g>
+  <!-- Land mass -->
+  <path filter="url(#soft)" fill="url(#land)" stroke="#d5e0cf" stroke-width="1.2" d="
+    M168 78
+    C190 52 230 48 268 58
+    C300 42 338 48 362 70
+    C400 62 438 78 458 108
+    C488 118 508 148 498 186
+    C518 210 528 248 512 286
+    C528 318 518 352 492 372
+    C508 410 498 452 468 478
+    C478 518 458 558 428 582
+    C438 620 418 658 388 678
+    C372 718 348 748 318 762
+    C292 778 268 752 278 722
+    C268 698 278 672 298 654
+    C278 638 248 628 228 642
+    C198 628 168 598 178 562
+    C148 538 128 498 142 458
+    C118 428 98 388 112 348
+    C88 318 78 278 96 242
+    C78 210 88 172 118 152
+    C128 122 148 96 168 78 Z"/>
+  <!-- Wadden islands -->
+  <g fill="#e8f0e2" stroke="#d5e0cf" stroke-width=".8">
+    <ellipse cx="262" cy="46" rx="22" ry="8"/>
+    <ellipse cx="312" cy="38" rx="18" ry="7"/>
+    <ellipse cx="358" cy="42" rx="16" ry="6"/>
+    <ellipse cx="402" cy="52" rx="14" ry="6"/>
+  </g>
+  <!-- IJsselmeer / Markermeer -->
+  <path fill="#7eb6d0" stroke="#6aa6c2" stroke-width="1" d="
+    M248 168
+    C278 148 318 158 332 188
+    C348 218 338 258 312 278
+    C286 298 248 288 232 258
+    C216 228 222 188 248 168 Z"/>
+  <path fill="#89bfd6" d="M268 198 C292 188 312 204 308 226 C300 246 274 248 262 228 C252 210 254 204 268 198 Z"/>
+  <!-- Parks / fields -->
+  <g fill="#cfe6c4" opacity=".85">
+    <ellipse cx="210" cy="300" rx="28" ry="16"/>
+    <ellipse cx="360" cy="240" rx="22" ry="14"/>
+    <ellipse cx="300" cy="420" rx="34" ry="18"/>
+    <ellipse cx="250" cy="520" rx="26" ry="14"/>
+    <ellipse cx="390" cy="560" rx="20" ry="12"/>
+    <ellipse cx="330" cy="680" rx="16" ry="20"/>
+  </g>
+  <!-- Urban wash (Randstad + cities) -->
+  <g fill="#efe4d6" opacity=".7">
+    <ellipse cx="228" cy="268" rx="36" ry="22"/>
+    <ellipse cx="198" cy="318" rx="24" ry="16"/>
+    <ellipse cx="248" cy="348" rx="20" ry="14"/>
+    <ellipse cx="320" cy="300" rx="18" ry="12"/>
+    <ellipse cx="360" cy="480" rx="16" ry="12"/>
+    <ellipse cx="400" cy="220" rx="14" ry="10"/>
+  </g>
+  <!-- Major roads -->
+  <g fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" opacity=".9">
+    <path d="M200 250 C230 270 250 310 270 360 C290 420 310 500 340 580 C360 640 330 700 318 750"/>
+    <path d="M170 330 C220 340 280 330 340 300 C390 270 430 230 470 190"/>
+    <path d="M210 290 C240 250 270 210 300 180"/>
+    <path d="M250 360 C300 390 350 430 390 490"/>
+  </g>
+  <g fill="none" stroke="#f2e7a4" stroke-width="1.5" stroke-linecap="round" opacity=".75">
+    <path d="M190 400 C230 410 270 400 310 380"/>
+    <path d="M280 240 C300 280 310 330 300 380"/>
+  </g>
+  <!-- Rivers -->
+  <g fill="none" stroke="#7eb6d0" stroke-width="2" stroke-linecap="round" opacity=".8">
+    <path d="M210 430 C250 440 300 450 340 470 C380 490 400 530 390 570"/>
+    <path d="M180 360 C200 380 210 410 200 450"/>
+  </g>
+  <!-- City ticks -->
+  <g fill="#c5b8a8">
+    <circle cx="222" cy="262" r="3.2"/>
+    <circle cx="196" cy="322" r="2.8"/>
+    <circle cx="252" cy="350" r="2.6"/>
+    <circle cx="324" cy="298" r="2.4"/>
+    <circle cx="402" cy="214" r="2.4"/>
+    <circle cx="362" cy="478" r="2.4"/>
+    <circle cx="330" cy="690" r="2.2"/>
+  </g>
+</svg>
