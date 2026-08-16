@@ -751,6 +751,83 @@ public class RoleFunctionalRegressionTests : IClassFixture<RoleFunctionalWebAppF
     }
 
     [Fact]
+    public async Task Every_login_role_can_open_home_and_core_reads()
+    {
+        // Guest
+        var guest = _factory.CreateClient();
+        Assert.Equal(HttpStatusCode.OK, (await guest.GetAsync("api/vacancies/discover?transport=Fiets&maxMinutes=60")).StatusCode);
+        Assert.Equal(HttpStatusCode.OK, (await guest.GetAsync("api/wages")).StatusCode);
+        Assert.Equal(HttpStatusCode.Unauthorized, (await guest.GetAsync("api/me/profile")).StatusCode);
+
+        // Candidate home + saved/applications
+        var candidate = CandidateClient();
+        Assert.Equal(HttpStatusCode.OK, (await candidate.GetAsync("api/me/profile")).StatusCode);
+        Assert.Equal(HttpStatusCode.OK, (await candidate.GetAsync("api/me/applications")).StatusCode);
+        Assert.Equal(HttpStatusCode.OK, (await candidate.GetAsync("api/me/metrics/summary?period=week")).StatusCode);
+        Assert.Equal(HttpStatusCode.OK, (await candidate.GetAsync("api/me/likes")).StatusCode);
+        Assert.Equal(HttpStatusCode.OK, (await candidate.GetAsync("api/me/shares")).StatusCode);
+        Assert.Equal(HttpStatusCode.OK, (await candidate.GetAsync("api/notifications/unread-count")).StatusCode);
+        Assert.Equal(HttpStatusCode.Forbidden, (await candidate.GetAsync("api/metrics/summary?period=week")).StatusCode);
+        Assert.Equal(HttpStatusCode.Forbidden, (await candidate.GetAsync("api/vacancies/manage")).StatusCode);
+
+        // Branch / regional / enterprise / intermediary employer home
+        foreach (var email in new[]
+                 {
+                     _factory.EmployerEmail,
+                     _factory.RegionalEmail,
+                     _factory.EnterpriseEmail,
+                     _factory.IntermediaryEmail
+                 })
+        {
+            var client = Authed(email);
+            Assert.Equal(HttpStatusCode.OK, (await client.GetAsync("api/metrics/summary?period=week")).StatusCode);
+            Assert.Equal(HttpStatusCode.OK, (await client.GetAsync("api/metrics/vacancy-performance?period=week&take=3")).StatusCode);
+            Assert.Equal(HttpStatusCode.OK, (await client.GetAsync("api/vacancies/manage")).StatusCode);
+            Assert.Equal(HttpStatusCode.OK, (await client.GetAsync("api/companies/mine")).StatusCode);
+            Assert.Equal(HttpStatusCode.OK, (await client.GetAsync("api/tokens/balance")).StatusCode);
+            Assert.Equal(HttpStatusCode.OK, (await client.GetAsync("api/salary-tables")).StatusCode);
+            Assert.Equal(HttpStatusCode.OK, (await client.GetAsync("api/notifications/unread-count")).StatusCode);
+            Assert.Equal(HttpStatusCode.Forbidden, (await client.GetAsync("api/admin/users")).StatusCode);
+        }
+
+        Assert.Equal(HttpStatusCode.OK, (await EmployerClient().GetAsync("api/applications")).StatusCode);
+        Assert.Equal(HttpStatusCode.OK, (await Authed(_factory.EnterpriseEmail).GetAsync("api/company-users")).StatusCode);
+        Assert.Equal(HttpStatusCode.OK, (await Authed(_factory.IntermediaryEmail).GetAsync("api/metrics/client-performance?period=week")).StatusCode);
+        Assert.Equal(HttpStatusCode.Forbidden, (await EmployerClient().GetAsync("api/company-users")).StatusCode);
+
+        // Admin home + settings/finance/logging
+        var admin = AdminClient();
+        Assert.Equal(HttpStatusCode.OK, (await admin.GetAsync("api/metrics/summary?period=week")).StatusCode);
+        Assert.Equal(HttpStatusCode.OK, (await admin.GetAsync("api/metrics/vacancy-performance?period=week&take=3")).StatusCode);
+        Assert.Equal(HttpStatusCode.OK, (await admin.GetAsync("api/admin/users")).StatusCode);
+        Assert.Equal(HttpStatusCode.OK, (await admin.GetAsync("api/admin/vacancies")).StatusCode);
+        Assert.Equal(HttpStatusCode.OK, (await admin.GetAsync("api/admin/companies")).StatusCode);
+        Assert.Equal(HttpStatusCode.OK, (await admin.GetAsync("api/integrations/health")).StatusCode);
+        Assert.Equal(HttpStatusCode.OK, (await admin.GetAsync("api/platform-logs")).StatusCode);
+        Assert.Equal(HttpStatusCode.OK, (await admin.GetAsync("api/settings/token-pricing")).StatusCode);
+        Assert.Equal(HttpStatusCode.OK, (await admin.GetAsync("api/feedback")).StatusCode);
+        Assert.Equal(HttpStatusCode.OK, (await admin.GetAsync("api/notifications/unread-count")).StatusCode);
+
+        // Sales + ambassadeur home + toolkit/finance reads
+        var sales = Authed(_factory.SalesEmail);
+        Assert.Equal(HttpStatusCode.OK, (await sales.GetAsync("api/sales-managers/me/dashboard")).StatusCode);
+        Assert.Equal(HttpStatusCode.OK, (await sales.GetAsync("api/sales-managers/me/profile")).StatusCode);
+        Assert.Equal(HttpStatusCode.OK, (await sales.GetAsync("api/sales-managers/me/invoices")).StatusCode);
+        Assert.Equal(HttpStatusCode.OK, (await sales.GetAsync("api/sales-commercial/catalog")).StatusCode);
+        Assert.Equal(HttpStatusCode.OK, (await sales.GetAsync("api/notifications/unread-count")).StatusCode);
+        Assert.Equal(HttpStatusCode.Forbidden, (await sales.GetAsync("api/admin/users")).StatusCode);
+        Assert.Equal(HttpStatusCode.Forbidden, (await sales.GetAsync("api/vacancies/manage")).StatusCode);
+
+        var amb = Authed(_factory.AmbassadeurEmail);
+        Assert.Equal(HttpStatusCode.OK, (await amb.GetAsync("api/ambassadeurs/me/dashboard")).StatusCode);
+        Assert.Equal(HttpStatusCode.OK, (await amb.GetAsync("api/ambassadeurs/me/profile")).StatusCode);
+        Assert.Equal(HttpStatusCode.OK, (await amb.GetAsync("api/ambassadeurs/me/invoices")).StatusCode);
+        Assert.Equal(HttpStatusCode.OK, (await amb.GetAsync("api/notifications/unread-count")).StatusCode);
+        Assert.Equal(HttpStatusCode.Forbidden, (await amb.GetAsync("api/vacancies/manage")).StatusCode);
+        Assert.Equal(HttpStatusCode.Forbidden, (await amb.GetAsync("api/admin/users")).StatusCode);
+    }
+
+    [Fact]
     public async Task Regional_cannot_react_to_applications()
     {
         var (_, pendingId) = await _factory.SeedVacancyWithPendingApplicationAsync();

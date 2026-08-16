@@ -137,6 +137,34 @@ public sealed class JobsyApiAuthHandler : DelegatingHandler
 
     private async Task<ClaimsPrincipal> ResolveUserAsync()
     {
+        var user = await ResolveUserCoreAsync();
+        if (user.Identity?.IsAuthenticated == true)
+        {
+            return user;
+        }
+
+        var httpContext = _httpContextAccessor.HttpContext;
+        if (httpContext is null || !httpContext.Request.Cookies.ContainsKey("Jobsy.Auth"))
+        {
+            return user;
+        }
+
+        // Cookie is present but the circuit principal is still catching up after login.
+        for (var i = 0; i < 6; i++)
+        {
+            await Task.Delay(75);
+            user = await ResolveUserCoreAsync();
+            if (user.Identity?.IsAuthenticated == true)
+            {
+                return user;
+            }
+        }
+
+        return user;
+    }
+
+    private async Task<ClaimsPrincipal> ResolveUserCoreAsync()
+    {
         var httpContext = _httpContextAccessor.HttpContext;
         var httpUser = httpContext?.User;
 

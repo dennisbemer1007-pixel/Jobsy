@@ -11,13 +11,17 @@ public static class JobsyApiClientFactory
 {
     public static HttpClient Create(IServiceProvider sp, IConfiguration configuration)
     {
-        var handler = new JobsyApiAuthHandler(
+        var auth = new JobsyApiAuthHandler(
             sp.GetRequiredService<IHttpContextAccessor>(),
             sp.GetRequiredService<AuthenticationStateProvider>(),
             sp,
             configuration)
         {
             InnerHandler = new HttpClientHandler()
+        };
+        var handler = new JobsyApiTransientRetryHandler
+        {
+            InnerHandler = auth
         };
 
         var apiBaseUrl = JobsyPublicUrl.NormalizeBaseUrl(

@@ -85,7 +85,7 @@
         </div>
     </header>
 
-    @if (_error is not null)
+    @if (_error is not null && _metrics.Count == 0 && !_loading)
     {
         <p class="state-message error">@_error</p>
     }
@@ -143,6 +143,11 @@
 
     protected override async Task OnInitializedAsync()
     {
+        if (!RendererInfo.IsInteractive)
+        {
+            return;
+        }
+
         if (EnableRaamflyer)
         {
             await LoadCompaniesAsync();
@@ -303,18 +308,18 @@
     {
         _loading = true;
         _error = null;
-        try
+        var (metrics, error) = await HomeDashboardLoad.FetchAsync(async () =>
+            (await Api.GetEmployerMetricsSummaryAsync(_period)).ToList());
+        if (error is not null)
         {
-            _metrics = (await Api.GetEmployerMetricsSummaryAsync(_period)).ToList();
-        }
-        catch (Exception ex)
-        {
-            _error = ex.Message;
+            _error = error;
             _metrics = [];
             _vacancyBoard = null;
             _loading = false;
             return;
         }
+
+        _metrics = metrics ?? [];
 
         try
         {

@@ -20,13 +20,13 @@
         </div>
     </header>
 
-    @if (_loading)
-    {
-        <p class="state-message">@Culture["Common.Loading"]</p>
-    }
-    else if (!string.IsNullOrEmpty(_error))
+    @if (_error is not null && _dashboard is null && !_loading)
     {
         <p class="state-message error">@_error</p>
+    }
+    else if (_loading && _dashboard is null)
+    {
+        <p class="state-message">@Culture["Common.Loading"]</p>
     }
     else if (_dashboard is not null && !_dashboard.IsOnboardingComplete)
     {
@@ -155,17 +155,14 @@
 
     protected override async Task OnInitializedAsync()
     {
-        try
+        if (!RendererInfo.IsInteractive)
         {
-            _dashboard = await Api.GetMySalesManagerDashboardAsync();
+            return;
         }
-        catch (Exception ex)
-        {
-            _error = ex.Message;
-        }
-        finally
-        {
-            _loading = false;
-        }
+
+        var (data, error) = await HomeDashboardLoad.FetchAsync(Api.GetMySalesManagerDashboardAsync);
+        _dashboard = data;
+        _error = error;
+        _loading = false;
     }
 }
