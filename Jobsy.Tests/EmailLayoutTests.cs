@@ -12,12 +12,21 @@ public class EmailLayoutTests
             "https://lobsy.nl",
             preheader: "Voorbeeld");
 
-        Assert.Contains("lobsy.png", html, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("lobsy-128.png", html, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("/images/brand/lobsy.png", html, StringComparison.OrdinalIgnoreCase);
         Assert.Contains("Lobsy", html);
         Assert.Contains("Hallo", html);
         Assert.Contains("Body tekst", html);
         Assert.Contains("Voorbeeld", html);
         Assert.Contains(EmailLayout.BrandNavy, html);
+    }
+
+    [Fact]
+    public void LogoUrl_points_at_the_small_png_not_the_site_mark()
+    {
+        var url = EmailLayout.LogoUrl("https://lobsy.nl");
+        Assert.Equal("https://lobsy.nl/images/brand/lobsy-128.png?v=20260816-mail", url);
+        Assert.Contains(EmailLayout.LogoRelativePath, url);
     }
 
     [Fact]

@@ -42,8 +42,14 @@ public static class EmailLayout
         return origin.TrimEnd('/') + path;
     }
 
+    /// <summary>Small PNG for mail clients (not the 568&nbsp;KB site mark).</summary>
+    public const string LogoRelativePath = "/images/brand/lobsy-128.png?v=20260816-mail";
+
+    /// <summary>Inline CID used when the sender embeds the logo bytes.</summary>
+    public const string LogoContentId = "lobsy-logo";
+
     public static string LogoUrl(string? publicWebBaseUrl)
-        => Absolute(publicWebBaseUrl, "/images/brand/lobsy.png?v=brand");
+        => Absolute(publicWebBaseUrl, LogoRelativePath);
 
     public static string VacancyUrl(string? publicWebBaseUrl, Guid vacancyId)
         => Absolute(publicWebBaseUrl, $"/vacancies/{vacancyId}");

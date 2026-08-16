@@ -1,6 +1,7 @@
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text.Json;
+using Jobsy.Core.Email;
 using Jobsy.Core.Entities;
 using Jobsy.Core.Enums;
 using Jobsy.Core.Interfaces;
@@ -97,12 +98,24 @@ public sealed class SmtpEmailService : IEmailService
             var client = _httpClientFactory.CreateClient(ResendHttpClientName);
             using var request = new HttpRequestMessage(HttpMethod.Post, "emails");
             request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", settings.ApiKey);
+            var html = EmailLogoEmbedder.RewriteToCid(message.BodyHtml);
+            var logo = EmailLogoEmbedder.PngBytes();
             request.Content = JsonContent.Create(new
             {
                 from = settings.FromAddress,
                 to = new[] { message.To },
                 subject = message.Subject,
-                html = message.BodyHtml ?? string.Empty
+                html,
+                attachments = new[]
+                {
+                    new
+                    {
+                        filename = EmailLogoEmbedder.FileName,
+                        content = Convert.ToBase64String(logo),
+                        content_id = EmailLayout.LogoContentId,
+                        content_type = "image/png"
+                    }
+                }
             });
 
             using var response = await client.SendAsync(request, cancellationToken);
@@ -167,7 +180,16 @@ public sealed class SmtpEmailService : IEmailService
             mime.From.Add(MailboxAddress.Parse(settings.FromAddress));
             mime.To.Add(MailboxAddress.Parse(message.To));
             mime.Subject = message.Subject;
-            mime.Body = new TextPart("html") { Text = message.BodyHtml ?? string.Empty };
+            var builder = new BodyBuilder
+            {
+                HtmlBody = EmailLogoEmbedder.RewriteToCid(message.BodyHtml)
+            };
+            var linked = builder.LinkedResources.Add(EmailLogoEmbedder.FileName, EmailLogoEmbedder.PngBytes());
+            linked.ContentId = EmailLayout.LogoContentId;
+            linked.ContentType.MediaType = "image";
+            linked.ContentType.MediaSubtype = "png";
+            linked.ContentDisposition = new ContentDisposition(ContentDisposition.Inline);
+            mime.Body = builder.ToMessageBody();
 
             using var client = new SmtpClient();
             client.Timeout = 20_000;

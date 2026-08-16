@@ -38,7 +38,8 @@ public class TransactionalEmailCatalogTests
             Assert.Equal(template.Key, mail.Key);
             Assert.False(string.IsNullOrWhiteSpace(mail.Subject));
             Assert.Contains("<!DOCTYPE html>", mail.Html, StringComparison.OrdinalIgnoreCase);
-            Assert.Contains("lobsy.png", mail.Html, StringComparison.OrdinalIgnoreCase);
+            Assert.Contains("lobsy-128.png", mail.Html, StringComparison.OrdinalIgnoreCase);
+            Assert.DoesNotContain("/images/brand/lobsy.png?", mail.Html, StringComparison.OrdinalIgnoreCase);
             Assert.Contains(EmailLayout.BrandNavy, mail.Html);
             Assert.DoesNotContain("javascript:", mail.Html, StringComparison.OrdinalIgnoreCase);
             Assert.DoesNotContain("href=\"\"", mail.Html);

@@ -27,6 +27,7 @@
 
   <ItemGroup>
     <EmbeddedResource Include="Assets\lobsy.png" LogicalName="Jobsy.Infrastructure.Assets.lobsy.png" />
+    <EmbeddedResource Include="Assets\lobsy-email.png" LogicalName="Jobsy.Infrastructure.Assets.lobsy-email.png" />
   </ItemGroup>
 
   <ItemGroup>

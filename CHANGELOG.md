@@ -14,6 +14,7 @@ Alle noemenswaardige wijzigingen aan dit project worden in dit bestand bijgehoud
 ## [Unreleased]
 
 ### Changed
+- Transactionele mails: Lobsy-logo als klein PNG + inline CID (niet meer de 568&nbsp;KB remote `lobsy.png` die in clients als gebroken plaatje verscheen).
 - Homepage weer snel: Leaflet pas na first paint, picsum-foto’s pas ná de live kaart (lazy, 400×267 op kaarten). Originele unieke foto’s en markers blijven. Zie `docs/performance.md`.
 - Vacaturefoto’s: picsum-seeds terug (unieke foto per vacature); SVG-stand-ins worden teruggezet. Kaart-init weer in de werkende volgorde (tegels → clusters). Zie `docs/performance.md`.
 - Homepage-kaart: markers weer zichtbaar (cluster niet droppen bij 0×0 bounds; preview-overlay weg na init). Zie `docs/performance.md`.
