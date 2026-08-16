@@ -63,6 +63,29 @@ public static class DependencyInjection
         services.AddOptions<OpenAiOptions>()
             .Bind(configuration.GetSection(OpenAiOptions.SectionName));
 
+        services.AddOptions<CursorCloudOptions>()
+            .Bind(configuration.GetSection(CursorCloudOptions.SectionName))
+            .PostConfigure(options =>
+            {
+                if (string.IsNullOrWhiteSpace(options.ApiKey))
+                {
+                    var alt = configuration["CURSOR_API_KEY"];
+                    if (!string.IsNullOrWhiteSpace(alt))
+                    {
+                        options.ApiKey = alt.Trim();
+                    }
+                }
+
+                if (string.IsNullOrWhiteSpace(options.WebhookUrl))
+                {
+                    var publicApi = configuration["PublicApiBaseUrl"];
+                    if (!string.IsNullOrWhiteSpace(publicApi))
+                    {
+                        options.WebhookUrl = publicApi.TrimEnd('/') + "/api/feedback/cursor-webhook";
+                    }
+                }
+            });
+
         services.AddOptions<MailOptions>()
             .Bind(configuration.GetSection(MailOptions.SectionName))
             .PostConfigure(options =>
@@ -108,6 +131,17 @@ public static class DependencyInjection
         services.AddHttpClient("IntegrationProbe", client =>
         {
             client.Timeout = TimeSpan.FromSeconds(20);
+        }).ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler
+        {
+            AllowAutoRedirect = false
+        });
+
+        var cursorBaseUrl = configuration.GetSection(CursorCloudOptions.SectionName)["BaseUrl"]
+            ?? "https://api.cursor.com";
+        services.AddHttpClient(CursorCloudAgentClient.HttpClientName, client =>
+        {
+            client.BaseAddress = new Uri(cursorBaseUrl.EndsWith('/') ? cursorBaseUrl : cursorBaseUrl + "/");
+            client.Timeout = TimeSpan.FromSeconds(45);
         }).ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler
         {
             AllowAutoRedirect = false
@@ -197,6 +231,9 @@ public static class DependencyInjection
         services.AddScoped<IExclusivitySettingService, ExclusivitySettingService>();
         services.AddScoped<IUserNotificationService, UserNotificationService>();
         services.AddScoped<ICandidateActionTokenService, CandidateActionTokenService>();
+        services.AddScoped<ICursorCloudAgentClient, CursorCloudAgentClient>();
+        services.AddScoped<IFeedbackService, FeedbackService>();
+        services.AddHostedService<FeedbackAutomationPollHostedService>();
         services.AddHostedService<DataRetentionHostedService>();
         services.AddHostedService<UnconfirmedRegistrationCleanupHostedService>();
         services.AddHostedService<DraftVacancyCleanupHostedService>();

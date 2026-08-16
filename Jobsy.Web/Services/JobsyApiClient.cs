@@ -2319,6 +2319,117 @@ public sealed class JobsyApiClient : IAsyncDisposable
         return await _http.GetFromJsonAsync<List<PlatformLogItem>>(url, ct) ?? [];
     }
 
+    public async Task<FeedbackListItem> SubmitFeedbackAsync(SubmitFeedbackForm form, CancellationToken ct = default)
+    {
+        var response = await _http.PostAsJsonAsync("api/feedback", form, ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException(TryExtractMessage(body) ?? body);
+        }
+
+        return await response.Content.ReadFromJsonAsync<FeedbackListItem>(cancellationToken: ct)
+               ?? throw new InvalidOperationException("Feedback-response ontbreekt.");
+    }
+
+    public async Task<IReadOnlyList<FeedbackListItem>> GetFeedbackAsync(
+        string? type = null,
+        string? status = null,
+        CancellationToken ct = default)
+    {
+        var qs = new List<string>();
+        if (!string.IsNullOrWhiteSpace(type))
+        {
+            qs.Add($"type={Uri.EscapeDataString(type)}");
+        }
+
+        if (!string.IsNullOrWhiteSpace(status))
+        {
+            qs.Add($"status={Uri.EscapeDataString(status)}");
+        }
+
+        var url = qs.Count == 0 ? "api/feedback" : "api/feedback?" + string.Join("&", qs);
+        return await _http.GetFromJsonAsync<List<FeedbackListItem>>(url, ct) ?? [];
+    }
+
+    public Task<FeedbackDetailItem?> GetFeedbackDetailAsync(Guid id, CancellationToken ct = default)
+        => _http.GetFromJsonAsync<FeedbackDetailItem>($"api/feedback/{id}", ct);
+
+    public async Task<string?> GetFeedbackScreenshotDataUrlAsync(Guid id, CancellationToken ct = default)
+    {
+        using var response = await _http.GetAsync($"api/feedback/{id}/screenshot", ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            return null;
+        }
+
+        var bytes = await response.Content.ReadAsByteArrayAsync(ct);
+        if (bytes.Length == 0)
+        {
+            return null;
+        }
+
+        var mime = response.Content.Headers.ContentType?.MediaType ?? "image/png";
+        return $"data:{mime};base64,{Convert.ToBase64String(bytes)}";
+    }
+
+    public async Task<FeedbackPromptItem?> SaveFeedbackPromptAsync(
+        Guid id,
+        string? prompt,
+        CancellationToken ct = default)
+    {
+        var response = await _http.PostAsJsonAsync($"api/feedback/{id}/prompt", new { prompt }, ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException(TryExtractMessage(body) ?? body);
+        }
+
+        return await response.Content.ReadFromJsonAsync<FeedbackPromptItem>(cancellationToken: ct);
+    }
+
+    public async Task<FeedbackAutomateItem?> AutomateFeedbackAsync(
+        Guid id,
+        string? prompt,
+        CancellationToken ct = default)
+    {
+        var response = await _http.PostAsJsonAsync($"api/feedback/{id}/automate", new { prompt }, ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException(TryExtractMessage(body) ?? body);
+        }
+
+        return await response.Content.ReadFromJsonAsync<FeedbackAutomateItem>(cancellationToken: ct);
+    }
+
+    public async Task<FeedbackDetailItem?> UpdateFeedbackStatusAsync(
+        Guid id,
+        string status,
+        CancellationToken ct = default)
+    {
+        var response = await _http.PostAsJsonAsync($"api/feedback/{id}/status", new { status }, ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException(TryExtractMessage(body) ?? body);
+        }
+
+        return await response.Content.ReadFromJsonAsync<FeedbackDetailItem>(cancellationToken: ct);
+    }
+
+    public async Task<FeedbackDetailItem?> RefreshFeedbackAsync(Guid id, CancellationToken ct = default)
+    {
+        var response = await _http.PostAsync($"api/feedback/{id}/refresh", null, ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException(TryExtractMessage(body) ?? body);
+        }
+
+        return await response.Content.ReadFromJsonAsync<FeedbackDetailItem>(cancellationToken: ct);
+    }
+
     public async Task<TokenPricingSettings?> GetTokenPricingSettingsAsync(CancellationToken ct = default)
         => await _http.GetFromJsonAsync<TokenPricingSettings>("api/settings/token-pricing", ct);
 

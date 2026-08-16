@@ -130,6 +130,15 @@ builder.Services.AddRateLimiter(options =>
                 Window = TimeSpan.FromMinutes(1),
                 QueueLimit = 0
             }));
+    options.AddPolicy("feedback-write", httpContext =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+            _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = 8,
+                Window = TimeSpan.FromMinutes(1),
+                QueueLimit = 0
+            }));
     // Partner PDF flyer generation (QuestPDF) — tighter than generic public-write.
     options.AddPolicy("public-pdf", httpContext =>
         RateLimitPartition.GetFixedWindowLimiter(

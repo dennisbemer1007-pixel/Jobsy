@@ -23,6 +23,7 @@ public class PageHelpDocsTests
     [InlineData("/employer/organization", "Organisatie")]
     [InlineData("/admin/integrations", "Beheer · Integraties")]
     [InlineData("/admin/mail-test", "Beheer · Mailtest")]
+    [InlineData("/admin/feedback", "Beheer · Feedback")]
     [InlineData("/branch/vacancies/new", "Vacature plaatsen")]
     [InlineData("/branch/vacancies", "Vacatures (vestiging)")]
     [InlineData("/salesmanager/toolkit", "Sales-toolkit")]

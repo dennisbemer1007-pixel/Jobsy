@@ -20,6 +20,7 @@ Alle noemenswaardige wijzigingen aan dit project worden in dit bestand bijgehoud
 - Banenkaart opent uit een warme in-memory vacature-index (refresh elke 15s + direct na publiceren/wijzigen) in plaats van een zware DB-query + OpenAI-vertaling per page-open. Kaart en lijst tonen meteen; locatiefilter volgt daarna.
 
 ### Added
+- End-to-end feedback-pipeline: globale Feedback-knop (screenshot + metadata), `POST /api/feedback`, admin-datagrid `/admin/feedback`, functionele prompt en Cursor Cloud Agent-koppeling die een PR opent; PR-URL via webhook/poll terug in het grid.
 - Prepaid token checkout (“no tokens, no action”): bij onvoldoende saldo blokkeert publish/highlight/PushBom/extend met in-context Mollie-top-up (exact match + bulkapakketten); na webhook/return worden tokens bijgeschreven en de pending actie automatisch uitgevoerd (`PendingTokenAction`).
 - Salesmanager multi-level referral (één laag): Admin maakt tier-0 aan; tier-0 dient aanbevelingen in; Admin keurt goed vóór provisioning; tier-1 kan niet verder werven.
 - Configureerbare commissies (defaults 15% direct / 3% indirect, max. 1 jaar per ondernemer) op `/admin/sales`; ledger + `RevenueShareLogs` voor indirecte bonus.

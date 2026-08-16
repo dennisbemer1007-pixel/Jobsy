@@ -128,15 +128,32 @@ public sealed class DataRetentionHostedService : BackgroundService
                         || (t.UsedAtUtc != null && t.UsedAtUtc < tokenCutoff))
             .ExecuteDeleteAsync(cancellationToken);
 
+        var screenshotCutoff = now.AddDays(-PrivacyConstants.FeedbackScreenshotRetentionDays);
+        var staleScreenshots = await db.PlatformFeedbacks
+            .Where(f => f.ScreenshotBytes != null
+                        && f.Status == FeedbackStatus.Resolved
+                        && f.CreatedAtUtc < screenshotCutoff)
+            .ToListAsync(cancellationToken);
+        foreach (var item in staleScreenshots)
+        {
+            item.ScreenshotBytes = null;
+            item.ScreenshotContentType = null;
+        }
+
+        if (staleScreenshots.Count > 0)
+        {
+            await db.SaveChangesAsync(cancellationToken);
+        }
+
         if (logsRemoved + regsRemoved + clicksRemoved + sharesRemoved + impressionsRemoved + visitsRemoved
             + unverifiedAppsRemoved + notificationsRemoved + tokensRemoved + dirtyActionUrls.Count
-            + withdrawnWithSnapshots.Count > 0)
+            + withdrawnWithSnapshots.Count + staleScreenshots.Count > 0)
         {
             _logger.LogInformation(
-                "Retention purge: logs={Logs}, registrations={Regs}, clicks={Clicks}, shares={Shares}, impressions={Impressions}, visits={Visits}, unverifiedApps={UnverifiedApps}, notifications={Notifications}, actionTokens={Tokens}, scrubbedActionUrls={Scrubbed}, scrubbedWithdrawnApps={WithdrawnScrubbed}",
+                "Retention purge: logs={Logs}, registrations={Regs}, clicks={Clicks}, shares={Shares}, impressions={Impressions}, visits={Visits}, unverifiedApps={UnverifiedApps}, notifications={Notifications}, actionTokens={Tokens}, scrubbedActionUrls={Scrubbed}, scrubbedWithdrawnApps={WithdrawnScrubbed}, feedbackScreenshots={Screenshots}",
                 logsRemoved, regsRemoved, clicksRemoved, sharesRemoved, impressionsRemoved, visitsRemoved,
                 unverifiedAppsRemoved, notificationsRemoved, tokensRemoved, dirtyActionUrls.Count,
-                withdrawnWithSnapshots.Count);
+                withdrawnWithSnapshots.Count, staleScreenshots.Count);
         }
     }
 }

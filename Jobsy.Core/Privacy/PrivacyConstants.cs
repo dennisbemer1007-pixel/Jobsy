@@ -17,6 +17,9 @@ public static class PrivacyConstants
     /// <summary>Used or expired candidate action tokens older than this are purged.</summary>
     public const int CandidateActionTokenRetentionDays = 30;
 
+    /// <summary>Screenshots on resolved feedback are dropped after this many days (AVG minimization).</summary>
+    public const int FeedbackScreenshotRetentionDays = 90;
+
     /// <summary>Unverified application drafts (OTP pending) are purged after this many hours.</summary>
     public const int UnverifiedApplicationRetentionHours = 48;
 

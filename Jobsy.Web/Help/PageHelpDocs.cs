@@ -429,6 +429,12 @@ public static class PageHelpDocs
             "Filter en bekijk logregels (o.a. betalingen, overnames, systeemevents).",
             "Problemen analyseren en acties nalopen."),
 
+        ["/admin/feedback"] = new(
+            "Beheer · Feedback",
+            "Binnengekomen bugs, errors en featurewensen met screenshot en metadata.",
+            "Bekijk het datagrid, maak een functionele prompt en start een Cursor-taak. De PR-link verschijnt automatisch zodra de agent klaar is.",
+            "Visuele/functionele feedback omzetten in een geautomatiseerde fix-PR."),
+
         ["/privacy"] = new(
             "Privacyverklaring",
             "Uitleg welke gegevens Lobsy verwerkt, inclusief matching, AI en jeugdige-arbeidschecks.",

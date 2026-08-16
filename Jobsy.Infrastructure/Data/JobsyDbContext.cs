@@ -78,6 +78,7 @@ public class JobsyDbContext : DbContext
     public DbSet<VacancyTypeTokenCost> VacancyTypeTokenCosts => Set<VacancyTypeTokenCost>();
     public DbSet<VacancyCategory> VacancyCategories => Set<VacancyCategory>();
     public DbSet<SalesPackage> SalesPackages => Set<SalesPackage>();
+    public DbSet<PlatformFeedback> PlatformFeedbacks => Set<PlatformFeedback>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -1160,6 +1161,31 @@ public class JobsyDbContext : DbContext
                 .WithMany(s => s.Educations)
                 .HasForeignKey(e => e.ExclusivitySettingId)
                 .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<PlatformFeedback>(entity =>
+        {
+            entity.ToTable("PlatformFeedbacks");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Description).HasMaxLength(4000).IsRequired();
+            entity.Property(e => e.PageUrl).HasMaxLength(2048).IsRequired();
+            entity.Property(e => e.UserRole).HasMaxLength(64);
+            entity.Property(e => e.UserDisplayName).HasMaxLength(128);
+            entity.Property(e => e.BrowserInfo).HasMaxLength(512);
+            entity.Property(e => e.DeviceInfo).HasMaxLength(256);
+            entity.Property(e => e.ScreenshotContentType).HasMaxLength(64);
+            entity.Property(e => e.GeneratedPrompt).HasMaxLength(16000);
+            entity.Property(e => e.CursorAgentId).HasMaxLength(128);
+            entity.Property(e => e.BranchName).HasMaxLength(128);
+            entity.Property(e => e.PullRequestUrl).HasMaxLength(1024);
+            entity.Property(e => e.AutomationError).HasMaxLength(512);
+            entity.HasIndex(e => e.CreatedAtUtc);
+            entity.HasIndex(e => e.Status);
+            entity.HasIndex(e => e.CursorAgentId);
+            entity.HasOne(e => e.User)
+                .WithMany()
+                .HasForeignKey(e => e.UserId)
+                .OnDelete(DeleteBehavior.SetNull);
         });
     }
 }

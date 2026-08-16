@@ -24,6 +24,7 @@ public static class AdminNavItems
         new("Nav.Notifications", "/admin/notifications", NavIcons.Notifications),
         new("Nav.Users", "/admin/users", NavIcons.Users),
         new("Nav.Logging", "/admin/logging", NavIcons.Logging),
+        new("Nav.Feedback", "/admin/feedback", NavIcons.Feedback),
         new("Nav.Wages", "/admin/wages", NavIcons.Wages),
     ];
 

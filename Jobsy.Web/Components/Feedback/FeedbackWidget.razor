@@ -1,0 +1,225 @@
+@namespace Jobsy.Web.Components.Feedback
+@using Microsoft.AspNetCore.Components.Authorization
+@using System.Security.Claims
+@inject JobsyApiClient Api
+@inject CultureState Culture
+@inject NavigationManager Navigation
+@inject IJSRuntime Js
+@inject AuthenticationStateProvider AuthState
+@implements IDisposable
+
+<div class="feedback-widget @(_hasBottomNav ? "has-bottom-nav" : null)">
+    <button type="button"
+            class="feedback-widget__btn"
+            @onclick="OpenAsync"
+            aria-haspopup="dialog"
+            aria-expanded="@_open">
+        <span class="feedback-widget__icon" aria-hidden="true">@((MarkupString)NavIcons.Feedback)</span>
+        <span>@Culture["Feedback.Button"]</span>
+    </button>
+</div>
+
+<LobsyFriendlyDialog IsOpen="_open"
+                     Title="@Culture["Feedback.Title"]"
+                     TitleId="feedback-dialog-title"
+                     Lead="@Culture["Feedback.Lead"]"
+                     Class="feedback-dialog"
+                     OnClose="Close">
+    @if (_sent)
+    {
+        <p class="state-message">@Culture["Feedback.Thanks"]</p>
+        <button type="button" class="provider-btn" @onclick="Close">@Culture["Common.Close"]</button>
+    }
+    else
+    {
+        <label class="feedback-dialog__field">
+            <span>@Culture["Feedback.Type"]</span>
+            <select @bind="_type">
+                <option value="Bug">@Culture["Feedback.Type.Bug"]</option>
+                <option value="Error">@Culture["Feedback.Type.Error"]</option>
+                <option value="Feature">@Culture["Feedback.Type.Feature"]</option>
+            </select>
+        </label>
+        <label class="feedback-dialog__field">
+            <span>@Culture["Feedback.Description"]</span>
+            <textarea rows="4"
+                      maxlength="4000"
+                      @bind="_description"
+                      @bind:event="oninput"
+                      placeholder="@Culture["Feedback.DescriptionPlaceholder"]"></textarea>
+        </label>
+        <p class="muted feedback-dialog__meta">
+            @Culture["Feedback.Meta"]: @ShortUrl · @_roleLabel
+        </p>
+        @if (!string.IsNullOrEmpty(_error))
+        {
+            <p class="state-message error">@_error</p>
+        }
+        <div class="inline-actions">
+            <button type="button"
+                    class="provider-btn"
+                    disabled="@(_sending || string.IsNullOrWhiteSpace(_description))"
+                    @onclick="SubmitAsync">
+                @(_sending ? Culture["Feedback.Sending"] : Culture["Feedback.Submit"])
+            </button>
+            <button type="button" class="provider-btn provider-btn--ghost" disabled="@_sending" @onclick="Close">
+                @Culture["Common.Cancel"]
+            </button>
+        </div>
+    }
+</LobsyFriendlyDialog>
+
+@code {
+    private bool _open;
+    private bool _sent;
+    private bool _sending;
+    private bool _hasBottomNav;
+    private string _type = "Bug";
+    private string _description = "";
+    private string? _error;
+    private string _roleLabel = "Gast";
+
+    [Parameter] public bool HasBottomNav { get; set; }
+
+    protected override void OnParametersSet()
+        => _hasBottomNav = HasBottomNav;
+
+    protected override void OnInitialized()
+        => Culture.Changed += OnCultureChanged;
+
+    private void OnCultureChanged()
+        => InvokeAsync(StateHasChanged);
+
+    public void Dispose()
+        => Culture.Changed -= OnCultureChanged;
+
+    private string ShortUrl
+    {
+        get
+        {
+            try
+            {
+                var path = new Uri(Navigation.Uri).PathAndQuery;
+                return path.Length > 64 ? path[..64] + "…" : path;
+            }
+            catch
+            {
+                return "/";
+            }
+        }
+    }
+
+    private async Task OpenAsync()
+    {
+        _open = true;
+        _sent = false;
+        _error = null;
+        _description = "";
+        _type = "Bug";
+        _roleLabel = await ResolveRoleAsync();
+    }
+
+    private void Close()
+    {
+        if (_sending)
+        {
+            return;
+        }
+
+        _open = false;
+    }
+
+    private async Task SubmitAsync()
+    {
+        if (_sending || string.IsNullOrWhiteSpace(_description))
+        {
+            return;
+        }
+
+        _sending = true;
+        _error = null;
+        try
+        {
+            FeedbackClientMeta? meta = null;
+            string? screenshot = null;
+            try
+            {
+                meta = await Js.InvokeAsync<FeedbackClientMeta>("lobsyFeedback.getMetadata");
+                screenshot = await Js.InvokeAsync<string?>("lobsyFeedback.captureScreenshot");
+            }
+            catch
+            {
+                _error = Culture["Feedback.CaptureFailed"];
+            }
+
+            var parsed = Enum.TryParse<FeedbackType>(_type, true, out var type)
+                ? type
+                : FeedbackType.Bug;
+
+            await Api.SubmitFeedbackAsync(new SubmitFeedbackForm(
+                parsed.ToString(),
+                _description.Trim(),
+                Navigation.Uri,
+                meta?.UserAgent,
+                FormatDevice(meta),
+                screenshot));
+
+            _sent = true;
+            _error = null;
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _sending = false;
+        }
+    }
+
+    private static string? FormatDevice(FeedbackClientMeta? meta)
+    {
+        if (meta is null)
+        {
+            return null;
+        }
+
+        var parts = new List<string>();
+        if (!string.IsNullOrWhiteSpace(meta.Platform))
+        {
+            parts.Add(meta.Platform);
+        }
+
+        if (meta.ViewportWidth > 0 && meta.ViewportHeight > 0)
+        {
+            parts.Add($"{meta.ViewportWidth}×{meta.ViewportHeight}");
+        }
+
+        if (!string.IsNullOrWhiteSpace(meta.Language))
+        {
+            parts.Add(meta.Language);
+        }
+
+        return parts.Count == 0 ? null : string.Join(" · ", parts);
+    }
+
+    private async Task<string> ResolveRoleAsync()
+    {
+        try
+        {
+            var state = await AuthState.GetAuthenticationStateAsync();
+            var user = state.User;
+            if (user.Identity?.IsAuthenticated != true)
+            {
+                return "Gast";
+            }
+
+            var role = user.FindFirst(ClaimTypes.Role)?.Value;
+            return string.IsNullOrWhiteSpace(role) ? "Gebruiker" : role;
+        }
+        catch
+        {
+            return "Gast";
+        }
+    }
+}

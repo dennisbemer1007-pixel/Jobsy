@@ -284,6 +284,21 @@ public sealed class PrivacyDataService : IPrivacyDataService
             VacancyClicks = clicks,
             VacancySearchImpressions = impressions,
             SiteVisits = siteVisits,
+            Feedback = await _db.PlatformFeedbacks.AsNoTracking()
+                .Where(f => f.UserId == user.Id)
+                .OrderByDescending(f => f.CreatedAtUtc)
+                .Select(f => new
+                {
+                    f.Id,
+                    f.CreatedAtUtc,
+                    Type = f.Type.ToString(),
+                    Status = f.Status.ToString(),
+                    f.Description,
+                    f.PageUrl,
+                    f.UserRole,
+                    HasScreenshot = f.ScreenshotBytes != null
+                })
+                .ToListAsync(cancellationToken),
             Notifications = notifications.Select(n => new
             {
                 n.Id,
@@ -693,6 +708,19 @@ public sealed class PrivacyDataService : IPrivacyDataService
         if (actionTokens.Count > 0)
         {
             _db.CandidateActionTokens.RemoveRange(actionTokens);
+        }
+
+        var feedbackRows = await _db.PlatformFeedbacks
+            .Where(f => f.UserId == user.Id)
+            .ToListAsync(cancellationToken);
+        foreach (var item in feedbackRows)
+        {
+            item.UserId = null;
+            item.UserDisplayName = "Verwijderde gebruiker";
+            item.ScreenshotBytes = null;
+            item.ScreenshotContentType = null;
+            item.BrowserInfo = null;
+            item.DeviceInfo = null;
         }
 
         user.Email = anonymizedEmail;

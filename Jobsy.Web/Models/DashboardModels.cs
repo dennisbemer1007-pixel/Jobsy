@@ -556,6 +556,62 @@ public class PlatformLogItem
     public DateTime CreatedAt { get; set; }
 }
 
+public sealed class FeedbackClientMeta
+{
+    public string? UserAgent { get; set; }
+    public string? Platform { get; set; }
+    public string? Language { get; set; }
+    public int ViewportWidth { get; set; }
+    public int ViewportHeight { get; set; }
+}
+
+public record SubmitFeedbackForm(
+    string Type,
+    string Description,
+    string PageUrl,
+    string? BrowserInfo,
+    string? DeviceInfo,
+    string? ScreenshotDataUrl);
+
+public class FeedbackListItem
+{
+    public Guid Id { get; set; }
+    public DateTime CreatedAtUtc { get; set; }
+    public string Type { get; set; } = string.Empty;
+    public string Status { get; set; } = string.Empty;
+    public string? UserRole { get; set; }
+    public string? UserDisplayName { get; set; }
+    public string PageUrl { get; set; } = string.Empty;
+    public string? PullRequestUrl { get; set; }
+    public bool HasScreenshot { get; set; }
+    public string? AutomationStatus { get; set; }
+    public string? BranchName { get; set; }
+}
+
+public class FeedbackDetailItem : FeedbackListItem
+{
+    public string Description { get; set; } = string.Empty;
+    public string? BrowserInfo { get; set; }
+    public string? DeviceInfo { get; set; }
+    public string? GeneratedPrompt { get; set; }
+    public string? CursorAgentId { get; set; }
+    public string? AutomationError { get; set; }
+}
+
+public class FeedbackPromptItem
+{
+    public Guid Id { get; set; }
+    public string Prompt { get; set; } = string.Empty;
+    public string BranchName { get; set; } = string.Empty;
+}
+
+public class FeedbackAutomateItem
+{
+    public FeedbackDetailItem? Feedback { get; set; }
+    public bool Launched { get; set; }
+    public string Message { get; set; } = string.Empty;
+}
+
 public class UnsubscribeReasonOption
 {
     public string Code { get; set; } = string.Empty;

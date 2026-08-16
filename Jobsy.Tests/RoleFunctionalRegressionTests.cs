@@ -507,6 +507,82 @@ public class RoleFunctionalRegressionTests : IClassFixture<RoleFunctionalWebAppF
     }
 
     [Fact]
+    public async Task Guest_can_submit_feedback_but_cannot_list_or_automate()
+    {
+        var client = _factory.CreateClient();
+        var submit = await client.PostAsJsonAsync("api/feedback", new
+        {
+            type = "Bug",
+            description = "Kaart blijft leeg",
+            pageUrl = "https://lobsy.test/",
+            browserInfo = "TestAgent",
+            deviceInfo = "CI"
+        });
+        Assert.Equal(HttpStatusCode.OK, submit.StatusCode);
+        var created = await submit.Content.ReadFromJsonAsync<JsonElement>(JsonOpts);
+        Assert.Equal("Bug", created.GetProperty("type").GetString());
+        Assert.False(created.TryGetProperty("screenshotBytes", out _));
+        Assert.False(created.TryGetProperty("screenshotDataUrl", out _));
+
+        Assert.Equal(HttpStatusCode.Unauthorized, (await client.GetAsync("api/feedback")).StatusCode);
+        var id = created.GetProperty("id").GetGuid();
+        Assert.Equal(HttpStatusCode.Unauthorized,
+            (await client.PostAsJsonAsync($"api/feedback/{id}/automate", new { prompt = "x" })).StatusCode);
+    }
+
+    [Fact]
+    public async Task Employer_cannot_list_feedback()
+    {
+        var client = EmployerClient();
+        Assert.Equal(HttpStatusCode.Forbidden, (await client.GetAsync("api/feedback")).StatusCode);
+    }
+
+    [Fact]
+    public async Task Admin_can_list_feedback_generate_prompt_and_store_pr_via_webhook()
+    {
+        var candidate = CandidateClient();
+        var submit = await candidate.PostAsJsonAsync("api/feedback", new
+        {
+            type = "Feature",
+            description = "Sla filters op",
+            pageUrl = "https://lobsy.test/candidate/liked",
+            browserInfo = "Firefox",
+            deviceInfo = "Linux"
+        });
+        Assert.Equal(HttpStatusCode.OK, submit.StatusCode);
+        var created = await submit.Content.ReadFromJsonAsync<JsonElement>(JsonOpts);
+        var id = created.GetProperty("id").GetGuid();
+        Assert.Equal("Candidate", created.GetProperty("userRole").GetString());
+
+        var admin = AdminClient();
+        var list = await admin.GetFromJsonAsync<List<JsonElement>>("api/feedback", JsonOpts);
+        Assert.Contains(list!, item => item.GetProperty("id").GetGuid() == id);
+        Assert.All(list!, item =>
+        {
+            Assert.False(item.TryGetProperty("screenshotBytes", out _));
+            Assert.False(item.TryGetProperty("description", out _));
+        });
+
+        var prompt = await admin.PostAsJsonAsync($"api/feedback/{id}/prompt", new { prompt = (string?)null });
+        Assert.Equal(HttpStatusCode.OK, prompt.StatusCode);
+        var promptBody = await prompt.Content.ReadFromJsonAsync<JsonElement>(JsonOpts);
+        Assert.Contains("Sla filters op", promptBody.GetProperty("prompt").GetString());
+
+        var automate = await admin.PostAsJsonAsync($"api/feedback/{id}/automate", new { prompt = "Maak filter-presets." });
+        Assert.Equal(HttpStatusCode.OK, automate.StatusCode);
+        var automateBody = await automate.Content.ReadFromJsonAsync<JsonElement>(JsonOpts);
+        Assert.False(automateBody.GetProperty("launched").GetBoolean());
+        Assert.Equal("InProgress", automateBody.GetProperty("feedback").GetProperty("status").GetString());
+
+        var attach = await admin.PostAsJsonAsync(
+            $"api/feedback/{id}/pull-request",
+            new { pullRequestUrl = "https://github.com/lobsy/lobsy/pull/7" });
+        Assert.Equal(HttpStatusCode.OK, attach.StatusCode);
+        var attached = await attach.Content.ReadFromJsonAsync<JsonElement>(JsonOpts);
+        Assert.Equal("https://github.com/lobsy/lobsy/pull/7", attached.GetProperty("pullRequestUrl").GetString());
+    }
+
+    [Fact]
     public async Task Admin_cannot_use_candidate_profile_endpoints()
     {
         var client = AdminClient();

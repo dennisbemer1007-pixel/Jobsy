@@ -1,0 +1,322 @@
+@page "/admin/feedback"
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
+@attribute [Authorize(Roles = "Admin")]
+@using Jobsy.Web.Components.Admin
+@inject JobsyApiClient Api
+@inject CultureState Culture
+@implements IDisposable
+
+<PageTitle>@Culture["Admin.Feedback"] · Lobsy</PageTitle>
+
+<AdminPageShell Title="@Culture["Admin.Feedback"]" Lead="@Culture["Admin.FeedbackLead"]" ShowSettingsNav="true" Wide="true">
+    <div class="filter-bar">
+        <label>
+            @Culture["Feedback.Type"]
+            <select @bind="_type" @bind:after="ReloadAsync">
+                <option value="">@Culture["Common.All"]</option>
+                <option value="Bug">@Culture["Feedback.Type.Bug"]</option>
+                <option value="Error">@Culture["Feedback.Type.Error"]</option>
+                <option value="Feature">@Culture["Feedback.Type.Feature"]</option>
+            </select>
+        </label>
+        <label>
+            @Culture["Common.Status"]
+            <select @bind="_status" @bind:after="ReloadAsync">
+                <option value="">@Culture["Common.All"]</option>
+                <option value="New">@Culture["Feedback.Status.New"]</option>
+                <option value="InProgress">@Culture["Feedback.Status.InProgress"]</option>
+                <option value="Resolved">@Culture["Feedback.Status.Resolved"]</option>
+            </select>
+        </label>
+        <button class="provider-btn" type="button" disabled="@_loading" @onclick="ReloadAsync">@Culture["Common.Filter"]</button>
+        <span class="muted">@_items.Count</span>
+    </div>
+
+    @if (_loading)
+    {
+        <p class="state-message">@Culture["Common.Loading"]</p>
+    }
+    else if (!string.IsNullOrEmpty(_error))
+    {
+        <p class="state-message error">@_error</p>
+    }
+    else if (_items.Count == 0)
+    {
+        <p class="state-message">@Culture["Admin.FeedbackEmpty"]</p>
+    }
+    else
+    {
+        <div class="table-scroll">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Datum</th>
+                        <th>Type</th>
+                        <th>Gebruiker / rol</th>
+                        <th>Status</th>
+                        <th>Pagina-URL</th>
+                        <th>@Culture["Admin.FeedbackPr"]</th>
+                        <th>@Culture["Common.Actions"]</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in _items)
+                    {
+                        <tr>
+                            <td><code>@ShortId(item.Id)</code></td>
+                            <td>@item.CreatedAtUtc.ToLocalTime().ToString("dd-MM-yyyy HH:mm")</td>
+                            <td>@item.Type</td>
+                            <td>@(item.UserDisplayName ?? "—") @(string.IsNullOrWhiteSpace(item.UserRole) ? "" : $"({item.UserRole})")</td>
+                            <td>@StatusLabel(item.Status)</td>
+                            <td class="feedback-url" title="@item.PageUrl">@ShortUrl(item.PageUrl)</td>
+                            <td>
+                                @if (!string.IsNullOrWhiteSpace(item.PullRequestUrl))
+                                {
+                                    <a href="@item.PullRequestUrl" target="_blank" rel="noopener noreferrer">PR</a>
+                                }
+                                else
+                                {
+                                    <span class="muted">@Culture["Admin.FeedbackNoPr"]</span>
+                                }
+                            </td>
+                            <td class="inline-actions">
+                                <button type="button" class="provider-btn" @onclick="() => OpenPromptAsync(item)">
+                                    @Culture["Admin.FeedbackPrompt"]
+                                </button>
+                                @if (!string.Equals(item.Status, "Resolved", StringComparison.OrdinalIgnoreCase))
+                                {
+                                    <button type="button" class="provider-btn provider-btn--ghost" @onclick="() => MarkResolvedAsync(item)">
+                                        @Culture["Admin.FeedbackMarkResolved"]
+                                    </button>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</AdminPageShell>
+
+<LobsyFriendlyDialog IsOpen="_promptOpen"
+                     Title="@Culture["Admin.FeedbackPrompt"]"
+                     TitleId="feedback-prompt-title"
+                     Lead="@Culture["Admin.FeedbackPromptLead"]"
+                     Class="feedback-prompt-dialog"
+                     OnClose="ClosePrompt">
+    @if (_detail is not null)
+    {
+        <p class="muted">
+            @_detail.Type · @_detail.UserDisplayName · @ShortUrl(_detail.PageUrl)
+        </p>
+        @if (!string.IsNullOrWhiteSpace(_screenshotUrl))
+        {
+            <img class="feedback-prompt-dialog__shot" src="@_screenshotUrl" alt="Screenshot" />
+        }
+        <label class="feedback-dialog__field">
+            <span>Prompt</span>
+            <textarea rows="14" @bind="_prompt" @bind:event="oninput"></textarea>
+        </label>
+        @if (!string.IsNullOrEmpty(_promptError))
+        {
+            <p class="state-message error">@_promptError</p>
+        }
+        @if (!string.IsNullOrEmpty(_promptInfo))
+        {
+            <p class="state-message">@_promptInfo</p>
+        }
+        @if (!string.IsNullOrWhiteSpace(_detail.PullRequestUrl))
+        {
+            <p><a href="@_detail.PullRequestUrl" target="_blank" rel="noopener noreferrer">@_detail.PullRequestUrl</a></p>
+        }
+        <div class="inline-actions">
+            <button type="button" class="provider-btn" disabled="@_promptBusy" @onclick="LaunchAsync">
+                @Culture["Admin.FeedbackStart"]
+            </button>
+            <button type="button" class="provider-btn provider-btn--ghost" disabled="@_promptBusy" @onclick="RefreshPrAsync">
+                @Culture["Admin.FeedbackRefresh"]
+            </button>
+            <button type="button" class="provider-btn provider-btn--ghost" disabled="@_promptBusy" @onclick="ClosePrompt">
+                @Culture["Common.Close"]
+            </button>
+        </div>
+    }
+</LobsyFriendlyDialog>
+
+@code {
+    private List<FeedbackListItem> _items = [];
+    private string _type = "";
+    private string _status = "";
+    private bool _loading = true;
+    private string? _error;
+    private bool _promptOpen;
+    private bool _promptBusy;
+    private string _prompt = "";
+    private string? _promptError;
+    private string? _promptInfo;
+    private FeedbackDetailItem? _detail;
+    private string? _screenshotUrl;
+
+    protected override void OnInitialized()
+        => Culture.Changed += OnCultureChanged;
+
+    private void OnCultureChanged()
+        => InvokeAsync(StateHasChanged);
+
+    public void Dispose()
+        => Culture.Changed -= OnCultureChanged;
+
+    protected override Task OnInitializedAsync()
+        => ReloadAsync();
+
+    private async Task ReloadAsync()
+    {
+        _loading = true;
+        _error = null;
+        try
+        {
+            _items = (await Api.GetFeedbackAsync(
+                string.IsNullOrWhiteSpace(_type) ? null : _type,
+                string.IsNullOrWhiteSpace(_status) ? null : _status)).ToList();
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+            _items = [];
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private async Task OpenPromptAsync(FeedbackListItem item)
+    {
+        _promptOpen = true;
+        _promptBusy = true;
+        _promptError = null;
+        _promptInfo = null;
+        try
+        {
+            _detail = await Api.GetFeedbackDetailAsync(item.Id);
+            var generated = await Api.SaveFeedbackPromptAsync(item.Id, null);
+            _prompt = generated?.Prompt ?? _detail?.GeneratedPrompt ?? "";
+            _screenshotUrl = _detail?.HasScreenshot == true
+                ? await Api.GetFeedbackScreenshotDataUrlAsync(item.Id)
+                : null;
+        }
+        catch (Exception ex)
+        {
+            _promptError = ex.Message;
+        }
+        finally
+        {
+            _promptBusy = false;
+        }
+    }
+
+    private void ClosePrompt()
+    {
+        if (_promptBusy)
+        {
+            return;
+        }
+
+        _promptOpen = false;
+    }
+
+    private async Task LaunchAsync()
+    {
+        if (_detail is null)
+        {
+            return;
+        }
+
+        _promptBusy = true;
+        _promptError = null;
+        _promptInfo = null;
+        try
+        {
+            var result = await Api.AutomateFeedbackAsync(_detail.Id, _prompt);
+            _promptInfo = result?.Message;
+            if (result?.Feedback is not null)
+            {
+                _detail = result.Feedback;
+            }
+
+            await ReloadAsync();
+        }
+        catch (Exception ex)
+        {
+            _promptError = ex.Message;
+        }
+        finally
+        {
+            _promptBusy = false;
+        }
+    }
+
+    private async Task RefreshPrAsync()
+    {
+        if (_detail is null)
+        {
+            return;
+        }
+
+        _promptBusy = true;
+        _promptError = null;
+        try
+        {
+            _detail = await Api.RefreshFeedbackAsync(_detail.Id);
+            await ReloadAsync();
+        }
+        catch (Exception ex)
+        {
+            _promptError = ex.Message;
+        }
+        finally
+        {
+            _promptBusy = false;
+        }
+    }
+
+    private async Task MarkResolvedAsync(FeedbackListItem item)
+    {
+        try
+        {
+            await Api.UpdateFeedbackStatusAsync(item.Id, "Resolved");
+            await ReloadAsync();
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+    }
+
+    private string StatusLabel(string status) => status switch
+    {
+        "New" => Culture["Feedback.Status.New"],
+        "InProgress" => Culture["Feedback.Status.InProgress"],
+        "Resolved" => Culture["Feedback.Status.Resolved"],
+        _ => status
+    };
+
+    private static string ShortId(Guid id) => id.ToString("N")[..8];
+
+    private static string ShortUrl(string? url)
+    {
+        if (string.IsNullOrWhiteSpace(url))
+        {
+            return "—";
+        }
+
+        if (Uri.TryCreate(url, UriKind.Absolute, out var uri))
+        {
+            var path = uri.PathAndQuery;
+            return path.Length > 48 ? path[..48] + "…" : path;
+        }
+
+        return url.Length > 48 ? url[..48] + "…" : url;
+    }
+}
