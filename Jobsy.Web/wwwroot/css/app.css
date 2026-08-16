@@ -3310,31 +3310,45 @@ a {
     object-position: 48% 42%;
 }
 
-.job-map-placeholder__cluster {
+.job-map-placeholder__pins {
     position: absolute;
-    width: 44px;
-    height: 44px;
-    transform: translate(-50%, -50%);
+    inset: 0;
     z-index: 3;
+    pointer-events: none;
 }
 
-.job-map-placeholder__cluster--main {
-    left: 38%;
-    top: 48%;
-    width: 52px;
-    height: 52px;
+.job-map-placeholder__pin,
+.job-map-placeholder__blob {
+    position: absolute;
+    transform: translate(-50%, -50%);
+    border-radius: 50%;
+    background: var(--map-pin);
+    border: 2px solid #fff;
+    box-shadow:
+        0 0 0 2px color-mix(in srgb, var(--map-pin) 22%, transparent),
+        0 3px 10px var(--map-pin-glow);
 }
 
-.job-map-placeholder__cluster--ams {
-    left: 42%;
-    top: 36%;
+.job-map-placeholder__pin {
+    width: 12px;
+    height: 12px;
 }
 
-.job-map-placeholder__cluster--ehv {
-    left: 48%;
-    top: 62%;
+.job-map-placeholder__blob--sm {
+    width: 28px;
+    height: 28px;
+}
+
+.job-map-placeholder__blob--md {
     width: 38px;
     height: 38px;
+    background: color-mix(in srgb, var(--map-pin) 88%, #000);
+}
+
+.job-map-placeholder__blob--lg {
+    width: 48px;
+    height: 48px;
+    background: color-mix(in srgb, var(--map-pin) 72%, #000);
 }
 
 @media (max-width: 768px) {

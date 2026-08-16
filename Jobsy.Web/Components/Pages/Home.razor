@@ -1,5 +1,5 @@
 @page "/"
-@* Prerender the map shell (placeholder + chrome). Leaflet binds only after hydrate + idle. *@
+@* Prerender the map shell (tiles + pins). Leaflet warms after first paint, binds on hydrate. *@
 @rendermode @(new InteractiveServerRenderMode(prerender: true))
 @inject CultureState Culture
 @implements IDisposable

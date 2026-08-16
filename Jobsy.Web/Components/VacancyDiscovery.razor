@@ -537,6 +537,16 @@
                      fetchpriority="high"
                      decoding="async"
                      draggable="false" />
+                <div class="job-map-placeholder__pins">
+                    <span class="job-map-placeholder__blob job-map-placeholder__blob--lg" style="left:36%;top:50%"></span>
+                    <span class="job-map-placeholder__blob job-map-placeholder__blob--md" style="left:42%;top:36%"></span>
+                    <span class="job-map-placeholder__blob job-map-placeholder__blob--sm" style="left:37.5%;top:57%"></span>
+                    <span class="job-map-placeholder__blob job-map-placeholder__blob--sm" style="left:45%;top:45.5%"></span>
+                    @foreach (var pin in MapPreviewPins)
+                    {
+                        <span class="job-map-placeholder__pin" style="left:@(pin.Left)%;top:@(pin.Top)%"></span>
+                    }
+                </div>
             </div>
             <div @ref="_mapElement" id="job-map" class="job-map"></div>
             @if (_categories.Any(c => c.ShowInLegend && c.IsActive))
@@ -857,6 +867,19 @@
     private bool _mapReady;
     private bool _mapPainted;
     private bool _mapInitScheduled;
+
+    /// <summary>
+    /// Static pins on the prerendered NL mosaic so first paint already looks filled.
+    /// Positions match the Carto preview crop (Randstad / Haaglanden-heavy).
+    /// </summary>
+    private static readonly (string Left, string Top)[] MapPreviewPins =
+    [
+        ("34", "49"), ("35.5", "50.5"), ("36.8", "48.2"), ("37.2", "51.5"), ("33.5", "51"),
+        ("38", "49.5"), ("35", "47.5"), ("36", "52.5"), ("39", "50"), ("34.8", "53"),
+        ("37", "56"), ("38.5", "57.5"), ("36.2", "58"), ("41.5", "35.5"), ("42.8", "37"),
+        ("40.8", "36.8"), ("44.5", "45"), ("45.5", "46.5"), ("48", "61.5"), ("39.5", "42"),
+        ("40.2", "40.5"), ("33.8", "48"), ("38.8", "52.8"), ("35.8", "49.2"), ("46.8", "60")
+    ];
     private ElementReference _mapElement;
     private const int DefaultMinHoursPerWeek = 0;
     private const int DefaultMaxHoursPerWeek = 40;

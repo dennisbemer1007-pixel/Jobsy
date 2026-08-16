@@ -13,10 +13,10 @@ window.jobsyMaps = (function () {
         "/lib/leaflet/leaflet.markercluster.min.js"
     ];
     var discoveryScripts = [
-        "/js/jobMap.js?v=20260816-fast"
+        "/js/jobMap.js?v=20260816-map"
     ];
     var detailScripts = [
-        "/js/vacancyDetailMap.js?v=20260816-fast"
+        "/js/vacancyDetailMap.js?v=20260816-map"
     ];
 
     function loadCss(href) {
@@ -86,20 +86,22 @@ window.jobsyMaps = (function () {
     }
 
     function afterNextPaint(cb) {
-        var run = function () {
-            if (typeof requestIdleCallback === "function") {
-                requestIdleCallback(function () { cb(); }, { timeout: 250 });
-            } else {
-                setTimeout(cb, 120);
-            }
-        };
         if (typeof requestAnimationFrame === "function") {
             requestAnimationFrame(function () {
-                requestAnimationFrame(run);
+                requestAnimationFrame(cb);
             });
         } else {
-            run();
+            setTimeout(cb, 0);
         }
+    }
+
+    function isVisible(el) {
+        if (!el) {
+            return false;
+        }
+        var r = el.getBoundingClientRect();
+        var vh = window.innerHeight || 0;
+        return r.width > 0 && r.height > 0 && r.bottom > 0 && r.top < vh;
     }
 
     function whenMapSlotReady(elementId, cb) {
@@ -117,7 +119,11 @@ window.jobsyMaps = (function () {
             afterNextPaint(cb);
         };
         var io = null;
-        if (el && typeof IntersectionObserver === "function") {
+        if (!el || isVisible(el)) {
+            finish();
+            return;
+        }
+        if (typeof IntersectionObserver === "function") {
             io = new IntersectionObserver(function (entries) {
                 for (var i = 0; i < entries.length; i++) {
                     if (entries[i].isIntersecting) {
@@ -128,10 +134,7 @@ window.jobsyMaps = (function () {
             }, { rootMargin: "80px" });
             io.observe(el);
         }
-        var fallback = setTimeout(finish, el ? 900 : 0);
-        if (!el) {
-            finish();
-        }
+        var fallback = setTimeout(finish, 400);
     }
 
     function ensure(kind) {
@@ -170,6 +173,22 @@ window.jobsyMaps = (function () {
                 });
             });
             return pendingPaint[kind];
+        },
+        warmDiscovery: function () {
+            if (!document.getElementById("job-map")) {
+                return;
+            }
+            afterNextPaint(function () {
+                ensure("discovery");
+            });
         }
     };
 })();
+
+if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", function () {
+        window.jobsyMaps.warmDiscovery();
+    });
+} else {
+    window.jobsyMaps.warmDiscovery();
+}

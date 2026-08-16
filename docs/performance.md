@@ -17,8 +17,8 @@ Na die eerste ronde was het gewicht weg (36 requests / ~334&nbsp;KB) en LCP ~2.4
 
 De banenkaart blijft de first-paint kernervaring (geen Funda-klik-om-te-tonen):
 
-- Home prerendert de kaart-shell: lokale Carto-mosaic van NL (`nl-preview.webp`), zonder Leaflet.
-- Leaflet + MarkerCluster + Carto-tegels laden pas na first paint (`requestIdleCallback` / Intersection Observer). Markers blijven: init op NL-center, overlay weg zodra `jobMap.init` slaagt.
+- Home prerendert de kaart-shell: lokale Carto-mosaic van NL (`nl-preview.webp`) plus CSS-pins, zodat first paint al gevuld oogt.
+- Leaflet + MarkerCluster + Carto-tegels warmen meteen na first paint (`jobsyMaps.warmDiscovery` als `#job-map` er is). Markers: init op NL-center, overlay weg zodra `jobMap.init` slaagt.
 - Soft fade zodra de eerste tegel binnen is — geen leeg grijs vlak.
 - Cookie-banner is compact, paint-contained, en wint de LCP niet van de kaart.
 - Alleen `app.css` en de kaart-preview worden gepreload; geen Leaflet op elke pagina.
