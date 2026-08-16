@@ -31,7 +31,7 @@ public sealed class JobsyApiTransientRetryHandler : DelegatingHandler
             try
             {
                 response = await base.SendAsync(outgoing, cancellationToken);
-                if (!retryable || attempt == attempts || !IsTransient(response.StatusCode))
+                if (!retryable || attempt == attempts || !ShouldRetry(response.StatusCode, outgoing))
                 {
                     return response;
                 }
@@ -68,6 +68,24 @@ public sealed class JobsyApiTransientRetryHandler : DelegatingHandler
             or HttpStatusCode.BadGateway
             or HttpStatusCode.ServiceUnavailable
             or HttpStatusCode.GatewayTimeout;
+
+    /// <summary>
+    /// 401 is only retried when the attempt went out without credentials
+    /// (circuit still settling). An authenticated 401 is a real denial.
+    /// </summary>
+    public static bool ShouldRetry(HttpStatusCode status, HttpRequestMessage sent)
+    {
+        if (status == HttpStatusCode.Unauthorized)
+        {
+            return !HasAttachedAuth(sent);
+        }
+
+        return IsTransient(status);
+    }
+
+    private static bool HasAttachedAuth(HttpRequestMessage request)
+        => request.Headers.Contains("X-Jobsy-Email")
+           || request.Headers.Authorization is not null;
 
     /// <summary>
     /// Fresh request so <see cref="JobsyApiAuthHandler"/> can attach the identity

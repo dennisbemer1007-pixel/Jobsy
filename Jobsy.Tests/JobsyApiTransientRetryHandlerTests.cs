@@ -36,6 +36,23 @@ public class JobsyApiTransientRetryHandlerTests
     }
 
     [Fact]
+    public async Task Get_does_not_retry_unauthorized_when_auth_headers_were_sent()
+    {
+        var inner = new InspectingHandler((request, _) =>
+        {
+            request.Headers.TryAddWithoutValidation("X-Jobsy-Email", "admin@jobsy.local");
+            return new HttpResponseMessage(HttpStatusCode.Unauthorized);
+        });
+        var sut = new JobsyApiTransientRetryHandler { InnerHandler = inner };
+
+        using var client = new HttpClient(sut);
+        var response = await client.GetAsync("http://retry.test/api/metrics/summary");
+
+        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+        Assert.Equal(1, inner.Calls);
+    }
+
+    [Fact]
     public async Task Get_retry_uses_a_fresh_request_without_stale_auth_headers()
     {
         HttpRequestMessage? first = null;
@@ -47,7 +64,7 @@ public class JobsyApiTransientRetryHandlerTests
                 first = request;
                 request.Headers.TryAddWithoutValidation("X-Jobsy-Email", "stale@jobsy.local");
                 request.Headers.TryAddWithoutValidation("Authorization", "Bearer stale");
-                return new HttpResponseMessage(HttpStatusCode.Unauthorized);
+                return new HttpResponseMessage(HttpStatusCode.ServiceUnavailable);
             }
 
             second = request;
@@ -74,6 +91,13 @@ public class JobsyApiTransientRetryHandlerTests
         Assert.True(JobsyApiTransientRetryHandler.IsTransient(HttpStatusCode.ServiceUnavailable));
         Assert.False(JobsyApiTransientRetryHandler.IsTransient(HttpStatusCode.Forbidden));
         Assert.False(JobsyApiTransientRetryHandler.IsTransient(HttpStatusCode.NotFound));
+
+        using var anonymous = new HttpRequestMessage(HttpMethod.Get, "http://retry.test/api/me");
+        Assert.True(JobsyApiTransientRetryHandler.ShouldRetry(HttpStatusCode.Unauthorized, anonymous));
+
+        using var authed = new HttpRequestMessage(HttpMethod.Get, "http://retry.test/api/me");
+        authed.Headers.TryAddWithoutValidation("X-Jobsy-Email", "admin@jobsy.local");
+        Assert.False(JobsyApiTransientRetryHandler.ShouldRetry(HttpStatusCode.Unauthorized, authed));
     }
 
     private sealed class SequenceHandler(params HttpResponseMessage[] responses) : HttpMessageHandler

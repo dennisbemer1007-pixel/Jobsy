@@ -1,3 +1,5 @@
+using System.Net;
+
 namespace Jobsy.Web.Services;
 
 /// <summary>
@@ -16,7 +18,7 @@ internal static class HomeDashboardLoad
             {
                 return (await load(), null);
             }
-            catch when (attempt < 2)
+            catch (Exception ex) when (attempt < 2 && IsTransient(ex))
             {
                 await Task.Delay(400);
             }
@@ -27,5 +29,34 @@ internal static class HomeDashboardLoad
         }
 
         return (default, FailedMessage);
+    }
+
+    internal static bool IsTransient(Exception ex)
+    {
+        if (ex is HttpRequestException http)
+        {
+            return http.StatusCode is null
+                or HttpStatusCode.Unauthorized
+                or HttpStatusCode.RequestTimeout
+                or HttpStatusCode.BadGateway
+                or HttpStatusCode.ServiceUnavailable
+                or HttpStatusCode.GatewayTimeout;
+        }
+
+        if (ex is TaskCanceledException)
+        {
+            return true;
+        }
+
+        if (ex is InvalidOperationException)
+        {
+            var message = ex.Message;
+            return message.Contains("401", StringComparison.Ordinal)
+                   || message.Contains("503", StringComparison.Ordinal)
+                   || message.Contains("502", StringComparison.Ordinal)
+                   || message.Contains("504", StringComparison.Ordinal);
+        }
+
+        return false;
     }
 }
