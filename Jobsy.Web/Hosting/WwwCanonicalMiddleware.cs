@@ -1,19 +1,22 @@
+using Microsoft.Extensions.Configuration;
+
 namespace Jobsy.Web.Hosting;
 
 /// <summary>
 /// Apex canonical: www.lobsy.nl → lobsy.nl (301). Cloudflare already does this;
-/// keep a server fallback so Render/onrender hosts and misconfigured DNS still converge.
+/// keep a server fallback for the known public host only (AllowedHosts is * on Render).
 /// </summary>
-public sealed class WwwCanonicalMiddleware(RequestDelegate next)
+public sealed class WwwCanonicalMiddleware(RequestDelegate next, IConfiguration configuration)
 {
     public Task Invoke(HttpContext context)
     {
         var host = context.Request.Host.Host;
-        if (CanonicalHost.IsLoopback(host) || !CanonicalHost.TryStripWww(host, out var canonical))
+        if (!CanonicalHost.ShouldRedirectWww(host, CanonicalHost.ConfiguredApexHosts(configuration)))
         {
             return next(context);
         }
 
+        CanonicalHost.TryStripWww(host, out var canonical);
         var target = Uri.UriSchemeHttps
                      + Uri.SchemeDelimiter
                      + canonical

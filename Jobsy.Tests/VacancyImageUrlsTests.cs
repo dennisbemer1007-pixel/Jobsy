@@ -33,14 +33,21 @@ public class VacancyImageUrlsTests
     }
 
     [Fact]
-    public void CdnResize_wraps_absolute_and_root_paths()
+    public void CdnResize_wraps_same_origin_paths_only()
     {
-        Assert.Equal(
-            "/cdn-cgi/image/width=400,quality=75,format=auto/https://cdn.example/a.jpg",
-            VacancyImageUrls.CdnResize("https://cdn.example/a.jpg", 400));
         Assert.Equal(
             "/cdn-cgi/image/width=400,quality=75,format=auto/images/a.jpg",
             VacancyImageUrls.CdnResize("/images/a.jpg", 400));
+        Assert.Equal("https://cdn.example/a.jpg", VacancyImageUrls.CdnResize("https://cdn.example/a.jpg", 400));
+        Assert.Equal("http://169.254.169.254/latest/meta-data/", VacancyImageUrls.CdnResize("http://169.254.169.254/latest/meta-data/", 400));
+        Assert.Equal("//evil.example/x.jpg", VacancyImageUrls.CdnResize("//evil.example/x.jpg", 400));
+    }
+
+    [Fact]
+    public void ForDisplay_does_not_proxy_absolute_urls_through_cloudflare()
+    {
+        const string remote = "https://cdn.example/photo.jpg";
+        Assert.Equal(remote, VacancyImageUrls.ForDisplay(remote, 400, cloudflareResizing: true));
     }
 
     [Fact]
@@ -95,6 +102,20 @@ public class CanonicalHostTests
         Assert.Equal(expected, CanonicalHost.TryStripWww(host, out var actual));
         Assert.Equal(canonical, actual);
     }
+
+    [Theory]
+    [InlineData("www.lobsy.nl", true)]
+    [InlineData("www.westland.lobsy.nl", true)]
+    [InlineData("lobsy.nl", false)]
+    [InlineData("www.example.com", false)]
+    [InlineData("www.evil.example", false)]
+    [InlineData("localhost", false)]
+    public void ShouldRedirectWww_only_known_apex(string host, bool expected)
+        => Assert.Equal(expected, CanonicalHost.ShouldRedirectWww(host));
+
+    [Fact]
+    public void ShouldRedirectWww_honors_configured_public_host()
+        => Assert.True(CanonicalHost.ShouldRedirectWww("www.jobsy-demo.onrender.com", ["jobsy-demo.onrender.com"]));
 
     [Fact]
     public void Loopback_is_not_rewritten()

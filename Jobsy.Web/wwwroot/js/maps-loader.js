@@ -62,6 +62,9 @@ window.jobsyMaps = (function () {
             }
             pending = Promise.all(css.map(loadCss)).then(function () {
                 return loadScriptsInOrder(scripts, 0);
+            }).catch(function (err) {
+                pending = null;
+                throw err;
             });
             return pending;
         }

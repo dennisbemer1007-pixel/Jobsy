@@ -16,7 +16,7 @@ LCP was een Carto-tegel (`leaflet-tile`) met **20s load delay**: de netwerkrij s
 - Mock/seed-foto’s zijn same-origin SVG’s (`/images/vacancies/{branche}-{0\|1}.svg`, ~0.6&nbsp;KB). Bestaande picsum/Unsplash-URL’s worden bij render herschreven en bij de volgende media-backfill in de database gezet.
 - Job cards gebruiken een echt `<img>` (`VacancyPhoto`) met `loading="lazy"`, `decoding="async"`, intrinsieke 600×400 en `sizes`. De eerste twee kaarten zijn eager.
 - Logo: WebP 64/128/256 i.p.v. 1024×1024 PNG (568&nbsp;KB). Watermarks lazy, apple-touch-icon 180&nbsp;px.
-- Optioneel Cloudflare Image Resizing: zet `Cloudflare__ImageResizing=true` (betaalde CF-add-on). Dan worden raster-URL’s `/cdn-cgi/image/width=…,format=auto/…`.
+- Optioneel Cloudflare Image Resizing: zet `Cloudflare__ImageResizing=true` (betaalde CF-add-on). Alleen same-origin paden (`/images/…`) worden gewrapt — geen absolute http(s)-URL’s (geen CF-fetch/SSRF-proxy).
 
 ### JavaScript / critical path
 

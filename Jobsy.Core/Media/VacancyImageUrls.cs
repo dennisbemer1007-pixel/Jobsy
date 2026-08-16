@@ -53,7 +53,7 @@ public static class VacancyImageUrls
             return resolved;
         }
 
-        return CdnResize(resolved, width);
+        return IsSafeSameOriginPath(resolved) ? CdnResize(resolved, width) : resolved;
     }
 
     public static string? SrcSet(string displayUrl, bool cloudflareResizing)
@@ -72,22 +72,25 @@ public static class VacancyImageUrls
         return $"{at400} 400w, {at800} 800w";
     }
 
+    /// <summary>
+    /// Cloudflare Image Resizing only for same-origin paths. Absolute http(s) URLs
+    /// are not wrapped — that would let Cloudflare fetch attacker-controlled origins.
+    /// </summary>
     public static string CdnResize(string url, int width)
     {
-        var options = $"width={width},quality=75,format=auto";
-        if (url.StartsWith('/'))
+        if (!IsSafeSameOriginPath(url))
         {
-            return $"/cdn-cgi/image/{options}{url}";
+            return url;
         }
 
-        if (url.StartsWith("https://", StringComparison.OrdinalIgnoreCase)
-            || url.StartsWith("http://", StringComparison.OrdinalIgnoreCase))
-        {
-            return $"/cdn-cgi/image/{options}/{url}";
-        }
-
-        return url;
+        return $"/cdn-cgi/image/width={width},quality=75,format=auto{url}";
     }
+
+    public static bool IsSafeSameOriginPath(string? url)
+        => !string.IsNullOrWhiteSpace(url)
+           && url.StartsWith('/')
+           && !url.StartsWith("//", StringComparison.Ordinal)
+           && url.IndexOfAny(['\\', '\n', '\r']) < 0;
 
     public static bool IsThirdPartyPlaceholder(string? imageUrl)
     {
