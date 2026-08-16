@@ -452,15 +452,12 @@
                                           OnHover="OnHover"
                                           OnSelect="OnCarouselSelect" />
                 <div class="vacancy-list vacancy-list--cards">
-                    @{ var cardIndex = 0; }
                     @foreach (var vacancy in VisibleVacancies)
                     {
                         var wageText = FormatWage(vacancy);
                         var travelText = vacancy.TravelMinutes is not null
                             ? $"± {vacancy.TravelMinutes} {Culture["Discovery.Minutes"]}"
                             : Culture.Format("Discovery.MaxMinutes", _maxTravelMinutes);
-                        var photoEager = cardIndex < 2;
-                        cardIndex++;
                         <article class="job-card @(_hoveredId == vacancy.Id ? "is-hovered" : null) @(vacancy.IsHighlighted ? "job-card--highlight" : null)"
                                  @onmouseenter="() => OnHover(vacancy.Id)"
                                  @onmouseleave="() => OnHover(null)"
@@ -470,7 +467,8 @@
                                               VacancyId="vacancy.Id"
                                               WorkType="@(vacancy.WorkTypes.FirstOrDefault())"
                                               Class="job-card__photo"
-                                              Eager="photoEager"
+                                              Width="400"
+                                              Height="267"
                                               Sizes="(max-width: 700px) 50vw, 360px" />
                                 @if (vacancy.IsHighlighted)
                                 {
@@ -520,7 +518,7 @@
     </aside>
 
     <section class="map-pane" aria-label="@Culture["Page.JobMapTitle"]">
-        @if (RendererInfo.IsInteractive && _vacancies.Count > 0)
+        @if (RendererInfo.IsInteractive && _mapPainted && _vacancies.Count > 0)
         {
             <HighlightVacancyCarousel Vacancies="HighlightedVacanciesForUi"
                                       ActiveId="_hoveredId"
@@ -1039,11 +1037,12 @@
     }
 
     /// <summary>
-    /// Job cards stay out of prerender HTML and the hidden mobile map pane.
-    /// Desktop (wide) always shows a windowed list beside the map.
+    /// Job cards stay out of prerender HTML, the hidden mobile map pane, and
+    /// first paint — picsum photos start only after the map is live.
+    /// Desktop (wide) then shows a windowed list beside the map.
     /// </summary>
     private bool ShouldRenderVacancyCards =>
-        RendererInfo.IsInteractive && (_wideViewport || !showMapOnMobile);
+        RendererInfo.IsInteractive && _mapPainted && (_wideViewport || !showMapOnMobile);
 
     private IReadOnlyList<VacancyListItem> HighlightedVacanciesForUi
     {
@@ -1633,7 +1632,7 @@
 
         try
         {
-            await MapScripts.EnsureDiscoveryAsync(Js);
+            await MapScripts.EnsureDiscoveryAfterPaintAsync(Js);
         }
         catch (JSException)
         {
@@ -1699,6 +1698,7 @@
             await Js.InvokeVoidAsync("jobMap.init", "job-map", markers, options);
             _mapReady = true;
             _mapPainted = true;
+            await InvokeAsync(StateHasChanged);
             await Task.Delay(80);
             await Js.InvokeVoidAsync("jobMap.invalidate");
             await TryFocusCompanyOnMapAsync();

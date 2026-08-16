@@ -13,8 +13,10 @@ public class HomepagePerformanceGuardTests
     {
         var discovery = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "Components", "VacancyDiscovery.razor"));
         Assert.Contains("ShouldRenderVacancyCards", discovery);
+        Assert.Contains("_mapPainted && (_wideViewport || !showMapOnMobile)", discovery);
         Assert.Contains("VisibleVacancies", discovery);
         Assert.Contains("RendererInfo.IsInteractive", discovery);
+        Assert.DoesNotContain("photoEager", discovery);
         Assert.Contains("jobsyViewport.isWide", discovery);
         Assert.Contains("VacancyCardPageSize = 12", discovery);
         Assert.DoesNotContain("@foreach (var vacancy in SortedVacancies)", discovery);
@@ -47,7 +49,7 @@ public class HomepagePerformanceGuardTests
         Assert.Contains("job-map-placeholder", discovery);
         Assert.Contains("images/maps/nl-preview.webp", discovery);
         Assert.DoesNotContain("job-map-placeholder__cluster", discovery);
-        Assert.Contains("EnsureDiscoveryAsync", discovery);
+        Assert.Contains("EnsureDiscoveryAfterPaintAsync", discovery);
         Assert.Contains("_vacancies.Count == 0 && _loading", discovery);
         Assert.Contains("if (!RendererInfo.IsInteractive)", discovery);
         Assert.Contains("OnMapTilesReady", discovery);
@@ -86,9 +88,9 @@ public class HomepagePerformanceGuardTests
         Assert.Contains("EnsureDetailAsync", mapScripts);
 
         var discovery = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "Components", "VacancyDiscovery.razor"));
-        Assert.Contains("EnsureDiscoveryAsync", discovery);
+        Assert.Contains("EnsureDiscoveryAfterPaintAsync", discovery);
         Assert.DoesNotContain("MapScripts.EnsureAsync(Js)", discovery);
-        Assert.DoesNotContain("EnsureDiscoveryAfterPaintAsync", discovery);
+        Assert.DoesNotContain("await MapScripts.EnsureDiscoveryAsync(Js)", discovery);
 
         var detail = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "Components", "Pages", "VacancyDetail.razor"));
         Assert.Contains("EnsureDetailAsync", detail);

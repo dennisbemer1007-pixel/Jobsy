@@ -15,7 +15,14 @@ public static class VacancyImageUrls
     public const int VariantCount = 2;
 
     public static string PicsumUrl(Guid vacancyId)
-        => $"https://picsum.photos/seed/jobsy-{vacancyId:N}/600/400";
+        => PicsumUrl(vacancyId, IntrinsicWidth, IntrinsicHeight);
+
+    public static string PicsumUrl(Guid vacancyId, int width, int height)
+    {
+        width = Math.Clamp(width, 80, IntrinsicWidth);
+        height = Math.Clamp(height, 54, IntrinsicHeight);
+        return $"https://picsum.photos/seed/jobsy-{vacancyId:N}/{width}/{height}";
+    }
 
     public static string Placeholder(Guid vacancyId, WorkType workTypes = WorkType.None)
         => Placeholder(vacancyId, FirstSlug(workTypes));
@@ -51,9 +58,18 @@ public static class VacancyImageUrls
         string? workType = null)
     {
         var resolved = Resolve(imageUrl, vacancyId, workType);
-        if (!cloudflareResizing
-            || resolved.StartsWith("data:", StringComparison.OrdinalIgnoreCase)
+        if (resolved.StartsWith("data:", StringComparison.OrdinalIgnoreCase)
             || resolved.EndsWith(".svg", StringComparison.OrdinalIgnoreCase))
+        {
+            return resolved;
+        }
+
+        if (IsPicsum(resolved))
+        {
+            return SizedPicsum(resolved, width, vacancyId);
+        }
+
+        if (!cloudflareResizing)
         {
             return resolved;
         }
@@ -149,6 +165,18 @@ public static class VacancyImageUrls
         if (t.Contains("schoonmaak", StringComparison.Ordinal)) return "schoonmaak";
         if (t.Contains("productie", StringComparison.Ordinal)) return "productie";
         return "flex";
+    }
+
+    private static string SizedPicsum(string url, int width, Guid? vacancyId)
+    {
+        var id = vacancyId ?? TryExtractSeed(url);
+        if (id is null || id == Guid.Empty || width <= 0 || width >= IntrinsicWidth)
+        {
+            return url;
+        }
+
+        var height = Math.Max(54, (int)Math.Round(width * (IntrinsicHeight / (double)IntrinsicWidth)));
+        return PicsumUrl(id.Value, width, height);
     }
 
     private static Guid? TryExtractSeed(string? imageUrl)

@@ -14,6 +14,7 @@ Alle noemenswaardige wijzigingen aan dit project worden in dit bestand bijgehoud
 ## [Unreleased]
 
 ### Changed
+- Homepage weer snel: Leaflet pas na first paint, picsum-foto’s pas ná de live kaart (lazy, 400×267 op kaarten). Originele unieke foto’s en markers blijven. Zie `docs/performance.md`.
 - Vacaturefoto’s: picsum-seeds terug (unieke foto per vacature); SVG-stand-ins worden teruggezet. Kaart-init weer in de werkende volgorde (tegels → clusters). Zie `docs/performance.md`.
 - Homepage-kaart: markers weer zichtbaar (cluster niet droppen bij 0×0 bounds; preview-overlay weg na init). Zie `docs/performance.md`.
 - Homepage-kaart: prerender van echte Carto-NL-tegels (lokaal webp); Leaflet start op heel NL, niet eerst Den Haag/Null Island. Zie `docs/performance.md`.

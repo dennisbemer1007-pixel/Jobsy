@@ -18,7 +18,7 @@ Na die eerste ronde was het gewicht weg (36 requests / ~334&nbsp;KB) en LCP ~2.4
 De banenkaart blijft de first-paint kernervaring (geen Funda-klik-om-te-tonen):
 
 - Home prerendert de kaart-shell: lokale Carto-mosaic van NL (`nl-preview.webp`), zonder Leaflet.
-- Leaflet + MarkerCluster + Carto-tegels laden pas na first paint (`requestIdleCallback` / Intersection Observer).
+- Leaflet + MarkerCluster + Carto-tegels laden pas na first paint (`requestIdleCallback` / Intersection Observer). Markers blijven: init op NL-center, overlay weg zodra `jobMap.init` slaagt.
 - Soft fade zodra de eerste tegel binnen is — geen leeg grijs vlak.
 - Cookie-banner is compact, paint-contained, en wint de LCP niet van de kaart.
 - Alleen `app.css` en de kaart-preview worden gepreload; geen Leaflet op elke pagina.
@@ -27,7 +27,7 @@ De banenkaart blijft de first-paint kernervaring (geen Funda-klik-om-te-tonen):
 
 ### Images
 
-- Mock/seed-foto’s zijn weer de originele picsum-seeds (`jobsy-{vacancyId}`, 600×400). Alleen zichtbare kaarten laden ze (`loading=lazy`, venster van 12). Unsplash-404’s en tijdelijke SVG-stand-ins gaan bij backfill terug naar picsum.
+- Mock/seed-foto’s blijven de originele picsum-seeds (`jobsy-{vacancyId}`). Ze starten **niet** in first paint: kaarten en carousel pas ná `_mapPainted`, allemaal `loading=lazy`, lijst op 400×267. Unsplash-404’s en SVG-stand-ins gaan bij backfill terug naar picsum.
 - Job cards gebruiken een echt `<img>` (`VacancyPhoto`) met `loading="lazy"`, `decoding="async"`, intrinsieke 600×400 en `sizes`. De eerste twee kaarten zijn eager.
 - De vacaturelijst wordt **niet** in de eerste HTML/mobile-kaartweergave gezet. Desktop en de mobiele lijst tonen vensters van 12 kaarten (+ “toon meer”). Featured-carousel max. 8.
 - Logo: WebP 64/128/256 i.p.v. 1024×1024 PNG (568&nbsp;KB). Watermarks lazy, apple-touch-icon 180&nbsp;px.

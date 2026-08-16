@@ -61,6 +61,17 @@ public class VacancyImageUrlsTests
     }
 
     [Fact]
+    public void ForDisplay_downsizes_picsum_for_cards_without_changing_the_seed()
+    {
+        var id = Guid.Parse("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb");
+        var full = VacancyImageUrls.PicsumUrl(id);
+        Assert.Equal(
+            $"https://picsum.photos/seed/jobsy-{id:N}/400/267",
+            VacancyImageUrls.ForDisplay(full, 400, cloudflareResizing: false, id, "Horeca"));
+        Assert.Equal(full, VacancyImageUrls.ForDisplay(full, 600, cloudflareResizing: false, id, "Horeca"));
+    }
+
+    [Fact]
     public void Placeholder_svg_files_exist_for_every_work_type()
     {
         var root = FindRepoRoot();
