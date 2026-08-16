@@ -64,6 +64,37 @@ public class TransactionalEmailCatalogTests
     }
 
     [Fact]
+    public void Hired_mail_omits_withdraw_when_no_token_url()
+    {
+        var ctx = EmailSampleContext.ForPreview("https://lobsy.nl");
+        var without = TransactionalEmails.ApplicationHired(
+            ctx.PublicWebBaseUrl, ctx.RecipientName, ctx.VacancyTitle, ctx.CompanyName, ctx.ApplicationId);
+        Assert.DoesNotContain("withdraw-others", without.Html);
+        Assert.DoesNotContain("Andere sollicitaties netjes intrekken", without.Html);
+
+        var withToken = TransactionalEmails.ApplicationHired(
+            ctx.PublicWebBaseUrl, ctx.RecipientName, ctx.VacancyTitle, ctx.CompanyName, ctx.ApplicationId,
+            "https://lobsy.nl/candidate/actions/withdraw-others?t=sample");
+        Assert.Contains("withdraw-others", withToken.Html);
+    }
+
+    [Fact]
+    public void Production_senders_use_the_shared_catalog()
+    {
+        var root = FindRepoRoot();
+        var files = Directory.GetFiles(root, "*.cs", SearchOption.AllDirectories)
+            .Where(p => !p.Contains($"{Path.DirectorySeparatorChar}obj{Path.DirectorySeparatorChar}", StringComparison.Ordinal)
+                        && !p.Contains($"{Path.DirectorySeparatorChar}bin{Path.DirectorySeparatorChar}", StringComparison.Ordinal)
+                        && !p.EndsWith("TransactionalEmails.cs", StringComparison.Ordinal)
+                        && !p.Contains($"{Path.DirectorySeparatorChar}Jobsy.Tests{Path.DirectorySeparatorChar}", StringComparison.Ordinal));
+        foreach (var file in files)
+        {
+            var source = File.ReadAllText(file);
+            Assert.DoesNotContain("EmailLayout.Wrap(", source);
+        }
+    }
+
+    [Fact]
     public void Working_cta_targets_match_live_routes()
     {
         var ctx = EmailSampleContext.ForPreview("https://lobsy.nl");

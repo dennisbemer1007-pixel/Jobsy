@@ -85,29 +85,13 @@ public sealed class DraftVacancyCleanupHostedService : BackgroundService
             }
 
             var deleteOn = vacancy.CreatedAtUtc.AddDays(DraftVacancyCleanupRules.DeleteAfterDays);
-            var deleteLabel = deleteOn.ToString("dd-MM-yyyy");
-            var warnHtml = EmailLayout.Wrap(
-                $"""
-                 {EmailLayout.Heading("Concept wordt binnenkort opgeruimd")}
-                 {EmailLayout.Paragraph("Hallo,")}
-                 {EmailLayout.Paragraph(
-                     $"Je concept-vacature <strong>{EmailLayout.Escape(vacancy.Title)}</strong> " +
-                     $"voor <strong>{EmailLayout.Escape(vacancy.Company.Name)}</strong> staat al " +
-                     $"{DraftVacancyCleanupRules.WarningAfterDays} dagen als concept en is nog nooit gepubliceerd.")}
-                 {EmailLayout.Paragraph(
-                     $"Als je niets doet, ruimt Lobsy dit concept automatisch op op " +
-                     $"<strong>{EmailLayout.Escape(deleteLabel)}</strong> (14 dagen vanaf deze mail).")}
-                 {EmailLayout.Paragraph(
-                     "Vacatures die je wél hebt gepubliceerd blijven altijd bewaard — ook na de deadline.")}
-                 {EmailLayout.MutedNote("Log in op Lobsy → Vacatures om dit concept te publiceren of te verwijderen.")}
-                 """,
-                baseUrl,
-                preheader: $"Concept '{vacancy.Title}' wordt over 14 dagen verwijderd");
+            var warn = TransactionalEmails.DraftVacancyCleanupWarning(
+                baseUrl, vacancy.Title, vacancy.Company.Name, vacancy.Id, deleteOn);
             await email.SendAsync(new EmailMessage(
                 recipient,
-                $"Concept-vacature '{vacancy.Title}' wordt over 14 dagen verwijderd",
-                warnHtml,
-                DraftVacancyCleanupRules.WarningEmailCategory), cancellationToken);
+                warn.Subject,
+                warn.Html,
+                warn.Category), cancellationToken);
 
             vacancy.DraftCleanupWarningSentAtUtc = now;
             warned++;

@@ -85,7 +85,8 @@ public static class TransactionalEmails
             "employercontacting" => EmployerContacting(
                 ctx.PublicWebBaseUrl, ctx.VacancyTitle),
             "applicationhired" => ApplicationHired(
-                ctx.PublicWebBaseUrl, ctx.RecipientName, ctx.VacancyTitle, ctx.CompanyName, ctx.ApplicationId),
+                ctx.PublicWebBaseUrl, ctx.RecipientName, ctx.VacancyTitle, ctx.CompanyName, ctx.ApplicationId,
+                EmailLayout.WithdrawOthersUrl(ctx.PublicWebBaseUrl, ctx.ApplicationId)),
             "applicationfilledelsewhere" => ApplicationFilledElsewhere(
                 ctx.PublicWebBaseUrl, ctx.RecipientName, ctx.VacancyTitle, ctx.CompanyName),
             "employernewapplication" => EmployerNewApplication(
@@ -96,12 +97,14 @@ public static class TransactionalEmails
                 ctx.PublicWebBaseUrl, ctx.VacancyTitle),
             "pushbom" => PushBom(
                 ctx.PublicWebBaseUrl, ctx.RecipientName, ctx.VacancyTitle, ctx.CompanyName,
-                ctx.VacancyId, ctx.LocationLabel, ctx.DistanceKm, ctx.TravelMinutes, ctx.HourlyWage, "Uurloon"),
+                ctx.VacancyId, ctx.LocationLabel, ctx.DistanceKm, ctx.TravelMinutes, ctx.HourlyWage, "Uurloon",
+                EmailLayout.SetUnavailableUrl(ctx.PublicWebBaseUrl)),
             "pendingapproval" => PendingApproval(
                 ctx.PublicWebBaseUrl, ctx.VacancyTitle, ctx.CompanyName),
             "vacancyengagementreminder" => VacancyEngagementReminder(
                 ctx.PublicWebBaseUrl, ctx.VacancyTitle, ctx.VacancyId, 42, 18, 3, 5, 2,
-                VacancyEngagementReminderRules.BuildHeuristicTip(42, 18, 3, 5, 2)),
+                VacancyEngagementReminderRules.BuildHeuristicTip(42, 18, 3, 5, 2),
+                ctx.CompanyName),
             "draftvacancycleanupwarning" => DraftVacancyCleanupWarning(
                 ctx.PublicWebBaseUrl, ctx.VacancyTitle, ctx.CompanyName, ctx.VacancyId,
                 DateTime.UtcNow.AddDays(DraftVacancyCleanupRules.DeleteAfterWarningDays)),
@@ -250,9 +253,14 @@ public static class TransactionalEmails
         string? withdrawAbsoluteUrl = null)
     {
         var subject = $"Gefeliciteerd! Je bent aangenomen voor {vacancyTitle}";
-        var withdraw = string.IsNullOrWhiteSpace(withdrawAbsoluteUrl)
-            ? EmailLayout.WithdrawOthersUrl(baseUrl, hiredApplicationId)
-            : withdrawAbsoluteUrl;
+        var withdrawBlock = string.IsNullOrWhiteSpace(withdrawAbsoluteUrl)
+            ? ""
+            : $"""
+               {EmailLayout.SecondaryButton(withdrawAbsoluteUrl, "Andere sollicitaties netjes intrekken")}
+               {EmailLayout.MutedNote(
+                   $"Heb je nog andere sollicitaties lopen? Trek ze in, zodat die werkgevers weten dat je al bent voorzien. " +
+                   $"<a href=\"{EmailLayout.Escape(withdrawAbsoluteUrl)}\" style=\"color:{EmailLayout.AccentTeal};font-weight:650;\">Andere sollicitaties netjes intrekken</a>")}
+               """;
         var html = EmailLayout.Wrap(
             $"""
              {EmailLayout.Heading("Gefeliciteerd — je bent aangenomen!")}
@@ -261,10 +269,7 @@ public static class TransactionalEmails
                  $"<strong>Wat een feest!</strong> Je bent aangenomen voor <strong>{EmailLayout.Escape(vacancyTitle)}</strong> bij {EmailLayout.Escape(companyName)}.")}
              {EmailLayout.Paragraph("Heel veel succes — en geniet van deze stap.")}
              {EmailLayout.PrimaryButton(EmailLayout.CandidateApplicationsUrl(baseUrl), "Bekijk mijn sollicitaties")}
-             {EmailLayout.SecondaryButton(withdraw, "Andere sollicitaties netjes intrekken")}
-             {EmailLayout.MutedNote(
-                 $"Heb je nog andere sollicitaties lopen? Trek ze in, zodat die werkgevers weten dat je al bent voorzien. " +
-                 $"<a href=\"{EmailLayout.Escape(withdraw)}\" style=\"color:{EmailLayout.AccentTeal};font-weight:650;\">Andere sollicitaties netjes intrekken</a>")}
+             {withdrawBlock}
              """,
             baseUrl,
             preheader: subject);
@@ -349,7 +354,8 @@ public static class TransactionalEmails
         double distanceKm,
         int travelMinutes,
         decimal? hourlyWage,
-        string wageNote)
+        string wageNote,
+        string? setUnavailableAbsoluteUrl = null)
     {
         var facts = new List<(string, string)>
         {
@@ -369,7 +375,9 @@ public static class TransactionalEmails
         }
 
         var subject = $"Nieuwe vacature bij jou in de buurt: {vacancyTitle}";
-        var setUnavailable = EmailLayout.SetUnavailableUrl(baseUrl);
+        var setUnavailable = string.IsNullOrWhiteSpace(setUnavailableAbsoluteUrl)
+            ? EmailLayout.SetUnavailableUrl(baseUrl)
+            : setUnavailableAbsoluteUrl;
         var deepLink = EmailLayout.VacancyUrl(baseUrl, vacancyId);
         var inner = new System.Text.StringBuilder();
         inner.Append(EmailLayout.Heading("Iets moois bij jou in de buurt"));
@@ -416,13 +424,16 @@ public static class TransactionalEmails
         int shares,
         int saved,
         int applications,
-        string tip)
+        string tip,
+        string? companyName = null)
     {
         var subject = $"Even checken: {vacancyTitle} staat {VacancyEngagementReminderRules.OpenDaysBeforeReminder} dagen open";
         var inner = $"""
-            {EmailLayout.Heading("Even checken")}
+            {EmailLayout.Heading("Even checken — je vacature staat 14 dagen open")}
+            {EmailLayout.Paragraph("Hoi,")}
             {EmailLayout.Paragraph(
-                $"Je vacature <strong>{EmailLayout.Escape(vacancyTitle)}</strong> " +
+                $"Je vacature <strong>{EmailLayout.Escape(vacancyTitle)}</strong>" +
+                $"{(string.IsNullOrWhiteSpace(companyName) ? "" : $" bij {EmailLayout.Escape(companyName)}")} " +
                 $"staat al {VacancyEngagementReminderRules.OpenDaysBeforeReminder} dagen open. Tijd voor een korte check-in.")}
             {EmailLayout.Paragraph("<strong>Dit zien we tot nu toe:</strong>")}
             {EmailLayout.KpiList([

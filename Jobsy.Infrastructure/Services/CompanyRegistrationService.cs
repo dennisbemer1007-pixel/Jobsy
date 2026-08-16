@@ -825,37 +825,18 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
         await _partnerAffiliates.EnsureProfileAsync(user.Id, cancellationToken);
 
         var features = await _features.GetAsync(cancellationToken);
-        var loginUrl = features.PublicWebBaseUrl.TrimEnd('/') + "/login";
-        var safeName = WebUtility.HtmlEncode(registration.ContactName);
-        var passwordBlock = temporaryPassword is null
-            ? EmailLayout.Paragraph(
-                "Log in met het wachtwoord dat je bij registratie hebt gekozen, of via " +
-                "<strong>Microsoft Entra</strong> met hetzelfde geverifieerde e-mailadres.")
-            : $"""
-               {EmailLayout.Paragraph(
-                   $"Log in met <code>{WebUtility.HtmlEncode(registration.ContactEmail)}</code>. " +
-                   "Je eenmalige tijdelijke wachtwoord (bewaar dit veilig; het wordt niet opnieuw getoond):")}
-               <p style="margin:16px 0;font-size:20px;letter-spacing:0.06em;font-weight:700;color:{EmailLayout.BrandNavy};text-align:center;"><code>{WebUtility.HtmlEncode(temporaryPassword)}</code></p>
-               {EmailLayout.MutedNote("Wijzig dit wachtwoord zo snel mogelijk.")}
-               """;
+        var approved = TransactionalEmails.TakeoverApproved(
+            features.PublicWebBaseUrl,
+            registration.ContactName,
+            target.Name,
+            registration.ContactEmail,
+            temporaryPassword,
+            orgId is not null);
         await _email.SendAsync(new EmailMessage(
             registration.ContactEmail,
-            "Overname goedgekeurd — Lobsy",
-            EmailLayout.Wrap(
-                $"""
-                 {EmailLayout.Heading("Overname goedgekeurd")}
-                 {EmailLayout.Paragraph($"Hoi {safeName},")}
-                 {EmailLayout.Paragraph(
-                     $"Je overnameverzoek voor <strong>{WebUtility.HtmlEncode(target.Name)}</strong> is goedgekeurd.")}
-                 {EmailLayout.Paragraph(
-                     "Tokens, vacatures en geschiedenis blijven gekoppeld aan de vestiging" +
-                     $"{(orgId is not null ? " onder de organisatie" : "")}.")}
-                 {passwordBlock}
-                 {EmailLayout.MutedNote($"Inloggen via Lobsy ({WebUtility.HtmlEncode(loginUrl)}).")}
-                 """,
-                features.PublicWebBaseUrl,
-                preheader: "Overname goedgekeurd"),
-            "TakeoverApproved"), cancellationToken);
+            approved.Subject,
+            approved.Html,
+            approved.Category), cancellationToken);
 
         return new TakeoverDecisionResult(
             takeover.Id,
@@ -900,20 +881,15 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
 
         await _db.SaveChangesAsync(cancellationToken);
 
-        var safeName = WebUtility.HtmlEncode(takeover.Registration.ContactName);
+        var rejected = TransactionalEmails.TakeoverRejected(
+            baseUrl: null,
+            takeover.Registration.ContactName,
+            takeover.TargetCompany.Name);
         await _email.SendAsync(new EmailMessage(
             takeover.Registration.ContactEmail,
-            "Overname afgewezen — Lobsy",
-            EmailLayout.Wrap(
-                $"""
-                 {EmailLayout.Heading("Overname afgewezen")}
-                 {EmailLayout.Paragraph($"Hoi {safeName},")}
-                 {EmailLayout.Paragraph(
-                     $"Je overnameverzoek voor <strong>{WebUtility.HtmlEncode(takeover.TargetCompany.Name)}</strong> is afgewezen.")}
-                 """,
-                publicWebBaseUrl: null,
-                preheader: "Overname afgewezen"),
-            "TakeoverRejected"), cancellationToken);
+            rejected.Subject,
+            rejected.Html,
+            rejected.Category), cancellationToken);
 
         return new TakeoverDecisionResult(
             takeover.Id,
@@ -1291,23 +1267,13 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
         string plaintextCode,
         CancellationToken cancellationToken)
     {
-        var safeName = WebUtility.HtmlEncode(registration.ContactName);
+        var verify = TransactionalEmails.TakeoverEmailVerification(
+            baseUrl: null, registration.ContactName, existing.Name, plaintextCode);
         await _email.SendAsync(new EmailMessage(
             registration.ContactEmail,
-            "Bevestigingscode overnameverzoek — Lobsy",
-            EmailLayout.Wrap(
-                $"""
-                 {EmailLayout.Heading("Bevestig je e-mailadres")}
-                 {EmailLayout.Paragraph($"Hoi {safeName},")}
-                 {EmailLayout.Paragraph(
-                     $"Vestiging <strong>{WebUtility.HtmlEncode(existing.Name)}</strong> is al geregistreerd. " +
-                     "Bevestig eerst je e-mailadres met deze code (geldig 10 minuten):")}
-                 {EmailLayout.OtpBlock(plaintextCode)}
-                 {EmailLayout.Paragraph("Daarna sturen we het overnameverzoek naar de huidige eigenaar.")}
-                 """,
-                publicWebBaseUrl: null,
-                preheader: "Bevestigingscode overnameverzoek"),
-            "TakeoverEmailVerification"), cancellationToken);
+            verify.Subject,
+            verify.Html,
+            verify.Category), cancellationToken);
     }
 
     private async Task NotifyTakeoverRequestedAsync(
@@ -1329,44 +1295,28 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
             .ToListAsync(cancellationToken);
 
         var features = await _features.GetAsync(cancellationToken);
-        var inboxUrl = features.PublicWebBaseUrl.TrimEnd('/') + "/employer/takeovers";
+        var requestMail = TransactionalEmails.TakeoverRequest(
+            features.PublicWebBaseUrl,
+            existing.Name,
+            existing.KvkEstablishmentId,
+            registration.ContactName,
+            registration.ContactEmail);
         foreach (var ownerEmail in owners)
         {
             await _email.SendAsync(new EmailMessage(
                 ownerEmail,
-                "Overnameverzoek vestiging — Lobsy",
-                EmailLayout.Wrap(
-                    $"""
-                     {EmailLayout.Heading("Overnameverzoek")}
-                     {EmailLayout.Paragraph(
-                         $"Er is een overnameverzoek voor <strong>{WebUtility.HtmlEncode(existing.Name)}</strong> " +
-                         $"({WebUtility.HtmlEncode(existing.KvkEstablishmentId ?? "")}).")}
-                     {EmailLayout.Paragraph(
-                         $"Aanvrager: {WebUtility.HtmlEncode(registration.ContactName)} " +
-                         $"({WebUtility.HtmlEncode(registration.ContactEmail)}).")}
-                     {EmailLayout.MutedNote(
-                         $"Bekijk verzoeken in Lobsy onder Overnames ({WebUtility.HtmlEncode(inboxUrl)}).")}
-                     """,
-                    features.PublicWebBaseUrl,
-                    preheader: "Overnameverzoek vestiging"),
-                "TakeoverRequest"), cancellationToken);
+                requestMail.Subject,
+                requestMail.Html,
+                requestMail.Category), cancellationToken);
         }
 
-        var safeName = WebUtility.HtmlEncode(registration.ContactName);
+        var submitted = TransactionalEmails.TakeoverSubmitted(
+            features.PublicWebBaseUrl, registration.ContactName, existing.Name);
         await _email.SendAsync(new EmailMessage(
             registration.ContactEmail,
-            "Overnameverzoek ingediend — Lobsy",
-            EmailLayout.Wrap(
-                $"""
-                 {EmailLayout.Heading("Verzoek ingediend")}
-                 {EmailLayout.Paragraph($"Hoi {safeName},")}
-                 {EmailLayout.Paragraph(
-                     $"Vestiging <strong>{WebUtility.HtmlEncode(existing.Name)}</strong> is al in gebruik. " +
-                     "We hebben een overnameverzoek gestuurd naar de huidige eigenaar.")}
-                 """,
-                features.PublicWebBaseUrl,
-                preheader: "Overnameverzoek ingediend"),
-            "TakeoverSubmitted"), cancellationToken);
+            submitted.Subject,
+            submitted.Html,
+            submitted.Category), cancellationToken);
     }
 
     private async Task SendActivationEmailAsync(
@@ -1374,33 +1324,23 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
         string plaintextCode,
         CancellationToken cancellationToken)
     {
-        var safeName = WebUtility.HtmlEncode(registration.ContactName);
         var roleLabel = registration.IsIntermediarySbi
             ? "Intermediair"
             : registration.Scope == RegistrationScope.Organization
                 ? "Bedrijfsmanager"
                 : "Filiaalmanager";
+        var activation = TransactionalEmails.RegistrationActivation(
+            baseUrl: null,
+            registration.ContactName,
+            registration.EstablishmentName,
+            roleLabel,
+            registration.PrimarySbiCode,
+            plaintextCode);
         await _email.SendAsync(new EmailMessage(
             registration.ContactEmail,
-            "Bevestigingscode — Lobsy",
-            EmailLayout.Wrap(
-                $"""
-                 {EmailLayout.Heading("Welkom bij Lobsy")}
-                 {EmailLayout.Paragraph($"Hoi {safeName},")}
-                 {EmailLayout.Paragraph(
-                     $"Bevestig je e-mailadres om je bedrijfsregistratie voor " +
-                     $"<strong>{WebUtility.HtmlEncode(registration.EstablishmentName)}</strong> te activeren " +
-                     $"(rol: {WebUtility.HtmlEncode(roleLabel)}" +
-                     $"{(string.IsNullOrEmpty(registration.PrimarySbiCode) ? "" : $", SBI {WebUtility.HtmlEncode(registration.PrimarySbiCode)}")}).")}
-                 {EmailLayout.Paragraph(
-                     "Na bevestiging kun je direct aan de slag — je eerste token is helemaal gratis, " +
-                     "zodat je meteen een vacature kunt plaatsen.")}
-                 {EmailLayout.Paragraph("Je bevestigingscode (geldig 10 minuten):")}
-                 {EmailLayout.OtpBlock(plaintextCode)}
-                 """,
-                publicWebBaseUrl: null,
-                preheader: "Je Lobsy-bevestigingscode"),
-            "RegistrationActivation"), cancellationToken);
+            activation.Subject,
+            activation.Html,
+            activation.Category), cancellationToken);
     }
 
     private async Task SendActivatedCredentialsEmailAsync(
@@ -1409,38 +1349,17 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
         CancellationToken cancellationToken)
     {
         var features = await _features.GetAsync(cancellationToken);
-        var loginUrl = features.PublicWebBaseUrl.TrimEnd('/') + "/login";
-        var safeName = WebUtility.HtmlEncode(registration.ContactName);
-        var passwordBlock = temporaryPassword is null
-            ? EmailLayout.Paragraph(
-                "Log in met het wachtwoord dat je bij registratie hebt gekozen, of via " +
-                "<strong>Microsoft Entra</strong> / Google met hetzelfde geverifieerde e-mailadres.")
-            : $"""
-               {EmailLayout.Paragraph("Gebruik dit eenmalige tijdelijke wachtwoord (niet opnieuw zichtbaar in de app):")}
-               <p style="margin:16px 0;font-size:20px;letter-spacing:0.06em;font-weight:700;color:{EmailLayout.BrandNavy};text-align:center;"><code>{WebUtility.HtmlEncode(temporaryPassword)}</code></p>
-               {EmailLayout.MutedNote("Wijzig dit wachtwoord zo snel mogelijk.")}
-               """;
+        var credentials = TransactionalEmails.RegistrationCredentials(
+            features.PublicWebBaseUrl,
+            registration.ContactName,
+            registration.EstablishmentName,
+            registration.ContactEmail,
+            temporaryPassword);
         await _email.SendAsync(new EmailMessage(
             registration.ContactEmail,
-            "Geslaagd — je Lobsy-account is actief!",
-            EmailLayout.Wrap(
-                $"""
-                 {EmailLayout.Heading("Account actief")}
-                 {EmailLayout.Paragraph($"Hoi {safeName},")}
-                 {EmailLayout.Paragraph(
-                     $"Geslaagd! Je account voor <strong>{WebUtility.HtmlEncode(registration.EstablishmentName)}</strong> " +
-                     "is geactiveerd. Je kunt direct aan de slag.")}
-                 {EmailLayout.Paragraph(
-                     "Je hebt van ons je eerste token helemaal gratis gekregen — daarmee plaats je meteen je eerste vacature.")}
-                 {EmailLayout.Paragraph(
-                     "Je kunt inloggen met e-mail/wachtwoord of met <strong>Microsoft Entra</strong> / " +
-                     $"Google op <code>{WebUtility.HtmlEncode(registration.ContactEmail)}</code>.")}
-                 {passwordBlock}
-                 {EmailLayout.MutedNote($"Inloggen via Lobsy ({WebUtility.HtmlEncode(loginUrl)}).")}
-                 """,
-                features.PublicWebBaseUrl,
-                preheader: "Je Lobsy-account is actief"),
-            "RegistrationCredentials"), cancellationToken);
+            credentials.Subject,
+            credentials.Html,
+            credentials.Category), cancellationToken);
     }
 
     /// <summary>

@@ -1055,46 +1055,24 @@ public sealed class VacancyProductService : IVacancyProductService
                 wageNote = "Uurloon";
             }
 
-            var facts = new List<(string Label, string Value)>
-            {
-                ("Functie", vacancy.Title),
-                ("Bedrijf", companyName)
-            };
-            if (!string.IsNullOrWhiteSpace(locationLabel))
-            {
-                facts.Add(("Locatie", locationLabel));
-            }
-
-            facts.Add(("Afstand", EmailLayout.FormatKm(recipient.DistanceKm)));
-            facts.Add(("Reistijd", $"{recipient.TravelMinutes} min"));
-            if (wage is decimal w && !string.IsNullOrWhiteSpace(wageNote))
-            {
-                facts.Add((wageNote, EmailLayout.FormatEuro(w)));
-            }
-
             var subject = $"Nieuwe vacature bij jou in de buurt: {vacancy.Title}";
             var bodyText =
                 $"{companyName} zoekt {vacancy.Title}. Bekijk de vacature in Lobsy.";
-            var inner = new System.Text.StringBuilder();
-            inner.Append(EmailLayout.Heading("Iets moois bij jou in de buurt"));
-            inner.Append(EmailLayout.Paragraph(
-                $"Hoi {EmailLayout.Escape(candidate.FullName)},"));
-            inner.Append(EmailLayout.Paragraph(
-                "Er staat een passende vacature open — op fiets- of reistijd-afstand van jou."));
-            inner.Append(EmailLayout.FactCard(facts));
-            inner.Append(EmailLayout.PrimaryButton(deepLink, "Klik hier"));
-            inner.Append(EmailLayout.MutedNote(
-                $"Niet meer op zoek naar werk? " +
-                $"<a href=\"{EmailLayout.Escape(setUnavailableLink)}\" style=\"color:{EmailLayout.AccentTeal};\">Zet je status op Niet beschikbaar</a> " +
-                "— dan sturen we je geen PushBom-tips meer."));
-
-            var html = EmailLayout.Wrap(
-                inner.ToString(),
+            var mail = TransactionalEmails.PushBom(
                 baseUrl,
-                preheader: $"{vacancy.Title} bij {companyName} — {EmailLayout.FormatKm(recipient.DistanceKm)} van jou");
+                candidate.FullName,
+                vacancy.Title,
+                companyName,
+                vacancy.Id,
+                locationLabel,
+                recipient.DistanceKm,
+                recipient.TravelMinutes,
+                wage,
+                wageNote ?? "Uurloon",
+                setUnavailableLink);
 
             await _email.SendAsync(
-                new EmailMessage(candidate.Email, subject, html, "PushBom"),
+                new EmailMessage(candidate.Email, mail.Subject, mail.Html, mail.Category),
                 cancellationToken);
 
             await _push.SendAsync(

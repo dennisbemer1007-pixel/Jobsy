@@ -209,32 +209,17 @@ public sealed class CompanyApiKeyService : ICompanyApiKeyService
         try
         {
             var apiBase = ResolvePublicApiBaseUrl();
-            var endpoint = apiBase + ExternalVacanciesPath;
-            var swaggerUrl = apiBase + "/swagger";
-            var keyHtml = EmailLayout.Wrap(
-                $"""
-                 {EmailLayout.Heading("API-credentials")}
-                 {EmailLayout.Paragraph("Hallo,")}
-                 {EmailLayout.Paragraph(
-                     $"Hierbij de API-credentials voor <strong>{WebUtility.HtmlEncode(company.Name)}</strong>.")}
-                 {EmailLayout.FactCard([
-                     ("Endpoint", endpoint),
-                     ("Header", $"{ApiKeyAuthDefaults.HeaderName}: <jouw-api-key>"),
-                     ("API-key", plaintext),
-                     ("Prefix", entity.KeyPrefix),
-                     ("Swagger", swaggerUrl)
-                 ])}
-                 {EmailLayout.Paragraph(
-                     "<strong>Let op:</strong> deze sleutel wordt slechts één keer getoond en " +
-                     "vervangt eventuele eerdere actieve keys. Bewaar hem veilig.")}
-                 """,
-                publicWebBaseUrl: null,
-                preheader: $"API-credentials voor {company.Name}");
+            var keyMail = TransactionalEmails.CompanyApiKeyCredentials(
+                baseUrl: null,
+                company.Name,
+                apiBase,
+                plaintext,
+                entity.KeyPrefix);
             await _email.SendAsync(new EmailMessage(
                 normalized,
-                $"Lobsy API-credentials voor {company.Name}",
-                keyHtml,
-                "CompanyApiKeyCredentials"), cancellationToken);
+                keyMail.Subject,
+                keyMail.Html,
+                keyMail.Category), cancellationToken);
         }
         catch (Exception ex)
         {

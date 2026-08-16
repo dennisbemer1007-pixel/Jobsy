@@ -126,28 +126,12 @@ public sealed class CompanyReengagementHostedService : BackgroundService
                 continue;
             }
 
+            var mail = TransactionalEmails.CompanyReEngagement(baseUrl, org.Name);
             await email.SendAsync(new EmailMessage(
                 recipient,
-                "We missen je bij Lobsy",
-                EmailLayout.Wrap(
-                    $"""
-                     {EmailLayout.Heading("We missen je")}
-                     {EmailLayout.Paragraph(
-                         $"Hallo team <strong>{EmailLayout.Escape(org.Name)}</strong>,")}
-                     {EmailLayout.Paragraph(
-                         "Het is al een tijdje stil op Lobsy — geen actieve vacatures, geen inlog, " +
-                         "geen API-call en geen CSV-upload.")}
-                     {EmailLayout.Paragraph("Goed nieuws: jullie tools staan nog klaar:")}
-                     {EmailLayout.KpiList([
-                         ("CSV Batch Import", "Veel vacatures in één keer als concept"),
-                         ("Externe API", "Koppel je ATS met een API-key"),
-                         ("Publiceren", "Tokens pas bij publicatie in Lobsy")
-                     ])}
-                     {EmailLayout.MutedNote("Log in op Lobsy wanneer je weer wilt starten.")}
-                     """,
-                    baseUrl,
-                    preheader: "We missen je bij Lobsy"),
-                DraftVacancyCleanupRules.ReengagementEmailCategory), cancellationToken);
+                mail.Subject,
+                mail.Html,
+                mail.Category), cancellationToken);
 
             var tracked = await db.Companies.FirstAsync(c => c.Id == org.Id, cancellationToken);
             tracked.ReengagementEmailSentAtUtc = DateTime.UtcNow;
