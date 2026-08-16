@@ -14,7 +14,7 @@ Alle noemenswaardige wijzigingen aan dit project worden in dit bestand bijgehoud
 ## [Unreleased]
 
 ### Changed
-- Homepage-kaart: prerender van NL-preview + 278-cluster; Leaflet/tiles pas na first paint (`ensureAfterPaint`). Zie `docs/performance.md`.
+- Homepage-kaart: prerender van echte Carto-NL-tegels (lokaal webp); Leaflet start op heel NL, niet eerst Den Haag/Null Island. Zie `docs/performance.md`.
 - Banenkaart-performance: lokale SVG-placeholders i.p.v. picsum, lazy `<img>` op job cards, WebP-logo, Leaflet pas laden op kaartpagina’s, gebundelde `app-core.js`, Brotli + cache-headers. Zie `docs/performance.md`.
 - PageSpeed-vervolg: geen 278 job cards meer in de eerste HTML/mobile-kaart (venster van 12), compacte cookiebanner in first paint, map-loader split discovery/detail.
 - Quality gate 456: www-canonical alleen voor bekende hosts (geen Host-header open redirect); Cloudflare image-resize alleen same-origin; `app-core.js` synchroon vóór Blazor; map-loader herstelt na een mislukte load.

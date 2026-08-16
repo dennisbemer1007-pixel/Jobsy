@@ -798,10 +798,10 @@ window.jobsyMaps = (function () {
         "/lib/leaflet/leaflet.markercluster.min.js"
     ];
     var discoveryScripts = [
-        "/js/jobMap.js?v=20260816-map"
+        "/js/jobMap.js?v=20260816-tiles"
     ];
     var detailScripts = [
-        "/js/vacancyDetailMap.js?v=20260816-map"
+        "/js/vacancyDetailMap.js?v=20260816-tiles"
     ];
 
     function loadCss(href) {
@@ -873,7 +873,7 @@ window.jobsyMaps = (function () {
     function afterNextPaint(cb) {
         var run = function () {
             if (typeof requestIdleCallback === "function") {
-                requestIdleCallback(function () { cb(); }, { timeout: 700 });
+                requestIdleCallback(function () { cb(); }, { timeout: 250 });
             } else {
                 setTimeout(cb, 120);
             }

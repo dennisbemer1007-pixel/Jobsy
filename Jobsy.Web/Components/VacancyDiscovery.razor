@@ -532,22 +532,13 @@
         <div class="map-stage @(_mapPainted ? "is-live" : null)">
             <div class="job-map-placeholder" aria-hidden="true">
                 <img class="job-map-placeholder__img"
-                     src="images/maps/nl-preview.svg"
+                     src="images/maps/nl-preview.webp"
                      alt=""
-                     width="600"
-                     height="800"
+                     width="1024"
+                     height="1280"
                      fetchpriority="high"
                      decoding="async"
                      draggable="false" />
-                <div class="job-map-placeholder__cluster job-map-placeholder__cluster--main job-cluster job-cluster--lg">
-                    <div><span>@MapPreviewClusterCount</span></div>
-                </div>
-                <div class="job-map-placeholder__cluster job-map-placeholder__cluster--ams job-cluster job-cluster--md">
-                    <div><span>42</span></div>
-                </div>
-                <div class="job-map-placeholder__cluster job-map-placeholder__cluster--ehv job-cluster job-cluster--sm">
-                    <div><span>18</span></div>
-                </div>
             </div>
             <div @ref="_mapElement" id="job-map" class="job-map"></div>
             @if (_categories.Any(c => c.ShowInLegend && c.IsActive))
@@ -868,7 +859,6 @@
     private bool _mapReady;
     private bool _mapPainted;
     private bool _mapInitScheduled;
-    private const int MapPreviewFallbackCount = 278;
     private ElementReference _mapElement;
     private const int DefaultMinHoursPerWeek = 0;
     private const int DefaultMaxHoursPerWeek = 40;
@@ -1054,9 +1044,6 @@
     /// </summary>
     private bool ShouldRenderVacancyCards =>
         RendererInfo.IsInteractive && (_wideViewport || !showMapOnMobile);
-
-    private int MapPreviewClusterCount =>
-        _vacancies.Count > 0 ? _vacancies.Count : MapPreviewFallbackCount;
 
     private IReadOnlyList<VacancyListItem> HighlightedVacanciesForUi
     {
@@ -1679,6 +1666,11 @@
         }
 
         if (_mapReady || _mapInitScheduled)
+        {
+            return;
+        }
+
+        if (_vacancies.Count == 0 && _loading)
         {
             return;
         }

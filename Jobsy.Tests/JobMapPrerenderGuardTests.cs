@@ -12,7 +12,7 @@ public class JobMapPrerenderGuardTests
         var home = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "Components", "Pages", "Home.razor"));
         Assert.Contains("InteractiveServerRenderMode(prerender: true)", home);
         Assert.DoesNotContain("prerender: false", home);
-        Assert.Contains("images/maps/nl-preview.svg", home);
+        Assert.Contains("images/maps/nl-preview.webp", home);
     }
 
     [Fact]
@@ -20,6 +20,9 @@ public class JobMapPrerenderGuardTests
     {
         var js = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "wwwroot", "js", "jobMap.js"));
         Assert.Contains("function isAlive()", js);
+        Assert.Contains("NL_BOUNDS", js);
+        Assert.Contains("Tiles after the view is correct", js);
+        Assert.DoesNotContain("map.setView([52.07, 4.28], 11)", js);
         Assert.Contains("container.isConnected", js);
         Assert.Contains("isAlive", js[(js.LastIndexOf("return {", StringComparison.Ordinal))..]);
     }

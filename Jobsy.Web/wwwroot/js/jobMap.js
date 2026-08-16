@@ -9,6 +9,12 @@ window.jobMap = (function () {
     let openCallback = null;
     let outsideClickCloserBound = false;
     let highlightSeed = 0;
+    let firstViewApplied = false;
+
+    // Same window as the prerendered Carto mosaic (z8 tiles x130-133 / y82-86).
+    const NL_CENTER = [52.15, 5.2913];
+    const NL_ZOOM = 7;
+    const NL_BOUNDS = [[50.29, 2.81], [53.33, 8.44]];
 
     const SPEED_M_PER_MIN = {
         // Keep in sync with MockRoutingService SpeedsKmPerHour
@@ -802,11 +808,14 @@ window.jobMap = (function () {
             }
         }
 
+        const immediate = !firstViewApplied;
+        const opts = { padding: [48, 48], maxZoom: 13, animate: !immediate };
         if (points.length > 0) {
-            map.fitBounds(points, { padding: [48, 48], maxZoom: 13 });
+            map.fitBounds(points, opts);
         } else {
-            map.setView([52.07, 4.28], 11);
+            map.fitBounds(NL_BOUNDS, { padding: [16, 16], maxZoom: 8, animate: !immediate });
         }
+        firstViewApplied = true;
     }
 
     function init(elementId, vacancies, options) {
@@ -832,24 +841,16 @@ window.jobMap = (function () {
             ? (Number(options.highlightSeed) >>> 0)
             : 0;
 
+        firstViewApplied = false;
         map = L.map(el, {
             zoomControl: true,
             scrollWheelZoom: true,
-            closePopupOnClick: true
+            closePopupOnClick: true,
+            center: NL_CENTER,
+            zoom: NL_ZOOM,
+            zoomAnimation: false,
+            fadeAnimation: false
         });
-
-        // Carto Voyager — vivid water/parks/roads without a washed-out light basemap
-        const tiles = L.tileLayer("https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png", {
-            maxZoom: 19,
-            attribution: "&copy; <a href=\"https://www.openstreetmap.org/copyright\">OpenStreetMap</a> &copy; <a href=\"https://carto.com/attributions\">CARTO</a>"
-        });
-        const notifyTilesReady = function () {
-            if (openCallback && typeof openCallback.invokeMethodAsync === "function") {
-                openCallback.invokeMethodAsync("OnMapTilesReady");
-            }
-        };
-        tiles.once("load", notifyTilesReady);
-        tiles.addTo(map);
 
         clusterGroup = L.markerClusterGroup({
             showCoverageOnHover: false,
@@ -869,14 +870,30 @@ window.jobMap = (function () {
             openClusterList(e.layer);
         });
 
-        setVacancies(vacancies || []);
-
         map.addLayer(clusterGroup);
-        bindOutsideClickCloser();
-
+        setVacancies(vacancies || []);
+        firstViewApplied = false;
         if (options && options.origin) {
             setOrigin(options.origin.lat, options.origin.lng, options.travel);
+        } else if (!vacancies || vacancies.length === 0) {
+            map.fitBounds(NL_BOUNDS, { padding: [16, 16], maxZoom: 8, animate: false });
+            firstViewApplied = true;
         }
+
+        // Tiles after the view is correct — first paint must not be Null Island / Den Haag.
+        const tiles = L.tileLayer("https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png", {
+            maxZoom: 19,
+            attribution: "&copy; <a href=\"https://www.openstreetmap.org/copyright\">OpenStreetMap</a> &copy; <a href=\"https://carto.com/attributions\">CARTO</a>"
+        });
+        const notifyTilesReady = function () {
+            if (openCallback && typeof openCallback.invokeMethodAsync === "function") {
+                openCallback.invokeMethodAsync("OnMapTilesReady");
+            }
+        };
+        tiles.once("load", notifyTilesReady);
+        tiles.addTo(map);
+
+        bindOutsideClickCloser();
 
         addLocateControl();
 
@@ -993,7 +1010,8 @@ window.jobMap = (function () {
         if (bounds.length > 0 || originMarker) {
             fitMapToContent(bounds);
         } else {
-            map.setView([52.07, 4.28], 11);
+            map.fitBounds(NL_BOUNDS, { padding: [16, 16], maxZoom: 8, animate: !firstViewApplied });
+            firstViewApplied = true;
         }
     }
 
@@ -1180,6 +1198,7 @@ window.jobMap = (function () {
             map = null;
         }
         markersById = {};
+        firstViewApplied = false;
     }
 
     function escapeHtml(value) {
