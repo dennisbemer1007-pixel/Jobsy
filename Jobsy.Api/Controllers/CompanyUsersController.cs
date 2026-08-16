@@ -344,34 +344,20 @@ public class CompanyUsersController : ControllerBase
         }
 
         var features = await _features.GetAsync(cancellationToken);
-        var loginUrl = features.PublicWebBaseUrl.TrimEnd('/') + "/login";
-        var name = WebUtility.HtmlEncode(user.FullName);
+        var loginUrl = EmailLayout.LoginUrl(features.PublicWebBaseUrl);
         var roleLabel = RoleLabel(user.Role);
-        var inviteHtml = EmailLayout.Wrap(
-            $"""
-             {EmailLayout.Heading($"Uitnodiging — {roleLabel}")}
-             {EmailLayout.Paragraph($"Hoi {name},")}
-             {EmailLayout.Paragraph(
-                 $"Je bent uitgenodigd als <strong>{WebUtility.HtmlEncode(roleLabel)}</strong> op Lobsy.")}
-             {EmailLayout.Paragraph(
-                 "<strong>Aanbevolen:</strong> log in met <strong>Google</strong> of <strong>Microsoft Entra</strong> " +
-                 $"op <code>{WebUtility.HtmlEncode(user.Email)}</code> — dan krijg je automatisch je managerrol.")}
-             {EmailLayout.Paragraph(
-                 "Alternatief: lokaal inloggen via het inlogscherm van Lobsy met dit eenmalige tijdelijke wachtwoord " +
-                 "(niet opnieuw zichtbaar in de app):")}
-             <p style="margin:16px 0;font-size:20px;letter-spacing:0.06em;font-weight:700;color:{EmailLayout.BrandNavy};text-align:center;"><code>{WebUtility.HtmlEncode(temporaryPassword)}</code></p>
-             {(promotedFromCandidate
-                 ? EmailLayout.Paragraph("Je eerdere sollicitaties blijven zichtbaar (alleen-lezen) in Lobsy.")
-                 : "")}
-             {EmailLayout.MutedNote("Wijzig het wachtwoord zo snel mogelijk na je eerste login.")}
-             """,
+        var invite = TransactionalEmails.UserInvite(
             features.PublicWebBaseUrl,
-            preheader: $"Uitnodiging voor Lobsy ({roleLabel})");
+            user.FullName,
+            roleLabel,
+            user.Email,
+            temporaryPassword,
+            promotedFromCandidate);
         await _email.SendAsync(new EmailMessage(
             user.Email,
-            $"Uitnodiging voor Lobsy ({roleLabel})",
-            inviteHtml,
-            "UserInvite"), cancellationToken);
+            invite.Subject,
+            invite.Html,
+            invite.Category), cancellationToken);
 
         var loaded = await _db.Users
             .AsNoTracking()

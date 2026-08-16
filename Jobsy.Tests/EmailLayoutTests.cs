@@ -52,6 +52,13 @@ public class EmailLayoutTests
         Assert.Equal(
             "https://lobsy.nl/employer/vacancies?boost=pushbom&id=11111111-1111-1111-1111-111111111111",
             EmailLayout.PushBomVacancyUrl(baseUrl, id));
+        Assert.Equal("https://lobsy.nl/login", EmailLayout.LoginUrl(baseUrl));
+        Assert.Equal("https://lobsy.nl/register/activate", EmailLayout.RegisterActivateUrl(baseUrl));
+        Assert.Equal("https://lobsy.nl/privacy/data", EmailLayout.PrivacyDataUrl(baseUrl));
+        Assert.Equal("https://lobsy.nl/employer/takeovers", EmailLayout.TakeoversUrl(baseUrl));
+        Assert.Equal(
+            "https://lobsy.nl/candidate/actions/set-unavailable",
+            EmailLayout.SetUnavailableUrl(baseUrl));
     }
 
     [Fact]

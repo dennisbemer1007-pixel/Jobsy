@@ -233,25 +233,17 @@ public class CandidateActionsController : ControllerBase
             var title = $"Sollicitatie ingetrokken: {other.Vacancy.Title}";
             var body =
                 "De kandidaat heeft deze sollicitatie ingetrokken omdat er inmiddels een andere baan is gevonden.";
-            var html = EmailLayout.Wrap(
-                $"""
-                 {EmailLayout.Heading("Sollicitatie ingetrokken")}
-                 {EmailLayout.Paragraph("Hoi,")}
-                 {EmailLayout.Paragraph(
-                     $"Goed om te weten: de kandidaat heeft de sollicitatie op " +
-                     $"<strong>{WebUtility.HtmlEncode(other.Vacancy.Title)}</strong> ingetrokken.")}
-                 {EmailLayout.Paragraph("Reden: de kandidaat heeft inmiddels een andere baan gevonden.")}
-                 """,
+            var mail = TransactionalEmails.CandidateWithdrawnOtherJob(
                 (await _features.GetAsync(cancellationToken)).PublicWebBaseUrl,
-                preheader: title);
+                other.Vacancy.Title);
 
             foreach (var contact in contacts)
             {
                 await _email.SendAsync(new EmailMessage(
                     contact.Email,
-                    title,
-                    html,
-                    "CandidateWithdrawnOtherJob"), cancellationToken);
+                    mail.Subject,
+                    mail.Html,
+                    mail.Category), cancellationToken);
 
                 await _notifications.CreateAsync(
                     new NotificationCreateRequest(

@@ -2428,6 +2428,45 @@ public sealed class JobsyApiClient : IAsyncDisposable
         return await response.Content.ReadFromJsonAsync<IntegrationHealthItem>(cancellationToken: ct);
     }
 
+    public async Task<IReadOnlyList<EmailTemplateItem>> GetEmailTemplatesAsync(CancellationToken ct = default)
+        => await _http.GetFromJsonAsync<List<EmailTemplateItem>>("api/settings/email-templates", ct) ?? [];
+
+    public async Task<EmailCatalogSendResultItem?> SendEmailTemplateAsync(
+        string key,
+        string to,
+        CancellationToken ct = default)
+    {
+        var response = await _http.PostAsJsonAsync(
+            $"api/settings/email-templates/{Uri.EscapeDataString(key)}/send",
+            new { to },
+            ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException(TryExtractMessage(body) ?? body);
+        }
+
+        return await response.Content.ReadFromJsonAsync<EmailCatalogSendResultItem>(cancellationToken: ct);
+    }
+
+    public async Task<IReadOnlyList<EmailCatalogSendResultItem>> SendAllEmailTemplatesAsync(
+        string to,
+        CancellationToken ct = default)
+    {
+        var response = await _http.PostAsJsonAsync(
+            "api/settings/email-templates/send-all",
+            new { to },
+            ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException(TryExtractMessage(body) ?? body);
+        }
+
+        return await response.Content.ReadFromJsonAsync<List<EmailCatalogSendResultItem>>(cancellationToken: ct)
+               ?? [];
+    }
+
     public async Task<SendTestMailResultItem?> SendTestMailAsync(string to, CancellationToken ct = default)
     {
         var response = await _http.PostAsJsonAsync(
@@ -3118,6 +3157,26 @@ public sealed class SendTestMailResultItem
 {
     public bool Ok { get; set; }
     public bool SentViaSmtp { get; set; }
+    public string Message { get; set; } = string.Empty;
+}
+
+public sealed class EmailTemplateItem
+{
+    public string Key { get; set; } = string.Empty;
+    public string Title { get; set; } = string.Empty;
+    public string Audience { get; set; } = string.Empty;
+    public string Description { get; set; } = string.Empty;
+    public string Category { get; set; } = string.Empty;
+}
+
+public sealed class EmailCatalogSendResultItem
+{
+    public string Key { get; set; } = string.Empty;
+    public string Title { get; set; } = string.Empty;
+    public string Category { get; set; } = string.Empty;
+    public string Subject { get; set; } = string.Empty;
+    public bool Ok { get; set; }
+    public bool DeliveredViaProvider { get; set; }
     public string Message { get; set; } = string.Empty;
 }
 

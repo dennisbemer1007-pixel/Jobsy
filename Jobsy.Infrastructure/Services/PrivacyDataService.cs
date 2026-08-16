@@ -370,22 +370,16 @@ public sealed class PrivacyDataService : IPrivacyDataService
 
         await _db.SaveChangesAsync(cancellationToken);
 
+        var unsub = TransactionalEmails.AccountUnsubscribeVerification(
+            baseUrl: null,
+            user.FullName,
+            verificationCode,
+            UnsubscribeCodeTtlMinutes);
         await _email.SendAsync(new EmailMessage(
             user.Email,
-            "Verificatiecode voor uitschrijving bij Lobsy",
-            EmailLayout.Wrap(
-                $"""
-                 {EmailLayout.Heading("Bevestig je uitschrijving")}
-                 {EmailLayout.Paragraph($"Hoi {Html(user.FullName)},")}
-                 {EmailLayout.Paragraph("Je hebt gevraagd om je Lobsy-account af te melden.")}
-                 {EmailLayout.Paragraph("Gebruik deze 6-cijferige code om de uitschrijving te bevestigen:")}
-                 {EmailLayout.OtpBlock(verificationCode)}
-                 {EmailLayout.Paragraph(
-                     $"De code is {UnsubscribeCodeTtlMinutes} minuten geldig. Heb je dit niet zelf aangevraagd? Negeer deze mail dan.")}
-                 """,
-                publicWebBaseUrl: null,
-                preheader: "Je verificatiecode voor uitschrijving"),
-            "AccountUnsubscribeVerification"), cancellationToken);
+            unsub.Subject,
+            unsub.Html,
+            unsub.Category), cancellationToken);
 
         return new RequestUnsubscribeResponse(
             "Er is een verificatiecode naar je e-mail gestuurd.",

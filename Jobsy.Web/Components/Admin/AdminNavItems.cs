@@ -19,6 +19,7 @@ public static class AdminNavItems
         new("Nav.VacancyCategories", "/admin/vacancy-categories", NavIcons.Masterdata),
         new("Nav.Exclusivity", "/admin/exclusivity", NavIcons.Masterdata),
         new("Nav.Integrations", "/admin/integrations", NavIcons.Api),
+        new("Nav.MailTest", "/admin/mail-test", NavIcons.Notifications),
         new("Nav.ApiKeys", "/admin/api-keys", NavIcons.Api),
         new("Nav.Notifications", "/admin/notifications", NavIcons.Notifications),
         new("Nav.Users", "/admin/users", NavIcons.Users),

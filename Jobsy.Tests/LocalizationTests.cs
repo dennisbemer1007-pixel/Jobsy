@@ -76,6 +76,8 @@ public class LocalizationTests
             "Unsubscribe.Title",
             "Employer.VacanciesTitle",
             "Admin.Vacancies",
+            "Admin.MailTest",
+            "Nav.MailTest",
             "Common.Cancel",
             "Legal.DocNote",
             "Discovery.LoadFailed",

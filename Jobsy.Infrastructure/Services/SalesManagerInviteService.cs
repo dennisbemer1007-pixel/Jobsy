@@ -170,25 +170,13 @@ public sealed class SalesManagerInviteService : ISalesManagerInviteService
 
         await _db.SaveChangesAsync(cancellationToken);
 
+        var invite = TransactionalEmails.SalesManagerInvite(
+            baseUrl: null, name, normalizedEmail, temporaryPassword);
         await _email.SendAsync(new EmailMessage(
             normalizedEmail,
-            "Uitnodiging Lobsy salesmanager",
-            EmailLayout.Wrap(
-                $"""
-                 {EmailLayout.Heading("Uitnodiging salesmanager")}
-                 {EmailLayout.Paragraph($"Hallo {System.Net.WebUtility.HtmlEncode(name)},")}
-                 {EmailLayout.Paragraph("Je bent uitgenodigd als salesmanager op Lobsy.")}
-                 {EmailLayout.Paragraph(
-                     $"Log in met <strong>{System.Net.WebUtility.HtmlEncode(normalizedEmail)}</strong> " +
-                     "en dit tijdelijke wachtwoord:")}
-                 <p style="margin:16px 0;font-size:20px;letter-spacing:0.06em;font-weight:700;color:{EmailLayout.BrandNavy};text-align:center;"><code>{System.Net.WebUtility.HtmlEncode(temporaryPassword)}</code></p>
-                 {EmailLayout.Paragraph(
-                     "Vul daarna je KvK/BTW/NAW-gegevens in en onderteken de bemiddelingsovereenkomst om je trackingcode te ontvangen.")}
-                 {EmailLayout.MutedNote("Wijzig het wachtwoord zo snel mogelijk na je eerste login.")}
-                 """,
-                publicWebBaseUrl: null,
-                preheader: "Uitnodiging Lobsy salesmanager"),
-            "SalesManagerInvite"), cancellationToken);
+            invite.Subject,
+            invite.Html,
+            invite.Category), cancellationToken);
 
         _logger.LogInformation(
             "Invited salesmanager {Email} ({UserId}) canRecruit={CanRecruit} referredBy={ReferredBy}",

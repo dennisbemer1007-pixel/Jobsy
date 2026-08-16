@@ -1,0 +1,182 @@
+@page "/admin/mail-test"
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
+@attribute [Authorize(Roles = "Admin")]
+@using Jobsy.Web.Components.Admin
+@inject JobsyApiClient Api
+@inject CultureState Culture
+@implements IDisposable
+
+<PageTitle>@Culture["Admin.MailTest"] · Lobsy</PageTitle>
+
+<AdminPageShell Title="@Culture["Admin.MailTest"]" Lead="@Culture["Admin.MailTestLead"]" ShowSettingsNav="true">
+    @if (_loading)
+    {
+        <p class="state-message">@Culture["Common.Loading"]</p>
+    }
+    else if (!string.IsNullOrEmpty(_error))
+    {
+        <p class="state-message error">@_error</p>
+    }
+    else
+    {
+        <section class="panel-section">
+            <article class="company-card platform-features-card">
+                <label>
+                    @Culture["Admin.MailTestTo"]
+                    <input type="email"
+                           autocomplete="email"
+                           placeholder="@Culture["Admin.MailTestToPlaceholder"]"
+                           @bind="_to"
+                           @bind:event="oninput" />
+                </label>
+                <p class="muted">@Culture["Admin.MailTestHint"]</p>
+                <div class="inline-actions" style="margin-top:0.75rem">
+                    <button class="btn-compact btn-compact--primary"
+                            type="button"
+                            disabled="@(_busy || string.IsNullOrWhiteSpace(_to))"
+                            @onclick="SendAllAsync">
+                        @Culture["Admin.MailTestSendAll"]
+                    </button>
+                </div>
+            </article>
+        </section>
+
+        <section class="panel-section">
+            <div class="table-list">
+                @foreach (var template in _templates)
+                {
+                    var result = _results.GetValueOrDefault(template.Key);
+                    <div class="table-row">
+                        <div style="flex:1">
+                            <strong>@template.Title</strong>
+                            <span class="muted">@template.Key</span>
+                            <div class="muted">@Culture["Admin.MailTestAudience"]: @template.Audience — @template.Description</div>
+                            @if (result is not null)
+                            {
+                                <p class="state-message @(result.Ok ? null : "error")" style="margin:0.35rem 0 0">
+                                    @result.Message
+                                    @if (result.Ok && !string.IsNullOrWhiteSpace(result.Subject))
+                                    {
+                                        <span class="muted"> · @result.Subject</span>
+                                    }
+                                </p>
+                            }
+                        </div>
+                        <div class="inline-actions">
+                            <button class="btn-compact"
+                                    type="button"
+                                    disabled="@(_busy || string.IsNullOrWhiteSpace(_to))"
+                                    @onclick="() => SendOneAsync(template.Key)">
+                                @Culture["Admin.MailTestSendOne"]
+                            </button>
+                        </div>
+                    </div>
+                }
+            </div>
+        </section>
+
+        @if (_busy)
+        {
+            <p class="state-message">@Culture["Admin.MailTestSending"]</p>
+        }
+        else if (!string.IsNullOrEmpty(_message))
+        {
+            <p class="state-message">@_message</p>
+        }
+    }
+</AdminPageShell>
+
+@code {
+    private readonly List<EmailTemplateItem> _templates = [];
+    private readonly Dictionary<string, EmailCatalogSendResultItem> _results = new(StringComparer.OrdinalIgnoreCase);
+    private string _to = "";
+    private bool _loading = true;
+    private bool _busy;
+    private string? _error;
+    private string? _message;
+
+    protected override void OnInitialized()
+        => Culture.Changed += OnCultureChanged;
+
+    private void OnCultureChanged()
+        => InvokeAsync(StateHasChanged);
+
+    public void Dispose()
+        => Culture.Changed -= OnCultureChanged;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            _templates.AddRange(await Api.GetEmailTemplatesAsync());
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private async Task SendOneAsync(string key)
+    {
+        _busy = true;
+        _message = null;
+        try
+        {
+            var result = await Api.SendEmailTemplateAsync(key, _to);
+            if (result is not null)
+            {
+                _results[key] = result;
+                _message = result.Message;
+            }
+        }
+        catch (Exception ex)
+        {
+            _results[key] = new EmailCatalogSendResultItem
+            {
+                Key = key,
+                Ok = false,
+                Message = ex.Message
+            };
+            _message = ex.Message;
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private async Task SendAllAsync()
+    {
+        _busy = true;
+        _message = null;
+        try
+        {
+            var results = await Api.SendAllEmailTemplatesAsync(_to);
+            _results.Clear();
+            foreach (var result in results)
+            {
+                if (!string.IsNullOrWhiteSpace(result.Key))
+                {
+                    _results[result.Key] = result;
+                }
+            }
+
+            var ok = results.Count(r => r.Ok);
+            var viaProvider = results.Count(r => r.DeliveredViaProvider);
+            _message = $"{ok}/{results.Count} types verstuurd" +
+                       (viaProvider > 0 ? $" ({viaProvider} via Resend/SMTP)." : " (stub/PlatformLog).");
+        }
+        catch (Exception ex)
+        {
+            _message = ex.Message;
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+}

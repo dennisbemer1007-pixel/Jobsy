@@ -80,14 +80,8 @@ public sealed class IntegrationHealthStub : IIntegrationHealthService
         var resendReady = SmtpEmailService.TryResolveResend(secrets, out _);
         var smtpReady = SmtpEmailService.TryResolveSmtp(secrets, out var smtp);
         var redacted = EmailServiceStub.RedactEmail(trimmed);
-        var body = EmailLayout.Wrap(
-            $"""
-             {EmailLayout.Heading("Testmail")}
-             {EmailLayout.Paragraph("Dit is een testmail van Lobsy.")}
-             {EmailLayout.Paragraph("Als je dit bericht ziet, werkt de uitgaande mailconfiguratie.")}
-             """,
-            publicWebBaseUrl: null,
-            preheader: "Lobsy testmail");
+        var composed = TransactionalEmails.MailTest(baseUrl: null);
+        var body = composed.Html;
 
         if (!resendReady && !smtpReady)
         {

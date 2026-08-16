@@ -2,6 +2,7 @@ using System.Globalization;
 using System.Net;
 using System.Text;
 using Jobsy.Core;
+using Jobsy.Core.Rules;
 
 namespace Jobsy.Core.Email;
 
@@ -61,6 +62,42 @@ public static class EmailLayout
 
     public static string BranchApplicantsUrl(string? publicWebBaseUrl)
         => Absolute(publicWebBaseUrl, "/branch/applicants");
+
+    public static string LoginUrl(string? publicWebBaseUrl)
+        => Absolute(publicWebBaseUrl, "/login");
+
+    public static string RegisterActivateUrl(string? publicWebBaseUrl)
+        => Absolute(publicWebBaseUrl, "/register/activate");
+
+    public static string RegisterUrl(string? publicWebBaseUrl)
+        => Absolute(publicWebBaseUrl, "/register");
+
+    public static string PrivacyDataUrl(string? publicWebBaseUrl)
+        => Absolute(publicWebBaseUrl, "/privacy/data");
+
+    public static string TakeoversUrl(string? publicWebBaseUrl)
+        => Absolute(publicWebBaseUrl, "/employer/takeovers");
+
+    public static string EmployerVacanciesUrl(string? publicWebBaseUrl)
+        => Absolute(publicWebBaseUrl, "/employer/vacancies");
+
+    public static string JobMapUrl(string? publicWebBaseUrl)
+        => Absolute(publicWebBaseUrl, "/");
+
+    public static string SetUnavailableUrl(string? publicWebBaseUrl)
+        => Absolute(publicWebBaseUrl, CandidateActionPurposes.SetUnavailableInAppPath);
+
+    public static string WithdrawOthersUrl(string? publicWebBaseUrl, Guid hiredApplicationId)
+        => Absolute(publicWebBaseUrl, CandidateActionPurposes.WithdrawOthersInAppPath(hiredApplicationId));
+
+    public static string SalesOnboardingUrl(string? publicWebBaseUrl)
+        => Absolute(publicWebBaseUrl, "/salesmanager/onboarding");
+
+    public static string AmbassadeurOnboardingUrl(string? publicWebBaseUrl)
+        => Absolute(publicWebBaseUrl, "/ambassadeur/onboarding");
+
+    public static string EmployerApiKeysUrl(string? publicWebBaseUrl)
+        => Absolute(publicWebBaseUrl, "/employer/company");
 
     /// <summary>Full HTML document with logo header, content, and footer.</summary>
     public static string Wrap(

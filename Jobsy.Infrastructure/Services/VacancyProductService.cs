@@ -1275,24 +1275,16 @@ public sealed class VacancyProductService : IVacancyProductService
         var deepLink = await BuildDeepLinkAsync("/employer/vacancies", cancellationToken);
         var companyName = vacancy.Company?.Name ?? "bedrijf";
         var features = await _features.GetAsync(cancellationToken);
-        var pendingHtml = EmailLayout.Wrap(
-            $"""
-             {EmailLayout.Heading("Publicatieaanvraag")}
-             {EmailLayout.Paragraph(
-                 $"Vacature <strong>{EmailLayout.Escape(vacancy.Title)}</strong> bij {EmailLayout.Escape(companyName)} " +
-                 "wacht op goedkeuring (onvoldoende tokens).")}
-             {EmailLayout.Paragraph("Log in op Lobsy om de aanvraag te beoordelen onder Vacatures.")}
-             """,
-            features.PublicWebBaseUrl,
-            preheader: $"Publicatieaanvraag: {vacancy.Title}");
+        var pending = TransactionalEmails.PendingApproval(
+            features.PublicWebBaseUrl, vacancy.Title, companyName);
         foreach (var manager in managers)
         {
             await _email.SendAsync(
                 new EmailMessage(
                     manager.Email,
-                    $"Publicatieaanvraag: {vacancy.Title}",
-                    pendingHtml,
-                    "PendingApproval"),
+                    pending.Subject,
+                    pending.Html,
+                    pending.Category),
                 cancellationToken);
 
             await _push.SendAsync(

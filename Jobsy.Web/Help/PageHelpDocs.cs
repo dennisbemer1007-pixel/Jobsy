@@ -387,6 +387,12 @@ public static class PageHelpDocs
             "Pas koppen, USP’s, lanceringsteksten en QR-doel aan. Download de PDF om te printen of digitaal te delen.",
             "Werkgevers overtuigen met een logo-first flyer zonder designbureau."),
 
+        ["/admin/mail-test"] = new(
+            "Beheer · Mailtest",
+            "Elk transactioneel mailtype als test versturen naar een adres naar keuze.",
+            "Vul een e-mailadres in en verstuur één type of alle types. De HTML is dezelfde als productie; knoppen linken naar echte Lobsy-pagina’s. OTP’s en wachtwoorden in testmails zijn voorbeelden en activeren geen accountactie.",
+            "Visueel en functioneel nalopen van alle uitgaande mails zonder echte gebruikers te mailen."),
+
         ["/admin/integrations"] = new(
             "Beheer · Integraties",
             "API-koppelingen (Mollie, KVK, Entra, Google, Mail, OpenAI).",
