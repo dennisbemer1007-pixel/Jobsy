@@ -27,9 +27,10 @@ public class JobMapPrerenderGuardTests
     {
         var app = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "Components", "App.razor"));
         Assert.DoesNotContain("unpkg.com", app);
-        Assert.DoesNotContain("leaflet", app, StringComparison.OrdinalIgnoreCase);
         Assert.Contains("js/app-core.js", app);
         Assert.Contains("rel=\"preload\"", app);
+        Assert.Contains("lib/leaflet/leaflet.min.js", app);
+        Assert.DoesNotContain("<script src=\"https://unpkg.com/leaflet", app);
     }
 
     [Fact]

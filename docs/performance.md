@@ -1,16 +1,13 @@
 # Lobsy website performance
 
-Lab baseline (PageSpeed Insights, mobile, augustus 2026, productie `https://lobsy.nl`):
+Lab baseline, productie `https://lobsy.nl` (geen CrUX field data):
 
-| Categorie | Score |
-|---|---|
-| Performance | 56 |
-| Accessibility | 95 |
-| Best Practices | 77 |
-| SEO | 91 |
-| CrUX field data | geen |
+| Bron | Perf | A11y | BP | SEO | FCP | LCP | TBT | CLS |
+|---|---|---|---|---|---|---|---|---|
+| PageSpeed Insights (aug 2026, opgave) | 56 | 95 | 77 | 91 | — | — | — | — |
+| Lighthouse 12.8 mobile (deze run, pre-fix) | 47 | 95 | 82 | 91 | 2.1s | **21.6s** | 600ms | 0.108 |
 
-Hoofdoorzaken in die meting: derde-partij jobfoto’s (`picsum.photos`, geen lazy-load via CSS `background-image`), een 568&nbsp;KB logo op elke pagina, Leaflet + MarkerCluster via unpkg in de critical path, en meerdere losse first-party JS-bestanden.
+LCP was een Carto-tegel (`leaflet-tile`) met **20s load delay**: de netwerkrij stond vol met `lobsy.png` (568&nbsp;KB) en tientallen picsum-JPEG’s (~60–80&nbsp;KB, ~9&nbsp;MB / 584 requests). Leaflet-CSS via unpkg was render-blocking (~780&nbsp;ms).
 
 ## Wat er nu in de code zit
 
@@ -42,7 +39,9 @@ Na deploy naar `main`:
 1. [PageSpeed Insights](https://pagespeed.web.dev/analysis?url=https://lobsy.nl) (mobile + desktop).
 2. Lokaal: `npx lighthouse https://lobsy.nl --only-categories=performance,accessibility,best-practices,seo --form-factor=mobile --output=json --output-path=./lighthouse-mobile.json`.
 
-Verwachte richting (lab, mobiel, na cache-warm): Performance 75–90, Best Practices ≥90, LCP/TBT omlaag doordat picsum + unpkg + 568&nbsp;KB logo weg zijn. Blazor Server (`blazor.web.js` + circuit) blijft een TBT-bodem; dat is geen WASM-bundle die je kunt splitten.
+Verwachte richting na deploy (lab, mobiel, cache-warm): LCP uit de 20s-range (picsum-storm + 568&nbsp;KB logo weg; Carto preconnect + Leaflet preload), Performance richting **70–90**, Best Practices **≥90**. Blazor Server (`blazor.web.js` + circuit) blijft een TBT-bodem; dat is geen WASM-bundle die je kunt splitten.
+
+Herhaal PSI/Lighthouse op `https://lobsy.nl` na merge naar `main` en vul de tabel hierboven aan.
 
 ## Bewust niet gedaan
 
