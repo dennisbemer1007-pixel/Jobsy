@@ -1048,6 +1048,14 @@ window.jobMap = (function () {
         }
     }
 
+    function isAlive() {
+        if (!map || !clusterGroup) {
+            return false;
+        }
+        const container = typeof map.getContainer === "function" ? map.getContainer() : null;
+        return !!(container && container.isConnected);
+    }
+
     function highlight(id) {
         Object.keys(markersById).forEach(function (key) {
             const marker = markersById[key];
@@ -1194,6 +1202,7 @@ window.jobMap = (function () {
         focus,
         focusCompany,
         dispose,
-        invalidate
+        invalidate,
+        isAlive
     };
 })();

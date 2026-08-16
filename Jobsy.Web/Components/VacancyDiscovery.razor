@@ -1461,80 +1461,99 @@
     {
         if (!_launchHydrationDone)
         {
+            var jsReady = true;
             try
             {
                 _highlightShuffleSeed = await Js.InvokeAsync<uint>("jobsyGeo.getOrCreateHighlightSeed");
             }
             catch (JSException)
             {
-                // Prerender / JS not ready — retry on the next interactive render.
-                return;
+                jsReady = false;
             }
             catch (InvalidOperationException)
             {
-                return;
+                jsReady = false;
             }
             catch
             {
                 _highlightShuffleSeed = (uint)Random.Shared.NextInt64(0, uint.MaxValue);
             }
 
-            try
+            if (jsReady)
             {
-                // Candidate age comes from profile (DOB). Only use localStorage for anonymous / no DOB.
-                if (_ageYears is null)
+                try
                 {
-                    var storedAge = await Js.InvokeAsync<int?>("jobsyGeo.getStoredAge");
-                    if (storedAge is int age)
+                    // Candidate age comes from profile (DOB). Only use localStorage for anonymous / no DOB.
+                    if (_ageYears is null)
                     {
-                        _ageYears = NormalizeFilterAge(age);
-                        // Do not prefill min wage from WML — user sets wage filters explicitly.
-                    }
-                }
-                else
-                {
-                    await Js.InvokeVoidAsync("jobsyGeo.setStoredAge", _ageYears.Value);
-                }
-
-                var stored = await Js.InvokeAsync<StoredOrigin?>("jobsyGeo.ensureLocationOnLaunch");
-                if (stored is not null && IsFinite(stored.Lat) && IsFinite(stored.Lng))
-                {
-                    _origin = new OriginPoint { Latitude = stored.Lat, Longitude = stored.Lng };
-                    if (!_sortChosenByUser && _sortMode is not "type" and not "recent")
-                    {
-                        _sortMode = "distance";
-                    }
-                    if (!string.IsNullOrWhiteSpace(stored.Label))
-                    {
-                        _addressQuery = stored.Label;
+                        var storedAge = await Js.InvokeAsync<int?>("jobsyGeo.getStoredAge");
+                        if (storedAge is int age)
+                        {
+                            _ageYears = NormalizeFilterAge(age);
+                            // Do not prefill min wage from WML — user sets wage filters explicitly.
+                        }
                     }
                     else
                     {
-                        // Do not block first discover on reverse-geocode latency; refresh UI when done.
-                        _ = ResolveLaunchAddressAsync(stored.Lat, stored.Lng);
+                        await Js.InvokeVoidAsync("jobsyGeo.setStoredAge", _ageYears.Value);
+                    }
+
+                    var stored = await Js.InvokeAsync<StoredOrigin?>("jobsyGeo.ensureLocationOnLaunch");
+                    if (stored is not null && IsFinite(stored.Lat) && IsFinite(stored.Lng))
+                    {
+                        _origin = new OriginPoint { Latitude = stored.Lat, Longitude = stored.Lng };
+                        if (!_sortChosenByUser && _sortMode is not "type" and not "recent")
+                        {
+                            _sortMode = "distance";
+                        }
+                        if (!string.IsNullOrWhiteSpace(stored.Label))
+                        {
+                            _addressQuery = stored.Label;
+                        }
+                        else
+                        {
+                            // Do not block first discover on reverse-geocode latency; refresh UI when done.
+                            _ = ResolveLaunchAddressAsync(stored.Lat, stored.Lng);
+                        }
+                    }
+
+                    _launchHydrationDone = true;
+                    if (_origin is not null || _ageYears is not null)
+                    {
+                        await LoadVacanciesAsync();
                     }
                 }
+                catch (JSException)
+                {
+                    // Keep going — map init must not wait on geo helpers.
+                }
+                catch (InvalidOperationException)
+                {
+                    // Keep going — map init must not wait on geo helpers.
+                }
+                catch
+                {
+                    _launchHydrationDone = true;
+                }
             }
-            catch (JSException)
+        }
+
+        if (_mapReady)
+        {
+            try
             {
-                return;
-            }
-            catch (InvalidOperationException)
-            {
-                return;
+                var alive = await Js.InvokeAsync<bool>("jobMap.isAlive");
+                if (!alive)
+                {
+                    _mapReady = false;
+                    _mapInitScheduled = false;
+                }
             }
             catch
             {
-                // geolocation helpers not ready yet — still load vacancies below
+                _mapReady = false;
+                _mapInitScheduled = false;
             }
-
-            _launchHydrationDone = true;
-            if (_origin is not null || _ageYears is not null)
-            {
-                await LoadVacanciesAsync();
-            }
-
-            StateHasChanged();
         }
 
         if (_mapReady || _mapInitScheduled)
