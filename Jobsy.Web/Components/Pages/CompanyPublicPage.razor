@@ -268,7 +268,7 @@
                 ["dotNetRef"] = _dotNetRef,
                 ["highlightSeed"] = _highlightShuffleSeed
             };
-            await MapScripts.EnsureAsync(Js);
+            await MapScripts.EnsureDiscoveryAsync(Js);
             await Js.InvokeVoidAsync("jobMap.init", "branch-job-map", markers, options);
             _mapReady = true;
             await Task.Delay(80);

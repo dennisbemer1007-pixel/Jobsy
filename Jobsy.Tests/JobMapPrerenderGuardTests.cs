@@ -34,9 +34,10 @@ public class JobMapPrerenderGuardTests
         Assert.DoesNotContain("<script src=\"https://unpkg.com/leaflet", app);
 
         var maps = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "wwwroot", "js", "maps-loader.js"));
-        Assert.Contains("pending = null", maps);
+        Assert.Contains("pending[kind] = null", maps);
+        Assert.Contains("discovery", maps);
         var bundle = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "wwwroot", "js", "app-core.js"));
-        Assert.Contains("pending = null", bundle);
+        Assert.Contains("pending[kind] = null", bundle);
     }
 
     [Fact]

@@ -1,17 +1,21 @@
 window.jobsyMaps = (function () {
     "use strict";
 
-    var pending = null;
+    var pending = {};
     var css = [
         "/lib/leaflet/leaflet.css",
         "/lib/leaflet/MarkerCluster.css",
         "/lib/leaflet/MarkerCluster.Default.css"
     ];
-    var scripts = [
+    var leafletScripts = [
         "/lib/leaflet/leaflet.min.js",
-        "/lib/leaflet/leaflet.markercluster.min.js",
-        "/js/jobMap.js?v=20260816-perf",
-        "/js/vacancyDetailMap.js?v=20260816-perf"
+        "/lib/leaflet/leaflet.markercluster.min.js"
+    ];
+    var discoveryScripts = [
+        "/js/jobMap.js?v=20260816-tbt"
+    ];
+    var detailScripts = [
+        "/js/vacancyDetailMap.js?v=20260816-tbt"
     ];
 
     function loadCss(href) {
@@ -52,21 +56,50 @@ window.jobsyMaps = (function () {
         });
     }
 
+    function normalizeKind(kind) {
+        return kind === "discovery" || kind === "detail" ? kind : "all";
+    }
+
+    function isReady(kind) {
+        if (!window.L) {
+            return false;
+        }
+        if (kind === "detail") {
+            return !!window.vacancyDetailMap;
+        }
+        if (kind === "discovery") {
+            return !!window.jobMap;
+        }
+        return !!(window.jobMap && window.vacancyDetailMap);
+    }
+
+    function scriptsFor(kind) {
+        var urls = leafletScripts.slice();
+        if (kind !== "detail") {
+            urls = urls.concat(discoveryScripts);
+        }
+        if (kind !== "discovery") {
+            urls = urls.concat(detailScripts);
+        }
+        return urls;
+    }
+
     return {
-        ensure: function () {
-            if (window.L && window.jobMap && window.vacancyDetailMap) {
+        ensure: function (kind) {
+            kind = normalizeKind(kind);
+            if (isReady(kind)) {
                 return Promise.resolve();
             }
-            if (pending) {
-                return pending;
+            if (pending[kind]) {
+                return pending[kind];
             }
-            pending = Promise.all(css.map(loadCss)).then(function () {
-                return loadScriptsInOrder(scripts, 0);
+            pending[kind] = Promise.all(css.map(loadCss)).then(function () {
+                return loadScriptsInOrder(scriptsFor(kind), 0);
             }).catch(function (err) {
-                pending = null;
+                pending[kind] = null;
                 throw err;
             });
-            return pending;
+            return pending[kind];
         }
     };
 })();

@@ -2,7 +2,8 @@ namespace Jobsy.Web.Hosting;
 
 /// <summary>
 /// Razor Components reject HEAD (405). Crawlers and some lab tools probe with HEAD.
-/// Serve the same status/headers as GET without a body.
+/// Rewrite to GET before the rest of the pipeline and suppress the body.
+/// If routing already bound a GET-only endpoint, coerce a leftover 405 to 200.
 /// </summary>
 public sealed class HeadAsGetMiddleware(RequestDelegate next)
 {
@@ -20,6 +21,11 @@ public sealed class HeadAsGetMiddleware(RequestDelegate next)
         try
         {
             await next(context);
+            if (context.Response.StatusCode == StatusCodes.Status405MethodNotAllowed)
+            {
+                context.Response.StatusCode = StatusCodes.Status200OK;
+                context.Response.Headers.Allow = "GET, HEAD";
+            }
         }
         finally
         {

@@ -443,77 +443,86 @@
                     </select>
                 </label>
             </div>
-            <HighlightVacancyCarousel Vacancies="HighlightedVacancies"
-                                      ActiveId="_hoveredId"
-                                      ModifierClass="highlight-carousel--list"
-                                      FormatTravel="FormatCarouselTravel"
-                                      OnHover="OnHover"
-                                      OnSelect="OnCarouselSelect" />
-            <div class="vacancy-list vacancy-list--cards">
-                @{ var cardIndex = 0; }
-                @foreach (var vacancy in SortedVacancies)
-                {
-                    var wageText = FormatWage(vacancy);
-                    var travelText = vacancy.TravelMinutes is not null
-                        ? $"± {vacancy.TravelMinutes} {Culture["Discovery.Minutes"]}"
-                        : Culture.Format("Discovery.MaxMinutes", _maxTravelMinutes);
-                    var photoEager = cardIndex < 2;
-                    cardIndex++;
-                    <article class="job-card @(_hoveredId == vacancy.Id ? "is-hovered" : null) @(vacancy.IsHighlighted ? "job-card--highlight" : null)"
-                             @onmouseenter="() => OnHover(vacancy.Id)"
-                             @onmouseleave="() => OnHover(null)"
-                             @onclick="() => OnSelect(vacancy.Id)">
-                        <a class="job-card__media" href="@($"/vacancies/{vacancy.Id}")" @onclick:stopPropagation="true">
-                            <VacancyPhoto Src="@vacancy.ImageUrl"
-                                          VacancyId="vacancy.Id"
-                                          WorkType="@(vacancy.WorkTypes.FirstOrDefault())"
-                                          Class="job-card__photo"
-                                          Eager="photoEager"
-                                          Sizes="(max-width: 700px) 50vw, 360px" />
-                            @if (vacancy.IsHighlighted)
-                            {
-                                <span class="job-card__badge">@Culture["Discovery.Featured"]</span>
-                            }
-                            else if (!string.IsNullOrWhiteSpace(vacancy.ExclusivityName)
-                                     && string.Equals(vacancy.Kind, "Internship", StringComparison.OrdinalIgnoreCase)
-                                     && !vacancy.ExclusivityIsOpen)
-                            {
-                                <span class="job-card__badge job-card__badge--soft">@vacancy.ExclusivityName</span>
-                            }
-                            else if (ShowsSuitableFor65Plus(vacancy))
-                            {
-                                <span class="job-card__badge job-card__badge--senior65">@VacancyCategoryDefaults.SuitableFor65PlusLabel</span>
-                            }
-                            else if (vacancy.WorkTypes.Length > 0)
-                            {
-                                <span class="job-card__badge job-card__badge--soft">@UiLabels.WorkType(Culture, vacancy.WorkTypes[0])</span>
-                            }
-                            <div class="job-card__overlay">
-                                <h2>@vacancy.Title</h2>
-                                <p class="job-card__travel">
-                                    <LobsyMark Compact="true" />
-                                    <span>@travelText · @UiLabels.TransportVerb(Culture, _selectedTransport)</span>
-                                </p>
-                                @if (!string.IsNullOrEmpty(wageText))
+            @if (ShouldRenderVacancyCards)
+            {
+                <HighlightVacancyCarousel Vacancies="HighlightedVacanciesForUi"
+                                          ActiveId="_hoveredId"
+                                          ModifierClass="highlight-carousel--list"
+                                          FormatTravel="FormatCarouselTravel"
+                                          OnHover="OnHover"
+                                          OnSelect="OnCarouselSelect" />
+                <div class="vacancy-list vacancy-list--cards">
+                    @{ var cardIndex = 0; }
+                    @foreach (var vacancy in VisibleVacancies)
+                    {
+                        var wageText = FormatWage(vacancy);
+                        var travelText = vacancy.TravelMinutes is not null
+                            ? $"± {vacancy.TravelMinutes} {Culture["Discovery.Minutes"]}"
+                            : Culture.Format("Discovery.MaxMinutes", _maxTravelMinutes);
+                        var photoEager = cardIndex < 2;
+                        cardIndex++;
+                        <article class="job-card @(_hoveredId == vacancy.Id ? "is-hovered" : null) @(vacancy.IsHighlighted ? "job-card--highlight" : null)"
+                                 @onmouseenter="() => OnHover(vacancy.Id)"
+                                 @onmouseleave="() => OnHover(null)"
+                                 @onclick="() => OnSelect(vacancy.Id)">
+                            <a class="job-card__media" href="@($"/vacancies/{vacancy.Id}")" @onclick:stopPropagation="true">
+                                <VacancyPhoto Src="@vacancy.ImageUrl"
+                                              VacancyId="vacancy.Id"
+                                              WorkType="@(vacancy.WorkTypes.FirstOrDefault())"
+                                              Class="job-card__photo"
+                                              Eager="photoEager"
+                                              Sizes="(max-width: 700px) 50vw, 360px" />
+                                @if (vacancy.IsHighlighted)
                                 {
-                                    <p class="job-card__wage">@wageText</p>
+                                    <span class="job-card__badge">@Culture["Discovery.Featured"]</span>
                                 }
+                                else if (!string.IsNullOrWhiteSpace(vacancy.ExclusivityName)
+                                         && string.Equals(vacancy.Kind, "Internship", StringComparison.OrdinalIgnoreCase)
+                                         && !vacancy.ExclusivityIsOpen)
+                                {
+                                    <span class="job-card__badge job-card__badge--soft">@vacancy.ExclusivityName</span>
+                                }
+                                else if (ShowsSuitableFor65Plus(vacancy))
+                                {
+                                    <span class="job-card__badge job-card__badge--senior65">@VacancyCategoryDefaults.SuitableFor65PlusLabel</span>
+                                }
+                                else if (vacancy.WorkTypes.Length > 0)
+                                {
+                                    <span class="job-card__badge job-card__badge--soft">@UiLabels.WorkType(Culture, vacancy.WorkTypes[0])</span>
+                                }
+                                <div class="job-card__overlay">
+                                    <h2>@vacancy.Title</h2>
+                                    <p class="job-card__travel">
+                                        <LobsyMark Compact="true" />
+                                        <span>@travelText · @UiLabels.TransportVerb(Culture, _selectedTransport)</span>
+                                    </p>
+                                    @if (!string.IsNullOrEmpty(wageText))
+                                    {
+                                        <p class="job-card__wage">@wageText</p>
+                                    }
+                                </div>
+                            </a>
+                            <div class="job-card__footer">
+                                <p class="job-card__company">@(string.IsNullOrWhiteSpace(vacancy.OfferedByLabel) ? vacancy.CompanyName : vacancy.OfferedByLabel)</p>
+                                <p class="job-card__location">@vacancy.CompanyAddress</p>
                             </div>
-                        </a>
-                        <div class="job-card__footer">
-                            <p class="job-card__company">@(string.IsNullOrWhiteSpace(vacancy.OfferedByLabel) ? vacancy.CompanyName : vacancy.OfferedByLabel)</p>
-                            <p class="job-card__location">@vacancy.CompanyAddress</p>
-                        </div>
-                    </article>
+                        </article>
+                    }
+                </div>
+                @if (HasMoreVacancyCards)
+                {
+                    <button type="button" class="vacancy-list__more" @onclick="ShowMoreVacancyCards">
+                        @Culture.Format("Discovery.ShowResults", RemainingVacancyCardCount)
+                    </button>
                 }
-            </div>
+            }
         }
     </aside>
 
     <section class="map-pane">
         @if (_vacancies.Count > 0)
         {
-            <HighlightVacancyCarousel Vacancies="HighlightedVacancies"
+            <HighlightVacancyCarousel Vacancies="HighlightedVacanciesForUi"
                                       ActiveId="_hoveredId"
                                       ModifierClass="highlight-carousel--map"
                                       FormatTravel="FormatCarouselTravel"
@@ -828,6 +837,11 @@
     private Guid? _hoveredId;
     private uint _highlightShuffleSeed;
     private bool showMapOnMobile = true;
+    /// <summary>Desktop split view (≥769px). Default false so mobile PSI does not mount 200+ cards.</summary>
+    private bool _wideViewport;
+    private const int VacancyCardPageSize = 12;
+    private const int HighlightCarouselCap = 8;
+    private int _visibleCardCount = VacancyCardPageSize;
     private bool _filtersOpen;
     private bool _legendOpen;
     private bool _branchMenuOpen;
@@ -1012,6 +1026,36 @@
             return sorted.ToList();
         }
     }
+
+    /// <summary>
+    /// Job cards stay out of prerender HTML and the hidden mobile map pane.
+    /// Desktop (wide) always shows a windowed list beside the map.
+    /// </summary>
+    private bool ShouldRenderVacancyCards =>
+        RendererInfo.IsInteractive && (_wideViewport || !showMapOnMobile);
+
+    private IReadOnlyList<VacancyListItem> HighlightedVacanciesForUi
+    {
+        get
+        {
+            var all = HighlightedVacancies;
+            return all.Count <= HighlightCarouselCap
+                ? all
+                : all.Take(HighlightCarouselCap).ToList();
+        }
+    }
+
+    private IEnumerable<VacancyListItem> VisibleVacancies =>
+        SortedVacancies.Take(_visibleCardCount);
+
+    private bool HasMoreVacancyCards =>
+        ShouldRenderVacancyCards && SortedVacancies.Count > _visibleCardCount;
+
+    private int RemainingVacancyCardCount =>
+        Math.Max(0, SortedVacancies.Count - _visibleCardCount);
+
+    private void ShowMoreVacancyCards()
+        => _visibleCardCount = Math.Min(SortedVacancies.Count, _visibleCardCount + VacancyCardPageSize);
 
     private string FormatCarouselTravel(VacancyListItem vacancy)
     {
@@ -1470,6 +1514,26 @@
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
+        if (firstRender)
+        {
+            try
+            {
+                var wide = await Js.InvokeAsync<bool>("jobsyViewport.isWide");
+                if (wide != _wideViewport)
+                {
+                    _wideViewport = wide;
+                    StateHasChanged();
+                }
+            }
+            catch (JSException)
+            {
+                // Keep mobile-first: do not mount the full card list.
+            }
+            catch (InvalidOperationException)
+            {
+            }
+        }
+
         if (!_launchHydrationDone)
         {
             var jsReady = true;
@@ -1551,7 +1615,7 @@
 
         try
         {
-            await MapScripts.EnsureAsync(Js);
+            await MapScripts.EnsureDiscoveryAsync(Js);
         }
         catch (JSException)
         {
@@ -1697,6 +1761,7 @@
             }
 
             _vacancies = items.ToList();
+            _visibleCardCount = VacancyCardPageSize;
             if (companyFocus)
             {
                 _vacancies = _companyFocusIds is { Count: > 0 }

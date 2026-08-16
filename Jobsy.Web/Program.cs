@@ -76,9 +76,10 @@ builder.Services.AddRateLimiter(options =>
 
 var app = builder.Build();
 
+// Rewrite HEAD→GET before routing so MapRazorComponents (GET-only) does not 405.
+app.UseMiddleware<HeadAsGetMiddleware>();
 app.UseForwardedHeaders();
 app.UseMiddleware<WwwCanonicalMiddleware>();
-app.UseMiddleware<HeadAsGetMiddleware>();
 app.UseResponseCompression();
 
 if (!app.Environment.IsDevelopment())

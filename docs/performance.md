@@ -6,8 +6,11 @@ Lab baseline, productie `https://lobsy.nl` (geen CrUX field data):
 |---|---|---|---|---|---|---|---|---|
 | PageSpeed Insights (aug 2026, opgave) | 56 | 95 | 77 | 91 | — | — | — | — |
 | Lighthouse 12.8 mobile (deze run, pre-fix) | 47 | 95 | 82 | 91 | 2.1s | **21.6s** | 600ms | 0.108 |
+| Lighthouse 12.8 mobile (na image/JS-fix, live) | 69 | 95 | 82 | 91 | 2.0s | **2.4s** | **830ms** | 0.108 |
 
 LCP was een Carto-tegel (`leaflet-tile`) met **20s load delay**: de netwerkrij stond vol met `lobsy.png` (568&nbsp;KB) en tientallen picsum-JPEG’s (~60–80&nbsp;KB, ~9&nbsp;MB / 584 requests). Leaflet-CSS via unpkg was render-blocking (~780&nbsp;ms).
+
+Na die eerste ronde was het gewicht weg (36 requests / ~334&nbsp;KB) en LCP ~2.4s, maar de labscore bleef hangen: de homepage prerenderde **alle ~278 job cards** (~6.5k DOM-nodes, TBT 830ms) en de cookiebanner verscheen pas na JS (late LCP-tekst).
 
 ## Wat er nu in de code zit
 
@@ -15,6 +18,7 @@ LCP was een Carto-tegel (`leaflet-tile`) met **20s load delay**: de netwerkrij s
 
 - Mock/seed-foto’s zijn same-origin SVG’s (`/images/vacancies/{branche}-{0\|1}.svg`, ~0.6&nbsp;KB). Bestaande picsum/Unsplash-URL’s worden bij render herschreven en bij de volgende media-backfill in de database gezet.
 - Job cards gebruiken een echt `<img>` (`VacancyPhoto`) met `loading="lazy"`, `decoding="async"`, intrinsieke 600×400 en `sizes`. De eerste twee kaarten zijn eager.
+- De vacaturelijst wordt **niet** in de eerste HTML/mobile-kaartweergave gezet. Desktop en de mobiele lijst tonen vensters van 12 kaarten (+ “toon meer”). Featured-carousel max. 8.
 - Logo: WebP 64/128/256 i.p.v. 1024×1024 PNG (568&nbsp;KB). Watermarks lazy, apple-touch-icon 180&nbsp;px.
 - Optioneel Cloudflare Image Resizing: zet `Cloudflare__ImageResizing=true` (betaalde CF-add-on). Alleen same-origin paden (`/images/…`) worden gewrapt — geen absolute http(s)-URL’s (geen CF-fetch/SSRF-proxy).
 
@@ -22,6 +26,8 @@ LCP was een Carto-tegel (`leaflet-tile`) met **20s load delay**: de netwerkrij s
 
 - Leaflet + MarkerCluster staan lokaal in `wwwroot/lib/leaflet/` en laden pas als een kaartpagina `jobsyMaps.ensure()` aanroept.
 - First-party JS is gebundeld in `js/app-core.js` (geo, culture, session, cookies, download, richtext, maps-loader).
+- `jobsyMaps.ensure("discovery"|"detail")` laadt niet beide kaart-scripts op elke pagina.
+- Cookiebanner staat in de eerste HTML (compact); `html.cookie-consent-known` verbergt hem vóór paint als de keuze al bekend is.
 - `app.css` wordt gepreload. Geen webfonts (systeemstack).
 
 ### Server / edge

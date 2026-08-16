@@ -1068,7 +1068,7 @@
 
         try
         {
-            await MapScripts.EnsureAsync(Js);
+            await MapScripts.EnsureDetailAsync(Js);
             // Pass numbers (JSON) so Leaflet gets exact coords without culture parsing.
             await Js.InvokeVoidAsync("vacancyDetailMap.init", "vacancy-detail-map", new Dictionary<string, object?>
             {
