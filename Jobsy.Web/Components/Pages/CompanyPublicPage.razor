@@ -6,7 +6,9 @@
 @inject IJSRuntime Js
 @inject CultureState Culture
 @inject NavigationManager Navigation
+@using Jobsy.Core.Media
 @using Jobsy.Core.Rules
+@using Jobsy.Web.Hosting
 @implements IAsyncDisposable
 
 <PageTitle>@(_page?.Name ?? Culture["BranchPage.Title"]) · Lobsy</PageTitle>
@@ -116,14 +118,22 @@
                 </nav>
             }
             <div class="vacancy-list vacancy-list--cards">
+                @{ var cardIndex = 0; }
                 @foreach (var vacancy in _vacancies)
                 {
+                    var photoEager = cardIndex < 2;
+                    cardIndex++;
                     <article class="job-card @(_hoveredId == vacancy.Id ? "is-hovered" : null) @(vacancy.IsHighlighted ? "job-card--highlight" : null)"
                              @onmouseenter="() => OnHover(vacancy.Id)"
                              @onmouseleave="() => OnHover(null)"
                              @onclick="() => OnSelect(vacancy.Id)">
-                        <a class="job-card__media" href="@($"/vacancies/{vacancy.Id}")" @onclick:stopPropagation="true"
-                           style="@(string.IsNullOrWhiteSpace(vacancy.ImageUrl) ? null : $"background-image:url('{vacancy.ImageUrl}')")">
+                        <a class="job-card__media" href="@($"/vacancies/{vacancy.Id}")" @onclick:stopPropagation="true">
+                            <VacancyPhoto Src="@vacancy.ImageUrl"
+                                          VacancyId="vacancy.Id"
+                                          WorkType="@(vacancy.WorkTypes.FirstOrDefault())"
+                                          Class="job-card__photo"
+                                          Eager="photoEager"
+                                          Sizes="(max-width: 700px) 50vw, 360px" />
                             @if (vacancy.IsHighlighted)
                             {
                                 <span class="job-card__badge">@Culture["Discovery.Featured"]</span>
@@ -258,6 +268,7 @@
                 ["dotNetRef"] = _dotNetRef,
                 ["highlightSeed"] = _highlightShuffleSeed
             };
+            await MapScripts.EnsureAsync(Js);
             await Js.InvokeVoidAsync("jobMap.init", "branch-job-map", markers, options);
             _mapReady = true;
             await Task.Delay(80);
@@ -295,7 +306,7 @@
                 ["offeredBy"] = v.OfferedByLabel,
                 ["address"] = v.CompanyAddress,
                 ["logoUrl"] = v.CompanyLogoUrl,
-                ["imageUrl"] = v.ImageUrl,
+                ["imageUrl"] = VacancyImageUrls.Resolve(v.ImageUrl, v.Id, v.WorkTypes.FirstOrDefault()),
                 ["lat"] = v.Latitude,
                 ["lng"] = v.Longitude,
                 ["transport"] = v.RequiredTransport,

@@ -1,0 +1,43 @@
+@namespace Jobsy.Web.Components
+@using Jobsy.Core.Media
+@inject IConfiguration Config
+
+@if (!string.IsNullOrWhiteSpace(DisplaySrc))
+{
+    <img class="vacancy-photo @Class"
+         src="@DisplaySrc"
+         srcset="@SrcSetOrNull"
+         sizes="@SizesOrNull"
+         alt="@Alt"
+         width="@Width"
+         height="@Height"
+         loading="@(Eager ? "eager" : "lazy")"
+         decoding="async"
+         fetchpriority="@(Eager ? "high" : "auto")"
+         draggable="false" />
+}
+
+@code {
+    [Parameter] public string? Src { get; set; }
+    [Parameter] public Guid? VacancyId { get; set; }
+    [Parameter] public string? WorkType { get; set; }
+    [Parameter] public string? Class { get; set; }
+    [Parameter] public string Alt { get; set; } = "";
+    [Parameter] public bool Eager { get; set; }
+    [Parameter] public string Sizes { get; set; } = "(max-width: 700px) 50vw, 360px";
+    [Parameter] public int Width { get; set; } = VacancyImageUrls.IntrinsicWidth;
+    [Parameter] public int Height { get; set; } = VacancyImageUrls.IntrinsicHeight;
+
+    private bool CloudflareResizing => Config.GetValue("Cloudflare:ImageResizing", false);
+
+    private string DisplaySrc => VacancyImageUrls.ForDisplay(
+        Src,
+        Width,
+        CloudflareResizing,
+        VacancyId,
+        WorkType);
+
+    private string? SrcSetOrNull => VacancyImageUrls.SrcSet(DisplaySrc, CloudflareResizing);
+
+    private string? SizesOrNull => string.IsNullOrWhiteSpace(SrcSetOrNull) ? null : Sizes;
+}

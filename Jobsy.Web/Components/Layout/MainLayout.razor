@@ -9,8 +9,20 @@
 
 <div class="app-shell @(_hasBottomNav ? "has-bottom-nav" : null)" dir="@(Culture.IsRightToLeft ? "rtl" : null)">
     <div class="lobsy-watermarks" aria-hidden="true">
-        <img class="lobsy-watermark lobsy-watermark--left" src="images/brand/lobsy.png?v=20260731-eyes" alt="" />
-        <img class="lobsy-watermark lobsy-watermark--right" src="images/brand/lobsy.png?v=20260731-eyes" alt="" />
+        <img class="lobsy-watermark lobsy-watermark--left"
+             src="@Jobsy.Web.Media.BrandImages.Webp256"
+             alt=""
+             width="256"
+             height="256"
+             loading="lazy"
+             decoding="async" />
+        <img class="lobsy-watermark lobsy-watermark--right"
+             src="@Jobsy.Web.Media.BrandImages.Webp256"
+             alt=""
+             width="256"
+             height="256"
+             loading="lazy"
+             decoding="async" />
     </div>
     <header class="app-header">
         <div class="app-header__brand">

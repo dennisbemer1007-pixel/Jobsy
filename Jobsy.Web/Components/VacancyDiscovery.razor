@@ -5,7 +5,9 @@
 @inject AuthenticationStateProvider AuthState
 @inject NavigationManager Navigation
 @implements IAsyncDisposable
+@using Jobsy.Core.Media
 @using Jobsy.Core.Rules
+@using Jobsy.Web.Hosting
 @using Microsoft.AspNetCore.Components.Authorization
 @using Microsoft.AspNetCore.WebUtilities
 
@@ -448,18 +450,26 @@
                                       OnHover="OnHover"
                                       OnSelect="OnCarouselSelect" />
             <div class="vacancy-list vacancy-list--cards">
+                @{ var cardIndex = 0; }
                 @foreach (var vacancy in SortedVacancies)
                 {
                     var wageText = FormatWage(vacancy);
                     var travelText = vacancy.TravelMinutes is not null
                         ? $"± {vacancy.TravelMinutes} {Culture["Discovery.Minutes"]}"
                         : Culture.Format("Discovery.MaxMinutes", _maxTravelMinutes);
+                    var photoEager = cardIndex < 2;
+                    cardIndex++;
                     <article class="job-card @(_hoveredId == vacancy.Id ? "is-hovered" : null) @(vacancy.IsHighlighted ? "job-card--highlight" : null)"
                              @onmouseenter="() => OnHover(vacancy.Id)"
                              @onmouseleave="() => OnHover(null)"
                              @onclick="() => OnSelect(vacancy.Id)">
-                        <a class="job-card__media" href="@($"/vacancies/{vacancy.Id}")" @onclick:stopPropagation="true"
-                           style="@(string.IsNullOrWhiteSpace(vacancy.ImageUrl) ? null : $"background-image:url('{vacancy.ImageUrl}')")">
+                        <a class="job-card__media" href="@($"/vacancies/{vacancy.Id}")" @onclick:stopPropagation="true">
+                            <VacancyPhoto Src="@vacancy.ImageUrl"
+                                          VacancyId="vacancy.Id"
+                                          WorkType="@(vacancy.WorkTypes.FirstOrDefault())"
+                                          Class="job-card__photo"
+                                          Eager="photoEager"
+                                          Sizes="(max-width: 700px) 50vw, 360px" />
                             @if (vacancy.IsHighlighted)
                             {
                                 <span class="job-card__badge">@Culture["Discovery.Featured"]</span>
@@ -556,11 +566,12 @@
         <div class="filter-sheet-backdrop" @onclick="CloseFiltersAsync"></div>
         <div id="discovery-filters" class="filter-sheet" role="dialog" aria-modal="true" aria-labelledby="filter-sheet-title">
             <div class="filter-sheet__header">
-                <img src="/images/brand/lobsy.png?v=20260731-eyes"
+                <img src="@Jobsy.Web.Media.BrandImages.AbsoluteWebp128"
                      alt=""
                      class="filter-sheet__mascot"
                      width="40"
                      height="40"
+                     decoding="async"
                      draggable="false"
                      aria-hidden="true" />
                 <h2 id="filter-sheet-title">
@@ -1538,6 +1549,19 @@
             }
         }
 
+        try
+        {
+            await MapScripts.EnsureAsync(Js);
+        }
+        catch (JSException)
+        {
+            return;
+        }
+        catch (InvalidOperationException)
+        {
+            return;
+        }
+
         if (_mapReady)
         {
             try
@@ -1786,7 +1810,7 @@
                 ["offeredBy"] = v.OfferedByLabel,
                 ["address"] = v.CompanyAddress,
                 ["logoUrl"] = v.CompanyLogoUrl,
-                ["imageUrl"] = v.ImageUrl,
+                ["imageUrl"] = VacancyImageUrls.Resolve(v.ImageUrl, v.Id, v.WorkTypes.FirstOrDefault()),
                 ["lat"] = v.Latitude,
                 ["lng"] = v.Longitude,
                 ["transport"] = v.RequiredTransport,

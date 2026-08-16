@@ -11,7 +11,7 @@ namespace Jobsy.Infrastructure.Data;
 /// <summary>
 /// Idempotent banenkaart seed for Den Haag (100), Delft (75) and Zoetermeer (50).
 /// Vacancies differ in title, description, image, video, transport, wage and (where set) rijbewijs.
-/// Every vacancy gets a working picsum image, a YouTube VideoUrl and an extensive description.
+/// Every vacancy gets a local SVG placeholder, a YouTube VideoUrl and an extensive description.
 /// </summary>
 internal static class HaaglandenVacanciesSeeder
 {
@@ -172,7 +172,7 @@ internal static class HaaglandenVacanciesSeeder
                     RequiredTransport = transport,
                     WorkTypes = role.WorkType,
                     WorkTypeLabels = string.Join(", ", WorkTypeLabels.Expand(role.WorkType).Take(2)),
-                    ImageUrl = MockVacancyMedia.ImageUrl(vacancyId),
+                    ImageUrl = MockVacancyMedia.ImageUrl(vacancyId, role.WorkType),
                     IsHighlighted = highlight,
                     HighlightedUntil = highlight
                         ? DateTime.UtcNow.AddDays(VacancyProductRules.HighlightDays)

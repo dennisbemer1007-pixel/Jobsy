@@ -6,7 +6,9 @@
 @inject IJSRuntime Js
 @inject AuthenticationStateProvider AuthState
 @inject CultureState Culture
+@using Jobsy.Core.Media
 @using Jobsy.Core.Rules
+@using Jobsy.Web.Hosting
 @using Microsoft.AspNetCore.Components.Authorization
 @implements IAsyncDisposable
 
@@ -142,7 +144,12 @@
 
             @if (!string.IsNullOrWhiteSpace(_vacancy.ImageUrl))
             {
-                <img class="detail-card__image" src="@_vacancy.ImageUrl" alt="" />
+                <VacancyPhoto Src="@_vacancy.ImageUrl"
+                              VacancyId="_vacancy.Id"
+                              WorkType="@(_vacancy.WorkTypes.FirstOrDefault())"
+                              Class="detail-card__image"
+                              Eager="true"
+                              Sizes="(max-width: 700px) 100vw, 640px" />
             }
 
             @if (VideoEmbedUrl is not null)
@@ -1061,6 +1068,7 @@
 
         try
         {
+            await MapScripts.EnsureAsync(Js);
             // Pass numbers (JSON) so Leaflet gets exact coords without culture parsing.
             await Js.InvokeVoidAsync("vacancyDetailMap.init", "vacancy-detail-map", new Dictionary<string, object?>
             {

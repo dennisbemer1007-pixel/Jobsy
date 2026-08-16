@@ -1902,13 +1902,25 @@ a {
     padding-bottom: 75%; /* 4:3 */
     flex: none;
     background:
-        linear-gradient(160deg, color-mix(in srgb, var(--brand) 35%, #1a2332), color-mix(in srgb, var(--secondary) 55%, #0b1b33)),
-        center / cover no-repeat;
-    background-size: cover;
-    background-position: center;
+        linear-gradient(160deg, color-mix(in srgb, var(--brand) 35%, #1a2332), color-mix(in srgb, var(--secondary) 55%, #0b1b33));
     color: #fff;
     text-decoration: none;
     overflow: hidden;
+}
+
+.job-card__photo,
+.vacancy-photo.job-card__photo {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    background: transparent;
+}
+
+.vacancy-photo {
+    background:
+        linear-gradient(160deg, color-mix(in srgb, var(--pearl-mid) 70%, var(--brand)), var(--pearl-cool));
 }
 
 .job-card__footer {
@@ -5568,12 +5580,15 @@ a.engagement-btn {
     gap: 0.65rem;
 }
 
-.detail-card__image {
+.detail-card__image,
+.vacancy-photo.detail-card__image {
     width: 100%;
     max-height: 240px;
     object-fit: cover;
     border-radius: 12px;
     margin: 0.85rem 0 0;
+    aspect-ratio: 3 / 2;
+    background: var(--pearl-mid);
 }
 
 .detail-card__video {

@@ -28,14 +28,13 @@ public class HaaglandenVacanciesSeederTests
         Assert.Equal(50, vacancies.Count(v => v.Id.ToString().StartsWith("a4000000", StringComparison.Ordinal)));
 
         Assert.Equal(vacancies.Count, vacancies.Select(v => v.Id).Distinct().Count());
-        Assert.Equal(vacancies.Count, vacancies.Select(v => v.ImageUrl).Distinct().Count());
         Assert.Equal(vacancies.Count, vacancies.Select(v => v.Title).Distinct().Count());
         Assert.Equal(vacancies.Count, vacancies.Select(v => v.Description).Distinct().Count());
 
         Assert.All(vacancies, v =>
         {
             Assert.False(string.IsNullOrWhiteSpace(v.ImageUrl));
-            Assert.Contains("picsum.photos", v.ImageUrl, StringComparison.OrdinalIgnoreCase);
+            Assert.StartsWith("/images/vacancies/", v.ImageUrl);
             Assert.False(string.IsNullOrWhiteSpace(v.VideoUrl));
             Assert.True(v.Description.Length >= MockVacancyMedia.MinRichDescriptionLength);
             Assert.NotNull(v.SalaryTableId);
@@ -152,7 +151,7 @@ public class MediaBackfillSeederTests
         await MediaBackfillSeeder.BackfillMediaAsync(db, NullLogger.Instance);
 
         var vacancy = await db.Vacancies.Include(v => v.Company).SingleAsync(v => v.Id == vacancyId);
-        Assert.Contains("picsum.photos", vacancy.ImageUrl, StringComparison.OrdinalIgnoreCase);
+        Assert.StartsWith("/images/vacancies/", vacancy.ImageUrl);
         Assert.False(string.IsNullOrWhiteSpace(vacancy.VideoUrl));
         Assert.True(vacancy.Description.Length >= MockVacancyMedia.MinRichDescriptionLength);
     }

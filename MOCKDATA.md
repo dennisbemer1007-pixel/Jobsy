@@ -60,7 +60,7 @@ Guard: platform-log `"Westland banenkaart seed 50"`. Vacature-IDs `a1000000-0000
 
 | Kenmerk | Dekking |
 |---------|---------|
-| **Unieke content** | Iedere vacature heeft een eigen titelvariant, uitgebreide tekst (intro / taken / aanbod / profiel), unieke werkende `ImageUrl` (picsum seed) en een `VideoUrl` (YouTube) |
+| **Unieke content** | Iedere vacature heeft een eigen titelvariant, uitgebreide tekst (intro / taken / aanbod / profiel), een lokale SVG-placeholder (`/images/vacancies/…`) en een `VideoUrl` (YouTube) |
 | **Media backfill** | `MediaBackfillSeeder` vult ontbrekende/kapotte Unsplash-images, videos en te korte teksten bij bestaande databases |
 | **Rijbewijs** | ~30% met `RequiredDrivingLicense` (B, BE, AM, T, Heftruck, C, …) |
 | **Branche** | Alle 9 work types + enkele dual flags |

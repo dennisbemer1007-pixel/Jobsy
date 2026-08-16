@@ -1,6 +1,7 @@
 using System.Threading.RateLimiting;
 using Jobsy.Web.Auth;
 using Jobsy.Web.Components;
+using Jobsy.Web.Hosting;
 using Jobsy.Web.Localization;
 using Jobsy.Web.Security;
 using Jobsy.Web.Services;
@@ -57,6 +58,8 @@ builder.Services.AddHttpClient<IGeocodingClient, NominatimGeocodingClient>(clien
 builder.Services.AddScoped(sp =>
     new JobsyApiClient(JobsyApiClientFactory.Create(sp, builder.Configuration)));
 
+builder.Services.AddJobsyWebPerformance();
+
 builder.Services.AddRateLimiter(options =>
 {
     options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
@@ -74,6 +77,9 @@ builder.Services.AddRateLimiter(options =>
 var app = builder.Build();
 
 app.UseForwardedHeaders();
+app.UseMiddleware<WwwCanonicalMiddleware>();
+app.UseMiddleware<HeadAsGetMiddleware>();
+app.UseResponseCompression();
 
 if (!app.Environment.IsDevelopment())
 {
@@ -87,7 +93,7 @@ if (app.Environment.IsDevelopment())
     app.UseHttpsRedirection();
 }
 
-app.UseStaticFiles();
+app.UseStaticFiles(WebPerformanceExtensions.JobsyStaticFiles());
 
 app.Use(async (context, next) =>
 {
@@ -96,6 +102,7 @@ app.Use(async (context, next) =>
     context.Response.Headers["Referrer-Policy"] = "strict-origin-when-cross-origin";
     context.Response.Headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=(self)";
     // Blazor Server needs inline scripts/styles and websockets; keep frame/base locked down.
+    // Leaflet is self-hosted — no unpkg in the critical path or CSP.
     context.Response.Headers["Content-Security-Policy"] =
         "default-src 'self'; " +
         "base-uri 'self'; " +
@@ -104,8 +111,8 @@ app.Use(async (context, next) =>
         "object-src 'none'; " +
         "img-src 'self' data: https: blob:; " +
         "font-src 'self' data: https://fonts.gstatic.com; " +
-        "style-src 'self' 'unsafe-inline' https://unpkg.com https://fonts.googleapis.com; " +
-        "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://unpkg.com; " +
+        "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; " +
+        "script-src 'self' 'unsafe-inline' 'unsafe-eval'; " +
         "connect-src 'self' wss: ws: https:; " +
         "worker-src 'self' blob:;";
     await next();

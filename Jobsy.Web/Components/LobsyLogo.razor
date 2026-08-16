@@ -1,15 +1,22 @@
 @namespace Jobsy.Web.Components
+@using Jobsy.Web.Media
 
 <span class="lobsy-logo @(Animate ? "lobsy-logo--animate" : null) @Class"
       role="@(string.IsNullOrEmpty(Alt) ? null : "img")"
       aria-hidden="@(string.IsNullOrEmpty(Alt) ? "true" : null)"
       aria-label="@(string.IsNullOrEmpty(Alt) ? null : Alt)">
-    <img class="lobsy-logo__img" src="@Src" alt="" width="1024" height="1024" draggable="false" />
+    <img class="lobsy-logo__img"
+         src="@BrandImages.Webp128"
+         srcset="@BrandImages.SrcSet56"
+         sizes="56px"
+         alt=""
+         width="128"
+         height="128"
+         decoding="async"
+         draggable="false" />
 </span>
 
 @code {
-    private const string Src = "images/brand/lobsy.png?v=20260731-eyes";
-
     [Parameter] public string? Class { get; set; }
     [Parameter] public string Alt { get; set; } = "Lobsy";
     [Parameter] public bool Animate { get; set; } = true;

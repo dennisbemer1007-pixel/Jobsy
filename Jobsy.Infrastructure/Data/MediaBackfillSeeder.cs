@@ -45,7 +45,7 @@ internal static class MediaBackfillSeeder
 
             if (MockVacancyMedia.NeedsImageBackfill(vacancy.ImageUrl))
             {
-                vacancy.ImageUrl = MockVacancyMedia.ImageUrl(vacancy.Id);
+                vacancy.ImageUrl = MockVacancyMedia.ImageUrl(vacancy.Id, vacancy.WorkTypes);
                 touched = true;
             }
 

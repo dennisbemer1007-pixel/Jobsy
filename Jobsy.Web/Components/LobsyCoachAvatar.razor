@@ -5,14 +5,22 @@
       role="@(string.IsNullOrEmpty(Alt) ? null : "img")"
       aria-hidden="@(string.IsNullOrEmpty(Alt) ? "true" : null)"
       aria-label="@(string.IsNullOrEmpty(Alt) ? null : Alt)">
-    <img class="lobsy-coach__img" src="@LogoSrc" alt="" width="1024" height="1024" draggable="false" />
+    <img class="lobsy-coach__img"
+         src="@LogoSrc"
+         srcset="@Jobsy.Web.Media.BrandImages.SrcSet56"
+         sizes="56px"
+         alt=""
+         width="128"
+         height="128"
+         decoding="async"
+         draggable="false" />
     <span class="lobsy-coach__flag-badge" aria-hidden="true">
         <img class="lobsy-coach__flag" src="@FlagSrc" alt="" width="100" height="66" draggable="false" />
     </span>
 </span>
 
 @code {
-    private const string LogoSrc = "images/brand/lobsy.png?v=20260731-eyes";
+    private const string LogoSrc = Jobsy.Web.Media.BrandImages.Webp128;
 
     [Parameter] public string? Class { get; set; }
     [Parameter] public string Alt { get; set; } = "Lobsy";

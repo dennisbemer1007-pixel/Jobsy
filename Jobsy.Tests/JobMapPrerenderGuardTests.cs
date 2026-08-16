@@ -23,6 +23,16 @@ public class JobMapPrerenderGuardTests
     }
 
     [Fact]
+    public void App_shell_does_not_load_unpkg_or_leaflet_on_every_page()
+    {
+        var app = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "Components", "App.razor"));
+        Assert.DoesNotContain("unpkg.com", app);
+        Assert.DoesNotContain("leaflet", app, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("js/app-core.js", app);
+        Assert.Contains("rel=\"preload\"", app);
+    }
+
+    [Fact]
     public void Discovery_reinitializes_map_when_leaflet_node_is_dead()
     {
         var discovery = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "Components", "VacancyDiscovery.razor"));

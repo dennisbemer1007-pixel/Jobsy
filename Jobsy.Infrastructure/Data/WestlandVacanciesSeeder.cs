@@ -300,7 +300,7 @@ internal static class WestlandVacanciesSeeder
                 Location = new GeoPoint(s.Lat, s.Lng),
                 RequiredTransport = s.Transport,
                 WorkTypes = s.Types,
-                ImageUrl = MockVacancyMedia.ImageUrl(vacancyId),
+                ImageUrl = MockVacancyMedia.ImageUrl(vacancyId, s.Types),
                 IsHighlighted = s.Highlight,
                 HighlightedUntil = s.Highlight
                     ? DateTime.UtcNow.AddDays(VacancyProductRules.HighlightDays)

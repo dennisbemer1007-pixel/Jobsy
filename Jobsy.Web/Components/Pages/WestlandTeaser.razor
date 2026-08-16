@@ -82,11 +82,12 @@
         <figure class="wl-portrait">
             <div class="wl-portrait__frame">
                 <img class="wl-portrait__img"
-                     src="images/brand/dennis.jpg"
+                     src="images/brand/dennis.webp"
                      alt="Portret van Dennis Bemer, oprichter van Lobsy"
                      width="640"
                      height="800"
                      loading="lazy"
+                     decoding="async"
                      @onerror="OnPortraitError" />
                 @if (_portraitMissing)
                 {

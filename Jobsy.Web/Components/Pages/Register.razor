@@ -270,11 +270,12 @@
         else if (_step == 5)
         {
             <div class="register-result" role="status">
-                <img src="/images/brand/lobsy.png?v=20260731-eyes"
+                <img src="@Jobsy.Web.Media.BrandImages.AbsoluteWebp256"
                      alt=""
                      class="register-result__mascot"
                      width="120"
-                     height="120" />
+                     height="120"
+                     decoding="async" />
                 @if (_activationResult is not null)
                 {
                     @if (_activationResult.EmailVerifiedAwaitingTakeover)

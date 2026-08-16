@@ -14,6 +14,7 @@ Alle noemenswaardige wijzigingen aan dit project worden in dit bestand bijgehoud
 ## [Unreleased]
 
 ### Changed
+- Banenkaart-performance: lokale SVG-placeholders i.p.v. picsum, lazy `<img>` op job cards, WebP-logo, Leaflet pas laden op kaartpagina’s, gebundelde `app-core.js`, Brotli + cache-headers. Zie `docs/performance.md`.
 - Banenkaart opent uit een warme in-memory vacature-index (refresh elke 15s + direct na publiceren/wijzigen) in plaats van een zware DB-query + OpenAI-vertaling per page-open. Kaart en lijst tonen meteen; locatiefilter volgt daarna.
 
 ### Added

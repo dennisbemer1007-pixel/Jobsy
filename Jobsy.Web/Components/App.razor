@@ -7,13 +7,10 @@
     <base href="/" />
     <link rel="icon" href="favicon.ico?v=20260731-eyes" sizes="any" />
     <link rel="icon" type="image/png" href="favicon.png?v=20260731-eyes" />
-    <link rel="apple-touch-icon" href="images/brand/lobsy.png?v=20260731-eyes" />
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-          integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
-          crossorigin="" />
-    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" crossorigin="" />
-    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" crossorigin="" />
-    <link rel="stylesheet" href="css/app.css?v=20260806-quality-gate" />
+    <link rel="apple-touch-icon" href="@Jobsy.Web.Media.BrandImages.AppleTouch" />
+    <link rel="preload" href="css/app.css?v=20260816-perf" as="style" />
+    <link rel="preload" href="@Jobsy.Web.Media.BrandImages.Webp128" as="image" type="image/webp" />
+    <link rel="stylesheet" href="css/app.css?v=20260816-perf" />
     <HeadOutlet @rendermode="new InteractiveServerRenderMode(prerender: true)" />
 </head>
 
@@ -21,18 +18,7 @@
     <CascadingAuthenticationState>
         <Routes @rendermode="new InteractiveServerRenderMode(prerender: true)" />
     </CascadingAuthenticationState>
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
-            integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
-            crossorigin=""></script>
-    <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js" crossorigin=""></script>
-    <script src="js/geo.js?v=20260802-consent-analytics"></script>
-    <script src="js/jobMap.js?v=20260816-map-alive"></script>
-    <script src="js/vacancyDetailMap.js?v=20260805-detail-pin"></script>
-    <script src="js/culture.js"></script>
-    <script src="js/richtext.js?v=20260727-toolbar"></script>
-    <script src="js/download.js?v=20260728-pdf"></script>
-    <script src="js/sessionIdle.js?v=20260802-session-login-fix"></script>
-    <script src="js/cookieConsent.js?v=20260802-consent"></script>
+    <script src="js/app-core.js?v=20260816-perf" defer></script>
     <script src="_framework/blazor.web.js"></script>
 </body>
 

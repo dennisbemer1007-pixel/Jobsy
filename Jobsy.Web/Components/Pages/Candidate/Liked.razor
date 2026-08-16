@@ -36,8 +36,11 @@
                     @foreach (var item in _items)
                     {
                         <article class="job-card">
-                            <a class="job-card__media" href="@($"/vacancies/{item.VacancyId}")"
-                               style="@(string.IsNullOrWhiteSpace(item.ImageUrl) ? null : $"background-image:url('{item.ImageUrl}')")">
+                            <a class="job-card__media" href="@($"/vacancies/{item.VacancyId}")">
+                                <VacancyPhoto Src="@item.ImageUrl"
+                                              VacancyId="item.VacancyId"
+                                              Class="job-card__photo"
+                                              Sizes="(max-width: 700px) 50vw, 360px" />
                                 <div class="job-card__overlay">
                                     <h2>@item.VacancyTitle</h2>
                                     <p class="job-card__travel">@item.CompanyName</p>

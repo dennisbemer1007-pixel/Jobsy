@@ -14,19 +14,15 @@
                         @onmouseenter="() => OnHover.InvokeAsync(vacancy.Id)"
                         @onmouseleave="() => OnHover.InvokeAsync(null)"
                         @onclick="() => OnSelect.InvokeAsync(vacancy.Id)">
-                    @if (!string.IsNullOrWhiteSpace(vacancy.ImageUrl))
+                    @if (!string.IsNullOrWhiteSpace(vacancy.ImageUrl) || !string.IsNullOrWhiteSpace(vacancy.CompanyLogoUrl))
                     {
-                        <img class="highlight-carousel__media"
-                             src="@vacancy.ImageUrl"
-                             alt=""
-                             loading="lazy" />
-                    }
-                    else if (!string.IsNullOrWhiteSpace(vacancy.CompanyLogoUrl))
-                    {
-                        <img class="highlight-carousel__media highlight-carousel__media--logo"
-                             src="@vacancy.CompanyLogoUrl"
-                             alt=""
-                             loading="lazy" />
+                        <VacancyPhoto Src="@(string.IsNullOrWhiteSpace(vacancy.ImageUrl) ? vacancy.CompanyLogoUrl : vacancy.ImageUrl)"
+                                      VacancyId="vacancy.Id"
+                                      WorkType="@(vacancy.WorkTypes.FirstOrDefault())"
+                                      Class="@(string.IsNullOrWhiteSpace(vacancy.ImageUrl) ? "highlight-carousel__media highlight-carousel__media--logo" : "highlight-carousel__media")"
+                                      Width="112"
+                                      Height="112"
+                                      Sizes="56px" />
                     }
                     else
                     {

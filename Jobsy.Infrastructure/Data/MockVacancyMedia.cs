@@ -1,10 +1,11 @@
 using Jobsy.Core.Enums;
+using Jobsy.Core.Media;
 
 namespace Jobsy.Infrastructure.Data;
 
 /// <summary>
 /// Shared mock media + copy helpers for vacancy seeders and backfill.
-/// Uses picsum.photos seed URLs (stable HTTPS images) instead of fragile Unsplash IDs.
+/// Images are same-origin SVG placeholders (no picsum/Unsplash round-trips).
 /// </summary>
 internal static class MockVacancyMedia
 {
@@ -18,10 +19,22 @@ internal static class MockVacancyMedia
     ];
 
     public static string ImageUrl(Guid vacancyId) =>
-        $"https://picsum.photos/seed/jobsy-{vacancyId:N}/600/400";
+        VacancyImageUrls.Placeholder(vacancyId);
 
-    public static string ImageUrl(string seed) =>
-        $"https://picsum.photos/seed/{Uri.EscapeDataString(seed)}/600/400";
+    public static string ImageUrl(Guid vacancyId, WorkType workTypes) =>
+        VacancyImageUrls.Placeholder(vacancyId, workTypes);
+
+    public static string ImageUrl(string seed)
+    {
+        var bytes = System.Text.Encoding.UTF8.GetBytes(seed ?? "flex");
+        var guidBytes = new byte[16];
+        for (var i = 0; i < guidBytes.Length; i++)
+        {
+            guidBytes[i] = bytes[i % bytes.Length];
+        }
+
+        return VacancyImageUrls.Placeholder(new Guid(guidBytes));
+    }
 
     public static string VideoUrl(int index) =>
         DemoVideos[Math.Abs(index) % DemoVideos.Length];
@@ -33,8 +46,8 @@ internal static class MockVacancyMedia
     }
 
     /// <summary>
-    /// True when the stored image is missing or likely broken (legacy Unsplash IDs).
-    /// Local /images/ and picsum URLs are kept.
+    /// True when the stored image is missing, a third-party placeholder, or a legacy Unsplash URL.
+    /// Local /images/ and data-URI uploads are kept.
     /// </summary>
     public static bool NeedsImageBackfill(string? imageUrl)
     {
@@ -49,18 +62,7 @@ internal static class MockVacancyMedia
             return false;
         }
 
-        if (imageUrl.Contains("picsum.photos", StringComparison.OrdinalIgnoreCase))
-        {
-            return false;
-        }
-
-        // Many historical Unsplash photo IDs in seed data now 404.
-        if (imageUrl.Contains("images.unsplash.com", StringComparison.OrdinalIgnoreCase))
-        {
-            return true;
-        }
-
-        return false;
+        return VacancyImageUrls.IsThirdPartyPlaceholder(imageUrl);
     }
 
     public static bool NeedsVideoBackfill(string? videoUrl) =>
