@@ -7,6 +7,7 @@ public static class FeedbackScreenshotCodec
     public const int MaxPageUrlLength = 2048;
     public const int MaxBrowserInfoLength = 512;
     public const int MaxDeviceInfoLength = 256;
+    public const int MaxPromptLength = 16_000;
 
     public static bool TryDecodeDataUrl(string? dataUrl, out byte[] bytes, out string contentType, out string? error)
     {

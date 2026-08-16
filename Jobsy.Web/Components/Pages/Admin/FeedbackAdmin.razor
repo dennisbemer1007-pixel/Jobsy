@@ -110,13 +110,22 @@
         <p class="muted">
             @_detail.Type · @_detail.UserDisplayName · @ShortUrl(_detail.PageUrl)
         </p>
+        <label class="feedback-dialog__field">
+            <span>@Culture["Admin.FeedbackUserReport"]</span>
+            <textarea rows="4" readonly>@_detail.Description</textarea>
+        </label>
         @if (!string.IsNullOrWhiteSpace(_screenshotUrl))
         {
             <img class="feedback-prompt-dialog__shot" src="@_screenshotUrl" alt="Screenshot" />
+            <p class="muted">@Culture["Admin.FeedbackScreenshotPii"]</p>
         }
         <label class="feedback-dialog__field">
-            <span>Prompt</span>
-            <textarea rows="14" @bind="_prompt" @bind:event="oninput"></textarea>
+            <span>@Culture["Admin.FeedbackAgentPrompt"]</span>
+            <textarea rows="12" maxlength="16000" @bind="_prompt" @bind:event="oninput"></textarea>
+        </label>
+        <label class="feedback-dialog__field">
+            <input type="checkbox" @bind="_reviewed" />
+            <span>@Culture["Admin.FeedbackReviewAck"]</span>
         </label>
         @if (!string.IsNullOrEmpty(_promptError))
         {
@@ -131,7 +140,7 @@
             <p><a href="@_detail.PullRequestUrl" target="_blank" rel="noopener noreferrer">@_detail.PullRequestUrl</a></p>
         }
         <div class="inline-actions">
-            <button type="button" class="provider-btn" disabled="@_promptBusy" @onclick="LaunchAsync">
+            <button type="button" class="provider-btn" disabled="@(!CanLaunch)" @onclick="LaunchAsync">
                 @Culture["Admin.FeedbackStart"]
             </button>
             <button type="button" class="provider-btn provider-btn--ghost" disabled="@_promptBusy" @onclick="RefreshPrAsync">
@@ -157,6 +166,7 @@
     private string? _promptInfo;
     private FeedbackDetailItem? _detail;
     private string? _screenshotUrl;
+    private bool _reviewed;
 
     protected override void OnInitialized()
         => Culture.Changed += OnCultureChanged;
@@ -197,11 +207,20 @@
         _promptBusy = true;
         _promptError = null;
         _promptInfo = null;
+        _reviewed = false;
         try
         {
             _detail = await Api.GetFeedbackDetailAsync(item.Id);
-            var generated = await Api.SaveFeedbackPromptAsync(item.Id, null);
-            _prompt = generated?.Prompt ?? _detail?.GeneratedPrompt ?? "";
+            if (!string.IsNullOrWhiteSpace(_detail?.GeneratedPrompt))
+            {
+                _prompt = _detail.GeneratedPrompt;
+            }
+            else
+            {
+                var generated = await Api.SaveFeedbackPromptAsync(item.Id, null);
+                _prompt = generated?.Prompt ?? "";
+            }
+
             _screenshotUrl = _detail?.HasScreenshot == true
                 ? await Api.GetFeedbackScreenshotDataUrlAsync(item.Id)
                 : null;
@@ -226,9 +245,19 @@
         _promptOpen = false;
     }
 
+    private bool CanLaunch
+        => !_promptBusy
+           && _reviewed
+           && _detail is not null
+           && !IsLockedAutomation(_detail.AutomationStatus);
+
+    private static bool IsLockedAutomation(string? status)
+        => string.Equals(status, "Launched", StringComparison.OrdinalIgnoreCase)
+           || string.Equals(status, "Finished", StringComparison.OrdinalIgnoreCase);
+
     private async Task LaunchAsync()
     {
-        if (_detail is null)
+        if (_detail is null || !CanLaunch)
         {
             return;
         }
@@ -313,7 +342,7 @@
 
         if (Uri.TryCreate(url, UriKind.Absolute, out var uri))
         {
-            var path = uri.PathAndQuery;
+            var path = uri.AbsolutePath;
             return path.Length > 48 ? path[..48] + "…" : path;
         }
 

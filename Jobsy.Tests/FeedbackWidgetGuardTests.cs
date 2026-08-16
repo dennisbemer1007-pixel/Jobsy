@@ -16,6 +16,9 @@ public class FeedbackWidgetGuardTests
         Assert.True(captureAt > 0 && openAt > captureAt, "Screenshot must be taken before the modal opens.");
         Assert.Contains("_screenshot", widget);
         Assert.Contains("feedback-dialog__shot", widget);
+        Assert.Contains("Feedback.PrivacyNote", widget);
+        Assert.Contains("PageUrlForSubmit", widget);
+        Assert.Contains("GetLeftPart(UriPartial.Path)", widget);
     }
 
     [Fact]
@@ -40,6 +43,20 @@ public class FeedbackWidgetGuardTests
         var program = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "Program.cs"));
         Assert.Contains("MaximumReceiveMessageSize", program);
         Assert.Contains("2 * 1024 * 1024", program);
+    }
+
+    [Fact]
+    public void Admin_keeps_saved_prompt_and_requires_review_before_launch()
+    {
+        var admin = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "Components", "Pages", "Admin", "FeedbackAdmin.razor"));
+        Assert.Contains("Admin.FeedbackUserReport", admin);
+        Assert.Contains("Admin.FeedbackReviewAck", admin);
+        Assert.Contains("GeneratedPrompt", admin);
+        Assert.Contains("CanLaunch", admin);
+        var openAt = admin.IndexOf("OpenPromptAsync", StringComparison.Ordinal);
+        var saveNullAt = admin.IndexOf("SaveFeedbackPromptAsync(item.Id, null)", StringComparison.Ordinal);
+        Assert.True(saveNullAt > openAt);
+        Assert.Contains("!string.IsNullOrWhiteSpace(_detail?.GeneratedPrompt)", admin);
     }
 
     [Fact]

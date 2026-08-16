@@ -7,9 +7,11 @@ using Jobsy.Core.Entities;
 using Jobsy.Core.Enums;
 using Jobsy.Core.Interfaces;
 using Jobsy.Core.Options;
+using Jobsy.Core.Privacy;
 using Jobsy.Core.Rules;
 using Jobsy.Core.Security;
 using Jobsy.Infrastructure.Data;
+using Jobsy.Infrastructure.Jobs;
 using Jobsy.Infrastructure.Services;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
@@ -46,11 +48,32 @@ public class FeedbackPipelineTests
         var prompt = FeedbackPromptFormatter.Build(feedback, "acc");
         Assert.Contains("Kaart laadt niet", prompt);
         Assert.Contains("/banen", prompt);
+        Assert.DoesNotContain("q=1", prompt);
         Assert.Contains("Candidate", prompt);
-        Assert.Contains("fix/feedback-aaaaaaaa", prompt);
+        Assert.Contains("fix/feedback-aaaaaaaabbbbccccddddeeeeeeeeeeee", prompt);
         Assert.Contains("acc", prompt);
         Assert.Contains("Jobsy.Web/Components/Pages/Banen.razor", prompt);
         Assert.Contains("bijgevoegd", prompt);
+        Assert.Contains("niet vertrouwen", prompt);
+    }
+
+    [Fact]
+    public void Branch_names_include_full_feedback_id()
+    {
+        var a = Guid.Parse("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee");
+        var b = Guid.Parse("aaaaaaaa-bbbb-cccc-dddd-ffffffffffff");
+        Assert.Equal("fix/feedback-aaaaaaaabbbbccccddddeeeeeeeeeeee", FeedbackPromptFormatter.BranchNameFor(a));
+        Assert.NotEqual(FeedbackPromptFormatter.BranchNameFor(a), FeedbackPromptFormatter.BranchNameFor(b));
+    }
+
+    [Fact]
+    public void Page_url_strips_query_and_fragment()
+    {
+        Assert.Equal(
+            "https://lobsy.nl/candidate/profile",
+            FeedbackPromptFormatter.NormalizePageUrl("https://lobsy.nl/candidate/profile?token=secret#top"));
+        Assert.Equal("/login", FeedbackPromptFormatter.NormalizePageUrl("/login?next=/admin"));
+        Assert.Equal("/", FeedbackPromptFormatter.NormalizePath("https://lobsy.nl/?q=1"));
     }
 
     [Fact]
@@ -114,7 +137,7 @@ public class FeedbackPipelineTests
         var row = await sut.SubmitAsync(new FeedbackSubmitRequest(
             FeedbackType.Error,
             "Knop doet niets",
-            "https://lobsy.nl/candidate/profile",
+            "https://lobsy.nl/candidate/profile?token=abc#panel",
             "Mozilla/5.0",
             "iPhone",
             "data:image/png;base64," + png,
@@ -125,8 +148,9 @@ public class FeedbackPipelineTests
         Assert.Equal(FeedbackStatus.New, row.Status);
         Assert.Equal("Candidate", row.UserRole);
         Assert.Equal("Kees", row.UserDisplayName);
+        Assert.Equal("https://lobsy.nl/candidate/profile", row.PageUrl);
         Assert.NotNull(row.ScreenshotBytes);
-        Assert.StartsWith("fix/feedback-", row.BranchName);
+        Assert.Equal($"fix/feedback-{row.Id:N}", row.BranchName);
 
         var listed = await sut.ListAsync(new FeedbackListQuery());
         var item = Assert.Single(listed);
@@ -327,11 +351,12 @@ public class FeedbackPipelineTests
         db.PlatformFeedbacks.Add(new PlatformFeedback
         {
             Id = Guid.NewGuid(),
-            Description = "Knop",
-            PageUrl = "/home",
+            Description = "Bel me op 06-12345678",
+            PageUrl = "/home?email=forget@jobsy.local",
             UserId = userId,
             UserDisplayName = "Forget",
             UserRole = "Candidate",
+            GeneratedPrompt = "Fix knop for Forget",
             ScreenshotBytes = [9, 8, 7],
             ScreenshotContentType = "image/png",
             BrowserInfo = "UA"
@@ -350,13 +375,17 @@ public class FeedbackPipelineTests
 
         var export = await privacy.ExportAsync(principal);
         var json = JsonSerializer.Serialize(export);
-        Assert.Contains("Knop", json);
+        Assert.Contains("Bel me op", json);
         Assert.DoesNotContain("iVBORw", json, StringComparison.Ordinal);
 
         await privacy.DeleteOrAnonymizeAsync(principal);
         var leftover = await db.PlatformFeedbacks.SingleAsync();
         Assert.Null(leftover.UserId);
         Assert.Equal("Verwijderde gebruiker", leftover.UserDisplayName);
+        Assert.Equal(PrivacyConstants.ForgottenFeedbackDescription, leftover.Description);
+        Assert.Null(leftover.GeneratedPrompt);
+        Assert.Null(leftover.UserRole);
+        Assert.Equal("/home", leftover.PageUrl);
         Assert.Null(leftover.ScreenshotBytes);
         Assert.Null(leftover.BrowserInfo);
     }
@@ -415,6 +444,86 @@ public class FeedbackPipelineTests
 
         var result = await controller.CursorWebhook(CancellationToken.None);
         Assert.IsType<UnauthorizedResult>(result);
+    }
+
+    [Fact]
+    public async Task Save_prompt_null_does_not_overwrite_existing()
+    {
+        await using var db = CreateDb();
+        var sut = CreateService(db, new FakeCursor());
+        var row = await sut.SubmitAsync(new FeedbackSubmitRequest(
+            FeedbackType.Bug, "origineel", "https://lobsy.nl/", null, null, null, null, null, "Gast"));
+        await sut.SavePromptAsync(row.Id, "Bewerkte prompt");
+        var again = await sut.SavePromptAsync(row.Id, null);
+        Assert.Equal("Bewerkte prompt", again.GeneratedPrompt);
+    }
+
+    [Fact]
+    public async Task Launch_does_not_start_a_second_cursor_agent()
+    {
+        await using var db = CreateDb();
+        var cursor = new FakeCursor
+        {
+            IsConfigured = true,
+            LaunchResult = new CursorAgentLaunchResult("bc_first", "CREATING", null)
+        };
+        var sut = CreateService(db, cursor);
+        var row = await sut.SubmitAsync(new FeedbackSubmitRequest(
+            FeedbackType.Bug, "x", "https://lobsy.nl/", null, null, null, null, null, "Gast"));
+        var first = await sut.LaunchAutomationAsync(row.Id, "eerste");
+        Assert.True(first.Launched);
+        cursor.LaunchResult = new CursorAgentLaunchResult("bc_second", "CREATING", null);
+        var second = await sut.LaunchAutomationAsync(row.Id, "tweede");
+        Assert.False(second.Launched);
+        Assert.Equal("bc_first", second.Feedback.CursorAgentId);
+        Assert.Equal("eerste", second.Feedback.GeneratedPrompt);
+    }
+
+    [Fact]
+    public async Task Oversized_prompt_is_rejected()
+    {
+        await using var db = CreateDb();
+        var sut = CreateService(db, new FakeCursor());
+        var row = await sut.SubmitAsync(new FeedbackSubmitRequest(
+            FeedbackType.Bug, "x", "https://lobsy.nl/", null, null, null, null, null, "Gast"));
+        var huge = new string('a', FeedbackScreenshotCodec.MaxPromptLength + 1);
+        await Assert.ThrowsAsync<InvalidOperationException>(() => sut.SavePromptAsync(row.Id, huge));
+    }
+
+    [Fact]
+    public async Task Retention_drops_old_screenshots_regardless_of_status()
+    {
+        await using var db = CreateDb();
+        db.PlatformFeedbacks.Add(new PlatformFeedback
+        {
+            Id = Guid.NewGuid(),
+            Description = "oud nieuw",
+            PageUrl = "/old",
+            Status = FeedbackStatus.New,
+            CreatedAtUtc = DateTime.UtcNow.AddDays(-91),
+            ScreenshotBytes = [1, 2, 3],
+            ScreenshotContentType = "image/png"
+        });
+        db.PlatformFeedbacks.Add(new PlatformFeedback
+        {
+            Id = Guid.NewGuid(),
+            Description = "vers",
+            PageUrl = "/new",
+            Status = FeedbackStatus.New,
+            CreatedAtUtc = DateTime.UtcNow.AddDays(-2),
+            ScreenshotBytes = [4, 5, 6],
+            ScreenshotContentType = "image/png"
+        });
+        await db.SaveChangesAsync();
+
+        var purged = await DataRetentionHostedService.PurgeStaleFeedbackScreenshotsAsync(
+            db, DateTime.UtcNow, CancellationToken.None);
+        Assert.Equal(1, purged);
+        var rows = await db.PlatformFeedbacks.OrderBy(f => f.PageUrl).ToListAsync();
+        Assert.Equal("/new", rows[0].PageUrl);
+        Assert.NotNull(rows[0].ScreenshotBytes);
+        Assert.Equal("/old", rows[1].PageUrl);
+        Assert.Null(rows[1].ScreenshotBytes);
     }
 
     private static readonly byte[] MinimalJpeg = [0xFF, 0xD8, 0xFF, 0xD9, 0x01, 0x02, 0x03, 0x04];

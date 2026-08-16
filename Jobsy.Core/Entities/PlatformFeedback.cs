@@ -4,7 +4,8 @@ namespace Jobsy.Core.Entities;
 
 /// <summary>
 /// In-app visual/functional feedback. Screenshots may contain on-screen PII — admin-only,
-/// excluded from list APIs, and stripped on right-to-be-forgotten / retention.
+/// excluded from list APIs, and stripped on right-to-be-forgotten / 90-day retention
+/// (any status). Page URLs are stored without query or fragment.
 /// Named PlatformFeedback to avoid clashing with Sentry.UserFeedback.
 /// </summary>
 public class PlatformFeedback

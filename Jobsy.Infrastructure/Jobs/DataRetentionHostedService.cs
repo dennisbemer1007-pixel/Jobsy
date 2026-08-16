@@ -128,11 +128,28 @@ public sealed class DataRetentionHostedService : BackgroundService
                         || (t.UsedAtUtc != null && t.UsedAtUtc < tokenCutoff))
             .ExecuteDeleteAsync(cancellationToken);
 
-        var screenshotCutoff = now.AddDays(-PrivacyConstants.FeedbackScreenshotRetentionDays);
+        var staleScreenshotCount = await PurgeStaleFeedbackScreenshotsAsync(db, now, cancellationToken);
+
+        if (logsRemoved + regsRemoved + clicksRemoved + sharesRemoved + impressionsRemoved + visitsRemoved
+            + unverifiedAppsRemoved + notificationsRemoved + tokensRemoved + dirtyActionUrls.Count
+            + withdrawnWithSnapshots.Count + staleScreenshotCount > 0)
+        {
+            _logger.LogInformation(
+                "Retention purge: logs={Logs}, registrations={Regs}, clicks={Clicks}, shares={Shares}, impressions={Impressions}, visits={Visits}, unverifiedApps={UnverifiedApps}, notifications={Notifications}, actionTokens={Tokens}, scrubbedActionUrls={Scrubbed}, scrubbedWithdrawnApps={WithdrawnScrubbed}, feedbackScreenshots={Screenshots}",
+                logsRemoved, regsRemoved, clicksRemoved, sharesRemoved, impressionsRemoved, visitsRemoved,
+                unverifiedAppsRemoved, notificationsRemoved, tokensRemoved, dirtyActionUrls.Count,
+                withdrawnWithSnapshots.Count, staleScreenshotCount);
+        }
+    }
+
+    internal static async Task<int> PurgeStaleFeedbackScreenshotsAsync(
+        JobsyDbContext db,
+        DateTime utcNow,
+        CancellationToken cancellationToken)
+    {
+        var screenshotCutoff = utcNow.AddDays(-PrivacyConstants.FeedbackScreenshotRetentionDays);
         var staleScreenshots = await db.PlatformFeedbacks
-            .Where(f => f.ScreenshotBytes != null
-                        && f.Status == FeedbackStatus.Resolved
-                        && f.CreatedAtUtc < screenshotCutoff)
+            .Where(f => f.ScreenshotBytes != null && f.CreatedAtUtc < screenshotCutoff)
             .ToListAsync(cancellationToken);
         foreach (var item in staleScreenshots)
         {
@@ -145,15 +162,6 @@ public sealed class DataRetentionHostedService : BackgroundService
             await db.SaveChangesAsync(cancellationToken);
         }
 
-        if (logsRemoved + regsRemoved + clicksRemoved + sharesRemoved + impressionsRemoved + visitsRemoved
-            + unverifiedAppsRemoved + notificationsRemoved + tokensRemoved + dirtyActionUrls.Count
-            + withdrawnWithSnapshots.Count + staleScreenshots.Count > 0)
-        {
-            _logger.LogInformation(
-                "Retention purge: logs={Logs}, registrations={Regs}, clicks={Clicks}, shares={Shares}, impressions={Impressions}, visits={Visits}, unverifiedApps={UnverifiedApps}, notifications={Notifications}, actionTokens={Tokens}, scrubbedActionUrls={Scrubbed}, scrubbedWithdrawnApps={WithdrawnScrubbed}, feedbackScreenshots={Screenshots}",
-                logsRemoved, regsRemoved, clicksRemoved, sharesRemoved, impressionsRemoved, visitsRemoved,
-                unverifiedAppsRemoved, notificationsRemoved, tokensRemoved, dirtyActionUrls.Count,
-                withdrawnWithSnapshots.Count, staleScreenshots.Count);
-        }
+        return staleScreenshots.Count;
     }
 }

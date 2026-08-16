@@ -18,6 +18,7 @@ Alle noemenswaardige wijzigingen aan dit project worden in dit bestand bijgehoud
 - PageSpeed-vervolg: geen 278 job cards meer in de eerste HTML/mobile-kaart (venster van 12), compacte cookiebanner in first paint, map-loader split discovery/detail.
 - Quality gate 456: www-canonical alleen voor bekende hosts (geen Host-header open redirect); Cloudflare image-resize alleen same-origin; `app-core.js` synchroon vóór Blazor; map-loader herstelt na een mislukte load.
 - Banenkaart opent uit een warme in-memory vacature-index (refresh elke 15s + direct na publiceren/wijzigen) in plaats van een zware DB-query + OpenAI-vertaling per page-open. Kaart en lijst tonen meteen; locatiefilter volgt daarna.
+- Quality gate 456 (feedback-pipeline): pagina-URL zonder query/fragment; RTBF wist ook beschrijving/prompt/rol; screenshots max. 90 dagen ongeacht status; geen dubbele Cursor-launch; opgeslagen prompt blijft behouden bij heropenen.
 
 ### Added
 - End-to-end feedback-pipeline: globale Feedback-knop (screenshot + metadata), `POST /api/feedback`, admin-datagrid `/admin/feedback`, functionele prompt en Cursor Cloud Agent-koppeling die een PR opent; PR-URL via webhook/poll terug in het grid.

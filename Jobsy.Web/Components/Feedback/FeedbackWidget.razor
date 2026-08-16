@@ -54,6 +54,7 @@
             <p class="muted feedback-dialog__meta">@Culture["Feedback.ScreenshotPreview"]</p>
             <img class="feedback-dialog__shot" src="@_screenshot" alt="" />
         }
+        <p class="muted feedback-dialog__meta">@Culture["Feedback.PrivacyNote"]</p>
         <p class="muted feedback-dialog__meta">
             @Culture["Feedback.Meta"]: @ShortUrl · @_roleLabel
         </p>
@@ -102,13 +103,28 @@
     public void Dispose()
         => Culture.Changed -= OnCultureChanged;
 
+    private string PageUrlForSubmit
+    {
+        get
+        {
+            try
+            {
+                return new Uri(Navigation.Uri).GetLeftPart(UriPartial.Path);
+            }
+            catch
+            {
+                return "/";
+            }
+        }
+    }
+
     private string ShortUrl
     {
         get
         {
             try
             {
-                var path = new Uri(Navigation.Uri).PathAndQuery;
+                var path = new Uri(Navigation.Uri).AbsolutePath;
                 return path.Length > 64 ? path[..64] + "…" : path;
             }
             catch
@@ -182,7 +198,7 @@
             await Api.SubmitFeedbackAsync(new SubmitFeedbackForm(
                 parsed.ToString(),
                 _description.Trim(),
-                Navigation.Uri,
+                PageUrlForSubmit,
                 _meta?.UserAgent,
                 FormatDevice(_meta),
                 _screenshot));

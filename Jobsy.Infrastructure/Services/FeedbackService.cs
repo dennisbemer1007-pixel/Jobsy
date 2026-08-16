@@ -41,11 +41,14 @@ public sealed class FeedbackService : IFeedbackService
             throw new InvalidOperationException("Omschrijving is verplicht.");
         }
 
-        var pageUrl = FeedbackScreenshotCodec.Truncate(request.PageUrl, FeedbackScreenshotCodec.MaxPageUrlLength);
-        if (string.IsNullOrWhiteSpace(pageUrl))
+        if (string.IsNullOrWhiteSpace(request.PageUrl))
         {
             throw new InvalidOperationException("Pagina-URL is verplicht.");
         }
+
+        var pageUrl = FeedbackScreenshotCodec.Truncate(
+            FeedbackPromptFormatter.NormalizePageUrl(request.PageUrl),
+            FeedbackScreenshotCodec.MaxPageUrlLength);
 
         if (!FeedbackScreenshotCodec.TryDecodeDataUrl(
                 request.ScreenshotDataUrl,
@@ -150,10 +153,7 @@ public sealed class FeedbackService : IFeedbackService
         var row = await _db.PlatformFeedbacks.FirstOrDefaultAsync(f => f.Id == id, cancellationToken)
                   ?? throw new KeyNotFoundException("Feedback niet gevonden.");
 
-        var prompt = string.IsNullOrWhiteSpace(editedPrompt)
-            ? FeedbackPromptFormatter.Build(row, TargetRef())
-            : editedPrompt.Trim();
-
+        var prompt = ResolvePrompt(row, editedPrompt);
         row.GeneratedPrompt = prompt;
         row.PromptEditedAtUtc = DateTime.UtcNow;
         if (row.AutomationStatus == FeedbackAutomationStatus.None)
@@ -173,10 +173,15 @@ public sealed class FeedbackService : IFeedbackService
         var row = await _db.PlatformFeedbacks.FirstOrDefaultAsync(f => f.Id == id, cancellationToken)
                   ?? throw new KeyNotFoundException("Feedback niet gevonden.");
 
-        var text = string.IsNullOrWhiteSpace(prompt)
-            ? FeedbackPromptFormatter.Build(row, TargetRef())
-            : prompt.Trim();
+        if (row.AutomationStatus is FeedbackAutomationStatus.Launched or FeedbackAutomationStatus.Finished)
+        {
+            return new FeedbackAutomationResult(
+                row,
+                false,
+                "Er loopt al een Cursor-taak of die is al afgerond. Gebruik PR vernieuwen in plaats van opnieuw te starten.");
+        }
 
+        var text = ResolvePrompt(row, prompt);
         row.GeneratedPrompt = text;
         row.PromptEditedAtUtc = DateTime.UtcNow;
         row.BranchName ??= FeedbackPromptFormatter.BranchNameFor(row.Id);
@@ -442,6 +447,30 @@ public sealed class FeedbackService : IFeedbackService
 
         normalized = uri.GetLeftPart(UriPartial.Query);
         return true;
+    }
+
+    private string ResolvePrompt(PlatformFeedback row, string? editedPrompt)
+    {
+        string prompt;
+        if (!string.IsNullOrWhiteSpace(editedPrompt))
+        {
+            prompt = editedPrompt.Trim();
+        }
+        else if (!string.IsNullOrWhiteSpace(row.GeneratedPrompt))
+        {
+            prompt = row.GeneratedPrompt;
+        }
+        else
+        {
+            prompt = FeedbackPromptFormatter.Build(row, TargetRef());
+        }
+
+        if (prompt.Length > FeedbackScreenshotCodec.MaxPromptLength)
+        {
+            throw new InvalidOperationException("Prompt is te lang (max. 16.000 tekens).");
+        }
+
+        return prompt;
     }
 
     private string TargetRef()

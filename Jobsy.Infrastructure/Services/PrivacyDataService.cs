@@ -7,6 +7,7 @@ using Jobsy.Core.Entities;
 using Jobsy.Core.Enums;
 using Jobsy.Core.Interfaces;
 using Jobsy.Core.Privacy;
+using Jobsy.Core.Rules;
 using Jobsy.Core.Security;
 using Jobsy.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
@@ -717,6 +718,10 @@ public sealed class PrivacyDataService : IPrivacyDataService
         {
             item.UserId = null;
             item.UserDisplayName = "Verwijderde gebruiker";
+            item.UserRole = null;
+            item.Description = PrivacyConstants.ForgottenFeedbackDescription;
+            item.GeneratedPrompt = null;
+            item.PageUrl = FeedbackPromptFormatter.NormalizePageUrl(item.PageUrl);
             item.ScreenshotBytes = null;
             item.ScreenshotContentType = null;
             item.BrowserInfo = null;
