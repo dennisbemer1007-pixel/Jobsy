@@ -79,6 +79,8 @@ public class LocalizationTests
             "Admin.MailTest",
             "Admin.Feedback",
             "Feedback.Button",
+            "Feedback.Capturing",
+            "Feedback.ScreenshotPreview",
             "Nav.MailTest",
             "Nav.Feedback",
             "Common.Cancel",

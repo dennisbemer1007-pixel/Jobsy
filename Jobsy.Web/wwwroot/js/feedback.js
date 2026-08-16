@@ -12,7 +12,7 @@
         }
         html2canvasPromise = new Promise(function (resolve, reject) {
             var script = document.createElement("script");
-            script.src = "lib/html2canvas/html2canvas.min.js";
+            script.src = "/lib/html2canvas/html2canvas.min.js";
             script.async = true;
             script.onload = function () {
                 if (window.html2canvas) {
@@ -29,7 +29,7 @@
         return html2canvasPromise;
     }
 
-    function shouldIgnore(el) {
+    function isChrome(el) {
         if (!el || !el.closest) {
             return false;
         }
@@ -38,7 +38,16 @@
             || el.closest(".lobsy-dialog")
             || el.closest(".lobsy-dialog-backdrop")
             || el.closest(".share-modal-backdrop")
-            || el.closest(".lobsy-assistant"));
+            || el.closest(".lobsy-assistant")
+            || el.closest(".cookie-consent"));
+    }
+
+    function hideChrome(doc) {
+        var nodes = doc.querySelectorAll(
+            ".feedback-widget, .feedback-dialog, .lobsy-dialog, .lobsy-dialog-backdrop, .share-modal-backdrop, .lobsy-assistant, .cookie-consent");
+        for (var i = 0; i < nodes.length; i++) {
+            nodes[i].style.visibility = "hidden";
+        }
     }
 
     window.lobsyFeedback = {
@@ -52,16 +61,27 @@
             };
         },
         captureScreenshot: function () {
+            var width = Math.max(1, window.innerWidth || 1);
+            var height = Math.max(1, window.innerHeight || 1);
             return loadHtml2Canvas().then(function (html2canvas) {
-                return html2canvas(document.body, {
-                    scale: Math.min(1, 1100 / Math.max(document.documentElement.scrollWidth || 1, 1)),
+                return html2canvas(document.documentElement, {
+                    x: window.scrollX || 0,
+                    y: window.scrollY || 0,
+                    width: width,
+                    height: height,
+                    windowWidth: document.documentElement.scrollWidth,
+                    windowHeight: document.documentElement.scrollHeight,
+                    scale: Math.min(1, 1280 / width),
                     useCORS: true,
                     logging: false,
                     backgroundColor: "#ffffff",
-                    ignoreElements: shouldIgnore
+                    ignoreElements: isChrome,
+                    onclone: function (doc) {
+                        hideChrome(doc);
+                    }
                 });
             }).then(function (canvas) {
-                var maxWidth = 1400;
+                var maxWidth = 1280;
                 if (canvas.width > maxWidth) {
                     var copy = document.createElement("canvas");
                     var ratio = maxWidth / canvas.width;
@@ -69,9 +89,9 @@
                     copy.height = Math.round(canvas.height * ratio);
                     var ctx = copy.getContext("2d");
                     ctx.drawImage(canvas, 0, 0, copy.width, copy.height);
-                    return copy.toDataURL("image/jpeg", 0.72);
+                    return copy.toDataURL("image/jpeg", 0.7);
                 }
-                return canvas.toDataURL("image/jpeg", 0.72);
+                return canvas.toDataURL("image/jpeg", 0.7);
             });
         }
     };

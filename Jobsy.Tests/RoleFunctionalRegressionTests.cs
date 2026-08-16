@@ -583,6 +583,47 @@ public class RoleFunctionalRegressionTests : IClassFixture<RoleFunctionalWebAppF
     }
 
     [Fact]
+    public async Task Feedback_screenshot_is_stored_and_served_only_to_admin()
+    {
+        const string jpegB64 = "AAD/2Q==";
+        var guest = _factory.CreateClient();
+        var submit = await guest.PostAsJsonAsync("api/feedback", new
+        {
+            type = "Error",
+            description = "Printscreen van de homepage",
+            pageUrl = "https://lobsy.test/home",
+            browserInfo = "Mozilla/5.0",
+            deviceInfo = "1440×900",
+            screenshotDataUrl = "data:image/jpeg;base64," + jpegB64
+        });
+        Assert.Equal(HttpStatusCode.OK, submit.StatusCode);
+        var created = await submit.Content.ReadFromJsonAsync<JsonElement>(JsonOpts);
+        var id = created.GetProperty("id").GetGuid();
+        Assert.True(created.GetProperty("hasScreenshot").GetBoolean());
+        Assert.False(created.TryGetProperty("screenshotDataUrl", out _));
+
+        Assert.Equal(HttpStatusCode.Unauthorized,
+            (await guest.GetAsync($"api/feedback/{id}/screenshot")).StatusCode);
+        Assert.Equal(HttpStatusCode.Forbidden,
+            (await EmployerClient().GetAsync($"api/feedback/{id}/screenshot")).StatusCode);
+
+        var admin = AdminClient();
+        var shot = await admin.GetAsync($"api/feedback/{id}/screenshot");
+        Assert.Equal(HttpStatusCode.OK, shot.StatusCode);
+        Assert.Equal("image/jpeg", shot.Content.Headers.ContentType?.MediaType);
+        var bytes = await shot.Content.ReadAsByteArrayAsync();
+        Assert.Equal(Convert.FromBase64String(jpegB64), bytes);
+
+        var prompt = await admin.PostAsJsonAsync($"api/feedback/{id}/prompt", new { prompt = (string?)null });
+        var promptBody = await prompt.Content.ReadFromJsonAsync<JsonElement>(JsonOpts);
+        var text = promptBody.GetProperty("prompt").GetString();
+        Assert.Contains("Printscreen van de homepage", text);
+        Assert.Contains("/home", text);
+        Assert.Contains("bijgevoegd", text);
+        Assert.Contains("fix/feedback-", text);
+    }
+
+    [Fact]
     public async Task Admin_cannot_use_candidate_profile_endpoints()
     {
         var client = AdminClient();

@@ -33,7 +33,12 @@ builder.Services.Configure<ForwardedHeadersOptions>(options =>
 builder.Services.AddJobsyDataProtection(builder.Configuration, builder.Environment);
 
 builder.Services.AddRazorComponents()
-    .AddInteractiveServerComponents();
+    .AddInteractiveServerComponents()
+    .AddHubOptions(options =>
+    {
+        // Page screenshots travel through JS interop (data URL). Default 32 KB is too small.
+        options.MaximumReceiveMessageSize = 2 * 1024 * 1024;
+    });
 
 builder.Services.AddJobsyAuthentication(builder.Configuration, builder.Environment);
 builder.Services.AddMemoryCache();

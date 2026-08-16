@@ -1,0 +1,69 @@
+namespace Jobsy.Tests;
+
+/// <summary>
+/// Source-level guards so the feedback printscreen actually captures the page
+/// (before the modal) and can travel through Blazor Server JS interop.
+/// </summary>
+public class FeedbackWidgetGuardTests
+{
+    [Fact]
+    public void Widget_captures_screenshot_before_opening_the_modal()
+    {
+        var widget = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "Components", "Feedback", "FeedbackWidget.razor"));
+        Assert.Contains("lobsyFeedback.captureScreenshot", widget);
+        var captureAt = widget.IndexOf("lobsyFeedback.captureScreenshot", StringComparison.Ordinal);
+        var openAt = widget.IndexOf("_open = true", StringComparison.Ordinal);
+        Assert.True(captureAt > 0 && openAt > captureAt, "Screenshot must be taken before the modal opens.");
+        Assert.Contains("_screenshot", widget);
+        Assert.Contains("feedback-dialog__shot", widget);
+    }
+
+    [Fact]
+    public void Screenshot_js_uses_viewport_printscreen_and_absolute_html2canvas()
+    {
+        var js = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "wwwroot", "js", "feedback.js"));
+        Assert.Contains("/lib/html2canvas/html2canvas.min.js", js);
+        Assert.Contains("window.innerWidth", js);
+        Assert.Contains("window.innerHeight", js);
+        Assert.Contains("window.scrollX", js);
+        Assert.Contains("window.scrollY", js);
+        Assert.Contains("image/jpeg", js);
+        Assert.Contains("ignoreElements", js);
+        Assert.Contains("onclone", js);
+        Assert.Contains("feedback-widget", js);
+        Assert.Contains("lobsy-dialog", js);
+    }
+
+    [Fact]
+    public void Blazor_server_accepts_screenshot_sized_js_interop()
+    {
+        var program = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "Program.cs"));
+        Assert.Contains("MaximumReceiveMessageSize", program);
+        Assert.Contains("2 * 1024 * 1024", program);
+    }
+
+    [Fact]
+    public void App_shell_loads_feedback_script()
+    {
+        var app = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "Components", "App.razor"));
+        Assert.Contains("js/feedback.js", app);
+        var layout = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "Components", "Layout", "MainLayout.razor"));
+        Assert.Contains("FeedbackWidget", layout);
+    }
+
+    private static string FindRepoRoot()
+    {
+        var dir = new DirectoryInfo(AppContext.BaseDirectory);
+        while (dir is not null)
+        {
+            if (File.Exists(Path.Combine(dir.FullName, "Jobsy.sln")))
+            {
+                return dir.FullName;
+            }
+
+            dir = dir.Parent;
+        }
+
+        throw new InvalidOperationException("Jobsy.sln not found.");
+    }
+}

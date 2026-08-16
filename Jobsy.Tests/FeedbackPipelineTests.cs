@@ -54,6 +54,20 @@ public class FeedbackPipelineTests
     }
 
     [Fact]
+    public void Screenshot_codec_accepts_jpeg_data_url()
+    {
+        var jpeg = Convert.ToBase64String(MinimalJpeg);
+        Assert.True(FeedbackScreenshotCodec.TryDecodeDataUrl(
+            "data:image/jpeg;base64," + jpeg,
+            out var bytes,
+            out var contentType,
+            out var error));
+        Assert.Null(error);
+        Assert.Equal("image/jpeg", contentType);
+        Assert.Equal(MinimalJpeg, bytes);
+    }
+
+    [Fact]
     public void Screenshot_codec_rejects_oversize_and_unknown_types()
     {
         Assert.True(FeedbackScreenshotCodec.TryDecodeDataUrl(null, out var empty, out _, out var err));
@@ -171,6 +185,7 @@ public class FeedbackPipelineTests
         Assert.Equal(FeedbackAutomationStatus.Launched, launched.Feedback.AutomationStatus);
         Assert.NotNull(cursor.LastRequest);
         Assert.Contains("Fix de login.", cursor.LastRequest!.Prompt);
+        Assert.Empty(cursor.LastRequest.Images ?? []);
 
         await sut.ApplyCursorWebhookAsync(
             "bc_feedback_1",
@@ -184,6 +199,79 @@ public class FeedbackPipelineTests
         Assert.Equal("https://github.com/lobsy/lobsy/pull/42", updated!.PullRequestUrl);
         Assert.Equal(FeedbackAutomationStatus.Finished, updated.AutomationStatus);
         Assert.Equal("fix/feedback-login", updated.BranchName);
+    }
+
+    [Fact]
+    public async Task Automate_sends_stored_screenshot_to_cursor()
+    {
+        await using var db = CreateDb();
+        var cursor = new FakeCursor
+        {
+            IsConfigured = true,
+            LaunchResult = new CursorAgentLaunchResult("bc_shot", "CREATING", null)
+        };
+        var sut = CreateService(db, cursor);
+        var jpeg = Convert.ToBase64String(MinimalJpeg);
+        var row = await sut.SubmitAsync(new FeedbackSubmitRequest(
+            FeedbackType.Bug,
+            "Knop valt weg op /home",
+            "https://lobsy.nl/home",
+            "Mozilla/5.0",
+            "Linux · 1440×900",
+            "data:image/jpeg;base64," + jpeg,
+            null,
+            "Candidate",
+            "Anna"));
+
+        var launched = await sut.LaunchAutomationAsync(row.Id, "");
+        Assert.True(launched.Launched);
+        Assert.NotNull(cursor.LastRequest);
+        var image = Assert.Single(cursor.LastRequest!.Images!);
+        Assert.Equal(jpeg, image.Base64Data);
+        Assert.Contains("Knop valt weg", cursor.LastRequest.Prompt);
+        Assert.Contains("bijgevoegd", cursor.LastRequest.Prompt);
+        Assert.Contains("/home", cursor.LastRequest.Prompt);
+    }
+
+    [Fact]
+    public async Task Webhook_with_valid_signature_stores_pr_url()
+    {
+        await using var db = CreateDb();
+        var id = Guid.NewGuid();
+        db.PlatformFeedbacks.Add(new PlatformFeedback
+        {
+            Id = id,
+            Description = "Login faalt",
+            PageUrl = "https://lobsy.nl/login",
+            CursorAgentId = "bc_hook",
+            Status = FeedbackStatus.InProgress,
+            AutomationStatus = FeedbackAutomationStatus.Launched,
+            BranchName = "fix/feedback-hook"
+        });
+        await db.SaveChangesAsync();
+
+        var sut = CreateService(db, new FakeCursor());
+        const string secret = "unit-test-webhook-secret-32chars!!";
+        var raw = """{"event":"statusChange","id":"bc_hook","status":"FINISHED","target":{"prUrl":"https://github.com/lobsy/lobsy/pull/11","branchName":"fix/feedback-hook"}}""";
+        var controller = new FeedbackController(
+            sut,
+            new StubUserLookup(db),
+            Options.Create(new CursorCloudOptions { WebhookSecret = secret }),
+            new StubHostEnvironment { EnvironmentName = Environments.Production });
+        controller.ControllerContext = new ControllerContext
+        {
+            HttpContext = new DefaultHttpContext()
+        };
+        var bytes = Encoding.UTF8.GetBytes(raw);
+        controller.HttpContext.Request.Body = new MemoryStream(bytes);
+        controller.HttpContext.Request.Headers["X-Webhook-Signature"] =
+            FeedbackWebhookSignatures.ComputeSha256Header(secret, bytes);
+
+        var result = await controller.CursorWebhook(CancellationToken.None);
+        Assert.IsType<OkResult>(result);
+        var updated = await sut.GetAsync(id);
+        Assert.Equal("https://github.com/lobsy/lobsy/pull/11", updated!.PullRequestUrl);
+        Assert.Equal(FeedbackAutomationStatus.Finished, updated.AutomationStatus);
     }
 
     [Fact]
@@ -328,6 +416,8 @@ public class FeedbackPipelineTests
         var result = await controller.CursorWebhook(CancellationToken.None);
         Assert.IsType<UnauthorizedResult>(result);
     }
+
+    private static readonly byte[] MinimalJpeg = [0xFF, 0xD8, 0xFF, 0xD9, 0x01, 0x02, 0x03, 0x04];
 
     private static FeedbackService CreateService(JobsyDbContext db, FakeCursor cursor)
         => new(

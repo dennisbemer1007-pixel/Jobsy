@@ -63,7 +63,7 @@ public sealed class CursorCloudAgentClient : ICursorCloudAgentClient
             new CursorLaunchTargetDto(true, request.BranchName),
             TryWebhook(options));
 
-        using var client = CreateClient();
+        var client = CreateClient();
         using var response = await client.PostAsync(
             "v0/agents",
             new StringContent(JsonSerializer.Serialize(body, JsonOpts), Encoding.UTF8, "application/json"),
@@ -96,7 +96,7 @@ public sealed class CursorCloudAgentClient : ICursorCloudAgentClient
             return null;
         }
 
-        using var client = CreateClient();
+        var client = CreateClient();
         using var response = await client.GetAsync(
             "v0/agents/" + Uri.EscapeDataString(agentId.Trim()),
             cancellationToken);
