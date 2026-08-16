@@ -22,7 +22,7 @@ public class JobMapPrerenderGuardTests
         Assert.Contains("function isAlive()", js);
         Assert.Contains("NL_BOUNDS", js);
         Assert.Contains("removeOutsideVisibleBounds: false", js);
-        Assert.Contains("Tiles after the view is correct", js);
+        Assert.Contains("NL_CENTER", js);
         Assert.DoesNotContain("map.setView([52.07, 4.28], 11)", js);
         Assert.Contains("container.isConnected", js);
         Assert.Contains("isAlive", js[(js.LastIndexOf("return {", StringComparison.Ordinal))..]);

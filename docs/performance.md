@@ -27,7 +27,7 @@ De banenkaart blijft de first-paint kernervaring (geen Funda-klik-om-te-tonen):
 
 ### Images
 
-- Mock/seed-foto’s zijn same-origin SVG’s (`/images/vacancies/{branche}-{0\|1}.svg`, ~0.6&nbsp;KB). Bestaande picsum/Unsplash-URL’s worden bij render herschreven en bij de volgende media-backfill in de database gezet.
+- Mock/seed-foto’s zijn weer de originele picsum-seeds (`jobsy-{vacancyId}`, 600×400). Alleen zichtbare kaarten laden ze (`loading=lazy`, venster van 12). Unsplash-404’s en tijdelijke SVG-stand-ins gaan bij backfill terug naar picsum.
 - Job cards gebruiken een echt `<img>` (`VacancyPhoto`) met `loading="lazy"`, `decoding="async"`, intrinsieke 600×400 en `sizes`. De eerste twee kaarten zijn eager.
 - De vacaturelijst wordt **niet** in de eerste HTML/mobile-kaartweergave gezet. Desktop en de mobiele lijst tonen vensters van 12 kaarten (+ “toon meer”). Featured-carousel max. 8.
 - Logo: WebP 64/128/256 i.p.v. 1024×1024 PNG (568&nbsp;KB). Watermarks lazy, apple-touch-icon 180&nbsp;px.

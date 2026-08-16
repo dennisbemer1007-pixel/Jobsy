@@ -34,7 +34,7 @@ public class HaaglandenVacanciesSeederTests
         Assert.All(vacancies, v =>
         {
             Assert.False(string.IsNullOrWhiteSpace(v.ImageUrl));
-            Assert.StartsWith("/images/vacancies/", v.ImageUrl);
+            Assert.StartsWith("https://picsum.photos/seed/jobsy-", v.ImageUrl);
             Assert.False(string.IsNullOrWhiteSpace(v.VideoUrl));
             Assert.True(v.Description.Length >= MockVacancyMedia.MinRichDescriptionLength);
             Assert.NotNull(v.SalaryTableId);
@@ -151,7 +151,7 @@ public class MediaBackfillSeederTests
         await MediaBackfillSeeder.BackfillMediaAsync(db, NullLogger.Instance);
 
         var vacancy = await db.Vacancies.Include(v => v.Company).SingleAsync(v => v.Id == vacancyId);
-        Assert.StartsWith("/images/vacancies/", vacancy.ImageUrl);
+        Assert.StartsWith("https://picsum.photos/seed/jobsy-", vacancy.ImageUrl);
         Assert.False(string.IsNullOrWhiteSpace(vacancy.VideoUrl));
         Assert.True(vacancy.Description.Length >= MockVacancyMedia.MinRichDescriptionLength);
     }

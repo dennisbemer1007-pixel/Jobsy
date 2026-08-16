@@ -47,7 +47,7 @@ public class HomepagePerformanceGuardTests
         Assert.Contains("job-map-placeholder", discovery);
         Assert.Contains("images/maps/nl-preview.webp", discovery);
         Assert.DoesNotContain("job-map-placeholder__cluster", discovery);
-        Assert.Contains("EnsureDiscoveryAfterPaintAsync", discovery);
+        Assert.Contains("EnsureDiscoveryAsync", discovery);
         Assert.Contains("_vacancies.Count == 0 && _loading", discovery);
         Assert.Contains("if (!RendererInfo.IsInteractive)", discovery);
         Assert.Contains("OnMapTilesReady", discovery);
@@ -86,9 +86,9 @@ public class HomepagePerformanceGuardTests
         Assert.Contains("EnsureDetailAsync", mapScripts);
 
         var discovery = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "Components", "VacancyDiscovery.razor"));
-        Assert.Contains("EnsureDiscoveryAfterPaintAsync", discovery);
+        Assert.Contains("EnsureDiscoveryAsync", discovery);
         Assert.DoesNotContain("MapScripts.EnsureAsync(Js)", discovery);
-        Assert.DoesNotContain("await MapScripts.EnsureDiscoveryAsync(Js)", discovery);
+        Assert.DoesNotContain("EnsureDiscoveryAfterPaintAsync", discovery);
 
         var detail = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "Components", "Pages", "VacancyDetail.razor"));
         Assert.Contains("EnsureDetailAsync", detail);

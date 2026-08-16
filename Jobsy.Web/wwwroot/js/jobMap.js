@@ -850,13 +850,24 @@ window.jobMap = (function () {
             zoom: NL_ZOOM
         });
 
+        const tiles = L.tileLayer("https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png", {
+            maxZoom: 19,
+            attribution: "&copy; <a href=\"https://www.openstreetmap.org/copyright\">OpenStreetMap</a> &copy; <a href=\"https://carto.com/attributions\">CARTO</a>"
+        });
+        const notifyTilesReady = function () {
+            if (openCallback && typeof openCallback.invokeMethodAsync === "function") {
+                openCallback.invokeMethodAsync("OnMapTilesReady");
+            }
+        };
+        tiles.once("load", notifyTilesReady);
+        tiles.addTo(map);
+
         clusterGroup = L.markerClusterGroup({
             showCoverageOnHover: false,
             zoomToBoundsOnClick: false,
             spiderfyOnMaxZoom: false,
             disableClusteringAtZoom: 16,
             maxClusterRadius: 60,
-            // Empty/0×0 bounds during first layout would otherwise drop every pin.
             removeOutsideVisibleBounds: false,
             iconCreateFunction: createClusterIcon
         });
@@ -875,26 +886,6 @@ window.jobMap = (function () {
         firstViewApplied = false;
         if (options && options.origin) {
             setOrigin(options.origin.lat, options.origin.lng, options.travel);
-        } else if (!vacancies || vacancies.length === 0) {
-            map.fitBounds(NL_BOUNDS, { padding: [16, 16], maxZoom: 8, animate: false });
-            firstViewApplied = true;
-        }
-
-        // Tiles after the view is correct — first paint must not be Null Island / Den Haag.
-        const tiles = L.tileLayer("https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png", {
-            maxZoom: 19,
-            attribution: "&copy; <a href=\"https://www.openstreetmap.org/copyright\">OpenStreetMap</a> &copy; <a href=\"https://carto.com/attributions\">CARTO</a>"
-        });
-        const notifyTilesReady = function () {
-            if (openCallback && typeof openCallback.invokeMethodAsync === "function") {
-                openCallback.invokeMethodAsync("OnMapTilesReady");
-            }
-        };
-        tiles.once("load", notifyTilesReady);
-        tiles.addTo(map);
-        // Cached tiles can skip "load"; markers must not wait on that event.
-        if (typeof tiles.isLoading !== "function" || !tiles.isLoading()) {
-            setTimeout(notifyTilesReady, 0);
         }
 
         bindOutsideClickCloser();

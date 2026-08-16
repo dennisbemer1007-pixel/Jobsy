@@ -798,10 +798,10 @@ window.jobsyMaps = (function () {
         "/lib/leaflet/leaflet.markercluster.min.js"
     ];
     var discoveryScripts = [
-        "/js/jobMap.js?v=20260816-pins"
+        "/js/jobMap.js?v=20260816-photos"
     ];
     var detailScripts = [
-        "/js/vacancyDetailMap.js?v=20260816-pins"
+        "/js/vacancyDetailMap.js?v=20260816-photos"
     ];
 
     function loadCss(href) {
@@ -948,7 +948,10 @@ window.jobsyMaps = (function () {
             }
             pendingPaint[kind] = new Promise(function (resolve, reject) {
                 whenMapSlotReady(elementId, function () {
-                    ensure(kind).then(resolve, reject);
+                    ensure(kind).then(resolve, function (err) {
+                        pendingPaint[kind] = null;
+                        reject(err);
+                    });
                 });
             });
             return pendingPaint[kind];

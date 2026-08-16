@@ -3,9 +3,9 @@ using Jobsy.Core.Enums;
 namespace Jobsy.Core.Media;
 
 /// <summary>
-/// Resolves vacancy photos for list/detail/map. Replaces third-party placeholders
-/// (picsum / broken Unsplash) with tiny same-origin SVGs so cards can lazy-load
-/// without extra DNS, redirects, or 600×400 JPEGs.
+/// Resolves vacancy photos for list/detail/map. Mock vacancies use stable
+/// picsum seeds (unique photo per id). Broken Unsplash URLs and the temporary
+/// local SVG stand-ins are mapped back to that seed.
 /// </summary>
 public static class VacancyImageUrls
 {
@@ -13,6 +13,9 @@ public static class VacancyImageUrls
     public const int IntrinsicHeight = 400;
     public const string LocalPrefix = "/images/vacancies/";
     public const int VariantCount = 2;
+
+    public static string PicsumUrl(Guid vacancyId)
+        => $"https://picsum.photos/seed/jobsy-{vacancyId:N}/600/400";
 
     public static string Placeholder(Guid vacancyId, WorkType workTypes = WorkType.None)
         => Placeholder(vacancyId, FirstSlug(workTypes));
@@ -26,10 +29,12 @@ public static class VacancyImageUrls
 
     public static string Resolve(string? imageUrl, Guid? vacancyId = null, string? workType = null)
     {
-        if (string.IsNullOrWhiteSpace(imageUrl) || IsThirdPartyPlaceholder(imageUrl))
+        if (string.IsNullOrWhiteSpace(imageUrl)
+            || IsBrokenUnsplash(imageUrl)
+            || IsLocalVacancySvg(imageUrl))
         {
             var id = vacancyId ?? TryExtractSeed(imageUrl) ?? Guid.Empty;
-            return Placeholder(id, workType);
+            return id == Guid.Empty ? (imageUrl ?? "").Trim() : PicsumUrl(id);
         }
 
         return imageUrl.Trim();
@@ -92,16 +97,21 @@ public static class VacancyImageUrls
            && !url.StartsWith("//", StringComparison.Ordinal)
            && url.IndexOfAny(['\\', '\n', '\r']) < 0;
 
-    public static bool IsThirdPartyPlaceholder(string? imageUrl)
-    {
-        if (string.IsNullOrWhiteSpace(imageUrl))
-        {
-            return false;
-        }
+    public static bool IsPicsum(string? imageUrl)
+        => !string.IsNullOrWhiteSpace(imageUrl)
+           && imageUrl.Contains("picsum.photos", StringComparison.OrdinalIgnoreCase);
 
-        return imageUrl.Contains("picsum.photos", StringComparison.OrdinalIgnoreCase)
-               || imageUrl.Contains("images.unsplash.com", StringComparison.OrdinalIgnoreCase);
-    }
+    public static bool IsBrokenUnsplash(string? imageUrl)
+        => !string.IsNullOrWhiteSpace(imageUrl)
+           && imageUrl.Contains("images.unsplash.com", StringComparison.OrdinalIgnoreCase);
+
+    public static bool IsLocalVacancySvg(string? imageUrl)
+        => !string.IsNullOrWhiteSpace(imageUrl)
+           && imageUrl.StartsWith(LocalPrefix, StringComparison.OrdinalIgnoreCase)
+           && imageUrl.EndsWith(".svg", StringComparison.OrdinalIgnoreCase);
+
+    public static bool IsThirdPartyPlaceholder(string? imageUrl)
+        => IsBrokenUnsplash(imageUrl);
 
     public static string FirstSlug(WorkType workTypes)
     {

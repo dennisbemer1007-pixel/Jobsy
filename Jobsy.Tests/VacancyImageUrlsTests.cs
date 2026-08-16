@@ -16,12 +16,22 @@ public class VacancyImageUrlsTests
     }
 
     [Fact]
-    public void Resolve_rewrites_picsum_to_local_placeholder()
+    public void Resolve_keeps_picsum_seed_urls()
     {
         var id = Guid.Parse("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb");
-        var picsum = $"https://picsum.photos/seed/jobsy-{id:N}/600/400";
-        var resolved = VacancyImageUrls.Resolve(picsum, id, "Horeca");
-        Assert.Equal(VacancyImageUrls.Placeholder(id, WorkType.Horeca), resolved);
+        var picsum = VacancyImageUrls.PicsumUrl(id);
+        Assert.Equal(picsum, VacancyImageUrls.Resolve(picsum, id, "Horeca"));
+    }
+
+    [Fact]
+    public void Resolve_restores_svg_standin_and_unsplash_to_picsum()
+    {
+        var id = Guid.Parse("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb");
+        var picsum = VacancyImageUrls.PicsumUrl(id);
+        Assert.Equal(picsum, VacancyImageUrls.Resolve(VacancyImageUrls.Placeholder(id, WorkType.Horeca), id, "Horeca"));
+        Assert.Equal(
+            picsum,
+            VacancyImageUrls.Resolve("https://images.unsplash.com/photo-legacy-404", id, "Horeca"));
     }
 
     [Fact]
@@ -64,6 +74,17 @@ public class VacancyImageUrlsTests
             Assert.True(File.Exists(Path.Combine(dir, $"{slug}-0.svg")), slug + "-0");
             Assert.True(File.Exists(Path.Combine(dir, $"{slug}-1.svg")), slug + "-1");
         }
+    }
+
+    [Fact]
+    public void NeedsImageBackfill_restores_svg_standins_and_keeps_picsum()
+    {
+        var id = Guid.Parse("cccccccc-cccc-cccc-cccc-cccccccccccc");
+        Assert.True(Jobsy.Infrastructure.Data.MockVacancyMedia.NeedsImageBackfill(null));
+        Assert.True(Jobsy.Infrastructure.Data.MockVacancyMedia.NeedsImageBackfill(VacancyImageUrls.Placeholder(id, WorkType.Winkel)));
+        Assert.True(Jobsy.Infrastructure.Data.MockVacancyMedia.NeedsImageBackfill("https://images.unsplash.com/photo-x"));
+        Assert.False(Jobsy.Infrastructure.Data.MockVacancyMedia.NeedsImageBackfill(VacancyImageUrls.PicsumUrl(id)));
+        Assert.False(Jobsy.Infrastructure.Data.MockVacancyMedia.NeedsImageBackfill("/images/uploads/x.jpg"));
     }
 
     [Fact]
