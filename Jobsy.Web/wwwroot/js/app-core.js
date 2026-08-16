@@ -798,10 +798,10 @@ window.jobsyMaps = (function () {
         "/lib/leaflet/leaflet.markercluster.min.js"
     ];
     var discoveryScripts = [
-        "/js/jobMap.js?v=20260816-tiles"
+        "/js/jobMap.js?v=20260816-pins"
     ];
     var detailScripts = [
-        "/js/vacancyDetailMap.js?v=20260816-tiles"
+        "/js/vacancyDetailMap.js?v=20260816-pins"
     ];
 
     function loadCss(href) {

@@ -3292,6 +3292,7 @@ a {
 
 .map-stage.is-live .job-map-placeholder {
     opacity: 0;
+    visibility: hidden;
 }
 
 @media (prefers-reduced-motion: reduce) {

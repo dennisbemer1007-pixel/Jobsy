@@ -1698,10 +1698,10 @@
 
             await Js.InvokeVoidAsync("jobMap.init", "job-map", markers, options);
             _mapReady = true;
+            _mapPainted = true;
             await Task.Delay(80);
             await Js.InvokeVoidAsync("jobMap.invalidate");
             await TryFocusCompanyOnMapAsync();
-            _ = MarkMapPaintedFallbackAsync();
         }
         catch (JSDisconnectedException)
         {
@@ -2628,18 +2628,6 @@
 
         _mapPainted = true;
         return InvokeAsync(StateHasChanged);
-    }
-
-    private async Task MarkMapPaintedFallbackAsync()
-    {
-        await Task.Delay(450);
-        if (_mapPainted)
-        {
-            return;
-        }
-
-        _mapPainted = true;
-        await InvokeAsync(StateHasChanged);
     }
 
     private void OnSortChanged(ChangeEventArgs e)

@@ -14,6 +14,7 @@ Alle noemenswaardige wijzigingen aan dit project worden in dit bestand bijgehoud
 ## [Unreleased]
 
 ### Changed
+- Homepage-kaart: markers weer zichtbaar (cluster niet droppen bij 0×0 bounds; preview-overlay weg na init). Zie `docs/performance.md`.
 - Homepage-kaart: prerender van echte Carto-NL-tegels (lokaal webp); Leaflet start op heel NL, niet eerst Den Haag/Null Island. Zie `docs/performance.md`.
 - Banenkaart-performance: lokale SVG-placeholders i.p.v. picsum, lazy `<img>` op job cards, WebP-logo, Leaflet pas laden op kaartpagina’s, gebundelde `app-core.js`, Brotli + cache-headers. Zie `docs/performance.md`.
 - PageSpeed-vervolg: geen 278 job cards meer in de eerste HTML/mobile-kaart (venster van 12), compacte cookiebanner in first paint, map-loader split discovery/detail.

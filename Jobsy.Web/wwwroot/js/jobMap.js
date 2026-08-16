@@ -847,9 +847,7 @@ window.jobMap = (function () {
             scrollWheelZoom: true,
             closePopupOnClick: true,
             center: NL_CENTER,
-            zoom: NL_ZOOM,
-            zoomAnimation: false,
-            fadeAnimation: false
+            zoom: NL_ZOOM
         });
 
         clusterGroup = L.markerClusterGroup({
@@ -858,6 +856,8 @@ window.jobMap = (function () {
             spiderfyOnMaxZoom: false,
             disableClusteringAtZoom: 16,
             maxClusterRadius: 60,
+            // Empty/0×0 bounds during first layout would otherwise drop every pin.
+            removeOutsideVisibleBounds: false,
             iconCreateFunction: createClusterIcon
         });
 
@@ -892,13 +892,22 @@ window.jobMap = (function () {
         };
         tiles.once("load", notifyTilesReady);
         tiles.addTo(map);
+        // Cached tiles can skip "load"; markers must not wait on that event.
+        if (typeof tiles.isLoading !== "function" || !tiles.isLoading()) {
+            setTimeout(notifyTilesReady, 0);
+        }
 
         bindOutsideClickCloser();
 
         addLocateControl();
 
         [50, 200, 500].forEach(function (ms) {
-            setTimeout(invalidate, ms);
+            setTimeout(function () {
+                invalidate();
+                if (clusterGroup && typeof clusterGroup.refreshClusters === "function") {
+                    clusterGroup.refreshClusters();
+                }
+            }, ms);
         });
 
         window.addEventListener("resize", invalidate);

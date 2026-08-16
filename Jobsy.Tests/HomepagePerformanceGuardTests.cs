@@ -51,6 +51,7 @@ public class HomepagePerformanceGuardTests
         Assert.Contains("_vacancies.Count == 0 && _loading", discovery);
         Assert.Contains("if (!RendererInfo.IsInteractive)", discovery);
         Assert.Contains("OnMapTilesReady", discovery);
+        Assert.Contains("_mapPainted = true", discovery);
 
         var maps = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "wwwroot", "js", "maps-loader.js"));
         Assert.Contains("ensureAfterPaint", maps);
