@@ -27,7 +27,6 @@ public class JobMapPrerenderGuardTests
     {
         var discovery = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "Components", "VacancyDiscovery.razor"));
         Assert.Contains("jobMap.isAlive", discovery);
-        Assert.Contains("_mapReady = false", discovery);
         Assert.Contains("Keep going — map init must not wait on geo helpers.", discovery);
 
         var afterRender = discovery.IndexOf("OnAfterRenderAsync(bool firstRender)", StringComparison.Ordinal);
@@ -36,6 +35,14 @@ public class JobMapPrerenderGuardTests
         Assert.True(hydrateCatch > afterRender);
         var hydrateSlice = discovery[hydrateCatch..(hydrateCatch + 180)];
         Assert.DoesNotContain("return;", hydrateSlice);
+
+        var isAliveIdx = discovery.IndexOf("jobMap.isAlive", afterRender, StringComparison.Ordinal);
+        Assert.True(isAliveIdx > afterRender);
+        var aliveCatch = discovery.IndexOf("catch (JSException)", isAliveIdx, StringComparison.Ordinal);
+        Assert.True(aliveCatch > isAliveIdx);
+        var aliveCatchSlice = discovery[aliveCatch..(aliveCatch + 220)];
+        Assert.Contains("do not tear down a live map", aliveCatchSlice);
+        Assert.DoesNotContain("_mapReady = false", aliveCatchSlice);
     }
 
     private static string FindRepoRoot()

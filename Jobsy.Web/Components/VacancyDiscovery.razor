@@ -1549,10 +1549,13 @@
                     _mapInitScheduled = false;
                 }
             }
-            catch
+            catch (JSException)
             {
-                _mapReady = false;
-                _mapInitScheduled = false;
+                // Missing isAlive (cached jobMap.js) or transient interop — do not tear down a live map.
+            }
+            catch (InvalidOperationException)
+            {
+                // Circuit not ready — keep current map state.
             }
         }
 
