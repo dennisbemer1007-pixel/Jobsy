@@ -7,6 +7,7 @@ Lab baseline, productie `https://lobsy.nl` (geen CrUX field data):
 | PageSpeed Insights (aug 2026, opgave) | 56 | 95 | 77 | 91 | — | — | — | — |
 | Lighthouse 12.8 mobile (deze run, pre-fix) | 47 | 95 | 82 | 91 | 2.1s | **21.6s** | 600ms | 0.108 |
 | Lighthouse 12.8 mobile (na image/JS-fix, live) | 69 | 95 | 82 | 91 | 2.0s | **2.4s** | **830ms** | 0.108 |
+| Lighthouse 12.8 mobile (deze PR, localhost) | **99** | — | — | — | **1.2s** | **1.9s** (NL-preview) | **0ms** | 0 |
 
 LCP was een Carto-tegel (`leaflet-tile`) met **20s load delay**: de netwerkrij stond vol met `lobsy.png` (568&nbsp;KB) en tientallen picsum-JPEG’s (~60–80&nbsp;KB, ~9&nbsp;MB / 584 requests). Leaflet-CSS via unpkg was render-blocking (~780&nbsp;ms).
 

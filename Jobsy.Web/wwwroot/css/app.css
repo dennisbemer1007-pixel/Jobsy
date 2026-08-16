@@ -3336,6 +3336,13 @@ a {
     height: 38px;
 }
 
+@media (max-width: 768px) {
+    .jobsy-discovery.show-map .map-pane,
+    .jobsy-discovery.show-map .job-map-placeholder {
+        min-height: 55dvh;
+    }
+}
+
 /*
  * Vacancy detail map must fill .vacancy-location__map-wrap.
  * Placed after .job-map so shared banenkaart sizing never collapses this container.
