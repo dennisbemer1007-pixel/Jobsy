@@ -160,7 +160,7 @@
             return;
         }
 
-        var (data, error) = await HomeDashboardLoad.FetchAsync(Api.GetMySalesManagerDashboardAsync);
+        var (data, error) = await HomeDashboardLoad.FetchAsync(async () => await Api.GetMySalesManagerDashboardAsync());
         _dashboard = data;
         _error = error;
         _loading = false;

@@ -222,7 +222,7 @@
             return;
         }
 
-        var (data, error) = await HomeDashboardLoad.FetchAsync(Api.GetMyAmbassadeurDashboardAsync);
+        var (data, error) = await HomeDashboardLoad.FetchAsync(async () => await Api.GetMyAmbassadeurDashboardAsync());
         _dashboard = data;
         _error = error;
         if (_dashboard is not null)
