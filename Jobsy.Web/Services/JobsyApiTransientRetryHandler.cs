@@ -62,7 +62,7 @@ public sealed class JobsyApiTransientRetryHandler : DelegatingHandler
         return response ?? throw new InvalidOperationException("API-verzoek gaf geen antwoord.");
     }
 
-    internal static bool IsTransient(HttpStatusCode status)
+    public static bool IsTransient(HttpStatusCode status)
         => status is HttpStatusCode.Unauthorized
             or HttpStatusCode.RequestTimeout
             or HttpStatusCode.BadGateway
