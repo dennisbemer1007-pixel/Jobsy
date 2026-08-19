@@ -24,6 +24,13 @@ public class JobMapPrerenderGuardTests
         Assert.Contains("removeOutsideVisibleBounds: false", js);
         Assert.Contains("NL_CENTER", js);
         Assert.DoesNotContain("map.setView([52.07, 4.28], 11)", js);
+        Assert.DoesNotContain("center: NL_CENTER", js);
+        Assert.Contains("No default NL view", js);
+        Assert.Contains("openingViewUntil", js);
+        var initIdx = js.IndexOf("function init(elementId, vacancies, options)", StringComparison.Ordinal);
+        var setVacanciesInInit = js.IndexOf("setVacancies(vacancies || []);", initIdx, StringComparison.Ordinal);
+        var tilesAddInInit = js.IndexOf("tiles.addTo(map);", initIdx, StringComparison.Ordinal);
+        Assert.True(initIdx > 0 && setVacanciesInInit > initIdx && tilesAddInInit > setVacanciesInInit);
         Assert.Contains("container.isConnected", js);
         Assert.Contains("isAlive", js[(js.LastIndexOf("return {", StringComparison.Ordinal))..]);
     }

@@ -49,7 +49,8 @@ public class HomepagePerformanceGuardTests
         Assert.Contains("job-map-placeholder", discovery);
         Assert.Contains("images/maps/nl-preview.webp", discovery);
         Assert.Contains("job-map-placeholder__pins", discovery);
-        Assert.Contains("MapPreviewPins", discovery);
+        Assert.Contains("(\"50.6\", \"38.2\")", discovery);
+        Assert.Contains("width=\"1536\"", discovery);
         Assert.Contains("EnsureDiscoveryAfterPaintAsync", discovery);
         Assert.Contains("_vacancies.Count == 0 && _loading", discovery);
         Assert.Contains("if (!RendererInfo.IsInteractive)", discovery);

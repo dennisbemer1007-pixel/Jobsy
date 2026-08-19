@@ -532,16 +532,16 @@
                 <img class="job-map-placeholder__img"
                      src="images/maps/nl-preview.webp"
                      alt=""
-                     width="1024"
-                     height="1280"
+                     width="1536"
+                     height="1024"
                      fetchpriority="high"
                      decoding="async"
                      draggable="false" />
                 <div class="job-map-placeholder__pins">
-                    <span class="job-map-placeholder__blob job-map-placeholder__blob--lg" style="left:36%;top:50%"></span>
-                    <span class="job-map-placeholder__blob job-map-placeholder__blob--md" style="left:42%;top:36%"></span>
-                    <span class="job-map-placeholder__blob job-map-placeholder__blob--sm" style="left:37.5%;top:57%"></span>
-                    <span class="job-map-placeholder__blob job-map-placeholder__blob--sm" style="left:45%;top:45.5%"></span>
+                    <span class="job-map-placeholder__blob job-map-placeholder__blob--lg" style="left:50.6%;top:38.2%"></span>
+                    <span class="job-map-placeholder__blob job-map-placeholder__blob--md" style="left:59.5%;top:69.2%"></span>
+                    <span class="job-map-placeholder__blob job-map-placeholder__blob--sm" style="left:85.3%;top:46.5%"></span>
+                    <span class="job-map-placeholder__blob job-map-placeholder__blob--sm" style="left:33.6%;top:67.3%"></span>
                     @foreach (var pin in MapPreviewPins)
                     {
                         <span class="job-map-placeholder__pin" style="left:@(pin.Left)%;top:@(pin.Top)%"></span>
@@ -869,16 +869,16 @@
     private bool _mapInitScheduled;
 
     /// <summary>
-    /// Static pins on the prerendered NL mosaic so first paint already looks filled.
-    /// Positions match the Carto preview crop (Randstad / Haaglanden-heavy).
+    /// Static pins on the prerendered Haaglanden mosaic so first paint already matches
+    /// the live marker view (Den Haag, Delft, Zoetermeer, Westland).
     /// </summary>
     private static readonly (string Left, string Top)[] MapPreviewPins =
     [
-        ("34", "49"), ("35.5", "50.5"), ("36.8", "48.2"), ("37.2", "51.5"), ("33.5", "51"),
-        ("38", "49.5"), ("35", "47.5"), ("36", "52.5"), ("39", "50"), ("34.8", "53"),
-        ("37", "56"), ("38.5", "57.5"), ("36.2", "58"), ("41.5", "35.5"), ("42.8", "37"),
-        ("40.8", "36.8"), ("44.5", "45"), ("45.5", "46.5"), ("48", "61.5"), ("39.5", "42"),
-        ("40.2", "40.5"), ("33.8", "48"), ("38.8", "52.8"), ("35.8", "49.2"), ("46.8", "60")
+        ("50.6", "38.2"), ("48.2", "40.5"), ("52.4", "36.0"), ("47.0", "35.5"), ("53.0", "41.8"),
+        ("44.0", "26.2"), ("46.5", "30.0"), ("53.5", "57.2"), ("60.1", "41.9"), ("66.4", "38.2"),
+        ("55.8", "48.0"), ("59.5", "69.2"), ("57.0", "66.0"), ("62.0", "71.5"), ("44.9", "74.3"),
+        ("85.3", "46.5"), ("82.0", "49.0"), ("73.2", "65.9"), ("67.1", "53.9"), ("31.7", "77.5"),
+        ("25.0", "63.2"), ("33.6", "67.3"), ("37.4", "72.0"), ("43.6", "63.6"), ("50.0", "42.0")
     ];
     private ElementReference _mapElement;
     private const int DefaultMinHoursPerWeek = 0;

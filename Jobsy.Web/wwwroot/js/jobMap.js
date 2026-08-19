@@ -10,8 +10,11 @@ window.jobMap = (function () {
     let outsideClickCloserBound = false;
     let highlightSeed = 0;
     let firstViewApplied = false;
+    let lastFitPoints = [];
+    let openingViewUntil = 0;
 
-    // Same window as the prerendered Carto mosaic (z8 tiles x130-133 / y82-86).
+    // Empty-catalog fallback only. The opening view always fits vacancy markers
+    // (plus origin/rings) so the first live frame is never the whole country.
     const NL_CENTER = [52.15, 5.2913];
     const NL_ZOOM = 7;
     const NL_BOUNDS = [[50.29, 2.81], [53.33, 8.44]];
@@ -789,9 +792,15 @@ window.jobMap = (function () {
         }
     }
 
-    function fitMapToContent(markerBounds) {
-        if (!map) return;
+    function mapHasUsableSize() {
+        if (!map || typeof map.getSize !== "function") {
+            return false;
+        }
+        const size = map.getSize();
+        return !!(size && size.x >= 32 && size.y >= 32);
+    }
 
+    function pointsWithOrigin(markerBounds) {
         const points = Array.isArray(markerBounds) ? markerBounds.slice() : [];
         if (originMarker) {
             const ll = originMarker.getLatLng();
@@ -807,13 +816,27 @@ window.jobMap = (function () {
                 points.push([ll.lat, ll.lng - dLng]);
             }
         }
+        return points;
+    }
 
-        const immediate = !firstViewApplied;
-        const opts = { padding: [48, 48], maxZoom: 13, animate: !immediate };
+    function fitMapToContent(markerBounds) {
+        if (!map) return;
+
+        lastFitPoints = Array.isArray(markerBounds) ? markerBounds.slice() : [];
+        const points = pointsWithOrigin(lastFitPoints);
+
+        const opening = !firstViewApplied || Date.now() < openingViewUntil;
+        const opts = { padding: [48, 48], maxZoom: 13, animate: !opening };
         if (points.length > 0) {
-            map.fitBounds(points, opts);
+            if (mapHasUsableSize()) {
+                map.fitBounds(points, opts);
+            } else {
+                map.setView(L.latLngBounds(points).getCenter(), 12, { animate: false });
+            }
+        } else if (mapHasUsableSize()) {
+            map.fitBounds(NL_BOUNDS, { padding: [16, 16], maxZoom: 8, animate: !opening });
         } else {
-            map.fitBounds(NL_BOUNDS, { padding: [16, 16], maxZoom: 8, animate: !immediate });
+            map.setView(NL_CENTER, NL_ZOOM, { animate: false });
         }
         firstViewApplied = true;
     }
@@ -842,25 +865,14 @@ window.jobMap = (function () {
             : 0;
 
         firstViewApplied = false;
+        lastFitPoints = [];
+        openingViewUntil = Date.now() + 700;
+        // No default NL view: set bounds from markers before requesting tiles.
         map = L.map(el, {
             zoomControl: true,
             scrollWheelZoom: true,
-            closePopupOnClick: true,
-            center: NL_CENTER,
-            zoom: NL_ZOOM
+            closePopupOnClick: true
         });
-
-        const tiles = L.tileLayer("https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png", {
-            maxZoom: 19,
-            attribution: "&copy; <a href=\"https://www.openstreetmap.org/copyright\">OpenStreetMap</a> &copy; <a href=\"https://carto.com/attributions\">CARTO</a>"
-        });
-        const notifyTilesReady = function () {
-            if (openCallback && typeof openCallback.invokeMethodAsync === "function") {
-                openCallback.invokeMethodAsync("OnMapTilesReady");
-            }
-        };
-        tiles.once("load", notifyTilesReady);
-        tiles.addTo(map);
 
         clusterGroup = L.markerClusterGroup({
             showCoverageOnHover: false,
@@ -883,14 +895,26 @@ window.jobMap = (function () {
 
         map.addLayer(clusterGroup);
         setVacancies(vacancies || []);
-        firstViewApplied = false;
         if (options && options.origin) {
             setOrigin(options.origin.lat, options.origin.lng, options.travel);
         }
 
+        const tiles = L.tileLayer("https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png", {
+            maxZoom: 19,
+            attribution: "&copy; <a href=\"https://www.openstreetmap.org/copyright\">OpenStreetMap</a> &copy; <a href=\"https://carto.com/attributions\">CARTO</a>"
+        });
+        const notifyTilesReady = function () {
+            if (openCallback && typeof openCallback.invokeMethodAsync === "function") {
+                openCallback.invokeMethodAsync("OnMapTilesReady");
+            }
+        };
+        tiles.once("load", notifyTilesReady);
+        tiles.addTo(map);
+
         bindOutsideClickCloser();
 
         addLocateControl();
+        invalidate();
 
         [50, 200, 500].forEach(function (ms) {
             setTimeout(function () {
@@ -1007,12 +1031,7 @@ window.jobMap = (function () {
             bounds.push([lat, lng]);
         });
 
-        if (bounds.length > 0 || originMarker) {
-            fitMapToContent(bounds);
-        } else {
-            map.fitBounds(NL_BOUNDS, { padding: [16, 16], maxZoom: 8, animate: !firstViewApplied });
-            firstViewApplied = true;
-        }
+        fitMapToContent(bounds);
     }
 
     function setOrigin(lat, lng, travel) {
@@ -1068,8 +1087,14 @@ window.jobMap = (function () {
     }
 
     function invalidate() {
-        if (map) {
-            map.invalidateSize({ animate: false });
+        if (!map) {
+            return;
+        }
+        map.invalidateSize({ animate: false });
+        // Re-apply the opening marker view after layout (carousel, 0×0 pane, mobile dvh).
+        if (Date.now() < openingViewUntil || !firstViewApplied) {
+            firstViewApplied = false;
+            fitMapToContent(lastFitPoints);
         }
     }
 
@@ -1096,6 +1121,7 @@ window.jobMap = (function () {
     }
 
     function focus(id) {
+        openingViewUntil = 0;
         const marker = markersById[id];
         if (!marker || !map || !clusterGroup) {
             return;
@@ -1148,6 +1174,7 @@ window.jobMap = (function () {
      * popup when 2+ vacancies share that company.
      */
     function focusCompany(companyId) {
+        openingViewUntil = 0;
         if (!map || !clusterGroup || companyId == null || companyId === "") {
             return;
         }
@@ -1198,7 +1225,9 @@ window.jobMap = (function () {
             map = null;
         }
         markersById = {};
+        lastFitPoints = [];
         firstViewApplied = false;
+        openingViewUntil = 0;
     }
 
     function escapeHtml(value) {
