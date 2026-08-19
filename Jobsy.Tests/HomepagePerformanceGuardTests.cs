@@ -40,6 +40,10 @@ public class HomepagePerformanceGuardTests
         var css = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "wwwroot", "css", "app.css"));
         Assert.Contains("html.cookie-consent-known .cookie-consent", css);
         Assert.Contains("contain: layout paint style", css);
+        Assert.DoesNotContain("cookie-consent__mascot", css);
+        Assert.Contains("components-reconnect-overlay", css);
+        Assert.Contains("translateZ(0)", css);
+        Assert.Contains("will-change: transform, opacity", css);
     }
 
     [Fact]
@@ -52,7 +56,7 @@ public class HomepagePerformanceGuardTests
         Assert.DoesNotContain("MapPreviewPins", discovery);
         Assert.Contains("EnsureDiscoveryAfterPaintAsync", discovery);
         Assert.Contains("TryInitJobMapAsync", discovery);
-        Assert.Contains("style=\"width: 100%; height: 300px; display: block; min-height: 300px;\"", discovery);
+        Assert.Contains("style=\"width: 100%; height: 300px; display: block;\"", discovery);
         Assert.DoesNotContain("job-map-placeholder__status", discovery);
         Assert.Contains("if (!RendererInfo.IsInteractive)", discovery);
         Assert.Contains("OnMapTilesReady", discovery);
@@ -61,18 +65,21 @@ public class HomepagePerformanceGuardTests
         var maps = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "wwwroot", "js", "maps-loader.js"));
         Assert.Contains("ensureAfterPaint", maps);
         Assert.Contains("IntersectionObserver", maps);
-        Assert.Contains("LOAD_DELAY_MS = 500", maps);
-        Assert.Contains("setTimeout(cb, LOAD_DELAY_MS)", maps);
+        Assert.Contains("requestIdleCallback", maps);
+        Assert.Contains("addEventListener(\"load\"", maps);
+        Assert.DoesNotContain("LOAD_DELAY_MS", maps);
         Assert.Contains("media = \"print\"", maps);
         Assert.DoesNotContain("jobsyMaps.warmDiscovery()", maps);
 
         var bundle = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "wwwroot", "js", "app-core.js"));
         Assert.Contains("ensureAfterPaint", bundle);
-        Assert.Contains("LOAD_DELAY_MS = 500", bundle);
+        Assert.Contains("requestIdleCallback", bundle);
+        Assert.DoesNotContain("LOAD_DELAY_MS", bundle);
         Assert.DoesNotContain("jobsyMaps.warmDiscovery()", bundle);
 
         var preview = Path.Combine(FindRepoRoot(), "Jobsy.Web", "wwwroot", "images", "maps", "nl-preview.webp");
-        Assert.True(File.Exists(preview));
+        Assert.False(File.Exists(preview));
+        Assert.False(Directory.Exists(Path.Combine(FindRepoRoot(), "Jobsy.Web", "wwwroot", "lib", "leaflet")));
 
         var layout = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "Components", "Layout", "MainLayout.razor"));
         Assert.Contains("RendererInfo.IsInteractive", layout);

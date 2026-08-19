@@ -33,9 +33,15 @@
             .jobsy-discovery:not(.jobsy-discovery--branch) .map-stage { min-height: 300px; width: 100%; }
         }
         .img-fallback-empty { background: #e7eef7; object-fit: contain; }
+        .components-reconnect-overlay,
+        .components-reconnect-dialog,
+        .components-rejoining-animation {
+            transform: translateZ(0);
+            will-change: transform, opacity;
+        }
     </style>
-    <link rel="stylesheet" href="css/app.css?v=20260819-tbt" media="print" onload="this.onload=null;this.media='all'" />
-    <noscript><link rel="stylesheet" href="css/app.css?v=20260819-tbt" /></noscript>
+    <link rel="stylesheet" href="css/app.css?v=20260819-psi" media="print" onload="this.onload=null;this.media='all'" />
+    <noscript><link rel="stylesheet" href="css/app.css?v=20260819-psi" /></noscript>
     <script>
         (function () {
             try {
@@ -118,9 +124,36 @@
     <CascadingAuthenticationState>
         <Routes @rendermode="new InteractiveServerRenderMode(prerender: true)" />
     </CascadingAuthenticationState>
-    <script src="js/app-core.js?v=20260819-tbt" defer></script>
+    <script src="js/app-core.js?v=20260819-psi" defer></script>
     <script src="js/feedback.js?v=20260816-fb2" defer></script>
-    <script src="_framework/blazor.web.js" defer></script>
+    <script>
+        (function () {
+            function bootBlazor() {
+                if (document.querySelector("script[data-jobsy-blazor]")) {
+                    return;
+                }
+                var s = document.createElement("script");
+                s.src = "_framework/blazor.web.js";
+                s.setAttribute("data-jobsy-blazor", "1");
+                document.body.appendChild(s);
+            }
+            function afterIdle(fn) {
+                if (typeof requestIdleCallback === "function") {
+                    requestIdleCallback(fn, { timeout: 2000 });
+                } else {
+                    setTimeout(fn, 0);
+                }
+            }
+            function afterLoad(fn) {
+                if (document.readyState === "complete") {
+                    fn();
+                } else {
+                    window.addEventListener("load", fn, { once: true });
+                }
+            }
+            afterLoad(function () { afterIdle(bootBlazor); });
+        })();
+    </script>
 </body>
 
 </html>

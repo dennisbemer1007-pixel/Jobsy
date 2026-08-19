@@ -517,7 +517,7 @@
         }
     </aside>
 
-<section class="map-pane" aria-label="@Culture["Page.JobMapTitle"]" style="width: 100%; height: 300px; min-height: 300px; display: block;">
+<section class="map-pane" aria-label="@Culture["Page.JobMapTitle"]" style="width: 100%; height: 300px; display: block;">
         @if (RendererInfo.IsInteractive && _mapPainted && _vacancies.Count > 0)
         {
             <HighlightVacancyCarousel Vacancies="HighlightedVacanciesForUi"
@@ -527,12 +527,12 @@
                                       OnHover="OnHover"
                                       OnSelect="OnCarouselSelect" />
         }
-        <div class="map-stage @(_mapPainted ? "is-live" : null)" style="width: 100%; height: 300px; min-height: 300px; display: block;">
+        <div class="map-stage @(_mapPainted ? "is-live" : null)" style="width: 100%; height: 300px; display: block;">
             <div class="job-map-placeholder" aria-hidden="true"></div>
             <div @ref="_mapElement"
                  id="job-map"
                  class="job-map"
-                 style="width: 100%; height: 300px; display: block; min-height: 300px;"></div>
+                 style="width: 100%; height: 300px; display: block;"></div>
             @if (_categories.Any(c => c.ShowInLegend && c.IsActive))
             {
                 <div class="map-legend @(_legendOpen ? "is-open" : null)">

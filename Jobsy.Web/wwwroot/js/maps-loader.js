@@ -3,19 +3,18 @@ window.jobsyMaps = (function () {
 
     var pending = {};
     var pendingPaint = {};
-    var LOAD_DELAY_MS = 500;
     var css = [
         "/lib/maplibre/maplibre-gl.css"
     ];
     var mapLibreScripts = [
         "/lib/maplibre/maplibre-gl.js",
-        "/js/jobsyMapLibre.js?v=20260819-tbt"
+        "/js/jobsyMapLibre.js?v=20260819-psi"
     ];
     var discoveryScripts = [
-        "/js/jobMap.js?v=20260819-tbt"
+        "/js/jobMap.js?v=20260819-psi"
     ];
     var detailScripts = [
-        "/js/vacancyDetailMap.js?v=20260819-tbt"
+        "/js/vacancyDetailMap.js?v=20260819-psi"
     ];
 
     function hrefMatches(node, href) {
@@ -113,21 +112,23 @@ window.jobsyMaps = (function () {
         return urls;
     }
 
-    function afterNextPaint(cb) {
-        if (typeof requestAnimationFrame === "function") {
-            requestAnimationFrame(function () {
-                requestAnimationFrame(cb);
-            });
+    function afterIdle(cb) {
+        if (typeof requestIdleCallback === "function") {
+            requestIdleCallback(function () { cb(); }, { timeout: 2500 });
         } else {
             setTimeout(cb, 0);
         }
     }
 
-    function afterMainThreadQuiet(cb) {
-        // Wait for FCP/LCP paint, then give the main thread 500ms before MapLibre.
-        afterNextPaint(function () {
-            setTimeout(cb, LOAD_DELAY_MS);
-        });
+    function afterPageLoad(cb) {
+        // MapLibre (1.1 MB) must not parse during the initial HTML load.
+        if (document.readyState === "complete") {
+            afterIdle(cb);
+        } else {
+            window.addEventListener("load", function () {
+                afterIdle(cb);
+            }, { once: true });
+        }
     }
 
     function isVisible(el) {
@@ -140,7 +141,7 @@ window.jobsyMaps = (function () {
     }
 
     function whenMapSlotReady(elementId, cb) {
-        afterMainThreadQuiet(function () {
+        afterPageLoad(function () {
             var el = elementId ? document.getElementById(elementId) : null;
             var done = false;
             var finish = function () {
@@ -174,6 +175,13 @@ window.jobsyMaps = (function () {
         });
     }
 
+    function fetchAssets(kind) {
+        return Promise.all([
+            Promise.all(css.map(loadCss)),
+            loadScriptsInOrder(scriptsFor(kind), 0)
+        ]);
+    }
+
     function ensure(kind) {
         kind = normalizeKind(kind);
         if (isReady(kind)) {
@@ -182,12 +190,13 @@ window.jobsyMaps = (function () {
         if (pending[kind]) {
             return pending[kind];
         }
-        pending[kind] = Promise.all([
-            Promise.all(css.map(loadCss)),
-            loadScriptsInOrder(scriptsFor(kind), 0)
-        ]).catch(function (err) {
-            pending[kind] = null;
-            throw err;
+        pending[kind] = new Promise(function (resolve, reject) {
+            afterPageLoad(function () {
+                fetchAssets(kind).then(resolve, function (err) {
+                    pending[kind] = null;
+                    reject(err);
+                });
+            });
         });
         return pending[kind];
     }

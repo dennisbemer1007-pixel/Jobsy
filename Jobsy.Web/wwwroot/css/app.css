@@ -12286,21 +12286,6 @@ html.cookie-consent-known .cookie-consent {
   justify-content: space-between;
 }
 
-.cookie-consent__mascot {
-  width: 3.25rem;
-  height: 3.25rem;
-  object-fit: contain;
-  flex: 0 0 auto;
-  filter: drop-shadow(0 6px 12px rgba(0, 0, 0, 0.28));
-  animation: lobsy-dialog-bob 1.8s ease-in-out infinite alternate;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .cookie-consent__mascot {
-    animation: none;
-  }
-}
-
 .cookie-consent__title {
   margin: 0 0 0.2rem;
   font-size: 0.92rem;
@@ -13641,4 +13626,12 @@ html.cookie-consent-known .cookie-consent {
 .jobsy-discovery:not(.jobsy-discovery--branch) .job-map {
     width: 100%;
     min-height: 300px;
+}
+
+/* GPU layer: Blazor reconnect chrome must not shift the document layout (CLS = 0). */
+.components-reconnect-overlay,
+.components-reconnect-dialog,
+.components-rejoining-animation {
+    transform: translateZ(0);
+    will-change: transform, opacity;
 }

@@ -112,7 +112,13 @@ public class JobMapPrerenderGuardTests
         Assert.Contains("height: 300px", app);
         Assert.Contains("min-height: 300px", app);
         Assert.Contains("min-width: 768px", app);
+        Assert.Contains("components-reconnect-overlay", app);
+        Assert.Contains("translateZ(0)", app);
+        Assert.Contains("will-change: transform, opacity", app);
+        Assert.Contains("data-jobsy-blazor", app);
+        Assert.Contains("requestIdleCallback", app);
         Assert.DoesNotContain("min-height: 55dvh", app);
+        Assert.DoesNotContain("<script src=\"_framework/blazor.web.js\"", app);
         Assert.DoesNotContain("lib/leaflet/leaflet.min.js", app);
         Assert.DoesNotContain("lib/leaflet/leaflet.css", app);
         Assert.DoesNotContain("lib/maplibre/maplibre-gl.js", app);
@@ -122,12 +128,15 @@ public class JobMapPrerenderGuardTests
         var maps = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "wwwroot", "js", "maps-loader.js"));
         Assert.Contains("pending[kind] = null", maps);
         Assert.Contains("discovery", maps);
-        Assert.Contains("LOAD_DELAY_MS = 500", maps);
-        Assert.Contains("setTimeout(cb, LOAD_DELAY_MS)", maps);
+        Assert.Contains("requestIdleCallback", maps);
+        Assert.Contains("addEventListener(\"load\"", maps);
+        Assert.Contains("document.readyState === \"complete\"", maps);
+        Assert.DoesNotContain("LOAD_DELAY_MS", maps);
         var bundle = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "wwwroot", "js", "app-core.js"));
         Assert.Contains("pending[kind] = null", bundle);
         Assert.Contains("maplibre-gl.js", bundle);
-        Assert.Contains("LOAD_DELAY_MS = 500", bundle);
+        Assert.Contains("requestIdleCallback", bundle);
+        Assert.DoesNotContain("LOAD_DELAY_MS", bundle);
     }
 
     [Fact]

@@ -2,7 +2,7 @@ using Microsoft.JSInterop;
 
 namespace Jobsy.Web.Hosting;
 
-/// <summary>Lazy-loads MapLibre GL after first paint (500ms + near-viewport) for discovery; detail maps load on demand.</summary>
+/// <summary>Lazy-loads MapLibre GL after window.load + requestIdleCallback (never in the initial HTML). Detail maps still load on demand.</summary>
 public static class MapScripts
 {
     public static ValueTask EnsureAsync(IJSRuntime js)
