@@ -21,7 +21,7 @@ public static class VacancyImageUrls
     {
         width = Math.Clamp(width, 80, IntrinsicWidth);
         height = Math.Clamp(height, 54, IntrinsicHeight);
-        return $"https://picsum.photos/seed/jobsy-{vacancyId:N}/{width}/{height}";
+        return $"https://picsum.photos/seed/jobsy-{vacancyId:N}/{width}/{height}.webp";
     }
 
     public static string Placeholder(Guid vacancyId, WorkType workTypes = WorkType.None)
@@ -94,7 +94,7 @@ public static class VacancyImageUrls
                 return null;
             }
 
-            return $"{PicsumUrl(id.Value, 320, 213)} 320w, {PicsumUrl(id.Value, 480, 320)} 480w";
+            return $"{PicsumUrl(id.Value, 300, 200)} 300w, {PicsumUrl(id.Value, 450, 300)} 450w";
         }
 
         if (!cloudflareResizing || !displayUrl.Contains("/cdn-cgi/image/", StringComparison.Ordinal))

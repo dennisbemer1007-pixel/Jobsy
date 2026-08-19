@@ -105,11 +105,11 @@ public class JobMapPrerenderGuardTests
     {
         var app = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "Components", "App.razor"));
         Assert.DoesNotContain("unpkg.com", app);
-        Assert.Contains("js/app-core.js", app);
+        Assert.Contains("js/app-core.min.js", app);
         Assert.Contains("defer", app);
         Assert.DoesNotContain("app-core.js?v=20260816-perf\" defer", app);
-        Assert.Contains("css/app.css", app);
-        Assert.Contains("media=\"print\"", app);
+        Assert.Contains("css/app.min.css", app);
+        Assert.Contains("data-jobsy-appcss", app);
         Assert.Contains("jobsyLogoFallback", app);
         Assert.Contains("#job-map", app);
         Assert.Contains("height: 300px", app);
@@ -138,14 +138,16 @@ public class JobMapPrerenderGuardTests
         Assert.Contains("requestIdleCallback", maps);
         Assert.Contains("addEventListener(\"load\"", maps);
         Assert.Contains("document.readyState === \"complete\"", maps);
-        Assert.Contains("DISCOVERY_DELAY_MS", maps);
+        Assert.Contains("INTERACT_FALLBACK_MS", maps);
         Assert.DoesNotContain("LOAD_DELAY_MS", maps);
+        Assert.DoesNotContain("DISCOVERY_DELAY_MS", maps);
         var bundle = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "wwwroot", "js", "app-core.js"));
         Assert.Contains("pending[kind] = null", bundle);
         Assert.Contains("maplibre-gl.js", bundle);
         Assert.Contains("requestIdleCallback", bundle);
-        Assert.Contains("DISCOVERY_DELAY_MS", bundle);
+        Assert.Contains("INTERACT_FALLBACK_MS", bundle);
         Assert.DoesNotContain("LOAD_DELAY_MS", bundle);
+        Assert.DoesNotContain("DISCOVERY_DELAY_MS", bundle);
     }
 
     [Fact]

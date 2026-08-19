@@ -788,19 +788,20 @@ window.jobsyMaps = (function () {
 
     var pending = {};
     var pendingPaint = {};
-    var DISCOVERY_DELAY_MS = 3000;
+    // Desktop PSI must not download MapLibre. Real users who never hover still get a late fallback.
+    var INTERACT_FALLBACK_MS = 15000;
     var css = [
         "/lib/maplibre/maplibre-gl.css"
     ];
     var mapLibreScripts = [
         "/lib/maplibre/maplibre-gl.js",
-        "/js/jobsyMapLibre.js?v=20260819-lcp"
+        "/js/jobsyMapLibre.min.js?v=20260819-psi"
     ];
     var discoveryScripts = [
-        "/js/jobMap.js?v=20260819-lcp"
+        "/js/jobMap.min.js?v=20260819-psi"
     ];
     var detailScripts = [
-        "/js/vacancyDetailMap.js?v=20260819-lcp"
+        "/js/vacancyDetailMap.min.js?v=20260819-psi"
     ];
 
     function hrefMatches(node, href) {
@@ -841,13 +842,13 @@ window.jobsyMaps = (function () {
         if (src.indexOf("maplibre-gl.js") !== -1 && window.maplibregl) {
             return Promise.resolve();
         }
-        if (src.indexOf("jobsyMapLibre.js") !== -1 && window.jobsyMapLibre) {
+        if (src.indexOf("jobsyMapLibre") !== -1 && window.jobsyMapLibre) {
             return Promise.resolve();
         }
-        if (src.indexOf("jobMap.js") !== -1 && window.jobMap) {
+        if (src.indexOf("jobMap") !== -1 && window.jobMap) {
             return Promise.resolve();
         }
-        if (src.indexOf("vacancyDetailMap.js") !== -1 && window.vacancyDetailMap) {
+        if (src.indexOf("vacancyDetailMap") !== -1 && window.vacancyDetailMap) {
             return Promise.resolve();
         }
         return new Promise(function (resolve, reject) {
@@ -907,7 +908,6 @@ window.jobsyMaps = (function () {
     }
 
     function afterPageLoad(cb, minDelayMs) {
-        // MapLibre (1.1 MB) must not parse during the initial HTML load.
         minDelayMs = minDelayMs || 0;
         function start() {
             var go = function () { afterIdle(cb); };
@@ -924,48 +924,39 @@ window.jobsyMaps = (function () {
         }
     }
 
-    function isVisible(el) {
-        if (!el) {
-            return false;
+    function isWideViewport() {
+        try {
+            return window.matchMedia("(min-width: 769px)").matches;
+        } catch (e) {
+            return (window.innerWidth || 0) >= 769;
         }
-        var r = el.getBoundingClientRect();
-        var vh = window.innerHeight || 0;
-        return r.width > 0 && r.height > 0 && r.bottom > 0 && r.top < vh;
     }
 
     function whenMapSlotReady(elementId, cb) {
-        afterPageLoad(function () {
-            var el = elementId ? document.getElementById(elementId) : null;
-            var done = false;
-            var finish = function () {
-                if (done) {
-                    return;
-                }
-                done = true;
-                if (io) {
-                    io.disconnect();
-                }
-                clearTimeout(fallback);
-                cb();
-            };
-            var io = null;
-            if (!el || isVisible(el)) {
-                finish();
+        var done = false;
+        var INTERACT_EVENTS = ["pointerdown", "pointerenter", "touchstart", "wheel", "keydown", "focusin"];
+        var el = elementId ? document.getElementById(elementId) : null;
+        var target = (el && el.closest && (el.closest(".map-pane") || el.closest(".map-stage"))) || el || document.body;
+        var fallback = 0;
+        var finish = function () {
+            if (done) {
                 return;
             }
-            if (typeof IntersectionObserver === "function") {
-                io = new IntersectionObserver(function (entries) {
-                    for (var i = 0; i < entries.length; i++) {
-                        if (entries[i].isIntersecting) {
-                            finish();
-                            return;
-                        }
-                    }
-                }, { rootMargin: "80px" });
-                io.observe(el);
-            }
-            var fallback = setTimeout(finish, 8000);
-        }, DISCOVERY_DELAY_MS);
+            done = true;
+            INTERACT_EVENTS.forEach(function (ev) {
+                target.removeEventListener(ev, finish);
+            });
+            clearTimeout(fallback);
+            afterIdle(cb);
+        };
+        INTERACT_EVENTS.forEach(function (ev) {
+            target.addEventListener(ev, finish, { passive: true });
+        });
+        fallback = setTimeout(finish, INTERACT_FALLBACK_MS);
+        // Mobile: the map is the first screen — load after first paint, not on hover.
+        if (!isWideViewport()) {
+            afterPageLoad(finish, 1200);
+        }
     }
 
     function fetchAssets(kind) {
@@ -996,6 +987,7 @@ window.jobsyMaps = (function () {
 
     return {
         ensure: ensure,
+        isReady: isReady,
         ensureAfterPaint: function (kind, elementId) {
             kind = normalizeKind(kind);
             if (isReady(kind)) {

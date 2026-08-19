@@ -480,8 +480,8 @@
                                               VacancyId="vacancy.Id"
                                               WorkType="@(vacancy.WorkTypes.FirstOrDefault())"
                                               Class="job-card__photo"
-                                              Width="320"
-                                              Height="213"
+                                              Width="300"
+                                              Height="200"
                                               Sizes="(max-width: 768px) 50vw, 300px"
                                               Eager="photoEager"
                                               HighPriority="photoHigh" />
@@ -870,6 +870,7 @@
     private bool _mapPainted;
     private bool _mapInitScheduled;
     private bool _mapHostReady;
+    private bool _mapScriptsRequested;
 
     private ElementReference _mapElement;
     private const int DefaultMinHoursPerWeek = 0;
@@ -1073,7 +1074,7 @@
 
             var href = VacancyImageUrls.ForDisplay(
                 first.ImageUrl,
-                320,
+                300,
                 cloudflareResizing: false,
                 first.Id,
                 first.WorkTypes.FirstOrDefault());
@@ -1696,11 +1697,35 @@
         }
     }
 
-    private async Task TryInitJobMapAsync()
+    private async Task LoadMapScriptsThenInitAsync()
     {
         try
         {
             await MapScripts.EnsureDiscoveryAfterPaintAsync(Js);
+            await InvokeAsync(TryInitJobMapAsync);
+        }
+        catch (JSException)
+        {
+        }
+        catch (InvalidOperationException)
+        {
+        }
+    }
+
+    private async Task TryInitJobMapAsync()
+    {
+        try
+        {
+            var scriptsReady = await Js.InvokeAsync<bool>("jobsyMaps.isReady", "discovery");
+            if (!scriptsReady)
+            {
+                if (!_mapScriptsRequested)
+                {
+                    _mapScriptsRequested = true;
+                    _ = LoadMapScriptsThenInitAsync();
+                }
+                return;
+            }
         }
         catch (JSException)
         {
