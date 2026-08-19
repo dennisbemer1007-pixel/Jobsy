@@ -366,13 +366,12 @@ window.jobMap = (function () {
             : "";
 
         let mediaInner = "";
-        const logoSrc = v.logoUrl || v.imageUrl || "/images/lobsy-256.webp?v=20260819-mapcls";
         if (hasImage) {
             mediaInner +=
                 "<img class=\"map-popup__photo\" src=\"" + escapeAttr(v.imageUrl) + "\" alt=\"\" loading=\"lazy\" data-logo-fallback=\"1\" onerror=\"window.jobsyLogoFallback&&window.jobsyLogoFallback(this)\" />";
-        } else {
+        } else if (v.logoUrl) {
             mediaInner +=
-                "<img class=\"map-popup__media-logo\" src=\"" + escapeAttr(logoSrc) + "\" alt=\"" +
+                "<img class=\"map-popup__media-logo\" src=\"" + escapeAttr(v.logoUrl) + "\" alt=\"" +
                 escapeAttr(v.company) + " logo\" loading=\"lazy\" data-logo-fallback=\"1\" onerror=\"window.jobsyLogoFallback&&window.jobsyLogoFallback(this)\" />";
         }
 
@@ -1381,9 +1380,6 @@ window.jobMap = (function () {
     function invalidate() {
         if (!map) {
             return;
-        }
-        if (window.jobsyMapLibre) {
-            window.jobsyMapLibre.pinReservedBox(map.getContainer());
         }
         map.resize();
         if (Date.now() < openingViewUntil || !firstViewApplied) {

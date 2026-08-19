@@ -11,9 +11,9 @@
          alt="@Alt"
          width="@Width"
          height="@Height"
-         loading="@(Eager || HighPriority ? "eager" : "lazy")"
+         loading="@(Eager ? "eager" : "lazy")"
          decoding="async"
-         fetchpriority="@(HighPriority ? "high" : "auto")"
+         fetchpriority="@(Eager ? "high" : "auto")"
          data-logo-fallback="1"
          onerror="window.jobsyLogoFallback&&window.jobsyLogoFallback(this)"
          draggable="false" />
@@ -26,7 +26,6 @@
     [Parameter] public string? Class { get; set; }
     [Parameter] public string Alt { get; set; } = "";
     [Parameter] public bool Eager { get; set; }
-    [Parameter] public bool HighPriority { get; set; }
     [Parameter] public string Sizes { get; set; } = "(max-width: 700px) 50vw, 360px";
     [Parameter] public int Width { get; set; } = VacancyImageUrls.IntrinsicWidth;
     [Parameter] public int Height { get; set; } = VacancyImageUrls.IntrinsicHeight;
@@ -40,9 +39,7 @@
         VacancyId,
         WorkType);
 
-    private string? SrcSetOrNull => Width <= 200
-        ? null
-        : VacancyImageUrls.SrcSet(DisplaySrc, CloudflareResizing);
+    private string? SrcSetOrNull => VacancyImageUrls.SrcSet(DisplaySrc, CloudflareResizing);
 
     private string? SizesOrNull => string.IsNullOrWhiteSpace(SrcSetOrNull) ? null : Sizes;
 }

@@ -15,9 +15,9 @@ Na die eerste ronde was het gewicht weg (36 requests / ~334&nbsp;KB) en LCP ~2.4
 
 ## Homepage-kaart (aug 2026)
 
-De banenkaart blijft de first-paint kernervaring (geen Funda-klik-om-te-tonen):
+De banenkaart blijft de first-paint kernervaring (geen Funda-klik-om-te-tonen). PageSpeed-PRs #159–#165 (vaste 300px-box, MapLibre pas na `window.load` of klik, minified CSS/JS, cards-first) zijn teruggedraaid omdat de desktopkaart leeg bleef.
 
-- Home prerendert alleen de kaart-chrome (landkleur, geen nep-pins en geen NL-overzicht). `#job-map` heeft **inline** `height: 300px` in de HTML, zodat de browser de box reserveert vóór CSS/JS (CLS 0). MapLibre laadt pas 500ms na first paint + IntersectionObserver.
+- Home prerendert alleen de kaart-chrome (landkleur, geen nep-pins en geen NL-overzicht). `#job-map` heeft een vaste `min-height` (55dvh / 70vh) zodat CLS niet optreedt.
 - MapLibre GL JS + OpenFreeMap laden **lui**: IntersectionObserver + `requestIdleCallback` (geen blocking CSS/JS in de eerste HTML). Overlay weg zodra er echte markers zijn.
 - Cookie-banner is compact, paint-contained, en wint de LCP niet van de kaart.
 - Critical CSS staat inline in `App.razor`; de volle `app.css` volgt asynchroon (`media=print` → `all`). Scripts (`app-core`, `blazor.web.js`) hebben `defer`.

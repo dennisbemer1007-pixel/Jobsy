@@ -21,7 +21,7 @@ public static class VacancyImageUrls
     {
         width = Math.Clamp(width, 80, IntrinsicWidth);
         height = Math.Clamp(height, 54, IntrinsicHeight);
-        return $"https://picsum.photos/seed/jobsy-{vacancyId:N}/{width}/{height}.webp";
+        return $"https://picsum.photos/seed/jobsy-{vacancyId:N}/{width}/{height}";
     }
 
     public static string Placeholder(Guid vacancyId, WorkType workTypes = WorkType.None)
@@ -79,25 +79,11 @@ public static class VacancyImageUrls
 
     public static string? SrcSet(string displayUrl, bool cloudflareResizing)
     {
-        if (string.IsNullOrWhiteSpace(displayUrl)
+        if (!cloudflareResizing
+            || string.IsNullOrWhiteSpace(displayUrl)
             || displayUrl.StartsWith("data:", StringComparison.OrdinalIgnoreCase)
-            || displayUrl.EndsWith(".svg", StringComparison.OrdinalIgnoreCase))
-        {
-            return null;
-        }
-
-        if (IsPicsum(displayUrl))
-        {
-            var id = TryExtractSeed(displayUrl);
-            if (id is null || id == Guid.Empty)
-            {
-                return null;
-            }
-
-            return $"{PicsumUrl(id.Value, 300, 200)} 300w, {PicsumUrl(id.Value, 450, 300)} 450w";
-        }
-
-        if (!cloudflareResizing || !displayUrl.Contains("/cdn-cgi/image/", StringComparison.Ordinal))
+            || displayUrl.EndsWith(".svg", StringComparison.OrdinalIgnoreCase)
+            || !displayUrl.Contains("/cdn-cgi/image/", StringComparison.Ordinal))
         {
             return null;
         }

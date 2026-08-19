@@ -9,7 +9,6 @@
 @using Jobsy.Core.Media
 @using Jobsy.Core.Rules
 @using Jobsy.Web.Hosting
-@using Jobsy.Web.Media
 @implements IAsyncDisposable
 
 <PageTitle>@(_page?.Name ?? Culture["BranchPage.Title"]) · Lobsy</PageTitle>
@@ -36,17 +35,6 @@
                     {
                         <img class="branch-page__logo"
                              src="@_page.LogoUrl"
-                             alt=""
-                             width="48"
-                             height="48"
-                             decoding="async"
-                             data-logo-fallback="1"
-                             onerror="window.jobsyLogoFallback&&window.jobsyLogoFallback(this)" />
-                    }
-                    else
-                    {
-                        <img class="branch-page__logo"
-                             src="@BrandImages.FallbackWebp256"
                              alt=""
                              width="48"
                              height="48"
@@ -185,9 +173,9 @@
         }
     </aside>
 
-    <section class="map-pane map-pane--branch" style="width: 100%; height: 300px; display: block;">
-        <div class="map-stage" style="width: 100%; height: 300px; display: block;">
-            <div @ref="_mapElement" id="branch-job-map" class="job-map" style="width: 100%; height: 300px; display: block;"></div>
+    <section class="map-pane map-pane--branch">
+        <div class="map-stage">
+            <div @ref="_mapElement" id="branch-job-map" class="job-map"></div>
         </div>
     </section>
 </div>

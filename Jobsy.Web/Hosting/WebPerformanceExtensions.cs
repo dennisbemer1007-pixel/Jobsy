@@ -37,7 +37,7 @@ public static class WebPerformanceExtensions
                 {
                     // Query-string cache busting is already used on CSS/JS/brand marks.
                     ctx.Context.Response.Headers.CacheControl =
-                        "public,max-age=31536000,immutable,stale-while-revalidate=86400";
+                        "public,max-age=604800,stale-while-revalidate=86400";
                 }
             }
         };

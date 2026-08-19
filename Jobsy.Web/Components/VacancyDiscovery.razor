@@ -445,12 +445,6 @@
             </div>
             @if (ShouldRenderVacancyCards)
             {
-                @if (LcpPreloadHref is not null)
-                {
-                    <HeadContent>
-                        <link rel="preload" as="image" href="@LcpPreloadHref" fetchpriority="high" />
-                    </HeadContent>
-                }
                 <HighlightVacancyCarousel Vacancies="HighlightedVacanciesForUi"
                                           ActiveId="_hoveredId"
                                           ModifierClass="highlight-carousel--list"
@@ -458,12 +452,8 @@
                                           OnHover="OnHover"
                                           OnSelect="OnCarouselSelect" />
                 <div class="vacancy-list vacancy-list--cards">
-                    @{ var cardIndex = 0; }
                     @foreach (var vacancy in VisibleVacancies)
                     {
-                        var photoEager = cardIndex < AboveFoldEagerPhotos;
-                        var photoHigh = cardIndex < 2;
-                        cardIndex++;
                         var wageText = FormatWage(vacancy);
                         var travelText = vacancy.TravelMinutes is not null
                             ? $"± {vacancy.TravelMinutes} {Culture["Discovery.Minutes"]}"
@@ -477,11 +467,9 @@
                                               VacancyId="vacancy.Id"
                                               WorkType="@(vacancy.WorkTypes.FirstOrDefault())"
                                               Class="job-card__photo"
-                                              Width="300"
-                                              Height="200"
-                                              Sizes="(max-width: 768px) 50vw, 300px"
-                                              Eager="photoEager"
-                                              HighPriority="photoHigh" />
+                                              Width="400"
+                                              Height="267"
+                                              Sizes="(max-width: 700px) 50vw, 360px" />
                                 @if (vacancy.IsHighlighted)
                                 {
                                     <span class="job-card__badge">@Culture["Discovery.Featured"]</span>
@@ -529,7 +517,7 @@
         }
     </aside>
 
-<section class="map-pane" aria-label="@Culture["Page.JobMapTitle"]" style="width: 100%; display: block;">
+    <section class="map-pane" aria-label="@Culture["Page.JobMapTitle"]">
         @if (RendererInfo.IsInteractive && _mapPainted && _vacancies.Count > 0)
         {
             <HighlightVacancyCarousel Vacancies="HighlightedVacanciesForUi"
@@ -539,12 +527,9 @@
                                       OnHover="OnHover"
                                       OnSelect="OnCarouselSelect" />
         }
-        <div class="map-stage @(_mapPainted ? "is-live" : null)" style="width: 100%; display: block;">
+        <div class="map-stage @(_mapPainted ? "is-live" : null)">
             <div class="job-map-placeholder" aria-hidden="true"></div>
-            <div @ref="_mapElement"
-                 id="job-map"
-                 class="job-map"
-                 style="width: 100%; height: 300px; display: block;"></div>
+            <div @ref="_mapElement" id="job-map" class="job-map"></div>
             @if (_categories.Any(c => c.ShowInLegend && c.IsActive))
             {
                 <div class="map-legend @(_legendOpen ? "is-open" : null)">
@@ -853,10 +838,7 @@
     private bool showMapOnMobile = true;
     /// <summary>Desktop split view (≥769px). Default false so mobile PSI does not mount 200+ cards.</summary>
     private bool _wideViewport;
-    /// <summary>False until jobsyViewport.isWide returns, so prerendered desktop cards are not yanked.</summary>
-    private bool _viewportResolved;
     private const int VacancyCardPageSize = 12;
-    private const int AboveFoldEagerPhotos = 6;
     private const int HighlightCarouselCap = 8;
     private int _visibleCardCount = VacancyCardPageSize;
     private bool _filtersOpen;
@@ -867,7 +849,6 @@
     private bool _mapPainted;
     private bool _mapInitScheduled;
     private bool _mapHostReady;
-    private bool _mapScriptsRequested;
 
     private ElementReference _mapElement;
     private const int DefaultMinHoursPerWeek = 0;
@@ -1049,35 +1030,12 @@
     }
 
     /// <summary>
-    /// Desktop LCP: prerender a windowed card list (mobile CSS hides .vacancy-pane).
-    /// After hydrate, keep those cards until the viewport is known, then show on
-    /// desktop or the mobile list — never wait for MapLibre.
+    /// Job cards stay out of prerender HTML, the hidden mobile map pane, and
+    /// first paint — picsum photos start only after the map is live.
+    /// Desktop (wide) then shows a windowed list beside the map.
     /// </summary>
     private bool ShouldRenderVacancyCards =>
-        !RendererInfo.IsInteractive
-        || !_viewportResolved
-        || _wideViewport
-        || !showMapOnMobile;
-
-    private string? LcpPreloadHref
-    {
-        get
-        {
-            var first = VisibleVacancies.FirstOrDefault();
-            if (first is null)
-            {
-                return null;
-            }
-
-            var href = VacancyImageUrls.ForDisplay(
-                first.ImageUrl,
-                300,
-                cloudflareResizing: false,
-                first.Id,
-                first.WorkTypes.FirstOrDefault());
-            return string.IsNullOrWhiteSpace(href) ? null : href;
-        }
-    }
+        RendererInfo.IsInteractive && _mapPainted && (_wideViewport || !showMapOnMobile);
 
     private IReadOnlyList<VacancyListItem> HighlightedVacanciesForUi
     {
@@ -1173,8 +1131,7 @@
 
         if (!RendererInfo.IsInteractive)
         {
-            // Anonymous catalog in prerender HTML so desktop LCP is in the first document.
-            await LoadVacanciesAsync();
+            // Catalog waits for the circuit. Keep loading so prerender is not "geen vacatures".
             return;
         }
 
@@ -1573,30 +1530,28 @@
             _ = WarmDiscoveryScriptsAsync();
         }
 
-        if (!_viewportResolved)
+        // Show the live map as soon as catalog coordinates exist — do not wait on geo or viewport.
+        await TryInitJobMapAsync();
+
+        if (firstRender)
         {
             try
             {
                 var wide = await Js.InvokeAsync<bool>("jobsyViewport.isWide");
-                _wideViewport = wide;
-                _viewportResolved = true;
-                await InvokeAsync(StateHasChanged);
+                if (wide != _wideViewport)
+                {
+                    _wideViewport = wide;
+                    StateHasChanged();
+                }
             }
             catch (JSException)
             {
-                // Keep mobile-first: unmount prerendered cards on the map view.
-                _wideViewport = false;
-                _viewportResolved = true;
-                await InvokeAsync(StateHasChanged);
+                // Keep mobile-first: do not mount the full card list.
             }
             catch (InvalidOperationException)
             {
-                // Circuit not ready — keep prerendered cards until the next render.
             }
         }
-
-        // Cards do not wait on the map. Init after viewport so desktop list paints first.
-        await TryInitJobMapAsync();
 
         if (!_launchHydrationDone)
         {
@@ -1694,35 +1649,11 @@
         }
     }
 
-    private async Task LoadMapScriptsThenInitAsync()
-    {
-        try
-        {
-            await MapScripts.EnsureDiscoveryAfterPaintAsync(Js);
-            await InvokeAsync(TryInitJobMapAsync);
-        }
-        catch (JSException)
-        {
-        }
-        catch (InvalidOperationException)
-        {
-        }
-    }
-
     private async Task TryInitJobMapAsync()
     {
         try
         {
-            var scriptsReady = await Js.InvokeAsync<bool>("jobsyMaps.isReady", "discovery");
-            if (!scriptsReady)
-            {
-                if (!_mapScriptsRequested)
-                {
-                    _mapScriptsRequested = true;
-                    _ = LoadMapScriptsThenInitAsync();
-                }
-                return;
-            }
+            await MapScripts.EnsureDiscoveryAfterPaintAsync(Js);
         }
         catch (JSException)
         {
@@ -1914,7 +1845,7 @@
                 _pendingCompanyMapFocus = _mapFocusCompanyId is not null;
             }
 
-            if (_vacancies.Count > 0 && RendererInfo.IsInteractive)
+            if (_vacancies.Count > 0)
             {
                 _ = RecordImpressionsSafeAsync();
             }

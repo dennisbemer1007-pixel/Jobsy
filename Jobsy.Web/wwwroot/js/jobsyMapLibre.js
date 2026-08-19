@@ -53,10 +53,6 @@ window.jobsyMapLibre = (function () {
         container.dataset.jobsyTouchLock = "1";
         // One-finger pan on the map must not scroll the rest of the page.
         container.addEventListener("touchmove", function (ev) {
-            // One finger pans the map; two fingers may pinch-zoom. Never scroll the page.
-            if (ev.touches && ev.touches.length > 1) {
-                return;
-            }
             if (ev.cancelable) {
                 ev.preventDefault();
             }
@@ -70,7 +66,7 @@ window.jobsyMapLibre = (function () {
         var el = map.getContainer();
         el.classList.add("job-map--minimal");
         var junk = el.querySelectorAll(
-            ".maplibregl-ctrl-attrib, .maplibregl-ctrl-logo, a.maplibregl-ctrl-logo, .maplibregl-compact, .maplibregl-ctrl-attrib-inner, .maplibregl-ctrl-attrib-button"
+            ".maplibregl-ctrl-attrib, .maplibregl-ctrl-logo, a.maplibregl-ctrl-logo, .maplibregl-compact"
         );
         for (var i = 0; i < junk.length; i++) {
             junk[i].remove();
@@ -174,73 +170,11 @@ window.jobsyMapLibre = (function () {
         });
     }
 
-    function pinReservedBox(container) {
-        if (!container || container.id !== "job-map") {
-            return;
-        }
-        var wide = false;
-        try {
-            wide = window.matchMedia("(min-width: 769px)").matches;
-        } catch (e) { }
-        if (!wide) {
-            try {
-                wide = (window.innerWidth || 0) >= 769;
-            } catch (e) { }
-        }
-        if (wide) {
-            container.style.position = "absolute";
-            container.style.inset = "0";
-            container.style.top = "0";
-            container.style.right = "0";
-            container.style.bottom = "0";
-            container.style.left = "0";
-            container.style.width = "100%";
-            container.style.height = "100%";
-            container.style.minHeight = "0";
-            container.style.minWidth = "0";
-            container.style.display = "block";
-            var stage = container.parentElement;
-            var pane = container.closest ? container.closest(".map-pane") : null;
-            if (stage && stage.classList && stage.classList.contains("map-stage")) {
-                stage.style.position = "relative";
-                stage.style.height = "100%";
-                stage.style.minHeight = "0";
-                stage.style.width = "100%";
-            }
-            if (pane) {
-                pane.style.height = "100%";
-                pane.style.minHeight = "0";
-                pane.style.position = "relative";
-            }
-            return;
-        }
-        var height = container.style.height;
-        var minHeight = container.style.minHeight;
-        if (!height || height === "0" || height === "0px") {
-            container.style.height = "300px";
-        }
-        if (!minHeight || minHeight === "0" || minHeight === "0px") {
-            container.style.minHeight = "300px";
-        }
-        container.style.width = container.style.width || "100%";
-        container.style.display = "block";
-        container.style.minWidth = container.style.minWidth || "100%";
-        if (container.style.position === "absolute") {
-            container.style.position = "relative";
-            container.style.inset = "auto";
-            container.style.top = "";
-            container.style.right = "";
-            container.style.bottom = "";
-            container.style.left = "";
-        }
-    }
-
     function createMap(container, options) {
         if (typeof maplibregl === "undefined") {
             throw new Error("MapLibre GL JS (maplibregl) is not loaded");
         }
         options = options || {};
-        pinReservedBox(container);
         var styleKey = options.styleKey || readStoredStyle();
         var spec = styleSpec(styleKey);
         var map = new maplibregl.Map({
@@ -270,7 +204,6 @@ window.jobsyMapLibre = (function () {
         });
 
         map._jobsyStyleKey = spec.key;
-        pinReservedBox(map.getContainer());
         lockTouch(map.getContainer());
         hideChrome(map);
         map.addControl(new maplibregl.NavigationControl({
@@ -281,16 +214,11 @@ window.jobsyMapLibre = (function () {
         attachStyleSwitch(map);
 
         map.on("load", function () {
-            pinReservedBox(map.getContainer());
             hideChrome(map);
             applyCameraForStyle(map, spec);
         });
         map.on("styledata", function () {
-            pinReservedBox(map.getContainer());
             hideChrome(map);
-        });
-        map.on("resize", function () {
-            pinReservedBox(map.getContainer());
         });
 
         return map;
@@ -306,7 +234,6 @@ window.jobsyMapLibre = (function () {
         createMap: createMap,
         setStyle: setStyle,
         hideChrome: hideChrome,
-        lockTouch: lockTouch,
-        pinReservedBox: pinReservedBox
+        lockTouch: lockTouch
     };
 })();

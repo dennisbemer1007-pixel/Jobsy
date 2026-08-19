@@ -18,7 +18,8 @@ Alle noemenswaardige wijzigingen aan dit project worden in dit bestand bijgehoud
 - Quality gate 456: geüploade CV-bytes wissen bij intrekken; OpenAI-CV-extractie in privacyverklaring/consent; geen OpenAI-response bodies in logs; werkgeverslijst toont recensietelling pas na Accept.
 
 ### Changed
-- Homepage PageSpeed: `app.css` laadt non-blocking (`media=print` + onload), `app-core`/`blazor.web.js` met `defer`, MapLibre pas 500ms na first paint + IntersectionObserver. `#job-map` reserveert 300px **inline** in de HTML zodat CLS 0 blijft; logo-`<img>` valt terug op `/images/lobsy-256.webp` en daarna een SVG.
+- Homepage-kaart: PageSpeed-PRs #159–#165 teruggedraaid. MapLibre laadt weer meteen na paint (geen click-only / window.load-gate), desktopkaart vult de kolom (`55dvh` / `70vh`) in plaats van een lege 300px-box.
+- Homepage PageSpeed: `app.css` laadt non-blocking (`media=print` + onload), `app-core`/`blazor.web.js` met `defer`, MapLibre pas na idle/IntersectionObserver. `#job-map` reserveert 55dvh om CLS te voorkomen; logo-`<img>` valt terug op Lobsy-mark.
 - Banenkaart: Leaflet/Carto vervangen door **MapLibre GL JS + OpenFreeMap** (Liberty standaard, 3D/Bright-switch, groene pins, geen attribution-chrome). Zie `docs/performance.md`.
 - Role dashboards (`/home`): geen foutflits meer na login (admin en andere rollen). GET-calls retrien kort terwijl auth settelt; 401 alleen zonder credentials; fouttekst alleen als er echt geen data is.
 - Homepage-kaart: first paint toont al pins op de NL-preview; Leaflet warmt meteen na paint (geen lege kaart meer tot de circuit klaar is).

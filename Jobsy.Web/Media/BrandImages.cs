@@ -14,9 +14,6 @@ public static class BrandImages
     public const string AbsoluteWebp128 = $"/images/brand/lobsy-128.webp?v={Version}";
     public const string AbsoluteWebp256 = $"/images/brand/lobsy-256.webp?v={Version}";
 
-    /// <summary>Public logo fallback used when a company mark is missing or fails to load.</summary>
-    public const string FallbackWebp256 = "/images/lobsy-256.webp?v=20260819-mapcls";
-
     public const string SrcSet56 =
         $"{Webp64} 64w, {Webp128} 128w, {Webp256} 256w";
 

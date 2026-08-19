@@ -10,106 +10,32 @@
     <link rel="apple-touch-icon" href="@Jobsy.Web.Media.BrandImages.AppleTouch" />
     <link rel="dns-prefetch" href="https://tiles.openfreemap.org" />
     <style>
-        :root { --bg:#f5f2ee; --surface:#fffcfa; --text:#122033; --muted:#5a6a7d; --border:#ddd5cc; --brand:#0f2d5c; --secondary:#163a6b; --accent:#0f2d5c; --accent-soft:#e7eef7; --coral:#f54a1b; --hover:#f0ebe6; --map-land:#e6efe4; --radius-sm:8px; --font:"Segoe UI","Helvetica Neue",Arial,sans-serif; }
+        :root { --bg:#f5f2ee; --surface:#fffcfa; --text:#122033; --border:#ddd5cc; --brand:#0f2d5c; --map-land:#e6efe4; --font:"Segoe UI","Helvetica Neue",Arial,sans-serif; }
         * { box-sizing: border-box; }
         html, body { margin: 0; height: 100%; font-family: var(--font); color: var(--text); background: var(--bg); }
         html.cookie-consent-known .cookie-consent { display: none; }
-        .app-shell { display: flex; flex-direction: column; height: 100%; min-height: 100%; }
-        .app-header { display: flex; align-items: center; justify-content: space-between; gap: 0.85rem; height: 4.25rem; min-height: 4.25rem; max-height: 4.25rem; padding: 0.35rem 1.15rem; flex-shrink: 0; overflow: hidden; }
-        .app-header__brand { display: flex; align-items: center; gap: 0.75rem; min-width: 0; }
-        .app-header__actions { display: flex; align-items: center; gap: 0.75rem; flex-shrink: 0; }
-        .app-main { flex: 1; min-height: 0; display: flex; flex-direction: column; overflow: hidden; position: relative; }
-        .app-footer { flex-shrink: 0; }
-        .app-shell:has(.jobsy-discovery) .app-footer { display: none; }
-        .jobsy-chrome { display: none; }
-        .lobsy-logo { width: 56px; height: 56px; display: block; flex-shrink: 0; }
-        .lobsy-logo__img { width: 100%; height: 100%; display: block; object-fit: contain; }
-        .lobsy-watermarks { display: none; }
-        .cookie-consent { position: fixed; left: 0; right: 0; bottom: 0; z-index: 80; }
-        .bottom-nav { position: fixed; left: 0; right: 0; bottom: 0; z-index: 50; height: 4.75rem; }
-        .jobsy-discovery { display: grid; grid-template-columns: minmax(320px,42%) minmax(0,58%); min-height: 0; height: 100%; position: relative; flex: 1; overflow: hidden; }
-        .vacancy-pane { min-height: 0; overflow: hidden; }
-        .map-pane, .map-stage { position: relative; display: block; width: 100%; min-width: 280px; height: 300px; min-height: 300px; background: var(--map-land); contain: layout; }
-        .map-stage { flex: none; }
-        #job-map, .job-map { display: block; width: 100%; min-width: 280px; height: 300px; min-height: 300px; background: var(--map-land); contain: layout; }
+        .jobsy-discovery { display: grid; grid-template-columns: minmax(320px,42%) minmax(0,58%); min-height: 0; height: 100%; position: relative; }
+        .map-pane, .map-stage { position: relative; width: 100%; min-width: 280px; min-height: 55dvh; background: var(--map-land); }
+        .map-stage { flex: 1 1 auto; }
+        #job-map, .job-map { width: 100%; min-width: 280px; min-height: 55dvh; height: 100%; background: var(--map-land); contain: layout; }
         .job-map-placeholder { position: absolute; inset: 0; background: var(--map-land); pointer-events: none; }
         @@media (max-width: 768px) {
-            .app-shell:has(.jobsy-discovery) .app-header,
-            .app-shell:has(.jobsy-discovery) .app-footer { display: none; }
-            .app-shell:has(.jobsy-discovery) .app-main { padding-bottom: 4.75rem; overflow: hidden; }
-            .jobsy-chrome { display: block; height: 10.25rem; max-height: 10.25rem; overflow: hidden; }
-            .jobsy-logo .lobsy-logo,
-            .jobsy-logo__img { width: 48px; height: 48px; }
             .jobsy-discovery { grid-template-columns: 1fr; grid-template-rows: auto 1fr; }
-            .jobsy-discovery .vacancy-pane,
-            .jobsy-discovery .discovery-toolbar--desktop { display: none; }
-            .jobsy-discovery.show-list .highlight-carousel--list { display: flex; }
             .jobsy-discovery.show-map .map-pane,
             .jobsy-discovery.show-map .map-stage,
             .jobsy-discovery.show-map #job-map,
             .jobsy-discovery.show-map .job-map,
-            .jobsy-discovery.show-map .job-map-placeholder { width: 100%; min-width: 100%; height: 300px; min-height: 300px; grid-column: 1; grid-row: 2; }
+            .jobsy-discovery.show-map .job-map-placeholder { min-height: 55dvh; width: 100%; min-width: 100%; }
         }
         @@media (min-width: 769px) {
-            .jobsy-chrome { display: none; }
-            .jobsy-discovery:not(.jobsy-discovery--branch) .map-pane {
-                position: relative;
-                width: 100%;
-                height: auto;
-                min-height: 0;
-                align-self: stretch;
-            }
-            .jobsy-discovery:not(.jobsy-discovery--branch) .map-stage {
-                position: relative;
-                width: 100%;
-                height: 100%;
-                min-height: 0;
-                flex: auto;
-            }
-            .jobsy-discovery:not(.jobsy-discovery--branch) #job-map,
-            .jobsy-discovery:not(.jobsy-discovery--branch) .job-map,
-            .jobsy-discovery:not(.jobsy-discovery--branch) .job-map-placeholder {
-                position: absolute;
-                inset: 0;
-                width: 100%;
-                height: 100%;
-                min-height: 0;
-            }
+            .jobsy-discovery:not(.jobsy-discovery--branch) .map-pane,
+            .jobsy-discovery:not(.jobsy-discovery--branch) .map-stage,
+            .jobsy-discovery:not(.jobsy-discovery--branch) #job-map { min-height: 70vh; width: 100%; }
         }
-        .vacancy-pane { display:flex; flex-direction:column; min-height:0; height:100%; overflow:hidden; background:var(--surface); border-right:1px solid var(--border); }
-        .discovery-toolbar { display:flex; align-items:flex-end; gap:0.65rem; padding:0.65rem 1rem; border-bottom:1px solid var(--border); background:var(--surface); flex-shrink:0; }
-        .results-meta { display:flex; align-items:center; justify-content:space-between; gap:0.75rem; padding:0.75rem 1rem 0.25rem; }
-        .highlight-carousel--list { display: none; }
-        .vacancy-list--cards { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:0.55rem; padding:0.75rem; align-content:start; overflow:auto; min-height:0; flex:1; contain:layout; }
-        .job-card { display:flex; flex-direction:column; padding:0; border:0; background:transparent; cursor:pointer; overflow:hidden; }
-        .job-card__media { position:relative; display:block; width:100%; height:0; padding-bottom:75%; overflow:hidden; background:#1a2332; }
-        .job-card__photo { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; }
-        .job-card__overlay { position:absolute; inset:auto 0 0; padding:1.4rem 0.6rem 0.55rem; background:linear-gradient(to top,rgba(10,22,40,.88),transparent); color:#fff; }
-        .job-card__overlay h2 { margin:0; font-size:0.98rem; }
-        .job-card__footer { padding:0.45rem 0.1rem 0.2rem; }
-        .job-card__company { margin:0; font-size:0.82rem; font-weight:600; color:var(--secondary); }
-        .job-card__location { margin:0.15rem 0 0; font-size:0.78rem; color:var(--muted); }
-        .cookie-consent { position:fixed; left:0; right:0; bottom:0; z-index:80; padding:0.65rem 0.85rem; background:#0a2044; color:#f7f4f0; contain:layout paint style; }
-        .cookie-consent__inner { display:flex; flex-wrap:wrap; gap:1rem; align-items:center; justify-content:space-between; }
-        .btn-compact { display:inline-flex; align-items:center; border:1px solid rgba(247,244,240,.45); border-radius:8px; padding:0.35rem 0.7rem; background:transparent; color:#f7f4f0; font:inherit; font-weight:600; cursor:pointer; }
-        .btn-compact--primary { background:#f54a1b; border-color:#f54a1b; color:#fff; }
         .img-fallback-empty { background: #e7eef7; object-fit: contain; }
-        .components-reconnect-overlay,
-        .components-reconnect-dialog,
-        .components-rejoining-animation {
-            transform: translateZ(0);
-            will-change: transform, opacity;
-        }
-        .components-rejoining-animation,
-        .components-rejoining-animation * {
-            animation: none !important;
-        }
-        .components-reconnect-overlay:not(.components-reconnect-visible) {
-            display: none !important;
-        }
     </style>
-    <link rel="stylesheet" href="css/app.min.css?v=20260819-mapon" media="print" onload="this.onload=null;this.media='all'" data-jobsy-appcss="1" />
-    <noscript><link rel="stylesheet" href="css/app.min.css?v=20260819-mapon" /></noscript>
+    <link rel="stylesheet" href="css/app.css?v=20260819-r159" media="print" onload="this.onload=null;this.media='all'" />
+    <noscript><link rel="stylesheet" href="css/app.css?v=20260819-r159" /></noscript>
     <script>
         (function () {
             try {
@@ -117,27 +43,19 @@
                     document.documentElement.classList.add("cookie-consent-known");
                 }
             } catch (e) { }
-            try {
-                if (window.matchMedia("(min-width: 769px)").matches) {
-                    document.documentElement.classList.add("jobsy-wide");
-                }
-            } catch (e) { }
-            var webp = "/images/lobsy-256.webp?v=20260819-mapcls";
-            var webpBrand = "/images/brand/lobsy-256.webp?v=20260816-perf";
+            var webp = "/images/brand/lobsy-256.webp?v=20260816-perf";
             var png = "/images/brand/lobsy-128.png?v=20260816-perf";
             var svg = "data:image/svg+xml," + encodeURIComponent(
                 '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="12" fill="#e7eef7"/><text x="32" y="40" text-anchor="middle" font-size="22" font-family="Segoe UI,Arial,sans-serif" fill="#0f2d5c">L</text></svg>'
             );
-            function isEmptySrc(src) {
-                return !src || src === window.location.href || src.indexOf("about:blank") === 0;
-            }
             window.jobsyLogoFallback = function (img) {
                 if (!img || img.dataset.fb === "done") return true;
-                var src = img.currentSrc || img.getAttribute("src") || img.src || "";
+                var src = img.currentSrc || img.src || "";
                 img.removeAttribute("srcset");
                 img.removeAttribute("sizes");
-                if (src.indexOf("picsum.photos") !== -1 && /\.webp(?:$|\?)/.test(src)) {
-                    img.src = src.replace(/\.webp(?=$|\?)/, ".jpg");
+                if (src.indexOf("lobsy-256.webp") !== -1 || src.indexOf("lobsy-128.webp") !== -1 || src.indexOf("lobsy-64.webp") !== -1) {
+                    img.dataset.fb = "png";
+                    img.src = png;
                     return true;
                 }
                 if (src.indexOf("lobsy-128.png") !== -1 || src.indexOf("lobsy-180.png") !== -1 || src.indexOf("lobsy-64.png") !== -1) {
@@ -147,18 +65,8 @@
                     img.classList.add("img-fallback-empty");
                     return true;
                 }
-                if (src.indexOf("lobsy-256.webp") !== -1 || src.indexOf("lobsy-128.webp") !== -1 || src.indexOf("lobsy-64.webp") !== -1) {
-                    img.dataset.fb = "png";
-                    img.src = png;
-                    return true;
-                }
-                if (isEmptySrc(src) || img.dataset.fb !== "webp") {
-                    img.dataset.fb = "webp";
-                    img.src = webp;
-                    return true;
-                }
-                img.dataset.fb = "webp-brand";
-                img.src = webpBrand;
+                img.dataset.fb = "webp";
+                img.src = webp;
                 return true;
             };
             document.addEventListener("error", function (ev) {
@@ -178,20 +86,6 @@
                     window.jobsyLogoFallback(t);
                 }
             }, true);
-            function hydrateEmptyLogos() {
-                var nodes = document.querySelectorAll("img[data-logo-fallback]:not([data-logo-fallback='off'])");
-                for (var i = 0; i < nodes.length; i++) {
-                    var img = nodes[i];
-                    if (isEmptySrc(img.getAttribute("src") || img.src || "")) {
-                        window.jobsyLogoFallback(img);
-                    }
-                }
-            }
-            if (document.readyState === "loading") {
-                document.addEventListener("DOMContentLoaded", hydrateEmptyLogos);
-            } else {
-                hydrateEmptyLogos();
-            }
         })();
     </script>
     <HeadOutlet @rendermode="new InteractiveServerRenderMode(prerender: true)" />
@@ -201,29 +95,9 @@
     <CascadingAuthenticationState>
         <Routes @rendermode="new InteractiveServerRenderMode(prerender: true)" />
     </CascadingAuthenticationState>
-    <script src="js/app-core.min.js?v=20260819-mapon" defer></script>
+    <script src="js/app-core.js?v=20260819-r159" defer></script>
     <script src="js/feedback.js?v=20260816-fb2" defer></script>
     <script src="_framework/blazor.web.js" defer></script>
-    <script>
-        (function () {
-            function patchReconnectShadow() {
-                var host = document.getElementById("components-reconnect-modal");
-                if (!host || !host.shadowRoot || host.shadowRoot.querySelector("[data-jobsy-reconnect]")) {
-                    return;
-                }
-                var s = document.createElement("style");
-                s.setAttribute("data-jobsy-reconnect", "1");
-                s.textContent = ".components-rejoining-animation,.components-rejoining-animation *{animation:none!important}.components-reconnect-overlay:not(.components-reconnect-visible){display:none!important}.components-reconnect-overlay,.components-reconnect-dialog,.components-rejoining-animation{transform:translateZ(0);will-change:transform,opacity}";
-                host.shadowRoot.appendChild(s);
-            }
-            new MutationObserver(patchReconnectShadow).observe(document.documentElement, { childList: true, subtree: true });
-            if (document.readyState === "loading") {
-                document.addEventListener("DOMContentLoaded", patchReconnectShadow);
-            } else {
-                patchReconnectShadow();
-            }
-        })();
-    </script>
 </body>
 
 </html>
