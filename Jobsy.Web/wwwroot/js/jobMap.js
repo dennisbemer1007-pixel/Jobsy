@@ -793,6 +793,60 @@ window.jobMap = (function () {
         }
     }
 
+    function readCoord(obj, names) {
+        if (!obj) {
+            return NaN;
+        }
+        for (let i = 0; i < names.length; i++) {
+            const n = Number(obj[names[i]]);
+            if (Number.isFinite(n)) {
+                return n;
+            }
+        }
+        return NaN;
+    }
+
+    function pointFromVacancy(v) {
+        const lat = readCoord(v, ["lat", "Lat", "latitude", "Latitude"]);
+        const lng = readCoord(v, ["lng", "Lng", "lon", "Lon", "longitude", "Longitude"]);
+        if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
+            return null;
+        }
+        return [lat, lng];
+    }
+
+    function collectVacancyPoints(vacancies) {
+        const points = [];
+        (vacancies || []).forEach(function (v) {
+            const pt = pointFromVacancy(v);
+            if (pt) {
+                points.push(pt);
+            }
+        });
+        return points;
+    }
+
+    function zoomForPoints(points) {
+        const b = L.latLngBounds(points);
+        const span = Math.max(b.getEast() - b.getWest(), b.getNorth() - b.getSouth());
+        if (span < 0.08) return 13;
+        if (span < 0.2) return 12;
+        if (span < 0.5) return 11;
+        if (span < 1.2) return 10;
+        if (span < 2.5) return 9;
+        return 8;
+    }
+
+    function revealMapStage() {
+        if (!map) {
+            return;
+        }
+        const stage = map.getContainer() && map.getContainer().closest(".map-stage");
+        if (stage) {
+            stage.classList.add("is-live");
+        }
+    }
+
     function mapHasUsableSize() {
         if (!map || typeof map.getSize !== "function") {
             return false;
@@ -824,14 +878,15 @@ window.jobMap = (function () {
         if (mapHasUsableSize()) {
             map.fitBounds(points, opts);
         } else {
-            map.setView(L.latLngBounds(points).getCenter(), 12, { animate: false });
+            map.setView(L.latLngBounds(points).getCenter(), zoomForPoints(points), { animate: false });
         }
         firstViewApplied = true;
         ensureVacancyTiles();
+        revealMapStage();
     }
 
     function ensureVacancyTiles() {
-        if (!map || tileLayer || lastFitPoints.length === 0) {
+        if (!map || tileLayer) {
             return;
         }
         tileLayer = L.tileLayer("https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png", {
@@ -839,6 +894,7 @@ window.jobMap = (function () {
             attribution: "&copy; <a href=\"https://www.openstreetmap.org/copyright\">OpenStreetMap</a> &copy; <a href=\"https://carto.com/attributions\">CARTO</a>"
         });
         tileLayer.once("load", function () {
+            revealMapStage();
             if (openCallback && typeof openCallback.invokeMethodAsync === "function") {
                 openCallback.invokeMethodAsync("OnMapTilesReady");
             }
@@ -871,13 +927,29 @@ window.jobMap = (function () {
 
         firstViewApplied = false;
         lastFitPoints = [];
-        openingViewUntil = Date.now() + 700;
-        // No default NL view: set bounds from markers before requesting tiles.
+        openingViewUntil = Date.now() + 800;
+        tileLayer = null;
+
+        // No default NL view: start on vacancy coordinates so the first tiles
+        // are the real jobs, not the whole country.
+        const openingPoints = collectVacancyPoints(vacancies || []);
+        if (openingPoints.length === 0) {
+            throw new Error("No vacancy coordinates for map");
+        }
+        lastFitPoints = openingPoints.slice();
+        const start = L.latLngBounds(openingPoints).getCenter();
         map = L.map(el, {
             zoomControl: true,
             scrollWheelZoom: true,
-            closePopupOnClick: true
+            closePopupOnClick: true,
+            fadeAnimation: false,
+            zoomAnimation: false,
+            markerZoomAnimation: false,
+            center: [start.lat, start.lng],
+            zoom: zoomForPoints(openingPoints)
         });
+        ensureVacancyTiles();
+        revealMapStage();
 
         clusterGroup = L.markerClusterGroup({
             showCoverageOnHover: false,
@@ -996,11 +1068,12 @@ window.jobMap = (function () {
         const bounds = [];
 
         (vacancies || []).forEach(function (v) {
-            const lat = Number(v.lat);
-            const lng = Number(v.lng);
-            if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
+            const pt = pointFromVacancy(v);
+            if (!pt) {
                 return;
             }
+            const lat = pt[0];
+            const lng = pt[1];
 
             const workType = Array.isArray(v.workTypes) && v.workTypes.length
                 ? v.workTypes[0]

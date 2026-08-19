@@ -3290,6 +3290,20 @@ a {
     transition: opacity 180ms ease;
 }
 
+.job-map-placeholder__status {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    padding: 0.45rem 0.8rem;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--surface) 88%, transparent);
+    color: var(--muted);
+    font-size: 0.85rem;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+}
+
 .map-stage.is-live .job-map-placeholder {
     opacity: 0;
     visibility: hidden;

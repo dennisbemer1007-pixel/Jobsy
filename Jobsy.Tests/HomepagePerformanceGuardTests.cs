@@ -51,7 +51,9 @@ public class HomepagePerformanceGuardTests
         Assert.DoesNotContain("job-map-placeholder__pins", discovery);
         Assert.DoesNotContain("MapPreviewPins", discovery);
         Assert.Contains("EnsureDiscoveryAfterPaintAsync", discovery);
-        Assert.Contains("_vacancies.Count == 0 && _loading", discovery);
+        Assert.Contains("_vacancies.Count == 0", discovery);
+        Assert.Contains("double.IsFinite(v.Latitude)", discovery);
+        Assert.Contains("job-map-placeholder__status", discovery);
         Assert.Contains("if (!RendererInfo.IsInteractive)", discovery);
         Assert.Contains("OnMapTilesReady", discovery);
         Assert.Contains("_mapPainted = true", discovery);

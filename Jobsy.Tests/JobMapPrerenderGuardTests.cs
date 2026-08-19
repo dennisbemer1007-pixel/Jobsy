@@ -28,6 +28,7 @@ public class JobMapPrerenderGuardTests
         Assert.DoesNotContain("map.fitBounds(NL_BOUNDS", js);
         Assert.DoesNotContain("map.setView(NL_CENTER", js);
         Assert.Contains("fitMapToVacancies", js);
+        Assert.Contains("collectVacancyPoints", js);
         Assert.Contains("No default NL view", js);
         Assert.Contains("ensureVacancyTiles", js);
         Assert.Contains("openingViewUntil", js);

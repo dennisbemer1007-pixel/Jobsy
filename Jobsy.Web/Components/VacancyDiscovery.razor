@@ -528,7 +528,9 @@
                                       OnSelect="OnCarouselSelect" />
         }
         <div class="map-stage @(_mapPainted ? "is-live" : null)">
-            <div class="job-map-placeholder" aria-hidden="true"></div>
+            <div class="job-map-placeholder" aria-hidden="true">
+                <span class="job-map-placeholder__status">Kaart laden…</span>
+            </div>
             <div @ref="_mapElement" id="job-map" class="job-map"></div>
             @if (_categories.Any(c => c.ShowInLegend && c.IsActive))
             {
@@ -1130,8 +1132,7 @@
 
         if (!RendererInfo.IsInteractive)
         {
-            // Prerender only the map chrome + placeholder. Catalog/profile wait for the circuit.
-            _loading = false;
+            // Catalog waits for the circuit. Keep loading so prerender is not "geen vacatures".
             return;
         }
 
@@ -1661,7 +1662,8 @@
             return;
         }
 
-        if (_vacancies.Count == 0 && _loading)
+        if (_vacancies.Count == 0
+            || !_vacancies.Any(v => double.IsFinite(v.Latitude) && double.IsFinite(v.Longitude)))
         {
             return;
         }
