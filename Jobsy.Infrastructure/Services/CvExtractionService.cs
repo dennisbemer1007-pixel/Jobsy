@@ -113,11 +113,9 @@ public sealed class CvExtractionService : ICvExtractionService
         using var response = await client.SendAsync(request, cancellationToken);
         if (!response.IsSuccessStatusCode)
         {
-            var body = await response.Content.ReadAsStringAsync(cancellationToken);
             _logger.LogWarning(
-                "OpenAI CV-extractie gaf {StatusCode}: {Body}",
-                (int)response.StatusCode,
-                body.Length > 400 ? body[..400] : body);
+                "OpenAI CV-extractie gaf {StatusCode} (response body not logged).",
+                (int)response.StatusCode);
             return null;
         }
 

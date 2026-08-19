@@ -10,6 +10,7 @@ using Jobsy.Core.Privacy;
 using Jobsy.Core.Rules;
 using Jobsy.Core.Security;
 using Jobsy.Infrastructure.Data;
+using Jobsy.Infrastructure.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
@@ -111,7 +112,8 @@ public class ApplicationsController : ControllerBase
                 a.SnapshotPhoneNumber,
                 a.SnapshotWhatsAppAllowed,
                 a.CandidateAgeYears,
-                a.HasUploadedCv
+                a.HasUploadedCv,
+                a.CandidateReferenceCount
             })
             .ToListAsync(cancellationToken);
 
@@ -161,7 +163,8 @@ public class ApplicationsController : ControllerBase
                 AvailabilitySummary: LobsyCvModelFactory.FormatAvailability(
                     availability.Slots,
                     availability.FlexibleTimes),
-                UploadedCvAvailable: revealed && a.HasUploadedCv);
+                UploadedCvAvailable: revealed && a.HasUploadedCv,
+                CandidateReferenceCount: revealed ? a.CandidateReferenceCount : 0);
         }));
     }
 
@@ -904,6 +907,7 @@ public class ApplicationsController : ControllerBase
 
         application.Status = ApplicationStatus.Withdrawn;
         application.RespondedAt = DateTime.UtcNow;
+        await ApplicationPrivacyCleanup.RemoveUploadedCvSnapshotsAsync(_db, [application.Id], cancellationToken);
         ApplicationRules.ScrubPersonalDataOnWithdraw(application);
         await _db.SaveChangesAsync(cancellationToken);
 

@@ -15,6 +15,7 @@ Alle noemenswaardige wijzigingen aan dit project worden in dit bestand bijgehoud
 
 ### Added
 - Kandidaat kan een eigen CV (PDF/DOCX) uploaden; OpenAI vult alleen lege profielvelden als ze duidelijk in het CV staan. Lobsy-CV toont bovenaan dat er een eigen CV is. Recensies (werkgever, contactpersoon, e-mail, telefoon) in het profiel; vacature kan een hard minimum aantal recensies eisen. Na Accept ziet de werkgever Lobsy-CV én het geüploade CV.
+- Quality gate 456: geüploade CV-bytes wissen bij intrekken; OpenAI-CV-extractie in privacyverklaring/consent; geen OpenAI-response bodies in logs; werkgeverslijst toont recensietelling pas na Accept.
 
 ### Changed
 - Homepage-kaart: echte vacaturemarkers weer zichtbaar. Leaflet start op catalogus-coördinaten (verplicht center/zoom + tegels); geen nep-pins, geen NL-overzicht, geen lege placeholder die de kaart bedekt.

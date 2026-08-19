@@ -113,5 +113,5 @@ Kernpunten:
 - **KVK API** — vestigingen/registratie
 - **Mollie** — prepaid token-aankoop (live API; Development stub op `/tokens/checkout-stub`)
 - **Mail** — activatie/invite/notificaties
-- **OpenAI** — vacature-contentmoderatie / mock interview / kandidaat-profielcoach (feature-flagged)
+- **OpenAI** — vacature-contentmoderatie / mock interview / kandidaat-profielcoach / CV-extractie bij eigen upload (feature-flagged; zonder key geen extractie)
 - Feature flags o.a. `JobsyFeatures:*` (activation-link exposure, Authenticator, stubs)

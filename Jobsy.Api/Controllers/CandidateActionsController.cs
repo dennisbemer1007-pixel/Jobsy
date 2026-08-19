@@ -5,6 +5,7 @@ using Jobsy.Core.Enums;
 using Jobsy.Core.Interfaces;
 using Jobsy.Core.Rules;
 using Jobsy.Infrastructure.Data;
+using Jobsy.Infrastructure.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
@@ -210,6 +211,10 @@ public class CandidateActionsController : ControllerBase
             .ToListAsync(cancellationToken);
 
         var now = DateTime.UtcNow;
+        await ApplicationPrivacyCleanup.RemoveUploadedCvSnapshotsAsync(
+            _db,
+            others.Select(o => o.Id),
+            cancellationToken);
         foreach (var other in others)
         {
             other.Status = ApplicationStatus.Withdrawn;
