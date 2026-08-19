@@ -51,7 +51,13 @@
         }
         @@media (min-width: 769px) {
             .jobsy-chrome { display: none; }
-            .jobsy-discovery:not(.jobsy-discovery--branch) .map-pane,
+            .jobsy-discovery:not(.jobsy-discovery--branch) .map-pane {
+                position: relative;
+                width: 100%;
+                height: auto;
+                min-height: 0;
+                align-self: stretch;
+            }
             .jobsy-discovery:not(.jobsy-discovery--branch) .map-stage {
                 position: relative;
                 width: 100%;
@@ -80,14 +86,22 @@
         .components-rejoining-animation * {
             animation: none !important;
         }
+        .components-reconnect-overlay:not(.components-reconnect-visible) {
+            display: none !important;
+        }
     </style>
-    <link rel="stylesheet" href="css/app.css?v=20260819-desk" media="print" onload="this.onload=null;this.media='all'" />
-    <noscript><link rel="stylesheet" href="css/app.css?v=20260819-desk" /></noscript>
+    <link rel="stylesheet" href="css/app.css?v=20260819-lcp" media="print" onload="this.onload=null;this.media='all'" />
+    <noscript><link rel="stylesheet" href="css/app.css?v=20260819-lcp" /></noscript>
     <script>
         (function () {
             try {
                 if (localStorage.getItem("Jobsy.CookieConsent")) {
                     document.documentElement.classList.add("cookie-consent-known");
+                }
+            } catch (e) { }
+            try {
+                if (window.matchMedia("(min-width: 769px)").matches) {
+                    document.documentElement.classList.add("jobsy-wide");
                 }
             } catch (e) { }
             var webp = "/images/lobsy-256.webp?v=20260819-mapcls";
@@ -165,34 +179,27 @@
     <CascadingAuthenticationState>
         <Routes @rendermode="new InteractiveServerRenderMode(prerender: true)" />
     </CascadingAuthenticationState>
-    <script src="js/app-core.js?v=20260819-desk" defer></script>
+    <script src="js/app-core.js?v=20260819-lcp" defer></script>
     <script src="js/feedback.js?v=20260816-fb2" defer></script>
+    <script src="_framework/blazor.web.js" defer></script>
     <script>
         (function () {
-            function bootBlazor() {
-                if (document.querySelector("script[data-jobsy-blazor]")) {
+            function patchReconnectShadow() {
+                var host = document.getElementById("components-reconnect-modal");
+                if (!host || !host.shadowRoot || host.shadowRoot.querySelector("[data-jobsy-reconnect]")) {
                     return;
                 }
-                var s = document.createElement("script");
-                s.src = "_framework/blazor.web.js";
-                s.setAttribute("data-jobsy-blazor", "1");
-                document.body.appendChild(s);
+                var s = document.createElement("style");
+                s.setAttribute("data-jobsy-reconnect", "1");
+                s.textContent = ".components-rejoining-animation,.components-rejoining-animation *{animation:none!important}.components-reconnect-overlay:not(.components-reconnect-visible){display:none!important}.components-reconnect-overlay,.components-reconnect-dialog,.components-rejoining-animation{transform:translateZ(0);will-change:transform,opacity}";
+                host.shadowRoot.appendChild(s);
             }
-            function afterIdle(fn) {
-                if (typeof requestIdleCallback === "function") {
-                    requestIdleCallback(fn, { timeout: 2000 });
-                } else {
-                    setTimeout(fn, 0);
-                }
+            new MutationObserver(patchReconnectShadow).observe(document.documentElement, { childList: true, subtree: true });
+            if (document.readyState === "loading") {
+                document.addEventListener("DOMContentLoaded", patchReconnectShadow);
+            } else {
+                patchReconnectShadow();
             }
-            function afterLoad(fn) {
-                if (document.readyState === "complete") {
-                    fn();
-                } else {
-                    window.addEventListener("load", fn, { once: true });
-                }
-            }
-            afterLoad(function () { afterIdle(bootBlazor); });
         })();
     </script>
 </body>

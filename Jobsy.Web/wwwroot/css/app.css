@@ -13621,7 +13621,7 @@ html.cookie-consent-known .cookie-consent {
     background: #f6f6f6;
 }
 
-/* Mobile: reserved 300px box. Desktop: fill the discovery column (inline 300px is only a floor). */
+/* Mobile: reserved 300px box. Desktop: stretch the grid cell (do not lock 300px on the pane). */
 #job-map {
     display: block !important;
     width: 100%;
@@ -13637,7 +13637,13 @@ html.cookie-consent-known .cookie-consent {
 }
 
 @media (min-width: 769px) {
-    .jobsy-discovery:not(.jobsy-discovery--branch) .map-pane,
+    .jobsy-discovery:not(.jobsy-discovery--branch) .map-pane {
+        position: relative !important;
+        height: auto !important;
+        min-height: 0 !important;
+        align-self: stretch !important;
+    }
+
     .jobsy-discovery:not(.jobsy-discovery--branch) .map-stage {
         position: relative !important;
         height: 100% !important;
@@ -13668,4 +13674,8 @@ html.cookie-consent-known .cookie-consent {
 .components-rejoining-animation,
 .components-rejoining-animation * {
     animation: none !important;
+}
+
+.components-reconnect-overlay:not(.components-reconnect-visible) {
+    display: none !important;
 }

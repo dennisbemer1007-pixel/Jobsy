@@ -121,9 +121,11 @@ public class JobMapPrerenderGuardTests
         Assert.Contains(".jobsy-chrome { display: none; }", app);
         Assert.Contains(".app-shell", app);
         Assert.Contains("padding-bottom: 4.75rem", app);
-        Assert.Contains("requestIdleCallback", app);
         Assert.DoesNotContain("min-height: 55dvh", app);
-        Assert.DoesNotContain("<script src=\"_framework/blazor.web.js\"", app);
+        Assert.Contains("<script src=\"_framework/blazor.web.js\" defer>", app);
+        Assert.DoesNotContain("bootBlazor", app);
+        Assert.Contains("data-jobsy-reconnect", app);
+        Assert.Contains("jobsy-wide", app);
         Assert.DoesNotContain("lib/leaflet/leaflet.min.js", app);
         Assert.DoesNotContain("lib/leaflet/leaflet.css", app);
         Assert.DoesNotContain("lib/maplibre/maplibre-gl.js", app);
@@ -158,7 +160,7 @@ public class JobMapPrerenderGuardTests
         Assert.Contains("_mapHostReady", discovery);
         var tryInit = discovery.IndexOf("await TryInitJobMapAsync();", afterRender, StringComparison.Ordinal);
         var isWide = discovery.IndexOf("jobsyViewport.isWide", afterRender, StringComparison.Ordinal);
-        Assert.True(tryInit > afterRender && isWide > tryInit);
+        Assert.True(isWide > afterRender && tryInit > isWide);
         var geoHydrate = discovery.IndexOf("ensureLocationOnLaunch", afterRender, StringComparison.Ordinal);
         Assert.True(geoHydrate > afterRender);
         var hydrateCatch = discovery.IndexOf("catch (JSException)", geoHydrate, StringComparison.Ordinal);

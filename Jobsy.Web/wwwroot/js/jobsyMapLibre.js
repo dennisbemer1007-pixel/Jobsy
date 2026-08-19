@@ -182,6 +182,11 @@ window.jobsyMapLibre = (function () {
         try {
             wide = window.matchMedia("(min-width: 769px)").matches;
         } catch (e) { }
+        if (!wide) {
+            try {
+                wide = (window.innerWidth || 0) >= 769;
+            } catch (e) { }
+        }
         if (wide) {
             container.style.position = "absolute";
             container.style.inset = "0";
@@ -194,6 +199,19 @@ window.jobsyMapLibre = (function () {
             container.style.minHeight = "0";
             container.style.minWidth = "0";
             container.style.display = "block";
+            var stage = container.parentElement;
+            var pane = container.closest ? container.closest(".map-pane") : null;
+            if (stage && stage.classList && stage.classList.contains("map-stage")) {
+                stage.style.position = "relative";
+                stage.style.height = "100%";
+                stage.style.minHeight = "0";
+                stage.style.width = "100%";
+            }
+            if (pane) {
+                pane.style.height = "100%";
+                pane.style.minHeight = "0";
+                pane.style.position = "relative";
+            }
             return;
         }
         var height = container.style.height;

@@ -13,11 +13,16 @@ public class HomepagePerformanceGuardTests
     {
         var discovery = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "Components", "VacancyDiscovery.razor"));
         Assert.Contains("ShouldRenderVacancyCards", discovery);
-        Assert.Contains("_mapPainted && (_wideViewport || !showMapOnMobile)", discovery);
+        Assert.Contains("_wideViewport", discovery);
+        Assert.Contains("!showMapOnMobile", discovery);
+        Assert.DoesNotContain("_mapPainted && (_wideViewport || !showMapOnMobile)", discovery);
         Assert.Contains("VisibleVacancies", discovery);
         Assert.Contains("RendererInfo.IsInteractive", discovery);
         Assert.Contains("photoEager", discovery);
         Assert.Contains("Eager=\"photoEager\"", discovery);
+        Assert.Contains("HighPriority=\"photoHigh\"", discovery);
+        Assert.Contains("AboveFoldEagerPhotos = 6", discovery);
+        Assert.Contains("rel=\"preload\" as=\"image\"", discovery);
         Assert.Contains("jobsyViewport.isWide", discovery);
         Assert.Contains("VacancyCardPageSize = 12", discovery);
         Assert.DoesNotContain("@foreach (var vacancy in SortedVacancies)", discovery);
@@ -60,6 +65,7 @@ public class HomepagePerformanceGuardTests
         Assert.Contains("style=\"width: 100%; height: 300px; display: block;\"", discovery);
         Assert.DoesNotContain("job-map-placeholder__status", discovery);
         Assert.Contains("if (!RendererInfo.IsInteractive)", discovery);
+        Assert.Contains("Anonymous catalog in prerender HTML", discovery);
         Assert.Contains("OnMapTilesReady", discovery);
         Assert.Contains("_mapPainted = true", discovery);
 

@@ -794,13 +794,13 @@ window.jobsyMaps = (function () {
     ];
     var mapLibreScripts = [
         "/lib/maplibre/maplibre-gl.js",
-        "/js/jobsyMapLibre.js?v=20260819-desk"
+        "/js/jobsyMapLibre.js?v=20260819-lcp"
     ];
     var discoveryScripts = [
-        "/js/jobMap.js?v=20260819-desk"
+        "/js/jobMap.js?v=20260819-lcp"
     ];
     var detailScripts = [
-        "/js/vacancyDetailMap.js?v=20260819-desk"
+        "/js/vacancyDetailMap.js?v=20260819-lcp"
     ];
 
     function hrefMatches(node, href) {

@@ -61,6 +61,17 @@ public class VacancyImageUrlsTests
     }
 
     [Fact]
+    public void SrcSet_emits_picsum_widths_without_cloudflare()
+    {
+        var id = Guid.Parse("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb");
+        var display = VacancyImageUrls.ForDisplay(VacancyImageUrls.PicsumUrl(id), 320, cloudflareResizing: false, id, "Horeca");
+        var srcset = VacancyImageUrls.SrcSet(display, cloudflareResizing: false);
+        Assert.Equal(
+            $"https://picsum.photos/seed/jobsy-{id:N}/320/213 320w, https://picsum.photos/seed/jobsy-{id:N}/480/320 480w",
+            srcset);
+    }
+
+    [Fact]
     public void ForDisplay_downsizes_picsum_for_cards_without_changing_the_seed()
     {
         var id = Guid.Parse("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb");

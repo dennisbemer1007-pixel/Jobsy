@@ -79,11 +79,25 @@ public static class VacancyImageUrls
 
     public static string? SrcSet(string displayUrl, bool cloudflareResizing)
     {
-        if (!cloudflareResizing
-            || string.IsNullOrWhiteSpace(displayUrl)
+        if (string.IsNullOrWhiteSpace(displayUrl)
             || displayUrl.StartsWith("data:", StringComparison.OrdinalIgnoreCase)
-            || displayUrl.EndsWith(".svg", StringComparison.OrdinalIgnoreCase)
-            || !displayUrl.Contains("/cdn-cgi/image/", StringComparison.Ordinal))
+            || displayUrl.EndsWith(".svg", StringComparison.OrdinalIgnoreCase))
+        {
+            return null;
+        }
+
+        if (IsPicsum(displayUrl))
+        {
+            var id = TryExtractSeed(displayUrl);
+            if (id is null || id == Guid.Empty)
+            {
+                return null;
+            }
+
+            return $"{PicsumUrl(id.Value, 320, 213)} 320w, {PicsumUrl(id.Value, 480, 320)} 480w";
+        }
+
+        if (!cloudflareResizing || !displayUrl.Contains("/cdn-cgi/image/", StringComparison.Ordinal))
         {
             return null;
         }

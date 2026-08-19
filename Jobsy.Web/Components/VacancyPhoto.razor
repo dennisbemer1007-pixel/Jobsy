@@ -11,9 +11,9 @@
          alt="@Alt"
          width="@Width"
          height="@Height"
-         loading="@(Eager ? "eager" : "lazy")"
+         loading="@(Eager || HighPriority ? "eager" : "lazy")"
          decoding="async"
-         fetchpriority="@(Eager ? "high" : "auto")"
+         fetchpriority="@(HighPriority ? "high" : "auto")"
          data-logo-fallback="1"
          onerror="window.jobsyLogoFallback&&window.jobsyLogoFallback(this)"
          draggable="false" />
@@ -26,6 +26,7 @@
     [Parameter] public string? Class { get; set; }
     [Parameter] public string Alt { get; set; } = "";
     [Parameter] public bool Eager { get; set; }
+    [Parameter] public bool HighPriority { get; set; }
     [Parameter] public string Sizes { get; set; } = "(max-width: 700px) 50vw, 360px";
     [Parameter] public int Width { get; set; } = VacancyImageUrls.IntrinsicWidth;
     [Parameter] public int Height { get; set; } = VacancyImageUrls.IntrinsicHeight;
