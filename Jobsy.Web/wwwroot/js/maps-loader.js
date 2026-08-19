@@ -14,7 +14,7 @@ window.jobsyMaps = (function () {
         "/js/jobMap.js?v=20260819-ml"
     ];
     var detailScripts = [
-        "/js/vacancyDetailMap.js?v=20260819-ml"
+        "/js/vacancyDetailMap.js?v=20260819-ml2"
     ];
 
     function hrefMatches(node, href) {

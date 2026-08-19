@@ -3,6 +3,8 @@ window.vacancyDetailMap = (function () {
     let marker = null;
     let currentLat = null;
     let currentLng = null;
+    let popupHtml = "";
+    let markerTitle = "Locatie";
 
     const TRAVEL_MODE = {
         Fiets: "bicycling",
@@ -44,6 +46,15 @@ window.vacancyDetailMap = (function () {
         })
             .setLngLat([currentLng, currentLat])
             .addTo(map);
+        marker.getElement().setAttribute("title", markerTitle);
+        if (popupHtml) {
+            marker.setPopup(new maplibregl.Popup({
+                className: "vacancy-detail-map-popup",
+                closeButton: true,
+                maxWidth: "280px",
+                offset: 18
+            }).setHTML(popupHtml));
+        }
     }
 
     function init(elementId, options) {
@@ -95,8 +106,11 @@ window.vacancyDetailMap = (function () {
         });
 
         const address = options && options.address ? String(options.address) : "";
-        const title = (options && options.title) || "Locatie";
+        markerTitle = (options && options.title) || "Locatie";
         const company = (options && options.company) || "";
+        popupHtml = address
+            ? "<strong>" + escapeHtml(company) + "</strong><br>" + escapeHtml(address)
+            : "";
 
         map._jobsyOnStyleRestored = function () {
             restoreMarker();
@@ -105,19 +119,6 @@ window.vacancyDetailMap = (function () {
 
         map.on("load", function () {
             restoreMarker();
-            if (address && marker) {
-                const popup = new maplibregl.Popup({
-                    className: "vacancy-detail-map-popup",
-                    closeButton: true,
-                    maxWidth: "280px",
-                    offset: 18
-                }).setHTML(
-                    "<strong>" + escapeHtml(company) + "</strong>" +
-                    (address ? "<br>" + escapeHtml(address) : "")
-                );
-                marker.setPopup(popup);
-                marker.getElement().setAttribute("title", title);
-            }
             invalidate();
             recenter();
         });
@@ -164,6 +165,8 @@ window.vacancyDetailMap = (function () {
         }
         currentLat = null;
         currentLng = null;
+        popupHtml = "";
+        markerTitle = "Locatie";
         if (map) {
             map.remove();
             map = null;
