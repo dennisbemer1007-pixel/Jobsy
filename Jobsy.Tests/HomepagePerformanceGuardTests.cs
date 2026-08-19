@@ -75,6 +75,8 @@ public class HomepagePerformanceGuardTests
         Assert.Contains("ensureAfterPaint", maps);
         Assert.Contains("pointerdown", maps);
         Assert.Contains("touchstart", maps);
+        Assert.Contains("Always start the map after first paint", maps);
+        Assert.Contains("afterPageLoad(finish, 0)", maps);
         Assert.DoesNotContain("pointerenter", maps);
         Assert.DoesNotContain("INTERACT_FALLBACK_MS", maps);
         Assert.Contains("requestIdleCallback", maps);
@@ -87,7 +89,7 @@ public class HomepagePerformanceGuardTests
         var bundle = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "wwwroot", "js", "app-core.js"));
         Assert.Contains("ensureAfterPaint", bundle);
         Assert.Contains("requestIdleCallback", bundle);
-        Assert.Contains("pointerdown", bundle);
+        Assert.Contains("Always start the map after first paint", bundle);
         Assert.DoesNotContain("INTERACT_FALLBACK_MS", bundle);
         Assert.DoesNotContain("DISCOVERY_DELAY_MS", bundle);
         Assert.DoesNotContain("LOAD_DELAY_MS", bundle);

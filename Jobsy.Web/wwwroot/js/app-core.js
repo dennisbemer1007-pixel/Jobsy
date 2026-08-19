@@ -793,13 +793,13 @@ window.jobsyMaps = (function () {
     ];
     var mapLibreScripts = [
         "/lib/maplibre/maplibre-gl.js",
-        "/js/jobsyMapLibre.min.js?v=20260819-fix2"
+        "/js/jobsyMapLibre.min.js?v=20260819-mapon"
     ];
     var discoveryScripts = [
-        "/js/jobMap.min.js?v=20260819-fix2"
+        "/js/jobMap.min.js?v=20260819-mapon"
     ];
     var detailScripts = [
-        "/js/vacancyDetailMap.min.js?v=20260819-fix2"
+        "/js/vacancyDetailMap.min.js?v=20260819-mapon"
     ];
 
     function hrefMatches(node, href) {
@@ -924,35 +924,31 @@ window.jobsyMaps = (function () {
 
     function whenMapSlotReady(elementId, cb) {
         var done = false;
-        var tries = 0;
-        // Lab tools synthesize hover/focus; only a real press may start MapLibre.
         var INTERACT_EVENTS = ["pointerdown", "touchstart"];
-
-        function arm() {
-            var el = elementId ? document.getElementById(elementId) : null;
-            var target = (el && el.closest && (el.closest(".map-pane") || el.closest(".map-stage"))) || el;
-            if (!target) {
-                if (tries++ < 40) {
-                    setTimeout(arm, 100);
-                }
+        var target = null;
+        var finish = function () {
+            if (done) {
                 return;
             }
-            var finish = function () {
-                if (done) {
-                    return;
-                }
-                done = true;
+            done = true;
+            if (target) {
                 INTERACT_EVENTS.forEach(function (ev) {
                     target.removeEventListener(ev, finish);
                 });
-                afterIdle(cb);
-            };
+            }
+            afterIdle(cb);
+        };
+
+        var el = elementId ? document.getElementById(elementId) : null;
+        target = (el && el.closest && (el.closest(".map-pane") || el.closest(".map-stage"))) || el;
+        if (target) {
             INTERACT_EVENTS.forEach(function (ev) {
                 target.addEventListener(ev, finish, { passive: true });
             });
         }
 
-        arm();
+        // Always start the map after first paint. Click/tap can start it earlier.
+        afterPageLoad(finish, 0);
     }
 
     function fetchAssets(kind) {

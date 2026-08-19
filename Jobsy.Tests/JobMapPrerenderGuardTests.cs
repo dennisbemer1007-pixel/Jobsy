@@ -142,6 +142,7 @@ public class JobMapPrerenderGuardTests
         Assert.Contains("addEventListener(\"load\"", maps);
         Assert.Contains("document.readyState === \"complete\"", maps);
         Assert.Contains("pointerdown", maps);
+        Assert.Contains("Always start the map after first paint", maps);
         Assert.DoesNotContain("INTERACT_FALLBACK_MS", maps);
         Assert.DoesNotContain("LOAD_DELAY_MS", maps);
         Assert.DoesNotContain("DISCOVERY_DELAY_MS", maps);
@@ -149,7 +150,7 @@ public class JobMapPrerenderGuardTests
         Assert.Contains("pending[kind] = null", bundle);
         Assert.Contains("maplibre-gl.js", bundle);
         Assert.Contains("requestIdleCallback", bundle);
-        Assert.Contains("pointerdown", bundle);
+        Assert.Contains("Always start the map after first paint", bundle);
         Assert.DoesNotContain("INTERACT_FALLBACK_MS", bundle);
         Assert.DoesNotContain("LOAD_DELAY_MS", bundle);
         Assert.DoesNotContain("DISCOVERY_DELAY_MS", bundle);
