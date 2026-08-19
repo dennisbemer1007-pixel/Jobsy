@@ -451,21 +451,18 @@
                         <link rel="preload" as="image" href="@LcpPreloadHref" fetchpriority="high" />
                     </HeadContent>
                 }
-                @if (RendererInfo.IsInteractive)
-                {
-                    <HighlightVacancyCarousel Vacancies="HighlightedVacanciesForUi"
-                                              ActiveId="_hoveredId"
-                                              ModifierClass="highlight-carousel--list"
-                                              FormatTravel="FormatCarouselTravel"
-                                              OnHover="OnHover"
-                                              OnSelect="OnCarouselSelect" />
-                }
+                <HighlightVacancyCarousel Vacancies="HighlightedVacanciesForUi"
+                                          ActiveId="_hoveredId"
+                                          ModifierClass="highlight-carousel--list"
+                                          FormatTravel="FormatCarouselTravel"
+                                          OnHover="OnHover"
+                                          OnSelect="OnCarouselSelect" />
                 <div class="vacancy-list vacancy-list--cards">
                     @{ var cardIndex = 0; }
                     @foreach (var vacancy in VisibleVacancies)
                     {
                         var photoEager = cardIndex < AboveFoldEagerPhotos;
-                        var photoHigh = cardIndex == 0;
+                        var photoHigh = cardIndex < 2;
                         cardIndex++;
                         var wageText = FormatWage(vacancy);
                         var travelText = vacancy.TravelMinutes is not null

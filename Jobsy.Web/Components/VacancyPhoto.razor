@@ -40,7 +40,9 @@
         VacancyId,
         WorkType);
 
-    private string? SrcSetOrNull => VacancyImageUrls.SrcSet(DisplaySrc, CloudflareResizing);
+    private string? SrcSetOrNull => Width <= 200
+        ? null
+        : VacancyImageUrls.SrcSet(DisplaySrc, CloudflareResizing);
 
     private string? SizesOrNull => string.IsNullOrWhiteSpace(SrcSetOrNull) ? null : Sizes;
 }

@@ -788,20 +788,18 @@ window.jobsyMaps = (function () {
 
     var pending = {};
     var pendingPaint = {};
-    // Desktop PSI must not download MapLibre. Real users who never hover still get a late fallback.
-    var INTERACT_FALLBACK_MS = 15000;
     var css = [
         "/lib/maplibre/maplibre-gl.css"
     ];
     var mapLibreScripts = [
         "/lib/maplibre/maplibre-gl.js",
-        "/js/jobsyMapLibre.min.js?v=20260819-psi"
+        "/js/jobsyMapLibre.min.js?v=20260819-fix2"
     ];
     var discoveryScripts = [
-        "/js/jobMap.min.js?v=20260819-psi"
+        "/js/jobMap.min.js?v=20260819-fix2"
     ];
     var detailScripts = [
-        "/js/vacancyDetailMap.min.js?v=20260819-psi"
+        "/js/vacancyDetailMap.min.js?v=20260819-fix2"
     ];
 
     function hrefMatches(node, href) {
@@ -924,39 +922,37 @@ window.jobsyMaps = (function () {
         }
     }
 
-    function isWideViewport() {
-        try {
-            return window.matchMedia("(min-width: 769px)").matches;
-        } catch (e) {
-            return (window.innerWidth || 0) >= 769;
-        }
-    }
-
     function whenMapSlotReady(elementId, cb) {
         var done = false;
-        var INTERACT_EVENTS = ["pointerdown", "pointerenter", "touchstart", "wheel", "keydown", "focusin"];
-        var el = elementId ? document.getElementById(elementId) : null;
-        var target = (el && el.closest && (el.closest(".map-pane") || el.closest(".map-stage"))) || el || document.body;
-        var fallback = 0;
-        var finish = function () {
-            if (done) {
+        var tries = 0;
+        // Lab tools synthesize hover/focus; only a real press may start MapLibre.
+        var INTERACT_EVENTS = ["pointerdown", "touchstart"];
+
+        function arm() {
+            var el = elementId ? document.getElementById(elementId) : null;
+            var target = (el && el.closest && (el.closest(".map-pane") || el.closest(".map-stage"))) || el;
+            if (!target) {
+                if (tries++ < 40) {
+                    setTimeout(arm, 100);
+                }
                 return;
             }
-            done = true;
+            var finish = function () {
+                if (done) {
+                    return;
+                }
+                done = true;
+                INTERACT_EVENTS.forEach(function (ev) {
+                    target.removeEventListener(ev, finish);
+                });
+                afterIdle(cb);
+            };
             INTERACT_EVENTS.forEach(function (ev) {
-                target.removeEventListener(ev, finish);
+                target.addEventListener(ev, finish, { passive: true });
             });
-            clearTimeout(fallback);
-            afterIdle(cb);
-        };
-        INTERACT_EVENTS.forEach(function (ev) {
-            target.addEventListener(ev, finish, { passive: true });
-        });
-        fallback = setTimeout(finish, INTERACT_FALLBACK_MS);
-        // Mobile: the map is the first screen — load after first paint, not on hover.
-        if (!isWideViewport()) {
-            afterPageLoad(finish, 1200);
         }
+
+        arm();
     }
 
     function fetchAssets(kind) {

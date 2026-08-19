@@ -73,10 +73,12 @@ public class HomepagePerformanceGuardTests
 
         var maps = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "wwwroot", "js", "maps-loader.js"));
         Assert.Contains("ensureAfterPaint", maps);
-        Assert.Contains("pointerenter", maps);
+        Assert.Contains("pointerdown", maps);
+        Assert.Contains("touchstart", maps);
+        Assert.DoesNotContain("pointerenter", maps);
+        Assert.DoesNotContain("INTERACT_FALLBACK_MS", maps);
         Assert.Contains("requestIdleCallback", maps);
         Assert.Contains("addEventListener(\"load\"", maps);
-        Assert.Contains("INTERACT_FALLBACK_MS", maps);
         Assert.DoesNotContain("DISCOVERY_DELAY_MS", maps);
         Assert.DoesNotContain("LOAD_DELAY_MS", maps);
         Assert.Contains("media = \"print\"", maps);
@@ -85,7 +87,8 @@ public class HomepagePerformanceGuardTests
         var bundle = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "wwwroot", "js", "app-core.js"));
         Assert.Contains("ensureAfterPaint", bundle);
         Assert.Contains("requestIdleCallback", bundle);
-        Assert.Contains("INTERACT_FALLBACK_MS", bundle);
+        Assert.Contains("pointerdown", bundle);
+        Assert.DoesNotContain("INTERACT_FALLBACK_MS", bundle);
         Assert.DoesNotContain("DISCOVERY_DELAY_MS", bundle);
         Assert.DoesNotContain("LOAD_DELAY_MS", bundle);
         Assert.DoesNotContain("jobsyMaps.warmDiscovery()", bundle);
