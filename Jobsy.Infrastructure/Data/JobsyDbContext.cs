@@ -25,6 +25,9 @@ public class JobsyDbContext : DbContext
     public DbSet<Vacancy> Vacancies => Set<Vacancy>();
     public DbSet<TokenTransaction> TokenTransactions => Set<TokenTransaction>();
     public DbSet<Application> Applications => Set<Application>();
+    public DbSet<CandidateUploadedCv> CandidateUploadedCvs => Set<CandidateUploadedCv>();
+    public DbSet<CandidateReference> CandidateReferences => Set<CandidateReference>();
+    public DbSet<ApplicationUploadedCv> ApplicationUploadedCvs => Set<ApplicationUploadedCv>();
     public DbSet<UserNotification> UserNotifications => Set<UserNotification>();
     public DbSet<CandidateActionToken> CandidateActionTokens => Set<CandidateActionToken>();
     public DbSet<MinimumWageRate> MinimumWageRates => Set<MinimumWageRate>();
@@ -414,6 +417,49 @@ public class JobsyDbContext : DbContext
                 .IsUnique()
                 .HasFilter("\"CandidateUserId\" IS NOT NULL");
             entity.HasIndex(e => new { e.VacancyId, e.CandidateEmail }).IsUnique();
+            entity.HasOne(e => e.UploadedCv)
+                .WithOne(c => c.Application)
+                .HasForeignKey<ApplicationUploadedCv>(c => c.ApplicationId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<CandidateUploadedCv>(entity =>
+        {
+            entity.ToTable("CandidateUploadedCvs");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.FileName).HasMaxLength(180).IsRequired();
+            entity.Property(e => e.ContentType).HasMaxLength(128).IsRequired();
+            entity.Property(e => e.Content).IsRequired();
+            entity.Property(e => e.FilledFieldsJson).HasMaxLength(1000);
+            entity.HasIndex(e => e.UserId).IsUnique();
+            entity.HasOne(e => e.User)
+                .WithMany()
+                .HasForeignKey(e => e.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<CandidateReference>(entity =>
+        {
+            entity.ToTable("CandidateReferences");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.EmployerName).HasMaxLength(200).IsRequired();
+            entity.Property(e => e.ContactName).HasMaxLength(200).IsRequired();
+            entity.Property(e => e.Email).HasMaxLength(256).IsRequired();
+            entity.Property(e => e.Phone).HasMaxLength(32).IsRequired();
+            entity.HasIndex(e => new { e.UserId, e.SortOrder });
+            entity.HasOne(e => e.User)
+                .WithMany()
+                .HasForeignKey(e => e.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<ApplicationUploadedCv>(entity =>
+        {
+            entity.ToTable("ApplicationUploadedCvs");
+            entity.HasKey(e => e.ApplicationId);
+            entity.Property(e => e.FileName).HasMaxLength(180).IsRequired();
+            entity.Property(e => e.ContentType).HasMaxLength(128).IsRequired();
+            entity.Property(e => e.Content).IsRequired();
         });
 
         modelBuilder.Entity<UserNotification>(entity =>

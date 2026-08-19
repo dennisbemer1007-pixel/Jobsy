@@ -237,7 +237,8 @@
 
             @if (!string.IsNullOrWhiteSpace(_vacancy.RequiredDrivingLicense)
                 || !string.IsNullOrWhiteSpace(_vacancy.RequiredEducation)
-                || _vacancy.MinimumEmployers is > 0)
+                || _vacancy.MinimumEmployers is > 0
+                || _vacancy.MinimumReferences is > 0)
             {
                 <aside class="lobsy-proximity" aria-label="@Culture["Vacancy.HardRequirements"]">
                     <span class="lobsy-proximity__icon"><LobsyMark /></span>
@@ -255,6 +256,10 @@
                             @if (_vacancy.MinimumEmployers is > 0)
                             {
                                 <span class="lobsy-proximity__chip">@Culture.Format("Vacancy.MinEmployers", _vacancy.MinimumEmployers)</span>
+                            }
+                            @if (_vacancy.MinimumReferences is > 0)
+                            {
+                                <span class="lobsy-proximity__chip">@Culture.Format("Vacancy.MinReferences", _vacancy.MinimumReferences)</span>
                             }
                         </p>
                     </div>
@@ -426,6 +431,10 @@
                                         <li class="@(_profileHasEducation ? "is-done" : null)">@Culture.Format("Apply.EducationItem", LocalizeEducationList(_vacancy.RequiredEducation!))</li>
                                     }
                                     <li class="@(_profileHasAboutMe ? "is-done" : null)">@Culture["Apply.AboutYou"]</li>
+                                    @if (_vacancy.MinimumReferences is > 0)
+                                    {
+                                        <li class="@(_profileHasReferences ? "is-done" : null)">@Culture.Format("Apply.ReferencesMin", _vacancy.MinimumReferences)</li>
+                                    }
                                 </ul>
                                 <a class="login-submit apply-flow__primary"
                                    href="@ProfileReturnHref">
@@ -647,6 +656,7 @@
     private bool _profileHasEmployers;
     private bool _profileHasEducation = true;
     private bool _profileHasAboutMe;
+    private bool _profileHasReferences;
     private bool _requiresDrivingLicense;
     private bool _requiresEducation;
     private bool _awaitingVerification;
@@ -904,6 +914,7 @@
         _profileHasEmployers = false;
         _profileHasEducation = true;
         _profileHasAboutMe = false;
+        _profileHasReferences = true;
         _requiresDrivingLicense = false;
         _requiresEducation = false;
         _authenticatorEnabled = false;
@@ -1150,6 +1161,10 @@
                         prefs.Educations,
                         _vacancy!.RequiredEducation);
                 _profileHasAboutMe = !string.IsNullOrWhiteSpace(prefs.AboutMe);
+                var neededRefs = _vacancy?.MinimumReferences is > 0 ? _vacancy.MinimumReferences.Value : 0;
+                _profileHasReferences = neededRefs == 0
+                    || CandidateReferenceRules.CountComplete(
+                        (profile.References ?? []).Select(r => (r.EmployerName, r.ContactName, r.Email, r.Phone))) >= neededRefs;
                 if (string.IsNullOrWhiteSpace(_motivation)
                     && !string.IsNullOrWhiteSpace(prefs.DefaultMotivation))
                 {
@@ -1160,7 +1175,8 @@
                     && _profileHasLicense
                     && _profileHasEmployers
                     && _profileHasEducation
-                    && _profileHasAboutMe;
+                    && _profileHasAboutMe
+                    && _profileHasReferences;
             }
         }
 

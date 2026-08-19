@@ -199,6 +199,9 @@ public class ExternalVacanciesController : ControllerBase
                 ? null
                 : request.RequiredEducation.Trim(),
             MinimumEmployers = request.MinimumEmployers is > 0 ? request.MinimumEmployers : null,
+            MinimumReferences = request.MinimumReferences is > 0
+                ? Math.Min(request.MinimumReferences.Value, CandidateReferenceRules.MaxMinimumOnVacancy)
+                : null,
             IntermediaryCompanyId = intermediaryCompanyId,
             ShowClientAddressOnMap = apiIsIntermediary && request.ShowClientAddressOnMap,
             Kind = VacancyKind.Regular,
@@ -325,6 +328,13 @@ public class ExternalVacanciesController : ControllerBase
         if (request.MinimumEmployers is not null)
         {
             vacancy.MinimumEmployers = request.MinimumEmployers is > 0 ? request.MinimumEmployers : null;
+        }
+
+        if (request.MinimumReferences is not null)
+        {
+            vacancy.MinimumReferences = request.MinimumReferences is > 0
+                ? Math.Min(request.MinimumReferences.Value, CandidateReferenceRules.MaxMinimumOnVacancy)
+                : null;
         }
 
         if (request.Status is string statusRaw)

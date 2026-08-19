@@ -9,7 +9,9 @@ public static class ApplicationRequirementRules
         int? minimumEmployers,
         IReadOnlyList<string>? candidateLicenses,
         IReadOnlyList<string>? candidateEducations,
-        int candidateEmployerCount)
+        int candidateEmployerCount,
+        int? minimumReferences = null,
+        int candidateReferenceCount = 0)
     {
         if (!DrivingLicenseLabels.CandidateMeetsRequirement(candidateLicenses, requiredDrivingLicense))
         {
@@ -24,6 +26,11 @@ public static class ApplicationRequirementRules
         if (minimumEmployers is > 0 && candidateEmployerCount < minimumEmployers.Value)
         {
             return $"Deze vacature vereist minimaal {minimumEmployers.Value} eerdere werkgever(s).";
+        }
+
+        if (minimumReferences is > 0 && candidateReferenceCount < minimumReferences.Value)
+        {
+            return $"Deze vacature vereist minimaal {minimumReferences.Value} recensie(s) (werkgever, contactpersoon, e-mail en telefoon). Vul ze eerst aan in je profiel.";
         }
 
         return null;

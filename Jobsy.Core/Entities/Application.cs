@@ -38,6 +38,14 @@ public class Application
     public string? SnapshotAboutMe { get; set; }
     public int CandidateEmployerCount { get; set; }
 
+    /// <summary>Complete employer references at apply (vacancies with MinimumReferences).</summary>
+    public int CandidateReferenceCount { get; set; }
+
+    /// <summary>True when a candidate-uploaded CV was snapshotted at apply.</summary>
+    public bool HasUploadedCv { get; set; }
+
+    public ApplicationUploadedCv? UploadedCv { get; set; }
+
     /// <summary>Phone snapshot at apply (released with PII after Accept).</summary>
     public string? SnapshotPhoneNumber { get; set; }
 

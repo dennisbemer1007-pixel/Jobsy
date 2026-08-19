@@ -19,7 +19,7 @@
 
 | Begrip | Betekenis |
 |--------|-----------|
-| **Lobsy-CV** | Server-gegenereerde PDF uit kandidaatprofiel + sollicitatie-snapshot (geen upload-CV). |
+| **Lobsy-CV** | Server-gegenereerde PDF uit kandidaatprofiel + sollicitatie-snapshot. Als de kandidaat een eigen CV heeft geüpload, staat dat bovenaan het Lobsy-CV. |
 | **Preview-PDF** | Zelfde layout als werkgevers-PDF, gegenereerd uit *live* of *draft*-profiel; alleen voor de kandidaat zelf. |
 | **Released CV** | PDF gebaseerd op **bevroren snapshots** van de Application; alleen na `Accepted` / `EmployerContacting` / `Hired`. |
 | **Profielcoach** | Deterministische checks + optionele LLM-tips; feature-flagged. |

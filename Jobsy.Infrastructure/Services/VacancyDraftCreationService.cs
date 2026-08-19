@@ -171,6 +171,11 @@ public sealed class VacancyDraftCreationService : IVacancyDraftCreationService
             return VacancyDraftCreateResult.Fail("Minimum werkgevers moet tussen 0 en 100 liggen.");
         }
 
+        if (input.MinimumReferences is < 0 or > CandidateReferenceRules.MaxMinimumOnVacancy)
+        {
+            return VacancyDraftCreateResult.Fail($"Aantal recensies moet tussen 0 en {CandidateReferenceRules.MaxMinimumOnVacancy} liggen.");
+        }
+
         var moderation = await _moderation.CheckAsync(input.Title, input.Description, cancellationToken);
 
         var isIntermediaryPlacement = input.IntermediaryCompanyId is not null;
@@ -202,6 +207,7 @@ public sealed class VacancyDraftCreationService : IVacancyDraftCreationService
             RequiredDrivingLicense = drivingLicense,
             RequiredEducation = education,
             MinimumEmployers = input.MinimumEmployers is > 0 ? input.MinimumEmployers : null,
+            MinimumReferences = input.MinimumReferences is > 0 ? input.MinimumReferences : null,
             IntermediaryCompanyId = input.IntermediaryCompanyId,
             ShowClientAddressOnMap = input.IntermediaryCompanyId is not null && input.ShowClientAddressOnMap,
             Kind = kind,

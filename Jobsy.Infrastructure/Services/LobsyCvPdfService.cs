@@ -131,6 +131,15 @@ public sealed class LobsyCvPdfService : ILobsyCvPdfService
                             });
                     });
                     header.Item().Height(3).Background(AccentCoral);
+                    if (model.HasUploadedOwnCv)
+                    {
+                        header.Item().Background(SoftMint).PaddingHorizontal(12).PaddingVertical(8).Text(t =>
+                        {
+                            t.Span("Eigen CV toegevoegd. ").FontSize(9).Bold().FontColor(AccentTeal);
+                            t.Span("Deze kandidaat heeft een eigen CV geüpload. Het Lobsy-CV is het visitekaartje; bekijk ook het geüploade bestand.")
+                                .FontSize(9).FontColor(Slate);
+                        });
+                    }
                 });
 
                 page.Content().PaddingTop(14).Column(body =>
@@ -399,7 +408,9 @@ public sealed class LobsyCvPdfService : ILobsyCvPdfService
                     footer.Item().PaddingTop(6).LineHorizontal(0.5f).LineColor(Line);
                     footer.Item().PaddingTop(5).Text(text =>
                     {
-                        text.Span("Gegenereerd door Lobsy · visitekaartje van de kandidaat, geen upload-CV")
+                        text.Span(model.HasUploadedOwnCv
+                                ? "Gegenereerd door Lobsy · visitekaartje van de kandidaat · eigen CV toegevoegd"
+                                : "Gegenereerd door Lobsy · visitekaartje van de kandidaat, geen upload-CV")
                             .FontSize(7.5f).FontColor(Muted);
                         if (!string.IsNullOrWhiteSpace(model.ConsentVersion))
                         {

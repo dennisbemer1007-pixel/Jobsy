@@ -189,7 +189,10 @@ public record EmployerApplicationDto(
     /// <summary>Age at apply — visible before Accept.</summary>
     int? CandidateAgeYears = null,
     /// <summary>Formatted availability — visible before Accept.</summary>
-    string? AvailabilitySummary = null);
+    string? AvailabilitySummary = null,
+    /// <summary>True when employer may download the candidate-uploaded CV (post-Accept snapshot).</summary>
+    bool UploadedCvAvailable = false,
+    int CandidateReferenceCount = 0);
 
 public record FulfillVacancyRequest(
     bool RejectOtherApplications = true,

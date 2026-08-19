@@ -349,6 +349,23 @@
                     }
                 </div>
             </fieldset>
+            <fieldset class="profile-min-employers">
+                <legend>Minimaal aantal recensies</legend>
+                <p class="muted vacancy-field-hint">Standaard geen. Bij 1 of meer is dit een harde eis: solliciteren kan pas als het kandidaatprofiel zoveel complete recensies heeft.</p>
+                <div class="profile-min-employers__options" role="radiogroup" aria-label="Minimaal aantal recensies">
+                    <label>
+                        <input type="radio" name="min-references" checked="@(_minimumReferences is null)" @onchange="() => SetMinimumReferences(null)" />
+                        Geen
+                    </label>
+                    @foreach (var n in _minReferenceOptions)
+                    {
+                        <label>
+                            <input type="radio" name="min-references" checked="@(_minimumReferences == n)" @onchange="() => SetMinimumReferences(n)" />
+                            @n
+                        </label>
+                    }
+                </div>
+            </fieldset>
 
             <fieldset class="vacancy-hours">
                 <legend class="visually-hidden">Uren per week</legend>
@@ -653,6 +670,9 @@
     private string _videoUrl = "";
     private string _salaryTableId = "";
     private int? _minimumEmployers;
+    private int? _minimumReferences;
+    private List<int> _minEmployerOptions = [1, 2, 3];
+    private List<int> _minReferenceOptions = [1, 2, 3];
     private string? _align;
     private bool _isIntermediary;
     private string _clientKvkNumber = "";
@@ -665,7 +685,6 @@
     private List<string> _branchOptions = WorkTypeLabels.All.ToList();
     private List<string> _licenseOptions = DrivingLicenseLabels.All.ToList();
     private List<string> _educationOptions = EducationLevelLabels.VacancyAll.ToList();
-    private List<int> _minEmployerOptions = [1, 2, 3];
     private bool _saving;
     private bool _isDuplicate;
     private string? _message;
@@ -1115,6 +1134,9 @@
             _minimumEmployers = source.MinimumEmployers is int min && _minEmployerOptions.Contains(min)
                 ? min
                 : null;
+            _minimumReferences = source.MinimumReferences is int refs && _minReferenceOptions.Contains(refs)
+                ? refs
+                : null;
             _minHours = source.MinHoursPerWeek ?? 8;
             _maxHours = source.MaxHoursPerWeek ?? 16;
             _flexibleTimes = source.FlexibleTimes || string.IsNullOrWhiteSpace(source.ScheduleJson);
@@ -1216,6 +1238,7 @@
     }
 
     private void SetMinimumEmployers(int? value) => _minimumEmployers = value;
+    private void SetMinimumReferences(int? value) => _minimumReferences = value;
 
     private void OnFlexibleTimesChanged(ChangeEventArgs e)
     {
@@ -1558,7 +1581,8 @@
                 CategoryId: Guid.TryParse(_categoryId, out var catId) ? catId : null,
                 CategoryFields: _categoryFields.Count > 0 ? new Dictionary<string, string>(_categoryFields) : null,
                 SuitableFor65Plus: SelectedCategory?.Slug == "regulier" && _suitableFor65Plus,
-                RequireEmailVerification: _requireEmailVerification);
+                RequireEmailVerification: _requireEmailVerification,
+                MinimumReferences: _minimumReferences is int refs && _minReferenceOptions.Contains(refs) ? refs : null);
 
             var saved = _editVacancyId is Guid editId
                 ? await Api.UpdateVacancyAsync(editId, form)

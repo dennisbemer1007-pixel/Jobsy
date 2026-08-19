@@ -77,4 +77,5 @@ public record VacancyListItemDto(
     string? ModerationWarning = null,
     bool RequireEmailVerification = false,
     string? EngagementReminderTip = null,
-    DateTime? EngagementReminderSentAtUtc = null);
+    DateTime? EngagementReminderSentAtUtc = null,
+    int? MinimumReferences = null);

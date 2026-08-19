@@ -26,7 +26,8 @@ public static class LobsyCvModelFactory
         double? workplaceLatitude = null,
         double? workplaceLongitude = null,
         string? workplaceAddress = null,
-        double? distanceKm = null)
+        double? distanceKm = null,
+        bool hasUploadedOwnCv = false)
     {
         // Home lat/lng retained in signature for call-site compatibility; never written to CV.
         _ = latitude;
@@ -94,7 +95,8 @@ public static class LobsyCvModelFactory
             WorkplaceLongitude: workplaceLongitude,
             WorkplaceAddress: string.IsNullOrWhiteSpace(workplaceAddress) ? null : workplaceAddress.Trim(),
             ReachTravelMinutes: reachMinutes,
-            DistanceKm: distanceKm is > 0 ? distanceKm : null);
+            DistanceKm: distanceKm is > 0 ? distanceKm : null,
+            HasUploadedOwnCv: hasUploadedOwnCv);
     }
 
     public static LobsyCvModel FromApplicationSnapshot(
@@ -128,7 +130,8 @@ public static class LobsyCvModelFactory
         double? workplaceLongitude = null,
         string? workplaceAddress = null,
         int? maxTravelMinutes = null,
-        double? distanceKm = null)
+        double? distanceKm = null,
+        bool hasUploadedOwnCv = false)
     {
         // Candidate home fields kept for API compatibility; never rendered on CV.
         _ = city;
@@ -190,7 +193,8 @@ public static class LobsyCvModelFactory
             WorkplaceLongitude: workplaceLongitude,
             WorkplaceAddress: string.IsNullOrWhiteSpace(workplaceAddress) ? null : workplaceAddress.Trim(),
             ReachTravelMinutes: reachMinutes,
-            DistanceKm: distanceKm is > 0 ? distanceKm : null);
+            DistanceKm: distanceKm is > 0 ? distanceKm : null,
+            HasUploadedOwnCv: hasUploadedOwnCv);
     }
 
     public static string SerializeCertificatesSnapshot(

@@ -33,6 +33,8 @@ public class MeController : ControllerBase
     private readonly IPlatformFeatureService _features;
     private readonly ITranslationService _translation;
     private readonly ILobsyCvPdfService _lobsyCvPdf;
+    private readonly ICvTextExtractor _cvText;
+    private readonly ICvExtractionService _cvExtraction;
     private const string VacancySourceLanguage = "nl";
 
     public MeController(
@@ -41,7 +43,9 @@ public class MeController : ControllerBase
         JobsyDbContext db,
         IPlatformFeatureService features,
         ITranslationService translation,
-        ILobsyCvPdfService lobsyCvPdf)
+        ILobsyCvPdfService lobsyCvPdf,
+        ICvTextExtractor cvText,
+        ICvExtractionService cvExtraction)
     {
         _companyAuth = companyAuth;
         _users = users;
@@ -49,6 +53,8 @@ public class MeController : ControllerBase
         _features = features;
         _translation = translation;
         _lobsyCvPdf = lobsyCvPdf;
+        _cvText = cvText;
+        _cvExtraction = cvExtraction;
     }
 
     [HttpGet("access")]
@@ -78,7 +84,7 @@ public class MeController : ControllerBase
             }
 
             var features = await _features.GetAsync(cancellationToken);
-            return Ok(ToProfileDto(user, features.AuthenticatorEnabled));
+            return Ok(await BuildProfileDtoAsync(user, features.AuthenticatorEnabled, cancellationToken));
         }
         catch (Exception)
         {
@@ -134,7 +140,7 @@ public class MeController : ControllerBase
 
         await _db.SaveChangesAsync(cancellationToken);
         var features = await _features.GetAsync(cancellationToken);
-        return Ok(ToProfileDto(user, features.AuthenticatorEnabled));
+        return Ok(await BuildProfileDtoAsync(user, features.AuthenticatorEnabled, cancellationToken));
     }
 
     [HttpPut("profile")]
@@ -289,9 +295,18 @@ public class MeController : ControllerBase
                 request.Preferences.ShowAddressOnCv);
         }
 
+        if (request.References is not null)
+        {
+            var replaceError = await ReplaceReferencesAsync(user.Id, request.References, cancellationToken);
+            if (replaceError is not null)
+            {
+                return BadRequest(new { message = replaceError });
+            }
+        }
+
         await _db.SaveChangesAsync(cancellationToken);
         var features = await _features.GetAsync(cancellationToken);
-        return Ok(ToProfileDto(user, features.AuthenticatorEnabled));
+        return Ok(await BuildProfileDtoAsync(user, features.AuthenticatorEnabled, cancellationToken));
     }
 
     [HttpPut("date-of-birth")]
@@ -498,6 +513,8 @@ public class MeController : ControllerBase
             return NotFound(new { message = "Gebruiker niet gevonden in Jobsy." });
         }
 
+        var hasUploadedCv = await _db.CandidateUploadedCvs.AsNoTracking()
+            .AnyAsync(c => c.UserId == user.Id, cancellationToken);
         var preferences = ParsePreferences(user.PreferencesJson);
         var model = LobsyCvModelFactory.FromLiveProfile(
             user.FullName,
@@ -509,11 +526,163 @@ public class MeController : ControllerBase
             user.HomeLocation?.Longitude,
             DateTime.UtcNow,
             user.ConsentVersion ?? PrivacyConstants.CurrentConsentVersion,
-            dateOfBirth: user.DateOfBirth);
+            dateOfBirth: user.DateOfBirth,
+            hasUploadedOwnCv: hasUploadedCv);
 
         var pdf = await _lobsyCvPdf.RenderAsync(model, cancellationToken);
         var fileName = _lobsyCvPdf.BuildFileName(model);
         return File(pdf, "application/pdf", fileName);
+    }
+
+    [HttpPost("cv")]
+    [Authorize(Policy = JobsyPolicies.RequireCandidate)]
+    [EnableRateLimiting("ai")]
+    [RequestSizeLimit(CandidateCvFileRules.MaxBytes + 64_000)]
+    public async Task<ActionResult<MeProfileDto>> UploadMyCv(IFormFile? file, CancellationToken cancellationToken)
+    {
+        if (file is null || file.Length == 0)
+        {
+            return BadRequest(new { message = "Kies een CV-bestand (PDF of Word)." });
+        }
+
+        if (!CandidateCvFileRules.TryNormalize(
+                file.FileName,
+                file.ContentType,
+                checked((int)file.Length),
+                out var safeName,
+                out var contentType,
+                out var fileError))
+        {
+            return BadRequest(new { message = fileError });
+        }
+
+        var lookup = await _users.FindByPrincipalAsync(User, cancellationToken);
+        if (lookup is null)
+        {
+            return NotFound(new { message = "Gebruiker niet gevonden in Jobsy." });
+        }
+
+        var user = await _db.Users.FirstOrDefaultAsync(u => u.Id == lookup.Id, cancellationToken);
+        if (user is null || !user.IsActive)
+        {
+            return NotFound(new { message = "Gebruiker niet gevonden in Jobsy." });
+        }
+
+        await using var buffer = new MemoryStream();
+        await file.CopyToAsync(buffer, cancellationToken);
+        var bytes = buffer.ToArray();
+
+        var existing = await _db.CandidateUploadedCvs.FirstOrDefaultAsync(c => c.UserId == user.Id, cancellationToken);
+        if (existing is null)
+        {
+            existing = new Core.Entities.CandidateUploadedCv
+            {
+                Id = Guid.NewGuid(),
+                UserId = user.Id
+            };
+            _db.CandidateUploadedCvs.Add(existing);
+        }
+
+        existing.FileName = safeName;
+        existing.ContentType = contentType;
+        existing.Content = bytes;
+        existing.SizeBytes = bytes.Length;
+        existing.UploadedAtUtc = DateTime.UtcNow;
+        existing.ExtractedAtUtc = null;
+        existing.FilledFieldsJson = null;
+
+        var text = _cvText.Extract(bytes, contentType, safeName);
+        var extracted = await _cvExtraction.ExtractAsync(text, cancellationToken);
+        var prefs = ParsePreferences(user.PreferencesJson);
+        var merged = CvProfileMerge.Apply(user.FirstName, user.LastName, user.PhoneNumber, prefs, extracted);
+        if (merged.FilledFields.Count > 0)
+        {
+            user.FirstName = merged.FirstName;
+            user.LastName = merged.LastName;
+            var composed = CandidateNameRules.ComposeFullName(user.FirstName, user.LastName, user.FullName);
+            if (!string.IsNullOrWhiteSpace(composed))
+            {
+                user.FullName = composed.Length > 256 ? composed[..256] : composed;
+            }
+
+            if (!string.IsNullOrWhiteSpace(merged.PhoneNumber) && CandidatePhoneRules.IsValid(merged.PhoneNumber))
+            {
+                user.PhoneNumber = merged.PhoneNumber;
+            }
+
+            user.PreferencesJson = SerializePreferences(
+                merged.Preferences.Roles,
+                merged.Preferences.MaxTravelMinutes,
+                merged.Preferences.PreferredTransport,
+                merged.Preferences.Language,
+                merged.Preferences.AgeYears,
+                merged.Preferences.AboutMe,
+                merged.Preferences.DefaultMotivation,
+                merged.Preferences.DrivingLicenses,
+                merged.Preferences.Availability,
+                merged.Preferences.Employers,
+                merged.Preferences.Educations,
+                merged.Preferences.HomeAddress,
+                merged.Preferences.MinHoursPerWeek,
+                merged.Preferences.MaxHoursPerWeek,
+                merged.Preferences.FlexibleTimes,
+                merged.Preferences.Certificates,
+                merged.Preferences.ShowAddressOnCv);
+            existing.ExtractedAtUtc = DateTime.UtcNow;
+            existing.FilledFieldsJson = JsonSerializer.Serialize(merged.FilledFields, JsonOptions);
+        }
+
+        await _db.SaveChangesAsync(cancellationToken);
+        var features = await _features.GetAsync(cancellationToken);
+        return Ok(await BuildProfileDtoAsync(user, features.AuthenticatorEnabled, cancellationToken));
+    }
+
+    [HttpGet("cv")]
+    [Authorize(Policy = JobsyPolicies.RequireCandidate)]
+    [EnableRateLimiting("public-pdf")]
+    public async Task<IActionResult> DownloadMyCv(CancellationToken cancellationToken)
+    {
+        var lookup = await _users.FindByPrincipalAsync(User, cancellationToken);
+        if (lookup is null)
+        {
+            return NotFound(new { message = "Gebruiker niet gevonden in Jobsy." });
+        }
+
+        var cv = await _db.CandidateUploadedCvs.AsNoTracking()
+            .FirstOrDefaultAsync(c => c.UserId == lookup.Id, cancellationToken);
+        if (cv is null)
+        {
+            return NotFound(new { message = "Er is nog geen eigen CV geüpload." });
+        }
+
+        return File(cv.Content, cv.ContentType, cv.FileName);
+    }
+
+    [HttpDelete("cv")]
+    [Authorize(Policy = JobsyPolicies.RequireCandidate)]
+    public async Task<ActionResult<MeProfileDto>> DeleteMyCv(CancellationToken cancellationToken)
+    {
+        var lookup = await _users.FindByPrincipalAsync(User, cancellationToken);
+        if (lookup is null)
+        {
+            return NotFound(new { message = "Gebruiker niet gevonden in Jobsy." });
+        }
+
+        var user = await _db.Users.FirstOrDefaultAsync(u => u.Id == lookup.Id, cancellationToken);
+        if (user is null || !user.IsActive)
+        {
+            return NotFound(new { message = "Gebruiker niet gevonden in Jobsy." });
+        }
+
+        var existing = await _db.CandidateUploadedCvs.FirstOrDefaultAsync(c => c.UserId == user.Id, cancellationToken);
+        if (existing is not null)
+        {
+            _db.CandidateUploadedCvs.Remove(existing);
+            await _db.SaveChangesAsync(cancellationToken);
+        }
+
+        var features = await _features.GetAsync(cancellationToken);
+        return Ok(await BuildProfileDtoAsync(user, features.AuthenticatorEnabled, cancellationToken));
     }
 
     /// <summary>
@@ -541,28 +710,137 @@ public class MeController : ControllerBase
         await _db.SaveChangesAsync(cancellationToken);
 
         var features = await _features.GetAsync(cancellationToken);
-        return Ok(ToProfileDto(user, features.AuthenticatorEnabled));
+        return Ok(await BuildProfileDtoAsync(user, features.AuthenticatorEnabled, cancellationToken));
     }
 
-    private MeProfileDto ToProfileDto(Core.Entities.User user, bool authenticatorEnabled) => new(
-        user.Id,
-        user.Email,
-        user.FullName,
-        user.Role.ToString(),
-        user.DateOfBirth,
-        user.DateOfBirth.HasValue,
-        user.OpenForWork,
-        ParsePreferences(user.PreferencesJson),
-        authenticatorEnabled,
-        user.HomeLocation?.Latitude,
-        user.HomeLocation?.Longitude,
-        user.ConsentVersion,
-        PrivacyConstants.RequiresAccountConsentReaccept(user.Role, user.ConsentVersion),
-        PrivacyConstants.CurrentConsentVersion,
-        CandidateNameRules.DisplayFirstName(user.FirstName, user.FullName),
-        CandidateNameRules.DisplayLastName(user.LastName, user.FullName),
-        user.PhoneNumber,
-        user.WhatsAppContactAllowed);
+    private async Task<MeProfileDto> BuildProfileDtoAsync(
+        Core.Entities.User user,
+        bool authenticatorEnabled,
+        CancellationToken cancellationToken)
+    {
+        var cvRow = await _db.CandidateUploadedCvs.AsNoTracking()
+            .Where(c => c.UserId == user.Id)
+            .Select(c => new
+            {
+                c.FileName,
+                c.ContentType,
+                c.SizeBytes,
+                c.UploadedAtUtc,
+                c.ExtractedAtUtc,
+                c.FilledFieldsJson
+            })
+            .FirstOrDefaultAsync(cancellationToken);
+
+        CandidateUploadedCvInfoDto? cv = null;
+        if (cvRow is not null)
+        {
+            IReadOnlyList<string>? filled = null;
+            if (!string.IsNullOrWhiteSpace(cvRow.FilledFieldsJson))
+            {
+                try
+                {
+                    filled = JsonSerializer.Deserialize<List<string>>(cvRow.FilledFieldsJson, JsonOptions);
+                }
+                catch (JsonException)
+                {
+                    filled = null;
+                }
+            }
+
+            cv = new CandidateUploadedCvInfoDto(
+                cvRow.FileName,
+                cvRow.ContentType,
+                cvRow.SizeBytes,
+                cvRow.UploadedAtUtc,
+                cvRow.ExtractedAtUtc,
+                filled);
+        }
+
+        var references = await _db.CandidateReferences.AsNoTracking()
+            .Where(r => r.UserId == user.Id)
+            .OrderBy(r => r.SortOrder)
+            .ThenBy(r => r.CreatedAtUtc)
+            .Select(r => new CandidateReferenceDto(r.Id, r.EmployerName, r.ContactName, r.Email, r.Phone))
+            .ToListAsync(cancellationToken);
+
+        return new MeProfileDto(
+            user.Id,
+            user.Email,
+            user.FullName,
+            user.Role.ToString(),
+            user.DateOfBirth,
+            user.DateOfBirth.HasValue,
+            user.OpenForWork,
+            ParsePreferences(user.PreferencesJson),
+            authenticatorEnabled,
+            user.HomeLocation?.Latitude,
+            user.HomeLocation?.Longitude,
+            user.ConsentVersion,
+            PrivacyConstants.RequiresAccountConsentReaccept(user.Role, user.ConsentVersion),
+            PrivacyConstants.CurrentConsentVersion,
+            CandidateNameRules.DisplayFirstName(user.FirstName, user.FullName),
+            CandidateNameRules.DisplayLastName(user.LastName, user.FullName),
+            user.PhoneNumber,
+            user.WhatsAppContactAllowed,
+            cv,
+            references);
+    }
+
+    private async Task<string?> ReplaceReferencesAsync(
+        Guid userId,
+        IReadOnlyList<CandidateReferenceDto> incoming,
+        CancellationToken cancellationToken)
+    {
+        var rows = incoming
+            .Select(r => (
+                Employer: CandidateReferenceRules.NormalizeName(r.EmployerName),
+                Contact: CandidateReferenceRules.NormalizeName(r.ContactName),
+                Email: CandidateReferenceRules.NormalizeEmail(r.Email),
+                Phone: CandidatePhoneRules.Normalize(r.Phone)))
+            .Where(r => !string.IsNullOrWhiteSpace(r.Employer)
+                        || !string.IsNullOrWhiteSpace(r.Contact)
+                        || !string.IsNullOrWhiteSpace(r.Email)
+                        || !string.IsNullOrWhiteSpace(r.Phone))
+            .ToList();
+
+        if (rows.Count > CandidateReferenceRules.MaxPerCandidate)
+        {
+            return $"Je kunt maximaal {CandidateReferenceRules.MaxPerCandidate} recensies toevoegen.";
+        }
+
+        foreach (var row in rows)
+        {
+            var error = CandidateReferenceRules.ValidateEntry(row.Employer, row.Contact, row.Email, row.Phone);
+            if (error is not null)
+            {
+                return error;
+            }
+        }
+
+        var existing = await _db.CandidateReferences.Where(r => r.UserId == userId).ToListAsync(cancellationToken);
+        if (existing.Count > 0)
+        {
+            _db.CandidateReferences.RemoveRange(existing);
+        }
+
+        var order = 0;
+        foreach (var row in rows)
+        {
+            _db.CandidateReferences.Add(new Core.Entities.CandidateReference
+            {
+                Id = Guid.NewGuid(),
+                UserId = userId,
+                EmployerName = row.Employer!,
+                ContactName = row.Contact!,
+                Email = row.Email!,
+                Phone = row.Phone!,
+                SortOrder = order++,
+                CreatedAtUtc = DateTime.UtcNow
+            });
+        }
+
+        return null;
+    }
 
     public static CandidatePreferencesDto ParsePreferences(string? json)
     {

@@ -31,7 +31,7 @@ Publiek (naast banenkaart): `/vacancies/{id}`, `/{kvknummer}` (ondernemer), `/{k
 | `/vacancies/{id}` | Detail, solliciteren, like/share, optioneel mock interview |
 | `/candidate/applications` | Sollicitatiehistorie |
 | `/candidate/liked` · `/candidate/shared` | Engagement-lijsten |
-| `/candidate/profile` | OpenForWork, prefs, DOB, HomeLocation (PushBom) |
+| `/candidate/profile` | OpenForWork, prefs, DOB, HomeLocation, eigen CV-upload, recensies |
 
 ---
 
@@ -45,7 +45,7 @@ Publiek (naast banenkaart): `/vacancies/{id}`, `/{kvknummer}` (ondernemer), `/{k
 | `/home` | Vestiging-KPI’s (Bento) + Top/Flop vacatures + drilldown |
 | `/employer/vacancies` | Beheer + publiceren (basis/highlight/PushBom/verlengen) |
 | `/branch/vacancies/new` | Nieuwe vacature |
-| `/branch/applicants` | Sollicitaties; pre-accept: motivatie/afstand/beschikbaarheid/leeftijd; PII + Lobsy-CV na Accept; daarna uitnodigen / matchen / weigeren |
+| `/branch/applicants` | Sollicitaties; pre-accept: motivatie/afstand/beschikbaarheid/leeftijd; PII + Lobsy-CV + geüpload CV na Accept; daarna uitnodigen / matchen / weigeren |
 | `/branch/tokens` | Saldo / logs |
 | `/employer/takeovers` | Inbox overnames |
 | `/branch` | Redirect → `/home` |

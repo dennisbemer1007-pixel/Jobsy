@@ -22,6 +22,7 @@ public record UpdateExternalVacancyRequest(
     string? RequiredDrivingLicense = null,
     string? RequiredEducation = null,
     int? MinimumEmployers = null,
+    int? MinimumReferences = null,
     string? Status = null);
 
 public record GenerateApiKeyRequest(string? Name = null);
