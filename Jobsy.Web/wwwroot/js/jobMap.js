@@ -1382,6 +1382,9 @@ window.jobMap = (function () {
         if (!map) {
             return;
         }
+        if (window.jobsyMapLibre) {
+            window.jobsyMapLibre.pinReservedBox(map.getContainer());
+        }
         map.resize();
         if (Date.now() < openingViewUntil || !firstViewApplied) {
             if (lastFitPoints.length > 0) {

@@ -174,11 +174,37 @@ window.jobsyMapLibre = (function () {
         });
     }
 
+    function pinReservedBox(container) {
+        if (!container || container.id !== "job-map") {
+            return;
+        }
+        var height = container.style.height;
+        var minHeight = container.style.minHeight;
+        if (!height || height === "0" || height === "0px") {
+            container.style.height = "300px";
+        }
+        if (!minHeight || minHeight === "0" || minHeight === "0px") {
+            container.style.minHeight = "300px";
+        }
+        container.style.width = container.style.width || "100%";
+        container.style.display = "block";
+        container.style.minWidth = container.style.minWidth || "100%";
+        if (container.style.position === "absolute") {
+            container.style.position = "relative";
+            container.style.inset = "auto";
+            container.style.top = "";
+            container.style.right = "";
+            container.style.bottom = "";
+            container.style.left = "";
+        }
+    }
+
     function createMap(container, options) {
         if (typeof maplibregl === "undefined") {
             throw new Error("MapLibre GL JS (maplibregl) is not loaded");
         }
         options = options || {};
+        pinReservedBox(container);
         var styleKey = options.styleKey || readStoredStyle();
         var spec = styleSpec(styleKey);
         var map = new maplibregl.Map({
@@ -208,6 +234,7 @@ window.jobsyMapLibre = (function () {
         });
 
         map._jobsyStyleKey = spec.key;
+        pinReservedBox(map.getContainer());
         lockTouch(map.getContainer());
         hideChrome(map);
         map.addControl(new maplibregl.NavigationControl({
@@ -218,11 +245,16 @@ window.jobsyMapLibre = (function () {
         attachStyleSwitch(map);
 
         map.on("load", function () {
+            pinReservedBox(map.getContainer());
             hideChrome(map);
             applyCameraForStyle(map, spec);
         });
         map.on("styledata", function () {
+            pinReservedBox(map.getContainer());
             hideChrome(map);
+        });
+        map.on("resize", function () {
+            pinReservedBox(map.getContainer());
         });
 
         return map;
@@ -238,6 +270,7 @@ window.jobsyMapLibre = (function () {
         createMap: createMap,
         setStyle: setStyle,
         hideChrome: hideChrome,
-        lockTouch: lockTouch
+        lockTouch: lockTouch,
+        pinReservedBox: pinReservedBox
     };
 })();

@@ -1,5 +1,5 @@
 @page "/"
-@* Map chrome prerenders; MapLibre CSS/JS load lazily via jobsyMaps when #job-map is near the viewport. *@
+@* Map chrome prerenders with an inline 300px box; jobsyMaps loads MapLibre 500ms after paint. *@
 @rendermode @(new InteractiveServerRenderMode(prerender: true))
 @inject CultureState Culture
 @implements IDisposable

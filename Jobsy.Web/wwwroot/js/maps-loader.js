@@ -3,18 +3,19 @@ window.jobsyMaps = (function () {
 
     var pending = {};
     var pendingPaint = {};
+    var LOAD_DELAY_MS = 500;
     var css = [
         "/lib/maplibre/maplibre-gl.css"
     ];
     var mapLibreScripts = [
         "/lib/maplibre/maplibre-gl.js",
-        "/js/jobsyMapLibre.js?v=20260819-mapcls"
+        "/js/jobsyMapLibre.js?v=20260819-tbt"
     ];
     var discoveryScripts = [
-        "/js/jobMap.js?v=20260819-mapcls"
+        "/js/jobMap.js?v=20260819-tbt"
     ];
     var detailScripts = [
-        "/js/vacancyDetailMap.js?v=20260819-mapcls"
+        "/js/vacancyDetailMap.js?v=20260819-tbt"
     ];
 
     function hrefMatches(node, href) {
@@ -67,6 +68,7 @@ window.jobsyMaps = (function () {
         return new Promise(function (resolve, reject) {
             var script = document.createElement("script");
             script.src = src;
+            script.async = true;
             script.setAttribute("data-jobsy-map", src);
             script.onload = function () { resolve(); };
             script.onerror = reject;
@@ -121,15 +123,11 @@ window.jobsyMaps = (function () {
         }
     }
 
-    function afterIdle(cb) {
-        var run = function () {
-            afterNextPaint(cb);
-        };
-        if (typeof requestIdleCallback === "function") {
-            requestIdleCallback(function () { run(); }, { timeout: 1800 });
-        } else {
-            setTimeout(run, 250);
-        }
+    function afterMainThreadQuiet(cb) {
+        // Wait for FCP/LCP paint, then give the main thread 500ms before MapLibre.
+        afterNextPaint(function () {
+            setTimeout(cb, LOAD_DELAY_MS);
+        });
     }
 
     function isVisible(el) {
@@ -142,36 +140,38 @@ window.jobsyMaps = (function () {
     }
 
     function whenMapSlotReady(elementId, cb) {
-        var el = elementId ? document.getElementById(elementId) : null;
-        var done = false;
-        var finish = function () {
-            if (done) {
+        afterMainThreadQuiet(function () {
+            var el = elementId ? document.getElementById(elementId) : null;
+            var done = false;
+            var finish = function () {
+                if (done) {
+                    return;
+                }
+                done = true;
+                if (io) {
+                    io.disconnect();
+                }
+                clearTimeout(fallback);
+                cb();
+            };
+            var io = null;
+            if (!el || isVisible(el)) {
+                finish();
                 return;
             }
-            done = true;
-            if (io) {
-                io.disconnect();
-            }
-            clearTimeout(fallback);
-            afterIdle(cb);
-        };
-        var io = null;
-        if (!el || isVisible(el)) {
-            finish();
-            return;
-        }
-        if (typeof IntersectionObserver === "function") {
-            io = new IntersectionObserver(function (entries) {
-                for (var i = 0; i < entries.length; i++) {
-                    if (entries[i].isIntersecting) {
-                        finish();
-                        return;
+            if (typeof IntersectionObserver === "function") {
+                io = new IntersectionObserver(function (entries) {
+                    for (var i = 0; i < entries.length; i++) {
+                        if (entries[i].isIntersecting) {
+                            finish();
+                            return;
+                        }
                     }
-                }
-            }, { rootMargin: "160px" });
-            io.observe(el);
-        }
-        var fallback = setTimeout(finish, 2200);
+                }, { rootMargin: "80px" });
+                io.observe(el);
+            }
+            var fallback = setTimeout(finish, 8000);
+        });
     }
 
     function ensure(kind) {
@@ -196,8 +196,8 @@ window.jobsyMaps = (function () {
         ensure: ensure,
         ensureAfterPaint: function (kind, elementId) {
             kind = normalizeKind(kind);
-            if (isReady(kind) || pending[kind]) {
-                return ensure(kind);
+            if (isReady(kind)) {
+                return Promise.resolve();
             }
             if (pendingPaint[kind]) {
                 return pendingPaint[kind];
@@ -213,18 +213,7 @@ window.jobsyMaps = (function () {
             return pendingPaint[kind];
         },
         warmDiscovery: function () {
-            if (!document.getElementById("job-map")) {
-                return;
-            }
-            this.ensureAfterPaint("discovery", "job-map");
+            // Intentionally empty: MapLibre must not start on page load.
         }
     };
 })();
-
-if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", function () {
-        window.jobsyMaps.warmDiscovery();
-    });
-} else {
-    window.jobsyMaps.warmDiscovery();
-}

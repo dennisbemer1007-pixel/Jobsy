@@ -70,11 +70,9 @@ public class JobMapPrerenderGuardTests
         Assert.Contains("#job-map", css);
         Assert.Contains("height: 300px", css);
         Assert.Contains("min-height: 300px", css);
-        Assert.Contains("min-width: 768px", css);
-        Assert.Contains("height: 450px", css);
-        Assert.Contains("min-height: 450px", css);
         Assert.DoesNotContain("min-height: 55dvh", css);
         Assert.DoesNotContain("/lib/leaflet/", helper);
+        Assert.Contains("pinReservedBox", helper);
     }
 
     [Fact]
@@ -114,8 +112,6 @@ public class JobMapPrerenderGuardTests
         Assert.Contains("height: 300px", app);
         Assert.Contains("min-height: 300px", app);
         Assert.Contains("min-width: 768px", app);
-        Assert.Contains("height: 450px", app);
-        Assert.Contains("min-height: 450px", app);
         Assert.DoesNotContain("min-height: 55dvh", app);
         Assert.DoesNotContain("lib/leaflet/leaflet.min.js", app);
         Assert.DoesNotContain("lib/leaflet/leaflet.css", app);
@@ -126,11 +122,12 @@ public class JobMapPrerenderGuardTests
         var maps = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "wwwroot", "js", "maps-loader.js"));
         Assert.Contains("pending[kind] = null", maps);
         Assert.Contains("discovery", maps);
-        Assert.Contains("requestIdleCallback", maps);
+        Assert.Contains("LOAD_DELAY_MS = 500", maps);
+        Assert.Contains("setTimeout(cb, LOAD_DELAY_MS)", maps);
         var bundle = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "wwwroot", "js", "app-core.js"));
         Assert.Contains("pending[kind] = null", bundle);
         Assert.Contains("maplibre-gl.js", bundle);
-        Assert.Contains("requestIdleCallback", bundle);
+        Assert.Contains("LOAD_DELAY_MS = 500", bundle);
     }
 
     [Fact]
