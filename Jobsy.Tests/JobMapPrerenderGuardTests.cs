@@ -12,14 +12,13 @@ public class JobMapPrerenderGuardTests
         var home = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "Components", "Pages", "Home.razor"));
         Assert.Contains("InteractiveServerRenderMode(prerender: true)", home);
         Assert.DoesNotContain("images/maps/nl-preview.webp", home);
-        Assert.Contains("/lib/maplibre/maplibre-gl.js", home);
-        Assert.Contains("/lib/maplibre/maplibre-gl.css", home);
-        Assert.Contains("tiles.openfreemap.org", home);
-        Assert.Contains("fetchpriority=\"high\"", home);
-        Assert.Contains("preconnect", home);
+        Assert.Contains("jobsyMaps", home);
         Assert.DoesNotContain("prerender: false", home);
         Assert.DoesNotContain("/lib/leaflet/leaflet.min.js", home);
         Assert.DoesNotContain("/lib/leaflet/leaflet.css", home);
+        Assert.DoesNotContain("/lib/maplibre/maplibre-gl.css", home);
+        Assert.DoesNotContain("/lib/maplibre/maplibre-gl.js", home);
+        Assert.DoesNotContain("fetchpriority=\"high\"", home);
     }
 
     [Fact]
@@ -67,6 +66,27 @@ public class JobMapPrerenderGuardTests
         Assert.Contains("display: none !important", css);
         Assert.Contains("job-map-style-switch", css);
         Assert.Contains("touch-action: none", css);
+        Assert.Contains("#job-map", css);
+        Assert.Contains("min-height: 55dvh", css);
+    }
+
+    [Fact]
+    public void Logo_images_have_a_lobsy_onerror_fallback()
+    {
+        var app = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "Components", "App.razor"));
+        Assert.Contains("jobsyLogoFallback", app);
+        Assert.Contains("/images/brand/lobsy-256.webp", app);
+        Assert.Contains("/images/brand/lobsy-128.png", app);
+
+        var photo = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "Components", "VacancyPhoto.razor"));
+        Assert.Contains("data-logo-fallback", photo);
+        Assert.Contains("jobsyLogoFallback", photo);
+
+        var logo = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "Components", "LobsyLogo.razor"));
+        Assert.Contains("jobsyLogoFallback", logo);
+
+        var js = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "wwwroot", "js", "jobMap.js"));
+        Assert.Contains("jobsyLogoFallback", js);
     }
 
     [Fact]
@@ -75,9 +95,13 @@ public class JobMapPrerenderGuardTests
         var app = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "Components", "App.razor"));
         Assert.DoesNotContain("unpkg.com", app);
         Assert.Contains("js/app-core.js", app);
+        Assert.Contains("defer", app);
         Assert.DoesNotContain("app-core.js?v=20260816-perf\" defer", app);
-        Assert.Contains("rel=\"preload\"", app);
         Assert.Contains("css/app.css", app);
+        Assert.Contains("media=\"print\"", app);
+        Assert.Contains("jobsyLogoFallback", app);
+        Assert.Contains("#job-map", app);
+        Assert.Contains("min-height: 55dvh", app);
         Assert.DoesNotContain("lib/leaflet/leaflet.min.js", app);
         Assert.DoesNotContain("lib/leaflet/leaflet.css", app);
         Assert.DoesNotContain("lib/maplibre/maplibre-gl.js", app);
@@ -87,9 +111,11 @@ public class JobMapPrerenderGuardTests
         var maps = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "wwwroot", "js", "maps-loader.js"));
         Assert.Contains("pending[kind] = null", maps);
         Assert.Contains("discovery", maps);
+        Assert.Contains("requestIdleCallback", maps);
         var bundle = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "wwwroot", "js", "app-core.js"));
         Assert.Contains("pending[kind] = null", bundle);
         Assert.Contains("maplibre-gl.js", bundle);
+        Assert.Contains("requestIdleCallback", bundle);
     }
 
     [Fact]

@@ -33,7 +33,14 @@
                 <div class="branch-page__identity">
                     @if (!string.IsNullOrWhiteSpace(_page.LogoUrl))
                     {
-                        <img class="branch-page__logo" src="@_page.LogoUrl" alt="" />
+                        <img class="branch-page__logo"
+                             src="@_page.LogoUrl"
+                             alt=""
+                             width="48"
+                             height="48"
+                             decoding="async"
+                             data-logo-fallback="1"
+                             onerror="window.jobsyLogoFallback&&window.jobsyLogoFallback(this)" />
                     }
                     <div>
                         <h1 class="branch-page__title">@_page.Name</h1>
@@ -268,7 +275,7 @@
                 ["dotNetRef"] = _dotNetRef,
                 ["highlightSeed"] = _highlightShuffleSeed
             };
-            await MapScripts.EnsureDiscoveryAsync(Js);
+            await MapScripts.EnsureDiscoveryAfterPaintAsync(Js, "branch-job-map");
             await Js.InvokeVoidAsync("jobMap.init", "branch-job-map", markers, options);
             _mapReady = true;
             await Task.Delay(80);

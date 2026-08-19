@@ -50,7 +50,7 @@ public class HomepagePerformanceGuardTests
         Assert.DoesNotContain("images/maps/nl-preview.webp", discovery);
         Assert.DoesNotContain("job-map-placeholder__pins", discovery);
         Assert.DoesNotContain("MapPreviewPins", discovery);
-        Assert.Contains("EnsureDiscoveryAsync", discovery);
+        Assert.Contains("EnsureDiscoveryAfterPaintAsync", discovery);
         Assert.Contains("TryInitJobMapAsync", discovery);
         Assert.DoesNotContain("job-map-placeholder__status", discovery);
         Assert.Contains("if (!RendererInfo.IsInteractive)", discovery);
@@ -61,10 +61,13 @@ public class HomepagePerformanceGuardTests
         Assert.Contains("ensureAfterPaint", maps);
         Assert.Contains("warmDiscovery", maps);
         Assert.Contains("IntersectionObserver", maps);
+        Assert.Contains("requestIdleCallback", maps);
+        Assert.Contains("media = \"print\"", maps);
 
         var bundle = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "wwwroot", "js", "app-core.js"));
         Assert.Contains("ensureAfterPaint", bundle);
         Assert.Contains("warmDiscovery", bundle);
+        Assert.Contains("requestIdleCallback", bundle);
 
         var preview = Path.Combine(FindRepoRoot(), "Jobsy.Web", "wwwroot", "images", "maps", "nl-preview.webp");
         Assert.True(File.Exists(preview));
@@ -90,9 +93,9 @@ public class HomepagePerformanceGuardTests
         Assert.Contains("EnsureDetailAsync", mapScripts);
 
         var discovery = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "Components", "VacancyDiscovery.razor"));
-        Assert.Contains("EnsureDiscoveryAsync", discovery);
+        Assert.Contains("EnsureDiscoveryAfterPaintAsync", discovery);
         Assert.DoesNotContain("MapScripts.EnsureAsync(Js)", discovery);
-        Assert.DoesNotContain("EnsureDiscoveryAfterPaintAsync", discovery);
+        Assert.DoesNotContain("MapScripts.EnsureDiscoveryAsync(Js)", discovery);
 
         var detail = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "Components", "Pages", "VacancyDetail.razor"));
         Assert.Contains("EnsureDetailAsync", detail);

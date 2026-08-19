@@ -14,6 +14,8 @@
          loading="@(Eager ? "eager" : "lazy")"
          decoding="async"
          fetchpriority="@(Eager ? "high" : "auto")"
+         data-logo-fallback="1"
+         onerror="window.jobsyLogoFallback&&window.jobsyLogoFallback(this)"
          draggable="false" />
 }
 

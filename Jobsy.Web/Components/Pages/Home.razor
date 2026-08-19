@@ -1,17 +1,10 @@
 @page "/"
-@* Prerender the map chrome. MapLibre + OpenFreeMap warm from this page so the live map appears sooner. *@
+@* Map chrome prerenders; MapLibre CSS/JS load lazily via jobsyMaps when #job-map is near the viewport. *@
 @rendermode @(new InteractiveServerRenderMode(prerender: true))
 @inject CultureState Culture
 @implements IDisposable
 
 <PageTitle>@Culture["Page.JobMapTitle"]</PageTitle>
-<HeadContent>
-    <link rel="preconnect" href="https://tiles.openfreemap.org" crossorigin />
-    <link rel="stylesheet" href="/lib/maplibre/maplibre-gl.css" />
-    <link rel="preload" href="/lib/maplibre/maplibre-gl.js" as="script" fetchpriority="high" />
-    <link rel="preload" href="/js/jobsyMapLibre.js?v=20260819-ml" as="script" fetchpriority="high" />
-    <link rel="preload" href="/js/jobMap.js?v=20260819-ml" as="script" fetchpriority="high" />
-</HeadContent>
 
 <VacancyDiscovery />
 

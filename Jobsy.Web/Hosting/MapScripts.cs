@@ -2,7 +2,7 @@ using Microsoft.JSInterop;
 
 namespace Jobsy.Web.Hosting;
 
-/// <summary>Lazy-loads MapLibre GL + map helpers once per circuit.</summary>
+/// <summary>Lazy-loads MapLibre GL + map helpers once per circuit (idle / near-viewport for discovery).</summary>
 public static class MapScripts
 {
     public static ValueTask EnsureAsync(IJSRuntime js)

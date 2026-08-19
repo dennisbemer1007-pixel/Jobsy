@@ -793,13 +793,13 @@ window.jobsyMaps = (function () {
     ];
     var mapLibreScripts = [
         "/lib/maplibre/maplibre-gl.js",
-        "/js/jobsyMapLibre.js?v=20260819-ml"
+        "/js/jobsyMapLibre.js?v=20260819-psi"
     ];
     var discoveryScripts = [
-        "/js/jobMap.js?v=20260819-ml"
+        "/js/jobMap.js?v=20260819-psi"
     ];
     var detailScripts = [
-        "/js/vacancyDetailMap.js?v=20260819-ml2"
+        "/js/vacancyDetailMap.js?v=20260819-psi"
     ];
 
     function hrefMatches(node, href) {
@@ -822,8 +822,12 @@ window.jobsyMaps = (function () {
             var link = document.createElement("link");
             link.rel = "stylesheet";
             link.href = href;
+            link.media = "print";
             link.setAttribute("data-jobsy-map", href);
-            link.onload = function () { resolve(); };
+            link.onload = function () {
+                link.media = "all";
+                resolve();
+            };
             link.onerror = reject;
             document.head.appendChild(link);
         });
@@ -902,6 +906,17 @@ window.jobsyMaps = (function () {
         }
     }
 
+    function afterIdle(cb) {
+        var run = function () {
+            afterNextPaint(cb);
+        };
+        if (typeof requestIdleCallback === "function") {
+            requestIdleCallback(function () { run(); }, { timeout: 1800 });
+        } else {
+            setTimeout(run, 250);
+        }
+    }
+
     function isVisible(el) {
         if (!el) {
             return false;
@@ -923,7 +938,7 @@ window.jobsyMaps = (function () {
                 io.disconnect();
             }
             clearTimeout(fallback);
-            afterNextPaint(cb);
+            afterIdle(cb);
         };
         var io = null;
         if (!el || isVisible(el)) {
@@ -938,10 +953,10 @@ window.jobsyMaps = (function () {
                         return;
                     }
                 }
-            }, { rootMargin: "80px" });
+            }, { rootMargin: "160px" });
             io.observe(el);
         }
-        var fallback = setTimeout(finish, 400);
+        var fallback = setTimeout(finish, 2200);
     }
 
     function ensure(kind) {
@@ -986,7 +1001,7 @@ window.jobsyMaps = (function () {
             if (!document.getElementById("job-map")) {
                 return;
             }
-            ensure("discovery");
+            this.ensureAfterPaint("discovery", "job-map");
         }
     };
 })();

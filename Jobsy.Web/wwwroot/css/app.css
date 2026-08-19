@@ -1613,7 +1613,10 @@ a {
     min-height: 0;
 }
 
-.jobsy-discovery--branch .map-pane--branch .map-stage {
+.jobsy-discovery--branch .map-pane--branch,
+.jobsy-discovery--branch .map-pane--branch .map-stage,
+.jobsy-discovery--branch #branch-job-map,
+.jobsy-discovery--branch .map-pane--branch .job-map {
     min-height: 220px;
 }
 
@@ -3242,42 +3245,54 @@ a {
     position: relative;
     display: flex;
     flex-direction: column;
-    min-height: 0;
-    min-width: 0;
+    min-height: 55dvh;
+    min-width: 280px;
+    width: 100%;
     height: 100%;
     background: var(--map-land);
+    contain: layout;
 }
 
 .map-stage {
-    position: relative;
-    flex: 1 1 auto;
-    min-height: 0;
-    min-width: 0;
-    width: 100%;
-}
-
-.map-pane:not(:has(.highlight-carousel)) .map-stage {
     position: absolute;
     inset: 0;
     flex: none;
+    min-height: 55dvh;
+    min-width: 280px;
+    width: 100%;
     height: 100%;
 }
 
-.job-map {
+.job-map,
+#job-map {
     position: relative;
-    flex: 1 1 auto;
-    min-height: 0;
+    flex: none;
+    min-height: 55dvh;
+    min-width: 280px;
     width: 100%;
-    height: auto;
+    height: 100%;
     z-index: 1;
     background: var(--map-land);
+    contain: layout;
 }
 
-.map-stage .job-map {
+.map-stage .job-map,
+.map-stage #job-map {
     position: absolute;
     inset: 0;
-    flex: none;
+    width: 100%;
+    min-width: 280px;
+    min-height: 55dvh;
     height: 100%;
+}
+
+.map-pane > .highlight-carousel--map {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 3;
+    pointer-events: auto;
 }
 
 .job-map-placeholder {
@@ -3296,8 +3311,23 @@ a {
 
 @media (max-width: 768px) {
     .jobsy-discovery.show-map .map-pane,
-    .jobsy-discovery.show-map .job-map-placeholder {
+    .jobsy-discovery.show-map .map-stage,
+    .jobsy-discovery.show-map .job-map-placeholder,
+    .jobsy-discovery.show-map #job-map,
+    .jobsy-discovery.show-map .job-map {
         min-height: 55dvh;
+        min-width: 100%;
+        width: 100%;
+    }
+}
+
+@media (min-width: 769px) {
+    .jobsy-discovery:not(.jobsy-discovery--branch) .map-pane,
+    .jobsy-discovery:not(.jobsy-discovery--branch) .map-stage,
+    .jobsy-discovery:not(.jobsy-discovery--branch) #job-map,
+    .jobsy-discovery:not(.jobsy-discovery--branch) .job-map {
+        min-height: 70vh;
+        width: 100%;
     }
 }
 
@@ -12200,6 +12230,11 @@ a.apply-flow__secondary {
 /* Cookie consent (ePrivacy) */
 html.cookie-consent-known .cookie-consent {
   display: none;
+}
+
+.img-fallback-empty {
+  background: var(--accent-soft, #e7eef7);
+  object-fit: contain;
 }
 
 .cookie-consent {
