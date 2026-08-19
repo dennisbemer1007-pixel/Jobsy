@@ -80,6 +80,8 @@ a {
     align-items: center;
     justify-content: space-between;
     gap: 0.85rem;
+    height: 4.25rem;
+    min-height: 4.25rem;
     padding: 0.35rem 1.15rem;
     background: var(--pearl-gradient);
     border-bottom: 1px solid color-mix(in srgb, var(--border) 80%, var(--brand) 20%);
@@ -87,6 +89,8 @@ a {
     color: var(--brand);
     box-shadow: 0 1px 0 rgba(255, 255, 255, 0.7) inset;
     position: relative;
+    overflow: visible;
+    max-height: none;
 }
 
 .app-header .brand-tagline {
@@ -1508,6 +1512,7 @@ a {
     min-height: 0;
     height: 100%;
     position: relative;
+    overflow: hidden;
 }
 
 /* Vestiging / ondernemer public page: list-first with a smaller map. */
@@ -4603,6 +4608,10 @@ a.map-popup__apply.map-popup__cta:visited {
         z-index: 15;
         background: var(--surface);
         border-bottom: 1px solid var(--border);
+        overflow: visible;
+        min-height: 0;
+        height: auto;
+        max-height: none;
     }
 
     .jobsy-chrome__header {

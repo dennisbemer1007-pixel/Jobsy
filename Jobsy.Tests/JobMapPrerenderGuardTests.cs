@@ -111,11 +111,13 @@ public class JobMapPrerenderGuardTests
         Assert.Contains("#job-map", app);
         Assert.Contains("height: 300px", app);
         Assert.Contains("min-height: 300px", app);
-        Assert.Contains("min-width: 768px", app);
+        Assert.Contains("min-width: 769px", app);
         Assert.Contains("components-reconnect-overlay", app);
         Assert.Contains("translateZ(0)", app);
         Assert.Contains("will-change: transform, opacity", app);
-        Assert.Contains("data-jobsy-blazor", app);
+        Assert.Contains(".jobsy-chrome { display: none; }", app);
+        Assert.Contains(".app-shell", app);
+        Assert.Contains("padding-bottom: 4.75rem", app);
         Assert.Contains("requestIdleCallback", app);
         Assert.DoesNotContain("min-height: 55dvh", app);
         Assert.DoesNotContain("<script src=\"_framework/blazor.web.js\"", app);

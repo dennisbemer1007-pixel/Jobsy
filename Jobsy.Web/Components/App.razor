@@ -14,20 +14,43 @@
         * { box-sizing: border-box; }
         html, body { margin: 0; height: 100%; font-family: var(--font); color: var(--text); background: var(--bg); }
         html.cookie-consent-known .cookie-consent { display: none; }
-        .jobsy-discovery { display: grid; grid-template-columns: minmax(320px,42%) minmax(0,58%); min-height: 0; height: 100%; position: relative; }
+        .app-shell { display: flex; flex-direction: column; height: 100%; min-height: 100%; }
+        .app-header { display: flex; align-items: center; justify-content: space-between; gap: 0.85rem; height: 4.25rem; min-height: 4.25rem; max-height: 4.25rem; padding: 0.35rem 1.15rem; flex-shrink: 0; overflow: hidden; }
+        .app-header__brand { display: flex; align-items: center; gap: 0.75rem; min-width: 0; }
+        .app-header__actions { display: flex; align-items: center; gap: 0.75rem; flex-shrink: 0; }
+        .app-main { flex: 1; min-height: 0; display: flex; flex-direction: column; overflow: hidden; position: relative; }
+        .app-footer { flex-shrink: 0; }
+        .app-shell:has(.jobsy-discovery) .app-footer { display: none; }
+        .jobsy-chrome { display: none; }
+        .lobsy-logo { width: 56px; height: 56px; display: block; flex-shrink: 0; }
+        .lobsy-logo__img { width: 100%; height: 100%; display: block; object-fit: contain; }
+        .lobsy-watermarks { display: none; }
+        .cookie-consent { position: fixed; left: 0; right: 0; bottom: 0; z-index: 80; }
+        .bottom-nav { position: fixed; left: 0; right: 0; bottom: 0; z-index: 50; height: 4.75rem; }
+        .jobsy-discovery { display: grid; grid-template-columns: minmax(320px,42%) minmax(0,58%); min-height: 0; height: 100%; position: relative; flex: 1; overflow: hidden; }
+        .vacancy-pane { min-height: 0; overflow: hidden; }
         .map-pane, .map-stage { position: relative; display: block; width: 100%; min-width: 280px; height: 300px; min-height: 300px; background: var(--map-land); contain: layout; }
         .map-stage { flex: none; }
         #job-map, .job-map { display: block; width: 100%; min-width: 280px; height: 300px; min-height: 300px; background: var(--map-land); contain: layout; }
         .job-map-placeholder { position: absolute; inset: 0; background: var(--map-land); pointer-events: none; }
-        @@media (max-width: 767px) {
+        @@media (max-width: 768px) {
+            .app-shell:has(.jobsy-discovery) .app-header,
+            .app-shell:has(.jobsy-discovery) .app-footer { display: none; }
+            .app-shell:has(.jobsy-discovery) .app-main { padding-bottom: 4.75rem; overflow: hidden; }
+            .jobsy-chrome { display: block; height: 10.25rem; max-height: 10.25rem; overflow: hidden; }
+            .jobsy-logo .lobsy-logo,
+            .jobsy-logo__img { width: 48px; height: 48px; }
             .jobsy-discovery { grid-template-columns: 1fr; grid-template-rows: auto 1fr; }
+            .jobsy-discovery .vacancy-pane,
+            .jobsy-discovery .discovery-toolbar--desktop { display: none; }
             .jobsy-discovery.show-map .map-pane,
             .jobsy-discovery.show-map .map-stage,
             .jobsy-discovery.show-map #job-map,
             .jobsy-discovery.show-map .job-map,
-            .jobsy-discovery.show-map .job-map-placeholder { width: 100%; min-width: 100%; height: 300px; min-height: 300px; }
+            .jobsy-discovery.show-map .job-map-placeholder { width: 100%; min-width: 100%; height: 300px; min-height: 300px; grid-column: 1; grid-row: 2; }
         }
-        @@media (min-width: 768px) {
+        @@media (min-width: 769px) {
+            .jobsy-chrome { display: none; }
             .map-pane, .map-stage { min-height: 300px; width: 100%; }
             .jobsy-discovery:not(.jobsy-discovery--branch) .map-pane,
             .jobsy-discovery:not(.jobsy-discovery--branch) .map-stage { min-height: 300px; width: 100%; }
@@ -40,8 +63,8 @@
             will-change: transform, opacity;
         }
     </style>
-    <link rel="stylesheet" href="css/app.css?v=20260819-psi" media="print" onload="this.onload=null;this.media='all'" />
-    <noscript><link rel="stylesheet" href="css/app.css?v=20260819-psi" /></noscript>
+    <link rel="stylesheet" href="css/app.css?v=20260819-cls3" media="print" onload="this.onload=null;this.media='all'" />
+    <noscript><link rel="stylesheet" href="css/app.css?v=20260819-cls3" /></noscript>
     <script>
         (function () {
             try {
