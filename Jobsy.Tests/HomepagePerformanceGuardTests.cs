@@ -47,10 +47,9 @@ public class HomepagePerformanceGuardTests
     {
         var discovery = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "Components", "VacancyDiscovery.razor"));
         Assert.Contains("job-map-placeholder", discovery);
-        Assert.Contains("images/maps/nl-preview.webp", discovery);
-        Assert.Contains("job-map-placeholder__pins", discovery);
-        Assert.Contains("(\"50.6\", \"38.2\")", discovery);
-        Assert.Contains("width=\"1536\"", discovery);
+        Assert.DoesNotContain("images/maps/nl-preview.webp", discovery);
+        Assert.DoesNotContain("job-map-placeholder__pins", discovery);
+        Assert.DoesNotContain("MapPreviewPins", discovery);
         Assert.Contains("EnsureDiscoveryAfterPaintAsync", discovery);
         Assert.Contains("_vacancies.Count == 0 && _loading", discovery);
         Assert.Contains("if (!RendererInfo.IsInteractive)", discovery);

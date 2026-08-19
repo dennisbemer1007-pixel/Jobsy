@@ -17,8 +17,8 @@ Na die eerste ronde was het gewicht weg (36 requests / ~334&nbsp;KB) en LCP ~2.4
 
 De banenkaart blijft de first-paint kernervaring (geen Funda-klik-om-te-tonen):
 
-- Home prerendert de kaart-shell: lokale Carto-mosaic van Haaglanden (`nl-preview.webp`) plus CSS-pins, zodat first paint al het marker-kader toont (niet heel NL).
-- Leaflet + MarkerCluster + Carto-tegels warmen meteen na first paint (`jobsyMaps.warmDiscovery` als `#job-map` er is). Markers: `fitBounds` vóór tegels; overlay weg zodra `jobMap.init` slaagt.
+- Home prerendert alleen de kaart-chrome (landkleur, geen nep-pins en geen NL-overzicht). Leaflet past `fitBounds` toe op echte vacaturecoördinaten vóór tegels.
+- Leaflet + MarkerCluster + Carto-tegels warmen na first paint (`jobsyMaps.warmDiscovery` als `#job-map` er is). Overlay weg zodra er echte markers zijn.
 - Soft fade zodra de eerste tegel binnen is — geen leeg grijs vlak.
 - Cookie-banner is compact, paint-contained, en wint de LCP niet van de kaart.
 - Alleen `app.css` en de kaart-preview worden gepreload; geen Leaflet op elke pagina.
@@ -39,7 +39,7 @@ De banenkaart blijft de first-paint kernervaring (geen Funda-klik-om-te-tonen):
 - First-party JS is gebundeld in `js/app-core.js` (geo, culture, session, cookies, download, richtext, maps-loader).
 - `jobsyMaps.ensure("discovery"|"detail")` laadt niet beide kaart-scripts op elke pagina.
 - Cookiebanner staat in de eerste HTML (compact); `html.cookie-consent-known` verbergt hem vóór paint als de keuze al bekend is. Paint-containment houdt hem buiten de LCP.
-- Alleen `app.css` (globaal) en `nl-preview.webp` (homepage `HeadContent`) worden gepreload. Geen webfonts.
+- Alleen `app.css` (globaal) wordt gepreload. Geen webfonts.
 
 ### Server / edge
 

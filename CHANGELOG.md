@@ -14,7 +14,7 @@ Alle noemenswaardige wijzigingen aan dit project worden in dit bestand bijgehoud
 ## [Unreleased]
 
 ### Changed
-- Homepage-kaart: eerste weergave is meteen het marker-kader (Haaglanden), niet heel Nederland. Leaflet past `fitBounds` toe vóór tegels; LCP-preview is dezelfde crop.
+- Homepage-kaart: nep-previewpins en NL-overzicht teruggedraaid. Camera past alleen op echte vacaturelocaties uit de catalogus; geen fake pins, geen `fitBounds` op heel Nederland.
 - Role dashboards (`/home`): geen foutflits meer na login (admin en andere rollen). GET-calls retrien kort terwijl auth settelt; 401 alleen zonder credentials; fouttekst alleen als er echt geen data is.
 - Homepage-kaart: first paint toont al pins op de NL-preview; Leaflet warmt meteen na paint (geen lege kaart meer tot de circuit klaar is).
 - Transactionele mails: Lobsy-logo als klein PNG + inline CID (niet meer de 568&nbsp;KB remote `lobsy.png` die in clients als gebroken plaatje verscheen).

@@ -1,8 +1,7 @@
 # Map preview
 
-`nl-preview.webp` is a same-origin Carto Voyager mosaic of Haaglanden
-(zoom 12, tiles x 2094–2099 / y 1350–1353) used as the homepage LCP so
-the first paint already matches the live marker view (Den Haag, Delft,
-Zoetermeer, Westland) instead of the whole country.
+`nl-preview.webp` is an unused leftover mosaic (whole Netherlands, zoom 8).
+The homepage no longer shows it: the live map fits real vacancy coordinates
+from the catalog, with a land-colored shell until those markers exist.
 
 © OpenStreetMap contributors, © CARTO.

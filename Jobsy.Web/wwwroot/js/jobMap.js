@@ -12,9 +12,10 @@ window.jobMap = (function () {
     let firstViewApplied = false;
     let lastFitPoints = [];
     let openingViewUntil = 0;
+    let tileLayer = null;
 
-    // Empty-catalog fallback only. The opening view always fits vacancy markers
-    // (plus origin/rings) so the first live frame is never the whole country.
+    // Kept as unused geographic constants (tests). Opening view never uses these —
+    // the camera fits actual vacancy markers from the catalog only.
     const NL_CENTER = [52.15, 5.2913];
     const NL_ZOOM = 7;
     const NL_BOUNDS = [[50.29, 2.81], [53.33, 8.44]];
@@ -800,45 +801,49 @@ window.jobMap = (function () {
         return !!(size && size.x >= 32 && size.y >= 32);
     }
 
-    function pointsWithOrigin(markerBounds) {
-        const points = Array.isArray(markerBounds) ? markerBounds.slice() : [];
-        if (originMarker) {
-            const ll = originMarker.getLatLng();
-            points.push([ll.lat, ll.lng]);
-
-            const ringM = maxRingRadiusMeters();
-            if (ringM > 0) {
-                const dLat = ringM / 111320;
-                const dLng = ringM / (111320 * Math.cos((ll.lat * Math.PI) / 180) || 1);
-                points.push([ll.lat + dLat, ll.lng]);
-                points.push([ll.lat - dLat, ll.lng]);
-                points.push([ll.lat, ll.lng + dLng]);
-                points.push([ll.lat, ll.lng - dLng]);
-            }
-        }
-        return points;
+    function vacancyPoints() {
+        return Object.keys(markersById).map(function (id) {
+            const ll = markersById[id].getLatLng();
+            return [ll.lat, ll.lng];
+        });
     }
 
-    function fitMapToContent(markerBounds) {
+    function fitMapToVacancies(markerBounds) {
         if (!map) return;
 
-        lastFitPoints = Array.isArray(markerBounds) ? markerBounds.slice() : [];
-        const points = pointsWithOrigin(lastFitPoints);
+        const points = Array.isArray(markerBounds) && markerBounds.length
+            ? markerBounds.slice()
+            : vacancyPoints();
+        lastFitPoints = points.slice();
+        if (points.length === 0) {
+            return;
+        }
 
         const opening = !firstViewApplied || Date.now() < openingViewUntil;
         const opts = { padding: [48, 48], maxZoom: 13, animate: !opening };
-        if (points.length > 0) {
-            if (mapHasUsableSize()) {
-                map.fitBounds(points, opts);
-            } else {
-                map.setView(L.latLngBounds(points).getCenter(), 12, { animate: false });
-            }
-        } else if (mapHasUsableSize()) {
-            map.fitBounds(NL_BOUNDS, { padding: [16, 16], maxZoom: 8, animate: !opening });
+        if (mapHasUsableSize()) {
+            map.fitBounds(points, opts);
         } else {
-            map.setView(NL_CENTER, NL_ZOOM, { animate: false });
+            map.setView(L.latLngBounds(points).getCenter(), 12, { animate: false });
         }
         firstViewApplied = true;
+        ensureVacancyTiles();
+    }
+
+    function ensureVacancyTiles() {
+        if (!map || tileLayer || lastFitPoints.length === 0) {
+            return;
+        }
+        tileLayer = L.tileLayer("https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png", {
+            maxZoom: 19,
+            attribution: "&copy; <a href=\"https://www.openstreetmap.org/copyright\">OpenStreetMap</a> &copy; <a href=\"https://carto.com/attributions\">CARTO</a>"
+        });
+        tileLayer.once("load", function () {
+            if (openCallback && typeof openCallback.invokeMethodAsync === "function") {
+                openCallback.invokeMethodAsync("OnMapTilesReady");
+            }
+        });
+        tileLayer.addTo(map);
     }
 
     function init(elementId, vacancies, options) {
@@ -898,18 +903,7 @@ window.jobMap = (function () {
         if (options && options.origin) {
             setOrigin(options.origin.lat, options.origin.lng, options.travel);
         }
-
-        const tiles = L.tileLayer("https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png", {
-            maxZoom: 19,
-            attribution: "&copy; <a href=\"https://www.openstreetmap.org/copyright\">OpenStreetMap</a> &copy; <a href=\"https://carto.com/attributions\">CARTO</a>"
-        });
-        const notifyTilesReady = function () {
-            if (openCallback && typeof openCallback.invokeMethodAsync === "function") {
-                openCallback.invokeMethodAsync("OnMapTilesReady");
-            }
-        };
-        tiles.once("load", notifyTilesReady);
-        tiles.addTo(map);
+        ensureVacancyTiles();
 
         bindOutsideClickCloser();
 
@@ -1031,7 +1025,7 @@ window.jobMap = (function () {
             bounds.push([lat, lng]);
         });
 
-        fitMapToContent(bounds);
+        fitMapToVacancies(bounds);
     }
 
     function setOrigin(lat, lng, travel) {
@@ -1061,7 +1055,7 @@ window.jobMap = (function () {
             const ll = markersById[id].getLatLng();
             return [ll.lat, ll.lng];
         });
-        fitMapToContent(markerBounds);
+        fitMapToVacancies(markerBounds);
     }
 
     function setTravelOptions(options) {
@@ -1073,7 +1067,7 @@ window.jobMap = (function () {
                 const mll = markersById[id].getLatLng();
                 return [mll.lat, mll.lng];
             });
-            fitMapToContent(markerBounds);
+            fitMapToVacancies(markerBounds);
         }
     }
 
@@ -1093,8 +1087,10 @@ window.jobMap = (function () {
         map.invalidateSize({ animate: false });
         // Re-apply the opening marker view after layout (carousel, 0×0 pane, mobile dvh).
         if (Date.now() < openingViewUntil || !firstViewApplied) {
-            firstViewApplied = false;
-            fitMapToContent(lastFitPoints);
+            if (lastFitPoints.length > 0) {
+                firstViewApplied = false;
+                fitMapToVacancies(lastFitPoints);
+            }
         }
     }
 
@@ -1228,6 +1224,7 @@ window.jobMap = (function () {
         lastFitPoints = [];
         firstViewApplied = false;
         openingViewUntil = 0;
+        tileLayer = null;
     }
 
     function escapeHtml(value) {

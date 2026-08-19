@@ -1,13 +1,10 @@
 @page "/"
-@* Prerender the marker-zoom map shell. Leaflet warms after first paint, binds on hydrate. *@
+@* Prerender the map chrome. Real vacancy markers bind after hydrate — no fake pins. *@
 @rendermode @(new InteractiveServerRenderMode(prerender: true))
 @inject CultureState Culture
 @implements IDisposable
 
 <PageTitle>@Culture["Page.JobMapTitle"]</PageTitle>
-<HeadContent>
-    <link rel="preload" href="images/maps/nl-preview.webp" as="image" type="image/webp" fetchpriority="high" />
-</HeadContent>
 
 <VacancyDiscovery />
 
