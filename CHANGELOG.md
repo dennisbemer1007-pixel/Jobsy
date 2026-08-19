@@ -18,7 +18,7 @@ Alle noemenswaardige wijzigingen aan dit project worden in dit bestand bijgehoud
 - Quality gate 456: geüploade CV-bytes wissen bij intrekken; OpenAI-CV-extractie in privacyverklaring/consent; geen OpenAI-response bodies in logs; werkgeverslijst toont recensietelling pas na Accept.
 
 ### Changed
-- Homepage-kaart: Leaflet-CSS in de eerste HTML van `/`, scripts preload + parallel met de catalogus, init vóór geo/viewport, zonder wait-for-paint of “Kaart laden”-chip.
+- Banenkaart: Leaflet/Carto vervangen door **MapLibre GL JS + OpenFreeMap** (Liberty standaard, 3D/Bright-switch, groene pins, geen attribution-chrome). Zie `docs/performance.md`.
 - Role dashboards (`/home`): geen foutflits meer na login (admin en andere rollen). GET-calls retrien kort terwijl auth settelt; 401 alleen zonder credentials; fouttekst alleen als er echt geen data is.
 - Homepage-kaart: first paint toont al pins op de NL-preview; Leaflet warmt meteen na paint (geen lege kaart meer tot de circuit klaar is).
 - Transactionele mails: Lobsy-logo als klein PNG + inline CID (niet meer de 568&nbsp;KB remote `lobsy.png` die in clients als gebroken plaatje verscheen).

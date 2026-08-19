@@ -1135,7 +1135,7 @@
             return;
         }
 
-        // Catalog + Leaflet in parallel — do not wait on profile/masterdata before pins appear.
+        // Catalog + MapLibre in parallel — do not wait on profile/masterdata before pins appear.
         _ = WarmDiscoveryScriptsAsync();
         var catalogTask = LoadVacanciesAsync();
         var profileChangedFilters = false;

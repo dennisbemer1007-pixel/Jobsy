@@ -1,26 +1,29 @@
 namespace Jobsy.Tests;
 
 /// <summary>
-/// Homepage prerenders a map shell. Leaflet binds only after hydrate + idle,
+/// Homepage prerenders a map shell. MapLibre binds only after hydrate + idle,
 /// so replacing the prerendered #job-map node cannot leave a dead map.
 /// </summary>
 public class JobMapPrerenderGuardTests
 {
     [Fact]
-    public void Home_prerenders_the_map_shell_without_binding_leaflet()
+    public void Home_prerenders_the_map_shell_without_binding_maplibre()
     {
         var home = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "Components", "Pages", "Home.razor"));
         Assert.Contains("InteractiveServerRenderMode(prerender: true)", home);
         Assert.DoesNotContain("images/maps/nl-preview.webp", home);
-        Assert.Contains("/lib/leaflet/leaflet.min.js", home);
-        Assert.Contains("/lib/leaflet/leaflet.css", home);
+        Assert.Contains("/lib/maplibre/maplibre-gl.js", home);
+        Assert.Contains("/lib/maplibre/maplibre-gl.css", home);
+        Assert.Contains("tiles.openfreemap.org", home);
         Assert.Contains("fetchpriority=\"high\"", home);
         Assert.Contains("preconnect", home);
         Assert.DoesNotContain("prerender: false", home);
+        Assert.DoesNotContain("/lib/leaflet/leaflet.min.js", home);
+        Assert.DoesNotContain("/lib/leaflet/leaflet.css", home);
     }
 
     [Fact]
-    public void Job_map_exposes_isAlive_for_detached_leaflet_containers()
+    public void Job_map_exposes_isAlive_for_detached_map_containers()
     {
         var js = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "wwwroot", "js", "jobMap.js"));
         Assert.Contains("function isAlive()", js);
@@ -42,10 +45,32 @@ public class JobMapPrerenderGuardTests
         Assert.True(initIdx > 0 && setVacanciesInInit > initIdx && tilesAfterVacancies > setVacanciesInInit);
         Assert.Contains("container.isConnected", js);
         Assert.Contains("isAlive", js[(js.LastIndexOf("return {", StringComparison.Ordinal))..]);
+        Assert.Contains("maplibregl", js);
+        Assert.Contains("Solliciteer", js);
     }
 
     [Fact]
-    public void App_shell_does_not_load_unpkg_or_leaflet_on_every_page()
+    public void Job_map_uses_openfreemap_vector_styles_and_hides_attribution()
+    {
+        var helper = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "wwwroot", "js", "jobsyMapLibre.js"));
+        Assert.Contains("https://tiles.openfreemap.org/styles/liberty", helper);
+        Assert.Contains("https://tiles.openfreemap.org/styles/bright", helper);
+        Assert.Contains("map.setStyle", helper);
+        Assert.Contains("attributionControl: false", helper);
+        Assert.Contains("cooperativeGestures: false", helper);
+        Assert.Contains("dragPan: true", helper);
+        Assert.Contains("touchAction", helper);
+        Assert.Contains("3D / Bright", helper);
+
+        var css = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "wwwroot", "css", "app.css"));
+        Assert.Contains("maplibregl-ctrl-attrib", css);
+        Assert.Contains("display: none !important", css);
+        Assert.Contains("job-map-style-switch", css);
+        Assert.Contains("touch-action: none", css);
+    }
+
+    [Fact]
+    public void App_shell_does_not_load_unpkg_or_map_engine_on_every_page()
     {
         var app = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "Components", "App.razor"));
         Assert.DoesNotContain("unpkg.com", app);
@@ -55,6 +80,8 @@ public class JobMapPrerenderGuardTests
         Assert.Contains("css/app.css", app);
         Assert.DoesNotContain("lib/leaflet/leaflet.min.js", app);
         Assert.DoesNotContain("lib/leaflet/leaflet.css", app);
+        Assert.DoesNotContain("lib/maplibre/maplibre-gl.js", app);
+        Assert.DoesNotContain("lib/maplibre/maplibre-gl.css", app);
         Assert.DoesNotContain("<script src=\"https://unpkg.com/leaflet", app);
 
         var maps = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "wwwroot", "js", "maps-loader.js"));
@@ -62,6 +89,7 @@ public class JobMapPrerenderGuardTests
         Assert.Contains("discovery", maps);
         var bundle = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "wwwroot", "js", "app-core.js"));
         Assert.Contains("pending[kind] = null", bundle);
+        Assert.Contains("maplibre-gl.js", bundle);
     }
 
     [Fact]

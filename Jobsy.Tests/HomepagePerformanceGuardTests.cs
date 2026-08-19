@@ -43,7 +43,7 @@ public class HomepagePerformanceGuardTests
     }
 
     [Fact]
-    public void Discovery_prerenders_a_map_placeholder_and_defers_leaflet()
+    public void Discovery_prerenders_a_map_placeholder_and_defers_maplibre()
     {
         var discovery = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "Components", "VacancyDiscovery.razor"));
         Assert.Contains("job-map-placeholder", discovery);

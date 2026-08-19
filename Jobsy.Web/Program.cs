@@ -108,7 +108,7 @@ app.Use(async (context, next) =>
     context.Response.Headers["Referrer-Policy"] = "strict-origin-when-cross-origin";
     context.Response.Headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=(self)";
     // Blazor Server needs inline scripts/styles and websockets; keep frame/base locked down.
-    // Leaflet is self-hosted — no unpkg in the critical path or CSP.
+    // MapLibre is self-hosted — OpenFreeMap tiles/styles load over HTTPS; no unpkg in the critical path.
     context.Response.Headers["Content-Security-Policy"] =
         "default-src 'self'; " +
         "base-uri 'self'; " +
@@ -116,7 +116,7 @@ app.Use(async (context, next) =>
         "frame-src 'self' https://www.youtube-nocookie.com https://www.youtube.com https://player.vimeo.com https://vimeo.com; " +
         "object-src 'none'; " +
         "img-src 'self' data: https: blob:; " +
-        "font-src 'self' data: https://fonts.gstatic.com; " +
+        "font-src 'self' data: https://fonts.gstatic.com https://tiles.openfreemap.org; " +
         "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; " +
         "script-src 'self' 'unsafe-inline' 'unsafe-eval'; " +
         "connect-src 'self' wss: ws: https:; " +

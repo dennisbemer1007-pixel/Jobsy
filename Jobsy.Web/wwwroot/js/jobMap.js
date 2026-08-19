@@ -4,6 +4,7 @@ window.jobMap = (function () {
     let markersById = {};
     let originMarker = null;
     let travelRingLayers = [];
+    let travelRingGeo = null;
     let travelOptions = { maxMinutes: 30, transport: "Fiets", radiusKm: 15 };
     let activeClusterPopup = null;
     let openCallback = null;
@@ -13,6 +14,10 @@ window.jobMap = (function () {
     let lastFitPoints = [];
     let openingViewUntil = 0;
     let tileLayer = null;
+    let renderedMarkers = [];
+    let lastOrigin = null;
+    let selectedId = null;
+    let zoomHandlerBound = false;
 
     // Kept as unused geographic constants (tests). Opening view never uses these —
     // the camera fits actual vacancy markers from the catalog only.
@@ -20,8 +25,16 @@ window.jobMap = (function () {
     const NL_ZOOM = 7;
     const NL_BOUNDS = [[50.29, 2.81], [53.33, 8.44]];
 
+    const CLUSTER_OPTS = {
+        showCoverageOnHover: false,
+        zoomToBoundsOnClick: false,
+        spiderfyOnMaxZoom: false,
+        disableClusteringAtZoom: 16,
+        maxClusterRadius: 60,
+        removeOutsideVisibleBounds: false
+    };
+
     const SPEED_M_PER_MIN = {
-        // Keep in sync with MockRoutingService SpeedsKmPerHour
         Fiets: 18.0 * 1000 / 60,
         Auto: 40.0 * 1000 / 60,
         OV: 25.0 * 1000 / 60,
@@ -37,7 +50,6 @@ window.jobMap = (function () {
 
     function workTypeGlyph(workType) {
         const t = String(workType || "").toLowerCase();
-        // Simple emoji glyphs for branch recognition on the map
         if (t.indexOf("horeca") >= 0) return "☕";
         if (t.indexOf("winkel") >= 0 || t.indexOf("retail") >= 0 || t.indexOf("supermarkt") >= 0) return "🛒";
         if (t.indexOf("logistiek") >= 0) return "📦";
@@ -50,8 +62,7 @@ window.jobMap = (function () {
         return "●";
     }
 
-    function createIcon(featured, selected, workType, categoryColor) {
-        const glyph = workTypeGlyph(workType);
+    function markerClassName(featured, selected) {
         const classes = ["job-marker"];
         if (featured) {
             classes.push("job-marker--featured");
@@ -59,6 +70,11 @@ window.jobMap = (function () {
         if (selected) {
             classes.push("job-marker--active");
         }
+        return classes.join(" ");
+    }
+
+    function markerInnerHtml(featured, workType, categoryColor) {
+        const glyph = workTypeGlyph(workType);
         const pulse = featured
             ? "<span class=\"job-marker__pulse\" aria-hidden=\"true\"></span>"
             : "";
@@ -68,33 +84,19 @@ window.jobMap = (function () {
         const style = color
             ? " style=\"--map-pin:" + color + ";--map-pin-deep:" + color + ";--map-pin-glow:" + color + "66\""
             : "";
-        return L.divIcon({
-            className: classes.join(" "),
-            html: pulse + "<span class=\"job-marker__glyph\"" + style + " aria-hidden=\"true\">" + glyph + "</span>",
-            iconSize: [34, 34],
-            iconAnchor: [17, 17],
-            popupAnchor: [0, -18]
-        });
+        return pulse + "<span class=\"job-marker__glyph\"" + style + " aria-hidden=\"true\">" + glyph + "</span>";
     }
 
-    function createClusterIcon(cluster) {
-        const count = cluster.getChildCount();
-        let sizeClass = "job-cluster--sm";
-        if (count >= 10) sizeClass = "job-cluster--lg";
-        else if (count >= 4) sizeClass = "job-cluster--md";
+    function fillMarkerElement(el, featured, selected, workType, categoryColor) {
+        el.className = markerClassName(featured, selected);
+        el.innerHTML = markerInnerHtml(featured, workType, categoryColor);
+        return el;
+    }
 
-        const children = typeof cluster.getAllChildMarkers === "function"
-            ? cluster.getAllChildMarkers()
-            : [];
-        const hasFeatured = children.some(function (m) {
-            return m && m.options && m.options.jobData && m.options.jobData.highlighted;
-        });
-
-        return L.divIcon({
-            html: "<div><span>" + count + "</span></div>",
-            className: "job-cluster " + sizeClass + (hasFeatured ? " job-cluster--featured" : ""),
-            iconSize: L.point(44, 44)
-        });
+    function workTypeOf(v) {
+        return Array.isArray(v.workTypes) && v.workTypes.length
+            ? v.workTypes[0]
+            : (v.workType || "");
     }
 
     function formatWage(wage) {
@@ -109,32 +111,22 @@ window.jobMap = (function () {
     function jobPopupOptions() {
         const vw = window.innerWidth || 360;
         const narrow = isNarrowViewport();
-        // Fixed width so every vacancy card matches (no content-driven resize).
-        // Mobile uses a compact horizontal card.
         const width = narrow
             ? Math.max(280, Math.min(340, vw - 24))
             : 520;
         return {
             className: "job-map-popup",
-            maxWidth: width,
-            minWidth: width,
-            autoPanPadding: narrow ? [14, 88] : [40, 56],
-            keepInView: true,
+            maxWidth: width + "px",
+            offset: 22,
             closeOnClick: true,
-            closeButton: true
+            closeButton: true,
+            anchor: "bottom"
         };
     }
 
     function clusterPopupOptions() {
-        // Same sizing/classes as the single-job popup; only add a cluster flag for the pager strip.
         const opts = jobPopupOptions();
-        const narrow = isNarrowViewport();
-        const vh = window.innerHeight || 640;
         opts.className = opts.className + " job-map-popup--cluster";
-        // Slightly more vertical padding so the pager + close button stay on-screen.
-        opts.autoPanPadding = narrow
-            ? [14, Math.max(96, Math.round(vh * 0.12))]
-            : [36, 56];
         return opts;
     }
 
@@ -143,10 +135,9 @@ window.jobMap = (function () {
             return;
         }
         const opts = clusterPopupOptions();
+        popup.options = popup.options || {};
         popup.options.className = opts.className;
         popup.options.maxWidth = opts.maxWidth;
-        popup.options.minWidth = opts.minWidth;
-        popup.options.autoPanPadding = opts.autoPanPadding;
 
         const el = typeof popup.getElement === "function" ? popup.getElement() : null;
         if (el) {
@@ -167,7 +158,6 @@ window.jobMap = (function () {
         if (v.wageLabel) {
             return "<p class=\"map-popup__wage map-popup__wage--masked\">" + escapeHtml(v.wageLabel) + "</p>";
         }
-        // Only show a concrete rate when age is selected (or a single fixed wage).
         if (v.wage == null || v.wage === "") {
             return "";
         }
@@ -209,7 +199,6 @@ window.jobMap = (function () {
                 "<path d=\"M9 8V6.8A1.8 1.8 0 0 1 10.8 5h2.4A1.8 1.8 0 0 1 15 6.8V8\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.7\"/>" +
                 "</svg>";
         }
-        // transport
         return "<svg class=\"map-popup__spec-icon\" viewBox=\"0 0 24 24\" width=\"16\" height=\"16\" aria-hidden=\"true\" focusable=\"false\">" +
             "<path d=\"M5 15.5 7.2 8.8A2 2 0 0 1 9.1 7.5h5.8a2 2 0 0 1 1.9 1.3L19 15.5\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.7\" stroke-linecap=\"round\"/>" +
             "<circle cx=\"8\" cy=\"16.5\" r=\"1.6\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.7\"/>" +
@@ -260,7 +249,7 @@ window.jobMap = (function () {
         if (!popupEl) {
             return;
         }
-        const content = popupEl.querySelector(".leaflet-popup-content");
+        const content = popupEl.querySelector(".maplibregl-popup-content") || popupEl;
         const btnInContent = content
             ? content.querySelector(".map-popup__wage-info")
             : null;
@@ -268,7 +257,6 @@ window.jobMap = (function () {
             ? content.querySelector(".map-popup__wage-popover")
             : null;
 
-        // Drop previously parked € controls (cluster page changes replace content only).
         Array.prototype.slice.call(popupEl.children).forEach(function (child) {
             if (!child.classList) {
                 return;
@@ -280,7 +268,6 @@ window.jobMap = (function () {
             }
         });
 
-        // Park € control next to Leaflet's close button (outside the card).
         if (btnInContent) {
             popupEl.appendChild(btnInContent);
             popupEl.classList.add("job-map-popup--with-wages");
@@ -303,6 +290,21 @@ window.jobMap = (function () {
         });
     }
 
+    function stopEvent(ev) {
+        if (!ev) {
+            return;
+        }
+        if (typeof ev.stopPropagation === "function") {
+            ev.stopPropagation();
+        }
+        if (typeof ev.preventDefault === "function") {
+            ev.preventDefault();
+        }
+        if (typeof ev.stopImmediatePropagation === "function") {
+            ev.stopImmediatePropagation();
+        }
+    }
+
     function bindWageInfoInteractions(popupEl) {
         if (!popupEl) {
             return;
@@ -316,9 +318,7 @@ window.jobMap = (function () {
             }
             btn.dataset.boundWageInfo = "1";
             btn.addEventListener("click", function (ev) {
-                // Keep the Leaflet vacancy popup open; only toggle the wage table.
-                L.DomEvent.stop(ev);
-                ev.preventDefault();
+                stopEvent(ev);
                 const controlId = btn.getAttribute("aria-controls");
                 const popover = controlId
                     ? popupEl.querySelector("#" + controlId)
@@ -446,10 +446,9 @@ window.jobMap = (function () {
     function clusterJobsFromMarkers(childMarkers) {
         return childMarkers
             .map(function (marker) {
-                return marker.options.jobData;
+                return marker.options && marker.options.jobData;
             })
             .filter(Boolean)
-            // Featured (highlighted) vacancies always appear first; among featured use session shuffle.
             .sort(function (a, b) {
                 const ah = a.highlighted ? 1 : 0;
                 const bh = b.highlighted ? 1 : 0;
@@ -494,7 +493,6 @@ window.jobMap = (function () {
             return "<div class=\"map-popup\"><p class=\"map-popup__company\">Geen vacatures</p></div>";
         }
 
-        // Funda-style: pager floats above the listing card.
         return buildClusterPagerHtml(current, pageCount) + buildPopupHtml(job);
     }
 
@@ -506,7 +504,6 @@ window.jobMap = (function () {
 
         bindWageInfoInteractions(popupEl);
 
-        // Match single-marker behaviour: detail links notify open.
         popupEl.querySelectorAll(".map-popup__cta, a.map-popup__media").forEach(function (cta) {
             if (cta.dataset.boundNav) {
                 return;
@@ -522,9 +519,7 @@ window.jobMap = (function () {
 
         popupEl.querySelectorAll("[data-cluster-page]").forEach(function (btn) {
             btn.addEventListener("click", function (ev) {
-                ev.preventDefault();
-                // Stop both DOM and Leaflet bubbling so pager clicks never close the popup.
-                L.DomEvent.stop(ev);
+                stopEvent(ev);
                 if (btn.disabled || btn.getAttribute("disabled") != null) {
                     return;
                 }
@@ -535,8 +530,7 @@ window.jobMap = (function () {
                     return;
                 }
                 applyPopupOptions(popup);
-                popup.setContent(buildClusterSingleHtml(childMarkers, nextPage));
-                // Keep popup open on last/first page — only update content.
+                popup.setHTML(buildClusterSingleHtml(childMarkers, nextPage));
                 if (typeof popup.update === "function") {
                     popup.update();
                 }
@@ -560,47 +554,35 @@ window.jobMap = (function () {
             target.closest(".map-popup__wage-info, .map-popup__wage-popover"));
     }
 
+    function closeActivePopup() {
+        if (activeClusterPopup) {
+            activeClusterPopup.remove();
+            activeClusterPopup = null;
+        }
+    }
+
     function closePopupsIfClickOutside(ev) {
         if (!map) {
             return;
         }
 
-        // Clicks outside the wage popover (even inside the vacancy card) dismiss the table only.
         if (!eventTargetInsideWagePopover(ev)) {
             closeAllWagePopovers(map.getContainer());
         }
 
-        // Clicks inside any open popup (pager, CTA, content, close btn) must stay put.
         if (activeClusterPopup && eventTargetInsidePopup(ev, activeClusterPopup)) {
-            return;
-        }
-        if (map._popup && eventTargetInsidePopup(ev, map._popup)) {
             return;
         }
 
         const target = ev.target || ev.srcElement;
         const onMarkerOrCluster = !!(target && target.closest &&
-            target.closest(".leaflet-marker-icon, .marker-cluster, .job-cluster, .job-marker"));
+            target.closest(".job-cluster, .job-marker, .vacancy-detail-marker"));
 
-        // Marker/cluster icons manage their own open/replace; don't force-close marker popups
-        // here (would break click-to-toggle). Still dismiss the custom cluster list.
         if (onMarkerOrCluster) {
-            if (activeClusterPopup) {
-                map.closePopup(activeClusterPopup);
-            }
             return;
         }
 
-        if (activeClusterPopup) {
-            map.closePopup(activeClusterPopup);
-            return;
-        }
-
-        // Empty-map click: also close single vacancy popups (Leaflet preclick is unreliable
-        // alongside MarkerCluster + bubblingMouseEvents:false).
-        if (map._popup) {
-            map.closePopup();
-        }
+        closeActivePopup();
     }
 
     function closeWagePopoverIfOutside(ev) {
@@ -614,8 +596,6 @@ window.jobMap = (function () {
             return;
         }
         outsideClickCloserBound = true;
-        // Native capture: L.DomEvent.on's 4th arg is context, not useCapture.
-        // Capture still runs when markers/clusters stop Leaflet click bubbling.
         map.getContainer().addEventListener("click", closePopupsIfClickOutside, true);
         document.addEventListener("click", closeWagePopoverIfOutside, true);
     }
@@ -640,42 +620,29 @@ window.jobMap = (function () {
         }
     }
 
-    function openClusterList(clusterLayer) {
-        const childMarkers = clusterLayer.getAllChildMarkers();
-        const latlng = clusterLayer.getLatLng();
-
-        if (activeClusterPopup) {
-            map.closePopup(activeClusterPopup);
-        }
-
-        // closeOnClick stays true for Leaflet-native path; bindOutsideClickCloser is the
-        // reliable fallback when MarkerCluster swallows map preclick/click bubbling.
-        const opts = Object.assign({}, clusterPopupOptions(), {
-            closeOnClick: true,
-            autoClose: true,
-            closeButton: true
-        });
-
-        activeClusterPopup = L.popup(opts)
-            .setLatLng(latlng)
-            .setContent(buildClusterSingleHtml(childMarkers, 1))
-            .openOn(map);
-
-        const opened = activeClusterPopup;
-        opened.on("remove", function () {
-            if (activeClusterPopup === opened) {
+    function popupFromOpts(opts, lngLat, html) {
+        const popup = new maplibregl.Popup(opts)
+            .setLngLat(lngLat)
+            .setHTML(html)
+            .addTo(map);
+        popup.on("close", function () {
+            if (activeClusterPopup === popup) {
                 activeClusterPopup = null;
             }
         });
-
-        bindClusterPopupInteractions(activeClusterPopup, childMarkers);
+        return popup;
     }
 
-    function bindPopupClicks(marker, v) {
-        marker.on("popupopen", function () {
-            notifyOpen(v.id);
-            const el = marker.getPopup() && marker.getPopup().getElement();
-            if (!el) return;
+    function openVacancyPopup(record) {
+        if (!map || !record) {
+            return;
+        }
+        closeActivePopup();
+        const v = record.options.jobData;
+        const opts = Object.assign({}, jobPopupOptions());
+        activeClusterPopup = popupFromOpts(opts, [record.lng, record.lat], buildPopupHtml(v));
+        const el = activeClusterPopup.getElement();
+        if (el) {
             bindWageInfoInteractions(el);
             el.querySelectorAll(".map-popup__cta, a.map-popup__media").forEach(function (cta) {
                 if (cta.dataset.bound) {
@@ -686,7 +653,21 @@ window.jobMap = (function () {
                     notifyOpen(v.id);
                 });
             });
-        });
+        }
+        notifyOpen(v.id);
+    }
+
+    function openClusterList(childMarkers, lngLat) {
+        if (!map || !childMarkers || childMarkers.length === 0) {
+            return;
+        }
+
+        closeActivePopup();
+
+        const opts = Object.assign({}, clusterPopupOptions());
+        const ll = lngLat || [childMarkers[0].lng, childMarkers[0].lat];
+        activeClusterPopup = popupFromOpts(opts, ll, buildClusterSingleHtml(childMarkers, 1));
+        bindClusterPopupInteractions(activeClusterPopup, childMarkers);
     }
 
     function ringMinutes(maxMinutes) {
@@ -707,12 +688,23 @@ window.jobMap = (function () {
     }
 
     function clearTravelRings() {
+        if (map && travelRingGeo) {
+            travelRingGeo.ids.forEach(function (id) {
+                if (map.getLayer(id)) {
+                    map.removeLayer(id);
+                }
+            });
+            if (map.getSource(travelRingGeo.sourceId)) {
+                map.removeSource(travelRingGeo.sourceId);
+            }
+        }
         travelRingLayers.forEach(function (layer) {
-            if (map && layer) {
-                map.removeLayer(layer);
+            if (layer && typeof layer.remove === "function") {
+                layer.remove();
             }
         });
         travelRingLayers = [];
+        travelRingGeo = null;
     }
 
     function maxRingRadiusMeters() {
@@ -732,49 +724,108 @@ window.jobMap = (function () {
         return Math.min(uncapped, cap);
     }
 
+    function destinationLngLat(lat, lng, distanceM, bearingDeg) {
+        const R = 6378137;
+        const br = bearingDeg * Math.PI / 180;
+        const lat1 = lat * Math.PI / 180;
+        const lng1 = lng * Math.PI / 180;
+        const ang = distanceM / R;
+        const lat2 = Math.asin(Math.sin(lat1) * Math.cos(ang) + Math.cos(lat1) * Math.sin(ang) * Math.cos(br));
+        const lng2 = lng1 + Math.atan2(
+            Math.sin(br) * Math.sin(ang) * Math.cos(lat1),
+            Math.cos(ang) - Math.sin(lat1) * Math.sin(lat2)
+        );
+        return [lng2 * 180 / Math.PI, lat2 * 180 / Math.PI];
+    }
+
+    function circlePolygon(lat, lng, radiusM) {
+        const coords = [];
+        for (let i = 0; i <= 64; i++) {
+            coords.push(destinationLngLat(lat, lng, radiusM, i * (360 / 64)));
+        }
+        return [coords];
+    }
+
     function drawTravelRings(lat, lng) {
         clearTravelRings();
-        if (!map) return;
+        if (!map || typeof map.addSource !== "function") {
+            return;
+        }
 
         const transport = travelOptions.transport || "Fiets";
         const labelVerb = TRANSPORT_LABEL[transport] || "reistijd";
         const minutes = ringMinutes(travelOptions.maxMinutes);
         const cap = maxRingRadiusMeters();
+        const features = [];
+        const layerIds = [];
 
         minutes.forEach(function (mins, index) {
             const radius = ringRadiusForMinutes(mins);
             if (radius < 40) return;
-
-            // Skip intermediate rings that collapse to the same capped size
             if (index > 0 && radius >= cap - 1 && ringRadiusForMinutes(minutes[index - 1]) >= cap - 1) {
                 return;
             }
 
-            const circle = L.circle([lat, lng], {
-                radius: radius,
-                color: "#007bff",
-                weight: index === minutes.length - 1 ? 2 : 1.5,
-                opacity: 0.7,
-                fillColor: "#007bff",
-                fillOpacity: 0.08 + index * 0.03,
-                interactive: false
-            }).addTo(map);
+            features.push({
+                type: "Feature",
+                properties: {
+                    index: index,
+                    outer: index === minutes.length - 1
+                },
+                geometry: {
+                    type: "Polygon",
+                    coordinates: circlePolygon(lat, lng, radius)
+                }
+            });
 
-            const labelLat = lat + (radius / 111320);
+            const labelLngLat = destinationLngLat(lat, lng, radius, 0);
             const effectiveMins = Math.max(1, Math.round(radius / metersPerMinute(transport)));
-            const label = L.marker([labelLat, lng], {
-                interactive: false,
-                keyboard: false,
-                icon: L.divIcon({
-                    className: "travel-ring-label",
-                    html: "<span>" + effectiveMins + " min " + escapeHtml(labelVerb) + "</span>",
-                    iconSize: [120, 22],
-                    iconAnchor: [60, 11]
-                })
-            }).addTo(map);
-
-            travelRingLayers.push(circle, label);
+            const labelEl = document.createElement("div");
+            labelEl.className = "travel-ring-label";
+            labelEl.innerHTML = "<span>" + effectiveMins + " min " + escapeHtml(labelVerb) + "</span>";
+            const labelMarker = new maplibregl.Marker({
+                element: labelEl,
+                anchor: "center",
+                pitchAlignment: "viewport",
+                rotationAlignment: "viewport"
+            })
+                .setLngLat(labelLngLat)
+                .addTo(map);
+            travelRingLayers.push(labelMarker);
         });
+
+        if (!features.length || !map.isStyleLoaded()) {
+            return;
+        }
+
+        const sourceId = "jobsy-travel-rings";
+        map.addSource(sourceId, {
+            type: "geojson",
+            data: { type: "FeatureCollection", features: features }
+        });
+        const fillId = sourceId + "-fill";
+        const lineId = sourceId + "-line";
+        map.addLayer({
+            id: fillId,
+            type: "fill",
+            source: sourceId,
+            paint: {
+                "fill-color": "#007bff",
+                "fill-opacity": 0.1
+            }
+        });
+        map.addLayer({
+            id: lineId,
+            type: "line",
+            source: sourceId,
+            paint: {
+                "line-color": "#007bff",
+                "line-width": 1.6,
+                "line-opacity": 0.7
+            }
+        });
+        layerIds.push(fillId, lineId);
+        travelRingGeo = { sourceId: sourceId, ids: layerIds };
     }
 
     function normalizeTravelOptions(options) {
@@ -827,8 +878,17 @@ window.jobMap = (function () {
     }
 
     function zoomForPoints(points) {
-        const b = L.latLngBounds(points);
-        const span = Math.max(b.getEast() - b.getWest(), b.getNorth() - b.getSouth());
+        if (!points.length) {
+            return 8;
+        }
+        let minLat = 90, maxLat = -90, minLng = 180, maxLng = -180;
+        points.forEach(function (p) {
+            minLat = Math.min(minLat, p[0]);
+            maxLat = Math.max(maxLat, p[0]);
+            minLng = Math.min(minLng, p[1]);
+            maxLng = Math.max(maxLng, p[1]);
+        });
+        const span = Math.max(maxLng - minLng, maxLat - minLat);
         if (span < 0.08) return 13;
         if (span < 0.2) return 12;
         if (span < 0.5) return 11;
@@ -848,18 +908,25 @@ window.jobMap = (function () {
     }
 
     function mapHasUsableSize() {
-        if (!map || typeof map.getSize !== "function") {
+        if (!map) {
             return false;
         }
-        const size = map.getSize();
-        return !!(size && size.x >= 32 && size.y >= 32);
+        const c = map.getContainer();
+        return !!(c && c.clientWidth >= 32 && c.clientHeight >= 32);
     }
 
     function vacancyPoints() {
         return Object.keys(markersById).map(function (id) {
-            const ll = markersById[id].getLatLng();
-            return [ll.lat, ll.lng];
+            return [markersById[id].lat, markersById[id].lng];
         });
+    }
+
+    function boundsFromPoints(points) {
+        const bounds = new maplibregl.LngLatBounds();
+        points.forEach(function (p) {
+            bounds.extend([p[1], p[0]]);
+        });
+        return bounds;
     }
 
     function fitMapToVacancies(markerBounds) {
@@ -874,11 +941,15 @@ window.jobMap = (function () {
         }
 
         const opening = !firstViewApplied || Date.now() < openingViewUntil;
-        const opts = { padding: [48, 48], maxZoom: 13, animate: !opening };
+        const opts = { padding: 48, maxZoom: 13, animate: !opening, duration: opening ? 0 : 450 };
+        const bounds = boundsFromPoints(points);
         if (mapHasUsableSize()) {
-            map.fitBounds(points, opts);
+            map.fitBounds(bounds, opts);
         } else {
-            map.setView(L.latLngBounds(points).getCenter(), zoomForPoints(points), { animate: false });
+            map.jumpTo({
+                center: bounds.getCenter(),
+                zoom: zoomForPoints(points)
+            });
         }
         firstViewApplied = true;
         ensureVacancyTiles();
@@ -889,25 +960,180 @@ window.jobMap = (function () {
         if (!map || tileLayer) {
             return;
         }
-        tileLayer = L.tileLayer("https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png", {
-            maxZoom: 19,
-            attribution: "&copy; <a href=\"https://www.openstreetmap.org/copyright\">OpenStreetMap</a> &copy; <a href=\"https://carto.com/attributions\">CARTO</a>"
-        });
-        tileLayer.once("load", function () {
+        tileLayer = { kind: "openfreemap-vector" };
+        const fire = function () {
             revealMapStage();
             if (openCallback && typeof openCallback.invokeMethodAsync === "function") {
                 openCallback.invokeMethodAsync("OnMapTilesReady");
             }
+        };
+        if (map.loaded()) {
+            map.once("idle", fire);
+        } else {
+            map.once("load", function () {
+                map.once("idle", fire);
+            });
+        }
+    }
+
+    function clusterProject(lat, lng) {
+        const p = maplibregl.MercatorCoordinate.fromLngLat({ lon: lng, lat: lat });
+        const scale = 512 * Math.pow(2, map.getZoom());
+        return { x: p.x * scale, y: p.y * scale };
+    }
+
+    function computeClusters() {
+        const items = Object.keys(markersById).map(function (id) {
+            return markersById[id];
         });
-        tileLayer.addTo(map);
+        const zoom = map.getZoom();
+        if (zoom >= CLUSTER_OPTS.disableClusteringAtZoom) {
+            return items.map(function (item) {
+                return { type: "pin", items: [item], lat: item.lat, lng: item.lng };
+            });
+        }
+
+        const radius = CLUSTER_OPTS.maxClusterRadius;
+        const pts = items.map(function (item) {
+            const p = clusterProject(item.lat, item.lng);
+            return { item: item, x: p.x, y: p.y, used: false };
+        });
+        const clusters = [];
+        for (let i = 0; i < pts.length; i++) {
+            if (pts[i].used) {
+                continue;
+            }
+            const group = [pts[i]];
+            pts[i].used = true;
+            for (let j = i + 1; j < pts.length; j++) {
+                if (pts[j].used) {
+                    continue;
+                }
+                const dx = pts[i].x - pts[j].x;
+                const dy = pts[i].y - pts[j].y;
+                if (dx * dx + dy * dy <= radius * radius) {
+                    pts[j].used = true;
+                    group.push(pts[j]);
+                }
+            }
+            if (group.length === 1) {
+                clusters.push({
+                    type: "pin",
+                    items: [group[0].item],
+                    lat: group[0].item.lat,
+                    lng: group[0].item.lng
+                });
+            } else {
+                let lat = 0;
+                let lng = 0;
+                group.forEach(function (g) {
+                    lat += g.item.lat;
+                    lng += g.item.lng;
+                });
+                clusters.push({
+                    type: "cluster",
+                    items: group.map(function (g) { return g.item; }),
+                    lat: lat / group.length,
+                    lng: lng / group.length
+                });
+            }
+        }
+        return clusters;
+    }
+
+    function clearRenderedMarkers() {
+        renderedMarkers.forEach(function (m) {
+            if (m && typeof m.remove === "function") {
+                m.remove();
+            }
+        });
+        renderedMarkers = [];
+        Object.keys(markersById).forEach(function (id) {
+            markersById[id].marker = null;
+            markersById[id].element = null;
+        });
+    }
+
+    function refreshClusters() {
+        if (!map) {
+            return;
+        }
+        clearRenderedMarkers();
+        const clusters = computeClusters();
+        clusters.forEach(function (cluster) {
+            if (cluster.type === "cluster") {
+                const count = cluster.items.length;
+                let sizeClass = "job-cluster--sm";
+                if (count >= 10) sizeClass = "job-cluster--lg";
+                else if (count >= 4) sizeClass = "job-cluster--md";
+                const hasFeatured = cluster.items.some(function (m) {
+                    return m && m.options && m.options.jobData && m.options.jobData.highlighted;
+                });
+                const el = document.createElement("div");
+                el.className = "job-cluster " + sizeClass + (hasFeatured ? " job-cluster--featured" : "");
+                el.innerHTML = "<div><span>" + count + "</span></div>";
+                el.addEventListener("click", function (ev) {
+                    stopEvent(ev);
+                    openClusterList(cluster.items, [cluster.lng, cluster.lat]);
+                });
+                const marker = new maplibregl.Marker({
+                    element: el,
+                    anchor: "center",
+                    pitchAlignment: "viewport",
+                    rotationAlignment: "viewport"
+                })
+                    .setLngLat([cluster.lng, cluster.lat])
+                    .addTo(map);
+                renderedMarkers.push(marker);
+                return;
+            }
+
+            const record = cluster.items[0];
+            const v = record.options.jobData;
+            const el = document.createElement("div");
+            fillMarkerElement(
+                el,
+                !!v.highlighted,
+                selectedId != null && String(record.id) === String(selectedId),
+                workTypeOf(v),
+                v.categoryColor
+            );
+            el.addEventListener("click", function (ev) {
+                stopEvent(ev);
+                highlight(v.id);
+                openVacancyPopup(record);
+            });
+            const marker = new maplibregl.Marker({
+                element: el,
+                anchor: "center",
+                pitchAlignment: "viewport",
+                rotationAlignment: "viewport"
+            })
+                .setLngLat([record.lng, record.lat])
+                .addTo(map);
+            record.marker = marker;
+            record.element = el;
+            renderedMarkers.push(marker);
+        });
+    }
+
+    function restoreOverlays() {
+        refreshClusters();
+        if (lastOrigin) {
+            ensureOriginMarker(lastOrigin.lat, lastOrigin.lng);
+            drawTravelRings(lastOrigin.lat, lastOrigin.lng);
+        }
+        if (window.jobsyMapLibre) {
+            window.jobsyMapLibre.hideChrome(map);
+        }
     }
 
     function init(elementId, vacancies, options) {
-        if (typeof L === "undefined") {
-            throw new Error("Leaflet (L) is not loaded");
+        if (typeof maplibregl === "undefined") {
+            throw new Error("MapLibre GL JS (maplibregl) is not loaded");
         }
-        if (typeof L.markerClusterGroup !== "function") {
-            throw new Error("Leaflet.markercluster is not loaded");
+        if (!window.jobsyMapLibre) {
+            throw new Error("jobsyMapLibre is not loaded");
         }
 
         const el = document.getElementById(elementId);
@@ -929,6 +1155,7 @@ window.jobMap = (function () {
         lastFitPoints = [];
         openingViewUntil = Date.now() + 800;
         tileLayer = null;
+        selectedId = null;
 
         // No default NL view: start on vacancy coordinates so the first tiles
         // are the real jobs, not the whole country.
@@ -937,40 +1164,43 @@ window.jobMap = (function () {
             throw new Error("No vacancy coordinates for map");
         }
         lastFitPoints = openingPoints.slice();
-        const start = L.latLngBounds(openingPoints).getCenter();
-        map = L.map(el, {
-            zoomControl: true,
-            scrollWheelZoom: true,
-            closePopupOnClick: true,
-            fadeAnimation: false,
-            zoomAnimation: false,
-            markerZoomAnimation: false,
-            center: [start.lat, start.lng],
+        const startBounds = boundsFromPoints(openingPoints);
+        const start = startBounds.getCenter();
+
+        map = window.jobsyMapLibre.createMap(el, {
+            center: [start.lng, start.lat],
             zoom: zoomForPoints(openingPoints)
         });
+        map._jobsyOnStyleRestored = restoreOverlays;
         ensureVacancyTiles();
         revealMapStage();
 
-        clusterGroup = L.markerClusterGroup({
-            showCoverageOnHover: false,
-            zoomToBoundsOnClick: false,
-            spiderfyOnMaxZoom: false,
-            disableClusteringAtZoom: 16,
-            maxClusterRadius: 60,
-            removeOutsideVisibleBounds: false,
-            iconCreateFunction: createClusterIcon
-        });
-
-        clusterGroup.on("clusterclick", function (e) {
-            // Stop Leaflet bubbling (_stopped) — native-only stopPropagation is not enough.
-            L.DomEvent.stopPropagation(e);
-            if (e.originalEvent) {
-                L.DomEvent.stopPropagation(e.originalEvent);
+        clusterGroup = {
+            refreshClusters: refreshClusters,
+            clearLayers: function () {
+                clearRenderedMarkers();
+                markersById = {};
+            },
+            zoomToShowLayer: function (record, cb) {
+                map.easeTo({
+                    center: [record.lng, record.lat],
+                    zoom: Math.max(map.getZoom(), CLUSTER_OPTS.disableClusteringAtZoom),
+                    duration: 280
+                });
+                map.once("idle", function () {
+                    refreshClusters();
+                    if (typeof cb === "function") {
+                        cb();
+                    }
+                });
             }
-            openClusterList(e.layer);
-        });
+        };
 
-        map.addLayer(clusterGroup);
+        if (!zoomHandlerBound) {
+            zoomHandlerBound = true;
+        }
+        map.on("zoomend", refreshClusters);
+
         setVacancies(vacancies || []);
         if (options && options.origin) {
             setOrigin(options.origin.lat, options.origin.lng, options.travel);
@@ -981,6 +1211,10 @@ window.jobMap = (function () {
 
         addLocateControl();
         invalidate();
+
+        map.on("load", function () {
+            restoreOverlays();
+        });
 
         [50, 200, 500].forEach(function (ms) {
             setTimeout(function () {
@@ -1007,45 +1241,45 @@ window.jobMap = (function () {
 
     function addLocateControl() {
         if (!map) return;
+        const host = map.getContainer();
+        if (host.querySelector(".job-map-locate")) {
+            syncLocateButton();
+            return;
+        }
 
-        const LocateControl = L.Control.extend({
-            onAdd: function () {
-                const bar = L.DomUtil.create("div", "leaflet-bar job-map-locate");
-                const btn = L.DomUtil.create("a", "job-map-locate__btn", bar);
-                btn.href = "#";
-                btn.title = "Mijn locatie";
-                btn.setAttribute("role", "button");
-                btn.setAttribute("aria-label", "Mijn locatie");
-                btn.innerHTML = locateIconHtml();
+        const bar = document.createElement("div");
+        bar.className = "job-map-locate";
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "job-map-locate__btn";
+        btn.title = "Mijn locatie";
+        btn.setAttribute("aria-label", "Mijn locatie");
+        btn.innerHTML = locateIconHtml();
+        bar.appendChild(btn);
+        host.appendChild(bar);
 
-                L.DomEvent.disableClickPropagation(bar);
-                L.DomEvent.on(btn, "click", L.DomEvent.stop)
-                    .on(btn, "click", function () {
-                        if (btn.classList.contains("is-busy")) return;
-                        btn.classList.add("is-busy");
-                        const done = function () {
-                            btn.classList.remove("is-busy");
-                        };
+        btn.addEventListener("click", function (ev) {
+            stopEvent(ev);
+            if (btn.classList.contains("is-busy")) return;
+            btn.classList.add("is-busy");
+            const done = function () {
+                btn.classList.remove("is-busy");
+            };
 
-                        if (openCallback) {
-                            openCallback.invokeMethodAsync("OnMapLocateClicked")
-                                .then(done, done);
-                        } else if (window.jobsyGeo && typeof window.jobsyGeo.requestLocation === "function") {
-                            window.jobsyGeo.requestLocation()
-                                .then(function (pos) {
-                                    setOrigin(pos.lat, pos.lng, travelOptions);
-                                })
-                                .then(done, done);
-                        } else {
-                            done();
-                        }
-                    });
-
-                return bar;
+            if (openCallback) {
+                openCallback.invokeMethodAsync("OnMapLocateClicked")
+                    .then(done, done);
+            } else if (window.jobsyGeo && typeof window.jobsyGeo.requestLocation === "function") {
+                window.jobsyGeo.requestLocation()
+                    .then(function (pos) {
+                        setOrigin(pos.lat, pos.lng, travelOptions);
+                    })
+                    .then(done, done);
+            } else {
+                done();
             }
         });
 
-        new LocateControl({ position: "bottomright" }).addTo(map);
         syncLocateButton();
     }
 
@@ -1074,31 +1308,40 @@ window.jobMap = (function () {
             }
             const lat = pt[0];
             const lng = pt[1];
-
-            const workType = Array.isArray(v.workTypes) && v.workTypes.length
-                ? v.workTypes[0]
-                : (v.workType || "");
-            const featured = !!v.highlighted;
-            const marker = L.marker([lat, lng], {
-                icon: createIcon(featured, false, workType, v.categoryColor),
-                jobData: v,
-                zIndexOffset: featured ? 1000 : 0
-            });
-
-            marker.bindPopup(buildPopupHtml(v), jobPopupOptions());
-
-            marker.on("click", function () {
-                highlight(v.id);
-            });
-
-            bindPopupClicks(marker, v);
-
-            markersById[v.id] = marker;
-            clusterGroup.addLayer(marker);
+            const record = {
+                id: v.id,
+                lat: lat,
+                lng: lng,
+                marker: null,
+                element: null,
+                options: { jobData: v },
+                getLatLng: function () { return { lat: lat, lng: lng }; },
+                getLngLat: function () { return { lng: lng, lat: lat }; }
+            };
+            markersById[v.id] = record;
             bounds.push([lat, lng]);
         });
 
+        refreshClusters();
         fitMapToVacancies(bounds);
+    }
+
+    function ensureOriginMarker(la, ln) {
+        if (originMarker) {
+            originMarker.setLngLat([ln, la]);
+            return;
+        }
+        const el = document.createElement("div");
+        el.className = "job-map-origin";
+        el.title = "Jouw locatie";
+        originMarker = new maplibregl.Marker({
+            element: el,
+            anchor: "center",
+            pitchAlignment: "viewport",
+            rotationAlignment: "viewport"
+        })
+            .setLngLat([ln, la])
+            .addTo(map);
     }
 
     function setOrigin(lat, lng, travel) {
@@ -1108,46 +1351,27 @@ window.jobMap = (function () {
         if (!Number.isFinite(la) || !Number.isFinite(ln)) return;
 
         normalizeTravelOptions(travel);
+        lastOrigin = { lat: la, lng: ln };
 
-        if (originMarker) {
-            originMarker.setLatLng([la, ln]);
-        } else {
-            originMarker = L.circleMarker([la, ln], {
-                radius: 9,
-                color: "#0056b3",
-                weight: 3,
-                fillColor: "#007bff",
-                fillOpacity: 1
-            }).addTo(map);
-            originMarker.bindTooltip("Jouw locatie", { direction: "top" });
-        }
-
+        ensureOriginMarker(la, ln);
         drawTravelRings(la, ln);
         syncLocateButton();
-        const markerBounds = Object.keys(markersById).map(function (id) {
-            const ll = markersById[id].getLatLng();
-            return [ll.lat, ll.lng];
-        });
-        fitMapToVacancies(markerBounds);
+        fitMapToVacancies(vacancyPoints());
     }
 
     function setTravelOptions(options) {
         normalizeTravelOptions(options);
-        if (originMarker) {
-            const ll = originMarker.getLatLng();
-            drawTravelRings(ll.lat, ll.lng);
-            const markerBounds = Object.keys(markersById).map(function (id) {
-                const mll = markersById[id].getLatLng();
-                return [mll.lat, mll.lng];
-            });
-            fitMapToVacancies(markerBounds);
+        if (lastOrigin) {
+            drawTravelRings(lastOrigin.lat, lastOrigin.lng);
+            fitMapToVacancies(vacancyPoints());
         }
     }
 
     function clearOrigin() {
         clearTravelRings();
-        if (originMarker && map) {
-            map.removeLayer(originMarker);
+        lastOrigin = null;
+        if (originMarker) {
+            originMarker.remove();
             originMarker = null;
         }
         syncLocateButton();
@@ -1157,8 +1381,7 @@ window.jobMap = (function () {
         if (!map) {
             return;
         }
-        map.invalidateSize({ animate: false });
-        // Re-apply the opening marker view after layout (carousel, 0×0 pane, mobile dvh).
+        map.resize();
         if (Date.now() < openingViewUntil || !firstViewApplied) {
             if (lastFitPoints.length > 0) {
                 firstViewApplied = false;
@@ -1176,30 +1399,30 @@ window.jobMap = (function () {
     }
 
     function highlight(id) {
+        selectedId = id;
         Object.keys(markersById).forEach(function (key) {
-            const marker = markersById[key];
-            const data = marker.options.jobData || {};
-            const workType = Array.isArray(data.workTypes) && data.workTypes.length
-                ? data.workTypes[0]
-                : (data.workType || "");
+            const record = markersById[key];
+            const data = record.options.jobData || {};
             const featured = !!data.highlighted;
             const selected = id != null && key === String(id);
-            marker.setIcon(createIcon(featured, selected, workType, data.categoryColor));
-            marker.setZIndexOffset(featured || selected ? 1000 : 0);
+            if (record.element) {
+                fillMarkerElement(record.element, featured, selected, workTypeOf(data), data.categoryColor);
+                record.element.style.zIndex = featured || selected ? "1000" : "";
+            }
         });
     }
 
     function focus(id) {
         openingViewUntil = 0;
-        const marker = markersById[id];
-        if (!marker || !map || !clusterGroup) {
+        const record = markersById[id];
+        if (!record || !map || !clusterGroup) {
             return;
         }
 
         highlight(id);
 
-        clusterGroup.zoomToShowLayer(marker, function () {
-            marker.openPopup();
+        clusterGroup.zoomToShowLayer(record, function () {
+            openVacancyPopup(record);
         });
     }
 
@@ -1211,31 +1434,7 @@ window.jobMap = (function () {
         if (!map || !childMarkers || childMarkers.length === 0) {
             return;
         }
-
-        const latlng = childMarkers[0].getLatLng();
-        if (activeClusterPopup) {
-            map.closePopup(activeClusterPopup);
-        }
-
-        const opts = Object.assign({}, clusterPopupOptions(), {
-            closeOnClick: true,
-            autoClose: true,
-            closeButton: true
-        });
-
-        activeClusterPopup = L.popup(opts)
-            .setLatLng(latlng)
-            .setContent(buildClusterSingleHtml(childMarkers, 1))
-            .openOn(map);
-
-        const opened = activeClusterPopup;
-        opened.on("remove", function () {
-            if (activeClusterPopup === opened) {
-                activeClusterPopup = null;
-            }
-        });
-
-        bindClusterPopupInteractions(activeClusterPopup, childMarkers);
+        openClusterList(childMarkers, [childMarkers[0].lng, childMarkers[0].lat]);
     }
 
     /**
@@ -1251,10 +1450,10 @@ window.jobMap = (function () {
         const wanted = normalizeCompanyId(companyId);
         const markers = [];
         Object.keys(markersById).forEach(function (key) {
-            const marker = markersById[key];
-            const data = marker.options.jobData || {};
+            const record = markersById[key];
+            const data = record.options.jobData || {};
             if (normalizeCompanyId(data.companyId) === wanted) {
-                markers.push(marker);
+                markers.push(record);
             }
         });
 
@@ -1268,12 +1467,10 @@ window.jobMap = (function () {
         }
 
         invalidate();
-        const group = L.featureGroup(markers);
-        map.fitBounds(group.getBounds().pad(0.45), { maxZoom: 16, animate: true });
+        const points = markers.map(function (m) { return [m.lat, m.lng]; });
+        map.fitBounds(boundsFromPoints(points), { padding: 64, maxZoom: 16, animate: true, duration: 450 });
         setTimeout(function () {
             invalidate();
-            // Always open a company-scoped popup — never the geographic cluster parent,
-            // which can include vacancies from other employers at nearby coordinates.
             openCompanyClusterPopup(markers);
         }, 450);
     }
@@ -1283,21 +1480,22 @@ window.jobMap = (function () {
         activeClusterPopup = null;
         openCallback = null;
         clearTravelRings();
+        lastOrigin = null;
         originMarker = null;
-        if (clusterGroup) {
-            clusterGroup.clearLayers();
-            clusterGroup = null;
-        }
+        clearRenderedMarkers();
         if (map) {
             unbindOutsideClickCloser();
             map.remove();
             map = null;
         }
+        clusterGroup = null;
         markersById = {};
         lastFitPoints = [];
         firstViewApplied = false;
         openingViewUntil = 0;
         tileLayer = null;
+        selectedId = null;
+        zoomHandlerBound = false;
     }
 
     function escapeHtml(value) {

@@ -38,7 +38,7 @@ Jobsy is een hyper-lokale job-matching applicatie gericht op de regionale arbeid
 - **Platform settings** — token packs/costs, PushBom tiers, early-adapter, WML, PlatformLogs, integraties
 
 ## 4. Kernfunctionaliteiten (MVP & Demo)
-- **Banenkaart (`/`):** Funda split-screen (lijst + OpenStreetMap), reistijd/afstand via PostGIS + OSRM
+- **Banenkaart (`/`):** Funda split-screen (lijst + OpenFreeMap/MapLibre), reistijd/afstand via PostGIS + OSRM
 - **Role dashboards (`/home`):** doorklikbare KPI’s (dag/week/maand) + drilldown voor kandidaat, werkgever en admin
 - **Token-producten:** publiceren / highlight / PushBom / verlengen; prepaid “no tokens, no action”
 - **Onvoldoende saldo:** blokkeer actie + in-context Mollie-checkout (exact match of bulkapakket); na webhook/return → tokens bijschrijven én pending actie uitvoeren. Vestigingsmanagers zonder kooprecht blijven op `PendingApproval`

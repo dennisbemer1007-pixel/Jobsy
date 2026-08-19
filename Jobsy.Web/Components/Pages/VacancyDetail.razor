@@ -1080,7 +1080,7 @@
         try
         {
             await MapScripts.EnsureDetailAsync(Js);
-            // Pass numbers (JSON) so Leaflet gets exact coords without culture parsing.
+            // Pass numbers (JSON) so MapLibre gets exact coords without culture parsing.
             await Js.InvokeVoidAsync("vacancyDetailMap.init", "vacancy-detail-map", new Dictionary<string, object?>
             {
                 ["lat"] = _vacancy!.Latitude,
@@ -1095,7 +1095,7 @@
         }
         catch
         {
-            // Leaflet may not be ready yet — retry on next render
+            // MapLibre may not be ready yet — retry on next render
             _mapReady = false;
             _mappedVacancyId = null;
         }

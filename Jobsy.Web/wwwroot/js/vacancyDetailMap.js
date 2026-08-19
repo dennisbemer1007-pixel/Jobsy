@@ -11,16 +11,12 @@ window.vacancyDetailMap = (function () {
         Lopend: "walking"
     };
 
-    function createLobsyIcon() {
-        // Square lobster art; anchor near the feet so the pin sits on the lat/lng.
-        return L.divIcon({
-            className: "vacancy-detail-marker",
-            html:
-                "<img class=\"vacancy-detail-marker__img\" src=\"/images/brand/lobsy.png?v=20260731-eyes\" alt=\"\" width=\"48\" height=\"48\" />",
-            iconSize: [48, 48],
-            iconAnchor: [24, 44],
-            popupAnchor: [0, -40]
-        });
+    function createMarkerElement() {
+        const el = document.createElement("div");
+        el.className = "vacancy-detail-marker";
+        el.innerHTML =
+            "<img class=\"vacancy-detail-marker__img\" src=\"/images/brand/lobsy.png?v=20260731-eyes\" alt=\"\" width=\"48\" height=\"48\" />";
+        return el;
     }
 
     function readCoord(options, camel, pascal) {
@@ -28,14 +24,34 @@ window.vacancyDetailMap = (function () {
         if (raw == null || raw === "") {
             return NaN;
         }
-        // Support invariant strings ("52.07") and numbers.
         const n = typeof raw === "number" ? raw : Number(String(raw).trim().replace(",", "."));
         return n;
     }
 
+    function restoreMarker() {
+        if (!map || !Number.isFinite(currentLat) || !Number.isFinite(currentLng)) {
+            return;
+        }
+        if (marker) {
+            marker.remove();
+            marker = null;
+        }
+        marker = new maplibregl.Marker({
+            element: createMarkerElement(),
+            anchor: "bottom",
+            pitchAlignment: "viewport",
+            rotationAlignment: "viewport"
+        })
+            .setLngLat([currentLng, currentLat])
+            .addTo(map);
+    }
+
     function init(elementId, options) {
-        if (typeof L === "undefined") {
-            throw new Error("Leaflet (L) is not loaded");
+        if (typeof maplibregl === "undefined") {
+            throw new Error("MapLibre GL JS (maplibregl) is not loaded");
+        }
+        if (!window.jobsyMapLibre) {
+            throw new Error("jobsyMapLibre is not loaded");
         }
 
         const el = document.getElementById(elementId);
@@ -48,11 +64,9 @@ window.vacancyDetailMap = (function () {
         if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
             throw new Error("Invalid vacancy coordinates");
         }
-        // Guard against swapped lat/lng for NL/BE-ish data (lng around 3–8, lat around 50–54).
         let useLat = lat;
         let useLng = lng;
         if (Math.abs(lat) <= 90 && Math.abs(lng) <= 180) {
-            // If values look swapped for the Low Countries, correct them.
             if (lat > 2 && lat < 10 && lng > 49 && lng < 55) {
                 useLat = lng;
                 useLng = lat;
@@ -66,8 +80,6 @@ window.vacancyDetailMap = (function () {
             dispose();
         }
 
-        // Detail map host must have a non-zero box before Leaflet measures it.
-        // (Shared .job-map "height:auto" used to collapse this to 0px.)
         if (el.clientHeight < 40) {
             el.style.position = "absolute";
             el.style.inset = "0";
@@ -76,39 +88,39 @@ window.vacancyDetailMap = (function () {
             el.style.minHeight = "200px";
         }
 
-        map = L.map(el, {
-            zoomControl: true,
-            scrollWheelZoom: false,
-            dragging: !L.Browser.mobile
+        map = window.jobsyMapLibre.createMap(el, {
+            center: [useLng, useLat],
+            zoom: 15,
+            scrollZoom: false
         });
 
-        L.tileLayer("https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png", {
-            maxZoom: 19,
-            attribution:
-                "&copy; <a href=\"https://www.openstreetmap.org/copyright\">OpenStreetMap</a> " +
-                "&copy; <a href=\"https://carto.com/attributions\">CARTO</a>"
-        }).addTo(map);
-
-        marker = L.marker([useLat, useLng], {
-            icon: createLobsyIcon(),
-            title: (options && options.title) || "Locatie"
-        }).addTo(map);
-
         const address = options && options.address ? String(options.address) : "";
-        if (address) {
-            marker.bindPopup(
-                "<strong>" + escapeHtml((options && options.company) || "") + "</strong>" +
-                (address ? "<br>" + escapeHtml(address) : ""),
-                { className: "vacancy-detail-map-popup" }
-            );
-        }
+        const title = (options && options.title) || "Locatie";
+        const company = (options && options.company) || "";
 
-        map.setView([useLat, useLng], 15, { animate: false });
-        if (marker) {
-            marker.setLatLng([useLat, useLng]);
-        }
-        invalidate();
-        recenter();
+        map._jobsyOnStyleRestored = function () {
+            restoreMarker();
+            recenter();
+        };
+
+        map.on("load", function () {
+            restoreMarker();
+            if (address && marker) {
+                const popup = new maplibregl.Popup({
+                    className: "vacancy-detail-map-popup",
+                    closeButton: true,
+                    maxWidth: "280px",
+                    offset: 18
+                }).setHTML(
+                    "<strong>" + escapeHtml(company) + "</strong>" +
+                    (address ? "<br>" + escapeHtml(address) : "")
+                );
+                marker.setPopup(popup);
+                marker.getElement().setAttribute("title", title);
+            }
+            invalidate();
+            recenter();
+        });
 
         [50, 150, 300, 600, 1200].forEach(function (ms) {
             setTimeout(function () {
@@ -124,9 +136,12 @@ window.vacancyDetailMap = (function () {
         if (!map || !Number.isFinite(currentLat) || !Number.isFinite(currentLng)) {
             return;
         }
-        map.setView([currentLat, currentLng], map.getZoom() || 15, { animate: false });
+        map.jumpTo({
+            center: [currentLng, currentLat],
+            zoom: map.getZoom() || 15
+        });
         if (marker) {
-            marker.setLatLng([currentLat, currentLng]);
+            marker.setLngLat([currentLng, currentLat]);
         }
     }
 
@@ -137,13 +152,16 @@ window.vacancyDetailMap = (function () {
 
     function invalidate() {
         if (map) {
-            map.invalidateSize({ animate: false });
+            map.resize();
         }
     }
 
     function dispose() {
         window.removeEventListener("resize", onResize);
-        marker = null;
+        if (marker) {
+            marker.remove();
+            marker = null;
+        }
         currentLat = null;
         currentLng = null;
         if (map) {
@@ -156,10 +174,6 @@ window.vacancyDetailMap = (function () {
         return TRAVEL_MODE[String(transport || "")] || TRAVEL_MODE.Fiets;
     }
 
-    /**
-     * Opens Google Maps directions for the selected transport mode.
-     * Uses stored/passed origin when available; otherwise destination-only.
-     */
     function openRoute(options) {
         const destLat = readCoord(options, "destLat", "DestLat");
         const destLng = readCoord(options, "destLng", "DestLng");
@@ -185,7 +199,6 @@ window.vacancyDetailMap = (function () {
         return { opened: !!win };
     }
 
-    /** Opens Google Street View at the company location. */
     function openStreetView(options) {
         const lat = readCoord(options, "lat", "Lat");
         const lng = readCoord(options, "lng", "Lng");

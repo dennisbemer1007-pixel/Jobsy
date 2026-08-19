@@ -31,9 +31,9 @@
     --radius: 12px;
     --radius-sm: 8px;
     --map-land: #e6efe4;
-    --map-pin: #f54a1b;
-    --map-pin-deep: #d93a12;
-    --map-pin-glow: rgba(245, 74, 27, 0.42);
+    --map-pin: #22c55e;
+    --map-pin-deep: #16a34a;
+    --map-pin-glow: rgba(34, 197, 94, 0.42);
     --map-ring-fill: rgba(15, 45, 92, 0.12);
     --map-ring-stroke: rgba(15, 45, 92, 0.45);
     --font: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
@@ -3315,43 +3315,125 @@ a {
     min-height: 0 !important;
 }
 
-/* Let clicks beside a popup hit the map (pane can grow with transforms). */
-.job-map .leaflet-popup-pane {
-    pointer-events: none;
-}
-
-.job-map .leaflet-popup-pane .leaflet-popup {
+/* Let clicks on popup chrome work; the canvas handles the map. */
+.job-map .maplibregl-popup {
     pointer-events: auto;
 }
 
-/* Carto Voyager already has vivid land/water/roads — keep a light polish only. */
-.job-map .leaflet-tile-pane,
-.vacancy-detail-map .leaflet-tile-pane {
+.job-map,
+.vacancy-detail-map {
+    touch-action: none;
+    overscroll-behavior: contain;
+}
+
+.job-map.maplibregl-map,
+.vacancy-detail-map.maplibregl-map {
+    font: inherit;
+}
+
+.job-marker {
+    width: 34px;
+    height: 34px;
+}
+
+.job-cluster {
+    width: 44px;
+    height: 44px;
+}
+
+.job-map-origin {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: #007bff;
+    border: 3px solid #fff;
+    box-shadow: 0 0 0 2px #0056b3, 0 2px 8px rgba(0, 86, 179, 0.35);
+    pointer-events: none;
+}
+
+.job-map-style-switch {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    z-index: 2;
+    display: inline-flex;
+    padding: 3px;
+    gap: 2px;
+    border-radius: 10px;
+    background: color-mix(in srgb, var(--surface) 92%, transparent);
+    box-shadow: 0 1px 4px rgba(15, 45, 92, 0.18);
+    pointer-events: auto;
+}
+
+.job-map-style-switch__btn {
+    appearance: none;
+    border: 0;
+    margin: 0;
+    padding: 0.38rem 0.7rem;
+    border-radius: 8px;
+    background: transparent;
+    color: var(--brand);
+    font: inherit;
+    font-size: 0.75rem;
+    font-weight: 700;
+    line-height: 1.2;
+    cursor: pointer;
+}
+
+.job-map-style-switch__btn.is-active {
+    background: var(--brand);
+    color: #fff;
+}
+
+.job-map-locate {
+    position: absolute;
+    right: 10px;
+    bottom: 28px;
+    z-index: 2;
+}
+
+/* Super-minimal map chrome: no attribution, logos, or corner links. */
+.job-map .maplibregl-ctrl-attrib,
+.job-map .maplibregl-ctrl-logo,
+.job-map .maplibregl-compact,
+.job-map a.maplibregl-ctrl-logo,
+.vacancy-detail-map .maplibregl-ctrl-attrib,
+.vacancy-detail-map .maplibregl-ctrl-logo,
+.vacancy-detail-map .maplibregl-compact,
+.vacancy-detail-map a.maplibregl-ctrl-logo {
+    display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+    width: 0 !important;
+    height: 0 !important;
+    overflow: hidden !important;
+}
+
+/* OpenFreeMap vector canvas — keep a light polish only. */
+.job-map .maplibregl-canvas,
+.vacancy-detail-map .maplibregl-canvas {
     filter: saturate(1.08) contrast(1.02) brightness(1.01);
 }
 
-.job-map .leaflet-control-zoom a,
-.job-map .leaflet-bar a,
-.vacancy-detail-map .leaflet-control-zoom a,
-.vacancy-detail-map .leaflet-bar a {
+.job-map .maplibregl-ctrl-group button,
+.vacancy-detail-map .maplibregl-ctrl-group button {
     color: var(--brand) !important;
     border-bottom-color: var(--border) !important;
     background: var(--surface) !important;
 }
 
-.job-map .leaflet-control-zoom a:hover,
-.job-map .leaflet-bar a:hover,
-.vacancy-detail-map .leaflet-control-zoom a:hover,
-.vacancy-detail-map .leaflet-bar a:hover {
+.job-map .maplibregl-ctrl-group button:hover,
+.vacancy-detail-map .maplibregl-ctrl-group button:hover {
     background: var(--accent-soft) !important;
     color: var(--brand) !important;
 }
 
 .job-map-locate {
-    margin-bottom: 18px !important;
-    border: none !important;
+    margin-bottom: 0;
+    border: none;
     box-shadow: 0 1px 4px rgba(0, 0, 0, 0.28);
-    border-radius: 2px;
+    border-radius: 8px;
     overflow: hidden;
 }
 
@@ -3386,10 +3468,10 @@ a {
     display: block;
 }
 
-.job-map .leaflet-control-attribution {
-    background: color-mix(in srgb, var(--surface) 88%, transparent) !important;
-    color: var(--muted);
-    font-size: 10px;
+.job-map-popup .maplibregl-popup-close-button {
+    position: absolute;
+    border: 0;
+    cursor: pointer;
 }
 
 .job-marker {
@@ -3421,7 +3503,7 @@ a {
         0 4px 14px rgba(212, 137, 10, 0.35);
 }
 
-.leaflet-marker-icon.job-marker--featured {
+.job-marker--featured {
     z-index: 650 !important;
 }
 
@@ -3749,9 +3831,9 @@ a {
     transform: scale(1.06);
 }
 
-.leaflet-marker-icon.job-marker:hover,
-.leaflet-marker-icon.job-marker--active,
-.leaflet-marker-icon.job-cluster:hover {
+.job-marker:hover,
+.job-marker--active,
+.job-cluster:hover {
     z-index: 1200 !important;
 }
 
@@ -3783,13 +3865,13 @@ a {
     box-shadow: var(--shadow);
 }
 
-.leaflet-popup.job-map-popup {
+.job-map-popup {
     overflow: visible;
     width: 520px;
     max-width: min(520px, calc(100vw - 1.5rem));
 }
 
-.leaflet-popup.job-map-popup .leaflet-popup-content-wrapper {
+.job-map-popup .maplibregl-popup-content {
     padding: 0;
     border-radius: 0;
     background: transparent;
@@ -3799,7 +3881,7 @@ a {
     max-width: 100%;
 }
 
-.leaflet-popup.job-map-popup .leaflet-popup-content {
+.job-map-popup .maplibregl-popup-content {
     margin: 0;
     min-width: 0 !important;
     width: 100% !important;
@@ -3810,17 +3892,17 @@ a {
     overflow: visible;
 }
 
-.leaflet-popup.job-map-popup--cluster .leaflet-popup-content {
+.job-map-popup--cluster .maplibregl-popup-content {
     display: flex;
     flex-direction: column;
 }
 
-.leaflet-popup.job-map-popup .leaflet-popup-tip {
+.job-map-popup .maplibregl-popup-tip {
     box-shadow: none;
     background: var(--surface);
 }
 
-.leaflet-popup.job-map-popup a.leaflet-popup-close-button {
+.job-map-popup .maplibregl-popup-close-button {
     top: -10px;
     right: -10px;
     width: 28px;
@@ -3953,8 +4035,8 @@ a {
     overflow: hidden;
 }
 
-/* Orange € control — parked next to Leaflet close via JS */
-.leaflet-popup.job-map-popup > .map-popup__wage-info,
+/* Orange € control — parked next to MapLibre close via JS */
+.job-map-popup > .map-popup__wage-info,
 .map-popup__wage-info {
     position: absolute;
     top: -10px;
@@ -3978,20 +4060,20 @@ a {
     box-shadow: 0 2px 8px var(--map-pin-glow, rgba(245, 74, 27, 0.42));
 }
 
-.leaflet-popup.job-map-popup--cluster > .map-popup__wage-info {
+.job-map-popup--cluster > .map-popup__wage-info {
     top: 0;
     right: 36px;
 }
 
-.leaflet-popup.job-map-popup > .map-popup__wage-info:hover,
-.leaflet-popup.job-map-popup > .map-popup__wage-info.is-open,
+.job-map-popup > .map-popup__wage-info:hover,
+.job-map-popup > .map-popup__wage-info.is-open,
 .map-popup__wage-info:hover,
 .map-popup__wage-info.is-open {
     background: var(--map-pin-deep, var(--coral-deep));
     color: #fff;
 }
 
-.leaflet-popup.job-map-popup > .map-popup__wage-popover,
+.job-map-popup > .map-popup__wage-popover,
 .map-popup__wage-popover {
     position: absolute;
     top: 1.55rem;
@@ -4006,7 +4088,7 @@ a {
     box-shadow: var(--shadow-lg);
 }
 
-.leaflet-popup.job-map-popup--cluster > .map-popup__wage-popover {
+.job-map-popup--cluster > .map-popup__wage-popover {
     top: 2.4rem;
     right: 0;
 }
@@ -4277,17 +4359,17 @@ a.map-popup__apply.map-popup__cta:visited {
 }
 
 @media (max-width: 768px) {
-    .leaflet-popup.job-map-popup {
+    .job-map-popup {
         width: min(340px, calc(100vw - 1.5rem));
         max-width: calc(100vw - 1.5rem);
     }
 
-    .leaflet-popup.job-map-popup .leaflet-popup-content {
+    .job-map-popup .maplibregl-popup-content {
         max-width: none;
     }
 
     /* Funda-style: square brand close button outside the card (top-right) */
-    .leaflet-popup.job-map-popup a.leaflet-popup-close-button {
+    .job-map-popup .maplibregl-popup-close-button {
         top: -12px !important;
         right: -10px !important;
         width: 32px !important;
@@ -4304,7 +4386,7 @@ a.map-popup__apply.map-popup__cta:visited {
         z-index: 30 !important;
     }
 
-    .leaflet-popup.job-map-popup > .map-popup__wage-info {
+    .job-map-popup > .map-popup__wage-info {
         top: -12px;
         right: 30px;
         width: 32px;
@@ -4312,12 +4394,12 @@ a.map-popup__apply.map-popup__cta:visited {
         font-size: 1.05rem;
     }
 
-    .leaflet-popup.job-map-popup--cluster > .map-popup__wage-info {
+    .job-map-popup--cluster > .map-popup__wage-info {
         top: 0;
         right: 40px;
     }
 
-    .leaflet-popup.job-map-popup > .map-popup__wage-popover {
+    .job-map-popup > .map-popup__wage-popover {
         top: 1.7rem;
         right: -10px;
     }
@@ -11097,7 +11179,7 @@ button.linkish:hover {
     box-shadow: 0 2px 8px rgba(15, 45, 92, 0.22);
 }
 
-.leaflet-popup.job-map-popup a.leaflet-popup-close-button {
+.job-map-popup .maplibregl-popup-close-button {
     top: -10px !important;
     right: -10px !important;
     width: 28px !important;
@@ -11114,12 +11196,12 @@ button.linkish:hover {
     z-index: 30 !important;
 }
 
-.leaflet-popup.job-map-popup--cluster a.leaflet-popup-close-button {
+.job-map-popup--cluster .maplibregl-popup-close-button {
     top: 0 !important;
     right: 0 !important;
 }
 
-.leaflet-popup.job-map-popup > .map-popup__wage-info {
+.job-map-popup > .map-popup__wage-info {
     top: -10px !important;
     right: 26px !important;
     width: 28px !important;
@@ -11127,13 +11209,13 @@ button.linkish:hover {
     z-index: 31 !important;
 }
 
-.leaflet-popup.job-map-popup--cluster > .map-popup__wage-info {
+.job-map-popup--cluster > .map-popup__wage-info {
     top: 0 !important;
     right: 36px !important;
 }
 
 @media (max-width: 768px) {
-    .leaflet-popup.job-map-popup a.leaflet-popup-close-button {
+    .job-map-popup .maplibregl-popup-close-button {
         top: -12px !important;
         right: -10px !important;
         width: 32px !important;
@@ -11142,19 +11224,19 @@ button.linkish:hover {
         font-size: 20px !important;
     }
 
-    .leaflet-popup.job-map-popup > .map-popup__wage-info {
+    .job-map-popup > .map-popup__wage-info {
         top: -12px !important;
         right: 30px !important;
         width: 32px !important;
         height: 32px !important;
     }
 
-    .leaflet-popup.job-map-popup--cluster a.leaflet-popup-close-button {
+    .job-map-popup--cluster .maplibregl-popup-close-button {
         top: 0 !important;
         right: 0 !important;
     }
 
-    .leaflet-popup.job-map-popup--cluster > .map-popup__wage-info {
+    .job-map-popup--cluster > .map-popup__wage-info {
         top: 0 !important;
         right: 40px !important;
     }

@@ -4,19 +4,17 @@ window.jobsyMaps = (function () {
     var pending = {};
     var pendingPaint = {};
     var css = [
-        "/lib/leaflet/leaflet.css",
-        "/lib/leaflet/MarkerCluster.css",
-        "/lib/leaflet/MarkerCluster.Default.css"
+        "/lib/maplibre/maplibre-gl.css"
     ];
-    var leafletScripts = [
-        "/lib/leaflet/leaflet.min.js",
-        "/lib/leaflet/leaflet.markercluster.min.js"
+    var mapLibreScripts = [
+        "/lib/maplibre/maplibre-gl.js",
+        "/js/jobsyMapLibre.js?v=20260819-ml"
     ];
     var discoveryScripts = [
-        "/js/jobMap.js?v=20260819-fast"
+        "/js/jobMap.js?v=20260819-ml"
     ];
     var detailScripts = [
-        "/js/vacancyDetailMap.js?v=20260819-fast"
+        "/js/vacancyDetailMap.js?v=20260819-ml"
     ];
 
     function hrefMatches(node, href) {
@@ -50,10 +48,10 @@ window.jobsyMaps = (function () {
         if (document.querySelector('script[data-jobsy-map="' + src + '"]')) {
             return Promise.resolve();
         }
-        if (src.indexOf("leaflet.min.js") !== -1 && window.L) {
+        if (src.indexOf("maplibre-gl.js") !== -1 && window.maplibregl) {
             return Promise.resolve();
         }
-        if (src.indexOf("leaflet.markercluster") !== -1 && window.L && typeof window.L.markerClusterGroup === "function") {
+        if (src.indexOf("jobsyMapLibre.js") !== -1 && window.jobsyMapLibre) {
             return Promise.resolve();
         }
         if (src.indexOf("jobMap.js") !== -1 && window.jobMap) {
@@ -86,7 +84,7 @@ window.jobsyMaps = (function () {
     }
 
     function isReady(kind) {
-        if (!window.L) {
+        if (!window.maplibregl || !window.jobsyMapLibre) {
             return false;
         }
         if (kind === "detail") {
@@ -99,7 +97,7 @@ window.jobsyMaps = (function () {
     }
 
     function scriptsFor(kind) {
-        var urls = leafletScripts.slice();
+        var urls = mapLibreScripts.slice();
         if (kind !== "detail") {
             urls = urls.concat(discoveryScripts);
         }
