@@ -528,9 +528,7 @@
                                       OnSelect="OnCarouselSelect" />
         }
         <div class="map-stage @(_mapPainted ? "is-live" : null)">
-            <div class="job-map-placeholder" aria-hidden="true">
-                <span class="job-map-placeholder__status">Kaart laden…</span>
-            </div>
+            <div class="job-map-placeholder" aria-hidden="true"></div>
             <div @ref="_mapElement" id="job-map" class="job-map"></div>
             @if (_categories.Any(c => c.ShowInLegend && c.IsActive))
             {
@@ -850,6 +848,7 @@
     private bool _mapReady;
     private bool _mapPainted;
     private bool _mapInitScheduled;
+    private bool _mapHostReady;
 
     private ElementReference _mapElement;
     private const int DefaultMinHoursPerWeek = 0;
@@ -1136,7 +1135,8 @@
             return;
         }
 
-        // Catalog first — do not wait on profile/masterdata before pins appear.
+        // Catalog + Leaflet in parallel — do not wait on profile/masterdata before pins appear.
+        _ = WarmDiscoveryScriptsAsync();
         var catalogTask = LoadVacanciesAsync();
         var profileChangedFilters = false;
         try
@@ -1524,6 +1524,15 @@
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
+        _mapHostReady = true;
+        if (firstRender)
+        {
+            _ = WarmDiscoveryScriptsAsync();
+        }
+
+        // Show the live map as soon as catalog coordinates exist — do not wait on geo or viewport.
+        await TryInitJobMapAsync();
+
         if (firstRender)
         {
             try
@@ -1623,9 +1632,28 @@
             }
         }
 
+        await TryInitJobMapAsync();
+    }
+
+    private async Task WarmDiscoveryScriptsAsync()
+    {
         try
         {
-            await MapScripts.EnsureDiscoveryAfterPaintAsync(Js);
+            await MapScripts.EnsureDiscoveryAsync(Js);
+        }
+        catch (JSException)
+        {
+        }
+        catch (InvalidOperationException)
+        {
+        }
+    }
+
+    private async Task TryInitJobMapAsync()
+    {
+        try
+        {
+            await MapScripts.EnsureDiscoveryAsync(Js);
         }
         catch (JSException)
         {
@@ -1691,10 +1719,8 @@
 
             await Js.InvokeVoidAsync("jobMap.init", "job-map", markers, options);
             _mapReady = true;
-            // Only reveal once real vacancy markers exist — never a country overview or fake pins.
             _mapPainted = markers.Count > 0;
             await InvokeAsync(StateHasChanged);
-            await Task.Delay(80);
             await Js.InvokeVoidAsync("jobMap.invalidate");
             await TryFocusCompanyOnMapAsync();
         }
@@ -1709,7 +1735,6 @@
         catch (JSException)
         {
             _mapInitScheduled = false;
-            await Task.Delay(150);
             await InvokeAsync(StateHasChanged);
         }
     }
@@ -1846,10 +1871,17 @@
             }
         }
 
-        // Nudge a re-render so the map can init as soon as markers exist.
         if (generation == _loadGeneration && !_mapReady && !_mapInitScheduled)
         {
-            await InvokeAsync(StateHasChanged);
+            if (_mapHostReady)
+            {
+                await TryInitJobMapAsync();
+            }
+
+            if (!_mapReady)
+            {
+                await InvokeAsync(StateHasChanged);
+            }
         }
     }
 

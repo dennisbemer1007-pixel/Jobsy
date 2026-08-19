@@ -17,11 +17,10 @@ Na die eerste ronde was het gewicht weg (36 requests / ~334&nbsp;KB) en LCP ~2.4
 
 De banenkaart blijft de first-paint kernervaring (geen Funda-klik-om-te-tonen):
 
-- Home prerendert alleen de kaart-chrome (landkleur, geen nep-pins en geen NL-overzicht). Leaflet past `fitBounds` toe op echte vacaturecoördinaten vóór tegels.
-- Leaflet + MarkerCluster + Carto-tegels warmen na first paint (`jobsyMaps.warmDiscovery` als `#job-map` er is). Overlay weg zodra er echte markers zijn.
-- Soft fade zodra de eerste tegel binnen is — geen leeg grijs vlak.
+- Home prerendert alleen de kaart-chrome (landkleur, geen nep-pins en geen NL-overzicht). Leaflet start op echte vacaturecoördinaten.
+- Leaflet + MarkerCluster + Carto warmen meteen op `/` (preload + `warmDiscovery` zonder wait-for-paint), parallel met de catalogus. Overlay weg zodra er echte markers zijn.
 - Cookie-banner is compact, paint-contained, en wint de LCP niet van de kaart.
-- Alleen `app.css` en de kaart-preview worden gepreload; geen Leaflet op elke pagina.
+- Alleen `app.css` globaal; homepage zet Leaflet-CSS al in de eerste HTML en preloadt de scripts. Geen webfonts.
 
 ## Wat er nu in de code zit
 
@@ -35,11 +34,11 @@ De banenkaart blijft de first-paint kernervaring (geen Funda-klik-om-te-tonen):
 
 ### JavaScript / critical path
 
-- Leaflet + MarkerCluster staan lokaal in `wwwroot/lib/leaflet/` en laden pas via `jobsyMaps.ensureAfterPaint()` (discovery) of `ensure()` (detail).
+- Leaflet + MarkerCluster staan lokaal in `wwwroot/lib/leaflet/` en laden via `jobsyMaps.ensure("discovery")` (homepage warmt meteen) of `ensure("detail")`.
 - First-party JS is gebundeld in `js/app-core.js` (geo, culture, session, cookies, download, richtext, maps-loader).
 - `jobsyMaps.ensure("discovery"|"detail")` laadt niet beide kaart-scripts op elke pagina.
 - Cookiebanner staat in de eerste HTML (compact); `html.cookie-consent-known` verbergt hem vóór paint als de keuze al bekend is. Paint-containment houdt hem buiten de LCP.
-- Alleen `app.css` (globaal) wordt gepreload. Geen webfonts.
+- Alleen `app.css` globaal; homepage zet Leaflet-CSS in de eerste HTML en preloadt de scripts. Geen webfonts.
 
 ### Server / edge
 

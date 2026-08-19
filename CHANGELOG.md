@@ -14,7 +14,7 @@ Alle noemenswaardige wijzigingen aan dit project worden in dit bestand bijgehoud
 ## [Unreleased]
 
 ### Changed
-- Homepage-kaart: echte vacaturemarkers weer zichtbaar. Leaflet start op catalogus-coördinaten (verplicht center/zoom + tegels); geen nep-pins, geen NL-overzicht, geen lege placeholder die de kaart bedekt.
+- Homepage-kaart: Leaflet-CSS in de eerste HTML van `/`, scripts preload + parallel met de catalogus, init vóór geo/viewport, zonder wait-for-paint of “Kaart laden”-chip.
 - Role dashboards (`/home`): geen foutflits meer na login (admin en andere rollen). GET-calls retrien kort terwijl auth settelt; 401 alleen zonder credentials; fouttekst alleen als er echt geen data is.
 - Homepage-kaart: first paint toont al pins op de NL-preview; Leaflet warmt meteen na paint (geen lege kaart meer tot de circuit klaar is).
 - Transactionele mails: Lobsy-logo als klein PNG + inline CID (niet meer de 568&nbsp;KB remote `lobsy.png` die in clients als gebroken plaatje verscheen).

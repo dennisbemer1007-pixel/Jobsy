@@ -1,10 +1,21 @@
 @page "/"
-@* Prerender the map chrome. Real vacancy markers bind after hydrate — no fake pins. *@
+@* Prerender the map chrome. Leaflet + Carto warm from this page so the live map appears sooner. *@
 @rendermode @(new InteractiveServerRenderMode(prerender: true))
 @inject CultureState Culture
 @implements IDisposable
 
 <PageTitle>@Culture["Page.JobMapTitle"]</PageTitle>
+<HeadContent>
+    <link rel="preconnect" href="https://a.basemaps.cartocdn.com" crossorigin />
+    <link rel="preconnect" href="https://b.basemaps.cartocdn.com" crossorigin />
+    <link rel="preconnect" href="https://c.basemaps.cartocdn.com" crossorigin />
+    <link rel="stylesheet" href="/lib/leaflet/leaflet.css" />
+    <link rel="stylesheet" href="/lib/leaflet/MarkerCluster.css" />
+    <link rel="stylesheet" href="/lib/leaflet/MarkerCluster.Default.css" />
+    <link rel="preload" href="/lib/leaflet/leaflet.min.js" as="script" fetchpriority="high" />
+    <link rel="preload" href="/lib/leaflet/leaflet.markercluster.min.js" as="script" fetchpriority="high" />
+    <link rel="preload" href="/js/jobMap.js?v=20260819-fast" as="script" fetchpriority="high" />
+</HeadContent>
 
 <VacancyDiscovery />
 

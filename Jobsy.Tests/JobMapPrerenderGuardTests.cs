@@ -12,6 +12,10 @@ public class JobMapPrerenderGuardTests
         var home = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "Components", "Pages", "Home.razor"));
         Assert.Contains("InteractiveServerRenderMode(prerender: true)", home);
         Assert.DoesNotContain("images/maps/nl-preview.webp", home);
+        Assert.Contains("/lib/leaflet/leaflet.min.js", home);
+        Assert.Contains("/lib/leaflet/leaflet.css", home);
+        Assert.Contains("fetchpriority=\"high\"", home);
+        Assert.Contains("preconnect", home);
         Assert.DoesNotContain("prerender: false", home);
     }
 
@@ -69,8 +73,14 @@ public class JobMapPrerenderGuardTests
 
         var afterRender = discovery.IndexOf("OnAfterRenderAsync(bool firstRender)", StringComparison.Ordinal);
         Assert.True(afterRender > 0);
-        var hydrateCatch = discovery.IndexOf("catch (JSException)", afterRender, StringComparison.Ordinal);
-        Assert.True(hydrateCatch > afterRender);
+        Assert.Contains("_mapHostReady", discovery);
+        var tryInit = discovery.IndexOf("await TryInitJobMapAsync();", afterRender, StringComparison.Ordinal);
+        var isWide = discovery.IndexOf("jobsyViewport.isWide", afterRender, StringComparison.Ordinal);
+        Assert.True(tryInit > afterRender && isWide > tryInit);
+        var geoHydrate = discovery.IndexOf("ensureLocationOnLaunch", afterRender, StringComparison.Ordinal);
+        Assert.True(geoHydrate > afterRender);
+        var hydrateCatch = discovery.IndexOf("catch (JSException)", geoHydrate, StringComparison.Ordinal);
+        Assert.True(hydrateCatch > geoHydrate);
         var hydrateSlice = discovery[hydrateCatch..(hydrateCatch + 180)];
         Assert.DoesNotContain("return;", hydrateSlice);
 

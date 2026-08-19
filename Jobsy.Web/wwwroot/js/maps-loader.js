@@ -13,15 +13,27 @@ window.jobsyMaps = (function () {
         "/lib/leaflet/leaflet.markercluster.min.js"
     ];
     var discoveryScripts = [
-        "/js/jobMap.js?v=20260819-live"
+        "/js/jobMap.js?v=20260819-fast"
     ];
     var detailScripts = [
-        "/js/vacancyDetailMap.js?v=20260819-live"
+        "/js/vacancyDetailMap.js?v=20260819-fast"
     ];
+
+    function hrefMatches(node, href) {
+        var current = node.getAttribute("href") || node.getAttribute("src") || "";
+        return current === href || current === href.replace(/^\//, "") || ("/" + current) === href;
+    }
 
     function loadCss(href) {
         if (document.querySelector('link[data-jobsy-map="' + href + '"]')) {
             return Promise.resolve();
+        }
+        var links = document.querySelectorAll("link[rel=\"stylesheet\"]");
+        for (var i = 0; i < links.length; i++) {
+            if (hrefMatches(links[i], href)) {
+                links[i].setAttribute("data-jobsy-map", href);
+                return Promise.resolve();
+            }
         }
         return new Promise(function (resolve, reject) {
             var link = document.createElement("link");
@@ -36,6 +48,18 @@ window.jobsyMaps = (function () {
 
     function loadScript(src) {
         if (document.querySelector('script[data-jobsy-map="' + src + '"]')) {
+            return Promise.resolve();
+        }
+        if (src.indexOf("leaflet.min.js") !== -1 && window.L) {
+            return Promise.resolve();
+        }
+        if (src.indexOf("leaflet.markercluster") !== -1 && window.L && typeof window.L.markerClusterGroup === "function") {
+            return Promise.resolve();
+        }
+        if (src.indexOf("jobMap.js") !== -1 && window.jobMap) {
+            return Promise.resolve();
+        }
+        if (src.indexOf("vacancyDetailMap.js") !== -1 && window.vacancyDetailMap) {
             return Promise.resolve();
         }
         return new Promise(function (resolve, reject) {
@@ -145,9 +169,10 @@ window.jobsyMaps = (function () {
         if (pending[kind]) {
             return pending[kind];
         }
-        pending[kind] = Promise.all(css.map(loadCss)).then(function () {
-            return loadScriptsInOrder(scriptsFor(kind), 0);
-        }).catch(function (err) {
+        pending[kind] = Promise.all([
+            Promise.all(css.map(loadCss)),
+            loadScriptsInOrder(scriptsFor(kind), 0)
+        ]).catch(function (err) {
             pending[kind] = null;
             throw err;
         });
@@ -178,9 +203,7 @@ window.jobsyMaps = (function () {
             if (!document.getElementById("job-map")) {
                 return;
             }
-            afterNextPaint(function () {
-                ensure("discovery");
-            });
+            ensure("discovery");
         }
     };
 })();
