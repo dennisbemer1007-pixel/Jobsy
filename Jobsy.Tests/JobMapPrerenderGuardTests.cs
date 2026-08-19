@@ -60,6 +60,7 @@ public class JobMapPrerenderGuardTests
         Assert.Contains("dragPan: true", helper);
         Assert.Contains("touchAction", helper);
         Assert.Contains("3D / Bright", helper);
+        Assert.Contains("ev.touches.length", helper);
 
         var css = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "wwwroot", "css", "app.css"));
         Assert.Contains("maplibregl-ctrl-attrib", css);
@@ -67,7 +68,13 @@ public class JobMapPrerenderGuardTests
         Assert.Contains("job-map-style-switch", css);
         Assert.Contains("touch-action: none", css);
         Assert.Contains("#job-map", css);
-        Assert.Contains("min-height: 55dvh", css);
+        Assert.Contains("height: 300px", css);
+        Assert.Contains("min-height: 300px", css);
+        Assert.Contains("min-width: 768px", css);
+        Assert.Contains("height: 450px", css);
+        Assert.Contains("min-height: 450px", css);
+        Assert.DoesNotContain("min-height: 55dvh", css);
+        Assert.DoesNotContain("/lib/leaflet/", helper);
     }
 
     [Fact]
@@ -75,8 +82,9 @@ public class JobMapPrerenderGuardTests
     {
         var app = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "Components", "App.razor"));
         Assert.Contains("jobsyLogoFallback", app);
-        Assert.Contains("/images/brand/lobsy-256.webp", app);
+        Assert.Contains("/images/lobsy-256.webp", app);
         Assert.Contains("/images/brand/lobsy-128.png", app);
+        Assert.Contains("data:image/svg+xml", app);
 
         var photo = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "Components", "VacancyPhoto.razor"));
         Assert.Contains("data-logo-fallback", photo);
@@ -87,6 +95,8 @@ public class JobMapPrerenderGuardTests
 
         var js = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "wwwroot", "js", "jobMap.js"));
         Assert.Contains("jobsyLogoFallback", js);
+        Assert.Contains("/images/lobsy-256.webp", js);
+        Assert.True(File.Exists(Path.Combine(FindRepoRoot(), "Jobsy.Web", "wwwroot", "images", "lobsy-256.webp")));
     }
 
     [Fact]
@@ -101,7 +111,12 @@ public class JobMapPrerenderGuardTests
         Assert.Contains("media=\"print\"", app);
         Assert.Contains("jobsyLogoFallback", app);
         Assert.Contains("#job-map", app);
-        Assert.Contains("min-height: 55dvh", app);
+        Assert.Contains("height: 300px", app);
+        Assert.Contains("min-height: 300px", app);
+        Assert.Contains("min-width: 768px", app);
+        Assert.Contains("height: 450px", app);
+        Assert.Contains("min-height: 450px", app);
+        Assert.DoesNotContain("min-height: 55dvh", app);
         Assert.DoesNotContain("lib/leaflet/leaflet.min.js", app);
         Assert.DoesNotContain("lib/leaflet/leaflet.css", app);
         Assert.DoesNotContain("lib/maplibre/maplibre-gl.js", app);

@@ -53,6 +53,10 @@ window.jobsyMapLibre = (function () {
         container.dataset.jobsyTouchLock = "1";
         // One-finger pan on the map must not scroll the rest of the page.
         container.addEventListener("touchmove", function (ev) {
+            // One finger pans the map; two fingers may pinch-zoom. Never scroll the page.
+            if (ev.touches && ev.touches.length > 1) {
+                return;
+            }
             if (ev.cancelable) {
                 ev.preventDefault();
             }
@@ -66,7 +70,7 @@ window.jobsyMapLibre = (function () {
         var el = map.getContainer();
         el.classList.add("job-map--minimal");
         var junk = el.querySelectorAll(
-            ".maplibregl-ctrl-attrib, .maplibregl-ctrl-logo, a.maplibregl-ctrl-logo, .maplibregl-compact"
+            ".maplibregl-ctrl-attrib, .maplibregl-ctrl-logo, a.maplibregl-ctrl-logo, .maplibregl-compact, .maplibregl-ctrl-attrib-inner, .maplibregl-ctrl-attrib-button"
         );
         for (var i = 0; i < junk.length; i++) {
             junk[i].remove();

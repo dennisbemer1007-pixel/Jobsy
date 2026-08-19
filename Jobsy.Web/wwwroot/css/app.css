@@ -1617,6 +1617,7 @@ a {
 .jobsy-discovery--branch .map-pane--branch .map-stage,
 .jobsy-discovery--branch #branch-job-map,
 .jobsy-discovery--branch .map-pane--branch .job-map {
+    height: 220px;
     min-height: 220px;
 }
 
@@ -3245,35 +3246,35 @@ a {
     position: relative;
     display: flex;
     flex-direction: column;
-    min-height: 55dvh;
-    min-width: 280px;
     width: 100%;
-    height: 100%;
+    min-width: 280px;
+    height: 300px;
+    min-height: 300px;
     background: var(--map-land);
-    contain: layout;
+    contain: layout size;
 }
 
 .map-stage {
     position: absolute;
     inset: 0;
     flex: none;
-    min-height: 55dvh;
-    min-width: 280px;
     width: 100%;
-    height: 100%;
+    min-width: 280px;
+    height: 300px;
+    min-height: 300px;
 }
 
 .job-map,
 #job-map {
     position: relative;
     flex: none;
-    min-height: 55dvh;
-    min-width: 280px;
     width: 100%;
-    height: 100%;
+    min-width: 280px;
+    height: 300px;
+    min-height: 300px;
     z-index: 1;
     background: var(--map-land);
-    contain: layout;
+    contain: layout size;
 }
 
 .map-stage .job-map,
@@ -3282,8 +3283,8 @@ a {
     inset: 0;
     width: 100%;
     min-width: 280px;
-    min-height: 55dvh;
-    height: 100%;
+    height: 300px;
+    min-height: 300px;
 }
 
 .map-pane > .highlight-carousel--map {
@@ -3309,25 +3310,33 @@ a {
     visibility: hidden;
 }
 
-@media (max-width: 768px) {
+@media (max-width: 767px) {
     .jobsy-discovery.show-map .map-pane,
     .jobsy-discovery.show-map .map-stage,
     .jobsy-discovery.show-map .job-map-placeholder,
     .jobsy-discovery.show-map #job-map,
     .jobsy-discovery.show-map .job-map {
-        min-height: 55dvh;
-        min-width: 100%;
         width: 100%;
+        min-width: 100%;
+        height: 300px;
+        min-height: 300px;
     }
 }
 
-@media (min-width: 769px) {
+@media (min-width: 768px) {
+    .map-pane,
+    .map-stage,
+    .job-map,
+    #job-map,
+    .map-stage .job-map,
+    .map-stage #job-map,
     .jobsy-discovery:not(.jobsy-discovery--branch) .map-pane,
     .jobsy-discovery:not(.jobsy-discovery--branch) .map-stage,
     .jobsy-discovery:not(.jobsy-discovery--branch) #job-map,
     .jobsy-discovery:not(.jobsy-discovery--branch) .job-map {
-        min-height: 70vh;
         width: 100%;
+        height: 450px;
+        min-height: 450px;
     }
 }
 
@@ -3427,10 +3436,14 @@ a {
 .job-map .maplibregl-ctrl-logo,
 .job-map .maplibregl-compact,
 .job-map a.maplibregl-ctrl-logo,
+.job-map .maplibregl-ctrl-bottom-left,
+.job-map .maplibregl-ctrl-bottom-right,
 .vacancy-detail-map .maplibregl-ctrl-attrib,
 .vacancy-detail-map .maplibregl-ctrl-logo,
 .vacancy-detail-map .maplibregl-compact,
-.vacancy-detail-map a.maplibregl-ctrl-logo {
+.vacancy-detail-map a.maplibregl-ctrl-logo,
+.vacancy-detail-map .maplibregl-ctrl-bottom-left,
+.vacancy-detail-map .maplibregl-ctrl-bottom-right {
     display: none !important;
     visibility: hidden !important;
     opacity: 0 !important;
@@ -4798,6 +4811,25 @@ a.map-popup__apply.map-popup__cta:visited {
         grid-row: 2;
         height: 100%;
         min-height: 0;
+    }
+
+    .jobsy-discovery.show-map .map-pane,
+    .jobsy-discovery.show-map .map-stage,
+    .jobsy-discovery.show-map .job-map-placeholder,
+    .jobsy-discovery.show-map #job-map,
+    .jobsy-discovery.show-map .job-map {
+        width: 100%;
+        min-width: 100%;
+        height: 300px;
+        min-height: 300px;
+    }
+
+    .jobsy-discovery--branch.show-map .map-pane--branch,
+    .jobsy-discovery--branch.show-map .map-pane--branch .map-stage,
+    .jobsy-discovery--branch.show-map #branch-job-map,
+    .jobsy-discovery--branch.show-map .map-pane--branch .job-map {
+        height: 220px;
+        min-height: 220px;
     }
 
     .jobsy-discovery.show-list .map-pane,
@@ -13599,4 +13631,33 @@ html.cookie-consent-known .cookie-consent {
     border-radius: 0.5rem;
     margin-bottom: 0.75rem;
     background: #f6f6f6;
+}
+
+/* Last: reserved discovery map box so later layout rules cannot undo CLS-stable pixels. */
+#job-map {
+    width: 100%;
+    height: 300px !important;
+    min-height: 300px !important;
+}
+
+.jobsy-discovery:not(.jobsy-discovery--branch) .map-pane,
+.jobsy-discovery:not(.jobsy-discovery--branch) .map-stage,
+.jobsy-discovery:not(.jobsy-discovery--branch) .job-map {
+    width: 100%;
+    height: 300px;
+    min-height: 300px;
+}
+
+@media (min-width: 768px) {
+    #job-map {
+        height: 450px !important;
+        min-height: 450px !important;
+    }
+
+    .jobsy-discovery:not(.jobsy-discovery--branch) .map-pane,
+    .jobsy-discovery:not(.jobsy-discovery--branch) .map-stage,
+    .jobsy-discovery:not(.jobsy-discovery--branch) .job-map {
+        height: 450px;
+        min-height: 450px;
+    }
 }

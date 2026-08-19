@@ -9,6 +9,7 @@
 @using Jobsy.Core.Media
 @using Jobsy.Core.Rules
 @using Jobsy.Web.Hosting
+@using Jobsy.Web.Media
 @implements IAsyncDisposable
 
 <PageTitle>@(_page?.Name ?? Culture["BranchPage.Title"]) · Lobsy</PageTitle>
@@ -35,6 +36,17 @@
                     {
                         <img class="branch-page__logo"
                              src="@_page.LogoUrl"
+                             alt=""
+                             width="48"
+                             height="48"
+                             decoding="async"
+                             data-logo-fallback="1"
+                             onerror="window.jobsyLogoFallback&&window.jobsyLogoFallback(this)" />
+                    }
+                    else
+                    {
+                        <img class="branch-page__logo"
+                             src="@BrandImages.FallbackWebp256"
                              alt=""
                              width="48"
                              height="48"

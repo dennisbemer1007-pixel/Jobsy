@@ -15,27 +15,28 @@
         html, body { margin: 0; height: 100%; font-family: var(--font); color: var(--text); background: var(--bg); }
         html.cookie-consent-known .cookie-consent { display: none; }
         .jobsy-discovery { display: grid; grid-template-columns: minmax(320px,42%) minmax(0,58%); min-height: 0; height: 100%; position: relative; }
-        .map-pane, .map-stage { position: relative; width: 100%; min-width: 280px; min-height: 55dvh; background: var(--map-land); }
-        .map-stage { flex: 1 1 auto; }
-        #job-map, .job-map { width: 100%; min-width: 280px; min-height: 55dvh; height: 100%; background: var(--map-land); contain: layout; }
+        .map-pane, .map-stage { position: relative; width: 100%; min-width: 280px; height: 300px; min-height: 300px; background: var(--map-land); contain: layout size; }
+        .map-stage { flex: none; }
+        #job-map, .job-map { width: 100%; min-width: 280px; height: 300px; min-height: 300px; background: var(--map-land); contain: layout size; }
         .job-map-placeholder { position: absolute; inset: 0; background: var(--map-land); pointer-events: none; }
-        @@media (max-width: 768px) {
+        @@media (max-width: 767px) {
             .jobsy-discovery { grid-template-columns: 1fr; grid-template-rows: auto 1fr; }
             .jobsy-discovery.show-map .map-pane,
             .jobsy-discovery.show-map .map-stage,
             .jobsy-discovery.show-map #job-map,
             .jobsy-discovery.show-map .job-map,
-            .jobsy-discovery.show-map .job-map-placeholder { min-height: 55dvh; width: 100%; min-width: 100%; }
+            .jobsy-discovery.show-map .job-map-placeholder { width: 100%; min-width: 100%; height: 300px; min-height: 300px; }
         }
-        @@media (min-width: 769px) {
+        @@media (min-width: 768px) {
+            .map-pane, .map-stage, #job-map, .job-map { height: 450px; min-height: 450px; width: 100%; }
             .jobsy-discovery:not(.jobsy-discovery--branch) .map-pane,
             .jobsy-discovery:not(.jobsy-discovery--branch) .map-stage,
-            .jobsy-discovery:not(.jobsy-discovery--branch) #job-map { min-height: 70vh; width: 100%; }
+            .jobsy-discovery:not(.jobsy-discovery--branch) #job-map { height: 450px; min-height: 450px; width: 100%; }
         }
         .img-fallback-empty { background: #e7eef7; object-fit: contain; }
     </style>
-    <link rel="stylesheet" href="css/app.css?v=20260819-psi" media="print" onload="this.onload=null;this.media='all'" />
-    <noscript><link rel="stylesheet" href="css/app.css?v=20260819-psi" /></noscript>
+    <link rel="stylesheet" href="css/app.css?v=20260819-mapcls" media="print" onload="this.onload=null;this.media='all'" />
+    <noscript><link rel="stylesheet" href="css/app.css?v=20260819-mapcls" /></noscript>
     <script>
         (function () {
             try {
@@ -43,21 +44,20 @@
                     document.documentElement.classList.add("cookie-consent-known");
                 }
             } catch (e) { }
-            var webp = "/images/brand/lobsy-256.webp?v=20260816-perf";
+            var webp = "/images/lobsy-256.webp?v=20260819-mapcls";
+            var webpBrand = "/images/brand/lobsy-256.webp?v=20260816-perf";
             var png = "/images/brand/lobsy-128.png?v=20260816-perf";
             var svg = "data:image/svg+xml," + encodeURIComponent(
                 '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="12" fill="#e7eef7"/><text x="32" y="40" text-anchor="middle" font-size="22" font-family="Segoe UI,Arial,sans-serif" fill="#0f2d5c">L</text></svg>'
             );
+            function isEmptySrc(src) {
+                return !src || src === window.location.href || src.indexOf("about:blank") === 0;
+            }
             window.jobsyLogoFallback = function (img) {
                 if (!img || img.dataset.fb === "done") return true;
-                var src = img.currentSrc || img.src || "";
+                var src = img.currentSrc || img.getAttribute("src") || img.src || "";
                 img.removeAttribute("srcset");
                 img.removeAttribute("sizes");
-                if (src.indexOf("lobsy-256.webp") !== -1 || src.indexOf("lobsy-128.webp") !== -1 || src.indexOf("lobsy-64.webp") !== -1) {
-                    img.dataset.fb = "png";
-                    img.src = png;
-                    return true;
-                }
                 if (src.indexOf("lobsy-128.png") !== -1 || src.indexOf("lobsy-180.png") !== -1 || src.indexOf("lobsy-64.png") !== -1) {
                     img.dataset.fb = "done";
                     img.onerror = null;
@@ -65,8 +65,18 @@
                     img.classList.add("img-fallback-empty");
                     return true;
                 }
-                img.dataset.fb = "webp";
-                img.src = webp;
+                if (src.indexOf("lobsy-256.webp") !== -1 || src.indexOf("lobsy-128.webp") !== -1 || src.indexOf("lobsy-64.webp") !== -1) {
+                    img.dataset.fb = "png";
+                    img.src = png;
+                    return true;
+                }
+                if (isEmptySrc(src) || img.dataset.fb !== "webp") {
+                    img.dataset.fb = "webp";
+                    img.src = webp;
+                    return true;
+                }
+                img.dataset.fb = "webp-brand";
+                img.src = webpBrand;
                 return true;
             };
             document.addEventListener("error", function (ev) {
@@ -86,6 +96,20 @@
                     window.jobsyLogoFallback(t);
                 }
             }, true);
+            function hydrateEmptyLogos() {
+                var nodes = document.querySelectorAll("img[data-logo-fallback]:not([data-logo-fallback='off'])");
+                for (var i = 0; i < nodes.length; i++) {
+                    var img = nodes[i];
+                    if (isEmptySrc(img.getAttribute("src") || img.src || "")) {
+                        window.jobsyLogoFallback(img);
+                    }
+                }
+            }
+            if (document.readyState === "loading") {
+                document.addEventListener("DOMContentLoaded", hydrateEmptyLogos);
+            } else {
+                hydrateEmptyLogos();
+            }
         })();
     </script>
     <HeadOutlet @rendermode="new InteractiveServerRenderMode(prerender: true)" />
@@ -95,7 +119,7 @@
     <CascadingAuthenticationState>
         <Routes @rendermode="new InteractiveServerRenderMode(prerender: true)" />
     </CascadingAuthenticationState>
-    <script src="js/app-core.js?v=20260819-psi" defer></script>
+    <script src="js/app-core.js?v=20260819-mapcls" defer></script>
     <script src="js/feedback.js?v=20260816-fb2" defer></script>
     <script src="_framework/blazor.web.js" defer></script>
 </body>

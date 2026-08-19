@@ -366,12 +366,13 @@ window.jobMap = (function () {
             : "";
 
         let mediaInner = "";
+        const logoSrc = v.logoUrl || v.imageUrl || "/images/lobsy-256.webp?v=20260819-mapcls";
         if (hasImage) {
             mediaInner +=
                 "<img class=\"map-popup__photo\" src=\"" + escapeAttr(v.imageUrl) + "\" alt=\"\" loading=\"lazy\" data-logo-fallback=\"1\" onerror=\"window.jobsyLogoFallback&&window.jobsyLogoFallback(this)\" />";
-        } else if (v.logoUrl) {
+        } else {
             mediaInner +=
-                "<img class=\"map-popup__media-logo\" src=\"" + escapeAttr(v.logoUrl) + "\" alt=\"" +
+                "<img class=\"map-popup__media-logo\" src=\"" + escapeAttr(logoSrc) + "\" alt=\"" +
                 escapeAttr(v.company) + " logo\" loading=\"lazy\" data-logo-fallback=\"1\" onerror=\"window.jobsyLogoFallback&&window.jobsyLogoFallback(this)\" />";
         }
 
