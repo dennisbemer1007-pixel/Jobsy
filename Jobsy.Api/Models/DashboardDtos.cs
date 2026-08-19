@@ -178,7 +178,24 @@ public record MeProfileDto(
     string? FirstName = null,
     string? LastName = null,
     string? PhoneNumber = null,
-    bool WhatsAppContactAllowed = false);
+    bool WhatsAppContactAllowed = false,
+    CandidateUploadedCvInfoDto? UploadedCv = null,
+    IReadOnlyList<CandidateReferenceDto>? References = null);
+
+public record CandidateUploadedCvInfoDto(
+    string FileName,
+    string ContentType,
+    int SizeBytes,
+    DateTime UploadedAtUtc,
+    DateTime? ExtractedAtUtc = null,
+    IReadOnlyList<string>? FilledFields = null);
+
+public record CandidateReferenceDto(
+    Guid Id,
+    string EmployerName,
+    string ContactName,
+    string Email,
+    string Phone);
 
 public record UpdateDateOfBirthRequest(DateOnly DateOfBirth);
 
@@ -192,7 +209,8 @@ public record UpdateCandidateProfileRequest(
     string? FirstName = null,
     string? LastName = null,
     string? PhoneNumber = null,
-    bool? WhatsAppContactAllowed = null);
+    bool? WhatsAppContactAllowed = null,
+    IReadOnlyList<CandidateReferenceDto>? References = null);
 
 public record UpdateLanguageRequest(string Language);
 

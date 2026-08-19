@@ -372,6 +372,8 @@ public class RoleFunctionalRegressionTests : IClassFixture<RoleFunctionalWebAppF
         Assert.NotNull(pending.MatchPercent);
         Assert.False(pending.PiiRevealed);
         Assert.False(pending.CvPdfAvailable);
+        Assert.False(pending.UploadedCvAvailable);
+        Assert.Equal(0, pending.CandidateReferenceCount);
         Assert.Null(pending.CandidateName);
         Assert.Null(pending.CandidateEmail);
         Assert.Null(pending.CandidateCity);
@@ -387,6 +389,8 @@ public class RoleFunctionalRegressionTests : IClassFixture<RoleFunctionalWebAppF
         var accepted = Assert.Single(list!, a => a.Id == _factory.AcceptedApplicationId);
         Assert.True(accepted.PiiRevealed);
         Assert.True(accepted.CvPdfAvailable);
+        Assert.True(accepted.UploadedCvAvailable);
+        Assert.Equal(2, accepted.CandidateReferenceCount);
         Assert.Equal("Kandidaat Test", accepted.CandidateName);
         Assert.NotNull(accepted.CandidateEmail);
         Assert.NotNull(accepted.CandidateCity);
@@ -431,6 +435,43 @@ public class RoleFunctionalRegressionTests : IClassFixture<RoleFunctionalWebAppF
         Assert.Equal("Pending", pending.Status);
         Assert.False(pending.PiiRevealed);
         Assert.Null(pending.CandidateName);
+    }
+
+    [Fact]
+    public async Task Uploaded_cv_download_enforces_owner_verify_company_scope_and_post_accept()
+    {
+        var employer = EmployerClient();
+        var candidate = CandidateClient();
+        var guest = _factory.CreateClient();
+
+        var pendingEmployer = await employer.GetAsync($"api/applications/{_factory.PendingApplicationId}/uploaded-cv");
+        Assert.Equal(HttpStatusCode.Forbidden, pendingEmployer.StatusCode);
+
+        var acceptedEmployer = await employer.GetAsync($"api/applications/{_factory.AcceptedApplicationId}/uploaded-cv");
+        Assert.Equal(HttpStatusCode.OK, acceptedEmployer.StatusCode);
+        Assert.Equal("application/pdf", acceptedEmployer.Content.Headers.ContentType?.MediaType);
+        var acceptedBytes = await acceptedEmployer.Content.ReadAsByteArrayAsync();
+        Assert.True(acceptedBytes.Length > 8);
+
+        var pendingOwner = await candidate.GetAsync($"api/applications/{_factory.PendingApplicationId}/uploaded-cv");
+        Assert.Equal(HttpStatusCode.OK, pendingOwner.StatusCode);
+
+        var otherCandidatesCv = await candidate.GetAsync($"api/applications/{_factory.AcceptedApplicationId}/uploaded-cv");
+        Assert.Equal(HttpStatusCode.Forbidden, otherCandidatesCv.StatusCode);
+
+        Assert.Equal(
+            HttpStatusCode.Unauthorized,
+            (await guest.GetAsync($"api/applications/{_factory.AcceptedApplicationId}/uploaded-cv")).StatusCode);
+
+        var foreignEmail = await _factory.SeedForeignBranchEmployerAsync();
+        var foreign = Authed(foreignEmail);
+        Assert.Equal(
+            HttpStatusCode.Forbidden,
+            (await foreign.GetAsync($"api/applications/{_factory.AcceptedApplicationId}/uploaded-cv")).StatusCode);
+
+        var unverifiedId = await _factory.SeedUnverifiedApplicationWithUploadedCvAsync();
+        var unverified = await candidate.GetAsync($"api/applications/{unverifiedId}/uploaded-cv");
+        Assert.Equal(HttpStatusCode.BadRequest, unverified.StatusCode);
     }
 
     [Fact]
@@ -1260,6 +1301,8 @@ public sealed class RoleFunctionalWebAppFactory : WebApplicationFactory<Program>
                 MatchBreakdownJson = """{"TotalPercent":78,"TravelScore":32,"HoursScore":24,"DayPartsScore":22}""",
                 ViaSafetyNet = false,
                 Motivation = "Sterke motivatie voor deze rol.",
+                HasUploadedCv = true,
+                CandidateReferenceCount = 3,
                 CreatedAt = DateTime.UtcNow.AddHours(-2)
             },
             new Application
@@ -1280,8 +1323,30 @@ public sealed class RoleFunctionalWebAppFactory : WebApplicationFactory<Program>
                 MatchBreakdownJson = """{"TotalPercent":85,"TravelScore":36,"HoursScore":25,"DayPartsScore":24}""",
                 ViaSafetyNet = false,
                 Motivation = "Accepted candidate motivation.",
+                HasUploadedCv = true,
+                CandidateReferenceCount = 2,
                 RespondedAt = DateTime.UtcNow.AddHours(-2),
                 CreatedAt = DateTime.UtcNow.AddHours(-4)
+            });
+
+        var pendingCv = "%PDF-1.4 pending-cv"u8.ToArray();
+        var acceptedCv = "%PDF-1.4 accepted-cv"u8.ToArray();
+        db.ApplicationUploadedCvs.AddRange(
+            new ApplicationUploadedCv
+            {
+                ApplicationId = PendingApplicationId,
+                FileName = "pending-cv.pdf",
+                ContentType = "application/pdf",
+                Content = pendingCv,
+                SizeBytes = pendingCv.Length
+            },
+            new ApplicationUploadedCv
+            {
+                ApplicationId = AcceptedApplicationId,
+                FileName = "accepted-cv.pdf",
+                ContentType = "application/pdf",
+                Content = acceptedCv,
+                SizeBytes = acceptedCv.Length
             });
 
         db.MinimumWageRates.Add(new MinimumWageRate
@@ -1355,6 +1420,94 @@ public sealed class RoleFunctionalWebAppFactory : WebApplicationFactory<Program>
         });
         await db.SaveChangesAsync();
         return (vacancyId, applicationId);
+    }
+
+    public async Task<string> SeedForeignBranchEmployerAsync()
+    {
+        EnsureSeeded();
+        var n = Interlocked.Increment(ref _extraSeedCounter);
+        var companyId = Guid.NewGuid();
+        var email = $"foreign-branch-{n}@jobsy.local";
+        await using var scope = Services.CreateAsyncScope();
+        var db = scope.ServiceProvider.GetRequiredService<JobsyDbContext>();
+        db.Companies.Add(new Company
+        {
+            Id = companyId,
+            Name = $"Ander Filiaal {n}",
+            KvkNumber = "87654321",
+            Address = "Elders 1",
+            Location = new GeoPoint(52.1, 4.3)
+        });
+        db.Users.Add(new User
+        {
+            Id = Guid.NewGuid(),
+            Email = email,
+            FullName = "Andere Branch",
+            Role = UserRole.BranchManager,
+            IsActive = true,
+            CompanyId = companyId,
+            ConsentVersion = PrivacyConstants.CurrentConsentVersion
+        });
+        await db.SaveChangesAsync();
+        return email;
+    }
+
+    public async Task<Guid> SeedUnverifiedApplicationWithUploadedCvAsync()
+    {
+        EnsureSeeded();
+        var n = Interlocked.Increment(ref _extraSeedCounter);
+        var vacancyId = Guid.NewGuid();
+        var applicationId = Guid.NewGuid();
+        var cv = "%PDF-1.4 unverified-cv"u8.ToArray();
+        var today = DateOnly.FromDateTime(DateTime.UtcNow);
+        await using var scope = Services.CreateAsyncScope();
+        var db = scope.ServiceProvider.GetRequiredService<JobsyDbContext>();
+        db.Vacancies.Add(new Vacancy
+        {
+            Id = vacancyId,
+            Title = $"Unverified CV vacature {n}",
+            Description = "Geïsoleerde vacature voor CV-download vóór verificatie.",
+            HourlyWage = 14.50m,
+            StartDate = today.AddDays(-1),
+            EndDate = today.AddMonths(1),
+            Status = VacancyStatus.Active,
+            CompanyId = CompanyId,
+            Location = new GeoPoint(52.0, 4.2),
+            RequiredTransport = TransportMode.Bike,
+            WorkTypes = WorkType.Winkel,
+            WorkTypeLabels = "Winkel",
+            SalaryTableId = SalaryTableId,
+            PublishedAtUtc = DateTime.UtcNow.AddHours(-1),
+            MinHoursPerWeek = 8,
+            MaxHoursPerWeek = 16,
+            FlexibleTimes = true,
+            FlexibleScheduleSource = nameof(FlexibleScheduleSource.Manual),
+            MaxApplications = 5,
+            CategoryId = VacancyCategoryDefaults.RegulierId,
+            RequireEmailVerification = true
+        });
+        db.Applications.Add(new Application
+        {
+            Id = applicationId,
+            VacancyId = vacancyId,
+            CandidateUserId = CandidateId,
+            CandidateName = "Kandidaat Test",
+            CandidateEmail = CandidateEmail,
+            Status = ApplicationStatus.Pending,
+            EmailVerifiedAt = null,
+            HasUploadedCv = true,
+            CreatedAt = DateTime.UtcNow
+        });
+        db.ApplicationUploadedCvs.Add(new ApplicationUploadedCv
+        {
+            ApplicationId = applicationId,
+            FileName = $"unverified-{n}.pdf",
+            ContentType = "application/pdf",
+            Content = cv,
+            SizeBytes = cv.Length
+        });
+        await db.SaveChangesAsync();
+        return applicationId;
     }
 
     private sealed class AllowAllModeration : IVacancyContentModerationService

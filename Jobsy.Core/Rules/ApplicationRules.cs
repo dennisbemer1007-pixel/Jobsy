@@ -96,6 +96,8 @@ public static class ApplicationRules
         application.StudyYear = null;
         application.ExclusivityValidationStatus = null;
         application.CandidateEmployerCount = 0;
+        application.HasUploadedCv = false;
+        application.CandidateReferenceCount = 0;
         application.DistanceKm = null;
         application.MatchBreakdownJson = null;
         application.EmailVerificationCode = null;

@@ -65,6 +65,8 @@ public sealed class PrivacyDataService : IPrivacyDataService
                 a.StudyYear,
                 a.ExclusivityValidationStatus,
                 a.CandidateEmployerCount,
+                a.CandidateReferenceCount,
+                a.HasUploadedCv,
                 EmailVerified = a.EmailVerifiedAt != null
             })
             .ToListAsync(cancellationToken);
@@ -278,6 +280,22 @@ public sealed class PrivacyDataService : IPrivacyDataService
                 user.ConsentVersion,
                 user.IsActive
             },
+            UploadedCv = await _db.CandidateUploadedCvs.AsNoTracking()
+                .Where(c => c.UserId == user.Id)
+                .Select(c => new
+                {
+                    c.FileName,
+                    c.ContentType,
+                    c.SizeBytes,
+                    c.UploadedAtUtc,
+                    c.ExtractedAtUtc
+                })
+                .FirstOrDefaultAsync(cancellationToken),
+            References = await _db.CandidateReferences.AsNoTracking()
+                .Where(r => r.UserId == user.Id)
+                .OrderBy(r => r.SortOrder)
+                .Select(r => new { r.EmployerName, r.ContactName, r.Email, r.Phone, r.CreatedAtUtc })
+                .ToListAsync(cancellationToken),
             CompanyMemberships = memberships,
             Applications = applications,
             Likes = likes,
@@ -508,6 +526,8 @@ public sealed class PrivacyDataService : IPrivacyDataService
             app.StudyYear = null;
             app.ExclusivityValidationStatus = null;
             app.CandidateEmployerCount = 0;
+            app.CandidateReferenceCount = 0;
+            app.HasUploadedCv = false;
             app.EmailVerificationCode = null;
             app.EmailVerificationExpiresAt = null;
         }
@@ -749,6 +769,31 @@ public sealed class PrivacyDataService : IPrivacyDataService
         user.UnsubscribeVerificationFailedAttempts = 0;
         user.UnsubscribeReasonCode = null;
         user.UnsubscribeReasonOther = null;
+
+        var uploadedCvs = await _db.CandidateUploadedCvs
+            .Where(c => c.UserId == user.Id)
+            .ToListAsync(cancellationToken);
+        if (uploadedCvs.Count > 0)
+        {
+            _db.CandidateUploadedCvs.RemoveRange(uploadedCvs);
+        }
+
+        var references = await _db.CandidateReferences
+            .Where(r => r.UserId == user.Id)
+            .ToListAsync(cancellationToken);
+        if (references.Count > 0)
+        {
+            _db.CandidateReferences.RemoveRange(references);
+        }
+
+        var applicationIds = applications.Select(a => a.Id).ToList();
+        var applicationCvs = await _db.ApplicationUploadedCvs
+            .Where(c => applicationIds.Contains(c.ApplicationId))
+            .ToListAsync(cancellationToken);
+        if (applicationCvs.Count > 0)
+        {
+            _db.ApplicationUploadedCvs.RemoveRange(applicationCvs);
+        }
 
         if (!string.IsNullOrWhiteSpace(reasonCode))
         {

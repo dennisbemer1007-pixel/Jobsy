@@ -8,7 +8,7 @@
     <header class="panel-header">
         <div>
             <h1>@Culture["Legal.Privacy"]</h1>
-            <p class="login-lead">Laatst bijgewerkt: 2 augustus 2026</p>
+            <p class="login-lead">Laatst bijgewerkt: 19 augustus 2026</p>
         </div>
     </header>
 
@@ -35,7 +35,7 @@
             <p>Afhankelijk van je rol verwerken we onder meer:</p>
             <ul>
                 <li><strong>Accountgegevens:</strong> naam, e-mailadres, inloggegevens en (indien van toepassing) telefoonnummer.</li>
-                <li><strong>Kandidaten:</strong> geboortedatum (voor leeftijdsloon en wettelijke taakchecks), voorkeursvervoer, locatiegegevens voor reistijdschattingen, gewenste uren per week, beschikbaarheid/dagdelen (of “tijden in overleg”), likes, sollicitaties (inclusief snapshot van voorkeuren/opleiding/rijbewijs, matchscore en optionele motivatie), e-mailverificatie (OTP) en eventuele authenticator-bevestigingen.</li>
+                <li><strong>Kandidaten:</strong> geboortedatum (voor leeftijdsloon en wettelijke taakchecks), voorkeursvervoer, locatiegegevens voor reistijdschattingen, gewenste uren per week, beschikbaarheid/dagdelen (of “tijden in overleg”), likes, sollicitaties (inclusief snapshot van voorkeuren/opleiding/rijbewijs, matchscore en optionele motivatie), optioneel geüpload eigen CV (PDF/DOCX), recensies (werkgever, contactpersoon, e-mail en telefoon van derden), e-mailverificatie (OTP) en eventuele authenticator-bevestigingen.</li>
                 <li><strong>Ondernemers:</strong> KVK-gegevens, vestigingsgegevens, contactpersonen, contactvoorkeuren (e-mail/telefoon/WhatsApp voor contact ná sollicitatie), vacaturegegevens (uren, roosters/dagdelen, wettelijke taakvinkjes voor jeugdige arbeid), gebruikersrollen, API-koppelingen (alleen gehashte keys) en token-/betalingsgerelateerde transactiegegevens.</li>
                 <li><strong>Salesmanagers:</strong> KvK/BTW/NAW, gemaskeerde IBAN voor uitbetaling, trackingcode, commissieboekingen en self-billingfacturen (fiscale bewaarplicht).</li>
                 <li><strong>Technische gegevens:</strong> sessie-cookie <code>Jobsy.Auth</code>; idle-timeout cookie <code>Jobsy.LastActivity</code> (versleuteld via Data Protection); taalvoorkeur-cookie <code>Jobsy.Culture</code>; cookie-/analyticsvoorkeur in <code>localStorage</code> (<code>Jobsy.CookieConsent</code>); optionele anonieme engagement-sleutel in <code>localStorage</code>/<code>sessionStorage</code> (alleen na analytics-toestemming); optionele klik-/impressie-/deel- en sitebezoekstatistieken (alleen na “Accepteer analytics”, ook voor ingelogde gebruikers); likes als functionele voorkeur in je account; beveiligingslogs en noodzakelijke cookies voor inloggen en werking van de dienst.</li>
@@ -69,7 +69,7 @@
                 <li><strong>Geocoding:</strong> Nominatim / OpenStreetMap voor adres- of locatieomzetting.</li>
                 <li><strong>Identiteitsproviders:</strong> Google of Microsoft (Entra) als je daarmee inlogt (alleen geverifieerde e-mailadressen).</li>
                 <li><strong>Betaaldienstverleners:</strong> optioneel Mollie voor tokenaankopen en (toekomstig) salesmanager-uitbetalingen (minimale metadata: checkout/company/pack).</li>
-                <li><strong>AI (optioneel):</strong> OpenAI voor oefengesprek, vacaturemoderatie, vertaling en de assistent-chat. Bij gebruik kan doorgifte naar de Verenigde Staten plaatsvinden.</li>
+                <li><strong>AI (optioneel):</strong> OpenAI voor oefengesprek, vacaturemoderatie, vertaling, assistent-chat en het uitlezen van een geüpload CV (alleen lege profielvelden die duidelijk in het bestand staan). Bij gebruik kan doorgifte naar de Verenigde Staten plaatsvinden.</li>
                 <li><strong>WhatsApp / telefoon:</strong> alleen wanneer jij of de werkgever daarvoor kiest ná een geverifieerde sollicitatie; het gesprek verloopt buiten Lobsy.</li>
             </ul>
             <p>We verkopen je persoonsgegevens niet.</p>
@@ -109,6 +109,7 @@
                 <li><strong>Geannuleerde registraties:</strong> 30 dagen.</li>
                 <li><strong>Klikken, shares, impressions en sitebezoeken:</strong> 365 dagen.</li>
                 <li><strong>Onbevestigde sollicitatiedrafts</strong> (e-mailverificatie niet afgerond): 48 uur, daarna automatisch verwijderd.</li>
+                <li><strong>Ingetrokken sollicitaties:</strong> snapshots en geüploade CV-bytes worden bij intrekken gewist; de sollicitatie blijft bestaan zonder die persoonsgegevens.</li>
                 <li><strong>Self-billing / commissies:</strong> langer bewaard waar fiscale bewaarplicht dat vereist; bij accountverwijdering worden persoonsgegevens geanonimiseerd.</li>
                 <li><strong>Accountgegevens:</strong> tot anonimisering of verwijdering op jouw verzoek, of zolang het account actief nodig is voor de dienst.</li>
             </ul>
@@ -121,10 +122,11 @@
         <section>
             <h2>7. AI-functies</h2>
             <p>
-                Bij optionele AI-functies (oefengesprek, vacaturemoderatie, vertaling, assistent) kunnen
-                berichten en relevante context naar OpenAI worden gestuurd. Chatgeschiedenis van het oefengesprek
+                Bij optionele AI-functies (oefengesprek, vacaturemoderatie, vertaling, assistent, CV-extractie)
+                kunnen berichten, vacaturetekst of CV-tekst naar OpenAI worden gestuurd. Chatgeschiedenis van het oefengesprek
                 wordt niet permanent server-side als gespreksarchief bewaard. Bij gebruik van OpenAI kan
-                doorgifte naar de Verenigde Staten plaatsvinden.
+                doorgifte naar de Verenigde Staten plaatsvinden. Een eigen CV uploaden is vrijwillig; zonder upload
+                wordt geen CV-tekst naar OpenAI gestuurd.
             </p>
         </section>
 

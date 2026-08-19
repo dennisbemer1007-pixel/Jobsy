@@ -10,6 +10,7 @@ using Jobsy.Core.Privacy;
 using Jobsy.Core.Rules;
 using Jobsy.Core.Security;
 using Jobsy.Infrastructure.Data;
+using Jobsy.Infrastructure.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
@@ -110,7 +111,9 @@ public class ApplicationsController : ControllerBase
                 a.ExclusivityValidationStatus,
                 a.SnapshotPhoneNumber,
                 a.SnapshotWhatsAppAllowed,
-                a.CandidateAgeYears
+                a.CandidateAgeYears,
+                a.HasUploadedCv,
+                a.CandidateReferenceCount
             })
             .ToListAsync(cancellationToken);
 
@@ -159,7 +162,9 @@ public class ApplicationsController : ControllerBase
                 CandidateAgeYears: a.CandidateAgeYears,
                 AvailabilitySummary: LobsyCvModelFactory.FormatAvailability(
                     availability.Slots,
-                    availability.FlexibleTimes));
+                    availability.FlexibleTimes),
+                UploadedCvAvailable: revealed && a.HasUploadedCv,
+                CandidateReferenceCount: revealed ? a.CandidateReferenceCount : 0);
         }));
     }
 
@@ -239,6 +244,75 @@ public class ApplicationsController : ControllerBase
         var employerModel = BuildApplicationCvModel(application, includePii: true);
         var employerPdf = await _lobsyCvPdf.RenderAsync(employerModel, cancellationToken);
         return File(employerPdf, "application/pdf", _lobsyCvPdf.BuildFileName(employerModel));
+    }
+
+    [HttpGet("{id:guid}/uploaded-cv")]
+    [Authorize]
+    [EnableRateLimiting("public-pdf")]
+    public async Task<IActionResult> DownloadUploadedCv(Guid id, CancellationToken cancellationToken)
+    {
+        var caller = await _users.FindByPrincipalAsync(User, cancellationToken);
+        if (caller is null || !caller.IsActive)
+        {
+            return Unauthorized();
+        }
+
+        var application = await _db.Applications
+            .AsNoTracking()
+            .Include(a => a.Vacancy)
+            .Include(a => a.UploadedCv)
+            .FirstOrDefaultAsync(a => a.Id == id, cancellationToken);
+        if (application is null)
+        {
+            return NotFound();
+        }
+
+        var isOwner = LobsyCvAccessRules.CanCandidateDownloadOwnApplication(
+            caller.Id,
+            application.CandidateUserId,
+            caller.Email,
+            application.CandidateEmail);
+
+        if (!isOwner)
+        {
+            if (!_companyAuth.IsEmployer(User) && !_companyAuth.IsAdmin(User))
+            {
+                return Forbid();
+            }
+
+            try
+            {
+                await _companyAuth.EnsureCanAccessCompanyAsync(User, application.Vacancy.CompanyId, cancellationToken);
+            }
+            catch (Core.Exceptions.ForbiddenCompanyAccessException)
+            {
+                return Forbid();
+            }
+
+            if (!LobsyCvAccessRules.CanEmployerDownloadCv(application.Status, application.EmailVerifiedAt))
+            {
+                return StatusCode((int)HttpStatusCode.Forbidden, new
+                {
+                    code = "cv_not_released",
+                    message = "Het geüploade CV is pas beschikbaar nadat je de sollicitatie hebt geaccepteerd."
+                });
+            }
+        }
+        else if (application.EmailVerifiedAt is null)
+        {
+            return BadRequest(new
+            {
+                code = "cv_not_verified",
+                message = "Bevestig eerst je sollicitatie voordat je het geüploade CV kunt downloaden."
+            });
+        }
+
+        if (application.UploadedCv is null || application.UploadedCv.Content.Length == 0)
+        {
+            return NotFound(new { message = "Er is geen geüpload CV bij deze sollicitatie." });
+        }
+
+        return File(application.UploadedCv.Content, application.UploadedCv.ContentType, application.UploadedCv.FileName);
     }
 
     [HttpPost]
@@ -331,13 +405,21 @@ public class ApplicationsController : ControllerBase
         }
 
         var preferences = MeController.ParsePreferences(candidate.PreferencesJson);
+        var referenceRows = await _db.CandidateReferences.AsNoTracking()
+            .Where(r => r.UserId == candidate.Id)
+            .Select(r => new { r.EmployerName, r.ContactName, r.Email, r.Phone })
+            .ToListAsync(cancellationToken);
+        var completeReferences = CandidateReferenceRules.CountComplete(
+            referenceRows.Select(r => (r.EmployerName, r.ContactName, r.Email, r.Phone)));
         var requirementError = ApplicationRequirementRules.ValidateHardRequirements(
             vacancy.RequiredDrivingLicense,
             vacancy.RequiredEducation,
             vacancy.MinimumEmployers,
             preferences.DrivingLicenses,
             preferences.Educations,
-            preferences.Employers?.Count ?? 0);
+            preferences.Employers?.Count ?? 0,
+            vacancy.MinimumReferences,
+            completeReferences);
         if (requirementError is not null)
         {
             return BadRequest(new { message = requirementError });
@@ -467,6 +549,8 @@ public class ApplicationsController : ControllerBase
             512);
         application.SnapshotAboutMe = Truncate(preferences.AboutMe, 1024);
         application.CandidateEmployerCount = preferences.Employers?.Count ?? 0;
+        application.CandidateReferenceCount = completeReferences;
+        await SnapshotUploadedCvAsync(application, candidate.Id, cancellationToken);
         application.SnapshotPhoneNumber = Truncate(candidate.PhoneNumber, 32);
         application.SnapshotWhatsAppAllowed = candidate.WhatsAppContactAllowed
                                               && !string.IsNullOrWhiteSpace(candidate.PhoneNumber);
@@ -823,6 +907,7 @@ public class ApplicationsController : ControllerBase
 
         application.Status = ApplicationStatus.Withdrawn;
         application.RespondedAt = DateTime.UtcNow;
+        await ApplicationPrivacyCleanup.RemoveUploadedCvSnapshotsAsync(_db, [application.Id], cancellationToken);
         ApplicationRules.ScrubPersonalDataOnWithdraw(application);
         await _db.SaveChangesAsync(cancellationToken);
 
@@ -1219,7 +1304,44 @@ public class ApplicationsController : ControllerBase
             CandidateAgeYears: a.CandidateAgeYears,
             AvailabilitySummary: LobsyCvModelFactory.FormatAvailability(
                 availability.Slots,
-                availability.FlexibleTimes));
+                availability.FlexibleTimes),
+            UploadedCvAvailable: revealed && a.HasUploadedCv,
+            CandidateReferenceCount: revealed ? a.CandidateReferenceCount : 0);
+    }
+
+    private async Task SnapshotUploadedCvAsync(
+        Core.Entities.Application application,
+        Guid candidateUserId,
+        CancellationToken cancellationToken)
+    {
+        var uploaded = await _db.CandidateUploadedCvs
+            .AsNoTracking()
+            .FirstOrDefaultAsync(c => c.UserId == candidateUserId, cancellationToken);
+        application.HasUploadedCv = uploaded is not null;
+        if (uploaded is null)
+        {
+            if (application.UploadedCv is not null)
+            {
+                _db.ApplicationUploadedCvs.Remove(application.UploadedCv);
+                application.UploadedCv = null;
+            }
+
+            return;
+        }
+
+        var snapshot = await _db.ApplicationUploadedCvs
+            .FirstOrDefaultAsync(c => c.ApplicationId == application.Id, cancellationToken);
+        if (snapshot is null)
+        {
+            snapshot = new Core.Entities.ApplicationUploadedCv { ApplicationId = application.Id };
+            _db.ApplicationUploadedCvs.Add(snapshot);
+        }
+
+        snapshot.FileName = uploaded.FileName;
+        snapshot.ContentType = uploaded.ContentType;
+        snapshot.Content = uploaded.Content;
+        snapshot.SizeBytes = uploaded.SizeBytes;
+        application.UploadedCv = snapshot;
     }
 
     private static LobsyCvModel BuildApplicationCvModel(Core.Entities.Application application, bool includePii)
@@ -1263,7 +1385,8 @@ public class ApplicationsController : ControllerBase
             workplaceLongitude: workplaceLng,
             workplaceAddress: display.DisplayAddress,
             maxTravelMinutes: null,
-            distanceKm: application.DistanceKm);
+            distanceKm: application.DistanceKm,
+            hasUploadedOwnCv: application.HasUploadedCv);
     }
 
     private async Task SendApplicationConfirmationAsync(

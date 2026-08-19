@@ -1,9 +1,11 @@
+using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Net;
 using System.Text.Json;
 using Jobsy.Core.Enums;
 using Jobsy.Core.Rules;
 using Jobsy.Web.Models;
+using Microsoft.AspNetCore.Components.Forms;
 using Microsoft.JSInterop;
 
 namespace Jobsy.Web.Services;
@@ -532,6 +534,67 @@ public sealed class JobsyApiClient : IAsyncDisposable
         await js.InvokeVoidAsync("jobsyDownload.bytes", fileName, base64, "application/pdf");
     }
 
+    public async Task<MeProfile?> UploadMyCvAsync(IBrowserFile file, CancellationToken ct = default)
+    {
+        await using var stream = file.OpenReadStream(CandidateCvFileRules.MaxBytes, ct);
+        using var content = new MultipartFormDataContent();
+        using var fileContent = new StreamContent(stream);
+        fileContent.Headers.ContentType = new MediaTypeHeaderValue(
+            string.IsNullOrWhiteSpace(file.ContentType) ? "application/octet-stream" : file.ContentType);
+        content.Add(fileContent, "file", file.Name);
+        var response = await _http.PostAsync("api/me/cv", content, ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException(ExtractMessage(body) ?? "CV uploaden mislukt.");
+        }
+
+        return await response.Content.ReadFromJsonAsync<MeProfile>(cancellationToken: ct);
+    }
+
+    public async Task DownloadMyUploadedCvAsync(IJSRuntime js, CancellationToken ct = default)
+    {
+        await DownloadNamedFileAsync("api/me/cv", js, "CV.pdf", ct);
+    }
+
+    public async Task<MeProfile?> DeleteMyCvAsync(CancellationToken ct = default)
+    {
+        var response = await _http.DeleteAsync("api/me/cv", ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException(ExtractMessage(body) ?? "CV verwijderen mislukt.");
+        }
+
+        return await response.Content.ReadFromJsonAsync<MeProfile>(cancellationToken: ct);
+    }
+
+    public async Task DownloadApplicationUploadedCvAsync(
+        Guid applicationId,
+        IJSRuntime js,
+        CancellationToken ct = default)
+    {
+        await DownloadNamedFileAsync($"api/applications/{applicationId:D}/uploaded-cv", js, "CV.pdf", ct);
+    }
+
+    private async Task DownloadNamedFileAsync(string url, IJSRuntime js, string fallbackName, CancellationToken ct)
+    {
+        var response = await _http.GetAsync(url, ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException(ExtractMessage(body) ?? "Downloaden mislukt.");
+        }
+
+        var bytes = await response.Content.ReadAsByteArrayAsync(ct);
+        var fileName = response.Content.Headers.ContentDisposition?.FileNameStar
+                       ?? response.Content.Headers.ContentDisposition?.FileName?.Trim('"')
+                       ?? fallbackName;
+        var media = response.Content.Headers.ContentType?.MediaType ?? "application/octet-stream";
+        var base64 = Convert.ToBase64String(bytes);
+        await js.InvokeVoidAsync("jobsyDownload.bytes", fileName, base64, media);
+    }
+
     public async Task<MeProfile?> AcceptConsentAsync(CancellationToken ct = default)
     {
         var response = await _http.PostAsync("api/me/accept-consent", null, ct);
@@ -564,6 +627,7 @@ public sealed class JobsyApiClient : IAsyncDisposable
         string? lastName = null,
         string? phoneNumber = null,
         bool? whatsAppContactAllowed = null,
+        IReadOnlyList<CandidateReferenceItem>? references = null,
         CancellationToken ct = default)
     {
         var response = await _http.PutAsJsonAsync("api/me/profile", new
@@ -577,7 +641,8 @@ public sealed class JobsyApiClient : IAsyncDisposable
             firstName,
             lastName,
             phoneNumber,
-            whatsAppContactAllowed
+            whatsAppContactAllowed,
+            references
         }, ct);
         response.EnsureSuccessStatusCode();
         return await response.Content.ReadFromJsonAsync<MeProfile>(cancellationToken: ct);
@@ -3158,7 +3223,8 @@ public record CreateVacancyForm(
     Guid? CategoryId = null,
     Dictionary<string, string>? CategoryFields = null,
     bool SuitableFor65Plus = false,
-    bool? RequireEmailVerification = null);
+    bool? RequireEmailVerification = null,
+    int? MinimumReferences = null);
 
 public sealed class CsvImportRowForm
 {

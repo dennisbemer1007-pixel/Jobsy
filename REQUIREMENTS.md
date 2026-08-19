@@ -31,7 +31,7 @@ Jobsy is een hyper-lokale job-matching applicatie gericht op de regionale arbeid
 - **Vacancy** — Status (`Draft` / `Active` / `Archived` / `PendingApproval`), media, highlight, extensions, requested publish-opties, salary table, **VacancyCategory** (kleur, tokenprijs, highlight/PushBom-beschikbaarheid, extra aanmaakvelden)
 - **VacancyCategory** — Admin-beheerbare categorieën; sturen kaartfilter, legenda, create-dropdown en tokenlogica
 - **TokenTransaction** — typed ledger (`Purchase` / `Spend` / `Grant` / `Allocation`) + `TokenSpendReason` (Publish/Highlight/PushBom/Extend)
-- **Application** — progressive PII tot Accept; Lobsy-CV PDF pas na Accept (zie §4d)
+- **Application** — progressive PII tot Accept; Lobsy-CV PDF én geüpload kandidaat-CV pas na Accept (zie §4d)
 - **Engagement** — VacancyClick / Like / Share
 - **Region** / **CompanySalaryTable** / **TokenPurchaseCheckout**
 - **CompanyRegistration** / **EstablishmentTakeoverRequest** / **LocalAuthCredential**
@@ -73,6 +73,8 @@ Kernpunten:
 
 Kernpunten:
 - **Voorbeeld-PDF** vóór verzenden: kandidaat inzage/download van automatisch Lobsy-CV (QuestPDF uit profiel + optionele motivatie)
+- **Eigen CV-upload:** kandidaat mag PDF/DOCX uploaden; OpenAI vult alleen lege profielvelden die écht duidelijk in het CV staan. Lobsy-CV vermeldt bovenaan dat er een eigen CV is. Werkgever downloadt beide bestanden pas na Accept.
+- **Recensies:** kandidaat voegt werkgever + contactpersoon + e-mail + telefoon toe. Vacature kan `MinimumReferences` eisen (standaard geen); apply is dan geblokkeerd tot het profiel genoeg complete recensies heeft.
 - **AVG / progressive disclosure:** werkgever (intermediair, bedrijfs-/vestigingsmanager) ziet PDF **pas na Accept** (`Accepted` / `EmployerContacting` / `Hired`); endpoint enforce’t zelfde `PiiRevealed`-regel
 - **AI-profielcoach:** lichte moderatie/feedback (heuristics + optionele OpenAI) op AboutMe/motivatie — spelling/taal, te korte velden, beschikbaarheid/match-tips; soft tips blokkeren niet, PII-in-tekst wel
 
@@ -111,5 +113,5 @@ Kernpunten:
 - **KVK API** — vestigingen/registratie
 - **Mollie** — prepaid token-aankoop (live API; Development stub op `/tokens/checkout-stub`)
 - **Mail** — activatie/invite/notificaties
-- **OpenAI** — vacature-contentmoderatie / mock interview / kandidaat-profielcoach (feature-flagged)
+- **OpenAI** — vacature-contentmoderatie / mock interview / kandidaat-profielcoach / CV-extractie bij eigen upload (feature-flagged; zonder key geen extractie)
 - Feature flags o.a. `JobsyFeatures:*` (activation-link exposure, Authenticator, stubs)

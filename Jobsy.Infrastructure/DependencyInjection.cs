@@ -208,6 +208,8 @@ public static class DependencyInjection
         services.AddScoped<IAmbassadeurDashboardService, AmbassadeurDashboardService>();
         services.AddScoped<IAmbassadeurFlyerPdfService, AmbassadeurFlyerPdfService>();
         services.AddScoped<ILobsyCvPdfService, LobsyCvPdfService>();
+        services.AddScoped<ICvTextExtractor, CvTextExtractor>();
+        services.AddScoped<ICvExtractionService, CvExtractionService>();
         services.AddScoped<ICandidateMapImageService, OsmTileMapImageService>();
         services.AddHttpClient("OsmTiles", OsmTileMapImageService.ConfigureHttpClient);
         services.AddScoped<ICommissionLedgerService, CommissionLedgerService>();

@@ -18,7 +18,7 @@ public class ConsentVersionTests
     [InlineData(UserRole.BranchManager, "2026-07-29", true)]
     [InlineData(UserRole.EnterpriseManager, null, true)]
     [InlineData(UserRole.Admin, "2026-07-29", true)]
-    [InlineData(UserRole.SalesManager, "2026-08-02", false)]
+    [InlineData(UserRole.SalesManager, "2026-08-19", false)]
     [InlineData(UserRole.Candidate, null, false)]
     [InlineData(UserRole.Candidate, "2026-07-29", false)]
     public void RequiresAccountConsentReaccept_by_role_and_version(
@@ -27,7 +27,7 @@ public class ConsentVersionTests
         bool expected)
     {
         // Keep theory in sync with the live constant for the "current" case.
-        if (version == "2026-08-02")
+        if (version == "2026-08-19")
         {
             version = PrivacyConstants.CurrentConsentVersion;
             expected = false;

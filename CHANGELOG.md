@@ -13,6 +13,10 @@ Alle noemenswaardige wijzigingen aan dit project worden in dit bestand bijgehoud
 
 ## [Unreleased]
 
+### Added
+- Kandidaat kan een eigen CV (PDF/DOCX) uploaden; OpenAI vult alleen lege profielvelden als ze duidelijk in het CV staan. Lobsy-CV toont bovenaan dat er een eigen CV is. Recensies (werkgever, contactpersoon, e-mail, telefoon) in het profiel; vacature kan een hard minimum aantal recensies eisen. Na Accept ziet de werkgever Lobsy-CV én het geüploade CV.
+- Quality gate 456: geüploade CV-bytes wissen bij intrekken; OpenAI-CV-extractie in privacyverklaring/consent; geen OpenAI-response bodies in logs; werkgeverslijst toont recensietelling pas na Accept.
+
 ### Changed
 - Homepage-kaart: Leaflet-CSS in de eerste HTML van `/`, scripts preload + parallel met de catalogus, init vóór geo/viewport, zonder wait-for-paint of “Kaart laden”-chip.
 - Role dashboards (`/home`): geen foutflits meer na login (admin en andere rollen). GET-calls retrien kort terwijl auth settelt; 401 alleen zonder credentials; fouttekst alleen als er echt geen data is.

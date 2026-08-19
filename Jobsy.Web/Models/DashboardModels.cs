@@ -208,6 +208,8 @@ public class EmployerApplicationItem
     public bool WhatsAppContactAllowed { get; set; }
     public int? CandidateAgeYears { get; set; }
     public string? AvailabilitySummary { get; set; }
+    public bool UploadedCvAvailable { get; set; }
+    public int CandidateReferenceCount { get; set; }
 }
 
 public class TokenPackItem

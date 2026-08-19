@@ -228,6 +228,12 @@
                                                     @Culture["Employer.DownloadLobsyCv"]
                                                 </button>
                                             }
+                                            @if (a.UploadedCvAvailable)
+                                            {
+                                                <button type="button" class="engagement-btn" disabled="@_busyId.HasValue" @onclick="() => DownloadUploadedCvAsync(a.Id)" @onclick:stopPropagation="true">
+                                                    @Culture["Employer.DownloadUploadedCv"]
+                                                </button>
+                                            }
                                         </div>
                                     </div>
                                 </td>
@@ -554,6 +560,26 @@
         try
         {
             await Api.DownloadApplicationLobsyCvPdfAsync(applicationId, Js);
+        }
+        catch (Exception ex)
+        {
+            _message = ex.Message;
+            _messageIsError = true;
+        }
+        finally
+        {
+            _busyId = null;
+        }
+    }
+
+    private async Task DownloadUploadedCvAsync(Guid applicationId)
+    {
+        _busyId = applicationId;
+        _message = null;
+        _messageIsError = false;
+        try
+        {
+            await Api.DownloadApplicationUploadedCvAsync(applicationId, Js);
         }
         catch (Exception ex)
         {

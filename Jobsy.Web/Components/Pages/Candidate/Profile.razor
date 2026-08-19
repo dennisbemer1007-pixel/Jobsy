@@ -242,6 +242,30 @@
                 </fieldset>
 
                 <fieldset class="profile-employers">
+                    <legend>@Culture["Profile.OwnCv"]</legend>
+                    <p class="profile-employers__hint">@Culture["Profile.OwnCvLead"]</p>
+                    @if (_uploadedCv is not null)
+                    {
+                        <p class="profile-cv__file">@Culture.Format("Profile.OwnCvPresent", _uploadedCv.FileName)</p>
+                    }
+                    <div class="profile-cv__actions">
+                        <label class="engagement-btn">
+                            @(_cvBusy ? Culture["Profile.CvUploading"] : _uploadedCv is null ? Culture["Profile.UploadCv"] : Culture["Profile.ReplaceCv"])
+                            <InputFile OnChange="OnCvSelectedAsync" accept=".pdf,.docx,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document" />
+                        </label>
+                        @if (_uploadedCv is not null)
+                        {
+                            <button class="engagement-btn" type="button" disabled="@_cvBusy" @onclick="DownloadOwnCvAsync">
+                                @Culture["Profile.DownloadOwnCv"]
+                            </button>
+                            <button class="engagement-btn" type="button" disabled="@_cvBusy" @onclick="DeleteOwnCvAsync">
+                                @Culture["Profile.RemoveOwnCv"]
+                            </button>
+                        }
+                    </div>
+                </fieldset>
+
+                <fieldset class="profile-employers">
                     <legend>@Culture["Profile.Experience"]</legend>
                     <p class="profile-employers__hint">@Culture["Profile.EmployerDatesHint"]</p>
                     @for (var i = 0; i < _employers.Count; i++)
@@ -354,6 +378,54 @@
                     </button>
                 </fieldset>
 
+                <fieldset class="profile-employers">
+                    <legend>@Culture["Profile.References"]</legend>
+                    <p class="profile-employers__hint">@Culture["Profile.ReferencesLead"]</p>
+                    @for (var i = 0; i < _references.Count; i++)
+                    {
+                        var idx = i;
+                        <div class="profile-employer-card">
+                            <div class="profile-employer-card__top">
+                                <label class="profile-employer-card__field profile-employer-card__field--employer">
+                                    <span>@Culture["Profile.ReferenceEmployer"]</span>
+                                    <input @bind="_references[idx].EmployerName" />
+                                </label>
+                                <label class="profile-employer-card__field profile-employer-card__field--role">
+                                    <span>@Culture["Profile.ReferenceContact"]</span>
+                                    <input @bind="_references[idx].ContactName" />
+                                </label>
+                                <button type="button"
+                                        class="icon-btn icon-btn--danger"
+                                        title="@Culture["Profile.RemoveReference"]"
+                                        aria-label="@Culture["Profile.RemoveReference"]"
+                                        @onclick="() => RemoveReference(idx)">
+                                    @((MarkupString)ActionIcons.Trash)
+                                </button>
+                            </div>
+                            <div class="profile-employer-card__dates">
+                                <label class="profile-employer-card__field">
+                                    <span>@Culture["Profile.ReferenceEmail"]</span>
+                                    <input type="email" @bind="_references[idx].Email" />
+                                </label>
+                                <label class="profile-employer-card__field">
+                                    <span>@Culture["Profile.ReferencePhone"]</span>
+                                    <input type="tel" @bind="_references[idx].Phone" />
+                                </label>
+                            </div>
+                        </div>
+                    }
+                    <button type="button"
+                            class="icon-btn icon-btn--add"
+                            title="@Culture["Profile.AddReference"]"
+                            aria-label="@Culture["Profile.AddReference"]"
+                            @onclick="AddReference"
+                            disabled="@(_references.Count >= CandidateReferenceRules.MaxPerCandidate)">
+                        <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round">
+                            <path d="M12 5v14" /><path d="M5 12h14" />
+                        </svg>
+                    </button>
+                </fieldset>
+
                 @if (_authenticatorEnabled)
                 {
                     <p class="login-lead">@Culture["Profile.AuthenticatorHint"]</p>
@@ -424,6 +496,9 @@
     private readonly HashSet<string> _availability = new(StringComparer.OrdinalIgnoreCase);
     private readonly List<CandidateEmployerHistory> _employers = [];
     private readonly List<CandidateCertificate> _certificates = [];
+    private readonly List<CandidateReferenceItem> _references = [];
+    private CandidateUploadedCvInfo? _uploadedCv;
+    private bool _cvBusy;
     private List<string> _branchOptions = WorkTypeLabels.All.ToList();
     private List<string> _licenseOptions = DrivingLicenseLabels.All.ToList();
     private List<string> _educationOptions = EducationLevelLabels.ProfileAll.ToList();
@@ -506,6 +581,7 @@
             _employers.AddRange(prefs.Employers ?? []);
             _certificates.Clear();
             _certificates.AddRange(prefs.Certificates ?? []);
+            ApplyCvAndReferences(profile);
             _selectedEducations.Clear();
             foreach (var education in prefs.Educations ?? [])
             {
@@ -683,6 +759,25 @@
 
     private void AddCertificate() => _certificates.Add(new CandidateCertificate());
     private void RemoveCertificate(int index) => _certificates.RemoveAt(index);
+
+    private void AddReference()
+    {
+        if (_references.Count >= CandidateReferenceRules.MaxPerCandidate)
+        {
+            return;
+        }
+
+        _references.Add(new CandidateReferenceItem());
+    }
+
+    private void RemoveReference(int index) => _references.RemoveAt(index);
+
+    private void ApplyCvAndReferences(MeProfile profile)
+    {
+        _uploadedCv = profile.UploadedCv;
+        _references.Clear();
+        _references.AddRange(profile.References ?? []);
+    }
 
     private void ToggleEducation(string level, bool selected)
     {
@@ -891,7 +986,20 @@
                 firstName: _firstName.Trim(),
                 lastName: _lastName.Trim(),
                 phoneNumber: string.IsNullOrWhiteSpace(_phoneNumber) ? "" : _phoneNumber.Trim(),
-                whatsAppContactAllowed: _whatsAppAllowed && !string.IsNullOrWhiteSpace(_phoneNumber));
+                whatsAppContactAllowed: _whatsAppAllowed && !string.IsNullOrWhiteSpace(_phoneNumber),
+                references: _references
+                    .Where(r => !string.IsNullOrWhiteSpace(r.EmployerName)
+                                || !string.IsNullOrWhiteSpace(r.ContactName)
+                                || !string.IsNullOrWhiteSpace(r.Email)
+                                || !string.IsNullOrWhiteSpace(r.Phone))
+                    .Select(r => new CandidateReferenceItem
+                    {
+                        EmployerName = r.EmployerName.Trim(),
+                        ContactName = r.ContactName.Trim(),
+                        Email = r.Email.Trim(),
+                        Phone = r.Phone.Trim()
+                    })
+                    .ToList());
             _homeLocationDirty = false;
             _message = Culture["Profile.Saved"];
             if (!string.IsNullOrWhiteSpace(_returnUrl))
@@ -926,6 +1034,128 @@
         finally
         {
             _pdfBusy = false;
+        }
+    }
+
+    private async Task OnCvSelectedAsync(InputFileChangeEventArgs e)
+    {
+        var file = e.File;
+        if (file is null)
+        {
+            return;
+        }
+
+        _cvBusy = true;
+        _message = null;
+        try
+        {
+            var updated = await Api.UploadMyCvAsync(file);
+            if (updated is not null)
+            {
+                ApplyExtractedProfile(updated);
+                if (updated.UploadedCv?.FilledFields is { Count: > 0 } filled)
+                {
+                    _message = Culture.Format("Profile.OwnCvFilled", string.Join(", ", filled));
+                }
+                else
+                {
+                    _message = Culture.Format("Profile.OwnCvPresent", updated.UploadedCv?.FileName ?? file.Name);
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            _message = ex.Message;
+        }
+        finally
+        {
+            _cvBusy = false;
+        }
+    }
+
+    private void ApplyExtractedProfile(MeProfile profile)
+    {
+        var prefs = profile.Preferences ?? new CandidatePreferences();
+        _firstName = profile.FirstName ?? _firstName;
+        _lastName = profile.LastName ?? _lastName;
+        _phoneNumber = profile.PhoneNumber ?? _phoneNumber;
+        _aboutMe = prefs.AboutMe ?? _aboutMe;
+        _employers.Clear();
+        _employers.AddRange(prefs.Employers ?? []);
+        _certificates.Clear();
+        _certificates.AddRange(prefs.Certificates ?? []);
+        _selectedLicenses.Clear();
+        foreach (var license in prefs.DrivingLicenses ?? [])
+        {
+            foreach (var normalized in DrivingLicenseLabels.Split(license))
+            {
+                _selectedLicenses.Add(normalized);
+            }
+        }
+
+        _selectedEducations.Clear();
+        foreach (var education in prefs.Educations ?? [])
+        {
+            foreach (var level in EducationLevelLabels.Split(education))
+            {
+                _selectedEducations.Add(level);
+            }
+        }
+
+        foreach (var role in prefs.Roles ?? [])
+        {
+            var label = WorkTypeLabels.Expand(WorkTypeLabels.Parse(role)).FirstOrDefault()
+                ?? _branchOptions.FirstOrDefault(b => string.Equals(b, role, StringComparison.OrdinalIgnoreCase))
+                ?? role;
+            if (!string.IsNullOrWhiteSpace(label))
+            {
+                _selectedRoles.Add(label);
+            }
+        }
+
+        ApplyCvAndReferences(profile);
+    }
+
+    private async Task DownloadOwnCvAsync()
+    {
+        _cvBusy = true;
+        try
+        {
+            await Api.DownloadMyUploadedCvAsync(Js);
+        }
+        catch (Exception ex)
+        {
+            _message = ex.Message;
+        }
+        finally
+        {
+            _cvBusy = false;
+        }
+    }
+
+    private async Task DeleteOwnCvAsync()
+    {
+        _cvBusy = true;
+        _message = null;
+        try
+        {
+            var updated = await Api.DeleteMyCvAsync();
+            if (updated is not null)
+            {
+                ApplyCvAndReferences(updated);
+            }
+            else
+            {
+                _uploadedCv = null;
+            }
+        }
+        catch (Exception ex)
+        {
+            _message = ex.Message;
+        }
+        finally
+        {
+            _cvBusy = false;
         }
     }
 

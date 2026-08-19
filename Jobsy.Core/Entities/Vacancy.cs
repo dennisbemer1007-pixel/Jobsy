@@ -102,6 +102,11 @@ public class Vacancy
     public string? RequiredDrivingLicense { get; set; }
     public string? RequiredEducation { get; set; }
     public int? MinimumEmployers { get; set; }
+
+    /// <summary>
+    /// Hard gate: complete employer references (recensies) required to apply. Null/0 = none.
+    /// </summary>
+    public int? MinimumReferences { get; set; }
     public Guid? FulfilledByApplicationId { get; set; }
 
     public int MaxApplications { get; set; } = 5;

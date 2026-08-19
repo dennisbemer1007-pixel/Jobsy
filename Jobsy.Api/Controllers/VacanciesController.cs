@@ -557,6 +557,9 @@ public class VacanciesController : ControllerBase
         vacancy.RequiredDrivingLicense = string.IsNullOrWhiteSpace(request.RequiredDrivingLicense) ? null : request.RequiredDrivingLicense.Trim();
         vacancy.RequiredEducation = string.IsNullOrWhiteSpace(request.RequiredEducation) ? null : request.RequiredEducation.Trim();
         vacancy.MinimumEmployers = request.MinimumEmployers is > 0 ? request.MinimumEmployers : null;
+        vacancy.MinimumReferences = request.MinimumReferences is > 0
+            ? Math.Min(request.MinimumReferences.Value, CandidateReferenceRules.MaxMinimumOnVacancy)
+            : null;
         vacancy.OverrideContactPreference = request.OverrideContactPreference;
         vacancy.DirectContactEnabled = request.OverrideContactPreference && request.DirectContactEnabled;
         vacancy.ContactPreferMail = request.OverrideContactPreference && request.DirectContactEnabled && request.ContactPreferMail;
@@ -1376,7 +1379,10 @@ public class VacanciesController : ControllerBase
             false,
             r.Status.ToString(),
             null,
-            r.RequireEmailVerification);
+            r.RequireEmailVerification,
+            EngagementReminderTip: null,
+            EngagementReminderSentAtUtc: null,
+            MinimumReferences: r.MinimumReferences);
     }
 
     private static VacancyListItemDto MapToDto(
@@ -1527,7 +1533,8 @@ public class VacanciesController : ControllerBase
             moderationWarning,
             v.RequireEmailVerification,
             includeCategoryInternals ? v.EngagementReminderTip : null,
-            includeCategoryInternals ? v.EngagementReminderSentAtUtc : null);
+            includeCategoryInternals ? v.EngagementReminderSentAtUtc : null,
+            v.MinimumReferences);
     }
 
     private async Task<(Core.Entities.VacancyCategory? Category, string? Error)> ResolveCategoryAsync(

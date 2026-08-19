@@ -61,6 +61,7 @@ public class VacancyListItem
     public string? RequiredDrivingLicense { get; set; }
     public string? RequiredEducation { get; set; }
     public int? MinimumEmployers { get; set; }
+    public int? MinimumReferences { get; set; }
     public Guid? FulfilledByApplicationId { get; set; }
     public string CreatedVia { get; set; } = "Manual";
     public decimal? MinHoursPerWeek { get; set; }
@@ -108,6 +109,27 @@ public sealed class MeProfile
     public string? ConsentVersion { get; set; }
     public bool NeedsConsentReaccept { get; set; }
     public string CurrentConsentVersion { get; set; } = string.Empty;
+    public CandidateUploadedCvInfo? UploadedCv { get; set; }
+    public List<CandidateReferenceItem> References { get; set; } = [];
+}
+
+public sealed class CandidateUploadedCvInfo
+{
+    public string FileName { get; set; } = string.Empty;
+    public string ContentType { get; set; } = string.Empty;
+    public int SizeBytes { get; set; }
+    public DateTime UploadedAtUtc { get; set; }
+    public DateTime? ExtractedAtUtc { get; set; }
+    public List<string> FilledFields { get; set; } = [];
+}
+
+public sealed class CandidateReferenceItem
+{
+    public Guid Id { get; set; }
+    public string EmployerName { get; set; } = string.Empty;
+    public string ContactName { get; set; } = string.Empty;
+    public string Email { get; set; } = string.Empty;
+    public string Phone { get; set; } = string.Empty;
 }
 
 public sealed class CandidatePreferences

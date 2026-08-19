@@ -194,7 +194,8 @@ public sealed class VacancyDiscoveryIndex : IVacancyDiscoveryIndex
                 vacancy.Company?.KvkEstablishmentId,
                 kvk),
             vacancy.ContentModerationPassed,
-            vacancy.RequireEmailVerification);
+            vacancy.RequireEmailVerification,
+            vacancy.MinimumReferences);
     }
 
     private static IReadOnlyList<VacancyDiscoveryRecord> VisibleToday(

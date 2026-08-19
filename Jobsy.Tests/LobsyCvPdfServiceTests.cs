@@ -78,6 +78,33 @@ public class LobsyCvPdfServiceTests
         Assert.StartsWith("Lobsy-CV-AC-", fileName);
         Assert.EndsWith(".pdf", fileName);
         Assert.DoesNotContain("@", fileName);
+        Assert.False(model.HasUploadedOwnCv);
+    }
+
+    [Fact]
+    public async Task Render_marks_uploaded_own_cv_on_lobsy_pdf()
+    {
+        var service = new LobsyCvPdfService(new FakeCompanySettings(), new FakeMapImages());
+        var prefs = new CandidatePreferencesDto(
+            Roles: [],
+            MaxTravelMinutes: 20,
+            PreferredTransport: "Fiets",
+            AboutMe: "Ik werk graag met mensen.");
+        var model = LobsyCvModelFactory.FromLiveProfile(
+            "Ada Candidate",
+            "ada@test.local",
+            null,
+            false,
+            prefs,
+            null,
+            null,
+            DateTime.UtcNow,
+            hasUploadedOwnCv: true);
+
+        Assert.True(model.HasUploadedOwnCv);
+        var pdf = await service.RenderAsync(model);
+        Assert.True(pdf.Length > 500);
+        Assert.Equal((byte)'%', pdf[0]);
     }
 
     [Fact]

@@ -90,9 +90,19 @@ public sealed class DataRetentionHostedService : BackgroundService
                             || a.CandidateAddress != null
                             || a.SnapshotPhoneNumber != null
                             || a.SnapshotCertificatesJson != null
-                            || a.SnapshotAvailabilityJson != null))
+                            || a.SnapshotAvailabilityJson != null
+                            || a.HasUploadedCv
+                            || a.CandidateReferenceCount != 0))
             .Take(500)
             .ToListAsync(cancellationToken);
+        if (withdrawnWithSnapshots.Count > 0)
+        {
+            await ApplicationPrivacyCleanup.RemoveUploadedCvSnapshotsAsync(
+                db,
+                withdrawnWithSnapshots.Select(a => a.Id),
+                cancellationToken);
+        }
+
         foreach (var app in withdrawnWithSnapshots)
         {
             ApplicationRules.ScrubPersonalDataOnWithdraw(app);

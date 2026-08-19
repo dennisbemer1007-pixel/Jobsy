@@ -10804,6 +10804,31 @@ button.linkish:hover {
     line-height: 1.4;
 }
 
+.profile-cv__file {
+    margin: 0;
+    font-weight: 600;
+}
+
+.profile-cv__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    align-items: center;
+}
+
+.profile-cv__actions label.engagement-btn {
+    position: relative;
+    overflow: hidden;
+    cursor: pointer;
+}
+
+.profile-cv__actions label.engagement-btn input[type="file"] {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    cursor: pointer;
+}
+
 .profile-employer-card {
     display: flex;
     flex-direction: column;

@@ -21,7 +21,8 @@ public sealed record VacancyDraftInput(
     Guid? IntermediaryCompanyId = null,
     bool ShowClientAddressOnMap = false,
     bool RequireEndClientKvk = false,
-    VacancyKind Kind = VacancyKind.Regular);
+    VacancyKind Kind = VacancyKind.Regular,
+    int? MinimumReferences = null);
 
 public sealed record VacancyDraftCreateResult(bool Succeeded, Vacancy? Vacancy, string? ErrorMessage)
 {

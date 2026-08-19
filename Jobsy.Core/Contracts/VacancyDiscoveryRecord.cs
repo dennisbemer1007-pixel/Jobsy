@@ -62,4 +62,5 @@ public sealed record VacancyDiscoveryRecord(
     string? KvkNumber,
     string? Vestigingsnummer,
     bool ContentModerationPassed,
-    bool RequireEmailVerification);
+    bool RequireEmailVerification,
+    int? MinimumReferences = null);

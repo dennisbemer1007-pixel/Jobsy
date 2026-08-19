@@ -40,7 +40,9 @@ public sealed record LobsyCvModel(
     /// <summary>Minutes used for the privacy reach circle / caption (usually estimated travel).</summary>
     int? ReachTravelMinutes = null,
     /// <summary>Crow-flies km candidate ↔ workplace; drives circle radius when set.</summary>
-    double? DistanceKm = null);
+    double? DistanceKm = null,
+    /// <summary>When true, the PDF banner states that the candidate also uploaded their own CV.</summary>
+    bool HasUploadedOwnCv = false);
 
 public sealed record LobsyCvEmployerEntry(
     string EmployerName,

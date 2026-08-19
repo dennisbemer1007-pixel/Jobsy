@@ -29,6 +29,8 @@ public class SoftWithdrawAndCandidateActionFlowTests
             SnapshotAvailabilityJson = "{}",
             DistanceKm = 4.2,
             EmailVerificationCode = VerificationCodes.Hash("123456"),
+            HasUploadedCv = true,
+            CandidateReferenceCount = 2,
             Status = ApplicationStatus.Withdrawn
         };
 
@@ -47,6 +49,40 @@ public class SoftWithdrawAndCandidateActionFlowTests
         Assert.Null(app.DistanceKm);
         Assert.Null(app.EmailVerificationCode);
         Assert.Equal(0, app.CandidateEmployerCount);
+        Assert.False(app.HasUploadedCv);
+        Assert.Equal(0, app.CandidateReferenceCount);
+    }
+
+    [Fact]
+    public async Task RemoveUploadedCvSnapshots_deletes_withdrawn_blobs()
+    {
+        await using var db = CreateDb();
+        var app = new Application
+        {
+            Id = Guid.NewGuid(),
+            VacancyId = Guid.NewGuid(),
+            CandidateEmail = "jan@example.com",
+            CandidateName = "Jan",
+            Status = ApplicationStatus.Withdrawn,
+            HasUploadedCv = true
+        };
+        db.Applications.Add(app);
+        db.ApplicationUploadedCvs.Add(new ApplicationUploadedCv
+        {
+            ApplicationId = app.Id,
+            FileName = "cv.pdf",
+            ContentType = "application/pdf",
+            Content = "%PDF-1.4 test"u8.ToArray(),
+            SizeBytes = 14
+        });
+        await db.SaveChangesAsync();
+
+        await ApplicationPrivacyCleanup.RemoveUploadedCvSnapshotsAsync(db, [app.Id]);
+        ApplicationRules.ScrubPersonalDataOnWithdraw(app);
+        await db.SaveChangesAsync();
+
+        Assert.Empty(db.ApplicationUploadedCvs);
+        Assert.False(app.HasUploadedCv);
     }
 
     [Fact]
