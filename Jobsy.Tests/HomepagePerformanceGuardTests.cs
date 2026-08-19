@@ -16,7 +16,8 @@ public class HomepagePerformanceGuardTests
         Assert.Contains("_mapPainted && (_wideViewport || !showMapOnMobile)", discovery);
         Assert.Contains("VisibleVacancies", discovery);
         Assert.Contains("RendererInfo.IsInteractive", discovery);
-        Assert.DoesNotContain("photoEager", discovery);
+        Assert.Contains("photoEager", discovery);
+        Assert.Contains("Eager=\"photoEager\"", discovery);
         Assert.Contains("jobsyViewport.isWide", discovery);
         Assert.Contains("VacancyCardPageSize = 12", discovery);
         Assert.DoesNotContain("@foreach (var vacancy in SortedVacancies)", discovery);
@@ -67,6 +68,7 @@ public class HomepagePerformanceGuardTests
         Assert.Contains("IntersectionObserver", maps);
         Assert.Contains("requestIdleCallback", maps);
         Assert.Contains("addEventListener(\"load\"", maps);
+        Assert.Contains("DISCOVERY_DELAY_MS", maps);
         Assert.DoesNotContain("LOAD_DELAY_MS", maps);
         Assert.Contains("media = \"print\"", maps);
         Assert.DoesNotContain("jobsyMaps.warmDiscovery()", maps);
@@ -74,6 +76,7 @@ public class HomepagePerformanceGuardTests
         var bundle = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "wwwroot", "js", "app-core.js"));
         Assert.Contains("ensureAfterPaint", bundle);
         Assert.Contains("requestIdleCallback", bundle);
+        Assert.Contains("DISCOVERY_DELAY_MS", bundle);
         Assert.DoesNotContain("LOAD_DELAY_MS", bundle);
         Assert.DoesNotContain("jobsyMaps.warmDiscovery()", bundle);
 

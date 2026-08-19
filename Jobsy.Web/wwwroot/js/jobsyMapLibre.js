@@ -178,6 +178,24 @@ window.jobsyMapLibre = (function () {
         if (!container || container.id !== "job-map") {
             return;
         }
+        var wide = false;
+        try {
+            wide = window.matchMedia("(min-width: 769px)").matches;
+        } catch (e) { }
+        if (wide) {
+            container.style.position = "absolute";
+            container.style.inset = "0";
+            container.style.top = "0";
+            container.style.right = "0";
+            container.style.bottom = "0";
+            container.style.left = "0";
+            container.style.width = "100%";
+            container.style.height = "100%";
+            container.style.minHeight = "0";
+            container.style.minWidth = "0";
+            container.style.display = "block";
+            return;
+        }
         var height = container.style.height;
         var minHeight = container.style.minHeight;
         if (!height || height === "0" || height === "0px") {

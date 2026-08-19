@@ -3,18 +3,19 @@ window.jobsyMaps = (function () {
 
     var pending = {};
     var pendingPaint = {};
+    var DISCOVERY_DELAY_MS = 3000;
     var css = [
         "/lib/maplibre/maplibre-gl.css"
     ];
     var mapLibreScripts = [
         "/lib/maplibre/maplibre-gl.js",
-        "/js/jobsyMapLibre.js?v=20260819-psi"
+        "/js/jobsyMapLibre.js?v=20260819-desk"
     ];
     var discoveryScripts = [
-        "/js/jobMap.js?v=20260819-psi"
+        "/js/jobMap.js?v=20260819-desk"
     ];
     var detailScripts = [
-        "/js/vacancyDetailMap.js?v=20260819-psi"
+        "/js/vacancyDetailMap.js?v=20260819-desk"
     ];
 
     function hrefMatches(node, href) {
@@ -120,14 +121,21 @@ window.jobsyMaps = (function () {
         }
     }
 
-    function afterPageLoad(cb) {
+    function afterPageLoad(cb, minDelayMs) {
         // MapLibre (1.1 MB) must not parse during the initial HTML load.
+        minDelayMs = minDelayMs || 0;
+        function start() {
+            var go = function () { afterIdle(cb); };
+            if (minDelayMs > 0) {
+                setTimeout(go, minDelayMs);
+            } else {
+                go();
+            }
+        }
         if (document.readyState === "complete") {
-            afterIdle(cb);
+            start();
         } else {
-            window.addEventListener("load", function () {
-                afterIdle(cb);
-            }, { once: true });
+            window.addEventListener("load", start, { once: true });
         }
     }
 
@@ -172,7 +180,7 @@ window.jobsyMaps = (function () {
                 io.observe(el);
             }
             var fallback = setTimeout(finish, 8000);
-        });
+        }, DISCOVERY_DELAY_MS);
     }
 
     function fetchAssets(kind) {

@@ -452,8 +452,11 @@
                                           OnHover="OnHover"
                                           OnSelect="OnCarouselSelect" />
                 <div class="vacancy-list vacancy-list--cards">
+                    @{ var cardIndex = 0; }
                     @foreach (var vacancy in VisibleVacancies)
                     {
+                        var photoEager = cardIndex < 2;
+                        cardIndex++;
                         var wageText = FormatWage(vacancy);
                         var travelText = vacancy.TravelMinutes is not null
                             ? $"± {vacancy.TravelMinutes} {Culture["Discovery.Minutes"]}"
@@ -469,7 +472,8 @@
                                               Class="job-card__photo"
                                               Width="400"
                                               Height="267"
-                                              Sizes="(max-width: 700px) 50vw, 360px" />
+                                              Sizes="(max-width: 700px) 50vw, 360px"
+                                              Eager="photoEager" />
                                 @if (vacancy.IsHighlighted)
                                 {
                                     <span class="job-card__badge">@Culture["Discovery.Featured"]</span>

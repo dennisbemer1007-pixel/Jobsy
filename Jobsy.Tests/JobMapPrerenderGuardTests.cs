@@ -70,9 +70,12 @@ public class JobMapPrerenderGuardTests
         Assert.Contains("#job-map", css);
         Assert.Contains("height: 300px", css);
         Assert.Contains("min-height: 300px", css);
+        Assert.Contains("height: 100% !important", css);
         Assert.DoesNotContain("min-height: 55dvh", css);
         Assert.DoesNotContain("/lib/leaflet/", helper);
         Assert.Contains("pinReservedBox", helper);
+        Assert.Contains("min-width: 769px", helper);
+        Assert.Contains("style.height = \"100%\"", helper);
     }
 
     [Fact]
@@ -133,11 +136,13 @@ public class JobMapPrerenderGuardTests
         Assert.Contains("requestIdleCallback", maps);
         Assert.Contains("addEventListener(\"load\"", maps);
         Assert.Contains("document.readyState === \"complete\"", maps);
+        Assert.Contains("DISCOVERY_DELAY_MS", maps);
         Assert.DoesNotContain("LOAD_DELAY_MS", maps);
         var bundle = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "wwwroot", "js", "app-core.js"));
         Assert.Contains("pending[kind] = null", bundle);
         Assert.Contains("maplibre-gl.js", bundle);
         Assert.Contains("requestIdleCallback", bundle);
+        Assert.Contains("DISCOVERY_DELAY_MS", bundle);
         Assert.DoesNotContain("LOAD_DELAY_MS", bundle);
     }
 
