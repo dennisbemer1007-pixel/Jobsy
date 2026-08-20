@@ -8,22 +8,25 @@
 @implements IDisposable
 
 <div class="app-shell @(_hasBottomNav ? "has-bottom-nav" : null)" dir="@(Culture.IsRightToLeft ? "rtl" : null)">
-    <div class="lobsy-watermarks" aria-hidden="true">
-        <img class="lobsy-watermark lobsy-watermark--left"
-             src="@Jobsy.Web.Media.BrandImages.Webp256"
-             alt=""
-             width="256"
-             height="256"
-             loading="lazy"
-             decoding="async" />
-        <img class="lobsy-watermark lobsy-watermark--right"
-             src="@Jobsy.Web.Media.BrandImages.Webp256"
-             alt=""
-             width="256"
-             height="256"
-             loading="lazy"
-             decoding="async" />
-    </div>
+    @if (ShowPanelWatermarks)
+    {
+        <div class="lobsy-watermarks" aria-hidden="true">
+            <img class="lobsy-watermark lobsy-watermark--left"
+                 src="@Jobsy.Web.Media.BrandImages.Webp256"
+                 alt=""
+                 width="256"
+                 height="256"
+                 loading="lazy"
+                 decoding="async" />
+            <img class="lobsy-watermark lobsy-watermark--right"
+                 src="@Jobsy.Web.Media.BrandImages.Webp256"
+                 alt=""
+                 width="256"
+                 height="256"
+                 loading="lazy"
+                 decoding="async" />
+        </div>
+    }
     <header class="app-header">
         <div class="app-header__brand">
             <a class="brand" href="/" aria-label="Lobsy">
@@ -109,6 +112,22 @@
 
         _hasBottomNav = hasItems;
         return InvokeAsync(StateHasChanged);
+    }
+
+    private bool ShowPanelWatermarks
+    {
+        get
+        {
+            try
+            {
+                var path = new Uri(Navigation.Uri).AbsolutePath.TrimEnd('/');
+                return !string.IsNullOrEmpty(path);
+            }
+            catch
+            {
+                return false;
+            }
+        }
     }
 
     private void OnCultureChanged()

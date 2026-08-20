@@ -1303,6 +1303,19 @@ window.jobMap = (function () {
         bindOutsideClickCloser();
     }
 
+    function readBootPins() {
+        const node = document.getElementById("jobsy-map-boot");
+        if (!node || !node.textContent) {
+            return [];
+        }
+        try {
+            const parsed = JSON.parse(node.textContent);
+            return Array.isArray(parsed) ? parsed : [];
+        } catch (e) {
+            return [];
+        }
+    }
+
     // Paint the basemap immediately as soon as #job-map exists — do not wait for Blazor/catalog.
     function boot(elementId) {
         if (map) {
@@ -1315,8 +1328,12 @@ window.jobMap = (function () {
         if (!el) {
             return;
         }
-        createMapInstance(el, []);
+        const pins = readBootPins();
+        createMapInstance(el, collectVacancyPoints(pins));
         bindMapRuntime();
+        if (pins.length) {
+            setVacancies(pins);
+        }
         revealMapStage();
         invalidate();
     }

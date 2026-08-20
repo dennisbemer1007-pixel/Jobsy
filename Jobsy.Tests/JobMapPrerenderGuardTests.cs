@@ -48,6 +48,8 @@ public class JobMapPrerenderGuardTests
         Assert.DoesNotContain("map.fitBounds(NL_BOUNDS", js);
         Assert.DoesNotContain("map.setView(NL_CENTER", js);
         Assert.Contains("function boot(", js);
+        Assert.Contains("readBootPins", js);
+        Assert.Contains("jobsy-map-boot", js);
         Assert.Contains("const reuse", js);
         Assert.Contains("Paint the basemap immediately", js);
         Assert.Contains("fitMapToVacancies", js);

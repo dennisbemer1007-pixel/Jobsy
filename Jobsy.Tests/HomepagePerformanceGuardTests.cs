@@ -55,6 +55,8 @@ public class HomepagePerformanceGuardTests
         Assert.Contains("TryInitJobMapAsync", discovery);
         Assert.DoesNotContain("job-map-placeholder__status", discovery);
         Assert.Contains("if (!RendererInfo.IsInteractive)", discovery);
+        Assert.Contains("jobsy-map-boot", discovery);
+        Assert.Contains("MapBootPinsJson", discovery);
         Assert.Contains("OnMapTilesReady", discovery);
         Assert.Contains("_mapPainted = true", discovery);
 

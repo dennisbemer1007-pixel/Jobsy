@@ -10,6 +10,7 @@
 @using Jobsy.Web.Hosting
 @using Microsoft.AspNetCore.Components.Authorization
 @using Microsoft.AspNetCore.WebUtilities
+@using System.Text.Json
 
 <div class="jobsy-discovery @(showMapOnMobile ? "show-map" : "show-list") @(_filtersOpen ? "filters-open" : null)">
     <div class="jobsy-chrome">
@@ -528,6 +529,10 @@
                                       OnSelect="OnCarouselSelect" />
         }
         <div class="map-stage @(_mapPainted ? "is-live" : null)">
+            @if (_vacancies.Count > 0)
+            {
+                <script type="application/json" id="jobsy-map-boot">@((MarkupString)MapBootPinsJson())</script>
+            }
             <div class="job-map-placeholder" aria-hidden="true"></div>
             <div @ref="_mapElement" id="job-map" class="job-map"></div>
             @if (_categories.Any(c => c.ShowInLegend && c.IsActive))
@@ -1131,7 +1136,19 @@
 
         if (!RendererInfo.IsInteractive)
         {
-            // Catalog waits for the circuit. Keep loading so prerender is not "geen vacatures".
+            // Load the warm catalog during prerender so #jobsy-map-boot has real pins
+            // before the Blazor circuit. Photos stay out of first paint.
+            try
+            {
+                using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(2));
+                await LoadVacanciesAsync(cts.Token);
+            }
+            catch (OperationCanceledException)
+            {
+            }
+            catch
+            {
+            }
             return;
         }
 
@@ -1739,7 +1756,7 @@
         }
     }
 
-    private async Task LoadVacanciesAsync()
+    private async Task LoadVacanciesAsync(CancellationToken ct = default)
     {
         var generation = ++_loadGeneration;
         var hadResults = _vacancies.Count > 0;
@@ -1771,7 +1788,8 @@
                 companyFocus ? null : _maxHoursPerWeek,
                 companyFocus || _selectedCategoryIds.Count == 0 ? null : _selectedCategoryIds,
                 suitableFor65Plus: null,
-                companyIds: _companyFocusIds);
+                companyIds: _companyFocusIds,
+                ct: ct);
 
             if (generation != _loadGeneration)
             {
@@ -1796,7 +1814,8 @@
                     _maxHoursPerWeek,
                     _selectedCategoryIds.Count == 0 ? null : _selectedCategoryIds,
                     suitableFor65Plus: null,
-                    companyIds: _companyFocusIds);
+                    companyIds: _companyFocusIds,
+                    ct: ct);
 
                 if (generation != _loadGeneration)
                 {
@@ -1908,6 +1927,34 @@
         {
             // Map may have been disposed during navigation.
         }
+    }
+
+    private string MapBootPinsJson()
+    {
+        var pins = _vacancies
+            .Where(v => double.IsFinite(v.Latitude) && double.IsFinite(v.Longitude))
+            .Select(v =>
+            {
+                var typeBadge = ResolveTypeBadge(v);
+                return new Dictionary<string, object?>
+                {
+                    ["id"] = v.Id.ToString("D"),
+                    ["title"] = v.Title,
+                    ["company"] = v.CompanyName,
+                    ["address"] = v.CompanyAddress,
+                    ["lat"] = v.Latitude,
+                    ["lng"] = v.Longitude,
+                    ["highlighted"] = v.IsHighlighted,
+                    ["workType"] = v.WorkTypes.FirstOrDefault() ?? "",
+                    ["categoryColor"] = ShowsSuitableFor65Plus(v)
+                        ? VacancyCategoryDefaults.SeniorPlusColorHex
+                        : v.CategoryColorHex,
+                    ["typeBadgeLabel"] = typeBadge.Label,
+                    ["typeBadgeColor"] = typeBadge.ColorHex
+                };
+            })
+            .ToList();
+        return JsonSerializer.Serialize(pins).Replace("<", "\\u003c", StringComparison.Ordinal);
     }
 
     private List<Dictionary<string, object?>> BuildMarkers() =>
