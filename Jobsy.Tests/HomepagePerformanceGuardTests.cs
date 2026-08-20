@@ -72,7 +72,7 @@ public class HomepagePerformanceGuardTests
         Assert.Contains("fetchpriority", bundle);
 
         var preview = Path.Combine(FindRepoRoot(), "Jobsy.Web", "wwwroot", "images", "maps", "nl-preview.webp");
-        Assert.True(File.Exists(preview));
+        Assert.False(File.Exists(preview));
 
         var layout = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "Components", "Layout", "MainLayout.razor"));
         Assert.Contains("RendererInfo.IsInteractive", layout);
@@ -160,9 +160,16 @@ public class HomepagePerformanceGuardTests
             < new FileInfo(Path.Combine(root, "Jobsy.Web", "wwwroot", "js", "jobsyMapLibre.js")).Length);
 
         var home = File.ReadAllText(Path.Combine(root, "Jobsy.Web", "Components", "Pages", "Home.razor"));
-        Assert.DoesNotContain("rel=\"preload\"", home);
-        Assert.DoesNotContain("as=\"script\"", home);
-        Assert.DoesNotContain("maplibre-gl-csp-worker.js", home);
+        Assert.Contains("rel=\"preload\"", home);
+        Assert.Contains("as=\"script\"", home);
+        Assert.Contains("as=\"fetch\"", home);
+        var workerIdx = home.IndexOf("csp-worker.js", StringComparison.Ordinal);
+        Assert.True(workerIdx > 0);
+        var workerSlice = home.Substring(workerIdx, Math.Min(90, home.Length - workerIdx));
+        Assert.Contains("as=\"fetch\"", workerSlice);
+        Assert.DoesNotContain("as=\"script\"", workerSlice);
+
+        Assert.False(Directory.Exists(Path.Combine(root, "Jobsy.Web", "wwwroot", "lib", "leaflet")));
     }
 
     private static string FindRepoRoot()

@@ -57,7 +57,13 @@ public class StaticAssetCacheTests
     public void Maplibre_and_blazor_urls_are_cache_busted()
     {
         var home = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "Components", "Pages", "Home.razor"));
-        Assert.DoesNotContain("lib/maplibre/", home);
+        Assert.Contains("lib/maplibre/maplibre-gl.css?v=", home);
+        Assert.Contains("lib/maplibre/maplibre-gl-csp.js?v=", home);
+        var workerIdx = home.IndexOf("csp-worker.js", StringComparison.Ordinal);
+        Assert.True(workerIdx > 0);
+        var workerSlice = home.Substring(workerIdx, Math.Min(90, home.Length - workerIdx));
+        Assert.Contains("as=\"fetch\"", workerSlice);
+        Assert.DoesNotContain("as=\"script\"", workerSlice);
 
         var app = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "Components", "App.razor"));
         Assert.Contains("_framework/blazor.web.js?v=", app);

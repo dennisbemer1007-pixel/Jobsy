@@ -1,7 +1,4 @@
 # Map preview
 
-`nl-preview.webp` is an unused leftover mosaic (whole Netherlands, zoom 8).
-The homepage no longer shows it: the live map fits real vacancy coordinates
-from the catalog, with a land-colored shell until those markers exist.
-
-© OpenStreetMap contributors, © CARTO.
+The homepage no longer ships a static NL mosaic. The live MapLibre map
+fits real vacancy coordinates, with a land-colored shell until markers exist.

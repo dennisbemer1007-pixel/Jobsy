@@ -1,23 +1,23 @@
 window.jobsyMaps = (function () {
     "use strict";
 
-    // Fetch MapLibre + helpers only when a map container exists (or Blazor calls ensure).
-    // Do not preload those files in <head> — Lighthouse unused-javascript treats a
-    // worker preloaded as="script" as ~100% unused main-thread bytes.
+    // MapLibre CSS/JS are preloaded from Home <head> (script, not the worker).
+    // The worker is preloaded as fetch so it is not unused main-thread JS.
+    // Injected here as soon as #job-map exists (or Blazor calls ensure).
     var pending = {};
-    var mapLibreWorker = "/lib/maplibre/maplibre-gl-csp-worker.js?v=20260820-r164";
+    var mapLibreWorker = "/lib/maplibre/maplibre-gl-csp-worker.js?v=20260820-r166";
     var css = [
-        "/lib/maplibre/maplibre-gl.css?v=20260820-r164"
+        "/lib/maplibre/maplibre-gl.css?v=20260820-r166"
     ];
     var mapLibreScripts = [
-        "/lib/maplibre/maplibre-gl-csp.js?v=20260820-r164",
-        "/js/jobsyMapLibre.min.js?v=20260820-r164"
+        "/lib/maplibre/maplibre-gl-csp.js?v=20260820-r166",
+        "/js/jobsyMapLibre.min.js?v=20260820-r166"
     ];
     var discoveryScripts = [
-        "/js/jobMap.min.js?v=20260820-r164"
+        "/js/jobMap.min.js?v=20260820-r166"
     ];
     var detailScripts = [
-        "/js/vacancyDetailMap.min.js?v=20260820-r164"
+        "/js/vacancyDetailMap.min.js?v=20260820-r166"
     ];
 
     function pathOnly(url) {

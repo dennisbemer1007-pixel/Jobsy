@@ -1,10 +1,17 @@
 @page "/"
-@* Map chrome prerenders. MapLibre CSS/JS are fetched only when #job-map exists (maps-loader). *@
+@* Map chrome prerenders. MapLibre CSS/JS preload in head so real markers paint as soon as the catalog is ready. Worker is not preloaded as a script (unused-JS). *@
 @rendermode @(new InteractiveServerRenderMode(prerender: true))
 @inject CultureState Culture
 @implements IDisposable
 
 <PageTitle>@Culture["Page.JobMapTitle"]</PageTitle>
+<HeadContent>
+    <link rel="stylesheet" href="lib/maplibre/maplibre-gl.css?v=20260820-r166" fetchpriority="high" />
+    <link rel="preload" href="lib/maplibre/maplibre-gl-csp.js?v=20260820-r166" as="script" fetchpriority="high" />
+    <link rel="preload" href="lib/maplibre/maplibre-gl-csp-worker.js?v=20260820-r166" as="fetch" crossorigin fetchpriority="high" />
+    <link rel="preload" href="js/jobsyMapLibre.min.js?v=20260820-r166" as="script" fetchpriority="high" />
+    <link rel="preload" href="js/jobMap.min.js?v=20260820-r166" as="script" fetchpriority="high" />
+</HeadContent>
 
 <VacancyDiscovery />
 
