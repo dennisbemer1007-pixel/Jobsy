@@ -13,11 +13,12 @@ public class HomepagePerformanceGuardTests
     {
         var discovery = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "Components", "VacancyDiscovery.razor"));
         Assert.Contains("ShouldRenderVacancyCards", discovery);
-        Assert.Contains("_mapPainted && (_wideViewport || !showMapOnMobile)", discovery);
+        Assert.Contains("_wideViewport || (_mapPainted && !showMapOnMobile)", discovery);
         Assert.Contains("VisibleVacancies", discovery);
         Assert.Contains("RendererInfo.IsInteractive", discovery);
         Assert.DoesNotContain("photoEager", discovery);
         Assert.Contains("jobsyViewport.isWide", discovery);
+        Assert.Contains("MeasureViewportAsync", discovery);
         Assert.Contains("VacancyCardPageSize = 12", discovery);
         Assert.DoesNotContain("@foreach (var vacancy in SortedVacancies)", discovery);
     }

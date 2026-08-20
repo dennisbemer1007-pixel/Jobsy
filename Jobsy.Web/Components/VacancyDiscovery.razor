@@ -1041,12 +1041,13 @@
     }
 
     /// <summary>
-    /// Job cards stay out of prerender HTML, the hidden mobile map pane, and
-    /// first paint — picsum photos start only after the map is live.
-    /// Desktop (wide) then shows a windowed list beside the map.
+    /// Job cards stay out of prerender HTML and the hidden mobile map pane.
+    /// Desktop (wide) shows the list as soon as the viewport is known — do not
+    /// wait for MapLibre. Mobile list view still waits until the map has painted
+    /// so toggling away from the map does not flash an empty column.
     /// </summary>
     private bool ShouldRenderVacancyCards =>
-        RendererInfo.IsInteractive && _mapPainted && (_wideViewport || !showMapOnMobile);
+        RendererInfo.IsInteractive && (_wideViewport || (_mapPainted && !showMapOnMobile));
 
     private IReadOnlyList<VacancyListItem> HighlightedVacanciesForUi
     {
@@ -1139,7 +1140,8 @@
         ApplyTransportFromQuery();
         ApplyHoursFromQuery();
         ApplyCompanyFocusFromQuery();
-        await RegionHost.EnsureInitializedAsync();
+        // Kaartfocus/branding must not block catalog load or first paint.
+        var regionHostTask = RegionHost.EnsureInitializedAsync();
 
         if (!RendererInfo.IsInteractive)
         {
@@ -1151,6 +1153,13 @@
                 var viewTask = LoadMapViewAsync(cts.Token);
                 await LoadVacanciesAsync(cts.Token);
                 await viewTask;
+                try
+                {
+                    await regionHostTask.WaitAsync(cts.Token);
+                }
+                catch (OperationCanceledException)
+                {
+                }
             }
             catch (OperationCanceledException)
             {
@@ -1160,6 +1169,8 @@
             }
             return;
         }
+
+        _ = regionHostTask;
 
         // Catalog + map-view in parallel — do not wait on profile/masterdata before pins appear.
         var viewTaskInteractive = LoadMapViewAsync();
@@ -1555,28 +1566,9 @@
         if (firstRender)
         {
             _ = WarmDiscoveryScriptsAsync();
-            // MapLibre exists only after hydration. Init once with the precomputed camera.
+            // Measure the viewport before MapLibre so desktop cards never wait on the map.
+            await MeasureViewportAsync();
             await TryInitJobMapAsync();
-        }
-
-        if (firstRender)
-        {
-            try
-            {
-                var wide = await Js.InvokeAsync<bool>("jobsyViewport.isWide");
-                if (wide != _wideViewport)
-                {
-                    _wideViewport = wide;
-                    StateHasChanged();
-                }
-            }
-            catch (JSException)
-            {
-                // Keep mobile-first: do not mount the full card list.
-            }
-            catch (InvalidOperationException)
-            {
-            }
         }
 
         if (!_launchHydrationDone)
@@ -1661,6 +1653,29 @@
         }
     }
 
+    private async Task MeasureViewportAsync()
+    {
+        try
+        {
+            var wide = await Js.InvokeAsync<bool>("jobsyViewport.isWide");
+            if (wide != _wideViewport)
+            {
+                _wideViewport = wide;
+                await InvokeAsync(StateHasChanged);
+            }
+        }
+        catch (JSException)
+        {
+            // Keep mobile-first: do not mount the full card list.
+        }
+        catch (InvalidOperationException)
+        {
+        }
+        catch
+        {
+        }
+    }
+
     private async Task WarmDiscoveryScriptsAsync()
     {
         try
@@ -1671,6 +1686,9 @@
         {
         }
         catch (InvalidOperationException)
+        {
+        }
+        catch
         {
         }
     }
@@ -1763,6 +1781,11 @@
             _mapInitScheduled = false;
         }
         catch (JSException)
+        {
+            _mapInitScheduled = false;
+            await InvokeAsync(StateHasChanged);
+        }
+        catch
         {
             _mapInitScheduled = false;
             await InvokeAsync(StateHasChanged);
@@ -2353,6 +2376,9 @@
         {
         }
         catch (InvalidOperationException)
+        {
+        }
+        catch
         {
         }
     }

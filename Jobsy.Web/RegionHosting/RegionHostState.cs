@@ -16,7 +16,7 @@ public sealed class RegionHostState
     private readonly JobsyApiClient _api;
     private readonly NavigationManager _nav;
     private readonly IJSRuntime _js;
-    private bool _initialized;
+    private Task? _initializeTask;
 
     public RegionHostState(JobsyApiClient api, NavigationManager nav, IJSRuntime js)
     {
@@ -29,42 +29,46 @@ public sealed class RegionHostState
 
     public event Action? Changed;
 
-    public async Task EnsureInitializedAsync()
-    {
-        if (_initialized)
-        {
-            return;
-        }
+    public Task EnsureInitializedAsync()
+        => _initializeTask ??= InitializeCoreAsync();
 
-        _initialized = true;
+    private async Task InitializeCoreAsync()
+    {
         try
         {
+            using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(2));
             var host = new Uri(_nav.Uri).Host;
-            var resolved = await _api.ResolveRegionHostAsync(host);
-            Current = resolved;
-
-            try
-            {
-                if (resolved is not null)
-                {
-                    await _js.InvokeVoidAsync("localStorage.setItem", StorageKey, resolved.Hostname);
-                }
-                else
-                {
-                    // Clear stale regional branding when visiting apex / unknown hosts.
-                    await _js.InvokeVoidAsync("localStorage.removeItem", StorageKey);
-                }
-            }
-            catch
-            {
-                // localStorage may be unavailable
-            }
-
+            Current = await _api.ResolveRegionHostAsync(host, cts.Token);
             Changed?.Invoke();
+            PersistHostname(Current);
         }
         catch
         {
             Current = null;
+            Changed?.Invoke();
+        }
+    }
+
+    private void PersistHostname(RegionHostItem? resolved)
+        => _ = PersistHostnameAsync(resolved);
+
+    private async Task PersistHostnameAsync(RegionHostItem? resolved)
+    {
+        try
+        {
+            if (resolved is not null)
+            {
+                await _js.InvokeVoidAsync("localStorage.setItem", StorageKey, resolved.Hostname);
+            }
+            else
+            {
+                // Clear stale regional branding when visiting apex / unknown hosts.
+                await _js.InvokeVoidAsync("localStorage.removeItem", StorageKey);
+            }
+        }
+        catch
+        {
+            // localStorage / JS interop may be unavailable during prerender.
         }
     }
 }

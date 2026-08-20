@@ -1044,6 +1044,24 @@ window.jobMap = (function () {
         return { center: [NL_CENTER[1], NL_CENTER[0]], zoom: NL_ZOOM, locked: false };
     }
 
+    function safeJumpTo(opts) {
+        if (!map || !opts) {
+            return;
+        }
+        try {
+            map.jumpTo(opts);
+        } catch (e) { }
+    }
+
+    function safeEaseTo(opts) {
+        if (!map || !opts) {
+            return;
+        }
+        try {
+            map.easeTo(opts);
+        } catch (e) { }
+    }
+
     function lockCamera(openingPoints, openingView, preferFilledLocation) {
         if (cameraLocked || !map) {
             return;
@@ -1052,7 +1070,7 @@ window.jobMap = (function () {
         if (!opening.locked) {
             return;
         }
-        map.jumpTo({ center: opening.center, zoom: opening.zoom });
+        safeJumpTo({ center: opening.center, zoom: opening.zoom });
         cameraLocked = true;
         firstSizedFit = true;
     }
@@ -1124,10 +1142,12 @@ window.jobMap = (function () {
         const opts = { padding: 48, maxZoom: 13, animate: !opening, duration: opening ? 0 : 450 };
         const bounds = boundsFromPoints(points);
         if (mapHasUsableSize()) {
-            map.fitBounds(bounds, opts);
+            try {
+                map.fitBounds(bounds, opts);
+            } catch (e) { }
             firstSizedFit = true;
         } else {
-            map.jumpTo({
+            safeJumpTo({
                 center: bounds.getCenter(),
                 zoom: zoomForPoints(points)
             });
@@ -1400,18 +1420,24 @@ window.jobMap = (function () {
             return;
         }
         const payload = readBootPayload();
-        createMapInstance(
-            el,
-            collectVacancyPoints(payload.pins),
-            payload.view,
-            payload.preferFilledLocation
-        );
-        bindMapRuntime();
-        if (payload.pins.length) {
-            setVacancies(payload.pins);
-        }
-        revealMapStage();
-        invalidate();
+        try {
+            try {
+                createMapInstance(
+                    el,
+                    collectVacancyPoints(payload.pins),
+                    payload.view,
+                    payload.preferFilledLocation
+                );
+            } catch (e) {
+                createMapInstance(el, collectVacancyPoints(payload.pins), payload.view, false);
+            }
+            bindMapRuntime();
+            if (payload.pins.length) {
+                setVacancies(payload.pins);
+            }
+            revealMapStage();
+            invalidate();
+        } catch (e) { }
     }
 
     function init(elementId, vacancies, options) {
@@ -1437,9 +1463,15 @@ window.jobMap = (function () {
             if (map) {
                 dispose();
             }
-            createMapInstance(el, openingPoints, openingView, preferFilledLocation);
+            try {
+                createMapInstance(el, openingPoints, openingView, preferFilledLocation);
+            } catch (e) {
+                createMapInstance(el, openingPoints, null, false);
+            }
         } else {
-            lockCamera(openingPoints, openingView, preferFilledLocation);
+            try {
+                lockCamera(openingPoints, openingView, preferFilledLocation);
+            } catch (e) { }
         }
 
         openCallback = options && options.dotNetRef ? options.dotNetRef : null;
@@ -1452,15 +1484,17 @@ window.jobMap = (function () {
 
         setVacancies(vacancies || []);
         if (options && options.origin) {
-            setOrigin(options.origin.lat, options.origin.lng, options.travel);
-            if (preferFilledLocation) {
-                const originZoom = Number(options.origin.zoom);
-                jumpToLocation(
-                    options.origin.lat,
-                    options.origin.lng,
-                    Number.isFinite(originZoom) ? originZoom : FILLED_LOCATION_ZOOM
-                );
-            }
+            try {
+                setOrigin(options.origin.lat, options.origin.lng, options.travel);
+                if (preferFilledLocation) {
+                    const originZoom = Number(options.origin.zoom);
+                    jumpToLocation(
+                        options.origin.lat,
+                        options.origin.lng,
+                        Number.isFinite(originZoom) ? originZoom : FILLED_LOCATION_ZOOM
+                    );
+                }
+            } catch (e) { }
         }
         ensureVacancyTiles();
 
@@ -1636,7 +1670,7 @@ window.jobMap = (function () {
         if (Number.isFinite(z) && z > 0) {
             opts.zoom = z;
         }
-        map.easeTo(opts);
+        safeEaseTo(opts);
     }
 
     function jumpToLocation(lat, lng, zoom) {
@@ -1653,7 +1687,7 @@ window.jobMap = (function () {
         if (Number.isFinite(z) && z > 0) {
             opts.zoom = z;
         }
-        map.jumpTo(opts);
+        safeJumpTo(opts);
         cameraLocked = true;
         firstSizedFit = true;
     }
