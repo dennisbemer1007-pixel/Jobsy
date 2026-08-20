@@ -43,7 +43,7 @@ De banenkaart blijft de first-paint kernervaring (geen Funda-klik-om-te-tonen). 
 ### Server / edge
 
 - Response compression (Brotli/Gzip) voor HTML/CSS/JS/SVG.
-- `Cache-Control: public, max-age=604800` op statische assets (versie-querystrings blijven de cache-bust).
+- Statische assets (JS/CSS/images/fonts): Lighthouse *efficient cache lifetimes*. URLs met `?v=` krijgen `Cache-Control: public, max-age=31536000, immutable` (1 jaar). Overige bestanden minstens 30 dagen (`max-age=2592000`) plus `stale-while-revalidate`. MapLibre en `blazor.web.js` hebben een versie-query.
 - `www.` → apex 301 (Cloudflare doet dit al; middleware is fallback).
 - `HEAD` op `/` geeft geen 405 meer (zelfde headers als GET, zonder body).
 - CSP zonder `unpkg.com`.

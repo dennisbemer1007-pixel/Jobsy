@@ -788,10 +788,10 @@ window.jobsyMaps = (function () {
 
     var pending = {};
     var css = [
-        "/lib/maplibre/maplibre-gl.css"
+        "/lib/maplibre/maplibre-gl.css?v=20260820-r163"
     ];
     var mapLibreScripts = [
-        "/lib/maplibre/maplibre-gl.js",
+        "/lib/maplibre/maplibre-gl.js?v=20260820-r163",
         "/js/jobsyMapLibre.js?v=20260820-r161"
     ];
     var discoveryScripts = [
@@ -801,9 +801,19 @@ window.jobsyMaps = (function () {
         "/js/vacancyDetailMap.js?v=20260820-r161"
     ];
 
+    function pathOnly(url) {
+        var q = url.indexOf("?");
+        var hash = url.indexOf("#");
+        var end = url.length;
+        if (q !== -1) end = q;
+        if (hash !== -1 && hash < end) end = hash;
+        return url.slice(0, end);
+    }
+
     function hrefMatches(node, href) {
-        var current = node.getAttribute("href") || node.getAttribute("src") || "";
-        return current === href || current === href.replace(/^\//, "") || ("/" + current) === href;
+        var current = pathOnly(node.getAttribute("href") || node.getAttribute("src") || "");
+        var want = pathOnly(href);
+        return current === want || current === want.replace(/^\//, "") || ("/" + current) === want;
     }
 
     function loadCss(href) {

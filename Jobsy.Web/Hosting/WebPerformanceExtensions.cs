@@ -26,6 +26,18 @@ public static class WebPerformanceExtensions
         return services;
     }
 
+    /// <summary>
+    /// Lighthouse <c>uses-long-cache-ttl</c> treats &lt; 30 days as inefficient
+    /// and 1 year as efficient. Versioned URLs (<c>?v=</c>) are immutable.
+    /// </summary>
+    public const int VersionedMaxAgeSeconds = 31_536_000; // 365 days
+    public const int UnversionedMaxAgeSeconds = 2_592_000; // 30 days
+
+    public static string StaticAssetCacheControl(bool versioned)
+        => versioned
+            ? $"public,max-age={VersionedMaxAgeSeconds},immutable"
+            : $"public,max-age={UnversionedMaxAgeSeconds},stale-while-revalidate=86400";
+
     public static StaticFileOptions JobsyStaticFiles()
         => new()
         {
@@ -35,9 +47,8 @@ public static class WebPerformanceExtensions
                 if (ext is ".js" or ".css" or ".webp" or ".png" or ".jpg" or ".jpeg" or ".svg"
                     or ".woff2" or ".woff" or ".ico")
                 {
-                    // Query-string cache busting is already used on CSS/JS/brand marks.
-                    ctx.Context.Response.Headers.CacheControl =
-                        "public,max-age=604800,stale-while-revalidate=86400";
+                    var versioned = ctx.Context.Request.Query.ContainsKey("v");
+                    ctx.Context.Response.Headers.CacheControl = StaticAssetCacheControl(versioned);
                 }
             }
         };
