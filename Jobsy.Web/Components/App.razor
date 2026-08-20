@@ -16,7 +16,7 @@
     <link rel="apple-touch-icon" href="@Jobsy.Web.Media.BrandImages.AppleTouch" />
     <link rel="dns-prefetch" href="https://tiles.openfreemap.org" />
     <style>
-        :root { --bg:#f5f2ee; --surface:#fffcfa; --text:#122033; --border:#ddd5cc; --brand:#0f2d5c; --map-land:#e6efe4; --font:"Segoe UI","Helvetica Neue",Arial,sans-serif; }
+        :root { --bg:#f5f2ee; --surface:#fffcfa; --text:#122033; --border:#ddd5cc; --brand:#0f2d5c; --map-land:#f8f4f0; --font:"Segoe UI","Helvetica Neue",Arial,sans-serif; }
         * { box-sizing: border-box; }
         html, body { margin: 0; height: 100%; font-family: var(--font); color: var(--text); background: var(--bg); }
         html.cookie-consent-known .cookie-consent { display: none; }
@@ -27,6 +27,7 @@
         .map-stage { flex: 1 1 auto; }
         #job-map, .job-map { width: 100%; min-width: 280px; min-height: 55dvh; height: 100%; background: var(--map-land); contain: layout; }
         .job-map-placeholder { position: absolute; inset: 0; background: var(--map-land); pointer-events: none; }
+        .map-stage.is-live .job-map-placeholder { opacity: 0; visibility: hidden; transition: none; }
         @@media (max-width: 768px) {
             .app-shell:has(.jobsy-discovery) .app-header,
             .app-shell:has(.jobsy-discovery) .app-footer { display: none; }
@@ -45,8 +46,8 @@
         }
         .img-fallback-empty { background: #e7eef7; object-fit: contain; }
     </style>
-    <link rel="stylesheet" href="css/app.css?v=20260820-r183" media="print" onload="this.onload=null;this.media='all'" />
-    <noscript><link rel="stylesheet" href="css/app.css?v=20260820-r183" /></noscript>
+    <link rel="stylesheet" href="css/app.css?v=20260820-r184" media="print" onload="this.onload=null;this.media='all'" />
+    <noscript><link rel="stylesheet" href="css/app.css?v=20260820-r184" /></noscript>
     <script>
         (function () {
             try {
@@ -134,7 +135,7 @@
     <CascadingAuthenticationState>
         <Routes @rendermode="new InteractiveServerRenderMode(prerender: true)" />
     </CascadingAuthenticationState>
-    <script src="js/app-core.js?v=20260820-r183" defer></script>
+    <script src="js/app-core.js?v=20260820-r184" defer></script>
     @if (LoadBlazorRuntime)
     {
         <script src="_framework/blazor.web.js?v=20260820-r164" defer></script>

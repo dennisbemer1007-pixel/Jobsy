@@ -56,7 +56,7 @@ public class JobMapPrerenderGuardTests
         Assert.Contains("lockCamera", js);
         Assert.Contains("openingCamera", js);
         Assert.Contains("readFilledOrigin", js);
-        Assert.Contains("FILLED_LOCATION_ZOOM", js);
+        Assert.Contains("FILLED_LOCATION_ZOOM = 11", js);
         Assert.Contains("preferFilledLocation", js);
         Assert.Contains("jumpToLocation", js);
         Assert.Contains("safeJumpTo", js);
@@ -67,9 +67,14 @@ public class JobMapPrerenderGuardTests
         Assert.DoesNotContain("openingViewUntil", js);
         Assert.DoesNotContain("No default NL view", js);
         var initIdx = js.IndexOf("function init(elementId, vacancies, options)", StringComparison.Ordinal);
+        var initEnd = js.IndexOf("function locateIconHtml", initIdx, StringComparison.Ordinal);
+        Assert.True(initIdx > 0 && initEnd > initIdx);
+        var initFn = js[initIdx..initEnd];
+        Assert.DoesNotContain("jumpToLocation", initFn);
+        Assert.DoesNotContain("fitMapToVacancies", initFn);
         var setVacanciesInInit = js.IndexOf("setVacancies(vacancies || []);", initIdx, StringComparison.Ordinal);
         var tilesAfterVacancies = js.IndexOf("ensureVacancyTiles();", setVacanciesInInit, StringComparison.Ordinal);
-        Assert.True(initIdx > 0 && setVacanciesInInit > initIdx && tilesAfterVacancies > setVacanciesInInit);
+        Assert.True(setVacanciesInInit > initIdx && tilesAfterVacancies > setVacanciesInInit);
 
         var setStart = js.IndexOf("function setVacancies(vacancies)", StringComparison.Ordinal);
         var setEnd = js.IndexOf("function ensureOriginMarker", StringComparison.Ordinal);
@@ -137,6 +142,14 @@ public class JobMapPrerenderGuardTests
         Assert.Contains("syncStyleToggle", helper);
         Assert.Contains("return \"liberty\"", helper);
 
+        var createStart = helper.IndexOf("function createMap(container, options)", StringComparison.Ordinal);
+        var createEnd = helper.IndexOf("return {", createStart, StringComparison.Ordinal);
+        Assert.True(createStart > 0 && createEnd > createStart);
+        var createFn = helper[createStart..createEnd];
+        Assert.Contains("center: options.center", createFn);
+        Assert.Contains("zoom: options.zoom", createFn);
+        Assert.DoesNotContain("applyCameraForStyle", createFn);
+
         var css = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "wwwroot", "css", "app.css"));
         Assert.Contains("maplibregl-ctrl-attrib", css);
         Assert.Contains("display: none !important", css);
@@ -180,6 +193,8 @@ public class JobMapPrerenderGuardTests
         Assert.Contains("jobsyLogoFallback", app);
         Assert.Contains("#job-map", app);
         Assert.Contains("min-height: 55dvh", app);
+        Assert.Contains("--map-land:#f8f4f0", app);
+        Assert.Contains(".map-stage.is-live .job-map-placeholder", app);
         Assert.Contains(".lobsy-watermarks { display: none; }", app);
         Assert.Contains(".jobsy-chrome { display: none; }", app);
         Assert.DoesNotContain("lib/leaflet/leaflet.min.js", app);
@@ -216,7 +231,7 @@ public class JobMapPrerenderGuardTests
         Assert.Contains("LoadMapViewAsync", discovery);
         Assert.Contains("[\"view\"]", discovery);
         Assert.Contains("preferFilledLocation", discovery);
-        Assert.Contains("ForFilledLocation", discovery);
+        Assert.Contains("VacancyMapViewCalculator.ResolveOpening", discovery);
         Assert.Contains("CenterMapOnFilledLocationAsync", discovery);
         Assert.Contains("RegionHost.EnsureInitializedAsync", discovery);
         Assert.DoesNotContain("await RegionHost.EnsureInitializedAsync();", discovery);
@@ -230,6 +245,9 @@ public class JobMapPrerenderGuardTests
         Assert.True(measureCall >= 0 && firstInit > measureCall && extraInit < 0);
         var geoHydrate = discovery.IndexOf("ensureLocationOnLaunch", afterRender, StringComparison.Ordinal);
         Assert.True(geoHydrate > afterRender);
+        var launchDone = discovery.IndexOf("_launchHydrationDone = true", geoHydrate, StringComparison.Ordinal);
+        Assert.True(launchDone > geoHydrate);
+        Assert.DoesNotContain("CenterMapOnFilledLocationAsync", discovery[geoHydrate..launchDone]);
         var hydrateCatch = discovery.IndexOf("catch (JSException)", geoHydrate, StringComparison.Ordinal);
         Assert.True(hydrateCatch > geoHydrate);
         var hydrateSlice = discovery[hydrateCatch..(hydrateCatch + 180)];

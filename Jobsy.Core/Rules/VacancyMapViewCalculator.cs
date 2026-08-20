@@ -11,10 +11,10 @@ public static class VacancyMapViewCalculator
     public static VacancyMapView Fallback { get; } = new(52.15, 5.2913, 7, 0);
 
     /// <summary>
-    /// Local zoom when the map is centered on a filled origin or region-host address
-    /// (~10–20 km). Keep in sync with <c>FILLED_LOCATION_ZOOM</c> in <c>jobMap.js</c>.
+    /// Local zoom when the map is centered on a filled origin or region-host address.
+    /// Keep in sync with <c>FILLED_LOCATION_ZOOM</c> in <c>jobMap.js</c>.
     /// </summary>
-    public const int FilledLocationZoom = 12;
+    public const int FilledLocationZoom = 11;
 
     public static VacancyMapView? ForFilledLocation(double lat, double lng, int pinCount = 0)
     {
@@ -29,6 +29,38 @@ public static class VacancyMapViewCalculator
             Math.Round(lng, 5, MidpointRounding.AwayFromZero),
             FilledLocationZoom,
             Math.Max(0, pinCount));
+    }
+
+    /// <summary>
+    /// Opening camera for the banenkaart, computed before HTML leaves the server.
+    /// Address / default-region wins (zoom 11); otherwise the marker-centroid view.
+    /// Company deep-links keep the pin camera.
+    /// </summary>
+    public static VacancyMapView ResolveOpening(
+        VacancyMapView pinCentroid,
+        double? originLat,
+        double? originLng,
+        double? regionLat,
+        double? regionLng,
+        bool companyFocus)
+    {
+        if (companyFocus)
+        {
+            return pinCentroid;
+        }
+
+        var fromOrigin = originLat is double oLat && originLng is double oLng
+            ? ForFilledLocation(oLat, oLng, pinCentroid.PinCount)
+            : null;
+        if (fromOrigin is not null)
+        {
+            return fromOrigin;
+        }
+
+        var fromRegion = regionLat is double rLat && regionLng is double rLng
+            ? ForFilledLocation(rLat, rLng, pinCentroid.PinCount)
+            : null;
+        return fromRegion ?? pinCentroid;
     }
 
     public static VacancyMapView FromRecords(IEnumerable<VacancyDiscoveryRecord> records)

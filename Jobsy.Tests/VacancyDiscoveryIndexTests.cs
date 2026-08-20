@@ -395,8 +395,69 @@ public class VacancyMapViewCalculatorTests
         Assert.Equal(52.01123, view.CenterLat);
         Assert.Equal(4.22167, view.CenterLng);
         Assert.Equal(VacancyMapViewCalculator.FilledLocationZoom, view.Zoom);
+        Assert.Equal(11, view.Zoom);
         Assert.Equal(8, view.PinCount);
         Assert.True(view.HasPins);
+    }
+
+    [Fact]
+    public void Opening_view_prefers_filled_origin_at_zoom_11_over_centroid()
+    {
+        var pins = VacancyMapViewCalculator.FromPoints([(52.0, 5.0), (53.0, 6.0)]);
+        var view = VacancyMapViewCalculator.ResolveOpening(
+            pins,
+            originLat: 52.01123,
+            originLng: 4.22167,
+            regionLat: 51.92,
+            regionLng: 4.48,
+            companyFocus: false);
+        Assert.Equal(52.01123, view.CenterLat);
+        Assert.Equal(4.22167, view.CenterLng);
+        Assert.Equal(11, view.Zoom);
+    }
+
+    [Fact]
+    public void Opening_view_uses_region_focus_when_no_origin()
+    {
+        var pins = VacancyMapViewCalculator.FromPoints([(52.0, 5.0), (53.0, 6.0)]);
+        var view = VacancyMapViewCalculator.ResolveOpening(
+            pins,
+            originLat: null,
+            originLng: null,
+            regionLat: 51.9225,
+            regionLng: 4.47917,
+            companyFocus: false);
+        Assert.Equal(51.9225, view.CenterLat);
+        Assert.Equal(4.47917, view.CenterLng);
+        Assert.Equal(11, view.Zoom);
+    }
+
+    [Fact]
+    public void Opening_view_keeps_pin_centroid_without_address_or_region()
+    {
+        var pins = VacancyMapViewCalculator.FromPoints([(52.0, 5.0), (53.0, 6.0)]);
+        var view = VacancyMapViewCalculator.ResolveOpening(
+            pins,
+            originLat: null,
+            originLng: null,
+            regionLat: null,
+            regionLng: null,
+            companyFocus: false);
+        Assert.Equal(pins, view);
+    }
+
+    [Fact]
+    public void Opening_view_keeps_pin_centroid_for_company_focus()
+    {
+        var pins = VacancyMapViewCalculator.FromPoints([(52.0, 5.0), (53.0, 6.0)]);
+        var view = VacancyMapViewCalculator.ResolveOpening(
+            pins,
+            originLat: 52.01123,
+            originLng: 4.22167,
+            regionLat: 51.92,
+            regionLng: 4.48,
+            companyFocus: true);
+        Assert.Equal(pins, view);
     }
 
     [Theory]

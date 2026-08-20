@@ -25,7 +25,7 @@ window.jobMap = (function () {
     const NL_ZOOM = 7;
     const NL_BOUNDS = [[50.29, 2.81], [53.33, 8.44]];
     // Keep in sync with VacancyMapViewCalculator.FilledLocationZoom.
-    const FILLED_LOCATION_ZOOM = 12;
+    const FILLED_LOCATION_ZOOM = 11;
 
     const CLUSTER_OPTS = {
         showCoverageOnHover: false,
@@ -1041,7 +1041,7 @@ window.jobMap = (function () {
             const start = startBounds.getCenter();
             return { center: [start.lng, start.lat], zoom: zoomForPoints(openingPoints), locked: true };
         }
-        return { center: [NL_CENTER[1], NL_CENTER[0]], zoom: NL_ZOOM, locked: false };
+        return { center: [NL_CENTER[1], NL_CENTER[0]], zoom: NL_ZOOM, locked: true };
     }
 
     function safeJumpTo(opts) {
@@ -1135,6 +1135,12 @@ window.jobMap = (function () {
             : vacancyPoints();
         lastFitPoints = points.slice();
         if (points.length === 0) {
+            return;
+        }
+
+        if (cameraLocked || firstSizedFit) {
+            ensureVacancyTiles();
+            revealMapStage();
             return;
         }
 
@@ -1345,13 +1351,13 @@ window.jobMap = (function () {
             zoom: opening.zoom
         });
         cameraLocked = opening.locked;
-        firstSizedFit = opening.locked;
+        firstSizedFit = true;
         map._jobsyOnStyleRestored = restoreOverlays;
         map.on("load", function () {
             restoreOverlays();
-            invalidate();
         });
         window.addEventListener("resize", invalidate);
+        revealMapStage();
     }
 
     function bindMapRuntime() {
@@ -1399,8 +1405,14 @@ window.jobMap = (function () {
                 return { pins: parsed, view: null, preferFilledLocation: true };
             }
             const pins = parsed && Array.isArray(parsed.pins) ? parsed.pins : [];
-            const view = parsed ? readOpeningView(parsed.view) : null;
+            let view = parsed ? readOpeningView(parsed.view) : null;
             const preferFilledLocation = !parsed || parsed.preferFilledLocation !== false;
+            if (preferFilledLocation) {
+                const filled = readFilledOrigin();
+                if (filled) {
+                    view = filled;
+                }
+            }
             return { pins: pins, view: view, preferFilledLocation: preferFilledLocation };
         } catch (e) {
             return { pins: [], view: null, preferFilledLocation: true };
@@ -1486,14 +1498,6 @@ window.jobMap = (function () {
         if (options && options.origin) {
             try {
                 setOrigin(options.origin.lat, options.origin.lng, options.travel);
-                if (preferFilledLocation) {
-                    const originZoom = Number(options.origin.zoom);
-                    jumpToLocation(
-                        options.origin.lat,
-                        options.origin.lng,
-                        Number.isFinite(originZoom) ? originZoom : FILLED_LOCATION_ZOOM
-                    );
-                }
             } catch (e) { }
         }
         ensureVacancyTiles();

@@ -216,7 +216,6 @@ window.jobsyMapLibre = (function () {
 
         map.on("load", function () {
             hideChrome(map);
-            applyCameraForStyle(map, spec);
         });
         map.on("styledata", function () {
             hideChrome(map);

@@ -1628,7 +1628,7 @@
                             _ = ResolveLaunchAddressAsync(stored.Lat, stored.Lng);
                         }
 
-                        await CenterMapOnFilledLocationAsync(stored.Lat, stored.Lng, animate: false);
+                        // Camera is already in the MapLibre constructor via localStorage / boot JSON.
                     }
 
                     _launchHydrationDone = true;
@@ -2025,34 +2025,14 @@
     /// </summary>
     private VacancyMapView ResolveOpeningView()
     {
-        var pins = PinCentroidOpeningView();
-        if (HasCompanyMapFocus)
-        {
-            return pins;
-        }
-
-        if (_origin is not null)
-        {
-            var fromOrigin = VacancyMapViewCalculator.ForFilledLocation(
-                _origin.Latitude, _origin.Longitude, pins.PinCount);
-            if (fromOrigin is not null)
-            {
-                return fromOrigin;
-            }
-        }
-
         var region = RegionHost.Current;
-        if (region?.Latitude is double regionLat && region.Longitude is double regionLng)
-        {
-            var fromRegion = VacancyMapViewCalculator.ForFilledLocation(
-                regionLat, regionLng, pins.PinCount);
-            if (fromRegion is not null)
-            {
-                return fromRegion;
-            }
-        }
-
-        return pins;
+        return VacancyMapViewCalculator.ResolveOpening(
+            PinCentroidOpeningView(),
+            _origin?.Latitude,
+            _origin?.Longitude,
+            region?.Latitude,
+            region?.Longitude,
+            HasCompanyMapFocus);
     }
 
     private string MapBootPinsJson()
