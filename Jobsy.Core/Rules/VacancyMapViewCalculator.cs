@@ -10,6 +10,27 @@ public static class VacancyMapViewCalculator
 {
     public static VacancyMapView Fallback { get; } = new(52.15, 5.2913, 7, 0);
 
+    /// <summary>
+    /// Local zoom when the map is centered on a filled origin or region-host address
+    /// (~10–20 km). Keep in sync with <c>FILLED_LOCATION_ZOOM</c> in <c>jobMap.js</c>.
+    /// </summary>
+    public const int FilledLocationZoom = 12;
+
+    public static VacancyMapView? ForFilledLocation(double lat, double lng, int pinCount = 0)
+    {
+        if (!double.IsFinite(lat) || !double.IsFinite(lng)
+            || lat is < -90 or > 90 || lng is < -180 or > 180)
+        {
+            return null;
+        }
+
+        return new VacancyMapView(
+            Math.Round(lat, 5, MidpointRounding.AwayFromZero),
+            Math.Round(lng, 5, MidpointRounding.AwayFromZero),
+            FilledLocationZoom,
+            Math.Max(0, pinCount));
+    }
+
     public static VacancyMapView FromRecords(IEnumerable<VacancyDiscoveryRecord> records)
         => FromPoints(records.Select(r => (r.Latitude, r.Longitude)));
 

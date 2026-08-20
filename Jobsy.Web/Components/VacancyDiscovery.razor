@@ -4,6 +4,7 @@
 @inject CultureState Culture
 @inject AuthenticationStateProvider AuthState
 @inject NavigationManager Navigation
+@inject Jobsy.Web.RegionHosting.RegionHostState RegionHost
 @implements IAsyncDisposable
 @using Jobsy.Core.Contracts
 @using Jobsy.Core.Media
@@ -1138,6 +1139,7 @@
         ApplyTransportFromQuery();
         ApplyHoursFromQuery();
         ApplyCompanyFocusFromQuery();
+        await RegionHost.EnsureInitializedAsync();
 
         if (!RendererInfo.IsInteractive)
         {
@@ -1633,6 +1635,8 @@
                             // Do not block first discover on reverse-geocode latency; refresh UI when done.
                             _ = ResolveLaunchAddressAsync(stored.Lat, stored.Lng);
                         }
+
+                        await CenterMapOnFilledLocationAsync(stored.Lat, stored.Lng, animate: false);
                     }
 
                     _launchHydrationDone = true;
@@ -1719,11 +1723,13 @@
             _dotNetRef ??= DotNetObjectReference.Create(this);
             var markers = BuildMarkers();
             var opening = ResolveOpeningView();
+            var preferFilledLocation = !HasCompanyMapFocus;
             var options = new Dictionary<string, object?>
             {
                 ["dotNetRef"] = _dotNetRef,
                 ["travel"] = TravelMapOptions(),
                 ["highlightSeed"] = _highlightShuffleSeed,
+                ["preferFilledLocation"] = preferFilledLocation,
                 ["view"] = new Dictionary<string, object?>
                 {
                     ["lat"] = opening.CenterLat,
@@ -1736,7 +1742,8 @@
                 options["origin"] = new Dictionary<string, object?>
                 {
                     ["lat"] = _origin.Latitude,
-                    ["lng"] = _origin.Longitude
+                    ["lng"] = _origin.Longitude,
+                    ["zoom"] = VacancyMapViewCalculator.FilledLocationZoom
                 };
             }
 
@@ -1972,7 +1979,10 @@
         }
     }
 
-    private VacancyMapView ResolveOpeningView()
+    private bool HasCompanyMapFocus =>
+        _mapFocusCompanyId is not null || _companyFocusIds is { Count: > 0 };
+
+    private VacancyMapView PinCentroidOpeningView()
     {
         if (_mapView is { PinCount: > 0 } stored)
         {
@@ -1983,6 +1993,43 @@
             _vacancies
                 .Where(v => double.IsFinite(v.Latitude) && double.IsFinite(v.Longitude))
                 .Select(v => (v.Latitude, v.Longitude)));
+    }
+
+    /// <summary>
+    /// Prefer the filled current location (search origin) as map center; else the
+    /// region-host kaartfocus; else the existing vacancy-pin centroid.
+    /// Company deep-links keep the pin/company camera.
+    /// </summary>
+    private VacancyMapView ResolveOpeningView()
+    {
+        var pins = PinCentroidOpeningView();
+        if (HasCompanyMapFocus)
+        {
+            return pins;
+        }
+
+        if (_origin is not null)
+        {
+            var fromOrigin = VacancyMapViewCalculator.ForFilledLocation(
+                _origin.Latitude, _origin.Longitude, pins.PinCount);
+            if (fromOrigin is not null)
+            {
+                return fromOrigin;
+            }
+        }
+
+        var region = RegionHost.Current;
+        if (region?.Latitude is double regionLat && region.Longitude is double regionLng)
+        {
+            var fromRegion = VacancyMapViewCalculator.ForFilledLocation(
+                regionLat, regionLng, pins.PinCount);
+            if (fromRegion is not null)
+            {
+                return fromRegion;
+            }
+        }
+
+        return pins;
     }
 
     private string MapBootPinsJson()
@@ -2013,6 +2060,7 @@
             .ToList();
         var payload = new Dictionary<string, object?>
         {
+            ["preferFilledLocation"] = !HasCompanyMapFocus,
             ["view"] = new Dictionary<string, object?>
             {
                 ["lat"] = opening.CenterLat,
@@ -2279,10 +2327,33 @@
         }
 
         await LoadVacanciesAsync();
-        if (_mapReady)
+        await CenterMapOnFilledLocationAsync(lat, lng, animate: true);
+    }
+
+    private async Task CenterMapOnFilledLocationAsync(double lat, double lng, bool animate)
+    {
+        if (!_mapReady || HasCompanyMapFocus || !IsFinite(lat) || !IsFinite(lng))
+        {
+            return;
+        }
+
+        try
         {
             await Js.InvokeVoidAsync("jobMap.setOrigin", lat, lng, TravelMapOptions());
-            await Js.InvokeVoidAsync("jobMap.panTo", lat, lng);
+            if (animate)
+            {
+                await Js.InvokeVoidAsync("jobMap.panTo", lat, lng, VacancyMapViewCalculator.FilledLocationZoom);
+            }
+            else
+            {
+                await Js.InvokeVoidAsync("jobMap.jumpToLocation", lat, lng, VacancyMapViewCalculator.FilledLocationZoom);
+            }
+        }
+        catch (JSException)
+        {
+        }
+        catch (InvalidOperationException)
+        {
         }
     }
 

@@ -55,6 +55,10 @@ public class JobMapPrerenderGuardTests
         Assert.Contains("fitMapToVacancies", js);
         Assert.Contains("lockCamera", js);
         Assert.Contains("openingCamera", js);
+        Assert.Contains("readFilledOrigin", js);
+        Assert.Contains("FILLED_LOCATION_ZOOM", js);
+        Assert.Contains("preferFilledLocation", js);
+        Assert.Contains("jumpToLocation", js);
         Assert.Contains("collectVacancyPoints", js);
         Assert.Contains("ensureVacancyTiles", js);
         Assert.Contains("firstSizedFit", js);
@@ -209,6 +213,11 @@ public class JobMapPrerenderGuardTests
         Assert.Contains("ResolveOpeningView", discovery);
         Assert.Contains("LoadMapViewAsync", discovery);
         Assert.Contains("[\"view\"]", discovery);
+        Assert.Contains("preferFilledLocation", discovery);
+        Assert.Contains("ForFilledLocation", discovery);
+        Assert.Contains("CenterMapOnFilledLocationAsync", discovery);
+        Assert.Contains("RegionHost.EnsureInitializedAsync", discovery);
+        Assert.Contains("FilledLocationZoom", discovery);
         var tryInit = discovery.IndexOf("await TryInitJobMapAsync();", afterRender, StringComparison.Ordinal);
         var isWide = discovery.IndexOf("jobsyViewport.isWide", afterRender, StringComparison.Ordinal);
         Assert.True(tryInit > afterRender && isWide > tryInit);

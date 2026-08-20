@@ -299,7 +299,8 @@
             var options = new Dictionary<string, object?>
             {
                 ["dotNetRef"] = _dotNetRef,
-                ["highlightSeed"] = _highlightShuffleSeed
+                ["highlightSeed"] = _highlightShuffleSeed,
+                ["preferFilledLocation"] = false
             };
             await MapScripts.EnsureDiscoveryAsync(Js);
             await Js.InvokeVoidAsync("jobMap.init", "branch-job-map", markers, options);

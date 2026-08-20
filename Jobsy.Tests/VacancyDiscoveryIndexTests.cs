@@ -386,4 +386,24 @@ public class VacancyMapViewCalculatorTests
     [InlineData(3.0, 8)]
     public void Zoom_matches_jobmap_span_heuristic(double span, int zoom)
         => Assert.Equal(zoom, VacancyMapViewCalculator.ZoomForSpan(span));
+
+    [Fact]
+    public void Filled_location_is_the_camera_center_at_local_zoom()
+    {
+        var view = VacancyMapViewCalculator.ForFilledLocation(52.01123, 4.22167, pinCount: 8);
+        Assert.NotNull(view);
+        Assert.Equal(52.01123, view.CenterLat);
+        Assert.Equal(4.22167, view.CenterLng);
+        Assert.Equal(VacancyMapViewCalculator.FilledLocationZoom, view.Zoom);
+        Assert.Equal(8, view.PinCount);
+        Assert.True(view.HasPins);
+    }
+
+    [Theory]
+    [InlineData(double.NaN, 4.2)]
+    [InlineData(52.0, double.PositiveInfinity)]
+    [InlineData(91, 4.2)]
+    [InlineData(52.0, 181)]
+    public void Invalid_filled_location_returns_null(double lat, double lng)
+        => Assert.Null(VacancyMapViewCalculator.ForFilledLocation(lat, lng));
 }
