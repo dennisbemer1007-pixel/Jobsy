@@ -3384,34 +3384,39 @@ a {
 .job-map-style-switch {
     position: absolute;
     top: 10px;
-    left: 10px;
+    right: 48px;
     z-index: 2;
-    display: inline-flex;
-    padding: 3px;
-    gap: 2px;
-    border-radius: 10px;
-    background: color-mix(in srgb, var(--surface) 92%, transparent);
-    box-shadow: 0 1px 4px rgba(15, 45, 92, 0.18);
     pointer-events: auto;
 }
 
 .job-map-style-switch__btn {
     appearance: none;
-    border: 0;
+    box-sizing: border-box;
+    width: 32px;
+    height: 29px;
     margin: 0;
-    padding: 0.38rem 0.7rem;
-    border-radius: 8px;
-    background: transparent;
-    color: var(--brand);
+    padding: 0;
+    border: 1px solid color-mix(in srgb, var(--border) 70%, transparent);
+    border-radius: 4px;
+    background: color-mix(in srgb, var(--surface) 82%, transparent);
+    color: color-mix(in srgb, var(--brand) 55%, var(--muted));
     font: inherit;
-    font-size: 0.75rem;
-    font-weight: 700;
-    line-height: 1.2;
+    font-size: 0.62rem;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+    line-height: 1;
     cursor: pointer;
+    box-shadow: 0 1px 3px rgba(15, 45, 92, 0.12);
 }
 
-.job-map-style-switch__btn.is-active {
+.job-map-style-switch__btn:hover {
+    background: var(--surface);
+    color: var(--brand);
+}
+
+.job-map-style-switch__btn.is-on {
     background: var(--brand);
+    border-color: var(--brand);
     color: #fff;
 }
 

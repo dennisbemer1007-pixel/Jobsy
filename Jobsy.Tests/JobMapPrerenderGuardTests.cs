@@ -114,12 +114,17 @@ public class JobMapPrerenderGuardTests
         Assert.Contains("cooperativeGestures: false", helper);
         Assert.Contains("dragPan: true", helper);
         Assert.Contains("touchAction", helper);
-        Assert.Contains("3D / Bright", helper);
+        Assert.Contains("aria-label=\"3D-kaart\"", helper);
+        Assert.DoesNotContain("3D / Bright", helper);
+        Assert.Contains("syncStyleToggle", helper);
+        Assert.Contains("return \"liberty\"", helper);
 
         var css = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "wwwroot", "css", "app.css"));
         Assert.Contains("maplibregl-ctrl-attrib", css);
         Assert.Contains("display: none !important", css);
         Assert.Contains("job-map-style-switch", css);
+        Assert.Contains("right: 48px", css);
+        Assert.Contains(".job-map-style-switch__btn.is-on", css);
         Assert.Contains("touch-action: none", css);
         Assert.Contains("#job-map", css);
         Assert.Contains("min-height: 55dvh", css);

@@ -361,7 +361,7 @@ window.jobsyMaps = (function () {
     ];
     var mapLibreScripts = [
         "/lib/maplibre/maplibre-gl-csp.js?v=20260820-r166",
-        "/js/jobsyMapLibre.min.js?v=20260820-r166"
+        "/js/jobsyMapLibre.min.js?v=20260820-r172"
     ];
     var discoveryScripts = [
         "/js/jobMap.min.js?v=20260820-r171"

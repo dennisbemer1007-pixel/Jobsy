@@ -106,16 +106,18 @@ window.jobsyMapLibre = (function () {
         }
     }
 
-    function syncStyleButtons(ctrl, key) {
+    function syncStyleToggle(ctrl, key) {
         if (!ctrl) {
             return;
         }
-        var buttons = ctrl.querySelectorAll("[data-map-style]");
-        for (var i = 0; i < buttons.length; i++) {
-            var active = buttons[i].getAttribute("data-map-style") === key;
-            buttons[i].classList.toggle("is-active", active);
-            buttons[i].setAttribute("aria-pressed", active ? "true" : "false");
+        var btn = ctrl.querySelector(".job-map-style-switch__btn");
+        if (!btn) {
+            return;
         }
+        var on = key === "bright";
+        btn.classList.toggle("is-on", on);
+        btn.setAttribute("aria-pressed", on ? "true" : "false");
+        btn.title = on ? "3D uitzetten" : "3D aanzetten";
     }
 
     function attachStyleSwitch(map) {
@@ -125,23 +127,22 @@ window.jobsyMapLibre = (function () {
         }
         var ctrl = document.createElement("div");
         ctrl.className = "job-map-style-switch";
-        ctrl.setAttribute("role", "group");
-        ctrl.setAttribute("aria-label", "Kaartstijl");
         ctrl.innerHTML =
-            "<button type=\"button\" class=\"job-map-style-switch__btn\" data-map-style=\"liberty\">Liberty</button>" +
-            "<button type=\"button\" class=\"job-map-style-switch__btn\" data-map-style=\"bright\">3D / Bright</button>";
+            "<button type=\"button\" class=\"job-map-style-switch__btn\" " +
+            "aria-label=\"3D-kaart\" aria-pressed=\"false\" title=\"3D aanzetten\">3D</button>";
         host.appendChild(ctrl);
-        syncStyleButtons(ctrl, map._jobsyStyleKey || "liberty");
+        syncStyleToggle(ctrl, map._jobsyStyleKey || "liberty");
         ctrl.addEventListener("click", function (ev) {
             var btn = ev.target && ev.target.closest
-                ? ev.target.closest("[data-map-style]")
+                ? ev.target.closest(".job-map-style-switch__btn")
                 : null;
             if (!btn) {
                 return;
             }
             ev.preventDefault();
             ev.stopPropagation();
-            setStyle(map, btn.getAttribute("data-map-style"));
+            var next = (map._jobsyStyleKey === "bright") ? "liberty" : "bright";
+            setStyle(map, next);
         });
         map._jobsyStyleSwitch = ctrl;
         return ctrl;
@@ -157,7 +158,7 @@ window.jobsyMapLibre = (function () {
         }
         map._jobsyStyleKey = spec.key;
         storeStyle(spec.key);
-        syncStyleButtons(map._jobsyStyleSwitch, spec.key);
+        syncStyleToggle(map._jobsyStyleSwitch, spec.key);
         var onRestore = map._jobsyOnStyleRestored;
         map.setStyle(spec.url);
         map.once("style.load", function () {
