@@ -10,9 +10,8 @@ window.jobMap = (function () {
     let openCallback = null;
     let outsideClickCloserBound = false;
     let highlightSeed = 0;
-    let firstViewApplied = false;
+    let firstSizedFit = false;
     let lastFitPoints = [];
-    let openingViewUntil = 0;
     let tileLayer = null;
     let renderedMarkers = [];
     let lastOrigin = null;
@@ -108,6 +107,10 @@ window.jobMap = (function () {
         return (window.innerWidth || 0) <= 768;
     }
 
+    // Center-anchored pins: 34px job / 44px cluster. Tip sits on the top of the marker.
+    const JOB_POPUP_OFFSET = { bottom: [0, -18] };
+    const CLUSTER_POPUP_OFFSET = { bottom: [0, -23] };
+
     function jobPopupOptions() {
         const vw = window.innerWidth || 360;
         const narrow = isNarrowViewport();
@@ -117,16 +120,17 @@ window.jobMap = (function () {
         return {
             className: "job-map-popup",
             maxWidth: width + "px",
-            offset: 22,
+            anchor: "bottom",
+            offset: JOB_POPUP_OFFSET,
             closeOnClick: true,
-            closeButton: true,
-            anchor: "bottom"
+            closeButton: true
         };
     }
 
     function clusterPopupOptions() {
         const opts = jobPopupOptions();
         opts.className = opts.className + " job-map-popup--cluster";
+        opts.offset = CLUSTER_POPUP_OFFSET;
         return opts;
     }
 
@@ -138,6 +142,11 @@ window.jobMap = (function () {
         popup.options = popup.options || {};
         popup.options.className = opts.className;
         popup.options.maxWidth = opts.maxWidth;
+        popup.options.anchor = opts.anchor;
+        popup.options.offset = opts.offset;
+        if (typeof popup.setOffset === "function") {
+            popup.setOffset(opts.offset);
+        }
 
         const el = typeof popup.getElement === "function" ? popup.getElement() : null;
         if (el) {
@@ -940,18 +949,18 @@ window.jobMap = (function () {
             return;
         }
 
-        const opening = !firstViewApplied || Date.now() < openingViewUntil;
+        const opening = !firstSizedFit;
         const opts = { padding: 48, maxZoom: 13, animate: !opening, duration: opening ? 0 : 450 };
         const bounds = boundsFromPoints(points);
         if (mapHasUsableSize()) {
             map.fitBounds(bounds, opts);
+            firstSizedFit = true;
         } else {
             map.jumpTo({
                 center: bounds.getCenter(),
                 zoom: zoomForPoints(points)
             });
         }
-        firstViewApplied = true;
         ensureVacancyTiles();
         revealMapStage();
     }
@@ -1151,9 +1160,8 @@ window.jobMap = (function () {
             ? (Number(options.highlightSeed) >>> 0)
             : 0;
 
-        firstViewApplied = false;
+        firstSizedFit = false;
         lastFitPoints = [];
-        openingViewUntil = Date.now() + 800;
         tileLayer = null;
         selectedId = null;
 
@@ -1214,15 +1222,7 @@ window.jobMap = (function () {
 
         map.on("load", function () {
             restoreOverlays();
-        });
-
-        [50, 200, 500].forEach(function (ms) {
-            setTimeout(function () {
-                invalidate();
-                if (clusterGroup && typeof clusterGroup.refreshClusters === "function") {
-                    clusterGroup.refreshClusters();
-                }
-            }, ms);
+            invalidate();
         });
 
         window.addEventListener("resize", invalidate);
@@ -1382,11 +1382,8 @@ window.jobMap = (function () {
             return;
         }
         map.resize();
-        if (Date.now() < openingViewUntil || !firstViewApplied) {
-            if (lastFitPoints.length > 0) {
-                firstViewApplied = false;
-                fitMapToVacancies(lastFitPoints);
-            }
+        if (!firstSizedFit && lastFitPoints.length > 0) {
+            fitMapToVacancies(lastFitPoints);
         }
     }
 
@@ -1413,7 +1410,6 @@ window.jobMap = (function () {
     }
 
     function focus(id) {
-        openingViewUntil = 0;
         const record = markersById[id];
         if (!record || !map || !clusterGroup) {
             return;
@@ -1442,7 +1438,6 @@ window.jobMap = (function () {
      * popup when 2+ vacancies share that company.
      */
     function focusCompany(companyId) {
-        openingViewUntil = 0;
         if (!map || !clusterGroup || companyId == null || companyId === "") {
             return;
         }
@@ -1491,8 +1486,7 @@ window.jobMap = (function () {
         clusterGroup = null;
         markersById = {};
         lastFitPoints = [];
-        firstViewApplied = false;
-        openingViewUntil = 0;
+        firstSizedFit = false;
         tileLayer = null;
         selectedId = null;
         zoomHandlerBound = false;

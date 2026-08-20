@@ -3928,8 +3928,17 @@ a {
 }
 
 .job-map-popup .maplibregl-popup-tip {
+    align-self: center;
+    margin-inline: auto;
     box-shadow: none;
-    background: var(--surface);
+    background: transparent;
+    border-left-color: transparent;
+    border-right-color: transparent;
+}
+
+.job-map-popup.maplibregl-popup-anchor-bottom .maplibregl-popup-tip {
+    border-top-color: var(--surface);
+    border-bottom: none;
 }
 
 .job-map-popup .maplibregl-popup-close-button {

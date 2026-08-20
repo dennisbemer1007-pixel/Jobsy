@@ -275,10 +275,9 @@
                 ["dotNetRef"] = _dotNetRef,
                 ["highlightSeed"] = _highlightShuffleSeed
             };
-            await MapScripts.EnsureDiscoveryAfterPaintAsync(Js, "branch-job-map");
+            await MapScripts.EnsureDiscoveryAsync(Js);
             await Js.InvokeVoidAsync("jobMap.init", "branch-job-map", markers, options);
             _mapReady = true;
-            await Task.Delay(80);
             await Js.InvokeVoidAsync("jobMap.invalidate");
             if (_page.CompanyIds.Count == 1)
             {

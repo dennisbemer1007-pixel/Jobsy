@@ -1,24 +1,25 @@
 namespace Jobsy.Tests;
 
 /// <summary>
-/// Homepage prerenders a map shell. MapLibre binds only after hydrate + idle,
-/// so replacing the prerendered #job-map node cannot leave a dead map.
+/// Homepage prerenders a sized map shell and starts MapLibre immediately
+/// so the first paint is a filled map, not an empty placeholder.
 /// </summary>
 public class JobMapPrerenderGuardTests
 {
     [Fact]
-    public void Home_prerenders_the_map_shell_without_binding_maplibre()
+    public void Home_preloads_maplibre_with_high_priority()
     {
         var home = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "Components", "Pages", "Home.razor"));
         Assert.Contains("InteractiveServerRenderMode(prerender: true)", home);
         Assert.DoesNotContain("images/maps/nl-preview.webp", home);
-        Assert.Contains("jobsyMaps", home);
         Assert.DoesNotContain("prerender: false", home);
         Assert.DoesNotContain("/lib/leaflet/leaflet.min.js", home);
         Assert.DoesNotContain("/lib/leaflet/leaflet.css", home);
-        Assert.DoesNotContain("/lib/maplibre/maplibre-gl.css", home);
-        Assert.DoesNotContain("/lib/maplibre/maplibre-gl.js", home);
-        Assert.DoesNotContain("fetchpriority=\"high\"", home);
+        Assert.Contains("lib/maplibre/maplibre-gl.css", home);
+        Assert.Contains("lib/maplibre/maplibre-gl.js", home);
+        Assert.Contains("fetchpriority=\"high\"", home);
+        Assert.Contains("jobsyMapLibre.js", home);
+        Assert.Contains("jobMap.js", home);
     }
 
     [Fact]
@@ -37,7 +38,8 @@ public class JobMapPrerenderGuardTests
         Assert.Contains("collectVacancyPoints", js);
         Assert.Contains("No default NL view", js);
         Assert.Contains("ensureVacancyTiles", js);
-        Assert.Contains("openingViewUntil", js);
+        Assert.Contains("firstSizedFit", js);
+        Assert.DoesNotContain("openingViewUntil", js);
         var initIdx = js.IndexOf("function init(elementId, vacancies, options)", StringComparison.Ordinal);
         var setVacanciesInInit = js.IndexOf("setVacancies(vacancies || []);", initIdx, StringComparison.Ordinal);
         var tilesAfterVacancies = js.IndexOf("ensureVacancyTiles();", setVacanciesInInit, StringComparison.Ordinal);
@@ -46,6 +48,24 @@ public class JobMapPrerenderGuardTests
         Assert.Contains("isAlive", js[(js.LastIndexOf("return {", StringComparison.Ordinal))..]);
         Assert.Contains("maplibregl", js);
         Assert.Contains("Solliciteer", js);
+    }
+
+    [Fact]
+    public void Job_map_popups_anchor_bottom_and_center_on_the_marker()
+    {
+        var js = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "wwwroot", "js", "jobMap.js"));
+        Assert.Contains("anchor: \"bottom\"", js);
+        Assert.Contains("JOB_POPUP_OFFSET", js);
+        Assert.Contains("CLUSTER_POPUP_OFFSET", js);
+        Assert.Contains("bottom: [0, -18]", js);
+        Assert.Contains("bottom: [0, -23]", js);
+        Assert.Contains("popup.setOffset", js);
+        Assert.DoesNotContain("offset: 22", js);
+
+        var css = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "wwwroot", "css", "app.css"));
+        Assert.Contains("maplibregl-popup-anchor-bottom .maplibregl-popup-tip", css);
+        Assert.Contains("align-self: center", css);
+        Assert.Contains("border-top-color: var(--surface)", css);
     }
 
     [Fact]
@@ -111,11 +131,15 @@ public class JobMapPrerenderGuardTests
         var maps = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "wwwroot", "js", "maps-loader.js"));
         Assert.Contains("pending[kind] = null", maps);
         Assert.Contains("discovery", maps);
-        Assert.Contains("requestIdleCallback", maps);
+        Assert.Contains("fetchpriority", maps);
+        Assert.DoesNotContain("requestIdleCallback", maps);
+        Assert.DoesNotContain("ensureAfterPaint", maps);
         var bundle = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "wwwroot", "js", "app-core.js"));
         Assert.Contains("pending[kind] = null", bundle);
         Assert.Contains("maplibre-gl.js", bundle);
-        Assert.Contains("requestIdleCallback", bundle);
+        Assert.Contains("fetchpriority", bundle);
+        Assert.DoesNotContain("requestIdleCallback", bundle);
+        Assert.DoesNotContain("ensureAfterPaint", bundle);
     }
 
     [Fact]

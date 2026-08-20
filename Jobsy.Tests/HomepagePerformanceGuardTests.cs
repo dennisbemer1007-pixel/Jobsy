@@ -43,14 +43,15 @@ public class HomepagePerformanceGuardTests
     }
 
     [Fact]
-    public void Discovery_prerenders_a_map_placeholder_and_defers_maplibre()
+    public void Discovery_prerenders_a_map_shell_and_starts_maplibre_immediately()
     {
         var discovery = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "Components", "VacancyDiscovery.razor"));
         Assert.Contains("job-map-placeholder", discovery);
         Assert.DoesNotContain("images/maps/nl-preview.webp", discovery);
         Assert.DoesNotContain("job-map-placeholder__pins", discovery);
         Assert.DoesNotContain("MapPreviewPins", discovery);
-        Assert.Contains("EnsureDiscoveryAfterPaintAsync", discovery);
+        Assert.Contains("EnsureDiscoveryAsync", discovery);
+        Assert.DoesNotContain("EnsureDiscoveryAfterPaintAsync", discovery);
         Assert.Contains("TryInitJobMapAsync", discovery);
         Assert.DoesNotContain("job-map-placeholder__status", discovery);
         Assert.Contains("if (!RendererInfo.IsInteractive)", discovery);
@@ -58,16 +59,17 @@ public class HomepagePerformanceGuardTests
         Assert.Contains("_mapPainted = true", discovery);
 
         var maps = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "wwwroot", "js", "maps-loader.js"));
-        Assert.Contains("ensureAfterPaint", maps);
+        Assert.DoesNotContain("ensureAfterPaint", maps);
         Assert.Contains("warmDiscovery", maps);
-        Assert.Contains("IntersectionObserver", maps);
-        Assert.Contains("requestIdleCallback", maps);
-        Assert.Contains("media = \"print\"", maps);
+        Assert.DoesNotContain("IntersectionObserver", maps);
+        Assert.DoesNotContain("requestIdleCallback", maps);
+        Assert.Contains("fetchpriority", maps);
 
         var bundle = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "wwwroot", "js", "app-core.js"));
-        Assert.Contains("ensureAfterPaint", bundle);
+        Assert.DoesNotContain("ensureAfterPaint", bundle);
         Assert.Contains("warmDiscovery", bundle);
-        Assert.Contains("requestIdleCallback", bundle);
+        Assert.DoesNotContain("requestIdleCallback", bundle);
+        Assert.Contains("fetchpriority", bundle);
 
         var preview = Path.Combine(FindRepoRoot(), "Jobsy.Web", "wwwroot", "images", "maps", "nl-preview.webp");
         Assert.True(File.Exists(preview));
@@ -83,19 +85,19 @@ public class HomepagePerformanceGuardTests
     {
         var maps = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "wwwroot", "js", "maps-loader.js"));
         Assert.Contains("ensure: ensure", maps);
-        Assert.Contains("ensureAfterPaint", maps);
+        Assert.DoesNotContain("ensureAfterPaint", maps);
         Assert.Contains("discoveryScripts", maps);
         Assert.Contains("detailScripts", maps);
 
         var mapScripts = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "Hosting", "MapScripts.cs"));
         Assert.Contains("EnsureDiscoveryAsync", mapScripts);
-        Assert.Contains("EnsureDiscoveryAfterPaintAsync", mapScripts);
+        Assert.DoesNotContain("EnsureDiscoveryAfterPaintAsync", mapScripts);
         Assert.Contains("EnsureDetailAsync", mapScripts);
 
         var discovery = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "Components", "VacancyDiscovery.razor"));
-        Assert.Contains("EnsureDiscoveryAfterPaintAsync", discovery);
+        Assert.Contains("MapScripts.EnsureDiscoveryAsync(Js)", discovery);
+        Assert.DoesNotContain("EnsureDiscoveryAfterPaintAsync", discovery);
         Assert.DoesNotContain("MapScripts.EnsureAsync(Js)", discovery);
-        Assert.DoesNotContain("MapScripts.EnsureDiscoveryAsync(Js)", discovery);
 
         var detail = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "Components", "Pages", "VacancyDetail.razor"));
         Assert.Contains("EnsureDetailAsync", detail);
