@@ -4145,6 +4145,7 @@ a {
 .job-map-popup--cluster > .map-popup__type-chip {
     top: 0;
     right: 36px;
+    max-width: min(9rem, calc(100% - 12rem));
 }
 
 .job-map-popup--cluster.job-map-popup--with-wages > .map-popup__type-chip {
