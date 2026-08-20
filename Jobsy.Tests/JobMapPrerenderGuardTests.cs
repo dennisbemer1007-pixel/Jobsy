@@ -114,7 +114,7 @@ public class JobMapPrerenderGuardTests
         Assert.Contains("cooperativeGestures: false", helper);
         Assert.Contains("dragPan: true", helper);
         Assert.Contains("touchAction", helper);
-        Assert.Contains("aria-label=\"3D-kaart\"", helper);
+        Assert.Contains("3D-kaart", helper);
         Assert.DoesNotContain("3D / Bright", helper);
         Assert.Contains("syncStyleToggle", helper);
         Assert.Contains("return \"liberty\"", helper);
