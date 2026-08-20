@@ -1760,6 +1760,7 @@
     {
         var generation = ++_loadGeneration;
         var hadResults = _vacancies.Count > 0;
+        var canceled = false;
         _loading = !hadResults;
         _error = null;
         if (!hadResults)
@@ -1866,7 +1867,16 @@
 
             if (_vacancies.Count > 0)
             {
+                _mapPainted = true;
                 _ = RecordImpressionsSafeAsync();
+            }
+        }
+        catch (OperationCanceledException)
+        {
+            canceled = true;
+            if (generation != _loadGeneration)
+            {
+                return;
             }
         }
         catch (Exception ex)
@@ -1884,7 +1894,7 @@
         }
         finally
         {
-            if (generation == _loadGeneration)
+            if (generation == _loadGeneration && !canceled)
             {
                 _loading = false;
             }
