@@ -296,3 +296,11 @@ public sealed class CandidateEngagementItem
     public string? Channel { get; set; }
     public string? ImageUrl { get; set; }
 }
+
+public sealed class VacancyMapViewResponse
+{
+    public double Lat { get; set; }
+    public double Lng { get; set; }
+    public double Zoom { get; set; }
+    public int PinCount { get; set; }
+}

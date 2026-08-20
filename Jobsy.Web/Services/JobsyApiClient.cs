@@ -215,6 +215,18 @@ public sealed class JobsyApiClient : IAsyncDisposable
         return await _http.GetFromJsonAsync<List<VacancyListItem>>($"api/vacancies/discover?{qs}", ct) ?? [];
     }
 
+    public async Task<VacancyMapViewResponse?> GetVacancyMapViewAsync(CancellationToken ct = default)
+    {
+        try
+        {
+            return await _http.GetFromJsonAsync<VacancyMapViewResponse>("api/vacancies/map-view", ct);
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
     public async Task<VacancyListItem?> GetVacancyAsync(
         Guid id,
         double? originLat = null,

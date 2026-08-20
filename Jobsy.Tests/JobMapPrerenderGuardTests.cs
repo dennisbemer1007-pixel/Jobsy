@@ -48,11 +48,13 @@ public class JobMapPrerenderGuardTests
         Assert.DoesNotContain("map.fitBounds(NL_BOUNDS", js);
         Assert.DoesNotContain("map.setView(NL_CENTER", js);
         Assert.Contains("function boot(", js);
-        Assert.Contains("readBootPins", js);
+        Assert.Contains("readBootPayload", js);
         Assert.Contains("jobsy-map-boot", js);
         Assert.Contains("const reuse", js);
         Assert.Contains("Paint the basemap immediately", js);
         Assert.Contains("fitMapToVacancies", js);
+        Assert.Contains("lockCamera", js);
+        Assert.Contains("openingCamera", js);
         Assert.Contains("collectVacancyPoints", js);
         Assert.Contains("ensureVacancyTiles", js);
         Assert.Contains("firstSizedFit", js);
@@ -62,6 +64,16 @@ public class JobMapPrerenderGuardTests
         var setVacanciesInInit = js.IndexOf("setVacancies(vacancies || []);", initIdx, StringComparison.Ordinal);
         var tilesAfterVacancies = js.IndexOf("ensureVacancyTiles();", setVacanciesInInit, StringComparison.Ordinal);
         Assert.True(initIdx > 0 && setVacanciesInInit > initIdx && tilesAfterVacancies > setVacanciesInInit);
+
+        var setStart = js.IndexOf("function setVacancies(vacancies)", StringComparison.Ordinal);
+        var setEnd = js.IndexOf("function ensureOriginMarker", StringComparison.Ordinal);
+        Assert.True(setStart > 0 && setEnd > setStart);
+        Assert.DoesNotContain("fitMapToVacancies", js[setStart..setEnd]);
+
+        var originStart = js.IndexOf("function setOrigin(lat, lng, travel)", StringComparison.Ordinal);
+        var originEnd = js.IndexOf("function setTravelOptions", StringComparison.Ordinal);
+        Assert.True(originStart > 0 && originEnd > originStart);
+        Assert.DoesNotContain("fitMapToVacancies", js[originStart..originEnd]);
         Assert.Contains("container.isConnected", js);
         Assert.Contains("isAlive", js[(js.LastIndexOf("return {", StringComparison.Ordinal))..]);
         Assert.Contains("maplibregl", js);
@@ -194,9 +206,18 @@ public class JobMapPrerenderGuardTests
         var afterRender = discovery.IndexOf("OnAfterRenderAsync(bool firstRender)", StringComparison.Ordinal);
         Assert.True(afterRender > 0);
         Assert.Contains("_mapHostReady", discovery);
+        Assert.Contains("ResolveOpeningView", discovery);
+        Assert.Contains("LoadMapViewAsync", discovery);
+        Assert.Contains("[\"view\"]", discovery);
         var tryInit = discovery.IndexOf("await TryInitJobMapAsync();", afterRender, StringComparison.Ordinal);
         var isWide = discovery.IndexOf("jobsyViewport.isWide", afterRender, StringComparison.Ordinal);
         Assert.True(tryInit > afterRender && isWide > tryInit);
+        var afterRenderEnd = discovery.IndexOf("private async Task WarmDiscoveryScriptsAsync", afterRender, StringComparison.Ordinal);
+        Assert.True(afterRenderEnd > afterRender);
+        var afterRenderFn = discovery[afterRender..afterRenderEnd];
+        var firstInit = afterRenderFn.IndexOf("await TryInitJobMapAsync();", StringComparison.Ordinal);
+        var extraInit = afterRenderFn.IndexOf("await TryInitJobMapAsync();", firstInit + 1, StringComparison.Ordinal);
+        Assert.True(firstInit >= 0 && extraInit < 0);
         var geoHydrate = discovery.IndexOf("ensureLocationOnLaunch", afterRender, StringComparison.Ordinal);
         Assert.True(geoHydrate > afterRender);
         var hydrateCatch = discovery.IndexOf("catch (JSException)", geoHydrate, StringComparison.Ordinal);

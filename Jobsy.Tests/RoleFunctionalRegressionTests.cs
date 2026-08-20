@@ -89,6 +89,23 @@ public class RoleFunctionalRegressionTests : IClassFixture<RoleFunctionalWebAppF
     }
 
     [Fact]
+    public async Task Guest_can_read_public_map_view_without_pii()
+    {
+        var client = _factory.CreateClient();
+        var response = await client.GetAsync("api/vacancies/map-view");
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+
+        var json = await response.Content.ReadFromJsonAsync<JsonElement>(JsonOpts);
+        Assert.True(json.GetProperty("pinCount").GetInt32() >= 1);
+        Assert.InRange(json.GetProperty("lat").GetDouble(), 50, 54);
+        Assert.InRange(json.GetProperty("lng").GetDouble(), 3, 8);
+        Assert.InRange(json.GetProperty("zoom").GetDouble(), 8, 13);
+        Assert.False(json.TryGetProperty("title", out _));
+        Assert.False(json.TryGetProperty("companyName", out _));
+        Assert.False(json.TryGetProperty("email", out _));
+    }
+
+    [Fact]
     public async Task Guest_discover_filters_categories_and_suitable_for_65plus_without_leaking_internals()
     {
         var client = _factory.CreateClient();

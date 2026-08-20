@@ -20,6 +20,7 @@ public sealed class VacancyDiscoveryIndex : IVacancyDiscoveryIndex
     private readonly SemaphoreSlim _refreshLock = new(1, 1);
 
     private volatile IReadOnlyList<VacancyDiscoveryRecord>? _snapshot;
+    private volatile VacancyMapView _mapView = VacancyMapViewCalculator.Fallback;
     private volatile bool _dirty = true;
     private DateOnly _indexedForDate;
 
@@ -47,6 +48,12 @@ public sealed class VacancyDiscoveryIndex : IVacancyDiscoveryIndex
         return VisibleToday(snap, today);
     }
 
+    public async Task<VacancyMapView> GetMapViewAsync(CancellationToken cancellationToken = default)
+    {
+        await GetActiveAsync(cancellationToken);
+        return _mapView;
+    }
+
     public Task RefreshAsync(CancellationToken cancellationToken = default)
         => RefreshCoreAsync(force: true, cancellationToken);
 
@@ -63,8 +70,10 @@ public sealed class VacancyDiscoveryIndex : IVacancyDiscoveryIndex
 
             _dirty = false;
             var records = await LoadActiveAsync(cancellationToken);
+            var todayAfterLoad = DateOnly.FromDateTime(DateTime.UtcNow);
             _snapshot = records;
-            _indexedForDate = today;
+            _mapView = VacancyMapViewCalculator.FromRecords(VisibleToday(records, todayAfterLoad));
+            _indexedForDate = todayAfterLoad;
             _logger.LogInformation("Banenkaart index refreshed with {Count} public vacancies.", records.Count);
         }
         catch (Exception ex) when (ex is not OperationCanceledException)

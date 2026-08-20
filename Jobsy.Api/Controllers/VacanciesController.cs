@@ -82,6 +82,18 @@ public class VacanciesController : ControllerBase
     }
 
     /// <summary>
+    /// Precomputed MapLibre camera for the public banenkaart (centroid + zoom of active pins).
+    /// No vacancy titles, addresses, or other PII.
+    /// </summary>
+    [HttpGet("map-view")]
+    [AllowAnonymous]
+    public async Task<ActionResult<VacancyMapViewDto>> GetMapView(CancellationToken cancellationToken)
+    {
+        var view = await _discoveryIndex.GetMapViewAsync(cancellationToken);
+        return Ok(new VacancyMapViewDto(view.CenterLat, view.CenterLng, view.Zoom, view.PinCount));
+    }
+
+    /// <summary>
     /// Banenkaart discover: without origin returns all active vacancies (optional workType/wage).
     /// With origin, filters by transport, travel time and optional radius via IRoutingService.
     /// Optional ageYears resolves salary-table wages; min/max hourly filters apply when age is set.

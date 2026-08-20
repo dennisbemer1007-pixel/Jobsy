@@ -5,6 +5,7 @@
 @inject AuthenticationStateProvider AuthState
 @inject NavigationManager Navigation
 @implements IAsyncDisposable
+@using Jobsy.Core.Contracts
 @using Jobsy.Core.Media
 @using Jobsy.Core.Rules
 @using Jobsy.Web.Hosting
@@ -531,10 +532,7 @@
                                       OnSelect="OnCarouselSelect" />
         }
         <div class="map-stage @(_mapPainted ? "is-live" : null)">
-            @if (_vacancies.Count > 0)
-            {
-                <script type="application/json" id="jobsy-map-boot">@((MarkupString)MapBootPinsJson())</script>
-            }
+            <script type="application/json" id="jobsy-map-boot">@((MarkupString)MapBootPinsJson())</script>
             <div class="job-map-placeholder" aria-hidden="true"></div>
             <div @ref="_mapElement" id="job-map" class="job-map"></div>
             @if (_categories.Any(c => c.ShowInLegend && c.IsActive))
@@ -860,6 +858,7 @@
     private bool _mapPainted;
     private bool _mapInitScheduled;
     private bool _mapHostReady;
+    private VacancyMapView? _mapView;
 
     private ElementReference _mapElement;
     private const int DefaultMinHoursPerWeek = 0;
@@ -1142,12 +1141,14 @@
 
         if (!RendererInfo.IsInteractive)
         {
-            // Load the warm catalog during prerender so #jobsy-map-boot has real pins
-            // before the Blazor circuit. Photos stay out of first paint.
+            // Load the warm catalog + precomputed camera during prerender so
+            // #jobsy-map-boot has the opening view (and pins) before the circuit.
             try
             {
                 using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(2));
+                var viewTask = LoadMapViewAsync(cts.Token);
                 await LoadVacanciesAsync(cts.Token);
+                await viewTask;
             }
             catch (OperationCanceledException)
             {
@@ -1158,8 +1159,8 @@
             return;
         }
 
-        // Catalog + MapLibre in parallel — do not wait on profile/masterdata before pins appear.
-        _ = WarmDiscoveryScriptsAsync();
+        // Catalog + map-view in parallel — do not wait on profile/masterdata before pins appear.
+        var viewTaskInteractive = LoadMapViewAsync();
         var catalogTask = LoadVacanciesAsync();
         var profileChangedFilters = false;
         try
@@ -1229,6 +1230,7 @@
         }
 
         await catalogTask;
+        await viewTaskInteractive;
         if (profileChangedFilters)
         {
             await LoadVacanciesAsync();
@@ -1551,10 +1553,9 @@
         if (firstRender)
         {
             _ = WarmDiscoveryScriptsAsync();
+            // MapLibre exists only after hydration. Init once with the precomputed camera.
+            await TryInitJobMapAsync();
         }
-
-        // Show the live map as soon as catalog coordinates exist — do not wait on geo or viewport.
-        await TryInitJobMapAsync();
 
         if (firstRender)
         {
@@ -1654,8 +1655,6 @@
                 }
             }
         }
-
-        await TryInitJobMapAsync();
     }
 
     private async Task WarmDiscoveryScriptsAsync()
@@ -1713,23 +1712,24 @@
             return;
         }
 
-        if (_vacancies.Count == 0
-            || !_vacancies.Any(v => double.IsFinite(v.Latitude) && double.IsFinite(v.Longitude)))
-        {
-            return;
-        }
-
         _mapInitScheduled = true;
 
         try
         {
             _dotNetRef ??= DotNetObjectReference.Create(this);
             var markers = BuildMarkers();
+            var opening = ResolveOpeningView();
             var options = new Dictionary<string, object?>
             {
                 ["dotNetRef"] = _dotNetRef,
                 ["travel"] = TravelMapOptions(),
-                ["highlightSeed"] = _highlightShuffleSeed
+                ["highlightSeed"] = _highlightShuffleSeed,
+                ["view"] = new Dictionary<string, object?>
+                {
+                    ["lat"] = opening.CenterLat,
+                    ["lng"] = opening.CenterLng,
+                    ["zoom"] = opening.Zoom
+                }
             };
             if (_origin is not null)
             {
@@ -1742,7 +1742,7 @@
 
             await Js.InvokeVoidAsync("jobMap.init", "job-map", markers, options);
             _mapReady = true;
-            _mapPainted = markers.Count > 0;
+            _mapPainted = true;
             await InvokeAsync(StateHasChanged);
             await Js.InvokeVoidAsync("jobMap.invalidate");
             await TryFocusCompanyOnMapAsync();
@@ -1861,7 +1861,7 @@
                     await Js.InvokeVoidAsync("jobMap.setTravelOptions", TravelMapOptions());
                 }
 
-                _mapPainted = _vacancies.Count > 0;
+                _mapPainted = true;
                 await InvokeAsync(StateHasChanged);
                 _ = RefreshMapSizeAsync();
                 _ = TryFocusCompanyOnMapAsync();
@@ -1875,6 +1875,10 @@
             {
                 _mapPainted = true;
                 _ = RecordImpressionsSafeAsync();
+            }
+            else if (_mapView is { PinCount: > 0 })
+            {
+                _mapPainted = true;
             }
         }
         catch (OperationCanceledException)
@@ -1945,8 +1949,45 @@
         }
     }
 
+    private async Task LoadMapViewAsync(CancellationToken ct = default)
+    {
+        try
+        {
+            var dto = await Api.GetVacancyMapViewAsync(ct);
+            if (dto is null
+                || dto.PinCount <= 0
+                || !double.IsFinite(dto.Lat)
+                || !double.IsFinite(dto.Lng)
+                || !double.IsFinite(dto.Zoom))
+            {
+                return;
+            }
+
+            _mapView = new VacancyMapView(dto.Lat, dto.Lng, dto.Zoom, dto.PinCount);
+            _mapPainted = true;
+        }
+        catch
+        {
+            // Opening view can fall back to pin centroid in MapBootPinsJson.
+        }
+    }
+
+    private VacancyMapView ResolveOpeningView()
+    {
+        if (_mapView is { PinCount: > 0 } stored)
+        {
+            return stored;
+        }
+
+        return VacancyMapViewCalculator.FromPoints(
+            _vacancies
+                .Where(v => double.IsFinite(v.Latitude) && double.IsFinite(v.Longitude))
+                .Select(v => (v.Latitude, v.Longitude)));
+    }
+
     private string MapBootPinsJson()
     {
+        var opening = ResolveOpeningView();
         var pins = _vacancies
             .Where(v => double.IsFinite(v.Latitude) && double.IsFinite(v.Longitude))
             .Select(v =>
@@ -1970,7 +2011,17 @@
                 };
             })
             .ToList();
-        return JsonSerializer.Serialize(pins).Replace("<", "\\u003c", StringComparison.Ordinal);
+        var payload = new Dictionary<string, object?>
+        {
+            ["view"] = new Dictionary<string, object?>
+            {
+                ["lat"] = opening.CenterLat,
+                ["lng"] = opening.CenterLng,
+                ["zoom"] = opening.Zoom
+            },
+            ["pins"] = pins
+        };
+        return JsonSerializer.Serialize(payload).Replace("<", "\\u003c", StringComparison.Ordinal);
     }
 
     private List<Dictionary<string, object?>> BuildMarkers() =>
@@ -2231,6 +2282,7 @@
         if (_mapReady)
         {
             await Js.InvokeVoidAsync("jobMap.setOrigin", lat, lng, TravelMapOptions());
+            await Js.InvokeVoidAsync("jobMap.panTo", lat, lng);
         }
     }
 
@@ -2712,7 +2764,7 @@
     [JSInvokable]
     public Task OnMapTilesReady()
     {
-        if (_mapPainted || _vacancies.Count == 0)
+        if (_mapPainted)
         {
             return Task.CompletedTask;
         }

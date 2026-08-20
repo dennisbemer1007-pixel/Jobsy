@@ -288,4 +288,102 @@ public class VacancyDiscoveryIndexTests
         Assert.Equal(2, afterJob.Count);
         Assert.Contains(afterJob, v => v.Id == secondId);
     }
+
+    [Fact]
+    public async Task GetMapViewAsync_uses_centroid_of_indexed_pins()
+    {
+        var dbName = "DiscoveryIndexMapView-" + Guid.NewGuid();
+        var services = new ServiceCollection();
+        services.AddDbContext<JobsyDbContext>(o => o.UseInMemoryDatabase(dbName));
+        services.AddLogging();
+        await using var provider = services.BuildServiceProvider();
+
+        var today = DateOnly.FromDateTime(DateTime.UtcNow);
+        var companyId = Guid.NewGuid();
+        using (var seed = provider.CreateScope())
+        {
+            var db = seed.ServiceProvider.GetRequiredService<JobsyDbContext>();
+            db.Companies.Add(new Company
+            {
+                Id = companyId,
+                Name = "Kaart Café",
+                KvkNumber = "11223344",
+                Address = "Plein 3",
+                Location = new GeoPoint(52.00, 4.20)
+            });
+            db.Vacancies.AddRange(
+                new Vacancy
+                {
+                    Id = Guid.NewGuid(),
+                    Title = "West",
+                    Description = "d",
+                    CompanyId = companyId,
+                    Status = VacancyStatus.Active,
+                    HourlyWage = 14,
+                    Location = new GeoPoint(52.00, 4.20),
+                    StartDate = today,
+                    EndDate = today.AddDays(10)
+                },
+                new Vacancy
+                {
+                    Id = Guid.NewGuid(),
+                    Title = "East",
+                    Description = "d",
+                    CompanyId = companyId,
+                    Status = VacancyStatus.Active,
+                    HourlyWage = 14,
+                    Location = new GeoPoint(52.02, 4.30),
+                    StartDate = today,
+                    EndDate = today.AddDays(10)
+                });
+            await db.SaveChangesAsync();
+        }
+
+        var index = new VacancyDiscoveryIndex(
+            provider.GetRequiredService<IServiceScopeFactory>(),
+            NullLogger<VacancyDiscoveryIndex>.Instance);
+        var view = await index.GetMapViewAsync();
+        Assert.Equal(2, view.PinCount);
+        Assert.Equal(52.01, view.CenterLat, 2);
+        Assert.Equal(4.25, view.CenterLng, 2);
+        Assert.InRange(view.Zoom, 11, 13);
+    }
+}
+
+public class VacancyMapViewCalculatorTests
+{
+    [Fact]
+    public void Empty_points_use_netherlands_fallback()
+    {
+        var view = VacancyMapViewCalculator.FromPoints([]);
+        Assert.Equal(VacancyMapViewCalculator.Fallback, view);
+        Assert.False(view.HasPins);
+        Assert.Equal(7, view.Zoom);
+    }
+
+    [Fact]
+    public void Westland_cluster_is_centroid_not_country_zoom()
+    {
+        var view = VacancyMapViewCalculator.FromPoints(
+        [
+            (51.995, 4.167),
+            (52.011, 4.221),
+            (52.045, 4.330)
+        ]);
+        Assert.Equal(3, view.PinCount);
+        Assert.InRange(view.CenterLat, 51.99, 52.03);
+        Assert.InRange(view.CenterLng, 4.20, 4.26);
+        Assert.True(view.Zoom >= 11, "Local clusters must not open at NL zoom 7–8.");
+        Assert.Equal(VacancyMapViewCalculator.ZoomForSpan(0.163), view.Zoom);
+    }
+
+    [Theory]
+    [InlineData(0.05, 13)]
+    [InlineData(0.15, 12)]
+    [InlineData(0.4, 11)]
+    [InlineData(1.0, 10)]
+    [InlineData(2.0, 9)]
+    [InlineData(3.0, 8)]
+    public void Zoom_matches_jobmap_span_heuristic(double span, int zoom)
+        => Assert.Equal(zoom, VacancyMapViewCalculator.ZoomForSpan(span));
 }

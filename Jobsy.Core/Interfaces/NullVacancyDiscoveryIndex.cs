@@ -1,4 +1,5 @@
 using Jobsy.Core.Contracts;
+using Jobsy.Core.Rules;
 
 namespace Jobsy.Core.Interfaces;
 
@@ -17,4 +18,7 @@ public sealed class NullVacancyDiscoveryIndex : IVacancyDiscoveryIndex
     public Task<IReadOnlyList<VacancyDiscoveryRecord>> GetActiveAsync(
         CancellationToken cancellationToken = default)
         => Task.FromResult<IReadOnlyList<VacancyDiscoveryRecord>>([]);
+
+    public Task<VacancyMapView> GetMapViewAsync(CancellationToken cancellationToken = default)
+        => Task.FromResult(VacancyMapViewCalculator.Fallback);
 }

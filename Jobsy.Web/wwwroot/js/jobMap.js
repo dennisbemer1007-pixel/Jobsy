@@ -18,7 +18,9 @@ window.jobMap = (function () {
     let selectedId = null;
     let zoomHandlerBound = false;
 
-    // Used to paint the basemap immediately (before the vacancy catalog arrives).
+    let cameraLocked = false;
+
+    // Fallback only when the index has no pins. Prefer the precomputed view from #jobsy-map-boot.
     const NL_CENTER = [52.15, 5.2913];
     const NL_ZOOM = 7;
     const NL_BOUNDS = [[50.29, 2.81], [53.33, 8.44]];
@@ -987,6 +989,45 @@ window.jobMap = (function () {
         return points;
     }
 
+    function readOpeningView(raw) {
+        if (!raw || typeof raw !== "object") {
+            return null;
+        }
+        const lat = Number(raw.lat);
+        const lng = Number(raw.lng);
+        const zoom = Number(raw.zoom);
+        if (!Number.isFinite(lat) || !Number.isFinite(lng) || !Number.isFinite(zoom)) {
+            return null;
+        }
+        return { lat: lat, lng: lng, zoom: zoom };
+    }
+
+    function openingCamera(openingPoints, openingView) {
+        const view = readOpeningView(openingView);
+        if (view) {
+            return { center: [view.lng, view.lat], zoom: view.zoom, locked: true };
+        }
+        if (openingPoints && openingPoints.length) {
+            const startBounds = boundsFromPoints(openingPoints);
+            const start = startBounds.getCenter();
+            return { center: [start.lng, start.lat], zoom: zoomForPoints(openingPoints), locked: true };
+        }
+        return { center: [NL_CENTER[1], NL_CENTER[0]], zoom: NL_ZOOM, locked: false };
+    }
+
+    function lockCamera(openingPoints, openingView) {
+        if (cameraLocked || !map) {
+            return;
+        }
+        const opening = openingCamera(openingPoints, openingView);
+        if (!opening.locked) {
+            return;
+        }
+        map.jumpTo({ center: opening.center, zoom: opening.zoom });
+        cameraLocked = true;
+        firstSizedFit = true;
+    }
+
     function zoomForPoints(points) {
         if (!points.length) {
             return 8;
@@ -1238,29 +1279,24 @@ window.jobMap = (function () {
         }
     }
 
-    function createMapInstance(el, openingPoints) {
+    function createMapInstance(el, openingPoints, openingView) {
         firstSizedFit = false;
         lastFitPoints = [];
         tileLayer = null;
         selectedId = null;
+        cameraLocked = false;
 
-        let center;
-        let zoom;
+        const opening = openingCamera(openingPoints, openingView);
         if (openingPoints && openingPoints.length) {
             lastFitPoints = openingPoints.slice();
-            const startBounds = boundsFromPoints(openingPoints);
-            const start = startBounds.getCenter();
-            center = [start.lng, start.lat];
-            zoom = zoomForPoints(openingPoints);
-        } else {
-            center = [NL_CENTER[1], NL_CENTER[0]];
-            zoom = NL_ZOOM;
         }
 
         map = window.jobsyMapLibre.createMap(el, {
-            center: center,
-            zoom: zoom
+            center: opening.center,
+            zoom: opening.zoom
         });
+        cameraLocked = opening.locked;
+        firstSizedFit = opening.locked;
         map._jobsyOnStyleRestored = restoreOverlays;
         map.on("load", function () {
             restoreOverlays();
@@ -1303,16 +1339,21 @@ window.jobMap = (function () {
         bindOutsideClickCloser();
     }
 
-    function readBootPins() {
+    function readBootPayload() {
         const node = document.getElementById("jobsy-map-boot");
         if (!node || !node.textContent) {
-            return [];
+            return { pins: [], view: null };
         }
         try {
             const parsed = JSON.parse(node.textContent);
-            return Array.isArray(parsed) ? parsed : [];
+            if (Array.isArray(parsed)) {
+                return { pins: parsed, view: null };
+            }
+            const pins = parsed && Array.isArray(parsed.pins) ? parsed.pins : [];
+            const view = parsed ? readOpeningView(parsed.view) : null;
+            return { pins: pins, view: view };
         } catch (e) {
-            return [];
+            return { pins: [], view: null };
         }
     }
 
@@ -1328,11 +1369,11 @@ window.jobMap = (function () {
         if (!el) {
             return;
         }
-        const pins = readBootPins();
-        createMapInstance(el, collectVacancyPoints(pins));
+        const payload = readBootPayload();
+        createMapInstance(el, collectVacancyPoints(payload.pins), payload.view);
         bindMapRuntime();
-        if (pins.length) {
-            setVacancies(pins);
+        if (payload.pins.length) {
+            setVacancies(payload.pins);
         }
         revealMapStage();
         invalidate();
@@ -1352,6 +1393,7 @@ window.jobMap = (function () {
         }
 
         const openingPoints = collectVacancyPoints(vacancies || []);
+        const openingView = options && options.view ? options.view : null;
         const reuse = !!(map && typeof map.getContainer === "function"
             && map.getContainer() === el && el.isConnected);
 
@@ -1359,7 +1401,9 @@ window.jobMap = (function () {
             if (map) {
                 dispose();
             }
-            createMapInstance(el, openingPoints);
+            createMapInstance(el, openingPoints, openingView);
+        } else {
+            lockCamera(openingPoints, openingView);
         }
 
         openCallback = options && options.dotNetRef ? options.dotNetRef : null;
@@ -1424,6 +1468,9 @@ window.jobMap = (function () {
                 window.jobsyGeo.requestLocation()
                     .then(function (pos) {
                         setOrigin(pos.lat, pos.lng, travelOptions);
+                        if (map) {
+                            map.easeTo({ center: [pos.lng, pos.lat], duration: 400 });
+                        }
                     })
                     .then(done, done);
             } else {
@@ -1474,7 +1521,8 @@ window.jobMap = (function () {
         });
 
         refreshClusters();
-        fitMapToVacancies(bounds);
+        ensureVacancyTiles();
+        revealMapStage();
     }
 
     function ensureOriginMarker(la, ln) {
@@ -1507,14 +1555,12 @@ window.jobMap = (function () {
         ensureOriginMarker(la, ln);
         drawTravelRings(la, ln);
         syncLocateButton();
-        fitMapToVacancies(vacancyPoints());
     }
 
     function setTravelOptions(options) {
         normalizeTravelOptions(options);
         if (lastOrigin) {
             drawTravelRings(lastOrigin.lat, lastOrigin.lng);
-            fitMapToVacancies(vacancyPoints());
         }
     }
 
@@ -1528,14 +1574,23 @@ window.jobMap = (function () {
         syncLocateButton();
     }
 
+    function panTo(lat, lng) {
+        if (!map) {
+            return;
+        }
+        const la = Number(lat);
+        const ln = Number(lng);
+        if (!Number.isFinite(la) || !Number.isFinite(ln)) {
+            return;
+        }
+        map.easeTo({ center: [ln, la], duration: 400 });
+    }
+
     function invalidate() {
         if (!map) {
             return;
         }
         map.resize();
-        if (!firstSizedFit && lastFitPoints.length > 0) {
-            fitMapToVacancies(lastFitPoints);
-        }
     }
 
     function isAlive() {
@@ -1638,6 +1693,7 @@ window.jobMap = (function () {
         markersById = {};
         lastFitPoints = [];
         firstSizedFit = false;
+        cameraLocked = false;
         tileLayer = null;
         selectedId = null;
         zoomHandlerBound = false;
@@ -1665,6 +1721,7 @@ window.jobMap = (function () {
         init,
         setVacancies,
         setOrigin,
+        panTo,
         setTravelOptions,
         clearOrigin,
         highlight,

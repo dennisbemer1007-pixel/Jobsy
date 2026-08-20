@@ -18,4 +18,9 @@ public interface IVacancyDiscoveryIndex
     /// Return the current public snapshot, refreshing first when empty or stale.
     /// </summary>
     Task<IReadOnlyList<VacancyDiscoveryRecord>> GetActiveAsync(CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Centroid + zoom of the current public snapshot, for MapLibre first paint.
+    /// </summary>
+    Task<VacancyMapView> GetMapViewAsync(CancellationToken cancellationToken = default);
 }
