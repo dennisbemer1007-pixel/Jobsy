@@ -195,6 +195,7 @@
         try
         {
             // Shared-browser hygiene: drop any prior draft blobs after forced expiry.
+            await JobsyJs.EnsureExtrasAsync(Js);
             await Js.InvokeVoidAsync("lobsySessionIdle.clearDrafts");
         }
         catch

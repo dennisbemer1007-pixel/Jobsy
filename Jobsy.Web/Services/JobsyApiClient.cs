@@ -512,7 +512,7 @@ public sealed class JobsyApiClient : IAsyncDisposable
         var fileName = response.Content.Headers.ContentDisposition?.FileName?.Trim('"')
                        ?? $"Lobsy-CV-{DateTime.UtcNow:yyyyMMdd}.pdf";
         var base64 = Convert.ToBase64String(bytes);
-        await js.InvokeVoidAsync("jobsyDownload.bytes", fileName, base64, "application/pdf");
+        await SendBrowserDownloadAsync(js, fileName, base64, "application/pdf");
     }
 
     public async Task DownloadApplicationLobsyCvPdfAsync(
@@ -531,7 +531,7 @@ public sealed class JobsyApiClient : IAsyncDisposable
         var fileName = response.Content.Headers.ContentDisposition?.FileName?.Trim('"')
                        ?? $"Lobsy-CV-{DateTime.UtcNow:yyyyMMdd}.pdf";
         var base64 = Convert.ToBase64String(bytes);
-        await js.InvokeVoidAsync("jobsyDownload.bytes", fileName, base64, "application/pdf");
+        await SendBrowserDownloadAsync(js, fileName, base64, "application/pdf");
     }
 
     public async Task<MeProfile?> UploadMyCvAsync(IBrowserFile file, CancellationToken ct = default)
@@ -592,6 +592,12 @@ public sealed class JobsyApiClient : IAsyncDisposable
                        ?? fallbackName;
         var media = response.Content.Headers.ContentType?.MediaType ?? "application/octet-stream";
         var base64 = Convert.ToBase64String(bytes);
+        await SendBrowserDownloadAsync(js, fileName, base64, media);
+    }
+
+    private static async Task SendBrowserDownloadAsync(IJSRuntime js, string fileName, string base64, string media)
+    {
+        await js.InvokeVoidAsync("jobsyExtras.ensure");
         await js.InvokeVoidAsync("jobsyDownload.bytes", fileName, base64, media);
     }
 
@@ -1244,7 +1250,7 @@ public sealed class JobsyApiClient : IAsyncDisposable
         var bytes = await response.Content.ReadAsByteArrayAsync(ct);
         var fileName = string.IsNullOrWhiteSpace(invoiceNumber) ? $"{invoiceId:N}.pdf" : $"{invoiceNumber}.pdf";
         var base64 = Convert.ToBase64String(bytes);
-        await js.InvokeVoidAsync("jobsyDownload.bytes", fileName, base64, "application/pdf");
+        await SendBrowserDownloadAsync(js, fileName, base64, "application/pdf");
     }
 
     public async Task<VacancyContactPreferenceItem?> GetVacancyContactPreferenceAsync(
@@ -1495,7 +1501,7 @@ public sealed class JobsyApiClient : IAsyncDisposable
         var bytes = await response.Content.ReadAsByteArrayAsync(ct);
         var fileName = $"token-aankopen-{(year?.ToString() ?? "all")}-Q{(quarter?.ToString() ?? "all")}.csv";
         var base64 = Convert.ToBase64String(bytes);
-        await js.InvokeVoidAsync("jobsyDownload.bytes", fileName, base64, "text/csv;charset=utf-8");
+        await SendBrowserDownloadAsync(js, fileName, base64, "text/csv;charset=utf-8");
     }
 
     public async Task DownloadTokenGoodwillCsvAsync(
@@ -1510,7 +1516,7 @@ public sealed class JobsyApiClient : IAsyncDisposable
         var bytes = await response.Content.ReadAsByteArrayAsync(ct);
         var fileName = $"token-goodwill-{(year?.ToString() ?? "all")}-Q{(quarter?.ToString() ?? "all")}.csv";
         var base64 = Convert.ToBase64String(bytes);
-        await js.InvokeVoidAsync("jobsyDownload.bytes", fileName, base64, "text/csv;charset=utf-8");
+        await SendBrowserDownloadAsync(js, fileName, base64, "text/csv;charset=utf-8");
     }
 
     public async Task DownloadTokenInvoicePdfAsync(
@@ -1524,7 +1530,7 @@ public sealed class JobsyApiClient : IAsyncDisposable
         var bytes = await response.Content.ReadAsByteArrayAsync(ct);
         var fileName = $"{invoiceNumber}.pdf";
         var base64 = Convert.ToBase64String(bytes);
-        await js.InvokeVoidAsync("jobsyDownload.bytes", fileName, base64, "application/pdf");
+        await SendBrowserDownloadAsync(js, fileName, base64, "application/pdf");
     }
 
     public async Task<PartnerSalesCatalog?> GetPartnerSalesCatalogAsync(CancellationToken ct = default)
@@ -1652,7 +1658,7 @@ public sealed class JobsyApiClient : IAsyncDisposable
         response.EnsureSuccessStatusCode();
         var bytes = await response.Content.ReadAsByteArrayAsync(ct);
         var base64 = Convert.ToBase64String(bytes);
-        await js.InvokeVoidAsync("jobsyDownload.bytes", "lobsy-partner-flyer.pdf", base64, "application/pdf");
+        await SendBrowserDownloadAsync(js, "lobsy-partner-flyer.pdf", base64, "application/pdf");
     }
 
     public async Task<PartnerAffiliateMeModel?> GetPartnerAffiliateMeAsync(CancellationToken ct = default)
@@ -1683,7 +1689,7 @@ public sealed class JobsyApiClient : IAsyncDisposable
             ? "lobsy-ondernemersflyer.pdf"
             : "lobsy-kandidatenflyer.pdf";
         var base64 = Convert.ToBase64String(bytes);
-        await js.InvokeVoidAsync("jobsyDownload.bytes", fileName, base64, "application/pdf");
+        await SendBrowserDownloadAsync(js, fileName, base64, "application/pdf");
     }
 
     public async Task<AmbassadeurInviteResult?> InviteAmbassadeurAsync(
@@ -1894,8 +1900,7 @@ public sealed class JobsyApiClient : IAsyncDisposable
         var bytes = await response.Content.ReadAsByteArrayAsync(ct);
         var size = string.Equals(format, "A3", StringComparison.OrdinalIgnoreCase) ? "A3" : "A4";
         var base64 = Convert.ToBase64String(bytes);
-        await js.InvokeVoidAsync(
-            "jobsyDownload.bytes",
+        await SendBrowserDownloadAsync(js,
             $"lobsy-raamflyer-{size}.pdf",
             base64,
             "application/pdf");
@@ -1932,8 +1937,7 @@ public sealed class JobsyApiClient : IAsyncDisposable
         var bytes = await response.Content.ReadAsByteArrayAsync(ct);
         var size = string.Equals(format, "A3", StringComparison.OrdinalIgnoreCase) ? "A3" : "A4";
         var base64 = Convert.ToBase64String(bytes);
-        await js.InvokeVoidAsync(
-            "jobsyDownload.bytes",
+        await SendBrowserDownloadAsync(js,
             $"lobsy-overzicht-raamflyer-{size}.pdf",
             base64,
             "application/pdf");
@@ -1978,7 +1982,7 @@ public sealed class JobsyApiClient : IAsyncDisposable
         var bytes = await response.Content.ReadAsByteArrayAsync(ct);
         var fileName = $"BTW-aangifte-{periodLabel}.pdf";
         var base64 = Convert.ToBase64String(bytes);
-        await js.InvokeVoidAsync("jobsyDownload.bytes", fileName, base64, "application/pdf");
+        await SendBrowserDownloadAsync(js, fileName, base64, "application/pdf");
     }
 
     public async Task<IReadOnlyList<SalesManagerCostFinanceItem>> GetSalesManagerCostsAsync(
@@ -2777,7 +2781,7 @@ public sealed class JobsyApiClient : IAsyncDisposable
 
         var bytes = await response.Content.ReadAsByteArrayAsync(ct);
         var base64 = Convert.ToBase64String(bytes);
-        await js.InvokeVoidAsync("jobsyDownload.bytes", "lobsy-werkgeversflyer.pdf", base64, "application/pdf");
+        await SendBrowserDownloadAsync(js, "lobsy-werkgeversflyer.pdf", base64, "application/pdf");
     }
 
     public async Task<IReadOnlyList<RegionHostItem>> GetRegionHostsAsync(CancellationToken ct = default)
@@ -3111,7 +3115,7 @@ public sealed class JobsyApiClient : IAsyncDisposable
         var bytes = await response.Content.ReadAsByteArrayAsync(ct);
         var fileName = string.IsNullOrWhiteSpace(invoiceNumber) ? $"{invoiceId:N}.pdf" : $"{invoiceNumber}.pdf";
         var base64 = Convert.ToBase64String(bytes);
-        await js.InvokeVoidAsync("jobsyDownload.bytes", fileName, base64, "application/pdf");
+        await SendBrowserDownloadAsync(js, fileName, base64, "application/pdf");
     }
 
     public async Task<SelfBillingInvoiceItem?> MarkSelfBillingInvoicePaidAsync(Guid invoiceId, CancellationToken ct = default)

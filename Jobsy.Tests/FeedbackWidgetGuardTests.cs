@@ -60,12 +60,18 @@ public class FeedbackWidgetGuardTests
     }
 
     [Fact]
-    public void App_shell_loads_feedback_script()
+    public void App_shell_does_not_load_feedback_until_the_widget_opens()
     {
         var app = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "Components", "App.razor"));
-        Assert.Contains("js/feedback.js", app);
-        var layout = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "Components", "Layout", "MainLayout.razor"));
-        Assert.Contains("FeedbackWidget", layout);
+        Assert.DoesNotContain("js/feedback.js", app);
+
+        var widget = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "Components", "Feedback", "FeedbackWidget.razor"));
+        Assert.Contains("lobsyFeedbackEnsure", widget);
+        Assert.Contains("FeedbackWidget", File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "Components", "Layout", "MainLayout.razor")));
+
+        var loader = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "wwwroot", "js", "extras-loader.js"));
+        Assert.Contains("feedback.js", loader);
+        Assert.Contains("lobsyFeedbackEnsure", loader);
     }
 
     private static string FindRepoRoot()

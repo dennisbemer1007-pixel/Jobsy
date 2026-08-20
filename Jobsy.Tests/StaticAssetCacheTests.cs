@@ -58,7 +58,7 @@ public class StaticAssetCacheTests
     {
         var home = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "Components", "Pages", "Home.razor"));
         Assert.Contains("lib/maplibre/maplibre-gl.css?v=", home);
-        Assert.Contains("lib/maplibre/maplibre-gl.js?v=", home);
+        Assert.Contains("lib/maplibre/maplibre-gl-csp.js?v=", home);
 
         var app = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "Components", "App.razor"));
         Assert.Contains("_framework/blazor.web.js?v=", app);
@@ -66,12 +66,13 @@ public class StaticAssetCacheTests
 
         var maps = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "wwwroot", "js", "maps-loader.js"));
         Assert.Contains("/lib/maplibre/maplibre-gl.css?v=", maps);
-        Assert.Contains("/lib/maplibre/maplibre-gl.js?v=", maps);
+        Assert.Contains("/lib/maplibre/maplibre-gl-csp.js?v=", maps);
         Assert.Contains("function pathOnly(url)", maps);
 
         var bundle = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "wwwroot", "js", "app-core.js"));
         Assert.Contains("/lib/maplibre/maplibre-gl.css?v=", bundle);
         Assert.Contains("function pathOnly(url)", bundle);
+        Assert.Contains("maplibre-gl-csp.js", bundle);
     }
 
     private static HttpResponse PrepareResponse(string fileName, string? query)

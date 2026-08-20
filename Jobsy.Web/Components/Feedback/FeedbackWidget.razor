@@ -154,6 +154,7 @@
 
         try
         {
+            await JobsyJs.EnsureFeedbackAsync(Js);
             _meta = await Js.InvokeAsync<FeedbackClientMeta>("lobsyFeedback.getMetadata");
             _screenshot = await Js.InvokeAsync<string?>("lobsyFeedback.captureScreenshot");
         }

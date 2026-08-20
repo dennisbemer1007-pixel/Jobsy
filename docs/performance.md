@@ -34,8 +34,8 @@ De banenkaart blijft de first-paint kernervaring (geen Funda-klik-om-te-tonen). 
 
 ### JavaScript / critical path
 
-- MapLibre GL JS staat lokaal in `wwwroot/lib/maplibre/` en laadt via `jobsyMaps.ensureAfterPaint("discovery")` (idle + nabij viewport) of `ensure("detail")`. OpenFreeMap-stijlen komen van `tiles.openfreemap.org`.
-- First-party JS is gebundeld in `js/app-core.js` (geo, culture, session, cookies, download, richtext, maps-loader) en staat op `defer`.
+- First-party JS is gesplitst: `js/app-core.js` (geo, culture, cookies, maps-loader) op `defer`; session-idle/download/richtext in `app-extras.js` en feedback pas bij openen van de widget. Kaart-scripts worden minified geserveerd (`jobMap.min.js` e.d.).
+- MapLibre GL JS staat lokaal als **CSP-build** (`maplibre-gl-csp.js` + worker). De worker parse’t off-thread; `setWorkerUrl` wijst naar hetzelfde-origin worker-bestand. OpenFreeMap-stijlen komen van `tiles.openfreemap.org`.
 - `jobsyMaps.ensure("discovery"|"detail")` laadt niet beide kaart-scripts op elke pagina.
 - Cookiebanner staat in de eerste HTML (compact); `html.cookie-consent-known` verbergt hem vóór paint als de keuze al bekend is. Paint-containment houdt hem buiten de LCP.
 - Critical CSS inline; `app.css` non-blocking. Geen webfonts.

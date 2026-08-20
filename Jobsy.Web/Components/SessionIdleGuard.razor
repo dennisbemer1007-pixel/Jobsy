@@ -61,6 +61,7 @@
 
         try
         {
+            await JobsyJs.EnsureExtrasAsync(Js);
             await Js.InvokeVoidAsync("lobsySessionIdle.start", new
             {
                 timeoutMinutes = minutes,
@@ -112,7 +113,10 @@
 
     private void OnLocationChanged(object? sender, Microsoft.AspNetCore.Components.Routing.LocationChangedEventArgs e)
     {
-        _ = Js.InvokeVoidAsync("lobsySessionIdle.markActivity");
+        if (_started)
+        {
+            _ = Js.InvokeVoidAsync("lobsySessionIdle.markActivity");
+        }
         _ = TryStartAsync();
     }
 

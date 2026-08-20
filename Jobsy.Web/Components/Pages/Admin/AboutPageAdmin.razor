@@ -161,6 +161,7 @@
 
     private async Task FormatAsync(string tag)
     {
+        await JobsyJs.EnsureExtrasAsync(Js);
         var next = await Js.InvokeAsync<string?>("jobsyRichtext.wrap", _bodyRef, $"<{tag}>", $"</{tag}>", "tekst");
         if (next is not null)
         {
@@ -170,6 +171,7 @@
 
     private async Task InsertHeadingAsync()
     {
+        await JobsyJs.EnsureExtrasAsync(Js);
         var next = await Js.InvokeAsync<string?>(
             "jobsyRichtext.wrap",
             _bodyRef,
@@ -184,6 +186,7 @@
 
     private async Task InsertListAsync()
     {
+        await JobsyJs.EnsureExtrasAsync(Js);
         var next = await Js.InvokeAsync<string?>(
             "jobsyRichtext.wrap",
             _bodyRef,
@@ -198,6 +201,7 @@
 
     private async Task InsertLinkAsync()
     {
+        await JobsyJs.EnsureExtrasAsync(Js);
         var next = await Js.InvokeAsync<string?>("jobsyRichtext.insertLink", _bodyRef);
         if (next is not null)
         {
@@ -207,6 +211,7 @@
 
     private async Task InsertSectionAsync()
     {
+        await JobsyJs.EnsureExtrasAsync(Js);
         var next = await Js.InvokeAsync<string?>(
             "jobsyRichtext.wrap",
             _bodyRef,

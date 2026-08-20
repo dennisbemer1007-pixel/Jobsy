@@ -16,10 +16,11 @@ public class JobMapPrerenderGuardTests
         Assert.DoesNotContain("/lib/leaflet/leaflet.min.js", home);
         Assert.DoesNotContain("/lib/leaflet/leaflet.css", home);
         Assert.Contains("lib/maplibre/maplibre-gl.css", home);
-        Assert.Contains("lib/maplibre/maplibre-gl.js", home);
+        Assert.Contains("lib/maplibre/maplibre-gl-csp.js", home);
+        Assert.Contains("maplibre-gl-csp-worker.js", home);
         Assert.Contains("fetchpriority=\"high\"", home);
-        Assert.Contains("jobsyMapLibre.js", home);
-        Assert.Contains("jobMap.js", home);
+        Assert.Contains("jobsyMapLibre.min.js", home);
+        Assert.Contains("jobMap.min.js", home);
     }
 
     [Fact]
@@ -139,7 +140,7 @@ public class JobMapPrerenderGuardTests
         Assert.DoesNotContain("ensureAfterPaint", maps);
         var bundle = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "wwwroot", "js", "app-core.js"));
         Assert.Contains("pending[kind] = null", bundle);
-        Assert.Contains("maplibre-gl.js", bundle);
+        Assert.Contains("maplibre-gl-csp.js", bundle);
         Assert.Contains("fetchpriority", bundle);
         Assert.DoesNotContain("requestIdleCallback", bundle);
         Assert.DoesNotContain("ensureAfterPaint", bundle);

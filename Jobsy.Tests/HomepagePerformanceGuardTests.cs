@@ -88,6 +88,9 @@ public class HomepagePerformanceGuardTests
         Assert.DoesNotContain("ensureAfterPaint", maps);
         Assert.Contains("discoveryScripts", maps);
         Assert.Contains("detailScripts", maps);
+        Assert.Contains("setWorkerUrl", maps);
+        Assert.Contains("jobMap.min.js", maps);
+        Assert.DoesNotContain("/js/jobMap.js?", maps);
 
         var mapScripts = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "Hosting", "MapScripts.cs"));
         Assert.Contains("EnsureDiscoveryAsync", mapScripts);
@@ -121,6 +124,40 @@ public class HomepagePerformanceGuardTests
         Assert.Equal(HttpMethods.Get, seenMethod);
         Assert.Equal(HttpMethods.Head, context.Request.Method);
         Assert.Equal(StatusCodes.Status200OK, context.Response.StatusCode);
+    }
+
+    [Fact]
+    public void Homepage_js_payload_skips_deferred_and_unminified_scripts()
+    {
+        var root = FindRepoRoot();
+        var app = File.ReadAllText(Path.Combine(root, "Jobsy.Web", "Components", "App.razor"));
+        Assert.Contains("js/app-core.js", app);
+        Assert.DoesNotContain("js/feedback.js", app);
+        Assert.DoesNotContain("js/app-extras.js", app);
+
+        var core = File.ReadAllText(Path.Combine(root, "Jobsy.Web", "wwwroot", "js", "app-core.js"));
+        Assert.Contains("jobsyExtras", core);
+        Assert.Contains("lobsyFeedbackEnsure", core);
+        Assert.Contains("setWorkerUrl", core);
+        Assert.DoesNotContain("window.lobsySessionIdle =", core);
+        Assert.DoesNotContain("window.jobsyDownload =", core);
+        Assert.DoesNotContain("window.jobsyRichtext =", core);
+
+        var extras = File.ReadAllText(Path.Combine(root, "Jobsy.Web", "wwwroot", "js", "app-extras.js"));
+        Assert.Contains("window.lobsySessionIdle =", extras);
+        Assert.Contains("window.jobsyDownload =", extras);
+        Assert.Contains("window.jobsyRichtext =", extras);
+
+        var mapDir = Path.Combine(root, "Jobsy.Web", "wwwroot", "lib", "maplibre");
+        Assert.False(File.Exists(Path.Combine(mapDir, "maplibre-gl.js")));
+        Assert.True(File.Exists(Path.Combine(mapDir, "maplibre-gl-csp.js")));
+        Assert.True(File.Exists(Path.Combine(mapDir, "maplibre-gl-csp-worker.js")));
+        Assert.True(new FileInfo(Path.Combine(mapDir, "maplibre-gl-csp.js")).Length < 1_000_000);
+
+        Assert.True(new FileInfo(Path.Combine(root, "Jobsy.Web", "wwwroot", "js", "jobMap.min.js")).Length
+            < new FileInfo(Path.Combine(root, "Jobsy.Web", "wwwroot", "js", "jobMap.js")).Length);
+        Assert.True(new FileInfo(Path.Combine(root, "Jobsy.Web", "wwwroot", "js", "jobsyMapLibre.min.js")).Length
+            < new FileInfo(Path.Combine(root, "Jobsy.Web", "wwwroot", "js", "jobsyMapLibre.js")).Length);
     }
 
     private static string FindRepoRoot()
