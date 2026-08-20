@@ -14,7 +14,7 @@ public static class VacancyMapViewCalculator
     /// Local zoom when the map is centered on a filled origin or region-host address.
     /// Keep in sync with <c>FILLED_LOCATION_ZOOM</c> in <c>jobMap.js</c>.
     /// </summary>
-    public const int FilledLocationZoom = 11;
+    public const int FilledLocationZoom = 13;
 
     public static VacancyMapView? ForFilledLocation(double lat, double lng, int pinCount = 0)
     {
@@ -33,7 +33,7 @@ public static class VacancyMapViewCalculator
 
     /// <summary>
     /// Opening camera for the banenkaart, computed before HTML leaves the server.
-    /// Address / default-region wins (zoom 11); otherwise the marker-centroid view.
+    /// Address / default-region wins (zoom 13); otherwise the marker-centroid view.
     /// Company deep-links keep the pin camera.
     /// </summary>
     public static VacancyMapView ResolveOpening(

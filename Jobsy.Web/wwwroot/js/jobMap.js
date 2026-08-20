@@ -25,7 +25,7 @@ window.jobMap = (function () {
     const NL_ZOOM = 7;
     const NL_BOUNDS = [[50.29, 2.81], [53.33, 8.44]];
     // Keep in sync with VacancyMapViewCalculator.FilledLocationZoom.
-    const FILLED_LOCATION_ZOOM = 11;
+    const FILLED_LOCATION_ZOOM = 13;
 
     const CLUSTER_OPTS = {
         showCoverageOnHover: false,
