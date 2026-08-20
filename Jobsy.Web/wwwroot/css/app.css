@@ -3927,6 +3927,21 @@ a {
     flex-direction: column;
 }
 
+/* Desktop cluster: keep card size stable while paging (mobile already clamps). */
+@media (min-width: 769px) {
+    .job-map-popup--cluster .map-popup__main,
+    .job-map-popup--cluster .map-popup__media,
+    .job-map-popup--cluster .map-popup__body {
+        height: 252px;
+        min-height: 252px;
+        max-height: 252px;
+    }
+
+    .job-map-popup--cluster .map-popup__header {
+        overflow: hidden;
+    }
+}
+
 .job-map-popup .maplibregl-popup-tip {
     align-self: center;
     margin-inline: auto;

@@ -87,6 +87,14 @@ public class JobMapPrerenderGuardTests
         Assert.Contains(".map-popup__type-chip", css);
         Assert.Contains(".job-map-popup--with-wages > .map-popup__type-chip", css);
         Assert.Contains("right: 62px", css);
+
+        var bindStart = js.IndexOf("function bindClusterPopupInteractions", StringComparison.Ordinal);
+        var bindEnd = js.IndexOf("function eventTargetInsidePopup", StringComparison.Ordinal);
+        Assert.True(bindStart >= 0 && bindEnd > bindStart);
+        var bindFn = js[bindStart..bindEnd];
+        Assert.DoesNotContain("centerPopupInView", bindFn);
+        Assert.Contains(".job-map-popup--cluster .map-popup__main", css);
+        Assert.Contains("max-height: 252px", css);
     }
 
     [Fact]

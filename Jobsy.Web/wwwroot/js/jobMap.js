@@ -563,7 +563,6 @@ window.jobMap = (function () {
                     popup.update();
                 }
                 bindClusterPopupInteractions(popup, childMarkers);
-                centerPopupInView(popup);
             });
         });
     }

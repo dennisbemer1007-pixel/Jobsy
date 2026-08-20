@@ -14,6 +14,7 @@ Alle noemenswaardige wijzigingen aan dit project worden in dit bestand bijgehoud
 ## [Unreleased]
 
 ### Changed
+- Banenkaart cluster-popup op desktop blijft op zijn plaats bij pagineren (vaste kaart-hoogte, geen her-centreren).
 - Banenkaart-popup: vacaturetype-label staat in de chrome-rij links van € (of links van het kruisje). Uitgelicht blijft op de foto.
 - Banenkaart laadt MapLibre (CSS, JS, helper-chunks) via `preload`/`fetchpriority=high` zodat pinnen eerder zichtbaar zijn. Worker-preload gebruikt `as="fetch"` (geen extra main-thread script). Leaflet is verwijderd.
 
