@@ -14,13 +14,18 @@
         * { box-sizing: border-box; }
         html, body { margin: 0; height: 100%; font-family: var(--font); color: var(--text); background: var(--bg); }
         html.cookie-consent-known .cookie-consent { display: none; }
+        .lobsy-watermarks { display: none; }
+        .jobsy-chrome { display: none; }
         .jobsy-discovery { display: grid; grid-template-columns: minmax(320px,42%) minmax(0,58%); min-height: 0; height: 100%; position: relative; }
         .map-pane, .map-stage { position: relative; width: 100%; min-width: 280px; min-height: 55dvh; background: var(--map-land); }
         .map-stage { flex: 1 1 auto; }
         #job-map, .job-map { width: 100%; min-width: 280px; min-height: 55dvh; height: 100%; background: var(--map-land); contain: layout; }
         .job-map-placeholder { position: absolute; inset: 0; background: var(--map-land); pointer-events: none; }
         @@media (max-width: 768px) {
+            .app-shell:has(.jobsy-discovery) .app-header,
+            .app-shell:has(.jobsy-discovery) .app-footer { display: none; }
             .jobsy-discovery { grid-template-columns: 1fr; grid-template-rows: auto 1fr; }
+            .jobsy-discovery .jobsy-chrome { display: block; }
             .jobsy-discovery.show-map .map-pane,
             .jobsy-discovery.show-map .map-stage,
             .jobsy-discovery.show-map #job-map,
@@ -34,8 +39,8 @@
         }
         .img-fallback-empty { background: #e7eef7; object-fit: contain; }
     </style>
-    <link rel="stylesheet" href="css/app.css?v=20260820-r169" media="print" onload="this.onload=null;this.media='all'" />
-    <noscript><link rel="stylesheet" href="css/app.css?v=20260820-r169" /></noscript>
+    <link rel="stylesheet" href="css/app.css?v=20260820-r170" media="print" onload="this.onload=null;this.media='all'" />
+    <noscript><link rel="stylesheet" href="css/app.css?v=20260820-r170" /></noscript>
     <script>
         (function () {
             try {
@@ -95,7 +100,7 @@
     <CascadingAuthenticationState>
         <Routes @rendermode="new InteractiveServerRenderMode(prerender: true)" />
     </CascadingAuthenticationState>
-    <script src="js/app-core.js?v=20260820-r169" defer></script>
+    <script src="js/app-core.js?v=20260820-r170" defer></script>
     <script src="_framework/blazor.web.js?v=20260820-r164" defer></script>
 </body>
 

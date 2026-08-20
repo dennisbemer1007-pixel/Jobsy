@@ -32,6 +32,7 @@ public class JobMapPrerenderGuardTests
         Assert.Contains("getElementById(\"job-map\")", maps);
         Assert.Contains("lib/maplibre/maplibre-gl-csp.js", maps);
         Assert.Contains("jobMap.min.js", maps);
+        Assert.Contains("jobMap.boot", maps);
     }
 
     [Fact]
@@ -46,12 +47,15 @@ public class JobMapPrerenderGuardTests
         Assert.DoesNotContain("center: NL_CENTER", js);
         Assert.DoesNotContain("map.fitBounds(NL_BOUNDS", js);
         Assert.DoesNotContain("map.setView(NL_CENTER", js);
+        Assert.Contains("function boot(", js);
+        Assert.Contains("const reuse", js);
+        Assert.Contains("Paint the basemap immediately", js);
         Assert.Contains("fitMapToVacancies", js);
         Assert.Contains("collectVacancyPoints", js);
-        Assert.Contains("No default NL view", js);
         Assert.Contains("ensureVacancyTiles", js);
         Assert.Contains("firstSizedFit", js);
         Assert.DoesNotContain("openingViewUntil", js);
+        Assert.DoesNotContain("No default NL view", js);
         var initIdx = js.IndexOf("function init(elementId, vacancies, options)", StringComparison.Ordinal);
         var setVacanciesInInit = js.IndexOf("setVacancies(vacancies || []);", initIdx, StringComparison.Ordinal);
         var tilesAfterVacancies = js.IndexOf("ensureVacancyTiles();", setVacanciesInInit, StringComparison.Ordinal);
@@ -151,6 +155,8 @@ public class JobMapPrerenderGuardTests
         Assert.Contains("jobsyLogoFallback", app);
         Assert.Contains("#job-map", app);
         Assert.Contains("min-height: 55dvh", app);
+        Assert.Contains(".lobsy-watermarks { display: none; }", app);
+        Assert.Contains(".jobsy-chrome { display: none; }", app);
         Assert.DoesNotContain("lib/leaflet/leaflet.min.js", app);
         Assert.DoesNotContain("lib/leaflet/leaflet.css", app);
         Assert.DoesNotContain("lib/maplibre/maplibre-gl.js", app);

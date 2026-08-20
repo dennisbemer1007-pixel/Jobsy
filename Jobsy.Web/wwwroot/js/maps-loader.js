@@ -14,7 +14,7 @@ window.jobsyMaps = (function () {
         "/js/jobsyMapLibre.min.js?v=20260820-r166"
     ];
     var discoveryScripts = [
-        "/js/jobMap.min.js?v=20260820-r169"
+        "/js/jobMap.min.js?v=20260820-r170"
     ];
     var detailScripts = [
         "/js/vacancyDetailMap.min.js?v=20260820-r166"
@@ -181,7 +181,13 @@ window.jobsyMaps = (function () {
             if (!document.getElementById("job-map")) {
                 return;
             }
-            this.ensure("discovery");
+            this.ensure("discovery").then(function () {
+                try {
+                    if (window.jobMap && typeof window.jobMap.boot === "function") {
+                        window.jobMap.boot("job-map");
+                    }
+                } catch (e) { }
+            });
         }
     };
 })();

@@ -18,8 +18,7 @@ window.jobMap = (function () {
     let selectedId = null;
     let zoomHandlerBound = false;
 
-    // Kept as unused geographic constants (tests). Opening view never uses these —
-    // the camera fits actual vacancy markers from the catalog only.
+    // Used to paint the basemap immediately (before the vacancy catalog arrives).
     const NL_CENTER = [52.15, 5.2913];
     const NL_ZOOM = 7;
     const NL_BOUNDS = [[50.29, 2.81], [53.33, 8.44]];
@@ -1239,6 +1238,89 @@ window.jobMap = (function () {
         }
     }
 
+    function createMapInstance(el, openingPoints) {
+        firstSizedFit = false;
+        lastFitPoints = [];
+        tileLayer = null;
+        selectedId = null;
+
+        let center;
+        let zoom;
+        if (openingPoints && openingPoints.length) {
+            lastFitPoints = openingPoints.slice();
+            const startBounds = boundsFromPoints(openingPoints);
+            const start = startBounds.getCenter();
+            center = [start.lng, start.lat];
+            zoom = zoomForPoints(openingPoints);
+        } else {
+            center = [NL_CENTER[1], NL_CENTER[0]];
+            zoom = NL_ZOOM;
+        }
+
+        map = window.jobsyMapLibre.createMap(el, {
+            center: center,
+            zoom: zoom
+        });
+        map._jobsyOnStyleRestored = restoreOverlays;
+        map.on("load", function () {
+            restoreOverlays();
+            invalidate();
+        });
+        window.addEventListener("resize", invalidate);
+    }
+
+    function bindMapRuntime() {
+        if (!map) {
+            return;
+        }
+        if (!clusterGroup) {
+            clusterGroup = {
+                refreshClusters: refreshClusters,
+                clearLayers: function () {
+                    clearRenderedMarkers();
+                    markersById = {};
+                },
+                zoomToShowLayer: function (record, cb) {
+                    map.easeTo({
+                        center: [record.lng, record.lat],
+                        zoom: Math.max(map.getZoom(), CLUSTER_OPTS.disableClusteringAtZoom),
+                        duration: 280
+                    });
+                    map.once("idle", function () {
+                        refreshClusters();
+                        if (typeof cb === "function") {
+                            cb();
+                        }
+                    });
+                }
+            };
+        }
+        if (!zoomHandlerBound) {
+            zoomHandlerBound = true;
+            map.on("zoomend", refreshClusters);
+        }
+        addLocateControl();
+        bindOutsideClickCloser();
+    }
+
+    // Paint the basemap immediately as soon as #job-map exists — do not wait for Blazor/catalog.
+    function boot(elementId) {
+        if (map) {
+            return;
+        }
+        if (typeof maplibregl === "undefined" || !window.jobsyMapLibre) {
+            return;
+        }
+        const el = document.getElementById(elementId || "job-map");
+        if (!el) {
+            return;
+        }
+        createMapInstance(el, []);
+        bindMapRuntime();
+        revealMapStage();
+        invalidate();
+    }
+
     function init(elementId, vacancies, options) {
         if (typeof maplibregl === "undefined") {
             throw new Error("MapLibre GL JS (maplibregl) is not loaded");
@@ -1252,8 +1334,15 @@ window.jobMap = (function () {
             throw new Error("Map element #" + elementId + " not found");
         }
 
-        if (map) {
-            dispose();
+        const openingPoints = collectVacancyPoints(vacancies || []);
+        const reuse = !!(map && typeof map.getContainer === "function"
+            && map.getContainer() === el && el.isConnected);
+
+        if (!reuse) {
+            if (map) {
+                dispose();
+            }
+            createMapInstance(el, openingPoints);
         }
 
         openCallback = options && options.dotNetRef ? options.dotNetRef : null;
@@ -1262,54 +1351,7 @@ window.jobMap = (function () {
             ? (Number(options.highlightSeed) >>> 0)
             : 0;
 
-        firstSizedFit = false;
-        lastFitPoints = [];
-        tileLayer = null;
-        selectedId = null;
-
-        // No default NL view: start on vacancy coordinates so the first tiles
-        // are the real jobs, not the whole country.
-        const openingPoints = collectVacancyPoints(vacancies || []);
-        if (openingPoints.length === 0) {
-            throw new Error("No vacancy coordinates for map");
-        }
-        lastFitPoints = openingPoints.slice();
-        const startBounds = boundsFromPoints(openingPoints);
-        const start = startBounds.getCenter();
-
-        map = window.jobsyMapLibre.createMap(el, {
-            center: [start.lng, start.lat],
-            zoom: zoomForPoints(openingPoints)
-        });
-        map._jobsyOnStyleRestored = restoreOverlays;
-        ensureVacancyTiles();
-        revealMapStage();
-
-        clusterGroup = {
-            refreshClusters: refreshClusters,
-            clearLayers: function () {
-                clearRenderedMarkers();
-                markersById = {};
-            },
-            zoomToShowLayer: function (record, cb) {
-                map.easeTo({
-                    center: [record.lng, record.lat],
-                    zoom: Math.max(map.getZoom(), CLUSTER_OPTS.disableClusteringAtZoom),
-                    duration: 280
-                });
-                map.once("idle", function () {
-                    refreshClusters();
-                    if (typeof cb === "function") {
-                        cb();
-                    }
-                });
-            }
-        };
-
-        if (!zoomHandlerBound) {
-            zoomHandlerBound = true;
-        }
-        map.on("zoomend", refreshClusters);
+        bindMapRuntime();
 
         setVacancies(vacancies || []);
         if (options && options.origin) {
@@ -1317,17 +1359,7 @@ window.jobMap = (function () {
         }
         ensureVacancyTiles();
 
-        bindOutsideClickCloser();
-
-        addLocateControl();
         invalidate();
-
-        map.on("load", function () {
-            restoreOverlays();
-            invalidate();
-        });
-
-        window.addEventListener("resize", invalidate);
     }
 
     function locateIconHtml() {
@@ -1612,6 +1644,7 @@ window.jobMap = (function () {
     }
 
     return {
+        boot,
         init,
         setVacancies,
         setOrigin,
