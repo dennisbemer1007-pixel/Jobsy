@@ -11,8 +11,8 @@
                 class="page-help__btn @(_open ? "is-open" : null)"
                 title="@Culture["Help.AboutPage"]"
                 aria-label="@($"{Culture["Help.AboutPage"]}: {_doc.Title}")"
-                aria-expanded="@_open"
-                aria-controls="page-help-panel"
+                aria-expanded="@(_open ? "true" : "false")"
+                aria-controls="@(_open ? "page-help-panel" : null)"
                 @onclick="Toggle">
             i
         </button>

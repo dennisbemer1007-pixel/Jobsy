@@ -7,7 +7,7 @@
     <button type="button"
             class="language-selector__toggle"
             aria-haspopup="listbox"
-            aria-expanded="@_open"
+            aria-expanded="@(_open ? "true" : "false")"
             aria-label="@Culture["Language.Choose"]"
             title="@Culture["Language.Label"]"
             @onclick="Toggle">
@@ -20,7 +20,7 @@
         <ul class="language-selector__menu" role="listbox" aria-label="@Culture["Language.Label"]">
             @foreach (var lang in JobsyLanguages.All)
             {
-                <li role="option" aria-selected="@(lang.Code == Culture.Language)">
+                <li role="option" aria-selected="@(lang.Code == Culture.Language ? "true" : "false")">
                     <button type="button"
                             class="language-selector__option @(lang.Code == Culture.Language ? "is-active" : null)"
                             @onclick="() => SelectAsync(lang.Code)">

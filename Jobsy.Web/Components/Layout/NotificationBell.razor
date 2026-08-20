@@ -13,7 +13,7 @@
                     class="notification-bell__toggle"
                     title="@(_unread > 0 ? $"{_unread} ongelezen bericht{(_unread == 1 ? "" : "en")}" : "Notificaties")"
                     aria-label="@($"Notificaties{(_unread > 0 ? $", {_unread} ongelezen" : "")}")"
-                    aria-expanded="@_open"
+                    aria-expanded="@(_open ? "true" : "false")"
                     @onclick="ToggleAsync">
                 <span class="notification-bell__icon" aria-hidden="true">@((MarkupString)NavIcons.Notifications)</span>
                 @if (_unread > 0)

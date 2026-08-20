@@ -2642,6 +2642,10 @@ a {
     align-items: start;
 }
 
+.filter-bar--desktop[hidden] {
+    display: none !important;
+}
+
 .filter-bar__address {
     grid-column: 1 / -1;
     position: relative;
@@ -12438,8 +12442,14 @@ html.cookie-consent-known .cookie-consent {
 }
 
 .cookie-consent__actions .btn-compact--primary {
-  background: #f54a1b;
-  border-color: #f54a1b;
+  background: var(--coral-deep, #d93a12);
+  border-color: var(--coral-deep, #d93a12);
+  color: #fff;
+}
+
+.cookie-consent__actions .btn-compact--primary:hover:not(:disabled) {
+  background: #c43410;
+  border-color: #c43410;
   color: #fff;
 }
 

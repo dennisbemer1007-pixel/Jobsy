@@ -14,7 +14,7 @@
             @onclick="OpenAsync"
             disabled="@_capturing"
             aria-haspopup="dialog"
-            aria-expanded="@_open">
+            aria-expanded="@(_open ? "true" : "false")">
         <span class="feedback-widget__icon" aria-hidden="true">@((MarkupString)NavIcons.Feedback)</span>
         <span>@(_capturing ? Culture["Feedback.Capturing"] : Culture["Feedback.Button"])</span>
     </button>

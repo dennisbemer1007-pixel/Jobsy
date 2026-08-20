@@ -14,6 +14,7 @@ Alle noemenswaardige wijzigingen aan dit project worden in dit bestand bijgehoud
 ## [Unreleased]
 
 ### Changed
+- Toegankelijkheid: Filters-knop gebruikt geldige ARIA (`true`/`false`) en houdt `#discovery-filters-desktop` in de DOM; cookiebanner “Accepteer analytics” haalt WCAG AA-contrast (wit op `--coral-deep`).
 - Banenkaart: eerste paint gebruikt de precomputed centroid/zoom van actieve pins (geen NL-overzicht, geen herzoom als markers later komen).
 - Banenkaart: prerender zet echte pin-coördinaten in `#jobsy-map-boot`; MapLibre boot meteen met markers (geen wachten op Blazor). Homepage toont geen watermark-logo’s meer.
 - Homepage toont meteen de kaart: watermarks/chrome blijven weg tot de layout-CSS er is, MapLibre boot vóór de vacaturecatalogus.
