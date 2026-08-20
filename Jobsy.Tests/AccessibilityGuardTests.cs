@@ -23,7 +23,7 @@ public class AccessibilityGuardTests
 
         var panelAt = discovery.IndexOf("id=\"discovery-filters-desktop\"", StringComparison.Ordinal);
         Assert.True(panelAt > 0);
-        var panelHead = discovery[Math.Max(0, panelAt - 180)..(panelAt + 80)];
+        var panelHead = discovery[Math.Max(0, panelAt - 180)..Math.Min(discovery.Length, panelAt + 220)];
         Assert.DoesNotContain("@if (_filtersOpen)", panelHead);
         Assert.Contains("hidden=\"@(!_filtersOpen)\"", panelHead);
         Assert.Contains("aria-hidden=\"@(!_filtersOpen ? \"true\" : \"false\")\"", panelHead);
@@ -40,7 +40,7 @@ public class AccessibilityGuardTests
         var marker = ".cookie-consent__actions .btn-compact--primary {";
         var start = css.IndexOf(marker, StringComparison.Ordinal);
         Assert.True(start > 0);
-        var end = css.IndexOf('}', start, StringComparison.Ordinal);
+        var end = css.IndexOf('}', start);
         Assert.True(end > start);
         var block = css[start..end];
         Assert.Contains("--coral-deep", block);
