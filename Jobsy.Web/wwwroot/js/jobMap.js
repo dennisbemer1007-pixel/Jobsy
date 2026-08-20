@@ -153,6 +153,7 @@ window.jobMap = (function () {
             el.classList.add("job-map-popup", "job-map-popup--cluster");
             el.classList.remove(
                 "job-map-popup--with-wages",
+                "job-map-popup--with-type",
                 "job-cluster-popup",
                 "job-cluster-popup--with-wages"
             );
@@ -254,6 +255,20 @@ window.jobMap = (function () {
         return "<div class=\"map-popup__specs\">" + parts.join("") + "</div>";
     }
 
+    function typeChipHtml(v) {
+        if (!v.typeBadgeLabel) {
+            return "";
+        }
+        const color = safeBadgeColor(v.typeBadgeColor || v.categoryColor);
+        return (
+            "<span class=\"map-popup__type-chip\" style=\"--badge-color:" +
+            escapeAttr(color) +
+            "\">" +
+            escapeHtml(String(v.typeBadgeLabel)) +
+            "</span>"
+        );
+    }
+
     function mountWageControls(popupEl) {
         if (!popupEl) {
             return;
@@ -265,14 +280,21 @@ window.jobMap = (function () {
         const popoverInContent = content
             ? content.querySelector(".map-popup__wage-popover")
             : null;
+        const typeInContent = content
+            ? content.querySelector(".map-popup__type-chip")
+            : null;
 
         Array.prototype.slice.call(popupEl.children).forEach(function (child) {
             if (!child.classList) {
                 return;
             }
-            const isWageChrome = child.classList.contains("map-popup__wage-info")
-                || child.classList.contains("map-popup__wage-popover");
-            if (isWageChrome && child !== btnInContent && child !== popoverInContent) {
+            const isChrome = child.classList.contains("map-popup__wage-info")
+                || child.classList.contains("map-popup__wage-popover")
+                || child.classList.contains("map-popup__type-chip");
+            if (isChrome
+                && child !== btnInContent
+                && child !== popoverInContent
+                && child !== typeInContent) {
                 child.remove();
             }
         });
@@ -285,6 +307,12 @@ window.jobMap = (function () {
         }
         if (popoverInContent) {
             popupEl.appendChild(popoverInContent);
+        }
+        if (typeInContent) {
+            popupEl.appendChild(typeInContent);
+            popupEl.classList.add("job-map-popup--with-type");
+        } else {
+            popupEl.classList.remove("job-map-popup--with-type");
         }
     }
 
@@ -360,16 +388,6 @@ window.jobMap = (function () {
                 "</span>"
             );
         }
-        if (v.typeBadgeLabel) {
-            const color = safeBadgeColor(v.typeBadgeColor || v.categoryColor);
-            badges.push(
-                "<span class=\"map-popup__badge map-popup__badge--type\" style=\"--badge-color:" +
-                escapeAttr(color) +
-                "\">" +
-                escapeHtml(String(v.typeBadgeLabel)) +
-                "</span>"
-            );
-        }
         const badgesHtml = badges.length > 0
             ? "<div class=\"map-popup__badges\">" + badges.join("") + "</div>"
             : "";
@@ -393,6 +411,7 @@ window.jobMap = (function () {
 
         return (
             "<div class=\"map-popup\">" +
+                typeChipHtml(v) +
                 wageInfoHtml(v) +
                 "<div class=\"map-popup__main\">" +
                     badgesHtml +

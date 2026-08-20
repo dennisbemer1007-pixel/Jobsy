@@ -4112,6 +4112,45 @@ a {
     color: #fff;
 }
 
+/* Vacaturetype — same chrome row as € and close (left of €, or left of ×) */
+.job-map-popup > .map-popup__type-chip,
+.map-popup__type-chip {
+    position: absolute;
+    top: -10px;
+    right: 26px;
+    z-index: 31;
+    box-sizing: border-box;
+    height: 28px;
+    max-width: min(12.5rem, calc(100% - 4.5rem));
+    padding: 0 0.55rem;
+    display: inline-flex;
+    align-items: center;
+    border-radius: 6px;
+    background: var(--badge-color, #64748b);
+    color: #fff;
+    font-size: 0.72rem;
+    font-weight: 700;
+    line-height: 1.2;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    box-shadow: 0 2px 8px color-mix(in srgb, var(--badge-color, #64748b) 35%, transparent);
+    pointer-events: none;
+}
+
+.job-map-popup--with-wages > .map-popup__type-chip {
+    right: 62px;
+}
+
+.job-map-popup--cluster > .map-popup__type-chip {
+    top: 0;
+    right: 36px;
+}
+
+.job-map-popup--cluster.job-map-popup--with-wages > .map-popup__type-chip {
+    right: 72px;
+}
+
 .job-map-popup > .map-popup__wage-popover,
 .map-popup__wage-popover {
     position: absolute;
@@ -4436,6 +4475,25 @@ a.map-popup__apply.map-popup__cta:visited {
     .job-map-popup--cluster > .map-popup__wage-info {
         top: 0;
         right: 40px;
+    }
+
+    .job-map-popup > .map-popup__type-chip {
+        top: -12px;
+        right: 30px;
+        height: 32px;
+    }
+
+    .job-map-popup--with-wages > .map-popup__type-chip {
+        right: 70px;
+    }
+
+    .job-map-popup--cluster > .map-popup__type-chip {
+        top: 0;
+        right: 40px;
+    }
+
+    .job-map-popup--cluster.job-map-popup--with-wages > .map-popup__type-chip {
+        right: 80px;
     }
 
     .job-map-popup > .map-popup__wage-popover {
@@ -11258,6 +11316,26 @@ button.linkish:hover {
     right: 36px !important;
 }
 
+.job-map-popup > .map-popup__type-chip {
+    top: -10px !important;
+    right: 26px !important;
+    height: 28px !important;
+    z-index: 31 !important;
+}
+
+.job-map-popup--with-wages > .map-popup__type-chip {
+    right: 62px !important;
+}
+
+.job-map-popup--cluster > .map-popup__type-chip {
+    top: 0 !important;
+    right: 36px !important;
+}
+
+.job-map-popup--cluster.job-map-popup--with-wages > .map-popup__type-chip {
+    right: 72px !important;
+}
+
 @media (max-width: 768px) {
     .job-map-popup .maplibregl-popup-close-button {
         top: -12px !important;
@@ -11283,6 +11361,25 @@ button.linkish:hover {
     .job-map-popup--cluster > .map-popup__wage-info {
         top: 0 !important;
         right: 40px !important;
+    }
+
+    .job-map-popup > .map-popup__type-chip {
+        top: -12px !important;
+        right: 30px !important;
+        height: 32px !important;
+    }
+
+    .job-map-popup--with-wages > .map-popup__type-chip {
+        right: 70px !important;
+    }
+
+    .job-map-popup--cluster > .map-popup__type-chip {
+        top: 0 !important;
+        right: 40px !important;
+    }
+
+    .job-map-popup--cluster.job-map-popup--with-wages > .map-popup__type-chip {
+        right: 80px !important;
     }
 }
 

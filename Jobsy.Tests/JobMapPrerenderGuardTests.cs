@@ -76,11 +76,17 @@ public class JobMapPrerenderGuardTests
         Assert.Contains("function centerPopupInView", js);
         Assert.Contains("map.panBy", js);
         Assert.Contains("highlight-carousel--map", js);
+        Assert.Contains("map-popup__type-chip", js);
+        Assert.Contains("job-map-popup--with-type", js);
+        Assert.DoesNotContain("map-popup__badge--type", js);
 
         var css = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "wwwroot", "css", "app.css"));
         Assert.Contains("maplibregl-popup-anchor-bottom .maplibregl-popup-tip", css);
         Assert.Contains("align-self: center", css);
         Assert.Contains("border-top-color: var(--surface)", css);
+        Assert.Contains(".map-popup__type-chip", css);
+        Assert.Contains(".job-map-popup--with-wages > .map-popup__type-chip", css);
+        Assert.Contains("right: 62px", css);
     }
 
     [Fact]

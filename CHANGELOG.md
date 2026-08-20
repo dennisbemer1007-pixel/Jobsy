@@ -13,12 +13,13 @@ Alle noemenswaardige wijzigingen aan dit project worden in dit bestand bijgehoud
 
 ## [Unreleased]
 
+### Changed
+- Banenkaart-popup: vacaturetype-label staat in de chrome-rij links van € (of links van het kruisje). Uitgelicht blijft op de foto.
+- Banenkaart laadt MapLibre (CSS, JS, helper-chunks) via `preload`/`fetchpriority=high` zodat pinnen eerder zichtbaar zijn. Worker-preload gebruikt `as="fetch"` (geen extra main-thread script). Leaflet is verwijderd.
+
 ### Added
 - Kandidaat kan een eigen CV (PDF/DOCX) uploaden; OpenAI vult alleen lege profielvelden als ze duidelijk in het CV staan. Lobsy-CV toont bovenaan dat er een eigen CV is. Recensies (werkgever, contactpersoon, e-mail, telefoon) in het profiel; vacature kan een hard minimum aantal recensies eisen. Na Accept ziet de werkgever Lobsy-CV én het geüploade CV.
 - Quality gate 456: geüploade CV-bytes wissen bij intrekken; OpenAI-CV-extractie in privacyverklaring/consent; geen OpenAI-response bodies in logs; werkgeverslijst toont recensietelling pas na Accept.
-
-### Changed
-- Banenkaart: MapLibre CSS/JS weer preloaden in `<head>` (`fetchpriority=high`) zodat echte markers zo snel mogelijk komen; worker alleen als `fetch` (niet als script). Ongebruikte Leaflet-lib en NL-preview-webp verwijderd.
 - PageSpeed *niet-gebruikt JavaScript*: worker niet als `as=script` preloaden.
 - PageSpeed *kleinere JS-payloads*: MapLibre CSP-build (worker off-thread), minified kaart-JS, `app-core` zonder session/download/richtext, feedback-script pas bij openen van de widget.
 - PageSpeed *Efficiënte levensduur voor het cachegeheugen*: statische assets met `?v=` cachen 1 jaar (`immutable`); overige JS/CSS/images/fonts minstens 30 dagen. MapLibre en `blazor.web.js` hebben nu een versie-query.
