@@ -61,6 +61,9 @@ public class JobMapPrerenderGuardTests
         Assert.Contains("bottom: [0, -23]", js);
         Assert.Contains("popup.setOffset", js);
         Assert.DoesNotContain("offset: 22", js);
+        Assert.Contains("function centerPopupInView", js);
+        Assert.Contains("map.panBy", js);
+        Assert.Contains("highlight-carousel--map", js);
 
         var css = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "wwwroot", "css", "app.css"));
         Assert.Contains("maplibregl-popup-anchor-bottom .maplibregl-popup-tip", css);

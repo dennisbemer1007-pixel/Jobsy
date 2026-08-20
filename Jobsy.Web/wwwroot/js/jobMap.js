@@ -544,6 +544,7 @@ window.jobMap = (function () {
                     popup.update();
                 }
                 bindClusterPopupInteractions(popup, childMarkers);
+                centerPopupInView(popup);
             });
         });
     }
@@ -642,6 +643,87 @@ window.jobMap = (function () {
         return popup;
     }
 
+    function prefersReducedMotion() {
+        return !!(window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches);
+    }
+
+    function mapFocusRect() {
+        const container = map.getContainer();
+        const mapRect = container.getBoundingClientRect();
+        let top = mapRect.top;
+        const pane = container.closest(".map-pane");
+        if (pane) {
+            const carousel = pane.querySelector(".highlight-carousel--map");
+            if (carousel && carousel.offsetParent !== null) {
+                const cr = carousel.getBoundingClientRect();
+                if (cr.bottom > top && cr.top < mapRect.bottom) {
+                    top = Math.max(top, cr.bottom);
+                }
+            }
+        }
+        const pad = 12;
+        const left = mapRect.left + pad;
+        const right = mapRect.right - pad;
+        const bottom = mapRect.bottom - pad;
+        top += pad;
+        return {
+            left: left,
+            top: top,
+            right: right,
+            bottom: bottom,
+            width: right - left,
+            height: bottom - top
+        };
+    }
+
+    function centerPopupInView(popup) {
+        if (!map || !popup) {
+            return;
+        }
+        const el = typeof popup.getElement === "function" ? popup.getElement() : null;
+        if (!el) {
+            return;
+        }
+
+        const run = function () {
+            if (!map || activeClusterPopup !== popup) {
+                return;
+            }
+            const pr = el.getBoundingClientRect();
+            const vr = mapFocusRect();
+            if (pr.width < 8 || pr.height < 8 || vr.width < 32 || vr.height < 32) {
+                return;
+            }
+
+            let dx;
+            let dy;
+            if (pr.width >= vr.width) {
+                dx = pr.left - vr.left;
+            } else {
+                dx = (pr.left + pr.width / 2) - (vr.left + vr.width / 2);
+            }
+            if (pr.height >= vr.height) {
+                dy = pr.top - vr.top;
+            } else {
+                dy = (pr.top + pr.height / 2) - (vr.top + vr.height / 2);
+            }
+
+            if (Math.abs(dx) < 1 && Math.abs(dy) < 1) {
+                return;
+            }
+
+            map.panBy([dx, dy], { duration: prefersReducedMotion() ? 0 : 320 });
+        };
+
+        if (typeof requestAnimationFrame === "function") {
+            requestAnimationFrame(function () {
+                requestAnimationFrame(run);
+            });
+        } else {
+            setTimeout(run, 0);
+        }
+    }
+
     function openVacancyPopup(record) {
         if (!map || !record) {
             return;
@@ -663,6 +745,7 @@ window.jobMap = (function () {
                 });
             });
         }
+        centerPopupInView(activeClusterPopup);
         notifyOpen(v.id);
     }
 
@@ -677,6 +760,7 @@ window.jobMap = (function () {
         const ll = lngLat || [childMarkers[0].lng, childMarkers[0].lat];
         activeClusterPopup = popupFromOpts(opts, ll, buildClusterSingleHtml(childMarkers, 1));
         bindClusterPopupInteractions(activeClusterPopup, childMarkers);
+        centerPopupInView(activeClusterPopup);
     }
 
     function ringMinutes(maxMinutes) {
