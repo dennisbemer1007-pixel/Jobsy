@@ -1769,7 +1769,6 @@
             _mapReady = true;
             _mapPainted = true;
             await InvokeAsync(StateHasChanged);
-            await Js.InvokeVoidAsync("jobMap.invalidate");
             await TryFocusCompanyOnMapAsync();
         }
         catch (JSDisconnectedException)

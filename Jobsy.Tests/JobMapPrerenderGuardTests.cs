@@ -32,7 +32,9 @@ public class JobMapPrerenderGuardTests
         Assert.Contains("getElementById(\"job-map\")", maps);
         Assert.Contains("lib/maplibre/maplibre-gl-csp.js", maps);
         Assert.Contains("jobMap.min.js", maps);
-        Assert.Contains("jobMap.boot", maps);
+        Assert.Contains("warmDiscovery", maps);
+        Assert.Contains("this.ensure(\"discovery\")", maps);
+        Assert.DoesNotContain("jobMap.boot", maps);
     }
 
     [Fact]
@@ -50,7 +52,7 @@ public class JobMapPrerenderGuardTests
         Assert.Contains("function boot(", js);
         Assert.Contains("readBootPayload", js);
         Assert.Contains("jobsy-map-boot", js);
-        Assert.Contains("const reuse", js);
+        Assert.Contains("const live", js);
         Assert.Contains("Paint the basemap immediately", js);
         Assert.Contains("fitMapToVacancies", js);
         Assert.Contains("lockCamera", js);

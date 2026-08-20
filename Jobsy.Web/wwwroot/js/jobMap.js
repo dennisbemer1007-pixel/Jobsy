@@ -1419,37 +1419,10 @@ window.jobMap = (function () {
         }
     }
 
-    // Paint the basemap immediately as soon as #job-map exists — do not wait for Blazor/catalog.
+    // Paint the basemap immediately from a single jobMap.init after hydrate.
+    // Pre-circuit boot() was discarded when Blazor replaced #job-map (double tile load).
     function boot(elementId) {
-        if (map) {
-            return;
-        }
-        if (typeof maplibregl === "undefined" || !window.jobsyMapLibre) {
-            return;
-        }
-        const el = document.getElementById(elementId || "job-map");
-        if (!el) {
-            return;
-        }
-        const payload = readBootPayload();
-        try {
-            try {
-                createMapInstance(
-                    el,
-                    collectVacancyPoints(payload.pins),
-                    payload.view,
-                    payload.preferFilledLocation
-                );
-            } catch (e) {
-                createMapInstance(el, collectVacancyPoints(payload.pins), payload.view, false);
-            }
-            bindMapRuntime();
-            if (payload.pins.length) {
-                setVacancies(payload.pins);
-            }
-            revealMapStage();
-            invalidate();
-        } catch (e) { }
+        return;
     }
 
     function init(elementId, vacancies, options) {
@@ -1468,10 +1441,10 @@ window.jobMap = (function () {
         const openingPoints = collectVacancyPoints(vacancies || []);
         const openingView = options && options.view ? options.view : null;
         const preferFilledLocation = !options || options.preferFilledLocation !== false;
-        const reuse = !!(map && typeof map.getContainer === "function"
+        const live = !!(map && typeof map.getContainer === "function"
             && map.getContainer() === el && el.isConnected);
 
-        if (!reuse) {
+        if (!live) {
             if (map) {
                 dispose();
             }
@@ -1480,10 +1453,6 @@ window.jobMap = (function () {
             } catch (e) {
                 createMapInstance(el, openingPoints, null, false);
             }
-        } else {
-            try {
-                lockCamera(openingPoints, openingView, preferFilledLocation);
-            } catch (e) { }
         }
 
         openCallback = options && options.dotNetRef ? options.dotNetRef : null;

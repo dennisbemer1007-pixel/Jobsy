@@ -14,7 +14,7 @@ window.jobsyMaps = (function () {
         "/js/jobsyMapLibre.min.js?v=20260820-r184"
     ];
     var discoveryScripts = [
-        "/js/jobMap.min.js?v=20260820-r185"
+        "/js/jobMap.min.js?v=20260820-r186"
     ];
     var detailScripts = [
         "/js/vacancyDetailMap.min.js?v=20260820-r166"
@@ -181,13 +181,9 @@ window.jobsyMaps = (function () {
             if (!document.getElementById("job-map")) {
                 return;
             }
-            this.ensure("discovery").then(function () {
-                try {
-                    if (window.jobMap && typeof window.jobMap.boot === "function") {
-                        window.jobMap.boot("job-map");
-                    }
-                } catch (e) { }
-            });
+            // Preload MapLibre + jobMap only. Creating the map here is discarded
+            // when the Blazor circuit attaches, which loaded tiles twice.
+            this.ensure("discovery");
         }
     };
 })();
