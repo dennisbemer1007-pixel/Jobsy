@@ -1,10 +1,13 @@
 @page "/wie-zijn-wij"
 @attribute [AllowAnonymous]
-@rendermode @(new InteractiveServerRenderMode(prerender: false))
+@rendermode @(new InteractiveServerRenderMode(prerender: true))
 @inject JobsyApiClient Api
 @inject CultureState Culture
 
 <PageTitle>@Culture["Legal.About"] · Lobsy</PageTitle>
+<PageSeo Title="@($"{Culture["Legal.About"]} · Lobsy")"
+         Description="@(string.IsNullOrWhiteSpace(_page.Lead) ? Culture["Seo.AboutDescription"] : _page.Lead)"
+         Index="true" />
 
 <div class="panel-page legal-page about-page">
     <div class="about-page__watermark" aria-hidden="true">

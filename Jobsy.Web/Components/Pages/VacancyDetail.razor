@@ -1,5 +1,5 @@
 @page "/vacancies/{Id:guid}"
-@rendermode @(new InteractiveServerRenderMode(prerender: false))
+@rendermode @(new InteractiveServerRenderMode(prerender: true))
 @attribute [Microsoft.AspNetCore.Authorization.AllowAnonymous]
 @inject JobsyApiClient Api
 @inject NavigationManager Navigation
@@ -9,10 +9,17 @@
 @using Jobsy.Core.Media
 @using Jobsy.Core.Rules
 @using Jobsy.Web.Hosting
+@using Jobsy.Web.Seo
 @using Microsoft.AspNetCore.Components.Authorization
 @implements IAsyncDisposable
 
 <PageTitle>@(_vacancy?.Title ?? Culture["Vacancy.Title"]) · Lobsy</PageTitle>
+<PageSeo Title="@SeoTitle"
+         Description="@SeoDescription"
+         Index="@(_vacancy is not null)"
+         ImageUrl="@SeoImage"
+         OgType="article"
+         JsonLd="@SeoJsonLd" />
 
 <div class="panel-page">
     @if (_loading)
@@ -629,6 +636,42 @@
     [Parameter] public Guid Id { get; set; }
 
     private VacancyListItem? _vacancy;
+    private string? SeoTitle => _vacancy is null ? null : $"{_vacancy.Title} · Lobsy";
+    private string? SeoDescription => _vacancy is null
+        ? null
+        : Culture.Format("Seo.VacancyDescription", _vacancy.Title, _vacancy.CompanyName);
+    private string? SeoImage => string.IsNullOrWhiteSpace(_vacancy?.ImageUrl) ? _vacancy?.CompanyLogoUrl : _vacancy.ImageUrl;
+    private string? SeoJsonLd
+    {
+        get
+        {
+            if (_vacancy is null)
+            {
+                return null;
+            }
+
+            var origin = Navigation.BaseUri.TrimEnd('/');
+            var pageUrl = origin + "/vacancies/" + _vacancy.Id.ToString("D");
+            return StructuredData.JobPosting(
+                _vacancy.Id,
+                _vacancy.Title,
+                _vacancy.Description,
+                _vacancy.CompanyName,
+                _vacancy.CompanyLogoUrl,
+                _vacancy.CompanyAddress,
+                _vacancy.Latitude,
+                _vacancy.Longitude,
+                _vacancy.StartDate,
+                _vacancy.EndDate,
+                _vacancy.Kind,
+                _vacancy.HourlyWage,
+                _vacancy.WageVisible,
+                _vacancy.MinHoursPerWeek,
+                _vacancy.MaxHoursPerWeek,
+                pageUrl,
+                origin);
+        }
+    }
     private bool ShowsSuitableFor65Plus =>
         _vacancy is not null
         && VacancyCategoryDefaults.MatchesSuitableFor65PlusFilter(_vacancy.CategoryId, _vacancy.SuitableFor65Plus);
@@ -874,11 +917,11 @@
         Culture.Changed += OnCultureChanged;
     }
 
-    protected override Task OnParametersSetAsync()
+    protected override async Task OnParametersSetAsync()
     {
         if (_loadedVacancyId == Id)
         {
-            return Task.CompletedTask;
+            return;
         }
 
         ResetApplyUiState();
@@ -891,8 +934,10 @@
         _mapReady = false;
         _mappedVacancyId = null;
         _pendingInitialHydration = true;
-        // Age + origin are resolved in OnAfterRender (JS + profile) before the first wage-aware load.
-        return Task.CompletedTask;
+        if (!RendererInfo.IsInteractive)
+        {
+            await LoadAsync(origin: null);
+        }
     }
 
     private bool _pendingInitialHydration;

@@ -109,7 +109,10 @@ public class LocalizationTests
             "GrantTokens.Title",
             "Nav.Organization",
             "DesktopPreferred.Title",
-            "Organization.Lead"
+            "Organization.Lead",
+            "Seo.HomeDescription",
+            "Seo.HomeHeading",
+            "Seo.LoginDescription"
         ];
 
         foreach (var key in sampleKeys)

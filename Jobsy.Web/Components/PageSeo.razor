@@ -1,0 +1,28 @@
+@inject PageSeoContext Seo
+@implements IDisposable
+
+@code {
+    private int _version;
+
+    [Parameter] public string? Title { get; set; }
+    [Parameter] public string? Description { get; set; }
+    [Parameter] public bool? Index { get; set; }
+    [Parameter] public string? CanonicalPath { get; set; }
+    [Parameter] public string? ImageUrl { get; set; }
+    [Parameter] public string? OgType { get; set; }
+    [Parameter] public string? JsonLd { get; set; }
+
+    protected override void OnParametersSet()
+    {
+        _version = Seo.Set(new PageSeoOverride(
+            Title,
+            Description,
+            Index,
+            CanonicalPath,
+            ImageUrl,
+            OgType,
+            JsonLd));
+    }
+
+    public void Dispose() => Seo.Clear(_version);
+}

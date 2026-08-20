@@ -1,6 +1,6 @@
 @page "/{KvkNumber:regex(^\\d{{8}}$)}"
 @page "/{KvkNumber:regex(^\\d{{8}}$)}/{Vestigingsnummer:regex(^\\d{{1,12}}$)}"
-@rendermode @(new InteractiveServerRenderMode(prerender: false))
+@rendermode @(new InteractiveServerRenderMode(prerender: true))
 @attribute [AllowAnonymous]
 @inject JobsyApiClient Api
 @inject IJSRuntime Js
@@ -12,6 +12,11 @@
 @implements IAsyncDisposable
 
 <PageTitle>@(_page?.Name ?? Culture["BranchPage.Title"]) · Lobsy</PageTitle>
+<PageSeo Title="@SeoTitle"
+         Description="@SeoDescription"
+         Index="@(_page is not null)"
+         ImageUrl="@_page?.LogoUrl"
+         JsonLd="@SeoJsonLd" />
 
 <div class="jobsy-discovery jobsy-discovery--branch @(showMapOnMobile ? "show-map" : "show-list")">
     <div class="jobsy-chrome jobsy-chrome--branch">
@@ -184,6 +189,27 @@
     [Parameter] public string KvkNumber { get; set; } = string.Empty;
     [Parameter] public string? Vestigingsnummer { get; set; }
 
+    private string? SeoTitle => _page is null ? null : $"{_page.Name} · Lobsy";
+    private string? SeoDescription => _page is null
+        ? null
+        : Culture.Format("Seo.CompanyDescription", _page.Name);
+    private string? SeoJsonLd
+    {
+        get
+        {
+            if (_page is null)
+            {
+                return null;
+            }
+
+            var origin = Navigation.BaseUri.TrimEnd('/');
+            var path = string.IsNullOrWhiteSpace(Vestigingsnummer)
+                ? $"/{KvkNumber}"
+                : $"/{KvkNumber}/{Vestigingsnummer}";
+            return StructuredData.Organization(origin, _page.Name, _page.Address, _page.LogoUrl, path);
+        }
+    }
+
     private ElementReference _mapElement;
     private PublicCompanyPage? _page;
     private List<VacancyListItem> _vacancies = [];
@@ -236,7 +262,7 @@
                 radiusKm: null,
                 companyIds: _page.CompanyIds)).ToList();
 
-            if (_vacancies.Count > 0)
+            if (RendererInfo.IsInteractive && _vacancies.Count > 0)
             {
                 try
                 {

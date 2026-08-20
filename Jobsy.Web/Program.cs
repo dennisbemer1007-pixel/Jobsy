@@ -1,9 +1,11 @@
 using System.Threading.RateLimiting;
+using Jobsy.Core;
 using Jobsy.Web.Auth;
 using Jobsy.Web.Components;
 using Jobsy.Web.Hosting;
 using Jobsy.Web.Localization;
 using Jobsy.Web.Security;
+using Jobsy.Web.Seo;
 using Jobsy.Web.Services;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.RateLimiting;
@@ -45,9 +47,20 @@ builder.Services.AddMemoryCache();
 builder.Services.AddHttpClient("JobsySessionSecurity");
 builder.Services.AddSingleton<Jobsy.Web.Security.ISessionTimeoutProvider, Jobsy.Web.Security.SessionTimeoutProvider>();
 builder.Services.AddScoped<CultureState>();
+builder.Services.AddScoped<PageSeoContext>();
 builder.Services.AddScoped<Jobsy.Web.RegionHosting.RegionHostState>();
 builder.Services.AddScoped<TokenBalanceCache>();
 builder.Services.AddScoped<Jobsy.Web.Navigation.BottomNavRefreshService>();
+builder.Services.AddHttpClient("JobsySeo", client =>
+{
+    var apiBaseUrl = JobsyPublicUrl.NormalizeBaseUrl(
+        builder.Configuration["ApiBaseUrl"],
+        "http://localhost:5200/");
+    client.BaseAddress = new Uri(apiBaseUrl);
+    client.Timeout = TimeSpan.FromSeconds(8);
+    client.DefaultRequestHeaders.TryAddWithoutValidation("User-Agent", "LobsySeo/1.0");
+});
+
 builder.Services.AddHttpClient<IGeocodingClient, NominatimGeocodingClient>(client =>
 {
     client.Timeout = TimeSpan.FromSeconds(8);
@@ -135,6 +148,7 @@ app.UseAuthorization();
 app.UseAntiforgery();
 
 app.MapJobsyAuthEndpoints();
+app.MapSeoEndpoints();
 
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();

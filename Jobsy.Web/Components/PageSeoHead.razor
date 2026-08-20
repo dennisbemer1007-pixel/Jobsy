@@ -1,0 +1,99 @@
+@inject NavigationManager Navigation
+@inject PageSeoContext Seo
+@inject CultureState Culture
+@inject IConfiguration Config
+@implements IDisposable
+
+<PageTitle>@Model.Title</PageTitle>
+<HeadContent>
+    <meta name="description" content="@Model.Description" />
+    <meta name="robots" content="@Model.Robots" />
+    <link rel="canonical" href="@Model.CanonicalUrl" />
+    <meta property="og:site_name" content="Lobsy" />
+    <meta property="og:type" content="@Model.OgType" />
+    <meta property="og:locale" content="@OgLocale" />
+    <meta property="og:title" content="@Model.Title" />
+    <meta property="og:description" content="@Model.Description" />
+    <meta property="og:url" content="@Model.CanonicalUrl" />
+    <meta property="og:image" content="@Model.ImageUrl" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="@Model.Title" />
+    <meta name="twitter:description" content="@Model.Description" />
+    <meta name="twitter:image" content="@Model.ImageUrl" />
+    @if (Model.Indexable && IsHome)
+    {
+        <script type="application/ld+json">@((MarkupString)StructuredData.WebsiteAndOrganization(Origin))</script>
+    }
+    @if (Model.Indexable && BreadcrumbJsonLd is not null)
+    {
+        <script type="application/ld+json">@((MarkupString)BreadcrumbJsonLd)</script>
+    }
+    @if (!string.IsNullOrWhiteSpace(Model.JsonLd))
+    {
+        <script type="application/ld+json">@((MarkupString)Model.JsonLd)</script>
+    }
+</HeadContent>
+
+@code {
+    private PageSeoModel Model => PageSeoResolver.Resolve(Navigation.Uri, Culture, Config, Seo.Current);
+
+    private bool IsHome => PageSeoCatalog.Normalize(new Uri(Navigation.Uri).AbsolutePath) == "/";
+
+    private string Origin => PageSeoResolver.Origin(Navigation.Uri, Config);
+
+    private string OgLocale => Culture.Language switch
+    {
+        "en" => "en_GB",
+        "pl" => "pl_PL",
+        "ro" => "ro_RO",
+        "ar" => "ar",
+        _ => "nl_NL"
+    };
+
+    private string? BreadcrumbJsonLd
+    {
+        get
+        {
+            var path = PageSeoCatalog.Normalize(new Uri(Navigation.Uri).AbsolutePath);
+            if (path == "/" || !Model.Indexable)
+            {
+                return null;
+            }
+
+            var items = new List<(string Name, string Path)> { ("Lobsy", "/") };
+            if (path.StartsWith("/vacancies/", StringComparison.Ordinal))
+            {
+                items.Add((Model.Title, path));
+            }
+            else if (PageSeoCatalog.IsPublicCompanyPath(path))
+            {
+                items.Add((Model.Title, path));
+            }
+            else
+            {
+                items.Add((Model.Title, path));
+            }
+
+            return StructuredData.Breadcrumb(Origin, items);
+        }
+    }
+
+    protected override void OnInitialized()
+    {
+        Seo.Changed += OnChanged;
+        Navigation.LocationChanged += OnLocationChanged;
+        Culture.Changed += OnChanged;
+    }
+
+    private void OnChanged() => InvokeAsync(StateHasChanged);
+
+    private void OnLocationChanged(object? sender, LocationChangedEventArgs e)
+        => InvokeAsync(StateHasChanged);
+
+    public void Dispose()
+    {
+        Seo.Changed -= OnChanged;
+        Navigation.LocationChanged -= OnLocationChanged;
+        Culture.Changed -= OnChanged;
+    }
+}

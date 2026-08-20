@@ -66,6 +66,29 @@ public class RoleFunctionalRegressionTests : IClassFixture<RoleFunctionalWebAppF
     }
 
     [Fact]
+    public async Task Guest_can_read_public_crawl_index_without_pii()
+    {
+        var client = _factory.CreateClient();
+        var response = await client.GetAsync("api/site/crawl-index");
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+
+        var json = await response.Content.ReadFromJsonAsync<JsonElement>(JsonOpts);
+        var vacancies = json.GetProperty("vacancies");
+        Assert.True(vacancies.GetArrayLength() >= 1);
+        var match = vacancies.EnumerateArray().Single(v => v.GetProperty("id").GetGuid() == _factory.VacancyId);
+        Assert.False(match.TryGetProperty("title", out _));
+        Assert.False(match.TryGetProperty("description", out _));
+        Assert.False(match.TryGetProperty("email", out _));
+        Assert.False(match.TryGetProperty("companyName", out _));
+
+        var companies = json.GetProperty("companyPaths")
+            .EnumerateArray()
+            .Select(x => x.GetString())
+            .ToList();
+        Assert.Contains("/12345678", companies);
+    }
+
+    [Fact]
     public async Task Guest_discover_filters_categories_and_suitable_for_65plus_without_leaking_internals()
     {
         var client = _factory.CreateClient();

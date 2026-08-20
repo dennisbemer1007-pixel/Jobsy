@@ -12,6 +12,7 @@
 @using Microsoft.AspNetCore.WebUtilities
 @using System.Text.Json
 
+<PageSeo JsonLd="@JobListJsonLd" />
 <div class="jobsy-discovery @(showMapOnMobile ? "show-map" : "show-list") @(_filtersOpen ? "filters-open" : null)">
     <div class="jobsy-chrome">
         <header class="jobsy-chrome__header">
@@ -19,6 +20,7 @@
                 <LobsyLogo Class="jobsy-logo__img" Alt="Lobsy" />
                 <span class="jobsy-logo__mark">Lobsy</span>
             </a>
+            <h1 class="visually-hidden">@Culture["Seo.HomeHeading"]</h1>
             <div class="jobsy-chrome__header-actions">
                 <LanguageSelector />
                 <AuthHeader />
@@ -836,6 +838,10 @@
 
 @code {
     private List<VacancyListItem> _vacancies = [];
+    private string? JobListJsonLd =>
+        StructuredData.JobList(
+            Navigation.BaseUri.TrimEnd('/'),
+            _vacancies.Select(v => (v.Id, v.Title, v.CompanyName)));
     private bool _loading = true;
     private string? _error;
     private Guid? _hoveredId;
