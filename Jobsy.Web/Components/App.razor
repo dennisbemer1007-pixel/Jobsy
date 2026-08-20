@@ -1,3 +1,4 @@
+@inject IHttpContextAccessor HttpContextAccessor
 <!DOCTYPE html>
 <html lang="nl">
 
@@ -48,6 +49,34 @@
     <noscript><link rel="stylesheet" href="css/app.css?v=20260820-r172" /></noscript>
     <script>
         (function () {
+            try {
+                var add = EventTarget.prototype.addEventListener;
+                var remove = EventTarget.prototype.removeEventListener;
+                var wrapped = typeof WeakMap === "function" ? new WeakMap() : null;
+                EventTarget.prototype.addEventListener = function (type, listener, options) {
+                    if (type === "unload") {
+                        type = "pagehide";
+                        if (wrapped && typeof listener === "function") {
+                            var mapped = wrapped.get(listener);
+                            if (!mapped) {
+                                mapped = function (ev) { return listener.call(this, ev); };
+                                wrapped.set(listener, mapped);
+                            }
+                            listener = mapped;
+                        }
+                    }
+                    return add.call(this, type, listener, options);
+                };
+                EventTarget.prototype.removeEventListener = function (type, listener, options) {
+                    if (type === "unload") {
+                        type = "pagehide";
+                        if (wrapped && typeof listener === "function") {
+                            listener = wrapped.get(listener) || listener;
+                        }
+                    }
+                    return remove.call(this, type, listener, options);
+                };
+            } catch (e) { }
             try {
                 if (localStorage.getItem("Jobsy.CookieConsent")) {
                     document.documentElement.classList.add("cookie-consent-known");
@@ -105,8 +134,17 @@
     <CascadingAuthenticationState>
         <Routes @rendermode="new InteractiveServerRenderMode(prerender: true)" />
     </CascadingAuthenticationState>
-    <script src="js/app-core.js?v=20260820-r172" defer></script>
-    <script src="_framework/blazor.web.js?v=20260820-r164" defer></script>
+    <script src="js/app-core.js?v=20260820-r180" defer></script>
+    @if (LoadBlazorRuntime)
+    {
+        <script src="_framework/blazor.web.js?v=20260820-r164" defer></script>
+    }
 </body>
 
 </html>
+
+@code {
+    private bool LoadBlazorRuntime =>
+        !CrawlerUserAgent.ShouldSkipInteractiveRuntime(
+            HttpContextAccessor.HttpContext?.Request.Headers.UserAgent.ToString());
+}

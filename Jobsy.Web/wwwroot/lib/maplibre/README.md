@@ -8,3 +8,5 @@ Used with OpenFreeMap vector styles:
 - Bright (3D camera): `https://tiles.openfreemap.org/styles/bright`
 
 License: BSD-3-Clause.
+
+A `maplibre-gl-csp.js.map` sits next to the bundle so Lighthouse/PageSpeed can map the ~950&nbsp;KB first-party file. Original `sourcesContent` is omitted (the TypeScript sources are not hosted on lobsy.nl).

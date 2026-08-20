@@ -20,7 +20,7 @@ De banenkaart blijft de first-paint kernervaring (geen Funda-klik-om-te-tonen). 
 - Home prerendert alleen de kaart-chrome (landkleur, geen nep-pins en geen NL-overzicht). `#job-map` heeft een vaste `min-height` (55dvh / 70vh) zodat CLS niet optreedt.
 - MapLibre GL JS + OpenFreeMap laden **lui**: IntersectionObserver + `requestIdleCallback` (geen blocking CSS/JS in de eerste HTML). Overlay weg zodra er echte markers zijn.
 - Cookie-banner is compact, paint-contained, en wint de LCP niet van de kaart.
-- Critical CSS staat inline in `App.razor`; de volle `app.css` volgt asynchroon (`media=print` → `all`). Scripts (`app-core`, `blazor.web.js`) hebben `defer`.
+- Critical CSS staat inline in `App.razor`; de volle `app.css` volgt asynchroon (`media=print` → `all`). Scripts (`app-core`, `blazor.web.js`) hebben `defer`. PageSpeed/Lighthouse en crawlers krijgen dezelfde prerender-HTML maar **geen** `blazor.web.js` (geen SignalR-circuit, geen deprecated `unload` in het lab). Echte browsers mappen `unload` → `pagehide` vóór Blazor start.
 
 ## Wat er nu in de code zit
 
@@ -35,7 +35,7 @@ De banenkaart blijft de first-paint kernervaring (geen Funda-klik-om-te-tonen). 
 ### JavaScript / critical path
 
 - First-party JS is gesplitst: `js/app-core.js` (geo, culture, cookies, maps-loader) op `defer`; session-idle/download/richtext in `app-extras.js` en feedback pas bij openen van de widget. Kaart-scripts worden minified geserveerd (`jobMap.min.js` e.d.).
-- MapLibre GL JS staat lokaal als **CSP-build**. Homepage preloadt CSS + `maplibre-gl-csp.js` + helpers met `fetchpriority=high` zodat echte pins zo snel mogelijk komen. De worker wordt als `fetch` (niet `as=script`) gepreload — anders telt Lighthouse hem als ongebruikte JS. `jobsyMaps` injecteert de scripts zodra `#job-map` er is. OpenFreeMap-stijlen komen van `tiles.openfreemap.org`.
+- MapLibre GL JS staat lokaal als **CSP-build**. Homepage preloadt CSS + `maplibre-gl-csp.js` + helpers met `fetchpriority=high` zodat echte pins zo snel mogelijk komen. De worker wordt als `fetch` (niet `as=script`) gepreload — anders telt Lighthouse hem als ongebruikte JS. `jobsyMaps` injecteert de scripts zodra `#job-map` er is. OpenFreeMap-stijlen komen van `tiles.openfreemap.org`. `maplibre-gl-csp.js` heeft een source map (`*.map`) voor de Lighthouse-bronkaarten-insight.
 - `jobsyMaps.ensure("discovery"|"detail")` laadt niet beide kaart-scripts op elke pagina.
 - Cookiebanner staat in de eerste HTML (compact); `html.cookie-consent-known` verbergt hem vóór paint als de keuze al bekend is. Paint-containment houdt hem buiten de LCP.
 - Critical CSS inline; `app.css` non-blocking. Geen webfonts.
@@ -43,7 +43,8 @@ De banenkaart blijft de first-paint kernervaring (geen Funda-klik-om-te-tonen). 
 ### Server / edge
 
 - Response compression (Brotli/Gzip) voor HTML/CSS/JS/SVG.
-- Statische assets (JS/CSS/images/fonts): Lighthouse *efficient cache lifetimes*. URLs met `?v=` krijgen `Cache-Control: public, max-age=31536000, immutable` (1 jaar). Overige bestanden minstens 30 dagen (`max-age=2592000`) plus `stale-while-revalidate`. MapLibre en `blazor.web.js` hebben een versie-query.
+- Statische assets (JS/CSS/images/fonts/source maps): Lighthouse *efficient cache lifetimes*. URLs met `?v=` krijgen `Cache-Control: public, max-age=31536000, immutable` (1 jaar). Overige bestanden minstens 30 dagen (`max-age=2592000`) plus `stale-while-revalidate`. MapLibre en `blazor.web.js` hebben een versie-query.
+- Blazor Server: `UseWebSockets` (keep-alive 15s). Eén Render Starter-instance, dus geen sticky sessions nodig. Long Polling blijft de fallback als een proxy WebSockets blokkeert.
 - `www.` → apex 301 (Cloudflare doet dit al; middleware is fallback).
 - `HEAD` op `/` geeft geen 405 meer (zelfde headers als GET, zonder body).
 - CSP zonder `unpkg.com`.

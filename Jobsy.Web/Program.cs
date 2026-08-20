@@ -97,6 +97,11 @@ var app = builder.Build();
 // Rewrite HEAD→GET before routing so MapRazorComponents (GET-only) does not 405.
 app.UseMiddleware<HeadAsGetMiddleware>();
 app.UseForwardedHeaders();
+app.UseWebSockets(new WebSocketOptions
+{
+    // Keep the Blazor circuit alive through Cloudflare/Render idle proxies.
+    KeepAliveInterval = TimeSpan.FromSeconds(15)
+});
 app.UseMiddleware<WwwCanonicalMiddleware>();
 app.UseResponseCompression();
 

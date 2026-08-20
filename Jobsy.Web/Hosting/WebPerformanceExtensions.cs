@@ -1,5 +1,6 @@
 using System.IO.Compression;
 using Microsoft.AspNetCore.ResponseCompression;
+using Microsoft.AspNetCore.StaticFiles;
 
 namespace Jobsy.Web.Hosting;
 
@@ -39,12 +40,16 @@ public static class WebPerformanceExtensions
             : $"public,max-age={UnversionedMaxAgeSeconds},stale-while-revalidate=86400";
 
     public static StaticFileOptions JobsyStaticFiles()
-        => new()
+    {
+        var contentTypes = new FileExtensionContentTypeProvider();
+        contentTypes.Mappings[".map"] = "application/json";
+        return new StaticFileOptions
         {
+            ContentTypeProvider = contentTypes,
             OnPrepareResponse = ctx =>
             {
                 var ext = Path.GetExtension(ctx.File.Name);
-                if (ext is ".js" or ".css" or ".webp" or ".png" or ".jpg" or ".jpeg" or ".svg"
+                if (ext is ".js" or ".css" or ".map" or ".webp" or ".png" or ".jpg" or ".jpeg" or ".svg"
                     or ".woff2" or ".woff" or ".ico")
                 {
                     var versioned = ctx.Context.Request.Query.ContainsKey("v");
@@ -52,4 +57,5 @@ public static class WebPerformanceExtensions
                 }
             }
         };
+    }
 }

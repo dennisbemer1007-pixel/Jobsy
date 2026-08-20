@@ -35,6 +35,9 @@ public class StaticAssetCacheTests
         var header = response.Headers.CacheControl.ToString();
         Assert.DoesNotContain("604800", header);
         Assert.Contains("max-age=2592000", header);
+
+        var map = PrepareResponse("maplibre-gl-csp.js.map", "?v=20260820-r180");
+        Assert.Equal("public,max-age=31536000,immutable", map.Headers.CacheControl.ToString());
     }
 
     [Fact]

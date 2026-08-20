@@ -111,7 +111,8 @@ dan is `ConnectionStrings__JobsyDb` leeg of geen echte Postgres-string — mockd
 
 | Keuze | Reden |
 |-------|--------|
-| `plan: starter` op api + web | Always-on; geen 15-min spin-down |
+| `plan: starter` op api + web | Always-on; geen 15-min spin-down. Eén web-instance = geen sticky sessions voor Blazor/SignalR |
+
 | `plan: basic-256mb` op DB | Blijvende Postgres (geen free 30-dagen expiry) |
 | Alles `frankfurt` | Zelfde private network voor Postgres |
 | `RENDER_EXTERNAL_URL` | Stabiele cross-service HTTP (ook op free bruikbaar) |

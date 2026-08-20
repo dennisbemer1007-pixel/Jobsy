@@ -10,7 +10,7 @@ window.jobsyMaps = (function () {
         "/lib/maplibre/maplibre-gl.css?v=20260820-r166"
     ];
     var mapLibreScripts = [
-        "/lib/maplibre/maplibre-gl-csp.js?v=20260820-r166",
+        "/lib/maplibre/maplibre-gl-csp.js?v=20260820-r180",
         "/js/jobsyMapLibre.min.js?v=20260820-r172"
     ];
     var discoveryScripts = [
