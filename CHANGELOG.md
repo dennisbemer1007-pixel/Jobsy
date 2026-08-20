@@ -18,6 +18,7 @@ Alle noemenswaardige wijzigingen aan dit project worden in dit bestand bijgehoud
 - Quality gate 456: geüploade CV-bytes wissen bij intrekken; OpenAI-CV-extractie in privacyverklaring/consent; geen OpenAI-response bodies in logs; werkgeverslijst toont recensietelling pas na Accept.
 
 ### Changed
+- PageSpeed *niet-gebruikt JavaScript*: MapLibre CSS/JS/worker niet meer preloaden in de homepage-`<head>`; laden pas als `#job-map` er is (of een detailkaart `ensure` aanroept).
 - PageSpeed *kleinere JS-payloads*: MapLibre CSP-build (worker off-thread), minified kaart-JS, `app-core` zonder session/download/richtext, feedback-script pas bij openen van de widget.
 - PageSpeed *Efficiënte levensduur voor het cachegeheugen*: statische assets met `?v=` cachen 1 jaar (`immutable`); overige JS/CSS/images/fonts minstens 30 dagen. MapLibre en `blazor.web.js` hebben nu een versie-query.
 - Homepage-kaart: PageSpeed-PRs #159–#165 teruggedraaid. MapLibre laadt weer meteen na paint (geen click-only / window.load-gate), desktopkaart vult de kolom (`55dvh` / `70vh`) in plaats van een lege 300px-box.

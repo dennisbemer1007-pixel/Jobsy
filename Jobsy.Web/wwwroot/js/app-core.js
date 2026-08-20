@@ -351,6 +351,9 @@ window.jobsyCulture = {
 window.jobsyMaps = (function () {
     "use strict";
 
+    // Fetch MapLibre + helpers only when a map container exists (or Blazor calls ensure).
+    // Do not preload those files in <head> — Lighthouse unused-javascript treats a
+    // worker preloaded as="script" as ~100% unused main-thread bytes.
     var pending = {};
     var mapLibreWorker = "/lib/maplibre/maplibre-gl-csp-worker.js?v=20260820-r164";
     var css = [

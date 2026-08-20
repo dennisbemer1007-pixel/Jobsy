@@ -158,6 +158,11 @@ public class HomepagePerformanceGuardTests
             < new FileInfo(Path.Combine(root, "Jobsy.Web", "wwwroot", "js", "jobMap.js")).Length);
         Assert.True(new FileInfo(Path.Combine(root, "Jobsy.Web", "wwwroot", "js", "jobsyMapLibre.min.js")).Length
             < new FileInfo(Path.Combine(root, "Jobsy.Web", "wwwroot", "js", "jobsyMapLibre.js")).Length);
+
+        var home = File.ReadAllText(Path.Combine(root, "Jobsy.Web", "Components", "Pages", "Home.razor"));
+        Assert.DoesNotContain("rel=\"preload\"", home);
+        Assert.DoesNotContain("as=\"script\"", home);
+        Assert.DoesNotContain("maplibre-gl-csp-worker.js", home);
     }
 
     private static string FindRepoRoot()

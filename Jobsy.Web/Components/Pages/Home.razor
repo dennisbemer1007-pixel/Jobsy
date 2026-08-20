@@ -1,17 +1,10 @@
 @page "/"
-@* Map chrome prerenders; MapLibre CSS/JS start at page load (fetchpriority=high) so the map is filled immediately. *@
+@* Map chrome prerenders. MapLibre CSS/JS are fetched only when #job-map exists (maps-loader). *@
 @rendermode @(new InteractiveServerRenderMode(prerender: true))
 @inject CultureState Culture
 @implements IDisposable
 
 <PageTitle>@Culture["Page.JobMapTitle"]</PageTitle>
-<HeadContent>
-    <link rel="stylesheet" href="lib/maplibre/maplibre-gl.css?v=20260820-r164" fetchpriority="high" />
-    <link rel="preload" href="lib/maplibre/maplibre-gl-csp.js?v=20260820-r164" as="script" fetchpriority="high" />
-    <link rel="preload" href="lib/maplibre/maplibre-gl-csp-worker.js?v=20260820-r164" as="script" fetchpriority="high" />
-    <link rel="preload" href="js/jobsyMapLibre.min.js?v=20260820-r164" as="script" fetchpriority="high" />
-    <link rel="preload" href="js/jobMap.min.js?v=20260820-r164" as="script" />
-</HeadContent>
 
 <VacancyDiscovery />
 

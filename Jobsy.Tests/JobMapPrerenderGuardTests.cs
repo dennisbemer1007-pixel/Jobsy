@@ -7,7 +7,7 @@ namespace Jobsy.Tests;
 public class JobMapPrerenderGuardTests
 {
     [Fact]
-    public void Home_preloads_maplibre_with_high_priority()
+    public void Home_does_not_preload_map_javascript()
     {
         var home = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "Components", "Pages", "Home.razor"));
         Assert.Contains("InteractiveServerRenderMode(prerender: true)", home);
@@ -15,12 +15,17 @@ public class JobMapPrerenderGuardTests
         Assert.DoesNotContain("prerender: false", home);
         Assert.DoesNotContain("/lib/leaflet/leaflet.min.js", home);
         Assert.DoesNotContain("/lib/leaflet/leaflet.css", home);
-        Assert.Contains("lib/maplibre/maplibre-gl.css", home);
-        Assert.Contains("lib/maplibre/maplibre-gl-csp.js", home);
-        Assert.Contains("maplibre-gl-csp-worker.js", home);
-        Assert.Contains("fetchpriority=\"high\"", home);
-        Assert.Contains("jobsyMapLibre.min.js", home);
-        Assert.Contains("jobMap.min.js", home);
+        Assert.DoesNotContain("rel=\"preload\"", home);
+        Assert.DoesNotContain("lib/maplibre/", home);
+        Assert.DoesNotContain("jobsyMapLibre", home);
+        Assert.DoesNotContain("jobMap.min.js", home);
+
+        var maps = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "wwwroot", "js", "maps-loader.js"));
+        Assert.Contains("getElementById(\"job-map\")", maps);
+        Assert.Contains("lib/maplibre/maplibre-gl-csp.js", maps);
+        Assert.Contains("maplibre-gl-csp-worker.js", maps);
+        Assert.Contains("jobsyMapLibre.min.js", maps);
+        Assert.Contains("jobMap.min.js", maps);
     }
 
     [Fact]
