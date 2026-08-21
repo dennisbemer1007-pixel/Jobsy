@@ -120,17 +120,14 @@ window.jobsyMapLibre = (function () {
         btn.title = on ? "3D uitzetten" : "3D aanzetten";
     }
 
-    function attachStyleSwitch(map) {
-        var host = map.getContainer();
-        if (host.querySelector(".job-map-style-switch")) {
-            return host.querySelector(".job-map-style-switch");
-        }
+    function StyleSwitchControl() { }
+
+    StyleSwitchControl.prototype.onAdd = function (map) {
         var ctrl = document.createElement("div");
-        ctrl.className = "job-map-style-switch";
+        ctrl.className = "maplibregl-ctrl maplibregl-ctrl-group job-map-style-switch";
         ctrl.innerHTML =
             "<button type=\"button\" class=\"job-map-style-switch__btn\" " +
             "aria-label=\"3D-kaart\" aria-pressed=\"false\" title=\"3D aanzetten\">3D</button>";
-        host.appendChild(ctrl);
         syncStyleToggle(ctrl, map._jobsyStyleKey || "liberty");
         ctrl.addEventListener("click", function (ev) {
             var btn = ev.target && ev.target.closest
@@ -146,6 +143,17 @@ window.jobsyMapLibre = (function () {
         });
         map._jobsyStyleSwitch = ctrl;
         return ctrl;
+    };
+
+    StyleSwitchControl.prototype.onRemove = function () { };
+
+    function attachStyleSwitch(map, position) {
+        var host = map.getContainer();
+        if (host.querySelector(".job-map-style-switch")) {
+            return host.querySelector(".job-map-style-switch");
+        }
+        map.addControl(new StyleSwitchControl(), position || "top-right");
+        return map._jobsyStyleSwitch;
     }
 
     function setStyle(map, key) {
@@ -207,12 +215,15 @@ window.jobsyMapLibre = (function () {
         map._jobsyStyleKey = spec.key;
         lockTouch(map.getContainer());
         hideChrome(map);
+        var controlsPosition = options.controlsPosition === "bottom-right"
+            ? "bottom-right"
+            : "top-right";
         map.addControl(new maplibregl.NavigationControl({
             showCompass: false,
             showZoom: true,
             visualizePitch: false
-        }), "top-right");
-        attachStyleSwitch(map);
+        }), controlsPosition);
+        attachStyleSwitch(map, controlsPosition);
 
         map.on("load", function () {
             hideChrome(map);

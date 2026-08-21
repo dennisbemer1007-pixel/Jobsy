@@ -2031,7 +2031,10 @@
             _origin?.Longitude,
             region?.Latitude,
             region?.Longitude,
-            HasCompanyMapFocus);
+            HasCompanyMapFocus,
+            _maxTravelMinutes,
+            _selectedTransport,
+            _radiusKm);
     }
 
     private string MapBootPinsJson()
@@ -2342,14 +2345,7 @@
         try
         {
             await Js.InvokeVoidAsync("jobMap.setOrigin", lat, lng, TravelMapOptions());
-            if (animate)
-            {
-                await Js.InvokeVoidAsync("jobMap.panTo", lat, lng, VacancyMapViewCalculator.FilledLocationZoom);
-            }
-            else
-            {
-                await Js.InvokeVoidAsync("jobMap.jumpToLocation", lat, lng, VacancyMapViewCalculator.FilledLocationZoom);
-            }
+            await Js.InvokeVoidAsync("jobMap.fitToOriginRings", animate);
         }
         catch (JSException)
         {

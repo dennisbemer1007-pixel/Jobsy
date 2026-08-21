@@ -58,11 +58,14 @@ public class JobMapPrerenderGuardTests
         Assert.Contains("lockCamera", js);
         Assert.Contains("openingCamera", js);
         Assert.Contains("readFilledOrigin", js);
-        Assert.Contains("FILLED_LOCATION_ZOOM = 13", js);
+        Assert.Contains("FILLED_LOCATION_ZOOM = 11", js);
         Assert.Contains("preferFilledLocation", js);
         Assert.Contains("jumpToLocation", js);
         Assert.Contains("safeJumpTo", js);
         Assert.Contains("safeEaseTo", js);
+        Assert.Contains("fitToOriginRings", js);
+        Assert.Contains("overlayFitPadding", js);
+        Assert.Contains("highlight-carousel--map", js);
         Assert.Contains("collectVacancyPoints", js);
         Assert.Contains("ensureVacancyTiles", js);
         Assert.Contains("firstSizedFit", js);
@@ -87,6 +90,7 @@ public class JobMapPrerenderGuardTests
         var originEnd = js.IndexOf("function setTravelOptions", StringComparison.Ordinal);
         Assert.True(originStart > 0 && originEnd > originStart);
         Assert.DoesNotContain("fitMapToVacancies", js[originStart..originEnd]);
+        Assert.Contains("fitToOriginRings", js[originStart..originEnd]);
         Assert.Contains("container.isConnected", js);
         Assert.Contains("isAlive", js[(js.LastIndexOf("return {", StringComparison.Ordinal))..]);
         Assert.Contains("maplibregl", js);
@@ -150,13 +154,15 @@ public class JobMapPrerenderGuardTests
         var createFn = helper[createStart..createEnd];
         Assert.Contains("center: options.center", createFn);
         Assert.Contains("zoom: options.zoom", createFn);
+        Assert.Contains("controlsPosition", createFn);
         Assert.DoesNotContain("applyCameraForStyle", createFn);
 
         var css = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "wwwroot", "css", "app.css"));
         Assert.Contains("maplibregl-ctrl-attrib", css);
         Assert.Contains("display: none !important", css);
         Assert.Contains("job-map-style-switch", css);
-        Assert.Contains("right: 48px", css);
+        Assert.Contains("maplibregl-ctrl-bottom-right", css);
+        Assert.Contains("bottom: 58px", css);
         Assert.Contains(".job-map-style-switch__btn.is-on", css);
         Assert.Contains("touch-action: none", css);
         Assert.Contains("#job-map", css);
@@ -235,6 +241,7 @@ public class JobMapPrerenderGuardTests
         Assert.Contains("preferFilledLocation", discovery);
         Assert.Contains("VacancyMapViewCalculator.ResolveOpening", discovery);
         Assert.Contains("CenterMapOnFilledLocationAsync", discovery);
+        Assert.Contains("fitToOriginRings", discovery);
         Assert.Contains("RegionHost.EnsureInitializedAsync", discovery);
         Assert.DoesNotContain("await RegionHost.EnsureInitializedAsync();", discovery);
         Assert.Contains("FilledLocationZoom", discovery);
@@ -262,6 +269,38 @@ public class JobMapPrerenderGuardTests
         var aliveCatchSlice = discovery[aliveCatch..(aliveCatch + 220)];
         Assert.Contains("do not tear down a live map", aliveCatchSlice);
         Assert.DoesNotContain("_mapReady = false", aliveCatchSlice);
+    }
+
+    [Fact]
+    public void Vacancy_detail_map_is_a_square_block_centered_on_the_vacancy()
+    {
+        var css = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "wwwroot", "css", "app.css"));
+        var wrapStart = css.IndexOf(".vacancy-location__map-wrap {", StringComparison.Ordinal);
+        Assert.True(wrapStart > 0);
+        var wrapEnd = css.IndexOf("}", wrapStart, StringComparison.Ordinal);
+        var wrap = css[wrapStart..wrapEnd];
+        Assert.Contains("aspect-ratio: 1 / 1", wrap);
+        Assert.Contains("min(100%, 26rem)", wrap);
+        Assert.DoesNotContain("height: 240px", wrap);
+
+        var js = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "wwwroot", "js", "vacancyDetailMap.js"));
+        Assert.Contains("styleKey: \"liberty\"", js);
+        Assert.Contains("vacancy-detail-marker", js);
+        Assert.Contains("center: [useLng, useLat]", js);
+        Assert.Contains("setLngLat([currentLng, currentLat])", js);
+        Assert.DoesNotContain("minHeight = \"200px\"", js);
+    }
+
+    [Fact]
+    public void Job_map_keeps_3d_toggle_with_zoom_above_locate()
+    {
+        var js = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "wwwroot", "js", "jobMap.js"));
+        Assert.Contains("controlsPosition: \"bottom-right\"", js);
+
+        var helper = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "wwwroot", "js", "jobsyMapLibre.js"));
+        Assert.Contains("StyleSwitchControl", helper);
+        Assert.Contains("maplibregl-ctrl-group job-map-style-switch", helper);
+        Assert.Contains("bottom-right", helper);
     }
 
     private static string FindRepoRoot()

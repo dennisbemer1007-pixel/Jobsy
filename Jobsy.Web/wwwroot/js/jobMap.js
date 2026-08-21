@@ -19,13 +19,15 @@ window.jobMap = (function () {
     let zoomHandlerBound = false;
 
     let cameraLocked = false;
+    let originHasBeenFramed = false;
+    let originNeedsFrame = false;
 
     // Fallback only when the index has no pins. Prefer the precomputed view from #jobsy-map-boot.
     const NL_CENTER = [52.15, 5.2913];
     const NL_ZOOM = 7;
     const NL_BOUNDS = [[50.29, 2.81], [53.33, 8.44]];
-    // Keep in sync with VacancyMapViewCalculator.FilledLocationZoom.
-    const FILLED_LOCATION_ZOOM = 13;
+    // Keep in sync with VacancyMapViewCalculator.FilledLocationZoom (fits default 30-min fiets ring).
+    const FILLED_LOCATION_ZOOM = 11;
 
     const CLUSTER_OPTS = {
         showCoverageOnHover: false,
@@ -942,6 +944,80 @@ window.jobMap = (function () {
         travelRingGeo = { sourceId: sourceId, ids: layerIds };
     }
 
+    function ringBounds(lat, lng, radiusM) {
+        const bounds = new maplibregl.LngLatBounds();
+        [0, 90, 180, 270].forEach(function (bearing) {
+            bounds.extend(destinationLngLat(lat, lng, radiusM, bearing));
+        });
+        return bounds;
+    }
+
+    function overlayFitPadding() {
+        const edge = 36;
+        const padding = { top: edge, right: edge, bottom: edge, left: edge };
+        if (!map) {
+            return padding;
+        }
+        const container = map.getContainer();
+        const pane = container && container.closest ? container.closest(".map-pane") : null;
+        if (pane) {
+            const carousel = pane.querySelector(".highlight-carousel--map");
+            if (carousel && carousel.offsetParent !== null && carousel.offsetHeight > 0) {
+                padding.top = Math.max(padding.top, carousel.offsetHeight + 16);
+            }
+        }
+        const locate = container ? container.querySelector(".job-map-locate") : null;
+        if (locate && locate.offsetHeight) {
+            // Locate sits at the corner; zoom + 3D sit above it (bottom: 58px).
+            padding.bottom = Math.max(padding.bottom, 110);
+        }
+        padding.right = Math.max(padding.right, 52);
+        return padding;
+    }
+
+    function sameOrigin(lat, lng) {
+        return !!(lastOrigin
+            && Math.abs(lastOrigin.lat - lat) < 1e-7
+            && Math.abs(lastOrigin.lng - lng) < 1e-7);
+    }
+
+    function fitToOriginRings(animate) {
+        if (!map || !lastOrigin) {
+            return;
+        }
+        const radius = maxRingRadiusMeters();
+        if (!(radius > 40)) {
+            return;
+        }
+        const opts = {
+            padding: overlayFitPadding(),
+            maxZoom: 13,
+            animate: animate === true && !prefersReducedMotion(),
+            duration: animate === true && !prefersReducedMotion() ? 450 : 0
+        };
+        if (!mapHasUsableSize()) {
+            originNeedsFrame = true;
+            safeJumpTo({
+                center: [lastOrigin.lng, lastOrigin.lat],
+                zoom: FILLED_LOCATION_ZOOM
+            });
+            return;
+        }
+        try {
+            map.fitBounds(ringBounds(lastOrigin.lat, lastOrigin.lng, radius), opts);
+            originNeedsFrame = false;
+            originHasBeenFramed = true;
+            cameraLocked = true;
+            firstSizedFit = true;
+        } catch (e) {
+            originNeedsFrame = true;
+            safeJumpTo({
+                center: [lastOrigin.lng, lastOrigin.lat],
+                zoom: FILLED_LOCATION_ZOOM
+            });
+        }
+    }
+
     function normalizeTravelOptions(options) {
         if (!options) return;
         if (options.maxMinutes != null) {
@@ -1340,6 +1416,8 @@ window.jobMap = (function () {
         tileLayer = null;
         selectedId = null;
         cameraLocked = false;
+        originHasBeenFramed = false;
+        originNeedsFrame = false;
 
         const opening = openingCamera(openingPoints, openingView, preferFilledLocation);
         if (openingPoints && openingPoints.length) {
@@ -1348,7 +1426,8 @@ window.jobMap = (function () {
 
         map = window.jobsyMapLibre.createMap(el, {
             center: opening.center,
-            zoom: opening.zoom
+            zoom: opening.zoom,
+            controlsPosition: "bottom-right"
         });
         cameraLocked = opening.locked;
         firstSizedFit = true;
@@ -1519,13 +1598,7 @@ window.jobMap = (function () {
                 window.jobsyGeo.requestLocation()
                     .then(function (pos) {
                         setOrigin(pos.lat, pos.lng, travelOptions);
-                        if (map) {
-                            map.easeTo({
-                                center: [pos.lng, pos.lat],
-                                zoom: FILLED_LOCATION_ZOOM,
-                                duration: 400
-                            });
-                        }
+                        fitToOriginRings(true);
                     })
                     .then(done, done);
             } else {
@@ -1604,24 +1677,35 @@ window.jobMap = (function () {
         const ln = Number(lng);
         if (!Number.isFinite(la) || !Number.isFinite(ln)) return;
 
+        const originChanged = !sameOrigin(la, ln);
         normalizeTravelOptions(travel);
         lastOrigin = { lat: la, lng: ln };
 
         ensureOriginMarker(la, ln);
         drawTravelRings(la, ln);
         syncLocateButton();
+
+        if (originChanged || !originHasBeenFramed) {
+            fitToOriginRings(originHasBeenFramed);
+        }
     }
 
     function setTravelOptions(options) {
+        const prevRadius = lastOrigin ? maxRingRadiusMeters() : 0;
         normalizeTravelOptions(options);
         if (lastOrigin) {
             drawTravelRings(lastOrigin.lat, lastOrigin.lng);
+            if (Math.abs(maxRingRadiusMeters() - prevRadius) > 1) {
+                fitToOriginRings(true);
+            }
         }
     }
 
     function clearOrigin() {
         clearTravelRings();
         lastOrigin = null;
+        originHasBeenFramed = false;
+        originNeedsFrame = false;
         if (originMarker) {
             originMarker.remove();
             originMarker = null;
@@ -1670,6 +1754,9 @@ window.jobMap = (function () {
             return;
         }
         map.resize();
+        if (originNeedsFrame && lastOrigin) {
+            fitToOriginRings(false);
+        }
     }
 
     function isAlive() {
@@ -1773,6 +1860,8 @@ window.jobMap = (function () {
         lastFitPoints = [];
         firstSizedFit = false;
         cameraLocked = false;
+        originHasBeenFramed = false;
+        originNeedsFrame = false;
         tileLayer = null;
         selectedId = null;
         zoomHandlerBound = false;
@@ -1802,6 +1891,7 @@ window.jobMap = (function () {
         setOrigin,
         panTo,
         jumpToLocation,
+        fitToOriginRings,
         setTravelOptions,
         clearOrigin,
         highlight,

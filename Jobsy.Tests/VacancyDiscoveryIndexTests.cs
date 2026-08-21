@@ -395,13 +395,13 @@ public class VacancyMapViewCalculatorTests
         Assert.Equal(52.01123, view.CenterLat);
         Assert.Equal(4.22167, view.CenterLng);
         Assert.Equal(VacancyMapViewCalculator.FilledLocationZoom, view.Zoom);
-        Assert.Equal(13, view.Zoom);
+        Assert.Equal(11, view.Zoom);
         Assert.Equal(8, view.PinCount);
         Assert.True(view.HasPins);
     }
 
     [Fact]
-    public void Opening_view_prefers_filled_origin_at_zoom_13_over_centroid()
+    public void Opening_view_prefers_filled_origin_that_fits_the_travel_ring_over_centroid()
     {
         var pins = VacancyMapViewCalculator.FromPoints([(52.0, 5.0), (53.0, 6.0)]);
         var view = VacancyMapViewCalculator.ResolveOpening(
@@ -413,7 +413,8 @@ public class VacancyMapViewCalculatorTests
             companyFocus: false);
         Assert.Equal(52.01123, view.CenterLat);
         Assert.Equal(4.22167, view.CenterLng);
-        Assert.Equal(13, view.Zoom);
+        Assert.Equal(VacancyMapViewCalculator.FilledLocationZoom, view.Zoom);
+        Assert.Equal(11, view.Zoom);
     }
 
     [Fact]
@@ -429,7 +430,8 @@ public class VacancyMapViewCalculatorTests
             companyFocus: false);
         Assert.Equal(51.9225, view.CenterLat);
         Assert.Equal(4.47917, view.CenterLng);
-        Assert.Equal(13, view.Zoom);
+        Assert.Equal(VacancyMapViewCalculator.FilledLocationZoom, view.Zoom);
+        Assert.Equal(11, view.Zoom);
     }
 
     [Fact]
@@ -467,4 +469,16 @@ public class VacancyMapViewCalculatorTests
     [InlineData(52.0, 181)]
     public void Invalid_filled_location_returns_null(double lat, double lng)
         => Assert.Null(VacancyMapViewCalculator.ForFilledLocation(lat, lng));
+
+    [Fact]
+    public void Default_30_min_bike_ring_uses_filled_location_zoom()
+        => Assert.Equal(
+            VacancyMapViewCalculator.FilledLocationZoom,
+            VacancyMapViewCalculator.ZoomForTravelRing(30, "Fiets", 15));
+
+    [Fact]
+    public void Short_bike_ring_zooms_in_further_than_the_30_min_default()
+        => Assert.True(
+            VacancyMapViewCalculator.ZoomForTravelRing(10, "Fiets", 15)
+            > VacancyMapViewCalculator.ZoomForTravelRing(30, "Fiets", 15));
 }

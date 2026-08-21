@@ -84,25 +84,25 @@ window.vacancyDetailMap = (function () {
             }
         }
 
-        currentLat = useLat;
-        currentLng = useLng;
-
         if (map) {
             dispose();
         }
+
+        currentLat = useLat;
+        currentLng = useLng;
 
         if (el.clientHeight < 40) {
             el.style.position = "absolute";
             el.style.inset = "0";
             el.style.width = "100%";
             el.style.height = "100%";
-            el.style.minHeight = "200px";
         }
 
         map = window.jobsyMapLibre.createMap(el, {
             center: [useLng, useLat],
             zoom: 15,
-            scrollZoom: false
+            scrollZoom: false,
+            styleKey: "liberty"
         });
 
         const address = options && options.address ? String(options.address) : "";
@@ -119,6 +119,11 @@ window.vacancyDetailMap = (function () {
 
         map.on("load", function () {
             restoreMarker();
+            invalidate();
+            recenter();
+        });
+
+        map.once("idle", function () {
             invalidate();
             recenter();
         });

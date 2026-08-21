@@ -1,4 +1,5 @@
 using Jobsy.Core.Contracts;
+using Jobsy.Core.Enums;
 
 namespace Jobsy.Core.Rules;
 
@@ -11,12 +12,21 @@ public static class VacancyMapViewCalculator
     public static VacancyMapView Fallback { get; } = new(52.15, 5.2913, 7, 0);
 
     /// <summary>
-    /// Local zoom when the map is centered on a filled origin or region-host address.
+    /// Fallback zoom that fits the default 30-min fiets ring on a typical viewport.
     /// Keep in sync with <c>FILLED_LOCATION_ZOOM</c> in <c>jobMap.js</c>.
     /// </summary>
-    public const int FilledLocationZoom = 13;
+    public const int FilledLocationZoom = 11;
 
-    public static VacancyMapView? ForFilledLocation(double lat, double lng, int pinCount = 0)
+    /// <summary>Padding so the outer travel ring (and its label) stay inside the viewport.</summary>
+    public const double TravelRingPaddingFactor = 1.45;
+
+    public static VacancyMapView? ForFilledLocation(
+        double lat,
+        double lng,
+        int pinCount = 0,
+        int maxMinutes = 30,
+        string? transport = "Fiets",
+        double? radiusKm = 15)
     {
         if (!double.IsFinite(lat) || !double.IsFinite(lng)
             || lat is < -90 or > 90 || lng is < -180 or > 180)
@@ -27,13 +37,13 @@ public static class VacancyMapViewCalculator
         return new VacancyMapView(
             Math.Round(lat, 5, MidpointRounding.AwayFromZero),
             Math.Round(lng, 5, MidpointRounding.AwayFromZero),
-            FilledLocationZoom,
+            ZoomForTravelRing(maxMinutes, transport, radiusKm),
             Math.Max(0, pinCount));
     }
 
     /// <summary>
     /// Opening camera for the banenkaart, computed before HTML leaves the server.
-    /// Address / default-region wins (zoom 13); otherwise the marker-centroid view.
+    /// Address / default-region wins (zoom fits the travel ring); otherwise the marker-centroid view.
     /// Company deep-links keep the pin camera.
     /// </summary>
     public static VacancyMapView ResolveOpening(
@@ -42,7 +52,10 @@ public static class VacancyMapViewCalculator
         double? originLng,
         double? regionLat,
         double? regionLng,
-        bool companyFocus)
+        bool companyFocus,
+        int maxMinutes = 30,
+        string? transport = "Fiets",
+        double? radiusKm = 15)
     {
         if (companyFocus)
         {
@@ -50,7 +63,7 @@ public static class VacancyMapViewCalculator
         }
 
         var fromOrigin = originLat is double oLat && originLng is double oLng
-            ? ForFilledLocation(oLat, oLng, pinCentroid.PinCount)
+            ? ForFilledLocation(oLat, oLng, pinCentroid.PinCount, maxMinutes, transport, radiusKm)
             : null;
         if (fromOrigin is not null)
         {
@@ -58,9 +71,29 @@ public static class VacancyMapViewCalculator
         }
 
         var fromRegion = regionLat is double rLat && regionLng is double rLng
-            ? ForFilledLocation(rLat, rLng, pinCentroid.PinCount)
+            ? ForFilledLocation(rLat, rLng, pinCentroid.PinCount, maxMinutes, transport, radiusKm)
             : null;
         return fromRegion ?? pinCentroid;
+    }
+
+    /// <summary>
+    /// Zoom that keeps the outer travel-time ring fully visible, matching jobMap.js ring radius.
+    /// </summary>
+    public static int ZoomForTravelRing(int maxMinutes = 30, string? transport = "Fiets", double? radiusKm = 15)
+    {
+        if (!TransportModeParser.TryParseMany(transport, out var mode, out _) || mode == TransportMode.None)
+        {
+            mode = TransportMode.Bike;
+        }
+
+        var meters = TravelReach.RingRadiusMeters(mode, maxMinutes);
+        if (radiusKm is > 0)
+        {
+            meters = Math.Min(meters, radiusKm.Value * 1000.0);
+        }
+
+        var paddedSpanDeg = meters * 2 * TravelRingPaddingFactor / 1000.0 / 111.32;
+        return ZoomForSpan(paddedSpanDeg);
     }
 
     public static VacancyMapView FromRecords(IEnumerable<VacancyDiscoveryRecord> records)
