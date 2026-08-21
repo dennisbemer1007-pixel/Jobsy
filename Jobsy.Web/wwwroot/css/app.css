@@ -3921,6 +3921,8 @@ a {
 .travel-ring-label {
     background: transparent !important;
     border: none !important;
+    pointer-events: none;
+    z-index: 2;
 }
 
 .travel-ring-label span {

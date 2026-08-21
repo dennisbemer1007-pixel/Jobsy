@@ -65,6 +65,10 @@ public class JobMapPrerenderGuardTests
         Assert.Contains("safeEaseTo", js);
         Assert.Contains("fitToOriginRings", js);
         Assert.Contains("overlayFitPadding", js);
+        Assert.Contains("scheduleTravelRingRedraw", js);
+        Assert.Contains("onTravelRingStyleData", js);
+        Assert.Contains("jobsy-travel-rings", js);
+        Assert.Contains("sourceId + \"-halo\"", js);
         Assert.Contains("highlight-carousel--map", js);
         Assert.Contains("collectVacancyPoints", js);
         Assert.Contains("ensureVacancyTiles", js);
@@ -77,6 +81,7 @@ public class JobMapPrerenderGuardTests
         var initFn = js[initIdx..initEnd];
         Assert.DoesNotContain("jumpToLocation", initFn);
         Assert.DoesNotContain("fitMapToVacancies", initFn);
+        Assert.Contains("setOrigin(filled.lat", initFn);
         var setVacanciesInInit = js.IndexOf("setVacancies(vacancies || []);", initIdx, StringComparison.Ordinal);
         var tilesAfterVacancies = js.IndexOf("ensureVacancyTiles();", setVacanciesInInit, StringComparison.Ordinal);
         Assert.True(setVacanciesInInit > initIdx && tilesAfterVacancies > setVacanciesInInit);

@@ -21,6 +21,9 @@ window.jobMap = (function () {
     let cameraLocked = false;
     let originHasBeenFramed = false;
     let originNeedsFrame = false;
+    let ringRedrawBound = false;
+    let ringStyleHandlerBound = false;
+    let ringRedrawTries = 0;
 
     // Fallback only when the index has no pins. Prefer the precomputed view from #jobsy-map-boot.
     const NL_CENTER = [52.15, 5.2913];
@@ -803,24 +806,56 @@ window.jobMap = (function () {
         return SPEED_M_PER_MIN[transport] || SPEED_M_PER_MIN.Fiets;
     }
 
-    function clearTravelRings() {
-        if (map && travelRingGeo) {
-            travelRingGeo.ids.forEach(function (id) {
-                if (map.getLayer(id)) {
-                    map.removeLayer(id);
-                }
-            });
-            if (map.getSource(travelRingGeo.sourceId)) {
-                map.removeSource(travelRingGeo.sourceId);
-            }
-        }
+    function clearTravelRingLabels() {
         travelRingLayers.forEach(function (layer) {
             if (layer && typeof layer.remove === "function") {
                 layer.remove();
             }
         });
         travelRingLayers = [];
+    }
+
+    function clearTravelRings() {
+        if (map && travelRingGeo) {
+            try {
+                travelRingGeo.ids.forEach(function (id) {
+                    if (map.getLayer(id)) {
+                        map.removeLayer(id);
+                    }
+                });
+                if (map.getSource(travelRingGeo.sourceId)) {
+                    map.removeSource(travelRingGeo.sourceId);
+                }
+            } catch (e) { }
+        }
         travelRingGeo = null;
+        clearTravelRingLabels();
+    }
+
+    function travelRingSourceReady() {
+        return !!(map && typeof map.getSource === "function" && map.getSource("jobsy-travel-rings"));
+    }
+
+    function bindTravelRingStyleGuard() {
+        if (!map || ringStyleHandlerBound) {
+            return;
+        }
+        ringStyleHandlerBound = true;
+        map.on("styledata", onTravelRingStyleData);
+        map.on("idle", onTravelRingStyleData);
+    }
+
+    function onTravelRingStyleData() {
+        if (!lastOrigin || !map) {
+            return;
+        }
+        if (typeof map.isStyleLoaded === "function" && !map.isStyleLoaded()) {
+            return;
+        }
+        if (travelRingSourceReady()) {
+            return;
+        }
+        drawTravelRings(lastOrigin.lat, lastOrigin.lng);
     }
 
     function maxRingRadiusMeters() {
@@ -862,39 +897,54 @@ window.jobMap = (function () {
         return [coords];
     }
 
-    function drawTravelRings(lat, lng) {
-        clearTravelRings();
-        if (!map || typeof map.addSource !== "function") {
+    function scheduleTravelRingRedraw() {
+        if (!map || ringRedrawBound || ringRedrawTries >= 12) {
             return;
         }
+        ringRedrawBound = true;
+        ringRedrawTries += 1;
+        map.once("idle", function () {
+            ringRedrawBound = false;
+            if (lastOrigin) {
+                drawTravelRings(lastOrigin.lat, lastOrigin.lng);
+            }
+        });
+    }
 
-        const transport = travelOptions.transport || "Fiets";
-        const labelVerb = TRANSPORT_LABEL[transport] || "reistijd";
+    function eachTravelRing(lat, lng, fn) {
         const minutes = ringMinutes(travelOptions.maxMinutes);
         const cap = maxRingRadiusMeters();
-        const features = [];
-        const layerIds = [];
-
         minutes.forEach(function (mins, index) {
             const radius = ringRadiusForMinutes(mins);
-            if (radius < 40) return;
+            if (radius < 40) {
+                return;
+            }
             if (index > 0 && radius >= cap - 1 && ringRadiusForMinutes(minutes[index - 1]) >= cap - 1) {
                 return;
             }
+            fn(mins, index, radius, index === minutes.length - 1);
+        });
+    }
 
+    function buildTravelRingFeatures(lat, lng) {
+        const features = [];
+        eachTravelRing(lat, lng, function (mins, index, radius, outer) {
             features.push({
                 type: "Feature",
-                properties: {
-                    index: index,
-                    outer: index === minutes.length - 1
-                },
-                geometry: {
-                    type: "Polygon",
-                    coordinates: circlePolygon(lat, lng, radius)
-                }
+                properties: { index: index, outer: outer ? 1 : 0 },
+                geometry: { type: "Polygon", coordinates: circlePolygon(lat, lng, radius) }
             });
+        });
+        return features;
+    }
 
-            const labelLngLat = destinationLngLat(lat, lng, radius, 0);
+    function placeTravelRingLabels(lat, lng) {
+        clearTravelRingLabels();
+        const transport = travelOptions.transport || "Fiets";
+        const labelVerb = TRANSPORT_LABEL[transport] || "reistijd";
+        eachTravelRing(lat, lng, function (mins, index, radius) {
+            // East-southeast keeps labels off the featured carousel and zoom stack.
+            const labelLngLat = destinationLngLat(lat, lng, radius, 125);
             const effectiveMins = Math.max(1, Math.round(radius / metersPerMinute(transport)));
             const labelEl = document.createElement("div");
             labelEl.className = "travel-ring-label";
@@ -909,39 +959,87 @@ window.jobMap = (function () {
                 .addTo(map);
             travelRingLayers.push(labelMarker);
         });
+    }
 
-        if (!features.length || !map.isStyleLoaded()) {
+    function drawTravelRings(lat, lng) {
+        if (!map || typeof map.addSource !== "function") {
+            return;
+        }
+        if (typeof map.isStyleLoaded === "function" && !map.isStyleLoaded()) {
+            scheduleTravelRingRedraw();
+            return;
+        }
+
+        const features = buildTravelRingFeatures(lat, lng);
+        if (!features.length) {
+            clearTravelRings();
             return;
         }
 
         const sourceId = "jobsy-travel-rings";
-        map.addSource(sourceId, {
-            type: "geojson",
-            data: { type: "FeatureCollection", features: features }
-        });
         const fillId = sourceId + "-fill";
+        const haloId = sourceId + "-halo";
         const lineId = sourceId + "-line";
-        map.addLayer({
-            id: fillId,
-            type: "fill",
-            source: sourceId,
-            paint: {
-                "fill-color": "#007bff",
-                "fill-opacity": 0.1
+
+        try {
+            const data = { type: "FeatureCollection", features: features };
+            if (map.getSource(sourceId)) {
+                map.getSource(sourceId).setData(data);
+            } else {
+                map.addSource(sourceId, {
+                    type: "geojson",
+                    data: data
+                });
             }
-        });
-        map.addLayer({
-            id: lineId,
-            type: "line",
-            source: sourceId,
-            paint: {
-                "line-color": "#007bff",
-                "line-width": 1.6,
-                "line-opacity": 0.7
+
+            if (!map.getLayer(fillId)) {
+                map.addLayer({
+                    id: fillId,
+                    type: "fill",
+                    source: sourceId,
+                    paint: {
+                        "fill-color": "#0d6efd",
+                        "fill-opacity": 0.16
+                    }
+                });
             }
-        });
-        layerIds.push(fillId, lineId);
-        travelRingGeo = { sourceId: sourceId, ids: layerIds };
+            if (!map.getLayer(haloId)) {
+                map.addLayer({
+                    id: haloId,
+                    type: "line",
+                    source: sourceId,
+                    paint: {
+                        "line-color": "#ffffff",
+                        "line-width": 5,
+                        "line-opacity": 0.72
+                    }
+                });
+            }
+            if (!map.getLayer(lineId)) {
+                map.addLayer({
+                    id: lineId,
+                    type: "line",
+                    source: sourceId,
+                    paint: {
+                        "line-color": "#0d6efd",
+                        "line-width": [
+                            "case",
+                            ["==", ["get", "outer"], 1],
+                            3.2,
+                            2.4
+                        ],
+                        "line-opacity": 0.95
+                    }
+                });
+            }
+            travelRingGeo = { sourceId: sourceId, ids: [fillId, haloId, lineId] };
+            ringRedrawTries = 0;
+        } catch (e) {
+            scheduleTravelRingRedraw();
+            return;
+        }
+
+        placeTravelRingLabels(lat, lng);
     }
 
     function ringBounds(lat, lng, radiusM) {
@@ -963,7 +1061,7 @@ window.jobMap = (function () {
         if (pane) {
             const carousel = pane.querySelector(".highlight-carousel--map");
             if (carousel && carousel.offsetParent !== null && carousel.offsetHeight > 0) {
-                padding.top = Math.max(padding.top, carousel.offsetHeight + 16);
+                padding.top = Math.max(padding.top, carousel.offsetHeight + 28);
             }
         }
         const locate = container ? container.querySelector(".job-map-locate") : null;
@@ -985,7 +1083,7 @@ window.jobMap = (function () {
         if (!map || !lastOrigin) {
             return;
         }
-        const radius = maxRingRadiusMeters();
+        const radius = maxRingRadiusMeters() * 1.12;
         if (!(radius > 40)) {
             return;
         }
@@ -1009,6 +1107,11 @@ window.jobMap = (function () {
             originHasBeenFramed = true;
             cameraLocked = true;
             firstSizedFit = true;
+            map.once("idle", function () {
+                if (lastOrigin) {
+                    drawTravelRings(lastOrigin.lat, lastOrigin.lng);
+                }
+            });
         } catch (e) {
             originNeedsFrame = true;
             safeJumpTo({
@@ -1418,6 +1521,9 @@ window.jobMap = (function () {
         cameraLocked = false;
         originHasBeenFramed = false;
         originNeedsFrame = false;
+        ringRedrawBound = false;
+        ringStyleHandlerBound = false;
+        ringRedrawTries = 0;
 
         const opening = openingCamera(openingPoints, openingView, preferFilledLocation);
         if (openingPoints && openingPoints.length) {
@@ -1435,6 +1541,9 @@ window.jobMap = (function () {
         map.on("load", function () {
             restoreOverlays();
         });
+        if (typeof map.loaded === "function" && map.loaded()) {
+            restoreOverlays();
+        }
         window.addEventListener("resize", invalidate);
         revealMapStage();
     }
@@ -1471,6 +1580,7 @@ window.jobMap = (function () {
         }
         addLocateControl();
         bindOutsideClickCloser();
+        bindTravelRingStyleGuard();
     }
 
     function readBootPayload() {
@@ -1547,6 +1657,13 @@ window.jobMap = (function () {
             try {
                 setOrigin(options.origin.lat, options.origin.lng, options.travel);
             } catch (e) { }
+        } else if (preferFilledLocation) {
+            const filled = readFilledOrigin();
+            if (filled) {
+                try {
+                    setOrigin(filled.lat, filled.lng, options && options.travel);
+                } catch (e) { }
+            }
         }
         ensureVacancyTiles();
 
@@ -1862,6 +1979,9 @@ window.jobMap = (function () {
         cameraLocked = false;
         originHasBeenFramed = false;
         originNeedsFrame = false;
+        ringRedrawBound = false;
+        ringStyleHandlerBound = false;
+        ringRedrawTries = 0;
         tileLayer = null;
         selectedId = null;
         zoomHandlerBound = false;
