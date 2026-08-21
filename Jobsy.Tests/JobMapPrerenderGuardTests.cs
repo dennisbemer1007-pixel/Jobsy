@@ -275,13 +275,23 @@ public class JobMapPrerenderGuardTests
     public void Vacancy_detail_map_is_a_square_block_centered_on_the_vacancy()
     {
         var css = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "wwwroot", "css", "app.css"));
-        var wrapStart = css.IndexOf(".vacancy-location__map-wrap {", StringComparison.Ordinal);
+        var wrapStart = css.IndexOf("\n.vacancy-location__map-wrap {", StringComparison.Ordinal);
         Assert.True(wrapStart > 0);
         var wrapEnd = css.IndexOf("}", wrapStart, StringComparison.Ordinal);
         var wrap = css[wrapStart..wrapEnd];
         Assert.Contains("aspect-ratio: 1 / 1", wrap);
         Assert.Contains("min(100%, 26rem)", wrap);
         Assert.DoesNotContain("height: 240px", wrap);
+
+        Assert.Contains(".vacancy-media--split", css);
+        Assert.Contains("repeat(2, minmax(0, 1fr))", css);
+
+        var detail = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "Components", "Pages", "VacancyDetail.razor"));
+        Assert.Contains("vacancy-media--split", detail);
+        Assert.Contains("HasPhoto && HasLocation", detail);
+        var mediaIdx = detail.IndexOf("class=\"vacancy-media", StringComparison.Ordinal);
+        var bodyIdx = detail.IndexOf("detail-card__body", StringComparison.Ordinal);
+        Assert.True(mediaIdx > 0 && bodyIdx > mediaIdx, "Photo and map must sit together above the description.");
 
         var js = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "wwwroot", "js", "vacancyDetailMap.js"));
         Assert.Contains("styleKey: \"liberty\"", js);

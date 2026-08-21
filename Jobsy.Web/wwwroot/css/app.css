@@ -3089,6 +3089,26 @@ a {
     margin-top: 1rem;
 }
 
+.vacancy-media {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0.85rem;
+    align-items: start;
+    margin: 0.85rem 0 0;
+}
+
+.vacancy-media--split {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.vacancy-media .vacancy-location {
+    margin-top: 0;
+}
+
+.vacancy-media--split .vacancy-location__map-wrap {
+    width: 100%;
+}
+
 .vacancy-location__map-wrap {
     position: relative;
     width: min(100%, 26rem);
@@ -3178,6 +3198,12 @@ a {
 
 .vacancy-location__btn {
     min-height: 2.35rem;
+}
+
+@media (max-width: 640px) {
+    .vacancy-media--split {
+        grid-template-columns: minmax(0, 1fr);
+    }
 }
 
 @media (max-width: 560px) {
@@ -5837,6 +5863,18 @@ a.engagement-btn {
     margin: 0.85rem 0 0;
     aspect-ratio: 3 / 2;
     background: var(--pearl-mid);
+}
+
+.vacancy-media .detail-card__image,
+.vacancy-media .vacancy-photo.detail-card__image {
+    margin: 0;
+}
+
+.vacancy-media--split .detail-card__image,
+.vacancy-media--split .vacancy-photo.detail-card__image {
+    max-height: none;
+    aspect-ratio: 1 / 1;
+    height: auto;
 }
 
 .detail-card__video {

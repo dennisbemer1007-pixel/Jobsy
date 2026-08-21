@@ -149,14 +149,47 @@
                 }
             </div>
 
-            @if (!string.IsNullOrWhiteSpace(_vacancy.ImageUrl))
+            @if (HasPhoto || HasLocation)
             {
-                <VacancyPhoto Src="@_vacancy.ImageUrl"
-                              VacancyId="_vacancy.Id"
-                              WorkType="@(_vacancy.WorkTypes.FirstOrDefault())"
-                              Class="detail-card__image"
-                              Eager="true"
-                              Sizes="(max-width: 700px) 100vw, 640px" />
+                <div class="vacancy-media @(HasPhoto && HasLocation ? "vacancy-media--split" : null)">
+                    @if (HasPhoto)
+                    {
+                        <VacancyPhoto Src="@_vacancy.ImageUrl"
+                                      VacancyId="_vacancy.Id"
+                                      WorkType="@(_vacancy.WorkTypes.FirstOrDefault())"
+                                      Class="detail-card__image vacancy-media__photo"
+                                      Eager="true"
+                                      Sizes="@(HasLocation ? "(max-width: 640px) 100vw, 420px" : "(max-width: 700px) 100vw, 640px")" />
+                    }
+
+                    @if (HasLocation)
+                    {
+                        <section class="vacancy-location vacancy-media__map" aria-label="@Culture["Vacancy.LocationMap"]">
+                            <div class="vacancy-location__map-wrap">
+                                <div id="vacancy-detail-map" class="vacancy-location__map vacancy-detail-map"></div>
+                            </div>
+                            <div class="vacancy-location__actions">
+                                <label class="vacancy-location__transport">
+                                    @Culture["Vacancy.YourTransport"]
+                                    <select value="@_transport" @onchange="OnTransportChanged">
+                                        <option value="Fiets">@Culture["Transport.Bike"]</option>
+                                        <option value="Auto">@Culture["Transport.Car"]</option>
+                                        <option value="OV">@Culture["Transport.Transit"]</option>
+                                        <option value="Lopend">@Culture["Transport.Walk"]</option>
+                                    </select>
+                                </label>
+                                <div class="vacancy-location__buttons">
+                                    <button class="engagement-btn vacancy-location__btn" type="button" disabled="@_openingRoute" @onclick="OpenRouteAsync">
+                                        @Culture["Vacancy.Route"]
+                                    </button>
+                                    <button class="engagement-btn vacancy-location__btn" type="button" @onclick="OpenStreetViewAsync">
+                                        @Culture["Vacancy.StreetView"]
+                                    </button>
+                                </div>
+                            </div>
+                        </section>
+                    }
+                </div>
             }
 
             @if (VideoEmbedUrl is not null)
@@ -302,34 +335,6 @@
                         </p>
                     </div>
                 </aside>
-            }
-
-            @if (HasLocation)
-            {
-                <section class="vacancy-location" aria-label="@Culture["Vacancy.LocationMap"]">
-                    <div class="vacancy-location__map-wrap">
-                        <div id="vacancy-detail-map" class="vacancy-location__map vacancy-detail-map"></div>
-                    </div>
-                    <div class="vacancy-location__actions">
-                        <label class="vacancy-location__transport">
-                            @Culture["Vacancy.YourTransport"]
-                            <select value="@_transport" @onchange="OnTransportChanged">
-                                <option value="Fiets">@Culture["Transport.Bike"]</option>
-                                <option value="Auto">@Culture["Transport.Car"]</option>
-                                <option value="OV">@Culture["Transport.Transit"]</option>
-                                <option value="Lopend">@Culture["Transport.Walk"]</option>
-                            </select>
-                        </label>
-                        <div class="vacancy-location__buttons">
-                            <button class="engagement-btn vacancy-location__btn" type="button" disabled="@_openingRoute" @onclick="OpenRouteAsync">
-                                @Culture["Vacancy.Route"]
-                            </button>
-                            <button class="engagement-btn vacancy-location__btn" type="button" @onclick="OpenStreetViewAsync">
-                                @Culture["Vacancy.StreetView"]
-                            </button>
-                        </div>
-                    </div>
-                </section>
             }
 
             @if (!_vacancy.WageVisible)
@@ -802,6 +807,9 @@
             : _awaitingVerification
                 ? "is-current"
                 : string.Empty;
+
+    private bool HasPhoto =>
+        _vacancy is not null && !string.IsNullOrWhiteSpace(_vacancy.ImageUrl);
 
     private bool HasLocation =>
         _vacancy is not null
