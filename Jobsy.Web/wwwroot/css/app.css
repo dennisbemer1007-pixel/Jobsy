@@ -12677,8 +12677,18 @@ html.cookie-consent-known .cookie-consent {
   max-width: 36rem;
 }
 
-.cookie-consent__text a {
+.cookie-consent__text a,
+.cookie-consent a.cookie-consent__privacy {
   color: #fff;
+  text-decoration: underline;
+  text-underline-offset: 0.12em;
+}
+
+.cookie-consent__text a:hover,
+.cookie-consent a.cookie-consent__privacy:hover {
+  color: #fff;
+  text-decoration: underline;
+  background: transparent;
 }
 
 .cookie-consent__actions {

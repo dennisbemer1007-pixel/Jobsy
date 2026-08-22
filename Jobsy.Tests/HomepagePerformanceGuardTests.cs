@@ -56,6 +56,7 @@ public class HomepagePerformanceGuardTests
         var critical = app[criticalStart..criticalEnd];
         Assert.Contains(".visually-hidden", critical);
         Assert.Contains(".cookie-consent { position: fixed", critical);
+        Assert.Contains(".cookie-consent a { color: #fff; text-decoration: underline", critical);
         Assert.Contains(".bottom-nav { position: fixed", critical);
         Assert.Contains(".lobsy-logo { display: block; width: 56px; height: 56px", critical);
         Assert.Contains("min-height: 10rem", critical);
@@ -78,6 +79,10 @@ public class HomepagePerformanceGuardTests
         var banner = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "Components", "CookieConsentBanner.razor"));
         Assert.Contains("private bool _visible = true", banner);
         Assert.DoesNotContain("cookie-consent__mascot", banner);
+        Assert.Contains("Accepteer cookies", banner);
+        Assert.DoesNotContain("Accepteer analytics", banner);
+        Assert.Contains("cookie-consent__privacy", banner);
+        Assert.DoesNotContain("class=\"auth-link\"", banner);
 
         var consentJs = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "wwwroot", "js", "cookieConsent.js"));
         Assert.Contains("cookie-consent-known", consentJs);
@@ -86,6 +91,11 @@ public class HomepagePerformanceGuardTests
         var css = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "wwwroot", "css", "app.css"));
         Assert.Contains("html.cookie-consent-known .cookie-consent", css);
         Assert.Contains("contain: layout paint style", css);
+        var privacyRule = css.IndexOf(".cookie-consent a.cookie-consent__privacy {", StringComparison.Ordinal);
+        Assert.True(privacyRule > 0);
+        var privacyBlock = css[privacyRule..(privacyRule + 180)];
+        Assert.Contains("color: #fff", privacyBlock);
+        Assert.Contains("text-decoration: underline", privacyBlock);
     }
 
     [Fact]
