@@ -50,6 +50,8 @@ public sealed class SmtpEmailService : IEmailService
     public async Task<EmailDeliveryResult> SendAsync(EmailMessage message, CancellationToken cancellationToken = default)
     {
         var secrets = await _credentials.GetSecretsAsync(IntegrationKey.Mail, cancellationToken);
+        Exception? providerError = null;
+
         if (TryResolveResend(secrets, out var resend))
         {
             try
@@ -59,6 +61,7 @@ public sealed class SmtpEmailService : IEmailService
             }
             catch (Exception ex) when (ex is not OperationCanceledException)
             {
+                providerError = ex;
                 // Fall through to SMTP or stub so registration / notifications are not hard-failed.
                 _logger.LogWarning(ex, "Resend failed; trying SMTP or stub fallback.");
             }
@@ -73,6 +76,7 @@ public sealed class SmtpEmailService : IEmailService
             }
             catch (Exception ex) when (ex is not OperationCanceledException)
             {
+                providerError = ex;
                 _logger.LogWarning(ex, "SMTP failed; falling back to email stub.");
             }
         }
@@ -81,6 +85,19 @@ public sealed class SmtpEmailService : IEmailService
             || string.Equals(_environment.EnvironmentName, "Testing", StringComparison.OrdinalIgnoreCase))
         {
             return await _stub.SendAsync(message, cancellationToken);
+        }
+
+        // Prefer the real provider error (e.g. Resend 403 domain) over a misleading "not configured".
+        if (providerError is InvalidOperationException ioe)
+        {
+            throw ioe;
+        }
+
+        if (providerError is not null)
+        {
+            throw new InvalidOperationException(
+                Truncate(providerError.Message, 280),
+                providerError);
         }
 
         throw new InvalidOperationException(
@@ -423,8 +440,8 @@ public sealed class SmtpEmailService : IEmailService
         {
             Id = Guid.NewGuid(),
             Level = level,
-            Category = category,
-            Message = message,
+            Category = category.Length > 128 ? category[..128] : category,
+            Message = message.Length > 2000 ? message[..2000] : message,
             DetailsJson = JsonSerializer.Serialize(details),
             CreatedAt = DateTime.UtcNow
         });

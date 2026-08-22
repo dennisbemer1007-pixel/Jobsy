@@ -67,6 +67,35 @@ public sealed class IntegrationHealthStub : IIntegrationHealthService
         string to,
         CancellationToken cancellationToken = default)
     {
+        try
+        {
+            return await SendTestMailCoreAsync(to, cancellationToken);
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            // Never bubble a 500 to Admin for mail diagnostics — surface a readable message.
+            _logger.LogError(ex, "Testmail endpoint failed unexpectedly");
+            var failMessage = $"Testmail mislukt: {Truncate(ex.Message, 280)}";
+            try
+            {
+                await _credentials.SavePingResultAsync(IntegrationKey.Mail, false, failMessage, cancellationToken);
+            }
+            catch (Exception saveEx) when (saveEx is not OperationCanceledException)
+            {
+                _logger.LogWarning(saveEx, "Could not persist mail test ping after failure");
+            }
+
+            return new SendTestMailResult(false, false, failMessage);
+        }
+
+        static string Truncate(string value, int max)
+            => value.Length <= max ? value : value[..max] + "…";
+    }
+
+    private async Task<SendTestMailResult> SendTestMailCoreAsync(
+        string to,
+        CancellationToken cancellationToken)
+    {
         var trimmed = (to ?? string.Empty).Trim();
         if (!LooksLikeEmail(trimmed))
         {
@@ -85,13 +114,11 @@ public sealed class IntegrationHealthStub : IIntegrationHealthService
 
         if (!resendReady && !smtpReady)
         {
-            await _email.SendAsync(
-                new EmailMessage(trimmed, "Lobsy testmail", body, "MailTest"),
-                cancellationToken);
+            // Do not call IEmailService here in Production — it throws "niet geconfigureerd".
             var stubMessage =
                 "Mail niet geconfigureerd. Vul Resend API-key + From in (aanbevolen op cloud), " +
                 "of SMTP-host/gebruiker/app-wachtwoord/From. " +
-                $"Testmail naar {redacted} is alleen in PlatformLog gelogd — niet echt verzonden.";
+                $"Testmail naar {redacted} is niet verzonden.";
             await _credentials.SavePingResultAsync(IntegrationKey.Mail, false, stubMessage, cancellationToken);
             return new SendTestMailResult(false, false, stubMessage);
         }
@@ -135,7 +162,8 @@ public sealed class IntegrationHealthStub : IIntegrationHealthService
             else if (!failMessage.StartsWith("Testmail", StringComparison.OrdinalIgnoreCase)
                      && !failMessage.StartsWith("Gmail", StringComparison.OrdinalIgnoreCase)
                      && !failMessage.StartsWith("Resend", StringComparison.OrdinalIgnoreCase)
-                     && !failMessage.StartsWith("SMTP", StringComparison.OrdinalIgnoreCase))
+                     && !failMessage.StartsWith("SMTP", StringComparison.OrdinalIgnoreCase)
+                     && !failMessage.StartsWith("E-mail", StringComparison.OrdinalIgnoreCase))
             {
                 failMessage = $"Testmail mislukt: {failMessage}";
             }

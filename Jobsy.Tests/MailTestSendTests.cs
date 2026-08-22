@@ -35,12 +35,9 @@ public class MailTestSendTests
 
         Assert.False(result.Ok);
         Assert.False(result.SentViaSmtp);
-        Assert.Contains("PlatformLog", result.Message, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("niet geconfigureerd", result.Message, StringComparison.OrdinalIgnoreCase);
         Assert.Contains("Resend", result.Message, StringComparison.OrdinalIgnoreCase);
-
-        var log = Assert.Single(db.PlatformLogs);
-        Assert.Equal("MailTest", log.Category);
-        Assert.Contains("testmail", log.Message, StringComparison.OrdinalIgnoreCase);
+        Assert.Empty(db.PlatformLogs);
     }
 
     [Fact]
