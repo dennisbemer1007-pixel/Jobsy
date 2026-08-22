@@ -72,6 +72,17 @@ public class AccessibilityGuardTests
         }
     }
 
+    [Fact]
+    public void Featured_carousel_keeps_an_accessible_name_without_repeating_uitgelicht()
+    {
+        var carousel = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "Components", "HighlightVacancyCarousel.razor"));
+        Assert.Contains("aria-label=\"@Culture[\"Discovery.Featured\"]\"", carousel);
+        Assert.DoesNotContain("class=\"highlight-carousel__title\"", carousel);
+        Assert.DoesNotContain("highlight-carousel__badge", carousel);
+        Assert.DoesNotContain("@Culture[\"Discovery.Featured\"]</p>", carousel);
+        Assert.DoesNotContain("@Culture[\"Discovery.Featured\"]</span>", carousel);
+    }
+
     private static double ContrastRatio(int fgRgb, int bgRgb)
     {
         var l1 = RelativeLuminance(fgRgb);
