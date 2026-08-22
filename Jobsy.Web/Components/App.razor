@@ -26,7 +26,10 @@
         .lobsy-logo { display: block; width: 56px; height: 56px; flex-shrink: 0; line-height: 0; }
         .lobsy-logo__img { display: block; width: 100%; height: 100%; object-fit: contain; }
         html.cookie-consent-known .cookie-consent { display: none; }
-        .cookie-consent { position: fixed; left: 0; right: 0; bottom: 0; z-index: 80; contain: layout paint style; }
+        .cookie-consent { position: fixed; left: 0; right: 0; bottom: 0; z-index: 80; contain: layout paint style; padding: 0.65rem 0.85rem; background: #0a2044; color: #f7f4f0; }
+        .cookie-consent__actions { display: flex; flex-wrap: wrap; gap: 0.55rem; }
+        .btn-compact { padding: 0.35rem 0.7rem; border-radius: 8px; border: 1px solid rgba(247,244,240,0.45); background: transparent; color: #f7f4f0; }
+        .btn-compact--primary { background: #d93a12; border-color: #d93a12; color: #fff; }
         .bottom-nav { position: fixed; left: 0; right: 0; bottom: 0; z-index: 50; }
         .lobsy-watermarks { display: none; }
         .app-shell:has(.jobsy-discovery) .lobsy-watermarks { display: none !important; }
@@ -65,8 +68,11 @@
         }
         .img-fallback-empty { background: #e7eef7; object-fit: contain; }
     </style>
-    <link rel="stylesheet" href="css/app.css?v=20260822-r195" media="print" onload="this.onload=null;this.media='all'" />
-    <noscript><link rel="stylesheet" href="css/app.css?v=20260822-r195" /></noscript>
+    @if (LoadBlazorRuntime)
+    {
+        <link rel="stylesheet" href="css/app.min.css?v=20260822-r198" media="print" onload="this.onload=null;this.media='all'" />
+    }
+    <noscript><link rel="stylesheet" href="css/app.min.css?v=20260822-r198" /></noscript>
     <script>
         (function () {
             try {
@@ -154,7 +160,7 @@
     <CascadingAuthenticationState>
         <Routes @rendermode="new InteractiveServerRenderMode(prerender: true)" />
     </CascadingAuthenticationState>
-    <script src="js/app-core.js?v=20260822-r197" defer></script>
+    <script src="js/app-core.js?v=20260822-r198" defer></script>
     @if (LoadBlazorRuntime)
     {
         <script src="_framework/blazor.web.js?v=20260820-r164" defer></script>

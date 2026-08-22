@@ -12,7 +12,7 @@ public class HomepagePerformanceGuardTests
     public void First_paint_stylesheets_are_non_blocking()
     {
         var app = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "Components", "App.razor"));
-        var appCssIdx = app.IndexOf("css/app.css", StringComparison.Ordinal);
+        var appCssIdx = app.IndexOf("css/app.min.css", StringComparison.Ordinal);
         var appCssLinkStart = app.LastIndexOf("<link", appCssIdx, StringComparison.Ordinal);
         var appCssLinkEnd = app.IndexOf("/>", appCssIdx, StringComparison.Ordinal);
         var appCssLink = app[appCssLinkStart..(appCssLinkEnd + 2)];
@@ -110,18 +110,20 @@ public class HomepagePerformanceGuardTests
 
         var maps = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "wwwroot", "js", "maps-loader.js"));
         Assert.DoesNotContain("ensureAfterPaint", maps);
-        Assert.Contains("warmDiscovery", maps);
-        Assert.Contains("jobsyMapsAfterFirstPaint", maps);
+        Assert.DoesNotContain("warmDiscovery", maps);
+        Assert.DoesNotContain("jobsyMapsAfterFirstPaint", maps);
         Assert.DoesNotContain("IntersectionObserver", maps);
         Assert.DoesNotContain("requestIdleCallback", maps);
         Assert.Contains("fetchpriority", maps);
+        Assert.Contains("Blazor calls ensure()", maps);
 
         var bundle = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "wwwroot", "js", "app-core.js"));
         Assert.DoesNotContain("ensureAfterPaint", bundle);
-        Assert.Contains("warmDiscovery", bundle);
-        Assert.Contains("jobsyMapsAfterFirstPaint", bundle);
+        Assert.DoesNotContain("warmDiscovery", bundle);
+        Assert.DoesNotContain("jobsyMapsAfterFirstPaint", bundle);
         Assert.DoesNotContain("requestIdleCallback", bundle);
         Assert.Contains("fetchpriority", bundle);
+        Assert.Contains("Blazor calls ensure()", bundle);
 
         var preview = Path.Combine(FindRepoRoot(), "Jobsy.Web", "wwwroot", "images", "maps", "nl-preview.webp");
         Assert.False(File.Exists(preview));
@@ -211,6 +213,12 @@ public class HomepagePerformanceGuardTests
             < new FileInfo(Path.Combine(root, "Jobsy.Web", "wwwroot", "js", "jobMap.js")).Length);
         Assert.True(new FileInfo(Path.Combine(root, "Jobsy.Web", "wwwroot", "js", "jobsyMapLibre.min.js")).Length
             < new FileInfo(Path.Combine(root, "Jobsy.Web", "wwwroot", "js", "jobsyMapLibre.js")).Length);
+        Assert.True(new FileInfo(Path.Combine(root, "Jobsy.Web", "wwwroot", "css", "app.min.css")).Length
+            < new FileInfo(Path.Combine(root, "Jobsy.Web", "wwwroot", "css", "app.css")).Length);
+
+        var appRazor = File.ReadAllText(Path.Combine(root, "Jobsy.Web", "Components", "App.razor"));
+        Assert.Contains("css/app.min.css", appRazor);
+        Assert.DoesNotContain("href=\"css/app.css?", appRazor);
 
         var home = File.ReadAllText(Path.Combine(root, "Jobsy.Web", "Components", "Pages", "Home.razor"));
         Assert.DoesNotContain("rel=\"preload\"", home);

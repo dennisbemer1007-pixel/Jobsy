@@ -1,9 +1,8 @@
 window.jobsyMaps = (function () {
     "use strict";
 
-    // MapLibre is not linked from the homepage document (no critical chain).
-    // Injected after first paint when #job-map exists, or immediately when
-    // Blazor calls ensure().
+    // MapLibre is not linked from the homepage document. Load it only when
+    // Blazor calls ensure() so crawlers/Lighthouse never download the GL bundle.
     var pending = {};
     var mapLibreWorker = "/lib/maplibre/maplibre-gl-csp-worker.js?v=20260820-r166";
     var css = [
@@ -173,36 +172,6 @@ window.jobsyMaps = (function () {
     }
 
     return {
-        ensure: ensure,
-        warmDiscovery: function () {
-            if (!document.getElementById("job-map")) {
-                return;
-            }
-            // Load MapLibre + jobMap only. Creating the map here is discarded
-            // when the Blazor circuit attaches, which loaded tiles twice.
-            this.ensure("discovery");
-        }
+        ensure: ensure
     };
 })();
-
-function jobsyMapsAfterFirstPaint(fn) {
-    if (typeof requestAnimationFrame === "function") {
-        requestAnimationFrame(function () {
-            requestAnimationFrame(fn);
-        });
-    } else {
-        setTimeout(fn, 0);
-    }
-}
-
-function jobsyMapsWarmAfterPaint() {
-    jobsyMapsAfterFirstPaint(function () {
-        window.jobsyMaps.warmDiscovery();
-    });
-}
-
-if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", jobsyMapsWarmAfterPaint);
-} else {
-    jobsyMapsWarmAfterPaint();
-}

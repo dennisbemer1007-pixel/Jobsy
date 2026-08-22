@@ -22,15 +22,13 @@ public class JobMapPrerenderGuardTests
         Assert.DoesNotContain("fetchpriority=\"high\"", home);
 
         var maps = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "wwwroot", "js", "maps-loader.js"));
-        Assert.Contains("getElementById(\"job-map\")", maps);
         Assert.Contains("lib/maplibre/maplibre-gl-csp.js", maps);
         Assert.Contains("jobMap.min.js", maps);
-        Assert.Contains("warmDiscovery", maps);
-        Assert.Contains("this.ensure(\"discovery\")", maps);
+        Assert.Contains("ensure: ensure", maps);
         Assert.Contains("link.media = \"print\"", maps);
-        Assert.Contains("jobsyMapsAfterFirstPaint", maps);
-        Assert.Contains("requestAnimationFrame", maps);
         Assert.Contains("fetchpriority\", \"low\"", maps);
+        Assert.DoesNotContain("warmDiscovery", maps);
+        Assert.DoesNotContain("jobsyMapsAfterFirstPaint", maps);
         Assert.DoesNotContain("fetchpriority\", \"high\"", maps);
         Assert.DoesNotContain("jobMap.boot", maps);
     }
@@ -204,7 +202,7 @@ public class JobMapPrerenderGuardTests
         Assert.Contains("js/app-core.js", app);
         Assert.Contains("defer", app);
         Assert.DoesNotContain("app-core.js?v=20260816-perf\" defer", app);
-        Assert.Contains("css/app.css", app);
+        Assert.Contains("css/app.min.css", app);
         Assert.Contains("media=\"print\"", app);
         Assert.Contains("jobsyLogoFallback", app);
         Assert.Contains("#job-map", app);
