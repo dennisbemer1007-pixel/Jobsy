@@ -23,6 +23,7 @@ public class SalesCommercialServiceTests
         Assert.Equal(25m, catalog.BaseTokenValueEuro);
         Assert.Equal(2m, catalog.HighlightCarouselTokens);
         Assert.Contains(catalog.VacancyTypeCosts, c => c.Kind == "Regular" && c.CostTokens == 1m);
+        Assert.Contains(catalog.VacancyTypeCosts, c => c.Kind == "Internship" && c.CostTokens == 0m);
         Assert.Contains(catalog.VacancyTypeCosts, c => c.Kind == "Volunteer" && c.CostTokens == 0m);
         Assert.Contains(catalog.Packages, p => p.Name == "Gold");
     }
@@ -35,7 +36,7 @@ public class SalesCommercialServiceTests
         var sut = new SalesCommercialService(db, new TokenLedgerService(db));
 
         Assert.Equal(1m, await sut.GetPublishCostTokensAsync(VacancyKind.Regular));
-        Assert.Equal(0.5m, await sut.GetPublishCostTokensAsync(VacancyKind.Internship));
+        Assert.Equal(0m, await sut.GetPublishCostTokensAsync(VacancyKind.Internship));
         Assert.Equal(0m, await sut.GetPublishCostTokensAsync(VacancyKind.Volunteer));
     }
 
@@ -304,7 +305,7 @@ public class SalesCommercialServiceTests
         });
         db.VacancyTypeTokenCosts.AddRange(
             new VacancyTypeTokenCost { Id = Guid.NewGuid(), Kind = VacancyKind.Regular, CostTokens = 1m },
-            new VacancyTypeTokenCost { Id = Guid.NewGuid(), Kind = VacancyKind.Internship, CostTokens = 0.5m },
+            new VacancyTypeTokenCost { Id = Guid.NewGuid(), Kind = VacancyKind.Internship, CostTokens = 0m },
             new VacancyTypeTokenCost { Id = Guid.NewGuid(), Kind = VacancyKind.Volunteer, CostTokens = 0m });
         db.SalesPackages.Add(new SalesPackage
         {

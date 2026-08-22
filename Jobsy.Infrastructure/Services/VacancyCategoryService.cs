@@ -142,6 +142,18 @@ public sealed class VacancyCategoryService : IVacancyCategoryService
             }
         }
 
+        // Stageplekken: publish is free (old seed was 0.5). Do not overwrite a custom admin rate.
+        var internship = await _db.VacancyCategories
+            .FirstOrDefaultAsync(
+                c => c.Id == VacancyCategoryDefaults.InternshipId || c.Slug == "stageplekken",
+                cancellationToken);
+        if (internship is not null && internship.PublishCostTokens == 0.5m)
+        {
+            internship.PublishCostTokens = 0m;
+            internship.UpdatedAtUtc = DateTime.UtcNow;
+            added = true;
+        }
+
         if (added)
         {
             await _db.SaveChangesAsync(cancellationToken);

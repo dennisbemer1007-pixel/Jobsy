@@ -381,7 +381,7 @@ public sealed class SalesCommercialService : ISalesCommercialService
     private static readonly (VacancyKind Kind, decimal Cost)[] DefaultTypeCosts =
     [
         (VacancyKind.Regular, 1m),
-        (VacancyKind.Internship, 0.5m),
+        (VacancyKind.Internship, 0m),
         (VacancyKind.Volunteer, 0m)
     ];
 }

@@ -24,10 +24,38 @@ public class VacancyCategoryServiceTests
         var volunteer = Assert.Single(active, c => c.Slug == "vrijwilligerswerk");
         Assert.True(volunteer.IsAlwaysFree);
         Assert.Equal(0m, volunteer.PublishCostTokens);
+        var internship = Assert.Single(active, c => c.Slug == "stageplekken");
+        Assert.False(internship.IsAlwaysFree);
+        Assert.Equal(0m, internship.PublishCostTokens);
         Assert.False(volunteer.HighlightAvailable);
         Assert.False(volunteer.PushBomAvailable);
         Assert.Contains(VacancyCategoryExtraFields.OrganizationType, volunteer.ExtraFields);
         Assert.All(active, c => Assert.Matches("^#[0-9A-F]{6}$", c.ColorHex));
+    }
+
+    [Fact]
+    public async Task EnsureDefaults_backfills_legacy_internship_publish_cost_to_zero()
+    {
+        await using var db = CreateDb();
+        db.VacancyCategories.Add(new Jobsy.Core.Entities.VacancyCategory
+        {
+            Id = VacancyCategoryDefaults.InternshipId,
+            Slug = "stageplekken",
+            Name = "Stageplekken",
+            ColorHex = "#0EA5E9",
+            PublishCostTokens = 0.5m,
+            HighlightAvailable = true,
+            HighlightCostTokens = 1m,
+            PlacementKind = VacancyKind.Internship,
+            IsActive = true
+        });
+        await db.SaveChangesAsync();
+
+        var sut = new VacancyCategoryService(db);
+        await sut.EnsureDefaultsAsync();
+
+        var internship = await sut.GetEntityAsync(VacancyCategoryDefaults.InternshipId);
+        Assert.Equal(0m, internship!.PublishCostTokens);
     }
 
     [Fact]
@@ -49,6 +77,10 @@ public class VacancyCategoryServiceTests
         Assert.Equal(0m, volunteer.PublishCostTokens);
         Assert.False(volunteer.HighlightAvailable);
         Assert.False(volunteer.PushBomAvailable);
+
+        var internship = await sut.ResolvePricingAsync(VacancyCategoryDefaults.InternshipId, VacancyKind.Internship);
+        Assert.Equal(0m, internship.PublishCostTokens);
+        Assert.True(internship.HighlightAvailable);
     }
 
     [Fact]

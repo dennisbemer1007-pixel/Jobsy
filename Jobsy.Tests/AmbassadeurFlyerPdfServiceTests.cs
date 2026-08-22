@@ -105,7 +105,7 @@ public class AmbassadeurFlyerPdfServiceTests
                 25m, 2m, 1m, 7, 2m,
                 [
                     new VacancyTypeCostDto("Regular", "Regulier", 1m, 25m, true),
-                    new VacancyTypeCostDto("Internship", "Stage", 0.5m, 12.5m, true),
+                    new VacancyTypeCostDto("Internship", "Stage", 0m, 0m, true),
                     new VacancyTypeCostDto("Volunteer", "Vrijwillig", 0m, 0m, true)
                 ],
                 packages));

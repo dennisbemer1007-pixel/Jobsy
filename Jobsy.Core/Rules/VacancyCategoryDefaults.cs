@@ -64,7 +64,7 @@ public static class VacancyCategoryDefaults
                 VacancyCategoryExtraFields.Frequency]),
 
         new(InternshipId, "stageplekken", "Stageplekken", "#0EA5E9",
-            0.5m, true, 1m, true, 2m, false, VacancyKind.Internship, 60,
+            0m, true, 1m, true, 2m, false, VacancyKind.Internship, 60,
             [VacancyCategoryExtraFields.EducationLevel, VacancyCategoryExtraFields.InternshipDuration,
                 VacancyCategoryExtraFields.HoursPerWeek, VacancyCategoryExtraFields.InternshipType]),
 
