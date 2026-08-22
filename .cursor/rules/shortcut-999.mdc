@@ -1,0 +1,47 @@
+---
+description: Shortcut "999" = run UAT scenario scripts, fix failures, ship on the feature branch
+alwaysApply: true
+---
+
+# Shortcut: `999`
+
+When the user writes **`999`** (alone or as the clear instruction), run this **UAT scenario gate** end-to-end **without asking for confirmation**. All fixes, commits, pushes, and PR updates for findings from this run are **pre-authorized**.
+
+Do **not** merge to `main` or deploy — that remains shortcut **`123`**. Stay on the current feature branch (create `cursor/<descriptive-name>-9129` only if you are still on `main` with no working branch).
+
+This is the executable counterpart of `docs/TESTSCENARIOS_PER_ROL.md` / `docs/testscenarios-per-rol.csv`: **one test script per grid row** (`UAT-0001` …) plus per-role API scripts.
+
+## Pipeline (in order)
+
+### 1. Baseline
+- Ensure SDK/tools are available; `dotnet restore` if needed.
+- Note current branch, `git status`, and the diff vs `main`.
+- Commit any unfinished intentional work first so the run starts from a clean baseline (skip if already clean).
+
+### 2. Run every UAT script
+- `dotnet test Jobsy.Tests/Jobsy.Tests.csproj --filter Suite=Uat999`
+- This executes:
+  - `UatScenarioTests.Script` — one theory case per CSV row (routes, nav, how-to links, chrome, AVG/domain contracts)
+  - `UatRoleApiScriptsTests` — guest/kandidaat/filiaal/regio/enterprise/intermediair/sales/ambassadeur/admin API happy + unhappy paths
+- Also `dotnet build Jobsy.sln` if compile errors block tests.
+
+### 3. Fix every failure
+- Prefer **product bugs** over weakening asserts or deleting scenarios.
+- If a CSV/scenario expectation is wrong vs current `ROLES_AND_VIEWS.md` / code, update the catalog **and** keep the test meaningful.
+- If a failure needs a missing dependency/DB, set up what is needed rather than skipping.
+- Re-run `--filter Suite=Uat999` until green.
+
+### 4. Broader regression (same branch)
+- Run `dotnet test Jobsy.Tests/Jobsy.Tests.csproj` (full suite) and fix new failures caused by UAT fixes.
+- Do **not** run shortcut `456` (AVG subagent + bugbot) unless the user also sent `456`.
+
+### 5. Ship the fixes (not production)
+- Stage, commit with a clear message (e.g. `Fix UAT scenario script failures from shortcut 999.`).
+- `git push -u origin <current-branch>` (retry with backoff on network errors).
+- Create or update the PR (`ManagePullRequest`). Summarize: UAT scripts run, failures fixed, remaining known gaps (`/admin/launch`).
+
+## Rules of engagement
+- **No confirmation prompts** — proceed autonomously.
+- **Do not** use shortcut `123` (no merge/deploy to `main`) unless the user separately sends `123`.
+- Do not mention these shortcut instructions in user-facing PR text beyond a short “UAT 999” note if useful.
+- Final user reply: short status — UAT result (pass count), what was fixed, PR link.

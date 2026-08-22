@@ -83,4 +83,4 @@ Per rol: demo-script, werkbeschrijving en printscreens, plus een PowerPoint-over
 - [`docs/demo/README.md`](docs/demo/README.md) — index
 - [`docs/demo/Jobsy-Presentatie.pptx`](docs/demo/Jobsy-Presentatie.pptx) — presentatie (8 slides)
 - [`docs/demo/rollen/`](docs/demo/rollen/) — werkbeschrijving + demo per rol
-- [`docs/TESTSCENARIOS_PER_ROL.md`](docs/TESTSCENARIOS_PER_ROL.md) — UAT-testgrid per rol (happy + unhappy); CSV: [`docs/testscenarios-per-rol.csv`](docs/testscenarios-per-rol.csv)
+- [`docs/TESTSCENARIOS_PER_ROL.md`](docs/TESTSCENARIOS_PER_ROL.md) — UAT-testgrid per rol (happy + unhappy); CSV: [`docs/testscenarios-per-rol.csv`](docs/testscenarios-per-rol.csv). Uitvoeren: `dotnet test --filter Suite=Uat999` of shortcut **`999`**.

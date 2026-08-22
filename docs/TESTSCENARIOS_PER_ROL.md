@@ -44,6 +44,10 @@ Bronnen: `ROLES_AND_VIEWS.md`, `REQUIREMENTS.md`, `SECURITY.md`, Blazor-paginaâ€
 
 Frontend default: `http://localhost:5201`. Entry: `/` = banenkaart, `/home` = role dashboard.
 
+### Automatische scripts (shortcut `999`)
+
+Elke grid-rij is een uitvoerbaar testscript `UAT-0001` â€¦ in `Jobsy.Tests/Uat/` (`dotnet test --filter Suite=Uat999`). Dat dekt routes/authz, bottom-nav, how-to-links, chrome en per-rol API happy/unhappy paths. Stuur **`999`** om de suite te draaien en failures te laten fixen (geen merge naar `main`).
+
 ### Bekende gaps in product (geen testdefect als 404)
 
 - `/admin/launch` (lancerings-KPI) staat in de specs maar heeft **geen** Razor-pagina.
