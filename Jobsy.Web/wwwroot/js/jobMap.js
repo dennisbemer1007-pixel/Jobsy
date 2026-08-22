@@ -120,14 +120,18 @@ window.jobMap = (function () {
     const JOB_POPUP_OFFSET = { bottom: [0, -18] };
     const CLUSTER_POPUP_OFFSET = { bottom: [0, -23] };
 
-    function jobPopupOptions() {
+    function isFeaturedVacancy(v) {
+        return !!(v && (v.highlighted === true || v.isFeatured === true || v.featured === true));
+    }
+
+    function jobPopupOptions(featured) {
         const vw = window.innerWidth || 360;
         const narrow = isNarrowViewport();
         const width = narrow
             ? Math.max(280, Math.min(340, vw - 24))
             : 520;
         return {
-            className: "job-map-popup",
+            className: "job-map-popup" + (featured ? " job-map-popup--featured featured-job" : ""),
             maxWidth: width + "px",
             anchor: "bottom",
             offset: JOB_POPUP_OFFSET,
@@ -136,18 +140,33 @@ window.jobMap = (function () {
         };
     }
 
-    function clusterPopupOptions() {
-        const opts = jobPopupOptions();
+    function clusterPopupOptions(featured) {
+        const opts = jobPopupOptions(featured);
         opts.className = opts.className + " job-map-popup--cluster";
         opts.offset = CLUSTER_POPUP_OFFSET;
         return opts;
     }
 
-    function applyPopupOptions(popup) {
+    function syncFeaturedPopupClass(popup, vacancy) {
+        const el = popup && typeof popup.getElement === "function" ? popup.getElement() : null;
+        if (!el || !el.classList) {
+            return;
+        }
+
+        const featured = isFeaturedVacancy(vacancy);
+        el.classList.toggle("job-map-popup--featured", featured);
+        el.classList.toggle("featured-job", featured);
+        const content = el.querySelector(".maplibregl-popup-content");
+        if (content && content.classList) {
+            content.classList.toggle("featured-job", featured);
+        }
+    }
+
+    function applyPopupOptions(popup, vacancy) {
         if (!popup) {
             return;
         }
-        const opts = clusterPopupOptions();
+        const opts = clusterPopupOptions(isFeaturedVacancy(vacancy));
         popup.options = popup.options || {};
         popup.options.className = opts.className;
         popup.options.maxWidth = opts.maxWidth;
@@ -566,11 +585,12 @@ window.jobMap = (function () {
                 if (!nextPage || nextPage < 1 || nextPage > pageCount) {
                     return;
                 }
-                applyPopupOptions(popup);
+                applyPopupOptions(popup, jobs[nextPage - 1]);
                 popup.setHTML(buildClusterSingleHtml(childMarkers, nextPage));
                 if (typeof popup.update === "function") {
                     popup.update();
                 }
+                syncFeaturedPopupClass(popup, jobs[nextPage - 1]);
                 bindClusterPopupInteractions(popup, childMarkers);
             });
         });
@@ -757,8 +777,9 @@ window.jobMap = (function () {
         }
         closeActivePopup();
         const v = record.options.jobData;
-        const opts = Object.assign({}, jobPopupOptions());
+        const opts = Object.assign({}, jobPopupOptions(isFeaturedVacancy(v)));
         activeClusterPopup = popupFromOpts(opts, [record.lng, record.lat], buildPopupHtml(v));
+        syncFeaturedPopupClass(activeClusterPopup, v);
         const el = activeClusterPopup.getElement();
         if (el) {
             bindWageInfoInteractions(el);
@@ -783,9 +804,11 @@ window.jobMap = (function () {
 
         closeActivePopup();
 
-        const opts = Object.assign({}, clusterPopupOptions());
+        const firstJob = clusterJobsFromMarkers(childMarkers)[0];
+        const opts = Object.assign({}, clusterPopupOptions(isFeaturedVacancy(firstJob)));
         const ll = lngLat || [childMarkers[0].lng, childMarkers[0].lat];
         activeClusterPopup = popupFromOpts(opts, ll, buildClusterSingleHtml(childMarkers, 1));
+        syncFeaturedPopupClass(activeClusterPopup, firstJob);
         bindClusterPopupInteractions(activeClusterPopup, childMarkers);
         centerPopupInView(activeClusterPopup);
     }

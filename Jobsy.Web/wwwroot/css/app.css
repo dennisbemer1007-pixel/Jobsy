@@ -4173,6 +4173,42 @@ a {
     overflow: hidden;
 }
 
+/* Gold glow sits outside the card (no extra padding) so popup anchor/offset stay put. */
+.job-map-popup--featured .map-popup::before,
+.job-map-popup.featured-job .map-popup::before,
+.maplibregl-popup-content.featured-job .map-popup::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: var(--radius);
+    pointer-events: none;
+    z-index: 0;
+    transform: translateZ(0);
+    box-shadow:
+        0 0 0 1px color-mix(in srgb, #e8a317 48%, transparent),
+        0 0 14px 2px color-mix(in srgb, #f0b429 40%, transparent);
+    animation: job-popup-featured-glow 2.7s ease-in-out infinite;
+}
+
+@keyframes job-popup-featured-glow {
+    0%,
+    100% {
+        opacity: 0.42;
+    }
+    50% {
+        opacity: 1;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .job-map-popup--featured .map-popup::before,
+    .job-map-popup.featured-job .map-popup::before,
+    .maplibregl-popup-content.featured-job .map-popup::before {
+        animation: none;
+        opacity: 0.72;
+    }
+}
+
 .map-popup__media {
     position: relative;
     flex: 0 0 200px;

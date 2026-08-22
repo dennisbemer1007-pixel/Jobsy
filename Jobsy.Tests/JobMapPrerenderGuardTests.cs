@@ -112,6 +112,11 @@ public class JobMapPrerenderGuardTests
         Assert.Contains("popup.setOffset", js);
         Assert.DoesNotContain("offset: 22", js);
         Assert.Contains("function centerPopupInView", js);
+        Assert.Contains("isFeaturedVacancy", js);
+        Assert.Contains("job-map-popup--featured", js);
+        Assert.Contains("featured-job", js);
+        Assert.Contains("syncFeaturedPopupClass", js);
+        Assert.Contains("v.highlighted === true || v.isFeatured === true", js);
         Assert.Contains("map.panBy", js);
         Assert.Contains("highlight-carousel--map", js);
         Assert.Contains("map-popup__type-chip", js);
@@ -133,6 +138,9 @@ public class JobMapPrerenderGuardTests
         Assert.DoesNotContain("centerPopupInView", bindFn);
         Assert.Contains(".job-map-popup--cluster .map-popup__main", css);
         Assert.Contains("max-height: 252px", css);
+        Assert.Contains("job-popup-featured-glow", css);
+        Assert.Contains(".job-map-popup--featured .map-popup::before", css);
+        Assert.Contains("pointer-events: none", css[css.IndexOf(".job-map-popup--featured .map-popup::before", StringComparison.Ordinal)..]);
     }
 
     [Fact]
