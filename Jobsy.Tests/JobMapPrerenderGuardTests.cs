@@ -7,7 +7,7 @@ namespace Jobsy.Tests;
 public class JobMapPrerenderGuardTests
 {
     [Fact]
-    public void Home_preloads_map_javascript_but_not_the_worker_as_a_script()
+    public void Home_does_not_chain_map_assets_from_the_document()
     {
         var home = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "Components", "Pages", "Home.razor"));
         Assert.Contains("InteractiveServerRenderMode(prerender: true)", home);
@@ -15,26 +15,11 @@ public class JobMapPrerenderGuardTests
         Assert.DoesNotContain("prerender: false", home);
         Assert.DoesNotContain("/lib/leaflet/leaflet.min.js", home);
         Assert.DoesNotContain("/lib/leaflet/leaflet.css", home);
-        Assert.Contains("lib/maplibre/maplibre-gl.css", home);
-        var mapCssIdx = home.IndexOf("maplibre-gl.css", StringComparison.Ordinal);
-        var mapCssLinkStart = home.LastIndexOf("<link", mapCssIdx, StringComparison.Ordinal);
-        var mapCssLinkEnd = home.IndexOf("/>", mapCssIdx, StringComparison.Ordinal);
-        Assert.True(mapCssLinkStart >= 0 && mapCssLinkEnd > mapCssLinkStart);
-        var mapCssLink = home[mapCssLinkStart..(mapCssLinkEnd + 2)];
-        Assert.Contains("media=\"print\"", mapCssLink);
-        Assert.Contains("this.media='all'", mapCssLink);
-        Assert.DoesNotContain("fetchpriority", mapCssLink);
-        Assert.Contains("lib/maplibre/maplibre-gl-csp.js", home);
-        Assert.Contains("jobsyMapLibre.min.js", home);
-        Assert.Contains("jobMap.min.js", home);
-        Assert.Contains("fetchpriority=\"high\"", home);
-        Assert.Contains("maplibre-gl-csp-worker.js", home);
-        Assert.Contains("as=\"fetch\"", home);
-        var workerIdx = home.IndexOf("csp-worker.js", StringComparison.Ordinal);
-        Assert.True(workerIdx > 0);
-        var workerSlice = home.Substring(workerIdx, Math.Min(90, home.Length - workerIdx));
-        Assert.Contains("as=\"fetch\"", workerSlice);
-        Assert.DoesNotContain("as=\"script\"", workerSlice);
+        Assert.DoesNotContain("rel=\"preload\"", home);
+        Assert.DoesNotContain("lib/maplibre/maplibre-gl.css", home);
+        Assert.DoesNotContain("lib/maplibre/maplibre-gl-csp.js", home);
+        Assert.DoesNotContain("jobMap.min.js", home);
+        Assert.DoesNotContain("fetchpriority=\"high\"", home);
 
         var maps = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "wwwroot", "js", "maps-loader.js"));
         Assert.Contains("getElementById(\"job-map\")", maps);
@@ -43,6 +28,10 @@ public class JobMapPrerenderGuardTests
         Assert.Contains("warmDiscovery", maps);
         Assert.Contains("this.ensure(\"discovery\")", maps);
         Assert.Contains("link.media = \"print\"", maps);
+        Assert.Contains("jobsyMapsAfterFirstPaint", maps);
+        Assert.Contains("requestAnimationFrame", maps);
+        Assert.Contains("fetchpriority\", \"low\"", maps);
+        Assert.DoesNotContain("fetchpriority\", \"high\"", maps);
         Assert.DoesNotContain("jobMap.boot", maps);
     }
 

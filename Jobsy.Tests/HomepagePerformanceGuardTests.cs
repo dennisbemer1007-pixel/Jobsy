@@ -20,14 +20,8 @@ public class HomepagePerformanceGuardTests
         Assert.Contains("this.media='all'", appCssLink);
 
         var home = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "Components", "Pages", "Home.razor"));
-        var mapCssIdx = home.IndexOf("maplibre-gl.css", StringComparison.Ordinal);
-        var mapCssLinkStart = home.LastIndexOf("<link", mapCssIdx, StringComparison.Ordinal);
-        var mapCssLinkEnd = home.IndexOf("/>", mapCssIdx, StringComparison.Ordinal);
-        var mapCssLink = home[mapCssLinkStart..(mapCssLinkEnd + 2)];
-        Assert.Contains("rel=\"stylesheet\"", mapCssLink);
-        Assert.Contains("media=\"print\"", mapCssLink);
-        Assert.Contains("this.media='all'", mapCssLink);
-        Assert.DoesNotContain("fetchpriority", mapCssLink);
+        Assert.DoesNotContain("lib/maplibre/maplibre-gl.css", home);
+        Assert.DoesNotContain("rel=\"preload\"", home);
 
         var maps = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "wwwroot", "js", "maps-loader.js"));
         Assert.Contains("link.media = \"print\"", maps);
@@ -117,6 +111,7 @@ public class HomepagePerformanceGuardTests
         var maps = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "wwwroot", "js", "maps-loader.js"));
         Assert.DoesNotContain("ensureAfterPaint", maps);
         Assert.Contains("warmDiscovery", maps);
+        Assert.Contains("jobsyMapsAfterFirstPaint", maps);
         Assert.DoesNotContain("IntersectionObserver", maps);
         Assert.DoesNotContain("requestIdleCallback", maps);
         Assert.Contains("fetchpriority", maps);
@@ -124,6 +119,7 @@ public class HomepagePerformanceGuardTests
         var bundle = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "wwwroot", "js", "app-core.js"));
         Assert.DoesNotContain("ensureAfterPaint", bundle);
         Assert.Contains("warmDiscovery", bundle);
+        Assert.Contains("jobsyMapsAfterFirstPaint", bundle);
         Assert.DoesNotContain("requestIdleCallback", bundle);
         Assert.Contains("fetchpriority", bundle);
 
@@ -217,16 +213,9 @@ public class HomepagePerformanceGuardTests
             < new FileInfo(Path.Combine(root, "Jobsy.Web", "wwwroot", "js", "jobsyMapLibre.js")).Length);
 
         var home = File.ReadAllText(Path.Combine(root, "Jobsy.Web", "Components", "Pages", "Home.razor"));
-        Assert.Contains("rel=\"preload\"", home);
-        Assert.Contains("as=\"script\"", home);
-        Assert.Contains("as=\"fetch\"", home);
-        Assert.Contains("media=\"print\"", home);
-        Assert.Contains("this.media='all'", home);
-        var workerIdx = home.IndexOf("csp-worker.js", StringComparison.Ordinal);
-        Assert.True(workerIdx > 0);
-        var workerSlice = home.Substring(workerIdx, Math.Min(90, home.Length - workerIdx));
-        Assert.Contains("as=\"fetch\"", workerSlice);
-        Assert.DoesNotContain("as=\"script\"", workerSlice);
+        Assert.DoesNotContain("rel=\"preload\"", home);
+        Assert.DoesNotContain("lib/maplibre/", home);
+        Assert.DoesNotContain("jobMap.min.js", home);
 
         Assert.False(Directory.Exists(Path.Combine(root, "Jobsy.Web", "wwwroot", "lib", "leaflet")));
     }

@@ -351,10 +351,9 @@ window.jobsyCulture = {
 window.jobsyMaps = (function () {
     "use strict";
 
-    // MapLibre CSS is linked from Home as media=print (non-blocking). JS is
-    // preloaded from Home <head> (script, not the worker).
-    // The worker is preloaded as fetch so it is not unused main-thread JS.
-    // Injected here as soon as #job-map exists (or Blazor calls ensure).
+    // MapLibre is not linked from the homepage document (no critical chain).
+    // Injected after first paint when #job-map exists, or immediately when
+    // Blazor calls ensure().
     var pending = {};
     var mapLibreWorker = "/lib/maplibre/maplibre-gl-csp-worker.js?v=20260820-r166";
     var css = [
@@ -431,10 +430,6 @@ window.jobsyMaps = (function () {
         }
     }
 
-    function isHighPriorityScript(src) {
-        return isMapLibreMain(src) || src.indexOf("jobsyMapLibre") !== -1;
-    }
-
     function loadScript(src) {
         if (document.querySelector('script[data-jobsy-map="' + src + '"]')) {
             if (isMapLibreMain(src)) {
@@ -460,9 +455,7 @@ window.jobsyMaps = (function () {
             script.src = src;
             script.async = false;
             script.setAttribute("data-jobsy-map", src);
-            if (isHighPriorityScript(src)) {
-                script.setAttribute("fetchpriority", "high");
-            }
+            script.setAttribute("fetchpriority", "low");
             script.onload = function () {
                 if (isMapLibreMain(src)) {
                     configureMapLibreWorker();
@@ -535,19 +528,33 @@ window.jobsyMaps = (function () {
             if (!document.getElementById("job-map")) {
                 return;
             }
-            // Preload MapLibre + jobMap only. Creating the map here is discarded
+            // Load MapLibre + jobMap only. Creating the map here is discarded
             // when the Blazor circuit attaches, which loaded tiles twice.
             this.ensure("discovery");
         }
     };
 })();
 
-if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", function () {
+function jobsyMapsAfterFirstPaint(fn) {
+    if (typeof requestAnimationFrame === "function") {
+        requestAnimationFrame(function () {
+            requestAnimationFrame(fn);
+        });
+    } else {
+        setTimeout(fn, 0);
+    }
+}
+
+function jobsyMapsWarmAfterPaint() {
+    jobsyMapsAfterFirstPaint(function () {
         window.jobsyMaps.warmDiscovery();
     });
+}
+
+if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", jobsyMapsWarmAfterPaint);
 } else {
-    window.jobsyMaps.warmDiscovery();
+    jobsyMapsWarmAfterPaint();
 }
 
 /* === extras-loader.js === */
