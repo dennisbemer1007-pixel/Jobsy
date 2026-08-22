@@ -53,6 +53,28 @@ public class HomepagePerformanceGuardTests
     }
 
     [Fact]
+    public void First_paint_reserves_homepage_layout_to_avoid_cls()
+    {
+        var app = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "Components", "App.razor"));
+        var criticalStart = app.IndexOf("<style>", StringComparison.Ordinal);
+        var criticalEnd = app.IndexOf("</style>", StringComparison.Ordinal);
+        Assert.True(criticalStart >= 0 && criticalEnd > criticalStart);
+        var critical = app[criticalStart..criticalEnd];
+        Assert.Contains(".visually-hidden", critical);
+        Assert.Contains(".cookie-consent { position: fixed", critical);
+        Assert.Contains(".bottom-nav { position: fixed", critical);
+        Assert.Contains(".lobsy-logo { display: block; width: 56px; height: 56px", critical);
+        Assert.Contains("min-height: 10rem", critical);
+        Assert.Contains(".app-header { min-height: 4.25rem; }", critical);
+        Assert.Contains("contain: layout", critical);
+
+        var logo = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "Components", "LobsyLogo.razor"));
+        Assert.Contains("width=\"56\"", logo);
+        Assert.Contains("height=\"56\"", logo);
+        Assert.DoesNotContain("width=\"128\"", logo);
+    }
+
+    [Fact]
     public void Cookie_consent_hides_known_choice_before_paint()
     {
         var app = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "Components", "App.razor"));

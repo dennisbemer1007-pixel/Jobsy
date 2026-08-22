@@ -19,7 +19,15 @@
         :root { --bg:#f5f2ee; --surface:#fffcfa; --text:#122033; --border:#ddd5cc; --brand:#0f2d5c; --map-land:#f8f4f0; --font:"Segoe UI","Helvetica Neue",Arial,sans-serif; }
         * { box-sizing: border-box; }
         html, body { margin: 0; height: 100%; font-family: var(--font); color: var(--text); background: var(--bg); }
+        .app-shell { display: flex; flex-direction: column; height: 100%; min-height: 100%; }
+        .app-main { flex: 1 1 auto; min-height: 0; }
+        .app-shell:has(.jobsy-discovery) .app-main { overflow: hidden; display: flex; flex-direction: column; }
+        .visually-hidden { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
+        .lobsy-logo { display: block; width: 56px; height: 56px; flex-shrink: 0; line-height: 0; }
+        .lobsy-logo__img { display: block; width: 100%; height: 100%; object-fit: contain; }
         html.cookie-consent-known .cookie-consent { display: none; }
+        .cookie-consent { position: fixed; left: 0; right: 0; bottom: 0; z-index: 80; contain: layout paint style; }
+        .bottom-nav { position: fixed; left: 0; right: 0; bottom: 0; z-index: 50; }
         .lobsy-watermarks { display: none; }
         .app-shell:has(.jobsy-discovery) .lobsy-watermarks { display: none !important; }
         .maplibregl-ctrl-logo, a.maplibregl-ctrl-logo, .maplibregl-ctrl-attrib, .maplibregl-compact { display: none !important; }
@@ -34,7 +42,15 @@
             .app-shell:has(.jobsy-discovery) .app-header,
             .app-shell:has(.jobsy-discovery) .app-footer { display: none; }
             .jobsy-discovery { grid-template-columns: 1fr; grid-template-rows: auto 1fr; }
-            .jobsy-discovery .jobsy-chrome { display: block; }
+            .jobsy-discovery .jobsy-chrome { display: block; min-height: 10rem; }
+            .jobsy-chrome__header { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; min-height: 3.5rem; padding: 0.55rem 0.85rem 0.35rem; }
+            .jobsy-logo, .jobsy-chrome .lobsy-logo, .jobsy-logo__img { width: 48px; height: 48px; }
+            .jobsy-chrome__search { padding: 0.55rem 0.75rem 0.35rem; }
+            .jobsy-search { display: grid; grid-template-columns: 1fr auto; gap: 0.45rem; }
+            .jobsy-search input { width: 100%; min-height: 2.75rem; box-sizing: border-box; }
+            .jobsy-search__btn { width: 2.75rem; height: 2.75rem; }
+            .jobsy-chrome__actions { display: grid; grid-template-columns: repeat(3, 1fr); }
+            .jobsy-action { display: inline-flex; min-height: 2.55rem; }
             .jobsy-discovery.show-map .map-pane,
             .jobsy-discovery.show-map .map-stage,
             .jobsy-discovery.show-map #job-map,
@@ -42,6 +58,7 @@
             .jobsy-discovery.show-map .job-map-placeholder { min-height: 55dvh; width: 100%; min-width: 100%; }
         }
         @@media (min-width: 769px) {
+            .app-header { min-height: 4.25rem; }
             .jobsy-discovery:not(.jobsy-discovery--branch) .map-pane,
             .jobsy-discovery:not(.jobsy-discovery--branch) .map-stage,
             .jobsy-discovery:not(.jobsy-discovery--branch) #job-map { min-height: 70vh; width: 100%; }
