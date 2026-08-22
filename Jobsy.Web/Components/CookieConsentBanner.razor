@@ -1,4 +1,7 @@
+@using Jobsy.Core.Privacy
+@using Jobsy.Core.Security
 @inject IJSRuntime Js
+@inject IConfiguration Configuration
 
 @if (_visible)
 {
@@ -46,6 +49,11 @@
             var existing = await Js.InvokeAsync<string>("jobsyCookieConsent.get");
             if (!string.IsNullOrWhiteSpace(existing))
             {
+                if (existing.Equals(CookieConsentNames.AnalyticsValue, StringComparison.OrdinalIgnoreCase))
+                {
+                    await Js.InvokeVoidAsync("jobsyCookieConsent.set", MintAnalyticsToken());
+                }
+
                 _visible = false;
                 StateHasChanged();
             }
@@ -62,7 +70,9 @@
         _busy = true;
         try
         {
-            await Js.InvokeVoidAsync("jobsyCookieConsent.set", analyticsAllowed ? "analytics" : "necessary");
+            await Js.InvokeVoidAsync(
+                "jobsyCookieConsent.set",
+                analyticsAllowed ? MintAnalyticsToken() : CookieConsentNames.NecessaryValue);
             _visible = false;
             if (OnConsentChanged.HasDelegate)
             {
@@ -85,5 +95,15 @@
         {
             return false;
         }
+    }
+
+    private string MintAnalyticsToken()
+    {
+        var key = JobsyLocalSessionToken.ResolveSigningKey(
+            Configuration["JobsyAuth:LocalSessionSigningKey"],
+            Configuration["JobsyAuth:DevelopmentAuthSecret"]);
+        return string.IsNullOrWhiteSpace(key)
+            ? CookieConsentNames.AnalyticsValue
+            : CookieConsentToken.Create(key);
     }
 }

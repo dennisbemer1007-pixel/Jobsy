@@ -423,13 +423,10 @@ public class CompaniesController : ControllerBase
         Guid companyId,
         CancellationToken cancellationToken)
     {
-        try
+        var gate = await EnsureCanMutateEmployerCompanySettingsAsync(companyId, cancellationToken);
+        if (gate is not null)
         {
-            await _companyAuth.EnsureCanAccessCompanyAsync(User, companyId, cancellationToken);
-        }
-        catch (Core.Exceptions.ForbiddenCompanyAccessException)
-        {
-            return Forbid();
+            return gate;
         }
 
         var company = await _db.Companies.AsNoTracking()
@@ -494,13 +491,10 @@ public class CompaniesController : ControllerBase
         Guid invoiceId,
         CancellationToken cancellationToken)
     {
-        try
+        var gate = await EnsureCanMutateEmployerCompanySettingsAsync(companyId, cancellationToken);
+        if (gate is not null)
         {
-            await _companyAuth.EnsureCanAccessCompanyAsync(User, companyId, cancellationToken);
-        }
-        catch (Core.Exceptions.ForbiddenCompanyAccessException)
-        {
-            return Forbid();
+            return gate;
         }
 
         var invoice = await _invoices.GetAsync(invoiceId, cancellationToken);
@@ -600,7 +594,7 @@ public class CompaniesController : ControllerBase
             company.RequireEmailVerificationForApplications);
 
     /// <summary>
-    /// Intermediaries may change contact/billing/email-check only on their own organisation,
+    /// Intermediaries may change or view billing/contact/email-check only on their own organisation,
     /// not on client vestigingen they can otherwise access for vacancy work.
     /// </summary>
     private async Task<ActionResult?> EnsureCanMutateEmployerCompanySettingsAsync(

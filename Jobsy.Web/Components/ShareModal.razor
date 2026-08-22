@@ -115,7 +115,7 @@
             {
                 if (await CookieConsentBanner.AllowsAnalyticsAsync(Js))
                 {
-                    await Api.ShareVacancyAsync(Vacancy.Id, ShareChannel.Other);
+                    await Api.ShareVacancyAsync(Js, Vacancy.Id, ShareChannel.Other);
                 }
             }
             catch
@@ -160,7 +160,7 @@
             {
                 if (await CookieConsentBanner.AllowsAnalyticsAsync(Js))
                 {
-                    await Api.ShareVacancyAsync(Vacancy.Id, channel);
+                    await Api.ShareVacancyAsync(Js, Vacancy.Id, channel);
                 }
             }
             catch

@@ -428,6 +428,14 @@ public class CompanyUsersController : ControllerBase
             return Forbid();
         }
 
+        if (callerRole == UserRole.Intermediary && user.Role != UserRole.Intermediary)
+        {
+            return BadRequest(new
+            {
+                message = "Je kunt geen bestaande werkgever overnemen als intermediair. Nodig alleen nieuwe collega's of andere intermediairs uit."
+            });
+        }
+
         if (!EmployerInviteRules.CanAssignRole(callerRole, user.Role)
             && caller.Id != user.Id)
         {

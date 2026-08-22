@@ -39,6 +39,17 @@ public class ProductionAuditTests
     }
 
     [Fact]
+    public void Cookie_consent_token_roundtrips_and_rejects_tampering()
+    {
+        const string secret = "consent-test-secret";
+        var token = CookieConsentToken.Create(secret);
+        Assert.True(CookieConsentToken.IsValid(token, secret));
+        Assert.True(CookieConsentToken.AllowsAnalyticsChoice(token));
+        Assert.False(CookieConsentToken.IsValid(token + "x", secret));
+        Assert.False(CookieConsentToken.IsValid(CookieConsentNames.AnalyticsValue, secret));
+    }
+
+    [Fact]
     public void Demo_login_is_gated_on_allow_development_auth()
     {
         var src = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "Auth", "AuthServiceCollectionExtensions.cs"));

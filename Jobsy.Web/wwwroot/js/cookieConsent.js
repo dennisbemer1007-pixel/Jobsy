@@ -33,7 +33,8 @@
             }
         },
         allowsAnalytics: function () {
-            return (window.jobsyCookieConsent.get() || "").toLowerCase() === "analytics";
+            var value = (window.jobsyCookieConsent.get() || "").toLowerCase();
+            return value === "analytics" || value.indexOf("analytics.") === 0;
         }
     };
 

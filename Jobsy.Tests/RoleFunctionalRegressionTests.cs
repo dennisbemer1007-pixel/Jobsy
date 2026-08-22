@@ -958,6 +958,29 @@ public class RoleFunctionalRegressionTests : IClassFixture<RoleFunctionalWebAppF
     }
 
     [Fact]
+    public async Task Intermediary_cannot_read_client_billing_history()
+    {
+        var response = await Authed(_factory.IntermediaryEmail)
+            .GetAsync($"api/companies/{_factory.CompanyId}/billing-history");
+        Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task Intermediary_cannot_update_existing_branch_manager()
+    {
+        var response = await Authed(_factory.IntermediaryEmail).PutAsJsonAsync(
+            $"api/company-users/{_factory.EmployerId}",
+            new
+            {
+                fullName = "Hijack",
+                role = "Intermediary",
+                primaryCompanyId = _factory.CompanyId,
+                isActive = true
+            });
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+    }
+
+    [Fact]
     public async Task Branch_cannot_approve_publish()
     {
         var response = await EmployerClient()

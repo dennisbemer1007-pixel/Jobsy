@@ -89,7 +89,7 @@ window.jobsyGeo = (function () {
             if (window.jobsyCookieConsent && typeof window.jobsyCookieConsent.allowsAnalytics === "function") {
                 return !!window.jobsyCookieConsent.allowsAnalytics();
             }
-            return (localStorage.getItem("Jobsy.CookieConsent") || "").toLowerCase() === "analytics";
+            return (localStorage.getItem("Jobsy.CookieConsent") || "").toLowerCase().indexOf("analytics") === 0;
         } catch {
             return false;
         }

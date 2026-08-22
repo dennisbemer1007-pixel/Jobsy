@@ -398,9 +398,14 @@ public sealed class JobsyApiClient : IAsyncDisposable
         throw new InvalidOperationException(TryExtractMessage(body) ?? body);
     }
 
-    public async Task RecordClickAsync(Guid vacancyId, string? anonymousKey = null, CancellationToken ct = default)
+    public async Task RecordClickAsync(
+        IJSRuntime js,
+        Guid vacancyId,
+        string? anonymousKey = null,
+        CancellationToken ct = default)
     {
         var response = await PostAnalyticsJsonAsync(
+            js,
             $"api/vacancies/{vacancyId}/clicks",
             new { anonymousKey },
             ct);
@@ -428,7 +433,7 @@ public sealed class JobsyApiClient : IAsyncDisposable
         }
 
         var anonKey = await js.InvokeAsync<string>("jobsyGeo.getOrCreateAnonymousKey");
-        await RecordClickAsync(vacancyId, anonKey, ct);
+        await RecordClickAsync(js, vacancyId, anonKey, ct);
     }
 
     public async Task RecordImpressionsAsync(
@@ -449,6 +454,7 @@ public sealed class JobsyApiClient : IAsyncDisposable
 
         var anonKey = await js.InvokeAsync<string>("jobsyGeo.getOrCreateAnonymousKey");
         var response = await PostAnalyticsJsonAsync(
+            js,
             "api/analytics/impressions",
             new { vacancyIds = ids, anonymousKey = anonKey },
             ct);
@@ -473,6 +479,7 @@ public sealed class JobsyApiClient : IAsyncDisposable
 
         var anonKey = await js.InvokeAsync<string>("jobsyGeo.getOrCreateAnonymousKey");
         var response = await PostAnalyticsJsonAsync(
+            js,
             "api/analytics/site-visits",
             new { anonymousKey = anonKey, path },
             ct);
@@ -493,6 +500,7 @@ public sealed class JobsyApiClient : IAsyncDisposable
     }
 
     private async Task<HttpResponseMessage> PostAnalyticsJsonAsync(
+        IJSRuntime js,
         string url,
         object body,
         CancellationToken ct)
@@ -501,9 +509,21 @@ public sealed class JobsyApiClient : IAsyncDisposable
         {
             Content = JsonContent.Create(body)
         };
-        request.Headers.TryAddWithoutValidation(
-            CookieConsentNames.HeaderName,
-            CookieConsentNames.AnalyticsValue);
+        var token = "";
+        try
+        {
+            token = await js.InvokeAsync<string>("jobsyCookieConsent.get");
+        }
+        catch
+        {
+            // private mode / prerender
+        }
+
+        if (!string.IsNullOrWhiteSpace(token))
+        {
+            request.Headers.TryAddWithoutValidation(CookieConsentNames.HeaderName, token.Trim());
+        }
+
         return await _http.SendAsync(request, ct);
     }
 
@@ -530,9 +550,13 @@ public sealed class JobsyApiClient : IAsyncDisposable
         return result?.Liked == true;
     }
 
-    public async Task ShareVacancyAsync(Guid vacancyId, ShareChannel channel, CancellationToken ct = default)
+    public async Task ShareVacancyAsync(
+        IJSRuntime js,
+        Guid vacancyId,
+        ShareChannel channel,
+        CancellationToken ct = default)
     {
-        var response = await PostAnalyticsJsonAsync($"api/vacancies/{vacancyId}/shares", new { channel }, ct);
+        var response = await PostAnalyticsJsonAsync(js, $"api/vacancies/{vacancyId}/shares", new { channel }, ct);
         response.EnsureSuccessStatusCode();
     }
 

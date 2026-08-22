@@ -92,7 +92,7 @@ window.jobsyGeo = (function () {
             if (window.jobsyCookieConsent && typeof window.jobsyCookieConsent.allowsAnalytics === "function") {
                 return !!window.jobsyCookieConsent.allowsAnalytics();
             }
-            return (localStorage.getItem("Jobsy.CookieConsent") || "").toLowerCase() === "analytics";
+            return (localStorage.getItem("Jobsy.CookieConsent") || "").toLowerCase().indexOf("analytics") === 0;
         } catch {
             return false;
         }
@@ -337,7 +337,8 @@ window.jobsyCulture = {
             }
         },
         allowsAnalytics: function () {
-            return (window.jobsyCookieConsent.get() || "").toLowerCase() === "analytics";
+            var value = (window.jobsyCookieConsent.get() || "").toLowerCase();
+            return value === "analytics" || value.indexOf("analytics.") === 0;
         }
     };
 
