@@ -27,6 +27,10 @@ public class AuthRedirectsTests
     [InlineData("/\\evil", "/home")]
     [InlineData("https://evil.com", "/home")]
     [InlineData("/login?returnUrl=https://evil.com", "/home")]
+    [InlineData("\"onclick=alert(1)", "/home")]
+    [InlineData("/\"onclick=alert(1)", "/home")]
+    [InlineData("/javascript:alert(1)", "/home")]
+    [InlineData("/privacy/data", "/privacy/data")]
     public void SafeLocalUrl_rejects_open_redirects(string input, string expected)
         => Assert.Equal(expected, AuthRedirects.SafeLocalUrl(input));
 }

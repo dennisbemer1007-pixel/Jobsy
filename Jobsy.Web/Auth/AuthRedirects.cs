@@ -91,13 +91,24 @@ public static partial class AuthRedirects
                 || decoded.StartsWith("//", StringComparison.Ordinal)
                 || decoded.Contains('\0')
                 || LooksLikeAbsoluteOrScheme(decoded)
+                || ContainsEmbeddedScheme(decoded)
                 || !SafeLocalPathRegex().IsMatch(decoded))
             {
                 return false;
             }
         }
 
-        return !LooksLikeAbsoluteOrScheme(url);
+        return !LooksLikeAbsoluteOrScheme(url) && !ContainsEmbeddedScheme(url);
+    }
+
+    /// <summary>
+    /// Rejects <c>/javascript:…</c> and similar scheme tricks that are still
+    /// same-origin relative paths but unsafe in HTML attributes.
+    /// </summary>
+    private static bool ContainsEmbeddedScheme(string value)
+    {
+        var trimmed = value.TrimStart('/');
+        return AbsoluteSchemeRegex().IsMatch(trimmed);
     }
 
     private static bool LooksLikeAbsoluteOrScheme(string value)

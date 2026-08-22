@@ -1,12 +1,29 @@
 @page "/Error"
 @attribute [Microsoft.AspNetCore.Authorization.AllowAnonymous]
+@using Microsoft.AspNetCore.Http
 
 <PageTitle>Er ging iets mis · Lobsy</PageTitle>
 
 <div class="login-page">
     <div class="login-card">
         <h1>Er ging iets mis</h1>
-        <p class="login-lead">Deze pagina kon de aanvraag niet afronden. Ga terug naar inloggen en probeer het opnieuw.</p>
-        <p><a class="auth-link" href="/login">Terug naar inloggen</a></p>
+        <p class="login-lead">Deze pagina kon de aanvraag niet afronden. Ga terug naar de banenkaart en probeer het opnieuw.</p>
+        @if (!string.IsNullOrWhiteSpace(_requestId))
+        {
+            <p class="muted">Referentie: @_requestId</p>
+        }
+        <p><a class="auth-link" href="/">Naar de banenkaart</a></p>
     </div>
 </div>
+
+@code {
+    [CascadingParameter]
+    private HttpContext? HttpContext { get; set; }
+
+    private string? _requestId;
+
+    protected override void OnInitialized()
+    {
+        _requestId = HttpContext?.TraceIdentifier;
+    }
+}

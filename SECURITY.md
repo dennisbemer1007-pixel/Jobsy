@@ -8,7 +8,7 @@
 - **Security Misconfiguration:** Secure/HttpOnly/SameSite cookies; security headers; rate limiting op auth/public writes; FallbackPolicy RequireAuthenticatedUser.
 - **Session inactivity:** Admin-configurable `SessionInactivityTimeoutMinutes` (default 30, clamp 5–480) on platform features. Web `SessionInactivityMiddleware` + browser idle-timer read it dynamically; `Jobsy.LastActivity` is Data Protection–sealed and subject-bound (forged/future/plaintext values expire the session). A *missing* activity cookie is re-stamped (login race / recovery); idle or tampered cookies still force re-auth. Auth endpoints (`/account/login`, `/account/demo-login`) are skipped so a stale auth cookie cannot block sign-in. Idle sessions redirect to `/login?error=session-expired`. Form draft restore is opt-in (`data-session-draft`) only, excludes IBAN/secrets, and is keyed by user subject.
 - **External provision:** `/api/auth/ensure-external` vereist `X-Jobsy-Provision-Secret` buiten Development (fail-closed zonder secret).
-- **OIDC:** `SaveTokens=false`; Google options mutations zijn geserialiseerd; `email_verified=false` wordt geweigerd. Externe accounts worden gebonden via `UserExternalLogins` (Entra OID / Google `sub`); match op subject gaat vóór e-mail zodat IdP e-mailwijzigingen geen orphan Candidate maken.
+- **OIDC:** `SaveTokens=false`; Google options mutations zijn geserialiseerd; `email_verified=false` wordt geweigerd. Externe accounts worden gebonden via `UserExternalLogins` (Entra OID / Google `sub`); match op subject gaat vóór e-mail zodat IdP e-mailwijzigingen geen orphan Candidate maken. OpenID Connect **nonce/correlation cookies** blijven `SameSite=None; Secure` (cross-site Entra-redirect); niet op Lax/Strict zetten.
 
 ## B. AVG / GDPR (Privacy by Design)
 - **Data Minimization:** Alleen opslaan wat strikt noodzakelijk is voor de match en sollicitatie.
@@ -29,14 +29,15 @@
 
 ## C. Security Headers & Error Handling (Middleware)
 De ASP.NET Core pipeline stuurt standaard:
-- `Content-Security-Policy` (API + Web). Web scripts use a **per-request nonce** (no `script-src 'unsafe-inline'`). One CSP header only (Blazor’s extra `frame-ancestors` is disabled). Style *attributes* remain `'unsafe-inline'` (Razor/MapLibre CSS variables); `<style>` elements use the same nonce. Blazor Server still needs `'unsafe-eval'`.
+- `Content-Security-Policy` (API + Web). Web scripts use a **per-request nonce** (no `script-src 'unsafe-inline'`). One CSP header only (Blazor’s extra `frame-ancestors` is disabled). Style *attributes* remain `'unsafe-inline'` (Razor/MapLibre CSS variables); `<style>` elements use the same nonce. Blazor Server still needs `'unsafe-eval'`. `img-src` / `connect-src` are host-allowlisted (`'self'`, picsum, OpenFreeMap tiles) — no `https:` / `ws:` / `wss:` scheme wildcards. Same-origin SignalR uses `'self'` (CSP3 covers `wss` to the page origin).
 - `Strict-Transport-Security`: `max-age=63072000` (2 jaar) + `includeSubDomains` (Observatory-minimum is 6 maanden)
 - Cookies: `Secure` + `HttpOnly` + `SameSite` in productie (ook achter Render’s HTTP-proxy)
-- `X-Content-Type-Options: nosniff`
+- `X-Content-Type-Options: nosniff` (HTML via `SecurityHeadersMiddleware`, static files via `OnPrepareResponse`)
 - `X-Frame-Options: DENY`
 - `Referrer-Policy`, `Permissions-Policy`
 - HSTS buiten Development
 - `ExceptionHandlingMiddleware` — generieke ProblemDetails naar clients; stacktraces/PII blijven server-side
+- Publieke foutpagina `/Error` toont geen technische details; wel een request-referentie (`TraceIdentifier`). Publieke bedrijfs-/vacaturepagina’s zetten geen `ex.Message` in HTML. Ontbrekende vestigingen geven 404, geen 500.
 - **Swagger:** standaard aan in Development; buiten Development uit tenzij `Swagger:Enabled=true`. “Try it out” blijft uit buiten Development.
 - **Sentry:** optioneel via `Sentry:Dsn` / `Sentry__Dsn` (API + Web); geen PII (`SendDefaultPii=false`).
 - **OTP pepper:** optioneel deploy-secret `VerificationCodes:Pepper` (fallback ingebouwde pepper blijft verifieerbaar tijdens rollout).

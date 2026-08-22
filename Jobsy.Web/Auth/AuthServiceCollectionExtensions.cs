@@ -97,6 +97,8 @@ public static class AuthServiceCollectionExtensions
             options.NonceCookie.SecurePolicy = secureAlways
                 ? CookieSecurePolicy.Always
                 : CookieSecurePolicy.SameAsRequest;
+            // OIDC nonce/correlation cookies stay SameSite=None (framework default).
+            // Lax/Strict would drop them on the cross-site Entra redirect and break login.
             // Entra ID tokens already carry profile/email claims; UserInfo often 404s and caused 500s.
             options.GetClaimsFromUserInfoEndpoint = false;
             options.Scope.Clear();

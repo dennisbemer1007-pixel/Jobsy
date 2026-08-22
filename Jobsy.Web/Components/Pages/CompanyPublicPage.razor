@@ -6,9 +6,12 @@
 @inject IJSRuntime Js
 @inject CultureState Culture
 @inject NavigationManager Navigation
+@inject IHttpContextAccessor HttpContextAccessor
+@inject ILogger<CompanyPublicPage> Logger
 @using Jobsy.Core.Media
 @using Jobsy.Core.Rules
 @using Jobsy.Web.Hosting
+@using Microsoft.AspNetCore.Http
 @implements IAsyncDisposable
 
 <PageTitle>@(_page?.Name ?? Culture["BranchPage.Title"]) · Lobsy</PageTitle>
@@ -221,6 +224,9 @@
     private readonly uint _highlightShuffleSeed = (uint)Random.Shared.NextInt64();
     private DotNetObjectReference<CompanyPublicPage>? _dotNetRef;
 
+    [CascadingParameter]
+    private HttpContext? HttpContext { get; set; }
+
     protected override async Task OnParametersSetAsync()
     {
         _loading = true;
@@ -235,7 +241,7 @@
             var kvk = CompanyPublicPaths.NormalizeKvkNumber(KvkNumber);
             if (kvk is null)
             {
-                _error = Culture["BranchPage.NotFound"];
+                MarkNotFound();
                 return;
             }
 
@@ -250,6 +256,7 @@
 
             if (_page is null || _page.CompanyIds.Count == 0)
             {
+                MarkNotFound();
                 return;
             }
 
@@ -275,11 +282,22 @@
         }
         catch (Exception ex)
         {
-            _error = Culture.Format("Discovery.LoadFailed", ex.Message);
+            Logger.LogWarning(ex, "Public company page failed for {Kvk}/{Vestiging}", KvkNumber, Vestigingsnummer);
+            _error = Culture["Discovery.LoadFailed"];
         }
         finally
         {
             _loading = false;
+        }
+    }
+
+    private void MarkNotFound()
+    {
+        _page = null;
+        var http = HttpContext ?? HttpContextAccessor.HttpContext;
+        if (http is not null && !http.Response.HasStarted)
+        {
+            http.Response.StatusCode = StatusCodes.Status404NotFound;
         }
     }
 

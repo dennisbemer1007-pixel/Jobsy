@@ -19,8 +19,9 @@ public class StaticAssetCacheTests
             "public,max-age=31536000,immutable",
             WebPerformanceExtensions.StaticAssetCacheControl(versioned: true));
 
-        var response = PrepareResponse("app.css", "?v=20260820-r163");
+        var response = PrepareResponse("favicon.png", "?v=20260731-eyes");
         Assert.Equal("public,max-age=31536000,immutable", response.Headers.CacheControl.ToString());
+        Assert.Equal("nosniff", response.Headers["X-Content-Type-Options"].ToString());
     }
 
     [Fact]
@@ -35,9 +36,11 @@ public class StaticAssetCacheTests
         var header = response.Headers.CacheControl.ToString();
         Assert.DoesNotContain("604800", header);
         Assert.Contains("max-age=2592000", header);
+        Assert.Equal("nosniff", response.Headers["X-Content-Type-Options"].ToString());
 
         var map = PrepareResponse("maplibre-gl-csp.js.map", "?v=20260820-r180");
         Assert.Equal("public,max-age=31536000,immutable", map.Headers.CacheControl.ToString());
+        Assert.Equal("nosniff", map.Headers["X-Content-Type-Options"].ToString());
     }
 
     [Fact]
@@ -45,6 +48,14 @@ public class StaticAssetCacheTests
     {
         var response = PrepareResponse("index.html", "?v=1");
         Assert.True(string.IsNullOrEmpty(response.Headers.CacheControl.ToString()));
+        Assert.Equal("nosniff", response.Headers["X-Content-Type-Options"].ToString());
+    }
+
+    [Fact]
+    public void Robots_txt_still_gets_nosniff()
+    {
+        var response = PrepareResponse("robots.txt", query: null);
+        Assert.Equal("nosniff", response.Headers["X-Content-Type-Options"].ToString());
     }
 
     [Fact]

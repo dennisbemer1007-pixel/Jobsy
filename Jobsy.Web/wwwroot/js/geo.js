@@ -192,7 +192,7 @@ window.jobsyGeo = (function () {
     }
 
     /**
-     * Returns stored origin only. Geolocation requires explicit user action ("Mijn locatie").
+     * Returns stored origin only. Geolocation requires an explicit "Mijn locatie" tap.
      */
     async function ensureLocationOnLaunch() {
         return getStoredOrigin();

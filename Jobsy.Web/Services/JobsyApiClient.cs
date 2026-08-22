@@ -1935,13 +1935,7 @@ public sealed class JobsyApiClient : IAsyncDisposable
         var response = await _http.GetAsync(
             $"api/public/companies/{Uri.EscapeDataString(kvkNumber.Trim())}",
             ct);
-        if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
-        {
-            return null;
-        }
-
-        response.EnsureSuccessStatusCode();
-        return await response.Content.ReadFromJsonAsync<PublicCompanyPage>(cancellationToken: ct);
+        return await ReadPublicCompanyOrNullAsync(response, ct);
     }
 
     public async Task<PublicCompanyPage?> GetPublicCompanyByVestigingAsync(
@@ -1952,12 +1946,20 @@ public sealed class JobsyApiClient : IAsyncDisposable
         var response = await _http.GetAsync(
             $"api/public/companies/{Uri.EscapeDataString(kvkNumber.Trim())}/{Uri.EscapeDataString(vestigingsnummer.Trim())}",
             ct);
-        if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
+        return await ReadPublicCompanyOrNullAsync(response, ct);
+    }
+
+    private static async Task<PublicCompanyPage?> ReadPublicCompanyOrNullAsync(
+        HttpResponseMessage response,
+        CancellationToken ct)
+    {
+        // Missing or failing lookups must not throw HttpRequestException
+        // ("500 Internal Server Error") into the public HTML.
+        if (!response.IsSuccessStatusCode)
         {
             return null;
         }
 
-        response.EnsureSuccessStatusCode();
         return await response.Content.ReadFromJsonAsync<PublicCompanyPage>(cancellationToken: ct);
     }
 

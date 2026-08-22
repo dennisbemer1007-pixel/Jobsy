@@ -15,7 +15,7 @@ namespace Jobsy.Api.Controllers;
 [ApiController]
 [Route("api/public/companies")]
 [AllowAnonymous]
-[EnableRateLimiting("public-write")]
+[EnableRateLimiting("public-read")]
 public sealed class PublicCompaniesController : ControllerBase
 {
     private readonly JobsyDbContext _db;
@@ -37,9 +37,7 @@ public sealed class PublicCompaniesController : ControllerBase
             return BadRequest(new { message = "Ongeldig KVK-nummer." });
         }
 
-        var companies = await _db.Companies.AsNoTracking()
-            .Where(c => c.KvkNumber == kvk)
-            .OrderBy(c => c.Name)
+        var companies = await QueryPublicRows(_db, kvk)
             .ToListAsync(cancellationToken);
 
         if (companies.Count == 0)
@@ -56,8 +54,8 @@ public sealed class PublicCompaniesController : ControllerBase
                     c.Name,
                     c.Address,
                     c.LogoUrl,
-                    c.Location?.Latitude ?? 0,
-                    c.Location?.Longitude ?? 0,
+                    c.Latitude,
+                    c.Longitude,
                     vestiging,
                     CompanyPublicPaths.TryBuildPath(kvk, c.KvkEstablishmentId));
             })
@@ -75,8 +73,8 @@ public sealed class PublicCompaniesController : ControllerBase
             displayName,
             primary.Address,
             primary.LogoUrl,
-            primary.Location?.Latitude ?? 0,
-            primary.Location?.Longitude ?? 0,
+            primary.Latitude,
+            primary.Longitude,
             companies.Select(c => c.Id).ToList(),
             branches));
     }
@@ -100,18 +98,16 @@ public sealed class PublicCompaniesController : ControllerBase
         }
 
         var establishmentId = CompanyPublicPaths.BuildEstablishmentId(kvk, vestigingsnummer.Trim());
-        var company = await _db.Companies.AsNoTracking()
+        var company = await QueryPublicRows(_db, kvk)
             .FirstOrDefaultAsync(
                 c => c.KvkEstablishmentId == establishmentId
-                     || (c.KvkNumber == kvk && c.KvkEstablishmentId == vestigingsnummer.Trim()),
+                     || c.KvkEstablishmentId == vestigingsnummer.Trim(),
                 cancellationToken);
 
         if (company is null)
         {
             // Soft match: same KVK and establishment suffix ignoring formatting.
-            var all = await _db.Companies.AsNoTracking()
-                .Where(c => c.KvkNumber == kvk)
-                .ToListAsync(cancellationToken);
+            var all = await QueryPublicRows(_db, kvk).ToListAsync(cancellationToken);
             company = all.FirstOrDefault(c =>
                 string.Equals(
                     CompanyPublicPaths.TryParseVestigingsnummer(c.KvkEstablishmentId, kvk),
@@ -133,11 +129,24 @@ public sealed class PublicCompaniesController : ControllerBase
             company.Name,
             company.Address,
             company.LogoUrl,
-            company.Location?.Latitude ?? 0,
-            company.Location?.Longitude ?? 0,
+            company.Latitude,
+            company.Longitude,
             [company.Id],
             Branches: null));
     }
+
+    private static IQueryable<CompanyPublicRow> QueryPublicRows(JobsyDbContext db, string kvk)
+        => db.Companies.AsNoTracking()
+            .Where(c => c.KvkNumber == kvk)
+            .Select(c => new CompanyPublicRow(
+                c.Id,
+                c.Name,
+                c.Address,
+                c.LogoUrl,
+                c.KvkEstablishmentId,
+                c.ParentCompanyId,
+                c.Location == null ? 0 : c.Location.Latitude,
+                c.Location == null ? 0 : c.Location.Longitude));
 
     private static string StripBranchSuffix(string name)
     {
@@ -166,3 +175,13 @@ public sealed record PublicCompanyPageDto(
     double Longitude,
     IReadOnlyList<Guid> CompanyIds,
     IReadOnlyList<PublicCompanyBranchDto>? Branches = null);
+
+internal sealed record CompanyPublicRow(
+    Guid Id,
+    string Name,
+    string Address,
+    string? LogoUrl,
+    string? KvkEstablishmentId,
+    Guid? ParentCompanyId,
+    double Latitude,
+    double Longitude);

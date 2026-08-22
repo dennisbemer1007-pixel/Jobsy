@@ -68,6 +68,10 @@ public class ProductionAuditTests
         Assert.Contains("[EnableRateLimiting(\"public-travel\")]", src);
         var program = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Api", "Program.cs"));
         Assert.Contains("public-travel", program);
+
+        var companies = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Api", "Controllers", "PublicCompaniesController.cs"));
+        Assert.Contains("[EnableRateLimiting(\"public-read\")]", companies);
+        Assert.DoesNotContain("[EnableRateLimiting(\"public-write\")]", companies);
     }
 
     [Fact]

@@ -48,6 +48,7 @@ public static class WebPerformanceExtensions
             ContentTypeProvider = contentTypes,
             OnPrepareResponse = ctx =>
             {
+                ctx.Context.Response.Headers["X-Content-Type-Options"] = "nosniff";
                 var ext = Path.GetExtension(ctx.File.Name);
                 if (ext is ".js" or ".css" or ".map" or ".webp" or ".png" or ".jpg" or ".jpeg" or ".svg"
                     or ".woff2" or ".woff" or ".ico")

@@ -17,6 +17,19 @@ public class ContentSecurityPolicyTests
         Assert.DoesNotContain("unsafe-inline", scriptSrc);
         Assert.Contains("'unsafe-eval'", scriptSrc);
 
+        var imgSrc = JobsyContentSecurityPolicy.Directive(csp, "img-src");
+        Assert.NotNull(imgSrc);
+        Assert.DoesNotContain("https:", imgSrc.Replace(JobsyContentSecurityPolicy.Picsum, "", StringComparison.Ordinal)
+            .Replace(JobsyContentSecurityPolicy.PicsumFastly, "", StringComparison.Ordinal)
+            .Replace(JobsyContentSecurityPolicy.OpenFreeMap, "", StringComparison.Ordinal));
+        Assert.Contains(JobsyContentSecurityPolicy.Picsum, imgSrc);
+        Assert.Contains(JobsyContentSecurityPolicy.OpenFreeMap, imgSrc);
+
+        var connectSrc = JobsyContentSecurityPolicy.Directive(csp, "connect-src");
+        Assert.Equal($"connect-src 'self' {JobsyContentSecurityPolicy.OpenFreeMap}", connectSrc);
+        Assert.DoesNotContain("wss:", connectSrc);
+        Assert.DoesNotContain("ws:", connectSrc);
+
         var formAction = JobsyContentSecurityPolicy.Directive(csp, "form-action");
         Assert.Equal("form-action 'self'", formAction);
 
