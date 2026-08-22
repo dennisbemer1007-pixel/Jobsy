@@ -91,6 +91,12 @@ public static class AuthServiceCollectionExtensions
             options.ResponseType = OpenIdConnectResponseType.Code;
             options.CallbackPath = authOptions.Entra.CallbackPath;
             options.SaveTokens = false;
+            options.CorrelationCookie.SecurePolicy = secureAlways
+                ? CookieSecurePolicy.Always
+                : CookieSecurePolicy.SameAsRequest;
+            options.NonceCookie.SecurePolicy = secureAlways
+                ? CookieSecurePolicy.Always
+                : CookieSecurePolicy.SameAsRequest;
             // Entra ID tokens already carry profile/email claims; UserInfo often 404s and caused 500s.
             options.GetClaimsFromUserInfoEndpoint = false;
             options.Scope.Clear();
@@ -143,6 +149,9 @@ public static class AuthServiceCollectionExtensions
                 ? "pending"
                 : authOptions.Google.ClientSecret;
             options.CallbackPath = authOptions.Google.CallbackPath;
+            options.CorrelationCookie.SecurePolicy = secureAlways
+                ? CookieSecurePolicy.Always
+                : CookieSecurePolicy.SameAsRequest;
             options.Events.OnRedirectToAuthorizationEndpoint = async context =>
             {
                 var source = context.HttpContext.RequestServices.GetRequiredService<IExternalAuthCredentialSource>();
@@ -192,6 +201,14 @@ public static class AuthServiceCollectionExtensions
         services.AddAuthorization();
         services.AddCascadingAuthenticationState();
         services.AddHttpContextAccessor();
+        services.AddAntiforgery(options =>
+        {
+            options.Cookie.HttpOnly = true;
+            options.Cookie.SameSite = SameSiteMode.Lax;
+            options.Cookie.SecurePolicy = secureAlways
+                ? CookieSecurePolicy.Always
+                : CookieSecurePolicy.SameAsRequest;
+        });
         services.AddScoped<AuthenticationStateProvider, ServerAuthenticationStateProvider>();
 
         return services;

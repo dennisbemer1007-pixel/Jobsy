@@ -17,6 +17,9 @@ public class ContentSecurityPolicyTests
         Assert.DoesNotContain("unsafe-inline", scriptSrc);
         Assert.Contains("'unsafe-eval'", scriptSrc);
 
+        var formAction = JobsyContentSecurityPolicy.Directive(csp, "form-action");
+        Assert.Equal("form-action 'self'", formAction);
+
         var attr = JobsyContentSecurityPolicy.Directive(csp, "script-src-attr");
         Assert.Equal("script-src-attr 'none'", attr);
 
@@ -70,6 +73,7 @@ public class ContentSecurityPolicyTests
 
         var program = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "Program.cs"));
         Assert.Contains("UseMiddleware<SecurityHeadersMiddleware>", program);
+        Assert.Contains("ContentSecurityFrameAncestorsPolicy = null", program);
         Assert.DoesNotContain("script-src 'self' 'unsafe-inline'", program);
     }
 

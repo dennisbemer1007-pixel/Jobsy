@@ -329,7 +329,8 @@ window.jobsyCulture = {
                 localStorage.setItem(KEY, value || "necessary");
                 var maxAge = 60 * 60 * 24 * 365;
                 document.cookie = KEY + "=" + encodeURIComponent(value || "necessary")
-                    + "; Path=/; SameSite=Lax; Max-Age=" + maxAge;
+                    + "; Path=/; SameSite=Lax; Max-Age=" + maxAge
+                    + (location.protocol === "https:" ? "; Secure" : "");
                 applyKnownClass();
                 return true;
             } catch (e) {

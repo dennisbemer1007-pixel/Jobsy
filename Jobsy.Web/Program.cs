@@ -1,5 +1,6 @@
 using System.Threading.RateLimiting;
 using Jobsy.Core;
+using Jobsy.Core.Security;
 using Jobsy.Web.Auth;
 using Jobsy.Web.Components;
 using Jobsy.Web.Hosting;
@@ -78,6 +79,13 @@ builder.Services.AddScoped(sp =>
 
 builder.Services.AddJobsyWebPerformance();
 
+builder.Services.AddHsts(options =>
+{
+    options.MaxAge = TimeSpan.FromSeconds(JobsyHsts.MaxAgeSeconds);
+    options.IncludeSubDomains = true;
+    options.Preload = false;
+});
+
 builder.Services.AddRateLimiter(options =>
 {
     options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
@@ -137,6 +145,11 @@ app.MapJobsyAuthEndpoints();
 app.MapSeoEndpoints();
 
 app.MapRazorComponents<App>()
-    .AddInteractiveServerRenderMode();
+    .AddInteractiveServerRenderMode(o =>
+    {
+        // CSP is issued once by SecurityHeadersMiddleware (frame-ancestors 'none').
+        // A second Blazor CSP header makes Observatory treat script-src as unrestricted.
+        o.ContentSecurityFrameAncestorsPolicy = null;
+    });
 
 app.Run();

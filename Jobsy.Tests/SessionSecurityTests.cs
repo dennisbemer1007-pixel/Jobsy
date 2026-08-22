@@ -184,6 +184,19 @@ public class SessionSecurityTests
     }
 
     [Fact]
+    public void Activity_cookie_is_secure_on_the_public_host()
+    {
+        var http = CreateAuthedContext("/home", "alice@jobsy.local");
+        http.Request.Host = new HostString("lobsy.nl");
+        SessionActivityCookie.Stamp(http, DateTimeOffset.UtcNow);
+        Assert.Contains(
+            http.Response.Headers.SetCookie,
+            v => v is not null
+                 && v.Contains(SessionInactivityMiddleware.LastActivityCookieName, StringComparison.Ordinal)
+                 && v.Contains("secure", StringComparison.OrdinalIgnoreCase));
+    }
+
+    [Fact]
     public void Activity_cookie_is_bound_to_subject()
     {
         var http = CreateAuthedContext("/home", "alice@jobsy.local");

@@ -76,6 +76,7 @@ public class ProductionAuditTests
         var js = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "wwwroot", "js", "cookieConsent.js"));
         Assert.Contains("document.cookie", js);
         Assert.Contains("Jobsy.CookieConsent", js);
+        Assert.Contains("; Secure", js);
     }
 
     private static string FindRepoRoot()

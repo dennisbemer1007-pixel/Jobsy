@@ -23,6 +23,7 @@ public static class JobsyContentSecurityPolicy
             "style-src-attr 'unsafe-inline';",
             $"script-src 'self' {n} 'unsafe-eval';",
             "script-src-attr 'none';",
+            "form-action 'self';",
             "connect-src 'self' wss: ws: https:;",
             "worker-src 'self' blob:;");
     }

@@ -4,6 +4,7 @@ using Jobsy.Api.Authorization;
 using Jobsy.Api.Jobs;
 using Jobsy.Api.Swagger;
 using Jobsy.Core;
+using Jobsy.Core.Security;
 using Jobsy.Infrastructure;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.RateLimiting;
@@ -162,6 +163,13 @@ builder.Services.AddRateLimiter(options =>
                 Window = TimeSpan.FromMinutes(1),
                 QueueLimit = 0
             }));
+});
+
+builder.Services.AddHsts(options =>
+{
+    options.MaxAge = TimeSpan.FromSeconds(JobsyHsts.MaxAgeSeconds);
+    options.IncludeSubDomains = true;
+    options.Preload = false;
 });
 
 var app = builder.Build();

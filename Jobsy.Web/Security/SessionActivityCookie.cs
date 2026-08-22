@@ -108,15 +108,10 @@ public static class SessionActivityCookie
 
     private static CookieOptions BuildCookieOptions(HttpContext context, DateTimeOffset expires)
     {
-        var secure = context.Request.IsHttps
-                     || string.Equals(
-                         context.Request.Headers["X-Forwarded-Proto"],
-                         "https",
-                         StringComparison.OrdinalIgnoreCase);
         return new CookieOptions
         {
             HttpOnly = true,
-            Secure = secure,
+            Secure = JobsyCookie.ShouldMarkSecure(context),
             SameSite = SameSiteMode.Lax,
             IsEssential = true,
             Expires = expires,

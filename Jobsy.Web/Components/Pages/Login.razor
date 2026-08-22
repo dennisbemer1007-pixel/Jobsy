@@ -177,7 +177,7 @@
                         HttpOnly = true,
                         IsEssential = true,
                         SameSite = SameSiteMode.Lax,
-                        Secure = http.Request.IsHttps,
+                        Secure = JobsyCookie.ShouldMarkSecure(http),
                         MaxAge = TimeSpan.FromDays(30),
                         Path = "/"
                     });
