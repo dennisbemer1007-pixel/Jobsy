@@ -52,7 +52,7 @@ public class HomepagePerformanceGuardTests
     public void First_paint_reserves_homepage_layout_to_avoid_cls()
     {
         var app = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "Components", "App.razor"));
-        var criticalStart = app.IndexOf("<style>", StringComparison.Ordinal);
+        var criticalStart = app.IndexOf("<style", StringComparison.Ordinal);
         var criticalEnd = app.IndexOf("</style>", StringComparison.Ordinal);
         Assert.True(criticalStart >= 0 && criticalEnd > criticalStart);
         var critical = app[criticalStart..criticalEnd];
