@@ -3,7 +3,6 @@
 @if (Vacancies.Count > 0)
 {
     <aside class="highlight-carousel @ModifierClass" aria-label="@Culture["Discovery.Featured"]">
-        <p class="highlight-carousel__title">@Culture["Discovery.Featured"]</p>
         <div class="highlight-carousel__track" role="list">
             @foreach (var vacancy in Vacancies)
             {
@@ -31,7 +30,6 @@
                         </span>
                     }
                     <span class="highlight-carousel__body">
-                        <span class="highlight-carousel__badge">@Culture["Discovery.Featured"]</span>
                         <span class="highlight-carousel__title-text">@vacancy.Title</span>
                         <span class="highlight-carousel__meta">@vacancy.CompanyName</span>
                         @if (!string.IsNullOrEmpty(travelText))
