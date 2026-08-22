@@ -163,6 +163,8 @@ public class JobMapPrerenderGuardTests
         Assert.Contains("center: options.center", createFn);
         Assert.Contains("zoom: options.zoom", createFn);
         Assert.Contains("controlsPosition", createFn);
+        Assert.Contains("options.controls !== false", createFn);
+        Assert.Contains("options.touchZoomRotate !== false", createFn);
         Assert.DoesNotContain("applyCameraForStyle", createFn);
 
         var css = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "wwwroot", "css", "app.css"));
@@ -290,21 +292,32 @@ public class JobMapPrerenderGuardTests
         var wrapEnd = css.IndexOf("}", wrapStart, StringComparison.Ordinal);
         var wrap = css[wrapStart..wrapEnd];
         Assert.Contains("aspect-ratio: 1 / 1", wrap);
-        Assert.Contains("min(100%, 26rem)", wrap);
+        Assert.Contains("min(100%, 16.5rem)", wrap);
         Assert.DoesNotContain("height: 240px", wrap);
 
         Assert.Contains(".vacancy-media--split", css);
-        Assert.Contains("repeat(2, minmax(0, 1fr))", css);
+        Assert.Contains("minmax(0, 1fr) 16.5rem", css);
+        Assert.Contains(".vacancy-media:not(.vacancy-media--split) .detail-card__image", css);
+        Assert.Contains("max-height: 16.5rem", css);
+        Assert.Contains("align-items: center", css[css.IndexOf(".vacancy-location__actions {", StringComparison.Ordinal)..]);
+        Assert.DoesNotContain("text-transform: uppercase", css[css.IndexOf(".vacancy-location__transport {", StringComparison.Ordinal)..(css.IndexOf(".vacancy-location__transport {", StringComparison.Ordinal) + 400)]);
 
         var detail = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "Components", "Pages", "VacancyDetail.razor"));
         Assert.Contains("vacancy-media--split", detail);
         Assert.Contains("HasPhoto && HasLocation", detail);
+        Assert.Contains("detail-card--pending", detail);
+        Assert.Contains("PersistentComponentState", detail);
+        Assert.Contains("panel-page--vacancy", detail);
+        Assert.Contains("keepPrerendered", detail);
         var mediaIdx = detail.IndexOf("class=\"vacancy-media", StringComparison.Ordinal);
+        var titleIdx = detail.IndexOf("detail-card__top", StringComparison.Ordinal);
         var bodyIdx = detail.IndexOf("detail-card__body", StringComparison.Ordinal);
-        Assert.True(mediaIdx > 0 && bodyIdx > mediaIdx, "Photo and map must sit together above the description.");
+        Assert.True(mediaIdx > 0 && titleIdx > mediaIdx && bodyIdx > titleIdx, "Photo and map must sit together above the title and description.");
 
         var js = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "wwwroot", "js", "vacancyDetailMap.js"));
         Assert.Contains("styleKey: \"liberty\"", js);
+        Assert.Contains("controls: false", js);
+        Assert.Contains("touchZoomRotate: false", js);
         Assert.Contains("vacancy-detail-marker", js);
         Assert.Contains("center: [useLng, useLat]", js);
         Assert.Contains("setLngLat([currentLng, currentLat])", js);

@@ -407,6 +407,7 @@ a {
     justify-content: space-between;
     gap: 1rem;
     align-items: flex-start;
+    margin-top: 0.85rem;
 }
 
 .detail-wage-panel {
@@ -442,7 +443,7 @@ a {
 }
 
 .detail-card h1 {
-    margin: 0.35rem 0 0;
+    margin: 0;
 }
 
 .detail-card__body {
@@ -3094,35 +3095,116 @@ a {
     margin-top: 1rem;
 }
 
+.panel-page--vacancy {
+    padding-top: 0.85rem;
+    padding-bottom: 1.5rem;
+    max-width: 52rem;
+}
+
+.panel-page--vacancy .detail-card {
+    padding: 0.9rem 1rem 1.2rem;
+}
+
+.panel-page--vacancy .detail-card__header-row {
+    align-items: center;
+    min-height: 1.75rem;
+}
+
+.panel-page--vacancy .detail-card__header-row .back-link {
+    margin-bottom: 0;
+}
+
+.panel-page--vacancy .detail-card h1 {
+    font-size: 1.42rem;
+    line-height: 1.22;
+    letter-spacing: -0.02em;
+}
+
+.panel-page--vacancy .detail-card__top {
+    margin-top: 0.7rem;
+}
+
+.panel-page--vacancy .detail-card__body {
+    margin: 0.7rem 0 0.45rem;
+}
+
+.detail-card--pending {
+    min-height: 16rem;
+}
+
 .vacancy-media {
     display: grid;
     grid-template-columns: minmax(0, 1fr);
-    gap: 0.85rem;
-    align-items: start;
-    margin: 0.85rem 0 0;
+    gap: 0.5rem;
+    align-items: stretch;
+    margin: 0.5rem 0 0;
 }
 
 .vacancy-media--split {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: minmax(0, 1fr) 16.5rem;
+    height: 16.5rem;
 }
 
 .vacancy-media .vacancy-location {
     margin-top: 0;
 }
 
+.vacancy-media__skeleton {
+    min-height: 10rem;
+    height: 100%;
+    border-radius: 12px;
+    background:
+        linear-gradient(90deg, color-mix(in srgb, var(--border) 55%, var(--surface)) 0%, var(--surface) 50%, color-mix(in srgb, var(--border) 55%, var(--surface)) 100%);
+    background-size: 200% 100%;
+    animation: vacancy-media-shimmer 1.2s ease-in-out infinite;
+}
+
+.detail-card__skeleton-line {
+    height: 0.9rem;
+    margin-top: 0.85rem;
+    border-radius: 6px;
+    background: color-mix(in srgb, var(--border) 70%, var(--surface));
+}
+
+.detail-card__skeleton-line--short {
+    width: 42%;
+    margin-top: 0.45rem;
+}
+
+@keyframes vacancy-media-shimmer {
+    0% { background-position: 100% 0; }
+    100% { background-position: -100% 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .vacancy-media__skeleton {
+        animation: none;
+    }
+}
+
 .vacancy-media--split .vacancy-location__map-wrap {
     width: 100%;
+    height: 100%;
+    aspect-ratio: auto;
 }
 
 .vacancy-location__map-wrap {
     position: relative;
-    width: min(100%, 26rem);
+    width: min(100%, 16.5rem);
     aspect-ratio: 1 / 1;
     height: auto;
-    border-radius: var(--radius);
+    border-radius: 12px;
     overflow: hidden;
     border: 1px solid var(--border);
     background: var(--map-land, #e8eef5);
+}
+
+.vacancy-media:not(.vacancy-media--split) .vacancy-location__map-wrap {
+    justify-self: start;
+}
+
+.vacancy-location__map-wrap .maplibregl-ctrl {
+    display: none !important;
 }
 
 /* Must beat later .job-map (relative/height:auto) used on banenkaart + highlight carousel. */
@@ -3165,70 +3247,73 @@ a {
 .vacancy-location__actions {
     display: flex;
     flex-wrap: wrap;
-    align-items: end;
-    gap: 0.75rem;
-    margin-top: 0.75rem;
+    align-items: center;
+    gap: 0.45rem 0.55rem;
+    margin-top: 0.5rem;
+    padding: 0.35rem 0.45rem;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    background: color-mix(in srgb, var(--hover) 72%, var(--surface));
 }
 
 .vacancy-location__transport {
     display: flex;
-    flex-direction: column;
-    gap: 0.3rem;
-    font-size: 0.78rem;
+    flex-direction: row;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.82rem;
     font-weight: 600;
     color: var(--muted);
-    text-transform: uppercase;
-    letter-spacing: 0.03em;
 }
 
 .vacancy-location__transport select {
-    min-width: 8.5rem;
-    padding: 0.45rem 0.55rem;
+    min-width: 7.25rem;
+    min-height: 2.1rem;
+    padding: 0.28rem 0.5rem;
     border: 1px solid var(--border);
     border-radius: 8px;
     background: var(--surface);
     color: var(--text);
     font: inherit;
-    font-size: 0.92rem;
+    font-size: 0.88rem;
     font-weight: 500;
-    text-transform: none;
-    letter-spacing: normal;
 }
 
 .vacancy-location__buttons {
     display: flex;
     flex-wrap: wrap;
-    gap: 0.5rem;
+    gap: 0.4rem;
+    margin-left: auto;
 }
 
 .vacancy-location__btn {
-    min-height: 2.35rem;
+    min-height: 2.1rem;
+    padding: 0.28rem 0.75rem;
 }
 
 @media (max-width: 640px) {
     .vacancy-media--split {
         grid-template-columns: minmax(0, 1fr);
+        height: auto;
+    }
+
+    .vacancy-media--split .vacancy-location__map-wrap {
+        width: min(100%, 16.5rem);
+        height: auto;
+        aspect-ratio: 1 / 1;
+        justify-self: start;
     }
 }
 
 @media (max-width: 560px) {
     .vacancy-location__map-wrap {
-        width: min(100%, 22rem);
+        width: min(100%, 16.5rem);
         height: auto;
         aspect-ratio: 1 / 1;
     }
 
-    .vacancy-location__actions {
-        flex-direction: column;
-        align-items: stretch;
-    }
-
     .vacancy-location__buttons {
-        width: 100%;
-    }
-
-    .vacancy-location__btn {
-        flex: 1 1 auto;
+        margin-left: 0;
     }
 }
 
@@ -5874,14 +5959,41 @@ a.engagement-btn {
 
 .vacancy-media .detail-card__image,
 .vacancy-media .vacancy-photo.detail-card__image {
+    display: block;
     margin: 0;
+    width: 100%;
+    height: 100%;
+    max-height: none;
+    aspect-ratio: 4 / 3;
+    object-fit: cover;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+}
+
+.vacancy-media:not(.vacancy-media--split) .detail-card__image,
+.vacancy-media:not(.vacancy-media--split) .vacancy-photo.detail-card__image {
+    max-height: 16.5rem;
+    height: 16.5rem;
+    aspect-ratio: auto;
 }
 
 .vacancy-media--split .detail-card__image,
 .vacancy-media--split .vacancy-photo.detail-card__image {
     max-height: none;
-    aspect-ratio: 1 / 1;
-    height: auto;
+    aspect-ratio: auto;
+    height: 100%;
+    min-height: 0;
+}
+
+@media (max-width: 640px) {
+    .vacancy-media--split .detail-card__image,
+    .vacancy-media--split .vacancy-photo.detail-card__image,
+    .vacancy-media:not(.vacancy-media--split) .detail-card__image,
+    .vacancy-media:not(.vacancy-media--split) .vacancy-photo.detail-card__image {
+        height: 12.75rem;
+        max-height: 12.75rem;
+        aspect-ratio: 16 / 10;
+    }
 }
 
 .detail-card__video {

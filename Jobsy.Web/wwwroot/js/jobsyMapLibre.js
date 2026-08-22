@@ -203,7 +203,7 @@ window.jobsyMapLibre = (function () {
             pitchWithRotate: spec.key === "bright",
             scrollZoom: options.scrollZoom !== false,
             dragPan: true,
-            touchZoomRotate: true,
+            touchZoomRotate: options.touchZoomRotate !== false,
             renderWorldCopies: false,
             maxZoom: 19,
             minZoom: 4,
@@ -216,15 +216,17 @@ window.jobsyMapLibre = (function () {
         map._jobsyStyleKey = spec.key;
         lockTouch(map.getContainer());
         hideChrome(map);
-        var controlsPosition = options.controlsPosition === "bottom-right"
-            ? "bottom-right"
-            : "top-right";
-        map.addControl(new maplibregl.NavigationControl({
-            showCompass: false,
-            showZoom: true,
-            visualizePitch: false
-        }), controlsPosition);
-        attachStyleSwitch(map, controlsPosition);
+        if (options.controls !== false) {
+            var controlsPosition = options.controlsPosition === "bottom-right"
+                ? "bottom-right"
+                : "top-right";
+            map.addControl(new maplibregl.NavigationControl({
+                showCompass: false,
+                showZoom: true,
+                visualizePitch: false
+            }), controlsPosition);
+            attachStyleSwitch(map, controlsPosition);
+        }
 
         map.on("load", function () {
             hideChrome(map);

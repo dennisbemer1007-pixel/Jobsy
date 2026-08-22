@@ -11,13 +11,13 @@ window.jobsyMaps = (function () {
     ];
     var mapLibreScripts = [
         "/lib/maplibre/maplibre-gl-csp.js?v=20260820-r180",
-        "/js/jobsyMapLibre.min.js?v=20260822-r193"
+        "/js/jobsyMapLibre.min.js?v=20260822-r195"
     ];
     var discoveryScripts = [
         "/js/jobMap.min.js?v=20260822-r193"
     ];
     var detailScripts = [
-        "/js/vacancyDetailMap.min.js?v=20260821-r190"
+        "/js/vacancyDetailMap.min.js?v=20260822-r195"
     ];
 
     function pathOnly(url) {

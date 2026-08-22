@@ -102,7 +102,9 @@ window.vacancyDetailMap = (function () {
             center: [useLng, useLat],
             zoom: 15,
             scrollZoom: false,
-            styleKey: "liberty"
+            touchZoomRotate: false,
+            styleKey: "liberty",
+            controls: false
         });
 
         const address = options && options.address ? String(options.address) : "";

@@ -6,6 +6,7 @@
 @inject IJSRuntime Js
 @inject AuthenticationStateProvider AuthState
 @inject CultureState Culture
+@inject PersistentComponentState Persist
 @using Jobsy.Core.Media
 @using Jobsy.Core.Rules
 @using Jobsy.Web.Hosting
@@ -21,14 +22,28 @@
          OgType="article"
          JsonLd="@SeoJsonLd" />
 
-<div class="panel-page">
-    @if (_loading)
+<div class="panel-page panel-page--vacancy">
+    @if (_vacancy is null)
     {
-        <p class="state-message">@Culture["Common.Loading"]</p>
-    }
-    else if (_vacancy is null)
-    {
-        <p class="state-message error">@Culture["Vacancy.NotFound"]</p>
+        @if (_loading)
+        {
+            <article class="detail-card detail-card--pending" aria-busy="true">
+                <p class="visually-hidden">@Culture["Common.Loading"]</p>
+                <div class="detail-card__header-row">
+                    <a class="back-link" href="/">@Culture["Vacancy.BackToMap"]</a>
+                </div>
+                <div class="vacancy-media vacancy-media--split">
+                    <div class="vacancy-media__skeleton"></div>
+                    <div class="vacancy-media__skeleton"></div>
+                </div>
+                <div class="detail-card__skeleton-line"></div>
+                <div class="detail-card__skeleton-line detail-card__skeleton-line--short"></div>
+            </article>
+        }
+        else
+        {
+            <p class="state-message error">@Culture["Vacancy.NotFound"]</p>
+        }
     }
     else
     {
@@ -83,6 +98,51 @@
                     </button>
                 </div>
             </div>
+
+            @if (HasPhoto || HasLocation)
+            {
+                <div class="vacancy-media @(HasPhoto && HasLocation ? "vacancy-media--split" : null)">
+                    @if (HasPhoto)
+                    {
+                        <VacancyPhoto Src="@_vacancy.ImageUrl"
+                                      VacancyId="_vacancy.Id"
+                                      WorkType="@(_vacancy.WorkTypes.FirstOrDefault())"
+                                      Class="detail-card__image vacancy-media__photo"
+                                      Eager="true"
+                                      Sizes="@(HasLocation ? "(max-width: 640px) 100vw, 55vw" : "(max-width: 700px) 100vw, 720px")" />
+                    }
+
+                    @if (HasLocation)
+                    {
+                        <div class="vacancy-location__map-wrap vacancy-media__map" aria-label="@Culture["Vacancy.LocationMap"]">
+                            <div id="vacancy-detail-map" class="vacancy-location__map vacancy-detail-map"></div>
+                        </div>
+                    }
+                </div>
+                @if (HasLocation)
+                {
+                    <div class="vacancy-location__actions">
+                        <label class="vacancy-location__transport">
+                            @Culture["Vacancy.YourTransport"]
+                            <select value="@_transport" @onchange="OnTransportChanged">
+                                <option value="Fiets">@Culture["Transport.Bike"]</option>
+                                <option value="Auto">@Culture["Transport.Car"]</option>
+                                <option value="OV">@Culture["Transport.Transit"]</option>
+                                <option value="Lopend">@Culture["Transport.Walk"]</option>
+                            </select>
+                        </label>
+                        <div class="vacancy-location__buttons">
+                            <button class="engagement-btn vacancy-location__btn" type="button" disabled="@_openingRoute" @onclick="OpenRouteAsync">
+                                @Culture["Vacancy.Route"]
+                            </button>
+                            <button class="engagement-btn vacancy-location__btn" type="button" @onclick="OpenStreetViewAsync">
+                                @Culture["Vacancy.StreetView"]
+                            </button>
+                        </div>
+                    </div>
+                }
+            }
+
             <div class="detail-card__top">
                 <div>
                     <h1>@_vacancy.Title</h1>
@@ -148,49 +208,6 @@
                     <a class="wage wage--cta" href="#dob">@Culture["Vacancy.EnterDob"]</a>
                 }
             </div>
-
-            @if (HasPhoto || HasLocation)
-            {
-                <div class="vacancy-media @(HasPhoto && HasLocation ? "vacancy-media--split" : null)">
-                    @if (HasPhoto)
-                    {
-                        <VacancyPhoto Src="@_vacancy.ImageUrl"
-                                      VacancyId="_vacancy.Id"
-                                      WorkType="@(_vacancy.WorkTypes.FirstOrDefault())"
-                                      Class="detail-card__image vacancy-media__photo"
-                                      Eager="true"
-                                      Sizes="@(HasLocation ? "(max-width: 640px) 100vw, 420px" : "(max-width: 700px) 100vw, 640px")" />
-                    }
-
-                    @if (HasLocation)
-                    {
-                        <section class="vacancy-location vacancy-media__map" aria-label="@Culture["Vacancy.LocationMap"]">
-                            <div class="vacancy-location__map-wrap">
-                                <div id="vacancy-detail-map" class="vacancy-location__map vacancy-detail-map"></div>
-                            </div>
-                            <div class="vacancy-location__actions">
-                                <label class="vacancy-location__transport">
-                                    @Culture["Vacancy.YourTransport"]
-                                    <select value="@_transport" @onchange="OnTransportChanged">
-                                        <option value="Fiets">@Culture["Transport.Bike"]</option>
-                                        <option value="Auto">@Culture["Transport.Car"]</option>
-                                        <option value="OV">@Culture["Transport.Transit"]</option>
-                                        <option value="Lopend">@Culture["Transport.Walk"]</option>
-                                    </select>
-                                </label>
-                                <div class="vacancy-location__buttons">
-                                    <button class="engagement-btn vacancy-location__btn" type="button" disabled="@_openingRoute" @onclick="OpenRouteAsync">
-                                        @Culture["Vacancy.Route"]
-                                    </button>
-                                    <button class="engagement-btn vacancy-location__btn" type="button" @onclick="OpenStreetViewAsync">
-                                        @Culture["Vacancy.StreetView"]
-                                    </button>
-                                </div>
-                            </div>
-                        </section>
-                    }
-                </div>
-            }
 
             @if (VideoEmbedUrl is not null)
             {
@@ -724,6 +741,7 @@
     private bool _openingRoute;
     private Guid? _mappedVacancyId;
     private Guid? _loadedVacancyId;
+    private PersistingComponentStateSubscription _persistSubscription;
 
     private bool RequiresExclusivityExtras
         => _vacancy is not null
@@ -923,6 +941,24 @@
     protected override void OnInitialized()
     {
         Culture.Changed += OnCultureChanged;
+        _persistSubscription = Persist.RegisterOnPersisting(PersistVacancyState);
+        if (Persist.TryTakeFromJson<VacancyListItem>("vacancyDetail", out var saved)
+            && saved is not null
+            && saved.Id == Id)
+        {
+            _vacancy = saved;
+            _loading = false;
+        }
+    }
+
+    private Task PersistVacancyState()
+    {
+        if (_vacancy is not null)
+        {
+            Persist.PersistAsJson("vacancyDetail", _vacancy);
+        }
+
+        return Task.CompletedTask;
     }
 
     protected override async Task OnParametersSetAsync()
@@ -932,16 +968,23 @@
             return;
         }
 
+        var keepPrerendered = _vacancy is not null && _vacancy.Id == Id;
         ResetApplyUiState();
         _loadedVacancyId = Id;
-        _loading = true;
         _liked = false;
         _clickRecorded = false;
-        _vacancy = null;
         _ageYears = null;
         _mapReady = false;
         _mappedVacancyId = null;
         _pendingInitialHydration = true;
+        if (keepPrerendered)
+        {
+            _loading = false;
+            return;
+        }
+
+        _loading = true;
+        _vacancy = null;
         if (!RendererInfo.IsInteractive)
         {
             await LoadAsync(origin: null);
@@ -985,6 +1028,7 @@
     public async ValueTask DisposeAsync()
     {
         Culture.Changed -= OnCultureChanged;
+        _persistSubscription.Dispose();
         if (_mapReady)
         {
             try
