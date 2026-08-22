@@ -72,6 +72,7 @@ public static class JobsyDbSeeder
                 await Sprint8MetricsSeeder.SeedRichMetricsAsync(db, logger);
                 await SalesManagerDemoSeeder.SeedAsync(db, logger);
                 await WestlandVacanciesSeeder.SeedWestlandBanenkaartAsync(db, logger);
+                await EnterpriseWestlandVacanciesSeeder.SeedAsync(db, logger);
                 await HaaglandenVacanciesSeeder.SeedHaaglandenBanenkaartAsync(db, logger);
                 await SeedVacancyCategoryMix.EnsureAsync(db, logger);
                 // Re-run media backfill after banenkaart seeds so every vacancy has image/video/copy.
@@ -99,6 +100,7 @@ public static class JobsyDbSeeder
             await Sprint8MetricsSeeder.SeedRichMetricsAsync(db, logger);
             await SalesManagerDemoSeeder.SeedAsync(db, logger);
             await WestlandVacanciesSeeder.SeedWestlandBanenkaartAsync(db, logger);
+            await EnterpriseWestlandVacanciesSeeder.SeedAsync(db, logger);
             await HaaglandenVacanciesSeeder.SeedHaaglandenBanenkaartAsync(db, logger);
             await SeedVacancyCategoryMix.EnsureAsync(db, logger);
             await MediaBackfillSeeder.BackfillMediaAsync(db, logger);
