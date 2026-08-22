@@ -15,6 +15,7 @@ Demo-scripts, werkbeschrijvingen met screenshots en een PowerPoint-presentatie v
 | [rollen/05-intermediair.md](rollen/05-intermediair.md) | Rol Intermediair |
 | [rollen/06-admin.md](rollen/06-admin.md) | Rol Admin |
 | [screenshots/](screenshots/) | Alle printscreens |
+| [Testscenario’s per rol](../TESTSCENARIOS_PER_ROL.md) | UAT-grid (happy + unhappy) per rol; CSV: [testscenarios-per-rol.csv](../testscenarios-per-rol.csv) |
 
 ## Lokaal starten voor een live demo
 
