@@ -31,7 +31,7 @@ window.jobMap = (function () {
     const NL_ZOOM = 7;
     const NL_BOUNDS = [[50.29, 2.81], [53.33, 8.44]];
     // Keep in sync with VacancyMapViewCalculator.FilledLocationZoom (fits default 30-min fiets ring).
-    const FILLED_LOCATION_ZOOM = 11;
+    const FILLED_LOCATION_ZOOM = 12;
 
     const CLUSTER_OPTS = {
         showCoverageOnHover: false,
@@ -42,11 +42,19 @@ window.jobMap = (function () {
         removeOutsideVisibleBounds: false
     };
 
-    const SPEED_M_PER_MIN = {
-        Fiets: 18.0 * 1000 / 60,
-        Auto: 40.0 * 1000 / 60,
-        OV: 25.0 * 1000 / 60,
-        Lopend: 5.0 * 1000 / 60
+    // On-road cruise km/h. Keep in sync with TravelReach.SpeedKmPerHour.
+    const CRUISE_KM_H = {
+        Fiets: 18.0,
+        Auto: 40.0,
+        OV: 25.0,
+        Lopend: 5.0
+    };
+    // Road / crow-flies. Keep in sync with TravelReach.RoadCircuity (bike 1.7 ≈ OSRM).
+    const ROAD_CIRCUITY = {
+        Fiets: 1.7,
+        Auto: 1.35,
+        OV: 1.5,
+        Lopend: 1.4
     };
 
     const TRANSPORT_LABEL = {
@@ -827,7 +835,9 @@ window.jobMap = (function () {
     }
 
     function metersPerMinute(transport) {
-        return SPEED_M_PER_MIN[transport] || SPEED_M_PER_MIN.Fiets;
+        const cruise = CRUISE_KM_H[transport] || CRUISE_KM_H.Fiets;
+        const circuity = ROAD_CIRCUITY[transport] || ROAD_CIRCUITY.Fiets;
+        return (cruise * 1000 / 60) / circuity;
     }
 
     function clearTravelRingLabels() {

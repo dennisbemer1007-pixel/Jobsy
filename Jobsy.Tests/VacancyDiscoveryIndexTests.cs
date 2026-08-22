@@ -395,7 +395,7 @@ public class VacancyMapViewCalculatorTests
         Assert.Equal(52.01123, view.CenterLat);
         Assert.Equal(4.22167, view.CenterLng);
         Assert.Equal(VacancyMapViewCalculator.FilledLocationZoom, view.Zoom);
-        Assert.Equal(11, view.Zoom);
+        Assert.Equal(12, view.Zoom);
         Assert.Equal(8, view.PinCount);
         Assert.True(view.HasPins);
     }
@@ -414,7 +414,7 @@ public class VacancyMapViewCalculatorTests
         Assert.Equal(52.01123, view.CenterLat);
         Assert.Equal(4.22167, view.CenterLng);
         Assert.Equal(VacancyMapViewCalculator.FilledLocationZoom, view.Zoom);
-        Assert.Equal(11, view.Zoom);
+        Assert.Equal(12, view.Zoom);
     }
 
     [Fact]
@@ -431,7 +431,7 @@ public class VacancyMapViewCalculatorTests
         Assert.Equal(51.9225, view.CenterLat);
         Assert.Equal(4.47917, view.CenterLng);
         Assert.Equal(VacancyMapViewCalculator.FilledLocationZoom, view.Zoom);
-        Assert.Equal(11, view.Zoom);
+        Assert.Equal(12, view.Zoom);
     }
 
     [Fact]

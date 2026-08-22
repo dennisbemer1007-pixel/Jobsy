@@ -6,8 +6,8 @@ using Jobsy.Core.ValueObjects;
 namespace Jobsy.Infrastructure.Services;
 
 /// <summary>
-/// Placeholder routing service. Replace with OSRM HTTP client when the Docker container is available.
-/// Uses a rough Haversine estimate with mode-specific speeds for local demo/dev.
+/// Placeholder routing for bulk flows (discover/PushBom). Uses Haversine × cruise speed / circuity
+/// so minutes stay aligned with <c>TravelReach.Estimate</c> and the map rings.
 /// </summary>
 public class MockRoutingService : IRoutingService
 {
@@ -23,8 +23,7 @@ public class MockRoutingService : IRoutingService
         var distanceMeters = GeoDistance.HaversineKm(
             new GeoPoint(fromLatitude, fromLongitude),
             new GeoPoint(toLatitude, toLongitude)) * 1000.0;
-        var speed = TravelReach.SpeedKmPerHour(mode);
-        var durationSeconds = distanceMeters / (speed * 1000.0 / 3600.0);
+        var durationSeconds = distanceMeters / (TravelReach.CrowFliesKmPerHour(mode) * 1000.0 / 3600.0);
 
         return Task.FromResult(new RouteResult(distanceMeters, durationSeconds, mode));
     }

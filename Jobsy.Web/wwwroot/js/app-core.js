@@ -363,7 +363,7 @@ window.jobsyMaps = (function () {
         "/js/jobsyMapLibre.min.js?v=20260822-r195"
     ];
     var discoveryScripts = [
-        "/js/jobMap.min.js?v=20260822-r201"
+        "/js/jobMap.min.js?v=20260822-r202"
     ];
     var detailScripts = [
         "/js/vacancyDetailMap.min.js?v=20260822-r195"

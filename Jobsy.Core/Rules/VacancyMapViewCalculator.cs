@@ -15,7 +15,7 @@ public static class VacancyMapViewCalculator
     /// Fallback zoom that fits the default 30-min fiets ring on a typical viewport.
     /// Keep in sync with <c>FILLED_LOCATION_ZOOM</c> in <c>jobMap.js</c>.
     /// </summary>
-    public const int FilledLocationZoom = 11;
+    public const int FilledLocationZoom = 12;
 
     /// <summary>Padding so the outer travel ring (and its label) stay inside the viewport.</summary>
     public const double TravelRingPaddingFactor = 1.45;

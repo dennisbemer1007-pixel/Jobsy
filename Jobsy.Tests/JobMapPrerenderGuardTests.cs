@@ -54,12 +54,14 @@ public class JobMapPrerenderGuardTests
         Assert.Contains("lockCamera", js);
         Assert.Contains("openingCamera", js);
         Assert.Contains("readFilledOrigin", js);
-        Assert.Contains("FILLED_LOCATION_ZOOM = 11", js);
+        Assert.Contains("FILLED_LOCATION_ZOOM = 12", js);
         Assert.Contains("preferFilledLocation", js);
         Assert.Contains("jumpToLocation", js);
         Assert.Contains("safeJumpTo", js);
         Assert.Contains("safeEaseTo", js);
         Assert.Contains("fitToOriginRings", js);
+        Assert.Contains("ROAD_CIRCUITY", js);
+        Assert.Contains("Fiets: 1.7", js);
         Assert.Contains("overlayFitPadding", js);
         Assert.Contains("scheduleTravelRingRedraw", js);
         Assert.Contains("onTravelRingStyleData", js);
