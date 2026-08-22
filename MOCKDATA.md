@@ -1,7 +1,7 @@
 # Mockdata Specificatie: Jobsy (Westland & Haaglanden)
 
 Automatische seed via `JobsyDbSeeder` bij API-start:
-`DemoCompaniesSeeder` → `DemoUsersSeeder` → `ApplicationsAndWagesSeeder` → `PlatformSettingsSeeder` → `Sprint0DemoSeeder` → **`Sprint8MetricsSeeder`** → **`WestlandVacanciesSeeder`** → **`HaaglandenVacanciesSeeder`**.
+`DemoCompaniesSeeder` → `DemoUsersSeeder` → `ApplicationsAndWagesSeeder` → `PlatformSettingsSeeder` → `Sprint0DemoSeeder` → **`Sprint8MetricsSeeder`** → **`WestlandVacanciesSeeder`** → **`EnterpriseWestlandVacanciesSeeder`** → **`HaaglandenVacanciesSeeder`**.
 
 Bestaande DB’s krijgen media/settings/sprint0/sprint8/westland/haaglanden **backfill** (idempotent).
 
@@ -47,6 +47,19 @@ Plus regio “Den Haag Stad”, salaristabel De Fred, token packs/costs/PushBom-
 | **Leeftijd + uurloon** | Enkele retail-vacatures met salaristabel (jeugdschaal); lonen van ~€8,50 tot ~€18,50 |
 
 Guard: platform-log `"Westland banenkaart seed 50"`. Vacature-IDs `a1000000-0000-4000-8000-…`.
+
+### Enterprise Westland-testset (`enterprise@jobsy.local`)
+
+`EnterpriseWestlandVacanciesSeeder` voegt **50 Active** vacatures toe op **Westland Fresh Logistics** (de Westland-vestiging van De Fred, beheerd door `enterprise@jobsy.local`):
+
+| Kenmerk | Seed |
+|---------|------|
+| **Bedrijf** | Westland Fresh Logistics (`11111111-…`) |
+| **Locaties** | 10 Westland-kernen × 5 rollen (Naaldwijk, De Lier, Honselersdijk, Monster, Poeldijk, Wateringen, Maasdijk, Kwintsheul, 's-Gravenzande, Heenweg) |
+| **Rollen** | Orderpicker, kasmedewerker, inpakker, magazijn, chauffeur intern |
+| **IDs** | `a5000000-0000-4000-8000-…` |
+
+Guard: platform-log `"Enterprise Westland vacancies seed 50"`. Idempotent; bestaande demo-DB’s krijgen de 50 vacatures bij de volgende API-start.
 
 ### Banenkaart-testset (Haaglanden)
 
