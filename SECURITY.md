@@ -29,7 +29,7 @@
 
 ## C. Security Headers & Error Handling (Middleware)
 De ASP.NET Core pipeline stuurt standaard:
-- `Content-Security-Policy` (API + Web; Blazor-compatible op Web)
+- `Content-Security-Policy` (API + Web). Web scripts use a **per-request nonce** (no `script-src 'unsafe-inline'`). Style *attributes* remain `'unsafe-inline'` (Razor/MapLibre CSS variables); `<style>` elements use the same nonce. Blazor Server still needs `'unsafe-eval'`.
 - `X-Content-Type-Options: nosniff`
 - `X-Frame-Options: DENY`
 - `Referrer-Policy`, `Permissions-Policy`

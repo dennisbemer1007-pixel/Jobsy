@@ -17,7 +17,9 @@ public class HomepagePerformanceGuardTests
         var appCssLinkEnd = app.IndexOf("/>", appCssIdx, StringComparison.Ordinal);
         var appCssLink = app[appCssLinkStart..(appCssLinkEnd + 2)];
         Assert.Contains("media=\"print\"", appCssLink);
-        Assert.Contains("this.media='all'", appCssLink);
+        Assert.Contains("data-app-css", appCssLink);
+        Assert.DoesNotContain("onload=", appCssLink);
+        Assert.Contains("link.media = \"all\"", app);
 
         var home = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "Components", "Pages", "Home.razor"));
         Assert.DoesNotContain("lib/maplibre/maplibre-gl.css", home);

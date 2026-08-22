@@ -47,7 +47,7 @@ De banenkaart blijft de first-paint kernervaring (geen Funda-klik-om-te-tonen). 
 - Blazor Server: `UseWebSockets` (keep-alive 15s). Eén Render Starter-instance, dus geen sticky sessions nodig. Long Polling blijft de fallback als een proxy WebSockets blokkeert.
 - `www.` → apex 301 (Cloudflare doet dit al; middleware is fallback).
 - `HEAD` op `/` geeft geen 405 meer (zelfde headers als GET, zonder body).
-- CSP zonder `unpkg.com`.
+- CSP zonder `unpkg.com`. Scripts krijgen een per-request nonce (geen `script-src 'unsafe-inline'`).
 
 ## Meten
 

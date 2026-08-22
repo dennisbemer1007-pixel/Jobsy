@@ -119,28 +119,9 @@ if (app.Environment.IsDevelopment())
 
 app.UseStaticFiles(WebPerformanceExtensions.JobsyStaticFiles());
 
-app.Use(async (context, next) =>
-{
-    context.Response.Headers["X-Content-Type-Options"] = "nosniff";
-    context.Response.Headers["X-Frame-Options"] = "DENY";
-    context.Response.Headers["Referrer-Policy"] = "strict-origin-when-cross-origin";
-    context.Response.Headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=(self)";
-    // Blazor Server needs inline scripts/styles and websockets; keep frame/base locked down.
-    // MapLibre is self-hosted — OpenFreeMap tiles/styles load over HTTPS; no unpkg in the critical path.
-    context.Response.Headers["Content-Security-Policy"] =
-        "default-src 'self'; " +
-        "base-uri 'self'; " +
-        "frame-ancestors 'none'; " +
-        "frame-src 'self' https://www.youtube-nocookie.com https://www.youtube.com https://player.vimeo.com https://vimeo.com; " +
-        "object-src 'none'; " +
-        "img-src 'self' data: https: blob:; " +
-        "font-src 'self' data: https://fonts.gstatic.com https://tiles.openfreemap.org; " +
-        "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; " +
-        "script-src 'self' 'unsafe-inline' 'unsafe-eval'; " +
-        "connect-src 'self' wss: ws: https:; " +
-        "worker-src 'self' blob:;";
-    await next();
-});
+// MapLibre is self-hosted — OpenFreeMap tiles/styles load over HTTPS; no unpkg.
+// Scripts use a per-request nonce (no script-src 'unsafe-inline').
+app.UseMiddleware<SecurityHeadersMiddleware>();
 
 app.UseRateLimiter();
 

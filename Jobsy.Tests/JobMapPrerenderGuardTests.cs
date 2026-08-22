@@ -195,13 +195,15 @@ public class JobMapPrerenderGuardTests
 
         var photo = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "Components", "VacancyPhoto.razor"));
         Assert.Contains("data-logo-fallback", photo);
-        Assert.Contains("jobsyLogoFallback", photo);
+        Assert.DoesNotContain("onerror=", photo);
 
         var logo = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "Components", "LobsyLogo.razor"));
-        Assert.Contains("jobsyLogoFallback", logo);
+        Assert.Contains("data-logo-fallback", logo);
+        Assert.DoesNotContain("onerror=", logo);
 
         var js = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "wwwroot", "js", "jobMap.js"));
-        Assert.Contains("jobsyLogoFallback", js);
+        Assert.Contains("data-logo-fallback", js);
+        Assert.DoesNotContain("onerror=", js);
     }
 
     [Fact]

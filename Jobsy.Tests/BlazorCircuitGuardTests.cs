@@ -34,6 +34,7 @@ public class BlazorCircuitGuardTests
         Assert.Contains("type === \"unload\"", app);
         Assert.Contains("pagehide", app);
         Assert.Contains("js/app-core.js?v=", app);
+        Assert.Contains("nonce=\"@Nonce\"", app);
         Assert.Contains("defer", app);
     }
 
