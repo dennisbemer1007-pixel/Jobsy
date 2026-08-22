@@ -3286,6 +3286,34 @@ a {
     margin-left: auto;
 }
 
+.vacancy-location__eta {
+    flex: 1 1 9rem;
+    margin: 0;
+    min-width: 0;
+    font-size: 0.88rem;
+    font-weight: 700;
+    color: var(--brand);
+    line-height: 1.25;
+}
+
+.vacancy-location__eta-value {
+    white-space: nowrap;
+}
+
+.vacancy-location__eta-hint,
+.vacancy-location__eta-loading {
+    font-weight: 600;
+    color: var(--muted);
+    font-size: 0.8rem;
+}
+
+.vacancy-location__required {
+    margin: 0.3rem 0 0;
+    color: var(--muted);
+    font-size: 0.78rem;
+    font-weight: 600;
+}
+
 .vacancy-location__btn {
     min-height: 2.1rem;
     padding: 0.28rem 0.75rem;
@@ -3295,6 +3323,20 @@ a {
     .vacancy-media--split {
         grid-template-columns: minmax(0, 1fr);
         height: auto;
+    }
+
+    .vacancy-location__eta {
+        flex-basis: 100%;
+    }
+
+    .apply-panel--guest {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .apply-panel--guest a.apply-flow__primary {
+        width: 100%;
+        margin-left: 0;
     }
 
     .vacancy-media--split .vacancy-location__map-wrap {
@@ -11836,6 +11878,44 @@ button.linkish:hover {
     border-color: color-mix(in srgb, #1f7a45 25%, var(--border));
 }
 
+.apply-panel--guest {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.55rem 1rem;
+    padding: 0.7rem 0.9rem;
+}
+
+.apply-panel--guest__copy {
+    flex: 1 1 14rem;
+    min-width: 0;
+}
+
+.apply-panel--guest .apply-flow__title {
+    margin: 0;
+    font-size: 1.05rem;
+}
+
+.apply-panel--guest .apply-panel__text {
+    margin: 0.2rem 0 0;
+    font-size: 0.88rem;
+    line-height: 1.35;
+}
+
+.apply-panel--guest a.apply-flow__primary {
+    width: auto;
+    min-width: 12.5rem;
+    max-width: none;
+    margin-left: auto;
+    min-height: 2.45rem;
+    padding: 0.45rem 1.1rem;
+    align-self: center;
+}
+
+.apply-flow:has(.apply-panel--guest) {
+    margin-top: 0.85rem;
+}
+
 .apply-panel__title {
     margin: 0;
     font-size: 1.02rem;
@@ -12158,8 +12238,16 @@ a.apply-flow__secondary {
         padding: 1.65rem 2rem 1.75rem;
     }
 
+    .apply-panel--guest {
+        padding: 0.75rem 1.1rem;
+    }
+
     .apply-flow__title {
         font-size: 1.5rem;
+    }
+
+    .apply-panel--guest .apply-flow__title {
+        font-size: 1.08rem;
     }
 }
 

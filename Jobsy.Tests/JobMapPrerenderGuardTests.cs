@@ -296,6 +296,8 @@ public class JobMapPrerenderGuardTests
         Assert.Contains(".vacancy-media:not(.vacancy-media--split) .detail-card__image", css);
         Assert.Contains("max-height: 16.5rem", css);
         Assert.Contains("align-items: center", css[css.IndexOf(".vacancy-location__actions {", StringComparison.Ordinal)..]);
+        Assert.Contains(".vacancy-location__eta", css);
+        Assert.Contains(".apply-panel--guest", css);
         Assert.DoesNotContain("text-transform: uppercase", css[css.IndexOf(".vacancy-location__transport {", StringComparison.Ordinal)..(css.IndexOf(".vacancy-location__transport {", StringComparison.Ordinal) + 400)]);
 
         var detail = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "Components", "Pages", "VacancyDetail.razor"));
@@ -305,6 +307,11 @@ public class JobMapPrerenderGuardTests
         Assert.Contains("PersistentComponentState", detail);
         Assert.Contains("panel-page--vacancy", detail);
         Assert.Contains("keepPrerendered", detail);
+        Assert.Contains("vacancy-location__eta", detail);
+        Assert.Contains("GetVacancyTravelAsync", detail);
+        Assert.Contains("apply-panel--guest", detail);
+        Assert.DoesNotContain("Vacancy.ProximityWink", detail);
+        Assert.DoesNotContain("± @_vacancy.TravelMinutes", detail);
         var mediaIdx = detail.IndexOf("class=\"vacancy-media", StringComparison.Ordinal);
         var titleIdx = detail.IndexOf("detail-card__top", StringComparison.Ordinal);
         var bodyIdx = detail.IndexOf("detail-card__body", StringComparison.Ordinal);

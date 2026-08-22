@@ -131,6 +131,24 @@
                                 <option value="Lopend">@Culture["Transport.Walk"]</option>
                             </select>
                         </label>
+                        <p class="vacancy-location__eta" aria-live="polite">
+                            @if (_travelLoading)
+                            {
+                                <span class="vacancy-location__eta-loading">@Culture["Vacancy.TravelLoading"]</span>
+                            }
+                            else if (_vacancy.TravelMinutes is int minutes && _vacancy.DistanceKm is double km)
+                            {
+                                <span class="vacancy-location__eta-value">@FormatTravelEta(minutes, km)</span>
+                            }
+                            else if (_hasOrigin)
+                            {
+                                <span class="vacancy-location__eta-hint">@Culture["Vacancy.TravelUnavailable"]</span>
+                            }
+                            else
+                            {
+                                <span class="vacancy-location__eta-hint">@Culture["Vacancy.TravelNeedOrigin"]</span>
+                            }
+                        </p>
                         <div class="vacancy-location__buttons">
                             <button class="engagement-btn vacancy-location__btn" type="button" disabled="@_openingRoute" @onclick="OpenRouteAsync">
                                 @Culture["Vacancy.Route"]
@@ -140,6 +158,12 @@
                             </button>
                         </div>
                     </div>
+                    @if (_vacancy.RequiredTransport.Length > 0)
+                    {
+                        <p class="vacancy-location__required">
+                            @Culture["Vacancy.Transport"]: @string.Join(" · ", _vacancy.RequiredTransport.Select(LocalizeTransport))
+                        </p>
+                    }
                 }
             }
 
@@ -317,37 +341,6 @@
                             @if (_vacancy.MinimumReferences is > 0)
                             {
                                 <span class="lobsy-proximity__chip">@Culture.Format("Vacancy.MinReferences", _vacancy.MinimumReferences)</span>
-                            }
-                        </p>
-                    </div>
-                </aside>
-            }
-            @if (_vacancy.TravelMinutes is not null || _vacancy.RequiredTransport.Length > 0)
-            {
-                <aside class="lobsy-proximity" aria-label="@Culture["Vacancy.ProximityLabel"]">
-                    <span class="lobsy-proximity__icon">
-                        <LobsyMark />
-                    </span>
-                    <div class="lobsy-proximity__body">
-                        <p class="lobsy-proximity__title">@Culture["Vacancy.ProximityWink"]</p>
-                        <p class="lobsy-proximity__meta">
-                            @if (_vacancy.TravelMinutes is not null)
-                            {
-                                <span class="lobsy-proximity__chip">
-                                    ± @_vacancy.TravelMinutes @Culture["Discovery.Minutes"] @Culture["Vacancy.FromYourLocation"]
-                                </span>
-                            }
-                            @if (_vacancy.DistanceKm is not null)
-                            {
-                                <span class="lobsy-proximity__chip lobsy-proximity__chip--soft">
-                                    @_vacancy.DistanceKm.Value.ToString("0.0") km
-                                </span>
-                            }
-                            @if (_vacancy.RequiredTransport.Length > 0)
-                            {
-                                <span class="lobsy-proximity__chip lobsy-proximity__chip--soft">
-                                    @Culture["Vacancy.Transport"]: @string.Join(" · ", _vacancy.RequiredTransport.Select(LocalizeTransport))
-                                </span>
                             }
                         </p>
                     </div>
@@ -633,11 +626,11 @@
                         @* Hide Solliciteren for admin / intermediary / manager roles; only anonymous see login-to-apply. *@
                         <AuthorizeView Context="authState">
                             <NotAuthorized Context="anon">
-                                <div class="apply-panel">
-                                    <header class="apply-flow__header">
+                                <div class="apply-panel apply-panel--guest">
+                                    <div class="apply-panel--guest__copy">
                                         <h2 class="apply-flow__title">@Culture["Apply.Title"]</h2>
-                                    </header>
-                                    <p class="apply-panel__text">@Culture["Apply.LoginToApply"]</p>
+                                        <p class="apply-panel__text">@Culture["Apply.LoginToApply"]</p>
+                                    </div>
                                     <a class="login-submit apply-flow__primary" href="@LoginUrl">@Culture["Apply.LoginCta"]</a>
                                 </div>
                             </NotAuthorized>
@@ -709,6 +702,9 @@
     private bool _savingDob;
     private DateOnly? _dobInput;
     private string _transport = "Fiets";
+    private bool _transportTouched;
+    private bool _hasOrigin;
+    private bool _travelLoading;
     private string? _message;
     private bool _clickRecorded;
     private bool _authenticatorEnabled;
@@ -836,6 +832,9 @@
         && !(_vacancy.Latitude == 0 && _vacancy.Longitude == 0)
         && Math.Abs(_vacancy.Latitude) <= 90
         && Math.Abs(_vacancy.Longitude) <= 180;
+
+    private string FormatTravelEta(int minutes, double km)
+        => $"{minutes} {Culture["Discovery.Minutes"]} · {km.ToString("0.0")} km";
 
     private string? VideoEmbedUrl =>
         _vacancy is null ? null : VideoEmbed.TryGetEmbedUrl(_vacancy.VideoUrl);
@@ -1088,6 +1087,7 @@
                 }
 
                 await LoadAsync(origin);
+                _hasOrigin = origin is not null;
                 await LoadLikeAsync();
 
                 // LoadLike may populate DOB when the early profile fetch missed — align wages once.
@@ -1267,6 +1267,17 @@
                 {
                     _motivation = prefs.DefaultMotivation!;
                 }
+
+                if (!_transportTouched
+                    && IsKnownTransport(prefs.PreferredTransport)
+                    && !string.Equals(_transport, prefs.PreferredTransport!.Trim(), StringComparison.OrdinalIgnoreCase))
+                {
+                    _transport = NormalizeTransport(prefs.PreferredTransport);
+                    if (_hasOrigin)
+                    {
+                        await RefreshTravelAsync();
+                    }
+                }
                 _profileReadyForApply =
                     _profileHasAvailability
                     && _profileHasLicense
@@ -1401,19 +1412,78 @@
 
     private async Task OnTransportChanged(ChangeEventArgs e)
     {
-        _transport = e.Value?.ToString() ?? "Fiets";
+        _transport = NormalizeTransport(e.Value?.ToString());
+        _transportTouched = true;
+        await RefreshTravelAsync();
+    }
 
+    private static bool IsKnownTransport(string? value)
+        => value?.Trim() is "Fiets" or "Auto" or "OV" or "Lopend";
+
+    private static string NormalizeTransport(string? value)
+        => value?.Trim() switch
+        {
+            "Auto" => "Auto",
+            "OV" => "OV",
+            "Lopend" => "Lopend",
+            _ => "Fiets"
+        };
+
+    private async Task<OriginPoint?> TryGetStoredOriginAsync()
+    {
         try
         {
             var dict = await Js.InvokeAsync<Dictionary<string, double>?>("jobsyGeo.getStoredOrigin");
-            if (dict is not null && dict.TryGetValue("lat", out var lat) && dict.TryGetValue("lng", out var lng))
+            if (dict is not null && dict.TryGetValue("lat", out var lat) && dict.TryGetValue("lng", out var lng)
+                && double.IsFinite(lat) && double.IsFinite(lng)
+                && !(lat == 0 && lng == 0))
             {
-                await LoadAsync(new OriginPoint { Latitude = lat, Longitude = lng });
+                return new OriginPoint { Latitude = lat, Longitude = lng };
             }
         }
         catch
         {
-            // ignore
+            // optional
+        }
+
+        return null;
+    }
+
+    private async Task RefreshTravelAsync()
+    {
+        if (_vacancy is null || !HasLocation)
+        {
+            return;
+        }
+
+        _travelLoading = true;
+        try
+        {
+            var origin = await TryGetStoredOriginAsync();
+            _hasOrigin = origin is not null;
+            if (origin is null)
+            {
+                _vacancy.TravelMinutes = null;
+                _vacancy.DistanceKm = null;
+                return;
+            }
+
+            var travel = await Api.GetVacancyTravelAsync(
+                Id,
+                origin.Latitude,
+                origin.Longitude,
+                _transport);
+            _vacancy.TravelMinutes = travel?.TravelMinutes;
+            _vacancy.DistanceKm = travel?.DistanceKm;
+        }
+        catch
+        {
+            _vacancy.TravelMinutes = null;
+            _vacancy.DistanceKm = null;
+        }
+        finally
+        {
+            _travelLoading = false;
         }
     }
 

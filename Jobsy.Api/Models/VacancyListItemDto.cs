@@ -82,3 +82,6 @@ public record VacancyListItemDto(
 
 /// <summary>Public MapLibre opening camera. Coordinates only — no vacancy or employer PII.</summary>
 public sealed record VacancyMapViewDto(double Lat, double Lng, double Zoom, int PinCount);
+
+/// <summary>Exact origin→vacancy travel for the selected transport. No PII.</summary>
+public sealed record VacancyTravelDto(int? TravelMinutes, double? DistanceKm);

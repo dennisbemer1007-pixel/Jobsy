@@ -154,6 +154,11 @@ public static class DependencyInjection
         });
 
         services.AddScoped<IRoutingService, MockRoutingService>();
+        services.AddHttpClient(OsrmRoutingService.OsrmClientName, client =>
+            OsrmRoutingService.ConfigureClient(client, TimeSpan.FromSeconds(8)));
+        services.AddHttpClient(OsrmRoutingService.TransitClientName, client =>
+            OsrmRoutingService.ConfigureClient(client, TimeSpan.FromSeconds(12)));
+        services.AddScoped<IExactRoutingService, OsrmRoutingService>();
         services.AddScoped<ISalaryService, SalaryService>();
         services.AddScoped<ICompanyAuthorizationService, CompanyAuthorizationService>();
         services.AddScoped<ICompanyApiKeyService, CompanyApiKeyService>();

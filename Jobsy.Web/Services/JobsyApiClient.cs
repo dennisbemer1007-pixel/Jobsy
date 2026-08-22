@@ -261,6 +261,32 @@ public sealed class JobsyApiClient : IAsyncDisposable
         return await _http.GetFromJsonAsync<VacancyListItem>(url, ct);
     }
 
+    public async Task<VacancyTravelResult?> GetVacancyTravelAsync(
+        Guid id,
+        double originLat,
+        double originLng,
+        string? transport = null,
+        CancellationToken ct = default)
+    {
+        var inv = System.Globalization.CultureInfo.InvariantCulture;
+        var url =
+            $"api/vacancies/{id:D}/travel" +
+            $"?originLat={originLat.ToString(inv)}" +
+            $"&originLng={originLng.ToString(inv)}";
+        if (!string.IsNullOrWhiteSpace(transport))
+        {
+            url += $"&transport={Uri.EscapeDataString(transport)}";
+        }
+
+        using var response = await _http.GetAsync(url, ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            return null;
+        }
+
+        return await response.Content.ReadFromJsonAsync<VacancyTravelResult>(cancellationToken: ct);
+    }
+
     public async Task<IReadOnlyList<VacancyListItem>> GetManagedVacanciesAsync(CancellationToken ct = default)
     {
         using var response = await _http.GetAsync("api/vacancies/manage", ct);

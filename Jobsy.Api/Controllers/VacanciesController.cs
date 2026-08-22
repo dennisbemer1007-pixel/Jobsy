@@ -26,7 +26,6 @@ public class VacanciesController : ControllerBase
     private readonly JobsyDbContext _db;
     private readonly ICompanyAuthorizationService _companyAuth;
     private readonly IVacancyProductService _products;
-    private readonly IRoutingService _routing;
     private readonly IUserLookupService _users;
     private readonly ISalaryService _salary;
     private readonly IVacancyContentModerationService _moderation;
@@ -35,12 +34,13 @@ public class VacanciesController : ControllerBase
     private readonly IPlatformFeatureService _features;
     private readonly IUserNotificationService _notifications;
     private readonly IVacancyDiscoveryIndex _discoveryIndex;
+    private readonly IExactRoutingService _exactRouting;
 
     public VacanciesController(
         JobsyDbContext db,
         ICompanyAuthorizationService companyAuth,
         IVacancyProductService products,
-        IRoutingService routing,
+        IExactRoutingService exactRouting,
         IUserLookupService users,
         ISalaryService salary,
         IVacancyContentModerationService moderation,
@@ -53,7 +53,6 @@ public class VacanciesController : ControllerBase
         _db = db;
         _companyAuth = companyAuth;
         _products = products;
-        _routing = routing;
         _users = users;
         _salary = salary;
         _moderation = moderation;
@@ -62,6 +61,7 @@ public class VacanciesController : ControllerBase
         _features = features;
         _notifications = notifications;
         _discoveryIndex = discoveryIndex;
+        _exactRouting = exactRouting;
     }
 
     /// <summary>
@@ -234,6 +234,57 @@ public class VacanciesController : ControllerBase
         }
 
         return NotFound();
+    }
+
+    /// <summary>
+    /// Exact travel time and distance from the caller's origin for one transport mode.
+    /// Recalculated independently of the full vacancy payload so changing "Jouw vervoer" stays cheap.
+    /// </summary>
+    [HttpGet("{id:guid}/travel")]
+    [AllowAnonymous]
+    public async Task<ActionResult<VacancyTravelDto>> GetTravel(
+        Guid id,
+        [FromQuery] double originLat,
+        [FromQuery] double originLng,
+        [FromQuery] string? transport,
+        CancellationToken cancellationToken = default)
+    {
+        if (!IsFiniteCoordinate(originLat, originLng))
+        {
+            return BadRequest();
+        }
+
+        var row = await _db.Vacancies
+            .AsNoTracking()
+            .Where(v => v.Id == id)
+            .Select(v => new
+            {
+                v.Status,
+                v.StartDate,
+                v.EndDate,
+                v.Location
+            })
+            .FirstOrDefaultAsync(cancellationToken);
+
+        if (row is null)
+        {
+            return NotFound();
+        }
+
+        var today = DateOnly.FromDateTime(DateTime.UtcNow);
+        if (!VacancyVisibilityRules.IsPubliclyVisible(row.Status, row.StartDate, row.EndDate, today))
+        {
+            return NotFound();
+        }
+
+        var (minutes, km) = await TryExactRouteAsync(
+            originLat,
+            originLng,
+            row.Location.Latitude,
+            row.Location.Longitude,
+            transport,
+            cancellationToken);
+        return Ok(new VacancyTravelDto(minutes, km));
     }
 
     /// <summary>
@@ -1209,17 +1260,13 @@ public class VacanciesController : ControllerBase
             return await MapToDtoAsync(vacancy, showWage, targetLanguage, ageYears, cancellationToken: cancellationToken);
         }
 
-        var mode = TransportLabels.Parse(transport);
-        var route = await _routing.GetRouteAsync(
+        var (travelMinutes, distanceKm) = await TryExactRouteAsync(
             originLat.Value,
             originLng.Value,
             vacancy.Location.Latitude,
             vacancy.Location.Longitude,
-            mode,
+            transport,
             cancellationToken);
-
-        var travelMinutes = (int)Math.Ceiling(route.DurationSeconds / 60.0);
-        var distanceKm = Math.Round(route.DistanceMeters / 1000.0, 2);
         return await MapToDtoAsync(
             vacancy,
             showWage,
@@ -1229,6 +1276,46 @@ public class VacanciesController : ControllerBase
             distanceKm: distanceKm,
             cancellationToken: cancellationToken);
     }
+
+    private async Task<(int? Minutes, double? DistanceKm)> TryExactRouteAsync(
+        double fromLat,
+        double fromLng,
+        double toLat,
+        double toLng,
+        string? transport,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            var mode = TransportLabels.Parse(transport);
+            var route = await _exactRouting.TryGetRouteAsync(
+                fromLat,
+                fromLng,
+                toLat,
+                toLng,
+                mode,
+                cancellationToken);
+            if (route is null)
+            {
+                return (null, null);
+            }
+
+            var minutes = Math.Max(1, (int)Math.Round(route.DurationSeconds / 60.0, MidpointRounding.AwayFromZero));
+            var km = Math.Round(route.DistanceMeters / 1000.0, 2);
+            return (minutes, km);
+        }
+        catch
+        {
+            return (null, null);
+        }
+    }
+
+    private static bool IsFiniteCoordinate(double lat, double lng)
+        => double.IsFinite(lat)
+           && double.IsFinite(lng)
+           && Math.Abs(lat) <= 90
+           && Math.Abs(lng) <= 180
+           && !(lat == 0 && lng == 0);
 
     private async Task<string> ResolveTargetLanguageAsync(CancellationToken cancellationToken)
     {

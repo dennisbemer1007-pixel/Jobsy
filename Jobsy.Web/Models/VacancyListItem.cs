@@ -196,6 +196,12 @@ public sealed class OriginPoint
     public double Longitude { get; set; }
 }
 
+public sealed class VacancyTravelResult
+{
+    public int? TravelMinutes { get; set; }
+    public double? DistanceKm { get; set; }
+}
+
 public sealed record MockInterviewChatMessage(string Role, string Content);
 
 public sealed class MockInterviewReply

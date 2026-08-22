@@ -100,6 +100,8 @@ public class LocalizationTests
             "Vacancy.SearchCompanyOrTitlePlaceholder",
             "Vacancy.PlacementDate",
             "Vacancy.Deadline",
+            "Vacancy.TravelLoading",
+            "Vacancy.TravelNeedOrigin",
             "Admin.Candidate",
             "Admin.Vacancy",
             "Sales.Dashboard",
