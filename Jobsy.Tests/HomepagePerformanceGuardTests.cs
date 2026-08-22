@@ -9,6 +9,35 @@ namespace Jobsy.Tests;
 public class HomepagePerformanceGuardTests
 {
     [Fact]
+    public void First_paint_stylesheets_are_non_blocking()
+    {
+        var app = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "Components", "App.razor"));
+        var appCssIdx = app.IndexOf("css/app.css", StringComparison.Ordinal);
+        var appCssLinkStart = app.LastIndexOf("<link", appCssIdx, StringComparison.Ordinal);
+        var appCssLinkEnd = app.IndexOf("/>", appCssIdx, StringComparison.Ordinal);
+        var appCssLink = app[appCssLinkStart..(appCssLinkEnd + 2)];
+        Assert.Contains("media=\"print\"", appCssLink);
+        Assert.Contains("this.media='all'", appCssLink);
+
+        var home = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "Components", "Pages", "Home.razor"));
+        var mapCssIdx = home.IndexOf("maplibre-gl.css", StringComparison.Ordinal);
+        var mapCssLinkStart = home.LastIndexOf("<link", mapCssIdx, StringComparison.Ordinal);
+        var mapCssLinkEnd = home.IndexOf("/>", mapCssIdx, StringComparison.Ordinal);
+        var mapCssLink = home[mapCssLinkStart..(mapCssLinkEnd + 2)];
+        Assert.Contains("rel=\"stylesheet\"", mapCssLink);
+        Assert.Contains("media=\"print\"", mapCssLink);
+        Assert.Contains("this.media='all'", mapCssLink);
+        Assert.DoesNotContain("fetchpriority", mapCssLink);
+
+        var maps = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "wwwroot", "js", "maps-loader.js"));
+        Assert.Contains("link.media = \"print\"", maps);
+        Assert.DoesNotContain("link.setAttribute(\"fetchpriority\"", maps);
+        var bundle = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "wwwroot", "js", "app-core.js"));
+        Assert.Contains("link.media = \"print\"", bundle);
+        Assert.DoesNotContain("link.setAttribute(\"fetchpriority\"", bundle);
+    }
+
+    [Fact]
     public void Discovery_does_not_render_the_full_card_list_on_the_mobile_map()
     {
         var discovery = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "Components", "VacancyDiscovery.razor"));
@@ -169,6 +198,8 @@ public class HomepagePerformanceGuardTests
         Assert.Contains("rel=\"preload\"", home);
         Assert.Contains("as=\"script\"", home);
         Assert.Contains("as=\"fetch\"", home);
+        Assert.Contains("media=\"print\"", home);
+        Assert.Contains("this.media='all'", home);
         var workerIdx = home.IndexOf("csp-worker.js", StringComparison.Ordinal);
         Assert.True(workerIdx > 0);
         var workerSlice = home.Substring(workerIdx, Math.Min(90, home.Length - workerIdx));

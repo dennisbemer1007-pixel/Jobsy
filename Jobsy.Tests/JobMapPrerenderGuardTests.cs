@@ -16,6 +16,14 @@ public class JobMapPrerenderGuardTests
         Assert.DoesNotContain("/lib/leaflet/leaflet.min.js", home);
         Assert.DoesNotContain("/lib/leaflet/leaflet.css", home);
         Assert.Contains("lib/maplibre/maplibre-gl.css", home);
+        var mapCssIdx = home.IndexOf("maplibre-gl.css", StringComparison.Ordinal);
+        var mapCssLinkStart = home.LastIndexOf("<link", mapCssIdx, StringComparison.Ordinal);
+        var mapCssLinkEnd = home.IndexOf("/>", mapCssIdx, StringComparison.Ordinal);
+        Assert.True(mapCssLinkStart >= 0 && mapCssLinkEnd > mapCssLinkStart);
+        var mapCssLink = home[mapCssLinkStart..(mapCssLinkEnd + 2)];
+        Assert.Contains("media=\"print\"", mapCssLink);
+        Assert.Contains("this.media='all'", mapCssLink);
+        Assert.DoesNotContain("fetchpriority", mapCssLink);
         Assert.Contains("lib/maplibre/maplibre-gl-csp.js", home);
         Assert.Contains("jobsyMapLibre.min.js", home);
         Assert.Contains("jobMap.min.js", home);
@@ -34,6 +42,7 @@ public class JobMapPrerenderGuardTests
         Assert.Contains("jobMap.min.js", maps);
         Assert.Contains("warmDiscovery", maps);
         Assert.Contains("this.ensure(\"discovery\")", maps);
+        Assert.Contains("link.media = \"print\"", maps);
         Assert.DoesNotContain("jobMap.boot", maps);
     }
 

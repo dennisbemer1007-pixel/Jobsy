@@ -1,7 +1,8 @@
 window.jobsyMaps = (function () {
     "use strict";
 
-    // MapLibre CSS/JS are preloaded from Home <head> (script, not the worker).
+    // MapLibre CSS is linked from Home as media=print (non-blocking). JS is
+    // preloaded from Home <head> (script, not the worker).
     // The worker is preloaded as fetch so it is not unused main-thread JS.
     // Injected here as soon as #job-map exists (or Blazor calls ensure).
     var pending = {};
@@ -50,9 +51,12 @@ window.jobsyMaps = (function () {
             var link = document.createElement("link");
             link.rel = "stylesheet";
             link.href = href;
-            link.setAttribute("fetchpriority", "high");
+            link.media = "print";
             link.setAttribute("data-jobsy-map", href);
-            link.onload = function () { resolve(); };
+            link.onload = function () {
+                link.media = "all";
+                resolve();
+            };
             link.onerror = reject;
             document.head.appendChild(link);
         });
