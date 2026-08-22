@@ -81,6 +81,7 @@ public class HomepagePerformanceGuardTests
 
         var layout = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "Components", "Layout", "MainLayout.razor"));
         Assert.Contains("RendererInfo.IsInteractive", layout);
+        Assert.Contains("Never on first paint", layout);
         Assert.Contains("LobsyAssistantChat", layout);
         Assert.Contains("FeedbackWidget", layout);
     }

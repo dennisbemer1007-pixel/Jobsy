@@ -67,6 +67,8 @@ public class JobMapPrerenderGuardTests
         Assert.Contains("overlayFitPadding", js);
         Assert.Contains("scheduleTravelRingRedraw", js);
         Assert.Contains("onTravelRingStyleData", js);
+        Assert.Contains("deferMapReveal", js);
+        Assert.Contains("finishOpeningFrame", js);
         Assert.Contains("jobsy-travel-rings", js);
         Assert.Contains("sourceId + \"-halo\"", js);
         Assert.Contains("highlight-carousel--map", js);
@@ -81,7 +83,7 @@ public class JobMapPrerenderGuardTests
         var initFn = js[initIdx..initEnd];
         Assert.DoesNotContain("jumpToLocation", initFn);
         Assert.DoesNotContain("fitMapToVacancies", initFn);
-        Assert.Contains("setOrigin(filled.lat", initFn);
+        Assert.Contains("setOrigin(filledOrigin.lat", initFn);
         var setVacanciesInInit = js.IndexOf("setVacancies(vacancies || []);", initIdx, StringComparison.Ordinal);
         var tilesAfterVacancies = js.IndexOf("ensureVacancyTiles();", setVacanciesInInit, StringComparison.Ordinal);
         Assert.True(setVacanciesInInit > initIdx && tilesAfterVacancies > setVacanciesInInit);
@@ -145,6 +147,7 @@ public class JobMapPrerenderGuardTests
         Assert.Contains("https://tiles.openfreemap.org/styles/bright", helper);
         Assert.Contains("map.setStyle", helper);
         Assert.Contains("attributionControl: false", helper);
+        Assert.Contains("maplibreLogo: false", helper);
         Assert.Contains("cooperativeGestures: false", helper);
         Assert.Contains("dragPan: true", helper);
         Assert.Contains("touchAction", helper);
@@ -209,6 +212,8 @@ public class JobMapPrerenderGuardTests
         Assert.Contains("--map-land:#f8f4f0", app);
         Assert.Contains(".map-stage.is-live .job-map-placeholder", app);
         Assert.Contains(".lobsy-watermarks { display: none; }", app);
+        Assert.Contains(".app-shell:has(.jobsy-discovery) .lobsy-watermarks", app);
+        Assert.Contains("maplibregl-ctrl-logo", app);
         Assert.Contains(".jobsy-chrome { display: none; }", app);
         Assert.DoesNotContain("lib/leaflet/leaflet.min.js", app);
         Assert.DoesNotContain("lib/leaflet/leaflet.css", app);

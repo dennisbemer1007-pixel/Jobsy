@@ -1456,6 +1456,11 @@ a {
     pointer-events: none;
 }
 
+.app-shell:has(.jobsy-discovery) .lobsy-watermarks,
+.app-shell:has(.funda-layout) .lobsy-watermarks {
+    display: none !important;
+}
+
 .lobsy-watermark {
     position: fixed;
     top: 50%;

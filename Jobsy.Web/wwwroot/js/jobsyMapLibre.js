@@ -192,6 +192,7 @@ window.jobsyMapLibre = (function () {
             center: options.center,
             zoom: options.zoom,
             attributionControl: false,
+            maplibreLogo: false,
             cooperativeGestures: false,
             fadeDuration: 0,
             pitch: spec.pitch,

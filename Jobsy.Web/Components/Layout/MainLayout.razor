@@ -119,6 +119,12 @@
     {
         get
         {
+            // Never on first paint: gutter logos flash over the banenkaart before CSS/layout settle.
+            if (!RendererInfo.IsInteractive)
+            {
+                return false;
+            }
+
             try
             {
                 var path = new Uri(Navigation.Uri).AbsolutePath.TrimEnd('/');

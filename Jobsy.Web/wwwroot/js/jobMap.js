@@ -24,6 +24,7 @@ window.jobMap = (function () {
     let ringRedrawBound = false;
     let ringStyleHandlerBound = false;
     let ringRedrawTries = 0;
+    let deferMapReveal = false;
 
     // Fallback only when the index has no pins. Prefer the precomputed view from #jobsy-map-boot.
     const NL_CENTER = [52.15, 5.2913];
@@ -1085,13 +1086,15 @@ window.jobMap = (function () {
         }
         const radius = maxRingRadiusMeters() * 1.12;
         if (!(radius > 40)) {
+            finishOpeningFrame();
             return;
         }
+        const opening = deferMapReveal || originHasBeenFramed !== true;
         const opts = {
             padding: overlayFitPadding(),
             maxZoom: 13,
-            animate: animate === true && !prefersReducedMotion(),
-            duration: animate === true && !prefersReducedMotion() ? 450 : 0
+            animate: animate === true && !opening && !prefersReducedMotion(),
+            duration: animate === true && !opening && !prefersReducedMotion() ? 450 : 0
         };
         if (!mapHasUsableSize()) {
             originNeedsFrame = true;
@@ -1099,6 +1102,7 @@ window.jobMap = (function () {
                 center: [lastOrigin.lng, lastOrigin.lat],
                 zoom: FILLED_LOCATION_ZOOM
             });
+            finishOpeningFrame();
             return;
         }
         try {
@@ -1107,6 +1111,7 @@ window.jobMap = (function () {
             originHasBeenFramed = true;
             cameraLocked = true;
             firstSizedFit = true;
+            finishOpeningFrame();
             map.once("idle", function () {
                 if (lastOrigin) {
                     drawTravelRings(lastOrigin.lat, lastOrigin.lng);
@@ -1118,6 +1123,7 @@ window.jobMap = (function () {
                 center: [lastOrigin.lng, lastOrigin.lat],
                 zoom: FILLED_LOCATION_ZOOM
             });
+            finishOpeningFrame();
         }
     }
 
@@ -1275,13 +1281,18 @@ window.jobMap = (function () {
     }
 
     function revealMapStage() {
-        if (!map) {
+        if (!map || deferMapReveal) {
             return;
         }
         const stage = map.getContainer() && map.getContainer().closest(".map-stage");
         if (stage) {
             stage.classList.add("is-live");
         }
+    }
+
+    function finishOpeningFrame() {
+        deferMapReveal = false;
+        revealMapStage();
     }
 
     function mapHasUsableSize() {
@@ -1545,7 +1556,6 @@ window.jobMap = (function () {
             restoreOverlays();
         }
         window.addEventListener("resize", invalidate);
-        revealMapStage();
     }
 
     function bindMapRuntime() {
@@ -1630,6 +1640,8 @@ window.jobMap = (function () {
         const openingPoints = collectVacancyPoints(vacancies || []);
         const openingView = options && options.view ? options.view : null;
         const preferFilledLocation = !options || options.preferFilledLocation !== false;
+        const filledOrigin = preferFilledLocation ? readFilledOrigin() : null;
+        const hasOrigin = !!(options && options.origin) || !!filledOrigin;
         const live = !!(map && typeof map.getContainer === "function"
             && map.getContainer() === el && el.isConnected);
 
@@ -1637,6 +1649,7 @@ window.jobMap = (function () {
             if (map) {
                 dispose();
             }
+            deferMapReveal = hasOrigin;
             try {
                 createMapInstance(el, openingPoints, openingView, preferFilledLocation);
             } catch (e) {
@@ -1653,19 +1666,22 @@ window.jobMap = (function () {
         bindMapRuntime();
 
         setVacancies(vacancies || []);
+        var originApplied = false;
         if (options && options.origin) {
             try {
                 setOrigin(options.origin.lat, options.origin.lng, options.travel);
+                originApplied = true;
             } catch (e) { }
-        } else if (preferFilledLocation) {
-            const filled = readFilledOrigin();
-            if (filled) {
-                try {
-                    setOrigin(filled.lat, filled.lng, options && options.travel);
-                } catch (e) { }
-            }
+        } else if (filledOrigin) {
+            try {
+                setOrigin(filledOrigin.lat, filledOrigin.lng, options && options.travel);
+                originApplied = true;
+            } catch (e) { }
         }
         ensureVacancyTiles();
+        if (!originApplied) {
+            finishOpeningFrame();
+        }
 
         invalidate();
     }
@@ -1789,10 +1805,16 @@ window.jobMap = (function () {
     }
 
     function setOrigin(lat, lng, travel) {
-        if (!map) return;
+        if (!map) {
+            finishOpeningFrame();
+            return;
+        }
         const la = Number(lat);
         const ln = Number(lng);
-        if (!Number.isFinite(la) || !Number.isFinite(ln)) return;
+        if (!Number.isFinite(la) || !Number.isFinite(ln)) {
+            finishOpeningFrame();
+            return;
+        }
 
         const originChanged = !sameOrigin(la, ln);
         normalizeTravelOptions(travel);
@@ -1804,6 +1826,8 @@ window.jobMap = (function () {
 
         if (originChanged || !originHasBeenFramed) {
             fitToOriginRings(originHasBeenFramed);
+        } else {
+            finishOpeningFrame();
         }
     }
 
@@ -1982,6 +2006,7 @@ window.jobMap = (function () {
         ringRedrawBound = false;
         ringStyleHandlerBound = false;
         ringRedrawTries = 0;
+        deferMapReveal = false;
         tileLayer = null;
         selectedId = null;
         zoomHandlerBound = false;
