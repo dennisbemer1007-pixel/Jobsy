@@ -39,4 +39,4 @@ De ASP.NET Core pipeline stuurt standaard:
 - **Sentry:** optioneel via `Sentry:Dsn` / `Sentry__Dsn` (API + Web); geen PII (`SendDefaultPii=false`).
 - **OTP pepper:** optioneel deploy-secret `VerificationCodes:Pepper` (fallback ingebouwde pepper blijft verifieerbaar tijdens rollout).
 - **Stub payouts:** alleen Development of expliciet `JobsyAuth:AllowStubPayments=true` (niet meer gekoppeld aan AllowDevelopmentAuth).
-- **Cookie consent:** banner + `Jobsy.CookieConsent` in localStorage; anonieme site-analytics pas na “Accepteer analytics”.
+- **Cookie consent:** banner + `Jobsy.CookieConsent` in localStorage and a first-party cookie; anonymous site-analytics POSTs only after “Accepteer cookies” (`X-Jobsy-Cookie-Consent` or the cookie).

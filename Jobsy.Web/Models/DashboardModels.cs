@@ -488,14 +488,6 @@ public class WageRateItem
     public DateOnly EffectiveFrom { get; set; }
 }
 
-public class WageCheckResult
-{
-    public decimal HourlyWage { get; set; }
-    public int AgeYears { get; set; }
-    public decimal Minimum { get; set; }
-    public bool MeetsMinimum { get; set; }
-}
-
 public class AdminCompanyItem
 {
     public Guid Id { get; set; }

@@ -243,8 +243,9 @@ public static class AuthServiceCollectionExtensions
             returnUrl = AuthRedirects.PostLoginUrl(returnUrl);
 
             ClaimsPrincipal? principal = null;
+            var allowDemoLogin = IsDemoLoginEnabled(http, configuration);
 
-            if (users.TryAuthenticate(email, password, out var user) && user is not null)
+            if (allowDemoLogin && users.TryAuthenticate(email, password, out var user) && user is not null)
             {
                 principal = CreateLocalPrincipal(user);
             }
@@ -282,6 +283,7 @@ public static class AuthServiceCollectionExtensions
         app.MapPost("/account/demo-login", async (
             HttpContext http,
             DemoUserStore users,
+            IConfiguration configuration,
             IAntiforgery antiforgery) =>
         {
             await antiforgery.ValidateRequestAsync(http);
@@ -291,7 +293,9 @@ public static class AuthServiceCollectionExtensions
             var returnUrl = string.IsNullOrWhiteSpace(form["returnUrl"]) ? "/home" : form["returnUrl"].ToString();
             returnUrl = AuthRedirects.PostLoginUrl(returnUrl);
 
-            if (!users.TryFindByEmail(email, out var user) || user is null)
+            if (!IsDemoLoginEnabled(http, configuration)
+                || !users.TryFindByEmail(email, out var user)
+                || user is null)
             {
                 return Results.Redirect($"/login?error=invalid&returnUrl={Uri.EscapeDataString(AuthRedirects.SafeLocalUrl(returnUrl))}");
             }
@@ -483,6 +487,13 @@ public static class AuthServiceCollectionExtensions
             CookieAuthenticationDefaults.AuthenticationScheme,
             http.User,
             CreateSessionAuthProperties());
+    }
+
+    private static bool IsDemoLoginEnabled(HttpContext http, IConfiguration configuration)
+    {
+        var env = http.RequestServices.GetRequiredService<IHostEnvironment>();
+        return env.IsDevelopment()
+               || configuration.GetValue("JobsyAuth:AllowDevelopmentAuth", false);
     }
 
     private static ClaimsPrincipal CreateLocalPrincipal(DemoUserOptions user)

@@ -49,6 +49,8 @@ public class CookieConsentAnalyticsTests
         Assert.True(MethodGatesConsent(client, clicksIdx));
         Assert.True(MethodGatesConsent(client, impressionsIdx));
         Assert.True(MethodGatesConsent(client, visitsIdx));
+        Assert.Contains("X-Jobsy-Cookie-Consent", client);
+        Assert.Contains("CookieConsentNames.HeaderName", client);
     }
 
     private static string FindRepoRoot()

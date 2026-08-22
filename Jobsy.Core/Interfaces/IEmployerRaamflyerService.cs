@@ -8,14 +8,6 @@ public enum RaamflyerFormat
     A3 = 1
 }
 
-public enum RaamflyerScope
-{
-    /// <summary>Single vestiging / filiaal.</summary>
-    Branch = 0,
-    /// <summary>All accessible branches under an organisation or region.</summary>
-    Overview = 1
-}
-
 public interface IEmployerRaamflyerService
 {
     /// <summary>

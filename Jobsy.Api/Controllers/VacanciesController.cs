@@ -12,6 +12,7 @@ using Jobsy.Infrastructure.Data;
 using Jobsy.Infrastructure.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 
 namespace Jobsy.Api.Controllers;
@@ -70,6 +71,7 @@ public class VacanciesController : ControllerBase
     /// </summary>
     [HttpGet]
     [AllowAnonymous]
+    [EnableRateLimiting("public-read")]
     public async Task<ActionResult<IEnumerable<VacancyListItemDto>>> GetActive(
         CancellationToken cancellationToken)
     {
@@ -87,6 +89,7 @@ public class VacanciesController : ControllerBase
     /// </summary>
     [HttpGet("map-view")]
     [AllowAnonymous]
+    [EnableRateLimiting("public-read")]
     public async Task<ActionResult<VacancyMapViewDto>> GetMapView(CancellationToken cancellationToken)
     {
         var view = await _discoveryIndex.GetMapViewAsync(cancellationToken);
@@ -102,6 +105,7 @@ public class VacanciesController : ControllerBase
     /// </summary>
     [HttpGet("discover")]
     [AllowAnonymous]
+    [EnableRateLimiting("public-read")]
     public async Task<ActionResult<IEnumerable<VacancyListItemDto>>> Discover(
         [FromQuery] double? originLat,
         [FromQuery] double? originLng,
@@ -191,6 +195,7 @@ public class VacanciesController : ControllerBase
 
     [HttpGet("{id:guid}")]
     [AllowAnonymous]
+    [EnableRateLimiting("public-read")]
     public async Task<ActionResult<VacancyListItemDto>> GetById(
         Guid id,
         [FromQuery] double? originLat,
@@ -242,6 +247,7 @@ public class VacanciesController : ControllerBase
     /// </summary>
     [HttpGet("{id:guid}/travel")]
     [AllowAnonymous]
+    [EnableRateLimiting("public-travel")]
     public async Task<ActionResult<VacancyTravelDto>> GetTravel(
         Guid id,
         [FromQuery] double originLat,

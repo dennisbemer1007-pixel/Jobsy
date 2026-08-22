@@ -306,13 +306,10 @@ public class CompaniesController : ControllerBase
         [FromBody] UpdateEmailVerificationPreferenceRequest request,
         CancellationToken cancellationToken)
     {
-        try
+        var gate = await EnsureCanMutateEmployerCompanySettingsAsync(companyId, cancellationToken);
+        if (gate is not null)
         {
-            await _companyAuth.EnsureCanAccessCompanyAsync(User, companyId, cancellationToken);
-        }
-        catch (Core.Exceptions.ForbiddenCompanyAccessException)
-        {
-            return Forbid();
+            return gate;
         }
 
         var company = await _db.Companies.FirstOrDefaultAsync(c => c.Id == companyId, cancellationToken);
@@ -337,13 +334,10 @@ public class CompaniesController : ControllerBase
         [FromBody] UpdateContactPreferenceRequest request,
         CancellationToken cancellationToken)
     {
-        try
+        var gate = await EnsureCanMutateEmployerCompanySettingsAsync(companyId, cancellationToken);
+        if (gate is not null)
         {
-            await _companyAuth.EnsureCanAccessCompanyAsync(User, companyId, cancellationToken);
-        }
-        catch (Core.Exceptions.ForbiddenCompanyAccessException)
-        {
-            return Forbid();
+            return gate;
         }
 
         var company = await _db.Companies.FirstOrDefaultAsync(c => c.Id == companyId, cancellationToken);
@@ -389,13 +383,10 @@ public class CompaniesController : ControllerBase
         [FromBody] UpdateBillingPreferenceRequest request,
         CancellationToken cancellationToken)
     {
-        try
+        var gate = await EnsureCanMutateEmployerCompanySettingsAsync(companyId, cancellationToken);
+        if (gate is not null)
         {
-            await _companyAuth.EnsureCanAccessCompanyAsync(User, companyId, cancellationToken);
-        }
-        catch (Core.Exceptions.ForbiddenCompanyAccessException)
-        {
-            return Forbid();
+            return gate;
         }
 
         var company = await _db.Companies.FirstOrDefaultAsync(c => c.Id == companyId, cancellationToken);
@@ -607,6 +598,37 @@ public class CompaniesController : ControllerBase
             company.KvkVerificationStatus.ToString(),
             company.PreferredPaymentMethod,
             company.RequireEmailVerificationForApplications);
+
+    /// <summary>
+    /// Intermediaries may change contact/billing/email-check only on their own organisation,
+    /// not on client vestigingen they can otherwise access for vacancy work.
+    /// </summary>
+    private async Task<ActionResult?> EnsureCanMutateEmployerCompanySettingsAsync(
+        Guid companyId,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            await _companyAuth.EnsureCanAccessCompanyAsync(User, companyId, cancellationToken);
+        }
+        catch (Core.Exceptions.ForbiddenCompanyAccessException)
+        {
+            return Forbid();
+        }
+
+        if (_companyAuth.GetPrimaryRole(User) != UserRole.Intermediary)
+        {
+            return null;
+        }
+
+        var caller = await _users.FindByPrincipalAsync(User, cancellationToken);
+        if (caller?.CompanyId is not Guid ownOrg || ownOrg != companyId)
+        {
+            return Forbid();
+        }
+
+        return null;
+    }
 
     private async Task EnsureActorMembershipAsync(Guid companyId, CancellationToken cancellationToken)
     {

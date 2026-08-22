@@ -3,6 +3,7 @@ using Jobsy.Core.Authorization;
 using Jobsy.Core.Entities;
 using Jobsy.Core.Enums;
 using Jobsy.Core.Interfaces;
+using Jobsy.Core.Privacy;
 using Jobsy.Core.Rules;
 using Jobsy.Infrastructure.Data;
 using Microsoft.AspNetCore.Authorization;
@@ -345,7 +346,9 @@ public class SettingsController : ControllerBase
         [FromBody] UpdatePlatformCompanyRequest request,
         CancellationToken cancellationToken)
     {
-        var snap = await _companySettings.UpdateAsync(
+        var snap = await _companySettings.GetAsync(cancellationToken);
+        var iban = IbanMasking.ResolveStoredIban(request.VatBufferIban, snap.VatBufferIban);
+        snap = await _companySettings.UpdateAsync(
             new PlatformCompanyUpdate(
                 request.CompanyName ?? "",
                 request.Slogan,
@@ -357,7 +360,7 @@ public class SettingsController : ControllerBase
                 request.VatNumber,
                 request.Phone,
                 request.Email,
-                request.VatBufferIban),
+                iban),
             cancellationToken);
         return Ok(ToCompanyDto(snap));
     }
@@ -517,7 +520,7 @@ public class SettingsController : ControllerBase
             snap.VatNumber,
             snap.Phone,
             snap.Email,
-            snap.VatBufferIban,
+            IbanMasking.ForApi(snap.VatBufferIban),
             snap.UpdatedAtUtc);
 
     private static IntegrationCredentialDto ToDto(IntegrationCredentialView view) =>

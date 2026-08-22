@@ -72,6 +72,13 @@ public class CompanyUsersController : ControllerBase
                 || u.CompanyMemberships.Any(m => accessible.Contains(m.CompanyId)));
         }
 
+        var caller = await _users.FindByPrincipalAsync(User, cancellationToken);
+        if (caller?.Role == UserRole.Intermediary && !_companyAuth.IsAdmin(User))
+        {
+            query = query.Where(u =>
+                u.Role == UserRole.Intermediary && u.CompanyId == caller.CompanyId);
+        }
+
         var users = await query
             .OrderBy(u => u.Email)
             .Select(u => new
@@ -265,6 +272,13 @@ public class CompanyUsersController : ControllerBase
             {
                 // Behoud User.Id zodat sollicitaties/profiel blijven bestaan; rol wordt manager.
                 promotedFromCandidate = true;
+            }
+            else if (callerRole == UserRole.Intermediary && existing.Role != UserRole.Intermediary)
+            {
+                return BadRequest(new
+                {
+                    message = "Je kunt geen bestaande werkgever overnemen als intermediair. Nodig alleen nieuwe collega's of andere intermediairs uit."
+                });
             }
             else
             {

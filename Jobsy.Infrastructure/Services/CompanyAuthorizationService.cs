@@ -76,9 +76,11 @@ public class CompanyAuthorizationService : ICompanyAuthorizationService
             return Array.Empty<Guid>();
         }
 
-        var claimIds = ReadCompanyIdsFromClaims(user);
+        var claimIds = ReadPluralCompanyIdsFromClaims(user);
         if (claimIds.Count == 0)
         {
+            // Singular CompanyId is the primary org, not an access-narrowing list.
+            // Regional/enterprise cookies often stamp only the primary; DB memberships stay authoritative.
             return dbIds;
         }
 
@@ -183,6 +185,27 @@ public class CompanyAuthorizationService : ICompanyAuthorizationService
                 }
             }
         }
+    }
+
+    /// <summary>
+    /// Explicit multi-company scope claim. Do not treat the singular primary <see cref="JobsyClaimTypes.CompanyId"/>
+    /// as a narrowing list — that claim is identity, not a deny-all-other-memberships flag.
+    /// </summary>
+    private static List<Guid> ReadPluralCompanyIdsFromClaims(ClaimsPrincipal user)
+    {
+        var ids = new HashSet<Guid>();
+        foreach (var claim in user.FindAll(JobsyClaimTypes.CompanyIds))
+        {
+            foreach (var part in claim.Value.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
+            {
+                if (Guid.TryParse(part, out var id))
+                {
+                    ids.Add(id);
+                }
+            }
+        }
+
+        return ids.ToList();
     }
 
     private static List<Guid> ReadCompanyIdsFromClaims(ClaimsPrincipal user)

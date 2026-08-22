@@ -740,9 +740,18 @@
         _inactiveKeys = [];
         if (_org.ParentCompanyId is null)
         {
-            _keys = (await Api.GetCompanyApiKeysAsync(_org.Id)).ToList();
-            _activeKey = _keys.FirstOrDefault(k => k.IsActive);
-            _inactiveKeys = _keys.Where(k => !k.IsActive).ToList();
+            try
+            {
+                _keys = (await Api.GetCompanyApiKeysAsync(_org.Id)).ToList();
+                _activeKey = _keys.FirstOrDefault(k => k.IsActive);
+                _inactiveKeys = _keys.Where(k => !k.IsActive).ToList();
+            }
+            catch
+            {
+                _keys = [];
+                _activeKey = null;
+                _inactiveKeys = [];
+            }
         }
 
         await LoadBillingHistoryAsync();

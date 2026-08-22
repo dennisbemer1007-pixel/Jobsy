@@ -4,6 +4,7 @@ using Jobsy.Core.ValueObjects;
 using Jobsy.Core.Authorization;
 using Jobsy.Core.Contracts;
 using Jobsy.Core.Email;
+using Jobsy.Core.Entities;
 using Jobsy.Core.Enums;
 using Jobsy.Core.Interfaces;
 using Jobsy.Core.Privacy;
@@ -70,7 +71,10 @@ public class ApplicationsController : ControllerBase
 
         if (accessible is not null)
         {
-            query = query.Where(a => accessible.Contains(a.Vacancy.CompanyId));
+            query = query.Where(a =>
+                accessible.Contains(a.Vacancy.CompanyId)
+                || (a.Vacancy.IntermediaryCompanyId != null
+                    && accessible.Contains(a.Vacancy.IntermediaryCompanyId.Value)));
         }
 
         var rows = await query
@@ -223,11 +227,7 @@ public class ApplicationsController : ControllerBase
             return Forbid();
         }
 
-        try
-        {
-            await _companyAuth.EnsureCanAccessCompanyAsync(User, application.Vacancy.CompanyId, cancellationToken);
-        }
-        catch (Core.Exceptions.ForbiddenCompanyAccessException)
+        if (!await CanAccessApplicationEmployerAsync(application, cancellationToken))
         {
             return Forbid();
         }
@@ -280,11 +280,7 @@ public class ApplicationsController : ControllerBase
                 return Forbid();
             }
 
-            try
-            {
-                await _companyAuth.EnsureCanAccessCompanyAsync(User, application.Vacancy.CompanyId, cancellationToken);
-            }
-            catch (Core.Exceptions.ForbiddenCompanyAccessException)
+            if (!await CanAccessApplicationEmployerAsync(application, cancellationToken))
             {
                 return Forbid();
             }
@@ -948,7 +944,7 @@ public class ApplicationsController : ControllerBase
         }
 
         var accessible = await _companyAuth.GetAccessibleCompanyIdsAsync(User, cancellationToken);
-        if (accessible is not null && !accessible.Contains(application.Vacancy.CompanyId))
+        if (!CanAccessApplicationCompany(application, accessible))
         {
             return Forbid();
         }
@@ -1064,7 +1060,7 @@ public class ApplicationsController : ControllerBase
         }
 
         var accessible = await _companyAuth.GetAccessibleCompanyIdsAsync(User, cancellationToken);
-        if (accessible is not null && !accessible.Contains(application.Vacancy.CompanyId))
+        if (!CanAccessApplicationCompany(application, accessible))
         {
             return Forbid();
         }
@@ -1627,6 +1623,32 @@ public class ApplicationsController : ControllerBase
     {
         var features = await _features.GetAsync(cancellationToken);
         return EmailLayout.Absolute(features.PublicWebBaseUrl, relativePath);
+    }
+
+    private static bool CanAccessApplicationCompany(
+        Application application,
+        IReadOnlyCollection<Guid>? accessible)
+    {
+        if (accessible is null)
+        {
+            return true;
+        }
+
+        if (accessible.Contains(application.Vacancy.CompanyId))
+        {
+            return true;
+        }
+
+        return application.Vacancy.IntermediaryCompanyId is Guid intermediaryId
+               && accessible.Contains(intermediaryId);
+    }
+
+    private async Task<bool> CanAccessApplicationEmployerAsync(
+        Application application,
+        CancellationToken cancellationToken)
+    {
+        var accessible = await _companyAuth.GetAccessibleCompanyIdsAsync(User, cancellationToken);
+        return CanAccessApplicationCompany(application, accessible);
     }
 
     private static string Html(string? value) => EmailLayout.Escape(value);

@@ -48,6 +48,9 @@ public class SoftWithdrawAndCandidateActionFlowTests
         Assert.Null(app.SnapshotAvailabilityJson);
         Assert.Null(app.DistanceKm);
         Assert.Null(app.EmailVerificationCode);
+        Assert.Null(app.CandidateAgeYears);
+        Assert.False(app.WorkPermitConfirmed);
+        Assert.Null(app.MatchPercent);
         Assert.Equal(0, app.CandidateEmployerCount);
         Assert.False(app.HasUploadedCv);
         Assert.Equal(0, app.CandidateReferenceCount);

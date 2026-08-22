@@ -120,6 +120,43 @@ public class CompanyAuthorizationServiceTests
         Assert.Contains(companyB, ids);
     }
 
+    [Fact]
+    public async Task Regional_singular_company_claim_does_not_drop_other_memberships()
+    {
+        var companyA = Guid.Parse("11111111-1111-1111-1111-111111111111");
+        var companyB = Guid.Parse("22222222-2222-2222-2222-222222222222");
+        await using var db = CreateDb();
+        db.Companies.AddRange(
+            new Company { Id = companyA, Name = "A", KvkNumber = "1", Address = "x", Location = new GeoPoint(51.9, 4.2) },
+            new Company { Id = companyB, Name = "B", KvkNumber = "2", Address = "y", Location = new GeoPoint(52.0, 4.3) });
+        var userId = Guid.NewGuid();
+        db.Users.Add(new User
+        {
+            Id = userId,
+            Email = "regio@jobsy.local",
+            FullName = "Regio",
+            Role = UserRole.RegionalManager,
+            CompanyId = companyA,
+            IsActive = true
+        });
+        db.UserCompanies.AddRange(
+            new UserCompany { UserId = userId, CompanyId = companyA },
+            new UserCompany { UserId = userId, CompanyId = companyB });
+        await db.SaveChangesAsync();
+
+        var sut = new CompanyAuthorizationService(db);
+        var principal = Principal(
+            "regio@jobsy.local",
+            JobsyRoles.RegionalManager,
+            (JobsyClaimTypes.CompanyId, companyA.ToString()));
+
+        var ids = await sut.GetAccessibleCompanyIdsAsync(principal);
+        Assert.NotNull(ids);
+        Assert.Equal(2, ids!.Count);
+        Assert.Contains(companyA, ids);
+        Assert.Contains(companyB, ids);
+    }
+
     private static JobsyDbContext CreateDb()
     {
         var options = new DbContextOptionsBuilder<JobsyDbContext>()

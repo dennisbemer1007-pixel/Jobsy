@@ -3,6 +3,7 @@ using System.Net.Http.Json;
 using System.Net;
 using System.Text.Json;
 using Jobsy.Core.Enums;
+using Jobsy.Core.Privacy;
 using Jobsy.Core.Rules;
 using Jobsy.Web.Models;
 using Microsoft.AspNetCore.Components.Forms;
@@ -399,7 +400,7 @@ public sealed class JobsyApiClient : IAsyncDisposable
 
     public async Task RecordClickAsync(Guid vacancyId, string? anonymousKey = null, CancellationToken ct = default)
     {
-        var response = await _http.PostAsJsonAsync(
+        var response = await PostAnalyticsJsonAsync(
             $"api/vacancies/{vacancyId}/clicks",
             new { anonymousKey },
             ct);
@@ -447,7 +448,7 @@ public sealed class JobsyApiClient : IAsyncDisposable
         }
 
         var anonKey = await js.InvokeAsync<string>("jobsyGeo.getOrCreateAnonymousKey");
-        var response = await _http.PostAsJsonAsync(
+        var response = await PostAnalyticsJsonAsync(
             "api/analytics/impressions",
             new { vacancyIds = ids, anonymousKey = anonKey },
             ct);
@@ -471,7 +472,7 @@ public sealed class JobsyApiClient : IAsyncDisposable
         }
 
         var anonKey = await js.InvokeAsync<string>("jobsyGeo.getOrCreateAnonymousKey");
-        var response = await _http.PostAsJsonAsync(
+        var response = await PostAnalyticsJsonAsync(
             "api/analytics/site-visits",
             new { anonymousKey = anonKey, path },
             ct);
@@ -489,6 +490,21 @@ public sealed class JobsyApiClient : IAsyncDisposable
         {
             return false;
         }
+    }
+
+    private async Task<HttpResponseMessage> PostAnalyticsJsonAsync(
+        string url,
+        object body,
+        CancellationToken ct)
+    {
+        using var request = new HttpRequestMessage(HttpMethod.Post, url)
+        {
+            Content = JsonContent.Create(body)
+        };
+        request.Headers.TryAddWithoutValidation(
+            CookieConsentNames.HeaderName,
+            CookieConsentNames.AnalyticsValue);
+        return await _http.SendAsync(request, ct);
     }
 
     public async Task<bool> GetLikedAsync(Guid vacancyId, CancellationToken ct = default)
@@ -516,7 +532,7 @@ public sealed class JobsyApiClient : IAsyncDisposable
 
     public async Task ShareVacancyAsync(Guid vacancyId, ShareChannel channel, CancellationToken ct = default)
     {
-        var response = await _http.PostAsJsonAsync($"api/vacancies/{vacancyId}/shares", new { channel }, ct);
+        var response = await PostAnalyticsJsonAsync($"api/vacancies/{vacancyId}/shares", new { channel }, ct);
         response.EnsureSuccessStatusCode();
     }
 

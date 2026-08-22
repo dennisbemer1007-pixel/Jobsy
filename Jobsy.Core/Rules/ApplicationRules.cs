@@ -99,7 +99,10 @@ public static class ApplicationRules
         application.HasUploadedCv = false;
         application.CandidateReferenceCount = 0;
         application.DistanceKm = null;
+        application.MatchPercent = null;
         application.MatchBreakdownJson = null;
+        application.CandidateAgeYears = null;
+        application.WorkPermitConfirmed = false;
         application.EmailVerificationCode = null;
         application.EmailVerificationExpiresAt = null;
         application.EmailVerificationFailedAttempts = 0;

@@ -184,12 +184,6 @@ public sealed class LikeStatus
     public bool Liked { get; set; }
 }
 
-public sealed class ClickRecordResult
-{
-    public bool Recorded { get; set; }
-    public string? AnonymousKey { get; set; }
-}
-
 public sealed class OriginPoint
 {
     public double Latitude { get; set; }

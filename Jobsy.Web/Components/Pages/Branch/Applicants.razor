@@ -1,6 +1,6 @@
 @page "/branch/applicants"
 @rendermode @(new InteractiveServerRenderMode(prerender: false))
-@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "BranchManager,RegionalManager,EnterpriseManager,Intermediary")]
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "BranchManager,RegionalManager,EnterpriseManager,Intermediary,Admin")]
 @inject JobsyApiClient Api
 @inject AuthenticationStateProvider AuthState
 @inject CultureState Culture

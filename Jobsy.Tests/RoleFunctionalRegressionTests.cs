@@ -909,6 +909,98 @@ public class RoleFunctionalRegressionTests : IClassFixture<RoleFunctionalWebAppF
     }
 
     [Fact]
+    public async Task Intermediary_cannot_re_role_existing_branch_manager()
+    {
+        var response = await Authed(_factory.IntermediaryEmail).PostAsJsonAsync("api/company-users/invite", new
+        {
+            email = _factory.EmployerEmail,
+            fullName = "Hijack",
+            role = "Intermediary",
+            primaryCompanyId = _factory.CompanyId
+        });
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+
+        using var scope = _factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<JobsyDbContext>();
+        var branch = await db.Users.AsNoTracking().SingleAsync(u => u.Email == _factory.EmployerEmail);
+        Assert.Equal(UserRole.BranchManager, branch.Role);
+    }
+
+    [Fact]
+    public async Task Intermediary_company_users_are_peer_only()
+    {
+        var users = await Authed(_factory.IntermediaryEmail)
+            .GetFromJsonAsync<List<CompanyUserDto>>("api/company-users", JsonOpts);
+        Assert.NotNull(users);
+        Assert.All(users!, u => Assert.Equal("Intermediary", u.Role));
+        Assert.DoesNotContain(users!, u =>
+            u.Email.Equals(_factory.EmployerEmail, StringComparison.OrdinalIgnoreCase));
+        Assert.DoesNotContain(users!, u =>
+            u.Email.Equals(_factory.EnterpriseEmail, StringComparison.OrdinalIgnoreCase));
+    }
+
+    [Fact]
+    public async Task Intermediary_cannot_mutate_client_company_contact()
+    {
+        var response = await Authed(_factory.IntermediaryEmail).PutAsJsonAsync(
+            $"api/companies/{_factory.CompanyId}/contact-preference",
+            new
+            {
+                directContactEnabled = true,
+                contactPreferMail = true,
+                contactPreferPhone = false,
+                contactPreferWhatsApp = false,
+                contactEmail = "x@example.com",
+                contactPhone = (string?)null,
+                contactWhatsApp = (string?)null
+            });
+        Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task Branch_cannot_approve_publish()
+    {
+        var response = await EmployerClient()
+            .PostAsync($"api/vacancies/{_factory.VacancyId}/approve-publish", content: null);
+        Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task Regional_cannot_create_vacancy()
+    {
+        var response = await Authed(_factory.RegionalEmail).PostAsJsonAsync("api/vacancies", new
+        {
+            companyId = _factory.CompanyId,
+            title = "Regio mag dit niet"
+        });
+        Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task Analytics_impressions_require_cookie_consent()
+    {
+        var guest = _factory.CreateClient();
+        var denied = await guest.PostAsJsonAsync("api/analytics/impressions", new
+        {
+            vacancyIds = new[] { _factory.VacancyId },
+            anonymousKey = "anon-" + Guid.NewGuid()
+        });
+        Assert.Equal(HttpStatusCode.OK, denied.StatusCode);
+        var deniedBody = await denied.Content.ReadFromJsonAsync<JsonElement>(JsonOpts);
+        Assert.Equal(0, deniedBody.GetProperty("recorded").GetInt32());
+
+        guest.DefaultRequestHeaders.Add("X-Jobsy-Cookie-Consent", "analytics");
+        var allowed = await guest.PostAsJsonAsync("api/analytics/impressions", new
+        {
+            vacancyIds = new[] { _factory.VacancyId },
+            anonymousKey = "anon-" + Guid.NewGuid()
+        });
+        Assert.Equal(HttpStatusCode.OK, allowed.StatusCode);
+        var allowedBody = await allowed.Content.ReadFromJsonAsync<JsonElement>(JsonOpts);
+        Assert.True(allowedBody.GetProperty("recorded").GetInt32() >= 1);
+    }
+
+    [Fact]
     public async Task Regional_cannot_react_to_applications()
     {
         var (_, pendingId) = await _factory.SeedVacancyWithPendingApplicationAsync();
@@ -959,6 +1051,7 @@ public sealed class RoleFunctionalWebAppFactory : WebApplicationFactory<Program>
     public const string DevSecret = "role-functional-secret";
 
     public Guid CompanyId { get; } = Guid.Parse("c1000000-0000-0000-0000-000000000001");
+    public Guid IntermediaryOrgId { get; } = Guid.Parse("c1000000-0000-0000-0000-000000000002");
     public Guid VacancyId { get; } = Guid.Parse("c1000000-0000-0000-0000-000000000010");
     public Guid LowMatchVacancyId { get; } = Guid.Parse("c1000000-0000-0000-0000-000000000011");
     public Guid NightShiftVacancyId { get; } = Guid.Parse("c1000000-0000-0000-0000-000000000012");
@@ -1066,6 +1159,14 @@ public sealed class RoleFunctionalWebAppFactory : WebApplicationFactory<Program>
             Address = "Veilingweg 1, Naaldwijk",
             Location = new GeoPoint(52.0, 4.2)
         });
+        db.Companies.Add(new Company
+        {
+            Id = IntermediaryOrgId,
+            Name = "Test Intermediair",
+            KvkNumber = "87654321",
+            Address = "Intermediairweg 1, Naaldwijk",
+            Location = new GeoPoint(52.01, 4.21)
+        });
 
         var table = new CompanySalaryTable
         {
@@ -1158,7 +1259,7 @@ public sealed class RoleFunctionalWebAppFactory : WebApplicationFactory<Program>
                 FullName = "Intermediary",
                 Role = UserRole.Intermediary,
                 IsActive = true,
-                CompanyId = CompanyId
+                CompanyId = IntermediaryOrgId
             },
             new User
             {
@@ -1180,6 +1281,7 @@ public sealed class RoleFunctionalWebAppFactory : WebApplicationFactory<Program>
         db.UserCompanies.AddRange(
             new UserCompany { UserId = RegionalId, CompanyId = CompanyId },
             new UserCompany { UserId = EnterpriseId, CompanyId = CompanyId },
+            new UserCompany { UserId = IntermediaryId, CompanyId = IntermediaryOrgId },
             new UserCompany { UserId = IntermediaryId, CompanyId = CompanyId },
             new UserCompany { UserId = EmployerId, CompanyId = CompanyId });
 

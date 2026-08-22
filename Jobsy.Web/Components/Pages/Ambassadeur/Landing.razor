@@ -1,5 +1,6 @@
 @page "/werven/{TrackingCode}"
 @page "/ambassadeur/ref/{TrackingCode}"
+@attribute [Microsoft.AspNetCore.Authorization.AllowAnonymous]
 @using Jobsy.Core.Rules
 @inject NavigationManager Navigation
 @inject IHttpContextAccessor HttpContextAccessor

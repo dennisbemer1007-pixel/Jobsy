@@ -75,6 +75,10 @@ public class AccountUnsubscribeTests
             SnapshotCertificatesJson = """[{"name":"BHV","year":2024}]""",
             SnapshotShowAddressOnCv = true,
             Motivation = "Ik wil graag werken",
+            CandidateAgeYears = 28,
+            WorkPermitConfirmed = true,
+            MatchPercent = 81,
+            MatchBreakdownJson = """{"score":81}""",
             CreatedAt = DateTime.UtcNow
         });
         db.VacancyLikes.Add(new VacancyLike
@@ -155,6 +159,10 @@ public class AccountUnsubscribeTests
         Assert.Null(app.SnapshotCertificatesJson);
         Assert.False(app.SnapshotShowAddressOnCv);
         Assert.Null(app.Motivation);
+        Assert.Null(app.CandidateAgeYears);
+        Assert.False(app.WorkPermitConfirmed);
+        Assert.Null(app.MatchPercent);
+        Assert.Null(app.MatchBreakdownJson);
         Assert.StartsWith("deleted-", app.CandidateEmail);
 
         Assert.Equal(0, await db.VacancyLikes.CountAsync(l => l.UserId == candidateId));
@@ -246,6 +254,8 @@ public class AccountUnsubscribeTests
         Assert.Contains("SnapshotShowAddressOnCv", json);
         Assert.Contains("CandidateAddress", json);
         Assert.Contains("Voorstraat 1", json);
+        Assert.Contains("CandidateName", json);
+        Assert.Contains("Export Kandidaat", json);
         Assert.Contains("Notifications", json);
         Assert.Contains("Export notificatie", json);
         Assert.DoesNotContain("token=secret", json);

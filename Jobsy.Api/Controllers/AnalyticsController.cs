@@ -1,5 +1,5 @@
-using System.Text.RegularExpressions;
 using Jobsy.Api.Models;
+using Jobsy.Api.Security;
 using Jobsy.Core.Entities;
 using Jobsy.Core.Enums;
 using Jobsy.Core.Interfaces;
@@ -13,7 +13,7 @@ namespace Jobsy.Api.Controllers;
 
 [ApiController]
 [Route("api/analytics")]
-public partial class AnalyticsController : ControllerBase
+public class AnalyticsController : ControllerBase
 {
     private const int MaxImpressionsPerRequest = 200;
 
@@ -33,6 +33,11 @@ public partial class AnalyticsController : ControllerBase
         [FromBody] RecordImpressionsRequest? request,
         CancellationToken cancellationToken)
     {
+        if (!AnalyticsConsent.IsGranted(Request))
+        {
+            return Ok(new { recorded = 0 });
+        }
+
         var vacancyIds = (request?.VacancyIds ?? [])
             .Where(id => id != Guid.Empty)
             .Distinct()
@@ -63,7 +68,7 @@ public partial class AnalyticsController : ControllerBase
                 return BadRequest(new { message = "anonymousKey is verplicht zonder bekende gebruiker." });
             }
 
-            if (anonymousKey.Length > 128 || !IsValidAnonymousKey(anonymousKey))
+            if (!AnonymousKeyRules.IsValid(anonymousKey))
             {
                 return BadRequest(new { message = "anonymousKey is ongeldig." });
             }
@@ -106,6 +111,11 @@ public partial class AnalyticsController : ControllerBase
         [FromBody] RecordSiteVisitRequest? request,
         CancellationToken cancellationToken)
     {
+        if (!AnalyticsConsent.IsGranted(Request))
+        {
+            return Ok(new { recorded = false });
+        }
+
         Guid? userId = null;
         if (User.Identity?.IsAuthenticated == true)
         {
@@ -125,7 +135,7 @@ public partial class AnalyticsController : ControllerBase
                 return BadRequest(new { message = "anonymousKey is verplicht zonder bekende gebruiker." });
             }
 
-            if (anonymousKey.Length > 128 || !IsValidAnonymousKey(anonymousKey))
+            if (!AnonymousKeyRules.IsValid(anonymousKey))
             {
                 return BadRequest(new { message = "anonymousKey is ongeldig." });
             }
@@ -151,18 +161,4 @@ public partial class AnalyticsController : ControllerBase
 
         return Ok(new { recorded = true, anonymousKey });
     }
-
-    private static bool IsValidAnonymousKey(string anonymousKey)
-    {
-        if (AnonymousGuidKeyRegex().IsMatch(anonymousKey))
-        {
-            return true;
-        }
-
-        return anonymousKey.Length is >= 10 and <= 128
-            && anonymousKey.StartsWith("anon-", StringComparison.Ordinal);
-    }
-
-    [GeneratedRegex("^anon-[0-9a-fA-F-]{36}$", RegexOptions.CultureInvariant)]
-    private static partial Regex AnonymousGuidKeyRegex();
 }

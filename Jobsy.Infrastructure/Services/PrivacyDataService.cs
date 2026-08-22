@@ -49,7 +49,13 @@ public sealed class PrivacyDataService : IPrivacyDataService
                 a.RespondedAt,
                 a.ConsentAcceptedAt,
                 a.ConsentVersion,
+                a.CandidateName,
+                a.CandidateEmail,
                 a.WorkPermitConfirmed,
+                a.CandidateAgeYears,
+                a.SnapshotDateOfBirth,
+                a.SnapshotPhoneNumber,
+                a.SnapshotWhatsAppAllowed,
                 a.SnapshotAvailabilityJson,
                 a.SnapshotDrivingLicenses,
                 a.SnapshotEducations,
@@ -59,6 +65,8 @@ public sealed class PrivacyDataService : IPrivacyDataService
                 a.CandidateCity,
                 a.CandidateAddress,
                 a.Motivation,
+                a.MatchPercent,
+                a.MatchBreakdownJson,
                 a.StudentNumber,
                 a.SchoolEmail,
                 a.StudyProgram,
@@ -528,8 +536,13 @@ public sealed class PrivacyDataService : IPrivacyDataService
             app.CandidateEmployerCount = 0;
             app.CandidateReferenceCount = 0;
             app.HasUploadedCv = false;
+            app.CandidateAgeYears = null;
+            app.WorkPermitConfirmed = false;
+            app.MatchPercent = null;
+            app.MatchBreakdownJson = null;
             app.EmailVerificationCode = null;
             app.EmailVerificationExpiresAt = null;
+            app.EmailVerificationFailedAttempts = 0;
         }
 
         var likes = await _db.VacancyLikes
