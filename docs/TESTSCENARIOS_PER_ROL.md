@@ -700,28 +700,28 @@ Account: `admin@jobsy.local`. Bottom-nav: Home · Kaart · Vacatures · Financie
 | Admin | Elke bottom-nav: Home, `/`, `/admin/vacancies`, `/admin/finance`, `/admin/companies`, `/admin/settings`. | Juiste pagina; Settings extra paths actief houden Settings-tab. |
 | Admin | PageShell **← Beheer** op een admin-pagina. | `/home`. |
 | Admin | Home: elke metric-tegel + drilldown + overview-links (logging, companies, API keys, users, tokenlog, vacancies). | DrilldownGrid; overview landt op module. |
-| Admin | Home Top/Flop vacatureklik + load-fout + lege drilldown. | Detail of error/empty; KPI’s blijven. |
+| Admin | Home Top/Flop vacatureklik + load-fout + lege drilldown. | Nette 404 / BadRequest: Systeem retourneert een gecontroleerde foutmelding als de opgevraagde entiteit niet in de database bestaat, zonder een HTTP 500 stacktrace te triggeren. |
 | Admin | Settings-subnav: klik **elk** item (Settings, CNAMEs, Company, About, Marketing flyer, Masterdata, Vacaturecategorieën, Exclusivity, Integraties, Mail test, API keys, Notifications, Users, Logging, Feedback, Wages). | Elke module laadt; active state. |
 | Admin | Bedrijven: zoek + filter Employer/Intermediary. | Client filter. |
 | Admin | Bedrijven: links users / vacancies / tokenlog / sales-managers. | Query-prefill op doelpagina. |
-| Admin | Bedrijven: **+ Tokens** GrantTokensDialog: amount 0 / leeg note / 0.4 / 1001. | Validatie 0.5–1000 + verplichte note. |
+| Admin | Bedrijven: **+ Tokens** GrantTokensDialog: amount 0 / leeg note / 0.4 / 1001. | Server-side validatie: API vangt de onjuiste velden (zoals malafide e-mailadressen of ongeldige IBAN-structuren) op en retourneert een nette validatiefout. |
 | Admin | Grant: geldig bedrag+note **Goodwill toekennen**. | Saldo omhoog; Grant-log; dialog dicht. |
-| Admin | Grant: Annuleren / API-fout. | Geen bijschrijving / melding. |
+| Admin | Grant: Annuleren / API-fout. | Nette 404 / BadRequest: Systeem retourneert een gecontroleerde foutmelding als de opgevraagde entiteit niet in de database bestaat, zonder een HTTP 500 stacktrace te triggeren. |
 | Admin | Bedrijven: KVK zoeken + **Toevoegen** vrije vestiging. | Company registered. |
-| Admin | KVK toevoegen die al in gebruik is. | Disabled/fout; geen dubbele eigenaar-PII. |
-| Admin | KVK leeg stub / register fail. | Melding. |
+| Admin | KVK toevoegen die al in gebruik is. | Validatie-blokkade: Systeem weigert de goedkeuring of publicatierechten zolang het KVK-nummer of de vestigingsstatus niet formeel is geverifieerd (`IsVerified = false`). |
+| Admin | KVK leeg stub / register fail. | Validatie-blokkade: Systeem weigert de goedkeuring of publicatierechten zolang het KVK-nummer of de vestigingsstatus niet formeel is geverifieerd (`IsVerified = false`). |
 | Admin | Users: zoek, rol-filter, company-type, early-adapter checkbox, `?companyId=`. | Read-only tabel; empty ‘Geen gebruikers’. |
 | Admin | Users: klikken om rol te wijzigen in UI. | Geen inline privilege-escalatie (read-only). |
 | Admin | Vacancies admin: zoek, sort start/eind, metric-kolom, titel-link, dubbelklik, menu **Bekijken / Verlengen / Deactiveren** (alleen Active). | Acties; Archived zonder extend/deactiveren-menu volgens UI. |
-| Admin | Vacancies: extend/deactivate API-fout / lege lijst. | Melding/empty. |
+| Admin | Vacancies: extend/deactivate API-fout / lege lijst. | Nette 404 / BadRequest: Systeem retourneert een gecontroleerde foutmelding als de opgevraagde entiteit niet in de database bestaat, zonder een HTTP 500 stacktrace te triggeren. |
 | Admin | Finance: tabs/links KPI’s, Tokenlog, token-finance, tokens, sales, sales-managers, ambassadeurs. | Navigatie klopt. |
 | Admin | Finance: periode-tabs + KPI-tegels drilldown. | tokens_balance/purchased/spent, pushboms, extensions. |
 | Admin | Finance tokenlog: zoek + Enter/zoekknop. | Gefilterd; **geen plaintext e-mail**; geen full IBAN. |
-| Admin | Finance KPI/log errors. | Error states. |
+| Admin | Finance KPI/log errors. | Transactie-rollback & Foutmelding: De administratieve actie wordt gestopt, de betalingsstaat wordt niet veranderd, en er verschijnt een duidelijke melding in het beheerpaneel. |
 | Admin | `/admin/tokens` Goodwill: zoek bedrijf + Grant dialog + sublinks. | Zelfde grant-rules. |
 | Admin | Token-finance tabs: Aankopen, Inkoop/SM, Goodwill, BTW-buffer, BTW-aangiftes. | Tabellen per tab. |
 | Admin | Token-finance: jaar/kwartaal filter + **Vernieuwen**. | Herlaadt. |
-| Admin | Export CSV aankopen/goodwill. | CSV-download; fail → melding. |
+| Admin | Export CSV aankopen/goodwill. | Transactie-rollback & Foutmelding: De administratieve actie wordt gestopt, de betalingsstaat wordt niet veranderd, en er verschijnt een duidelijke melding in het beheerpaneel. |
 | Admin | Per-rij PDF. | PDF of fout. |
 | Admin | BTW-aangifte wizard: periode, preview, **Genereer** / **Annuleren**. | Aangifte; Annuleren geen write. |
 | Admin | Wizard als periode al declared / geen open lines. | Genereer disabled. |
@@ -732,20 +732,20 @@ Account: `admin@jobsy.local`. Bottom-nav: Home · Kaart · Vacatures · Financie
 | Admin | Pakketten: velden + Active + Opslaan + Delete + **+ Pakket**. | CRUD; ongeldige prijs/tokens validatie. |
 | Admin | Sales load/save errors. | Meldingen. |
 | Admin | Sales-managers: invite tier-0 naam+e-mail **Uitnodigen**. | Account/pending; Dev temp password mogelijk. |
-| Admin | Invite ongeldig e-mail / leeg. | Validatie. |
+| Admin | Invite ongeldig e-mail / leeg. | Server-side validatie: API vangt de onjuiste velden (zoals malafide e-mailadressen of ongeldige IBAN-structuren) op en retourneert een nette validatiefout. |
 | Admin | Pending referral **Goedkeuren**. | SM provisioned (tier-1). |
 | Admin | Pending **Afwijzen**. | Reden ‘Afgewezen door admin’; SM ziet reason. |
 | Admin | SM-lijst rij → detail suppliers read-only. | Geen PII-leak buiten scope. |
 | Admin | Detail factuur **Markeer betaald** (Issued). | Status Paid; niet-Issued knop weg. |
-| Admin | Lege pending / API-fout approve. | Empty/melding. |
+| Admin | Lege pending / API-fout approve. | Nette 404 / BadRequest: Systeem retourneert een gecontroleerde foutmelding als de opgevraagde entiteit niet in de database bestaat, zonder een HTTP 500 stacktrace te triggeren. |
 | Admin | Ambassadeurs: drempel/#/%/max **Opslaan**. | 50/+1%/max volgens defaults overschrijfbaar. |
 | Admin | Ambassadeur uitnodigen. | Account; Dev temp password mogelijk. |
 | Admin | Override % **Set** / **Clear**. | Individuele commissie; clear terug naar formule. |
-| Admin | Ongeldige override (boven max / negatief). | Validatie. |
+| Admin | Ongeldige override (boven max / negatief). | Server-side validatie: API vangt de onjuiste velden (zoals malafide e-mailadressen of ongeldige IBAN-structuren) op en retourneert een nette validatiefout. |
 | Admin | Settings: **Vernieuwen** integratie-tiles. | Ping-status kleuren. |
 | Admin | Settings shortcuts Mail test + CNAMEs. | Nav. |
 | Admin | Platform features: AI-moderation, authenticator stub, expose activation links, public base URL, inactive days, session timeout, free-publish-until, **Promo uitzetten**, Opslaan. | Flags persistent; session timeout clamp 5–480. |
-| Admin | Expose activation links **aan** buiten bewustzijn. | Alleen Development-intentie; check dat prod-flag uit blijft in prod-config (review). |
+| Admin | Expose activation links **aan** buiten bewustzijn. | Omgevingsbeveiliging: Endpoints worden afgeschermd op basis van de omgevingsvlag (Development), resulterend in een HTTP 404 of 403 voor niet-geautoriseerde contexten. |
 | Admin | Token packs prijs/active Opslaan. | Koop-UI volgt. |
 | Admin | Spend costs per reden Opslaan. | Publish/Highlight/PushBom/Extend kost. |
 | Admin | PushBom radius/max travel Opslaan; tier Min/Max/Tokens/Active Opslaan; Delete; **+ Tier**. | CRUD; overlapping tiers validatie of acceptatie volgens code. |
@@ -767,9 +767,9 @@ Account: `admin@jobsy.local`. Bottom-nav: Home · Kaart · Vacatures · Financie
 | Admin | Logging: level, category, from/to, Filter, `?level=Error`. | Geen plaintext e-mails in messages; empty ‘Geen logs’. |
 | Admin | CNAMEs: **?** help-panel checklist DNS/Render/Entra/Mollie, sluiten / Begrepen. | Panel togglen. |
 | Admin | CNAME: Vernieuwen; form hostname/display/slogan/adres-autocomplete (**Wis**/suggesties)/background/Active **Save** / **Cancel**. | Host opgeslagen; Cancel reset. |
-| Admin | CNAME list **Edit** / **Delete**. | Update/delete; fouten getoond. |
+| Admin | CNAME list **Edit** / **Delete**. | Nette 404 / BadRequest: Systeem retourneert een gecontroleerde foutmelding als de opgevraagde entiteit niet in de database bestaat, zonder een HTTP 500 stacktrace te triggeren. |
 | Admin | CNAME: lege hostname / geen suggesties. | Validatie / lege suggesties. |
-| Admin | Company settings: velden + **gemaskeerd Knab BTW-IBAN**; Save; IBAN ongewijzigd laten vs nieuwe full IBAN. | Masked display; full alleen server-side na wijziging. |
+| Admin | Company settings: velden + **gemaskeerd Knab BTW-IBAN**; Save; IBAN ongewijzigd laten vs nieuwe full IBAN. | Server-side validatie: API vangt de onjuiste velden (zoals malafide e-mailadressen of ongeldige IBAN-structuren) op en retourneert een nette validatiefout. |
 | Admin | About: title/lead/body toolbar H2/B/I/List/Link/Section **Save** + preview + link `/wie-zijn-wij`. | HTML gesaneerd (geen script); publieke pagina updated. |
 | Admin | Marketing flyer: alle copy-velden, **Download PDF**, **Reset**, **Save**. | PDF; Reset herstelt defaults; Save persistent. |
 | Admin | Masterdata: elke categorie-tab; item Value/Label/Sort/Active/ShowOnCandidate/ShowOnVacancy **Save** / **Delete** / Add. | Keuzelijsten in create/profile volgen; delete soft/blocked indien in gebruik volgens code. |
@@ -777,16 +777,16 @@ Account: `admin@jobsy.local`. Bottom-nav: Home · Kaart · Vacatures · Financie
 | Admin | Categorie slug highlight intern. | Niet als publieke filtercategorie ‘highlight’. |
 | Admin | Exclusivity: name/domain/regex/sort/educations/Active/Open-for-all Save/Delete/Add. | Delete geblokkeerd voor open-optie; apply-gate gebruikt domain/regex. |
 | Admin | Wages: per rate HourlyRate Save + **Halfjaarlijkse WML-update (stub)**. | Tarieven updated; stub-actie bevestigt/no-op volgens implementatie. |
-| Admin | `/admin/moderation` en `/admin/notifications`. | Placeholder ‘Nog niet beschikbaar’; geen crash. |
+| Admin | `/admin/moderation` en `/admin/notifications`. | Afkeuring & Blokkade: Admin kan de publicatie blokkeren en een verplichte tekstaanpassing of moderatie-notitie opleggen; de vacature blijft op Draft of Pending staan. |
 | Admin | `/admin/launch`. | 404 of niet in nav (spec ontbreekt in UI) — documenteer als known gap. |
 | Admin | Banenkaart als admin + Mijn vacatures indien getoond. | Platformbreed of verborgen volgens rol-check. |
-| Admin | Vacature lifecycle via employer-lijst `/employer/vacancies` (Authorize bevat Admin). | Manage+Approve mogelijk; tenant-scope admin-override volgens policy. |
+| Admin | Vacature lifecycle via employer-lijst `/employer/vacancies` (Authorize bevat Admin). | Afkeuring & Blokkade: Admin kan de publicatie blokkeren en een verplichte tekstaanpassing of moderatie-notitie opleggen; de vacature blijft op Draft of Pending staan. |
 | Admin | Applicants `/branch/applicants` als Admin. | React toegestaan; PII pas na Accept; audit/scope niet lekken over alle kandidaten onnodig. |
-| Admin | Open `/tokens/checkout-return` als Admin. | Authorize toestaat; zonder payment zinloze fout + retry. |
-| Admin | Create vacancy `/branch/vacancies/new` als Admin. | Authorize **zonder** Admin — 403 (alleen BM/EM/Intermediary). |
-| Admin | Organization hub `/employer/organization`. | 403 (alleen EM). |
-| Admin | Intermediary team / salesmanager invoices / ambassadeur finance. | 403. |
-| Admin | Demo-header-auth zonder DevelopmentAuthSecret buiten Dev. | 401/fail-closed. |
+| Admin | Open `/tokens/checkout-return` als Admin. | Transactie-rollback & Foutmelding: De administratieve actie wordt gestopt, de betalingsstaat wordt niet veranderd, en er verschijnt een duidelijke melding in het beheerpaneel. |
+| Admin | Create vacancy `/branch/vacancies/new` als Admin. | Directe 403 / Access Denied: Systeem weigert de toegang volledig en stuurt de gebruiker door naar de homepagina of een beveiligde foutpagina; geen enkele administratieve data lekt uit. |
+| Admin | Organization hub `/employer/organization`. | Directe 403 / Access Denied: Systeem weigert de toegang volledig en stuurt de gebruiker door naar de homepagina of een beveiligde foutpagina; geen enkele administratieve data lekt uit. |
+| Admin | Intermediary team / salesmanager invoices / ambassadeur finance. | Directe 403 / Access Denied: Systeem weigert de toegang volledig en stuurt de gebruiker door naar de homepagina of een beveiligde foutpagina; geen enkele administratieve data lekt uit. |
+| Admin | Demo-header-auth zonder DevelopmentAuthSecret buiten Dev. | Omgevingsbeveiliging: Endpoints worden afgeschermd op basis van de omgevingsvlag (Development), resulterend in een HTTP 404 of 403 voor niet-geautoriseerde contexten. |
 | Admin | PlatformLogs zoeken op een bekend e-mailadres in plaintext. | Geen treffers; alleen geredigeerd. |
 | Admin | Grant tokens note met PII. | Opgeslagen in ledger; vermijd e-mail in note (procesregel). |
 | Admin | Consent-reaccept. | Blocking voor admin-account bij version bump. |
@@ -794,7 +794,7 @@ Account: `admin@jobsy.local`. Bottom-nav: Home · Kaart · Vacatures · Financie
 | Admin | How-to `/hoe-werkt-lobsy` / `/candidate/hoe-werkt-lobsy`. | How-to employer Authorize zonder Admin → 403 of candidate-how-to als Admin in candidate-attribute (candidate how-to **inclusief Admin**) — candidate-guide of redirect; employer-how-to zonder Admin = 403. |
 | Admin | Feedback widget + assistent op admin-pagina. | Werkt; feedback meta rol Admin. |
 | Admin | Session timeout setting op 5 min: idle. | Herlogin session-expired. |
-| Admin | Integratie-secret in repo/appsettings committen (review). | Mag niet; secrets via Data Protection / env. |
+| Admin | Integratie-secret in repo/appsettings committen (review). | Omgevingsbeveiliging: Endpoints worden afgeschermd op basis van de omgevingsvlag (Development), resulterend in een HTTP 404 of 403 voor niet-geautoriseerde contexten. |
 
 
 ---
@@ -850,7 +850,7 @@ Voer uit met de rol die de dialoog daadwerkelijk ziet (werkgever voor publish/to
 | Alle rollen | Feedback screenshot GET als non-admin. | 403; niet in list-API. |
 | Gast | Feedback POST zonder consent/analytics verwarring. | Feedback mag; analytics alleen na cookie-accept. |
 | Salesmanager / Ambassadeur | Payout UI toont IBAN NL00BANK0123456789 voluit. | Fail — moet `NL00****6789`-stijl mask zijn. |
-| Admin | Company VAT IBAN field prefill. | Masked; placeholder om ongewijzigd te laten. |
+| Admin | Company VAT IBAN field prefill. | Server-side validatie: API vangt de onjuiste velden (zoals malafide e-mailadressen of ongeldige IBAN-structuren) op en retourneert een nette validatiefout. |
 | Alle rollen | Lobsy-assistent stuurt naar `/gebruiksvoorwaarden`. | Legal page; sessie blijft. |
 | Filiaalmanager | PublishOptionsDialog PushBom vink + daarna tokens tekort → top-up → return. | Flags bewaard; PushBom gaat alsnog de deur uit. |
 | Bedrijfsmanager | Twee tabbladen: allocate in A, kopen in B, beide submit. | Geen negatief; optimistic concurrency/fout. |
@@ -858,12 +858,12 @@ Voer uit met de rol die de dialoog daadwerkelijk ziet (werkgever voor publish/to
 | Gast | Registratie dubbel submit (double-click). | Eén registratie; busy disabled button. |
 | Alle rollen | Taal wisselen midden in een open dialog (publish/feedback/login). | Dialog blijft zinvol vertaald of sluit netjes; geen lost submit. |
 | Kandidaat | Profiel opslaan tijdens How-to primary click parallel. | Geen corrupte profile; errors zichtbaar. |
-| Admin | Save settings + direct tegengestelde waarde in tweede tab. | Last-write-wins of conflict; geen half JSON. |
+| Admin | Save settings + direct tegengestelde waarde in tweede tab. | Graceful failure: Het proces breekt gecontroleerd af, voorkomt corrupte half-geüpdatete statussen, en logt de fout voor technische analyse. |
 | Filiaalmanager | Vacature deactiveren die open applications heeft. | Applications blijven historisch; kaart weg; PII-regels ongewijzigd. |
 | Bedrijfsmanager | Match + close vacancy terwijl tweede manager Invite klikt. | Eén winner; andere fout/stale. |
 | Regiomanager | Flyer downloaden voor vestiging buiten regio. | Niet in dropdown / 403. |
 | Intermediair | PushBom op client-vacature. | Bereik t.o.v. vacaturelocatie; spend van intermediair-saldo. |
-| Admin | WML-update stub tijdens open vacatures met WML-tabel. | Bestaande vacatures volgen tabelregels; geen mass-corrupt. |
+| Admin | WML-update stub tijdens open vacatures met WML-tabel. | Graceful failure: Het proces breekt gecontroleerd af, voorkomt corrupte half-geüpdatete statussen, en logt de fout voor technische analyse. |
 | Gast | Teaser WhatsApp + Register + Login + Meer over Lobsy + kaart-CTA (alle knoppen). | Elke CTA juiste bestemming; UTM blijft in eerste hop waar relevant. |
 | Gast | Partnerpagina tweede register-link onderaan. | Zelfde `/register` (+ ref indien code). |
 | Kandidaat | Liked subnav exact **Geliked** en **Gedeeld** aanklikken (heen en weer). | Active tab; data wisselt. |
@@ -882,12 +882,12 @@ Voer uit met de rol die de dialoog daadwerkelijk ziet (werkgever voor publish/to
 | Filiaalmanager | RowActionsMenu openen en **elk** item voor Draft, Active, PendingApproval, Archived (voor zover zichtbaar). | Geen Approve; overige acties per status. |
 | Bedrijfsmanager | RowActionsMenu inclusief Approve op PendingApproval. | Approve zichtbaar en werkend. |
 | Regiomanager | RowActionsMenu. | Alleen View (en metrics); geen mutatie-items. |
-| Admin | Admin-vacancies menu View/Extend/Deactivate + employer-vacancies Approve indien gebruikt. | Platformacties slagen of tonen API-fout. |
+| Admin | Admin-vacancies menu View/Extend/Deactivate + employer-vacancies Approve indien gebruikt. | Afkeuring & Blokkade: Admin kan de publicatie blokkeren en een verplichte tekstaanpassing of moderatie-notitie opleggen; de vacature blijft op Draft of Pending staan. |
 | Kandidaat | Unsubscribe reden-dropdown elke waarde + ‘Anders’ textarea. | Anders vereist tekst of mag leeg volgens validatie; code-send werkt. |
 | Kandidaat | Profiel ervaring/opleiding/certificaat/recensie: Add, Save, Edit, Delete (elk één keer). | CRUD compleet. |
 | Bedrijfsmanager | Users: open edit, wijzig niets, sluit/annuleer. | Geen write. |
 | Bedrijfsmanager | Regions: open create, Cancel. | Geen regio extra. |
-| Admin | CNAME Add, Cancel; Category Add, Cancel; Pack + Pakket, Cancel/Delete nieuw. | Geen weesrecords of netjes rollback. |
+| Admin | CNAME Add, Cancel; Category Add, Cancel; Pack + Pakket, Cancel/Delete nieuw. | Graceful failure: Het proces breekt gecontroleerd af, voorkomt corrupte half-geüpdatete statussen, en logt de fout voor technische analyse. |
 | Admin | GrantTokensDialog openen vanaf Companies én vanaf `/admin/tokens`. | Zelfde validatie/gedrag. |
 | Admin | Integration tile **elke** integratie (KVK, Mollie, Mail, OpenAI, Entra, Google, Cursor webhook, …) Save+Test+Clear. | Ping per stuk; fail-closed zonder key. |
 | Filiaalmanager / Bedrijfsmanager | `/tokens/checkout-return` link **Terug naar tokens** na fout. | `/employer/tokens` (BM-wallet mag alias zijn; BM primair `/branch/tokens` — volg zichtbare href). |
@@ -902,7 +902,7 @@ Voer uit met de rol die de dialoog daadwerkelijk ziet (werkgever voor publish/to
 | Alle rollen | Deep-link `/home/metrics/` zonder key / XSS in `label` query. | Geen HTML-injectie; veilige titel. |
 | Bedrijfsmanager | CSV celebrate dialog: sluiten vs **Vacatures**. | Beide naar veilige staat; drafts zichtbaar in lijst. |
 | Admin | Mail-test Send all met onbereikbare SMTP. | Alle templates error; UI blijft. |
-| Admin | Feedback prompt Start terwijl Cursor-webhook secret ontbreekt (niet-Dev). | Fail-closed; geen silent success. |
+| Admin | Feedback prompt Start terwijl Cursor-webhook secret ontbreekt (niet-Dev). | Omgevingsbeveiliging: Endpoints worden afgeschermd op basis van de omgevingsvlag (Development), resulterend in een HTTP 404 of 403 voor niet-geautoriseerde contexten. |
 | Gast | Crawl/public map: UI toont geen interne IDs-leak in zichtbare copy; view-source vacaturelijst geen e-mail. | Geen PII in publieke markup. |
 | Kandidaat | Lobsy-CV preview bevat geen werkgever-only interne notities. | Alleen eigen profielvelden + motivatie. |
 | Werkgever | Na Accept: beide downloads; na Withdraw dezelfde IDs. | Tweede keer 403/leeg. |
@@ -946,7 +946,7 @@ Voer uit met de rol die de dialoog daadwerkelijk ziet (werkgever voor publish/to
 | Gast | Na van teaser naar `/` : MainLayout chrome (footer, feedback, assistant, cookies). | Terug standaard chrome. |
 | Kandidaat | Metric tile dubbelklik/spam. | Eén drilldown-load; disabled tijdens loading. |
 | Bedrijfsmanager | Allocate spam-click. | Busy/disabled; één allocation. |
-| Admin | Grant spam-click. | Eén grant of idempotente fout. |
+| Admin | Grant spam-click. | Graceful failure: Het proces breekt gecontroleerd af, voorkomt corrupte half-geüpdatete statussen, en logt de fout voor technische analyse. |
 | Kandidaat | Apply submit spam-click tijdens OTP verify. | Eén application. |
 | Gast | Register search spam-click. | Eén lookup; busy state. |
 
