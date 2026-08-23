@@ -2,7 +2,7 @@ namespace Jobsy.Core.Entities;
 
 /// <summary>
 /// Singleton row for Lobsy/Jobsy legal company details (admin Bedrijfsgegevens).
-/// Shown on self-billing invoice PDFs.
+/// Slogan is shown in the site header; the rest appears on self-billing invoice PDFs.
 /// </summary>
 public class PlatformCompanySettings
 {

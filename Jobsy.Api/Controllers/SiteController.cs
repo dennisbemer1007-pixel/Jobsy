@@ -12,11 +12,16 @@ public class SiteController : ControllerBase
 {
     private readonly IAboutPageSettingsService _aboutPage;
     private readonly IVacancyDiscoveryIndex _discovery;
+    private readonly IPlatformCompanySettingsService _companySettings;
 
-    public SiteController(IAboutPageSettingsService aboutPage, IVacancyDiscoveryIndex discovery)
+    public SiteController(
+        IAboutPageSettingsService aboutPage,
+        IVacancyDiscoveryIndex discovery,
+        IPlatformCompanySettingsService companySettings)
     {
         _aboutPage = aboutPage;
         _discovery = discovery;
+        _companySettings = companySettings;
     }
 
     /// <summary>Public “Wie zijn wij” page content.</summary>
@@ -26,6 +31,18 @@ public class SiteController : ControllerBase
     {
         var snap = await _aboutPage.GetAsync(cancellationToken);
         return Ok(ToDto(snap));
+    }
+
+    /// <summary>
+    /// Public header branding (company name + slogan). No addresses, KvK, IBAN or other PII.
+    /// </summary>
+    [HttpGet("branding")]
+    [AllowAnonymous]
+    [EnableRateLimiting("public-read")]
+    public async Task<ActionResult<SiteBrandingDto>> GetBranding(CancellationToken cancellationToken)
+    {
+        var snap = await _companySettings.GetAsync(cancellationToken);
+        return Ok(new SiteBrandingDto(snap.CompanyName, snap.Slogan));
     }
 
     /// <summary>
@@ -72,6 +89,8 @@ public sealed record AboutPageDto(
     string Lead,
     string BodyHtml,
     DateTime? UpdatedAtUtc);
+
+public sealed record SiteBrandingDto(string CompanyName, string Slogan);
 
 public sealed record SiteCrawlIndexDto(
     IReadOnlyList<SiteCrawlVacancyDto> Vacancies,

@@ -2799,6 +2799,9 @@ public sealed class JobsyApiClient : IAsyncDisposable
         return await response.Content.ReadFromJsonAsync<PlatformCompanyItem>(cancellationToken: ct);
     }
 
+    public async Task<SiteBrandingItem?> GetPublicBrandingAsync(CancellationToken ct = default)
+        => await _http.GetFromJsonAsync<SiteBrandingItem>("api/site/branding", ct);
+
     public async Task<AboutPageItem?> GetPublicAboutPageAsync(CancellationToken ct = default)
         => await _http.GetFromJsonAsync<AboutPageItem>("api/site/about", ct);
 
@@ -3511,6 +3514,12 @@ public sealed class PlatformCompanyItem
     public string? Email { get; set; }
     public string? VatBufferIban { get; set; }
     public DateTime? UpdatedAtUtc { get; set; }
+}
+
+public sealed class SiteBrandingItem
+{
+    public string CompanyName { get; set; } = "Lobsy";
+    public string Slogan { get; set; } = "Dichtbij genoeg om het pantser te laten vallen";
 }
 
 public sealed class AboutPageItem

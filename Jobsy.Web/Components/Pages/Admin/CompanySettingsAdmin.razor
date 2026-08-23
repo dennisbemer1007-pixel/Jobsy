@@ -4,6 +4,7 @@
 @using Jobsy.Web.Components.Admin
 @inject JobsyApiClient Api
 @inject CultureState Culture
+@inject Jobsy.Web.Branding.PlatformBrandingState Branding
 @implements IDisposable
 
 <PageTitle>@Culture["Admin.CompanyDetails"] · Lobsy</PageTitle>
@@ -26,7 +27,7 @@
                     @(_busy ? "Opslaan…" : "Opslaan")
                 </button>
             </div>
-            <p class="muted">Deze gegevens verschijnen onderaan factuur-PDF’s. Het Knab BTW-IBAN wordt gebruikt voor de geautomatiseerde BTW-buffer.</p>
+            <p class="muted">Deze gegevens verschijnen onderaan factuur-PDF’s. De slogan staat ook in de header onder het Lobsy-logo. Het Knab BTW-IBAN wordt gebruikt voor de geautomatiseerde BTW-buffer.</p>
 
             @if (!string.IsNullOrEmpty(_message))
             {
@@ -40,8 +41,11 @@
                 </label>
                 <label>
                     Slogan
-                    <input @bind="_form.Slogan" />
+                    <input @bind="_form.Slogan" maxlength="240" />
                 </label>
+                <p class="muted" style="margin:0">
+                    Zichtbaar in de header onder het Lobsy-logo. Leeg laten herstelt de standaardslogan.
+                </p>
                 <label>
                     Adres
                     <input @bind="_form.Address" />
@@ -136,6 +140,7 @@
         try
         {
             _form = await Api.SavePlatformCompanyAsync(_form) ?? _form;
+            await Branding.RefreshAsync();
             _message = "Bedrijfsgegevens opgeslagen.";
         }
         catch (Exception ex)

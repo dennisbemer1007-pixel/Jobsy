@@ -27,6 +27,7 @@ public sealed class UatRoleApiScriptsTests : IClassFixture<RoleFunctionalWebAppF
         Assert.Equal(HttpStatusCode.OK, (await c.GetAsync("api/wages")).StatusCode);
         Assert.Equal(HttpStatusCode.OK, (await c.GetAsync("api/vacancy-categories")).StatusCode);
         Assert.Equal(HttpStatusCode.OK, (await c.GetAsync("api/site/crawl-index")).StatusCode);
+        Assert.Equal(HttpStatusCode.OK, (await c.GetAsync("api/site/branding")).StatusCode);
         Assert.Equal(HttpStatusCode.OK, (await c.GetAsync("api/kvk/12345678/establishments")).StatusCode);
 
         Assert.Equal(HttpStatusCode.Unauthorized, (await c.GetAsync("api/me/profile")).StatusCode);

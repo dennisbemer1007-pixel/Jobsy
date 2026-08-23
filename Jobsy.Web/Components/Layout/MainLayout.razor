@@ -3,6 +3,7 @@
 @inject CultureState Culture
 @inject JobsyApiClient Api
 @inject Jobsy.Web.RegionHosting.RegionHostState RegionHost
+@inject Jobsy.Web.Branding.PlatformBrandingState Branding
 @inject IJSRuntime Js
 @inject NavigationManager Navigation
 @implements IDisposable
@@ -34,7 +35,7 @@
                 <LobsyLogo Class="brand__logo" Alt="Lobsy" />
                 <span class="brand__text">
                     <span class="brand__name">Lobsy</span>
-                    <span class="brand-tagline">@(RegionHost.Current?.Slogan ?? Culture["Brand.Tagline"])</span>
+                    <span class="brand-tagline">@HeaderTagline</span>
                 </span>
             </a>
         </div>
@@ -70,9 +71,12 @@
     protected override async Task OnInitializedAsync()
     {
         Culture.Changed += OnCultureChanged;
+        RegionHost.Changed += OnBrandingChanged;
+        Branding.Changed += OnBrandingChanged;
         await Culture.InitializeAsync();
         await Culture.SyncDocumentAsync();
         await RegionHost.EnsureInitializedAsync();
+        await Branding.EnsureInitializedAsync();
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -137,9 +141,18 @@
         }
     }
 
+    private string HeaderTagline => Branding.ResolveTagline(RegionHost.Current?.Slogan, Culture["Brand.Tagline"]);
+
     private void OnCultureChanged()
         => InvokeAsync(StateHasChanged);
 
+    private void OnBrandingChanged()
+        => InvokeAsync(StateHasChanged);
+
     public void Dispose()
-        => Culture.Changed -= OnCultureChanged;
+    {
+        Culture.Changed -= OnCultureChanged;
+        RegionHost.Changed -= OnBrandingChanged;
+        Branding.Changed -= OnBrandingChanged;
+    }
 }

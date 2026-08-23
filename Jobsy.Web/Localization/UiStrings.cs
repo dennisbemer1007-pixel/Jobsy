@@ -66,7 +66,7 @@ public static class UiStrings
             ["Discovery.ShowResults"] = "Toon {0} resultaten",
             ["Discovery.ClearFilters"] = "Alle filters wissen",
             ["Discovery.Cancel"] = "Annuleren",
-            ["Discovery.ResultCount"] = "{0} bijbanen op Lobsy",
+            ["Discovery.ResultCount"] = "{0} vacatures op Lobsy",
             ["Discovery.Sort"] = "Sorteer",
             ["Discovery.SortDistance"] = "Afstand",
             ["Discovery.SortType"] = "Type vacature",

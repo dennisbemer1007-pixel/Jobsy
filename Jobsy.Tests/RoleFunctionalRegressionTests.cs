@@ -89,6 +89,71 @@ public class RoleFunctionalRegressionTests : IClassFixture<RoleFunctionalWebAppF
     }
 
     [Fact]
+    public async Task Guest_can_read_public_branding_without_company_pii()
+    {
+        var client = _factory.CreateClient();
+        var response = await client.GetAsync("api/site/branding");
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+
+        var json = await response.Content.ReadFromJsonAsync<JsonElement>(JsonOpts);
+        Assert.False(string.IsNullOrWhiteSpace(json.GetProperty("companyName").GetString()));
+        Assert.False(string.IsNullOrWhiteSpace(json.GetProperty("slogan").GetString()));
+        Assert.False(json.TryGetProperty("vatBufferIban", out _));
+        Assert.False(json.TryGetProperty("kvkNumber", out _));
+        Assert.False(json.TryGetProperty("address", out _));
+        Assert.False(json.TryGetProperty("email", out _));
+
+        Assert.Equal(HttpStatusCode.Unauthorized, (await client.GetAsync("api/settings/company")).StatusCode);
+    }
+
+    [Fact]
+    public async Task Admin_company_slogan_is_served_on_public_branding()
+    {
+        var admin = AdminClient();
+        var guest = _factory.CreateClient();
+        var current = await admin.GetFromJsonAsync<JsonElement>("api/settings/company", JsonOpts);
+        Assert.True(current.ValueKind == JsonValueKind.Object);
+
+        static string? Read(JsonElement e, string name)
+            => e.TryGetProperty(name, out var p) && p.ValueKind != JsonValueKind.Null ? p.GetString() : null;
+
+        var originalSlogan = Read(current, "slogan");
+        var unique = "Pantser-test " + Guid.NewGuid().ToString("N")[..8];
+        var put = await admin.PutAsJsonAsync("api/settings/company", new
+        {
+            companyName = Read(current, "companyName"),
+            slogan = unique,
+            address = Read(current, "address"),
+            postalCode = Read(current, "postalCode"),
+            city = Read(current, "city"),
+            country = Read(current, "country"),
+            kvkNumber = Read(current, "kvkNumber"),
+            vatNumber = Read(current, "vatNumber"),
+            phone = Read(current, "phone"),
+            email = Read(current, "email")
+        });
+        Assert.Equal(HttpStatusCode.OK, put.StatusCode);
+
+        var branding = await guest.GetFromJsonAsync<JsonElement>("api/site/branding", JsonOpts);
+        Assert.Equal(unique, branding.GetProperty("slogan").GetString());
+
+        var restore = await admin.PutAsJsonAsync("api/settings/company", new
+        {
+            companyName = Read(current, "companyName"),
+            slogan = originalSlogan,
+            address = Read(current, "address"),
+            postalCode = Read(current, "postalCode"),
+            city = Read(current, "city"),
+            country = Read(current, "country"),
+            kvkNumber = Read(current, "kvkNumber"),
+            vatNumber = Read(current, "vatNumber"),
+            phone = Read(current, "phone"),
+            email = Read(current, "email")
+        });
+        Assert.Equal(HttpStatusCode.OK, restore.StatusCode);
+    }
+
+    [Fact]
     public async Task Guest_can_read_public_map_view_without_pii()
     {
         var client = _factory.CreateClient();

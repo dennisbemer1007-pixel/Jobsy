@@ -50,6 +50,7 @@ builder.Services.AddSingleton<Jobsy.Web.Security.ISessionTimeoutProvider, Jobsy.
 builder.Services.AddScoped<CultureState>();
 builder.Services.AddScoped<PageSeoContext>();
 builder.Services.AddScoped<Jobsy.Web.RegionHosting.RegionHostState>();
+builder.Services.AddScoped<Jobsy.Web.Branding.PlatformBrandingState>();
 builder.Services.AddScoped<TokenBalanceCache>();
 builder.Services.AddScoped<Jobsy.Web.Navigation.BottomNavRefreshService>();
 builder.Services.AddHttpClient("JobsySeo", client =>
