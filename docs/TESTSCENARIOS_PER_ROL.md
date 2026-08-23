@@ -381,13 +381,13 @@ Account: `ondernemer@jobsy.local`. Bottom-nav: Home · Banenkaart · Vacatures �
 | Filiaalmanager | Home: klik elke metric-tegel. | `/home/metrics/{key}?period=…` drilldown. |
 | Filiaalmanager | Metric-drilldown: periode wisselen + **← Dashboard**. | Nieuwe periode; terug `/home`. |
 | Filiaalmanager | Drilldown overview-link (vacancies/applicants/tokens). | Juiste lijstpagina. |
-| Filiaalmanager | Drilldown leeg / API-fout. | Empty of error; geen 500. |
+| Filiaalmanager | Drilldown leeg / API-fout. | Graceful failure: Het dashboard vangt de fout netjes op met een melding in de component; geen pagina-crash of ongeformatteerde HTTP 500. |
 | Filiaalmanager | Top/Flop: klik vacature. | `/vacancies/{id}`. |
 | Filiaalmanager | Raamflyer: scope vestiging, A4, **Download**. | PDF per vestiging. |
 | Filiaalmanager | Raamflyer: A3. | A3-PDF. |
-| Filiaalmanager | Raamflyer: downloadfout. | Melding. |
+| Filiaalmanager | Raamflyer: downloadfout. | Foutmelding: Systeem toont een duidelijke melding aan de manager; de UI blijft stabiel en breekt niet af. |
 | Filiaalmanager | Banenkaart: toggle **Mijn vacatures** aan. | Alleen eigen open vacatures; uit = publiek. |
-| Filiaalmanager | Mijn vacatures zonder actieve open vacatures. | Melding ‘Je beheert geen actieve open vacatures.’ |
+| Filiaalmanager | Mijn vacatures zonder actieve open vacatures. | Lege staat (Empty-state): Systeem toont een heldere melding ("Je beheert geen actieve open vacatures.") in plaats van een lege tabel of een serverfout. |
 | Filiaalmanager | Hoe werkt Lobsy `/hoe-werkt-lobsy`: alle stappen + primary **Vacatures** + secondary **Home**. | Branch-guide; deep links `/home`, `/branch/vacancies`, applicants, tokens, company, takeovers, kaart. |
 | Filiaalmanager | How-to: klik elke deep link in de stappen. | Landt op genoemd scherm. |
 | Filiaalmanager | Vacatures `/branch/vacancies` (= `/employer/vacancies`): **Nieuwe vacature**. | `/branch/vacancies/new`. |
@@ -400,38 +400,38 @@ Account: `ondernemer@jobsy.local`. Bottom-nav: Home · Banenkaart · Vacatures �
 | Filiaalmanager | **E-mailcheck aanzetten/uitzetten**. | RequireEmailVerification togglet; apply-OTP-plicht volgt. |
 | Filiaalmanager | **Dupliceren**. | Create-pagina `?from={id}` vooringevuld concept. |
 | Filiaalmanager | **Bewerken** draft/active. | `?edit={id}`. |
-| Filiaalmanager | Bewerken/dupliceren van incomplete draft. | Duplicate verborgen tot compleet; edit mag. |
+| Filiaalmanager | Bewerken/dupliceren van incomplete draft. | Blokkade: De dupliceer-optie is verborgen of uitgeschakeld zolang de bron-draft niet volledig is ingevuld. |
 | Filiaalmanager | **Publiceren** op complete Draft. | PublishOptionsDialog: basis aan (disabled), Highlight, PushBom, Verlengen. |
 | Filiaalmanager | Publish dialog: alleen basis, voldoende tokens. | Status Active; tokens afgeboekt (Publish). |
 | Filiaalmanager | Publish: Highlight aan (categorie staat het toe). | Extra tokenkost; highlight zichtbaar op kaart/carousel. |
 | Filiaalmanager | Publish: Highlight terwijl categorie Highlight uit heeft. | Optie verborgen/disabled. |
-| Filiaalmanager | Publish: PushBom aan → preview 0 kandidaten. | Bevestigen disabled. |
+| Filiaalmanager | Publish: PushBom aan → preview 0 kandidaten. | Verzendblokkade: De bevestigingsknop blijft uitgeschakeld (disabled) om onnodige token-inzet bij nul bereik te voorkomen. |
 | Filiaalmanager | Publish: PushBom met bereik + bevestigen. | PushBom verstuurd; spend PushBom; OpenForWork-kandidaten in radius. |
 | Filiaalmanager | Publish: Extend aanvinken. | +extend-kost; looptijd +14d. |
 | Filiaalmanager | Publish: **Annuleren**. | Blijft Draft; geen spend. |
-| Filiaalmanager | Publish bij onvoldoende tokens **mét** kooprecht. | TokenTopUpDialog / Mollie; na betaling pending actie uitgevoerd. |
-| Filiaalmanager | Publish bij onvoldoende tokens **zonder** kooprecht (TokensManagedByEnterprise). | Status **PendingApproval**; geen Mollie; EM/Admin moet goedkeuren. |
-| Filiaalmanager | Publish: KVK nog niet Verified (pending registratie). | Publiceren geblokkeerd. |
+| Filiaalmanager | Publish bij onvoldoende tokens **mét** kooprecht. | Betaalflow: Systeem opent de TokenTopUpDialog (Mollie-integratie); na een succesvolle betaling wordt de uitgestelde actie automatisch uitgevoerd. |
+| Filiaalmanager | Publish bij onvoldoende tokens **zonder** kooprecht (TokensManagedByEnterprise). | Goedkeuringsstatus: De status springt automatisch naar PendingApproval in plaats van een betaalwand; een enterprise-manager of admin moet de actie goedkeuren. |
+| Filiaalmanager | Publish: KVK nog niet Verified (pending registratie). | Publicatieblokkade: Systeem blokkeert de actie volledig en toont een melding dat de bedrijfsverificatie nog voltooid moet worden. |
 | Filiaalmanager | Actieve vacature: **Highlight**. | Spend of top-up; al gehighlight: knop weg. |
-| Filiaalmanager | Actieve vacature: **PushBom** → confirm dialog. | Preview + bevestigen/annuleren; 0 reach = disabled. |
+| Filiaalmanager | Actieve vacature: **PushBom** → confirm dialog. | Verzendblokkade: De bevestigingsknop blijft uitgeschakeld (disabled) om onnodige token-inzet bij nul bereik te voorkomen. |
 | Filiaalmanager | Actieve vacature: **Verlengen**. | Looptijd + tokens of top-up. |
 | Filiaalmanager | Actieve vacature: **Deactiveren**. | Archived/inactive; verdwijnt van publieke kaart. |
 | Filiaalmanager | Gearchiveerd: **Reactiveren**. | Extend-pad; tokens nodig. |
 | Filiaalmanager | **Goedkeuren** PendingApproval. | Knop **niet** zichtbaar (alleen EM/Admin). |
-| Filiaalmanager | Lifecycle-actie API-fout. | Melding; status ongewijzigd. |
-| Filiaalmanager | Nieuwe vacature: verplichten leeg opslaan. | Validatie; niet opgeslagen. |
+| Filiaalmanager | Lifecycle-actie API-fout. | Visuele rollback: Systeem toont een foutmelding en draait de visuele status-update in de UI direct terug om desync te voorkomen. |
+| Filiaalmanager | Nieuwe vacature: verplichten leeg opslaan. | Validatiefout: Client- en servervalidatie blokkeren de opslag; verplichte velden worden gemarkeerd met duidelijke foutmeldingen. |
 | Filiaalmanager | Nieuwe vacature: titel, categorie, beschrijving (toolbar H2/B/I/lijst/link), media-URL’s. | Concept opslaan lukt; moderatie-dialog kan ‘Tekst aanpassen’ eisen. |
-| Filiaalmanager | Moderatie-dialog: tekst aanpassen vs negeren/sluiten. | Aanpassen houdt draft; publiceren pas na acceptabele tekst. |
+| Filiaalmanager | Moderatie-dialog: tekst aanpassen vs negeren/sluiten. | Moderatie-dialog: Systeem verplicht de manager om de tekst aan te passen voordat de draft kan worden opgeslagen of gepubliceerd. |
 | Filiaalmanager | Create: extra categorevelden, exclusivity stage, salaristabel, rijbewijs, opleiding, min werkgevers/recensies, uren, dagdelen / in overleg, wettelijke vinkjes + `[i]` tooltips. | Velden opgeslagen; legal flags verplicht voor matching. |
 | Filiaalmanager | Create: direct contact + kanalen. | Na apply ziet kandidaat contactmodal. |
 | Filiaalmanager | Create: e-mailverificatie-toggle. | Apply vereist OTP als aan. |
 | Filiaalmanager | Create: meerdere vestigingen — max vestigingen overschrijden. | Validatie/disabled extra. |
-| Filiaalmanager | Create: vestiging van een **ander** bedrijf kiezen. | Niet in lijst / 403 bij API. |
+| Filiaalmanager | Create: vestiging van een **ander** bedrijf kiezen. | Toegangsweigering: De vestiging verschijnt niet in de selectielijst, of de API retourneert een HTTP 403 / weigering bij het opslaan. |
 | Filiaalmanager | **Opslaan als concept** success. | Terug naar lijst als Draft. |
 | Filiaalmanager | Create: intermediair-KVK-blok. | Niet getoond (geen uitzend-KVK-plicht). |
 | Filiaalmanager | Sollicitaties `/branch/applicants`: filters Alles/Open/Accepted/Matched/Rejected. | Client filter; telling klopt (alleen e-mail-verified). |
-| Filiaalmanager | Applicants: rij uitklappen vóór Accept. | Motivatie, afstand (km zonder adres), beschikbaarheid, leeftijd, match-%; **geen** naam/e-mail/telefoon/adres/CV; copy ‘accepteer om te tonen’. |
-| Filiaalmanager | Download Lobsy-CV / eigen CV vóór Accept. | Knoppen weg of 403; geen PDF. |
+| Filiaalmanager | Applicants: rij uitklappen vóór Accept. | Progressive Disclosure-blokkade: De knoppen zijn afwezig of retourneren een HTTP 403; kandidaat-PII en CV's zijn ten strengste afgeschermd tot de manager de kandidaat expliciet accepteert. |
+| Filiaalmanager | Download Lobsy-CV / eigen CV vóór Accept. | Progressive Disclosure-blokkade: De knoppen zijn afwezig of retourneren een HTTP 403; kandidaat-PII en CV's zijn ten strengste afgeschermd tot de manager de kandidaat expliciet accepteert. |
 | Filiaalmanager | **Accepteren**. | Status Accepted; PII + beide CV-downloads zichtbaar. |
 | Filiaalmanager | Na Accept: naam/e-mail/telefoon/adres zichtbaar. | Progressive disclosure; recensie-contacten niet vóór Accept. |
 | Filiaalmanager | **Weigeren** → confirm **Weigeren**. | Rejected; PII blijft verborgen. |
@@ -440,11 +440,11 @@ Account: `ondernemer@jobsy.local`. Bottom-nav: Home · Banenkaart · Vacatures �
 | Filiaalmanager | Na Accept/Contacting: **Matchen**. | Confirm: afwijzen overige + vacature sluiten checkboxes; Hired/Filled. |
 | Filiaalmanager | Match: overige afwijzen aan, sluiten vacature aan. | Andere kandidaten FilledElsewhere/Rejected; vacature niet meer Active. |
 | Filiaalmanager | Match: beide opties uit. | Alleen deze Hired; vacature/anderen volgens rules. |
-| Filiaalmanager | Match/invite/reject API-fout. | Fout; status rollback visueel. |
+| Filiaalmanager | Match/invite/reject API-fout. | Visuele rollback: Systeem toont een foutmelding en draait de visuele status-update in de UI direct terug om desync te voorkomen. |
 | Filiaalmanager | Download Lobsy-CV na Accept. | PDF. |
 | Filiaalmanager | Download geüpload CV na Accept (als aanwezig). | Bestand; ontbreekt: knop weg. |
 | Filiaalmanager | Match-% kleur + breakdown klikken. | Breakdown-modal; vangnet-indicatie indien ViaSafetyNet. |
-| Filiaalmanager | Applicants van vacature andere vestiging (ID in URL/API). | Leeg of 403; tenant-scope. |
+| Filiaalmanager | Applicants van vacature andere vestiging (ID in URL/API). | Toegangsblokkade (403 / Access Denied): Systeem weigert direct de toegang of stuurt de gebruiker door naar de eigen rol-omgeving; geen inzage in vreemde vestigingsdata. |
 | Filiaalmanager | Tokens `/branch/tokens` zonder enterprise-beheer: pakket kiezen + iDEAL/creditcard. | Mollie checkout; webhook bijschrijving; log Purchase. |
 | Filiaalmanager | Tokens: checkout annuleren bij Mollie. | Geen tokens; terug wallet; pending actie niet uitgevoerd. |
 | Filiaalmanager | Tokens: `/tokens/checkout-return` success. | Poll tot bijschrijving; redirect/actie uitgevoerd; chip-saldo omhoog. |
@@ -461,10 +461,10 @@ Account: `ondernemer@jobsy.local`. Bottom-nav: Home · Banenkaart · Vacatures �
 | Filiaalmanager | Overnames `/employer/takeovers` met inbox: **Goedkeuren**. | Org-merge; inbox leeg → nav-item mag verdwijnen. |
 | Filiaalmanager | Overnames: **Afwijzen**. | Request rejected; claimant krijgt geen eigendom. |
 | Filiaalmanager | Takeover zonder e-mailverificatie claimant. | Niet in inbox / niet approvebaar tot verified. |
-| Filiaalmanager | Open `/employer/users`, `/employer/organization`, `/employer/regions`, `/employer/salary-tables`, `/employer/csv-import`. | 403/access-denied (geen EM). |
-| Filiaalmanager | Open `/admin/*`. | 403. |
-| Filiaalmanager | Open `/regional/branches` als BM zonder lidmaatschap. | 403 of lege niet-jouw regio. |
-| Filiaalmanager | Approve-publish API direct aanroepen. | 403. |
+| Filiaalmanager | Open `/employer/users`, `/employer/organization`, `/employer/regions`, `/employer/salary-tables`, `/employer/csv-import`. | Toegangsblokkade (403 / Access Denied): Systeem weigert direct de toegang of stuurt de gebruiker door naar de eigen rol-omgeving; geen inzage in vreemde vestigingsdata. |
+| Filiaalmanager | Open `/admin/*`. | Toegangsblokkade (403 / Access Denied): Systeem weigert direct de toegang of stuurt de gebruiker door naar de eigen rol-omgeving; geen inzage in vreemde vestigingsdata. |
+| Filiaalmanager | Open `/regional/branches` als BM zonder lidmaatschap. | Toegangsblokkade (403 / Access Denied): Systeem weigert direct de toegang of stuurt de gebruiker door naar de eigen rol-omgeving; geen inzage in vreemde vestigingsdata. |
+| Filiaalmanager | Approve-publish API direct aanroepen. | Toegangsblokkade (403 / Access Denied): Systeem weigert direct de toegang of stuurt de gebruiker door naar de eigen rol-omgeving; geen inzage in vreemde vestigingsdata. |
 | Filiaalmanager | Consent-bump: blocking **Akkoord en verder** (niet-kandidaat). | Geen dismiss; links legal; na akkoord app bruikbaar; client-supplied ConsentVersion genegeerd. |
 | Filiaalmanager | Consent dialog: sluiten/Escape. | Blijft blokkeren tot akkoord. |
 | Filiaalmanager | Als claim `HasCandidateApplications`: extra nav **Mijn sollicitaties**. | Read-only candidate applications; **geen** Intrekken. |
@@ -806,7 +806,7 @@ Herhaal per actor. Verwacht overal: login-challenge (anoniem) of **403 / `/acces
 | Rol | Testscenario | Verwacht resultaat |
 |-----|--------------|--------------------|
 | Kandidaat | Open `/admin/settings`, `/admin/users`, `/admin/logging`, `/admin/token-finance`, `/employer/users`, `/employer/organization`, `/branch/applicants`, `/salesmanager/toolkit`, `/ambassadeur/toolkit`. | Geen toegang. |
-| Filiaalmanager | Open `/admin/companies`, `/employer/users`, `/employer/regions`, `/intermediary/team`, `/salesmanager/invoices`, `/ambassadeur/finance`, `/regional/tokens` allocate POST. | Geen toegang / geen allocate. |
+| Filiaalmanager | Open `/admin/companies`, `/employer/users`, `/employer/regions`, `/intermediary/team`, `/salesmanager/invoices`, `/ambassadeur/finance`, `/regional/tokens` allocate POST. | Toegangsblokkade (403 / Access Denied): Systeem weigert direct de toegang of stuurt de gebruiker door naar de eigen rol-omgeving; geen inzage in vreemde vestigingsdata. |
 | Regiomanager | Open `/branch/vacancies/new`, `/employer/users`, `/admin/wages`, `/employer/csv-import`, applicants **Accept**-API, tokens **kopen**-API. | 403. |
 | Bedrijfsmanager | Open `/admin/sales`, `/admin/api-keys`, `/intermediary` (clients dashboard), `/salesmanager/referrals`. | 403. |
 | Intermediair | Open `/employer/organization`, `/admin/finance`, `/salesmanager/onboarding`, approve-publish. | Toegangsblokkade (403 / Access Denied): Systeem weigert direct de toegang en stuurt de gebruiker naar de homepagina of een beveiligde foutpagina. |
@@ -814,7 +814,7 @@ Herhaal per actor. Verwacht overal: login-challenge (anoniem) of **403 / `/acces
 | Ambassadeur | Open `/admin/ambassadeurs`, `/salesmanager/referrals`, `/employer/vacancies`. | 403. |
 | Admin | Als user A data van user B opvragen via gewijzigde IDs (vacancy/application/export). | Alleen platform-scope waar bedoeld; privacy-export blijft **eigen** data; application-PDF zonder PiiRevealed = 403. |
 | Gast | IDOR: `/api/applications/{id}/cv`, `/api/privacy/export`, `/api/tokens/grant`. | 401. |
-| Filiaalmanager | IDOR: applicants/CV van andere companyId. | 403; geen PII. |
+| Filiaalmanager | IDOR: applicants/CV van andere companyId. | Toegangsblokkade (403 / Access Denied): Systeem weigert direct de toegang of stuurt de gebruiker door naar de eigen rol-omgeving; geen inzage in vreemde vestigingsdata. |
 | Intermediair | IDOR: vacancy muteren van niet-gekoppelde opdrachtgever (`IntermediaryCompanyId`). | Claim-pad / Weigering: Systeem weigert directe overname en start een gecontroleerde claim- of contactflow op; geen ongeautoriseerde PII-inzage. |
 | Bedrijfsmanager | IDOR: `/employer/users` van andere org. | 403/lege lijst. |
 | Salesmanager | IDOR: factuur-PDF van andere SM. | Toegangsblokkade (403 / Access Denied): Systeem weigert de toegang onmiddellijk en stuurt de gebruiker terug naar de algemene homepagina of een beveiligde foutpagina. |
@@ -852,7 +852,7 @@ Voer uit met de rol die de dialoog daadwerkelijk ziet (werkgever voor publish/to
 | Salesmanager / Ambassadeur | Payout UI toont IBAN NL00BANK0123456789 voluit. | Fail — moet `NL00****6789`-stijl mask zijn. |
 | Admin | Company VAT IBAN field prefill. | Server-side validatie: API vangt de onjuiste velden (zoals malafide e-mailadressen of ongeldige IBAN-structuren) op en retourneert een nette validatiefout. |
 | Alle rollen | Lobsy-assistent stuurt naar `/gebruiksvoorwaarden`. | Legal page; sessie blijft. |
-| Filiaalmanager | PublishOptionsDialog PushBom vink + daarna tokens tekort → top-up → return. | Flags bewaard; PushBom gaat alsnog de deur uit. |
+| Filiaalmanager | PublishOptionsDialog PushBom vink + daarna tokens tekort → top-up → return. | Betaalflow: Systeem opent de TokenTopUpDialog (Mollie-integratie); na een succesvolle betaling wordt de uitgestelde actie automatisch uitgevoerd. |
 | Bedrijfsmanager | Twee tabbladen: allocate in A, kopen in B, beide submit. | Geen negatief; optimistic concurrency/fout. |
 | Kandidaat | Twee tabbladen dubbel OTP bevestigen. | Eén sollicitatie; tweede idempotent/fout al aangevraagd. |
 | Gast | Registratie dubbel submit (double-click). | Eén registratie; busy disabled button. |
@@ -936,7 +936,7 @@ Voer uit met de rol die de dialoog daadwerkelijk ziet (werkgever voor publish/to
 | Admin | Vacancy category PushBom tokens leeg laten. | Range-price uit PushBom-tiers. |
 | Admin | Vacancy category Always free + toch publish tokens > 0. | Free wint of cost volgens implementatie — vastleggen wat UI/API doet. |
 | Filiaalmanager | Publish incomplete draft (IsIncompleteDraft). | Geen Publiceren-knop. |
-| Filiaalmanager | Dupliceren incomplete draft. | Geen Duplicate-knop. |
+| Filiaalmanager | Dupliceren incomplete draft. | Blokkade: De dupliceer-optie is verborgen of uitgeschakeld zolang de bron-draft niet volledig is ingevuld. |
 | Kandidaat | Applications Intrekken op reeds Withdrawn. | Knop weg / fout. |
 | Kandidaat | Applications read-only als werkgever met claim (niet kandidaat-primary). | Lead read-only; geen Intrekken — dit met een dual-role user. |
 | Regiomanager | Tokenchip vs ontbrekende ‘Mijn tokens’ in bottom-nav. | Chip gaat naar `/employer/tokens`; nav heeft geen Tokens-item (by design). |
