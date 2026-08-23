@@ -272,39 +272,39 @@ Account: `kandidaat@jobsy.local` / `Jobsy123!`. Bottom-nav: Zoeken · Bewaard ·
 | Kandidaat | Home: klik elke KPI-tegel (sollicitaties, likes, shares, reacties). | Tegel selected; drilldown-lijst; overview-link naar bijbehorende lijstpagina. |
 | Kandidaat | Home: drilldown-item klikken. | Navigeert naar vacature of lijstitem. |
 | Kandidaat | Home: drilldown overview-link. | Naar `/candidate/applications`, liked of shared afhankelijk van metric. |
-| Kandidaat | Home: API-fout metrics. | Foutmelding; geen lege stille pagina. |
-| Kandidaat | Home: periode zonder data. | Tegels 0; drilldown empty. |
+| Kandidaat | Home: API-fout metrics. | Graceful empty-state: De dashboard-tegel toont 0 of een nette foutmelding binnen de component; de pagina crasht niet en blijft functioneel. |
+| Kandidaat | Home: periode zonder data. | Graceful empty-state: De dashboard-tegel toont 0 of een nette foutmelding binnen de component; de pagina crasht niet en blijft functioneel. |
 | Kandidaat | Banenkaart als ingelogde kandidaat (alle gast-filters herhalen). | Zelfde filters; likes/apply beschikbaar; origin mag uit profiel-thuislocatie komen. |
 | Kandidaat | Banenkaart: **Zoekopdracht bewaren**. | Gaat naar liked (ingelogd, geen gate). |
 | Kandidaat | Vacaturedetail: **Like** (uit → aan). | Liked; toast; hart-state aan. |
 | Kandidaat | Vacaturedetail: **Like** nogmaals (aan → uit). | Like verwijderd; toast removed. |
-| Kandidaat | Like terwijl API faalt. | Fout in `_message`; UI niet desync-crash. |
+| Kandidaat | Like terwijl API faalt. | UI-synchronisatie & Toast: De applicatie toont een foutmelding via de `_message` state, maar voorkomt dat de hart-icoon state desynced of de app crasht. |
 | Kandidaat | Vacaturedetail: **Delen** + elk kanaal. | ShareModal; share geteld in engagement na daadwerkelijk delen/kopiëren volgens implementatie. |
 | Kandidaat | Detail: **Route** / **Street View** / **Video** / bedrijfsnaam. | Zelfde als gast, plus ingelogde locatie uit profiel indien gezet. |
 | Kandidaat | Detail: geboortedatum opslaan. | Loon naar leeftijd; validatie ongeldige datum. |
-| Kandidaat | Detail: DOB in de toekomst / onvolledig. | Validatiefout; niet opgeslagen. |
+| Kandidaat | Detail: DOB in de toekomst / onvolledig. | Validatiefout: Systeem weigert de opslag; de UI toont een duidelijke validatiemelding dat de datum ongeldig is. |
 | Kandidaat | Mock-interview CTA openen. | Coach-modal start. |
 | Kandidaat | Mock-interview: vraag beantwoorden **Verstuur**. | Volgende vraag/progress/hints. |
 | Kandidaat | Mock-interview: **Opnieuw starten**. | Gesprek reset. |
 | Kandidaat | Mock-interview: disclaimer + sluiten. | Modal dicht; vacature blijft. |
-| Kandidaat | Mock-interview: API-fout. | Fout in modal; Restart blijft. |
-| Kandidaat | Solliciteren: incomplete profiel (geen beschikbaarheid/rijbewijs/ervaring/opleiding/over-jou/te weinig recensies). | Checklist + **Profiel aanvullen** met returnUrl; OTP nog niet. |
-| Kandidaat | Solliciteren: vacature met `MinimumReferences` > aantal complete recensies. | Apply geblokkeerd tot recensies compleet (contact+email+telefoon). |
-| Kandidaat | Solliciteren: stage-exclusiviteit zonder studentnummer/school-mail/opleiding/leerjaar. | CTA geblokkeerd tot exclusivity-velden. |
-| Kandidaat | Solliciteren: school-domein matcht niet (exclusivity regex/domain). | Geblokkeerd of validatiefout. |
+| Kandidaat | Mock-interview: API-fout. | Foutafhandeling in modal: De coach-modal toont een foutmelding, maar de optie om opnieuw te starten (Restart) blijft beschikbaar. |
+| Kandidaat | Solliciteren: incomplete profiel (geen beschikbaarheid/rijbewijs/ervaring/opleiding/over-jou/te weinig recensies). | Sollicitatieblokkade: De sollicitatieknop is geblokkeerd of leidt naar een checklist met ontbrekende onderdelen (zoals recensies of werkvergunning). |
+| Kandidaat | Solliciteren: vacature met `MinimumReferences` > aantal complete recensies. | Sollicitatieblokkade: De sollicitatieknop is geblokkeerd of leidt naar een checklist met ontbrekende onderdelen (zoals recensies of werkvergunning). |
+| Kandidaat | Solliciteren: stage-exclusiviteit zonder studentnummer/school-mail/opleiding/leerjaar. | Validatieblokkade: De CTA blijft geblokkeerd tot alle verplichte exclusiviteitsvelden correct zijn ingevuld en gevalideerd. |
+| Kandidaat | Solliciteren: school-domein matcht niet (exclusivity regex/domain). | Weigering: Systeem blokkeert de actie of geeft een validatiefout op basis van het ingestelde domeinpatroon. |
 | Kandidaat | Solliciteren: match ≥ 50%, profiel compleet, voorwaarden+werkvergunning aan, optionele motivatie ≤500. | OTP-stap; code per e-mail. |
-| Kandidaat | Apply: voorwaarden of werkvergunning uit. | Submit disabled / validatie ‘akkoord vereist’. |
-| Kandidaat | Apply: motivatie > 500 tekens. | Niet meer invoerbaar of validatiefout. |
+| Kandidaat | Apply: voorwaarden of werkvergunning uit. | Submit-blokkade: De verzendknop is uitgeschakeld of triggert een verplichte validatiemelding ('akkoord vereist'). |
+| Kandidaat | Apply: motivatie > 500 tekens. | Karakterlimiet: De invoer wordt afgekapt door de UI of geweigerd via een validatiefout op de lengte. |
 | Kandidaat | Apply: authenticator-checkbox (feature flag aan). | Mag aan; zonder flag niet storend. |
-| Kandidaat | Apply OTP: verkeerde 6 cijfers. | `CodeRejected`; na 5 fout + rate-limit. |
+| Kandidaat | Apply OTP: verkeerde 6 cijfers. | Code-weigering & Rate-limit: De code wordt afgewezen (`CodeRejected`). Na 5 pogingen wordt het verzoek tijdelijk geblokkeerd via een rate-limit. |
 | Kandidaat | Apply OTP: **Opnieuw versturen**. | Nieuwe code; kan opnieuw bevestigen. |
 | Kandidaat | Apply OTP: geldige code **Bevestigen**. | Sollicitatie verstuurd; success-panel; alleen verified telt in lijsten/metrics. |
 | Kandidaat | Apply: al gesolliciteerd op dezelfde vacature. | Success/al-gesolliciteerd panel; geen tweede OTP; link **Mijn sollicitaties**; optioneel Direct contact. |
 | Kandidaat | Direct-contact modal: WhatsApp / Bellen / Mail / Sluiten. | Deeplinks naar werkgeverkanalen indien aangeboden ná apply; sluiten werkt. |
-| Kandidaat | Apply match < 50% (Gulden Middenweg) — o.a. `kandidaat.ver@jobsy.local`. | Panel matchscore; **Ja, pas mijn profiel aan** vs **Toch doorgaan** (vangnet-flag). |
+| Kandidaat | Apply match < 50% (Gulden Middenweg) — o.a. `kandidaat.ver@jobsy.local`. | Vangnet-flow: Toont een waarschuwingspaneel; de kandidaat kan kiezen om het profiel aan te passen of expliciet door te gaan met een vangnet-vinkje. |
 | Kandidaat | Vangnet: **Profiel aanpassen**. | Naar profiel met returnUrl; apply niet voltooid. |
 | Kandidaat | Vangnet: **Toch doorgaan** + OTP afronden. | Sollicitatie met `ViaSafetyNet`; werkgever ziet match-% + vangnet-indicatie. |
-| Kandidaat | Apply: wettelijke leeftijd/taak-vinkjes vacature (nacht/arbeidstijden). | Hard block als profiel/leeftijd niet voldoet; geen UI-minimumleeftijd-veld omzeilen. |
+| Kandidaat | Apply: wettelijke leeftijd/taak-vinkjes vacature (nacht/arbeidstijden). | Hard block: Systeem blokkeert de sollicitatie op basis van profieldata (zoals wettelijke nachtdienstvereisten); geen enkele UI-omzeiling mogelijk. |
 | Kandidaat | Apply: links privacy/voorwaarden in de flow. | Openen legal pages; flow-state behouden bij terug. |
 | Kandidaat | Match-breakdown op kaart/detail openen. | Modal met breakdown + adviezen; sluiten werkt. |
 | Kandidaat | Sollicitaties: tabs **Alles / Open / Afgewezen / Gematched**. | Lijst filtert; empty-tab copy. |
@@ -312,7 +312,7 @@ Account: `kandidaat@jobsy.local` / `Jobsy123!`. Bottom-nav: Zoeken · Bewaard ·
 | Kandidaat | Sollicitaties: **Lobsy-CV downloaden**. | PDF-download eigen Lobsy-CV. |
 | Kandidaat | Sollicitaties: **Intrekken** + bevestigen. | Status Withdrawn; snapshots/upload-CV gewist; melding. |
 | Kandidaat | Intrekken: annuleren in confirm. | Status ongewijzigd. |
-| Kandidaat | Intrekken: API-fout. | Foutmelding; rij blijft. |
+| Kandidaat | Intrekken: API-fout. | Foutmelding & State-behoud: Er verschijnt een foutmelding; de sollicitatie-rij blijft ongewijzigd in de lijst staan. |
 | Kandidaat | Sollicitaties empty → **naar kaart**. | `/`. |
 | Kandidaat | Liked: subnav **Geliked** / **Gedeeld**. | `/candidate/liked` vs `/candidate/shared`. |
 | Kandidaat | Liked: klik card. | Vacaturedetail; unlike vanaf detail werkt terug in lijst na refresh. |
@@ -330,16 +330,16 @@ Account: `kandidaat@jobsy.local` / `Jobsy123!`. Bottom-nav: Zoeken · Bewaard ·
 | Kandidaat | Profiel: naam, telefoon, WhatsApp wijzigen + **Opslaan**. | Opgeslagen; validatie te lange/lege verplichte velden. |
 | Kandidaat | Profiel: thuisadres suggestie kiezen. | HomeLocation gezet (PushBom/reistijd). |
 | Kandidaat | Profiel: adres **wissen** + opslaan. | Locatie leeg; matching/reistijd limited. |
-| Kandidaat | Profiel: adres vrije tekst zonder suggestie. | Fout ‘kies uit suggesties’ of niet-geocoded. |
+| Kandidaat | Profiel: adres vrije tekst zonder suggestie. | Geocode-validatie: Systeem eist een selectie uit de adres-suggesties om te zorgen dat reistijd en coördinaten correct worden berekend. |
 | Kandidaat | Profiel: max reistijd + vervoer. | Opgeslagen; kaart gebruikt voorkeur. |
 | Kandidaat | Profiel: interesses, rijbewijzen, over-jou, standaardmotivatie. | Opgeslagen; AI-coach soft tips mogen tonen, PII-in-tekst hard block. |
-| Kandidaat | AboutMe met telefoonnummer/e-mail in vrije tekst. | Coach/moderatie blokkeert of waarschuwt PII; niet stiekem publiceren. |
+| Kandidaat | AboutMe met telefoonnummer/e-mail in vrije tekst. | Moderatie-blokkade: De AI-coach of moderatielaag waarschuwt of blokkeert het opslaan van directe PII in vrije tekstvelden. |
 | Kandidaat | Profiel: uren min/max + dagdelenmatrix / tijden in overleg. | Matrix opgeslagen; overlap-logica voor match-%. |
 | Kandidaat | Profiel: eigen CV uploaden PDF. | Upload OK; OpenAI vult alleen lege duidelijke velden; Lobsy-CV vermeldt eigen CV. |
 | Kandidaat | CV uploaden DOCX. | Zelfde pad. |
-| Kandidaat | CV uploaden .exe / te groot / leeg. | Validatiefout; geen extractie. |
+| Kandidaat | CV uploaden .exe / te groot / leeg. | Validatiefout: Systeem weigert het bestand direct; er vindt geen extractie plaats en er wordt een duidelijke foutmelding getoond. |
 | Kandidaat | CV **vervangen** / **downloaden** / **verwijderen**. | Nieuw bestand / download / verwijderd; extractie niet overschrijft gevulde velden. |
-| Kandidaat | CV-extractie zonder OpenAI-key. | Upload blijft staan; geen extractie; geen fout-body in logs. |
+| Kandidaat | CV-extractie zonder OpenAI-key. | Graceful degradatie: Het bestand wordt wel opgeslagen in de opslag, maar de automatische veld-extractie wordt overgeslagen zonder log-crash. |
 | Kandidaat | Ervaring CRUD: toevoegen, wijzigen, verwijderen. | Lijst klopt na opslaan. |
 | Kandidaat | Opleiding CRUD. | Opgeslagen. |
 | Kandidaat | Certificaten CRUD. | Opgeslagen. |
@@ -348,18 +348,18 @@ Account: `kandidaat@jobsy.local` / `Jobsy123!`. Bottom-nav: Zoeken · Bewaard ·
 | Kandidaat | Recensie max bereikt. | Geen extra add of fout. |
 | Kandidaat | Recensie verwijderen. | Telling daalt; apply-gate kan terugkomen. |
 | Kandidaat | Profiel **Opslaan** success. | Bevestiging; data persistent na reload. |
-| Kandidaat | Profiel opslaan API-fout / not found. | Foutmelding. |
+| Kandidaat | Profiel opslaan API-fout / not found. | Foutmelding: Systeem vangt de HTTP-fout op en toont een melding aan de gebruiker in plaats van een lege of falende pagina. |
 | Kandidaat | **Download Lobsy-CV** vanaf profiel. | Voorbeeld-PDF (QuestPDF) met profiel + optionele motivatie. |
 | Kandidaat | Profiel **Afmelden** → UnsubscribeDialog. | Zelfde OTP-forget als `/privacy/data`. |
 | Kandidaat | Deep-link `/candidate/actions/withdraw-others` geldige token: **Ja, trek andere sollicitaties in**. | Andere open sollicitaties ingetrokken; naar applications. |
 | Kandidaat | Withdraw-others: **Liever niet**. | Geen wijziging; terug applications/home. |
-| Kandidaat | Withdraw-others: ongeldige/verlopen token. | Fout; geen mass-withdraw. |
+| Kandidaat | Withdraw-others: ongeldige/verlopen token. | Token-weigering: Systeem toont een foutmelding; de massale actie wordt uit veiligheidsoverwegingen volledig geweigerd. |
 | Kandidaat | Deep-link `/candidate/actions/set-unavailable`: **Ja, zet op Niet beschikbaar**. | OpenForWork uit; naar profiel. |
 | Kandidaat | Set-unavailable: **Annuleren**. | Geen wijziging. |
-| Kandidaat | Set-unavailable: ongeldige token. | Fout. |
-| Kandidaat | Open `/hoe-werkt-lobsy` (employer-pad). | Authorize-fail of redirect `/home` (niet de employer-guide). |
-| Kandidaat | Open `/employer/vacancies`, `/branch/applicants`, `/admin/users`, `/salesmanager`. | 403 / access-denied / redirect home — geen werkgever-PII. |
-| Kandidaat | Open `/employer/tokens`. | Geen tokenwallet; 403. |
+| Kandidaat | Set-unavailable: ongeldige token. | Token-weigering: Systeem toont een foutmelding; de massale actie wordt uit veiligheidsoverwegingen volledig geweigerd. |
+| Kandidaat | Open `/hoe-werkt-lobsy` (employer-pad). | Toegangsblokkade: Systeem retourneert een HTTP 403, een Access Denied-pagina of een redirect naar de homepagina; zero PII-lek. |
+| Kandidaat | Open `/employer/vacancies`, `/branch/applicants`, `/admin/users`, `/salesmanager`. | Toegangsblokkade: Systeem retourneert een HTTP 403, een Access Denied-pagina of een redirect naar de homepagina; zero PII-lek. |
+| Kandidaat | Open `/employer/tokens`. | Toegangsblokkade: Systeem retourneert een HTTP 403, een Access Denied-pagina of een redirect naar de homepagina; zero PII-lek. |
 | Kandidaat | Consent-reaccept dialog. | Niet getoond (kandidaat herbevestigt per sollicitatie). |
 | Kandidaat | Solliciteren zonder nieuwe consent-checkbox bij consent-bump. | Per-apply akkoord verplicht; oude sollicitaties blijven. |
 | Kandidaat | Notifications: sollicitatie-statuswijziging (accept/reject). | Bell toont item; deep link naar applications/detail. |
