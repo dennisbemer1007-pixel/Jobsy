@@ -1,0 +1,66 @@
+@inject JobsyApiClient Api
+@inject TokenBalanceCache TokenBalances
+
+<div class="dash-refresh" style="display:flex;align-items:center;gap:0.5rem;flex-wrap:wrap">
+    <button type="button"
+            class="login-submit"
+            style="margin-top:0;min-width:8rem"
+            disabled="@(_busy || Disabled)"
+            aria-busy="@_busy"
+            @onclick="RefreshAsync">
+        @if (_busy)
+        {
+            <span style="display:inline-block;width:0.85rem;height:0.85rem;border:2px solid rgba(255,255,255,.35);border-top-color:#fff;border-radius:50%;margin-right:0.45rem;vertical-align:-0.1rem;animation:jobsy-dash-spin 0.7s linear infinite" aria-hidden="true"></span>
+            <span>Bezig…</span>
+        }
+        else
+        {
+            <span>Ververs</span>
+        }
+    </button>
+    @if (_error is not null)
+    {
+        <span class="state-message error" style="margin:0">@_error</span>
+    }
+</div>
+<style>
+    @@keyframes jobsy-dash-spin { to { transform: rotate(360deg); } }
+</style>
+
+@code {
+    [Parameter] public string Period { get; set; } = "week";
+    [Parameter] public Guid? CompanyId { get; set; }
+    [Parameter] public bool Disabled { get; set; }
+    [Parameter] public EventCallback<DashboardRefreshResult> OnRefreshed { get; set; }
+
+    private bool _busy;
+    private string? _error;
+
+    private async Task RefreshAsync()
+    {
+        if (_busy)
+        {
+            return;
+        }
+
+        _busy = true;
+        _error = null;
+        try
+        {
+            var result = await Api.RefreshDashboardAsync(Period, CompanyId);
+            TokenBalances.Invalidate();
+            if (OnRefreshed.HasDelegate)
+            {
+                await OnRefreshed.InvokeAsync(result);
+            }
+        }
+        catch
+        {
+            _error = "Verversen mislukt. Probeer het opnieuw.";
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+}

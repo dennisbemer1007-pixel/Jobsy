@@ -172,8 +172,15 @@ public static class DependencyInjection
         services.AddScoped<IVatDeclarationService, VatDeclarationService>();
         services.AddScoped<IVacancyProductService, VacancyProductService>();
         services.AddScoped<IVacancyDraftCreationService, VacancyDraftCreationService>();
-        services.AddScoped<IMetricsQueryService, MetricsQueryService>();
+        services.AddSingleton<IDashboardCache, DashboardMemoryCache>();
+        services.AddScoped<IDashboardLiveOverlay, DashboardLiveOverlay>();
+        services.AddScoped<MetricsQueryService>();
+        services.AddScoped<IMetricsQueryService>(sp => new CachingMetricsQueryService(
+            sp.GetRequiredService<MetricsQueryService>(),
+            sp.GetRequiredService<IDashboardCache>(),
+            sp.GetRequiredService<IDashboardLiveOverlay>()));
         services.AddScoped<ICandidateMetricsQueryService, CandidateMetricsQueryService>();
+        services.AddScoped<IDashboardRefreshService, DashboardRefreshService>();
 
         services.AddHttpClient(MolliePaymentService.HttpClientName, client =>
         {
@@ -210,7 +217,11 @@ public static class DependencyInjection
         services.AddScoped<IAmbassadeurOnboardingService, AmbassadeurOnboardingService>();
         services.AddScoped<IAmbassadeurSettingsService, AmbassadeurSettingsService>();
         services.AddScoped<IAmbassadeurAttributionService, AmbassadeurAttributionService>();
-        services.AddScoped<IAmbassadeurDashboardService, AmbassadeurDashboardService>();
+        services.AddScoped<AmbassadeurDashboardService>();
+        services.AddScoped<IAmbassadeurDashboardService>(sp => new CachingAmbassadeurDashboardService(
+            sp.GetRequiredService<AmbassadeurDashboardService>(),
+            sp.GetRequiredService<IDashboardCache>(),
+            sp.GetRequiredService<IDashboardLiveOverlay>()));
         services.AddScoped<IAmbassadeurFlyerPdfService, AmbassadeurFlyerPdfService>();
         services.AddScoped<ILobsyCvPdfService, LobsyCvPdfService>();
         services.AddScoped<ICvTextExtractor, CvTextExtractor>();
@@ -222,7 +233,11 @@ public static class DependencyInjection
         services.AddScoped<ISupplierOnboardingPaymentService, SupplierOnboardingPaymentService>();
         services.AddScoped<ISelfBillingInvoiceService, SelfBillingInvoiceService>();
         services.AddScoped<ISalesManagerPayoutService, SalesManagerPayoutService>();
-        services.AddScoped<ISalesManagerDashboardService, SalesManagerDashboardService>();
+        services.AddScoped<SalesManagerDashboardService>();
+        services.AddScoped<ISalesManagerDashboardService>(sp => new CachingSalesManagerDashboardService(
+            sp.GetRequiredService<SalesManagerDashboardService>(),
+            sp.GetRequiredService<IDashboardCache>(),
+            sp.GetRequiredService<IDashboardLiveOverlay>()));
         services.AddScoped<ISalesCommercialService, SalesCommercialService>();
         services.AddScoped<IPartnerAffiliateService, PartnerAffiliateService>();
         services.AddScoped<IVacancyCategoryService, VacancyCategoryService>();
@@ -230,6 +245,7 @@ public static class DependencyInjection
         services.AddScoped<IEmployerRaamflyerService, EmployerRaamflyerService>();
         services.AddSingleton<IVacancyDiscoveryIndex, VacancyDiscoveryIndex>();
         services.AddHostedService<VacancyDiscoveryIndexHostedService>();
+        services.AddHostedService<DashboardCacheRefreshHostedService>();
         services.AddScoped<IVacancyContentModerationService, VacancyContentModerationService>();
         services.AddScoped<IMockInterviewService, MockInterviewService>();
         services.AddScoped<IAssistantChatService, AssistantChatService>();

@@ -20,9 +20,12 @@ public sealed class TokenBalanceCache
         return _total;
     }
 
+    public event Action? Changed;
+
     public void Invalidate()
     {
         _loaded = false;
         _total = null;
+        Changed?.Invoke();
     }
 }

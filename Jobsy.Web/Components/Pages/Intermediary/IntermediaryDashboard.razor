@@ -14,7 +14,9 @@
             <h1>Bedrijvenoverzicht</h1>
             <p class="login-lead">Prestaties per opdrachtgever: werving, conversie, tokens en acties die aandacht vragen.</p>
         </div>
-        <div class="period-tabs period-tabs--compact" role="tablist" aria-label="@Culture["Common.Period"]">
+        <div style="display:flex;flex-wrap:wrap;gap:0.75rem;align-items:center;justify-content:flex-end">
+            <DashboardRefreshButton Period="_period" Disabled="_loading" OnRefreshed="ApplyRefreshAsync" />
+            <div class="period-tabs period-tabs--compact" role="tablist" aria-label="@Culture["Common.Period"]">
             @foreach (var p in PeriodKeys)
             {
                 <button type="button"
@@ -26,6 +28,7 @@
                     @PeriodLabel(p)
                 </button>
             }
+            </div>
         </div>
     </header>
 
@@ -241,5 +244,28 @@
         {
             _loading = false;
         }
+    }
+
+    private void ApplyRefreshAsync(DashboardRefreshResult result)
+    {
+        if (result.ClientPerformance?.Clients is null)
+        {
+            return;
+        }
+
+        _clients = result.ClientPerformance.Clients
+            .OrderByDescending(c => c.ApplicationsPending)
+            .ThenByDescending(c => c.ExpiringWithin5Days)
+            .ThenByDescending(c => c.ActiveVacancies)
+            .ThenBy(c => c.CompanyName)
+            .ToList();
+        _totalActive = _clients.Sum(c => c.ActiveVacancies);
+        _totalPending = _clients.Sum(c => c.ApplicationsPending);
+        _actionRequiredCount = _clients.Count(c =>
+            ClientPerformanceStatus.Resolve(
+                c.ApplicationsPending,
+                c.ExpiringWithin5Days,
+                c.TokenBalance) == ClientPerformanceBadge.ActionRequired);
+        _error = null;
     }
 }

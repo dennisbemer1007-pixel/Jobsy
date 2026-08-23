@@ -971,6 +971,14 @@ public class RoleFunctionalRegressionTests : IClassFixture<RoleFunctionalWebAppF
         Assert.Equal(HttpStatusCode.OK, (await amb.GetAsync("api/notifications/unread-count")).StatusCode);
         Assert.Equal(HttpStatusCode.Forbidden, (await amb.GetAsync("api/vacancies/manage")).StatusCode);
         Assert.Equal(HttpStatusCode.Forbidden, (await amb.GetAsync("api/admin/users")).StatusCode);
+
+        Assert.Equal(HttpStatusCode.OK, (await AdminClient().PostAsync("api/dashboard/refresh?period=week", null)).StatusCode);
+        Assert.Equal(HttpStatusCode.OK, (await EmployerClient().PostAsync("api/dashboard/refresh?period=week", null)).StatusCode);
+        Assert.Equal(HttpStatusCode.OK, (await Authed(_factory.IntermediaryEmail).PostAsync("api/dashboard/refresh?period=week", null)).StatusCode);
+        Assert.Equal(HttpStatusCode.OK, (await sales.PostAsync("api/dashboard/refresh", null)).StatusCode);
+        Assert.Equal(HttpStatusCode.OK, (await amb.PostAsync("api/dashboard/refresh", null)).StatusCode);
+        Assert.Equal(HttpStatusCode.Forbidden, (await CandidateClient().PostAsync("api/dashboard/refresh", null)).StatusCode);
+        Assert.Equal(HttpStatusCode.Unauthorized, (await _factory.CreateClient().PostAsync("api/dashboard/refresh", null)).StatusCode);
     }
 
     [Fact]

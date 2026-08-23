@@ -11,4 +11,7 @@ public static class JobsyPolicies
     public const string RequireAmbassadeur = "RequireAmbassadeur";
     public const string RequireAdminOrAmbassadeur = "RequireAdminOrAmbassadeur";
     public const string RequireApiKey = "RequireApiKey";
+
+    /// <summary>Admin, employer, sales manager and ambassadeur dashboards (manual cache refresh).</summary>
+    public const string RequireDashboardAccess = "RequireDashboardAccess";
 }

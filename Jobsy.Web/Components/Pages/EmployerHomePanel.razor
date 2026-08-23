@@ -69,6 +69,7 @@
                     }
                 </div>
             }
+            <DashboardRefreshButton Period="_period" Disabled="_loading" OnRefreshed="ApplyRefreshAsync" />
             <div class="period-tabs period-tabs--compact" role="tablist" aria-label="@Culture["Common.Period"]">
                 @foreach (var p in PeriodKeys)
                 {
@@ -343,6 +344,22 @@
         {
             _loading = false;
         }
+    }
+
+    private Task ApplyRefreshAsync(DashboardRefreshResult result)
+    {
+        if (result.Metrics is not null)
+        {
+            _metrics = result.Metrics;
+        }
+
+        if (result.VacancyPerformance is not null)
+        {
+            _vacancyBoard = result.VacancyPerformance;
+        }
+
+        _error = null;
+        return Task.CompletedTask;
     }
 
     private string ListHrefFor(string key) => key.ToLowerInvariant() switch

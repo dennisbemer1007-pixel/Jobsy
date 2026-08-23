@@ -9,6 +9,7 @@
             <p class="login-lead">@Culture["Sales.DashboardLead"]</p>
         </div>
         <div class="inline-actions" style="gap:0.75rem;flex-wrap:wrap">
+            <DashboardRefreshButton Period="week" Disabled="_loading" OnRefreshed="ApplyRefreshAsync" />
             @if (_dashboard is not null && !_dashboard.IsOnboardingComplete)
             {
                 <a class="auth-link" href="/salesmanager/onboarding">@Culture["Sales.Onboarding"]</a>
@@ -172,5 +173,16 @@
         _error = error;
         _loading = false;
         await InvokeAsync(StateHasChanged);
+    }
+
+    private Task ApplyRefreshAsync(DashboardRefreshResult result)
+    {
+        if (result.Sales is not null)
+        {
+            _dashboard = result.Sales;
+            _error = null;
+        }
+
+        return Task.CompletedTask;
     }
 }

@@ -10,7 +10,9 @@
             <h1>Platform dashboard</h1>
             <p class="login-lead">KPI’s over het hele platform — klik een tegel voor drilldown. Modules via Settings of Financieel in de navigatie.</p>
         </div>
-        <div class="period-tabs period-tabs--compact" role="tablist" aria-label="Periode">
+        <div style="display:flex;flex-wrap:wrap;gap:0.75rem;align-items:center;justify-content:flex-end">
+            <DashboardRefreshButton Period="_period" Disabled="_loading" OnRefreshed="ApplyRefreshAsync" />
+            <div class="period-tabs period-tabs--compact" role="tablist" aria-label="Periode">
             @foreach (var p in Periods)
             {
                 <button type="button"
@@ -22,6 +24,7 @@
                     @p.Label
                 </button>
             }
+            </div>
         </div>
     </header>
 
@@ -175,6 +178,22 @@
         {
             _loading = false;
         }
+    }
+
+    private Task ApplyRefreshAsync(DashboardRefreshResult result)
+    {
+        if (result.Metrics is { Count: > 0 } or not null)
+        {
+            _metrics = result.Metrics ?? [];
+        }
+
+        if (result.VacancyPerformance is not null)
+        {
+            _vacancyBoard = result.VacancyPerformance;
+        }
+
+        _error = null;
+        return Task.CompletedTask;
     }
 
     private async Task LoadDrilldownAsync(string key)

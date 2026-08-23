@@ -11,6 +11,7 @@
             <p class="login-lead">@Culture["Ambassadeur.DashboardLead"]</p>
         </div>
         <div class="inline-actions" style="gap:0.75rem;flex-wrap:wrap">
+            <DashboardRefreshButton Period="week" Disabled="_loading" OnRefreshed="ApplyRefreshAsync" />
             @if (_dashboard is not null && !_dashboard.IsOnboardingComplete)
             {
                 <a class="auth-link" href="/ambassadeur/onboarding">@Culture["Ambassadeur.Onboarding"]</a>
@@ -240,6 +241,18 @@
 
         _loading = false;
         await InvokeAsync(StateHasChanged);
+    }
+
+    private Task ApplyRefreshAsync(DashboardRefreshResult result)
+    {
+        if (result.Ambassadeur is not null)
+        {
+            _dashboard = result.Ambassadeur;
+            _error = null;
+            RecalcMeter();
+        }
+
+        return Task.CompletedTask;
     }
 
     private void RecalcMeter()

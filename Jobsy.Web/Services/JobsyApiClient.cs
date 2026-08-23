@@ -794,6 +794,29 @@ public sealed class JobsyApiClient : IAsyncDisposable
         => await _http.GetFromJsonAsync<ClientPerformanceBoard>(
             $"api/metrics/client-performance?period={Uri.EscapeDataString(period)}", ct);
 
+    public async Task<DashboardRefreshResult> RefreshDashboardAsync(
+        string period = "week",
+        Guid? companyId = null,
+        CancellationToken ct = default)
+    {
+        var qs = $"period={Uri.EscapeDataString(period)}";
+        if (companyId is not null)
+        {
+            qs += $"&companyId={companyId}";
+        }
+
+        var response = await _http.PostAsync($"api/dashboard/refresh?{qs}", content: null, ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException(
+                ExtractMessage(body) ?? $"Dashboard verversen mislukt ({(int)response.StatusCode}).");
+        }
+
+        return await response.Content.ReadFromJsonAsync<DashboardRefreshResult>(cancellationToken: ct)
+               ?? new DashboardRefreshResult();
+    }
+
     public async Task<IReadOnlyList<ApplicationItem>> GetMyApplicationsAsync(CancellationToken ct = default)
         => await _http.GetFromJsonAsync<List<ApplicationItem>>("api/me/applications", ct) ?? [];
 
@@ -3639,6 +3662,17 @@ public sealed class AmbassadeurDashboard
     public List<ReferredSupplierItem> Suppliers { get; set; } = [];
     public List<CommissionEntryItem> RecentLedger { get; set; } = [];
     public List<SelfBillingInvoiceItem> Invoices { get; set; } = [];
+}
+
+public sealed class DashboardRefreshResult
+{
+    public DateTime GeneratedAtUtc { get; set; }
+    public DateTime CachedUntilUtc { get; set; }
+    public List<MetricCount>? Metrics { get; set; }
+    public VacancyPerformanceBoard? VacancyPerformance { get; set; }
+    public ClientPerformanceBoard? ClientPerformance { get; set; }
+    public SalesManagerDashboard? Sales { get; set; }
+    public AmbassadeurDashboard? Ambassadeur { get; set; }
 }
 
 public sealed class ReferredCandidateItem

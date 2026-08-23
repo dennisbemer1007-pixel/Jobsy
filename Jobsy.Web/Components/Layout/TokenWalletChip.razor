@@ -27,7 +27,10 @@
     private string _href = "/employer/tokens";
 
     protected override void OnInitialized()
-        => Culture.Changed += OnCultureChanged;
+    {
+        Culture.Changed += OnCultureChanged;
+        TokenBalances.Changed += OnTokenCacheChanged;
+    }
 
     protected override async Task OnInitializedAsync()
     {
@@ -39,7 +42,11 @@
         }
 
         _href = RoleNavCatalog.TokensHrefFor(state.User);
+        await LoadBalanceAsync();
+    }
 
+    private async Task LoadBalanceAsync()
+    {
         try
         {
             _total = await TokenBalances.GetOrLoadAsync(async () =>
@@ -58,9 +65,15 @@
         }
     }
 
+    private void OnTokenCacheChanged()
+        => InvokeAsync(LoadBalanceAsync);
+
     private void OnCultureChanged()
         => InvokeAsync(StateHasChanged);
 
     public void Dispose()
-        => Culture.Changed -= OnCultureChanged;
+    {
+        Culture.Changed -= OnCultureChanged;
+        TokenBalances.Changed -= OnTokenCacheChanged;
+    }
 }
