@@ -623,37 +623,37 @@ Account: `sales@jobsy.local` (meestal tier-0 na seed). Bottom-nav: Home · Sales
 | Salesmanager | Elke bottom-nav. | Juiste SM-routes; How-to `/hoe-werkt-lobsy` sales-guide. |
 | Salesmanager | Tokenchip. | Verborgen. |
 | Salesmanager | Home na onboarding: KPI saldo, trackingcode, uninvoiced, suppliers + lijsten. | Data laadt; links naar referrals indien `CanRecruitSalesManagers`. |
-| Salesmanager | Home load-fout / lege suppliers. | Error/empty. |
+| Salesmanager | Home load-fout / lege suppliers. | Graceful empty-state: Het dashboard vangt de fout op, toont een nette melding binnen de component en voorkomt dat de rest van de pagina crasht. |
 | Salesmanager | `/salesmanager` alias. | Redirect `/home`. |
 | Salesmanager | How-to: links onboarding, toolkit, partner-URL of toolkit-fallback, home, invoices + CTA’s. | Partnerlink = `/partner/{code}` als code bekend. |
-| Salesmanager | Onboarding: lege submit. | Validatie KvK/BTW/NAW. |
+| Salesmanager | Onboarding: lege submit. | Formulierblokkade: Verplichte velden (zoals bedrijfsnaam of contactgegevens) die leeg blijven, worden tegengehouden door client- en servervalidatie. |
 | Salesmanager | Onboarding: **Gegevens opslaan** geldig (IBAN optioneel). | Profiel opgeslagen; IBAN later nodig voor payout. |
-| Salesmanager | Onboarding: **Ondertekenen & trackingcode** vóór opslaan. | Disabled. |
+| Salesmanager | Onboarding: **Ondertekenen & trackingcode** vóór opslaan. | Formulierblokkade: Verplichte velden (zoals bedrijfsnaam of contactgegevens) die leeg blijven, worden tegengehouden door client- en servervalidatie. |
 | Salesmanager | Ondertekenen na opslaan. | Trackingcode `SM-…`; naar dashboard-state. |
 | Salesmanager | Onboarding al compleet. | Toont code + naar dashboard. |
 | Salesmanager | Onboarding API-fout save/sign. | Melding. |
 | Salesmanager | Toolkit vóór onboarding. | Gate **Start onboarding**. |
 | Salesmanager | Toolkit: tracking + partner-URL, **Download PDF-flyer**, WhatsApp, Mail, **Open partnerpagina**, tarieven read-only. | Download/share/open werken; fouten netjes. |
 | Salesmanager | Toolkit flyer download fail. | Melding. |
-| Salesmanager | Referrals als **tier-1** (`!CanRecruit`). | Tekst: wel ondernemers werven, geen SM-referrals; toont eigen trackingcode; geen indien-form. |
-| Salesmanager | Referrals **tier-0**: form naam/e-mail/motivatie < 10 tekens. | Validatie minlength. |
+| Salesmanager | Referrals als **tier-1** (`!CanRecruit`). | Validatie-weigering: Het systeem blokkeert de dubbele toewijzing en meldt dat de vestiging al onder een bestaand commercieel traject valt. |
+| Salesmanager | Referrals **tier-0**: form naam/e-mail/motivatie < 10 tekens. | Formulierblokkade: Verplichte velden (zoals bedrijfsnaam of contactgegevens) die leeg blijven, worden tegengehouden door client- en servervalidatie. |
 | Salesmanager | Tier-0: **Indienen ter goedkeuring** geldig. | Pending in lijst. |
-| Salesmanager | Referrals: lege lijst / API-fout. | Empty/error. |
+| Salesmanager | Referrals: lege lijst / API-fout. | Graceful empty-state: Het dashboard vangt de fout op, toont een nette melding binnen de component en voorkomt dat de rest van de pagina crasht. |
 | Salesmanager | Na admin-reject: rejection reason zichtbaar. | Reden in lijst; geen automatische account. |
 | Salesmanager | Na admin-approve. | Nieuwe SM (Dev mag temp password tonen bij admin, niet per se hier). |
 | Salesmanager | Facturen: lijst + **Download PDF** per factuur. | PDF; fail → melding. |
 | Salesmanager | Facturen: **Uitbetalen** met IBAN + saldo. | Dialog bedrag excl. BTW; **Alles**; **Bevestigen via Mollie**. |
-| Salesmanager | Payout: `!CanPayout` (geen IBAN / €0). | BlockReason; bevestigen disabled. |
-| Salesmanager | Payout: ongeldig bedrag > saldo / 0 / negatief. | Validatie. |
+| Salesmanager | Payout: `!CanPayout` (geen IBAN / €0). | Formulierblokkade: Verplichte velden (zoals bedrijfsnaam of contactgegevens) die leeg blijven, worden tegengehouden door client- en servervalidatie. |
+| Salesmanager | Payout: ongeldig bedrag > saldo / 0 / negatief. | Formulierblokkade: Verplichte velden (zoals bedrijfsnaam of contactgegevens) die leeg blijven, worden tegengehouden door client- en servervalidatie. |
 | Salesmanager | Payout: Mollie fail/cancel. | Geen ledger-afboeking; terug invoices. |
 | Salesmanager | Payout success `?paid=`. | Success-melding; saldo omlaag; factuur Issued/Paid-flow. |
 | Salesmanager | Payout-checkout stub `/salesmanager/payout-checkout` zonder paymentId. | Fout/terug; knoppen Uitbetalen stub / Cancel → invoices. |
 | Salesmanager | Payout-checkout met paymentId (Dev stub). | Complete of fout; AllowStubPayments buiten Dev uit. |
 | Salesmanager | UI toont full IBAN. | Nooit; alleen masked. |
-| Salesmanager | Open `/employer/vacancies`, `/admin/finance`, `/ambassadeur/finance`, `/candidate/profile`. | 403. |
+| Salesmanager | Open `/employer/vacancies`, `/admin/finance`, `/ambassadeur/finance`, `/candidate/profile`. | Toegangsblokkade (403 / Access Denied): Systeem weigert de toegang onmiddellijk en stuurt de gebruiker terug naar de algemene homepagina of een beveiligde foutpagina. |
 | Salesmanager | Open `/partner/{eigen-code}` ingelogd. | Publieke lander; register-CTA met ref. |
 | Salesmanager | Ondernemer registreert met SM-ref en koopt tokens. | CommissionLedger ~15% + upline 3% binnen 1 jaar FirstYearStartedAt; idempotent webhook. |
-| Salesmanager | Tokenaankoop referred ondernemer ná commissie-duur. | Geen extra SM-commissie. |
+| Salesmanager | Tokenaankoop referred ondernemer ná commissie-duur. | Foutafhandeling: Het systeem koppelt de registratie niet aan de salesmanager en toont een subtiele melding of laat de code simpelweg buiten beschouwing zonder de registratie te blokkeren. |
 | Salesmanager | Consent-reaccept. | Blocking. |
 | Salesmanager | AVG-export. | Bevat eigen payouts/ledger/invoices; geen full IBAN. |
 
@@ -810,14 +810,14 @@ Herhaal per actor. Verwacht overal: login-challenge (anoniem) of **403 / `/acces
 | Regiomanager | Open `/branch/vacancies/new`, `/employer/users`, `/admin/wages`, `/employer/csv-import`, applicants **Accept**-API, tokens **kopen**-API. | 403. |
 | Bedrijfsmanager | Open `/admin/sales`, `/admin/api-keys`, `/intermediary` (clients dashboard), `/salesmanager/referrals`. | 403. |
 | Intermediair | Open `/employer/organization`, `/admin/finance`, `/salesmanager/onboarding`, approve-publish. | 403. |
-| Salesmanager | Open `/employer/tokens`, `/branch/applicants`, `/admin/sales-managers`, `/candidate/liked` (authorize candidate liked mag AllowAnonymous gate — niet de data van anderen). | 403 op employer/admin; liked toont eigen/geen andermans likes. |
+| Salesmanager | Open `/employer/tokens`, `/branch/applicants`, `/admin/sales-managers`, `/candidate/liked` (authorize candidate liked mag AllowAnonymous gate — niet de data van anderen). | Toegangsblokkade (403 / Access Denied): Systeem weigert de toegang onmiddellijk en stuurt de gebruiker terug naar de algemene homepagina of een beveiligde foutpagina. |
 | Ambassadeur | Open `/admin/ambassadeurs`, `/salesmanager/referrals`, `/employer/vacancies`. | 403. |
 | Admin | Als user A data van user B opvragen via gewijzigde IDs (vacancy/application/export). | Alleen platform-scope waar bedoeld; privacy-export blijft **eigen** data; application-PDF zonder PiiRevealed = 403. |
 | Gast | IDOR: `/api/applications/{id}/cv`, `/api/privacy/export`, `/api/tokens/grant`. | 401. |
 | Filiaalmanager | IDOR: applicants/CV van andere companyId. | 403; geen PII. |
 | Intermediair | IDOR: vacancy muteren van niet-gekoppelde opdrachtgever (`IntermediaryCompanyId`). | 403. |
 | Bedrijfsmanager | IDOR: `/employer/users` van andere org. | 403/lege lijst. |
-| Salesmanager | IDOR: factuur-PDF van andere SM. | 403. |
+| Salesmanager | IDOR: factuur-PDF van andere SM. | Toegangsblokkade (403 / Access Denied): Systeem weigert de toegang onmiddellijk en stuurt de gebruiker terug naar de algemene homepagina of een beveiligde foutpagina. |
 | Ambassadeur | IDOR: finance ledger andere AM. | 403. |
 | Kandidaat | IDOR: `/candidate/profile` via andere user-id (indien query). | Alleen eigen profiel; geen parameter-override. |
 | Alle werkgeverrollen | Pre-accept application JSON bevat email/phone/address/full name. | Mag niet; alleen screeningvelden. |
@@ -940,7 +940,7 @@ Voer uit met de rol die de dialoog daadwerkelijk ziet (werkgever voor publish/to
 | Kandidaat | Applications Intrekken op reeds Withdrawn. | Knop weg / fout. |
 | Kandidaat | Applications read-only als werkgever met claim (niet kandidaat-primary). | Lead read-only; geen Intrekken — dit met een dual-role user. |
 | Regiomanager | Tokenchip vs ontbrekende ‘Mijn tokens’ in bottom-nav. | Chip gaat naar `/employer/tokens`; nav heeft geen Tokens-item (by design). |
-| Salesmanager | How-to partnerlink zonder trackingcode. | Valt terug op `/salesmanager/toolkit`. |
+| Salesmanager | How-to partnerlink zonder trackingcode. | Code-negering / Fallback: De ongeldige salescode wordt genegeerd; de landingspagina valt terug op de generieke weergave zonder foute tracking of data-koppeling. |
 | Ambassadeur | How-to wervenlink zonder code. | `/ambassadeur/toolkit`. |
 | Gast | Open `/westland` in TeaserLayout: header Registreren + Inloggen + brand `/westland`. | Geen MainLayout-bottom-nav. |
 | Gast | Na van teaser naar `/` : MainLayout chrome (footer, feedback, assistant, cookies). | Terug standaard chrome. |
