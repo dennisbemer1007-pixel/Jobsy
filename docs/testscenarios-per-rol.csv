@@ -2,13 +2,13 @@ Rol,Testscenario,Verwacht resultaat
 Gast,Open `/`.,"Banenkaart (lijst + kaart) laadt zonder login. Geen bottom-nav. Header toont logo, taalkeuze en **Inloggen**."
 Gast,Klik logo **Lobsy**.,Blijft op of navigeert naar `/`.
 Gast,Klik footer **Privacy**.,Pagina `/privacy` met privacyverklaring; link naar **Mijn gegevens** en mailto privacy.
-Gast,Klik op `/privacy` de link **Mijn gegevens** (`/privacy/data`).,Redirect naar login (Authorize). Na login zou export beschikbaar zijn.
+Gast,Klik op `/privacy` de link **Mijn gegevens** (`/privacy/data`).,Autorisatie-redirect: Systeem triggert een redirect naar `/login` (met returnUrl). Externe data-export is pas zichtbaar na succesvolle authenticatie.
 Gast,Klik footer **Algemene voorwaarden**.,`/algemene-voorwaarden` toont voorwaarden.
 Gast,Klik footer **Gebruiksvoorwaarden**.,`/gebruiksvoorwaarden` toont gebruiksvoorwaarden.
 Gast,Klik footer **Wie zijn wij**.,`/wie-zijn-wij` toont About-CMS-content (of leeg/placeholder als niet gevuld).
 Gast,Klik footer **Westland**.,"Teaser `/westland` in teaser-layout (livedatum 18 nov, tarieven, CTA’s)."
 Gast,Open `/lancering`.,Zelfde teaser als `/westland`.
-Gast,Cookie-banner: **Alleen noodzakelijk**.,Banner verdwijnt. Geen analytics-POST. Keuze onthouden (localStorage + cookie).
+Gast,Cookie-banner: **Alleen noodzakelijk**.,Strikt functioneel: Banner sluit direct. Geen analytische trackers of cookies worden geplaatst; geen analytics-POST naar de server. Keuze wordt opgeslagen in localStorage en cookie.
 Gast,Cookie-banner: **Accepteer cookies**.,Banner verdwijnt. Analytics mag fire’n (`X-Jobsy-Cookie-Consent`).
 Gast,Cookie-banner: klik Privacy-link in de banner.,`/privacy` opent; banner mag zichtbaar blijven tot een keuze.
 Gast,Herlaad na cookie-keuze.,Banner blijft weg.
@@ -17,37 +17,37 @@ Gast,Taalkeuze: **English**.,UI-labels schakelen naar Engels; kaart blijft werke
 Gast,"Taalkeuze: **Polski**, **Română**.",UI schakelt; geen crash.
 Gast,Taalkeuze: **العربية**.,"UI RTL; layout blijft bruikbaar (filters, kaart, login)."
 Gast,Klik **Inloggen** in de header.,`/login` als modal; achtergrond banenkaart.
-Gast,Login-modal: klik backdrop of **×**.,Terug naar banenkaart `/` (niet naar een protected returnUrl).
+Gast,Login-modal: klik backdrop of **×**.,Schermbehoud: Modal sluit zonder navigatie; gebruiker blijft op de huidige pagina (`/`) en wordt niet naar een beschermde returnUrl gestuurd.
 Gast,Login-modal: **Terug naar de kaart**.,Zelfde: `/`.
 Gast,Login: **Registreer via KVK**.,`/register` wizard stap KVK.
-Gast,Login: leeg e-mail/wachtwoord submit.,HTML5 required blokkeert of serverfout; geen sessie.
-Gast,Login: ongeldig wachtwoord (`niet@bestaat.nl` / `fout`).,Foutmelding (geen stacktrace/PII); blijft op login.
-Gast,Login: Microsoft-knop terwijl Entra niet geconfigureerd is.,Knop disabled + tooltip ‘niet geconfigureerd’.
-Gast,Login: Google-knop terwijl Google niet geconfigureerd is.,Knop disabled + tooltip.
-Gast,"Login: Microsoft/Google wél geconfigureerd, daarna IdP-annulering.",Terug op login met foutcode; geen half-sessie.
-Gast,Login: Google-account met `email_verified=false`.,Weigering; geen accountkoppeling.
-Gast,Open `/login?error=session-expired`.,Melding dat de sessie is verlopen; kan opnieuw inloggen.
-Gast,Open `/login?returnUrl=https://evil.example`.,returnUrl wordt genegeerd/gesaneerd; geen open redirect.
-Gast,Open `/login?returnUrl=/admin/users`.,Na geslaagde kandidaat-login géén toegang tot admin (Access Denied of home); local returnUrl alleen als toegestaan.
-Gast,Open `/access-denied`.,Tekst over geen toegang; links **Naar home** en **Inloggen**.
-Gast,Access-denied: **Naar home** zonder login.,Challenge naar login of `/` volgens FallbackPolicy.
-Gast,Open `/Error`.,"Generieke foutpagina, eventueel request-referentie, **geen** stacktrace; link **Naar de banenkaart**."
+Gast,Login: leeg e-mail/wachtwoord submit.,Client-side validatie: HTML5 required attributen of serverweigering blokkeren de submit. Er wordt geen sessie aangemaakt.
+Gast,Login: ongeldig wachtwoord (`niet@bestaat.nl` / `fout`).,Veilige foutmelding: Systeem retourneert een generieke foutmelding (zonder PII of stacktrace om brute-force te ontmoedigen); gebruiker blijft op het login-scherm.
+Gast,Login: Microsoft-knop terwijl Entra niet geconfigureerd is.,UI-blokkade: De OAuth-knop wordt visueel uitgeschakeld (disabled) en toont een informatieve tooltip dat de provider niet actief is.
+Gast,Login: Google-knop terwijl Google niet geconfigureerd is.,UI-blokkade: De OAuth-knop wordt visueel uitgeschakeld (disabled) en toont een informatieve tooltip dat de provider niet actief is.
+Gast,"Login: Microsoft/Google wél geconfigureerd, daarna IdP-annulering.",Graceful fallback: Gebruiker keert terug naar het login-scherm met een specifieke foutcode; er wordt geen incomplete of half-ingestelde sessie aangemaakt.
+Gast,Login: Google-account met `email_verified=false`.,Directe weigering: Authenticatie wordt afgewezen; het account wordt niet gekoppeld omdat het e-mailadres niet geverifieerd is bij de provider.
+Gast,Open `/login?error=session-expired`.,"Informatieve melding: Het login-scherm toont een duidelijke melding dat de sessie is verlopen, zodat de gebruiker direct opnieuw kan inloggen."
+Gast,Open `/login?returnUrl=https://evil.example`.,Sanitatie / Beveiliging: Externe of malafide returnUrl's worden gedetecteerd en genegeerd; geen open redirect kwetsbaarheid.
+Gast,Open `/login?returnUrl=/admin/users`.,"Rol-isolatie: Na succesvolle login krijgt de gebruiker géén toegang tot admin-routes (Access Denied of terug naar home), omdat de rolrechten ontbreken."
+Gast,Open `/access-denied`.,Uitlegpagina: Toont een heldere melding over ontbrekende rechten met veilige navigatielinks naar de homepagina en het login-scherm.
+Gast,Access-denied: **Naar home** zonder login.,Fallback-beleid: Systeem dwingt een login-challenge af of stuurt de gebruiker door naar de publieke hoofdpagina volgens de ingestelde FallbackPolicy.
+Gast,Open `/Error`.,"Afgeschermde foutpagina: Toont een generieke foutmelding met eventueel een request-referentie, maar verbergt alle gevoelige technische stacktraces."
 Gast,Foutpagina: klik **Naar de banenkaart**.,`/`.
 Gast,Banenkaart: vul adres + kies suggestie.,Origin gezet; resultaten op reistijd; suggesties sluiten.
-Gast,Banenkaart: adres wissen (**Clear**).,Origin weg; empty-state zonder reistijd of fallback-weergave.
+Gast,Banenkaart: adres wissen (**Clear**).,State-reset: De geografische origin verdwijnt; de kaart valt terug naar een empty-state zonder reistijdberekeningen of toont een standaard landelijke fallback.
 Gast,Banenkaart: **Gebruik mijn locatie** + toestemming.,GPS-origin; lijst herberekend.
-Gast,Banenkaart: locatie **weigeren**.,Foutmelding locatie; geen crash; handmatig adres blijft mogelijk.
-Gast,Banenkaart: locatie unavailable (timeout).,Foutmelding; filters blijven staan.
+Gast,Banenkaart: locatie **weigeren**.,"Graceful degradatie: De applicatie vangt de browserfout netjes op, toont een melding dat de locatie niet gebruikt kan worden, maar laat de handmatige adresbalk functioneel."
+Gast,Banenkaart: locatie unavailable (timeout).,"Graceful degradatie: De applicatie vangt de browserfout netjes op, toont een melding dat de locatie niet gebruikt kan worden, maar laat de handmatige adresbalk functioneel."
 Gast,Banenkaart: open **Filters**.,"Filter sheet/bar met keyword, type, categorie, leeftijd, loon, reistijd, uren, vervoer, radius."
-Gast,Filters: **Annuleren** zonder toepassen.,Sheet dicht; oude filters blijven.
+Gast,Filters: **Annuleren** zonder toepassen.,State-behoud: Het filterscherm sluit onmiddellijk en de eerder ingestelde filters blijven ongewijzigd actief.
 Gast,"Filters: **Toepassen/Zoeken** met combinatie (Fiets, 30 min, categorie Regulier).",Lijst + kaart gefilterd; chip-count klopt.
 Gast,Filters: **Filters wissen** / chip wissen.,Die filter weg; resultaten herladen.
 Gast,Filters: alle chips **wissen**.,Terug naar default; badge 0.
 Gast,Filters: leeftijd selecteren.,Lonencolom mag zichtbaar worden (wages hidden zonder leeftijd).
-Gast,Filters: zonder leeftijd lonen bekijken op kaart/lijst.,Geen loonbedragen (privacy).
+Gast,Filters: zonder leeftijd lonen bekijken op kaart/lijst.,Privacy-bescherming: Loonbedragen blijven verborgen of uitgeschakeld zolang de geboortedatum/leeftijd van de gebruiker niet bekend is.
 Gast,Filters: categorie **65+** / geschikt 65+.,Alleen passende vacatures; geen interne categoryFields-leak in UI.
 Gast,Filters: categorie **Uitzendbureau**.,Uitzend-vacatures; label ‘Aangeboden door …’ waar van toepassing.
-Gast,Filters: min-loon > max-loon.,Validatie of lege set; geen 500.
+Gast,Filters: min-loon > max-loon.,Validatie-vangnet: Systeem vangt de logische tegenstrijdigheid op via client- of servervalidatie en retourneert een lege dataset of foutmelding (geen HTTP 500).
 Gast,Filters: radius 1 km vs 50 km.,Set groeit/krimpt logisch rond origin.
 Gast,Vervoer wisselen: Fiets / Auto / OV / Lopen.,Reistijden en volgorde veranderen; loading-state.
 Gast,Sorteren: afstand / type / recent / A–Z / Z–A.,Lijst herschikt; kaart selectie blijft bruikbaar.
@@ -70,29 +70,29 @@ Gast,ShareModal: elk kanaal aanklikken.,Deeplink/share-URL opent of kopieert; mo
 Gast,ShareModal: **Kopieer link** (clipboard geblokkeerd).,Foutmelding of fallback; geen crash.
 Gast,ShareModal sluiten.,Terug op detail.
 Gast,Vacaturedetail: bedrijfsnaam-link.,Publieke pagina `/{kvk}/{vestiging}` indien aanwezig.
-Gast,Vacaturedetail: vervoer wijzigen.,Reistijd herberekend of melding ‘locatie nodig’.
-Gast,Vacaturedetail: **Route** zonder locatietoestemming.,Fout of prompt; geen crash.
+Gast,Vacaturedetail: vervoer wijzigen.,Prompt / Fallback: Systeem vraagt alsnog om een locatie of toont een melding dat een startlocatie vereist is; geen applicatiecrash.
+Gast,Vacaturedetail: **Route** zonder locatietoestemming.,Prompt / Fallback: Systeem vraagt alsnog om een locatie of toont een melding dat een startlocatie vereist is; geen applicatiecrash.
 Gast,Vacaturedetail: **Route** mét locatie.,Externe maps-directions.
-Gast,Vacaturedetail: **Street View**.,Externe Street View of foutmelding.
-Gast,Vacaturedetail: **Video kijken** indien URL.,Externe video; ontbreekt: knop niet getoond.
+Gast,Vacaturedetail: **Street View**.,Optionele UI-verberging: Externe componenten worden niet geladen; ontbrekende media-URL's resulteren in het verbergen van de knop in plaats van een lege container of fout.
+Gast,Vacaturedetail: **Video kijken** indien URL.,Optionele UI-verberging: Externe componenten worden niet geladen; ontbrekende media-URL's resulteren in het verbergen van de knop in plaats van een lege container of fout.
 Gast,Vacaturedetail: geboortedatum opslaan voor loon.,Login-als-kandidaat vereist.
 Gast,Vacaturedetail: **Solliciteren**.,CTA **Inloggen om te solliciteren** → `/login?returnUrl=…`.
 Gast,Vacaturedetail: mock-interview CTA.,Niet beschikbaar of login-gate (alleen kandidaat).
-Gast,Vacaturedetail: onbekende GUID.,Niet-gevonden/fout; geen PII; geen 500-HTML met exception.
+Gast,Vacaturedetail: onbekende GUID.,Nette 404: Systeem retourneert een gecontroleerde Not Found-pagina of empty-state zonder gevoelige data of ongeformatteerde exceptions.
 Gast,Open `/{8-cijferig kvk}`.,"Publiek bedrijfsprofiel: vestigingen + vacatures, List/Map, terug naar kaart."
 Gast,Open `/{kvk}/{vestigingsnummer}`.,Publieke vestigingspagina / flyer-pad.
-Gast,Open onbekend kvk-pad.,"Not-found empty-state of 404, geen 500."
+Gast,Open onbekend kvk-pad.,Nette 404: Systeem retourneert een gecontroleerde Not Found-pagina of empty-state zonder gevoelige data of ongeformatteerde exceptions.
 Gast,Bedrijfspagina: List/Map toggle + jobcard.,Werkt analoog aan kaart; detail opent.
 Gast,Bedrijfspagina: klik andere vestiging.,Navigeert naar die vestigings-URL.
 Gast,Open `/vestiging/{companyId}` (QR).,Redirect naar publieke vestigings-URL of `/?company=`.
-Gast,Open `/vestiging/{onbekende-guid}`.,Fout/redirect zonder 500.
+Gast,Open `/vestiging/{onbekende-guid}`.,Nette 404: Systeem retourneert een gecontroleerde Not Found-pagina of empty-state zonder gevoelige data of ongeformatteerde exceptions.
 Gast,Open `/partner`.,"Partnerlandingspagina: tarieven, **Registreren**, flyer-download, WhatsApp, mail."
 Gast,Partner: **Registreren**.,`/register` zonder of met lege ref.
 Gast,Partner: **Download flyer**.,PDF-download; bij fout een melding.
 Gast,Partner: WhatsApp- en mail-CTA.,WhatsApp/mail-deeplink met pitch.
 Gast,Open `/partner/SM-XXXXXX` (geldige salescode).,Zelfde lander met ingebedde trackingcode; register `?ref=SM-…`.
-Gast,Open `/partner/AM-XXXXXX` of ongeldige code.,Tracking genegeerd; generieke partnerpagina (AM hoort bij `/werven`).
-Gast,Open `/werven/{ongeldige-code}`.,Flash + redirect `/login` **zonder** ambassadeur-cookie.
+Gast,Open `/partner/AM-XXXXXX` of ongeldige code.,Code-negering: Ongeldige marketing- of ambassadeurscodes worden genegeerd; de gebruiker landt op de standaard pagina of wordt doorgestuurd zonder foute cookies.
+Gast,Open `/werven/{ongeldige-code}`.,Code-negering: Ongeldige marketing- of ambassadeurscodes worden genegeerd; de gebruiker landt op de standaard pagina of wordt doorgestuurd zonder foute cookies.
 Gast,Open `/werven/{geldige-AM-code}`.,Referral-cookie gezet; redirect `/login?ref=…`.
 Gast,Open `/ambassadeur/ref/{code}`.,Zelfde gedrag als `/werven/{code}`.
 Gast,Teaser `/westland`: **Registreren**.,`/register`.
@@ -102,39 +102,39 @@ Gast,Teaser: **Meer over Lobsy**.,`/wie-zijn-wij`.
 Gast,Teaser: WhatsApp Dennis.,WhatsApp-deeplink.
 Gast,Teaser: klik UTM/QR-variant (`?utm_source=…`).,Pagina laadt; teaser-engagement event (geen IP in logs).
 Gast,Feedback-knop: openen.,Screenshot-capture (of skip) + dialog type Bug/Error/Feature.
-Gast,Feedback: leeg versturen.,Validatie of disabled submit.
+Gast,Feedback: leeg versturen.,"Validatie & Tolerantie: Lege formulieren worden geblokkeerd; een falende screenshot-capture geeft een subtiele melding, maar belemmert het versturen van de tekstuele feedback niet."
 Gast,Feedback: type Bug + tekst + **Versturen**.,Bedankt-melding; geen e-mail in het record; URL zonder query.
 Gast,Feedback: Annuleren/sluiten.,Dialog dicht; geen record.
-Gast,Feedback: screenshot-capture faalt.,Tekst kan nog steeds verstuurd; foutmelding capture.
+Gast,Feedback: screenshot-capture faalt.,"Validatie & Tolerantie: Lege formulieren worden geblokkeerd; een falende screenshot-capture geeft een subtiele melding, maar belemmert het versturen van de tekstuele feedback niet."
 Gast,Lobsy-assistent FAB openen.,Chatpaneel met begroeting.
 Gast,Assistent: vraag versturen.,Antwoord of typing; follow-up links navigeren.
 Gast,Assistent: disclaimer-link.,`/gebruiksvoorwaarden`.
-Gast,Assistent: API-fout.,Fout in paneel; FAB blijft bruikbaar.
+Gast,Assistent: API-fout.,"Isolatie: Het chatpaneel toont een nette foutmelding binnen de interface, maar de Floating Action Button (FAB) blijft bruikbaar voor verdere interactie."
 Gast,Assistent sluiten.,FAB terug.
-Gast,Direct URL `/home`.,Login-challenge (FallbackPolicy).
-Gast,"Direct `/candidate/profile`, `/employer/vacancies`, `/admin/settings`, `/salesmanager`, `/ambassadeur`.",Login-challenge; geen data-leak in HTML.
-Gast,Direct `/candidate/applications`.,Login-challenge.
-Gast,Direct `/candidate/shared`.,Login-challenge.
-Gast,Open `/candidate/liked` als gast.,Gate: doorgaan via Google / Apple(→login) / e-mail-login met returnUrl; géén liked-data.
+Gast,Direct URL `/home`.,Directe Login-challenge: Systeem onderschept de poging en dwingt een login af; er lekt geen enkele data of HTML-inhoud van het dashboard naar buiten.
+Gast,"Direct `/candidate/profile`, `/employer/vacancies`, `/admin/settings`, `/salesmanager`, `/ambassadeur`.",Directe Login-challenge: Systeem onderschept de poging en dwingt een login af; er lekt geen enkele data of HTML-inhoud van het dashboard naar buiten.
+Gast,Direct `/candidate/applications`.,Directe Login-challenge: Systeem onderschept de poging en dwingt een login af; er lekt geen enkele data of HTML-inhoud van het dashboard naar buiten.
+Gast,Direct `/candidate/shared`.,Directe Login-challenge: Systeem onderschept de poging en dwingt een login af; er lekt geen enkele data of HTML-inhoud van het dashboard naar buiten.
+Gast,Open `/candidate/liked` als gast.,Login-gate: De gebruiker wordt opgevangen door een inlog-modal of gate; er wordt absoluut geen favorieten-data getoond.
 Gast,Liked-gate: kies e-mail/login.,`/login` met returnUrl `/candidate/liked`.
 Gast,Open `/banen`.,Redirect naar `/`.
 Gast,Open `/register` stap 1: lege KVK zoeken.,Validatie required.
-Gast,Register: ongeldig KVK-nummer.,Fout of lege vestigingen; geen crash.
+Gast,Register: ongeldig KVK-nummer.,"Blokkade & Alternatief: Systeem vangt KVK-fouten af, weigert dubbele claims en biedt bij een KVK-storing een handmatige invoeroptie met de status KVK in afwachting."
 Gast,Register: stub KVK `12345678` (werkgever) **Zoek vestigingen**.,Lijst vestigingen; bezette tonen ‘in gebruik’ zonder eigenaar-PII.
-Gast,Register: vestiging die al in gebruik is.,Geen Toevoegen; **claim**-pad aangeboden.
+Gast,Register: vestiging die al in gebruik is.,"Blokkade & Alternatief: Systeem vangt KVK-fouten af, weigert dubbele claims en biedt bij een KVK-storing een handmatige invoeroptie met de status KVK in afwachting."
 Gast,Register: claim-pad starten.,Contact/claim-flow i.p.v. nieuwe org; takeover later bij eigenaar.
 Gast,Register: vrije vestiging kiezen.,Stap Scope.
 Gast,Register: scope **Organisatie** vs **Alleen deze vestiging**.,Volgende stap Contact; rol/scope server-side (geen Intermediair claimen met de hand).
 Gast,Register: stub KVK `55667788` (SBI 78).,Na verificatie Intermediair; niet tijdens KVK-storing.
-Gast,Register: KVK-storing (unavailable).,Handmatig vestiging + **Doorgaan (KVK in afwachting)**; geen Intermediair-rol; publiceren/tokens later geblokkeerd tot Verified.
+Gast,Register: KVK-storing (unavailable).,"Blokkade & Alternatief: Systeem vangt KVK-fouten af, weigert dubbele claims en biedt bij een KVK-storing een handmatige invoeroptie met de status KVK in afwachting."
 Gast,Register KVK-pending: **Terug**.,Terug naar KVK-stap.
-Gast,Register contact: wachtwoord te kort / mismatch.,Validatiefout; niet verzonden.
-Gast,Register contact: voorwaarden/privacy niet aangevinkt.,Submit disabled of fout.
+Gast,Register contact: wachtwoord te kort / mismatch.,Formulier-validatie: Knoppen worden uitgeschakeld of validatiefouten worden getoond; het account wordt niet aangemaakt zolang niet aan alle eisen is voldaan.
+Gast,Register contact: voorwaarden/privacy niet aangevinkt.,Formulier-validatie: Knoppen worden uitgeschakeld of validatiefouten worden getoond; het account wordt niet aangemaakt zolang niet aan alle eisen is voldaan.
 Gast,Register: sales/ambassadeur-code in veld (SM-/AM-).,Code meegestuurd; ongeldige code genegeerd of fout.
 Gast,Register: geldige submit.,Activatie/OTP-stap; e-mailcode.
-Gast,Register: verkeerde activatiecode.,Code geweigerd; na max pogingen geblokkeerd/rate-limit.
+Gast,Register: verkeerde activatiecode.,"Token-weigering: De code wordt geweigerd, na herhaalde pogingen volgt een tijdelijke rate-limit; bij een verlopen code moet een nieuwe worden aangevraagd."
 Gast,Register: **Code opnieuw versturen**.,Nieuwe code; oude ongeldig of beide binnen window.
-Gast,Register: verlopen code.,Fout verlopen; opnieuw aanvragen.
+Gast,Register: verlopen code.,"Token-weigering: De code wordt geweigerd, na herhaalde pogingen volgt een tijdelijke rate-limit; bij een verlopen code moet een nieuwe worden aangevraagd."
 Gast,Open `/register/activate` zonder token.,Fout + retry naar register.
 Gast,Activate met geldige token.,Succes + naar login; wachtwoord niet in UI buiten Development.
 Gast,Activate takeover-wachtend.,Melding wacht op eigenaar; naar login.
@@ -144,8 +144,8 @@ Gast,TokenWalletChip.,Niet zichtbaar.
 Gast,Uitloggen-knop.,Niet zichtbaar; wel Inloggen.
 Gast,Consent-reaccept dialog.,Niet getoond.
 Gast,PageHelp `?` op banenkaart indien aanwezig.,Help-panel Doel/Werking of verborgen als geen doc.
-Gast,Open `/swagger` op Web-host.,Niet de API-swagger; of 404. API-swagger buiten Development uit tenzij flag.
-Gast,Open `/tokens/checkout-stub` of payout-stubs.,Login of 403; geen anonieme betaling.
+Gast,Open `/swagger` op Web-host.,Beveiliging: De API-swagger is buiten de ontwikkelomgeving uitgeschakeld en retourneert een HTTP 404 of toegang geweigerd.
+Gast,Open `/tokens/checkout-stub` of payout-stubs.,Toegangscontrole: Retourneert direct een login-challenge of HTTP 403; anonieme betalingen of payouts zijn fundamenteel uitgesloten.
 Alle ingelogde rollen,Na login vanaf `/` of `/banen`.,Redirect naar `/home` (role dashboard). Andere local returnUrls blijven behouden.
 Alle ingelogde rollen,Klik header **Uitloggen**.,POST logout + antiforgery; landt op `/`; sessie weg.
 Alle ingelogde rollen,Uitloggen en daarna Back-button naar `/home`.,Opnieuw login-challenge; geen cached dashboard-PII.
@@ -190,39 +190,39 @@ Kandidaat,Home: periode **Dag / Week / Maand / Kwartaal / Jaar**.,KPI’s herlad
 Kandidaat,"Home: klik elke KPI-tegel (sollicitaties, likes, shares, reacties).",Tegel selected; drilldown-lijst; overview-link naar bijbehorende lijstpagina.
 Kandidaat,Home: drilldown-item klikken.,Navigeert naar vacature of lijstitem.
 Kandidaat,Home: drilldown overview-link.,"Naar `/candidate/applications`, liked of shared afhankelijk van metric."
-Kandidaat,Home: API-fout metrics.,Foutmelding; geen lege stille pagina.
-Kandidaat,Home: periode zonder data.,Tegels 0; drilldown empty.
+Kandidaat,Home: API-fout metrics.,Graceful empty-state: De dashboard-tegel toont 0 of een nette foutmelding binnen de component; de pagina crasht niet en blijft functioneel.
+Kandidaat,Home: periode zonder data.,Graceful empty-state: De dashboard-tegel toont 0 of een nette foutmelding binnen de component; de pagina crasht niet en blijft functioneel.
 Kandidaat,Banenkaart als ingelogde kandidaat (alle gast-filters herhalen).,Zelfde filters; likes/apply beschikbaar; origin mag uit profiel-thuislocatie komen.
 Kandidaat,Banenkaart: **Zoekopdracht bewaren**.,"Gaat naar liked (ingelogd, geen gate)."
 Kandidaat,Vacaturedetail: **Like** (uit → aan).,Liked; toast; hart-state aan.
 Kandidaat,Vacaturedetail: **Like** nogmaals (aan → uit).,Like verwijderd; toast removed.
-Kandidaat,Like terwijl API faalt.,Fout in `_message`; UI niet desync-crash.
+Kandidaat,Like terwijl API faalt.,"UI-synchronisatie & Toast: De applicatie toont een foutmelding via de `_message` state, maar voorkomt dat de hart-icoon state desynced of de app crasht."
 Kandidaat,Vacaturedetail: **Delen** + elk kanaal.,ShareModal; share geteld in engagement na daadwerkelijk delen/kopiëren volgens implementatie.
 Kandidaat,Detail: **Route** / **Street View** / **Video** / bedrijfsnaam.,"Zelfde als gast, plus ingelogde locatie uit profiel indien gezet."
 Kandidaat,Detail: geboortedatum opslaan.,Loon naar leeftijd; validatie ongeldige datum.
-Kandidaat,Detail: DOB in de toekomst / onvolledig.,Validatiefout; niet opgeslagen.
+Kandidaat,Detail: DOB in de toekomst / onvolledig.,Validatiefout: Systeem weigert de opslag; de UI toont een duidelijke validatiemelding dat de datum ongeldig is.
 Kandidaat,Mock-interview CTA openen.,Coach-modal start.
 Kandidaat,Mock-interview: vraag beantwoorden **Verstuur**.,Volgende vraag/progress/hints.
 Kandidaat,Mock-interview: **Opnieuw starten**.,Gesprek reset.
 Kandidaat,Mock-interview: disclaimer + sluiten.,Modal dicht; vacature blijft.
-Kandidaat,Mock-interview: API-fout.,Fout in modal; Restart blijft.
-Kandidaat,Solliciteren: incomplete profiel (geen beschikbaarheid/rijbewijs/ervaring/opleiding/over-jou/te weinig recensies).,Checklist + **Profiel aanvullen** met returnUrl; OTP nog niet.
-Kandidaat,Solliciteren: vacature met `MinimumReferences` > aantal complete recensies.,Apply geblokkeerd tot recensies compleet (contact+email+telefoon).
-Kandidaat,Solliciteren: stage-exclusiviteit zonder studentnummer/school-mail/opleiding/leerjaar.,CTA geblokkeerd tot exclusivity-velden.
-Kandidaat,Solliciteren: school-domein matcht niet (exclusivity regex/domain).,Geblokkeerd of validatiefout.
+Kandidaat,Mock-interview: API-fout.,"Foutafhandeling in modal: De coach-modal toont een foutmelding, maar de optie om opnieuw te starten (Restart) blijft beschikbaar."
+Kandidaat,Solliciteren: incomplete profiel (geen beschikbaarheid/rijbewijs/ervaring/opleiding/over-jou/te weinig recensies).,Sollicitatieblokkade: De sollicitatieknop is geblokkeerd of leidt naar een checklist met ontbrekende onderdelen (zoals recensies of werkvergunning).
+Kandidaat,Solliciteren: vacature met `MinimumReferences` > aantal complete recensies.,Sollicitatieblokkade: De sollicitatieknop is geblokkeerd of leidt naar een checklist met ontbrekende onderdelen (zoals recensies of werkvergunning).
+Kandidaat,Solliciteren: stage-exclusiviteit zonder studentnummer/school-mail/opleiding/leerjaar.,Validatieblokkade: De CTA blijft geblokkeerd tot alle verplichte exclusiviteitsvelden correct zijn ingevuld en gevalideerd.
+Kandidaat,Solliciteren: school-domein matcht niet (exclusivity regex/domain).,Weigering: Systeem blokkeert de actie of geeft een validatiefout op basis van het ingestelde domeinpatroon.
 Kandidaat,"Solliciteren: match ≥ 50%, profiel compleet, voorwaarden+werkvergunning aan, optionele motivatie ≤500.",OTP-stap; code per e-mail.
-Kandidaat,Apply: voorwaarden of werkvergunning uit.,Submit disabled / validatie ‘akkoord vereist’.
-Kandidaat,Apply: motivatie > 500 tekens.,Niet meer invoerbaar of validatiefout.
+Kandidaat,Apply: voorwaarden of werkvergunning uit.,Submit-blokkade: De verzendknop is uitgeschakeld of triggert een verplichte validatiemelding ('akkoord vereist').
+Kandidaat,Apply: motivatie > 500 tekens.,Karakterlimiet: De invoer wordt afgekapt door de UI of geweigerd via een validatiefout op de lengte.
 Kandidaat,Apply: authenticator-checkbox (feature flag aan).,Mag aan; zonder flag niet storend.
-Kandidaat,Apply OTP: verkeerde 6 cijfers.,`CodeRejected`; na 5 fout + rate-limit.
+Kandidaat,Apply OTP: verkeerde 6 cijfers.,Code-weigering & Rate-limit: De code wordt afgewezen (`CodeRejected`). Na 5 pogingen wordt het verzoek tijdelijk geblokkeerd via een rate-limit.
 Kandidaat,Apply OTP: **Opnieuw versturen**.,Nieuwe code; kan opnieuw bevestigen.
 Kandidaat,Apply OTP: geldige code **Bevestigen**.,Sollicitatie verstuurd; success-panel; alleen verified telt in lijsten/metrics.
 Kandidaat,Apply: al gesolliciteerd op dezelfde vacature.,Success/al-gesolliciteerd panel; geen tweede OTP; link **Mijn sollicitaties**; optioneel Direct contact.
 Kandidaat,Direct-contact modal: WhatsApp / Bellen / Mail / Sluiten.,Deeplinks naar werkgeverkanalen indien aangeboden ná apply; sluiten werkt.
-Kandidaat,Apply match < 50% (Gulden Middenweg) — o.a. `kandidaat.ver@jobsy.local`.,"Panel matchscore; **Ja, pas mijn profiel aan** vs **Toch doorgaan** (vangnet-flag)."
+Kandidaat,Apply match < 50% (Gulden Middenweg) — o.a. `kandidaat.ver@jobsy.local`.,Vangnet-flow: Toont een waarschuwingspaneel; de kandidaat kan kiezen om het profiel aan te passen of expliciet door te gaan met een vangnet-vinkje.
 Kandidaat,Vangnet: **Profiel aanpassen**.,Naar profiel met returnUrl; apply niet voltooid.
 Kandidaat,Vangnet: **Toch doorgaan** + OTP afronden.,Sollicitatie met `ViaSafetyNet`; werkgever ziet match-% + vangnet-indicatie.
-Kandidaat,Apply: wettelijke leeftijd/taak-vinkjes vacature (nacht/arbeidstijden).,Hard block als profiel/leeftijd niet voldoet; geen UI-minimumleeftijd-veld omzeilen.
+Kandidaat,Apply: wettelijke leeftijd/taak-vinkjes vacature (nacht/arbeidstijden).,Hard block: Systeem blokkeert de sollicitatie op basis van profieldata (zoals wettelijke nachtdienstvereisten); geen enkele UI-omzeiling mogelijk.
 Kandidaat,Apply: links privacy/voorwaarden in de flow.,Openen legal pages; flow-state behouden bij terug.
 Kandidaat,Match-breakdown op kaart/detail openen.,Modal met breakdown + adviezen; sluiten werkt.
 Kandidaat,Sollicitaties: tabs **Alles / Open / Afgewezen / Gematched**.,Lijst filtert; empty-tab copy.
@@ -230,7 +230,7 @@ Kandidaat,Sollicitaties: klik rij.,Vacaturedetail.
 Kandidaat,Sollicitaties: **Lobsy-CV downloaden**.,PDF-download eigen Lobsy-CV.
 Kandidaat,Sollicitaties: **Intrekken** + bevestigen.,Status Withdrawn; snapshots/upload-CV gewist; melding.
 Kandidaat,Intrekken: annuleren in confirm.,Status ongewijzigd.
-Kandidaat,Intrekken: API-fout.,Foutmelding; rij blijft.
+Kandidaat,Intrekken: API-fout.,Foutmelding & State-behoud: Er verschijnt een foutmelding; de sollicitatie-rij blijft ongewijzigd in de lijst staan.
 Kandidaat,Sollicitaties empty → **naar kaart**.,`/`.
 Kandidaat,Liked: subnav **Geliked** / **Gedeeld**.,`/candidate/liked` vs `/candidate/shared`.
 Kandidaat,Liked: klik card.,Vacaturedetail; unlike vanaf detail werkt terug in lijst na refresh.
@@ -248,16 +248,16 @@ Kandidaat,Profiel: **Open voor werk** aan/uit + opslaan.,OpenForWork gezet; Push
 Kandidaat,"Profiel: naam, telefoon, WhatsApp wijzigen + **Opslaan**.",Opgeslagen; validatie te lange/lege verplichte velden.
 Kandidaat,Profiel: thuisadres suggestie kiezen.,HomeLocation gezet (PushBom/reistijd).
 Kandidaat,Profiel: adres **wissen** + opslaan.,Locatie leeg; matching/reistijd limited.
-Kandidaat,Profiel: adres vrije tekst zonder suggestie.,Fout ‘kies uit suggesties’ of niet-geocoded.
+Kandidaat,Profiel: adres vrije tekst zonder suggestie.,Geocode-validatie: Systeem eist een selectie uit de adres-suggesties om te zorgen dat reistijd en coördinaten correct worden berekend.
 Kandidaat,Profiel: max reistijd + vervoer.,Opgeslagen; kaart gebruikt voorkeur.
 Kandidaat,"Profiel: interesses, rijbewijzen, over-jou, standaardmotivatie.","Opgeslagen; AI-coach soft tips mogen tonen, PII-in-tekst hard block."
-Kandidaat,AboutMe met telefoonnummer/e-mail in vrije tekst.,Coach/moderatie blokkeert of waarschuwt PII; niet stiekem publiceren.
+Kandidaat,AboutMe met telefoonnummer/e-mail in vrije tekst.,Moderatie-blokkade: De AI-coach of moderatielaag waarschuwt of blokkeert het opslaan van directe PII in vrije tekstvelden.
 Kandidaat,Profiel: uren min/max + dagdelenmatrix / tijden in overleg.,Matrix opgeslagen; overlap-logica voor match-%.
 Kandidaat,Profiel: eigen CV uploaden PDF.,Upload OK; OpenAI vult alleen lege duidelijke velden; Lobsy-CV vermeldt eigen CV.
 Kandidaat,CV uploaden DOCX.,Zelfde pad.
-Kandidaat,CV uploaden .exe / te groot / leeg.,Validatiefout; geen extractie.
+Kandidaat,CV uploaden .exe / te groot / leeg.,Validatiefout: Systeem weigert het bestand direct; er vindt geen extractie plaats en er wordt een duidelijke foutmelding getoond.
 Kandidaat,CV **vervangen** / **downloaden** / **verwijderen**.,Nieuw bestand / download / verwijderd; extractie niet overschrijft gevulde velden.
-Kandidaat,CV-extractie zonder OpenAI-key.,Upload blijft staan; geen extractie; geen fout-body in logs.
+Kandidaat,CV-extractie zonder OpenAI-key.,"Graceful degradatie: Het bestand wordt wel opgeslagen in de opslag, maar de automatische veld-extractie wordt overgeslagen zonder log-crash."
 Kandidaat,"Ervaring CRUD: toevoegen, wijzigen, verwijderen.",Lijst klopt na opslaan.
 Kandidaat,Opleiding CRUD.,Opgeslagen.
 Kandidaat,Certificaten CRUD.,Opgeslagen.
@@ -266,18 +266,18 @@ Kandidaat,Recensie incompleet opslaan.,Telt niet als complete reference.
 Kandidaat,Recensie max bereikt.,Geen extra add of fout.
 Kandidaat,Recensie verwijderen.,Telling daalt; apply-gate kan terugkomen.
 Kandidaat,Profiel **Opslaan** success.,Bevestiging; data persistent na reload.
-Kandidaat,Profiel opslaan API-fout / not found.,Foutmelding.
+Kandidaat,Profiel opslaan API-fout / not found.,Foutmelding: Systeem vangt de HTTP-fout op en toont een melding aan de gebruiker in plaats van een lege of falende pagina.
 Kandidaat,**Download Lobsy-CV** vanaf profiel.,Voorbeeld-PDF (QuestPDF) met profiel + optionele motivatie.
 Kandidaat,Profiel **Afmelden** → UnsubscribeDialog.,Zelfde OTP-forget als `/privacy/data`.
 Kandidaat,"Deep-link `/candidate/actions/withdraw-others` geldige token: **Ja, trek andere sollicitaties in**.",Andere open sollicitaties ingetrokken; naar applications.
 Kandidaat,Withdraw-others: **Liever niet**.,Geen wijziging; terug applications/home.
-Kandidaat,Withdraw-others: ongeldige/verlopen token.,Fout; geen mass-withdraw.
+Kandidaat,Withdraw-others: ongeldige/verlopen token.,Token-weigering: Systeem toont een foutmelding; de massale actie wordt uit veiligheidsoverwegingen volledig geweigerd.
 Kandidaat,"Deep-link `/candidate/actions/set-unavailable`: **Ja, zet op Niet beschikbaar**.",OpenForWork uit; naar profiel.
 Kandidaat,Set-unavailable: **Annuleren**.,Geen wijziging.
-Kandidaat,Set-unavailable: ongeldige token.,Fout.
-Kandidaat,Open `/hoe-werkt-lobsy` (employer-pad).,Authorize-fail of redirect `/home` (niet de employer-guide).
-Kandidaat,"Open `/employer/vacancies`, `/branch/applicants`, `/admin/users`, `/salesmanager`.",403 / access-denied / redirect home — geen werkgever-PII.
-Kandidaat,Open `/employer/tokens`.,Geen tokenwallet; 403.
+Kandidaat,Set-unavailable: ongeldige token.,Token-weigering: Systeem toont een foutmelding; de massale actie wordt uit veiligheidsoverwegingen volledig geweigerd.
+Kandidaat,Open `/hoe-werkt-lobsy` (employer-pad).,"Toegangsblokkade: Systeem retourneert een HTTP 403, een Access Denied-pagina of een redirect naar de homepagina; zero PII-lek."
+Kandidaat,"Open `/employer/vacancies`, `/branch/applicants`, `/admin/users`, `/salesmanager`.","Toegangsblokkade: Systeem retourneert een HTTP 403, een Access Denied-pagina of een redirect naar de homepagina; zero PII-lek."
+Kandidaat,Open `/employer/tokens`.,"Toegangsblokkade: Systeem retourneert een HTTP 403, een Access Denied-pagina of een redirect naar de homepagina; zero PII-lek."
 Kandidaat,Consent-reaccept dialog.,Niet getoond (kandidaat herbevestigt per sollicitatie).
 Kandidaat,Solliciteren zonder nieuwe consent-checkbox bij consent-bump.,Per-apply akkoord verplicht; oude sollicitaties blijven.
 Kandidaat,Notifications: sollicitatie-statuswijziging (accept/reject).,Bell toont item; deep link naar applications/detail.
@@ -289,13 +289,13 @@ Filiaalmanager,Home: periode Dag–Jaar.,KPI’s + Top/Flop herladen.
 Filiaalmanager,Home: klik elke metric-tegel.,`/home/metrics/{key}?period=…` drilldown.
 Filiaalmanager,Metric-drilldown: periode wisselen + **← Dashboard**.,Nieuwe periode; terug `/home`.
 Filiaalmanager,Drilldown overview-link (vacancies/applicants/tokens).,Juiste lijstpagina.
-Filiaalmanager,Drilldown leeg / API-fout.,Empty of error; geen 500.
+Filiaalmanager,Drilldown leeg / API-fout.,Graceful failure: Het dashboard vangt de fout netjes op met een melding in de component; geen pagina-crash of ongeformatteerde HTTP 500.
 Filiaalmanager,Top/Flop: klik vacature.,`/vacancies/{id}`.
 Filiaalmanager,"Raamflyer: scope vestiging, A4, **Download**.",PDF per vestiging.
 Filiaalmanager,Raamflyer: A3.,A3-PDF.
-Filiaalmanager,Raamflyer: downloadfout.,Melding.
+Filiaalmanager,Raamflyer: downloadfout.,Foutmelding: Systeem toont een duidelijke melding aan de manager; de UI blijft stabiel en breekt niet af.
 Filiaalmanager,Banenkaart: toggle **Mijn vacatures** aan.,Alleen eigen open vacatures; uit = publiek.
-Filiaalmanager,Mijn vacatures zonder actieve open vacatures.,Melding ‘Je beheert geen actieve open vacatures.’
+Filiaalmanager,Mijn vacatures zonder actieve open vacatures.,"Lege staat (Empty-state): Systeem toont een heldere melding (""Je beheert geen actieve open vacatures."") in plaats van een lege tabel of een serverfout."
 Filiaalmanager,Hoe werkt Lobsy `/hoe-werkt-lobsy`: alle stappen + primary **Vacatures** + secondary **Home**.,"Branch-guide; deep links `/home`, `/branch/vacancies`, applicants, tokens, company, takeovers, kaart."
 Filiaalmanager,How-to: klik elke deep link in de stappen.,Landt op genoemd scherm.
 Filiaalmanager,Vacatures `/branch/vacancies` (= `/employer/vacancies`): **Nieuwe vacature**.,`/branch/vacancies/new`.
@@ -308,38 +308,38 @@ Filiaalmanager,Contactvoorkeur dialog annuleren.,Geen wijziging.
 Filiaalmanager,**E-mailcheck aanzetten/uitzetten**.,RequireEmailVerification togglet; apply-OTP-plicht volgt.
 Filiaalmanager,**Dupliceren**.,Create-pagina `?from={id}` vooringevuld concept.
 Filiaalmanager,**Bewerken** draft/active.,`?edit={id}`.
-Filiaalmanager,Bewerken/dupliceren van incomplete draft.,Duplicate verborgen tot compleet; edit mag.
+Filiaalmanager,Bewerken/dupliceren van incomplete draft.,Blokkade: De dupliceer-optie is verborgen of uitgeschakeld zolang de bron-draft niet volledig is ingevuld.
 Filiaalmanager,**Publiceren** op complete Draft.,"PublishOptionsDialog: basis aan (disabled), Highlight, PushBom, Verlengen."
 Filiaalmanager,"Publish dialog: alleen basis, voldoende tokens.",Status Active; tokens afgeboekt (Publish).
 Filiaalmanager,Publish: Highlight aan (categorie staat het toe).,Extra tokenkost; highlight zichtbaar op kaart/carousel.
 Filiaalmanager,Publish: Highlight terwijl categorie Highlight uit heeft.,Optie verborgen/disabled.
-Filiaalmanager,Publish: PushBom aan → preview 0 kandidaten.,Bevestigen disabled.
+Filiaalmanager,Publish: PushBom aan → preview 0 kandidaten.,Verzendblokkade: De bevestigingsknop blijft uitgeschakeld (disabled) om onnodige token-inzet bij nul bereik te voorkomen.
 Filiaalmanager,Publish: PushBom met bereik + bevestigen.,PushBom verstuurd; spend PushBom; OpenForWork-kandidaten in radius.
 Filiaalmanager,Publish: Extend aanvinken.,+extend-kost; looptijd +14d.
 Filiaalmanager,Publish: **Annuleren**.,Blijft Draft; geen spend.
-Filiaalmanager,Publish bij onvoldoende tokens **mét** kooprecht.,TokenTopUpDialog / Mollie; na betaling pending actie uitgevoerd.
-Filiaalmanager,Publish bij onvoldoende tokens **zonder** kooprecht (TokensManagedByEnterprise).,Status **PendingApproval**; geen Mollie; EM/Admin moet goedkeuren.
-Filiaalmanager,Publish: KVK nog niet Verified (pending registratie).,Publiceren geblokkeerd.
+Filiaalmanager,Publish bij onvoldoende tokens **mét** kooprecht.,Betaalflow: Systeem opent de TokenTopUpDialog (Mollie-integratie); na een succesvolle betaling wordt de uitgestelde actie automatisch uitgevoerd.
+Filiaalmanager,Publish bij onvoldoende tokens **zonder** kooprecht (TokensManagedByEnterprise).,Goedkeuringsstatus: De status springt automatisch naar PendingApproval in plaats van een betaalwand; een enterprise-manager of admin moet de actie goedkeuren.
+Filiaalmanager,Publish: KVK nog niet Verified (pending registratie).,Publicatieblokkade: Systeem blokkeert de actie volledig en toont een melding dat de bedrijfsverificatie nog voltooid moet worden.
 Filiaalmanager,Actieve vacature: **Highlight**.,Spend of top-up; al gehighlight: knop weg.
-Filiaalmanager,Actieve vacature: **PushBom** → confirm dialog.,Preview + bevestigen/annuleren; 0 reach = disabled.
+Filiaalmanager,Actieve vacature: **PushBom** → confirm dialog.,Verzendblokkade: De bevestigingsknop blijft uitgeschakeld (disabled) om onnodige token-inzet bij nul bereik te voorkomen.
 Filiaalmanager,Actieve vacature: **Verlengen**.,Looptijd + tokens of top-up.
 Filiaalmanager,Actieve vacature: **Deactiveren**.,Archived/inactive; verdwijnt van publieke kaart.
 Filiaalmanager,Gearchiveerd: **Reactiveren**.,Extend-pad; tokens nodig.
 Filiaalmanager,**Goedkeuren** PendingApproval.,Knop **niet** zichtbaar (alleen EM/Admin).
-Filiaalmanager,Lifecycle-actie API-fout.,Melding; status ongewijzigd.
-Filiaalmanager,Nieuwe vacature: verplichten leeg opslaan.,Validatie; niet opgeslagen.
+Filiaalmanager,Lifecycle-actie API-fout.,Visuele rollback: Systeem toont een foutmelding en draait de visuele status-update in de UI direct terug om desync te voorkomen.
+Filiaalmanager,Nieuwe vacature: verplichten leeg opslaan.,Validatiefout: Client- en servervalidatie blokkeren de opslag; verplichte velden worden gemarkeerd met duidelijke foutmeldingen.
 Filiaalmanager,"Nieuwe vacature: titel, categorie, beschrijving (toolbar H2/B/I/lijst/link), media-URL’s.",Concept opslaan lukt; moderatie-dialog kan ‘Tekst aanpassen’ eisen.
-Filiaalmanager,Moderatie-dialog: tekst aanpassen vs negeren/sluiten.,Aanpassen houdt draft; publiceren pas na acceptabele tekst.
+Filiaalmanager,Moderatie-dialog: tekst aanpassen vs negeren/sluiten.,Moderatie-dialog: Systeem verplicht de manager om de tekst aan te passen voordat de draft kan worden opgeslagen of gepubliceerd.
 Filiaalmanager,"Create: extra categorevelden, exclusivity stage, salaristabel, rijbewijs, opleiding, min werkgevers/recensies, uren, dagdelen / in overleg, wettelijke vinkjes + `[i]` tooltips.",Velden opgeslagen; legal flags verplicht voor matching.
 Filiaalmanager,Create: direct contact + kanalen.,Na apply ziet kandidaat contactmodal.
 Filiaalmanager,Create: e-mailverificatie-toggle.,Apply vereist OTP als aan.
 Filiaalmanager,Create: meerdere vestigingen — max vestigingen overschrijden.,Validatie/disabled extra.
-Filiaalmanager,Create: vestiging van een **ander** bedrijf kiezen.,Niet in lijst / 403 bij API.
+Filiaalmanager,Create: vestiging van een **ander** bedrijf kiezen.,"Toegangsweigering: De vestiging verschijnt niet in de selectielijst, of de API retourneert een HTTP 403 / weigering bij het opslaan."
 Filiaalmanager,**Opslaan als concept** success.,Terug naar lijst als Draft.
 Filiaalmanager,Create: intermediair-KVK-blok.,Niet getoond (geen uitzend-KVK-plicht).
 Filiaalmanager,Sollicitaties `/branch/applicants`: filters Alles/Open/Accepted/Matched/Rejected.,Client filter; telling klopt (alleen e-mail-verified).
-Filiaalmanager,Applicants: rij uitklappen vóór Accept.,"Motivatie, afstand (km zonder adres), beschikbaarheid, leeftijd, match-%; **geen** naam/e-mail/telefoon/adres/CV; copy ‘accepteer om te tonen’."
-Filiaalmanager,Download Lobsy-CV / eigen CV vóór Accept.,Knoppen weg of 403; geen PDF.
+Filiaalmanager,Applicants: rij uitklappen vóór Accept.,Progressive Disclosure-blokkade: De knoppen zijn afwezig of retourneren een HTTP 403; kandidaat-PII en CV's zijn ten strengste afgeschermd tot de manager de kandidaat expliciet accepteert.
+Filiaalmanager,Download Lobsy-CV / eigen CV vóór Accept.,Progressive Disclosure-blokkade: De knoppen zijn afwezig of retourneren een HTTP 403; kandidaat-PII en CV's zijn ten strengste afgeschermd tot de manager de kandidaat expliciet accepteert.
 Filiaalmanager,**Accepteren**.,Status Accepted; PII + beide CV-downloads zichtbaar.
 Filiaalmanager,Na Accept: naam/e-mail/telefoon/adres zichtbaar.,Progressive disclosure; recensie-contacten niet vóór Accept.
 Filiaalmanager,**Weigeren** → confirm **Weigeren**.,Rejected; PII blijft verborgen.
@@ -348,11 +348,11 @@ Filiaalmanager,Na Accept: **Uitnodigen**.,EmployerContacting.
 Filiaalmanager,Na Accept/Contacting: **Matchen**.,Confirm: afwijzen overige + vacature sluiten checkboxes; Hired/Filled.
 Filiaalmanager,"Match: overige afwijzen aan, sluiten vacature aan.",Andere kandidaten FilledElsewhere/Rejected; vacature niet meer Active.
 Filiaalmanager,Match: beide opties uit.,Alleen deze Hired; vacature/anderen volgens rules.
-Filiaalmanager,Match/invite/reject API-fout.,Fout; status rollback visueel.
+Filiaalmanager,Match/invite/reject API-fout.,Visuele rollback: Systeem toont een foutmelding en draait de visuele status-update in de UI direct terug om desync te voorkomen.
 Filiaalmanager,Download Lobsy-CV na Accept.,PDF.
 Filiaalmanager,Download geüpload CV na Accept (als aanwezig).,Bestand; ontbreekt: knop weg.
 Filiaalmanager,Match-% kleur + breakdown klikken.,Breakdown-modal; vangnet-indicatie indien ViaSafetyNet.
-Filiaalmanager,Applicants van vacature andere vestiging (ID in URL/API).,Leeg of 403; tenant-scope.
+Filiaalmanager,Applicants van vacature andere vestiging (ID in URL/API).,Toegangsblokkade (403 / Access Denied): Systeem weigert direct de toegang of stuurt de gebruiker door naar de eigen rol-omgeving; geen inzage in vreemde vestigingsdata.
 Filiaalmanager,Tokens `/branch/tokens` zonder enterprise-beheer: pakket kiezen + iDEAL/creditcard.,Mollie checkout; webhook bijschrijving; log Purchase.
 Filiaalmanager,Tokens: checkout annuleren bij Mollie.,Geen tokens; terug wallet; pending actie niet uitgevoerd.
 Filiaalmanager,Tokens: `/tokens/checkout-return` success.,Poll tot bijschrijving; redirect/actie uitgevoerd; chip-saldo omhoog.
@@ -369,10 +369,10 @@ Filiaalmanager,Company: API-key genereren/mailen/deactiveren/copy.,Modals; secre
 Filiaalmanager,Overnames `/employer/takeovers` met inbox: **Goedkeuren**.,Org-merge; inbox leeg → nav-item mag verdwijnen.
 Filiaalmanager,Overnames: **Afwijzen**.,Request rejected; claimant krijgt geen eigendom.
 Filiaalmanager,Takeover zonder e-mailverificatie claimant.,Niet in inbox / niet approvebaar tot verified.
-Filiaalmanager,"Open `/employer/users`, `/employer/organization`, `/employer/regions`, `/employer/salary-tables`, `/employer/csv-import`.",403/access-denied (geen EM).
-Filiaalmanager,Open `/admin/*`.,403.
-Filiaalmanager,Open `/regional/branches` als BM zonder lidmaatschap.,403 of lege niet-jouw regio.
-Filiaalmanager,Approve-publish API direct aanroepen.,403.
+Filiaalmanager,"Open `/employer/users`, `/employer/organization`, `/employer/regions`, `/employer/salary-tables`, `/employer/csv-import`.",Toegangsblokkade (403 / Access Denied): Systeem weigert direct de toegang of stuurt de gebruiker door naar de eigen rol-omgeving; geen inzage in vreemde vestigingsdata.
+Filiaalmanager,Open `/admin/*`.,Toegangsblokkade (403 / Access Denied): Systeem weigert direct de toegang of stuurt de gebruiker door naar de eigen rol-omgeving; geen inzage in vreemde vestigingsdata.
+Filiaalmanager,Open `/regional/branches` als BM zonder lidmaatschap.,Toegangsblokkade (403 / Access Denied): Systeem weigert direct de toegang of stuurt de gebruiker door naar de eigen rol-omgeving; geen inzage in vreemde vestigingsdata.
+Filiaalmanager,Approve-publish API direct aanroepen.,Toegangsblokkade (403 / Access Denied): Systeem weigert direct de toegang of stuurt de gebruiker door naar de eigen rol-omgeving; geen inzage in vreemde vestigingsdata.
 Filiaalmanager,Consent-bump: blocking **Akkoord en verder** (niet-kandidaat).,Geen dismiss; links legal; na akkoord app bruikbaar; client-supplied ConsentVersion genegeerd.
 Filiaalmanager,Consent dialog: sluiten/Escape.,Blijft blokkeren tot akkoord.
 Filiaalmanager,Als claim `HasCandidateApplications`: extra nav **Mijn sollicitaties**.,Read-only candidate applications; **geen** Intrekken.
@@ -384,23 +384,23 @@ Regiomanager,Klik elke bottom-nav + Tokenchip.,"Home, `/`, `/employer/vacancies`
 Regiomanager,"Home periode-tabs, metric-tegels, drilldown, Top/Flop, raamflyer A4/A3 overview + vestiging.",Zelfde patronen als BM maar regio-scope.
 Regiomanager,"How-to: alle deep links (home, vacancies, branches, tokens, kaart) + CTA’s.",Regional-guide; primary **Mijn vestigingen**.
 Regiomanager,Vacatures: zoeken/sorteren/bekijken/metrics.,Werkt.
-Regiomanager,Vacatures: Nieuwe vacature / Publiceren / Highlight / PushBom / Verlengen / Deactiveren / Dupliceren / Bewerken / Contact / E-mailcheck / Approve.,Niet zichtbaar of disabled (`_canManageVacancy` false).
-Regiomanager,Direct `/branch/vacancies/new`.,403 (CreateVacancy-roles zonder RM).
+Regiomanager,Vacatures: Nieuwe vacature / Publiceren / Highlight / PushBom / Verlengen / Deactiveren / Dupliceren / Bewerken / Contact / E-mailcheck / Approve.,Validatie-blokkade: Server-side rollencontrole weigert de wijziging en retourneert een melding dat de wijzigingsbevoegdheid ontbreekt voor die specifieke vestiging.
+Regiomanager,Direct `/branch/vacancies/new`.,Toegangsblokkade (403 / Access Denied): Systeem weigert direct de toegang of stuurt de gebruiker terug naar de algemene homepagina; geen inzage in bedrijfsbrede of ongeautoriseerde vestigingsdata.
 Regiomanager,Applicants: filters + uitklappen.,Pre-PII screening zichtbaar; **geen** Accept/Reject/Invite/Match/CV-download-acties.
-Regiomanager,Applicants react API forceren.,403.
-Regiomanager,Tokens `/employer/tokens`: saldo + logs + filter.,Read-only; geen kopen; lead regio.
-Regiomanager,Link `/regional/tokens`.,Balances + vacatures; **geen** allocate-form (`_canAllocate` false).
+Regiomanager,Applicants react API forceren.,Toegangsblokkade (403 / Access Denied): Systeem weigert direct de toegang of stuurt de gebruiker terug naar de algemene homepagina; geen inzage in bedrijfsbrede of ongeautoriseerde vestigingsdata.
+Regiomanager,Tokens `/employer/tokens`: saldo + logs + filter.,Budget-restrictie: Systeem weigert de vrijgave of vereist een escalatie naar een hoger niveau (Admin / Enterprise Manager) zolang er geen saldo of goedkeuring is.
+Regiomanager,Link `/regional/tokens`.,Budget-restrictie: Systeem weigert de vrijgave of vereist een escalatie naar een hoger niveau (Admin / Enterprise Manager) zolang er geen saldo of goedkeuring is.
 Regiomanager,Regional tokens: link terug employer tokens.,Werkt.
 Regiomanager,Mijn vestigingen `/regional/branches`: lijst tokens + actieve vacatures.,Alleen eigen regio-vestigingen.
-Regiomanager,Branches: EM-invite / KVK-register knoppen.,Niet zichtbaar (AuthorizeView EM).
-Regiomanager,"Open `/employer/users`, organization, regions edit, salary create, csv-import, takeovers approve.",403 (tenzij toevallig ook EM — niet in demo).
-Regiomanager,"Open `/admin/*`, `/salesmanager`, `/ambassadeur`.",403.
-Regiomanager,Banenkaart **Mijn vacatures**.,Vacatures in regio-scope of melding geen actieve.
+Regiomanager,Branches: EM-invite / KVK-register knoppen.,Validatie-blokkade: Server-side rollencontrole weigert de wijziging en retourneert een melding dat de wijzigingsbevoegdheid ontbreekt voor die specifieke vestiging.
+Regiomanager,"Open `/employer/users`, organization, regions edit, salary create, csv-import, takeovers approve.",Toegangsblokkade (403 / Access Denied): Systeem weigert direct de toegang of stuurt de gebruiker terug naar de algemene homepagina; geen inzage in bedrijfsbrede of ongeautoriseerde vestigingsdata.
+Regiomanager,"Open `/admin/*`, `/salesmanager`, `/ambassadeur`.",Toegangsblokkade (403 / Access Denied): Systeem weigert direct de toegang of stuurt de gebruiker terug naar de algemene homepagina; geen inzage in bedrijfsbrede of ongeautoriseerde vestigingsdata.
+Regiomanager,Banenkaart **Mijn vacatures**.,"Lege staat (Empty-state): Systeem toont een heldere melding dat er geen data of vestigingen binnen de geselecteerde regio actief zijn, zonder visuele artefacten of lege tabellen."
 Regiomanager,`/regional` alias.,Redirect `/home`.
 Regiomanager,Consent-reaccept + AVG export/afmelden.,Zelfde blocking consent als andere non-candidates; export zonder andermans kandidaat-PII voorbij accept-regels.
 Regiomanager,Optional candidate-applications claim.,Read-only mijn sollicitaties indien gezet.
-Regiomanager,Drilldown `/home/metrics/{key}` onbekende key.,Leeg/fout; geen 500.
-Regiomanager,Tenant: vacature/tokens van andere regio via ID.,403/leeg.
+Regiomanager,Drilldown `/home/metrics/{key}` onbekende key.,"Graceful empty-state: Het dashboard vangt de fout op, toont een nette melding binnen de component en voorkomt een ongecontroleerde pagina-crash of HTTP 500."
+Regiomanager,Tenant: vacature/tokens van andere regio via ID.,Autorisatie-weigering: Systeem blokkeert de actie op basis van de server-side scope; de manager kan alleen ingrijpen binnen de eigen geautoriseerde vestigingen.
 Bedrijfsmanager,Login desktop → `/home`.,"Org-KPI’s, Top/Flop, raamflyer overview, Organization in bottom-nav."
 Bedrijfsmanager,Login/smalle viewport: Organization-item.,Verborgen (`desktop-only`); overige ops-nav zichtbaar.
 Bedrijfsmanager,Klik elke mobile-nav + Tokenchip + How-to.,Juiste routes; chip `/employer/tokens`.
@@ -409,14 +409,14 @@ Bedrijfsmanager,"Home: alle periode-tabs, tegels, drilldowns, Top/Flop, flyer A4
 Bedrijfsmanager,How-to Enterprise: alle stappen + links home/vacancies/tokens/users/organization + CTA’s.,Guide klopt; organization-link op desktop bruikbaar.
 Bedrijfsmanager,"Vacatures: volledige lifecycle zoals BM (new, edit, duplicate, contact, e-mailcheck, publish options, highlight, PushBom, extend, deactivate, reactivate).",Acties slagen binnen org-scope.
 Bedrijfsmanager,PendingApproval: **Goedkeuren**.,Publish voltooid (tokens/org-pot volgens rules); vacature Active of fout als nog geen saldo.
-Bedrijfsmanager,Approve zonder saldo.,Fout of top-up; niet stiekem gratis tenzij Always-free categorie / free-publish-until.
+Bedrijfsmanager,Approve zonder saldo.,Saldo-restrictie: Systeem weigert de goedkeuring of vereist een directe token-topup voordat de vacature live kan worden gezet via de enterprise-wallet.
 Bedrijfsmanager,Applicants: volledige Accept → PII → Invite → Match (met/zonder others/close) → Reject + CV-downloads.,Zelfde progressive disclosure.
 Bedrijfsmanager,Tokens: checkboxes **tokenbeheer per vestiging** opslaan.,BM van die vestiging kan daarna niet meer kopen.
 Bedrijfsmanager,Tokens: beheer uitzetten voor vestiging.,BM mag weer kopen.
 Bedrijfsmanager,Tokens kopen in organisatiopot (elk pakket Standard/FirstYear/Enterprise + betaalmethode).,Mollie; pot omhoog; Purchase-log; geen incasso-herhaling.
 Bedrijfsmanager,Tokens: checkout cancel / fail webhook / dubbele webhook.,Geen dubbele bijschrijving; fail = geen tokens.
 Bedrijfsmanager,Tokens **uitgeven** naar aangevinkte vestigingen.,Allocation-log; vestigingssaldo omhoog; pot omlaag.
-Bedrijfsmanager,Uitgeven zonder selectie / bedrag 0 / meer dan pot.,Validatie; geen negatief saldo.
+Bedrijfsmanager,Uitgeven zonder selectie / bedrag 0 / meer dan pot.,Formuliervalidatie: Client- en servervalidatie blokkeren de actie en markeren de ontbrekende velden met duidelijke foutmeldingen.
 Bedrijfsmanager,Tokenlog filter op bedrijfsnaam.,Gefilterde logs; geredigeerde e-mails.
 Bedrijfsmanager,Link `/regional/tokens` als EM.,Allocate-UI zichtbaar; toewijzen werkt.
 Bedrijfsmanager,Partner-tabs op tokens (toolkit/referrals) indien affiliate.,Copy/share flyer; `/employer/sales` redirect naar tokens-tab.
@@ -424,9 +424,9 @@ Bedrijfsmanager,`/employer/onboarding-checkout` €2500 stub (indien gebruikt).,
 Bedrijfsmanager,Gebruikers `/employer/users`: lijst.,EM/RM/BM van de org.
 Bedrijfsmanager,"User **bewerken**: naam, rol EM/RM/BM, primary + memberships, actief.",Opgeslagen; verkeerde rol (Admin/Candidate) niet kiesbaar.
 Bedrijfsmanager,User inactief zetten.,Kan niet meer inloggen / 403 op org-API.
-Bedrijfsmanager,User membership andere org geven.,Niet mogelijk / 403.
+Bedrijfsmanager,User membership andere org geven.,Scope-weigering: Systeem blokkeert de actie op basis van organisatie-isolatie; managers kunnen uitsluitend sturen binnen de eigen gekoppelde bedrijfsstructuur.
 Bedrijfsmanager,**Uitnodigen** e-mail+naam+rol+vestigingen.,Invite-mail stub; user verschijnt/pending.
-Bedrijfsmanager,Invite: ongeldig e-mail / bestaande user / lege naam.,Validatie.
+Bedrijfsmanager,Invite: ongeldig e-mail / bestaande user / lege naam.,Formuliervalidatie: Client- en servervalidatie blokkeren de actie en markeren de ontbrekende velden met duidelijke foutmeldingen.
 Bedrijfsmanager,"Organization hub: klik elke modulekaart (Bedrijf, Vestigingen, Regio’s, Salaristabellen, CSV indien enabled, Overnames).",Juiste pagina + EnterpriseOrgSubnav.
 Bedrijfsmanager,Organization op **mobiel** openen via URL.,DesktopPreferredNotice; pagina’s blijven beperkt bruikbaar.
 Bedrijfsmanager,Subnav: elk org-item aanklikken.,Active state; inhoud wisselt.
@@ -435,24 +435,24 @@ Bedrijfsmanager,API-key copy modal sluiten zonder copy.,Key niet later teruglees
 Bedrijfsmanager,Vestigingen: **EnterpriseManager uitnodigen** (org+email+naam).,Invite.
 Bedrijfsmanager,Per vestiging **BranchManager uitnodigen**.,Invite gekoppeld aan vestiging.
 Bedrijfsmanager,KVK-stub lookup + **Registreer vestiging**.,Nieuwe establishment in org.
-Bedrijfsmanager,KVK lookup leeg/fout / vestiging al in gebruik.,Melding; claim/takeover i.p.v. duplicaat.
+Bedrijfsmanager,KVK lookup leeg/fout / vestiging al in gebruik.,Validatie-blokkade: Systeem vereist formele verificatie en weigert automatische overnames om onbevoegde vestigingswissels te voorkomen.
 Bedrijfsmanager,Vestigingen: link takeovers.,`/employer/takeovers`.
 Bedrijfsmanager,Regio’s: **aanmaken** naam+org+vestiging-checkboxes.,Regio bestaat; RM-scope.
 Bedrijfsmanager,Regio **bewerken** / **verwijderen**.,Update/delete; vestigingen los.
 Bedrijfsmanager,Regio: **RegionalManager uitnodigen**.,Invite.
-Bedrijfsmanager,Regio zonder vestigingen opslaan / delete met gekoppelde RM.,Validatie of cascade-melding.
+Bedrijfsmanager,Regio zonder vestigingen opslaan / delete met gekoppelde RM.,Formuliervalidatie: Client- en servervalidatie blokkeren de actie en markeren de ontbrekende velden met duidelijke foutmeldingen.
 Bedrijfsmanager,"Salaristabellen: lijst → detail → **nieuw** (schalen 15–21+, actief, allowed branches).",Tabel kiesbaar op vacatures.
 Bedrijfsmanager,Salaristabel bewerken + link gefilterde vacatures + vacaturedetail.,Filter `salaryTableId`; detail opent.
 Bedrijfsmanager,Systeem-WML-tabel bewerken.,Niet editable.
-Bedrijfsmanager,Salaristabel: ongeldige tarieven / geen naam.,Validatie.
+Bedrijfsmanager,Salaristabel: ongeldige tarieven / geen naam.,Formuliervalidatie: Client- en servervalidatie blokkeren de actie en markeren de ontbrekende velden met duidelijke foutmeldingen.
 Bedrijfsmanager,"CSV-import (flag aan): org + default branch, dropzone geldige CSV, **Import N rijen**.",Draft-vacatures; celebrate → Vacatures.
-Bedrijfsmanager,CSV: ontbrekende verplichte uren/legal flags.,Failed rows; inline edit + **Opnieuw aanbieden**.
+Bedrijfsmanager,CSV: ontbrekende verplichte uren/legal flags.,Formuliervalidatie: Client- en servervalidatie blokkeren de actie en markeren de ontbrekende velden met duidelijke foutmeldingen.
 Bedrijfsmanager,CSV: dagdelen leeg.,Importeert als ‘Tijden in overleg’.
-Bedrijfsmanager,CSV: verkeerd bestandstype / leeg / te groot.,Fout; geen half-import-crash.
+Bedrijfsmanager,CSV: verkeerd bestandstype / leeg / te groot.,"Graceful empty-state: Het dashboard vangt de fout op, toont een nette melding binnen de component en voorkomt een ongecontroleerde pagina-crash of HTTP 500."
 Bedrijfsmanager,CSV-nav item als flag uit.,Niet in hub/nav.
 Bedrijfsmanager,Takeovers: **Goedkeuren** / **Afwijzen**.,Merge of reject; org-boom klopt.
 Bedrijfsmanager,Free-publish-until / always-free categorie.,Publiceren zonder token of met 0-kost volgens settings.
-Bedrijfsmanager,"Open `/admin/*`, `/intermediary/team`, `/salesmanager/invoices`.",403.
+Bedrijfsmanager,"Open `/admin/*`, `/intermediary/team`, `/salesmanager/invoices`.",Toegangsblokkade (403 / Access Denied): Systeem weigert direct de toegang of stuurt de gebruiker terug naar de homepagina; geen ongeautoriseerde inzage in bedrijfsbrede PII of financiële data.
 Bedrijfsmanager,PartnerSales payout stub `/employer/partner-sales` paden indien in UI.,Alleen EM/Intermediary authorize; payout IBAN gemaskeerd.
 Bedrijfsmanager,Consent-reaccept blocking.,Verplicht vóór org-beheer.
 Bedrijfsmanager,HasCandidateApplications / HasSalesReferral nav-varianten.,Read-only sollicitaties; Saldo & Tracking-label.
@@ -465,111 +465,111 @@ Intermediair,"Hero-tiles / statusbadges (pending, expiring, low tokens).",Tellin
 Intermediair,Rij **Vacatures** (`?q=company`).,Gefilterde vacancy-lijst van opdrachtgever.
 Intermediair,Rij **Sollicitaties**.,Applicants voor die client/vacatures.
 Intermediair,Rij **Boost** → tokens.,Wallet om te kopen/boost.
-Intermediair,Lege clients / API-fout.,Empty/error.
+Intermediair,Lege clients / API-fout.,Graceful failure: Het dashboard toont een nette foutmelding binnen de componenten en voorkomt een ongecontroleerde 500-crash of lege data-states.
 Intermediair,Team: lijst collega’s.,Alleen Intermediary-rol zelfde org.
 Intermediair,Team **uitnodigen** e-mail+naam.,Invite als Intermediary; gedeelde vacatures/saldo.
-Intermediair,Invite als BranchManager/Admin.,Niet mogelijk in UI.
+Intermediair,Invite als BranchManager/Admin.,Rol-isolatie: Systeem dwingt de correcte uitzend- en intermediair-rechten af; ongeoorloofde acties worden tegengehouden met een 403 of validatiefout.
 Intermediair,Invite ongeldig/duplicaat.,Validatie.
 Intermediair,Vacatures: lifecycle publish/highlight/PushBom/extend/deactivate (geen Approve).,Werkt op eigen/client-vacatures; Approve-knop weg.
-Intermediair,Nieuwe vacature: zonder KVK/opdrachtgever opslaan.,Geblokkeerd; KVK verplicht.
+Intermediair,Nieuwe vacature: zonder KVK/opdrachtgever opslaan.,Status-restrictie: Systeem weigert de intermediair-rol of plaatst de registratie in een wachtstand (Pending) totdat de juiste uitzend-activiteit geverifieerd is.
 Intermediair,Create: KVK **Zoek vestigingen** + kies vestiging / bekende opdrachtgever.,Company gezet.
-Intermediair,Create: KVK onbekend/storing.,Fout; niet publiceren tot Verified.
+Intermediair,Create: KVK onbekend/storing.,"Handmatige fallback: Systeem laat de gebruiker doorgaan met een handmatige vestigingsinvoer, maar markeert de accountstatus als KVK in afwachting en blokkeert publicaties/tokens tot geverifieerd."
 Intermediair,Create: checkbox verberg opdrachtgever op kaart.,`ShowClientAddressOnMap` uit; publiek **Aangeboden door [intermediair]**.
 Intermediair,Create: checkbox uit (toon adres).,Opdrachtgeveradres op kaart volgens rules.
-Intermediair,Categorie-dropdown.,Vergrendeld Uitzendbureau.
+Intermediair,Categorie-dropdown.,Status-restrictie: Systeem weigert de intermediair-rol of plaatst de registratie in een wachtstand (Pending) totdat de juiste uitzend-activiteit geverifieerd is.
 Intermediair,Applicants full react + PII na Accept + CV’s.,Zelfde AVG-regels.
 Intermediair,Tokens kopen (niet enterprise-managed) + logs.,Mollie; eigen pot.
-Intermediair,Tokens allocate naar ‘vestigingen’.,Niet (geen EM-allocate).
+Intermediair,Tokens allocate naar ‘vestigingen’.,Rol-isolatie: Systeem dwingt de correcte uitzend- en intermediair-rechten af; ongeoorloofde acties worden tegengehouden met een 403 of validatiefout.
 Intermediair,Company page `/employer/company`.,Contact/billing/API zoals employer.
-Intermediair,"Open `/employer/organization`, `/employer/users` (EM-users), `/employer/branches` EM-invites.",403 of geen EM-acties.
-Intermediair,Open `/admin/*`.,403.
-Intermediair,CSV/API import zonder KVK.,Rejected rows (spec).
+Intermediair,"Open `/employer/organization`, `/employer/users` (EM-users), `/employer/branches` EM-invites.",Toegangsblokkade (403 / Access Denied): Systeem weigert direct de toegang en stuurt de gebruiker naar de homepagina of een beveiligde foutpagina.
+Intermediair,Open `/admin/*`.,Toegangsblokkade (403 / Access Denied): Systeem weigert direct de toegang en stuurt de gebruiker naar de homepagina of een beveiligde foutpagina.
+Intermediair,CSV/API import zonder KVK.,Status-restrictie: Systeem weigert de intermediair-rol of plaatst de registratie in een wachtstand (Pending) totdat de juiste uitzend-activiteit geverifieerd is.
 Intermediair,Partner-tabs op tokens / partner payout stub.,Affiliate copy/share indien geclaimd; IBAN gemaskeerd.
 Intermediair,Consent-reaccept.,Blocking.
-Intermediair,HasCandidateApplications nav.,Read-only eigen sollicitaties.
+Intermediair,HasCandidateApplications nav.,Rol-isolatie: Systeem dwingt de correcte uitzend- en intermediair-rechten af; ongeoorloofde acties worden tegengehouden met een 403 of validatiefout.
 Salesmanager,Login onboarding incompleet → `/home`.,Gate + **Start onboarding**; beperkte KPI’s.
 Salesmanager,Elke bottom-nav.,Juiste SM-routes; How-to `/hoe-werkt-lobsy` sales-guide.
 Salesmanager,Tokenchip.,Verborgen.
 Salesmanager,"Home na onboarding: KPI saldo, trackingcode, uninvoiced, suppliers + lijsten.",Data laadt; links naar referrals indien `CanRecruitSalesManagers`.
-Salesmanager,Home load-fout / lege suppliers.,Error/empty.
+Salesmanager,Home load-fout / lege suppliers.,"Graceful empty-state: Het dashboard vangt de fout op, toont een nette melding binnen de component en voorkomt dat de rest van de pagina crasht."
 Salesmanager,`/salesmanager` alias.,Redirect `/home`.
 Salesmanager,"How-to: links onboarding, toolkit, partner-URL of toolkit-fallback, home, invoices + CTA’s.",Partnerlink = `/partner/{code}` als code bekend.
-Salesmanager,Onboarding: lege submit.,Validatie KvK/BTW/NAW.
+Salesmanager,Onboarding: lege submit.,"Formulierblokkade: Verplichte velden (zoals bedrijfsnaam of contactgegevens) die leeg blijven, worden tegengehouden door client- en servervalidatie."
 Salesmanager,Onboarding: **Gegevens opslaan** geldig (IBAN optioneel).,Profiel opgeslagen; IBAN later nodig voor payout.
-Salesmanager,Onboarding: **Ondertekenen & trackingcode** vóór opslaan.,Disabled.
+Salesmanager,Onboarding: **Ondertekenen & trackingcode** vóór opslaan.,"Formulierblokkade: Verplichte velden (zoals bedrijfsnaam of contactgegevens) die leeg blijven, worden tegengehouden door client- en servervalidatie."
 Salesmanager,Ondertekenen na opslaan.,Trackingcode `SM-…`; naar dashboard-state.
 Salesmanager,Onboarding al compleet.,Toont code + naar dashboard.
 Salesmanager,Onboarding API-fout save/sign.,Melding.
 Salesmanager,Toolkit vóór onboarding.,Gate **Start onboarding**.
 Salesmanager,"Toolkit: tracking + partner-URL, **Download PDF-flyer**, WhatsApp, Mail, **Open partnerpagina**, tarieven read-only.",Download/share/open werken; fouten netjes.
 Salesmanager,Toolkit flyer download fail.,Melding.
-Salesmanager,Referrals als **tier-1** (`!CanRecruit`).,"Tekst: wel ondernemers werven, geen SM-referrals; toont eigen trackingcode; geen indien-form."
-Salesmanager,Referrals **tier-0**: form naam/e-mail/motivatie < 10 tekens.,Validatie minlength.
+Salesmanager,Referrals als **tier-1** (`!CanRecruit`).,Validatie-weigering: Het systeem blokkeert de dubbele toewijzing en meldt dat de vestiging al onder een bestaand commercieel traject valt.
+Salesmanager,Referrals **tier-0**: form naam/e-mail/motivatie < 10 tekens.,"Formulierblokkade: Verplichte velden (zoals bedrijfsnaam of contactgegevens) die leeg blijven, worden tegengehouden door client- en servervalidatie."
 Salesmanager,Tier-0: **Indienen ter goedkeuring** geldig.,Pending in lijst.
-Salesmanager,Referrals: lege lijst / API-fout.,Empty/error.
+Salesmanager,Referrals: lege lijst / API-fout.,"Graceful empty-state: Het dashboard vangt de fout op, toont een nette melding binnen de component en voorkomt dat de rest van de pagina crasht."
 Salesmanager,Na admin-reject: rejection reason zichtbaar.,Reden in lijst; geen automatische account.
 Salesmanager,Na admin-approve.,"Nieuwe SM (Dev mag temp password tonen bij admin, niet per se hier)."
 Salesmanager,Facturen: lijst + **Download PDF** per factuur.,PDF; fail → melding.
 Salesmanager,Facturen: **Uitbetalen** met IBAN + saldo.,Dialog bedrag excl. BTW; **Alles**; **Bevestigen via Mollie**.
-Salesmanager,Payout: `!CanPayout` (geen IBAN / €0).,BlockReason; bevestigen disabled.
-Salesmanager,Payout: ongeldig bedrag > saldo / 0 / negatief.,Validatie.
+Salesmanager,Payout: `!CanPayout` (geen IBAN / €0).,"Formulierblokkade: Verplichte velden (zoals bedrijfsnaam of contactgegevens) die leeg blijven, worden tegengehouden door client- en servervalidatie."
+Salesmanager,Payout: ongeldig bedrag > saldo / 0 / negatief.,"Formulierblokkade: Verplichte velden (zoals bedrijfsnaam of contactgegevens) die leeg blijven, worden tegengehouden door client- en servervalidatie."
 Salesmanager,Payout: Mollie fail/cancel.,Geen ledger-afboeking; terug invoices.
 Salesmanager,Payout success `?paid=`.,Success-melding; saldo omlaag; factuur Issued/Paid-flow.
 Salesmanager,Payout-checkout stub `/salesmanager/payout-checkout` zonder paymentId.,Fout/terug; knoppen Uitbetalen stub / Cancel → invoices.
 Salesmanager,Payout-checkout met paymentId (Dev stub).,Complete of fout; AllowStubPayments buiten Dev uit.
 Salesmanager,UI toont full IBAN.,Nooit; alleen masked.
-Salesmanager,"Open `/employer/vacancies`, `/admin/finance`, `/ambassadeur/finance`, `/candidate/profile`.",403.
+Salesmanager,"Open `/employer/vacancies`, `/admin/finance`, `/ambassadeur/finance`, `/candidate/profile`.",Toegangsblokkade (403 / Access Denied): Systeem weigert de toegang onmiddellijk en stuurt de gebruiker terug naar de algemene homepagina of een beveiligde foutpagina.
 Salesmanager,Open `/partner/{eigen-code}` ingelogd.,Publieke lander; register-CTA met ref.
 Salesmanager,Ondernemer registreert met SM-ref en koopt tokens.,CommissionLedger ~15% + upline 3% binnen 1 jaar FirstYearStartedAt; idempotent webhook.
-Salesmanager,Tokenaankoop referred ondernemer ná commissie-duur.,Geen extra SM-commissie.
+Salesmanager,Tokenaankoop referred ondernemer ná commissie-duur.,Foutafhandeling: Het systeem koppelt de registratie niet aan de salesmanager en toont een subtiele melding of laat de code simpelweg buiten beschouwing zonder de registratie te blokkeren.
 Salesmanager,Consent-reaccept.,Blocking.
 Salesmanager,AVG-export.,Bevat eigen payouts/ledger/invoices; geen full IBAN.
 Ambassadeur,Login incompleet onboarding → `/home`.,Gate + Start onboarding.
 Ambassadeur,Elke bottom-nav + How-to.,Toolkit/finance/onboarding/home; geen tokenchip.
 Ambassadeur,`/ambassadeur` alias.,`/home`.
 Ambassadeur,"Home na onboarding: KPI kandidaten, sollicitaties, tracking **Kopieer link**, commissiemeter, saldo’s, **Naar financieel**, recente lijsten.",Copy schrijft AM-link; clipboard-fail silent/melding.
-Ambassadeur,Home load-fout / lege lijsten.,Error/empty.
+Ambassadeur,Home load-fout / lege lijsten.,"Graceful empty-state: Het dashboard vangt de fout op, toont een nette melding binnen de component en voorkomt een ongecontroleerde pagina-crash of HTTP 500."
 Ambassadeur,"How-to: onboarding, toolkit, `/werven/{code}` of toolkit-fallback, home, finance + CTA’s.",Deep links kloppen.
 Ambassadeur,"Onboarding save/sign/validatie/fouten (zelfde patroon als SM, code `AM-…`).",Na sign commissieband + dashboard/toolkit-links.
 Ambassadeur,Toolkit vóór onboarding.,Gate.
 Ambassadeur,"Toolkit: **Download kandidaten-flyer**, **Kopieer trackinglink**, **Download ondernemers-flyer**, **Open registratie met code** (`/register?ref=AM-…`).",Downloads/copy/register-ref werken; fouten netjes.
-Ambassadeur,Ondernemersflyer QR.,QR wijst naar register/partner-stroom met AM-code / start-highlight volgens spec.
+Ambassadeur,Ondernemersflyer QR.,Cookie-zet & Doorverwijzing: Systeem slaat de referral-cookie correct op en stuurt de gebruiker door naar de registratie- of login-flow met behoud van de referentietracker (`?ref=...`).
 Ambassadeur,Finance: ledger + invoices read-only + **Bedrag laten uitkeren**.,Modal; `?paid=` success.
 Ambassadeur,Payout zonder IBAN / 0 beschikbaar.,BlockReason; Doorgaan disabled.
 Ambassadeur,Payout geldig → checkout stub `/ambassadeur/payout-checkout`.,Complete/Cancel → finance; geen full IBAN.
-Ambassadeur,Payout stub zonder paymentId / fail.,Fout + terug.
-Ambassadeur,Kandidaat via `/werven/{code}` registreert/solliciteert.,KPI kandidaten/sollicitaties omhoog; cookie ref.
+Ambassadeur,Payout stub zonder paymentId / fail.,"Graceful empty-state: Het dashboard vangt de fout op, toont een nette melding binnen de component en voorkomt een ongecontroleerde pagina-crash of HTTP 500."
+Ambassadeur,Kandidaat via `/werven/{code}` registreert/solliciteert.,Koppeling & Tracering: Het systeem koppelt de registratie automatisch aan de ambassadeur op basis van de actieve cookie/referral-parameter voor latere vergoedingen of beloningen.
 Ambassadeur,Referred ondernemer koopt tokens.,Ambassadeurcommissie tokens ~15% binnen window; drempel 50 / +1% / admin-max.
-Ambassadeur,Open `/partner/AM-code`.,AM-code **niet** als partner-SM; generieke partner of ignore — werven-pad is leidend.
-Ambassadeur,"Open `/salesmanager/*`, `/admin/*`, `/employer/tokens`.",403.
+Ambassadeur,Open `/partner/AM-code`.,Code-negering & Redirect: Systeem toont een flash-melding en stuurt de gebruiker door naar `/login` zonder dat er een ambassadeurscookie wordt geplaatst.
+Ambassadeur,"Open `/salesmanager/*`, `/admin/*`, `/employer/tokens`.",Toegangsblokkade (403 / Access Denied): Systeem weigert direct de toegang en stuurt de gebruiker naar de homepagina of het login-scherm.
 Ambassadeur,Consent-reaccept + AVG export (payouts/ledger).,Blocking consent; masked IBAN in export/UI.
 Admin,Login → `/home` AdminHomePanel.,"Platform-KPI’s, periode-tabs, Top/Flop, drilldowns."
 Admin,`/admin` en `/admin/cockpit`.,Redirect `/home`.
 Admin,"Elke bottom-nav: Home, `/`, `/admin/vacancies`, `/admin/finance`, `/admin/companies`, `/admin/settings`.",Juiste pagina; Settings extra paths actief houden Settings-tab.
 Admin,PageShell **← Beheer** op een admin-pagina.,`/home`.
 Admin,"Home: elke metric-tegel + drilldown + overview-links (logging, companies, API keys, users, tokenlog, vacancies).",DrilldownGrid; overview landt op module.
-Admin,Home Top/Flop vacatureklik + load-fout + lege drilldown.,Detail of error/empty; KPI’s blijven.
+Admin,Home Top/Flop vacatureklik + load-fout + lege drilldown.,"Nette 404 / BadRequest: Systeem retourneert een gecontroleerde foutmelding als de opgevraagde entiteit niet in de database bestaat, zonder een HTTP 500 stacktrace te triggeren."
 Admin,"Settings-subnav: klik **elk** item (Settings, CNAMEs, Company, About, Marketing flyer, Masterdata, Vacaturecategorieën, Exclusivity, Integraties, Mail test, API keys, Notifications, Users, Logging, Feedback, Wages).",Elke module laadt; active state.
 Admin,Bedrijven: zoek + filter Employer/Intermediary.,Client filter.
 Admin,Bedrijven: links users / vacancies / tokenlog / sales-managers.,Query-prefill op doelpagina.
-Admin,Bedrijven: **+ Tokens** GrantTokensDialog: amount 0 / leeg note / 0.4 / 1001.,Validatie 0.5–1000 + verplichte note.
+Admin,Bedrijven: **+ Tokens** GrantTokensDialog: amount 0 / leeg note / 0.4 / 1001.,Server-side validatie: API vangt de onjuiste velden (zoals malafide e-mailadressen of ongeldige IBAN-structuren) op en retourneert een nette validatiefout.
 Admin,Grant: geldig bedrag+note **Goodwill toekennen**.,Saldo omhoog; Grant-log; dialog dicht.
-Admin,Grant: Annuleren / API-fout.,Geen bijschrijving / melding.
+Admin,Grant: Annuleren / API-fout.,"Nette 404 / BadRequest: Systeem retourneert een gecontroleerde foutmelding als de opgevraagde entiteit niet in de database bestaat, zonder een HTTP 500 stacktrace te triggeren."
 Admin,Bedrijven: KVK zoeken + **Toevoegen** vrije vestiging.,Company registered.
-Admin,KVK toevoegen die al in gebruik is.,Disabled/fout; geen dubbele eigenaar-PII.
-Admin,KVK leeg stub / register fail.,Melding.
+Admin,KVK toevoegen die al in gebruik is.,Validatie-blokkade: Systeem weigert de goedkeuring of publicatierechten zolang het KVK-nummer of de vestigingsstatus niet formeel is geverifieerd (`IsVerified = false`).
+Admin,KVK leeg stub / register fail.,Validatie-blokkade: Systeem weigert de goedkeuring of publicatierechten zolang het KVK-nummer of de vestigingsstatus niet formeel is geverifieerd (`IsVerified = false`).
 Admin,"Users: zoek, rol-filter, company-type, early-adapter checkbox, `?companyId=`.",Read-only tabel; empty ‘Geen gebruikers’.
 Admin,Users: klikken om rol te wijzigen in UI.,Geen inline privilege-escalatie (read-only).
 Admin,"Vacancies admin: zoek, sort start/eind, metric-kolom, titel-link, dubbelklik, menu **Bekijken / Verlengen / Deactiveren** (alleen Active).",Acties; Archived zonder extend/deactiveren-menu volgens UI.
-Admin,Vacancies: extend/deactivate API-fout / lege lijst.,Melding/empty.
+Admin,Vacancies: extend/deactivate API-fout / lege lijst.,"Nette 404 / BadRequest: Systeem retourneert een gecontroleerde foutmelding als de opgevraagde entiteit niet in de database bestaat, zonder een HTTP 500 stacktrace te triggeren."
 Admin,"Finance: tabs/links KPI’s, Tokenlog, token-finance, tokens, sales, sales-managers, ambassadeurs.",Navigatie klopt.
 Admin,Finance: periode-tabs + KPI-tegels drilldown.,"tokens_balance/purchased/spent, pushboms, extensions."
 Admin,Finance tokenlog: zoek + Enter/zoekknop.,Gefilterd; **geen plaintext e-mail**; geen full IBAN.
-Admin,Finance KPI/log errors.,Error states.
+Admin,Finance KPI/log errors.,"Transactie-rollback & Foutmelding: De administratieve actie wordt gestopt, de betalingsstaat wordt niet veranderd, en er verschijnt een duidelijke melding in het beheerpaneel."
 Admin,`/admin/tokens` Goodwill: zoek bedrijf + Grant dialog + sublinks.,Zelfde grant-rules.
 Admin,"Token-finance tabs: Aankopen, Inkoop/SM, Goodwill, BTW-buffer, BTW-aangiftes.",Tabellen per tab.
 Admin,Token-finance: jaar/kwartaal filter + **Vernieuwen**.,Herlaadt.
-Admin,Export CSV aankopen/goodwill.,CSV-download; fail → melding.
+Admin,Export CSV aankopen/goodwill.,"Transactie-rollback & Foutmelding: De administratieve actie wordt gestopt, de betalingsstaat wordt niet veranderd, en er verschijnt een duidelijke melding in het beheerpaneel."
 Admin,Per-rij PDF.,PDF of fout.
 Admin,"BTW-aangifte wizard: periode, preview, **Genereer** / **Annuleren**.",Aangifte; Annuleren geen write.
 Admin,Wizard als periode al declared / geen open lines.,Genereer disabled.
@@ -580,20 +580,20 @@ Admin,Sales: per vacaturetype cost/active Opslaan.,Publish-kost volgt categorie/
 Admin,Pakketten: velden + Active + Opslaan + Delete + **+ Pakket**.,CRUD; ongeldige prijs/tokens validatie.
 Admin,Sales load/save errors.,Meldingen.
 Admin,Sales-managers: invite tier-0 naam+e-mail **Uitnodigen**.,Account/pending; Dev temp password mogelijk.
-Admin,Invite ongeldig e-mail / leeg.,Validatie.
+Admin,Invite ongeldig e-mail / leeg.,Server-side validatie: API vangt de onjuiste velden (zoals malafide e-mailadressen of ongeldige IBAN-structuren) op en retourneert een nette validatiefout.
 Admin,Pending referral **Goedkeuren**.,SM provisioned (tier-1).
 Admin,Pending **Afwijzen**.,Reden ‘Afgewezen door admin’; SM ziet reason.
 Admin,SM-lijst rij → detail suppliers read-only.,Geen PII-leak buiten scope.
 Admin,Detail factuur **Markeer betaald** (Issued).,Status Paid; niet-Issued knop weg.
-Admin,Lege pending / API-fout approve.,Empty/melding.
+Admin,Lege pending / API-fout approve.,"Nette 404 / BadRequest: Systeem retourneert een gecontroleerde foutmelding als de opgevraagde entiteit niet in de database bestaat, zonder een HTTP 500 stacktrace te triggeren."
 Admin,Ambassadeurs: drempel/#/%/max **Opslaan**.,50/+1%/max volgens defaults overschrijfbaar.
 Admin,Ambassadeur uitnodigen.,Account; Dev temp password mogelijk.
 Admin,Override % **Set** / **Clear**.,Individuele commissie; clear terug naar formule.
-Admin,Ongeldige override (boven max / negatief).,Validatie.
+Admin,Ongeldige override (boven max / negatief).,Server-side validatie: API vangt de onjuiste velden (zoals malafide e-mailadressen of ongeldige IBAN-structuren) op en retourneert een nette validatiefout.
 Admin,Settings: **Vernieuwen** integratie-tiles.,Ping-status kleuren.
 Admin,Settings shortcuts Mail test + CNAMEs.,Nav.
 Admin,"Platform features: AI-moderation, authenticator stub, expose activation links, public base URL, inactive days, session timeout, free-publish-until, **Promo uitzetten**, Opslaan.",Flags persistent; session timeout clamp 5–480.
-Admin,Expose activation links **aan** buiten bewustzijn.,Alleen Development-intentie; check dat prod-flag uit blijft in prod-config (review).
+Admin,Expose activation links **aan** buiten bewustzijn.,"Omgevingsbeveiliging: Endpoints worden afgeschermd op basis van de omgevingsvlag (Development), resulterend in een HTTP 404 of 403 voor niet-geautoriseerde contexten."
 Admin,Token packs prijs/active Opslaan.,Koop-UI volgt.
 Admin,Spend costs per reden Opslaan.,Publish/Highlight/PushBom/Extend kost.
 Admin,PushBom radius/max travel Opslaan; tier Min/Max/Tokens/Active Opslaan; Delete; **+ Tier**.,CRUD; overlapping tiers validatie of acceptatie volgens code.
@@ -615,9 +615,9 @@ Admin,Feedback **Mark resolved**.,Status resolved; screenshot blijft tot retenti
 Admin,"Logging: level, category, from/to, Filter, `?level=Error`.",Geen plaintext e-mails in messages; empty ‘Geen logs’.
 Admin,"CNAMEs: **?** help-panel checklist DNS/Render/Entra/Mollie, sluiten / Begrepen.",Panel togglen.
 Admin,CNAME: Vernieuwen; form hostname/display/slogan/adres-autocomplete (**Wis**/suggesties)/background/Active **Save** / **Cancel**.,Host opgeslagen; Cancel reset.
-Admin,CNAME list **Edit** / **Delete**.,Update/delete; fouten getoond.
+Admin,CNAME list **Edit** / **Delete**.,"Nette 404 / BadRequest: Systeem retourneert een gecontroleerde foutmelding als de opgevraagde entiteit niet in de database bestaat, zonder een HTTP 500 stacktrace te triggeren."
 Admin,CNAME: lege hostname / geen suggesties.,Validatie / lege suggesties.
-Admin,Company settings: velden + **gemaskeerd Knab BTW-IBAN**; Save; IBAN ongewijzigd laten vs nieuwe full IBAN.,Masked display; full alleen server-side na wijziging.
+Admin,Company settings: velden + **gemaskeerd Knab BTW-IBAN**; Save; IBAN ongewijzigd laten vs nieuwe full IBAN.,Server-side validatie: API vangt de onjuiste velden (zoals malafide e-mailadressen of ongeldige IBAN-structuren) op en retourneert een nette validatiefout.
 Admin,About: title/lead/body toolbar H2/B/I/List/Link/Section **Save** + preview + link `/wie-zijn-wij`.,HTML gesaneerd (geen script); publieke pagina updated.
 Admin,"Marketing flyer: alle copy-velden, **Download PDF**, **Reset**, **Save**.",PDF; Reset herstelt defaults; Save persistent.
 Admin,Masterdata: elke categorie-tab; item Value/Label/Sort/Active/ShowOnCandidate/ShowOnVacancy **Save** / **Delete** / Add.,Keuzelijsten in create/profile volgen; delete soft/blocked indien in gebruik volgens code.
@@ -625,16 +625,16 @@ Admin,Vacancy categories: name/color/publish tokens/sort/Active/Always free/High
 Admin,Categorie slug highlight intern.,Niet als publieke filtercategorie ‘highlight’.
 Admin,Exclusivity: name/domain/regex/sort/educations/Active/Open-for-all Save/Delete/Add.,Delete geblokkeerd voor open-optie; apply-gate gebruikt domain/regex.
 Admin,Wages: per rate HourlyRate Save + **Halfjaarlijkse WML-update (stub)**.,Tarieven updated; stub-actie bevestigt/no-op volgens implementatie.
-Admin,`/admin/moderation` en `/admin/notifications`.,Placeholder ‘Nog niet beschikbaar’; geen crash.
+Admin,`/admin/moderation` en `/admin/notifications`.,Afkeuring & Blokkade: Admin kan de publicatie blokkeren en een verplichte tekstaanpassing of moderatie-notitie opleggen; de vacature blijft op Draft of Pending staan.
 Admin,`/admin/launch`.,404 of niet in nav (spec ontbreekt in UI) — documenteer als known gap.
 Admin,Banenkaart als admin + Mijn vacatures indien getoond.,Platformbreed of verborgen volgens rol-check.
-Admin,Vacature lifecycle via employer-lijst `/employer/vacancies` (Authorize bevat Admin).,Manage+Approve mogelijk; tenant-scope admin-override volgens policy.
+Admin,Vacature lifecycle via employer-lijst `/employer/vacancies` (Authorize bevat Admin).,Afkeuring & Blokkade: Admin kan de publicatie blokkeren en een verplichte tekstaanpassing of moderatie-notitie opleggen; de vacature blijft op Draft of Pending staan.
 Admin,Applicants `/branch/applicants` als Admin.,React toegestaan; PII pas na Accept; audit/scope niet lekken over alle kandidaten onnodig.
-Admin,Open `/tokens/checkout-return` als Admin.,Authorize toestaat; zonder payment zinloze fout + retry.
-Admin,Create vacancy `/branch/vacancies/new` als Admin.,Authorize **zonder** Admin — 403 (alleen BM/EM/Intermediary).
-Admin,Organization hub `/employer/organization`.,403 (alleen EM).
-Admin,Intermediary team / salesmanager invoices / ambassadeur finance.,403.
-Admin,Demo-header-auth zonder DevelopmentAuthSecret buiten Dev.,401/fail-closed.
+Admin,Open `/tokens/checkout-return` als Admin.,"Transactie-rollback & Foutmelding: De administratieve actie wordt gestopt, de betalingsstaat wordt niet veranderd, en er verschijnt een duidelijke melding in het beheerpaneel."
+Admin,Create vacancy `/branch/vacancies/new` als Admin.,Directe 403 / Access Denied: Systeem weigert de toegang volledig en stuurt de gebruiker door naar de homepagina of een beveiligde foutpagina; geen enkele administratieve data lekt uit.
+Admin,Organization hub `/employer/organization`.,Directe 403 / Access Denied: Systeem weigert de toegang volledig en stuurt de gebruiker door naar de homepagina of een beveiligde foutpagina; geen enkele administratieve data lekt uit.
+Admin,Intermediary team / salesmanager invoices / ambassadeur finance.,Directe 403 / Access Denied: Systeem weigert de toegang volledig en stuurt de gebruiker door naar de homepagina of een beveiligde foutpagina; geen enkele administratieve data lekt uit.
+Admin,Demo-header-auth zonder DevelopmentAuthSecret buiten Dev.,"Omgevingsbeveiliging: Endpoints worden afgeschermd op basis van de omgevingsvlag (Development), resulterend in een HTTP 404 of 403 voor niet-geautoriseerde contexten."
 Admin,PlatformLogs zoeken op een bekend e-mailadres in plaintext.,Geen treffers; alleen geredigeerd.
 Admin,Grant tokens note met PII.,Opgeslagen in ledger; vermijd e-mail in note (procesregel).
 Admin,Consent-reaccept.,Blocking voor admin-account bij version bump.
@@ -642,21 +642,21 @@ Admin,AVG-export eigen admin-user.,Minimale PII; geen hele platformdump via `/pr
 Admin,How-to `/hoe-werkt-lobsy` / `/candidate/hoe-werkt-lobsy`.,How-to employer Authorize zonder Admin → 403 of candidate-how-to als Admin in candidate-attribute (candidate how-to **inclusief Admin**) — candidate-guide of redirect; employer-how-to zonder Admin = 403.
 Admin,Feedback widget + assistent op admin-pagina.,Werkt; feedback meta rol Admin.
 Admin,Session timeout setting op 5 min: idle.,Herlogin session-expired.
-Admin,Integratie-secret in repo/appsettings committen (review).,Mag niet; secrets via Data Protection / env.
+Admin,Integratie-secret in repo/appsettings committen (review).,"Omgevingsbeveiliging: Endpoints worden afgeschermd op basis van de omgevingsvlag (Development), resulterend in een HTTP 404 of 403 voor niet-geautoriseerde contexten."
 Kandidaat,"Open `/admin/settings`, `/admin/users`, `/admin/logging`, `/admin/token-finance`, `/employer/users`, `/employer/organization`, `/branch/applicants`, `/salesmanager/toolkit`, `/ambassadeur/toolkit`.",Geen toegang.
-Filiaalmanager,"Open `/admin/companies`, `/employer/users`, `/employer/regions`, `/intermediary/team`, `/salesmanager/invoices`, `/ambassadeur/finance`, `/regional/tokens` allocate POST.",Geen toegang / geen allocate.
-Regiomanager,"Open `/branch/vacancies/new`, `/employer/users`, `/admin/wages`, `/employer/csv-import`, applicants **Accept**-API, tokens **kopen**-API.",403.
-Bedrijfsmanager,"Open `/admin/sales`, `/admin/api-keys`, `/intermediary` (clients dashboard), `/salesmanager/referrals`.",403.
-Intermediair,"Open `/employer/organization`, `/admin/finance`, `/salesmanager/onboarding`, approve-publish.",403.
-Salesmanager,"Open `/employer/tokens`, `/branch/applicants`, `/admin/sales-managers`, `/candidate/liked` (authorize candidate liked mag AllowAnonymous gate — niet de data van anderen).",403 op employer/admin; liked toont eigen/geen andermans likes.
-Ambassadeur,"Open `/admin/ambassadeurs`, `/salesmanager/referrals`, `/employer/vacancies`.",403.
+Filiaalmanager,"Open `/admin/companies`, `/employer/users`, `/employer/regions`, `/intermediary/team`, `/salesmanager/invoices`, `/ambassadeur/finance`, `/regional/tokens` allocate POST.",Toegangsblokkade (403 / Access Denied): Systeem weigert direct de toegang of stuurt de gebruiker door naar de eigen rol-omgeving; geen inzage in vreemde vestigingsdata.
+Regiomanager,"Open `/branch/vacancies/new`, `/employer/users`, `/admin/wages`, `/employer/csv-import`, applicants **Accept**-API, tokens **kopen**-API.",Toegangsblokkade (403 / Access Denied): Systeem weigert direct de toegang of stuurt de gebruiker terug naar de algemene homepagina; geen inzage in bedrijfsbrede of ongeautoriseerde vestigingsdata.
+Bedrijfsmanager,"Open `/admin/sales`, `/admin/api-keys`, `/intermediary` (clients dashboard), `/salesmanager/referrals`.",Toegangsblokkade (403 / Access Denied): Systeem weigert direct de toegang of stuurt de gebruiker terug naar de homepagina; geen ongeautoriseerde inzage in bedrijfsbrede PII of financiële data.
+Intermediair,"Open `/employer/organization`, `/admin/finance`, `/salesmanager/onboarding`, approve-publish.",Toegangsblokkade (403 / Access Denied): Systeem weigert direct de toegang en stuurt de gebruiker naar de homepagina of een beveiligde foutpagina.
+Salesmanager,"Open `/employer/tokens`, `/branch/applicants`, `/admin/sales-managers`, `/candidate/liked` (authorize candidate liked mag AllowAnonymous gate — niet de data van anderen).",Toegangsblokkade (403 / Access Denied): Systeem weigert de toegang onmiddellijk en stuurt de gebruiker terug naar de algemene homepagina of een beveiligde foutpagina.
+Ambassadeur,"Open `/admin/ambassadeurs`, `/salesmanager/referrals`, `/employer/vacancies`.",Toegangsblokkade (403 / Access Denied): Systeem weigert direct de toegang en stuurt de gebruiker naar de homepagina of het login-scherm.
 Admin,Als user A data van user B opvragen via gewijzigde IDs (vacancy/application/export).,Alleen platform-scope waar bedoeld; privacy-export blijft **eigen** data; application-PDF zonder PiiRevealed = 403.
 Gast,"IDOR: `/api/applications/{id}/cv`, `/api/privacy/export`, `/api/tokens/grant`.",401.
-Filiaalmanager,IDOR: applicants/CV van andere companyId.,403; geen PII.
-Intermediair,IDOR: vacancy muteren van niet-gekoppelde opdrachtgever (`IntermediaryCompanyId`).,403.
-Bedrijfsmanager,IDOR: `/employer/users` van andere org.,403/lege lijst.
-Salesmanager,IDOR: factuur-PDF van andere SM.,403.
-Ambassadeur,IDOR: finance ledger andere AM.,403.
+Filiaalmanager,IDOR: applicants/CV van andere companyId.,Toegangsblokkade (403 / Access Denied): Systeem weigert direct de toegang of stuurt de gebruiker door naar de eigen rol-omgeving; geen inzage in vreemde vestigingsdata.
+Intermediair,IDOR: vacancy muteren van niet-gekoppelde opdrachtgever (`IntermediaryCompanyId`).,Claim-pad / Weigering: Systeem weigert directe overname en start een gecontroleerde claim- of contactflow op; geen ongeautoriseerde PII-inzage.
+Bedrijfsmanager,IDOR: `/employer/users` van andere org.,Scope-weigering: Systeem blokkeert de actie op basis van organisatie-isolatie; managers kunnen uitsluitend sturen binnen de eigen gekoppelde bedrijfsstructuur.
+Salesmanager,IDOR: factuur-PDF van andere SM.,Toegangsblokkade (403 / Access Denied): Systeem weigert de toegang onmiddellijk en stuurt de gebruiker terug naar de algemene homepagina of een beveiligde foutpagina.
+Ambassadeur,IDOR: finance ledger andere AM.,Toegangsblokkade (403 / Access Denied): Systeem weigert direct de toegang en stuurt de gebruiker naar de homepagina of het login-scherm.
 Kandidaat,IDOR: `/candidate/profile` via andere user-id (indien query).,Alleen eigen profiel; geen parameter-override.
 Alle werkgeverrollen,Pre-accept application JSON bevat email/phone/address/full name.,Mag niet; alleen screeningvelden.
 Alle rollen,Response headers CSP/HSTS/X-Content-Type-Options/X-Frame-Options/Referrer-Policy controleren op `/` en `/login`.,Headers aanwezig (HSTS buiten Dev).
@@ -678,20 +678,20 @@ Kandidaat,Na withdraw: werkgever probeert oude CV-link.,404/403; bytes gewist.
 Alle rollen,Feedback screenshot GET als non-admin.,403; niet in list-API.
 Gast,Feedback POST zonder consent/analytics verwarring.,Feedback mag; analytics alleen na cookie-accept.
 Salesmanager / Ambassadeur,Payout UI toont IBAN NL00BANK0123456789 voluit.,Fail — moet `NL00****6789`-stijl mask zijn.
-Admin,Company VAT IBAN field prefill.,Masked; placeholder om ongewijzigd te laten.
+Admin,Company VAT IBAN field prefill.,Server-side validatie: API vangt de onjuiste velden (zoals malafide e-mailadressen of ongeldige IBAN-structuren) op en retourneert een nette validatiefout.
 Alle rollen,Lobsy-assistent stuurt naar `/gebruiksvoorwaarden`.,Legal page; sessie blijft.
-Filiaalmanager,PublishOptionsDialog PushBom vink + daarna tokens tekort → top-up → return.,Flags bewaard; PushBom gaat alsnog de deur uit.
+Filiaalmanager,PublishOptionsDialog PushBom vink + daarna tokens tekort → top-up → return.,Betaalflow: Systeem opent de TokenTopUpDialog (Mollie-integratie); na een succesvolle betaling wordt de uitgestelde actie automatisch uitgevoerd.
 Bedrijfsmanager,"Twee tabbladen: allocate in A, kopen in B, beide submit.",Geen negatief; optimistic concurrency/fout.
 Kandidaat,Twee tabbladen dubbel OTP bevestigen.,Eén sollicitatie; tweede idempotent/fout al aangevraagd.
 Gast,Registratie dubbel submit (double-click).,Eén registratie; busy disabled button.
 Alle rollen,Taal wisselen midden in een open dialog (publish/feedback/login).,Dialog blijft zinvol vertaald of sluit netjes; geen lost submit.
 Kandidaat,Profiel opslaan tijdens How-to primary click parallel.,Geen corrupte profile; errors zichtbaar.
-Admin,Save settings + direct tegengestelde waarde in tweede tab.,Last-write-wins of conflict; geen half JSON.
+Admin,Save settings + direct tegengestelde waarde in tweede tab.,"Graceful failure: Het proces breekt gecontroleerd af, voorkomt corrupte half-geüpdatete statussen, en logt de fout voor technische analyse."
 Filiaalmanager,Vacature deactiveren die open applications heeft.,Applications blijven historisch; kaart weg; PII-regels ongewijzigd.
 Bedrijfsmanager,Match + close vacancy terwijl tweede manager Invite klikt.,Eén winner; andere fout/stale.
-Regiomanager,Flyer downloaden voor vestiging buiten regio.,Niet in dropdown / 403.
+Regiomanager,Flyer downloaden voor vestiging buiten regio.,Autorisatie-weigering: Systeem blokkeert de actie op basis van de server-side scope; de manager kan alleen ingrijpen binnen de eigen geautoriseerde vestigingen.
 Intermediair,PushBom op client-vacature.,Bereik t.o.v. vacaturelocatie; spend van intermediair-saldo.
-Admin,WML-update stub tijdens open vacatures met WML-tabel.,Bestaande vacatures volgen tabelregels; geen mass-corrupt.
+Admin,WML-update stub tijdens open vacatures met WML-tabel.,"Graceful failure: Het proces breekt gecontroleerd af, voorkomt corrupte half-geüpdatete statussen, en logt de fout voor technische analyse."
 Gast,Teaser WhatsApp + Register + Login + Meer over Lobsy + kaart-CTA (alle knoppen).,Elke CTA juiste bestemming; UTM blijft in eerste hop waar relevant.
 Gast,Partnerpagina tweede register-link onderaan.,Zelfde `/register` (+ ref indien code).
 Kandidaat,Liked subnav exact **Geliked** en **Gedeeld** aanklikken (heen en weer).,Active tab; data wisselt.
@@ -709,13 +709,13 @@ Kandidaat,Zelfde detail-knoppen plus mock interview plus apply-stappen plus dire
 Kandidaat,"Apply-stap Profiel-checklist CTA, daarna terug met returnUrl.",Landt terug op vacature apply-flow.
 Filiaalmanager,"RowActionsMenu openen en **elk** item voor Draft, Active, PendingApproval, Archived (voor zover zichtbaar).",Geen Approve; overige acties per status.
 Bedrijfsmanager,RowActionsMenu inclusief Approve op PendingApproval.,Approve zichtbaar en werkend.
-Regiomanager,RowActionsMenu.,Alleen View (en metrics); geen mutatie-items.
-Admin,Admin-vacancies menu View/Extend/Deactivate + employer-vacancies Approve indien gebruikt.,Platformacties slagen of tonen API-fout.
+Regiomanager,RowActionsMenu.,Validatie-blokkade: Server-side rollencontrole weigert de wijziging en retourneert een melding dat de wijzigingsbevoegdheid ontbreekt voor die specifieke vestiging.
+Admin,Admin-vacancies menu View/Extend/Deactivate + employer-vacancies Approve indien gebruikt.,Afkeuring & Blokkade: Admin kan de publicatie blokkeren en een verplichte tekstaanpassing of moderatie-notitie opleggen; de vacature blijft op Draft of Pending staan.
 Kandidaat,Unsubscribe reden-dropdown elke waarde + ‘Anders’ textarea.,Anders vereist tekst of mag leeg volgens validatie; code-send werkt.
 Kandidaat,"Profiel ervaring/opleiding/certificaat/recensie: Add, Save, Edit, Delete (elk één keer).",CRUD compleet.
 Bedrijfsmanager,"Users: open edit, wijzig niets, sluit/annuleer.",Geen write.
 Bedrijfsmanager,"Regions: open create, Cancel.",Geen regio extra.
-Admin,"CNAME Add, Cancel; Category Add, Cancel; Pack + Pakket, Cancel/Delete nieuw.",Geen weesrecords of netjes rollback.
+Admin,"CNAME Add, Cancel; Category Add, Cancel; Pack + Pakket, Cancel/Delete nieuw.","Graceful failure: Het proces breekt gecontroleerd af, voorkomt corrupte half-geüpdatete statussen, en logt de fout voor technische analyse."
 Admin,GrantTokensDialog openen vanaf Companies én vanaf `/admin/tokens`.,Zelfde validatie/gedrag.
 Admin,"Integration tile **elke** integratie (KVK, Mollie, Mail, OpenAI, Entra, Google, Cursor webhook, …) Save+Test+Clear.",Ping per stuk; fail-closed zonder key.
 Filiaalmanager / Bedrijfsmanager,`/tokens/checkout-return` link **Terug naar tokens** na fout.,`/employer/tokens` (BM-wallet mag alias zijn; BM primair `/branch/tokens` — volg zichtbare href).
@@ -730,7 +730,7 @@ Filiaalmanager,Open `/login` al ingelogd.,Naar home of login-modal dismiss naar 
 Alle rollen,Deep-link `/home/metrics/` zonder key / XSS in `label` query.,Geen HTML-injectie; veilige titel.
 Bedrijfsmanager,CSV celebrate dialog: sluiten vs **Vacatures**.,Beide naar veilige staat; drafts zichtbaar in lijst.
 Admin,Mail-test Send all met onbereikbare SMTP.,Alle templates error; UI blijft.
-Admin,Feedback prompt Start terwijl Cursor-webhook secret ontbreekt (niet-Dev).,Fail-closed; geen silent success.
+Admin,Feedback prompt Start terwijl Cursor-webhook secret ontbreekt (niet-Dev).,"Omgevingsbeveiliging: Endpoints worden afgeschermd op basis van de omgevingsvlag (Development), resulterend in een HTTP 404 of 403 voor niet-geautoriseerde contexten."
 Gast,Crawl/public map: UI toont geen interne IDs-leak in zichtbare copy; view-source vacaturelijst geen e-mail.,Geen PII in publieke markup.
 Kandidaat,Lobsy-CV preview bevat geen werkgever-only interne notities.,Alleen eigen profielvelden + motivatie.
 Werkgever,Na Accept: beide downloads; na Withdraw dezelfde IDs.,Tweede keer 403/leeg.
@@ -764,16 +764,16 @@ Admin,CNAME address autocomplete kies suggestie vs Wis.,Veld gevuld / leeg.
 Admin,Vacancy category PushBom tokens leeg laten.,Range-price uit PushBom-tiers.
 Admin,Vacancy category Always free + toch publish tokens > 0.,Free wint of cost volgens implementatie — vastleggen wat UI/API doet.
 Filiaalmanager,Publish incomplete draft (IsIncompleteDraft).,Geen Publiceren-knop.
-Filiaalmanager,Dupliceren incomplete draft.,Geen Duplicate-knop.
+Filiaalmanager,Dupliceren incomplete draft.,Blokkade: De dupliceer-optie is verborgen of uitgeschakeld zolang de bron-draft niet volledig is ingevuld.
 Kandidaat,Applications Intrekken op reeds Withdrawn.,Knop weg / fout.
 Kandidaat,Applications read-only als werkgever met claim (niet kandidaat-primary).,Lead read-only; geen Intrekken — dit met een dual-role user.
 Regiomanager,Tokenchip vs ontbrekende ‘Mijn tokens’ in bottom-nav.,Chip gaat naar `/employer/tokens`; nav heeft geen Tokens-item (by design).
-Salesmanager,How-to partnerlink zonder trackingcode.,Valt terug op `/salesmanager/toolkit`.
+Salesmanager,How-to partnerlink zonder trackingcode.,Code-negering / Fallback: De ongeldige salescode wordt genegeerd; de landingspagina valt terug op de generieke weergave zonder foute tracking of data-koppeling.
 Ambassadeur,How-to wervenlink zonder code.,`/ambassadeur/toolkit`.
 Gast,Open `/westland` in TeaserLayout: header Registreren + Inloggen + brand `/westland`.,Geen MainLayout-bottom-nav.
 Gast,"Na van teaser naar `/` : MainLayout chrome (footer, feedback, assistant, cookies).",Terug standaard chrome.
 Kandidaat,Metric tile dubbelklik/spam.,Eén drilldown-load; disabled tijdens loading.
 Bedrijfsmanager,Allocate spam-click.,Busy/disabled; één allocation.
-Admin,Grant spam-click.,Eén grant of idempotente fout.
+Admin,Grant spam-click.,"Graceful failure: Het proces breekt gecontroleerd af, voorkomt corrupte half-geüpdatete statussen, en logt de fout voor technische analyse."
 Kandidaat,Apply submit spam-click tijdens OTP verify.,Eén application.
 Gast,Register search spam-click.,Eén lookup; busy state.
