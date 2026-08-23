@@ -486,23 +486,23 @@ Account: `regio@jobsy.local`. Bottom-nav: Home · Banenkaart · Vacatures · Mij
 | Regiomanager | Home periode-tabs, metric-tegels, drilldown, Top/Flop, raamflyer A4/A3 overview + vestiging. | Zelfde patronen als BM maar regio-scope. |
 | Regiomanager | How-to: alle deep links (home, vacancies, branches, tokens, kaart) + CTA’s. | Regional-guide; primary **Mijn vestigingen**. |
 | Regiomanager | Vacatures: zoeken/sorteren/bekijken/metrics. | Werkt. |
-| Regiomanager | Vacatures: Nieuwe vacature / Publiceren / Highlight / PushBom / Verlengen / Deactiveren / Dupliceren / Bewerken / Contact / E-mailcheck / Approve. | Niet zichtbaar of disabled (`_canManageVacancy` false). |
-| Regiomanager | Direct `/branch/vacancies/new`. | 403 (CreateVacancy-roles zonder RM). |
+| Regiomanager | Vacatures: Nieuwe vacature / Publiceren / Highlight / PushBom / Verlengen / Deactiveren / Dupliceren / Bewerken / Contact / E-mailcheck / Approve. | Validatie-blokkade: Server-side rollencontrole weigert de wijziging en retourneert een melding dat de wijzigingsbevoegdheid ontbreekt voor die specifieke vestiging. |
+| Regiomanager | Direct `/branch/vacancies/new`. | Toegangsblokkade (403 / Access Denied): Systeem weigert direct de toegang of stuurt de gebruiker terug naar de algemene homepagina; geen inzage in bedrijfsbrede of ongeautoriseerde vestigingsdata. |
 | Regiomanager | Applicants: filters + uitklappen. | Pre-PII screening zichtbaar; **geen** Accept/Reject/Invite/Match/CV-download-acties. |
-| Regiomanager | Applicants react API forceren. | 403. |
-| Regiomanager | Tokens `/employer/tokens`: saldo + logs + filter. | Read-only; geen kopen; lead regio. |
-| Regiomanager | Link `/regional/tokens`. | Balances + vacatures; **geen** allocate-form (`_canAllocate` false). |
+| Regiomanager | Applicants react API forceren. | Toegangsblokkade (403 / Access Denied): Systeem weigert direct de toegang of stuurt de gebruiker terug naar de algemene homepagina; geen inzage in bedrijfsbrede of ongeautoriseerde vestigingsdata. |
+| Regiomanager | Tokens `/employer/tokens`: saldo + logs + filter. | Budget-restrictie: Systeem weigert de vrijgave of vereist een escalatie naar een hoger niveau (Admin / Enterprise Manager) zolang er geen saldo of goedkeuring is. |
+| Regiomanager | Link `/regional/tokens`. | Budget-restrictie: Systeem weigert de vrijgave of vereist een escalatie naar een hoger niveau (Admin / Enterprise Manager) zolang er geen saldo of goedkeuring is. |
 | Regiomanager | Regional tokens: link terug employer tokens. | Werkt. |
 | Regiomanager | Mijn vestigingen `/regional/branches`: lijst tokens + actieve vacatures. | Alleen eigen regio-vestigingen. |
-| Regiomanager | Branches: EM-invite / KVK-register knoppen. | Niet zichtbaar (AuthorizeView EM). |
-| Regiomanager | Open `/employer/users`, organization, regions edit, salary create, csv-import, takeovers approve. | 403 (tenzij toevallig ook EM — niet in demo). |
-| Regiomanager | Open `/admin/*`, `/salesmanager`, `/ambassadeur`. | 403. |
-| Regiomanager | Banenkaart **Mijn vacatures**. | Vacatures in regio-scope of melding geen actieve. |
+| Regiomanager | Branches: EM-invite / KVK-register knoppen. | Validatie-blokkade: Server-side rollencontrole weigert de wijziging en retourneert een melding dat de wijzigingsbevoegdheid ontbreekt voor die specifieke vestiging. |
+| Regiomanager | Open `/employer/users`, organization, regions edit, salary create, csv-import, takeovers approve. | Toegangsblokkade (403 / Access Denied): Systeem weigert direct de toegang of stuurt de gebruiker terug naar de algemene homepagina; geen inzage in bedrijfsbrede of ongeautoriseerde vestigingsdata. |
+| Regiomanager | Open `/admin/*`, `/salesmanager`, `/ambassadeur`. | Toegangsblokkade (403 / Access Denied): Systeem weigert direct de toegang of stuurt de gebruiker terug naar de algemene homepagina; geen inzage in bedrijfsbrede of ongeautoriseerde vestigingsdata. |
+| Regiomanager | Banenkaart **Mijn vacatures**. | Lege staat (Empty-state): Systeem toont een heldere melding dat er geen data of vestigingen binnen de geselecteerde regio actief zijn, zonder visuele artefacten of lege tabellen. |
 | Regiomanager | `/regional` alias. | Redirect `/home`. |
 | Regiomanager | Consent-reaccept + AVG export/afmelden. | Zelfde blocking consent als andere non-candidates; export zonder andermans kandidaat-PII voorbij accept-regels. |
 | Regiomanager | Optional candidate-applications claim. | Read-only mijn sollicitaties indien gezet. |
-| Regiomanager | Drilldown `/home/metrics/{key}` onbekende key. | Leeg/fout; geen 500. |
-| Regiomanager | Tenant: vacature/tokens van andere regio via ID. | 403/leeg. |
+| Regiomanager | Drilldown `/home/metrics/{key}` onbekende key. | Graceful empty-state: Het dashboard vangt de fout op, toont een nette melding binnen de component en voorkomt een ongecontroleerde pagina-crash of HTTP 500. |
+| Regiomanager | Tenant: vacature/tokens van andere regio via ID. | Autorisatie-weigering: Systeem blokkeert de actie op basis van de server-side scope; de manager kan alleen ingrijpen binnen de eigen geautoriseerde vestigingen. |
 
 
 ---
@@ -807,7 +807,7 @@ Herhaal per actor. Verwacht overal: login-challenge (anoniem) of **403 / `/acces
 |-----|--------------|--------------------|
 | Kandidaat | Open `/admin/settings`, `/admin/users`, `/admin/logging`, `/admin/token-finance`, `/employer/users`, `/employer/organization`, `/branch/applicants`, `/salesmanager/toolkit`, `/ambassadeur/toolkit`. | Geen toegang. |
 | Filiaalmanager | Open `/admin/companies`, `/employer/users`, `/employer/regions`, `/intermediary/team`, `/salesmanager/invoices`, `/ambassadeur/finance`, `/regional/tokens` allocate POST. | Toegangsblokkade (403 / Access Denied): Systeem weigert direct de toegang of stuurt de gebruiker door naar de eigen rol-omgeving; geen inzage in vreemde vestigingsdata. |
-| Regiomanager | Open `/branch/vacancies/new`, `/employer/users`, `/admin/wages`, `/employer/csv-import`, applicants **Accept**-API, tokens **kopen**-API. | 403. |
+| Regiomanager | Open `/branch/vacancies/new`, `/employer/users`, `/admin/wages`, `/employer/csv-import`, applicants **Accept**-API, tokens **kopen**-API. | Toegangsblokkade (403 / Access Denied): Systeem weigert direct de toegang of stuurt de gebruiker terug naar de algemene homepagina; geen inzage in bedrijfsbrede of ongeautoriseerde vestigingsdata. |
 | Bedrijfsmanager | Open `/admin/sales`, `/admin/api-keys`, `/intermediary` (clients dashboard), `/salesmanager/referrals`. | 403. |
 | Intermediair | Open `/employer/organization`, `/admin/finance`, `/salesmanager/onboarding`, approve-publish. | Toegangsblokkade (403 / Access Denied): Systeem weigert direct de toegang en stuurt de gebruiker naar de homepagina of een beveiligde foutpagina. |
 | Salesmanager | Open `/employer/tokens`, `/branch/applicants`, `/admin/sales-managers`, `/candidate/liked` (authorize candidate liked mag AllowAnonymous gate — niet de data van anderen). | Toegangsblokkade (403 / Access Denied): Systeem weigert de toegang onmiddellijk en stuurt de gebruiker terug naar de algemene homepagina of een beveiligde foutpagina. |
@@ -861,7 +861,7 @@ Voer uit met de rol die de dialoog daadwerkelijk ziet (werkgever voor publish/to
 | Admin | Save settings + direct tegengestelde waarde in tweede tab. | Graceful failure: Het proces breekt gecontroleerd af, voorkomt corrupte half-geüpdatete statussen, en logt de fout voor technische analyse. |
 | Filiaalmanager | Vacature deactiveren die open applications heeft. | Applications blijven historisch; kaart weg; PII-regels ongewijzigd. |
 | Bedrijfsmanager | Match + close vacancy terwijl tweede manager Invite klikt. | Eén winner; andere fout/stale. |
-| Regiomanager | Flyer downloaden voor vestiging buiten regio. | Niet in dropdown / 403. |
+| Regiomanager | Flyer downloaden voor vestiging buiten regio. | Autorisatie-weigering: Systeem blokkeert de actie op basis van de server-side scope; de manager kan alleen ingrijpen binnen de eigen geautoriseerde vestigingen. |
 | Intermediair | PushBom op client-vacature. | Bereik t.o.v. vacaturelocatie; spend van intermediair-saldo. |
 | Admin | WML-update stub tijdens open vacatures met WML-tabel. | Graceful failure: Het proces breekt gecontroleerd af, voorkomt corrupte half-geüpdatete statussen, en logt de fout voor technische analyse. |
 | Gast | Teaser WhatsApp + Register + Login + Meer over Lobsy + kaart-CTA (alle knoppen). | Elke CTA juiste bestemming; UTM blijft in eerste hop waar relevant. |
@@ -881,7 +881,7 @@ Voer uit met de rol die de dialoog daadwerkelijk ziet (werkgever voor publish/to
 | Kandidaat | Apply-stap Profiel-checklist CTA, daarna terug met returnUrl. | Landt terug op vacature apply-flow. |
 | Filiaalmanager | RowActionsMenu openen en **elk** item voor Draft, Active, PendingApproval, Archived (voor zover zichtbaar). | Geen Approve; overige acties per status. |
 | Bedrijfsmanager | RowActionsMenu inclusief Approve op PendingApproval. | Approve zichtbaar en werkend. |
-| Regiomanager | RowActionsMenu. | Alleen View (en metrics); geen mutatie-items. |
+| Regiomanager | RowActionsMenu. | Validatie-blokkade: Server-side rollencontrole weigert de wijziging en retourneert een melding dat de wijzigingsbevoegdheid ontbreekt voor die specifieke vestiging. |
 | Admin | Admin-vacancies menu View/Extend/Deactivate + employer-vacancies Approve indien gebruikt. | Afkeuring & Blokkade: Admin kan de publicatie blokkeren en een verplichte tekstaanpassing of moderatie-notitie opleggen; de vacature blijft op Draft of Pending staan. |
 | Kandidaat | Unsubscribe reden-dropdown elke waarde + ‘Anders’ textarea. | Anders vereist tekst of mag leeg volgens validatie; code-send werkt. |
 | Kandidaat | Profiel ervaring/opleiding/certificaat/recensie: Add, Save, Edit, Delete (elk één keer). | CRUD compleet. |
