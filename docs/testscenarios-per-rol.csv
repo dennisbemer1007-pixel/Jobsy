@@ -409,14 +409,14 @@ Bedrijfsmanager,"Home: alle periode-tabs, tegels, drilldowns, Top/Flop, flyer A4
 Bedrijfsmanager,How-to Enterprise: alle stappen + links home/vacancies/tokens/users/organization + CTA’s.,Guide klopt; organization-link op desktop bruikbaar.
 Bedrijfsmanager,"Vacatures: volledige lifecycle zoals BM (new, edit, duplicate, contact, e-mailcheck, publish options, highlight, PushBom, extend, deactivate, reactivate).",Acties slagen binnen org-scope.
 Bedrijfsmanager,PendingApproval: **Goedkeuren**.,Publish voltooid (tokens/org-pot volgens rules); vacature Active of fout als nog geen saldo.
-Bedrijfsmanager,Approve zonder saldo.,Fout of top-up; niet stiekem gratis tenzij Always-free categorie / free-publish-until.
+Bedrijfsmanager,Approve zonder saldo.,Saldo-restrictie: Systeem weigert de goedkeuring of vereist een directe token-topup voordat de vacature live kan worden gezet via de enterprise-wallet.
 Bedrijfsmanager,Applicants: volledige Accept → PII → Invite → Match (met/zonder others/close) → Reject + CV-downloads.,Zelfde progressive disclosure.
 Bedrijfsmanager,Tokens: checkboxes **tokenbeheer per vestiging** opslaan.,BM van die vestiging kan daarna niet meer kopen.
 Bedrijfsmanager,Tokens: beheer uitzetten voor vestiging.,BM mag weer kopen.
 Bedrijfsmanager,Tokens kopen in organisatiopot (elk pakket Standard/FirstYear/Enterprise + betaalmethode).,Mollie; pot omhoog; Purchase-log; geen incasso-herhaling.
 Bedrijfsmanager,Tokens: checkout cancel / fail webhook / dubbele webhook.,Geen dubbele bijschrijving; fail = geen tokens.
 Bedrijfsmanager,Tokens **uitgeven** naar aangevinkte vestigingen.,Allocation-log; vestigingssaldo omhoog; pot omlaag.
-Bedrijfsmanager,Uitgeven zonder selectie / bedrag 0 / meer dan pot.,Validatie; geen negatief saldo.
+Bedrijfsmanager,Uitgeven zonder selectie / bedrag 0 / meer dan pot.,Formuliervalidatie: Client- en servervalidatie blokkeren de actie en markeren de ontbrekende velden met duidelijke foutmeldingen.
 Bedrijfsmanager,Tokenlog filter op bedrijfsnaam.,Gefilterde logs; geredigeerde e-mails.
 Bedrijfsmanager,Link `/regional/tokens` als EM.,Allocate-UI zichtbaar; toewijzen werkt.
 Bedrijfsmanager,Partner-tabs op tokens (toolkit/referrals) indien affiliate.,Copy/share flyer; `/employer/sales` redirect naar tokens-tab.
@@ -424,9 +424,9 @@ Bedrijfsmanager,`/employer/onboarding-checkout` €2500 stub (indien gebruikt).,
 Bedrijfsmanager,Gebruikers `/employer/users`: lijst.,EM/RM/BM van de org.
 Bedrijfsmanager,"User **bewerken**: naam, rol EM/RM/BM, primary + memberships, actief.",Opgeslagen; verkeerde rol (Admin/Candidate) niet kiesbaar.
 Bedrijfsmanager,User inactief zetten.,Kan niet meer inloggen / 403 op org-API.
-Bedrijfsmanager,User membership andere org geven.,Niet mogelijk / 403.
+Bedrijfsmanager,User membership andere org geven.,Scope-weigering: Systeem blokkeert de actie op basis van organisatie-isolatie; managers kunnen uitsluitend sturen binnen de eigen gekoppelde bedrijfsstructuur.
 Bedrijfsmanager,**Uitnodigen** e-mail+naam+rol+vestigingen.,Invite-mail stub; user verschijnt/pending.
-Bedrijfsmanager,Invite: ongeldig e-mail / bestaande user / lege naam.,Validatie.
+Bedrijfsmanager,Invite: ongeldig e-mail / bestaande user / lege naam.,Formuliervalidatie: Client- en servervalidatie blokkeren de actie en markeren de ontbrekende velden met duidelijke foutmeldingen.
 Bedrijfsmanager,"Organization hub: klik elke modulekaart (Bedrijf, Vestigingen, Regio’s, Salaristabellen, CSV indien enabled, Overnames).",Juiste pagina + EnterpriseOrgSubnav.
 Bedrijfsmanager,Organization op **mobiel** openen via URL.,DesktopPreferredNotice; pagina’s blijven beperkt bruikbaar.
 Bedrijfsmanager,Subnav: elk org-item aanklikken.,Active state; inhoud wisselt.
@@ -435,24 +435,24 @@ Bedrijfsmanager,API-key copy modal sluiten zonder copy.,Key niet later teruglees
 Bedrijfsmanager,Vestigingen: **EnterpriseManager uitnodigen** (org+email+naam).,Invite.
 Bedrijfsmanager,Per vestiging **BranchManager uitnodigen**.,Invite gekoppeld aan vestiging.
 Bedrijfsmanager,KVK-stub lookup + **Registreer vestiging**.,Nieuwe establishment in org.
-Bedrijfsmanager,KVK lookup leeg/fout / vestiging al in gebruik.,Melding; claim/takeover i.p.v. duplicaat.
+Bedrijfsmanager,KVK lookup leeg/fout / vestiging al in gebruik.,Validatie-blokkade: Systeem vereist formele verificatie en weigert automatische overnames om onbevoegde vestigingswissels te voorkomen.
 Bedrijfsmanager,Vestigingen: link takeovers.,`/employer/takeovers`.
 Bedrijfsmanager,Regio’s: **aanmaken** naam+org+vestiging-checkboxes.,Regio bestaat; RM-scope.
 Bedrijfsmanager,Regio **bewerken** / **verwijderen**.,Update/delete; vestigingen los.
 Bedrijfsmanager,Regio: **RegionalManager uitnodigen**.,Invite.
-Bedrijfsmanager,Regio zonder vestigingen opslaan / delete met gekoppelde RM.,Validatie of cascade-melding.
+Bedrijfsmanager,Regio zonder vestigingen opslaan / delete met gekoppelde RM.,Formuliervalidatie: Client- en servervalidatie blokkeren de actie en markeren de ontbrekende velden met duidelijke foutmeldingen.
 Bedrijfsmanager,"Salaristabellen: lijst → detail → **nieuw** (schalen 15–21+, actief, allowed branches).",Tabel kiesbaar op vacatures.
 Bedrijfsmanager,Salaristabel bewerken + link gefilterde vacatures + vacaturedetail.,Filter `salaryTableId`; detail opent.
 Bedrijfsmanager,Systeem-WML-tabel bewerken.,Niet editable.
-Bedrijfsmanager,Salaristabel: ongeldige tarieven / geen naam.,Validatie.
+Bedrijfsmanager,Salaristabel: ongeldige tarieven / geen naam.,Formuliervalidatie: Client- en servervalidatie blokkeren de actie en markeren de ontbrekende velden met duidelijke foutmeldingen.
 Bedrijfsmanager,"CSV-import (flag aan): org + default branch, dropzone geldige CSV, **Import N rijen**.",Draft-vacatures; celebrate → Vacatures.
-Bedrijfsmanager,CSV: ontbrekende verplichte uren/legal flags.,Failed rows; inline edit + **Opnieuw aanbieden**.
+Bedrijfsmanager,CSV: ontbrekende verplichte uren/legal flags.,Formuliervalidatie: Client- en servervalidatie blokkeren de actie en markeren de ontbrekende velden met duidelijke foutmeldingen.
 Bedrijfsmanager,CSV: dagdelen leeg.,Importeert als ‘Tijden in overleg’.
-Bedrijfsmanager,CSV: verkeerd bestandstype / leeg / te groot.,Fout; geen half-import-crash.
+Bedrijfsmanager,CSV: verkeerd bestandstype / leeg / te groot.,"Graceful empty-state: Het dashboard vangt de fout op, toont een nette melding binnen de component en voorkomt een ongecontroleerde pagina-crash of HTTP 500."
 Bedrijfsmanager,CSV-nav item als flag uit.,Niet in hub/nav.
 Bedrijfsmanager,Takeovers: **Goedkeuren** / **Afwijzen**.,Merge of reject; org-boom klopt.
 Bedrijfsmanager,Free-publish-until / always-free categorie.,Publiceren zonder token of met 0-kost volgens settings.
-Bedrijfsmanager,"Open `/admin/*`, `/intermediary/team`, `/salesmanager/invoices`.",403.
+Bedrijfsmanager,"Open `/admin/*`, `/intermediary/team`, `/salesmanager/invoices`.",Toegangsblokkade (403 / Access Denied): Systeem weigert direct de toegang of stuurt de gebruiker terug naar de homepagina; geen ongeautoriseerde inzage in bedrijfsbrede PII of financiële data.
 Bedrijfsmanager,PartnerSales payout stub `/employer/partner-sales` paden indien in UI.,Alleen EM/Intermediary authorize; payout IBAN gemaskeerd.
 Bedrijfsmanager,Consent-reaccept blocking.,Verplicht vóór org-beheer.
 Bedrijfsmanager,HasCandidateApplications / HasSalesReferral nav-varianten.,Read-only sollicitaties; Saldo & Tracking-label.
@@ -646,7 +646,7 @@ Admin,Integratie-secret in repo/appsettings committen (review).,"Omgevingsbeveil
 Kandidaat,"Open `/admin/settings`, `/admin/users`, `/admin/logging`, `/admin/token-finance`, `/employer/users`, `/employer/organization`, `/branch/applicants`, `/salesmanager/toolkit`, `/ambassadeur/toolkit`.",Geen toegang.
 Filiaalmanager,"Open `/admin/companies`, `/employer/users`, `/employer/regions`, `/intermediary/team`, `/salesmanager/invoices`, `/ambassadeur/finance`, `/regional/tokens` allocate POST.",Toegangsblokkade (403 / Access Denied): Systeem weigert direct de toegang of stuurt de gebruiker door naar de eigen rol-omgeving; geen inzage in vreemde vestigingsdata.
 Regiomanager,"Open `/branch/vacancies/new`, `/employer/users`, `/admin/wages`, `/employer/csv-import`, applicants **Accept**-API, tokens **kopen**-API.",Toegangsblokkade (403 / Access Denied): Systeem weigert direct de toegang of stuurt de gebruiker terug naar de algemene homepagina; geen inzage in bedrijfsbrede of ongeautoriseerde vestigingsdata.
-Bedrijfsmanager,"Open `/admin/sales`, `/admin/api-keys`, `/intermediary` (clients dashboard), `/salesmanager/referrals`.",403.
+Bedrijfsmanager,"Open `/admin/sales`, `/admin/api-keys`, `/intermediary` (clients dashboard), `/salesmanager/referrals`.",Toegangsblokkade (403 / Access Denied): Systeem weigert direct de toegang of stuurt de gebruiker terug naar de homepagina; geen ongeautoriseerde inzage in bedrijfsbrede PII of financiële data.
 Intermediair,"Open `/employer/organization`, `/admin/finance`, `/salesmanager/onboarding`, approve-publish.",Toegangsblokkade (403 / Access Denied): Systeem weigert direct de toegang en stuurt de gebruiker naar de homepagina of een beveiligde foutpagina.
 Salesmanager,"Open `/employer/tokens`, `/branch/applicants`, `/admin/sales-managers`, `/candidate/liked` (authorize candidate liked mag AllowAnonymous gate — niet de data van anderen).",Toegangsblokkade (403 / Access Denied): Systeem weigert de toegang onmiddellijk en stuurt de gebruiker terug naar de algemene homepagina of een beveiligde foutpagina.
 Ambassadeur,"Open `/admin/ambassadeurs`, `/salesmanager/referrals`, `/employer/vacancies`.",403.
@@ -654,7 +654,7 @@ Admin,Als user A data van user B opvragen via gewijzigde IDs (vacancy/applicatio
 Gast,"IDOR: `/api/applications/{id}/cv`, `/api/privacy/export`, `/api/tokens/grant`.",401.
 Filiaalmanager,IDOR: applicants/CV van andere companyId.,Toegangsblokkade (403 / Access Denied): Systeem weigert direct de toegang of stuurt de gebruiker door naar de eigen rol-omgeving; geen inzage in vreemde vestigingsdata.
 Intermediair,IDOR: vacancy muteren van niet-gekoppelde opdrachtgever (`IntermediaryCompanyId`).,Claim-pad / Weigering: Systeem weigert directe overname en start een gecontroleerde claim- of contactflow op; geen ongeautoriseerde PII-inzage.
-Bedrijfsmanager,IDOR: `/employer/users` van andere org.,403/lege lijst.
+Bedrijfsmanager,IDOR: `/employer/users` van andere org.,Scope-weigering: Systeem blokkeert de actie op basis van organisatie-isolatie; managers kunnen uitsluitend sturen binnen de eigen gekoppelde bedrijfsstructuur.
 Salesmanager,IDOR: factuur-PDF van andere SM.,Toegangsblokkade (403 / Access Denied): Systeem weigert de toegang onmiddellijk en stuurt de gebruiker terug naar de algemene homepagina of een beveiligde foutpagina.
 Ambassadeur,IDOR: finance ledger andere AM.,403.
 Kandidaat,IDOR: `/candidate/profile` via andere user-id (indien query).,Alleen eigen profiel; geen parameter-override.
