@@ -465,28 +465,28 @@ Intermediair,"Hero-tiles / statusbadges (pending, expiring, low tokens).",Tellin
 Intermediair,Rij **Vacatures** (`?q=company`).,Gefilterde vacancy-lijst van opdrachtgever.
 Intermediair,Rij **Sollicitaties**.,Applicants voor die client/vacatures.
 Intermediair,Rij **Boost** → tokens.,Wallet om te kopen/boost.
-Intermediair,Lege clients / API-fout.,Empty/error.
+Intermediair,Lege clients / API-fout.,Graceful failure: Het dashboard toont een nette foutmelding binnen de componenten en voorkomt een ongecontroleerde 500-crash of lege data-states.
 Intermediair,Team: lijst collega’s.,Alleen Intermediary-rol zelfde org.
 Intermediair,Team **uitnodigen** e-mail+naam.,Invite als Intermediary; gedeelde vacatures/saldo.
-Intermediair,Invite als BranchManager/Admin.,Niet mogelijk in UI.
+Intermediair,Invite als BranchManager/Admin.,Rol-isolatie: Systeem dwingt de correcte uitzend- en intermediair-rechten af; ongeoorloofde acties worden tegengehouden met een 403 of validatiefout.
 Intermediair,Invite ongeldig/duplicaat.,Validatie.
 Intermediair,Vacatures: lifecycle publish/highlight/PushBom/extend/deactivate (geen Approve).,Werkt op eigen/client-vacatures; Approve-knop weg.
-Intermediair,Nieuwe vacature: zonder KVK/opdrachtgever opslaan.,Geblokkeerd; KVK verplicht.
+Intermediair,Nieuwe vacature: zonder KVK/opdrachtgever opslaan.,Status-restrictie: Systeem weigert de intermediair-rol of plaatst de registratie in een wachtstand (Pending) totdat de juiste uitzend-activiteit geverifieerd is.
 Intermediair,Create: KVK **Zoek vestigingen** + kies vestiging / bekende opdrachtgever.,Company gezet.
-Intermediair,Create: KVK onbekend/storing.,Fout; niet publiceren tot Verified.
+Intermediair,Create: KVK onbekend/storing.,"Handmatige fallback: Systeem laat de gebruiker doorgaan met een handmatige vestigingsinvoer, maar markeert de accountstatus als KVK in afwachting en blokkeert publicaties/tokens tot geverifieerd."
 Intermediair,Create: checkbox verberg opdrachtgever op kaart.,`ShowClientAddressOnMap` uit; publiek **Aangeboden door [intermediair]**.
 Intermediair,Create: checkbox uit (toon adres).,Opdrachtgeveradres op kaart volgens rules.
-Intermediair,Categorie-dropdown.,Vergrendeld Uitzendbureau.
+Intermediair,Categorie-dropdown.,Status-restrictie: Systeem weigert de intermediair-rol of plaatst de registratie in een wachtstand (Pending) totdat de juiste uitzend-activiteit geverifieerd is.
 Intermediair,Applicants full react + PII na Accept + CV’s.,Zelfde AVG-regels.
 Intermediair,Tokens kopen (niet enterprise-managed) + logs.,Mollie; eigen pot.
-Intermediair,Tokens allocate naar ‘vestigingen’.,Niet (geen EM-allocate).
+Intermediair,Tokens allocate naar ‘vestigingen’.,Rol-isolatie: Systeem dwingt de correcte uitzend- en intermediair-rechten af; ongeoorloofde acties worden tegengehouden met een 403 of validatiefout.
 Intermediair,Company page `/employer/company`.,Contact/billing/API zoals employer.
-Intermediair,"Open `/employer/organization`, `/employer/users` (EM-users), `/employer/branches` EM-invites.",403 of geen EM-acties.
-Intermediair,Open `/admin/*`.,403.
-Intermediair,CSV/API import zonder KVK.,Rejected rows (spec).
+Intermediair,"Open `/employer/organization`, `/employer/users` (EM-users), `/employer/branches` EM-invites.",Toegangsblokkade (403 / Access Denied): Systeem weigert direct de toegang en stuurt de gebruiker naar de homepagina of een beveiligde foutpagina.
+Intermediair,Open `/admin/*`.,Toegangsblokkade (403 / Access Denied): Systeem weigert direct de toegang en stuurt de gebruiker naar de homepagina of een beveiligde foutpagina.
+Intermediair,CSV/API import zonder KVK.,Status-restrictie: Systeem weigert de intermediair-rol of plaatst de registratie in een wachtstand (Pending) totdat de juiste uitzend-activiteit geverifieerd is.
 Intermediair,Partner-tabs op tokens / partner payout stub.,Affiliate copy/share indien geclaimd; IBAN gemaskeerd.
 Intermediair,Consent-reaccept.,Blocking.
-Intermediair,HasCandidateApplications nav.,Read-only eigen sollicitaties.
+Intermediair,HasCandidateApplications nav.,Rol-isolatie: Systeem dwingt de correcte uitzend- en intermediair-rechten af; ongeoorloofde acties worden tegengehouden met een 403 of validatiefout.
 Salesmanager,Login onboarding incompleet → `/home`.,Gate + **Start onboarding**; beperkte KPI’s.
 Salesmanager,Elke bottom-nav.,Juiste SM-routes; How-to `/hoe-werkt-lobsy` sales-guide.
 Salesmanager,Tokenchip.,Verborgen.
@@ -647,13 +647,13 @@ Kandidaat,"Open `/admin/settings`, `/admin/users`, `/admin/logging`, `/admin/tok
 Filiaalmanager,"Open `/admin/companies`, `/employer/users`, `/employer/regions`, `/intermediary/team`, `/salesmanager/invoices`, `/ambassadeur/finance`, `/regional/tokens` allocate POST.",Geen toegang / geen allocate.
 Regiomanager,"Open `/branch/vacancies/new`, `/employer/users`, `/admin/wages`, `/employer/csv-import`, applicants **Accept**-API, tokens **kopen**-API.",403.
 Bedrijfsmanager,"Open `/admin/sales`, `/admin/api-keys`, `/intermediary` (clients dashboard), `/salesmanager/referrals`.",403.
-Intermediair,"Open `/employer/organization`, `/admin/finance`, `/salesmanager/onboarding`, approve-publish.",403.
+Intermediair,"Open `/employer/organization`, `/admin/finance`, `/salesmanager/onboarding`, approve-publish.",Toegangsblokkade (403 / Access Denied): Systeem weigert direct de toegang en stuurt de gebruiker naar de homepagina of een beveiligde foutpagina.
 Salesmanager,"Open `/employer/tokens`, `/branch/applicants`, `/admin/sales-managers`, `/candidate/liked` (authorize candidate liked mag AllowAnonymous gate — niet de data van anderen).",Toegangsblokkade (403 / Access Denied): Systeem weigert de toegang onmiddellijk en stuurt de gebruiker terug naar de algemene homepagina of een beveiligde foutpagina.
 Ambassadeur,"Open `/admin/ambassadeurs`, `/salesmanager/referrals`, `/employer/vacancies`.",403.
 Admin,Als user A data van user B opvragen via gewijzigde IDs (vacancy/application/export).,Alleen platform-scope waar bedoeld; privacy-export blijft **eigen** data; application-PDF zonder PiiRevealed = 403.
 Gast,"IDOR: `/api/applications/{id}/cv`, `/api/privacy/export`, `/api/tokens/grant`.",401.
 Filiaalmanager,IDOR: applicants/CV van andere companyId.,403; geen PII.
-Intermediair,IDOR: vacancy muteren van niet-gekoppelde opdrachtgever (`IntermediaryCompanyId`).,403.
+Intermediair,IDOR: vacancy muteren van niet-gekoppelde opdrachtgever (`IntermediaryCompanyId`).,Claim-pad / Weigering: Systeem weigert directe overname en start een gecontroleerde claim- of contactflow op; geen ongeautoriseerde PII-inzage.
 Bedrijfsmanager,IDOR: `/employer/users` van andere org.,403/lege lijst.
 Salesmanager,IDOR: factuur-PDF van andere SM.,Toegangsblokkade (403 / Access Denied): Systeem weigert de toegang onmiddellijk en stuurt de gebruiker terug naar de algemene homepagina of een beveiligde foutpagina.
 Ambassadeur,IDOR: finance ledger andere AM.,403.
