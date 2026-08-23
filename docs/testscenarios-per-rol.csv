@@ -2,13 +2,13 @@ Rol,Testscenario,Verwacht resultaat
 Gast,Open `/`.,"Banenkaart (lijst + kaart) laadt zonder login. Geen bottom-nav. Header toont logo, taalkeuze en **Inloggen**."
 Gast,Klik logo **Lobsy**.,Blijft op of navigeert naar `/`.
 Gast,Klik footer **Privacy**.,Pagina `/privacy` met privacyverklaring; link naar **Mijn gegevens** en mailto privacy.
-Gast,Klik op `/privacy` de link **Mijn gegevens** (`/privacy/data`).,Redirect naar login (Authorize). Na login zou export beschikbaar zijn.
+Gast,Klik op `/privacy` de link **Mijn gegevens** (`/privacy/data`).,Autorisatie-redirect: Systeem triggert een redirect naar `/login` (met returnUrl). Externe data-export is pas zichtbaar na succesvolle authenticatie.
 Gast,Klik footer **Algemene voorwaarden**.,`/algemene-voorwaarden` toont voorwaarden.
 Gast,Klik footer **Gebruiksvoorwaarden**.,`/gebruiksvoorwaarden` toont gebruiksvoorwaarden.
 Gast,Klik footer **Wie zijn wij**.,`/wie-zijn-wij` toont About-CMS-content (of leeg/placeholder als niet gevuld).
 Gast,Klik footer **Westland**.,"Teaser `/westland` in teaser-layout (livedatum 18 nov, tarieven, CTA’s)."
 Gast,Open `/lancering`.,Zelfde teaser als `/westland`.
-Gast,Cookie-banner: **Alleen noodzakelijk**.,Banner verdwijnt. Geen analytics-POST. Keuze onthouden (localStorage + cookie).
+Gast,Cookie-banner: **Alleen noodzakelijk**.,Strikt functioneel: Banner sluit direct. Geen analytische trackers of cookies worden geplaatst; geen analytics-POST naar de server. Keuze wordt opgeslagen in localStorage en cookie.
 Gast,Cookie-banner: **Accepteer cookies**.,Banner verdwijnt. Analytics mag fire’n (`X-Jobsy-Cookie-Consent`).
 Gast,Cookie-banner: klik Privacy-link in de banner.,`/privacy` opent; banner mag zichtbaar blijven tot een keuze.
 Gast,Herlaad na cookie-keuze.,Banner blijft weg.
@@ -17,37 +17,37 @@ Gast,Taalkeuze: **English**.,UI-labels schakelen naar Engels; kaart blijft werke
 Gast,"Taalkeuze: **Polski**, **Română**.",UI schakelt; geen crash.
 Gast,Taalkeuze: **العربية**.,"UI RTL; layout blijft bruikbaar (filters, kaart, login)."
 Gast,Klik **Inloggen** in de header.,`/login` als modal; achtergrond banenkaart.
-Gast,Login-modal: klik backdrop of **×**.,Terug naar banenkaart `/` (niet naar een protected returnUrl).
+Gast,Login-modal: klik backdrop of **×**.,Schermbehoud: Modal sluit zonder navigatie; gebruiker blijft op de huidige pagina (`/`) en wordt niet naar een beschermde returnUrl gestuurd.
 Gast,Login-modal: **Terug naar de kaart**.,Zelfde: `/`.
 Gast,Login: **Registreer via KVK**.,`/register` wizard stap KVK.
-Gast,Login: leeg e-mail/wachtwoord submit.,HTML5 required blokkeert of serverfout; geen sessie.
-Gast,Login: ongeldig wachtwoord (`niet@bestaat.nl` / `fout`).,Foutmelding (geen stacktrace/PII); blijft op login.
-Gast,Login: Microsoft-knop terwijl Entra niet geconfigureerd is.,Knop disabled + tooltip ‘niet geconfigureerd’.
-Gast,Login: Google-knop terwijl Google niet geconfigureerd is.,Knop disabled + tooltip.
-Gast,"Login: Microsoft/Google wél geconfigureerd, daarna IdP-annulering.",Terug op login met foutcode; geen half-sessie.
-Gast,Login: Google-account met `email_verified=false`.,Weigering; geen accountkoppeling.
-Gast,Open `/login?error=session-expired`.,Melding dat de sessie is verlopen; kan opnieuw inloggen.
-Gast,Open `/login?returnUrl=https://evil.example`.,returnUrl wordt genegeerd/gesaneerd; geen open redirect.
-Gast,Open `/login?returnUrl=/admin/users`.,Na geslaagde kandidaat-login géén toegang tot admin (Access Denied of home); local returnUrl alleen als toegestaan.
-Gast,Open `/access-denied`.,Tekst over geen toegang; links **Naar home** en **Inloggen**.
-Gast,Access-denied: **Naar home** zonder login.,Challenge naar login of `/` volgens FallbackPolicy.
-Gast,Open `/Error`.,"Generieke foutpagina, eventueel request-referentie, **geen** stacktrace; link **Naar de banenkaart**."
+Gast,Login: leeg e-mail/wachtwoord submit.,Client-side validatie: HTML5 required attributen of serverweigering blokkeren de submit. Er wordt geen sessie aangemaakt.
+Gast,Login: ongeldig wachtwoord (`niet@bestaat.nl` / `fout`).,Veilige foutmelding: Systeem retourneert een generieke foutmelding (zonder PII of stacktrace om brute-force te ontmoedigen); gebruiker blijft op het login-scherm.
+Gast,Login: Microsoft-knop terwijl Entra niet geconfigureerd is.,UI-blokkade: De OAuth-knop wordt visueel uitgeschakeld (disabled) en toont een informatieve tooltip dat de provider niet actief is.
+Gast,Login: Google-knop terwijl Google niet geconfigureerd is.,UI-blokkade: De OAuth-knop wordt visueel uitgeschakeld (disabled) en toont een informatieve tooltip dat de provider niet actief is.
+Gast,"Login: Microsoft/Google wél geconfigureerd, daarna IdP-annulering.",Graceful fallback: Gebruiker keert terug naar het login-scherm met een specifieke foutcode; er wordt geen incomplete of half-ingestelde sessie aangemaakt.
+Gast,Login: Google-account met `email_verified=false`.,Directe weigering: Authenticatie wordt afgewezen; het account wordt niet gekoppeld omdat het e-mailadres niet geverifieerd is bij de provider.
+Gast,Open `/login?error=session-expired`.,"Informatieve melding: Het login-scherm toont een duidelijke melding dat de sessie is verlopen, zodat de gebruiker direct opnieuw kan inloggen."
+Gast,Open `/login?returnUrl=https://evil.example`.,Sanitatie / Beveiliging: Externe of malafide returnUrl's worden gedetecteerd en genegeerd; geen open redirect kwetsbaarheid.
+Gast,Open `/login?returnUrl=/admin/users`.,"Rol-isolatie: Na succesvolle login krijgt de gebruiker géén toegang tot admin-routes (Access Denied of terug naar home), omdat de rolrechten ontbreken."
+Gast,Open `/access-denied`.,Uitlegpagina: Toont een heldere melding over ontbrekende rechten met veilige navigatielinks naar de homepagina en het login-scherm.
+Gast,Access-denied: **Naar home** zonder login.,Fallback-beleid: Systeem dwingt een login-challenge af of stuurt de gebruiker door naar de publieke hoofdpagina volgens de ingestelde FallbackPolicy.
+Gast,Open `/Error`.,"Afgeschermde foutpagina: Toont een generieke foutmelding met eventueel een request-referentie, maar verbergt alle gevoelige technische stacktraces."
 Gast,Foutpagina: klik **Naar de banenkaart**.,`/`.
 Gast,Banenkaart: vul adres + kies suggestie.,Origin gezet; resultaten op reistijd; suggesties sluiten.
-Gast,Banenkaart: adres wissen (**Clear**).,Origin weg; empty-state zonder reistijd of fallback-weergave.
+Gast,Banenkaart: adres wissen (**Clear**).,State-reset: De geografische origin verdwijnt; de kaart valt terug naar een empty-state zonder reistijdberekeningen of toont een standaard landelijke fallback.
 Gast,Banenkaart: **Gebruik mijn locatie** + toestemming.,GPS-origin; lijst herberekend.
-Gast,Banenkaart: locatie **weigeren**.,Foutmelding locatie; geen crash; handmatig adres blijft mogelijk.
-Gast,Banenkaart: locatie unavailable (timeout).,Foutmelding; filters blijven staan.
+Gast,Banenkaart: locatie **weigeren**.,"Graceful degradatie: De applicatie vangt de browserfout netjes op, toont een melding dat de locatie niet gebruikt kan worden, maar laat de handmatige adresbalk functioneel."
+Gast,Banenkaart: locatie unavailable (timeout).,"Graceful degradatie: De applicatie vangt de browserfout netjes op, toont een melding dat de locatie niet gebruikt kan worden, maar laat de handmatige adresbalk functioneel."
 Gast,Banenkaart: open **Filters**.,"Filter sheet/bar met keyword, type, categorie, leeftijd, loon, reistijd, uren, vervoer, radius."
-Gast,Filters: **Annuleren** zonder toepassen.,Sheet dicht; oude filters blijven.
+Gast,Filters: **Annuleren** zonder toepassen.,State-behoud: Het filterscherm sluit onmiddellijk en de eerder ingestelde filters blijven ongewijzigd actief.
 Gast,"Filters: **Toepassen/Zoeken** met combinatie (Fiets, 30 min, categorie Regulier).",Lijst + kaart gefilterd; chip-count klopt.
 Gast,Filters: **Filters wissen** / chip wissen.,Die filter weg; resultaten herladen.
 Gast,Filters: alle chips **wissen**.,Terug naar default; badge 0.
 Gast,Filters: leeftijd selecteren.,Lonencolom mag zichtbaar worden (wages hidden zonder leeftijd).
-Gast,Filters: zonder leeftijd lonen bekijken op kaart/lijst.,Geen loonbedragen (privacy).
+Gast,Filters: zonder leeftijd lonen bekijken op kaart/lijst.,Privacy-bescherming: Loonbedragen blijven verborgen of uitgeschakeld zolang de geboortedatum/leeftijd van de gebruiker niet bekend is.
 Gast,Filters: categorie **65+** / geschikt 65+.,Alleen passende vacatures; geen interne categoryFields-leak in UI.
 Gast,Filters: categorie **Uitzendbureau**.,Uitzend-vacatures; label ‘Aangeboden door …’ waar van toepassing.
-Gast,Filters: min-loon > max-loon.,Validatie of lege set; geen 500.
+Gast,Filters: min-loon > max-loon.,Validatie-vangnet: Systeem vangt de logische tegenstrijdigheid op via client- of servervalidatie en retourneert een lege dataset of foutmelding (geen HTTP 500).
 Gast,Filters: radius 1 km vs 50 km.,Set groeit/krimpt logisch rond origin.
 Gast,Vervoer wisselen: Fiets / Auto / OV / Lopen.,Reistijden en volgorde veranderen; loading-state.
 Gast,Sorteren: afstand / type / recent / A–Z / Z–A.,Lijst herschikt; kaart selectie blijft bruikbaar.
@@ -70,29 +70,29 @@ Gast,ShareModal: elk kanaal aanklikken.,Deeplink/share-URL opent of kopieert; mo
 Gast,ShareModal: **Kopieer link** (clipboard geblokkeerd).,Foutmelding of fallback; geen crash.
 Gast,ShareModal sluiten.,Terug op detail.
 Gast,Vacaturedetail: bedrijfsnaam-link.,Publieke pagina `/{kvk}/{vestiging}` indien aanwezig.
-Gast,Vacaturedetail: vervoer wijzigen.,Reistijd herberekend of melding ‘locatie nodig’.
-Gast,Vacaturedetail: **Route** zonder locatietoestemming.,Fout of prompt; geen crash.
+Gast,Vacaturedetail: vervoer wijzigen.,Prompt / Fallback: Systeem vraagt alsnog om een locatie of toont een melding dat een startlocatie vereist is; geen applicatiecrash.
+Gast,Vacaturedetail: **Route** zonder locatietoestemming.,Prompt / Fallback: Systeem vraagt alsnog om een locatie of toont een melding dat een startlocatie vereist is; geen applicatiecrash.
 Gast,Vacaturedetail: **Route** mét locatie.,Externe maps-directions.
-Gast,Vacaturedetail: **Street View**.,Externe Street View of foutmelding.
-Gast,Vacaturedetail: **Video kijken** indien URL.,Externe video; ontbreekt: knop niet getoond.
+Gast,Vacaturedetail: **Street View**.,Optionele UI-verberging: Externe componenten worden niet geladen; ontbrekende media-URL's resulteren in het verbergen van de knop in plaats van een lege container of fout.
+Gast,Vacaturedetail: **Video kijken** indien URL.,Optionele UI-verberging: Externe componenten worden niet geladen; ontbrekende media-URL's resulteren in het verbergen van de knop in plaats van een lege container of fout.
 Gast,Vacaturedetail: geboortedatum opslaan voor loon.,Login-als-kandidaat vereist.
 Gast,Vacaturedetail: **Solliciteren**.,CTA **Inloggen om te solliciteren** → `/login?returnUrl=…`.
 Gast,Vacaturedetail: mock-interview CTA.,Niet beschikbaar of login-gate (alleen kandidaat).
-Gast,Vacaturedetail: onbekende GUID.,Niet-gevonden/fout; geen PII; geen 500-HTML met exception.
+Gast,Vacaturedetail: onbekende GUID.,Nette 404: Systeem retourneert een gecontroleerde Not Found-pagina of empty-state zonder gevoelige data of ongeformatteerde exceptions.
 Gast,Open `/{8-cijferig kvk}`.,"Publiek bedrijfsprofiel: vestigingen + vacatures, List/Map, terug naar kaart."
 Gast,Open `/{kvk}/{vestigingsnummer}`.,Publieke vestigingspagina / flyer-pad.
-Gast,Open onbekend kvk-pad.,"Not-found empty-state of 404, geen 500."
+Gast,Open onbekend kvk-pad.,Nette 404: Systeem retourneert een gecontroleerde Not Found-pagina of empty-state zonder gevoelige data of ongeformatteerde exceptions.
 Gast,Bedrijfspagina: List/Map toggle + jobcard.,Werkt analoog aan kaart; detail opent.
 Gast,Bedrijfspagina: klik andere vestiging.,Navigeert naar die vestigings-URL.
 Gast,Open `/vestiging/{companyId}` (QR).,Redirect naar publieke vestigings-URL of `/?company=`.
-Gast,Open `/vestiging/{onbekende-guid}`.,Fout/redirect zonder 500.
+Gast,Open `/vestiging/{onbekende-guid}`.,Nette 404: Systeem retourneert een gecontroleerde Not Found-pagina of empty-state zonder gevoelige data of ongeformatteerde exceptions.
 Gast,Open `/partner`.,"Partnerlandingspagina: tarieven, **Registreren**, flyer-download, WhatsApp, mail."
 Gast,Partner: **Registreren**.,`/register` zonder of met lege ref.
 Gast,Partner: **Download flyer**.,PDF-download; bij fout een melding.
 Gast,Partner: WhatsApp- en mail-CTA.,WhatsApp/mail-deeplink met pitch.
 Gast,Open `/partner/SM-XXXXXX` (geldige salescode).,Zelfde lander met ingebedde trackingcode; register `?ref=SM-…`.
-Gast,Open `/partner/AM-XXXXXX` of ongeldige code.,Tracking genegeerd; generieke partnerpagina (AM hoort bij `/werven`).
-Gast,Open `/werven/{ongeldige-code}`.,Flash + redirect `/login` **zonder** ambassadeur-cookie.
+Gast,Open `/partner/AM-XXXXXX` of ongeldige code.,Code-negering: Ongeldige marketing- of ambassadeurscodes worden genegeerd; de gebruiker landt op de standaard pagina of wordt doorgestuurd zonder foute cookies.
+Gast,Open `/werven/{ongeldige-code}`.,Code-negering: Ongeldige marketing- of ambassadeurscodes worden genegeerd; de gebruiker landt op de standaard pagina of wordt doorgestuurd zonder foute cookies.
 Gast,Open `/werven/{geldige-AM-code}`.,Referral-cookie gezet; redirect `/login?ref=…`.
 Gast,Open `/ambassadeur/ref/{code}`.,Zelfde gedrag als `/werven/{code}`.
 Gast,Teaser `/westland`: **Registreren**.,`/register`.
@@ -102,39 +102,39 @@ Gast,Teaser: **Meer over Lobsy**.,`/wie-zijn-wij`.
 Gast,Teaser: WhatsApp Dennis.,WhatsApp-deeplink.
 Gast,Teaser: klik UTM/QR-variant (`?utm_source=…`).,Pagina laadt; teaser-engagement event (geen IP in logs).
 Gast,Feedback-knop: openen.,Screenshot-capture (of skip) + dialog type Bug/Error/Feature.
-Gast,Feedback: leeg versturen.,Validatie of disabled submit.
+Gast,Feedback: leeg versturen.,"Validatie & Tolerantie: Lege formulieren worden geblokkeerd; een falende screenshot-capture geeft een subtiele melding, maar belemmert het versturen van de tekstuele feedback niet."
 Gast,Feedback: type Bug + tekst + **Versturen**.,Bedankt-melding; geen e-mail in het record; URL zonder query.
 Gast,Feedback: Annuleren/sluiten.,Dialog dicht; geen record.
-Gast,Feedback: screenshot-capture faalt.,Tekst kan nog steeds verstuurd; foutmelding capture.
+Gast,Feedback: screenshot-capture faalt.,"Validatie & Tolerantie: Lege formulieren worden geblokkeerd; een falende screenshot-capture geeft een subtiele melding, maar belemmert het versturen van de tekstuele feedback niet."
 Gast,Lobsy-assistent FAB openen.,Chatpaneel met begroeting.
 Gast,Assistent: vraag versturen.,Antwoord of typing; follow-up links navigeren.
 Gast,Assistent: disclaimer-link.,`/gebruiksvoorwaarden`.
-Gast,Assistent: API-fout.,Fout in paneel; FAB blijft bruikbaar.
+Gast,Assistent: API-fout.,"Isolatie: Het chatpaneel toont een nette foutmelding binnen de interface, maar de Floating Action Button (FAB) blijft bruikbaar voor verdere interactie."
 Gast,Assistent sluiten.,FAB terug.
-Gast,Direct URL `/home`.,Login-challenge (FallbackPolicy).
-Gast,"Direct `/candidate/profile`, `/employer/vacancies`, `/admin/settings`, `/salesmanager`, `/ambassadeur`.",Login-challenge; geen data-leak in HTML.
-Gast,Direct `/candidate/applications`.,Login-challenge.
-Gast,Direct `/candidate/shared`.,Login-challenge.
-Gast,Open `/candidate/liked` als gast.,Gate: doorgaan via Google / Apple(→login) / e-mail-login met returnUrl; géén liked-data.
+Gast,Direct URL `/home`.,Directe Login-challenge: Systeem onderschept de poging en dwingt een login af; er lekt geen enkele data of HTML-inhoud van het dashboard naar buiten.
+Gast,"Direct `/candidate/profile`, `/employer/vacancies`, `/admin/settings`, `/salesmanager`, `/ambassadeur`.",Directe Login-challenge: Systeem onderschept de poging en dwingt een login af; er lekt geen enkele data of HTML-inhoud van het dashboard naar buiten.
+Gast,Direct `/candidate/applications`.,Directe Login-challenge: Systeem onderschept de poging en dwingt een login af; er lekt geen enkele data of HTML-inhoud van het dashboard naar buiten.
+Gast,Direct `/candidate/shared`.,Directe Login-challenge: Systeem onderschept de poging en dwingt een login af; er lekt geen enkele data of HTML-inhoud van het dashboard naar buiten.
+Gast,Open `/candidate/liked` als gast.,Login-gate: De gebruiker wordt opgevangen door een inlog-modal of gate; er wordt absoluut geen favorieten-data getoond.
 Gast,Liked-gate: kies e-mail/login.,`/login` met returnUrl `/candidate/liked`.
 Gast,Open `/banen`.,Redirect naar `/`.
 Gast,Open `/register` stap 1: lege KVK zoeken.,Validatie required.
-Gast,Register: ongeldig KVK-nummer.,Fout of lege vestigingen; geen crash.
+Gast,Register: ongeldig KVK-nummer.,"Blokkade & Alternatief: Systeem vangt KVK-fouten af, weigert dubbele claims en biedt bij een KVK-storing een handmatige invoeroptie met de status KVK in afwachting."
 Gast,Register: stub KVK `12345678` (werkgever) **Zoek vestigingen**.,Lijst vestigingen; bezette tonen ‘in gebruik’ zonder eigenaar-PII.
-Gast,Register: vestiging die al in gebruik is.,Geen Toevoegen; **claim**-pad aangeboden.
+Gast,Register: vestiging die al in gebruik is.,"Blokkade & Alternatief: Systeem vangt KVK-fouten af, weigert dubbele claims en biedt bij een KVK-storing een handmatige invoeroptie met de status KVK in afwachting."
 Gast,Register: claim-pad starten.,Contact/claim-flow i.p.v. nieuwe org; takeover later bij eigenaar.
 Gast,Register: vrije vestiging kiezen.,Stap Scope.
 Gast,Register: scope **Organisatie** vs **Alleen deze vestiging**.,Volgende stap Contact; rol/scope server-side (geen Intermediair claimen met de hand).
 Gast,Register: stub KVK `55667788` (SBI 78).,Na verificatie Intermediair; niet tijdens KVK-storing.
-Gast,Register: KVK-storing (unavailable).,Handmatig vestiging + **Doorgaan (KVK in afwachting)**; geen Intermediair-rol; publiceren/tokens later geblokkeerd tot Verified.
+Gast,Register: KVK-storing (unavailable).,"Blokkade & Alternatief: Systeem vangt KVK-fouten af, weigert dubbele claims en biedt bij een KVK-storing een handmatige invoeroptie met de status KVK in afwachting."
 Gast,Register KVK-pending: **Terug**.,Terug naar KVK-stap.
-Gast,Register contact: wachtwoord te kort / mismatch.,Validatiefout; niet verzonden.
-Gast,Register contact: voorwaarden/privacy niet aangevinkt.,Submit disabled of fout.
+Gast,Register contact: wachtwoord te kort / mismatch.,Formulier-validatie: Knoppen worden uitgeschakeld of validatiefouten worden getoond; het account wordt niet aangemaakt zolang niet aan alle eisen is voldaan.
+Gast,Register contact: voorwaarden/privacy niet aangevinkt.,Formulier-validatie: Knoppen worden uitgeschakeld of validatiefouten worden getoond; het account wordt niet aangemaakt zolang niet aan alle eisen is voldaan.
 Gast,Register: sales/ambassadeur-code in veld (SM-/AM-).,Code meegestuurd; ongeldige code genegeerd of fout.
 Gast,Register: geldige submit.,Activatie/OTP-stap; e-mailcode.
-Gast,Register: verkeerde activatiecode.,Code geweigerd; na max pogingen geblokkeerd/rate-limit.
+Gast,Register: verkeerde activatiecode.,"Token-weigering: De code wordt geweigerd, na herhaalde pogingen volgt een tijdelijke rate-limit; bij een verlopen code moet een nieuwe worden aangevraagd."
 Gast,Register: **Code opnieuw versturen**.,Nieuwe code; oude ongeldig of beide binnen window.
-Gast,Register: verlopen code.,Fout verlopen; opnieuw aanvragen.
+Gast,Register: verlopen code.,"Token-weigering: De code wordt geweigerd, na herhaalde pogingen volgt een tijdelijke rate-limit; bij een verlopen code moet een nieuwe worden aangevraagd."
 Gast,Open `/register/activate` zonder token.,Fout + retry naar register.
 Gast,Activate met geldige token.,Succes + naar login; wachtwoord niet in UI buiten Development.
 Gast,Activate takeover-wachtend.,Melding wacht op eigenaar; naar login.
@@ -144,8 +144,8 @@ Gast,TokenWalletChip.,Niet zichtbaar.
 Gast,Uitloggen-knop.,Niet zichtbaar; wel Inloggen.
 Gast,Consent-reaccept dialog.,Niet getoond.
 Gast,PageHelp `?` op banenkaart indien aanwezig.,Help-panel Doel/Werking of verborgen als geen doc.
-Gast,Open `/swagger` op Web-host.,Niet de API-swagger; of 404. API-swagger buiten Development uit tenzij flag.
-Gast,Open `/tokens/checkout-stub` of payout-stubs.,Login of 403; geen anonieme betaling.
+Gast,Open `/swagger` op Web-host.,Beveiliging: De API-swagger is buiten de ontwikkelomgeving uitgeschakeld en retourneert een HTTP 404 of toegang geweigerd.
+Gast,Open `/tokens/checkout-stub` of payout-stubs.,Toegangscontrole: Retourneert direct een login-challenge of HTTP 403; anonieme betalingen of payouts zijn fundamenteel uitgesloten.
 Alle ingelogde rollen,Na login vanaf `/` of `/banen`.,Redirect naar `/home` (role dashboard). Andere local returnUrls blijven behouden.
 Alle ingelogde rollen,Klik header **Uitloggen**.,POST logout + antiforgery; landt op `/`; sessie weg.
 Alle ingelogde rollen,Uitloggen en daarna Back-button naar `/home`.,Opnieuw login-challenge; geen cached dashboard-PII.
