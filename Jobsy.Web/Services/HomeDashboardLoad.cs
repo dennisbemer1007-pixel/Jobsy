@@ -5,10 +5,27 @@ namespace Jobsy.Web.Services;
 /// <summary>
 /// Loads role dashboards without flashing a raw HTTP error while auth/circuit settle.
 /// </summary>
-internal static class HomeDashboardLoad
+public static class HomeDashboardLoad
 {
     public const string FailedMessage =
         "Het dashboard kon niet worden geladen. Vernieuw de pagina als dit aanhoudt.";
+
+    /// <summary>
+    /// Starts dashboard loading once the circuit is interactive.
+    /// Prerender/enhanced-nav can run <c>OnInitializedAsync</c> with
+    /// <c>RendererInfo.IsInteractive == false</c>; callers must retry from
+    /// <c>OnAfterRenderAsync</c> so the skeleton is not permanent.
+    /// </summary>
+    public static bool TryBegin(ref bool started, bool isInteractive)
+    {
+        if (started || !isInteractive)
+        {
+            return false;
+        }
+
+        started = true;
+        return true;
+    }
 
     public static async Task<(T? Data, string? Error)> FetchAsync<T>(Func<Task<T>> load)
     {

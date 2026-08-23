@@ -90,7 +90,15 @@ public class PlatformSloganAndJobMapWordingTests
         var layout = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "Components", "Layout", "MainLayout.razor"));
         Assert.Contains("PlatformBrandingState", layout);
         Assert.Contains("HeaderTagline", layout);
+        Assert.Contains("HydrateHostBrandingAsync", layout);
+        Assert.DoesNotContain("await Branding.EnsureInitializedAsync();", layout);
+        Assert.DoesNotContain("await RegionHost.EnsureInitializedAsync();", layout);
         Assert.DoesNotContain("RegionHost.Current?.Slogan ?? Culture[\"Brand.Tagline\"]", layout);
+
+        var branding = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "Branding", "PlatformBrandingState.cs"));
+        Assert.Contains("IHttpClientFactory", branding);
+        Assert.Contains("JobsyPublic", branding);
+        Assert.DoesNotContain("JobsyApiClient _api", branding);
 
         var admin = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "Components", "Pages", "Admin", "CompanySettingsAdmin.razor"));
         Assert.Contains("maxlength=\"240\"", admin);

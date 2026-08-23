@@ -215,9 +215,17 @@
         }
     }
 
-    protected override async Task OnInitializedAsync()
+    private bool _loadStarted;
+
+    protected override Task OnInitializedAsync()
+        => TryLoadAsync();
+
+    protected override Task OnAfterRenderAsync(bool firstRender)
+        => firstRender ? TryLoadAsync() : Task.CompletedTask;
+
+    private async Task TryLoadAsync()
     {
-        if (!RendererInfo.IsInteractive)
+        if (!HomeDashboardLoad.TryBegin(ref _loadStarted, RendererInfo.IsInteractive))
         {
             return;
         }
@@ -231,6 +239,7 @@
         }
 
         _loading = false;
+        await InvokeAsync(StateHasChanged);
     }
 
     private void RecalcMeter()

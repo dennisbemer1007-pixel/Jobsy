@@ -75,8 +75,22 @@
         Branding.Changed += OnBrandingChanged;
         await Culture.InitializeAsync();
         await Culture.SyncDocumentAsync();
-        await RegionHost.EnsureInitializedAsync();
-        await Branding.EnsureInitializedAsync();
+        // Do not block first paint (or /home dashboards) on region/slogan HTTP.
+        _ = HydrateHostBrandingAsync();
+    }
+
+    private async Task HydrateHostBrandingAsync()
+    {
+        try
+        {
+            await Task.WhenAll(
+                RegionHost.EnsureInitializedAsync(),
+                Branding.EnsureInitializedAsync());
+        }
+        catch
+        {
+            // Header falls back to the default tagline.
+        }
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)

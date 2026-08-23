@@ -152,10 +152,17 @@
     private SalesManagerDashboard? _dashboard;
     private bool _loading = true;
     private string? _error;
+    private bool _loadStarted;
 
-    protected override async Task OnInitializedAsync()
+    protected override Task OnInitializedAsync()
+        => TryLoadAsync();
+
+    protected override Task OnAfterRenderAsync(bool firstRender)
+        => firstRender ? TryLoadAsync() : Task.CompletedTask;
+
+    private async Task TryLoadAsync()
     {
-        if (!RendererInfo.IsInteractive)
+        if (!HomeDashboardLoad.TryBegin(ref _loadStarted, RendererInfo.IsInteractive))
         {
             return;
         }
@@ -164,5 +171,6 @@
         _dashboard = data;
         _error = error;
         _loading = false;
+        await InvokeAsync(StateHasChanged);
     }
 }

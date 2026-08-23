@@ -63,6 +63,17 @@ builder.Services.AddHttpClient("JobsySeo", client =>
     client.DefaultRequestHeaders.TryAddWithoutValidation("User-Agent", "LobsySeo/1.0");
 });
 
+// Anonymous, no auth handler — header slogan must not share the circuit API client.
+builder.Services.AddHttpClient(Jobsy.Web.Branding.PlatformBrandingState.HttpClientName, client =>
+{
+    var apiBaseUrl = JobsyPublicUrl.NormalizeBaseUrl(
+        builder.Configuration["ApiBaseUrl"],
+        "http://localhost:5200/");
+    client.BaseAddress = new Uri(apiBaseUrl);
+    client.Timeout = TimeSpan.FromSeconds(3);
+    client.DefaultRequestHeaders.TryAddWithoutValidation("User-Agent", "LobsyWeb/1.0");
+});
+
 builder.Services.AddHttpClient<IGeocodingClient, NominatimGeocodingClient>(client =>
 {
     client.Timeout = TimeSpan.FromSeconds(8);

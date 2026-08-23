@@ -100,17 +100,26 @@
         _ => key
     };
 
+    private bool _loadStarted;
+
     protected override void OnInitialized()
         => Culture.Changed += OnCultureChanged;
 
-    protected override async Task OnInitializedAsync()
+    protected override Task OnInitializedAsync()
+        => TryLoadAsync();
+
+    protected override Task OnAfterRenderAsync(bool firstRender)
+        => firstRender ? TryLoadAsync() : Task.CompletedTask;
+
+    private async Task TryLoadAsync()
     {
-        if (!RendererInfo.IsInteractive)
+        if (!HomeDashboardLoad.TryBegin(ref _loadStarted, RendererInfo.IsInteractive))
         {
             return;
         }
 
         await LoadSummaryAsync();
+        await InvokeAsync(StateHasChanged);
     }
 
     private void OnCultureChanged()
