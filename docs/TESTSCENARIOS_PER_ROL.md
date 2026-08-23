@@ -670,20 +670,20 @@ Account: `ambassadeur@jobsy.local`. Bottom-nav: Home · Toolkit · Financieel ·
 | Ambassadeur | Elke bottom-nav + How-to. | Toolkit/finance/onboarding/home; geen tokenchip. |
 | Ambassadeur | `/ambassadeur` alias. | `/home`. |
 | Ambassadeur | Home na onboarding: KPI kandidaten, sollicitaties, tracking **Kopieer link**, commissiemeter, saldo’s, **Naar financieel**, recente lijsten. | Copy schrijft AM-link; clipboard-fail silent/melding. |
-| Ambassadeur | Home load-fout / lege lijsten. | Error/empty. |
+| Ambassadeur | Home load-fout / lege lijsten. | Graceful empty-state: Het dashboard vangt de fout op, toont een nette melding binnen de component en voorkomt een ongecontroleerde pagina-crash of HTTP 500. |
 | Ambassadeur | How-to: onboarding, toolkit, `/werven/{code}` of toolkit-fallback, home, finance + CTA’s. | Deep links kloppen. |
 | Ambassadeur | Onboarding save/sign/validatie/fouten (zelfde patroon als SM, code `AM-…`). | Na sign commissieband + dashboard/toolkit-links. |
 | Ambassadeur | Toolkit vóór onboarding. | Gate. |
 | Ambassadeur | Toolkit: **Download kandidaten-flyer**, **Kopieer trackinglink**, **Download ondernemers-flyer**, **Open registratie met code** (`/register?ref=AM-…`). | Downloads/copy/register-ref werken; fouten netjes. |
-| Ambassadeur | Ondernemersflyer QR. | QR wijst naar register/partner-stroom met AM-code / start-highlight volgens spec. |
+| Ambassadeur | Ondernemersflyer QR. | Cookie-zet & Doorverwijzing: Systeem slaat de referral-cookie correct op en stuurt de gebruiker door naar de registratie- of login-flow met behoud van de referentietracker (`?ref=...`). |
 | Ambassadeur | Finance: ledger + invoices read-only + **Bedrag laten uitkeren**. | Modal; `?paid=` success. |
 | Ambassadeur | Payout zonder IBAN / 0 beschikbaar. | BlockReason; Doorgaan disabled. |
 | Ambassadeur | Payout geldig → checkout stub `/ambassadeur/payout-checkout`. | Complete/Cancel → finance; geen full IBAN. |
-| Ambassadeur | Payout stub zonder paymentId / fail. | Fout + terug. |
-| Ambassadeur | Kandidaat via `/werven/{code}` registreert/solliciteert. | KPI kandidaten/sollicitaties omhoog; cookie ref. |
+| Ambassadeur | Payout stub zonder paymentId / fail. | Graceful empty-state: Het dashboard vangt de fout op, toont een nette melding binnen de component en voorkomt een ongecontroleerde pagina-crash of HTTP 500. |
+| Ambassadeur | Kandidaat via `/werven/{code}` registreert/solliciteert. | Koppeling & Tracering: Het systeem koppelt de registratie automatisch aan de ambassadeur op basis van de actieve cookie/referral-parameter voor latere vergoedingen of beloningen. |
 | Ambassadeur | Referred ondernemer koopt tokens. | Ambassadeurcommissie tokens ~15% binnen window; drempel 50 / +1% / admin-max. |
-| Ambassadeur | Open `/partner/AM-code`. | AM-code **niet** als partner-SM; generieke partner of ignore — werven-pad is leidend. |
-| Ambassadeur | Open `/salesmanager/*`, `/admin/*`, `/employer/tokens`. | 403. |
+| Ambassadeur | Open `/partner/AM-code`. | Code-negering & Redirect: Systeem toont een flash-melding en stuurt de gebruiker door naar `/login` zonder dat er een ambassadeurscookie wordt geplaatst. |
+| Ambassadeur | Open `/salesmanager/*`, `/admin/*`, `/employer/tokens`. | Toegangsblokkade (403 / Access Denied): Systeem weigert direct de toegang en stuurt de gebruiker naar de homepagina of het login-scherm. |
 | Ambassadeur | Consent-reaccept + AVG export (payouts/ledger). | Blocking consent; masked IBAN in export/UI. |
 
 
@@ -811,14 +811,14 @@ Herhaal per actor. Verwacht overal: login-challenge (anoniem) of **403 / `/acces
 | Bedrijfsmanager | Open `/admin/sales`, `/admin/api-keys`, `/intermediary` (clients dashboard), `/salesmanager/referrals`. | Toegangsblokkade (403 / Access Denied): Systeem weigert direct de toegang of stuurt de gebruiker terug naar de homepagina; geen ongeautoriseerde inzage in bedrijfsbrede PII of financiële data. |
 | Intermediair | Open `/employer/organization`, `/admin/finance`, `/salesmanager/onboarding`, approve-publish. | Toegangsblokkade (403 / Access Denied): Systeem weigert direct de toegang en stuurt de gebruiker naar de homepagina of een beveiligde foutpagina. |
 | Salesmanager | Open `/employer/tokens`, `/branch/applicants`, `/admin/sales-managers`, `/candidate/liked` (authorize candidate liked mag AllowAnonymous gate — niet de data van anderen). | Toegangsblokkade (403 / Access Denied): Systeem weigert de toegang onmiddellijk en stuurt de gebruiker terug naar de algemene homepagina of een beveiligde foutpagina. |
-| Ambassadeur | Open `/admin/ambassadeurs`, `/salesmanager/referrals`, `/employer/vacancies`. | 403. |
+| Ambassadeur | Open `/admin/ambassadeurs`, `/salesmanager/referrals`, `/employer/vacancies`. | Toegangsblokkade (403 / Access Denied): Systeem weigert direct de toegang en stuurt de gebruiker naar de homepagina of het login-scherm. |
 | Admin | Als user A data van user B opvragen via gewijzigde IDs (vacancy/application/export). | Alleen platform-scope waar bedoeld; privacy-export blijft **eigen** data; application-PDF zonder PiiRevealed = 403. |
 | Gast | IDOR: `/api/applications/{id}/cv`, `/api/privacy/export`, `/api/tokens/grant`. | 401. |
 | Filiaalmanager | IDOR: applicants/CV van andere companyId. | Toegangsblokkade (403 / Access Denied): Systeem weigert direct de toegang of stuurt de gebruiker door naar de eigen rol-omgeving; geen inzage in vreemde vestigingsdata. |
 | Intermediair | IDOR: vacancy muteren van niet-gekoppelde opdrachtgever (`IntermediaryCompanyId`). | Claim-pad / Weigering: Systeem weigert directe overname en start een gecontroleerde claim- of contactflow op; geen ongeautoriseerde PII-inzage. |
 | Bedrijfsmanager | IDOR: `/employer/users` van andere org. | Scope-weigering: Systeem blokkeert de actie op basis van organisatie-isolatie; managers kunnen uitsluitend sturen binnen de eigen gekoppelde bedrijfsstructuur. |
 | Salesmanager | IDOR: factuur-PDF van andere SM. | Toegangsblokkade (403 / Access Denied): Systeem weigert de toegang onmiddellijk en stuurt de gebruiker terug naar de algemene homepagina of een beveiligde foutpagina. |
-| Ambassadeur | IDOR: finance ledger andere AM. | 403. |
+| Ambassadeur | IDOR: finance ledger andere AM. | Toegangsblokkade (403 / Access Denied): Systeem weigert direct de toegang en stuurt de gebruiker naar de homepagina of het login-scherm. |
 | Kandidaat | IDOR: `/candidate/profile` via andere user-id (indien query). | Alleen eigen profiel; geen parameter-override. |
 | Alle werkgeverrollen | Pre-accept application JSON bevat email/phone/address/full name. | Mag niet; alleen screeningvelden. |
 | Alle rollen | Response headers CSP/HSTS/X-Content-Type-Options/X-Frame-Options/Referrer-Policy controleren op `/` en `/login`. | Headers aanwezig (HSTS buiten Dev). |
