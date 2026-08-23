@@ -2,7 +2,6 @@ using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using Jobsy.Core.Email;
 using Jobsy.Core.Entities;
 using Jobsy.Core.Enums;
 using Jobsy.Core.Interfaces;
@@ -165,14 +164,8 @@ public sealed class SmtpEmailService : IEmailService
             mime.Subject = message.Subject;
             var builder = new BodyBuilder
             {
-                HtmlBody = EmailLogoEmbedder.RewriteToCid(message.BodyHtml)
+                HtmlBody = message.BodyHtml
             };
-            var linked = builder.LinkedResources.Add(
-                EmailLogoEmbedder.FileName,
-                EmailLogoEmbedder.PngBytes(),
-                new ContentType("image", "png"));
-            linked.ContentId = EmailLayout.LogoContentId;
-            linked.ContentDisposition = new ContentDisposition(ContentDisposition.Inline);
             mime.Body = builder.ToMessageBody();
 
             using var client = new SmtpClient();
@@ -375,37 +368,17 @@ public sealed class SmtpEmailService : IEmailService
     }
 
     /// <summary>
-    /// Resend's Go/Python SDKs send attachment bytes as a JSON array of ints
-    /// (not a Base64 string). A Base64 string is written as a bogus .png file
-    /// and shows up as a paperclip instead of the inline Lobsy mark.
+    /// Keep the hosted HTTPS logo URL. CID attachments do not render in Gmail /
+    /// mobile webmail (broken-image icon next to the wordmark).
     /// </summary>
     internal static ResendSendRequest CreateResendRequest(EmailMessage message, string fromAddress)
-    {
-        var logo = EmailLogoEmbedder.PngBytes();
-        var content = new int[logo.Length];
-        for (var i = 0; i < logo.Length; i++)
-        {
-            content[i] = logo[i];
-        }
-
-        return new ResendSendRequest
+        => new()
         {
             From = fromAddress,
             To = [message.To],
             Subject = message.Subject,
-            Html = EmailLogoEmbedder.RewriteToCid(message.BodyHtml),
-            Attachments =
-            [
-                new ResendSendAttachment
-                {
-                    Filename = EmailLogoEmbedder.FileName,
-                    Content = content,
-                    ContentId = EmailLayout.LogoContentId,
-                    ContentType = "image/png"
-                }
-            ]
+            Html = message.BodyHtml ?? string.Empty
         };
-    }
 
     internal static string FormatResendError(int statusCode, string body)
     {
@@ -470,23 +443,5 @@ public sealed class SmtpEmailService : IEmailService
 
         [JsonPropertyName("html")]
         public required string Html { get; init; }
-
-        [JsonPropertyName("attachments")]
-        public required ResendSendAttachment[] Attachments { get; init; }
-    }
-
-    internal sealed class ResendSendAttachment
-    {
-        [JsonPropertyName("filename")]
-        public required string Filename { get; init; }
-
-        [JsonPropertyName("content")]
-        public required int[] Content { get; init; }
-
-        [JsonPropertyName("content_id")]
-        public required string ContentId { get; init; }
-
-        [JsonPropertyName("content_type")]
-        public required string ContentType { get; init; }
     }
 }

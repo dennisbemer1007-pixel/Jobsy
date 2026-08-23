@@ -42,11 +42,11 @@ public static class EmailLayout
         return origin.TrimEnd('/') + path;
     }
 
-    /// <summary>Small PNG for mail clients (not the 568&nbsp;KB site mark).</summary>
-    public const string LogoRelativePath = "/images/brand/lobsy-128.png?v=20260816-mail";
-
-    /// <summary>Inline CID used when the sender embeds the logo bytes.</summary>
-    public const string LogoContentId = "lobsy-logo";
+    /// <summary>
+    /// Small PNG hosted on the public site. Mail clients (Gmail/mobile) load this
+    /// over HTTPS; CID attachments show as a broken image there.
+    /// </summary>
+    public const string LogoRelativePath = "/images/brand/lobsy-128.png?v=20260823-hosted";
 
     public static string LogoUrl(string? publicWebBaseUrl)
         => Absolute(publicWebBaseUrl, LogoRelativePath);
@@ -141,7 +141,7 @@ public static class EmailLayout
                           <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
                             <tr>
                               <td width="52" valign="middle">
-                                <img src="{logo}" width="44" height="44" alt="{brand}" style="display:block;border:0;border-radius:10px;background:#ffffff;padding:4px;" />
+                                <img src="{logo}" width="44" height="44" alt="{brand}" border="0" style="display:block;border:0;outline:none;text-decoration:none;border-radius:10px;background:#ffffff;padding:4px;" />
                               </td>
                               <td valign="middle" style="padding-left:12px;">
                                 <div style="font-size:20px;font-weight:700;color:#ffffff;letter-spacing:0.02em;">{brand}</div>
