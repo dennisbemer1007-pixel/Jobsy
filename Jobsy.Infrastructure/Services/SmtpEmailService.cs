@@ -1,6 +1,7 @@
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using Jobsy.Core.Email;
 using Jobsy.Core.Entities;
 using Jobsy.Core.Enums;
@@ -98,25 +99,7 @@ public sealed class SmtpEmailService : IEmailService
             var client = _httpClientFactory.CreateClient(ResendHttpClientName);
             using var request = new HttpRequestMessage(HttpMethod.Post, "emails");
             request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", settings.ApiKey);
-            var html = EmailLogoEmbedder.RewriteToCid(message.BodyHtml);
-            var logo = EmailLogoEmbedder.PngBytes();
-            request.Content = JsonContent.Create(new
-            {
-                from = settings.FromAddress,
-                to = new[] { message.To },
-                subject = message.Subject,
-                html,
-                attachments = new[]
-                {
-                    new
-                    {
-                        filename = EmailLogoEmbedder.FileName,
-                        content = Convert.ToBase64String(logo),
-                        content_id = EmailLayout.LogoContentId,
-                        content_type = "image/png"
-                    }
-                }
-            });
+            request.Content = JsonContent.Create(CreateResendRequest(message, settings.FromAddress));
 
             using var response = await client.SendAsync(request, cancellationToken);
             var body = await response.Content.ReadAsStringAsync(cancellationToken);
@@ -184,10 +167,11 @@ public sealed class SmtpEmailService : IEmailService
             {
                 HtmlBody = EmailLogoEmbedder.RewriteToCid(message.BodyHtml)
             };
-            var linked = builder.LinkedResources.Add(EmailLogoEmbedder.FileName, EmailLogoEmbedder.PngBytes());
+            var linked = builder.LinkedResources.Add(
+                EmailLogoEmbedder.FileName,
+                EmailLogoEmbedder.PngBytes(),
+                new ContentType("image", "png"));
             linked.ContentId = EmailLayout.LogoContentId;
-            linked.ContentType.MediaType = "image";
-            linked.ContentType.MediaSubtype = "png";
             linked.ContentDisposition = new ContentDisposition(ContentDisposition.Inline);
             mime.Body = builder.ToMessageBody();
 
@@ -390,6 +374,39 @@ public sealed class SmtpEmailService : IEmailService
         return Truncate(raw, 280);
     }
 
+    /// <summary>
+    /// Resend's Go/Python SDKs send attachment bytes as a JSON array of ints
+    /// (not a Base64 string). A Base64 string is written as a bogus .png file
+    /// and shows up as a paperclip instead of the inline Lobsy mark.
+    /// </summary>
+    internal static ResendSendRequest CreateResendRequest(EmailMessage message, string fromAddress)
+    {
+        var logo = EmailLogoEmbedder.PngBytes();
+        var content = new int[logo.Length];
+        for (var i = 0; i < logo.Length; i++)
+        {
+            content[i] = logo[i];
+        }
+
+        return new ResendSendRequest
+        {
+            From = fromAddress,
+            To = [message.To],
+            Subject = message.Subject,
+            Html = EmailLogoEmbedder.RewriteToCid(message.BodyHtml),
+            Attachments =
+            [
+                new ResendSendAttachment
+                {
+                    Filename = EmailLogoEmbedder.FileName,
+                    Content = content,
+                    ContentId = EmailLayout.LogoContentId,
+                    ContentType = "image/png"
+                }
+            ]
+        };
+    }
+
     internal static string FormatResendError(int statusCode, string body)
     {
         var detail = Truncate(body.Replace('\n', ' ').Trim(), 180);
@@ -439,4 +456,37 @@ public sealed class SmtpEmailService : IEmailService
         string Username,
         string Password,
         string FromAddress);
+
+    internal sealed class ResendSendRequest
+    {
+        [JsonPropertyName("from")]
+        public required string From { get; init; }
+
+        [JsonPropertyName("to")]
+        public required string[] To { get; init; }
+
+        [JsonPropertyName("subject")]
+        public required string Subject { get; init; }
+
+        [JsonPropertyName("html")]
+        public required string Html { get; init; }
+
+        [JsonPropertyName("attachments")]
+        public required ResendSendAttachment[] Attachments { get; init; }
+    }
+
+    internal sealed class ResendSendAttachment
+    {
+        [JsonPropertyName("filename")]
+        public required string Filename { get; init; }
+
+        [JsonPropertyName("content")]
+        public required int[] Content { get; init; }
+
+        [JsonPropertyName("content_id")]
+        public required string ContentId { get; init; }
+
+        [JsonPropertyName("content_type")]
+        public required string ContentType { get; init; }
+    }
 }

@@ -14,7 +14,7 @@ internal static class EmailLogoEmbedder
     public const string ResourceName = "Jobsy.Infrastructure.Assets.lobsy-email.png";
 
     private static readonly Regex RemoteLogo = new(
-        @"https?://[^""'\s>]+/images/brand/lobsy[^""'\s>]*",
+        @"(?:https?://[^""'\s>]+)?/images/brand/lobsy[^""'\s>]*",
         RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | RegexOptions.Compiled);
 
     public static string RewriteToCid(string? html)
