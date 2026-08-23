@@ -3,6 +3,7 @@ using Jobsy.Core.Enums;
 using Jobsy.Core.Privacy;
 using Jobsy.Core.Rules;
 using Jobsy.Core.ValueObjects;
+using Jobsy.Infrastructure.Security;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
@@ -10,6 +11,9 @@ namespace Jobsy.Infrastructure.Data;
 
 internal static class DemoUsersSeeder
 {
+    /// <summary>Documented public-demo password for every @jobsy.local seed account.</summary>
+    public const string DemoPassword = "Jobsy123!";
+
     private static readonly Guid WestlandId = Guid.Parse("11111111-1111-1111-1111-111111111111");
     private static readonly Guid CafeId = Guid.Parse("22222222-2222-2222-2222-222222222222");
     private static readonly Guid SupermarketId = Guid.Parse("33333333-3333-3333-3333-333333333333");
@@ -190,6 +194,7 @@ internal static class DemoUsersSeeder
 
             // Demo accounts stay on the current consent version so version bumps don't block the public demo.
             StampDemoConsent(existing);
+            await EnsureDemoPasswordAsync(db, existing);
 
             return 0;
         }
@@ -201,7 +206,39 @@ internal static class DemoUsersSeeder
         }
 
         db.Users.Add(template);
+        await EnsureDemoPasswordAsync(db, template);
         return 1;
+    }
+
+    /// <summary>
+    /// Creates or resets the local-login hash so demo accounts always accept <see cref="DemoPassword"/>.
+    /// Production web login uses <c>POST api/auth/local-login</c> (demo-store is Development-only unless allowed).
+    /// </summary>
+    private static async Task EnsureDemoPasswordAsync(JobsyDbContext db, User user)
+    {
+        var email = user.Email.Trim().ToLowerInvariant();
+        var credential = await db.LocalAuthCredentials.FirstOrDefaultAsync(c => c.UserId == user.Id)
+            ?? await db.LocalAuthCredentials.FirstOrDefaultAsync(c => c.Email == email);
+
+        if (credential is null)
+        {
+            db.LocalAuthCredentials.Add(new LocalAuthCredential
+            {
+                Id = Guid.NewGuid(),
+                UserId = user.Id,
+                Email = email,
+                PasswordHash = JobsyPasswordHasher.Hash(DemoPassword)
+            });
+            return;
+        }
+
+        credential.UserId = user.Id;
+        credential.Email = email;
+        if (!JobsyPasswordHasher.Verify(DemoPassword, credential.PasswordHash)
+            || JobsyPasswordHasher.NeedsRehash(credential.PasswordHash))
+        {
+            credential.PasswordHash = JobsyPasswordHasher.Hash(DemoPassword);
+        }
     }
 
     private static void StampDemoConsent(User user)

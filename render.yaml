@@ -97,6 +97,9 @@ services:
         value: "false"
       - key: AllowedHosts
         value: "*"
+      # Same flag as jobsy-api: password login may use DemoUsers (Jobsy123!) and local-login hashes.
+      - key: JobsyAuth__AllowDevelopmentAuth
+        value: "true"
       - key: JobsyAuth__DevelopmentAuthSecret
         fromService:
           name: jobsy-api
