@@ -160,6 +160,31 @@ public class MobileSaasUxTests
         Assert.Contains(".application-stepper__step.is-done .application-stepper__bar,\n.application-stepper__step.is-current .application-stepper__bar {\n    background: var(--brand);", css);
     }
 
+    [Fact]
+    public void Candidate_profile_uses_accordions_compact_availability_and_sticky_save()
+    {
+        var razor = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/Components/Pages/Candidate/Profile.razor"));
+        Assert.Contains("profile-page--candidate", razor);
+        Assert.Contains("profile-accordion", razor);
+        Assert.Contains("ToggleSection(\"personal\")", razor);
+        Assert.Contains("ToggleSection(\"preferences\")", razor);
+        Assert.Contains("ToggleSection(\"availability\")", razor);
+        Assert.Contains("ToggleSection(\"experience\")", razor);
+        Assert.Contains("profile-check-grid", razor);
+        Assert.Contains("availability-matrix", razor);
+        Assert.Contains("availability-presets", razor);
+        Assert.Contains("profile-save-bar", razor);
+        Assert.Contains("aria-expanded=\"@(IsSectionOpen(\"personal\") ? \"true\" : \"false\")\"", razor);
+        Assert.DoesNotContain("vacancy-schedule__table", razor);
+
+        var css = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/wwwroot/css/app.css"));
+        Assert.Contains(".profile-accordion {\n    display: flex;\n    flex-direction: column;", css);
+        Assert.Contains(".profile-page--candidate .profile-check-grid,\n.profile-page--candidate .profile-roles.profile-check-grid {\n    grid-template-columns: repeat(2, minmax(0, 1fr));", css);
+        Assert.Contains(".availability-matrix {\n    display: grid;\n    grid-template-columns: 2.35rem repeat(4, minmax(0, 1fr));", css);
+        Assert.Contains("bottom: calc(4.75rem + env(safe-area-inset-bottom, 0px));", css);
+        Assert.Contains(".profile-save-bar .login-submit {\n    width: 100%;", css);
+    }
+
     private static string FindRepoRoot()
     {
         var dir = new DirectoryInfo(AppContext.BaseDirectory);

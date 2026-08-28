@@ -15255,3 +15255,197 @@ html.cookie-consent-known .cookie-consent {
         display: none;
     }
 }
+
+/* —— Candidate profile: accordions, compact availability, sticky save —— */
+.profile-page--candidate .profile-form {
+    max-width: none;
+    width: 100%;
+}
+
+.profile-page--candidate .profile-form input:not([type="checkbox"]):not([type="radio"]),
+.profile-page--candidate .profile-form select,
+.profile-page--candidate .profile-form textarea {
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+}
+
+.profile-accordion {
+    display: flex;
+    flex-direction: column;
+    gap: 0.55rem;
+}
+
+.profile-page--candidate .profile-accordion__item {
+    margin: 0;
+    font-size: 1rem;
+}
+
+.profile-accordion__toggle {
+    display: flex;
+    width: 100%;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    min-height: 2.75rem;
+    padding: 0.7rem 0.9rem;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    background: var(--surface);
+    color: var(--text);
+    font: inherit;
+    font-weight: 750;
+    cursor: pointer;
+    text-align: left;
+}
+
+.profile-accordion__toggle.is-open {
+    border-color: color-mix(in srgb, var(--brand) 35%, var(--border));
+    background: color-mix(in srgb, var(--accent-soft) 55%, var(--surface));
+    color: var(--brand);
+}
+
+.profile-accordion__body {
+    display: flex;
+    flex-direction: column;
+    gap: 0.85rem;
+    padding: 0.2rem 0.05rem 0.45rem;
+}
+
+.profile-page--candidate .profile-check-grid,
+.profile-page--candidate .profile-roles.profile-check-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.5rem;
+}
+
+.profile-availability {
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 0.75rem 0.85rem;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.availability-presets {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.45rem;
+}
+
+.availability-presets__btn {
+    flex: 1 1 6.5rem;
+    min-height: 2.4rem;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    background: var(--surface);
+    color: var(--text);
+    font: inherit;
+    font-weight: 650;
+    font-size: 0.85rem;
+    cursor: pointer;
+}
+
+.availability-presets__btn.is-active {
+    background: var(--brand);
+    border-color: var(--brand);
+    color: #fff;
+}
+
+.availability-matrix {
+    display: grid;
+    grid-template-columns: 2.35rem repeat(4, minmax(0, 1fr));
+    gap: 0.35rem;
+    align-items: stretch;
+    width: 100%;
+}
+
+.availability-matrix__slot,
+.availability-matrix__day {
+    font-size: 0.68rem;
+    font-weight: 700;
+    color: var(--muted);
+    text-align: center;
+    line-height: 1.2;
+}
+
+.availability-matrix__day {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    font-size: 0.75rem;
+}
+
+.profile-page--candidate .availability-matrix__cell {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    gap: 0;
+    min-height: 2.4rem;
+    margin: 0;
+    padding: 0;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--surface);
+    cursor: pointer;
+    font-weight: 500;
+}
+
+.availability-matrix__cell input {
+    width: 1.15rem;
+    height: 1.15rem;
+    margin: 0;
+    accent-color: var(--brand);
+}
+
+.availability-matrix__cell.is-on {
+    background: color-mix(in srgb, var(--brand) 14%, var(--surface));
+    border-color: var(--brand);
+}
+
+.profile-save-bar {
+    display: flex;
+    flex-direction: column;
+    gap: 0.45rem;
+    margin-top: 0.85rem;
+}
+
+.profile-save-bar .login-submit {
+    width: 100%;
+    margin: 0;
+    min-height: 2.75rem;
+    border-radius: 10px;
+}
+
+.profile-save-bar__message {
+    margin: 0;
+}
+
+@media (max-width: 420px) {
+    .profile-page--candidate .profile-check-grid,
+    .profile-page--candidate .profile-roles.profile-check-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 1024px) {
+    .app-shell.has-bottom-nav .profile-save-bar,
+    .app-shell:has(.bottom-nav) .profile-save-bar {
+        position: fixed;
+        left: 0;
+        right: 0;
+        bottom: calc(4.75rem + env(safe-area-inset-bottom, 0px));
+        z-index: 45;
+        margin: 0;
+        padding: 0.65rem 1rem calc(0.55rem + env(safe-area-inset-bottom, 0px));
+        background: var(--surface);
+        border-top: 1px solid var(--border);
+        box-shadow: 0 -8px 18px rgba(15, 23, 42, 0.12);
+    }
+
+    .profile-page--candidate {
+        padding-bottom: 4.5rem;
+    }
+}

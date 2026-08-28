@@ -13,7 +13,7 @@
 
 <PageTitle>@Culture["Profile.Title"] · Lobsy</PageTitle>
 
-<div class="panel-page profile-page">
+<div class="panel-page profile-page profile-page--candidate">
     <header class="saved-gate__header profile-page__header">
         <h1>@Culture["Profile.Title"]</h1>
         @if (!string.IsNullOrWhiteSpace(_returnUrl))
@@ -32,416 +32,486 @@
         else
         {
             <div class="profile-form">
-                <label class="profile-toggle">
-                    <input type="checkbox" @bind="_openForWork" />
-                    <span>@Culture["Profile.OpenForWork"]</span>
-                </label>
-
-                <fieldset class="profile-contact">
-                    <legend>@Culture["Profile.ContactDetails"]</legend>
-                    <div class="profile-contact__names">
-                        <label>
-                            @Culture["Profile.FirstName"]
-                            <input type="text" maxlength="128" @bind="_firstName" autocomplete="given-name" />
-                        </label>
-                        <label>
-                            @Culture["Profile.LastName"]
-                            <input type="text" maxlength="128" @bind="_lastName" autocomplete="family-name" />
-                        </label>
-                    </div>
-                    <label>
-                        @Culture["Profile.Phone"]
-                        <input type="tel"
-                               maxlength="32"
-                               placeholder="@Culture["Profile.PhonePlaceholder"]"
-                               @bind="_phoneNumber"
-                               autocomplete="tel" />
-                    </label>
-                    <label class="profile-toggle">
-                        <input type="checkbox"
-                               disabled="@string.IsNullOrWhiteSpace(_phoneNumber)"
-                               @bind="_whatsAppAllowed" />
-                        <span>@Culture["Profile.WhatsAppAllowed"]</span>
-                    </label>
-                    <p class="profile-address__hint">@Culture["Profile.ContactHint"]</p>
-                </fieldset>
-
-                <label>
-                    @Culture["Profile.DateOfBirth"]
-                    <input type="date" @bind="_dobInput" />
-                </label>
-
-                <div class="profile-address">
-                    <label for="profile-home-address">@Culture["Profile.HomeAddress"]</label>
-                    <div class="address-field">
-                        <input id="profile-home-address"
-                               type="text"
-                               autocomplete="off"
-                               placeholder="@Culture["Discovery.AddressPlaceholder"]"
-                               value="@_homeAddress"
-                               @oninput="OnAddressInputAsync"
-                               @onfocus="OnAddressFocus"
-                               @onkeydown="OnAddressKeyDown" />
-                        @if (!string.IsNullOrWhiteSpace(_homeAddress) || _homeLat is not null)
-                        {
-                            <button type="button"
-                                    class="engagement-btn address-field__clear"
-                                    @onclick="ClearHomeAddress">
-                                @Culture["Common.Clear"]
-                            </button>
-                        }
-                    </div>
-                    @if (_showSuggestions)
+                <div class="profile-accordion">
+                    <h2 class="profile-accordion__item">
+                        <button type="button"
+                                class="profile-accordion__toggle @(IsSectionOpen("personal") ? "is-open" : null)"
+                                aria-expanded="@(IsSectionOpen("personal") ? "true" : "false")"
+                                aria-controls="profile-section-personal"
+                                id="profile-section-personal-btn"
+                                @onclick='() => ToggleSection("personal")'>
+                            <span>@Culture["Profile.Section.Personal"]</span>
+                            <span class="profile-accordion__chevron" aria-hidden="true">@(IsSectionOpen("personal") ? "▾" : "▸")</span>
+                        </button>
+                    </h2>
+                    @if (IsSectionOpen("personal"))
                     {
-                        <ul class="address-suggestions" role="listbox">
-                            @if (_suggesting)
-                            {
-                                <li class="address-suggestions__status">@Culture["Common.Loading"]</li>
-                            }
-                            else if (_suggestions.Count == 0 && _homeAddress.Trim().Length >= 3)
-                            {
-                                <li class="address-suggestions__status">@Culture["Discovery.AddressNoResults"]</li>
-                            }
-                            else
-                            {
-                                @foreach (var suggestion in _suggestions)
-                                {
-                                    <li>
+                        <div class="profile-accordion__body" id="profile-section-personal" role="region" aria-labelledby="profile-section-personal-btn">
+                            <label class="profile-toggle">
+                                <input type="checkbox" @bind="_openForWork" />
+                                <span>@Culture["Profile.OpenForWork"]</span>
+                            </label>
+
+                            <fieldset class="profile-contact">
+                                <legend>@Culture["Profile.ContactDetails"]</legend>
+                                <div class="profile-contact__names">
+                                    <label>
+                                        @Culture["Profile.FirstName"]
+                                        <input type="text" maxlength="128" @bind="_firstName" autocomplete="given-name" />
+                                    </label>
+                                    <label>
+                                        @Culture["Profile.LastName"]
+                                        <input type="text" maxlength="128" @bind="_lastName" autocomplete="family-name" />
+                                    </label>
+                                </div>
+                                <label>
+                                    @Culture["Profile.Phone"]
+                                    <input type="tel"
+                                           maxlength="32"
+                                           placeholder="@Culture["Profile.PhonePlaceholder"]"
+                                           @bind="_phoneNumber"
+                                           autocomplete="tel" />
+                                </label>
+                                <label class="profile-toggle">
+                                    <input type="checkbox"
+                                           disabled="@string.IsNullOrWhiteSpace(_phoneNumber)"
+                                           @bind="_whatsAppAllowed" />
+                                    <span>@Culture["Profile.WhatsAppAllowed"]</span>
+                                </label>
+                                <p class="profile-address__hint">@Culture["Profile.ContactHint"]</p>
+                            </fieldset>
+
+                            <label>
+                                @Culture["Profile.DateOfBirth"]
+                                <input type="date" @bind="_dobInput" />
+                            </label>
+
+                            <div class="profile-address">
+                                <label for="profile-home-address">@Culture["Profile.HomeAddress"]</label>
+                                <div class="address-field">
+                                    <input id="profile-home-address"
+                                           type="text"
+                                           autocomplete="off"
+                                           placeholder="@Culture["Discovery.AddressPlaceholder"]"
+                                           value="@_homeAddress"
+                                           @oninput="OnAddressInputAsync"
+                                           @onfocus="OnAddressFocus"
+                                           @onkeydown="OnAddressKeyDown" />
+                                    @if (!string.IsNullOrWhiteSpace(_homeAddress) || _homeLat is not null)
+                                    {
                                         <button type="button"
-                                                class="address-suggestions__item"
-                                                @onclick="() => SelectSuggestion(suggestion)">
-                                            @suggestion.Label
+                                                class="engagement-btn address-field__clear"
+                                                @onclick="ClearHomeAddress">
+                                            @Culture["Common.Clear"]
                                         </button>
-                                    </li>
+                                    }
+                                </div>
+                                @if (_showSuggestions)
+                                {
+                                    <ul class="address-suggestions" role="listbox">
+                                        @if (_suggesting)
+                                        {
+                                            <li class="address-suggestions__status">@Culture["Common.Loading"]</li>
+                                        }
+                                        else if (_suggestions.Count == 0 && _homeAddress.Trim().Length >= 3)
+                                        {
+                                            <li class="address-suggestions__status">@Culture["Discovery.AddressNoResults"]</li>
+                                        }
+                                        else
+                                        {
+                                            @foreach (var suggestion in _suggestions)
+                                            {
+                                                <li>
+                                                    <button type="button"
+                                                            class="address-suggestions__item"
+                                                            @onclick="() => SelectSuggestion(suggestion)">
+                                                        @suggestion.Label
+                                                    </button>
+                                                </li>
+                                            }
+                                        }
+                                    </ul>
                                 }
-                            }
-                        </ul>
+                                <p class="profile-address__hint">@Culture["Profile.AddressHint"]</p>
+                                <p class="profile-address__hint">@Culture["Profile.CvMapPrivacyHint"]</p>
+                            </div>
+                        </div>
                     }
-                    <p class="profile-address__hint">@Culture["Profile.AddressHint"]</p>
-                    <p class="profile-address__hint">@Culture["Profile.CvMapPrivacyHint"]</p>
-                </div>
 
-                <label>
-                    @Culture["Profile.MaxTravel"]
-                    <input type="number" min="1" max="180" @bind="_maxTravel" />
-                </label>
-
-                <label>
-                    @Culture["Profile.PreferredTransport"]
-                    <select @bind="_preferredTransport">
-                        <option value="">—</option>
-                        <option value="Fiets">@Culture["Transport.Bike"]</option>
-                        <option value="Auto">@Culture["Transport.Car"]</option>
-                        <option value="OV">@Culture["Transport.Transit"]</option>
-                        <option value="Lopend">@Culture["Transport.Walk"]</option>
-                    </select>
-                </label>
-
-                <fieldset class="profile-roles">
-                    <legend>@Culture["Profile.Interests"]</legend>
-                    @foreach (var role in _branchOptions)
+                    <h2 class="profile-accordion__item">
+                        <button type="button"
+                                class="profile-accordion__toggle @(IsSectionOpen("preferences") ? "is-open" : null)"
+                                aria-expanded="@(IsSectionOpen("preferences") ? "true" : "false")"
+                                aria-controls="profile-section-preferences"
+                                id="profile-section-preferences-btn"
+                                @onclick='() => ToggleSection("preferences")'>
+                            <span>@Culture["Profile.Section.Preferences"]</span>
+                            <span class="profile-accordion__chevron" aria-hidden="true">@(IsSectionOpen("preferences") ? "▾" : "▸")</span>
+                        </button>
+                    </h2>
+                    @if (IsSectionOpen("preferences"))
                     {
-                        <label>
-                            <input type="checkbox"
-                                   checked="@_selectedRoles.Contains(role)"
-                                   @onchange="e => ToggleRole(role, (bool)(e.Value ?? false))" />
-                            @UiLabels.WorkType(Culture, role)
-                        </label>
+                        <div class="profile-accordion__body" id="profile-section-preferences" role="region" aria-labelledby="profile-section-preferences-btn">
+                            <label>
+                                @Culture["Profile.MaxTravel"]
+                                <input type="number" min="1" max="180" @bind="_maxTravel" />
+                            </label>
+
+                            <label>
+                                @Culture["Profile.PreferredTransport"]
+                                <select @bind="_preferredTransport">
+                                    <option value="">—</option>
+                                    <option value="Fiets">@Culture["Transport.Bike"]</option>
+                                    <option value="Auto">@Culture["Transport.Car"]</option>
+                                    <option value="OV">@Culture["Transport.Transit"]</option>
+                                    <option value="Lopend">@Culture["Transport.Walk"]</option>
+                                </select>
+                            </label>
+
+                            <fieldset class="profile-roles profile-check-grid">
+                                <legend>@Culture["Profile.Interests"]</legend>
+                                @foreach (var role in _branchOptions)
+                                {
+                                    <label>
+                                        <input type="checkbox"
+                                               checked="@_selectedRoles.Contains(role)"
+                                               @onchange="e => ToggleRole(role, (bool)(e.Value ?? false))" />
+                                        @UiLabels.WorkType(Culture, role)
+                                    </label>
+                                }
+                            </fieldset>
+
+                            <fieldset class="profile-roles profile-check-grid">
+                                <legend>@Culture["Profile.Licenses"]</legend>
+                                @foreach (var license in _licenseOptions)
+                                {
+                                    <label>
+                                        <input type="checkbox"
+                                               checked="@_selectedLicenses.Contains(license)"
+                                               @onchange="e => ToggleLicense(license, (bool)(e.Value ?? false))" />
+                                        @UiLabels.License(Culture, license)
+                                    </label>
+                                }
+                            </fieldset>
+                        </div>
                     }
-                </fieldset>
 
-                <fieldset class="profile-roles">
-                    <legend>@Culture["Profile.Licenses"]</legend>
-                    @foreach (var license in _licenseOptions)
+                    <h2 class="profile-accordion__item">
+                        <button type="button"
+                                class="profile-accordion__toggle @(IsSectionOpen("availability") ? "is-open" : null)"
+                                aria-expanded="@(IsSectionOpen("availability") ? "true" : "false")"
+                                aria-controls="profile-section-availability"
+                                id="profile-section-availability-btn"
+                                @onclick='() => ToggleSection("availability")'>
+                            <span>@Culture["Profile.Section.Availability"]</span>
+                            <span class="profile-accordion__chevron" aria-hidden="true">@(IsSectionOpen("availability") ? "▾" : "▸")</span>
+                        </button>
+                    </h2>
+                    @if (IsSectionOpen("availability"))
                     {
-                        <label>
-                            <input type="checkbox"
-                                   checked="@_selectedLicenses.Contains(license)"
-                                   @onchange="e => ToggleLicense(license, (bool)(e.Value ?? false))" />
-                            @UiLabels.License(Culture, license)
-                        </label>
-                    }
-                </fieldset>
+                        <div class="profile-accordion__body" id="profile-section-availability" role="region" aria-labelledby="profile-section-availability-btn">
+                            <fieldset class="vacancy-hours profile-hours">
+                                <legend class="visually-hidden">@Culture["Vacancy.HoursPerWeek"]</legend>
+                                <div class="vacancy-hours__row">
+                                    <span class="vacancy-hours__title">@Culture["Vacancy.HoursPerWeek"]</span>
+                                    <label>
+                                        Min.
+                                        <input type="number" min="1" max="60" step="0.5" @bind="_minHours" />
+                                    </label>
+                                    <span class="vacancy-hours__sep" aria-hidden="true">–</span>
+                                    <label>
+                                        Max.
+                                        <input type="number" min="1" max="60" step="0.5" @bind="_maxHours" />
+                                    </label>
+                                    @if (_minHours is decimal minH && _maxHours is decimal maxH && maxH >= minH)
+                                    {
+                                        <span class="vacancy-hours__meta muted">@HoursRangeRules.CategoryLabel(new HoursRange(minH, maxH).Category)</span>
+                                    }
+                                </div>
+                            </fieldset>
 
-                <label>
-                    @Culture["Profile.AboutMe"]
-                    <textarea rows="4" @bind="_aboutMe"></textarea>
-                </label>
-
-                <label>
-                    @Culture["Profile.DefaultMotivation"]
-                    <textarea rows="4" maxlength="500" @bind="_defaultMotivation"></textarea>
-                    <span class="profile-address__hint">@Culture["Profile.DefaultMotivationHint"]</span>
-                </label>
-
-                <fieldset class="vacancy-hours profile-hours">
-                    <legend class="visually-hidden">Uren per week</legend>
-                    <p class="vacancy-field-hint">Hoeveel uur wil je roughly per week werken?</p>
-                    <div class="vacancy-hours__row">
-                        <span class="vacancy-hours__title">Uren per week</span>
-                        <label>
-                            Min.
-                            <input type="number" min="1" max="60" step="0.5" @bind="_minHours" />
-                        </label>
-                        <span class="vacancy-hours__sep" aria-hidden="true">–</span>
-                        <label>
-                            Max.
-                            <input type="number" min="1" max="60" step="0.5" @bind="_maxHours" />
-                        </label>
-                        @if (_minHours is decimal minH && _maxHours is decimal maxH && maxH >= minH)
-                        {
-                            <span class="vacancy-hours__meta muted">Categorie: @HoursRangeRules.CategoryLabel(new HoursRange(minH, maxH).Category)</span>
-                        }
-                    </div>
-                </fieldset>
-
-                <fieldset class="vacancy-schedule profile-availability">
-                    <legend>@Culture["Profile.Availability"]</legend>
-                    <label class="vacancy-toggle-row">
-                        <input type="checkbox" checked="@_flexibleTimes" @onchange="OnFlexibleTimesChanged" />
-                        <span>
-                            <strong>@Culture["Vacancy.FlexibleTimes"]</strong>
-                        </span>
-                    </label>
-                    @if (!_flexibleTimes)
-                    {
-                        <div class="vacancy-schedule__table-wrap">
-                            <table class="wage-table vacancy-schedule__table">
-                                <thead>
-                                    <tr>
-                                        <th>@Culture["Profile.Day"]</th>
+                            <fieldset class="profile-availability">
+                                <legend>@Culture["Profile.Availability"]</legend>
+                                <div class="availability-presets" role="group" aria-label="@Culture["Profile.Availability"]">
+                                    <button type="button"
+                                            class="availability-presets__btn @(_flexibleTimes ? "is-active" : null)"
+                                            @onclick='() => ApplyAvailabilityPreset("flexible")'>
+                                        @Culture["Profile.PresetFlexible"]
+                                    </button>
+                                    <button type="button"
+                                            class="availability-presets__btn @(!_flexibleTimes && IsOfficeHoursPreset() ? "is-active" : null)"
+                                            @onclick='() => ApplyAvailabilityPreset("office")'>
+                                        @Culture["Profile.PresetOffice"]
+                                    </button>
+                                    <button type="button"
+                                            class="availability-presets__btn @(!_flexibleTimes && IsEveningsPreset() ? "is-active" : null)"
+                                            @onclick='() => ApplyAvailabilityPreset("evenings")'>
+                                        @Culture["Profile.PresetEvenings"]
+                                    </button>
+                                </div>
+                                @if (!_flexibleTimes)
+                                {
+                                    <div class="availability-matrix" role="grid" aria-label="@Culture["Profile.Availability"]">
+                                        <div class="availability-matrix__corner" role="columnheader"></div>
                                         @foreach (var slot in AvailabilitySlots)
                                         {
-                                            <th>
+                                            <div class="availability-matrix__slot" role="columnheader">
                                                 @UiLabels.AvailabilitySlot(Culture, slot)
-                                                <div class="muted" style="font-weight:normal;font-size:0.75rem">@DayPartMatrix.DayPartWindows[slot]</div>
-                                            </th>
+                                            </div>
                                         }
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    @foreach (var day in AvailabilityDays)
-                                    {
-                                        <tr>
-                                            <th>@UiLabels.Weekday(Culture, day)</th>
+                                        @foreach (var day in AvailabilityDays)
+                                        {
+                                            <div class="availability-matrix__day" role="rowheader">@UiLabels.Weekday(Culture, day)</div>
                                             @foreach (var slot in AvailabilitySlots)
                                             {
                                                 var key = $"{day}:{slot}";
-                                                <td>
+                                                var on = _availability.Contains(key);
+                                                <label class="availability-matrix__cell @(on ? "is-on" : null)">
                                                     <input type="checkbox"
-                                                           checked="@_availability.Contains(key)"
+                                                           checked="@on"
                                                            @onchange="e => ToggleAvailability(key, (bool)(e.Value ?? false))" />
-                                                </td>
+                                                    <span class="visually-hidden">@UiLabels.Weekday(Culture, day) @UiLabels.AvailabilitySlot(Culture, slot)</span>
+                                                </label>
                                             }
-                                        </tr>
+                                        }
+                                    </div>
+                                }
+                            </fieldset>
+                        </div>
+                    }
+
+                    <h2 class="profile-accordion__item">
+                        <button type="button"
+                                class="profile-accordion__toggle @(IsSectionOpen("experience") ? "is-open" : null)"
+                                aria-expanded="@(IsSectionOpen("experience") ? "true" : "false")"
+                                aria-controls="profile-section-experience"
+                                id="profile-section-experience-btn"
+                                @onclick='() => ToggleSection("experience")'>
+                            <span>@Culture["Profile.Section.Experience"]</span>
+                            <span class="profile-accordion__chevron" aria-hidden="true">@(IsSectionOpen("experience") ? "▾" : "▸")</span>
+                        </button>
+                    </h2>
+                    @if (IsSectionOpen("experience"))
+                    {
+                        <div class="profile-accordion__body" id="profile-section-experience" role="region" aria-labelledby="profile-section-experience-btn">
+                            <label>
+                                @Culture["Profile.AboutMe"]
+                                <textarea rows="4" @bind="_aboutMe"></textarea>
+                            </label>
+
+                            <label>
+                                @Culture["Profile.DefaultMotivation"]
+                                <textarea rows="4" maxlength="500" @bind="_defaultMotivation"></textarea>
+                                <span class="profile-address__hint">@Culture["Profile.DefaultMotivationHint"]</span>
+                            </label>
+
+                            <fieldset class="profile-employers">
+                                <legend>@Culture["Profile.OwnCv"]</legend>
+                                <p class="profile-employers__hint">@Culture["Profile.OwnCvLead"]</p>
+                                @if (_uploadedCv is not null)
+                                {
+                                    <p class="profile-cv__file">@Culture.Format("Profile.OwnCvPresent", _uploadedCv.FileName)</p>
+                                }
+                                <div class="profile-cv__actions">
+                                    <label class="engagement-btn">
+                                        @(_cvBusy ? Culture["Profile.CvUploading"] : _uploadedCv is null ? Culture["Profile.UploadCv"] : Culture["Profile.ReplaceCv"])
+                                        <InputFile OnChange="OnCvSelectedAsync" accept=".pdf,.docx,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document" />
+                                    </label>
+                                    @if (_uploadedCv is not null)
+                                    {
+                                        <button class="engagement-btn" type="button" disabled="@_cvBusy" @onclick="DownloadOwnCvAsync">
+                                            @Culture["Profile.DownloadOwnCv"]
+                                        </button>
+                                        <button class="engagement-btn" type="button" disabled="@_cvBusy" @onclick="DeleteOwnCvAsync">
+                                            @Culture["Profile.RemoveOwnCv"]
+                                        </button>
                                     }
-                                </tbody>
-                            </table>
-                        </div>
-                    }
-                </fieldset>
+                                </div>
+                            </fieldset>
 
-                <fieldset class="profile-employers">
-                    <legend>@Culture["Profile.OwnCv"]</legend>
-                    <p class="profile-employers__hint">@Culture["Profile.OwnCvLead"]</p>
-                    @if (_uploadedCv is not null)
-                    {
-                        <p class="profile-cv__file">@Culture.Format("Profile.OwnCvPresent", _uploadedCv.FileName)</p>
-                    }
-                    <div class="profile-cv__actions">
-                        <label class="engagement-btn">
-                            @(_cvBusy ? Culture["Profile.CvUploading"] : _uploadedCv is null ? Culture["Profile.UploadCv"] : Culture["Profile.ReplaceCv"])
-                            <InputFile OnChange="OnCvSelectedAsync" accept=".pdf,.docx,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document" />
-                        </label>
-                        @if (_uploadedCv is not null)
-                        {
-                            <button class="engagement-btn" type="button" disabled="@_cvBusy" @onclick="DownloadOwnCvAsync">
-                                @Culture["Profile.DownloadOwnCv"]
-                            </button>
-                            <button class="engagement-btn" type="button" disabled="@_cvBusy" @onclick="DeleteOwnCvAsync">
-                                @Culture["Profile.RemoveOwnCv"]
-                            </button>
-                        }
-                    </div>
-                </fieldset>
-
-                <fieldset class="profile-employers">
-                    <legend>@Culture["Profile.Experience"]</legend>
-                    <p class="profile-employers__hint">@Culture["Profile.EmployerDatesHint"]</p>
-                    @for (var i = 0; i < _employers.Count; i++)
-                    {
-                        var idx = i;
-                        <div class="profile-employer-card">
-                            <div class="profile-employer-card__top">
-                                <label class="profile-employer-card__field profile-employer-card__field--employer">
-                                    <span>@Culture["Profile.Employer"]</span>
-                                    <input placeholder="@Culture["Profile.EmployerName"]" @bind="_employers[idx].EmployerName" />
-                                </label>
-                                <label class="profile-employer-card__field profile-employer-card__field--role">
-                                    <span>@Culture["Profile.Role"]</span>
-                                    <input placeholder="@Culture["Profile.RolePlaceholder"]" @bind="_employers[idx].Role" />
-                                </label>
-                                <button type="button"
-                                        class="icon-btn icon-btn--danger"
-                                        title="@Culture["Profile.RemoveEmployer"]"
-                                        aria-label="@Culture["Profile.RemoveEmployer"]"
-                                        @onclick="() => RemoveEmployer(idx)">
-                                    @((MarkupString)ActionIcons.Trash)
+                            <fieldset class="profile-employers">
+                                <legend>@Culture["Profile.Experience"]</legend>
+                                <p class="profile-employers__hint">@Culture["Profile.EmployerDatesHint"]</p>
+                                @for (var i = 0; i < _employers.Count; i++)
+                                {
+                                    var idx = i;
+                                    <div class="profile-employer-card">
+                                        <div class="profile-employer-card__top">
+                                            <label class="profile-employer-card__field profile-employer-card__field--employer">
+                                                <span>@Culture["Profile.Employer"]</span>
+                                                <input placeholder="@Culture["Profile.EmployerName"]" @bind="_employers[idx].EmployerName" />
+                                            </label>
+                                            <label class="profile-employer-card__field profile-employer-card__field--role">
+                                                <span>@Culture["Profile.Role"]</span>
+                                                <input placeholder="@Culture["Profile.RolePlaceholder"]" @bind="_employers[idx].Role" />
+                                            </label>
+                                            <button type="button"
+                                                    class="icon-btn icon-btn--danger"
+                                                    title="@Culture["Profile.RemoveEmployer"]"
+                                                    aria-label="@Culture["Profile.RemoveEmployer"]"
+                                                    @onclick="() => RemoveEmployer(idx)">
+                                                @((MarkupString)ActionIcons.Trash)
+                                            </button>
+                                        </div>
+                                        <div class="profile-employer-card__dates">
+                                            <label class="profile-employer-card__field profile-employer-card__field--start">
+                                                <span>@Culture["Profile.EmployerFrom"]</span>
+                                                <input type="month"
+                                                       min="1950-01"
+                                                       max="2100-12"
+                                                       value="@(_employers[idx].StartMonth ?? "")"
+                                                       @onchange="e => SetEmployerStartMonth(idx, e.Value?.ToString())" />
+                                            </label>
+                                            <label class="profile-employer-card__field profile-employer-card__field--end">
+                                                <span>@Culture["Profile.EmployerTo"]</span>
+                                                <input type="month"
+                                                       min="1950-01"
+                                                       max="2100-12"
+                                                       value="@(_employers[idx].EndMonth ?? "")"
+                                                       @onchange="e => SetEmployerEndMonth(idx, e.Value?.ToString())" />
+                                            </label>
+                                            <p class="profile-employer-card__dates-hint">@Culture["Profile.EmployerToHint"]</p>
+                                        </div>
+                                        <label class="profile-employer-card__field profile-employer-card__field--description">
+                                            <span>@Culture["Profile.WhatDidYouDo"]</span>
+                                            <textarea rows="3"
+                                                      maxlength="1000"
+                                                      placeholder="@Culture["Profile.DutiesPlaceholder"]"
+                                                      @bind="_employers[idx].Description"></textarea>
+                                        </label>
+                                    </div>
+                                }
+                                <button type="button" class="icon-btn icon-btn--add" title="@Culture["Profile.AddEmployer"]" aria-label="@Culture["Profile.AddEmployer"]" @onclick="AddEmployer">
+                                    <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round">
+                                        <path d="M12 5v14" /><path d="M5 12h14" />
+                                    </svg>
                                 </button>
-                            </div>
-                            <div class="profile-employer-card__dates">
-                                <label class="profile-employer-card__field profile-employer-card__field--start">
-                                    <span>@Culture["Profile.EmployerFrom"]</span>
-                                    <input type="month"
-                                           min="1950-01"
-                                           max="2100-12"
-                                           value="@(_employers[idx].StartMonth ?? "")"
-                                           @onchange="e => SetEmployerStartMonth(idx, e.Value?.ToString())" />
-                                </label>
-                                <label class="profile-employer-card__field profile-employer-card__field--end">
-                                    <span>@Culture["Profile.EmployerTo"]</span>
-                                    <input type="month"
-                                           min="1950-01"
-                                           max="2100-12"
-                                           value="@(_employers[idx].EndMonth ?? "")"
-                                           @onchange="e => SetEmployerEndMonth(idx, e.Value?.ToString())" />
-                                </label>
-                                <p class="profile-employer-card__dates-hint">@Culture["Profile.EmployerToHint"]</p>
-                            </div>
-                            <label class="profile-employer-card__field profile-employer-card__field--description">
-                                <span>@Culture["Profile.WhatDidYouDo"]</span>
-                                <textarea rows="3"
-                                          maxlength="1000"
-                                          placeholder="@Culture["Profile.DutiesPlaceholder"]"
-                                          @bind="_employers[idx].Description"></textarea>
-                            </label>
-                        </div>
-                    }
-                    <button type="button" class="icon-btn icon-btn--add" title="@Culture["Profile.AddEmployer"]" aria-label="@Culture["Profile.AddEmployer"]" @onclick="AddEmployer">
-                        <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round">
-                            <path d="M12 5v14" /><path d="M5 12h14" />
-                        </svg>
-                    </button>
-                </fieldset>
+                            </fieldset>
 
-                <fieldset class="profile-roles">
-                    <legend>@Culture["Profile.Education"]</legend>
-                    @foreach (var level in _educationOptions)
-                    {
-                        <label>
-                            <input type="checkbox"
-                                   checked="@_selectedEducations.Contains(level)"
-                                   @onchange="e => ToggleEducation(level, (bool)(e.Value ?? false))" />
-                            @UiLabels.Education(Culture, level)
-                        </label>
-                    }
-                </fieldset>
+                            <fieldset class="profile-roles profile-check-grid">
+                                <legend>@Culture["Profile.Education"]</legend>
+                                @foreach (var level in _educationOptions)
+                                {
+                                    <label>
+                                        <input type="checkbox"
+                                               checked="@_selectedEducations.Contains(level)"
+                                               @onchange="e => ToggleEducation(level, (bool)(e.Value ?? false))" />
+                                        @UiLabels.Education(Culture, level)
+                                    </label>
+                                }
+                            </fieldset>
 
-                <fieldset class="profile-certificates">
-                    <legend>@Culture["Profile.Certificates"]</legend>
-                    @for (var i = 0; i < _certificates.Count; i++)
-                    {
-                        var idx = i;
-                        <div class="profile-cert-row">
-                            <label class="profile-cert-row__year">
-                                <span class="visually-hidden">@Culture["Profile.CertificateYear"]</span>
-                                <input type="number"
-                                       min="1950"
-                                       max="2100"
-                                       placeholder="@Culture["Profile.CertificateYear"]"
-                                       @bind="_certificates[idx].Year" />
-                            </label>
-                            <label class="profile-cert-row__name">
-                                <span class="visually-hidden">@Culture["Profile.CertificateName"]</span>
-                                <input type="text"
-                                       maxlength="200"
-                                       placeholder="@Culture["Profile.CertificateName"]"
-                                       @bind="_certificates[idx].Name" />
-                            </label>
-                            <button type="button"
-                                    class="icon-btn icon-btn--danger"
-                                    title="@Culture["Profile.RemoveCertificate"]"
-                                    aria-label="@Culture["Profile.RemoveCertificate"]"
-                                    @onclick="() => RemoveCertificate(idx)">
-                                @((MarkupString)ActionIcons.Trash)
-                            </button>
-                        </div>
-                    }
-                    <button type="button"
-                            class="icon-btn icon-btn--add"
-                            title="@Culture["Profile.AddCertificate"]"
-                            aria-label="@Culture["Profile.AddCertificate"]"
-                            @onclick="AddCertificate">
-                        <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round">
-                            <path d="M12 5v14" /><path d="M5 12h14" />
-                        </svg>
-                    </button>
-                </fieldset>
-
-                <fieldset class="profile-employers">
-                    <legend>@Culture["Profile.References"]</legend>
-                    <p class="profile-employers__hint">@Culture["Profile.ReferencesLead"]</p>
-                    @for (var i = 0; i < _references.Count; i++)
-                    {
-                        var idx = i;
-                        <div class="profile-employer-card">
-                            <div class="profile-employer-card__top">
-                                <label class="profile-employer-card__field profile-employer-card__field--employer">
-                                    <span>@Culture["Profile.ReferenceEmployer"]</span>
-                                    <input @bind="_references[idx].EmployerName" />
-                                </label>
-                                <label class="profile-employer-card__field profile-employer-card__field--role">
-                                    <span>@Culture["Profile.ReferenceContact"]</span>
-                                    <input @bind="_references[idx].ContactName" />
-                                </label>
+                            <fieldset class="profile-certificates">
+                                <legend>@Culture["Profile.Certificates"]</legend>
+                                @for (var i = 0; i < _certificates.Count; i++)
+                                {
+                                    var idx = i;
+                                    <div class="profile-cert-row">
+                                        <label class="profile-cert-row__year">
+                                            <span class="visually-hidden">@Culture["Profile.CertificateYear"]</span>
+                                            <input type="number"
+                                                   min="1950"
+                                                   max="2100"
+                                                   placeholder="@Culture["Profile.CertificateYear"]"
+                                                   @bind="_certificates[idx].Year" />
+                                        </label>
+                                        <label class="profile-cert-row__name">
+                                            <span class="visually-hidden">@Culture["Profile.CertificateName"]</span>
+                                            <input type="text"
+                                                   maxlength="200"
+                                                   placeholder="@Culture["Profile.CertificateName"]"
+                                                   @bind="_certificates[idx].Name" />
+                                        </label>
+                                        <button type="button"
+                                                class="icon-btn icon-btn--danger"
+                                                title="@Culture["Profile.RemoveCertificate"]"
+                                                aria-label="@Culture["Profile.RemoveCertificate"]"
+                                                @onclick="() => RemoveCertificate(idx)">
+                                            @((MarkupString)ActionIcons.Trash)
+                                        </button>
+                                    </div>
+                                }
                                 <button type="button"
-                                        class="icon-btn icon-btn--danger"
-                                        title="@Culture["Profile.RemoveReference"]"
-                                        aria-label="@Culture["Profile.RemoveReference"]"
-                                        @onclick="() => RemoveReference(idx)">
-                                    @((MarkupString)ActionIcons.Trash)
+                                        class="icon-btn icon-btn--add"
+                                        title="@Culture["Profile.AddCertificate"]"
+                                        aria-label="@Culture["Profile.AddCertificate"]"
+                                        @onclick="AddCertificate">
+                                    <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round">
+                                        <path d="M12 5v14" /><path d="M5 12h14" />
+                                    </svg>
                                 </button>
-                            </div>
-                            <div class="profile-employer-card__dates">
-                                <label class="profile-employer-card__field">
-                                    <span>@Culture["Profile.ReferenceEmail"]</span>
-                                    <input type="email" @bind="_references[idx].Email" />
-                                </label>
-                                <label class="profile-employer-card__field">
-                                    <span>@Culture["Profile.ReferencePhone"]</span>
-                                    <input type="tel" @bind="_references[idx].Phone" />
-                                </label>
-                            </div>
+                            </fieldset>
+
+                            <fieldset class="profile-employers">
+                                <legend>@Culture["Profile.References"]</legend>
+                                <p class="profile-employers__hint">@Culture["Profile.ReferencesLead"]</p>
+                                @for (var i = 0; i < _references.Count; i++)
+                                {
+                                    var idx = i;
+                                    <div class="profile-employer-card">
+                                        <div class="profile-employer-card__top">
+                                            <label class="profile-employer-card__field profile-employer-card__field--employer">
+                                                <span>@Culture["Profile.ReferenceEmployer"]</span>
+                                                <input @bind="_references[idx].EmployerName" />
+                                            </label>
+                                            <label class="profile-employer-card__field profile-employer-card__field--role">
+                                                <span>@Culture["Profile.ReferenceContact"]</span>
+                                                <input @bind="_references[idx].ContactName" />
+                                            </label>
+                                            <button type="button"
+                                                    class="icon-btn icon-btn--danger"
+                                                    title="@Culture["Profile.RemoveReference"]"
+                                                    aria-label="@Culture["Profile.RemoveReference"]"
+                                                    @onclick="() => RemoveReference(idx)">
+                                                @((MarkupString)ActionIcons.Trash)
+                                            </button>
+                                        </div>
+                                        <div class="profile-employer-card__dates">
+                                            <label class="profile-employer-card__field">
+                                                <span>@Culture["Profile.ReferenceEmail"]</span>
+                                                <input type="email" @bind="_references[idx].Email" />
+                                            </label>
+                                            <label class="profile-employer-card__field">
+                                                <span>@Culture["Profile.ReferencePhone"]</span>
+                                                <input type="tel" @bind="_references[idx].Phone" />
+                                            </label>
+                                        </div>
+                                    </div>
+                                }
+                                <button type="button"
+                                        class="icon-btn icon-btn--add"
+                                        title="@Culture["Profile.AddReference"]"
+                                        aria-label="@Culture["Profile.AddReference"]"
+                                        @onclick="AddReference"
+                                        disabled="@(_references.Count >= CandidateReferenceRules.MaxPerCandidate)">
+                                    <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round">
+                                        <path d="M12 5v14" /><path d="M5 12h14" />
+                                    </svg>
+                                </button>
+                            </fieldset>
+
+                            @if (_authenticatorEnabled)
+                            {
+                                <p class="login-lead">@Culture["Profile.AuthenticatorHint"]</p>
+                            }
+
+                            <button class="engagement-btn" type="button" disabled="@(_saving || _pdfBusy)" @onclick="DownloadLobsyCvAsync">
+                                @(_pdfBusy ? Culture["Common.Loading"] : Culture["Profile.DownloadLobsyCv"])
+                            </button>
+                            <p class="profile-address__hint">@Culture["Profile.LobsyCvHint"]</p>
                         </div>
                     }
-                    <button type="button"
-                            class="icon-btn icon-btn--add"
-                            title="@Culture["Profile.AddReference"]"
-                            aria-label="@Culture["Profile.AddReference"]"
-                            @onclick="AddReference"
-                            disabled="@(_references.Count >= CandidateReferenceRules.MaxPerCandidate)">
-                        <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round">
-                            <path d="M12 5v14" /><path d="M5 12h14" />
-                        </svg>
+                </div>
+
+                <div class="profile-save-bar">
+                    <button class="login-submit" type="button" disabled="@_saving" @onclick="SaveAsync">
+                        @Culture["Common.Save"]
                     </button>
-                </fieldset>
-
-                @if (_authenticatorEnabled)
-                {
-                    <p class="login-lead">@Culture["Profile.AuthenticatorHint"]</p>
-                }
-
-                <button class="login-submit" type="button" disabled="@_saving" @onclick="SaveAsync">
-                    @Culture["Common.Save"]
-                </button>
-                <button class="engagement-btn" type="button" disabled="@(_saving || _pdfBusy)" @onclick="DownloadLobsyCvAsync">
-                    @(_pdfBusy ? Culture["Common.Loading"] : Culture["Profile.DownloadLobsyCv"])
-                </button>
-                <p class="profile-address__hint">@Culture["Profile.LobsyCvHint"]</p>
-                @if (!string.IsNullOrEmpty(_message))
-                {
-                    <p class="state-message">@_message</p>
-                }
+                    @if (!string.IsNullOrEmpty(_message))
+                    {
+                        <p class="state-message profile-save-bar__message">@_message</p>
+                    }
+                </div>
             </div>
         }
     </article>
@@ -512,6 +582,8 @@
     private bool _suggesting;
     private CancellationTokenSource? _suggestCts;
     private int _suggestGeneration;
+    private string _openSection = "personal";
+    private static readonly string[] WeekdayCodes = ["Ma", "Di", "Wo", "Do", "Vr"];
 
     [SupplyParameterFromQuery(Name = "returnUrl")]
     public string? ReturnUrl { get; set; }
@@ -706,6 +778,60 @@
         {
             _availability.Clear();
         }
+    }
+
+    private bool IsSectionOpen(string id)
+        => string.Equals(_openSection, id, StringComparison.Ordinal);
+
+    private void ToggleSection(string id)
+        => _openSection = id;
+
+    private void ApplyAvailabilityPreset(string preset)
+    {
+        if (preset == "flexible")
+        {
+            _flexibleTimes = true;
+            _availability.Clear();
+            return;
+        }
+
+        _flexibleTimes = false;
+        _availability.Clear();
+        var slots = preset == "evenings" ? new[] { "Avond" } : new[] { "Ochtend", "Middag" };
+        foreach (var day in WeekdayCodes)
+        {
+            foreach (var slot in slots)
+            {
+                _availability.Add($"{day}:{slot}");
+            }
+        }
+    }
+
+    private bool IsOfficeHoursPreset()
+        => MatchesPreset(["Ochtend", "Middag"]);
+
+    private bool IsEveningsPreset()
+        => MatchesPreset(["Avond"]);
+
+    private bool MatchesPreset(string[] slots)
+    {
+        if (_flexibleTimes || _availability.Count != WeekdayCodes.Length * slots.Length)
+        {
+            return false;
+        }
+
+        foreach (var day in WeekdayCodes)
+        {
+            foreach (var slot in slots)
+            {
+                if (!_availability.Contains($"{day}:{slot}"))
+                {
+                    return false;
+                }
+            }
+        }
+
+        return true;
     }
 
     private void AddEmployer() => _employers.Add(new CandidateEmployerHistory());

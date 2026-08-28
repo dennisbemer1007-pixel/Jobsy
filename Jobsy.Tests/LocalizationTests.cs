@@ -49,6 +49,8 @@ public class LocalizationTests
             "Apps.AppliedOn",
             "Apps.Wizard.InReview",
             "Profile.Title",
+            "Profile.Section.Personal",
+            "Profile.PresetOffice",
             "HowLobsy.Title",
             "Share.Title",
             "Metrics.Welcome",
