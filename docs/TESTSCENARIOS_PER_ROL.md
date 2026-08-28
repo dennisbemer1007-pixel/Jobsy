@@ -432,8 +432,8 @@ Account: `ondernemer@jobsy.local`. Bottom-nav: Home · Banenkaart · Vacatures �
 | Filiaalmanager | Sollicitaties `/branch/applicants`: filters Alles/Open/Accepted/Matched/Rejected. | Client filter; telling klopt (alleen e-mail-verified). |
 | Filiaalmanager | Applicants: rij uitklappen vóór Accept. | Motivatie, afstand (km zonder adres), beschikbaarheid, leeftijd, match-%; **geen** naam/e-mail/telefoon/adres/CV; copy ‘accepteer om te tonen’. |
 | Filiaalmanager | Download Lobsy-CV / eigen CV vóór Accept. | Knoppen weg of 403; geen PDF. |
-| Filiaalmanager | **Accepteren**. | Status Accepted; PII + beide CV-downloads zichtbaar. |
-| Filiaalmanager | Na Accept: naam/e-mail/telefoon/adres zichtbaar. | Progressive disclosure; recensie-contacten niet vóór Accept. |
+| Filiaalmanager | **Accepteren**. | Status Accepted; naam/adres + beide CV-downloads zichtbaar; e-mail/telefoon nog niet. |
+| Filiaalmanager | Na Accept: naam/adres zichtbaar; e-mail/telefoon pas na Hired. | Progressive disclosure; recensie-contacten niet vóór Accept. |
 | Filiaalmanager | **Weigeren** → confirm **Weigeren**. | Rejected; PII blijft verborgen. |
 | Filiaalmanager | Weigeren: dialog sluiten/annuleren. | Status ongewijzigd. |
 | Filiaalmanager | Na Accept: **Uitnodigen**. | EmployerContacting. |
@@ -441,7 +441,7 @@ Account: `ondernemer@jobsy.local`. Bottom-nav: Home · Banenkaart · Vacatures �
 | Filiaalmanager | Match: overige afwijzen aan, sluiten vacature aan. | Andere kandidaten FilledElsewhere/Rejected; vacature niet meer Active. |
 | Filiaalmanager | Match: beide opties uit. | Alleen deze Hired; vacature/anderen volgens rules. |
 | Filiaalmanager | Match/invite/reject API-fout. | Fout; status rollback visueel. |
-| Filiaalmanager | Download Lobsy-CV na Accept. | PDF. |
+| Filiaalmanager | Download Lobsy-CV na Accept. | PDF zonder e-mail/telefoon tot Hired. |
 | Filiaalmanager | Download geüpload CV na Accept (als aanwezig). | Bestand; ontbreekt: knop weg. |
 | Filiaalmanager | Match-% kleur + breakdown klikken. | Breakdown-modal; vangnet-indicatie indien ViaSafetyNet. |
 | Filiaalmanager | Applicants van vacature andere vestiging (ID in URL/API). | Leeg of 403; tenant-scope. |

@@ -353,6 +353,13 @@ public static class UatScriptRunner
             Assert.True(ApplicationRules.IsPiiRevealed(Jobsy.Core.Enums.ApplicationStatus.Hired));
         }
 
+        if (Contains(blob, "pas na Hired", "e-mail/telefoon pas"))
+        {
+            Assert.False(ApplicationRules.IsDirectContactRevealed(Jobsy.Core.Enums.ApplicationStatus.Accepted));
+            Assert.False(ApplicationRules.IsDirectContactRevealed(Jobsy.Core.Enums.ApplicationStatus.EmployerContacting));
+            Assert.True(ApplicationRules.IsDirectContactRevealed(Jobsy.Core.Enums.ApplicationStatus.Hired));
+        }
+
         if (Contains(blob, "Gulden Middenweg", "match < 50", "vangnet", "ViaSafetyNet"))
         {
             Assert.Equal(50, MatchScoreWeights.GuldenMiddenwegThreshold);

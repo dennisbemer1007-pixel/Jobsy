@@ -1,4 +1,6 @@
 @page "/branch/applicants"
+@using Jobsy.Core.Enums
+@using Jobsy.Core.Rules
 @rendermode @(new InteractiveServerRenderMode(prerender: false))
 @attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "BranchManager,RegionalManager,EnterpriseManager,Intermediary,Admin")]
 @inject JobsyApiClient Api
@@ -400,7 +402,8 @@
     }
 
     private static bool IsDirectContactVisible(EmployerApplicationItem item)
-        => string.Equals(item.Status, "Hired", StringComparison.OrdinalIgnoreCase);
+        => Enum.TryParse<ApplicationStatus>(item.Status, ignoreCase: true, out var status)
+           && ApplicationRules.IsDirectContactRevealed(status);
 
     private static string DigitsOnly(string phone)
         => new string(phone.Where(char.IsDigit).ToArray());

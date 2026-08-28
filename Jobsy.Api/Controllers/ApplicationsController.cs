@@ -218,7 +218,10 @@ public class ApplicationsController : ControllerBase
                 });
             }
 
-            var model = BuildApplicationCvModel(application, includePii: true);
+            var model = LobsyCvModelFactory.FromApplicationForDownload(
+                application,
+                includePii: true,
+                includeDirectContact: true);
             var pdf = await _lobsyCvPdf.RenderAsync(model, cancellationToken);
             return File(pdf, "application/pdf", _lobsyCvPdf.BuildFileName(model));
         }
@@ -242,7 +245,10 @@ public class ApplicationsController : ControllerBase
             });
         }
 
-        var employerModel = BuildApplicationCvModel(application, includePii: true);
+        var employerModel = LobsyCvModelFactory.FromApplicationForDownload(
+            application,
+            includePii: true,
+            includeDirectContact: ApplicationRules.IsDirectContactRevealed(application.Status));
         var employerPdf = await _lobsyCvPdf.RenderAsync(employerModel, cancellationToken);
         return File(employerPdf, "application/pdf", _lobsyCvPdf.BuildFileName(employerModel));
     }
@@ -1340,51 +1346,6 @@ public class ApplicationsController : ControllerBase
         snapshot.Content = uploaded.Content;
         snapshot.SizeBytes = uploaded.SizeBytes;
         application.UploadedCv = snapshot;
-    }
-
-    private static LobsyCvModel BuildApplicationCvModel(Core.Entities.Application application, bool includePii)
-    {
-        var vacancy = application.Vacancy;
-        var display = IntermediaryVacancyRules.ResolvePublicDisplay(
-            vacancy,
-            vacancy.Company,
-            vacancy.IntermediaryCompany);
-        var workplaceLat = display.Latitude != 0 ? display.Latitude : vacancy.Location?.Latitude;
-        var workplaceLng = display.Longitude != 0 ? display.Longitude : vacancy.Location?.Longitude;
-
-        return LobsyCvModelFactory.FromApplicationSnapshot(
-            application.CandidateName,
-            includePii ? application.CandidateEmail : null,
-            includePii ? application.SnapshotPhoneNumber : null,
-            includePii && application.SnapshotWhatsAppAllowed,
-            city: null,
-            address: null,
-            latitude: null,
-            longitude: null,
-            application.SnapshotAboutMe,
-            application.Motivation,
-            application.PreferredTransport,
-            application.EstimatedTravelMinutes,
-            application.SnapshotAvailabilityJson,
-            application.SnapshotDrivingLicenses,
-            application.SnapshotEducations,
-            application.SnapshotCertificatesJson,
-            application.CandidateEmployerCount,
-            application.MatchPercent,
-            vacancy.Title,
-            display.DisplayName,
-            application.ConsentVersion,
-            DateTime.UtcNow,
-            includeFullAddress: false,
-            includeContactDetails: includePii,
-            dateOfBirth: includePii ? application.SnapshotDateOfBirth : null,
-            ageYears: application.CandidateAgeYears,
-            workplaceLatitude: workplaceLat,
-            workplaceLongitude: workplaceLng,
-            workplaceAddress: display.DisplayAddress,
-            maxTravelMinutes: null,
-            distanceKm: application.DistanceKm,
-            hasUploadedOwnCv: application.HasUploadedCv);
     }
 
     private async Task SendApplicationConfirmationAsync(

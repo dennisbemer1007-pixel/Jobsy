@@ -72,19 +72,20 @@ CanDownloadLobsyCvPdf(caller, application):
   4. Anders → DENY 403
 ```
 
-**Regel:** UI-verbergen is niet genoeg. Elk PDF-endpoint herhaalt dezelfde check als `MapEmployerDto` / list-mapping (`revealed = Accepted | EmployerContacting | Hired`).
+**Regel:** UI-verbergen is niet genoeg. Elk PDF-endpoint herhaalt dezelfde check als `MapEmployerDto` / list-mapping (`revealed = Accepted | EmployerContacting | Hired`). Direct contact in het platform-Lobsy-CV (e-mail/telefoon) extra: alleen `Hired`.
 
 ### 2.2 Progressive disclosure — wat de werkgever wél/niet ziet
 
-| Data | Pre-Accept (Pending) | Post-Accept |
-|------|----------------------|-------------|
-| Match %, breakdown, ViaSafetyNet | Ja | Ja |
-| Motivatie (tekst) | Ja (bestaand) | Ja |
-| Reistijd / transport (niet-PII) | Ja | Ja |
-| Naam, e-mail, adres, stad, afstand | Nee | Ja |
-| Snapshots (AboutMe, licenses, …) | Nee | Ja |
-| **Lobsy-CV PDF download/preview** | **Nee** | **Ja** |
-| Knop “Download Lobsy-CV” in UI | Verborgen + disabled | Zichtbaar |
+| Data | Pre-Accept (Pending) | Post-Accept | Hired |
+|------|----------------------|-------------|-------|
+| Match %, ViaSafetyNet | Ja | Ja | Ja |
+| Motivatie (tekst) | Ja (bestaand) | Ja | Ja |
+| Reistijd / transport (niet-PII) | Ja | Ja | Ja |
+| Naam, adres, stad, afstand | Nee | Ja | Ja |
+| Snapshots (AboutMe, licenses, …) | Nee | Ja | Ja |
+| E-mail, telefoon, school-e-mail, WhatsApp | Nee | Nee | Ja |
+| **Lobsy-CV PDF download/preview** | **Nee** | **Ja (zonder contact)** | **Ja (met contact)** |
+| Knop “Download Lobsy-CV” in UI | Verborgen + disabled | Zichtbaar | Zichtbaar |
 
 Motivatie blijft pre-accept zichtbaar als *tekst in de sollicitatiekaart* (bestaand contract). De **PDF** bundelt PII + snapshots → daarom strenger: pas na Accept.
 

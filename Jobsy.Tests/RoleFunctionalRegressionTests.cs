@@ -582,6 +582,53 @@ public class RoleFunctionalRegressionTests : IClassFixture<RoleFunctionalWebAppF
     }
 
     [Fact]
+    public async Task Employer_lobsy_cv_pdf_hides_direct_contact_until_hired()
+    {
+        var (vacancyId, applicationId) = await _factory.SeedVacancyWithPendingApplicationAsync();
+        var client = EmployerClient();
+
+        var pendingPdf = await client.GetAsync($"api/applications/{applicationId}/lobsy-cv.pdf");
+        Assert.Equal(HttpStatusCode.Forbidden, pendingPdf.StatusCode);
+
+        var accept = await client.PostAsJsonAsync(
+            $"api/applications/{applicationId}/react",
+            new ReactToApplicationRequest(ApplicationStatus.Accepted));
+        Assert.Equal(HttpStatusCode.OK, accept.StatusCode);
+
+        var acceptedPdfResponse = await client.GetAsync($"api/applications/{applicationId}/lobsy-cv.pdf");
+        Assert.Equal(HttpStatusCode.OK, acceptedPdfResponse.StatusCode);
+        Assert.Equal("application/pdf", acceptedPdfResponse.Content.Headers.ContentType?.MediaType);
+        var acceptedPdf = await acceptedPdfResponse.Content.ReadAsByteArrayAsync();
+        Assert.True(acceptedPdf.Length > 500);
+
+        var acceptedList = await client.GetFromJsonAsync<List<JsonElement>>(
+            $"api/applications?vacancyId={vacancyId}",
+            JsonOpts);
+        var acceptedRow = Assert.Single(acceptedList!, a => a.GetProperty("id").GetGuid() == applicationId);
+        Assert.Equal(JsonValueKind.Null, acceptedRow.GetProperty("candidateEmail").ValueKind);
+        Assert.Equal(JsonValueKind.Null, acceptedRow.GetProperty("candidatePhone").ValueKind);
+
+        var hire = await client.PostAsJsonAsync(
+            $"api/applications/vacancies/{vacancyId}/fulfill/{applicationId}",
+            new FulfillVacancyRequest(RejectOtherApplications: false));
+        Assert.Equal(HttpStatusCode.OK, hire.StatusCode);
+
+        var hiredList = await client.GetFromJsonAsync<List<JsonElement>>(
+            $"api/applications?vacancyId={vacancyId}",
+            JsonOpts);
+        var hired = Assert.Single(hiredList!, a => a.GetProperty("id").GetGuid() == applicationId);
+        Assert.Equal(nameof(ApplicationStatus.Hired), hired.GetProperty("status").GetString());
+        Assert.Equal(_factory.CandidateEmail, hired.GetProperty("candidateEmail").GetString());
+        Assert.Equal("0611122233", hired.GetProperty("candidatePhone").GetString());
+
+        var hiredPdfResponse = await client.GetAsync($"api/applications/{applicationId}/lobsy-cv.pdf");
+        Assert.Equal(HttpStatusCode.OK, hiredPdfResponse.StatusCode);
+        var hiredPdf = await hiredPdfResponse.Content.ReadAsByteArrayAsync();
+        Assert.True(hiredPdf.Length > 500);
+        Assert.True(hiredPdf.Length > acceptedPdf.Length);
+    }
+
+    [Fact]
     public async Task Employer_cannot_access_admin_integrations()
     {
         var client = EmployerClient();
@@ -1556,6 +1603,7 @@ public sealed class RoleFunctionalWebAppFactory : WebApplicationFactory<Program>
                 PreferredTransport = "Fiets",
                 EstimatedTravelMinutes = 12,
                 DistanceKm = 2.1,
+                SnapshotPhoneNumber = "0619988777",
                 Status = ApplicationStatus.Accepted,
                 EmailVerifiedAt = DateTime.UtcNow.AddHours(-3),
                 WorkPermitConfirmed = true,
@@ -1651,7 +1699,9 @@ public sealed class RoleFunctionalWebAppFactory : WebApplicationFactory<Program>
             EstimatedTravelMinutes = 10,
             DistanceKm = 2.5,
             CandidateAgeYears = 26,
-            Status = ApplicationStatus.Pending,
+            SnapshotPhoneNumber = "0611122233",
+                SnapshotWhatsAppAllowed = true,
+                Status = ApplicationStatus.Pending,
             EmailVerifiedAt = DateTime.UtcNow.AddMinutes(-30),
             WorkPermitConfirmed = true,
             MatchPercent = 80,

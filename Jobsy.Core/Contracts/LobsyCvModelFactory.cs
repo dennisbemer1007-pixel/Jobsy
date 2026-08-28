@@ -1,5 +1,6 @@
 using System.Text;
 using System.Text.Json;
+using Jobsy.Core.Entities;
 using Jobsy.Core.Privacy;
 using Jobsy.Core.Rules;
 
@@ -195,6 +196,60 @@ public static class LobsyCvModelFactory
             ReachTravelMinutes: reachMinutes,
             DistanceKm: distanceKm is > 0 ? distanceKm : null,
             HasUploadedOwnCv: hasUploadedOwnCv);
+    }
+
+    /// <summary>
+    /// Application snapshot PDF: name/CV after Accept; e-mail/phone only when
+    /// <paramref name="includeDirectContact"/> is true (Hired for employers; always for the candidate).
+    /// </summary>
+    public static LobsyCvModel FromApplicationForDownload(
+        Application application,
+        bool includePii,
+        bool includeDirectContact)
+    {
+        var vacancy = application.Vacancy
+            ?? throw new InvalidOperationException("Application.Vacancy is required to build a Lobsy-CV.");
+        var display = IntermediaryVacancyRules.ResolvePublicDisplay(
+            vacancy,
+            vacancy.Company,
+            vacancy.IntermediaryCompany);
+        var workplaceLat = display.Latitude != 0 ? display.Latitude : vacancy.Location?.Latitude;
+        var workplaceLng = display.Longitude != 0 ? display.Longitude : vacancy.Location?.Longitude;
+        var contact = includePii && includeDirectContact;
+
+        return FromApplicationSnapshot(
+            application.CandidateName,
+            contact ? application.CandidateEmail : null,
+            contact ? application.SnapshotPhoneNumber : null,
+            contact && application.SnapshotWhatsAppAllowed,
+            city: null,
+            address: null,
+            latitude: null,
+            longitude: null,
+            application.SnapshotAboutMe,
+            application.Motivation,
+            application.PreferredTransport,
+            application.EstimatedTravelMinutes,
+            application.SnapshotAvailabilityJson,
+            application.SnapshotDrivingLicenses,
+            application.SnapshotEducations,
+            application.SnapshotCertificatesJson,
+            application.CandidateEmployerCount,
+            application.MatchPercent,
+            vacancy.Title,
+            display.DisplayName,
+            application.ConsentVersion,
+            DateTime.UtcNow,
+            includeFullAddress: false,
+            includeContactDetails: contact,
+            dateOfBirth: contact ? application.SnapshotDateOfBirth : null,
+            ageYears: application.CandidateAgeYears,
+            workplaceLatitude: workplaceLat,
+            workplaceLongitude: workplaceLng,
+            workplaceAddress: display.DisplayAddress,
+            maxTravelMinutes: null,
+            distanceKm: application.DistanceKm,
+            hasUploadedOwnCv: application.HasUploadedCv);
     }
 
     public static string SerializeCertificatesSnapshot(
