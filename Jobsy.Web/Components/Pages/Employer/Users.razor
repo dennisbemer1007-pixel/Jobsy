@@ -116,7 +116,7 @@
                                         <button type="button" class="user-card__menu-item" role="menuitem" @onclick="() => StartEdit(u)">
                                             Rol wijzigen
                                         </button>
-                                        <button type="button" class="user-card__menu-item user-card__menu-item--danger" role="menuitem" disabled="@_busy" @onclick="() => DeactivateAsync(u)">
+                                        <button type="button" class="user-card__menu-item user-card__menu-item--danger" role="menuitem" disabled="@_busy" @onclick="() => RequestDeactivate(u)">
                                             Deactiveren
                                         </button>
                                     </div>
@@ -127,6 +127,14 @@
                             <span class="role-badge @RoleBadgeClass(u.Role)">@RoleLabel(u.Role)</span>
                             <span class="user-card__branch">@(u.CompanyName ?? "—")</span>
                         </div>
+                        @if (_confirmDeactivateId == u.Id)
+                        {
+                            <div class="user-card__confirm" role="group" aria-label="Deactiveren bevestigen">
+                                <p>@u.FullName deactiveren?</p>
+                                <button type="button" class="btn-compact" disabled="@_busy" @onclick="CancelDeactivate">Annuleren</button>
+                                <button type="button" class="btn-compact user-card__confirm-yes" disabled="@_busy" @onclick="() => DeactivateAsync(u)">Bevestigen</button>
+                            </div>
+                        }
                     </article>
                 }
             </div>
@@ -260,6 +268,7 @@
     private string _branchFilter = "";
     private bool _isAdmin;
     private Guid? _menuUserId;
+    private Guid? _confirmDeactivateId;
 
     private CompanyUserItem? _editing;
     private string _editFullName = "";
@@ -319,7 +328,19 @@
     }
 
     private void ToggleMenu(Guid userId)
-        => _menuUserId = _menuUserId == userId ? null : userId;
+    {
+        _confirmDeactivateId = null;
+        _menuUserId = _menuUserId == userId ? null : userId;
+    }
+
+    private void RequestDeactivate(CompanyUserItem user)
+    {
+        _menuUserId = null;
+        _confirmDeactivateId = user.Id;
+    }
+
+    private void CancelDeactivate()
+        => _confirmDeactivateId = null;
 
     private async Task OnMenuFocusOut(FocusEventArgs _)
     {
@@ -331,6 +352,7 @@
     private void StartEdit(CompanyUserItem user)
     {
         _menuUserId = null;
+        _confirmDeactivateId = null;
         _editing = user;
         _editFullName = user.FullName;
         _editRole = IsRoleAllowed(user.Role) ? user.Role : RoleOptions[0].Value;
@@ -469,6 +491,7 @@
         }
         finally
         {
+            _confirmDeactivateId = null;
             _busy = false;
         }
     }

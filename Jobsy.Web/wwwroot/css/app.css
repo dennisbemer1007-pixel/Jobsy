@@ -14730,6 +14730,28 @@ html.cookie-consent-known .cookie-consent {
     cursor: not-allowed;
 }
 
+.user-card__confirm {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.45rem;
+    padding-top: 0.55rem;
+    border-top: 1px solid var(--border);
+}
+
+.user-card__confirm p {
+    margin: 0;
+    flex: 1 1 8rem;
+    font-size: 0.82rem;
+    color: var(--text);
+}
+
+.user-card__confirm-yes {
+    background: var(--danger-soft);
+    border-color: color-mix(in srgb, var(--danger) 35%, var(--border));
+    color: var(--danger);
+}
+
 .invite-form {
     display: flex;
     flex-direction: column;
@@ -15140,10 +15162,6 @@ html.cookie-consent-known .cookie-consent {
 }
 
 @media (max-width: 1024px) {
-    .app-main {
-        padding-bottom: var(--bottom-nav-clearance);
-    }
-
     .app-shell.has-bottom-nav .app-main,
     .app-shell:has(.bottom-nav) .app-main {
         padding-bottom: calc(var(--bottom-nav-clearance) + env(safe-area-inset-bottom, 0px));
