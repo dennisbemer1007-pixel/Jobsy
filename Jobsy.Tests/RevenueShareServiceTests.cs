@@ -77,14 +77,14 @@ public class RevenueShareServiceTests
         var logs = await db.RevenueShareLogs.Where(l => l.TokenCheckoutId == checkoutId).ToListAsync();
         Assert.Equal(3, logs.Count);
         Assert.Contains(logs, l => l.RecipientKind == RevenueShareRecipientKind.Ambassador && l.Percentage == 15m && l.Tokens == 1.5m);
-        Assert.Contains(logs, l => l.RecipientKind == RevenueShareRecipientKind.SalesManager && l.AmountEuro == 15m);
-        Assert.Contains(logs, l => l.RecipientKind == RevenueShareRecipientKind.Platform && l.AmountEuro == 70m);
+        Assert.Contains(logs, l => l.RecipientKind == RevenueShareRecipientKind.SalesManager && l.AmountEuro == 25m);
+        Assert.Contains(logs, l => l.RecipientKind == RevenueShareRecipientKind.Platform && l.AmountEuro == 60m);
 
         var balance = await tokens.GetBalanceAsync(companyId);
         Assert.Equal(1.5m, balance);
 
         var smBalance = await commissions.GetBalanceExVatAsync(smId);
-        Assert.Equal(15.00m, smBalance);
+        Assert.Equal(25.00m, smBalance);
     }
 
     private static void SeedCommercialSettings(JobsyDbContext db)

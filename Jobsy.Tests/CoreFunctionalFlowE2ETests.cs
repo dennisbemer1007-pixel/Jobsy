@@ -217,13 +217,13 @@ public class CoreFunctionalFlowE2ETests
         var (exVatCents, _, _) = TokenVatPricing.SplitInclVatEuros(paidCheckout.AmountEuro);
         var purchaseExVat = TokenVatPricing.FromCents(exVatCents);
         var expectedDirect = SalesCommissionRules.ShareEuro(
-            purchaseExVat, SalesCommissionRules.DefaultDirectCommissionRate);
+            purchaseExVat, SalesCommissionRules.DefaultReferredYear1DirectCommissionRate);
         var expectedIndirect = SalesCommissionRules.ShareEuro(
             purchaseExVat, SalesCommissionRules.DefaultIndirectCommissionRate);
         Assert.True(expectedDirect > 0m);
         Assert.True(expectedIndirect > 0m);
         Assert.Equal(
-            Math.Round(purchaseExVat * 0.25m, 2, MidpointRounding.AwayFromZero),
+            Math.Round(purchaseExVat * 0.20m, 2, MidpointRounding.AwayFromZero),
             expectedDirect);
         Assert.Equal(
             Math.Round(purchaseExVat * 0.05m, 2, MidpointRounding.AwayFromZero),
@@ -312,7 +312,7 @@ public class CoreFunctionalFlowE2ETests
     }
 
     [Fact]
-    public async Task Commission_window_stops_after_one_year_from_entrepreneur_onboarding()
+    public async Task Commission_window_stops_after_three_years_from_entrepreneur_onboarding()
     {
         await using var db = CreateDb();
         SeedCommercialSettings(db);
@@ -326,7 +326,7 @@ public class CoreFunctionalFlowE2ETests
         CompleteOnboarding(db, direct.UserId, "SM-YEARD1");
 
         var companyId = Guid.NewGuid();
-        var started = DateTime.UtcNow.AddYears(-1).AddDays(-1);
+        var started = DateTime.UtcNow.AddYears(-3).AddDays(-1);
         db.Companies.Add(new Company
         {
             Id = companyId,

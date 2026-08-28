@@ -15,8 +15,8 @@ using Microsoft.Extensions.Options;
 namespace Jobsy.Tests;
 
 /// <summary>
-/// End-to-end: Mollie paid checkout fulfillment → real-time direct (15%) + upline (3%)
-/// commission ledger credits → salesmanager dashboard balance, with 1-year window enforcement.
+/// End-to-end: Mollie paid checkout fulfillment → real-time direct (25% / referred 20%) + upline (5%)
+/// commission ledger credits → salesmanager dashboard balance, with 3-year staffel window.
 /// </summary>
 public class MollieWebhookCommissionSettlementTests
 {
@@ -93,7 +93,7 @@ public class MollieWebhookCommissionSettlementTests
     }
 
     [Fact]
-    public async Task Webhook_fulfillment_skips_sm_commission_after_one_year_window()
+    public async Task Webhook_fulfillment_skips_sm_commission_after_three_year_window()
     {
         await using var db = CreateDb();
         SeedCommercialSettings(db);
@@ -102,7 +102,7 @@ public class MollieWebhookCommissionSettlementTests
         var parentSmId = Guid.NewGuid();
         var directSmId = Guid.NewGuid();
         var companyId = Guid.NewGuid();
-        var started = DateTime.UtcNow.AddYears(-1).AddDays(-2);
+        var started = DateTime.UtcNow.AddYears(-3).AddDays(-2);
         SeedHierarchy(db, parentSmId, directSmId, companyId, started);
 
         var (ex, vat, total) = TokenVatPricing.SplitInclVatEuros(40.00m);

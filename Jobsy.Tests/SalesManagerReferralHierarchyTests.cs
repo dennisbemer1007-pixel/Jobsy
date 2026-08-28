@@ -143,24 +143,24 @@ public class SalesManagerReferralHierarchyTests
             checkoutId, companyId, null, packSize: 10, purchaseAmountExVatEuro: 100m,
             childId, now.AddMonths(-2));
 
-        Assert.Equal(15.00m, await commissions.GetBalanceExVatAsync(childId));
-        Assert.Equal(3.00m, await commissions.GetBalanceExVatAsync(parentId));
+        Assert.Equal(20.00m, await commissions.GetBalanceExVatAsync(childId));
+        Assert.Equal(5.00m, await commissions.GetBalanceExVatAsync(parentId));
 
         var logs = await db.RevenueShareLogs.Where(l => l.TokenCheckoutId == checkoutId).ToListAsync();
-        Assert.Contains(logs, l => l.RecipientKind == RevenueShareRecipientKind.SalesManager && l.AmountEuro == 15m);
-        Assert.Contains(logs, l => l.RecipientKind == RevenueShareRecipientKind.IndirectSalesManager && l.AmountEuro == 3m);
-        Assert.Contains(logs, l => l.RecipientKind == RevenueShareRecipientKind.Platform && l.AmountEuro == 67m);
+        Assert.Contains(logs, l => l.RecipientKind == RevenueShareRecipientKind.SalesManager && l.AmountEuro == 20m);
+        Assert.Contains(logs, l => l.RecipientKind == RevenueShareRecipientKind.IndirectSalesManager && l.AmountEuro == 5m);
+        Assert.Contains(logs, l => l.RecipientKind == RevenueShareRecipientKind.Platform && l.AmountEuro == 60m);
     }
 
     [Fact]
-    public async Task Commission_stops_after_one_year_window()
+    public async Task Commission_stops_after_three_year_window()
     {
         await using var db = CreateDb();
         SeedCommercialSettings(db);
 
         var smId = Guid.NewGuid();
         var companyId = Guid.NewGuid();
-        var started = DateTime.UtcNow.AddYears(-1).AddDays(-1);
+        var started = DateTime.UtcNow.AddYears(-3).AddDays(-1);
         db.Users.Add(new User
         {
             Id = smId, Email = "sm@t.local", FullName = "SM", Role = UserRole.SalesManager, IsActive = true

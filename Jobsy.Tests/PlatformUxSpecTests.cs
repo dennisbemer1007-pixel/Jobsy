@@ -43,10 +43,16 @@ public class PlatformUxSpecTests
         var nextFn = js.IndexOf("function focus(id)", highlightIdx, StringComparison.Ordinal);
         var highlight = js[highlightIdx..nextFn];
         Assert.Contains("applyMarkerSelected", highlight);
-        Assert.Contains("classList.toggle", highlight);
         Assert.DoesNotContain("fillMarkerElement", highlight);
         Assert.DoesNotContain("innerHTML", highlight);
         Assert.DoesNotContain("style.zIndex", highlight);
+
+        var applyIdx = js.IndexOf("function applyMarkerSelected", StringComparison.Ordinal);
+        Assert.True(applyIdx > 0);
+        var applyEnd = js.IndexOf("function highlight(id)", applyIdx, StringComparison.Ordinal);
+        var apply = js[applyIdx..applyEnd];
+        Assert.Contains("classList.toggle", apply);
+        Assert.Contains("job-marker--active", apply);
     }
 
     [Fact]
