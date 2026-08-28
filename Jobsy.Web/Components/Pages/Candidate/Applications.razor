@@ -2,6 +2,7 @@
 @rendermode @(new InteractiveServerRenderMode(prerender: false))
 @attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Candidate,BranchManager,RegionalManager,EnterpriseManager,Intermediary,Admin")]
 @using Jobsy.Core.Authorization
+@using Jobsy.Core.Rules
 @using Jobsy.Web.Localization
 @using Microsoft.AspNetCore.Components.Authorization
 @inject JobsyApiClient Api
@@ -55,13 +56,33 @@
         <div class="table-list">
             @foreach (var a in _filtered)
             {
-                <div class="table-row application-row">
-                    <a class="application-row__link" href="@($"/vacancies/{a.VacancyId}")">
-                        <strong>@a.VacancyTitle</strong>
-                        <span class="muted">@a.CompanyName · @UiLabels.Transport(Culture, a.PreferredTransport) · @a.EstimatedTravelMinutes @Culture["Discovery.Minutes"]</span>
-                    </a>
-                    <div class="application-row__meta">
-                        <span class="status-pill status-pill--@a.Status.ToLowerInvariant()">@UiLabels.ApplicationStatus(Culture, a.Status)</span>
+                var steps = ApplicationStatusWizard.StepsFor(a.Status);
+                var current = ApplicationStatusWizard.CurrentStepIndex(a.Status);
+                var rejectedTrack = ApplicationStatusWizard.IsRejectedTrack(a.Status);
+                <article class="application-card">
+                    <div class="application-card__top">
+                        <a class="application-row__link" href="@($"/vacancies/{a.VacancyId}")">
+                            <strong>@a.VacancyTitle</strong>
+                            <span class="application-card__travel">
+                                @UiLabels.Transport(Culture, a.PreferredTransport) · @a.EstimatedTravelMinutes @Culture["Discovery.Minutes"]
+                            </span>
+                            <span class="muted">@a.CompanyName</span>
+                        </a>
+                    </div>
+                    <p class="application-card__date">@AppliedOnLabel(a.CreatedAt)</p>
+                    <ol class="application-stepper" aria-label="@Culture["Apps.StatusTrail"]">
+                        @for (var i = 0; i < steps.Length; i++)
+                        {
+                            var done = i < current;
+                            var isCurrent = i == current;
+                            var rejected = rejectedTrack && i == current;
+                            <li class="application-stepper__step @(done ? "is-done" : null) @(isCurrent ? "is-current" : null) @(rejected ? "is-rejected" : null)">
+                                <span class="application-stepper__bar" aria-hidden="true"></span>
+                                <span>@steps[i]</span>
+                            </li>
+                        }
+                    </ol>
+                    <div class="application-card__actions">
                         @if (!_readOnly)
                         {
                             <button type="button"
@@ -81,7 +102,7 @@
                             </button>
                         }
                     </div>
-                </div>
+                </article>
             }
         </div>
     }
@@ -101,6 +122,7 @@
     private Guid? _busyId;
     private bool _pdfBusy;
     private string? _message;
+    private static readonly System.Globalization.CultureInfo Dutch = new("nl-NL");
 
     protected override void OnInitialized()
         => Culture.Changed += OnCultureChanged;
@@ -172,6 +194,12 @@
 
     private static bool CanWithdraw(string status)
         => status == "Pending";
+
+    private static string AppliedOnLabel(DateTime createdAt)
+    {
+        var local = createdAt.ToLocalTime();
+        return $"Gesolliciteerd op {local.ToString("d MMM yyyy", Dutch).Replace(".", "")}";
+    }
 
     private async Task WithdrawAsync(ApplicationItem item)
     {

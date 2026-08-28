@@ -81,6 +81,22 @@ public class ExternalAuthAndInvitePromotionTests
     }
 
     [Fact]
+    public void ResolveCandidateReturnUrl_keeps_vacancy_deep_link()
+    {
+        Assert.Equal(
+            "/vacancies/abc",
+            AuthRedirects.ResolveCandidateReturnUrl("/vacancies/abc", showCandidateHowTo: true));
+        Assert.Equal(
+            AuthRedirects.CandidateHowToPath,
+            AuthRedirects.ResolveCandidateReturnUrl("/home", showCandidateHowTo: true));
+        Assert.Equal(
+            AuthRedirects.BanenkaartPath,
+            AuthRedirects.ResolveCandidateReturnUrl("/", showCandidateHowTo: false));
+        Assert.True(AuthRedirects.IsGenericPostLoginLanding("/banen"));
+        Assert.False(AuthRedirects.IsGenericPostLoginLanding("/vacancies/1"));
+    }
+
+    [Fact]
     public async Task Ensure_external_returns_invited_manager_role()
     {
         await using var db = CreateDb();

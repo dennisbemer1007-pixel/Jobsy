@@ -3511,9 +3511,10 @@ a {
     min-height: 0 !important;
 }
 
-/* Let clicks on popup chrome work; the canvas handles the map. */
+/* Let clicks on popup chrome work; popups sit above markers and travel-ring labels. */
 .job-map .maplibregl-popup {
     pointer-events: auto;
+    z-index: 40 !important;
 }
 
 .job-map,
@@ -3530,6 +3531,7 @@ a {
 .job-marker {
     width: 34px;
     height: 34px;
+    z-index: 8;
 }
 
 .job-cluster {
@@ -3708,7 +3710,7 @@ a {
 }
 
 .job-marker--featured {
-    z-index: 650 !important;
+    z-index: 9 !important;
 }
 
 .job-cluster--featured div {
@@ -3947,6 +3949,7 @@ a {
     background: transparent;
     border: none;
     cursor: pointer;
+    z-index: 8;
 }
 
 .job-cluster div {
@@ -3999,7 +4002,7 @@ a {
 .job-marker:hover,
 .job-marker--active,
 .job-cluster:hover {
-    z-index: 1200 !important;
+    z-index: 12 !important;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -4015,7 +4018,7 @@ a {
     background: transparent !important;
     border: none !important;
     pointer-events: none;
-    z-index: 2;
+    z-index: 1 !important;
 }
 
 .travel-ring-label span {
@@ -13980,4 +13983,560 @@ html.cookie-consent-known .cookie-consent {
     border-radius: 0.5rem;
     margin-bottom: 0.75rem;
     background: #f6f6f6;
+}
+
+/* —— Master spec: saved grid, applications wizard, org/users, sales, mobile —— */
+
+.vacancy-list--saved {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.45rem;
+}
+
+.vacancy-list--saved .job-card__media {
+    padding-bottom: 62%;
+}
+
+.vacancy-list--saved .job-card__overlay {
+    padding: 1.1rem 0.5rem 0.4rem;
+}
+
+.vacancy-list--saved .job-card__overlay h2 {
+    font-size: 0.82rem;
+    line-height: 1.2;
+}
+
+.vacancy-list--saved .job-card__company,
+.vacancy-list--saved .job-card__location {
+    font-size: 0.74rem;
+}
+
+@media (min-width: 700px) {
+    .vacancy-list--saved {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+}
+
+@media (min-width: 1100px) {
+    .vacancy-list--saved {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 0.5rem;
+    }
+}
+
+.application-card {
+    display: flex;
+    flex-direction: column;
+    gap: 0.65rem;
+    padding: 0.9rem 1rem;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    background: var(--surface);
+}
+
+.application-card__top {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 0.35rem 0.85rem;
+    align-items: flex-start;
+}
+
+.application-card__travel {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    font-size: 0.8rem;
+    font-weight: 650;
+    color: var(--brand);
+}
+
+.application-card__date {
+    margin: 0;
+    font-size: 0.78rem;
+    color: var(--muted);
+}
+
+.application-stepper {
+    display: flex;
+    gap: 0.35rem;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.application-stepper__step {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.28rem;
+    font-size: 0.68rem;
+    font-weight: 650;
+    color: var(--muted);
+    text-align: center;
+}
+
+.application-stepper__bar {
+    height: 4px;
+    border-radius: 99px;
+    background: color-mix(in srgb, var(--border) 80%, transparent);
+}
+
+.application-stepper__step.is-done .application-stepper__bar,
+.application-stepper__step.is-current .application-stepper__bar {
+    background: var(--brand);
+}
+
+.application-stepper__step.is-current {
+    color: var(--brand);
+}
+
+.application-stepper__step.is-rejected .application-stepper__bar {
+    background: color-mix(in srgb, #b42318 80%, var(--brand));
+}
+
+.application-stepper__step.is-rejected {
+    color: #b42318;
+}
+
+.application-card__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+}
+
+.contact-icons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.45rem;
+}
+
+.contact-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.4rem;
+    height: 2.4rem;
+    border-radius: 50%;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--brand);
+    text-decoration: none;
+}
+
+.contact-icon:hover {
+    background: color-mix(in srgb, var(--brand) 10%, var(--surface));
+}
+
+.contact-icon svg {
+    width: 1.15rem;
+    height: 1.15rem;
+}
+
+.users-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.55rem;
+    margin-bottom: 0.85rem;
+}
+
+.users-toolbar input,
+.users-toolbar select {
+    min-height: 2.5rem;
+    padding: 0.4rem 0.65rem;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font: inherit;
+    background: var(--surface);
+}
+
+.users-toolbar input {
+    flex: 1 1 12rem;
+}
+
+.users-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.users-table th,
+.users-table td {
+    padding: 0.65rem 0.55rem;
+    text-align: left;
+    border-bottom: 1px solid var(--border);
+    vertical-align: middle;
+}
+
+.users-table__person {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    min-width: 0;
+}
+
+.user-avatar {
+    flex: none;
+    width: 2.25rem;
+    height: 2.25rem;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: #fff;
+    background: var(--brand);
+}
+
+.role-badge {
+    display: inline-block;
+    padding: 0.15rem 0.5rem;
+    border-radius: 99px;
+    font-size: 0.72rem;
+    font-weight: 700;
+}
+
+.role-badge--em { background: color-mix(in srgb, var(--brand) 16%, transparent); color: var(--brand); }
+.role-badge--rm { background: color-mix(in srgb, #2563eb 16%, transparent); color: #1d4ed8; }
+.role-badge--bm { background: color-mix(in srgb, #0f766e 16%, transparent); color: #0f766e; }
+.role-badge--im { background: color-mix(in srgb, #7c3aed 16%, transparent); color: #6d28d9; }
+
+.invite-panel {
+    margin-top: 1.25rem;
+    padding: 1rem;
+    border: 1px solid color-mix(in srgb, #ca8a04 45%, var(--border));
+    border-radius: 12px;
+    background: color-mix(in srgb, #ca8a04 8%, var(--surface));
+}
+
+.invite-panel__title {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin: 0 0 0.65rem;
+}
+
+.invite-count {
+    display: inline-flex;
+    min-width: 1.4rem;
+    height: 1.4rem;
+    padding: 0 0.35rem;
+    border-radius: 99px;
+    align-items: center;
+    justify-content: center;
+    background: #ca8a04;
+    color: #fff;
+    font-size: 0.72rem;
+    font-weight: 800;
+}
+
+.sales-wallet-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.28rem 0.65rem;
+    border-radius: 99px;
+    border: 1px solid color-mix(in srgb, var(--brand) 25%, var(--border));
+    background: color-mix(in srgb, var(--surface) 80%, #fff);
+    color: var(--brand);
+    font-weight: 700;
+    font-size: 0.82rem;
+    text-decoration: none;
+    white-space: nowrap;
+}
+
+.sales-invoices-hero {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 0.85rem;
+    padding: 1rem 1.1rem;
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    background: var(--surface);
+    margin-bottom: 1rem;
+    align-items: center;
+}
+
+.sales-invoices-hero__value {
+    font-size: 1.55rem;
+    font-weight: 800;
+}
+
+.sales-toolkit-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
+    gap: 0.85rem;
+    align-items: stretch;
+}
+
+.sales-toolkit-card {
+    display: flex;
+    flex-direction: column;
+    gap: 0.65rem;
+    min-height: 12rem;
+    padding: 1rem;
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    background: var(--surface);
+}
+
+.sales-toolkit-card .login-submit,
+.sales-toolkit-card .btn-compact--primary {
+    margin-top: auto;
+}
+
+.rate-free-badge {
+    display: inline-block;
+    margin-left: 0.35rem;
+    padding: 0.1rem 0.4rem;
+    border-radius: 99px;
+    background: color-mix(in srgb, #15803d 16%, transparent);
+    color: #15803d;
+    font-size: 0.68rem;
+    font-weight: 800;
+    text-transform: uppercase;
+}
+
+.token-pack-options--vertical {
+    grid-template-columns: 1fr;
+    max-width: 28rem;
+}
+
+.token-pack-options--vertical .scope-option.is-selected::after {
+    content: "✓";
+    margin-left: auto;
+    font-weight: 800;
+    color: var(--brand);
+}
+
+.token-agree {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.55rem;
+    margin: 0.75rem 0;
+    font-size: 0.88rem;
+}
+
+.salary-detail-head {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 0.75rem;
+    align-items: flex-start;
+}
+
+.salary-rates-aside {
+    min-width: 10rem;
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+}
+
+.commission-staffel {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+    gap: 0.75rem;
+}
+
+.commission-staffel article {
+    padding: 0.85rem;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    background: var(--surface);
+}
+
+@media (max-width: 768px) {
+    html,
+    body,
+    .app-shell,
+    .app-main,
+    .panel-page {
+        max-width: 100%;
+        overflow-x: hidden;
+    }
+
+    .table-list .table-row,
+    .table-row {
+        flex-wrap: wrap;
+        align-items: flex-start;
+    }
+
+    .table-scroll,
+    .salary-table-preview,
+    .vacancy-schedule__table-wrap {
+        overflow-x: hidden;
+    }
+
+    .vacancy-schedule__table {
+        min-width: 0;
+        width: 100%;
+    }
+
+    .client-perf-table-wrap {
+        overflow-x: hidden;
+        border: none;
+        background: transparent;
+    }
+
+    .client-perf-table {
+        min-width: 0;
+        border: none;
+    }
+
+    .client-perf-table thead {
+        display: none;
+    }
+
+    .client-perf-table,
+    .client-perf-table tbody,
+    .client-perf-table tr,
+    .client-perf-table th,
+    .client-perf-table td {
+        display: block;
+        width: 100%;
+        text-align: left;
+    }
+
+    .client-perf-table tr {
+        margin-bottom: 0.75rem;
+        padding: 0.75rem;
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        background: var(--surface);
+    }
+
+    .client-perf-table td {
+        display: flex;
+        justify-content: space-between;
+        gap: 0.75rem;
+        border: none;
+        padding: 0.25rem 0;
+    }
+
+    .client-perf-table td::before {
+        content: attr(data-label);
+        font-weight: 650;
+        color: var(--muted);
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 0.03em;
+    }
+
+    .client-perf-table__num {
+        text-align: left;
+        white-space: normal;
+    }
+
+    .users-table thead {
+        display: none;
+    }
+
+    .users-table,
+    .users-table tbody,
+    .users-table tr,
+    .users-table th,
+    .users-table td {
+        display: block;
+        width: 100%;
+    }
+
+    .users-table tr {
+        margin-bottom: 0.65rem;
+        padding: 0.7rem;
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        background: var(--surface);
+    }
+
+    .users-toolbar input,
+    .users-toolbar select,
+    .login-submit,
+    .btn-compact {
+        min-height: 2.6rem;
+    }
+
+    .users-table td::before {
+        content: attr(data-label);
+        font-weight: 650;
+        color: var(--muted);
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 0.03em;
+    }
+
+    .data-table thead,
+    .applicants-grid__table thead {
+        display: none;
+    }
+
+    .data-table,
+    .data-table tbody,
+    .data-table tr,
+    .data-table th,
+    .data-table td,
+    .applicants-grid__table,
+    .applicants-grid__table tbody,
+    .applicants-grid__table tr,
+    .applicants-grid__table th,
+    .applicants-grid__table td {
+        display: block;
+        width: 100%;
+        white-space: normal;
+    }
+
+    .data-table tr,
+    .applicants-grid__table tbody > tr {
+        margin-bottom: 0.65rem;
+        padding: 0.7rem;
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        background: var(--surface);
+    }
+
+    .data-table td,
+    .applicants-grid__table td {
+        display: flex;
+        justify-content: space-between;
+        gap: 0.75rem;
+        border: none;
+        padding: 0.25rem 0;
+        white-space: normal;
+    }
+
+    .data-table td::before,
+    .applicants-grid__table td::before {
+        content: attr(data-label);
+        font-weight: 650;
+        color: var(--muted);
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 0.03em;
+    }
+
+    .applicants-grid__expand-cell,
+    .applicants-grid__details-row td {
+        display: block;
+        justify-content: flex-start;
+    }
+
+    .applicants-grid__details-row td::before {
+        content: none;
+    }
+
+    .applicants-grid__col--expand {
+        width: auto;
+        text-align: left;
+    }
+
+    .sales-invoices-hero {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .application-stepper {
+        gap: 0.2rem;
+    }
+
+    .application-stepper__step {
+        font-size: 0.62rem;
+    }
 }

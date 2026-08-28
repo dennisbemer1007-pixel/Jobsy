@@ -167,6 +167,9 @@ internal static class PlatformSettingsSeeder
                 IndirectCommissionRate = SalesCommissionRules.DefaultIndirectCommissionRate,
                 CommissionDurationDays = SalesCommissionRules.DefaultCommissionDurationDays,
                 PartnerCommissionRate = SalesCommissionRules.DefaultPartnerCommissionRate,
+                Year2DirectCommissionRate = SalesCommissionRules.DefaultYear2DirectCommissionRate,
+                Year3DirectCommissionRate = SalesCommissionRules.DefaultYear3DirectCommissionRate,
+                ReferredYear1DirectCommissionRate = SalesCommissionRules.DefaultReferredYear1DirectCommissionRate,
                 UpdatedAtUtc = DateTime.UtcNow
             });
             logger.LogInformation("Seeded default SalesCommercialSettings (token €25 / highlight / SM commissions).");
@@ -191,6 +194,24 @@ internal static class PlatformSettingsSeeder
             if (existing.CommissionDurationDays <= 0)
             {
                 existing.CommissionDurationDays = SalesCommissionRules.DefaultCommissionDurationDays;
+                touched = true;
+            }
+
+            if (existing.Year2DirectCommissionRate <= 0)
+            {
+                existing.Year2DirectCommissionRate = SalesCommissionRules.DefaultYear2DirectCommissionRate;
+                touched = true;
+            }
+
+            if (existing.Year3DirectCommissionRate <= 0)
+            {
+                existing.Year3DirectCommissionRate = SalesCommissionRules.DefaultYear3DirectCommissionRate;
+                touched = true;
+            }
+
+            if (existing.ReferredYear1DirectCommissionRate <= 0)
+            {
+                existing.ReferredYear1DirectCommissionRate = SalesCommissionRules.DefaultReferredYear1DirectCommissionRate;
                 touched = true;
             }
 

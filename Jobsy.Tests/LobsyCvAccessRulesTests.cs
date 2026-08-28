@@ -19,6 +19,17 @@ public class LobsyCvAccessRulesTests
         Assert.Equal(expected, ApplicationRules.IsPiiRevealed(status));
     }
 
+    [Theory]
+    [InlineData(ApplicationStatus.Pending, false)]
+    [InlineData(ApplicationStatus.Accepted, false)]
+    [InlineData(ApplicationStatus.EmployerContacting, false)]
+    [InlineData(ApplicationStatus.Hired, true)]
+    public void IsDirectContactRevealed_only_when_hired(ApplicationStatus status, bool expected)
+    {
+        Assert.Equal(expected, LobsyCvAccessRules.IsDirectContactRevealed(status));
+        Assert.Equal(expected, ApplicationRules.IsDirectContactRevealed(status));
+    }
+
     [Fact]
     public void CanEmployerDownloadCv_requires_verified_and_revealed()
     {

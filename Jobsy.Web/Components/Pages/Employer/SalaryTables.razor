@@ -77,14 +77,24 @@
     else if (_view == ViewMode.Detail && _selected is not null)
     {
         <section class="panel-section">
-            <h2>@_selected.Name</h2>
-            <p class="muted">
-                @_selected.CompanyName · @(_selected.IsActive ? "actief" : "inactief")
-                @if (_selected.IsSystemWml)
-                {
-                    <text> · tarieven volgen het platform (niet handmatig te wijzigen)</text>
-                }
-            </p>
+            <div class="salary-detail-head">
+                <div>
+                    <h2>@_selected.Name</h2>
+                    <p class="muted">
+                        @_selected.CompanyName · @(_selected.IsActive ? "actief" : "inactief")
+                        @if (_selected.IsSystemWml)
+                        {
+                            <text> · tarieven volgen het platform (niet handmatig te wijzigen)</text>
+                        }
+                    </p>
+                </div>
+                <aside class="salary-rates-aside" aria-label="Uurlonen">
+                    @foreach (var rate in _selected.Rates.OrderBy(r => r.AgeYears).Take(3))
+                    {
+                        <div><strong>€ @rate.HourlyRate.ToString("0.00")</strong> <span class="muted">@rate.Label</span></div>
+                    }
+                </aside>
+            </div>
 
             <p>
                 Toegepast op
@@ -130,8 +140,12 @@
             @if (_vacancies.Count > 0)
             {
                 <h3 style="margin-top:1.5rem">Vacatures met deze tabel</h3>
+                <div class="admin-sublinks" role="tablist">
+                    <button type="button" class="admin-sublink @(_vacancyTab == "open" ? "admin-sublink--active" : null)" @onclick='() => _vacancyTab = "open"'>Open</button>
+                    <button type="button" class="admin-sublink @(_vacancyTab == "closed" ? "admin-sublink--active" : null)" @onclick='() => _vacancyTab = "closed"'>Gesloten</button>
+                </div>
                 <div class="table-list">
-                    @foreach (var v in _vacancies)
+                    @foreach (var v in VacancyTabItems)
                     {
                         <div class="table-row">
                             <div>
@@ -237,6 +251,26 @@
     }
 </div>
 
+@if (_deactivateConfirm)
+{
+    <div class="confirm-modal" role="dialog" aria-modal="true" aria-labelledby="salary-deactivate-title">
+        <button type="button" class="confirm-modal__backdrop" @onclick="() => _deactivateConfirm = false" aria-label="Sluiten"></button>
+        <div class="confirm-modal__dialog">
+            <h2 id="salary-deactivate-title">Salaristabel deactiveren?</h2>
+            <p>
+                Deze tabel hangt aan @_selected?.VacancyCount vacature@(_selected?.VacancyCount == 1 ? "" : "s").
+                Deactiveren kan loonweergave en nieuwe plaatsingen blokkeren.
+            </p>
+            <div class="confirm-modal__actions">
+                <button type="button" class="engagement-btn" @onclick="() => _deactivateConfirm = false">Annuleren</button>
+                <button type="button" class="engagement-btn engagement-btn--danger" disabled="@_busy" @onclick="SaveAsync">
+                    Toch deactiveren
+                </button>
+            </div>
+        </div>
+    </div>
+}
+
 @code {
     private enum ViewMode { List, Detail, Create, Edit }
 
@@ -262,6 +296,13 @@
     private Guid? _editingId;
     private string _name = "";
     private bool _isActive = true;
+    private string _vacancyTab = "open";
+    private bool _deactivateConfirm;
+
+    private IEnumerable<SalaryTableVacancyItem> VacancyTabItems =>
+        _vacancyTab == "closed"
+            ? _vacancies.Where(v => !string.Equals(v.Status, "Active", StringComparison.OrdinalIgnoreCase))
+            : _vacancies.Where(v => string.Equals(v.Status, "Active", StringComparison.OrdinalIgnoreCase));
 
     protected override void OnInitialized()
         => Culture.Changed += OnCultureChanged;
@@ -419,6 +460,15 @@
 
     private async Task SaveAsync()
     {
+        if (_view == ViewMode.Edit
+            && _selected is { VacancyCount: > 0, IsActive: true }
+            && !_isActive
+            && !_deactivateConfirm)
+        {
+            _deactivateConfirm = true;
+            return;
+        }
+
         _busy = true;
         _message = null;
         try
@@ -457,6 +507,7 @@
         finally
         {
             _busy = false;
+            _deactivateConfirm = false;
         }
     }
 }

@@ -497,7 +497,9 @@ public class RoleFunctionalRegressionTests : IClassFixture<RoleFunctionalWebAppF
         Assert.True(accepted.UploadedCvAvailable);
         Assert.Equal(2, accepted.CandidateReferenceCount);
         Assert.Equal("Kandidaat Test", accepted.CandidateName);
-        Assert.NotNull(accepted.CandidateEmail);
+        Assert.Null(accepted.CandidateEmail);
+        Assert.Null(accepted.CandidatePhone);
+        Assert.Null(accepted.MatchBreakdownJson);
         Assert.NotNull(accepted.CandidateCity);
         Assert.True(accepted.WorkPermitConfirmed);
         Assert.True(accepted.MatchPercent >= 50);

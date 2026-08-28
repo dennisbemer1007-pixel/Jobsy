@@ -154,7 +154,7 @@ public record EmployerApplicationDto(
     string? PreferencesSummary,
     /// <summary>Null until Accepted — progressive disclosure.</summary>
     string? CandidateName,
-    /// <summary>Null until Accepted — progressive disclosure.</summary>
+    /// <summary>Null until Hired — direct contact stays hidden until then.</summary>
     string? CandidateEmail,
     /// <summary>Null until Accepted — progressive disclosure.</summary>
     string? CandidateAddress,
@@ -172,7 +172,7 @@ public record EmployerApplicationDto(
     bool LegalEligible = true,
     /// <summary>Null until Accepted — progressive disclosure (stage exclusivity).</summary>
     string? StudentNumber = null,
-    /// <summary>Null until Accepted — progressive disclosure (stage exclusivity).</summary>
+    /// <summary>Null until Hired — school e-mail is direct contact.</summary>
     string? SchoolEmail = null,
     /// <summary>Null until Accepted — progressive disclosure (stage exclusivity).</summary>
     string? StudyProgram = null,
@@ -182,7 +182,7 @@ public record EmployerApplicationDto(
     string? ExclusivityValidationStatus = null,
     /// <summary>True when employer may download Lobsy-CV PDF (= PiiRevealed).</summary>
     bool CvPdfAvailable = false,
-    /// <summary>Null until Accepted — phone from apply snapshot.</summary>
+    /// <summary>Null until Hired — phone from apply snapshot.</summary>
     string? CandidatePhone = null,
     /// <summary>WhatsApp contact allowed (only meaningful when CandidatePhone is revealed).</summary>
     bool WhatsAppContactAllowed = false,

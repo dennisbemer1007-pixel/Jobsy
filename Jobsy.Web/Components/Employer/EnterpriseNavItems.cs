@@ -10,7 +10,6 @@ public static class EnterpriseNavItems
 {
     public static readonly NavItem[] OrganizationModules =
     [
-        new("Nav.Organization", "/employer/organization", NavIcons.Settings),
         new("Nav.CompanyDetails", "/employer/company", NavIcons.Companies),
         new("Nav.Branches", "/employer/branches", NavIcons.Branches, ["/employer/takeovers"]),
         new("Nav.Regions", "/employer/regions", NavIcons.Regions),
@@ -22,6 +21,11 @@ public static class EnterpriseNavItems
     public static bool IsOrganizationPath(string relativePath)
     {
         var path = RoleNavCatalog.NormalizePath(relativePath);
+        if (string.Equals(path, "employer/organization", StringComparison.OrdinalIgnoreCase))
+        {
+            return true;
+        }
+
         return OrganizationModules.Any(m =>
             RoleNavCatalog.IsActive(m, path.TrimStart('/'), OrganizationModules));
     }

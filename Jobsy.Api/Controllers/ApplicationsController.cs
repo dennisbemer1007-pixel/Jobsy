@@ -124,6 +124,7 @@ public class ApplicationsController : ControllerBase
         return Ok(rows.Select(a =>
         {
             var revealed = ApplicationRules.IsPiiRevealed(a.Status);
+            var contact = ApplicationRules.IsDirectContactRevealed(a.Status);
             var availability = LobsyCvModelFactory.ParseAvailabilityPayload(a.SnapshotAvailabilityJson);
             return new EmployerApplicationDto(
                 a.Id,
@@ -140,7 +141,7 @@ public class ApplicationsController : ControllerBase
                 a.DistanceKm,
                 ApplicationPreferenceRedaction.RedactForEmployer(a.PreferencesSummary, revealed),
                 revealed ? a.CandidateName : null,
-                revealed ? a.CandidateEmail : null,
+                contact ? a.CandidateEmail : null,
                 revealed ? a.CandidateAddress : null,
                 revealed,
                 revealed && a.WorkPermitConfirmed,
@@ -150,19 +151,19 @@ public class ApplicationsController : ControllerBase
                 revealed ? a.SnapshotAboutMe : null,
                 revealed ? a.CandidateEmployerCount : 0,
                 a.MatchPercent,
-                a.MatchBreakdownJson,
+                MatchBreakdownJson: null,
                 a.ViaSafetyNet,
                 // Motivation is candidate-authored for the employer — show after verified apply (pre-accept OK).
                 a.Motivation,
                 LegalEligible: true,
                 revealed ? a.StudentNumber : null,
-                revealed ? a.SchoolEmail : null,
+                contact ? a.SchoolEmail : null,
                 revealed ? a.StudyProgram : null,
                 revealed ? a.StudyYear : null,
                 revealed ? a.ExclusivityValidationStatus : null,
                 CvPdfAvailable: revealed,
-                CandidatePhone: revealed ? a.SnapshotPhoneNumber : null,
-                WhatsAppContactAllowed: revealed && a.SnapshotWhatsAppAllowed,
+                CandidatePhone: contact ? a.SnapshotPhoneNumber : null,
+                WhatsAppContactAllowed: contact && a.SnapshotWhatsAppAllowed,
                 CandidateAgeYears: a.CandidateAgeYears,
                 AvailabilitySummary: LobsyCvModelFactory.FormatAvailability(
                     availability.Slots,
@@ -1260,6 +1261,7 @@ public class ApplicationsController : ControllerBase
     private static EmployerApplicationDto MapEmployerDto(Core.Entities.Application a)
     {
         var revealed = ApplicationRules.IsPiiRevealed(a.Status);
+        var contact = ApplicationRules.IsDirectContactRevealed(a.Status);
         var availability = LobsyCvModelFactory.ParseAvailabilityPayload(a.SnapshotAvailabilityJson);
         return new EmployerApplicationDto(
             a.Id,
@@ -1275,7 +1277,7 @@ public class ApplicationsController : ControllerBase
             a.DistanceKm,
             ApplicationPreferenceRedaction.RedactForEmployer(a.PreferencesSummary, revealed),
             revealed ? a.CandidateName : null,
-            revealed ? a.CandidateEmail : null,
+            contact ? a.CandidateEmail : null,
             revealed ? a.CandidateAddress : null,
             revealed,
             revealed && a.WorkPermitConfirmed,
@@ -1285,18 +1287,18 @@ public class ApplicationsController : ControllerBase
             revealed ? a.SnapshotAboutMe : null,
             revealed ? a.CandidateEmployerCount : 0,
             a.MatchPercent,
-            a.MatchBreakdownJson,
+            MatchBreakdownJson: null,
             a.ViaSafetyNet,
             a.Motivation,
             LegalEligible: true,
             revealed ? a.StudentNumber : null,
-            revealed ? a.SchoolEmail : null,
+            contact ? a.SchoolEmail : null,
             revealed ? a.StudyProgram : null,
             revealed ? a.StudyYear : null,
             revealed ? a.ExclusivityValidationStatus : null,
             CvPdfAvailable: revealed,
-            CandidatePhone: revealed ? a.SnapshotPhoneNumber : null,
-            WhatsAppContactAllowed: revealed && a.SnapshotWhatsAppAllowed,
+            CandidatePhone: contact ? a.SnapshotPhoneNumber : null,
+            WhatsAppContactAllowed: contact && a.SnapshotWhatsAppAllowed,
             CandidateAgeYears: a.CandidateAgeYears,
             AvailabilitySummary: LobsyCvModelFactory.FormatAvailability(
                 availability.Slots,

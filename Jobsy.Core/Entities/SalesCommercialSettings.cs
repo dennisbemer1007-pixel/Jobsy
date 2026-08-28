@@ -26,16 +26,24 @@ public class SalesCommercialSettings
     public decimal StartHighlightBonusTokens { get; set; } = 2m;
 
     /// <summary>
-    /// Direct commission rate for the primary salesmanager on platform earnings
-    /// from each onboarded entrepreneur (default 15%). Configurable by Admin.
+    /// Year-1 commission for a salesmanager who was not referred (default 25%).
+    /// Configurable by Admin.
     /// </summary>
-    public decimal DirectCommissionRate { get; set; } = 0.15m;
+    public decimal DirectCommissionRate { get; set; } = 0.25m;
+
+    /// <summary>Year-2 direct commission (default 10%).</summary>
+    public decimal Year2DirectCommissionRate { get; set; } = 0.10m;
+
+    /// <summary>Year-3 direct commission (default 5%).</summary>
+    public decimal Year3DirectCommissionRate { get; set; } = 0.05m;
+
+    /// <summary>Year-1 commission when the salesmanager was aangedragen (default 20%).</summary>
+    public decimal ReferredYear1DirectCommissionRate { get; set; } = 0.20m;
 
     /// <summary>
-    /// Passive referral bonus for the salesmanager who referred the primary salesmanager
-    /// (default 3%). Configurable by Admin. Applies only when a referrer exists.
+    /// Referrer override: share of token purchases in year 1 of a referred salesmanager (default 5%).
     /// </summary>
-    public decimal IndirectCommissionRate { get; set; } = 0.03m;
+    public decimal IndirectCommissionRate { get; set; } = 0.05m;
 
     /// <summary>
     /// Commission rate for partner affiliates (Bedrijfsmanager / Intermediair) on token purchases (default 5%).
@@ -43,9 +51,9 @@ public class SalesCommercialSettings
     public decimal PartnerCommissionRate { get; set; } = 0.05m;
 
     /// <summary>
-    /// Maximum duration (days) commission accrues for an onboarded entrepreneur (default 365 = 1 year).
+    /// Maximum duration (days) commission accrues for an onboarded entrepreneur (default 1095 = 3 years).
     /// </summary>
-    public int CommissionDurationDays { get; set; } = 365;
+    public int CommissionDurationDays { get; set; } = 1095;
 
     public DateTime UpdatedAtUtc { get; set; } = DateTime.UtcNow;
 }

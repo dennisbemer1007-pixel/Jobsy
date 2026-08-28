@@ -11,6 +11,35 @@ public static partial class AuthRedirects
     public static string CandidatePostLoginUrl(bool showCandidateHowTo)
         => showCandidateHowTo ? CandidateHowToPath : BanenkaartPath;
 
+    /// <summary>
+    /// Generic landings that may be replaced by the candidate how-to / banenkaart.
+    /// Vacancy (and other explicit) returnUrls are kept.
+    /// </summary>
+    public static bool IsGenericPostLoginLanding(string? url)
+    {
+        if (string.IsNullOrWhiteSpace(url))
+        {
+            return true;
+        }
+
+        var path = url.Split('?', '#')[0];
+        return path is "/" or "/home" or "/banen" or "/login";
+    }
+
+    /// <summary>
+    /// Preserves an explicit local returnUrl (e.g. <c>/vacancies/{id}</c>).
+    /// First-login how-to and the banenkaart only apply for generic landings.
+    /// </summary>
+    public static string ResolveCandidateReturnUrl(string returnUrl, bool showCandidateHowTo)
+    {
+        if (!IsGenericPostLoginLanding(returnUrl))
+        {
+            return returnUrl;
+        }
+
+        return CandidatePostLoginUrl(showCandidateHowTo);
+    }
+
     [GeneratedRegex(@"^/[A-Za-z0-9\-._~!$&'()*+,;=:@%/?]*$", RegexOptions.CultureInvariant)]
     private static partial Regex SafeLocalPathRegex();
 

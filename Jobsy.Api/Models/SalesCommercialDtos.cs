@@ -11,7 +11,10 @@ public record UpdateSalesCommercialSettingsRequest(
     decimal? DirectCommissionRate = null,
     decimal? IndirectCommissionRate = null,
     int? CommissionDurationDays = null,
-    decimal? PartnerCommissionRate = null);
+    decimal? PartnerCommissionRate = null,
+    decimal? Year2DirectCommissionRate = null,
+    decimal? Year3DirectCommissionRate = null,
+    decimal? ReferredYear1DirectCommissionRate = null);
 
 public record UpdateVacancyTypeCostRequest(
     VacancyKind Kind,

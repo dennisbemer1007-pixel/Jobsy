@@ -684,6 +684,9 @@ public class JobsyDbContext : DbContext
             entity.Property(e => e.DirectCommissionRate).HasPrecision(5, 4);
             entity.Property(e => e.IndirectCommissionRate).HasPrecision(5, 4);
             entity.Property(e => e.PartnerCommissionRate).HasPrecision(5, 4);
+            entity.Property(e => e.Year2DirectCommissionRate).HasPrecision(5, 4);
+            entity.Property(e => e.Year3DirectCommissionRate).HasPrecision(5, 4);
+            entity.Property(e => e.ReferredYear1DirectCommissionRate).HasPrecision(5, 4);
         });
 
         modelBuilder.Entity<VacancyTypeTokenCost>(entity =>

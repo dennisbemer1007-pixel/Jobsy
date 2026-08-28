@@ -73,6 +73,9 @@ public partial class SalesCommercialController : ControllerBase
                 request.IndirectCommissionRate,
                 request.CommissionDurationDays,
                 request.PartnerCommissionRate,
+                request.Year2DirectCommissionRate,
+                request.Year3DirectCommissionRate,
+                request.ReferredYear1DirectCommissionRate,
                 cancellationToken);
             return Ok(new
             {
@@ -86,6 +89,9 @@ public partial class SalesCommercialController : ControllerBase
                 settings.IndirectCommissionRate,
                 settings.CommissionDurationDays,
                 settings.PartnerCommissionRate,
+                settings.Year2DirectCommissionRate,
+                settings.Year3DirectCommissionRate,
+                settings.ReferredYear1DirectCommissionRate,
                 settings.UpdatedAtUtc
             });
         }

@@ -34,16 +34,39 @@
         try
         {
             var companies = await Api.GetMyCompaniesAsync();
+            var branchCount = companies.Count(c => c.ParentCompanyId is not null);
+            if (branchCount < 2)
+            {
+                modules = modules.Where(m =>
+                    !string.Equals(m.Href, "/employer/regions", StringComparison.OrdinalIgnoreCase));
+            }
+
             if (!companies.Any(c => c.CsvBatchImportEnabled))
             {
                 modules = modules.Where(m =>
                     !string.Equals(m.Href, RoleNavCatalog.CsvImport.Href, StringComparison.OrdinalIgnoreCase));
             }
+
+            try
+            {
+                var takeovers = await Api.GetTakeoverInboxAsync();
+                if (takeovers.Count == 0)
+                {
+                    modules = modules.Where(m =>
+                        !string.Equals(m.Href, RoleNavCatalog.Takeovers.Href, StringComparison.OrdinalIgnoreCase));
+                }
+            }
+            catch
+            {
+                modules = modules.Where(m =>
+                    !string.Equals(m.Href, RoleNavCatalog.Takeovers.Href, StringComparison.OrdinalIgnoreCase));
+            }
         }
         catch
         {
             modules = modules.Where(m =>
-                !string.Equals(m.Href, RoleNavCatalog.CsvImport.Href, StringComparison.OrdinalIgnoreCase));
+                !string.Equals(m.Href, RoleNavCatalog.CsvImport.Href, StringComparison.OrdinalIgnoreCase)
+                && !string.Equals(m.Href, RoleNavCatalog.Takeovers.Href, StringComparison.OrdinalIgnoreCase));
         }
 
         _modules = modules.ToList();

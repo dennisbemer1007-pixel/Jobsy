@@ -91,7 +91,6 @@
                                     <th scope="col" class="client-perf-table__num">Conversie</th>
                                     <th scope="col">Match</th>
                                     <th scope="col" class="client-perf-table__num">Tokens</th>
-                                    <th scope="col" class="client-perf-table__num">Boosts</th>
                                     <th scope="col" class="client-perf-table__num">Verloopt</th>
                                     <th scope="col">Acties</th>
                                 </tr>
@@ -105,22 +104,22 @@
                                         row.TokenBalance);
                                     var badgeMod = ClientPerformanceStatus.CssModifier(badge);
                                     <tr class="client-perf-row client-perf-row--@badgeMod">
-                                        <th scope="row" class="client-perf-table__company">
+                                        <th scope="row" class="client-perf-table__company" data-label="Opdrachtgever">
                                             <span class="client-perf-table__name">@row.CompanyName</span>
                                         </th>
-                                        <td>
+                                        <td data-label="Status">
                                             <span class="client-perf-badge client-perf-badge--@badgeMod">
                                                 @ClientPerformanceStatus.LabelNl(badge)
                                             </span>
                                         </td>
-                                        <td class="client-perf-table__num">@row.ActiveVacancies</td>
-                                        <td class="client-perf-table__num @(row.ApplicationsPending > 0 ? "client-perf-table__alert" : null)">
+                                        <td data-label="Vacatures" class="client-perf-table__num">@row.ActiveVacancies</td>
+                                        <td data-label="Open" class="client-perf-table__num @(row.ApplicationsPending > 0 ? "client-perf-table__alert" : null)">
                                             @row.ApplicationsPending
                                         </td>
-                                        <td class="client-perf-table__num">@row.Clicks</td>
-                                        <td class="client-perf-table__num">@row.Applications</td>
-                                        <td class="client-perf-table__num">@row.ConversionRate.ToString("0.#")%</td>
-                                        <td class="client-perf-table__match">
+                                        <td data-label="Clicks" class="client-perf-table__num">@row.Clicks</td>
+                                        <td data-label="Sollicitaties" class="client-perf-table__num">@row.Applications</td>
+                                        <td data-label="Conversie" class="client-perf-table__num">@row.ConversionRate.ToString("0.#")%</td>
+                                        <td data-label="Match" class="client-perf-table__match">
                                             @if (row.AvgTravelMinutes > 0 || !string.IsNullOrWhiteSpace(row.TopTransportMode))
                                             {
                                                 <span>@row.AvgTravelMinutes.ToString("0.#") min</span>
@@ -134,14 +133,13 @@
                                                 <span class="muted">—</span>
                                             }
                                         </td>
-                                        <td class="client-perf-table__num @(row.TokenBalance < MetricDashboardCatalog.LowTokenBalanceThreshold ? "client-perf-table__alert" : null)">
+                                        <td data-label="Tokens" class="client-perf-table__num @(row.TokenBalance < MetricDashboardCatalog.LowTokenBalanceThreshold ? "client-perf-table__alert" : null)">
                                             @row.TokenBalance.ToString("0.##")
                                         </td>
-                                        <td class="client-perf-table__num">@row.ActiveBoosts</td>
-                                        <td class="client-perf-table__num @(row.ExpiringWithin5Days > 0 ? "client-perf-table__alert" : null)">
+                                        <td data-label="Verloopt" class="client-perf-table__num @(row.ExpiringWithin5Days > 0 ? "client-perf-table__alert" : null)">
                                             @row.ExpiringWithin5Days
                                         </td>
-                                        <td>
+                                        <td data-label="Acties">
                                             <div class="client-perf-actions">
                                                 <a class="client-perf-action"
                                                    href="@($"/employer/vacancies?q={Uri.EscapeDataString(row.CompanyName)}")">
@@ -150,9 +148,8 @@
                                                 <a class="client-perf-action" href="/branch/applicants">
                                                     Sollicitaties
                                                 </a>
-                                                <a class="client-perf-action client-perf-action--emphasis"
-                                                   href="/employer/tokens">
-                                                    Boost
+                                                <a class="client-perf-action" href="/employer/tokens">
+                                                    Tokens
                                                 </a>
                                             </div>
                                         </td>

@@ -877,6 +877,7 @@
     private HashSet<string> _snapSelectedWorkTypes = new(StringComparer.OrdinalIgnoreCase);
     private HashSet<Guid> _snapSelectedCategoryIds = [];
     private HashSet<Guid>? _snapMyVacancyCompanyIds;
+    private HashSet<Guid>? _snapMyVacancyIds;
     private int _snapMaxTravelMinutes = 30;
     private int _snapRadiusKm = 15;
     private string _snapSelectedTransport = "Fiets";
@@ -896,6 +897,7 @@
     private HashSet<Guid>? _companyFocusIds;
     private HashSet<Guid>? _queryCompanyFocusIds;
     private HashSet<Guid>? _myVacancyCompanyIds;
+    private HashSet<Guid>? _myVacancyIds;
     private Guid? _mapFocusCompanyId;
     private bool _pendingCompanyMapFocus;
     private List<string> _branchOptions = WorkTypeLabels.All.ToList();
@@ -1862,7 +1864,13 @@
 
             _vacancies = items.ToList();
             _visibleCardCount = VacancyCardPageSize;
-            if (companyFocus)
+            if (_myVacanciesOnly)
+            {
+                _vacancies = _myVacancyIds is { Count: > 0 }
+                    ? _vacancies.Where(v => _myVacancyIds.Contains(v.Id)).ToList()
+                    : [];
+            }
+            else if (companyFocus)
             {
                 _vacancies = _companyFocusIds is { Count: > 0 }
                     ? _vacancies
@@ -2446,6 +2454,7 @@
         {
             _myVacanciesOnly = false;
             _myVacancyCompanyIds = null;
+            _myVacancyIds = null;
             ApplyEffectiveCompanyFocus();
             await LoadVacanciesAsync();
             return;
@@ -2455,13 +2464,19 @@
         try
         {
             var managed = await Api.GetManagedVacanciesAsync();
-            _myVacancyCompanyIds = managed
-                .Where(IsActiveOpenManagedVacancy)
+            var managedOpen = managed.Where(v =>
+                ManagedVacancyMapFilter.IsPublishedOpen(v.Status, v.FulfilledByApplicationId)).ToList();
+            _myVacancyIds = managedOpen
+                .Select(v => v.Id)
+                .Where(id => id != Guid.Empty)
+                .ToHashSet();
+            _myVacancyCompanyIds = managedOpen
                 .Select(v => v.CompanyId)
                 .Where(id => id != Guid.Empty)
                 .ToHashSet();
-            if (_myVacancyCompanyIds.Count == 0)
+            if (_myVacancyIds.Count == 0)
             {
+                _myVacancyIds = null;
                 _myVacancyCompanyIds = null;
                 _myVacanciesOnly = false;
                 _myVacanciesError = "Je beheert geen actieve open vacatures.";
@@ -2484,8 +2499,7 @@
     }
 
     private static bool IsActiveOpenManagedVacancy(VacancyListItem vacancy) =>
-        string.Equals(vacancy.Status, "Active", StringComparison.OrdinalIgnoreCase)
-        && vacancy.FulfilledByApplicationId is null;
+        ManagedVacancyMapFilter.IsPublishedOpen(vacancy.Status, vacancy.FulfilledByApplicationId);
 
     private async Task OnTransportChanged(ChangeEventArgs e)
     {
@@ -2907,6 +2921,7 @@
         _snapSelectedCategoryIds = _selectedCategoryIds.ToHashSet();
         _snapMyVacanciesOnly = _myVacanciesOnly;
         _snapMyVacancyCompanyIds = _myVacancyCompanyIds?.ToHashSet();
+        _snapMyVacancyIds = _myVacancyIds?.ToHashSet();
     }
 
     private void RestoreFilterSnapshot()
@@ -2923,6 +2938,7 @@
         _searchDraft = _snapSearchQuery;
         _myVacanciesOnly = _snapMyVacanciesOnly;
         _myVacancyCompanyIds = _snapMyVacancyCompanyIds?.ToHashSet();
+        _myVacancyIds = _snapMyVacancyIds?.ToHashSet();
         ApplyEffectiveCompanyFocus();
         _selectedWorkTypes.Clear();
         _selectedCategoryIds.Clear();
@@ -3026,6 +3042,7 @@
         _maxHoursPerWeek = DefaultMaxHoursPerWeek;
         _myVacanciesOnly = false;
         _myVacancyCompanyIds = null;
+        _myVacancyIds = null;
         _myVacanciesError = null;
         ApplyEffectiveCompanyFocus();
         if (!_filtersOpen)

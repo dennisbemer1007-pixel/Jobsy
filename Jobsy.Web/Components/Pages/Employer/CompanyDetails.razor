@@ -20,7 +20,7 @@
     <header class="panel-header">
         <div>
             <h1>Bedrijfsgegevens</h1>
-            <p class="login-lead">Organisatie, contactvoorkeur, facturatie, CSV-import en API-koppeling — alles op één plek.</p>
+            <p class="login-lead">Bedrijfsidentiteit, contactvoorkeur, financiën en wervingsvoorkeuren.</p>
         </div>
     </header>
 
@@ -87,7 +87,7 @@
             </section>
 
             <section class="panel-section company-details__card company-details__kvk">
-                <h2>KVK-gegevens</h2>
+                <h2>Bedrijfsidentiteit</h2>
                 <dl class="company-details__kvk-grid">
                     <div>
                         <dt>Bedrijfsnaam</dt>
@@ -207,7 +207,7 @@
             </section>
 
             <section class="panel-section company-details__card">
-                <h2>Facturatie &amp; betalen</h2>
+                <h2>Financiën / facturatie</h2>
                 <p class="muted company-details__lead">
                     Stel een standaardbetaalmethode in voor snellere tokenaankopen.
                     Bij elke checkout kun je nog steeds expliciet iDEAL of creditcard kiezen voordat je naar Mollie gaat.
@@ -266,7 +266,7 @@
             </section>
 
             <section class="panel-section company-details__card">
-                <h2>E-mailcheck bij solliciteren</h2>
+                <h2>Wervingsvoorkeuren</h2>
                 <p class="muted company-details__lead">
                     Standaard staat dit <strong>uit</strong>, zodat solliciteren zo soepel mogelijk blijft.
                     Zet het alleen aan als je wilt dat kandidaten hun e-mail eerst met een code bevestigen.
@@ -324,7 +324,9 @@
                 }
             </section>
 
-            <section class="panel-section company-details__card">
+            <details class="company-details__card company-details__advanced">
+                <summary>Geavanceerde API-koppelingen</summary>
+                <section class="panel-section" style="box-shadow:none;border:none;padding:0.75rem 0 0">
                 <h2>API-koppeling</h2>
                 <p class="muted company-details__lead">
                     Koppel een ATS of ander systeem aan Lobsy. Vacatures via de API blijven concept tot je ze publiceert.
@@ -449,7 +451,7 @@
                     <p class="state-message @(_messageIsError ? "error" : null)">@_message</p>
                 }
             </section>
-            }
+            </details>
         }
     }
 </div>

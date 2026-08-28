@@ -32,6 +32,14 @@
     }
     else
     {
+        <section class="sales-invoices-hero">
+            <div>
+                <span class="muted">Beschikbaar saldo</span>
+                <div class="sales-invoices-hero__value">€ @(_preview?.AvailableExVat.ToString("0.00") ?? "0.00")</div>
+                <p class="muted">excl. BTW — uitbetalen via iDEAL</p>
+            </div>
+            <button class="login-submit" type="button" disabled="@_busy" @onclick="OpenPayoutModalAsync">Uitbetalen</button>
+        </section>
         <div class="table-list">
             @foreach (var inv in _invoices)
             {
@@ -165,6 +173,14 @@
         try
         {
             _invoices = await Api.GetMySelfBillingInvoicesAsync();
+            try
+            {
+                _preview = await Api.GetMyPayoutPreviewAsync();
+            }
+            catch
+            {
+                // Hero falls back to €0.00
+            }
         }
         catch (Exception ex)
         {

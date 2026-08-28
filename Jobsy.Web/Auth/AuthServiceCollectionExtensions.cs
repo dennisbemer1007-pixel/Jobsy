@@ -278,15 +278,13 @@ public static class AuthServiceCollectionExtensions
                 return Results.Redirect($"/login?error=invalid&returnUrl={Uri.EscapeDataString(AuthRedirects.SafeLocalUrl(returnUrl))}");
             }
 
-            if (principal.HasClaim(c =>
-                    c.Type == "show_candidate_how_to" && c.Value == "1"))
+            var showHowTo = principal.HasClaim(c =>
+                c.Type == "show_candidate_how_to" && c.Value == "1");
+            if (showHowTo
+                || principal.IsInRole("Candidate")
+                || principal.HasClaim(ClaimTypes.Role, "Candidate"))
             {
-                returnUrl = AuthRedirects.CandidateHowToPath;
-            }
-            else if (principal.IsInRole("Candidate")
-                     || principal.HasClaim(ClaimTypes.Role, "Candidate"))
-            {
-                returnUrl = AuthRedirects.BanenkaartPath;
+                returnUrl = AuthRedirects.ResolveCandidateReturnUrl(returnUrl, showHowTo);
             }
 
             await http.SignInAsync(
@@ -320,15 +318,13 @@ public static class AuthServiceCollectionExtensions
             }
 
             var principal = CreateLocalPrincipal(user);
-            if (principal.HasClaim(c =>
-                    c.Type == "show_candidate_how_to" && c.Value == "1"))
+            var showHowTo = principal.HasClaim(c =>
+                c.Type == "show_candidate_how_to" && c.Value == "1");
+            if (showHowTo
+                || principal.IsInRole("Candidate")
+                || principal.HasClaim(ClaimTypes.Role, "Candidate"))
             {
-                returnUrl = AuthRedirects.CandidateHowToPath;
-            }
-            else if (principal.IsInRole("Candidate")
-                     || principal.HasClaim(ClaimTypes.Role, "Candidate"))
-            {
-                returnUrl = AuthRedirects.BanenkaartPath;
+                returnUrl = AuthRedirects.ResolveCandidateReturnUrl(returnUrl, showHowTo);
             }
 
             await http.SignInAsync(
@@ -670,13 +666,12 @@ public static class AuthServiceCollectionExtensions
             if (properties is not null)
             {
                 var role = NormalizeRole(profile.Role);
-                if (profile.ShowCandidateHowTo)
+                if (profile.ShowCandidateHowTo || role == "Candidate")
                 {
-                    properties.RedirectUri = AuthRedirects.CandidateHowToPath;
-                }
-                else if (role == "Candidate")
-                {
-                    properties.RedirectUri = AuthRedirects.BanenkaartPath;
+                    properties.RedirectUri = AuthRedirects.SafeLocalUrl(
+                        AuthRedirects.ResolveCandidateReturnUrl(
+                            properties.RedirectUri ?? "/home",
+                            profile.ShowCandidateHowTo));
                 }
             }
         }

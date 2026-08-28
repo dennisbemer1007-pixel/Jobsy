@@ -1,0 +1,45 @@
+@using Microsoft.AspNetCore.Components.Authorization
+@inject JobsyApiClient Api
+@inject CultureState Culture
+@implements IDisposable
+
+<AuthorizeView Roles="SalesManager">
+    <Authorized>
+        @if (_loaded)
+        {
+            <a class="sales-wallet-chip" href="/salesmanager/invoices" title="Beschikbaar commissiesaldo">
+                <span>Wallet</span>
+                <strong>€ @_balance.ToString("0.00")</strong>
+            </a>
+        }
+    </Authorized>
+</AuthorizeView>
+
+@code {
+    private decimal _balance;
+    private bool _loaded;
+
+    protected override void OnInitialized()
+        => Culture.Changed += OnCultureChanged;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var dash = await Api.GetMySalesManagerDashboardAsync();
+            _balance = dash?.UninvoicedExVat ?? dash?.BalanceExVat ?? 0m;
+        }
+        catch
+        {
+            _balance = 0m;
+        }
+        finally
+        {
+            _loaded = true;
+        }
+    }
+
+    private void OnCultureChanged() => InvokeAsync(StateHasChanged);
+
+    public void Dispose() => Culture.Changed -= OnCultureChanged;
+}

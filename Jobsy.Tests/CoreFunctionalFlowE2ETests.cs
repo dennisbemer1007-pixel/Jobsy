@@ -53,9 +53,9 @@ public class CoreFunctionalFlowE2ETests
 
         var commercial = new SalesCommercialService(db, new TokenLedgerService(db));
         var adminCommercial = await commercial.GetAdminAsync();
-        Assert.Equal(0.15m, adminCommercial.DirectCommissionRate);
-        Assert.Equal(0.03m, adminCommercial.IndirectCommissionRate);
-        Assert.Equal(365, adminCommercial.CommissionDurationDays);
+        Assert.Equal(0.25m, adminCommercial.DirectCommissionRate);
+        Assert.Equal(0.05m, adminCommercial.IndirectCommissionRate);
+        Assert.Equal(SalesCommissionRules.DefaultCommissionDurationDays, adminCommercial.CommissionDurationDays);
 
         // ── 2. Company Manager registration + email verification ─────────────
         var registration = CreateRegistrationService(db);
@@ -223,10 +223,10 @@ public class CoreFunctionalFlowE2ETests
         Assert.True(expectedDirect > 0m);
         Assert.True(expectedIndirect > 0m);
         Assert.Equal(
-            Math.Round(purchaseExVat * 0.15m, 2, MidpointRounding.AwayFromZero),
+            Math.Round(purchaseExVat * 0.25m, 2, MidpointRounding.AwayFromZero),
             expectedDirect);
         Assert.Equal(
-            Math.Round(purchaseExVat * 0.03m, 2, MidpointRounding.AwayFromZero),
+            Math.Round(purchaseExVat * 0.05m, 2, MidpointRounding.AwayFromZero),
             expectedIndirect);
 
         var commissions = new CommissionLedgerService(db);

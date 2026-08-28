@@ -2,6 +2,7 @@
 @rendermode @(new InteractiveServerRenderMode(prerender: false))
 @attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "EnterpriseManager,Admin")]
 @inject JobsyApiClient Api
+@inject IJSRuntime Js
 @using Jobsy.Core.Rules
 @using Jobsy.Web.Components.Employer
 @using Jobsy.Web.Components.Shared
@@ -38,7 +39,8 @@
     else
     {
         <section class="panel-section csv-howto">
-            <h2>How-to · minimale CSV-vereisten</h2>
+            <details>
+                <summary>How-to · minimale CSV-vereisten</summary>
             <p class="muted">
                 Gebruik een UTF-8 CSV met headerrij. Scheidingsteken: komma <code>,</code> of puntkomma <code>;</code>.
                 Velden met komma’s of regeleinden tussen aanhalingstekens zetten.
@@ -73,6 +75,8 @@
                 Voorbeeldheader:
                 <code>titel,omschrijving,startdatum,einddatum,branches,salaristabel_id,afbeelding</code>
             </p>
+            <button class="btn-compact" type="button" @onclick="DownloadSampleAsync">Download voorbeeld-CSV</button>
+            </details>
         </section>
 
         <section class="panel-section">
@@ -118,6 +122,12 @@
             @if (!string.IsNullOrEmpty(_parseError))
             {
                 <p class="state-message error">@_parseError</p>
+            }
+
+            @if (_pendingRows.Count > 0)
+            {
+                <h3>Rijen-preview (@_pendingRows.Count)</h3>
+                <p class="muted">Controleer de eerste rijen voordat je importeert.</p>
             }
 
             <div class="inline-actions" style="margin-top:1rem">
@@ -517,6 +527,14 @@
     // Keep in sync with API publish hint text.
     private const string VacancyCsvImportControllerPublishHint =
         "Geslaagde rijen zijn opgeslagen als concept. Publiceer ze via Vacatures in Lobsy — daar wordt het tokenverbruik verwerkt. Dit geldt ook voor vacatures via de API.";
+
+    private async Task DownloadSampleAsync()
+    {
+        const string csv =
+            "titel,omschrijving,startdatum,einddatum,branches,salaristabel_id\n" +
+            "Medewerker winkel,Omschrijving van de functie,2026-09-01,2026-12-31,Winkel,\n";
+        await Js.InvokeVoidAsync("jobsyDownload.text", "lobsy-vacatures-voorbeeld.csv", csv, "text/csv");
+    }
 
     private void CloseCelebrate() => _showCelebrate = false;
 

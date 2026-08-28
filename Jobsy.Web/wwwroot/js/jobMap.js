@@ -1941,16 +1941,22 @@ window.jobMap = (function () {
         return !!(container && container.isConnected);
     }
 
+    function applyMarkerSelected(el, selected) {
+        if (!el || !el.classList) {
+            return;
+        }
+        el.classList.toggle("job-marker--active", !!selected);
+    }
+
     function highlight(id) {
+        if (id == null && activeClusterPopup) {
+            return;
+        }
         selectedId = id;
         Object.keys(markersById).forEach(function (key) {
             const record = markersById[key];
-            const data = record.options.jobData || {};
-            const featured = !!data.highlighted;
-            const selected = id != null && key === String(id);
             if (record.element) {
-                fillMarkerElement(record.element, featured, selected, workTypeOf(data), data.categoryColor);
-                record.element.style.zIndex = featured || selected ? "1000" : "";
+                applyMarkerSelected(record.element, id != null && key === String(id));
             }
         });
     }

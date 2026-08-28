@@ -222,13 +222,13 @@ public static class PageHelpDocs
         ["/branch/applicants"] = new(
             "Sollicitanten",
             "Binnenkomende sollicitaties op jouw vacatures.",
-            "Filter en open kandidaten, bekijk matchscore/status en vervolgstappen. Contactgegevens (PII) verschijnen pas na acceptatie of contactstatus.",
+            "Filter en open kandidaten, bekijk matchscore/status en vervolgstappen. Naam en cv na acceptatie; e-mail en telefoon pas na aanname.",
             "Selectie en opvolging van sollicitaties door managers."),
 
         ["/employer/organization"] = new(
             "Organisatie",
             "Desktop-hub voor zwaar organisatiebeheer.",
-            "Open vestigingen, regio’s, salaristabellen, bedrijfsgegevens, CSV-import en overnames. Op mobiel zie je een desktop-melding.",
+            "Bedrijfsgegevens is de landingspagina. Vestigingen, salaristabellen en CSV-import zitten in de subnav. De tab Regio’s verschijnt bij 2+ vestigingen; Overnames alleen bij openstaande verzoeken.",
             "Structuur en masterdata van de organisatie beheren zonder de mobiele ops-nav te overbelasten."),
 
         ["/regional/tokens"] = new(
@@ -240,7 +240,7 @@ public static class PageHelpDocs
         ["/intermediary"] = new(
             "Bedrijvenoverzicht",
             "Prestaties per gekoppelde opdrachtgever voor intermediairs.",
-            "Bekijk vacatures, openstaande sollicitaties, conversie, tokens, boosts en snelle acties per bedrijf.",
+            "Bekijk vacatures, openstaande sollicitaties, conversie, tokens en snelle acties per gekoppelde opdrachtgever. Geen vestigingspotten of boosts — één centrale tokenpot.",
             "Stuur op gezondheid per opdrachtgever zonder vestigingen of regio’s."),
 
         ["/intermediary/team"] = new(

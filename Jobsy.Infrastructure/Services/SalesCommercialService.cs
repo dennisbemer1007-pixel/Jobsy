@@ -117,7 +117,10 @@ public sealed class SalesCommercialService : ISalesCommercialService
             settings.DirectCommissionRate,
             settings.IndirectCommissionRate,
             settings.CommissionDurationDays,
-            settings.PartnerCommissionRate);
+            settings.PartnerCommissionRate,
+            settings.Year2DirectCommissionRate,
+            settings.Year3DirectCommissionRate,
+            settings.ReferredYear1DirectCommissionRate);
     }
 
     public async Task<SalesCommercialSettings> UpdateSettingsAsync(
@@ -130,6 +133,9 @@ public sealed class SalesCommercialService : ISalesCommercialService
         decimal? indirectCommissionRate = null,
         int? commissionDurationDays = null,
         decimal? partnerCommissionRate = null,
+        decimal? year2DirectCommissionRate = null,
+        decimal? year3DirectCommissionRate = null,
+        decimal? referredYear1DirectCommissionRate = null,
         CancellationToken cancellationToken = default)
     {
         if (baseTokenValueEuro < 0
@@ -165,6 +171,21 @@ public sealed class SalesCommercialService : ISalesCommercialService
             throw new ArgumentException("Partnercommissie moet tussen 0 en 100% liggen.");
         }
 
+        if (year2DirectCommissionRate is < 0 or > 1)
+        {
+            throw new ArgumentException("Jaar-2 commissie moet tussen 0 en 100% liggen.");
+        }
+
+        if (year3DirectCommissionRate is < 0 or > 1)
+        {
+            throw new ArgumentException("Jaar-3 commissie moet tussen 0 en 100% liggen.");
+        }
+
+        if (referredYear1DirectCommissionRate is < 0 or > 1)
+        {
+            throw new ArgumentException("Aangedragen jaar-1 commissie moet tussen 0 en 100% liggen.");
+        }
+
         if (directCommissionRate is decimal d
             && indirectCommissionRate is decimal i
             && d + i + SalesCommissionRules.AmbassadorShareRate > 1m)
@@ -197,6 +218,21 @@ public sealed class SalesCommercialService : ISalesCommercialService
         if (partnerCommissionRate is not null)
         {
             settings.PartnerCommissionRate = partnerCommissionRate.Value;
+        }
+
+        if (year2DirectCommissionRate is not null)
+        {
+            settings.Year2DirectCommissionRate = year2DirectCommissionRate.Value;
+        }
+
+        if (year3DirectCommissionRate is not null)
+        {
+            settings.Year3DirectCommissionRate = year3DirectCommissionRate.Value;
+        }
+
+        if (referredYear1DirectCommissionRate is not null)
+        {
+            settings.ReferredYear1DirectCommissionRate = referredYear1DirectCommissionRate.Value;
         }
 
         settings.UpdatedAtUtc = DateTime.UtcNow;
@@ -364,6 +400,9 @@ public sealed class SalesCommercialService : ISalesCommercialService
         IndirectCommissionRate = SalesCommissionRules.DefaultIndirectCommissionRate,
         CommissionDurationDays = SalesCommissionRules.DefaultCommissionDurationDays,
         PartnerCommissionRate = SalesCommissionRules.DefaultPartnerCommissionRate,
+        Year2DirectCommissionRate = SalesCommissionRules.DefaultYear2DirectCommissionRate,
+        Year3DirectCommissionRate = SalesCommissionRules.DefaultYear3DirectCommissionRate,
+        ReferredYear1DirectCommissionRate = SalesCommissionRules.DefaultReferredYear1DirectCommissionRate,
         UpdatedAtUtc = DateTime.UtcNow
     };
 

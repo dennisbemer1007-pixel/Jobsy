@@ -113,13 +113,17 @@ public sealed class CommissionLedgerService : ICommissionLedgerService
         DateTime? firstYearStartedAt,
         decimal? directRate = null,
         int? durationDays = null,
+        decimal? year2Rate = null,
+        decimal? year3Rate = null,
         CancellationToken cancellationToken = default)
     {
         var rate = SalesCommissionRules.TokenCommissionRate(
             firstYearStartedAt,
             DateTime.UtcNow,
             directRate ?? SalesCommissionRules.DefaultDirectCommissionRate,
-            durationDays ?? SalesCommissionRules.DefaultCommissionDurationDays);
+            durationDays ?? SalesCommissionRules.DefaultCommissionDurationDays,
+            year2Rate ?? SalesCommissionRules.DefaultYear2DirectCommissionRate,
+            year3Rate ?? SalesCommissionRules.DefaultYear3DirectCommissionRate);
 
         return CreditCheckoutCommissionAsync(
             salesManagerUserId,

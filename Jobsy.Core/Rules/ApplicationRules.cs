@@ -37,9 +37,13 @@ public static class ApplicationRules
     public static bool IsListedForCandidate(DateTime? emailVerifiedAt)
         => emailVerifiedAt is not null;
 
-    /// <summary>Employer sees candidate PII (and Lobsy-CV PDF) after Accept.</summary>
+    /// <summary>Employer sees candidate name / CV after Accept. Direct contact is separate.</summary>
     public static bool IsPiiRevealed(ApplicationStatus status)
         => LobsyCvAccessRules.IsPiiRevealed(status);
+
+    /// <summary>E-mail and phone stay hidden until Hired.</summary>
+    public static bool IsDirectContactRevealed(ApplicationStatus status)
+        => LobsyCvAccessRules.IsDirectContactRevealed(status);
 
     /// <summary>
     /// Verified applications occupy a vacancy slot, except withdrawn ones (slot freed).

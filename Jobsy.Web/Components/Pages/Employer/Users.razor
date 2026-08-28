@@ -27,35 +27,88 @@
     }
     else
     {
-        <div class="table-list">
-            @if (_users.Count == 0)
-            {
-                <p class="muted">Nog geen gebruikers in deze organisatie. Verstuur hieronder de eerste uitnodiging.</p>
-            }
-            else
-            {
-                @foreach (var u in _users)
+        var pendingInvites = _users.Where(u => !u.IsActive).ToList();
+        var visibleUsers = FilteredUsers.ToList();
+        <div class="users-toolbar">
+            <input type="search" placeholder="Zoek op naam of e-mail" @bind="_search" @bind:event="oninput" />
+            <select @bind="_roleFilter">
+                <option value="">Alle rollen</option>
+                @foreach (var option in RoleOptions)
+                {
+                    <option value="@option.Value">@option.Label</option>
+                }
+            </select>
+            <select @bind="_branchFilter">
+                <option value="">Alle vestigingen</option>
+                @foreach (var c in _companies)
+                {
+                    <option value="@c.Id">@c.Name</option>
+                }
+            </select>
+        </div>
+
+        @if (pendingInvites.Count > 0)
+        {
+            <section class="invite-panel" aria-label="Openstaande uitnodigingen">
+                <h2 class="invite-panel__title">
+                    Openstaande uitnodigingen
+                    <span class="invite-count">@pendingInvites.Count</span>
+                </h2>
+                @foreach (var u in pendingInvites)
                 {
                     <div class="table-row">
-                        <div>
-                            <strong>@u.FullName</strong>
-                            <span class="muted">
-                                @u.Email · @RoleLabel(u.Role) · @(u.CompanyName ?? "—")
-                                @if (!u.IsActive)
-                                {
-                                    <text> · inactief</text>
-                                }
-                            </span>
-                        </div>
-                        <div class="table-row__actions">
-                            <button type="button" class="icon-btn" title="Bewerken" aria-label="Gebruiker bewerken" disabled="@_busy" @onclick="() => StartEdit(u)">
-                                @((MarkupString)ActionIcons.Edit)
-                            </button>
+                        <div class="users-table__person">
+                            <span class="user-avatar" aria-hidden="true">@Initials(u.FullName)</span>
+                            <div>
+                                <strong>@u.FullName</strong>
+                                <span class="muted">@u.Email · @RoleLabel(u.Role)</span>
+                            </div>
                         </div>
                     </div>
                 }
-            }
-        </div>
+            </section>
+        }
+
+        @if (visibleUsers.Count == 0)
+        {
+            <p class="muted">Nog geen gebruikers in deze organisatie. Verstuur hieronder de eerste uitnodiging.</p>
+        }
+        else
+        {
+            <table class="users-table">
+                <thead>
+                    <tr>
+                        <th>Gebruiker</th>
+                        <th>Rol</th>
+                        <th>Vestiging</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var u in visibleUsers)
+                    {
+                        <tr>
+                            <td data-label="Gebruiker">
+                                <div class="users-table__person">
+                                    <span class="user-avatar" aria-hidden="true">@Initials(u.FullName)</span>
+                                    <div>
+                                        <strong>@u.FullName</strong>
+                                        <div class="muted">@u.Email</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td data-label="Rol"><span class="role-badge @RoleBadgeClass(u.Role)">@RoleLabel(u.Role)</span></td>
+                            <td data-label="Vestiging">@(u.CompanyName ?? "—")</td>
+                            <td>
+                                <button type="button" class="icon-btn" title="Bewerken" aria-label="Gebruiker bewerken" disabled="@_busy" @onclick="() => StartEdit(u)">
+                                    @((MarkupString)ActionIcons.Edit)
+                                </button>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
 
         @if (_editing is not null)
         {
@@ -176,6 +229,9 @@
     private string _fullName = "";
     private string _role = "BranchManager";
     private string _primaryCompanyId = "";
+    private string _search = "";
+    private string _roleFilter = "";
+    private string _branchFilter = "";
     private bool _isAdmin;
 
     private CompanyUserItem? _editing;
@@ -347,6 +403,55 @@
             _busy = false;
         }
     }
+
+    private IEnumerable<CompanyUserItem> FilteredUsers
+    {
+        get
+        {
+            IEnumerable<CompanyUserItem> query = _users.Where(u => u.IsActive);
+            if (!string.IsNullOrWhiteSpace(_search))
+            {
+                query = query.Where(u =>
+                    u.FullName.Contains(_search, StringComparison.OrdinalIgnoreCase)
+                    || u.Email.Contains(_search, StringComparison.OrdinalIgnoreCase));
+            }
+
+            if (!string.IsNullOrWhiteSpace(_roleFilter))
+            {
+                query = query.Where(u => string.Equals(u.Role, _roleFilter, StringComparison.Ordinal));
+            }
+
+            if (Guid.TryParse(_branchFilter, out var branchId))
+            {
+                query = query.Where(u =>
+                    u.CompanyId == branchId || u.MembershipCompanyIds.Contains(branchId));
+            }
+
+            return query;
+        }
+    }
+
+    private static string Initials(string name)
+    {
+        var parts = (name ?? "").Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        if (parts.Length == 0)
+        {
+            return "?";
+        }
+
+        return parts.Length == 1
+            ? parts[0][..Math.Min(2, parts[0].Length)].ToUpperInvariant()
+            : $"{char.ToUpperInvariant(parts[0][0])}{char.ToUpperInvariant(parts[^1][0])}";
+    }
+
+    private static string RoleBadgeClass(string role) => role switch
+    {
+        "EnterpriseManager" => "role-badge--em",
+        "RegionalManager" => "role-badge--rm",
+        "BranchManager" => "role-badge--bm",
+        "Intermediary" => "role-badge--im",
+        _ => ""
+    };
 
     private static string RoleLabel(string role) => role switch
     {

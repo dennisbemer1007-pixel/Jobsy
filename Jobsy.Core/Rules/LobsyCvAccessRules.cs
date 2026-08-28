@@ -4,7 +4,7 @@ namespace Jobsy.Core.Rules;
 
 /// <summary>
 /// Progressive disclosure for the auto-generated Lobsy-CV PDF.
-/// Mirrors employer PII reveal: Accepted / EmployerContacting / Hired.
+/// Name / CV after Accept; direct contact (e-mail, phone) only after Hired.
 /// </summary>
 public static class LobsyCvAccessRules
 {
@@ -12,6 +12,12 @@ public static class LobsyCvAccessRules
         => status is ApplicationStatus.Accepted
             or ApplicationStatus.EmployerContacting
             or ApplicationStatus.Hired;
+
+    /// <summary>
+    /// Direct contact (e-mail, phone, school e-mail) is never shown until the candidate is hired.
+    /// </summary>
+    public static bool IsDirectContactRevealed(ApplicationStatus status)
+        => status == ApplicationStatus.Hired;
 
     /// <summary>Employer may download the application snapshot PDF only after Accept + e-mail verification.</summary>
     public static bool CanEmployerDownloadCv(ApplicationStatus status, DateTime? emailVerifiedAt)

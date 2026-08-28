@@ -1650,6 +1650,9 @@ public sealed class JobsyApiClient : IAsyncDisposable
         decimal? indirectCommissionRate = null,
         int? commissionDurationDays = null,
         decimal? partnerCommissionRate = null,
+        decimal? year2DirectCommissionRate = null,
+        decimal? year3DirectCommissionRate = null,
+        decimal? referredYear1DirectCommissionRate = null,
         CancellationToken ct = default)
     {
         var response = await _http.PutAsJsonAsync(
@@ -1664,7 +1667,10 @@ public sealed class JobsyApiClient : IAsyncDisposable
                 directCommissionRate,
                 indirectCommissionRate,
                 commissionDurationDays,
-                partnerCommissionRate
+                partnerCommissionRate,
+                year2DirectCommissionRate,
+                year3DirectCommissionRate,
+                referredYear1DirectCommissionRate
             },
             ct);
         response.EnsureSuccessStatusCode();
@@ -3983,10 +3989,13 @@ public sealed class SalesCommercialAdminModel
     public DateTime UpdatedAtUtc { get; set; }
     public List<VacancyTypeCostItem> VacancyTypeCosts { get; set; } = [];
     public List<SalesPackageItem> Packages { get; set; } = [];
-    public decimal DirectCommissionRate { get; set; } = 0.15m;
-    public decimal IndirectCommissionRate { get; set; } = 0.03m;
-    public int CommissionDurationDays { get; set; } = 365;
+    public decimal DirectCommissionRate { get; set; } = 0.25m;
+    public decimal IndirectCommissionRate { get; set; } = 0.05m;
+    public int CommissionDurationDays { get; set; } = 1095;
     public decimal PartnerCommissionRate { get; set; } = 0.05m;
+    public decimal Year2DirectCommissionRate { get; set; } = 0.10m;
+    public decimal Year3DirectCommissionRate { get; set; } = 0.05m;
+    public decimal ReferredYear1DirectCommissionRate { get; set; } = 0.20m;
 }
 
 public sealed class PartnerAffiliateMeModel

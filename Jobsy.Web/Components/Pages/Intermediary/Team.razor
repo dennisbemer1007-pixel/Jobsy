@@ -25,23 +25,66 @@
     }
     else
     {
-        <div class="table-list">
-            @foreach (var u in _users.Where(u => u.Role == "Intermediary"))
-            {
-                <div class="table-row">
-                    <div>
-                        <strong>@u.FullName</strong>
-                        <span class="muted">
-                            @u.Email · @(u.CompanyName ?? "—")
-                            @if (!u.IsActive)
-                            {
-                                <text> · inactief</text>
-                            }
-                        </span>
-                    </div>
-                </div>
-            }
+        var pending = _users.Where(u => u.Role == "Intermediary" && !u.IsActive).ToList();
+        var active = _users.Where(u =>
+            u.Role == "Intermediary"
+            && u.IsActive
+            && (string.IsNullOrWhiteSpace(_search)
+                || u.FullName.Contains(_search, StringComparison.OrdinalIgnoreCase)
+                || u.Email.Contains(_search, StringComparison.OrdinalIgnoreCase))).ToList();
+        <div class="users-toolbar">
+            <input type="search" placeholder="Zoek op naam of e-mail" @bind="_search" @bind:event="oninput" />
         </div>
+        @if (pending.Count > 0)
+        {
+            <section class="invite-panel" aria-label="Openstaande uitnodigingen">
+                <h2 class="invite-panel__title">
+                    Openstaande uitnodigingen
+                    <span class="invite-count">@pending.Count</span>
+                </h2>
+                @foreach (var u in pending)
+                {
+                    <div class="table-row">
+                        <div class="users-table__person">
+                            <span class="user-avatar" aria-hidden="true">@Initials(u.FullName)</span>
+                            <div>
+                                <strong>@u.FullName</strong>
+                                <span class="muted">@u.Email</span>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </section>
+        }
+        @if (active.Count == 0)
+        {
+            <p class="muted">Nog geen actieve teamleden. Verstuur hieronder de eerste uitnodiging.</p>
+        }
+        else
+        {
+            <table class="users-table">
+                <thead>
+                    <tr><th>Collega</th><th>Rol</th></tr>
+                </thead>
+                <tbody>
+                    @foreach (var u in active)
+                    {
+                        <tr>
+                            <td data-label="Collega">
+                                <div class="users-table__person">
+                                    <span class="user-avatar" aria-hidden="true">@Initials(u.FullName)</span>
+                                    <div>
+                                        <strong>@u.FullName</strong>
+                                        <div class="muted">@u.Email</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td data-label="Rol"><span class="role-badge role-badge--im">Intermediair</span></td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
 
         <section class="panel-section">
             <h2>Collega uitnodigen</h2>
@@ -74,6 +117,20 @@
     private string? _message;
     private string _email = "";
     private string _fullName = "";
+    private string _search = "";
+
+    private static string Initials(string name)
+    {
+        var parts = (name ?? "").Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        if (parts.Length == 0)
+        {
+            return "?";
+        }
+
+        return parts.Length == 1
+            ? parts[0][..Math.Min(2, parts[0].Length)].ToUpperInvariant()
+            : $"{char.ToUpperInvariant(parts[0][0])}{char.ToUpperInvariant(parts[^1][0])}";
+    }
 
     protected override void OnInitialized()
         => Culture.Changed += OnCultureChanged;

@@ -270,11 +270,11 @@
         {
             <section class="panel-section">
                 <h2>Tokens kopen</h2>
-                <p class="muted">Koop tokens voor de organisatiopot via iDEAL of creditcard (Mollie). Daarna geef je ze uit aan een vestiging.</p>
-                <form class="login-form" style="max-width:480px" @onsubmit="CheckoutIntoPotAsync" @onsubmit:preventDefault>
+                <p class="muted">Kies een pakket en betaal met iDEAL of creditcard. Tokens staan daarna op de organisatiopot.</p>
+                <form class="login-form token-buy" style="max-width:32rem" @onsubmit="CheckoutIntoPotAsync" @onsubmit:preventDefault>
                     <fieldset class="scope-fieldset">
                         <legend>Pakket</legend>
-                        <div class="token-pack-options" role="radiogroup" aria-label="Tokenpakket">
+                        <div class="token-pack-options token-pack-options--vertical" role="radiogroup" aria-label="Tokenpakket">
                             @if (_packs.Count == 0)
                             {
                                 <p class="muted">Geen tokenpakketten beschikbaar. Probeer het later opnieuw of neem contact op met support.</p>
@@ -302,8 +302,11 @@
                                          @bind-RememberPreference="_rememberPaymentMethod"
                                          ShowRememberPreference="true"
                                          Disabled="_busy" />
-                    <p class="muted">Na succesvolle betaling werkt Mollie’s webhook je saldo en openstaande acties direct bij.</p>
-                    <button class="login-submit" type="submit" disabled="@(_busy || _pot is null || _packs.Count == 0 || string.IsNullOrWhiteSpace(_paymentMethod))">
+                    <label class="token-agree">
+                        <input type="checkbox" @bind="_purchaseAgreed" />
+                        <span>Ik ga akkoord met de aankoop van dit tokenpakket. Tokens zijn prepaid en niet automatisch verlengd.</span>
+                    </label>
+                    <button class="login-submit" type="submit" disabled="@(_busy || _pot is null || _packs.Count == 0 || string.IsNullOrWhiteSpace(_paymentMethod) || !_purchaseAgreed)">
                         @CheckoutButtonLabel
                     </button>
                 </form>
@@ -313,7 +316,7 @@
         {
             <section class="panel-section">
                 <h2>Tokens kopen</h2>
-                <form class="login-form" style="max-width:480px" @onsubmit="CheckoutOwnAsync" @onsubmit:preventDefault>
+                <form class="login-form token-buy" style="max-width:32rem" @onsubmit="CheckoutOwnAsync" @onsubmit:preventDefault>
                     @if (_balances.Count > 1)
                     {
                         <label>
@@ -328,7 +331,7 @@
                     }
                     <fieldset class="scope-fieldset">
                         <legend>Pakket</legend>
-                        <div class="token-pack-options" role="radiogroup" aria-label="Tokenpakket">
+                        <div class="token-pack-options token-pack-options--vertical" role="radiogroup" aria-label="Tokenpakket">
                             @if (_packs.Count == 0)
                             {
                                 <p class="muted">Geen tokenpakketten beschikbaar. Probeer het later opnieuw of neem contact op met support.</p>
@@ -356,8 +359,11 @@
                                          @bind-RememberPreference="_rememberPaymentMethod"
                                          ShowRememberPreference="true"
                                          Disabled="_busy" />
-                    <p class="muted">Na succesvolle betaling werkt Mollie’s webhook je saldo en openstaande acties direct bij.</p>
-                    <button class="login-submit" type="submit" disabled="@(_busy || _checkoutCompanyId == Guid.Empty || _packs.Count == 0 || string.IsNullOrWhiteSpace(_paymentMethod))">
+                    <label class="token-agree">
+                        <input type="checkbox" @bind="_purchaseAgreed" />
+                        <span>Ik ga akkoord met de aankoop van dit tokenpakket. Tokens zijn prepaid en niet automatisch verlengd.</span>
+                    </label>
+                    <button class="login-submit" type="submit" disabled="@(_busy || _checkoutCompanyId == Guid.Empty || _packs.Count == 0 || string.IsNullOrWhiteSpace(_paymentMethod) || !_purchaseAgreed)">
                         @CheckoutButtonLabel
                     </button>
                 </form>
@@ -420,6 +426,7 @@
     private List<PartnerAffiliateReferralRowModel> _referrals = [];
     private bool _loading = true;
     private bool _busy;
+    private bool _purchaseAgreed;
     private bool _canAllocate;
     private bool _canPurchaseIntoPot;
     private bool _canPurchaseOwn;

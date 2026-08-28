@@ -63,14 +63,19 @@ public sealed class RevenueShareService : IRevenueShareService
             companyId, salesManagerUserId.Value, cancellationToken);
 
         var asOf = DateTime.UtcNow;
-        var withinWindow = SalesCommissionRules.IsWithinCommissionWindow(
-            firstYearStartedAt, asOf, terms.DurationDays);
-
-        var referringSmId = withinWindow ? terms.ReferringSmId : null;
-        var appliedDirectRate = withinWindow ? Math.Max(0m, terms.DirectRate) : 0m;
-        var appliedIndirectRate = referringSmId is not null && withinWindow
-            ? Math.Max(0m, terms.IndirectRate)
-            : 0m;
+        var appliedDirectRate = SalesCommissionRules.TokenCommissionRate(
+            firstYearStartedAt,
+            asOf,
+            terms.DirectRate,
+            terms.DurationDays,
+            terms.Year2Rate,
+            terms.Year3Rate) ?? 0m;
+        var appliedIndirectRate = SalesCommissionRules.IndirectCommissionRate(
+            firstYearStartedAt,
+            asOf,
+            terms.IndirectRate,
+            terms.DurationDays) ?? 0m;
+        var referringSmId = appliedIndirectRate > 0 ? terms.ReferringSmId : null;
 
         var ambassadorTokens = SalesCommissionRules.AmbassadorTokens(packSize);
         var ambassadorEuro = SalesCommissionRules.ShareEuro(
@@ -157,8 +162,10 @@ public sealed class RevenueShareService : IRevenueShareService
                 tokenCheckoutId,
                 purchaseAmountExVatEuro,
                 firstYearStartedAt,
-                appliedDirectRate,
+                terms.DirectRate,
                 terms.DurationDays,
+                terms.Year2Rate,
+                terms.Year3Rate,
                 cancellationToken);
         }
 
@@ -248,7 +255,13 @@ public sealed class RevenueShareService : IRevenueShareService
             .ToListAsync(cancellationToken);
     }
 
-    private async Task<(decimal DirectRate, decimal IndirectRate, int DurationDays, Guid? ReferringSmId)>
+    private async Task<(
+            decimal DirectRate,
+            decimal IndirectRate,
+            int DurationDays,
+            Guid? ReferringSmId,
+            decimal Year2Rate,
+            decimal Year3Rate)>
         ResolveCommissionTermsAsync(
             Guid companyId,
             Guid salesManagerUserId,
@@ -266,6 +279,10 @@ public sealed class RevenueShareService : IRevenueShareService
             })
             .FirstOrDefaultAsync(cancellationToken);
 
+        var settings = await _commercial.GetSettingsAsync(cancellationToken);
+        var year2 = settings.Year2DirectCommissionRate;
+        var year3 = settings.Year3DirectCommissionRate;
+
         if (company?.CommissionTermsSnapshottedAtUtc is not null
             && company.CommissionDirectRateSnapshot is not null)
         {
@@ -275,20 +292,24 @@ public sealed class RevenueShareService : IRevenueShareService
                 company.CommissionDurationDaysSnapshot is > 0
                     ? company.CommissionDurationDaysSnapshot.Value
                     : SalesCommissionRules.DefaultCommissionDurationDays,
-                company.CommissionIndirectSalesManagerUserId);
+                company.CommissionIndirectSalesManagerUserId,
+                year2,
+                year3);
         }
-
-        var settings = await _commercial.GetSettingsAsync(cancellationToken);
-        var directRate = settings.DirectCommissionRate;
-        var indirectRate = settings.IndirectCommissionRate;
-        var durationDays = settings.CommissionDurationDays > 0
-            ? settings.CommissionDurationDays
-            : SalesCommissionRules.DefaultCommissionDurationDays;
 
         var referringSmId = await _db.SalesManagerProfiles.AsNoTracking()
             .Where(p => p.UserId == salesManagerUserId)
             .Select(p => p.ReferredBySalesManagerUserId)
             .FirstOrDefaultAsync(cancellationToken);
+
+        var directRate = SalesCommissionRules.Year1RateForSalesManager(
+            referringSmId is not null,
+            settings.DirectCommissionRate,
+            settings.ReferredYear1DirectCommissionRate);
+        var indirectRate = referringSmId is not null ? settings.IndirectCommissionRate : 0m;
+        var durationDays = settings.CommissionDurationDays > 0
+            ? settings.CommissionDurationDays
+            : SalesCommissionRules.DefaultCommissionDurationDays;
 
         await FreezeLegacyCommissionTermsAsync(
             companyId,
@@ -298,7 +319,7 @@ public sealed class RevenueShareService : IRevenueShareService
             durationDays,
             cancellationToken);
 
-        return (directRate, indirectRate, durationDays, referringSmId);
+        return (directRate, indirectRate, durationDays, referringSmId, year2, year3);
     }
 
     private async Task EnsureAmbassadorGrantFromLogsAsync(

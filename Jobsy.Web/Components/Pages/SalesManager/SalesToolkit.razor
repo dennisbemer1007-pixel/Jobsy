@@ -32,29 +32,29 @@
     }
     else if (_dashboard is not null)
     {
-        <div class="stat-grid">
-            <div class="stat-card">
-                <span class="stat-card__label">Trackingcode</span>
-                <strong class="stat-card__value">@_dashboard.TrackingCode</strong>
-            </div>
-            <div class="stat-card">
-                <span class="stat-card__label">Partnerlink</span>
-                <strong class="stat-card__value" style="font-size:0.95rem;word-break:break-all">@PartnerUrl</strong>
-            </div>
-        </div>
-
-        <section class="panel-section partner-sales__box">
-            <h2>PDF-flyer &amp; delen</h2>
-            <p class="muted">Persoonlijke A4-uitnodiging (één blad) met jouw salescode, compacte tarieven en QR — geen link op de flyer. Deel ook via WhatsApp of mail.</p>
-            <div class="inline-actions" style="flex-wrap:wrap;gap:0.5rem">
-                <button class="btn-compact btn-compact--primary" type="button" disabled="@_busy" @onclick="DownloadFlyerAsync">
+        <div class="sales-toolkit-grid">
+            <article class="sales-toolkit-card">
+                <h2>Trackingcode</h2>
+                <p class="muted">Deel je unieke code met ondernemers.</p>
+                <strong>@_dashboard.TrackingCode</strong>
+            </article>
+            <article class="sales-toolkit-card">
+                <h2>PDF-flyer &amp; delen</h2>
+                <p class="muted">Persoonlijke A4-uitnodiging met jouw salescode, compacte tarieven en QR.</p>
+                <button class="login-submit" type="button" disabled="@_busy" @onclick="DownloadFlyerAsync">
                     Download PDF-flyer
                 </button>
-                <button class="btn-compact" type="button" @onclick="ShareWhatsApp">Deel via WhatsApp</button>
-                <button class="btn-compact" type="button" @onclick="ShareMail">Deel via mail</button>
-                <a class="btn-compact" href="@PartnerUrl">Open partnerpagina</a>
-            </div>
-        </section>
+                <div class="inline-actions" style="flex-wrap:wrap;gap:0.5rem">
+                    <button class="btn-compact" type="button" @onclick="ShareWhatsApp">Deel via WhatsApp</button>
+                    <button class="btn-compact" type="button" @onclick="ShareMail">Deel via mail</button>
+                    <a class="btn-compact" href="@PartnerUrl">Open partnerpagina</a>
+                </div>
+            </article>
+            <article class="sales-toolkit-card">
+                <h2>Partnerlink</h2>
+                <p class="muted" style="word-break:break-all">@PartnerUrl</p>
+            </article>
+        </div>
 
         @if (_catalog is not null)
         {
@@ -65,7 +65,13 @@
                     @foreach (var cost in _catalog.VacancyTypeCosts)
                     {
                         <div class="table-row">
-                            <strong>@cost.Label</strong>
+                            <strong>
+                                @cost.Label
+                                @if (cost.CostTokens <= 0 || cost.PriceEuro <= 0)
+                                {
+                                    <span class="rate-free-badge">Gratis</span>
+                                }
+                            </strong>
                             <span>@cost.CostTokens.ToString("0.##") tokens · € @cost.PriceEuro.ToString("0.00")</span>
                         </div>
                     }

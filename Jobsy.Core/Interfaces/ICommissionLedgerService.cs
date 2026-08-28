@@ -32,6 +32,8 @@ public interface ICommissionLedgerService
         DateTime? firstYearStartedAt,
         decimal? directRate = null,
         int? durationDays = null,
+        decimal? year2Rate = null,
+        decimal? year3Rate = null,
         CancellationToken cancellationToken = default);
 
     /// <summary>

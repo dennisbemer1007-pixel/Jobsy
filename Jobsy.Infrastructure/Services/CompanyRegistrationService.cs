@@ -1692,8 +1692,10 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
             .OrderBy(s => s.Id)
             .FirstOrDefaultAsync(cancellationToken);
 
-        var directRate = settings?.DirectCommissionRate
-                         ?? SalesCommissionRules.DefaultDirectCommissionRate;
+        var standardYear1 = settings?.DirectCommissionRate
+                            ?? SalesCommissionRules.DefaultDirectCommissionRate;
+        var referredYear1 = settings?.ReferredYear1DirectCommissionRate
+                            ?? SalesCommissionRules.DefaultReferredYear1DirectCommissionRate;
         var indirectRate = settings?.IndirectCommissionRate
                            ?? SalesCommissionRules.DefaultIndirectCommissionRate;
         var durationDays = settings?.CommissionDurationDays > 0
@@ -1705,9 +1707,14 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
             .Select(p => p.ReferredBySalesManagerUserId)
             .FirstOrDefaultAsync(cancellationToken);
 
+        var directRate = SalesCommissionRules.Year1RateForSalesManager(
+            wasReferred: upline is not null,
+            standardYear1,
+            referredYear1);
+
         company.CommissionIndirectSalesManagerUserId = upline;
         company.CommissionDirectRateSnapshot = Math.Max(0m, directRate);
-        company.CommissionIndirectRateSnapshot = Math.Max(0m, indirectRate);
+        company.CommissionIndirectRateSnapshot = upline is not null ? Math.Max(0m, indirectRate) : 0m;
         company.CommissionDurationDaysSnapshot = durationDays;
         company.CommissionTermsSnapshottedAtUtc = DateTime.UtcNow;
     }

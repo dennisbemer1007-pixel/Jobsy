@@ -73,6 +73,7 @@ public sealed class UatRoleApiScriptsTests : IClassFixture<RoleFunctionalWebAppF
 
         var accepted = list.Single(a => a.GetProperty("id").GetGuid() == _factory.AcceptedApplicationId);
         Assert.True(accepted.GetProperty("piiRevealed").GetBoolean());
+        Assert.False(HasEmail(accepted));
 
         Assert.Equal(HttpStatusCode.Forbidden, (await c.GetAsync("api/integrations/health")).StatusCode);
         Assert.Equal(HttpStatusCode.Forbidden, (await c.PostAsJsonAsync("api/tokens/allocate", new

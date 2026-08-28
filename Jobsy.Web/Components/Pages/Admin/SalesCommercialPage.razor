@@ -61,26 +61,38 @@
         <section class="panel-section">
             <h2>Salesmanager-commissies</h2>
             <p class="muted">
-                Directe commissie voor de primary salesmanager (standaard 15%) en passieve referral-bonus (standaard 3%)
-                voor de salesmanager die die primary heeft aangedragen. Commissies lopen maximaal 1 jaar per binnengehaalde ondernemer.
+                Alle percentages en looptijden zijn configureerbaar. Standaardstaffel: 25% / 10% / 5% over drie jaar.
+                Aangedragen salesmanagers: 20% in jaar 1 (plus 5% override voor de aanbeveler), daarna 10% / 5%.
             </p>
             <article class="company-card platform-features-card">
-                <div class="inline-actions" style="flex-wrap:wrap;gap:0.75rem">
+                <div class="commission-staffel">
                     <label>
-                        Direct %
-                        <input type="number" min="0" max="100" step="0.1"
-                               @bind="_directPct" style="width:5.5rem" />
+                        Standaard jaar 1 %
+                        <input type="number" min="0" max="100" step="0.1" @bind="_directPct" style="width:5.5rem" />
                     </label>
                     <label>
-                        Indirect %
-                        <input type="number" min="0" max="100" step="0.1"
-                               @bind="_indirectPct" style="width:5.5rem" />
+                        Jaar 2 %
+                        <input type="number" min="0" max="100" step="0.1" @bind="_year2Pct" style="width:5.5rem" />
                     </label>
                     <label>
-                        Duur (dagen)
+                        Jaar 3 %
+                        <input type="number" min="0" max="100" step="0.1" @bind="_year3Pct" style="width:5.5rem" />
+                    </label>
+                    <label>
+                        Aangedragen jaar 1 %
+                        <input type="number" min="0" max="100" step="0.1" @bind="_referredYear1Pct" style="width:5.5rem" />
+                    </label>
+                    <label>
+                        Aanbeveler override %
+                        <input type="number" min="0" max="100" step="0.1" @bind="_indirectPct" style="width:5.5rem" />
+                    </label>
+                    <label>
+                        Looptijd (dagen)
                         <input type="number" min="1" max="3650" step="1"
                                @bind="_admin.CommissionDurationDays" style="width:5.5rem" />
                     </label>
+                </div>
+                <div class="inline-actions" style="margin-top:0.75rem">
                     <button class="btn-compact btn-compact--primary" type="button" disabled="@_busy" @onclick="SaveSettingsAsync">
                         @Culture["Common.Save"]
                     </button>
@@ -152,8 +164,11 @@
 
 @code {
     private SalesCommercialAdminModel? _admin;
-    private decimal _directPct = 15m;
-    private decimal _indirectPct = 3m;
+    private decimal _directPct = 25m;
+    private decimal _indirectPct = 5m;
+    private decimal _year2Pct = 10m;
+    private decimal _year3Pct = 5m;
+    private decimal _referredYear1Pct = 20m;
     private bool _loading = true;
     private bool _busy;
     private string? _error;
@@ -180,6 +195,9 @@
             {
                 _directPct = Math.Round(_admin.DirectCommissionRate * 100m, 2);
                 _indirectPct = Math.Round(_admin.IndirectCommissionRate * 100m, 2);
+                _year2Pct = Math.Round(_admin.Year2DirectCommissionRate * 100m, 2);
+                _year3Pct = Math.Round(_admin.Year3DirectCommissionRate * 100m, 2);
+                _referredYear1Pct = Math.Round(_admin.ReferredYear1DirectCommissionRate * 100m, 2);
             }
         }
         catch (Exception ex)
@@ -208,7 +226,10 @@
                 Math.Round(_directPct / 100m, 4),
                 Math.Round(_indirectPct / 100m, 4),
                 _admin.CommissionDurationDays,
-                _admin.PartnerCommissionRate);
+                _admin.PartnerCommissionRate,
+                Math.Round(_year2Pct / 100m, 4),
+                Math.Round(_year3Pct / 100m, 4),
+                Math.Round(_referredYear1Pct / 100m, 4));
             _message = "Instellingen opgeslagen.";
             await ReloadAsync();
         }

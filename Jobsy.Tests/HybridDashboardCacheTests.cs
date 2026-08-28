@@ -245,7 +245,8 @@ public sealed class HybridDashboardCacheTests
 
         public Task<CommissionLedgerEntry?> TryCreditTokenCommissionAsync(
             Guid salesManagerUserId, Guid companyId, Guid tokenCheckoutId, decimal purchaseAmountEuro,
-            DateTime? firstYearStartedAt, decimal? directRate = null, int? durationDays = null, CancellationToken cancellationToken = default)
+            DateTime? firstYearStartedAt, decimal? directRate = null, int? durationDays = null,
+            decimal? year2Rate = null, decimal? year3Rate = null, CancellationToken cancellationToken = default)
             => Task.FromResult<CommissionLedgerEntry?>(null);
 
         public Task<CommissionLedgerEntry?> TryCreditIndirectTokenCommissionAsync(
