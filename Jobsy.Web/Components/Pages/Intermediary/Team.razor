@@ -7,7 +7,7 @@
 
 <PageTitle>Team · Lobsy</PageTitle>
 
-<div class="panel-page">
+<div class="panel-page users-page">
     <header class="panel-header">
         <div>
             <h1>Team</h1>
@@ -42,18 +42,24 @@
                     Openstaande uitnodigingen
                     <span class="invite-count">@pending.Count</span>
                 </h2>
-                @foreach (var u in pending)
-                {
-                    <div class="table-row">
-                        <div class="users-table__person">
-                            <span class="user-avatar" aria-hidden="true">@Initials(u.FullName)</span>
-                            <div>
-                                <strong>@u.FullName</strong>
-                                <span class="muted">@u.Email</span>
+                <div class="user-card-list">
+                    @foreach (var u in pending)
+                    {
+                        <article class="user-card user-card--pending">
+                            <div class="user-card__head">
+                                <span class="user-avatar" aria-hidden="true">@Initials(u.FullName)</span>
+                                <div class="user-card__identity">
+                                    <strong>@u.FullName</strong>
+                                    <span class="user-card__email">@u.Email</span>
+                                </div>
                             </div>
-                        </div>
-                    </div>
-                }
+                            <div class="user-card__meta">
+                                <span class="role-badge role-badge--im">Intermediair</span>
+                                <span class="user-card__inactive">Openstaand</span>
+                            </div>
+                        </article>
+                    }
+                </div>
             </section>
         }
         @if (active.Count == 0)
@@ -62,33 +68,28 @@
         }
         else
         {
-            <table class="users-table">
-                <thead>
-                    <tr><th>Collega</th><th>Rol</th></tr>
-                </thead>
-                <tbody>
-                    @foreach (var u in active)
-                    {
-                        <tr>
-                            <td data-label="Collega">
-                                <div class="users-table__person">
-                                    <span class="user-avatar" aria-hidden="true">@Initials(u.FullName)</span>
-                                    <div>
-                                        <strong>@u.FullName</strong>
-                                        <div class="muted">@u.Email</div>
-                                    </div>
-                                </div>
-                            </td>
-                            <td data-label="Rol"><span class="role-badge role-badge--im">Intermediair</span></td>
-                        </tr>
-                    }
-                </tbody>
-            </table>
+            <div class="user-card-list">
+                @foreach (var u in active)
+                {
+                    <article class="user-card">
+                        <div class="user-card__head">
+                            <span class="user-avatar" aria-hidden="true">@Initials(u.FullName)</span>
+                            <div class="user-card__identity">
+                                <strong>@u.FullName</strong>
+                                <span class="user-card__email">@u.Email</span>
+                            </div>
+                        </div>
+                        <div class="user-card__meta">
+                            <span class="role-badge role-badge--im">Intermediair</span>
+                        </div>
+                    </article>
+                }
+            </div>
         }
 
         <section class="panel-section">
             <h2>Collega uitnodigen</h2>
-            <form class="login-form" style="max-width:480px" @onsubmit="InviteAsync" @onsubmit:preventDefault>
+            <form class="login-form invite-form" @onsubmit="InviteAsync" @onsubmit:preventDefault>
                 <label>
                     E-mail
                     <input type="email" @bind="_email" required />
@@ -98,7 +99,9 @@
                     <input @bind="_fullName" required />
                 </label>
                 <p class="muted">Rol: Intermediair. Teamleden krijgen alleen toegang tot dit intermediair-account.</p>
-                <button class="login-submit" type="submit" disabled="@_busy">Uitnodigen</button>
+                <div class="invite-form__actions">
+                    <button class="login-submit" type="submit" disabled="@_busy">Uitnodigen</button>
+                </div>
             </form>
         </section>
 

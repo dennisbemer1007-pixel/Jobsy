@@ -466,6 +466,12 @@ html[dir="rtl"] .account-menu__panel {
     stroke-linejoin: round;
 }
 
+.icon-btn svg[fill="currentColor"],
+.user-card__menu-toggle svg {
+    fill: currentColor;
+    stroke: none;
+}
+
 .detail-card {
     position: relative;
     background: var(--surface);
@@ -11406,6 +11412,11 @@ button.linkish:hover {
     .app-footer__copy {
         display: none;
     }
+
+    .app-shell.has-bottom-nav .app-footer,
+    .app-shell:has(.bottom-nav) .app-footer {
+        display: none;
+    }
 }
 
 @media (max-width: 420px) {
@@ -14397,25 +14408,62 @@ html.cookie-consent-known .cookie-consent {
     height: 1.15rem;
 }
 
+.users-page {
+    min-width: 0;
+    max-width: 100%;
+    overflow-x: hidden;
+    box-sizing: border-box;
+}
+
 .users-toolbar {
     display: flex;
-    flex-wrap: wrap;
+    flex-direction: column;
+    align-items: stretch;
+    flex-wrap: nowrap;
     gap: 0.55rem;
     margin-bottom: 0.85rem;
+    min-width: 0;
+    max-width: 100%;
 }
 
 .users-toolbar input,
 .users-toolbar select {
     min-height: 2.5rem;
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
     padding: 0.4rem 0.65rem;
     border: 1px solid var(--border);
     border-radius: 8px;
     font: inherit;
     background: var(--surface);
+    box-sizing: border-box;
 }
 
-.users-toolbar input {
-    flex: 1 1 12rem;
+.users-toolbar__filters {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 0.5rem;
+    min-width: 0;
+    width: 100%;
+}
+
+@media (min-width: 900px) {
+    .users-toolbar {
+        flex-direction: row;
+        align-items: stretch;
+        flex-wrap: wrap;
+    }
+
+    .users-toolbar input {
+        flex: 1 1 14rem;
+        width: auto;
+    }
+
+    .users-toolbar__filters {
+        flex: 0 1 22rem;
+        width: min(22rem, 100%);
+    }
 }
 
 .users-table {
@@ -14491,6 +14539,194 @@ html.cookie-consent-known .cookie-consent {
     color: #fff;
     font-size: 0.72rem;
     font-weight: 800;
+}
+
+.user-card-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.7rem;
+    min-width: 0;
+}
+
+.user-card {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    min-width: 0;
+    max-width: 100%;
+    padding: 0.9rem 1rem 0.95rem;
+    background: color-mix(in srgb, var(--surface) 92%, var(--pearl) 8%);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    box-shadow: 0 1px 2px rgba(15, 45, 92, 0.04);
+    box-sizing: border-box;
+}
+
+.user-card--pending {
+    background: color-mix(in srgb, #ca8a04 6%, var(--surface));
+}
+
+.user-card__head {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    min-width: 0;
+}
+
+.user-card__identity {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.12rem;
+}
+
+.user-card__identity strong,
+.user-card__name {
+    font-weight: 700;
+    font-size: 0.98rem;
+    line-height: 1.25;
+    overflow-wrap: anywhere;
+}
+
+.user-card__email,
+.user-card__identity .muted {
+    font-size: 0.8rem;
+    color: var(--muted);
+    overflow-wrap: anywhere;
+    word-break: break-word;
+}
+
+.user-card__meta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.35rem 0.5rem;
+    padding-left: calc(2.25rem + 0.75rem);
+}
+
+.user-card__branch {
+    font-size: 0.78rem;
+    color: var(--muted);
+    overflow-wrap: anywhere;
+}
+
+.user-card__inactive {
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: #b45309;
+}
+
+.user-card__menu {
+    position: relative;
+    flex-shrink: 0;
+}
+
+.user-card__menu-toggle {
+    width: 2.35rem;
+    height: 2.35rem;
+}
+
+.user-card__menu-panel {
+    position: absolute;
+    right: 0;
+    top: calc(100% + 0.2rem);
+    z-index: 8;
+    min-width: 11.5rem;
+    max-width: min(16rem, calc(100vw - 2rem));
+    padding: 0.3rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    box-shadow: var(--shadow-lg);
+    display: flex;
+    flex-direction: column;
+    gap: 0.12rem;
+}
+
+.user-card__menu-item {
+    appearance: none;
+    border: 0;
+    background: transparent;
+    text-align: left;
+    padding: 0.55rem 0.7rem;
+    border-radius: 8px;
+    font: inherit;
+    font-size: 0.86rem;
+    font-weight: 600;
+    color: var(--text);
+    cursor: pointer;
+}
+
+.user-card__menu-item:hover:not(:disabled),
+.user-card__menu-item:focus-visible {
+    background: var(--hover);
+}
+
+.user-card__menu-item--danger {
+    color: var(--danger);
+}
+
+.user-card__menu-item:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+}
+
+.invite-form {
+    display: flex;
+    flex-direction: column;
+    gap: 0.65rem;
+    max-width: 36rem;
+    min-width: 0;
+}
+
+.invite-form__row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 0.65rem;
+    min-width: 0;
+}
+
+.invite-form__row > label {
+    min-width: 0;
+}
+
+.invite-form .profile-roles--wide {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    padding: 0.65rem 0.75rem;
+}
+
+.invite-form > .login-submit,
+.invite-form__actions {
+    margin-top: 0.85rem;
+    margin-bottom: 0.35rem;
+}
+
+.invite-form > .login-submit {
+    width: 100%;
+    min-height: 2.75rem;
+}
+
+.invite-form__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.55rem;
+    width: 100%;
+}
+
+.invite-form__actions .login-submit {
+    flex: 1 1 10rem;
+    min-height: 2.75rem;
+}
+
+@media (max-width: 640px) {
+    .invite-form__row {
+        grid-template-columns: 1fr;
+    }
+
+    .user-card__meta {
+        padding-left: 0;
+    }
 }
 
 .sales-wallet-chip {

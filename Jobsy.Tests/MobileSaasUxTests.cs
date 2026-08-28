@@ -80,6 +80,36 @@ public class MobileSaasUxTests
         Assert.Contains(".token-buy .login-submit {\n    width: 100%;", css);
     }
 
+    [Fact]
+    public void Users_and_team_pages_use_cards_not_tables()
+    {
+        var users = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/Components/Pages/Employer/Users.razor"));
+        Assert.Contains("class=\"user-card-list\"", users);
+        Assert.Contains("class=\"user-card\"", users);
+        Assert.Contains("user-card__menu-toggle", users);
+        Assert.Contains("aria-expanded=\"@(menuOpen ? \"true\" : \"false\")\"", users);
+        Assert.Contains("class=\"users-toolbar__filters\"", users);
+        Assert.Contains("class=\"invite-form\"", users);
+        Assert.Contains("invite-form__row", users);
+        Assert.Contains("Uitnodigen", users);
+        Assert.DoesNotContain("users-table", users);
+        Assert.DoesNotContain("<table", users);
+
+        var team = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/Components/Pages/Intermediary/Team.razor"));
+        Assert.Contains("class=\"user-card-list\"", team);
+        Assert.Contains("class=\"user-card\"", team);
+        Assert.Contains("class=\"invite-form\"", team);
+        Assert.DoesNotContain("users-table", team);
+        Assert.DoesNotContain("<table", team);
+
+        var css = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/wwwroot/css/app.css"));
+        Assert.Contains(".user-card-list {\n    display: flex;\n    flex-direction: column;", css);
+        Assert.Contains(".users-toolbar {\n    display: flex;\n    flex-direction: column;", css);
+        Assert.Contains(".users-toolbar__filters {\n    display: grid;\n    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);", css);
+        Assert.Contains(".invite-form__row {\n    display: grid;\n    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);", css);
+        Assert.Contains(".app-shell.has-bottom-nav .app-footer,\n    .app-shell:has(.bottom-nav) .app-footer {\n        display: none;", css);
+    }
+
     private static string FindRepoRoot()
     {
         var dir = new DirectoryInfo(AppContext.BaseDirectory);

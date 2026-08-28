@@ -9,7 +9,7 @@
 
 <PageTitle>@Culture["Employer.Users"] · Lobsy</PageTitle>
 
-<div class="panel-page">
+<div class="panel-page users-page">
     <header class="panel-header">
         <div>
             <h1>@Culture["Employer.Users"]</h1>
@@ -31,20 +31,22 @@
         var visibleUsers = FilteredUsers.ToList();
         <div class="users-toolbar">
             <input type="search" placeholder="Zoek op naam of e-mail" @bind="_search" @bind:event="oninput" />
-            <select @bind="_roleFilter">
-                <option value="">Alle rollen</option>
-                @foreach (var option in RoleOptions)
-                {
-                    <option value="@option.Value">@option.Label</option>
-                }
-            </select>
-            <select @bind="_branchFilter">
-                <option value="">Alle vestigingen</option>
-                @foreach (var c in _companies)
-                {
-                    <option value="@c.Id">@c.Name</option>
-                }
-            </select>
+            <div class="users-toolbar__filters">
+                <select @bind="_roleFilter" aria-label="Filter op rol">
+                    <option value="">Alle rollen</option>
+                    @foreach (var option in RoleOptions)
+                    {
+                        <option value="@option.Value">@option.Label</option>
+                    }
+                </select>
+                <select @bind="_branchFilter" aria-label="Filter op vestiging">
+                    <option value="">Alle vestigingen</option>
+                    @foreach (var c in _companies)
+                    {
+                        <option value="@c.Id">@c.Name</option>
+                    }
+                </select>
+            </div>
         </div>
 
         @if (pendingInvites.Count > 0)
@@ -54,18 +56,25 @@
                     Openstaande uitnodigingen
                     <span class="invite-count">@pendingInvites.Count</span>
                 </h2>
-                @foreach (var u in pendingInvites)
-                {
-                    <div class="table-row">
-                        <div class="users-table__person">
-                            <span class="user-avatar" aria-hidden="true">@Initials(u.FullName)</span>
-                            <div>
-                                <strong>@u.FullName</strong>
-                                <span class="muted">@u.Email · @RoleLabel(u.Role)</span>
+                <div class="user-card-list">
+                    @foreach (var u in pendingInvites)
+                    {
+                        <article class="user-card user-card--pending">
+                            <div class="user-card__head">
+                                <span class="user-avatar" aria-hidden="true">@Initials(u.FullName)</span>
+                                <div class="user-card__identity">
+                                    <strong>@u.FullName</strong>
+                                    <span class="user-card__email">@u.Email</span>
+                                </div>
                             </div>
-                        </div>
-                    </div>
-                }
+                            <div class="user-card__meta">
+                                <span class="role-badge @RoleBadgeClass(u.Role)">@RoleLabel(u.Role)</span>
+                                <span class="user-card__branch">@(u.CompanyName ?? "—")</span>
+                                <span class="user-card__inactive">Openstaand</span>
+                            </div>
+                        </article>
+                    }
+                </div>
             </section>
         }
 
@@ -75,39 +84,52 @@
         }
         else
         {
-            <table class="users-table">
-                <thead>
-                    <tr>
-                        <th>Gebruiker</th>
-                        <th>Rol</th>
-                        <th>Vestiging</th>
-                        <th></th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach (var u in visibleUsers)
-                    {
-                        <tr>
-                            <td data-label="Gebruiker">
-                                <div class="users-table__person">
-                                    <span class="user-avatar" aria-hidden="true">@Initials(u.FullName)</span>
-                                    <div>
-                                        <strong>@u.FullName</strong>
-                                        <div class="muted">@u.Email</div>
-                                    </div>
-                                </div>
-                            </td>
-                            <td data-label="Rol"><span class="role-badge @RoleBadgeClass(u.Role)">@RoleLabel(u.Role)</span></td>
-                            <td data-label="Vestiging">@(u.CompanyName ?? "—")</td>
-                            <td>
-                                <button type="button" class="icon-btn" title="Bewerken" aria-label="Gebruiker bewerken" disabled="@_busy" @onclick="() => StartEdit(u)">
-                                    @((MarkupString)ActionIcons.Edit)
+            <div class="user-card-list">
+                @foreach (var u in visibleUsers)
+                {
+                    var menuOpen = _menuUserId == u.Id;
+                    <article class="user-card">
+                        <div class="user-card__head">
+                            <span class="user-avatar" aria-hidden="true">@Initials(u.FullName)</span>
+                            <div class="user-card__identity">
+                                <strong>@u.FullName</strong>
+                                <span class="user-card__email">@u.Email</span>
+                            </div>
+                            <div class="user-card__menu" @onfocusout="OnMenuFocusOut">
+                                <button type="button"
+                                        class="icon-btn user-card__menu-toggle"
+                                        title="Acties"
+                                        aria-label="Acties voor @u.FullName"
+                                        aria-haspopup="menu"
+                                        aria-expanded="@(menuOpen ? "true" : "false")"
+                                        disabled="@_busy"
+                                        @onclick="() => ToggleMenu(u.Id)"
+                                        @onclick:stopPropagation="true">
+                                    @((MarkupString)ActionIcons.More)
                                 </button>
-                            </td>
-                        </tr>
-                    }
-                </tbody>
-            </table>
+                                @if (menuOpen)
+                                {
+                                    <div class="user-card__menu-panel" role="menu">
+                                        <button type="button" class="user-card__menu-item" role="menuitem" @onclick="() => StartEdit(u)">
+                                            Bewerken
+                                        </button>
+                                        <button type="button" class="user-card__menu-item" role="menuitem" @onclick="() => StartEdit(u)">
+                                            Rol wijzigen
+                                        </button>
+                                        <button type="button" class="user-card__menu-item user-card__menu-item--danger" role="menuitem" disabled="@_busy" @onclick="() => DeactivateAsync(u)">
+                                            Deactiveren
+                                        </button>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                        <div class="user-card__meta">
+                            <span class="role-badge @RoleBadgeClass(u.Role)">@RoleLabel(u.Role)</span>
+                            <span class="user-card__branch">@(u.CompanyName ?? "—")</span>
+                        </div>
+                    </article>
+                }
+            </div>
         }
 
         @if (_editing is not null)
@@ -115,7 +137,7 @@
             <section class="panel-section">
                 <h2>Gebruiker bewerken</h2>
                 <p class="muted">@_editing.Email</p>
-                <form class="login-form" style="max-width:480px" @onsubmit="SaveEditAsync" @onsubmit:preventDefault>
+                <form class="login-form invite-form" @onsubmit="SaveEditAsync" @onsubmit:preventDefault>
                     <label>
                         Naam
                         <input @bind="_editFullName" required />
@@ -155,7 +177,7 @@
                         <input type="checkbox" @bind="_editIsActive" />
                         <span>Actief</span>
                     </label>
-                    <div class="inline-actions">
+                    <div class="inline-actions invite-form__actions">
                         <button class="login-submit" type="submit" disabled="@_busy">@Culture["Common.Save"]</button>
                         <button class="btn-compact" type="button" disabled="@_busy" @onclick="CancelEdit">@Culture["Common.Cancel"]</button>
                     </div>
@@ -165,7 +187,7 @@
 
         <section class="panel-section">
             <h2>Uitnodigen</h2>
-            <form class="login-form" style="max-width:480px" @onsubmit="InviteAsync" @onsubmit:preventDefault>
+            <form class="login-form invite-form" @onsubmit="InviteAsync" @onsubmit:preventDefault>
                 <label>
                     E-mail
                     <input type="email" @bind="_email" required />
@@ -174,25 +196,27 @@
                     Naam
                     <input @bind="_fullName" required />
                 </label>
-                <label>
-                    Rol
-                    <select @bind="_role">
-                        @foreach (var option in RoleOptions)
-                        {
-                            <option value="@option.Value">@option.Label</option>
-                        }
-                    </select>
-                </label>
-                <label>
-                    Primaire vestiging
-                    <select @bind="_primaryCompanyId">
-                        <option value="">— Geen —</option>
-                        @foreach (var c in _companies)
-                        {
-                            <option value="@c.Id">@c.Name</option>
-                        }
-                    </select>
-                </label>
+                <div class="invite-form__row">
+                    <label>
+                        Rol
+                        <select @bind="_role">
+                            @foreach (var option in RoleOptions)
+                            {
+                                <option value="@option.Value">@option.Label</option>
+                            }
+                        </select>
+                    </label>
+                    <label>
+                        Primaire vestiging
+                        <select @bind="_primaryCompanyId">
+                            <option value="">— Geen —</option>
+                            @foreach (var c in _companies)
+                            {
+                                <option value="@c.Id">@c.Name</option>
+                            }
+                        </select>
+                    </label>
+                </div>
                 <fieldset class="profile-roles profile-roles--wide">
                     <legend>Extra lidmaatschappen</legend>
                     @foreach (var c in _companies)
@@ -205,7 +229,9 @@
                         </label>
                     }
                 </fieldset>
-                <button class="login-submit" type="submit" disabled="@_busy">Uitnodigen</button>
+                <div class="invite-form__actions">
+                    <button class="login-submit" type="submit" disabled="@_busy">Uitnodigen</button>
+                </div>
             </form>
         </section>
 
@@ -233,6 +259,7 @@
     private string _roleFilter = "";
     private string _branchFilter = "";
     private bool _isAdmin;
+    private Guid? _menuUserId;
 
     private CompanyUserItem? _editing;
     private string _editFullName = "";
@@ -291,8 +318,19 @@
         }
     }
 
+    private void ToggleMenu(Guid userId)
+        => _menuUserId = _menuUserId == userId ? null : userId;
+
+    private async Task OnMenuFocusOut(FocusEventArgs _)
+    {
+        await Task.Delay(150);
+        _menuUserId = null;
+        await InvokeAsync(StateHasChanged);
+    }
+
     private void StartEdit(CompanyUserItem user)
     {
+        _menuUserId = null;
         _editing = user;
         _editFullName = user.FullName;
         _editRole = IsRoleAllowed(user.Role) ? user.Role : RoleOptions[0].Value;
@@ -393,6 +431,37 @@
             _fullName = "";
             _memberships = [];
             _message = "Uitnodiging verstuurd met inloglink en tijdelijk wachtwoord (stub e-mail).";
+        }
+        catch (Exception ex)
+        {
+            _message = ex.Message;
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private async Task DeactivateAsync(CompanyUserItem user)
+    {
+        _menuUserId = null;
+        _busy = true;
+        _message = null;
+        try
+        {
+            await Api.UpdateCompanyUserAsync(user.Id, new UpdateCompanyUserForm(
+                user.FullName,
+                user.Role,
+                user.CompanyId,
+                user.MembershipCompanyIds.ToArray(),
+                IsActive: false));
+            _users = (await Api.GetCompanyUsersAsync()).ToList();
+            if (_editing?.Id == user.Id)
+            {
+                CancelEdit();
+            }
+
+            _message = $"{user.FullName} is gedeactiveerd.";
         }
         catch (Exception ex)
         {
