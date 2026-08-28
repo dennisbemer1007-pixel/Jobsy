@@ -485,7 +485,7 @@ public static class UiStrings
             ["Profile.Section.Availability"] = "Beschikbaarheid",
             ["Profile.Section.Experience"] = "CV & ervaring",
             ["Profile.PresetFlexible"] = "Flexibel",
-            ["Profile.PresetOffice"] = "Kantoortijden",
+            ["Profile.PresetOffice"] = "Standaard kantoortijden",
             ["Profile.PresetEvenings"] = "Avonden",
             ["Profile.Day"] = "Dag",
             ["Profile.Day.Mon"] = "Ma",

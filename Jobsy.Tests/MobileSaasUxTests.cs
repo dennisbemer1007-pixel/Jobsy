@@ -183,6 +183,8 @@ public class MobileSaasUxTests
         Assert.Contains(".availability-matrix {\n    display: grid;\n    grid-template-columns: 2.35rem repeat(4, minmax(0, 1fr));", css);
         Assert.Contains("bottom: calc(4.75rem + env(safe-area-inset-bottom, 0px));", css);
         Assert.Contains(".profile-save-bar .login-submit {\n    width: 100%;", css);
+        Assert.Contains(".profile-page--candidate .profile-contact__names {\n    grid-template-columns: repeat(2, minmax(0, 1fr));", css);
+        Assert.Contains(".profile-page--candidate .profile-page__header {\n        display: none;", css);
     }
 
     private static string FindRepoRoot()

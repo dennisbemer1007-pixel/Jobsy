@@ -15270,6 +15270,22 @@ html.cookie-consent-known .cookie-consent {
     box-sizing: border-box;
 }
 
+.profile-page--candidate .profile-contact__names {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+@media (max-width: 768px) {
+    .profile-page--candidate .profile-page__header {
+        display: none;
+    }
+
+    .profile-page--candidate .detail-card {
+        padding-left: 0.9rem;
+        padding-right: 0.9rem;
+        overflow-x: hidden;
+    }
+}
+
 .profile-accordion {
     display: flex;
     flex-direction: column;
