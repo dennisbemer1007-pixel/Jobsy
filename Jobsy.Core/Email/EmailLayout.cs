@@ -46,7 +46,7 @@ public static class EmailLayout
     /// Small PNG hosted on the public site. Mail clients (Gmail/mobile) load this
     /// over HTTPS; CID attachments show as a broken image there.
     /// </summary>
-    public const string LogoRelativePath = "/images/brand/lobsy-128.png?v=20260823-hosted";
+    public const string LogoRelativePath = "/images/brand/lobsy-128.png?v=20260828-pin";
 
     public static string LogoUrl(string? publicWebBaseUrl)
         => Absolute(publicWebBaseUrl, LogoRelativePath);
@@ -141,7 +141,7 @@ public static class EmailLayout
                           <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
                             <tr>
                               <td width="52" valign="middle">
-                                <img src="{logo}" width="44" height="44" alt="{brand}" border="0" style="display:block;border:0;outline:none;text-decoration:none;border-radius:10px;background:#ffffff;padding:4px;" />
+                                <img src="{logo}" width="48" height="48" alt="{brand}" border="0" style="display:block;border:0;outline:none;text-decoration:none;background:transparent;" />
                               </td>
                               <td valign="middle" style="padding-left:12px;">
                                 <div style="font-size:20px;font-weight:700;color:#ffffff;letter-spacing:0.02em;">{brand}</div>

@@ -6,8 +6,8 @@
       aria-hidden="@(string.IsNullOrEmpty(Alt) ? "true" : null)"
       aria-label="@(string.IsNullOrEmpty(Alt) ? null : Alt)">
     <img class="lobsy-logo__img"
-         src="@BrandImages.Webp128"
-         srcset="@BrandImages.SrcSet56"
+         src="@Src"
+         srcset="@SrcSet"
          sizes="56px"
          alt=""
          width="56"
@@ -21,4 +21,9 @@
     [Parameter] public string? Class { get; set; }
     [Parameter] public string Alt { get; set; } = "Lobsy";
     [Parameter] public bool Animate { get; set; } = true;
+    /// <summary>Use the illustrated mascot (chatbots / sollicitatiebots) instead of the pin mark.</summary>
+    [Parameter] public bool UseMascot { get; set; }
+
+    private string Src => UseMascot ? BrandImages.MascotWebp128 : BrandImages.Webp128;
+    private string SrcSet => UseMascot ? BrandImages.MascotSrcSet56 : BrandImages.SrcSet56;
 }

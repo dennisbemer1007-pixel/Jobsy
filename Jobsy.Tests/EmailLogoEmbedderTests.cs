@@ -16,7 +16,7 @@ public class EmailLogoEmbedderTests
             "Lobsy <noreply@lobsy.nl>");
 
         Assert.Contains("https://lobsy.nl/images/brand/lobsy-128.png", request.Html, StringComparison.OrdinalIgnoreCase);
-        Assert.Contains("v=20260823-hosted", request.Html, StringComparison.Ordinal);
+        Assert.Contains("v=20260828-pin", request.Html, StringComparison.Ordinal);
         Assert.DoesNotContain("cid:", request.Html, StringComparison.OrdinalIgnoreCase);
         Assert.DoesNotContain("/images/brand/lobsy.png?", request.Html, StringComparison.OrdinalIgnoreCase);
 
@@ -38,6 +38,23 @@ public class EmailLogoEmbedderTests
         Assert.Equal((byte)'P', bytes[1]);
         Assert.Equal((byte)'N', bytes[2]);
         Assert.Equal((byte)'G', bytes[3]);
+        Assert.Equal(6, bytes[25]); // IHDR color type 6 = RGBA (transparent mark)
+    }
+
+    [Fact]
+    public void Chatbots_keep_the_illustrated_mascot()
+    {
+        var root = FindRepoRoot();
+        var assistant = File.ReadAllText(Path.Combine(root, "Jobsy.Web", "Components", "LobsyAssistantChat.razor"));
+        Assert.Contains("UseMascot=\"true\"", assistant);
+        Assert.DoesNotContain("<LobsyLogo Class=\"lobsy-assistant__logo\" Alt=\"\" Animate=\"true\" />", assistant);
+
+        var coach = File.ReadAllText(Path.Combine(root, "Jobsy.Web", "Components", "LobsyCoachAvatar.razor"));
+        Assert.Contains("BrandImages.MascotWebp128", coach);
+        Assert.Contains("BrandImages.MascotSrcSet56", coach);
+
+        var mascot = Path.Combine(root, "Jobsy.Web", "wwwroot", "images", "brand", "mascot-128.png");
+        Assert.True(File.Exists(mascot), mascot);
     }
 
     private static string FindRepoRoot()

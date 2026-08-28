@@ -11,8 +11,8 @@
     <meta name="apple-mobile-web-app-title" content="Lobsy" />
     <meta name="format-detection" content="telephone=no" />
     <base href="/" />
-    <link rel="icon" href="favicon.ico?v=20260731-eyes" sizes="any" />
-    <link rel="icon" type="image/png" href="favicon.png?v=20260731-eyes" />
+    <link rel="icon" href="favicon.ico?v=20260828-pin" sizes="any" />
+    <link rel="icon" type="image/png" href="favicon.png?v=20260828-pin" />
     <link rel="apple-touch-icon" href="@Jobsy.Web.Media.BrandImages.AppleTouch" />
     <link rel="dns-prefetch" href="https://tiles.openfreemap.org" />
     <style nonce="@Nonce">
@@ -127,8 +127,9 @@
                     document.documentElement.classList.add("cookie-consent-known");
                 }
             } catch (e) { }
-            var webp = "/images/brand/lobsy-256.webp?v=20260816-perf";
-            var png = "/images/brand/lobsy-128.png?v=20260816-perf";
+            var webp = "/images/brand/lobsy-256.webp?v=20260828-pin";
+            var png = "/images/brand/lobsy-128.png?v=20260828-pin";
+            var mascotPng = "/images/brand/mascot-128.png?v=20260828-mascot";
             var svg = "data:image/svg+xml," + encodeURIComponent(
                 '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="12" fill="#e7eef7"/><text x="32" y="40" text-anchor="middle" font-size="22" font-family="Segoe UI,Arial,sans-serif" fill="#0f2d5c">L</text></svg>'
             );
@@ -137,6 +138,18 @@
                 var src = img.currentSrc || img.src || "";
                 img.removeAttribute("srcset");
                 img.removeAttribute("sizes");
+                if (src.indexOf("mascot-256.webp") !== -1 || src.indexOf("mascot-128.webp") !== -1 || src.indexOf("mascot-64.webp") !== -1) {
+                    img.dataset.fb = "png";
+                    img.src = mascotPng;
+                    return true;
+                }
+                if (src.indexOf("mascot-128.png") !== -1 || src.indexOf("mascot-180.png") !== -1 || src.indexOf("mascot-64.png") !== -1) {
+                    img.dataset.fb = "done";
+                    img.onerror = null;
+                    img.src = svg;
+                    img.classList.add("img-fallback-empty");
+                    return true;
+                }
                 if (src.indexOf("lobsy-256.webp") !== -1 || src.indexOf("lobsy-128.webp") !== -1 || src.indexOf("lobsy-64.webp") !== -1) {
                     img.dataset.fb = "png";
                     img.src = png;

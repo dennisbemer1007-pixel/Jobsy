@@ -17,7 +17,7 @@
                     <div class="lobsy-assistant__panel" role="dialog" aria-modal="false" aria-labelledby="lobsy-assistant-title" tabindex="-1" @onkeydown="OnKeyDown">
                         <header class="lobsy-assistant__header">
                             <div class="lobsy-assistant__brand">
-                                <LobsyLogo Class="lobsy-assistant__logo" Alt="" Animate="true" />
+                                <LobsyLogo Class="lobsy-assistant__logo" Alt="" Animate="true" UseMascot="true" />
                                 <div>
                                     <h2 id="lobsy-assistant-title">@Culture["Assistant.Title"]</h2>
                                     <p class="lobsy-assistant__lead">@Culture["Assistant.Lead"]</p>
@@ -33,7 +33,7 @@
                                     @if (msg.Role == "assistant")
                                     {
                                         <div class="lobsy-assistant__bubble-head">
-                                            <LobsyLogo Class="lobsy-assistant__bubble-logo" Alt="" Animate="false" />
+                                            <LobsyLogo Class="lobsy-assistant__bubble-logo" Alt="" Animate="false" UseMascot="true" />
                                             <span>@Culture["Assistant.BotName"]</span>
                                         </div>
                                     }
@@ -48,7 +48,7 @@
                             {
                                 <div class="lobsy-assistant__bubble lobsy-assistant__bubble--assistant lobsy-assistant__bubble--typing">
                                     <div class="lobsy-assistant__bubble-head">
-                                        <LobsyLogo Class="lobsy-assistant__bubble-logo" Alt="" Animate="false" />
+                                        <LobsyLogo Class="lobsy-assistant__bubble-logo" Alt="" Animate="false" UseMascot="true" />
                                         <span>@Culture["Assistant.BotName"]</span>
                                     </div>
                                     <p>@Culture["Assistant.Typing"]</p>
@@ -99,7 +99,7 @@
                         @onclick="Toggle"
                         aria-expanded="@_open"
                         aria-label="@Culture["Assistant.Open"]">
-                    <LobsyLogo Class="lobsy-assistant__fab-logo" Alt="" Animate="true" />
+                    <LobsyLogo Class="lobsy-assistant__fab-logo" Alt="" Animate="true" UseMascot="true" />
                 </button>
             </div>
         }

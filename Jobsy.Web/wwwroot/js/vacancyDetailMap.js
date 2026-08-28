@@ -17,7 +17,7 @@ window.vacancyDetailMap = (function () {
         const el = document.createElement("div");
         el.className = "vacancy-detail-marker";
         el.innerHTML =
-            "<img class=\"vacancy-detail-marker__img\" src=\"/images/brand/lobsy.png?v=20260731-eyes\" alt=\"\" width=\"48\" height=\"48\" />";
+            "<img class=\"vacancy-detail-marker__img\" src=\"/images/brand/lobsy-128.png?v=20260828-pin\" alt=\"\" width=\"48\" height=\"48\" />";
         return el;
     }
 

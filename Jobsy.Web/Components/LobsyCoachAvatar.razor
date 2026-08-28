@@ -7,7 +7,7 @@
       aria-label="@(string.IsNullOrEmpty(Alt) ? null : Alt)">
     <img class="lobsy-coach__img"
          src="@LogoSrc"
-         srcset="@Jobsy.Web.Media.BrandImages.SrcSet56"
+         srcset="@Jobsy.Web.Media.BrandImages.MascotSrcSet56"
          sizes="56px"
          alt=""
          width="128"
@@ -20,7 +20,7 @@
 </span>
 
 @code {
-    private const string LogoSrc = Jobsy.Web.Media.BrandImages.Webp128;
+    private const string LogoSrc = Jobsy.Web.Media.BrandImages.MascotWebp128;
 
     [Parameter] public string? Class { get; set; }
     [Parameter] public string Alt { get; set; } = "Lobsy";
