@@ -58,6 +58,8 @@
 html, body {
     margin: 0;
     height: 100%;
+    max-width: 100%;
+    overflow-x: hidden;
     font-family: var(--font);
     color: var(--text);
     background: var(--bg);
@@ -74,6 +76,9 @@ a {
     flex-direction: column;
     height: 100vh;
     min-height: 100vh;
+    max-width: 100%;
+    min-width: 0;
+    overflow-x: hidden;
 }
 
 .app-header {
@@ -88,6 +93,8 @@ a {
     color: var(--brand);
     box-shadow: 0 1px 0 rgba(255, 255, 255, 0.7) inset;
     position: relative;
+    max-width: 100%;
+    min-width: 0;
 }
 
 .app-header .brand-tagline {
@@ -190,6 +197,7 @@ a {
     right: 0;
     z-index: 45;
     min-width: 14rem;
+    max-width: min(18rem, calc(100vw - 1.5rem));
     padding: 0.35rem;
     background: var(--surface);
     border: 1px solid var(--border);
@@ -215,6 +223,27 @@ html[dir="rtl"] .account-menu__panel {
 .account-menu__link:hover {
     background: var(--accent-soft);
     color: var(--brand);
+}
+
+.account-menu__link--logout {
+    appearance: none;
+    width: 100%;
+    margin-top: 0.2rem;
+    border: 0;
+    border-top: 1px solid var(--border);
+    border-radius: 0 0 7px 7px;
+    background: transparent;
+    font: inherit;
+    font-size: 0.82rem;
+    font-weight: 600;
+    text-align: start;
+    color: var(--danger);
+    cursor: pointer;
+}
+
+.account-menu__link--logout:hover {
+    background: var(--danger-soft);
+    color: var(--danger);
 }
 
 .panel-page {
@@ -615,11 +644,12 @@ html[dir="rtl"] .account-menu__panel {
         flex-wrap: nowrap;
         gap: 0.5rem;
         padding: 0.3rem 0.75rem;
+        max-width: 100%;
     }
 
     .app-header__brand {
         min-width: 0;
-        flex: 1 1 auto;
+        flex: 0 1 auto;
     }
 
     .brand__name {
@@ -628,9 +658,20 @@ html[dir="rtl"] .account-menu__panel {
         white-space: nowrap;
     }
 
+    .brand-tagline {
+        display: none;
+    }
+
     .app-header__actions {
         gap: 0.35rem;
         margin-left: auto;
+        flex: 1 1 auto;
+        min-width: 0;
+        justify-content: flex-end;
+    }
+
+    .auth-logout-form--chrome {
+        display: none;
     }
 
     .auth-user {
@@ -1516,6 +1557,7 @@ html[dir="rtl"] .account-menu__panel {
 .app-main {
     flex: 1;
     min-height: 0;
+    max-width: 100%;
     display: flex;
     flex-direction: column;
     overflow-x: hidden;
@@ -3555,14 +3597,23 @@ html[dir="rtl"] .account-menu__panel {
 }
 
 @media (max-width: 768px) {
+    .map-pane,
+    .map-stage,
+    .job-map,
+    #job-map,
+    .job-map-placeholder {
+        min-width: 0;
+    }
+
     .jobsy-discovery.show-map .map-pane,
     .jobsy-discovery.show-map .map-stage,
     .jobsy-discovery.show-map .job-map-placeholder,
     .jobsy-discovery.show-map #job-map,
     .jobsy-discovery.show-map .job-map {
         min-height: 55dvh;
-        min-width: 100%;
+        min-width: 0;
         width: 100%;
+        max-width: 100%;
     }
 }
 
@@ -5262,7 +5313,10 @@ a.map-popup__apply.map-popup__cta:visited {
     display: flex;
     align-items: center;
     gap: 0.75rem;
-    flex-shrink: 0;
+    flex: 1 1 auto;
+    min-width: 0;
+    max-width: 100%;
+    justify-content: flex-end;
 }
 
 .notification-bell {
@@ -7510,6 +7564,10 @@ a.engagement-btn {
     }
 
     .token-wallet-chip__label {
+        display: none;
+    }
+
+    .sales-wallet-chip span {
         display: none;
     }
 }

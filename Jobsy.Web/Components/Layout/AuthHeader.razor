@@ -27,16 +27,22 @@
                 </button>
                 @if (_open)
                 {
-                    <div class="account-menu__panel" role="menu" aria-label="@Culture["Footer.Legal"]">
+                    <div class="account-menu__panel" role="menu" aria-label="@Culture["Auth.AccountMenu"]">
                         <a class="account-menu__link" href="/privacy" role="menuitem">@Culture["Footer.Privacy"]</a>
                         <a class="account-menu__link" href="/algemene-voorwaarden" role="menuitem">@Culture["Footer.Terms"]</a>
                         <a class="account-menu__link" href="/gebruiksvoorwaarden" role="menuitem">@Culture["Footer.Usage"]</a>
                         <a class="account-menu__link" href="/wie-zijn-wij" role="menuitem">@Culture["Footer.About"]</a>
                         <a class="account-menu__link" href="/westland" role="menuitem">@Culture["Footer.Westland"]</a>
+                        <button type="submit"
+                                form="auth-logout"
+                                class="account-menu__link account-menu__link--logout"
+                                role="menuitem">
+                            @Culture["Auth.Logout"]
+                        </button>
                     </div>
                 }
             </div>
-            <form method="post" action="/account/logout" class="auth-logout-form">
+            <form id="auth-logout" method="post" action="/account/logout" class="auth-logout-form auth-logout-form--chrome">
                 @if (!string.IsNullOrEmpty(_antiforgeryFieldName) && !string.IsNullOrEmpty(_antiforgeryToken))
                 {
                     <input type="hidden" name="@_antiforgeryFieldName" value="@_antiforgeryToken" />

@@ -81,6 +81,26 @@ public class MobileSaasUxTests
     }
 
     [Fact]
+    public void Mobile_shell_locks_horizontal_overflow_and_moves_logout_into_the_account_menu()
+    {
+        var css = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/wwwroot/css/app.css"));
+        Assert.Contains("html, body {\n    margin: 0;\n    height: 100%;\n    max-width: 100%;\n    overflow-x: hidden;", css);
+        Assert.Contains(".app-shell {\n    display: flex;\n    flex-direction: column;\n    height: 100vh;\n    min-height: 100vh;\n    max-width: 100%;\n    min-width: 0;\n    overflow-x: hidden;", css);
+        Assert.Contains(".app-header__actions {\n    display: flex;\n    align-items: center;\n    gap: 0.75rem;\n    flex: 1 1 auto;\n    min-width: 0;", css);
+        Assert.Contains(".auth-logout-form--chrome {\n        display: none;", css);
+
+        var header = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/Components/Layout/AuthHeader.razor"));
+        Assert.Contains("id=\"auth-logout\"", header);
+        Assert.Contains("form=\"auth-logout\"", header);
+        Assert.Contains("account-menu__link--logout", header);
+        Assert.Contains("Auth.Logout", header);
+        Assert.Contains("auth-logout-form--chrome", header);
+
+        var app = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/Components/App.razor"));
+        Assert.Contains("max-width: 100%; overflow-x: hidden;", app);
+    }
+
+    [Fact]
     public void Users_and_team_pages_use_cards_not_tables()
     {
         var users = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/Components/Pages/Employer/Users.razor"));
