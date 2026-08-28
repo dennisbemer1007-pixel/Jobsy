@@ -174,6 +174,8 @@ public class MobileSaasUxTests
         Assert.Contains("availability-matrix", razor);
         Assert.Contains("availability-presets", razor);
         Assert.Contains("profile-save-bar", razor);
+        Assert.Contains("Profile.ReturnHint", razor);
+        Assert.Contains("profile-return-hint", razor);
         Assert.Contains("aria-expanded=\"@(IsSectionOpen(\"personal\") ? \"true\" : \"false\")\"", razor);
         Assert.DoesNotContain("vacancy-schedule__table", razor);
 

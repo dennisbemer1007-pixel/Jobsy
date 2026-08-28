@@ -333,32 +333,53 @@ public class MeController : ControllerBase
         }
 
         // Only verified (actually submitted) applications — drafts awaiting a verification code stay out of Sollicitaties.
-        var items = await _db.Applications.AsNoTracking()
+        var rows = await _db.Applications.AsNoTracking()
             .Where(a => a.CandidateUserId == user.Id && a.EmailVerifiedAt != null)
             .OrderByDescending(a => a.CreatedAt)
-            .Select(a => new ApplicationDto(
+            .Select(a => new
+            {
                 a.Id,
                 a.VacancyId,
-                a.Vacancy.Title,
-                a.Vacancy.Company.Name,
+                Title = a.Vacancy.Title,
+                CompanyName = a.Vacancy.Company.Name,
+                CompanyAddress = a.Vacancy.Company.Address,
+                IntermediaryName = a.Vacancy.IntermediaryCompany != null ? a.Vacancy.IntermediaryCompany.Name : null,
+                IntermediaryAddress = a.Vacancy.IntermediaryCompany != null ? a.Vacancy.IntermediaryCompany.Address : null,
+                a.Vacancy.ShowClientAddressOnMap,
+                HasIntermediary = a.Vacancy.IntermediaryCompanyId != null,
                 a.CandidateName,
                 a.CandidateEmail,
                 a.PreferredTransport,
                 a.EstimatedTravelMinutes,
                 a.CreatedAt,
-                a.Status.ToString(),
-                a.RespondedAt,
-                a.Vacancy.Company.Address))
+                Status = a.Status.ToString(),
+                a.RespondedAt
+            })
             .ToListAsync(cancellationToken);
 
-        for (var i = 0; i < items.Count; i++)
+        var items = rows.Select(row =>
         {
-            var city = LobsyCvModelFactory.ExtractCity(items[i].LocationLabel);
-            if (!string.IsNullOrWhiteSpace(city))
-            {
-                items[i] = items[i] with { LocationLabel = city };
-            }
-        }
+            var (companyName, location) = CandidateApplicationLocation.ForPublicCard(
+                row.HasIntermediary,
+                row.ShowClientAddressOnMap,
+                row.CompanyName,
+                row.CompanyAddress,
+                row.IntermediaryName,
+                row.IntermediaryAddress);
+            return new ApplicationDto(
+                row.Id,
+                row.VacancyId,
+                row.Title,
+                companyName,
+                row.CandidateName,
+                row.CandidateEmail,
+                row.PreferredTransport,
+                row.EstimatedTravelMinutes,
+                row.CreatedAt,
+                row.Status,
+                row.RespondedAt,
+                location);
+        }).ToList();
 
         var lang = await ResolveTargetLanguageAsync(user, cancellationToken);
         if (!JobsyLanguages.AreSame(VacancySourceLanguage, lang))

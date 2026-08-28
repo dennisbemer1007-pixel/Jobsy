@@ -24,6 +24,10 @@
     <article class="detail-card">
         <h1 class="profile-page__title">@Culture["Profile.MyProfile"]</h1>
         <p class="login-lead">@Culture["Profile.Lead"]</p>
+        @if (!string.IsNullOrWhiteSpace(_returnUrl))
+        {
+            <p class="login-lead profile-return-hint">@Culture["Profile.ReturnHint"]</p>
+        }
 
         @if (_loading)
         {
