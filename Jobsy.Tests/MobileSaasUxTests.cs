@@ -89,7 +89,7 @@ public class MobileSaasUxTests
         Assert.Contains("user-card__menu-toggle", users);
         Assert.Contains("aria-expanded=\"@(menuOpen ? \"true\" : \"false\")\"", users);
         Assert.Contains("class=\"users-toolbar__filters\"", users);
-        Assert.Contains("class=\"invite-form\"", users);
+        Assert.Contains("login-form invite-form", users);
         Assert.Contains("invite-form__row", users);
         Assert.Contains("Uitnodigen", users);
         Assert.DoesNotContain("users-table", users);
@@ -98,7 +98,7 @@ public class MobileSaasUxTests
         var team = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/Components/Pages/Intermediary/Team.razor"));
         Assert.Contains("class=\"user-card-list\"", team);
         Assert.Contains("class=\"user-card\"", team);
-        Assert.Contains("class=\"invite-form\"", team);
+        Assert.Contains("login-form invite-form", team);
         Assert.DoesNotContain("users-table", team);
         Assert.DoesNotContain("<table", team);
 
