@@ -49,6 +49,23 @@ public static class UiLabels
         _ => status
     };
 
+    public static string WizardStep(CultureState culture, string status)
+    {
+        if (ApplicationStatusWizard.IsRejectedTrack(status))
+        {
+            return ApplicationStatus(culture, status);
+        }
+
+        return ApplicationStatusWizard.CurrentStepLabel(status) switch
+        {
+            "Gesolliciteerd" => culture["Apps.Wizard.Applied"],
+            "In behandeling" => culture["Apps.Wizard.InReview"],
+            "Contact" => culture["Apps.Wizard.Contact"],
+            "Gematched" => culture["Apps.Wizard.Matched"],
+            _ => ApplicationStatus(culture, status)
+        };
+    }
+
     public static string Weekday(CultureState culture, string day) => day switch
     {
         "Ma" => culture["Profile.Day.Mon"],

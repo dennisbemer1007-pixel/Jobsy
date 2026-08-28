@@ -45,6 +45,9 @@ public class LocalizationTests
         string[] sampleKeys =
         [
             "Apps.Status.Pending",
+            "Apps.StatusNow",
+            "Apps.AppliedOn",
+            "Apps.Wizard.InReview",
             "Profile.Title",
             "HowLobsy.Title",
             "Share.Title",

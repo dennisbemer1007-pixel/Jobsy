@@ -133,6 +133,33 @@ public class MobileSaasUxTests
         Assert.Contains("Bevestigen", users);
     }
 
+    [Fact]
+    public void Candidate_applications_use_cards_with_current_status_and_bar_stepper()
+    {
+        var razor = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/Components/Pages/Candidate/Applications.razor"));
+        Assert.Contains("class=\"panel-page apps-page\"", razor);
+        Assert.Contains("apps-tabs", razor);
+        Assert.Contains("class=\"application-card-list\"", razor);
+        Assert.Contains("class=\"application-card\"", razor);
+        Assert.Contains("application-card__title", razor);
+        Assert.Contains("application-card__meta", razor);
+        Assert.Contains("application-card__company", razor);
+        Assert.Contains("Apps.StatusNow", razor);
+        Assert.Contains("application-stepper", razor);
+        Assert.Contains("visually-hidden", razor);
+        Assert.Contains("application-card__btn", razor);
+        Assert.DoesNotContain("class=\"table-list\"", razor);
+        Assert.DoesNotContain("<table", razor);
+        Assert.DoesNotContain("<span>@steps[i]</span>", razor);
+
+        var css = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/wwwroot/css/app.css"));
+        Assert.Contains(".application-card-list {\n    display: flex;\n    flex-direction: column;\n    gap: 1rem;", css);
+        Assert.Contains(".apps-tabs.admin-sublinks {\n    position: sticky;\n    top: 0;", css);
+        Assert.Contains(".application-card__actions {\n    display: flex;\n    flex-wrap: wrap;", css);
+        Assert.Contains(".application-card__actions .application-card__btn {\n    flex: 1 1 8.5rem;\n    min-height: 2.6rem;\n    border-radius: 10px;", css);
+        Assert.Contains(".application-stepper__step.is-done .application-stepper__bar,\n.application-stepper__step.is-current .application-stepper__bar {\n    background: var(--brand);", css);
+    }
+
     private static string FindRepoRoot()
     {
         var dir = new DirectoryInfo(AppContext.BaseDirectory);

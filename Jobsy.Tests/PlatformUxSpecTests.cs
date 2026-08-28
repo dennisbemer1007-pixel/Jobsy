@@ -25,6 +25,9 @@ public class PlatformUxSpecTests
         Assert.Equal(rejected, ApplicationStatusWizard.IsRejectedTrack(status));
         Assert.Equal(current, ApplicationStatusWizard.CurrentStepIndex(status));
         Assert.Equal(rejected ? 2 : 4, ApplicationStatusWizard.StepsFor(status).Length);
+        Assert.Equal(
+            ApplicationStatusWizard.StepsFor(status)[current],
+            ApplicationStatusWizard.CurrentStepLabel(status));
     }
 
     [Fact]

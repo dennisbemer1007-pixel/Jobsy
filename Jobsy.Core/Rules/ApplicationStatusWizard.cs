@@ -35,4 +35,11 @@ public static class ApplicationStatusWizard
         "Rejected" or "FilledElsewhere" or "Withdrawn" => 1,
         _ => 0
     };
+
+    public static string CurrentStepLabel(string? status)
+    {
+        var steps = StepsFor(status);
+        var index = Math.Clamp(CurrentStepIndex(status), 0, steps.Length - 1);
+        return steps[index];
+    }
 }

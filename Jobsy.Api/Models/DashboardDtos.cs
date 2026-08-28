@@ -94,7 +94,8 @@ public record ApplicationDto(
     int EstimatedTravelMinutes,
     DateTime CreatedAt,
     string Status,
-    DateTime? RespondedAt = null);
+    DateTime? RespondedAt = null,
+    string? LocationLabel = null);
 
 public record ApplyRequest(
     Guid VacancyId,

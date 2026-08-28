@@ -347,8 +347,18 @@ public class MeController : ControllerBase
                 a.EstimatedTravelMinutes,
                 a.CreatedAt,
                 a.Status.ToString(),
-                a.RespondedAt))
+                a.RespondedAt,
+                a.Vacancy.Company.Address))
             .ToListAsync(cancellationToken);
+
+        for (var i = 0; i < items.Count; i++)
+        {
+            var city = LobsyCvModelFactory.ExtractCity(items[i].LocationLabel);
+            if (!string.IsNullOrWhiteSpace(city))
+            {
+                items[i] = items[i] with { LocationLabel = city };
+            }
+        }
 
         var lang = await ResolveTargetLanguageAsync(user, cancellationToken);
         if (!JobsyLanguages.AreSame(VacancySourceLanguage, lang))

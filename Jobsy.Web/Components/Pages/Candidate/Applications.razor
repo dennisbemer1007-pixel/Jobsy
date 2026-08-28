@@ -13,7 +13,7 @@
 
 <PageTitle>@Culture["Nav.MyApplications"] · Lobsy</PageTitle>
 
-<div class="panel-page">
+<div class="panel-page apps-page">
     <header class="panel-header">
         <div>
             <h1>@Culture["Nav.MyApplications"]</h1>
@@ -23,7 +23,7 @@
         </div>
     </header>
 
-    <div class="admin-sublinks pill-scroller" role="tablist" aria-label="@Culture["Nav.MyApplications"]">
+    <div class="admin-sublinks pill-scroller apps-tabs" role="tablist" aria-label="@Culture["Nav.MyApplications"]">
         <button type="button" class="admin-sublink @(_tab == "all" ? "admin-sublink--active" : null)" role="tab" aria-selected="@(_tab == "all")" @onclick='() => SetTab("all")'>@Culture["Apps.TabAll"]</button>
         <button type="button" class="admin-sublink @(_tab == "open" ? "admin-sublink--active" : null)" role="tab" aria-selected="@(_tab == "open")" @onclick='() => SetTab("open")'>@Culture["Apps.TabOpen"]</button>
         <button type="button" class="admin-sublink @(_tab == "rejected" ? "admin-sublink--active" : null)" role="tab" aria-selected="@(_tab == "rejected")" @onclick='() => SetTab("rejected")'>@Culture["Apps.TabRejected"]</button>
@@ -53,32 +53,33 @@
     }
     else
     {
-        <div class="table-list">
+        <div class="application-card-list">
             @foreach (var a in _filtered)
             {
                 var steps = ApplicationStatusWizard.StepsFor(a.Status);
                 var current = ApplicationStatusWizard.CurrentStepIndex(a.Status);
                 var rejectedTrack = ApplicationStatusWizard.IsRejectedTrack(a.Status);
+                var statusLabel = string.Format(Culture["Apps.StatusNow"], UiLabels.WizardStep(Culture, a.Status));
                 <article class="application-card">
-                    <div class="application-card__top">
-                        <a class="application-row__link" href="@($"/vacancies/{a.VacancyId}")">
-                            <strong>@a.VacancyTitle</strong>
-                            <span class="application-card__travel">
-                                @UiLabels.Transport(Culture, a.PreferredTransport) · @a.EstimatedTravelMinutes @Culture["Discovery.Minutes"]
-                            </span>
-                            <span class="muted">@a.CompanyName</span>
+                    <header class="application-card__header">
+                        <a class="application-card__link" href="@($"/vacancies/{a.VacancyId}")">
+                            <h2 class="application-card__title">@a.VacancyTitle</h2>
                         </a>
-                    </div>
-                    <p class="application-card__date">@AppliedOnLabel(a.CreatedAt)</p>
+                        <p class="application-card__meta">@LocationAndTravel(a)</p>
+                        <p class="application-card__company">@a.CompanyName</p>
+                        <p class="application-card__date">@AppliedOnLabel(a.CreatedAt)</p>
+                    </header>
+                    <p class="application-card__status">@statusLabel</p>
                     <ol class="application-stepper" aria-label="@Culture["Apps.StatusTrail"]">
                         @for (var i = 0; i < steps.Length; i++)
                         {
                             var done = i < current;
                             var isCurrent = i == current;
                             var rejected = rejectedTrack && i == current;
-                            <li class="application-stepper__step @(done ? "is-done" : null) @(isCurrent ? "is-current" : null) @(rejected ? "is-rejected" : null)">
+                            <li class="application-stepper__step @(done ? "is-done" : null) @(isCurrent ? "is-current" : null) @(rejected ? "is-rejected" : null)"
+                                aria-current="@(isCurrent ? "step" : null)">
                                 <span class="application-stepper__bar" aria-hidden="true"></span>
-                                <span>@steps[i]</span>
+                                <span class="visually-hidden">@WizardStepName(steps[i], a.Status)</span>
                             </li>
                         }
                     </ol>
@@ -86,7 +87,7 @@
                         @if (!_readOnly)
                         {
                             <button type="button"
-                                    class="btn-compact"
+                                    class="btn-compact btn-compact--primary application-card__btn"
                                     disabled="@(_busyId == a.Id)"
                                     @onclick="() => DownloadCvAsync(a)">
                                 @(_busyId == a.Id && _pdfBusy ? "…" : Culture["Apps.DownloadLobsyCv"])
@@ -95,7 +96,7 @@
                         @if (!_readOnly && CanWithdraw(a.Status))
                         {
                             <button type="button"
-                                    class="btn-compact"
+                                    class="btn-compact application-card__btn"
                                     disabled="@(_busyId == a.Id)"
                                     @onclick="() => WithdrawAsync(a)">
                                 @(_busyId == a.Id && !_pdfBusy ? "…" : Culture["Apps.Withdraw"])
@@ -195,10 +196,39 @@
     private static bool CanWithdraw(string status)
         => status == "Pending";
 
-    private static string AppliedOnLabel(DateTime createdAt)
+    private string LocationAndTravel(ApplicationItem a)
+    {
+        var travel = $"{a.EstimatedTravelMinutes} {Culture["Discovery.Minutes"]}";
+        var transport = UiLabels.Transport(Culture, a.PreferredTransport);
+        var travelLine = string.IsNullOrWhiteSpace(transport) ? travel : $"{transport} · {travel}";
+        return string.IsNullOrWhiteSpace(a.LocationLabel)
+            ? travelLine
+            : $"{a.LocationLabel} · {travelLine}";
+    }
+
+    private string WizardStepName(string dutchName, string status) => dutchName switch
+    {
+        "Gesolliciteerd" => Culture["Apps.Wizard.Applied"],
+        "In behandeling" => Culture["Apps.Wizard.InReview"],
+        "Contact" => Culture["Apps.Wizard.Contact"],
+        "Gematched" => Culture["Apps.Wizard.Matched"],
+        "Afgewezen" => UiLabels.ApplicationStatus(Culture, status),
+        _ => dutchName
+    };
+
+    private string AppliedOnLabel(DateTime createdAt)
     {
         var local = createdAt.ToLocalTime();
-        return $"Gesolliciteerd op {local.ToString("d MMM yyyy", Dutch).Replace(".", "")}";
+        var culture = Culture.Language switch
+        {
+            "en" => new System.Globalization.CultureInfo("en-GB"),
+            "pl" => new System.Globalization.CultureInfo("pl-PL"),
+            "ro" => new System.Globalization.CultureInfo("ro-RO"),
+            "ar" => new System.Globalization.CultureInfo("ar-SA"),
+            _ => Dutch
+        };
+        var date = local.ToString("d MMM yyyy", culture).Replace(".", "");
+        return string.Format(Culture["Apps.AppliedOn"], date);
     }
 
     private async Task WithdrawAsync(ApplicationItem item)

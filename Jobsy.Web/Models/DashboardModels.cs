@@ -103,6 +103,7 @@ public class ApplicationItem
     public DateTime CreatedAt { get; set; }
     public string Status { get; set; } = "Pending";
     public DateTime? RespondedAt { get; set; }
+    public string? LocationLabel { get; set; }
 }
 
 public class ApplyResultItem
