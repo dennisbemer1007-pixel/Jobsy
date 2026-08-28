@@ -83,17 +83,26 @@ public class Sprint5EmployerUiFoundationTests
     }
 
     [Fact]
-    public void Preference_redaction_hides_raw_json_until_accepted()
+    public void Preference_redaction_never_returns_raw_json()
     {
-        const string json = """{"roles":["horeca"],"maxTravelMinutes":30,"city":"Den Haag","emailHint":"secret"}""";
+        const string json = """{"roles":["horeca","retail"],"maxTravelMinutes":30,"city":"Den Haag","emailHint":"secret"}""";
         var pending = ApplicationPreferenceRedaction.RedactForEmployer(json, piiRevealed: false);
+        Assert.False(string.IsNullOrWhiteSpace(pending));
         Assert.DoesNotContain("secret", pending);
         Assert.DoesNotContain("Den Haag", pending);
-        Assert.Contains("horeca", pending);
+        Assert.DoesNotContain("{", pending);
+        Assert.Contains("Horeca", pending);
+        Assert.Contains("Winkel", pending);
         Assert.Contains("max 30 min", pending);
 
         var accepted = ApplicationPreferenceRedaction.RedactForEmployer(json, piiRevealed: true);
-        Assert.Equal(json, accepted);
+        Assert.DoesNotContain("{", accepted);
+        Assert.DoesNotContain("secret", accepted);
+        Assert.Contains("Horeca", accepted);
+        Assert.Contains("Den Haag", accepted);
+        Assert.True(ApplicationPreferenceRedaction.LooksLikeJson(json));
+        Assert.False(ApplicationPreferenceRedaction.LooksLikeJson(accepted));
+        Assert.Equal("B, C", ApplicationPreferenceRedaction.ToHumanReadable("""["B","C"]"""));
     }
 
     [Fact]

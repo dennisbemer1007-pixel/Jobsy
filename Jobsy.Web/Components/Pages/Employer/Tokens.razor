@@ -26,7 +26,7 @@
 
     @if (_isPartnerAffiliate && !_loading)
     {
-        <div class="admin-sublinks" role="tablist" aria-label="Tokens onderdelen">
+        <div class="admin-sublinks pill-scroller" role="tablist" aria-label="Tokens onderdelen">
             <button type="button" class="admin-sublink @ActiveTabClass("balance")" role="tab" aria-selected="@(_tab == "balance")" @onclick='() => SetTab("balance")'>
                 Saldo
             </button>
@@ -271,10 +271,10 @@
             <section class="panel-section">
                 <h2>Tokens kopen</h2>
                 <p class="muted">Kies een pakket en betaal met iDEAL of creditcard. Tokens staan daarna op de organisatiopot.</p>
-                <form class="login-form token-buy" style="max-width:32rem" @onsubmit="CheckoutIntoPotAsync" @onsubmit:preventDefault>
+                <form class="login-form token-buy" @onsubmit="CheckoutIntoPotAsync" @onsubmit:preventDefault>
                     <fieldset class="scope-fieldset">
                         <legend>Pakket</legend>
-                        <div class="token-pack-options token-pack-options--vertical" role="radiogroup" aria-label="Tokenpakket">
+                        <div class="token-pack-options" role="radiogroup" aria-label="Tokenpakket">
                             @if (_packs.Count == 0)
                             {
                                 <p class="muted">Geen tokenpakketten beschikbaar. Probeer het later opnieuw of neem contact op met support.</p>
@@ -301,10 +301,11 @@
                     <PaymentMethodPicker @bind-SelectedMethod="_paymentMethod"
                                          @bind-RememberPreference="_rememberPaymentMethod"
                                          ShowRememberPreference="true"
-                                         Disabled="_busy" />
+                                         Disabled="_busy"
+                                         Lead="Kies iDEAL of creditcard. Prepaid — geen automatische incasso." />
                     <label class="token-agree">
                         <input type="checkbox" @bind="_purchaseAgreed" />
-                        <span>Ik ga akkoord met de aankoop van dit tokenpakket. Tokens zijn prepaid en niet automatisch verlengd.</span>
+                        <span>Ik ga akkoord met de aankoop. Prepaid, geen automatische verlenging.</span>
                     </label>
                     <button class="login-submit" type="submit" disabled="@(_busy || _pot is null || _packs.Count == 0 || string.IsNullOrWhiteSpace(_paymentMethod) || !_purchaseAgreed)">
                         @CheckoutButtonLabel
@@ -316,7 +317,7 @@
         {
             <section class="panel-section">
                 <h2>Tokens kopen</h2>
-                <form class="login-form token-buy" style="max-width:32rem" @onsubmit="CheckoutOwnAsync" @onsubmit:preventDefault>
+                <form class="login-form token-buy" @onsubmit="CheckoutOwnAsync" @onsubmit:preventDefault>
                     @if (_balances.Count > 1)
                     {
                         <label>
@@ -331,7 +332,7 @@
                     }
                     <fieldset class="scope-fieldset">
                         <legend>Pakket</legend>
-                        <div class="token-pack-options token-pack-options--vertical" role="radiogroup" aria-label="Tokenpakket">
+                        <div class="token-pack-options" role="radiogroup" aria-label="Tokenpakket">
                             @if (_packs.Count == 0)
                             {
                                 <p class="muted">Geen tokenpakketten beschikbaar. Probeer het later opnieuw of neem contact op met support.</p>
@@ -358,10 +359,11 @@
                     <PaymentMethodPicker @bind-SelectedMethod="_paymentMethod"
                                          @bind-RememberPreference="_rememberPaymentMethod"
                                          ShowRememberPreference="true"
-                                         Disabled="_busy" />
+                                         Disabled="_busy"
+                                         Lead="Kies iDEAL of creditcard. Prepaid — geen automatische incasso." />
                     <label class="token-agree">
                         <input type="checkbox" @bind="_purchaseAgreed" />
-                        <span>Ik ga akkoord met de aankoop van dit tokenpakket. Tokens zijn prepaid en niet automatisch verlengd.</span>
+                        <span>Ik ga akkoord met de aankoop. Prepaid, geen automatische verlenging.</span>
                     </label>
                     <button class="login-submit" type="submit" disabled="@(_busy || _checkoutCompanyId == Guid.Empty || _packs.Count == 0 || string.IsNullOrWhiteSpace(_paymentMethod) || !_purchaseAgreed)">
                         @CheckoutButtonLabel

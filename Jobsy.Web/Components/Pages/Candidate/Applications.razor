@@ -23,7 +23,7 @@
         </div>
     </header>
 
-    <div class="admin-sublinks" role="tablist" aria-label="@Culture["Nav.MyApplications"]">
+    <div class="admin-sublinks pill-scroller" role="tablist" aria-label="@Culture["Nav.MyApplications"]">
         <button type="button" class="admin-sublink @(_tab == "all" ? "admin-sublink--active" : null)" role="tab" aria-selected="@(_tab == "all")" @onclick='() => SetTab("all")'>@Culture["Apps.TabAll"]</button>
         <button type="button" class="admin-sublink @(_tab == "open" ? "admin-sublink--active" : null)" role="tab" aria-selected="@(_tab == "open")" @onclick='() => SetTab("open")'>@Culture["Apps.TabOpen"]</button>
         <button type="button" class="admin-sublink @(_tab == "rejected" ? "admin-sublink--active" : null)" role="tab" aria-selected="@(_tab == "rejected")" @onclick='() => SetTab("rejected")'>@Culture["Apps.TabRejected"]</button>

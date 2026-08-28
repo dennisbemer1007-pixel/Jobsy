@@ -30,30 +30,31 @@
 
         <fieldset class="token-topup-options">
             <legend>Tokenpakket (prepaid via Mollie)</legend>
-
+            <div class="token-pack-options" role="radiogroup" aria-label="Tokenpakket">
             @if (_quote.ExactMatchTokens > 0)
             {
-                <label class="publish-option">
+                <label class="scope-option token-pack-option @(_selectedPack == _quote.ExactMatchTokens ? "is-selected" : null)">
                     <input type="radio" name="topup-pack" checked="@(_selectedPack == _quote.ExactMatchTokens)"
                            @onchange="() => SelectPack(_quote.ExactMatchTokens)" />
                     <span>
-                        Exact wat je nodig hebt
-                        <em>@_quote.ExactMatchTokens token(s) · € @_quote.ExactMatchPriceEuro.ToString("0.00")</em>
+                        <strong>Exact</strong>
+                        <span class="muted">@_quote.ExactMatchTokens token(s) · € @_quote.ExactMatchPriceEuro.ToString("0.00")</span>
                     </span>
                 </label>
             }
 
             @foreach (var pack in _quote.BulkPacks)
             {
-                <label class="publish-option">
+                <label class="scope-option token-pack-option @(_selectedPack == pack.PackSize ? "is-selected" : null)">
                     <input type="radio" name="topup-pack" checked="@(_selectedPack == pack.PackSize)"
                            @onchange="() => SelectPack(pack.PackSize)" />
                     <span>
-                        Pakket @pack.PackSize
-                        <em>@pack.PackSize tokens · € @pack.PriceEuro.ToString("0.00")</em>
+                        <strong>@pack.PackSize tokens</strong>
+                        <span class="muted">€ @pack.PriceEuro.ToString("0.00")</span>
                     </span>
                 </label>
             }
+            </div>
         </fieldset>
 
         <PaymentMethodPicker @bind-SelectedMethod="_paymentMethod"

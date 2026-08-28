@@ -4,7 +4,7 @@
 @inject CultureState Culture
 @implements IDisposable
 
-<nav class="admin-sublinks" aria-label="@Culture["Nav.Settings"]">
+<nav class="admin-sublinks pill-scroller" aria-label="@Culture["Nav.Settings"]">
     @foreach (var item in AdminNavItems.SettingsModules)
     {
         var title = Culture[item.TitleKey];

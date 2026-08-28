@@ -11,9 +11,30 @@
 <div class="auth-header">
     <AuthorizeView>
         <Authorized>
-            <div class="auth-user" title="@context.User.FindFirst(ClaimTypes.Email)?.Value">
-                <span class="auth-user__name">@DisplayName(context.User)</span>
-                <span class="auth-user__role">@RoleLabel(context.User)</span>
+            <div class="account-menu" @onfocusout="OnFocusOut">
+                <button type="button"
+                        class="account-menu__toggle"
+                        title="@Culture["Footer.Legal"]"
+                        aria-label="@Culture["Auth.AccountMenu"]"
+                        aria-haspopup="menu"
+                        aria-expanded="@(_open ? "true" : "false")"
+                        @onclick="Toggle">
+                    <span class="auth-user" title="@context.User.FindFirst(ClaimTypes.Email)?.Value">
+                        <span class="auth-user__name">@DisplayName(context.User)</span>
+                        <span class="auth-user__role">@RoleLabel(context.User)</span>
+                    </span>
+                    <span class="account-menu__icon" aria-hidden="true">@((MarkupString)NavIcons.Profile)</span>
+                </button>
+                @if (_open)
+                {
+                    <div class="account-menu__panel" role="menu" aria-label="@Culture["Footer.Legal"]">
+                        <a class="account-menu__link" href="/privacy" role="menuitem">@Culture["Footer.Privacy"]</a>
+                        <a class="account-menu__link" href="/algemene-voorwaarden" role="menuitem">@Culture["Footer.Terms"]</a>
+                        <a class="account-menu__link" href="/gebruiksvoorwaarden" role="menuitem">@Culture["Footer.Usage"]</a>
+                        <a class="account-menu__link" href="/wie-zijn-wij" role="menuitem">@Culture["Footer.About"]</a>
+                        <a class="account-menu__link" href="/westland" role="menuitem">@Culture["Footer.Westland"]</a>
+                    </div>
+                }
             </div>
             <form method="post" action="/account/logout" class="auth-logout-form">
                 @if (!string.IsNullOrEmpty(_antiforgeryFieldName) && !string.IsNullOrEmpty(_antiforgeryToken))
@@ -40,6 +61,7 @@
 @code {
     private string _antiforgeryFieldName = "";
     private string _antiforgeryToken = "";
+    private bool _open;
 
     protected override void OnInitialized()
     {
@@ -55,6 +77,16 @@
 
     private void OnCultureChanged()
         => InvokeAsync(StateHasChanged);
+
+    private void Toggle()
+        => _open = !_open;
+
+    private async Task OnFocusOut(FocusEventArgs _)
+    {
+        await Task.Delay(150);
+        _open = false;
+        await InvokeAsync(StateHasChanged);
+    }
 
     private string DisplayName(ClaimsPrincipal user)
         => user.Identity?.Name
