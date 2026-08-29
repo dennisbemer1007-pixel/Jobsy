@@ -1,4 +1,5 @@
 @page "/branch/applicants"
+@using Jobsy.Core.Contracts
 @using Jobsy.Core.Enums
 @using Jobsy.Core.Rules
 @rendermode @(new InteractiveServerRenderMode(prerender: false))
@@ -103,7 +104,40 @@
                             </section>
                             <section class="applicant-card__section">
                                 <h3>@Culture["Employer.FactAvailability"]</h3>
-                                <p>@(string.IsNullOrWhiteSpace(a.AvailabilitySummary) ? "—" : a.AvailabilitySummary)</p>
+                                @{
+                                    var availability = LobsyCvModelFactory.ParseAvailabilityPayload(a.SnapshotAvailabilityJson);
+                                }
+                                @if (availability.FlexibleTimes)
+                                {
+                                    <p>@Culture["Vacancy.FlexibleTimes"]</p>
+                                }
+                                else if (availability.Slots.Count > 0)
+                                {
+                                    <div class="availability-matrix availability-matrix--readonly" role="grid" aria-label="@Culture["Employer.FactAvailability"]">
+                                        <div class="availability-matrix__corner" role="columnheader"></div>
+                                        @foreach (var slot in DayPartMatrix.DayPartCodes)
+                                        {
+                                            <div class="availability-matrix__slot" role="columnheader">
+                                                @UiLabels.AvailabilitySlot(Culture, slot)
+                                            </div>
+                                        }
+                                        @foreach (var day in DayPartMatrix.DayCodes)
+                                        {
+                                            <div class="availability-matrix__day" role="rowheader">@UiLabels.Weekday(Culture, day)</div>
+                                            @foreach (var slot in DayPartMatrix.DayPartCodes)
+                                            {
+                                                var on = availability.Slots.TryGetValue(day, out var daySlots)
+                                                         && daySlots.Any(s => string.Equals(s, slot, StringComparison.OrdinalIgnoreCase));
+                                                <span class="availability-matrix__cell @(on ? "is-on" : null)"
+                                                      aria-label="@UiLabels.Weekday(Culture, day) @UiLabels.AvailabilitySlot(Culture, slot): @(on ? "ja" : "nee")"></span>
+                                            }
+                                        }
+                                    </div>
+                                }
+                                else
+                                {
+                                    <p>@(string.IsNullOrWhiteSpace(a.AvailabilitySummary) ? "—" : a.AvailabilitySummary)</p>
+                                }
                                 @if (!string.IsNullOrWhiteSpace(prefs))
                                 {
                                     <p class="muted">@prefs</p>

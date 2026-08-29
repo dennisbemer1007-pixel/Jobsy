@@ -15465,3 +15465,207 @@ html.cookie-consent-known .cookie-consent {
         padding-bottom: 4.5rem;
     }
 }
+
+/* —— Global mobile SaaS: reconnect toast, vacancy cards, availability read-only —— */
+.reconnect-toast {
+    display: none;
+    position: fixed;
+    left: 50%;
+    bottom: calc(5.5rem + env(safe-area-inset-bottom, 0px));
+    transform: translateX(-50%);
+    z-index: 10001;
+    width: min(22rem, calc(100vw - 1.5rem));
+    pointer-events: none;
+    visibility: hidden;
+    opacity: 0;
+    transition: opacity 0.2s ease, visibility 0s linear 0.5s;
+}
+
+.reconnect-toast.components-reconnect-show,
+.reconnect-toast.components-reconnect-failed,
+.reconnect-toast.components-reconnect-rejected {
+    display: block;
+    visibility: visible;
+    opacity: 1;
+    pointer-events: auto;
+    transition-delay: 0s;
+}
+
+.reconnect-toast.components-reconnect-hide {
+    display: none;
+}
+
+.reconnect-toast__panel {
+    padding: 0.7rem 0.9rem;
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    box-shadow: 0 10px 28px rgba(15, 23, 42, 0.18);
+    color: var(--text);
+    font-size: 0.9rem;
+    font-weight: 650;
+    text-align: center;
+}
+
+.reconnect-toast__msg {
+    display: none;
+    margin: 0;
+}
+
+.reconnect-toast.components-reconnect-show .reconnect-toast__msg--show,
+.reconnect-toast.components-reconnect-failed .reconnect-toast__msg--failed,
+.reconnect-toast.components-reconnect-rejected .reconnect-toast__msg--rejected {
+    display: block;
+}
+
+.reconnect-toast__action {
+    margin-left: 0.35rem;
+    border: none;
+    background: transparent;
+    color: var(--brand);
+    font: inherit;
+    font-weight: 800;
+    text-decoration: underline;
+    cursor: pointer;
+}
+
+.vacancy-card-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.85rem;
+}
+
+.vacancy-mgmt-card {
+    display: flex;
+    flex-direction: column;
+    gap: 0.7rem;
+    padding: 0.95rem 1rem;
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    background: var(--surface);
+    box-shadow: 0 6px 18px rgba(15, 23, 42, 0.04);
+}
+
+.vacancy-mgmt-card__header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 0.75rem;
+}
+
+.vacancy-mgmt-card__identity {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+}
+
+.vacancy-mgmt-card__title {
+    font-size: 1.02rem;
+    font-weight: 800;
+    color: var(--text);
+    line-height: 1.25;
+}
+
+.vacancy-mgmt-card__branch {
+    margin: 0;
+    font-size: 0.88rem;
+    font-weight: 600;
+    color: var(--muted);
+}
+
+.vacancy-mgmt-card__highlight {
+    margin: 0;
+    font-size: 0.75rem;
+}
+
+.vacancy-mgmt-card__status {
+    flex-shrink: 0;
+    padding: 0.28rem 0.55rem;
+    border-radius: 999px;
+    background: var(--accent-soft);
+    color: var(--brand);
+    font-size: 0.72rem;
+    font-weight: 750;
+    white-space: nowrap;
+}
+
+.vacancy-mgmt-card__meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.45rem 0.75rem;
+    align-items: center;
+    font-size: 0.8rem;
+    color: var(--muted);
+}
+
+.vacancy-mgmt-card__stats {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.45rem;
+}
+
+.vacancy-mgmt-card__stat {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+    padding: 0.45rem 0.5rem;
+    border-radius: 10px;
+    background: color-mix(in srgb, var(--brand) 4%, var(--surface));
+    border: 1px solid color-mix(in srgb, var(--border) 85%, transparent);
+    text-decoration: none;
+    color: inherit;
+    min-width: 0;
+}
+
+.vacancy-mgmt-card__stat-label {
+    font-size: 0.68rem;
+    font-weight: 700;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+}
+
+.vacancy-mgmt-card__stat-value {
+    font-size: 1rem;
+    font-weight: 800;
+    color: var(--brand);
+    font-variant-numeric: tabular-nums;
+}
+
+.vacancy-mgmt-card__actions {
+    display: flex;
+    justify-content: flex-end;
+}
+
+.availability-matrix--readonly .availability-matrix__cell {
+    pointer-events: none;
+    min-height: 1.85rem;
+}
+
+.availability-matrix--readonly .availability-matrix__cell.is-on {
+    background: color-mix(in srgb, var(--brand) 18%, var(--surface));
+}
+
+.availability-matrix--readonly .availability-matrix__cell.is-on::after {
+    content: "";
+    width: 0.45rem;
+    height: 0.45rem;
+    border-radius: 50%;
+    background: var(--brand);
+}
+
+@media (max-width: 1024px) {
+    .bento-cell--category {
+        background: transparent;
+        border: none;
+        border-radius: 0;
+        padding: 0;
+    }
+
+    .bento-cell--category > h2,
+    .bento-cell--category > .bento-category__title {
+        margin: 0 0 0.55rem;
+        padding: 0;
+    }
+}

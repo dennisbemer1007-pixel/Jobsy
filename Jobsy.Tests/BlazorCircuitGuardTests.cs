@@ -44,6 +44,22 @@ public class BlazorCircuitGuardTests
         var program = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "Program.cs"));
         Assert.Contains("UseWebSockets", program);
         Assert.Contains("KeepAliveInterval", program);
+        Assert.Contains("ClientTimeoutInterval", program);
+        Assert.Contains("DisconnectedCircuitRetentionPeriod", program);
+        Assert.Contains("TimeSpan.FromMinutes(5)", program);
+    }
+
+    [Fact]
+    public void App_shell_uses_a_subtle_reconnect_toast_instead_of_a_blocking_modal()
+    {
+        var app = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "Components", "App.razor"));
+        Assert.Contains("id=\"components-reconnect-modal\"", app);
+        Assert.Contains("reconnect-toast", app);
+        Assert.Contains("Verbinding herstellen", app);
+
+        var css = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "wwwroot", "css", "app.css"));
+        Assert.Contains(".reconnect-toast {\n    display: none;\n    position: fixed;", css);
+        Assert.Contains("bottom: calc(5.5rem + env(safe-area-inset-bottom, 0px));", css);
     }
 
     [Fact]

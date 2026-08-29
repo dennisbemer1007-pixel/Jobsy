@@ -72,9 +72,9 @@
     </style>
     @if (LoadBlazorRuntime)
     {
-        <link rel="stylesheet" href="css/app.min.css?v=20260828-profile2" media="print" data-app-css />
+        <link rel="stylesheet" href="css/app.min.css?v=20260829-mobile" media="print" data-app-css />
     }
-    <noscript><link rel="stylesheet" href="css/app.min.css?v=20260828-profile2" /></noscript>
+    <noscript><link rel="stylesheet" href="css/app.min.css?v=20260829-mobile" /></noscript>
     <script nonce="@Nonce">
         (function () {
             var nonce = document.currentScript && document.currentScript.nonce;
@@ -193,6 +193,19 @@
     <CascadingAuthenticationState>
         <Routes @rendermode="new InteractiveServerRenderMode(prerender: true)" />
     </CascadingAuthenticationState>
+    <div id="components-reconnect-modal" class="reconnect-toast">
+        <div class="reconnect-toast__panel" role="status" aria-live="polite">
+            <p class="reconnect-toast__msg reconnect-toast__msg--show">Verbinding herstellen…</p>
+            <p class="reconnect-toast__msg reconnect-toast__msg--failed">
+                Verbinding verbroken.
+                <button type="button" class="reconnect-toast__action" onclick="location.reload()">Herladen</button>
+            </p>
+            <p class="reconnect-toast__msg reconnect-toast__msg--rejected">
+                Sessie verlopen.
+                <button type="button" class="reconnect-toast__action" onclick="location.reload()">Herladen</button>
+            </p>
+        </div>
+    </div>
     <script src="js/app-core.js?v=20260822-r207" nonce="@Nonce" defer></script>
     @if (LoadBlazorRuntime)
     {

@@ -121,10 +121,23 @@
                     <span class="jobsy-action__icon" aria-hidden="true">@((MarkupString)NavIcons.ClearFilters)</span>
                 </button>
             }
-            <a class="jobsy-action" href="/candidate/liked">
-                <span class="jobsy-action__icon" aria-hidden="true">@((MarkupString)NavIcons.Liked)</span>
-                <span>@Culture["Discovery.SaveSearch"]</span>
-            </a>
+            <AuthorizeView>
+                <Authorized>
+                    <a class="jobsy-action" href="/candidate/liked">
+                        <span class="jobsy-action__icon" aria-hidden="true">@((MarkupString)NavIcons.Liked)</span>
+                        <span>@Culture["Discovery.SaveSearch"]</span>
+                    </a>
+                </Authorized>
+                <NotAuthorized>
+                    <a class="jobsy-action"
+                       href="@LikedLoginUrl"
+                       title="@Culture["Discovery.SaveSearch"]"
+                       aria-label="@Culture["Discovery.SaveSearch"]">
+                        <span class="jobsy-action__icon" aria-hidden="true">@((MarkupString)NavIcons.Liked)</span>
+                        <span>@Culture["Discovery.SaveSearch"]</span>
+                    </a>
+                </NotAuthorized>
+            </AuthorizeView>
             <button type="button" class="jobsy-action jobsy-action--toggle" @onclick="ToggleMobileView">
                 @if (showMapOnMobile)
                 {
@@ -838,6 +851,8 @@
 
 @code {
     private List<VacancyListItem> _vacancies = [];
+    private string LikedLoginUrl =>
+        $"/login?returnUrl={Uri.EscapeDataString("/candidate/liked")}";
     private string? JobListJsonLd =>
         StructuredData.JobList(
             Navigation.BaseUri.TrimEnd('/'),

@@ -189,6 +189,47 @@ public class MobileSaasUxTests
         Assert.Contains(".profile-page--candidate .profile-page__header {\n        display: none;", css);
     }
 
+    [Fact]
+    public void Guest_discovery_heart_goes_to_login_not_empty_liked_page()
+    {
+        var discovery = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/Components/VacancyDiscovery.razor"));
+        Assert.Contains("AuthorizeView", discovery);
+        Assert.Contains("LikedLoginUrl", discovery);
+        Assert.Contains("/login?returnUrl=", discovery);
+        Assert.Contains("/candidate/liked", discovery);
+        var guestBlockStart = discovery.IndexOf("<NotAuthorized>", StringComparison.Ordinal);
+        Assert.True(guestBlockStart > 0);
+        var guestBlock = discovery[guestBlockStart..Math.Min(discovery.Length, guestBlockStart + 450)];
+        Assert.Contains("LikedLoginUrl", guestBlock);
+        Assert.DoesNotContain("href=\"/candidate/liked\"", guestBlock);
+    }
+
+    [Fact]
+    public void Employer_vacancies_use_mgmt_cards_with_stat_mini_grid()
+    {
+        var razor = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/Components/Pages/Employer/Vacancies.razor"));
+        Assert.Contains("vacancy-card-list", razor);
+        Assert.Contains("vacancy-mgmt-card", razor);
+        Assert.Contains("vacancy-mgmt-card__stats", razor);
+        Assert.Contains("vacancy-mgmt-card__status", razor);
+        Assert.DoesNotContain("table-scroll vacancy-grid", razor);
+        Assert.DoesNotContain("<table class=\"data-table\">", razor);
+
+        var css = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/wwwroot/css/app.css"));
+        Assert.Contains(".vacancy-mgmt-card__stats {\n    display: grid;\n    grid-template-columns: repeat(3, minmax(0, 1fr));", css);
+        Assert.Contains(".bento-cell--category {\n        background: transparent;\n        border: none;", css);
+    }
+
+    [Fact]
+    public void Applicants_availability_renders_a_readonly_matrix_not_raw_day_text()
+    {
+        var razor = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/Components/Pages/Branch/Applicants.razor"));
+        Assert.Contains("availability-matrix--readonly", razor);
+        Assert.Contains("ParseAvailabilityPayload", razor);
+        Assert.Contains("DayPartMatrix.DayPartCodes", razor);
+        Assert.DoesNotContain("<p>@(string.IsNullOrWhiteSpace(a.AvailabilitySummary) ? \"—\" : a.AvailabilitySummary)</p>\n                                @if (!string.IsNullOrWhiteSpace(prefs))", razor);
+    }
+
     private static string FindRepoRoot()
     {
         var dir = new DirectoryInfo(AppContext.BaseDirectory);

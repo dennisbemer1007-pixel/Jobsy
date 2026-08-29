@@ -41,7 +41,16 @@ builder.Services.AddRazorComponents()
     {
         // Page screenshots travel through JS interop (data URL). Default 32 KB is too small.
         options.MaximumReceiveMessageSize = 2 * 1024 * 1024;
+        // Mobile networks / brief background pauses: keep the circuit warmer than defaults.
+        options.KeepAliveInterval = TimeSpan.FromSeconds(15);
+        options.ClientTimeoutInterval = TimeSpan.FromSeconds(60);
     });
+
+builder.Services.Configure<Microsoft.AspNetCore.Components.Server.CircuitOptions>(options =>
+{
+    options.DisconnectedCircuitRetentionPeriod = TimeSpan.FromMinutes(5);
+    options.DisconnectedCircuitMaxRetained = 200;
+});
 
 builder.Services.AddJobsyAuthentication(builder.Configuration, builder.Environment);
 builder.Services.AddMemoryCache();
