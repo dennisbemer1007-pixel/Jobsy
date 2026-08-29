@@ -55,7 +55,10 @@ public class BlazorCircuitGuardTests
         var app = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "Components", "App.razor"));
         Assert.Contains("id=\"components-reconnect-modal\"", app);
         Assert.Contains("reconnect-toast", app);
+        Assert.Contains("data-reconnect-reload", app);
         Assert.Contains("Verbinding herstellen", app);
+        Assert.DoesNotContain("onclick=\"location.reload()\"", app);
+        Assert.Contains("closest(\"[data-reconnect-reload]\")", app);
 
         var css = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "wwwroot", "css", "app.css"));
         Assert.Contains(".reconnect-toast {\n    display: none;\n    position: fixed;", css);

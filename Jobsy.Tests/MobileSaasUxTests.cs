@@ -226,8 +226,10 @@ public class MobileSaasUxTests
         var razor = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/Components/Pages/Branch/Applicants.razor"));
         Assert.Contains("availability-matrix--readonly", razor);
         Assert.Contains("ParseAvailabilityPayload", razor);
+        Assert.Contains("a.PiiRevealed", razor);
+        Assert.Contains("Common.Yes", razor);
         Assert.Contains("DayPartMatrix.DayPartCodes", razor);
-        Assert.DoesNotContain("<p>@(string.IsNullOrWhiteSpace(a.AvailabilitySummary) ? \"—\" : a.AvailabilitySummary)</p>\n                                @if (!string.IsNullOrWhiteSpace(prefs))", razor);
+        Assert.DoesNotContain("aria-label=\"@UiLabels.Weekday(Culture, day) @UiLabels.AvailabilitySlot(Culture, slot): @(on ? \"ja\" : \"nee\")\"", razor);
     }
 
     private static string FindRepoRoot()

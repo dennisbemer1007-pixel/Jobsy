@@ -198,14 +198,24 @@
             <p class="reconnect-toast__msg reconnect-toast__msg--show">Verbinding herstellen…</p>
             <p class="reconnect-toast__msg reconnect-toast__msg--failed">
                 Verbinding verbroken.
-                <button type="button" class="reconnect-toast__action" onclick="location.reload()">Herladen</button>
+                <button type="button" class="reconnect-toast__action" data-reconnect-reload>Herladen</button>
             </p>
             <p class="reconnect-toast__msg reconnect-toast__msg--rejected">
                 Sessie verlopen.
-                <button type="button" class="reconnect-toast__action" onclick="location.reload()">Herladen</button>
+                <button type="button" class="reconnect-toast__action" data-reconnect-reload>Herladen</button>
             </p>
         </div>
     </div>
+    <script nonce="@Nonce">
+        document.addEventListener("click", function (ev) {
+            var t = ev.target;
+            if (!t || !t.closest) return;
+            if (t.closest("[data-reconnect-reload]")) {
+                ev.preventDefault();
+                location.reload();
+            }
+        });
+    </script>
     <script src="js/app-core.js?v=20260822-r207" nonce="@Nonce" defer></script>
     @if (LoadBlazorRuntime)
     {
