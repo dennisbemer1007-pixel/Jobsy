@@ -53,6 +53,10 @@
             .jobsy-chrome__search { padding: 0.55rem 0.75rem 0.35rem; }
             .jobsy-search { display: grid; grid-template-columns: 1fr auto; gap: 0.45rem; }
             .jobsy-search input { width: 100%; min-height: 2.75rem; box-sizing: border-box; }
+        .login-modal .login-form, .login-modal .login-form label { width: 100%; max-width: 100%; }
+        .login-modal .login-form { display: grid; grid-template-columns: minmax(0, 1fr); }
+        .login-modal .login-form input:not([type="checkbox"]):not([type="radio"]) { display: block; width: 100%; max-width: 100%; min-width: 0; box-sizing: border-box; min-height: 3rem; padding: 0.75rem 1rem; border-radius: 14px; }
+        .login-modal .provider-btn { min-height: 2.1rem; padding: 0.32rem 0.7rem; }
             .jobsy-search__btn { width: 2.75rem; height: 2.75rem; }
             .jobsy-chrome__actions { display: grid; grid-template-columns: repeat(3, 1fr); }
             .jobsy-action { display: inline-flex; min-height: 2.55rem; }
@@ -72,9 +76,9 @@
     </style>
     @if (LoadBlazorRuntime)
     {
-        <link rel="stylesheet" href="css/app.min.css?v=20260831-ux2" media="print" data-app-css />
+        <link rel="stylesheet" href="css/app.min.css?v=20260831-ux3" media="print" data-app-css />
     }
-    <noscript><link rel="stylesheet" href="css/app.min.css?v=20260831-ux2" /></noscript>
+    <noscript><link rel="stylesheet" href="css/app.min.css?v=20260831-ux3" /></noscript>
     <script nonce="@Nonce">
         (function () {
             var nonce = document.currentScript && document.currentScript.nonce;

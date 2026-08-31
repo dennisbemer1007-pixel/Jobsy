@@ -324,7 +324,8 @@ public class MobileSaasUxTests
         Assert.Contains("class=\"w-full px-4 py-3\"", login);
 
         var css = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/wwwroot/css/app.css"));
-        Assert.Contains(".login-modal .login-form input:not([type=\"checkbox\"]):not([type=\"radio\"]),\n.login-modal .login-form input.w-full {", css);
+        Assert.Contains(".login-modal .login-form {\n    display: grid;\n    grid-template-columns: minmax(0, 1fr);", css);
+        Assert.Contains("width: 100% !important;", css);
         Assert.Contains("min-height: 3rem;", css);
         Assert.Contains("border-radius: 14px;", css);
         Assert.Contains(".w-full { width: 100%; }", css);
@@ -332,7 +333,10 @@ public class MobileSaasUxTests
         Assert.Contains(".py-3 { padding-top: 0.75rem; padding-bottom: 0.75rem; }", css);
         Assert.Contains(".login-modal .login-form label {\n    text-transform: none;", css);
         Assert.Contains(".login-modal__dialog .login-lead {\n        display: none;", css);
-        Assert.Contains(".login-modal .provider-btn {\n    min-height: 2.25rem;", css);
+        Assert.Contains(".login-modal .provider-btn {\n    min-height: 2.1rem;", css);
+
+        var app = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/Components/App.razor"));
+        Assert.Contains(".login-modal .login-form input:not([type=\"checkbox\"]):not([type=\"radio\"]) { display: block; width: 100%;", app);
 
         var header = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/Components/Layout/AuthHeader.razor"));
         Assert.Contains("IsLoginRoute", header);
