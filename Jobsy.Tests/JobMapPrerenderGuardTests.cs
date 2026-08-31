@@ -203,7 +203,7 @@ public class JobMapPrerenderGuardTests
         Assert.DoesNotContain("onerror=", logo);
 
         var js = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "wwwroot", "js", "jobMap.js"));
-        Assert.Contains("data-logo-fallback=\"photo\"", js);
+        Assert.Contains("data-logo-fallback=\\\"photo\\\"", js);
         Assert.Contains("data-fallback-src", js);
         Assert.DoesNotContain("onerror=", js);
 
