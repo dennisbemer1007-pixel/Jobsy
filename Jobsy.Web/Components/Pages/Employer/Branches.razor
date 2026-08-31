@@ -24,6 +24,16 @@
         </div>
     </header>
 
+    @if (!_loading && string.IsNullOrEmpty(_error))
+    {
+        <section class="panel-section">
+            <h2>Wervingsmateriaal</h2>
+            <RaamflyerTools Companies="_companies"
+                            AllowOverview="true"
+                            OverviewTitle="onze regio" />
+        </section>
+    }
+
     @if (_loading)
     {
         <p class="state-message">@Culture["Common.Loading"]</p>

@@ -12,7 +12,7 @@
 
 <PageTitle>@(_hasSalesReferral ? Culture["Nav.BalanceAndTracking"] : Culture["Employer.MyTokens"]) · Lobsy</PageTitle>
 
-<div class="panel-page @(_isPartnerAffiliate ? "panel-page--wide" : null)">
+<div class="panel-page @(_isPartnerAffiliate ? "panel-page--wide" : null) max-w-full overflow-x-hidden pb-28">
     <header class="panel-header">
         <div>
             <h1>@(_hasSalesReferral ? Culture["Nav.BalanceAndTracking"] : Culture["Employer.MyTokens"])</h1>
@@ -26,7 +26,7 @@
 
     @if (_isPartnerAffiliate && !_loading)
     {
-        <div class="admin-sublinks pill-scroller" role="tablist" aria-label="Tokens onderdelen">
+        <div class="admin-sublinks pill-scroller token-tabs" role="tablist" aria-label="Tokens onderdelen">
             <button type="button" class="admin-sublink @ActiveTabClass("balance")" role="tab" aria-selected="@(_tab == "balance")" @onclick='() => SetTab("balance")'>
                 Saldo
             </button>
@@ -584,7 +584,7 @@
                 </label>
                 <button class="provider-btn" type="submit" disabled="@_busy">Filter</button>
             </form>
-            <div class="table-list">
+            <div class="token-log-list">
                 @if (_logs.Count == 0)
                 {
                     <p class="muted">Geen tokenlogs gevonden@(string.IsNullOrWhiteSpace(_logFilter) ? "." : " voor dit filter.")</p>
@@ -593,13 +593,14 @@
                 {
                     @foreach (var log in _logs)
                     {
-                        <div class="table-row">
-                            <div>
-                                <strong>@log.CompanyName</strong>
-                                <span class="muted">@log.Kind / @log.Reason · @log.Note</span>
+                        <article class="token-log">
+                            <div class="token-log__main">
+                                <strong class="token-log__company">@log.CompanyName</strong>
+                                <time class="token-log__when" datetime="@log.CreatedAt.ToUniversalTime().ToString("o")">@TokenLogPresentation.FormatWhen(log.CreatedAt)</time>
+                                <p class="token-log__note">@TokenLogPresentation.Describe(log)</p>
                             </div>
-                            <span>@log.Amount.ToString("+0.##;-0.##") · @log.CreatedAt.ToLocalTime().ToString("dd-MM HH:mm")</span>
-                        </div>
+                            <span class="token-log__amount @TokenLogPresentation.AmountToneClass(log.Amount)">@TokenLogPresentation.FormatAmount(log.Amount)</span>
+                        </article>
                     }
                 }
             </div>

@@ -116,6 +116,18 @@
                 }
             </section>
 
+            <AuthorizeView Roles="BranchManager,EnterpriseManager,Admin">
+                <Authorized>
+                    <section class="panel-section company-details__card">
+                        <h2>Wervingsmateriaal</h2>
+                        <p class="muted company-details__lead">Raamflyer voor in de etalage — A4 of A3, per vestiging of als overzicht.</p>
+                        <RaamflyerTools Companies="_organizations"
+                                        AllowOverview="@(_organizations.Count > 1)"
+                                        OverviewTitle="@(_org?.ParentCompanyId is null ? "onze vestigingen" : "onze vestiging")" />
+                    </section>
+                </Authorized>
+            </AuthorizeView>
+
             <section class="panel-section company-details__card">
                 <h2>Contactvoorkeur</h2>
                 <p class="muted company-details__lead">

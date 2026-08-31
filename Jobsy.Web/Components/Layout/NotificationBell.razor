@@ -24,7 +24,8 @@
 
             @if (_open)
             {
-                <div class="notification-bell__panel" role="dialog" aria-label="Je notificaties">
+                <div class="header-dropdown-backdrop" @onclick="Close" aria-hidden="true"></div>
+                <div class="notification-bell__panel notification-dropdown right-0 max-w-[90vw] mx-auto z-50" role="dialog" aria-label="Je notificaties">
                     <div class="notification-bell__header">
                         <div>
                             <strong>Jouw berichten</strong>

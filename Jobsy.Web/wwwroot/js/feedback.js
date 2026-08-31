@@ -50,6 +50,44 @@
         }
     }
 
+    function softenCrossOriginAssets(doc) {
+        var origin = "";
+        try {
+            origin = (doc.defaultView && doc.defaultView.location && doc.defaultView.location.origin)
+                || (window.location && window.location.origin)
+                || "";
+        } catch (e) {
+            origin = "";
+        }
+
+        var imgs = doc.querySelectorAll("img");
+        for (var i = 0; i < imgs.length; i++) {
+            var img = imgs[i];
+            var src = img.getAttribute("src") || "";
+            if (!src || src.indexOf("data:") === 0 || src.indexOf("blob:") === 0) {
+                continue;
+            }
+            if (/^https?:\/\//i.test(src) && origin && src.indexOf(origin) !== 0) {
+                img.setAttribute("crossorigin", "anonymous");
+                img.setAttribute("referrerpolicy", "no-referrer");
+            }
+        }
+    }
+
+    function canvasToJpeg(canvas) {
+        var maxWidth = 1280;
+        if (canvas.width > maxWidth) {
+            var copy = document.createElement("canvas");
+            var ratio = maxWidth / canvas.width;
+            copy.width = maxWidth;
+            copy.height = Math.round(canvas.height * ratio);
+            var ctx = copy.getContext("2d");
+            ctx.drawImage(canvas, 0, 0, copy.width, copy.height);
+            return copy.toDataURL("image/jpeg", 0.7);
+        }
+        return canvas.toDataURL("image/jpeg", 0.7);
+    }
+
     window.lobsyFeedback = {
         getMetadata: function () {
             return {
@@ -73,25 +111,19 @@
                     windowHeight: document.documentElement.scrollHeight,
                     scale: Math.min(1, 1280 / width),
                     useCORS: true,
+                    allowTaint: false,
                     logging: false,
                     backgroundColor: "#ffffff",
                     ignoreElements: isChrome,
                     onclone: function (doc) {
                         hideChrome(doc);
+                        softenCrossOriginAssets(doc);
                     }
                 });
             }).then(function (canvas) {
-                var maxWidth = 1280;
-                if (canvas.width > maxWidth) {
-                    var copy = document.createElement("canvas");
-                    var ratio = maxWidth / canvas.width;
-                    copy.width = maxWidth;
-                    copy.height = Math.round(canvas.height * ratio);
-                    var ctx = copy.getContext("2d");
-                    ctx.drawImage(canvas, 0, 0, copy.width, copy.height);
-                    return copy.toDataURL("image/jpeg", 0.7);
-                }
-                return canvas.toDataURL("image/jpeg", 0.7);
+                return canvasToJpeg(canvas);
+            }).catch(function () {
+                return null;
             });
         }
     };

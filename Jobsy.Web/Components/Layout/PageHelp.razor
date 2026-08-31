@@ -19,7 +19,8 @@
 
         @if (_open)
         {
-            <aside id="page-help-panel" class="page-help__panel" role="dialog" aria-label="@_doc.Title">
+            <div class="header-dropdown-backdrop" @onclick="Close" aria-hidden="true"></div>
+            <aside id="page-help-panel" class="page-help__panel info-dropdown right-0 max-w-[90vw] mx-auto z-50" role="dialog" aria-label="@_doc.Title">
                 <div class="page-help__panel-head">
                     <strong>@_doc.Title</strong>
                     <button type="button" class="page-help__close" aria-label="@Culture["Common.Close"]" @onclick="Close">×</button>

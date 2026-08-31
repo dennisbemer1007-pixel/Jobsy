@@ -11,6 +11,8 @@ public class FeedbackWidgetGuardTests
     {
         var widget = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "Components", "Feedback", "FeedbackWidget.razor"));
         Assert.Contains("lobsyFeedback.captureScreenshot", widget);
+        Assert.DoesNotContain("Feedback.CaptureFailed", widget);
+        Assert.DoesNotContain("_error = Culture[\"Feedback.CaptureFailed\"]", widget);
         var captureAt = widget.IndexOf("lobsyFeedback.captureScreenshot", StringComparison.Ordinal);
         var openAt = widget.IndexOf("_open = true", StringComparison.Ordinal);
         Assert.True(captureAt > 0 && openAt > captureAt, "Screenshot must be taken before the modal opens.");
@@ -31,10 +33,14 @@ public class FeedbackWidgetGuardTests
         Assert.Contains("window.scrollX", js);
         Assert.Contains("window.scrollY", js);
         Assert.Contains("image/jpeg", js);
+        Assert.Contains("useCORS: true", js);
+        Assert.Contains("logging: false", js);
+        Assert.Contains("allowTaint: false", js);
         Assert.Contains("ignoreElements", js);
         Assert.Contains("onclone", js);
         Assert.Contains("feedback-widget", js);
         Assert.Contains("lobsy-dialog", js);
+        Assert.Contains("return null", js);
     }
 
     [Fact]

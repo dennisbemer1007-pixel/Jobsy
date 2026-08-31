@@ -12,7 +12,7 @@
 
 <PageTitle>@Culture["Employer.Applicants"] · Lobsy</PageTitle>
 
-<div class="panel-page applicants-page">
+<div class="panel-page applicants-page max-w-full overflow-x-hidden pb-28">
     <header class="applicants-page__header">
         <div>
             <h1>@Culture["Employer.Applicants"]</h1>
@@ -117,7 +117,7 @@
                                 {
                                     <div class="availability-matrix availability-matrix--readonly" role="grid" aria-label="@Culture["Employer.FactAvailability"]">
                                         <div class="availability-matrix__corner" role="columnheader"></div>
-                                        @foreach (var slot in DayPartMatrix.DayPartCodes)
+                                        @foreach (var slot in DayPartMatrix.EmployerDisplayDayPartCodes)
                                         {
                                             <div class="availability-matrix__slot" role="columnheader">
                                                 @UiLabels.AvailabilitySlot(Culture, slot)
@@ -126,7 +126,7 @@
                                         @foreach (var day in DayPartMatrix.DayCodes)
                                         {
                                             <div class="availability-matrix__day" role="rowheader">@UiLabels.Weekday(Culture, day)</div>
-                                            @foreach (var slot in DayPartMatrix.DayPartCodes)
+                                            @foreach (var slot in DayPartMatrix.EmployerDisplayDayPartCodes)
                                             {
                                                 var on = availability.Slots.TryGetValue(day, out var daySlots)
                                                          && daySlots.Any(s => string.Equals(s, slot, StringComparison.OrdinalIgnoreCase));

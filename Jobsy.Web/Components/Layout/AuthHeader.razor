@@ -27,7 +27,7 @@
                 </button>
                 @if (_open)
                 {
-                    <div class="account-menu__panel" role="menu" aria-label="@Culture["Auth.AccountMenu"]">
+                    <div class="account-menu__panel right-0 max-w-[90vw] z-50" role="menu" aria-label="@Culture["Auth.AccountMenu"]">
                         <a class="account-menu__link" href="/privacy" role="menuitem">@Culture["Footer.Privacy"]</a>
                         <a class="account-menu__link" href="/algemene-voorwaarden" role="menuitem">@Culture["Footer.Terms"]</a>
                         <a class="account-menu__link" href="/gebruiksvoorwaarden" role="menuitem">@Culture["Footer.Usage"]</a>
@@ -42,17 +42,11 @@
                     </div>
                 }
             </div>
-            <form id="auth-logout" method="post" action="/account/logout" class="auth-logout-form auth-logout-form--chrome">
+            <form id="auth-logout" method="post" action="/account/logout" class="auth-logout-form auth-logout-form--chrome visually-hidden" aria-hidden="true">
                 @if (!string.IsNullOrEmpty(_antiforgeryFieldName) && !string.IsNullOrEmpty(_antiforgeryToken))
                 {
                     <input type="hidden" name="@_antiforgeryFieldName" value="@_antiforgeryToken" />
                 }
-                <button type="submit"
-                        class="auth-icon-btn"
-                        title="@Culture["Auth.Logout"]"
-                        aria-label="@Culture["Auth.Logout"]">
-                    <span class="auth-icon-btn__icon" aria-hidden="true">@((MarkupString)NavIcons.Logout)</span>
-                </button>
             </form>
         </Authorized>
         <NotAuthorized>

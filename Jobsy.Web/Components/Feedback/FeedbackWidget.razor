@@ -155,12 +155,26 @@
         try
         {
             await JobsyJs.EnsureFeedbackAsync(Js);
-            _meta = await Js.InvokeAsync<FeedbackClientMeta>("lobsyFeedback.getMetadata");
-            _screenshot = await Js.InvokeAsync<string?>("lobsyFeedback.captureScreenshot");
+            try
+            {
+                _meta = await Js.InvokeAsync<FeedbackClientMeta>("lobsyFeedback.getMetadata");
+            }
+            catch
+            {
+                _meta = null;
+            }
+
+            try
+            {
+                _screenshot = await Js.InvokeAsync<string?>("lobsyFeedback.captureScreenshot");
+            }
+            catch
+            {
+                _screenshot = null;
+            }
         }
         catch
         {
-            _error = Culture["Feedback.CaptureFailed"];
             _screenshot = null;
         }
         finally
@@ -188,7 +202,6 @@
         }
 
         _sending = true;
-        var captureWarning = _error;
         _error = null;
         try
         {
@@ -209,9 +222,7 @@
         }
         catch (Exception ex)
         {
-            _error = string.IsNullOrWhiteSpace(captureWarning)
-                ? ex.Message
-                : captureWarning + " " + ex.Message;
+            _error = ex.Message;
         }
         finally
         {

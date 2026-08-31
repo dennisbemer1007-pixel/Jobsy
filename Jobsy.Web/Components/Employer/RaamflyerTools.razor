@@ -1,0 +1,147 @@
+@inject JobsyApiClient Api
+@inject IJSRuntime Js
+
+<details class="raamflyer-tools">
+    <summary>Raamflyer PDF</summary>
+    <div class="raamflyer-tools__body">
+        <p class="muted raamflyer-tools__lead">Printbare flyer voor in de etalage. Kies vestiging en formaat.</p>
+        <div class="raamflyer-tools__grid">
+            @if (AllowOverview && Companies.Count > 1)
+            {
+                <label>
+                    Bereik
+                    <select @bind="_scope" disabled="@(_busy || Loading)">
+                        <option value="branch">Per vestiging</option>
+                        <option value="overview">Alle vestigingen</option>
+                    </select>
+                </label>
+            }
+
+            @if (_scope == "branch" && Companies.Count > 1)
+            {
+                <label>
+                    Vestiging
+                    <select @bind="_selectedCompanyId" disabled="@(_busy || Loading)">
+                        @foreach (var c in Companies)
+                        {
+                            <option value="@c.Id.ToString("D")">@c.Name</option>
+                        }
+                    </select>
+                </label>
+            }
+
+            <label>
+                Formaat
+                <select @bind="_format" disabled="@_busy">
+                    <option value="A4">A4</option>
+                    <option value="A3">A3</option>
+                </select>
+            </label>
+        </div>
+        <button type="button"
+                class="login-submit"
+                disabled="@(_busy || Loading || (_scope == "branch" && !Guid.TryParse(_selectedCompanyId, out _)))"
+                @onclick="DownloadAsync">
+            @(_busy ? "Bezig…" : "Download PDF")
+        </button>
+        @if (!string.IsNullOrWhiteSpace(_error))
+        {
+            <p class="state-message error">@_error</p>
+        }
+    </div>
+</details>
+
+@code {
+    [Parameter] public IReadOnlyList<CompanySummary> Companies { get; set; } = [];
+    [Parameter] public bool AllowOverview { get; set; }
+    [Parameter] public bool Loading { get; set; }
+    [Parameter] public string OverviewTitle { get; set; } = "onze vestigingen";
+
+    private string _scope = "branch";
+    private string _selectedCompanyId = "";
+    private string _format = "A4";
+    private bool _busy;
+    private string? _error;
+
+    protected override void OnParametersSet()
+    {
+        if (!AllowOverview || Companies.Count <= 1)
+        {
+            _scope = "branch";
+        }
+
+        if (Companies.Count > 0
+            && (string.IsNullOrWhiteSpace(_selectedCompanyId)
+                || Companies.All(c => c.Id.ToString("D") != _selectedCompanyId)))
+        {
+            var branch = Companies.FirstOrDefault(c => c.ParentCompanyId is not null) ?? Companies[0];
+            _selectedCompanyId = branch.Id.ToString("D");
+        }
+    }
+
+    private async Task DownloadAsync()
+    {
+        if (_busy)
+        {
+            return;
+        }
+
+        if (_scope == "overview")
+        {
+            await DownloadOverviewAsync();
+            return;
+        }
+
+        await DownloadBranchAsync();
+    }
+
+    private async Task DownloadBranchAsync()
+    {
+        if (!Guid.TryParse(_selectedCompanyId, out var companyId))
+        {
+            return;
+        }
+
+        _busy = true;
+        _error = null;
+        try
+        {
+            await Api.DownloadBranchRaamflyerPdfAsync(Js, companyId, _format);
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private async Task DownloadOverviewAsync()
+    {
+        if (Companies.Count == 0)
+        {
+            return;
+        }
+
+        _busy = true;
+        _error = null;
+        try
+        {
+            await Api.DownloadOverviewRaamflyerPdfAsync(
+                Js,
+                title: OverviewTitle,
+                format: _format,
+                companyIds: Companies.Select(c => c.Id));
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+}

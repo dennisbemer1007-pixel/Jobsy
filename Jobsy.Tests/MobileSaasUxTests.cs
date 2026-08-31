@@ -87,7 +87,7 @@ public class MobileSaasUxTests
         Assert.Contains("html, body {\n    margin: 0;\n    height: 100%;\n    max-width: 100%;\n    overflow-x: hidden;", css);
         Assert.Contains(".app-shell {\n    display: flex;\n    flex-direction: column;\n    height: 100vh;\n    min-height: 100vh;\n    max-width: 100%;\n    min-width: 0;\n    overflow-x: hidden;", css);
         Assert.Contains(".app-header__actions {\n    display: flex;\n    align-items: center;\n    gap: 0.75rem;\n    flex: 1 1 auto;\n    min-width: 0;", css);
-        Assert.Contains(".auth-logout-form--chrome {\n        display: none;", css);
+        Assert.Contains(".auth-logout-form--chrome {\n    display: none;", css);
 
         var header = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/Components/Layout/AuthHeader.razor"));
         Assert.Contains("id=\"auth-logout\"", header);
@@ -95,6 +95,8 @@ public class MobileSaasUxTests
         Assert.Contains("account-menu__link--logout", header);
         Assert.Contains("Auth.Logout", header);
         Assert.Contains("auth-logout-form--chrome", header);
+        Assert.DoesNotContain("auth-icon-btn", header);
+        Assert.DoesNotContain("NavIcons.Logout", header);
 
         var app = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/Components/App.razor"));
         Assert.Contains("max-width: 100%; overflow-x: hidden;", app);
@@ -109,7 +111,8 @@ public class MobileSaasUxTests
         Assert.Contains("user-card__menu-toggle", users);
         Assert.Contains("aria-expanded=\"@(menuOpen ? \"true\" : \"false\")\"", users);
         Assert.Contains("class=\"users-toolbar__filters\"", users);
-        Assert.Contains("login-form invite-form", users);
+        Assert.Contains("membership-grid", users);
+        Assert.Contains("pb-28", users);
         Assert.Contains("invite-form__row", users);
         Assert.Contains("Uitnodigen", users);
         Assert.DoesNotContain("users-table", users);
@@ -228,8 +231,73 @@ public class MobileSaasUxTests
         Assert.Contains("ParseAvailabilityPayload", razor);
         Assert.Contains("a.PiiRevealed", razor);
         Assert.Contains("Common.Yes", razor);
-        Assert.Contains("DayPartMatrix.DayPartCodes", razor);
+        Assert.Contains("EmployerDisplayDayPartCodes", razor);
+        Assert.DoesNotContain("DayPartMatrix.DayPartCodes", razor);
+        Assert.DoesNotContain("Nacht", razor);
         Assert.DoesNotContain("aria-label=\"@UiLabels.Weekday(Culture, day) @UiLabels.AvailabilitySlot(Culture, slot): @(on ? \"ja\" : \"nee\")\"", razor);
+    }
+
+    [Fact]
+    public void Token_logs_hide_technical_ids_and_show_explicit_token_amounts()
+    {
+        var tokens = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/Components/Pages/Employer/Tokens.razor"));
+        Assert.Contains("token-log-list", tokens);
+        Assert.Contains("TokenLogPresentation.FormatAmount", tokens);
+        Assert.Contains("TokenLogPresentation.FormatWhen", tokens);
+        Assert.Contains("TokenLogPresentation.Describe", tokens);
+        Assert.DoesNotContain("@log.Kind / @log.Reason", tokens);
+        Assert.DoesNotContain("dd-MM HH:mm", tokens);
+        Assert.Contains("pill-scroller token-tabs", tokens);
+        Assert.Contains("pb-28", tokens);
+
+        var css = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/wwwroot/css/app.css"));
+        Assert.Contains(".token-log__amount--in {\n    color: var(--success);", css);
+        Assert.Contains(".token-log__amount--out {\n    color: var(--danger);", css);
+    }
+
+    [Fact]
+    public void Header_popups_stay_in_viewport_and_dashboard_moves_raamflyer_off_home()
+    {
+        var css = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/wwwroot/css/app.css"));
+        Assert.Contains(".notification-dropdown", css);
+        Assert.Contains(".info-dropdown", css);
+        Assert.Contains(".header-dropdown-backdrop", css);
+        Assert.Contains("max-width: 90vw", css);
+        Assert.Contains(".z-50 { z-index: 50; }", css);
+        Assert.Contains(".pb-28 { padding-bottom: 7rem; }", css);
+        Assert.Contains(".grid-cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr));", css);
+        Assert.Contains(".availability-matrix--readonly {\n    grid-template-columns: 2.35rem repeat(3, minmax(0, 1fr));", css);
+        Assert.Contains(".dash-refresh-btn {\n    display: inline-flex;", css);
+
+        var help = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/Components/Layout/PageHelp.razor"));
+        Assert.Contains("info-dropdown", help);
+        Assert.Contains("header-dropdown-backdrop", help);
+        Assert.Contains("right-0 max-w-[90vw] mx-auto z-50", help);
+
+        var bell = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/Components/Layout/NotificationBell.razor"));
+        Assert.Contains("notification-dropdown", bell);
+        Assert.Contains("header-dropdown-backdrop", bell);
+        Assert.Contains("right-0 max-w-[90vw] mx-auto z-50", bell);
+
+        var home = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/Components/Pages/EmployerHomePanel.razor"));
+        Assert.DoesNotContain("Download Raamflyer", home);
+        Assert.DoesNotContain("Per vestiging", home);
+        Assert.DoesNotContain("raamflyer-scope", home);
+        Assert.Contains("dashboard-secondary", home);
+        Assert.Contains("RaamflyerTools", home);
+        Assert.Contains("panel-header__title-row", home);
+        Assert.Contains("DashboardRefreshButton", home);
+
+        var company = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/Components/Pages/Employer/CompanyDetails.razor"));
+        Assert.Contains("RaamflyerTools", company);
+        Assert.Contains("Wervingsmateriaal", company);
+
+        var branches = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/Components/Pages/Employer/Branches.razor"));
+        Assert.Contains("RaamflyerTools", branches);
+
+        var refresh = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/Components/Shared/DashboardRefreshButton.razor"));
+        Assert.Contains("dash-refresh-btn", refresh);
+        Assert.Contains("aria-label=\"Ververs\"", refresh);
     }
 
     private static string FindRepoRoot()

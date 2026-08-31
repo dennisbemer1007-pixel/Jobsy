@@ -1,76 +1,21 @@
+@using Jobsy.Web.Components.Employer
 @using Jobsy.Web.Components.Shared
 @using Jobsy.Web.Dashboard
 @using Jobsy.Web.Models
 @inject JobsyApiClient Api
 @inject NavigationManager Navigation
 @inject CultureState Culture
-@inject IJSRuntime Js
 @implements IDisposable
 
-<div class="panel-page panel-page--dashboard">
+<div class="panel-page panel-page--dashboard max-w-full overflow-x-hidden">
     <header class="panel-header panel-header--dashboard">
-        <div>
+        <div class="panel-header__title-row">
             <h1>@Title</h1>
-            <p class="login-lead">@Lead</p>
-        </div>
-        <div class="panel-header__actions">
-            @if (EnableRaamflyer)
-            {
-                <div class="raamflyer-actions" aria-label="Raamflyer downloaden">
-                    @if (AllowOverviewRaamflyer && _companies.Count > 1)
-                    {
-                        <div class="raamflyer-scope" role="group" aria-label="Flyerscope">
-                            <button type="button"
-                                    class="raamflyer-scope__btn @(_scope == FlyerScope.Branch ? "is-active" : null)"
-                                    disabled="@(_flyerBusy || _loadingCompanies)"
-                                    @onclick="() => _scope = FlyerScope.Branch">
-                                Per vestiging
-                            </button>
-                            <button type="button"
-                                    class="raamflyer-scope__btn @(_scope == FlyerScope.Overview ? "is-active" : null)"
-                                    disabled="@(_flyerBusy || _loadingCompanies)"
-                                    @onclick="() => _scope = FlyerScope.Overview">
-                                Alle vestigingen
-                            </button>
-                        </div>
-                    }
-
-                    @if (_scope == FlyerScope.Branch && _companies.Count > 1)
-                    {
-                        <label class="raamflyer-branch">
-                            <span class="visually-hidden">Vestiging</span>
-                            <select @bind="_selectedCompanyId" disabled="@(_flyerBusy || _loadingCompanies)">
-                                @foreach (var c in _companies)
-                                {
-                                    <option value="@c.Id.ToString("D")">@c.Name</option>
-                                }
-                            </select>
-                        </label>
-                    }
-
-                    <label class="raamflyer-format">
-                        <span class="visually-hidden">Formaat</span>
-                        <select @bind="_format" disabled="@_flyerBusy">
-                            <option value="A4">A4</option>
-                            <option value="A3">A3</option>
-                        </select>
-                    </label>
-
-                    <button type="button"
-                            class="login-submit"
-                            disabled="@(_flyerBusy || _loadingCompanies || (_scope == FlyerScope.Branch && !Guid.TryParse(_selectedCompanyId, out _)))"
-                            @onclick="DownloadAsync">
-                        @(_flyerBusy ? "Bezig…" : "Download Raamflyer PDF")
-                    </button>
-
-                    @if (!string.IsNullOrWhiteSpace(_flyerError))
-                    {
-                        <p class="state-message error raamflyer-error">@_flyerError</p>
-                    }
-                </div>
-            }
             <DashboardRefreshButton Period="_period" Disabled="_loading" OnRefreshed="ApplyRefreshAsync" />
-            <div class="period-tabs period-tabs--compact" role="tablist" aria-label="@Culture["Common.Period"]">
+        </div>
+        <p class="login-lead">@Lead</p>
+        <div class="panel-header__actions">
+            <div class="period-tabs period-tabs--compact pill-scroller" role="tablist" aria-label="@Culture["Common.Period"]">
                 @foreach (var p in PeriodKeys)
                 {
                     <button type="button"
@@ -100,11 +45,19 @@
                               VacancyHrefPrefix="/vacancies"
                               OnMetricClick="OpenMetricAsync" />
     }
+
+    @if (EnableRaamflyer)
+    {
+        <section class="panel-section dashboard-secondary">
+            <RaamflyerTools Companies="_companies"
+                            AllowOverview="AllowOverviewRaamflyer"
+                            Loading="_loadingCompanies"
+                            OverviewTitle="@(Title.Contains("Regio", StringComparison.OrdinalIgnoreCase) ? "onze regio" : "onze vestigingen")" />
+        </section>
+    }
 </div>
 
 @code {
-    private enum FlyerScope { Branch, Overview }
-
     private static readonly string[] PeriodKeys = ["day", "week", "month", "quarter", "year"];
 
     [Parameter] public string Title { get; set; } = "Dashboard";
@@ -120,14 +73,8 @@
     private string? _error;
     private List<MetricCount> _metrics = [];
     private VacancyPerformanceBoard? _vacancyBoard;
-
     private List<CompanySummary> _companies = [];
-    private string _selectedCompanyId = "";
-    private string _format = "A4";
-    private FlyerScope _scope = FlyerScope.Branch;
     private bool _loadingCompanies;
-    private bool _flyerBusy;
-    private string? _flyerError;
 
     private string PeriodLabel(string key) => key switch
     {
@@ -213,104 +160,20 @@
     private async Task LoadCompaniesAsync()
     {
         _loadingCompanies = true;
-        _flyerError = null;
         try
         {
             _companies = (await Api.GetMyCompaniesAsync())
                 .OrderBy(c => c.ParentCompanyId is null ? 0 : 1)
                 .ThenBy(c => c.Name)
                 .ToList();
-            if (_companies.Count > 0
-                && (string.IsNullOrWhiteSpace(_selectedCompanyId)
-                    || _companies.All(c => c.Id.ToString("D") != _selectedCompanyId)))
-            {
-                // Prefer a vestiging (child) when available — filiaal raamflyer.
-                var branch = _companies.FirstOrDefault(c => c.ParentCompanyId is not null)
-                             ?? _companies[0];
-                _selectedCompanyId = branch.Id.ToString("D");
-            }
-
-            if (!AllowOverviewRaamflyer || _companies.Count <= 1)
-            {
-                _scope = FlyerScope.Branch;
-            }
         }
-        catch (Exception ex)
+        catch
         {
-            _flyerError = ex.Message;
             _companies = [];
         }
         finally
         {
             _loadingCompanies = false;
-        }
-    }
-
-    private async Task DownloadAsync()
-    {
-        if (_flyerBusy)
-        {
-            return;
-        }
-
-        if (_scope == FlyerScope.Overview)
-        {
-            await DownloadOverviewAsync();
-            return;
-        }
-
-        await DownloadBranchAsync();
-    }
-
-    private async Task DownloadBranchAsync()
-    {
-        if (!Guid.TryParse(_selectedCompanyId, out var companyId))
-        {
-            return;
-        }
-
-        _flyerBusy = true;
-        _flyerError = null;
-        try
-        {
-            await Api.DownloadBranchRaamflyerPdfAsync(Js, companyId, _format);
-        }
-        catch (Exception ex)
-        {
-            _flyerError = ex.Message;
-        }
-        finally
-        {
-            _flyerBusy = false;
-        }
-    }
-
-    private async Task DownloadOverviewAsync()
-    {
-        if (_companies.Count == 0)
-        {
-            return;
-        }
-
-        _flyerBusy = true;
-        _flyerError = null;
-        try
-        {
-            await Api.DownloadOverviewRaamflyerPdfAsync(
-                Js,
-                title: Title.Contains("Regio", StringComparison.OrdinalIgnoreCase)
-                    ? "onze regio"
-                    : "onze vestigingen",
-                format: _format,
-                companyIds: _companies.Select(c => c.Id));
-        }
-        catch (Exception ex)
-        {
-            _flyerError = ex.Message;
-        }
-        finally
-        {
-            _flyerBusy = false;
         }
     }
 

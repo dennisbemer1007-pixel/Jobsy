@@ -9,7 +9,7 @@
 
 <PageTitle>@Culture["Employer.Users"] · Lobsy</PageTitle>
 
-<div class="panel-page users-page">
+<div class="panel-page users-page max-w-full overflow-x-hidden pb-28">
     <header class="panel-header">
         <div>
             <h1>@Culture["Employer.Users"]</h1>
@@ -169,7 +169,7 @@
                             }
                         </select>
                     </label>
-                    <fieldset class="profile-roles profile-roles--wide">
+                    <fieldset class="profile-roles profile-roles--wide membership-grid grid grid-cols-2 gap-2">
                         <legend>Extra lidmaatschappen</legend>
                         @foreach (var c in _companies)
                         {
@@ -225,7 +225,7 @@
                         </select>
                     </label>
                 </div>
-                <fieldset class="profile-roles profile-roles--wide">
+                <fieldset class="profile-roles profile-roles--wide membership-grid grid grid-cols-2 gap-2">
                     <legend>Extra lidmaatschappen</legend>
                     @foreach (var c in _companies)
                     {

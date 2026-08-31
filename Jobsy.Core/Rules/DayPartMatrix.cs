@@ -6,6 +6,9 @@ public static class DayPartMatrix
     public static readonly string[] DayCodes = ["Ma", "Di", "Wo", "Do", "Vr", "Za", "Zo"];
     public static readonly string[] DayPartCodes = ["Ochtend", "Middag", "Avond", "Nacht"];
 
+    /// <summary>Employer applicant matrix: morning / afternoon / evening only.</summary>
+    public static readonly string[] EmployerDisplayDayPartCodes = ["Ochtend", "Middag", "Avond"];
+
     public static readonly IReadOnlyDictionary<string, string> DayPartWindows =
         new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
         {
