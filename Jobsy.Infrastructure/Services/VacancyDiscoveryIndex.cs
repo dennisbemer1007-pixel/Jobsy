@@ -2,6 +2,7 @@ using Jobsy.Core.Contracts;
 using Jobsy.Core.Entities;
 using Jobsy.Core.Enums;
 using Jobsy.Core.Interfaces;
+using Jobsy.Core.Media;
 using Jobsy.Core.Rules;
 using Jobsy.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
@@ -156,8 +157,8 @@ public sealed class VacancyDiscoveryIndex : IVacancyDiscoveryIndex
             vacancy.CompanyId,
             display.DisplayName,
             display.DisplayAddress,
-            display.DisplayLogoUrl,
-            vacancy.ImageUrl,
+            VacancyImageUrls.Normalize(display.DisplayLogoUrl),
+            VacancyImageUrls.Normalize(vacancy.ImageUrl),
             vacancy.VideoUrl,
             display.Latitude,
             display.Longitude,

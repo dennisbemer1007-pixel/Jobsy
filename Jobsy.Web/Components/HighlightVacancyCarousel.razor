@@ -1,3 +1,4 @@
+@namespace Jobsy.Web.Components
 @inject CultureState Culture
 
 @if (Vacancies.Count > 0)
@@ -13,22 +14,14 @@
                         @onmouseenter="() => OnHover.InvokeAsync(vacancy.Id)"
                         @onmouseleave="() => OnHover.InvokeAsync(null)"
                         @onclick="() => OnSelect.InvokeAsync(vacancy.Id)">
-                    @if (!string.IsNullOrWhiteSpace(vacancy.ImageUrl) || !string.IsNullOrWhiteSpace(vacancy.CompanyLogoUrl))
-                    {
-                        <VacancyPhoto Src="@(string.IsNullOrWhiteSpace(vacancy.ImageUrl) ? vacancy.CompanyLogoUrl : vacancy.ImageUrl)"
-                                      VacancyId="vacancy.Id"
-                                      WorkType="@(vacancy.WorkTypes.FirstOrDefault())"
-                                      Class="@(string.IsNullOrWhiteSpace(vacancy.ImageUrl) ? "highlight-carousel__media highlight-carousel__media--logo" : "highlight-carousel__media")"
-                                      Width="160"
-                                      Height="107"
-                                      Sizes="56px" />
-                    }
-                    else
-                    {
-                        <span class="highlight-carousel__media highlight-carousel__media--placeholder" aria-hidden="true">
-                            @(vacancy.CompanyName.Length > 0 ? vacancy.CompanyName[0].ToString().ToUpperInvariant() : "L")
-                        </span>
-                    }
+                    <VacancyPhoto Src="@vacancy.ImageUrl"
+                                  FallbackSrc="@vacancy.CompanyLogoUrl"
+                                  VacancyId="vacancy.Id"
+                                  WorkType="@(vacancy.WorkTypes.FirstOrDefault())"
+                                  Class="highlight-carousel__media"
+                                  Width="160"
+                                  Height="107"
+                                  Sizes="56px" />
                     <span class="highlight-carousel__body">
                         <span class="highlight-carousel__title-text">@vacancy.Title</span>
                         <span class="highlight-carousel__meta">@vacancy.CompanyName</span>

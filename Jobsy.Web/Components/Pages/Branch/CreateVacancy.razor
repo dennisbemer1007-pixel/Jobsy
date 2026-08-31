@@ -8,6 +8,7 @@
 @inject CultureState Culture
 @implements IDisposable
 @using Jobsy.Core.Enums
+@using Jobsy.Core.Media
 @using Jobsy.Core.Rules
 
 <PageTitle>@PageHeading · Lobsy</PageTitle>
@@ -802,7 +803,7 @@
     {
         get
         {
-            var url = HtmlSanitize.NormalizeMediaUrl(_imageUrl);
+            var url = VacancyImageUrls.Normalize(_imageUrl);
             if (url is null)
             {
                 return null;

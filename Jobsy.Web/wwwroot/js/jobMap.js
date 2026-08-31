@@ -429,13 +429,18 @@ window.jobMap = (function () {
             : "";
 
         let mediaInner = "";
-        if (hasImage) {
+        const photoSrc = v.imageUrl ? String(v.imageUrl) : "";
+        const logoSrc = v.logoUrl ? String(v.logoUrl) : "";
+        if (photoSrc) {
+            const fb = logoSrc && logoSrc !== photoSrc
+                ? " data-fallback-src=\"" + escapeAttr(logoSrc) + "\""
+                : "";
             mediaInner +=
-                "<img class=\"map-popup__photo\" src=\"" + escapeAttr(v.imageUrl) + "\" alt=\"\" loading=\"lazy\" data-logo-fallback=\"1\" />";
-        } else if (v.logoUrl) {
+                "<img class=\"map-popup__photo\" src=\"" + escapeAttr(photoSrc) + "\" alt=\"\" loading=\"lazy\" data-logo-fallback=\"photo\"" + fb + " />";
+        } else if (logoSrc) {
             mediaInner +=
-                "<img class=\"map-popup__media-logo\" src=\"" + escapeAttr(v.logoUrl) + "\" alt=\"" +
-                escapeAttr(v.company) + " logo\" loading=\"lazy\" data-logo-fallback=\"1\" />";
+                "<img class=\"map-popup__media-logo\" src=\"" + escapeAttr(logoSrc) + "\" alt=\"" +
+                escapeAttr(v.company) + " logo\" loading=\"lazy\" data-logo-fallback=\"photo\" />";
         }
 
         const detailHref = "/vacancies/" + encodeURIComponent(v.id);

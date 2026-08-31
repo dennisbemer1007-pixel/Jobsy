@@ -121,6 +121,18 @@ public class HtmlSanitizeImageTests
     }
 
     [Fact]
+    public void NormalizeImageInput_accepts_local_images_path()
+    {
+        var url = HtmlSanitize.NormalizeImageInput("images/uploads/storefront.jpg", out var error);
+        Assert.Null(error);
+        Assert.Equal("/images/uploads/storefront.jpg", url);
+
+        var own = HtmlSanitize.NormalizeImageInput("https://lobsy.nl/images/logos/westland.svg", out error);
+        Assert.Null(error);
+        Assert.Equal("/images/logos/westland.svg", own);
+    }
+
+    [Fact]
     public void NormalizeImageInput_accepts_png_base64()
     {
         var png = Convert.FromBase64String(

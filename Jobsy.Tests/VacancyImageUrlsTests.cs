@@ -24,14 +24,73 @@ public class VacancyImageUrlsTests
     }
 
     [Fact]
-    public void Resolve_restores_svg_standin_and_unsplash_to_picsum()
+    public void Resolve_keeps_local_svg_standin_and_maps_unsplash_to_picsum()
     {
         var id = Guid.Parse("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb");
         var picsum = VacancyImageUrls.PicsumUrl(id);
-        Assert.Equal(picsum, VacancyImageUrls.Resolve(VacancyImageUrls.Placeholder(id, WorkType.Horeca), id, "Horeca"));
+        var svg = VacancyImageUrls.Placeholder(id, WorkType.Horeca);
+        Assert.Equal(svg, VacancyImageUrls.Resolve(svg, id, "Horeca"));
         Assert.Equal(
             picsum,
             VacancyImageUrls.Resolve("https://images.unsplash.com/photo-legacy-404", id, "Horeca"));
+    }
+
+    [Fact]
+    public void Resolve_uses_company_logo_when_photo_is_missing()
+    {
+        var id = Guid.Parse("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb");
+        Assert.Equal(
+            "/images/logos/westland.svg",
+            VacancyImageUrls.Resolve(null, "/images/logos/westland.svg", id, "Horeca"));
+        Assert.Equal(
+            "/images/logos/westland.svg",
+            VacancyImageUrls.Resolve("  ", "images/logos/westland.svg", id, "Logistiek"));
+        Assert.Equal(
+            "/images/logos/cafe.svg",
+            VacancyImageUrls.Resolve("null", "https://lobsy.nl/images/logos/cafe.svg", id, "Horeca"));
+    }
+
+    [Fact]
+    public void Resolve_uses_work_type_svg_when_photo_and_logo_are_empty()
+    {
+        var id = Guid.Parse("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb");
+        var svg = VacancyImageUrls.Placeholder(id, "Horeca");
+        Assert.Equal(svg, VacancyImageUrls.Resolve(null, null, id, "Horeca"));
+        Assert.Equal(svg, VacancyImageUrls.Resolve("undefined", "", id, "Horeca"));
+    }
+
+    [Fact]
+    public void Normalize_rewrites_own_origin_and_storage_paths()
+    {
+        Assert.Null(VacancyImageUrls.Normalize(null));
+        Assert.Null(VacancyImageUrls.Normalize(" "));
+        Assert.Null(VacancyImageUrls.Normalize("null"));
+        Assert.Null(VacancyImageUrls.Normalize("undefined"));
+        Assert.Equal("/images/uploads/x.jpg", VacancyImageUrls.Normalize("/images/uploads/x.jpg"));
+        Assert.Equal("/images/uploads/x.jpg", VacancyImageUrls.Normalize("images/uploads/x.jpg"));
+        Assert.Equal("/images/uploads/x.jpg", VacancyImageUrls.Normalize("uploads/x.jpg"));
+        Assert.Equal("/images/uploads/shot.png", VacancyImageUrls.Normalize("shot.png"));
+        Assert.Equal("/images/logos/westland.svg", VacancyImageUrls.Normalize("wwwroot/images/logos/westland.svg"));
+        Assert.Equal("/images/uploads/x.jpg", VacancyImageUrls.Normalize("https://lobsy.nl/images/uploads/x.jpg"));
+        Assert.Equal("/images/uploads/x.jpg?v=2", VacancyImageUrls.Normalize("https://www.lobsy.nl/images/uploads/x.jpg?v=2"));
+        Assert.Equal("https://cdn.example/photo.jpg", VacancyImageUrls.Normalize("https://cdn.example/photo.jpg"));
+        Assert.Null(VacancyImageUrls.Normalize("/images/../secret.jpg"));
+    }
+
+    [Fact]
+    public void AlternateSrc_is_logo_only_when_it_differs_from_display()
+    {
+        Assert.Equal(
+            "/images/logos/westland.svg",
+            VacancyImageUrls.AlternateSrc(
+                "https://picsum.photos/seed/jobsy-bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb/400/267",
+                "/images/logos/westland.svg",
+                "https://picsum.photos/seed/jobsy-bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb/400/267"));
+        Assert.Null(VacancyImageUrls.AlternateSrc(
+            "/images/logos/westland.svg",
+            "/images/logos/westland.svg",
+            "/images/logos/westland.svg"));
+        Assert.Null(VacancyImageUrls.AlternateSrc(null, null, "/images/vacancies/horeca-0.svg"));
     }
 
     [Fact]
@@ -51,6 +110,7 @@ public class VacancyImageUrlsTests
         Assert.Equal("https://cdn.example/a.jpg", VacancyImageUrls.CdnResize("https://cdn.example/a.jpg", 400));
         Assert.Equal("http://169.254.169.254/latest/meta-data/", VacancyImageUrls.CdnResize("http://169.254.169.254/latest/meta-data/", 400));
         Assert.Equal("//evil.example/x.jpg", VacancyImageUrls.CdnResize("//evil.example/x.jpg", 400));
+        Assert.Equal("/images/../secret.jpg", VacancyImageUrls.CdnResize("/images/../secret.jpg", 400));
     }
 
     [Fact]

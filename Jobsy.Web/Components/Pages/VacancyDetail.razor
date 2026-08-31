@@ -105,6 +105,7 @@
                     @if (HasPhoto)
                     {
                         <VacancyPhoto Src="@_vacancy.ImageUrl"
+                                      FallbackSrc="@_vacancy.CompanyLogoUrl"
                                       VacancyId="_vacancy.Id"
                                       WorkType="@(_vacancy.WorkTypes.FirstOrDefault())"
                                       Class="detail-card__image vacancy-media__photo"
@@ -655,7 +656,9 @@
     private string? SeoDescription => _vacancy is null
         ? null
         : Culture.Format("Seo.VacancyDescription", _vacancy.Title, _vacancy.CompanyName);
-    private string? SeoImage => string.IsNullOrWhiteSpace(_vacancy?.ImageUrl) ? _vacancy?.CompanyLogoUrl : _vacancy.ImageUrl;
+    private string? SeoImage =>
+        VacancyImageUrls.Normalize(_vacancy?.ImageUrl)
+        ?? VacancyImageUrls.Normalize(_vacancy?.CompanyLogoUrl);
     private string? SeoJsonLd
     {
         get
@@ -823,7 +826,9 @@
                 : string.Empty;
 
     private bool HasPhoto =>
-        _vacancy is not null && !string.IsNullOrWhiteSpace(_vacancy.ImageUrl);
+        _vacancy is not null
+        && (!string.IsNullOrWhiteSpace(VacancyImageUrls.Normalize(_vacancy.ImageUrl))
+            || !string.IsNullOrWhiteSpace(VacancyImageUrls.Normalize(_vacancy.CompanyLogoUrl)));
 
     private bool HasLocation =>
         _vacancy is not null

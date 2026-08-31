@@ -4,7 +4,7 @@
 
 @if (!string.IsNullOrWhiteSpace(DisplaySrc))
 {
-    <img class="vacancy-photo @Class"
+    <img class="vacancy-photo @(ShowingLogo ? "vacancy-photo--logo" : null) @Class"
          src="@DisplaySrc"
          srcset="@SrcSetOrNull"
          sizes="@SizesOrNull"
@@ -14,12 +14,14 @@
          loading="@(Eager ? "eager" : "lazy")"
          decoding="async"
          fetchpriority="@(Eager ? "high" : "auto")"
-         data-logo-fallback="1"
+         data-logo-fallback="photo"
+         data-fallback-src="@AlternateSrcOrNull"
          draggable="false" />
 }
 
 @code {
     [Parameter] public string? Src { get; set; }
+    [Parameter] public string? FallbackSrc { get; set; }
     [Parameter] public Guid? VacancyId { get; set; }
     [Parameter] public string? WorkType { get; set; }
     [Parameter] public string? Class { get; set; }
@@ -33,10 +35,23 @@
 
     private string DisplaySrc => VacancyImageUrls.ForDisplay(
         Src,
+        FallbackSrc,
         Width,
         CloudflareResizing,
         VacancyId,
         WorkType);
+
+    private string? AlternateSrcOrNull => VacancyImageUrls.AlternateSrc(Src, FallbackSrc, DisplaySrc);
+
+    private bool ShowingLogo
+    {
+        get
+        {
+            var logo = VacancyImageUrls.Normalize(FallbackSrc);
+            return !string.IsNullOrWhiteSpace(logo)
+                   && string.Equals(logo, DisplaySrc, StringComparison.OrdinalIgnoreCase);
+        }
+    }
 
     private string? SrcSetOrNull => VacancyImageUrls.SrcSet(DisplaySrc, CloudflareResizing);
 

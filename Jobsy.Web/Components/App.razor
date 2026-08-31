@@ -76,9 +76,9 @@
     </style>
     @if (LoadBlazorRuntime)
     {
-        <link rel="stylesheet" href="css/app.min.css?v=20260831-ux3" media="print" data-app-css />
+        <link rel="stylesheet" href="css/app.min.css?v=20260831-img1" media="print" data-app-css />
     }
-    <noscript><link rel="stylesheet" href="css/app.min.css?v=20260831-ux3" /></noscript>
+    <noscript><link rel="stylesheet" href="css/app.min.css?v=20260831-img1" /></noscript>
     <script nonce="@Nonce">
         (function () {
             var nonce = document.currentScript && document.currentScript.nonce;
@@ -138,11 +138,31 @@
             var svg = "data:image/svg+xml," + encodeURIComponent(
                 '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="12" fill="#e7eef7"/><text x="32" y="40" text-anchor="middle" font-size="22" font-family="Segoe UI,Arial,sans-serif" fill="#0f2d5c">L</text></svg>'
             );
+            function isPhotoFallback(img) {
+                var mode = img.getAttribute("data-logo-fallback");
+                if (mode === "photo") return true;
+                return !!(img.classList && (
+                    img.classList.contains("vacancy-photo")
+                    || img.classList.contains("map-popup__photo")
+                    || img.classList.contains("map-popup__media-logo")
+                ));
+            }
             window.jobsyLogoFallback = function (img) {
                 if (!img || img.dataset.fb === "done") return true;
                 var src = img.currentSrc || img.src || "";
                 img.removeAttribute("srcset");
                 img.removeAttribute("sizes");
+                if (isPhotoFallback(img) && img.dataset.fb !== "alt" && img.dataset.fb !== "webp" && img.dataset.fb !== "png") {
+                    var alt = img.getAttribute("data-fallback-src");
+                    if (alt && alt.length && src.indexOf(alt.split("?")[0]) === -1) {
+                        img.dataset.fb = "alt";
+                        img.src = alt;
+                        return true;
+                    }
+                    img.dataset.fb = "webp";
+                    img.src = webp;
+                    return true;
+                }
                 if (src.indexOf("mascot-256.webp") !== -1 || src.indexOf("mascot-128.webp") !== -1 || src.indexOf("mascot-64.webp") !== -1) {
                     img.dataset.fb = "png";
                     img.src = mascotPng;

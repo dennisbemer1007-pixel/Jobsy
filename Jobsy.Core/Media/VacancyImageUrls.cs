@@ -3,16 +3,28 @@ using Jobsy.Core.Enums;
 namespace Jobsy.Core.Media;
 
 /// <summary>
-/// Resolves vacancy photos for list/detail/map. Mock vacancies use stable
-/// picsum seeds (unique photo per id). Broken Unsplash URLs and the temporary
-/// local SVG stand-ins are mapped back to that seed.
+/// Resolves vacancy photos for list/detail/map. Stored http(s), <c>/images/…</c> and
+/// data-URI values are kept after path cleanup. Empty or junk values fall through to
+/// a company logo, then a local work-type SVG — never to the Lobsy brand mark.
+/// Broken Unsplash URLs map to a stable picsum seed when a vacancy id is known.
 /// </summary>
 public static class VacancyImageUrls
 {
     public const int IntrinsicWidth = 600;
     public const int IntrinsicHeight = 400;
     public const string LocalPrefix = "/images/vacancies/";
+    public const string ImagesPrefix = "/images/";
     public const int VariantCount = 2;
+
+    private static readonly string[] ImageExtensions =
+    [
+        ".jpg", ".jpeg", ".png", ".gif", ".webp", ".svg", ".avif", ".bmp"
+    ];
+
+    private static readonly string[] StorageFolders =
+    [
+        "uploads/", "logos/", "vacancies/", "brand/", "media/", "teaser/"
+    ];
 
     public static string PicsumUrl(Guid vacancyId)
         => PicsumUrl(vacancyId, IntrinsicWidth, IntrinsicHeight);
@@ -34,21 +46,101 @@ public static class VacancyImageUrls
         return $"{LocalPrefix}{slug}-{variant}.svg";
     }
 
-    public static string Resolve(string? imageUrl, Guid? vacancyId = null, string? workType = null)
+    /// <summary>
+    /// Turns empty/null/"null", missing slashes, wwwroot prefixes and own-origin
+    /// absolute URLs into a same-origin <c>/images/…</c> path (or keeps a remote URL).
+    /// Returns null when there is no usable image source.
+    /// </summary>
+    public static string? Normalize(string? imageUrl)
     {
-        if (string.IsNullOrWhiteSpace(imageUrl)
-            || IsBrokenUnsplash(imageUrl)
-            || IsLocalVacancySvg(imageUrl))
+        if (string.IsNullOrWhiteSpace(imageUrl))
         {
-            var id = vacancyId ?? TryExtractSeed(imageUrl) ?? Guid.Empty;
-            return id == Guid.Empty ? (imageUrl ?? "").Trim() : PicsumUrl(id);
+            return null;
         }
 
-        return imageUrl.Trim();
+        var trimmed = imageUrl.Trim().Trim('"', '\'');
+        if (trimmed.Length == 0
+            || trimmed.Equals("null", StringComparison.OrdinalIgnoreCase)
+            || trimmed.Equals("undefined", StringComparison.OrdinalIgnoreCase)
+            || trimmed.Equals("none", StringComparison.OrdinalIgnoreCase)
+            || trimmed.Equals("nil", StringComparison.OrdinalIgnoreCase))
+        {
+            return null;
+        }
+
+        if (trimmed.StartsWith("data:image/", StringComparison.OrdinalIgnoreCase)
+            || trimmed.StartsWith("blob:", StringComparison.OrdinalIgnoreCase))
+        {
+            return trimmed;
+        }
+
+        trimmed = trimmed.Replace('\\', '/');
+        if (trimmed.Contains("..", StringComparison.Ordinal)
+            || trimmed.IndexOfAny(['\n', '\r', '\0']) >= 0)
+        {
+            return null;
+        }
+
+        if (trimmed.StartsWith("//", StringComparison.Ordinal))
+        {
+            return Normalize("https:" + trimmed);
+        }
+
+        if (Uri.TryCreate(trimmed, UriKind.Absolute, out var uri))
+        {
+            if (uri.Scheme != Uri.UriSchemeHttp && uri.Scheme != Uri.UriSchemeHttps)
+            {
+                return ExtractImagesPath(uri.AbsolutePath) ?? ExtractImagesPath(trimmed);
+            }
+
+            if (!string.IsNullOrEmpty(uri.UserInfo))
+            {
+                return null;
+            }
+
+            if (IsOwnHost(uri.Host))
+            {
+                var path = uri.PathAndQuery;
+                return string.IsNullOrWhiteSpace(path) || path == "/" ? null : path;
+            }
+
+            return uri.ToString();
+        }
+
+        return NormalizeRelative(trimmed);
     }
 
+    public static string Resolve(string? imageUrl, Guid? vacancyId = null, string? workType = null)
+        => Resolve(imageUrl, fallbackUrl: null, vacancyId, workType);
+
     public static string Resolve(string? imageUrl, Guid vacancyId, WorkType workTypes)
-        => Resolve(imageUrl, vacancyId, FirstSlug(workTypes));
+        => Resolve(imageUrl, fallbackUrl: null, vacancyId, FirstSlug(workTypes));
+
+    public static string Resolve(
+        string? imageUrl,
+        string? fallbackUrl,
+        Guid? vacancyId,
+        string? workType)
+    {
+        var primary = UsableSource(imageUrl, vacancyId);
+        if (primary is not null)
+        {
+            return primary;
+        }
+
+        var fallback = UsableSource(fallbackUrl, vacancyId: null);
+        if (fallback is not null)
+        {
+            return fallback;
+        }
+
+        if (vacancyId is Guid id && id != Guid.Empty)
+        {
+            return Placeholder(id, workType);
+        }
+
+        return string.Empty;
+    }
 
     public static string ForDisplay(
         string? imageUrl,
@@ -56,9 +148,19 @@ public static class VacancyImageUrls
         bool cloudflareResizing,
         Guid? vacancyId = null,
         string? workType = null)
+        => ForDisplay(imageUrl, fallbackUrl: null, width, cloudflareResizing, vacancyId, workType);
+
+    public static string ForDisplay(
+        string? imageUrl,
+        string? fallbackUrl,
+        int width,
+        bool cloudflareResizing,
+        Guid? vacancyId = null,
+        string? workType = null)
     {
-        var resolved = Resolve(imageUrl, vacancyId, workType);
-        if (resolved.StartsWith("data:", StringComparison.OrdinalIgnoreCase)
+        var resolved = Resolve(imageUrl, fallbackUrl, vacancyId, workType);
+        if (string.IsNullOrWhiteSpace(resolved)
+            || resolved.StartsWith("data:", StringComparison.OrdinalIgnoreCase)
             || resolved.EndsWith(".svg", StringComparison.OrdinalIgnoreCase))
         {
             return resolved;
@@ -75,6 +177,23 @@ public static class VacancyImageUrls
         }
 
         return IsSafeSameOriginPath(resolved) ? CdnResize(resolved, width) : resolved;
+    }
+
+    /// <summary>
+    /// Alternate <c>src</c> for <c>onError</c>: company logo when it differs from the
+    /// photo already chosen for display.
+    /// </summary>
+    public static string? AlternateSrc(string? imageUrl, string? fallbackUrl, string displaySrc)
+    {
+        var fallback = UsableSource(fallbackUrl, vacancyId: null);
+        if (string.IsNullOrWhiteSpace(fallback)
+            || string.Equals(fallback, displaySrc, StringComparison.OrdinalIgnoreCase)
+            || string.Equals(fallback, Normalize(imageUrl), StringComparison.OrdinalIgnoreCase))
+        {
+            return null;
+        }
+
+        return fallback;
     }
 
     public static string? SrcSet(string displayUrl, bool cloudflareResizing)
@@ -111,7 +230,12 @@ public static class VacancyImageUrls
         => !string.IsNullOrWhiteSpace(url)
            && url.StartsWith('/')
            && !url.StartsWith("//", StringComparison.Ordinal)
-           && url.IndexOfAny(['\\', '\n', '\r']) < 0;
+           && !url.Contains("..", StringComparison.Ordinal)
+           && url.IndexOfAny(['\\', '\n', '\r', '\0']) < 0;
+
+    public static bool IsLocalImagePath(string? url)
+        => IsSafeSameOriginPath(url)
+           && url!.StartsWith(ImagesPrefix, StringComparison.OrdinalIgnoreCase);
 
     public static bool IsPicsum(string? imageUrl)
         => !string.IsNullOrWhiteSpace(imageUrl)
@@ -145,6 +269,152 @@ public static class VacancyImageUrls
         }
 
         return "flex";
+    }
+
+    private static string? UsableSource(string? imageUrl, Guid? vacancyId)
+    {
+        var normalized = Normalize(imageUrl);
+        if (string.IsNullOrWhiteSpace(normalized))
+        {
+            return null;
+        }
+
+        if (IsBrokenUnsplash(normalized))
+        {
+            var id = vacancyId ?? TryExtractSeed(imageUrl) ?? Guid.Empty;
+            return id == Guid.Empty ? null : PicsumUrl(id);
+        }
+
+        return normalized;
+    }
+
+    private static string? NormalizeRelative(string path)
+    {
+        while (path.StartsWith("./", StringComparison.Ordinal))
+        {
+            path = path[2..];
+        }
+
+        const string wwwroot = "wwwroot/";
+        if (path.StartsWith(wwwroot, StringComparison.OrdinalIgnoreCase))
+        {
+            path = path[wwwroot.Length..];
+        }
+
+        var extracted = ExtractImagesPath(path);
+        if (extracted is not null)
+        {
+            path = extracted;
+        }
+
+        if (!path.StartsWith('/'))
+        {
+            if (path.StartsWith("images/", StringComparison.OrdinalIgnoreCase))
+            {
+                path = "/" + path;
+            }
+            else if (IsStorageRelative(path))
+            {
+                path = ImagesPrefix + path.TrimStart('/');
+            }
+            else if (HasImageExtension(path) && path.IndexOf("://", StringComparison.Ordinal) < 0)
+            {
+                path = ImagesPrefix + "uploads/" + path.TrimStart('/');
+            }
+            else
+            {
+                return null;
+            }
+        }
+
+        while (path.Contains("//", StringComparison.Ordinal))
+        {
+            path = path.Replace("//", "/", StringComparison.Ordinal);
+        }
+
+        if (!IsSafeSameOriginPath(path))
+        {
+            return null;
+        }
+
+        return path;
+    }
+
+    private static string? ExtractImagesPath(string? value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            return null;
+        }
+
+        var idx = value.IndexOf("/images/", StringComparison.OrdinalIgnoreCase);
+        if (idx < 0)
+        {
+            return null;
+        }
+
+        var path = value[idx..];
+        var hash = path.IndexOf('#', StringComparison.Ordinal);
+        if (hash >= 0)
+        {
+            path = path[..hash];
+        }
+
+        return IsSafeSameOriginPath(path) ? path : null;
+    }
+
+    private static bool IsStorageRelative(string path)
+    {
+        foreach (var folder in StorageFolders)
+        {
+            if (path.StartsWith(folder, StringComparison.OrdinalIgnoreCase))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private static bool HasImageExtension(string path)
+    {
+        var cut = path.IndexOfAny(['?', '#']);
+        var file = cut < 0 ? path : path[..cut];
+        foreach (var ext in ImageExtensions)
+        {
+            if (file.EndsWith(ext, StringComparison.OrdinalIgnoreCase))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private static bool IsOwnHost(string host)
+    {
+        if (string.IsNullOrWhiteSpace(host))
+        {
+            return false;
+        }
+
+        host = host.Trim().TrimEnd('.');
+        if (host.Equals("localhost", StringComparison.OrdinalIgnoreCase)
+            || host.Equals("::1", StringComparison.Ordinal)
+            || host.StartsWith("127.", StringComparison.Ordinal))
+        {
+            return true;
+        }
+
+        if (host.Equals("lobsy.nl", StringComparison.OrdinalIgnoreCase)
+            || host.EndsWith(".lobsy.nl", StringComparison.OrdinalIgnoreCase)
+            || host.Equals("jobsy.local", StringComparison.OrdinalIgnoreCase)
+            || host.EndsWith(".jobsy.local", StringComparison.OrdinalIgnoreCase))
+        {
+            return true;
+        }
+
+        return false;
     }
 
     private static string NormalizeSlug(string? workType)

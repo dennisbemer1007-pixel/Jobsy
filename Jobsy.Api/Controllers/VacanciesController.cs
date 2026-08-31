@@ -7,6 +7,7 @@ using Jobsy.Core.Enums;
 using Jobsy.Core.Exceptions;
 using Jobsy.Core.Interfaces;
 using Jobsy.Core.Localization;
+using Jobsy.Core.Media;
 using Jobsy.Core.Rules;
 using Jobsy.Infrastructure.Data;
 using Jobsy.Infrastructure.Services;
@@ -1422,8 +1423,8 @@ public class VacanciesController : ControllerBase
             r.CompanyId,
             r.CompanyName,
             r.CompanyAddress,
-            r.CompanyLogoUrl,
-            r.ImageUrl,
+            VacancyImageUrls.Normalize(r.CompanyLogoUrl),
+            VacancyImageUrls.Normalize(r.ImageUrl),
             r.Latitude,
             r.Longitude,
             r.RequiredTransportLabels,
@@ -1561,8 +1562,8 @@ public class VacanciesController : ControllerBase
             v.CompanyId,
             display.DisplayName,
             display.DisplayAddress,
-            display.DisplayLogoUrl,
-            v.ImageUrl,
+            VacancyImageUrls.Normalize(display.DisplayLogoUrl),
+            VacancyImageUrls.Normalize(v.ImageUrl),
             display.Latitude,
             display.Longitude,
             TransportLabels.Expand(v.RequiredTransport),

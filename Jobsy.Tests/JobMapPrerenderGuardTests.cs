@@ -194,7 +194,8 @@ public class JobMapPrerenderGuardTests
         Assert.Contains("/images/brand/lobsy-128.png", app);
 
         var photo = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "Components", "VacancyPhoto.razor"));
-        Assert.Contains("data-logo-fallback", photo);
+        Assert.Contains("data-logo-fallback=\"photo\"", photo);
+        Assert.Contains("data-fallback-src", photo);
         Assert.DoesNotContain("onerror=", photo);
 
         var logo = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "Components", "LobsyLogo.razor"));
@@ -202,8 +203,12 @@ public class JobMapPrerenderGuardTests
         Assert.DoesNotContain("onerror=", logo);
 
         var js = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "wwwroot", "js", "jobMap.js"));
-        Assert.Contains("data-logo-fallback", js);
+        Assert.Contains("data-logo-fallback=\"photo\"", js);
+        Assert.Contains("data-fallback-src", js);
         Assert.DoesNotContain("onerror=", js);
+
+        Assert.Contains("isPhotoFallback", app);
+        Assert.Contains("data-fallback-src", app);
     }
 
     [Fact]

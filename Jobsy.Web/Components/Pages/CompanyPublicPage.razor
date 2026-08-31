@@ -143,6 +143,7 @@
                              @onclick="() => OnSelect(vacancy.Id)">
                         <a class="job-card__media" href="@($"/vacancies/{vacancy.Id}")" @onclick:stopPropagation="true">
                             <VacancyPhoto Src="@vacancy.ImageUrl"
+                                          FallbackSrc="@vacancy.CompanyLogoUrl"
                                           VacancyId="vacancy.Id"
                                           WorkType="@(vacancy.WorkTypes.FirstOrDefault())"
                                           Class="job-card__photo"
@@ -355,8 +356,8 @@
                 ["companyHref"] = companyHref,
                 ["offeredBy"] = v.OfferedByLabel,
                 ["address"] = v.CompanyAddress,
-                ["logoUrl"] = v.CompanyLogoUrl,
-                ["imageUrl"] = VacancyImageUrls.Resolve(v.ImageUrl, v.Id, v.WorkTypes.FirstOrDefault()),
+                ["logoUrl"] = VacancyImageUrls.Normalize(v.CompanyLogoUrl),
+                ["imageUrl"] = VacancyImageUrls.Resolve(v.ImageUrl, v.CompanyLogoUrl, v.Id, v.WorkTypes.FirstOrDefault()),
                 ["lat"] = v.Latitude,
                 ["lng"] = v.Longitude,
                 ["transport"] = v.RequiredTransport,

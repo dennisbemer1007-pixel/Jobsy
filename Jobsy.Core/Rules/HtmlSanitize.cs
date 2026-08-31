@@ -1,6 +1,7 @@
 using System.Net;
 using System.Text;
 using System.Text.RegularExpressions;
+using Jobsy.Core.Media;
 
 namespace Jobsy.Core.Rules;
 
@@ -182,7 +183,7 @@ public static class HtmlSanitize
         }
 
         var trimmed = input.Trim().Trim('"');
-        if (IsSafeHttpsUrl(trimmed))
+        if (IsSafeHttpsUrl(trimmed) && Uri.TryCreate(trimmed, UriKind.Absolute, out _))
         {
             if (trimmed.Length > 1024)
             {
@@ -190,7 +191,19 @@ public static class HtmlSanitize
                 return null;
             }
 
-            return trimmed;
+            var rewritten = VacancyImageUrls.Normalize(trimmed);
+            if (rewritten is not null && VacancyImageUrls.IsLocalImagePath(rewritten))
+            {
+                return rewritten;
+            }
+
+            return rewritten ?? trimmed;
+        }
+
+        var local = VacancyImageUrls.Normalize(trimmed);
+        if (local is not null && VacancyImageUrls.IsLocalImagePath(local) && local.Length <= 1024)
+        {
+            return local;
         }
 
         var dataUri = NormalizeImageData(trimmed);

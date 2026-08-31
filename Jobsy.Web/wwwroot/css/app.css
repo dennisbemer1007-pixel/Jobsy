@@ -2116,6 +2116,13 @@ html[dir="rtl"] .account-menu__panel {
     background: transparent;
 }
 
+.vacancy-photo--logo,
+.job-card__photo.vacancy-photo--logo {
+    object-fit: contain;
+    background: #fff;
+    padding: 0.45rem;
+}
+
 .vacancy-photo {
     background:
         linear-gradient(160deg, color-mix(in srgb, var(--pearl-mid) 70%, var(--brand)), var(--pearl-cool));
@@ -4019,7 +4026,8 @@ html[dir="rtl"] .account-menu__panel {
     background: color-mix(in srgb, var(--brand) 8%, var(--surface));
 }
 
-.highlight-carousel__media--logo {
+.highlight-carousel__media--logo,
+.highlight-carousel__media.vacancy-photo--logo {
     object-fit: contain;
     padding: 0.2rem;
 }
