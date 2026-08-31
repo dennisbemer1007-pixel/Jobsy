@@ -27,9 +27,10 @@ public static class DayPartMatrix
         => !string.IsNullOrWhiteSpace(code)
            && DayPartCodes.Contains(code.Trim(), StringComparer.OrdinalIgnoreCase);
 
-    public static IReadOnlyList<string> DaysWithDayPart(
-        IReadOnlyDictionary<string, List<string>> slots,
+    public static IReadOnlyList<string> DaysWithDayPart<TParts>(
+        IReadOnlyDictionary<string, TParts> slots,
         string dayPart)
+        where TParts : IEnumerable<string>
     {
         if (slots.Count == 0 || string.IsNullOrWhiteSpace(dayPart))
         {
@@ -38,6 +39,7 @@ public static class DayPartMatrix
 
         return DayCodes
             .Where(day => slots.TryGetValue(day, out var parts)
+                          && parts is not null
                           && parts.Any(p => p.Equals(dayPart, StringComparison.OrdinalIgnoreCase)))
             .ToList();
     }
