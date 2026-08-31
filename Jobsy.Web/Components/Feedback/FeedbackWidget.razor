@@ -8,9 +8,9 @@
 @inject AuthenticationStateProvider AuthState
 @implements IDisposable
 
-<div class="feedback-widget @(_hasBottomNav ? "has-bottom-nav" : null) @(_capturing ? "is-capturing" : null)">
+<div class="feedback-widget feedback-widget--tab @(_hasBottomNav ? "has-bottom-nav" : null) @(_capturing ? "is-capturing" : null) @(_open ? "is-open" : null)">
     <button type="button"
-            class="feedback-widget__btn"
+            class="feedback-widget__btn feedback-widget__tab"
             @onclick="OpenAsync"
             disabled="@_capturing"
             aria-haspopup="dialog"

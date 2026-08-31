@@ -1,106 +1,96 @@
 @namespace Jobsy.Web.Components
 @using Microsoft.AspNetCore.Components.Authorization
-@using Jobsy.Core.Authorization
+@using Jobsy.Web.Navigation
 @inject JobsyApiClient Api
 @inject CultureState Culture
 @inject NavigationManager Navigation
 @inject AuthenticationStateProvider AuthState
+@inject AssistantChatHost ChatHost
 @implements IDisposable
 
 <AuthorizeView>
     <Authorized>
-        @if (_visible)
+        @if (_visible && _open)
         {
-            <div class="lobsy-assistant @(_open ? "is-open" : null) @(_hasBottomNav ? "has-bottom-nav" : null)">
-                @if (_open)
-                {
-                    <div class="lobsy-assistant__panel" role="dialog" aria-modal="false" aria-labelledby="lobsy-assistant-title" tabindex="-1" @onkeydown="OnKeyDown">
-                        <header class="lobsy-assistant__header">
-                            <div class="lobsy-assistant__brand">
-                                <LobsyLogo Class="lobsy-assistant__logo" Alt="" Animate="true" UseMascot="true" />
-                                <div>
-                                    <h2 id="lobsy-assistant-title">@Culture["Assistant.Title"]</h2>
-                                    <p class="lobsy-assistant__lead">@Culture["Assistant.Lead"]</p>
-                                </div>
+            <div class="lobsy-assistant is-open @(_hasBottomNav ? "has-bottom-nav" : null)">
+                <div class="lobsy-assistant__panel" role="dialog" aria-modal="false" aria-labelledby="lobsy-assistant-title" tabindex="-1" @onkeydown="OnKeyDown">
+                    <header class="lobsy-assistant__header">
+                        <div class="lobsy-assistant__brand">
+                            <LobsyLogo Class="lobsy-assistant__logo" Alt="" Animate="true" UseMascot="true" />
+                            <div>
+                                <h2 id="lobsy-assistant-title">@Culture["Assistant.Title"]</h2>
+                                <p class="lobsy-assistant__lead">@Culture["Assistant.Lead"]</p>
                             </div>
-                            <button type="button" class="share-modal__close" @onclick="Close" aria-label="@Culture["Assistant.Close"]">×</button>
-                        </header>
+                        </div>
+                        <button type="button" class="share-modal__close" @onclick="Close" aria-label="@Culture["Assistant.Close"]">×</button>
+                    </header>
 
-                        <div class="lobsy-assistant__chat">
-                            @foreach (var msg in _messages)
-                            {
-                                <div class="lobsy-assistant__bubble lobsy-assistant__bubble--@msg.Role">
-                                    @if (msg.Role == "assistant")
-                                    {
-                                        <div class="lobsy-assistant__bubble-head">
-                                            <LobsyLogo Class="lobsy-assistant__bubble-logo" Alt="" Animate="false" UseMascot="true" />
-                                            <span>@Culture["Assistant.BotName"]</span>
-                                        </div>
-                                    }
-                                    else
-                                    {
-                                        <span class="lobsy-assistant__bubble-role">@Culture["Assistant.You"]</span>
-                                    }
-                                    <p>@msg.Content</p>
-                                </div>
-                            }
-                            @if (_busy)
-                            {
-                                <div class="lobsy-assistant__bubble lobsy-assistant__bubble--assistant lobsy-assistant__bubble--typing">
+                    <div class="lobsy-assistant__chat">
+                        @foreach (var msg in _messages)
+                        {
+                            <div class="lobsy-assistant__bubble lobsy-assistant__bubble--@msg.Role">
+                                @if (msg.Role == "assistant")
+                                {
                                     <div class="lobsy-assistant__bubble-head">
                                         <LobsyLogo Class="lobsy-assistant__bubble-logo" Alt="" Animate="false" UseMascot="true" />
                                         <span>@Culture["Assistant.BotName"]</span>
                                     </div>
-                                    <p>@Culture["Assistant.Typing"]</p>
-                                </div>
-                            }
-                        </div>
-
-                        @if (_actionLinks.Count > 0)
-                        {
-                            <div class="lobsy-assistant__actions">
-                                @foreach (var link in _actionLinks)
-                                {
-                                    <button type="button" class="engagement-btn lobsy-assistant__action" @onclick="() => FollowLink(link)">
-                                        @(link.Label ?? link.Url ?? "→")
-                                    </button>
                                 }
+                                else
+                                {
+                                    <span class="lobsy-assistant__bubble-role">@Culture["Assistant.You"]</span>
+                                }
+                                <p>@msg.Content</p>
                             </div>
                         }
-
-                        @if (!string.IsNullOrEmpty(_error))
+                        @if (_busy)
                         {
-                            <p class="state-message error">@_error</p>
+                            <div class="lobsy-assistant__bubble lobsy-assistant__bubble--assistant lobsy-assistant__bubble--typing">
+                                <div class="lobsy-assistant__bubble-head">
+                                    <LobsyLogo Class="lobsy-assistant__bubble-logo" Alt="" Animate="false" UseMascot="true" />
+                                    <span>@Culture["Assistant.BotName"]</span>
+                                </div>
+                                <p>@Culture["Assistant.Typing"]</p>
+                            </div>
                         }
-
-                        <form class="lobsy-assistant__compose" @onsubmit="SendAsync" @onsubmit:preventDefault="true">
-                            <label class="visually-hidden" for="lobsy-assistant-input">@Culture["Assistant.InputLabel"]</label>
-                            <textarea id="lobsy-assistant-input"
-                                      rows="2"
-                                      maxlength="1500"
-                                      placeholder="@Culture["Assistant.Placeholder"]"
-                                      disabled="@_busy"
-                                      @bind="_draft"
-                                      @bind:event="oninput"></textarea>
-                            <button type="submit" class="login-submit" disabled="@(_busy || string.IsNullOrWhiteSpace(_draft))">
-                                @Culture["Assistant.Send"]
-                            </button>
-                        </form>
-
-                        <p class="lobsy-assistant__disclaimer">
-                            @Culture["Assistant.Disclaimer"]
-                            <a class="auth-link" href="/gebruiksvoorwaarden" target="_blank" rel="noopener">@Culture["Assistant.DisclaimerLink"]</a>
-                        </p>
                     </div>
-                }
 
-                <button type="button"
-                        class="lobsy-assistant__fab"
-                        @onclick="Toggle"
-                        aria-expanded="@_open"
-                        aria-label="@Culture["Assistant.Open"]">
-                    <LobsyLogo Class="lobsy-assistant__fab-logo" Alt="" Animate="true" UseMascot="true" />
-                </button>
+                    @if (_actionLinks.Count > 0)
+                    {
+                        <div class="lobsy-assistant__actions">
+                            @foreach (var link in _actionLinks)
+                            {
+                                <button type="button" class="engagement-btn lobsy-assistant__action" @onclick="() => FollowLink(link)">
+                                    @(link.Label ?? link.Url ?? "→")
+                                </button>
+                            }
+                        </div>
+                    }
+
+                    @if (!string.IsNullOrEmpty(_error))
+                    {
+                        <p class="state-message error">@_error</p>
+                    }
+
+                    <form class="lobsy-assistant__compose" @onsubmit="SendAsync" @onsubmit:preventDefault="true">
+                        <label class="visually-hidden" for="lobsy-assistant-input">@Culture["Assistant.InputLabel"]</label>
+                        <textarea id="lobsy-assistant-input"
+                                  rows="2"
+                                  maxlength="1500"
+                                  placeholder="@Culture["Assistant.Placeholder"]"
+                                  disabled="@_busy"
+                                  @bind="_draft"
+                                  @bind:event="oninput"></textarea>
+                        <button type="submit" class="login-submit" disabled="@(_busy || string.IsNullOrWhiteSpace(_draft))">
+                            @Culture["Assistant.Send"]
+                        </button>
+                    </form>
+
+                    <p class="lobsy-assistant__disclaimer">
+                        @Culture["Assistant.Disclaimer"]
+                        <a class="auth-link" href="/gebruiksvoorwaarden" target="_blank" rel="noopener">@Culture["Assistant.DisclaimerLink"]</a>
+                    </p>
+                </div>
             </div>
         }
     </Authorized>
@@ -122,6 +112,7 @@
     protected override void OnInitialized()
     {
         Culture.Changed += OnCultureChanged;
+        ChatHost.ToggleRequested += OnToggleRequested;
     }
 
     protected override async Task OnParametersSetAsync()
@@ -133,9 +124,17 @@
     public void Dispose()
     {
         Culture.Changed -= OnCultureChanged;
+        ChatHost.ToggleRequested -= OnToggleRequested;
+        if (_open)
+        {
+            ChatHost.NotifyOpen(false);
+        }
     }
 
     private void OnCultureChanged() => _ = InvokeAsync(StateHasChanged);
+
+    private void OnToggleRequested()
+        => _ = InvokeAsync(Toggle);
 
     private async Task ResolveVisibilityAsync()
     {
@@ -143,11 +142,7 @@
         {
             var state = await AuthState.GetAuthenticationStateAsync();
             var user = state.User;
-            _visible = user.Identity?.IsAuthenticated == true
-                       && (RoleClaimMatching.HasRole(user, JobsyRoles.Candidate)
-                           || RoleClaimMatching.HasRole(user, JobsyRoles.SalesManager)
-                           || RoleClaimMatching.HasRole(user, JobsyRoles.Admin)
-                           || RoleClaimMatching.HasAnyRole(user, JobsyRoles.EmployerRoles));
+            _visible = AssistantChatHost.IsAvailableFor(user);
         }
         catch
         {
@@ -157,7 +152,18 @@
 
     private async Task Toggle()
     {
+        if (!_visible)
+        {
+            await ResolveVisibilityAsync();
+        }
+
+        if (!_visible)
+        {
+            return;
+        }
+
         _open = !_open;
+        ChatHost.NotifyOpen(_open);
         if (_open && !_started)
         {
             await StartAsync();
@@ -167,6 +173,7 @@
     private void Close()
     {
         _open = false;
+        ChatHost.NotifyOpen(false);
     }
 
     private void OnKeyDown(KeyboardEventArgs e)

@@ -61,6 +61,7 @@ public class AccessibilityGuardTests
             Path.Combine("Jobsy.Web", "Components", "Layout", "NotificationBell.razor"),
             Path.Combine("Jobsy.Web", "Components", "Layout", "PageHelp.razor"),
             Path.Combine("Jobsy.Web", "Components", "Layout", "AuthHeader.razor"),
+            Path.Combine("Jobsy.Web", "Components", "Layout", "BottomNav.razor"),
             Path.Combine("Jobsy.Web", "Components", "Feedback", "FeedbackWidget.razor")
         };
 

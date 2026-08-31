@@ -40,6 +40,9 @@ public static class NavIcons
     public const string Feedback =
         "<svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.75\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M21 12a8 8 0 0 1-8 8H7l-4 3V12a8 8 0 1 1 18 0Z\"/><path d=\"M8 12h.01M12 12h.01M16 12h.01\"/></svg>";
 
+    public const string Assistant =
+        "<svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.75\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><rect x=\"5\" y=\"8\" width=\"14\" height=\"10\" rx=\"3\"/><path d=\"M12 8V5\"/><circle cx=\"12\" cy=\"4\" r=\"1\" fill=\"currentColor\" stroke=\"none\"/><circle cx=\"9.5\" cy=\"13\" r=\"1\" fill=\"currentColor\" stroke=\"none\"/><circle cx=\"14.5\" cy=\"13\" r=\"1\" fill=\"currentColor\" stroke=\"none\"/><path d=\"M9 16.5h6\"/></svg>";
+
     public const string Finance =
         "<svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.75\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><rect x=\"2\" y=\"5\" width=\"20\" height=\"14\" rx=\"2\"/><path d=\"M2 10h20\"/><path d=\"M6 15h2\"/><path d=\"M12 15h2\"/></svg>";
 

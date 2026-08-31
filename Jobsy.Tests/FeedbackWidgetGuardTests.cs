@@ -19,6 +19,7 @@ public class FeedbackWidgetGuardTests
         Assert.Contains("_screenshot", widget);
         Assert.Contains("feedback-dialog__shot", widget);
         Assert.Contains("Feedback.PrivacyNote", widget);
+        Assert.Contains("feedback-widget--tab", widget);
         Assert.Contains("PageUrlForSubmit", widget);
         Assert.Contains("GetLeftPart(UriPartial.Path)", widget);
     }
@@ -41,6 +42,8 @@ public class FeedbackWidgetGuardTests
         Assert.Contains("feedback-widget", js);
         Assert.Contains("lobsy-dialog", js);
         Assert.Contains("return null", js);
+        Assert.Contains("try {", js);
+        Assert.Contains("catch (err)", js);
     }
 
     [Fact]

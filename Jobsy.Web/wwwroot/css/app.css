@@ -864,7 +864,7 @@ html[dir="rtl"] .account-menu__panel {
 
 .login-modal__dialog.login-card {
     width: min(400px, calc(100vw - 1.5rem));
-    padding: 1.15rem 1.2rem 1.05rem;
+    padding: 1rem 1.1rem 0.9rem;
 }
 
 .login-modal__header {
@@ -997,25 +997,25 @@ html[dir="rtl"] .account-menu__panel {
     }
 
     .login-modal__dialog .login-providers {
-        margin-top: 0.7rem;
-        gap: 0.45rem;
+        margin-top: 0.5rem;
+        gap: 0.35rem;
     }
 
     .login-modal__dialog .provider-btn {
-        padding: 0.65rem 0.85rem;
-        min-height: 2.65rem;
-        font-size: 0.9rem;
+        padding: 0.38rem 0.7rem;
+        min-height: 2.2rem;
+        font-size: 0.86rem;
         border-radius: 12px;
     }
 
     .login-modal__dialog .login-divider {
-        margin: 0.7rem 0 0.6rem;
+        margin: 0.5rem 0 0.45rem;
     }
 
     .login-modal__dialog .login-register {
-        margin-top: 0.75rem;
-        padding-top: 0.7rem;
-        gap: 0.35rem;
+        margin-top: 0.55rem;
+        padding-top: 0.55rem;
+        gap: 0.3rem;
     }
 
     .login-modal__close {
@@ -1037,13 +1037,13 @@ html[dir="rtl"] .account-menu__panel {
     }
 
     .login-modal__dialog .login-providers {
-        margin-top: 0.55rem;
-        gap: 0.35rem;
+        margin-top: 0.4rem;
+        gap: 0.28rem;
     }
 
     .login-modal__dialog .provider-btn {
-        padding: 0.5rem 0.75rem;
-        min-height: 2.5rem;
+        padding: 0.32rem 0.65rem;
+        min-height: 2.05rem;
     }
 
     .login-modal__actions {
@@ -1114,8 +1114,20 @@ html[dir="rtl"] .account-menu__panel {
 .login-providers {
     display: flex;
     flex-direction: column;
-    gap: 0.5rem;
-    margin-top: 0.9rem;
+    gap: 0.4rem;
+    margin-top: 0.55rem;
+}
+
+.login-modal .login-providers {
+    margin-top: 0.5rem;
+    gap: 0.35rem;
+}
+
+.login-modal .provider-btn {
+    min-height: 2.25rem;
+    padding: 0.38rem 0.75rem;
+    font-size: 0.88rem;
+    border-radius: 12px;
 }
 
 .provider-btn {
@@ -1169,7 +1181,7 @@ html[dir="rtl"] .account-menu__panel {
     display: flex;
     align-items: center;
     gap: 0.75rem;
-    margin: 0.8rem 0 0.7rem;
+    margin: 0.55rem 0 0.5rem;
     color: var(--muted);
     font-size: 0.78rem;
 }
@@ -1183,8 +1195,8 @@ html[dir="rtl"] .account-menu__panel {
 }
 
 .login-register {
-    margin-top: 0.95rem;
-    padding-top: 0.85rem;
+    margin-top: 0.65rem;
+    padding-top: 0.6rem;
     border-top: 1px solid var(--border);
     display: flex;
     flex-direction: column;
@@ -1234,7 +1246,11 @@ html[dir="rtl"] .account-menu__panel {
 .login-form {
     display: flex;
     flex-direction: column;
-    gap: 0.65rem;
+    gap: 0.5rem;
+}
+
+.login-modal .login-form {
+    gap: 0.45rem;
 }
 
 .login-form label {
@@ -1254,6 +1270,9 @@ html[dir="rtl"] .account-menu__panel {
     font-size: 0.82rem;
     font-weight: 650;
     color: var(--text);
+    width: 100%;
+    max-width: 100%;
+    align-self: stretch;
 }
 
 .login-form input:not([type="checkbox"]):not([type="radio"]) {
@@ -1269,11 +1288,23 @@ html[dir="rtl"] .account-menu__panel {
     background: var(--surface);
 }
 
-.login-modal .login-form input:not([type="checkbox"]):not([type="radio"]) {
-    border-radius: 12px;
-    min-height: 2.75rem;
-    padding: 0.7rem 0.9rem;
+.login-modal .login-form input:not([type="checkbox"]):not([type="radio"]),
+.login-modal .login-form input.w-full {
+    display: block;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+    align-self: stretch;
+    border-radius: 14px;
+    min-height: 3rem;
+    padding: 0.75rem 1rem;
     background: color-mix(in srgb, var(--pearl) 62%, var(--surface));
+}
+
+.login-modal .login-submit {
+    width: 100%;
+    min-height: 2.65rem;
+    padding: 0.65rem 1rem;
 }
 
 .login-form input:focus,
@@ -7569,6 +7600,36 @@ a.engagement-btn {
     color: var(--brand);
 }
 
+button.bottom-nav__item {
+    appearance: none;
+    border: none;
+    background: transparent;
+    font: inherit;
+    cursor: pointer;
+}
+
+.bottom-nav__item--assistant {
+    color: var(--brand);
+}
+
+.bottom-nav__item--assistant .bottom-nav__icon {
+    width: 2rem;
+    height: 2rem;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--accent-soft) 85%, var(--surface));
+    color: var(--brand);
+}
+
+.bottom-nav__item--assistant.is-open {
+    background: var(--accent-soft);
+    color: var(--brand);
+}
+
+.bottom-nav__item--assistant.is-open .bottom-nav__icon {
+    background: var(--accent);
+    color: #fff;
+}
+
 .bottom-nav__icon {
     display: inline-flex;
     align-items: center;
@@ -12632,7 +12693,6 @@ a.apply-flow__secondary {
     }
 }
 
-.lobsy-assistant__fab,
 .lobsy-assistant__panel,
 .lobsy-assistant__compose,
 .lobsy-assistant__actions,
@@ -12641,28 +12701,7 @@ a.apply-flow__secondary {
 }
 
 .lobsy-assistant__fab {
-    width: 80px;
-    height: 80px;
-    border-radius: 50%;
-    border: 2px solid color-mix(in srgb, var(--accent) 40%, var(--border));
-    background: var(--surface);
-    box-shadow: 0 8px 24px color-mix(in srgb, var(--brand) 18%, transparent);
-    display: grid;
-    place-items: center;
-    cursor: pointer;
-    padding: 0;
-}
-
-.lobsy-assistant__fab:hover,
-.lobsy-assistant__fab:focus-visible {
-    outline: 2px solid color-mix(in srgb, var(--accent) 55%, var(--brand));
-    outline-offset: 3px;
-    transform: translateY(-2px);
-}
-
-.lobsy-assistant__fab-logo {
-    width: 68px;
-    height: 68px;
+    display: none !important;
 }
 
 .lobsy-assistant__panel {
@@ -12862,16 +12901,6 @@ a.apply-flow__secondary {
         bottom: calc(3.5rem + env(safe-area-inset-bottom, 0px));
     }
 
-    .lobsy-assistant__fab {
-        width: 60px;
-        height: 60px;
-    }
-
-    .lobsy-assistant__fab-logo {
-        width: 50px;
-        height: 50px;
-    }
-
     .lobsy-assistant__panel {
         width: calc(100vw - 1rem);
         max-height: calc(100dvh - 5rem);
@@ -12907,9 +12936,8 @@ a.apply-flow__secondary {
 }
 
 @media (prefers-reduced-motion: reduce) {
-    .lobsy-assistant__fab:hover,
-    .lobsy-assistant__fab:focus-visible {
-        transform: none;
+    .lobsy-assistant__panel {
+        animation: none;
     }
 }
 
@@ -14259,22 +14287,26 @@ html.cookie-consent-known .cookie-consent {
 
 .feedback-widget {
     position: fixed;
-    left: 1rem;
-    bottom: 1rem;
+    top: 46%;
+    right: 0;
+    left: auto;
+    bottom: auto;
     z-index: 54;
+    transform: translateY(-50%);
 }
 
 .feedback-widget.has-bottom-nav {
-    bottom: calc(4.5rem + env(safe-area-inset-bottom, 0px));
+    top: 42%;
 }
 
-.feedback-widget.is-capturing {
+.feedback-widget.is-capturing,
+.feedback-widget.is-open {
     visibility: hidden;
 }
 
 @media (max-width: 720px) {
     .feedback-widget.has-bottom-nav {
-        bottom: calc(3.5rem + env(safe-area-inset-bottom, 0px));
+        top: 40%;
     }
 }
 
@@ -14294,6 +14326,24 @@ html.cookie-consent-known .cookie-consent {
     cursor: pointer;
 }
 
+.feedback-widget--tab {
+    max-width: none;
+}
+
+.feedback-widget__tab {
+    writing-mode: vertical-rl;
+    transform: rotate(180deg);
+    gap: 0.35rem;
+    padding: 0.7rem 0.38rem;
+    border-right: none;
+    border-radius: 10px 0 0 10px;
+    background: color-mix(in srgb, var(--surface) 94%, transparent);
+    box-shadow: -2px 2px 12px color-mix(in srgb, var(--brand) 12%, transparent);
+    min-height: 5.75rem;
+    font-size: 0.72rem;
+    letter-spacing: 0.04em;
+}
+
 .feedback-widget__btn:hover,
 .feedback-widget__btn:focus-visible {
     background: var(--surface);
@@ -14303,6 +14353,10 @@ html.cookie-consent-known .cookie-consent {
     display: inline-flex;
     width: 1rem;
     height: 1rem;
+}
+
+.feedback-widget__tab .feedback-widget__icon {
+    transform: rotate(180deg);
 }
 
 .feedback-widget__icon svg {
@@ -15287,8 +15341,7 @@ html.cookie-consent-known .cookie-consent {
         padding-bottom: calc(4.75rem + env(safe-area-inset-bottom, 0px));
     }
 
-    .lobsy-assistant.has-bottom-nav,
-    .feedback-widget.has-bottom-nav {
+    .lobsy-assistant.has-bottom-nav {
         bottom: calc(4.75rem + env(safe-area-inset-bottom, 0px));
     }
 }
@@ -15738,6 +15791,9 @@ html.cookie-consent-known .cookie-consent {
 .pb-28 { padding-bottom: 7rem; }
 .max-w-full { max-width: 100%; }
 .overflow-x-hidden { overflow-x: hidden; }
+.w-full { width: 100%; }
+.px-4 { padding-left: 1rem; padding-right: 1rem; }
+.py-3 { padding-top: 0.75rem; padding-bottom: 0.75rem; }
 
 .header-dropdown-backdrop {
     position: fixed;

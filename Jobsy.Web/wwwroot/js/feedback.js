@@ -102,26 +102,37 @@
             var width = Math.max(1, window.innerWidth || 1);
             var height = Math.max(1, window.innerHeight || 1);
             return loadHtml2Canvas().then(function (html2canvas) {
-                return html2canvas(document.documentElement, {
-                    x: window.scrollX || 0,
-                    y: window.scrollY || 0,
-                    width: width,
-                    height: height,
-                    windowWidth: document.documentElement.scrollWidth,
-                    windowHeight: document.documentElement.scrollHeight,
-                    scale: Math.min(1, 1280 / width),
-                    useCORS: true,
-                    allowTaint: false,
-                    logging: false,
-                    backgroundColor: "#ffffff",
-                    ignoreElements: isChrome,
-                    onclone: function (doc) {
-                        hideChrome(doc);
-                        softenCrossOriginAssets(doc);
-                    }
-                });
+                try {
+                    return html2canvas(document.documentElement, {
+                        x: window.scrollX || 0,
+                        y: window.scrollY || 0,
+                        width: width,
+                        height: height,
+                        windowWidth: document.documentElement.scrollWidth,
+                        windowHeight: document.documentElement.scrollHeight,
+                        scale: Math.min(1, 1280 / width),
+                        useCORS: true,
+                        allowTaint: false,
+                        logging: false,
+                        backgroundColor: "#ffffff",
+                        ignoreElements: isChrome,
+                        onclone: function (doc) {
+                            hideChrome(doc);
+                            softenCrossOriginAssets(doc);
+                        }
+                    });
+                } catch (err) {
+                    return null;
+                }
             }).then(function (canvas) {
-                return canvasToJpeg(canvas);
+                if (!canvas) {
+                    return null;
+                }
+                try {
+                    return canvasToJpeg(canvas);
+                } catch (err) {
+                    return null;
+                }
             }).catch(function () {
                 return null;
             });
