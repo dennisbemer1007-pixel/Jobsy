@@ -159,7 +159,7 @@
             if (/^\/login\/?$/i.test(path)) {
                 return "";
             }
-            return path + (window.location.search || "");
+            return path;
         } catch (e) {
             return "";
         }

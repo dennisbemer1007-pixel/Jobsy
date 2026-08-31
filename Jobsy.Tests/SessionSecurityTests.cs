@@ -253,6 +253,52 @@ public class SessionSecurityTests
     }
 
     [Fact]
+    public async Task Logout_session_expired_strips_query_pii_from_return_url()
+    {
+        await using var app = await CreateWebAppAsync(timeoutMinutes: 30);
+        var server = app.GetTestServer();
+
+        var context = await server.SendAsync(ctx =>
+        {
+            ctx.Request.Method = "GET";
+            ctx.Request.Path = "/account/logout";
+            ctx.Request.QueryString = new QueryString(
+                "?reason=session-expired&returnUrl="
+                + Uri.EscapeDataString("/employer/vacancies?email=secret@jobsy.local"));
+        });
+
+        Assert.Equal(302, context.Response.StatusCode);
+        var location = Uri.UnescapeDataString(context.Response.Headers.Location.ToString());
+        Assert.Contains("/login?error=session-expired", location);
+        Assert.Contains("/employer/vacancies", location);
+        Assert.DoesNotContain("secret@jobsy.local", location);
+        Assert.DoesNotContain("email=", location);
+    }
+
+    [Fact]
+    public async Task Middleware_idle_redirect_omits_request_query_pii()
+    {
+        var http = CreateAuthedContext("/employer/vacancies", "manager@jobsy.local");
+        http.Request.QueryString = new QueryString("?email=secret@jobsy.local&token=abc");
+        SessionActivityCookie.Stamp(http, DateTimeOffset.UtcNow.AddMinutes(-45));
+        CopySetCookieToRequest(http);
+
+        var authService = new FakeAuthService();
+        ReplaceAuthService(http, authService);
+
+        var middleware = new SessionInactivityMiddleware(_ => Task.CompletedTask);
+        await middleware.InvokeAsync(http, new FixedTimeoutProvider(30));
+
+        Assert.True(authService.SignedOut);
+        var location = Uri.UnescapeDataString(http.Response.Headers.Location.ToString());
+        Assert.Contains("session-expired", location);
+        Assert.Contains("/employer/vacancies", location);
+        Assert.DoesNotContain("secret@jobsy.local", location);
+        Assert.DoesNotContain("email=", location);
+        Assert.DoesNotContain("token=abc", location);
+    }
+
+    [Fact]
     public async Task Session_security_endpoint_returns_configured_timeout()
     {
         await using var app = await CreateWebAppAsync(timeoutMinutes: 42);

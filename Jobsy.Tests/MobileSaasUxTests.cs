@@ -335,10 +335,14 @@ public class MobileSaasUxTests
         var idle = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/wwwroot/js/sessionIdle.js"));
         Assert.Contains("sessionReturnUrl", idle);
         Assert.Contains("&returnUrl=", idle);
+        Assert.Contains("return path;", idle);
+        Assert.DoesNotContain("path + (window.location.search", idle);
 
         var extras = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/wwwroot/js/app-extras.js"));
         Assert.Contains("sessionReturnUrl", extras);
         Assert.Contains("&returnUrl=", extras);
+        Assert.Contains("return path;", extras);
+        Assert.DoesNotContain("path + (window.location.search", extras);
     }
 
     private static string FindRepoRoot()

@@ -413,7 +413,7 @@ public static class AuthServiceCollectionExtensions
 
             if (string.Equals(reason, "session-expired", StringComparison.OrdinalIgnoreCase))
             {
-                var returnUrl = AuthRedirects.ResolveRequestedReturnUrl(
+                var returnUrl = AuthRedirects.ResolveSessionReturnUrl(
                     http.Request.Query["returnUrl"],
                     http.Request.Query["returnTo"],
                     http.Request.Query["redirect"]);

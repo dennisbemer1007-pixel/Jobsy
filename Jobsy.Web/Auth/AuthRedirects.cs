@@ -48,7 +48,16 @@ public static partial class AuthRedirects
     /// </summary>
     public static string PostLoginUrl(string? url)
     {
-        if (string.IsNullOrWhiteSpace(url) || url is "/" or "/banen")
+        if (string.IsNullOrWhiteSpace(url))
+        {
+            return "/home";
+        }
+
+        var path = url.Split('?', '#')[0];
+        if (path is "/" or "/banen" or "/login"
+            || path.StartsWith("/account/login", StringComparison.OrdinalIgnoreCase)
+            || path.StartsWith("/account/logout", StringComparison.OrdinalIgnoreCase)
+            || path.StartsWith("/account/demo-login", StringComparison.OrdinalIgnoreCase))
         {
             return "/home";
         }
@@ -57,8 +66,8 @@ public static partial class AuthRedirects
     }
 
     /// <summary>
-    /// Picks the first non-empty candidate (<c>returnUrl</c>, <c>returnTo</c>, <c>redirect</c>)
-    /// and maps it through <see cref="PostLoginUrl"/> + <see cref="SafeLocalUrl"/>.
+    /// Picks the first <em>safe</em> non-empty candidate (<c>returnUrl</c>, <c>returnTo</c>, <c>redirect</c>).
+    /// Unsafe values are skipped so a later local path still wins.
     /// </summary>
     public static string ResolveRequestedReturnUrl(params string?[] candidates)
     {
@@ -69,10 +78,41 @@ public static partial class AuthRedirects
                 continue;
             }
 
-            return SafeLocalUrl(PostLoginUrl(raw.Trim()));
+            var mapped = PostLoginUrl(raw.Trim());
+            if (!IsSafeLocalPath(mapped))
+            {
+                continue;
+            }
+
+            return mapped;
         }
 
         return "/home";
+    }
+
+    /// <summary>Path only — no query/fragment — so idle re-auth does not echo PII in the login URL.</summary>
+    public static string PathOnly(string? url)
+    {
+        if (string.IsNullOrWhiteSpace(url))
+        {
+            return "";
+        }
+
+        var trimmed = url.Trim();
+        var cut = trimmed.IndexOfAny(['?', '#']);
+        return cut >= 0 ? trimmed[..cut] : trimmed;
+    }
+
+    /// <summary>Session-expiry destination: local path without query string.</summary>
+    public static string ResolveSessionReturnUrl(params string?[] candidates)
+    {
+        var paths = new string?[candidates.Length];
+        for (var i = 0; i < candidates.Length; i++)
+        {
+            paths[i] = PathOnly(candidates[i]);
+        }
+
+        return ResolveRequestedReturnUrl(paths);
     }
 
     /// <summary>Appends a sanitized local <c>returnUrl</c> query parameter.</summary>

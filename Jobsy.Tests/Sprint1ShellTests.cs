@@ -17,6 +17,8 @@ public class AuthRedirectsTests
     [InlineData("/", "/home")]
     [InlineData("/banen", "/home")]
     [InlineData("/vacancies/abc", "/vacancies/abc")]
+    [InlineData("/login", "/home")]
+    [InlineData("/login?returnUrl=/vacancies/1", "/home")]
     public void PostLoginUrl_maps_anonymous_landings(string? input, string expected)
         => Assert.Equal(expected, AuthRedirects.PostLoginUrl(input));
 
@@ -51,6 +53,20 @@ public class AuthRedirectsTests
         Assert.Equal(
             "/home",
             AuthRedirects.ResolveRequestedReturnUrl("/login?returnUrl=https://evil.com"));
+        Assert.Equal(
+            "/vacancies/abc",
+            AuthRedirects.ResolveRequestedReturnUrl("https://evil.example", "/vacancies/abc"));
+        Assert.Equal("/home", AuthRedirects.ResolveRequestedReturnUrl("/login", "/login?x=1"));
+    }
+
+    [Fact]
+    public void Session_return_url_strips_query_and_fragment()
+    {
+        Assert.Equal(
+            "/employer/vacancies",
+            AuthRedirects.ResolveSessionReturnUrl("/employer/vacancies?email=secret@jobsy.local#frag"));
+        Assert.Equal("", AuthRedirects.PathOnly(null));
+        Assert.Equal("/home", AuthRedirects.PathOnly("/home?token=abc"));
     }
 
     [Fact]

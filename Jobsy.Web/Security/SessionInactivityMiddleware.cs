@@ -104,7 +104,7 @@ public sealed class SessionInactivityMiddleware
             return;
         }
 
-        var returnUrl = context.Request.Path + context.Request.QueryString;
+        var returnUrl = context.Request.Path.Value ?? "";
         var target = SessionExpiredPath;
         if (!string.IsNullOrWhiteSpace(returnUrl)
             && returnUrl != "/"
@@ -113,7 +113,9 @@ public sealed class SessionInactivityMiddleware
             && !returnUrl.StartsWith("/account/login", StringComparison.OrdinalIgnoreCase)
             && !returnUrl.StartsWith("/account/demo-login", StringComparison.OrdinalIgnoreCase))
         {
-            target = AuthRedirects.AppendReturnUrl(SessionExpiredPath, returnUrl);
+            target = AuthRedirects.AppendReturnUrl(
+                SessionExpiredPath,
+                AuthRedirects.ResolveSessionReturnUrl(returnUrl));
         }
 
         context.Response.Redirect(target);
