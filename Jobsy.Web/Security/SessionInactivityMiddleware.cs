@@ -1,3 +1,4 @@
+using Jobsy.Web.Auth;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 
@@ -112,7 +113,7 @@ public sealed class SessionInactivityMiddleware
             && !returnUrl.StartsWith("/account/login", StringComparison.OrdinalIgnoreCase)
             && !returnUrl.StartsWith("/account/demo-login", StringComparison.OrdinalIgnoreCase))
         {
-            target += "&returnUrl=" + Uri.EscapeDataString(returnUrl);
+            target = AuthRedirects.AppendReturnUrl(SessionExpiredPath, returnUrl);
         }
 
         context.Response.Redirect(target);

@@ -117,7 +117,8 @@ public static class AuthServiceCollectionExtensions
                     {
                         context.Fail("E-mailadres is niet geverifieerd bij de identity provider.");
                         context.HandleResponse();
-                        context.Response.Redirect("/login?error=email-unverified");
+                        context.Response.Redirect(
+                            AuthRedirects.AppendReturnUrl("/login?error=email-unverified", context.Properties?.RedirectUri));
                         return;
                     }
 
@@ -136,7 +137,8 @@ public static class AuthServiceCollectionExtensions
                         "Microsoft Entra login mislukt: {Message}",
                         context.Failure?.Message);
                     context.HandleResponse();
-                    context.Response.Redirect("/login?error=entra-failed");
+                    context.Response.Redirect(
+                        AuthRedirects.AppendReturnUrl("/login?error=entra-failed", context.Properties?.RedirectUri));
                     return Task.CompletedTask;
                 }
             };
@@ -160,7 +162,8 @@ public static class AuthServiceCollectionExtensions
                 var google = await source.GetGoogleAsync(context.HttpContext.RequestAborted);
                 if (google is null)
                 {
-                    context.Response.Redirect("/login?error=google-not-configured");
+                    context.Response.Redirect(
+                        AuthRedirects.AppendReturnUrl("/login?error=google-not-configured", context.Properties?.RedirectUri));
                     return;
                 }
 
@@ -195,7 +198,8 @@ public static class AuthServiceCollectionExtensions
                     "Google login mislukt: {Message}",
                     context.Failure?.Message);
                 context.HandleResponse();
-                context.Response.Redirect("/login?error=google-failed");
+                context.Response.Redirect(
+                    AuthRedirects.AppendReturnUrl("/login?error=google-failed", context.Properties?.RedirectUri));
                 return Task.CompletedTask;
             };
         });
@@ -223,7 +227,8 @@ public static class AuthServiceCollectionExtensions
         if (entra is null)
         {
             context.HandleResponse();
-            context.Response.Redirect("/login?error=entra-not-configured");
+            context.Response.Redirect(
+                AuthRedirects.AppendReturnUrl("/login?error=entra-not-configured", context.Properties?.RedirectUri));
             return;
         }
 
@@ -238,7 +243,8 @@ public static class AuthServiceCollectionExtensions
         if (entra is null)
         {
             context.HandleResponse();
-            context.Response.Redirect("/login?error=entra-not-configured");
+            context.Response.Redirect(
+                AuthRedirects.AppendReturnUrl("/login?error=entra-not-configured", context.Properties?.RedirectUri));
             return;
         }
 
@@ -258,8 +264,8 @@ public static class AuthServiceCollectionExtensions
             var form = await http.Request.ReadFormAsync();
             var email = form["email"].ToString().Trim();
             var password = form["password"].ToString();
-            var returnUrl = string.IsNullOrWhiteSpace(form["returnUrl"]) ? "/home" : form["returnUrl"].ToString();
-            returnUrl = AuthRedirects.PostLoginUrl(returnUrl);
+            var returnUrl = AuthRedirects.ResolveRequestedReturnUrl(
+                form["returnUrl"], form["returnTo"], form["redirect"]);
 
             ClaimsPrincipal? principal = null;
             var allowDemoLogin = IsDemoLoginEnabled(http, configuration);
@@ -307,8 +313,8 @@ public static class AuthServiceCollectionExtensions
 
             var form = await http.Request.ReadFormAsync();
             var email = form["email"].ToString().Trim();
-            var returnUrl = string.IsNullOrWhiteSpace(form["returnUrl"]) ? "/home" : form["returnUrl"].ToString();
-            returnUrl = AuthRedirects.PostLoginUrl(returnUrl);
+            var returnUrl = AuthRedirects.ResolveRequestedReturnUrl(
+                form["returnUrl"], form["returnTo"], form["redirect"]);
 
             if (!IsDemoLoginEnabled(http, configuration)
                 || !users.TryFindByEmail(email, out var user)
@@ -344,13 +350,18 @@ public static class AuthServiceCollectionExtensions
             IOptionsMonitor<Microsoft.AspNetCore.Authentication.Google.GoogleOptions> googleOptions,
             string? returnUrl) =>
         {
+            var dest = AuthRedirects.ResolveRequestedReturnUrl(
+                returnUrl,
+                http.Request.Query["returnTo"],
+                http.Request.Query["redirect"]);
+
             var scheme = provider.Equals("entra", StringComparison.OrdinalIgnoreCase) ? EntraScheme
                 : provider.Equals("google", StringComparison.OrdinalIgnoreCase) ? GoogleScheme
                 : null;
 
             if (scheme is null)
             {
-                return Results.Redirect("/login?error=unknown-provider");
+                return Results.Redirect(AuthRedirects.AppendReturnUrl("/login?error=unknown-provider", dest));
             }
 
             if (scheme == EntraScheme)
@@ -358,7 +369,7 @@ public static class AuthServiceCollectionExtensions
                 var entra = await credentials.GetEntraAsync(http.RequestAborted);
                 if (entra is null)
                 {
-                    return Results.Redirect("/login?error=entra-not-configured");
+                    return Results.Redirect(AuthRedirects.AppendReturnUrl("/login?error=entra-not-configured", dest));
                 }
 
                 EntraOidcOptionsApplier.Apply(oidcOptions.Get(EntraScheme), entra);
@@ -368,7 +379,7 @@ public static class AuthServiceCollectionExtensions
                 var google = await credentials.GetGoogleAsync(http.RequestAborted);
                 if (google is null)
                 {
-                    return Results.Redirect("/login?error=google-not-configured");
+                    return Results.Redirect(AuthRedirects.AppendReturnUrl("/login?error=google-not-configured", dest));
                 }
 
                 var options = googleOptions.Get(GoogleScheme);
@@ -381,7 +392,7 @@ public static class AuthServiceCollectionExtensions
 
             var props = new AuthenticationProperties
             {
-                RedirectUri = AuthRedirects.SafeLocalUrl(AuthRedirects.PostLoginUrl(returnUrl ?? "/home"))
+                RedirectUri = dest
             };
 
             return Results.Challenge(props, [scheme]);
@@ -402,7 +413,12 @@ public static class AuthServiceCollectionExtensions
 
             if (string.Equals(reason, "session-expired", StringComparison.OrdinalIgnoreCase))
             {
-                return Results.Redirect(SessionInactivityMiddleware.SessionExpiredPath);
+                var returnUrl = AuthRedirects.ResolveRequestedReturnUrl(
+                    http.Request.Query["returnUrl"],
+                    http.Request.Query["returnTo"],
+                    http.Request.Query["redirect"]);
+                return Results.Redirect(
+                    AuthRedirects.AppendReturnUrl(SessionInactivityMiddleware.SessionExpiredPath, returnUrl));
             }
 
             return Results.Redirect("/");

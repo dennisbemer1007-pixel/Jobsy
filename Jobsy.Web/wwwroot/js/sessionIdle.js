@@ -150,6 +150,18 @@
         idleTimer = setTimeout(onIdle, ms);
     }
 
+    function sessionReturnUrl() {
+        try {
+            var path = window.location.pathname || "/";
+            if (/^\/login\/?$/i.test(path)) {
+                return "";
+            }
+            return path + (window.location.search || "");
+        } catch (e) {
+            return "";
+        }
+    }
+
     function forceSessionExpiredLogout() {
         if (expiring) {
             return;
@@ -163,7 +175,11 @@
         } catch (e) { }
         expiring = true;
         saveCriticalDrafts();
+        var here = sessionReturnUrl();
         var target = "/account/logout?reason=session-expired";
+        if (here) {
+            target += "&returnUrl=" + encodeURIComponent(here);
+        }
         try {
             window.location.href = target;
         } catch (e) {

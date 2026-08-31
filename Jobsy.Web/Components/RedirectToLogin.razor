@@ -5,7 +5,7 @@
     {
         var relative = Navigation.ToBaseRelativePath(Navigation.Uri);
         var path = string.IsNullOrEmpty(relative) ? "/" : "/" + relative;
-        var returnUrl = Uri.EscapeDataString(AuthRedirects.SafeLocalUrl(AuthRedirects.PostLoginUrl(path)));
+        var returnUrl = Uri.EscapeDataString(AuthRedirects.ResolveRequestedReturnUrl(path));
         Navigation.NavigateTo($"/login?returnUrl={returnUrl}", forceLoad: true);
     }
 }

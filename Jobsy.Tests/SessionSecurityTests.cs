@@ -232,6 +232,27 @@ public class SessionSecurityTests
     }
 
     [Fact]
+    public async Task Logout_with_session_expired_reason_keeps_return_url()
+    {
+        await using var app = await CreateWebAppAsync(timeoutMinutes: 30);
+        var server = app.GetTestServer();
+
+        var context = await server.SendAsync(ctx =>
+        {
+            ctx.Request.Method = "GET";
+            ctx.Request.Path = "/account/logout";
+            ctx.Request.QueryString = new QueryString("?reason=session-expired&returnUrl=/employer/vacancies/123");
+        });
+
+        Assert.Equal(302, context.Response.StatusCode);
+        var location = context.Response.Headers.Location.ToString();
+        Assert.Contains("/login?error=session-expired", location);
+        Assert.Contains("returnUrl=", location);
+        Assert.Contains("employer", location);
+        Assert.DoesNotContain("https://", location);
+    }
+
+    [Fact]
     public async Task Session_security_endpoint_returns_configured_timeout()
     {
         await using var app = await CreateWebAppAsync(timeoutMinutes: 42);

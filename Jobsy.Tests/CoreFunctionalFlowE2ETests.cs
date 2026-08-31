@@ -449,6 +449,8 @@ public class CoreFunctionalFlowE2ETests
         Assert.Contains("saveCriticalDrafts", idleJs, StringComparison.Ordinal);
         Assert.Contains("sessionStorage", idleJs, StringComparison.Ordinal);
         Assert.Contains("session-expired", idleJs, StringComparison.Ordinal);
+        Assert.Contains("encodeURIComponent(here)", idleJs, StringComparison.Ordinal);
+        Assert.Contains("&returnUrl=", idleJs, StringComparison.Ordinal);
     }
 
     private static string FindRepoRoot()

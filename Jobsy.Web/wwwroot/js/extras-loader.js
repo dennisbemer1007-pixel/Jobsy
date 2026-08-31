@@ -1,7 +1,7 @@
 window.jobsyExtras = (function () {
     "use strict";
 
-    var extrasSrc = "/js/app-extras.js?v=20260820-r164";
+    var extrasSrc = "/js/app-extras.js?v=20260831-login";
     var feedbackSrc = "/js/feedback.js?v=20260820-r164";
     var pending = {};
 

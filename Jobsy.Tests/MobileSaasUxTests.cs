@@ -304,6 +304,43 @@ public class MobileSaasUxTests
         Assert.Contains("aria-label=\"Ververs\"", refresh);
     }
 
+    [Fact]
+    public void Login_is_compact_modern_and_honors_return_aliases()
+    {
+        var login = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/Components/Pages/Login.razor"));
+        Assert.Contains("login-modal--compact", login);
+        Assert.Contains("AuthRedirects.ResolveRequestedReturnUrl", login);
+        Assert.Contains("QueryValue(query, \"returnTo\")", login);
+        Assert.Contains("QueryValue(query, \"redirect\")", login);
+        Assert.Contains("name=\"returnUrl\"", login);
+        Assert.Contains("/account/external/entra?returnUrl=", login);
+        Assert.Contains("/account/external/google?returnUrl=", login);
+        Assert.DoesNotContain("login-brand", login);
+        Assert.DoesNotContain("<LobsyLogo", login);
+        Assert.DoesNotContain("login-register__actions", login);
+        Assert.Contains("login-register__cta", login);
+        Assert.Contains("login-register__back", login);
+        Assert.Contains("NavigateTo(_returnUrl", login);
+
+        var css = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/wwwroot/css/app.css"));
+        Assert.Contains(".login-modal .login-form input:not([type=\"checkbox\"]):not([type=\"radio\"]) {\n    border-radius: 12px;", css);
+        Assert.Contains(".login-modal .login-form label {\n    text-transform: none;", css);
+        Assert.Contains("min-height: 2.75rem;", css);
+        Assert.Contains(".login-modal__dialog .login-lead {\n        display: none;", css);
+
+        var header = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/Components/Layout/AuthHeader.razor"));
+        Assert.Contains("IsLoginRoute", header);
+        Assert.Contains("href=\"/login\"", header);
+
+        var idle = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/wwwroot/js/sessionIdle.js"));
+        Assert.Contains("sessionReturnUrl", idle);
+        Assert.Contains("&returnUrl=", idle);
+
+        var extras = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/wwwroot/js/app-extras.js"));
+        Assert.Contains("sessionReturnUrl", extras);
+        Assert.Contains("&returnUrl=", extras);
+    }
+
     private static string FindRepoRoot()
     {
         var dir = new DirectoryInfo(AppContext.BaseDirectory);

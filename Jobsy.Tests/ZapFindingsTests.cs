@@ -78,7 +78,7 @@ public class ZapFindingsTests
     public void Login_sanitizes_return_url_before_attributes()
     {
         var login = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "Components", "Pages", "Login.razor"));
-        Assert.Contains("AuthRedirects.SafeLocalUrl", login);
+        Assert.Contains("AuthRedirects.ResolveRequestedReturnUrl", login);
         Assert.Contains("value=\"@_returnUrl\"", login);
     }
 

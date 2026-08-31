@@ -57,6 +57,33 @@ public static partial class AuthRedirects
     }
 
     /// <summary>
+    /// Picks the first non-empty candidate (<c>returnUrl</c>, <c>returnTo</c>, <c>redirect</c>)
+    /// and maps it through <see cref="PostLoginUrl"/> + <see cref="SafeLocalUrl"/>.
+    /// </summary>
+    public static string ResolveRequestedReturnUrl(params string?[] candidates)
+    {
+        foreach (var raw in candidates)
+        {
+            if (string.IsNullOrWhiteSpace(raw))
+            {
+                continue;
+            }
+
+            return SafeLocalUrl(PostLoginUrl(raw.Trim()));
+        }
+
+        return "/home";
+    }
+
+    /// <summary>Appends a sanitized local <c>returnUrl</c> query parameter.</summary>
+    public static string AppendReturnUrl(string pathAndQuery, string? returnUrl)
+    {
+        var safe = ResolveRequestedReturnUrl(returnUrl);
+        var separator = pathAndQuery.Contains('?', StringComparison.Ordinal) ? "&" : "?";
+        return pathAndQuery + separator + "returnUrl=" + Uri.EscapeDataString(safe);
+    }
+
+    /// <summary>
     /// Returns a safe same-origin relative path, or <c>/home</c> when the value is unsafe.
     /// </summary>
     public static string SafeLocalUrl(string? url)

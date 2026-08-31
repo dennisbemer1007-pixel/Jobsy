@@ -33,6 +33,36 @@ public class AuthRedirectsTests
     [InlineData("/privacy/data", "/privacy/data")]
     public void SafeLocalUrl_rejects_open_redirects(string input, string expected)
         => Assert.Equal(expected, AuthRedirects.SafeLocalUrl(input));
+
+    [Fact]
+    public void ResolveRequestedReturnUrl_accepts_returnTo_and_redirect_aliases()
+    {
+        Assert.Equal("/home", AuthRedirects.ResolveRequestedReturnUrl());
+        Assert.Equal("/home", AuthRedirects.ResolveRequestedReturnUrl(null, "", "https://evil.example"));
+        Assert.Equal(
+            "/employer/vacancies/123",
+            AuthRedirects.ResolveRequestedReturnUrl(null, "/employer/vacancies/123", "/ignored"));
+        Assert.Equal(
+            "/vacancies/abc",
+            AuthRedirects.ResolveRequestedReturnUrl(null, null, "/vacancies/abc"));
+        Assert.Equal(
+            "/employer/tokens",
+            AuthRedirects.ResolveRequestedReturnUrl("/employer/tokens", "/other"));
+        Assert.Equal(
+            "/home",
+            AuthRedirects.ResolveRequestedReturnUrl("/login?returnUrl=https://evil.com"));
+    }
+
+    [Fact]
+    public void AppendReturnUrl_sanitizes_and_keeps_existing_query()
+    {
+        Assert.Equal(
+            "/login?error=session-expired&returnUrl=%2Femployer%2Fvacancies",
+            AuthRedirects.AppendReturnUrl("/login?error=session-expired", "/employer/vacancies"));
+        Assert.Equal(
+            "/login?error=invalid&returnUrl=%2Fhome",
+            AuthRedirects.AppendReturnUrl("/login?error=invalid", "https://evil.example"));
+    }
 }
 
 public class RoleNavCatalogTests

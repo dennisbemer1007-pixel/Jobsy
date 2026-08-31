@@ -14,7 +14,7 @@
 
 <PageTitle>@Culture["Login.Title"] · Lobsy</PageTitle>
 
-<div class="login-modal" role="dialog" aria-modal="true" aria-labelledby="login-title">
+<div class="login-modal login-modal--compact" role="dialog" aria-modal="true" aria-labelledby="login-title">
     <a class="login-modal__backdrop"
        href="@_dismissUrl"
        tabindex="-1"
@@ -22,17 +22,13 @@
 
     <div class="login-modal__dialog login-card">
         <div class="login-modal__header">
-            <div class="login-brand">
-                <LobsyLogo Class="login-brand__logo" Alt="Lobsy" />
-                <span class="login-brand__name">Lobsy</span>
-            </div>
+            <h1 id="login-title">@Culture["Login.Title"]</h1>
             <a class="login-modal__close"
                href="@_dismissUrl"
                aria-label="@Culture["Login.Close"]"
                title="@Culture["Login.Close"]">×</a>
         </div>
 
-        <h1 id="login-title">@Culture["Login.Title"]</h1>
         <p class="login-lead">@Culture["Login.Lead"]</p>
 
         @if (!string.IsNullOrEmpty(_errorMessage))
@@ -66,7 +62,14 @@
             {
                 <a class="provider-btn provider-btn--google"
                    href="@($"/account/external/google?returnUrl={Uri.EscapeDataString(_returnUrl)}")">
-                    <span class="provider-btn__icon provider-btn__icon--google" aria-hidden="true">G</span>
+                    <span class="provider-btn__icon provider-btn__icon--google" aria-hidden="true">
+                        <svg viewBox="0 0 48 48" width="18" height="18">
+                            <path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.3 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 8 3.1l5.7-5.7C34.2 6.1 29.4 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.5-.4-3.5z"/>
+                            <path fill="#FF3D00" d="M6.3 14.7 12.9 19.6C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 8 3.1l5.7-5.7C34.2 6.1 29.4 4 24 4 16.3 4 9.6 8.3 6.3 14.7z"/>
+                            <path fill="#4CAF50" d="M24 44c5.2 0 10-2 13.6-5.2l-6.3-5.2C29.2 35.1 26.7 36 24 36c-5.3 0-9.7-3.3-11.3-8h-6.6v5.1C9.5 39.6 16.2 44 24 44z"/>
+                            <path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.1-4.1 5.5l.1-.1 6.3 5.2C39.2 40.3 44 34.7 44 24c0-1.3-.1-2.5-.4-3.5z"/>
+                        </svg>
+                    </span>
                     @Culture["Login.Google"]
                 </a>
             }
@@ -74,7 +77,14 @@
             {
                 <button type="button" class="provider-btn provider-btn--google is-disabled" disabled
                         title="@Culture["Login.GoogleNotConfigured"]">
-                    <span class="provider-btn__icon provider-btn__icon--google" aria-hidden="true">G</span>
+                    <span class="provider-btn__icon provider-btn__icon--google" aria-hidden="true">
+                        <svg viewBox="0 0 48 48" width="18" height="18">
+                            <path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.3 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 8 3.1l5.7-5.7C34.2 6.1 29.4 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.5-.4-3.5z"/>
+                            <path fill="#FF3D00" d="M6.3 14.7 12.9 19.6C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 8 3.1l5.7-5.7C34.2 6.1 29.4 4 24 4 16.3 4 9.6 8.3 6.3 14.7z"/>
+                            <path fill="#4CAF50" d="M24 44c5.2 0 10-2 13.6-5.2l-6.3-5.2C29.2 35.1 26.7 36 24 36c-5.3 0-9.7-3.3-11.3-8h-6.6v5.1C9.5 39.6 16.2 44 24 44z"/>
+                            <path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.1-4.1 5.5l.1-.1 6.3 5.2C39.2 40.3 44 34.7 44 24c0-1.3-.1-2.5-.4-3.5z"/>
+                        </svg>
+                    </span>
                     @Culture["Login.Google"]
                 </button>
             }
@@ -97,11 +107,11 @@
         </form>
 
         <div class="login-register">
-            <p class="login-register__lead">@Culture["Login.RegisterLead"]</p>
-            <div class="login-register__actions">
-                <a class="provider-btn login-register__back" href="@_dismissUrl">@Culture["Login.BackToMap"]</a>
-                <a class="provider-btn provider-btn--register" href="/register">@Culture["Login.RegisterCta"]</a>
-            </div>
+            <p class="login-register__lead">
+                @Culture["Login.RegisterLead"]
+                <a class="login-register__cta" href="/register">@Culture["Login.RegisterCta"]</a>
+            </p>
+            <a class="login-register__back" href="@_dismissUrl">@Culture["Login.BackToMap"]</a>
         </div>
     </div>
 </div>
@@ -136,14 +146,19 @@
 
         var uri = Navigation.ToAbsoluteUri(Navigation.Uri);
         var query = QueryHelpers.ParseQuery(uri.Query);
-
-        if (query.TryGetValue("returnUrl", out var returnUrl) && !string.IsNullOrWhiteSpace(returnUrl))
-        {
-            _returnUrl = AuthRedirects.SafeLocalUrl(AuthRedirects.PostLoginUrl(returnUrl.ToString()));
-        }
+        _returnUrl = AuthRedirects.ResolveRequestedReturnUrl(
+            QueryValue(query, "returnUrl"),
+            QueryValue(query, "returnTo"),
+            QueryValue(query, "redirect"));
 
         // Closing the dialog always returns to the banenkaart (not a protected returnUrl).
         _dismissUrl = AuthRedirects.BanenkaartPath;
+
+        if (http?.User.Identity?.IsAuthenticated == true)
+        {
+            Navigation.NavigateTo(_returnUrl, forceLoad: true);
+            return;
+        }
 
         if (query.TryGetValue("error", out var error))
         {
@@ -203,6 +218,13 @@
             // Script may not be ready on static render.
         }
     }
+
+    private static string? QueryValue(
+        Dictionary<string, Microsoft.Extensions.Primitives.StringValues> query,
+        string key)
+        => query.TryGetValue(key, out var value) && !string.IsNullOrWhiteSpace(value)
+            ? value.ToString()
+            : null;
 
     private void OnCultureChanged()
         => InvokeAsync(StateHasChanged);

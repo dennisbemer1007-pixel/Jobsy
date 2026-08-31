@@ -6,6 +6,7 @@
 @inject CultureState Culture
 @inject IAntiforgery Antiforgery
 @inject IHttpContextAccessor HttpContextAccessor
+@inject NavigationManager Navigation
 @implements IDisposable
 
 <div class="auth-header">
@@ -50,10 +51,13 @@
             </form>
         </Authorized>
         <NotAuthorized>
-            <a class="auth-link auth-link--login" href="/login">
-                <span class="auth-link__icon" aria-hidden="true">@((MarkupString)NavIcons.Login)</span>
-                <span class="auth-link__label">@Culture["Auth.Login"]</span>
-            </a>
+            @if (!IsLoginRoute)
+            {
+                <a class="auth-link auth-link--login" href="/login">
+                    <span class="auth-link__icon" aria-hidden="true">@((MarkupString)NavIcons.Login)</span>
+                    <span class="auth-link__label">@Culture["Auth.Login"]</span>
+                </a>
+            }
         </NotAuthorized>
     </AuthorizeView>
 </div>
@@ -66,6 +70,7 @@
     protected override void OnInitialized()
     {
         Culture.Changed += OnCultureChanged;
+        Navigation.LocationChanged += OnLocationChanged;
         var http = HttpContextAccessor.HttpContext;
         if (http is not null)
         {
@@ -77,6 +82,20 @@
 
     private void OnCultureChanged()
         => InvokeAsync(StateHasChanged);
+
+    private void OnLocationChanged(object? sender, LocationChangedEventArgs e)
+        => InvokeAsync(StateHasChanged);
+
+    private bool IsLoginRoute
+    {
+        get
+        {
+            var relative = Navigation.ToBaseRelativePath(Navigation.Uri);
+            var path = relative.Split('?', '#')[0];
+            return path.Equals("login", StringComparison.OrdinalIgnoreCase)
+                || path.StartsWith("login/", StringComparison.OrdinalIgnoreCase);
+        }
+    }
 
     private void Toggle()
         => _open = !_open;
@@ -111,5 +130,8 @@
     }
 
     public void Dispose()
-        => Culture.Changed -= OnCultureChanged;
+    {
+        Culture.Changed -= OnCultureChanged;
+        Navigation.LocationChanged -= OnLocationChanged;
+    }
 }
