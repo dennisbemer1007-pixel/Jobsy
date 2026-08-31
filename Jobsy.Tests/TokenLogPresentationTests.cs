@@ -1,3 +1,4 @@
+using Jobsy.Core.Rules;
 using Jobsy.Web.Models;
 using Jobsy.Web.Tokens;
 
@@ -60,5 +61,47 @@ public class TokenLogPresentationTests
         Assert.Equal("Vacature publiceren · Betaling", text);
         Assert.DoesNotContain("Spend", text);
         Assert.DoesNotContain("tr_", text);
+    }
+
+    [Fact]
+    public void Employer_token_log_api_redacts_notes_for_non_admins()
+    {
+        var controller = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Api/Controllers/TokenLogsController.cs"));
+        Assert.Contains("TokenNoteRedaction.Sanitize", controller);
+        Assert.Contains("IsAdmin", controller);
+    }
+
+    private static string FindRepoRoot()
+    {
+        var dir = new DirectoryInfo(AppContext.BaseDirectory);
+        while (dir is not null)
+        {
+            if (File.Exists(Path.Combine(dir.FullName, "Jobsy.sln")))
+            {
+                return dir.FullName;
+            }
+
+            dir = dir.Parent;
+        }
+
+        throw new InvalidOperationException("Jobsy.sln not found.");
+    }
+}
+
+public class DayPartMatrixDisplayTests
+{
+    [Fact]
+    public void Days_with_night_part_are_listed_without_using_the_night_column()
+    {
+        var slots = new Dictionary<string, List<string>>(StringComparer.OrdinalIgnoreCase)
+        {
+            ["Ma"] = ["Nacht"],
+            ["Wo"] = ["Avond", "Nacht"],
+            ["Vr"] = ["Ochtend"]
+        };
+
+        Assert.Equal(["Ochtend", "Middag", "Avond"], DayPartMatrix.EmployerDisplayDayPartCodes);
+        Assert.DoesNotContain("Nacht", DayPartMatrix.EmployerDisplayDayPartCodes);
+        Assert.Equal(["Ma", "Wo"], DayPartMatrix.DaysWithDayPart(slots, DayPartMatrix.NightDayPart));
     }
 }

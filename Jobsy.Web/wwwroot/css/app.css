@@ -195,7 +195,7 @@ a {
     position: absolute;
     top: calc(100% + 0.35rem);
     right: 0;
-    z-index: 50;
+    z-index: 60;
     min-width: 14rem;
     max-width: min(18rem, 90vw);
     margin-left: auto;
@@ -5382,7 +5382,7 @@ a.map-popup__apply.map-popup__cta:visited {
     margin-right: 0;
     max-height: min(70vh, 28rem);
     overflow: auto;
-    z-index: 50;
+    z-index: 60;
     background: var(--surface);
     border: 1px solid var(--border);
     border-radius: 0.85rem;
@@ -5605,7 +5605,7 @@ a.map-popup__apply.map-popup__cta:visited {
     position: absolute;
     top: calc(100% + 0.45rem);
     right: 0;
-    z-index: 50;
+    z-index: 60;
     width: min(26rem, 90vw);
     max-width: 90vw;
     margin-left: auto;
@@ -5687,7 +5687,7 @@ a.map-popup__apply.map-popup__cta:visited {
         bottom: auto;
         max-height: min(70vh, 28rem);
         overflow: auto;
-        z-index: 50;
+        z-index: 60;
     }
 }
 
@@ -15678,6 +15678,13 @@ html.cookie-consent-known .cookie-consent {
     background: var(--accent);
 }
 
+.availability-matrix__night-note {
+    margin: 0.55rem 0 0;
+    font-size: 0.82rem;
+    font-weight: 650;
+    color: var(--brand);
+}
+
 @media (max-width: 1024px) {
     .bento-cell--category {
         background: transparent;
@@ -15709,8 +15716,14 @@ html.cookie-consent-known .cookie-consent {
 .header-dropdown-backdrop {
     position: fixed;
     inset: 0;
-    z-index: 40;
+    z-index: 55;
     background: color-mix(in srgb, var(--brand-deep) 28%, transparent);
+}
+
+.notification-dropdown.z-50,
+.info-dropdown.z-50,
+.account-menu__panel.z-50 {
+    z-index: 60;
 }
 
 .notification-dropdown.mx-auto,

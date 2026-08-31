@@ -115,6 +115,7 @@
                                 }
                                 else if (a.PiiRevealed && availability.Slots.Count > 0)
                                 {
+                                    var nightDays = DayPartMatrix.DaysWithDayPart(availability.Slots, DayPartMatrix.NightDayPart);
                                     <div class="availability-matrix availability-matrix--readonly" role="grid" aria-label="@Culture["Employer.FactAvailability"]">
                                         <div class="availability-matrix__corner" role="columnheader"></div>
                                         @foreach (var slot in DayPartMatrix.EmployerDisplayDayPartCodes)
@@ -135,6 +136,13 @@
                                             }
                                         }
                                     </div>
+                                    @if (nightDays.Count > 0)
+                                    {
+                                        <p class="availability-matrix__night-note">
+                                            @Culture["Profile.Slot.Night"]:
+                                            @string.Join(", ", nightDays.Select(d => UiLabels.Weekday(Culture, d)))
+                                        </p>
+                                    }
                                 }
                                 else
                                 {

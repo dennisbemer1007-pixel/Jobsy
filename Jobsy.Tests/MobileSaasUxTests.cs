@@ -232,8 +232,10 @@ public class MobileSaasUxTests
         Assert.Contains("a.PiiRevealed", razor);
         Assert.Contains("Common.Yes", razor);
         Assert.Contains("EmployerDisplayDayPartCodes", razor);
+        Assert.Contains("DayPartMatrix.NightDayPart", razor);
+        Assert.Contains("availability-matrix__night-note", razor);
+        Assert.Contains("Profile.Slot.Night", razor);
         Assert.DoesNotContain("DayPartMatrix.DayPartCodes", razor);
-        Assert.DoesNotContain("Nacht", razor);
         Assert.DoesNotContain("aria-label=\"@UiLabels.Weekday(Culture, day) @UiLabels.AvailabilitySlot(Culture, slot): @(on ? \"ja\" : \"nee\")\"", razor);
     }
 
@@ -262,6 +264,8 @@ public class MobileSaasUxTests
         Assert.Contains(".notification-dropdown", css);
         Assert.Contains(".info-dropdown", css);
         Assert.Contains(".header-dropdown-backdrop", css);
+        Assert.Contains("z-index: 55", css);
+        Assert.Contains(".notification-dropdown.z-50", css);
         Assert.Contains("max-width: 90vw", css);
         Assert.Contains(".z-50 { z-index: 50; }", css);
         Assert.Contains(".pb-28 { padding-bottom: 7rem; }", css);

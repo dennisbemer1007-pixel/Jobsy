@@ -8,6 +8,7 @@ public static class DayPartMatrix
 
     /// <summary>Employer applicant matrix: morning / afternoon / evening only.</summary>
     public static readonly string[] EmployerDisplayDayPartCodes = ["Ochtend", "Middag", "Avond"];
+    public const string NightDayPart = "Nacht";
 
     public static readonly IReadOnlyDictionary<string, string> DayPartWindows =
         new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
@@ -25,6 +26,21 @@ public static class DayPartMatrix
     public static bool IsValidDayPartCode(string? code)
         => !string.IsNullOrWhiteSpace(code)
            && DayPartCodes.Contains(code.Trim(), StringComparer.OrdinalIgnoreCase);
+
+    public static IReadOnlyList<string> DaysWithDayPart(
+        IReadOnlyDictionary<string, List<string>> slots,
+        string dayPart)
+    {
+        if (slots.Count == 0 || string.IsNullOrWhiteSpace(dayPart))
+        {
+            return [];
+        }
+
+        return DayCodes
+            .Where(day => slots.TryGetValue(day, out var parts)
+                          && parts.Any(p => p.Equals(dayPart, StringComparison.OrdinalIgnoreCase)))
+            .ToList();
+    }
 
     public static string NormalizeDayCode(string code)
     {

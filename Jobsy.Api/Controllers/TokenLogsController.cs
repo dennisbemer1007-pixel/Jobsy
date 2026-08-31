@@ -2,6 +2,7 @@ using Jobsy.Core.Authorization;
 using Jobsy.Core.Contracts;
 using Jobsy.Core.Enums;
 using Jobsy.Core.Interfaces;
+using Jobsy.Core.Rules;
 using Jobsy.Infrastructure.Data;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -62,6 +63,13 @@ public class TokenLogsController : ControllerBase
                 t.CreatedAt))
             .Take(500)
             .ToListAsync(cancellationToken);
+
+        if (!_companyAuth.IsAdmin(User))
+        {
+            items = items
+                .Select(t => t with { Note = TokenNoteRedaction.Sanitize(t.Note) })
+                .ToList();
+        }
 
         return Ok(items);
     }
