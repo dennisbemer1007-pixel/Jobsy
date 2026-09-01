@@ -62,7 +62,7 @@ public class BlazorCircuitGuardTests
 
         var css = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "wwwroot", "css", "app.css"));
         Assert.Contains(".reconnect-toast {\n    display: none;\n    position: fixed;", css);
-        Assert.Contains("bottom: calc(5.5rem + env(safe-area-inset-bottom, 0px));", css);
+        Assert.Contains("bottom: calc(6.75rem + env(safe-area-inset-bottom, 0px));", css);
     }
 
     [Fact]
