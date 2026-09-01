@@ -114,6 +114,7 @@ public static partial class PageSeoCatalog
             ["/candidate/hoe-werkt-lobsy"] = Private("Nav.HowLobsyWorks", "Seo.PrivateDescription"),
             ["/candidate/liked"] = Private("Saved.Title", "Seo.PrivateDescription"),
             ["/candidate/shared"] = Private("Saved.TabShared", "Seo.PrivateDescription"),
+            ["/candidate/vacancies"] = Private("Nav.Vacancies", "Seo.PrivateDescription"),
             ["/candidate/applications"] = Private("Nav.MyApplications", "Seo.PrivateDescription"),
             ["/candidate/profile"] = Private("Profile.Title", "Seo.PrivateDescription"),
             ["/candidate/actions/set-unavailable"] = Private("Seo.SiteName", "Seo.PrivateDescription"),

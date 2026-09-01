@@ -22,6 +22,7 @@ public static class RoleNavCatalog
     [
         new("Nav.Search", "/", NavIcons.Search),
         new("Nav.Saved", "/candidate/liked", NavIcons.Liked, ["/candidate/shared"]),
+        new("Nav.Vacancies", "/candidate/vacancies", NavIcons.Vacancies),
         new("Nav.MyApplications", "/candidate/applications", NavIcons.Applications),
         new("Nav.Profile", "/candidate/profile", NavIcons.Profile, ["/home"])
     ];

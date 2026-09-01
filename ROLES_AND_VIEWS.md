@@ -24,7 +24,7 @@ Publiek (naast banenkaart): `/vacancies/{id}`, `/{kvknummer}` (ondernemer), `/{k
 ## 1. Candidate
 *Doel: snel een baan vinden op reistijd/vervoer.*
 
-**BottomNav:** Zoeken · Bewaard · Sollicitaties · Profiel
+**BottomNav:** Zoeken · Bewaard · Vacatures · Sollicitaties · Profiel
 
 | Route | Inhoud |
 |-------|--------|
@@ -32,6 +32,7 @@ Publiek (naast banenkaart): `/vacancies/{id}`, `/{kvknummer}` (ondernemer), `/{k
 | `/home` | Eigen metrics: sollicitaties, shares, likes, reacties (periode + drilldown) |
 | `/vacancies/{id}` | Detail, solliciteren, like/share, optioneel mock interview |
 | `/candidate/applications` | Sollicitatiehistorie |
+| `/candidate/vacancies` | Overzicht + **Onlangs bekeken** (localStorage, alleen vacancy-GUIDs) + in-de-buurt op reistijd/vervoer |
 | `/candidate/liked` · `/candidate/shared` | Engagement-lijsten |
 | `/candidate/profile` | OpenForWork, prefs, DOB, HomeLocation, eigen CV-upload, recensies |
 

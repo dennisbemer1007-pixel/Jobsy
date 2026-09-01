@@ -1,0 +1,297 @@
+@page "/candidate/vacancies"
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Candidate")]
+@using Jobsy.Core.Rules
+@using Jobsy.Web.Localization
+@inject JobsyApiClient Api
+@inject CultureState Culture
+@inject IJSRuntime Js
+@implements IDisposable
+
+<PageTitle>@Culture["Nav.Vacancies"] · Lobsy</PageTitle>
+
+<div class="panel-page candidate-vacancies-page pb-28">
+    <header class="panel-header">
+        <div>
+            <h1>@Culture["Nav.Vacancies"]</h1>
+            <p class="login-lead">@Culture["CandidateVacancies.Lead"]</p>
+        </div>
+    </header>
+
+    <div class="admin-sublinks pill-scroller" role="tablist" aria-label="@Culture["Nav.Vacancies"]">
+        <button type="button"
+                class="admin-sublink @(_tab == "overview" ? "admin-sublink--active" : null)"
+                role="tab"
+                aria-selected="@(_tab == "overview" ? "true" : "false")"
+                @onclick='() => SetTab("overview")'>
+            @Culture["CandidateVacancies.Overview"]
+        </button>
+        <button type="button"
+                class="admin-sublink @(_tab == "recent" ? "admin-sublink--active" : null)"
+                role="tab"
+                aria-selected="@(_tab == "recent" ? "true" : "false")"
+                @onclick='() => SetTab("recent")'>
+            @Culture["CandidateVacancies.RecentlyViewed"]
+        </button>
+        <button type="button"
+                class="admin-sublink @(_tab == "nearby" ? "admin-sublink--active" : null)"
+                role="tab"
+                aria-selected="@(_tab == "nearby" ? "true" : "false")"
+                @onclick='() => SetTab("nearby")'>
+            @Culture["CandidateVacancies.Nearby"]
+        </button>
+    </div>
+
+    @if (!string.IsNullOrWhiteSpace(_travelSummary))
+    {
+        <p class="candidate-vacancies__travel">
+            <a href="/">@_travelSummary</a>
+        </p>
+    }
+
+    @if (_loading)
+    {
+        <p class="state-message">@Culture["Common.Loading"]</p>
+    }
+    else
+    {
+        @if (ShowRecent)
+        {
+            <section class="candidate-vacancies__section" aria-labelledby="candidate-recent-heading">
+                <h2 id="candidate-recent-heading">@Culture["CandidateVacancies.RecentlyViewed"]</h2>
+                @if (_recent.Count == 0)
+                {
+                    <p class="state-message">
+                        @Culture["CandidateVacancies.EmptyRecent"]
+                        <a href="/">@Culture["CandidateVacancies.BrowseMap"]</a>
+                    </p>
+                }
+                else
+                {
+                    @RenderCards(_recent)
+                }
+            </section>
+        }
+
+        @if (ShowNearby)
+        {
+            <section class="candidate-vacancies__section" aria-labelledby="candidate-nearby-heading">
+                <h2 id="candidate-nearby-heading">@Culture["CandidateVacancies.Nearby"]</h2>
+                @if (_nearby.Count == 0)
+                {
+                    <p class="state-message">
+                        @(_hasOrigin
+                            ? Culture.Format("Discovery.NoneWithOrigin", _maxTravelMinutes, UiLabels.TransportVerb(Culture, _transport))
+                            : Culture["Discovery.NoneWithoutOrigin"])
+                        <a href="/">@Culture["CandidateVacancies.BrowseMap"]</a>
+                    </p>
+                }
+                else
+                {
+                    @RenderCards(_nearby)
+                    @if (_nearby.Count >= NearbyCap)
+                    {
+                        <p class="candidate-vacancies__more">
+                            <a href="/">@Culture["CandidateVacancies.OpenMap"]</a>
+                        </p>
+                    }
+                }
+            </section>
+        }
+    }
+</div>
+
+@code {
+    private const int NearbyCap = 24;
+    private string _tab = "overview";
+    private bool _loading = true;
+    private bool _hasOrigin;
+    private int _maxTravelMinutes = 30;
+    private string _transport = TransportLabels.Bike;
+    private string? _travelSummary;
+    private List<VacancyListItem> _recent = [];
+    private List<VacancyListItem> _nearby = [];
+
+    private bool ShowRecent => _tab is "overview" or "recent";
+    private bool ShowNearby => _tab is "overview" or "nearby";
+
+    protected override void OnInitialized()
+        => Culture.Changed += OnCultureChanged;
+
+    protected override async Task OnInitializedAsync()
+        => await LoadAsync();
+
+    public void Dispose()
+        => Culture.Changed -= OnCultureChanged;
+
+    private void OnCultureChanged()
+        => _ = InvokeAsync(async () =>
+        {
+            UpdateTravelSummary();
+            await InvokeAsync(StateHasChanged);
+        });
+
+    private void SetTab(string tab)
+        => _tab = tab;
+
+    private async Task LoadAsync()
+    {
+        _loading = true;
+        try
+        {
+            MeProfile? profile = null;
+            try
+            {
+                profile = await Api.GetMyProfileAsync();
+            }
+            catch
+            {
+                profile = null;
+            }
+
+            if (profile?.Preferences.MaxTravelMinutes is int travel)
+            {
+                _maxTravelMinutes = Math.Clamp(travel, 5, 90);
+            }
+
+            if (!string.IsNullOrWhiteSpace(profile?.Preferences.PreferredTransport))
+            {
+                _transport = profile!.Preferences.PreferredTransport!;
+            }
+
+            OriginPoint? origin = await ResolveOriginAsync(profile);
+            _hasOrigin = origin is not null;
+            UpdateTravelSummary();
+
+            var recentIds = await RecentlyViewedVacancies.ListAsync(Js, profile?.Id);
+            var recentTask = LoadRecentAsync(recentIds, origin);
+            var nearbyTask = LoadNearbyAsync(origin);
+            await Task.WhenAll(recentTask, nearbyTask);
+            _recent = await recentTask;
+            _nearby = await nearbyTask;
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private async Task<OriginPoint?> ResolveOriginAsync(MeProfile? profile)
+    {
+        try
+        {
+            var stored = await Js.InvokeAsync<StoredOrigin?>("jobsyGeo.getStoredOrigin");
+            if (stored is not null && IsFinite(stored.Lat) && IsFinite(stored.Lng))
+            {
+                return new OriginPoint { Latitude = stored.Lat, Longitude = stored.Lng };
+            }
+        }
+        catch (JSDisconnectedException)
+        {
+        }
+        catch (JSException)
+        {
+        }
+        catch (InvalidOperationException)
+        {
+        }
+
+        if (profile?.HomeLatitude is double lat && profile.HomeLongitude is double lng && IsFinite(lat) && IsFinite(lng))
+        {
+            return new OriginPoint { Latitude = lat, Longitude = lng };
+        }
+
+        return null;
+    }
+
+    private async Task<List<VacancyListItem>> LoadRecentAsync(IReadOnlyList<Guid> ids, OriginPoint? origin)
+    {
+        if (ids.Count == 0)
+        {
+            return [];
+        }
+
+        var tasks = ids.Select(id => SafeGetVacancyAsync(id, origin)).ToArray();
+        var loaded = await Task.WhenAll(tasks);
+        return loaded.Where(v => v is not null).Cast<VacancyListItem>().ToList();
+    }
+
+    private async Task<List<VacancyListItem>> LoadNearbyAsync(OriginPoint? origin)
+    {
+        try
+        {
+            var items = await Api.DiscoverVacanciesAsync(
+                origin?.Latitude,
+                origin?.Longitude,
+                _transport,
+                _maxTravelMinutes,
+                radiusKm: origin is null ? null : 15);
+            return items
+                .OrderBy(v => v.TravelMinutes ?? int.MaxValue)
+                .ThenBy(v => v.Title, StringComparer.CurrentCultureIgnoreCase)
+                .Take(NearbyCap)
+                .ToList();
+        }
+        catch
+        {
+            return [];
+        }
+    }
+
+    private async Task<VacancyListItem?> SafeGetVacancyAsync(Guid id, OriginPoint? origin)
+    {
+        try
+        {
+            return await Api.GetVacancyAsync(id, origin?.Latitude, origin?.Longitude, _transport);
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    private void UpdateTravelSummary()
+    {
+        _travelSummary = _hasOrigin
+            ? Culture.Format("CandidateVacancies.TravelSummary", _maxTravelMinutes, UiLabels.TransportVerb(Culture, _transport))
+            : Culture["CandidateVacancies.ShareLocationHint"];
+    }
+
+    private static bool IsFinite(double value)
+        => !double.IsNaN(value) && !double.IsInfinity(value);
+
+    private RenderFragment RenderCards(IReadOnlyList<VacancyListItem> items) => __builder =>
+    {
+        <div class="vacancy-list vacancy-list--cards vacancy-list--saved">
+            @foreach (var vacancy in items)
+            {
+                var travel = vacancy.TravelMinutes is int minutes
+                    ? Culture.Format("Discovery.TravelModeMinutes", minutes, UiLabels.TransportVerb(Culture, _transport))
+                    : vacancy.CompanyName;
+                <article class="job-card @(vacancy.IsHighlighted ? "job-card--highlight" : null)">
+                    <a class="job-card__media" href="@($"/vacancies/{vacancy.Id}")">
+                        <VacancyPhoto Src="@vacancy.ImageUrl"
+                                      FallbackSrc="@vacancy.CompanyLogoUrl"
+                                      VacancyId="vacancy.Id"
+                                      Class="job-card__photo"
+                                      Sizes="(max-width: 700px) 50vw, 360px" />
+                        <div class="job-card__overlay">
+                            <h2>@vacancy.Title</h2>
+                            <p class="job-card__travel">@travel</p>
+                        </div>
+                    </a>
+                    <div class="job-card__footer">
+                        <p class="job-card__company">@(string.IsNullOrWhiteSpace(vacancy.OfferedByLabel) ? vacancy.CompanyName : vacancy.OfferedByLabel)</p>
+                        <p class="job-card__location">@vacancy.CompanyAddress</p>
+                    </div>
+                </article>
+            }
+        </div>
+    };
+
+    private sealed class StoredOrigin
+    {
+        public double Lat { get; set; }
+        public double Lng { get; set; }
+    }
+}

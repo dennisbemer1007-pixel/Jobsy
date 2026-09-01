@@ -1231,6 +1231,7 @@
         var isCandidate = RoleClaimMatching.HasRole(auth.User, JobsyRoles.Candidate);
         Task<MeProfile?>? profileTask = null;
         Task<IReadOnlyList<ApplicationItem>?>? appsTask = null;
+        MeProfile? candidateProfile = null;
         if (isCandidate)
         {
             profileTask = SafeProfileAsync();
@@ -1242,6 +1243,7 @@
         if (profileTask is not null)
         {
             var profile = await profileTask;
+            candidateProfile = profile;
             if (profile is not null)
             {
                 _dobInput = profile.DateOfBirth;
@@ -1291,6 +1293,11 @@
                     && _profileHasAboutMe
                     && _profileHasReferences;
             }
+        }
+
+        if (isCandidate && _vacancy is not null)
+        {
+            await RecentlyViewedVacancies.RememberAsync(Js, _vacancy.Id, candidateProfile?.Id);
         }
 
         if (appsTask is not null)

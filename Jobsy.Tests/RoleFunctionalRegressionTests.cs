@@ -901,6 +901,9 @@ public class RoleFunctionalRegressionTests : IClassFixture<RoleFunctionalWebAppF
     public void Role_nav_catalog_covers_all_login_roles_with_how_lobsy()
     {
         Assert.DoesNotContain(RoleNavCatalog.Candidate, n => n.Href.Contains("hoe-werkt", StringComparison.Ordinal));
+        Assert.Contains(RoleNavCatalog.Candidate, n => n.Href == "/candidate/vacancies");
+        Assert.DoesNotContain(RoleNavCatalog.Branch, n => n.Href == "/candidate/vacancies");
+        Assert.DoesNotContain(RoleNavCatalog.Enterprise, n => n.Href == "/candidate/vacancies");
         Assert.DoesNotContain(RoleNavCatalog.Branch, n => n.Href == "/hoe-werkt-lobsy");
         Assert.DoesNotContain(RoleNavCatalog.Regional, n => n.Href == "/hoe-werkt-lobsy");
         Assert.DoesNotContain(RoleNavCatalog.Enterprise, n => n.Href == "/hoe-werkt-lobsy");

@@ -52,6 +52,7 @@ public class LocalizationTests
             "Profile.Section.Personal",
             "Profile.PresetOffice",
             "HowLobsy.Title",
+            "CandidateVacancies.RecentlyViewed",
             "Share.Title",
             "Metrics.Welcome",
             "Discovery.Top",

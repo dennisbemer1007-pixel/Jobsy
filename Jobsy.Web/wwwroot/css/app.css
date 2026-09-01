@@ -14511,6 +14511,31 @@ html.cookie-consent-known .cookie-consent {
     }
 }
 
+.candidate-vacancies-page .candidate-vacancies__travel {
+    margin: 0 0 0.85rem;
+    font-size: 0.88rem;
+}
+
+.candidate-vacancies-page .candidate-vacancies__travel a {
+    color: var(--brand);
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.candidate-vacancies-page .candidate-vacancies__section {
+    margin: 0 0 1.5rem;
+}
+
+.candidate-vacancies-page .candidate-vacancies__section h2 {
+    margin: 0 0 0.7rem;
+    font-size: 1.05rem;
+}
+
+.candidate-vacancies-page .candidate-vacancies__more {
+    margin: 0.75rem 0 0;
+    font-size: 0.88rem;
+}
+
 .apps-page.panel-page {
     padding-left: 1rem;
     padding-right: 1rem;

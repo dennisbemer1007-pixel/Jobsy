@@ -182,6 +182,8 @@ Alle ingelogde rollen,Klik logo in header.,`/` banenkaart; als werkgever eventue
 Kandidaat,Login met demo-account.,`/home` kandidaat-dashboard (KPI’s sollicitaties/likes/shares/reacties).
 Kandidaat,Bottom-nav **Zoeken**.,`/` banenkaart.
 Kandidaat,Bottom-nav **Bewaard**.,`/candidate/liked`.
+Kandidaat,Bottom-nav **Vacatures**.,`/candidate/vacancies` met **Onlangs bekeken** + overzicht op reistijd/vervoer.
+Kandidaat,Vacatures: open een vacature en terug naar Vacatures.,Onlangs bekeken toont die vacature (localStorage, alleen IDs).
 Kandidaat,Bottom-nav **Sollicitaties**.,`/candidate/applications`.
 Kandidaat,Bottom-nav **Profiel**.,`/candidate/profile` (active ook op `/home`).
 Kandidaat,Account-menu (userknop) **Hoe werkt Lobsy**.,`/candidate/hoe-werkt-lobsy`.

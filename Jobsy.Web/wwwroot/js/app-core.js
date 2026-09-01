@@ -8,6 +8,9 @@ window.jobsyGeo = (function () {
     const SITE_VISIT_KEY = "jobsy.siteVisitClaimed";
     const AGE_KEY = "jobsy.discoveryAge";
     const PROMPT_KEY = "jobsy.locationPrompted";
+    const RECENT_KEY = "jobsy.recentlyViewedVacancies";
+    const RECENT_MAX = 20;
+    const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
     function getStoredOrigin() {
         try {
@@ -236,6 +239,56 @@ window.jobsyGeo = (function () {
         return false;
     }
 
+    function recentStorageKey(userId) {
+        var id = String(userId || "");
+        if (UUID_RE.test(id)) {
+            return RECENT_KEY + ":" + id.toLowerCase();
+        }
+        return RECENT_KEY;
+    }
+
+    function listRecentlyViewed(userId) {
+        try {
+            const raw = localStorage.getItem(recentStorageKey(userId));
+            const parsed = raw ? JSON.parse(raw) : [];
+            if (!Array.isArray(parsed)) {
+                return [];
+            }
+            const ids = [];
+            const seen = {};
+            for (var i = 0; i < parsed.length; i++) {
+                var item = parsed[i];
+                var id = typeof item === "string" ? item : (item && item.id);
+                id = String(id || "").toLowerCase();
+                if (!UUID_RE.test(id) || seen[id]) {
+                    continue;
+                }
+                seen[id] = true;
+                ids.push(id);
+            }
+            return ids;
+        } catch {
+            return [];
+        }
+    }
+
+    function rememberViewedVacancy(vacancyId, userId) {
+        const id = String(vacancyId || "").toLowerCase();
+        if (!UUID_RE.test(id)) {
+            return;
+        }
+        const rest = listRecentlyViewed(userId).filter(function (x) { return x !== id; });
+        rest.unshift(id);
+        const payload = rest.slice(0, RECENT_MAX).map(function (x) {
+            return { id: x, at: new Date().toISOString() };
+        });
+        try {
+            localStorage.setItem(recentStorageKey(userId), JSON.stringify(payload));
+        } catch {
+            // quota / private mode
+        }
+    }
+
     const HIGHLIGHT_SEED_KEY = "jobsy.highlightShuffleSeed";
 
     /// Stable per browser-tab session seed for randomizing featured vacancy order.
@@ -273,7 +326,9 @@ window.jobsyGeo = (function () {
         scrollToId,
         openShare,
         copyText,
-        getOrCreateHighlightSeed
+        getOrCreateHighlightSeed,
+        listRecentlyViewed,
+        rememberViewedVacancy
     };
 })();
 

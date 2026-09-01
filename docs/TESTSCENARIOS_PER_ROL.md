@@ -257,13 +257,15 @@ Voer deze set **eenmaal per rol** uit (Kandidaat, Filiaalmanager, Regiomanager, 
 
 ## 3. Kandidaat
 
-Account: `kandidaat@jobsy.local` / `Jobsy123!`. Bottom-nav: Zoeken · Bewaard · Sollicitaties · Profiel. Hoe werkt Lobsy staat in het account-menu (userknop). Geen TokenWalletChip. Extra accounts: `kandidaat.denhaag@jobsy.local`, `kandidaat.ver@jobsy.local` (reistijd/vangnet).
+Account: `kandidaat@jobsy.local` / `Jobsy123!`. Bottom-nav: Zoeken · Bewaard · Vacatures · Sollicitaties · Profiel. Hoe werkt Lobsy staat in het account-menu (userknop). Geen TokenWalletChip. Extra accounts: `kandidaat.denhaag@jobsy.local`, `kandidaat.ver@jobsy.local` (reistijd/vangnet).
 
 | Rol | Testscenario | Verwacht resultaat |
 |-----|--------------|--------------------|
 | Kandidaat | Login met demo-account. | `/home` kandidaat-dashboard (KPI’s sollicitaties/likes/shares/reacties). |
 | Kandidaat | Bottom-nav **Zoeken**. | `/` banenkaart. |
 | Kandidaat | Bottom-nav **Bewaard**. | `/candidate/liked`. |
+| Kandidaat | Bottom-nav **Vacatures**. | `/candidate/vacancies` met **Onlangs bekeken** + overzicht op reistijd/vervoer. |
+| Kandidaat | Vacatures: open een vacature en terug naar Vacatures. | Onlangs bekeken toont die vacature (localStorage, alleen IDs). |
 | Kandidaat | Bottom-nav **Sollicitaties**. | `/candidate/applications`. |
 | Kandidaat | Bottom-nav **Profiel**. | `/candidate/profile` (active ook op `/home`). |
 | Kandidaat | Account-menu (userknop) **Hoe werkt Lobsy**. | `/candidate/hoe-werkt-lobsy`. |

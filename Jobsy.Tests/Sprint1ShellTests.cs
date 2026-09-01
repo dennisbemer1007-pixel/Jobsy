@@ -110,17 +110,24 @@ public class RoleNavCatalogTests
     }
 
     [Fact]
-    public void ForUser_candidate_gets_search_saved_applications_profile()
+    public void ForUser_candidate_gets_search_saved_vacancies_applications_profile()
     {
         var identity = new ClaimsIdentity([new Claim(ClaimTypes.Role, JobsyRoles.Candidate)], "test");
         var user = new ClaimsPrincipal(identity);
         var items = RoleNavCatalog.ForUser(user);
-        Assert.Equal(4, items.Count);
-        Assert.Contains(items, i => i.Href == "/");
+        Assert.Equal(5, items.Count);
+        Assert.Equal(
+            new[]
+            {
+                "/",
+                "/candidate/liked",
+                "/candidate/vacancies",
+                "/candidate/applications",
+                "/candidate/profile"
+            },
+            items.Select(i => i.Href));
+        Assert.Equal("Nav.Vacancies", items[2].TitleKey);
         Assert.DoesNotContain(items, i => i.Href == "/candidate/hoe-werkt-lobsy");
-        Assert.Contains(items, i => i.Href == "/candidate/liked");
-        Assert.Contains(items, i => i.Href == "/candidate/applications");
-        Assert.Contains(items, i => i.Href == "/candidate/profile");
         Assert.DoesNotContain(items, i => i.Href == "/home");
         var saved = items.First(i => i.Href == "/candidate/liked");
         Assert.Contains("/candidate/shared", saved.ExtraActivePaths ?? []);
@@ -166,6 +173,7 @@ public class RoleNavCatalogTests
         var items = RoleNavCatalog.ForUser(user);
         Assert.DoesNotContain(items, i => i.Href == "/hoe-werkt-lobsy");
         Assert.DoesNotContain(items, i => i.Href == "/candidate/hoe-werkt-lobsy");
+        Assert.DoesNotContain(items, i => i.Href == "/candidate/vacancies");
         Assert.DoesNotContain(items, i => i.TitleKey == "Nav.HowLobsyWorks");
         Assert.Equal("/hoe-werkt-lobsy", RoleNavCatalog.HowLobsyHrefFor(user));
     }
@@ -179,6 +187,7 @@ public class RoleNavCatalogTests
         var user = new ClaimsPrincipal(identity);
         var items = RoleNavCatalog.ForUser(user);
         Assert.Contains(items, i => i.Href == "/candidate/applications");
+        Assert.DoesNotContain(items, i => i.Href == "/candidate/vacancies");
         Assert.DoesNotContain(items, i => i.TitleKey == "Nav.HowLobsyWorks");
         Assert.Equal("/hoe-werkt-lobsy", RoleNavCatalog.HowLobsyHrefFor(user));
     }
