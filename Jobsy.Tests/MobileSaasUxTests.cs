@@ -366,9 +366,13 @@ public class MobileSaasUxTests
 
         var nav = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/Components/Layout/BottomNav.razor"));
         Assert.Contains("bottom-nav__item--assistant", nav);
-        Assert.Contains("NavIcons.Assistant", nav);
+        Assert.Contains("bottom-nav--assistant", nav);
+        Assert.Contains("ClusterAroundAssistant", nav);
+        Assert.Contains("UseMascot=\"true\"", nav);
+        Assert.Contains("bottom-nav__orb", nav);
         Assert.Contains("AssistantChatHost.IsAvailableFor", nav);
         Assert.Contains("aria-expanded=\"@(_assistantOpen ? \"true\" : \"false\")\"", nav);
+        Assert.Contains("aria-expanded=\"@(_moreOpen ? \"true\" : \"false\")\"", nav);
         Assert.DoesNotContain("aria-expanded=\"@_assistantOpen\"", nav);
 
         var feedback = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/Components/Feedback/FeedbackWidget.razor"));
@@ -382,6 +386,9 @@ public class MobileSaasUxTests
         Assert.Contains(".lobsy-assistant__fab {\n    display: none !important;", css);
         Assert.Contains("button.bottom-nav__item {", css);
         Assert.Contains(".bottom-nav__item--assistant {", css);
+        Assert.Contains(".bottom-nav--assistant {", css);
+        Assert.Contains("grid-template-columns: repeat(7, minmax(0, 1fr));", css);
+        Assert.Contains(".bottom-nav__orb {", css);
         Assert.Contains(".pb-28 { padding-bottom: 7rem; }", css);
         Assert.Contains(".overflow-x-hidden { overflow-x: hidden; }", css);
 

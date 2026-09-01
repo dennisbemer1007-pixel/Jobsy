@@ -58,7 +58,9 @@ public class LocalizationTests
             "Transport.Verb.Bike",
             "Help.Purpose",
             "Education.None",
-            "Common.Close"
+            "Common.Close",
+            "Nav.More",
+            "Nav.Assistant"
         ];
 
         foreach (var key in sampleKeys)

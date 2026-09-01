@@ -7627,24 +7627,52 @@ button.bottom-nav__item {
 
 .bottom-nav__item--assistant {
     color: var(--brand);
+    position: relative;
+    z-index: 2;
+    width: 3.85rem;
+    min-width: 3.85rem;
+    max-width: 3.85rem;
+    height: 3.85rem;
+    margin: -1.35rem auto 0.1rem;
+    padding: 0;
+    border-radius: 999px;
+    background: transparent;
 }
 
-.bottom-nav__item--assistant .bottom-nav__icon {
-    width: 2rem;
-    height: 2rem;
-    border-radius: 999px;
-    background: color-mix(in srgb, var(--accent-soft) 85%, var(--surface));
-    color: var(--brand);
+.bottom-nav__item--assistant:hover {
+    background: transparent;
 }
 
 .bottom-nav__item--assistant.is-open {
-    background: var(--accent-soft);
+    background: transparent;
     color: var(--brand);
 }
 
-.bottom-nav__item--assistant.is-open .bottom-nav__icon {
-    background: var(--accent);
-    color: #fff;
+.bottom-nav__orb {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 3.65rem;
+    height: 3.65rem;
+    border-radius: 999px;
+    background: linear-gradient(180deg, var(--pearl-shine), var(--coral-soft));
+    border: 3px solid var(--surface);
+    box-shadow:
+        0 0 0 2px color-mix(in srgb, var(--coral) 72%, var(--brand) 28%),
+        0 8px 18px rgba(15, 45, 92, 0.22);
+    overflow: hidden;
+}
+
+.bottom-nav__item--assistant.is-open .bottom-nav__orb {
+    box-shadow:
+        0 0 0 2px var(--brand),
+        0 8px 20px rgba(15, 45, 92, 0.3);
+}
+
+.bottom-nav__mascot,
+.bottom-nav__item--assistant .lobsy-logo {
+    width: 2.85rem;
+    height: 2.85rem;
 }
 
 .bottom-nav__icon {
@@ -7696,6 +7724,127 @@ button.bottom-nav__item {
     .bottom-nav__label {
         display: block !important;
     }
+}
+
+.bottom-nav--assistant {
+    display: grid;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    align-items: end;
+    gap: 0;
+    padding: 1.15rem 0.28rem 0.35rem;
+    padding-bottom: max(0.35rem, env(safe-area-inset-bottom));
+    overflow: visible;
+    overflow-x: visible;
+}
+
+.bottom-nav__cluster {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    align-items: stretch;
+    min-width: 0;
+    position: relative;
+    z-index: 1;
+}
+
+.bottom-nav__cluster--left {
+    grid-column: 1 / 4;
+}
+
+.bottom-nav__center {
+    grid-column: 4 / 5;
+    display: flex;
+    justify-content: center;
+    align-items: flex-end;
+    position: relative;
+    z-index: 2;
+    min-width: 0;
+}
+
+.bottom-nav__cluster--right {
+    grid-column: 5 / 8;
+}
+
+.bottom-nav--assistant .bottom-nav__item:not(.bottom-nav__item--assistant) {
+    min-width: 0;
+    max-width: none;
+    flex: 1 1 0;
+    padding: 0.32rem 0.1rem;
+}
+
+.bottom-nav--assistant .bottom-nav__item--assistant {
+    width: 3.85rem;
+    min-width: 3.85rem;
+    max-width: 3.85rem;
+    height: 3.85rem;
+    padding: 0;
+    flex: 0 0 auto;
+}
+
+.bottom-nav--assistant .bottom-nav__label {
+    font-size: 0.62rem;
+}
+
+.bottom-nav__slot {
+    min-width: 0;
+}
+
+.bottom-nav__more {
+    position: relative;
+    display: flex;
+    min-width: 0;
+}
+
+.bottom-nav__more .bottom-nav__item {
+    width: 100%;
+}
+
+.bottom-nav__more-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    cursor: default;
+}
+
+.bottom-nav__more-panel {
+    position: absolute;
+    right: 0;
+    bottom: calc(100% + 0.45rem);
+    z-index: 3;
+    min-width: 12.5rem;
+    max-width: min(18rem, 86vw);
+    padding: 0.35rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    box-shadow: var(--shadow-lg);
+}
+
+html[dir="rtl"] .bottom-nav__more-panel,
+.app-shell[dir="rtl"] .bottom-nav__more-panel {
+    right: auto;
+    left: 0;
+}
+
+.bottom-nav__more-link {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.55rem 0.65rem;
+    border-radius: 8px;
+    color: var(--text);
+    font-size: 0.82rem;
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.bottom-nav__more-link:hover,
+.bottom-nav__more-link.is-active {
+    background: var(--accent-soft);
+    color: var(--brand);
 }
 
 /* Bedrijfsmanager: hide desktop-only org admin from mobile/PWA bottom-nav */
