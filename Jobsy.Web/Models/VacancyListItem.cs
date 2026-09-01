@@ -295,6 +295,7 @@ public sealed class CandidateEngagementItem
     public DateTime CreatedAt { get; set; }
     public string? Channel { get; set; }
     public string? ImageUrl { get; set; }
+    public string? CompanyLogoUrl { get; set; }
 }
 
 public sealed class VacancyMapViewResponse

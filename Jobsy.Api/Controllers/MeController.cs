@@ -443,7 +443,8 @@ public class MeController : ControllerBase
                 l.Vacancy.Company.Name,
                 l.CreatedAt,
                 null,
-                l.Vacancy.ImageUrl))
+                l.Vacancy.ImageUrl,
+                l.Vacancy.Company.LogoUrl))
             .ToListAsync(cancellationToken);
 
         return Ok(await TranslateEngagementTitlesAsync(items, user, cancellationToken));
@@ -469,7 +470,8 @@ public class MeController : ControllerBase
                 s.Vacancy.Company.Name,
                 s.CreatedAt,
                 s.Channel.ToString(),
-                s.Vacancy.ImageUrl))
+                s.Vacancy.ImageUrl,
+                s.Vacancy.Company.LogoUrl))
             .ToListAsync(cancellationToken);
 
         return Ok(await TranslateEngagementTitlesAsync(items, user, cancellationToken));

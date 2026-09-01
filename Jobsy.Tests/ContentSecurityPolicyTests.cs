@@ -21,6 +21,7 @@ public class ContentSecurityPolicyTests
         Assert.NotNull(imgSrc);
         Assert.DoesNotContain("https:", imgSrc.Replace(JobsyContentSecurityPolicy.Picsum, "", StringComparison.Ordinal)
             .Replace(JobsyContentSecurityPolicy.PicsumFastly, "", StringComparison.Ordinal)
+            .Replace(JobsyContentSecurityPolicy.PicsumI, "", StringComparison.Ordinal)
             .Replace(JobsyContentSecurityPolicy.OpenFreeMap, "", StringComparison.Ordinal));
         Assert.Contains(JobsyContentSecurityPolicy.Picsum, imgSrc);
         Assert.Contains(JobsyContentSecurityPolicy.OpenFreeMap, imgSrc);

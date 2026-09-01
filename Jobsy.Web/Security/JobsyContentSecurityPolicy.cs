@@ -12,6 +12,7 @@ public static class JobsyContentSecurityPolicy
     public const string OpenFreeMap = "https://tiles.openfreemap.org";
     public const string Picsum = "https://picsum.photos";
     public const string PicsumFastly = "https://fastly.picsum.photos";
+    public const string PicsumI = "https://i.picsum.photos";
 
     public static string ForWeb(string nonce)
     {
@@ -23,7 +24,7 @@ public static class JobsyContentSecurityPolicy
             "frame-ancestors 'none';",
             "frame-src 'self' https://www.youtube-nocookie.com https://www.youtube.com https://player.vimeo.com https://vimeo.com;",
             "object-src 'none';",
-            $"img-src 'self' data: blob: {Picsum} {PicsumFastly} {OpenFreeMap};",
+            $"img-src 'self' data: blob: {Picsum} {PicsumFastly} {PicsumI} {OpenFreeMap};",
             $"font-src 'self' data: {OpenFreeMap};",
             $"style-src-elem 'self' {n};",
             "style-src-attr 'unsafe-inline';",

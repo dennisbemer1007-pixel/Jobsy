@@ -42,4 +42,5 @@ public record CandidateVacancyEngagementDto(
     string CompanyName,
     DateTime CreatedAt,
     string? Channel = null,
-    string? ImageUrl = null);
+    string? ImageUrl = null,
+    string? CompanyLogoUrl = null);
