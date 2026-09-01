@@ -7660,7 +7660,7 @@ button.bottom-nav__item {
     box-shadow:
         0 0 0 2px color-mix(in srgb, var(--coral) 72%, var(--brand) 28%),
         0 8px 18px rgba(15, 45, 92, 0.22);
-    overflow: hidden;
+    overflow: visible;
 }
 
 .bottom-nav__item--assistant.is-open .bottom-nav__orb {
@@ -12850,12 +12850,12 @@ a.apply-flow__secondary {
 }
 
 .lobsy-assistant.has-bottom-nav {
-    bottom: calc(4.5rem + env(safe-area-inset-bottom, 0px));
+    bottom: calc(5.5rem + env(safe-area-inset-bottom, 0px));
 }
 
 @media (max-width: 720px) {
     .lobsy-assistant.has-bottom-nav {
-        bottom: calc(3.5rem + env(safe-area-inset-bottom, 0px));
+        bottom: calc(5.5rem + env(safe-area-inset-bottom, 0px));
     }
 }
 
@@ -13064,7 +13064,7 @@ a.apply-flow__secondary {
     }
 
     .lobsy-assistant.has-bottom-nav {
-        bottom: calc(3.5rem + env(safe-area-inset-bottom, 0px));
+        bottom: calc(5.5rem + env(safe-area-inset-bottom, 0px));
     }
 
     .lobsy-assistant__panel {
@@ -15508,7 +15508,7 @@ html.cookie-consent-known .cookie-consent {
     }
 
     .lobsy-assistant.has-bottom-nav {
-        bottom: calc(4.75rem + env(safe-area-inset-bottom, 0px));
+        bottom: calc(5.5rem + env(safe-area-inset-bottom, 0px));
     }
 }
 
