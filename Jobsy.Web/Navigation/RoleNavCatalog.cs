@@ -126,62 +126,6 @@ public static class RoleNavCatalog
         new("Nav.HowLobsyWorks", "/hoe-werkt-lobsy", NavIcons.Info)
     ];
 
-    /// <summary>
-    /// Splits role nav into two clusters around a centered assistant control.
-    /// Each side has at most <paramref name="slotsPerSide"/> slots; "Hoe werkt Lobsy"
-    /// stays last on the right. Extra items go into <see cref="BottomNavClusters.Overflow"/>.
-    /// </summary>
-    public static BottomNavClusters ClusterAroundAssistant(IReadOnlyList<NavItem> items, int slotsPerSide = 3)
-    {
-        ArgumentNullException.ThrowIfNull(items);
-        slotsPerSide = Math.Max(1, slotsPerSide);
-        if (items.Count == 0)
-        {
-            return BottomNavClusters.Empty;
-        }
-
-        NavItem? how = null;
-        var rest = new List<NavItem>(items.Count);
-        foreach (var item in items)
-        {
-            if (how is null
-                && string.Equals(item.TitleKey, "Nav.HowLobsyWorks", StringComparison.Ordinal))
-            {
-                how = item;
-                continue;
-            }
-
-            rest.Add(item);
-        }
-
-        var leftCount = Math.Min(slotsPerSide, rest.Count);
-        var left = rest.GetRange(0, leftCount);
-        var leftover = rest.Count == leftCount
-            ? new List<NavItem>()
-            : rest.GetRange(leftCount, rest.Count - leftCount);
-        var rightSlots = how is null ? slotsPerSide : slotsPerSide - 1;
-
-        if (leftover.Count <= rightSlots)
-        {
-            if (how is not null)
-            {
-                leftover.Add(how);
-            }
-
-            return new BottomNavClusters(left, leftover, []);
-        }
-
-        var shown = Math.Max(0, rightSlots - 1);
-        var right = leftover.GetRange(0, shown);
-        var overflow = leftover.GetRange(shown, leftover.Count - shown);
-        if (how is not null)
-        {
-            right.Add(how);
-        }
-
-        return new BottomNavClusters(left, right, overflow);
-    }
-
     public static IReadOnlyList<NavItem> ForUser(ClaimsPrincipal? user)
     {
         if (user?.Identity?.IsAuthenticated != true)

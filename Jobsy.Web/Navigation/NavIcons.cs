@@ -7,17 +7,6 @@ public sealed record NavItem(
     string[]? ExtraActivePaths = null,
     bool DesktopOnly = false);
 
-/// <summary>Left/right bottom-nav clusters around the centered Lobsy assistant.</summary>
-public sealed record BottomNavClusters(
-    IReadOnlyList<NavItem> Left,
-    IReadOnlyList<NavItem> Right,
-    IReadOnlyList<NavItem> Overflow)
-{
-    public static readonly BottomNavClusters Empty = new([], [], []);
-
-    public bool HasOverflow => Overflow.Count > 0;
-}
-
 public static class NavIcons
 {
     public const string Home =
@@ -53,9 +42,6 @@ public static class NavIcons
 
     public const string Assistant =
         "<svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.75\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><rect x=\"5\" y=\"8\" width=\"14\" height=\"10\" rx=\"3\"/><path d=\"M12 8V5\"/><circle cx=\"12\" cy=\"4\" r=\"1\" fill=\"currentColor\" stroke=\"none\"/><circle cx=\"9.5\" cy=\"13\" r=\"1\" fill=\"currentColor\" stroke=\"none\"/><circle cx=\"14.5\" cy=\"13\" r=\"1\" fill=\"currentColor\" stroke=\"none\"/><path d=\"M9 16.5h6\"/></svg>";
-
-    public const string More =
-        "<svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.75\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><circle cx=\"12\" cy=\"5\" r=\"1.25\" fill=\"currentColor\" stroke=\"none\"/><circle cx=\"12\" cy=\"12\" r=\"1.25\" fill=\"currentColor\" stroke=\"none\"/><circle cx=\"12\" cy=\"19\" r=\"1.25\" fill=\"currentColor\" stroke=\"none\"/></svg>";
 
     public const string Finance =
         "<svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.75\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><rect x=\"2\" y=\"5\" width=\"20\" height=\"14\" rx=\"2\"/><path d=\"M2 10h20\"/><path d=\"M6 15h2\"/><path d=\"M12 15h2\"/></svg>";

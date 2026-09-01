@@ -7586,26 +7586,6 @@ a.engagement-btn {
     scrollbar-width: thin;
 }
 
-.bottom-nav--pill {
-    bottom: calc(1rem + env(safe-area-inset-bottom, 0px));
-    left: 1rem;
-    right: 1rem;
-    width: auto;
-    max-width: 42rem;
-    margin-inline: auto;
-    border-radius: 999px;
-    background: #fff;
-    border: 1px solid color-mix(in srgb, var(--border) 72%, var(--brand) 28%);
-    box-shadow:
-        0 18px 40px rgba(15, 45, 92, 0.16),
-        0 6px 14px rgba(15, 45, 92, 0.08);
-    padding: 0.4rem 0.55rem;
-    padding-bottom: 0.4rem;
-    overflow: visible;
-    overflow-x: visible;
-    min-height: 4.25rem;
-}
-
 .app-shell.has-bottom-nav .app-main,
 .app-shell:has(.bottom-nav) .app-main {
     padding-bottom: calc(var(--bottom-nav-clearance) + env(safe-area-inset-bottom, 0px));
@@ -7647,55 +7627,24 @@ button.bottom-nav__item {
 
 .bottom-nav__item--assistant {
     color: var(--brand);
-    position: absolute;
-    z-index: 2;
-    top: -1.35rem;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 4.15rem;
-    min-width: 4.15rem;
-    max-width: 4.15rem;
-    height: 4.15rem;
-    margin: 0;
-    padding: 0;
+}
+
+.bottom-nav__item--assistant .bottom-nav__icon {
+    width: 2rem;
+    height: 2rem;
     border-radius: 999px;
-    background: transparent;
-}
-
-.bottom-nav__item--assistant:hover {
-    background: transparent;
-}
-
-.bottom-nav__item--assistant.is-open {
-    background: transparent;
+    background: color-mix(in srgb, var(--accent-soft) 85%, var(--surface));
     color: var(--brand);
 }
 
-.bottom-nav__orb {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 4.05rem;
-    height: 4.05rem;
-    border-radius: 999px;
-    background: #fff;
-    border: 1px solid color-mix(in srgb, var(--border) 65%, var(--brand) 35%);
-    box-shadow:
-        0 12px 24px rgba(15, 45, 92, 0.2),
-        0 2px 6px rgba(15, 45, 92, 0.08);
-    overflow: visible;
+.bottom-nav__item--assistant.is-open {
+    background: var(--accent-soft);
+    color: var(--brand);
 }
 
-.bottom-nav__item--assistant.is-open .bottom-nav__orb {
-    box-shadow:
-        0 0 0 2px var(--brand),
-        0 12px 24px rgba(15, 45, 92, 0.24);
-}
-
-.bottom-nav__mascot,
-.bottom-nav__item--assistant .lobsy-logo {
-    width: 3.15rem;
-    height: 3.15rem;
+.bottom-nav__item--assistant.is-open .bottom-nav__icon {
+    background: var(--accent);
+    color: #fff;
 }
 
 .bottom-nav__icon {
@@ -7747,138 +7696,6 @@ button.bottom-nav__item {
     .bottom-nav__label {
         display: block !important;
     }
-}
-
-.bottom-nav--assistant {
-    display: grid;
-    grid-template-columns: repeat(7, minmax(0, 1fr));
-    align-items: center;
-    gap: 0;
-    padding: 0.4rem 0.45rem;
-    padding-bottom: 0.4rem;
-    overflow: visible;
-    overflow-x: visible;
-}
-
-.bottom-nav__cluster {
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    align-items: stretch;
-    min-width: 0;
-    position: relative;
-    z-index: 1;
-}
-
-.bottom-nav__cluster--left {
-    grid-column: 1 / 4;
-}
-
-.bottom-nav__center {
-    grid-column: 4 / 5;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    position: relative;
-    z-index: 2;
-    min-width: 0;
-    align-self: stretch;
-}
-
-.bottom-nav__cluster--right {
-    grid-column: 5 / 8;
-}
-
-.bottom-nav--assistant .bottom-nav__item:not(.bottom-nav__item--assistant) {
-    min-width: 0;
-    max-width: none;
-    flex: 1 1 0;
-    padding: 0.28rem 0.08rem;
-    border-radius: 999px;
-}
-
-.bottom-nav--assistant .bottom-nav__item--assistant {
-    position: absolute;
-    top: -1.35rem;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 4.15rem;
-    min-width: 4.15rem;
-    max-width: 4.15rem;
-    height: 4.15rem;
-    margin: 0;
-    padding: 0;
-    flex: 0 0 auto;
-}
-
-.bottom-nav--pill .bottom-nav__item:not(.bottom-nav__item--assistant) {
-    border-radius: 999px;
-}
-
-.bottom-nav--assistant .bottom-nav__label {
-    font-size: 0.62rem;
-}
-
-.bottom-nav__slot {
-    min-width: 0;
-}
-
-.bottom-nav__more {
-    position: relative;
-    display: flex;
-    min-width: 0;
-}
-
-.bottom-nav__more .bottom-nav__item {
-    width: 100%;
-}
-
-.bottom-nav__more-backdrop {
-    position: fixed;
-    inset: 0;
-    z-index: 0;
-    margin: 0;
-    padding: 0;
-    border: 0;
-    background: transparent;
-    cursor: default;
-}
-
-.bottom-nav__more-panel {
-    position: absolute;
-    right: 0;
-    bottom: calc(100% + 0.45rem);
-    z-index: 3;
-    min-width: 12.5rem;
-    max-width: min(18rem, 86vw);
-    padding: 0.35rem;
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    box-shadow: var(--shadow-lg);
-}
-
-html[dir="rtl"] .bottom-nav__more-panel,
-.app-shell[dir="rtl"] .bottom-nav__more-panel {
-    right: auto;
-    left: 0;
-}
-
-.bottom-nav__more-link {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    padding: 0.55rem 0.65rem;
-    border-radius: 8px;
-    color: var(--text);
-    font-size: 0.82rem;
-    font-weight: 600;
-    text-decoration: none;
-}
-
-.bottom-nav__more-link:hover,
-.bottom-nav__more-link.is-active {
-    background: var(--accent-soft);
-    color: var(--brand);
 }
 
 /* Bedrijfsmanager: hide desktop-only org admin from mobile/PWA bottom-nav */
@@ -10993,7 +10810,7 @@ html[dir="rtl"] .row-actions-menu__item {
         position: fixed;
         top: auto;
         right: 0.75rem;
-        bottom: calc(6.5rem + env(safe-area-inset-bottom, 0px));
+        bottom: calc(4.5rem + env(safe-area-inset-bottom, 0px));
         left: 0.75rem;
         z-index: 80;
         min-width: 0;
@@ -12884,12 +12701,12 @@ a.apply-flow__secondary {
 }
 
 .lobsy-assistant.has-bottom-nav {
-    bottom: calc(6.75rem + env(safe-area-inset-bottom, 0px));
+    bottom: calc(4.5rem + env(safe-area-inset-bottom, 0px));
 }
 
 @media (max-width: 720px) {
     .lobsy-assistant.has-bottom-nav {
-        bottom: calc(6.75rem + env(safe-area-inset-bottom, 0px));
+        bottom: calc(3.5rem + env(safe-area-inset-bottom, 0px));
     }
 }
 
@@ -13098,7 +12915,7 @@ a.apply-flow__secondary {
     }
 
     .lobsy-assistant.has-bottom-nav {
-        bottom: calc(6.75rem + env(safe-area-inset-bottom, 0px));
+        bottom: calc(3.5rem + env(safe-area-inset-bottom, 0px));
     }
 
     .lobsy-assistant__panel {
@@ -15542,7 +15359,7 @@ html.cookie-consent-known .cookie-consent {
     }
 
     .lobsy-assistant.has-bottom-nav {
-        bottom: calc(6.75rem + env(safe-area-inset-bottom, 0px));
+        bottom: calc(4.75rem + env(safe-area-inset-bottom, 0px));
     }
 }
 
@@ -15748,7 +15565,7 @@ html.cookie-consent-known .cookie-consent {
         position: fixed;
         left: 0;
         right: 0;
-        bottom: calc(6.5rem + env(safe-area-inset-bottom, 0px));
+        bottom: calc(4.75rem + env(safe-area-inset-bottom, 0px));
         z-index: 45;
         margin: 0;
         padding: 0.65rem 1rem calc(0.55rem + env(safe-area-inset-bottom, 0px));
@@ -15767,7 +15584,7 @@ html.cookie-consent-known .cookie-consent {
     display: none;
     position: fixed;
     left: 50%;
-    bottom: calc(6.75rem + env(safe-area-inset-bottom, 0px));
+    bottom: calc(5.5rem + env(safe-area-inset-bottom, 0px));
     transform: translateX(-50%);
     z-index: 10001;
     width: min(22rem, calc(100vw - 1.5rem));

@@ -10,109 +10,49 @@
 @inject AssistantChatHost ChatHost
 @implements IDisposable
 
-@if (_items.Count > 0)
+@if (_entries.Count > 0)
 {
-    <nav class="bottom-nav bottom-nav--pill @(_showAssistant ? "bottom-nav--assistant" : null)" aria-label="@Culture["Nav.Main"]">
-        @if (_showAssistant)
+    <nav class="bottom-nav" aria-label="@Culture["Nav.Main"]">
+        @foreach (var entry in _entries)
         {
-            @if (_moreOpen)
+            if (entry.IsAssistant)
             {
-                <button type="button"
-                        class="bottom-nav__more-backdrop"
-                        tabindex="-1"
-                        aria-label="@Culture["Common.Close"]"
-                        @onclick="CloseMore"></button>
-            }
-            <div class="bottom-nav__cluster bottom-nav__cluster--left">
-                @foreach (var item in _clusters.Left)
-                {
-                    @NavItemLink(item)
-                }
-                @for (var i = 0; i < LeftSpacerCount; i++)
-                {
-                    <span class="bottom-nav__slot" aria-hidden="true"></span>
-                }
-            </div>
-            <div class="bottom-nav__center">
                 <button type="button"
                         class="bottom-nav__item bottom-nav__item--assistant @(_assistantOpen ? "is-open" : null)"
                         title="@Culture["Assistant.Open"]"
                         aria-label="@Culture["Assistant.Open"]"
                         aria-expanded="@(_assistantOpen ? "true" : "false")"
                         @onclick="OpenAssistant">
-                    <span class="bottom-nav__orb" aria-hidden="true">
-                        <LobsyLogo Class="bottom-nav__mascot" Alt="" Animate="true" UseMascot="true" />
+                    <span class="bottom-nav__icon" aria-hidden="true">
+                        @((MarkupString)NavIcons.Assistant)
                     </span>
-                    <span class="visually-hidden">@Culture["Nav.Assistant"]</span>
+                    <span class="bottom-nav__label">@Culture["Nav.Assistant"]</span>
                 </button>
-            </div>
-            <div class="bottom-nav__cluster bottom-nav__cluster--right">
-                @for (var i = 0; i < RightSpacerCount; i++)
-                {
-                    <span class="bottom-nav__slot" aria-hidden="true"></span>
-                }
-                @foreach (var item in RightLeading)
-                {
-                    @NavItemLink(item)
-                }
-                @if (_clusters.HasOverflow)
-                {
-                    <div class="bottom-nav__more @(MoreIsDesktopOnly ? "bottom-nav__item--desktop-only" : null)">
-                        <button type="button"
-                                class="bottom-nav__item @(_moreOpen ? "is-open" : null)"
-                                title="@Culture["Nav.More"]"
-                                aria-label="@Culture["Nav.More"]"
-                                aria-haspopup="menu"
-                                aria-expanded="@(_moreOpen ? "true" : "false")"
-                                @onclick="ToggleMore">
-                            <span class="bottom-nav__icon" aria-hidden="true">
-                                @((MarkupString)NavIcons.More)
-                            </span>
-                            <span class="bottom-nav__label">@Culture["Nav.More"]</span>
-                        </button>
-                        @if (_moreOpen)
-                        {
-                            <div class="bottom-nav__more-panel" role="menu" aria-label="@Culture["Nav.More"]">
-                                @foreach (var item in _clusters.Overflow)
-                                {
-                                    var title = Culture[item.TitleKey];
-                                    var active = RoleNavCatalog.IsActive(item, Navigation.ToBaseRelativePath(Navigation.Uri), _items);
-                                    <a class="bottom-nav__more-link @(active ? "is-active" : null) @(item.DesktopOnly ? "bottom-nav__item--desktop-only" : null)"
-                                       href="@item.Href"
-                                       role="menuitem"
-                                       title="@title"
-                                       data-desktop-only="@(item.DesktopOnly ? "true" : null)"
-                                       aria-current="@(active ? "page" : null)"
-                                       @onclick="CloseMore">
-                                        <span class="bottom-nav__icon" aria-hidden="true">
-                                            @((MarkupString)item.Svg)
-                                        </span>
-                                        <span>@title</span>
-                                    </a>
-                                }
-                            </div>
-                        }
-                    </div>
-                }
-                @if (RightHow is { } how)
-                {
-                    @NavItemLink(how)
-                }
-            </div>
-        }
-        else
-        {
-            @foreach (var item in _items)
+            }
+            else if (entry.Item is { } item)
             {
-                @NavItemLink(item)
+                var title = Culture[item.TitleKey];
+                var active = RoleNavCatalog.IsActive(item, Navigation.ToBaseRelativePath(Navigation.Uri), _items);
+                <a class="bottom-nav__item @(active ? "is-active" : null) @(item.DesktopOnly ? "bottom-nav__item--desktop-only" : null)"
+                   href="@item.Href"
+                   title="@title"
+                   data-desktop-only="@(item.DesktopOnly ? "true" : null)"
+                   aria-current="@(active ? "page" : null)">
+                    <span class="bottom-nav__icon" aria-hidden="true">
+                        @((MarkupString)item.Svg)
+                    </span>
+                    <span class="bottom-nav__label">@title</span>
+                </a>
             }
         }
     </nav>
 }
 
 @code {
+    private sealed record BottomNavEntry(NavItem? Item, bool IsAssistant);
+
     private IReadOnlyList<NavItem> _items = RoleNavCatalog.Anonymous;
-    private BottomNavClusters _clusters = BottomNavClusters.Empty;
+    private List<BottomNavEntry> _entries = [];
     private bool _hasTakeoverActions;
     private bool _salesOnboardingComplete;
     private bool _ambassadeurOnboardingComplete;
@@ -120,42 +60,10 @@
     private bool _roleFlagsLoaded;
     private bool _showAssistant;
     private bool _assistantOpen;
-    private bool _moreOpen;
     private string? _lastRoleFingerprint;
 
     [Parameter]
     public EventCallback<bool> HasItemsChanged { get; set; }
-
-    private IEnumerable<NavItem> RightLeading =>
-        _clusters.Right.Where(i => !string.Equals(i.TitleKey, "Nav.HowLobsyWorks", StringComparison.Ordinal));
-
-    private NavItem? RightHow =>
-        _clusters.Right.FirstOrDefault(i => string.Equals(i.TitleKey, "Nav.HowLobsyWorks", StringComparison.Ordinal));
-
-    private int LeftSpacerCount => Math.Max(0, 3 - _clusters.Left.Count);
-
-    private int RightFilledCount => _clusters.Right.Count + (_clusters.HasOverflow ? 1 : 0);
-
-    private int RightSpacerCount => Math.Max(0, 3 - RightFilledCount);
-
-    private bool MoreIsDesktopOnly =>
-        _clusters.HasOverflow && _clusters.Overflow.All(i => i.DesktopOnly);
-
-    private RenderFragment NavItemLink(NavItem item) => __builder =>
-    {
-        var title = Culture[item.TitleKey];
-        var active = RoleNavCatalog.IsActive(item, Navigation.ToBaseRelativePath(Navigation.Uri), _items);
-        <a class="bottom-nav__item @(active ? "is-active" : null) @(item.DesktopOnly ? "bottom-nav__item--desktop-only" : null)"
-           href="@item.Href"
-           title="@title"
-           data-desktop-only="@(item.DesktopOnly ? "true" : null)"
-           aria-current="@(active ? "page" : null)">
-            <span class="bottom-nav__icon" aria-hidden="true">
-                @((MarkupString)item.Svg)
-            </span>
-            <span class="bottom-nav__label">@title</span>
-        </a>
-    };
 
     protected override async Task OnInitializedAsync()
     {
@@ -178,16 +86,7 @@
         });
 
     private void OpenAssistant()
-    {
-        _moreOpen = false;
-        ChatHost.RequestToggle();
-    }
-
-    private void ToggleMore()
-        => _moreOpen = !_moreOpen;
-
-    private void CloseMore()
-        => _moreOpen = false;
+        => ChatHost.RequestToggle();
 
     private async Task OnNavRefreshRequestedAsync()
     {
@@ -197,7 +96,6 @@
 
     private async void OnLocationChanged(object? sender, LocationChangedEventArgs e)
     {
-        _moreOpen = false;
         // Active styling is URI-based; avoid re-hitting takeover/sales APIs on every nav.
         await RefreshItemsAsync(forceRoleApis: false);
         await InvokeAsync(StateHasChanged);
@@ -287,22 +185,22 @@
 
         var previousCount = _items.Count;
         _items = catalog;
-        RebuildClusters();
+        RebuildEntries();
         if (previousCount != _items.Count || HasItemsChanged.HasDelegate)
         {
             await HasItemsChanged.InvokeAsync(_items.Count > 0);
         }
     }
 
-    private void RebuildClusters()
+    private void RebuildEntries()
     {
-        _clusters = _showAssistant && _items.Count > 0
-            ? RoleNavCatalog.ClusterAroundAssistant(_items)
-            : BottomNavClusters.Empty;
-        if (!_clusters.HasOverflow)
+        var entries = _items.Select(i => new BottomNavEntry(i, false)).ToList();
+        if (_showAssistant && _items.Count > 0)
         {
-            _moreOpen = false;
+            entries.Insert(_items.Count / 2, new BottomNavEntry(null, true));
         }
+
+        _entries = entries;
     }
 
     private async Task RefreshTakeoverFlagAsync()

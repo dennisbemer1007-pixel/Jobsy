@@ -260,46 +260,6 @@ public class RoleNavCatalogTests
         Assert.DoesNotContain(items, i => i.Href == "/intermediary/batch");
         Assert.DoesNotContain(items, i => i.TitleKey == "Nav.BatchTool");
     }
-
-    [Fact]
-    public void ClusterAroundAssistant_candidate_puts_three_left_and_how_on_the_right()
-    {
-        var clusters = RoleNavCatalog.ClusterAroundAssistant(RoleNavCatalog.Candidate);
-
-        Assert.Equal(new[] { "Nav.Search", "Nav.Saved", "Nav.MyApplications" }, clusters.Left.Select(i => i.TitleKey));
-        Assert.Equal(new[] { "Nav.Profile", "Nav.HowLobsyWorks" }, clusters.Right.Select(i => i.TitleKey));
-        Assert.Empty(clusters.Overflow);
-        Assert.False(clusters.HasOverflow);
-    }
-
-    [Fact]
-    public void ClusterAroundAssistant_admin_splits_six_items_evenly()
-    {
-        var clusters = RoleNavCatalog.ClusterAroundAssistant(RoleNavCatalog.Admin);
-
-        Assert.Equal(3, clusters.Left.Count);
-        Assert.Equal(3, clusters.Right.Count);
-        Assert.Empty(clusters.Overflow);
-        Assert.Equal("Nav.Home", clusters.Left[0].TitleKey);
-        Assert.Equal("Nav.Settings", clusters.Right[^1].TitleKey);
-    }
-
-    [Fact]
-    public void ClusterAroundAssistant_keeps_how_lobsy_rightmost_and_overflows_the_rest()
-    {
-        var clusters = RoleNavCatalog.ClusterAroundAssistant(RoleNavCatalog.Enterprise);
-
-        Assert.Equal(3, clusters.Left.Count);
-        Assert.Equal("Nav.HowLobsyWorks", clusters.Right[^1].TitleKey);
-        Assert.True(clusters.HasOverflow);
-        Assert.Contains(clusters.Overflow, i => i.Href == "/employer/organization" && i.DesktopOnly);
-        Assert.True(clusters.Left.Count + clusters.Right.Count <= 6);
-        Assert.DoesNotContain(clusters.Left.Concat(clusters.Right), i => i.TitleKey == "Nav.More");
-    }
-
-    [Fact]
-    public void ClusterAroundAssistant_empty_catalog_is_empty()
-        => Assert.Equal(BottomNavClusters.Empty, RoleNavCatalog.ClusterAroundAssistant([]));
 }
 
 public class RoleClaimMatchingTests
