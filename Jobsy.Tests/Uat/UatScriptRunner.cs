@@ -93,7 +93,19 @@ public static class UatScriptRunner
 
         if (Contains(blob, "Lobsy-assistent", "Assistent"))
         {
-            Assert.True(File.Exists(Path.Combine(root, "Jobsy.Web/Components/LobsyAssistantChat.razor")));
+            var assistant = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/LobsyAssistantChat.razor"));
+            Assert.Contains("lobsy-assistant-tab", assistant, StringComparison.Ordinal);
+            Assert.DoesNotContain("lobsy-assistant__fab", assistant, StringComparison.Ordinal);
+        }
+
+        if (Contains(blob, "Hoe werkt Lobsy")
+            && Contains(blob, "account-menu", "Account-menu", "userknop"))
+        {
+            var header = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Layout/AuthHeader.razor"));
+            Assert.Contains("HowLobsyHrefFor", header, StringComparison.Ordinal);
+            Assert.Contains("Nav.HowLobsyWorks", header, StringComparison.Ordinal);
+            var nav = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Layout/BottomNav.razor"));
+            Assert.DoesNotContain("Nav.HowLobsyWorks", nav, StringComparison.Ordinal);
         }
 
         if (Contains(blob, "ShareModal", "WhatsApp", "Kopieer link") && Contains(blob, "Delen", "share", "Share"))
@@ -214,11 +226,16 @@ public static class UatScriptRunner
         }
 
         var guide = HowLobsyRoleGuides.ForRole(jobsyRole);
+        var howHref = RoleNavCatalog.HowLobsyHrefFor(PrincipalFor(jobsyRole));
         if (string.Equals(jobsyRole, JobsyRoles.Admin, StringComparison.Ordinal))
         {
             Assert.Null(guide);
+            Assert.Null(howHref);
             return;
         }
+
+        Assert.False(string.IsNullOrWhiteSpace(howHref));
+        AssertRouteExistsOrAuthEndpoint(howHref!, $"{scenario.Id}: how-to account-menu href");
 
         if (guide is null)
         {

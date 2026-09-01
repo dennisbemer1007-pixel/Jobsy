@@ -23,8 +23,7 @@ public static class RoleNavCatalog
         new("Nav.Search", "/", NavIcons.Search),
         new("Nav.Saved", "/candidate/liked", NavIcons.Liked, ["/candidate/shared"]),
         new("Nav.MyApplications", "/candidate/applications", NavIcons.Applications),
-        new("Nav.Profile", "/candidate/profile", NavIcons.Profile, ["/home"]),
-        new("Nav.HowLobsyWorks", "/candidate/hoe-werkt-lobsy", NavIcons.Info)
+        new("Nav.Profile", "/candidate/profile", NavIcons.Profile, ["/home"])
     ];
 
     public static readonly NavItem MyApplicationsReadOnly =
@@ -51,8 +50,7 @@ public static class RoleNavCatalog
                 "/employer/company",
                 "/employer/csv-import"
             ],
-            DesktopOnly: true),
-        new("Nav.HowLobsyWorks", "/hoe-werkt-lobsy", NavIcons.Info)
+            DesktopOnly: true)
     ];
 
     public static readonly NavItem CsvImport =
@@ -75,8 +73,7 @@ public static class RoleNavCatalog
         new("Nav.Home", "/home", NavIcons.Home),
         new("Nav.JobMap", "/", NavIcons.Map),
         new("Nav.Vacancies", "/employer/vacancies", NavIcons.Vacancies, ["/regional", "/branch/applicants"]),
-        new("Nav.MyBranches", "/regional/branches", NavIcons.Branches, ["/employer/takeovers"]),
-        new("Nav.HowLobsyWorks", "/hoe-werkt-lobsy", NavIcons.Info)
+        new("Nav.MyBranches", "/regional/branches", NavIcons.Branches, ["/employer/takeovers"])
     ];
 
     public static readonly NavItem[] Branch =
@@ -87,8 +84,7 @@ public static class RoleNavCatalog
         new("Nav.Applications", "/branch/applicants", NavIcons.Applications),
         new("Nav.MyTokens", "/branch/tokens", NavIcons.Tokens),
         new("Nav.CompanyDetails", "/employer/company", NavIcons.Companies),
-        new("Nav.Takeovers", "/employer/takeovers", NavIcons.Branches),
-        new("Nav.HowLobsyWorks", "/hoe-werkt-lobsy", NavIcons.Info)
+        new("Nav.Takeovers", "/employer/takeovers", NavIcons.Branches)
     ];
 
     public static readonly NavItem Takeovers = new("Nav.Takeovers", "/employer/takeovers", NavIcons.Branches);
@@ -100,8 +96,7 @@ public static class RoleNavCatalog
         new("Nav.Vacancies", "/employer/vacancies", NavIcons.Vacancies, ["/branch/vacancies/new", "/branch/applicants"]),
         new("Nav.Clients", "/intermediary", NavIcons.Companies),
         new("Nav.Team", "/intermediary/team", NavIcons.Users),
-        new("Nav.Tokens", "/employer/tokens", NavIcons.Tokens),
-        new("Nav.HowLobsyWorks", "/hoe-werkt-lobsy", NavIcons.Info)
+        new("Nav.Tokens", "/employer/tokens", NavIcons.Tokens)
     ];
 
     public static readonly NavItem BalanceAndTracking =
@@ -113,8 +108,7 @@ public static class RoleNavCatalog
         new("Nav.SalesToolkit", "/salesmanager/toolkit", NavIcons.Shared),
         new("Nav.SalesReferrals", "/salesmanager/referrals", NavIcons.Users),
         new("Nav.Onboarding", "/salesmanager/onboarding", NavIcons.Users),
-        new("Nav.Invoices", "/salesmanager/invoices", NavIcons.Tokens),
-        new("Nav.HowLobsyWorks", "/hoe-werkt-lobsy", NavIcons.Info)
+        new("Nav.Invoices", "/salesmanager/invoices", NavIcons.Tokens)
     ];
 
     public static readonly NavItem[] Ambassadeur =
@@ -122,8 +116,7 @@ public static class RoleNavCatalog
         new("Nav.Home", "/home", NavIcons.Home, ["/ambassadeur"]),
         new("Nav.AmbassadeurToolkit", "/ambassadeur/toolkit", NavIcons.Shared),
         new("Nav.AmbassadeurFinance", "/ambassadeur/finance", NavIcons.Tokens),
-        new("Nav.Onboarding", "/ambassadeur/onboarding", NavIcons.Users),
-        new("Nav.HowLobsyWorks", "/hoe-werkt-lobsy", NavIcons.Info)
+        new("Nav.Onboarding", "/ambassadeur/onboarding", NavIcons.Users)
     ];
 
     public static IReadOnlyList<NavItem> ForUser(ClaimsPrincipal? user)
@@ -140,69 +133,66 @@ public static class RoleNavCatalog
 
         if (RoleClaimMatching.HasRole(user, JobsyRoles.SalesManager))
         {
-            return WithHowLobsyLast(SalesManager);
+            return SalesManager;
         }
 
         if (RoleClaimMatching.HasRole(user, JobsyRoles.Ambassadeur))
         {
-            return WithHowLobsyLast(Ambassadeur);
+            return Ambassadeur;
         }
 
         if (RoleClaimMatching.HasRole(user, JobsyRoles.Candidate))
         {
-            return WithHowLobsyLast(Candidate);
+            return Candidate;
         }
 
         if (RoleClaimMatching.HasRole(user, JobsyRoles.EnterpriseManager))
         {
-            return WithHowLobsyLast(WithSalesReferralNav(WithOptionalCandidateApplications(Enterprise, user), user));
+            return WithSalesReferralNav(WithOptionalCandidateApplications(Enterprise, user), user);
         }
 
         if (RoleClaimMatching.HasRole(user, JobsyRoles.RegionalManager))
         {
-            return WithHowLobsyLast(WithOptionalCandidateApplications(Regional, user));
+            return WithOptionalCandidateApplications(Regional, user);
         }
 
         if (RoleClaimMatching.HasRole(user, JobsyRoles.BranchManager))
         {
-            return WithHowLobsyLast(WithSalesReferralNav(WithOptionalCandidateApplications(Branch, user), user));
+            return WithSalesReferralNav(WithOptionalCandidateApplications(Branch, user), user);
         }
 
         if (RoleClaimMatching.HasRole(user, JobsyRoles.Intermediary))
         {
-            return WithHowLobsyLast(WithOptionalCandidateApplications(Intermediary, user));
+            return WithOptionalCandidateApplications(Intermediary, user);
         }
 
         return Anonymous;
     }
 
     /// <summary>
-    /// Keeps "Hoe werkt Lobsy" as the rightmost bottom-nav item after optional nav appends.
+    /// Role-specific “Hoe werkt Lobsy” page, shown in the account menu rather than bottom-nav.
     /// </summary>
-    internal static IReadOnlyList<NavItem> WithHowLobsyLast(IReadOnlyList<NavItem> items)
+    public static string? HowLobsyHrefFor(ClaimsPrincipal? user)
     {
-        NavItem? how = null;
-        List<NavItem>? rest = null;
-        foreach (var item in items)
+        if (user?.Identity?.IsAuthenticated != true
+            || RoleClaimMatching.HasRole(user, JobsyRoles.Admin))
         {
-            if (string.Equals(item.TitleKey, "Nav.HowLobsyWorks", StringComparison.Ordinal))
-            {
-                how = item;
-                continue;
-            }
-
-            rest ??= new List<NavItem>(items.Count);
-            rest.Add(item);
+            return null;
         }
 
-        if (how is null)
+        if (RoleClaimMatching.HasRole(user, JobsyRoles.Candidate))
         {
-            return items;
+            return "/candidate/hoe-werkt-lobsy";
         }
 
-        rest ??= [];
-        rest.Add(how);
-        return rest;
+        if (RoleClaimMatching.HasRole(user, JobsyRoles.SalesManager)
+            || RoleClaimMatching.HasRole(user, JobsyRoles.Ambassadeur)
+            || RoleClaimMatching.HasAnyRole(user, JobsyRoles.EmployerRoles))
+        {
+            return "/hoe-werkt-lobsy";
+        }
+
+        return null;
     }
 
     private static IReadOnlyList<NavItem> WithSalesReferralNav(

@@ -7625,28 +7625,6 @@ button.bottom-nav__item {
     cursor: pointer;
 }
 
-.bottom-nav__item--assistant {
-    color: var(--brand);
-}
-
-.bottom-nav__item--assistant .bottom-nav__icon {
-    width: 2rem;
-    height: 2rem;
-    border-radius: 999px;
-    background: color-mix(in srgb, var(--accent-soft) 85%, var(--surface));
-    color: var(--brand);
-}
-
-.bottom-nav__item--assistant.is-open {
-    background: var(--accent-soft);
-    color: var(--brand);
-}
-
-.bottom-nav__item--assistant.is-open .bottom-nav__icon {
-    background: var(--accent);
-    color: #fff;
-}
-
 .bottom-nav__icon {
     display: inline-flex;
     align-items: center;
@@ -14300,6 +14278,69 @@ html.cookie-consent-known .cookie-consent {
 .provider-btn--ghost {
     background: transparent;
     font-weight: 500;
+}
+
+.lobsy-assistant-tab {
+    position: fixed;
+    top: 26%;
+    right: 0;
+    left: auto;
+    bottom: auto;
+    z-index: 54;
+    transform: translateY(-50%);
+}
+
+.lobsy-assistant-tab.has-bottom-nav {
+    top: 22%;
+}
+
+.lobsy-assistant-tab.is-open {
+    visibility: hidden;
+}
+
+@media (max-width: 720px) {
+    .lobsy-assistant-tab.has-bottom-nav {
+        top: 20%;
+    }
+}
+
+.lobsy-assistant-tab__btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    writing-mode: vertical-rl;
+    transform: rotate(180deg);
+    padding: 0.7rem 0.38rem;
+    border: 1px solid var(--border);
+    border-right: none;
+    border-radius: 10px 0 0 10px;
+    background: color-mix(in srgb, var(--surface) 94%, transparent);
+    color: var(--text);
+    font: inherit;
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    box-shadow: -2px 2px 12px color-mix(in srgb, var(--brand) 12%, transparent);
+    min-height: 5.75rem;
+    cursor: pointer;
+}
+
+.lobsy-assistant-tab__btn:hover,
+.lobsy-assistant-tab__btn:focus-visible {
+    background: var(--surface);
+}
+
+.lobsy-assistant-tab__icon {
+    display: inline-flex;
+    width: 1.35rem;
+    height: 1.35rem;
+    transform: rotate(180deg);
+}
+
+.lobsy-assistant-tab .lobsy-logo,
+.lobsy-assistant-tab__mascot {
+    width: 1.35rem;
+    height: 1.35rem;
 }
 
 .feedback-widget {

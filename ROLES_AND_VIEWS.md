@@ -12,6 +12,8 @@ Route- en capability-matrix per rol. Entry: **`/` = banenkaart**, **`/home` = ro
 | Logout | → `/` |
 | Auth | Entra + Google + lokale/demo + registratie-activatie |
 | Tokens (werkgevers) | `TokenWalletChip` in header → role-specifieke tokens-URL |
+| Hoe werkt Lobsy | Account-menu onder de userknop (niet Admin; gasten hebben geen account-menu) |
+| Lobsy-assistent | Rechterrand-tab, zelfde patroon als Feedback (niet gast, niet Ambassadeur) |
 | Gedeelde UI | `MetricTile`, `MetricsCategoryBoard` (Bento), `VacancyPerformancePanel`, `DrilldownGrid`, `ShareModal`, `PublishOptionsDialog`, `BottomNav` |
 | Dashboard layout | Compacte periode-scroller · categorie-tabs · Bento-grid met featured KPI, sparklines/ringen · Top/Flop 3 vacatures (employer/admin) |
 
@@ -22,7 +24,7 @@ Publiek (naast banenkaart): `/vacancies/{id}`, `/{kvknummer}` (ondernemer), `/{k
 ## 1. Candidate
 *Doel: snel een baan vinden op reistijd/vervoer.*
 
-**BottomNav:** Zoeken · Bewaard · Sollicitaties · Profiel · Hoe werkt Lobsy
+**BottomNav:** Zoeken · Bewaard · Sollicitaties · Profiel
 
 | Route | Inhoud |
 |-------|--------|
@@ -38,7 +40,7 @@ Publiek (naast banenkaart): `/vacancies/{id}`, `/{kvknummer}` (ondernemer), `/{k
 ## 2. BranchManager
 *Doel: lokaal werven voor één vestiging.*
 
-**BottomNav:** Home · Banenkaart · Vacatures · Sollicitaties · Mijn tokens · Bedrijfsgegevens · Overnames · Hoe werkt Lobsy
+**BottomNav:** Home · Banenkaart · Vacatures · Sollicitaties · Mijn tokens · Bedrijfsgegevens · Overnames
 
 | Route | Inhoud |
 |-------|--------|
@@ -57,7 +59,7 @@ Onvoldoende tokens bij publiceren → `PendingApproval` (EM/Admin keurt goed).
 ## 3. RegionalManager
 *Doel: overzicht over vestigingen in de regio.*
 
-**BottomNav:** Home · Banenkaart · Vacatures · Mijn vestigingen · Hoe werkt Lobsy
+**BottomNav:** Home · Banenkaart · Vacatures · Mijn vestigingen
 
 | Route | Inhoud |
 |-------|--------|
@@ -71,9 +73,9 @@ Onvoldoende tokens bij publiceren → `PendingApproval` (EM/Admin keurt goed).
 ## 4. EnterpriseManager (Bedrijfsmanager)
 *Doel: organisatiebreed beheer met strikte mobile/desktop-scheiding.*
 
-**Mobile/PWA BottomNav (operationeel):** Home · Banenkaart · Vacatures · Sollicitaties · Tokens · Gebruikers · Hoe werkt Lobsy  
+**Mobile/PWA BottomNav (operationeel):** Home · Banenkaart · Vacatures · Sollicitaties · Tokens · Gebruikers  
 
-**Desktop BottomNav:** bovenstaande (met **Organisatie** desktop-only vóór Hoe werkt Lobsy)
+**Desktop BottomNav:** bovenstaande (met **Organisatie** desktop-only)
 
 | Route | Inhoud | Scherm |
 |-------|--------|--------|
@@ -94,7 +96,7 @@ Onvoldoende tokens bij publiceren → `PendingApproval` (EM/Admin keurt goed).
 ## 5. Intermediary
 *Doel: werven voor externe opdrachtgevers.*
 
-**BottomNav:** Home · Banenkaart · Vacatures · Bedrijvenoverzicht · Team · Tokens · Hoe werkt Lobsy
+**BottomNav:** Home · Banenkaart · Vacatures · Bedrijvenoverzicht · Team · Tokens
 
 | Route | Inhoud |
 |-------|--------|
@@ -108,7 +110,7 @@ Onvoldoende tokens bij publiceren → `PendingApproval` (EM/Admin keurt goed).
 ## 5b. SalesManager
 *Doel: acquisitie via trackingcodes + commissie / revenue-share.*
 
-**BottomNav:** Home · Sales-toolkit · Referrals · Onboarding · Facturen · Hoe werkt Lobsy
+**BottomNav:** Home · Sales-toolkit · Referrals · Onboarding · Facturen
 
 | Route | Inhoud |
 |-------|--------|
@@ -122,7 +124,7 @@ Gekoppelde ondernemers (via trackingcode) krijgen nav **“Mijn Saldo & Tracking
 ## 5c. Ambassadeur
 *Doel: kandidaten werven via trackingcode + gelaagde commissie; ondernemersflyer met gratis start-highlight.*
 
-**BottomNav:** Home · Toolkit · Financieel · Onboarding · Hoe werkt Lobsy
+**BottomNav:** Home · Toolkit · Financieel · Onboarding
 
 | Route | Inhoud |
 |-------|--------|
@@ -163,7 +165,7 @@ Admin: `/admin/ambassadeurs` — uitnodigen, drempels (50 / +1% / max), commissi
 ## 7. SalesManager
 *Doel: veldverkoop met trackingcode, commissies en partnerflyer.*
 
-**BottomNav:** Home · Sales-toolkit · Referrals · Onboarding · Facturen · Hoe werkt Lobsy
+**BottomNav:** Home · Sales-toolkit · Referrals · Onboarding · Facturen
 
 | Route | Inhoud |
 |-------|--------|

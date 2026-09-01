@@ -10,10 +10,26 @@
 
 <AuthorizeView>
     <Authorized>
+        @if (_visible)
+        {
+            <div class="lobsy-assistant-tab @(_hasBottomNav ? "has-bottom-nav" : null) @(_open ? "is-open" : null)">
+                <button type="button"
+                        class="lobsy-assistant-tab__btn"
+                        @onclick="Toggle"
+                        aria-haspopup="dialog"
+                        aria-expanded="@(_open ? "true" : "false")"
+                        aria-controls="lobsy-assistant-panel">
+                    <span class="lobsy-assistant-tab__icon" aria-hidden="true">
+                        <LobsyLogo Class="lobsy-assistant-tab__mascot" Alt="" Animate="true" UseMascot="true" />
+                    </span>
+                    <span>@Culture["Nav.Assistant"]</span>
+                </button>
+            </div>
+        }
         @if (_visible && _open)
         {
             <div class="lobsy-assistant is-open @(_hasBottomNav ? "has-bottom-nav" : null)">
-                <div class="lobsy-assistant__panel" role="dialog" aria-modal="false" aria-labelledby="lobsy-assistant-title" tabindex="-1" @onkeydown="OnKeyDown">
+                <div id="lobsy-assistant-panel" class="lobsy-assistant__panel" role="dialog" aria-modal="false" aria-labelledby="lobsy-assistant-title" tabindex="-1" @onkeydown="OnKeyDown">
                     <header class="lobsy-assistant__header">
                         <div class="lobsy-assistant__brand">
                             <LobsyLogo Class="lobsy-assistant__logo" Alt="" Animate="true" UseMascot="true" />

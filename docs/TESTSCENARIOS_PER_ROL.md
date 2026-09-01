@@ -168,11 +168,11 @@ Start in een private window. Cookie-banner nog niet beantwoord. Geen bottom-navi
 | Gast | Feedback: type Bug + tekst + **Versturen**. | Bedankt-melding; geen e-mail in het record; URL zonder query. |
 | Gast | Feedback: Annuleren/sluiten. | Dialog dicht; geen record. |
 | Gast | Feedback: screenshot-capture faalt. | Tekst kan nog steeds verstuurd; foutmelding capture. |
-| Gast | Lobsy-assistent FAB openen. | Chatpaneel met begroeting. |
+| Gast | Lobsy-assistent rechterrand-tab openen. | Niet zichtbaar voor gasten; ingelogde rollen (niet Ambassadeur) zien een tab zoals Feedback. |
 | Gast | Assistent: vraag versturen. | Antwoord of typing; follow-up links navigeren. |
 | Gast | Assistent: disclaimer-link. | `/gebruiksvoorwaarden`. |
-| Gast | Assistent: API-fout. | Fout in paneel; FAB blijft bruikbaar. |
-| Gast | Assistent sluiten. | FAB terug. |
+| Gast | Assistent: API-fout. | Fout in paneel; rechterrand-tab blijft bruikbaar. |
+| Gast | Assistent sluiten. | Rechterrand-tab terug. |
 | Gast | Direct URL `/home`. | Login-challenge (FallbackPolicy). |
 | Gast | Direct `/candidate/profile`, `/employer/vacancies`, `/admin/settings`, `/salesmanager`, `/ambassadeur`. | Login-challenge; geen data-leak in HTML. |
 | Gast | Direct `/candidate/applications`. | Login-challenge. |
@@ -257,7 +257,7 @@ Voer deze set **eenmaal per rol** uit (Kandidaat, Filiaalmanager, Regiomanager, 
 
 ## 3. Kandidaat
 
-Account: `kandidaat@jobsy.local` / `Jobsy123!`. Bottom-nav: Zoeken · Bewaard · Sollicitaties · Profiel · Hoe werkt Lobsy. Geen TokenWalletChip. Extra accounts: `kandidaat.denhaag@jobsy.local`, `kandidaat.ver@jobsy.local` (reistijd/vangnet).
+Account: `kandidaat@jobsy.local` / `Jobsy123!`. Bottom-nav: Zoeken · Bewaard · Sollicitaties · Profiel. Hoe werkt Lobsy staat in het account-menu (userknop). Geen TokenWalletChip. Extra accounts: `kandidaat.denhaag@jobsy.local`, `kandidaat.ver@jobsy.local` (reistijd/vangnet).
 
 | Rol | Testscenario | Verwacht resultaat |
 |-----|--------------|--------------------|
@@ -266,7 +266,7 @@ Account: `kandidaat@jobsy.local` / `Jobsy123!`. Bottom-nav: Zoeken · Bewaard ·
 | Kandidaat | Bottom-nav **Bewaard**. | `/candidate/liked`. |
 | Kandidaat | Bottom-nav **Sollicitaties**. | `/candidate/applications`. |
 | Kandidaat | Bottom-nav **Profiel**. | `/candidate/profile` (active ook op `/home`). |
-| Kandidaat | Bottom-nav **Hoe werkt Lobsy**. | `/candidate/hoe-werkt-lobsy`. |
+| Kandidaat | Account-menu (userknop) **Hoe werkt Lobsy**. | `/candidate/hoe-werkt-lobsy`. |
 | Kandidaat | TokenWalletChip. | Niet zichtbaar. |
 | Kandidaat | Home: periode **Dag / Week / Maand / Kwartaal / Jaar**. | KPI’s herladen; actieve tab gemarkeerd; loading-skeletons. |
 | Kandidaat | Home: klik elke KPI-tegel (sollicitaties, likes, shares, reacties). | Tegel selected; drilldown-lijst; overview-link naar bijbehorende lijstpagina. |
@@ -370,7 +370,7 @@ Account: `kandidaat@jobsy.local` / `Jobsy123!`. Bottom-nav: Zoeken · Bewaard ·
 
 ## 4. Filiaalmanager (BranchManager)
 
-Account: `ondernemer@jobsy.local`. Bottom-nav: Home · Banenkaart · Vacatures · Sollicitaties · Mijn tokens · Bedrijfsgegevens · Overnames (alleen bij inbox) · Hoe werkt Lobsy. Tokenchip → `/branch/tokens`.
+Account: `ondernemer@jobsy.local`. Bottom-nav: Home · Banenkaart · Vacatures · Sollicitaties · Mijn tokens · Bedrijfsgegevens · Overnames (alleen bij inbox). Hoe werkt Lobsy staat in het account-menu (userknop). Tokenchip → `/branch/tokens`.
 
 | Rol | Testscenario | Verwacht resultaat |
 |-----|--------------|--------------------|
@@ -477,7 +477,7 @@ Account: `ondernemer@jobsy.local`. Bottom-nav: Home · Banenkaart · Vacatures �
 
 ## 5. Regiomanager (RegionalManager)
 
-Account: `regio@jobsy.local`. Bottom-nav: Home · Banenkaart · Vacatures · Mijn vestigingen · Hoe werkt Lobsy. Read-only op vacature-lifecycle en applicants-react. Tokenchip → `/employer/tokens`.
+Account: `regio@jobsy.local`. Bottom-nav: Home · Banenkaart · Vacatures · Mijn vestigingen. Hoe werkt Lobsy staat in het account-menu (userknop). Read-only op vacature-lifecycle en applicants-react. Tokenchip → `/employer/tokens`.
 
 | Rol | Testscenario | Verwacht resultaat |
 |-----|--------------|--------------------|
@@ -509,7 +509,7 @@ Account: `regio@jobsy.local`. Bottom-nav: Home · Banenkaart · Vacatures · Mij
 
 ## 6. Bedrijfsmanager (EnterpriseManager)
 
-Account: `enterprise@jobsy.local`. Mobiel: Home · Kaart · Vacatures · Sollicitaties · Tokens · Gebruikers · Hoe werkt Lobsy. Desktop extra: **Organisatie** (desktop-only) vóór How-to. Tokenchip → `/employer/tokens`.
+Account: `enterprise@jobsy.local`. Mobiel: Home · Kaart · Vacatures · Sollicitaties · Tokens · Gebruikers. Desktop extra: **Organisatie** (desktop-only). Hoe werkt Lobsy staat in het account-menu (userknop). Tokenchip → `/employer/tokens`.
 
 | Rol | Testscenario | Verwacht resultaat |
 |-----|--------------|--------------------|
@@ -574,7 +574,7 @@ Account: `enterprise@jobsy.local`. Mobiel: Home · Kaart · Vacatures · Sollici
 
 ## 7. Intermediair
 
-Account: `intermediair@jobsy.local`. Bottom-nav: Home · Kaart · Vacatures · Bedrijvenoverzicht · Team · Tokens · Hoe werkt Lobsy. Geen raamflyer. Vacaturecategorie vast Uitzendbureau; KVK-vestiging verplicht.
+Account: `intermediair@jobsy.local`. Bottom-nav: Home · Kaart · Vacatures · Bedrijvenoverzicht · Team · Tokens. Hoe werkt Lobsy staat in het account-menu (userknop). Geen raamflyer. Vacaturecategorie vast Uitzendbureau; KVK-vestiging verplicht.
 
 | Rol | Testscenario | Verwacht resultaat |
 |-----|--------------|--------------------|
@@ -615,7 +615,7 @@ Account: `intermediair@jobsy.local`. Bottom-nav: Home · Kaart · Vacatures · B
 
 ## 8. Salesmanager
 
-Account: `sales@jobsy.local` (meestal tier-0 na seed). Bottom-nav: Home · Sales-toolkit · Referrals · Onboarding · Facturen · Hoe werkt Lobsy. Geen TokenWalletChip. Publieke lander `/partner/{SM-code}`.
+Account: `sales@jobsy.local` (meestal tier-0 na seed). Bottom-nav: Home · Sales-toolkit · Referrals · Onboarding · Facturen. Hoe werkt Lobsy staat in het account-menu (userknop). Geen TokenWalletChip. Publieke lander `/partner/{SM-code}`.
 
 | Rol | Testscenario | Verwacht resultaat |
 |-----|--------------|--------------------|
@@ -662,7 +662,7 @@ Account: `sales@jobsy.local` (meestal tier-0 na seed). Bottom-nav: Home · Sales
 
 ## 9. Ambassadeur
 
-Account: `ambassadeur@jobsy.local`. Bottom-nav: Home · Toolkit · Financieel · Onboarding · Hoe werkt Lobsy. Tracking `AM-…`. Publiek `/werven/{code}`.
+Account: `ambassadeur@jobsy.local`. Bottom-nav: Home · Toolkit · Financieel · Onboarding. Hoe werkt Lobsy staat in het account-menu (userknop). Tracking `AM-…`. Publiek `/werven/{code}`.
 
 | Rol | Testscenario | Verwacht resultaat |
 |-----|--------------|--------------------|

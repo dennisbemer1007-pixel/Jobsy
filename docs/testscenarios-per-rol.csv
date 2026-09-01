@@ -106,11 +106,11 @@ Gast,Feedback: leeg versturen.,Validatie of disabled submit.
 Gast,Feedback: type Bug + tekst + **Versturen**.,Bedankt-melding; geen e-mail in het record; URL zonder query.
 Gast,Feedback: Annuleren/sluiten.,Dialog dicht; geen record.
 Gast,Feedback: screenshot-capture faalt.,Tekst kan nog steeds verstuurd; foutmelding capture.
-Gast,Lobsy-assistent FAB openen.,Chatpaneel met begroeting.
+Gast,Lobsy-assistent rechterrand-tab openen.,Niet zichtbaar voor gasten; ingelogde rollen (niet Ambassadeur) zien een tab zoals Feedback.
 Gast,Assistent: vraag versturen.,Antwoord of typing; follow-up links navigeren.
 Gast,Assistent: disclaimer-link.,`/gebruiksvoorwaarden`.
-Gast,Assistent: API-fout.,Fout in paneel; FAB blijft bruikbaar.
-Gast,Assistent sluiten.,FAB terug.
+Gast,Assistent: API-fout.,Fout in paneel; rechterrand-tab blijft bruikbaar.
+Gast,Assistent sluiten.,Rechterrand-tab terug.
 Gast,Direct URL `/home`.,Login-challenge (FallbackPolicy).
 Gast,"Direct `/candidate/profile`, `/employer/vacancies`, `/admin/settings`, `/salesmanager`, `/ambassadeur`.",Login-challenge; geen data-leak in HTML.
 Gast,Direct `/candidate/applications`.,Login-challenge.
@@ -184,7 +184,7 @@ Kandidaat,Bottom-nav **Zoeken**.,`/` banenkaart.
 Kandidaat,Bottom-nav **Bewaard**.,`/candidate/liked`.
 Kandidaat,Bottom-nav **Sollicitaties**.,`/candidate/applications`.
 Kandidaat,Bottom-nav **Profiel**.,`/candidate/profile` (active ook op `/home`).
-Kandidaat,Bottom-nav **Hoe werkt Lobsy**.,`/candidate/hoe-werkt-lobsy`.
+Kandidaat,Account-menu (userknop) **Hoe werkt Lobsy**.,`/candidate/hoe-werkt-lobsy`.
 Kandidaat,TokenWalletChip.,Niet zichtbaar.
 Kandidaat,Home: periode **Dag / Week / Maand / Kwartaal / Jaar**.,KPI’s herladen; actieve tab gemarkeerd; loading-skeletons.
 Kandidaat,"Home: klik elke KPI-tegel (sollicitaties, likes, shares, reacties).",Tegel selected; drilldown-lijst; overview-link naar bijbehorende lijstpagina.

@@ -31,6 +31,8 @@ public class MobileSaasUxTests
 
         var header = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/Components/Layout/AuthHeader.razor"));
         Assert.Contains("account-menu", header);
+        Assert.Contains("HowLobsyHrefFor", header);
+        Assert.Contains("Nav.HowLobsyWorks", header);
         Assert.Contains("href=\"/privacy\"", header);
         Assert.Contains("aria-expanded=\"@(_open ? \"true\" : \"false\")\"", header);
         Assert.DoesNotContain("aria-expanded=\"@_open\"", header);
@@ -356,20 +358,27 @@ public class MobileSaasUxTests
     }
 
     [Fact]
-    public void Assistant_lives_in_bottom_nav_and_feedback_is_a_right_edge_tab()
+    public void Assistant_and_feedback_are_right_edge_tabs_and_how_lobsy_lives_in_the_account_menu()
     {
         var assistant = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/Components/LobsyAssistantChat.razor"));
         Assert.DoesNotContain("lobsy-assistant__fab", assistant);
+        Assert.Contains("lobsy-assistant-tab", assistant);
+        Assert.Contains("lobsy-assistant-tab__btn", assistant);
         Assert.Contains("AssistantChatHost", assistant);
         Assert.Contains("ChatHost.ToggleRequested", assistant);
         Assert.Contains("UseMascot=\"true\"", assistant);
+        Assert.Contains("aria-expanded=\"@(_open ? \"true\" : \"false\")\"", assistant);
+        Assert.DoesNotContain("aria-expanded=\"@_open\"", assistant);
 
         var nav = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/Components/Layout/BottomNav.razor"));
-        Assert.Contains("bottom-nav__item--assistant", nav);
-        Assert.Contains("NavIcons.Assistant", nav);
-        Assert.Contains("AssistantChatHost.IsAvailableFor", nav);
-        Assert.Contains("aria-expanded=\"@(_assistantOpen ? \"true\" : \"false\")\"", nav);
-        Assert.DoesNotContain("aria-expanded=\"@_assistantOpen\"", nav);
+        Assert.DoesNotContain("bottom-nav__item--assistant", nav);
+        Assert.DoesNotContain("NavIcons.Assistant", nav);
+        Assert.DoesNotContain("AssistantChatHost", nav);
+        Assert.DoesNotContain("Nav.HowLobsyWorks", nav);
+
+        var header = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/Components/Layout/AuthHeader.razor"));
+        Assert.Contains("HowLobsyHrefFor", header);
+        Assert.Contains("Nav.HowLobsyWorks", header);
 
         var feedback = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/Components/Feedback/FeedbackWidget.razor"));
         Assert.Contains("feedback-widget--tab", feedback);
@@ -377,11 +386,13 @@ public class MobileSaasUxTests
         Assert.DoesNotContain("Feedback.CaptureFailed", feedback);
 
         var css = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/wwwroot/css/app.css"));
+        Assert.Contains(".lobsy-assistant-tab {\n    position: fixed;\n    top: 26%;\n    right: 0;", css);
+        Assert.Contains(".lobsy-assistant-tab__btn {\n    display: inline-flex;\n    align-items: center;\n    gap: 0.35rem;\n    writing-mode: vertical-rl;", css);
         Assert.Contains(".feedback-widget {\n    position: fixed;\n    top: 46%;\n    right: 0;", css);
         Assert.Contains(".feedback-widget__tab {\n    writing-mode: vertical-rl;", css);
         Assert.Contains(".lobsy-assistant__fab {\n    display: none !important;", css);
         Assert.Contains("button.bottom-nav__item {", css);
-        Assert.Contains(".bottom-nav__item--assistant {", css);
+        Assert.DoesNotContain(".bottom-nav__item--assistant {", css);
         Assert.Contains(".pb-28 { padding-bottom: 7rem; }", css);
         Assert.Contains(".overflow-x-hidden { overflow-x: hidden; }", css);
 

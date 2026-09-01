@@ -1,5 +1,6 @@
 using System.Net;
 using System.Net.Http.Json;
+using System.Security.Claims;
 using System.Text.Json;
 using Jobsy.Api.Models;
 using Jobsy.Core.Authorization;
@@ -899,19 +900,31 @@ public class RoleFunctionalRegressionTests : IClassFixture<RoleFunctionalWebAppF
     [Fact]
     public void Role_nav_catalog_covers_all_login_roles_with_how_lobsy()
     {
-        Assert.Contains(RoleNavCatalog.Candidate, n => n.Href.Contains("hoe-werkt", StringComparison.Ordinal));
-        Assert.Contains(RoleNavCatalog.Branch, n => n.Href == "/hoe-werkt-lobsy");
-        Assert.Contains(RoleNavCatalog.Regional, n => n.Href == "/hoe-werkt-lobsy");
-        Assert.Contains(RoleNavCatalog.Enterprise, n => n.Href == "/hoe-werkt-lobsy");
-        Assert.Contains(RoleNavCatalog.Intermediary, n => n.Href == "/hoe-werkt-lobsy");
-        Assert.Contains(RoleNavCatalog.SalesManager, n => n.Href == "/hoe-werkt-lobsy");
-        Assert.Contains(RoleNavCatalog.Ambassadeur, n => n.Href == "/hoe-werkt-lobsy");
+        Assert.DoesNotContain(RoleNavCatalog.Candidate, n => n.Href.Contains("hoe-werkt", StringComparison.Ordinal));
+        Assert.DoesNotContain(RoleNavCatalog.Branch, n => n.Href == "/hoe-werkt-lobsy");
+        Assert.DoesNotContain(RoleNavCatalog.Regional, n => n.Href == "/hoe-werkt-lobsy");
+        Assert.DoesNotContain(RoleNavCatalog.Enterprise, n => n.Href == "/hoe-werkt-lobsy");
+        Assert.DoesNotContain(RoleNavCatalog.Intermediary, n => n.Href == "/hoe-werkt-lobsy");
+        Assert.DoesNotContain(RoleNavCatalog.SalesManager, n => n.Href == "/hoe-werkt-lobsy");
+        Assert.DoesNotContain(RoleNavCatalog.Ambassadeur, n => n.Href == "/hoe-werkt-lobsy");
         Assert.DoesNotContain(RoleNavCatalog.Admin, n => n.TitleKey == "Nav.HowLobsyWorks");
+
+        Assert.Equal("/candidate/hoe-werkt-lobsy", RoleNavCatalog.HowLobsyHrefFor(NavPrincipal(JobsyRoles.Candidate)));
+        Assert.Equal("/hoe-werkt-lobsy", RoleNavCatalog.HowLobsyHrefFor(NavPrincipal(JobsyRoles.BranchManager)));
+        Assert.Equal("/hoe-werkt-lobsy", RoleNavCatalog.HowLobsyHrefFor(NavPrincipal(JobsyRoles.RegionalManager)));
+        Assert.Equal("/hoe-werkt-lobsy", RoleNavCatalog.HowLobsyHrefFor(NavPrincipal(JobsyRoles.EnterpriseManager)));
+        Assert.Equal("/hoe-werkt-lobsy", RoleNavCatalog.HowLobsyHrefFor(NavPrincipal(JobsyRoles.Intermediary)));
+        Assert.Equal("/hoe-werkt-lobsy", RoleNavCatalog.HowLobsyHrefFor(NavPrincipal(JobsyRoles.SalesManager)));
+        Assert.Equal("/hoe-werkt-lobsy", RoleNavCatalog.HowLobsyHrefFor(NavPrincipal(JobsyRoles.Ambassadeur)));
+        Assert.Null(RoleNavCatalog.HowLobsyHrefFor(NavPrincipal(JobsyRoles.Admin)));
 
         Assert.Contains(RoleNavCatalog.Ambassadeur, n => n.Href == "/ambassadeur/toolkit");
         Assert.Contains(RoleNavCatalog.SalesManager, n => n.Href == "/salesmanager/toolkit");
         Assert.Contains(RoleNavCatalog.Enterprise, n => n.Href == "/employer/organization" && n.DesktopOnly);
     }
+
+    private static ClaimsPrincipal NavPrincipal(string role)
+        => new(new ClaimsIdentity([new Claim(ClaimTypes.Role, role)], "test"));
 
     [Fact]
     public async Task Regional_enterprise_intermediary_can_load_manage_and_metrics()

@@ -110,13 +110,14 @@ public class RoleNavCatalogTests
     }
 
     [Fact]
-    public void ForUser_candidate_gets_search_how_saved_applications_profile()
+    public void ForUser_candidate_gets_search_saved_applications_profile()
     {
         var identity = new ClaimsIdentity([new Claim(ClaimTypes.Role, JobsyRoles.Candidate)], "test");
-        var items = RoleNavCatalog.ForUser(new ClaimsPrincipal(identity));
-        Assert.Equal(5, items.Count);
+        var user = new ClaimsPrincipal(identity);
+        var items = RoleNavCatalog.ForUser(user);
+        Assert.Equal(4, items.Count);
         Assert.Contains(items, i => i.Href == "/");
-        Assert.Contains(items, i => i.Href == "/candidate/hoe-werkt-lobsy");
+        Assert.DoesNotContain(items, i => i.Href == "/candidate/hoe-werkt-lobsy");
         Assert.Contains(items, i => i.Href == "/candidate/liked");
         Assert.Contains(items, i => i.Href == "/candidate/applications");
         Assert.Contains(items, i => i.Href == "/candidate/profile");
@@ -124,6 +125,7 @@ public class RoleNavCatalogTests
         var saved = items.First(i => i.Href == "/candidate/liked");
         Assert.Contains("/candidate/shared", saved.ExtraActivePaths ?? []);
         Assert.DoesNotContain("/candidate/applications", saved.ExtraActivePaths ?? []);
+        Assert.Equal("/candidate/hoe-werkt-lobsy", RoleNavCatalog.HowLobsyHrefFor(user));
     }
 
     [Fact]
@@ -157,42 +159,41 @@ public class RoleNavCatalogTests
     [InlineData(JobsyRoles.Intermediary)]
     [InlineData(JobsyRoles.SalesManager)]
     [InlineData(JobsyRoles.Ambassadeur)]
-    public void ForUser_non_admin_roles_get_how_lobsy_nav(string role)
+    public void HowLobsyHrefFor_employer_sales_and_ambassadeur_use_shared_guide(string role)
     {
         var identity = new ClaimsIdentity([new Claim(ClaimTypes.Role, role)], "test");
-        var items = RoleNavCatalog.ForUser(new ClaimsPrincipal(identity));
-        Assert.Contains(items, i => i.Href == "/hoe-werkt-lobsy");
+        var user = new ClaimsPrincipal(identity);
+        var items = RoleNavCatalog.ForUser(user);
+        Assert.DoesNotContain(items, i => i.Href == "/hoe-werkt-lobsy");
         Assert.DoesNotContain(items, i => i.Href == "/candidate/hoe-werkt-lobsy");
-        Assert.Equal("Nav.HowLobsyWorks", items[^1].TitleKey);
+        Assert.DoesNotContain(items, i => i.TitleKey == "Nav.HowLobsyWorks");
+        Assert.Equal("/hoe-werkt-lobsy", RoleNavCatalog.HowLobsyHrefFor(user));
     }
 
     [Fact]
-    public void ForUser_candidate_keeps_how_lobsy_rightmost()
-    {
-        var identity = new ClaimsIdentity([new Claim(ClaimTypes.Role, JobsyRoles.Candidate)], "test");
-        var items = RoleNavCatalog.ForUser(new ClaimsPrincipal(identity));
-        Assert.Equal("/candidate/hoe-werkt-lobsy", items[^1].Href);
-    }
-
-    [Fact]
-    public void ForUser_optional_applications_do_not_push_how_lobsy_left()
+    public void ForUser_optional_applications_stay_in_bottom_nav_not_how_lobsy()
     {
         var identity = new ClaimsIdentity("test");
         identity.AddClaim(new Claim(ClaimTypes.Role, JobsyRoles.BranchManager));
         identity.AddClaim(new Claim(JobsyClaimTypes.HasCandidateApplications, "1"));
-        var items = RoleNavCatalog.ForUser(new ClaimsPrincipal(identity));
+        var user = new ClaimsPrincipal(identity);
+        var items = RoleNavCatalog.ForUser(user);
         Assert.Contains(items, i => i.Href == "/candidate/applications");
-        Assert.Equal("Nav.HowLobsyWorks", items[^1].TitleKey);
+        Assert.DoesNotContain(items, i => i.TitleKey == "Nav.HowLobsyWorks");
+        Assert.Equal("/hoe-werkt-lobsy", RoleNavCatalog.HowLobsyHrefFor(user));
     }
 
     [Fact]
-    public void ForUser_admin_does_not_get_how_lobsy_nav()
+    public void HowLobsyHrefFor_admin_and_guests_have_no_guide_link()
     {
-        var identity = new ClaimsIdentity([new Claim(ClaimTypes.Role, JobsyRoles.Admin)], "test");
-        var items = RoleNavCatalog.ForUser(new ClaimsPrincipal(identity));
+        var admin = new ClaimsPrincipal(new ClaimsIdentity([new Claim(ClaimTypes.Role, JobsyRoles.Admin)], "test"));
+        var items = RoleNavCatalog.ForUser(admin);
         Assert.DoesNotContain(items, i => i.TitleKey == "Nav.HowLobsyWorks");
         Assert.DoesNotContain(items, i => i.Href == "/hoe-werkt-lobsy");
         Assert.DoesNotContain(items, i => i.Href == "/candidate/hoe-werkt-lobsy");
+        Assert.Null(RoleNavCatalog.HowLobsyHrefFor(admin));
+        Assert.Null(RoleNavCatalog.HowLobsyHrefFor(new ClaimsPrincipal(new ClaimsIdentity())));
+        Assert.Null(RoleNavCatalog.HowLobsyHrefFor(null));
     }
 
     [Fact]

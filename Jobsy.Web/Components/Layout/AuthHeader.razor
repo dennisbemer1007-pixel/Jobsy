@@ -29,6 +29,10 @@
                 @if (_open)
                 {
                     <div class="account-menu__panel right-0 max-w-[90vw] z-50" role="menu" aria-label="@Culture["Auth.AccountMenu"]">
+                        @if (RoleNavCatalog.HowLobsyHrefFor(context.User) is { } howHref)
+                        {
+                            <a class="account-menu__link" href="@howHref" role="menuitem">@Culture["Nav.HowLobsyWorks"]</a>
+                        }
                         <a class="account-menu__link" href="/privacy" role="menuitem">@Culture["Footer.Privacy"]</a>
                         <a class="account-menu__link" href="/algemene-voorwaarden" role="menuitem">@Culture["Footer.Terms"]</a>
                         <a class="account-menu__link" href="/gebruiksvoorwaarden" role="menuitem">@Culture["Footer.Usage"]</a>

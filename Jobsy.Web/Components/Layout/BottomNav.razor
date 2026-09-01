@@ -7,59 +7,36 @@
 @inject CultureState Culture
 @inject JobsyApiClient Api
 @inject BottomNavRefreshService NavRefresh
-@inject AssistantChatHost ChatHost
 @implements IDisposable
 
-@if (_entries.Count > 0)
+@if (_items.Count > 0)
 {
     <nav class="bottom-nav" aria-label="@Culture["Nav.Main"]">
-        @foreach (var entry in _entries)
+        @foreach (var item in _items)
         {
-            if (entry.IsAssistant)
-            {
-                <button type="button"
-                        class="bottom-nav__item bottom-nav__item--assistant @(_assistantOpen ? "is-open" : null)"
-                        title="@Culture["Assistant.Open"]"
-                        aria-label="@Culture["Assistant.Open"]"
-                        aria-expanded="@(_assistantOpen ? "true" : "false")"
-                        @onclick="OpenAssistant">
-                    <span class="bottom-nav__icon" aria-hidden="true">
-                        @((MarkupString)NavIcons.Assistant)
-                    </span>
-                    <span class="bottom-nav__label">@Culture["Nav.Assistant"]</span>
-                </button>
-            }
-            else if (entry.Item is { } item)
-            {
-                var title = Culture[item.TitleKey];
-                var active = RoleNavCatalog.IsActive(item, Navigation.ToBaseRelativePath(Navigation.Uri), _items);
-                <a class="bottom-nav__item @(active ? "is-active" : null) @(item.DesktopOnly ? "bottom-nav__item--desktop-only" : null)"
-                   href="@item.Href"
-                   title="@title"
-                   data-desktop-only="@(item.DesktopOnly ? "true" : null)"
-                   aria-current="@(active ? "page" : null)">
-                    <span class="bottom-nav__icon" aria-hidden="true">
-                        @((MarkupString)item.Svg)
-                    </span>
-                    <span class="bottom-nav__label">@title</span>
-                </a>
-            }
+            var title = Culture[item.TitleKey];
+            var active = RoleNavCatalog.IsActive(item, Navigation.ToBaseRelativePath(Navigation.Uri), _items);
+            <a class="bottom-nav__item @(active ? "is-active" : null) @(item.DesktopOnly ? "bottom-nav__item--desktop-only" : null)"
+               href="@item.Href"
+               title="@title"
+               data-desktop-only="@(item.DesktopOnly ? "true" : null)"
+               aria-current="@(active ? "page" : null)">
+                <span class="bottom-nav__icon" aria-hidden="true">
+                    @((MarkupString)item.Svg)
+                </span>
+                <span class="bottom-nav__label">@title</span>
+            </a>
         }
     </nav>
 }
 
 @code {
-    private sealed record BottomNavEntry(NavItem? Item, bool IsAssistant);
-
     private IReadOnlyList<NavItem> _items = RoleNavCatalog.Anonymous;
-    private List<BottomNavEntry> _entries = [];
     private bool _hasTakeoverActions;
     private bool _salesOnboardingComplete;
     private bool _ambassadeurOnboardingComplete;
     private bool _csvImportEnabled;
     private bool _roleFlagsLoaded;
-    private bool _showAssistant;
-    private bool _assistantOpen;
     private string? _lastRoleFingerprint;
 
     [Parameter]
@@ -70,23 +47,11 @@
         Navigation.LocationChanged += OnLocationChanged;
         Culture.Changed += OnCultureChanged;
         NavRefresh.RefreshRequested += OnNavRefreshRequestedAsync;
-        ChatHost.Changed += OnAssistantChanged;
-        _assistantOpen = ChatHost.IsOpen;
         await RefreshItemsAsync(forceRoleApis: true);
     }
 
     private void OnCultureChanged()
         => InvokeAsync(StateHasChanged);
-
-    private void OnAssistantChanged()
-        => _ = InvokeAsync(() =>
-        {
-            _assistantOpen = ChatHost.IsOpen;
-            StateHasChanged();
-        });
-
-    private void OpenAssistant()
-        => ChatHost.RequestToggle();
 
     private async Task OnNavRefreshRequestedAsync()
     {
@@ -181,26 +146,13 @@
         }
 
         _roleFlagsLoaded = true;
-        _showAssistant = AssistantChatHost.IsAvailableFor(state.User);
 
         var previousCount = _items.Count;
         _items = catalog;
-        RebuildEntries();
         if (previousCount != _items.Count || HasItemsChanged.HasDelegate)
         {
             await HasItemsChanged.InvokeAsync(_items.Count > 0);
         }
-    }
-
-    private void RebuildEntries()
-    {
-        var entries = _items.Select(i => new BottomNavEntry(i, false)).ToList();
-        if (_showAssistant && _items.Count > 0)
-        {
-            entries.Insert(_items.Count / 2, new BottomNavEntry(null, true));
-        }
-
-        _entries = entries;
     }
 
     private async Task RefreshTakeoverFlagAsync()
@@ -260,6 +212,5 @@
         Navigation.LocationChanged -= OnLocationChanged;
         Culture.Changed -= OnCultureChanged;
         NavRefresh.RefreshRequested -= OnNavRefreshRequestedAsync;
-        ChatHost.Changed -= OnAssistantChanged;
     }
 }
