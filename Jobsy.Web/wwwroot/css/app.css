@@ -7586,6 +7586,26 @@ a.engagement-btn {
     scrollbar-width: thin;
 }
 
+.bottom-nav--pill {
+    bottom: calc(1rem + env(safe-area-inset-bottom, 0px));
+    left: 1rem;
+    right: 1rem;
+    width: auto;
+    max-width: 42rem;
+    margin-inline: auto;
+    border-radius: 999px;
+    background: #fff;
+    border: 1px solid color-mix(in srgb, var(--border) 72%, var(--brand) 28%);
+    box-shadow:
+        0 18px 40px rgba(15, 45, 92, 0.16),
+        0 6px 14px rgba(15, 45, 92, 0.08);
+    padding: 0.4rem 0.55rem;
+    padding-bottom: 0.4rem;
+    overflow: visible;
+    overflow-x: visible;
+    min-height: 4.25rem;
+}
+
 .app-shell.has-bottom-nav .app-main,
 .app-shell:has(.bottom-nav) .app-main {
     padding-bottom: calc(var(--bottom-nav-clearance) + env(safe-area-inset-bottom, 0px));
@@ -7627,13 +7647,16 @@ button.bottom-nav__item {
 
 .bottom-nav__item--assistant {
     color: var(--brand);
-    position: relative;
+    position: absolute;
     z-index: 2;
-    width: 3.85rem;
-    min-width: 3.85rem;
-    max-width: 3.85rem;
-    height: 3.85rem;
-    margin: -1.35rem auto 0.1rem;
+    top: -1.35rem;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 4.15rem;
+    min-width: 4.15rem;
+    max-width: 4.15rem;
+    height: 4.15rem;
+    margin: 0;
     padding: 0;
     border-radius: 999px;
     background: transparent;
@@ -7652,27 +7675,27 @@ button.bottom-nav__item {
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 3.65rem;
-    height: 3.65rem;
+    width: 4.05rem;
+    height: 4.05rem;
     border-radius: 999px;
-    background: linear-gradient(180deg, var(--pearl-shine), var(--coral-soft));
-    border: 3px solid var(--surface);
+    background: #fff;
+    border: 1px solid color-mix(in srgb, var(--border) 65%, var(--brand) 35%);
     box-shadow:
-        0 0 0 2px color-mix(in srgb, var(--coral) 72%, var(--brand) 28%),
-        0 8px 18px rgba(15, 45, 92, 0.22);
+        0 12px 24px rgba(15, 45, 92, 0.2),
+        0 2px 6px rgba(15, 45, 92, 0.08);
     overflow: visible;
 }
 
 .bottom-nav__item--assistant.is-open .bottom-nav__orb {
     box-shadow:
         0 0 0 2px var(--brand),
-        0 8px 20px rgba(15, 45, 92, 0.3);
+        0 12px 24px rgba(15, 45, 92, 0.24);
 }
 
 .bottom-nav__mascot,
 .bottom-nav__item--assistant .lobsy-logo {
-    width: 2.85rem;
-    height: 2.85rem;
+    width: 3.15rem;
+    height: 3.15rem;
 }
 
 .bottom-nav__icon {
@@ -7729,10 +7752,10 @@ button.bottom-nav__item {
 .bottom-nav--assistant {
     display: grid;
     grid-template-columns: repeat(7, minmax(0, 1fr));
-    align-items: end;
+    align-items: center;
     gap: 0;
-    padding: 1.15rem 0.28rem 0.35rem;
-    padding-bottom: max(0.35rem, env(safe-area-inset-bottom));
+    padding: 0.4rem 0.45rem;
+    padding-bottom: 0.4rem;
     overflow: visible;
     overflow-x: visible;
 }
@@ -7754,10 +7777,11 @@ button.bottom-nav__item {
     grid-column: 4 / 5;
     display: flex;
     justify-content: center;
-    align-items: flex-end;
+    align-items: center;
     position: relative;
     z-index: 2;
     min-width: 0;
+    align-self: stretch;
 }
 
 .bottom-nav__cluster--right {
@@ -7768,16 +7792,26 @@ button.bottom-nav__item {
     min-width: 0;
     max-width: none;
     flex: 1 1 0;
-    padding: 0.32rem 0.1rem;
+    padding: 0.28rem 0.08rem;
+    border-radius: 999px;
 }
 
 .bottom-nav--assistant .bottom-nav__item--assistant {
-    width: 3.85rem;
-    min-width: 3.85rem;
-    max-width: 3.85rem;
-    height: 3.85rem;
+    position: absolute;
+    top: -1.35rem;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 4.15rem;
+    min-width: 4.15rem;
+    max-width: 4.15rem;
+    height: 4.15rem;
+    margin: 0;
     padding: 0;
     flex: 0 0 auto;
+}
+
+.bottom-nav--pill .bottom-nav__item:not(.bottom-nav__item--assistant) {
+    border-radius: 999px;
 }
 
 .bottom-nav--assistant .bottom-nav__label {
@@ -10959,7 +10993,7 @@ html[dir="rtl"] .row-actions-menu__item {
         position: fixed;
         top: auto;
         right: 0.75rem;
-        bottom: calc(4.5rem + env(safe-area-inset-bottom, 0px));
+        bottom: calc(6.5rem + env(safe-area-inset-bottom, 0px));
         left: 0.75rem;
         z-index: 80;
         min-width: 0;
@@ -12850,12 +12884,12 @@ a.apply-flow__secondary {
 }
 
 .lobsy-assistant.has-bottom-nav {
-    bottom: calc(5.5rem + env(safe-area-inset-bottom, 0px));
+    bottom: calc(6.75rem + env(safe-area-inset-bottom, 0px));
 }
 
 @media (max-width: 720px) {
     .lobsy-assistant.has-bottom-nav {
-        bottom: calc(5.5rem + env(safe-area-inset-bottom, 0px));
+        bottom: calc(6.75rem + env(safe-area-inset-bottom, 0px));
     }
 }
 
@@ -13064,7 +13098,7 @@ a.apply-flow__secondary {
     }
 
     .lobsy-assistant.has-bottom-nav {
-        bottom: calc(5.5rem + env(safe-area-inset-bottom, 0px));
+        bottom: calc(6.75rem + env(safe-area-inset-bottom, 0px));
     }
 
     .lobsy-assistant__panel {
@@ -15508,7 +15542,7 @@ html.cookie-consent-known .cookie-consent {
     }
 
     .lobsy-assistant.has-bottom-nav {
-        bottom: calc(5.5rem + env(safe-area-inset-bottom, 0px));
+        bottom: calc(6.75rem + env(safe-area-inset-bottom, 0px));
     }
 }
 
@@ -15714,7 +15748,7 @@ html.cookie-consent-known .cookie-consent {
         position: fixed;
         left: 0;
         right: 0;
-        bottom: calc(4.75rem + env(safe-area-inset-bottom, 0px));
+        bottom: calc(6.5rem + env(safe-area-inset-bottom, 0px));
         z-index: 45;
         margin: 0;
         padding: 0.65rem 1rem calc(0.55rem + env(safe-area-inset-bottom, 0px));
@@ -15733,7 +15767,7 @@ html.cookie-consent-known .cookie-consent {
     display: none;
     position: fixed;
     left: 50%;
-    bottom: calc(5.5rem + env(safe-area-inset-bottom, 0px));
+    bottom: calc(6.75rem + env(safe-area-inset-bottom, 0px));
     transform: translateX(-50%);
     z-index: 10001;
     width: min(22rem, calc(100vw - 1.5rem));

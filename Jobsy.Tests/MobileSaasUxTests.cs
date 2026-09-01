@@ -186,7 +186,7 @@ public class MobileSaasUxTests
         Assert.Contains(".profile-accordion {\n    display: flex;\n    flex-direction: column;", css);
         Assert.Contains(".profile-page--candidate .profile-check-grid,\n.profile-page--candidate .profile-roles.profile-check-grid {\n    grid-template-columns: repeat(2, minmax(0, 1fr));", css);
         Assert.Contains(".availability-matrix {\n    display: grid;\n    grid-template-columns: 2.35rem repeat(4, minmax(0, 1fr));", css);
-        Assert.Contains("bottom: calc(4.75rem + env(safe-area-inset-bottom, 0px));", css);
+        Assert.Contains("bottom: calc(6.5rem + env(safe-area-inset-bottom, 0px));", css);
         Assert.Contains(".profile-save-bar .login-submit {\n    width: 100%;", css);
         Assert.Contains(".profile-page--candidate .profile-contact__names {\n    grid-template-columns: repeat(2, minmax(0, 1fr));", css);
         Assert.Contains(".profile-page--candidate .profile-page__header {\n        display: none;", css);
@@ -366,6 +366,7 @@ public class MobileSaasUxTests
 
         var nav = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/Components/Layout/BottomNav.razor"));
         Assert.Contains("bottom-nav__item--assistant", nav);
+        Assert.Contains("bottom-nav--pill", nav);
         Assert.Contains("bottom-nav--assistant", nav);
         Assert.Contains("ClusterAroundAssistant", nav);
         Assert.Contains("UseMascot=\"true\"", nav);
@@ -387,7 +388,11 @@ public class MobileSaasUxTests
         Assert.Contains("button.bottom-nav__item {", css);
         Assert.Contains(".bottom-nav__item--assistant {", css);
         Assert.Contains(".bottom-nav--assistant {", css);
+        Assert.Contains(".bottom-nav--pill {", css);
         Assert.Contains("grid-template-columns: repeat(7, minmax(0, 1fr));", css);
+        Assert.Contains("border-radius: 999px;", css);
+        Assert.Contains("transform: translateX(-50%);", css);
+        Assert.Contains("top: -1.35rem;", css);
         Assert.Contains(".bottom-nav__orb {", css);
         Assert.Contains(".pb-28 { padding-bottom: 7rem; }", css);
         Assert.Contains(".overflow-x-hidden { overflow-x: hidden; }", css);

@@ -32,6 +32,7 @@
         .btn-compact { padding: 0.35rem 0.7rem; border-radius: 8px; border: 1px solid rgba(247,244,240,0.45); background: transparent; color: #f7f4f0; }
         .btn-compact--primary { background: #d93a12; border-color: #d93a12; color: #fff; }
         .bottom-nav { position: fixed; left: 0; right: 0; bottom: 0; z-index: 50; }
+        .bottom-nav--pill { left: 1rem; right: 1rem; bottom: 1rem; border-radius: 999px; background: #fff; }
         .lobsy-watermarks { display: none; }
         .app-shell:has(.jobsy-discovery) .lobsy-watermarks { display: none !important; }
         .maplibregl-ctrl-logo, a.maplibregl-ctrl-logo, .maplibregl-ctrl-attrib, .maplibregl-compact { display: none !important; }
@@ -76,9 +77,9 @@
     </style>
     @if (LoadBlazorRuntime)
     {
-        <link rel="stylesheet" href="css/app.min.css?v=20260901-nav1" media="print" data-app-css />
+        <link rel="stylesheet" href="css/app.min.css?v=20260901-nav2" media="print" data-app-css />
     }
-    <noscript><link rel="stylesheet" href="css/app.min.css?v=20260901-nav1" /></noscript>
+    <noscript><link rel="stylesheet" href="css/app.min.css?v=20260901-nav2" /></noscript>
     <script nonce="@Nonce">
         (function () {
             var nonce = document.currentScript && document.currentScript.nonce;
