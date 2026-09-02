@@ -81,6 +81,7 @@ public class VacanciesController : ControllerBase
         var mapped = records
             .Select(r => MapRecordToDto(r, showWage, ageYears: null, includeDescription: false))
             .ToList();
+        ApplyPublicListCacheHeaders();
         return Ok(mapped);
     }
 
@@ -123,6 +124,7 @@ public class VacanciesController : ControllerBase
         [FromQuery] Guid[]? categoryId = null,
         [FromQuery] bool? suitableFor65Plus = null,
         [FromQuery] Guid[]? companyId = null,
+        [FromQuery] int? take = null,
         CancellationToken cancellationToken = default)
     {
         maxMinutes = Math.Clamp(maxMinutes, 5, 90);
@@ -190,8 +192,51 @@ public class VacanciesController : ControllerBase
             results.Add(dto);
         }
 
+        if (take is int cap)
+        {
+            cap = Math.Clamp(cap, 1, 200);
+            if (results.Count > cap)
+            {
+                results = results.Take(cap).ToList();
+            }
+        }
+
+        ApplyPublicListCacheHeaders();
         // Banenkaart list stays on the indexed snapshot — no OpenAI wait on open.
         return Ok(results);
+    }
+
+    /// <summary>
+    /// Cacheable vacancy photo. List JSON points here instead of embedding Base64.
+    /// Remote/picsum URLs redirect so Render does not proxy third-party bytes.
+    /// </summary>
+    [HttpGet("{id:guid}/image")]
+    [AllowAnonymous]
+    [EnableRateLimiting("public-read")]
+    public async Task<IActionResult> GetPublicImage(Guid id, CancellationToken cancellationToken)
+    {
+        var records = await _discoveryIndex.GetActiveAsync(cancellationToken);
+        var record = records.FirstOrDefault(r => r.Id == id);
+        if (record is null)
+        {
+            return NotFound();
+        }
+
+        var workType = record.WorkTypeLabelList.FirstOrDefault();
+        if (VacancyImageUrls.TryDecodeInlineImage(record.ImageUrl, out var bytes, out var contentType))
+        {
+            Response.Headers.CacheControl = "public,max-age=86400,stale-while-revalidate=604800";
+            return File(bytes, contentType);
+        }
+
+        var target = VacancyImageUrls.ForPublicList(record.ImageUrl, id, workType)
+                     ?? VacancyImageUrls.Placeholder(id, workType);
+        if (target.StartsWith("/api/", StringComparison.OrdinalIgnoreCase))
+        {
+            target = VacancyImageUrls.Placeholder(id, workType);
+        }
+
+        return Redirect(target);
     }
 
     [HttpGet("{id:guid}")]
@@ -1211,6 +1256,13 @@ public class VacanciesController : ControllerBase
             result.PushBomRecipientCount);
     }
 
+    private void ApplyPublicListCacheHeaders()
+    {
+        Response.Headers.CacheControl = User.Identity?.IsAuthenticated == true
+            ? "private,max-age=15"
+            : "public,max-age=20,stale-while-revalidate=60";
+    }
+
     private async Task<bool> CanViewerSeeWageAsync(CancellationToken cancellationToken)
     {
         if (User.Identity?.IsAuthenticated != true)
@@ -1239,7 +1291,7 @@ public class VacanciesController : ControllerBase
 
         var translated = await _translation.TranslateVacancyAsync(
             dto.Title,
-            dto.Description,
+            dto.Description ?? string.Empty,
             VacancySourceLanguage,
             targetLanguage,
             cancellationToken);
@@ -1411,11 +1463,13 @@ public class VacanciesController : ControllerBase
         }
 
         var featured = VacancyHighlightRules.IsActive(r.IsHighlighted, r.HighlightedUntil, DateTime.UtcNow);
+        var compact = !includeDescription;
+        var workType = r.WorkTypeLabelList.FirstOrDefault();
 
         return new VacancyListItemDto(
             r.Id,
             r.Title,
-            includeDescription ? r.Description : string.Empty,
+            includeDescription ? r.Description : null,
             hourly,
             r.StartDate,
             r.EndDate,
@@ -1424,7 +1478,7 @@ public class VacanciesController : ControllerBase
             r.CompanyName,
             r.CompanyAddress,
             VacancyImageUrls.Normalize(r.CompanyLogoUrl),
-            VacancyImageUrls.Normalize(r.ImageUrl),
+            VacancyImageUrls.ForPublicList(r.ImageUrl, r.Id, workType),
             r.Latitude,
             r.Longitude,
             r.RequiredTransportLabels,
@@ -1434,38 +1488,38 @@ public class VacanciesController : ControllerBase
             featured,
             featured ? r.HighlightedUntil : null,
             r.ExtensionCount,
-            r.VideoUrl,
-            r.SalaryTableId,
+            compact ? null : r.VideoUrl,
+            compact ? null : r.SalaryTableId,
             wageByAge,
             resolvedForAge,
             r.WorkTypeLabelList,
             0,
             0,
             0,
-            r.RequiredDrivingLicense,
-            r.RequiredEducation,
-            r.MinimumEmployers,
-            r.FulfilledByApplicationId,
+            compact ? null : r.RequiredDrivingLicense,
+            compact ? null : r.RequiredEducation,
+            compact ? null : r.MinimumEmployers,
+            compact ? null : r.FulfilledByApplicationId,
             r.CreatedVia.ToString(),
             r.MinHoursPerWeek,
             r.MaxHoursPerWeek,
             r.FlexibleTimes,
-            r.ScheduleJson,
-            r.LegalWorksAfter19,
-            r.LegalNightShift23To06,
-            r.LegalAdultSupervisorPresent,
-            r.LegalHandlesMoneyOrClosing,
-            r.LegalHeavyOrHazardousWork,
+            compact ? null : r.ScheduleJson,
+            compact ? null : r.LegalWorksAfter19,
+            compact ? null : r.LegalNightShift23To06,
+            compact ? null : r.LegalAdultSupervisorPresent,
+            compact ? null : r.LegalHandlesMoneyOrClosing,
+            compact ? null : r.LegalHeavyOrHazardousWork,
             0,
             0,
             r.OfferedByLabel,
             r.ShowClientAddressOnMap,
-            r.IntermediaryCompanyId,
+            compact ? null : r.IntermediaryCompanyId,
             r.Kind.ToString(),
-            r.ExclusivitySettingId,
-            r.ExclusivityName,
+            compact ? null : r.ExclusivitySettingId,
+            compact ? null : r.ExclusivityName,
             r.ExclusivityIsOpen,
-            r.ExclusivitySchoolDomain,
+            compact ? null : r.ExclusivitySchoolDomain,
             null,
             null,
             r.CategoryId,
@@ -1488,7 +1542,7 @@ public class VacanciesController : ControllerBase
             r.RequireEmailVerification,
             EngagementReminderTip: null,
             EngagementReminderSentAtUtc: null,
-            MinimumReferences: r.MinimumReferences);
+            MinimumReferences: compact ? null : r.MinimumReferences);
     }
 
     private static VacancyListItemDto MapToDto(
@@ -1554,7 +1608,7 @@ public class VacanciesController : ControllerBase
         return new VacancyListItemDto(
             v.Id,
             v.Title,
-            includeDescription ? v.Description : string.Empty,
+            includeDescription ? v.Description : null,
             hourly,
             v.StartDate,
             v.EndDate,
@@ -1563,7 +1617,9 @@ public class VacanciesController : ControllerBase
             display.DisplayName,
             display.DisplayAddress,
             VacancyImageUrls.Normalize(display.DisplayLogoUrl),
-            VacancyImageUrls.Normalize(v.ImageUrl),
+            includeDescription
+                ? VacancyImageUrls.Normalize(v.ImageUrl)
+                : VacancyImageUrls.ForPublicList(v.ImageUrl, v.Id, VacancyImageUrls.FirstSlug(v.WorkTypes)),
             display.Latitude,
             display.Longitude,
             TransportLabels.Expand(v.RequiredTransport),
@@ -1589,7 +1645,7 @@ public class VacanciesController : ControllerBase
             v.MinHoursPerWeek,
             v.MaxHoursPerWeek,
             v.FlexibleTimes,
-            v.ScheduleJson,
+            includeDescription ? v.ScheduleJson : null,
             v.LegalWorksAfter19,
             v.LegalNightShift23To06,
             v.LegalAdultSupervisorPresent,

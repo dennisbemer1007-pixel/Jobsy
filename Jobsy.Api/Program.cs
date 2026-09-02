@@ -1,6 +1,7 @@
 using System.Threading.RateLimiting;
 using Jobsy.Api;
 using Jobsy.Api.Authorization;
+using Jobsy.Api.Hosting;
 using Jobsy.Api.Jobs;
 using Jobsy.Api.Swagger;
 using Jobsy.Core;
@@ -43,11 +44,15 @@ builder.Services.Configure<ForwardedHeadersOptions>(options =>
     options.KnownProxies.Clear();
 });
 
+builder.Services.AddJobsyApiPerformance();
+builder.Services.AddMemoryCache();
 builder.Services.AddControllers()
     .AddJsonOptions(options =>
     {
         options.JsonSerializerOptions.Converters.Add(
             new System.Text.Json.Serialization.JsonStringEnumConverter());
+        options.JsonSerializerOptions.DefaultIgnoreCondition =
+            System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull;
     });
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(ExternalApiSwagger.Configure);
@@ -175,6 +180,7 @@ builder.Services.AddHsts(options =>
 var app = builder.Build();
 
 app.UseForwardedHeaders();
+app.UseResponseCompression();
 app.UseMiddleware<ExceptionHandlingMiddleware>();
 
 // Short-circuit before auth/HTTPS so Render probes always get 200 once Kestrel listens.

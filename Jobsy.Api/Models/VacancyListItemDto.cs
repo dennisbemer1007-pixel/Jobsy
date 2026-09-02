@@ -5,7 +5,7 @@ public record WageByAgeDto(int AgeYears, decimal HourlyRate, string Label);
 public record VacancyListItemDto(
     Guid Id,
     string Title,
-    string Description,
+    string? Description,
     decimal? HourlyWage,
     DateOnly StartDate,
     DateOnly EndDate,

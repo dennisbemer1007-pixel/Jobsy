@@ -606,8 +606,12 @@ public class RoleFunctionalRegressionTests : IClassFixture<RoleFunctionalWebAppF
             $"api/applications?vacancyId={vacancyId}",
             JsonOpts);
         var acceptedRow = Assert.Single(acceptedList!, a => a.GetProperty("id").GetGuid() == applicationId);
-        Assert.Equal(JsonValueKind.Null, acceptedRow.GetProperty("candidateEmail").ValueKind);
-        Assert.Equal(JsonValueKind.Null, acceptedRow.GetProperty("candidatePhone").ValueKind);
+        Assert.True(
+            !acceptedRow.TryGetProperty("candidateEmail", out var acceptedEmail)
+            || acceptedEmail.ValueKind is JsonValueKind.Null or JsonValueKind.Undefined);
+        Assert.True(
+            !acceptedRow.TryGetProperty("candidatePhone", out var acceptedPhone)
+            || acceptedPhone.ValueKind is JsonValueKind.Null or JsonValueKind.Undefined);
 
         var hire = await client.PostAsJsonAsync(
             $"api/applications/vacancies/{vacancyId}/fulfill/{applicationId}",

@@ -5,12 +5,13 @@ using Microsoft.Extensions.Logging;
 namespace Jobsy.Infrastructure.Jobs;
 
 /// <summary>
-/// Keeps the banenkaart index warm. First rebuild runs immediately; then every 15 seconds
+/// Keeps the banenkaart index warm. First rebuild runs immediately; then every 60 seconds
 /// so newly published vacancies appear without waiting for a visitor to trigger a cold query.
+/// Writes still call <see cref="IVacancyDiscoveryIndex.Invalidate"/> immediately.
 /// </summary>
 public sealed class VacancyDiscoveryIndexHostedService : BackgroundService
 {
-    public static readonly TimeSpan RefreshInterval = TimeSpan.FromSeconds(15);
+    public static readonly TimeSpan RefreshInterval = TimeSpan.FromSeconds(60);
 
     private readonly IVacancyDiscoveryIndex _index;
     private readonly ILogger<VacancyDiscoveryIndexHostedService> _logger;

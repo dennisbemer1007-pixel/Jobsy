@@ -4,6 +4,7 @@
 @inject JobsyApiClient Api
 @inject NavigationManager Navigation
 @inject CultureState Culture
+@inject IJSRuntime Js
 @implements IDisposable
 
 <AuthorizeView>
@@ -122,6 +123,11 @@
         {
             while (_timer is not null && await _timer.WaitForNextTickAsync(ct))
             {
+                if (!await PageIsVisibleAsync())
+                {
+                    continue;
+                }
+
                 await RefreshUnreadAsync();
                 await InvokeAsync(StateHasChanged);
             }
@@ -170,6 +176,18 @@
         catch
         {
             // Not signed in / transient — ignore.
+        }
+    }
+
+    private async Task<bool> PageIsVisibleAsync()
+    {
+        try
+        {
+            return await Js.InvokeAsync<bool>("jobsyPageVisible");
+        }
+        catch
+        {
+            return true;
         }
     }
 

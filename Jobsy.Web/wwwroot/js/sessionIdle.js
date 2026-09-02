@@ -219,6 +219,9 @@
     }
 
     function refreshTimeout() {
+        if (document.visibilityState === "hidden") {
+            return;
+        }
         var urls = ["/account/session-security"];
         if (apiBaseUrl) {
             urls.push(String(apiBaseUrl).replace(/\/?$/, "/") + "api/settings/session-security");
@@ -267,6 +270,7 @@
         document.addEventListener("visibilitychange", function () {
             if (document.visibilityState === "visible") {
                 onActivity();
+                refreshTimeout();
             }
         });
         window.addEventListener("lobsy:navigation", onActivity);
@@ -335,6 +339,9 @@
         markActivity: onActivity,
         expireNow: forceSessionExpiredLogout,
         checkSession: function () {
+            if (document.visibilityState === "hidden") {
+                return Promise.resolve(true);
+            }
             return fetch("/account/session-activity", {
                 method: "GET",
                 credentials: "same-origin",

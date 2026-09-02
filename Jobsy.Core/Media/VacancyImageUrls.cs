@@ -12,6 +12,7 @@ public static class VacancyImageUrls
 {
     public const int IntrinsicWidth = 600;
     public const int IntrinsicHeight = 400;
+    public const int ListCardWidth = 400;
     public const string LocalPrefix = "/images/vacancies/";
     public const string ImagesPrefix = "/images/";
     public const int VariantCount = 2;
@@ -44,6 +45,97 @@ public static class VacancyImageUrls
         var slug = NormalizeSlug(workType);
         var variant = (int)(StableHash(vacancyId) % VariantCount);
         return $"{LocalPrefix}{slug}-{variant}.svg";
+    }
+
+    /// <summary>Same-origin bytes endpoint so list JSON never embeds data-URIs.</summary>
+    public static string PublicImagePath(Guid vacancyId)
+        => vacancyId == Guid.Empty ? string.Empty : $"/api/vacancies/{vacancyId:D}/image";
+
+    public static bool IsInlineDataUri(string? imageUrl)
+        => !string.IsNullOrWhiteSpace(imageUrl)
+           && imageUrl.StartsWith("data:image/", StringComparison.OrdinalIgnoreCase);
+
+    /// <summary>
+    /// List/map JSON: never ship Base64. Inline photos become a cacheable
+    /// <c>/api/vacancies/{id}/image</c> URL; picsum is downsized to card width.
+    /// </summary>
+    public static string? ForPublicList(string? imageUrl, Guid? vacancyId = null, string? workType = null)
+    {
+        var normalized = Normalize(imageUrl);
+        if (string.IsNullOrWhiteSpace(normalized)
+            || normalized.StartsWith("blob:", StringComparison.OrdinalIgnoreCase))
+        {
+            return vacancyId is Guid id && id != Guid.Empty
+                ? Placeholder(id, workType)
+                : null;
+        }
+
+        if (IsInlineDataUri(normalized))
+        {
+            return vacancyId is Guid id && id != Guid.Empty
+                ? Placeholder(id, workType)
+                : null;
+        }
+
+        if (IsPicsum(normalized))
+        {
+            return SizedPicsum(normalized, ListCardWidth, vacancyId);
+        }
+
+        return normalized;
+    }
+
+    /// <summary>Decode a stored <c>data:image/…;base64,</c> photo for the public image endpoint.</summary>
+    public static bool TryDecodeInlineImage(string? imageUrl, out byte[] bytes, out string contentType)
+    {
+        bytes = [];
+        contentType = "image/jpeg";
+        var raw = Normalize(imageUrl);
+        if (!IsInlineDataUri(raw))
+        {
+            return false;
+        }
+
+        var comma = raw!.IndexOf(',');
+        if (comma < 0 || comma + 1 >= raw.Length)
+        {
+            return false;
+        }
+
+        var header = raw[..comma];
+        var payload = raw[(comma + 1)..].Replace(" ", "", StringComparison.Ordinal);
+        var mimeEnd = header.IndexOf(';');
+        var mime = mimeEnd > 5 ? header[5..mimeEnd] : header[5..];
+        mime = mime.Trim().ToLowerInvariant();
+        contentType = mime switch
+        {
+            "image/jpg" => "image/jpeg",
+            "image/jpeg" or "image/png" or "image/gif" or "image/webp" => mime,
+            _ => "application/octet-stream"
+        };
+
+        if (contentType == "application/octet-stream" || payload.Length == 0)
+        {
+            return false;
+        }
+
+        try
+        {
+            bytes = Convert.FromBase64String(payload);
+        }
+        catch (FormatException)
+        {
+            bytes = [];
+            return false;
+        }
+
+        if (bytes.Length is 0 or > Jobsy.Core.Rules.HtmlSanitize.MaxImageBytes)
+        {
+            bytes = [];
+            return false;
+        }
+
+        return true;
     }
 
     /// <summary>

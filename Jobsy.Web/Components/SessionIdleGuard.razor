@@ -93,6 +93,21 @@
             try
             {
                 await Task.Delay(TimeSpan.FromSeconds(45), ct);
+                bool visible;
+                try
+                {
+                    visible = await Js.InvokeAsync<bool>("jobsyPageVisible");
+                }
+                catch
+                {
+                    visible = true;
+                }
+
+                if (!visible)
+                {
+                    continue;
+                }
+
                 var ok = await Js.InvokeAsync<bool>("lobsySessionIdle.checkSession");
                 if (!ok)
                 {

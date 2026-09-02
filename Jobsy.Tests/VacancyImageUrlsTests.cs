@@ -166,6 +166,32 @@ public class VacancyImageUrlsTests
         Assert.Equal("data:image/png;base64,x", VacancyImageUrls.ForDisplay("data:image/png;base64,x", 400, true));
     }
 
+    [Fact]
+    public void ForPublicList_never_embeds_data_uris_and_downsizes_picsum()
+    {
+        var id = Guid.Parse("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb");
+        var placeholder = VacancyImageUrls.Placeholder(id, "Horeca");
+        Assert.Equal(placeholder, VacancyImageUrls.ForPublicList("data:image/png;base64,abc", id, "Horeca"));
+        Assert.DoesNotContain("data:image", VacancyImageUrls.ForPublicList("data:image/jpeg;base64,/9j/", id, "Zorg"));
+
+        var full = VacancyImageUrls.PicsumUrl(id);
+        var listed = VacancyImageUrls.ForPublicList(full, id, "Horeca");
+        Assert.Contains("/400/", listed);
+        Assert.DoesNotContain("/600/", listed);
+
+        Assert.Equal("/images/logos/westland.svg", VacancyImageUrls.ForPublicList("/images/logos/westland.svg", id));
+    }
+
+    [Fact]
+    public void TryDecodeInlineImage_reads_png_data_uri()
+    {
+        var png = Convert.ToBase64String(new byte[] { 0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A, 1, 2, 3 });
+        Assert.True(VacancyImageUrls.TryDecodeInlineImage($"data:image/png;base64,{png}", out var bytes, out var type));
+        Assert.Equal("image/png", type);
+        Assert.True(bytes.Length > 8);
+        Assert.False(VacancyImageUrls.TryDecodeInlineImage("https://picsum.photos/seed/x/400/267", out _, out _));
+    }
+
     private static string FindRepoRoot()
     {
         var dir = new DirectoryInfo(AppContext.BaseDirectory);

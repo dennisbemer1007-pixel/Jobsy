@@ -1972,7 +1972,7 @@
     {
         try
         {
-            await Api.RecordImpressionsAsync(Js, _vacancies.Select(v => v.Id));
+            await Api.RecordImpressionsAsync(Js, VisibleVacancies.Select(v => v.Id));
         }
         catch
         {
@@ -2109,7 +2109,8 @@
                 ["offeredBy"] = v.OfferedByLabel,
                 ["address"] = v.CompanyAddress,
                 ["logoUrl"] = VacancyImageUrls.Normalize(v.CompanyLogoUrl),
-                ["imageUrl"] = VacancyImageUrls.Resolve(v.ImageUrl, v.CompanyLogoUrl, v.Id, v.WorkTypes.FirstOrDefault()),
+                ["imageUrl"] = VacancyImageUrls.ForPublicList(v.ImageUrl, v.Id, v.WorkTypes.FirstOrDefault())
+                    ?? VacancyImageUrls.Resolve(v.ImageUrl, v.CompanyLogoUrl, v.Id, v.WorkTypes.FirstOrDefault()),
                 ["lat"] = v.Latitude,
                 ["lng"] = v.Longitude,
                 ["transport"] = v.RequiredTransport,

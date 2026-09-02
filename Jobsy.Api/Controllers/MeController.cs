@@ -5,6 +5,7 @@ using Jobsy.Core.Authorization;
 using Jobsy.Core.Contracts;
 using Jobsy.Core.Interfaces;
 using Jobsy.Core.Localization;
+using Jobsy.Core.Media;
 using Jobsy.Core.Privacy;
 using Jobsy.Core.Rules;
 using Jobsy.Infrastructure.Data;
@@ -447,7 +448,7 @@ public class MeController : ControllerBase
                 l.Vacancy.Company.LogoUrl))
             .ToListAsync(cancellationToken);
 
-        return Ok(await TranslateEngagementTitlesAsync(items, user, cancellationToken));
+        return Ok(SlimEngagementMedia(await TranslateEngagementTitlesAsync(items, user, cancellationToken)));
     }
 
     [HttpGet("shares")]
@@ -474,8 +475,16 @@ public class MeController : ControllerBase
                 s.Vacancy.Company.LogoUrl))
             .ToListAsync(cancellationToken);
 
-        return Ok(await TranslateEngagementTitlesAsync(items, user, cancellationToken));
+        return Ok(SlimEngagementMedia(await TranslateEngagementTitlesAsync(items, user, cancellationToken)));
     }
+
+    private static List<CandidateVacancyEngagementDto> SlimEngagementMedia(
+        List<CandidateVacancyEngagementDto> items)
+        => items.Select(i => i with
+        {
+            ImageUrl = VacancyImageUrls.ForPublicList(i.ImageUrl, i.VacancyId),
+            CompanyLogoUrl = VacancyImageUrls.Normalize(i.CompanyLogoUrl)
+        }).ToList();
 
     private async Task<List<CandidateVacancyEngagementDto>> TranslateEngagementTitlesAsync(
         List<CandidateVacancyEngagementDto> items,

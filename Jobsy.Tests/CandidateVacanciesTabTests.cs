@@ -32,6 +32,7 @@ public class CandidateVacanciesTabTests
         Assert.Contains("CandidateVacancies.RecentlyViewed", page);
         Assert.Contains("pb-28", page);
         Assert.Contains("DiscoverVacanciesAsync", page);
+        Assert.Contains("take: NearbyCap", page);
         Assert.Contains("aria-selected=\"@(_tab == \"overview\" ? \"true\" : \"false\")\"", page);
     }
 

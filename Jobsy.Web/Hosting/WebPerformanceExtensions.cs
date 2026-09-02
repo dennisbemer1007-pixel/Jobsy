@@ -51,7 +51,7 @@ public static class WebPerformanceExtensions
                 ctx.Context.Response.Headers["X-Content-Type-Options"] = "nosniff";
                 var ext = Path.GetExtension(ctx.File.Name);
                 if (ext is ".js" or ".css" or ".map" or ".webp" or ".png" or ".jpg" or ".jpeg" or ".svg"
-                    or ".woff2" or ".woff" or ".ico")
+                    or ".gif" or ".avif" or ".woff2" or ".woff" or ".ico")
                 {
                     var versioned = ctx.Context.Request.Query.ContainsKey("v");
                     ctx.Context.Response.Headers.CacheControl = StaticAssetCacheControl(versioned);

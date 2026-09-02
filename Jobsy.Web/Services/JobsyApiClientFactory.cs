@@ -17,7 +17,10 @@ public static class JobsyApiClientFactory
             sp,
             configuration)
         {
-            InnerHandler = new HttpClientHandler()
+            InnerHandler = new HttpClientHandler
+            {
+                AutomaticDecompression = System.Net.DecompressionMethods.All
+            }
         };
         var handler = new JobsyApiTransientRetryHandler
         {

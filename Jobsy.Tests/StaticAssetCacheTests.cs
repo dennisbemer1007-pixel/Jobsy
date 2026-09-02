@@ -38,6 +38,12 @@ public class StaticAssetCacheTests
         Assert.Contains("max-age=2592000", header);
         Assert.Equal("nosniff", response.Headers["X-Content-Type-Options"].ToString());
 
+        var gif = PrepareResponse("hero.gif", query: null);
+        Assert.Contains("max-age=2592000", gif.Headers.CacheControl.ToString());
+
+        var avif = PrepareResponse("photo.avif", "?v=1");
+        Assert.Equal("public,max-age=31536000,immutable", avif.Headers.CacheControl.ToString());
+
         var map = PrepareResponse("maplibre-gl-csp.js.map", "?v=20260820-r180");
         Assert.Equal("public,max-age=31536000,immutable", map.Headers.CacheControl.ToString());
         Assert.Equal("nosniff", map.Headers["X-Content-Type-Options"].ToString());

@@ -140,6 +140,7 @@ public sealed class JobsyApiClient : IAsyncDisposable
         IEnumerable<Guid>? categoryIds = null,
         bool? suitableFor65Plus = null,
         IEnumerable<Guid>? companyIds = null,
+        int? take = null,
         CancellationToken ct = default)
     {
         var qs = $"transport={Uri.EscapeDataString(transport)}&maxMinutes={maxMinutes}";
@@ -211,6 +212,12 @@ public sealed class JobsyApiClient : IAsyncDisposable
         if (!string.IsNullOrWhiteSpace(searchQuery))
         {
             qs += $"&q={Uri.EscapeDataString(searchQuery.Trim())}";
+        }
+
+        if (take is int cap)
+        {
+            cap = Math.Clamp(cap, 1, 200);
+            qs += $"&take={cap}";
         }
 
         return await _http.GetFromJsonAsync<List<VacancyListItem>>($"api/vacancies/discover?{qs}", ct) ?? [];

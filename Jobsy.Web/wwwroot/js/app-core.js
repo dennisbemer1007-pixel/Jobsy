@@ -590,7 +590,7 @@ window.jobsyMaps = (function () {
 window.jobsyExtras = (function () {
     "use strict";
 
-    var extrasSrc = "/js/app-extras.js?v=20260831-login";
+    var extrasSrc = "/js/app-extras.js?v=20260902-bw1";
     var feedbackSrc = "/js/feedback.js?v=20260831-ux2";
     var pending = {};
 
@@ -628,4 +628,17 @@ window.jobsyExtras = (function () {
     };
 
     return { ensure: ensure };
+})();
+
+window.jobsyPageVisible = function () {
+    return typeof document === "undefined" || document.visibilityState !== "hidden";
+};
+
+(function registerImageCacheWorker() {
+    if (!("serviceWorker" in navigator)) {
+        return;
+    }
+    window.addEventListener("load", function () {
+        navigator.serviceWorker.register("/image-cache-sw.js?v=20260902-bw1").catch(function () { });
+    });
 })();

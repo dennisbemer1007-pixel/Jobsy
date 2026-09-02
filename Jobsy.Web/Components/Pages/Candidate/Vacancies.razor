@@ -225,7 +225,8 @@
                 origin?.Longitude,
                 _transport,
                 _maxTravelMinutes,
-                radiusKm: origin is null ? null : 15);
+                radiusKm: origin is null ? null : 15,
+                take: NearbyCap);
             return items
                 .OrderBy(v => v.TravelMinutes ?? int.MaxValue)
                 .ThenBy(v => v.Title, StringComparer.CurrentCultureIgnoreCase)
