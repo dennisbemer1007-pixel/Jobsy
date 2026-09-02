@@ -61,7 +61,7 @@ Gast,Deep-link `/?company={id}` of `?companies=`.,Focus op vacatures van dat bed
 Gast,Deep-link onbekend company-id.,Lege of fallback-lijst; geen 500.
 Gast,API/kaart load failure (netwerk uit).,Melding load failed; retry mogelijk via herladen/zoeken.
 Gast,Lege resultaten (onmogelijke filters).,Empty-state copy (met/zonder origin).
-Gast,Klik **Zoekopdracht bewaren**.,Navigeert naar `/candidate/liked` → login-gate.
+Gast,Banenkaart: **Bewaar** (zoekopdracht).,Niet zichtbaar voor gasten (alleen na inloggen).
 Gast,Toggle **Mijn vacatures** (gast).,Niet zichtbaar of zonder effect (alleen werkgeverrollen).
 Gast,Vacaturedetail: **Terug naar kaart**.,`/`.
 Gast,Vacaturedetail: **Like**.,Redirect login met returnUrl naar deze vacature.

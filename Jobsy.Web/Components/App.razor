@@ -58,7 +58,7 @@
         .login-modal .login-form input:not([type="checkbox"]):not([type="radio"]) { display: block; width: 100%; max-width: 100%; min-width: 0; box-sizing: border-box; min-height: 3rem; padding: 0.75rem 1rem; border-radius: 14px; }
         .login-modal .provider-btn { min-height: 2.1rem; padding: 0.32rem 0.7rem; }
             .jobsy-search__btn { width: 2.75rem; height: 2.75rem; }
-            .jobsy-chrome__actions { display: grid; grid-template-columns: repeat(3, 1fr); }
+            .jobsy-chrome__actions { display: grid; grid-template-columns: repeat(auto-fit, minmax(0, 1fr)); }
             .jobsy-action { display: inline-flex; min-height: 2.55rem; }
             .jobsy-discovery.show-map .map-pane,
             .jobsy-discovery.show-map .map-stage,
@@ -76,9 +76,9 @@
     </style>
     @if (LoadBlazorRuntime)
     {
-        <link rel="stylesheet" href="css/app.min.css?v=20260901-vac1" media="print" data-app-css />
+        <link rel="stylesheet" href="css/app.min.css?v=20260902-bewaar" media="print" data-app-css />
     }
-    <noscript><link rel="stylesheet" href="css/app.min.css?v=20260901-vac1" /></noscript>
+    <noscript><link rel="stylesheet" href="css/app.min.css?v=20260902-bewaar" /></noscript>
     <script nonce="@Nonce">
         (function () {
             var nonce = document.currentScript && document.currentScript.nonce;

@@ -195,18 +195,21 @@ public class MobileSaasUxTests
     }
 
     [Fact]
-    public void Guest_discovery_heart_goes_to_login_not_empty_liked_page()
+    public void Guest_discovery_omits_save_search_button()
     {
         var discovery = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/Components/VacancyDiscovery.razor"));
         Assert.Contains("AuthorizeView", discovery);
-        Assert.Contains("LikedLoginUrl", discovery);
-        Assert.Contains("/login?returnUrl=", discovery);
-        Assert.Contains("/candidate/liked", discovery);
-        var guestBlockStart = discovery.IndexOf("<NotAuthorized>", StringComparison.Ordinal);
-        Assert.True(guestBlockStart > 0);
-        var guestBlock = discovery[guestBlockStart..Math.Min(discovery.Length, guestBlockStart + 450)];
-        Assert.Contains("LikedLoginUrl", guestBlock);
-        Assert.DoesNotContain("href=\"/candidate/liked\"", guestBlock);
+        Assert.Contains("jobsy-action--save", discovery);
+        Assert.Contains("href=\"/candidate/liked\"", discovery);
+        Assert.Contains("Discovery.SaveSearch", discovery);
+        Assert.DoesNotContain("LikedLoginUrl", discovery);
+        Assert.DoesNotContain("<NotAuthorized>", discovery);
+
+        var authStart = discovery.IndexOf("<Authorized>", StringComparison.Ordinal);
+        Assert.True(authStart > 0);
+        var authBlock = discovery[authStart..Math.Min(discovery.Length, authStart + 450)];
+        Assert.Contains("href=\"/candidate/liked\"", authBlock);
+        Assert.Contains("Discovery.SaveSearch", authBlock);
     }
 
     [Fact]

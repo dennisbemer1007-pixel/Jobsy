@@ -5200,13 +5200,13 @@ a.map-popup__apply.map-popup__cta:visited {
 
     .jobsy-chrome__actions {
         display: grid;
-        grid-template-columns: repeat(3, 1fr);
+        grid-template-columns: repeat(auto-fit, minmax(0, 1fr));
         border-top: 1px solid var(--border);
         background: var(--surface);
     }
 
     .jobsy-chrome__actions--with-clear {
-        grid-template-columns: repeat(4, 1fr);
+        grid-template-columns: repeat(auto-fit, minmax(0, 1fr));
     }
 
     .jobsy-action {
