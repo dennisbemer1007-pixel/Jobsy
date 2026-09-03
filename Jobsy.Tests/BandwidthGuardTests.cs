@@ -4,7 +4,8 @@ namespace Jobsy.Tests;
 
 /// <summary>
 /// Guards Render egress: compressed API JSON, compact discover payloads,
-/// no background polling in hidden tabs, and a same-origin image Cache API.
+/// no background polling in hidden tabs. A root-scoped image service worker
+/// is unregistered because it blocked MapLibre pins on the banenkaart.
 /// </summary>
 public class BandwidthGuardTests
 {
@@ -28,6 +29,8 @@ public class BandwidthGuardTests
         var controller = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Api/Controllers/VacanciesController.cs"));
         Assert.Contains("[FromQuery] int? take = null", controller);
         Assert.Contains("ApplyPublicListCacheHeaders", controller);
+        Assert.Contains("private,max-age=15", controller);
+        Assert.DoesNotContain("public,max-age=20", controller);
         Assert.Contains("VacancyImageUrls.ForPublicList", controller);
         Assert.Contains("compact ? null : r.ScheduleJson", controller);
         Assert.Contains("GetPublicImage", controller);
@@ -62,18 +65,18 @@ public class BandwidthGuardTests
     }
 
     [Fact]
-    public void Image_service_worker_caches_only_same_origin_images()
+    public void Image_service_worker_is_unregistered_so_the_map_keeps_network_fetch()
     {
         var sw = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/wwwroot/image-cache-sw.js"));
-        Assert.Contains("pathname.startsWith(\"/images/\")", sw);
-        Assert.Contains("cache.put", sw);
-        Assert.DoesNotContain("/api/", sw);
-        Assert.Contains("request.mode === \"navigate\"", sw);
+        Assert.Contains("self.registration.unregister()", sw);
+        Assert.DoesNotContain("cache.put", sw);
+        Assert.DoesNotContain("addEventListener(\"fetch\"", sw);
 
         var core = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/wwwroot/js/app-core.js"));
         Assert.Contains("window.jobsyPageVisible", core);
-        Assert.Contains("image-cache-sw.js", core);
-        Assert.Contains("serviceWorker.register", core);
+        Assert.Contains("serviceWorker.getRegistrations()", core);
+        Assert.Contains("reg.unregister()", core);
+        Assert.DoesNotContain("serviceWorker.register", core);
         Assert.DoesNotContain("window.lobsySessionIdle =", core);
     }
 
