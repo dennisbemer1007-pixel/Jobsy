@@ -5,7 +5,7 @@ Blueprint: [`render.yaml`](../render.yaml). Project **Lobsy**, twee omgevingen:
 | Environment | Resources | Publieke URL |
 |-------------|-----------|----------------|
 | **Production** | `jobsy-api`, `jobsy-web`, `jobsy-db` | `https://lobsy.nl` |
-| **Acceptatie** | `lobsy-acc-api`, `lobsy-acc-web`, `lobsy-acc-db` | `https://lobsy-acc-web.onrender.com` (Render-subdomein) |
+| **Acceptatie** | `lobsy-acc-api`, `lobsy-acc-web`, `lobsy-acc-db` | `https://acceptatie.lobsy.nl` |
 
 Acceptatie heeft **eigen** Postgres en **eigen** secrets. Die omgeving mag nooit de productiedatabase gebruiken.
 
@@ -51,7 +51,12 @@ Acceptatie in het dashboard is alleen een lege map totdat de Blueprint de drie `
    - `https://lobsy-acc-api.onrender.com/health` → OK
    - `https://lobsy-acc-web.onrender.com` opent de site
    - Login: `kandidaat@jobsy.local` / `Jobsy123!`
-6. Optioneel: Acceptatie → **•••** → **Block cross-environment connections** (acc kan dan niet via het private netwerk bij Production).
+6. Custom domain `acceptatie.lobsy.nl` (DNS alleen is niet genoeg):
+   - CNAME bij de registrar: host `acceptatie` → `lobsy-acc-web.onrender.com`
+   - **Render → `lobsy-acc-web` → Settings → Custom Domains → Add `acceptatie.lobsy.nl`**
+   - Wacht tot status **Verified / Active** (Let’s Encrypt). Zonder deze stap geeft HTTPS een handshake-fout en HTTP Cloudflare 409/`error code: 1001`.
+   - Blueprint zet daarna `PublicWebBaseUrl` en CORS op `https://acceptatie.lobsy.nl`.
+7. Optioneel: Acceptatie → **•••** → **Block cross-environment connections** (acc kan dan niet via het private netwerk bij Production).
 
 Mail op Acceptatie blijft leeg tot je `Mail__ResendApiKey` / `Mail__FromAddress` in het Dashboard zet. Laat dat zo als je geen echte mails vanuit acc wilt.
 
@@ -62,7 +67,7 @@ De Blueprint houdt `JobsyAuth__AllowDevelopmentAuth=true` zodat demo-login via d
 - Buiten Development accepteert header-auth `@jobsy.local` demo-accounts met de gedeelde secret; echte registratie-/OAuth-gebruikers sturen ook `X-Jobsy-Local-Session` (HMAC met `LocalSessionSigningKey`, vernieuwd bij session-activity).
 - OAuth client-secrets vereisen een aparte `JobsyAuth__ExternalProvisionSecret` (niet dezelfde DevelopmentAuthSecret; Web gebruikt geen DevelopmentAuthSecret-fallback meer).
 - Production custom domain: `PublicWebBaseUrl=https://lobsy.nl` + CORS voor `lobsy.nl` / `www.lobsy.nl`.
-- Acceptatie gebruikt het `onrender.com`-subdomein van `lobsy-acc-web` (geen `lobsy.nl` in CORS).
+- Acceptatie gebruikt `https://acceptatie.lobsy.nl` (`PublicWebBaseUrl` + CORS; geen `lobsy.nl` in CORS).
 
 - `JobsyAuth__DevelopmentAuthSecret` wordt per environment gegenereerd op de API en gedeeld met de web-service van **diezelfde** environment.
 - `JobsyAuth__LocalSessionSigningKey` wordt apart gegenereerd en gedeeld voor HMAC-sessietokens van niet-demo gebruikers.
@@ -107,7 +112,7 @@ Verwijder Acceptatie-resources niet samen met Production.
 ## Gebruiken
 
 - Production: `https://lobsy.nl` of klik **`jobsy-web`** → link bovenaan
-- Acceptatie: klik **`lobsy-acc-web`** → `https://lobsy-acc-web.onrender.com`
+- Acceptatie: `https://acceptatie.lobsy.nl` (of `lobsy-acc-web` → onrender-URL tot het custom domain Active is)
 - Login: `kandidaat@jobsy.local` / `Jobsy123!`
 - API check: **`jobsy-api`** of **`lobsy-acc-api`** URL + `/health`
 

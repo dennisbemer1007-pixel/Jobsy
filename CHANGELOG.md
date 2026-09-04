@@ -28,7 +28,7 @@ Alle noemenswaardige wijzigingen aan dit project worden in dit bestand bijgehoud
 - Banenkaart laadt MapLibre (CSS, JS, helper-chunks) via `preload`/`fetchpriority=high` zodat pinnen eerder zichtbaar zijn. Worker-preload gebruikt `as="fetch"` (geen extra main-thread script). Leaflet is verwijderd.
 
 ### Added
-- Render Blueprint: project **Lobsy** met omgevingen **Production** (`jobsy-api` / `jobsy-web` / `jobsy-db`) en **Acceptatie** (`lobsy-acc-*`). Zie `docs/deploy-render.md`.
+- Render: Acceptatie-custom-domain `acceptatie.lobsy.nl` op `lobsy-acc-web` (CNAME + Render Custom Domains + CORS).
 - PageSpeed/Lighthouse: auditors en crawlers krijgen dezelfde prerender-HTML zonder Blazor-circuit (`blazor.web.js`); echte browsers mappen `unload` naar `pagehide`; `UseWebSockets` + source map voor MapLibre CSP.
 - Kandidaat kan een eigen CV (PDF/DOCX) uploaden; OpenAI vult alleen lege profielvelden als ze duidelijk in het CV staan. Lobsy-CV toont bovenaan dat er een eigen CV is. Recensies (werkgever, contactpersoon, e-mail, telefoon) in het profiel; vacature kan een hard minimum aantal recensies eisen. Na Accept ziet de werkgever Lobsy-CV én het geüploade CV.
 - Quality gate 456: geüploade CV-bytes wissen bij intrekken; OpenAI-CV-extractie in privacyverklaring/consent; geen OpenAI-response bodies in logs; werkgeverslijst toont recensietelling pas na Accept.
