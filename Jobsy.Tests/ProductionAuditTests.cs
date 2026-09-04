@@ -65,12 +65,14 @@ public class ProductionAuditTests
     {
         var hosted = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Api", "Jobs", "DatabaseSeedHostedService.cs"));
         Assert.Contains("Seed:Enabled", hosted);
+        Assert.Contains("PreferWipeOverSeed", hosted);
         Assert.Contains("PurgeDemoDataAsync", hosted);
         Assert.DoesNotContain("JobsyAuth:AllowDevelopmentAuth", hosted);
 
         var purge = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Infrastructure", "Data", "DemoDataPurge.cs"));
         Assert.Contains("Seed:PurgeDemoData", purge);
-        Assert.Contains("Seed:Enabled", purge);
+        Assert.Contains("RENDER_SERVICE_NAME", purge);
+        Assert.Contains("jobsy-api", purge);
         Assert.Contains("IsLiveProductionSite", purge);
         Assert.Contains("admin@jobsy.local", purge);
     }

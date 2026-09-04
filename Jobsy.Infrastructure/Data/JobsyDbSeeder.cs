@@ -43,6 +43,9 @@ public static class JobsyDbSeeder
         }
     }
 
+    public static bool PreferWipeOverSeed(IConfiguration configuration)
+        => DemoDataPurge.IsLiveProductionRuntime(configuration);
+
     public static async Task PurgeDemoDataAsync(IServiceProvider services, IConfiguration configuration)
     {
         using var scope = services.CreateScope();
@@ -53,7 +56,12 @@ public static class JobsyDbSeeder
         if (!DemoDataPurge.ShouldRun(configuration, marked))
         {
             logger.LogInformation(
-                "Skipping operational wipe (Seed:Enabled, already marked, or not live lobsy.nl).");
+                "Skipping operational wipe (already marked, Seed:Enabled on non-prod, or not jobsy-api/lobsy.nl). Service={Service} PublicWeb={PublicWeb} SeedEnabled={SeedEnabled} PurgeFlag={PurgeFlag} Marked={Marked}",
+                configuration["RENDER_SERVICE_NAME"],
+                configuration["PublicWebBaseUrl"],
+                configuration.GetValue("Seed:Enabled", false),
+                configuration.GetValue("Seed:PurgeDemoData", false),
+                marked);
             return;
         }
 

@@ -14,7 +14,7 @@ Alle noemenswaardige wijzigingen aan dit project worden in dit bestand bijgehoud
 ## [Unreleased]
 
 ### Changed
-- Render: Production wist **alle** bedrijven, vacatures en niet-admin gebruikers bij API-start (houdt `admin@jobsy.local`). Trigger: `Seed:PurgeDemoData` of `PublicWebBaseUrl` op `lobsy.nl`. Acceptatie (`Seed:Enabled`) blijft seeden. Seed hangt niet meer aan `AllowDevelopmentAuth`.
+- Render: Production (`jobsy-api` / `lobsy.nl`) wist **alle** bedrijven, vacatures en niet-admin gebruikers bij API-start, ook als `Seed:Enabled` nog aanstaat; houdt `admin@jobsy.local`. Acceptatie (`lobsy-acc-api`) blijft seeden.
 - ZAP (Checkmarx): geen exception-/status-tekst meer in publieke HTML; ontbrekende vestiging `/12345678/0001` geeft 404 i.p.v. 500; foutpagina toont alleen een request-referentie. CSP `img-src`/`connect-src` zonder scheme-wildcards (picsum + OpenFreeMap). `X-Content-Type-Options: nosniff` ook op statische files (favicon). Publieke bedrijfs-API op `public-read`. `'unsafe-eval'` blijft nodig voor Blazor Server; OIDC-nonce blijft `SameSite=None` voor Entra.
 - Production audit 111: dode CSS/modellen opgeruimd; intermediair kan geen werkgevers overnemen of client-bedrijfsinstellingen/facturen wijzigen of lezen; demo-login alleen bij `AllowDevelopmentAuth`; rate limits op publieke vacature-GETs en `/travel`; analytics-POSTs vereisen cookietoestemming (HMAC in Production); RTBF/intrekken wissen leeftijd/werkvergunning/match; platform BTW-IBAN alleen gemaskeerd in de API.
 - CSP: per-request nonce op scripts en het critical-`<style>`-blok; `script-src` zonder `'unsafe-inline'` (inline `onerror`/`onload` weg; logo-fallback via capturing listener). Style-attributen blijven `'unsafe-inline'` voor Razor/MapLibre CSS-variabelen.

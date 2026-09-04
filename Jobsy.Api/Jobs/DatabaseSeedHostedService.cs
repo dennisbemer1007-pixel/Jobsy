@@ -42,8 +42,17 @@ public sealed class DatabaseSeedHostedService : BackgroundService
             throw;
         }
 
-        var allowSeed = _environment.IsDevelopment()
-                        || _configuration.GetValue("Seed:Enabled", false);
+        var wipeInsteadOfSeed = JobsyDbSeeder.PreferWipeOverSeed(_configuration);
+        var allowSeed = !wipeInsteadOfSeed
+                        && (_environment.IsDevelopment()
+                            || _configuration.GetValue("Seed:Enabled", false));
+        _logger.LogInformation(
+            "Startup data path: wipe={Wipe} seed={Seed} service={Service} publicWeb={PublicWeb} seedEnabled={SeedEnabled}",
+            wipeInsteadOfSeed,
+            allowSeed,
+            _configuration["RENDER_SERVICE_NAME"],
+            _configuration["PublicWebBaseUrl"],
+            _configuration.GetValue("Seed:Enabled", false));
         if (allowSeed)
         {
             try

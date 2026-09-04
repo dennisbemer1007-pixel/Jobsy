@@ -15,6 +15,51 @@ internal static class DemoDataPurge
 {
     public const string Marker = "Operational wipe 2026-09-04 keep admin@jobsy.local";
     public const string KeptAdminEmail = "admin@jobsy.local";
+    public const string LiveRenderServiceName = "jobsy-api";
+
+    private static readonly Type[] PostgresTruncateTypes =
+    [
+        typeof(PendingTokenAction),
+        typeof(VatBufferTransfer),
+        typeof(RevenueShareLog),
+        typeof(TokenPurchaseInvoice),
+        typeof(TokenPurchaseCheckout),
+        typeof(SupplierOnboardingCheckout),
+        typeof(ApiKey),
+        typeof(CommissionLedgerEntry),
+        typeof(SelfBillingInvoiceLine),
+        typeof(SalesManagerPayoutCheckout),
+        typeof(SelfBillingInvoice),
+        typeof(VatDeclaration),
+        typeof(SalesManagerApplication),
+        typeof(SalesManagerProfile),
+        typeof(AmbassadeurProfile),
+        typeof(PartnerAffiliateProfile),
+        typeof(EstablishmentTakeoverRequest),
+        typeof(CompanyRegistration),
+        typeof(RegionCompany),
+        typeof(Region),
+        typeof(CompanySalaryTableChangeLog),
+        typeof(CompanySalaryRate),
+        typeof(CompanySalaryTableAllowedBranch),
+        typeof(CompanySalaryTable),
+        typeof(ApplicationUploadedCv),
+        typeof(Application),
+        typeof(VacancyClick),
+        typeof(VacancyLike),
+        typeof(VacancyShare),
+        typeof(VacancySearchImpression),
+        typeof(TokenTransaction),
+        typeof(CandidateUploadedCv),
+        typeof(CandidateReference),
+        typeof(CandidateActionToken),
+        typeof(UserNotification),
+        typeof(UserExternalLogin),
+        typeof(SiteVisit),
+        typeof(PlatformFeedback),
+        typeof(UserCompany),
+        typeof(Vacancy)
+    ];
 
     public static bool IsKeptAdminEmail(string? email)
         => !string.IsNullOrWhiteSpace(email)
@@ -35,25 +80,52 @@ internal static class DemoDataPurge
                || uri.Host.Equals("www.lobsy.nl", StringComparison.OrdinalIgnoreCase);
     }
 
+    /// <summary>
+    /// Render injects <c>RENDER_SERVICE_NAME</c> without a Blueprint env sync.
+    /// Production API is <c>jobsy-api</c>; Acceptatie is <c>lobsy-acc-api</c>.
+    /// </summary>
+    public static bool IsLiveProductionRuntime(IConfiguration configuration)
+    {
+        var serviceName = configuration["RENDER_SERVICE_NAME"];
+        if (!string.IsNullOrWhiteSpace(serviceName)
+            && serviceName.Equals(LiveRenderServiceName, StringComparison.OrdinalIgnoreCase))
+        {
+            return true;
+        }
+
+        return IsLiveProductionSite(configuration["PublicWebBaseUrl"]);
+    }
+
     public static bool ShouldRun(IConfiguration configuration, bool alreadyMarked)
     {
-        if (alreadyMarked || configuration.GetValue("Seed:Enabled", false))
+        if (alreadyMarked)
         {
             return false;
         }
 
-        return configuration.GetValue("Seed:PurgeDemoData", false)
-               || IsLiveProductionSite(configuration["PublicWebBaseUrl"]);
+        if (IsLiveProductionRuntime(configuration))
+        {
+            return true;
+        }
+
+        if (configuration.GetValue("Seed:Enabled", false))
+        {
+            return false;
+        }
+
+        return configuration.GetValue("Seed:PurgeDemoData", false);
     }
 
     public static async Task<DemoDataPurgeResult> PurgeAsync(JobsyDbContext db, ILogger logger)
     {
-        var companyIds = await db.Companies.IgnoreQueryFilters().Select(c => c.Id).ToListAsync();
-        var vacancyIds = await db.Vacancies.IgnoreQueryFilters().Select(v => v.Id).ToListAsync();
-        var users = await db.Users.ToListAsync();
-        var removeUserIds = users.Where(u => !IsKeptAdminEmail(u.Email)).Select(u => u.Id).ToHashSet();
+        var companyCount = await db.Companies.IgnoreQueryFilters().CountAsync();
+        var vacancyCount = await db.Vacancies.IgnoreQueryFilters().CountAsync();
+        var removeUserIds = (await db.Users.Select(u => new { u.Id, u.Email }).ToListAsync())
+            .Where(u => !IsKeptAdminEmail(u.Email))
+            .Select(u => u.Id)
+            .ToHashSet();
 
-        if (companyIds.Count == 0 && vacancyIds.Count == 0 && removeUserIds.Count == 0)
+        if (companyCount == 0 && vacancyCount == 0 && removeUserIds.Count == 0)
         {
             await EnsureMarkerAsync(db);
             logger.LogInformation("Operational wipe: nothing to delete (admin-only / empty).");
@@ -63,9 +135,99 @@ internal static class DemoDataPurge
         logger.LogWarning(
             "Wiping operational data; keeping {Admin}. Removing {Companies} companies, {Vacancies} vacancies, {Users} users.",
             KeptAdminEmail,
-            companyIds.Count,
-            vacancyIds.Count,
+            companyCount,
+            vacancyCount,
             removeUserIds.Count);
+
+        if (db.Database.IsNpgsql())
+        {
+            try
+            {
+                await PurgePostgresAsync(db, logger);
+                await EnsureMarkerAsync(db);
+                logger.LogWarning(
+                    "Operational wipe finished via Postgres ({Companies} companies, {Vacancies} vacancies, {Users} users). Kept {Admin}.",
+                    companyCount,
+                    vacancyCount,
+                    removeUserIds.Count,
+                    KeptAdminEmail);
+                return new DemoDataPurgeResult(companyCount, vacancyCount, removeUserIds.Count);
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Postgres operational wipe failed; falling back to EF.");
+                db.ChangeTracker.Clear();
+            }
+        }
+
+        await PurgeWithEfAsync(db, removeUserIds);
+
+        await EnsureMarkerAsync(db);
+
+        logger.LogWarning(
+            "Operational wipe finished ({Companies} companies, {Vacancies} vacancies, {Users} users). Kept {Admin}.",
+            companyCount,
+            vacancyCount,
+            removeUserIds.Count,
+            KeptAdminEmail);
+
+        return new DemoDataPurgeResult(companyCount, vacancyCount, removeUserIds.Count);
+    }
+
+    private static async Task PurgePostgresAsync(JobsyDbContext db, ILogger logger)
+    {
+        await using var tx = await db.Database.BeginTransactionAsync();
+
+        var tables = new List<string>();
+        foreach (var type in PostgresTruncateTypes)
+        {
+            var entity = db.Model.FindEntityType(type);
+            var name = entity?.GetTableName();
+            if (string.IsNullOrWhiteSpace(name))
+            {
+                continue;
+            }
+
+            var schema = entity!.GetSchema();
+            tables.Add(string.IsNullOrWhiteSpace(schema) ? $"\"{name}\"" : $"\"{schema}\".\"{name}\"");
+        }
+
+        await db.Database.ExecuteSqlRawAsync(
+            """
+            UPDATE "Users" SET "CompanyId" = NULL, "ReferredByAmbassadeurUserId" = NULL;
+            UPDATE "Companies"
+               SET "ParentCompanyId" = NULL,
+                   "ReferredBySalesManagerUserId" = NULL,
+                   "ReferredByAmbassadeurUserId" = NULL,
+                   "ReferredByPartnerUserId" = NULL,
+                   "CommissionIndirectSalesManagerUserId" = NULL;
+            """);
+
+        if (tables.Count > 0)
+        {
+            logger.LogWarning("Truncating {Count} operational tables.", tables.Count);
+            var truncateSql = "TRUNCATE TABLE " + string.Join(", ", tables) + " RESTART IDENTITY CASCADE";
+            await db.Database.ExecuteSqlRawAsync(truncateSql);
+        }
+
+        await db.Database.ExecuteSqlRawAsync("""DELETE FROM "Companies";""");
+        await db.Database.ExecuteSqlRawAsync(
+            """
+            DELETE FROM "LocalAuthCredentials"
+            WHERE "UserId" IN (SELECT "Id" FROM "Users" WHERE lower("Email") <> lower({0}));
+            """,
+            KeptAdminEmail);
+        await db.Database.ExecuteSqlRawAsync(
+            """DELETE FROM "Users" WHERE lower("Email") <> lower({0});""",
+            KeptAdminEmail);
+
+        db.ChangeTracker.Clear();
+        await tx.CommitAsync();
+    }
+
+    private static async Task PurgeWithEfAsync(JobsyDbContext db, HashSet<Guid> removeUserIds)
+    {
+        var users = await db.Users.ToListAsync();
 
         await RemoveAllAsync(db, db.PendingTokenActions);
         await RemoveAllAsync(db, db.VatBufferTransfers);
@@ -135,17 +297,6 @@ internal static class DemoDataPurge
 
         await RemoveWhereAsync(db, db.Users, x => removeUserIds.Contains(x.Id));
         await db.SaveChangesAsync();
-
-        await EnsureMarkerAsync(db);
-
-        logger.LogWarning(
-            "Operational wipe finished ({Companies} companies, {Vacancies} vacancies, {Users} users). Kept {Admin}.",
-            companyIds.Count,
-            vacancyIds.Count,
-            removeUserIds.Count,
-            KeptAdminEmail);
-
-        return new DemoDataPurgeResult(companyIds.Count, vacancyIds.Count, removeUserIds.Count);
     }
 
     private static async Task EnsureMarkerAsync(JobsyDbContext db)

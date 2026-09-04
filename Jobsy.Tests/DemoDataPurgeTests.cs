@@ -102,12 +102,30 @@ public class DemoDataPurgeTests
         => Assert.Equal(expected, DemoDataPurge.IsLiveProductionSite(url));
 
     [Fact]
-    public void ShouldRun_skips_when_already_marked_or_seed_enabled()
+    public void ShouldRun_skips_when_already_marked_or_non_prod_seed()
     {
         Assert.False(DemoDataPurge.ShouldRun(Config(("Seed:PurgeDemoData", "true")), alreadyMarked: true));
         Assert.False(DemoDataPurge.ShouldRun(
+            Config(("Seed:Enabled", "true"), ("PublicWebBaseUrl", "https://acceptatie.lobsy.nl")),
+            alreadyMarked: false));
+        Assert.False(DemoDataPurge.ShouldRun(
+            Config(("Seed:Enabled", "true"), ("RENDER_SERVICE_NAME", "lobsy-acc-api")),
+            alreadyMarked: false));
+    }
+
+    [Fact]
+    public void ShouldRun_on_jobsy_api_even_when_seed_is_enabled()
+    {
+        Assert.True(DemoDataPurge.ShouldRun(
+            Config(("Seed:Enabled", "true"), ("RENDER_SERVICE_NAME", "jobsy-api")),
+            alreadyMarked: false));
+        Assert.True(DemoDataPurge.ShouldRun(
             Config(("Seed:Enabled", "true"), ("PublicWebBaseUrl", "https://lobsy.nl")),
             alreadyMarked: false));
+        Assert.True(JobsyDbSeeder.PreferWipeOverSeed(
+            Config(("Seed:Enabled", "true"), ("RENDER_SERVICE_NAME", "jobsy-api"))));
+        Assert.False(JobsyDbSeeder.PreferWipeOverSeed(
+            Config(("Seed:Enabled", "true"), ("RENDER_SERVICE_NAME", "lobsy-acc-api"))));
     }
 
     [Fact]
