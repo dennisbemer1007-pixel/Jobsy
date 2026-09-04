@@ -13,6 +13,7 @@ public class MobileSaasUxTests
         var layout = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/Components/Layout/MainLayout.razor"));
         Assert.Contains("<BottomNav", layout);
         Assert.Contains("<AppFooter", layout);
+        Assert.DoesNotContain("lobsy-watermarks", layout);
     }
 
     [Fact]
@@ -233,8 +234,11 @@ public class MobileSaasUxTests
     {
         var razor = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/Components/Pages/Branch/Applicants.razor"));
         Assert.Contains("availability-matrix--readonly", razor);
-        Assert.Contains("ParseAvailabilityPayload", razor);
+        Assert.Contains("ParseAvailabilityPayload(a.SnapshotAvailabilityJson)", razor);
         Assert.Contains("a.PiiRevealed", razor);
+        Assert.Contains("contact-details", razor);
+        Assert.Contains("FormatDisplayPhone", razor);
+        Assert.DoesNotContain("contact-icon", razor);
         Assert.Contains("Common.Yes", razor);
         Assert.Contains("EmployerDisplayDayPartCodes", razor);
         Assert.Contains("DayPartMatrix.NightDayPart", razor);
@@ -242,6 +246,11 @@ public class MobileSaasUxTests
         Assert.Contains("Profile.Slot.Night", razor);
         Assert.DoesNotContain("DayPartMatrix.DayPartCodes", razor);
         Assert.DoesNotContain("aria-label=\"@UiLabels.Weekday(Culture, day) @UiLabels.AvailabilitySlot(Culture, slot): @(on ? \"ja\" : \"nee\")\"", razor);
+
+        var contactModal = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/Components/DirectContactModal.razor"));
+        Assert.Contains("direct-contact-modal__details", contactModal);
+        Assert.Contains("FormatDisplayPhone", contactModal);
+        Assert.Contains("WhatsAppLabel", contactModal);
     }
 
     [Fact]
@@ -287,6 +296,8 @@ public class MobileSaasUxTests
         Assert.Contains("notification-dropdown", bell);
         Assert.Contains("header-dropdown-backdrop", bell);
         Assert.Contains("right-0 max-w-[90vw] mx-auto z-50", bell);
+        Assert.Contains("notification-bell__toggle--unread", bell);
+        Assert.Contains(".notification-bell__toggle--unread {\n    color: #c9a227;", css);
 
         var home = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/Components/Pages/EmployerHomePanel.razor"));
         Assert.DoesNotContain("Download Raamflyer", home);

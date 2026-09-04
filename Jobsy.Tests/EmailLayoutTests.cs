@@ -12,11 +12,11 @@ public class EmailLayoutTests
             "https://lobsy.nl",
             preheader: "Voorbeeld");
 
-        Assert.Contains("lobsy-128.png", html, StringComparison.OrdinalIgnoreCase);
-        Assert.Contains("https://lobsy.nl/images/brand/lobsy-128.png", html, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("lobsy-email.png", html, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("https://lobsy.nl/images/brand/lobsy-email.png", html, StringComparison.OrdinalIgnoreCase);
         Assert.DoesNotContain("cid:", html, StringComparison.OrdinalIgnoreCase);
         Assert.DoesNotContain("/images/brand/lobsy.png", html, StringComparison.OrdinalIgnoreCase);
-        Assert.DoesNotContain("background:#ffffff;padding:4px", html, StringComparison.Ordinal);
+        Assert.Contains("background:#ffffff;border-radius:12px;padding:6px", html, StringComparison.Ordinal);
         Assert.Contains("background:transparent", html, StringComparison.Ordinal);
         Assert.Contains("Lobsy", html);
         Assert.Contains("Hallo", html);
@@ -29,7 +29,7 @@ public class EmailLayoutTests
     public void LogoUrl_points_at_the_small_png_not_the_site_mark()
     {
         var url = EmailLayout.LogoUrl("https://lobsy.nl");
-        Assert.Equal("https://lobsy.nl/images/brand/lobsy-128.png?v=20260828-pin", url);
+        Assert.Equal("https://lobsy.nl/images/brand/lobsy-email.png?v=20260904-mail", url);
         Assert.Contains(EmailLayout.LogoRelativePath, url);
     }
 

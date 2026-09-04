@@ -129,6 +129,7 @@ public class EmployerDirectContactItem
     public string? Email { get; set; }
     public string? Phone { get; set; }
     public string? WhatsAppUrl { get; set; }
+    public string? WhatsAppNumber { get; set; }
 }
 
 public class VacancyContactPreferenceItem

@@ -164,8 +164,9 @@ public sealed class SmtpEmailService : IEmailService
             mime.Subject = message.Subject;
             var builder = new BodyBuilder
             {
-                HtmlBody = message.BodyHtml
+                HtmlBody = EmailLogoEmbedder.WithCidLogo(message.BodyHtml)
             };
+            EmailLogoEmbedder.AddInlineLogo(builder);
             mime.Body = builder.ToMessageBody();
 
             using var client = new SmtpClient();

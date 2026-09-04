@@ -1640,47 +1640,15 @@ html[dir="rtl"] .account-menu__panel {
     overflow: hidden;
 }
 
-/* One full Lobsy logo as watermark in each side gutter (panel pages, not discovery map) */
-.lobsy-watermarks {
-    display: none;
-    pointer-events: none;
+/* Side-gutter logos removed for a quieter desktop chrome. */
+.lobsy-watermarks,
+.lobsy-watermark {
+    display: none !important;
 }
 
 .app-shell:has(.jobsy-discovery) .lobsy-watermarks,
 .app-shell:has(.funda-layout) .lobsy-watermarks {
     display: none !important;
-}
-
-.lobsy-watermark {
-    position: fixed;
-    top: 50%;
-    width: min(300px, calc((100vw - 1100px) / 2 - 1.5rem));
-    height: min(300px, calc((100vw - 1100px) / 2 - 1.5rem));
-    max-width: 42vh;
-    max-height: 42vh;
-    object-fit: contain;
-    object-position: center;
-    opacity: 0.18;
-    pointer-events: none;
-    user-select: none;
-    z-index: 0;
-    transform: translate(-50%, -50%);
-}
-
-/* Center of the left gutter (viewport edge → content) */
-.lobsy-watermark--left {
-    left: calc((100vw - min(1100px, 100vw)) / 4);
-}
-
-/* Center of the right gutter */
-.lobsy-watermark--right {
-    left: calc(100vw - (100vw - min(1100px, 100vw)) / 4);
-}
-
-@media (min-width: 1280px) {
-    .app-shell:not(:has(.jobsy-discovery)):not(:has(.funda-layout)) .lobsy-watermarks {
-        display: block;
-    }
 }
 
 @media (max-width: 900px) {
@@ -3195,30 +3163,6 @@ html[dir="rtl"] .account-menu__panel {
     background: transparent;
     user-select: none;
     -webkit-user-drag: none;
-}
-
-.lobsy-logo--animate .lobsy-logo__img {
-    animation: lobsy-float 4.8s ease-in-out infinite;
-    transform-origin: 50% 70%;
-}
-
-@keyframes lobsy-float {
-    0%,
-    100% {
-        transform: translateY(0) rotate(0deg);
-    }
-    40% {
-        transform: translateY(-2px) rotate(-1.5deg);
-    }
-    70% {
-        transform: translateY(1px) rotate(1deg);
-    }
-}
-
-@media (prefers-reduced-motion: reduce) {
-    .lobsy-logo--animate .lobsy-logo__img {
-        animation: none !important;
-    }
 }
 
 .lobsy-proximity {
@@ -5419,6 +5363,23 @@ a.map-popup__apply.map-popup__cta:visited {
     color: var(--brand);
 }
 
+.notification-bell__toggle--unread {
+    color: #c9a227;
+    border-color: #c9a227;
+    background: color-mix(in srgb, #c9a227 18%, var(--surface));
+}
+
+.notification-bell__toggle--unread:hover {
+    border-color: #b8860b;
+    color: #b8860b;
+    background: color-mix(in srgb, #c9a227 28%, var(--surface));
+}
+
+.notification-bell__toggle--unread .notification-bell__icon svg {
+    color: #c9a227;
+    stroke: #c9a227;
+}
+
 .notification-bell__icon {
     display: inline-flex;
     width: 1.15rem;
@@ -6809,36 +6770,6 @@ a.engagement-btn {
     object-fit: cover;
 }
 
-.lobsy-coach--animate .lobsy-coach__img {
-    animation: lobsy-float 4.8s ease-in-out infinite;
-    transform-origin: 50% 70%;
-}
-
-.lobsy-coach--animate .lobsy-coach__flag-badge {
-    animation: lobsy-flag-wave 5.6s ease-in-out infinite;
-    transform-origin: 0% 80%;
-}
-
-@keyframes lobsy-flag-wave {
-    0%,
-    100% {
-        transform: rotate(-14deg) translateY(0);
-    }
-    45% {
-        transform: rotate(-10deg) translateY(-1px);
-    }
-    75% {
-        transform: rotate(-16deg) translateY(1px);
-    }
-}
-
-@media (prefers-reduced-motion: reduce) {
-    .lobsy-coach--animate .lobsy-coach__img,
-    .lobsy-coach--animate .lobsy-coach__flag-badge {
-        animation: none !important;
-    }
-}
-
 .mock-interview-modal__brand {
     display: flex;
     align-items: center;
@@ -7099,6 +7030,40 @@ a.engagement-btn {
 .moderation-modal__suggestion p {
     margin: 0;
     line-height: 1.45;
+}
+
+.direct-contact-modal__details {
+    display: grid;
+    gap: 0.65rem;
+    margin: 0.35rem 0 0.85rem;
+}
+
+.direct-contact-modal__row {
+    display: grid;
+    gap: 0.15rem;
+    margin: 0;
+}
+
+.direct-contact-modal__row dt {
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--muted);
+}
+
+.direct-contact-modal__row dd {
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 650;
+    color: var(--brand);
+    word-break: break-word;
+}
+
+.direct-contact-modal__row a {
+    color: inherit;
+    text-decoration: underline;
+    text-underline-offset: 0.12em;
 }
 
 .direct-contact-modal__actions {
@@ -14691,6 +14656,38 @@ html.cookie-consent-known .cookie-consent {
     }
 }
 
+.contact-details {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: 0.55rem;
+}
+
+.contact-details__row {
+    display: grid;
+    gap: 0.12rem;
+}
+
+.contact-details__label {
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--muted);
+}
+
+.contact-details__value {
+    color: var(--brand);
+    font-weight: 650;
+    text-decoration: none;
+    word-break: break-word;
+}
+
+.contact-details__value:hover {
+    text-decoration: underline;
+}
+
 .contact-icons {
     display: flex;
     flex-wrap: wrap;
@@ -16128,6 +16125,7 @@ html.cookie-consent-known .cookie-consent {
     padding-bottom: calc(var(--bottom-nav-clearance) + 1.25rem);
 }
 
+.applicant-card__details .contact-details,
 .applicant-card__details .contact-icons,
 .applicant-card__actions {
     margin-bottom: 0.35rem;

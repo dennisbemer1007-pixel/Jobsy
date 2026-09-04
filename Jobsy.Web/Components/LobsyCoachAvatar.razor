@@ -24,7 +24,7 @@
 
     [Parameter] public string? Class { get; set; }
     [Parameter] public string Alt { get; set; } = "Lobsy";
-    [Parameter] public bool Animate { get; set; } = true;
+    [Parameter] public bool Animate { get; set; }
     [Parameter] public string? Language { get; set; }
 
     private string FlagSrc => JobsyLanguages.Get(Language).FlagImage + "?v=1";

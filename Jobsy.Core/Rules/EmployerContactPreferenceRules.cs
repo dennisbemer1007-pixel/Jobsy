@@ -174,6 +174,23 @@ public static class EmployerContactPreferenceRules
         return digits is null ? null : $"https://wa.me/{digits}";
     }
 
+    /// <summary>Human-readable international number, e.g. +31 6 12345678.</summary>
+    public static string FormatDisplayPhone(string? digitsOrPhone)
+    {
+        var digits = NormalizePhoneDigits(digitsOrPhone);
+        if (digits is null)
+        {
+            return string.IsNullOrWhiteSpace(digitsOrPhone) ? string.Empty : digitsOrPhone.Trim();
+        }
+
+        if (digits.StartsWith("31", StringComparison.Ordinal) && digits.Length >= 11)
+        {
+            return $"+31 {digits[2]} {digits[3..]}";
+        }
+
+        return digits.Length >= 8 ? "+" + digits : digits;
+    }
+
     public static bool IsValidEmail(string? email)
     {
         if (string.IsNullOrWhiteSpace(email) || !email.Contains('@'))

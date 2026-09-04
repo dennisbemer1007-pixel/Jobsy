@@ -486,6 +486,8 @@ public class RoleFunctionalRegressionTests : IClassFixture<RoleFunctionalWebAppF
         Assert.Equal(4.2, pending.DistanceKm);
         Assert.Equal(19, pending.CandidateAgeYears);
         Assert.False(string.IsNullOrWhiteSpace(pending.AvailabilitySummary));
+        Assert.False(string.IsNullOrWhiteSpace(pending.SnapshotAvailabilityJson));
+        Assert.Contains("avond", pending.SnapshotAvailabilityJson, StringComparison.OrdinalIgnoreCase);
         Assert.False(pending.WorkPermitConfirmed); // gated until accept
         Assert.Equal("Sterke motivatie voor deze rol.", pending.Motivation);
         Assert.Null(pending.StudentNumber);

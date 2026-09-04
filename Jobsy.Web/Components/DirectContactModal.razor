@@ -1,3 +1,4 @@
+@using Jobsy.Core.Rules
 @using Jobsy.Web.Localization
 @using Jobsy.Web.Models
 @inject CultureState Culture
@@ -10,6 +11,33 @@
                      OnClose="Close">
     @if (Contact is not null)
     {
+        <dl class="direct-contact-modal__details" aria-label="@Culture["Apply.DirectContactChannels"]">
+            @if (Contact.OfferMail && !string.IsNullOrWhiteSpace(Contact.Email))
+            {
+                <div class="direct-contact-modal__row">
+                    <dt>@Culture["Apply.Mail"]</dt>
+                    <dd><a href="@($"mailto:{Contact.Email}")">@Contact.Email</a></dd>
+                </div>
+            }
+            @if (Contact.OfferPhone && !string.IsNullOrWhiteSpace(Contact.Phone))
+            {
+                <div class="direct-contact-modal__row">
+                    <dt>@Culture["Apply.Call"]</dt>
+                    <dd><a href="@($"tel:{Contact.Phone}")">@EmployerContactPreferenceRules.FormatDisplayPhone(Contact.Phone)</a></dd>
+                </div>
+            }
+            @if (Contact.OfferWhatsApp && !string.IsNullOrWhiteSpace(Contact.WhatsAppUrl))
+            {
+                <div class="direct-contact-modal__row">
+                    <dt>WhatsApp</dt>
+                    <dd>
+                        <a href="@Contact.WhatsAppUrl" target="_blank" rel="noopener noreferrer">
+                            @WhatsAppLabel(Contact)
+                        </a>
+                    </dd>
+                </div>
+            }
+        </dl>
         <div class="direct-contact-modal__actions" role="group" aria-label="@Culture["Apply.DirectContactChannels"]">
             @if (Contact.OfferWhatsApp && !string.IsNullOrWhiteSpace(Contact.WhatsAppUrl))
             {
@@ -17,14 +45,14 @@
                    href="@Contact.WhatsAppUrl"
                    target="_blank"
                    rel="noopener noreferrer">
-                    WhatsApp
+                    WhatsApp @WhatsAppLabel(Contact)
                 </a>
             }
             @if (Contact.OfferPhone && !string.IsNullOrWhiteSpace(Contact.Phone))
             {
                 <a class="login-submit direct-contact-modal__btn direct-contact-modal__btn--phone"
                    href="@($"tel:{Contact.Phone}")">
-                    @Culture["Apply.Call"] @Contact.Phone
+                    @Culture["Apply.Call"] @EmployerContactPreferenceRules.FormatDisplayPhone(Contact.Phone)
                 </a>
             }
             @if (Contact.OfferMail && !string.IsNullOrWhiteSpace(Contact.Email))
@@ -45,6 +73,21 @@
     [Parameter] public bool IsOpen { get; set; }
     [Parameter] public EmployerDirectContactItem? Contact { get; set; }
     [Parameter] public EventCallback OnClose { get; set; }
+
+    private static string WhatsAppLabel(EmployerDirectContactItem contact)
+    {
+        if (!string.IsNullOrWhiteSpace(contact.WhatsAppNumber))
+        {
+            return EmployerContactPreferenceRules.FormatDisplayPhone(contact.WhatsAppNumber);
+        }
+
+        if (!string.IsNullOrWhiteSpace(contact.Phone))
+        {
+            return EmployerContactPreferenceRules.FormatDisplayPhone(contact.Phone);
+        }
+
+        return contact.WhatsAppUrl ?? "WhatsApp";
+    }
 
     private async Task Close() => await OnClose.InvokeAsync();
 }

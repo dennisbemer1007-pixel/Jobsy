@@ -15,21 +15,31 @@ public class EmailLogoEmbedderTests
             new EmailMessage("dev@example.com", composed.Subject, composed.Html, composed.Category),
             "Lobsy <noreply@lobsy.nl>");
 
-        Assert.Contains("https://lobsy.nl/images/brand/lobsy-128.png", request.Html, StringComparison.OrdinalIgnoreCase);
-        Assert.Contains("v=20260828-pin", request.Html, StringComparison.Ordinal);
+        Assert.Contains("https://lobsy.nl/images/brand/lobsy-email.png", request.Html, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("v=20260904-mail", request.Html, StringComparison.Ordinal);
         Assert.DoesNotContain("cid:", request.Html, StringComparison.OrdinalIgnoreCase);
         Assert.DoesNotContain("/images/brand/lobsy.png?", request.Html, StringComparison.OrdinalIgnoreCase);
 
         var json = JsonSerializer.Serialize(request, new JsonSerializerOptions(JsonSerializerDefaults.Web));
         Assert.DoesNotContain("\"attachments\"", json, StringComparison.Ordinal);
         Assert.DoesNotContain("content_id", json, StringComparison.Ordinal);
-        Assert.Contains("lobsy-128.png", json, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("lobsy-email.png", json, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public void Smtp_html_rewrites_hosted_logo_to_cid()
+    {
+        var html = TransactionalEmails.MailTest("https://lobsy.nl").Html;
+        var cidHtml = EmailLogoEmbedder.WithCidLogo(html);
+
+        Assert.Contains("cid:" + EmailLogoEmbedder.ContentId, cidHtml, StringComparison.Ordinal);
+        Assert.DoesNotContain("https://lobsy.nl/images/brand/lobsy-email.png", cidHtml, StringComparison.OrdinalIgnoreCase);
     }
 
     [Fact]
     public void Wwwroot_email_logo_file_is_a_small_valid_png()
     {
-        var path = Path.Combine(FindRepoRoot(), "Jobsy.Web", "wwwroot", "images", "brand", "lobsy-128.png");
+        var path = Path.Combine(FindRepoRoot(), "Jobsy.Web", "wwwroot", "images", "brand", "lobsy-email.png");
         Assert.True(File.Exists(path), path);
 
         var bytes = File.ReadAllBytes(path);
@@ -39,6 +49,7 @@ public class EmailLogoEmbedderTests
         Assert.Equal((byte)'N', bytes[2]);
         Assert.Equal((byte)'G', bytes[3]);
         Assert.Equal(6, bytes[25]); // IHDR color type 6 = RGBA (transparent mark)
+        Assert.Equal(EmailLogoEmbedder.LoadPng(), bytes);
     }
 
     [Fact]

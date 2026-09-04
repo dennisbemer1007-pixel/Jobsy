@@ -145,7 +145,8 @@ public class ApplicationsController : ControllerBase
                 revealed ? a.CandidateAddress : null,
                 revealed,
                 revealed && a.WorkPermitConfirmed,
-                revealed ? a.SnapshotAvailabilityJson : null,
+                // Availability is screening data (not identity PII) — same matrix before and after Accept.
+                a.SnapshotAvailabilityJson,
                 revealed ? ApplicationPreferenceRedaction.ToHumanReadable(a.SnapshotDrivingLicenses) : null,
                 revealed ? ApplicationPreferenceRedaction.ToHumanReadable(a.SnapshotEducations) : null,
                 revealed ? a.SnapshotAboutMe : null,
@@ -880,7 +881,8 @@ public class ApplicationsController : ControllerBase
             OfferWhatsApp: effective.OfferWhatsApp,
             Email: effective.Email,
             Phone: effective.Phone,
-            WhatsAppUrl: effective.WhatsAppUrl);
+            WhatsAppUrl: effective.WhatsAppUrl,
+            WhatsAppNumber: effective.WhatsAppNumber);
     }
 
     [HttpPost("{id:guid}/withdraw")]
@@ -1287,7 +1289,7 @@ public class ApplicationsController : ControllerBase
             revealed ? a.CandidateAddress : null,
             revealed,
             revealed && a.WorkPermitConfirmed,
-            revealed ? a.SnapshotAvailabilityJson : null,
+            a.SnapshotAvailabilityJson,
             revealed ? ApplicationPreferenceRedaction.ToHumanReadable(a.SnapshotDrivingLicenses) : null,
             revealed ? ApplicationPreferenceRedaction.ToHumanReadable(a.SnapshotEducations) : null,
             revealed ? a.SnapshotAboutMe : null,

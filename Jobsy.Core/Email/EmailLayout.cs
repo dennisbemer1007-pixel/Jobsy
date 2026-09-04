@@ -43,10 +43,11 @@ public static class EmailLayout
     }
 
     /// <summary>
-    /// Small PNG hosted on the public site. Mail clients (Gmail/mobile) load this
-    /// over HTTPS; CID attachments show as a broken image there.
+    /// Small PNG hosted on the public site (Gmail/Apple Mail). SMTP additionally
+    /// inlines the same bytes as CID so Outlook desktop shows the mark without a
+    /// remote fetch.
     /// </summary>
-    public const string LogoRelativePath = "/images/brand/lobsy-128.png?v=20260828-pin";
+    public const string LogoRelativePath = "/images/brand/lobsy-email.png?v=20260904-mail";
 
     public static string LogoUrl(string? publicWebBaseUrl)
         => Absolute(publicWebBaseUrl, LogoRelativePath);
@@ -140,8 +141,14 @@ public static class EmailLayout
                         <td style="background:{BrandNavy};padding:22px 28px;">
                           <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
                             <tr>
-                              <td width="52" valign="middle">
-                                <img src="{logo}" width="48" height="48" alt="{brand}" border="0" style="display:block;border:0;outline:none;text-decoration:none;background:transparent;" />
+                              <td width="64" valign="middle" style="width:64px;">
+                                <table role="presentation" cellspacing="0" cellpadding="0">
+                                  <tr>
+                                    <td style="background:#ffffff;border-radius:12px;padding:6px;line-height:0;">
+                                      <img src="{logo}" width="48" height="48" alt="{brand}" border="0" style="display:block;border:0;outline:none;text-decoration:none;background:transparent;" />
+                                    </td>
+                                  </tr>
+                                </table>
                               </td>
                               <td valign="middle" style="padding-left:12px;">
                                 <div style="font-size:20px;font-weight:700;color:#ffffff;letter-spacing:0.02em;">{brand}</div>

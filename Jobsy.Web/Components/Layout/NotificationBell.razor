@@ -11,7 +11,7 @@
     <Authorized>
         <div class="notification-bell" @onclick:stopPropagation="true">
             <button type="button"
-                    class="notification-bell__toggle"
+                    class="notification-bell__toggle @(_unread > 0 ? "notification-bell__toggle--unread" : null)"
                     title="@(_unread > 0 ? $"{_unread} ongelezen bericht{(_unread == 1 ? "" : "en")}" : "Notificaties")"
                     aria-label="@($"Notificaties{(_unread > 0 ? $", {_unread} ongelezen" : "")}")"
                     aria-expanded="@(_open ? "true" : "false")"

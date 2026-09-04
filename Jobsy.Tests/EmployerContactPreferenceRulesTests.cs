@@ -172,6 +172,14 @@ public class EmployerContactPreferenceRulesTests
         Assert.False(effective.Available);
     }
 
+    [Fact]
+    public void FormatDisplayPhone_formats_dutch_mobile()
+    {
+        Assert.Equal("+31 6 12345678", EmployerContactPreferenceRules.FormatDisplayPhone("06 12345678"));
+        Assert.Equal("+31 6 12345678", EmployerContactPreferenceRules.FormatDisplayPhone("31612345678"));
+        Assert.Equal("", EmployerContactPreferenceRules.FormatDisplayPhone(" "));
+    }
+
     private static Company Company(string? email, string? phone) => new()
     {
         Id = Guid.NewGuid(),

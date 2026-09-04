@@ -160,6 +160,7 @@ public record EmployerApplicationDto(
     string? CandidateAddress,
     bool PiiRevealed,
     bool WorkPermitConfirmed,
+    /// <summary>Day-part matrix JSON — visible before Accept (not identity PII).</summary>
     string? SnapshotAvailabilityJson,
     string? SnapshotDrivingLicenses,
     string? SnapshotEducations,

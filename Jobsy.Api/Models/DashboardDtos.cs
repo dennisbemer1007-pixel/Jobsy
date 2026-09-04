@@ -137,7 +137,8 @@ public record EmployerDirectContactDto(
     bool OfferWhatsApp,
     string? Email = null,
     string? Phone = null,
-    string? WhatsAppUrl = null);
+    string? WhatsAppUrl = null,
+    string? WhatsAppNumber = null);
 
 public record MinimumWageRateDto(
     Guid Id,
