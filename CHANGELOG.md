@@ -14,7 +14,7 @@ Alle noemenswaardige wijzigingen aan dit project worden in dit bestand bijgehoud
 ## [Unreleased]
 
 ### Changed
-- Render: Production-blueprint gebruikt weer `jobsy-api` / `jobsy-web` / `jobsy-db`. Hernoemen naar `lobsy-*` maakte een tweede (lege) stack naast de live database.
+- Render: Production wist seeder-mockdata bij API-start (`Seed:PurgeDemoData`); Acceptatie blijft seeden. Seed hangt niet meer aan `AllowDevelopmentAuth`.
 - ZAP (Checkmarx): geen exception-/status-tekst meer in publieke HTML; ontbrekende vestiging `/12345678/0001` geeft 404 i.p.v. 500; foutpagina toont alleen een request-referentie. CSP `img-src`/`connect-src` zonder scheme-wildcards (picsum + OpenFreeMap). `X-Content-Type-Options: nosniff` ook op statische files (favicon). Publieke bedrijfs-API op `public-read`. `'unsafe-eval'` blijft nodig voor Blazor Server; OIDC-nonce blijft `SameSite=None` voor Entra.
 - Production audit 111: dode CSS/modellen opgeruimd; intermediair kan geen werkgevers overnemen of client-bedrijfsinstellingen/facturen wijzigen of lezen; demo-login alleen bij `AllowDevelopmentAuth`; rate limits op publieke vacature-GETs en `/travel`; analytics-POSTs vereisen cookietoestemming (HMAC in Production); RTBF/intrekken wissen leeftijd/werkvergunning/match; platform BTW-IBAN alleen gemaskeerd in de API.
 - CSP: per-request nonce op scripts en het critical-`<style>`-blok; `script-src` zonder `'unsafe-inline'` (inline `onerror`/`onload` weg; logo-fallback via capturing listener). Style-attributen blijven `'unsafe-inline'` voor Razor/MapLibre CSS-variabelen.

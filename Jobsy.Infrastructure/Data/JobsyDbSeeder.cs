@@ -42,6 +42,14 @@ public static class JobsyDbSeeder
         }
     }
 
+    public static async Task PurgeDemoDataAsync(IServiceProvider services)
+    {
+        using var scope = services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<JobsyDbContext>();
+        var logger = scope.ServiceProvider.GetRequiredService<ILoggerFactory>().CreateLogger("JobsyDbSeeder");
+        await DemoDataPurge.PurgeAsync(db, logger);
+    }
+
     public static async Task SeedDataAsync(IServiceProvider services)
     {
         using var scope = services.CreateScope();

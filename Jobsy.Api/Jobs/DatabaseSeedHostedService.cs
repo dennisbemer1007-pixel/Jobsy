@@ -43,23 +43,35 @@ public sealed class DatabaseSeedHostedService : BackgroundService
         }
 
         var allowSeed = _environment.IsDevelopment()
-                        || _configuration.GetValue("Seed:Enabled", false)
-                        || _configuration.GetValue("JobsyAuth:AllowDevelopmentAuth", false);
-        if (!allowSeed)
+                        || _configuration.GetValue("Seed:Enabled", false);
+        var purgeDemo = _configuration.GetValue("Seed:PurgeDemoData", false);
+        if (purgeDemo)
+        {
+            try
+            {
+                await JobsyDbSeeder.PurgeDemoDataAsync(_services);
+            }
+            catch (Exception ex) when (ex is not OperationCanceledException)
+            {
+                _logger.LogError(ex, "Demo-data purge failed during startup; API continues.");
+            }
+        }
+        else if (!allowSeed)
         {
             _logger.LogInformation(
-                "Skipping database seed (requires Development, Seed:Enabled, or JobsyAuth:AllowDevelopmentAuth).");
-            return;
+                "Skipping database seed (requires Development or Seed:Enabled).");
         }
-
-        try
+        else
         {
-            await JobsyDbSeeder.SeedDataAsync(_services);
-        }
-        catch (Exception ex) when (ex is not OperationCanceledException)
-        {
-            // Keep API available (salesmanager endpoints, auth, etc.) even if demo seed flakes.
-            _logger.LogError(ex, "Database seed failed during startup; API continues without full seed.");
+            try
+            {
+                await JobsyDbSeeder.SeedDataAsync(_services);
+            }
+            catch (Exception ex) when (ex is not OperationCanceledException)
+            {
+                // Keep API available (salesmanager endpoints, auth, etc.) even if demo seed flakes.
+                _logger.LogError(ex, "Database seed failed during startup; API continues without full seed.");
+            }
         }
 
         try

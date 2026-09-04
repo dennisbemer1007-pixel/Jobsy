@@ -84,9 +84,10 @@ Na Blueprint sync: controleer per environment dat API en web dezelfde `JobsyAuth
 3. Bevestig instance types (Starter / Basic-256mb) in het Dashboard.
 4. Controleer na sync:
    - `jobsy-api` → **Environment**: `ConnectionStrings__JobsyDb` is een echte `postgres://` / `postgresql://` URL
-   - `jobsy-api` Logs: `Seeding Jobsy mock data` of `Seed completed`
+   - Production API-logs: `Purged seeder mock data` of `No seeder mock data found to purge` (geen nieuwe Westland-seed)
+   - Acceptatie API-logs: `Seed completed` / `Seeding Jobsy mock data`
    - `jobsy-api` URL + `/health` → OK
-5. Open `jobsy-web`; mockdata (Westland / Den Haag vacatures) hoort zichtbaar te zijn.
+5. `https://lobsy.nl` toont geen seeder-vacatures meer; `https://acceptatie.lobsy.nl` wel.
 
 Als de connection string leeg is of corrupt (vaak na DB-upgrade), zie hieronder.
 
@@ -224,4 +225,5 @@ Resend is pas operationeel als **API-key én From** beide gezet zijn (DB of env)
 | `JobsyAuth__AllowDevelopmentAuth` | `true` | `false` + Entra/Google |
 | `JobsyAuth__AllowStubPayments` | `true` | `false` + live Mollie |
 | `Swagger__Enabled` | `false` | `false` (of tijdelijk `true` voor partners) |
-| `Seed:Enabled` | via AllowDevelopmentAuth | `false` |
+| `Seed:Enabled` | `true` op Acceptatie | `false` |
+| `Seed:PurgeDemoData` | uit | `true` (wist seeder-mockdata eenmalig bij API-start) |

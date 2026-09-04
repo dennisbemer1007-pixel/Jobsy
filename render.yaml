@@ -49,6 +49,10 @@ projects:
               # Stub Mollie payouts for the public demo only — keep false for real production money paths.
               - key: JobsyAuth__AllowStubPayments
                 value: "true"
+              - key: Seed__Enabled
+                value: "false"
+              - key: Seed__PurgeDemoData
+                value: "true"
               - key: JobsyAuth__DevelopmentAuthSecret
                 generateValue: true
               - key: JobsyAuth__LocalSessionSigningKey
@@ -157,6 +161,8 @@ projects:
               - key: JobsyAuth__AllowDevelopmentAuth
                 value: "true"
               - key: JobsyAuth__AllowStubPayments
+                value: "true"
+              - key: Seed__Enabled
                 value: "true"
               - key: JobsyAuth__DevelopmentAuthSecret
                 generateValue: true

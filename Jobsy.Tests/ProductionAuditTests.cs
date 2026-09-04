@@ -61,6 +61,15 @@ public class ProductionAuditTests
     }
 
     [Fact]
+    public void Production_seed_is_not_tied_to_allow_development_auth()
+    {
+        var src = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Api", "Jobs", "DatabaseSeedHostedService.cs"));
+        Assert.Contains("Seed:PurgeDemoData", src);
+        Assert.Contains("Seed:Enabled", src);
+        Assert.DoesNotContain("JobsyAuth:AllowDevelopmentAuth", src);
+    }
+
+    [Fact]
     public void Public_vacancy_reads_are_rate_limited()
     {
         var src = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Api", "Controllers", "VacanciesController.cs"));
