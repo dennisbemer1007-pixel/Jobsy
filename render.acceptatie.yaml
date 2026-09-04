@@ -1,20 +1,20 @@
-# Jobsy ACCEPTATIE Blueprint (Render project "Lobsy Acceptatie").
+# Lobsy ACCEPTATIE — environment inside project "Lobsy" (not a second project).
 # Docs: docs/deploy-render.md § Acceptatie
 #
-# Same stack as production (Starter web + Basic Postgres, Frankfurt, Docker),
-# but UNIQUE resource names so this cannot attach to Lobsy prod.
+# Same stack as Production (Starter web + Basic Postgres, Frankfurt, Docker),
+# unique names so this cannot attach to lobsy-api / lobsy-web / lobsy-db.
 #
 # Dashboard: New → Blueprint → repo Jobsy → branch Acceptatie →
 # Blueprint Path: render.acceptatie.yaml
 #
-# Never point this file at jobsy-api / jobsy-web / jobsy-db.
+# Never list lobsy-api / lobsy-web / lobsy-db in this file.
 
 projects:
-  - name: Lobsy Acceptatie
+  - name: Lobsy
     environments:
       - name: Acceptatie
         databases:
-          - name: jobsy-db-acceptatie
+          - name: lobsy-db-acceptatie
             plan: basic-256mb
             region: frankfurt
             postgresMajorVersion: "16"
@@ -23,7 +23,7 @@ projects:
 
         services:
           - type: web
-            name: jobsy-api-acceptatie
+            name: lobsy-api-acceptatie
             runtime: docker
             plan: starter
             region: frankfurt
@@ -56,21 +56,21 @@ projects:
                 generateValue: true
               - key: ConnectionStrings__JobsyDb
                 fromDatabase:
-                  name: jobsy-db-acceptatie
+                  name: lobsy-db-acceptatie
                   property: connectionString
               - key: PublicWebBaseUrl
                 fromService:
-                  name: jobsy-web-acceptatie
+                  name: lobsy-web-acceptatie
                   type: web
                   envVarKey: RENDER_EXTERNAL_URL
               - key: PublicApiBaseUrl
                 fromService:
-                  name: jobsy-api-acceptatie
+                  name: lobsy-api-acceptatie
                   type: web
                   envVarKey: RENDER_EXTERNAL_URL
               - key: Cors__AllowedOrigins__0
                 fromService:
-                  name: jobsy-web-acceptatie
+                  name: lobsy-web-acceptatie
                   type: web
                   envVarKey: RENDER_EXTERNAL_URL
               - key: Mail__ResendApiKey
@@ -79,7 +79,7 @@ projects:
                 sync: false
 
           - type: web
-            name: jobsy-web-acceptatie
+            name: lobsy-web-acceptatie
             runtime: docker
             plan: starter
             region: frankfurt
@@ -98,25 +98,25 @@ projects:
                 value: "true"
               - key: JobsyAuth__DevelopmentAuthSecret
                 fromService:
-                  name: jobsy-api-acceptatie
+                  name: lobsy-api-acceptatie
                   type: web
                   envVarKey: JobsyAuth__DevelopmentAuthSecret
               - key: JobsyAuth__LocalSessionSigningKey
                 fromService:
-                  name: jobsy-api-acceptatie
+                  name: lobsy-api-acceptatie
                   type: web
                   envVarKey: JobsyAuth__LocalSessionSigningKey
               - key: JobsyAuth__ExternalProvisionSecret
                 fromService:
-                  name: jobsy-api-acceptatie
+                  name: lobsy-api-acceptatie
                   type: web
                   envVarKey: JobsyAuth__ExternalProvisionSecret
               - key: ApiBaseUrl
                 fromService:
-                  name: jobsy-api-acceptatie
+                  name: lobsy-api-acceptatie
                   type: web
                   envVarKey: RENDER_EXTERNAL_URL
               - key: ConnectionStrings__JobsyDb
                 fromDatabase:
-                  name: jobsy-db-acceptatie
+                  name: lobsy-db-acceptatie
                   property: connectionString

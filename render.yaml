@@ -1,7 +1,7 @@
 # Jobsy PRODUCTION Blueprint (Render project "Lobsy").
 # Docs: docs/deploy-render.md
 #
-# Do NOT create a second Blueprint from this file for "Lobsy Acceptatie".
+# Do NOT create a second Blueprint from this file for Acceptatie.
 # Service names (jobsy-api / jobsy-web / jobsy-db) are workspace-unique and
 # would reconfigure production. Use render.acceptatie.yaml instead.
 #
