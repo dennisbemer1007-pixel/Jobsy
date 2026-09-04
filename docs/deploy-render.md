@@ -26,6 +26,100 @@ De Blueprint houdt `JobsyAuth__AllowDevelopmentAuth=true` zodat demo-login via d
 
 Na Blueprint sync: controleer dat beide services dezelfde `JobsyAuth__DevelopmentAuthSecret`, `JobsyAuth__LocalSessionSigningKey` én `JobsyAuth__ExternalProvisionSecret` hebben.
 
+## Acceptatie (environment in project **Lobsy**)
+
+Productie staat in **Lobsy → Production** (`lobsy-api` / `lobsy-web` / `lobsy-db`, branch `main`).
+**Lobsy → Acceptatie** is dezelfde stack (Docker, Starter, Basic-256mb Postgres, Frankfurt) maar **nieuwe** resources. Klik **niet** op **Move existing services** — dat haalt productie uit Production.
+
+Render-servicenamen zijn uniek in de hele workspace. De prod-Blueprint (`render.yaml`) niet een tweede keer toepassen. Gebruik `render.acceptatie.yaml` of maak de drie services in Acceptatie (stappen hieronder).
+
+### Wat “identiek” wél en niet is
+
+| Wel hetzelfde | Nooit delen met prod |
+|---------------|----------------------|
+| Dockerfiles, plans, regio, health checks, feature-flags | Database (`lobsy-db`) |
+| Branch `Acceptatie` (nu gelijk aan `main`) | Signing keys / peppers |
+| Demo-login gedrag | Mollie live-keys + echte betalingen |
+| | Resend + testdata naar echte gebruikers |
+
+Kosten: nog eens ~$14/mo web + Postgres (naast productie).
+
+### Aanbevolen: tweede Blueprint
+
+1. Zorg dat `render.acceptatie.yaml` op branch **`Acceptatie`** staat (al in deze repo).
+2. In Render: **New → Blueprint**.
+3. Repo **Jobsy**, branch **`Acceptatie`**.
+4. **Blueprint Path:** `render.acceptatie.yaml` (niet het default `render.yaml`).
+5. Deploy. Render maakt in **Lobsy → Acceptatie**:
+   - `lobsy-db-acceptatie`
+   - `lobsy-api-acceptatie`
+   - `lobsy-web-acceptatie`
+6. Wacht tot alle drie groen zijn. Open `lobsy-web-acceptatie` → `https://….onrender.com`.
+7. API-check: `lobsy-api-acceptatie` URL + `/health`.
+8. Kopieer **alleen** dashboard-secrets die je op acceptatie nodig hebt (zie tabel hieronder). Nieuwe waarden, geen copy-paste van prod-signing-keys.
+
+Landen services in Ungrouped: **••• → Move** naar **Lobsy / Acceptatie**. Verplaats nooit `lobsy-api` / `lobsy-web` / `lobsy-db`.
+
+### Dashboard: leeg Acceptatie-scherm
+
+Op **Lobsy → Acceptatie** (“Acceptatie is empty”):
+
+1. **+ Create new service** → **Postgres** — naam `lobsy-db-acceptatie`, plan **Basic 256 MB**, regio **Frankfurt**, Postgres 16. Create.
+2. **+ Create new service** → **Web Service** — repo Jobsy, Docker, branch **`Acceptatie`**, `./Jobsy.Api/Dockerfile`, context `.`, plan **Starter**, Frankfurt, health `/health`, naam `lobsy-api-acceptatie`.
+3. **+ Create new service** → **Web Service** — zelfde repo/branch, `./Jobsy.Web/Dockerfile`, health `/`, naam `lobsy-web-acceptatie`.
+4. Env-vars (tweede tab: Production `lobsy-api` / `lobsy-web` als voorbeeld van de key-namen):
+
+| Key | Acceptatie-waarde |
+|-----|-------------------|
+| `ConnectionStrings__JobsyDb` | Internal URL van **`lobsy-db-acceptatie`** (api én web) |
+| `ApiBaseUrl` (web) | URL van **`lobsy-api-acceptatie`** |
+| `PublicApiBaseUrl` (api) | idem |
+| `PublicWebBaseUrl` (api) | URL van **`lobsy-web-acceptatie`** |
+| `Cors__AllowedOrigins__0` | diezelfde web-URL |
+| `JobsyAuth__DevelopmentAuthSecret` e.d. | **nieuw** genereren; web = zelfde waarde als api |
+
+Zet **geen** `https://lobsy.nl` in CORS of `PublicWebBaseUrl` op acceptatie — anders wijzen mails/links naar productie.
+
+Snel overzicht van prod-env: Production `lobsy-api` + `lobsy-web` selecteren → **Generate Blueprint** (waarden komen er niet in, wel de key-namen).
+
+### Secrets en integraties overzetten
+
+| Integratie | Acceptatie |
+|------------|------------|
+| Resend (`Mail__ResendApiKey` / `FromAddress`) | Alleen zetten als je écht mail wilt testen. Bij een testdatabase: test-inbox of geen key. **Nooit** prod-data + prod-Resend (dan mailen echte gebruikers). |
+| Sentry `Sentry__Dsn` | Mag dezelfde Dsn; filter op environment/host. |
+| Entra / Google | Nieuwe redirect URI’s: `{acceptatie-web}/signin-entra` en `/signin-google`. |
+| Mollie | **Test-keys**, tenzij je bewust live wilt. `JobsyAuth__AllowStubPayments` staat in de blueprint op `true` (zelfde als huidige prod-demo). |
+| Signing keys / `VerificationCodes__Pepper` | Altijd nieuw. Gedeelde keys maken sessies/OTP tussen prod en acceptatie inwisselbaar. |
+
+### Testdata: leeg (seed) of kopie van prod
+
+**Lege DB (standaard):** api seedt mockdata bij eerste start (AllowDevelopmentAuth), net als de publieke demo.
+
+**Kopie van productie** (alleen als je UAT met echte inhoud nodig hebt):
+
+1. Prod: `lobsy-db` → **Recovery / Backups** of `pg_dump` met de **External Database URL**.
+2. Restore in `lobsy-db-acceptatie` (`pg_restore --no-owner --no-acl`).
+3. Schakel Resend uit of gebruik een veilige From, tot je zeker weet dat er geen mails naar echte adressen gaan.
+4. Deel nooit de prod connection string met acceptatie-services.
+
+```bash
+pg_dump -Fc -d "$PROD_EXTERNAL_URL" -f lobsy-prod.dump
+pg_restore -d "$ACCEPTATIE_EXTERNAL_URL" -v --no-owner --no-acl lobsy-prod.dump
+```
+
+### Gelijk houden met productie
+
+- **Code:** merge `main` → `Acceptatie` (of cherry-pick de release). Push naar `Acceptatie` deployst automatisch `lobsy-*-acceptatie`.
+- **Infra:** wijzigingen in `render.yaml` (prod) spiegelen in `render.acceptatie.yaml` (andere namen).
+- Na validatie: merge `Acceptatie` → `main` zodat de productie-Blueprint opnieuw deployt.
+
+### Custom domain (optioneel)
+
+1. DNS: `acceptatie.lobsy.nl` CNAME naar de `onrender.com` van `lobsy-web-acceptatie`.
+2. Custom domain koppelen op die web-service.
+3. `PublicWebBaseUrl` + CORS op die origin zetten.
+
 ## Eenmalig: code + Blueprint
 
 1. Repo op GitHub: `dennisbemer1007-pixel/Jobsy` (branch `main` met `render.yaml`).

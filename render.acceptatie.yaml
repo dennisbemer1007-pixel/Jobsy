@@ -1,0 +1,122 @@
+# Lobsy ACCEPTATIE — environment inside project "Lobsy" (not a second project).
+# Docs: docs/deploy-render.md § Acceptatie
+#
+# Same stack as Production (Starter web + Basic Postgres, Frankfurt, Docker),
+# unique names so this cannot attach to lobsy-api / lobsy-web / lobsy-db.
+#
+# Dashboard: New → Blueprint → repo Jobsy → branch Acceptatie →
+# Blueprint Path: render.acceptatie.yaml
+#
+# Never list lobsy-api / lobsy-web / lobsy-db in this file.
+
+projects:
+  - name: Lobsy
+    environments:
+      - name: Acceptatie
+        databases:
+          - name: lobsy-db-acceptatie
+            plan: basic-256mb
+            region: frankfurt
+            postgresMajorVersion: "16"
+            databaseName: jobsy
+            user: jobsy
+
+        services:
+          - type: web
+            name: lobsy-api-acceptatie
+            runtime: docker
+            plan: starter
+            region: frankfurt
+            branch: Acceptatie
+            dockerfilePath: ./Jobsy.Api/Dockerfile
+            dockerContext: .
+            healthCheckPath: /health
+            envVars:
+              - key: ASPNETCORE_ENVIRONMENT
+                value: Production
+              - key: DOTNET_HOSTBUILDER__RELOADCONFIGONCHANGE
+                value: "false"
+              - key: AllowedHosts
+                value: "*"
+              - key: JobsyAuth__AllowDevelopmentAuth
+                value: "true"
+              - key: JobsyAuth__AllowStubPayments
+                value: "true"
+              - key: JobsyAuth__DevelopmentAuthSecret
+                generateValue: true
+              - key: JobsyAuth__LocalSessionSigningKey
+                generateValue: true
+              - key: JobsyAuth__ExternalProvisionSecret
+                generateValue: true
+              - key: JobsyFeatures__ExposeRegistrationActivationLinks
+                value: "false"
+              - key: Swagger__Enabled
+                value: "false"
+              - key: VerificationCodes__Pepper
+                generateValue: true
+              - key: ConnectionStrings__JobsyDb
+                fromDatabase:
+                  name: lobsy-db-acceptatie
+                  property: connectionString
+              - key: PublicWebBaseUrl
+                fromService:
+                  name: lobsy-web-acceptatie
+                  type: web
+                  envVarKey: RENDER_EXTERNAL_URL
+              - key: PublicApiBaseUrl
+                fromService:
+                  name: lobsy-api-acceptatie
+                  type: web
+                  envVarKey: RENDER_EXTERNAL_URL
+              - key: Cors__AllowedOrigins__0
+                fromService:
+                  name: lobsy-web-acceptatie
+                  type: web
+                  envVarKey: RENDER_EXTERNAL_URL
+              - key: Mail__ResendApiKey
+                sync: false
+              - key: Mail__FromAddress
+                sync: false
+
+          - type: web
+            name: lobsy-web-acceptatie
+            runtime: docker
+            plan: starter
+            region: frankfurt
+            branch: Acceptatie
+            dockerfilePath: ./Jobsy.Web/Dockerfile
+            dockerContext: .
+            healthCheckPath: /
+            envVars:
+              - key: ASPNETCORE_ENVIRONMENT
+                value: Production
+              - key: DOTNET_HOSTBUILDER__RELOADCONFIGONCHANGE
+                value: "false"
+              - key: AllowedHosts
+                value: "*"
+              - key: JobsyAuth__AllowDevelopmentAuth
+                value: "true"
+              - key: JobsyAuth__DevelopmentAuthSecret
+                fromService:
+                  name: lobsy-api-acceptatie
+                  type: web
+                  envVarKey: JobsyAuth__DevelopmentAuthSecret
+              - key: JobsyAuth__LocalSessionSigningKey
+                fromService:
+                  name: lobsy-api-acceptatie
+                  type: web
+                  envVarKey: JobsyAuth__LocalSessionSigningKey
+              - key: JobsyAuth__ExternalProvisionSecret
+                fromService:
+                  name: lobsy-api-acceptatie
+                  type: web
+                  envVarKey: JobsyAuth__ExternalProvisionSecret
+              - key: ApiBaseUrl
+                fromService:
+                  name: lobsy-api-acceptatie
+                  type: web
+                  envVarKey: RENDER_EXTERNAL_URL
+              - key: ConnectionStrings__JobsyDb
+                fromDatabase:
+                  name: lobsy-db-acceptatie
+                  property: connectionString
