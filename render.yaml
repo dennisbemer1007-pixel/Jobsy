@@ -1,5 +1,9 @@
-# Jobsy always-on demo on Render (paid instance types).
+# Jobsy PRODUCTION Blueprint (Render project "Lobsy").
 # Docs: docs/deploy-render.md
+#
+# Do NOT create a second Blueprint from this file for "Lobsy Acceptatie".
+# Service names (jobsy-api / jobsy-web / jobsy-db) are workspace-unique and
+# would reconfigure production. Use render.acceptatie.yaml instead.
 #
 # Starter web services do not spin down on idle.
 # basic-256mb Postgres does not expire after 30 days (unlike free).

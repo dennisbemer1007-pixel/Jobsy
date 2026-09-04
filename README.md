@@ -23,7 +23,8 @@ Jobsy/
 ## Cloud-demo (Render, always-on)
 
 Publiek zonder laptop: zie [`docs/deploy-render.md`](docs/deploy-render.md).
-Blueprint: [`render.yaml`](render.yaml) → Starter web + Basic Postgres (geen idle spin-down).
+Blueprint productie: [`render.yaml`](render.yaml) → Starter web + Basic Postgres (geen idle spin-down).
+Acceptatie (kopie-stack, andere namen): [`render.acceptatie.yaml`](render.acceptatie.yaml) — zie [`docs/deploy-render.md`](docs/deploy-render.md) § Acceptatie.
 Render **New → Blueprint** op GitHub-repo `dennisbemer1007-pixel/Jobsy` (of Manual sync op bestaande Blueprint).
 
 ## Lokaal starten
