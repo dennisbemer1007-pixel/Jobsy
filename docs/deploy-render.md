@@ -84,10 +84,10 @@ Na Blueprint sync: controleer per environment dat API en web dezelfde `JobsyAuth
 3. Bevestig instance types (Starter / Basic-256mb) in het Dashboard.
 4. Controleer na sync:
    - `jobsy-api` → **Environment**: `ConnectionStrings__JobsyDb` is een echte `postgres://` / `postgresql://` URL
-   - Production API-logs: `Purged seeder mock data` of `No seeder mock data found to purge` (geen nieuwe Westland-seed)
-   - Acceptatie API-logs: `Seed completed` / `Seeding Jobsy mock data`
+   - Production API-logs: `Operational wipe finished` of `nothing to delete` (geen nieuwe Westland-seed). Daarna: `already marked`.
+   - Acceptatie API-logs: `Seed completed` / `Seeding Jobsy mock data` (geen wipe)
    - `jobsy-api` URL + `/health` → OK
-5. `https://lobsy.nl` toont geen seeder-vacatures meer; `https://acceptatie.lobsy.nl` wel.
+5. `https://lobsy.nl` toont geen bedrijven/vacatures meer (alleen `admin@jobsy.local`); `https://acceptatie.lobsy.nl` blijft geseeded.
 
 Als de connection string leeg is of corrupt (vaak na DB-upgrade), zie hieronder.
 
@@ -107,9 +107,8 @@ Verwijder Acceptatie-resources niet samen met Production.
 
 ## Gebruiken
 
-- Production: `https://lobsy.nl` of klik **`jobsy-web`** → link bovenaan
-- Acceptatie: klik **`lobsy-acc-web`** → `https://lobsy-acc-web.onrender.com`
-- Login: `kandidaat@jobsy.local` / `Jobsy123!`
+- Production: `https://lobsy.nl` of klik **`jobsy-web`** → link bovenaan. Na de operational wipe: login `admin@jobsy.local` / `Jobsy123!` (geen vacatures/bedrijven tot je ze opnieuw aanmaakt).
+- Acceptatie: klik **`lobsy-acc-web`** → `https://acceptatie.lobsy.nl` of `https://lobsy-acc-web.onrender.com`. Demo-login: `kandidaat@jobsy.local` / `Jobsy123!`
 - API check: **`jobsy-api`** of **`lobsy-acc-api`** URL + `/health`
 
 Services blijven draaien; geen cold start na idle.
@@ -226,4 +225,4 @@ Resend is pas operationeel als **API-key én From** beide gezet zijn (DB of env)
 | `JobsyAuth__AllowStubPayments` | `true` | `false` + live Mollie |
 | `Swagger__Enabled` | `false` | `false` (of tijdelijk `true` voor partners) |
 | `Seed:Enabled` | `true` op Acceptatie | `false` |
-| `Seed:PurgeDemoData` | uit | `true` (wist seeder-mockdata eenmalig bij API-start) |
+| `Seed:PurgeDemoData` | uit | `true` (eenmalige wipe: alle bedrijven/vacatures/kandidaten; houdt `admin@jobsy.local`). Draait ook als `PublicWebBaseUrl` `https://lobsy.nl` is, zodat Blueprint-env-sync niet verplicht is. |

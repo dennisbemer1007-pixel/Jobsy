@@ -1,190 +1,121 @@
 using Jobsy.Core.Entities;
 using Jobsy.Core.Enums;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 
 namespace Jobsy.Infrastructure.Data;
 
 /// <summary>
-/// Identifies and deletes deterministic seeder rows (Westland/Haaglanden banenkaart,
-/// @jobsy.local demo accounts, sprint-8 metrics). Leaves real registrations and
-/// platform masterdata (categories, token prices, about-page) intact.
+/// One-shot wipe of operational demo rows on live <c>lobsy.nl</c>: every company,
+/// vacancy and non-admin user. Keeps <c>admin@jobsy.local</c> plus platform
+/// masterdata (categories, token prices, about-page, integration secrets).
 /// </summary>
 internal static class DemoDataPurge
 {
-    public const string Marker = "Demo data purged";
+    public const string Marker = "Operational wipe 2026-09-04 keep admin@jobsy.local";
+    public const string KeptAdminEmail = "admin@jobsy.local";
 
-    public static bool IsDemoCompanyId(Guid id)
-    {
-        if (id == Guid.Parse("11111111-1111-1111-1111-111111111111")
-            || id == Guid.Parse("22222222-2222-2222-2222-222222222222")
-            || id == Guid.Parse("33333333-3333-3333-3333-333333333333")
-            || id == Guid.Parse("44444444-4444-4444-4444-444444444444"))
-        {
-            return true;
-        }
-
-        var key = id.ToString("D");
-        return key.StartsWith("c1000000-0000-4000-8000-", StringComparison.OrdinalIgnoreCase)
-               || key.StartsWith("c2000000-0000-4000-8000-", StringComparison.OrdinalIgnoreCase)
-               || key.StartsWith("c3000000-0000-4000-8000-", StringComparison.OrdinalIgnoreCase)
-               || key.StartsWith("c4000000-0000-4000-8000-", StringComparison.OrdinalIgnoreCase);
-    }
-
-    public static bool IsDemoVacancyId(Guid id)
-    {
-        if (id == Guid.Parse("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa")
-            || id == Guid.Parse("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb")
-            || id == Guid.Parse("cccccccc-cccc-cccc-cccc-cccccccccccc")
-            || id == Guid.Parse("dddddddd-dddd-dddd-dddd-dddddddddddd")
-            || id == Guid.Parse("eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee")
-            || id == Guid.Parse("ffffffff-ffff-ffff-ffff-ffffffffffff")
-            || id == Guid.Parse("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"))
-        {
-            return true;
-        }
-
-        var key = id.ToString("D");
-        return key.StartsWith("a1000000-0000-4000-8000-", StringComparison.OrdinalIgnoreCase)
-               || key.StartsWith("a2000000-0000-4000-8000-", StringComparison.OrdinalIgnoreCase)
-               || key.StartsWith("a3000000-0000-4000-8000-", StringComparison.OrdinalIgnoreCase)
-               || key.StartsWith("a4000000-0000-4000-8000-", StringComparison.OrdinalIgnoreCase)
-               || key.StartsWith("a5000000-0000-4000-8000-", StringComparison.OrdinalIgnoreCase);
-    }
-
-    public static bool IsDemoUserEmail(string? email)
+    public static bool IsKeptAdminEmail(string? email)
         => !string.IsNullOrWhiteSpace(email)
-           && email.EndsWith("@jobsy.local", StringComparison.OrdinalIgnoreCase);
+           && email.Equals(KeptAdminEmail, StringComparison.OrdinalIgnoreCase);
+
+    /// <summary>
+    /// Live production is the apex site. Acceptatie uses acceptatie.lobsy.nl or onrender.
+    /// </summary>
+    public static bool IsLiveProductionSite(string? publicWebBaseUrl)
+    {
+        if (!Uri.TryCreate(publicWebBaseUrl, UriKind.Absolute, out var uri)
+            || string.IsNullOrWhiteSpace(uri.Host))
+        {
+            return false;
+        }
+
+        return uri.Host.Equals("lobsy.nl", StringComparison.OrdinalIgnoreCase)
+               || uri.Host.Equals("www.lobsy.nl", StringComparison.OrdinalIgnoreCase);
+    }
+
+    public static bool ShouldRun(IConfiguration configuration, bool alreadyMarked)
+    {
+        if (alreadyMarked || configuration.GetValue("Seed:Enabled", false))
+        {
+            return false;
+        }
+
+        return configuration.GetValue("Seed:PurgeDemoData", false)
+               || IsLiveProductionSite(configuration["PublicWebBaseUrl"]);
+    }
 
     public static async Task<DemoDataPurgeResult> PurgeAsync(JobsyDbContext db, ILogger logger)
     {
-        var companies = await db.Companies.ToListAsync();
-        var demoCompanyIds = companies.Where(c => IsDemoCompanyId(c.Id)).Select(c => c.Id).ToHashSet();
-
+        var companyIds = await db.Companies.IgnoreQueryFilters().Select(c => c.Id).ToListAsync();
+        var vacancyIds = await db.Vacancies.IgnoreQueryFilters().Select(v => v.Id).ToListAsync();
         var users = await db.Users.ToListAsync();
-        var demoUserIds = users.Where(u => IsDemoUserEmail(u.Email)).Select(u => u.Id).ToHashSet();
+        var removeUserIds = users.Where(u => !IsKeptAdminEmail(u.Email)).Select(u => u.Id).ToHashSet();
 
-        var vacancies = await db.Vacancies.ToListAsync();
-        var demoVacancyIds = vacancies
-            .Where(v => demoCompanyIds.Contains(v.CompanyId)
-                        || (v.IntermediaryCompanyId is { } inter && demoCompanyIds.Contains(inter))
-                        || IsDemoVacancyId(v.Id))
-            .Select(v => v.Id)
-            .ToHashSet();
-
-        if (demoCompanyIds.Count == 0 && demoUserIds.Count == 0 && demoVacancyIds.Count == 0)
+        if (companyIds.Count == 0 && vacancyIds.Count == 0 && removeUserIds.Count == 0)
         {
-            logger.LogInformation("No seeder mock data found to purge.");
+            await EnsureMarkerAsync(db);
+            logger.LogInformation("Operational wipe: nothing to delete (admin-only / empty).");
             return new DemoDataPurgeResult(0, 0, 0);
         }
 
         logger.LogWarning(
-            "Purging seeder mock data: {Companies} companies, {Vacancies} vacancies, {Users} @jobsy.local users.",
-            demoCompanyIds.Count,
-            demoVacancyIds.Count,
-            demoUserIds.Count);
+            "Wiping operational data; keeping {Admin}. Removing {Companies} companies, {Vacancies} vacancies, {Users} users.",
+            KeptAdminEmail,
+            companyIds.Count,
+            vacancyIds.Count,
+            removeUserIds.Count);
 
-        await RemoveWhereAsync(db, db.PendingTokenActions, x =>
-            demoCompanyIds.Contains(x.CompanyId) || demoVacancyIds.Contains(x.VacancyId));
+        await RemoveAllAsync(db, db.PendingTokenActions);
+        await RemoveAllAsync(db, db.VatBufferTransfers);
+        await RemoveAllAsync(db, db.RevenueShareLogs);
+        await RemoveAllAsync(db, db.TokenPurchaseInvoices);
+        await RemoveAllAsync(db, db.TokenPurchaseCheckouts);
+        await RemoveAllAsync(db, db.SupplierOnboardingCheckouts);
+        await RemoveAllAsync(db, db.ApiKeys);
+        await RemoveAllAsync(db, db.CommissionLedgerEntries);
+        await RemoveAllAsync(db, db.SelfBillingInvoiceLines);
+        await RemoveAllAsync(db, db.SalesManagerPayoutCheckouts);
+        await RemoveAllAsync(db, db.SelfBillingInvoices);
+        await RemoveAllAsync(db, db.VatDeclarations);
+        await RemoveAllAsync(db, db.SalesManagerApplications);
+        await RemoveAllAsync(db, db.SalesManagerProfiles);
+        await RemoveAllAsync(db, db.AmbassadeurProfiles);
+        await RemoveAllAsync(db, db.PartnerAffiliateProfiles);
+        await RemoveAllAsync(db, db.EstablishmentTakeoverRequests);
+        await RemoveAllAsync(db, db.CompanyRegistrations);
+        await RemoveAllAsync(db, db.RegionCompanies);
+        await RemoveAllAsync(db, db.Regions);
+        await RemoveAllAsync(db, db.CompanySalaryTableChangeLogs);
+        await RemoveAllAsync(db, db.CompanySalaryRates);
+        await RemoveAllAsync(db, db.CompanySalaryTableAllowedBranches);
+        await RemoveAllAsync(db, db.ApplicationUploadedCvs);
+        await RemoveAllAsync(db, db.Applications);
+        await RemoveAllAsync(db, db.VacancyClicks);
+        await RemoveAllAsync(db, db.VacancyLikes);
+        await RemoveAllAsync(db, db.VacancyShares);
+        await RemoveAllAsync(db, db.VacancySearchImpressions);
+        await RemoveAllAsync(db, db.TokenTransactions.IgnoreQueryFilters());
+        await RemoveWhereAsync(db, db.CandidateUploadedCvs, x => removeUserIds.Contains(x.UserId));
+        await RemoveWhereAsync(db, db.CandidateReferences, x => removeUserIds.Contains(x.UserId));
+        await RemoveWhereAsync(db, db.CandidateActionTokens, x => removeUserIds.Contains(x.UserId));
+        await RemoveWhereAsync(db, db.UserNotifications, x => removeUserIds.Contains(x.UserId));
+        await RemoveWhereAsync(db, db.UserExternalLogins, x => removeUserIds.Contains(x.UserId));
+        await RemoveWhereAsync(db, db.LocalAuthCredentials, x => removeUserIds.Contains(x.UserId));
+        await RemoveAllAsync(db, db.SiteVisits);
+        await RemoveWhereAsync(db, db.PlatformFeedbacks, x =>
+            x.UserId == null || (x.UserId != null && removeUserIds.Contains(x.UserId.Value)));
+        await RemoveAllAsync(db, db.UserCompanies);
+        await db.SaveChangesAsync();
 
-        var demoInvoiceIds = await db.TokenPurchaseInvoices
-            .Where(i => demoCompanyIds.Contains(i.CompanyId))
-            .Select(i => i.Id)
-            .ToListAsync();
-        if (demoInvoiceIds.Count > 0)
-        {
-            await RemoveWhereAsync(db, db.VatBufferTransfers, x => demoInvoiceIds.Contains(x.TokenPurchaseInvoiceId));
-        }
-
-        await RemoveWhereAsync(db, db.RevenueShareLogs, x => demoCompanyIds.Contains(x.CompanyId));
-        await RemoveWhereAsync(db, db.TokenPurchaseInvoices, x => demoCompanyIds.Contains(x.CompanyId));
-        await RemoveWhereAsync(db, db.TokenPurchaseCheckouts, x => demoCompanyIds.Contains(x.CompanyId));
-        await RemoveWhereAsync(db, db.SupplierOnboardingCheckouts, x => demoCompanyIds.Contains(x.CompanyId));
-        await RemoveWhereAsync(db, db.ApiKeys, x => demoCompanyIds.Contains(x.CompanyId));
-        await RemoveWhereAsync(db, db.CommissionLedgerEntries, x =>
-            (x.CompanyId != null && demoCompanyIds.Contains(x.CompanyId.Value))
-            || demoUserIds.Contains(x.SalesManagerUserId));
-
-        var demoSelfBillingIds = await db.SelfBillingInvoices
-            .Where(i => demoUserIds.Contains(i.SalesManagerUserId))
-            .Select(i => i.Id)
-            .ToListAsync();
-        if (demoSelfBillingIds.Count > 0)
-        {
-            await RemoveWhereAsync(db, db.SelfBillingInvoiceLines, x => demoSelfBillingIds.Contains(x.SelfBillingInvoiceId));
-        }
-
-        await RemoveWhereAsync(db, db.SalesManagerPayoutCheckouts, x => demoUserIds.Contains(x.SalesManagerUserId));
-        await RemoveWhereAsync(db, db.SelfBillingInvoices, x => demoUserIds.Contains(x.SalesManagerUserId));
-        await RemoveWhereAsync(db, db.SalesManagerApplications, x =>
-            demoUserIds.Contains(x.ReferrerSalesManagerUserId)
-            || (x.ProvisionedUserId != null && demoUserIds.Contains(x.ProvisionedUserId.Value)));
-        await RemoveWhereAsync(db, db.SalesManagerProfiles, x => demoUserIds.Contains(x.UserId));
-        await RemoveWhereAsync(db, db.AmbassadeurProfiles, x => demoUserIds.Contains(x.UserId));
-        await RemoveWhereAsync(db, db.PartnerAffiliateProfiles, x => demoUserIds.Contains(x.UserId));
-
-        await RemoveWhereAsync(db, db.EstablishmentTakeoverRequests, x => demoCompanyIds.Contains(x.TargetCompanyId));
-        await RemoveWhereAsync(db, db.CompanyRegistrations, x =>
-            (x.CreatedOrganizationCompanyId != null && demoCompanyIds.Contains(x.CreatedOrganizationCompanyId.Value))
-            || (x.CreatedBranchCompanyId != null && demoCompanyIds.Contains(x.CreatedBranchCompanyId.Value)));
-
-        var demoRegionIds = await db.Regions
-            .Where(r => demoCompanyIds.Contains(r.OrganizationCompanyId))
-            .Select(r => r.Id)
-            .ToListAsync();
-        if (demoRegionIds.Count > 0)
-        {
-            await RemoveWhereAsync(db, db.RegionCompanies, x => demoRegionIds.Contains(x.RegionId));
-            await RemoveWhereAsync(db, db.Regions, x => demoRegionIds.Contains(x.Id));
-        }
-
-        await RemoveWhereAsync(db, db.RegionCompanies, x => demoCompanyIds.Contains(x.CompanyId));
-
-        var demoTableIds = await db.CompanySalaryTables
-            .Where(t => demoCompanyIds.Contains(t.CompanyId))
-            .Select(t => t.Id)
-            .ToListAsync();
-        if (demoTableIds.Count > 0)
-        {
-            await RemoveWhereAsync(db, db.CompanySalaryTableChangeLogs, x => demoTableIds.Contains(x.SalaryTableId));
-            await RemoveWhereAsync(db, db.CompanySalaryRates, x => demoTableIds.Contains(x.SalaryTableId));
-            await RemoveWhereAsync(db, db.CompanySalaryTableAllowedBranches, x =>
-                demoTableIds.Contains(x.SalaryTableId) || demoCompanyIds.Contains(x.CompanyId));
-        }
-
-        var demoApplicationIds = (await db.Applications.ToListAsync())
-            .Where(a => demoVacancyIds.Contains(a.VacancyId)
-                        || (a.CandidateUserId is { } cand && demoUserIds.Contains(cand)))
-            .Select(a => a.Id)
-            .ToHashSet();
-        if (demoApplicationIds.Count > 0)
-        {
-            await RemoveWhereAsync(db, db.ApplicationUploadedCvs, x => demoApplicationIds.Contains(x.ApplicationId));
-            await RemoveWhereAsync(db, db.Applications, x => demoApplicationIds.Contains(x.Id));
-        }
-        await RemoveWhereAsync(db, db.VacancyClicks, x => demoVacancyIds.Contains(x.VacancyId));
-        await RemoveWhereAsync(db, db.VacancyLikes, x => demoVacancyIds.Contains(x.VacancyId));
-        await RemoveWhereAsync(db, db.VacancyShares, x => demoVacancyIds.Contains(x.VacancyId));
-        await RemoveWhereAsync(db, db.VacancySearchImpressions, x => demoVacancyIds.Contains(x.VacancyId));
-        await RemoveWhereAsync(db, db.TokenTransactions, x => demoCompanyIds.Contains(x.CompanyId));
-
-        await RemoveWhereAsync(db, db.CandidateUploadedCvs, x => demoUserIds.Contains(x.UserId));
-        await RemoveWhereAsync(db, db.CandidateReferences, x => demoUserIds.Contains(x.UserId));
-        await RemoveWhereAsync(db, db.CandidateActionTokens, x => demoUserIds.Contains(x.UserId));
-        await RemoveWhereAsync(db, db.UserNotifications, x => demoUserIds.Contains(x.UserId));
-        await RemoveWhereAsync(db, db.UserExternalLogins, x => demoUserIds.Contains(x.UserId));
-        await RemoveWhereAsync(db, db.LocalAuthCredentials, x => demoUserIds.Contains(x.UserId));
-        await RemoveWhereAsync(db, db.SiteVisits, x => x.UserId != null && demoUserIds.Contains(x.UserId.Value));
-        await RemoveWhereAsync(db, db.PlatformFeedbacks, x => x.UserId != null && demoUserIds.Contains(x.UserId.Value));
-        await RemoveWhereAsync(db, db.UserCompanies, x =>
-            demoUserIds.Contains(x.UserId) || demoCompanyIds.Contains(x.CompanyId));
-
-        foreach (var user in users.Where(u => demoCompanyIds.Contains(u.CompanyId ?? Guid.Empty)))
+        foreach (var user in users)
         {
             user.CompanyId = null;
+            user.ReferredByAmbassadeurUserId = null;
         }
 
-        foreach (var company in companies.Where(c => demoCompanyIds.Contains(c.Id)))
+        foreach (var company in await db.Companies.ToListAsync())
         {
             company.ParentCompanyId = null;
             company.ReferredBySalesManagerUserId = null;
@@ -195,19 +126,34 @@ internal static class DemoDataPurge
 
         await db.SaveChangesAsync();
 
-        if (demoTableIds.Count > 0)
+        await RemoveAllAsync(db, db.CompanySalaryTables);
+        await RemoveAllAsync(db, db.Vacancies.IgnoreQueryFilters());
+        await db.SaveChangesAsync();
+
+        await RemoveAllAsync(db, db.Companies);
+        await db.SaveChangesAsync();
+
+        await RemoveWhereAsync(db, db.Users, x => removeUserIds.Contains(x.Id));
+        await db.SaveChangesAsync();
+
+        await EnsureMarkerAsync(db);
+
+        logger.LogWarning(
+            "Operational wipe finished ({Companies} companies, {Vacancies} vacancies, {Users} users). Kept {Admin}.",
+            companyIds.Count,
+            vacancyIds.Count,
+            removeUserIds.Count,
+            KeptAdminEmail);
+
+        return new DemoDataPurgeResult(companyIds.Count, vacancyIds.Count, removeUserIds.Count);
+    }
+
+    private static async Task EnsureMarkerAsync(JobsyDbContext db)
+    {
+        if (await db.PlatformLogs.AnyAsync(l => l.Category == "Seed" && l.Message == Marker))
         {
-            await RemoveWhereAsync(db, db.CompanySalaryTables, x => demoTableIds.Contains(x.Id));
+            return;
         }
-
-        await RemoveWhereAsync(db, db.Vacancies, x => demoVacancyIds.Contains(x.Id));
-        await db.SaveChangesAsync();
-
-        await RemoveWhereAsync(db, db.Companies, x => demoCompanyIds.Contains(x.Id));
-        await db.SaveChangesAsync();
-
-        await RemoveWhereAsync(db, db.Users, x => demoUserIds.Contains(x.Id));
-        await RemoveWhereAsync(db, db.PlatformLogs, x => x.Category == "Seed");
 
         db.PlatformLogs.Add(new PlatformLog
         {
@@ -218,15 +164,11 @@ internal static class DemoDataPurge
             CreatedAt = DateTime.UtcNow
         });
         await db.SaveChangesAsync();
-
-        logger.LogWarning(
-            "Purged seeder mock data ({Companies} companies, {Vacancies} vacancies, {Users} users).",
-            demoCompanyIds.Count,
-            demoVacancyIds.Count,
-            demoUserIds.Count);
-
-        return new DemoDataPurgeResult(demoCompanyIds.Count, demoVacancyIds.Count, demoUserIds.Count);
     }
+
+    private static Task RemoveAllAsync<T>(JobsyDbContext db, IQueryable<T> source)
+        where T : class
+        => RemoveWhereAsync(db, source, _ => true);
 
     private static async Task RemoveWhereAsync<T>(
         JobsyDbContext db,

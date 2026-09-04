@@ -63,10 +63,16 @@ public class ProductionAuditTests
     [Fact]
     public void Production_seed_is_not_tied_to_allow_development_auth()
     {
-        var src = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Api", "Jobs", "DatabaseSeedHostedService.cs"));
-        Assert.Contains("Seed:PurgeDemoData", src);
-        Assert.Contains("Seed:Enabled", src);
-        Assert.DoesNotContain("JobsyAuth:AllowDevelopmentAuth", src);
+        var hosted = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Api", "Jobs", "DatabaseSeedHostedService.cs"));
+        Assert.Contains("Seed:Enabled", hosted);
+        Assert.Contains("PurgeDemoDataAsync", hosted);
+        Assert.DoesNotContain("JobsyAuth:AllowDevelopmentAuth", hosted);
+
+        var purge = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Infrastructure", "Data", "DemoDataPurge.cs"));
+        Assert.Contains("Seed:PurgeDemoData", purge);
+        Assert.Contains("Seed:Enabled", purge);
+        Assert.Contains("IsLiveProductionSite", purge);
+        Assert.Contains("admin@jobsy.local", purge);
     }
 
     [Fact]

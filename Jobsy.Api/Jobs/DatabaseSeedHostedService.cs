@@ -44,24 +44,7 @@ public sealed class DatabaseSeedHostedService : BackgroundService
 
         var allowSeed = _environment.IsDevelopment()
                         || _configuration.GetValue("Seed:Enabled", false);
-        var purgeDemo = _configuration.GetValue("Seed:PurgeDemoData", false);
-        if (purgeDemo)
-        {
-            try
-            {
-                await JobsyDbSeeder.PurgeDemoDataAsync(_services);
-            }
-            catch (Exception ex) when (ex is not OperationCanceledException)
-            {
-                _logger.LogError(ex, "Demo-data purge failed during startup; API continues.");
-            }
-        }
-        else if (!allowSeed)
-        {
-            _logger.LogInformation(
-                "Skipping database seed (requires Development or Seed:Enabled).");
-        }
-        else
+        if (allowSeed)
         {
             try
             {
@@ -71,6 +54,17 @@ public sealed class DatabaseSeedHostedService : BackgroundService
             {
                 // Keep API available (salesmanager endpoints, auth, etc.) even if demo seed flakes.
                 _logger.LogError(ex, "Database seed failed during startup; API continues without full seed.");
+            }
+        }
+        else
+        {
+            try
+            {
+                await JobsyDbSeeder.PurgeDemoDataAsync(_services, _configuration);
+            }
+            catch (Exception ex) when (ex is not OperationCanceledException)
+            {
+                _logger.LogError(ex, "Operational wipe failed during startup; API continues.");
             }
         }
 

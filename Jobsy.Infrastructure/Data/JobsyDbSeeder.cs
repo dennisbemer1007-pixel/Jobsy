@@ -1,5 +1,6 @@
 using Jobsy.Infrastructure.Services;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
@@ -42,11 +43,20 @@ public static class JobsyDbSeeder
         }
     }
 
-    public static async Task PurgeDemoDataAsync(IServiceProvider services)
+    public static async Task PurgeDemoDataAsync(IServiceProvider services, IConfiguration configuration)
     {
         using var scope = services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<JobsyDbContext>();
         var logger = scope.ServiceProvider.GetRequiredService<ILoggerFactory>().CreateLogger("JobsyDbSeeder");
+        var marked = await db.PlatformLogs.AnyAsync(l =>
+            l.Category == "Seed" && l.Message == DemoDataPurge.Marker);
+        if (!DemoDataPurge.ShouldRun(configuration, marked))
+        {
+            logger.LogInformation(
+                "Skipping operational wipe (Seed:Enabled, already marked, or not live lobsy.nl).");
+            return;
+        }
+
         await DemoDataPurge.PurgeAsync(db, logger);
     }
 

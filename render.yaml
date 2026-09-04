@@ -51,6 +51,8 @@ projects:
                 value: "true"
               - key: Seed__Enabled
                 value: "false"
+              # One-shot wipe of companies/vacancies/users except admin@jobsy.local.
+              # Also triggered when PublicWebBaseUrl is https://lobsy.nl (code path; no Blueprint sync required).
               - key: Seed__PurgeDemoData
                 value: "true"
               - key: JobsyAuth__DevelopmentAuthSecret
