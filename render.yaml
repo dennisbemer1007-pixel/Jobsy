@@ -1,126 +1,241 @@
-# Jobsy always-on demo on Render (paid instance types).
+# Lobsy on Render — project Lobsy, environments Production + Acceptatie.
 # Docs: docs/deploy-render.md
 #
 # Starter web services do not spin down on idle.
 # basic-256mb Postgres does not expire after 30 days (unlike free).
 #
-# Cross-service HTTP still uses RENDER_EXTERNAL_URL (works on free and paid).
-# All resources MUST share one region (private DB access).
+# Cross-service HTTP uses RENDER_EXTERNAL_URL.
+# All resources MUST share one region (private DB access): frankfurt.
 #
-# If you previously deployed with mixed regions, delete jobsy-api, jobsy-web,
-# and jobsy-db in the Render Dashboard, then Manual sync this Blueprint.
+# Workspace service names must be unique, even across environments.
+# Production matches the live dashboard names (lobsy-api / lobsy-web / lobsy-db).
+# Acceptatie uses the lobsy-acc-* prefix so it cannot collide with Production.
+#
+# Do not also define these resources at the YAML root — that duplicates them.
+#
+# After merge to main: Render Blueprint → Manual sync.
+# Confirm the plan CREATES lobsy-acc-* in Acceptatie and does NOT delete Production.
 
-databases:
-  - name: jobsy-db
-    plan: basic-256mb
-    region: frankfurt
-    postgresMajorVersion: "16"
-    databaseName: jobsy
-    user: jobsy
+projects:
+  - name: Lobsy
+    environments:
+      - name: Production
+        databases:
+          - name: lobsy-db
+            plan: basic-256mb
+            region: frankfurt
+            postgresMajorVersion: "16"
+            databaseName: jobsy
+            user: jobsy
 
-services:
-  - type: web
-    name: jobsy-api
-    runtime: docker
-    plan: starter
-    region: frankfurt
-    dockerfilePath: ./Jobsy.Api/Dockerfile
-    dockerContext: .
-    healthCheckPath: /health
-    envVars:
-      - key: ASPNETCORE_ENVIRONMENT
-        value: Production
-      - key: DOTNET_HOSTBUILDER__RELOADCONFIGONCHANGE
-        value: "false"
-      # "*" avoids Render health-check 400s when Host is localhost / internal / onrender subdomain.
-      # Browser origin access is still limited by Cors__AllowedOrigins.
-      - key: AllowedHosts
-        value: "*"
-      - key: JobsyAuth__AllowDevelopmentAuth
-        value: "true"
-      # Stub Mollie payouts for the public demo only — keep false for real production money paths.
-      - key: JobsyAuth__AllowStubPayments
-        value: "true"
-      - key: JobsyAuth__DevelopmentAuthSecret
-        generateValue: true
-      - key: JobsyAuth__LocalSessionSigningKey
-        generateValue: true
-      - key: JobsyAuth__ExternalProvisionSecret
-        generateValue: true
-      - key: JobsyFeatures__ExposeRegistrationActivationLinks
-        value: "false"
-      # Partner Swagger off by default in Production; set true if needed.
-      - key: Swagger__Enabled
-        value: "false"
-      - key: VerificationCodes__Pepper
-        generateValue: true
-      # Optional: set Sentry__Dsn in the Render dashboard for exception monitoring.
-      - key: ConnectionStrings__JobsyDb
-        fromDatabase:
-          name: jobsy-db
-          property: connectionString
-      - key: PublicWebBaseUrl
-        value: "https://lobsy.nl"
-      - key: PublicApiBaseUrl
-        fromService:
-          name: jobsy-api
-          type: web
-          envVarKey: RENDER_EXTERNAL_URL
-      - key: Cors__AllowedOrigins__0
-        fromService:
-          name: jobsy-web
-          type: web
-          envVarKey: RENDER_EXTERNAL_URL
-      - key: Cors__AllowedOrigins__1
-        value: "https://lobsy.nl"
-      - key: Cors__AllowedOrigins__2
-        value: "https://www.lobsy.nl"
-      # Resend transactional mail (set values in Render Dashboard — do not commit secrets).
-      # Admin → Integraties → Mail (Resend) can also store encrypted credentials in the DB.
-      - key: Mail__ResendApiKey
-        sync: false
-      - key: Mail__FromAddress
-        sync: false
+        services:
+          - type: web
+            name: lobsy-api
+            runtime: docker
+            plan: starter
+            region: frankfurt
+            dockerfilePath: ./Jobsy.Api/Dockerfile
+            dockerContext: .
+            healthCheckPath: /health
+            envVars:
+              - key: ASPNETCORE_ENVIRONMENT
+                value: Production
+              - key: DOTNET_HOSTBUILDER__RELOADCONFIGONCHANGE
+                value: "false"
+              # "*" avoids Render health-check 400s when Host is localhost / internal / onrender subdomain.
+              # Browser origin access is still limited by Cors__AllowedOrigins.
+              - key: AllowedHosts
+                value: "*"
+              - key: JobsyAuth__AllowDevelopmentAuth
+                value: "true"
+              # Stub Mollie payouts for the public demo only — keep false for real production money paths.
+              - key: JobsyAuth__AllowStubPayments
+                value: "true"
+              - key: JobsyAuth__DevelopmentAuthSecret
+                generateValue: true
+              - key: JobsyAuth__LocalSessionSigningKey
+                generateValue: true
+              - key: JobsyAuth__ExternalProvisionSecret
+                generateValue: true
+              - key: JobsyFeatures__ExposeRegistrationActivationLinks
+                value: "false"
+              - key: Swagger__Enabled
+                value: "false"
+              - key: VerificationCodes__Pepper
+                generateValue: true
+              - key: ConnectionStrings__JobsyDb
+                fromDatabase:
+                  name: lobsy-db
+                  property: connectionString
+              - key: PublicWebBaseUrl
+                value: "https://lobsy.nl"
+              - key: PublicApiBaseUrl
+                fromService:
+                  name: lobsy-api
+                  type: web
+                  envVarKey: RENDER_EXTERNAL_URL
+              - key: Cors__AllowedOrigins__0
+                fromService:
+                  name: lobsy-web
+                  type: web
+                  envVarKey: RENDER_EXTERNAL_URL
+              - key: Cors__AllowedOrigins__1
+                value: "https://lobsy.nl"
+              - key: Cors__AllowedOrigins__2
+                value: "https://www.lobsy.nl"
+              # Resend (set values in Render Dashboard — do not commit secrets).
+              - key: Mail__ResendApiKey
+                sync: false
+              - key: Mail__FromAddress
+                sync: false
 
-  - type: web
-    name: jobsy-web
-    runtime: docker
-    plan: starter
-    region: frankfurt
-    dockerfilePath: ./Jobsy.Web/Dockerfile
-    dockerContext: .
-    healthCheckPath: /
-    envVars:
-      - key: ASPNETCORE_ENVIRONMENT
-        value: Production
-      - key: DOTNET_HOSTBUILDER__RELOADCONFIGONCHANGE
-        value: "false"
-      - key: AllowedHosts
-        value: "*"
-      # Same flag as jobsy-api: password login may use DemoUsers (Jobsy123!) and local-login hashes.
-      - key: JobsyAuth__AllowDevelopmentAuth
-        value: "true"
-      - key: JobsyAuth__DevelopmentAuthSecret
-        fromService:
-          name: jobsy-api
-          type: web
-          envVarKey: JobsyAuth__DevelopmentAuthSecret
-      - key: JobsyAuth__LocalSessionSigningKey
-        fromService:
-          name: jobsy-api
-          type: web
-          envVarKey: JobsyAuth__LocalSessionSigningKey
-      - key: JobsyAuth__ExternalProvisionSecret
-        fromService:
-          name: jobsy-api
-          type: web
-          envVarKey: JobsyAuth__ExternalProvisionSecret
-      - key: ApiBaseUrl
-        fromService:
-          name: jobsy-api
-          type: web
-          envVarKey: RENDER_EXTERNAL_URL
-      - key: ConnectionStrings__JobsyDb
-        fromDatabase:
-          name: jobsy-db
-          property: connectionString
+          - type: web
+            name: lobsy-web
+            runtime: docker
+            plan: starter
+            region: frankfurt
+            dockerfilePath: ./Jobsy.Web/Dockerfile
+            dockerContext: .
+            healthCheckPath: /
+            envVars:
+              - key: ASPNETCORE_ENVIRONMENT
+                value: Production
+              - key: DOTNET_HOSTBUILDER__RELOADCONFIGONCHANGE
+                value: "false"
+              - key: AllowedHosts
+                value: "*"
+              - key: JobsyAuth__AllowDevelopmentAuth
+                value: "true"
+              - key: JobsyAuth__DevelopmentAuthSecret
+                fromService:
+                  name: lobsy-api
+                  type: web
+                  envVarKey: JobsyAuth__DevelopmentAuthSecret
+              - key: JobsyAuth__LocalSessionSigningKey
+                fromService:
+                  name: lobsy-api
+                  type: web
+                  envVarKey: JobsyAuth__LocalSessionSigningKey
+              - key: JobsyAuth__ExternalProvisionSecret
+                fromService:
+                  name: lobsy-api
+                  type: web
+                  envVarKey: JobsyAuth__ExternalProvisionSecret
+              - key: ApiBaseUrl
+                fromService:
+                  name: lobsy-api
+                  type: web
+                  envVarKey: RENDER_EXTERNAL_URL
+              - key: ConnectionStrings__JobsyDb
+                fromDatabase:
+                  name: lobsy-db
+                  property: connectionString
+
+      - name: Acceptatie
+        databases:
+          - name: lobsy-acc-db
+            plan: basic-256mb
+            region: frankfurt
+            postgresMajorVersion: "16"
+            databaseName: lobsy
+            user: lobsy
+
+        services:
+          - type: web
+            name: lobsy-acc-api
+            runtime: docker
+            plan: starter
+            region: frankfurt
+            dockerfilePath: ./Jobsy.Api/Dockerfile
+            dockerContext: .
+            healthCheckPath: /health
+            envVars:
+              - key: ASPNETCORE_ENVIRONMENT
+                value: Production
+              - key: DOTNET_HOSTBUILDER__RELOADCONFIGONCHANGE
+                value: "false"
+              - key: AllowedHosts
+                value: "*"
+              - key: JobsyAuth__AllowDevelopmentAuth
+                value: "true"
+              - key: JobsyAuth__AllowStubPayments
+                value: "true"
+              - key: JobsyAuth__DevelopmentAuthSecret
+                generateValue: true
+              - key: JobsyAuth__LocalSessionSigningKey
+                generateValue: true
+              - key: JobsyAuth__ExternalProvisionSecret
+                generateValue: true
+              - key: JobsyFeatures__ExposeRegistrationActivationLinks
+                value: "false"
+              - key: Swagger__Enabled
+                value: "false"
+              - key: VerificationCodes__Pepper
+                generateValue: true
+              - key: ConnectionStrings__JobsyDb
+                fromDatabase:
+                  name: lobsy-acc-db
+                  property: connectionString
+              - key: PublicWebBaseUrl
+                fromService:
+                  name: lobsy-acc-web
+                  type: web
+                  envVarKey: RENDER_EXTERNAL_URL
+              - key: PublicApiBaseUrl
+                fromService:
+                  name: lobsy-acc-api
+                  type: web
+                  envVarKey: RENDER_EXTERNAL_URL
+              - key: Cors__AllowedOrigins__0
+                fromService:
+                  name: lobsy-acc-web
+                  type: web
+                  envVarKey: RENDER_EXTERNAL_URL
+              # Optional: fill in Dashboard if Acceptatie must send mail.
+              # Leave unset so acc does not email real users with the production From.
+              - key: Mail__ResendApiKey
+                sync: false
+              - key: Mail__FromAddress
+                sync: false
+
+          - type: web
+            name: lobsy-acc-web
+            runtime: docker
+            plan: starter
+            region: frankfurt
+            dockerfilePath: ./Jobsy.Web/Dockerfile
+            dockerContext: .
+            healthCheckPath: /
+            envVars:
+              - key: ASPNETCORE_ENVIRONMENT
+                value: Production
+              - key: DOTNET_HOSTBUILDER__RELOADCONFIGONCHANGE
+                value: "false"
+              - key: AllowedHosts
+                value: "*"
+              - key: JobsyAuth__AllowDevelopmentAuth
+                value: "true"
+              - key: JobsyAuth__DevelopmentAuthSecret
+                fromService:
+                  name: lobsy-acc-api
+                  type: web
+                  envVarKey: JobsyAuth__DevelopmentAuthSecret
+              - key: JobsyAuth__LocalSessionSigningKey
+                fromService:
+                  name: lobsy-acc-api
+                  type: web
+                  envVarKey: JobsyAuth__LocalSessionSigningKey
+              - key: JobsyAuth__ExternalProvisionSecret
+                fromService:
+                  name: lobsy-acc-api
+                  type: web
+                  envVarKey: JobsyAuth__ExternalProvisionSecret
+              - key: ApiBaseUrl
+                fromService:
+                  name: lobsy-acc-api
+                  type: web
+                  envVarKey: RENDER_EXTERNAL_URL
+              - key: ConnectionStrings__JobsyDb
+                fromDatabase:
+                  name: lobsy-acc-db
+                  property: connectionString

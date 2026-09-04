@@ -23,7 +23,7 @@ Jobsy/
 ## Cloud-demo (Render, always-on)
 
 Publiek zonder laptop: zie [`docs/deploy-render.md`](docs/deploy-render.md).
-Blueprint: [`render.yaml`](render.yaml) → Starter web + Basic Postgres (geen idle spin-down).
+Blueprint: [`render.yaml`](render.yaml) → project **Lobsy**, omgevingen **Production** (`lobsy-api` / `lobsy-web` / `lobsy-db`) en **Acceptatie** (`lobsy-acc-*`). Starter web + Basic Postgres (geen idle spin-down).
 Render **New → Blueprint** op GitHub-repo `dennisbemer1007-pixel/Jobsy` (of Manual sync op bestaande Blueprint).
 
 ## Lokaal starten

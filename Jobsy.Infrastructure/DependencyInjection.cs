@@ -27,8 +27,8 @@ public static class DependencyInjection
             {
                 throw new InvalidOperationException(
                     "ConnectionStrings:JobsyDb (or DATABASE_URL) is required outside Development. " +
-                    "On Render: jobsy-api → Environment → set ConnectionStrings__JobsyDb to the " +
-                    "Internal Database URL from jobsy-db → Info.");
+                    "On Render: open the API service → Environment → set ConnectionStrings__JobsyDb to the " +
+                    "Internal Database URL from that environment's Postgres → Info.");
             }
 
             connectionString =
@@ -43,7 +43,7 @@ public static class DependencyInjection
         {
             throw new InvalidOperationException(
                 "ConnectionStrings:JobsyDb is not a valid Postgres connection string. " +
-                "Paste the Internal Database URL from Render (jobsy-db → Info).", ex);
+                "Paste the Internal Database URL from Render (Postgres → Info).", ex);
         }
 
         if (!isDev

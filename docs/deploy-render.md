@@ -1,15 +1,47 @@
-# Jobsy op Render (always-on demo)
+# Lobsy op Render (always-on)
 
-Publieke demo zonder laptop. Blueprint gebruikt **betaalde instance types**:
+Blueprint: [`render.yaml`](../render.yaml). Project **Lobsy**, twee omgevingen:
+
+| Environment | Resources | Publieke URL |
+|-------------|-----------|----------------|
+| **Production** | `lobsy-api`, `lobsy-web`, `lobsy-db` | `https://lobsy.nl` |
+| **Acceptatie** | `lobsy-acc-api`, `lobsy-acc-web`, `lobsy-acc-db` | `https://lobsy-acc-web.onrender.com` (Render-subdomein) |
+
+Acceptatie heeft **eigen** Postgres en **eigen** secrets. Die omgeving mag nooit de productiedatabase gebruiken.
+
+Namen verschillen per environment omdat Render servicenamen workspace-breed uniek houdt. `fromDatabase` / `fromService` blijven binnen dezelfde environment.
+
+## Plannen (kosten)
+
+Blueprint gebruikt **betaalde instance types**:
 
 | Resource | Plan | Effect |
 |----------|------|--------|
-| `jobsy-api` / `jobsy-web` | **Starter** (~$7/mo elk) | Geen spin-down na idle |
-| `jobsy-db` | **Basic-256mb** | Geen 30-dagen free-expiry |
+| `lobsy-api` / `lobsy-web` (en `lobsy-acc-*`) | **Starter** (~$7/mo elk) | Geen spin-down na idle |
+| `lobsy-db` / `lobsy-acc-db` | **Basic-256mb** | Geen 30-dagen free-expiry |
 
 Een workspace-betaalplan of creditcard alleen is **niet** genoeg: Free instances blijven slapen. Het instance-type per service telt.
 
-Indicatie kosten: ~$14/mo web + Postgres-compute/storage (prorata per seconde). Zie [Render pricing](https://render.com/pricing).
+Indicatie: Production ~$14/mo web + Postgres. Acceptatie is **nog eens** hetzelfde. Zie [Render pricing](https://render.com/pricing).
+
+## Acceptatie aanzetten
+
+Acceptatie in het dashboard is alleen een lege map totdat de Blueprint de drie `lobsy-acc-*` resources aanmaakt.
+
+1. Merge deze `render.yaml` naar `main` (of wacht tot de PR gemerged is).
+2. Render Dashboard → Blueprint van deze repo → **Manual sync**.
+3. Controleer het sync-plan:
+   - **Aanmaken:** `lobsy-acc-db`, `lobsy-acc-api`, `lobsy-acc-web` in environment **Acceptatie**
+   - **Niet verwijderen:** `lobsy-api`, `lobsy-web`, `lobsy-db`
+   - Klik **niet** op **Move existing services** in het lege Acceptatie-blok (dat verhuist Production).
+4. Bevestig. Wacht tot de drie acc-resources groen zijn (eerste API-start seedt de lege acc-DB).
+5. Check:
+   - `https://lobsy-acc-api.onrender.com/health` → OK
+   - `https://lobsy-acc-web.onrender.com` opent de site
+   - Login: `kandidaat@jobsy.local` / `Jobsy123!`
+6. Optioneel: Acceptatie → **•••** → **Block cross-environment connections** (acc kan dan niet via het private netwerk bij Production).
+
+Mail op Acceptatie blijft leeg tot je `Mail__ResendApiKey` / `Mail__FromAddress` in het Dashboard zet. Laat dat zo als je geen echte mails vanuit acc wilt.
 
 ## Security (demo)
 
@@ -17,14 +49,15 @@ De Blueprint houdt `JobsyAuth__AllowDevelopmentAuth=true` zodat demo-login via d
 
 - Buiten Development accepteert header-auth `@jobsy.local` demo-accounts met de gedeelde secret; echte registratie-/OAuth-gebruikers sturen ook `X-Jobsy-Local-Session` (HMAC met `LocalSessionSigningKey`, vernieuwd bij session-activity).
 - OAuth client-secrets vereisen een aparte `JobsyAuth__ExternalProvisionSecret` (niet dezelfde DevelopmentAuthSecret; Web gebruikt geen DevelopmentAuthSecret-fallback meer).
-- Custom domain: `PublicWebBaseUrl=https://lobsy.nl` + CORS voor `lobsy.nl` / `www.lobsy.nl`.
+- Production custom domain: `PublicWebBaseUrl=https://lobsy.nl` + CORS voor `lobsy.nl` / `www.lobsy.nl`.
+- Acceptatie gebruikt het `onrender.com`-subdomein van `lobsy-acc-web` (geen `lobsy.nl` in CORS).
 
-- `JobsyAuth__DevelopmentAuthSecret` wordt gegenereerd op `jobsy-api` en gedeeld met `jobsy-web`. Alleen requests met die secret-header worden geaccepteerd — spoofing van `X-Jobsy-Email` vanaf het internet werkt niet meer.
+- `JobsyAuth__DevelopmentAuthSecret` wordt per environment gegenereerd op de API en gedeeld met de web-service van **diezelfde** environment.
 - `JobsyAuth__LocalSessionSigningKey` wordt apart gegenereerd en gedeeld voor HMAC-sessietokens van niet-demo gebruikers.
-- `JobsyAuth__ExternalProvisionSecret` wordt apart gegenereerd en gedeeld met `jobsy-web` voor OAuth credential-provisioning.
+- `JobsyAuth__ExternalProvisionSecret` wordt apart gegenereerd en gedeeld met web voor OAuth credential-provisioning.
 - `JobsyFeatures__ExposeRegistrationActivationLinks=false` (geen activatie-URL in API-responses).
 
-Na Blueprint sync: controleer dat beide services dezelfde `JobsyAuth__DevelopmentAuthSecret`, `JobsyAuth__LocalSessionSigningKey` én `JobsyAuth__ExternalProvisionSecret` hebben.
+Na Blueprint sync: controleer per environment dat API en web dezelfde `JobsyAuth__DevelopmentAuthSecret`, `JobsyAuth__LocalSessionSigningKey` én `JobsyAuth__ExternalProvisionSecret` hebben. Production-secrets mogen **niet** gelijk zijn aan Acceptatie.
 
 ## Eenmalig: code + Blueprint
 
@@ -32,16 +65,16 @@ Na Blueprint sync: controleer dat beide services dezelfde `JobsyAuth__Developmen
 2. Account op [https://render.com/register](https://render.com/register) (GitHub-login) + betaalmethode.
 3. Render Dashboard: **New** → **Blueprint** → repo **Jobsy** → Deploy.
 
-## Bestaande free-deploy upgraden
+## Bestaande deploy upgraden / her-syncen
 
 1. Push deze `render.yaml` naar `main`.
 2. Blueprint-pagina → **Manual sync** (of wacht op auto-sync).
-3. Bevestig upgrades naar Starter / Basic-256mb in het Dashboard.
+3. Bevestig instance types (Starter / Basic-256mb) in het Dashboard.
 4. Controleer na sync:
-   - `jobsy-api` → **Environment**: `ConnectionStrings__JobsyDb` is een echte `postgres://` / `postgresql://` URL
-   - `jobsy-api` Logs: `Seeding Jobsy mock data` of `Seed completed`
-   - `jobsy-api` URL + `/health` → OK
-5. Open `jobsy-web`; mockdata (Westland / Den Haag vacatures) hoort zichtbaar te zijn.
+   - `lobsy-api` → **Environment**: `ConnectionStrings__JobsyDb` is een echte `postgres://` / `postgresql://` URL
+   - `lobsy-api` Logs: `Seeding Jobsy mock data` of `Seed completed`
+   - `lobsy-api` URL + `/health` → OK
+5. Open `lobsy-web`; mockdata (Westland / Den Haag vacatures) hoort zichtbaar te zijn.
 
 Als de connection string leeg is of corrupt (vaak na DB-upgrade), zie hieronder.
 
@@ -49,21 +82,26 @@ Als de connection string leeg is of corrupt (vaak na DB-upgrade), zie hieronder.
 
 Eerdere deploys hadden DB in **Oregon** en web in **Frankfurt**. Regio’s zijn **niet** te wijzigen.
 
-1. Verwijder in het Dashboard (Allow/confirm alles):
-   - `jobsy-api`
-   - `jobsy-web`
-   - `jobsy-db`
+1. Verwijder in het Dashboard (Allow/confirm alles) **alleen** de kapotte resources van **die** environment, bijvoorbeeld Production:
+   - `lobsy-api`
+   - `lobsy-web`
+   - `lobsy-db`
 2. Blueprint-pagina → **Manual sync**
 3. Wacht tot alle drie opnieuw groen zijn (zelfde regio: **Frankfurt**)
 4. API herseedt mockdata bij eerste start op een lege DB
 
+Verwijder Acceptatie-resources niet samen met Production.
+
 ## Gebruiken
 
-- URL: klik **`jobsy-web`** → link bovenaan (`https://….onrender.com`)
+- Production: `https://lobsy.nl` of klik **`lobsy-web`** → link bovenaan
+- Acceptatie: klik **`lobsy-acc-web`** → `https://lobsy-acc-web.onrender.com`
 - Login: `kandidaat@jobsy.local` / `Jobsy123!`
-- API check: **`jobsy-api`** URL + `/health`
+- API check: **`lobsy-api`** of **`lobsy-acc-api`** URL + `/health`
 
 Services blijven draaien; geen cold start na idle.
+
+Eerst Acceptatie, daarna Production: zet op `lobsy-api` en `lobsy-web` auto-deploy **uit** (alleen Manual Deploy). Laat `lobsy-acc-*` auto-deployen vanaf `main`.
 
 ## Antiforgery / “key was not found in the key ring”
 
@@ -73,7 +111,7 @@ Na een redeploy kan Render kort dit loggen als je browser nog oude cookies heeft
 
 **Nu meteen:** site-cookies voor `*.onrender.com` wissen (of privévenster) en opnieuw laden.
 
-**Structureel:** `jobsy-web` bewaart Data Protection-keys in Postgres (`ConnectionStrings__JobsyDb`). Zorg dat die env-var gezet is (Blueprint zet dit via `jobsy-db`). Zonder DB-keys blijven cookies na elke deploy ongeldig.
+**Structureel:** web bewaart Data Protection-keys in Postgres (`ConnectionStrings__JobsyDb`). Zorg dat die env-var gezet is (Blueprint zet dit via de DB van dezelfde environment). Zonder DB-keys blijven cookies na elke deploy ongeldig.
 
 ## API deploy “Timed Out” terwijl logs “Now listening” tonen
 
@@ -90,20 +128,20 @@ Als de API crasht met:
 `The configured user limit (128) on the number of inotify instances has been reached`
 
 dan heeft .NET te veel file-watchers (config reload). De Dockerfiles en Blueprint zetten
-`DOTNET_HOSTBUILDER__RELOADCONFIGONCHANGE=false`. Na push: Manual Deploy van `jobsy-api` (en eventueel `jobsy-web`).
+`DOTNET_HOSTBUILDER__RELOADCONFIGONCHANGE=false`. Na push: Manual Deploy van de API (en eventueel web).
 
 ## Connection string fout (na DB-upgrade)
 
-Als `jobsy-api` crasht met:
+Als de API crasht met:
 `Format of the initialization string does not conform to specification starting at index 0`
 
 dan is `ConnectionStrings__JobsyDb` leeg of geen echte Postgres-string — mockdata en de site blijven dan leeg/kapot.
 
-1. Open **`jobsy-db`** → **Info** → kopieer **Internal Database URL**  
+1. Open de Postgres van **die** environment (`lobsy-db` of `lobsy-acc-db`) → **Info** → kopieer **Internal Database URL**  
    (begint met `postgres://` of `postgresql://`)
-2. Open **`jobsy-api`** én **`jobsy-web`** → **Environment**
+2. Open de API én web van dezelfde environment → **Environment**
 3. Zet / herstel key **`ConnectionStrings__JobsyDb`** op die volledige URL (geen aanhalingstekens)
-4. **Save** → Manual Deploy van `jobsy-api` (web daarna desnoods ook)
+4. **Save** → Manual Deploy van de API (web daarna desnoods ook)
 5. Optioneel in DB-shell: `CREATE EXTENSION IF NOT EXISTS postgis;`
 6. In API-logs bevestigen dat de seeder draait
 
@@ -112,19 +150,19 @@ dan is `ConnectionStrings__JobsyDb` leeg of geen echte Postgres-string — mockd
 | Keuze | Reden |
 |-------|--------|
 | `plan: starter` op api + web | Always-on; geen 15-min spin-down. Eén web-instance = geen sticky sessions voor Blazor/SignalR |
-
 | `plan: basic-256mb` op DB | Blijvende Postgres (geen free 30-dagen expiry) |
 | Alles `frankfurt` | Zelfde private network voor Postgres |
 | `RENDER_EXTERNAL_URL` | Stabiele cross-service HTTP (ook op free bruikbaar) |
 | `ConnectionStrings__JobsyDb` op **web én api** | Data Protection-keys in Postgres (antiforgery/auth cookies na redeploy) |
 | `JobsyAuth__AllowDevelopmentAuth` | Demo-logins zonder Entra (niet voor echte productie) |
+| `lobsy-acc-*` namen | Render vereist unieke servicenamen over de hele workspace |
 
 ## Database backups (productie)
 
-Render **Basic Postgres** (`jobsy-db`) maakt dagelijkse automatische backups (zie Dashboard → `jobsy-db` → **Backups**). Voor echte productie:
+Render **Basic Postgres** (`lobsy-db`) maakt dagelijkse automatische backups (zie Dashboard → `lobsy-db` → **Backups**). Voor echte productie:
 
 1. Bevestig in het Dashboard dat daily backups aan staan en noteer de retentie.
-2. Plan minstens één restore-drill (nieuwe DB vanuit backup → connection string tijdelijk op staging).
+2. Plan minstens één restore-drill (nieuwe DB vanuit backup → connection string tijdelijk op Acceptatie).
 3. Voor strengere RPO: upgrade naar een plan met Point-in-Time Recovery (PITR) en/of periodieke `pg_dump` naar offsite storage.
 4. Documenteer RPO/RTO en wie restore mag uitvoeren in jullie ops-runbook.
 
@@ -136,7 +174,7 @@ Lobsy stuurt alle platformmails via **Resend** (`POST https://api.resend.com/ema
 
 **A. Render / omgeving (aanbevolen voor productie)**
 
-Zet op `jobsy-api`:
+Zet op `lobsy-api`:
 
 | Env var | Voorbeeld |
 |---------|-----------|
@@ -162,7 +200,7 @@ Resend is pas operationeel als **API-key én From** beide gezet zijn (DB of env)
 
 ## Sentry & webhook-ops
 
-1. Maak een Sentry project en zet `Sentry__Dsn` op `jobsy-api` én `jobsy-web`.
+1. Maak een Sentry project en zet `Sentry__Dsn` op API én web (Production en eventueel Acceptatie).
 2. Mollie webhook-fouten geven **503** (Mollie retries) en schrijven PlatformLog categorie `MollieWebhook`.
 3. `TokenCheckoutReconcileHostedService` herstelt betaalde checkouts zonder credit/factuur (idempotent).
 4. Optioneel: zet `VerificationCodes__Pepper` op een lange random string per omgeving.
