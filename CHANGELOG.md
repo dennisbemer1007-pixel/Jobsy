@@ -65,6 +65,7 @@ Alle noemenswaardige wijzigingen aan dit project worden in dit bestand bijgehoud
 - Publieke Partner Sales-pagina (`/partner`, `/partner/{code}`) met live tarieven/pakketten, PDF-flyer (QuestPDF) en WhatsApp/mail-deelknoppen.
 - Salesmanager toolkit (`/salesmanager/toolkit`) met persoonlijke trackinglink/flyer; registratie via `?ref=` activeert gratis start-highlight op eerste vacature.
 - Cursor shortcut `456` (quality gate): full regression + AVG audit + code review.
+- Cursor shortcut `111` (production audit): cleanup, role E2E, security/pentest, AVG — fixes on a feature branch + PR; does **not** merge or deploy (`123`).
 - Quality-gate fixes: start-highlight only on vestiging + atomic consume (incl. approve path); anonymous catalog read-only; flyer rate-limit + `SM-XXXXXX` validation; type pricing ignores catalog `IsActive`; i18n key parity (nl/en/pl/ro/ar).
 
 ## [0.8.0] - 2026-07-25 (Sprint 8: Polish, seed, docs, cleanup)
