@@ -8,20 +8,18 @@
 # All resources MUST share one region (private DB access): frankfurt.
 #
 # Workspace service names must be unique, even across environments.
-# Production matches the live dashboard names (lobsy-api / lobsy-web / lobsy-db).
-# Acceptatie uses the lobsy-acc-* prefix so it cannot collide with Production.
+# Production MUST keep the original Render names (jobsy-api / jobsy-web / jobsy-db).
+# Renaming them in this file creates a second paid stack and leaves the live DB behind.
+# Acceptatie uses lobsy-acc-* so it cannot collide with Production.
 #
 # Do not also define these resources at the YAML root — that duplicates them.
-#
-# After merge to main: Render Blueprint → Manual sync.
-# Confirm the plan CREATES lobsy-acc-* in Acceptatie and does NOT delete Production.
 
 projects:
   - name: Lobsy
     environments:
       - name: Production
         databases:
-          - name: lobsy-db
+          - name: jobsy-db
             plan: basic-256mb
             region: frankfurt
             postgresMajorVersion: "16"
@@ -30,7 +28,7 @@ projects:
 
         services:
           - type: web
-            name: lobsy-api
+            name: jobsy-api
             runtime: docker
             plan: starter
             region: frankfurt
@@ -65,18 +63,18 @@ projects:
                 generateValue: true
               - key: ConnectionStrings__JobsyDb
                 fromDatabase:
-                  name: lobsy-db
+                  name: jobsy-db
                   property: connectionString
               - key: PublicWebBaseUrl
                 value: "https://lobsy.nl"
               - key: PublicApiBaseUrl
                 fromService:
-                  name: lobsy-api
+                  name: jobsy-api
                   type: web
                   envVarKey: RENDER_EXTERNAL_URL
               - key: Cors__AllowedOrigins__0
                 fromService:
-                  name: lobsy-web
+                  name: jobsy-web
                   type: web
                   envVarKey: RENDER_EXTERNAL_URL
               - key: Cors__AllowedOrigins__1
@@ -90,7 +88,7 @@ projects:
                 sync: false
 
           - type: web
-            name: lobsy-web
+            name: jobsy-web
             runtime: docker
             plan: starter
             region: frankfurt
@@ -108,27 +106,27 @@ projects:
                 value: "true"
               - key: JobsyAuth__DevelopmentAuthSecret
                 fromService:
-                  name: lobsy-api
+                  name: jobsy-api
                   type: web
                   envVarKey: JobsyAuth__DevelopmentAuthSecret
               - key: JobsyAuth__LocalSessionSigningKey
                 fromService:
-                  name: lobsy-api
+                  name: jobsy-api
                   type: web
                   envVarKey: JobsyAuth__LocalSessionSigningKey
               - key: JobsyAuth__ExternalProvisionSecret
                 fromService:
-                  name: lobsy-api
+                  name: jobsy-api
                   type: web
                   envVarKey: JobsyAuth__ExternalProvisionSecret
               - key: ApiBaseUrl
                 fromService:
-                  name: lobsy-api
+                  name: jobsy-api
                   type: web
                   envVarKey: RENDER_EXTERNAL_URL
               - key: ConnectionStrings__JobsyDb
                 fromDatabase:
-                  name: lobsy-db
+                  name: jobsy-db
                   property: connectionString
 
       - name: Acceptatie

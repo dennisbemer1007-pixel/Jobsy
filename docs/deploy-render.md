@@ -4,12 +4,24 @@ Blueprint: [`render.yaml`](../render.yaml). Project **Lobsy**, twee omgevingen:
 
 | Environment | Resources | Publieke URL |
 |-------------|-----------|----------------|
-| **Production** | `lobsy-api`, `lobsy-web`, `lobsy-db` | `https://lobsy.nl` |
+| **Production** | `jobsy-api`, `jobsy-web`, `jobsy-db` | `https://lobsy.nl` |
 | **Acceptatie** | `lobsy-acc-api`, `lobsy-acc-web`, `lobsy-acc-db` | `https://lobsy-acc-web.onrender.com` (Render-subdomein) |
 
 Acceptatie heeft **eigen** Postgres en **eigen** secrets. Die omgeving mag nooit de productiedatabase gebruiken.
 
 Namen verschillen per environment omdat Render servicenamen workspace-breed uniek houdt. `fromDatabase` / `fromService` blijven binnen dezelfde environment.
+
+**Niet hernoemen in `render.yaml`:** een andere Production-naam maakt een *nieuwe* API/web/DB aan en laat de bestaande `jobsy-*` (met de echte data) staan. Projectnaam **Lobsy** en Acceptatie-prefix `lobsy-acc-*` zijn genoeg voor de Lobsy-branding.
+
+## Dubbele Production-stack opruimen
+
+Als Production zowel `jobsy-*` als `lobsy-api` / `lobsy-web` / `lobsy-db` toont:
+
+1. Laat **`jobsy-db`** met rust (de database van ~1 maand is de echte productiedata).
+2. Laat **`jobsy-api`** en **`jobsy-web`** met rust (`lobsy.nl` hangt hieraan).
+3. Laat Acceptatie (`lobsy-acc-*`) met rust.
+4. Verwijder **alleen** de nieuwe Production-kopie: `lobsy-api`, `lobsy-web`, `lobsy-db` (aangemaakt bij de hernoem-sync; lege DB van een paar minuten).
+5. Sync de Blueprint pas nádat Production in `render.yaml` weer `jobsy-*` heet — anders maakt Render de lege `lobsy-*` stack opnieuw.
 
 ## Plannen (kosten)
 
@@ -17,8 +29,8 @@ Blueprint gebruikt **betaalde instance types**:
 
 | Resource | Plan | Effect |
 |----------|------|--------|
-| `lobsy-api` / `lobsy-web` (en `lobsy-acc-*`) | **Starter** (~$7/mo elk) | Geen spin-down na idle |
-| `lobsy-db` / `lobsy-acc-db` | **Basic-256mb** | Geen 30-dagen free-expiry |
+| `jobsy-api` / `jobsy-web` (en `lobsy-acc-*`) | **Starter** (~$7/mo elk) | Geen spin-down na idle |
+| `jobsy-db` / `lobsy-acc-db` | **Basic-256mb** | Geen 30-dagen free-expiry |
 
 Een workspace-betaalplan of creditcard alleen is **niet** genoeg: Free instances blijven slapen. Het instance-type per service telt.
 
@@ -32,7 +44,7 @@ Acceptatie in het dashboard is alleen een lege map totdat de Blueprint de drie `
 2. Render Dashboard → Blueprint van deze repo → **Manual sync**.
 3. Controleer het sync-plan:
    - **Aanmaken:** `lobsy-acc-db`, `lobsy-acc-api`, `lobsy-acc-web` in environment **Acceptatie**
-   - **Niet verwijderen:** `lobsy-api`, `lobsy-web`, `lobsy-db`
+   - **Niet verwijderen:** `jobsy-api`, `jobsy-web`, `jobsy-db`
    - Klik **niet** op **Move existing services** in het lege Acceptatie-blok (dat verhuist Production).
 4. Bevestig. Wacht tot de drie acc-resources groen zijn (eerste API-start seedt de lege acc-DB).
 5. Check:
@@ -71,10 +83,10 @@ Na Blueprint sync: controleer per environment dat API en web dezelfde `JobsyAuth
 2. Blueprint-pagina → **Manual sync** (of wacht op auto-sync).
 3. Bevestig instance types (Starter / Basic-256mb) in het Dashboard.
 4. Controleer na sync:
-   - `lobsy-api` → **Environment**: `ConnectionStrings__JobsyDb` is een echte `postgres://` / `postgresql://` URL
-   - `lobsy-api` Logs: `Seeding Jobsy mock data` of `Seed completed`
-   - `lobsy-api` URL + `/health` → OK
-5. Open `lobsy-web`; mockdata (Westland / Den Haag vacatures) hoort zichtbaar te zijn.
+   - `jobsy-api` → **Environment**: `ConnectionStrings__JobsyDb` is een echte `postgres://` / `postgresql://` URL
+   - `jobsy-api` Logs: `Seeding Jobsy mock data` of `Seed completed`
+   - `jobsy-api` URL + `/health` → OK
+5. Open `jobsy-web`; mockdata (Westland / Den Haag vacatures) hoort zichtbaar te zijn.
 
 Als de connection string leeg is of corrupt (vaak na DB-upgrade), zie hieronder.
 
@@ -83,9 +95,9 @@ Als de connection string leeg is of corrupt (vaak na DB-upgrade), zie hieronder.
 Eerdere deploys hadden DB in **Oregon** en web in **Frankfurt**. Regio’s zijn **niet** te wijzigen.
 
 1. Verwijder in het Dashboard (Allow/confirm alles) **alleen** de kapotte resources van **die** environment, bijvoorbeeld Production:
-   - `lobsy-api`
-   - `lobsy-web`
-   - `lobsy-db`
+   - `jobsy-api`
+   - `jobsy-web`
+   - `jobsy-db`
 2. Blueprint-pagina → **Manual sync**
 3. Wacht tot alle drie opnieuw groen zijn (zelfde regio: **Frankfurt**)
 4. API herseedt mockdata bij eerste start op een lege DB
@@ -94,14 +106,14 @@ Verwijder Acceptatie-resources niet samen met Production.
 
 ## Gebruiken
 
-- Production: `https://lobsy.nl` of klik **`lobsy-web`** → link bovenaan
+- Production: `https://lobsy.nl` of klik **`jobsy-web`** → link bovenaan
 - Acceptatie: klik **`lobsy-acc-web`** → `https://lobsy-acc-web.onrender.com`
 - Login: `kandidaat@jobsy.local` / `Jobsy123!`
-- API check: **`lobsy-api`** of **`lobsy-acc-api`** URL + `/health`
+- API check: **`jobsy-api`** of **`lobsy-acc-api`** URL + `/health`
 
 Services blijven draaien; geen cold start na idle.
 
-Eerst Acceptatie, daarna Production: zet op `lobsy-api` en `lobsy-web` auto-deploy **uit** (alleen Manual Deploy). Laat `lobsy-acc-*` auto-deployen vanaf `main`.
+Eerst Acceptatie, daarna Production: zet op `jobsy-api` en `jobsy-web` auto-deploy **uit** (alleen Manual Deploy). Laat `lobsy-acc-*` auto-deployen vanaf `main`.
 
 ## Antiforgery / “key was not found in the key ring”
 
@@ -137,7 +149,7 @@ Als de API crasht met:
 
 dan is `ConnectionStrings__JobsyDb` leeg of geen echte Postgres-string — mockdata en de site blijven dan leeg/kapot.
 
-1. Open de Postgres van **die** environment (`lobsy-db` of `lobsy-acc-db`) → **Info** → kopieer **Internal Database URL**  
+1. Open de Postgres van **die** environment (`jobsy-db` of `lobsy-acc-db`) → **Info** → kopieer **Internal Database URL**  
    (begint met `postgres://` of `postgresql://`)
 2. Open de API én web van dezelfde environment → **Environment**
 3. Zet / herstel key **`ConnectionStrings__JobsyDb`** op die volledige URL (geen aanhalingstekens)
@@ -159,7 +171,7 @@ dan is `ConnectionStrings__JobsyDb` leeg of geen echte Postgres-string — mockd
 
 ## Database backups (productie)
 
-Render **Basic Postgres** (`lobsy-db`) maakt dagelijkse automatische backups (zie Dashboard → `lobsy-db` → **Backups**). Voor echte productie:
+Render **Basic Postgres** (`jobsy-db`) maakt dagelijkse automatische backups (zie Dashboard → `jobsy-db` → **Backups**). Voor echte productie:
 
 1. Bevestig in het Dashboard dat daily backups aan staan en noteer de retentie.
 2. Plan minstens één restore-drill (nieuwe DB vanuit backup → connection string tijdelijk op Acceptatie).
@@ -174,7 +186,7 @@ Lobsy stuurt alle platformmails via **Resend** (`POST https://api.resend.com/ema
 
 **A. Render / omgeving (aanbevolen voor productie)**
 
-Zet op `lobsy-api`:
+Zet op `jobsy-api`:
 
 | Env var | Voorbeeld |
 |---------|-----------|
