@@ -55,6 +55,18 @@ public class RoleFunctionalRegressionTests : IClassFixture<RoleFunctionalWebAppF
         var discover = await client.GetAsync(
             $"api/vacancies/discover?originLat=52.09&originLng=4.31&transport=Fiets&maxMinutes=60");
         Assert.Equal(HttpStatusCode.OK, discover.StatusCode);
+        var cache = discover.Headers.CacheControl?.ToString() ?? "";
+        Assert.Contains("private", cache, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("public", cache, StringComparison.OrdinalIgnoreCase);
+
+        var catalog = await client.GetAsync("api/vacancies/discover?transport=Fiets&maxMinutes=90");
+        Assert.Equal(HttpStatusCode.OK, catalog.StatusCode);
+        var webItems = await catalog.Content.ReadFromJsonAsync<List<Jobsy.Web.Models.VacancyListItem>>(JsonOpts);
+        Assert.NotNull(webItems);
+        var pin = Assert.Single(webItems!, v => v.Id == _factory.VacancyId);
+        Assert.True(double.IsFinite(pin.Latitude) && pin.Latitude != 0);
+        Assert.True(double.IsFinite(pin.Longitude) && pin.Longitude != 0);
+        Assert.False(string.IsNullOrWhiteSpace(pin.Title));
 
         var detail = await client.GetAsync($"api/vacancies/{_factory.VacancyId}");
         Assert.Equal(HttpStatusCode.OK, detail.StatusCode);
