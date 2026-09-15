@@ -211,10 +211,19 @@ public static class UatScriptRunner
         if (string.Equals(jobsyRole, JobsyRoles.Admin, StringComparison.Ordinal)
             && Contains(blob, "Settings-subnav", "settings-subnav", "16 modules"))
         {
+            Assert.Equal(16, AdminNavItems.SettingsModules.Length);
             foreach (var module in AdminNavItems.SettingsModules)
             {
                 AssertRouteExistsOrAuthEndpoint(module.Href, $"{scenario.Id}: admin settings {module.Href}");
             }
+
+            var root = RepoRoot.Find();
+            var settingsNav = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Admin/AdminSettingsSubnav.razor"));
+            Assert.Contains("admin-sublinks--wrap", settingsNav, StringComparison.Ordinal);
+            Assert.DoesNotContain("pill-scroller", settingsNav, StringComparison.Ordinal);
+            var css = File.ReadAllText(Path.Combine(root, "Jobsy.Web/wwwroot/css/app.css"));
+            Assert.Contains(".admin-sublinks.admin-sublinks--wrap", css, StringComparison.Ordinal);
+            Assert.Contains("flex-wrap: wrap", css, StringComparison.Ordinal);
         }
     }
 
@@ -392,6 +401,25 @@ public static class UatScriptRunner
         {
             Assert.Equal("/home", AuthRedirects.PostLoginUrl("/"));
             Assert.Equal("/home", AuthRedirects.PostLoginUrl("/banen"));
+        }
+
+        if (string.Equals(jobsyRole, JobsyRoles.EnterpriseManager, StringComparison.Ordinal)
+            && Contains(blob, "e-mail+naam+rol+vestigingen"))
+        {
+            var root = RepoRoot.Find();
+            var users = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Pages/Employer/Users.razor"));
+            Assert.Contains("InviteExtraCompanies", users, StringComparison.Ordinal);
+            Assert.Contains("EmployerInviteCompanyOptions", users, StringComparison.Ordinal);
+
+            var orgId = Guid.Parse("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa");
+            var branchId = Guid.Parse("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb");
+            InviteCompanyOption[] companies =
+            [
+                new(orgId, "Bemer IT Solutions", "Laan 1", ParentCompanyId: null),
+                new(branchId, "Bemer IT Solutions", "Laan 1", orgId, "000012345678")
+            ];
+            Assert.Empty(EmployerInviteCompanyOptions.ExtraMembershipChoices(companies, branchId));
+            Assert.Single(EmployerInviteCompanyOptions.ExtraMembershipChoices(companies, orgId));
         }
     }
 

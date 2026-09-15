@@ -427,7 +427,7 @@ Bedrijfsmanager,Gebruikers `/employer/users`: lijst.,EM/RM/BM van de org.
 Bedrijfsmanager,"User **bewerken**: naam, rol EM/RM/BM, primary + memberships, actief.",Opgeslagen; verkeerde rol (Admin/Candidate) niet kiesbaar.
 Bedrijfsmanager,User inactief zetten.,Kan niet meer inloggen / 403 op org-API.
 Bedrijfsmanager,User membership andere org geven.,Niet mogelijk / 403.
-Bedrijfsmanager,**Uitnodigen** e-mail+naam+rol+vestigingen.,Invite-mail stub; user verschijnt/pending.
+Bedrijfsmanager,**Uitnodigen** e-mail+naam+rol+vestigingen.,Invite-mail stub; user verschijnt/pending. Extra lidmaatschappen toont geen dubbele org/vestiging met dezelfde naam.
 Bedrijfsmanager,Invite: ongeldig e-mail / bestaande user / lege naam.,Validatie.
 Bedrijfsmanager,"Organization hub: klik elke modulekaart (Bedrijf, Vestigingen, Regio’s, Salaristabellen, CSV indien enabled, Overnames).",Juiste pagina + EnterpriseOrgSubnav.
 Bedrijfsmanager,Organization op **mobiel** openen via URL.,DesktopPreferredNotice; pagina’s blijven beperkt bruikbaar.
@@ -551,7 +551,7 @@ Admin,"Elke bottom-nav: Home, `/`, `/admin/vacancies`, `/admin/finance`, `/admin
 Admin,PageShell **← Beheer** op een admin-pagina.,`/home`.
 Admin,"Home: elke metric-tegel + drilldown + overview-links (logging, companies, API keys, users, tokenlog, vacancies).",DrilldownGrid; overview landt op module.
 Admin,Home Top/Flop vacatureklik + load-fout + lege drilldown.,Detail of error/empty; KPI’s blijven.
-Admin,"Settings-subnav: klik **elk** item (Settings, CNAMEs, Company, About, Marketing flyer, Masterdata, Vacaturecategorieën, Exclusivity, Integraties, Mail test, API keys, Notifications, Users, Logging, Feedback, Wages).",Elke module laadt; active state.
+Admin,"Settings-subnav: klik **elk** item (Settings, CNAMEs, Company, About, Marketing flyer, Masterdata, Vacaturecategorieën, Exclusivity, Integraties, Mail test, API keys, Notifications, Users, Logging, Feedback, Wages).","Elke module laadt; active state. Pills wrappen zodat rechter items klikbaar blijven."
 Admin,Bedrijven: zoek + filter Employer/Intermediary.,Client filter.
 Admin,Bedrijven: links users / vacancies / tokenlog / sales-managers.,Query-prefill op doelpagina.
 Admin,Bedrijven: **+ Tokens** GrantTokensDialog: amount 0 / leeg note / 0.4 / 1001.,Validatie 0.5–1000 + verplichte note.
