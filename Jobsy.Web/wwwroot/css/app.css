@@ -7749,6 +7749,14 @@ button.bottom-nav__item {
     display: none;
 }
 
+.admin-sublinks.admin-sublinks--wrap {
+    flex-wrap: wrap;
+    overflow: visible;
+    min-width: 0;
+    row-gap: 0.45rem;
+    white-space: normal;
+}
+
 .admin-sublink {
     display: inline-flex;
     align-items: center;

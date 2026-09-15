@@ -12,7 +12,7 @@
 <PageTitle>@Culture["Admin.Finance"] · Lobsy</PageTitle>
 
 <AdminPageShell Title="@Culture["Admin.Finance"]" Lead="@Culture["Admin.FinanceLead"]">
-    <div class="admin-sublinks">
+    <div class="admin-sublinks admin-sublinks--wrap">
         <button type="button" class="admin-sublink @(_tab == "kpi" ? "admin-sublink--active" : null)" @onclick='() => SetTab("kpi")'>KPI’s</button>
         <button type="button" class="admin-sublink @(_tab == "tokenlog" ? "admin-sublink--active" : null)" @onclick='() => SetTab("tokenlog")'>Tokenlog</button>
         <a class="admin-sublink" href="/admin/token-finance">Token-administratie</a>

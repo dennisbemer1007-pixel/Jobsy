@@ -50,6 +50,11 @@ public class MobileSaasUxTests
         Assert.Contains("min-height: 40px", css);
         Assert.Contains(".pill-scroller", css);
         Assert.Contains("scrollbar-width: none", css);
+        Assert.Contains(".admin-sublinks.admin-sublinks--wrap {\n    flex-wrap: wrap;\n    overflow: visible;", css);
+
+        var settingsNav = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/Components/Admin/AdminSettingsSubnav.razor"));
+        Assert.Contains("admin-sublinks--wrap", settingsNav);
+        Assert.DoesNotContain("pill-scroller", settingsNav);
     }
 
     [Fact]
