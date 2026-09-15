@@ -1071,6 +1071,113 @@ public class RoleFunctionalRegressionTests : IClassFixture<RoleFunctionalWebAppF
     }
 
     [Fact]
+    public async Task Enterprise_cannot_re_role_ambassadeur_via_invite()
+    {
+        var response = await Authed(_factory.EnterpriseEmail).PostAsJsonAsync("api/company-users/invite", new
+        {
+            email = _factory.AmbassadeurEmail,
+            fullName = "Hijack",
+            role = "BranchManager",
+            primaryCompanyId = _factory.CompanyId
+        });
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+
+        using var scope = _factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<JobsyDbContext>();
+        var amb = await db.Users.AsNoTracking().SingleAsync(u => u.Email == _factory.AmbassadeurEmail);
+        Assert.Equal(UserRole.Ambassadeur, amb.Role);
+    }
+
+    [Fact]
+    public async Task Enterprise_cannot_promote_candidate_without_verified_application()
+    {
+        _ = Authed(_factory.EnterpriseEmail);
+        const string email = "vreemd.kandidaat@jobsy.local";
+        using (var scope = _factory.Services.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<JobsyDbContext>();
+            if (!await db.Users.AnyAsync(u => u.Email == email))
+            {
+                db.Users.Add(new User
+                {
+                    Id = Guid.NewGuid(),
+                    Email = email,
+                    FullName = "Vreemde Kandidaat",
+                    Role = UserRole.Candidate,
+                    IsActive = true
+                });
+                await db.SaveChangesAsync();
+            }
+        }
+
+        var response = await Authed(_factory.EnterpriseEmail).PostAsJsonAsync("api/company-users/invite", new
+        {
+            email,
+            fullName = "Hijack",
+            role = "BranchManager",
+            primaryCompanyId = _factory.CompanyId
+        });
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+
+        using var verify = _factory.Services.CreateScope();
+        var verifyDb = verify.ServiceProvider.GetRequiredService<JobsyDbContext>();
+        var candidate = await verifyDb.Users.AsNoTracking().SingleAsync(u => u.Email == email);
+        Assert.Equal(UserRole.Candidate, candidate.Role);
+    }
+
+    [Fact]
+    public async Task Enterprise_can_promote_candidate_with_verified_application()
+    {
+        _ = Authed(_factory.EnterpriseEmail);
+        const string email = "bekende.kandidaat@jobsy.local";
+        var candidateId = Guid.Parse("c1000000-0000-0000-0000-0000000000aa");
+        using (var scope = _factory.Services.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<JobsyDbContext>();
+            if (!await db.Users.AnyAsync(u => u.Email == email))
+            {
+                db.Users.Add(new User
+                {
+                    Id = candidateId,
+                    Email = email,
+                    FullName = "Bekende Kandidaat",
+                    Role = UserRole.Candidate,
+                    IsActive = true
+                });
+                db.Applications.Add(new Application
+                {
+                    Id = Guid.Parse("c1000000-0000-0000-0000-0000000000ab"),
+                    VacancyId = _factory.VacancyId,
+                    CandidateUserId = candidateId,
+                    CandidateName = "Bekende Kandidaat",
+                    CandidateEmail = email,
+                    PreferredTransport = "Fiets",
+                    EstimatedTravelMinutes = 10,
+                    Status = ApplicationStatus.Pending,
+                    EmailVerifiedAt = DateTime.UtcNow.AddHours(-1),
+                    CreatedAt = DateTime.UtcNow.AddHours(-2)
+                });
+                await db.SaveChangesAsync();
+            }
+        }
+
+        var response = await Authed(_factory.EnterpriseEmail).PostAsJsonAsync("api/company-users/invite", new
+        {
+            email,
+            fullName = "Nieuwe Vestigingsmanager",
+            role = "BranchManager",
+            primaryCompanyId = _factory.CompanyId
+        });
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+
+        using var verify = _factory.Services.CreateScope();
+        var verifyDb = verify.ServiceProvider.GetRequiredService<JobsyDbContext>();
+        var promoted = await verifyDb.Users.AsNoTracking().SingleAsync(u => u.Email == email);
+        Assert.Equal(UserRole.BranchManager, promoted.Role);
+        Assert.Equal(_factory.CompanyId, promoted.CompanyId);
+    }
+
+    [Fact]
     public async Task Intermediary_company_users_are_peer_only()
     {
         var users = await Authed(_factory.IntermediaryEmail)

@@ -70,6 +70,7 @@ public class EmployerInviteCompanyOptionsTests
         Assert.Contains("EmployerInviteCompanyOptions", users);
         Assert.Contains("@foreach (var c in InviteExtraCompanies)", users);
         Assert.Contains("@foreach (var c in EditExtraCompanies)", users);
+        Assert.Contains("DropCoveredMemberships(_editMemberships", users);
     }
 
     private static List<InviteCompanyOption> BemerOrgAndBranch() =>

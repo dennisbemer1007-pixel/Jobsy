@@ -263,13 +263,23 @@ public class CompanyUsersController : ControllerBase
         var promotedFromCandidate = false;
         if (existing is not null)
         {
-            if (existing.Role is UserRole.Admin or UserRole.SalesManager)
+            if (EmployerInviteRules.BlocksInviteOverwrite(existing.Role))
             {
                 return BadRequest(new { message = "Dit e-mailadres is al in gebruik met een andere rol." });
             }
 
             if (existing.Role == UserRole.Candidate)
             {
+                var hasVerifiedApplication = await CandidateHasVerifiedApplicationInScopeAsync(
+                    existing.Id, accessible, _companyAuth.IsAdmin(User), cancellationToken);
+                if (!EmployerInviteRules.MayPromoteCandidate(_companyAuth.IsAdmin(User), hasVerifiedApplication))
+                {
+                    return BadRequest(new
+                    {
+                        message = "Deze kandidaat heeft geen geverifieerde sollicitatie bij jouw organisatie en kan niet worden uitgenodigd als manager."
+                    });
+                }
+
                 // Behoud User.Id zodat sollicitaties/profiel blijven bestaan; rol wordt manager.
                 promotedFromCandidate = true;
             }
@@ -550,6 +560,30 @@ public class CompanyUsersController : ControllerBase
             .FirstAsync(u => u.Id == user.Id, cancellationToken);
 
         return Ok(Map(loaded));
+    }
+
+    private Task<bool> CandidateHasVerifiedApplicationInScopeAsync(
+        Guid candidateUserId,
+        IReadOnlyCollection<Guid>? accessible,
+        bool callerIsAdmin,
+        CancellationToken cancellationToken)
+    {
+        if (callerIsAdmin || accessible is null)
+        {
+            return Task.FromResult(true);
+        }
+
+        if (accessible.Count == 0)
+        {
+            return Task.FromResult(false);
+        }
+
+        return _db.Applications.AsNoTracking()
+            .AnyAsync(
+                a => a.CandidateUserId == candidateUserId
+                     && a.EmailVerifiedAt != null
+                     && accessible.Contains(a.Vacancy.CompanyId),
+                cancellationToken);
     }
 
     private static string RoleLabel(UserRole role) => role switch

@@ -420,6 +420,7 @@
             EditPrimaryCompanies,
             ParseGuid(_editPrimaryCompanyId));
         _editPrimaryCompanyId = primary?.ToString() ?? "";
+        DropCoveredMemberships(_editMemberships, primary);
     }
 
     private void DropCoveredMemberships(HashSet<Guid> memberships, Guid? primary)

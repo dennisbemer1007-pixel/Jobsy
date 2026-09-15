@@ -46,6 +46,7 @@ public static class EmployerInviteRules
 
     /// <summary>
     /// Existing employer may only be re-invited when all of their company links are within the caller's scope.
+    /// An account with no company links (e.g. Ambassadeur) is not in employer scope.
     /// </summary>
     public static bool IsWithinCallerScope(
         Guid? primaryCompanyId,
@@ -58,11 +59,30 @@ public static class EmployerInviteRules
             return true;
         }
 
+        var memberships = membershipCompanyIds.Distinct().ToList();
+        if (primaryCompanyId is null && memberships.Count == 0)
+        {
+            return false;
+        }
+
         if (primaryCompanyId is Guid primary && !accessibleCompanyIds.Contains(primary))
         {
             return false;
         }
 
-        return membershipCompanyIds.All(accessibleCompanyIds.Contains);
+        return memberships.All(accessibleCompanyIds.Contains);
     }
+
+    /// <summary>
+    /// Platform roles that must never be overwritten by an employer invite.
+    /// </summary>
+    public static bool BlocksInviteOverwrite(UserRole existingRole) =>
+        existingRole is UserRole.Admin or UserRole.SalesManager or UserRole.Ambassadeur;
+
+    /// <summary>
+    /// Candidates may only be promoted when they already applied (verified) in the caller's company scope,
+    /// or when the caller is admin.
+    /// </summary>
+    public static bool MayPromoteCandidate(bool callerIsAdmin, bool hasVerifiedApplicationInCallerScope) =>
+        callerIsAdmin || hasVerifiedApplicationInCallerScope;
 }
