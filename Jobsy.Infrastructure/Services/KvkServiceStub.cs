@@ -1,5 +1,5 @@
-using System.Text.RegularExpressions;
 using Jobsy.Core.Interfaces;
+using Jobsy.Core.Rules;
 using Jobsy.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 
@@ -132,7 +132,7 @@ public sealed class KvkServiceStub : IKvkService
         string kvkNumber,
         CancellationToken cancellationToken = default)
     {
-        var normalized = NormalizeKvkNumber(kvkNumber);
+        var normalized = CompanyPublicPaths.NormalizeKvkNumber(kvkNumber);
         if (normalized is null)
         {
             return Task.FromResult<KvkCompanyResult?>(null);
@@ -179,7 +179,7 @@ public sealed class KvkServiceStub : IKvkService
             return KvkEstablishmentsLookup.Unavailable();
         }
 
-        var normalized = NormalizeKvkNumber(kvkNumber);
+        var normalized = CompanyPublicPaths.NormalizeKvkNumber(kvkNumber);
         if (normalized is null)
         {
             return KvkEstablishmentsLookup.NotFound();
@@ -201,18 +201,6 @@ public sealed class KvkServiceStub : IKvkService
         return items.Count == 0
             ? KvkEstablishmentsLookup.NotFound()
             : KvkEstablishmentsLookup.Ok(items);
-    }
-
-    /// <summary>Accepteert spaties/streepjes; verwacht 8 cijfers.</summary>
-    internal static string? NormalizeKvkNumber(string? raw)
-    {
-        if (string.IsNullOrWhiteSpace(raw))
-        {
-            return null;
-        }
-
-        var digits = Regex.Replace(raw.Trim(), @"\D", string.Empty);
-        return digits.Length == 8 ? digits : null;
     }
 
     private static string[] SbiCodesFor(string kvkNumber)

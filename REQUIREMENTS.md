@@ -45,7 +45,7 @@ Jobsy is een hyper-lokale job-matching applicatie gericht op de regionale arbeid
 - **PushBom:** OpenForWork-kandidaten binnen radius/reistijd; pricing tiers uit settings
 - **Tokens:** live Mollie iDEAL + creditcard (Dev-stub zonder API-key); EM koopt in organisatiopot; geen automatische incasso; webhook → instant saldo/pending actie; bedrijfsprofiel: betaalvoorkeur + factuurhistorie; admin grant; uitgifte aan vestigingen
 - **Employer suite:** vacature-editor, regio’s, vestigingen (KVK), gebruikers-invite, salaristabellen, sollicitanten
-- **Registratie:** KVK-stub (+ SBI) → vestiging → scope → wachtwoord → e-mailverificatie; na activatie dual auth (wachtwoord of Entra, zelfde e-mail); SBI `78*` → Intermediair; anders altijd Bedrijfsmanager — Organization = org-boom, BranchOnly = vestiging-als-bedrijf (kan vestigingsmanagers uitnodigen); conflict → takeover/org-merge
+- **Registratie:** KVK (live API bij key, anders stub + SBI) → vestiging → scope → wachtwoord → e-mailverificatie; na activatie dual auth (wachtwoord of Entra, zelfde e-mail); SBI `78*` → Intermediair; anders altijd Bedrijfsmanager — Organization = org-boom, BranchOnly = vestiging-als-bedrijf (kan vestigingsmanagers uitnodigen); conflict → takeover/org-merge
 - **Admin suite:** bedrijven, users, vacatures, finance/tokenlog, logging, settings, integratie-pings, WML (incl. halfjaarlijkse update-stub)
 - **Mockdata:** rijke seed (engagement, spends, logs, statusmix) zodat dashboards gevuld zijn
 
@@ -109,8 +109,8 @@ Kernpunten:
 - **Logout** → `/`
 - Gedeelde UI: `BottomNav`, `TokenWalletChip`, `MetricTile`, `DrilldownGrid`, `ShareModal`, `PublishOptionsDialog`
 
-## 6. Externe Koppelingen (stubs voor demo)
-- **KVK API** — vestigingen/registratie
+## 6. Externe Koppelingen
+- **KVK API** — vestigingen/registratie (live Handelsregister bij API-key; anders demo-stub)
 - **Mollie** — prepaid token-aankoop (live API; Development stub op `/tokens/checkout-stub`)
 - **Mail** — activatie/invite/notificaties
 - **OpenAI** — vacature-contentmoderatie / mock interview / kandidaat-profielcoach / CV-extractie bij eigen upload (feature-flagged; zonder key geen extractie)

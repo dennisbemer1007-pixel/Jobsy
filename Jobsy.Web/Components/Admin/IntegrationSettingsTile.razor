@@ -171,8 +171,12 @@
                     <input @bind="_baseUrl"
                            @bind:event="oninput"
                            @bind:after="MarkDirty"
-                           placeholder="@(IsMailIntegration ? "smtp.gmail.com" : "https://...")" />
+                           placeholder="@(BaseUrlPlaceholder)" />
                 </label>
+                @if (IsKvkIntegration)
+                {
+                    <p class="muted">Leeg = productie <code>https://api.kvk.nl/api/</code>. Testomgeving: <code>https://api.kvk.nl/test/api/</code>. Na opslaan <strong>Test verbinding</strong> — pas dan is live lookup actief.</p>
+                }
                 @if (IsMailIntegration)
                 {
                     <label>
@@ -293,6 +297,16 @@
 
     private bool IsMailIntegration =>
         string.Equals(Credential.Key, "Mail", StringComparison.OrdinalIgnoreCase);
+
+    private bool IsKvkIntegration =>
+        string.Equals(Credential.Key, "Kvk", StringComparison.OrdinalIgnoreCase);
+
+    private string BaseUrlPlaceholder =>
+        IsMailIntegration
+            ? "smtp.gmail.com"
+            : IsKvkIntegration
+                ? "https://api.kvk.nl/api/"
+                : "https://...";
 
     protected override void OnParametersSet()
     {

@@ -210,6 +210,34 @@ Resend is pas operationeel als **API-key én From** beide gezet zijn (DB of env)
 3. Gebruik From op het geverifieerde domein (niet langdurig `onboarding@resend.dev`).
 4. Mislukte sends landen in PlatformLogs (e-mail geredacteerd).
 
+## KVK Handelsregister
+
+Zonder API-key blijft de **demo-stub** (vaste testnummers zoals `11223344`). Met key gaat registratie live naar KVK.
+
+**A. Admin UI (aanbevolen)**
+
+Admin → Integraties → **KVK** → plak API-key → Base URL:
+
+| Omgeving | Base URL |
+|----------|----------|
+| Productie (echte bedrijven) | leeg laten, of `https://api.kvk.nl/api/` |
+| KVK-testomgeving | `https://api.kvk.nl/test/api/` |
+
+Niet `https://developers.kvk.nl/` of de Zoeken-URL (`.../v2/zoeken`) plakken. **Opslaan** → **Test verbinding**. 401/403 = key past niet bij die Base URL (test-key vs productie).
+
+**B. Render / omgeving**
+
+Zet op de **API**-service (`jobsy-api` / `lobsy-acc-api`):
+
+| Env var | Voorbeeld |
+|---------|-----------|
+| `Kvk__ApiKey` | key uit Mijn API-keys (of `KVK_API_KEY`) |
+| `Kvk__BaseUrl` | leeg of `https://api.kvk.nl/api/` |
+
+Keys uit Integraties gaan voor; env vult lege velden. Na deploy: Integraties → Test verbinding.
+
+Als KVK IP-whitelisting aan heeft staan in het Developer Portal, voeg de uitgaande IP’s van Render toe of zet die restrictie uit — anders weigert KVK de calls (dat is geen stub meer).
+
 ## Sentry & webhook-ops
 
 1. Maak een Sentry project en zet `Sentry__Dsn` op API én web (Production en eventueel Acceptatie).

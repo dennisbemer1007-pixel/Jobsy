@@ -13,6 +13,9 @@ Alle noemenswaardige wijzigingen aan dit project worden in dit bestand bijgehoud
 
 ## [Unreleased]
 
+### Added
+- Live **KVK Handelsregister**-koppeling: bij API-key (Admin → Integraties of `Kvk__ApiKey` / `KVK_API_KEY`) zoekt Lobsy echte vestigingen; zonder key blijft de demo-stub. Base URL leeg = `https://api.kvk.nl/api/` (test: `https://api.kvk.nl/test/api/`).
+
 ### Changed
 - Render: Production (`jobsy-api` / `lobsy.nl`) wist **alle** bedrijven, vacatures en niet-admin gebruikers bij API-start, ook als `Seed:Enabled` nog aanstaat; houdt `admin@jobsy.local`. Acceptatie (`lobsy-acc-api`) blijft seeden.
 - ZAP (Checkmarx): geen exception-/status-tekst meer in publieke HTML; ontbrekende vestiging `/12345678/0001` geeft 404 i.p.v. 500; foutpagina toont alleen een request-referentie. CSP `img-src`/`connect-src` zonder scheme-wildcards (picsum + OpenFreeMap). `X-Content-Type-Options: nosniff` ook op statische files (favicon). Publieke bedrijfs-API op `public-read`. `'unsafe-eval'` blijft nodig voor Blazor Server; OIDC-nonce blijft `SameSite=None` voor Entra.

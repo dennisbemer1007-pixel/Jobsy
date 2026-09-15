@@ -548,7 +548,7 @@ Account: `enterprise@jobsy.local`. Mobiel: Home · Kaart · Vacatures · Sollici
 | Bedrijfsmanager | API-key copy modal sluiten zonder copy. | Key niet later terugleesbaar in full. |
 | Bedrijfsmanager | Vestigingen: **EnterpriseManager uitnodigen** (org+email+naam). | Invite. |
 | Bedrijfsmanager | Per vestiging **BranchManager uitnodigen**. | Invite gekoppeld aan vestiging. |
-| Bedrijfsmanager | KVK-stub lookup + **Registreer vestiging**. | Nieuwe establishment in org. |
+| Bedrijfsmanager | KVK lookup + **Registreer vestiging**. | Nieuwe establishment in org. |
 | Bedrijfsmanager | KVK lookup leeg/fout / vestiging al in gebruik. | Melding; claim/takeover i.p.v. duplicaat. |
 | Bedrijfsmanager | Vestigingen: link takeovers. | `/employer/takeovers`. |
 | Bedrijfsmanager | Regio’s: **aanmaken** naam+org+vestiging-checkboxes. | Regio bestaat; RM-scope. |

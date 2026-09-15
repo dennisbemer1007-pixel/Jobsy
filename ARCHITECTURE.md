@@ -3,7 +3,7 @@
 ## 1. Clean Architecture Principes
 De applicatie is opgesplitst in strikte lagen om afhankelijkheden te isoleren:
 - **Jobsy.Core (Domain):** Bevat alle entiteiten, enums, business logica en interfaces (`IRoutingService`, `ISalaryService`). Deze laag heeft geen enkele externe afhankelijkheid.
-- **Jobsy.Infrastructure (Data & Services):** Bevat de `JobsyDbContext`, EF Core configuraties, migraties, de database seeder en externe API-clients (zoals OSRM en mocks voor KVK/Mollie).
+- **Jobsy.Infrastructure (Data & Services):** Bevat de `JobsyDbContext`, EF Core configuraties, migraties, de database seeder en externe API-clients (OSRM, live KVK Handelsregister met stub-fallback, Mollie).
 - **Jobsy.Api (Backend / Web API):** De ASP.NET Core Web API die endpoints exposed voor de frontend, beveiligd met Microsoft Entra ID.
 - **Jobsy.Web (Frontend):** Blazor Web applicatie voor de gebruikersinterface (Funda-stijl dashboard en kaartweergave).
 

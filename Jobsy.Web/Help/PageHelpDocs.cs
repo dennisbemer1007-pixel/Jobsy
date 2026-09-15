@@ -162,7 +162,7 @@ public static class PageHelpDocs
         ["/employer/branches"] = new(
             "Vestigingen",
             "Vestigingen onder jouw organisatie beheren.",
-            "Bekijk vestigingen, zoek via KVK-stub nieuwe vestigingen en registreer ze. Overnames lopen via een apart scherm.",
+            "Bekijk vestigingen, zoek via KVK nieuwe vestigingen en registreer ze. Overnames lopen via een apart scherm.",
             "Organisatiestructuur opbouwen zodat managers per vestiging kunnen werken."),
 
         ["/regional/branches"] = new(
@@ -306,7 +306,7 @@ public static class PageHelpDocs
         ["/admin/companies"] = new(
             "Beheer · Bedrijven",
             "Alle werkgevers en intermediairs op het platform.",
-            "Zoek/filter bedrijven, ken tokens toe, of voeg toe via KVK-stub.",
+            "Zoek/filter bedrijven, ken tokens toe, of voeg toe via KVK.",
             "Platformbeheer van organisatiestructuur en wallets."),
 
         ["/admin/users"] = new(

@@ -86,6 +86,20 @@ public static class DependencyInjection
                 }
             });
 
+        services.AddOptions<KvkOptions>()
+            .Bind(configuration.GetSection(KvkOptions.SectionName))
+            .PostConfigure(options =>
+            {
+                if (string.IsNullOrWhiteSpace(options.ApiKey))
+                {
+                    var alt = configuration["KVK_API_KEY"];
+                    if (!string.IsNullOrWhiteSpace(alt))
+                    {
+                        options.ApiKey = alt.Trim();
+                    }
+                }
+            });
+
         services.AddOptions<MailOptions>()
             .Bind(configuration.GetSection(MailOptions.SectionName))
             .PostConfigure(options =>
@@ -190,11 +204,22 @@ public static class DependencyInjection
             AllowAutoRedirect = false
         });
 
+        services.AddHttpClient(KvkHandelsregisterService.HttpClientName, client =>
+        {
+            client.Timeout = TimeSpan.FromSeconds(20);
+            client.DefaultRequestHeaders.Accept.ParseAdd("application/json");
+        }).ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler
+        {
+            AllowAutoRedirect = false
+        });
+
         // Real Mollie when API key is configured; Development falls back to stub without a key.
         services.AddScoped<MolliePaymentStub>();
         services.AddScoped<IPaymentService, MolliePaymentService>();
 
-        services.AddScoped<IKvkService, KvkServiceStub>();
+        // Live KVK when API key is configured (Admin Integraties or Kvk__ApiKey); otherwise demo stub.
+        services.AddScoped<KvkServiceStub>();
+        services.AddScoped<IKvkService, KvkHandelsregisterService>();
         services.AddScoped<IKvkVerificationRetryService, KvkVerificationRetryService>();
         services.AddScoped<EmailServiceStub>();
         services.AddScoped<IEmailService, SmtpEmailService>();

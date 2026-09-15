@@ -16,9 +16,10 @@ public sealed class IntegrationCredentialService : IIntegrationCredentialService
     private readonly JobsyDbContext _db;
     private readonly ISecretProtector _secrets;
     private readonly MailOptions _mailOptions;
+    private readonly KvkOptions _kvkOptions;
 
     public IntegrationCredentialService(JobsyDbContext db, ISecretProtector secrets)
-        : this(db, secrets, Options.Create(new MailOptions()))
+        : this(db, secrets, Options.Create(new MailOptions()), Options.Create(new KvkOptions()))
     {
     }
 
@@ -26,10 +27,20 @@ public sealed class IntegrationCredentialService : IIntegrationCredentialService
         JobsyDbContext db,
         ISecretProtector secrets,
         IOptions<MailOptions> mailOptions)
+        : this(db, secrets, mailOptions, Options.Create(new KvkOptions()))
+    {
+    }
+
+    public IntegrationCredentialService(
+        JobsyDbContext db,
+        ISecretProtector secrets,
+        IOptions<MailOptions> mailOptions,
+        IOptions<KvkOptions> kvkOptions)
     {
         _db = db;
         _secrets = secrets;
         _mailOptions = mailOptions.Value ?? new MailOptions();
+        _kvkOptions = kvkOptions.Value ?? new KvkOptions();
     }
 
     public async Task<IntegrationCredentialView?> GetAsync(
@@ -251,6 +262,12 @@ public sealed class IntegrationCredentialService : IIntegrationCredentialService
             fromAddress ??= TrimOrNull(_mailOptions.FromAddress);
         }
 
+        if (key == IntegrationKey.Kvk)
+        {
+            apiKey ??= TrimOrNull(_kvkOptions.ApiKey);
+            baseUrl ??= TrimOrNull(_kvkOptions.BaseUrl);
+        }
+
         if (apiKey is null && clientId is null && clientSecret is null && tenantId is null
             && model is null && baseUrl is null && fromAddress is null)
         {
@@ -304,7 +321,7 @@ public sealed class IntegrationCredentialService : IIntegrationCredentialService
     {
         IntegrationKey.OpenAI => "Vacaturemoderatie via OpenAI.",
         IntegrationKey.Mollie => "Token-betalingen / checkout.",
-        IntegrationKey.Kvk => "KvK-handelsregister koppeling.",
+        IntegrationKey.Kvk => "KvK-handelsregister (live API bij key, anders demo-stub).",
         IntegrationKey.MicrosoftEntra => "Microsoft-login (OIDC).",
         IntegrationKey.GoogleEntra => "Google-login (OAuth).",
         IntegrationKey.Mail => "Uitgaande e-mail via Resend API (SMTP alleen als fallback).",
@@ -332,6 +349,7 @@ public sealed class IntegrationCredentialService : IIntegrationCredentialService
         var apiKeyPlain = string.IsNullOrWhiteSpace(row?.ApiKey) ? null : _secrets.Unprotect(row.ApiKey);
         var secretPlain = string.IsNullOrWhiteSpace(row?.ClientSecret) ? null : _secrets.Unprotect(row.ClientSecret);
         var fromAddress = string.IsNullOrWhiteSpace(row?.FromAddress) ? null : row!.FromAddress.Trim();
+        var baseUrl = string.IsNullOrWhiteSpace(row?.BaseUrl) ? null : row!.BaseUrl.Trim();
         var ignoresEnv = key == IntegrationKey.Mail && row?.IgnoreEnvironmentCredentials == true;
         var usedEnvKey = false;
         var usedEnvFrom = false;
@@ -359,6 +377,29 @@ public sealed class IntegrationCredentialService : IIntegrationCredentialService
             }
         }
 
+        if (key == IntegrationKey.Kvk)
+        {
+            if (apiKeyPlain is null)
+            {
+                var envKey = TrimOrNull(_kvkOptions.ApiKey);
+                if (envKey is not null)
+                {
+                    apiKeyPlain = envKey;
+                    usedEnvKey = true;
+                }
+            }
+
+            if (baseUrl is null)
+            {
+                var envBase = TrimOrNull(_kvkOptions.BaseUrl);
+                if (envBase is not null)
+                {
+                    baseUrl = envBase;
+                    usedEnvFrom = true;
+                }
+            }
+        }
+
         var hasKey = !string.IsNullOrWhiteSpace(apiKeyPlain);
         var hasSecret = !string.IsNullOrWhiteSpace(secretPlain);
         return new IntegrationCredentialView(
@@ -372,7 +413,7 @@ public sealed class IntegrationCredentialService : IIntegrationCredentialService
             row?.ClientId,
             row?.TenantId,
             SupportsModel(key) ? (row?.Model ?? "gpt-4o-mini") : row?.Model,
-            row?.BaseUrl,
+            baseUrl,
             fromAddress,
             SupportsApiKey(key),
             SupportsModel(key),
