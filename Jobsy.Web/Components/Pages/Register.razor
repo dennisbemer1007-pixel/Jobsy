@@ -1,5 +1,6 @@
 @page "/register"
 @using Jobsy.Web.Auth
+@using Jobsy.Core.Rules
 @attribute [AllowAnonymous]
 @rendermode @(new InteractiveServerRenderMode(prerender: false))
 @inject JobsyApiClient Api
@@ -99,14 +100,7 @@
                     {
                         <div class="table-row register-choice register-choice--unavailable">
                             <div class="register-choice__main">
-                                <div>
-                                    <strong>@e.Name</strong>
-                                    <span class="muted">@e.Address · @e.KvkEstablishmentId</span>
-                                    @if (e.SbiCodes is { Count: > 0 })
-                                    {
-                                        <span class="muted"> · SBI @string.Join(", ", e.SbiCodes)</span>
-                                    }
-                                </div>
+                                <RegisterEstablishmentIdentity Item="e" />
                                 <span class="badge-warn">@Culture["Register.InUse"]</span>
                             </div>
                             @if (string.Equals(_claimExpandedId, e.KvkEstablishmentId, StringComparison.Ordinal))
@@ -135,21 +129,16 @@
                     }
                     else
                     {
-                        <button type="button"
-                                class="table-row register-choice @(_selected?.KvkEstablishmentId == e.KvkEstablishmentId && !_claimMode ? "is-selected" : null)"
-                                @onclick="() => SelectEstablishment(e)">
+                        <div role="button"
+                             tabindex="0"
+                             class="table-row register-choice @(_selected?.KvkEstablishmentId == e.KvkEstablishmentId && !_claimMode ? "is-selected" : null)"
+                             @onclick="() => SelectEstablishment(e)"
+                             @onkeydown="ev => OnEstablishmentKey(ev, e)">
                             <div class="register-choice__main">
-                                <div>
-                                    <strong>@e.Name</strong>
-                                    <span class="muted">@e.Address · @e.KvkEstablishmentId</span>
-                                    @if (e.SbiCodes is { Count: > 0 })
-                                    {
-                                        <span class="muted"> · SBI @string.Join(", ", e.SbiCodes)</span>
-                                    }
-                                </div>
+                                <RegisterEstablishmentIdentity Item="e" />
                                 <span class="badge-ok">@Culture["Register.Available"]</span>
                             </div>
-                        </button>
+                        </div>
                     }
                 }
             </div>
@@ -239,17 +228,35 @@
                     <div class="register-address">
                         <div class="register-address__label">
                             <span>@Culture["Register.AddressLabel"]</span>
+                        </div>
+                        <p class="register-address__value">
+                            <span>@_selected.Address</span>
                             <button type="button"
                                     class="integration-tile__info @(_addressHintOpen ? "is-open" : null)"
-                                    title="@Culture["Register.AddressHint"]"
-                                    aria-label="@Culture["Register.AddressHint"]"
+                                    title="@Culture["Register.KvkDetailsHint"]"
+                                    aria-label="@Culture["Register.KvkDetailsHint"]"
                                     aria-expanded="@_addressHintOpen"
                                     @onclick="ToggleAddressHint">i</button>
-                        </div>
-                        <p class="register-address__value">@_selected.Address</p>
+                        </p>
                         @if (_addressHintOpen)
                         {
-                            <p class="muted register-address__hint">@Culture["Register.AddressHint"]</p>
+                            <div class="register-choice__kvk-details">
+                                <p class="muted register-address__hint">@Culture["Register.AddressHint"]</p>
+                                @if (!string.IsNullOrWhiteSpace(SelectedVestigingsnummer))
+                                {
+                                    <p>
+                                        <span class="muted">@Culture["Register.EstablishmentNumber"]</span>
+                                        @SelectedVestigingsnummer
+                                    </p>
+                                }
+                                @if (!string.IsNullOrWhiteSpace(SelectedSbiLabel))
+                                {
+                                    <p>
+                                        <span class="muted">@Culture["Register.SbiCodes"]</span>
+                                        @SelectedSbiLabel
+                                    </p>
+                                }
+                            </div>
                         }
                     </div>
                 }
@@ -442,6 +449,26 @@
 
     private void ToggleAddressHint()
         => _addressHintOpen = !_addressHintOpen;
+
+    private void OnEstablishmentKey(KeyboardEventArgs ev, KvkEstablishmentItem e)
+    {
+        if (ev.Key is "Enter" or " ")
+        {
+            SelectEstablishment(e);
+        }
+    }
+
+    private string? SelectedVestigingsnummer =>
+        _selected is null
+            ? null
+            : !string.IsNullOrWhiteSpace(_selected.EstablishmentNumber)
+                ? _selected.EstablishmentNumber.Trim()
+                : CompanyPublicPaths.TryParseVestigingsnummer(_selected.KvkEstablishmentId, _selected.KvkNumber);
+
+    private string? SelectedSbiLabel =>
+        _selected?.SbiCodes is { Count: > 0 } codes
+            ? string.Join(", ", codes.Where(static s => !string.IsNullOrWhiteSpace(s)))
+            : null;
 
     private void OnCultureChanged()
         => InvokeAsync(StateHasChanged);
