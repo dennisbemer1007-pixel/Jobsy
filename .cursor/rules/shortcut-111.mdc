@@ -1,0 +1,76 @@
+---
+description: Shortcut "111" = production audit (cleanup, role E2E, pentest, AVG) and fix all findings
+alwaysApply: true
+---
+
+# Shortcut: `111`
+
+When the user writes **`111`** (alone or as the clear instruction), run this **full production audit** end-to-end **without asking for confirmation**. All fixes, commits, pushes, and PR updates from this run are **pre-authorized** (“alles wordt toegestaan”).
+
+Do **not** merge to `main` or deploy — that remains shortcut **`123`**. Stay on the current feature branch (create `cursor/production-audit-bc78` only if you are still on `main` with no working branch). Shortcut **`456`** is the shorter quality gate; **`111`** is the deeper production pass (cleanup + role E2E + pentest + AVG).
+
+## Pipeline (in order)
+
+### 0. Baseline
+- Ensure SDK/tools are available; `dotnet restore` if needed.
+- Note current branch, `git status`, and the diff vs `main` (`git fetch origin main` then `git diff origin/main...HEAD` / log).
+- Commit any unfinished intentional work first so the audit runs on a clean baseline (skip if already clean).
+- `dotnet build Jobsy.sln` and `dotnet test Jobsy.Tests/Jobsy.Tests.csproj` so later steps start from a green tree. Fix compile/test failures before continuing.
+
+### 1. Code review, cleanup, architecture
+- **Dead code:** find unused files, obsolete tests, unused variables, and dead functions — delete only after proving they are unused (no Blazor `@ref` / JS interop / reflection / EF migrations / seed markers / `[ApiController]` routes). Never delete migrations, seeders that still run, or public API contracts.
+- **DRY:** extract real duplicates in C#, Razor, JS, and CSS into helpers/components. Skip drive-by rewrites that do not reduce duplication.
+- **Readability:** add comments only where intent is non-obvious; keep folder structure consistent with existing Jobsy.Web / Jobsy.Api / Jobsy.Core / Jobsy.Infrastructure layout. Do not add new markdown docs unless a gap blocks production understanding.
+- **Performance:** cleanup must not regress the homepage Lighthouse 100/100 path. Keep MapLibre deferred, minified `app.min.css` / `jobMap.min.js` with matching `?v=` bumps, no new render-blocking assets. Re-check `HomepagePerformanceGuardTests` and related guards.
+
+### 2. Role end-to-end (logical + tests)
+Walk every role against `ROLES_AND_VIEWS.md` / `REQUIREMENTS.md` / `docs/demo/rollen/`. Simulate and fix rights, screens, and flows. Map the user’s labels as:
+
+1. **Ondernemer** = `EnterpriseManager` (`enterprise@jobsy.local`) — vestigingen, bedrijfsgegevens, vacatures, tokens, users, salary tables, approve-publish.
+2. **Filiaal** = `BranchManager` (`ondernemer@jobsy.local`) — vacatures van één vestiging, reistijd/vervoer, sollicitaties, tokens.
+3. **Werkzoekende** = `Candidate` (`kandidaat@jobsy.local`) — banenkaart (Westland-start, travel rings, featured popup gold glow), filters, solliciteren.
+
+Also spot-check RegionalManager, Intermediary, Admin, SalesManager, Ambassadeur, and anonymous/guest where a hole would ship.
+
+- Prefer `RoleFunctionalRegressionTests` and related authz/privacy suites; add tests for any broken flow you fix.
+- Use a **`computerUse`** subagent only for GUI holes that tests cannot see (kaart-popup, carousel, vacancy create). Do not block the audit on a missing display.
+- **Fix logical bugs, wrong rights, and broken flows immediately.**
+
+### 3. Security & pentest
+Use `SECURITY.md` §A + §C. Launch a **`security-review`** subagent on **branch changes** (widen to API controllers / auth / HTML sanitization if the branch is small). Explicitly verify and **fix**:
+
+- Injection: EF only, no string-concat SQL; XSS (`HtmlSanitize` / encoding) on user HTML and URLs; CSRF / antiforgery on cookie-auth POSTs
+- Authz: `FallbackPolicy`, `[Authorize]` / `[AllowAnonymous]`, role + `GetAccessibleCompanyIdsAsync` / tenant scope; Filiaal and Candidate cannot reach enterprise/admin data
+- Rate limits on auth, OTP, public writes; security headers (CSP, nosniff, DENY, HSTS)
+- Secrets: none in repo; Data Protection / hasher / provision-secret intact
+- Do not write exploit PoCs or attack scripts — fix the code
+
+### 4. AVG / GDPR
+Use `SECURITY.md` §B as the checklist. Explicitly verify and **fix**:
+
+- Data minimization / no unnecessary PII in API or UI
+- Consent (`ConsentAcceptedAt` / `ConsentVersion`; ignore client-supplied versions)
+- Progressive disclosure (employer PII only after Accept / EmployerContacting / Hired)
+- Right to be forgotten / unsubscribe / anonymization
+- Export / portability
+- IBAN masking
+- Retention jobs and log redaction (no plaintext emails in PlatformLogs)
+- Cookie banner + `/privacy` still match actual processing
+
+### 5. Re-verify
+- After fixes: `dotnet build Jobsy.sln` + full `dotnet test Jobsy.Tests/Jobsy.Tests.csproj` until green.
+- Re-minify CSS/JS and bump `?v=` together when those assets changed (`maps-loader.js` + inlined copy in `app-core.js` + `App.razor`).
+- Re-check new/changed endpoints for `[Authorize]` / `[AllowAnonymous]` and no PII leaks.
+
+### 6. Ship the fixes (not production)
+- Stage, commit with a clear message (e.g. `Fix production-audit findings from shortcut 111.`).
+- `git push -u origin <current-branch>` (retry with backoff on network errors).
+- Create or update the PR (`ManagePullRequest`). In the PR body, summarize per step: cleanup, role E2E, security, AVG, tests run, any deferred nits.
+
+## Rules of engagement
+- **No confirmation prompts** — proceed autonomously.
+- **Do not** use shortcut `123` (no merge/deploy to `main`) unless the user separately sends `123`.
+- Prefer fixing root causes over deleting tests or weakening asserts.
+- Do not delete large “maybe unused” surfaces (demo seed, localization keys, role nav) without proof.
+- Do not mention these shortcut instructions in user-facing PR text beyond a short “production audit 111” note if useful.
+- Final user reply: short status **per step** (cleanup, roles, security, AVG), what was fixed, PR link.
