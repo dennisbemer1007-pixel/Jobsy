@@ -10831,12 +10831,41 @@ button.linkish:hover {
     margin-bottom: 0.85rem;
 }
 
+.register-crumbs {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.35rem;
+    margin: 0 0 0.85rem;
+    font-size: 0.82rem;
+    color: var(--muted);
+}
+
+.register-crumbs__sep {
+    color: var(--muted);
+    font-weight: 400;
+}
+
 .wizard-steps {
     display: flex;
     flex-wrap: wrap;
     gap: 0.4rem 0.75rem;
     margin: 0 0 1.25rem;
+    padding: 0;
+    list-style: none;
     font-size: 0.8rem;
+    color: var(--muted);
+}
+
+.wizard-steps--crumbs {
+    gap: 0.2rem 0.35rem;
+    align-items: center;
+}
+
+.wizard-steps--crumbs .wizard-step:not(:last-child)::after {
+    content: "›";
+    margin-left: 0.4rem;
+    font-weight: 400;
     color: var(--muted);
 }
 
@@ -10847,9 +10876,9 @@ button.linkish:hover {
 
 .wizard-actions {
     display: flex;
-    flex-wrap: nowrap;
+    flex-wrap: wrap;
     gap: 0.65rem;
-    align-items: center;
+    align-items: stretch;
     margin-top: 1rem;
 }
 
@@ -10863,10 +10892,12 @@ button.linkish:hover {
 .wizard-actions .login-submit,
 .wizard-actions a.provider-btn {
     width: auto;
-    flex: 1 1 0;
-    min-width: 0;
+    flex: 1 1 11rem;
+    min-width: 11rem;
     margin-top: 0;
     text-decoration: none;
+    overflow: visible;
+    white-space: nowrap;
 }
 
 .login-register__actions {
@@ -10968,7 +10999,40 @@ button.linkish:hover {
     width: 120px;
     height: 120px;
     object-fit: contain;
-    animation: register-mascot-bob 1.8s ease-in-out infinite;
+}
+
+.register-address {
+    margin: 0 0 0.85rem;
+}
+
+.register-address__label,
+.register-label-with-info__text {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-weight: 600;
+    margin-bottom: 0.35rem;
+}
+
+.register-address__value {
+    margin: 0;
+    padding: 0.65rem 0.75rem;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    background: color-mix(in srgb, var(--muted) 6%, var(--surface));
+}
+
+.register-address__hint {
+    display: block;
+    margin: 0.4rem 0 0;
+    font-size: 0.86rem;
+    line-height: 1.4;
+}
+
+.register-label-with-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
 }
 
 .register-result__title {
@@ -10989,17 +11053,6 @@ button.linkish:hover {
     width: auto;
     min-width: 0;
     padding-inline: 1.1rem;
-}
-
-@keyframes register-mascot-bob {
-    from { transform: translateY(0); }
-    to { transform: translateY(-6px); }
-}
-
-@media (prefers-reduced-motion: reduce) {
-    .register-result__mascot {
-        animation: none;
-    }
 }
 
 .scope-fieldset {

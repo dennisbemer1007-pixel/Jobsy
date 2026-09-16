@@ -15,8 +15,12 @@ Alle noemenswaardige wijzigingen aan dit project worden in dit bestand bijgehoud
 
 ### Added
 - Live **KVK Handelsregister**-koppeling: bij API-key (Admin → Integraties of `Kvk__ApiKey` / `KVK_API_KEY`) zoekt Lobsy echte vestigingen; zonder key blijft de demo-stub. Base URL leeg = `https://api.kvk.nl/api/` (test: `https://api.kvk.nl/test/api/`).
+- Register-wizard: kruimelpad, KVK-adres met i-toelichting, stil logo, knoptekst ‘Bevestigen’ niet meer afgeknipt, geen ‘Open verificatielink’.
+- `/health` en HTML-meta `lobsy-commit` tonen de Render git-SHA zodat productie verifieerbaar is.
 
 ### Changed
+- CSS-cachebust `app.min.css?v=20260916-prod` zodat Systeeminstellingen-wrap en register-styling bij bestaande browsers aankomen (oude `?v=20260904-ui` bleef 1 jaar in cache).
+- Register: KVK-nummer is leeg buiten Development (geen vooringevulde stub `12345678` op lobsy.nl).
 - Render: Production (`jobsy-api` / `lobsy.nl`) wist **alle** bedrijven, vacatures en niet-admin gebruikers bij API-start, ook als `Seed:Enabled` nog aanstaat; houdt `admin@jobsy.local`. Acceptatie (`lobsy-acc-api`) blijft seeden.
 - ZAP (Checkmarx): geen exception-/status-tekst meer in publieke HTML; ontbrekende vestiging `/12345678/0001` geeft 404 i.p.v. 500; foutpagina toont alleen een request-referentie. CSP `img-src`/`connect-src` zonder scheme-wildcards (picsum + OpenFreeMap). `X-Content-Type-Options: nosniff` ook op statische files (favicon). Publieke bedrijfs-API op `public-read`. `'unsafe-eval'` blijft nodig voor Blazor Server; OIDC-nonce blijft `SameSite=None` voor Entra.
 - Production audit 111: dode CSS/modellen opgeruimd; intermediair kan geen werkgevers overnemen of client-bedrijfsinstellingen/facturen wijzigen of lezen; demo-login alleen bij `AllowDevelopmentAuth`; rate limits op publieke vacature-GETs en `/travel`; analytics-POSTs vereisen cookietoestemming (HMAC in Production); RTBF/intrekken wissen leeftijd/werkvergunning/match; platform BTW-IBAN alleen gemaskeerd in de API.
