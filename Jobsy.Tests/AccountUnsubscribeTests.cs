@@ -105,16 +105,30 @@ public class AccountUnsubscribeTests
             ActionUrl = "/candidate/actions/set-unavailable?token=secret",
             CreatedAtUtc = DateTime.UtcNow
         });
-        db.CandidateActionTokens.Add(new CandidateActionToken
-        {
-            Id = Guid.NewGuid(),
-            UserId = candidateId,
-            Purpose = "SetUnavailable",
-            TokenHash = VerificationCodes.Hash("abcdef"),
-            ExpiresAtUtc = DateTime.UtcNow.AddDays(7),
-            CreatedAtUtc = DateTime.UtcNow
-        });
-        await db.SaveChangesAsync();
+            db.CandidateActionTokens.Add(new CandidateActionToken
+            {
+                Id = Guid.NewGuid(),
+                UserId = candidateId,
+                Purpose = "SetUnavailable",
+                TokenHash = VerificationCodes.Hash("abcdef"),
+                ExpiresAtUtc = DateTime.UtcNow.AddDays(7),
+                CreatedAtUtc = DateTime.UtcNow
+            });
+            db.CandidateCompetencies.Add(new CandidateCompetency
+            {
+                Id = Guid.NewGuid(),
+                UserId = candidateId,
+                Status = CandidateCompetencyStatuses.Completed,
+                AnswersJson = """{"1":5,"2":4}""",
+                SamenwerkenPercent = 72,
+                ResultaatgerichtheidPercent = 68,
+                StressbestendigheidPercent = 55,
+                InnovatiePercent = 60,
+                CreatedAtUtc = DateTime.UtcNow,
+                UpdatedAtUtc = DateTime.UtcNow,
+                CompletedAtUtc = DateTime.UtcNow
+            });
+            await db.SaveChangesAsync();
 
         var privacy = CreatePrivacy(db, out var mail);
         var principal = CreatePrincipal(email);
@@ -170,6 +184,7 @@ public class AccountUnsubscribeTests
         Assert.Equal(0, await db.LocalAuthCredentials.CountAsync(c => c.UserId == candidateId));
         Assert.Equal(0, await db.UserNotifications.CountAsync(n => n.UserId == candidateId));
         Assert.Equal(0, await db.CandidateActionTokens.CountAsync(t => t.UserId == candidateId));
+        Assert.Equal(0, await db.CandidateCompetencies.CountAsync(c => c.UserId == candidateId));
 
         var confirmLog = await db.PlatformLogs
             .Where(l => l.Category == "Unsubscribe" && l.Message.Contains("bevestigd"))
@@ -243,6 +258,20 @@ public class AccountUnsubscribeTests
             ActionUrl = "/candidate/actions/withdraw-others?hiredApplicationId=11111111-1111-1111-1111-111111111111&token=secret",
             CreatedAtUtc = DateTime.UtcNow
         });
+        db.CandidateCompetencies.Add(new CandidateCompetency
+        {
+            Id = Guid.NewGuid(),
+            UserId = candidateId,
+            Status = CandidateCompetencyStatuses.Completed,
+            AnswersJson = """{"1":4,"6":5}""",
+            SamenwerkenPercent = 70,
+            ResultaatgerichtheidPercent = 80,
+            StressbestendigheidPercent = 60,
+            InnovatiePercent = 65,
+            CreatedAtUtc = DateTime.UtcNow,
+            UpdatedAtUtc = DateTime.UtcNow,
+            CompletedAtUtc = DateTime.UtcNow
+        });
         await db.SaveChangesAsync();
 
         var privacy = CreatePrivacy(db);
@@ -258,6 +287,8 @@ public class AccountUnsubscribeTests
         Assert.Contains("Export Kandidaat", json);
         Assert.Contains("Notifications", json);
         Assert.Contains("Export notificatie", json);
+        Assert.Contains("Competencies", json);
+        Assert.Contains("SamenwerkenPercent", json);
         Assert.DoesNotContain("token=secret", json);
     }
 

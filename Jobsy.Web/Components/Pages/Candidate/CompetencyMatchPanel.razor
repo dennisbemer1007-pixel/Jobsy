@@ -1,0 +1,88 @@
+@using Jobsy.Web.Localization
+@inject CultureState Culture
+
+<section class="competency-matches" aria-labelledby="competency-matches-title">
+    <header class="competency-matches__header">
+        <h2 id="competency-matches-title">@Culture["Competency.Matches.Title"]</h2>
+        <p class="login-lead">@Culture["Competency.Matches.Lead"]</p>
+    </header>
+
+    @if (Loading)
+    {
+        <p class="state-message">@Culture["Common.Loading"]</p>
+    }
+    else if (Items.Count == 0)
+    {
+        <p class="state-message">@Culture["Competency.Matches.Empty"]</p>
+    }
+    else
+    {
+        <ol class="competency-matches__list">
+            @foreach (var item in Items)
+            {
+                <li class="competency-match-card">
+                    <a class="competency-match-card__link" href="@($"/vacancies/{item.Id}")">
+                        <span class="competency-match-card__title">@item.Title</span>
+                        <span class="competency-match-card__company">@item.CompanyName</span>
+                    </a>
+                    <div class="competency-match-card__score">
+                        <span class="match-score match-score--@item.ColorBand">@item.MatchPercent%</span>
+                        <span class="competency-help-wrap">
+                            <button type="button"
+                                    class="competency-help"
+                                    title="@Culture["Competency.Matches.Help"]"
+                                    aria-label="@Culture["Competency.Matches.Help"]"
+                                    @onclick="() => Open(item)">
+                                ?
+                            </button>
+                            <span class="competency-help__tip" role="tooltip">
+                                <strong>@Culture["Competency.Matches.Why"]</strong>
+                                @(item.Why.FirstOrDefault() ?? "")
+                                <strong>@Culture["Competency.Matches.Gap"]</strong>
+                                @(item.Gaps.FirstOrDefault() ?? "")
+                            </span>
+                        </span>
+                    </div>
+                </li>
+            }
+        </ol>
+    }
+</section>
+
+<LobsyFriendlyDialog IsOpen="@(_open is not null)"
+                     Title="@(_open is null ? "" : Culture.Format("Competency.Matches.ExplainTitle", _open.MatchPercent))"
+                     TitleId="competency-match-explain-title"
+                     OnClose="Close">
+    @if (_open is not null)
+    {
+        <p class="competency-explain__vacancy">@_open.Title · @_open.CompanyName</p>
+        <h3 class="competency-explain__h">@Culture["Competency.Matches.Why"]</h3>
+        <ul class="competency-explain__list">
+            @foreach (var line in _open.Why)
+            {
+                <li>@line</li>
+            }
+        </ul>
+        <h3 class="competency-explain__h">@Culture["Competency.Matches.Gap"]</h3>
+        <ul class="competency-explain__list competency-explain__list--gap">
+            @foreach (var line in _open.Gaps)
+            {
+                <li>@line</li>
+            }
+        </ul>
+        <a class="login-submit competency-explain__cta" href="@($"/vacancies/{_open.Id}")">
+            @Culture["Competency.Matches.OpenVacancy"]
+        </a>
+    }
+</LobsyFriendlyDialog>
+
+@code {
+    [Parameter] public IReadOnlyList<CandidateMatchedVacancy> Items { get; set; } = [];
+    [Parameter] public bool Loading { get; set; }
+
+    private CandidateMatchedVacancy? _open;
+
+    private void Open(CandidateMatchedVacancy item) => _open = item;
+
+    private void Close() => _open = null;
+}

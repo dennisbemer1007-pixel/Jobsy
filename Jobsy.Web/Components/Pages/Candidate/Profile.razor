@@ -21,6 +21,35 @@
             <p class="login-lead">@Culture["Profile.ReturnHint"]</p>
         }
     </header>
+    <div class="profile-layout">
+    <div class="profile-layout__main">
+    <section class="detail-card competency-profile-card" aria-labelledby="competency-profile-title">
+        <h2 id="competency-profile-title" class="profile-page__title">@Culture["Competency.Section"]</h2>
+        <p class="login-lead">@Culture["Competency.Lead"]</p>
+        @if (_competenciesLoading)
+        {
+            <p class="state-message">@Culture["Common.Loading"]</p>
+        }
+        else if (_competencyScores is { IsComplete: true })
+        {
+            @if (_competencyCompletedAt is DateTime completed)
+            {
+                <p class="profile-address__hint">@Culture.Format("Competency.CompletedOn", completed.ToLocalTime().ToString("d"))</p>
+            }
+            <CompetencyScorePanel Scores="_competencyScores" />
+            <a class="engagement-btn" href="/candidate/competencies">@Culture["Competency.Retake"]</a>
+        }
+        else if (_competencyAnswered > 0)
+        {
+            <p class="login-lead">@Culture.Format("Competency.DraftProgress", _competencyAnswered, 20)</p>
+            <a class="login-submit" href="/candidate/competencies">@Culture["Competency.Continue"]</a>
+        }
+        else
+        {
+            <p class="login-lead">@Culture["Competency.Empty"]</p>
+            <a class="login-submit" href="/candidate/competencies">@Culture["Competency.Start"]</a>
+        }
+    </section>
     <article class="detail-card">
         <h1 class="profile-page__title">@Culture["Profile.MyProfile"]</h1>
         <p class="login-lead">@Culture["Profile.Lead"]</p>
@@ -534,6 +563,13 @@
             </button>
         </section>
     }
+    </div>
+    <aside class="profile-layout__matches">
+        <div class="detail-card">
+            <CompetencyMatchPanel Items="_matchedVacancies" Loading="_matchesLoading" />
+        </div>
+    </aside>
+    </div>
 </div>
 
 <UnsubscribeDialog IsOpen="_unsubscribeOpen"
@@ -588,6 +624,12 @@
     private int _suggestGeneration;
     private string _openSection = "personal";
     private static readonly string[] WeekdayCodes = ["Ma", "Di", "Wo", "Do", "Vr"];
+    private bool _competenciesLoading = true;
+    private bool _matchesLoading = true;
+    private CompetencyScoreSet? _competencyScores;
+    private int _competencyAnswered;
+    private DateTime? _competencyCompletedAt;
+    private IReadOnlyList<CandidateMatchedVacancy> _matchedVacancies = [];
 
     [SupplyParameterFromQuery(Name = "returnUrl")]
     public string? ReturnUrl { get; set; }
@@ -658,6 +700,7 @@
             _certificates.Clear();
             _certificates.AddRange(prefs.Certificates ?? []);
             ApplyCvAndReferences(profile);
+            await LoadCompetencyWidgetsAsync();
             _selectedEducations.Clear();
             foreach (var education in prefs.Educations ?? [])
             {
@@ -710,6 +753,33 @@
         finally
         {
             _loading = false;
+        }
+    }
+
+    private async Task LoadCompetencyWidgetsAsync()
+    {
+        _competenciesLoading = true;
+        _matchesLoading = true;
+        try
+        {
+            var competency = await Api.GetMyCompetenciesAsync();
+            if (competency is not null)
+            {
+                _competencyAnswered = competency.AnsweredCount;
+                _competencyCompletedAt = competency.CompletedAtUtc;
+                _competencyScores = competency.Scores ?? competency.PreviewScores;
+            }
+
+            _matchedVacancies = await Api.GetMyMatchedVacanciesAsync();
+        }
+        catch
+        {
+            _matchedVacancies = [];
+        }
+        finally
+        {
+            _competenciesLoading = false;
+            _matchesLoading = false;
         }
     }
 
@@ -1132,6 +1202,7 @@
                     .ToList());
             _homeLocationDirty = false;
             _message = Culture["Profile.Saved"];
+            await LoadCompetencyWidgetsAsync();
             if (!string.IsNullOrWhiteSpace(_returnUrl))
             {
                 Navigation.NavigateTo(_returnUrl);

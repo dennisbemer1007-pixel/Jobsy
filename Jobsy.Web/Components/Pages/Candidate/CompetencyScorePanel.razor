@@ -1,0 +1,77 @@
+@using Jobsy.Core.Rules
+@using Jobsy.Web.Localization
+@inject CultureState Culture
+
+@if (Scores is { IsComplete: true } complete)
+{
+    <div class="competency-score-panel">
+        <svg class="competency-radar" viewBox="0 0 220 220" role="img" aria-label="@Culture["Competency.RadarLabel"]">
+            <g transform="translate(110,110)">
+                @for (var ring = 1; ring <= 4; ring++)
+                {
+                    <polygon class="competency-radar__grid" points="@RadarRing(ring * 25)" />
+                }
+                @for (var i = 0; i < 4; i++)
+                {
+                    var end = RadarPoint(100, i);
+                    <line class="competency-radar__axis" x1="0" y1="0" x2="@end.X.ToString("0.###", System.Globalization.CultureInfo.InvariantCulture)" y2="@end.Y.ToString("0.###", System.Globalization.CultureInfo.InvariantCulture)" />
+                }
+                <polygon class="competency-radar__fill" points="@RadarShape(complete)" />
+            </g>
+        </svg>
+        <ul class="competency-bars">
+            @foreach (var category in CompetencyTestCatalog.CategoryCodes)
+            {
+                var value = Value(complete, category) ?? 0;
+                <li class="competency-bar">
+                    <div class="competency-bar__meta">
+                        <span class="competency-bar__name">@Culture[$"Competency.Cat.{category}"]</span>
+                        <span class="competency-bar__value">@value%</span>
+                    </div>
+                    <div class="competency-bar__track" role="meter" aria-valuemin="0" aria-valuemax="100" aria-valuenow="@value" aria-label="@Culture[$"Competency.Cat.{category}"]">
+                        <span class="competency-bar__fill" style="width: @value%"></span>
+                    </div>
+                    <p class="competency-bar__hint">@Culture[$"Competency.Cat.{category}.Hint"]</p>
+                </li>
+            }
+        </ul>
+    </div>
+}
+
+@code {
+    [Parameter] public CompetencyScoreSet? Scores { get; set; }
+
+    private static int? Value(CompetencyScoreSet scores, string category) => category switch
+    {
+        CompetencyTestCatalog.Samenwerken => scores.Samenwerken,
+        CompetencyTestCatalog.Resultaatgerichtheid => scores.Resultaatgerichtheid,
+        CompetencyTestCatalog.Stressbestendigheid => scores.Stressbestendigheid,
+        CompetencyTestCatalog.Innovatie => scores.Innovatie,
+        _ => null
+    };
+
+    private static string RadarRing(double percent)
+        => string.Join(" ", Enumerable.Range(0, 4).Select(i => FormatPoint(RadarPoint(percent, i))));
+
+    private static string RadarShape(CompetencyScoreSet scores)
+    {
+        var values = new[]
+        {
+            scores.Samenwerken ?? 0,
+            scores.Resultaatgerichtheid ?? 0,
+            scores.Stressbestendigheid ?? 0,
+            scores.Innovatie ?? 0
+        };
+        return string.Join(" ", values.Select((v, i) => FormatPoint(RadarPoint(v, i))));
+    }
+
+    private static (double X, double Y) RadarPoint(double percent, int index)
+    {
+        var radius = 88 * Math.Clamp(percent, 0, 100) / 100.0;
+        var angle = -Math.PI / 2 + index * (Math.PI / 2);
+        return (radius * Math.Cos(angle), radius * Math.Sin(angle));
+    }
+
+    private static string FormatPoint((double X, double Y) p)
+        => $"{p.X.ToString("0.###", System.Globalization.CultureInfo.InvariantCulture)},{p.Y.ToString("0.###", System.Globalization.CultureInfo.InvariantCulture)}";
+}

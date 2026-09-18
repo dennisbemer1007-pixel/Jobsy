@@ -50,6 +50,8 @@ public class LocalizationTests
             "Apps.Wizard.InReview",
             "Profile.Title",
             "Profile.Section.Personal",
+            "Competency.Title",
+            "Competency.Cat.Samenwerken",
             "Profile.PresetOffice",
             "HowLobsy.Title",
             "CandidateVacancies.RecentlyViewed",

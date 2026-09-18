@@ -739,6 +739,52 @@ public sealed class JobsyApiClient : IAsyncDisposable
         return await response.Content.ReadFromJsonAsync<MeProfile>(cancellationToken: ct);
     }
 
+    public async Task<CandidateCompetencyState?> GetMyCompetenciesAsync(CancellationToken ct = default)
+    {
+        try
+        {
+            return await _http.GetFromJsonAsync<CandidateCompetencyState>("api/me/competencies", ct);
+        }
+        catch (HttpRequestException ex) when (ex.StatusCode is HttpStatusCode.Unauthorized or HttpStatusCode.NotFound or HttpStatusCode.Forbidden)
+        {
+            return null;
+        }
+    }
+
+    public async Task<CandidateCompetencyState> SaveMyCompetenciesAsync(
+        IReadOnlyDictionary<int, int> answers,
+        bool complete,
+        CancellationToken ct = default)
+    {
+        var payload = new
+        {
+            answers = answers.ToDictionary(kv => kv.Key.ToString(), kv => kv.Value),
+            complete
+        };
+        var response = await _http.PutAsJsonAsync("api/me/competencies", payload, ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException(ExtractMessage(body) ?? "Competentietest opslaan mislukt.");
+        }
+
+        return await response.Content.ReadFromJsonAsync<CandidateCompetencyState>(cancellationToken: ct)
+               ?? new CandidateCompetencyState();
+    }
+
+    public async Task<IReadOnlyList<CandidateMatchedVacancy>> GetMyMatchedVacanciesAsync(CancellationToken ct = default)
+    {
+        try
+        {
+            return await _http.GetFromJsonAsync<List<CandidateMatchedVacancy>>("api/me/matched-vacancies", ct)
+                   ?? [];
+        }
+        catch (HttpRequestException ex) when (ex.StatusCode is HttpStatusCode.Unauthorized or HttpStatusCode.NotFound or HttpStatusCode.Forbidden)
+        {
+            return [];
+        }
+    }
+
     public async Task<IReadOnlyList<MetricCount>> GetMyMetricsSummaryAsync(string period = "week", CancellationToken ct = default)
         => await _http.GetFromJsonAsync<List<MetricCount>>($"api/me/metrics/summary?period={Uri.EscapeDataString(period)}", ct) ?? [];
 

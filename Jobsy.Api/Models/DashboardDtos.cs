@@ -216,6 +216,10 @@ public record UpdateCandidateProfileRequest(
 
 public record UpdateLanguageRequest(string Language);
 
+public record SaveCandidateCompetenciesRequest(
+    Dictionary<string, int>? Answers,
+    bool Complete = false);
+
 public record RecordClickRequest(string? AnonymousKey);
 
 public record RecordImpressionsRequest(IReadOnlyList<Guid>? VacancyIds, string? AnonymousKey);

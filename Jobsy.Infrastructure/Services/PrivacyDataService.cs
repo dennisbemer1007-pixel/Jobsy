@@ -304,6 +304,20 @@ public sealed class PrivacyDataService : IPrivacyDataService
                 .OrderBy(r => r.SortOrder)
                 .Select(r => new { r.EmployerName, r.ContactName, r.Email, r.Phone, r.CreatedAtUtc })
                 .ToListAsync(cancellationToken),
+            Competencies = await _db.CandidateCompetencies.AsNoTracking()
+                .Where(c => c.UserId == user.Id)
+                .Select(c => new
+                {
+                    c.Status,
+                    c.AnswersJson,
+                    c.SamenwerkenPercent,
+                    c.ResultaatgerichtheidPercent,
+                    c.StressbestendigheidPercent,
+                    c.InnovatiePercent,
+                    c.CompletedAtUtc,
+                    c.UpdatedAtUtc
+                })
+                .FirstOrDefaultAsync(cancellationToken),
             CompanyMemberships = memberships,
             Applications = applications,
             Likes = likes,
@@ -797,6 +811,14 @@ public sealed class PrivacyDataService : IPrivacyDataService
         if (references.Count > 0)
         {
             _db.CandidateReferences.RemoveRange(references);
+        }
+
+        var competencies = await _db.CandidateCompetencies
+            .Where(c => c.UserId == user.Id)
+            .ToListAsync(cancellationToken);
+        if (competencies.Count > 0)
+        {
+            _db.CandidateCompetencies.RemoveRange(competencies);
         }
 
         var applicationIds = applications.Select(a => a.Id).ToList();

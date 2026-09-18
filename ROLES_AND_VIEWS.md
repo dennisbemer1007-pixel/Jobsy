@@ -34,7 +34,8 @@ Publiek (naast banenkaart): `/vacancies/{id}`, `/{kvknummer}` (ondernemer), `/{k
 | `/candidate/applications` | Sollicitatiehistorie |
 | `/candidate/vacancies` | Overzicht + **Onlangs bekeken** (localStorage, alleen vacancy-GUIDs) + in-de-buurt op reistijd/vervoer |
 | `/candidate/liked` · `/candidate/shared` | Engagement-lijsten |
-| `/candidate/profile` | OpenForWork, prefs, DOB, HomeLocation, eigen CV-upload, recensies |
+| `/candidate/profile` | OpenForWork, prefs, DOB, HomeLocation, eigen CV-upload, recensies, **competenties** (Big Five-test) + Top 10 vacatures (≥60% match) |
+| `/candidate/competencies` | Competentietest (20 vragen); draft tussentijds opslaan; scores herberekend bij afronden |
 
 ---
 

@@ -117,6 +117,7 @@ public static partial class PageSeoCatalog
             ["/candidate/vacancies"] = Private("Nav.Vacancies", "Seo.PrivateDescription"),
             ["/candidate/applications"] = Private("Nav.MyApplications", "Seo.PrivateDescription"),
             ["/candidate/profile"] = Private("Profile.Title", "Seo.PrivateDescription"),
+            ["/candidate/competencies"] = Private("Competency.Title", "Seo.PrivateDescription"),
             ["/candidate/actions/set-unavailable"] = Private("Seo.SiteName", "Seo.PrivateDescription"),
             ["/candidate/actions/withdraw-others"] = Private("Seo.SiteName", "Seo.PrivateDescription"),
             ["/employer/vacancies"] = Private("Employer.VacanciesTitle", "Seo.PrivateDescription"),

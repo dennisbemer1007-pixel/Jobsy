@@ -1,6 +1,6 @@
 # Testscenario’s per rol (UAT-catalogus)
 
-Aantal rijen: **778**. Handmatige testdekking van **elke rol**, **elke primaire knop/link/nav-item**, plus **unhappy paths** (validatie, 401/403, lege staten, tokens tekort, AVG, IDOR, timeouts). Kolommen: **Rol** · **Testscenario** · **Verwacht resultaat**.
+Aantal rijen: **784**. Handmatige testdekking van **elke rol**, **elke primaire knop/link/nav-item**, plus **unhappy paths** (validatie, 401/403, lege staten, tokens tekort, AVG, IDOR, timeouts). Kolommen: **Rol** · **Testscenario** · **Verwacht resultaat**.
 
 Bronnen: `ROLES_AND_VIEWS.md`, `REQUIREMENTS.md`, `SECURITY.md`, Blazor-pagina’s onder `Jobsy.Web/Components`, `RoleNavCatalog`, functionele specs in `docs/`.
 
@@ -10,7 +10,7 @@ Bronnen: `ROLES_AND_VIEWS.md`, `REQUIREMENTS.md`, `SECURITY.md`, Blazor-pagina�
 
 - [1. Gast (niet ingelogd)](#1-gast-niet-ingelogd) — 147 scenario’s
 - [2. Alle ingelogde rollen (cross-cutting chrome)](#2-alle-ingelogde-rollen-cross-cutting-chrome) — 33 scenario’s
-- [3. Kandidaat](#3-kandidaat) — 103 scenario’s
+- [3. Kandidaat](#3-kandidaat) — 109 scenario’s
 - [4. Filiaalmanager (BranchManager)](#4-filiaalmanager-branchmanager) — 97 scenario’s
 - [5. Regiomanager (RegionalManager)](#5-regiomanager-regionalmanager) — 22 scenario’s
 - [6. Bedrijfsmanager (EnterpriseManager)](#6-bedrijfsmanager-enterprisemanager) — 55 scenario’s
@@ -352,6 +352,12 @@ Account: `kandidaat@jobsy.local` / `Jobsy123!`. Bottom-nav: Zoeken · Bewaard ·
 | Kandidaat | Profiel **Opslaan** success. | Bevestiging; data persistent na reload. |
 | Kandidaat | Profiel opslaan API-fout / not found. | Foutmelding. |
 | Kandidaat | **Download Lobsy-CV** vanaf profiel. | Voorbeeld-PDF (QuestPDF) met profiel + optionele motivatie. |
+| Kandidaat | Profiel-kop **Competenties** met progress bars/radar. | Toont 4 scores (Samenwerken, Resultaatgerichtheid, Stressbestendigheid, Innovatie) ná afronden; anders CTA om te starten. |
+| Kandidaat | Knop **Test opnieuw invullen / aanpassen**. | Opent `/candidate/competencies` met bestaande antwoorden. |
+| Kandidaat | Competentietest 20 Likert-vragen (Big Five/OCEAN). | Vier categorieën; omgekeerde items; tussentijds **Draft** opslaan mag incompleet. |
+| Kandidaat | Competentietest **Afronden** met 20 antwoorden. | Status Completed; percentages 0–100 opgeslagen; matches herberekend. |
+| Kandidaat | Profiel rechts: **Top 10 vacatures**. | Strikt aflopend matchingpercentage; alleen ≥ 60%; max 10. |
+| Kandidaat | Vraagteken bij matchpercentage (hover/klik). | Jip-en-Janneke: waarom de match hoog is (ervaring + competenties) én waar het gat zit. |
 | Kandidaat | Profiel **Afmelden** → UnsubscribeDialog. | Zelfde OTP-forget als `/privacy/data`. |
 | Kandidaat | Deep-link `/candidate/actions/withdraw-others` geldige token: **Ja, trek andere sollicitaties in**. | Andere open sollicitaties ingetrokken; naar applications. |
 | Kandidaat | Withdraw-others: **Liever niet**. | Geen wijziging; terug applications/home. |

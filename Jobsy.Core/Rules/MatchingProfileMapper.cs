@@ -125,4 +125,86 @@ public static class MatchingProfileMapper
             CandidateAgeYears = candidateAgeYears,
             LegalFlags = TryLegalFlags(vacancy)
         };
+
+    public static MatchScoreInput BuildInput(
+        VacancyDiscoveryRecord vacancy,
+        CandidatePreferencesDto prefs,
+        int? estimatedTravelMinutes,
+        int? candidateAgeYears)
+        => new()
+        {
+            EstimatedTravelMinutes = estimatedTravelMinutes,
+            MaxTravelMinutes = prefs.MaxTravelMinutes,
+            CandidateHours = TryCandidateHours(prefs),
+            VacancyHours = TryHours(vacancy.MinHoursPerWeek, vacancy.MaxHoursPerWeek),
+            CandidateSchedule = TryCandidateSchedule(prefs),
+            VacancySchedule = TrySchedule(vacancy.FlexibleTimes, vacancy.ScheduleJson),
+            CandidateAgeYears = candidateAgeYears,
+            LegalFlags = TryLegalFlags(
+                vacancy.LegalWorksAfter19,
+                vacancy.LegalNightShift23To06,
+                vacancy.LegalAdultSupervisorPresent,
+                vacancy.LegalHandlesMoneyOrClosing,
+                vacancy.LegalHeavyOrHazardousWork)
+        };
+
+    public static HoursRange? TryHours(decimal? min, decimal? max)
+    {
+        if (min is null || max is null)
+        {
+            return null;
+        }
+
+        var range = new HoursRange(min.Value, max.Value);
+        return range.Validate() is null ? range : null;
+    }
+
+    public static SchedulePayload? TrySchedule(bool flexibleTimes, string? scheduleJson)
+    {
+        if (flexibleTimes)
+        {
+            return SchedulePayload.Flexible(FlexibleScheduleSource.Manual);
+        }
+
+        if (string.IsNullOrWhiteSpace(scheduleJson))
+        {
+            return null;
+        }
+
+        try
+        {
+            var payload = JsonSerializer.Deserialize<SchedulePayload>(scheduleJson, JsonOptions);
+            return payload?.Normalize();
+        }
+        catch (JsonException)
+        {
+            return null;
+        }
+    }
+
+    public static LegalTaskFlags? TryLegalFlags(
+        bool? worksAfter19,
+        bool? nightShift,
+        bool? supervisorPresent,
+        bool? handlesMoney,
+        bool? heavyWork)
+    {
+        if (worksAfter19 is null
+            || nightShift is null
+            || supervisorPresent is null
+            || handlesMoney is null
+            || heavyWork is null)
+        {
+            return null;
+        }
+
+        return new LegalTaskFlags
+        {
+            WorksAfter19 = worksAfter19.Value,
+            NightShift23To06 = nightShift.Value,
+            AdultSupervisorPresent = supervisorPresent.Value,
+            HandlesMoneyOrClosing = handlesMoney.Value,
+            HeavyOrHazardousWork = heavyWork.Value
+        };
+    }
 }

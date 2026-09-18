@@ -338,6 +338,55 @@ public class RoleFunctionalRegressionTests : IClassFixture<RoleFunctionalWebAppF
     }
 
     [Fact]
+    public async Task Candidate_can_draft_and_complete_competency_test_then_see_top_matches()
+    {
+        var client = CandidateClient();
+        var start = await client.GetFromJsonAsync<JsonElement>("api/me/competencies", JsonOpts);
+        Assert.Equal(20, start.GetProperty("questionCount").GetInt32());
+        Assert.Equal("Draft", start.GetProperty("status").GetString());
+
+        var draftAnswers = new Dictionary<string, int> { ["1"] = 4, ["2"] = 5, ["6"] = 3 };
+        var draft = await client.PutAsJsonAsync("api/me/competencies", new { answers = draftAnswers, complete = false });
+        Assert.Equal(HttpStatusCode.OK, draft.StatusCode);
+        var draftBody = await draft.Content.ReadFromJsonAsync<JsonElement>(JsonOpts);
+        Assert.Equal("Draft", draftBody.GetProperty("status").GetString());
+        Assert.Equal(3, draftBody.GetProperty("answeredCount").GetInt32());
+        Assert.True(!draftBody.TryGetProperty("scores", out var draftScores)
+                    || draftScores.ValueKind is JsonValueKind.Null);
+
+        var tooSoon = await client.PutAsJsonAsync("api/me/competencies", new { answers = draftAnswers, complete = true });
+        Assert.Equal(HttpStatusCode.BadRequest, tooSoon.StatusCode);
+
+        var full = Enumerable.Range(1, 20).ToDictionary(i => i.ToString(), _ => 4);
+        var complete = await client.PutAsJsonAsync("api/me/competencies", new { answers = full, complete = true });
+        Assert.Equal(HttpStatusCode.OK, complete.StatusCode);
+        var done = await complete.Content.ReadFromJsonAsync<JsonElement>(JsonOpts);
+        Assert.Equal("Completed", done.GetProperty("status").GetString());
+        Assert.Equal(20, done.GetProperty("answeredCount").GetInt32());
+        var scores = done.GetProperty("scores");
+        Assert.InRange(scores.GetProperty("samenwerken").GetInt32(), 0, 100);
+        Assert.InRange(scores.GetProperty("innovatie").GetInt32(), 0, 100);
+
+        var matches = await client.GetFromJsonAsync<JsonElement>("api/me/matched-vacancies", JsonOpts);
+        Assert.Equal(JsonValueKind.Array, matches.ValueKind);
+        Assert.True(matches.GetArrayLength() <= 10);
+        var percents = new List<int>();
+        foreach (var item in matches.EnumerateArray())
+        {
+            var pct = item.GetProperty("matchPercent").GetInt32();
+            Assert.True(pct >= 60);
+            percents.Add(pct);
+            Assert.True(item.GetProperty("why").GetArrayLength() > 0);
+            Assert.True(item.GetProperty("gaps").GetArrayLength() > 0);
+        }
+
+        for (var i = 1; i < percents.Count; i++)
+        {
+            Assert.True(percents[i - 1] >= percents[i]);
+        }
+    }
+
+    [Fact]
     public async Task Candidate_apply_gulden_middenweg_then_safety_net_then_otp()
     {
         var client = CandidateClient();
@@ -979,6 +1028,8 @@ public class RoleFunctionalRegressionTests : IClassFixture<RoleFunctionalWebAppF
         // Candidate home + saved/applications
         var candidate = CandidateClient();
         Assert.Equal(HttpStatusCode.OK, (await candidate.GetAsync("api/me/profile")).StatusCode);
+        Assert.Equal(HttpStatusCode.OK, (await candidate.GetAsync("api/me/competencies")).StatusCode);
+        Assert.Equal(HttpStatusCode.OK, (await candidate.GetAsync("api/me/matched-vacancies")).StatusCode);
         Assert.Equal(HttpStatusCode.OK, (await candidate.GetAsync("api/me/applications")).StatusCode);
         Assert.Equal(HttpStatusCode.OK, (await candidate.GetAsync("api/me/metrics/summary?period=week")).StatusCode);
         Assert.Equal(HttpStatusCode.OK, (await candidate.GetAsync("api/me/likes")).StatusCode);

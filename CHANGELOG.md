@@ -14,12 +14,13 @@ Alle noemenswaardige wijzigingen aan dit project worden in dit bestand bijgehoud
 ## [Unreleased]
 
 ### Added
+- Kandidaat **competentietest** (20 Likert-vragen, Big Five/OCEAN → Samenwerken, Resultaatgerichtheid, Stressbestendigheid, Innovatie). Tabel `CandidateCompetencies`, tussentijds Draft, later aanpassen; scores 0–100% op het profiel (balken + radar). Rechts **Top 10 vacatures** (≥ 60%, aflopend) met `?`-uitleg waarom de match hoog is en waar het gat zit.
 - Live **KVK Handelsregister**-koppeling: bij API-key (Admin → Integraties of `Kvk__ApiKey` / `KVK_API_KEY`) zoekt Lobsy echte vestigingen; zonder key blijft de demo-stub. Base URL leeg = `https://api.kvk.nl/api/` (test: `https://api.kvk.nl/test/api/`).
 - Register-wizard: kruimelpad, KVK-adres met i-toelichting (vestigingsnummer + SBI achter het i-tje), stil logo, knoptekst ‘Bevestigen’ niet meer afgeknipt, geen ‘Open verificatielink’.
 - `/health` en HTML-meta `lobsy-commit` tonen de Render git-SHA zodat productie verifieerbaar is.
 
 ### Changed
-- CSS-cachebust `app.min.css?v=20260916-kvki` zodat Systeeminstellingen-wrap en register-styling bij bestaande browsers aankomen.
+- CSS-cachebust `app.min.css?v=20260918-comp` zodat competentie-profiel en Top 10-matches in bestaande browsers aankomen.
 - Register: KVK-nummer is leeg buiten Development (geen vooringevulde stub `12345678` op lobsy.nl).
 - Render: Production (`jobsy-api` / `lobsy.nl`) wist **alle** bedrijven, vacatures en niet-admin gebruikers bij API-start, ook als `Seed:Enabled` nog aanstaat; houdt `admin@jobsy.local`. Acceptatie (`lobsy-acc-api`) blijft seeden.
 - ZAP (Checkmarx): geen exception-/status-tekst meer in publieke HTML; ontbrekende vestiging `/12345678/0001` geeft 404 i.p.v. 500; foutpagina toont alleen een request-referentie. CSP `img-src`/`connect-src` zonder scheme-wildcards (picsum + OpenFreeMap). `X-Content-Type-Options: nosniff` ook op statische files (favicon). Publieke bedrijfs-API op `public-read`. `'unsafe-eval'` blijft nodig voor Blazor Server; OIDC-nonce blijft `SameSite=None` voor Entra.

@@ -391,6 +391,14 @@ public static class UatScriptRunner
             Assert.Equal(50, MatchScoreWeights.GuldenMiddenwegThreshold);
         }
 
+        if (Contains(blob, "competentietest", "Competenties", "Top 10 vacatures", "60%"))
+        {
+            Assert.Equal(20, CompetencyTestCatalog.QuestionCount);
+            Assert.Equal(60, ProfileVacancyMatchCalculator.DisplayThreshold);
+            Assert.Equal(10, ProfileVacancyMatchCalculator.MaxResults);
+            Assert.Equal(4, CompetencyTestCatalog.CategoryCodes.Length);
+        }
+
         if (Contains(blob, "VacancyLifecycle", "Publiceren") && jobsyRole == JobsyRoles.RegionalManager)
         {
             Assert.False(JobsyRoles.CanManageVacancyLifecycle(Jobsy.Core.Enums.UserRole.RegionalManager));

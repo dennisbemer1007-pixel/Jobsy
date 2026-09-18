@@ -451,7 +451,7 @@ public static class UiStrings
             ["HowLobsy.Step1Title"] = "1. Start op de banenkaart",
             ["HowLobsy.Step1Body"] = "Open {0}. Je ziet vacatures op een kaart rondom jouw regio. Sleep of zoom, tik op pins of clusters, en gebruik filters (bijv. interesse, leeftijd, loon) om banen te vinden die bij je passen.",
             ["HowLobsy.Step2Title"] = "2. Vul je profiel",
-            ["HowLobsy.Step2Body"] = "Ga naar {0} en vul opleiding, rijbewijzen, interesses, voorkeuren en je thuislocatie in. Lobsy gebruikt dit om beter te matchen en om te checken of je aan harde eisen van een vacature voldoet.",
+            ["HowLobsy.Step2Body"] = "Ga naar {0} en vul opleiding, rijbewijzen, interesses, voorkeuren, thuislocatie én de competentietest (20 vragen) in. Lobsy gebruikt dit om beter te matchen en om te checken of je aan harde eisen van een vacature voldoet.",
             ["HowLobsy.Step3Title"] = "3. Bewaar of deel wat je leuk vindt",
             ["HowLobsy.Step3Body"] = "Lik of bewaar vacatures onder {0}. Gedeelde vacatures vind je terug bij {1}. Zo kun je later rustig verder kijken.",
             ["HowLobsy.Step4Title"] = "4. Open een vacature en solliciteer",
@@ -465,7 +465,7 @@ public static class UiStrings
             ["Profile.Title"] = "Profiel",
             ["Profile.MyProfile"] = "Mijn profiel",
             ["Profile.ReturnHint"] = "Vul je gegevens aan en ga daarna terug naar solliciteren.",
-            ["Profile.Lead"] = "Beschikbaarheid, voorkeuren, thuisadres en geboortedatum (voor leeftijdsloon).",
+            ["Profile.Lead"] = "Beschikbaarheid, voorkeuren, thuisadres, geboortedatum (voor leeftijdsloon) en je competenties.",
             ["Profile.OpenForWork"] = "Beschikbaar voor werk",
             ["Profile.ContactDetails"] = "Contactgegevens",
             ["Profile.FirstName"] = "Voornaam",
@@ -1001,7 +1001,7 @@ public static class UiStrings
             ["HowLobsy.Step1Title"] = "1. Start on the job map",
             ["HowLobsy.Step1Body"] = "Open {0}. You see vacancies on a map around your area. Pan or zoom, tap pins or clusters, and use filters (e.g. interest, age, wage) to find jobs that fit.",
             ["HowLobsy.Step2Title"] = "2. Complete your profile",
-            ["HowLobsy.Step2Body"] = "Go to {0} and fill in education, licences, interests, preferences and home location. Lobsy uses this to match better and check hard vacancy requirements.",
+            ["HowLobsy.Step2Body"] = "Go to {0} and fill in education, licences, interests, preferences, home location and the competency test (20 questions). Lobsy uses this to match better and check hard vacancy requirements.",
             ["HowLobsy.Step3Title"] = "3. Save or share what you like",
             ["HowLobsy.Step3Body"] = "Like or save vacancies under {0}. Shared vacancies appear under {1}. You can come back later at your own pace.",
             ["HowLobsy.Step4Title"] = "4. Open a vacancy and apply",
@@ -1015,7 +1015,7 @@ public static class UiStrings
             ["Profile.Title"] = "Profile",
             ["Profile.MyProfile"] = "My profile",
             ["Profile.ReturnHint"] = "Complete your details and then return to apply.",
-            ["Profile.Lead"] = "Open for work, preferences, home address and date of birth (for age-based pay).",
+            ["Profile.Lead"] = "Open for work, preferences, home address, date of birth (for age-based pay) and your competencies.",
             ["Profile.OpenForWork"] = "Open for work",
             ["Profile.ContactDetails"] = "Contact details",
             ["Profile.FirstName"] = "First name",
@@ -1551,7 +1551,7 @@ public static class UiStrings
             ["HowLobsy.Step1Title"] = "1. Zacznij na mapie ofert",
             ["HowLobsy.Step1Body"] = "Otwórz {0}. Widzisz oferty na mapie wokół Twojej okolicy. Przesuwaj lub powiększaj, stukaj pinezki lub klastry i używaj filtrów (np. zainteresowania, wiek, stawka), by znaleźć pasującą pracę.",
             ["HowLobsy.Step2Title"] = "2. Uzupełnij profil",
-            ["HowLobsy.Step2Body"] = "Przejdź do {0} i uzupełnij wykształcenie, prawa jazdy, zainteresowania, preferencje i lokalizację. Lobsy używa tego do lepszego dopasowania i sprawdzenia twardych wymagań oferty.",
+            ["HowLobsy.Step2Body"] = "Przejdź do {0} i uzupełnij wykształcenie, prawa jazdy, zainteresowania, preferencje, lokalizację i test kompetencji (20 pytań). Lobsy używa tego do lepszego dopasowania i sprawdzenia twardych wymagań oferty.",
             ["HowLobsy.Step3Title"] = "3. Zapisz lub udostępnij to, co lubisz",
             ["HowLobsy.Step3Body"] = "Polub lub zapisz oferty w {0}. Udostępnione oferty znajdziesz w {1}. Możesz wrócić później we własnym tempie.",
             ["HowLobsy.Step4Title"] = "4. Otwórz ofertę i aplikuj",
@@ -2101,7 +2101,7 @@ public static class UiStrings
             ["HowLobsy.Step1Title"] = "1. Începe pe harta joburilor",
             ["HowLobsy.Step1Body"] = "Deschide {0}. Vezi joburi pe o hartă în jurul zonei tale. Mută sau mărește, atinge pinuri sau clustere și folosește filtre (ex. interes, vârstă, salariu) ca să găsești joburi potrivite.",
             ["HowLobsy.Step2Title"] = "2. Completează profilul",
-            ["HowLobsy.Step2Body"] = "Mergi la {0} și completează educația, permisele, interesele, preferințele și locația de acasă. Lobsy folosește asta pentru matching mai bun și verificarea cerințelor dure.",
+            ["HowLobsy.Step2Body"] = "Mergi la {0} și completează educația, permisele, interesele, preferințele, locația de acasă și testul de competențe (20 de întrebări). Lobsy folosește asta pentru matching mai bun și verificarea cerințelor dure.",
             ["HowLobsy.Step3Title"] = "3. Salvează sau distribuie ce îți place",
             ["HowLobsy.Step3Body"] = "Like sau salvează joburi la {0}. Joburile distribuite apar la {1}. Poți reveni mai târziu în ritmul tău.",
             ["HowLobsy.Step4Title"] = "4. Deschide un job și aplică",
@@ -2651,7 +2651,7 @@ public static class UiStrings
             ["HowLobsy.Step1Title"] = "1. ابدأ على خريطة الوظائف",
             ["HowLobsy.Step1Body"] = "افتح {0}. ترى الوظائف على خريطة حول منطقتك. حرّك أو كبّر، اضغط على الدبابيس أو المجموعات، واستخدم الفلاتر (مثل الاهتمام والعمر والأجر) للعثور على وظائف تناسبك.",
             ["HowLobsy.Step2Title"] = "2. أكمل ملفك",
-            ["HowLobsy.Step2Body"] = "انتقل إلى {0} واملأ التعليم والرخص والاهتمامات والتفضيلات وموقع المنزل. يستخدم Lobsy ذلك للمطابقة الأفضل وللتحقق من المتطلبات الصارمة.",
+            ["HowLobsy.Step2Body"] = "انتقل إلى {0} واملأ التعليم والرخص والاهتمامات والتفضيلات وموقع المنزل واختبار الكفاءات (20 سؤالاً). يستخدم Lobsy ذلك للمطابقة الأفضل وللتحقق من المتطلبات الصارمة.",
             ["HowLobsy.Step3Title"] = "3. احفظ أو شارك ما يعجبك",
             ["HowLobsy.Step3Body"] = "أعجب أو احفظ الوظائف تحت {0}. الوظائف المشاركة تظهر تحت {1}. يمكنك العودة لاحقاً بوتيرتك.",
             ["HowLobsy.Step4Title"] = "4. افتح وظيفة وقدّم",
@@ -2779,6 +2779,7 @@ public static class UiStrings
         };
 
         UiStringsExtras.MergeAll(nl, en, pl, ro, ar);
+        UiStringsCompetencies.MergeAll(nl, en, pl, ro, ar);
         UiStringsHowLobsyRoles.MergeAll(nl, en, pl, ro, ar);
 
         return new Dictionary<string, Dictionary<string, string>>(StringComparer.OrdinalIgnoreCase)

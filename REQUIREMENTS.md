@@ -27,6 +27,7 @@ Jobsy is een hyper-lokale job-matching applicatie gericht op de regionale arbeid
 
 ### Kernentiteiten (niet exhaustief)
 - **User** — Email, FullName, Role, HomeLocation, OpenForWork, prefs, early-adapter
+- **CandidateCompetency** — Big Five-testantwoorden + scores per competentie (Draft/Completed)
 - **Company** — KVK + `KvkEstablishmentId`, hierarchy (`ParentCompanyId`), `CompanyType` (Employer/Intermediary)
 - **Vacancy** — Status (`Draft` / `Active` / `Archived` / `PendingApproval`), media, highlight, extensions, requested publish-opties, salary table, **VacancyCategory** (kleur, tokenprijs, highlight/PushBom-beschikbaarheid, extra aanmaakvelden)
 - **VacancyCategory** — Admin-beheerbare categorieën; sturen kaartfilter, legenda, create-dropdown en tokenlogica
@@ -97,6 +98,7 @@ Kernpunten:
 - **Verplichte uren** min/max per week + automatische urencategorie (bijbaan/parttime/fulltime)
 - **Geen UI-minimumleeftijd;** achtergrondfiltering via verplichte wettelijke taak-vinkjes + `[ i ]`-tooltips (Arbeidstijdenwet)
 - **Matchingspercentage** op banenkaart met breakdown-modal en actie-adviezen
+- **Competentietest (Big Five / 20 vragen)** op het kandidaatprofiel: draft tussentijds opslaan, later wijzigen, scores (0–100%) op Samenwerken / Resultaatgerichtheid / Stressbestendigheid / Innovatie; dynamische **Top 10 vacatures** (≥ 60%, aflopend) met Jip-en-Janneke-uitleg (fit + gap)
 - **Gulden Middenweg** bij solliciteren (&lt; 50%): OTP tegenhouden, profiel aanpassen of vangnet
 - **Optioneel motivatieveld** op sollicitatieformulier
 - **Werkgeversdashboard:** match-% met kleurcodering, breakdown, wettelijke bevestiging, motivatie, sort hoog→laag

@@ -27,6 +27,7 @@ public class JobsyDbContext : DbContext
     public DbSet<Application> Applications => Set<Application>();
     public DbSet<CandidateUploadedCv> CandidateUploadedCvs => Set<CandidateUploadedCv>();
     public DbSet<CandidateReference> CandidateReferences => Set<CandidateReference>();
+    public DbSet<CandidateCompetency> CandidateCompetencies => Set<CandidateCompetency>();
     public DbSet<ApplicationUploadedCv> ApplicationUploadedCvs => Set<ApplicationUploadedCv>();
     public DbSet<UserNotification> UserNotifications => Set<UserNotification>();
     public DbSet<CandidateActionToken> CandidateActionTokens => Set<CandidateActionToken>();
@@ -447,6 +448,19 @@ public class JobsyDbContext : DbContext
             entity.Property(e => e.Email).HasMaxLength(256).IsRequired();
             entity.Property(e => e.Phone).HasMaxLength(32).IsRequired();
             entity.HasIndex(e => new { e.UserId, e.SortOrder });
+            entity.HasOne(e => e.User)
+                .WithMany()
+                .HasForeignKey(e => e.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<CandidateCompetency>(entity =>
+        {
+            entity.ToTable("CandidateCompetencies");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Status).HasMaxLength(16).IsRequired();
+            entity.Property(e => e.AnswersJson).HasMaxLength(2000).IsRequired();
+            entity.HasIndex(e => e.UserId).IsUnique();
             entity.HasOne(e => e.User)
                 .WithMany()
                 .HasForeignKey(e => e.UserId)

@@ -132,8 +132,14 @@ public static class PageHelpDocs
         ["/candidate/profile"] = new(
             "Mijn profiel",
             "Jouw kandidaatgegevens voor matching en solliciteren.",
-            "Vul interesses, opleiding, rijbewijzen, voorkeuren, locatie, uren per week en beschikbaarheid/dagdelen in (of tijden in overleg). Geboortedatum is nodig voor leeftijdsloon en wettelijke taakchecks. Wijzigingen verbeteren matchscores en filters.",
+            "Vul interesses, opleiding, rijbewijzen, voorkeuren, locatie, uren per week, beschikbaarheid/dagdelen en de competentietest (20 vragen, Big Five) in. Geboortedatum is nodig voor leeftijdsloon en wettelijke taakchecks. Wijzigingen verbeteren matchscores en filters. Rechts zie je de Top 10 vacatures vanaf 60% match.",
             "Betere matches en sneller solliciteren met volledige gegevens."),
+
+        ["/candidate/competencies"] = new(
+            "Competentietest",
+            "Twintig stellingen op basis van het Big Five-model, vertaald naar vier werkcompetenties.",
+            "Beantwoord in je eigen tempo. Tussentijds opslaan mag; later kun je antwoorden wijzigen. Afronden herberekent je scores en de vacature-matches op je profiel.",
+            "Inzicht in samenwerken, resultaatgerichtheid, stressbestendigheid en innovatie."),
 
         ["/employer/vacancies"] = new(
             "Vacatures (werkgever)",

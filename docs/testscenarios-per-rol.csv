@@ -112,7 +112,7 @@ Gast,Assistent: disclaimer-link.,`/gebruiksvoorwaarden`.
 Gast,Assistent: API-fout.,Fout in paneel; rechterrand-tab blijft bruikbaar.
 Gast,Assistent sluiten.,Rechterrand-tab terug.
 Gast,Direct URL `/home`.,Login-challenge (FallbackPolicy).
-Gast,"Direct `/candidate/profile`, `/employer/vacancies`, `/admin/settings`, `/salesmanager`, `/ambassadeur`.",Login-challenge; geen data-leak in HTML.
+Gast,"Direct `/candidate/profile`, `/candidate/competencies`, `/employer/vacancies`, `/admin/settings`, `/salesmanager`, `/ambassadeur`.",Login-challenge; geen data-leak in HTML.
 Gast,Direct `/candidate/applications`.,Login-challenge.
 Gast,Direct `/candidate/shared`.,Login-challenge.
 Gast,Open `/candidate/liked` als gast.,Gate: doorgaan via Google / Apple(→login) / e-mail-login met returnUrl; géén liked-data.
@@ -270,6 +270,12 @@ Kandidaat,Recensie verwijderen.,Telling daalt; apply-gate kan terugkomen.
 Kandidaat,Profiel **Opslaan** success.,Bevestiging; data persistent na reload.
 Kandidaat,Profiel opslaan API-fout / not found.,Foutmelding.
 Kandidaat,**Download Lobsy-CV** vanaf profiel.,Voorbeeld-PDF (QuestPDF) met profiel + optionele motivatie.
+Kandidaat,Profiel-kop **Competenties** met progress bars/radar.,Toont 4 scores (Samenwerken, Resultaatgerichtheid, Stressbestendigheid, Innovatie) ná afronden; anders CTA om te starten.
+Kandidaat,Knop **Test opnieuw invullen / aanpassen**.,Opent `/candidate/competencies` met bestaande antwoorden.
+Kandidaat,Competentietest 20 Likert-vragen (Big Five/OCEAN).,Vier categorieën; omgekeerde items; tussentijds **Draft** opslaan mag incompleet.
+Kandidaat,Competentietest **Afronden** met 20 antwoorden.,Status Completed; percentages 0–100 opgeslagen; matches herberekend.
+Kandidaat,Profiel rechts: **Top 10 vacatures**.,Strikt aflopend matchingpercentage; alleen ≥ 60%; max 10.
+Kandidaat,Vraagteken bij matchpercentage (hover/klik).,Jip-en-Janneke: waarom de match hoog is (ervaring + competenties) én waar het gat zit.
 Kandidaat,Profiel **Afmelden** → UnsubscribeDialog.,Zelfde OTP-forget als `/privacy/data`.
 Kandidaat,"Deep-link `/candidate/actions/withdraw-others` geldige token: **Ja, trek andere sollicitaties in**.",Andere open sollicitaties ingetrokken; naar applications.
 Kandidaat,Withdraw-others: **Liever niet**.,Geen wijziging; terug applications/home.
@@ -520,7 +526,7 @@ Salesmanager,Payout success `?paid=`.,Success-melding; saldo omlaag; factuur Iss
 Salesmanager,Payout-checkout stub `/salesmanager/payout-checkout` zonder paymentId.,Fout/terug; knoppen Uitbetalen stub / Cancel → invoices.
 Salesmanager,Payout-checkout met paymentId (Dev stub).,Complete of fout; AllowStubPayments buiten Dev uit.
 Salesmanager,UI toont full IBAN.,Nooit; alleen masked.
-Salesmanager,"Open `/employer/vacancies`, `/admin/finance`, `/ambassadeur/finance`, `/candidate/profile`.",403.
+Salesmanager,"Open `/employer/vacancies`, `/admin/finance`, `/ambassadeur/finance`, `/candidate/profile`, `/candidate/competencies`.",403.
 Salesmanager,Open `/partner/{eigen-code}` ingelogd.,Publieke lander; register-CTA met ref.
 Salesmanager,Ondernemer registreert met SM-ref en koopt tokens.,CommissionLedger ~15% + upline 3% binnen 1 jaar FirstYearStartedAt; idempotent webhook.
 Salesmanager,Tokenaankoop referred ondernemer ná commissie-duur.,Geen extra SM-commissie.

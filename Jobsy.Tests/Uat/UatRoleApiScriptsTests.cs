@@ -31,6 +31,8 @@ public sealed class UatRoleApiScriptsTests : IClassFixture<RoleFunctionalWebAppF
         Assert.Equal(HttpStatusCode.OK, (await c.GetAsync("api/kvk/12345678/establishments")).StatusCode);
 
         Assert.Equal(HttpStatusCode.Unauthorized, (await c.GetAsync("api/me/profile")).StatusCode);
+        Assert.Equal(HttpStatusCode.Unauthorized, (await c.GetAsync("api/me/competencies")).StatusCode);
+        Assert.Equal(HttpStatusCode.Unauthorized, (await c.GetAsync("api/me/matched-vacancies")).StatusCode);
         Assert.Equal(HttpStatusCode.Unauthorized, (await c.GetAsync("api/privacy/export")).StatusCode);
         Assert.Equal(HttpStatusCode.Unauthorized, (await c.GetAsync("api/applications")).StatusCode);
         Assert.Equal(HttpStatusCode.Unauthorized, (await c.GetAsync("api/vacancies/manage")).StatusCode);
@@ -47,6 +49,8 @@ public sealed class UatRoleApiScriptsTests : IClassFixture<RoleFunctionalWebAppF
     {
         var c = Authed(_factory.CandidateEmail);
         Assert.Equal(HttpStatusCode.OK, (await c.GetAsync("api/me/profile")).StatusCode);
+        Assert.Equal(HttpStatusCode.OK, (await c.GetAsync("api/me/competencies")).StatusCode);
+        Assert.Equal(HttpStatusCode.OK, (await c.GetAsync("api/me/matched-vacancies")).StatusCode);
         Assert.Equal(HttpStatusCode.OK, (await c.GetAsync("api/privacy/export")).StatusCode);
         Assert.Equal(HttpStatusCode.OK, (await c.GetAsync("api/me/applications")).StatusCode);
         Assert.Equal(HttpStatusCode.OK, (await c.PostAsJsonAsync($"api/vacancies/{_factory.VacancyId}/like", new { })).StatusCode);
@@ -76,6 +80,7 @@ public sealed class UatRoleApiScriptsTests : IClassFixture<RoleFunctionalWebAppF
         Assert.False(HasEmail(accepted));
 
         Assert.Equal(HttpStatusCode.Forbidden, (await c.GetAsync("api/integrations/health")).StatusCode);
+        Assert.Equal(HttpStatusCode.Forbidden, (await c.GetAsync("api/me/competencies")).StatusCode);
         Assert.Equal(HttpStatusCode.Forbidden, (await c.PostAsJsonAsync("api/tokens/allocate", new
         {
             fromCompanyId = _factory.CompanyId,
