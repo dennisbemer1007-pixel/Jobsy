@@ -30,7 +30,7 @@
         {
             <p class="state-message">@Culture["Common.Loading"]</p>
         }
-        else if (_competencyScores is { IsComplete: true })
+        else if (_competencyCompleted && _competencyScores is { IsComplete: true })
         {
             @if (_competencyCompletedAt is DateTime completed)
             {
@@ -627,6 +627,7 @@
     private bool _competenciesLoading = true;
     private bool _matchesLoading = true;
     private CompetencyScoreSet? _competencyScores;
+    private bool _competencyCompleted;
     private int _competencyAnswered;
     private DateTime? _competencyCompletedAt;
     private IReadOnlyList<CandidateMatchedVacancy> _matchedVacancies = [];
@@ -767,7 +768,11 @@
             {
                 _competencyAnswered = competency.AnsweredCount;
                 _competencyCompletedAt = competency.CompletedAtUtc;
-                _competencyScores = competency.Scores ?? competency.PreviewScores;
+                _competencyCompleted = string.Equals(
+                    competency.Status,
+                    "Completed",
+                    StringComparison.OrdinalIgnoreCase);
+                _competencyScores = competency.Scores;
             }
 
             _matchedVacancies = await Api.GetMyMatchedVacanciesAsync();

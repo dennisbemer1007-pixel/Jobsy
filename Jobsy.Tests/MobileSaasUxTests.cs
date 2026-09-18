@@ -184,6 +184,8 @@ public class MobileSaasUxTests
         Assert.Contains("competency-profile-card", razor);
         Assert.Contains("profile-layout__matches", razor);
         Assert.Contains("Competency.Retake", razor);
+        Assert.Contains("_competencyCompleted && _competencyScores is { IsComplete: true }", razor);
+        Assert.DoesNotContain("competency.Scores ?? competency.PreviewScores", razor);
         Assert.Contains("profile-check-grid", razor);
         Assert.Contains("availability-matrix", razor);
         Assert.Contains("availability-presets", razor);
@@ -201,6 +203,22 @@ public class MobileSaasUxTests
         Assert.Contains(".profile-save-bar .login-submit {\n    width: 100%;", css);
         Assert.Contains(".profile-page--candidate .profile-contact__names {\n    grid-template-columns: repeat(2, minmax(0, 1fr));", css);
         Assert.Contains(".profile-page--candidate .profile-page__header {\n        display: none;", css);
+    }
+
+    [Fact]
+    public void Competency_test_discloses_privacy_and_blocks_save_after_load_failure()
+    {
+        var test = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/Components/Pages/Candidate/CompetencyTest.razor"));
+        Assert.Contains("Competency.PrivacyNote", test);
+        Assert.Contains("href=\"/privacy\"", test);
+        Assert.Contains("_loadFailed", test);
+        Assert.Contains("disabled=\"@(_saving || _loadFailed)\"", test);
+
+        var privacy = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/Components/Pages/Legal/Privacy.razor"));
+        Assert.Contains("5b. Competentietest", privacy);
+        Assert.Contains("niet</strong> aan werkgevers", privacy);
+        Assert.Contains("18 september 2026", privacy);
+        Assert.Equal("2026-09-18", Jobsy.Core.Privacy.PrivacyConstants.CurrentConsentVersion);
     }
 
     [Fact]

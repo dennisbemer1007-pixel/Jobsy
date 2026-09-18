@@ -17,6 +17,10 @@
 
     <article class="detail-card">
         <p class="login-lead">@Culture["Competency.ScienceNote"]</p>
+        <p class="login-lead competency-privacy-note">
+            @Culture["Competency.PrivacyNote"]
+            <a href="/privacy">@Culture["Legal.Privacy"]</a>
+        </p>
         <p class="competency-test__progress" aria-live="polite">
             @Culture.Format("Competency.Progress", AnsweredCount, CompetencyTestCatalog.QuestionCount)
         </p>
@@ -27,6 +31,11 @@
         @if (_loading)
         {
             <p class="state-message">@Culture["Common.Loading"]</p>
+        }
+        else if (_loadFailed)
+        {
+            <p class="state-message">@_message</p>
+            <a class="login-submit" href="/candidate/competencies">@Culture["Competency.Reload"]</a>
         }
         else
         {
@@ -64,10 +73,10 @@
             }
 
             <div class="profile-save-bar">
-                <button class="engagement-btn" type="button" disabled="@_saving" @onclick="SaveDraftAsync">
+                <button class="engagement-btn" type="button" disabled="@(_saving || _loadFailed)" @onclick="SaveDraftAsync">
                     @Culture["Competency.SaveDraft"]
                 </button>
-                <button class="login-submit" type="button" disabled="@(_saving || AnsweredCount < CompetencyTestCatalog.QuestionCount)" @onclick="CompleteAsync">
+                <button class="login-submit" type="button" disabled="@(_saving || _loadFailed || AnsweredCount < CompetencyTestCatalog.QuestionCount)" @onclick="CompleteAsync">
                     @Culture["Competency.Complete"]
                 </button>
                 <a class="engagement-btn" href="/candidate/profile">@Culture["Competency.BackToProfile"]</a>
@@ -83,6 +92,7 @@
 @code {
     private bool _loading = true;
     private bool _saving;
+    private bool _loadFailed;
     private string? _message;
     private readonly Dictionary<int, int> _answers = [];
     private List<CompetencyQuestionItem> _questions = [];
@@ -109,6 +119,7 @@
         }
         catch (Exception ex)
         {
+            _loadFailed = true;
             _message = ex.Message;
         }
         finally
@@ -140,6 +151,11 @@
 
     private async Task PersistAsync(bool complete)
     {
+        if (_loadFailed)
+        {
+            return;
+        }
+
         _saving = true;
         _message = null;
         try

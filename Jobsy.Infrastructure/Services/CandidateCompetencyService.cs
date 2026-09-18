@@ -51,6 +51,17 @@ public sealed class CandidateCompetencyService : ICandidateCompetencyService
 
         var row = await _db.CandidateCompetencies
             .FirstOrDefaultAsync(c => c.UserId == userId, cancellationToken);
+        if (answers.Count == 0)
+        {
+            if (row is not null)
+            {
+                throw new InvalidOperationException(
+                    "Lege antwoorden overschrijven je bestaande test niet. Stuur de huidige antwoorden mee.");
+            }
+
+            return ToDto(null);
+        }
+
         var now = DateTime.UtcNow;
         if (row is null)
         {

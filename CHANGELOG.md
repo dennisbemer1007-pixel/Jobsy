@@ -20,6 +20,7 @@ Alle noemenswaardige wijzigingen aan dit project worden in dit bestand bijgehoud
 - `/health` en HTML-meta `lobsy-commit` tonen de Render git-SHA zodat productie verifieerbaar is.
 
 ### Changed
+- Privacyverklaring en consentversie **2026-09-18**: optionele competentietest (antwoorden/scores, alleen kandidaat, export/RTBF, geen werkgever-inzage). Lege `PUT api/me/competencies` overschrijft een bestaande test niet.
 - CSS-cachebust `app.min.css?v=20260918-comp` zodat competentie-profiel en Top 10-matches in bestaande browsers aankomen.
 - Register: KVK-nummer is leeg buiten Development (geen vooringevulde stub `12345678` op lobsy.nl).
 - Render: Production (`jobsy-api` / `lobsy.nl`) wist **alle** bedrijven, vacatures en niet-admin gebruikers bij API-start, ook als `Seed:Enabled` nog aanstaat; houdt `admin@jobsy.local`. Acceptatie (`lobsy-acc-api`) blijft seeden.

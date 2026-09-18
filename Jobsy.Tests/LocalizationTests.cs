@@ -52,6 +52,7 @@ public class LocalizationTests
             "Profile.Section.Personal",
             "Competency.Title",
             "Competency.Cat.Samenwerken",
+            "Competency.PrivacyNote",
             "Profile.PresetOffice",
             "HowLobsy.Title",
             "CandidateVacancies.RecentlyViewed",

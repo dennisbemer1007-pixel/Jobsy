@@ -8,7 +8,7 @@
     <header class="panel-header">
         <div>
             <h1>@Culture["Legal.Privacy"]</h1>
-            <p class="login-lead">Laatst bijgewerkt: 19 augustus 2026</p>
+            <p class="login-lead">Laatst bijgewerkt: 18 september 2026</p>
         </div>
     </header>
 
@@ -35,7 +35,7 @@
             <p>Afhankelijk van je rol verwerken we onder meer:</p>
             <ul>
                 <li><strong>Accountgegevens:</strong> naam, e-mailadres, inloggegevens en (indien van toepassing) telefoonnummer.</li>
-                <li><strong>Kandidaten:</strong> geboortedatum (voor leeftijdsloon en wettelijke taakchecks), voorkeursvervoer, locatiegegevens voor reistijdschattingen, gewenste uren per week, beschikbaarheid/dagdelen (of “tijden in overleg”), likes, sollicitaties (inclusief snapshot van voorkeuren/opleiding/rijbewijs, matchscore en optionele motivatie), optioneel geüpload eigen CV (PDF/DOCX), recensies (werkgever, contactpersoon, e-mail en telefoon van derden), e-mailverificatie (OTP) en eventuele authenticator-bevestigingen.</li>
+                <li><strong>Kandidaten:</strong> geboortedatum (voor leeftijdsloon en wettelijke taakchecks), voorkeursvervoer, locatiegegevens voor reistijdschattingen, gewenste uren per week, beschikbaarheid/dagdelen (of “tijden in overleg”), likes, sollicitaties (inclusief snapshot van voorkeuren/opleiding/rijbewijs, matchscore en optionele motivatie), optioneel geüpload eigen CV (PDF/DOCX), recensies (werkgever, contactpersoon, e-mail en telefoon van derden), antwoorden en afgeleide scores van de optionele competentietest (20 werkgerichte Likert-stellingen op basis van het Big Five/OCEAN-model → samenwerken, resultaatgerichtheid, stressbestendigheid, innovatie/probleemoplossen), e-mailverificatie (OTP) en eventuele authenticator-bevestigingen.</li>
                 <li><strong>Ondernemers:</strong> KVK-gegevens, vestigingsgegevens, contactpersonen, contactvoorkeuren (e-mail/telefoon/WhatsApp voor contact ná sollicitatie), vacaturegegevens (uren, roosters/dagdelen, wettelijke taakvinkjes voor jeugdige arbeid), gebruikersrollen, API-koppelingen (alleen gehashte keys) en token-/betalingsgerelateerde transactiegegevens.</li>
                 <li><strong>Salesmanagers:</strong> KvK/BTW/NAW, gemaskeerde IBAN voor uitbetaling, trackingcode, commissieboekingen en self-billingfacturen (fiscale bewaarplicht).</li>
                 <li><strong>Technische gegevens:</strong> sessie-cookie <code>Jobsy.Auth</code>; idle-timeout cookie <code>Jobsy.LastActivity</code> (versleuteld via Data Protection); taalvoorkeur-cookie <code>Jobsy.Culture</code>; cookie-/analyticsvoorkeur in <code>localStorage</code> en first-party cookie <code>Jobsy.CookieConsent</code>; optionele anonieme engagement-sleutel in <code>localStorage</code>/<code>sessionStorage</code> (alleen na analytics-toestemming); optionele klik-/impressie-/deel- en sitebezoekstatistieken (alleen na “Accepteer cookies”, ook voor ingelogde gebruikers — de API weigert deze writes zonder toestemming); likes als functionele voorkeur in je account; beveiligingslogs en noodzakelijke cookies voor inloggen en werking van de dienst.</li>
@@ -51,7 +51,7 @@
         <section>
             <h2>3. Doeleinden en grondslagen</h2>
             <ul>
-                <li><strong>Uitvoering van de overeenkomst:</strong> account, matching op reistijd/uren/dagdelen, wettelijke geschiktheidschecks bij solliciteren, sollicitaties, vacaturepublicatie, tokengebruik en (optioneel) direct contact na een succesvolle sollicitatie.</li>
+                <li><strong>Uitvoering van de overeenkomst:</strong> account, matching op reistijd/uren/dagdelen en (optioneel) competenties, wettelijke geschiktheidschecks bij solliciteren, sollicitaties, vacaturepublicatie, tokengebruik en (optioneel) direct contact na een succesvolle sollicitatie.</li>
                 <li><strong>Gerechtvaardigd belang:</strong> beveiliging, fraudepreventie, platformverbetering, moderatie van vacatureteksten, en incidentele re-engagementberichten aan inactieve organisaties (maximaal één keer).</li>
                 <li><strong>Toestemming:</strong> waar we daarom vragen (bijvoorbeeld bij akkoord met voorwaarden of optionele functies).</li>
                 <li><strong>Wettelijke verplichting:</strong> bijvoorbeeld bewaarplichten rondom betalingen of verzoeken van bevoegde autoriteiten.</li>
@@ -62,7 +62,7 @@
             <h2>4. Verwerkers en derden</h2>
             <p>We kunnen gegevens delen met of laten verwerken door:</p>
             <ul>
-                <li><strong>Werkgevers / vestigingen</strong> wanneer je solliciteert — NAW/contactgegevens worden pas gedeeld na acceptatie van de sollicitatie (progressive disclosure). Reis-/voorkeursinformatie kan eerder zichtbaar zijn voor matching.</li>
+                <li><strong>Werkgevers / vestigingen</strong> wanneer je solliciteert — NAW/contactgegevens worden pas gedeeld na acceptatie van de sollicitatie (progressive disclosure). Reis-/voorkeursinformatie kan eerder zichtbaar zijn voor matching. Antwoorden en scores van de competentietest worden <strong>niet</strong> aan werkgevers getoond.</li>
                 <li><strong>Hosting:</strong> Render (hosting van de applicatie en database).</li>
                 <li><strong>E-mail:</strong> Resend voor transactionele e-mail (verificatiecodes, bevestigingen, credentials).</li>
                 <li><strong>Kaarten / OSM-tegels</strong> voor de weergave van de vacaturekaart.</li>
@@ -85,7 +85,11 @@
             </p>
             <p>
                 Voor matchingspercentages combineren we reistijd met uren- en dagdelenoverlap (en waar relevant
-                wettelijke taakgeschiktheid op basis van geboortedatum). Scores zijn informatieve schattingen
+                wettelijke taakgeschiktheid op basis van geboortedatum). Op jouw profiel gebruiken we daarnaast
+                ervaring en, ná afronden van de competentietest, de vier werkcompetenties om een Top 10
+                vacatures (≥ 60%) te rangschikken. Die suggesties en de Jip-en-Janneke-uitleg zijn alleen voor jou.
+                Scores bij solliciteren naar een werkgever blijven gebaseerd op reistijd, uren en dagdelen —
+                zonder Big Five-antwoorden of -percentages. Scores zijn informatieve schattingen
                 om jou en werkgevers te helpen; zij vormen geen besluit tot aanname of afwijzing.
             </p>
         </section>
@@ -103,6 +107,19 @@
         </section>
 
         <section>
+            <h2>5b. Competentietest</h2>
+            <p>
+                De competentietest is optioneel. Je kunt tussentijds opslaan, later wijzigen of de test overslaan.
+                We bewaren je antwoorden (Likert 1–5 per vraag) en, na afronden, de vier percentages zodat jij ze
+                kunt inzien en zodat we vacaturesuggesties op jouw profiel kunnen verbeteren. Grondslag:
+                uitvoering van de overeenkomst (passende vacatures tonen). Werkgevers, intermediairs en
+                andere kandidaten zien deze gegevens niet. Bij export (“Mijn gegevens”) gaan antwoorden en scores
+                mee; bij uitschrijven of wissen van het account worden ze verwijderd. Zolang je account actief is,
+                blijven ze bewaard totdat jij ze overschrijft of het account laat anonimiseren.
+            </p>
+        </section>
+
+        <section>
             <h2>6. Bewaartermijnen</h2>
             <ul>
                 <li><strong>Platformlogs:</strong> 90 dagen.</li>
@@ -111,7 +128,7 @@
                 <li><strong>Onbevestigde sollicitatiedrafts</strong> (e-mailverificatie niet afgerond): 48 uur, daarna automatisch verwijderd.</li>
                 <li><strong>Ingetrokken sollicitaties:</strong> snapshots en geüploade CV-bytes worden bij intrekken gewist; de sollicitatie blijft bestaan zonder die persoonsgegevens.</li>
                 <li><strong>Self-billing / commissies:</strong> langer bewaard waar fiscale bewaarplicht dat vereist; bij accountverwijdering worden persoonsgegevens geanonimiseerd.</li>
-                <li><strong>Accountgegevens:</strong> tot anonimisering of verwijdering op jouw verzoek, of zolang het account actief nodig is voor de dienst.</li>
+                <li><strong>Accountgegevens:</strong> tot anonimisering of verwijdering op jouw verzoek, of zolang het account actief nodig is voor de dienst (inclusief competentietest-antwoorden en -scores).</li>
             </ul>
             <p>
                 Langere bewaartermijnen kunnen gelden waar dat wettelijk verplicht is
