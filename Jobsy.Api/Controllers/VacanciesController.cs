@@ -1258,9 +1258,9 @@ public class VacanciesController : ControllerBase
 
     private void ApplyPublicListCacheHeaders()
     {
-        Response.Headers.CacheControl = User.Identity?.IsAuthenticated == true
-            ? "private,max-age=15"
-            : "public,max-age=20,stale-while-revalidate=60";
+        // Never `public`: discover is origin/wage-specific and a shared empty
+        // snapshot would hide pins on the banenkaart.
+        Response.Headers.CacheControl = "private,max-age=15";
     }
 
     private async Task<bool> CanViewerSeeWageAsync(CancellationToken cancellationToken)

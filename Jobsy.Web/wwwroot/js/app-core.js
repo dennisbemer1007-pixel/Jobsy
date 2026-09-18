@@ -423,7 +423,7 @@ window.jobsyMaps = (function () {
         "/js/jobsyMapLibre.min.js?v=20260822-r195"
     ];
     var discoveryScripts = [
-        "/js/jobMap.min.js?v=20260831-img1"
+        "/js/jobMap.min.js?v=20260903-map1"
     ];
     var detailScripts = [
         "/js/vacancyDetailMap.min.js?v=20260822-r195"
@@ -634,11 +634,37 @@ window.jobsyPageVisible = function () {
     return typeof document === "undefined" || document.visibilityState !== "hidden";
 };
 
-(function registerImageCacheWorker() {
+(function removeImageCacheWorker() {
+    // A root-scoped worker (even one that only caches /images/*) takes over
+    // fetch/Worker construction for the whole origin and can leave the
+    // banenkaart without MapLibre pins after Blazor hydrate.
     if (!("serviceWorker" in navigator)) {
         return;
     }
-    window.addEventListener("load", function () {
-        navigator.serviceWorker.register("/image-cache-sw.js?v=20260902-bw1").catch(function () { });
-    });
+    var reloadOnce = function () {
+        try {
+            if (sessionStorage.getItem("lobsy-sw-cleared") === "1") {
+                return;
+            }
+            sessionStorage.setItem("lobsy-sw-cleared", "1");
+        } catch (e) { }
+        if (navigator.serviceWorker.controller) {
+            location.reload();
+        }
+    };
+    navigator.serviceWorker.getRegistrations().then(function (regs) {
+        if (!regs || !regs.length) {
+            return;
+        }
+        return Promise.all(regs.map(function (reg) { return reg.unregister(); })).then(reloadOnce);
+    }).catch(function () { });
+    if (window.caches && typeof caches.keys === "function") {
+        caches.keys().then(function (keys) {
+            keys.forEach(function (key) {
+                if (String(key).indexOf("lobsy-images") === 0) {
+                    caches.delete(key);
+                }
+            });
+        }).catch(function () { });
+    }
 })();

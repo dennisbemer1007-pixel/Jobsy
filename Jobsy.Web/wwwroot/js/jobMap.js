@@ -1675,7 +1675,15 @@ window.jobMap = (function () {
             throw new Error("Map element #" + elementId + " not found");
         }
 
-        const openingPoints = collectVacancyPoints(vacancies || []);
+        // First interactive paint can run before the circuit reloads the catalog.
+        // Keep prerendered #jobsy-map-boot pins so the map is never empty on hydrate.
+        const pins = (vacancies && vacancies.length)
+            ? vacancies
+            : (function () {
+                const boot = readBootPayload();
+                return boot.pins && boot.pins.length ? boot.pins : (vacancies || []);
+            })();
+        const openingPoints = collectVacancyPoints(pins);
         const openingView = options && options.view ? options.view : null;
         const preferFilledLocation = !options || options.preferFilledLocation !== false;
         const filledOrigin = preferFilledLocation ? readFilledOrigin() : null;
@@ -1703,7 +1711,7 @@ window.jobMap = (function () {
 
         bindMapRuntime();
 
-        setVacancies(vacancies || []);
+        setVacancies(pins);
         var originApplied = false;
         if (options && options.origin) {
             try {

@@ -82,7 +82,9 @@ public class JobMapPrerenderGuardTests
         Assert.DoesNotContain("jumpToLocation", initFn);
         Assert.DoesNotContain("fitMapToVacancies", initFn);
         Assert.Contains("setOrigin(filledOrigin.lat", initFn);
-        var setVacanciesInInit = js.IndexOf("setVacancies(vacancies || []);", initIdx, StringComparison.Ordinal);
+        Assert.Contains("readBootPayload", initFn);
+        Assert.Contains("setVacancies(pins);", initFn);
+        var setVacanciesInInit = js.IndexOf("setVacancies(pins);", initIdx, StringComparison.Ordinal);
         var tilesAfterVacancies = js.IndexOf("ensureVacancyTiles();", setVacanciesInInit, StringComparison.Ordinal);
         Assert.True(setVacanciesInInit > initIdx && tilesAfterVacancies > setVacanciesInInit);
 
