@@ -252,6 +252,14 @@ public static class DependencyInjection
         services.AddScoped<ICvTextExtractor, CvTextExtractor>();
         services.AddScoped<ICvExtractionService, CvExtractionService>();
         services.AddScoped<IProfileVacancyMatchService, ProfileVacancyMatchService>();
+        services.AddHttpClient(CultureFitAiService.HttpClientName, client =>
+        {
+            client.Timeout = TimeSpan.FromSeconds(12);
+        }).ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler
+        {
+            AllowAutoRedirect = false
+        });
+        services.AddScoped<ICultureFitAiService, CultureFitAiService>();
         services.AddScoped<ICandidateCompetencyService, CandidateCompetencyService>();
         services.AddScoped<ICandidateCareerInterestService, CandidateCareerInterestService>();
         services.AddHttpClient(CareerCompassGenerationService.HttpClientName, client =>

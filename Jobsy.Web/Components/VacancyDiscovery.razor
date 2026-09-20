@@ -528,6 +528,10 @@
                                                     @onclick="() => OpenMatchExplain(vacancy)"
                                                     @onclick:stopPropagation="true">?</button>
                                         </p>
+                                        @if (!string.IsNullOrWhiteSpace(vacancy.CultureFitLabel))
+                                        {
+                                            <span class="culture-fit culture-fit--@(vacancy.CultureFitBand ?? "mid")">@vacancy.CultureFitLabel</span>
+                                        }
                                         @if (!string.IsNullOrWhiteSpace(vacancy.MatchWhySummary))
                                         {
                                             <p class="job-card__match-why">@vacancy.MatchWhySummary</p>
@@ -898,6 +902,14 @@
         @if (!string.IsNullOrWhiteSpace(_matchExplain.MatchWhySummary))
         {
             <p class="login-lead">@_matchExplain.MatchWhySummary</p>
+        }
+        @if (!string.IsNullOrWhiteSpace(_matchExplain.CultureFitLabel))
+        {
+            <p class="culture-fit culture-fit--@(_matchExplain.CultureFitBand ?? "mid")">@_matchExplain.CultureFitLabel</p>
+        }
+        @if (!string.IsNullOrWhiteSpace(_matchExplain.CultureFitWhy))
+        {
+            <p class="login-lead">@_matchExplain.CultureFitWhy</p>
         }
         <h3 class="competency-explain__h">@Culture["Competency.Matches.Why"]</h3>
         <ul class="competency-explain__list">
@@ -2249,7 +2261,11 @@
                 ["transportLabel"] = UiLabels.TransportVerb(Culture, _selectedTransport),
                 ["matchPercent"] = v.MatchPercent,
                 ["matchColorBand"] = v.MatchColorBand,
-                ["matchWhySummary"] = v.MatchWhySummary
+                ["matchWhySummary"] = v.MatchWhySummary,
+                ["cultureFitPercent"] = v.CultureFitPercent,
+                ["cultureFitBand"] = v.CultureFitBand,
+                ["cultureFitLabel"] = v.CultureFitLabel,
+                ["cultureFitWhy"] = v.CultureFitWhy
             };
             if (v.WageVisible)
             {

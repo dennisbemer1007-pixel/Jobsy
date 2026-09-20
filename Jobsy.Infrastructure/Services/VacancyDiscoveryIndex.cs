@@ -129,7 +129,7 @@ public sealed class VacancyDiscoveryIndex : IVacancyDiscoveryIndex
         return records;
     }
 
-    internal static VacancyDiscoveryRecord ToRecord(Vacancy vacancy)
+    public static VacancyDiscoveryRecord ToRecord(Vacancy vacancy)
     {
         var display = IntermediaryVacancyRules.ResolvePublicDisplay(
             vacancy,
@@ -205,7 +205,8 @@ public sealed class VacancyDiscoveryIndex : IVacancyDiscoveryIndex
                 kvk),
             vacancy.ContentModerationPassed,
             vacancy.RequireEmailVerification,
-            vacancy.MinimumReferences);
+            vacancy.MinimumReferences,
+            CulturePillarCatalog.Deserialize(vacancy.CulturePillarsJson));
     }
 
     private static IReadOnlyList<VacancyDiscoveryRecord> VisibleToday(

@@ -172,6 +172,20 @@
             <div class="detail-card__top">
                 <div>
                     <h1>@_vacancy.Title</h1>
+                    @if (_vacancy.MatchPercent is int matchPct)
+                    {
+                        <p class="job-card__match">
+                            <span class="match-score match-score--@(_vacancy.MatchColorBand ?? "orange")">@Culture.Format("Discovery.MatchPercent", matchPct)</span>
+                            @if (!string.IsNullOrWhiteSpace(_vacancy.CultureFitLabel))
+                            {
+                                <span class="culture-fit culture-fit--@(_vacancy.CultureFitBand ?? "mid")">@_vacancy.CultureFitLabel</span>
+                            }
+                        </p>
+                        @if (!string.IsNullOrWhiteSpace(_vacancy.CultureFitWhy))
+                        {
+                            <p class="job-card__match-why">@_vacancy.CultureFitWhy</p>
+                        }
+                    }
                     @if (!string.IsNullOrWhiteSpace(_vacancy.CategoryName)
                          && !VacancyCategoryDefaults.IsSeniorLightCategory(_vacancy.CategoryId))
                     {

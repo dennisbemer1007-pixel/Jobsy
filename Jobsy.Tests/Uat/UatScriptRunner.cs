@@ -483,6 +483,20 @@ public static class UatScriptRunner
             Assert.True(TransportLabels.Parse("E-bike") == Jobsy.Core.Enums.TransportMode.Bike);
         }
 
+        if (Contains(blob, "Cultuur Fit", "cultuurpijlers"))
+        {
+            var root = RepoRoot.Find();
+            Assert.Equal(3, CulturePillarCatalog.MinSelected);
+            Assert.Equal(5, CulturePillarCatalog.MaxSelected);
+            Assert.Contains("CultureFitPercent", File.ReadAllText(Path.Combine(root, "Jobsy.Api/Models/VacancyListItemDto.cs")), StringComparison.Ordinal);
+            Assert.Contains("CulturePillarsJson", File.ReadAllText(Path.Combine(root, "Jobsy.Core/Entities/Vacancy.cs")), StringComparison.Ordinal);
+            var create = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Pages/Branch/CreateVacancy.razor"));
+            Assert.Contains("CulturePillarCatalog", create, StringComparison.Ordinal);
+            var map = File.ReadAllText(Path.Combine(root, "Jobsy.Web/wwwroot/js/jobMap.js"));
+            Assert.Contains("cultureFitHtml", map, StringComparison.Ordinal);
+            Assert.DoesNotContain("OCEAN", File.ReadAllText(Path.Combine(root, "Jobsy.Core/Rules/CultureFitBuilder.cs")), StringComparison.Ordinal);
+        }
+
         if (Contains(blob, "leeftijdsfilter", "talentpool", "ContactUnlock", "48 uur"))
         {
             Assert.Equal(48, TalentContactRules.TalentContactRequestHours);

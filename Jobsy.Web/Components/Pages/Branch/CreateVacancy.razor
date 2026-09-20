@@ -367,6 +367,25 @@
                     }
                 </div>
             </fieldset>
+            <fieldset class="profile-roles vacancy-culture">
+                <legend>@Culture["Employer.Culture.Legend"]</legend>
+                <p class="muted vacancy-field-hint">@Culture["Employer.Culture.Hint"]</p>
+                <div class="profile-min-employers__options" role="group" aria-label="@Culture["Employer.Culture.Legend"]">
+                    @foreach (var pillar in CulturePillarCatalog.All)
+                    {
+                        <label>
+                            <input type="checkbox"
+                                   checked="@_selectedCulturePillars.Contains(pillar.Id)"
+                                   @onchange="e => ToggleCulturePillar(pillar.Id, e)" />
+                            @Culture[pillar.LabelKey]
+                        </label>
+                    }
+                </div>
+                @if (_cultureError)
+                {
+                    <p class="state-message error">@Culture["Employer.Culture.Error"]</p>
+                }
+            </fieldset>
 
             <fieldset class="vacancy-hours">
                 <legend class="visually-hidden">Uren per week</legend>
@@ -683,6 +702,8 @@
     private HashSet<string> _selectedWorkTypes = new(StringComparer.OrdinalIgnoreCase);
     private HashSet<string> _selectedLicenses = new(StringComparer.OrdinalIgnoreCase);
     private HashSet<string> _selectedEducationLevels = new(StringComparer.OrdinalIgnoreCase);
+    private HashSet<string> _selectedCulturePillars = new(StringComparer.OrdinalIgnoreCase);
+    private bool _cultureError;
     private List<string> _branchOptions = WorkTypeLabels.All.ToList();
     private List<string> _licenseOptions = DrivingLicenseLabels.All.ToList();
     private List<string> _educationOptions = EducationLevelLabels.VacancyAll.ToList();
@@ -1138,6 +1159,8 @@
             _minimumReferences = source.MinimumReferences is int refs && _minReferenceOptions.Contains(refs)
                 ? refs
                 : null;
+            _selectedCulturePillars = CulturePillarCatalog.Normalize(source.CulturePillars)
+                .ToHashSet(StringComparer.OrdinalIgnoreCase);
             _minHours = source.MinHoursPerWeek ?? 8;
             _maxHours = source.MaxHoursPerWeek ?? 16;
             _flexibleTimes = source.FlexibleTimes || string.IsNullOrWhiteSpace(source.ScheduleJson);
@@ -1240,6 +1263,28 @@
 
     private void SetMinimumEmployers(int? value) => _minimumEmployers = value;
     private void SetMinimumReferences(int? value) => _minimumReferences = value;
+
+    private void ToggleCulturePillar(string id, ChangeEventArgs e)
+    {
+        var on = e.Value is bool b ? b : string.Equals(e.Value?.ToString(), "true", StringComparison.OrdinalIgnoreCase);
+        if (on)
+        {
+            if (_selectedCulturePillars.Count >= CulturePillarCatalog.MaxSelected)
+            {
+                _cultureError = true;
+                return;
+            }
+
+            _selectedCulturePillars.Add(id);
+        }
+        else
+        {
+            _selectedCulturePillars.Remove(id);
+        }
+
+        _cultureError = _selectedCulturePillars.Count is < CulturePillarCatalog.MinSelected
+            or > CulturePillarCatalog.MaxSelected;
+    }
 
     private void OnFlexibleTimesChanged(ChangeEventArgs e)
     {
@@ -1536,6 +1581,13 @@
             return;
         }
 
+        if (!CulturePillarCatalog.HasProfile(_selectedCulturePillars))
+        {
+            _cultureError = true;
+            _message = Culture["Employer.Culture.Error"];
+            return;
+        }
+
         _saving = true;
         _message = null;
         try
@@ -1587,7 +1639,8 @@
                 CategoryFields: _categoryFields.Count > 0 ? new Dictionary<string, string>(_categoryFields) : null,
                 SuitableFor65Plus: SelectedCategory?.Slug == "regulier" && _suitableFor65Plus,
                 RequireEmailVerification: _requireEmailVerification,
-                MinimumReferences: _minimumReferences is int refs && _minReferenceOptions.Contains(refs) ? refs : null);
+                MinimumReferences: _minimumReferences is int refs && _minReferenceOptions.Contains(refs) ? refs : null,
+                CulturePillars: _selectedCulturePillars.ToArray());
 
             var saved = _editVacancyId is Guid editId
                 ? await Api.UpdateVacancyAsync(editId, form)

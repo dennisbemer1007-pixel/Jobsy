@@ -106,7 +106,7 @@ Kernpunten:
 - **Beroepentest (Quick-Scan / 25 vragen):** richting in gewone taal; **Mijn Beroepen-kompas**; dynamische **Top 10 actieve vacatures** (≥ 60%, aflopend)
 - **Diepte-analyses (150 unieke vragen, € 2,99 per test):** 30 per Big Five-trek (competentie) en 25 per beroepsrichting; Mollie iDEAL; OpenAI vult de loopbaan-PDF (logo, Super-match 95–100 als kernfit / Sterke keus / Handige verbreding, *Wat betekent dit voor jou?*) en schrijft top-beroepen naar **Mijn Beroepen-kompas**
 - **Functie-Fit Checker** (“Past dit bij mij?”): gated tot beide 25-vragen quick-scans klaar zijn; vrije functietitel → match-% / sterktes / gat / groeistappen + banenkaart-link; upsell 150-vragen analyse
-- **Banenkaart:** uitgebreide beroepentest weegt zwaarder; algemene beroepstags uit het kompas matchen actuele vacatures (zoekwoorden, niet hardcoded Lobsy-aanbod)
+- **Cultuur & teamfit:** werkgever kiest 3–5 cultuurpijlers op de vacature; na harde criteria (reistijd/uren/dagdelen, wettelijke taken, rijbewijs/opleiding) berekent de backend een **Cultuur Fit**-score uit competentiescores + pijlers (OpenAI met lokale fallback); banenkaart/popup toont *Cultuur Fit: Hoog/Midden/Laag* in Jip-en-Janneke. Sollicitatie-match-% naar werkgevers blijft reistijd/uren/dagdelen.
 - **Gulden Middenweg** bij solliciteren (&lt; 50%): OTP tegenhouden, profiel aanpassen of vangnet
 - **Optioneel motivatieveld** op sollicitatieformulier
 - **Werkgeversdashboard:** match-% met kleurcodering, breakdown, wettelijke bevestiging, motivatie, sort hoog→laag

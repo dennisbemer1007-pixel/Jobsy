@@ -204,6 +204,7 @@ Kandidaat,Home: API-fout metrics.,Foutmelding; geen lege stille pagina.
 Kandidaat,Home: periode zonder data.,Tegels 0; drilldown empty.
 Kandidaat,Banenkaart als ingelogde kandidaat (alle gast-filters herhalen).,Zelfde filters; likes/apply beschikbaar; origin mag uit profiel-thuislocatie komen.
 Kandidaat,Banenkaart: match-% op lijstkaart en pin (live).,Percentage + kleur; geen PII-lek; gast ziet geen match-%.
+Kandidaat,Banenkaart: **Cultuur Fit** op kaart/popup als harde criteria kloppen.,Label Hoog/Midden/Laag + Jip-en-Janneke-onderbouwing; geen OCEAN-jargon; gast ziet geen cultuurfit.
 Kandidaat,Banenkaart: filter **Alleen >80% match** + sorteren **Beste match**.,Lijst en kaart tonen alleen hoge scores; volgorde hoog→laag.
 Kandidaat,Banenkaart: **?** / uitleg waarom deze match.,Breakdown reistijd/beschikbaarheid/beroepsrichting/competenties; link naar profiel.
 Kandidaat,Banenkaart: **Zoekopdracht bewaren**.,"Gaat naar liked (ingelogd, geen gate)."
@@ -351,6 +352,7 @@ Filiaalmanager,**Goedkeuren** PendingApproval.,Knop **niet** zichtbaar (alleen E
 Filiaalmanager,Lifecycle-actie API-fout.,Melding; status ongewijzigd.
 Filiaalmanager,Nieuwe vacature: verplichten leeg opslaan.,Validatie; niet opgeslagen.
 Filiaalmanager,"Nieuwe vacature: titel, categorie, beschrijving (toolbar H2/B/I/lijst/link), media-URL’s.",Concept opslaan lukt; moderatie-dialog kan ‘Tekst aanpassen’ eisen.
+Filiaalmanager,Nieuwe vacature: 3 tot 5 **cultuurpijlers** (Cultuur & teamfit).,Opslaan vereist 3–5 keuzes; opgeslagen op de vacature; <3 of >5 geeft validatie.
 Filiaalmanager,Moderatie-dialog: tekst aanpassen vs negeren/sluiten.,Aanpassen houdt draft; publiceren pas na acceptabele tekst.
 Filiaalmanager,"Create: extra categorevelden, exclusivity stage, salaristabel, rijbewijs, opleiding, min werkgevers/recensies, uren, dagdelen / in overleg, wettelijke vinkjes + `[i]` tooltips.",Velden opgeslagen; legal flags verplicht voor matching.
 Filiaalmanager,Create: direct contact + kanalen.,Na apply ziet kandidaat contactmodal.

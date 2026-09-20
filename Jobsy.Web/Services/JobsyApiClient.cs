@@ -3673,7 +3673,8 @@ public record CreateVacancyForm(
     Dictionary<string, string>? CategoryFields = null,
     bool SuitableFor65Plus = false,
     bool? RequireEmailVerification = null,
-    int? MinimumReferences = null);
+    int? MinimumReferences = null,
+    string[]? CulturePillars = null);
 
 public sealed class CsvImportRowForm
 {

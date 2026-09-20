@@ -85,6 +85,11 @@ public class VacancyListItem
     public string? MatchWhySummary { get; set; }
     public List<string> MatchWhy { get; set; } = [];
     public List<string> MatchGaps { get; set; } = [];
+    public List<string> CulturePillars { get; set; } = [];
+    public int? CultureFitPercent { get; set; }
+    public string? CultureFitBand { get; set; }
+    public string? CultureFitLabel { get; set; }
+    public string? CultureFitWhy { get; set; }
 }
 
 public sealed class WageByAgeItem

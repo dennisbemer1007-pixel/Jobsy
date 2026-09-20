@@ -83,7 +83,12 @@ public record VacancyListItemDto(
     string? MatchColorBand = null,
     string? MatchWhySummary = null,
     IReadOnlyList<string>? MatchWhy = null,
-    IReadOnlyList<string>? MatchGaps = null);
+    IReadOnlyList<string>? MatchGaps = null,
+    IReadOnlyList<string>? CulturePillars = null,
+    int? CultureFitPercent = null,
+    string? CultureFitBand = null,
+    string? CultureFitLabel = null,
+    string? CultureFitWhy = null);
 
 /// <summary>Public MapLibre opening camera. Coordinates only — no vacancy or employer PII.</summary>
 public sealed record VacancyMapViewDto(double Lat, double Lng, double Zoom, int PinCount);

@@ -485,6 +485,7 @@ window.jobMap = (function () {
                                 : "<p class=\"map-popup__address map-popup__address--empty\">&nbsp;</p>") +
                             travelLineHtml(v) +
                             matchLineHtml(v) +
+                            cultureFitHtml(v) +
                             pushBomStatusHtml(v) +
                         "</div>" +
                         (wage || "<p class=\"map-popup__wage map-popup__wage--empty\">&nbsp;</p>") +
@@ -518,6 +519,22 @@ window.jobMap = (function () {
         return (
             "<p class=\"map-popup__match match-score--" + escapeHtml(band) + "\">" +
                 escapeHtml(String(v.matchPercent)) + "% Match" +
+                why +
+            "</p>"
+        );
+    }
+
+    function cultureFitHtml(v) {
+        if (!v.cultureFitLabel) {
+            return "";
+        }
+        const band = String(v.cultureFitBand || "mid");
+        const why = v.cultureFitWhy
+            ? "<span class=\"map-popup__match-why\">" + escapeHtml(String(v.cultureFitWhy)) + "</span>"
+            : "";
+        return (
+            "<p class=\"map-popup__culture culture-fit culture-fit--" + escapeHtml(band) + "\">" +
+                escapeHtml(String(v.cultureFitLabel)) +
                 why +
             "</p>"
         );

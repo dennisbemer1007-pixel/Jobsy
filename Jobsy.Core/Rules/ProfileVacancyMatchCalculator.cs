@@ -93,7 +93,20 @@ public static class ProfileVacancyMatchCalculator
         }
 
         var total = (int)Math.Clamp(Math.Round(100 * total01, MidpointRounding.AwayFromZero), 0, 100);
-        var (why, gaps) = BuildExplanation(input, core, experience01, competency01, interest01, occupationFit, total);
+        CultureFitResult? culture = null;
+        if (CultureFitBuilder.HardCriteriaMatch(input, core)
+            && input.CandidateCompetencies is { IsComplete: true })
+        {
+            culture = CultureFitBuilder.Evaluate(input.CulturePillars, input.CandidateCompetencies);
+            if (culture is not null)
+            {
+                total01 = (1 - CultureFitBuilder.TotalScoreWeight) * total01
+                          + CultureFitBuilder.TotalScoreWeight * (culture.Percent / 100.0);
+                total = (int)Math.Clamp(Math.Round(100 * total01, MidpointRounding.AwayFromZero), 0, 100);
+            }
+        }
+
+        var (why, gaps) = BuildExplanation(input, core, experience01, competency01, interest01, occupationFit, culture, total);
         return new ProfileVacancyMatch
         {
             VacancyId = input.VacancyId,
@@ -103,6 +116,7 @@ public static class ProfileVacancyMatchCalculator
             ExperienceScore01 = experience01,
             CompetencyScore01 = competency01,
             InterestScore01 = interest01,
+            CultureFit = culture,
             Why = why,
             Gaps = gaps,
             ColorBand = total >= MatchScoreWeights.StrongMatchThreshold
@@ -145,6 +159,7 @@ public static class ProfileVacancyMatchCalculator
         "experience" when point.Code == "license" => "Rijbewijs klopt",
         "experience" => "Branche sluit aan",
         "competency" => "Sterke competentie-match",
+        "culture" => "Cultuur & teamfit",
         "occupation" => "Beroepen-kompas past",
         "interest" => "Beroepsinteresse past",
         _ => point.Text
@@ -236,10 +251,24 @@ public static class ProfileVacancyMatchCalculator
             double? competency01,
             double? interest01,
             VacancyOccupationMatch.Fit? occupationFit,
+            CultureFitResult? culture,
             int total)
     {
         var why = new List<ProfileMatchExplainPoint>();
         var gaps = new List<ProfileMatchExplainPoint>();
+
+        if (culture is not null)
+        {
+            var point = new ProfileMatchExplainPoint("culture", culture.Band, culture.Why);
+            if (culture.Band == "low")
+            {
+                gaps.Add(point);
+            }
+            else
+            {
+                why.Add(point);
+            }
+        }
 
         if (core.TravelWithinPreference == true)
         {
@@ -458,14 +487,15 @@ public static class ProfileVacancyMatchCalculator
             .Select(g => g.First())
             .OrderBy(p => p.Kind switch
             {
-                "travel" => 0,
-                "competency" => 1,
-                "occupation" => 2,
-                "interest" => 3,
-                "hours" => 4,
-                "experience" => 5,
-                "dayparts" => 6,
-                _ => 7
+                "culture" => 0,
+                "travel" => 1,
+                "competency" => 2,
+                "occupation" => 3,
+                "interest" => 4,
+                "hours" => 5,
+                "experience" => 6,
+                "dayparts" => 7,
+                _ => 8
             })
             .Take(3)
             .ToList();
@@ -577,6 +607,7 @@ public sealed class ProfileVacancyMatchInput
     public bool CareerDeepCompleted { get; init; }
     public IReadOnlyList<string>? VacancyRiasecTags { get; init; }
     public IReadOnlyList<CareerOccupationMatch>? CareerOccupations { get; init; }
+    public IReadOnlyList<string>? CulturePillars { get; init; }
 }
 
 public sealed class ProfileVacancyMatch
@@ -588,6 +619,7 @@ public sealed class ProfileVacancyMatch
     public double ExperienceScore01 { get; init; }
     public double? CompetencyScore01 { get; init; }
     public double? InterestScore01 { get; init; }
+    public CultureFitResult? CultureFit { get; init; }
     public IReadOnlyList<ProfileMatchExplainPoint> Why { get; init; } = [];
     public IReadOnlyList<ProfileMatchExplainPoint> Gaps { get; init; } = [];
     public string ColorBand { get; init; } = "orange";

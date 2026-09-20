@@ -38,4 +38,5 @@ public record CreateVacancyRequest(
     Dictionary<string, string>? CategoryFields = null,
     bool SuitableFor65Plus = false,
     bool? RequireEmailVerification = null,
-    int? MinimumReferences = null);
+    int? MinimumReferences = null,
+    string[]? CulturePillars = null);

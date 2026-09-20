@@ -252,6 +252,7 @@ public class JobsyDbContext : DbContext
             entity.HasIndex(e => new { e.Status, e.CategoryId });
             entity.HasIndex(e => new { e.Status, e.SuitableFor65Plus });
             entity.Property(e => e.CategoryFieldsJson).HasMaxLength(8000);
+            entity.Property(e => e.CulturePillarsJson).HasMaxLength(2000);
             entity.Property(e => e.EngagementReminderTip).HasMaxLength(2000);
             entity.HasIndex(e => new { e.Status, e.EngagementReminderSentAtUtc, e.PublishedAtUtc });
             entity.HasOne(e => e.Company)

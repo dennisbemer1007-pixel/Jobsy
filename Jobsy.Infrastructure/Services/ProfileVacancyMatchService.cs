@@ -71,7 +71,8 @@ public sealed class ProfileVacancyMatchService : IProfileVacancyMatchService
                 CandidateRiasecScores = context.RiasecScores,
                 CareerDeepCompleted = context.CareerDeepCompleted,
                 VacancyRiasecTags = VacancyRiasecProfile.InferTags(record),
-                CareerOccupations = context.CareerOccupations
+                CareerOccupations = context.CareerOccupations,
+                CulturePillars = record.CulturePillars
             });
             result[record.Id] = match;
         }

@@ -14,6 +14,9 @@ Alle noemenswaardige wijzigingen aan dit project worden in dit bestand bijgehoud
 ## [Unreleased]
 
 ### Added
+- **Cultuur & teamfit:** werkgevers kiezen 3–5 cultuurpijlers bij vacaturecreatie/bewerken (`CulturePillarsJson`). Na harde criteria berekent de backend een Cultuur Fit-% uit competentiescores (OpenAI + lokale fallback, geen NAW). Banenkaart, popup en vacaturedetail tonen *Cultuur Fit: Hoog/Midden/Laag* plus Jip-en-Janneke-onderbouwing.
+
+### Added
 - **Functie-Fit Checker** (“Past dit bij mij?”) in Mijn Lobsy Kompas: pas te gebruiken na beide gratis 25-vragen quick-scans; OpenAI-toets van een vrije functietitel tegen het kandidaatprofiel (zonder NAW); lokale fallback; upsell naar de 150-vragen diepte-analyse (€ 2,99); knop naar vergelijkbare vacatures op de banenkaart (Den Haag / Westland). Resultaat in privacy-export en RTBF.
 - Kandidaatprofiel en `/home`-kompas in **vier tabbladen**: Mijn profiel, Mijn competenties, Mijn beroepen, Past dit bij mij? (Functie-Fit Checker). Inactieve tab-panels blijven in de DOM (`hidden`) zodat flex-layout ze niet stapelt.
 

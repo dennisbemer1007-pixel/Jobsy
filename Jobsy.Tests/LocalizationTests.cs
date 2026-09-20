@@ -69,6 +69,7 @@ public class LocalizationTests
             "Share.Title",
             "Metrics.Welcome",
             "Discovery.Top",
+            "Discovery.CultureFit",
             "Transport.Verb.Bike",
             "Help.Purpose",
             "Education.None",

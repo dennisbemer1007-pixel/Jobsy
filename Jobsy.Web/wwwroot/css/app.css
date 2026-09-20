@@ -9176,6 +9176,40 @@ button.stat-card {
     color: var(--danger);
 }
 
+.culture-fit {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.18rem 0.5rem;
+    border-radius: 999px;
+    font-size: 0.72rem;
+    font-weight: 800;
+    background: var(--accent-soft);
+    color: var(--brand);
+}
+
+.culture-fit--high {
+    background: var(--success-soft);
+    color: var(--success);
+}
+
+.culture-fit--mid {
+    background: var(--warn-soft);
+    color: var(--warn);
+}
+
+.culture-fit--low {
+    background: var(--danger-soft);
+    color: var(--danger);
+}
+
+.map-popup__culture {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0.25rem 0.45rem;
+    margin: 0.15rem 0 0;
+}
+
 .applicants-page__header {
     display: flex;
     flex-wrap: wrap;

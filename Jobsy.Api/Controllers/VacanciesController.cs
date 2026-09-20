@@ -38,6 +38,7 @@ public class VacanciesController : ControllerBase
     private readonly IVacancyDiscoveryIndex _discoveryIndex;
     private readonly IExactRoutingService _exactRouting;
     private readonly IProfileVacancyMatchService _profileMatch;
+    private readonly ICultureFitAiService _cultureFitAi;
 
     public VacanciesController(
         JobsyDbContext db,
@@ -52,7 +53,8 @@ public class VacanciesController : ControllerBase
         IPlatformFeatureService features,
         IUserNotificationService notifications,
         IVacancyDiscoveryIndex discoveryIndex,
-        IProfileVacancyMatchService profileMatch)
+        IProfileVacancyMatchService profileMatch,
+        ICultureFitAiService cultureFitAi)
     {
         _db = db;
         _companyAuth = companyAuth;
@@ -67,6 +69,7 @@ public class VacanciesController : ControllerBase
         _discoveryIndex = discoveryIndex;
         _exactRouting = exactRouting;
         _profileMatch = profileMatch;
+        _cultureFitAi = cultureFitAi;
     }
 
     /// <summary>
@@ -226,14 +229,7 @@ public class VacanciesController : ControllerBase
 
             if (matches is not null && matches.TryGetValue(c.Record.Id, out var match))
             {
-                dto = dto with
-                {
-                    MatchPercent = match.TotalPercent,
-                    MatchColorBand = match.ColorBand,
-                    MatchWhySummary = string.Join(", ", ProfileVacancyMatchCalculator.WhyHeadlines(match)),
-                    MatchWhy = match.Why.Select(w => w.Text).ToList(),
-                    MatchGaps = match.Gaps.Select(g => g.Text).ToList()
-                };
+                dto = WithCandidateMatch(dto, match);
             }
 
             results.Add(dto);
@@ -730,6 +726,15 @@ public class VacanciesController : ControllerBase
         vacancy.MinimumReferences = request.MinimumReferences is > 0
             ? Math.Min(request.MinimumReferences.Value, CandidateReferenceRules.MaxMinimumOnVacancy)
             : null;
+        var culturePillars = CulturePillarCatalog.Normalize(request.CulturePillars);
+        if (request.CulturePillars is { Length: > 0 }
+            && (culturePillars.Count < CulturePillarCatalog.MinSelected
+                || culturePillars.Count > CulturePillarCatalog.MaxSelected))
+        {
+            return BadRequest(new { message = "Kies 3 tot 5 cultuurpijlers die bij het team passen." });
+        }
+
+        vacancy.CulturePillarsJson = CulturePillarCatalog.Serialize(culturePillars);
         vacancy.OverrideContactPreference = request.OverrideContactPreference;
         vacancy.DirectContactEnabled = request.OverrideContactPreference && request.DirectContactEnabled;
         vacancy.ContactPreferMail = request.OverrideContactPreference && request.DirectContactEnabled && request.ContactPreferMail;
@@ -1368,20 +1373,21 @@ public class VacanciesController : ControllerBase
         CancellationToken cancellationToken = default)
     {
         var targetLanguage = await ResolveTargetLanguageAsync(cancellationToken);
+        int? travelMinutes = null;
+        double? distanceKm = null;
 
-        if (originLat is null || originLng is null)
+        if (originLat is not null && originLng is not null)
         {
-            return await MapToDtoAsync(vacancy, showWage, targetLanguage, ageYears, cancellationToken: cancellationToken);
+            (travelMinutes, distanceKm) = await TryExactRouteAsync(
+                originLat.Value,
+                originLng.Value,
+                vacancy.Location.Latitude,
+                vacancy.Location.Longitude,
+                transport,
+                cancellationToken);
         }
 
-        var (travelMinutes, distanceKm) = await TryExactRouteAsync(
-            originLat.Value,
-            originLng.Value,
-            vacancy.Location.Latitude,
-            vacancy.Location.Longitude,
-            transport,
-            cancellationToken);
-        return await MapToDtoAsync(
+        var dto = await MapToDtoAsync(
             vacancy,
             showWage,
             targetLanguage,
@@ -1389,6 +1395,8 @@ public class VacanciesController : ControllerBase
             travelMinutes: travelMinutes,
             distanceKm: distanceKm,
             cancellationToken: cancellationToken);
+
+        return await AttachCandidateMatchAsync(dto, vacancy, travelMinutes, cancellationToken);
     }
 
     private async Task<(int? Minutes, double? DistanceKm)> TryExactRouteAsync(
@@ -1597,7 +1605,8 @@ public class VacanciesController : ControllerBase
             r.RequireEmailVerification,
             EngagementReminderTip: null,
             EngagementReminderSentAtUtc: null,
-            MinimumReferences: compact ? null : r.MinimumReferences);
+            MinimumReferences: compact ? null : r.MinimumReferences,
+            CulturePillars: r.CulturePillars is { Count: > 0 } ? r.CulturePillars.ToList() : null);
     }
 
     private static VacancyListItemDto MapToDto(
@@ -1751,7 +1760,8 @@ public class VacanciesController : ControllerBase
             v.RequireEmailVerification,
             includeCategoryInternals ? v.EngagementReminderTip : null,
             includeCategoryInternals ? v.EngagementReminderSentAtUtc : null,
-            v.MinimumReferences);
+            v.MinimumReferences,
+            CulturePillars: CulturePillarCatalog.Deserialize(v.CulturePillarsJson).ToList());
     }
 
     private async Task<(Core.Entities.VacancyCategory? Category, string? Error)> ResolveCategoryAsync(
@@ -1979,6 +1989,88 @@ public class VacanciesController : ControllerBase
         vacancy.LegalHandlesMoneyOrClosing = request.LegalHandlesMoneyOrClosing;
         vacancy.LegalHeavyOrHazardousWork = request.LegalHeavyOrHazardousWork;
     }
+
+    private async Task<VacancyListItemDto> AttachCandidateMatchAsync(
+        VacancyListItemDto dto,
+        Core.Entities.Vacancy vacancy,
+        int? travelMinutes,
+        CancellationToken cancellationToken)
+    {
+        if (!_companyAuth.IsCandidate(User))
+        {
+            return dto;
+        }
+
+        var matchContext = await _profileMatch.TryLoadForPrincipalAsync(User, cancellationToken);
+        if (matchContext is null)
+        {
+            return dto;
+        }
+
+        var record = VacancyDiscoveryIndex.ToRecord(vacancy);
+        var matches = _profileMatch.Score(matchContext, [(record, travelMinutes)]);
+        if (!matches.TryGetValue(vacancy.Id, out var match))
+        {
+            return dto;
+        }
+
+        if (match.CultureFit is { } local
+            && matchContext.Competencies is { IsComplete: true } scores)
+        {
+            var labels = CulturePillarCatalog.Labels(record.CulturePillars);
+            var refined = await _cultureFitAi.TryRefineAsync(local, scores, labels, cancellationToken);
+            if (refined is not null)
+            {
+                match = CloneMatchWithCulture(match, refined);
+            }
+        }
+
+        return WithCandidateMatch(dto, match);
+    }
+
+    private static ProfileVacancyMatch CloneMatchWithCulture(ProfileVacancyMatch match, CultureFitResult culture)
+    {
+        var why = match.Why.Where(w => w.Kind != "culture").ToList();
+        var gaps = match.Gaps.Where(g => g.Kind != "culture").ToList();
+        var point = new ProfileMatchExplainPoint("culture", culture.Band, culture.Why);
+        if (culture.Band == "low")
+        {
+            gaps.Insert(0, point);
+        }
+        else
+        {
+            why.Insert(0, point);
+        }
+
+        return new ProfileVacancyMatch
+        {
+            VacancyId = match.VacancyId,
+            VacancyTitle = match.VacancyTitle,
+            TotalPercent = match.TotalPercent,
+            Core = match.Core,
+            ExperienceScore01 = match.ExperienceScore01,
+            CompetencyScore01 = match.CompetencyScore01,
+            InterestScore01 = match.InterestScore01,
+            CultureFit = culture,
+            Why = why,
+            Gaps = gaps,
+            ColorBand = match.ColorBand
+        };
+    }
+
+    private static VacancyListItemDto WithCandidateMatch(VacancyListItemDto dto, ProfileVacancyMatch match)
+        => dto with
+        {
+            MatchPercent = match.TotalPercent,
+            MatchColorBand = match.ColorBand,
+            MatchWhySummary = string.Join(", ", ProfileVacancyMatchCalculator.WhyHeadlines(match)),
+            MatchWhy = match.Why.Select(w => w.Text).ToList(),
+            MatchGaps = match.Gaps.Select(g => g.Text).ToList(),
+            CultureFitPercent = match.CultureFit?.Percent,
+            CultureFitBand = match.CultureFit?.Band,
+            CultureFitLabel = match.CultureFit?.Label,
+            CultureFitWhy = match.CultureFit?.Why
+        };
 
     private static string? FirstNonEmpty(params string?[] values)
     {
