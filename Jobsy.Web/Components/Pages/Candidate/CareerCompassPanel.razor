@@ -24,6 +24,10 @@
                         <li class="kompas-occupation">
                             <span class="kompas-occupation__title">@item.Title</span>
                             <span class="kompas-occupation__pct">@item.Percent%</span>
+                            @if (!string.IsNullOrWhiteSpace(item.Why))
+                            {
+                                <span class="kompas-occupation__why">@item.Why</span>
+                            }
                         </li>
                     }
                 </ul>
@@ -39,6 +43,10 @@
                         <li class="kompas-occupation">
                             <span class="kompas-occupation__title">@item.Title</span>
                             <span class="kompas-occupation__pct">@item.Percent%</span>
+                            @if (!string.IsNullOrWhiteSpace(item.Why))
+                            {
+                                <span class="kompas-occupation__why">@item.Why</span>
+                            }
                         </li>
                     }
                 </ul>
@@ -54,6 +62,10 @@
                         <li class="kompas-occupation">
                             <span class="kompas-occupation__title">@item.Title</span>
                             <span class="kompas-occupation__pct">@item.Percent%</span>
+                            @if (!string.IsNullOrWhiteSpace(item.Why))
+                            {
+                                <span class="kompas-occupation__why">@item.Why</span>
+                            }
                         </li>
                     }
                 </ul>

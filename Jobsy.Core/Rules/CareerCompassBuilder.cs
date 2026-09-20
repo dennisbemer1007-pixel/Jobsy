@@ -37,13 +37,12 @@ public static class CareerCompassBuilder
             .Select(x => x.Label)
             .ToList();
 
-        return new CareerCompassSnapshot(
+        return CareerCompassHierarchy.FromOccupations(
             strengths,
-            ranked.Where(m => m.Band == BandSuper).ToList(),
-            ranked.Where(m => m.Band == BandStrong).ToList(),
-            ranked.Where(m => m.Band == BandBroaden).ToList(),
+            ranked,
             PracticalNotes(scores, strengths, fromDeepAnalysis),
-            fromDeepAnalysis);
+            fromDeepAnalysis,
+            fromOpenAi: false);
     }
 
     public static string TypeLabel(string code) => code switch
@@ -95,7 +94,12 @@ public static class CareerCompassBuilder
         "Investigative",
         "Enterprising",
         "Conventional",
-        "Big Five"
+        "Big Five",
+        "extraversie",
+        "extraversion",
+        "neuroticisme",
+        "neuroticism",
+        "consciëntieusheid"
     ];
 
     public static bool ContainsForbiddenJargon(string? text)

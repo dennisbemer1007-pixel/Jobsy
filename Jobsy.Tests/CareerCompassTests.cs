@@ -73,6 +73,8 @@ public class CareerCompassTests
         Assert.False(CareerCompassBuilder.ContainsForbiddenJargon("sociale werkplek"));
         Assert.True(CareerCompassBuilder.ContainsForbiddenJargon("RIASEC-profiel"));
         Assert.True(CareerCompassBuilder.ContainsForbiddenJargon("Holland-code ACE"));
+        Assert.True(CareerCompassBuilder.ContainsForbiddenJargon("extraversie"));
+        Assert.True(CareerCompassBuilder.ContainsForbiddenJargon("neuroticisme"));
 
         foreach (var code in CareerTestCatalog.RiasecCodes)
         {
@@ -166,6 +168,7 @@ public class CareerCompassTests
         Assert.Contains("GetBrandLogoPng", source, StringComparison.Ordinal);
         Assert.Contains("Jouw loopbaanrapport", renderCareer, StringComparison.Ordinal);
         Assert.Contains("Wat betekent dit voor jou?", renderCareer, StringComparison.Ordinal);
+        Assert.Contains("persoonlijk en positief", renderCareer, StringComparison.Ordinal);
         Assert.Contains("WriteOccupationBand", renderCareer, StringComparison.Ordinal);
         Assert.Contains("BandSuper", renderCareer, StringComparison.Ordinal);
         Assert.Contains("BandStrong", renderCareer, StringComparison.Ordinal);
@@ -205,6 +208,7 @@ public class CareerCompassTests
         var panel = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Pages/Candidate/CareerCompassPanel.razor"));
         Assert.Contains("Kompas.BandSuper", panel, StringComparison.Ordinal);
         Assert.Contains("Kompas.PracticalTitle", panel, StringComparison.Ordinal);
+        Assert.Contains("item.Why", panel, StringComparison.Ordinal);
 
         var home = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Pages/Candidate/CandidateKompas.razor"));
         Assert.Contains("Kompas.Career", home, StringComparison.Ordinal);
@@ -244,6 +248,7 @@ public class CareerCompassTests
         var scores = DeepAnalysisCatalog.ScoreDomains(answers, AssessmentKind.Career);
         var user = CareerCompassPrompt.User(scores, answers);
         Assert.Contains("150 unieke vragen", user, StringComparison.Ordinal);
+        Assert.Contains("Kernfit", user, StringComparison.Ordinal);
         Assert.Contains("→ 4", user, StringComparison.Ordinal);
         Assert.DoesNotContain("@", user, StringComparison.Ordinal);
         Assert.DoesNotContain("gmail", user, StringComparison.OrdinalIgnoreCase);
@@ -256,6 +261,11 @@ public class CareerCompassTests
         Assert.Contains("Nederlandse arbeidsmarkt", CareerCompassPrompt.System, StringComparison.Ordinal);
         Assert.Contains("Jip-en-Janneke", CareerCompassPrompt.System, StringComparison.Ordinal);
         Assert.Contains("superMatches", CareerCompassPrompt.System, StringComparison.Ordinal);
+        Assert.Contains("extraversie", CareerCompassPrompt.System, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("neuroticisme", CareerCompassPrompt.System, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("95-100", CareerCompassPrompt.System, StringComparison.Ordinal);
+        Assert.Contains("Wat betekent dit voor jou?", CareerCompassPrompt.System, StringComparison.Ordinal);
+        Assert.Contains("banenkaart", CareerCompassPrompt.System, StringComparison.OrdinalIgnoreCase);
     }
 
     [Fact]
@@ -282,6 +292,37 @@ public class CareerCompassTests
         Assert.DoesNotContain(compass.AllOccupations, m => m.Title.Contains("RIASEC", StringComparison.OrdinalIgnoreCase));
         Assert.DoesNotContain(compass.AllOccupations, m => m.Percent < 75);
         Assert.Contains(compass.PracticalNotes, n => n.Contains("banenkaart", StringComparison.OrdinalIgnoreCase));
+        AssertNoJargon(compass);
+    }
+
+    [Fact]
+    public void Sanitize_lifts_top_jobs_into_super_match_when_openai_scores_too_low()
+    {
+        var json = """
+            {
+              "strengths": ["Aanpakken met je handen"],
+              "superMatches": [],
+              "strongChoices": [
+                {"title":"Medewerker tuinbouw","percent":90,"why":"Jij wilt buiten iets maken.","keys":["kas","tuinbouw"]},
+                {"title":"Onderhoudsmonteur","percent":89,"why":"Jij wilt dingen maken en repareren.","keys":["onderhoud","monteur"]},
+                {"title":"Magazijnmedewerker","percent":88,"why":"Jij wilt pakken en tillen.","keys":["magazijn","orderpicker"]},
+                {"title":"Productiemedewerker","percent":87,"why":"Jij wilt tempo maken.","keys":["productie"]},
+                {"title":"Chauffeur","percent":86,"why":"Jij wilt onderweg zijn.","keys":["chauffeur","rijden"]},
+                {"title":"Elektricien","percent":85,"why":"Jij wilt installaties aanpakken.","keys":["elektra"]}
+              ],
+              "broadening": [],
+              "practicalNotes": ["Open de banenkaart en filter op hoge match."]
+            }
+            """;
+        var compass = CareerCompassJson.TryDeserialize(json);
+        Assert.NotNull(compass);
+        Assert.True(compass!.SuperMatches.Count >= 3);
+        Assert.All(compass.SuperMatches, m => Assert.InRange(m.Percent, 95, 100));
+        Assert.Equal("Medewerker tuinbouw", compass.SuperMatches[0].Title);
+        Assert.True(compass.SuperMatches[0].Percent >= compass.SuperMatches[^1].Percent);
+        Assert.NotEmpty(compass.StrongChoices);
+        Assert.All(compass.StrongChoices, m => Assert.InRange(m.Percent, 85, 94));
+        Assert.True(compass.SuperMatches[^1].Percent > compass.StrongChoices[0].Percent);
         AssertNoJargon(compass);
     }
 

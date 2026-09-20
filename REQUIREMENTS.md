@@ -104,7 +104,7 @@ Kernpunten:
 - **Matchingspercentage** op banenkaart met breakdown-modal en actie-adviezen
 - **Competentietest (Quick-Scan / 25 vragen)** op het kandidaatprofiel: Big Five / OCEAN; draft tussentijds opslaan; scores + tags voeden matching en talentpool
 - **Beroepentest (Quick-Scan / 25 vragen):** richting in gewone taal; **Mijn Beroepen-kompas**; dynamische **Top 10 actieve vacatures** (≥ 60%, aflopend)
-- **Diepte-analyses (150 unieke vragen, € 2,99 per test):** 30 per Big Five-trek (competentie) en 25 per beroepsrichting; Mollie iDEAL; verrijkte tags + loopbaan-PDF (gekleurd logo, algemene NL-beroepen via OpenAI in Super-match / Sterke keus / Handige verbreding, *Wat betekent dit voor jou?*)
+- **Diepte-analyses (150 unieke vragen, € 2,99 per test):** 30 per Big Five-trek (competentie) en 25 per beroepsrichting; Mollie iDEAL; OpenAI vult de loopbaan-PDF (logo, Super-match 95–100 als kernfit / Sterke keus / Handige verbreding, *Wat betekent dit voor jou?*) en schrijft top-beroepen naar **Mijn Beroepen-kompas**
 - **Banenkaart:** uitgebreide beroepentest weegt zwaarder; algemene beroepstags uit het kompas matchen actuele vacatures (zoekwoorden, niet hardcoded Lobsy-aanbod)
 - **Gulden Middenweg** bij solliciteren (&lt; 50%): OTP tegenhouden, profiel aanpassen of vangnet
 - **Optioneel motivatieveld** op sollicitatieformulier

@@ -14,7 +14,7 @@ Alle noemenswaardige wijzigingen aan dit project worden in dit bestand bijgehoud
 ## [Unreleased]
 
 ### Added
-- Loopbaan-PDF na de uitgebreide beroepentest (150): gekleurd Lobsy-logo, Jip-en-Janneke-taal (geen RIASEC/OCEAN), **algemene Nederlandse beroepen** (OpenAI; lokale catalogus als fallback) in **Super-match (>95%)** / **Sterke keus (>85%)** / **Handige verbreding (>75%)**, plus **Wat betekent dit voor jou?** — niet beperkt tot vacatures die nu op Lobsy staan.
+- Loopbaan-PDF na de uitgebreide beroepentest (150): OpenAI-prompt dwingt een hiërarchie af (Super-match 95–100 als kernfit, nooit te laag), Jip-en-Janneke zonder extraversie/neuroticisme, gekleurd Lobsy-logo, *Wat betekent dit voor jou?* (werkplek, taken, banenkaart). Resultaat vult PDF én **Mijn Beroepen-kompas**.
 - **Mijn Beroepen-kompas** slaat die algemene beroepen (inclusief zoeksleutels) op in het kandidaatprofiel; de banenkaart vertaalt ze naar actuele advertenties (bijv. verpleegkundige → vacatures in Den Haag/Westland).
 - Privacyverklaring en consentversie **2026-09-21**: OpenAI-doorgifte van anonieme beroepentest-antwoorden voor het kompas; export bevat `CompassJson`.
 - **Mijn Lobsy Kompas** op `/home` (kandidaat): visuele competentie-balans, beroepen-kompas en bewerkbare harde criteria (reistijd, vervoer incl. e-bike, rijbewijs, beschikbaarheid per direct/parttime/seizoenswerk) plus PDF-download van de 150-vragen analyse.

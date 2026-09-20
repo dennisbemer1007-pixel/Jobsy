@@ -444,6 +444,8 @@ public static class UatScriptRunner
             Assert.Contains("json_object", gen, StringComparison.Ordinal);
             var prompt = CareerCompassPrompt.System;
             Assert.Contains("Nederlandse arbeidsmarkt", prompt, StringComparison.Ordinal);
+            Assert.Contains("extraversie", prompt, StringComparison.OrdinalIgnoreCase);
+            Assert.Contains("95-100", prompt, StringComparison.Ordinal);
             Assert.DoesNotContain("Lobsy-vacature", prompt, StringComparison.OrdinalIgnoreCase);
             var merge = File.ReadAllText(Path.Combine(RepoRoot.Find(), "Jobsy.Infrastructure/Services/DeepAnalysisService.cs"));
             Assert.Contains("CompassJson", merge, StringComparison.Ordinal);

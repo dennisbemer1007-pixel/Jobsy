@@ -138,7 +138,7 @@ public sealed class AssessmentReportPdfService : IAssessmentReportPdfService
                 {
                     col.Spacing(10);
                     col.Item().Text(
-                            "Geen ingewikkelde testtaal: dit is een helder overzicht van werk dat bij jou past, op basis van 150 vragen.")
+                            "Dit rapport is persoonlijk en positief: bovenaan staan de beroepen die het best bij jouw 150 antwoorden passen. Daarna volgen sterke alternatieven en ruimer werk om verder te kijken. Geen ingewikkelde testtaal.")
                         .FontColor(Muted).Italic();
 
                     if (compass.Strengths.Count > 0)

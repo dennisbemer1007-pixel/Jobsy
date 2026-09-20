@@ -21,12 +21,9 @@ public static class CareerCompassSanitize
         var strengths = CleanTexts(dto.Strengths, 5);
         var allJobs = CleanJobs(
             (dto.SuperMatches ?? []).Concat(dto.StrongChoices ?? []).Concat(dto.Broadening ?? []).ToList());
-        var super = TakeBand(allJobs, CareerCompassBuilder.BandSuper);
-        var strong = TakeBand(allJobs, CareerCompassBuilder.BandStrong);
-        var broaden = TakeBand(allJobs, CareerCompassBuilder.BandBroaden);
         var notes = CleanTexts(dto.PracticalNotes, MaxNotes);
 
-        if (super.Count == 0 && strong.Count == 0 && broaden.Count == 0 && notes.Count == 0)
+        if (allJobs.Count == 0 && notes.Count == 0 && strengths.Count == 0)
         {
             return null;
         }
@@ -35,27 +32,18 @@ public static class CareerCompassSanitize
         {
             notes =
             [
+                "Jij floreert waar de taken lijken op jouw top-beroepen: herkenbaar werk, in een sfeer die bij je past.",
                 "Open de banenkaart. Vacatures die lijken op jouw top-beroepen scoren hoger — ook als de functienaam nét anders is."
             ];
         }
 
-        return new CareerCompassSnapshot(
+        return CareerCompassHierarchy.FromOccupations(
             strengths,
-            super,
-            strong,
-            broaden,
+            allJobs,
             notes,
             dto.FromDeepAnalysis || fromOpenAi,
             fromOpenAi || dto.FromOpenAi);
     }
-
-    private static List<CareerOccupationMatch> TakeBand(IReadOnlyList<CareerOccupationMatch> items, string band)
-        => items
-            .Where(m => m.Band == band)
-            .OrderByDescending(m => m.Percent)
-            .ThenBy(m => m.Title, StringComparer.OrdinalIgnoreCase)
-            .Take(MaxPerBand)
-            .ToList();
 
     private static List<CareerOccupationMatch> CleanJobs(IReadOnlyList<CareerCompassJson.OccupationDto> items)
     {
