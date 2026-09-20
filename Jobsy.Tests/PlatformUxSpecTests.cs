@@ -34,7 +34,7 @@ public class PlatformUxSpecTests
     public void Auth_preserves_vacancy_return_url()
     {
         Assert.Equal("/vacancies/123", AuthRedirects.ResolveCandidateReturnUrl("/vacancies/123", true));
-        Assert.Equal(AuthRedirects.BanenkaartPath, AuthRedirects.ResolveCandidateReturnUrl("/home", false));
+        Assert.Equal("/home", AuthRedirects.ResolveCandidateReturnUrl("/home", false));
     }
 
     [Fact]

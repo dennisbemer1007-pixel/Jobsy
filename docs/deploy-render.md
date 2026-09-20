@@ -62,7 +62,7 @@ De Blueprint houdt `JobsyAuth__AllowDevelopmentAuth=true` zodat demo-login via d
 - Buiten Development accepteert header-auth `@jobsy.local` demo-accounts met de gedeelde secret; echte registratie-/OAuth-gebruikers sturen ook `X-Jobsy-Local-Session` (HMAC met `LocalSessionSigningKey`, vernieuwd bij session-activity).
 - OAuth client-secrets vereisen een aparte `JobsyAuth__ExternalProvisionSecret` (niet dezelfde DevelopmentAuthSecret; Web gebruikt geen DevelopmentAuthSecret-fallback meer).
 - Production custom domain: `PublicWebBaseUrl=https://lobsy.nl` + CORS voor `lobsy.nl` / `www.lobsy.nl`.
-- Acceptatie gebruikt het `onrender.com`-subdomein van `lobsy-acc-web` (geen `lobsy.nl` in CORS).
+- Acceptatie: CORS voor het `onrender.com`-subdomein van `lobsy-acc-web` én `https://acceptatie.lobsy.nl`.
 
 - `JobsyAuth__DevelopmentAuthSecret` wordt per environment gegenereerd op de API en gedeeld met de web-service van **diezelfde** environment.
 - `JobsyAuth__LocalSessionSigningKey` wordt apart gegenereerd en gedeeld voor HMAC-sessietokens van niet-demo gebruikers.

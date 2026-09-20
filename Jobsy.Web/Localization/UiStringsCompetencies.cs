@@ -192,7 +192,8 @@ internal static class UiStringsCompetencies
         ["Kompas.PreferredEmpty"] = "Nog geen branches gekozen. Zet ze hier of in je profiel.",
         ["Kompas.LicenseNone"] = "Geen rijbewijs",
         ["Kompas.Saved"] = "Je criteria zijn opgeslagen. Matches op de banenkaart worden live herberekend.",
-        ["Kompas.OpenMap"] = "Naar de banenkaart"
+        ["Kompas.OpenMap"] = "Naar de banenkaart",
+        ["Kompas.Nav"] = "Kompas"
     };
 
     private static Dictionary<string, string> En() => new(StringComparer.OrdinalIgnoreCase)
@@ -361,6 +362,7 @@ internal static class UiStringsCompetencies
         ["Kompas.PreferredEmpty"] = "No sectors chosen yet. Set them here or in your profile.",
         ["Kompas.LicenseNone"] = "No driving licence",
         ["Kompas.Saved"] = "Your criteria are saved. Matches on the job map are recalculated live.",
-        ["Kompas.OpenMap"] = "Open the job map"
+        ["Kompas.OpenMap"] = "Open the job map",
+        ["Kompas.Nav"] = "Compass"
     };
 }

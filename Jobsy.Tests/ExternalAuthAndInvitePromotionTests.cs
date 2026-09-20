@@ -76,7 +76,7 @@ public class ExternalAuthAndInvitePromotionTests
             AuthRedirects.CandidateHowToPath,
             AuthRedirects.CandidatePostLoginUrl(showCandidateHowTo: true));
         Assert.Equal(
-            AuthRedirects.BanenkaartPath,
+            "/home",
             AuthRedirects.CandidatePostLoginUrl(showCandidateHowTo: false));
     }
 
@@ -90,7 +90,7 @@ public class ExternalAuthAndInvitePromotionTests
             AuthRedirects.CandidateHowToPath,
             AuthRedirects.ResolveCandidateReturnUrl("/home", showCandidateHowTo: true));
         Assert.Equal(
-            AuthRedirects.BanenkaartPath,
+            "/home",
             AuthRedirects.ResolveCandidateReturnUrl("/", showCandidateHowTo: false));
         Assert.True(AuthRedirects.IsGenericPostLoginLanding("/banen"));
         Assert.False(AuthRedirects.IsGenericPostLoginLanding("/vacancies/1"));

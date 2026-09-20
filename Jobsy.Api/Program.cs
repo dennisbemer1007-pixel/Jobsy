@@ -64,6 +64,12 @@ builder.Services.AddHostedService<MinimumWageUpdateHostedService>();
 var allowedOrigins = (builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>()
     ?? ["http://localhost:5201", "https://localhost:5201"])
     .Select(JobsyPublicUrl.NormalizeOrigin)
+    .Concat(
+    [
+        "https://acceptatie.lobsy.nl",
+        "https://lobsy.nl",
+        "https://www.lobsy.nl"
+    ])
     .Where(o => !string.IsNullOrWhiteSpace(o))
     .Distinct(StringComparer.OrdinalIgnoreCase)
     .ToArray();
@@ -183,6 +189,11 @@ app.UseForwardedHeaders();
 app.UseResponseCompression();
 app.UseMiddleware<ExceptionHandlingMiddleware>();
 
+static string DeployedGitCommit() =>
+    Environment.GetEnvironmentVariable("RENDER_GIT_COMMIT")
+    ?? Environment.GetEnvironmentVariable("GIT_COMMIT")
+    ?? "local";
+
 // Short-circuit before auth/HTTPS so Render probes always get 200 once Kestrel listens.
 app.Use(async (context, next) =>
 {
@@ -190,8 +201,9 @@ app.Use(async (context, next) =>
         && context.Request.Path.Equals("/health", StringComparison.OrdinalIgnoreCase))
     {
         context.Response.StatusCode = StatusCodes.Status200OK;
-        context.Response.ContentType = "application/json; charset=utf-8";
-        await context.Response.WriteAsync("""{"status":"ok"}""", context.RequestAborted);
+        await context.Response.WriteAsJsonAsync(
+            new { status = "ok", commit = DeployedGitCommit() },
+            context.RequestAborted);
         return;
     }
 
@@ -253,9 +265,7 @@ app.UseAuthorization();
 app.MapGet("/health", () => Results.Ok(new
     {
         status = "ok",
-        commit = Environment.GetEnvironmentVariable("RENDER_GIT_COMMIT")
-            ?? Environment.GetEnvironmentVariable("GIT_COMMIT")
-            ?? "local"
+        commit = DeployedGitCommit()
     }))
     .AllowAnonymous();
 

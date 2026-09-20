@@ -9,7 +9,7 @@ public static partial class AuthRedirects
 
     /// <summary>Post-login landing for a candidate based on first-login how-to flag.</summary>
     public static string CandidatePostLoginUrl(bool showCandidateHowTo)
-        => showCandidateHowTo ? CandidateHowToPath : BanenkaartPath;
+        => showCandidateHowTo ? CandidateHowToPath : "/home";
 
     /// <summary>
     /// Generic landings that may be replaced by the candidate how-to / banenkaart.
