@@ -253,6 +253,7 @@ public static class DependencyInjection
         services.AddScoped<ICvExtractionService, CvExtractionService>();
         services.AddScoped<IProfileVacancyMatchService, ProfileVacancyMatchService>();
         services.AddScoped<ICandidateCompetencyService, CandidateCompetencyService>();
+        services.AddScoped<ICandidateCareerInterestService, CandidateCareerInterestService>();
         services.AddHttpClient(CareerCompassGenerationService.HttpClientName, client =>
         {
             client.Timeout = TimeSpan.FromSeconds(45);

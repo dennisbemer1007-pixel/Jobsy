@@ -17,7 +17,7 @@ public class CareerCompassGenerationServiceTests
     public async Task Without_api_key_uses_local_general_catalog()
     {
         var sut = CreateSut(new RecordingHandler(), apiKey: null);
-        var result = await sut.GenerateFromCareerDeepAsync(AllAgree());
+        var result = await sut.GenerateFromCareerDeepAsync(PeakAll());
         Assert.False(result.FromOpenAi);
         Assert.True(result.FromDeepAnalysis);
         Assert.True(result.HasOccupations);
@@ -46,7 +46,7 @@ public class CareerCompassGenerationServiceTests
             """;
         var handler = new RecordingHandler { ResponseJson = WrapChat(inner) };
         var sut = CreateSut(handler, apiKey: "sk-test");
-        var result = await sut.GenerateFromCareerDeepAsync(AllAgree());
+        var result = await sut.GenerateFromCareerDeepAsync(PeakAll());
 
         Assert.True(result.FromOpenAi);
         Assert.True(result.FromDeepAnalysis);
@@ -64,14 +64,14 @@ public class CareerCompassGenerationServiceTests
     {
         var handler = new RecordingHandler { Status = HttpStatusCode.InternalServerError };
         var sut = CreateSut(handler, apiKey: "sk-test");
-        var result = await sut.GenerateFromCareerDeepAsync(AllAgree());
+        var result = await sut.GenerateFromCareerDeepAsync(PeakAll());
         Assert.False(result.FromOpenAi);
         Assert.True(result.FromDeepAnalysis);
         Assert.True(result.HasOccupations);
     }
 
-    private static Dictionary<int, int> AllAgree()
-        => DeepAnalysisCatalog.CareerQuestions.ToDictionary(q => q.Id, _ => 5);
+    private static Dictionary<int, int> PeakAll()
+        => DeepAnalysisCatalog.CareerQuestions.ToDictionary(q => q.Id, q => q.Reverse ? 1 : 5);
 
     private static string WrapChat(string content)
         => JsonSerializer.Serialize(new

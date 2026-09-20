@@ -217,6 +217,10 @@ public class CareerCompassTests
         Assert.Contains("ResolveCompass", interest, StringComparison.Ordinal);
         Assert.DoesNotContain("CompassJson =", interest, StringComparison.Ordinal);
 
+        var di = File.ReadAllText(Path.Combine(root, "Jobsy.Infrastructure/DependencyInjection.cs"));
+        Assert.Contains("ICandidateCareerInterestService", di, StringComparison.Ordinal);
+        Assert.Contains("ICareerCompassGenerationService", di, StringComparison.Ordinal);
+
         var merge = File.ReadAllText(Path.Combine(root, "Jobsy.Infrastructure/Services/DeepAnalysisService.cs"));
         Assert.Contains("ToRiasecScores", merge, StringComparison.Ordinal);
         Assert.Contains("RealisticPercent = riasec.Realistic", merge, StringComparison.Ordinal);
