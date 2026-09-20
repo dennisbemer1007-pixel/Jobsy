@@ -338,7 +338,7 @@ public static class ProfileVacancyMatchCalculator
                     worstGap,
                     $"Hier ligt de uitdaging: de baan vraagt meer {Label(worstGap).ToLowerInvariant()} ({targets.Get(worstGap)}%) dan jouw test nu laat zien ({cand.Get(worstGap)}%). Dat is het stukje dat nog niet matcht."));
             }
-            else if (competency01 is >= 0.75)
+            else if (bestFit is null && competency01 is >= 0.75)
             {
                 why.Add(new(
                     "competency",
@@ -394,8 +394,29 @@ public static class ProfileVacancyMatchCalculator
                 "Geen groot gat: kleine verschillen in uren of reistijd kunnen het percentage nog een tikje lager zetten dan 100%."));
         }
 
-        return (why.Take(3).ToList(), gaps.Take(3).ToList());
+        return (PrioritizeExplain(why), PrioritizeExplain(gaps));
     }
+
+    /// <summary>
+    /// Card/popup summaries keep three lines; travel + competency + RIASEC beat generic day-part copy.
+    /// </summary>
+    private static IReadOnlyList<ProfileMatchExplainPoint> PrioritizeExplain(
+        IReadOnlyList<ProfileMatchExplainPoint> points)
+        => points
+            .GroupBy(p => p.Kind, StringComparer.Ordinal)
+            .Select(g => g.First())
+            .OrderBy(p => p.Kind switch
+            {
+                "travel" => 0,
+                "competency" => 1,
+                "interest" => 2,
+                "hours" => 3,
+                "experience" => 4,
+                "dayparts" => 5,
+                _ => 6
+            })
+            .Take(3)
+            .ToList();
 
     private static List<string> SharedWorkTypes(ProfileVacancyMatchInput input)
     {

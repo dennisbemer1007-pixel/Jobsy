@@ -298,6 +298,7 @@ public class CompetencyMatchingTests
         Assert.True(match.InterestScore01 >= 0.4);
         Assert.Contains(match.Why, w => w.Kind == "interest");
         Assert.Contains(ProfileVacancyMatchCalculator.WhyHeadlines(match), h => h == "Beroepsinteresse past");
+        Assert.Contains(ProfileVacancyMatchCalculator.WhyHeadlines(match), h => h is "Goede reistijd" or "Sterke competentie-match");
     }
 
     [Fact]
