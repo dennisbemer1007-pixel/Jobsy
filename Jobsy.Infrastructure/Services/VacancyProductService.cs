@@ -112,6 +112,10 @@ public sealed class VacancyProductService : IVacancyProductService
             pricing.PublishCostTokens,
             (await _features.GetAsync(cancellationToken)).FreePublishUntil,
             DateTime.UtcNow);
+        if (publishCost > 0 && await HasActiveAgencySubscriptionAsync(vacancy.CompanyId, cancellationToken))
+        {
+            publishCost = 0m;
+        }
         var highlightCost = pricing.HighlightCostTokens;
         var highlightDays = await _salesCommercial.GetHighlightDaysAsync(cancellationToken);
 
@@ -378,6 +382,10 @@ public sealed class VacancyProductService : IVacancyProductService
             pricing.PublishCostTokens,
             (await _features.GetAsync(cancellationToken)).FreePublishUntil,
             DateTime.UtcNow);
+        if (publishCost > 0 && await HasActiveAgencySubscriptionAsync(vacancy.CompanyId, cancellationToken))
+        {
+            publishCost = 0m;
+        }
         var highlightCost = pricing.HighlightCostTokens;
         var highlightDays = await _salesCommercial.GetHighlightDaysAsync(cancellationToken);
         costOverrides ??= new Dictionary<TokenSpendReason, decimal>();
@@ -1297,6 +1305,20 @@ public sealed class VacancyProductService : IVacancyProductService
         }
 
         return null;
+    }
+
+    private async Task<bool> HasActiveAgencySubscriptionAsync(
+        Guid companyId,
+        CancellationToken cancellationToken)
+    {
+        var now = DateTime.UtcNow;
+        return await _db.AgencyAnnualSubscriptions.AsNoTracking()
+            .AnyAsync(
+                s => s.CompanyId == companyId
+                     && s.IsActive
+                     && s.StartsAtUtc <= now
+                     && s.EndsAtUtc > now,
+                cancellationToken);
     }
 
     private static VacancyProductOutcome Fail(Vacancy vacancy, string message)

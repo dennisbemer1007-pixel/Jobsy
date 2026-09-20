@@ -751,6 +751,74 @@ public sealed class JobsyApiClient : IAsyncDisposable
         }
     }
 
+    public async Task<List<AnonymousTalentCard>?> SearchTalentPoolAsync(
+        string? tags,
+        int? maxTravelMinutes,
+        string? drivingLicense,
+        CancellationToken ct = default)
+    {
+        var qs = new List<string>();
+        if (!string.IsNullOrWhiteSpace(tags))
+        {
+            qs.Add($"tags={Uri.EscapeDataString(tags)}");
+        }
+
+        if (maxTravelMinutes is int m)
+        {
+            qs.Add($"maxTravelMinutes={m}");
+        }
+
+        if (!string.IsNullOrWhiteSpace(drivingLicense))
+        {
+            qs.Add($"drivingLicense={Uri.EscapeDataString(drivingLicense)}");
+        }
+
+        var url = "api/employer/talent/search" + (qs.Count == 0 ? "" : "?" + string.Join('&', qs));
+        try
+        {
+            return await _http.GetFromJsonAsync<List<AnonymousTalentCard>>(url, ct);
+        }
+        catch (HttpRequestException)
+        {
+            return [];
+        }
+    }
+
+    public async Task UnlockTalentContactAsync(Guid candidateUserId, string message, CancellationToken ct = default)
+    {
+        var response = await _http.PostAsJsonAsync(
+            "api/employer/talent/unlock",
+            new { candidateUserId, message },
+            ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException(ExtractMessage(body) ?? "Contact ontgrendelen mislukt.");
+        }
+    }
+
+    public async Task<List<TalentContactRequestModel>?> ListEmployerTalentContactsAsync(CancellationToken ct = default)
+    {
+        try
+        {
+            return await _http.GetFromJsonAsync<List<TalentContactRequestModel>>("api/employer/talent/requests", ct);
+        }
+        catch (HttpRequestException)
+        {
+            return [];
+        }
+    }
+
+    public async Task WithdrawTalentContactAsync(Guid requestId, CancellationToken ct = default)
+    {
+        var response = await _http.PostAsync($"api/employer/talent/{requestId}/withdraw", null, ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException(ExtractMessage(body) ?? "Intrekken mislukt.");
+        }
+    }
+
     public async Task<CandidateCompetencyState> SaveMyCompetenciesAsync(
         IReadOnlyDictionary<int, int> answers,
         bool complete,

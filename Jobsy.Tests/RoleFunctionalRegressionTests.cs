@@ -342,7 +342,7 @@ public class RoleFunctionalRegressionTests : IClassFixture<RoleFunctionalWebAppF
     {
         var client = CandidateClient();
         var start = await client.GetFromJsonAsync<JsonElement>("api/me/competencies", JsonOpts);
-        Assert.Equal(20, start.GetProperty("questionCount").GetInt32());
+        Assert.Equal(25, start.GetProperty("questionCount").GetInt32());
         Assert.Equal("Draft", start.GetProperty("status").GetString());
 
         var draftAnswers = new Dictionary<string, int> { ["1"] = 4, ["2"] = 5, ["6"] = 3 };
@@ -357,12 +357,12 @@ public class RoleFunctionalRegressionTests : IClassFixture<RoleFunctionalWebAppF
         var tooSoon = await client.PutAsJsonAsync("api/me/competencies", new { answers = draftAnswers, complete = true });
         Assert.Equal(HttpStatusCode.BadRequest, tooSoon.StatusCode);
 
-        var full = Enumerable.Range(1, 20).ToDictionary(i => i.ToString(), _ => 4);
+        var full = Enumerable.Range(1, 25).ToDictionary(i => i.ToString(), _ => 4);
         var complete = await client.PutAsJsonAsync("api/me/competencies", new { answers = full, complete = true });
         Assert.Equal(HttpStatusCode.OK, complete.StatusCode);
         var done = await complete.Content.ReadFromJsonAsync<JsonElement>(JsonOpts);
         Assert.Equal("Completed", done.GetProperty("status").GetString());
-        Assert.Equal(20, done.GetProperty("answeredCount").GetInt32());
+        Assert.Equal(25, done.GetProperty("answeredCount").GetInt32());
         var scores = done.GetProperty("scores");
         Assert.InRange(scores.GetProperty("samenwerken").GetInt32(), 0, 100);
         Assert.InRange(scores.GetProperty("innovatie").GetInt32(), 0, 100);
@@ -391,7 +391,7 @@ public class RoleFunctionalRegressionTests : IClassFixture<RoleFunctionalWebAppF
         Assert.Equal(HttpStatusCode.BadRequest, emptyWipe.StatusCode);
         var still = await client.GetFromJsonAsync<JsonElement>("api/me/competencies", JsonOpts);
         Assert.Equal("Completed", still.GetProperty("status").GetString());
-        Assert.Equal(20, still.GetProperty("answeredCount").GetInt32());
+        Assert.Equal(25, still.GetProperty("answeredCount").GetInt32());
         var stillScores = still.GetProperty("scores");
         Assert.InRange(stillScores.GetProperty("samenwerken").GetInt32(), 0, 100);
     }

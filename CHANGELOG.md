@@ -14,7 +14,11 @@ Alle noemenswaardige wijzigingen aan dit project worden in dit bestand bijgehoud
 ## [Unreleased]
 
 ### Added
-- Kandidaat **competentietest** (20 Likert-vragen, Big Five/OCEAN → Samenwerken, Resultaatgerichtheid, Stressbestendigheid, Innovatie). Tabel `CandidateCompetencies`, tussentijds Draft, later aanpassen; scores 0–100% op het profiel (balken + radar). Rechts **Top 10 vacatures** (≥ 60%, aflopend) met `?`-uitleg waarom de match hoog is en waar het gat zit.
+- **Lobsy Platform master-spec** (`docs/FUNCTIONELE_SPECIFICATIES_LOBSY_PLATFORM.md`): Quick-Scan **25** vragen (Big Five + RIASEC), diepte-analyse **150** vragen (€ 2,99 Mollie-stub), anonieme werkgever-talentpool (geen leeftijdsfilter), ContactUnlock **1 token** + **48-uurs** refund, Flex-marge **€ 2,00/uur**, uitzend-jaarabonnement **€ 4.000**.
+- API: `api/employer/talent/*`, `api/me/talent-contacts`, `api/me/deep-analysis`; UI: `/employer/talent`, `/employer/talent-contacts`.
+
+### Changed
+- Kandidaat **competentietest** uitgebreid van 20 → 25 (RIASEC-tags + match-tags op `CandidateCompetencies`).
 - Live **KVK Handelsregister**-koppeling: bij API-key (Admin → Integraties of `Kvk__ApiKey` / `KVK_API_KEY`) zoekt Lobsy echte vestigingen; zonder key blijft de demo-stub. Base URL leeg = `https://api.kvk.nl/api/` (test: `https://api.kvk.nl/test/api/`).
 - Register-wizard: kruimelpad, KVK-adres met i-toelichting (vestigingsnummer + SBI achter het i-tje), stil logo, knoptekst ‘Bevestigen’ niet meer afgeknipt, geen ‘Open verificatielink’.
 - `/health` en HTML-meta `lobsy-commit` tonen de Render git-SHA zodat productie verifieerbaar is.

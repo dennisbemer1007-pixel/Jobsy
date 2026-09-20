@@ -84,7 +84,7 @@ public sealed class CandidateCompetencyService : ICandidateCompetencyService
         {
             if (preview is not { IsComplete: true })
             {
-                throw new InvalidOperationException("Beantwoord alle 20 vragen om de test af te ronden.");
+                throw new InvalidOperationException("Beantwoord alle 25 vragen om de Quick-Scan af te ronden.");
             }
 
             row.Status = CandidateCompetencyStatuses.Completed;
@@ -92,6 +92,10 @@ public sealed class CandidateCompetencyService : ICandidateCompetencyService
             row.ResultaatgerichtheidPercent = preview.Resultaatgerichtheid;
             row.StressbestendigheidPercent = preview.Stressbestendigheid;
             row.InnovatiePercent = preview.Innovatie;
+            var riasec = CompetencyTestCatalog.DeriveRiasecTags(answers);
+            row.RiasecTagsJson = CompetencyTestCatalog.SerializeTags(riasec);
+            row.MatchTagsJson = CompetencyTestCatalog.SerializeTags(
+                CompetencyTestCatalog.DeriveMatchTags(preview, riasec));
             row.CompletedAtUtc = now;
         }
         else
@@ -101,6 +105,8 @@ public sealed class CandidateCompetencyService : ICandidateCompetencyService
             row.ResultaatgerichtheidPercent = null;
             row.StressbestendigheidPercent = null;
             row.InnovatiePercent = null;
+            row.RiasecTagsJson = "[]";
+            row.MatchTagsJson = "[]";
             row.CompletedAtUtc = null;
         }
 
@@ -225,8 +231,11 @@ public sealed class CandidateCompetencyService : ICandidateCompetencyService
             row?.CompletedAtUtc,
             row?.UpdatedAtUtc,
             CompetencyTestCatalog.Questions
-                .Select(q => new CompetencyQuestionDto(q.Id, q.Category, q.Reverse, q.TextKey))
-                .ToList());
+                .Select(q => new CompetencyQuestionDto(q.Id, q.Category, q.Reverse, q.TextKey, q.IsRiasec))
+                .ToList(),
+            CompetencyTestCatalog.ParseTagsJson(row?.RiasecTagsJson),
+            CompetencyTestCatalog.ParseTagsJson(row?.MatchTagsJson),
+            DeepAnalysisService.UpsellCopyNl);
     }
 
     private static CandidatePreferencesDto DeserializePrefs(string? json)

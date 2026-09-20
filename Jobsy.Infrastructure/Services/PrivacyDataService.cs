@@ -821,6 +821,30 @@ public sealed class PrivacyDataService : IPrivacyDataService
             _db.CandidateCompetencies.RemoveRange(competencies);
         }
 
+        var deepAnalyses = await _db.CandidateDeepAnalyses
+            .Where(d => d.UserId == user.Id)
+            .ToListAsync(cancellationToken);
+        if (deepAnalyses.Count > 0)
+        {
+            _db.CandidateDeepAnalyses.RemoveRange(deepAnalyses);
+        }
+
+        var deepCheckouts = await _db.DeepAnalysisCheckouts
+            .Where(c => c.UserId == user.Id)
+            .ToListAsync(cancellationToken);
+        if (deepCheckouts.Count > 0)
+        {
+            _db.DeepAnalysisCheckouts.RemoveRange(deepCheckouts);
+        }
+
+        var talentAsCandidate = await _db.TalentContactRequests
+            .Where(r => r.CandidateUserId == user.Id || r.EmployerUserId == user.Id)
+            .ToListAsync(cancellationToken);
+        if (talentAsCandidate.Count > 0)
+        {
+            _db.TalentContactRequests.RemoveRange(talentAsCandidate);
+        }
+
         var applicationIds = applications.Select(a => a.Id).ToList();
         var applicationCvs = await _db.ApplicationUploadedCvs
             .Where(c => applicationIds.Contains(c.ApplicationId))

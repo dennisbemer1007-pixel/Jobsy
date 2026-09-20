@@ -8,12 +8,12 @@ using Microsoft.Extensions.Logging;
 namespace Jobsy.Infrastructure.Data;
 
 /// <summary>
-/// Assigns the seven built-in vacancy categories across banenkaart mock vacancies
+/// Assigns the built-in vacancy categories across banenkaart mock vacancies
 /// so filters, legend colors and map-popup type badges are all demonstrable.
 /// </summary>
 internal static class SeedVacancyCategoryMix
 {
-    public const string Marker = "Banenkaart vacancy category mix v1";
+    public const string Marker = "Banenkaart vacancy category mix v2";
 
     public readonly record struct Mix(
         Guid CategoryId,
@@ -22,7 +22,7 @@ internal static class SeedVacancyCategoryMix
         bool PreferHighlight);
 
     /// <summary>
-    /// Cycles all seven categories. Every second Regulier slot also gets
+    /// Cycles all built-in categories. Every second Regulier slot also gets
     /// <see cref="Vacancy.SuitableFor65Plus"/> so the 65+ filter works outside the dedicated category.
     /// Highlight-category slots prefer an active Uitgelicht flag for carousel/pulse demos.
     /// </summary>
@@ -30,8 +30,9 @@ internal static class SeedVacancyCategoryMix
     {
         ArgumentOutOfRangeException.ThrowIfLessThan(oneBasedIndex, 1);
 
-        var cycle = (oneBasedIndex - 1) / 7;
-        var slot = (oneBasedIndex - 1) % 7;
+        var cycleLength = VacancyCategoryDefaults.All.Count;
+        var cycle = (oneBasedIndex - 1) / cycleLength;
+        var slot = (oneBasedIndex - 1) % cycleLength;
         return slot switch
         {
             0 => new Mix(
@@ -64,9 +65,14 @@ internal static class SeedVacancyCategoryMix
                 VacancyKind.Internship,
                 SuitableFor65Plus: false,
                 PreferHighlight: false),
-            _ => new Mix(
+            6 => new Mix(
                 VacancyCategoryDefaults.SeniorLightId,
                 VacancyKind.Regular,
+                SuitableFor65Plus: false,
+                PreferHighlight: false),
+            _ => new Mix(
+                VacancyCategoryDefaults.FlexId,
+                VacancyKind.Flex,
                 SuitableFor65Plus: false,
                 PreferHighlight: false)
         };
@@ -150,7 +156,7 @@ internal static class SeedVacancyCategoryMix
         });
         await db.SaveChangesAsync();
         logger.LogInformation(
-            "Vacancy category mix applied to {Updated} mock vacancies (all seven types).",
+            "Vacancy category mix applied to {Updated} mock vacancies (all built-in types).",
             updated);
     }
 

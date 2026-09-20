@@ -1,0 +1,64 @@
+@page "/employer/talent-contacts"
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "BranchManager,RegionalManager,EnterpriseManager,Intermediary")]
+@inject JobsyApiClient Api
+@inject CultureState Culture
+
+<PageTitle>@Culture["Talent.Title"] · Lobsy</PageTitle>
+
+<div class="panel-page">
+    <header class="saved-gate__header">
+        <h1>Contactverzoeken</h1>
+        <p class="login-lead">48-uurs reactievenster. Zonder reactie kun je intrekken en het token terugkrijgen.</p>
+        <p><a href="/employer/talent">← Terug naar talentpool</a></p>
+    </header>
+
+    @if (!string.IsNullOrEmpty(_message))
+    {
+        <p class="state-message">@_message</p>
+    }
+
+    @foreach (var row in _rows)
+    {
+        <article class="detail-card">
+            <p>Status: <strong>@row.Status</strong></p>
+            <p>Reageer vóór: @row.RespondByUtc.ToLocalTime().ToString("g")</p>
+            <p>@row.Message</p>
+            @if (row.PiiRevealed)
+            {
+                <p>@row.CandidateFullName · @row.CandidateEmail · @row.CandidatePhone</p>
+            }
+            else
+            {
+                <p class="profile-address__hint">Contactgegevens nog niet gedeeld (anoniem).</p>
+                <button class="engagement-btn" type="button" @onclick="() => WithdrawAsync(row.Id)">
+                    @Culture["Talent.Withdraw"]
+                </button>
+            }
+        </article>
+    }
+</div>
+
+@code {
+    private List<TalentContactRequestModel> _rows = [];
+    private string? _message;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _rows = await Api.ListEmployerTalentContactsAsync() ?? [];
+    }
+
+    private async Task WithdrawAsync(Guid id)
+    {
+        try
+        {
+            await Api.WithdrawTalentContactAsync(id);
+            _rows = await Api.ListEmployerTalentContactsAsync() ?? [];
+            _message = "Verzoek ingetrokken; token teruggestort indien van toepassing.";
+        }
+        catch (Exception ex)
+        {
+            _message = ex.Message;
+        }
+    }
+}

@@ -29,13 +29,17 @@ public sealed record CandidateCompetencyStateDto(
     CompetencyScores? PreviewScores,
     DateTime? CompletedAtUtc,
     DateTime? UpdatedAtUtc,
-    IReadOnlyList<CompetencyQuestionDto> Questions);
+    IReadOnlyList<CompetencyQuestionDto> Questions,
+    IReadOnlyList<string> RiasecTags,
+    IReadOnlyList<string> MatchTags,
+    string DeepAnalysisUpsellCopy);
 
 public sealed record CompetencyQuestionDto(
     int Id,
     string Category,
     bool Reverse,
-    string TextKey);
+    string TextKey,
+    bool IsRiasec = false);
 
 public sealed record CandidateMatchedVacancyDto(
     Guid Id,

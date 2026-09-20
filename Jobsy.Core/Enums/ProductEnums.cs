@@ -18,7 +18,9 @@ public enum TokenSpendReason
     Publish = 1,
     Highlight = 2,
     PushBom = 3,
-    Extend = 4
+    Extend = 4,
+    /// <summary>Unlock anonymous talent-pool contact (1 token; refundable within 48h rules).</summary>
+    ContactUnlock = 5
 }
 
 public enum ApplicationStatus

@@ -1,7 +1,7 @@
 namespace Jobsy.Core.Entities;
 
 /// <summary>
-/// Big Five / OCEAN workplace competency test (20 items) for one candidate.
+/// Quick-Scan competency test (25 items: Big Five + RIASEC) for one candidate.
 /// One row per user; draft answers may be incomplete.
 /// </summary>
 public class CandidateCompetency
@@ -20,6 +20,12 @@ public class CandidateCompetency
     public int? ResultaatgerichtheidPercent { get; set; }
     public int? StressbestendigheidPercent { get; set; }
     public int? InnovatiePercent { get; set; }
+
+    /// <summary>JSON array of RIASEC interest tags, e.g. <c>["Social","Enterprising"]</c>.</summary>
+    public string RiasecTagsJson { get; set; } = "[]";
+
+    /// <summary>JSON array of match tags derived from scores + RIASEC for talent-pool search.</summary>
+    public string MatchTagsJson { get; set; } = "[]";
 
     public DateTime CreatedAtUtc { get; set; }
     public DateTime UpdatedAtUtc { get; set; }

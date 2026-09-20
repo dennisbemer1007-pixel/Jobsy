@@ -252,6 +252,9 @@ public static class DependencyInjection
         services.AddScoped<ICvTextExtractor, CvTextExtractor>();
         services.AddScoped<ICvExtractionService, CvExtractionService>();
         services.AddScoped<ICandidateCompetencyService, CandidateCompetencyService>();
+        services.AddScoped<IDeepAnalysisService, DeepAnalysisService>();
+        services.AddScoped<ITalentPoolService, TalentPoolService>();
+        services.AddScoped<IFlexCommercialService, FlexCommercialService>();
         services.AddScoped<ICandidateMapImageService, OsmTileMapImageService>();
         services.AddHttpClient("OsmTiles", OsmTileMapImageService.ConfigureHttpClient);
         services.AddScoped<ICommissionLedgerService, CommissionLedgerService>();
@@ -284,6 +287,7 @@ public static class DependencyInjection
         services.AddScoped<IFeedbackService, FeedbackService>();
         services.AddHostedService<FeedbackAutomationPollHostedService>();
         services.AddHostedService<DataRetentionHostedService>();
+        services.AddHostedService<TalentContactRefundHostedService>();
         services.AddHostedService<UnconfirmedRegistrationCleanupHostedService>();
         services.AddHostedService<DraftVacancyCleanupHostedService>();
         services.AddHostedService<CompanyReengagementHostedService>();

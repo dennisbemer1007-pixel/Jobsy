@@ -5,12 +5,15 @@ public sealed class CandidateCompetencyState
     public string Status { get; set; } = "Draft";
     public Dictionary<string, int> Answers { get; set; } = new(StringComparer.OrdinalIgnoreCase);
     public int AnsweredCount { get; set; }
-    public int QuestionCount { get; set; } = 20;
+    public int QuestionCount { get; set; } = 25;
     public CompetencyScoreSet? Scores { get; set; }
     public CompetencyScoreSet? PreviewScores { get; set; }
     public DateTime? CompletedAtUtc { get; set; }
     public DateTime? UpdatedAtUtc { get; set; }
     public List<CompetencyQuestionItem> Questions { get; set; } = [];
+    public List<string> RiasecTags { get; set; } = [];
+    public List<string> MatchTags { get; set; } = [];
+    public string DeepAnalysisUpsellCopy { get; set; } = "";
 }
 
 public sealed class CompetencyScoreSet
@@ -33,6 +36,7 @@ public sealed class CompetencyQuestionItem
     public string Category { get; set; } = "";
     public bool Reverse { get; set; }
     public string TextKey { get; set; } = "";
+    public bool IsRiasec { get; set; }
 }
 
 public sealed class CandidateMatchedVacancy

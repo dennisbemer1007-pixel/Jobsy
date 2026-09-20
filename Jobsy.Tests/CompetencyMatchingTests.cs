@@ -5,16 +5,17 @@ namespace Jobsy.Tests;
 public class CompetencyMatchingTests
 {
     [Fact]
-    public void Catalog_has_20_items_five_per_big_five_competency()
+    public void Catalog_has_25_items_big_five_plus_riasec()
     {
-        Assert.Equal(20, CompetencyTestCatalog.QuestionCount);
-        Assert.Equal(20, CompetencyTestCatalog.Questions.Count);
+        Assert.Equal(25, CompetencyTestCatalog.QuestionCount);
+        Assert.Equal(25, CompetencyTestCatalog.Questions.Count);
         Assert.Equal(4, CompetencyTestCatalog.CategoryCodes.Length);
         foreach (var category in CompetencyTestCatalog.CategoryCodes)
         {
-            Assert.Equal(5, CompetencyTestCatalog.Questions.Count(q => q.Category == category));
+            Assert.Equal(5, CompetencyTestCatalog.Questions.Count(q => q.Category == category && !q.IsRiasec));
         }
 
+        Assert.Equal(5, CompetencyTestCatalog.Questions.Count(q => q.IsRiasec));
         Assert.Contains(CompetencyTestCatalog.Questions, q => q.Reverse);
         Assert.True(CompetencyTestCatalog.Questions.Count(q => q.Reverse) >= 8);
     }
@@ -22,7 +23,7 @@ public class CompetencyMatchingTests
     [Fact]
     public void Score_maps_likert_to_0_100_and_reverses_items()
     {
-        var high = Enumerable.Range(1, 20).ToDictionary(
+        var high = Enumerable.Range(1, 25).ToDictionary(
             i => i,
             i => CompetencyTestCatalog.Questions.First(q => q.Id == i).Reverse ? 1 : 5);
         var scores = CompetencyTestCatalog.Score(high);
@@ -33,7 +34,7 @@ public class CompetencyMatchingTests
         Assert.Equal(100, scores.Stressbestendigheid);
         Assert.Equal(100, scores.Innovatie);
 
-        var low = Enumerable.Range(1, 20).ToDictionary(
+        var low = Enumerable.Range(1, 25).ToDictionary(
             i => i,
             i => CompetencyTestCatalog.Questions.First(q => q.Id == i).Reverse ? 5 : 1);
         var lowScores = CompetencyTestCatalog.Score(low)!;
@@ -42,17 +43,59 @@ public class CompetencyMatchingTests
     }
 
     [Fact]
-    public void Draft_may_be_partial_complete_requires_all_20()
+    public void Draft_may_be_partial_complete_requires_all_25()
     {
         var partial = new Dictionary<int, int> { [1] = 4, [2] = 3 };
         Assert.Null(CompetencyTestCatalog.ValidateAnswers(partial, requireComplete: false));
         Assert.NotNull(CompetencyTestCatalog.ValidateAnswers(partial, requireComplete: true));
         Assert.False(CompetencyTestCatalog.IsComplete(partial));
 
-        var full = Enumerable.Range(1, 20).ToDictionary(i => i, _ => 3);
+        var full = Enumerable.Range(1, 25).ToDictionary(i => i, _ => 3);
         Assert.Null(CompetencyTestCatalog.ValidateAnswers(full, requireComplete: true));
         Assert.True(CompetencyTestCatalog.IsComplete(full));
         Assert.Equal(50, CompetencyTestCatalog.Score(full)!.Samenwerken);
+    }
+
+    [Fact]
+    public void Riasec_tags_derived_from_high_interest_answers()
+    {
+        var answers = Enumerable.Range(1, 25).ToDictionary(i => i, _ => 3);
+        answers[21] = 5;
+        answers[24] = 5;
+        var tags = CompetencyTestCatalog.DeriveRiasecTags(answers);
+        Assert.Contains(CompetencyTestCatalog.RiasecRealistic, tags);
+        Assert.Contains(CompetencyTestCatalog.RiasecSocial, tags);
+    }
+
+    [Fact]
+    public void Deep_analysis_catalog_has_150_questions()
+    {
+        Assert.Equal(150, DeepAnalysisCatalog.QuestionCount);
+        Assert.Equal(150, DeepAnalysisCatalog.Questions.Count);
+    }
+
+    [Fact]
+    public void Talent_contact_rules_48h_refund_window()
+    {
+        var created = new DateTime(2026, 9, 20, 8, 0, 0, DateTimeKind.Utc);
+        var deadline = TalentContactRules.ComputeRespondByUtc(created);
+        Assert.Equal(created.AddHours(48), deadline);
+        Assert.False(TalentContactRules.CanEmployerWithdraw(
+            Jobsy.Core.Enums.TalentContactStatus.Pending, created.AddHours(12), deadline));
+        Assert.True(TalentContactRules.CanEmployerWithdraw(
+            Jobsy.Core.Enums.TalentContactStatus.Pending, created.AddHours(49), deadline));
+        Assert.True(TalentContactRules.IsRefundBlockedAfterContactShared(
+            Jobsy.Core.Enums.TalentContactStatus.ContactShared));
+    }
+
+    [Fact]
+    public void Flex_and_agency_commercial_defaults()
+    {
+        Assert.Equal(2.00m, new Jobsy.Core.Entities.FlexCommercialSettings().MarginPerHourEuro);
+        Assert.Equal(4000m, Jobsy.Core.Entities.AgencyAnnualSubscription.AnnualPriceEuro);
+        Assert.Equal(Jobsy.Core.Enums.VacancyKind.Flex, VacancyKindLabels.ParseOrDefault("flex"));
+        Assert.Equal("Flex-inzet", VacancyKindLabels.ToDutch(Jobsy.Core.Enums.VacancyKind.Flex));
+        Assert.Equal(1m, TalentContactRules.DefaultUnlockCostTokens);
     }
 
     [Fact]

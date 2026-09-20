@@ -27,11 +27,14 @@ Jobsy is een hyper-lokale job-matching applicatie gericht op de regionale arbeid
 
 ### Kernentiteiten (niet exhaustief)
 - **User** — Email, FullName, Role, HomeLocation, OpenForWork, prefs, early-adapter
-- **CandidateCompetency** — Big Five-testantwoorden + scores per competentie (Draft/Completed)
-- **Company** — KVK + `KvkEstablishmentId`, hierarchy (`ParentCompanyId`), `CompanyType` (Employer/Intermediary)
-- **Vacancy** — Status (`Draft` / `Active` / `Archived` / `PendingApproval`), media, highlight, extensions, requested publish-opties, salary table, **VacancyCategory** (kleur, tokenprijs, highlight/PushBom-beschikbaarheid, extra aanmaakvelden)
+- **CandidateCompetency** — Quick-Scan (25) antwoorden + competentiescores + RIASEC/match-tags (Draft/Completed); optionele diepte-analyse-unlock
+- **CandidateDeepAnalysis** / **DeepAnalysisCheckout** — 150-vragen analyse na € 2,99 Mollie-betaling + PDF-rapportflag
+- **TalentContactRequest** — anonieme ontgrendeling (1 token), 48-uurs reactievenster, refund-pad
+- **Company** — KVK + `KvkEstablishmentId`, hierarchy (`ParentCompanyId`), `CompanyType` (Employer/Intermediary); optioneel `AgencyAnnualSubscription`
+- **Vacancy** — Status (`Draft` / `Active` / `Archived` / `PendingApproval`), media, highlight, extensions, requested publish-opties, salary table, **VacancyCategory**, **VacancyKind** incl. `Flex`
 - **VacancyCategory** — Admin-beheerbare categorieën; sturen kaartfilter, legenda, create-dropdown en tokenlogica
-- **TokenTransaction** — typed ledger (`Purchase` / `Spend` / `Grant` / `Allocation`) + `TokenSpendReason` (Publish/Highlight/PushBom/Extend)
+- **FlexCommercialSettings** — marge € 2,00/uur boven backoffice-inkoop
+- **TokenTransaction** — typed ledger (`Purchase` / `Spend` / `Grant` / `Allocation` / `Goodwill`) + `TokenSpendReason` (Publish/Highlight/PushBom/Extend/**ContactUnlock**)
 - **Application** — progressive PII tot Accept; Lobsy-CV PDF én geüpload kandidaat-CV pas na Accept (zie §4d)
 - **Engagement** — VacancyClick / Like / Share
 - **Region** / **CompanySalaryTable** / **TokenPurchaseCheckout**
@@ -98,11 +101,22 @@ Kernpunten:
 - **Verplichte uren** min/max per week + automatische urencategorie (bijbaan/parttime/fulltime)
 - **Geen UI-minimumleeftijd;** achtergrondfiltering via verplichte wettelijke taak-vinkjes + `[ i ]`-tooltips (Arbeidstijdenwet)
 - **Matchingspercentage** op banenkaart met breakdown-modal en actie-adviezen
-- **Competentietest (Big Five / 20 vragen)** op het kandidaatprofiel: draft tussentijds opslaan, later wijzigen, scores (0–100%) op Samenwerken / Resultaatgerichtheid / Stressbestendigheid / Innovatie; dynamische **Top 10 vacatures** (≥ 60%, aflopend) met Jip-en-Janneke-uitleg (fit + gap)
+- **Competentietest (Quick-Scan / 25 vragen)** op het kandidaatprofiel: Big Five (20) + RIASEC (5); draft tussentijds opslaan; scores + tags voeden matching en talentpool; dynamische **Top 10 vacatures** (≥ 60%, aflopend)
+- **Diepte-analyse (150 vragen, € 2,99):** optionele upsell na Quick-Scan; Mollie iDEAL; verrijkte tags + PDF-rapport
 - **Gulden Middenweg** bij solliciteren (&lt; 50%): OTP tegenhouden, profiel aanpassen of vangnet
 - **Optioneel motivatieveld** op sollicitatieformulier
 - **Werkgeversdashboard:** match-% met kleurcodering, breakdown, wettelijke bevestiging, motivatie, sort hoog→laag
 - **CSV/API:** uren + legal flags verplicht; dagdelen optioneel → “Tijden in overleg”
+
+## 4g. Anonieme talentpool, ContactUnlock & Lobsy Flex
+
+→ **[`docs/FUNCTIONELE_SPECIFICATIES_LOBSY_PLATFORM.md`](docs/FUNCTIONELE_SPECIFICATIES_LOBSY_PLATFORM.md)**
+
+Kernpunten:
+- **Omgekeerd werven:** werkgevers zoeken OpenForWork-kandidaten anoniem (competenties/RIASEC, reistijd, beschikbaarheid, rijbewijs) — **geen leeftijdsfilter**
+- **ContactUnlock:** 1 token om contact te starten; 48-uurs timer; refund bij intrekken na geen reactie / reeds voorzien; geen refund na geslaagde contactuitwisseling
+- **Flex (`VacancyKind.Flex`):** 0 tokens publiceren; vaste marge **€ 2,00/uur** boven backoffice-inkoop (NEN 4400-1 partner)
+- **Uitzend-jaarabonnement:** **€ 4.000/jaar** carte blanche vacatureplaatsing op vestigingspins (zonder pushbomb-vervuiling)
 
 ## 5. Navigatie & entry points
 - **Anoniem** → banenkaart `/` (BottomNav: Banenkaart, Registreren, Inloggen)

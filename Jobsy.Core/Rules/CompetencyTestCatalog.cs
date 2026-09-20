@@ -4,16 +4,14 @@ using Jobsy.Core.Entities;
 namespace Jobsy.Core.Rules;
 
 /// <summary>
-/// Workplace Big Five / OCEAN short form (20 Likert items), mapped to four Lobsy competencies.
-/// Inspired by Mini-IPIP (Donnellan et al., 2006) and IPIP-NEO work-style wording:
-/// Agreeableness (+ social Extraversion) → Samenwerken,
-/// Conscientiousness → Resultaatgerichtheid,
-/// Emotional Stability (reverse Neuroticism) → Stressbestendigheid,
-/// Openness / Intellect → Innovatie / Probleemoplossend.
+/// Free Quick-Scan: 25 Likert items — Big Five / OCEAN workplace short form (20)
+/// plus compact RIASEC interest probes (5). Maps to four Lobsy competencies and RIASEC tags.
 /// </summary>
 public static class CompetencyTestCatalog
 {
-    public const int QuestionCount = 20;
+    public const int QuestionCount = 25;
+    public const int BigFiveQuestionCount = 20;
+    public const int RiasecQuestionCount = 5;
     public const int LikertMin = 1;
     public const int LikertMax = 5;
     public const int CategoryQuestionCount = 5;
@@ -23,12 +21,29 @@ public static class CompetencyTestCatalog
     public const string Stressbestendigheid = "Stressbestendigheid";
     public const string Innovatie = "Innovatie";
 
+    public const string RiasecRealistic = "Realistic";
+    public const string RiasecInvestigative = "Investigative";
+    public const string RiasecArtistic = "Artistic";
+    public const string RiasecSocial = "Social";
+    public const string RiasecEnterprising = "Enterprising";
+    public const string RiasecConventional = "Conventional";
+
     public static readonly string[] CategoryCodes =
     [
         Samenwerken,
         Resultaatgerichtheid,
         Stressbestendigheid,
         Innovatie
+    ];
+
+    public static readonly string[] RiasecCodes =
+    [
+        RiasecRealistic,
+        RiasecInvestigative,
+        RiasecArtistic,
+        RiasecSocial,
+        RiasecEnterprising,
+        RiasecConventional
     ];
 
     public static readonly IReadOnlyList<CompetencyQuestion> Questions =
@@ -52,7 +67,13 @@ public static class CompetencyTestCatalog
         new(17, Innovatie, Reverse: false, "Competency.Q17"),
         new(18, Innovatie, Reverse: false, "Competency.Q18"),
         new(19, Innovatie, Reverse: true, "Competency.Q19"),
-        new(20, Innovatie, Reverse: true, "Competency.Q20")
+        new(20, Innovatie, Reverse: true, "Competency.Q20"),
+        // RIASEC interest probes (compact Quick-Scan)
+        new(21, RiasecRealistic, Reverse: false, "Competency.Q21", IsRiasec: true),
+        new(22, RiasecInvestigative, Reverse: false, "Competency.Q22", IsRiasec: true),
+        new(23, RiasecArtistic, Reverse: false, "Competency.Q23", IsRiasec: true),
+        new(24, RiasecSocial, Reverse: false, "Competency.Q24", IsRiasec: true),
+        new(25, RiasecEnterprising, Reverse: false, "Competency.Q25", IsRiasec: true)
     ];
 
     private static readonly JsonSerializerOptions JsonOptions = new()
@@ -79,7 +100,7 @@ public static class CompetencyTestCatalog
 
         if (requireComplete && !IsComplete(answers))
         {
-            return "Beantwoord alle 20 vragen om de test af te ronden.";
+            return "Beantwoord alle 25 vragen om de Quick-Scan af te ronden.";
         }
 
         return null;
@@ -156,14 +177,14 @@ public static class CompetencyTestCatalog
     }
 
     /// <summary>
-    /// Converts Likert answers to 0–100% per category. Missing items are skipped;
-    /// a category without answers is omitted (null).
+    /// Converts Likert answers to 0–100% per Big Five competency category.
+    /// RIASEC items are excluded from competency percentages.
     /// </summary>
     public static CompetencyScores? Score(IReadOnlyDictionary<int, int> answers)
     {
         int? ScoreCategory(string category)
         {
-            var items = Questions.Where(q => q.Category == category).ToList();
+            var items = Questions.Where(q => q.Category == category && !q.IsRiasec).ToList();
             var scored = 0;
             var sum = 0;
             foreach (var question in items)
@@ -200,6 +221,105 @@ public static class CompetencyTestCatalog
         return new CompetencyScores(samenwerken, resultaat, stress, innovatie);
     }
 
+    /// <summary>
+    /// Top RIASEC interests (score ≥ 4, or top 2 by Likert). Conventional inferred when
+    /// Resultaatgerichtheid is high and no Enterprising/Artistic preference.
+    /// </summary>
+    public static IReadOnlyList<string> DeriveRiasecTags(IReadOnlyDictionary<int, int> answers)
+    {
+        var scores = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+        foreach (var question in Questions.Where(q => q.IsRiasec))
+        {
+            if (answers.TryGetValue(question.Id, out var value) && IsValidAnswer(value))
+            {
+                scores[question.Category] = value;
+            }
+        }
+
+        var tags = scores
+            .Where(kv => kv.Value >= 4)
+            .OrderByDescending(kv => kv.Value)
+            .ThenBy(kv => kv.Key, StringComparer.Ordinal)
+            .Select(kv => kv.Key)
+            .Take(3)
+            .ToList();
+
+        if (tags.Count == 0 && scores.Count > 0)
+        {
+            tags = scores
+                .OrderByDescending(kv => kv.Value)
+                .ThenBy(kv => kv.Key, StringComparer.Ordinal)
+                .Take(2)
+                .Select(kv => kv.Key)
+                .ToList();
+        }
+
+        // Soft Conventional signal from conscientiousness when no creative/enterprise lean.
+        if (answers.TryGetValue(6, out var q6) && answers.TryGetValue(7, out var q7) && answers.TryGetValue(8, out var q8))
+        {
+            var conscientiousness = (q6 + q7 + q8) / 3.0;
+            if (conscientiousness >= 4
+                && !tags.Contains(RiasecArtistic, StringComparer.OrdinalIgnoreCase)
+                && !tags.Contains(RiasecEnterprising, StringComparer.OrdinalIgnoreCase)
+                && !tags.Contains(RiasecConventional, StringComparer.OrdinalIgnoreCase))
+            {
+                tags.Add(RiasecConventional);
+            }
+        }
+
+        return tags;
+    }
+
+    public static IReadOnlyList<string> DeriveMatchTags(
+        CompetencyScores? scores,
+        IReadOnlyList<string> riasecTags)
+    {
+        var tags = new List<string>();
+        if (scores is not null)
+        {
+            foreach (var category in CategoryCodes)
+            {
+                var value = scores.TryGet(category);
+                if (value is >= 70)
+                {
+                    tags.Add(category);
+                }
+            }
+        }
+
+        foreach (var tag in riasecTags)
+        {
+            if (!tags.Contains(tag, StringComparer.OrdinalIgnoreCase))
+            {
+                tags.Add(tag);
+            }
+        }
+
+        return tags;
+    }
+
+    public static string SerializeTags(IEnumerable<string> tags)
+        => JsonSerializer.Serialize(
+            tags.Where(t => !string.IsNullOrWhiteSpace(t)).Distinct(StringComparer.OrdinalIgnoreCase).ToList(),
+            JsonOptions);
+
+    public static IReadOnlyList<string> ParseTagsJson(string? json)
+    {
+        if (string.IsNullOrWhiteSpace(json))
+        {
+            return [];
+        }
+
+        try
+        {
+            return JsonSerializer.Deserialize<List<string>>(json, JsonOptions) ?? [];
+        }
+        catch (JsonException)
+        {
+            return [];
+        }
+    }
+
     public static CompetencyScores? CompletedScoresOrNull(
         string? status,
         int? samenwerken,
@@ -220,7 +340,12 @@ public static class CompetencyTestCatalog
     }
 }
 
-public sealed record CompetencyQuestion(int Id, string Category, bool Reverse, string TextKey);
+public sealed record CompetencyQuestion(
+    int Id,
+    string Category,
+    bool Reverse,
+    string TextKey,
+    bool IsRiasec = false);
 
 /// <summary>Four workplace competencies as 0–100 percentages (null = not enough answers).</summary>
 public sealed record CompetencyScores(
