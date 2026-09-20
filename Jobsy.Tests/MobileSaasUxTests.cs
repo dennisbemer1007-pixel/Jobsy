@@ -182,9 +182,8 @@ public class MobileSaasUxTests
         Assert.Contains("ToggleSection(\"availability\")", razor);
         Assert.Contains("ToggleSection(\"experience\")", razor);
         Assert.Contains("competency-profile-card", razor);
+        Assert.Contains("CandidateKompas", razor);
         Assert.Contains("profile-layout__matches", razor);
-        Assert.Contains("Competency.Retake", razor);
-        Assert.Contains("_competencyCompleted && _competencyScores is { IsComplete: true }", razor);
         Assert.DoesNotContain("competency.Scores ?? competency.PreviewScores", razor);
         Assert.Contains("profile-check-grid", razor);
         Assert.Contains("availability-matrix", razor);

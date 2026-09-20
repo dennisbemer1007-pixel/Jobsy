@@ -468,6 +468,12 @@ public static class UatScriptRunner
             var root = RepoRoot.Find();
             var home = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Pages/Candidate/CandidateHomePanel.razor"));
             Assert.Contains("CandidateKompas", home, StringComparison.Ordinal);
+            var kompas = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Pages/Candidate/CandidateKompas.razor"));
+            Assert.Contains("Kompas.TabProfile", kompas, StringComparison.Ordinal);
+            Assert.Contains("Kompas.TabCompetencies", kompas, StringComparison.Ordinal);
+            Assert.Contains("Kompas.TabCareers", kompas, StringComparison.Ordinal);
+            Assert.Contains("role=\"tablist\"", kompas, StringComparison.Ordinal);
+            Assert.Contains("<CandidateKompas", File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Pages/Candidate/Profile.razor")), StringComparison.Ordinal);
             var dto = File.ReadAllText(Path.Combine(root, "Jobsy.Api/Models/VacancyListItemDto.cs"));
             Assert.Contains("MatchPercent", dto, StringComparison.Ordinal);
             Assert.Contains("minMatchPercent", File.ReadAllText(Path.Combine(root, "Jobsy.Api/Controllers/VacanciesController.cs")), StringComparison.Ordinal);

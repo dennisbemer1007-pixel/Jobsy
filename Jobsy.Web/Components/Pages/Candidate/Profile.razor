@@ -23,84 +23,8 @@
     </header>
     <div class="profile-layout">
     <div class="profile-layout__main">
-    <section class="detail-card competency-profile-card" aria-labelledby="competency-profile-title">
-        <h2 id="competency-profile-title" class="profile-page__title">@Culture["Competency.Section"]</h2>
-        <p class="login-lead">@Culture["Competency.Lead"]</p>
-        @if (_competenciesLoading)
-        {
-            <p class="state-message">@Culture["Common.Loading"]</p>
-        }
-        else if (_competencyCompleted && _competencyScores is { IsComplete: true })
-        {
-            @if (_competencyCompletedAt is DateTime completed)
-            {
-                <p class="profile-address__hint">@Culture.Format("Competency.CompletedOn", completed.ToLocalTime().ToString("d"))</p>
-            }
-            <CompetencyScorePanel Scores="_competencyScores" />
-            <a class="engagement-btn" href="/candidate/competencies">@Culture["Competency.Retake"]</a>
-            @if (_competenceDeep is { IsCompleted: true })
-            {
-                <p class="kompas-status kompas-status--ok">@Culture["Kompas.DeepDone"]</p>
-                <button class="login-submit" type="button" disabled="@_pdfBusy" @onclick='() => DownloadDeepPdfAsync("competence")'>
-                    @Culture["Deep.DownloadPdf"]
-                </button>
-            }
-            else
-            {
-                <p class="login-lead">@_competencyUpsell</p>
-                <a class="login-submit" href="/candidate/deep-analysis/competence">@Culture["Competency.DeepUnlock"]</a>
-            }
-        }
-        else if (_competencyAnswered > 0)
-        {
-            <p class="login-lead">@Culture.Format("Competency.DraftProgress", _competencyAnswered, 25)</p>
-            <a class="login-submit" href="/candidate/competencies">@Culture["Competency.Continue"]</a>
-        }
-        else
-        {
-            <p class="login-lead">@Culture["Competency.Empty"]</p>
-            <a class="login-submit" href="/candidate/competencies">@Culture["Competency.Start"]</a>
-        }
-    </section>
-    <section class="detail-card competency-profile-card" aria-labelledby="career-profile-title">
-        <h2 id="career-profile-title" class="profile-page__title">@Culture["Kompas.Career"]</h2>
-        <p class="login-lead">@Culture["Career.Lead"]</p>
-        @if (_careerLoading)
-        {
-            <p class="state-message">@Culture["Common.Loading"]</p>
-        }
-        else if (_careerCompleted)
-        {
-            <CareerCompassPanel Compass="_careerCompass" />
-            <RiasecScorePanel Scores="_careerScores" />
-            @if (_careerTags.Count > 0)
-            {
-                <p class="profile-address__hint">@string.Join(" · ", _careerTags.Select(Jobsy.Core.Rules.CareerCompassBuilder.TypeLabel))</p>
-            }
-            <a class="engagement-btn" href="/candidate/career">@Culture["Career.Retake"]</a>
-            @if (_careerDeep is { IsCompleted: true })
-            {
-                <p class="kompas-status kompas-status--ok">@Culture["Kompas.DeepDone"]</p>
-                <button class="login-submit" type="button" disabled="@_pdfBusy" @onclick='() => DownloadDeepPdfAsync("career")'>
-                    @Culture["Deep.DownloadPdf"]
-                </button>
-            }
-            else
-            {
-                <p class="login-lead">@_careerUpsell</p>
-                <a class="login-submit" href="/candidate/deep-analysis/career">@Culture["Career.DeepUnlock"]</a>
-            }
-        }
-        else if (_careerAnswered > 0)
-        {
-            <p class="login-lead">@Culture.Format("Competency.DraftProgress", _careerAnswered, 25)</p>
-            <a class="login-submit" href="/candidate/career">@Culture["Career.Continue"]</a>
-        }
-        else
-        {
-            <p class="login-lead">@Culture["Career.Empty"]</p>
-            <a class="login-submit" href="/candidate/career">@Culture["Career.Start"]</a>
-        }
+    <section class="detail-card competency-profile-card" aria-labelledby="kompas-title">
+        <CandidateKompas />
     </section>
     <section class="detail-card competency-profile-card" aria-labelledby="talent-contacts-title">
         <h2 id="talent-contacts-title" class="profile-page__title">@Culture["Talent.CandidateTitle"]</h2>
@@ -697,22 +621,7 @@
     private int _suggestGeneration;
     private string _openSection = "personal";
     private static readonly string[] WeekdayCodes = ["Ma", "Di", "Wo", "Do", "Vr"];
-    private bool _competenciesLoading = true;
     private bool _matchesLoading = true;
-    private CompetencyScoreSet? _competencyScores;
-    private bool _competencyCompleted;
-    private int _competencyAnswered;
-    private DateTime? _competencyCompletedAt;
-    private string _competencyUpsell = "";
-    private bool _careerLoading = true;
-    private bool _careerCompleted;
-    private int _careerAnswered;
-    private List<string> _careerTags = [];
-    private CareerCompassModel _careerCompass = new();
-    private RiasecScoreSet? _careerScores;
-    private DeepAnalysisState? _competenceDeep;
-    private DeepAnalysisState? _careerDeep;
-    private string _careerUpsell = "";
     private IReadOnlyList<CandidateMatchedVacancy> _matchedVacancies = [];
 
     private string? AvailabilityKind =>
@@ -789,7 +698,7 @@
             _certificates.Clear();
             _certificates.AddRange(prefs.Certificates ?? []);
             ApplyCvAndReferences(profile);
-            await LoadCompetencyWidgetsAsync();
+            await LoadMatchedVacanciesAsync();
             _selectedEducations.Clear();
             foreach (var education in prefs.Educations ?? [])
             {
@@ -845,39 +754,11 @@
         }
     }
 
-    private async Task LoadCompetencyWidgetsAsync()
+    private async Task LoadMatchedVacanciesAsync()
     {
-        _competenciesLoading = true;
         _matchesLoading = true;
         try
         {
-            var competency = await Api.GetMyCompetenciesAsync();
-            if (competency is not null)
-            {
-                _competencyAnswered = competency.AnsweredCount;
-                _competencyCompletedAt = competency.CompletedAtUtc;
-                _competencyCompleted = string.Equals(
-                    competency.Status,
-                    "Completed",
-                    StringComparison.OrdinalIgnoreCase);
-                _competencyScores = competency.Scores;
-                _competencyUpsell = competency.DeepAnalysisUpsellCopy;
-            }
-
-            _careerLoading = true;
-            var career = await Api.GetMyCareerInterestsAsync();
-            if (career is not null)
-            {
-                _careerAnswered = career.AnsweredCount;
-                _careerCompleted = string.Equals(career.Status, "Completed", StringComparison.OrdinalIgnoreCase);
-                _careerTags = career.RiasecTags ?? [];
-                _careerCompass = career.Compass ?? new CareerCompassModel();
-                _careerScores = career.Scores;
-                _careerUpsell = career.DeepAnalysisUpsellCopy;
-            }
-
-            _competenceDeep = await Api.GetDeepAnalysisAsync("competence");
-            _careerDeep = await Api.GetDeepAnalysisAsync("career");
             _matchedVacancies = await Api.GetMyMatchedVacanciesAsync();
         }
         catch
@@ -886,8 +767,6 @@
         }
         finally
         {
-            _competenciesLoading = false;
-            _careerLoading = false;
             _matchesLoading = false;
         }
     }
@@ -1331,7 +1210,7 @@
                     .ToList());
             _homeLocationDirty = false;
             _message = Culture["Profile.Saved"];
-            await LoadCompetencyWidgetsAsync();
+            await LoadMatchedVacanciesAsync();
             if (!string.IsNullOrWhiteSpace(_returnUrl))
             {
                 Navigation.NavigateTo(_returnUrl);
@@ -1345,24 +1224,6 @@
         finally
         {
             _saving = false;
-        }
-    }
-
-    private async Task DownloadDeepPdfAsync(string kind)
-    {
-        _pdfBusy = true;
-        _message = null;
-        try
-        {
-            await Api.DownloadDeepAnalysisReportAsync(Js, kind);
-        }
-        catch (Exception ex)
-        {
-            _message = ex.Message;
-        }
-        finally
-        {
-            _pdfBusy = false;
         }
     }
 

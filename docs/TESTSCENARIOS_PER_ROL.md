@@ -261,7 +261,8 @@ Account: `kandidaat@jobsy.local` / `Jobsy123!`. Bottom-nav: Zoeken · Bewaard ·
 
 | Rol | Testscenario | Verwacht resultaat |
 |-----|--------------|--------------------|
-| Kandidaat | Login met demo-account. | `/home` kandidaat-dashboard **Mijn Lobsy Kompas** (competentie-balans + beroepenkompas + harde criteria) plus KPI’s sollicitaties/likes/shares/reacties. |
+| Kandidaat | Login met demo-account. | `/home` kandidaat-dashboard **Mijn Lobsy Kompas** (tabbladen **Mijn profiel** / **Mijn competenties** / **Mijn beroepen**) plus KPI’s sollicitaties/likes/shares/reacties. |
+| Kandidaat | Home: Kompas-tabbladen Mijn profiel / Mijn competenties / Mijn beroepen. | Drie tabs; profiel=beschikbaarheid/reistijd/vervoer/rijbewijs; competenties=Quick-Scan 25 vs diepte-analyse 150 + werkstijl; beroepen=Super-match/Sterke keus/Handige verbreding + Wat betekent dit voor jou? + PDF. |
 | Kandidaat | Home: Kompas toont Quick-Scan 25 vs diepte-analyse 150 + PDF als klaar. | Status zichtbaar; PDF-knop alleen na afgeronde diepte-analyse; geen extra nav-tab. |
 | Kandidaat | Home: **Mijn Beroepen-kompas** toont Super-match / Sterke keus / Handige verbreding. | Groepen >95% / >85% / >75%; sectie **Wat betekent dit voor jou?**; geen RIASEC/OCEAN in kandidaattekst. |
 | Kandidaat | Download loopbaan-PDF na uitgebreide beroepentest (150). | Gekleurd Lobsy-logo; Super-match/Sterke keus/Handige verbreding; **Wat betekent dit voor jou?**; geen RIASEC/OCEAN. |

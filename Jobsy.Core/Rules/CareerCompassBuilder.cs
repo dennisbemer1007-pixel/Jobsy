@@ -58,9 +58,9 @@ public static class CareerCompassBuilder
 
     public static string BandLabel(string band) => band switch
     {
-        BandSuper => "Super-match (meer dan 95%)",
-        BandStrong => "Sterke keus (meer dan 85%)",
-        BandBroaden => "Handige verbreding (meer dan 75%)",
+        BandSuper => "Super-match — meer dan 95% (de kernfit)",
+        BandStrong => "Sterke keus — meer dan 85% (uitstekende alternatieven)",
+        BandBroaden => "Handige verbreding — meer dan 75% (doorgroeirichtingen)",
         _ => "Richting om te bekijken"
     };
 

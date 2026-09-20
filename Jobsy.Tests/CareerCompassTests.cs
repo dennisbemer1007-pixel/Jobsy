@@ -3,6 +3,7 @@ using Jobsy.Core.Rules;
 using Jobsy.Infrastructure.Services;
 using Jobsy.Tests.Uat;
 using Jobsy.Web.Localization;
+using Jobsy.Web.Navigation;
 
 namespace Jobsy.Tests;
 
@@ -126,8 +127,12 @@ public class CareerCompassTests
         Assert.Equal("Mijn Beroepen-kompas", UiStrings.Get("Kompas.Career", "nl"));
         Assert.Equal("Wat betekent dit voor jou?", UiStrings.Get("Kompas.PracticalTitle", "nl"));
         Assert.Contains("95%", UiStrings.Get("Kompas.BandSuper", "nl"));
+        Assert.Contains("kernfit", UiStrings.Get("Kompas.BandSuper", "nl"), StringComparison.OrdinalIgnoreCase);
         Assert.Contains("85%", UiStrings.Get("Kompas.BandStrong", "nl"));
         Assert.Contains("75%", UiStrings.Get("Kompas.BandBroaden", "nl"));
+        Assert.Equal("Mijn profiel", UiStrings.Get("Kompas.TabProfile", "nl"));
+        Assert.Equal("Mijn competenties", UiStrings.Get("Kompas.TabCompetencies", "nl"));
+        Assert.Equal("Mijn beroepen", UiStrings.Get("Kompas.TabCareers", "nl"));
     }
 
     [Fact]
@@ -202,6 +207,16 @@ public class CareerCompassTests
     }
 
     [Fact]
+    public void Kompas_tabs_normalize_query_and_legacy_hashes()
+    {
+        Assert.Equal(CandidateKompasTabs.Profile, CandidateKompasTabs.Normalize("profiel"));
+        Assert.Equal(CandidateKompasTabs.Competencies, CandidateKompasTabs.Normalize("competency-profile-title"));
+        Assert.Equal(CandidateKompasTabs.Career, CandidateKompasTabs.Normalize("#career-profile-title"));
+        Assert.Equal(CandidateKompasTabs.Career, CandidateKompasTabs.Neighbor(CandidateKompasTabs.Competencies, 1));
+        Assert.Equal(CandidateKompasTabs.Career, CandidateKompasTabs.Neighbor(CandidateKompasTabs.Profile, -1));
+    }
+
+    [Fact]
     public void Kompas_panel_and_pages_wire_career_compass()
     {
         var root = RepoRoot.Find();
@@ -211,11 +226,26 @@ public class CareerCompassTests
         Assert.Contains("item.Why", panel, StringComparison.Ordinal);
 
         var home = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Pages/Candidate/CandidateKompas.razor"));
-        Assert.Contains("Kompas.Career", home, StringComparison.Ordinal);
         Assert.Contains("CareerCompassPanel", home, StringComparison.Ordinal);
+        Assert.Contains("role=\"tablist\"", home, StringComparison.Ordinal);
+        Assert.Contains("Kompas.TabProfile", home, StringComparison.Ordinal);
+        Assert.Contains("Kompas.TabCompetencies", home, StringComparison.Ordinal);
+        Assert.Contains("Kompas.TabCareers", home, StringComparison.Ordinal);
+        Assert.Contains("kompas-panel-profile", home, StringComparison.Ordinal);
+        Assert.Contains("kompas-panel-competencies", home, StringComparison.Ordinal);
+        Assert.Contains("kompas-panel-career", home, StringComparison.Ordinal);
+        Assert.Contains("Kompas.ShowWorkStyle", home, StringComparison.Ordinal);
+        Assert.Contains("Kompas.PracticalTitle", File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Pages/Candidate/CareerCompassPanel.razor")), StringComparison.Ordinal);
+        Assert.DoesNotContain("kompas-grid", home, StringComparison.Ordinal);
+
+        var css = File.ReadAllText(Path.Combine(root, "Jobsy.Web/wwwroot/css/app.css"));
+        Assert.Contains(".kompas-tabs.admin-sublinks", css, StringComparison.Ordinal);
+        Assert.Contains(".kompas-status-stack", css, StringComparison.Ordinal);
+        var minCss = File.ReadAllText(Path.Combine(root, "Jobsy.Web/wwwroot/css/app.min.css"));
+        Assert.Contains(".kompas-tabs.admin-sublinks", minCss, StringComparison.Ordinal);
 
         var profile = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Pages/Candidate/Profile.razor"));
-        Assert.Contains("CareerCompassPanel", profile, StringComparison.Ordinal);
+        Assert.Contains("CandidateKompas", profile, StringComparison.Ordinal);
 
         var interest = File.ReadAllText(Path.Combine(root, "Jobsy.Infrastructure/Services/CandidateCareerInterestService.cs"));
         Assert.Contains("ResolveCompass", interest, StringComparison.Ordinal);
