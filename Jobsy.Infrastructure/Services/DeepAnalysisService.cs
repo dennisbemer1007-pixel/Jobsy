@@ -4,6 +4,8 @@ using Jobsy.Core.Interfaces;
 using Jobsy.Core.Rules;
 using Jobsy.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
 namespace Jobsy.Infrastructure.Services;
@@ -12,15 +14,21 @@ public sealed class DeepAnalysisService : IDeepAnalysisService
 {
     private readonly JobsyDbContext _db;
     private readonly IFlexCommercialService _commercial;
+    private readonly IHostEnvironment _environment;
+    private readonly IConfiguration _configuration;
     private readonly ILogger<DeepAnalysisService> _logger;
 
     public DeepAnalysisService(
         JobsyDbContext db,
         IFlexCommercialService commercial,
+        IHostEnvironment environment,
+        IConfiguration configuration,
         ILogger<DeepAnalysisService> logger)
     {
         _db = db;
         _commercial = commercial;
+        _environment = environment;
+        _configuration = configuration;
         _logger = logger;
     }
 
@@ -52,6 +60,12 @@ public sealed class DeepAnalysisService : IDeepAnalysisService
         if (existing is not null && CandidateDeepAnalysisStatuses.IsUnlocked(existing.Status))
         {
             throw new InvalidOperationException("Diepte-analyse is al ontgrendeld.");
+        }
+
+        if (!AllowStubPayments())
+        {
+            throw new InvalidOperationException(
+                "Diepte-analyse-betalingen zijn buiten Development alleen beschikbaar met Mollie of AllowStubPayments.");
         }
 
         var commercial = await _commercial.GetAsync(cancellationToken);
@@ -92,11 +106,23 @@ public sealed class DeepAnalysisService : IDeepAnalysisService
 
     public async Task<bool> TryFulfillPaidCheckoutAsync(
         string paymentId,
+        Guid? expectedUserId = null,
+        bool allowDevStubMarkPaid = false,
         CancellationToken cancellationToken = default)
     {
+        if (string.IsNullOrWhiteSpace(paymentId))
+        {
+            return false;
+        }
+
         var checkout = await _db.DeepAnalysisCheckouts
             .FirstOrDefaultAsync(c => c.PaymentId == paymentId, cancellationToken);
         if (checkout is null)
+        {
+            return false;
+        }
+
+        if (expectedUserId is Guid uid && checkout.UserId != uid)
         {
             return false;
         }
@@ -108,6 +134,15 @@ public sealed class DeepAnalysisService : IDeepAnalysisService
         }
 
         if (checkout.Status != DeepAnalysisCheckoutStatus.Pending)
+        {
+            return false;
+        }
+
+        var canStubMarkPaid = allowDevStubMarkPaid
+            && AllowStubPayments()
+            && paymentId.StartsWith("stub_deep_", StringComparison.Ordinal);
+
+        if (!canStubMarkPaid)
         {
             return false;
         }
@@ -163,6 +198,19 @@ public sealed class DeepAnalysisService : IDeepAnalysisService
             throw new InvalidOperationException("Diepte-analyse is nog niet ontgrendeld. Betaal eerst via de checkout.");
         }
 
+        if (answers.Count == 0)
+        {
+            var existingAnswers = DeepAnalysisCatalog.ParseAnswersJson(row.AnswersJson);
+            if (existingAnswers.Count > 0)
+            {
+                throw new InvalidOperationException(
+                    "Lege antwoorden overschrijven je bestaande diepte-analyse niet. Stuur de huidige antwoorden mee.");
+            }
+
+            var commercialEmpty = await _commercial.GetAsync(cancellationToken);
+            return ToDto(row, commercialEmpty.DeepAnalysisPriceEuro);
+        }
+
         var error = DeepAnalysisCatalog.ValidateAnswers(answers, complete);
         if (error is not null)
         {
@@ -210,6 +258,10 @@ public sealed class DeepAnalysisService : IDeepAnalysisService
         var commercial = await _commercial.GetAsync(cancellationToken);
         return ToDto(row, commercial.DeepAnalysisPriceEuro);
     }
+
+    private bool AllowStubPayments() =>
+        _environment.IsDevelopment()
+        || _configuration.GetValue("JobsyAuth:AllowStubPayments", false);
 
     private static DeepAnalysisStateDto ToDto(CandidateDeepAnalysis? row, decimal priceEuro)
     {

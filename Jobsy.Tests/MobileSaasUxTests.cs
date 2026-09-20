@@ -215,10 +215,11 @@ public class MobileSaasUxTests
         Assert.Contains("disabled=\"@(_saving || _loadFailed)\"", test);
 
         var privacy = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/Components/Pages/Legal/Privacy.razor"));
-        Assert.Contains("5b. Competentietest", privacy);
-        Assert.Contains("niet</strong> aan werkgevers", privacy);
-        Assert.Contains("18 september 2026", privacy);
-        Assert.Equal("2026-09-18", Jobsy.Core.Privacy.PrivacyConstants.CurrentConsentVersion);
+        Assert.Contains("5b. Quick-Scan, diepte-analyse en talentpool", privacy);
+        Assert.Contains("niet</strong> aan werkgevers getoond", privacy);
+        Assert.Contains("anonieme talentpool", privacy);
+        Assert.Contains("20 september 2026", privacy);
+        Assert.Equal("2026-09-20", Jobsy.Core.Privacy.PrivacyConstants.CurrentConsentVersion);
     }
 
     [Fact]

@@ -314,10 +314,55 @@ public sealed class PrivacyDataService : IPrivacyDataService
                     c.ResultaatgerichtheidPercent,
                     c.StressbestendigheidPercent,
                     c.InnovatiePercent,
+                    c.RiasecTagsJson,
+                    c.MatchTagsJson,
                     c.CompletedAtUtc,
                     c.UpdatedAtUtc
                 })
                 .FirstOrDefaultAsync(cancellationToken),
+            DeepAnalysis = await _db.CandidateDeepAnalyses.AsNoTracking()
+                .Where(d => d.UserId == user.Id)
+                .Select(d => new
+                {
+                    d.Status,
+                    d.AnswersJson,
+                    d.TagsJson,
+                    d.UnlockedAtUtc,
+                    d.CompletedAtUtc,
+                    d.ReportGeneratedAtUtc,
+                    d.UpdatedAtUtc
+                })
+                .FirstOrDefaultAsync(cancellationToken),
+            DeepAnalysisCheckouts = await _db.DeepAnalysisCheckouts.AsNoTracking()
+                .Where(c => c.UserId == user.Id)
+                .OrderByDescending(c => c.CreatedAtUtc)
+                .Select(c => new
+                {
+                    c.Id,
+                    c.PaymentId,
+                    c.AmountEuro,
+                    Status = c.Status.ToString(),
+                    c.CreatedAtUtc,
+                    c.PaidAtUtc
+                })
+                .ToListAsync(cancellationToken),
+            TalentContactRequests = await _db.TalentContactRequests.AsNoTracking()
+                .Where(r => r.CandidateUserId == user.Id || r.EmployerUserId == user.Id)
+                .OrderByDescending(r => r.CreatedAtUtc)
+                .Select(r => new
+                {
+                    r.Id,
+                    r.CompanyId,
+                    r.CandidateUserId,
+                    r.EmployerUserId,
+                    Status = r.Status.ToString(),
+                    r.Message,
+                    r.CreatedAtUtc,
+                    r.RespondByUtc,
+                    r.RespondedAtUtc,
+                    r.ContactSharedAtUtc
+                })
+                .ToListAsync(cancellationToken),
             CompanyMemberships = memberships,
             Applications = applications,
             Likes = likes,

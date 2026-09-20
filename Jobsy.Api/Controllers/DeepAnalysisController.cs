@@ -62,10 +62,14 @@ public sealed class DeepAnalysisController : ControllerBase
             return NotFound();
         }
 
-        var ok = await _deep.TryFulfillPaidCheckoutAsync(paymentId, cancellationToken);
+        var ok = await _deep.TryFulfillPaidCheckoutAsync(
+            paymentId,
+            expectedUserId: user.Id,
+            allowDevStubMarkPaid: true,
+            cancellationToken);
         if (!ok)
         {
-            return BadRequest(new { message = "Checkout niet gevonden of al verwerkt." });
+            return BadRequest(new { message = "Checkout niet gevonden, niet van jou, of betaling nog niet afgerond." });
         }
 
         return Ok(await _deep.GetStateAsync(user.Id, cancellationToken));

@@ -10,8 +10,14 @@ public interface IDeepAnalysisService
         Guid userId,
         CancellationToken cancellationToken = default);
 
+    /// <summary>
+    /// Marks a pending stub checkout as paid (Development / AllowStubPayments only) and unlocks.
+    /// When <paramref name="expectedUserId"/> is set, the checkout must belong to that user.
+    /// </summary>
     Task<bool> TryFulfillPaidCheckoutAsync(
         string paymentId,
+        Guid? expectedUserId = null,
+        bool allowDevStubMarkPaid = false,
         CancellationToken cancellationToken = default);
 
     Task UnlockForUserAsync(Guid userId, CancellationToken cancellationToken = default);

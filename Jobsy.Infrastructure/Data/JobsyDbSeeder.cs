@@ -41,6 +41,15 @@ public static class JobsyDbSeeder
         {
             logger.LogWarning(ex, "Vacancy category ensure/backfill after migrate failed; continuing.");
         }
+
+        try
+        {
+            await CompetencyTagBackfillSeeder.BackfillAsync(db, logger);
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(ex, "Competency tag backfill after migrate failed; continuing.");
+        }
     }
 
     public static bool PreferWipeOverSeed(IConfiguration configuration)
