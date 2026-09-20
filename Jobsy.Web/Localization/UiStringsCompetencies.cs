@@ -206,7 +206,21 @@ internal static class UiStringsCompetencies
         ["Kompas.BandSuper"] = "Super-match — meer dan 95% (de kernfit)",
         ["Kompas.BandStrong"] = "Sterke keus — meer dan 85% (uitstekende alternatieven)",
         ["Kompas.BandBroaden"] = "Handige verbreding — meer dan 75% (doorgroeirichtingen)",
-        ["Kompas.PracticalTitle"] = "Wat betekent dit voor jou?"
+        ["Kompas.PracticalTitle"] = "Wat betekent dit voor jou?",
+        ["Kompas.TabFit"] = "Past dit bij mij?",
+        ["Fit.Lead"] = "Typ een functietitel. We toetsen die tegen jouw tests — zonder vakjargon.",
+        ["Fit.Locked"] = "Ontgrendel de Functie-Fit Checker door eerst je korte competentie- en beroepentest in te vullen (ca. 3 minuten).",
+        ["Fit.DeepUpsell"] = "Wil je een nóg preciezere analyse op maat met een haarscherp groeistappenplan? Ontgrendel dan de uitgebreide 150-vragen diepte-analyse (€ 2,99) voor een waterdichte vergelijking.",
+        ["Fit.JobTitle"] = "Functietitel",
+        ["Fit.Placeholder"] = "Bijvoorbeeld verpleegkundige of magazijnmedewerker",
+        ["Fit.Check"] = "Past dit bij mij?",
+        ["Fit.Match"] = "Match",
+        ["Fit.Strengths"] = "Waar voldoe je al aan?",
+        ["Fit.Gaps"] = "Waar zit het gat?",
+        ["Fit.Steps"] = "Groeistappen",
+        ["Fit.OpenMap"] = "Vergelijkbare vacatures in Den Haag en het Westland",
+        ["Fit.ShowScores"] = "Bekijk scores en werkstijl",
+        ["Fit.HideScores"] = "Verberg scores"
     };
 
     private static Dictionary<string, string> En() => new(StringComparer.OrdinalIgnoreCase)
@@ -389,6 +403,20 @@ internal static class UiStringsCompetencies
         ["Kompas.BandSuper"] = "Super-match — over 95% (core fit)",
         ["Kompas.BandStrong"] = "Strong choice — over 85% (excellent alternatives)",
         ["Kompas.BandBroaden"] = "Useful broadening — over 75% (growth directions)",
-        ["Kompas.PracticalTitle"] = "What does this mean for you?"
+        ["Kompas.PracticalTitle"] = "What does this mean for you?",
+        ["Kompas.TabFit"] = "Does this fit me?",
+        ["Fit.Lead"] = "Type a job title. We check it against your tests — in plain language.",
+        ["Fit.Locked"] = "Unlock the role-fit checker by first completing your short competence and occupation tests (about 3 minutes).",
+        ["Fit.DeepUpsell"] = "Want an even sharper tailored analysis with a clear growth plan? Unlock the extended 150-question deep analysis (€ 2.99) for a watertight comparison.",
+        ["Fit.JobTitle"] = "Job title",
+        ["Fit.Placeholder"] = "For example nurse or warehouse worker",
+        ["Fit.Check"] = "Does this fit me?",
+        ["Fit.Match"] = "Match",
+        ["Fit.Strengths"] = "What do you already bring?",
+        ["Fit.Gaps"] = "Where is the gap?",
+        ["Fit.Steps"] = "Growth steps",
+        ["Fit.OpenMap"] = "Similar vacancies in The Hague and Westland",
+        ["Fit.ShowScores"] = "View scores and work style",
+        ["Fit.HideScores"] = "Hide scores"
     };
 }

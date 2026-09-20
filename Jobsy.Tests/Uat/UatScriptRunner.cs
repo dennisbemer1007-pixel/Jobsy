@@ -472,8 +472,11 @@ public static class UatScriptRunner
             Assert.Contains("Kompas.TabProfile", kompas, StringComparison.Ordinal);
             Assert.Contains("Kompas.TabCompetencies", kompas, StringComparison.Ordinal);
             Assert.Contains("Kompas.TabCareers", kompas, StringComparison.Ordinal);
+            Assert.Contains("Kompas.TabFit", kompas, StringComparison.Ordinal);
             Assert.Contains("role=\"tablist\"", kompas, StringComparison.Ordinal);
+            Assert.Contains("RoleFitCheckPanel", kompas, StringComparison.Ordinal);
             Assert.Contains("<CandidateKompas", File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Pages/Candidate/Profile.razor")), StringComparison.Ordinal);
+            Assert.Equal(RoleFitCheckCopy.Locked, Jobsy.Web.Localization.UiStrings.Get("Fit.Locked", "nl"));
             var dto = File.ReadAllText(Path.Combine(root, "Jobsy.Api/Models/VacancyListItemDto.cs"));
             Assert.Contains("MatchPercent", dto, StringComparison.Ordinal);
             Assert.Contains("minMatchPercent", File.ReadAllText(Path.Combine(root, "Jobsy.Api/Controllers/VacanciesController.cs")), StringComparison.Ordinal);

@@ -132,7 +132,7 @@ public static class PageHelpDocs
         ["/candidate/profile"] = new(
             "Mijn profiel",
             "Jouw kandidaatgegevens voor matching en solliciteren.",
-            "Vul interesses, opleiding, rijbewijzen, voorkeuren, locatie, uren per week, beschikbaarheid/dagdelen, de competentietest (25 vragen) en de beroepentest (25 vragen) in. Uitkomsten landen in Mijn Beroepen-kompas. Geboortedatum is nodig voor leeftijdsloon en wettelijke taakchecks. Wijzigingen verbeteren matchscores en filters. Rechts zie je de Top 10 vacatures vanaf 60% match.",
+            "Vul interesses, opleiding, rijbewijzen, voorkeuren, locatie, uren per week, beschikbaarheid/dagdelen in op het tabblad Mijn profiel. Competentietest en beroepentest staan op eigen tabbladen; uitkomsten landen in Mijn Beroepen-kompas. Na beide quick-scans kun je op Past dit bij mij? een functietitel toetsen. Geboortedatum is nodig voor leeftijdsloon en wettelijke taakchecks. Rechts zie je de Top 10 vacatures vanaf 60% match.",
             "Betere matches en sneller solliciteren met volledige gegevens."),
 
         ["/candidate/competencies"] = new(

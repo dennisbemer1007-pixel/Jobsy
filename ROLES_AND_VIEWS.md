@@ -29,12 +29,12 @@ Publiek (naast banenkaart): `/vacancies/{id}`, `/{kvknummer}` (ondernemer), `/{k
 | Route | Inhoud |
 |-------|--------|
 | `/` | Banenkaart (filters, lijst, kaart). Ingelogde kandidaat: live match-% per vacature, sort/filter op match, uitleg waarom |
-| `/home` | **Mijn Lobsy Kompas** in drie tabbladen: **Mijn profiel** (harde criteria), **Mijn competenties** (Quick-Scan 25 / diepte-analyse 150), **Mijn beroepen** (**Mijn Beroepen-kompas** met super-match/sterke keus/verbreding) + eigen metrics |
+| `/home` | **Mijn Lobsy Kompas** in tabbladen: **Mijn profiel**, **Mijn competenties**, **Mijn beroepen**, **Past dit bij mij?** + eigen metrics |
 | `/vacancies/{id}` | Detail, solliciteren, like/share, optioneel mock interview |
 | `/candidate/applications` | Sollicitatiehistorie |
 | `/candidate/vacancies` | Overzicht + **Onlangs bekeken** (localStorage, alleen vacancy-GUIDs) + in-de-buurt op reistijd/vervoer |
 | `/candidate/liked` · `/candidate/shared` | Engagement-lijsten |
-| `/candidate/profile` | OpenForWork, prefs (reistijd, vervoer incl. e-bike, rijbewijs, beschikbaarheid), DOB, HomeLocation, eigen CV-upload, recensies, **Mijn Lobsy Kompas**-tabbladen (profiel / competenties / beroepen) + Top 10 vacatures (≥60%); PDF-download als diepte-analyse klaar is |
+| `/candidate/profile` | OpenForWork, NAW/CV, recensies, **Mijn Lobsy Kompas**-tabbladen (profiel / competenties / beroepen / Past dit bij mij? Functie-Fit Checker) + Top 10 vacatures (≥60%); PDF als diepte-analyse klaar is |
 | `/candidate/competencies` | Competentietest (25); draft tussentijds opslaan; scores herberekend bij afronden |
 | `/candidate/career` | Beroepentest (25); Mijn Beroepen-kompas + top 10 actieve vacatures |
 | `/candidate/deep-analysis/{kind}` | Betaalde 150-vragen analyse (competence \| career) + loopbaan-PDF (gekleurd logo, match-banden, *Wat betekent dit voor jou?*) |

@@ -9,8 +9,9 @@ public static class CandidateKompasTabs
     public const string Profile = "profile";
     public const string Competencies = "competencies";
     public const string Career = "career";
+    public const string Fit = "fit";
 
-    public static readonly string[] All = [Profile, Competencies, Career];
+    public static readonly string[] All = [Profile, Competencies, Career, Fit];
 
     public static string Normalize(string? raw)
     {
@@ -32,9 +33,12 @@ public static class CandidateKompasTabs
                 or "kompas-panel-competencies" or "kompas-tab-competencies"
                 => Competencies,
             Career or "careers" or "beroepen" or "beroep" or "mijn-beroepen" or "mijn beroepen"
-                or "career-profile-title" or "kompas-career-title"
+                or "occupations" or "career-profile-title" or "kompas-career-title"
                 or "kompas-panel-career" or "kompas-tab-career"
                 => Career,
+            Fit or "role-fit" or "past-dit" or "past dit bij mij" or "functie-fit"
+                or "kompas-panel-fit" or "kompas-tab-fit"
+                => Fit,
             _ => Profile
         };
     }

@@ -262,6 +262,14 @@ public static class DependencyInjection
             AllowAutoRedirect = false
         });
         services.AddScoped<ICareerCompassGenerationService, CareerCompassGenerationService>();
+        services.AddHttpClient(RoleFitCheckService.HttpClientName, client =>
+        {
+            client.Timeout = TimeSpan.FromSeconds(30);
+        }).ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler
+        {
+            AllowAutoRedirect = false
+        });
+        services.AddScoped<IRoleFitCheckService, RoleFitCheckService>();
         services.AddScoped<IDeepAnalysisService, DeepAnalysisService>();
         services.AddScoped<IAssessmentReportPdfService, AssessmentReportPdfService>();
         services.AddScoped<ITalentPoolService, TalentPoolService>();

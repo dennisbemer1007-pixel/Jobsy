@@ -54,6 +54,7 @@ internal static class DemoDataPurge
         typeof(CandidateReference),
         typeof(CandidateCompetency),
         typeof(CandidateCareerInterest),
+        typeof(CandidateRoleFitCheck),
         typeof(CandidateDeepAnalysis),
         typeof(DeepAnalysisCheckout),
         typeof(TalentContactRequest),

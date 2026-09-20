@@ -149,3 +149,29 @@ public sealed class DeepAnalysisCheckout
     public bool IsStub { get; set; }
     public string Kind { get; set; } = "Competence";
 }
+
+public sealed class RoleFitCheckState
+{
+    public bool IsUnlocked { get; set; }
+    public bool CompetenceQuickScanCompleted { get; set; }
+    public bool CareerQuickScanCompleted { get; set; }
+    public bool DeepAnalysisCompleted { get; set; }
+    public decimal DeepAnalysisPriceEuro { get; set; }
+    public string LockMessage { get; set; } = "";
+    public string DeepUpsellCopy { get; set; } = "";
+    public RoleFitCheckResult? LastResult { get; set; }
+}
+
+public sealed class RoleFitCheckResult
+{
+    public string JobTitle { get; set; } = "";
+    public int MatchPercent { get; set; }
+    public List<string> Strengths { get; set; } = [];
+    public List<string> Gaps { get; set; } = [];
+    public List<string> ActionSteps { get; set; } = [];
+    public List<string> SearchKeys { get; set; } = [];
+    public string MapHref { get; set; } = "/";
+    public bool FromDeepAnalysis { get; set; }
+    public bool FromOpenAi { get; set; }
+    public bool ShowDeepUpsell { get; set; }
+}

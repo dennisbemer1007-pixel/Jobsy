@@ -16574,6 +16574,43 @@ html.cookie-consent-known .cookie-consent {
     display: none !important;
 }
 
+.kompas-fit-search,
+.kompas-fit-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.role-fit-result {
+    display: flex;
+    flex-direction: column;
+    gap: 0.85rem;
+}
+
+.role-fit-result__pct {
+    margin: 0;
+    font-size: 1.35rem;
+}
+
+.role-fit-result__pct strong {
+    color: var(--brand);
+    font-size: 1.7rem;
+}
+
+.role-fit-result h4 {
+    margin: 0 0 0.35rem;
+}
+
+.role-fit-result ul,
+.role-fit-result ol {
+    margin: 0;
+    padding-left: 1.1rem;
+}
+
+.fit-upsell {
+    font-size: 0.9rem;
+}
+
 .kompas-status-stack {
     display: flex;
     flex-direction: column;

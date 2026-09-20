@@ -61,6 +61,8 @@ public class LocalizationTests
             "Kompas.TabProfile",
             "Kompas.TabCompetencies",
             "Kompas.TabCareers",
+            "Kompas.TabFit",
+            "Fit.Locked",
             "Profile.PresetOffice",
             "HowLobsy.Title",
             "CandidateVacancies.RecentlyViewed",

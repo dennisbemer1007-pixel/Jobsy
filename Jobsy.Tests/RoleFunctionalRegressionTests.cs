@@ -414,6 +414,44 @@ public class RoleFunctionalRegressionTests : IClassFixture<RoleFunctionalWebAppF
     }
 
     [Fact]
+    public async Task Candidate_role_fit_is_locked_until_both_quick_scans_then_returns_plain_language_fit()
+    {
+        var client = Authed(await _factory.SeedIsolatedCandidateAsync());
+        var locked = await client.GetFromJsonAsync<JsonElement>("api/me/role-fit", JsonOpts);
+        Assert.False(locked.GetProperty("isUnlocked").GetBoolean());
+        Assert.Contains("Functie-Fit Checker", locked.GetProperty("lockMessage").GetString(), StringComparison.Ordinal);
+
+        var blocked = await client.PostAsJsonAsync("api/me/role-fit", new { jobTitle = "Verpleegkundige" });
+        Assert.Equal(HttpStatusCode.Conflict, blocked.StatusCode);
+
+        var competence = Enumerable.Range(1, 25).ToDictionary(i => i.ToString(), _ => 4);
+        Assert.Equal(HttpStatusCode.OK, (await client.PutAsJsonAsync("api/me/competencies", new { answers = competence, complete = true })).StatusCode);
+        var career = Enumerable.Range(1, 25).ToDictionary(i => i.ToString(), _ => 5);
+        Assert.Equal(HttpStatusCode.OK, (await client.PutAsJsonAsync("api/me/career-interests", new { answers = career, complete = true })).StatusCode);
+
+        var empty = await client.PostAsJsonAsync("api/me/role-fit", new { jobTitle = "a" });
+        Assert.Equal(HttpStatusCode.BadRequest, empty.StatusCode);
+
+        var pii = await client.PostAsJsonAsync("api/me/role-fit", new { jobTitle = "ada@jobsy.local" });
+        Assert.Equal(HttpStatusCode.BadRequest, pii.StatusCode);
+
+        var ok = await client.PostAsJsonAsync("api/me/role-fit", new { jobTitle = "Verpleegkundige" });
+        Assert.Equal(HttpStatusCode.OK, ok.StatusCode);
+        var body = await ok.Content.ReadFromJsonAsync<JsonElement>(JsonOpts);
+        Assert.True(body.GetProperty("isUnlocked").GetBoolean());
+        var result = body.GetProperty("lastResult");
+        Assert.InRange(result.GetProperty("matchPercent").GetInt32(), 0, 100);
+        Assert.True(result.GetProperty("strengths").GetArrayLength() > 0);
+        Assert.True(result.GetProperty("gaps").GetArrayLength() > 0);
+        Assert.True(result.GetProperty("actionSteps").GetArrayLength() > 0);
+        Assert.Contains("q=", result.GetProperty("mapHref").GetString(), StringComparison.Ordinal);
+        Assert.True(result.GetProperty("showDeepUpsell").GetBoolean());
+        Assert.DoesNotContain("RIASEC", result.ToString(), StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("OCEAN", result.ToString(), StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("@", result.ToString(), StringComparison.Ordinal);
+    }
+
+    [Fact]
     public async Task Candidate_deep_analysis_is_locked_per_kind_until_paid()
     {
         var client = CandidateClient();
@@ -2045,6 +2083,27 @@ public sealed class RoleFunctionalWebAppFactory : WebApplicationFactory<Program>
         });
         await db.SaveChangesAsync();
         return applicationId;
+    }
+
+    public async Task<string> SeedIsolatedCandidateAsync()
+    {
+        EnsureSeeded();
+        var n = Interlocked.Increment(ref _extraSeedCounter);
+        var email = $"fit-kandidaat-{n}@jobsy.local";
+        await using var scope = Services.CreateAsyncScope();
+        var db = scope.ServiceProvider.GetRequiredService<JobsyDbContext>();
+        db.Users.Add(new User
+        {
+            Id = Guid.NewGuid(),
+            Email = email,
+            FullName = "Fit Kandidaat",
+            Role = UserRole.Candidate,
+            IsActive = true,
+            DateOfBirth = new DateOnly(1998, 6, 15),
+            OpenForWork = true
+        });
+        await db.SaveChangesAsync();
+        return email;
     }
 
     private sealed class AllowAllModeration : IVacancyContentModerationService

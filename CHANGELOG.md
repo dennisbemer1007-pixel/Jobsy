@@ -14,6 +14,10 @@ Alle noemenswaardige wijzigingen aan dit project worden in dit bestand bijgehoud
 ## [Unreleased]
 
 ### Added
+- **Functie-Fit Checker** (“Past dit bij mij?”) in Mijn Lobsy Kompas: pas te gebruiken na beide gratis 25-vragen quick-scans; OpenAI-toets van een vrije functietitel tegen het kandidaatprofiel (zonder NAW); lokale fallback; upsell naar de 150-vragen diepte-analyse (€ 2,99); knop naar vergelijkbare vacatures op de banenkaart (Den Haag / Westland). Resultaat in privacy-export en RTBF.
+- Kandidaatprofiel en `/home`-kompas in **vier tabbladen**: Mijn profiel, Mijn competenties, Mijn beroepen, Past dit bij mij? (Functie-Fit Checker). Inactieve tab-panels blijven in de DOM (`hidden`) zodat flex-layout ze niet stapelt.
+
+### Added
 - Loopbaan-PDF na de uitgebreide beroepentest (150): OpenAI-prompt dwingt een hiërarchie af (Super-match 95–100 als kernfit, nooit te laag), Jip-en-Janneke zonder extraversie/neuroticisme, gekleurd Lobsy-logo, *Wat betekent dit voor jou?* (werkplek, taken, banenkaart). Resultaat vult PDF én **Mijn Beroepen-kompas**.
 - **Mijn Beroepen-kompas** slaat die algemene beroepen (inclusief zoeksleutels) op in het kandidaatprofiel; de banenkaart vertaalt ze naar actuele advertenties (bijv. verpleegkundige → vacatures in Den Haag/Westland).
 - Privacyverklaring en consentversie **2026-09-21**: OpenAI-doorgifte van anonieme beroepentest-antwoorden voor het kompas; export bevat `CompassJson`.

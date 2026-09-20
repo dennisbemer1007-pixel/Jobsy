@@ -341,6 +341,18 @@ public sealed class PrivacyDataService : IPrivacyDataService
                     c.UpdatedAtUtc
                 })
                 .FirstOrDefaultAsync(cancellationToken),
+            RoleFitChecks = await _db.CandidateRoleFitChecks.AsNoTracking()
+                .Where(r => r.UserId == user.Id)
+                .Select(r => new
+                {
+                    r.JobTitle,
+                    r.MatchPercent,
+                    r.ResultJson,
+                    r.FromDeepAnalysis,
+                    r.FromOpenAi,
+                    r.UpdatedAtUtc
+                })
+                .FirstOrDefaultAsync(cancellationToken),
             DeepAnalysis = await _db.CandidateDeepAnalyses.AsNoTracking()
                 .Where(d => d.UserId == user.Id)
                 .Select(d => new
@@ -895,6 +907,14 @@ public sealed class PrivacyDataService : IPrivacyDataService
         if (careers.Count > 0)
         {
             _db.CandidateCareerInterests.RemoveRange(careers);
+        }
+
+        var roleFits = await _db.CandidateRoleFitChecks
+            .Where(r => r.UserId == user.Id)
+            .ToListAsync(cancellationToken);
+        if (roleFits.Count > 0)
+        {
+            _db.CandidateRoleFitChecks.RemoveRange(roleFits);
         }
 
         var deepAnalyses = await _db.CandidateDeepAnalyses

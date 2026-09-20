@@ -54,6 +54,16 @@
                 @onclick='() => SetTab(CandidateKompasTabs.Career)'>
             @Culture["Kompas.TabCareers"]
         </button>
+        <button type="button"
+                id="kompas-tab-fit"
+                class="admin-sublink @(_tab == CandidateKompasTabs.Fit ? "admin-sublink--active" : null)"
+                role="tab"
+                aria-selected="@(_tab == CandidateKompasTabs.Fit)"
+                aria-controls="kompas-panel-fit"
+                tabindex="@(_tab == CandidateKompasTabs.Fit ? 0 : -1)"
+                @onclick='() => SetTab(CandidateKompasTabs.Fit)'>
+            @Culture["Kompas.TabFit"]
+        </button>
     </div>
 
     <article id="kompas-panel-profile"
@@ -265,6 +275,14 @@
             <a class="login-submit" href="/candidate/career">@Culture["Career.Start"]</a>
         }
     </article>
+
+    <article id="kompas-panel-fit"
+             class="kompas-card kompas-card--tab"
+             role="tabpanel"
+             aria-labelledby="kompas-tab-fit"
+             hidden="@(_tab != CandidateKompasTabs.Fit)">
+        <RoleFitCheckPanel />
+    </article>
 </section>
 
 @code {
@@ -403,7 +421,7 @@
                 SetTab(CandidateKompasTabs.Profile);
                 break;
             case "End":
-                SetTab(CandidateKompasTabs.Career);
+                SetTab(CandidateKompasTabs.Fit);
                 break;
         }
     }

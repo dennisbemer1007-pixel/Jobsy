@@ -212,8 +212,9 @@ public class CareerCompassTests
         Assert.Equal(CandidateKompasTabs.Profile, CandidateKompasTabs.Normalize("profiel"));
         Assert.Equal(CandidateKompasTabs.Competencies, CandidateKompasTabs.Normalize("competency-profile-title"));
         Assert.Equal(CandidateKompasTabs.Career, CandidateKompasTabs.Normalize("#career-profile-title"));
+        Assert.Equal(CandidateKompasTabs.Fit, CandidateKompasTabs.Normalize("past-dit"));
         Assert.Equal(CandidateKompasTabs.Career, CandidateKompasTabs.Neighbor(CandidateKompasTabs.Competencies, 1));
-        Assert.Equal(CandidateKompasTabs.Career, CandidateKompasTabs.Neighbor(CandidateKompasTabs.Profile, -1));
+        Assert.Equal(CandidateKompasTabs.Fit, CandidateKompasTabs.Neighbor(CandidateKompasTabs.Profile, -1));
     }
 
     [Fact]
@@ -231,9 +232,12 @@ public class CareerCompassTests
         Assert.Contains("Kompas.TabProfile", home, StringComparison.Ordinal);
         Assert.Contains("Kompas.TabCompetencies", home, StringComparison.Ordinal);
         Assert.Contains("Kompas.TabCareers", home, StringComparison.Ordinal);
+        Assert.Contains("Kompas.TabFit", home, StringComparison.Ordinal);
+        Assert.Contains("RoleFitCheckPanel", home, StringComparison.Ordinal);
         Assert.Contains("kompas-panel-profile", home, StringComparison.Ordinal);
         Assert.Contains("kompas-panel-competencies", home, StringComparison.Ordinal);
         Assert.Contains("kompas-panel-career", home, StringComparison.Ordinal);
+        Assert.Contains("kompas-panel-fit", home, StringComparison.Ordinal);
         Assert.Contains("Kompas.ShowWorkStyle", home, StringComparison.Ordinal);
         Assert.Contains("Kompas.PracticalTitle", File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Pages/Candidate/CareerCompassPanel.razor")), StringComparison.Ordinal);
         Assert.DoesNotContain("kompas-grid", home, StringComparison.Ordinal);
