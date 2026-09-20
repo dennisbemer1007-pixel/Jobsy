@@ -197,6 +197,8 @@ projects:
                   name: lobsy-acc-web
                   type: web
                   envVarKey: RENDER_EXTERNAL_URL
+              - key: Cors__AllowedOrigins__1
+                value: "https://acceptatie.lobsy.nl"
               # Optional: fill in Dashboard if Acceptatie must send mail.
               # Leave unset so acc does not email real users with the production From.
               - key: Mail__ResendApiKey

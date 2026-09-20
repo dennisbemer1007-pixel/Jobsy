@@ -21,6 +21,7 @@ Alle noemenswaardige wijzigingen aan dit project worden in dit bestand bijgehoud
 - API: `api/employer/talent/*`, `api/me/talent-contacts`, `api/me/deep-analysis`; UI: `/employer/talent`, `/employer/talent-contacts`, `/candidate/talent-contacts`.
 
 ### Changed
+- Kandidaat-login landt op `/home` (**Mijn Lobsy Kompas**) in plaats van de banenkaart; de kaart toont een Kompas-link. Acceptatie CORS staat `https://acceptatie.lobsy.nl` toe. `/health` geeft de git-SHA ook via de Render-probe.
 - Alle Lobsy-platformbedragen (diepte-analyse, flex-marge, uitzend-jaarabonnement, ContactUnlock) zijn admin-configureerbaar via **Settings → Lobsy Flex & talent**.
 - Kandidaat **competentietest** uitgebreid van 20 → 25 (RIASEC-tags + match-tags op `CandidateCompetencies`).
 - Live **KVK Handelsregister**-koppeling: bij API-key (Admin → Integraties of `Kvk__ApiKey` / `KVK_API_KEY`) zoekt Lobsy echte vestigingen; zonder key blijft de demo-stub. Base URL leeg = `https://api.kvk.nl/api/` (test: `https://api.kvk.nl/test/api/`).

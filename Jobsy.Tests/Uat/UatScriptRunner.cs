@@ -424,6 +424,10 @@ public static class UatScriptRunner
             Assert.Contains("MatchPercent", dto, StringComparison.Ordinal);
             Assert.Contains("minMatchPercent", File.ReadAllText(Path.Combine(root, "Jobsy.Api/Controllers/VacanciesController.cs")), StringComparison.Ordinal);
             Assert.True(TransportLabels.Parse("E-bike") == Jobsy.Core.Enums.TransportMode.Bike);
+            var discovery = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/VacancyDiscovery.razor"));
+            Assert.Contains("Kompas.Nav", discovery, StringComparison.Ordinal);
+            Assert.Contains("href=\"/home\"", discovery, StringComparison.Ordinal);
+            Assert.Equal("/home", Jobsy.Web.Auth.AuthRedirects.CandidatePostLoginUrl(showCandidateHowTo: false));
         }
 
         if (Contains(blob, "leeftijdsfilter", "talentpool", "ContactUnlock", "48 uur"))

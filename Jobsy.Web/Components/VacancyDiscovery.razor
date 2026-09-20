@@ -25,6 +25,10 @@
             </a>
             <h1 class="visually-hidden">@Culture["Seo.HomeHeading"]</h1>
             <div class="jobsy-chrome__header-actions">
+                @if (_isCandidate)
+                {
+                    <a class="auth-link" href="/home" title="@Culture["Kompas.Title"]">@Culture["Kompas.Nav"]</a>
+                }
                 <LanguageSelector />
                 <AuthHeader />
             </div>
@@ -1237,10 +1241,27 @@
         && _radiusKm == 15
         && string.Equals(_selectedTransport, "Fiets", StringComparison.Ordinal);
 
+    private void ApplyRoleFlags(System.Security.Claims.ClaimsPrincipal user)
+    {
+        _isCandidate = user.IsInRole("Candidate");
+        _canShowMyVacancies = user.IsInRole("EnterpriseManager")
+            || user.IsInRole("RegionalManager")
+            || user.IsInRole("BranchManager")
+            || user.IsInRole("Intermediary");
+    }
+
     protected override async Task OnInitializedAsync()
     {
         Culture.Changed += OnCultureChanged;
         Navigation.LocationChanged += OnLocationChanged;
+        try
+        {
+            ApplyRoleFlags((await AuthState.GetAuthenticationStateAsync()).User);
+        }
+        catch
+        {
+            // Auth state is optional during prerender; interactive path retries below.
+        }
         ApplyWorkTypeFromQuery();
         ApplySearchQueryFromQuery();
         ApplyTravelFromQuery();
@@ -1288,11 +1309,7 @@
             await LoadBranchOptionsAsync();
             var state = await AuthState.GetAuthenticationStateAsync();
             var user = state.User;
-            _isCandidate = user.IsInRole("Candidate");
-            _canShowMyVacancies = user.IsInRole("EnterpriseManager")
-                || user.IsInRole("RegionalManager")
-                || user.IsInRole("BranchManager")
-                || user.IsInRole("Intermediary");
+            ApplyRoleFlags(user);
             if (_isCandidate)
             {
                 var profile = await Api.GetMyProfileAsync();

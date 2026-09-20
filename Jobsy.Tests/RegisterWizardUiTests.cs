@@ -65,6 +65,8 @@ public class RegisterWizardUiTests
         var api = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Api/Program.cs"));
         Assert.Contains("status = \"ok\"", api);
         Assert.Contains("RENDER_GIT_COMMIT", api);
+        Assert.Contains("WriteAsJsonAsync", api);
+        Assert.Contains("https://acceptatie.lobsy.nl", api);
     }
 
     [Fact]
