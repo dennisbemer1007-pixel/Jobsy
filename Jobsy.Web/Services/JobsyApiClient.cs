@@ -847,6 +847,31 @@ public sealed class JobsyApiClient : IAsyncDisposable
         }
     }
 
+    public async Task<List<TalentContactRequestModel>?> ListCandidateTalentContactsAsync(CancellationToken ct = default)
+    {
+        try
+        {
+            return await _http.GetFromJsonAsync<List<TalentContactRequestModel>>("api/me/talent-contacts", ct);
+        }
+        catch (HttpRequestException)
+        {
+            return [];
+        }
+    }
+
+    public async Task RespondToTalentContactAsync(Guid requestId, bool accept, bool alreadyPlaced = false, CancellationToken ct = default)
+    {
+        var response = await _http.PostAsJsonAsync(
+            $"api/me/talent-contacts/{requestId}/respond",
+            new { accept, alreadyPlaced },
+            ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException(ExtractMessage(body) ?? "Reageren op contactverzoek mislukt.");
+        }
+    }
+
     public async Task<CandidateCompetencyState> SaveMyCompetenciesAsync(
         IReadOnlyDictionary<int, int> answers,
         bool complete,

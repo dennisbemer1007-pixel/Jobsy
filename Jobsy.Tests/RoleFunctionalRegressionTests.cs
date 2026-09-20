@@ -414,6 +414,45 @@ public class RoleFunctionalRegressionTests : IClassFixture<RoleFunctionalWebAppF
     }
 
     [Fact]
+    public async Task Candidate_deep_analysis_is_locked_per_kind_until_paid()
+    {
+        var client = CandidateClient();
+        var career = await client.GetFromJsonAsync<JsonElement>("api/me/deep-analysis?kind=career", JsonOpts);
+        Assert.Equal(150, career.GetProperty("questionCount").GetInt32());
+        Assert.False(career.GetProperty("isUnlocked").GetBoolean());
+        Assert.Contains("beroepentest", career.GetProperty("upsellCopy").GetString(), StringComparison.OrdinalIgnoreCase);
+
+        var competence = await client.GetFromJsonAsync<JsonElement>("api/me/deep-analysis?kind=competence", JsonOpts);
+        Assert.False(competence.GetProperty("isUnlocked").GetBoolean());
+        Assert.Contains("competentie", competence.GetProperty("upsellCopy").GetString(), StringComparison.OrdinalIgnoreCase);
+
+        Assert.Equal(HttpStatusCode.OK, (await client.GetAsync("api/me/talent-contacts")).StatusCode);
+        Assert.Equal(HttpStatusCode.Forbidden, (await client.GetAsync("api/employer/talent/search")).StatusCode);
+    }
+
+    [Fact]
+    public async Task Employer_talent_search_rejects_age_filters_and_hides_pii()
+    {
+        var employer = EmployerClient();
+        var age = await employer.GetAsync("api/employer/talent/search?minAge=18&maxAge=30");
+        Assert.Equal(HttpStatusCode.BadRequest, age.StatusCode);
+        var ageBody = await age.Content.ReadAsStringAsync();
+        Assert.Contains("Leeftijd", ageBody, StringComparison.OrdinalIgnoreCase);
+
+        var ok = await employer.GetAsync("api/employer/talent/search");
+        Assert.Equal(HttpStatusCode.OK, ok.StatusCode);
+        var cards = await ok.Content.ReadFromJsonAsync<JsonElement>(JsonOpts);
+        Assert.Equal(JsonValueKind.Array, cards.ValueKind);
+        foreach (var card in cards.EnumerateArray())
+        {
+            Assert.False(card.TryGetProperty("email", out var email) && email.ValueKind is JsonValueKind.String && email.GetString()?.Contains('@') == true);
+            Assert.False(card.TryGetProperty("fullName", out _));
+            Assert.False(card.TryGetProperty("phoneNumber", out _));
+            Assert.False(card.TryGetProperty("dateOfBirth", out _));
+        }
+    }
+
+    [Fact]
     public async Task Candidate_apply_gulden_middenweg_then_safety_net_then_otp()
     {
         var client = CandidateClient();

@@ -147,6 +147,24 @@ public static class PageHelpDocs
             "Rond af voor een top 10 actieve vacatures in de regio. Optioneel: uitgebreide beroepentest (150 vragen, € 2,99) met loopbaan-PDF.",
             "Interesses koppelen aan actieve vacatures op de kaart."),
 
+        ["/candidate/talent-contacts"] = new(
+            "Contactverzoeken",
+            "Berichten van werkgevers uit de anonieme talentpool.",
+            "Reageer binnen 48 uur. Bij akkoord worden contactgegevens gedeeld. Als je al voorzien bent, kan de werkgever het token terugkrijgen.",
+            "Contact leggen zonder dat je 06 of e-mail publiek staat."),
+
+        ["/employer/talent"] = new(
+            "Anonieme talentpool",
+            "Zoek kandidaten op competenties, RIASEC, reistijd, beschikbaarheid en rijbewijs — zonder leeftijdsfilter.",
+            "Profielen blijven anoniem tot je 1 token inzet. Reageert de kandidaat niet binnen 48 uur, dan kun je intrekken en het token terugkrijgen.",
+            "Omgekeerd werven: gericht zoeken in de talentenpool."),
+
+        ["/employer/talent-contacts"] = new(
+            "Talentpool-contactverzoeken",
+            "Openstaande ontgrendelingen en 48-uurs refund.",
+            "Na 48 uur zonder reactie, of als de kandidaat al voorzien is, trek je in en wordt het token teruggestort. Na gedeeld contact geen refund.",
+            "No-risk ContactUnlock bewaken."),
+
         ["/employer/vacancies"] = new(
             "Vacatures (werkgever)",
             "Beheer van vacatures van jouw organisatie of vestiging, inclusief concepten uit CSV-import of API.",

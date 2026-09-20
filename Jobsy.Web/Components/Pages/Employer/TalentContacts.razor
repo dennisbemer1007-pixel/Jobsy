@@ -1,6 +1,8 @@
 @page "/employer/talent-contacts"
 @rendermode @(new InteractiveServerRenderMode(prerender: false))
 @attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "BranchManager,RegionalManager,EnterpriseManager,Intermediary")]
+@using Jobsy.Core.Enums
+@using Jobsy.Core.Rules
 @inject JobsyApiClient Api
 @inject CultureState Culture
 
@@ -8,9 +10,9 @@
 
 <div class="panel-page">
     <header class="saved-gate__header">
-        <h1>Contactverzoeken</h1>
-        <p class="login-lead">48-uurs reactievenster. Zonder reactie kun je intrekken en het token terugkrijgen.</p>
-        <p><a href="/employer/talent">← Terug naar talentpool</a></p>
+        <h1>@Culture["Talent.EmployerContactsTitle"]</h1>
+        <p class="login-lead">@Culture["Talent.EmployerContactsLead"]</p>
+        <p><a href="/employer/talent">← @Culture["Talent.Title"]</a></p>
     </header>
 
     @if (!string.IsNullOrEmpty(_message))
@@ -18,11 +20,16 @@
         <p class="state-message">@_message</p>
     }
 
+    @if (_rows.Count == 0)
+    {
+        <p class="state-message">@Culture["Talent.EmployerContactsEmpty"]</p>
+    }
+
     @foreach (var row in _rows)
     {
         <article class="detail-card">
-            <p>Status: <strong>@row.Status</strong></p>
-            <p>Reageer vóór: @row.RespondByUtc.ToLocalTime().ToString("g")</p>
+            <p>@Culture["Talent.Status"]: <strong>@row.Status</strong></p>
+            <p>@Culture.Format("Talent.RespondBy", row.RespondByUtc.ToLocalTime().ToString("g"))</p>
             <p>@row.Message</p>
             @if (row.PiiRevealed)
             {
@@ -30,10 +37,17 @@
             }
             else
             {
-                <p class="profile-address__hint">Contactgegevens nog niet gedeeld (anoniem).</p>
-                <button class="engagement-btn" type="button" @onclick="() => WithdrawAsync(row.Id)">
-                    @Culture["Talent.Withdraw"]
-                </button>
+                <p class="profile-address__hint">@Culture["Talent.StillAnonymous"]</p>
+                @if (CanWithdraw(row))
+                {
+                    <button class="engagement-btn" type="button" @onclick="() => WithdrawAsync(row.Id)">
+                        @Culture["Talent.Withdraw"]
+                    </button>
+                }
+                else
+                {
+                    <p class="profile-address__hint">@Culture["Talent.WithdrawWait"]</p>
+                }
             }
         </article>
     }
@@ -47,6 +61,10 @@
     {
         _rows = await Api.ListEmployerTalentContactsAsync() ?? [];
     }
+
+    private static bool CanWithdraw(TalentContactRequestModel row)
+        => Enum.TryParse<TalentContactStatus>(row.Status, ignoreCase: true, out var status)
+           && TalentContactRules.CanEmployerWithdraw(status, DateTime.UtcNow, row.RespondByUtc);
 
     private async Task WithdrawAsync(Guid id)
     {

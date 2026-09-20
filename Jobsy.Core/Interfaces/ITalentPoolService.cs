@@ -81,4 +81,5 @@ public sealed record TalentContactRequestDto(
     bool PiiRevealed,
     string? CandidateFullName,
     string? CandidateEmail,
-    string? CandidatePhone);
+    string? CandidatePhone,
+    string? CompanyName = null);

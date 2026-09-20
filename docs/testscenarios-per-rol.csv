@@ -274,6 +274,9 @@ Kandidaat,Profiel-kop **Competenties** met progress bars/radar.,Toont 4 scores (
 Kandidaat,Knop **Test opnieuw invullen / aanpassen**.,Opent `/candidate/competencies` met bestaande antwoorden.
 Kandidaat,Competentietest 25 Likert-vragen (Big Five/OCEAN).,Vijf categorieën; omgekeerde items; tussentijds **Draft** opslaan mag incompleet.
 Kandidaat,Competentietest **Afronden** met 25 antwoorden.,Status Completed; percentages 0–100 opgeslagen; matches herberekend.
+Kandidaat,Beroepentest 25 Likert-vragen (RIASEC).,Holland-code + tags; top 10 actieve vacatures; route `/candidate/career`.
+Kandidaat,Diepte-analyse upsell (€ 2,99) per test.,Checkout `/candidate/deep-analysis/checkout` → 150 vragen `/candidate/deep-analysis/competence` of `/candidate/deep-analysis/career` → PDF-rapport.
+Kandidaat,Contactverzoeken van werkgevers `/candidate/talent-contacts`.,Inbox; binnen 48 uur reageren (akkoord / al voorzien / geen interesse); geen extra menu-tab.
 Kandidaat,Profiel rechts: **Top 10 vacatures**.,Strikt aflopend matchingpercentage; alleen ≥ 60%; max 10.
 Kandidaat,Vraagteken bij matchpercentage (hover/klik).,Jip-en-Janneke: waarom de match hoog is (ervaring + competenties) én waar het gat zit.
 Kandidaat,Profiel **Afmelden** → UnsubscribeDialog.,Zelfde OTP-forget als `/privacy/data`.
@@ -361,6 +364,10 @@ Filiaalmanager,Download Lobsy-CV na Accept.,PDF zonder e-mail/telefoon tot Hired
 Filiaalmanager,Download geüpload CV na Accept (als aanwezig).,Bestand; ontbreekt: knop weg.
 Filiaalmanager,Match-% kleur + breakdown klikken.,Breakdown-modal; vangnet-indicatie indien ViaSafetyNet.
 Filiaalmanager,Applicants van vacature andere vestiging (ID in URL/API).,Leeg of 403; tenant-scope.
+Filiaalmanager,Talentpool `/employer/talent`: filters tags/reistijd/vervoer/beschikbaarheid/rijbewijs.,Anonieme kaarten zonder naam/e-mail/06; **geen leeftijdsfilter**.
+Filiaalmanager,Talentpool: leeftijd-query `minAge`/`maxAge`.,API 400; UI toont geen leeftijdsveld.
+Filiaalmanager,Talentpool: **Start contact (1 token)**.,Token afgeboekt; kandidaat krijgt notificatie naar `/candidate/talent-contacts`.
+Filiaalmanager,Contactverzoeken `/employer/talent-contacts`: 48 uur zonder reactie **Intrekken & token terug**.,Token teruggestort; na gedeeld contact geen refund.
 Filiaalmanager,Tokens `/branch/tokens` zonder enterprise-beheer: pakket kiezen + iDEAL/creditcard.,Mollie checkout; webhook bijschrijving; log Purchase.
 Filiaalmanager,Tokens: checkout annuleren bij Mollie.,Geen tokens; terug wallet; pending actie niet uitgevoerd.
 Filiaalmanager,Tokens: `/tokens/checkout-return` success.,Poll tot bijschrijving; redirect/actie uitgevoerd; chip-saldo omhoog.

@@ -82,12 +82,9 @@ public sealed class DeepAnalysisController : ControllerBase
             return BadRequest(new { message = "Checkout niet gevonden, niet van jou, of betaling nog niet afgerond." });
         }
 
-        var checkoutKind = AssessmentKind.Competence;
-        if (paymentId.Contains("_career_", StringComparison.OrdinalIgnoreCase)
-            || paymentId.Contains("career", StringComparison.OrdinalIgnoreCase))
-        {
-            checkoutKind = AssessmentKind.Career;
-        }
+        var checkoutKind = paymentId.Contains("_career_", StringComparison.OrdinalIgnoreCase)
+            ? AssessmentKind.Career
+            : AssessmentKind.Competence;
 
         return Ok(await _deep.GetStateAsync(user.Id, checkoutKind, cancellationToken));
     }

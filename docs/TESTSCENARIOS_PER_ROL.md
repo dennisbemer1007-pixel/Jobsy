@@ -1,6 +1,6 @@
 # Testscenario’s per rol (UAT-catalogus)
 
-Aantal rijen: **784**. Handmatige testdekking van **elke rol**, **elke primaire knop/link/nav-item**, plus **unhappy paths** (validatie, 401/403, lege staten, tokens tekort, AVG, IDOR, timeouts). Kolommen: **Rol** · **Testscenario** · **Verwacht resultaat**.
+Aantal rijen: **793**. Handmatige testdekking van **elke rol**, **elke primaire knop/link/nav-item**, plus **unhappy paths** (validatie, 401/403, lege staten, tokens tekort, AVG, IDOR, timeouts). Kolommen: **Rol** · **Testscenario** · **Verwacht resultaat**.
 
 Bronnen: `ROLES_AND_VIEWS.md`, `REQUIREMENTS.md`, `SECURITY.md`, Blazor-pagina’s onder `Jobsy.Web/Components`, `RoleNavCatalog`, functionele specs in `docs/`.
 
@@ -10,8 +10,8 @@ Bronnen: `ROLES_AND_VIEWS.md`, `REQUIREMENTS.md`, `SECURITY.md`, Blazor-pagina�
 
 - [1. Gast (niet ingelogd)](#1-gast-niet-ingelogd) — 147 scenario’s
 - [2. Alle ingelogde rollen (cross-cutting chrome)](#2-alle-ingelogde-rollen-cross-cutting-chrome) — 33 scenario’s
-- [3. Kandidaat](#3-kandidaat) — 109 scenario’s
-- [4. Filiaalmanager (BranchManager)](#4-filiaalmanager-branchmanager) — 97 scenario’s
+- [3. Kandidaat](#3-kandidaat) — 110 scenario’s
+- [4. Filiaalmanager (BranchManager)](#4-filiaalmanager-branchmanager) — 101 scenario’s
 - [5. Regiomanager (RegionalManager)](#5-regiomanager-regionalmanager) — 22 scenario’s
 - [6. Bedrijfsmanager (EnterpriseManager)](#6-bedrijfsmanager-enterprisemanager) — 55 scenario’s
 - [7. Intermediair](#7-intermediair) — 31 scenario’s
@@ -356,8 +356,9 @@ Account: `kandidaat@jobsy.local` / `Jobsy123!`. Bottom-nav: Zoeken · Bewaard ·
 | Kandidaat | Knop **Test opnieuw invullen / aanpassen**. | Opent `/candidate/competencies` met bestaande antwoorden. |
 | Kandidaat | Competentietest 25 Likert-vragen (Big Five/OCEAN). | Vijf categorieën; omgekeerde items; tussentijds **Draft** opslaan mag incompleet. |
 | Kandidaat | Competentietest **Afronden** met 25 antwoorden. | Status Completed; percentages 0–100 opgeslagen; matches herberekend. |
-| Kandidaat | Beroepentest 25 Likert-vragen (RIASEC). | Holland-code + tags; top 10 actieve vacatures. |
-| Kandidaat | Diepte-analyse upsell (€ 2,99) per test. | Checkout → 150 vragen → PDF-rapport. |
+| Kandidaat | Beroepentest 25 Likert-vragen (RIASEC). | Holland-code + tags; top 10 actieve vacatures; route `/candidate/career`. |
+| Kandidaat | Diepte-analyse upsell (€ 2,99) per test. | Checkout `/candidate/deep-analysis/checkout` → 150 vragen `/candidate/deep-analysis/competence` of `/candidate/deep-analysis/career` → PDF-rapport. |
+| Kandidaat | Contactverzoeken van werkgevers `/candidate/talent-contacts`. | Inbox; binnen 48 uur reageren (akkoord / al voorzien / geen interesse); geen extra menu-tab. |
 | Kandidaat | Profiel rechts: **Top 10 vacatures**. | Strikt aflopend matchingpercentage; alleen ≥ 60%; max 10. |
 | Kandidaat | Vraagteken bij matchpercentage (hover/klik). | Jip-en-Janneke: waarom de match hoog is (ervaring + competenties) én waar het gat zit. |
 | Kandidaat | Profiel **Afmelden** → UnsubscribeDialog. | Zelfde OTP-forget als `/privacy/data`. |
@@ -380,7 +381,7 @@ Account: `kandidaat@jobsy.local` / `Jobsy123!`. Bottom-nav: Zoeken · Bewaard ·
 
 ## 4. Filiaalmanager (BranchManager)
 
-Account: `ondernemer@jobsy.local`. Bottom-nav: Home · Banenkaart · Vacatures · Sollicitaties · Mijn tokens · Bedrijfsgegevens · Overnames (alleen bij inbox). Hoe werkt Lobsy staat in het account-menu (userknop). Tokenchip → `/branch/tokens`.
+Account: `ondernemer@jobsy.local`. Bottom-nav: Home · Banenkaart · Vacatures · Sollicitaties · Talentpool · Mijn tokens · Bedrijfsgegevens · Overnames (alleen bij inbox). Hoe werkt Lobsy staat in het account-menu (userknop). Tokenchip → `/branch/tokens`.
 
 | Rol | Testscenario | Verwacht resultaat |
 |-----|--------------|--------------------|
@@ -455,6 +456,10 @@ Account: `ondernemer@jobsy.local`. Bottom-nav: Home · Banenkaart · Vacatures �
 | Filiaalmanager | Download geüpload CV na Accept (als aanwezig). | Bestand; ontbreekt: knop weg. |
 | Filiaalmanager | Match-% kleur + breakdown klikken. | Breakdown-modal; vangnet-indicatie indien ViaSafetyNet. |
 | Filiaalmanager | Applicants van vacature andere vestiging (ID in URL/API). | Leeg of 403; tenant-scope. |
+| Filiaalmanager | Talentpool `/employer/talent`: filters tags/reistijd/vervoer/beschikbaarheid/rijbewijs. | Anonieme kaarten zonder naam/e-mail/06; **geen leeftijdsfilter**. |
+| Filiaalmanager | Talentpool: leeftijd-query `minAge`/`maxAge`. | API 400; UI toont geen leeftijdsveld. |
+| Filiaalmanager | Talentpool: **Start contact (1 token)**. | Token afgeboekt; kandidaat krijgt notificatie naar `/candidate/talent-contacts`. |
+| Filiaalmanager | Contactverzoeken `/employer/talent-contacts`: 48 uur zonder reactie **Intrekken & token terug**. | Token teruggestort; na gedeeld contact geen refund. |
 | Filiaalmanager | Tokens `/branch/tokens` zonder enterprise-beheer: pakket kiezen + iDEAL/creditcard. | Mollie checkout; webhook bijschrijving; log Purchase. |
 | Filiaalmanager | Tokens: checkout annuleren bij Mollie. | Geen tokens; terug wallet; pending actie niet uitgevoerd. |
 | Filiaalmanager | Tokens: `/tokens/checkout-return` success. | Poll tot bijschrijving; redirect/actie uitgevoerd; chip-saldo omhoog. |

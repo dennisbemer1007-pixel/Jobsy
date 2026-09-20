@@ -1,6 +1,7 @@
 using System.Security.Claims;
 using System.Text.RegularExpressions;
 using Jobsy.Core.Authorization;
+using Jobsy.Core.Entities;
 using Jobsy.Core.Interfaces;
 using Jobsy.Core.Localization;
 using Jobsy.Core.Rules;
@@ -397,6 +398,24 @@ public static class UatScriptRunner
             Assert.Equal(60, ProfileVacancyMatchCalculator.DisplayThreshold);
             Assert.Equal(10, ProfileVacancyMatchCalculator.MaxResults);
             Assert.Equal(4, CompetencyTestCatalog.CategoryCodes.Length);
+        }
+
+        if (Contains(blob, "Beroepentest", "RIASEC", "Holland-code"))
+        {
+            Assert.Equal(25, CareerTestCatalog.QuestionCount);
+            Assert.Equal(6, CareerTestCatalog.RiasecCodes.Length);
+        }
+
+        if (Contains(blob, "Diepte-analyse", "150 vragen"))
+        {
+            Assert.Equal(150, DeepAnalysisCatalog.QuestionCount);
+            Assert.Equal(2.99m, FlexCommercialSettings.DefaultDeepAnalysisPriceEuro);
+        }
+
+        if (Contains(blob, "leeftijdsfilter", "talentpool", "ContactUnlock", "48 uur"))
+        {
+            Assert.Equal(48, TalentContactRules.TalentContactRequestHours);
+            Assert.Equal(1m, TalentContactRules.DefaultUnlockCostTokens);
         }
 
         if (Contains(blob, "VacancyLifecycle", "Publiceren") && jobsyRole == JobsyRoles.RegionalManager)

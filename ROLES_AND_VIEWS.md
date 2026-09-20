@@ -38,13 +38,14 @@ Publiek (naast banenkaart): `/vacancies/{id}`, `/{kvknummer}` (ondernemer), `/{k
 | `/candidate/competencies` | Competentietest (25); draft tussentijds opslaan; scores herberekend bij afronden |
 | `/candidate/career` | Beroepentest (25 RIASEC); Holland-code + top 10 actieve vacatures |
 | `/candidate/deep-analysis/{kind}` | Betaalde 150-vragen analyse (competence \| career) + PDF |
+| `/candidate/talent-contacts` | Inbox contactverzoeken (48u); geen extra bottom-nav tab |
 
 ---
 
 ## 2. BranchManager
 *Doel: lokaal werven voor één vestiging.*
 
-**BottomNav:** Home · Banenkaart · Vacatures · Sollicitaties · Mijn tokens · Bedrijfsgegevens · Overnames
+**BottomNav:** Home · Banenkaart · Vacatures · Sollicitaties · Talentpool · Mijn tokens · Bedrijfsgegevens · Overnames
 
 | Route | Inhoud |
 |-------|--------|

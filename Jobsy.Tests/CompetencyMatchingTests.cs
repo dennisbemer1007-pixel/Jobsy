@@ -1,6 +1,7 @@
 using Jobsy.Core.Entities;
 using Jobsy.Core.Enums;
 using Jobsy.Core.Rules;
+using Jobsy.Infrastructure.Services;
 
 namespace Jobsy.Tests;
 
@@ -117,6 +118,47 @@ public class CompetencyMatchingTests
         Assert.Equal(VacancyKind.Flex, VacancyKindLabels.ParseOrDefault("flex"));
         Assert.Equal("Flex-inzet", VacancyKindLabels.ToDutch(VacancyKind.Flex));
         Assert.Equal(1m, TalentContactRules.DefaultUnlockCostTokens);
+    }
+
+    [Fact]
+    public void Legacy_compact_riasec_maps_q21_to_q25_and_keeps_top_three()
+    {
+        var answers = new Dictionary<int, int>
+        {
+            [21] = 5,
+            [22] = 1,
+            [23] = 1,
+            [24] = 5,
+            [25] = 4
+        };
+        var tags = CareerTestCatalog.DeriveLegacyCompactRiasecTags(answers);
+        Assert.Equal(
+            new[] { CareerTestCatalog.Realistic, CareerTestCatalog.Social, CareerTestCatalog.Enterprising },
+            tags);
+
+        var crowded = new Dictionary<int, int>
+        {
+            [21] = 5,
+            [22] = 5,
+            [23] = 5,
+            [24] = 5,
+            [25] = 5
+        };
+        var top = CareerTestCatalog.DeriveLegacyCompactRiasecTags(crowded);
+        Assert.Equal(3, top.Count);
+        Assert.Equal(CareerTestCatalog.Artistic, top[0]);
+    }
+
+    [Fact]
+    public void Deep_analysis_upsell_copy_is_kind_specific()
+    {
+        var competence = DeepAnalysisService.FormatUpsellCopy(2.99m, AssessmentKind.Competence);
+        Assert.Contains("€ 2,99", competence, StringComparison.Ordinal);
+        Assert.Contains("competentie-analyse", competence, StringComparison.OrdinalIgnoreCase);
+
+        var career = DeepAnalysisService.FormatUpsellCopy(2.99m, AssessmentKind.Career);
+        Assert.Contains("€ 2,99", career, StringComparison.Ordinal);
+        Assert.Contains("beroepentest", career, StringComparison.OrdinalIgnoreCase);
     }
 
     [Fact]

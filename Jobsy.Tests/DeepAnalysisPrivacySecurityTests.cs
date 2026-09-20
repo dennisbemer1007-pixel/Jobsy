@@ -114,9 +114,17 @@ public class DeepAnalysisPrivacySecurityTests
     {
         await using var db = CreateDb();
         var userId = Guid.NewGuid();
-        var answers = Enumerable.Range(1, 25).ToDictionary(i => i, _ => 4);
+        // High Big Five scores for competence match tags. Q21–Q25 still map to the
+        // legacy compact RIASEC probes (R/I/A/S/E); keep only R and S at ≥4 so
+        // Take(3) cannot crowd Social out alphabetically.
+        var answers = Enumerable.Range(1, 25).ToDictionary(
+            i => i,
+            i => CompetencyTestCatalog.Questions.First(q => q.Id == i).Reverse ? 1 : 5);
         answers[21] = 5;
+        answers[22] = 1;
+        answers[23] = 1;
         answers[24] = 5;
+        answers[25] = 1;
         var preview = CompetencyTestCatalog.Score(answers)!;
         db.CandidateCompetencies.Add(new CandidateCompetency
         {

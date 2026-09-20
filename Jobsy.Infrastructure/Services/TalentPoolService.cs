@@ -434,9 +434,8 @@ public sealed class TalentPoolService : ITalentPoolService
         var list = new List<TalentContactRequestDto>();
         foreach (var id in ids)
         {
-            var row = await _db.TalentContactRequests.AsNoTracking()
-                .FirstAsync(r => r.Id == id, cancellationToken);
-            list.Add(await ToDtoAsync(id, revealPii: row.Status == TalentContactStatus.ContactShared, cancellationToken));
+            // Candidate inbox never includes the candidate's own PII; company name is always attached.
+            list.Add(await ToDtoAsync(id, revealPii: false, cancellationToken));
         }
 
         return list;
@@ -480,6 +479,11 @@ public sealed class TalentPoolService : ITalentPoolService
             phone = candidate?.PhoneNumber;
         }
 
+        var companyName = await _db.Companies.AsNoTracking()
+            .Where(c => c.Id == request.CompanyId)
+            .Select(c => c.Name)
+            .FirstOrDefaultAsync(cancellationToken);
+
         return new TalentContactRequestDto(
             request.Id,
             request.CompanyId,
@@ -493,7 +497,8 @@ public sealed class TalentPoolService : ITalentPoolService
             PiiRevealed: revealPii || request.Status == TalentContactStatus.ContactShared,
             name,
             email,
-            phone);
+            phone,
+            companyName);
     }
 
     private static CandidatePreferencesDto DeserializePrefs(string? json)

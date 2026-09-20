@@ -31,4 +31,5 @@ public sealed class TalentContactRequestModel
     public string? CandidateFullName { get; set; }
     public string? CandidateEmail { get; set; }
     public string? CandidatePhone { get; set; }
+    public string? CompanyName { get; set; }
 }

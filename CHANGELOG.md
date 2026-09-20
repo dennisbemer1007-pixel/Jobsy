@@ -15,7 +15,7 @@ Alle noemenswaardige wijzigingen aan dit project worden in dit bestand bijgehoud
 
 ### Added
 - **Gescheiden test-architectuur:** competentietest (25 Big Five) en beroepentest (25 RIASEC) elk met eigen 150-vragen diepte-analyse (€ 2,99) en PDF; routes `/candidate/career` en `/candidate/deep-analysis/{kind}`.
-- API: `api/employer/talent/*`, `api/me/talent-contacts`, `api/me/deep-analysis`; UI: `/employer/talent`, `/employer/talent-contacts`.
+- API: `api/employer/talent/*`, `api/me/talent-contacts`, `api/me/deep-analysis`; UI: `/employer/talent`, `/employer/talent-contacts`, `/candidate/talent-contacts`.
 
 ### Changed
 - Alle Lobsy-platformbedragen (diepte-analyse, flex-marge, uitzend-jaarabonnement, ContactUnlock) zijn admin-configureerbaar via **Settings → Lobsy Flex & talent**.
