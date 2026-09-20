@@ -1,4 +1,4 @@
-@page "/candidate/competencies"
+@page "/candidate/career"
 @rendermode @(new InteractiveServerRenderMode(prerender: false))
 @attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Candidate")]
 @using Jobsy.Core.Rules
@@ -7,25 +7,25 @@
 @inject CultureState Culture
 @inject NavigationManager Navigation
 
-<PageTitle>@Culture["Competency.Title"] · Lobsy</PageTitle>
+<PageTitle>@Culture["Career.Title"] · Lobsy</PageTitle>
 
 <div class="panel-page profile-page profile-page--candidate competency-test-page">
     <header class="saved-gate__header profile-page__header">
-        <h1>@Culture["Competency.Title"]</h1>
-        <p class="login-lead">@Culture["Competency.Lead"]</p>
+        <h1>@Culture["Career.Title"]</h1>
+        <p class="login-lead">@Culture["Career.Lead"]</p>
     </header>
 
     <article class="detail-card">
-        <p class="login-lead">@Culture["Competency.ScienceNote"]</p>
+        <p class="login-lead">@Culture["Career.ScienceNote"]</p>
         <p class="login-lead competency-privacy-note">
             @Culture["Competency.PrivacyNote"]
             <a href="/privacy">@Culture["Legal.Privacy"]</a>
         </p>
         <p class="competency-test__progress" aria-live="polite">
-            @Culture.Format("Competency.Progress", AnsweredCount, CompetencyTestCatalog.QuestionCount)
+            @Culture.Format("Competency.Progress", AnsweredCount, CareerTestCatalog.QuestionCount)
         </p>
-        <div class="competency-test__meter" role="progressbar" aria-valuemin="0" aria-valuemax="@CompetencyTestCatalog.QuestionCount" aria-valuenow="@AnsweredCount">
-            <span style="width: @((AnsweredCount * 100 / CompetencyTestCatalog.QuestionCount).ToString(System.Globalization.CultureInfo.InvariantCulture))%"></span>
+        <div class="competency-test__meter" role="progressbar" aria-valuemin="0" aria-valuemax="@CareerTestCatalog.QuestionCount" aria-valuenow="@AnsweredCount">
+            <span style="width: @((AnsweredCount * 100 / CareerTestCatalog.QuestionCount).ToString(System.Globalization.CultureInfo.InvariantCulture))%"></span>
         </div>
 
         @if (_loading)
@@ -35,18 +35,18 @@
         else if (_loadFailed)
         {
             <p class="state-message">@_message</p>
-            <a class="login-submit" href="/candidate/competencies">@Culture["Competency.Reload"]</a>
+            <a class="login-submit" href="/candidate/career">@Culture["Competency.Reload"]</a>
         }
         else
         {
-            @foreach (var category in CompetencyTestCatalog.QuickScanCategories)
+            @foreach (var category in CareerTestCatalog.RiasecCodes)
             {
                 var questions = QuestionsFor(category);
                 var done = questions.Count(q => _answers.ContainsKey(q.Id));
                 <fieldset class="competency-test__cat">
-                    <legend>@Culture[$"Competency.Cat.{category}"]</legend>
-                    <p class="profile-address__hint">@Culture[$"Competency.Cat.{category}.Hint"]</p>
-                    <p class="profile-address__hint">@Culture.Format("Competency.CategoryProgress", Culture[$"Competency.Cat.{category}"], done, questions.Count)</p>
+                    <legend>@Culture[$"Career.Cat.{category}"]</legend>
+                    <p class="profile-address__hint">@Culture[$"Career.Cat.{category}.Hint"]</p>
+                    <p class="profile-address__hint">@Culture.Format("Competency.CategoryProgress", Culture[$"Career.Cat.{category}"], done, questions.Count)</p>
                     @foreach (var question in questions)
                     {
                         <div class="competency-question">
@@ -55,10 +55,10 @@
                                 @for (var value = 1; value <= 5; value++)
                                 {
                                     var current = value;
-                                    var id = $"q{question.Id}-{current}";
+                                    var id = $"cq{question.Id}-{current}";
                                     <label class="competency-likert__opt @(_answers.TryGetValue(question.Id, out var selected) && selected == current ? "is-on" : null)">
                                         <input type="radio"
-                                               name="@($"q{question.Id}")"
+                                               name="@($"cq{question.Id}")"
                                                id="@id"
                                                value="@current"
                                                checked="@(_answers.TryGetValue(question.Id, out var v) && v == current)"
@@ -76,7 +76,7 @@
                 <button class="engagement-btn" type="button" disabled="@(_saving || _loadFailed)" @onclick="SaveDraftAsync">
                     @Culture["Competency.SaveDraft"]
                 </button>
-                <button class="login-submit" type="button" disabled="@(_saving || _loadFailed || AnsweredCount < CompetencyTestCatalog.QuestionCount)" @onclick="CompleteAsync">
+                <button class="login-submit" type="button" disabled="@(_saving || _loadFailed || AnsweredCount < CareerTestCatalog.QuestionCount)" @onclick="CompleteAsync">
                     @Culture["Competency.Complete"]
                 </button>
                 <a class="engagement-btn" href="/candidate/profile">@Culture["Competency.BackToProfile"]</a>
@@ -87,6 +87,13 @@
             </div>
         }
     </article>
+
+    @if (_matches.Count > 0)
+    {
+        <article class="detail-card">
+            <CompetencyMatchPanel Items="_matches" Loading="false" />
+        </article>
+    }
 </div>
 
 @code {
@@ -96,6 +103,7 @@
     private string? _message;
     private readonly Dictionary<int, int> _answers = [];
     private List<CompetencyQuestionItem> _questions = [];
+    private List<CandidateMatchedVacancy> _matches = [];
 
     private int AnsweredCount => _answers.Count;
 
@@ -103,10 +111,11 @@
     {
         try
         {
-            var state = await Api.GetMyCompetenciesAsync();
+            var state = await Api.GetMyCareerInterestsAsync();
             if (state is not null)
             {
                 _questions = state.Questions;
+                _matches = state.TopVacancies ?? [];
                 _answers.Clear();
                 foreach (var (key, value) in state.Answers)
                 {
@@ -132,7 +141,7 @@
     {
         var list = _questions.Count > 0
             ? _questions.Where(q => q.Category == category).OrderBy(q => q.Id).ToList()
-            : CompetencyTestCatalog.Questions
+            : CareerTestCatalog.Questions
                 .Where(q => q.Category == category)
                 .Select(q => new CompetencyQuestionItem { Id = q.Id, Category = q.Category, Reverse = q.Reverse, TextKey = q.TextKey })
                 .ToList();
@@ -160,7 +169,7 @@
         _message = null;
         try
         {
-            var saved = await Api.SaveMyCompetenciesAsync(_answers, complete);
+            var saved = await Api.SaveMyCareerInterestsAsync(_answers, complete);
             _answers.Clear();
             foreach (var (key, value) in saved.Answers)
             {
@@ -170,7 +179,8 @@
                 }
             }
 
-            _message = complete ? Culture["Competency.SavedComplete"] : Culture["Competency.SavedDraft"];
+            _matches = saved.TopVacancies ?? [];
+            _message = complete ? Culture["Career.SavedComplete"] : Culture["Competency.SavedDraft"];
             if (complete)
             {
                 Navigation.NavigateTo("/candidate/profile");

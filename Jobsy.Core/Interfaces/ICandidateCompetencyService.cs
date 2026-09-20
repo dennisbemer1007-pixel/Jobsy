@@ -30,7 +30,6 @@ public sealed record CandidateCompetencyStateDto(
     DateTime? CompletedAtUtc,
     DateTime? UpdatedAtUtc,
     IReadOnlyList<CompetencyQuestionDto> Questions,
-    IReadOnlyList<string> RiasecTags,
     IReadOnlyList<string> MatchTags,
     string DeepAnalysisUpsellCopy);
 

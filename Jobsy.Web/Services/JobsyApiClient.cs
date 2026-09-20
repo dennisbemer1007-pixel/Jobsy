@@ -600,6 +600,22 @@ public sealed class JobsyApiClient : IAsyncDisposable
         await SendBrowserDownloadAsync(js, fileName, base64, "application/pdf");
     }
 
+    public async Task DownloadDeepAnalysisReportAsync(IJSRuntime js, string kind, CancellationToken ct = default)
+    {
+        var response = await _http.GetAsync($"api/me/deep-analysis/report?kind={Uri.EscapeDataString(kind)}", ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException(ExtractMessage(body) ?? "Rapport downloaden mislukt.");
+        }
+
+        var bytes = await response.Content.ReadAsByteArrayAsync(ct);
+        var fileName = response.Content.Headers.ContentDisposition?.FileName?.Trim('"')
+                       ?? $"Lobsy-{kind}-rapport.pdf";
+        var base64 = Convert.ToBase64String(bytes);
+        await SendBrowserDownloadAsync(js, fileName, base64, "application/pdf");
+    }
+
     public async Task DownloadApplicationLobsyCvPdfAsync(
         Guid applicationId,
         IJSRuntime js,
@@ -755,6 +771,8 @@ public sealed class JobsyApiClient : IAsyncDisposable
         string? tags,
         int? maxTravelMinutes,
         string? drivingLicense,
+        string? availability = null,
+        string? transport = null,
         CancellationToken ct = default)
     {
         var qs = new List<string>();
@@ -771,6 +789,16 @@ public sealed class JobsyApiClient : IAsyncDisposable
         if (!string.IsNullOrWhiteSpace(drivingLicense))
         {
             qs.Add($"drivingLicense={Uri.EscapeDataString(drivingLicense)}");
+        }
+
+        if (!string.IsNullOrWhiteSpace(availability))
+        {
+            qs.Add($"availability={Uri.EscapeDataString(availability)}");
+        }
+
+        if (!string.IsNullOrWhiteSpace(transport))
+        {
+            qs.Add($"transport={Uri.EscapeDataString(transport)}");
         }
 
         var url = "api/employer/talent/search" + (qs.Count == 0 ? "" : "?" + string.Join('&', qs));
@@ -838,6 +866,110 @@ public sealed class JobsyApiClient : IAsyncDisposable
 
         return await response.Content.ReadFromJsonAsync<CandidateCompetencyState>(cancellationToken: ct)
                ?? new CandidateCompetencyState();
+    }
+
+    public async Task<CandidateCareerInterestState?> GetMyCareerInterestsAsync(CancellationToken ct = default)
+    {
+        try
+        {
+            return await _http.GetFromJsonAsync<CandidateCareerInterestState>("api/me/career-interests", ct);
+        }
+        catch (HttpRequestException ex) when (ex.StatusCode is HttpStatusCode.Unauthorized or HttpStatusCode.NotFound or HttpStatusCode.Forbidden)
+        {
+            return null;
+        }
+    }
+
+    public async Task<CandidateCareerInterestState> SaveMyCareerInterestsAsync(
+        IReadOnlyDictionary<int, int> answers,
+        bool complete,
+        CancellationToken ct = default)
+    {
+        var payload = new
+        {
+            answers = answers.ToDictionary(kv => kv.Key.ToString(), kv => kv.Value),
+            complete
+        };
+        var response = await _http.PutAsJsonAsync("api/me/career-interests", payload, ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException(ExtractMessage(body) ?? "Beroepentest opslaan mislukt.");
+        }
+
+        return await response.Content.ReadFromJsonAsync<CandidateCareerInterestState>(cancellationToken: ct)
+               ?? new CandidateCareerInterestState();
+    }
+
+    public async Task<DeepAnalysisState?> GetDeepAnalysisAsync(string kind, CancellationToken ct = default)
+    {
+        try
+        {
+            return await _http.GetFromJsonAsync<DeepAnalysisState>(
+                $"api/me/deep-analysis?kind={Uri.EscapeDataString(kind)}",
+                ct);
+        }
+        catch (HttpRequestException)
+        {
+            return null;
+        }
+    }
+
+    public async Task<DeepAnalysisCheckout> StartDeepAnalysisCheckoutAsync(string kind, CancellationToken ct = default)
+    {
+        var response = await _http.PostAsync(
+            $"api/me/deep-analysis/checkout?kind={Uri.EscapeDataString(kind)}",
+            null,
+            ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException(ExtractMessage(body) ?? "Checkout starten mislukt.");
+        }
+
+        return await response.Content.ReadFromJsonAsync<DeepAnalysisCheckout>(cancellationToken: ct)
+               ?? new DeepAnalysisCheckout();
+    }
+
+    public async Task<DeepAnalysisState> CompleteDeepAnalysisCheckoutAsync(string paymentId, CancellationToken ct = default)
+    {
+        var response = await _http.PostAsync(
+            $"api/me/deep-analysis/checkout/{Uri.EscapeDataString(paymentId)}/complete",
+            null,
+            ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException(ExtractMessage(body) ?? "Betaling afronden mislukt.");
+        }
+
+        return await response.Content.ReadFromJsonAsync<DeepAnalysisState>(cancellationToken: ct)
+               ?? new DeepAnalysisState();
+    }
+
+    public async Task<DeepAnalysisState> SaveDeepAnalysisAsync(
+        string kind,
+        IReadOnlyDictionary<int, int> answers,
+        bool complete,
+        CancellationToken ct = default)
+    {
+        var payload = new
+        {
+            answers = answers.ToDictionary(kv => kv.Key.ToString(), kv => kv.Value),
+            complete
+        };
+        var response = await _http.PutAsJsonAsync(
+            $"api/me/deep-analysis?kind={Uri.EscapeDataString(kind)}",
+            payload,
+            ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException(ExtractMessage(body) ?? "Diepte-analyse opslaan mislukt.");
+        }
+
+        return await response.Content.ReadFromJsonAsync<DeepAnalysisState>(cancellationToken: ct)
+               ?? new DeepAnalysisState();
     }
 
     public async Task<IReadOnlyList<CandidateMatchedVacancy>> GetMyMatchedVacanciesAsync(CancellationToken ct = default)

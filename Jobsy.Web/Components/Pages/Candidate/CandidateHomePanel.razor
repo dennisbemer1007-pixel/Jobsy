@@ -9,6 +9,11 @@
         <div>
             <h1>@Culture["Metrics.Welcome"]</h1>
             <p class="login-lead">@Culture["Metrics.Lead"]</p>
+            <p class="profile-address__hint">
+                <a href="/candidate/profile">@Culture["Competency.Section"]</a>
+                ·
+                <a href="/candidate/career">@Culture["Career.Section"]</a>
+            </p>
         </div>
         <div class="period-tabs period-tabs--compact" role="tablist" aria-label="@Culture["Metrics.Period"]">
             @foreach (var p in PeriodKeys)

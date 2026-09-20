@@ -22,15 +22,40 @@ public static class ProfileVacancyMatchCalculator
                 input.VacancyTitle,
                 input.VacancyDescription))
             : (double?)null;
+        var interest01 = input.CandidateRiasecTags is { Count: > 0 } tags
+            ? VacancyRiasecProfile.Fit01(
+                tags,
+                input.VacancyRiasecTags ?? VacancyRiasecProfile.InferTags(
+                    input.WorkTypes,
+                    input.VacancyTitle,
+                    input.VacancyDescription))
+            : (double?)null;
 
         double total01;
-        if (competency01 is not null)
+        if (competency01 is not null && interest01 is not null)
+        {
+            total01 = 0.25 * Ratio(core.TravelScore, MatchScoreWeights.Travel)
+                      + 0.10 * Ratio(core.HoursScore, MatchScoreWeights.Hours)
+                      + 0.10 * Ratio(core.DayPartsScore, MatchScoreWeights.DayParts)
+                      + 0.15 * experience01
+                      + 0.20 * competency01.Value
+                      + 0.20 * interest01.Value;
+        }
+        else if (competency01 is not null)
         {
             total01 = 0.30 * Ratio(core.TravelScore, MatchScoreWeights.Travel)
                       + 0.15 * Ratio(core.HoursScore, MatchScoreWeights.Hours)
                       + 0.15 * Ratio(core.DayPartsScore, MatchScoreWeights.DayParts)
                       + 0.20 * experience01
                       + 0.20 * competency01.Value;
+        }
+        else if (interest01 is not null)
+        {
+            total01 = 0.30 * Ratio(core.TravelScore, MatchScoreWeights.Travel)
+                      + 0.15 * Ratio(core.HoursScore, MatchScoreWeights.Hours)
+                      + 0.15 * Ratio(core.DayPartsScore, MatchScoreWeights.DayParts)
+                      + 0.15 * experience01
+                      + 0.25 * interest01.Value;
         }
         else
         {
@@ -41,7 +66,7 @@ public static class ProfileVacancyMatchCalculator
         }
 
         var total = (int)Math.Clamp(Math.Round(100 * total01, MidpointRounding.AwayFromZero), 0, 100);
-        var (why, gaps) = BuildExplanation(input, core, experience01, competency01, total);
+        var (why, gaps) = BuildExplanation(input, core, experience01, competency01, interest01, total);
         return new ProfileVacancyMatch
         {
             VacancyId = input.VacancyId,
@@ -50,6 +75,7 @@ public static class ProfileVacancyMatchCalculator
             Core = core,
             ExperienceScore01 = experience01,
             CompetencyScore01 = competency01,
+            InterestScore01 = interest01,
             Why = why,
             Gaps = gaps,
             ColorBand = total >= MatchScoreWeights.StrongMatchThreshold
@@ -138,6 +164,7 @@ public static class ProfileVacancyMatchCalculator
             MatchScoreBreakdown core,
             double experience01,
             double? competency01,
+            double? interest01,
             int total)
     {
         var why = new List<ProfileMatchExplainPoint>();
@@ -287,12 +314,36 @@ public static class ProfileVacancyMatchCalculator
                     "Jouw competenties uit de test sluiten in het algemeen goed aan bij deze functie."));
             }
         }
-        else
+        else if (input.CandidateCompetencies is not { IsComplete: true }
+                 && input.CandidateRiasecTags is not { Count: > 0 })
         {
             gaps.Add(new(
                 "competency",
                 "missing",
-                "Rond de competentietest af. Dan kunnen we nóg beter uitleggen waarom een baan bij je past."));
+                "Rond de competentietest of beroepentest af. Dan kunnen we nóg beter uitleggen waarom een baan bij je past."));
+        }
+
+        if (input.CandidateRiasecTags is { Count: > 0 } candRiasec)
+        {
+            var vacancyRiasec = input.VacancyRiasecTags ?? VacancyRiasecProfile.InferTags(
+                input.WorkTypes, input.VacancyTitle, input.VacancyDescription);
+            var overlap = candRiasec
+                .Where(t => vacancyRiasec.Contains(t, StringComparer.OrdinalIgnoreCase))
+                .ToList();
+            if (overlap.Count > 0 && interest01 is >= 0.5)
+            {
+                why.Add(new(
+                    "interest",
+                    string.Join("+", overlap),
+                    $"Jouw beroepsinteresses ({string.Join(", ", candRiasec)}) passen bij deze actieve vacature ({string.Join(", ", overlap)})."));
+            }
+            else if (interest01 is < 0.4)
+            {
+                gaps.Add(new(
+                    "interest",
+                    "mismatch",
+                    "Deze baan ligt inhoudelijk wat verder van jouw Holland-code. Kijk of de taken je toch aanspreken, of filter op een andere richting."));
+            }
         }
 
         if (why.Count == 0 && total >= DisplayThreshold)
@@ -416,6 +467,8 @@ public sealed class ProfileVacancyMatchInput
     public int? MinimumEmployers { get; init; }
     public CompetencyScores? CandidateCompetencies { get; init; }
     public CompetencyScores? VacancyCompetencies { get; init; }
+    public IReadOnlyList<string>? CandidateRiasecTags { get; init; }
+    public IReadOnlyList<string>? VacancyRiasecTags { get; init; }
 }
 
 public sealed class ProfileVacancyMatch
@@ -426,6 +479,7 @@ public sealed class ProfileVacancyMatch
     public required MatchScoreBreakdown Core { get; init; }
     public double ExperienceScore01 { get; init; }
     public double? CompetencyScore01 { get; init; }
+    public double? InterestScore01 { get; init; }
     public IReadOnlyList<ProfileMatchExplainPoint> Why { get; init; } = [];
     public IReadOnlyList<ProfileMatchExplainPoint> Gaps { get; init; } = [];
     public string ColorBand { get; init; } = "orange";

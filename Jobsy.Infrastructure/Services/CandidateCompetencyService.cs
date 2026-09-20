@@ -96,10 +96,10 @@ public sealed class CandidateCompetencyService : ICandidateCompetencyService
             row.ResultaatgerichtheidPercent = preview.Resultaatgerichtheid;
             row.StressbestendigheidPercent = preview.Stressbestendigheid;
             row.InnovatiePercent = preview.Innovatie;
-            var riasec = CompetencyTestCatalog.DeriveRiasecTags(answers);
-            row.RiasecTagsJson = CompetencyTestCatalog.SerializeTags(riasec);
+            row.ExtraversiePercent = preview.Extraversie;
+            row.RiasecTagsJson = "[]";
             row.MatchTagsJson = CompetencyTestCatalog.SerializeTags(
-                CompetencyTestCatalog.DeriveMatchTags(preview, riasec));
+                CompetencyTestCatalog.DeriveMatchTags(preview));
             row.CompletedAtUtc = now;
         }
         else
@@ -109,6 +109,7 @@ public sealed class CandidateCompetencyService : ICandidateCompetencyService
             row.ResultaatgerichtheidPercent = null;
             row.StressbestendigheidPercent = null;
             row.InnovatiePercent = null;
+            row.ExtraversiePercent = null;
             row.RiasecTagsJson = "[]";
             row.MatchTagsJson = "[]";
             row.CompletedAtUtc = null;
@@ -135,7 +136,8 @@ public sealed class CandidateCompetencyService : ICandidateCompetencyService
             row.SamenwerkenPercent,
             row.ResultaatgerichtheidPercent,
             row.StressbestendigheidPercent,
-            row.InnovatiePercent);
+            row.InnovatiePercent,
+            row.ExtraversiePercent);
     }
 
     public async Task<IReadOnlyList<CandidateMatchedVacancyDto>> GetTopMatchesAsync(
@@ -151,6 +153,11 @@ public sealed class CandidateCompetencyService : ICandidateCompetencyService
 
         var prefs = DeserializePrefs(user.PreferencesJson);
         var scores = await GetCompletedScoresAsync(userId, cancellationToken);
+        var career = await _db.CandidateCareerInterests.AsNoTracking()
+            .FirstOrDefaultAsync(c => c.UserId == userId, cancellationToken);
+        var riasecTags = career is not null && CandidateCompetencyStatuses.IsCompleted(career.Status)
+            ? CareerTestCatalog.ParseTagsJson(career.RiasecTagsJson)
+            : Array.Empty<string>();
         var vacancies = await _discovery.GetActiveAsync(cancellationToken);
         var ageYears = AgeRules.AgeYearsFromDateOfBirth(user.DateOfBirth) ?? prefs.AgeYears;
         var transport = TransportLabels.Parse(prefs.PreferredTransport);
@@ -187,7 +194,9 @@ public sealed class CandidateCompetencyService : ICandidateCompetencyService
                 RequiredEducation = vacancy.RequiredEducation,
                 MinimumEmployers = vacancy.MinimumEmployers,
                 CandidateCompetencies = scores,
-                VacancyCompetencies = VacancyCompetencyProfile.Infer(vacancy)
+                VacancyCompetencies = VacancyCompetencyProfile.Infer(vacancy),
+                CandidateRiasecTags = riasecTags,
+                VacancyRiasecTags = VacancyRiasecProfile.InferTags(vacancy)
             });
         }
 
@@ -225,7 +234,8 @@ public sealed class CandidateCompetencyService : ICandidateCompetencyService
             row?.SamenwerkenPercent,
             row?.ResultaatgerichtheidPercent,
             row?.StressbestendigheidPercent,
-            row?.InnovatiePercent);
+            row?.InnovatiePercent,
+            row?.ExtraversiePercent);
         return new CandidateCompetencyStateDto(
             row?.Status ?? CandidateCompetencyStatuses.Draft,
             answers,
@@ -238,9 +248,8 @@ public sealed class CandidateCompetencyService : ICandidateCompetencyService
             CompetencyTestCatalog.Questions
                 .Select(q => new CompetencyQuestionDto(q.Id, q.Category, q.Reverse, q.TextKey, q.IsRiasec))
                 .ToList(),
-            CompetencyTestCatalog.ParseTagsJson(row?.RiasecTagsJson),
             CompetencyTestCatalog.ParseTagsJson(row?.MatchTagsJson),
-            DeepAnalysisService.FormatUpsellCopy(deepAnalysisPriceEuro));
+            DeepAnalysisService.FormatUpsellCopy(deepAnalysisPriceEuro, AssessmentKind.Competence));
     }
 
     private static CandidatePreferencesDto DeserializePrefs(string? json)

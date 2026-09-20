@@ -1,32 +1,33 @@
-using System.Text.Json;
+using Jobsy.Core.Enums;
 
 namespace Jobsy.Core.Rules;
 
 /// <summary>
-/// Paid deep psychometric analysis: 150 Likert items covering Big Five facets,
-/// RIASEC interests, and practical work capacity / skills.
+/// Paid 150-item deep analyses — competence (Big Five + skills) and career (RIASEC + orientation) are separate catalogs.
 /// </summary>
 public static class DeepAnalysisCatalog
 {
     public const int QuestionCount = 150;
-    public const int LikertMin = 1;
-    public const int LikertMax = 5;
+    public const int LikertMin = LikertAnswerJson.LikertMin;
+    public const int LikertMax = LikertAnswerJson.LikertMax;
 
-    private static readonly Lazy<IReadOnlyList<DeepAnalysisQuestion>> LazyQuestions = new(BuildQuestions);
+    private static readonly Lazy<IReadOnlyList<DeepAnalysisQuestion>> LazyCompetence = new(BuildCompetenceQuestions);
+    private static readonly Lazy<IReadOnlyList<DeepAnalysisQuestion>> LazyCareer = new(BuildCareerQuestions);
 
-    public static IReadOnlyList<DeepAnalysisQuestion> Questions => LazyQuestions.Value;
+    /// <summary>Competence deep analysis (backward-compatible default).</summary>
+    public static IReadOnlyList<DeepAnalysisQuestion> Questions => LazyCompetence.Value;
 
-    private static readonly JsonSerializerOptions JsonOptions = new()
-    {
-        PropertyNameCaseInsensitive = true
-    };
+    public static IReadOnlyList<DeepAnalysisQuestion> CareerQuestions => LazyCareer.Value;
 
-    private static IReadOnlyList<DeepAnalysisQuestion> BuildQuestions()
+    public static IReadOnlyList<DeepAnalysisQuestion> QuestionsFor(AssessmentKind kind)
+        => kind == AssessmentKind.Career ? CareerQuestions : Questions;
+
+    private static IReadOnlyList<DeepAnalysisQuestion> BuildCompetenceQuestions()
     {
         var list = new List<DeepAnalysisQuestion>(QuestionCount);
         var id = 1;
 
-        // Big Five facets: 5 traits × 10 = 50
+        // Big Five facets: 5 traits × 20 = 100
         string[] bigFive =
         [
             "Openheid", "Consciëntieusheid", "Extraversie", "Inschikkelijkheid", "EmotioneleStabiliteit"
@@ -41,47 +42,23 @@ public static class DeepAnalysisCatalog
         ];
         for (var t = 0; t < bigFive.Length; t++)
         {
-            for (var i = 0; i < 10; i++)
+            for (var i = 0; i < 20; i++)
             {
-                var reverse = i % 5 == 4;
                 list.Add(new DeepAnalysisQuestion(
                     id++,
                     "BigFive",
                     bigFive[t],
-                    reverse,
+                    Reverse: i % 5 == 4,
                     $"{bigFivePrompts[t]} (variant {i + 1})"));
             }
         }
 
-        // RIASEC: 6 × 10 = 60
-        string[] riasec = CompetencyTestCatalog.RiasecCodes.ToArray();
-        string[] riasecPrompts =
-        [
-            "Ik werk graag met machines, gereedschap of buiten.",
-            "Ik onderzoek graag hoe iets werkt of waarom iets zo is.",
-            "Ik bedenk graag creatieve of visuele oplossingen.",
-            "Ik help graag mensen of werk in een team.",
-            "Ik neem graag initiatief en overtuig anderen.",
-            "Ik houd van orde, administratie en vaste procedures."
-        ];
-        for (var t = 0; t < riasec.Length; t++)
-        {
-            for (var i = 0; i < 10; i++)
-            {
-                list.Add(new DeepAnalysisQuestion(
-                    id++,
-                    "RIASEC",
-                    riasec[t],
-                    Reverse: false,
-                    $"{riasecPrompts[t]} (variant {i + 1})"));
-            }
-        }
-
-        // Practical capacity / skills: 40
+        // Practical capacity / skills: 10 × 5 = 50
         string[] practicalThemes =
         [
             "FysiekeBelasting", "MentaleBelasting", "Klantcontact", "Zelfstandigheid",
-            "Ploegendienst", "Leervermogen", "Nauwkeurigheid", "Tempo"
+            "Ploegendienst", "Leervermogen", "Nauwkeurigheid", "Tempo",
+            "Verantwoordelijkheid", "Aanpassingsvermogen"
         ];
         string[] practicalPrompts =
         [
@@ -92,7 +69,9 @@ public static class DeepAnalysisCatalog
             "Ik kan wisselende of onregelmatige diensten aan.",
             "Ik leer nieuwe systemen of taken snel.",
             "Ik controleer mijn werk zorgvuldig op fouten.",
-            "Ik houd een hoog werktempo vol zonder kwaliteit in te leveren."
+            "Ik houd een hoog werktempo vol zonder kwaliteit in te leveren.",
+            "Ik neem verantwoordelijkheid als iets misgaat.",
+            "Ik schakel snel als de planning of de taak verandert."
         ];
         for (var t = 0; t < practicalThemes.Length; t++)
         {
@@ -107,16 +86,80 @@ public static class DeepAnalysisCatalog
             }
         }
 
-        if (list.Count != QuestionCount)
-        {
-            throw new InvalidOperationException(
-                $"DeepAnalysisCatalog must contain {QuestionCount} questions, got {list.Count}.");
-        }
-
+        EnsureCount(list, AssessmentKind.Competence);
         return list;
     }
 
-    public static bool IsValidAnswer(int value) => value is >= LikertMin and <= LikertMax;
+    private static IReadOnlyList<DeepAnalysisQuestion> BuildCareerQuestions()
+    {
+        var list = new List<DeepAnalysisQuestion>(QuestionCount);
+        var id = 1;
+
+        // RIASEC: 6 × 20 = 120
+        string[] riasec = CareerTestCatalog.RiasecCodes.ToArray();
+        string[] riasecPrompts =
+        [
+            "Ik werk graag met machines, gereedschap of buiten.",
+            "Ik onderzoek graag hoe iets werkt of waarom iets zo is.",
+            "Ik bedenk graag creatieve of visuele oplossingen.",
+            "Ik help graag mensen of werk in een team.",
+            "Ik neem graag initiatief en overtuig anderen.",
+            "Ik houd van orde, administratie en vaste procedures."
+        ];
+        for (var t = 0; t < riasec.Length; t++)
+        {
+            for (var i = 0; i < 20; i++)
+            {
+                list.Add(new DeepAnalysisQuestion(
+                    id++,
+                    "RIASEC",
+                    riasec[t],
+                    Reverse: i % 5 == 4,
+                    $"{riasecPrompts[t]} (variant {i + 1})"));
+            }
+        }
+
+        // Career orientation: 6 × 5 = 30
+        string[] careerThemes =
+        [
+            "Werkwaarden", "Autonomie", "Zekerheid", "Groei", "Impact", "Variatie"
+        ];
+        string[] careerPrompts =
+        [
+            "Ik wil werk dat aansluit bij wat ik belangrijk vind in het leven.",
+            "Ik wil zelf kunnen bepalen hoe ik mijn werk aanpak.",
+            "Ik zoek zekerheid en een voorspelbaar rooster.",
+            "Ik wil doorgroeien en nieuwe vaardigheden leren.",
+            "Ik wil werk waarmee ik iets bijdraag voor anderen.",
+            "Ik zoek afwisseling in taken en werkomgeving."
+        ];
+        for (var t = 0; t < careerThemes.Length; t++)
+        {
+            for (var i = 0; i < 5; i++)
+            {
+                list.Add(new DeepAnalysisQuestion(
+                    id++,
+                    "Career",
+                    careerThemes[t],
+                    Reverse: i == 4,
+                    $"{careerPrompts[t]} (variant {i + 1})"));
+            }
+        }
+
+        EnsureCount(list, AssessmentKind.Career);
+        return list;
+    }
+
+    private static void EnsureCount(List<DeepAnalysisQuestion> list, AssessmentKind kind)
+    {
+        if (list.Count != QuestionCount)
+        {
+            throw new InvalidOperationException(
+                $"DeepAnalysisCatalog ({kind}) must contain {QuestionCount} questions, got {list.Count}.");
+        }
+    }
+
+    public static bool IsValidAnswer(int value) => LikertAnswerJson.IsValidAnswer(value);
 
     public static string? ValidateAnswers(IReadOnlyDictionary<int, int> answers, bool requireComplete)
     {
@@ -160,61 +203,17 @@ public static class DeepAnalysisCatalog
     }
 
     public static Dictionary<int, int> ParseAnswersJson(string? json)
-    {
-        var result = new Dictionary<int, int>();
-        if (string.IsNullOrWhiteSpace(json))
-        {
-            return result;
-        }
-
-        try
-        {
-            using var doc = JsonDocument.Parse(json);
-            if (doc.RootElement.ValueKind != JsonValueKind.Object)
-            {
-                return result;
-            }
-
-            foreach (var prop in doc.RootElement.EnumerateObject())
-            {
-                if (!int.TryParse(prop.Name, out var qid) || qid is < 1 or > QuestionCount)
-                {
-                    continue;
-                }
-
-                var value = prop.Value.ValueKind switch
-                {
-                    JsonValueKind.Number when prop.Value.TryGetInt32(out var n) => n,
-                    JsonValueKind.String when int.TryParse(prop.Value.GetString(), out var parsed) => parsed,
-                    _ => 0
-                };
-                if (IsValidAnswer(value))
-                {
-                    result[qid] = value;
-                }
-            }
-        }
-        catch (JsonException)
-        {
-            return result;
-        }
-
-        return result;
-    }
+        => LikertAnswerJson.Parse(json, QuestionCount);
 
     public static string SerializeAnswers(IReadOnlyDictionary<int, int> answers)
-    {
-        var ordered = answers
-            .Where(kv => kv.Key is >= 1 and <= QuestionCount && IsValidAnswer(kv.Value))
-            .OrderBy(kv => kv.Key)
-            .ToDictionary(kv => kv.Key.ToString(), kv => kv.Value);
-        return JsonSerializer.Serialize(ordered, JsonOptions);
-    }
+        => LikertAnswerJson.Serialize(answers, QuestionCount);
 
-    public static IReadOnlyList<string> DeriveEnrichedTags(IReadOnlyDictionary<int, int> answers)
+    public static IReadOnlyList<string> DeriveEnrichedTags(
+        IReadOnlyDictionary<int, int> answers,
+        AssessmentKind kind = AssessmentKind.Competence)
     {
         var domainAverages = new Dictionary<string, List<int>>(StringComparer.OrdinalIgnoreCase);
-        foreach (var question in Questions)
+        foreach (var question in QuestionsFor(kind))
         {
             if (!answers.TryGetValue(question.Id, out var raw) || !IsValidAnswer(raw))
             {
@@ -239,8 +238,7 @@ public static class DeepAnalysisCatalog
                 continue;
             }
 
-            var avg = values.Average();
-            if (avg >= 4.0)
+            if (values.Average() >= 4.0)
             {
                 tags.Add(domain);
             }

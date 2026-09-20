@@ -1,8 +1,8 @@
 namespace Jobsy.Core.Entities;
 
 /// <summary>
-/// Quick-Scan competency test (25 items: Big Five + RIASEC) for one candidate.
-/// One row per user; draft answers may be incomplete.
+/// Competence Quick-Scan (25 Big Five items) for one candidate.
+/// Career interests live in <see cref="CandidateCareerInterest"/>.
 /// </summary>
 public class CandidateCompetency
 {
@@ -20,11 +20,12 @@ public class CandidateCompetency
     public int? ResultaatgerichtheidPercent { get; set; }
     public int? StressbestendigheidPercent { get; set; }
     public int? InnovatiePercent { get; set; }
+    public int? ExtraversiePercent { get; set; }
 
-    /// <summary>JSON array of RIASEC interest tags, e.g. <c>["Social","Enterprising"]</c>.</summary>
+    /// <summary>Legacy RIASEC tags from the combined Quick-Scan; new data lives on <see cref="CandidateCareerInterest"/>.</summary>
     public string RiasecTagsJson { get; set; } = "[]";
 
-    /// <summary>JSON array of match tags derived from scores + RIASEC for talent-pool search.</summary>
+    /// <summary>JSON array of competence match tags for talent-pool search.</summary>
     public string MatchTagsJson { get; set; } = "[]";
 
     public DateTime CreatedAtUtc { get; set; }

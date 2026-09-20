@@ -11,9 +11,26 @@ public sealed class CandidateCompetencyState
     public DateTime? CompletedAtUtc { get; set; }
     public DateTime? UpdatedAtUtc { get; set; }
     public List<CompetencyQuestionItem> Questions { get; set; } = [];
+    public List<string> MatchTags { get; set; } = [];
+    public string DeepAnalysisUpsellCopy { get; set; } = "";
+}
+
+public sealed class CandidateCareerInterestState
+{
+    public string Status { get; set; } = "Draft";
+    public Dictionary<string, int> Answers { get; set; } = new(StringComparer.OrdinalIgnoreCase);
+    public int AnsweredCount { get; set; }
+    public int QuestionCount { get; set; } = 25;
+    public RiasecScoreSet? Scores { get; set; }
+    public RiasecScoreSet? PreviewScores { get; set; }
+    public string HollandCode { get; set; } = "";
+    public DateTime? CompletedAtUtc { get; set; }
+    public DateTime? UpdatedAtUtc { get; set; }
+    public List<CompetencyQuestionItem> Questions { get; set; } = [];
     public List<string> RiasecTags { get; set; } = [];
     public List<string> MatchTags { get; set; } = [];
     public string DeepAnalysisUpsellCopy { get; set; } = "";
+    public List<CandidateMatchedVacancy> TopVacancies { get; set; } = [];
 }
 
 public sealed class CompetencyScoreSet
@@ -22,12 +39,31 @@ public sealed class CompetencyScoreSet
     public int? Resultaatgerichtheid { get; set; }
     public int? Stressbestendigheid { get; set; }
     public int? Innovatie { get; set; }
+    public int? Extraversie { get; set; }
 
     public bool IsComplete =>
         Samenwerken is not null
         && Resultaatgerichtheid is not null
         && Stressbestendigheid is not null
         && Innovatie is not null;
+}
+
+public sealed class RiasecScoreSet
+{
+    public int? Realistic { get; set; }
+    public int? Investigative { get; set; }
+    public int? Artistic { get; set; }
+    public int? Social { get; set; }
+    public int? Enterprising { get; set; }
+    public int? Conventional { get; set; }
+
+    public bool IsComplete =>
+        Realistic is not null
+        && Investigative is not null
+        && Artistic is not null
+        && Social is not null
+        && Enterprising is not null
+        && Conventional is not null;
 }
 
 public sealed class CompetencyQuestionItem
@@ -50,4 +86,41 @@ public sealed class CandidateMatchedVacancy
     public string ColorBand { get; set; } = "orange";
     public List<string> Why { get; set; } = [];
     public List<string> Gaps { get; set; } = [];
+}
+
+public sealed class DeepAnalysisState
+{
+    public string Kind { get; set; } = "Competence";
+    public string Status { get; set; } = "Locked";
+    public bool IsUnlocked { get; set; }
+    public bool IsCompleted { get; set; }
+    public int AnsweredCount { get; set; }
+    public int QuestionCount { get; set; } = 150;
+    public decimal PriceEuro { get; set; } = 2.99m;
+    public List<string> Tags { get; set; } = [];
+    public DateTime? UnlockedAtUtc { get; set; }
+    public DateTime? CompletedAtUtc { get; set; }
+    public DateTime? ReportGeneratedAtUtc { get; set; }
+    public Dictionary<string, int> Answers { get; set; } = new(StringComparer.OrdinalIgnoreCase);
+    public List<DeepAnalysisQuestionItem> Questions { get; set; } = [];
+    public string UpsellCopy { get; set; } = "";
+}
+
+public sealed class DeepAnalysisQuestionItem
+{
+    public int Id { get; set; }
+    public string Family { get; set; } = "";
+    public string Domain { get; set; } = "";
+    public bool Reverse { get; set; }
+    public string PromptNl { get; set; } = "";
+}
+
+public sealed class DeepAnalysisCheckout
+{
+    public Guid CheckoutId { get; set; }
+    public string PaymentId { get; set; } = "";
+    public string CheckoutUrl { get; set; } = "";
+    public decimal AmountEuro { get; set; }
+    public bool IsStub { get; set; }
+    public string Kind { get; set; } = "Competence";
 }

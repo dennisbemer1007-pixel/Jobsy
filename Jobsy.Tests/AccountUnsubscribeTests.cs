@@ -289,6 +289,7 @@ public class AccountUnsubscribeTests
         Assert.Contains("Export notificatie", json);
         Assert.Contains("Competencies", json);
         Assert.Contains("SamenwerkenPercent", json);
+        Assert.Contains("CareerInterests", json);
         Assert.Contains("DeepAnalysis", json);
         Assert.Contains("TalentContactRequests", json);
         Assert.DoesNotContain("token=secret", json);

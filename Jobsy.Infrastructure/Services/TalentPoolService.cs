@@ -49,22 +49,30 @@ public sealed class TalentPoolService : ITalentPoolService
             ?? throw new KeyNotFoundException("Bedrijf niet gevonden.");
 
         var take = Math.Clamp(query.Take <= 0 ? 50 : query.Take, 1, 100);
-        var candidates = await _db.Users.AsNoTracking()
+        var users = await _db.Users.AsNoTracking()
             .Where(u => u.Role == UserRole.Candidate && u.IsActive && u.OpenForWork)
-            .Join(
-                _db.CandidateCompetencies.AsNoTracking()
-                    .Where(c => c.Status == CandidateCompetencyStatuses.Completed),
-                u => u.Id,
-                c => c.UserId,
-                (u, c) => new { User = u, Competency = c })
             .Take(500)
             .ToListAsync(cancellationToken);
 
+        var userIds = users.Select(u => u.Id).ToList();
+        var competencies = await _db.CandidateCompetencies.AsNoTracking()
+            .Where(c => userIds.Contains(c.UserId) && c.Status == CandidateCompetencyStatuses.Completed)
+            .ToDictionaryAsync(c => c.UserId, cancellationToken);
+        var careers = await _db.CandidateCareerInterests.AsNoTracking()
+            .Where(c => userIds.Contains(c.UserId) && c.Status == CandidateCompetencyStatuses.Completed)
+            .ToDictionaryAsync(c => c.UserId, cancellationToken);
         var deepCompleted = await _db.CandidateDeepAnalyses.AsNoTracking()
-            .Where(d => d.Status == CandidateDeepAnalysisStatuses.Completed)
-            .Select(d => d.UserId)
+            .Where(d => d.Status == CandidateDeepAnalysisStatuses.Completed && userIds.Contains(d.UserId))
+            .Select(d => new { d.UserId, d.Kind })
             .ToListAsync(cancellationToken);
-        var deepSet = deepCompleted.ToHashSet();
+        var competenceDeep = deepCompleted
+            .Where(d => d.Kind == AssessmentKind.Competence)
+            .Select(d => d.UserId)
+            .ToHashSet();
+        var careerDeep = deepCompleted
+            .Where(d => d.Kind == AssessmentKind.Career)
+            .Select(d => d.UserId)
+            .ToHashSet();
 
         var tagsFilter = query.Tags?
             .Where(t => !string.IsNullOrWhiteSpace(t))
@@ -72,10 +80,34 @@ public sealed class TalentPoolService : ITalentPoolService
             .ToHashSet(StringComparer.OrdinalIgnoreCase);
 
         var results = new List<AnonymousTalentCardDto>();
-        foreach (var row in candidates)
+        foreach (var user in users)
         {
-            var matchTags = CompetencyTestCatalog.ParseTagsJson(row.Competency.MatchTagsJson);
-            var riasec = CompetencyTestCatalog.ParseTagsJson(row.Competency.RiasecTagsJson);
+            competencies.TryGetValue(user.Id, out var competency);
+            careers.TryGetValue(user.Id, out var career);
+            if (competency is null && career is null)
+            {
+                continue;
+            }
+
+            var matchTags = competency is null
+                ? new List<string>()
+                : CompetencyTestCatalog.ParseTagsJson(competency.MatchTagsJson).ToList();
+            var riasec = career is not null
+                ? CareerTestCatalog.ParseTagsJson(career.RiasecTagsJson)
+                : competency is not null
+                    ? CompetencyTestCatalog.ParseTagsJson(competency.RiasecTagsJson)
+                    : [];
+            if (career is not null)
+            {
+                foreach (var tag in CareerTestCatalog.ParseTagsJson(career.MatchTagsJson))
+                {
+                    if (!matchTags.Contains(tag, StringComparer.OrdinalIgnoreCase))
+                    {
+                        matchTags.Add(tag);
+                    }
+                }
+            }
+
             if (tagsFilter is { Count: > 0 }
                 && !matchTags.Any(t => tagsFilter.Contains(t))
                 && !riasec.Any(t => tagsFilter.Contains(t)))
@@ -83,7 +115,7 @@ public sealed class TalentPoolService : ITalentPoolService
                 continue;
             }
 
-            var prefs = DeserializePrefs(row.User.PreferencesJson);
+            var prefs = DeserializePrefs(user.PreferencesJson);
             var licenses = prefs.DrivingLicenses?.ToList() ?? [];
             if (!string.IsNullOrWhiteSpace(query.DrivingLicense)
                 && !DrivingLicenseLabels.CandidateMeetsRequirement(licenses, query.DrivingLicense))
@@ -98,13 +130,13 @@ public sealed class TalentPoolService : ITalentPoolService
             }
 
             int? travelMinutes = null;
-            if (row.User.HomeLocation is not null && company.Location is not null)
+            if (user.HomeLocation is not null && company.Location is not null)
             {
                 var route = await _routing.GetRouteAsync(
                     company.Location.Latitude,
                     company.Location.Longitude,
-                    row.User.HomeLocation.Latitude,
-                    row.User.HomeLocation.Longitude,
+                    user.HomeLocation.Latitude,
+                    user.HomeLocation.Longitude,
                     query.Transport,
                     cancellationToken);
                 travelMinutes = (int)Math.Round(route.DurationSeconds / 60.0, MidpointRounding.AwayFromZero);
@@ -118,27 +150,43 @@ public sealed class TalentPoolService : ITalentPoolService
                 continue;
             }
 
-            var scores = CompetencyTestCatalog.CompletedScoresOrNull(
-                row.Competency.Status,
-                row.Competency.SamenwerkenPercent,
-                row.Competency.ResultaatgerichtheidPercent,
-                row.Competency.StressbestendigheidPercent,
-                row.Competency.InnovatiePercent);
+            var scores = competency is null
+                ? null
+                : CompetencyTestCatalog.CompletedScoresOrNull(
+                    competency.Status,
+                    competency.SamenwerkenPercent,
+                    competency.ResultaatgerichtheidPercent,
+                    competency.StressbestendigheidPercent,
+                    competency.InnovatiePercent,
+                    competency.ExtraversiePercent);
+            var careerScores = career is null
+                ? null
+                : CareerTestCatalog.CompletedScoresOrNull(
+                    career.Status,
+                    career.RealisticPercent,
+                    career.InvestigativePercent,
+                    career.ArtisticPercent,
+                    career.SocialPercent,
+                    career.EnterprisingPercent,
+                    career.ConventionalPercent);
 
             var availability = LobsyCvModelFactory.FormatAvailability(
                 prefs.Availability,
                 prefs.FlexibleTimes == true);
 
             results.Add(new AnonymousTalentCardDto(
-                row.User.Id,
+                user.Id,
                 matchTags,
                 riasec,
                 scores,
+                careerScores,
+                career?.HollandCode,
                 availability,
                 licenses,
                 travelMinutes,
                 LobsyCvModelFactory.ExtractCity(prefs.HomeAddress) ?? "Westland / Den Haag",
-                deepSet.Contains(row.User.Id)));
+                competenceDeep.Contains(user.Id),
+                careerDeep.Contains(user.Id)));
 
             if (results.Count >= take)
             {
@@ -167,12 +215,15 @@ public sealed class TalentPoolService : ITalentPoolService
                 cancellationToken)
             ?? throw new InvalidOperationException("Kandidaat niet beschikbaar in de talentpool.");
 
-        var completed = await _db.CandidateCompetencies.AnyAsync(
+        var competencyDone = await _db.CandidateCompetencies.AnyAsync(
             c => c.UserId == candidateUserId && c.Status == CandidateCompetencyStatuses.Completed,
             cancellationToken);
-        if (!completed)
+        var careerDone = await _db.CandidateCareerInterests.AnyAsync(
+            c => c.UserId == candidateUserId && c.Status == CandidateCompetencyStatuses.Completed,
+            cancellationToken);
+        if (!competencyDone && !careerDone)
         {
-            throw new InvalidOperationException("Kandidaat heeft de Quick-Scan nog niet afgerond.");
+            throw new InvalidOperationException("Kandidaat heeft de competentie- of beroepentest nog niet afgerond.");
         }
 
         var openExisting = await _db.TalentContactRequests.AnyAsync(

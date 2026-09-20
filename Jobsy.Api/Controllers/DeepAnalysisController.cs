@@ -1,4 +1,5 @@
 using Jobsy.Core.Authorization;
+using Jobsy.Core.Enums;
 using Jobsy.Core.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -12,16 +13,23 @@ namespace Jobsy.Api.Controllers;
 public sealed class DeepAnalysisController : ControllerBase
 {
     private readonly IDeepAnalysisService _deep;
+    private readonly IAssessmentReportPdfService _reports;
     private readonly IUserLookupService _users;
 
-    public DeepAnalysisController(IDeepAnalysisService deep, IUserLookupService users)
+    public DeepAnalysisController(
+        IDeepAnalysisService deep,
+        IAssessmentReportPdfService reports,
+        IUserLookupService users)
     {
         _deep = deep;
+        _reports = reports;
         _users = users;
     }
 
     [HttpGet]
-    public async Task<ActionResult<DeepAnalysisStateDto>> Get(CancellationToken cancellationToken)
+    public async Task<ActionResult<DeepAnalysisStateDto>> Get(
+        [FromQuery] string? kind,
+        CancellationToken cancellationToken)
     {
         var user = await _users.FindByPrincipalAsync(User, cancellationToken);
         if (user is null)
@@ -29,12 +37,14 @@ public sealed class DeepAnalysisController : ControllerBase
             return NotFound();
         }
 
-        return Ok(await _deep.GetStateAsync(user.Id, cancellationToken));
+        return Ok(await _deep.GetStateAsync(user.Id, ParseKind(kind), cancellationToken));
     }
 
     [HttpPost("checkout")]
     [EnableRateLimiting("public-write")]
-    public async Task<ActionResult<DeepAnalysisCheckoutResult>> Checkout(CancellationToken cancellationToken)
+    public async Task<ActionResult<DeepAnalysisCheckoutResult>> Checkout(
+        [FromQuery] string? kind,
+        CancellationToken cancellationToken)
     {
         var user = await _users.FindByPrincipalAsync(User, cancellationToken);
         if (user is null)
@@ -44,7 +54,7 @@ public sealed class DeepAnalysisController : ControllerBase
 
         try
         {
-            return Ok(await _deep.StartCheckoutAsync(user.Id, cancellationToken));
+            return Ok(await _deep.StartCheckoutAsync(user.Id, ParseKind(kind), cancellationToken));
         }
         catch (InvalidOperationException ex)
         {
@@ -72,12 +82,20 @@ public sealed class DeepAnalysisController : ControllerBase
             return BadRequest(new { message = "Checkout niet gevonden, niet van jou, of betaling nog niet afgerond." });
         }
 
-        return Ok(await _deep.GetStateAsync(user.Id, cancellationToken));
+        var checkoutKind = AssessmentKind.Competence;
+        if (paymentId.Contains("_career_", StringComparison.OrdinalIgnoreCase)
+            || paymentId.Contains("career", StringComparison.OrdinalIgnoreCase))
+        {
+            checkoutKind = AssessmentKind.Career;
+        }
+
+        return Ok(await _deep.GetStateAsync(user.Id, checkoutKind, cancellationToken));
     }
 
     [HttpPut]
     [EnableRateLimiting("public-write")]
     public async Task<ActionResult<DeepAnalysisStateDto>> Save(
+        [FromQuery] string? kind,
         [FromBody] SaveDeepAnalysisRequest request,
         CancellationToken cancellationToken)
     {
@@ -103,13 +121,37 @@ public sealed class DeepAnalysisController : ControllerBase
 
         try
         {
-            return Ok(await _deep.SaveAsync(user.Id, answers, request.Complete, cancellationToken));
+            return Ok(await _deep.SaveAsync(user.Id, ParseKind(kind), answers, request.Complete, cancellationToken));
         }
         catch (InvalidOperationException ex)
         {
             return BadRequest(new { message = ex.Message });
         }
     }
+
+    [HttpGet("report")]
+    [EnableRateLimiting("public-read")]
+    public async Task<IActionResult> Report(
+        [FromQuery] string? kind,
+        CancellationToken cancellationToken)
+    {
+        var user = await _users.FindByPrincipalAsync(User, cancellationToken);
+        if (user is null)
+        {
+            return NotFound();
+        }
+
+        var pdf = await _reports.TryRenderAsync(user.Id, ParseKind(kind), cancellationToken);
+        if (pdf is null)
+        {
+            return NotFound(new { message = "Rapport is nog niet beschikbaar. Rond de diepte-analyse eerst af." });
+        }
+
+        return File(pdf.Content, "application/pdf", pdf.FileName);
+    }
+
+    private static AssessmentKind ParseKind(string? kind)
+        => AssessmentKindLabels.ParseOrDefault(kind);
 }
 
 public sealed record SaveDeepAnalysisRequest(

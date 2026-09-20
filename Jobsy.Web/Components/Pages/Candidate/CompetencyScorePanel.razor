@@ -20,7 +20,7 @@
             </g>
         </svg>
         <ul class="competency-bars">
-            @foreach (var category in CompetencyTestCatalog.CategoryCodes)
+            @foreach (var category in CompetencyTestCatalog.QuickScanCategories)
             {
                 var value = Value(complete, category) ?? 0;
                 <li class="competency-bar">
@@ -47,6 +47,7 @@
         CompetencyTestCatalog.Resultaatgerichtheid => scores.Resultaatgerichtheid,
         CompetencyTestCatalog.Stressbestendigheid => scores.Stressbestendigheid,
         CompetencyTestCatalog.Innovatie => scores.Innovatie,
+        CompetencyTestCatalog.Extraversie => scores.Extraversie,
         _ => null
     };
 

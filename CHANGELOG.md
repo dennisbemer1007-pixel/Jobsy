@@ -14,7 +14,7 @@ Alle noemenswaardige wijzigingen aan dit project worden in dit bestand bijgehoud
 ## [Unreleased]
 
 ### Added
-- **Lobsy Platform master-spec** (`docs/FUNCTIONELE_SPECIFICATIES_LOBSY_PLATFORM.md`): Quick-Scan **25** vragen (Big Five + RIASEC), diepte-analyse **150** vragen (€ 2,99 Mollie-stub), anonieme werkgever-talentpool (geen leeftijdsfilter), ContactUnlock **1 token** + **48-uurs** refund, Flex-marge **€ 2,00/uur**, uitzend-jaarabonnement **€ 4.000**.
+- **Gescheiden test-architectuur:** competentietest (25 Big Five) en beroepentest (25 RIASEC) elk met eigen 150-vragen diepte-analyse (€ 2,99) en PDF; routes `/candidate/career` en `/candidate/deep-analysis/{kind}`.
 - API: `api/employer/talent/*`, `api/me/talent-contacts`, `api/me/deep-analysis`; UI: `/employer/talent`, `/employer/talent-contacts`.
 
 ### Changed

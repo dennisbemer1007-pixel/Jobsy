@@ -7,17 +7,18 @@ namespace Jobsy.Tests;
 public class CompetencyMatchingTests
 {
     [Fact]
-    public void Catalog_has_25_items_big_five_plus_riasec()
+    public void Catalog_has_25_big_five_items_without_riasec()
     {
         Assert.Equal(25, CompetencyTestCatalog.QuestionCount);
         Assert.Equal(25, CompetencyTestCatalog.Questions.Count);
         Assert.Equal(4, CompetencyTestCatalog.CategoryCodes.Length);
-        foreach (var category in CompetencyTestCatalog.CategoryCodes)
+        Assert.Equal(5, CompetencyTestCatalog.QuickScanCategories.Length);
+        foreach (var category in CompetencyTestCatalog.QuickScanCategories)
         {
-            Assert.Equal(5, CompetencyTestCatalog.Questions.Count(q => q.Category == category && !q.IsRiasec));
+            Assert.Equal(5, CompetencyTestCatalog.Questions.Count(q => q.Category == category));
         }
 
-        Assert.Equal(5, CompetencyTestCatalog.Questions.Count(q => q.IsRiasec));
+        Assert.DoesNotContain(CompetencyTestCatalog.Questions, q => q.IsRiasec);
         Assert.Contains(CompetencyTestCatalog.Questions, q => q.Reverse);
         Assert.True(CompetencyTestCatalog.Questions.Count(q => q.Reverse) >= 8);
     }
@@ -35,6 +36,7 @@ public class CompetencyMatchingTests
         Assert.Equal(100, scores.Resultaatgerichtheid);
         Assert.Equal(100, scores.Stressbestendigheid);
         Assert.Equal(100, scores.Innovatie);
+        Assert.Equal(100, scores.Extraversie);
 
         var low = Enumerable.Range(1, 25).ToDictionary(
             i => i,
@@ -59,21 +61,36 @@ public class CompetencyMatchingTests
     }
 
     [Fact]
-    public void Riasec_tags_derived_from_high_interest_answers()
+    public void Career_catalog_has_25_riasec_items()
     {
-        var answers = Enumerable.Range(1, 25).ToDictionary(i => i, _ => 3);
-        answers[21] = 5;
-        answers[24] = 5;
-        var tags = CompetencyTestCatalog.DeriveRiasecTags(answers);
-        Assert.Contains(CompetencyTestCatalog.RiasecRealistic, tags);
-        Assert.Contains(CompetencyTestCatalog.RiasecSocial, tags);
+        Assert.Equal(25, CareerTestCatalog.QuestionCount);
+        Assert.Equal(25, CareerTestCatalog.Questions.Count);
+        Assert.Equal(6, CareerTestCatalog.RiasecCodes.Length);
+        Assert.Equal(5, CareerTestCatalog.Questions.Count(q => q.Category == CareerTestCatalog.Realistic));
+        Assert.Equal(4, CareerTestCatalog.Questions.Count(q => q.Category == CareerTestCatalog.Social));
+
+        var high = Enumerable.Range(1, 25).ToDictionary(
+            i => i,
+            i => CareerTestCatalog.Questions.First(q => q.Id == i).Reverse ? 1 : 5);
+        var scores = CareerTestCatalog.Score(high);
+        Assert.NotNull(scores);
+        Assert.True(scores!.IsComplete);
+        Assert.Equal(100, scores.Realistic);
+        Assert.Equal("ACE", CareerTestCatalog.HollandCode(scores));
+        var tags = CareerTestCatalog.DeriveRiasecTags(scores);
+        Assert.Equal(3, tags.Count);
     }
 
     [Fact]
-    public void Deep_analysis_catalog_has_150_questions()
+    public void Deep_analysis_catalogs_are_separated_150()
     {
         Assert.Equal(150, DeepAnalysisCatalog.QuestionCount);
         Assert.Equal(150, DeepAnalysisCatalog.Questions.Count);
+        Assert.Equal(150, DeepAnalysisCatalog.CareerQuestions.Count);
+        Assert.Contains(DeepAnalysisCatalog.Questions, q => q.Family == "BigFive");
+        Assert.DoesNotContain(DeepAnalysisCatalog.Questions, q => q.Family == "RIASEC");
+        Assert.Contains(DeepAnalysisCatalog.CareerQuestions, q => q.Family == "RIASEC");
+        Assert.DoesNotContain(DeepAnalysisCatalog.CareerQuestions, q => q.Family == "BigFive");
     }
 
     [Fact]

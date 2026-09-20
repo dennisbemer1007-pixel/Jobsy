@@ -59,11 +59,14 @@ public sealed record AnonymousTalentCardDto(
     IReadOnlyList<string> MatchTags,
     IReadOnlyList<string> RiasecTags,
     CompetencyScores? CompetencyScores,
+    RiasecScores? CareerScores,
+    string? HollandCode,
     string? AvailabilitySummary,
     IReadOnlyList<string> DrivingLicenses,
     int? TravelMinutes,
     string? RegionLabel,
-    bool DeepAnalysisCompleted);
+    bool CompetenceDeepCompleted,
+    bool CareerDeepCompleted);
 
 public sealed record TalentContactRequestDto(
     Guid Id,

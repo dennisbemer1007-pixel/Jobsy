@@ -215,7 +215,7 @@ public class MobileSaasUxTests
         Assert.Contains("disabled=\"@(_saving || _loadFailed)\"", test);
 
         var privacy = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/Components/Pages/Legal/Privacy.razor"));
-        Assert.Contains("5b. Quick-Scan, diepte-analyse en talentpool", privacy);
+        Assert.Contains("5b. Competentietest, beroepentest, diepte-analyse en talentpool", privacy);
         Assert.Contains("niet</strong> aan werkgevers getoond", privacy);
         Assert.Contains("anonieme talentpool", privacy);
         Assert.Contains("20 september 2026", privacy);

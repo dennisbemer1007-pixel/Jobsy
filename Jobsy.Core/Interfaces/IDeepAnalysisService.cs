@@ -1,13 +1,18 @@
+using Jobsy.Core.Enums;
 using Jobsy.Core.Rules;
 
 namespace Jobsy.Core.Interfaces;
 
 public interface IDeepAnalysisService
 {
-    Task<DeepAnalysisStateDto> GetStateAsync(Guid userId, CancellationToken cancellationToken = default);
+    Task<DeepAnalysisStateDto> GetStateAsync(
+        Guid userId,
+        AssessmentKind kind,
+        CancellationToken cancellationToken = default);
 
     Task<DeepAnalysisCheckoutResult> StartCheckoutAsync(
         Guid userId,
+        AssessmentKind kind,
         CancellationToken cancellationToken = default);
 
     /// <summary>
@@ -20,16 +25,21 @@ public interface IDeepAnalysisService
         bool allowDevStubMarkPaid = false,
         CancellationToken cancellationToken = default);
 
-    Task UnlockForUserAsync(Guid userId, CancellationToken cancellationToken = default);
+    Task UnlockForUserAsync(
+        Guid userId,
+        AssessmentKind kind,
+        CancellationToken cancellationToken = default);
 
     Task<DeepAnalysisStateDto> SaveAsync(
         Guid userId,
+        AssessmentKind kind,
         IReadOnlyDictionary<int, int> answers,
         bool complete,
         CancellationToken cancellationToken = default);
 }
 
 public sealed record DeepAnalysisStateDto(
+    AssessmentKind Kind,
     string Status,
     bool IsUnlocked,
     bool IsCompleted,
@@ -40,6 +50,7 @@ public sealed record DeepAnalysisStateDto(
     DateTime? UnlockedAtUtc,
     DateTime? CompletedAtUtc,
     DateTime? ReportGeneratedAtUtc,
+    IReadOnlyDictionary<int, int> Answers,
     IReadOnlyList<DeepAnalysisQuestionDto> Questions,
     string UpsellCopy);
 
@@ -55,4 +66,5 @@ public sealed record DeepAnalysisCheckoutResult(
     string PaymentId,
     string CheckoutUrl,
     decimal AmountEuro,
-    bool IsStub);
+    bool IsStub,
+    AssessmentKind Kind);

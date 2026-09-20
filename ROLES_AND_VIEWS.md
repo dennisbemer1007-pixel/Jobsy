@@ -34,10 +34,10 @@ Publiek (naast banenkaart): `/vacancies/{id}`, `/{kvknummer}` (ondernemer), `/{k
 | `/candidate/applications` | Sollicitatiehistorie |
 | `/candidate/vacancies` | Overzicht + **Onlangs bekeken** (localStorage, alleen vacancy-GUIDs) + in-de-buurt op reistijd/vervoer |
 | `/candidate/liked` · `/candidate/shared` | Engagement-lijsten |
-| `/candidate/profile` | OpenForWork, prefs, DOB, HomeLocation, eigen CV-upload, recensies, **Quick-Scan** (25: Big Five + RIASEC) + Top 10 vacatures (≥60% match); upsell diepte-analyse € 2,99 |
-| `/employer/talent` | Anonieme talentpool (filters zonder leeftijd); ContactUnlock 1 token |
-| `/employer/talent-contacts` | Contactverzoeken + 48u refund-intrekken |
-| `/candidate/competencies` | Competentietest (20 vragen); draft tussentijds opslaan; scores herberekend bij afronden |
+| `/candidate/profile` | OpenForWork, prefs, DOB, HomeLocation, eigen CV-upload, recensies, **competentietest** (25 Big Five) + **beroepentest** (25 RIASEC) + Top 10 vacatures (≥60%); upsell diepte-analyses € 2,99 |
+| `/candidate/competencies` | Competentietest (25); draft tussentijds opslaan; scores herberekend bij afronden |
+| `/candidate/career` | Beroepentest (25 RIASEC); Holland-code + top 10 actieve vacatures |
+| `/candidate/deep-analysis/{kind}` | Betaalde 150-vragen analyse (competence \| career) + PDF |
 
 ---
 
@@ -52,6 +52,8 @@ Publiek (naast banenkaart): `/vacancies/{id}`, `/{kvknummer}` (ondernemer), `/{k
 | `/employer/vacancies` | Beheer + publiceren (basis/highlight/PushBom/verlengen) |
 | `/branch/vacancies/new` | Nieuwe vacature |
 | `/branch/applicants` | Sollicitaties; pre-accept: motivatie/afstand/beschikbaarheid/leeftijd; PII + Lobsy-CV + geüpload CV na Accept; daarna uitnodigen / matchen / weigeren |
+| `/employer/talent` | Anonieme talentpool (filters zonder leeftijd); ContactUnlock 1 token |
+| `/employer/talent-contacts` | Contactverzoeken + 48u refund-intrekken |
 | `/branch/tokens` | Saldo / logs |
 | `/employer/takeovers` | Inbox overnames |
 | `/branch` | Redirect → `/home` |

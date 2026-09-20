@@ -252,7 +252,9 @@ public static class DependencyInjection
         services.AddScoped<ICvTextExtractor, CvTextExtractor>();
         services.AddScoped<ICvExtractionService, CvExtractionService>();
         services.AddScoped<ICandidateCompetencyService, CandidateCompetencyService>();
+        services.AddScoped<ICandidateCareerInterestService, CandidateCareerInterestService>();
         services.AddScoped<IDeepAnalysisService, DeepAnalysisService>();
+        services.AddScoped<IAssessmentReportPdfService, AssessmentReportPdfService>();
         services.AddScoped<ITalentPoolService, TalentPoolService>();
         services.AddScoped<IFlexCommercialService, FlexCommercialService>();
         services.AddScoped<ICandidateMapImageService, OsmTileMapImageService>();

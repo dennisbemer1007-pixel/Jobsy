@@ -28,6 +28,7 @@ public class JobsyDbContext : DbContext
     public DbSet<CandidateUploadedCv> CandidateUploadedCvs => Set<CandidateUploadedCv>();
     public DbSet<CandidateReference> CandidateReferences => Set<CandidateReference>();
     public DbSet<CandidateCompetency> CandidateCompetencies => Set<CandidateCompetency>();
+    public DbSet<CandidateCareerInterest> CandidateCareerInterests => Set<CandidateCareerInterest>();
     public DbSet<CandidateDeepAnalysis> CandidateDeepAnalyses => Set<CandidateDeepAnalysis>();
     public DbSet<DeepAnalysisCheckout> DeepAnalysisCheckouts => Set<DeepAnalysisCheckout>();
     public DbSet<TalentContactRequest> TalentContactRequests => Set<TalentContactRequest>();
@@ -474,6 +475,22 @@ public class JobsyDbContext : DbContext
                 .OnDelete(DeleteBehavior.Cascade);
         });
 
+        modelBuilder.Entity<CandidateCareerInterest>(entity =>
+        {
+            entity.ToTable("CandidateCareerInterests");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Status).HasMaxLength(16).IsRequired();
+            entity.Property(e => e.AnswersJson).HasMaxLength(4000).IsRequired();
+            entity.Property(e => e.HollandCode).HasMaxLength(8).IsRequired();
+            entity.Property(e => e.RiasecTagsJson).HasMaxLength(500).IsRequired();
+            entity.Property(e => e.MatchTagsJson).HasMaxLength(1000).IsRequired();
+            entity.HasIndex(e => e.UserId).IsUnique();
+            entity.HasOne(e => e.User)
+                .WithMany()
+                .HasForeignKey(e => e.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
         modelBuilder.Entity<CandidateDeepAnalysis>(entity =>
         {
             entity.ToTable("CandidateDeepAnalyses");
@@ -481,7 +498,7 @@ public class JobsyDbContext : DbContext
             entity.Property(e => e.Status).HasMaxLength(16).IsRequired();
             entity.Property(e => e.AnswersJson).HasColumnType("text").IsRequired();
             entity.Property(e => e.TagsJson).HasMaxLength(2000).IsRequired();
-            entity.HasIndex(e => e.UserId).IsUnique();
+            entity.HasIndex(e => new { e.UserId, e.Kind }).IsUnique();
             entity.HasOne(e => e.User)
                 .WithMany()
                 .HasForeignKey(e => e.UserId)
@@ -496,6 +513,7 @@ public class JobsyDbContext : DbContext
             entity.Property(e => e.AmountEuro).HasPrecision(10, 2);
             entity.HasIndex(e => e.PaymentId).IsUnique();
             entity.HasIndex(e => e.UserId);
+            entity.HasIndex(e => new { e.UserId, e.Kind, e.Status });
             entity.HasOne(e => e.User)
                 .WithMany()
                 .HasForeignKey(e => e.UserId)

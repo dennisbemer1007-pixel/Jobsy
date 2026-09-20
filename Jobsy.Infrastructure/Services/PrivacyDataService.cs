@@ -314,6 +314,26 @@ public sealed class PrivacyDataService : IPrivacyDataService
                     c.ResultaatgerichtheidPercent,
                     c.StressbestendigheidPercent,
                     c.InnovatiePercent,
+                    c.ExtraversiePercent,
+                    c.RiasecTagsJson,
+                    c.MatchTagsJson,
+                    c.CompletedAtUtc,
+                    c.UpdatedAtUtc
+                })
+                .FirstOrDefaultAsync(cancellationToken),
+            CareerInterests = await _db.CandidateCareerInterests.AsNoTracking()
+                .Where(c => c.UserId == user.Id)
+                .Select(c => new
+                {
+                    c.Status,
+                    c.AnswersJson,
+                    c.RealisticPercent,
+                    c.InvestigativePercent,
+                    c.ArtisticPercent,
+                    c.SocialPercent,
+                    c.EnterprisingPercent,
+                    c.ConventionalPercent,
+                    c.HollandCode,
                     c.RiasecTagsJson,
                     c.MatchTagsJson,
                     c.CompletedAtUtc,
@@ -324,6 +344,7 @@ public sealed class PrivacyDataService : IPrivacyDataService
                 .Where(d => d.UserId == user.Id)
                 .Select(d => new
                 {
+                    Kind = d.Kind.ToString(),
                     d.Status,
                     d.AnswersJson,
                     d.TagsJson,
@@ -332,13 +353,14 @@ public sealed class PrivacyDataService : IPrivacyDataService
                     d.ReportGeneratedAtUtc,
                     d.UpdatedAtUtc
                 })
-                .FirstOrDefaultAsync(cancellationToken),
+                .ToListAsync(cancellationToken),
             DeepAnalysisCheckouts = await _db.DeepAnalysisCheckouts.AsNoTracking()
                 .Where(c => c.UserId == user.Id)
                 .OrderByDescending(c => c.CreatedAtUtc)
                 .Select(c => new
                 {
                     c.Id,
+                    Kind = c.Kind.ToString(),
                     c.PaymentId,
                     c.AmountEuro,
                     Status = c.Status.ToString(),
@@ -864,6 +886,14 @@ public sealed class PrivacyDataService : IPrivacyDataService
         if (competencies.Count > 0)
         {
             _db.CandidateCompetencies.RemoveRange(competencies);
+        }
+
+        var careers = await _db.CandidateCareerInterests
+            .Where(c => c.UserId == user.Id)
+            .ToListAsync(cancellationToken);
+        if (careers.Count > 0)
+        {
+            _db.CandidateCareerInterests.RemoveRange(careers);
         }
 
         var deepAnalyses = await _db.CandidateDeepAnalyses

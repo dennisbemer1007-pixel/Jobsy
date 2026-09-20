@@ -132,14 +132,20 @@ public static class PageHelpDocs
         ["/candidate/profile"] = new(
             "Mijn profiel",
             "Jouw kandidaatgegevens voor matching en solliciteren.",
-            "Vul interesses, opleiding, rijbewijzen, voorkeuren, locatie, uren per week, beschikbaarheid/dagdelen en de competentietest (20 vragen, Big Five) in. Geboortedatum is nodig voor leeftijdsloon en wettelijke taakchecks. Wijzigingen verbeteren matchscores en filters. Rechts zie je de Top 10 vacatures vanaf 60% match.",
+            "Vul interesses, opleiding, rijbewijzen, voorkeuren, locatie, uren per week, beschikbaarheid/dagdelen, de competentietest (25 vragen, Big Five) en de beroepentest (25 vragen, RIASEC) in. Geboortedatum is nodig voor leeftijdsloon en wettelijke taakchecks. Wijzigingen verbeteren matchscores en filters. Rechts zie je de Top 10 vacatures vanaf 60% match.",
             "Betere matches en sneller solliciteren met volledige gegevens."),
 
         ["/candidate/competencies"] = new(
             "Competentietest",
-            "Twintig stellingen op basis van het Big Five-model, vertaald naar vier werkcompetenties.",
-            "Beantwoord in je eigen tempo. Tussentijds opslaan mag; later kun je antwoorden wijzigen. Afronden herberekent je scores en de vacature-matches op je profiel.",
-            "Inzicht in samenwerken, resultaatgerichtheid, stressbestendigheid en innovatie."),
+            "Vijfentwintig stellingen op basis van het Big Five-model, vertaald naar werkcompetenties.",
+            "Beantwoord in je eigen tempo. Tussentijds opslaan mag; later kun je antwoorden wijzigen. Afronden herberekent je scores en de vacature-matches op je profiel. Optioneel: uitgebreide analyse (150 vragen, € 2,99) met PDF.",
+            "Inzicht in samenwerken, resultaatgerichtheid, stressbestendigheid, innovatie en extraversie."),
+
+        ["/candidate/career"] = new(
+            "Beroepentest",
+            "Vijfentwintig stellingen op basis van RIASEC / Holland-code: wat wil je en welke baan past.",
+            "Rond af voor een top 10 actieve vacatures in de regio. Optioneel: uitgebreide beroepentest (150 vragen, € 2,99) met loopbaan-PDF.",
+            "Interesses koppelen aan actieve vacatures op de kaart."),
 
         ["/employer/vacancies"] = new(
             "Vacatures (werkgever)",

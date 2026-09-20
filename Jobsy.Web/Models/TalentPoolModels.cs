@@ -6,11 +6,16 @@ public sealed class AnonymousTalentCard
     public List<string> MatchTags { get; set; } = [];
     public List<string> RiasecTags { get; set; } = [];
     public CompetencyScoreSet? CompetencyScores { get; set; }
+    public RiasecScoreSet? CareerScores { get; set; }
+    public string? HollandCode { get; set; }
     public string? AvailabilitySummary { get; set; }
     public List<string> DrivingLicenses { get; set; } = [];
     public int? TravelMinutes { get; set; }
     public string? RegionLabel { get; set; }
-    public bool DeepAnalysisCompleted { get; set; }
+    public bool CompetenceDeepCompleted { get; set; }
+    public bool CareerDeepCompleted { get; set; }
+
+    public bool DeepAnalysisCompleted => CompetenceDeepCompleted || CareerDeepCompleted;
 }
 
 public sealed class TalentContactRequestModel

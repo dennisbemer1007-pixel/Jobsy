@@ -29,7 +29,7 @@ public class DeepAnalysisPrivacySecurityTests
         await db.SaveChangesAsync();
 
         var sut = CreateSut(db, isDevelopment: true, allowStub: false);
-        var checkout = await sut.StartCheckoutAsync(userId);
+        var checkout = await sut.StartCheckoutAsync(userId, AssessmentKind.Competence);
 
         Assert.False(await sut.TryFulfillPaidCheckoutAsync(
             checkout.PaymentId,
@@ -52,7 +52,7 @@ public class DeepAnalysisPrivacySecurityTests
             expectedUserId: userId,
             allowDevStubMarkPaid: true));
 
-        var state = await sut.GetStateAsync(userId);
+        var state = await sut.GetStateAsync(userId, AssessmentKind.Competence);
         Assert.True(state.IsUnlocked);
     }
 
@@ -72,7 +72,7 @@ public class DeepAnalysisPrivacySecurityTests
         await db.SaveChangesAsync();
 
         var sut = CreateSut(db, isDevelopment: false, allowStub: false);
-        await Assert.ThrowsAsync<InvalidOperationException>(() => sut.StartCheckoutAsync(userId));
+        await Assert.ThrowsAsync<InvalidOperationException>(() => sut.StartCheckoutAsync(userId, AssessmentKind.Competence));
     }
 
     [Fact]
@@ -92,6 +92,7 @@ public class DeepAnalysisPrivacySecurityTests
         {
             Id = Guid.NewGuid(),
             UserId = userId,
+            Kind = AssessmentKind.Competence,
             Status = CandidateDeepAnalysisStatuses.Draft,
             AnswersJson = """{"1":4,"2":3}""",
             TagsJson = "[]",
@@ -102,7 +103,7 @@ public class DeepAnalysisPrivacySecurityTests
 
         var sut = CreateSut(db, isDevelopment: true, allowStub: false);
         await Assert.ThrowsAsync<InvalidOperationException>(
-            () => sut.SaveAsync(userId, new Dictionary<int, int>(), complete: false));
+            () => sut.SaveAsync(userId, AssessmentKind.Competence, new Dictionary<int, int>(), complete: false));
 
         var row = await db.CandidateDeepAnalyses.SingleAsync(d => d.UserId == userId);
         Assert.Contains("\"1\":4", row.AnswersJson);
@@ -138,9 +139,10 @@ public class DeepAnalysisPrivacySecurityTests
         await CompetencyTagBackfillSeeder.BackfillAsync(db, NullLogger.Instance);
 
         var row = await db.CandidateCompetencies.SingleAsync();
-        Assert.NotEqual("[]", row.RiasecTagsJson);
         Assert.NotEqual("[]", row.MatchTagsJson);
-        Assert.Contains(CompetencyTestCatalog.RiasecRealistic, CompetencyTestCatalog.ParseTagsJson(row.RiasecTagsJson));
+        var career = await db.CandidateCareerInterests.SingleAsync();
+        Assert.Contains(CompetencyTestCatalog.RiasecRealistic, CareerTestCatalog.ParseTagsJson(career.RiasecTagsJson));
+        Assert.Contains(CompetencyTestCatalog.RiasecSocial, CareerTestCatalog.ParseTagsJson(career.RiasecTagsJson));
     }
 
     private static DeepAnalysisService CreateSut(JobsyDbContext db, bool isDevelopment, bool allowStub)

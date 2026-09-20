@@ -1,7 +1,9 @@
+using Jobsy.Core.Enums;
+
 namespace Jobsy.Core.Entities;
 
 /// <summary>
-/// Paid 150-question deep psychometric analysis for one candidate.
+/// Paid 150-question deep analysis for one candidate and one <see cref="AssessmentKind"/>.
 /// Unlocked after successful <see cref="DeepAnalysisCheckout"/>.
 /// </summary>
 public class CandidateDeepAnalysis
@@ -9,6 +11,8 @@ public class CandidateDeepAnalysis
     public Guid Id { get; set; }
     public Guid UserId { get; set; }
     public User User { get; set; } = null!;
+
+    public AssessmentKind Kind { get; set; } = AssessmentKind.Competence;
 
     /// <summary><c>Locked</c>, <c>Draft</c>, or <c>Completed</c>.</summary>
     public string Status { get; set; } = CandidateDeepAnalysisStatuses.Locked;

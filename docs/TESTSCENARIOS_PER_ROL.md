@@ -352,10 +352,12 @@ Account: `kandidaat@jobsy.local` / `Jobsy123!`. Bottom-nav: Zoeken · Bewaard ·
 | Kandidaat | Profiel **Opslaan** success. | Bevestiging; data persistent na reload. |
 | Kandidaat | Profiel opslaan API-fout / not found. | Foutmelding. |
 | Kandidaat | **Download Lobsy-CV** vanaf profiel. | Voorbeeld-PDF (QuestPDF) met profiel + optionele motivatie. |
-| Kandidaat | Profiel-kop **Competenties** met progress bars/radar. | Toont 4 scores (Samenwerken, Resultaatgerichtheid, Stressbestendigheid, Innovatie) ná afronden; anders CTA om te starten. |
+| Kandidaat | Profiel-kop **Competentietest** met progress bars/radar. | Toont 4+ extraversie-scores ná afronden; anders CTA om te starten. |
 | Kandidaat | Knop **Test opnieuw invullen / aanpassen**. | Opent `/candidate/competencies` met bestaande antwoorden. |
-| Kandidaat | Competentietest 20 Likert-vragen (Big Five/OCEAN). | Vier categorieën; omgekeerde items; tussentijds **Draft** opslaan mag incompleet. |
-| Kandidaat | Competentietest **Afronden** met 20 antwoorden. | Status Completed; percentages 0–100 opgeslagen; matches herberekend. |
+| Kandidaat | Competentietest 25 Likert-vragen (Big Five/OCEAN). | Vijf categorieën; omgekeerde items; tussentijds **Draft** opslaan mag incompleet. |
+| Kandidaat | Competentietest **Afronden** met 25 antwoorden. | Status Completed; percentages 0–100 opgeslagen; matches herberekend. |
+| Kandidaat | Beroepentest 25 Likert-vragen (RIASEC). | Holland-code + tags; top 10 actieve vacatures. |
+| Kandidaat | Diepte-analyse upsell (€ 2,99) per test. | Checkout → 150 vragen → PDF-rapport. |
 | Kandidaat | Profiel rechts: **Top 10 vacatures**. | Strikt aflopend matchingpercentage; alleen ≥ 60%; max 10. |
 | Kandidaat | Vraagteken bij matchpercentage (hover/klik). | Jip-en-Janneke: waarom de match hoog is (ervaring + competenties) én waar het gat zit. |
 | Kandidaat | Profiel **Afmelden** → UnsubscribeDialog. | Zelfde OTP-forget als `/privacy/data`. |

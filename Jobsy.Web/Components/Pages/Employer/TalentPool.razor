@@ -25,6 +25,25 @@
                 <input type="number" min="1" max="180" @bind="_maxTravel" />
             </label>
             <label>
+                Vervoer
+                <select @bind="_transport">
+                    <option value="Bike">Fiets</option>
+                    <option value="Car">Auto</option>
+                    <option value="PublicTransport">OV</option>
+                    <option value="Walk">Lopen</option>
+                </select>
+            </label>
+            <label>
+                Beschikbaarheid
+                <select @bind="_availability">
+                    <option value="">Alle</option>
+                    <option value="direct">Per direct</option>
+                    <option value="parttime">Parttime</option>
+                    <option value="fulltime">Fulltime</option>
+                    <option value="seizoen">Seizoenswerk</option>
+                </select>
+            </label>
+            <label>
                 Rijbewijs
                 <input @bind="_license" placeholder="B" />
             </label>
@@ -47,15 +66,22 @@
                 <div class="detail-card">
                     <p><strong>@card.RegionLabel</strong> · @(card.TravelMinutes is int m ? $"{m} min" : "reistijd onbekend")</p>
                     <p>Tags: @string.Join(", ", card.MatchTags.Concat(card.RiasecTags).Distinct())</p>
+                    @if (!string.IsNullOrWhiteSpace(card.HollandCode))
+                    {
+                        <p>Holland-code: @card.HollandCode</p>
+                    }
                     @if (card.CompetencyScores is not null)
                     {
                         <p>Scores: S @card.CompetencyScores.Samenwerken% · R @card.CompetencyScores.Resultaatgerichtheid% · St @card.CompetencyScores.Stressbestendigheid% · I @card.CompetencyScores.Innovatie%</p>
                     }
                     <p>@(card.AvailabilitySummary ?? "Beschikbaarheid onbekend")</p>
                     <p>Rijbewijs: @(card.DrivingLicenses.Count == 0 ? "—" : string.Join(", ", card.DrivingLicenses))</p>
-                    @if (card.DeepAnalysisCompleted)
+                    @if (card.CompetenceDeepCompleted || card.CareerDeepCompleted)
                     {
-                        <p class="profile-address__hint">Diepte-analyse voltooid</p>
+                        <p class="profile-address__hint">
+                            @(card.CompetenceDeepCompleted ? "Competentie-diepte-analyse voltooid" : "")
+                            @(card.CareerDeepCompleted ? " Beroepen-diepte-analyse voltooid" : "")
+                        </p>
                     }
                     <button class="login-submit" type="button" @onclick="() => UnlockAsync(card.CandidateUserId)">
                         @Culture["Talent.Unlock"]
@@ -72,6 +98,8 @@
     private string _tags = "";
     private int? _maxTravel = 45;
     private string _license = "";
+    private string _availability = "";
+    private string _transport = "Bike";
     private List<AnonymousTalentCard> _results = [];
 
     protected override async Task OnInitializedAsync() => await SearchAsync();
@@ -82,7 +110,7 @@
         _message = null;
         try
         {
-            _results = await Api.SearchTalentPoolAsync(_tags, _maxTravel, _license) ?? [];
+            _results = await Api.SearchTalentPoolAsync(_tags, _maxTravel, _license, _availability, _transport) ?? [];
         }
         catch (Exception ex)
         {

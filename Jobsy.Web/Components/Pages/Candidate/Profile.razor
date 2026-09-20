@@ -38,16 +38,50 @@
             }
             <CompetencyScorePanel Scores="_competencyScores" />
             <a class="engagement-btn" href="/candidate/competencies">@Culture["Competency.Retake"]</a>
+            <p class="login-lead">@_competencyUpsell</p>
+            <a class="login-submit" href="/candidate/deep-analysis/competence">@Culture["Competency.DeepUnlock"]</a>
         }
         else if (_competencyAnswered > 0)
         {
-            <p class="login-lead">@Culture.Format("Competency.DraftProgress", _competencyAnswered, 20)</p>
+            <p class="login-lead">@Culture.Format("Competency.DraftProgress", _competencyAnswered, 25)</p>
             <a class="login-submit" href="/candidate/competencies">@Culture["Competency.Continue"]</a>
         }
         else
         {
             <p class="login-lead">@Culture["Competency.Empty"]</p>
             <a class="login-submit" href="/candidate/competencies">@Culture["Competency.Start"]</a>
+        }
+    </section>
+    <section class="detail-card competency-profile-card" aria-labelledby="career-profile-title">
+        <h2 id="career-profile-title" class="profile-page__title">@Culture["Career.Section"]</h2>
+        <p class="login-lead">@Culture["Career.Lead"]</p>
+        @if (_careerLoading)
+        {
+            <p class="state-message">@Culture["Common.Loading"]</p>
+        }
+        else if (_careerCompleted)
+        {
+            @if (!string.IsNullOrWhiteSpace(_hollandCode))
+            {
+                <p class="login-lead">@Culture.Format("Career.Holland", _hollandCode)</p>
+            }
+            @if (_careerTags.Count > 0)
+            {
+                <p class="profile-address__hint">@string.Join(" · ", _careerTags)</p>
+            }
+            <a class="engagement-btn" href="/candidate/career">@Culture["Career.Retake"]</a>
+            <p class="login-lead">@_careerUpsell</p>
+            <a class="login-submit" href="/candidate/deep-analysis/career">@Culture["Career.DeepUnlock"]</a>
+        }
+        else if (_careerAnswered > 0)
+        {
+            <p class="login-lead">@Culture.Format("Competency.DraftProgress", _careerAnswered, 25)</p>
+            <a class="login-submit" href="/candidate/career">@Culture["Career.Continue"]</a>
+        }
+        else
+        {
+            <p class="login-lead">@Culture["Career.Empty"]</p>
+            <a class="login-submit" href="/candidate/career">@Culture["Career.Start"]</a>
         }
     </section>
     <article class="detail-card">
@@ -630,6 +664,13 @@
     private bool _competencyCompleted;
     private int _competencyAnswered;
     private DateTime? _competencyCompletedAt;
+    private string _competencyUpsell = "";
+    private bool _careerLoading = true;
+    private bool _careerCompleted;
+    private int _careerAnswered;
+    private string _hollandCode = "";
+    private List<string> _careerTags = [];
+    private string _careerUpsell = "";
     private IReadOnlyList<CandidateMatchedVacancy> _matchedVacancies = [];
 
     [SupplyParameterFromQuery(Name = "returnUrl")]
@@ -773,6 +814,18 @@
                     "Completed",
                     StringComparison.OrdinalIgnoreCase);
                 _competencyScores = competency.Scores;
+                _competencyUpsell = competency.DeepAnalysisUpsellCopy;
+            }
+
+            _careerLoading = true;
+            var career = await Api.GetMyCareerInterestsAsync();
+            if (career is not null)
+            {
+                _careerAnswered = career.AnsweredCount;
+                _careerCompleted = string.Equals(career.Status, "Completed", StringComparison.OrdinalIgnoreCase);
+                _hollandCode = career.HollandCode ?? "";
+                _careerTags = career.RiasecTags ?? [];
+                _careerUpsell = career.DeepAnalysisUpsellCopy;
             }
 
             _matchedVacancies = await Api.GetMyMatchedVacanciesAsync();
@@ -784,6 +837,7 @@
         finally
         {
             _competenciesLoading = false;
+            _careerLoading = false;
             _matchesLoading = false;
         }
     }

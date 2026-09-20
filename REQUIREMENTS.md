@@ -27,8 +27,9 @@ Jobsy is een hyper-lokale job-matching applicatie gericht op de regionale arbeid
 
 ### Kernentiteiten (niet exhaustief)
 - **User** — Email, FullName, Role, HomeLocation, OpenForWork, prefs, early-adapter
-- **CandidateCompetency** — Quick-Scan (25) antwoorden + competentiescores + RIASEC/match-tags (Draft/Completed); optionele diepte-analyse-unlock
-- **CandidateDeepAnalysis** / **DeepAnalysisCheckout** — 150-vragen analyse na € 2,99 Mollie-betaling + PDF-rapportflag
+- **CandidateCompetency** — Competentie Quick-Scan (25 Big Five) antwoorden + scores + match-tags (Draft/Completed)
+- **CandidateCareerInterest** — Beroepen Quick-Scan (25 RIASEC) + Holland-code + tags
+- **CandidateDeepAnalysis** / **DeepAnalysisCheckout** — 150-vragen analyse per `AssessmentKind` (Competence | Career) na € 2,99 Mollie-betaling + PDF-rapport
 - **TalentContactRequest** — anonieme ontgrendeling (1 token), 48-uurs reactievenster, refund-pad
 - **Company** — KVK + `KvkEstablishmentId`, hierarchy (`ParentCompanyId`), `CompanyType` (Employer/Intermediary); optioneel `AgencyAnnualSubscription`
 - **Vacancy** — Status (`Draft` / `Active` / `Archived` / `PendingApproval`), media, highlight, extensions, requested publish-opties, salary table, **VacancyCategory**, **VacancyKind** incl. `Flex`
@@ -101,8 +102,9 @@ Kernpunten:
 - **Verplichte uren** min/max per week + automatische urencategorie (bijbaan/parttime/fulltime)
 - **Geen UI-minimumleeftijd;** achtergrondfiltering via verplichte wettelijke taak-vinkjes + `[ i ]`-tooltips (Arbeidstijdenwet)
 - **Matchingspercentage** op banenkaart met breakdown-modal en actie-adviezen
-- **Competentietest (Quick-Scan / 25 vragen)** op het kandidaatprofiel: Big Five (20) + RIASEC (5); draft tussentijds opslaan; scores + tags voeden matching en talentpool; dynamische **Top 10 vacatures** (≥ 60%, aflopend)
-- **Diepte-analyse (150 vragen, € 2,99):** optionele upsell na Quick-Scan; Mollie iDEAL; verrijkte tags + PDF-rapport
+- **Competentietest (Quick-Scan / 25 vragen)** op het kandidaatprofiel: Big Five / OCEAN; draft tussentijds opslaan; scores + tags voeden matching en talentpool
+- **Beroepentest (Quick-Scan / 25 vragen):** RIASEC / Holland-code; dynamische **Top 10 actieve vacatures** (≥ 60%, aflopend)
+- **Diepte-analyses (150 vragen, € 2,99 per test):** optionele upsell na elke Quick-Scan; Mollie iDEAL; verrijkte tags + PDF-rapport
 - **Gulden Middenweg** bij solliciteren (&lt; 50%): OTP tegenhouden, profiel aanpassen of vangnet
 - **Optioneel motivatieveld** op sollicitatieformulier
 - **Werkgeversdashboard:** match-% met kleurcodering, breakdown, wettelijke bevestiging, motivatie, sort hoog→laag

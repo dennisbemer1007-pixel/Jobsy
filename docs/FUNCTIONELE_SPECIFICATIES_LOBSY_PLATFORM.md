@@ -19,33 +19,31 @@
 
 ---
 
-## 1. Beroeps- en competentietests
+## 1. Gescheiden test-architectuur
 
-### 1.1 Gratis Quick-Scan (25 vragen)
+Tests zitten in profiel/dashboard (geen losse menu-tabs). Elke engine heeft een **gratis Quick-Scan (25)** en een **betaalde diepte-analyse (150, € 2,99)**.
 
-| Eigenschap | Waarde |
-|------------|--------|
-| Duur | ca. 3 minuten |
-| Items | 25 Likert (1–5) |
-| Basis | Big Five / OCEAN (20) + RIASEC-interesses (5) |
-| Output | Competentiescores 0–100% + RIASEC-tags + match-tags |
-| Opslag | `CandidateCompetencies` gekoppeld aan user |
-| Effect | Kandidaat zichtbaar in talentpool (als OpenForWork) / regionale kaart |
+### 1.1 Competentietest — wie ben jij en wat kun je?
 
-**RIASEC-tags (canoniek):** `Realistic`, `Investigative`, `Artistic`, `Social`, `Enterprising`, `Conventional`  
-Quick-Scan meet de top-interesses via 5 compacte items (hoogste scores → tags).
+| Eigenschap | Quick-Scan | Diepte-analyse |
+|------------|------------|----------------|
+| Items | 25 Likert (Big Five / OCEAN) | 150 Likert (facetten + vaardigheden) |
+| Output | Competentiescores 0–100% + match-tags | Verrijkte tags + PDF |
+| Opslag | `CandidateCompetencies` | `CandidateDeepAnalyses` (`Kind=Competence`) |
+| Upsell | — | *“Ontgrendel je uitgebreide competentie-analyse inclusief officiële PDF-rapportage voor € {prijs}.”* |
 
-### 1.2 Uitgebreide Diepte-Analyse (150 vragen — € 2,99)
+### 1.2 Beroepentest — wat wil je en welke baan past?
 
-| Eigenschap | Waarde |
-|------------|--------|
-| Items | 150 Likert |
-| Basis | Big Five-facetten, RIASEC, praktische belastbaarheid/vaardigheden |
-| Prijs | Admin-configureerbaar (default € 2,99; iDEAL via Mollie; Dev-stub zonder API-key) |
-| Upsell-copy | *“Wil je een diepgaand inzicht in jouw unieke werkstijl en een officiële PDF-rapportage voor je sollicitaties? Ontgrendel de uitgebreide diepte-analyse voor € 2,99.”* |
-| Na betaling | Tags verrijken match-index; PDF-rapport in dashboard |
+| Eigenschap | Quick-Scan | Diepte-analyse |
+|------------|------------|----------------|
+| Items | 25 Likert (RIASEC / Holland-code) | 150 Likert (RIASEC + loopbaanoriëntatie) |
+| Output | Percentages per type, Holland-code, **top 10 actieve vacatures** | Loopbaan-PDF + verfijnde matching |
+| Opslag | `CandidateCareerInterests` | `CandidateDeepAnalyses` (`Kind=Career`) |
+| Upsell | na gratis test | *“Wil je een diepgaand carrière-advies … Ontgrendel de uitgebreide beroepentest voor € {prijs}.”* |
 
-**Checkout-flow:** kandidaat → Mollie → webhook/return → `DeepAnalysisUnlocked` → antwoorden verwerken → PDF genereren.
+**RIASEC-tags (canoniek):** `Realistic`, `Investigative`, `Artistic`, `Social`, `Enterprising`, `Conventional`
+
+**Checkout-flow:** kandidaat → Mollie/stub iDEAL → webhook/return → unlock → antwoorden verwerken → PDF.
 
 ### 1.3 Privacy
 
@@ -72,7 +70,7 @@ Toont **wel:** match-tags, competentiebanden, RIASEC, beschikbaarheidsamenvattin
 
 ### 2.3 Authz
 
-Alleen employer-rollen met company-scope (`BranchManager`, `RegionalManager`, `EnterpriseManager`, `Intermediary`). Resultaten beperkt tot OpenForWork + actieve kandidaten met (minimaal) voltooide Quick-Scan.
+Alleen employer-rollen met company-scope (`BranchManager`, `RegionalManager`, `EnterpriseManager`, `Intermediary`). Resultaten beperkt tot OpenForWork + actieve kandidaten met (minimaal) één voltooide test (competentie of beroep).
 
 ---
 
@@ -120,10 +118,11 @@ Alle bedragen onder **Admin → Settings → Lobsy Flex & talent**:
 
 ## 5. Acceptatiecriteria (kern)
 
-1. Quick-Scan = 25 vragen; afronden schrijft scores + RIASEC-tags.
-2. Diepte-Analyse locked tot betaald; na unlock 150 vragen + PDF-flag. Prijs admin-configureerbaar (default € 2,99).
-3. Talentpool-API lekt geen PII vóór `ContactShared`.
-4. Talentpool-API accepteert geen `minAge`/`maxAge`/`dateOfBirth`-filters.
-5. ContactUnlock debiteert configureerbaar aantal tokens (default 1); refund na intrekken bij timeout/declined-unavailable.
-6. Flex-publicatie kost 0 tokens; settings tonen configureerbare marge (default € 2,00).
-7. Actief uitzend-jaarabonnement: carte blanche publish; jaartarief admin-configureerbaar (default € 4.000).
+1. Competentie-Quick-Scan = 25 Big Five-vragen; afronden schrijft scores + match-tags.
+2. Beroepen-Quick-Scan = 25 RIASEC-vragen; afronden schrijft Holland-code + top 10 actieve vacatures.
+3. Elke diepte-analyse is locked tot betaald; na unlock 150 vragen + PDF. Prijs admin-configureerbaar (default € 2,99).
+4. Talentpool-API lekt geen PII vóór `ContactShared`.
+5. Talentpool-API accepteert geen `minAge`/`maxAge`/`dateOfBirth`-filters.
+6. ContactUnlock debiteert configureerbaar aantal tokens (default 1); refund na intrekken bij timeout/declined-unavailable.
+7. Flex-publicatie kost 0 tokens; settings tonen configureerbare marge (default € 2,00).
+8. Actief uitzend-jaarabonnement: carte blanche publish; jaartarief admin-configureerbaar (default € 4.000).

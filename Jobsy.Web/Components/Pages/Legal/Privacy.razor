@@ -35,7 +35,7 @@
             <p>Afhankelijk van je rol verwerken we onder meer:</p>
             <ul>
                 <li><strong>Accountgegevens:</strong> naam, e-mailadres, inloggegevens en (indien van toepassing) telefoonnummer.</li>
-                <li><strong>Kandidaten:</strong> geboortedatum (voor leeftijdsloon en wettelijke taakchecks), voorkeursvervoer, locatiegegevens voor reistijdschattingen, gewenste uren per week, beschikbaarheid/dagdelen (of “tijden in overleg”), likes, sollicitaties (inclusief snapshot van voorkeuren/opleiding/rijbewijs, matchscore en optionele motivatie), optioneel geüpload eigen CV (PDF/DOCX), recensies (werkgever, contactpersoon, e-mail en telefoon van derden), antwoorden en afgeleide scores/tags van de optionele Quick-Scan (25 Likert-stellingen: Big Five/OCEAN + RIASEC) en optionele betaalde diepte-analyse (150 vragen), e-mailverificatie (OTP) en eventuele authenticator-bevestigingen.</li>
+                <li><strong>Kandidaten:</strong> geboortedatum (voor leeftijdsloon en wettelijke taakchecks), voorkeursvervoer, locatiegegevens voor reistijdschattingen, gewenste uren per week, beschikbaarheid/dagdelen (of “tijden in overleg”), likes, sollicitaties (inclusief snapshot van voorkeuren/opleiding/rijbewijs, matchscore en optionele motivatie), optioneel geüpload eigen CV (PDF/DOCX), recensies (werkgever, contactpersoon, e-mail en telefoon van derden), antwoorden en afgeleide scores/tags van de optionele competentietest (25 Likert, Big Five) en beroepentest (25 Likert, RIASEC) plus optionele betaalde diepte-analyses (150 vragen per test), e-mailverificatie (OTP) en eventuele authenticator-bevestigingen.</li>
                 <li><strong>Ondernemers:</strong> KVK-gegevens, vestigingsgegevens, contactpersonen, contactvoorkeuren (e-mail/telefoon/WhatsApp voor contact ná sollicitatie), vacaturegegevens (uren, roosters/dagdelen, wettelijke taakvinkjes voor jeugdige arbeid), gebruikersrollen, API-koppelingen (alleen gehashte keys) en token-/betalingsgerelateerde transactiegegevens.</li>
                 <li><strong>Salesmanagers:</strong> KvK/BTW/NAW, gemaskeerde IBAN voor uitbetaling, trackingcode, commissieboekingen en self-billingfacturen (fiscale bewaarplicht).</li>
                 <li><strong>Technische gegevens:</strong> sessie-cookie <code>Jobsy.Auth</code>; idle-timeout cookie <code>Jobsy.LastActivity</code> (versleuteld via Data Protection); taalvoorkeur-cookie <code>Jobsy.Culture</code>; cookie-/analyticsvoorkeur in <code>localStorage</code> en first-party cookie <code>Jobsy.CookieConsent</code>; optionele anonieme engagement-sleutel in <code>localStorage</code>/<code>sessionStorage</code> (alleen na analytics-toestemming); optionele klik-/impressie-/deel- en sitebezoekstatistieken (alleen na “Accepteer cookies”, ook voor ingelogde gebruikers — de API weigert deze writes zonder toestemming); likes als functionele voorkeur in je account; beveiligingslogs en noodzakelijke cookies voor inloggen en werking van de dienst.</li>
@@ -62,7 +62,7 @@
             <h2>4. Verwerkers en derden</h2>
             <p>We kunnen gegevens delen met of laten verwerken door:</p>
             <ul>
-                <li><strong>Werkgevers / vestigingen</strong> wanneer je solliciteert — NAW/contactgegevens worden pas gedeeld na acceptatie van de sollicitatie (progressive disclosure). Reis-/voorkeursinformatie kan eerder zichtbaar zijn voor matching. <strong>Ruwe antwoorden</strong> van Quick-Scan en diepte-analyse worden <strong>niet</strong> aan werkgevers getoond. Als je OpenForWork staat en de Quick-Scan hebt afgerond, kunnen werkgevers in de <strong>anonieme talentpool</strong> wel afgeleide tags, competentiepercentages, beschikbaarheidssamenvatting, rijbewijzen en geschatte reistijd zien — zonder naam, e-mail, telefoon of geboortedatum. Contactgegevens volgen pas na een ContactUnlock én jouw acceptatie.</li>
+                <li><strong>Werkgevers / vestigingen</strong> wanneer je solliciteert — NAW/contactgegevens worden pas gedeeld na acceptatie van de sollicitatie (progressive disclosure). Reis-/voorkeursinformatie kan eerder zichtbaar zijn voor matching. <strong>Ruwe antwoorden</strong> van competentie- en beroepentest en diepte-analyses worden <strong>niet</strong> aan werkgevers getoond. Als je OpenForWork staat en minstens één test hebt afgerond, kunnen werkgevers in de <strong>anonieme talentpool</strong> wel afgeleide tags, competentiepercentages, RIASEC, beschikbaarheidssamenvatting, rijbewijzen en geschatte reistijd zien — zonder naam, e-mail, telefoon of geboortedatum. Contactgegevens volgen pas na een ContactUnlock én jouw acceptatie.</li>
                 <li><strong>Hosting:</strong> Render (hosting van de applicatie en database).</li>
                 <li><strong>E-mail:</strong> Resend voor transactionele e-mail (verificatiecodes, bevestigingen, credentials).</li>
                 <li><strong>Kaarten / OSM-tegels</strong> voor de weergave van de vacaturekaart.</li>
@@ -86,7 +86,7 @@
             <p>
                 Voor matchingspercentages combineren we reistijd met uren- en dagdelenoverlap (en waar relevant
                 wettelijke taakgeschiktheid op basis van geboortedatum). Op jouw profiel gebruiken we daarnaast
-                ervaring en, ná afronden van de Quick-Scan, de vier werkcompetenties om een Top 10
+                ervaring en, ná afronden van de competentie- en/of beroepentest, scores en interesses om een Top 10
                 vacatures (≥ 60%) te rangschikken. Die suggesties en de Jip-en-Janneke-uitleg zijn alleen voor jou.
                 Scores bij solliciteren naar een werkgever blijven gebaseerd op reistijd, uren en dagdelen —
                 zonder Big Five-antwoorden. In de anonieme talentpool kunnen werkgevers wel de afgeleide
@@ -108,21 +108,20 @@
         </section>
 
         <section>
-            <h2>5b. Quick-Scan, diepte-analyse en talentpool</h2>
+            <h2>5b. Competentietest, beroepentest, diepte-analyse en talentpool</h2>
             <p>
-                De Quick-Scan (25 vragen) is optioneel. Je kunt tussentijds opslaan, later wijzigen of de test overslaan.
-                We bewaren je antwoorden (Likert 1–5 per vraag) en, na afronden, de vier percentages plus RIASEC-
-                en match-tags zodat jij ze kunt inzien, vacaturesuggesties op jouw profiel verbeteren, en — als
-                OpenForWork aan staat — anoniem vindbaar bent in de werkgever-talentpool. Grondslag:
-                uitvoering van de overeenkomst (passende vacatures en talentmatching). <strong>Ruwe antwoorden</strong>
-                zien werkgevers, intermediairs en andere kandidaten niet. Afgeleide tags en percentages kunnen
-                wel anoniem in de talentpool zichtbaar zijn. Contact (naam/e-mail/telefoon) volgt alleen na een
-                betaald ContactUnlock én jouw acceptatie van het verzoek.
+                De competentietest (25 vragen, Big Five) en de beroepentest (25 vragen, RIASEC) zijn optioneel
+                en zitten in je profiel/dashboard. Je kunt tussentijds opslaan, later wijzigen of een test overslaan.
+                We bewaren je antwoorden (Likert 1–5 per vraag) en, na afronden, percentages, Holland-code en
+                match-tags zodat jij ze kunt inzien, vacaturesuggesties verbeteren, en — als OpenForWork aan staat —
+                anoniem vindbaar bent in de werkgever-talentpool. Grondslag: uitvoering van de overeenkomst.
+                <strong>Ruwe antwoorden</strong> zien werkgevers, intermediairs en andere kandidaten niet.
+                Contact (naam/e-mail/telefoon) volgt alleen na een betaald ContactUnlock én jouw acceptatie.
             </p>
             <p>
-                De optionele diepte-analyse (150 vragen, betaald) voegt verrijkte tags en een rapport toe.
+                Optionele diepte-analyses (150 vragen per test, € 2,99) voegen verrijkte tags en een PDF-rapport toe.
                 Checkout en ontgrendeling lopen via de betaalflow; lege opslag overschrijft bestaande antwoorden niet.
-                Bij export (“Mijn gegevens”) gaan Quick-Scan, diepte-analyse, checkouts en talent-contactverzoeken
+                Bij export (“Mijn gegevens”) gaan beide tests, diepte-analyses, checkouts en talent-contactverzoeken
                 mee; bij uitschrijven of wissen van het account worden ze verwijderd.
             </p>
         </section>
@@ -136,7 +135,7 @@
                 <li><strong>Onbevestigde sollicitatiedrafts</strong> (e-mailverificatie niet afgerond): 48 uur, daarna automatisch verwijderd.</li>
                 <li><strong>Ingetrokken sollicitaties:</strong> snapshots en geüploade CV-bytes worden bij intrekken gewist; de sollicitatie blijft bestaan zonder die persoonsgegevens.</li>
                 <li><strong>Self-billing / commissies:</strong> langer bewaard waar fiscale bewaarplicht dat vereist; bij accountverwijdering worden persoonsgegevens geanonimiseerd.</li>
-                <li><strong>Accountgegevens:</strong> tot anonimisering of verwijdering op jouw verzoek, of zolang het account actief nodig is voor de dienst (inclusief Quick-Scan-/diepte-analyse-antwoorden, -scores en -tags).</li>
+                <li><strong>Accountgegevens:</strong> tot anonimisering of verwijdering op jouw verzoek, of zolang het account actief nodig is voor de dienst (inclusief testantwoorden, scores, tags en diepte-analyse-rapporten).</li>
             </ul>
             <p>
                 Langere bewaartermijnen kunnen gelden waar dat wettelijk verplicht is

@@ -1,12 +1,15 @@
+using Jobsy.Core.Enums;
+
 namespace Jobsy.Core.Entities;
 
-/// <summary>Mollie checkout to unlock the 150-question deep analysis. Amount comes from admin settings.</summary>
+/// <summary>Mollie checkout to unlock a 150-question deep analysis. Amount comes from admin settings.</summary>
 public class DeepAnalysisCheckout
 {
     public Guid Id { get; set; }
     public Guid UserId { get; set; }
     public User User { get; set; } = null!;
 
+    public AssessmentKind Kind { get; set; } = AssessmentKind.Competence;
     public string PaymentId { get; set; } = string.Empty;
     public decimal AmountEuro { get; set; }
     public DeepAnalysisCheckoutStatus Status { get; set; } = DeepAnalysisCheckoutStatus.Pending;
