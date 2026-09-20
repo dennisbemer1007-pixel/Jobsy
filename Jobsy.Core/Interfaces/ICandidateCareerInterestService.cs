@@ -32,7 +32,8 @@ public sealed record CandidateCareerInterestStateDto(
     IReadOnlyList<string> RiasecTags,
     IReadOnlyList<string> MatchTags,
     string DeepAnalysisUpsellCopy,
-    IReadOnlyList<CandidateMatchedVacancyDto> TopVacancies);
+    IReadOnlyList<CandidateMatchedVacancyDto> TopVacancies,
+    CareerCompassSnapshot Compass);
 
 public sealed record CareerQuestionDto(
     int Id,

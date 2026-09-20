@@ -400,10 +400,38 @@ public static class UatScriptRunner
             Assert.Equal(4, CompetencyTestCatalog.CategoryCodes.Length);
         }
 
-        if (Contains(blob, "Beroepentest", "RIASEC", "Holland-code"))
+        if (Contains(blob, "Beroepentest", "RIASEC", "Holland-code", "Beroepen-kompas"))
         {
             Assert.Equal(25, CareerTestCatalog.QuestionCount);
             Assert.Equal(6, CareerTestCatalog.RiasecCodes.Length);
+        }
+
+        if (Contains(blob, "Mijn Beroepen-kompas", "Super-match", "Wat betekent dit voor jou?"))
+        {
+            Assert.Equal(95, CareerCompassBuilder.SuperMatchMin);
+            Assert.Equal(85, CareerCompassBuilder.StrongMatchMin);
+            Assert.Equal(75, CareerCompassBuilder.BroadenMin);
+            Assert.Equal(0.32, ProfileVacancyMatchCalculator.InterestWeightDeepAnalysis);
+            Assert.True(ProfileVacancyMatchCalculator.InterestWeightDeepAnalysis
+                        > ProfileVacancyMatchCalculator.InterestWeightQuickScan);
+            Assert.True(ProfileVacancyMatchCalculator.InterestWeightDeepAnalysisOnly
+                        > ProfileVacancyMatchCalculator.InterestWeightQuickScanOnly);
+
+            var root = RepoRoot.Find();
+            var panel = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Pages/Candidate/CareerCompassPanel.razor"));
+            Assert.Contains("Kompas.BandSuper", panel, StringComparison.Ordinal);
+            Assert.Contains("Kompas.BandStrong", panel, StringComparison.Ordinal);
+            Assert.Contains("Kompas.BandBroaden", panel, StringComparison.Ordinal);
+            Assert.Contains("Kompas.PracticalTitle", panel, StringComparison.Ordinal);
+            Assert.DoesNotContain("RIASEC", panel, StringComparison.OrdinalIgnoreCase);
+            Assert.DoesNotContain("OCEAN", panel, StringComparison.OrdinalIgnoreCase);
+
+            var pdf = File.ReadAllText(Path.Combine(root, "Jobsy.Infrastructure/Services/AssessmentReportPdfService.cs"));
+            Assert.Contains("GetBrandLogoPng", pdf, StringComparison.Ordinal);
+            Assert.Contains("Wat betekent dit voor jou?", pdf, StringComparison.Ordinal);
+            Assert.Contains("Jouw loopbaanrapport", pdf, StringComparison.Ordinal);
+
+            Assert.Equal("Mijn Beroepen-kompas", Jobsy.Web.Localization.UiStrings.Get("Kompas.Career", "nl"));
         }
 
         if (Contains(blob, "Diepte-analyse", "150 vragen"))

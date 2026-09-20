@@ -11,6 +11,10 @@ public static class ProfileVacancyMatchCalculator
 {
     public const int DisplayThreshold = 60;
     public const int MaxResults = 10;
+    public const double InterestWeightQuickScan = 0.25;
+    public const double InterestWeightDeepAnalysis = 0.32;
+    public const double InterestWeightQuickScanOnly = 0.30;
+    public const double InterestWeightDeepAnalysisOnly = 0.38;
 
     public static ProfileVacancyMatch Calculate(ProfileVacancyMatchInput input)
     {
@@ -22,7 +26,14 @@ public static class ProfileVacancyMatchCalculator
                 input.VacancyTitle,
                 input.VacancyDescription))
             : (double?)null;
-        var interest01 = input.CandidateRiasecTags is { Count: > 0 } tags
+        var interest01 = input.CandidateRiasecScores is { IsComplete: true } scored
+            ? VacancyRiasecProfile.Fit01(
+                scored,
+                input.VacancyRiasecTags ?? VacancyRiasecProfile.InferTags(
+                    input.WorkTypes,
+                    input.VacancyTitle,
+                    input.VacancyDescription))
+            : input.CandidateRiasecTags is { Count: > 0 } tags
             ? VacancyRiasecProfile.Fit01(
                 tags,
                 input.VacancyRiasecTags ?? VacancyRiasecProfile.InferTags(
@@ -32,14 +43,16 @@ public static class ProfileVacancyMatchCalculator
             : (double?)null;
 
         double total01;
+        var interestWeight = InterestWeight(input.CareerDeepCompleted, competency01 is not null);
         if (competency01 is not null && interest01 is not null)
         {
-            total01 = 0.25 * Ratio(core.TravelScore, MatchScoreWeights.Travel)
-                      + 0.10 * Ratio(core.HoursScore, MatchScoreWeights.Hours)
-                      + 0.10 * Ratio(core.DayPartsScore, MatchScoreWeights.DayParts)
-                      + 0.15 * experience01
-                      + 0.20 * competency01.Value
-                      + 0.20 * interest01.Value;
+            var rest = 1 - interestWeight;
+            total01 = rest * 0.25 / 0.80 * Ratio(core.TravelScore, MatchScoreWeights.Travel)
+                      + rest * 0.10 / 0.80 * Ratio(core.HoursScore, MatchScoreWeights.Hours)
+                      + rest * 0.10 / 0.80 * Ratio(core.DayPartsScore, MatchScoreWeights.DayParts)
+                      + rest * 0.15 / 0.80 * experience01
+                      + rest * 0.20 / 0.80 * competency01.Value
+                      + interestWeight * interest01.Value;
         }
         else if (competency01 is not null)
         {
@@ -51,11 +64,12 @@ public static class ProfileVacancyMatchCalculator
         }
         else if (interest01 is not null)
         {
-            total01 = 0.30 * Ratio(core.TravelScore, MatchScoreWeights.Travel)
-                      + 0.15 * Ratio(core.HoursScore, MatchScoreWeights.Hours)
-                      + 0.15 * Ratio(core.DayPartsScore, MatchScoreWeights.DayParts)
-                      + 0.15 * experience01
-                      + 0.25 * interest01.Value;
+            var rest = 1 - interestWeight;
+            total01 = rest * 0.30 / 0.75 * Ratio(core.TravelScore, MatchScoreWeights.Travel)
+                      + rest * 0.15 / 0.75 * Ratio(core.HoursScore, MatchScoreWeights.Hours)
+                      + rest * 0.15 / 0.75 * Ratio(core.DayPartsScore, MatchScoreWeights.DayParts)
+                      + rest * 0.15 / 0.75 * experience01
+                      + interestWeight * interest01.Value;
         }
         else
         {
@@ -129,6 +143,16 @@ public static class ProfileVacancyMatchCalculator
             .Distinct(StringComparer.OrdinalIgnoreCase)
             .Take(3)
             .ToList();
+
+    private static double InterestWeight(bool careerDeepCompleted, bool hasCompetency)
+    {
+        if (careerDeepCompleted)
+        {
+            return hasCompetency ? InterestWeightDeepAnalysis : InterestWeightDeepAnalysisOnly;
+        }
+
+        return hasCompetency ? InterestWeightQuickScan : InterestWeightQuickScanOnly;
+    }
 
     private static double Ratio(int points, int weight)
         => weight <= 0 ? 0 : Math.Clamp(points / (double)weight, 0, 1);
@@ -347,7 +371,8 @@ public static class ProfileVacancyMatchCalculator
             }
         }
         else if (input.CandidateCompetencies is not { IsComplete: true }
-                 && input.CandidateRiasecTags is not { Count: > 0 })
+                 && input.CandidateRiasecTags is not { Count: > 0 }
+                 && input.CandidateRiasecScores is not { IsComplete: true })
         {
             gaps.Add(new(
                 "competency",
@@ -355,7 +380,10 @@ public static class ProfileVacancyMatchCalculator
                 "Rond de competentietest of beroepentest af. Dan kunnen we nóg beter uitleggen waarom een baan bij je past."));
         }
 
-        if (input.CandidateRiasecTags is { Count: > 0 } candRiasec)
+        var candRiasec = input.CandidateRiasecTags is { Count: > 0 }
+            ? input.CandidateRiasecTags
+            : CareerTestCatalog.DeriveRiasecTags(input.CandidateRiasecScores);
+        if (candRiasec.Count > 0)
         {
             var vacancyRiasec = input.VacancyRiasecTags ?? VacancyRiasecProfile.InferTags(
                 input.WorkTypes, input.VacancyTitle, input.VacancyDescription);
@@ -367,14 +395,14 @@ public static class ProfileVacancyMatchCalculator
                 why.Add(new(
                     "interest",
                     string.Join("+", overlap),
-                    $"Jouw beroepsinteresses ({string.Join(", ", candRiasec)}) passen bij deze actieve vacature ({string.Join(", ", overlap)})."));
+                    $"Wat jij leuk vindt aan werk ({JoinNl(overlap.Select(CareerCompassBuilder.TypeLabel).ToList())}) komt terug in deze vacature."));
             }
             else if (interest01 is < 0.4)
             {
                 gaps.Add(new(
                     "interest",
                     "mismatch",
-                    "Deze baan ligt inhoudelijk wat verder van jouw Holland-code. Kijk of de taken je toch aanspreken, of filter op een andere richting."));
+                    "Deze baan ligt inhoudelijk wat verder van wat jij leuk vindt. Kijk of de taken je toch aanspreken, of filter op een andere richting."));
             }
         }
 
@@ -521,6 +549,8 @@ public sealed class ProfileVacancyMatchInput
     public CompetencyScores? CandidateCompetencies { get; init; }
     public CompetencyScores? VacancyCompetencies { get; init; }
     public IReadOnlyList<string>? CandidateRiasecTags { get; init; }
+    public RiasecScores? CandidateRiasecScores { get; init; }
+    public bool CareerDeepCompleted { get; init; }
     public IReadOnlyList<string>? VacancyRiasecTags { get; init; }
 }
 

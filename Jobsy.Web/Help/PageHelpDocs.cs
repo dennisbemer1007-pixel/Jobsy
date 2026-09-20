@@ -132,7 +132,7 @@ public static class PageHelpDocs
         ["/candidate/profile"] = new(
             "Mijn profiel",
             "Jouw kandidaatgegevens voor matching en solliciteren.",
-            "Vul interesses, opleiding, rijbewijzen, voorkeuren, locatie, uren per week, beschikbaarheid/dagdelen, de competentietest (25 vragen, Big Five) en de beroepentest (25 vragen, RIASEC) in. Geboortedatum is nodig voor leeftijdsloon en wettelijke taakchecks. Wijzigingen verbeteren matchscores en filters. Rechts zie je de Top 10 vacatures vanaf 60% match.",
+            "Vul interesses, opleiding, rijbewijzen, voorkeuren, locatie, uren per week, beschikbaarheid/dagdelen, de competentietest (25 vragen) en de beroepentest (25 vragen) in. Uitkomsten landen in Mijn Beroepen-kompas. Geboortedatum is nodig voor leeftijdsloon en wettelijke taakchecks. Wijzigingen verbeteren matchscores en filters. Rechts zie je de Top 10 vacatures vanaf 60% match.",
             "Betere matches en sneller solliciteren met volledige gegevens."),
 
         ["/candidate/competencies"] = new(
@@ -143,8 +143,8 @@ public static class PageHelpDocs
 
         ["/candidate/career"] = new(
             "Beroepentest",
-            "Vijfentwintig stellingen op basis van RIASEC / Holland-code: wat wil je en welke baan past.",
-            "Rond af voor een top 10 actieve vacatures in de regio. Optioneel: uitgebreide beroepentest (150 vragen, € 2,99) met loopbaan-PDF.",
+            "Vijfentwintig stellingen over wat je wilt in werk: aanpakken, uitzoeken, maken, helpen, aanjagen of organiseren.",
+            "Rond af voor Mijn Beroepen-kompas en een top 10 actieve vacatures in de regio. Optioneel: uitgebreide beroepentest (150 vragen, € 2,99) met een loopbaan-PDF in gewone taal (super-match, sterke keus, handige verbreding).",
             "Interesses koppelen aan actieve vacatures op de kaart."),
 
         ["/candidate/talent-contacts"] = new(

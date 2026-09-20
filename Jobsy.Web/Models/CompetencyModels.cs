@@ -29,6 +29,7 @@ public sealed class CandidateCareerInterestState
     public List<CompetencyQuestionItem> Questions { get; set; } = [];
     public List<string> RiasecTags { get; set; } = [];
     public List<string> MatchTags { get; set; } = [];
+    public CareerCompassModel Compass { get; set; } = new();
     public string DeepAnalysisUpsellCopy { get; set; } = "";
     public List<CandidateMatchedVacancy> TopVacancies { get; set; } = [];
 }
@@ -86,6 +87,27 @@ public sealed class CandidateMatchedVacancy
     public string ColorBand { get; set; } = "orange";
     public List<string> Why { get; set; } = [];
     public List<string> Gaps { get; set; } = [];
+}
+
+public sealed class CareerOccupationMatchModel
+{
+    public string Title { get; set; } = "";
+    public int Percent { get; set; }
+    public string Band { get; set; } = "";
+    public string Why { get; set; } = "";
+}
+
+public sealed class CareerCompassModel
+{
+    public List<string> Strengths { get; set; } = [];
+    public List<CareerOccupationMatchModel> SuperMatches { get; set; } = [];
+    public List<CareerOccupationMatchModel> StrongChoices { get; set; } = [];
+    public List<CareerOccupationMatchModel> Broadening { get; set; } = [];
+    public List<string> PracticalNotes { get; set; } = [];
+    public bool FromDeepAnalysis { get; set; }
+
+    public bool HasOccupations =>
+        SuperMatches.Count > 0 || StrongChoices.Count > 0 || Broadening.Count > 0;
 }
 
 public sealed class DeepAnalysisState

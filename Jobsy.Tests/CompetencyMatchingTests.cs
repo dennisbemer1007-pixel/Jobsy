@@ -330,6 +330,77 @@ public class CompetencyMatchingTests
         Assert.Contains(match.Why, w => w.Kind == "interest");
         Assert.Contains(ProfileVacancyMatchCalculator.WhyHeadlines(match), h => h == "Beroepsinteresse past");
         Assert.Contains(ProfileVacancyMatchCalculator.WhyHeadlines(match), h => h is "Goede reistijd" or "Sterke competentie-match");
+        Assert.DoesNotContain(match.Why, w => CareerCompassBuilder.ContainsForbiddenJargon(w.Text));
+    }
+
+    [Fact]
+    public void Completed_career_deep_analysis_weighs_interest_more_on_the_job_map()
+    {
+        var scores = new RiasecScores(100, 5, 5, 5, 5, 5);
+        var alignedQuick = ProfileVacancyMatchCalculator.Calculate(MakeInput(
+            Guid.NewGuid(),
+            "Medewerker kas",
+            travelMinutes: 10,
+            maxTravel: 30,
+            candidateHours: new HoursRange(16, 24),
+            vacancyHours: new HoursRange(16, 24),
+            competencies: new CompetencyScores(80, 80, 80, 80),
+            workTypes: ["Tuinbouw"],
+            candidateRoles: ["Tuinbouw"],
+            vacancyDescription: "Werk in de kas.",
+            candidateRiasecScores: scores,
+            vacancyRiasec: [CareerTestCatalog.Realistic],
+            careerDeepCompleted: false));
+        var alignedDeep = ProfileVacancyMatchCalculator.Calculate(MakeInput(
+            alignedQuick.VacancyId,
+            "Medewerker kas",
+            travelMinutes: 10,
+            maxTravel: 30,
+            candidateHours: new HoursRange(16, 24),
+            vacancyHours: new HoursRange(16, 24),
+            competencies: new CompetencyScores(80, 80, 80, 80),
+            workTypes: ["Tuinbouw"],
+            candidateRoles: ["Tuinbouw"],
+            vacancyDescription: "Werk in de kas.",
+            candidateRiasecScores: scores,
+            vacancyRiasec: [CareerTestCatalog.Realistic],
+            careerDeepCompleted: true));
+
+        Assert.Equal(1.0, alignedQuick.InterestScore01);
+        Assert.True(alignedDeep.TotalPercent >= alignedQuick.TotalPercent);
+
+        var mismatchQuick = ProfileVacancyMatchCalculator.Calculate(MakeInput(
+            Guid.NewGuid(),
+            "Helpende zorg",
+            travelMinutes: 10,
+            maxTravel: 30,
+            candidateHours: new HoursRange(16, 24),
+            vacancyHours: new HoursRange(16, 24),
+            competencies: new CompetencyScores(80, 80, 80, 80),
+            workTypes: ["Zorg"],
+            candidateRoles: ["Tuinbouw"],
+            vacancyDescription: "Zorg en begeleiding.",
+            candidateRiasecScores: scores,
+            vacancyRiasec: [CareerTestCatalog.Social],
+            careerDeepCompleted: false));
+        var mismatchDeep = ProfileVacancyMatchCalculator.Calculate(MakeInput(
+            mismatchQuick.VacancyId,
+            "Helpende zorg",
+            travelMinutes: 10,
+            maxTravel: 30,
+            candidateHours: new HoursRange(16, 24),
+            vacancyHours: new HoursRange(16, 24),
+            competencies: new CompetencyScores(80, 80, 80, 80),
+            workTypes: ["Zorg"],
+            candidateRoles: ["Tuinbouw"],
+            vacancyDescription: "Zorg en begeleiding.",
+            candidateRiasecScores: scores,
+            vacancyRiasec: [CareerTestCatalog.Social],
+            careerDeepCompleted: true));
+
+        Assert.True(mismatchDeep.TotalPercent <= mismatchQuick.TotalPercent);
+        Assert.True(alignedDeep.TotalPercent - mismatchDeep.TotalPercent
+                    >= alignedQuick.TotalPercent - mismatchQuick.TotalPercent);
     }
 
     [Fact]
@@ -363,7 +434,9 @@ public class CompetencyMatchingTests
         IReadOnlyList<string>? candidateRoles = null,
         string? vacancyDescription = null,
         IReadOnlyList<string>? candidateRiasec = null,
-        IReadOnlyList<string>? vacancyRiasec = null)
+        IReadOnlyList<string>? vacancyRiasec = null,
+        RiasecScores? candidateRiasecScores = null,
+        bool careerDeepCompleted = false)
         => new()
         {
             VacancyId = id,
@@ -377,6 +450,8 @@ public class CompetencyMatchingTests
             CandidateCompetencies = competencies,
             VacancyCompetencies = VacancyCompetencyProfile.Infer(workTypes ?? ["Winkel"], title, vacancyDescription),
             CandidateRiasecTags = candidateRiasec,
+            CandidateRiasecScores = candidateRiasecScores,
+            CareerDeepCompleted = careerDeepCompleted,
             VacancyRiasecTags = vacancyRiasec,
             Core = new MatchScoreInput
             {

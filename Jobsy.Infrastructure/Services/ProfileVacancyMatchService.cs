@@ -1,6 +1,7 @@
 using System.Security.Claims;
 using Jobsy.Core.Contracts;
 using Jobsy.Core.Entities;
+using Jobsy.Core.Enums;
 using Jobsy.Core.Interfaces;
 using Jobsy.Core.Rules;
 using Jobsy.Infrastructure.Data;
@@ -67,6 +68,8 @@ public sealed class ProfileVacancyMatchService : IProfileVacancyMatchService
                 CandidateCompetencies = context.Competencies,
                 VacancyCompetencies = VacancyCompetencyProfile.Infer(record),
                 CandidateRiasecTags = context.RiasecTags,
+                CandidateRiasecScores = context.RiasecScores,
+                CareerDeepCompleted = context.CareerDeepCompleted,
                 VacancyRiasecTags = VacancyRiasecProfile.InferTags(record)
             });
             result[record.Id] = match;
@@ -102,9 +105,25 @@ public sealed class ProfileVacancyMatchService : IProfileVacancyMatchService
                 competency.InnovatiePercent,
                 competency.ExtraversiePercent);
 
-        var riasec = career is not null && CandidateCompetencyStatuses.IsCompleted(career.Status)
+        var riasecTags = career is not null && CandidateCompetencyStatuses.IsCompleted(career.Status)
             ? CareerTestCatalog.ParseTagsJson(career.RiasecTagsJson)
             : Array.Empty<string>();
+        var riasecScores = career is null
+            ? null
+            : CareerTestCatalog.CompletedScoresOrNull(
+                career.Status,
+                career.RealisticPercent,
+                career.InvestigativePercent,
+                career.ArtisticPercent,
+                career.SocialPercent,
+                career.EnterprisingPercent,
+                career.ConventionalPercent);
+        var careerDeep = await _db.CandidateDeepAnalyses.AsNoTracking()
+            .AnyAsync(
+                d => d.UserId == userId
+                     && d.Kind == AssessmentKind.Career
+                     && d.Status == CandidateDeepAnalysisStatuses.Completed,
+                cancellationToken);
 
         return new ProfileVacancyMatchContext
         {
@@ -114,7 +133,9 @@ public sealed class ProfileVacancyMatchService : IProfileVacancyMatchService
             Prefs = prefs,
             AgeYears = AgeRules.AgeYearsFromDateOfBirth(user.DateOfBirth) ?? prefs.AgeYears,
             Competencies = scores,
-            RiasecTags = riasec
+            RiasecTags = riasecTags,
+            RiasecScores = riasecScores,
+            CareerDeepCompleted = careerDeep
         };
     }
 }

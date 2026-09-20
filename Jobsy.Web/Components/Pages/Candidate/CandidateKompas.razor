@@ -69,10 +69,7 @@
             }
             else if (_careerCompleted && _riasecScores is { IsComplete: true })
             {
-                @if (!string.IsNullOrWhiteSpace(_hollandCode))
-                {
-                    <p class="login-lead">@Culture.Format("Career.Holland", _hollandCode)</p>
-                }
+                <CareerCompassPanel Compass="_careerCompass" />
                 <RiasecScorePanel Scores="_riasecScores" />
                 <div class="kompas-tags" aria-label="@Culture["Kompas.PreferredBranches"]">
                     <h4>@Culture["Kompas.PreferredBranches"]</h4>
@@ -89,7 +86,7 @@
                             }
                             @foreach (var tag in _careerTags)
                             {
-                                <li class="kompas-chip">@tag</li>
+                                <li class="kompas-chip">@CareerCompassBuilder.TypeLabel(tag)</li>
                             }
                         </ul>
                     }
@@ -221,8 +218,8 @@
     private DeepAnalysisState? _competenceDeep;
     private bool _careerCompleted;
     private int _careerAnswered;
-    private string _hollandCode = "";
     private List<string> _careerTags = [];
+    private CareerCompassModel _careerCompass = new();
     private RiasecScoreSet? _riasecScores;
     private string _careerUpsell = "";
     private DeepAnalysisState? _careerDeep;
@@ -316,8 +313,8 @@
             {
                 _careerAnswered = career.AnsweredCount;
                 _careerCompleted = string.Equals(career.Status, "Completed", StringComparison.OrdinalIgnoreCase);
-                _hollandCode = career.HollandCode ?? "";
                 _careerTags = career.RiasecTags ?? [];
+                _careerCompass = career.Compass ?? new CareerCompassModel();
                 _riasecScores = career.Scores;
                 _careerUpsell = career.DeepAnalysisUpsellCopy;
             }

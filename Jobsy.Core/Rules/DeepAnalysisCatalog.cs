@@ -221,6 +221,20 @@ public static class DeepAnalysisCatalog
             .ToList();
     }
 
+    public static RiasecScores ToRiasecScores(IReadOnlyList<DeepAnalysisDomainScore> scores)
+    {
+        int Get(string code) =>
+            scores.FirstOrDefault(s => s.Domain.Equals(code, StringComparison.OrdinalIgnoreCase))?.Percent ?? 0;
+
+        return new RiasecScores(
+            Get(CareerTestCatalog.Realistic),
+            Get(CareerTestCatalog.Investigative),
+            Get(CareerTestCatalog.Artistic),
+            Get(CareerTestCatalog.Social),
+            Get(CareerTestCatalog.Enterprising),
+            Get(CareerTestCatalog.Conventional));
+    }
+
     public static IReadOnlyList<string> CareerAdviceParagraphs(IReadOnlyList<DeepAnalysisDomainScore> scores)
     {
         var top = scores
@@ -232,13 +246,13 @@ public static class DeepAnalysisCatalog
         {
             return
             [
-                "Rond de 150 vragen af. Dan maken we een Holland-profiel en bijpassend carrière-advies voor Den Haag en het Westland."
+            "Rond de 150 vragen af. Dan maken we een helder beeld van welk werk bij je past, plus advies voor Den Haag en het Westland."
             ];
         }
 
         var lines = new List<string>
         {
-            $"Je diepte-analyse wijst het sterkst naar {JoinNl(top.Select(s => $"{Label(s.Domain)} ({s.Percent}%)").ToList())}."
+            $"Je uitgebreide test wijst het sterkst naar {JoinNl(top.Select(s => $"{CareerCompassBuilder.TypeLabel(s.Domain)} ({s.Percent}%)").ToList())}."
         };
         foreach (var score in top)
         {
@@ -253,17 +267,17 @@ public static class DeepAnalysisCatalog
     private static string AdviceFor(string domain) => domain switch
     {
         CareerTestCatalog.Realistic =>
-            "Realistic: praktijkomgevingen passen bij je — kassen, logistiek, keuken, bouw, onderhoud. Zoek vacatures met tastbaar resultaat en duidelijke veiligheid.",
+            "Aanpakken met je handen past bij je — kas, logistiek, keuken, bouw, onderhoud. Zoek vacatures met tastbaar resultaat en duidelijke veiligheid.",
         CareerTestCatalog.Investigative =>
-            "Investigative: je wilt weten waarom iets werkt. Kijk naar kwaliteitscontrole, teelttechniek, lab-achtige taken, data in de keten of verbetertrajecten op de vestiging.",
+            "Uitzoeken hoe het zit geeft je energie. Kijk naar kwaliteitscontrole, teelttechniek, metingen, data in de keten of verbetertrajecten op de vestiging.",
         CareerTestCatalog.Artistic =>
-            "Artistic: presentatie en eigen inbreng tellen. Denk aan horeca-styling, winkelpresentatie, content, bloemen/groen of seizoensconcepten.",
+            "Iets moois of nieuws maken telt. Denk aan winkelpresentatie, content, bloemen/groen of seizoensconcepten.",
         CareerTestCatalog.Social =>
-            "Social: mensen helpen geeft richting. Zorg, horeca, retail, begeleiding en inwerken van seizoenscollega’s sluiten aan bij je RIASEC-profiel.",
+            "Mensen helpen geeft richting. Zorg, horeca, retail, begeleiding en inwerken van seizoenscollega’s sluiten aan.",
         CareerTestCatalog.Enterprising =>
-            "Enterprising: jij trekt, verkoopt en organiseert. Filiaalverkoop, ploegaansturing, horeca-shiftleiding of acquisitie in de regio past beter dan puur uitvoerend werk.",
+            "Aanjagen en verkopen ligt je. Filiaalverkoop, ploegaansturing, horeca-shiftleiding of acquisitie in de regio past beter dan puur uitvoerend werk.",
         CareerTestCatalog.Conventional =>
-            "Conventional: structuur is je kracht. Planning, kassa, orderpicking-systemen, administratie en kwaliteitsregistratie in Den Haag/Westland matchen sterk.",
+            "Netjes organiseren is je kracht. Planning, kassa, orderpicking-systemen, administratie en kwaliteitsregistratie matchen sterk.",
         DeepAnalysisCompetenceItems.Openheid =>
             "Openheid: je leert en verbetert graag. Vacatures met wisselende taken en inwerken op nieuwe systemen benutten dat.",
         DeepAnalysisCompetenceItems.Consciëntieusheid =>
@@ -279,12 +293,12 @@ public static class DeepAnalysisCatalog
 
     private static string Label(string domain) => domain switch
     {
-        CareerTestCatalog.Realistic => "Realistic (doen / maken)",
-        CareerTestCatalog.Investigative => "Investigative (onderzoeken)",
-        CareerTestCatalog.Artistic => "Artistic (creëren)",
-        CareerTestCatalog.Social => "Social (helpen)",
-        CareerTestCatalog.Enterprising => "Enterprising (ondernemen)",
-        CareerTestCatalog.Conventional => "Conventional (organiseren)",
+        CareerTestCatalog.Realistic => CareerCompassBuilder.TypeLabel(CareerTestCatalog.Realistic),
+        CareerTestCatalog.Investigative => CareerCompassBuilder.TypeLabel(CareerTestCatalog.Investigative),
+        CareerTestCatalog.Artistic => CareerCompassBuilder.TypeLabel(CareerTestCatalog.Artistic),
+        CareerTestCatalog.Social => CareerCompassBuilder.TypeLabel(CareerTestCatalog.Social),
+        CareerTestCatalog.Enterprising => CareerCompassBuilder.TypeLabel(CareerTestCatalog.Enterprising),
+        CareerTestCatalog.Conventional => CareerCompassBuilder.TypeLabel(CareerTestCatalog.Conventional),
         DeepAnalysisCompetenceItems.EmotioneleStabiliteit => "emotionele stabiliteit",
         DeepAnalysisCompetenceItems.Vriendelijkheid => "vriendelijkheid",
         _ => domain.ToLowerInvariant()

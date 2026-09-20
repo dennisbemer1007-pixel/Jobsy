@@ -27,9 +27,7 @@ public sealed class CandidateCareerInterestService : ICandidateCareerInterestSer
     {
         var row = await _db.CandidateCareerInterests.AsNoTracking()
             .FirstOrDefaultAsync(c => c.UserId == userId, cancellationToken);
-        var price = (await _commercial.GetAsync(cancellationToken)).DeepAnalysisPriceEuro;
-        var matches = await _competencies.GetTopMatchesAsync(userId, cancellationToken);
-        return ToDto(row, price, matches);
+        return await ComposeDtoAsync(userId, row, cancellationToken);
     }
 
     public async Task<CandidateCareerInterestStateDto> SaveAsync(
@@ -54,7 +52,7 @@ public sealed class CandidateCareerInterestService : ICandidateCareerInterestSer
                     "Lege antwoorden overschrijven je bestaande test niet. Stuur de huidige antwoorden mee.");
             }
 
-            return ToDto(null, FlexCommercialSettings.DefaultDeepAnalysisPriceEuro, []);
+            return await ComposeDtoAsync(userId, null, cancellationToken);
         }
 
         var now = DateTime.UtcNow;
@@ -111,9 +109,7 @@ public sealed class CandidateCareerInterestService : ICandidateCareerInterestSer
         }
 
         await _db.SaveChangesAsync(cancellationToken);
-        var price = (await _commercial.GetAsync(cancellationToken)).DeepAnalysisPriceEuro;
-        var matches = await _competencies.GetTopMatchesAsync(userId, cancellationToken);
-        return ToDto(row, price, matches);
+        return await ComposeDtoAsync(userId, row, cancellationToken);
     }
 
     public async Task<RiasecScores?> GetCompletedScoresAsync(
@@ -151,10 +147,27 @@ public sealed class CandidateCareerInterestService : ICandidateCareerInterestSer
         return CareerTestCatalog.ParseTagsJson(row.RiasecTagsJson);
     }
 
+    private async Task<CandidateCareerInterestStateDto> ComposeDtoAsync(
+        Guid userId,
+        CandidateCareerInterest? row,
+        CancellationToken cancellationToken)
+    {
+        var price = (await _commercial.GetAsync(cancellationToken)).DeepAnalysisPriceEuro;
+        var matches = await _competencies.GetTopMatchesAsync(userId, cancellationToken);
+        var deepDone = await _db.CandidateDeepAnalyses.AsNoTracking()
+            .AnyAsync(
+                d => d.UserId == userId
+                     && d.Kind == AssessmentKind.Career
+                     && d.Status == CandidateDeepAnalysisStatuses.Completed,
+                cancellationToken);
+        return ToDto(row, price, matches, deepDone);
+    }
+
     private static CandidateCareerInterestStateDto ToDto(
         CandidateCareerInterest? row,
         decimal deepAnalysisPriceEuro,
-        IReadOnlyList<CandidateMatchedVacancyDto> matches)
+        IReadOnlyList<CandidateMatchedVacancyDto> matches,
+        bool fromDeepAnalysis)
     {
         var answers = CareerTestCatalog.ParseAnswersJson(row?.AnswersJson);
         var preview = CareerTestCatalog.Score(answers);
@@ -182,6 +195,7 @@ public sealed class CandidateCareerInterestService : ICandidateCareerInterestSer
             CareerTestCatalog.ParseTagsJson(row?.RiasecTagsJson),
             CareerTestCatalog.ParseTagsJson(row?.MatchTagsJson),
             DeepAnalysisService.FormatUpsellCopy(deepAnalysisPriceEuro, AssessmentKind.Career),
-            matches);
+            matches,
+            CareerCompassBuilder.Build(completed, fromDeepAnalysis));
     }
 }

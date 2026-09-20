@@ -70,6 +70,20 @@ public static class VacancyRiasecProfile
         return Math.Clamp(hit / (double)Math.Max(vac.Count, 1), 0, 1);
     }
 
+    /// <summary>
+    /// Score-based fit: average of the candidate's type percentages for the vacancy's interest tags.
+    /// </summary>
+    public static double Fit01(RiasecScores scores, IReadOnlyList<string>? vacancyTags)
+    {
+        var vac = vacancyTags?.Where(t => !string.IsNullOrWhiteSpace(t)).ToList() ?? [];
+        if (vac.Count == 0 || !scores.IsComplete)
+        {
+            return Fit01(CareerTestCatalog.DeriveRiasecTags(scores), vacancyTags);
+        }
+
+        return Math.Clamp(vac.Average(tag => scores.Get(tag) / 100.0), 0, 1);
+    }
+
     private static IReadOnlyList<string> ForWorkType(string label) => label.Trim() switch
     {
         WorkTypeLabels.Horeca => [CareerTestCatalog.Social, CareerTestCatalog.Enterprising],

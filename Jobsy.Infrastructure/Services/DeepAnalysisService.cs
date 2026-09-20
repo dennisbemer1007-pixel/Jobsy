@@ -241,7 +241,7 @@ public sealed class DeepAnalysisService : IDeepAnalysisService
             row.TagsJson = CompetencyTestCatalog.SerializeTags(tags);
             row.CompletedAtUtc = now;
             row.ReportGeneratedAtUtc = now;
-            await MergeTagsIntoQuickScanAsync(userId, kind, tags, now, cancellationToken);
+            await MergeTagsIntoQuickScanAsync(userId, kind, answers, tags, now, cancellationToken);
         }
         else
         {
@@ -259,6 +259,7 @@ public sealed class DeepAnalysisService : IDeepAnalysisService
     private async Task MergeTagsIntoQuickScanAsync(
         Guid userId,
         AssessmentKind kind,
+        IReadOnlyDictionary<int, int> answers,
         IReadOnlyList<string> tags,
         DateTime now,
         CancellationToken cancellationToken)
@@ -267,13 +268,34 @@ public sealed class DeepAnalysisService : IDeepAnalysisService
         {
             var career = await _db.CandidateCareerInterests
                 .FirstOrDefaultAsync(c => c.UserId == userId, cancellationToken);
-            if (career is null || !CandidateCompetencyStatuses.IsCompleted(career.Status))
+            var riasec = DeepAnalysisCatalog.ToRiasecScores(
+                DeepAnalysisCatalog.ScoreDomains(answers, AssessmentKind.Career));
+            var compassTags = CareerTestCatalog.DeriveRiasecTags(riasec);
+
+            if (career is null)
             {
-                return;
+                career = new CandidateCareerInterest
+                {
+                    Id = Guid.NewGuid(),
+                    UserId = userId,
+                    Status = CandidateCompetencyStatuses.Completed,
+                    AnswersJson = "{}",
+                    CreatedAtUtc = now
+                };
+                _db.CandidateCareerInterests.Add(career);
             }
 
+            career.Status = CandidateCompetencyStatuses.Completed;
+            career.RealisticPercent = riasec.Realistic;
+            career.InvestigativePercent = riasec.Investigative;
+            career.ArtisticPercent = riasec.Artistic;
+            career.SocialPercent = riasec.Social;
+            career.EnterprisingPercent = riasec.Enterprising;
+            career.ConventionalPercent = riasec.Conventional;
+            career.HollandCode = CareerTestCatalog.HollandCode(riasec);
+            career.RiasecTagsJson = CareerTestCatalog.SerializeTags(compassTags);
             var existing = CareerTestCatalog.ParseTagsJson(career.MatchTagsJson).ToList();
-            foreach (var tag in tags)
+            foreach (var tag in tags.Concat(compassTags))
             {
                 if (!existing.Contains(tag, StringComparer.OrdinalIgnoreCase))
                 {
@@ -282,6 +304,7 @@ public sealed class DeepAnalysisService : IDeepAnalysisService
             }
 
             career.MatchTagsJson = CareerTestCatalog.SerializeTags(existing);
+            career.CompletedAtUtc ??= now;
             career.UpdatedAtUtc = now;
             return;
         }

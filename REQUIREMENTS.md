@@ -103,8 +103,9 @@ Kernpunten:
 - **Geen UI-minimumleeftijd;** achtergrondfiltering via verplichte wettelijke taak-vinkjes + `[ i ]`-tooltips (Arbeidstijdenwet)
 - **Matchingspercentage** op banenkaart met breakdown-modal en actie-adviezen
 - **Competentietest (Quick-Scan / 25 vragen)** op het kandidaatprofiel: Big Five / OCEAN; draft tussentijds opslaan; scores + tags voeden matching en talentpool
-- **Beroepentest (Quick-Scan / 25 vragen):** RIASEC / Holland-code; dynamische **Top 10 actieve vacatures** (≥ 60%, aflopend)
-- **Diepte-analyses (150 unieke vragen, € 2,99 per test):** 30 per Big Five-trek (competentie) en 25 per RIASEC-type (beroep); Mollie iDEAL; verrijkte tags + PDF-rapport
+- **Beroepentest (Quick-Scan / 25 vragen):** richting in gewone taal; **Mijn Beroepen-kompas**; dynamische **Top 10 actieve vacatures** (≥ 60%, aflopend)
+- **Diepte-analyses (150 unieke vragen, € 2,99 per test):** 30 per Big Five-trek (competentie) en 25 per beroepsrichting; Mollie iDEAL; verrijkte tags + loopbaan-PDF (gekleurd logo, Super-match / Sterke keus / Handige verbreding, *Wat betekent dit voor jou?*)
+- **Banenkaart:** uitgebreide beroepentest weegt zwaarder in het match-% dan de Quick-Scan
 - **Gulden Middenweg** bij solliciteren (&lt; 50%): OTP tegenhouden, profiel aanpassen of vangnet
 - **Optioneel motivatieveld** op sollicitatieformulier
 - **Werkgeversdashboard:** match-% met kleurcodering, breakdown, wettelijke bevestiging, motivatie, sort hoog→laag
