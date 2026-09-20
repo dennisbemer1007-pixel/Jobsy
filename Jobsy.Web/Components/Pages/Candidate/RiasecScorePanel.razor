@@ -1,0 +1,40 @@
+@using Jobsy.Core.Rules
+@using Jobsy.Web.Localization
+@inject CultureState Culture
+
+@if (Scores is { IsComplete: true } complete)
+{
+    <div class="competency-score-panel riasec-score-panel">
+        <ul class="competency-bars">
+            @foreach (var code in CareerTestCatalog.RiasecCodes)
+            {
+                var value = Value(complete, code) ?? 0;
+                <li class="competency-bar">
+                    <div class="competency-bar__meta">
+                        <span class="competency-bar__name">@Culture[$"Career.Cat.{code}"]</span>
+                        <span class="competency-bar__value">@value%</span>
+                    </div>
+                    <div class="competency-bar__track" role="meter" aria-valuemin="0" aria-valuemax="100" aria-valuenow="@value" aria-label="@Culture[$"Career.Cat.{code}"]">
+                        <span class="competency-bar__fill competency-bar__fill--riasec" style="width: @value%"></span>
+                    </div>
+                    <p class="competency-bar__hint">@Culture[$"Career.Cat.{code}.Hint"]</p>
+                </li>
+            }
+        </ul>
+    </div>
+}
+
+@code {
+    [Parameter] public RiasecScoreSet? Scores { get; set; }
+
+    private static int? Value(RiasecScoreSet scores, string code) => code switch
+    {
+        CareerTestCatalog.Realistic => scores.Realistic,
+        CareerTestCatalog.Investigative => scores.Investigative,
+        CareerTestCatalog.Artistic => scores.Artistic,
+        CareerTestCatalog.Social => scores.Social,
+        CareerTestCatalog.Enterprising => scores.Enterprising,
+        CareerTestCatalog.Conventional => scores.Conventional,
+        _ => null
+    };
+}

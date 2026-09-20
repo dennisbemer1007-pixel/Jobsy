@@ -2,6 +2,7 @@ using Jobsy.Core.Entities;
 using Jobsy.Core.Enums;
 using Jobsy.Core.Rules;
 using Jobsy.Infrastructure.Services;
+using Jobsy.Tests.Uat;
 
 namespace Jobsy.Tests;
 
@@ -223,6 +224,93 @@ public class CompetencyMatchingTests
     }
 
     [Fact]
+    public void ScoreAll_includes_matches_below_display_threshold()
+    {
+        var strong = MakeInput(
+            Guid.NewGuid(),
+            "Sterke match",
+            travelMinutes: 8,
+            maxTravel: 30,
+            candidateHours: new HoursRange(16, 24),
+            vacancyHours: new HoursRange(16, 24),
+            competencies: new CompetencyScores(80, 80, 80, 80));
+        var weak = MakeInput(
+            Guid.NewGuid(),
+            "Zwakke match",
+            travelMinutes: 90,
+            maxTravel: 20,
+            candidateHours: new HoursRange(4, 8),
+            vacancyHours: new HoursRange(32, 40),
+            competencies: null);
+
+        var scored = ProfileVacancyMatchCalculator.ScoreAll([strong, weak]);
+        Assert.Equal(2, scored.Count);
+        Assert.Contains(scored, m => m.TotalPercent < ProfileVacancyMatchCalculator.DisplayThreshold);
+        Assert.Contains(ProfileVacancyMatchCalculator.WhyHeadlines(scored[0]), h => h.Length > 0);
+    }
+
+    [Fact]
+    public void E_bike_routes_as_bike_and_satisfies_fiets_requirement()
+    {
+        Assert.Equal(TransportMode.Bike, TransportLabels.Parse("E-bike"));
+        Assert.Equal(TransportLabels.EBike, TransportLabels.Canonical("ebike"));
+        Assert.True(TransportLabels.MatchesRequired([TransportLabels.Bike], TransportLabels.EBike));
+        Assert.False(TransportLabels.MatchesRequired([TransportLabels.Car], TransportLabels.EBike));
+    }
+
+    [Fact]
+    public void Availability_presets_mutate_hours_and_flexibility()
+    {
+        var immediate = CandidateAvailabilityPresets.Apply(CandidateAvailabilityPresets.Immediate);
+        Assert.True(immediate.FlexibleTimes);
+        Assert.Equal(8, immediate.MinHoursPerWeek);
+        Assert.Equal(40, immediate.MaxHoursPerWeek);
+
+        var parttime = CandidateAvailabilityPresets.Apply(CandidateAvailabilityPresets.PartTime);
+        Assert.False(parttime.FlexibleTimes);
+        Assert.Equal(24, parttime.MaxHoursPerWeek);
+        Assert.Contains("Ma", parttime.Availability.Keys);
+
+        var seasonal = CandidateAvailabilityPresets.Apply(CandidateAvailabilityPresets.Seasonal);
+        Assert.Equal(
+            CandidateAvailabilityPresets.Seasonal,
+            CandidateAvailabilityPresets.Detect(seasonal.MinHoursPerWeek, seasonal.MaxHoursPerWeek, seasonal.FlexibleTimes));
+        Assert.Equal(
+            CandidateAvailabilityPresets.PartTime,
+            CandidateAvailabilityPresets.Detect(8, 24, false));
+    }
+
+    [Fact]
+    public void Riasec_overlap_feeds_score_and_why_headline()
+    {
+        var match = ProfileVacancyMatchCalculator.Calculate(MakeInput(
+            Guid.NewGuid(),
+            "Verkoopmedewerker",
+            travelMinutes: 10,
+            maxTravel: 30,
+            candidateHours: new HoursRange(16, 24),
+            vacancyHours: new HoursRange(16, 24),
+            competencies: new CompetencyScores(80, 80, 80, 80),
+            candidateRiasec: [CareerTestCatalog.Enterprising, CareerTestCatalog.Social],
+            vacancyRiasec: [CareerTestCatalog.Enterprising, CareerTestCatalog.Conventional]));
+
+        Assert.NotNull(match.InterestScore01);
+        Assert.True(match.InterestScore01 >= 0.4);
+        Assert.Contains(match.Why, w => w.Kind == "interest");
+        Assert.Contains(ProfileVacancyMatchCalculator.WhyHeadlines(match), h => h == "Beroepsinteresse past");
+    }
+
+    [Fact]
+    public void Discover_attaches_match_fields_only_for_candidates()
+    {
+        var src = File.ReadAllText(Path.Combine(RepoRoot.Find(), "Jobsy.Api/Controllers/VacanciesController.cs"));
+        Assert.Contains("if (_companyAuth.IsCandidate(User))", src, StringComparison.Ordinal);
+        Assert.Contains("MatchPercent = match.TotalPercent", src, StringComparison.Ordinal);
+        Assert.Contains("minMatchPercent", src, StringComparison.Ordinal);
+        Assert.Contains("LegalAgeKnown && !match.Core.LegalEligible", src, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void Completed_scores_helper_ignores_drafts()
     {
         Assert.Null(CompetencyTestCatalog.CompletedScoresOrNull("Draft", 80, 80, 80, 80));
@@ -241,7 +329,9 @@ public class CompetencyMatchingTests
         CompetencyScores? competencies,
         IReadOnlyList<string>? workTypes = null,
         IReadOnlyList<string>? candidateRoles = null,
-        string? vacancyDescription = null)
+        string? vacancyDescription = null,
+        IReadOnlyList<string>? candidateRiasec = null,
+        IReadOnlyList<string>? vacancyRiasec = null)
         => new()
         {
             VacancyId = id,
@@ -254,6 +344,8 @@ public class CompetencyMatchingTests
             CandidateEmployerCount = 1,
             CandidateCompetencies = competencies,
             VacancyCompetencies = VacancyCompetencyProfile.Infer(workTypes ?? ["Winkel"], title, vacancyDescription),
+            CandidateRiasecTags = candidateRiasec,
+            VacancyRiasecTags = vacancyRiasec,
             Core = new MatchScoreInput
             {
                 EstimatedTravelMinutes = travelMinutes,

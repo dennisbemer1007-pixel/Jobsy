@@ -37,6 +37,7 @@ public class VacanciesController : ControllerBase
     private readonly IUserNotificationService _notifications;
     private readonly IVacancyDiscoveryIndex _discoveryIndex;
     private readonly IExactRoutingService _exactRouting;
+    private readonly IProfileVacancyMatchService _profileMatch;
 
     public VacanciesController(
         JobsyDbContext db,
@@ -50,7 +51,8 @@ public class VacanciesController : ControllerBase
         IVacancyCategoryService categories,
         IPlatformFeatureService features,
         IUserNotificationService notifications,
-        IVacancyDiscoveryIndex discoveryIndex)
+        IVacancyDiscoveryIndex discoveryIndex,
+        IProfileVacancyMatchService profileMatch)
     {
         _db = db;
         _companyAuth = companyAuth;
@@ -64,6 +66,7 @@ public class VacanciesController : ControllerBase
         _notifications = notifications;
         _discoveryIndex = discoveryIndex;
         _exactRouting = exactRouting;
+        _profileMatch = profileMatch;
     }
 
     /// <summary>
@@ -125,6 +128,7 @@ public class VacanciesController : ControllerBase
         [FromQuery] bool? suitableFor65Plus = null,
         [FromQuery] Guid[]? companyId = null,
         [FromQuery] int? take = null,
+        [FromQuery] int? minMatchPercent = null,
         CancellationToken cancellationToken = default)
     {
         maxMinutes = Math.Clamp(maxMinutes, 5, 90);
@@ -179,6 +183,37 @@ public class VacanciesController : ControllerBase
                 .ToList();
         }
 
+        IReadOnlyDictionary<Guid, ProfileVacancyMatch>? matches = null;
+        var matchFloor = minMatchPercent is int requestedFloor
+            ? Math.Clamp(requestedFloor, 0, 100)
+            : (int?)null;
+        if (_companyAuth.IsCandidate(User))
+        {
+            var matchContext = await _profileMatch.TryLoadForPrincipalAsync(User, cancellationToken);
+            if (matchContext is not null)
+            {
+                matches = _profileMatch.Score(
+                    matchContext,
+                    candidates.Select(c => (c.Record, c.TravelMinutes)));
+                candidates = candidates
+                    .Where(c =>
+                    {
+                        if (!matches.TryGetValue(c.Record.Id, out var match))
+                        {
+                            return true;
+                        }
+
+                        if (match.Core.LegalAgeKnown && !match.Core.LegalEligible)
+                        {
+                            return false;
+                        }
+
+                        return matchFloor is not int floor || match.TotalPercent >= floor;
+                    })
+                    .ToList();
+            }
+        }
+
         var results = new List<VacancyListItemDto>(candidates.Count);
         foreach (var c in candidates)
         {
@@ -189,7 +224,27 @@ public class VacanciesController : ControllerBase
                 continue;
             }
 
+            if (matches is not null && matches.TryGetValue(c.Record.Id, out var match))
+            {
+                dto = dto with
+                {
+                    MatchPercent = match.TotalPercent,
+                    MatchColorBand = match.ColorBand,
+                    MatchWhySummary = string.Join(", ", ProfileVacancyMatchCalculator.WhyHeadlines(match)),
+                    MatchWhy = match.Why.Select(w => w.Text).ToList(),
+                    MatchGaps = match.Gaps.Select(g => g.Text).ToList()
+                };
+            }
+
             results.Add(dto);
+        }
+
+        if (matches is not null)
+        {
+            results = results
+                .OrderByDescending(r => r.MatchPercent ?? -1)
+                .ThenBy(r => r.Title, StringComparer.CurrentCultureIgnoreCase)
+                .ToList();
         }
 
         if (take is int cap)

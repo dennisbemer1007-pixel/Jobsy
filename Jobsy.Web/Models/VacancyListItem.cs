@@ -80,6 +80,11 @@ public class VacancyListItem
     public bool RequireEmailVerification { get; set; }
     public string? EngagementReminderTip { get; set; }
     public DateTime? EngagementReminderSentAtUtc { get; set; }
+    public int? MatchPercent { get; set; }
+    public string? MatchColorBand { get; set; }
+    public string? MatchWhySummary { get; set; }
+    public List<string> MatchWhy { get; set; } = [];
+    public List<string> MatchGaps { get; set; } = [];
 }
 
 public sealed class WageByAgeItem

@@ -14,6 +14,8 @@ Alle noemenswaardige wijzigingen aan dit project worden in dit bestand bijgehoud
 ## [Unreleased]
 
 ### Added
+- **Mijn Lobsy Kompas** op `/home` (kandidaat): visuele competentie-balans (Big Five), RIASEC-beroepenkompas en bewerkbare harde criteria (reistijd, vervoer incl. e-bike, rijbewijs, beschikbaarheid per direct/parttime/seizoenswerk) plus PDF-download van de 150-vragen analyse.
+- Banenkaart (ingelogde kandidaat): live match-% op pin, popup en lijst; filter “alleen >80%”; sorteren op beste match; uitleg waarom. Discover-API: `minMatchPercent` + matchvelden alleen voor kandidaat (private cache).
 - **Gescheiden test-architectuur:** competentietest (25 Big Five) en beroepentest (25 RIASEC) elk met eigen 150-vragen diepte-analyse (€ 2,99) en PDF; routes `/candidate/career` en `/candidate/deep-analysis/{kind}`.
 - API: `api/employer/talent/*`, `api/me/talent-contacts`, `api/me/deep-analysis`; UI: `/employer/talent`, `/employer/talent-contacts`, `/candidate/talent-contacts`.
 

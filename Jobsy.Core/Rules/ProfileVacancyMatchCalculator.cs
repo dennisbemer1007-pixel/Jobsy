@@ -90,12 +90,44 @@ public static class ProfileVacancyMatchCalculator
         IEnumerable<ProfileVacancyMatchInput> inputs,
         int take = MaxResults,
         int minPercent = DisplayThreshold)
-        => inputs
-            .Select(Calculate)
+        => RankScored(inputs.Select(Calculate), take, minPercent);
+
+    /// <summary>
+    /// Live banenkaart scoring: every vacancy, including below the Top-10 threshold.
+    /// Legal eligibility is left to the caller (hide only when age is known).
+    /// </summary>
+    public static IReadOnlyList<ProfileVacancyMatch> ScoreAll(IEnumerable<ProfileVacancyMatchInput> inputs)
+        => inputs.Select(Calculate).ToList();
+
+    public static IReadOnlyList<ProfileVacancyMatch> RankScored(
+        IEnumerable<ProfileVacancyMatch> matches,
+        int take = MaxResults,
+        int minPercent = DisplayThreshold)
+        => matches
             .Where(m => m.Core.LegalEligible && m.TotalPercent >= minPercent)
             .OrderByDescending(m => m.TotalPercent)
             .ThenBy(m => m.VacancyTitle, StringComparer.OrdinalIgnoreCase)
             .Take(Math.Clamp(take, 1, MaxResults))
+            .ToList();
+
+    public static string WhyHeadline(ProfileMatchExplainPoint point) => point.Kind switch
+    {
+        "travel" => "Goede reistijd",
+        "hours" => "Beschikbaarheid past",
+        "dayparts" => "Dagdelen kloppen",
+        "experience" when point.Code == "license" => "Rijbewijs klopt",
+        "experience" => "Branche sluit aan",
+        "competency" => "Sterke competentie-match",
+        "interest" => "Beroepsinteresse past",
+        _ => point.Text
+    };
+
+    public static IReadOnlyList<string> WhyHeadlines(ProfileVacancyMatch match)
+        => match.Why
+            .Select(WhyHeadline)
+            .Where(text => !string.IsNullOrWhiteSpace(text))
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .Take(3)
             .ToList();
 
     private static double Ratio(int points, int weight)

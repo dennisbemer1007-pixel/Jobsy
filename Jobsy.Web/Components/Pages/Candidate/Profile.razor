@@ -38,8 +38,18 @@
             }
             <CompetencyScorePanel Scores="_competencyScores" />
             <a class="engagement-btn" href="/candidate/competencies">@Culture["Competency.Retake"]</a>
-            <p class="login-lead">@_competencyUpsell</p>
-            <a class="login-submit" href="/candidate/deep-analysis/competence">@Culture["Competency.DeepUnlock"]</a>
+            @if (_competenceDeep is { IsCompleted: true })
+            {
+                <p class="kompas-status kompas-status--ok">@Culture["Kompas.DeepDone"]</p>
+                <button class="login-submit" type="button" disabled="@_pdfBusy" @onclick='() => DownloadDeepPdfAsync("competence")'>
+                    @Culture["Deep.DownloadPdf"]
+                </button>
+            }
+            else
+            {
+                <p class="login-lead">@_competencyUpsell</p>
+                <a class="login-submit" href="/candidate/deep-analysis/competence">@Culture["Competency.DeepUnlock"]</a>
+            }
         }
         else if (_competencyAnswered > 0)
         {
@@ -65,13 +75,24 @@
             {
                 <p class="login-lead">@Culture.Format("Career.Holland", _hollandCode)</p>
             }
+            <RiasecScorePanel Scores="_careerScores" />
             @if (_careerTags.Count > 0)
             {
                 <p class="profile-address__hint">@string.Join(" · ", _careerTags)</p>
             }
             <a class="engagement-btn" href="/candidate/career">@Culture["Career.Retake"]</a>
-            <p class="login-lead">@_careerUpsell</p>
-            <a class="login-submit" href="/candidate/deep-analysis/career">@Culture["Career.DeepUnlock"]</a>
+            @if (_careerDeep is { IsCompleted: true })
+            {
+                <p class="kompas-status kompas-status--ok">@Culture["Kompas.DeepDone"]</p>
+                <button class="login-submit" type="button" disabled="@_pdfBusy" @onclick='() => DownloadDeepPdfAsync("career")'>
+                    @Culture["Deep.DownloadPdf"]
+                </button>
+            }
+            else
+            {
+                <p class="login-lead">@_careerUpsell</p>
+                <a class="login-submit" href="/candidate/deep-analysis/career">@Culture["Career.DeepUnlock"]</a>
+            }
         }
         else if (_careerAnswered > 0)
         {
@@ -234,6 +255,7 @@
                                 <select @bind="_preferredTransport">
                                     <option value="">—</option>
                                     <option value="Fiets">@Culture["Transport.Bike"]</option>
+                                    <option value="E-bike">@Culture["Transport.EBike"]</option>
                                     <option value="Auto">@Culture["Transport.Car"]</option>
                                     <option value="OV">@Culture["Transport.Transit"]</option>
                                     <option value="Lopend">@Culture["Transport.Walk"]</option>
@@ -306,9 +328,24 @@
                                 <legend>@Culture["Profile.Availability"]</legend>
                                 <div class="availability-presets" role="group" aria-label="@Culture["Profile.Availability"]">
                                     <button type="button"
-                                            class="availability-presets__btn @(_flexibleTimes ? "is-active" : null)"
+                                            class="availability-presets__btn @(_flexibleTimes && AvailabilityKind is null ? "is-active" : null)"
                                             @onclick='() => ApplyAvailabilityPreset("flexible")'>
                                         @Culture["Profile.PresetFlexible"]
+                                    </button>
+                                    <button type="button"
+                                            class="availability-presets__btn @(AvailabilityKind == CandidateAvailabilityPresets.Immediate ? "is-active" : null)"
+                                            @onclick='() => ApplyAvailabilityPreset("immediate")'>
+                                        @Culture["Profile.PresetImmediate"]
+                                    </button>
+                                    <button type="button"
+                                            class="availability-presets__btn @(AvailabilityKind == CandidateAvailabilityPresets.PartTime ? "is-active" : null)"
+                                            @onclick='() => ApplyAvailabilityPreset("parttime")'>
+                                        @Culture["Profile.PresetPartTime"]
+                                    </button>
+                                    <button type="button"
+                                            class="availability-presets__btn @(AvailabilityKind == CandidateAvailabilityPresets.Seasonal ? "is-active" : null)"
+                                            @onclick='() => ApplyAvailabilityPreset("seasonal")'>
+                                        @Culture["Profile.PresetSeasonal"]
                                     </button>
                                     <button type="button"
                                             class="availability-presets__btn @(!_flexibleTimes && IsOfficeHoursPreset() ? "is-active" : null)"
@@ -675,8 +712,14 @@
     private int _careerAnswered;
     private string _hollandCode = "";
     private List<string> _careerTags = [];
+    private RiasecScoreSet? _careerScores;
+    private DeepAnalysisState? _competenceDeep;
+    private DeepAnalysisState? _careerDeep;
     private string _careerUpsell = "";
     private IReadOnlyList<CandidateMatchedVacancy> _matchedVacancies = [];
+
+    private string? AvailabilityKind =>
+        CandidateAvailabilityPresets.Detect(_minHours, _maxHours, _flexibleTimes);
 
     [SupplyParameterFromQuery(Name = "returnUrl")]
     public string? ReturnUrl { get; set; }
@@ -708,7 +751,9 @@
             _homeLat = profile.HomeLatitude;
             _homeLng = profile.HomeLongitude;
             _maxTravel = prefs.MaxTravelMinutes ?? 30;
-            _preferredTransport = prefs.PreferredTransport ?? "";
+            _preferredTransport = string.IsNullOrWhiteSpace(prefs.PreferredTransport)
+                ? ""
+                : TransportLabels.Canonical(prefs.PreferredTransport);
             _selectedRoles.Clear();
             foreach (var role in prefs.Roles ?? [])
             {
@@ -830,9 +875,12 @@
                 _careerCompleted = string.Equals(career.Status, "Completed", StringComparison.OrdinalIgnoreCase);
                 _hollandCode = career.HollandCode ?? "";
                 _careerTags = career.RiasecTags ?? [];
+                _careerScores = career.Scores;
                 _careerUpsell = career.DeepAnalysisUpsellCopy;
             }
 
+            _competenceDeep = await Api.GetDeepAnalysisAsync("competence");
+            _careerDeep = await Api.GetDeepAnalysisAsync("career");
             _matchedVacancies = await Api.GetMyMatchedVacanciesAsync();
         }
         catch
@@ -926,6 +974,26 @@
 
     private void ApplyAvailabilityPreset(string preset)
     {
+        if (preset is CandidateAvailabilityPresets.Immediate
+            or CandidateAvailabilityPresets.PartTime
+            or CandidateAvailabilityPresets.Seasonal)
+        {
+            var patch = CandidateAvailabilityPresets.Apply(preset);
+            _flexibleTimes = patch.FlexibleTimes;
+            _minHours = patch.MinHoursPerWeek;
+            _maxHours = patch.MaxHoursPerWeek;
+            _availability.Clear();
+            foreach (var (day, slots) in patch.Availability)
+            {
+                foreach (var slot in slots)
+                {
+                    _availability.Add($"{day}:{slot}");
+                }
+            }
+
+            return;
+        }
+
         if (preset == "flexible")
         {
             _flexibleTimes = true;
@@ -935,10 +1003,10 @@
 
         _flexibleTimes = false;
         _availability.Clear();
-        var slots = preset == "evenings" ? new[] { "Avond" } : new[] { "Ochtend", "Middag" };
+        var officeSlots = preset == "evenings" ? new[] { "Avond" } : new[] { "Ochtend", "Middag" };
         foreach (var day in WeekdayCodes)
         {
-            foreach (var slot in slots)
+            foreach (var slot in officeSlots)
             {
                 _availability.Add($"{day}:{slot}");
             }
@@ -1280,6 +1348,24 @@
         finally
         {
             _saving = false;
+        }
+    }
+
+    private async Task DownloadDeepPdfAsync(string kind)
+    {
+        _pdfBusy = true;
+        _message = null;
+        try
+        {
+            await Api.DownloadDeepAnalysisReportAsync(Js, kind);
+        }
+        catch (Exception ex)
+        {
+            _message = ex.Message;
+        }
+        finally
+        {
+            _pdfBusy = false;
         }
     }
 

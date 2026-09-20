@@ -261,7 +261,9 @@ Account: `kandidaat@jobsy.local` / `Jobsy123!`. Bottom-nav: Zoeken · Bewaard ·
 
 | Rol | Testscenario | Verwacht resultaat |
 |-----|--------------|--------------------|
-| Kandidaat | Login met demo-account. | `/home` kandidaat-dashboard (KPI’s sollicitaties/likes/shares/reacties). |
+| Kandidaat | Login met demo-account. | `/home` kandidaat-dashboard **Mijn Lobsy Kompas** (competentie-balans + beroepenkompas + harde criteria) plus KPI’s sollicitaties/likes/shares/reacties. |
+| Kandidaat | Home: Kompas toont Quick-Scan 25 vs diepte-analyse 150 + PDF als klaar. | Status zichtbaar; PDF-knop alleen na afgeronde diepte-analyse; geen extra nav-tab. |
+| Kandidaat | Home: harde criteria reistijd/vervoer (incl. e-bike)/rijbewijs/beschikbaarheid (per direct/parttime/seizoen) opslaan. | Voorkeuren opgeslagen; banenkaart herberekent match-%. |
 | Kandidaat | Bottom-nav **Zoeken**. | `/` banenkaart. |
 | Kandidaat | Bottom-nav **Bewaard**. | `/candidate/liked`. |
 | Kandidaat | Bottom-nav **Vacatures**. | `/candidate/vacancies` met **Onlangs bekeken** + overzicht op reistijd/vervoer. |
@@ -277,6 +279,9 @@ Account: `kandidaat@jobsy.local` / `Jobsy123!`. Bottom-nav: Zoeken · Bewaard ·
 | Kandidaat | Home: API-fout metrics. | Foutmelding; geen lege stille pagina. |
 | Kandidaat | Home: periode zonder data. | Tegels 0; drilldown empty. |
 | Kandidaat | Banenkaart als ingelogde kandidaat (alle gast-filters herhalen). | Zelfde filters; likes/apply beschikbaar; origin mag uit profiel-thuislocatie komen. |
+| Kandidaat | Banenkaart: match-% op lijstkaart en pin (live). | Percentage + kleur; geen PII-lek; gast ziet geen match-%. |
+| Kandidaat | Banenkaart: filter **Alleen >80% match** + sorteren **Beste match**. | Lijst en kaart tonen alleen hoge scores; volgorde hoog→laag. |
+| Kandidaat | Banenkaart: **?** / uitleg waarom deze match. | Breakdown reistijd/beschikbaarheid/RIASEC/competenties; link naar profiel. |
 | Kandidaat | Banenkaart: **Zoekopdracht bewaren**. | Gaat naar liked (ingelogd, geen gate). |
 | Kandidaat | Vacaturedetail: **Like** (uit → aan). | Liked; toast; hart-state aan. |
 | Kandidaat | Vacaturedetail: **Like** nogmaals (aan → uit). | Like verwijderd; toast removed. |

@@ -127,6 +127,8 @@ public class TransportLabelsTests
 {
     [Theory]
     [InlineData("Fiets", TransportMode.Bike)]
+    [InlineData("E-bike", TransportMode.Bike)]
+    [InlineData("ebike", TransportMode.Bike)]
     [InlineData("Auto", TransportMode.Car)]
     [InlineData("OV", TransportMode.PublicTransport)]
     [InlineData("Lopend", TransportMode.Walking)]

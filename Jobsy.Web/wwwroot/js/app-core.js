@@ -423,7 +423,7 @@ window.jobsyMaps = (function () {
         "/js/jobsyMapLibre.min.js?v=20260822-r195"
     ];
     var discoveryScripts = [
-        "/js/jobMap.min.js?v=20260831-img1"
+        "/js/jobMap.min.js?v=20260920-kompas"
     ];
     var detailScripts = [
         "/js/vacancyDetailMap.min.js?v=20260822-r195"

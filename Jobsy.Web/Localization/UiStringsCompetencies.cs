@@ -177,7 +177,22 @@ internal static class UiStringsCompetencies
         ["Competency.Matches.ExplainTitle"] = "Waarom {0}%?",
         ["Competency.Matches.OpenVacancy"] = "Bekijk vacature",
         ["Competency.Matches.Help"] = "Uitleg over dit matchingpercentage",
-        ["Competency.RadarLabel"] = "Overzicht van je vier competenties"
+        ["Competency.RadarLabel"] = "Overzicht van je vier competenties",
+        ["Kompas.Title"] = "Mijn Lobsy Kompas",
+        ["Kompas.Lead"] = "Je tests, beroepsrichting en praktische criteria — het vervangt een tekst-cv als startpunt voor matching.",
+        ["Kompas.Competence"] = "Competentie-balans",
+        ["Kompas.Career"] = "Beroepen-kompas",
+        ["Kompas.Criteria"] = "Praktische harde criteria",
+        ["Kompas.QuickScanDone"] = "Gratis 25-vragen Quick-Scan afgerond",
+        ["Kompas.QuickScanOpen"] = "Gratis 25-vragen Quick-Scan nog niet afgerond",
+        ["Kompas.DeepLocked"] = "Uitgebreide 150-vragen analyse nog vergrendeld",
+        ["Kompas.DeepReady"] = "Uitgebreide 150-vragen analyse ontgrendeld",
+        ["Kompas.DeepDone"] = "Uitgebreide 150-vragen analyse afgerond",
+        ["Kompas.PreferredBranches"] = "Voorkeursbranches",
+        ["Kompas.PreferredEmpty"] = "Nog geen branches gekozen. Zet ze hier of in je profiel.",
+        ["Kompas.LicenseNone"] = "Geen rijbewijs",
+        ["Kompas.Saved"] = "Je criteria zijn opgeslagen. Matches op de banenkaart worden live herberekend.",
+        ["Kompas.OpenMap"] = "Naar de banenkaart"
     };
 
     private static Dictionary<string, string> En() => new(StringComparer.OrdinalIgnoreCase)
@@ -331,6 +346,21 @@ internal static class UiStringsCompetencies
         ["Competency.Matches.ExplainTitle"] = "Why {0}%?",
         ["Competency.Matches.OpenVacancy"] = "View vacancy",
         ["Competency.Matches.Help"] = "Explanation of this match percentage",
-        ["Competency.RadarLabel"] = "Overview of your four competencies"
+        ["Competency.RadarLabel"] = "Overview of your four competencies",
+        ["Kompas.Title"] = "My Lobsy Compass",
+        ["Kompas.Lead"] = "Your tests, career direction and practical criteria — this replaces a text CV as the starting point for matching.",
+        ["Kompas.Competence"] = "Competence balance",
+        ["Kompas.Career"] = "Career compass",
+        ["Kompas.Criteria"] = "Practical hard criteria",
+        ["Kompas.QuickScanDone"] = "Free 25-question Quick-Scan completed",
+        ["Kompas.QuickScanOpen"] = "Free 25-question Quick-Scan not completed yet",
+        ["Kompas.DeepLocked"] = "Extended 150-question analysis still locked",
+        ["Kompas.DeepReady"] = "Extended 150-question analysis unlocked",
+        ["Kompas.DeepDone"] = "Extended 150-question analysis completed",
+        ["Kompas.PreferredBranches"] = "Preferred sectors",
+        ["Kompas.PreferredEmpty"] = "No sectors chosen yet. Set them here or in your profile.",
+        ["Kompas.LicenseNone"] = "No driving licence",
+        ["Kompas.Saved"] = "Your criteria are saved. Matches on the job map are recalculated live.",
+        ["Kompas.OpenMap"] = "Open the job map"
     };
 }

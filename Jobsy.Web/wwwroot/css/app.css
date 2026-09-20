@@ -16529,4 +16529,134 @@ html.cookie-consent-known .cookie-consent {
     }
 }
 
+.kompas {
+    margin: 0 0 1.35rem;
+}
+
+.kompas__toolbar {
+    display: flex;
+    justify-content: flex-end;
+    margin: 0 0 0.75rem;
+}
+
+.kompas-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1rem;
+    margin-bottom: 0.5rem;
+}
+
+.kompas-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 1rem 1.1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.kompas-card h3 {
+    margin: 0;
+    font-size: 1.05rem;
+}
+
+.kompas-status {
+    margin: 0;
+    font-weight: 700;
+    font-size: 0.88rem;
+}
+
+.kompas-status--ok {
+    color: var(--brand);
+}
+
+.kompas-criteria {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.kompas-chip-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+}
+
+.kompas-chip {
+    border-radius: 999px;
+    padding: 0.2rem 0.6rem;
+    background: color-mix(in srgb, var(--brand) 12%, var(--surface));
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+.job-card__match {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    margin: 0 0 0.25rem;
+}
+
+.job-card__match-why {
+    margin: 0 0 0.35rem;
+    font-size: 0.78rem;
+    opacity: 0.92;
+}
+
+.job-marker {
+    overflow: visible;
+}
+
+.job-marker__match {
+    position: absolute;
+    top: -0.55rem;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 2;
+    font-size: 0.62rem;
+    font-weight: 800;
+    line-height: 1;
+    padding: 0.12rem 0.28rem;
+    border-radius: 999px;
+    background: var(--surface);
+    color: var(--brand);
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.18);
+    white-space: nowrap;
+}
+
+.job-marker__match--green {
+    color: #0f7b3a;
+}
+
+.job-marker__match--orange {
+    color: #b45309;
+}
+
+.job-marker__match--red {
+    color: #b91c1c;
+}
+
+.map-popup__match {
+    margin: 0.2rem 0 0;
+    font-weight: 800;
+    font-size: 0.92rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+}
+
+.map-popup__match-why {
+    font-weight: 500;
+    font-size: 0.78rem;
+}
+
+.competency-bar__fill--riasec {
+    background: color-mix(in srgb, var(--brand) 70%, #7c3aed);
+}
+
+
 

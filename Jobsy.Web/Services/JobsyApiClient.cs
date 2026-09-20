@@ -141,6 +141,7 @@ public sealed class JobsyApiClient : IAsyncDisposable
         bool? suitableFor65Plus = null,
         IEnumerable<Guid>? companyIds = null,
         int? take = null,
+        int? minMatchPercent = null,
         CancellationToken ct = default)
     {
         var qs = $"transport={Uri.EscapeDataString(transport)}&maxMinutes={maxMinutes}";
@@ -218,6 +219,11 @@ public sealed class JobsyApiClient : IAsyncDisposable
         {
             cap = Math.Clamp(cap, 1, 200);
             qs += $"&take={cap}";
+        }
+
+        if (minMatchPercent is int floor)
+        {
+            qs += $"&minMatchPercent={Math.Clamp(floor, 0, 100)}";
         }
 
         return await _http.GetFromJsonAsync<List<VacancyListItem>>($"api/vacancies/discover?{qs}", ct) ?? [];

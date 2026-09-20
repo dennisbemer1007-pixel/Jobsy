@@ -28,13 +28,13 @@ Publiek (naast banenkaart): `/vacancies/{id}`, `/{kvknummer}` (ondernemer), `/{k
 
 | Route | Inhoud |
 |-------|--------|
-| `/` | Banenkaart (filters, lijst, kaart) |
-| `/home` | Eigen metrics: sollicitaties, shares, likes, reacties (periode + drilldown) |
+| `/` | Banenkaart (filters, lijst, kaart). Ingelogde kandidaat: live match-% per vacature, sort/filter op match, uitleg waarom |
+| `/home` | **Mijn Lobsy Kompas** (competentie-balans Big Five, RIASEC-beroepenkompas, harde criteria) + eigen metrics |
 | `/vacancies/{id}` | Detail, solliciteren, like/share, optioneel mock interview |
 | `/candidate/applications` | Sollicitatiehistorie |
 | `/candidate/vacancies` | Overzicht + **Onlangs bekeken** (localStorage, alleen vacancy-GUIDs) + in-de-buurt op reistijd/vervoer |
 | `/candidate/liked` · `/candidate/shared` | Engagement-lijsten |
-| `/candidate/profile` | OpenForWork, prefs, DOB, HomeLocation, eigen CV-upload, recensies, **competentietest** (25 Big Five) + **beroepentest** (25 RIASEC) + Top 10 vacatures (≥60%); upsell diepte-analyses € 2,99 |
+| `/candidate/profile` | OpenForWork, prefs (reistijd, vervoer incl. e-bike, rijbewijs, beschikbaarheid per direct/parttime/seizoen), DOB, HomeLocation, eigen CV-upload, recensies, **competentietest** (25 Big Five) + **beroepentest** (25 RIASEC) + Top 10 vacatures (≥60%); PDF-download als diepte-analyse klaar is |
 | `/candidate/competencies` | Competentietest (25); draft tussentijds opslaan; scores herberekend bij afronden |
 | `/candidate/career` | Beroepentest (25 RIASEC); Holland-code + top 10 actieve vacatures |
 | `/candidate/deep-analysis/{kind}` | Betaalde 150-vragen analyse (competence \| career) + PDF |

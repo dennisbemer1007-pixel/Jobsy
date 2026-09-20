@@ -182,6 +182,24 @@ public static class MatchingProfileMapper
         }
     }
 
+    public static CandidatePreferencesDto DeserializePrefs(string? json)
+    {
+        if (string.IsNullOrWhiteSpace(json))
+        {
+            return new CandidatePreferencesDto([], null, null);
+        }
+
+        try
+        {
+            return JsonSerializer.Deserialize<CandidatePreferencesDto>(json, JsonOptions)
+                   ?? new CandidatePreferencesDto([], null, null);
+        }
+        catch (JsonException)
+        {
+            return new CandidatePreferencesDto([], null, null);
+        }
+    }
+
     public static LegalTaskFlags? TryLegalFlags(
         bool? worksAfter19,
         bool? nightShift,

@@ -251,6 +251,7 @@ public static class DependencyInjection
         services.AddScoped<ILobsyCvPdfService, LobsyCvPdfService>();
         services.AddScoped<ICvTextExtractor, CvTextExtractor>();
         services.AddScoped<ICvExtractionService, CvExtractionService>();
+        services.AddScoped<IProfileVacancyMatchService, ProfileVacancyMatchService>();
         services.AddScoped<ICandidateCompetencyService, CandidateCompetencyService>();
         services.AddScoped<ICandidateCareerInterestService, CandidateCareerInterestService>();
         services.AddScoped<IDeepAnalysisService, DeepAnalysisService>();

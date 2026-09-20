@@ -412,6 +412,17 @@ public static class UatScriptRunner
             Assert.Equal(2.99m, FlexCommercialSettings.DefaultDeepAnalysisPriceEuro);
         }
 
+        if (Contains(blob, "Mijn Lobsy Kompas", "match-%", "Beste match", ">80% match"))
+        {
+            var root = RepoRoot.Find();
+            var home = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Pages/Candidate/CandidateHomePanel.razor"));
+            Assert.Contains("CandidateKompas", home, StringComparison.Ordinal);
+            var dto = File.ReadAllText(Path.Combine(root, "Jobsy.Api/Models/VacancyListItemDto.cs"));
+            Assert.Contains("MatchPercent", dto, StringComparison.Ordinal);
+            Assert.Contains("minMatchPercent", File.ReadAllText(Path.Combine(root, "Jobsy.Api/Controllers/VacanciesController.cs")), StringComparison.Ordinal);
+            Assert.True(TransportLabels.Parse("E-bike") == Jobsy.Core.Enums.TransportMode.Bike);
+        }
+
         if (Contains(blob, "leeftijdsfilter", "talentpool", "ContactUnlock", "48 uur"))
         {
             Assert.Equal(48, TalentContactRules.TalentContactRequestHours);

@@ -78,7 +78,12 @@ public record VacancyListItemDto(
     bool RequireEmailVerification = false,
     string? EngagementReminderTip = null,
     DateTime? EngagementReminderSentAtUtc = null,
-    int? MinimumReferences = null);
+    int? MinimumReferences = null,
+    int? MatchPercent = null,
+    string? MatchColorBand = null,
+    string? MatchWhySummary = null,
+    IReadOnlyList<string>? MatchWhy = null,
+    IReadOnlyList<string>? MatchGaps = null);
 
 /// <summary>Public MapLibre opening camera. Coordinates only — no vacancy or employer PII.</summary>
 public sealed record VacancyMapViewDto(double Lat, double Lng, double Zoom, int PinCount);

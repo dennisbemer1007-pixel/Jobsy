@@ -127,6 +127,7 @@
                             @Culture["Vacancy.YourTransport"]
                             <select value="@_transport" @onchange="OnTransportChanged">
                                 <option value="Fiets">@Culture["Transport.Bike"]</option>
+                                <option value="E-bike">@Culture["Transport.EBike"]</option>
                                 <option value="Auto">@Culture["Transport.Car"]</option>
                                 <option value="OV">@Culture["Transport.Transit"]</option>
                                 <option value="Lopend">@Culture["Transport.Walk"]</option>
@@ -506,6 +507,7 @@
                                         <span>@Culture["Apply.Transport"]</span>
                                         <select value="@_transport" @onchange="OnTransportChanged">
                                             <option value="Fiets">@Culture["Transport.Bike"]</option>
+                                            <option value="E-bike">@Culture["Transport.EBike"]</option>
                                             <option value="Auto">@Culture["Transport.Car"]</option>
                                             <option value="OV">@Culture["Transport.Transit"]</option>
                                             <option value="Lopend">@Culture["Transport.Walk"]</option>
@@ -1430,7 +1432,7 @@
     }
 
     private static bool IsKnownTransport(string? value)
-        => value?.Trim() is "Fiets" or "Auto" or "OV" or "Lopend";
+        => value?.Trim() is "Fiets" or "E-bike" or "Auto" or "OV" or "Lopend";
 
     private static string NormalizeTransport(string? value)
         => value?.Trim() switch
@@ -1438,6 +1440,7 @@
             "Auto" => "Auto",
             "OV" => "OV",
             "Lopend" => "Lopend",
+            "E-bike" => "E-bike",
             _ => "Fiets"
         };
 

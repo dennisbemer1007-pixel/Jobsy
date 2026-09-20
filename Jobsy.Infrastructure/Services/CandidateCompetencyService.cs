@@ -1,5 +1,3 @@
-using System.Text.Json;
-using Jobsy.Core.Contracts;
 using Jobsy.Core.Entities;
 using Jobsy.Core.Enums;
 using Jobsy.Core.Interfaces;
@@ -11,25 +9,20 @@ namespace Jobsy.Infrastructure.Services;
 
 public sealed class CandidateCompetencyService : ICandidateCompetencyService
 {
-    private static readonly JsonSerializerOptions JsonOptions = new()
-    {
-        PropertyNameCaseInsensitive = true
-    };
-
     private readonly JobsyDbContext _db;
     private readonly IVacancyDiscoveryIndex _discovery;
-    private readonly IRoutingService _routing;
+    private readonly IProfileVacancyMatchService _matches;
     private readonly IFlexCommercialService _commercial;
 
     public CandidateCompetencyService(
         JobsyDbContext db,
         IVacancyDiscoveryIndex discovery,
-        IRoutingService routing,
+        IProfileVacancyMatchService matches,
         IFlexCommercialService commercial)
     {
         _db = db;
         _discovery = discovery;
-        _routing = routing;
+        _matches = matches;
         _commercial = commercial;
     }
 
@@ -144,63 +137,34 @@ public sealed class CandidateCompetencyService : ICandidateCompetencyService
         Guid userId,
         CancellationToken cancellationToken = default)
     {
-        var user = await _db.Users.AsNoTracking()
-            .FirstOrDefaultAsync(u => u.Id == userId && u.IsActive, cancellationToken);
-        if (user is null)
+        var context = await _matches.TryLoadForUserIdAsync(userId, cancellationToken);
+        if (context is null)
         {
             return [];
         }
 
-        var prefs = DeserializePrefs(user.PreferencesJson);
-        var scores = await GetCompletedScoresAsync(userId, cancellationToken);
-        var career = await _db.CandidateCareerInterests.AsNoTracking()
-            .FirstOrDefaultAsync(c => c.UserId == userId, cancellationToken);
-        var riasecTags = career is not null && CandidateCompetencyStatuses.IsCompleted(career.Status)
-            ? CareerTestCatalog.ParseTagsJson(career.RiasecTagsJson)
-            : Array.Empty<string>();
         var vacancies = await _discovery.GetActiveAsync(cancellationToken);
-        var ageYears = AgeRules.AgeYearsFromDateOfBirth(user.DateOfBirth) ?? prefs.AgeYears;
-        var transport = TransportLabels.Parse(prefs.PreferredTransport);
-
-        var inputs = new List<ProfileVacancyMatchInput>(vacancies.Count);
-        foreach (var vacancy in vacancies)
-        {
-            int? travelMinutes = null;
-            if (user.HomeLocation is not null)
+        var transport = TransportLabels.Parse(context.Prefs.PreferredTransport);
+        var scored = _matches.Score(
+            context,
+            vacancies.Select(vacancy =>
             {
-                var route = await _routing.GetRouteAsync(
-                    user.HomeLocation.Latitude,
-                    user.HomeLocation.Longitude,
-                    vacancy.Latitude,
-                    vacancy.Longitude,
-                    transport,
-                    cancellationToken);
-                travelMinutes = (int)Math.Round(route.DurationSeconds / 60.0, MidpointRounding.AwayFromZero);
-            }
+                int? travelMinutes = null;
+                if (context.HomeLatitude is double lat && context.HomeLongitude is double lng)
+                {
+                    var estimate = TravelReach.Estimate(
+                        lat,
+                        lng,
+                        vacancy.Latitude,
+                        vacancy.Longitude,
+                        transport);
+                    travelMinutes = estimate.TravelMinutes;
+                }
 
-            var core = MatchingProfileMapper.BuildInput(vacancy, prefs, travelMinutes, ageYears);
-            inputs.Add(new ProfileVacancyMatchInput
-            {
-                VacancyId = vacancy.Id,
-                Core = core,
-                VacancyTitle = vacancy.Title,
-                VacancyDescription = vacancy.Description,
-                WorkTypes = vacancy.WorkTypeLabelList,
-                CandidateRoles = prefs.Roles,
-                CandidateLicenses = prefs.DrivingLicenses,
-                CandidateEducations = prefs.Educations,
-                CandidateEmployerCount = prefs.Employers?.Count ?? 0,
-                RequiredDrivingLicense = vacancy.RequiredDrivingLicense,
-                RequiredEducation = vacancy.RequiredEducation,
-                MinimumEmployers = vacancy.MinimumEmployers,
-                CandidateCompetencies = scores,
-                VacancyCompetencies = VacancyCompetencyProfile.Infer(vacancy),
-                CandidateRiasecTags = riasecTags,
-                VacancyRiasecTags = VacancyRiasecProfile.InferTags(vacancy)
-            });
-        }
+                return (vacancy, travelMinutes);
+            }));
 
-        var ranked = ProfileVacancyMatchCalculator.Rank(inputs);
+        var ranked = ProfileVacancyMatchCalculator.RankScored(scored.Values);
         var byId = vacancies.ToDictionary(v => v.Id);
         var result = new List<CandidateMatchedVacancyDto>(ranked.Count);
         foreach (var match in ranked)
@@ -250,23 +214,5 @@ public sealed class CandidateCompetencyService : ICandidateCompetencyService
                 .ToList(),
             CompetencyTestCatalog.ParseTagsJson(row?.MatchTagsJson),
             DeepAnalysisService.FormatUpsellCopy(deepAnalysisPriceEuro, AssessmentKind.Competence));
-    }
-
-    private static CandidatePreferencesDto DeserializePrefs(string? json)
-    {
-        if (string.IsNullOrWhiteSpace(json))
-        {
-            return new CandidatePreferencesDto([], null, null);
-        }
-
-        try
-        {
-            return JsonSerializer.Deserialize<CandidatePreferencesDto>(json, JsonOptions)
-                   ?? new CandidatePreferencesDto([], null, null);
-        }
-        catch (JsonException)
-        {
-            return new CandidatePreferencesDto([], null, null);
-        }
     }
 }

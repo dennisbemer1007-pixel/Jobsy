@@ -19,21 +19,23 @@ public static class UiLabels
         _ => label
     };
 
-    public static string Transport(CultureState culture, string transport) => transport switch
+    public static string Transport(CultureState culture, string transport) => TransportLabels.Canonical(transport) switch
     {
-        "Fiets" => culture["Transport.Bike"],
-        "Auto" => culture["Transport.Car"],
-        "OV" => culture["Transport.Transit"],
-        "Lopend" => culture["Transport.Walk"],
+        TransportLabels.EBike => culture["Transport.EBike"],
+        TransportLabels.Bike => culture["Transport.Bike"],
+        TransportLabels.Car => culture["Transport.Car"],
+        TransportLabels.PublicTransport => culture["Transport.Transit"],
+        TransportLabels.Walking => culture["Transport.Walk"],
         _ => transport
     };
 
-    public static string TransportVerb(CultureState culture, string transport) => transport switch
+    public static string TransportVerb(CultureState culture, string transport) => TransportLabels.Canonical(transport) switch
     {
-        "Fiets" => culture["Transport.Verb.Bike"],
-        "Auto" => culture["Transport.Verb.Car"],
-        "OV" => culture["Transport.Verb.Transit"],
-        "Lopend" => culture["Transport.Verb.Walk"],
+        TransportLabels.EBike => culture["Transport.Verb.EBike"],
+        TransportLabels.Bike => culture["Transport.Verb.Bike"],
+        TransportLabels.Car => culture["Transport.Verb.Car"],
+        TransportLabels.PublicTransport => culture["Transport.Verb.Transit"],
+        TransportLabels.Walking => culture["Transport.Verb.Walk"],
         _ => culture["Transport.Verb.Default"]
     };
 
