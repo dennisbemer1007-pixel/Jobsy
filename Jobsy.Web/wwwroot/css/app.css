@@ -16570,6 +16570,10 @@ html.cookie-consent-known .cookie-consent {
     min-height: 12rem;
 }
 
+.kompas-card[hidden] {
+    display: none !important;
+}
+
 .kompas-status-stack {
     display: flex;
     flex-direction: column;

@@ -241,8 +241,10 @@ public class CareerCompassTests
         var css = File.ReadAllText(Path.Combine(root, "Jobsy.Web/wwwroot/css/app.css"));
         Assert.Contains(".kompas-tabs.admin-sublinks", css, StringComparison.Ordinal);
         Assert.Contains(".kompas-status-stack", css, StringComparison.Ordinal);
+        Assert.Contains(".kompas-card[hidden]", css, StringComparison.Ordinal);
         var minCss = File.ReadAllText(Path.Combine(root, "Jobsy.Web/wwwroot/css/app.min.css"));
         Assert.Contains(".kompas-tabs.admin-sublinks", minCss, StringComparison.Ordinal);
+        Assert.Contains(".kompas-card[hidden]", minCss, StringComparison.Ordinal);
 
         var profile = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Pages/Candidate/Profile.razor"));
         Assert.Contains("CandidateKompas", profile, StringComparison.Ordinal);
