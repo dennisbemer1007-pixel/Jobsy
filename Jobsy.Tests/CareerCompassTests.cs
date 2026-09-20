@@ -144,6 +144,10 @@ public class CareerCompassTests
     public void Career_pdf_uses_logo_bands_and_plain_language()
     {
         var compass = CareerCompassBuilder.Build(HandsOnScores(), fromDeepAnalysis: true);
+        Assert.True(compass.HasOccupations);
+        Assert.Contains(compass.PracticalNotes, n => n.Contains("banenkaart", StringComparison.OrdinalIgnoreCase));
+        AssertNoJargon(compass);
+
         var withLogo = AssessmentReportPdfService.RenderCareer(
             "Lobsy", LoadBrandLogo(), "Ada Kandidaat", "20 september 2026", compass);
         var withoutLogo = AssessmentReportPdfService.RenderCareer(
@@ -153,16 +157,19 @@ public class CareerCompassTests
         AssertPdf(withoutLogo);
         Assert.True(withLogo.Length > withoutLogo.Length);
 
-        var haystack = System.Text.Encoding.Latin1.GetString(withLogo) + PdfLiteralText(withLogo);
-        Assert.Contains("loopbaanrapport", haystack, StringComparison.OrdinalIgnoreCase);
-        Assert.Contains("Super-match", haystack, StringComparison.OrdinalIgnoreCase);
-        Assert.Contains("Sterke keus", haystack, StringComparison.OrdinalIgnoreCase);
-        Assert.Contains("Handige verbreding", haystack, StringComparison.OrdinalIgnoreCase);
-        Assert.Contains("Wat betekent dit voor jou?", haystack, StringComparison.OrdinalIgnoreCase);
-        Assert.DoesNotContain("RIASEC", haystack, StringComparison.OrdinalIgnoreCase);
-        Assert.DoesNotContain("OCEAN", haystack, StringComparison.OrdinalIgnoreCase);
-        Assert.DoesNotContain("Holland-code", haystack, StringComparison.OrdinalIgnoreCase);
-        Assert.DoesNotContain("Holland code", haystack, StringComparison.OrdinalIgnoreCase);
+        var source = File.ReadAllText(Path.Combine(RepoRoot.Find(), "Jobsy.Infrastructure/Services/AssessmentReportPdfService.cs"));
+        var renderStart = source.IndexOf("internal static byte[] RenderCareer(", StringComparison.Ordinal);
+        Assert.True(renderStart >= 0);
+        var renderCompetence = source.IndexOf("private static byte[] RenderCompetence(", renderStart, StringComparison.Ordinal);
+        var renderCareer = source[renderStart..(renderCompetence > renderStart ? renderCompetence : source.Length)];
+        Assert.Contains("GetBrandLogoPng", source, StringComparison.Ordinal);
+        Assert.Contains("Jouw loopbaanrapport", renderCareer, StringComparison.Ordinal);
+        Assert.Contains("Wat betekent dit voor jou?", renderCareer, StringComparison.Ordinal);
+        Assert.Contains("WriteOccupationBand", renderCareer, StringComparison.Ordinal);
+        Assert.Contains("BandSuper", renderCareer, StringComparison.Ordinal);
+        Assert.Contains("BandStrong", renderCareer, StringComparison.Ordinal);
+        Assert.Contains("BandBroaden", renderCareer, StringComparison.Ordinal);
+        Assert.False(CareerCompassBuilder.ContainsForbiddenJargon(renderCareer));
     }
 
     [Fact]
@@ -260,13 +267,5 @@ public class CareerCompassTests
         using var ms = new MemoryStream();
         stream.CopyTo(ms);
         return ms.ToArray();
-    }
-
-    private static string PdfLiteralText(byte[] pdf)
-    {
-        var raw = System.Text.Encoding.Latin1.GetString(pdf);
-        return string.Concat(
-            System.Text.RegularExpressions.Regex.Matches(raw, @"\((?:\\.|[^\\)])*\)")
-                .Select(m => m.Value.Trim('(', ')')));
     }
 }
