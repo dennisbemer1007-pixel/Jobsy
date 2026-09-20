@@ -11,14 +11,17 @@
         <a class="engagement-btn" href="/">@Culture["Kompas.OpenMap"]</a>
     </div>
 
+    <KompasTabBar Active="_tab" ActiveChanged="SetTab" />
+
     @if (!string.IsNullOrWhiteSpace(_message))
     {
         <p class="state-message">@_message</p>
     }
 
-    <div class="kompas-grid">
-        <article class="kompas-card" aria-labelledby="kompas-competence-title">
-            <h3 id="kompas-competence-title">@Culture["Kompas.Competence"]</h3>
+    @if (_tab == KompasTabs.Competencies)
+    {
+    <article class="kompas-card" id="kompas-panel-competencies" role="tabpanel" aria-labelledby="kompas-tab-competencies">
+            <h3 id="kompas-competence-title">@Culture["Kompas.TabCompetencies"]</h3>
             @if (_loading)
             {
                 <p class="state-message">@Culture["Common.Loading"]</p>
@@ -26,7 +29,15 @@
             else if (_competencyCompleted && _competencyScores is { IsComplete: true })
             {
                 <p class="kompas-status kompas-status--ok">@Culture["Kompas.QuickScanDone"]</p>
-                <CompetencyScorePanel Scores="_competencyScores" />
+                @if (_showWorkStyle)
+                {
+                    <CompetencyScorePanel Scores="_competencyScores" />
+                    <button class="engagement-btn" type="button" @onclick="() => _showWorkStyle = false">@Culture["Fit.HideScores"]</button>
+                }
+                else
+                {
+                    <button class="login-submit" type="button" @onclick="() => _showWorkStyle = true">@Culture["Fit.ShowScores"]</button>
+                }
                 @if (_competenceDeep is { IsCompleted: true })
                 {
                     <p class="kompas-status kompas-status--ok">@Culture["Kompas.DeepDone"]</p>
@@ -60,8 +71,11 @@
                 <a class="login-submit" href="/candidate/competencies">@Culture["Competency.Start"]</a>
             }
         </article>
+    }
 
-        <article class="kompas-card" aria-labelledby="kompas-career-title">
+    @if (_tab == KompasTabs.Occupations)
+    {
+        <article class="kompas-card" id="kompas-panel-occupations" role="tabpanel" aria-labelledby="kompas-tab-occupations">
             <h3 id="kompas-career-title">@Culture["Kompas.Career"]</h3>
             @if (_loading)
             {
@@ -124,9 +138,12 @@
                 <a class="login-submit" href="/candidate/career">@Culture["Career.Start"]</a>
             }
         </article>
+    }
 
-        <article class="kompas-card kompas-card--criteria" aria-labelledby="kompas-criteria-title">
-            <h3 id="kompas-criteria-title">@Culture["Kompas.Criteria"]</h3>
+    @if (_tab == KompasTabs.Profile)
+    {
+        <article class="kompas-card kompas-card--criteria" id="kompas-panel-profile" role="tabpanel" aria-labelledby="kompas-tab-profile">
+            <h3 id="kompas-criteria-title">@Culture["Kompas.TabProfile"]</h3>
             @if (_loading)
             {
                 <p class="state-message">@Culture["Common.Loading"]</p>
@@ -202,13 +219,19 @@
                 </form>
             }
         </article>
-    </div>
+    }
+
+    @if (_tab == KompasTabs.Fit)
+    {
+        <RoleFitCheckPanel />
+    }
 </section>
 
 @code {
     private bool _loadStarted;
     private bool _loading = true;
     private bool _busy;
+    private string _tab = KompasTabs.Profile;
     private string? _message;
     private MeProfile? _profile;
     private bool _competencyCompleted;
@@ -228,6 +251,7 @@
     private readonly HashSet<string> _licenses = new(StringComparer.OrdinalIgnoreCase);
     private readonly HashSet<string> _roles = new(StringComparer.OrdinalIgnoreCase);
     private string? _availabilityKind;
+    private bool _showWorkStyle = true;
     private decimal? _minHours = 8;
     private decimal? _maxHours = 24;
     private bool _flexibleTimes;
@@ -247,6 +271,9 @@
 
     private void OnCultureChanged()
         => InvokeAsync(StateHasChanged);
+
+    private void SetTab(string tab)
+        => _tab = KompasTabs.Normalize(tab);
 
     private async Task TryLoadAsync()
     {

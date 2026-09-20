@@ -1,0 +1,22 @@
+@inject CultureState Culture
+
+<div class="kompas-tabs pill-scroller" role="tablist" aria-label="@Culture["Kompas.Title"]">
+    @foreach (var tab in KompasTabs.All)
+    {
+        var selected = string.Equals(Active, tab.Id, StringComparison.OrdinalIgnoreCase);
+        <button type="button"
+                class="kompas-tab @(selected ? "kompas-tab--active" : null)"
+                role="tab"
+                id="kompas-tab-@tab.Id"
+                aria-selected="@selected"
+                aria-controls="kompas-panel-@tab.Id"
+                @onclick="() => ActiveChanged.InvokeAsync(tab.Id)">
+            @Culture[tab.LabelKey]
+        </button>
+    }
+</div>
+
+@code {
+    [Parameter] public string Active { get; set; } = KompasTabs.Profile;
+    [Parameter] public EventCallback<string> ActiveChanged { get; set; }
+}

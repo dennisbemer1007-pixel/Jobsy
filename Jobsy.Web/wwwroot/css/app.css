@@ -16541,9 +16541,79 @@ html.cookie-consent-known .cookie-consent {
 
 .kompas-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    grid-template-columns: minmax(0, 1fr);
     gap: 1rem;
     margin-bottom: 0.5rem;
+}
+
+.kompas-tabs {
+    display: flex;
+    flex-wrap: nowrap;
+    gap: 0.4rem;
+    margin: 0 0 1rem;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+}
+
+.kompas-tabs::-webkit-scrollbar {
+    display: none;
+}
+
+.kompas-tab {
+    flex: 0 0 auto;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--muted);
+    border-radius: 999px;
+    padding: 0.45rem 0.9rem;
+    font-size: 0.88rem;
+    font-weight: 700;
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+.kompas-tab--active {
+    border-color: var(--accent);
+    background: var(--accent);
+    color: #fff;
+}
+
+.kompas-fit-search,
+.kompas-fit-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.role-fit-result {
+    display: flex;
+    flex-direction: column;
+    gap: 0.85rem;
+}
+
+.role-fit-result__pct {
+    margin: 0;
+    font-size: 1.35rem;
+}
+
+.role-fit-result__pct strong {
+    color: var(--brand);
+    font-size: 1.7rem;
+}
+
+.role-fit-result h4 {
+    margin: 0 0 0.35rem;
+}
+
+.role-fit-result ul,
+.role-fit-result ol {
+    margin: 0;
+    padding-left: 1.1rem;
+}
+
+.fit-upsell {
+    font-size: 0.9rem;
 }
 
 .kompas-card {

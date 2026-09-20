@@ -58,6 +58,8 @@ public class LocalizationTests
             "Kompas.BandStrong",
             "Kompas.BandBroaden",
             "Kompas.PracticalTitle",
+            "Kompas.TabFit",
+            "Fit.Locked",
             "Profile.PresetOffice",
             "HowLobsy.Title",
             "CandidateVacancies.RecentlyViewed",

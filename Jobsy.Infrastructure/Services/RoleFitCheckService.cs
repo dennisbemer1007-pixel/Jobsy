@@ -1,0 +1,351 @@
+using System.Net.Http.Headers;
+using System.Net.Http.Json;
+using System.Text.Json;
+using System.Text.Json.Serialization;
+using Jobsy.Core;
+using Jobsy.Core.Entities;
+using Jobsy.Core.Enums;
+using Jobsy.Core.Interfaces;
+using Jobsy.Core.Options;
+using Jobsy.Core.Rules;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
+using Jobsy.Infrastructure.Data;
+
+namespace Jobsy.Infrastructure.Services;
+
+public sealed class RoleFitCheckService : IRoleFitCheckService
+{
+    public const string HttpClientName = "OpenAIRoleFit";
+
+    private static readonly JsonSerializerOptions JsonOptions = new()
+    {
+        PropertyNameCaseInsensitive = true
+    };
+
+    private readonly JobsyDbContext _db;
+    private readonly ICandidateCompetencyService _competencies;
+    private readonly ICandidateCareerInterestService _career;
+    private readonly IFlexCommercialService _commercial;
+    private readonly IHttpClientFactory _httpClientFactory;
+    private readonly IIntegrationCredentialService _credentials;
+    private readonly OpenAiOptions _options;
+    private readonly ILogger<RoleFitCheckService> _logger;
+
+    public RoleFitCheckService(
+        JobsyDbContext db,
+        ICandidateCompetencyService competencies,
+        ICandidateCareerInterestService career,
+        IFlexCommercialService commercial,
+        IHttpClientFactory httpClientFactory,
+        IIntegrationCredentialService credentials,
+        IOptions<OpenAiOptions> options,
+        ILogger<RoleFitCheckService> logger)
+    {
+        _db = db;
+        _competencies = competencies;
+        _career = career;
+        _commercial = commercial;
+        _httpClientFactory = httpClientFactory;
+        _credentials = credentials;
+        _options = options.Value;
+        _logger = logger;
+    }
+
+    public async Task<RoleFitCheckStateDto> GetAsync(Guid userId, CancellationToken cancellationToken = default)
+    {
+        var competence = await _competencies.GetCompletedScoresAsync(userId, cancellationToken);
+        var career = await _career.GetCompletedScoresAsync(userId, cancellationToken);
+        var unlocked = competence is { IsComplete: true } && career is { IsComplete: true };
+        var deep = await HasCompletedDeepAsync(userId, cancellationToken);
+        var price = (await _commercial.GetAsync(cancellationToken)).DeepAnalysisPriceEuro;
+        var last = await _db.CandidateRoleFitChecks.AsNoTracking()
+            .FirstOrDefaultAsync(r => r.UserId == userId, cancellationToken);
+
+        return new RoleFitCheckStateDto(
+            unlocked,
+            competence is { IsComplete: true },
+            career is { IsComplete: true },
+            deep,
+            price,
+            unlocked ? "" : RoleFitCheckCopy.Locked,
+            RoleFitCheckCopy.DeepUpsell,
+            last is null ? null : ToResult(last, deep));
+    }
+
+    public async Task<RoleFitCheckStateDto> EvaluateAsync(
+        Guid userId,
+        string? jobTitle,
+        CancellationToken cancellationToken = default)
+    {
+        var title = RoleFitCheckBuilder.NormalizeTitle(jobTitle);
+        if (title is null)
+        {
+            throw new InvalidOperationException(RoleFitCheckCopy.TitleEmpty);
+        }
+
+        var competence = await _competencies.GetCompletedScoresAsync(userId, cancellationToken);
+        var career = await _career.GetCompletedScoresAsync(userId, cancellationToken);
+        if (competence is not { IsComplete: true } || career is not { IsComplete: true })
+        {
+            throw new RoleFitLockedException();
+        }
+
+        var fromDeep = await HasCompletedDeepAsync(userId, cancellationToken);
+        var local = RoleFitCheckBuilder.Build(title, competence, career, fromDeep);
+        var snapshot = await TryOpenAiAsync(title, competence, career, fromDeep, userId, local, cancellationToken)
+                       ?? local;
+
+        var now = DateTime.UtcNow;
+        var row = await _db.CandidateRoleFitChecks.FirstOrDefaultAsync(r => r.UserId == userId, cancellationToken);
+        if (row is null)
+        {
+            row = new CandidateRoleFitCheck
+            {
+                Id = Guid.NewGuid(),
+                UserId = userId,
+                CreatedAtUtc = now
+            };
+            _db.CandidateRoleFitChecks.Add(row);
+        }
+
+        row.JobTitle = snapshot.JobTitle;
+        row.MatchPercent = snapshot.MatchPercent;
+        row.ResultJson = RoleFitCheckJson.Serialize(snapshot);
+        row.FromDeepAnalysis = snapshot.FromDeepAnalysis;
+        row.FromOpenAi = snapshot.FromOpenAi;
+        row.UpdatedAtUtc = now;
+        await _db.SaveChangesAsync(cancellationToken);
+
+        var price = (await _commercial.GetAsync(cancellationToken)).DeepAnalysisPriceEuro;
+        return new RoleFitCheckStateDto(
+            true,
+            true,
+            true,
+            fromDeep,
+            price,
+            "",
+            RoleFitCheckCopy.DeepUpsell,
+            ToResult(row, fromDeep));
+    }
+
+    private async Task<RoleFitCheckSnapshot?> TryOpenAiAsync(
+        string jobTitle,
+        CompetencyScores competencies,
+        RiasecScores career,
+        bool fromDeep,
+        Guid userId,
+        RoleFitCheckSnapshot fallback,
+        CancellationToken cancellationToken)
+    {
+        var apiKey = await ResolveApiKeyAsync(cancellationToken);
+        if (string.IsNullOrWhiteSpace(apiKey))
+        {
+            return null;
+        }
+
+        try
+        {
+            var prefs = await LoadPracticalCriteriaAsync(userId, cancellationToken);
+            var user = RoleFitCheckPrompt.User(
+                jobTitle,
+                competencies,
+                career,
+                fromDeep,
+                prefs.MaxTravelMinutes,
+                prefs.Transport,
+                prefs.Licenses,
+                prefs.Roles);
+            var model = await ResolveModelAsync(cancellationToken);
+            var baseUrl = await ResolveBaseUrlAsync(cancellationToken);
+            var client = _httpClientFactory.CreateClient(HttpClientName);
+            using var request = new HttpRequestMessage(
+                HttpMethod.Post,
+                new Uri(new Uri(baseUrl, UriKind.Absolute), "chat/completions"));
+            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", apiKey);
+            request.Content = JsonContent.Create(new
+            {
+                model,
+                temperature = 0.3,
+                response_format = new { type = "json_object" },
+                messages = new object[]
+                {
+                    new { role = "system", content = RoleFitCheckPrompt.System },
+                    new { role = "user", content = user }
+                }
+            });
+
+            using var response = await client.SendAsync(request, cancellationToken);
+            if (!response.IsSuccessStatusCode)
+            {
+                _logger.LogWarning(
+                    "OpenAI functie-fit gaf {StatusCode} (response body not logged).",
+                    (int)response.StatusCode);
+                return null;
+            }
+
+            var completion = await response.Content.ReadFromJsonAsync<ChatCompletionResponse>(JsonOptions, cancellationToken);
+            var content = completion?.Choices?.FirstOrDefault()?.Message?.Content;
+            var parsed = RoleFitCheckJson.TryDeserialize(content, jobTitle, fromDeep);
+            if (parsed is null || parsed.Strengths.Count == 0)
+            {
+                return null;
+            }
+
+            return parsed with { FromOpenAi = true, FromDeepAnalysis = fromDeep };
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            _logger.LogWarning(ex, "OpenAI functie-fit mislukt; lokale indicatie wordt gebruikt.");
+            return fallback with { FromOpenAi = false };
+        }
+    }
+
+    private async Task<(int? MaxTravelMinutes, string? Transport, IReadOnlyList<string>? Licenses, IReadOnlyList<string>? Roles)>
+        LoadPracticalCriteriaAsync(Guid userId, CancellationToken cancellationToken)
+    {
+        var json = await _db.Users.AsNoTracking()
+            .Where(u => u.Id == userId)
+            .Select(u => u.PreferencesJson)
+            .FirstOrDefaultAsync(cancellationToken);
+        if (string.IsNullOrWhiteSpace(json))
+        {
+            return (null, null, null, null);
+        }
+
+        try
+        {
+            using var doc = JsonDocument.Parse(json);
+            var root = doc.RootElement;
+            int? minutes = root.TryGetProperty("maxTravelMinutes", out var m) && m.ValueKind == JsonValueKind.Number
+                ? m.GetInt32()
+                : null;
+            var transport = root.TryGetProperty("preferredTransport", out var t) && t.ValueKind == JsonValueKind.String
+                ? t.GetString()
+                : null;
+            List<string>? licenses = ReadStringArray(root, "drivingLicenses");
+            List<string>? roles = ReadStringArray(root, "roles");
+            return (minutes, transport, licenses, roles);
+        }
+        catch (JsonException)
+        {
+            return (null, null, null, null);
+        }
+    }
+
+    private static List<string>? ReadStringArray(JsonElement root, string name)
+    {
+        if (!root.TryGetProperty(name, out var el) || el.ValueKind != JsonValueKind.Array)
+        {
+            return null;
+        }
+
+        var list = new List<string>();
+        foreach (var item in el.EnumerateArray())
+        {
+            if (item.ValueKind == JsonValueKind.String)
+            {
+                var value = item.GetString();
+                if (!string.IsNullOrWhiteSpace(value) && !value.Contains('@', StringComparison.Ordinal))
+                {
+                    list.Add(value.Trim());
+                }
+            }
+        }
+
+        return list.Count == 0 ? null : list;
+    }
+
+    private Task<bool> HasCompletedDeepAsync(Guid userId, CancellationToken cancellationToken)
+        => _db.CandidateDeepAnalyses.AsNoTracking()
+            .AnyAsync(
+                d => d.UserId == userId && d.Status == CandidateDeepAnalysisStatuses.Completed,
+                cancellationToken);
+
+    private static RoleFitCheckResultDto ToResult(CandidateRoleFitCheck row, bool deepNow)
+    {
+        var snapshot = RoleFitCheckJson.TryDeserialize(row.ResultJson, row.JobTitle, row.FromDeepAnalysis || deepNow)
+                       ?? new RoleFitCheckSnapshot(
+                           row.JobTitle,
+                           row.MatchPercent,
+                           [],
+                           [],
+                           [],
+                           CareerOccupationKeys.FromTitle(row.JobTitle),
+                           row.FromDeepAnalysis || deepNow,
+                           row.FromOpenAi);
+        var query = Uri.EscapeDataString(snapshot.MapQuery);
+        return new RoleFitCheckResultDto(
+            snapshot.JobTitle,
+            snapshot.MatchPercent,
+            snapshot.Strengths,
+            snapshot.Gaps,
+            snapshot.ActionSteps,
+            snapshot.SearchKeys,
+            $"/?q={query}",
+            snapshot.FromDeepAnalysis,
+            snapshot.FromOpenAi,
+            snapshot.ShowDeepUpsell);
+    }
+
+    private async Task<string?> ResolveApiKeyAsync(CancellationToken cancellationToken)
+    {
+        var fromDb = await _credentials.GetRawApiKeyAsync(IntegrationKey.OpenAI, cancellationToken);
+        if (!string.IsNullOrWhiteSpace(fromDb))
+        {
+            return fromDb;
+        }
+
+        return string.IsNullOrWhiteSpace(_options.ApiKey) ? null : _options.ApiKey.Trim();
+    }
+
+    private async Task<string> ResolveModelAsync(CancellationToken cancellationToken)
+    {
+        var fromDb = await _credentials.GetModelAsync(IntegrationKey.OpenAI, cancellationToken);
+        if (!string.IsNullOrWhiteSpace(fromDb))
+        {
+            return fromDb;
+        }
+
+        return string.IsNullOrWhiteSpace(_options.Model) ? "gpt-4o-mini" : _options.Model.Trim();
+    }
+
+    private async Task<string> ResolveBaseUrlAsync(CancellationToken cancellationToken)
+    {
+        var fromDb = await _credentials.GetBaseUrlAsync(IntegrationKey.OpenAI, cancellationToken);
+        if (!string.IsNullOrWhiteSpace(fromDb)
+            && IntegrationEndpointUrl.TryNormalizeBaseUrl(fromDb, out var normalized, out _)
+            && !string.IsNullOrWhiteSpace(normalized))
+        {
+            return normalized;
+        }
+
+        var fallback = string.IsNullOrWhiteSpace(_options.BaseUrl)
+            ? "https://api.openai.com/v1/"
+            : _options.BaseUrl;
+        if (IntegrationEndpointUrl.TryNormalizeBaseUrl(fallback, out var normalizedFallback, out _)
+            && !string.IsNullOrWhiteSpace(normalizedFallback))
+        {
+            return normalizedFallback;
+        }
+
+        return "https://api.openai.com/v1/";
+    }
+
+    private sealed class ChatCompletionResponse
+    {
+        public List<Choice>? Choices { get; set; }
+
+        public sealed class Choice
+        {
+            public Message? Message { get; set; }
+        }
+
+        public sealed class Message
+        {
+            [JsonPropertyName("content")]
+            public string? Content { get; set; }
+        }
+    }
+}

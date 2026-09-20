@@ -213,6 +213,7 @@ public class CareerCompassTests
         var home = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Pages/Candidate/CandidateKompas.razor"));
         Assert.Contains("Kompas.Career", home, StringComparison.Ordinal);
         Assert.Contains("CareerCompassPanel", home, StringComparison.Ordinal);
+        Assert.Contains("KompasTabBar", home, StringComparison.Ordinal);
 
         var profile = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Pages/Candidate/Profile.razor"));
         Assert.Contains("CareerCompassPanel", profile, StringComparison.Ordinal);

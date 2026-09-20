@@ -1,0 +1,158 @@
+@using Jobsy.Web.Localization
+@inject JobsyApiClient Api
+@inject CultureState Culture
+@implements IDisposable
+
+<article class="kompas-card kompas-card--fit" id="kompas-panel-fit" role="tabpanel" aria-labelledby="kompas-tab-fit">
+    <h3>@Culture["Kompas.TabFit"]</h3>
+    <p class="login-lead">@Culture["Fit.Lead"]</p>
+
+    @if (!string.IsNullOrWhiteSpace(_message))
+    {
+        <p class="state-message">@_message</p>
+    }
+
+    @if (_loading)
+    {
+        <p class="state-message">@Culture["Common.Loading"]</p>
+    }
+    else if (_state is not { IsUnlocked: true })
+    {
+        <p class="kompas-status">@Culture["Fit.Locked"]</p>
+        <div class="kompas-fit-actions">
+            <a class="login-submit" href="/candidate/competencies">@Culture["Competency.Start"]</a>
+            <a class="engagement-btn" href="/candidate/career">@Culture["Career.Start"]</a>
+        </div>
+    }
+    else
+    {
+        <form class="kompas-fit-search" @onsubmit="EvaluateAsync" @onsubmit:preventDefault="true">
+            <label>
+                @Culture["Fit.JobTitle"]
+                <input type="search"
+                       maxlength="80"
+                       autocomplete="off"
+                       placeholder="@Culture["Fit.Placeholder"]"
+                       @bind="_jobTitle" />
+            </label>
+            <button class="login-submit" type="submit" disabled="@_busy">@Culture["Fit.Check"]</button>
+        </form>
+
+        @if (_state.LastResult is { } result)
+        {
+            <div class="role-fit-result">
+                <p class="role-fit-result__pct" aria-label="@Culture["Fit.Match"]">
+                    <strong>@result.MatchPercent%</strong> @Culture["Fit.Match"]
+                </p>
+                <section>
+                    <h4>@Culture["Fit.Strengths"]</h4>
+                    <ul>
+                        @foreach (var line in result.Strengths)
+                        {
+                            <li>@line</li>
+                        }
+                    </ul>
+                </section>
+                <section>
+                    <h4>@Culture["Fit.Gaps"]</h4>
+                    <ul>
+                        @foreach (var line in result.Gaps)
+                        {
+                            <li>@line</li>
+                        }
+                    </ul>
+                </section>
+                <section>
+                    <h4>@Culture["Fit.Steps"]</h4>
+                    <ol>
+                        @foreach (var line in result.ActionSteps)
+                        {
+                            <li>@line</li>
+                        }
+                    </ol>
+                </section>
+                <a class="login-submit" href="@result.MapHref">@Culture["Fit.OpenMap"]</a>
+            </div>
+            @if (result.ShowDeepUpsell)
+            {
+                <p class="login-lead fit-upsell">@Culture["Fit.DeepUpsell"]</p>
+                <a class="engagement-btn" href="/candidate/deep-analysis/career">@Culture["Career.DeepUnlock"]</a>
+            }
+        }
+    }
+</article>
+
+@code {
+    private bool _loadStarted;
+    private bool _loading = true;
+    private bool _busy;
+    private string? _message;
+    private string _jobTitle = "";
+    private RoleFitCheckState? _state;
+
+    protected override void OnInitialized()
+        => Culture.Changed += OnCultureChanged;
+
+    protected override Task OnInitializedAsync()
+        => TryLoadAsync();
+
+    protected override Task OnAfterRenderAsync(bool firstRender)
+        => firstRender ? TryLoadAsync() : Task.CompletedTask;
+
+    public void Dispose()
+        => Culture.Changed -= OnCultureChanged;
+
+    private void OnCultureChanged()
+        => InvokeAsync(StateHasChanged);
+
+    private async Task TryLoadAsync()
+    {
+        if (!HomeDashboardLoad.TryBegin(ref _loadStarted, RendererInfo.IsInteractive))
+        {
+            return;
+        }
+
+        await LoadAsync();
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private async Task LoadAsync()
+    {
+        _loading = true;
+        _message = null;
+        try
+        {
+            _state = await Api.GetMyRoleFitAsync();
+            if (_state?.LastResult is { } last && string.IsNullOrWhiteSpace(_jobTitle))
+            {
+                _jobTitle = last.JobTitle;
+            }
+        }
+        catch
+        {
+            _message = Culture["Common.Error"];
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private async Task EvaluateAsync()
+    {
+        _busy = true;
+        _message = null;
+        try
+        {
+            _state = await Api.EvaluateRoleFitAsync(_jobTitle);
+        }
+        catch (Exception ex)
+        {
+            _message = string.IsNullOrWhiteSpace(ex.Message) ? Culture["Common.Error"] : ex.Message;
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+}

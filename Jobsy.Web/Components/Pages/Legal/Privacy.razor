@@ -69,7 +69,7 @@
                 <li><strong>Geocoding:</strong> Nominatim / OpenStreetMap voor adres- of locatieomzetting.</li>
                 <li><strong>Identiteitsproviders:</strong> Google of Microsoft (Entra) als je daarmee inlogt (alleen geverifieerde e-mailadressen).</li>
                 <li><strong>Betaaldienstverleners:</strong> optioneel Mollie voor tokenaankopen en (toekomstig) salesmanager-uitbetalingen (minimale metadata: checkout/company/pack).</li>
-                <li><strong>AI (optioneel):</strong> OpenAI voor oefengesprek, vacaturemoderatie, vertaling, assistent-chat, het uitlezen van een geüpload CV (alleen lege profielvelden die duidelijk in het bestand staan) en — na de uitgebreide beroepentest — het voorstellen van algemene beroepen voor <strong>Mijn Beroepen-kompas</strong> (Likert-antwoorden en richtingscores, zonder naam of e-mail). Bij gebruik kan doorgifte naar de Verenigde Staten plaatsvinden.</li>
+                <li><strong>AI (optioneel):</strong> OpenAI voor oefengesprek, vacaturemoderatie, vertaling, assistent-chat, het uitlezen van een geüpload CV (alleen lege profielvelden die duidelijk in het bestand staan), — na de uitgebreide beroepentest — het voorstellen van algemene beroepen voor <strong>Mijn Beroepen-kompas</strong>, en de Functie-Fit Checker (functietitel + scores, zonder naam of e-mail). Bij gebruik kan doorgifte naar de Verenigde Staten plaatsvinden.</li>
                 <li><strong>WhatsApp / telefoon:</strong> alleen wanneer jij of de werkgever daarvoor kiest ná een geverifieerde sollicitatie; het gesprek verloopt buiten Lobsy.</li>
             </ul>
             <p>We verkopen je persoonsgegevens niet.</p>
@@ -126,8 +126,14 @@
                 (OpenAI wanneer geconfigureerd; anders een lokale catalogus van de Nederlandse arbeidsmarkt —
                 niet beperkt tot vacatures die nu op Lobsy staan). Checkout en ontgrendeling lopen via de betaalflow;
                 lege opslag overschrijft bestaande antwoorden niet.
-                Bij export (“Mijn gegevens”) gaan beide tests, het beroepen-kompas, diepte-analyses, checkouts en talent-contactverzoeken
+                Bij export (“Mijn gegevens”) gaan beide tests, het beroepen-kompas, de Functie-Fit Checker, diepte-analyses, checkouts en talent-contactverzoeken
                 mee; bij uitschrijven of wissen van het account worden ze verwijderd.
+            </p>
+            <p>
+                De <strong>Functie-Fit Checker</strong> (“Past dit bij mij?”) is pas beschikbaar nadat beide gratis quick-scans (25 vragen)
+                zijn afgerond. We sturen de ingevoerde functietitel plus je scores en praktische voorkeuren (reistijd, vervoer, rijbewijs, branches)
+                naar OpenAI — zonder naam, e-mail of adres. Het laatste resultaat (titel, matchpercentage, sterktes, gaten, groeistappen)
+                bewaren we in je account tot je het wist. Zonder OpenAI-sleutel volgt een lokale indicatie.
             </p>
         </section>
 
@@ -152,9 +158,10 @@
             <h2>7. AI-functies</h2>
             <p>
                 Bij optionele AI-functies (oefengesprek, vacaturemoderatie, vertaling, assistent, CV-extractie,
-                beroepen-kompas na de uitgebreide beroepentest)
+                beroepen-kompas na de uitgebreide beroepentest, Functie-Fit Checker)
                 kunnen berichten, vacaturetekst, CV-tekst of (anonieme) testdata naar OpenAI worden gestuurd.
                 Voor het beroepen-kompas sturen we Likert-antwoorden en richtingscores, geen naam of e-mail.
+                Voor de Functie-Fit Checker sturen we de functietitel plus scores en voorkeuren, geen naam of e-mail.
                 Chatgeschiedenis van het oefengesprek
                 wordt niet permanent server-side als gespreksarchief bewaard. Bij gebruik van OpenAI kan
                 doorgifte naar de Verenigde Staten plaatsvinden. Een eigen CV uploaden is vrijwillig; zonder upload

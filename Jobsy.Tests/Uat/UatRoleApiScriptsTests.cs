@@ -36,6 +36,7 @@ public sealed class UatRoleApiScriptsTests : IClassFixture<RoleFunctionalWebAppF
         Assert.Equal(HttpStatusCode.Unauthorized, (await c.GetAsync("api/me/matched-vacancies")).StatusCode);
         Assert.Equal(HttpStatusCode.Unauthorized, (await c.GetAsync("api/me/talent-contacts")).StatusCode);
         Assert.Equal(HttpStatusCode.Unauthorized, (await c.GetAsync("api/me/deep-analysis")).StatusCode);
+        Assert.Equal(HttpStatusCode.Unauthorized, (await c.GetAsync("api/me/role-fit")).StatusCode);
         Assert.Equal(HttpStatusCode.Unauthorized, (await c.GetAsync("api/privacy/export")).StatusCode);
         Assert.Equal(HttpStatusCode.Unauthorized, (await c.GetAsync("api/applications")).StatusCode);
         Assert.Equal(HttpStatusCode.Unauthorized, (await c.GetAsync("api/vacancies/manage")).StatusCode);
@@ -57,6 +58,7 @@ public sealed class UatRoleApiScriptsTests : IClassFixture<RoleFunctionalWebAppF
         Assert.Equal(HttpStatusCode.OK, (await c.GetAsync("api/me/matched-vacancies")).StatusCode);
         Assert.Equal(HttpStatusCode.OK, (await c.GetAsync("api/me/talent-contacts")).StatusCode);
         Assert.Equal(HttpStatusCode.OK, (await c.GetAsync("api/me/deep-analysis?kind=career")).StatusCode);
+        Assert.Equal(HttpStatusCode.OK, (await c.GetAsync("api/me/role-fit")).StatusCode);
         Assert.Equal(HttpStatusCode.OK, (await c.GetAsync("api/privacy/export")).StatusCode);
         Assert.Equal(HttpStatusCode.OK, (await c.GetAsync("api/me/applications")).StatusCode);
         Assert.Equal(HttpStatusCode.OK, (await c.PostAsJsonAsync($"api/vacancies/{_factory.VacancyId}/like", new { })).StatusCode);
@@ -92,6 +94,7 @@ public sealed class UatRoleApiScriptsTests : IClassFixture<RoleFunctionalWebAppF
         Assert.Equal(HttpStatusCode.Forbidden, (await c.GetAsync("api/integrations/health")).StatusCode);
         Assert.Equal(HttpStatusCode.Forbidden, (await c.GetAsync("api/me/competencies")).StatusCode);
         Assert.Equal(HttpStatusCode.Forbidden, (await c.GetAsync("api/me/career-interests")).StatusCode);
+        Assert.Equal(HttpStatusCode.Forbidden, (await c.GetAsync("api/me/role-fit")).StatusCode);
         Assert.Equal(HttpStatusCode.Forbidden, (await c.PostAsJsonAsync("api/tokens/allocate", new
         {
             fromCompanyId = _factory.CompanyId,

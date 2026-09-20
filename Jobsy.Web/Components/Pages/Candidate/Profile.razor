@@ -15,7 +15,8 @@
 
 <div class="panel-page profile-page profile-page--candidate">
     <header class="saved-gate__header profile-page__header">
-        <h1>@Culture["Profile.Title"]</h1>
+        <h1>@Culture["Kompas.Title"]</h1>
+        <p class="login-lead">@Culture["Kompas.Lead"]</p>
         @if (!string.IsNullOrWhiteSpace(_returnUrl))
         {
             <p class="login-lead">@Culture["Profile.ReturnHint"]</p>
@@ -23,6 +24,9 @@
     </header>
     <div class="profile-layout">
     <div class="profile-layout__main">
+    <KompasTabBar Active="_profileTab" ActiveChanged="SetProfileTab" />
+    @if (_profileTab == KompasTabs.Competencies)
+    {
     <section class="detail-card competency-profile-card" aria-labelledby="competency-profile-title">
         <h2 id="competency-profile-title" class="profile-page__title">@Culture["Competency.Section"]</h2>
         <p class="login-lead">@Culture["Competency.Lead"]</p>
@@ -62,6 +66,10 @@
             <a class="login-submit" href="/candidate/competencies">@Culture["Competency.Start"]</a>
         }
     </section>
+    }
+
+    @if (_profileTab == KompasTabs.Occupations)
+    {
     <section class="detail-card competency-profile-card" aria-labelledby="career-profile-title">
         <h2 id="career-profile-title" class="profile-page__title">@Culture["Kompas.Career"]</h2>
         <p class="login-lead">@Culture["Career.Lead"]</p>
@@ -102,6 +110,15 @@
             <a class="login-submit" href="/candidate/career">@Culture["Career.Start"]</a>
         }
     </section>
+    }
+
+    @if (_profileTab == KompasTabs.Fit)
+    {
+        <RoleFitCheckPanel />
+    }
+
+    @if (_profileTab == KompasTabs.Profile)
+    {
     <section class="detail-card competency-profile-card" aria-labelledby="talent-contacts-title">
         <h2 id="talent-contacts-title" class="profile-page__title">@Culture["Talent.CandidateTitle"]</h2>
         <p class="login-lead">@Culture["Talent.CandidateLead"]</p>
@@ -636,6 +653,7 @@
             </button>
         </section>
     }
+    }
     </div>
     <aside class="profile-layout__matches">
         <div class="detail-card">
@@ -696,6 +714,7 @@
     private CancellationTokenSource? _suggestCts;
     private int _suggestGeneration;
     private string _openSection = "personal";
+    private string _profileTab = KompasTabs.Profile;
     private static readonly string[] WeekdayCodes = ["Ma", "Di", "Wo", "Do", "Vr"];
     private bool _competenciesLoading = true;
     private bool _matchesLoading = true;
@@ -721,8 +740,14 @@
     [SupplyParameterFromQuery(Name = "returnUrl")]
     public string? ReturnUrl { get; set; }
 
+    [SupplyParameterFromQuery(Name = "tab")]
+    public string? Tab { get; set; }
+
     protected override void OnInitialized()
-        => Culture.Changed += OnCultureChanged;
+    {
+        Culture.Changed += OnCultureChanged;
+        _profileTab = KompasTabs.Normalize(Tab);
+    }
 
     protected override async Task OnInitializedAsync()
     {
@@ -894,6 +919,9 @@
 
     private void OnCultureChanged()
         => InvokeAsync(StateHasChanged);
+
+    private void SetProfileTab(string tab)
+        => _profileTab = KompasTabs.Normalize(tab);
 
     private void OpenUnsubscribe() => _unsubscribeOpen = true;
     private void CloseUnsubscribe() => _unsubscribeOpen = false;

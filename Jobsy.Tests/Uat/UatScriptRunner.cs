@@ -468,6 +468,10 @@ public static class UatScriptRunner
             var root = RepoRoot.Find();
             var home = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Pages/Candidate/CandidateHomePanel.razor"));
             Assert.Contains("CandidateKompas", home, StringComparison.Ordinal);
+            var kompas = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Pages/Candidate/CandidateKompas.razor"));
+            Assert.Contains("KompasTabBar", kompas, StringComparison.Ordinal);
+            Assert.Contains("RoleFitCheckPanel", kompas, StringComparison.Ordinal);
+            Assert.Equal(RoleFitCheckCopy.Locked, Jobsy.Web.Localization.UiStrings.Get("Fit.Locked", "nl"));
             var dto = File.ReadAllText(Path.Combine(root, "Jobsy.Api/Models/VacancyListItemDto.cs"));
             Assert.Contains("MatchPercent", dto, StringComparison.Ordinal);
             Assert.Contains("minMatchPercent", File.ReadAllText(Path.Combine(root, "Jobsy.Api/Controllers/VacanciesController.cs")), StringComparison.Ordinal);

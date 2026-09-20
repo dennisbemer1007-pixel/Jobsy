@@ -932,6 +932,31 @@ public sealed class JobsyApiClient : IAsyncDisposable
                ?? new CandidateCareerInterestState();
     }
 
+    public async Task<RoleFitCheckState?> GetMyRoleFitAsync(CancellationToken ct = default)
+    {
+        try
+        {
+            return await _http.GetFromJsonAsync<RoleFitCheckState>("api/me/role-fit", ct);
+        }
+        catch (HttpRequestException ex) when (ex.StatusCode is HttpStatusCode.Unauthorized or HttpStatusCode.NotFound or HttpStatusCode.Forbidden)
+        {
+            return null;
+        }
+    }
+
+    public async Task<RoleFitCheckState> EvaluateRoleFitAsync(string jobTitle, CancellationToken ct = default)
+    {
+        var response = await _http.PostAsJsonAsync("api/me/role-fit", new { jobTitle }, ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException(ExtractMessage(body) ?? "Functie-fit toetsen mislukt.");
+        }
+
+        return await response.Content.ReadFromJsonAsync<RoleFitCheckState>(cancellationToken: ct)
+               ?? new RoleFitCheckState();
+    }
+
     public async Task<DeepAnalysisState?> GetDeepAnalysisAsync(string kind, CancellationToken ct = default)
     {
         try
