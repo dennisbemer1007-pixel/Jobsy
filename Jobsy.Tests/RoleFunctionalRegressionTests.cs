@@ -449,6 +449,9 @@ public class RoleFunctionalRegressionTests : IClassFixture<RoleFunctionalWebAppF
         Assert.DoesNotContain("RIASEC", result.ToString(), StringComparison.OrdinalIgnoreCase);
         Assert.DoesNotContain("OCEAN", result.ToString(), StringComparison.OrdinalIgnoreCase);
         Assert.DoesNotContain("@", result.ToString(), StringComparison.Ordinal);
+        Assert.True(result.TryGetProperty("trainingOffers", out var offers));
+        Assert.True(offers.GetArrayLength() > 0);
+        Assert.Contains("Zorgcollege", offers.ToString(), StringComparison.Ordinal);
     }
 
     [Fact]

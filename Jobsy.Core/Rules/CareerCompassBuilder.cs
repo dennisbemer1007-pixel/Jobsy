@@ -209,6 +209,7 @@ public static class CareerCompassBuilder
             workplace,
             culture,
             "Taken die vaak passen: afwisseling tussen doen en overleg, met een duidelijke rol. Twijfel je? Kies de vacature waarvan de dagelijkse klus het meest klinkt als jouw top-richting hierboven.",
+            TrainingCopy.GapAdvice,
             platform
         };
         return lines;

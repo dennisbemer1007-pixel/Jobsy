@@ -51,6 +51,7 @@ public class RoleFitCheckTests
         Assert.Contains("q=", BuildMapHref(snapshot.MapQuery), StringComparison.Ordinal);
         AssertNoJargon(snapshot);
         Assert.Contains(snapshot.ActionSteps, s => s.Contains("banenkaart", StringComparison.OrdinalIgnoreCase));
+        Assert.Contains(snapshot.ActionSteps, s => s == TrainingCopy.GapAdvice);
         Assert.Contains(snapshot.ActionSteps, s => s.Contains("150-vragen", StringComparison.OrdinalIgnoreCase));
     }
 
@@ -85,7 +86,7 @@ public class RoleFitCheckTests
         Assert.DoesNotContain("@", user, StringComparison.Ordinal);
         Assert.False(CareerCompassBuilder.ContainsForbiddenJargon(user));
         Assert.Contains("Jip-en-Janneke", RoleFitCheckPrompt.System, StringComparison.Ordinal);
-        Assert.Contains("matchPercent", RoleFitCheckPrompt.System, StringComparison.Ordinal);
+        Assert.Contains("Volg een korte cursus", RoleFitCheckPrompt.System, StringComparison.Ordinal);
         Assert.Contains("extraversie", RoleFitCheckPrompt.System, StringComparison.OrdinalIgnoreCase);
     }
 
@@ -105,6 +106,7 @@ public class RoleFitCheckTests
         var panel = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Pages/Candidate/RoleFitCheckPanel.razor"));
         Assert.Contains("Fit.Locked", panel, StringComparison.Ordinal);
         Assert.Contains("Fit.DeepUpsell", panel, StringComparison.Ordinal);
+        Assert.Contains("TrainingOffersBlock", panel, StringComparison.Ordinal);
         Assert.Contains("Fit.OpenMap", panel, StringComparison.Ordinal);
         Assert.DoesNotContain("RIASEC", panel, StringComparison.OrdinalIgnoreCase);
         Assert.DoesNotContain("OCEAN", panel, StringComparison.OrdinalIgnoreCase);
@@ -117,8 +119,10 @@ public class RoleFitCheckTests
         var privacy = File.ReadAllText(Path.Combine(root, "Jobsy.Infrastructure/Services/PrivacyDataService.cs"));
         Assert.Contains("RoleFitChecks", privacy, StringComparison.Ordinal);
         Assert.Contains("CandidateRoleFitChecks.RemoveRange", privacy, StringComparison.Ordinal);
+        Assert.Contains("TrainingClicks", privacy, StringComparison.Ordinal);
 
         var di = File.ReadAllText(Path.Combine(root, "Jobsy.Infrastructure/DependencyInjection.cs"));
+        Assert.Contains("ITrainingUpskillService", di, StringComparison.Ordinal);
         Assert.Contains("IRoleFitCheckService", di, StringComparison.Ordinal);
     }
 

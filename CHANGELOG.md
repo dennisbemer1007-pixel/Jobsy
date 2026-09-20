@@ -14,6 +14,9 @@ Alle noemenswaardige wijzigingen aan dit project worden in dit bestand bijgehoud
 ## [Unreleased]
 
 ### Added
+- **Opleidings- & upskill-vliegwiel:** bij een gat in de Functie-Fit Checker (en het Beroepen-kompas) volgt het advies “Volg een korte cursus of omscholing om dit gat te dichten” plus CTA *Bekijk erkende opleidingen voor dit vakgebied*. Landelijke affiliates (LOI/Daisycon, NTI/Awin) met UTM/`ref=lobsy`/`candidate_id` (HMAC, geen e-mail/GUID). Regionale praktijkpartners Den Haag/Westland (zorg, techniek, logistiek) met intake-/start-fee. Admin `/admin/training`: catalogus, conversiematch (click-id / hash / e-mailhash) en maand-CSV. RTBF wist `UserId` op kliks, hashes blijven voor facturatie.
+
+### Added
 - **Cultuur & teamfit:** werkgevers kiezen 3–5 cultuurpijlers bij vacaturecreatie/bewerken (`CulturePillarsJson`). Na harde criteria berekent de backend een Cultuur Fit-% uit competentiescores (OpenAI + lokale fallback, geen NAW). Banenkaart, popup en vacaturedetail tonen *Cultuur Fit: Hoog/Midden/Laag* plus Jip-en-Janneke-onderbouwing.
 
 ### Added

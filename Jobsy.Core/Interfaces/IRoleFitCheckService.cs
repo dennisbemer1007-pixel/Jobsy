@@ -32,4 +32,5 @@ public sealed record RoleFitCheckResultDto(
     string MapHref,
     bool FromDeepAnalysis,
     bool FromOpenAi,
-    bool ShowDeepUpsell);
+    bool ShowDeepUpsell,
+    IReadOnlyList<TrainingOfferCardDto> TrainingOffers);

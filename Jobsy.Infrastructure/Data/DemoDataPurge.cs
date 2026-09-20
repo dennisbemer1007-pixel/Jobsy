@@ -55,6 +55,8 @@ internal static class DemoDataPurge
         typeof(CandidateCompetency),
         typeof(CandidateCareerInterest),
         typeof(CandidateRoleFitCheck),
+        typeof(TrainingConversion),
+        typeof(TrainingClick),
         typeof(CandidateDeepAnalysis),
         typeof(DeepAnalysisCheckout),
         typeof(TalentContactRequest),
@@ -267,6 +269,8 @@ internal static class DemoDataPurge
         await RemoveAllAsync(db, db.VacancySearchImpressions);
         await RemoveAllAsync(db, db.TokenTransactions.IgnoreQueryFilters());
         await RemoveWhereAsync(db, db.CandidateUploadedCvs, x => removeUserIds.Contains(x.UserId));
+        await RemoveAllAsync(db, db.TrainingConversions);
+        await RemoveAllAsync(db, db.TrainingClicks);
         await RemoveWhereAsync(db, db.CandidateReferences, x => removeUserIds.Contains(x.UserId));
         await RemoveWhereAsync(db, db.CandidateActionTokens, x => removeUserIds.Contains(x.UserId));
         await RemoveWhereAsync(db, db.UserNotifications, x => removeUserIds.Contains(x.UserId));

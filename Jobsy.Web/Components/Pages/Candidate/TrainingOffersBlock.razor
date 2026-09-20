@@ -1,0 +1,83 @@
+@using Jobsy.Web.Localization
+@inject JobsyApiClient Api
+@inject NavigationManager Navigation
+@inject CultureState Culture
+
+@if (_offers.Count == 0 && string.IsNullOrWhiteSpace(_message))
+{
+    return;
+}
+
+<section class="training-offers" aria-label="@Culture["Fit.TrainingTitle"]">
+    <h4>@Culture["Fit.TrainingTitle"]</h4>
+    <p class="login-lead">@Culture["Fit.TrainingLead"]</p>
+    @if (!string.IsNullOrWhiteSpace(_message))
+    {
+        <p class="state-message">@_message</p>
+    }
+    <ul class="training-offers__list">
+        @foreach (var offer in _offers)
+        {
+            <li class="training-offers__item">
+                <p class="training-offers__advice">@offer.Advice</p>
+                <p>
+                    <strong>@offer.Title</strong>
+                    <span>@offer.ProviderName</span>
+                    @if (!string.IsNullOrWhiteSpace(offer.Region))
+                    {
+                        <span>· @offer.Region</span>
+                    }
+                </p>
+                <button class="login-submit" type="button" disabled="@_busy" @onclick="() => OpenAsync(offer)">
+                    @offer.CtaLabel
+                </button>
+            </li>
+        }
+    </ul>
+</section>
+
+@code {
+    [Parameter] public IReadOnlyList<TrainingOfferCard>? Offers { get; set; }
+    [Parameter] public string? JobTitle { get; set; }
+    [Parameter] public string Campaign { get; set; } = "functie_fit";
+
+    private List<TrainingOfferCard> _offers = [];
+    private bool _busy;
+    private string? _message;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (Offers is { Count: > 0 })
+        {
+            _offers = Offers.ToList();
+            return;
+        }
+
+        _offers = await Api.GetTrainingOffersAsync(JobTitle, Campaign);
+    }
+
+    private async Task OpenAsync(TrainingOfferCard offer)
+    {
+        _busy = true;
+        _message = null;
+        try
+        {
+            var tracked = await Api.TrackTrainingOfferAsync(offer.OfferId, Campaign);
+            if (string.IsNullOrWhiteSpace(tracked.Url) || tracked.Url.Contains('@', StringComparison.Ordinal))
+            {
+                _message = Culture["Common.Error"];
+                return;
+            }
+
+            Navigation.NavigateTo(tracked.Url, forceLoad: true);
+        }
+        catch (Exception ex)
+        {
+            _message = string.IsNullOrWhiteSpace(ex.Message) ? Culture["Common.Error"] : ex.Message;
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+}

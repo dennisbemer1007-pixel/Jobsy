@@ -248,7 +248,7 @@ public static class RoleFitCheckBuilder
         var steps = new List<string>
         {
             $"Zoek op de Lobsy-banenkaart in Den Haag en het Westland naar {role} en filter op hoge match.",
-            "Praat met iemand die het werk al doet: één dag meelopen zegt meer dan een vacaturetekst.",
+            TrainingCopy.GapAdvice,
             gaps.Count > 0
                 ? "Pak het grootste gat uit de lijst hierboven: volg een korte training of vraag of je die taak mag oefenen."
                 : "Bewaar twee vacatures die voelen als ‘dit is het’ en solliciteer op de beste fit."

@@ -34,7 +34,7 @@ Publiek (naast banenkaart): `/vacancies/{id}`, `/{kvknummer}` (ondernemer), `/{k
 | `/candidate/applications` | Sollicitatiehistorie |
 | `/candidate/vacancies` | Overzicht + **Onlangs bekeken** (localStorage, alleen vacancy-GUIDs) + in-de-buurt op reistijd/vervoer |
 | `/candidate/liked` · `/candidate/shared` | Engagement-lijsten |
-| `/candidate/profile` | OpenForWork, NAW/CV, recensies, **Mijn Lobsy Kompas**-tabbladen (profiel / competenties / beroepen / Past dit bij mij? Functie-Fit Checker) + Top 10 vacatures (≥60%); PDF als diepte-analyse klaar is |
+| `/candidate/profile` | OpenForWork, NAW/CV, recensies, **Mijn Lobsy Kompas**-tabbladen (profiel / competenties / beroepen / Past dit bij mij? Functie-Fit Checker + opleidingen-CTA) + Top 10 vacatures (≥60%); PDF als diepte-analyse klaar is |
 | `/candidate/competencies` | Competentietest (25); draft tussentijds opslaan; scores herberekend bij afronden |
 | `/candidate/career` | Beroepentest (25); Mijn Beroepen-kompas + top 10 actieve vacatures |
 | `/candidate/deep-analysis/{kind}` | Betaalde 150-vragen analyse (competence \| career) + loopbaan-PDF (gekleurd logo, match-banden, *Wat betekent dit voor jou?*) |
@@ -162,7 +162,7 @@ Admin: `/admin/ambassadeurs` — uitnodigen, drempels (50 / +1% / max), commissi
 | `/admin/logging` · `/admin/settings` · `/admin/integrations` | Logs, pricing/PushBom/early-adapter, integratie-pings |
 | `/admin/launch` | Lancerings-KPI’s: teaser-kliks/UTM, gratis vacatures, Westland-groei, tokens/jaardeals (spec) |
 | `/admin/cnames` | CNAME / regio-hosts (hostname, branding, adres-autocomplete) + checklist-hulp (?) |
-| `/admin/masterdata` · `/admin/vacancy-categories` · `/admin/exclusivity` | Keuzelijsten, vacaturecategorieën (kleur/tokens/extra velden), stage-exclusiviteit |
+| `/admin/masterdata` · `/admin/vacancy-categories` · `/admin/exclusivity` · `/admin/training` | Keuzelijsten, vacaturecategorieën (kleur/tokens/extra velden), stage-exclusiviteit, opleiders (affiliate + regionale deals, maand-CSV) |
 | `/admin/wages` | WML + semi-annual update-stub |
 | `/admin` · `/admin/cockpit` | Redirect → `/home` |
 | `/admin/moderation` · `/masterdata` · `/notifications` | Placeholders (“later”) |

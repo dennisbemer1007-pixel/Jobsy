@@ -219,6 +219,8 @@ internal static class UiStringsCompetencies
         ["Fit.Gaps"] = "Waar zit het gat?",
         ["Fit.Steps"] = "Groeistappen",
         ["Fit.OpenMap"] = "Vergelijkbare vacatures in Den Haag en het Westland",
+        ["Fit.TrainingTitle"] = "Erkende opleidingen",
+        ["Fit.TrainingLead"] = "Volg een korte cursus of omscholing om dit gat te dichten. Eerst lokale praktijkopleiders in Den Haag en het Westland; landelijke cursussen als vangnet.",
         ["Fit.ShowScores"] = "Bekijk scores en werkstijl",
         ["Fit.HideScores"] = "Verberg scores"
     };
@@ -416,6 +418,8 @@ internal static class UiStringsCompetencies
         ["Fit.Gaps"] = "Where is the gap?",
         ["Fit.Steps"] = "Growth steps",
         ["Fit.OpenMap"] = "Similar vacancies in The Hague and Westland",
+        ["Fit.TrainingTitle"] = "Recognised courses",
+        ["Fit.TrainingLead"] = "Take a short course or retraining to close this gap. Local providers in The Hague and Westland first; national courses as a fallback.",
         ["Fit.ShowScores"] = "View scores and work style",
         ["Fit.HideScores"] = "Hide scores"
     };

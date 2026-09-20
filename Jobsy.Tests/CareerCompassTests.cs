@@ -33,6 +33,7 @@ public class CareerCompassTests
         Assert.All(compass.StrongChoices, m => Assert.InRange(m.Percent, 85, 94));
         Assert.All(compass.Broadening, m => Assert.InRange(m.Percent, 75, 84));
         Assert.Contains(compass.PracticalNotes, n => n.Contains("banenkaart", StringComparison.OrdinalIgnoreCase));
+        Assert.Contains(compass.PracticalNotes, n => n == TrainingCopy.GapAdvice);
         Assert.DoesNotContain(compass.PracticalNotes, n => n.Contains("150 vragen", StringComparison.OrdinalIgnoreCase));
     }
 
@@ -224,6 +225,7 @@ public class CareerCompassTests
         var panel = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Pages/Candidate/CareerCompassPanel.razor"));
         Assert.Contains("Kompas.BandSuper", panel, StringComparison.Ordinal);
         Assert.Contains("Kompas.PracticalTitle", panel, StringComparison.Ordinal);
+        Assert.Contains("TrainingOffersBlock", panel, StringComparison.Ordinal);
         Assert.Contains("item.Why", panel, StringComparison.Ordinal);
 
         var home = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Pages/Candidate/CandidateKompas.razor"));

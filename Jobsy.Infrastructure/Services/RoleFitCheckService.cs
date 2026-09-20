@@ -32,6 +32,7 @@ public sealed class RoleFitCheckService : IRoleFitCheckService
     private readonly IIntegrationCredentialService _credentials;
     private readonly OpenAiOptions _options;
     private readonly ILogger<RoleFitCheckService> _logger;
+    private readonly ITrainingUpskillService _training;
 
     public RoleFitCheckService(
         JobsyDbContext db,
@@ -41,7 +42,8 @@ public sealed class RoleFitCheckService : IRoleFitCheckService
         IHttpClientFactory httpClientFactory,
         IIntegrationCredentialService credentials,
         IOptions<OpenAiOptions> options,
-        ILogger<RoleFitCheckService> logger)
+        ILogger<RoleFitCheckService> logger,
+        ITrainingUpskillService training)
     {
         _db = db;
         _competencies = competencies;
@@ -51,6 +53,7 @@ public sealed class RoleFitCheckService : IRoleFitCheckService
         _credentials = credentials;
         _options = options.Value;
         _logger = logger;
+        _training = training;
     }
 
     public async Task<RoleFitCheckStateDto> GetAsync(Guid userId, CancellationToken cancellationToken = default)
@@ -71,7 +74,7 @@ public sealed class RoleFitCheckService : IRoleFitCheckService
             price,
             unlocked ? "" : RoleFitCheckCopy.Locked,
             RoleFitCheckCopy.DeepUpsell,
-            last is null ? null : ToResult(last, deep));
+            last is null ? null : await ToResultAsync(userId, last, deep, cancellationToken));
     }
 
     public async Task<RoleFitCheckStateDto> EvaluateAsync(
@@ -127,7 +130,7 @@ public sealed class RoleFitCheckService : IRoleFitCheckService
             price,
             "",
             RoleFitCheckCopy.DeepUpsell,
-            ToResult(row, fromDeep));
+            await ToResultAsync(userId, row, fromDeep, cancellationToken));
     }
 
     private async Task<RoleFitCheckSnapshot?> TryOpenAiAsync(
@@ -263,7 +266,11 @@ public sealed class RoleFitCheckService : IRoleFitCheckService
                 d => d.UserId == userId && d.Status == CandidateDeepAnalysisStatuses.Completed,
                 cancellationToken);
 
-    private static RoleFitCheckResultDto ToResult(CandidateRoleFitCheck row, bool deepNow)
+    private async Task<RoleFitCheckResultDto> ToResultAsync(
+        Guid userId,
+        CandidateRoleFitCheck row,
+        bool deepNow,
+        CancellationToken cancellationToken)
     {
         var snapshot = RoleFitCheckJson.TryDeserialize(row.ResultJson, row.JobTitle, row.FromDeepAnalysis || deepNow)
                        ?? new RoleFitCheckSnapshot(
@@ -276,6 +283,14 @@ public sealed class RoleFitCheckService : IRoleFitCheckService
                            row.FromDeepAnalysis || deepNow,
                            row.FromOpenAi);
         var query = Uri.EscapeDataString(snapshot.MapQuery);
+        var offers = snapshot.Gaps.Count == 0
+            ? Array.Empty<TrainingOfferCardDto>()
+            : await _training.RecommendAsync(
+                userId,
+                snapshot.JobTitle,
+                snapshot.SearchKeys,
+                TrainingTracking.CampaignFit,
+                cancellationToken);
         return new RoleFitCheckResultDto(
             snapshot.JobTitle,
             snapshot.MatchPercent,
@@ -286,7 +301,8 @@ public sealed class RoleFitCheckService : IRoleFitCheckService
             $"/?q={query}",
             snapshot.FromDeepAnalysis,
             snapshot.FromOpenAi,
-            snapshot.ShowDeepUpsell);
+            snapshot.ShowDeepUpsell,
+            offers);
     }
 
     private async Task<string?> ResolveApiKeyAsync(CancellationToken cancellationToken)

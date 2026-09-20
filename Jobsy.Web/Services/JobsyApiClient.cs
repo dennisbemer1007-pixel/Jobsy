@@ -957,6 +957,86 @@ public sealed class JobsyApiClient : IAsyncDisposable
                ?? new RoleFitCheckState();
     }
 
+    public async Task<List<TrainingOfferCard>> GetTrainingOffersAsync(
+        string? jobTitle,
+        string campaign,
+        CancellationToken ct = default)
+    {
+        try
+        {
+            var qs = $"api/me/training-offers?campaign={Uri.EscapeDataString(campaign)}";
+            if (!string.IsNullOrWhiteSpace(jobTitle))
+            {
+                qs += "&jobTitle=" + Uri.EscapeDataString(jobTitle);
+            }
+
+            return await _http.GetFromJsonAsync<List<TrainingOfferCard>>(qs, ct) ?? [];
+        }
+        catch (HttpRequestException)
+        {
+            return [];
+        }
+    }
+
+    public async Task<TrainingTrackedLink> TrackTrainingOfferAsync(
+        Guid offerId,
+        string campaign,
+        CancellationToken ct = default)
+    {
+        var response = await _http.PostAsJsonAsync(
+            $"api/me/training-offers/{offerId:D}/track",
+            new { campaign },
+            ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException(ExtractMessage(body) ?? "Opleiding openen mislukt.");
+        }
+
+        return await response.Content.ReadFromJsonAsync<TrainingTrackedLink>(cancellationToken: ct)
+               ?? new TrainingTrackedLink();
+    }
+
+    public async Task<List<TrainingProviderAdmin>> GetTrainingProvidersAdminAsync(CancellationToken ct = default)
+        => await _http.GetFromJsonAsync<List<TrainingProviderAdmin>>("api/admin/training/providers", ct) ?? [];
+
+    public async Task<TrainingProviderAdmin> UpsertTrainingProviderAsync(object payload, CancellationToken ct = default)
+    {
+        var response = await _http.PutAsJsonAsync("api/admin/training/providers", payload, ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException(ExtractMessage(body) ?? "Opleider opslaan mislukt.");
+        }
+
+        return await response.Content.ReadFromJsonAsync<TrainingProviderAdmin>(cancellationToken: ct)
+               ?? new TrainingProviderAdmin();
+    }
+
+    public Task DeleteTrainingProviderAsync(Guid id, CancellationToken ct = default)
+        => _http.DeleteAsync($"api/admin/training/providers/{id:D}", ct);
+
+    public async Task RecordTrainingConversionAsync(object payload, CancellationToken ct = default)
+    {
+        var response = await _http.PostAsJsonAsync("api/admin/training/conversions", payload, ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException(ExtractMessage(body) ?? "Conversie matchen mislukt.");
+        }
+    }
+
+    public async Task<string> ExportTrainingCsvAsync(int year, int month, Guid? providerId, CancellationToken ct = default)
+    {
+        var url = $"api/admin/training/export?year={year}&month={month}";
+        if (providerId is Guid id)
+        {
+            url += $"&providerId={id:D}";
+        }
+
+        return await _http.GetStringAsync(url, ct);
+    }
+
     public async Task<DeepAnalysisState?> GetDeepAnalysisAsync(string kind, CancellationToken ct = default)
     {
         try

@@ -189,6 +189,7 @@ public static partial class PageSeoCatalog
             ["/admin/users"] = Private("Admin.Users", "Seo.PrivateDescription"),
             ["/admin/vacancies"] = Private("Admin.Vacancies", "Seo.PrivateDescription"),
             ["/admin/vacancy-categories"] = Private("Admin.VacancyCategories", "Seo.PrivateDescription"),
+            ["/admin/training"] = Private("Admin.Training", "Seo.PrivateDescription"),
             ["/admin/wages"] = Private("Admin.Wages", "Seo.PrivateDescription"),
             ["/branch"] = Private("Seo.DashboardTitle", "Seo.PrivateDescription"),
         };

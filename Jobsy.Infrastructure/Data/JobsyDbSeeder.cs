@@ -44,6 +44,16 @@ public static class JobsyDbSeeder
 
         try
         {
+            await scope.ServiceProvider.GetRequiredService<Jobsy.Core.Interfaces.ITrainingUpskillService>()
+                .EnsureDefaultsAsync();
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(ex, "Training catalog seed after migrate failed; continuing.");
+        }
+
+        try
+        {
             await CompetencyTagBackfillSeeder.BackfillAsync(db, logger);
         }
         catch (Exception ex)

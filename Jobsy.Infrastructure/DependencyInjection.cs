@@ -278,6 +278,7 @@ public static class DependencyInjection
             AllowAutoRedirect = false
         });
         services.AddScoped<IRoleFitCheckService, RoleFitCheckService>();
+        services.AddScoped<ITrainingUpskillService, TrainingUpskillService>();
         services.AddScoped<IDeepAnalysisService, DeepAnalysisService>();
         services.AddScoped<IAssessmentReportPdfService, AssessmentReportPdfService>();
         services.AddScoped<ITalentPoolService, TalentPoolService>();

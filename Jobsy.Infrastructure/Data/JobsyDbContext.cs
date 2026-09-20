@@ -30,6 +30,10 @@ public class JobsyDbContext : DbContext
     public DbSet<CandidateCompetency> CandidateCompetencies => Set<CandidateCompetency>();
     public DbSet<CandidateCareerInterest> CandidateCareerInterests => Set<CandidateCareerInterest>();
     public DbSet<CandidateRoleFitCheck> CandidateRoleFitChecks => Set<CandidateRoleFitCheck>();
+    public DbSet<TrainingProvider> TrainingProviders => Set<TrainingProvider>();
+    public DbSet<TrainingOffer> TrainingOffers => Set<TrainingOffer>();
+    public DbSet<TrainingClick> TrainingClicks => Set<TrainingClick>();
+    public DbSet<TrainingConversion> TrainingConversions => Set<TrainingConversion>();
     public DbSet<CandidateDeepAnalysis> CandidateDeepAnalyses => Set<CandidateDeepAnalysis>();
     public DbSet<DeepAnalysisCheckout> DeepAnalysisCheckouts => Set<DeepAnalysisCheckout>();
     public DbSet<TalentContactRequest> TalentContactRequests => Set<TalentContactRequest>();
@@ -1371,6 +1375,71 @@ public class JobsyDbContext : DbContext
                 .WithMany()
                 .HasForeignKey(e => e.UserId)
                 .OnDelete(DeleteBehavior.SetNull);
+        });
+
+        modelBuilder.Entity<TrainingProvider>(entity =>
+        {
+            entity.ToTable("TrainingProviders");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Name).HasMaxLength(200).IsRequired();
+            entity.Property(e => e.BaseUrl).HasMaxLength(1024).IsRequired();
+            entity.Property(e => e.FieldsCsv).HasMaxLength(200).IsRequired();
+            entity.Property(e => e.Region).HasMaxLength(120).IsRequired();
+            entity.Property(e => e.CplEuro).HasPrecision(10, 2);
+            entity.Property(e => e.CpaEuro).HasPrecision(10, 2);
+            entity.Property(e => e.IntakeFeeEuro).HasPrecision(10, 2);
+            entity.Property(e => e.StartFeeEuro).HasPrecision(10, 2);
+            entity.HasIndex(e => e.Kind);
+            entity.HasIndex(e => e.IsActive);
+        });
+
+        modelBuilder.Entity<TrainingOffer>(entity =>
+        {
+            entity.ToTable("TrainingOffers");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Title).HasMaxLength(200).IsRequired();
+            entity.Property(e => e.FieldsCsv).HasMaxLength(200).IsRequired();
+            entity.Property(e => e.KeysCsv).HasMaxLength(400).IsRequired();
+            entity.Property(e => e.ExternalPath).HasMaxLength(1024);
+            entity.HasIndex(e => e.ProviderId);
+            entity.HasOne(e => e.Provider)
+                .WithMany(p => p.Offers)
+                .HasForeignKey(e => e.ProviderId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<TrainingClick>(entity =>
+        {
+            entity.ToTable("TrainingClicks");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.CandidateHash).HasMaxLength(64).IsRequired();
+            entity.Property(e => e.EmailHash).HasMaxLength(64).IsRequired();
+            entity.Property(e => e.Campaign).HasMaxLength(64).IsRequired();
+            entity.Property(e => e.OutboundUrl).HasMaxLength(2000).IsRequired();
+            entity.HasIndex(e => e.OfferId);
+            entity.HasIndex(e => e.CandidateHash);
+            entity.HasIndex(e => e.EmailHash);
+            entity.HasIndex(e => e.UserId);
+            entity.HasOne(e => e.Offer)
+                .WithMany()
+                .HasForeignKey(e => e.OfferId)
+                .OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne<User>()
+                .WithMany()
+                .HasForeignKey(e => e.UserId)
+                .OnDelete(DeleteBehavior.SetNull);
+        });
+
+        modelBuilder.Entity<TrainingConversion>(entity =>
+        {
+            entity.ToTable("TrainingConversions");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Source).HasMaxLength(32).IsRequired();
+            entity.HasIndex(e => new { e.ClickId, e.Kind }).IsUnique();
+            entity.HasOne(e => e.Click)
+                .WithMany(c => c.Conversions)
+                .HasForeignKey(e => e.ClickId)
+                .OnDelete(DeleteBehavior.Cascade);
         });
     }
 }

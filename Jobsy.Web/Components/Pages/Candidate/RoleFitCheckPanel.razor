@@ -72,6 +72,7 @@
                     </ol>
                 </section>
                 <a class="login-submit" href="@result.MapHref">@Culture["Fit.OpenMap"]</a>
+                <TrainingOffersBlock Offers="result.TrainingOffers" JobTitle="@result.JobTitle" Campaign="functie_fit" />
             </div>
             @if (result.ShowDeepUpsell)
             {

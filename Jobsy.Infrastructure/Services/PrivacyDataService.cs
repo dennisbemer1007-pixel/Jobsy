@@ -353,6 +353,19 @@ public sealed class PrivacyDataService : IPrivacyDataService
                     r.UpdatedAtUtc
                 })
                 .FirstOrDefaultAsync(cancellationToken),
+            TrainingClicks = await _db.TrainingClicks.AsNoTracking()
+                .Include(c => c.Offer).ThenInclude(o => o.Provider)
+                .Where(c => c.UserId == user.Id)
+                .OrderByDescending(c => c.ClickedAtUtc)
+                .Select(c => new
+                {
+                    c.CandidateHash,
+                    c.Campaign,
+                    c.ClickedAtUtc,
+                    OfferTitle = c.Offer.Title,
+                    ProviderName = c.Offer.Provider.Name
+                })
+                .ToListAsync(cancellationToken),
             DeepAnalysis = await _db.CandidateDeepAnalyses.AsNoTracking()
                 .Where(d => d.UserId == user.Id)
                 .Select(d => new
@@ -915,6 +928,14 @@ public sealed class PrivacyDataService : IPrivacyDataService
         if (roleFits.Count > 0)
         {
             _db.CandidateRoleFitChecks.RemoveRange(roleFits);
+        }
+
+        var trainingClicks = await _db.TrainingClicks
+            .Where(c => c.UserId == user.Id)
+            .ToListAsync(cancellationToken);
+        foreach (var click in trainingClicks)
+        {
+            click.UserId = null;
         }
 
         var deepAnalyses = await _db.CandidateDeepAnalyses

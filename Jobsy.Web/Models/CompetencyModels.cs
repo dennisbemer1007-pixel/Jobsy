@@ -174,4 +174,54 @@ public sealed class RoleFitCheckResult
     public bool FromDeepAnalysis { get; set; }
     public bool FromOpenAi { get; set; }
     public bool ShowDeepUpsell { get; set; }
+    public List<TrainingOfferCard> TrainingOffers { get; set; } = [];
+}
+
+public sealed class TrainingOfferCard
+{
+    public Guid OfferId { get; set; }
+    public string Title { get; set; } = "";
+    public string ProviderName { get; set; } = "";
+    public string Kind { get; set; } = "";
+    public string Network { get; set; } = "";
+    public string Region { get; set; } = "";
+    public string CtaLabel { get; set; } = "";
+    public string Advice { get; set; } = "";
+}
+
+public sealed class TrainingTrackedLink
+{
+    public Guid ClickId { get; set; }
+    public string Url { get; set; } = "";
+    public string CandidateHash { get; set; } = "";
+}
+
+public sealed class TrainingProviderAdmin
+{
+    public Guid Id { get; set; }
+    public string Name { get; set; } = "";
+    public string Kind { get; set; } = "";
+    public string Network { get; set; } = "";
+    public string BaseUrl { get; set; } = "";
+    public string FieldsCsv { get; set; } = "";
+    public string Region { get; set; } = "";
+    public decimal? CplEuro { get; set; }
+    public decimal? CpaEuro { get; set; }
+    public decimal? IntakeFeeEuro { get; set; }
+    public decimal? StartFeeEuro { get; set; }
+    public bool IsActive { get; set; } = true;
+    public int SortOrder { get; set; }
+    public List<TrainingOfferAdmin> Offers { get; set; } = [];
+}
+
+public sealed class TrainingOfferAdmin
+{
+    public Guid Id { get; set; }
+    public Guid ProviderId { get; set; }
+    public string Title { get; set; } = "";
+    public string FieldsCsv { get; set; } = "";
+    public string KeysCsv { get; set; } = "";
+    public string? ExternalPath { get; set; }
+    public bool IsActive { get; set; } = true;
+    public int SortOrder { get; set; }
 }

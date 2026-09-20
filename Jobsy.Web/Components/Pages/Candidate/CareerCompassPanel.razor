@@ -85,6 +85,13 @@
     </div>
 }
 
+@if (!string.IsNullOrWhiteSpace(Compass.SuperMatches.FirstOrDefault()?.Title)
+     || !string.IsNullOrWhiteSpace(Compass.StrongChoices.FirstOrDefault()?.Title)
+     || !string.IsNullOrWhiteSpace(Compass.Broadening.FirstOrDefault()?.Title))
+{
+    <TrainingOffersBlock JobTitle="@(Compass.SuperMatches.FirstOrDefault()?.Title ?? Compass.StrongChoices.FirstOrDefault()?.Title ?? Compass.Broadening.FirstOrDefault()?.Title)" Campaign="career_compass" />
+}
+
 @code {
     [Parameter] public CareerCompassModel? Compass { get; set; }
 }

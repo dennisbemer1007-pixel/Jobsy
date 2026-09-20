@@ -12,7 +12,7 @@ public static class RoleFitCheckPrompt
         matchPercent: 0-100, eerlijk. 95+ alleen bij een kernfit, 85-94 sterk, 75-84 verbreding, daaronder een mogelijke switch met duidelijk gat.
         strengths: 2 tot 4 zinnen — waar de kandidaat al aan voldoet (competenties en interesses).
         gaps: 2 tot 4 zinnen — wat nog ontbreekt.
-        actionSteps: 3 tot 5 concrete groeistappen (training, meelopen, banenkaart-filter).
+        actionSteps: 3 tot 5 concrete groeistappen (korte cursus/omscholing om een gat te dichten, meelopen, banenkaart-filter). Als er een gat is, noem: "Volg een korte cursus of omscholing om dit gat te dichten."
         searchKeys: 2 tot 6 korte Nederlandse zoekwoorden voor de banenkaart.
         Antwoord ALLEEN als JSON-object:
         {
