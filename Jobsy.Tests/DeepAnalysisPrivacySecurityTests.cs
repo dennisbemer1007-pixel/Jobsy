@@ -1,5 +1,6 @@
 using Jobsy.Core.Entities;
 using Jobsy.Core.Enums;
+using Jobsy.Core.Interfaces;
 using Jobsy.Core.Rules;
 using Jobsy.Infrastructure.Data;
 using Jobsy.Infrastructure.Services;
@@ -166,7 +167,20 @@ public class DeepAnalysisPrivacySecurityTests
             new FlexCommercialService(db),
             new FakeHostEnvironment(isDevelopment ? Environments.Development : Environments.Production),
             config,
+            new StubCareerCompass(),
             NullLogger<DeepAnalysisService>.Instance);
+    }
+
+    private sealed class StubCareerCompass : ICareerCompassGenerationService
+    {
+        public Task<CareerCompassSnapshot> GenerateFromCareerDeepAsync(
+            IReadOnlyDictionary<int, int> answers,
+            CancellationToken cancellationToken = default)
+        {
+            var scores = DeepAnalysisCatalog.ToRiasecScores(
+                DeepAnalysisCatalog.ScoreDomains(answers, AssessmentKind.Career));
+            return Task.FromResult(CareerCompassBuilder.Build(scores, fromDeepAnalysis: true));
+        }
     }
 
     private static JobsyDbContext CreateDb()

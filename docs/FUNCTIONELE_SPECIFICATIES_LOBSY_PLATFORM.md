@@ -37,15 +37,15 @@ Tests zitten in profiel/dashboard (geen losse menu-tabs). Elke engine heeft een 
 | Eigenschap | Quick-Scan | Diepte-analyse |
 |------------|------------|----------------|
 | Items | 25 Likert (RIASEC / Holland-code) | **150 unieke** Likert (25 per RIASEC-type; mix reverse-items) + carrière-advies in PDF |
-| Output | Percentages per type, **Mijn Beroepen-kompas**, **top 10 actieve vacatures** | Loopbaan-PDF (Jip-en-Janneke, gekleurd Lobsy-logo) + zwaardere matchingweging |
+| Output | Percentages per type, **Mijn Beroepen-kompas**, **top 10 actieve vacatures** | Loopbaan-PDF (Jip-en-Janneke, gekleurd Lobsy-logo) + algemene NL-beroepen (OpenAI) + zwaardere matchingweging |
 | Opslag | `CandidateCareerInterests` | `CandidateDeepAnalyses` (`Kind=Career`) |
 | Upsell | na gratis test | *“Wil je een diepgaand carrière-advies … Ontgrendel de uitgebreide beroepentest voor € {prijs}.”* |
 
 **RIASEC-tags (canoniek, intern):** `Realistic`, `Investigative`, `Artistic`, `Social`, `Enterprising`, `Conventional`. Kandidaat-UI en PDF gebruiken geen vaktermen: *Aanpakken met je handen*, *Uitzoeken hoe het zit*, *Iets moois of nieuws maken*, *Mensen helpen*, *Aanjagen en verkopen*, *Netjes organiseren*.
 
-**Loopbaan-PDF (na 150 vragen):** gekleurd Lobsy-logo + huisstijl; beroepen gegroepeerd in **Super-match (>95%)**, **Sterke keus (>85%)**, **Handige verbreding (>75%)**; sectie **Wat betekent dit voor jou?** (werkplek, cultuur, taken, inzet op de banenkaart).
+**Loopbaan-PDF (na 150 vragen):** gekleurd Lobsy-logo + huisstijl; **algemene beroepen uit de Nederlandse arbeidsmarkt** (niet beperkt tot actieve Lobsy-vacatures), gegroepeerd in **Super-match (>95%)**, **Sterke keus (>85%)**, **Handige verbreding (>75%)**; sectie **Wat betekent dit voor jou?** (werkplek, cultuur, taken, inzet op de banenkaart). Generatie via OpenAI (`gpt-4o-mini`, zelfde credential store als CV-extractie); zonder key of bij fout een lokale arbeidsmarkt-catalogus. Geen naam/e-mail in de prompt.
 
-**Profiel:** afronden schrijft scores/tags naar `CandidateCareerInterests`; Kompas-categorie **Mijn Beroepen-kompas**. Uitgebreide beroepentest verhoogt de interesse-weging op de banenkaart (quick-scan 0,25 / diepte 0,32, of 0,30 / 0,38 zonder competentiescores).
+**Profiel:** afronden schrijft scores/tags én `CompassJson` naar `CandidateCareerInterests`; Kompas-categorie **Mijn Beroepen-kompas**. Uitgebreide beroepentest verhoogt de interesse-weging op de banenkaart (quick-scan 0,25 / diepte 0,32, of 0,30 / 0,38 zonder competentiescores). Algemene beroepstags + zoeksleutels weegt 65% van de interesse-score (RIASEC 35%) om actuele vacatures (bijv. Den Haag / Westland) te herkennen.
 
 **Checkout-flow:** kandidaat → Mollie/stub iDEAL → webhook/return → unlock → antwoorden verwerken → PDF.
 
@@ -53,7 +53,8 @@ Tests zitten in profiel/dashboard (geen losse menu-tabs). Elke engine heeft een 
 
 - Scores/tags zijn matchingmetadata, geen medische diagnose.
 - Werkgever ziet in anonieme pool alleen geaggregeerde scores/tags, geen ruwe antwoorden.
-- Ruwe antwoorden blijven bij de kandidaat; export/vergetelheid volgt AVG-paden.
+- Ruwe antwoorden blijven bij de kandidaat; export/vergetelheid volgt AVG-paden (inclusief `CompassJson`).
+- OpenAI ontvangt geen NAW: alleen Likert + richtingscores van de 150-vragen beroepentest.
 
 ---
 

@@ -1,8 +1,9 @@
 namespace Jobsy.Core.Options;
 
 /// <summary>
-/// Optional OpenAI settings for vacancy content moderation and mock interviews.
-/// Without an API key moderation uses local heuristics; mock interviews use a scripted fallback.
+/// Optional OpenAI settings for vacancy content moderation, mock interviews, CV extraction,
+/// and general-occupation career-compass generation after the paid 150-item beroepentest.
+/// Without an API key those features use local fallbacks.
 /// </summary>
 public sealed class OpenAiOptions
 {

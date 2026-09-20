@@ -14,4 +14,5 @@ public sealed class ProfileVacancyMatchContext
     public IReadOnlyList<string> RiasecTags { get; init; } = [];
     public RiasecScores? RiasecScores { get; init; }
     public bool CareerDeepCompleted { get; init; }
+    public IReadOnlyList<CareerOccupationMatch> CareerOccupations { get; init; } = [];
 }

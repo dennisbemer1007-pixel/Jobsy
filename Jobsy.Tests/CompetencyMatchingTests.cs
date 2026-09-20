@@ -404,6 +404,51 @@ public class CompetencyMatchingTests
     }
 
     [Fact]
+    public void Compass_occupation_keys_blend_into_job_map_score_and_why()
+    {
+        var occupations = new List<CareerOccupationMatch>
+        {
+            new("Verpleegkundige", 97, CareerCompassBuilder.BandSuper, "Zorg.", ["verpleegkundige", "zorg"])
+        };
+        var aligned = ProfileVacancyMatchCalculator.Calculate(MakeInput(
+            Guid.NewGuid(),
+            "Verpleegkundige thuiszorg Westland",
+            travelMinutes: 10,
+            maxTravel: 30,
+            candidateHours: new HoursRange(16, 24),
+            vacancyHours: new HoursRange(16, 24),
+            competencies: null,
+            workTypes: ["Zorg"],
+            candidateRoles: ["Winkel"],
+            vacancyDescription: "Thuiszorg in Den Haag en het Westland.",
+            candidateRiasecScores: new RiasecScores(10, 10, 10, 40, 10, 10),
+            vacancyRiasec: [CareerTestCatalog.Social],
+            careerDeepCompleted: true,
+            careerOccupations: occupations));
+        var unrelated = ProfileVacancyMatchCalculator.Calculate(MakeInput(
+            Guid.NewGuid(),
+            "Softwareontwikkelaar",
+            travelMinutes: 10,
+            maxTravel: 30,
+            candidateHours: new HoursRange(16, 24),
+            vacancyHours: new HoursRange(16, 24),
+            competencies: null,
+            workTypes: ["IT"],
+            candidateRoles: ["Winkel"],
+            vacancyDescription: "C# backend in Delft.",
+            candidateRiasecScores: new RiasecScores(10, 10, 10, 40, 10, 10),
+            vacancyRiasec: [CareerTestCatalog.Investigative],
+            careerDeepCompleted: true,
+            careerOccupations: occupations));
+
+        Assert.True(aligned.InterestScore01 > unrelated.InterestScore01);
+        Assert.True(aligned.TotalPercent > unrelated.TotalPercent);
+        Assert.Contains(aligned.Why, w => w.Kind == "occupation" && w.Text.Contains("verpleegkundige", StringComparison.OrdinalIgnoreCase));
+        Assert.Contains(ProfileVacancyMatchCalculator.WhyHeadlines(aligned), h => h == "Beroepen-kompas past");
+        Assert.DoesNotContain(aligned.Why, w => CareerCompassBuilder.ContainsForbiddenJargon(w.Text));
+    }
+
+    [Fact]
     public void Discover_attaches_match_fields_only_for_candidates()
     {
         var src = File.ReadAllText(Path.Combine(RepoRoot.Find(), "Jobsy.Api/Controllers/VacanciesController.cs"));
@@ -436,7 +481,8 @@ public class CompetencyMatchingTests
         IReadOnlyList<string>? candidateRiasec = null,
         IReadOnlyList<string>? vacancyRiasec = null,
         RiasecScores? candidateRiasecScores = null,
-        bool careerDeepCompleted = false)
+        bool careerDeepCompleted = false,
+        IReadOnlyList<CareerOccupationMatch>? careerOccupations = null)
         => new()
         {
             VacancyId = id,
@@ -453,6 +499,7 @@ public class CompetencyMatchingTests
             CandidateRiasecScores = candidateRiasecScores,
             CareerDeepCompleted = careerDeepCompleted,
             VacancyRiasecTags = vacancyRiasec,
+            CareerOccupations = careerOccupations,
             Core = new MatchScoreInput
             {
                 EstimatedTravelMinutes = travelMinutes,

@@ -196,6 +196,20 @@ public sealed class CandidateCareerInterestService : ICandidateCareerInterestSer
             CareerTestCatalog.ParseTagsJson(row?.MatchTagsJson),
             DeepAnalysisService.FormatUpsellCopy(deepAnalysisPriceEuro, AssessmentKind.Career),
             matches,
-            CareerCompassBuilder.Build(completed, fromDeepAnalysis));
+            ResolveCompass(row, completed, fromDeepAnalysis));
+    }
+
+    private static CareerCompassSnapshot ResolveCompass(
+        CandidateCareerInterest? row,
+        RiasecScores? completed,
+        bool fromDeepAnalysis)
+    {
+        var stored = CareerCompassJson.TryDeserialize(row?.CompassJson);
+        if (stored is { HasOccupations: true })
+        {
+            return stored;
+        }
+
+        return CareerCompassBuilder.Build(completed, fromDeepAnalysis);
     }
 }

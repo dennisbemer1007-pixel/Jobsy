@@ -434,6 +434,24 @@ public static class UatScriptRunner
             Assert.Equal("Mijn Beroepen-kompas", Jobsy.Web.Localization.UiStrings.Get("Kompas.Career", "nl"));
         }
 
+        if (Contains(blob, "OpenAI", "algemene beroepen", "Nederlandse arbeidsmarkt", "zoeksleutels"))
+        {
+            Assert.Equal(0.65, ProfileVacancyMatchCalculator.OccupationFitWeight);
+            Assert.Equal(0.35, ProfileVacancyMatchCalculator.RiasecFitWeight);
+            var gen = File.ReadAllText(Path.Combine(RepoRoot.Find(), "Jobsy.Infrastructure/Services/CareerCompassGenerationService.cs"));
+            Assert.Contains("CareerCompassPrompt.System", gen, StringComparison.Ordinal);
+            Assert.Contains("response body not logged", gen, StringComparison.Ordinal);
+            Assert.Contains("json_object", gen, StringComparison.Ordinal);
+            var prompt = CareerCompassPrompt.System;
+            Assert.Contains("Nederlandse arbeidsmarkt", prompt, StringComparison.Ordinal);
+            Assert.DoesNotContain("Lobsy-vacature", prompt, StringComparison.OrdinalIgnoreCase);
+            var merge = File.ReadAllText(Path.Combine(RepoRoot.Find(), "Jobsy.Infrastructure/Services/DeepAnalysisService.cs"));
+            Assert.Contains("CompassJson", merge, StringComparison.Ordinal);
+            Assert.Contains("GenerateFromCareerDeepAsync", merge, StringComparison.Ordinal);
+            var match = File.ReadAllText(Path.Combine(RepoRoot.Find(), "Jobsy.Infrastructure/Services/ProfileVacancyMatchService.cs"));
+            Assert.Contains("CareerOccupations", match, StringComparison.Ordinal);
+        }
+
         if (Contains(blob, "Diepte-analyse", "150 vragen"))
         {
             Assert.Equal(150, DeepAnalysisCatalog.QuestionCount);

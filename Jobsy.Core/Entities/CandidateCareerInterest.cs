@@ -31,6 +31,9 @@ public class CandidateCareerInterest
     /// <summary>JSON array of match tags for talent-pool search and vacancy ranking.</summary>
     public string MatchTagsJson { get; set; } = "[]";
 
+    /// <summary>Persisted OpenAI (or local fallback) compass JSON for Mijn Beroepen-kompas.</summary>
+    public string CompassJson { get; set; } = "";
+
     public DateTime CreatedAtUtc { get; set; }
     public DateTime UpdatedAtUtc { get; set; }
     public DateTime? CompletedAtUtc { get; set; }

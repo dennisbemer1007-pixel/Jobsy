@@ -70,7 +70,8 @@ public sealed class ProfileVacancyMatchService : IProfileVacancyMatchService
                 CandidateRiasecTags = context.RiasecTags,
                 CandidateRiasecScores = context.RiasecScores,
                 CareerDeepCompleted = context.CareerDeepCompleted,
-                VacancyRiasecTags = VacancyRiasecProfile.InferTags(record)
+                VacancyRiasecTags = VacancyRiasecProfile.InferTags(record),
+                CareerOccupations = context.CareerOccupations
             });
             result[record.Id] = match;
         }
@@ -125,6 +126,8 @@ public sealed class ProfileVacancyMatchService : IProfileVacancyMatchService
                      && d.Status == CandidateDeepAnalysisStatuses.Completed,
                 cancellationToken);
 
+        var occupations = ResolveOccupations(career, riasecScores, careerDeep);
+
         return new ProfileVacancyMatchContext
         {
             UserId = user.Id,
@@ -135,7 +138,22 @@ public sealed class ProfileVacancyMatchService : IProfileVacancyMatchService
             Competencies = scores,
             RiasecTags = riasecTags,
             RiasecScores = riasecScores,
-            CareerDeepCompleted = careerDeep
+            CareerDeepCompleted = careerDeep,
+            CareerOccupations = occupations
         };
+    }
+
+    private static IReadOnlyList<CareerOccupationMatch> ResolveOccupations(
+        CandidateCareerInterest? career,
+        RiasecScores? riasecScores,
+        bool careerDeep)
+    {
+        var stored = CareerCompassJson.TryDeserialize(career?.CompassJson);
+        if (stored is { HasOccupations: true })
+        {
+            return stored.AllOccupations.ToList();
+        }
+
+        return CareerCompassBuilder.Build(riasecScores, careerDeep).AllOccupations.ToList();
     }
 }

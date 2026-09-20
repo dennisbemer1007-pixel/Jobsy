@@ -14,8 +14,9 @@ Alle noemenswaardige wijzigingen aan dit project worden in dit bestand bijgehoud
 ## [Unreleased]
 
 ### Added
-- Loopbaan-PDF na de uitgebreide beroepentest (150): gekleurd Lobsy-logo, Jip-en-Janneke-taal (geen RIASEC/OCEAN), beroepen in **Super-match (>95%)** / **Sterke keus (>85%)** / **Handige verbreding (>75%)**, plus **Wat betekent dit voor jou?**
-- **Mijn Beroepen-kompas** in Mijn Lobsy Kompas en op het kandidaatprofiel; uitgebreide beroepentest weegt zwaarder op de banenkaart.
+- Loopbaan-PDF na de uitgebreide beroepentest (150): gekleurd Lobsy-logo, Jip-en-Janneke-taal (geen RIASEC/OCEAN), **algemene Nederlandse beroepen** (OpenAI; lokale catalogus als fallback) in **Super-match (>95%)** / **Sterke keus (>85%)** / **Handige verbreding (>75%)**, plus **Wat betekent dit voor jou?** — niet beperkt tot vacatures die nu op Lobsy staan.
+- **Mijn Beroepen-kompas** slaat die algemene beroepen (inclusief zoeksleutels) op in het kandidaatprofiel; de banenkaart vertaalt ze naar actuele advertenties (bijv. verpleegkundige → vacatures in Den Haag/Westland).
+- Privacyverklaring en consentversie **2026-09-21**: OpenAI-doorgifte van anonieme beroepentest-antwoorden voor het kompas; export bevat `CompassJson`.
 - **Mijn Lobsy Kompas** op `/home` (kandidaat): visuele competentie-balans, beroepen-kompas en bewerkbare harde criteria (reistijd, vervoer incl. e-bike, rijbewijs, beschikbaarheid per direct/parttime/seizoenswerk) plus PDF-download van de 150-vragen analyse.
 - Diepte-analyses: **150 unieke, niet-herhalende** Likert-items (competentie: 30 per OCEAN-trek; beroep: 25 per RIASEC-type) met reverse-items; PDF toont domainscores + carrière-advies; matchingtags na afronden.
 - Banenkaart (ingelogde kandidaat): live match-% op pin, popup en lijst; filter “alleen >80%”; sorteren op beste match; uitleg waarom. Discover-API: `minMatchPercent` + matchvelden alleen voor kandidaat (private cache).

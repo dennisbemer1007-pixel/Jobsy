@@ -104,8 +104,8 @@ Kernpunten:
 - **Matchingspercentage** op banenkaart met breakdown-modal en actie-adviezen
 - **Competentietest (Quick-Scan / 25 vragen)** op het kandidaatprofiel: Big Five / OCEAN; draft tussentijds opslaan; scores + tags voeden matching en talentpool
 - **Beroepentest (Quick-Scan / 25 vragen):** richting in gewone taal; **Mijn Beroepen-kompas**; dynamische **Top 10 actieve vacatures** (≥ 60%, aflopend)
-- **Diepte-analyses (150 unieke vragen, € 2,99 per test):** 30 per Big Five-trek (competentie) en 25 per beroepsrichting; Mollie iDEAL; verrijkte tags + loopbaan-PDF (gekleurd logo, Super-match / Sterke keus / Handige verbreding, *Wat betekent dit voor jou?*)
-- **Banenkaart:** uitgebreide beroepentest weegt zwaarder in het match-% dan de Quick-Scan
+- **Diepte-analyses (150 unieke vragen, € 2,99 per test):** 30 per Big Five-trek (competentie) en 25 per beroepsrichting; Mollie iDEAL; verrijkte tags + loopbaan-PDF (gekleurd logo, algemene NL-beroepen via OpenAI in Super-match / Sterke keus / Handige verbreding, *Wat betekent dit voor jou?*)
+- **Banenkaart:** uitgebreide beroepentest weegt zwaarder; algemene beroepstags uit het kompas matchen actuele vacatures (zoekwoorden, niet hardcoded Lobsy-aanbod)
 - **Gulden Middenweg** bij solliciteren (&lt; 50%): OTP tegenhouden, profiel aanpassen of vangnet
 - **Optioneel motivatieveld** op sollicitatieformulier
 - **Werkgeversdashboard:** match-% met kleurcodering, breakdown, wettelijke bevestiging, motivatie, sort hoog→laag
@@ -133,5 +133,5 @@ Kernpunten:
 - **KVK API** — vestigingen/registratie (live Handelsregister bij API-key; anders demo-stub)
 - **Mollie** — prepaid token-aankoop (live API; Development stub op `/tokens/checkout-stub`)
 - **Mail** — activatie/invite/notificaties
-- **OpenAI** — vacature-contentmoderatie / mock interview / kandidaat-profielcoach / CV-extractie bij eigen upload (feature-flagged; zonder key geen extractie)
+- **OpenAI** — vacature-contentmoderatie / mock interview / kandidaat-profielcoach / CV-extractie bij eigen upload / algemene beroepen na de 150-vragen beroepentest (feature-flagged; zonder key lokale catalogus, geen extractie)
 - Feature flags o.a. `JobsyFeatures:*` (activation-link exposure, Authenticator, stubs)

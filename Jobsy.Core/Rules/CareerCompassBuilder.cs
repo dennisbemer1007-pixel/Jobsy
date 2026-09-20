@@ -146,7 +146,8 @@ public static class CareerCompassBuilder
             job.Title,
             percent,
             Band(percent),
-            $"Dit werk vraagt vooral {top} — en dat sluit aan bij hoe jij scoort.");
+            $"Dit werk vraagt vooral {top} — en dat sluit aan bij hoe jij scoort.",
+            CareerOccupationKeys.FromTitle(job.Title));
     }
 
     private static IReadOnlyList<string> PracticalNotes(
@@ -217,6 +218,10 @@ public static class CareerCompassBuilder
         _ => string.Join(", ", items.Take(items.Count - 1)) + " en " + items[^1]
     };
 
+    /// <summary>
+    /// Fallback labour-market catalog (general Dutch occupations). Not live Lobsy vacancies.
+    /// OpenAI is the primary source after the paid 150-item test.
+    /// </summary>
     public static readonly IReadOnlyList<CareerOccupation> Occupations =
     [
         new("Medewerker tuinbouw / kas", W(CareerTestCatalog.Realistic, 100)),
@@ -242,7 +247,19 @@ public static class CareerCompassBuilder
         new("Administratief medewerker", W(CareerTestCatalog.Conventional, 100)),
         new("Planningsmedewerker", W(CareerTestCatalog.Conventional, 80), W(CareerTestCatalog.Enterprising, 30)),
         new("Kassamedewerker", W(CareerTestCatalog.Conventional, 70), W(CareerTestCatalog.Social, 40)),
-        new("Orderadministrator", W(CareerTestCatalog.Conventional, 90), W(CareerTestCatalog.Realistic, 20))
+        new("Orderadministrator", W(CareerTestCatalog.Conventional, 90), W(CareerTestCatalog.Realistic, 20)),
+        new("Verpleegkundige / zorgmedewerker", W(CareerTestCatalog.Social, 100)),
+        new("Docent / leraar", W(CareerTestCatalog.Social, 70), W(CareerTestCatalog.Artistic, 40)),
+        new("ICT-beheerder", W(CareerTestCatalog.Investigative, 70), W(CareerTestCatalog.Conventional, 50)),
+        new("Softwareontwikkelaar", W(CareerTestCatalog.Investigative, 80), W(CareerTestCatalog.Conventional, 40)),
+        new("Chauffeur", W(CareerTestCatalog.Realistic, 80), W(CareerTestCatalog.Conventional, 30)),
+        new("Elektricien", W(CareerTestCatalog.Realistic, 80), W(CareerTestCatalog.Investigative, 40)),
+        new("Kok", W(CareerTestCatalog.Realistic, 60), W(CareerTestCatalog.Artistic, 50)),
+        new("Receptionist", W(CareerTestCatalog.Conventional, 60), W(CareerTestCatalog.Social, 50)),
+        new("HR-medewerker", W(CareerTestCatalog.Social, 60), W(CareerTestCatalog.Conventional, 50)),
+        new("Marketingmedewerker", W(CareerTestCatalog.Enterprising, 70), W(CareerTestCatalog.Artistic, 50)),
+        new("Boekhouder / administrateur", W(CareerTestCatalog.Conventional, 100)),
+        new("Dierenverzorger", W(CareerTestCatalog.Realistic, 50), W(CareerTestCatalog.Social, 50))
     ];
 
     private static (string Code, int Weight) W(string code, int weight) => (code, weight);
@@ -250,7 +267,16 @@ public static class CareerCompassBuilder
 
 public sealed record CareerOccupation(string Title, params (string Code, int Weight)[] Weights);
 
-public sealed record CareerOccupationMatch(string Title, int Percent, string Band, string Why);
+public sealed record CareerOccupationMatch(
+    string Title,
+    int Percent,
+    string Band,
+    string Why,
+    IReadOnlyList<string>? Keys = null)
+{
+    public IReadOnlyList<string> SearchKeys =>
+        Keys is { Count: > 0 } keys ? keys : CareerOccupationKeys.FromTitle(Title);
+}
 
 public sealed record CareerCompassSnapshot(
     IReadOnlyList<string> Strengths,
@@ -258,7 +284,8 @@ public sealed record CareerCompassSnapshot(
     IReadOnlyList<CareerOccupationMatch> StrongChoices,
     IReadOnlyList<CareerOccupationMatch> Broadening,
     IReadOnlyList<string> PracticalNotes,
-    bool FromDeepAnalysis)
+    bool FromDeepAnalysis,
+    bool FromOpenAi = false)
 {
     public static CareerCompassSnapshot Empty(bool fromDeepAnalysis = false)
         => new([], [], [], [],
@@ -268,4 +295,7 @@ public sealed record CareerCompassSnapshot(
 
     public bool HasOccupations =>
         SuperMatches.Count > 0 || StrongChoices.Count > 0 || Broadening.Count > 0;
+
+    public IEnumerable<CareerOccupationMatch> AllOccupations =>
+        SuperMatches.Concat(StrongChoices).Concat(Broadening);
 }

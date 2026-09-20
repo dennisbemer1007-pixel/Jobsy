@@ -218,8 +218,10 @@ public class MobileSaasUxTests
         Assert.Contains("5b. Competentietest, beroepentest, diepte-analyse en talentpool", privacy);
         Assert.Contains("niet</strong> aan werkgevers getoond", privacy);
         Assert.Contains("anonieme talentpool", privacy);
-        Assert.Contains("20 september 2026", privacy);
-        Assert.Equal("2026-09-20", Jobsy.Core.Privacy.PrivacyConstants.CurrentConsentVersion);
+        Assert.Contains("Mijn Beroepen-kompas", privacy);
+        Assert.Contains("Likert-antwoorden", privacy);
+        Assert.Contains("21 september 2026", privacy);
+        Assert.Equal("2026-09-21", Jobsy.Core.Privacy.PrivacyConstants.CurrentConsentVersion);
     }
 
     [Fact]

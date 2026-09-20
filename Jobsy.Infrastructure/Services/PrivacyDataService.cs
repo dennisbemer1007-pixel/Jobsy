@@ -336,6 +336,7 @@ public sealed class PrivacyDataService : IPrivacyDataService
                     c.HollandCode,
                     c.RiasecTagsJson,
                     c.MatchTagsJson,
+                    c.CompassJson,
                     c.CompletedAtUtc,
                     c.UpdatedAtUtc
                 })

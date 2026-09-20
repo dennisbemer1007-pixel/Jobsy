@@ -95,6 +95,8 @@ public sealed class CareerOccupationMatchModel
     public int Percent { get; set; }
     public string Band { get; set; } = "";
     public string Why { get; set; } = "";
+    public List<string> Keys { get; set; } = [];
+    public List<string> SearchKeys { get; set; } = [];
 }
 
 public sealed class CareerCompassModel
@@ -105,6 +107,7 @@ public sealed class CareerCompassModel
     public List<CareerOccupationMatchModel> Broadening { get; set; } = [];
     public List<string> PracticalNotes { get; set; } = [];
     public bool FromDeepAnalysis { get; set; }
+    public bool FromOpenAi { get; set; }
 
     public bool HasOccupations =>
         SuperMatches.Count > 0 || StrongChoices.Count > 0 || Broadening.Count > 0;

@@ -15,6 +15,8 @@ public static class ProfileVacancyMatchCalculator
     public const double InterestWeightDeepAnalysis = 0.32;
     public const double InterestWeightQuickScanOnly = 0.30;
     public const double InterestWeightDeepAnalysisOnly = 0.38;
+    public const double OccupationFitWeight = 0.65;
+    public const double RiasecFitWeight = 0.35;
 
     public static ProfileVacancyMatch Calculate(ProfileVacancyMatchInput input)
     {
@@ -41,6 +43,17 @@ public static class ProfileVacancyMatchCalculator
                     input.VacancyTitle,
                     input.VacancyDescription))
             : (double?)null;
+        var occupationFit = VacancyOccupationMatch.TryFit(
+            input.CareerOccupations,
+            input.WorkTypes,
+            input.VacancyTitle,
+            input.VacancyDescription);
+        if (occupationFit is { } occ)
+        {
+            interest01 = interest01 is { } riasecFit
+                ? OccupationFitWeight * occ.Score01 + RiasecFitWeight * riasecFit
+                : occ.Score01;
+        }
 
         double total01;
         var interestWeight = InterestWeight(input.CareerDeepCompleted, competency01 is not null);
@@ -80,7 +93,7 @@ public static class ProfileVacancyMatchCalculator
         }
 
         var total = (int)Math.Clamp(Math.Round(100 * total01, MidpointRounding.AwayFromZero), 0, 100);
-        var (why, gaps) = BuildExplanation(input, core, experience01, competency01, interest01, total);
+        var (why, gaps) = BuildExplanation(input, core, experience01, competency01, interest01, occupationFit, total);
         return new ProfileVacancyMatch
         {
             VacancyId = input.VacancyId,
@@ -132,6 +145,7 @@ public static class ProfileVacancyMatchCalculator
         "experience" when point.Code == "license" => "Rijbewijs klopt",
         "experience" => "Branche sluit aan",
         "competency" => "Sterke competentie-match",
+        "occupation" => "Beroepen-kompas past",
         "interest" => "Beroepsinteresse past",
         _ => point.Text
     };
@@ -221,6 +235,7 @@ public static class ProfileVacancyMatchCalculator
             double experience01,
             double? competency01,
             double? interest01,
+            VacancyOccupationMatch.Fit? occupationFit,
             int total)
     {
         var why = new List<ProfileMatchExplainPoint>();
@@ -380,6 +395,14 @@ public static class ProfileVacancyMatchCalculator
                 "Rond de competentietest of beroepentest af. Dan kunnen we nóg beter uitleggen waarom een baan bij je past."));
         }
 
+        if (occupationFit is { } occFit)
+        {
+            why.Add(new(
+                "occupation",
+                occFit.Title,
+                $"Deze vacature sluit aan bij {occFit.Title.ToLowerInvariant()} uit jouw beroepen-kompas."));
+        }
+
         var candRiasec = input.CandidateRiasecTags is { Count: > 0 }
             ? input.CandidateRiasecTags
             : CareerTestCatalog.DeriveRiasecTags(input.CandidateRiasecScores);
@@ -437,11 +460,12 @@ public static class ProfileVacancyMatchCalculator
             {
                 "travel" => 0,
                 "competency" => 1,
-                "interest" => 2,
-                "hours" => 3,
-                "experience" => 4,
-                "dayparts" => 5,
-                _ => 6
+                "occupation" => 2,
+                "interest" => 3,
+                "hours" => 4,
+                "experience" => 5,
+                "dayparts" => 6,
+                _ => 7
             })
             .Take(3)
             .ToList();
@@ -552,6 +576,7 @@ public sealed class ProfileVacancyMatchInput
     public RiasecScores? CandidateRiasecScores { get; init; }
     public bool CareerDeepCompleted { get; init; }
     public IReadOnlyList<string>? VacancyRiasecTags { get; init; }
+    public IReadOnlyList<CareerOccupationMatch>? CareerOccupations { get; init; }
 }
 
 public sealed class ProfileVacancyMatch

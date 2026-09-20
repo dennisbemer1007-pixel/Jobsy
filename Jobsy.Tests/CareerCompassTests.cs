@@ -1,3 +1,4 @@
+using Jobsy.Core.Enums;
 using Jobsy.Core.Rules;
 using Jobsy.Infrastructure.Services;
 using Jobsy.Tests.Uat;
@@ -212,9 +213,125 @@ public class CareerCompassTests
         var profile = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Pages/Candidate/Profile.razor"));
         Assert.Contains("CareerCompassPanel", profile, StringComparison.Ordinal);
 
+        var interest = File.ReadAllText(Path.Combine(root, "Jobsy.Infrastructure/Services/CandidateCareerInterestService.cs"));
+        Assert.Contains("ResolveCompass", interest, StringComparison.Ordinal);
+        Assert.DoesNotContain("CompassJson =", interest, StringComparison.Ordinal);
+
         var merge = File.ReadAllText(Path.Combine(root, "Jobsy.Infrastructure/Services/DeepAnalysisService.cs"));
         Assert.Contains("ToRiasecScores", merge, StringComparison.Ordinal);
         Assert.Contains("RealisticPercent = riasec.Realistic", merge, StringComparison.Ordinal);
+        Assert.Contains("GenerateFromCareerDeepAsync", merge, StringComparison.Ordinal);
+        Assert.Contains("CompassJson", merge, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void Local_catalog_covers_general_dutch_occupations_not_only_lobsy_ads()
+    {
+        Assert.Contains(CareerCompassBuilder.Occupations, o => o.Title.Contains("Verpleegkundige", StringComparison.OrdinalIgnoreCase));
+        Assert.Contains(CareerCompassBuilder.Occupations, o => o.Title.Contains("Software", StringComparison.OrdinalIgnoreCase));
+        Assert.Contains(CareerCompassBuilder.Occupations, o => o.Title.Contains("Chauffeur", StringComparison.OrdinalIgnoreCase));
+        Assert.Contains(CareerCompassBuilder.Occupations, o => o.Title.Contains("Elektricien", StringComparison.OrdinalIgnoreCase));
+    }
+
+    [Fact]
+    public void OpenAi_user_prompt_sends_150_answers_without_pii_or_jargon()
+    {
+        var answers = DeepAnalysisCatalog.CareerQuestions.ToDictionary(q => q.Id, _ => 4);
+        var scores = DeepAnalysisCatalog.ScoreDomains(answers, AssessmentKind.Career);
+        var user = CareerCompassPrompt.User(scores, answers);
+        Assert.Contains("150 unieke vragen", user, StringComparison.Ordinal);
+        Assert.Contains("→ 4", user, StringComparison.Ordinal);
+        Assert.DoesNotContain("@", user, StringComparison.Ordinal);
+        Assert.DoesNotContain("gmail", user, StringComparison.OrdinalIgnoreCase);
+        AssertNoJargon(user);
+        foreach (var code in CareerTestCatalog.RiasecCodes)
+        {
+            Assert.DoesNotContain(code, user, StringComparison.Ordinal);
+        }
+
+        Assert.Contains("Nederlandse arbeidsmarkt", CareerCompassPrompt.System, StringComparison.Ordinal);
+        Assert.Contains("Jip-en-Janneke", CareerCompassPrompt.System, StringComparison.Ordinal);
+        Assert.Contains("superMatches", CareerCompassPrompt.System, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void Sanitize_rebands_openai_jobs_and_drops_jargon_or_weak_matches()
+    {
+        var json = """
+            {
+              "strengths": ["Mensen helpen"],
+              "superMatches": [],
+              "strongChoices": [
+                {"title":"Verpleegkundige","percent":97,"why":"Jij wilt voor mensen klaarstaan.","keys":["zorg","verpleeg"]}
+              ],
+              "broadening": [
+                {"title":"RIASEC-coach","percent":90,"why":"Holland-code mismatch.","keys":["coach"]},
+                {"title":"Kassamedewerker","percent":70,"why":"Te zwak.","keys":["kassa"]}
+              ],
+              "practicalNotes": ["Open de banenkaart in Den Haag of het Westland."]
+            }
+            """;
+        var compass = CareerCompassJson.TryDeserialize(json);
+        Assert.NotNull(compass);
+        Assert.Contains(compass!.SuperMatches, m => m.Title == "Verpleegkundige" && m.Percent == 97);
+        Assert.Empty(compass.StrongChoices);
+        Assert.DoesNotContain(compass.AllOccupations, m => m.Title.Contains("RIASEC", StringComparison.OrdinalIgnoreCase));
+        Assert.DoesNotContain(compass.AllOccupations, m => m.Percent < 75);
+        Assert.Contains(compass.PracticalNotes, n => n.Contains("banenkaart", StringComparison.OrdinalIgnoreCase));
+        AssertNoJargon(compass);
+    }
+
+    [Fact]
+    public void Compass_json_roundtrip_keeps_openai_flag_and_keys()
+    {
+        var snapshot = new CareerCompassSnapshot(
+            ["Mensen helpen"],
+            [new CareerOccupationMatch("Verpleegkundige", 97, CareerCompassBuilder.BandSuper, "Zorg.", ["zorg", "verpleegkundige"])],
+            [],
+            [],
+            ["Open de banenkaart."],
+            FromDeepAnalysis: true,
+            FromOpenAi: true);
+        var back = CareerCompassJson.TryDeserialize(CareerCompassJson.Serialize(snapshot));
+        Assert.NotNull(back);
+        Assert.True(back!.FromOpenAi);
+        Assert.True(back.FromDeepAnalysis);
+        Assert.Equal("Verpleegkundige", back.SuperMatches[0].Title);
+        Assert.Contains(back.SuperMatches[0].SearchKeys, k => k.Contains("zorg", StringComparison.OrdinalIgnoreCase));
+    }
+
+    [Fact]
+    public void Occupation_keys_map_general_title_onto_den_haag_westland_vacancy()
+    {
+        var occupations = new List<CareerOccupationMatch>
+        {
+            new("Verpleegkundige", 97, CareerCompassBuilder.BandSuper, "Jij wilt voor mensen klaarstaan.",
+                ["verpleegkundige", "zorg", "verpleeg"])
+        };
+        var hit = VacancyOccupationMatch.TryFit(
+            occupations,
+            ["Zorg"],
+            "Verpleegkundige thuiszorg Den Haag",
+            "Zorg in het Westland en Den Haag.");
+        Assert.NotNull(hit);
+        Assert.Equal("Verpleegkundige", hit!.Value.Title);
+        Assert.True(hit.Value.Score01 >= 0.9);
+
+        var miss = VacancyOccupationMatch.TryFit(
+            occupations,
+            ["IT"],
+            "Softwareontwikkelaar Delft",
+            "Backend in C#.");
+        Assert.Null(miss);
+
+        var generic = VacancyOccupationMatch.TryFit(
+            [
+                new("Medewerker tuinbouw / kas", 96, CareerCompassBuilder.BandSuper, "Aanpakken.", null)
+            ],
+            ["Winkel"],
+            "Verkoopmedewerker winkel",
+            "Kassa en schappen.");
+        Assert.Null(generic);
     }
 
     private static RiasecScores HandsOnScores()

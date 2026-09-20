@@ -184,6 +184,8 @@ Kandidaat,Home: Kompas toont Quick-Scan 25 vs diepte-analyse 150 + PDF als klaar
 Kandidaat,Home: **Mijn Beroepen-kompas** toont Super-match / Sterke keus / Handige verbreding.,Groepen >95% / >85% / >75%; sectie **Wat betekent dit voor jou?**; geen RIASEC/OCEAN in kandidaattekst.
 Kandidaat,Download loopbaan-PDF na uitgebreide beroepentest (150).,Gekleurd Lobsy-logo; Super-match/Sterke keus/Handige verbreding; **Wat betekent dit voor jou?**; geen RIASEC/OCEAN.
 Kandidaat,Banenkaart na uitgebreide beroepentest.,Match-% weegt **Mijn Beroepen-kompas** zwaarder; Super-match vacatures stijgen; filter scherper.
+Kandidaat,Uitgebreide beroepentest (150) levert algemene beroepen via OpenAI.,Beroepen uit de Nederlandse arbeidsmarkt (niet beperkt tot Lobsy-vacatures); Jip-en-Janneke; Super-match/Sterke keus/Handige verbreding; opgeslagen in **Mijn Beroepen-kompas**; zonder key lokale catalogus.
+Kandidaat,Banenkaart koppelt algemene beroepstags aan actuele vacatures.,Algemeen beroep (bijv. verpleegkundige) matcht vacatures in Den Haag/Westland via zoeksleutels.
 Kandidaat,Home: harde criteria reistijd/vervoer (incl. e-bike)/rijbewijs/beschikbaarheid (per direct/parttime/seizoen) opslaan.,Voorkeuren opgeslagen; banenkaart herberekent match-%.
 Kandidaat,Bottom-nav **Zoeken**.,`/` banenkaart.
 Kandidaat,Bottom-nav **Bewaard**.,`/candidate/liked`.

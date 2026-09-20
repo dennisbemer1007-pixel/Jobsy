@@ -484,6 +484,7 @@ public class JobsyDbContext : DbContext
             entity.Property(e => e.HollandCode).HasMaxLength(8).IsRequired();
             entity.Property(e => e.RiasecTagsJson).HasMaxLength(500).IsRequired();
             entity.Property(e => e.MatchTagsJson).HasMaxLength(1000).IsRequired();
+            entity.Property(e => e.CompassJson).HasColumnType("text").IsRequired();
             entity.HasIndex(e => e.UserId).IsUnique();
             entity.HasOne(e => e.User)
                 .WithMany()

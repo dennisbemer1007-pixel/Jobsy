@@ -514,6 +514,10 @@ namespace Jobsy.Infrastructure.Data.Migrations
                     b.Property<DateTime?>("CompletedAtUtc")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<string>("CompassJson")
+                        .IsRequired()
+                        .HasColumnType("text");
+
                     b.Property<int?>("ConventionalPercent")
                         .HasColumnType("integer");
 

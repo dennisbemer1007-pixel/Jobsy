@@ -17,6 +17,7 @@ public sealed class DeepAnalysisService : IDeepAnalysisService
     private readonly IFlexCommercialService _commercial;
     private readonly IHostEnvironment _environment;
     private readonly IConfiguration _configuration;
+    private readonly ICareerCompassGenerationService _careerCompass;
     private readonly ILogger<DeepAnalysisService> _logger;
 
     public DeepAnalysisService(
@@ -24,12 +25,14 @@ public sealed class DeepAnalysisService : IDeepAnalysisService
         IFlexCommercialService commercial,
         IHostEnvironment environment,
         IConfiguration configuration,
+        ICareerCompassGenerationService careerCompass,
         ILogger<DeepAnalysisService> logger)
     {
         _db = db;
         _commercial = commercial;
         _environment = environment;
         _configuration = configuration;
+        _careerCompass = careerCompass;
         _logger = logger;
     }
 
@@ -304,6 +307,8 @@ public sealed class DeepAnalysisService : IDeepAnalysisService
             }
 
             career.MatchTagsJson = CareerTestCatalog.SerializeTags(existing);
+            var compass = await _careerCompass.GenerateFromCareerDeepAsync(answers, cancellationToken);
+            career.CompassJson = CareerCompassJson.Serialize(compass);
             career.CompletedAtUtc ??= now;
             career.UpdatedAtUtc = now;
             return;

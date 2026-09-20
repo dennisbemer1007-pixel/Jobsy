@@ -26,16 +26,21 @@ public sealed class AssessmentReportPdfService : IAssessmentReportPdfService
 
     private readonly JobsyDbContext _db;
     private readonly IPlatformCompanySettingsService _companySettings;
+    private readonly ICareerCompassGenerationService _careerCompass;
 
     static AssessmentReportPdfService()
     {
         QuestPDF.Settings.License = LicenseType.Community;
     }
 
-    public AssessmentReportPdfService(JobsyDbContext db, IPlatformCompanySettingsService companySettings)
+    public AssessmentReportPdfService(
+        JobsyDbContext db,
+        IPlatformCompanySettingsService companySettings,
+        ICareerCompassGenerationService careerCompass)
     {
         _db = db;
         _companySettings = companySettings;
+        _careerCompass = careerCompass;
     }
 
     public async Task<AssessmentReportPdf?> TryRenderAsync(
@@ -73,22 +78,20 @@ public sealed class AssessmentReportPdfService : IAssessmentReportPdfService
         byte[] bytes;
         if (kind == AssessmentKind.Career)
         {
-            var riasec = DeepAnalysisCatalog.ToRiasecScores(domainScores);
-            if (!riasec.IsComplete)
+            var careerRow = await _db.CandidateCareerInterests
+                .FirstOrDefaultAsync(c => c.UserId == userId, cancellationToken);
+            var compass = CareerCompassJson.TryDeserialize(careerRow?.CompassJson);
+            if (compass is not { HasOccupations: true })
             {
-                var row = await _db.CandidateCareerInterests.AsNoTracking()
-                    .FirstOrDefaultAsync(c => c.UserId == userId, cancellationToken);
-                riasec = CareerTestCatalog.CompletedScoresOrNull(
-                    row?.Status,
-                    row?.RealisticPercent,
-                    row?.InvestigativePercent,
-                    row?.ArtisticPercent,
-                    row?.SocialPercent,
-                    row?.EnterprisingPercent,
-                    row?.ConventionalPercent) ?? riasec;
+                compass = await _careerCompass.GenerateFromCareerDeepAsync(answers, cancellationToken);
+                if (careerRow is not null)
+                {
+                    careerRow.CompassJson = CareerCompassJson.Serialize(compass);
+                    careerRow.UpdatedAtUtc = DateTime.UtcNow;
+                    await _db.SaveChangesAsync(cancellationToken);
+                }
             }
 
-            var compass = CareerCompassBuilder.Build(riasec, fromDeepAnalysis: true);
             bytes = RenderCareer(brand, logo, user.FullName, generated, compass);
         }
         else
