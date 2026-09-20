@@ -69,7 +69,7 @@ public static class RoleFitCheckBuilder
             steps,
             keys,
             fromDeepAnalysis,
-            fromOpenAi: false));
+            FromOpenAi: false));
     }
 
     public static RoleFitCheckSnapshot Sanitize(RoleFitCheckSnapshot snapshot)

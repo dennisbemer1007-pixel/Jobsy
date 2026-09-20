@@ -416,7 +416,7 @@ public class RoleFunctionalRegressionTests : IClassFixture<RoleFunctionalWebAppF
     [Fact]
     public async Task Candidate_role_fit_is_locked_until_both_quick_scans_then_returns_plain_language_fit()
     {
-        var client = CandidateClient();
+        var client = Authed(await _factory.SeedIsolatedCandidateAsync());
         var locked = await client.GetFromJsonAsync<JsonElement>("api/me/role-fit", JsonOpts);
         Assert.False(locked.GetProperty("isUnlocked").GetBoolean());
         Assert.Contains("Functie-Fit Checker", locked.GetProperty("lockMessage").GetString(), StringComparison.Ordinal);
@@ -2083,6 +2083,27 @@ public sealed class RoleFunctionalWebAppFactory : WebApplicationFactory<Program>
         });
         await db.SaveChangesAsync();
         return applicationId;
+    }
+
+    public async Task<string> SeedIsolatedCandidateAsync()
+    {
+        EnsureSeeded();
+        var n = Interlocked.Increment(ref _extraSeedCounter);
+        var email = $"fit-kandidaat-{n}@jobsy.local";
+        await using var scope = Services.CreateAsyncScope();
+        var db = scope.ServiceProvider.GetRequiredService<JobsyDbContext>();
+        db.Users.Add(new User
+        {
+            Id = Guid.NewGuid(),
+            Email = email,
+            FullName = "Fit Kandidaat",
+            Role = UserRole.Candidate,
+            IsActive = true,
+            DateOfBirth = new DateOnly(1998, 6, 15),
+            OpenForWork = true
+        });
+        await db.SaveChangesAsync();
+        return email;
     }
 
     private sealed class AllowAllModeration : IVacancyContentModerationService
