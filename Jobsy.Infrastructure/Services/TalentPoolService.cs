@@ -20,17 +20,20 @@ public sealed class TalentPoolService : ITalentPoolService
     private readonly ITokenLedgerService _tokens;
     private readonly IRoutingService _routing;
     private readonly IUserNotificationService _notifications;
+    private readonly IFlexCommercialService _commercial;
 
     public TalentPoolService(
         JobsyDbContext db,
         ITokenLedgerService tokens,
         IRoutingService routing,
-        IUserNotificationService notifications)
+        IUserNotificationService notifications,
+        IFlexCommercialService commercial)
     {
         _db = db;
         _tokens = tokens;
         _routing = routing;
         _notifications = notifications;
+        _commercial = commercial;
     }
 
     public async Task<IReadOnlyList<AnonymousTalentCardDto>> SearchAsync(
@@ -198,6 +201,8 @@ public sealed class TalentPoolService : ITalentPoolService
         };
 
         TokenTransaction? spendTx = null;
+        var commercial = await _commercial.GetAsync(cancellationToken);
+        var unlockCost = commercial.ContactUnlockCostTokens;
         var outcome = await _tokens.TrySpendAsync(
             companyId,
             TokenSpendReason.ContactUnlock,
@@ -211,7 +216,7 @@ public sealed class TalentPoolService : ITalentPoolService
             },
             costOverrides: new Dictionary<TokenSpendReason, decimal>
             {
-                [TokenSpendReason.ContactUnlock] = TalentContactRules.DefaultUnlockCostTokens
+                [TokenSpendReason.ContactUnlock] = unlockCost
             },
             cancellationToken: cancellationToken);
 
@@ -310,9 +315,26 @@ public sealed class TalentPoolService : ITalentPoolService
             return await ToDtoAsync(request.Id, revealPii: false, cancellationToken);
         }
 
+        decimal refundAmount;
+        if (request.SpendTransactionId is Guid spendId)
+        {
+            var spend = await _db.TokenTransactions.AsNoTracking()
+                .FirstOrDefaultAsync(t => t.Id == spendId, cancellationToken);
+            refundAmount = spend is null ? 0m : Math.Abs(spend.Amount);
+        }
+        else
+        {
+            refundAmount = (await _commercial.GetAsync(cancellationToken)).ContactUnlockCostTokens;
+        }
+
+        if (refundAmount <= 0)
+        {
+            refundAmount = FlexCommercialSettings.DefaultContactUnlockCostTokens;
+        }
+
         var refund = await _tokens.GrantAsync(
             companyId,
-            TalentContactRules.DefaultUnlockCostTokens,
+            refundAmount,
             employerUserId,
             note: $"ContactUnlockRefund:{request.Id}",
             cancellationToken);

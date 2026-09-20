@@ -1,3 +1,4 @@
+using Jobsy.Core.Entities;
 using Jobsy.Core.Enums;
 
 namespace Jobsy.Core.Rules;
@@ -9,7 +10,7 @@ public static class TalentContactRules
 
     public const int TalentContactRequestHours = 48;
 
-    public const decimal DefaultUnlockCostTokens = 1m;
+    public const decimal DefaultUnlockCostTokens = FlexCommercialSettings.DefaultContactUnlockCostTokens;
 
     public static DateTime ComputeRespondByUtc(DateTime createdAtUtc)
         => createdAtUtc.Add(ResponseWindow);

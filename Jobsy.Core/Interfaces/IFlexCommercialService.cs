@@ -5,8 +5,7 @@ public interface IFlexCommercialService
     Task<FlexCommercialSettingsDto> GetAsync(CancellationToken cancellationToken = default);
 
     Task<FlexCommercialSettingsDto> UpdateAsync(
-        decimal marginPerHourEuro,
-        string backofficePartnerName,
+        FlexCommercialSettingsUpdate update,
         CancellationToken cancellationToken = default);
 
     Task<bool> HasActiveAgencySubscriptionAsync(
@@ -24,9 +23,19 @@ public interface IFlexCommercialService
         CancellationToken cancellationToken = default);
 }
 
+public sealed record FlexCommercialSettingsUpdate(
+    decimal MarginPerHourEuro,
+    string BackofficePartnerName,
+    decimal DeepAnalysisPriceEuro,
+    decimal AgencyAnnualPriceEuro,
+    decimal ContactUnlockCostTokens);
+
 public sealed record FlexCommercialSettingsDto(
     decimal MarginPerHourEuro,
     string BackofficePartnerName,
+    decimal DeepAnalysisPriceEuro,
+    decimal AgencyAnnualPriceEuro,
+    decimal ContactUnlockCostTokens,
     DateTime UpdatedAtUtc);
 
 public sealed record AgencySubscriptionDto(

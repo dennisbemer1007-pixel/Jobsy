@@ -115,8 +115,9 @@ Kernpunten:
 Kernpunten:
 - **Omgekeerd werven:** werkgevers zoeken OpenForWork-kandidaten anoniem (competenties/RIASEC, reistijd, beschikbaarheid, rijbewijs) — **geen leeftijdsfilter**
 - **ContactUnlock:** 1 token om contact te starten; 48-uurs timer; refund bij intrekken na geen reactie / reeds voorzien; geen refund na geslaagde contactuitwisseling
-- **Flex (`VacancyKind.Flex`):** 0 tokens publiceren; vaste marge **€ 2,00/uur** boven backoffice-inkoop (NEN 4400-1 partner)
-- **Uitzend-jaarabonnement:** **€ 4.000/jaar** carte blanche vacatureplaatsing op vestigingspins (zonder pushbomb-vervuiling)
+- **Flex (`VacancyKind.Flex`):** 0 tokens publiceren; marge admin-configureerbaar (default **€ 2,00/uur**) boven backoffice-inkoop (NEN 4400-1 partner)
+- **Uitzend-jaarabonnement:** admin-configureerbaar (default **€ 4.000/jaar**) carte blanche vacatureplaatsing op vestigingspins
+- **Admin → Settings → Lobsy Flex & talent:** diepte-analyseprijs, flex-marge, uitzend-jaartarief, ContactUnlock-tokens, backoffice-partner
 
 ## 5. Navigatie & entry points
 - **Anoniem** → banenkaart `/` (BottomNav: Banenkaart, Registreren, Inloggen)

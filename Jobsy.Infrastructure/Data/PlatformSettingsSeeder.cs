@@ -37,7 +37,7 @@ internal static class PlatformSettingsSeeder
                 {
                     Id = Guid.NewGuid(),
                     Reason = TokenSpendReason.ContactUnlock,
-                    CostTokens = TalentContactRules.DefaultUnlockCostTokens
+                    CostTokens = FlexCommercialSettings.DefaultContactUnlockCostTokens
                 });
         }
         else
@@ -56,7 +56,7 @@ internal static class PlatformSettingsSeeder
                 {
                     Id = Guid.NewGuid(),
                     Reason = TokenSpendReason.ContactUnlock,
-                    CostTokens = TalentContactRules.DefaultUnlockCostTokens
+                    CostTokens = FlexCommercialSettings.DefaultContactUnlockCostTokens
                 });
             }
         }
@@ -267,8 +267,11 @@ internal static class PlatformSettingsSeeder
             db.FlexCommercialSettings.Add(new FlexCommercialSettings
             {
                 Id = FlexCommercialService.SettingsSingletonId,
-                MarginPerHourEuro = 2.00m,
-                BackofficePartnerName = "Yellowstone",
+                MarginPerHourEuro = FlexCommercialSettings.DefaultMarginPerHourEuro,
+                BackofficePartnerName = FlexCommercialSettings.DefaultBackofficePartnerName,
+                DeepAnalysisPriceEuro = FlexCommercialSettings.DefaultDeepAnalysisPriceEuro,
+                AgencyAnnualPriceEuro = FlexCommercialSettings.DefaultAgencyAnnualPriceEuro,
+                ContactUnlockCostTokens = FlexCommercialSettings.DefaultContactUnlockCostTokens,
                 UpdatedAtUtc = DateTime.UtcNow
             });
         }

@@ -41,7 +41,7 @@ Quick-Scan meet de top-interesses via 5 compacte items (hoogste scores → tags)
 |------------|--------|
 | Items | 150 Likert |
 | Basis | Big Five-facetten, RIASEC, praktische belastbaarheid/vaardigheden |
-| Prijs | € 2,99 (iDEAL via Mollie; Dev-stub zonder API-key) |
+| Prijs | Admin-configureerbaar (default € 2,99; iDEAL via Mollie; Dev-stub zonder API-key) |
 | Upsell-copy | *“Wil je een diepgaand inzicht in jouw unieke werkstijl en een officiële PDF-rapportage voor je sollicitaties? Ontgrendel de uitgebreide diepte-analyse voor € 2,99.”* |
 | Na betaling | Tags verrijken match-index; PDF-rapport in dashboard |
 
@@ -95,23 +95,35 @@ Alleen employer-rollen met company-scope (`BranchManager`, `RegionalManager`, `E
 ### 4.1 Flex-inzet
 
 - Vacaturekind `Flex`: publiceren kost **0 tokens**.
-- Platformmarge: vast **€ 2,00 per gewerkt uur** boven inkoopprijs NEN 4400-1 backoffice-partner (config: `FlexCommercialSettings.MarginPerHourEuro`).
+- Platformmarge: configureerbaar in Admin → Settings (default **€ 2,00 per gewerkt uur**) boven inkoopprijs NEN 4400-1 backoffice-partner (`FlexCommercialSettings`).
 - Verloning/juridisch risico via partner (Yellowstone e.d.) — Lobsy factureert alleen de marge-opslag in de commerciele afspraak (backoffice-integratie kan stubben).
 
 ### 4.2 Uitzendbureau-abonnement
 
-- `AgencyAnnualSubscription`: **€ 4.000 / jaar**.
+- `AgencyAnnualSubscription`: jaartarief admin-configureerbaar (default **€ 4.000 / jaar**).
 - Rechten: onbeperkt vacature plaatsen gekoppeld aan vestigingslocatie-pins (geen PushBom-spam / “pushbombs”).
 - Actief abonnement → publish-kosten 0 voor Regular op geabonneerde vestigingen; PushBom blijft token-geprijsd of uitgeschakeld per settings.
+
+### 4.3 Admin-configureerbare bedragen
+
+Alle bedragen onder **Admin → Settings → Lobsy Flex & talent**:
+
+| Veld | Default |
+|------|---------|
+| Diepte-analyse | € 2,99 |
+| Flex-marge / uur | € 2,00 |
+| Uitzend-jaarabonnement | € 4.000 |
+| ContactUnlock | 1 token (sync naar spend-costs) |
+| Backoffice-partnernaam | Yellowstone |
 
 ---
 
 ## 5. Acceptatiecriteria (kern)
 
 1. Quick-Scan = 25 vragen; afronden schrijft scores + RIASEC-tags.
-2. Diepte-Analyse locked tot betaald; na unlock 150 vragen + PDF-flag.
+2. Diepte-Analyse locked tot betaald; na unlock 150 vragen + PDF-flag. Prijs admin-configureerbaar (default € 2,99).
 3. Talentpool-API lekt geen PII vóór `ContactShared`.
 4. Talentpool-API accepteert geen `minAge`/`maxAge`/`dateOfBirth`-filters.
-5. ContactUnlock debiteert 1 token; refund na intrekken bij timeout/declined-unavailable.
-6. Flex-publicatie kost 0 tokens; settings tonen € 2,00 marge.
-7. Actief uitzend-jaarabonnement: carte blanche publish op vestigingspins.
+5. ContactUnlock debiteert configureerbaar aantal tokens (default 1); refund na intrekken bij timeout/declined-unavailable.
+6. Flex-publicatie kost 0 tokens; settings tonen configureerbare marge (default € 2,00).
+7. Actief uitzend-jaarabonnement: carte blanche publish; jaartarief admin-configureerbaar (default € 4.000).

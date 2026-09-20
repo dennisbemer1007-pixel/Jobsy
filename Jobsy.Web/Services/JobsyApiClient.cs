@@ -2763,6 +2763,30 @@ public sealed class JobsyApiClient : IAsyncDisposable
         return await response.Content.ReadFromJsonAsync<PushBomSettingsItem>(cancellationToken: ct);
     }
 
+    public async Task<LobsyCommercialSettingsItem?> UpdateLobsyCommercialAsync(
+        LobsyCommercialSettingsItem settings,
+        CancellationToken ct = default)
+    {
+        var response = await _http.PutAsJsonAsync(
+            "api/settings/lobsy-commercial",
+            new
+            {
+                settings.MarginPerHourEuro,
+                settings.BackofficePartnerName,
+                settings.DeepAnalysisPriceEuro,
+                settings.AgencyAnnualPriceEuro,
+                settings.ContactUnlockCostTokens
+            },
+            ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException(ExtractMessage(body) ?? "Opslaan van Lobsy-bedragen mislukt.");
+        }
+
+        return await response.Content.ReadFromJsonAsync<LobsyCommercialSettingsItem>(cancellationToken: ct);
+    }
+
     public async Task<PushBomPricingTierItem?> UpsertPushBomPricingTierAsync(
         PushBomPricingTierItem tier,
         CancellationToken ct = default)

@@ -19,22 +19,26 @@ public sealed class CandidateCompetencyService : ICandidateCompetencyService
     private readonly JobsyDbContext _db;
     private readonly IVacancyDiscoveryIndex _discovery;
     private readonly IRoutingService _routing;
+    private readonly IFlexCommercialService _commercial;
 
     public CandidateCompetencyService(
         JobsyDbContext db,
         IVacancyDiscoveryIndex discovery,
-        IRoutingService routing)
+        IRoutingService routing,
+        IFlexCommercialService commercial)
     {
         _db = db;
         _discovery = discovery;
         _routing = routing;
+        _commercial = commercial;
     }
 
     public async Task<CandidateCompetencyStateDto> GetAsync(Guid userId, CancellationToken cancellationToken = default)
     {
         var row = await _db.CandidateCompetencies.AsNoTracking()
             .FirstOrDefaultAsync(c => c.UserId == userId, cancellationToken);
-        return ToDto(row);
+        var price = (await _commercial.GetAsync(cancellationToken)).DeepAnalysisPriceEuro;
+        return ToDto(row, price);
     }
 
     public async Task<CandidateCompetencyStateDto> SaveAsync(
@@ -59,7 +63,7 @@ public sealed class CandidateCompetencyService : ICandidateCompetencyService
                     "Lege antwoorden overschrijven je bestaande test niet. Stuur de huidige antwoorden mee.");
             }
 
-            return ToDto(null);
+            return ToDto(null, FlexCommercialSettings.DefaultDeepAnalysisPriceEuro);
         }
 
         var now = DateTime.UtcNow;
@@ -111,7 +115,8 @@ public sealed class CandidateCompetencyService : ICandidateCompetencyService
         }
 
         await _db.SaveChangesAsync(cancellationToken);
-        return ToDto(row);
+        var price = (await _commercial.GetAsync(cancellationToken)).DeepAnalysisPriceEuro;
+        return ToDto(row, price);
     }
 
     public async Task<CompetencyScores?> GetCompletedScoresAsync(
@@ -211,7 +216,7 @@ public sealed class CandidateCompetencyService : ICandidateCompetencyService
         return result;
     }
 
-    private static CandidateCompetencyStateDto ToDto(CandidateCompetency? row)
+    private static CandidateCompetencyStateDto ToDto(CandidateCompetency? row, decimal deepAnalysisPriceEuro)
     {
         var answers = CompetencyTestCatalog.ParseAnswersJson(row?.AnswersJson);
         var preview = CompetencyTestCatalog.Score(answers);
@@ -235,7 +240,7 @@ public sealed class CandidateCompetencyService : ICandidateCompetencyService
                 .ToList(),
             CompetencyTestCatalog.ParseTagsJson(row?.RiasecTagsJson),
             CompetencyTestCatalog.ParseTagsJson(row?.MatchTagsJson),
-            DeepAnalysisService.UpsellCopyNl);
+            DeepAnalysisService.FormatUpsellCopy(deepAnalysisPriceEuro));
     }
 
     private static CandidatePreferencesDto DeserializePrefs(string? json)

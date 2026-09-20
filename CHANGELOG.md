@@ -18,6 +18,7 @@ Alle noemenswaardige wijzigingen aan dit project worden in dit bestand bijgehoud
 - API: `api/employer/talent/*`, `api/me/talent-contacts`, `api/me/deep-analysis`; UI: `/employer/talent`, `/employer/talent-contacts`.
 
 ### Changed
+- Alle Lobsy-platformbedragen (diepte-analyse, flex-marge, uitzend-jaarabonnement, ContactUnlock) zijn admin-configureerbaar via **Settings → Lobsy Flex & talent**.
 - Kandidaat **competentietest** uitgebreid van 20 → 25 (RIASEC-tags + match-tags op `CandidateCompetencies`).
 - Live **KVK Handelsregister**-koppeling: bij API-key (Admin → Integraties of `Kvk__ApiKey` / `KVK_API_KEY`) zoekt Lobsy echte vestigingen; zonder key blijft de demo-stub. Base URL leeg = `https://api.kvk.nl/api/` (test: `https://api.kvk.nl/test/api/`).
 - Register-wizard: kruimelpad, KVK-adres met i-toelichting (vestigingsnummer + SBI achter het i-tje), stil logo, knoptekst ‘Bevestigen’ niet meer afgeknipt, geen ‘Open verificatielink’.

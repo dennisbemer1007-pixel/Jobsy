@@ -622,6 +622,17 @@ public class TokenPricingSettings
     public List<EarlyAdapterRuleItem> EarlyAdapterRules { get; set; } = [];
     public PushBomSettingsItem? PushBomSettings { get; set; }
     public List<PushBomPricingTierItem> PushBomPricingTiers { get; set; } = [];
+    public LobsyCommercialSettingsItem? LobsyCommercial { get; set; }
+}
+
+public class LobsyCommercialSettingsItem
+{
+    public decimal MarginPerHourEuro { get; set; } = 2.00m;
+    public string BackofficePartnerName { get; set; } = "Yellowstone";
+    public decimal DeepAnalysisPriceEuro { get; set; } = 2.99m;
+    public decimal AgencyAnnualPriceEuro { get; set; } = 4000m;
+    public decimal ContactUnlockCostTokens { get; set; } = 1m;
+    public DateTime UpdatedAtUtc { get; set; }
 }
 
 public class TokenPackSetting

@@ -1,3 +1,4 @@
+using System.Globalization;
 using Jobsy.Core.Entities;
 using Jobsy.Core.Interfaces;
 using Jobsy.Core.Rules;
@@ -9,16 +10,24 @@ namespace Jobsy.Infrastructure.Services;
 
 public sealed class DeepAnalysisService : IDeepAnalysisService
 {
-    public const string UpsellCopyNl =
-        "Wil je een diepgaand inzicht in jouw unieke werkstijl en een officiële PDF-rapportage voor je sollicitaties? Ontgrendel de uitgebreide diepte-analyse voor € 2,99.";
-
     private readonly JobsyDbContext _db;
+    private readonly IFlexCommercialService _commercial;
     private readonly ILogger<DeepAnalysisService> _logger;
 
-    public DeepAnalysisService(JobsyDbContext db, ILogger<DeepAnalysisService> logger)
+    public DeepAnalysisService(
+        JobsyDbContext db,
+        IFlexCommercialService commercial,
+        ILogger<DeepAnalysisService> logger)
     {
         _db = db;
+        _commercial = commercial;
         _logger = logger;
+    }
+
+    public static string FormatUpsellCopy(decimal priceEuro)
+    {
+        var price = priceEuro.ToString("0.00", CultureInfo.GetCultureInfo("nl-NL"));
+        return $"Wil je een diepgaand inzicht in jouw unieke werkstijl en een officiële PDF-rapportage voor je sollicitaties? Ontgrendel de uitgebreide diepte-analyse voor € {price}.";
     }
 
     public async Task<DeepAnalysisStateDto> GetStateAsync(
@@ -27,7 +36,8 @@ public sealed class DeepAnalysisService : IDeepAnalysisService
     {
         var row = await _db.CandidateDeepAnalyses.AsNoTracking()
             .FirstOrDefaultAsync(d => d.UserId == userId, cancellationToken);
-        return ToDto(row);
+        var commercial = await _commercial.GetAsync(cancellationToken);
+        return ToDto(row, commercial.DeepAnalysisPriceEuro);
     }
 
     public async Task<DeepAnalysisCheckoutResult> StartCheckoutAsync(
@@ -44,6 +54,9 @@ public sealed class DeepAnalysisService : IDeepAnalysisService
             throw new InvalidOperationException("Diepte-analyse is al ontgrendeld.");
         }
 
+        var commercial = await _commercial.GetAsync(cancellationToken);
+        var price = commercial.DeepAnalysisPriceEuro;
+
         var open = await _db.DeepAnalysisCheckouts
             .Where(c => c.UserId == userId && c.Status == DeepAnalysisCheckoutStatus.Pending)
             .ToListAsync(cancellationToken);
@@ -58,7 +71,7 @@ public sealed class DeepAnalysisService : IDeepAnalysisService
             Id = Guid.NewGuid(),
             UserId = userId,
             PaymentId = paymentId,
-            AmountEuro = DeepAnalysisCheckout.PriceEuro,
+            AmountEuro = price,
             Status = DeepAnalysisCheckoutStatus.Pending,
             CreatedAtUtc = DateTime.UtcNow
         };
@@ -67,13 +80,13 @@ public sealed class DeepAnalysisService : IDeepAnalysisService
 
         _logger.LogInformation(
             "Deep analysis checkout for user {UserId}: €{Amount} ({PaymentId})",
-            userId, DeepAnalysisCheckout.PriceEuro, paymentId);
+            userId, price, paymentId);
 
         return new DeepAnalysisCheckoutResult(
             checkout.Id,
             paymentId,
             $"/candidate/deep-analysis/checkout?paymentId={Uri.EscapeDataString(paymentId)}",
-            DeepAnalysisCheckout.PriceEuro,
+            price,
             IsStub: true);
     }
 
@@ -143,11 +156,11 @@ public sealed class DeepAnalysisService : IDeepAnalysisService
     {
         var row = await _db.CandidateDeepAnalyses
             .FirstOrDefaultAsync(d => d.UserId == userId, cancellationToken)
-            ?? throw new InvalidOperationException("Diepte-analyse is nog niet ontgrendeld. Betaal eerst € 2,99.");
+            ?? throw new InvalidOperationException("Diepte-analyse is nog niet ontgrendeld. Betaal eerst via de checkout.");
 
         if (!CandidateDeepAnalysisStatuses.IsUnlocked(row.Status))
         {
-            throw new InvalidOperationException("Diepte-analyse is nog niet ontgrendeld. Betaal eerst € 2,99.");
+            throw new InvalidOperationException("Diepte-analyse is nog niet ontgrendeld. Betaal eerst via de checkout.");
         }
 
         var error = DeepAnalysisCatalog.ValidateAnswers(answers, complete);
@@ -168,7 +181,6 @@ public sealed class DeepAnalysisService : IDeepAnalysisService
             row.CompletedAtUtc = now;
             row.ReportGeneratedAtUtc = now;
 
-            // Merge enriched tags into Quick-Scan match index when present.
             var quick = await _db.CandidateCompetencies
                 .FirstOrDefaultAsync(c => c.UserId == userId, cancellationToken);
             if (quick is not null && CandidateCompetencyStatuses.IsCompleted(quick.Status))
@@ -195,10 +207,11 @@ public sealed class DeepAnalysisService : IDeepAnalysisService
         }
 
         await _db.SaveChangesAsync(cancellationToken);
-        return ToDto(row);
+        var commercial = await _commercial.GetAsync(cancellationToken);
+        return ToDto(row, commercial.DeepAnalysisPriceEuro);
     }
 
-    private static DeepAnalysisStateDto ToDto(CandidateDeepAnalysis? row)
+    private static DeepAnalysisStateDto ToDto(CandidateDeepAnalysis? row, decimal priceEuro)
     {
         var status = row?.Status ?? CandidateDeepAnalysisStatuses.Locked;
         var answers = DeepAnalysisCatalog.ParseAnswersJson(row?.AnswersJson);
@@ -209,7 +222,7 @@ public sealed class DeepAnalysisService : IDeepAnalysisService
             CandidateDeepAnalysisStatuses.IsCompleted(status),
             answers.Count,
             DeepAnalysisCatalog.QuestionCount,
-            DeepAnalysisCheckout.PriceEuro,
+            priceEuro,
             CompetencyTestCatalog.ParseTagsJson(row?.TagsJson),
             row?.UnlockedAtUtc,
             row?.CompletedAtUtc,
@@ -219,6 +232,6 @@ public sealed class DeepAnalysisService : IDeepAnalysisService
                     .Select(q => new DeepAnalysisQuestionDto(q.Id, q.Family, q.Domain, q.Reverse, q.PromptNl))
                     .ToList()
                 : [],
-            UpsellCopyNl);
+            FormatUpsellCopy(priceEuro));
     }
 }

@@ -25,6 +25,7 @@ public class SettingsController : ControllerBase
     private readonly IAboutPageSettingsService _aboutPage;
     private readonly IMarketingFlyerSettingsService _marketingFlyer;
     private readonly IMarketingFlyerPdfService _marketingFlyerPdf;
+    private readonly IFlexCommercialService _flexCommercial;
 
     public SettingsController(
         JobsyDbContext db,
@@ -33,7 +34,8 @@ public class SettingsController : ControllerBase
         IPlatformCompanySettingsService companySettings,
         IAboutPageSettingsService aboutPage,
         IMarketingFlyerSettingsService marketingFlyer,
-        IMarketingFlyerPdfService marketingFlyerPdf)
+        IMarketingFlyerPdfService marketingFlyerPdf,
+        IFlexCommercialService flexCommercial)
     {
         _db = db;
         _credentials = credentials;
@@ -42,6 +44,7 @@ public class SettingsController : ControllerBase
         _aboutPage = aboutPage;
         _marketingFlyer = marketingFlyer;
         _marketingFlyerPdf = marketingFlyerPdf;
+        _flexCommercial = flexCommercial;
     }
 
     [HttpGet("token-pricing")]
@@ -74,6 +77,7 @@ public class SettingsController : ControllerBase
             .OrderBy(t => t.MinCandidates)
             .Select(t => new { t.Id, t.MinCandidates, t.MaxCandidates, t.CostTokens, t.IsActive })
             .ToListAsync(cancellationToken);
+        var lobsyCommercial = await _flexCommercial.GetAsync(cancellationToken);
 
         return Ok(new
         {
@@ -81,8 +85,35 @@ public class SettingsController : ControllerBase
             costs,
             earlyAdapterRules = early,
             pushBomSettings,
-            pushBomPricingTiers = pushBomTiers
+            pushBomPricingTiers = pushBomTiers,
+            lobsyCommercial
         });
+    }
+
+    [HttpGet("lobsy-commercial")]
+    public async Task<ActionResult<FlexCommercialSettingsDto>> GetLobsyCommercial(CancellationToken cancellationToken)
+        => Ok(await _flexCommercial.GetAsync(cancellationToken));
+
+    [HttpPut("lobsy-commercial")]
+    public async Task<ActionResult<FlexCommercialSettingsDto>> UpdateLobsyCommercial(
+        [FromBody] UpdateLobsyCommercialRequest request,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            return Ok(await _flexCommercial.UpdateAsync(
+                new FlexCommercialSettingsUpdate(
+                    request.MarginPerHourEuro,
+                    request.BackofficePartnerName ?? "",
+                    request.DeepAnalysisPriceEuro,
+                    request.AgencyAnnualPriceEuro,
+                    request.ContactUnlockCostTokens),
+                cancellationToken));
+        }
+        catch (ArgumentException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
     }
 
     [HttpPut("token-pricing/packs/{id:guid}")]
@@ -609,3 +640,10 @@ public sealed record UpdateMarketingFlyerRequest(
     string? QrCaption,
     string? QrPath,
     string? FooterNote);
+
+public sealed record UpdateLobsyCommercialRequest(
+    decimal MarginPerHourEuro,
+    string? BackofficePartnerName,
+    decimal DeepAnalysisPriceEuro,
+    decimal AgencyAnnualPriceEuro,
+    decimal ContactUnlockCostTokens);

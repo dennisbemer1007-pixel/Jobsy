@@ -1,13 +1,12 @@
 namespace Jobsy.Core.Entities;
 
 /// <summary>
-/// Annual agency (uitzendbureau) subscription: € 4.000 / year for unlimited
+/// Annual agency (uitzendbureau) subscription for unlimited
 /// carte-blanche vacancy publishing on subscribed establishment pins.
+/// Price is configured in <see cref="FlexCommercialSettings.AgencyAnnualPriceEuro"/>.
 /// </summary>
 public class AgencyAnnualSubscription
 {
-    public const decimal AnnualPriceEuro = 4000m;
-
     public Guid Id { get; set; }
 
     public Guid CompanyId { get; set; }
@@ -17,6 +16,9 @@ public class AgencyAnnualSubscription
     public DateTime EndsAtUtc { get; set; }
 
     public bool IsActive { get; set; } = true;
+
+    /// <summary>Price charged / agreed at activation (snapshot of admin setting).</summary>
+    public decimal PriceEuro { get; set; }
 
     public string? Note { get; set; }
 

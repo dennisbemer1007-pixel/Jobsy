@@ -536,6 +536,9 @@ public class JobsyDbContext : DbContext
             entity.ToTable("FlexCommercialSettings");
             entity.HasKey(e => e.Id);
             entity.Property(e => e.MarginPerHourEuro).HasPrecision(10, 2);
+            entity.Property(e => e.DeepAnalysisPriceEuro).HasPrecision(10, 2);
+            entity.Property(e => e.AgencyAnnualPriceEuro).HasPrecision(12, 2);
+            entity.Property(e => e.ContactUnlockCostTokens).HasPrecision(10, 2);
             entity.Property(e => e.BackofficePartnerName).HasMaxLength(128).IsRequired();
         });
 
@@ -544,6 +547,7 @@ public class JobsyDbContext : DbContext
             entity.ToTable("AgencyAnnualSubscriptions");
             entity.HasKey(e => e.Id);
             entity.Property(e => e.Note).HasMaxLength(500);
+            entity.Property(e => e.PriceEuro).HasPrecision(12, 2);
             entity.HasIndex(e => new { e.CompanyId, e.IsActive, e.EndsAtUtc });
             entity.HasOne(e => e.Company)
                 .WithMany()

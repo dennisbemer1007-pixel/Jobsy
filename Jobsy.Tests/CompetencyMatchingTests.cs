@@ -1,3 +1,5 @@
+using Jobsy.Core.Entities;
+using Jobsy.Core.Enums;
 using Jobsy.Core.Rules;
 
 namespace Jobsy.Tests;
@@ -91,10 +93,12 @@ public class CompetencyMatchingTests
     [Fact]
     public void Flex_and_agency_commercial_defaults()
     {
-        Assert.Equal(2.00m, new Jobsy.Core.Entities.FlexCommercialSettings().MarginPerHourEuro);
-        Assert.Equal(4000m, Jobsy.Core.Entities.AgencyAnnualSubscription.AnnualPriceEuro);
-        Assert.Equal(Jobsy.Core.Enums.VacancyKind.Flex, VacancyKindLabels.ParseOrDefault("flex"));
-        Assert.Equal("Flex-inzet", VacancyKindLabels.ToDutch(Jobsy.Core.Enums.VacancyKind.Flex));
+        Assert.Equal(2.00m, FlexCommercialSettings.DefaultMarginPerHourEuro);
+        Assert.Equal(2.99m, FlexCommercialSettings.DefaultDeepAnalysisPriceEuro);
+        Assert.Equal(4000m, FlexCommercialSettings.DefaultAgencyAnnualPriceEuro);
+        Assert.Equal(1m, FlexCommercialSettings.DefaultContactUnlockCostTokens);
+        Assert.Equal(VacancyKind.Flex, VacancyKindLabels.ParseOrDefault("flex"));
+        Assert.Equal("Flex-inzet", VacancyKindLabels.ToDutch(VacancyKind.Flex));
         Assert.Equal(1m, TalentContactRules.DefaultUnlockCostTokens);
     }
 

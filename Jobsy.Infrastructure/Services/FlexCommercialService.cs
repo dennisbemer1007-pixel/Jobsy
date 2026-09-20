@@ -1,4 +1,5 @@
 using Jobsy.Core.Entities;
+using Jobsy.Core.Enums;
 using Jobsy.Core.Interfaces;
 using Jobsy.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
@@ -19,33 +20,49 @@ public sealed class FlexCommercialService : IFlexCommercialService
     public async Task<FlexCommercialSettingsDto> GetAsync(CancellationToken cancellationToken = default)
     {
         var settings = await EnsureSettingsAsync(cancellationToken);
-        return new FlexCommercialSettingsDto(
-            settings.MarginPerHourEuro,
-            settings.BackofficePartnerName,
-            settings.UpdatedAtUtc);
+        return MapSettings(settings);
     }
 
     public async Task<FlexCommercialSettingsDto> UpdateAsync(
-        decimal marginPerHourEuro,
-        string backofficePartnerName,
+        FlexCommercialSettingsUpdate update,
         CancellationToken cancellationToken = default)
     {
-        if (marginPerHourEuro < 0 || marginPerHourEuro > 100)
+        if (update.MarginPerHourEuro is < 0 or > 100)
         {
-            throw new ArgumentOutOfRangeException(nameof(marginPerHourEuro), "Marge moet tussen € 0 en € 100 liggen.");
+            throw new ArgumentOutOfRangeException(nameof(update.MarginPerHourEuro), "Flex-marge moet tussen € 0 en € 100 liggen.");
         }
 
-        if (string.IsNullOrWhiteSpace(backofficePartnerName))
+        if (update.DeepAnalysisPriceEuro is < 0 or > 500)
+        {
+            throw new ArgumentOutOfRangeException(nameof(update.DeepAnalysisPriceEuro), "Diepte-analyse prijs moet tussen € 0 en € 500 liggen.");
+        }
+
+        if (update.AgencyAnnualPriceEuro is < 0 or > 1_000_000)
+        {
+            throw new ArgumentOutOfRangeException(nameof(update.AgencyAnnualPriceEuro), "Uitzend-jaarabonnement moet tussen € 0 en € 1.000.000 liggen.");
+        }
+
+        if (update.ContactUnlockCostTokens is <= 0 or > 100)
+        {
+            throw new ArgumentOutOfRangeException(nameof(update.ContactUnlockCostTokens), "ContactUnlock moet tussen 0,1 en 100 tokens liggen.");
+        }
+
+        if (string.IsNullOrWhiteSpace(update.BackofficePartnerName))
         {
             throw new ArgumentException("Backoffice-partner is verplicht.");
         }
 
         var settings = await EnsureSettingsAsync(cancellationToken);
-        settings.MarginPerHourEuro = Math.Round(marginPerHourEuro, 2, MidpointRounding.AwayFromZero);
-        settings.BackofficePartnerName = backofficePartnerName.Trim();
+        settings.MarginPerHourEuro = Math.Round(update.MarginPerHourEuro, 2, MidpointRounding.AwayFromZero);
+        settings.BackofficePartnerName = update.BackofficePartnerName.Trim();
+        settings.DeepAnalysisPriceEuro = Math.Round(update.DeepAnalysisPriceEuro, 2, MidpointRounding.AwayFromZero);
+        settings.AgencyAnnualPriceEuro = Math.Round(update.AgencyAnnualPriceEuro, 2, MidpointRounding.AwayFromZero);
+        settings.ContactUnlockCostTokens = Math.Round(update.ContactUnlockCostTokens, 2, MidpointRounding.AwayFromZero);
         settings.UpdatedAtUtc = DateTime.UtcNow;
+
+        await SyncContactUnlockSpendCostAsync(settings.ContactUnlockCostTokens, cancellationToken);
         await _db.SaveChangesAsync(cancellationToken);
-        return await GetAsync(cancellationToken);
+        return MapSettings(settings);
     }
 
     public async Task<bool> HasActiveAgencySubscriptionAsync(
@@ -71,7 +88,7 @@ public sealed class FlexCommercialService : IFlexCommercialService
             .Where(s => s.CompanyId == companyId && s.IsActive && s.EndsAtUtc > now)
             .OrderByDescending(s => s.EndsAtUtc)
             .FirstOrDefaultAsync(cancellationToken);
-        return row is null ? null : Map(row);
+        return row is null ? null : MapSubscription(row);
     }
 
     public async Task<AgencySubscriptionDto> ActivateAgencySubscriptionAsync(
@@ -83,6 +100,7 @@ public sealed class FlexCommercialService : IFlexCommercialService
         _ = await _db.Companies.FirstOrDefaultAsync(c => c.Id == companyId, cancellationToken)
             ?? throw new KeyNotFoundException("Bedrijf niet gevonden.");
 
+        var commercial = await EnsureSettingsAsync(cancellationToken);
         var start = startsAtUtc ?? DateTime.UtcNow;
         var row = new AgencyAnnualSubscription
         {
@@ -91,12 +109,33 @@ public sealed class FlexCommercialService : IFlexCommercialService
             StartsAtUtc = start,
             EndsAtUtc = start.AddYears(1),
             IsActive = true,
+            PriceEuro = commercial.AgencyAnnualPriceEuro,
             Note = string.IsNullOrWhiteSpace(note) ? null : note.Trim(),
             CreatedAtUtc = DateTime.UtcNow
         };
         _db.AgencyAnnualSubscriptions.Add(row);
         await _db.SaveChangesAsync(cancellationToken);
-        return Map(row);
+        return MapSubscription(row);
+    }
+
+    private async Task SyncContactUnlockSpendCostAsync(decimal costTokens, CancellationToken cancellationToken)
+    {
+        var row = await _db.TokenSpendCosts
+            .FirstOrDefaultAsync(c => c.Reason == TokenSpendReason.ContactUnlock, cancellationToken);
+        if (row is null)
+        {
+            _db.TokenSpendCosts.Add(new TokenSpendCost
+            {
+                Id = Guid.NewGuid(),
+                Reason = TokenSpendReason.ContactUnlock,
+                CostTokens = costTokens,
+                IsActive = true
+            });
+            return;
+        }
+
+        row.CostTokens = costTokens;
+        row.IsActive = true;
     }
 
     private async Task<FlexCommercialSettings> EnsureSettingsAsync(CancellationToken cancellationToken)
@@ -112,8 +151,11 @@ public sealed class FlexCommercialService : IFlexCommercialService
         settings = new FlexCommercialSettings
         {
             Id = SettingsSingletonId,
-            MarginPerHourEuro = 2.00m,
-            BackofficePartnerName = "Yellowstone",
+            MarginPerHourEuro = FlexCommercialSettings.DefaultMarginPerHourEuro,
+            BackofficePartnerName = FlexCommercialSettings.DefaultBackofficePartnerName,
+            DeepAnalysisPriceEuro = FlexCommercialSettings.DefaultDeepAnalysisPriceEuro,
+            AgencyAnnualPriceEuro = FlexCommercialSettings.DefaultAgencyAnnualPriceEuro,
+            ContactUnlockCostTokens = FlexCommercialSettings.DefaultContactUnlockCostTokens,
             UpdatedAtUtc = DateTime.UtcNow
         };
         _db.FlexCommercialSettings.Add(settings);
@@ -121,12 +163,20 @@ public sealed class FlexCommercialService : IFlexCommercialService
         return settings;
     }
 
-    private static AgencySubscriptionDto Map(AgencyAnnualSubscription row) => new(
+    private static FlexCommercialSettingsDto MapSettings(FlexCommercialSettings settings) => new(
+        settings.MarginPerHourEuro,
+        settings.BackofficePartnerName,
+        settings.DeepAnalysisPriceEuro,
+        settings.AgencyAnnualPriceEuro,
+        settings.ContactUnlockCostTokens,
+        settings.UpdatedAtUtc);
+
+    private static AgencySubscriptionDto MapSubscription(AgencyAnnualSubscription row) => new(
         row.Id,
         row.CompanyId,
         row.StartsAtUtc,
         row.EndsAtUtc,
         row.IsActive,
-        AgencyAnnualSubscription.AnnualPriceEuro,
+        row.PriceEuro,
         row.Note);
 }
