@@ -27,7 +27,7 @@ Tests zitten in profiel/dashboard (geen losse menu-tabs). Elke engine heeft een 
 
 | Eigenschap | Quick-Scan | Diepte-analyse |
 |------------|------------|----------------|
-| Items | 25 Likert (Big Five / OCEAN) | 150 Likert (facetten + vaardigheden) |
+| Items | 25 Likert (Big Five / OCEAN) | **150 unieke** Likert (30 per OCEAN-trek: Openheid, Consciëntieusheid, Extraversie, Vriendelijkheid, Emotionele stabiliteit; mix reverse-items; geen “variant N”) |
 | Output | Competentiescores 0–100% + match-tags | Verrijkte tags + PDF |
 | Opslag | `CandidateCompetencies` | `CandidateDeepAnalyses` (`Kind=Competence`) |
 | Upsell | — | *“Ontgrendel je uitgebreide competentie-analyse inclusief officiële PDF-rapportage voor € {prijs}.”* |
@@ -36,7 +36,7 @@ Tests zitten in profiel/dashboard (geen losse menu-tabs). Elke engine heeft een 
 
 | Eigenschap | Quick-Scan | Diepte-analyse |
 |------------|------------|----------------|
-| Items | 25 Likert (RIASEC / Holland-code) | 150 Likert (RIASEC + loopbaanoriëntatie) |
+| Items | 25 Likert (RIASEC / Holland-code) | **150 unieke** Likert (25 per RIASEC-type; mix reverse-items) + carrière-advies in PDF |
 | Output | Percentages per type, Holland-code, **top 10 actieve vacatures** | Loopbaan-PDF + verfijnde matching |
 | Opslag | `CandidateCareerInterests` | `CandidateDeepAnalyses` (`Kind=Career`) |
 | Upsell | na gratis test | *“Wil je een diepgaand carrière-advies … Ontgrendel de uitgebreide beroepentest voor € {prijs}.”* |

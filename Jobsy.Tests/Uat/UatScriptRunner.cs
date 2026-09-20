@@ -410,6 +410,9 @@ public static class UatScriptRunner
         {
             Assert.Equal(150, DeepAnalysisCatalog.QuestionCount);
             Assert.Equal(2.99m, FlexCommercialSettings.DefaultDeepAnalysisPriceEuro);
+            Assert.Equal(150, DeepAnalysisCatalog.Questions.Select(q => q.PromptNl).Distinct(StringComparer.OrdinalIgnoreCase).Count());
+            Assert.DoesNotContain(DeepAnalysisCatalog.Questions, q => q.PromptNl.Contains("variant", StringComparison.OrdinalIgnoreCase));
+            Assert.Equal(30, DeepAnalysisCatalog.CompetenceItemsPerDomain);
         }
 
         if (Contains(blob, "Mijn Lobsy Kompas", "match-%", "Beste match", ">80% match"))

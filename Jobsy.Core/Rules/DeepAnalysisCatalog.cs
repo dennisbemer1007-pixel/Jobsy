@@ -3,13 +3,18 @@ using Jobsy.Core.Enums;
 namespace Jobsy.Core.Rules;
 
 /// <summary>
-/// Paid 150-item deep analyses — competence (Big Five + skills) and career (RIASEC + orientation) are separate catalogs.
+/// Paid 150-item deep analyses. Competence is 30 unique Likert items per Big Five trait;
+/// career is 25 unique items per RIASEC type. No repeated stems / “variant N”.
 /// </summary>
 public static class DeepAnalysisCatalog
 {
     public const int QuestionCount = 150;
+    public const int CompetenceItemsPerDomain = 30;
+    public const int CareerItemsPerDomain = 25;
     public const int LikertMin = LikertAnswerJson.LikertMin;
     public const int LikertMax = LikertAnswerJson.LikertMax;
+
+    public static readonly string[] BigFiveDomains = DeepAnalysisCompetenceItems.Domains;
 
     private static readonly Lazy<IReadOnlyList<DeepAnalysisQuestion>> LazyCompetence = new(BuildCompetenceQuestions);
     private static readonly Lazy<IReadOnlyList<DeepAnalysisQuestion>> LazyCareer = new(BuildCareerQuestions);
@@ -23,139 +28,71 @@ public static class DeepAnalysisCatalog
         => kind == AssessmentKind.Career ? CareerQuestions : Questions;
 
     private static IReadOnlyList<DeepAnalysisQuestion> BuildCompetenceQuestions()
-    {
-        var list = new List<DeepAnalysisQuestion>(QuestionCount);
-        var id = 1;
-
-        // Big Five facets: 5 traits × 20 = 100
-        string[] bigFive =
-        [
-            "Openheid", "Consciëntieusheid", "Extraversie", "Inschikkelijkheid", "EmotioneleStabiliteit"
-        ];
-        string[] bigFivePrompts =
-        [
-            "Ik zoek graag nieuwe ideeën en werkwijzen.",
-            "Ik werk systematisch en houd afspraken bij.",
-            "Ik krijg energie van contact met collega's.",
-            "Ik houd rekening met de gevoelens van anderen.",
-            "Ik blijf rustig onder tijdsdruk."
-        ];
-        for (var t = 0; t < bigFive.Length; t++)
-        {
-            for (var i = 0; i < 20; i++)
-            {
-                list.Add(new DeepAnalysisQuestion(
-                    id++,
-                    "BigFive",
-                    bigFive[t],
-                    Reverse: i % 5 == 4,
-                    $"{bigFivePrompts[t]} (variant {i + 1})"));
-            }
-        }
-
-        // Practical capacity / skills: 10 × 5 = 50
-        string[] practicalThemes =
-        [
-            "FysiekeBelasting", "MentaleBelasting", "Klantcontact", "Zelfstandigheid",
-            "Ploegendienst", "Leervermogen", "Nauwkeurigheid", "Tempo",
-            "Verantwoordelijkheid", "Aanpassingsvermogen"
-        ];
-        string[] practicalPrompts =
-        [
-            "Ik kan fysiek zwaar of staand werk lang volhouden.",
-            "Ik kan complexe informatie combineren zonder overprikkeld te raken.",
-            "Ik voel me op mijn gemak bij klant- of gastcontact.",
-            "Ik werk goed zelfstandig zonder voortdurende sturing.",
-            "Ik kan wisselende of onregelmatige diensten aan.",
-            "Ik leer nieuwe systemen of taken snel.",
-            "Ik controleer mijn werk zorgvuldig op fouten.",
-            "Ik houd een hoog werktempo vol zonder kwaliteit in te leveren.",
-            "Ik neem verantwoordelijkheid als iets misgaat.",
-            "Ik schakel snel als de planning of de taak verandert."
-        ];
-        for (var t = 0; t < practicalThemes.Length; t++)
-        {
-            for (var i = 0; i < 5; i++)
-            {
-                list.Add(new DeepAnalysisQuestion(
-                    id++,
-                    "Practical",
-                    practicalThemes[t],
-                    Reverse: i == 4,
-                    $"{practicalPrompts[t]} (variant {i + 1})"));
-            }
-        }
-
-        EnsureCount(list, AssessmentKind.Competence);
-        return list;
-    }
+        => Materialize("BigFive", DeepAnalysisCompetenceItems.All, AssessmentKind.Competence, CompetenceItemsPerDomain);
 
     private static IReadOnlyList<DeepAnalysisQuestion> BuildCareerQuestions()
+        => Materialize("RIASEC", DeepAnalysisCareerItems.All, AssessmentKind.Career, CareerItemsPerDomain);
+
+    private static IReadOnlyList<DeepAnalysisQuestion> Materialize(
+        string family,
+        IReadOnlyList<(string Domain, bool Reverse, string Prompt)> items,
+        AssessmentKind kind,
+        int expectedPerDomain)
     {
+        if (items.Count != QuestionCount)
+        {
+            throw new InvalidOperationException(
+                $"DeepAnalysisCatalog ({kind}) source must contain {QuestionCount} items, got {items.Count}.");
+        }
+
         var list = new List<DeepAnalysisQuestion>(QuestionCount);
-        var id = 1;
-
-        // RIASEC: 6 × 20 = 120
-        string[] riasec = CareerTestCatalog.RiasecCodes.ToArray();
-        string[] riasecPrompts =
-        [
-            "Ik werk graag met machines, gereedschap of buiten.",
-            "Ik onderzoek graag hoe iets werkt of waarom iets zo is.",
-            "Ik bedenk graag creatieve of visuele oplossingen.",
-            "Ik help graag mensen of werk in een team.",
-            "Ik neem graag initiatief en overtuig anderen.",
-            "Ik houd van orde, administratie en vaste procedures."
-        ];
-        for (var t = 0; t < riasec.Length; t++)
+        for (var i = 0; i < items.Count; i++)
         {
-            for (var i = 0; i < 20; i++)
-            {
-                list.Add(new DeepAnalysisQuestion(
-                    id++,
-                    "RIASEC",
-                    riasec[t],
-                    Reverse: i % 5 == 4,
-                    $"{riasecPrompts[t]} (variant {i + 1})"));
-            }
+            var item = items[i];
+            list.Add(new DeepAnalysisQuestion(i + 1, family, item.Domain, item.Reverse, item.Prompt.Trim()));
         }
 
-        // Career orientation: 6 × 5 = 30
-        string[] careerThemes =
-        [
-            "Werkwaarden", "Autonomie", "Zekerheid", "Groei", "Impact", "Variatie"
-        ];
-        string[] careerPrompts =
-        [
-            "Ik wil werk dat aansluit bij wat ik belangrijk vind in het leven.",
-            "Ik wil zelf kunnen bepalen hoe ik mijn werk aanpak.",
-            "Ik zoek zekerheid en een voorspelbaar rooster.",
-            "Ik wil doorgroeien en nieuwe vaardigheden leren.",
-            "Ik wil werk waarmee ik iets bijdraag voor anderen.",
-            "Ik zoek afwisseling in taken en werkomgeving."
-        ];
-        for (var t = 0; t < careerThemes.Length; t++)
-        {
-            for (var i = 0; i < 5; i++)
-            {
-                list.Add(new DeepAnalysisQuestion(
-                    id++,
-                    "Career",
-                    careerThemes[t],
-                    Reverse: i == 4,
-                    $"{careerPrompts[t]} (variant {i + 1})"));
-            }
-        }
-
-        EnsureCount(list, AssessmentKind.Career);
+        EnsureQuality(list, kind, expectedPerDomain);
         return list;
     }
 
-    private static void EnsureCount(List<DeepAnalysisQuestion> list, AssessmentKind kind)
+    private static void EnsureQuality(
+        List<DeepAnalysisQuestion> list,
+        AssessmentKind kind,
+        int expectedPerDomain)
     {
         if (list.Count != QuestionCount)
         {
             throw new InvalidOperationException(
                 $"DeepAnalysisCatalog ({kind}) must contain {QuestionCount} questions, got {list.Count}.");
+        }
+
+        var prompts = list.Select(q => q.PromptNl).ToList();
+        if (prompts.Any(p => p.Contains("variant", StringComparison.OrdinalIgnoreCase)))
+        {
+            throw new InvalidOperationException($"DeepAnalysisCatalog ({kind}) still contains repeated 'variant' stems.");
+        }
+
+        var distinct = prompts.Distinct(StringComparer.OrdinalIgnoreCase).Count();
+        if (distinct != QuestionCount)
+        {
+            throw new InvalidOperationException(
+                $"DeepAnalysisCatalog ({kind}) prompts must be unique, got {distinct} distinct of {QuestionCount}.");
+        }
+
+        foreach (var group in list.GroupBy(q => q.Domain, StringComparer.OrdinalIgnoreCase))
+        {
+            if (group.Count() != expectedPerDomain)
+            {
+                throw new InvalidOperationException(
+                    $"DeepAnalysisCatalog ({kind}) domain {group.Key} has {group.Count()} items, expected {expectedPerDomain}.");
+            }
+
+            if (group.Count(q => q.Reverse) < expectedPerDomain / 5)
+            {
+                throw new InvalidOperationException(
+                    $"DeepAnalysisCatalog ({kind}) domain {group.Key} needs more reverse-keyed items.");
+            }
         }
     }
 
@@ -246,6 +183,120 @@ public static class DeepAnalysisCatalog
 
         return tags.OrderBy(t => t, StringComparer.Ordinal).ToList();
     }
+
+    /// <summary>0–100 per domain from reverse-corrected Likert answers.</summary>
+    public static IReadOnlyList<DeepAnalysisDomainScore> ScoreDomains(
+        IReadOnlyDictionary<int, int> answers,
+        AssessmentKind kind)
+    {
+        var buckets = new Dictionary<string, List<int>>(StringComparer.OrdinalIgnoreCase);
+        foreach (var question in QuestionsFor(kind))
+        {
+            if (!answers.TryGetValue(question.Id, out var raw) || !IsValidAnswer(raw))
+            {
+                continue;
+            }
+
+            var value = question.Reverse ? LikertMax + LikertMin - raw : raw;
+            if (!buckets.TryGetValue(question.Domain, out var list))
+            {
+                list = [];
+                buckets[question.Domain] = list;
+            }
+
+            list.Add(value);
+        }
+
+        return buckets
+            .OrderBy(kv => kv.Key, StringComparer.OrdinalIgnoreCase)
+            .Select(kv =>
+            {
+                var avg = kv.Value.Average();
+                var percent = (int)Math.Clamp(
+                    Math.Round(100 * (avg - LikertMin) / (LikertMax - LikertMin), MidpointRounding.AwayFromZero),
+                    0,
+                    100);
+                return new DeepAnalysisDomainScore(kv.Key, percent, kv.Value.Count);
+            })
+            .ToList();
+    }
+
+    public static IReadOnlyList<string> CareerAdviceParagraphs(IReadOnlyList<DeepAnalysisDomainScore> scores)
+    {
+        var top = scores
+            .OrderByDescending(s => s.Percent)
+            .ThenBy(s => s.Domain, StringComparer.OrdinalIgnoreCase)
+            .Take(3)
+            .ToList();
+        if (top.Count == 0)
+        {
+            return
+            [
+                "Rond de 150 vragen af. Dan maken we een Holland-profiel en bijpassend carrière-advies voor Den Haag en het Westland."
+            ];
+        }
+
+        var lines = new List<string>
+        {
+            $"Je diepte-analyse wijst het sterkst naar {JoinNl(top.Select(s => $"{Label(s.Domain)} ({s.Percent}%)").ToList())}."
+        };
+        foreach (var score in top)
+        {
+            lines.Add(AdviceFor(score.Domain));
+        }
+
+        lines.Add(
+            "Gebruik dit advies samen met je harde criteria (reistijd, vervoer, beschikbaarheid) op de banenkaart. Werkgevers zien alleen anonieme tags tot jij contact deelt.");
+        return lines;
+    }
+
+    private static string AdviceFor(string domain) => domain switch
+    {
+        CareerTestCatalog.Realistic =>
+            "Realistic: praktijkomgevingen passen bij je — kassen, logistiek, keuken, bouw, onderhoud. Zoek vacatures met tastbaar resultaat en duidelijke veiligheid.",
+        CareerTestCatalog.Investigative =>
+            "Investigative: je wilt weten waarom iets werkt. Kijk naar kwaliteitscontrole, teelttechniek, lab-achtige taken, data in de keten of verbetertrajecten op de vestiging.",
+        CareerTestCatalog.Artistic =>
+            "Artistic: presentatie en eigen inbreng tellen. Denk aan horeca-styling, winkelpresentatie, content, bloemen/groen of seizoensconcepten.",
+        CareerTestCatalog.Social =>
+            "Social: mensen helpen geeft richting. Zorg, horeca, retail, begeleiding en inwerken van seizoenscollega’s sluiten aan bij je RIASEC-profiel.",
+        CareerTestCatalog.Enterprising =>
+            "Enterprising: jij trekt, verkoopt en organiseert. Filiaalverkoop, ploegaansturing, horeca-shiftleiding of acquisitie in de regio past beter dan puur uitvoerend werk.",
+        CareerTestCatalog.Conventional =>
+            "Conventional: structuur is je kracht. Planning, kassa, orderpicking-systemen, administratie en kwaliteitsregistratie in Den Haag/Westland matchen sterk.",
+        DeepAnalysisCompetenceItems.Openheid =>
+            "Openheid: je leert en verbetert graag. Vacatures met wisselende taken en inwerken op nieuwe systemen benutten dat.",
+        DeepAnalysisCompetenceItems.Consciëntieusheid =>
+            "Consciëntieusheid: betrouwbaarheid en afronden zijn jouw voorsprong bij werkgeversfilters.",
+        DeepAnalysisCompetenceItems.Extraversie =>
+            "Extraversie: klant- en teamcontact past; kijk naar balie, vloer en ploegen met veel overleg.",
+        DeepAnalysisCompetenceItems.Vriendelijkheid =>
+            "Vriendelijkheid: samenwerking en gastvrijheid zijn een sterke match-tag in de talentpool.",
+        DeepAnalysisCompetenceItems.EmotioneleStabiliteit =>
+            "Emotionele stabiliteit: piekdruk (seizoen, horeca, logistiek) is haalbaarder als de rest van het profiel klopt.",
+        _ => $"Op {Label(domain)} scoor je hoog; weeg dat mee bij branchevorkeur en matching."
+    };
+
+    private static string Label(string domain) => domain switch
+    {
+        CareerTestCatalog.Realistic => "Realistic (doen / maken)",
+        CareerTestCatalog.Investigative => "Investigative (onderzoeken)",
+        CareerTestCatalog.Artistic => "Artistic (creëren)",
+        CareerTestCatalog.Social => "Social (helpen)",
+        CareerTestCatalog.Enterprising => "Enterprising (ondernemen)",
+        CareerTestCatalog.Conventional => "Conventional (organiseren)",
+        DeepAnalysisCompetenceItems.EmotioneleStabiliteit => "emotionele stabiliteit",
+        DeepAnalysisCompetenceItems.Vriendelijkheid => "vriendelijkheid",
+        _ => domain.ToLowerInvariant()
+    };
+
+    private static string JoinNl(IReadOnlyList<string> items) => items.Count switch
+    {
+        0 => "",
+        1 => items[0],
+        2 => $"{items[0]} en {items[1]}",
+        _ => string.Join(", ", items.Take(items.Count - 1)) + " en " + items[^1]
+    };
 }
 
 public sealed record DeepAnalysisQuestion(
@@ -254,3 +305,5 @@ public sealed record DeepAnalysisQuestion(
     string Domain,
     bool Reverse,
     string PromptNl);
+
+public sealed record DeepAnalysisDomainScore(string Domain, int Percent, int AnsweredCount);

@@ -4,6 +4,7 @@
 @inject JobsyApiClient Api
 @inject CultureState Culture
 @inject NavigationManager Navigation
+@using Jobsy.Core.Rules
 
 <PageTitle>@Culture["Talent.Title"] · Lobsy</PageTitle>
 
@@ -28,10 +29,11 @@
             <label>
                 Vervoer
                 <select @bind="_transport">
-                    <option value="Bike">Fiets</option>
-                    <option value="Car">Auto</option>
-                    <option value="PublicTransport">OV</option>
-                    <option value="Walk">Lopen</option>
+                    <option value="@TransportLabels.Bike">@Culture["Transport.Bike"]</option>
+                    <option value="@TransportLabels.EBike">@Culture["Transport.EBike"]</option>
+                    <option value="@TransportLabels.Car">@Culture["Transport.Car"]</option>
+                    <option value="@TransportLabels.PublicTransport">@Culture["Transport.Transit"]</option>
+                    <option value="@TransportLabels.Walking">@Culture["Transport.Walk"]</option>
                 </select>
             </label>
             <label>
@@ -100,7 +102,7 @@
     private int? _maxTravel = 45;
     private string _license = "";
     private string _availability = "";
-    private string _transport = "Bike";
+    private string _transport = TransportLabels.Bike;
     private List<AnonymousTalentCard> _results = [];
 
     protected override async Task OnInitializedAsync() => await SearchAsync();

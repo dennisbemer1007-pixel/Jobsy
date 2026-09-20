@@ -1,6 +1,7 @@
 using Jobsy.Core.Authorization;
 using Jobsy.Core.Enums;
 using Jobsy.Core.Interfaces;
+using Jobsy.Core.Rules;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
@@ -52,12 +53,7 @@ public sealed class TalentPoolController : ControllerBase
             return Forbid();
         }
 
-        var transportMode = TransportMode.Bike;
-        if (!string.IsNullOrWhiteSpace(transport)
-            && Enum.TryParse<TransportMode>(transport, ignoreCase: true, out var parsed))
-        {
-            transportMode = parsed;
-        }
+        var transportMode = TransportLabels.Parse(transport);
 
         var tagList = string.IsNullOrWhiteSpace(tags)
             ? null

@@ -64,9 +64,17 @@ public sealed class AssessmentReportPdfService : IAssessmentReportPdfService
             .ToLocalTime()
             .ToString("d", culture);
 
-        var scoreLines = kind == AssessmentKind.Career
-            ? await CareerLinesAsync(userId, cancellationToken)
-            : await CompetenceLinesAsync(userId, cancellationToken);
+        var answers = DeepAnalysisCatalog.ParseAnswersJson(deep.AnswersJson);
+        var domainScores = DeepAnalysisCatalog.ScoreDomains(answers, kind);
+        var scoreLines = domainScores
+            .Select(s => $"{LabelDomain(s.Domain)}: {s.Percent}%")
+            .ToList();
+        if (scoreLines.Count == 0)
+        {
+            scoreLines = kind == AssessmentKind.Career
+                ? await CareerLinesAsync(userId, cancellationToken)
+                : await CompetenceLinesAsync(userId, cancellationToken);
+        }
 
         var bytes = Document.Create(container =>
         {
@@ -88,12 +96,12 @@ public sealed class AssessmentReportPdfService : IAssessmentReportPdfService
                 {
                     col.Spacing(10);
                     col.Item().Text(
-                            "Dit rapport is geen medische of klinische diagnose. Het vat je antwoorden samen voor matching en loopbaanoriëntatie.")
+                            "Dit rapport is geen medische of klinische diagnose. Het vat je 150 unieke antwoorden samen voor matching en loopbaanoriëntatie.")
                         .FontColor(Muted).Italic();
 
                     if (scoreLines.Count > 0)
                     {
-                        col.Item().Text("Scores").FontSize(13).Bold().FontColor(BrandNavy);
+                        col.Item().Text("Scores uit de 150-vragen analyse").FontSize(13).Bold().FontColor(BrandNavy);
                         foreach (var line in scoreLines)
                         {
                             col.Item().Text(line);
@@ -102,14 +110,23 @@ public sealed class AssessmentReportPdfService : IAssessmentReportPdfService
 
                     if (tags.Count > 0)
                     {
-                        col.Item().PaddingTop(8).Text("Verrijkte tags").FontSize(13).Bold().FontColor(BrandNavy);
+                        col.Item().PaddingTop(8).Text("Verrijkte matchingtags").FontSize(13).Bold().FontColor(BrandNavy);
                         col.Item().Text(string.Join(" · ", tags));
                     }
 
-                    col.Item().PaddingTop(12).Text("Toelichting").FontSize(13).Bold().FontColor(BrandNavy);
-                    col.Item().Text(kind == AssessmentKind.Career
-                        ? "Je Holland-code (RIASEC) voedt de vacaturematching op de kaart. Werkgevers zien alleen anonieme tags tot jij contact deelt."
-                        : "Je competentiescores voeden werkgeversfilters in de anonieme talentpool. Ruwe antwoorden blijven in jouw account.");
+                    var advice = DeepAnalysisCatalog.CareerAdviceParagraphs(domainScores);
+                    col.Item().PaddingTop(12).Text(kind == AssessmentKind.Career
+                            ? "Carrière-advies"
+                            : "Toelichting")
+                        .FontSize(13).Bold().FontColor(BrandNavy);
+                    foreach (var paragraph in advice)
+                    {
+                        col.Item().Text(paragraph);
+                    }
+
+                    col.Item().PaddingTop(8).Text(
+                            "Dit rapport is geen medische of klinische diagnose. Ruwe antwoorden blijven in jouw account.")
+                        .FontColor(Muted).Italic();
                 });
 
                 page.Footer().AlignRight().Text(x =>
@@ -166,4 +183,20 @@ public sealed class AssessmentReportPdfService : IAssessmentReportPdfService
             $"Conventional: {row.ConventionalPercent}%"
         ];
     }
+
+    private static string LabelDomain(string domain) => domain switch
+    {
+        "Openheid" => "Openheid",
+        "Consciëntieusheid" => "Consciëntieusheid",
+        "Extraversie" => "Extraversie",
+        "Vriendelijkheid" => "Vriendelijkheid",
+        "EmotioneleStabiliteit" => "Emotionele stabiliteit",
+        CareerTestCatalog.Realistic => "Realistic",
+        CareerTestCatalog.Investigative => "Investigative",
+        CareerTestCatalog.Artistic => "Artistic",
+        CareerTestCatalog.Social => "Social",
+        CareerTestCatalog.Enterprising => "Enterprising",
+        CareerTestCatalog.Conventional => "Conventional",
+        _ => domain
+    };
 }

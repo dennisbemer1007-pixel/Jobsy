@@ -104,7 +104,7 @@ Kernpunten:
 - **Matchingspercentage** op banenkaart met breakdown-modal en actie-adviezen
 - **Competentietest (Quick-Scan / 25 vragen)** op het kandidaatprofiel: Big Five / OCEAN; draft tussentijds opslaan; scores + tags voeden matching en talentpool
 - **Beroepentest (Quick-Scan / 25 vragen):** RIASEC / Holland-code; dynamische **Top 10 actieve vacatures** (≥ 60%, aflopend)
-- **Diepte-analyses (150 vragen, € 2,99 per test):** optionele upsell na elke Quick-Scan; Mollie iDEAL; verrijkte tags + PDF-rapport
+- **Diepte-analyses (150 unieke vragen, € 2,99 per test):** 30 per Big Five-trek (competentie) en 25 per RIASEC-type (beroep); Mollie iDEAL; verrijkte tags + PDF-rapport
 - **Gulden Middenweg** bij solliciteren (&lt; 50%): OTP tegenhouden, profiel aanpassen of vangnet
 - **Optioneel motivatieveld** op sollicitatieformulier
 - **Werkgeversdashboard:** match-% met kleurcodering, breakdown, wettelijke bevestiging, motivatie, sort hoog→laag

@@ -93,6 +93,37 @@ public class CompetencyMatchingTests
         Assert.DoesNotContain(DeepAnalysisCatalog.Questions, q => q.Family == "RIASEC");
         Assert.Contains(DeepAnalysisCatalog.CareerQuestions, q => q.Family == "RIASEC");
         Assert.DoesNotContain(DeepAnalysisCatalog.CareerQuestions, q => q.Family == "BigFive");
+        Assert.All(DeepAnalysisCatalog.Questions, q => Assert.False(q.PromptNl.Contains("variant", StringComparison.OrdinalIgnoreCase)));
+        Assert.All(DeepAnalysisCatalog.CareerQuestions, q => Assert.False(q.PromptNl.Contains("variant", StringComparison.OrdinalIgnoreCase)));
+        Assert.Equal(150, DeepAnalysisCatalog.Questions.Select(q => q.PromptNl).Distinct(StringComparer.OrdinalIgnoreCase).Count());
+        Assert.Equal(150, DeepAnalysisCatalog.CareerQuestions.Select(q => q.PromptNl).Distinct(StringComparer.OrdinalIgnoreCase).Count());
+        Assert.Equal(5, DeepAnalysisCatalog.BigFiveDomains.Length);
+        foreach (var domain in DeepAnalysisCatalog.BigFiveDomains)
+        {
+            Assert.Equal(30, DeepAnalysisCatalog.Questions.Count(q => q.Domain == domain));
+        }
+
+        foreach (var code in CareerTestCatalog.RiasecCodes)
+        {
+            Assert.Equal(25, DeepAnalysisCatalog.CareerQuestions.Count(q => q.Domain == code));
+        }
+
+        Assert.True(DeepAnalysisCatalog.Questions.Count(q => q.Reverse) >= 40);
+        Assert.True(DeepAnalysisCatalog.CareerQuestions.Count(q => q.Reverse) >= 30);
+
+        var high = DeepAnalysisCatalog.Questions.ToDictionary(
+            q => q.Id,
+            q => q.Reverse ? 1 : 5);
+        var tags = DeepAnalysisCatalog.DeriveEnrichedTags(high, AssessmentKind.Competence);
+        Assert.Contains("Vriendelijkheid", tags);
+        Assert.Contains("Openheid", tags);
+        var scores = DeepAnalysisCatalog.ScoreDomains(high, AssessmentKind.Competence);
+        Assert.All(scores, s => Assert.Equal(100, s.Percent));
+        var careerHigh = DeepAnalysisCatalog.CareerQuestions.ToDictionary(
+            q => q.Id,
+            q => q.Reverse ? 1 : 5);
+        Assert.NotEmpty(DeepAnalysisCatalog.CareerAdviceParagraphs(
+            DeepAnalysisCatalog.ScoreDomains(careerHigh, AssessmentKind.Career)));
     }
 
     [Fact]
