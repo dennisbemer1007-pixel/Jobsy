@@ -338,6 +338,10 @@ public sealed class AssessmentReportPdfService : IAssessmentReportPdfService
         "Extraversie" => "Energie van mensen",
         "Vriendelijkheid" => "Aardig en meewerkend",
         "EmotioneleStabiliteit" => "Kalm onder druk",
+        "Dominant" => "Het voortouw nemen",
+        "Invloed" => "Mensen meenemen",
+        "Stabiel" => "Rust en ritme",
+        "Nauwkeurig" => "Nauwkeurig werken",
         _ => domain
     };
 

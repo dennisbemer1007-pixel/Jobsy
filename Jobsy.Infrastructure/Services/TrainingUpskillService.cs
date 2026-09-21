@@ -375,10 +375,8 @@ public sealed class TrainingUpskillService : ITrainingUpskillService
 
     private static TrainingOfferCardDto ToCard(TrainingOffer offer, string? campaign = null)
     {
-        var skill = string.Equals(
-            campaign?.Trim(),
-            TrainingTracking.CampaignCompetence,
-            StringComparison.OrdinalIgnoreCase);
+        var skill = string.Equals(campaign?.Trim(), TrainingTracking.CampaignCompetence, StringComparison.OrdinalIgnoreCase)
+                    || string.Equals(campaign?.Trim(), TrainingTracking.CampaignDisc, StringComparison.OrdinalIgnoreCase);
         return new(
             offer.Id,
             offer.Title,
@@ -684,6 +682,36 @@ public sealed class TrainingUpskillService : ITrainingUpskillService
             KeysCsv = "klantcontact,presenteren,gastvrijheid,verkoop",
             IsActive = true,
             SortOrder = 5
+        });
+        academy.Offers.Add(new TrainingOffer
+        {
+            Id = Guid.Parse("a11a0001-0001-4000-8000-000000000066"),
+            ProviderId = academy.Id,
+            Title = "Besluiten en tempo op de werkvloer",
+            FieldsCsv = TrainingFieldCatalog.Vaardigheden,
+            KeysCsv = "leiding,besluiten,tempo,aanpakken",
+            IsActive = true,
+            SortOrder = 6
+        });
+        academy.Offers.Add(new TrainingOffer
+        {
+            Id = Guid.Parse("a11a0001-0001-4000-8000-000000000067"),
+            ProviderId = academy.Id,
+            Title = "Kwaliteit en checklists",
+            FieldsCsv = TrainingFieldCatalog.Vaardigheden,
+            KeysCsv = "nauwkeurig,kwaliteit,administratie,checklists",
+            IsActive = true,
+            SortOrder = 7
+        });
+        academy.Offers.Add(new TrainingOffer
+        {
+            Id = Guid.Parse("a11a0001-0001-4000-8000-000000000068"),
+            ProviderId = academy.Id,
+            Title = "Ritme en samenwerken in de ploeg",
+            FieldsCsv = TrainingFieldCatalog.Vaardigheden,
+            KeysCsv = "ritme,samenwerken,teamoverleg,rust",
+            IsActive = true,
+            SortOrder = 8
         });
         return academy;
     }

@@ -899,6 +899,39 @@ public sealed class JobsyApiClient : IAsyncDisposable
                ?? new CandidateCompetencyState();
     }
 
+    public async Task<CandidateDiscState?> GetMyDiscAsync(CancellationToken ct = default)
+    {
+        try
+        {
+            return await _http.GetFromJsonAsync<CandidateDiscState>("api/me/disc", ct);
+        }
+        catch (HttpRequestException ex) when (ex.StatusCode is HttpStatusCode.Unauthorized or HttpStatusCode.NotFound or HttpStatusCode.Forbidden)
+        {
+            return null;
+        }
+    }
+
+    public async Task<CandidateDiscState> SaveMyDiscAsync(
+        IReadOnlyDictionary<int, int> answers,
+        bool complete,
+        CancellationToken ct = default)
+    {
+        var payload = new
+        {
+            answers = answers.ToDictionary(kv => kv.Key.ToString(), kv => kv.Value),
+            complete
+        };
+        var response = await _http.PutAsJsonAsync("api/me/disc", payload, ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException(ExtractMessage(body) ?? "Gedragsanalyse opslaan mislukt.");
+        }
+
+        return await response.Content.ReadFromJsonAsync<CandidateDiscState>(cancellationToken: ct)
+               ?? new CandidateDiscState();
+    }
+
     public async Task<CandidateCareerInterestState?> GetMyCareerInterestsAsync(CancellationToken ct = default)
     {
         try

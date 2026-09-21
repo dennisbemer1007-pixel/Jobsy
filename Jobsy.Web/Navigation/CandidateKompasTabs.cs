@@ -8,10 +8,11 @@ public static class CandidateKompasTabs
 {
     public const string Profile = "profile";
     public const string Competencies = "competencies";
+    public const string Disc = "disc";
     public const string Career = "career";
     public const string Fit = "fit";
 
-    public static readonly string[] All = [Profile, Competencies, Career, Fit];
+    public static readonly string[] All = [Profile, Competencies, Disc, Career, Fit];
 
     public static string Normalize(string? raw)
     {
@@ -32,6 +33,9 @@ public static class CandidateKompasTabs
                 or "competency-profile-title" or "kompas-competence-title"
                 or "kompas-panel-competencies" or "kompas-tab-competencies"
                 => Competencies,
+            Disc or "disc-analyse" or "disc analyse" or "gedrag" or "gedragsanalyse"
+                or "kompas-panel-disc" or "kompas-tab-disc"
+                => Disc,
             Career or "careers" or "beroepen" or "beroep" or "mijn-beroepen" or "mijn beroepen"
                 or "occupations" or "career-profile-title" or "kompas-career-title"
                 or "kompas-panel-career" or "kompas-tab-career"

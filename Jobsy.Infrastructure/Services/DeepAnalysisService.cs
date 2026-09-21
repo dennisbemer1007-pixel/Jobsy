@@ -39,9 +39,15 @@ public sealed class DeepAnalysisService : IDeepAnalysisService
     public static string FormatUpsellCopy(decimal priceEuro, AssessmentKind kind = AssessmentKind.Competence)
     {
         var price = priceEuro.ToString("0.00", CultureInfo.GetCultureInfo("nl-NL"));
-        return kind == AssessmentKind.Career
-            ? $"Wil je een diepgaand carrière-advies en een uitgebreid overzicht van al je opties inclusief PDF-rapport? Ontgrendel de uitgebreide beroepentest voor € {price}."
-            : $"Ontgrendel je uitgebreide competentie-analyse inclusief officiële PDF-rapportage voor € {price}.";
+        return kind switch
+        {
+            AssessmentKind.Career =>
+                $"Wil je een diepgaand carrière-advies en een uitgebreid overzicht van al je opties inclusief PDF-rapport? Ontgrendel de uitgebreide beroepentest voor € {price}.",
+            AssessmentKind.Disc =>
+                $"Wil je onder druk, in overleg en in je teamrol nog scherper zien hoe jij werkt? Ontgrendel de uitgebreide gedragsanalyse inclusief PDF-rapport voor € {price}.",
+            _ =>
+                $"Ontgrendel je uitgebreide competentie-analyse inclusief officiële PDF-rapportage voor € {price}."
+        };
     }
 
     public async Task<DeepAnalysisStateDto> GetStateAsync(
@@ -311,6 +317,45 @@ public sealed class DeepAnalysisService : IDeepAnalysisService
             career.CompassJson = CareerCompassJson.Serialize(compass);
             career.CompletedAtUtc ??= now;
             career.UpdatedAtUtc = now;
+            return;
+        }
+
+        if (kind == AssessmentKind.Disc)
+        {
+            var disc = await _db.CandidateDiscProfiles
+                .FirstOrDefaultAsync(c => c.UserId == userId, cancellationToken);
+            var mapped = DeepAnalysisCatalog.ToDiscScores(
+                DeepAnalysisCatalog.ScoreDomains(answers, AssessmentKind.Disc));
+            if (disc is null)
+            {
+                disc = new CandidateDiscProfile
+                {
+                    Id = Guid.NewGuid(),
+                    UserId = userId,
+                    Status = CandidateCompetencyStatuses.Completed,
+                    AnswersJson = "{}",
+                    CreatedAtUtc = now
+                };
+                _db.CandidateDiscProfiles.Add(disc);
+            }
+
+            disc.Status = CandidateCompetencyStatuses.Completed;
+            disc.DominantPercent = mapped.Dominant;
+            disc.InvloedPercent = mapped.Invloed;
+            disc.StabielPercent = mapped.Stabiel;
+            disc.NauwkeurigPercent = mapped.Nauwkeurig;
+            var existing = DiscTestCatalog.ParseTagsJson(disc.MatchTagsJson).ToList();
+            foreach (var tag in tags.Concat(DiscTestCatalog.DeriveMatchTags(mapped)))
+            {
+                if (!existing.Contains(tag, StringComparer.OrdinalIgnoreCase))
+                {
+                    existing.Add(tag);
+                }
+            }
+
+            disc.MatchTagsJson = DiscTestCatalog.SerializeTags(existing);
+            disc.CompletedAtUtc ??= now;
+            disc.UpdatedAtUtc = now;
             return;
         }
 

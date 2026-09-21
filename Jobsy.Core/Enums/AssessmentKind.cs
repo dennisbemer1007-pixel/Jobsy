@@ -1,18 +1,20 @@
 namespace Jobsy.Core.Enums;
 
 /// <summary>
-/// Separated assessment engines: competence (who you are / Big Five) vs career (what you want / RIASEC).
+/// Separated assessment engines: competence (Big Five), career (RIASEC), behaviour (DISC).
 /// </summary>
 public enum AssessmentKind
 {
     Competence = 0,
-    Career = 1
+    Career = 1,
+    Disc = 2
 }
 
 public static class AssessmentKindLabels
 {
     public const string Competence = "competence";
     public const string Career = "career";
+    public const string Disc = "disc";
 
     public static bool TryParse(string? value, out AssessmentKind kind)
     {
@@ -33,6 +35,14 @@ public static class AssessmentKindLabels
             return true;
         }
 
+        if (string.Equals(value, Disc, StringComparison.OrdinalIgnoreCase)
+            || string.Equals(value, "disc-analyse", StringComparison.OrdinalIgnoreCase)
+            || string.Equals(value, "gedrag", StringComparison.OrdinalIgnoreCase))
+        {
+            kind = AssessmentKind.Disc;
+            return true;
+        }
+
         kind = default;
         return false;
     }
@@ -43,12 +53,14 @@ public static class AssessmentKindLabels
     public static string ToSlug(AssessmentKind kind) => kind switch
     {
         AssessmentKind.Career => Career,
+        AssessmentKind.Disc => Disc,
         _ => Competence
     };
 
     public static string ToDutch(AssessmentKind kind) => kind switch
     {
         AssessmentKind.Career => "Beroepentest",
+        AssessmentKind.Disc => "Gedragsanalyse",
         _ => "Competentietest"
     };
 }

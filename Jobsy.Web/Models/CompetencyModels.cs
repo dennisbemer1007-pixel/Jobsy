@@ -49,6 +49,35 @@ public sealed class CompetencyScoreSet
         && Innovatie is not null;
 }
 
+public sealed class DiscScoreSet
+{
+    public int? Dominant { get; set; }
+    public int? Invloed { get; set; }
+    public int? Stabiel { get; set; }
+    public int? Nauwkeurig { get; set; }
+
+    public bool IsComplete =>
+        Dominant is not null
+        && Invloed is not null
+        && Stabiel is not null
+        && Nauwkeurig is not null;
+}
+
+public sealed class CandidateDiscState
+{
+    public string Status { get; set; } = "Draft";
+    public Dictionary<string, int> Answers { get; set; } = new(StringComparer.OrdinalIgnoreCase);
+    public int AnsweredCount { get; set; }
+    public int QuestionCount { get; set; } = 25;
+    public DiscScoreSet? Scores { get; set; }
+    public DiscScoreSet? PreviewScores { get; set; }
+    public DateTime? CompletedAtUtc { get; set; }
+    public DateTime? UpdatedAtUtc { get; set; }
+    public List<CompetencyQuestionItem> Questions { get; set; } = [];
+    public List<string> MatchTags { get; set; } = [];
+    public string DeepAnalysisUpsellCopy { get; set; } = "";
+}
+
 public sealed class RiasecScoreSet
 {
     public int? Realistic { get; set; }

@@ -12,6 +12,7 @@ public static class TrainingTracking
     public const string CampaignFit = "functie_fit";
     public const string CampaignCompass = "career_compass";
     public const string CampaignCompetence = "competence";
+    public const string CampaignDisc = "disc";
 
     public static string CandidateHash(Guid userId, string secret)
         => HmacHex(userId.ToString("N"), secret)[..16];

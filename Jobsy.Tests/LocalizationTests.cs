@@ -60,6 +60,7 @@ public class LocalizationTests
             "Kompas.PracticalTitle",
             "Kompas.TabProfile",
             "Kompas.TabCompetencies",
+            "Kompas.TabDisc",
             "Kompas.TabCareers",
             "Kompas.TabFit",
             "Fit.Locked",

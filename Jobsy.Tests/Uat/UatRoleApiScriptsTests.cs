@@ -32,6 +32,7 @@ public sealed class UatRoleApiScriptsTests : IClassFixture<RoleFunctionalWebAppF
 
         Assert.Equal(HttpStatusCode.Unauthorized, (await c.GetAsync("api/me/profile")).StatusCode);
         Assert.Equal(HttpStatusCode.Unauthorized, (await c.GetAsync("api/me/competencies")).StatusCode);
+        Assert.Equal(HttpStatusCode.Unauthorized, (await c.GetAsync("api/me/disc")).StatusCode);
         Assert.Equal(HttpStatusCode.Unauthorized, (await c.GetAsync("api/me/career-interests")).StatusCode);
         Assert.Equal(HttpStatusCode.Unauthorized, (await c.GetAsync("api/me/matched-vacancies")).StatusCode);
         Assert.Equal(HttpStatusCode.Unauthorized, (await c.GetAsync("api/me/talent-contacts")).StatusCode);
@@ -56,6 +57,7 @@ public sealed class UatRoleApiScriptsTests : IClassFixture<RoleFunctionalWebAppF
         var c = Authed(_factory.CandidateEmail);
         Assert.Equal(HttpStatusCode.OK, (await c.GetAsync("api/me/profile")).StatusCode);
         Assert.Equal(HttpStatusCode.OK, (await c.GetAsync("api/me/competencies")).StatusCode);
+        Assert.Equal(HttpStatusCode.OK, (await c.GetAsync("api/me/disc")).StatusCode);
         Assert.Equal(HttpStatusCode.OK, (await c.GetAsync("api/me/career-interests")).StatusCode);
         Assert.Equal(HttpStatusCode.OK, (await c.GetAsync("api/me/matched-vacancies")).StatusCode);
         Assert.Equal(HttpStatusCode.OK, (await c.GetAsync("api/me/talent-contacts")).StatusCode);
@@ -97,6 +99,7 @@ public sealed class UatRoleApiScriptsTests : IClassFixture<RoleFunctionalWebAppF
 
         Assert.Equal(HttpStatusCode.Forbidden, (await c.GetAsync("api/integrations/health")).StatusCode);
         Assert.Equal(HttpStatusCode.Forbidden, (await c.GetAsync("api/me/competencies")).StatusCode);
+        Assert.Equal(HttpStatusCode.Forbidden, (await c.GetAsync("api/me/disc")).StatusCode);
         Assert.Equal(HttpStatusCode.Forbidden, (await c.GetAsync("api/me/career-interests")).StatusCode);
         Assert.Equal(HttpStatusCode.Forbidden, (await c.GetAsync("api/me/role-fit")).StatusCode);
         Assert.Equal(HttpStatusCode.Forbidden, (await c.PostAsJsonAsync("api/tokens/allocate", new

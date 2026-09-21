@@ -17,6 +17,7 @@ public class RoleFitCheckTests
         Assert.Equal(RoleFitCheckCopy.DeepUpsell, UiStringsNl("Fit.DeepUpsell"));
         Assert.Equal("Mijn profiel", UiStringsNl("Kompas.TabProfile"));
         Assert.Equal("Mijn competenties", UiStringsNl("Kompas.TabCompetencies"));
+        Assert.Equal("DISC-Analyse", UiStringsNl("Kompas.TabDisc"));
         Assert.Equal("Mijn beste match", UiStringsNl("Kompas.TabCareers"));
         Assert.Equal("Functiefit checker", UiStringsNl("Kompas.TabFit"));
     }

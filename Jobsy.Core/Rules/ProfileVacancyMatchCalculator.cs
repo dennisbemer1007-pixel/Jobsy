@@ -28,6 +28,12 @@ public static class ProfileVacancyMatchCalculator
                 input.VacancyTitle,
                 input.VacancyDescription))
             : (double?)null;
+        if (competency01 is not null
+            && input.CandidateDiscScores is { IsComplete: true } discScores)
+        {
+            var disc01 = DiscFitRules.Fit01(discScores, input.VacancyTitle, input.VacancyDescription);
+            competency01 = 0.75 * competency01.Value + 0.25 * disc01;
+        }
         var interest01 = input.CandidateRiasecScores is { IsComplete: true } scored
             ? VacancyRiasecProfile.Fit01(
                 scored,
@@ -97,7 +103,10 @@ public static class ProfileVacancyMatchCalculator
         if (CultureFitBuilder.HardCriteriaMatch(input, core)
             && input.CandidateCompetencies is { IsComplete: true })
         {
-            culture = CultureFitBuilder.Evaluate(input.CulturePillars, input.CandidateCompetencies);
+            culture = CultureFitBuilder.Evaluate(
+                input.CulturePillars,
+                input.CandidateCompetencies,
+                input.CandidateDiscScores);
             if (culture is not null)
             {
                 total01 = (1 - CultureFitBuilder.TotalScoreWeight) * total01
@@ -608,6 +617,7 @@ public sealed class ProfileVacancyMatchInput
     public IReadOnlyList<string>? VacancyRiasecTags { get; init; }
     public IReadOnlyList<CareerOccupationMatch>? CareerOccupations { get; init; }
     public IReadOnlyList<string>? CulturePillars { get; init; }
+    public DiscScores? CandidateDiscScores { get; init; }
 }
 
 public sealed class ProfileVacancyMatch

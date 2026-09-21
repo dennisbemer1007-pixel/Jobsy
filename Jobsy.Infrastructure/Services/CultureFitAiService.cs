@@ -41,6 +41,7 @@ public sealed class CultureFitAiService : ICultureFitAiService
         CultureFitResult local,
         CompetencyScores scores,
         IReadOnlyList<string> pillarLabels,
+        DiscScores? disc = null,
         CancellationToken cancellationToken = default)
     {
         if (pillarLabels.Count == 0 || scores is not { IsComplete: true })
@@ -71,7 +72,7 @@ public sealed class CultureFitAiService : ICultureFitAiService
                 messages = new object[]
                 {
                     new { role = "system", content = CultureFitPrompt.System },
-                    new { role = "user", content = CultureFitPrompt.User(pillarLabels, scores) }
+                    new { role = "user", content = CultureFitPrompt.User(pillarLabels, scores, disc) }
                 }
             });
 

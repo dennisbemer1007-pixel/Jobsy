@@ -215,8 +215,9 @@ public class CareerCompassTests
         Assert.Equal(CandidateKompasTabs.Career, CandidateKompasTabs.Normalize("#career-profile-title"));
         Assert.Equal(CandidateKompasTabs.Career, CandidateKompasTabs.Normalize("beste-match"));
         Assert.Equal(CandidateKompasTabs.Fit, CandidateKompasTabs.Normalize("functiefit"));
-        Assert.Equal(CandidateKompasTabs.Career, CandidateKompasTabs.Neighbor(CandidateKompasTabs.Competencies, 1));
+        Assert.Equal(CandidateKompasTabs.Disc, CandidateKompasTabs.Neighbor(CandidateKompasTabs.Competencies, 1));
         Assert.Equal(CandidateKompasTabs.Fit, CandidateKompasTabs.Neighbor(CandidateKompasTabs.Profile, -1));
+        Assert.Equal(CandidateKompasTabs.Disc, CandidateKompasTabs.Normalize("gedragsanalyse"));
     }
 
     [Fact]
@@ -240,6 +241,7 @@ public class CareerCompassTests
         Assert.Contains("role=\"tablist\"", home, StringComparison.Ordinal);
         Assert.Contains("Kompas.TabProfile", home, StringComparison.Ordinal);
         Assert.Contains("Kompas.TabCompetencies", home, StringComparison.Ordinal);
+        Assert.Contains("Kompas.TabDisc", home, StringComparison.Ordinal);
         Assert.Contains("Kompas.TabCareers", home, StringComparison.Ordinal);
         Assert.Contains("Kompas.TabFit", home, StringComparison.Ordinal);
         Assert.Contains("AxisCount = 5", File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Pages/Candidate/CompetencyScorePanel.razor")), StringComparison.Ordinal);
@@ -276,6 +278,7 @@ public class CareerCompassTests
 
         var di = File.ReadAllText(Path.Combine(root, "Jobsy.Infrastructure/DependencyInjection.cs"));
         Assert.Contains("ICandidateCareerInterestService", di, StringComparison.Ordinal);
+        Assert.Contains("ICandidateDiscService", di, StringComparison.Ordinal);
         Assert.Contains("ICareerCompassGenerationService", di, StringComparison.Ordinal);
 
         var merge = File.ReadAllText(Path.Combine(root, "Jobsy.Infrastructure/Services/DeepAnalysisService.cs"));

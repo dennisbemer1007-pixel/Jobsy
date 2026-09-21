@@ -2,6 +2,7 @@ using System.Security.Claims;
 using System.Text.RegularExpressions;
 using Jobsy.Core.Authorization;
 using Jobsy.Core.Entities;
+using Jobsy.Core.Enums;
 using Jobsy.Core.Interfaces;
 using Jobsy.Core.Localization;
 using Jobsy.Core.Rules;
@@ -471,6 +472,7 @@ public static class UatScriptRunner
             var kompas = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Pages/Candidate/CandidateKompas.razor"));
             Assert.Contains("Kompas.TabProfile", kompas, StringComparison.Ordinal);
             Assert.Contains("Kompas.TabCompetencies", kompas, StringComparison.Ordinal);
+            Assert.Contains("Kompas.TabDisc", kompas, StringComparison.Ordinal);
             Assert.Contains("Kompas.TabCareers", kompas, StringComparison.Ordinal);
             Assert.Contains("Kompas.TabFit", kompas, StringComparison.Ordinal);
             Assert.Contains("role=\"tablist\"", kompas, StringComparison.Ordinal);
@@ -498,6 +500,17 @@ public static class UatScriptRunner
             Assert.DoesNotContain("Talent.CandidateTitle", kompas, StringComparison.Ordinal);
             Assert.Equal("competence", TrainingTracking.CampaignCompetence);
             Assert.Contains(TrainingFieldCatalog.Vaardigheden, TrainingFieldCatalog.Detect([CompetencyTrainingCatalog.SearchBlob(CompetencyTestCatalog.Samenwerken)]));
+        }
+
+        if (Contains(blob, "DISC-Analyse", "gedragsstijl", "workshops"))
+        {
+            var root = RepoRoot.Find();
+            var panel = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Pages/Candidate/DiscScorePanel.razor"));
+            Assert.Contains("competency-skill__details", panel, StringComparison.Ordinal);
+            Assert.Contains("TrainingOffersBlock", panel, StringComparison.Ordinal);
+            Assert.Equal(25, DiscTestCatalog.QuestionCount);
+            Assert.Equal(150, DeepAnalysisCatalog.QuestionsFor(AssessmentKind.Disc).Count);
+            Assert.Equal("disc", TrainingTracking.CampaignDisc);
         }
 
         if (Contains(blob, "Cultuur Fit", "cultuurpijlers"))

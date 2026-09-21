@@ -2870,6 +2870,7 @@ public static class UiStrings
 
         UiStringsExtras.MergeAll(nl, en, pl, ro, ar);
         UiStringsCompetencies.MergeAll(nl, en, pl, ro, ar);
+        UiStringsDisc.MergeAll(nl, en, pl, ro, ar);
         UiStringsHowLobsyRoles.MergeAll(nl, en, pl, ro, ar);
 
         return new Dictionary<string, Dictionary<string, string>>(StringComparer.OrdinalIgnoreCase)

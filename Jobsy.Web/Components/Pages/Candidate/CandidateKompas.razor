@@ -45,6 +45,16 @@
             @Culture["Kompas.TabCompetencies"]
         </button>
         <button type="button"
+                id="kompas-tab-disc"
+                class="admin-sublink @(_tab == CandidateKompasTabs.Disc ? "admin-sublink--active" : null)"
+                role="tab"
+                aria-selected="@(_tab == CandidateKompasTabs.Disc)"
+                aria-controls="kompas-panel-disc"
+                tabindex="@(_tab == CandidateKompasTabs.Disc ? 0 : -1)"
+                @onclick='() => SetTab(CandidateKompasTabs.Disc)'>
+            @Culture["Kompas.TabDisc"]
+        </button>
+        <button type="button"
                 id="kompas-tab-career"
                 class="admin-sublink @(_tab == CandidateKompasTabs.Career ? "admin-sublink--active" : null)"
                 role="tab"
@@ -210,6 +220,54 @@
         }
     </article>
 
+    <article id="kompas-panel-disc"
+             class="kompas-card kompas-card--tab"
+             role="tabpanel"
+             aria-labelledby="kompas-tab-disc"
+             hidden="@(_tab != CandidateKompasTabs.Disc)">
+        <h3 id="kompas-disc-title" class="visually-hidden">@Culture["Kompas.TabDisc"]</h3>
+        <p class="login-lead">@Culture["Kompas.DiscLead"]</p>
+        @if (_loading)
+        {
+            <p class="state-message">@Culture["Common.Loading"]</p>
+        }
+        else if (_discCompleted && _discScores is { IsComplete: true })
+        {
+            <p class="kompas-status kompas-status--ok">@Culture["Kompas.QuickScanDone"]</p>
+            <DiscScorePanel Scores="_discScores" />
+            @if (_discDeep is { IsCompleted: true })
+            {
+                <p class="kompas-status kompas-status--ok">@Culture["Kompas.DeepDone"]</p>
+                <button class="login-submit" type="button" disabled="@_busy" @onclick='() => DownloadPdfAsync("disc")'>
+                    @Culture["Deep.DownloadPdf"]
+                </button>
+            }
+            else if (_discDeep is { IsUnlocked: true })
+            {
+                <p class="kompas-status">@Culture["Kompas.DeepReady"]</p>
+                <a class="login-submit" href="/candidate/deep-analysis/disc">@Culture["Disc.DeepUnlock"]</a>
+            }
+            else
+            {
+                <p class="login-lead">@_discUpsell</p>
+                <a class="login-submit" href="/candidate/deep-analysis/disc">@Culture["Disc.DeepUnlock"]</a>
+            }
+            <a class="engagement-btn" href="/candidate/disc">@Culture["Disc.Retake"]</a>
+        }
+        else if (_discAnswered > 0)
+        {
+            <p class="kompas-status">@Culture["Kompas.QuickScanOpen"]</p>
+            <p class="login-lead">@Culture.Format("Competency.DraftProgress", _discAnswered, 25)</p>
+            <a class="login-submit" href="/candidate/disc">@Culture["Disc.Continue"]</a>
+        }
+        else
+        {
+            <p class="kompas-status">@Culture["Kompas.QuickScanOpen"]</p>
+            <p class="login-lead">@Culture["Disc.Empty"]</p>
+            <a class="login-submit" href="/candidate/disc">@Culture["Disc.Start"]</a>
+        }
+    </article>
+
     <article id="kompas-panel-career"
              class="kompas-card kompas-card--tab"
              role="tabpanel"
@@ -285,6 +343,11 @@
     private CompetencyScoreSet? _competencyScores;
     private string _competencyUpsell = "";
     private DeepAnalysisState? _competenceDeep;
+    private bool _discCompleted;
+    private int _discAnswered;
+    private DiscScoreSet? _discScores;
+    private string _discUpsell = "";
+    private DeepAnalysisState? _discDeep;
     private bool _careerCompleted;
     private int _careerAnswered;
     private CareerCompassModel _careerCompass = new();
@@ -486,7 +549,17 @@
             }
 
             _competenceDeep = await Api.GetDeepAnalysisAsync("competence");
+            _discDeep = await Api.GetDeepAnalysisAsync("disc");
             _careerDeep = await Api.GetDeepAnalysisAsync("career");
+
+            var disc = await Api.GetMyDiscAsync();
+            if (disc is not null)
+            {
+                _discAnswered = disc.AnsweredCount;
+                _discCompleted = string.Equals(disc.Status, "Completed", StringComparison.OrdinalIgnoreCase);
+                _discScores = disc.Scores;
+                _discUpsell = disc.DeepAnalysisUpsellCopy;
+            }
         }
         catch
         {

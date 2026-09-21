@@ -113,7 +113,12 @@
     protected override async Task OnInitializedAsync()
     {
         _slug = AssessmentKindLabels.ToSlug(AssessmentKindLabels.ParseOrDefault(Kind));
-        _titleKey = _slug == "career" ? "Deep.CareerTitle" : "Deep.CompetenceTitle";
+        _titleKey = _slug switch
+        {
+            "career" => "Deep.CareerTitle",
+            "disc" => "Deep.DiscTitle",
+            _ => "Deep.CompetenceTitle"
+        };
         try
         {
             _state = await Api.GetDeepAnalysisAsync(_slug);

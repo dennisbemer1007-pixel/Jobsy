@@ -120,7 +120,7 @@ public static class CareerCompassBuilder
         // Whole-word only: "sociale" is Dutch, "Social" as type name is jargon.
         return System.Text.RegularExpressions.Regex.IsMatch(
             text,
-            @"\b(Social|Artistic)\b",
+            @"\b(Social|Artistic|DISC)\b",
             System.Text.RegularExpressions.RegexOptions.IgnoreCase | System.Text.RegularExpressions.RegexOptions.CultureInvariant);
     }
 

@@ -672,6 +672,60 @@ namespace Jobsy.Infrastructure.Data.Migrations
                     b.ToTable("CandidateCompetencies", (string)null);
                 });
 
+
+            modelBuilder.Entity("Jobsy.Core.Entities.CandidateDiscProfile", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("AnswersJson")
+                        .IsRequired()
+                        .HasMaxLength(4000)
+                        .HasColumnType("character varying(4000)");
+
+                    b.Property<DateTime?>("CompletedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int?>("DominantPercent")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("InvloedPercent")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("MatchTagsJson")
+                        .IsRequired()
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
+                    b.Property<int?>("NauwkeurigPercent")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("StabielPercent")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)");
+
+                    b.Property<DateTime>("UpdatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId")
+                        .IsUnique();
+
+                    b.ToTable("CandidateDiscProfiles", (string)null);
+                });
+
             modelBuilder.Entity("Jobsy.Core.Entities.CandidateDeepAnalysis", b =>
                 {
                     b.Property<Guid>("Id")
@@ -4236,6 +4290,18 @@ namespace Jobsy.Infrastructure.Data.Migrations
 
                     b.Navigation("User");
                 });
+
+            modelBuilder.Entity("Jobsy.Core.Entities.CandidateDiscProfile", b =>
+                {
+                    b.HasOne("Jobsy.Core.Entities.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
 
             modelBuilder.Entity("Jobsy.Core.Entities.CandidateDeepAnalysis", b =>
                 {

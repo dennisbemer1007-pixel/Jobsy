@@ -39,7 +39,8 @@ public static class RoleFitCheckBuilder
         string jobTitle,
         CompetencyScores competencies,
         RiasecScores career,
-        bool fromDeepAnalysis)
+        bool fromDeepAnalysis,
+        DiscScores? disc = null)
     {
         var title = NormalizeTitle(jobTitle) ?? "deze functie";
         var occupation = FindClosestOccupation(title);
@@ -47,8 +48,15 @@ public static class RoleFitCheckBuilder
             ? Average(career)
             : CareerCompassBuilder.Score(occupation, career).Percent;
         var competencePercent = CompetenceFit(occupation, competencies);
+        var discPercent = disc is { IsComplete: true } completeDisc
+            ? DiscFitRules.FitPercent(occupation, completeDisc)
+            : (int?)null;
         var percent = (int)Math.Clamp(
-            Math.Round(interestPercent * 0.65 + competencePercent * 0.35, MidpointRounding.AwayFromZero),
+            Math.Round(
+                discPercent is int d
+                    ? interestPercent * 0.58 + competencePercent * 0.27 + d * 0.15
+                    : interestPercent * 0.65 + competencePercent * 0.35,
+                MidpointRounding.AwayFromZero),
             0,
             100);
         if (fromDeepAnalysis)
@@ -57,8 +65,8 @@ public static class RoleFitCheckBuilder
         }
 
         var keys = CareerOccupationKeys.Merge(title, occupation is null ? null : CareerOccupationKeys.FromTitle(occupation.Title));
-        var strengths = BuildStrengths(title, occupation, competencies, career);
-        var gaps = BuildGaps(occupation, competencies, career);
+        var strengths = BuildStrengths(title, occupation, competencies, career, disc);
+        var gaps = BuildGaps(occupation, competencies, career, disc);
         var steps = BuildSteps(title, gaps, fromDeepAnalysis);
         var similar = RoleFitFunnel.SuggestSimilar(title, career);
 
@@ -224,15 +232,40 @@ public static class RoleFitCheckBuilder
         string title,
         CareerOccupation? occupation,
         CompetencyScores competencies,
-        RiasecScores career)
+        RiasecScores career,
+        DiscScores? disc)
     {
         var lines = new List<string>();
+        if (disc is { IsComplete: true })
+        {
+            foreach (var category in DiscFitRules.Needed(occupation))
+            {
+                var value = disc.Get(category);
+                if (value >= 70)
+                {
+                    lines.Add($"In het team ligt {DiscTestCatalog.EverydayLabel(category)} je goed ({value}%). Dat sluit aan bij hoe deze functie dagelijks loopt.");
+                }
+            }
+        }
+
         foreach (var category in CompetencyTestCatalog.CategoryCodes)
         {
             var value = competencies.Get(category);
             if (value >= 70)
             {
                 lines.Add($"{CompetenceLabel(category)} zit al stevig: {value}%. Dat helpt in {title.ToLowerInvariant()}.");
+            }
+        }
+
+        if (disc is { IsComplete: true })
+        {
+            foreach (var category in DiscFitRules.Needed(occupation))
+            {
+                var value = disc.Get(category);
+                if (value >= 70)
+                {
+                    lines.Add($"In het team ligt {DiscTestCatalog.EverydayLabel(category)} je goed ({value}%). Dat sluit aan bij hoe deze functie dagelijks loopt.");
+                }
             }
         }
 
@@ -255,13 +288,14 @@ public static class RoleFitCheckBuilder
             lines.Add($"Er zit overlap: je kunt {title.ToLowerInvariant()} serieus overwegen, al is het nog geen kernfit.");
         }
 
-        return lines.Take(4).ToList();
+        return lines.Take(5).ToList();
     }
 
     private static List<string> BuildGaps(
         CareerOccupation? occupation,
         CompetencyScores competencies,
-        RiasecScores career)
+        RiasecScores career,
+        DiscScores? disc)
     {
         var lines = new List<string>();
         foreach (var category in NeededCompetencies(occupation))
@@ -270,6 +304,18 @@ public static class RoleFitCheckBuilder
             if (value < 60)
             {
                 lines.Add($"{CompetenceLabel(category)} is nog {value}%. Voor deze functie helpt het als dat omhoog gaat.");
+            }
+        }
+
+        if (disc is { IsComplete: true })
+        {
+            foreach (var category in DiscFitRules.Needed(occupation))
+            {
+                var value = disc.Get(category);
+                if (value < 55)
+                {
+                    lines.Add($"{DiscTestCatalog.EverydayLabel(category)} scoort {value}%. In dit team wordt dat vaker gevraagd — een workshop helpt.");
+                }
             }
         }
 

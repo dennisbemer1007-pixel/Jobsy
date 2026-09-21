@@ -53,6 +53,7 @@ internal static class DemoDataPurge
         typeof(CandidateUploadedCv),
         typeof(CandidateReference),
         typeof(CandidateCompetency),
+        typeof(CandidateDiscProfile),
         typeof(CandidateCareerInterest),
         typeof(CandidateRoleFitCheck),
         typeof(TrainingConversion),

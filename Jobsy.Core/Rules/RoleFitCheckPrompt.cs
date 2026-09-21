@@ -6,7 +6,7 @@ public static class RoleFitCheckPrompt
 {
     public const string System = """
         Je bent de loopbaanadviseur van Lobsy. Je legt in warme, positieve Jip-en-Janneke-taal (Nederlands) uit of een functietitel bij dit kandidaatprofiel past.
-        Verboden vaktermen: RIASEC, OCEAN, Holland-code, Holland code, Realistic, Investigative, Artistic, Social, Enterprising, Conventional, Big Five, extraversie, extraversion, neuroticisme, neuroticism, consciëntieusheid.
+        Verboden vaktermen: RIASEC, OCEAN, Holland-code, Holland code, Realistic, Investigative, Artistic, Social, Enterprising, Conventional, Big Five, DISC, extraversie, extraversion, neuroticisme, neuroticism, consciëntieusheid.
         Geen naam, e-mail, telefoon, adres of woonplaats van de kandidaat. Geen bedrijfsnamen verzinnen.
         Beoordeel ALGEMENE functies op de Nederlandse arbeidsmarkt. Noem Den Haag en het Westland alleen als zoekadvies op de Lobsy-banenkaart.
         matchPercent: 0-100, eerlijk. 95+ alleen bij een kernfit, 85-94 sterk, 75-84 verbreding, daaronder een mogelijke switch met duidelijk gat.
@@ -34,7 +34,8 @@ public static class RoleFitCheckPrompt
         int? maxTravelMinutes,
         string? transport,
         IReadOnlyList<string>? licenses,
-        IReadOnlyList<string>? roles)
+        IReadOnlyList<string>? roles,
+        DiscScores? disc = null)
     {
         var sb = new StringBuilder();
         sb.AppendLine("Functietitel om te toetsen (geen persoonsgegevens):");
@@ -47,6 +48,14 @@ public static class RoleFitCheckPrompt
         sb.Append("- Afmaken wat je belooft: ").Append(competencies.Resultaatgerichtheid ?? 0).AppendLine("%");
         sb.Append("- Kalm blijven als het druk is: ").Append(competencies.Stressbestendigheid ?? 0).AppendLine("%");
         sb.Append("- Nieuwe wegen zoeken: ").Append(competencies.Innovatie ?? 0).AppendLine("%");
+        if (disc is { IsComplete: true })
+        {
+            sb.AppendLine("Gedrag in het team 0-100:");
+            sb.Append("- Het voortouw nemen: ").Append(disc.Dominant ?? 0).AppendLine("%");
+            sb.Append("- Mensen meenemen: ").Append(disc.Invloed ?? 0).AppendLine("%");
+            sb.Append("- Rust en ritme: ").Append(disc.Stabiel ?? 0).AppendLine("%");
+            sb.Append("- Nauwkeurig werken: ").Append(disc.Nauwkeurig ?? 0).AppendLine("%");
+        }
         sb.AppendLine("Richting 0-100:");
         foreach (var code in CareerTestCatalog.RiasecCodes)
         {

@@ -72,7 +72,8 @@ public sealed class ProfileVacancyMatchService : IProfileVacancyMatchService
                 CareerDeepCompleted = context.CareerDeepCompleted,
                 VacancyRiasecTags = VacancyRiasecProfile.InferTags(record),
                 CareerOccupations = context.CareerOccupations,
-                CulturePillars = record.CulturePillars
+                CulturePillars = record.CulturePillars,
+                CandidateDiscScores = context.DiscScores
             });
             result[record.Id] = match;
         }
@@ -129,6 +130,17 @@ public sealed class ProfileVacancyMatchService : IProfileVacancyMatchService
 
         var occupations = ResolveOccupations(career, riasecScores, careerDeep);
 
+        var discRow = await _db.CandidateDiscProfiles.AsNoTracking()
+            .FirstOrDefaultAsync(c => c.UserId == userId, cancellationToken);
+        var disc = discRow is null
+            ? null
+            : DiscTestCatalog.CompletedScoresOrNull(
+                discRow.Status,
+                discRow.DominantPercent,
+                discRow.InvloedPercent,
+                discRow.StabielPercent,
+                discRow.NauwkeurigPercent);
+
         return new ProfileVacancyMatchContext
         {
             UserId = user.Id,
@@ -140,7 +152,8 @@ public sealed class ProfileVacancyMatchService : IProfileVacancyMatchService
             RiasecTags = riasecTags,
             RiasecScores = riasecScores,
             CareerDeepCompleted = careerDeep,
-            CareerOccupations = occupations
+            CareerOccupations = occupations,
+            DiscScores = disc
         };
     }
 

@@ -20,7 +20,9 @@ public static class TrainingFieldCatalog
             "resultaatgericht", "deadlines", "afronden",
             "stressbestendig", "weerbaarheid", "werkdruk",
             "innovatie", "probleemoplossen", "digitale vaardigheden",
-            "klantcontact", "presenteren", "gastvrijheid"
+            "klantcontact", "presenteren", "gastvrijheid",
+            "leiding", "besluiten", "aanpakken", "overtuigen",
+            "ritme", "nauwkeurig", "kwaliteit", "administratie", "checklists"
         ])
     ];
 

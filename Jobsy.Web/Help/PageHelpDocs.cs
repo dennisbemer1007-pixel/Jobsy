@@ -141,6 +141,12 @@ public static class PageHelpDocs
             "Beantwoord in je eigen tempo. Tussentijds opslaan mag; later kun je antwoorden wijzigen. Afronden herberekent je scores en de vacature-matches op je profiel. Optioneel: uitgebreide analyse (150 vragen, € 2,99) met PDF.",
             "Inzicht in samenwerken, resultaatgerichtheid, stressbestendigheid, innovatie en extraversie."),
 
+        ["/candidate/disc"] = new(
+            "Gedragsanalyse",
+            "Vijfentwintig stellingen over hoe jij in een team werkt: voortouw, mensen meenemen, ritme en nauwkeurigheid.",
+            "Rond af voor de grafiek en workshops per stijl. Optioneel: uitgebreide analyse (150 vragen, € 2,99) met PDF over gedrag onder druk en teamrol.",
+            "Gedragsstijl mee laten wegen in Functie-Fit en cultuurfit."),
+
         ["/candidate/career"] = new(
             "Beroepentest",
             "Vijfentwintig stellingen over wat je wilt in werk: aanpakken, uitzoeken, maken, helpen, aanjagen of organiseren.",

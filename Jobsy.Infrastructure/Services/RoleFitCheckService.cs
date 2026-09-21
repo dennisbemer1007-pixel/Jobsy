@@ -28,6 +28,7 @@ public sealed class RoleFitCheckService : IRoleFitCheckService
     private readonly JobsyDbContext _db;
     private readonly ICandidateCompetencyService _competencies;
     private readonly ICandidateCareerInterestService _career;
+    private readonly ICandidateDiscService _disc;
     private readonly IFlexCommercialService _commercial;
     private readonly IHttpClientFactory _httpClientFactory;
     private readonly IIntegrationCredentialService _credentials;
@@ -42,6 +43,7 @@ public sealed class RoleFitCheckService : IRoleFitCheckService
         JobsyDbContext db,
         ICandidateCompetencyService competencies,
         ICandidateCareerInterestService career,
+        ICandidateDiscService disc,
         IFlexCommercialService commercial,
         IHttpClientFactory httpClientFactory,
         IIntegrationCredentialService credentials,
@@ -55,6 +57,7 @@ public sealed class RoleFitCheckService : IRoleFitCheckService
         _db = db;
         _competencies = competencies;
         _career = career;
+        _disc = disc;
         _commercial = commercial;
         _httpClientFactory = httpClientFactory;
         _credentials = credentials;
@@ -115,14 +118,15 @@ public sealed class RoleFitCheckService : IRoleFitCheckService
 
         var competence = await _competencies.GetCompletedScoresAsync(userId, cancellationToken);
         var career = await _career.GetCompletedScoresAsync(userId, cancellationToken);
+        var disc = await _disc.GetCompletedScoresAsync(userId, cancellationToken);
         if (competence is not { IsComplete: true } || career is not { IsComplete: true })
         {
             throw new RoleFitLockedException();
         }
 
         var fromDeep = await HasCompletedDeepAsync(userId, cancellationToken);
-        var local = RoleFitCheckBuilder.Build(title, competence, career, fromDeep);
-        var snapshot = await TryOpenAiAsync(title, competence, career, fromDeep, userId, local, cancellationToken)
+        var local = RoleFitCheckBuilder.Build(title, competence, career, fromDeep, disc);
+        var snapshot = await TryOpenAiAsync(title, competence, career, fromDeep, userId, local, disc, cancellationToken)
                        ?? local;
         snapshot = snapshot with
         {
@@ -130,7 +134,7 @@ public sealed class RoleFitCheckService : IRoleFitCheckService
         };
         if (vacancy is not null)
         {
-            snapshot = await AttachVacancyAsync(userId, vacancy, competence, snapshot, cancellationToken);
+            snapshot = await AttachVacancyAsync(userId, vacancy, competence, snapshot, disc, cancellationToken);
         }
 
         var now = DateTime.UtcNow;
@@ -173,6 +177,7 @@ public sealed class RoleFitCheckService : IRoleFitCheckService
         bool fromDeep,
         Guid userId,
         RoleFitCheckSnapshot fallback,
+        DiscScores? disc,
         CancellationToken cancellationToken)
     {
         var apiKey = await ResolveApiKeyAsync(cancellationToken);
@@ -192,7 +197,8 @@ public sealed class RoleFitCheckService : IRoleFitCheckService
                 prefs.MaxTravelMinutes,
                 prefs.Transport,
                 prefs.Licenses,
-                prefs.Roles);
+                prefs.Roles,
+                disc);
             var model = await ResolveModelAsync(cancellationToken);
             var baseUrl = await ResolveBaseUrlAsync(cancellationToken);
             var client = _httpClientFactory.CreateClient(HttpClientName);
@@ -368,6 +374,7 @@ public sealed class RoleFitCheckService : IRoleFitCheckService
         Vacancy vacancy,
         CompetencyScores competence,
         RoleFitCheckSnapshot snapshot,
+        DiscScores? disc,
         CancellationToken cancellationToken)
     {
         var user = await _db.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Id == userId, cancellationToken);
@@ -381,13 +388,13 @@ public sealed class RoleFitCheckService : IRoleFitCheckService
             vacancy.RequiredDrivingLicense,
             vacancy.RequiredEducation);
         var pillars = CulturePillarCatalog.Deserialize(vacancy.CulturePillarsJson);
-        var culture = CultureFitBuilder.Evaluate(pillars, competence);
+        var culture = CultureFitBuilder.Evaluate(pillars, competence, disc);
         if (culture is not null)
         {
             var labels = pillars
                 .Select(id => CulturePillarCatalog.TryGet(id, out var d) ? d.Label : id)
                 .ToList();
-            culture = await _cultureFit.TryRefineAsync(culture, competence, labels, cancellationToken) ?? culture;
+            culture = await _cultureFit.TryRefineAsync(culture, competence, labels, disc, cancellationToken) ?? culture;
         }
 
         var vacancyFit = RoleFitCheckBuilder.BuildVacancyFit(vacancy.Id, requirements, formal, culture, availability);

@@ -261,6 +261,7 @@ public static class DependencyInjection
         });
         services.AddScoped<ICultureFitAiService, CultureFitAiService>();
         services.AddScoped<ICandidateCompetencyService, CandidateCompetencyService>();
+        services.AddScoped<ICandidateDiscService, CandidateDiscService>();
         services.AddScoped<ICandidateCareerInterestService, CandidateCareerInterestService>();
         services.AddHttpClient(CareerCompassGenerationService.HttpClientName, client =>
         {

@@ -29,13 +29,14 @@ Publiek (naast banenkaart): `/vacancies/{id}`, `/{kvknummer}` (ondernemer), `/{k
 | Route | Inhoud |
 |-------|--------|
 | `/` | Banenkaart (filters, lijst, kaart). Ingelogde kandidaat: live match-% per vacature, **Cultuur Fit**-label na harde criteria, sort/filter op match, uitleg waarom |
-| `/home` | **Mijn Lobsy Kompas** in tabbladen: **Mijn profiel**, **Mijn competenties**, **Mijn beste match**, **Functiefit checker** + eigen metrics |
+| `/home` | **Mijn Lobsy Kompas** in tabbladen: **Mijn profiel**, **Mijn competenties**, **DISC-Analyse**, **Mijn beste match**, **Functiefit checker** + eigen metrics |
 | `/vacancies/{id}` | Detail, solliciteren, like/share, optioneel mock interview, kandidaat **Past deze vacature bij mij?** |
 | `/candidate/applications` | Sollicitatiehistorie |
 | `/candidate/vacancies` | Overzicht + **Onlangs bekeken** (localStorage, alleen vacancy-GUIDs) + in-de-buurt op reistijd/vervoer |
 | `/candidate/liked` · `/candidate/shared` | Engagement-lijsten |
-| `/candidate/profile` | OpenForWork, NAW/CV, recensies, **Mijn Lobsy Kompas**-tabbladen (profiel / competenties: grafiek + accordeon met workshops / beste match / Functiefit checker in 4 stappen) — werkgeverscontact alleen op tab Mijn profiel; Top 10 vacatures (≥60%); PDF als diepte-analyse klaar is |
+| `/candidate/profile` | OpenForWork, NAW/CV, recensies, **Mijn Lobsy Kompas**-tabbladen (profiel / competenties: grafiek + accordeon met workshops / DISC-Analyse / beste match / Functiefit checker in 4 stappen) — werkgeverscontact alleen op tab Mijn profiel; Top 10 vacatures (≥60%); PDF als diepte-analyse klaar is |
 | `/candidate/competencies` | Competentietest (25); draft tussentijds opslaan; scores herberekend bij afronden |
+| `/candidate/disc` | Gedragsanalyse / DISC Quick-Scan (25); accordeon met workshops; optionele diepte-analyse 150 |
 | `/candidate/career` | Beroepentest (25); Mijn Beroepen-kompas + top 10 actieve vacatures |
 | `/candidate/deep-analysis/{kind}` | Betaalde 150-vragen analyse (competence \| career) + loopbaan-PDF (gekleurd logo, match-banden, *Wat betekent dit voor jou?*) |
 | `/candidate/talent-contacts` | Inbox contactverzoeken (48u); geen extra bottom-nav tab |
