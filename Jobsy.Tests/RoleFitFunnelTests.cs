@@ -16,6 +16,14 @@ public class RoleFitFunnelTests
     }
 
     [Fact]
+    public void Juf_suggests_classroom_stepping_stones()
+    {
+        var similar = RoleFitFunnel.SuggestSimilar("juf", new RiasecScores(20, 20, 40, 90, 30, 25));
+        Assert.Contains(similar, r => r.Title.Contains("Onderwijsassistent", StringComparison.OrdinalIgnoreCase));
+        Assert.Contains(similar, r => r.Title.Contains("Pedagogisch", StringComparison.OrdinalIgnoreCase));
+    }
+
+    [Fact]
     public void Nurse_title_suggests_helpende_as_stepping_stone()
     {
         var similar = RoleFitFunnel.SuggestSimilar(

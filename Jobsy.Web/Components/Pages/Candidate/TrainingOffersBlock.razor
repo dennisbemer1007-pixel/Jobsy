@@ -8,9 +8,16 @@
     return;
 }
 
-<section class="training-offers" aria-label="@Culture["Fit.TrainingTitle"]">
-    <h4>@Culture["Fit.TrainingTitle"]</h4>
-    <p class="login-lead">@Culture["Fit.TrainingLead"]</p>
+<section class="training-offers @(Compact ? "training-offers--compact" : null)" aria-label="@Culture["Fit.TrainingTitle"]">
+    @if (!Compact)
+    {
+        <h4>@Culture["Fit.TrainingTitle"]</h4>
+        <p class="login-lead">@Culture["Fit.TrainingLead"]</p>
+    }
+    else
+    {
+        <h5>@Culture["Fit.TrainingTitle"]</h5>
+    }
     @if (!string.IsNullOrWhiteSpace(_message))
     {
         <p class="state-message">@_message</p>
@@ -40,6 +47,7 @@
     [Parameter] public IReadOnlyList<TrainingOfferCard>? Offers { get; set; }
     [Parameter] public string? JobTitle { get; set; }
     [Parameter] public string Campaign { get; set; } = "functie_fit";
+    [Parameter] public bool Compact { get; set; }
 
     private List<TrainingOfferCard> _offers = [];
     private bool _busy;

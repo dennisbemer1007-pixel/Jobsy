@@ -17,8 +17,8 @@ public class RoleFitCheckTests
         Assert.Equal(RoleFitCheckCopy.DeepUpsell, UiStringsNl("Fit.DeepUpsell"));
         Assert.Equal("Mijn profiel", UiStringsNl("Kompas.TabProfile"));
         Assert.Equal("Mijn competenties", UiStringsNl("Kompas.TabCompetencies"));
-        Assert.Equal("Mijn beroepen", UiStringsNl("Kompas.TabCareers"));
-        Assert.Equal("Past dit bij mij?", UiStringsNl("Kompas.TabFit"));
+        Assert.Equal("Mijn beste match", UiStringsNl("Kompas.TabCareers"));
+        Assert.Equal("Functiefit checker", UiStringsNl("Kompas.TabFit"));
     }
 
     [Fact]
@@ -109,7 +109,8 @@ public class RoleFitCheckTests
         Assert.Contains("Fit.Locked", panel, StringComparison.Ordinal);
         Assert.Contains("Fit.DeepUpsell", panel, StringComparison.Ordinal);
         Assert.Contains("TrainingOffersBlock", panel, StringComparison.Ordinal);
-        Assert.Contains("Fit.OpenMap", panel, StringComparison.Ordinal);
+        Assert.Contains("EvaluateSimilarAsync", panel, StringComparison.Ordinal);
+        Assert.Contains("role-fit-convert--quiet", panel, StringComparison.Ordinal);
         Assert.Contains("Fit.Step1", panel, StringComparison.Ordinal);
         Assert.Contains("Fit.SimilarTitle", panel, StringComparison.Ordinal);
         Assert.Contains("Fit.DirectTitle", panel, StringComparison.Ordinal);

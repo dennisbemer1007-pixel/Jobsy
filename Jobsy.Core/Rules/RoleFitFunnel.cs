@@ -33,6 +33,7 @@ public static class RoleFitFunnel
         var title = RoleFitCheckBuilder.NormalizeTitle(jobTitle) ?? "deze functie";
         var folded = CareerOccupationKeys.Fold(title);
         var licensed = LooksLicensed(folded);
+        var extras = EducationSteppingStones(folded);
         var ranked = CareerCompassBuilder.Occupations
             .Select(job => (Job: job, Match: CareerCompassBuilder.Score(job, career)))
             .Where(x => x.Match.Percent >= CareerCompassBuilder.BroadenMin)
@@ -49,7 +50,7 @@ public static class RoleFitFunnel
                 x.Match.Percent))
             .ToList();
 
-        return ranked;
+        return MergeSimilar(extras, ranked);
     }
 
     public static IReadOnlyList<RoleFitSimilarRole> MergeSimilar(
@@ -124,7 +125,30 @@ public static class RoleFitFunnel
            || folded.Contains("software", StringComparison.Ordinal)
            || folded.Contains("boekhoud", StringComparison.Ordinal)
            || folded.Contains("docent", StringComparison.Ordinal)
-           || folded.Contains("leraar", StringComparison.Ordinal);
+           || folded.Contains("leraar", StringComparison.Ordinal)
+           || folded.Contains("juf", StringComparison.Ordinal)
+           || folded.Contains("meester", StringComparison.Ordinal)
+           || folded.Contains("onderwij", StringComparison.Ordinal)
+           || folded.Contains("pedagog", StringComparison.Ordinal);
+
+    private static IReadOnlyList<RoleFitSimilarRole> EducationSteppingStones(string folded)
+    {
+        if (!(folded.Contains("juf", StringComparison.Ordinal)
+              || folded.Contains("meester", StringComparison.Ordinal)
+              || folded.Contains("docent", StringComparison.Ordinal)
+              || folded.Contains("leraar", StringComparison.Ordinal)
+              || folded.Contains("onderwij", StringComparison.Ordinal)))
+        {
+            return [];
+        }
+
+        return
+        [
+            new RoleFitSimilarRole("Onderwijsassistent", "Zelfde klas, minder papieren eisen dan juf of meester.", 86),
+            new RoleFitSimilarRole("Pedagogisch medewerker", "Kinderen begeleiden in opvang of buitenschoolse opvang.", 84),
+            new RoleFitSimilarRole("Praktijkopleider", "Vak overbrengen op de werkvloer — een logische opstap of verbreding.", 80)
+        ];
+    }
 
     private static bool IsSteppingStone(string occupationTitle)
     {
@@ -137,6 +161,8 @@ public static class RoleFitFunnel
                || folded.Contains("horeca", StringComparison.Ordinal)
                || folded.Contains("winkel", StringComparison.Ordinal)
                || folded.Contains("kassa", StringComparison.Ordinal)
-               || folded.Contains("activiteiten", StringComparison.Ordinal);
+               || folded.Contains("onderwijsassistent", StringComparison.Ordinal)
+               || folded.Contains("pedagogisch", StringComparison.Ordinal)
+               || folded.Contains("praktijkopleider", StringComparison.Ordinal);
     }
 }

@@ -133,7 +133,7 @@ public class CareerCompassTests
         Assert.Contains("75%", UiStrings.Get("Kompas.BandBroaden", "nl"));
         Assert.Equal("Mijn profiel", UiStrings.Get("Kompas.TabProfile", "nl"));
         Assert.Equal("Mijn competenties", UiStrings.Get("Kompas.TabCompetencies", "nl"));
-        Assert.Equal("Mijn beroepen", UiStrings.Get("Kompas.TabCareers", "nl"));
+        Assert.Equal("Mijn beste match", UiStrings.Get("Kompas.TabCareers", "nl"));
     }
 
     [Fact]
@@ -213,7 +213,8 @@ public class CareerCompassTests
         Assert.Equal(CandidateKompasTabs.Profile, CandidateKompasTabs.Normalize("profiel"));
         Assert.Equal(CandidateKompasTabs.Competencies, CandidateKompasTabs.Normalize("competency-profile-title"));
         Assert.Equal(CandidateKompasTabs.Career, CandidateKompasTabs.Normalize("#career-profile-title"));
-        Assert.Equal(CandidateKompasTabs.Fit, CandidateKompasTabs.Normalize("past-dit"));
+        Assert.Equal(CandidateKompasTabs.Career, CandidateKompasTabs.Normalize("beste-match"));
+        Assert.Equal(CandidateKompasTabs.Fit, CandidateKompasTabs.Normalize("functiefit"));
         Assert.Equal(CandidateKompasTabs.Career, CandidateKompasTabs.Neighbor(CandidateKompasTabs.Competencies, 1));
         Assert.Equal(CandidateKompasTabs.Fit, CandidateKompasTabs.Neighbor(CandidateKompasTabs.Profile, -1));
     }
@@ -226,16 +227,22 @@ public class CareerCompassTests
         Assert.Contains("Kompas.BandSuper", panel, StringComparison.Ordinal);
         Assert.Contains("Kompas.PracticalTitle", panel, StringComparison.Ordinal);
         Assert.Contains("TrainingOffersBlock", panel, StringComparison.Ordinal);
-        Assert.Contains("item.Why", panel, StringComparison.Ordinal);
+        Assert.Contains("kompas-occupation__details", panel, StringComparison.Ordinal);
+        Assert.Contains("CareerOccupationDetail", panel, StringComparison.Ordinal);
 
         var home = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Pages/Candidate/CandidateKompas.razor"));
+        Assert.DoesNotContain("Talent.CandidateTitle", home, StringComparison.Ordinal);
+        var profilePage = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Pages/Candidate/Profile.razor"));
+        Assert.Contains("ProfileTab", profilePage, StringComparison.Ordinal);
+        Assert.Contains("profile-section-nav", profilePage, StringComparison.Ordinal);
+        Assert.Contains("Talent.CandidateTitle", profilePage, StringComparison.Ordinal);
         Assert.Contains("CareerCompassPanel", home, StringComparison.Ordinal);
         Assert.Contains("role=\"tablist\"", home, StringComparison.Ordinal);
         Assert.Contains("Kompas.TabProfile", home, StringComparison.Ordinal);
         Assert.Contains("Kompas.TabCompetencies", home, StringComparison.Ordinal);
         Assert.Contains("Kompas.TabCareers", home, StringComparison.Ordinal);
         Assert.Contains("Kompas.TabFit", home, StringComparison.Ordinal);
-        Assert.Contains("RoleFitCheckPanel", home, StringComparison.Ordinal);
+        Assert.Contains("AxisCount = 5", File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Pages/Candidate/CompetencyScorePanel.razor")), StringComparison.Ordinal);
         Assert.Contains("kompas-panel-profile", home, StringComparison.Ordinal);
         Assert.Contains("kompas-panel-competencies", home, StringComparison.Ordinal);
         Assert.Contains("kompas-panel-career", home, StringComparison.Ordinal);

@@ -52,7 +52,9 @@ public class TrainingUpskillTests
             TrainingProviderKind.RegionalPartner, fields, ["zorg"], fields, "verpleegkundige");
         var national = TrainingMatchRules.Score(
             TrainingProviderKind.NationalAffiliate, fields, ["zorg"], fields, "verpleegkundige");
-        Assert.True(regional > national);
+        var nationalNoKey = TrainingMatchRules.Score(
+            TrainingProviderKind.NationalAffiliate, fields, ["loi"], fields, "verpleegkundige");
+        Assert.Equal(0, nationalNoKey);
     }
 
     [Fact]

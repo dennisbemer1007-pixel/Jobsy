@@ -28,7 +28,14 @@ public static class TrainingMatchRules
         var fieldHits = offerFields.Count(f => detectedFields.Contains(f, StringComparer.OrdinalIgnoreCase));
         var keyHits = offerKeys.Count(k => folded.Contains(k, StringComparison.Ordinal) || CareerOccupationKeys.Hits(folded, k));
         var regionalBoost = kind == TrainingProviderKind.RegionalPartner && fieldHits > 0 ? 40 : 0;
-        var nationalFallback = kind == TrainingProviderKind.NationalAffiliate ? 8 : 0;
-        return regionalBoost + fieldHits * 20 + keyHits * 12 + nationalFallback;
+        if (keyHits == 0)
+        {
+            // National affiliates without a title/key hit are generic noise.
+            return kind == TrainingProviderKind.RegionalPartner && fieldHits > 0
+                ? regionalBoost + fieldHits * 20
+                : 0;
+        }
+
+        return regionalBoost + fieldHits * 20 + keyHits * 12;
     }
 }

@@ -4,7 +4,7 @@
 @implements IDisposable
 
 <div class="kompas-card--fit">
-    <h3>@Culture["Kompas.TabFit"]</h3>
+    <h3 class="visually-hidden">@Culture["Kompas.TabFit"]</h3>
     <p class="login-lead">@Culture["Fit.Lead"]</p>
 
     @if (!string.IsNullOrWhiteSpace(_message))
@@ -152,7 +152,7 @@
                 </section>
             }
 
-            <section class="role-fit-convert" aria-labelledby="fit-direct-title">
+            <section class="role-fit-convert role-fit-convert--quiet" aria-labelledby="fit-direct-title">
                 <h4 id="fit-direct-title">@Culture["Fit.DirectTitle"]</h4>
                 <p class="login-lead">@Culture["Fit.DirectLead"]</p>
                 @if (result.DirectVacancies.Count == 0)

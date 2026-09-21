@@ -11,7 +11,7 @@
                 {
                     <polygon class="competency-radar__grid" points="@RadarRing(ring * 25)" />
                 }
-                @for (var i = 0; i < 4; i++)
+                @for (var i = 0; i < 5; i++)
                 {
                     var end = RadarPoint(100, i);
                     <line class="competency-radar__axis" x1="0" y1="0" x2="@end.X.ToString("0.###", System.Globalization.CultureInfo.InvariantCulture)" y2="@end.Y.ToString("0.###", System.Globalization.CultureInfo.InvariantCulture)" />
@@ -52,7 +52,9 @@
     };
 
     private static string RadarRing(double percent)
-        => string.Join(" ", Enumerable.Range(0, 4).Select(i => FormatPoint(RadarPoint(percent, i))));
+        => string.Join(" ", Enumerable.Range(0, AxisCount).Select(i => FormatPoint(RadarPoint(percent, i))));
+
+    private const int AxisCount = 5;
 
     private static string RadarShape(CompetencyScoreSet scores)
     {
@@ -61,7 +63,8 @@
             scores.Samenwerken ?? 0,
             scores.Resultaatgerichtheid ?? 0,
             scores.Stressbestendigheid ?? 0,
-            scores.Innovatie ?? 0
+            scores.Innovatie ?? 0,
+            scores.Extraversie ?? 0
         };
         return string.Join(" ", values.Select((v, i) => FormatPoint(RadarPoint(v, i))));
     }
@@ -69,7 +72,7 @@
     private static (double X, double Y) RadarPoint(double percent, int index)
     {
         var radius = 88 * Math.Clamp(percent, 0, 100) / 100.0;
-        var angle = -Math.PI / 2 + index * (Math.PI / 2);
+        var angle = -Math.PI / 2 + index * (2 * Math.PI / AxisCount);
         return (radius * Math.Cos(angle), radius * Math.Sin(angle));
     }
 

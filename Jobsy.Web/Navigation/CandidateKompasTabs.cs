@@ -35,9 +35,11 @@ public static class CandidateKompasTabs
             Career or "careers" or "beroepen" or "beroep" or "mijn-beroepen" or "mijn beroepen"
                 or "occupations" or "career-profile-title" or "kompas-career-title"
                 or "kompas-panel-career" or "kompas-tab-career"
+                or "beste-match" or "mijn-beste-match" or "mijn beste match"
                 => Career,
             Fit or "role-fit" or "past-dit" or "past dit bij mij" or "functie-fit"
                 or "kompas-panel-fit" or "kompas-tab-fit"
+                or "functiefit" or "functiefit-checker" or "functiefit checker"
                 => Fit,
             _ => Profile
         };

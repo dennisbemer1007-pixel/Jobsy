@@ -13,6 +13,9 @@ Alle noemenswaardige wijzigingen aan dit project worden in dit bestand bijgehoud
 
 ## [Unreleased]
 
+### Changed
+- **Kompas UI-opschoning:** tab **Mijn beste match** (was Mijn beroepen) en **Functiefit checker**; profielsecties (Persoonlijk / Voorkeuren & reistijd / Beschikbaarheid / CV & ervaring) bovenaan; contactverzoeken alleen op tab Mijn profiel; OCEAN-grafiek altijd zichtbaar; beroepen als accordeon met opleidingen per functie; rustigere directe vacatures; vergelijkbare functies herberekent live.
+
 ### Added
 - **Functie-Fit conversietrechter:** 4 vaste stappen (overall match-% uit reistijd/uren, cultuurfit en formele eisen; waar je matcht; wat je mist; actie/upskilling). Plus AI/lokale **vergelijkbare functies** (opstaprollen) en een live scan van **direct startbare vacatures** in Den Haag/Westland.
 

@@ -317,11 +317,7 @@ public sealed class RoleFitCheckService : IRoleFitCheckService
                            row.FromOpenAi);
         var query = Uri.EscapeDataString(snapshot.MapQuery);
         var fit = snapshot.VacancyFit;
-        var searchKeys = snapshot.SearchKeys;
-        if (fit is { ShowUpskill: true, FormalItems: { Count: > 0 } })
-        {
-            searchKeys = fit.FormalItems.Where(i => !i.Met).Select(i => i.Label).Concat(searchKeys).ToList();
-        }
+        var searchKeys = CareerOccupationKeys.FromTitle(snapshot.JobTitle);
 
         var offers = (fit is { ShowUpskill: true } || snapshot.Gaps.Count > 0)
             ? await _training.RecommendAsync(
