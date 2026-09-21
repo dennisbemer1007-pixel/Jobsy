@@ -483,6 +483,23 @@ public static class UatScriptRunner
             Assert.True(TransportLabels.Parse("E-bike") == Jobsy.Core.Enums.TransportMode.Bike);
         }
 
+        if (Contains(blob, "accordeon per vaardigheid", "workshops"))
+        {
+            var root = RepoRoot.Find();
+            var panel = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Pages/Candidate/CompetencyScorePanel.razor"));
+            Assert.Contains("competency-skill__details", panel, StringComparison.Ordinal);
+            Assert.Contains("TrainingOffersBlock", panel, StringComparison.Ordinal);
+            Assert.Contains("CampaignCompetence", panel, StringComparison.Ordinal);
+            Assert.Contains("CompetencyTrainingCatalog.MeaningKey", panel, StringComparison.Ordinal);
+            Assert.DoesNotContain("OCEAN", panel, StringComparison.OrdinalIgnoreCase);
+            Assert.DoesNotContain("RIASEC", panel, StringComparison.OrdinalIgnoreCase);
+            var kompas = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Pages/Candidate/CandidateKompas.razor"));
+            Assert.Contains("CompetencyScorePanel", kompas, StringComparison.Ordinal);
+            Assert.DoesNotContain("Talent.CandidateTitle", kompas, StringComparison.Ordinal);
+            Assert.Equal("competence", TrainingTracking.CampaignCompetence);
+            Assert.Contains(TrainingFieldCatalog.Vaardigheden, TrainingFieldCatalog.Detect([CompetencyTrainingCatalog.SearchBlob(CompetencyTestCatalog.Samenwerken)]));
+        }
+
         if (Contains(blob, "Cultuur Fit", "cultuurpijlers"))
         {
             var root = RepoRoot.Find();

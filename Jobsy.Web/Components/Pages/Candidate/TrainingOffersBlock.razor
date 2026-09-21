@@ -16,7 +16,7 @@
     }
     else
     {
-        <h5>@Culture["Fit.TrainingTitle"]</h5>
+        <h5>@Culture[string.IsNullOrWhiteSpace(TitleKey) ? "Fit.TrainingTitle" : TitleKey]</h5>
     }
     @if (!string.IsNullOrWhiteSpace(_message))
     {
@@ -48,6 +48,7 @@
     [Parameter] public string? JobTitle { get; set; }
     [Parameter] public string Campaign { get; set; } = "functie_fit";
     [Parameter] public bool Compact { get; set; }
+    [Parameter] public string? TitleKey { get; set; }
 
     private List<TrainingOfferCard> _offers = [];
     private bool _busy;

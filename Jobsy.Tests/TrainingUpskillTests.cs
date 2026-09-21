@@ -42,6 +42,8 @@ public class TrainingUpskillTests
         Assert.Contains(TrainingFieldCatalog.Zorg, TrainingFieldCatalog.Detect(["Verpleegkundige"]));
         Assert.Contains(TrainingFieldCatalog.Techniek, TrainingFieldCatalog.Detect(["Monteur installatie"]));
         Assert.Contains(TrainingFieldCatalog.Logistiek, TrainingFieldCatalog.Detect(["Heftruck chauffeur"]));
+        Assert.Contains(TrainingFieldCatalog.Vaardigheden, TrainingFieldCatalog.Detect(["samenwerken communicatie teamoverleg"]));
+        Assert.DoesNotContain(TrainingFieldCatalog.Vaardigheden, TrainingFieldCatalog.Detect(["Verpleegkundige"]));
     }
 
     [Fact]
@@ -96,6 +98,17 @@ public class TrainingUpskillTests
         Assert.DoesNotContain("ada@jobsy.local", csv, StringComparison.OrdinalIgnoreCase);
         Assert.Contains("lobsy-export", csv, StringComparison.Ordinal);
 
+        var skills = await sut.RecommendAsync(
+            userId,
+            CompetencyTrainingCatalog.SearchBlob(CompetencyTestCatalog.Samenwerken),
+            null,
+            TrainingTracking.CampaignCompetence);
+        Assert.NotEmpty(skills);
+        Assert.Equal("Praktijkacademie Haaglanden", skills[0].ProviderName);
+        Assert.Equal(TrainingCopy.SkillCta, skills[0].CtaLabel);
+        Assert.Equal(TrainingCopy.SkillAdvice, skills[0].Advice);
+        Assert.Contains("Samenwerken", skills[0].Title, StringComparison.OrdinalIgnoreCase);
+
         await sut.ForgetUserAsync(userId);
         var click = await db.TrainingClicks.SingleAsync();
         Assert.Null(click.UserId);
@@ -119,6 +132,9 @@ public class TrainingUpskillTests
         Assert.Contains("TrainingOffersBlock", panel, StringComparison.Ordinal);
         var compassPanel = File.ReadAllText(Path.Combine(RepoRoot.Find(), "Jobsy.Web/Components/Pages/Candidate/CareerCompassPanel.razor"));
         Assert.Contains("TrainingOffersBlock", compassPanel, StringComparison.Ordinal);
+        var competencyPanel = File.ReadAllText(Path.Combine(RepoRoot.Find(), "Jobsy.Web/Components/Pages/Candidate/CompetencyScorePanel.razor"));
+        Assert.Contains("TrainingOffersBlock", competencyPanel, StringComparison.Ordinal);
+        Assert.Contains("CampaignCompetence", competencyPanel, StringComparison.Ordinal);
         var admin = File.ReadAllText(Path.Combine(RepoRoot.Find(), "Jobsy.Web/Components/Pages/Admin/TrainingAdmin.razor"));
         Assert.Contains("/admin/training", admin, StringComparison.Ordinal);
         Assert.Contains(

@@ -243,6 +243,12 @@ public class CareerCompassTests
         Assert.Contains("Kompas.TabCareers", home, StringComparison.Ordinal);
         Assert.Contains("Kompas.TabFit", home, StringComparison.Ordinal);
         Assert.Contains("AxisCount = 5", File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Pages/Candidate/CompetencyScorePanel.razor")), StringComparison.Ordinal);
+        var competencyPanel = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Pages/Candidate/CompetencyScorePanel.razor"));
+        Assert.Contains("competency-skill__details", competencyPanel, StringComparison.Ordinal);
+        Assert.Contains("TrainingOffersBlock", competencyPanel, StringComparison.Ordinal);
+        Assert.Contains("CampaignCompetence", competencyPanel, StringComparison.Ordinal);
+        Assert.DoesNotContain("OCEAN", competencyPanel, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("RIASEC", competencyPanel, StringComparison.OrdinalIgnoreCase);
         Assert.Contains("kompas-panel-profile", home, StringComparison.Ordinal);
         Assert.Contains("kompas-panel-competencies", home, StringComparison.Ordinal);
         Assert.Contains("kompas-panel-career", home, StringComparison.Ordinal);
@@ -258,6 +264,8 @@ public class CareerCompassTests
         var minCss = File.ReadAllText(Path.Combine(root, "Jobsy.Web/wwwroot/css/app.min.css"));
         Assert.Contains(".kompas-tabs.admin-sublinks", minCss, StringComparison.Ordinal);
         Assert.Contains(".kompas-card[hidden]", minCss, StringComparison.Ordinal);
+        Assert.Contains(".competency-skill-list", css, StringComparison.Ordinal);
+        Assert.Contains(".competency-skill-list", minCss, StringComparison.Ordinal);
 
         var profile = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Pages/Candidate/Profile.razor"));
         Assert.Contains("CandidateKompas", profile, StringComparison.Ordinal);

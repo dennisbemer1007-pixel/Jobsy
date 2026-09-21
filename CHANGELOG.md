@@ -14,6 +14,7 @@ Alle noemenswaardige wijzigingen aan dit project worden in dit bestand bijgehoud
 ## [Unreleased]
 
 ### Changed
+- **Mijn competenties:** radar bovenaan; per vaardigheid een accordeon met korte uitleg (naar score) en workshops/cursussen van regionale opleiders (campagne `competence`); geen contactverzoeken of profielformulieren op dit tabblad.
 - **Kompas UI-opschoning:** tab **Mijn beste match** (was Mijn beroepen) en **Functiefit checker**; profielsecties (Persoonlijk / Voorkeuren & reistijd / Beschikbaarheid / CV & ervaring) bovenaan; contactverzoeken alleen op tab Mijn profiel; OCEAN-grafiek altijd zichtbaar; beroepen als accordeon met opleidingen per functie; rustigere directe vacatures; vergelijkbare functies herberekent live.
 
 ### Added

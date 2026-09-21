@@ -19,19 +19,24 @@
                 <polygon class="competency-radar__fill" points="@RadarShape(complete)" />
             </g>
         </svg>
-        <ul class="competency-bars">
+        <ul class="competency-skill-list" aria-label="@Culture["Kompas.TabCompetencies"]">
             @foreach (var category in CompetencyTestCatalog.QuickScanCategories)
             {
                 var value = Value(complete, category) ?? 0;
-                <li class="competency-bar">
-                    <div class="competency-bar__meta">
-                        <span class="competency-bar__name">@Culture[$"Competency.Cat.{category}"]</span>
-                        <span class="competency-bar__value">@value%</span>
-                    </div>
-                    <div class="competency-bar__track" role="meter" aria-valuemin="0" aria-valuemax="100" aria-valuenow="@value" aria-label="@Culture[$"Competency.Cat.{category}"]">
-                        <span class="competency-bar__fill" style="width: @value%"></span>
-                    </div>
-                    <p class="competency-bar__hint">@Culture[$"Competency.Cat.{category}.Hint"]</p>
+                <li class="competency-skill">
+                    <details class="competency-skill__details">
+                        <summary>
+                            <span class="competency-skill__name">@Culture[$"Competency.Cat.{category}"]</span>
+                            <span class="competency-skill__value">@value%</span>
+                        </summary>
+                        <div class="competency-skill__body">
+                            <p class="competency-skill__meaning">@Culture[CompetencyTrainingCatalog.MeaningKey(category, value)]</p>
+                            <TrainingOffersBlock JobTitle="@CompetencyTrainingCatalog.SearchBlob(category)"
+                                                 Campaign="@TrainingTracking.CampaignCompetence"
+                                                 Compact="true"
+                                                 TitleKey="Competency.TrainingTitle" />
+                        </div>
+                    </details>
                 </li>
             }
         </ul>

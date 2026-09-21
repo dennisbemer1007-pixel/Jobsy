@@ -102,7 +102,7 @@ Kernpunten:
 - **Verplichte uren** min/max per week + automatische urencategorie (bijbaan/parttime/fulltime)
 - **Geen UI-minimumleeftijd;** achtergrondfiltering via verplichte wettelijke taak-vinkjes + `[ i ]`-tooltips (Arbeidstijdenwet)
 - **Matchingspercentage** op banenkaart met breakdown-modal en actie-adviezen
-- **Competentietest (Quick-Scan / 25 vragen)** op het kandidaatprofiel: Big Five / OCEAN; draft tussentijds opslaan; scores + tags voeden matching en talentpool
+- **Competentietest (Quick-Scan / 25 vragen)** op het kandidaatprofiel: Big Five / OCEAN; draft tussentijds opslaan; scores + tags voeden matching en talentpool. Tab **Mijn competenties**: radar + accordeon per vaardigheid (uitleg + regionale workshops/cursussen); geen werkgeverscontact of profielformulieren op dat tabblad.
 - **Beroepentest (Quick-Scan / 25 vragen):** richting in gewone taal; **Mijn Beroepen-kompas**; dynamische **Top 10 actieve vacatures** (≥ 60%, aflopend)
 - **Diepte-analyses (150 unieke vragen, € 2,99 per test):** 30 per Big Five-trek (competentie) en 25 per beroepsrichting; Mollie iDEAL; OpenAI vult de loopbaan-PDF (logo, Super-match 95–100 als kernfit / Sterke keus / Handige verbreding, *Wat betekent dit voor jou?*) en schrijft top-beroepen naar **Mijn Beroepen-kompas**
 - **Functie-Fit Checker** (**Functiefit checker**): gated tot beide 25-vragen quick-scans klaar zijn; vrije functietitel **of een concrete vacature** → **4 stappen** (overall match-% uit reistijd/uren + cultuur/OCEAN + formele eisen; waar je matcht; wat je mist; actie/upskilling) + vergelijkbare functies (klik herberekent live) + rustige lijst vacatures in Den Haag/Westland waar je direct kunt starten; opleidingen strikt op de ingetypte titel; upsell 150-vragen analyse

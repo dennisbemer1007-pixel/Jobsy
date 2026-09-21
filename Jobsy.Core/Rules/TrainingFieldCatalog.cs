@@ -6,6 +6,7 @@ public static class TrainingFieldCatalog
     public const string Zorg = "zorg";
     public const string Techniek = "techniek";
     public const string Logistiek = "logistiek";
+    public const string Vaardigheden = "vaardigheden";
 
     public static readonly string[] ShortageFields = [Zorg, Techniek, Logistiek];
 
@@ -13,7 +14,14 @@ public static class TrainingFieldCatalog
     [
         (Zorg, ["zorg", "verpleeg", "verzorg", "welzijn", "thuishulp", "agz", "vvt", "helpende"]),
         (Techniek, ["techniek", "install", "elektro", "metaal", "monteur", "werktuig", "installatie", "bouw"]),
-        (Logistiek, ["logistiek", "magazijn", "heftruck", "chauffeur", "warehouse", "orderpick", "expeditie"])
+        (Logistiek, ["logistiek", "magazijn", "heftruck", "chauffeur", "warehouse", "orderpick", "expeditie"]),
+        (Vaardigheden, [
+            "samenwerken", "communicatie", "teamoverleg", "luisteren",
+            "resultaatgericht", "deadlines", "afronden",
+            "stressbestendig", "weerbaarheid", "werkdruk",
+            "innovatie", "probleemoplossen", "digitale vaardigheden",
+            "klantcontact", "presenteren", "gastvrijheid"
+        ])
     ];
 
     public static IReadOnlyList<string> Detect(params IEnumerable<string>?[] blobs)

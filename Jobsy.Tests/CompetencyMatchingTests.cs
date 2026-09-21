@@ -63,6 +63,18 @@ public class CompetencyMatchingTests
     }
 
     [Fact]
+    public void Training_blobs_and_meaning_keys_are_plain_skill_language()
+    {
+        Assert.Equal("Competency.Cat.Samenwerken.MeaningHigh", CompetencyTrainingCatalog.MeaningKey(CompetencyTestCatalog.Samenwerken, 70));
+        Assert.Equal("Competency.Cat.Innovatie.MeaningMid", CompetencyTrainingCatalog.MeaningKey(CompetencyTestCatalog.Innovatie, 45));
+        Assert.Equal("Competency.Cat.Extraversie.MeaningLow", CompetencyTrainingCatalog.MeaningKey(CompetencyTestCatalog.Extraversie, 44));
+        Assert.Contains("samenwerken", CompetencyTrainingCatalog.SearchBlob(CompetencyTestCatalog.Samenwerken), StringComparison.Ordinal);
+        Assert.DoesNotContain('@', CompetencyTrainingCatalog.SearchBlob(CompetencyTestCatalog.Samenwerken));
+        Assert.Contains("team", Jobsy.Web.Localization.UiStrings.Get("Competency.Cat.Samenwerken.MeaningHigh", "nl"), StringComparison.OrdinalIgnoreCase);
+        Assert.Equal("Workshops en cursussen", Jobsy.Web.Localization.UiStrings.Get("Competency.TrainingTitle", "nl"));
+    }
+
+    [Fact]
     public void Career_catalog_has_25_riasec_items()
     {
         Assert.Equal(25, CareerTestCatalog.QuestionCount);

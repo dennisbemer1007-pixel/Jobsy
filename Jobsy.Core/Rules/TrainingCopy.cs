@@ -11,4 +11,10 @@ public static class TrainingCopy
 
     public const string RegionalHint =
         "Eerst lokale praktijkopleiders in Den Haag en het Westland; landelijke cursussen als vangnet.";
+
+    public const string SkillAdvice =
+        "Versterk deze vaardigheid met een korte workshop of cursus van een regionale opleider.";
+
+    public const string SkillCta =
+        "Bekijk workshops en cursussen";
 }
