@@ -92,7 +92,7 @@
              aria-labelledby="kompas-tab-whoami"
              hidden="@(_tab != CandidateKompasTabs.WhoAmI)">
         <h3 id="kompas-whoami-title" class="visually-hidden">@Culture["Kompas.TabWhoAmI"]</h3>
-        <WhoAmIPanel OnOpenTab="SetTab" />
+        <WhoAmIPanel Active="@(_tab == CandidateKompasTabs.WhoAmI)" OnOpenTab="SetTab" />
     </article>
 
     <article id="kompas-panel-profile"

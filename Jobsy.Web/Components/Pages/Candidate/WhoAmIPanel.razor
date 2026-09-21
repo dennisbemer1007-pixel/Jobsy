@@ -61,9 +61,9 @@
                 <span class="whoami-check" aria-hidden="true">@(locked.ProfileFilled ? "✓" : "")</span>
                 <div>
                     <strong>@Culture["WhoAmI.StepProfile"]</strong>
-                    <p>@Culture["WhoAmI.StepProfileHint"]</p>
                     @if (!locked.ProfileFilled)
                     {
+                        <p>@Culture["WhoAmI.StepProfileHint"]</p>
                         <button type="button" class="engagement-btn" @onclick="() => GoTab(CandidateKompasTabs.Profile)">@Culture["WhoAmI.OpenProfile"]</button>
                     }
                 </div>
@@ -107,25 +107,57 @@
 </div>
 
 @code {
+    [Parameter] public bool Active { get; set; }
     [Parameter] public EventCallback<string> OnOpenTab { get; set; }
 
     private bool _loading = true;
     private bool _busy;
+    private bool _wasActive;
     private string? _message;
     private WhoAmIState? _state;
 
-    protected override Task OnInitializedAsync() => LoadAsync();
+    protected override async Task OnParametersSetAsync()
+    {
+        if (Active == _wasActive)
+        {
+            return;
+        }
+
+        var opening = Active && !_wasActive;
+        _wasActive = Active;
+        if (opening)
+        {
+            await LoadAsync();
+        }
+    }
 
     private async Task LoadAsync()
     {
-        _loading = true;
+        var firstLoad = _state is null;
+        if (firstLoad)
+        {
+            _loading = true;
+        }
+
         try
         {
-            _state = await Api.GetMyWhoAmIAsync();
+            var next = await Api.GetMyWhoAmIAsync();
+            if (next is not null)
+            {
+                _state = next;
+                _message = null;
+            }
+            else if (_state is null)
+            {
+                _message = Culture["Common.Error"];
+            }
         }
         catch
         {
-            _message = Culture["Common.Error"];
+            if (_state is null)
+            {
+                _message = Culture["Common.Error"];
+            }
         }
         finally
         {

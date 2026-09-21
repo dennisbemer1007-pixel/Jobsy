@@ -69,8 +69,17 @@ public sealed class WhoAmIService : IWhoAmIService
     {
         var user = await _db.Users.AsNoTracking()
             .FirstOrDefaultAsync(u => u.Id == userId, cancellationToken);
-        var prefs = MatchingProfileMapper.DeserializePrefs(user?.PreferencesJson);
-        var profileFilled = WhoAmICompleteness.IsProfileFilled(user?.FullName, prefs);
+        var hasUploadedCv = await _db.CandidateUploadedCvs.AsNoTracking()
+            .AnyAsync(c => c.UserId == userId, cancellationToken);
+        var hasReferences = await _db.CandidateReferences.AsNoTracking()
+            .AnyAsync(c => c.UserId == userId, cancellationToken);
+        var profileFilled = WhoAmICompleteness.IsProfileFilled(
+            user?.FullName,
+            user?.FirstName,
+            user?.LastName,
+            user?.PreferencesJson,
+            hasUploadedCv,
+            hasReferences);
 
         var competencyRow = await _db.CandidateCompetencies.AsNoTracking()
             .FirstOrDefaultAsync(c => c.UserId == userId, cancellationToken);
