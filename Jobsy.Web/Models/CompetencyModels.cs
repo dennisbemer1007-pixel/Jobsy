@@ -139,6 +139,8 @@ public sealed class CandidateMatchedVacancy
     public string ColorBand { get; set; } = "orange";
     public List<string> Why { get; set; } = [];
     public List<string> Gaps { get; set; } = [];
+    public bool IsBroadMatch { get; set; }
+    public string? MatchRationale { get; set; }
 }
 
 public sealed class CareerOccupationMatchModel

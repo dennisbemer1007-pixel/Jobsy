@@ -71,7 +71,7 @@ public class CompetencyMatchingTests
         Assert.Contains("samenwerken", CompetencyTrainingCatalog.SearchBlob(CompetencyTestCatalog.Samenwerken), StringComparison.Ordinal);
         Assert.DoesNotContain('@', CompetencyTrainingCatalog.SearchBlob(CompetencyTestCatalog.Samenwerken));
         Assert.Contains("team", Jobsy.Web.Localization.UiStrings.Get("Competency.Cat.Samenwerken.MeaningHigh", "nl"), StringComparison.OrdinalIgnoreCase);
-        Assert.Equal("Workshops en cursussen", Jobsy.Web.Localization.UiStrings.Get("Competency.TrainingTitle", "nl"));
+        Assert.Equal("Passende workshop", Jobsy.Web.Localization.UiStrings.Get("Competency.TrainingTitle", "nl"));
     }
 
     [Fact]

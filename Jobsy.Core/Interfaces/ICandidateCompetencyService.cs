@@ -49,4 +49,6 @@ public sealed record CandidateMatchedVacancyDto(
     int MatchPercent,
     string ColorBand,
     IReadOnlyList<string> Why,
-    IReadOnlyList<string> Gaps);
+    IReadOnlyList<string> Gaps,
+    bool IsBroadMatch = false,
+    string? MatchRationale = null);

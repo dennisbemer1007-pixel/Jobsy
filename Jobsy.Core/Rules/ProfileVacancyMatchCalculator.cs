@@ -5,7 +5,8 @@ namespace Jobsy.Core.Rules;
 
 /// <summary>
 /// Candidate-facing vacancy ranking for the profile Top 10 widget.
-/// Combines travel/hours/day-parts with experience and (when completed) competencies.
+/// Multidimensional: travel/hours/day-parts + opleiding, competenties/drijfveren
+/// (Wie ben ik? / DISC/OCEAN), and transferable skills — not exact functietitel alone.
 /// </summary>
 public static class ProfileVacancyMatchCalculator
 {
@@ -17,6 +18,9 @@ public static class ProfileVacancyMatchCalculator
     public const double InterestWeightDeepAnalysisOnly = 0.38;
     public const double OccupationFitWeight = 0.65;
     public const double RiasecFitWeight = 0.35;
+    /// <summary>Within experience: exact branche vs transferable-domain blend.</summary>
+    public const double ExactWorkTypeWeight = 0.55;
+    public const double TransferableWeight = 0.45;
 
     public static ProfileVacancyMatch Calculate(ProfileVacancyMatchInput input)
     {
@@ -115,7 +119,14 @@ public static class ProfileVacancyMatchCalculator
             }
         }
 
-        var (why, gaps) = BuildExplanation(input, core, experience01, competency01, interest01, occupationFit, culture, total);
+        var titleExact = TransferableSkillRules.TitleLooksExact(
+            input.VacancyTitle, input.CandidateRoles, input.CareerOccupations);
+        var isBroadMatch = !titleExact && total >= DisplayThreshold;
+        var rationale = BroadMatchRationaleBuilder.TryBuild(
+            input, experience01, competency01, interest01, occupationFit, isBroadMatch);
+
+        var (why, gaps) = BuildExplanation(
+            input, core, experience01, competency01, interest01, occupationFit, culture, total);
         return new ProfileVacancyMatch
         {
             VacancyId = input.VacancyId,
@@ -126,6 +137,8 @@ public static class ProfileVacancyMatchCalculator
             CompetencyScore01 = competency01,
             InterestScore01 = interest01,
             CultureFit = culture,
+            IsBroadMatch = isBroadMatch,
+            MatchRationale = rationale,
             Why = why,
             Gaps = gaps,
             ColorBand = total >= MatchScoreWeights.StrongMatchThreshold
@@ -166,11 +179,14 @@ public static class ProfileVacancyMatchCalculator
         "hours" => "Beschikbaarheid past",
         "dayparts" => "Dagdelen kloppen",
         "experience" when point.Code == "license" => "Rijbewijs klopt",
+        "experience" when point.Code == "transferable" => "Overdraagbare ervaring",
+        "experience" when point.Code == "education" => "Opleiding sluit aan",
         "experience" => "Branche sluit aan",
         "competency" => "Sterke competentie-match",
         "culture" => "Cultuur & teamfit",
         "occupation" => "Beroepen-kompas past",
         "interest" => "Beroepsinteresse past",
+        "broad" => "Brede match",
         _ => point.Text
     };
 
@@ -181,6 +197,18 @@ public static class ProfileVacancyMatchCalculator
             .Distinct(StringComparer.OrdinalIgnoreCase)
             .Take(3)
             .ToList();
+
+    /// <summary>Card/popup one-liner: prefer AI-style rationale on broader matches.</summary>
+    public static string? SummaryLine(ProfileVacancyMatch match)
+    {
+        if (match.IsBroadMatch && !string.IsNullOrWhiteSpace(match.MatchRationale))
+        {
+            return match.MatchRationale;
+        }
+
+        var headlines = WhyHeadlines(match);
+        return headlines.Count == 0 ? null : string.Join(", ", headlines);
+    }
 
     private static double InterestWeight(bool careerDeepCompleted, bool hasCompetency)
     {
@@ -201,24 +229,29 @@ public static class ProfileVacancyMatchCalculator
 
         var vacancyTypes = input.WorkTypes ?? [];
         var candidateRoles = input.CandidateRoles ?? [];
+        double exact01;
         if (vacancyTypes.Count > 0)
         {
             if (candidateRoles.Count == 0)
             {
-                parts.Add(0.4);
+                exact01 = 0.4;
             }
             else
             {
                 var vac = vacancyTypes.Select(NormalizeLabel).ToHashSet(StringComparer.OrdinalIgnoreCase);
                 var cand = candidateRoles.Select(NormalizeLabel).ToHashSet(StringComparer.OrdinalIgnoreCase);
                 var hit = vac.Count(v => cand.Contains(v));
-                parts.Add(vac.Count == 0 ? 1 : (double)hit / vac.Count);
+                exact01 = vac.Count == 0 ? 1 : (double)hit / vac.Count;
             }
         }
         else
         {
-            parts.Add(candidateRoles.Count > 0 ? 0.8 : 0.55);
+            exact01 = candidateRoles.Count > 0 ? 0.8 : 0.55;
         }
+
+        var transferable01 = TransferableSkillRules.Score01(
+            candidateRoles, vacancyTypes, input.VacancyTitle, input.VacancyDescription);
+        parts.Add(ExactWorkTypeWeight * exact01 + TransferableWeight * transferable01);
 
         if (!string.IsNullOrWhiteSpace(input.RequiredDrivingLicense))
         {
@@ -228,13 +261,19 @@ public static class ProfileVacancyMatchCalculator
                 : 0);
         }
 
-        if (!string.IsNullOrWhiteSpace(input.RequiredEducation))
-        {
-            parts.Add(EducationLevelLabels.CandidateMeetsRequirement(
+        // Opleidingsachtergrond: niveau (hard) + richting via overdraagbare domeinen.
+        var educationLevel01 = string.IsNullOrWhiteSpace(input.RequiredEducation)
+            ? ((input.CandidateEducations?.Count ?? 0) > 0 ? 0.85 : 0.55)
+            : EducationLevelLabels.CandidateMeetsRequirement(
                 input.CandidateEducations, input.RequiredEducation)
                 ? 1
-                : 0.2);
-        }
+                : 0.2;
+        var educationDirection01 = TransferableSkillRules.Score01(
+            input.CandidateEducations?.Concat(candidateRoles).ToList(),
+            vacancyTypes,
+            input.VacancyTitle,
+            input.VacancyDescription);
+        parts.Add(0.65 * educationLevel01 + 0.35 * educationDirection01);
 
         if (input.MinimumEmployers is > 0)
         {
@@ -341,12 +380,24 @@ public static class ProfileVacancyMatchCalculator
                 "worktype",
                 $"Je hebt interesse of ervaring in {JoinNl(sharedTypes)}, en dat sluit aan bij deze vacature."));
         }
-        else if ((input.WorkTypes?.Count ?? 0) > 0 && experience01 < 0.5)
+        else
         {
-            gaps.Add(new(
-                "experience",
-                "worktype",
-                $"Deze baan zit in {JoinNl(input.WorkTypes!)}. Zet dat bij je interesses of ervaring als het klopt — dan matcht het beter."));
+            var transferable = TransferableSkillRules.SharedDomainLabels(
+                input.CandidateRoles, input.WorkTypes, input.VacancyTitle, input.VacancyDescription);
+            if (transferable.Count > 0)
+            {
+                why.Add(new(
+                    "experience",
+                    "transferable",
+                    $"Je hebt overdraagbare ervaring in {JoinNl(transferable)}. Die vaardigheden kun je meenemen naar deze rol, ook als de functietitel anders is."));
+            }
+            else if ((input.WorkTypes?.Count ?? 0) > 0 && experience01 < 0.5)
+            {
+                gaps.Add(new(
+                    "experience",
+                    "worktype",
+                    $"Deze baan zit in {JoinNl(input.WorkTypes!)}. Zet dat bij je interesses of ervaring als het klopt — dan matcht het beter."));
+            }
         }
 
         if (!string.IsNullOrWhiteSpace(input.RequiredDrivingLicense)
@@ -372,6 +423,14 @@ public static class ProfileVacancyMatchCalculator
                 "experience",
                 "education",
                 $"Deze baan vraagt opleidingsniveau {input.RequiredEducation}. Vul je opleiding aan als je die hebt."));
+        }
+        else if (!string.IsNullOrWhiteSpace(input.RequiredEducation)
+                 && EducationLevelLabels.CandidateMeetsRequirement(input.CandidateEducations, input.RequiredEducation))
+        {
+            why.Add(new(
+                "experience",
+                "education",
+                $"Je opleidingsniveau past bij wat deze vacature vraagt ({input.RequiredEducation})."));
         }
 
         if (input.CandidateCompetencies is { IsComplete: true } cand
@@ -630,6 +689,10 @@ public sealed class ProfileVacancyMatch
     public double? CompetencyScore01 { get; init; }
     public double? InterestScore01 { get; init; }
     public CultureFitResult? CultureFit { get; init; }
+    /// <summary>True when the vacancy fits holistically without an exact functietitel hit.</summary>
+    public bool IsBroadMatch { get; init; }
+    /// <summary>Short AI-style onderbouwing for broader matches (opleiding, drijfveren, transferable).</summary>
+    public string? MatchRationale { get; init; }
     public IReadOnlyList<ProfileMatchExplainPoint> Why { get; init; } = [];
     public IReadOnlyList<ProfileMatchExplainPoint> Gaps { get; init; } = [];
     public string ColorBand { get; init; } = "orange";

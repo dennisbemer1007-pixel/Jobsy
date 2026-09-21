@@ -13,6 +13,10 @@ Alle noemenswaardige wijzigingen aan dit project worden in dit bestand bijgehoud
 
 ## [Unreleased]
 
+### Changed
+- **Multidimensionale vacature-matching:** ranking weegt opleiding (niveau/richting), competenties & drijfveren (Wie ben ik? / DISC/OCEAN) en overdraagbare werkervaring — niet alleen een exacte functietitel. Bij bredere matches toont banenkaart/Top 10 een korte AI-onderbouwing.
+- **Opleidingen subtiel & deeplinks:** in-context tekstlinks i.p.v. schreeuwende CTA’s; outbound-URL’s moeten altijd op een specifieke cursuspagina landen (geen opleider-homepage).
+
 ### Added
 - **Wie ben ik?** in Mijn Lobsy Kompas: checklist (profiel, competentie, beroepen, gedragsanalyse); daarna AI-persoonsverhaal, radar, DISC-kwadranten en optionele PDF-bijlage bij het Lobsy-CV.
 - **DISC-Analyse** in Mijn Lobsy Kompas: gratis Quick-Scan (25) + optionele diepte-analyse (150, € 2,99); radar + accordeon per gedragsstijl met ontwikkelpunten en regionale workshops; scores wegen mee in Functie-Fit en cultuurfit (gewone taal, geen vaktermen in stap 2/3).

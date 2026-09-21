@@ -86,6 +86,9 @@ public class TrainingUpskillTests
         Assert.DoesNotContain("ada@jobsy.local", tracked.Url, StringComparison.OrdinalIgnoreCase);
         Assert.DoesNotContain(userId.ToString("D"), tracked.Url, StringComparison.OrdinalIgnoreCase);
         Assert.Contains("ref=lobsy", tracked.Url, StringComparison.Ordinal);
+        Assert.True(TrainingDeepLinkRules.IsCourseDeepLink(tracked.Url));
+        Assert.DoesNotContain("https://www.rocmondriaan.nl/?ref=", tracked.Url, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("/opleidingen/", tracked.Url, StringComparison.OrdinalIgnoreCase);
 
         var lead = await sut.RecordConversionAsync(new(tracked.ClickId, null, null, TrainingConversionKind.Lead));
         Assert.Equal("Lead", lead.Kind);
@@ -137,11 +140,11 @@ public class TrainingUpskillTests
         Assert.Contains("CampaignCompetence", competencyPanel, StringComparison.Ordinal);
         var admin = File.ReadAllText(Path.Combine(RepoRoot.Find(), "Jobsy.Web/Components/Pages/Admin/TrainingAdmin.razor"));
         Assert.Contains("/admin/training", admin, StringComparison.Ordinal);
+        Assert.Equal("Passende cursus", Jobsy.Web.Localization.UiStrings.Get("Fit.TrainingTitle", "nl"));
         Assert.Contains(
             TrainingCopy.GapAdvice,
             Jobsy.Web.Localization.UiStrings.Get("Fit.TrainingLead", "nl"),
             StringComparison.Ordinal);
-        Assert.Equal("Erkende opleidingen", Jobsy.Web.Localization.UiStrings.Get("Fit.TrainingTitle", "nl"));
     }
 
     private static JobsyDbContext CreateDb()

@@ -36,6 +36,7 @@ public sealed class TrainingUpskillService : ITrainingUpskillService
         }
 
         await EnsureCompetencyWorkshopsAsync(cancellationToken);
+        await EnsureOfferDeepLinksAsync(cancellationToken);
     }
 
     public async Task<IReadOnlyList<TrainingOfferCardDto>> RecommendAsync(
@@ -69,6 +70,7 @@ public sealed class TrainingUpskillService : ITrainingUpskillService
                     fields,
                     blob)))
             .Where(x => x.Score > 0)
+            .Where(x => TrainingDeepLinkRules.TryCombine(x.Offer.Provider.BaseUrl, x.Offer.ExternalPath, out _))
             .OrderByDescending(x => x.Score)
             .ThenBy(x => x.Offer.SortOrder)
             .Take(TrainingMatchRules.MaxResults)
@@ -96,11 +98,11 @@ public sealed class TrainingUpskillService : ITrainingUpskillService
         var clickId = Guid.NewGuid();
         var campaignValue = string.IsNullOrWhiteSpace(campaign) ? TrainingTracking.CampaignFit : campaign.Trim();
         var medium = offer.Provider.Kind == TrainingProviderKind.RegionalPartner ? "partner" : "affiliate";
-        var target = CombineUrl(offer.Provider.BaseUrl, offer.ExternalPath);
+        var target = TrainingDeepLinkRules.Combine(offer.Provider.BaseUrl, offer.ExternalPath);
         var outbound = TrainingTracking.AppendParameters(target, hash, clickId, campaignValue, medium);
-        if (!TrainingTracking.LooksSafeOutbound(outbound))
+        if (!TrainingTracking.LooksSafeOutbound(outbound) || !TrainingDeepLinkRules.IsCourseDeepLink(outbound))
         {
-            throw new InvalidOperationException("Ongeldige opleiders-URL.");
+            throw new InvalidOperationException("Ongeldige opleiders-deeplink (geen homepage).");
         }
 
         _db.TrainingClicks.Add(new TrainingClick
@@ -218,7 +220,10 @@ public sealed class TrainingUpskillService : ITrainingUpskillService
         row.Title = title;
         row.FieldsCsv = TrainingMatchRules.JoinCsv(TrainingMatchRules.SplitCsv(request.FieldsCsv));
         row.KeysCsv = TrainingMatchRules.JoinCsv(TrainingMatchRules.SplitCsv(request.KeysCsv));
-        row.ExternalPath = string.IsNullOrWhiteSpace(request.ExternalPath) ? null : request.ExternalPath.Trim();
+        var path = TrainingDeepLinkRules.NormalizeExternalPath(request.ExternalPath)
+                   ?? throw new ArgumentException(
+                       "Zet een directe cursus-deeplink (pad of volledige URL). Geen homepage.");
+        row.ExternalPath = path;
         row.IsActive = request.IsActive;
         row.SortOrder = request.SortOrder;
         row.UpdatedAtUtc = DateTime.UtcNow;
@@ -359,19 +364,7 @@ public sealed class TrainingUpskillService : ITrainingUpskillService
     }
 
     private static string CombineUrl(string baseUrl, string? path)
-    {
-        if (string.IsNullOrWhiteSpace(path))
-        {
-            return baseUrl;
-        }
-
-        if (Uri.TryCreate(path, UriKind.Absolute, out _))
-        {
-            return path;
-        }
-
-        return baseUrl.TrimEnd('/') + "/" + path.TrimStart('/');
-    }
+        => TrainingDeepLinkRules.Combine(baseUrl, path);
 
     private static TrainingOfferCardDto ToCard(TrainingOffer offer, string? campaign = null)
     {
@@ -434,6 +427,7 @@ public sealed class TrainingUpskillService : ITrainingUpskillService
             Title = "MBO Zorg & Welzijn (LOI)",
             FieldsCsv = "zorg",
             KeysCsv = "zorg,verpleeg,welzijn",
+            ExternalPath = "/opleidingen/mbo/zorg-welzijn",
             IsActive = true,
             SortOrder = 1
         });
@@ -444,6 +438,7 @@ public sealed class TrainingUpskillService : ITrainingUpskillService
             Title = "Techniek & installatie (LOI)",
             FieldsCsv = "techniek",
             KeysCsv = "techniek,monteur,install",
+            ExternalPath = "/opleidingen/mbo/techniek-installatie",
             IsActive = true,
             SortOrder = 2
         });
@@ -470,6 +465,7 @@ public sealed class TrainingUpskillService : ITrainingUpskillService
             Title = "Logistiek & magazijn (NTI)",
             FieldsCsv = "logistiek",
             KeysCsv = "logistiek,magazijn,heftruck",
+            ExternalPath = "/opleidingen/logistiek-magazijn",
             IsActive = true,
             SortOrder = 1
         });
@@ -496,6 +492,7 @@ public sealed class TrainingUpskillService : ITrainingUpskillService
             Title = "Helpende / Verzorgende IG — Haaglanden",
             FieldsCsv = "zorg",
             KeysCsv = "zorg,verpleeg,verzorg,helpende",
+            ExternalPath = "/opleidingen/helpende-verzorgende-ig",
             IsActive = true,
             SortOrder = 1
         });
@@ -521,6 +518,7 @@ public sealed class TrainingUpskillService : ITrainingUpskillService
             Title = "Monteur / installatietechniek Westland",
             FieldsCsv = "techniek",
             KeysCsv = "techniek,monteur,install,elektro",
+            ExternalPath = "/opleidingen/monteur-installatietechniek",
             IsActive = true,
             SortOrder = 1
         });
@@ -546,6 +544,7 @@ public sealed class TrainingUpskillService : ITrainingUpskillService
             Title = "Magazijn & heftruck — Den Haag",
             FieldsCsv = "logistiek",
             KeysCsv = "logistiek,magazijn,heftruck,orderpick",
+            ExternalPath = "/opleidingen/magazijn-heftruck-den-haag",
             IsActive = true,
             SortOrder = 1
         });
@@ -580,6 +579,36 @@ public sealed class TrainingUpskillService : ITrainingUpskillService
         await _db.SaveChangesAsync(cancellationToken);
     }
 
+    private async Task EnsureOfferDeepLinksAsync(CancellationToken cancellationToken)
+    {
+        var pathById = Seeds()
+            .SelectMany(p => p.Offers)
+            .Concat(SkillsAcademy().Offers)
+            .Concat([LoiSkillOffer(), NtiSkillOffer()])
+            .Where(o => !string.IsNullOrWhiteSpace(o.ExternalPath))
+            .GroupBy(o => o.Id)
+            .ToDictionary(g => g.Key, g => g.First().ExternalPath!);
+
+        var offers = await _db.TrainingOffers
+            .Where(o => o.ExternalPath == null || o.ExternalPath == "" || o.ExternalPath == "/")
+            .ToListAsync(cancellationToken);
+        var dirty = false;
+        foreach (var offer in offers)
+        {
+            if (pathById.TryGetValue(offer.Id, out var path))
+            {
+                offer.ExternalPath = path;
+                offer.UpdatedAtUtc = DateTime.UtcNow;
+                dirty = true;
+            }
+        }
+
+        if (dirty)
+        {
+            await _db.SaveChangesAsync(cancellationToken);
+        }
+    }
+
     private async Task AddOfferIfMissingAsync(TrainingOffer offer, CancellationToken cancellationToken)
     {
         if (await _db.TrainingOffers.AnyAsync(o => o.Id == offer.Id, cancellationToken))
@@ -602,6 +631,7 @@ public sealed class TrainingUpskillService : ITrainingUpskillService
         Title = "Persoonlijke effectiviteit (LOI)",
         FieldsCsv = TrainingFieldCatalog.Vaardigheden,
         KeysCsv = "samenwerken,communicatie,resultaatgericht,stressbestendig,innovatie,klantcontact",
+        ExternalPath = "/opleidingen/persoonlijke-effectiviteit",
         IsActive = true,
         SortOrder = 3
     };
@@ -613,6 +643,7 @@ public sealed class TrainingUpskillService : ITrainingUpskillService
         Title = "Communicatie & presenteren (NTI)",
         FieldsCsv = TrainingFieldCatalog.Vaardigheden,
         KeysCsv = "communicatie,presenteren,klantcontact,gastvrijheid",
+        ExternalPath = "/opleidingen/communicatie-presenteren",
         IsActive = true,
         SortOrder = 2
     };
@@ -640,6 +671,7 @@ public sealed class TrainingUpskillService : ITrainingUpskillService
             Title = "Samenwerken en communiceren op de werkvloer",
             FieldsCsv = TrainingFieldCatalog.Vaardigheden,
             KeysCsv = "samenwerken,communicatie,teamoverleg,luisteren",
+            ExternalPath = "/workshops/samenwerken-communiceren",
             IsActive = true,
             SortOrder = 1
         });
@@ -650,6 +682,7 @@ public sealed class TrainingUpskillService : ITrainingUpskillService
             Title = "Afronden en plannen onder druk",
             FieldsCsv = TrainingFieldCatalog.Vaardigheden,
             KeysCsv = "resultaatgericht,deadlines,organiseren,afronden",
+            ExternalPath = "/workshops/afronden-plannen",
             IsActive = true,
             SortOrder = 2
         });
@@ -660,6 +693,7 @@ public sealed class TrainingUpskillService : ITrainingUpskillService
             Title = "Kalm blijven bij werkdruk",
             FieldsCsv = TrainingFieldCatalog.Vaardigheden,
             KeysCsv = "stressbestendig,weerbaarheid,werkdruk,kalm",
+            ExternalPath = "/workshops/kalm-bij-werkdruk",
             IsActive = true,
             SortOrder = 3
         });
@@ -670,6 +704,7 @@ public sealed class TrainingUpskillService : ITrainingUpskillService
             Title = "Nieuwe manieren van werken",
             FieldsCsv = TrainingFieldCatalog.Vaardigheden,
             KeysCsv = "innovatie,probleemoplossen,digitale vaardigheden",
+            ExternalPath = "/workshops/nieuwe-manieren-van-werken",
             IsActive = true,
             SortOrder = 4
         });
@@ -680,6 +715,7 @@ public sealed class TrainingUpskillService : ITrainingUpskillService
             Title = "Klantcontact en presenteren",
             FieldsCsv = TrainingFieldCatalog.Vaardigheden,
             KeysCsv = "klantcontact,presenteren,gastvrijheid,verkoop",
+            ExternalPath = "/workshops/klantcontact-presenteren",
             IsActive = true,
             SortOrder = 5
         });
@@ -690,6 +726,7 @@ public sealed class TrainingUpskillService : ITrainingUpskillService
             Title = "Besluiten en tempo op de werkvloer",
             FieldsCsv = TrainingFieldCatalog.Vaardigheden,
             KeysCsv = "leiding,besluiten,tempo,aanpakken",
+            ExternalPath = "/workshops/besluiten-tempo",
             IsActive = true,
             SortOrder = 6
         });
@@ -700,6 +737,7 @@ public sealed class TrainingUpskillService : ITrainingUpskillService
             Title = "Kwaliteit en checklists",
             FieldsCsv = TrainingFieldCatalog.Vaardigheden,
             KeysCsv = "nauwkeurig,kwaliteit,administratie,checklists",
+            ExternalPath = "/workshops/kwaliteit-checklists",
             IsActive = true,
             SortOrder = 7
         });
@@ -710,6 +748,7 @@ public sealed class TrainingUpskillService : ITrainingUpskillService
             Title = "Ritme en samenwerken in de ploeg",
             FieldsCsv = TrainingFieldCatalog.Vaardigheden,
             KeysCsv = "ritme,samenwerken,teamoverleg,rust",
+            ExternalPath = "/workshops/ritme-samenwerken",
             IsActive = true,
             SortOrder = 8
         });

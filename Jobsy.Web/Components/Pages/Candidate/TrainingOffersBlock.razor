@@ -1,3 +1,4 @@
+@using Jobsy.Core.Rules
 @using Jobsy.Web.Localization
 @inject JobsyApiClient Api
 @inject NavigationManager Navigation
@@ -8,15 +9,15 @@
     return;
 }
 
-<section class="training-offers @(Compact ? "training-offers--compact" : null)" aria-label="@Culture["Fit.TrainingTitle"]">
+<section class="training-offers training-offers--subtle @(Compact ? "training-offers--compact" : null)"
+         aria-label="@Culture[string.IsNullOrWhiteSpace(TitleKey) ? "Fit.TrainingTitle" : TitleKey]">
     @if (!Compact)
     {
-        <h4>@Culture["Fit.TrainingTitle"]</h4>
-        <p class="login-lead">@Culture["Fit.TrainingLead"]</p>
+        <p class="training-offers__lead muted">@Culture["Fit.TrainingLead"]</p>
     }
     else
     {
-        <h5>@Culture[string.IsNullOrWhiteSpace(TitleKey) ? "Fit.TrainingTitle" : TitleKey]</h5>
+        <p class="training-offers__lead muted">@Culture[string.IsNullOrWhiteSpace(TitleKey) ? "Fit.TrainingTitle" : TitleKey]</p>
     }
     @if (!string.IsNullOrWhiteSpace(_message))
     {
@@ -26,18 +27,17 @@
         @foreach (var offer in _offers)
         {
             <li class="training-offers__item">
-                <p class="training-offers__advice">@offer.Advice</p>
-                <p>
-                    <strong>@offer.Title</strong>
-                    <span>@offer.ProviderName</span>
+                <p class="training-offers__advice muted">@offer.Advice</p>
+                <p class="training-offers__meta">
+                    <button class="training-offers__link" type="button" disabled="@_busy" @onclick="() => OpenAsync(offer)">
+                        @offer.Title
+                    </button>
+                    <span class="muted">@offer.ProviderName</span>
                     @if (!string.IsNullOrWhiteSpace(offer.Region))
                     {
-                        <span>· @offer.Region</span>
+                        <span class="muted">· @offer.Region</span>
                     }
                 </p>
-                <button class="login-submit" type="button" disabled="@_busy" @onclick="() => OpenAsync(offer)">
-                    @offer.CtaLabel
-                </button>
             </li>
         }
     </ul>
@@ -72,7 +72,9 @@
         try
         {
             var tracked = await Api.TrackTrainingOfferAsync(offer.OfferId, Campaign);
-            if (string.IsNullOrWhiteSpace(tracked.Url) || tracked.Url.Contains('@', StringComparison.Ordinal))
+            if (string.IsNullOrWhiteSpace(tracked.Url)
+                || tracked.Url.Contains('@', StringComparison.Ordinal)
+                || !TrainingDeepLinkRules.IsCourseDeepLink(tracked.Url))
             {
                 _message = Culture["Common.Error"];
                 return;

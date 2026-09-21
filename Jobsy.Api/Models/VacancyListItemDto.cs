@@ -84,6 +84,8 @@ public record VacancyListItemDto(
     string? MatchWhySummary = null,
     IReadOnlyList<string>? MatchWhy = null,
     IReadOnlyList<string>? MatchGaps = null,
+    bool IsBroadMatch = false,
+    string? MatchRationale = null,
     IReadOnlyList<string>? CulturePillars = null,
     int? CultureFitPercent = null,
     string? CultureFitBand = null,

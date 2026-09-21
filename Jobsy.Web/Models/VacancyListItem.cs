@@ -85,6 +85,8 @@ public class VacancyListItem
     public string? MatchWhySummary { get; set; }
     public List<string> MatchWhy { get; set; } = [];
     public List<string> MatchGaps { get; set; } = [];
+    public bool IsBroadMatch { get; set; }
+    public string? MatchRationale { get; set; }
     public List<string> CulturePillars { get; set; } = [];
     public int? CultureFitPercent { get; set; }
     public string? CultureFitBand { get; set; }

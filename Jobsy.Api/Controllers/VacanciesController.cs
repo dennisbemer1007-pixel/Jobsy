@@ -2100,6 +2100,8 @@ public class VacanciesController : ControllerBase
             CompetencyScore01 = match.CompetencyScore01,
             InterestScore01 = match.InterestScore01,
             CultureFit = culture,
+            IsBroadMatch = match.IsBroadMatch,
+            MatchRationale = match.MatchRationale,
             Why = why,
             Gaps = gaps,
             ColorBand = match.ColorBand
@@ -2111,14 +2113,29 @@ public class VacanciesController : ControllerBase
         {
             MatchPercent = match.TotalPercent,
             MatchColorBand = match.ColorBand,
-            MatchWhySummary = string.Join(", ", ProfileVacancyMatchCalculator.WhyHeadlines(match)),
-            MatchWhy = match.Why.Select(w => w.Text).ToList(),
+            MatchWhySummary = ProfileVacancyMatchCalculator.SummaryLine(match),
+            MatchWhy = PreferRationaleWhy(match),
             MatchGaps = match.Gaps.Select(g => g.Text).ToList(),
+            IsBroadMatch = match.IsBroadMatch,
+            MatchRationale = match.MatchRationale,
             CultureFitPercent = match.CultureFit?.Percent,
             CultureFitBand = match.CultureFit?.Band,
             CultureFitLabel = match.CultureFit?.Label,
             CultureFitWhy = match.CultureFit?.Why
         };
+
+    private static IReadOnlyList<string> PreferRationaleWhy(ProfileVacancyMatch match)
+    {
+        var lines = match.Why.Select(w => w.Text).ToList();
+        if (match.IsBroadMatch
+            && !string.IsNullOrWhiteSpace(match.MatchRationale)
+            && !lines.Contains(match.MatchRationale, StringComparer.Ordinal))
+        {
+            lines.Insert(0, match.MatchRationale);
+        }
+
+        return lines;
+    }
 
     private static string? FirstNonEmpty(params string?[] values)
     {

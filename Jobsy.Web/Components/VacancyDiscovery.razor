@@ -536,6 +536,10 @@
                                         {
                                             <p class="job-card__match-why">@vacancy.MatchWhySummary</p>
                                         }
+                                        else if (vacancy.IsBroadMatch && !string.IsNullOrWhiteSpace(vacancy.MatchRationale))
+                                        {
+                                            <p class="job-card__match-why">@vacancy.MatchRationale</p>
+                                        }
                                     }
                                     <p class="job-card__travel">
                                         <LobsyMark Compact="true" />

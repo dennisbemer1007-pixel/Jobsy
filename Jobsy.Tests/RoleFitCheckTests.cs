@@ -90,7 +90,7 @@ public class RoleFitCheckTests
         Assert.False(CareerCompassBuilder.ContainsForbiddenJargon(user));
         Assert.Contains("similarRoles", RoleFitCheckPrompt.System, StringComparison.Ordinal);
         Assert.Contains("Jip-en-Janneke", RoleFitCheckPrompt.System, StringComparison.Ordinal);
-        Assert.Contains("Volg een korte cursus", RoleFitCheckPrompt.System, StringComparison.Ordinal);
+        Assert.Contains("Een korte cursus kan dit stukje aanvullen.", RoleFitCheckPrompt.System, StringComparison.Ordinal);
         Assert.Contains("extraversie", RoleFitCheckPrompt.System, StringComparison.OrdinalIgnoreCase);
     }
 

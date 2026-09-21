@@ -182,11 +182,26 @@ public sealed class CandidateCompetencyService : ICandidateCompetencyService
                 vacancy.CompanyLogoUrl,
                 match.TotalPercent,
                 match.ColorBand,
-                match.Why.Select(w => w.Text).ToList(),
-                match.Gaps.Select(g => g.Text).ToList()));
+                PreferWhy(match),
+                match.Gaps.Select(g => g.Text).ToList(),
+                match.IsBroadMatch,
+                match.MatchRationale));
         }
 
         return result;
+    }
+
+    private static IReadOnlyList<string> PreferWhy(ProfileVacancyMatch match)
+    {
+        var lines = match.Why.Select(w => w.Text).ToList();
+        if (match.IsBroadMatch
+            && !string.IsNullOrWhiteSpace(match.MatchRationale)
+            && !lines.Contains(match.MatchRationale, StringComparer.Ordinal))
+        {
+            lines.Insert(0, match.MatchRationale);
+        }
+
+        return lines;
     }
 
     private static CandidateCompetencyStateDto ToDto(CandidateCompetency? row, decimal deepAnalysisPriceEuro)
