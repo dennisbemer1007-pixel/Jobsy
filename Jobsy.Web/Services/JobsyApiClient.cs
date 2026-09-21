@@ -944,9 +944,12 @@ public sealed class JobsyApiClient : IAsyncDisposable
         }
     }
 
-    public async Task<RoleFitCheckState> EvaluateRoleFitAsync(string jobTitle, CancellationToken ct = default)
+    public async Task<RoleFitCheckState> EvaluateRoleFitAsync(
+        string jobTitle,
+        Guid? vacancyId = null,
+        CancellationToken ct = default)
     {
-        var response = await _http.PostAsJsonAsync("api/me/role-fit", new { jobTitle }, ct);
+        var response = await _http.PostAsJsonAsync("api/me/role-fit", new { jobTitle, vacancyId }, ct);
         if (!response.IsSuccessStatusCode)
         {
             var body = await response.Content.ReadAsStringAsync(ct);
@@ -3754,7 +3757,12 @@ public record CreateVacancyForm(
     bool SuitableFor65Plus = false,
     bool? RequireEmailVerification = null,
     int? MinimumReferences = null,
-    string[]? CulturePillars = null);
+    string[]? CulturePillars = null,
+    string? BarrierKind = null,
+    string[]? BarrierDiplomas = null,
+    string[]? BarrierCertifications = null,
+    int? BarrierMinExperienceYears = null,
+    int? BarrierMinExperienceHours = null);
 
 public sealed class CsvImportRowForm
 {

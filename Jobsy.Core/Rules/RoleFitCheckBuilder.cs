@@ -72,6 +72,28 @@ public static class RoleFitCheckBuilder
             FromOpenAi: false));
     }
 
+    public static RoleFitVacancyFit BuildVacancyFit(
+        Guid vacancyId,
+        VacancyBarrierRequirements requirements,
+        VacancyBarrierCheck formal,
+        CultureFitResult? culture,
+        bool availabilityOk)
+    {
+        var cultureOk = culture is null || culture.Percent >= CultureFitBuilder.MidThreshold;
+        var formalGaps = formal.Items.Any(i => !i.Met);
+        return new RoleFitVacancyFit(
+            vacancyId,
+            requirements.Barrier.ToString(),
+            culture?.Percent,
+            culture?.Band,
+            culture?.Label,
+            culture?.Why,
+            formal.Items,
+            availabilityOk,
+            VacancyBarrierCatalog.ShowFormalBlock(requirements),
+            availabilityOk && cultureOk && formalGaps);
+    }
+
     public static RoleFitCheckSnapshot Sanitize(RoleFitCheckSnapshot snapshot)
     {
         var title = NormalizeTitle(snapshot.JobTitle) ?? "deze functie";
@@ -84,7 +106,33 @@ public static class RoleFitCheckBuilder
             CleanList(snapshot.ActionSteps, 5),
             CareerOccupationKeys.Merge(title, snapshot.SearchKeys),
             snapshot.FromDeepAnalysis,
-            snapshot.FromOpenAi);
+            snapshot.FromOpenAi,
+            snapshot.VacancyFit is null ? null : SanitizeVacancy(snapshot.VacancyFit));
+    }
+
+    private static RoleFitVacancyFit SanitizeVacancy(RoleFitVacancyFit fit)
+    {
+        var items = fit.FormalItems
+            .Where(i => !string.IsNullOrWhiteSpace(i.Label))
+            .Select(i => i with
+            {
+                Label = i.Label.Trim(),
+                Note = string.IsNullOrWhiteSpace(i.Note) || CareerCompassBuilder.ContainsForbiddenJargon(i.Note)
+                    ? (i.Met ? "Dit klopt met je profiel." : "Dit is nog een gat.")
+                    : i.Note.Trim()
+            })
+            .Where(i => !CareerCompassBuilder.ContainsForbiddenJargon(i.Label))
+            .Take(12)
+            .ToList();
+        var why = string.IsNullOrWhiteSpace(fit.CultureWhy) || CareerCompassBuilder.ContainsForbiddenJargon(fit.CultureWhy)
+            ? "Kijk of de sfeer van het team bij jou past."
+            : fit.CultureWhy.Trim();
+        return fit with
+        {
+            CultureWhy = why,
+            FormalItems = items,
+            CulturePercent = fit.CulturePercent is int p ? Math.Clamp(p, 0, 100) : null
+        };
     }
 
     private static IReadOnlyList<string> CleanList(IReadOnlyList<string>? items, int take)

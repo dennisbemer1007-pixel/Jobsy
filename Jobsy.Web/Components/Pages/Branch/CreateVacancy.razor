@@ -334,6 +334,53 @@
                     </label>
                 }
             </fieldset>
+            <fieldset class="vacancy-barrier">
+                <legend>@Culture["Employer.Barrier.Legend"]</legend>
+                <p class="muted vacancy-field-hint">@Culture["Employer.Barrier.Hint"]</p>
+                <div class="profile-min-employers__options" role="radiogroup" aria-label="@Culture["Employer.Barrier.Legend"]">
+                    <label>
+                        <input type="radio" name="barrier" checked="@(!_barrierHigh)" @onchange="() => SetBarrierHigh(false)" />
+                        @Culture["Employer.Barrier.Low"]
+                    </label>
+                    <label>
+                        <input type="radio" name="barrier" checked="@_barrierHigh" @onchange="() => SetBarrierHigh(true)" />
+                        @Culture["Employer.Barrier.High"]
+                    </label>
+                </div>
+                @if (_barrierHigh)
+                {
+                    <label>
+                        @Culture["Employer.Barrier.Diplomas"]
+                        <textarea rows="3" @bind="_barrierDiplomas" @bind:event="oninput" placeholder="MBO Verpleegkunde"></textarea>
+                    </label>
+                    <p class="muted vacancy-field-hint">@Culture["Employer.Barrier.Certs"]</p>
+                    <div class="profile-min-employers__options" role="group">
+                        @foreach (var cert in VacancyBarrierCatalog.SuggestedCertifications)
+                        {
+                            <label>
+                                <input type="checkbox"
+                                       checked="@_barrierCerts.Contains(cert)"
+                                       @onchange="e => ToggleBarrierCert(cert, e)" />
+                                @cert
+                            </label>
+                        }
+                    </div>
+                    <label>
+                        Extra certificaten (komma)
+                        <input @bind="_barrierCertExtra" @bind:event="oninput" placeholder="VCA, BIG" />
+                    </label>
+                    <div class="vacancy-hours__row">
+                        <label>
+                            @Culture["Employer.Barrier.Years"]
+                            <input type="number" min="0" max="40" @bind="_barrierYears" @bind:event="oninput" />
+                        </label>
+                        <label>
+                            @Culture["Employer.Barrier.Hours"]
+                            <input type="number" min="0" max="80000" step="100" @bind="_barrierHours" @bind:event="oninput" />
+                        </label>
+                    </div>
+                }
+            </fieldset>
             <fieldset class="profile-min-employers">
                 <legend>Minimaal aantal werkgevers</legend>
                 <div class="profile-min-employers__options" role="radiogroup" aria-label="Minimaal aantal werkgevers">
@@ -702,6 +749,12 @@
     private HashSet<string> _selectedWorkTypes = new(StringComparer.OrdinalIgnoreCase);
     private HashSet<string> _selectedLicenses = new(StringComparer.OrdinalIgnoreCase);
     private HashSet<string> _selectedEducationLevels = new(StringComparer.OrdinalIgnoreCase);
+    private bool _barrierHigh;
+    private string _barrierDiplomas = "";
+    private readonly HashSet<string> _barrierCerts = new(StringComparer.OrdinalIgnoreCase);
+    private string _barrierCertExtra = "";
+    private int? _barrierYears;
+    private int? _barrierHours;
     private HashSet<string> _selectedCulturePillars = new(StringComparer.OrdinalIgnoreCase);
     private bool _cultureError;
     private List<string> _branchOptions = WorkTypeLabels.All.ToList();
@@ -1161,6 +1214,23 @@
                 : null;
             _selectedCulturePillars = CulturePillarCatalog.Normalize(source.CulturePillars)
                 .ToHashSet(StringComparer.OrdinalIgnoreCase);
+            _barrierHigh = string.Equals(source.BarrierKind, "High", StringComparison.OrdinalIgnoreCase);
+            _barrierDiplomas = string.Join(Environment.NewLine, source.BarrierDiplomas ?? []);
+            _barrierCerts.Clear();
+            foreach (var cert in source.BarrierCertifications ?? [])
+            {
+                if (VacancyBarrierCatalog.SuggestedCertifications.Contains(cert, StringComparer.OrdinalIgnoreCase))
+                {
+                    _barrierCerts.Add(VacancyBarrierCatalog.SuggestedCertifications
+                        .First(c => string.Equals(c, cert, StringComparison.OrdinalIgnoreCase)));
+                }
+                else
+                {
+                    _barrierCertExtra = string.IsNullOrWhiteSpace(_barrierCertExtra) ? cert : _barrierCertExtra + ", " + cert;
+                }
+            }
+            _barrierYears = source.BarrierMinExperienceYears;
+            _barrierHours = source.BarrierMinExperienceHours;
             _minHours = source.MinHoursPerWeek ?? 8;
             _maxHours = source.MaxHoursPerWeek ?? 16;
             _flexibleTimes = source.FlexibleTimes || string.IsNullOrWhiteSpace(source.ScheduleJson);
@@ -1263,6 +1333,28 @@
 
     private void SetMinimumEmployers(int? value) => _minimumEmployers = value;
     private void SetMinimumReferences(int? value) => _minimumReferences = value;
+    private void SetBarrierHigh(bool value) => _barrierHigh = value;
+
+    private void ToggleBarrierCert(string cert, ChangeEventArgs e)
+    {
+        var on = e.Value is bool b ? b : string.Equals(e.Value?.ToString(), "true", StringComparison.OrdinalIgnoreCase);
+        if (on)
+        {
+            _barrierCerts.Add(cert);
+        }
+        else
+        {
+            _barrierCerts.Remove(cert);
+        }
+    }
+
+    private static string[] SplitLines(string? raw)
+        => string.IsNullOrWhiteSpace(raw)
+            ? []
+            : raw.Split(['\r', '\n', ',', ';'], StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
+
+    private string[] BarrierCertList()
+        => _barrierCerts.Concat(SplitLines(_barrierCertExtra)).Distinct(StringComparer.OrdinalIgnoreCase).ToArray();
 
     private void ToggleCulturePillar(string id, ChangeEventArgs e)
     {
@@ -1640,7 +1732,12 @@
                 SuitableFor65Plus: SelectedCategory?.Slug == "regulier" && _suitableFor65Plus,
                 RequireEmailVerification: _requireEmailVerification,
                 MinimumReferences: _minimumReferences is int refs && _minReferenceOptions.Contains(refs) ? refs : null,
-                CulturePillars: _selectedCulturePillars.ToArray());
+                CulturePillars: _selectedCulturePillars.ToArray(),
+                BarrierKind: _barrierHigh ? "High" : "Low",
+                BarrierDiplomas: SplitLines(_barrierDiplomas),
+                BarrierCertifications: BarrierCertList(),
+                BarrierMinExperienceYears: _barrierHigh ? _barrierYears : null,
+                BarrierMinExperienceHours: _barrierHigh ? _barrierHours : null);
 
             var saved = _editVacancyId is Guid editId
                 ? await Api.UpdateVacancyAsync(editId, form)

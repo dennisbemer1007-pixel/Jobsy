@@ -39,4 +39,9 @@ public record CreateVacancyRequest(
     bool SuitableFor65Plus = false,
     bool? RequireEmailVerification = null,
     int? MinimumReferences = null,
-    string[]? CulturePillars = null);
+    string[]? CulturePillars = null,
+    string? BarrierKind = null,
+    string[]? BarrierDiplomas = null,
+    string[]? BarrierCertifications = null,
+    int? BarrierMinExperienceYears = null,
+    int? BarrierMinExperienceHours = null);

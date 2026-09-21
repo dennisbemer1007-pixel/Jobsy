@@ -44,6 +44,49 @@
                 <p class="role-fit-result__pct" aria-label="@Culture["Fit.Match"]">
                     <strong>@result.MatchPercent%</strong> @Culture["Fit.Match"]
                 </p>
+                @if (result.VacancyId is Guid)
+                {
+                    <section class="role-fit-block role-fit-block--culture">
+                        <h4>@Culture["Fit.CultureBlock"]</h4>
+                        @if (result.CultureFitPercent is int culturePct)
+                        {
+                            <p class="role-fit-culture">
+                                <strong>@culturePct%</strong>
+                                @(result.CultureFitLabel ?? Culture["Fit.CultureBlock"])
+                            </p>
+                            @if (!string.IsNullOrWhiteSpace(result.CultureFitWhy))
+                            {
+                                <p>@result.CultureFitWhy</p>
+                            }
+                        }
+                        else
+                        {
+                            <p class="login-lead">@Culture["Fit.CultureMissing"]</p>
+                        }
+                    </section>
+                    @if (result.ShowFormalBlock)
+                    {
+                        <section class="role-fit-block role-fit-block--formal">
+                            <h4>@Culture["Fit.FormalBlock"]</h4>
+                            <ul class="role-fit-checklist">
+                                @foreach (var item in result.FormalItems)
+                                {
+                                    <li class="@(item.Met ? "is-met" : "is-gap")">
+                                        <span aria-hidden="true">@(item.Met ? "✓" : "✗")</span>
+                                        <span>
+                                            <strong>@item.Label</strong>
+                                            <span class="muted">@item.Note</span>
+                                        </span>
+                                    </li>
+                                }
+                            </ul>
+                        </section>
+                    }
+                    else
+                    {
+                        <p class="login-lead">@Culture["Fit.LowBarrierNote"]</p>
+                    }
+                }
                 <section>
                     <h4>@Culture["Fit.Strengths"]</h4>
                     <ul>
@@ -72,7 +115,10 @@
                     </ol>
                 </section>
                 <a class="login-submit" href="@result.MapHref">@Culture["Fit.OpenMap"]</a>
-                <TrainingOffersBlock Offers="result.TrainingOffers" JobTitle="@result.JobTitle" Campaign="functie_fit" />
+                @if (result.ShowUpskill || result.VacancyId is null)
+                {
+                    <TrainingOffersBlock Offers="result.TrainingOffers" JobTitle="@result.JobTitle" Campaign="functie_fit" />
+                }
             </div>
             @if (result.ShowDeepUpsell)
             {
@@ -84,12 +130,15 @@
 </div>
 
 @code {
+    [Parameter] public Guid? VacancyId { get; set; }
+
     private bool _loadStarted;
     private bool _loading = true;
     private bool _busy;
     private string? _message;
     private string _jobTitle = "";
     private RoleFitCheckState? _state;
+    private bool _autoEvaluated;
 
     protected override void OnInitialized()
         => Culture.Changed += OnCultureChanged;
@@ -124,7 +173,16 @@
         try
         {
             _state = await Api.GetMyRoleFitAsync();
-            if (_state?.LastResult is { } last && string.IsNullOrWhiteSpace(_jobTitle))
+            if (VacancyId is Guid vid && _state is { IsUnlocked: true } && !_autoEvaluated)
+            {
+                _autoEvaluated = true;
+                _state = await Api.EvaluateRoleFitAsync(_jobTitle, vid);
+                if (_state.LastResult is { } fresh)
+                {
+                    _jobTitle = fresh.JobTitle;
+                }
+            }
+            else if (_state?.LastResult is { } last && string.IsNullOrWhiteSpace(_jobTitle))
             {
                 _jobTitle = last.JobTitle;
             }
@@ -145,7 +203,7 @@
         _message = null;
         try
         {
-            _state = await Api.EvaluateRoleFitAsync(_jobTitle);
+            _state = await Api.EvaluateRoleFitAsync(_jobTitle, VacancyId);
         }
         catch (Exception ex)
         {

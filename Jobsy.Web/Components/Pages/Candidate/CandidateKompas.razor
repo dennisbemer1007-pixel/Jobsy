@@ -281,7 +281,7 @@
              role="tabpanel"
              aria-labelledby="kompas-tab-fit"
              hidden="@(_tab != CandidateKompasTabs.Fit)">
-        <RoleFitCheckPanel />
+        <RoleFitCheckPanel VacancyId="@_vacancyId" />
     </article>
 </section>
 
@@ -312,6 +312,7 @@
     private bool _flexibleTimes;
     private Dictionary<string, List<string>> _availability = new(StringComparer.OrdinalIgnoreCase);
     private string _tab = CandidateKompasTabs.Profile;
+    private Guid? _vacancyId;
     private bool _showCompetenceDetails;
     private bool _showCareerDetails;
     private bool _listeningToLocation;
@@ -369,6 +370,13 @@
     {
         var uri = Navigation.ToAbsoluteUri(Navigation.Uri);
         var query = QueryHelpers.ParseQuery(uri.Query);
+        if (query.TryGetValue("vacancyId", out var vacancyValues)
+            && Guid.TryParse(vacancyValues.FirstOrDefault(), out var vacancyId))
+        {
+            _vacancyId = vacancyId;
+            _tab = CandidateKompasTabs.Fit;
+        }
+
         if (query.TryGetValue("tab", out var values))
         {
             var fromQuery = values.FirstOrDefault();

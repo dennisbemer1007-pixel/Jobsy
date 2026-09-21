@@ -175,6 +175,24 @@ public sealed class RoleFitCheckResult
     public bool FromOpenAi { get; set; }
     public bool ShowDeepUpsell { get; set; }
     public List<TrainingOfferCard> TrainingOffers { get; set; } = [];
+    public Guid? VacancyId { get; set; }
+    public string? BarrierKind { get; set; }
+    public int? CultureFitPercent { get; set; }
+    public string? CultureFitBand { get; set; }
+    public string? CultureFitLabel { get; set; }
+    public string? CultureFitWhy { get; set; }
+    public List<RoleFitFormalItem> FormalItems { get; set; } = [];
+    public bool ShowFormalBlock { get; set; }
+    public bool ShowUpskill { get; set; }
+    public bool AvailabilityOk { get; set; } = true;
+}
+
+public sealed class RoleFitFormalItem
+{
+    public string Key { get; set; } = "";
+    public string Label { get; set; } = "";
+    public bool Met { get; set; }
+    public string Note { get; set; } = "";
 }
 
 public sealed class TrainingOfferCard

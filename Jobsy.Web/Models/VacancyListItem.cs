@@ -90,6 +90,11 @@ public class VacancyListItem
     public string? CultureFitBand { get; set; }
     public string? CultureFitLabel { get; set; }
     public string? CultureFitWhy { get; set; }
+    public string? BarrierKind { get; set; }
+    public List<string> BarrierDiplomas { get; set; } = [];
+    public List<string> BarrierCertifications { get; set; } = [];
+    public int? BarrierMinExperienceYears { get; set; }
+    public int? BarrierMinExperienceHours { get; set; }
 }
 
 public sealed class WageByAgeItem

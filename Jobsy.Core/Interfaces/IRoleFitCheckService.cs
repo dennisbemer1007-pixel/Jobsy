@@ -9,6 +9,7 @@ public interface IRoleFitCheckService
     Task<RoleFitCheckStateDto> EvaluateAsync(
         Guid userId,
         string? jobTitle,
+        Guid? vacancyId = null,
         CancellationToken cancellationToken = default);
 }
 
@@ -33,4 +34,16 @@ public sealed record RoleFitCheckResultDto(
     bool FromDeepAnalysis,
     bool FromOpenAi,
     bool ShowDeepUpsell,
-    IReadOnlyList<TrainingOfferCardDto> TrainingOffers);
+    IReadOnlyList<TrainingOfferCardDto> TrainingOffers,
+    Guid? VacancyId = null,
+    string? BarrierKind = null,
+    int? CultureFitPercent = null,
+    string? CultureFitBand = null,
+    string? CultureFitLabel = null,
+    string? CultureFitWhy = null,
+    IReadOnlyList<RoleFitFormalItemDto>? FormalItems = null,
+    bool ShowFormalBlock = false,
+    bool ShowUpskill = false,
+    bool AvailabilityOk = true);
+
+public sealed record RoleFitFormalItemDto(string Key, string Label, bool Met, string Note);

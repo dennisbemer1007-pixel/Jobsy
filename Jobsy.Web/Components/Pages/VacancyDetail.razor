@@ -399,6 +399,14 @@
                 </Authorized>
             </AuthorizeView>
 
+            <AuthorizeView Roles="Candidate">
+                <Authorized>
+                    <p class="login-lead">
+                        <a class="engagement-btn" href="@($"/candidate/profile?tab=fit&vacancyId={Id}")">@Culture["Fit.CheckVacancy"]</a>
+                    </p>
+                </Authorized>
+            </AuthorizeView>
+
             <div id="apply" class="apply-flow">
                 <AuthorizeView Roles="Candidate">
                     <Authorized>

@@ -33,6 +33,7 @@ public sealed class RoleFitCheckService : IRoleFitCheckService
     private readonly OpenAiOptions _options;
     private readonly ILogger<RoleFitCheckService> _logger;
     private readonly ITrainingUpskillService _training;
+    private readonly ICultureFitAiService _cultureFit;
 
     public RoleFitCheckService(
         JobsyDbContext db,
@@ -43,7 +44,8 @@ public sealed class RoleFitCheckService : IRoleFitCheckService
         IIntegrationCredentialService credentials,
         IOptions<OpenAiOptions> options,
         ILogger<RoleFitCheckService> logger,
-        ITrainingUpskillService training)
+        ITrainingUpskillService training,
+        ICultureFitAiService cultureFit)
     {
         _db = db;
         _competencies = competencies;
@@ -54,6 +56,7 @@ public sealed class RoleFitCheckService : IRoleFitCheckService
         _options = options.Value;
         _logger = logger;
         _training = training;
+        _cultureFit = cultureFit;
     }
 
     public async Task<RoleFitCheckStateDto> GetAsync(Guid userId, CancellationToken cancellationToken = default)
@@ -80,9 +83,24 @@ public sealed class RoleFitCheckService : IRoleFitCheckService
     public async Task<RoleFitCheckStateDto> EvaluateAsync(
         Guid userId,
         string? jobTitle,
+        Guid? vacancyId = null,
         CancellationToken cancellationToken = default)
     {
-        var title = RoleFitCheckBuilder.NormalizeTitle(jobTitle);
+        Vacancy? vacancy = null;
+        if (vacancyId is Guid vid)
+        {
+            vacancy = await _db.Vacancies.IgnoreQueryFilters().AsNoTracking()
+                .FirstOrDefaultAsync(v => v.Id == vid && v.Status == VacancyStatus.Active, cancellationToken);
+            if (vacancy is null)
+            {
+                throw new InvalidOperationException("Vacature niet gevonden.");
+            }
+        }
+
+        var title = vacancy is not null
+            ? RoleFitCheckBuilder.NormalizeTitle(vacancy.Title)
+              ?? RoleFitCheckBuilder.NormalizeTitle(jobTitle)
+            : RoleFitCheckBuilder.NormalizeTitle(jobTitle);
         if (title is null)
         {
             throw new InvalidOperationException(RoleFitCheckCopy.TitleEmpty);
@@ -99,6 +117,10 @@ public sealed class RoleFitCheckService : IRoleFitCheckService
         var local = RoleFitCheckBuilder.Build(title, competence, career, fromDeep);
         var snapshot = await TryOpenAiAsync(title, competence, career, fromDeep, userId, local, cancellationToken)
                        ?? local;
+        if (vacancy is not null)
+        {
+            snapshot = await AttachVacancyAsync(userId, vacancy, competence, snapshot, cancellationToken);
+        }
 
         var now = DateTime.UtcNow;
         var row = await _db.CandidateRoleFitChecks.FirstOrDefaultAsync(r => r.UserId == userId, cancellationToken);
@@ -283,14 +305,26 @@ public sealed class RoleFitCheckService : IRoleFitCheckService
                            row.FromDeepAnalysis || deepNow,
                            row.FromOpenAi);
         var query = Uri.EscapeDataString(snapshot.MapQuery);
-        var offers = snapshot.Gaps.Count == 0
-            ? Array.Empty<TrainingOfferCardDto>()
-            : await _training.RecommendAsync(
+        var fit = snapshot.VacancyFit;
+        var searchKeys = snapshot.SearchKeys;
+        if (fit is { ShowUpskill: true, FormalItems: { Count: > 0 } })
+        {
+            searchKeys = fit.FormalItems.Where(i => !i.Met).Select(i => i.Label).Concat(searchKeys).ToList();
+        }
+
+        var offers = (fit is { ShowUpskill: true } || snapshot.Gaps.Count > 0)
+            ? await _training.RecommendAsync(
                 userId,
                 snapshot.JobTitle,
-                snapshot.SearchKeys,
+                searchKeys,
                 TrainingTracking.CampaignFit,
-                cancellationToken);
+                cancellationToken)
+            : Array.Empty<TrainingOfferCardDto>();
+        if (fit is { ShowUpskill: false })
+        {
+            offers = [];
+        }
+
         return new RoleFitCheckResultDto(
             snapshot.JobTitle,
             snapshot.MatchPercent,
@@ -302,7 +336,67 @@ public sealed class RoleFitCheckService : IRoleFitCheckService
             snapshot.FromDeepAnalysis,
             snapshot.FromOpenAi,
             snapshot.ShowDeepUpsell,
-            offers);
+            offers,
+            fit?.VacancyId,
+            fit?.BarrierKind,
+            fit?.CulturePercent,
+            fit?.CultureBand,
+            fit?.CultureLabel,
+            fit?.CultureWhy,
+            fit?.FormalItems.Select(i => new RoleFitFormalItemDto(i.Key, i.Label, i.Met, i.Note)).ToList(),
+            fit?.ShowFormalBlock ?? false,
+            fit?.ShowUpskill ?? false,
+            fit?.AvailabilityOk ?? true);
+    }
+
+    private async Task<RoleFitCheckSnapshot> AttachVacancyAsync(
+        Guid userId,
+        Vacancy vacancy,
+        CompetencyScores competence,
+        RoleFitCheckSnapshot snapshot,
+        CancellationToken cancellationToken)
+    {
+        var user = await _db.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Id == userId, cancellationToken);
+        var prefs = MatchingProfileMapper.DeserializePrefs(user?.PreferencesJson);
+        var requirements = VacancyBarrierCatalog.Deserialize(vacancy.BarrierRequirementsJson);
+        var formal = VacancyBarrierCatalog.Evaluate(requirements, prefs);
+        var availability = VacancyBarrierCatalog.AvailabilityLooksOk(
+            prefs,
+            vacancy.MinHoursPerWeek,
+            vacancy.MaxHoursPerWeek,
+            vacancy.RequiredDrivingLicense,
+            vacancy.RequiredEducation);
+        var pillars = CulturePillarCatalog.Deserialize(vacancy.CulturePillarsJson);
+        var culture = CultureFitBuilder.Evaluate(pillars, competence);
+        if (culture is not null)
+        {
+            var labels = pillars
+                .Select(id => CulturePillarCatalog.TryGet(id, out var d) ? d.Label : id)
+                .ToList();
+            culture = await _cultureFit.TryRefineAsync(culture, competence, labels, cancellationToken) ?? culture;
+        }
+
+        var vacancyFit = RoleFitCheckBuilder.BuildVacancyFit(vacancy.Id, requirements, formal, culture, availability);
+        var strengths = formal.Items.Where(i => i.Met).Select(i => i.Note).Concat(snapshot.Strengths).Take(5).ToList();
+        var gaps = formal.Items.Where(i => !i.Met).Select(i => i.Note).Concat(snapshot.Gaps).Take(5).ToList();
+        if (vacancyFit.ShowUpskill)
+        {
+            snapshot = snapshot with
+            {
+                ActionSteps = snapshot.ActionSteps
+                    .Prepend(TrainingCopy.GapAdvice)
+                    .Distinct(StringComparer.OrdinalIgnoreCase)
+                    .Take(5)
+                    .ToList()
+            };
+        }
+
+        return RoleFitCheckBuilder.Sanitize(snapshot with
+        {
+            Strengths = strengths,
+            Gaps = gaps.Count > 0 ? gaps : snapshot.Gaps,
+            VacancyFit = vacancyFit
+        });
     }
 
     private async Task<string?> ResolveApiKeyAsync(CancellationToken cancellationToken)

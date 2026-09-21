@@ -30,7 +30,7 @@ Publiek (naast banenkaart): `/vacancies/{id}`, `/{kvknummer}` (ondernemer), `/{k
 |-------|--------|
 | `/` | Banenkaart (filters, lijst, kaart). Ingelogde kandidaat: live match-% per vacature, **Cultuur Fit**-label na harde criteria, sort/filter op match, uitleg waarom |
 | `/home` | **Mijn Lobsy Kompas** in tabbladen: **Mijn profiel**, **Mijn competenties**, **Mijn beroepen**, **Past dit bij mij?** + eigen metrics |
-| `/vacancies/{id}` | Detail, solliciteren, like/share, optioneel mock interview |
+| `/vacancies/{id}` | Detail, solliciteren, like/share, optioneel mock interview, kandidaat **Past deze vacature bij mij?** |
 | `/candidate/applications` | Sollicitatiehistorie |
 | `/candidate/vacancies` | Overzicht + **Onlangs bekeken** (localStorage, alleen vacancy-GUIDs) + in-de-buurt op reistijd/vervoer |
 | `/candidate/liked` · `/candidate/shared` | Engagement-lijsten |
@@ -51,7 +51,7 @@ Publiek (naast banenkaart): `/vacancies/{id}`, `/{kvknummer}` (ondernemer), `/{k
 |-------|--------|
 | `/home` | Vestiging-KPI’s (Bento) + Top/Flop vacatures + drilldown |
 | `/employer/vacancies` | Beheer + publiceren (basis/highlight/PushBom/verlengen) |
-| `/branch/vacancies/new` | Nieuwe vacature, inclusief 3–5 cultuurpijlers |
+| `/branch/vacancies/new` | Nieuwe vacature, inclusief 3–5 cultuurpijlers en optionele hoge/lage functie-drempel (diploma/certificaat/ervaring) |
 | `/branch/applicants` | Sollicitaties; pre-accept: motivatie/afstand/beschikbaarheid/leeftijd; PII + Lobsy-CV + geüpload CV na Accept; daarna uitnodigen / matchen / weigeren |
 | `/employer/talent` | Anonieme talentpool (filters zonder leeftijd); ContactUnlock 1 token |
 | `/employer/talent-contacts` | Contactverzoeken + 48u refund-intrekken |

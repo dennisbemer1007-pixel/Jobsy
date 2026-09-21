@@ -735,6 +735,13 @@ public class VacanciesController : ControllerBase
         }
 
         vacancy.CulturePillarsJson = CulturePillarCatalog.Serialize(culturePillars);
+        vacancy.BarrierRequirementsJson = VacancyBarrierCatalog.Serialize(
+            VacancyBarrierCatalog.Normalize(
+                ParseBarrierKind(request.BarrierKind),
+                request.BarrierDiplomas,
+                request.BarrierCertifications,
+                request.BarrierMinExperienceYears,
+                request.BarrierMinExperienceHours));
         vacancy.OverrideContactPreference = request.OverrideContactPreference;
         vacancy.DirectContactEnabled = request.OverrideContactPreference && request.DirectContactEnabled;
         vacancy.ContactPreferMail = request.OverrideContactPreference && request.DirectContactEnabled && request.ContactPreferMail;
@@ -1668,6 +1675,7 @@ public class VacanciesController : ControllerBase
         var displayStatus = v.Status == VacancyStatus.Draft && isIncomplete
             ? "DraftIncomplete"
             : v.Status.ToString();
+        var barrier = includeDescription ? MapBarrier(v.BarrierRequirementsJson) : default;
 
         return new VacancyListItemDto(
             v.Id,
@@ -1761,7 +1769,46 @@ public class VacanciesController : ControllerBase
             includeCategoryInternals ? v.EngagementReminderTip : null,
             includeCategoryInternals ? v.EngagementReminderSentAtUtc : null,
             v.MinimumReferences,
-            CulturePillars: CulturePillarCatalog.Deserialize(v.CulturePillarsJson).ToList());
+            CulturePillars: CulturePillarCatalog.Deserialize(v.CulturePillarsJson).ToList(),
+            BarrierKind: barrier.Kind,
+            BarrierDiplomas: barrier.Diplomas,
+            BarrierCertifications: barrier.Certs,
+            BarrierMinExperienceYears: barrier.Years,
+            BarrierMinExperienceHours: barrier.Hours);
+    }
+
+    private static (string? Kind, IReadOnlyList<string>? Diplomas, IReadOnlyList<string>? Certs, int? Years, int? Hours)
+        MapBarrier(string? json)
+    {
+        var req = VacancyBarrierCatalog.Deserialize(json);
+        if (req.Barrier == VacancyBarrierKind.Low && !VacancyBarrierCatalog.HasFormalRequirements(req))
+        {
+            return ("Low", null, null, null, null);
+        }
+
+        return (
+            req.Barrier.ToString(),
+            req.Diplomas.Count == 0 ? null : req.Diplomas,
+            req.Certifications.Count == 0 ? null : req.Certifications,
+            req.MinExperienceYears,
+            req.MinExperienceHours);
+    }
+
+    private static VacancyBarrierKind? ParseBarrierKind(string? raw)
+    {
+        if (string.Equals(raw, "high", StringComparison.OrdinalIgnoreCase)
+            || string.Equals(raw, nameof(VacancyBarrierKind.High), StringComparison.OrdinalIgnoreCase))
+        {
+            return VacancyBarrierKind.High;
+        }
+
+        if (string.Equals(raw, "low", StringComparison.OrdinalIgnoreCase)
+            || string.Equals(raw, nameof(VacancyBarrierKind.Low), StringComparison.OrdinalIgnoreCase))
+        {
+            return VacancyBarrierKind.Low;
+        }
+
+        return null;
     }
 
     private async Task<(Core.Entities.VacancyCategory? Category, string? Error)> ResolveCategoryAsync(

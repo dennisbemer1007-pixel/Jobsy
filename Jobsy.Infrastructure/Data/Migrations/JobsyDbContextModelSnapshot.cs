@@ -3572,6 +3572,10 @@ namespace Jobsy.Infrastructure.Data.Migrations
                         .HasMaxLength(2000)
                         .HasColumnType("character varying(2000)");
 
+                    b.Property<string>("BarrierRequirementsJson")
+                        .HasMaxLength(4000)
+                        .HasColumnType("character varying(4000)");
+
                     b.Property<string>("Description")
                         .IsRequired()
                         .HasMaxLength(20000)

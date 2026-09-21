@@ -88,7 +88,12 @@ public record VacancyListItemDto(
     int? CultureFitPercent = null,
     string? CultureFitBand = null,
     string? CultureFitLabel = null,
-    string? CultureFitWhy = null);
+    string? CultureFitWhy = null,
+    string? BarrierKind = null,
+    IReadOnlyList<string>? BarrierDiplomas = null,
+    IReadOnlyList<string>? BarrierCertifications = null,
+    int? BarrierMinExperienceYears = null,
+    int? BarrierMinExperienceHours = null);
 
 /// <summary>Public MapLibre opening camera. Coordinates only — no vacancy or employer PII.</summary>
 public sealed record VacancyMapViewDto(double Lat, double Lng, double Zoom, int PinCount);

@@ -221,6 +221,11 @@ internal static class UiStringsCompetencies
         ["Fit.OpenMap"] = "Vergelijkbare vacatures in Den Haag en het Westland",
         ["Fit.TrainingTitle"] = "Erkende opleidingen",
         ["Fit.TrainingLead"] = "Volg een korte cursus of omscholing om dit gat te dichten. Eerst lokale praktijkopleiders in Den Haag en het Westland; landelijke cursussen als vangnet.",
+        ["Fit.CultureBlock"] = "Cultuur & teamfit",
+        ["Fit.FormalBlock"] = "Formele randvoorwaarden",
+        ["Fit.CultureMissing"] = "Deze vacature heeft nog geen team-cultuurpijlers. We toetsen vooral of het werk bij jouw richting past.",
+        ["Fit.LowBarrierNote"] = "Geen extra diploma’s of certificaten nodig. Reistijd en beschikbaarheid zijn genoeg.",
+        ["Fit.CheckVacancy"] = "Past deze vacature bij mij?",
         ["Fit.ShowScores"] = "Bekijk scores en werkstijl",
         ["Fit.HideScores"] = "Verberg scores"
     };
@@ -420,6 +425,11 @@ internal static class UiStringsCompetencies
         ["Fit.OpenMap"] = "Similar vacancies in The Hague and Westland",
         ["Fit.TrainingTitle"] = "Recognised courses",
         ["Fit.TrainingLead"] = "Take a short course or retraining to close this gap. Local providers in The Hague and Westland first; national courses as a fallback.",
+        ["Fit.CultureBlock"] = "Culture & team fit",
+        ["Fit.FormalBlock"] = "Formal requirements",
+        ["Fit.CultureMissing"] = "This vacancy has no team-culture pillars yet. We mainly check whether the work matches your direction.",
+        ["Fit.LowBarrierNote"] = "No extra diplomas or certificates needed. Travel time and availability are enough.",
+        ["Fit.CheckVacancy"] = "Does this vacancy fit me?",
         ["Fit.ShowScores"] = "View scores and work style",
         ["Fit.HideScores"] = "Hide scores"
     };

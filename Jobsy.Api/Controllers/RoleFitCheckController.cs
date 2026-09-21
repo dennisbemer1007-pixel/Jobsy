@@ -47,7 +47,7 @@ public sealed class RoleFitCheckController : ControllerBase
 
         try
         {
-            return Ok(await _fit.EvaluateAsync(user.Id, request.JobTitle, cancellationToken));
+            return Ok(await _fit.EvaluateAsync(user.Id, request.JobTitle, request.VacancyId, cancellationToken));
         }
         catch (RoleFitLockedException ex)
         {
@@ -60,4 +60,4 @@ public sealed class RoleFitCheckController : ControllerBase
     }
 }
 
-public sealed record RoleFitCheckRequest(string? JobTitle);
+public sealed record RoleFitCheckRequest(string? JobTitle, Guid? VacancyId = null);

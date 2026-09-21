@@ -39,7 +39,23 @@ public static class RoleFitCheckJson
                 dto.ActionSteps ?? [],
                 dto.SearchKeys ?? [],
                 dto.FromDeepAnalysis || fromDeepAnalysis,
-                dto.FromOpenAi);
+                dto.FromOpenAi,
+                dto.VacancyId is Guid vid
+                    ? new RoleFitVacancyFit(
+                        vid,
+                        dto.BarrierKind ?? VacancyBarrierKind.Low.ToString(),
+                        dto.CulturePercent,
+                        dto.CultureBand,
+                        dto.CultureLabel,
+                        dto.CultureWhy,
+                        (dto.FormalItems ?? [])
+                            .Where(i => !string.IsNullOrWhiteSpace(i.Label))
+                            .Select(i => new VacancyBarrierCheckItem(i.Key ?? "", i.Label!.Trim(), i.Met, i.Note ?? ""))
+                            .ToList(),
+                        dto.AvailabilityOk ?? true,
+                        dto.ShowFormalBlock ?? false,
+                        dto.ShowUpskill ?? false)
+                    : null);
             return RoleFitCheckBuilder.Sanitize(snapshot);
         }
         catch (JsonException)
@@ -57,7 +73,23 @@ public static class RoleFitCheckJson
         ActionSteps = snapshot.ActionSteps.ToList(),
         SearchKeys = snapshot.SearchKeys.ToList(),
         FromDeepAnalysis = snapshot.FromDeepAnalysis,
-        FromOpenAi = snapshot.FromOpenAi
+        FromOpenAi = snapshot.FromOpenAi,
+        VacancyId = snapshot.VacancyFit?.VacancyId,
+        BarrierKind = snapshot.VacancyFit?.BarrierKind,
+        CulturePercent = snapshot.VacancyFit?.CulturePercent,
+        CultureBand = snapshot.VacancyFit?.CultureBand,
+        CultureLabel = snapshot.VacancyFit?.CultureLabel,
+        CultureWhy = snapshot.VacancyFit?.CultureWhy,
+        FormalItems = snapshot.VacancyFit?.FormalItems.Select(i => new FormalDto
+        {
+            Key = i.Key,
+            Label = i.Label,
+            Met = i.Met,
+            Note = i.Note
+        }).ToList(),
+        AvailabilityOk = snapshot.VacancyFit?.AvailabilityOk,
+        ShowFormalBlock = snapshot.VacancyFit?.ShowFormalBlock,
+        ShowUpskill = snapshot.VacancyFit?.ShowUpskill
     };
 
     private sealed class FitDto
@@ -70,5 +102,23 @@ public static class RoleFitCheckJson
         public List<string>? SearchKeys { get; set; }
         public bool FromDeepAnalysis { get; set; }
         public bool FromOpenAi { get; set; }
+        public Guid? VacancyId { get; set; }
+        public string? BarrierKind { get; set; }
+        public int? CulturePercent { get; set; }
+        public string? CultureBand { get; set; }
+        public string? CultureLabel { get; set; }
+        public string? CultureWhy { get; set; }
+        public List<FormalDto>? FormalItems { get; set; }
+        public bool? AvailabilityOk { get; set; }
+        public bool? ShowFormalBlock { get; set; }
+        public bool? ShowUpskill { get; set; }
+    }
+
+    private sealed class FormalDto
+    {
+        public string? Key { get; set; }
+        public string? Label { get; set; }
+        public bool Met { get; set; }
+        public string? Note { get; set; }
     }
 }
