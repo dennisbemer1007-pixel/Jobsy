@@ -27,6 +27,7 @@ Jobsy is een hyper-lokale job-matching applicatie gericht op de regionale arbeid
 
 ### Kernentiteiten (niet exhaustief)
 - **User** — Email, FullName, Role, HomeLocation, OpenForWork, prefs, early-adapter
+- **CandidateWhoAmIProfile** — “Wie ben ik?”-rapport (AI-verhaal, CV-bijlage-opt-in)
 - **CandidateCompetency** — Competentie Quick-Scan (25 Big Five) antwoorden + scores + match-tags (Draft/Completed)
 - **CandidateCareerInterest** — Beroepen Quick-Scan (25 RIASEC) + Holland-code + tags
 - **CandidateDeepAnalysis** / **DeepAnalysisCheckout** — 150-vragen analyse per `AssessmentKind` (Competence | Career) na € 2,99 Mollie-betaling + PDF-rapport

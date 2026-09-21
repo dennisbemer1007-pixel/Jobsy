@@ -25,6 +25,16 @@
          aria-label="@Culture["Kompas.TabsLabel"]"
          @onkeydown="OnTabListKeyDown">
         <button type="button"
+                id="kompas-tab-whoami"
+                class="admin-sublink @(_tab == CandidateKompasTabs.WhoAmI ? "admin-sublink--active" : null)"
+                role="tab"
+                aria-selected="@(_tab == CandidateKompasTabs.WhoAmI)"
+                aria-controls="kompas-panel-whoami"
+                tabindex="@(_tab == CandidateKompasTabs.WhoAmI ? 0 : -1)"
+                @onclick='() => SetTab(CandidateKompasTabs.WhoAmI)'>
+            @Culture["Kompas.TabWhoAmI"]
+        </button>
+        <button type="button"
                 id="kompas-tab-profile"
                 class="admin-sublink @(_tab == CandidateKompasTabs.Profile ? "admin-sublink--active" : null)"
                 role="tab"
@@ -75,6 +85,15 @@
             @Culture["Kompas.TabFit"]
         </button>
     </div>
+
+    <article id="kompas-panel-whoami"
+             class="kompas-card kompas-card--tab"
+             role="tabpanel"
+             aria-labelledby="kompas-tab-whoami"
+             hidden="@(_tab != CandidateKompasTabs.WhoAmI)">
+        <h3 id="kompas-whoami-title" class="visually-hidden">@Culture["Kompas.TabWhoAmI"]</h3>
+        <WhoAmIPanel OnOpenTab="SetTab" />
+    </article>
 
     <article id="kompas-panel-profile"
              class="kompas-card kompas-card--tab"
@@ -363,7 +382,7 @@
     private decimal? _maxHours = 24;
     private bool _flexibleTimes;
     private Dictionary<string, List<string>> _availability = new(StringComparer.OrdinalIgnoreCase);
-    private string _tab = CandidateKompasTabs.Profile;
+    private string _tab = CandidateKompasTabs.WhoAmI;
     private Guid? _vacancyId;
     private bool _showCareerDetails;
     private bool _listeningToLocation;
@@ -478,7 +497,7 @@
                 SetTab(CandidateKompasTabs.Neighbor(_tab, -1));
                 break;
             case "Home":
-                SetTab(CandidateKompasTabs.Profile);
+                SetTab(CandidateKompasTabs.WhoAmI);
                 break;
             case "End":
                 SetTab(CandidateKompasTabs.Fit);

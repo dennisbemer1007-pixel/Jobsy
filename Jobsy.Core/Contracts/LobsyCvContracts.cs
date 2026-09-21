@@ -42,7 +42,17 @@ public sealed record LobsyCvModel(
     /// <summary>Crow-flies km candidate ↔ workplace; drives circle radius when set.</summary>
     double? DistanceKm = null,
     /// <summary>When true, the PDF banner states that the candidate also uploaded their own CV.</summary>
-    bool HasUploadedOwnCv = false);
+    bool HasUploadedOwnCv = false,
+    /// <summary>Optional "Wie ben ik?" bijlage when the candidate opted in.</summary>
+    LobsyCvWhoAmI? WhoAmI = null);
+
+public sealed record LobsyCvWhoAmI(
+    string Story,
+    IReadOnlyList<string> Keywords,
+    IReadOnlyList<LobsyCvScoreBar> Competencies,
+    IReadOnlyList<LobsyCvScoreBar> Disc);
+
+public sealed record LobsyCvScoreBar(string Label, int Percent);
 
 public sealed record LobsyCvEmployerEntry(
     string EmployerName,

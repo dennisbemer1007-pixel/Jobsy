@@ -210,13 +210,14 @@ public class CareerCompassTests
     [Fact]
     public void Kompas_tabs_normalize_query_and_legacy_hashes()
     {
+        Assert.Equal(CandidateKompasTabs.WhoAmI, CandidateKompasTabs.Normalize("wie-ben-ik"));
         Assert.Equal(CandidateKompasTabs.Profile, CandidateKompasTabs.Normalize("profiel"));
         Assert.Equal(CandidateKompasTabs.Competencies, CandidateKompasTabs.Normalize("competency-profile-title"));
         Assert.Equal(CandidateKompasTabs.Career, CandidateKompasTabs.Normalize("#career-profile-title"));
         Assert.Equal(CandidateKompasTabs.Career, CandidateKompasTabs.Normalize("beste-match"));
         Assert.Equal(CandidateKompasTabs.Fit, CandidateKompasTabs.Normalize("functiefit"));
         Assert.Equal(CandidateKompasTabs.Disc, CandidateKompasTabs.Neighbor(CandidateKompasTabs.Competencies, 1));
-        Assert.Equal(CandidateKompasTabs.Fit, CandidateKompasTabs.Neighbor(CandidateKompasTabs.Profile, -1));
+        Assert.Equal(CandidateKompasTabs.WhoAmI, CandidateKompasTabs.Neighbor(CandidateKompasTabs.Profile, -1));
         Assert.Equal(CandidateKompasTabs.Disc, CandidateKompasTabs.Normalize("gedragsanalyse"));
     }
 
@@ -239,6 +240,7 @@ public class CareerCompassTests
         Assert.Contains("Talent.CandidateTitle", profilePage, StringComparison.Ordinal);
         Assert.Contains("CareerCompassPanel", home, StringComparison.Ordinal);
         Assert.Contains("role=\"tablist\"", home, StringComparison.Ordinal);
+        Assert.Contains("Kompas.TabWhoAmI", home, StringComparison.Ordinal);
         Assert.Contains("Kompas.TabProfile", home, StringComparison.Ordinal);
         Assert.Contains("Kompas.TabCompetencies", home, StringComparison.Ordinal);
         Assert.Contains("Kompas.TabDisc", home, StringComparison.Ordinal);

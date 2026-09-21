@@ -183,9 +183,9 @@ public static class DiscTestCatalog
     {
         Dominant => "het voortouw nemen",
         Invloed => "mensen meenemen",
-        Stabiel => "rust en ritme",
+        Stabiel => "rust en ritme houden",
         Nauwkeurig => "nauwkeurig werken",
-        _ => "werkstijl"
+        _ => "werken in een team"
     };
 }
 

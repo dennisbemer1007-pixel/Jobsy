@@ -58,6 +58,7 @@ public class LocalizationTests
             "Kompas.BandStrong",
             "Kompas.BandBroaden",
             "Kompas.PracticalTitle",
+            "Kompas.TabWhoAmI",
             "Kompas.TabProfile",
             "Kompas.TabCompetencies",
             "Kompas.TabDisc",

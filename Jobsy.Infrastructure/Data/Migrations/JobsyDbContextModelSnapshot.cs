@@ -379,6 +379,9 @@ namespace Jobsy.Infrastructure.Data.Migrations
                     b.Property<bool>("SnapshotWhatsAppAllowed")
                         .HasColumnType("boolean");
 
+                    b.Property<string>("SnapshotWhoAmIJson")
+                        .HasColumnType("text");
+
                     b.Property<int>("Status")
                         .HasColumnType("integer");
 
@@ -724,6 +727,52 @@ namespace Jobsy.Infrastructure.Data.Migrations
                         .IsUnique();
 
                     b.ToTable("CandidateDiscProfiles", (string)null);
+                });
+
+            modelBuilder.Entity("Jobsy.Core.Entities.CandidateWhoAmIProfile", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<bool>("FromOpenAi")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("IncludeOnCv")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("InputFingerprint")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)");
+
+                    b.Property<string>("KeywordsJson")
+                        .IsRequired()
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
+                    b.Property<DateTime?>("StoryGeneratedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("StoryText")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("UpdatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId")
+                        .IsUnique();
+
+                    b.ToTable("CandidateWhoAmIProfiles", (string)null);
                 });
 
             modelBuilder.Entity("Jobsy.Core.Entities.CandidateDeepAnalysis", b =>
@@ -4302,6 +4351,16 @@ namespace Jobsy.Infrastructure.Data.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("Jobsy.Core.Entities.CandidateWhoAmIProfile", b =>
+                {
+                    b.HasOne("Jobsy.Core.Entities.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
 
             modelBuilder.Entity("Jobsy.Core.Entities.CandidateDeepAnalysis", b =>
                 {

@@ -470,6 +470,7 @@ public static class UatScriptRunner
             var home = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Pages/Candidate/CandidateHomePanel.razor"));
             Assert.Contains("CandidateKompas", home, StringComparison.Ordinal);
             var kompas = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Pages/Candidate/CandidateKompas.razor"));
+            Assert.Contains("Kompas.TabWhoAmI", kompas, StringComparison.Ordinal);
             Assert.Contains("Kompas.TabProfile", kompas, StringComparison.Ordinal);
             Assert.Contains("Kompas.TabCompetencies", kompas, StringComparison.Ordinal);
             Assert.Contains("Kompas.TabDisc", kompas, StringComparison.Ordinal);
@@ -483,6 +484,20 @@ public static class UatScriptRunner
             Assert.Contains("MatchPercent", dto, StringComparison.Ordinal);
             Assert.Contains("minMatchPercent", File.ReadAllText(Path.Combine(root, "Jobsy.Api/Controllers/VacanciesController.cs")), StringComparison.Ordinal);
             Assert.True(TransportLabels.Parse("E-bike") == Jobsy.Core.Enums.TransportMode.Bike);
+        }
+
+        if (Contains(blob, "Wie ben ik?", "persoonsprofiel", "Lobsy-CV-bijlage"))
+        {
+            var root = RepoRoot.Find();
+            var panel = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Pages/Candidate/WhoAmIPanel.razor"));
+            Assert.Contains("WhoAmI.AttachCv", panel, StringComparison.Ordinal);
+            Assert.Contains("WhoAmIDiscQuadrant", panel, StringComparison.Ordinal);
+            Assert.False(WhoAmICompleteness.IsUnlocked(false, true, true, true));
+            Assert.True(WhoAmICompleteness.IsUnlocked(true, true, true, true));
+            Assert.DoesNotContain("@", WhoAmIPrompt.User(
+                new CompetencyScores(80, 70, 60, 50),
+                new RiasecScores(80, 40, 30, 50, 20, 10),
+                new DiscScores(70, 60, 80, 40)), StringComparison.Ordinal);
         }
 
         if (Contains(blob, "accordeon per vaardigheid", "workshops"))

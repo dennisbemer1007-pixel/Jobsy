@@ -773,6 +773,31 @@ public sealed class JobsyApiClient : IAsyncDisposable
         }
     }
 
+    public async Task<WhoAmIState?> GetMyWhoAmIAsync(CancellationToken ct = default)
+    {
+        try
+        {
+            return await _http.GetFromJsonAsync<WhoAmIState>("api/me/who-am-i", ct);
+        }
+        catch (HttpRequestException ex) when (ex.StatusCode is HttpStatusCode.Unauthorized or HttpStatusCode.NotFound or HttpStatusCode.Forbidden)
+        {
+            return null;
+        }
+    }
+
+    public async Task<WhoAmIState> SaveMyWhoAmIAsync(bool includeOnCv, CancellationToken ct = default)
+    {
+        var response = await _http.PutAsJsonAsync("api/me/who-am-i", new { includeOnCv }, ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException(ExtractMessage(body) ?? "Persoonsprofiel opslaan mislukt.");
+        }
+
+        return await response.Content.ReadFromJsonAsync<WhoAmIState>(cancellationToken: ct)
+               ?? new WhoAmIState();
+    }
+
     public async Task<List<AnonymousTalentCard>?> SearchTalentPoolAsync(
         string? tags,
         int? maxTravelMinutes,

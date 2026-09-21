@@ -6,13 +6,14 @@ namespace Jobsy.Web.Navigation;
 /// </summary>
 public static class CandidateKompasTabs
 {
+    public const string WhoAmI = "whoami";
     public const string Profile = "profile";
     public const string Competencies = "competencies";
     public const string Disc = "disc";
     public const string Career = "career";
     public const string Fit = "fit";
 
-    public static readonly string[] All = [Profile, Competencies, Disc, Career, Fit];
+    public static readonly string[] All = [WhoAmI, Profile, Competencies, Disc, Career, Fit];
 
     public static string Normalize(string? raw)
     {
@@ -25,6 +26,9 @@ public static class CandidateKompasTabs
 
         return value switch
         {
+            WhoAmI or "wie-ben-ik" or "wie ben ik" or "whoami" or "who-am-i" or "who am i"
+                or "kompas-panel-whoami" or "kompas-tab-whoami"
+                => WhoAmI,
             Profile or "profiel" or "mijn-profiel" or "mijn profiel" or "criteria"
                 or "kompas-criteria-title" or "kompas-panel-profile" or "kompas-tab-profile"
                 => Profile,

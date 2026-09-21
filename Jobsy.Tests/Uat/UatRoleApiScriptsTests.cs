@@ -31,6 +31,7 @@ public sealed class UatRoleApiScriptsTests : IClassFixture<RoleFunctionalWebAppF
         Assert.Equal(HttpStatusCode.OK, (await c.GetAsync("api/kvk/12345678/establishments")).StatusCode);
 
         Assert.Equal(HttpStatusCode.Unauthorized, (await c.GetAsync("api/me/profile")).StatusCode);
+        Assert.Equal(HttpStatusCode.Unauthorized, (await c.GetAsync("api/me/who-am-i")).StatusCode);
         Assert.Equal(HttpStatusCode.Unauthorized, (await c.GetAsync("api/me/competencies")).StatusCode);
         Assert.Equal(HttpStatusCode.Unauthorized, (await c.GetAsync("api/me/disc")).StatusCode);
         Assert.Equal(HttpStatusCode.Unauthorized, (await c.GetAsync("api/me/career-interests")).StatusCode);
@@ -56,6 +57,7 @@ public sealed class UatRoleApiScriptsTests : IClassFixture<RoleFunctionalWebAppF
     {
         var c = Authed(_factory.CandidateEmail);
         Assert.Equal(HttpStatusCode.OK, (await c.GetAsync("api/me/profile")).StatusCode);
+        Assert.Equal(HttpStatusCode.OK, (await c.GetAsync("api/me/who-am-i")).StatusCode);
         Assert.Equal(HttpStatusCode.OK, (await c.GetAsync("api/me/competencies")).StatusCode);
         Assert.Equal(HttpStatusCode.OK, (await c.GetAsync("api/me/disc")).StatusCode);
         Assert.Equal(HttpStatusCode.OK, (await c.GetAsync("api/me/career-interests")).StatusCode);
@@ -98,6 +100,7 @@ public sealed class UatRoleApiScriptsTests : IClassFixture<RoleFunctionalWebAppF
         Assert.Equal(HttpStatusCode.OK, (await c.GetAsync("api/employer/talent/search")).StatusCode);
 
         Assert.Equal(HttpStatusCode.Forbidden, (await c.GetAsync("api/integrations/health")).StatusCode);
+        Assert.Equal(HttpStatusCode.Forbidden, (await c.GetAsync("api/me/who-am-i")).StatusCode);
         Assert.Equal(HttpStatusCode.Forbidden, (await c.GetAsync("api/me/competencies")).StatusCode);
         Assert.Equal(HttpStatusCode.Forbidden, (await c.GetAsync("api/me/disc")).StatusCode);
         Assert.Equal(HttpStatusCode.Forbidden, (await c.GetAsync("api/me/career-interests")).StatusCode);

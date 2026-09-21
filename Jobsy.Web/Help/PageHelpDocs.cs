@@ -96,7 +96,7 @@ public static class PageHelpDocs
         ["/home"] = new(
             "Home / dashboard",
             "Startscherm na inloggen, afgestemd op jouw rol.",
-            "Je ziet kerncijfers bovenaan en KPI’s gegroepeerd in categorieën (groei, engagement, marketing, systeem). Kies een periode, open een categorie en klik een tegel voor drilldown.",
+            "Als kandidaat open je Mijn Lobsy Kompas: Wie ben ik?, profiel, competenties, gedragsanalyse, beste match en Functiefit. Andere rollen zien kerncijfers en KPI-categorieën.",
             "Overzicht houden en snel naar vacatures, tokens, sollicitaties of beheer gaan."),
 
         ["/hoe-werkt-lobsy"] = new(

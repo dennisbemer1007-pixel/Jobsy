@@ -336,6 +336,18 @@ public sealed class PrivacyDataService : IPrivacyDataService
                     c.UpdatedAtUtc
                 })
                 .FirstOrDefaultAsync(cancellationToken),
+            WhoAmI = await _db.CandidateWhoAmIProfiles.AsNoTracking()
+                .Where(c => c.UserId == user.Id)
+                .Select(c => new
+                {
+                    c.IncludeOnCv,
+                    c.StoryText,
+                    c.KeywordsJson,
+                    c.FromOpenAi,
+                    c.StoryGeneratedAtUtc,
+                    c.UpdatedAtUtc
+                })
+                .FirstOrDefaultAsync(cancellationToken),
             CareerInterests = await _db.CandidateCareerInterests.AsNoTracking()
                 .Where(c => c.UserId == user.Id)
                 .Select(c => new
@@ -935,6 +947,14 @@ public sealed class PrivacyDataService : IPrivacyDataService
         if (discs.Count > 0)
         {
             _db.CandidateDiscProfiles.RemoveRange(discs);
+        }
+
+        var whoAmI = await _db.CandidateWhoAmIProfiles
+            .Where(c => c.UserId == user.Id)
+            .ToListAsync(cancellationToken);
+        if (whoAmI.Count > 0)
+        {
+            _db.CandidateWhoAmIProfiles.RemoveRange(whoAmI);
         }
 
         var careers = await _db.CandidateCareerInterests

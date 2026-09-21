@@ -1,5 +1,28 @@
 namespace Jobsy.Web.Models;
 
+public sealed class WhoAmIState
+{
+    public bool ProfileFilled { get; set; }
+    public bool CompetencyCompleted { get; set; }
+    public bool CareerCompleted { get; set; }
+    public bool DiscCompleted { get; set; }
+    public bool IsUnlocked { get; set; }
+    public string Encouragement { get; set; } = "";
+    public string? Story { get; set; }
+    public bool FromOpenAi { get; set; }
+    public List<string> Keywords { get; set; } = [];
+    public CompetencyScoreSet? CompetencyScores { get; set; }
+    public DiscScoreSet? DiscScores { get; set; }
+    public bool IncludeOnCv { get; set; }
+    public DateTime? StoryGeneratedAtUtc { get; set; }
+
+    public int CompletedCount =>
+        (ProfileFilled ? 1 : 0)
+        + (CompetencyCompleted ? 1 : 0)
+        + (CareerCompleted ? 1 : 0)
+        + (DiscCompleted ? 1 : 0);
+}
+
 public sealed class CandidateCompetencyState
 {
     public string Status { get; set; } = "Draft";

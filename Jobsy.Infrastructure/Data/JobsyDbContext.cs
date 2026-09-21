@@ -29,6 +29,7 @@ public class JobsyDbContext : DbContext
     public DbSet<CandidateReference> CandidateReferences => Set<CandidateReference>();
     public DbSet<CandidateCompetency> CandidateCompetencies => Set<CandidateCompetency>();
     public DbSet<CandidateDiscProfile> CandidateDiscProfiles => Set<CandidateDiscProfile>();
+    public DbSet<CandidateWhoAmIProfile> CandidateWhoAmIProfiles => Set<CandidateWhoAmIProfile>();
     public DbSet<CandidateCareerInterest> CandidateCareerInterests => Set<CandidateCareerInterest>();
     public DbSet<CandidateRoleFitCheck> CandidateRoleFitChecks => Set<CandidateRoleFitCheck>();
     public DbSet<TrainingProvider> TrainingProviders => Set<TrainingProvider>();
@@ -411,6 +412,7 @@ public class JobsyDbContext : DbContext
             entity.Property(e => e.StudyYear).HasMaxLength(64);
             entity.Property(e => e.ExclusivityValidationStatus).HasMaxLength(32);
             entity.Property(e => e.MatchBreakdownJson).HasMaxLength(4000);
+            entity.Property(e => e.SnapshotWhoAmIJson).HasColumnType("text");
             entity.HasIndex(e => e.MatchPercent);
             entity.HasIndex(e => e.ViaSafetyNet)
                 .HasFilter("\"ViaSafetyNet\" = TRUE");
@@ -490,6 +492,20 @@ public class JobsyDbContext : DbContext
             entity.Property(e => e.Status).HasMaxLength(16).IsRequired();
             entity.Property(e => e.AnswersJson).HasMaxLength(4000).IsRequired();
             entity.Property(e => e.MatchTagsJson).HasMaxLength(1000).IsRequired();
+            entity.HasIndex(e => e.UserId).IsUnique();
+            entity.HasOne(e => e.User)
+                .WithMany()
+                .HasForeignKey(e => e.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<CandidateWhoAmIProfile>(entity =>
+        {
+            entity.ToTable("CandidateWhoAmIProfiles");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.StoryText).HasColumnType("text").IsRequired();
+            entity.Property(e => e.KeywordsJson).HasMaxLength(1000).IsRequired();
+            entity.Property(e => e.InputFingerprint).HasMaxLength(128).IsRequired();
             entity.HasIndex(e => e.UserId).IsUnique();
             entity.HasOne(e => e.User)
                 .WithMany()

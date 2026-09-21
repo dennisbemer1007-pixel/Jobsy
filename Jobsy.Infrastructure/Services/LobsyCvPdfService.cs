@@ -140,6 +140,15 @@ public sealed class LobsyCvPdfService : ILobsyCvPdfService
                                 .FontSize(9).FontColor(Slate);
                         });
                     }
+                    if (model.WhoAmI is not null)
+                    {
+                        header.Item().Background(WarmSand).PaddingHorizontal(12).PaddingVertical(8).Text(t =>
+                        {
+                            t.Span("Persoonsprofiel bijgevoegd. ").FontSize(9).Bold().FontColor(AccentCoral);
+                            t.Span("De bijlage “Wie ben ik?” hoort bij dit Lobsy-CV.")
+                                .FontSize(9).FontColor(Slate);
+                        });
+                    }
                 });
 
                 page.Content().PaddingTop(14).Column(body =>
@@ -420,7 +429,115 @@ public sealed class LobsyCvPdfService : ILobsyCvPdfService
                     });
                 });
             });
+
+            if (model.WhoAmI is { } whoAmI)
+            {
+                container.Page(page => RenderWhoAmIPage(page, model, whoAmI, brand, logo, culture, generatedLocal));
+            }
         }).GeneratePdf();
+    }
+
+    private static void RenderWhoAmIPage(
+        PageDescriptor page,
+        LobsyCvModel model,
+        LobsyCvWhoAmI whoAmI,
+        string brand,
+        byte[]? logo,
+        CultureInfo culture,
+        DateTime generatedLocal)
+    {
+        page.Size(PageSizes.A4);
+        page.MarginHorizontal(28);
+        page.MarginVertical(24);
+        page.DefaultTextStyle(x => x.FontSize(10).FontColor(Slate));
+
+        page.Header().Column(header =>
+        {
+            header.Item().Background(WarmSand).Padding(14).Row(row =>
+            {
+                if (logo is { Length: > 0 })
+                {
+                    row.ConstantItem(40).Height(26).Image(logo).FitArea();
+                    row.ConstantItem(8);
+                }
+
+                row.RelativeItem().AlignMiddle().Column(title =>
+                {
+                    title.Item().Text(brand).FontSize(16).Bold().FontColor(BrandNavy);
+                    title.Item().Text("Wie ben ik? — persoonsprofiel").FontSize(9).FontColor(AccentCoral);
+                });
+
+                row.ConstantItem(118).AlignMiddle().AlignRight().Column(meta =>
+                {
+                    meta.Item().Text("Bijlage bij Lobsy-CV").FontSize(9).Bold().FontColor(AccentTeal);
+                    meta.Item().Text(generatedLocal.ToString("d MMM yyyy", culture))
+                        .FontSize(8).FontColor(Muted);
+                });
+            });
+            header.Item().Height(3).Background(AccentTeal);
+        });
+
+        page.Content().PaddingTop(14).Column(body =>
+        {
+            body.Spacing(12);
+            body.Item().Text(string.IsNullOrWhiteSpace(model.FullName) ? "Kandidaat" : model.FullName)
+                .FontSize(18).Bold().FontColor(BrandNavy);
+            body.Item().Text(whoAmI.Story).FontSize(10.5f).LineHeight(1.35f).FontColor(Slate);
+
+            if (whoAmI.Keywords.Count > 0)
+            {
+                body.Item().Text("Sterke punten").FontSize(12).Bold().FontColor(BrandNavy);
+                body.Item().Row(chips =>
+                {
+                    foreach (var keyword in whoAmI.Keywords.Take(8))
+                    {
+                        chips.AutoItem().PaddingRight(6).PaddingBottom(4)
+                            .Background(SoftSky).PaddingHorizontal(8).PaddingVertical(4)
+                            .Text(keyword).FontSize(8).FontColor(BrandNavy);
+                    }
+                });
+            }
+
+            ScoreBars(body, "Competenties", whoAmI.Competencies);
+            ScoreBars(body, "Gedrag in het team", whoAmI.Disc);
+        });
+
+        page.Footer().AlignCenter().PaddingTop(6).Text("Bijlage persoonsprofiel · geen vaktermen · gegenereerd door Lobsy")
+            .FontSize(7.5f).FontColor(Muted);
+    }
+
+    private static void ScoreBars(ColumnDescriptor body, string title, IReadOnlyList<LobsyCvScoreBar> bars)
+    {
+        if (bars.Count == 0)
+        {
+            return;
+        }
+
+        body.Item().Text(title).FontSize(12).Bold().FontColor(BrandNavy);
+        foreach (var bar in bars)
+        {
+            var pct = Math.Clamp(bar.Percent, 0, 100);
+            body.Item().Column(col =>
+            {
+                col.Item().Row(row =>
+                {
+                    row.RelativeItem().Text(bar.Label).FontSize(9).FontColor(Slate);
+                    row.ConstantItem(36).AlignRight().Text($"{pct}%").FontSize(9).Bold().FontColor(BrandNavy);
+                });
+                col.Item().Height(7).Background(Line).Row(fill =>
+                {
+                    if (pct > 0)
+                    {
+                        fill.RelativeItem(pct).Background(AccentTeal);
+                    }
+
+                    if (pct < 100)
+                    {
+                        fill.RelativeItem(100 - pct);
+                    }
+                });
+            });
+        }
     }
 
     private static void DrawAvailabilityMatrix(

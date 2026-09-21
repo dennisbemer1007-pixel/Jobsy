@@ -1,6 +1,6 @@
 # Testscenario’s per rol (UAT-catalogus)
 
-Aantal rijen: **793**. Handmatige testdekking van **elke rol**, **elke primaire knop/link/nav-item**, plus **unhappy paths** (validatie, 401/403, lege staten, tokens tekort, AVG, IDOR, timeouts). Kolommen: **Rol** · **Testscenario** · **Verwacht resultaat**.
+Aantal rijen: **808**. Handmatige testdekking van **elke rol**, **elke primaire knop/link/nav-item**, plus **unhappy paths** (validatie, 401/403, lege staten, tokens tekort, AVG, IDOR, timeouts). Kolommen: **Rol** · **Testscenario** · **Verwacht resultaat**.
 
 Bronnen: `ROLES_AND_VIEWS.md`, `REQUIREMENTS.md`, `SECURITY.md`, Blazor-pagina’s onder `Jobsy.Web/Components`, `RoleNavCatalog`, functionele specs in `docs/`.
 
@@ -10,7 +10,7 @@ Bronnen: `ROLES_AND_VIEWS.md`, `REQUIREMENTS.md`, `SECURITY.md`, Blazor-pagina�
 
 - [1. Gast (niet ingelogd)](#1-gast-niet-ingelogd) — 147 scenario’s
 - [2. Alle ingelogde rollen (cross-cutting chrome)](#2-alle-ingelogde-rollen-cross-cutting-chrome) — 33 scenario’s
-- [3. Kandidaat](#3-kandidaat) — 110 scenario’s
+- [3. Kandidaat](#3-kandidaat) — 112 scenario’s
 - [4. Filiaalmanager (BranchManager)](#4-filiaalmanager-branchmanager) — 101 scenario’s
 - [5. Regiomanager (RegionalManager)](#5-regiomanager-regionalmanager) — 22 scenario’s
 - [6. Bedrijfsmanager (EnterpriseManager)](#6-bedrijfsmanager-enterprisemanager) — 55 scenario’s
@@ -261,8 +261,10 @@ Account: `kandidaat@jobsy.local` / `Jobsy123!`. Bottom-nav: Zoeken · Bewaard ·
 
 | Rol | Testscenario | Verwacht resultaat |
 |-----|--------------|--------------------|
-| Kandidaat | Login met demo-account. | `/home` kandidaat-dashboard **Mijn Lobsy Kompas** (tabbladen **Mijn profiel** / **Mijn competenties** / **DISC-Analyse** / **Mijn beste match** / **Functiefit checker**) plus KPI’s sollicitaties/likes/shares/reacties. |
-| Kandidaat | Home: Kompas-tabbladen Mijn profiel / Mijn competenties / DISC-Analyse / Mijn beste match / Functiefit checker. | Vijf tabs; profiel=sectienav Persoonlijk/Voorkeuren/Beschikbaarheid/CV; competenties=grafiek + accordeon per vaardigheid met uitleg en workshops; DISC-Analyse=grafiek + accordeon per gedragsstijl met ontwikkelpunten en workshops; beste match=Super-match/Handige verbreding als accordeon + Wat betekent dit voor jou? + opleidingen per beroep; fit=4 stappen Functiefit checker + vergelijkbare functies. |
+| Kandidaat | Login met demo-account. | `/home` kandidaat-dashboard **Mijn Lobsy Kompas** (tabbladen **Wie ben ik?** / **Mijn profiel** / **Mijn competenties** / **DISC-Analyse** / **Mijn beste match** / **Functiefit checker**) plus KPI’s sollicitaties/likes/shares/reacties. |
+| Kandidaat | Home: Kompas-tabbladen Wie ben ik? / Mijn profiel / Mijn competenties / DISC-Analyse / Mijn beste match / Functiefit checker. | Zes tabs; Wie ben ik?=checklist tot 4 vinkjes groen daarna verhaal+radar+DISC-kwadranten+CV-bijlage; profiel=sectienav Persoonlijk/Voorkeuren/Beschikbaarheid/CV; competenties=grafiek + accordeon per vaardigheid met uitleg en workshops; DISC-Analyse=grafiek + accordeon per gedragsstijl met ontwikkelpunten en workshops; beste match=Super-match/Handige verbreding als accordeon + Wat betekent dit voor jou? + opleidingen per beroep; fit=4 stappen Functiefit checker + vergelijkbare functies. |
+| Kandidaat | Wie ben ik?: rapport locked tot profiel+competentie+beroepen+gedragsanalyse klaar. | Vier vinkjes; aanmoediging naar openstaande stap; geen AI-verhaal tot unlock. |
+| Kandidaat | Wie ben ik?: vink Lobsy-CV-bijlage aan na unlock. | Sollicitatie en batch-hiring nemen persoonsprofiel-PDF mee in Lobsy-CV na Accept. |
 | Kandidaat | Home: Kompas toont Quick-Scan 25 vs diepte-analyse 150 + PDF als klaar. | Status zichtbaar; PDF-knop alleen na afgeronde diepte-analyse; geen extra nav-tab. |
 | Kandidaat | Home: **Mijn Beroepen-kompas** toont Super-match / Sterke keus / Handige verbreding. | Groepen >95% / >85% / >75%; sectie **Wat betekent dit voor jou?**; geen RIASEC/OCEAN in kandidaattekst. |
 | Kandidaat | Download loopbaan-PDF na uitgebreide beroepentest (150). | Gekleurd Lobsy-logo; Super-match/Sterke keus/Handige verbreding; **Wat betekent dit voor jou?**; geen RIASEC/OCEAN. |

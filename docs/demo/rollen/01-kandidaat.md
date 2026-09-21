@@ -11,7 +11,7 @@ De kandidaat werkt vanuit een persoonlijk dashboard en de banenkaart. Matching d
 
 | Taak | Waar | Toelichting |
 |------|------|-------------|
-| Overzicht eigen activiteit | `/home` | **Mijn Lobsy Kompas** (tabbladen Mijn profiel / Mijn competenties / DISC-Analyse / Mijn beste match / Functiefit checker) + KPI’s sollicitaties/likes/shares |
+| Overzicht eigen activiteit | `/home` | **Mijn Lobsy Kompas** (tabbladen Wie ben ik? / Mijn profiel / Mijn competenties / DISC-Analyse / Mijn beste match / Functiefit checker) + KPI’s sollicitaties/likes/shares |
 | Banen zoeken | `/` | Filters + kaart |
 | Vacature bekijken / solliciteren | `/vacancies/{id}` | Solliciteren, like, share; optioneel mock-interview |
 | Historie | `/candidate/applications` | Sollicitatiehistorie |

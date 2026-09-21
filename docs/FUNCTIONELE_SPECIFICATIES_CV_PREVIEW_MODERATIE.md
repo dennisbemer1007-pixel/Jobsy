@@ -30,6 +30,8 @@
 Canonieke secties (NL; EN/PL/RO/AR via bestaande localization later):
 
 1. **Kop** — Lobsy-merk + “Lobsy-CV” + generatiedatum  
+2. **Optionele bijlage “Wie ben ik?”** — als de kandidaat dat vinkje zette: persoonlijk verhaal + sterke punten + scorebalken (geen vaktermen, geen extra PII).  
+3. **Over mij / motivatie / beschikbaarheid / ervaring** — zoals hieronder.  
 2. **Persoon** — naam, woonplaats (geen volledige straat in preview naar derden; wel in released CV na Accept)  
 3. **Over mij** — `AboutMe` / `SnapshotAboutMe`  
 4. **Motivatie** — optioneel `Application.Motivation` (alleen als ingevuld bij deze vacature)  

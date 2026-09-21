@@ -1,0 +1,30 @@
+@using Jobsy.Core.Rules
+@using Jobsy.Web.Localization
+@inject CultureState Culture
+
+@if (Scores is { IsComplete: true } complete)
+{
+    <div class="whoami-disc" role="img" aria-label="@Culture["Disc.RadarLabel"]">
+        @foreach (var category in DiscTestCatalog.CategoryCodes)
+        {
+            var value = Value(complete, category) ?? 0;
+            <div class="whoami-disc__cell whoami-disc__cell--@category.ToLowerInvariant()">
+                <span class="whoami-disc__pct">@value%</span>
+                <span class="whoami-disc__name">@Culture[$"Disc.Cat.{category}"]</span>
+            </div>
+        }
+    </div>
+}
+
+@code {
+    [Parameter] public DiscScoreSet? Scores { get; set; }
+
+    private static int? Value(DiscScoreSet scores, string category) => category switch
+    {
+        DiscTestCatalog.Dominant => scores.Dominant,
+        DiscTestCatalog.Invloed => scores.Invloed,
+        DiscTestCatalog.Stabiel => scores.Stabiel,
+        DiscTestCatalog.Nauwkeurig => scores.Nauwkeurig,
+        _ => null
+    };
+}

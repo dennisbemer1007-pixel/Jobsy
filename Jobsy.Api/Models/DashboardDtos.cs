@@ -220,6 +220,8 @@ public record SaveCandidateCompetenciesRequest(
     Dictionary<string, int>? Answers,
     bool Complete = false);
 
+public record SaveWhoAmIRequest(bool IncludeOnCv);
+
 public record RecordClickRequest(string? AnonymousKey);
 
 public record RecordImpressionsRequest(IReadOnlyList<Guid>? VacancyIds, string? AnonymousKey);

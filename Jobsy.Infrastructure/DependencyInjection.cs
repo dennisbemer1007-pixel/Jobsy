@@ -249,6 +249,15 @@ public static class DependencyInjection
             sp.GetRequiredService<IDashboardLiveOverlay>()));
         services.AddScoped<IAmbassadeurFlyerPdfService, AmbassadeurFlyerPdfService>();
         services.AddScoped<ILobsyCvPdfService, LobsyCvPdfService>();
+        services.AddHttpClient(WhoAmIGenerationService.HttpClientName, client =>
+        {
+            client.Timeout = TimeSpan.FromSeconds(25);
+        }).ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler
+        {
+            AllowAutoRedirect = false
+        });
+        services.AddScoped<IWhoAmIGenerationService, WhoAmIGenerationService>();
+        services.AddScoped<IWhoAmIService, WhoAmIService>();
         services.AddScoped<ICvTextExtractor, CvTextExtractor>();
         services.AddScoped<ICvExtractionService, CvExtractionService>();
         services.AddScoped<IProfileVacancyMatchService, ProfileVacancyMatchService>();

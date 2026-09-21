@@ -34,6 +34,7 @@ public class ApplicationsController : ControllerBase
     private readonly IUserNotificationService _notifications;
     private readonly ICandidateActionTokenService _actionTokens;
     private readonly IVacancyDiscoveryIndex _discoveryIndex;
+    private readonly IWhoAmIService _whoAmI;
 
     public ApplicationsController(
         JobsyDbContext db,
@@ -45,7 +46,8 @@ public class ApplicationsController : ControllerBase
         ILobsyCvPdfService lobsyCvPdf,
         IUserNotificationService notifications,
         ICandidateActionTokenService actionTokens,
-        IVacancyDiscoveryIndex discoveryIndex)
+        IVacancyDiscoveryIndex discoveryIndex,
+        IWhoAmIService whoAmI)
     {
         _db = db;
         _companyAuth = companyAuth;
@@ -57,6 +59,7 @@ public class ApplicationsController : ControllerBase
         _notifications = notifications;
         _actionTokens = actionTokens;
         _discoveryIndex = discoveryIndex;
+        _whoAmI = whoAmI;
     }
 
     [HttpGet]
@@ -576,6 +579,8 @@ public class ApplicationsController : ControllerBase
         application.MatchBreakdownJson = Truncate(matchJson, 4000);
         application.ViaSafetyNet = GuldenMiddenwegRules.RequiresSafetyNetConfirmation(match)
                                    && request.ConfirmLowMatchSafetyNet;
+        var whoAmI = await _whoAmI.GetCvAttachmentAsync(candidate.Id, cancellationToken);
+        application.SnapshotWhoAmIJson = WhoAmISnapshot.Serialize(whoAmI);
 
         if (vacancy.Kind == VacancyKind.Internship
             && vacancy.ExclusivitySetting is { } excl

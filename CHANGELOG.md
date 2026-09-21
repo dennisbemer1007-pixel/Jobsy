@@ -14,6 +14,7 @@ Alle noemenswaardige wijzigingen aan dit project worden in dit bestand bijgehoud
 ## [Unreleased]
 
 ### Added
+- **Wie ben ik?** in Mijn Lobsy Kompas: checklist (profiel, competentie, beroepen, gedragsanalyse); daarna AI-persoonsverhaal, radar, DISC-kwadranten en optionele PDF-bijlage bij het Lobsy-CV.
 - **DISC-Analyse** in Mijn Lobsy Kompas: gratis Quick-Scan (25) + optionele diepte-analyse (150, € 2,99); radar + accordeon per gedragsstijl met ontwikkelpunten en regionale workshops; scores wegen mee in Functie-Fit en cultuurfit (gewone taal, geen vaktermen in stap 2/3).
 
 ### Changed

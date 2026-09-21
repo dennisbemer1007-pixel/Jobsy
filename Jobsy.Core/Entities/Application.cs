@@ -91,6 +91,9 @@ public class Application
     /// <summary>JSON snapshot of match score breakdown for employer/candidate UI.</summary>
     public string? MatchBreakdownJson { get; set; }
 
+    /// <summary>JSON snapshot of the optional "Wie ben ik?" CV bijlage at apply.</summary>
+    public string? SnapshotWhoAmIJson { get; set; }
+
     public DateTime CreatedAt { get; set; }
     public DateTime? RespondedAt { get; set; }
 }

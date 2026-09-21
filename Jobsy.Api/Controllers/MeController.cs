@@ -36,6 +36,7 @@ public class MeController : ControllerBase
     private readonly ILobsyCvPdfService _lobsyCvPdf;
     private readonly ICvTextExtractor _cvText;
     private readonly ICvExtractionService _cvExtraction;
+    private readonly IWhoAmIService _whoAmI;
     private const string VacancySourceLanguage = "nl";
 
     public MeController(
@@ -46,7 +47,8 @@ public class MeController : ControllerBase
         ITranslationService translation,
         ILobsyCvPdfService lobsyCvPdf,
         ICvTextExtractor cvText,
-        ICvExtractionService cvExtraction)
+        ICvExtractionService cvExtraction,
+        IWhoAmIService whoAmI)
     {
         _companyAuth = companyAuth;
         _users = users;
@@ -56,6 +58,7 @@ public class MeController : ControllerBase
         _lobsyCvPdf = lobsyCvPdf;
         _cvText = cvText;
         _cvExtraction = cvExtraction;
+        _whoAmI = whoAmI;
     }
 
     [HttpGet("access")]
@@ -558,6 +561,7 @@ public class MeController : ControllerBase
         var hasUploadedCv = await _db.CandidateUploadedCvs.AsNoTracking()
             .AnyAsync(c => c.UserId == user.Id, cancellationToken);
         var preferences = ParsePreferences(user.PreferencesJson);
+        var whoAmI = await _whoAmI.GetCvAttachmentAsync(user.Id, cancellationToken);
         var model = LobsyCvModelFactory.FromLiveProfile(
             user.FullName,
             user.Email,
@@ -569,7 +573,8 @@ public class MeController : ControllerBase
             DateTime.UtcNow,
             user.ConsentVersion ?? PrivacyConstants.CurrentConsentVersion,
             dateOfBirth: user.DateOfBirth,
-            hasUploadedOwnCv: hasUploadedCv);
+            hasUploadedOwnCv: hasUploadedCv,
+            whoAmI: whoAmI);
 
         var pdf = await _lobsyCvPdf.RenderAsync(model, cancellationToken);
         var fileName = _lobsyCvPdf.BuildFileName(model);
