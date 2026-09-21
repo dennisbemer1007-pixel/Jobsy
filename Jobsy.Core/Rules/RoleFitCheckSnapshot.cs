@@ -9,7 +9,8 @@ public sealed record RoleFitCheckSnapshot(
     IReadOnlyList<string> SearchKeys,
     bool FromDeepAnalysis,
     bool FromOpenAi = false,
-    RoleFitVacancyFit? VacancyFit = null)
+    RoleFitVacancyFit? VacancyFit = null,
+    IReadOnlyList<RoleFitSimilarRole>? SimilarRoles = null)
 {
     public string MapQuery
     {
@@ -38,4 +39,6 @@ public sealed record RoleFitVacancyFit(
     bool AvailabilityOk,
     bool ShowFormalBlock,
     bool ShowUpskill);
+
+public sealed record RoleFitSimilarRole(string Title, string Why, int FitPercent);
 

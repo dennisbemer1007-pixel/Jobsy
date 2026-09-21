@@ -44,6 +44,7 @@ public class RoleFitCheckTests
         Assert.NotEmpty(snapshot.Strengths);
         Assert.NotEmpty(snapshot.Gaps);
         Assert.NotEmpty(snapshot.ActionSteps);
+        Assert.Contains(snapshot.SimilarRoles ?? [], r => r.Title.Contains("Helpende", StringComparison.OrdinalIgnoreCase));
         Assert.True(snapshot.ShowDeepUpsell);
         Assert.False(snapshot.FromOpenAi);
         Assert.Contains(snapshot.SearchKeys, k => k.Contains("zorg", StringComparison.OrdinalIgnoreCase)
@@ -85,6 +86,7 @@ public class RoleFitCheckTests
         Assert.Contains("Mensen helpen", user, StringComparison.Ordinal);
         Assert.DoesNotContain("@", user, StringComparison.Ordinal);
         Assert.False(CareerCompassBuilder.ContainsForbiddenJargon(user));
+        Assert.Contains("similarRoles", RoleFitCheckPrompt.System, StringComparison.Ordinal);
         Assert.Contains("Jip-en-Janneke", RoleFitCheckPrompt.System, StringComparison.Ordinal);
         Assert.Contains("Volg een korte cursus", RoleFitCheckPrompt.System, StringComparison.Ordinal);
         Assert.Contains("extraversie", RoleFitCheckPrompt.System, StringComparison.OrdinalIgnoreCase);
@@ -108,6 +110,9 @@ public class RoleFitCheckTests
         Assert.Contains("Fit.DeepUpsell", panel, StringComparison.Ordinal);
         Assert.Contains("TrainingOffersBlock", panel, StringComparison.Ordinal);
         Assert.Contains("Fit.OpenMap", panel, StringComparison.Ordinal);
+        Assert.Contains("Fit.Step1", panel, StringComparison.Ordinal);
+        Assert.Contains("Fit.SimilarTitle", panel, StringComparison.Ordinal);
+        Assert.Contains("Fit.DirectTitle", panel, StringComparison.Ordinal);
         Assert.DoesNotContain("RIASEC", panel, StringComparison.OrdinalIgnoreCase);
         Assert.DoesNotContain("OCEAN", panel, StringComparison.OrdinalIgnoreCase);
 

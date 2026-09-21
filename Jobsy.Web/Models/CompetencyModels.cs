@@ -185,6 +185,8 @@ public sealed class RoleFitCheckResult
     public bool ShowFormalBlock { get; set; }
     public bool ShowUpskill { get; set; }
     public bool AvailabilityOk { get; set; } = true;
+    public List<RoleFitSimilarRoleCard> SimilarRoles { get; set; } = [];
+    public List<RoleFitDirectVacancyCard> DirectVacancies { get; set; } = [];
 }
 
 public sealed class RoleFitFormalItem
@@ -193,6 +195,22 @@ public sealed class RoleFitFormalItem
     public string Label { get; set; } = "";
     public bool Met { get; set; }
     public string Note { get; set; } = "";
+}
+
+public sealed class RoleFitSimilarRoleCard
+{
+    public string Title { get; set; } = "";
+    public string Why { get; set; } = "";
+    public int FitPercent { get; set; }
+}
+
+public sealed class RoleFitDirectVacancyCard
+{
+    public Guid Id { get; set; }
+    public string Title { get; set; } = "";
+    public string CompanyName { get; set; } = "";
+    public int MatchPercent { get; set; }
+    public string Href { get; set; } = "";
 }
 
 public sealed class TrainingOfferCard

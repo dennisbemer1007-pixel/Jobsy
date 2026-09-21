@@ -60,6 +60,7 @@ public static class RoleFitCheckBuilder
         var strengths = BuildStrengths(title, occupation, competencies, career);
         var gaps = BuildGaps(occupation, competencies, career);
         var steps = BuildSteps(title, gaps, fromDeepAnalysis);
+        var similar = RoleFitFunnel.SuggestSimilar(title, career);
 
         return Sanitize(new RoleFitCheckSnapshot(
             title,
@@ -69,7 +70,8 @@ public static class RoleFitCheckBuilder
             steps,
             keys,
             fromDeepAnalysis,
-            FromOpenAi: false));
+            FromOpenAi: false,
+            SimilarRoles: similar));
     }
 
     public static RoleFitVacancyFit BuildVacancyFit(
@@ -107,7 +109,8 @@ public static class RoleFitCheckBuilder
             CareerOccupationKeys.Merge(title, snapshot.SearchKeys),
             snapshot.FromDeepAnalysis,
             snapshot.FromOpenAi,
-            snapshot.VacancyFit is null ? null : SanitizeVacancy(snapshot.VacancyFit));
+            snapshot.VacancyFit is null ? null : SanitizeVacancy(snapshot.VacancyFit),
+            RoleFitFunnel.MergeSimilar(snapshot.SimilarRoles, null));
     }
 
     private static RoleFitVacancyFit SanitizeVacancy(RoleFitVacancyFit fit)

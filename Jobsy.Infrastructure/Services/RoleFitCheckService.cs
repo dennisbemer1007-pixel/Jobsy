@@ -2,6 +2,7 @@ using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using Jobsy.Core.Contracts;
 using Jobsy.Core;
 using Jobsy.Core.Entities;
 using Jobsy.Core.Enums;
@@ -34,6 +35,8 @@ public sealed class RoleFitCheckService : IRoleFitCheckService
     private readonly ILogger<RoleFitCheckService> _logger;
     private readonly ITrainingUpskillService _training;
     private readonly ICultureFitAiService _cultureFit;
+    private readonly IVacancyDiscoveryIndex _discovery;
+    private readonly IProfileVacancyMatchService _matches;
 
     public RoleFitCheckService(
         JobsyDbContext db,
@@ -45,7 +48,9 @@ public sealed class RoleFitCheckService : IRoleFitCheckService
         IOptions<OpenAiOptions> options,
         ILogger<RoleFitCheckService> logger,
         ITrainingUpskillService training,
-        ICultureFitAiService cultureFit)
+        ICultureFitAiService cultureFit,
+        IVacancyDiscoveryIndex discovery,
+        IProfileVacancyMatchService matches)
     {
         _db = db;
         _competencies = competencies;
@@ -57,6 +62,8 @@ public sealed class RoleFitCheckService : IRoleFitCheckService
         _logger = logger;
         _training = training;
         _cultureFit = cultureFit;
+        _discovery = discovery;
+        _matches = matches;
     }
 
     public async Task<RoleFitCheckStateDto> GetAsync(Guid userId, CancellationToken cancellationToken = default)
@@ -117,6 +124,10 @@ public sealed class RoleFitCheckService : IRoleFitCheckService
         var local = RoleFitCheckBuilder.Build(title, competence, career, fromDeep);
         var snapshot = await TryOpenAiAsync(title, competence, career, fromDeep, userId, local, cancellationToken)
                        ?? local;
+        snapshot = snapshot with
+        {
+            SimilarRoles = RoleFitFunnel.MergeSimilar(snapshot.SimilarRoles, local.SimilarRoles)
+        };
         if (vacancy is not null)
         {
             snapshot = await AttachVacancyAsync(userId, vacancy, competence, snapshot, cancellationToken);
@@ -325,6 +336,11 @@ public sealed class RoleFitCheckService : IRoleFitCheckService
             offers = [];
         }
 
+        var similar = (snapshot.SimilarRoles ?? [])
+            .Select(s => new RoleFitSimilarRoleDto(s.Title, s.Why, s.FitPercent))
+            .ToList();
+        var direct = await ScanDirectVacanciesAsync(userId, fit?.VacancyId, cancellationToken);
+
         return new RoleFitCheckResultDto(
             snapshot.JobTitle,
             snapshot.MatchPercent,
@@ -346,7 +362,9 @@ public sealed class RoleFitCheckService : IRoleFitCheckService
             fit?.FormalItems.Select(i => new RoleFitFormalItemDto(i.Key, i.Label, i.Met, i.Note)).ToList(),
             fit?.ShowFormalBlock ?? false,
             fit?.ShowUpskill ?? false,
-            fit?.AvailabilityOk ?? true);
+            fit?.AvailabilityOk ?? true,
+            similar,
+            direct);
     }
 
     private async Task<RoleFitCheckSnapshot> AttachVacancyAsync(
@@ -377,8 +395,30 @@ public sealed class RoleFitCheckService : IRoleFitCheckService
         }
 
         var vacancyFit = RoleFitCheckBuilder.BuildVacancyFit(vacancy.Id, requirements, formal, culture, availability);
-        var strengths = formal.Items.Where(i => i.Met).Select(i => i.Note).Concat(snapshot.Strengths).Take(5).ToList();
-        var gaps = formal.Items.Where(i => !i.Met).Select(i => i.Note).Concat(snapshot.Gaps).Take(5).ToList();
+        var overall = RoleFitFunnel.CombineOverall(snapshot.MatchPercent, availability, culture?.Percent, formal);
+        var extraStrengths = new List<string>();
+        if (availability)
+        {
+            extraStrengths.Add("Reistijd, uren en basisbeschikbaarheid passen bij deze vacature.");
+        }
+
+        if (culture is { Percent: >= CultureFitBuilder.MidThreshold } && !string.IsNullOrWhiteSpace(culture.Why))
+        {
+            extraStrengths.Add(culture.Why);
+        }
+
+        extraStrengths.AddRange(formal.Items.Where(i => i.Met).Select(i => i.Note));
+        extraStrengths.AddRange(snapshot.Strengths);
+
+        var extraGaps = new List<string>();
+        if (!availability)
+        {
+            extraGaps.Add("Reistijd, uren of rijbewijs/opleidingsniveau klopt nog niet met deze vacature.");
+        }
+
+        extraGaps.AddRange(formal.Items.Where(i => !i.Met).Select(i => i.Note));
+        extraGaps.AddRange(snapshot.Gaps);
+
         if (vacancyFit.ShowUpskill)
         {
             snapshot = snapshot with
@@ -393,10 +433,102 @@ public sealed class RoleFitCheckService : IRoleFitCheckService
 
         return RoleFitCheckBuilder.Sanitize(snapshot with
         {
-            Strengths = strengths,
-            Gaps = gaps.Count > 0 ? gaps : snapshot.Gaps,
+            MatchPercent = overall,
+            Strengths = extraStrengths.Take(5).ToList(),
+            Gaps = extraGaps.Count > 0 ? extraGaps.Take(5).ToList() : snapshot.Gaps,
             VacancyFit = vacancyFit
         });
+    }
+
+    private async Task<IReadOnlyList<RoleFitDirectVacancyDto>> ScanDirectVacanciesAsync(
+        Guid userId,
+        Guid? excludeVacancyId,
+        CancellationToken cancellationToken)
+    {
+        var context = await _matches.TryLoadForUserIdAsync(userId, cancellationToken);
+        if (context is null)
+        {
+            return [];
+        }
+
+        var vacancies = await _discovery.GetActiveAsync(cancellationToken);
+        var transport = TransportLabels.Parse(context.Prefs.PreferredTransport);
+        var scored = _matches.Score(
+            context,
+            vacancies.Select(vacancy =>
+            {
+                int? travelMinutes = null;
+                if (context.HomeLatitude is double lat && context.HomeLongitude is double lng)
+                {
+                    var estimate = TravelReach.Estimate(
+                        lat,
+                        lng,
+                        vacancy.Latitude,
+                        vacancy.Longitude,
+                        transport);
+                    travelMinutes = estimate.TravelMinutes;
+                }
+
+                return (vacancy, travelMinutes);
+            }));
+
+        var ranked = scored.Values
+            .Where(m => m.VacancyId != excludeVacancyId)
+            .Where(m => m.Core.LegalEligible && m.TotalPercent >= RoleFitFunnel.DirectMatchMin)
+            .OrderByDescending(m => m.TotalPercent)
+            .Take(40)
+            .ToList();
+        if (ranked.Count == 0)
+        {
+            return [];
+        }
+
+        var ids = ranked.Select(m => m.VacancyId).ToList();
+        var barriers = await _db.Vacancies.AsNoTracking()
+            .Where(v => ids.Contains(v.Id))
+            .Select(v => new { v.Id, v.BarrierRequirementsJson })
+            .ToDictionaryAsync(v => v.Id, cancellationToken);
+        var byId = vacancies.ToDictionary(v => v.Id);
+        var cards = new List<RoleFitDirectVacancyDto>();
+        foreach (var match in ranked)
+        {
+            if (!byId.TryGetValue(match.VacancyId, out var record))
+            {
+                continue;
+            }
+
+            barriers.TryGetValue(match.VacancyId, out var row);
+            var requirements = VacancyBarrierCatalog.Deserialize(row?.BarrierRequirementsJson);
+            var formal = VacancyBarrierCatalog.Evaluate(requirements, context.Prefs);
+            var availability = VacancyBarrierCatalog.AvailabilityLooksOk(
+                context.Prefs,
+                record.MinHoursPerWeek,
+                record.MaxHoursPerWeek,
+                record.RequiredDrivingLicense,
+                record.RequiredEducation);
+            if (!RoleFitFunnel.CanStartImmediately(
+                    match.Core.LegalEligible,
+                    match.TotalPercent,
+                    match.Core.TravelWithinPreference,
+                    formal,
+                    availability))
+            {
+                continue;
+            }
+
+            cards.Add(new RoleFitDirectVacancyDto(
+                record.Id,
+                record.Title,
+                record.CompanyName,
+                match.TotalPercent,
+                "/vacancies/" + record.Id.ToString("D")));
+            if (cards.Count >= RoleFitFunnel.MaxDirect)
+            {
+                break;
+            }
+        }
+
+        return cards;
     }
 
     private async Task<string?> ResolveApiKeyAsync(CancellationToken cancellationToken)

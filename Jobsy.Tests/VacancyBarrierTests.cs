@@ -82,6 +82,8 @@ public class VacancyBarrierTests
         Assert.Contains("Fit.CultureBlock", panel, StringComparison.Ordinal);
         Assert.Contains("Fit.FormalBlock", panel, StringComparison.Ordinal);
         Assert.Contains("ShowUpskill", panel, StringComparison.Ordinal);
+        Assert.Contains("Fit.Step1", panel, StringComparison.Ordinal);
+        Assert.Contains("Fit.DirectTitle", panel, StringComparison.Ordinal);
 
         var create = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Pages/Branch/CreateVacancy.razor"));
         Assert.Contains("Employer.Barrier.High", create, StringComparison.Ordinal);

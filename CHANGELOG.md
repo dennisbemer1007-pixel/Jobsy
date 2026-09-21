@@ -14,6 +14,9 @@ Alle noemenswaardige wijzigingen aan dit project worden in dit bestand bijgehoud
 ## [Unreleased]
 
 ### Added
+- **Functie-Fit conversietrechter:** 4 vaste stappen (overall match-% uit reistijd/uren, cultuurfit en formele eisen; waar je matcht; wat je mist; actie/upskilling). Plus AI/lokale **vergelijkbare functies** (opstaprollen) en een live scan van **direct startbare vacatures** in Den Haag/Westland.
+
+### Added
 - **Dynamische Functie-Fit op vacature:** optionele `BarrierRequirementsJson` (lage drempel vs zware eisen: diploma’s, VCA/BIG/vliegbrevet, ervaringsjaren/uren). Functie-Fit Checker toetst cultuurfit (OCEAN-pijlers) en een formele checklist; bij cultuur+beschikbaarheid OK maar een papieren gat volgt de opleidingen-CTA. Werkgever stelt de drempel in bij vacature-aanmaken.
 
 ### Added

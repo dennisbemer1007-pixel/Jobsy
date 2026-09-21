@@ -40,86 +40,142 @@
 
         @if (_state.LastResult is { } result)
         {
-            <div class="role-fit-result">
-                <p class="role-fit-result__pct" aria-label="@Culture["Fit.Match"]">
-                    <strong>@result.MatchPercent%</strong> @Culture["Fit.Match"]
-                </p>
-                @if (result.VacancyId is Guid)
-                {
-                    <section class="role-fit-block role-fit-block--culture">
-                        <h4>@Culture["Fit.CultureBlock"]</h4>
-                        @if (result.CultureFitPercent is int culturePct)
-                        {
-                            <p class="role-fit-culture">
-                                <strong>@culturePct%</strong>
-                                @(result.CultureFitLabel ?? Culture["Fit.CultureBlock"])
-                            </p>
-                            @if (!string.IsNullOrWhiteSpace(result.CultureFitWhy))
+            <ol class="role-fit-funnel">
+                <li class="role-fit-funnel__step">
+                    <h4>@Culture["Fit.Step1"]</h4>
+                    <p class="role-fit-result__pct" aria-label="@Culture["Fit.Match"]">
+                        <strong>@result.MatchPercent%</strong> @Culture["Fit.Match"]
+                    </p>
+                    @if (result.VacancyId is Guid)
+                    {
+                        <section class="role-fit-block role-fit-block--culture">
+                            <h5>@Culture["Fit.CultureBlock"]</h5>
+                            @if (result.CultureFitPercent is int culturePct)
                             {
-                                <p>@result.CultureFitWhy</p>
+                                <p class="role-fit-culture">
+                                    <strong>@culturePct%</strong>
+                                    @(result.CultureFitLabel ?? Culture["Fit.CultureBlock"])
+                                </p>
+                                @if (!string.IsNullOrWhiteSpace(result.CultureFitWhy))
+                                {
+                                    <p>@result.CultureFitWhy</p>
+                                }
                             }
+                            else
+                            {
+                                <p class="login-lead">@Culture["Fit.CultureMissing"]</p>
+                            }
+                        </section>
+                        @if (result.ShowFormalBlock)
+                        {
+                            <section class="role-fit-block role-fit-block--formal">
+                                <h5>@Culture["Fit.FormalBlock"]</h5>
+                                <ul class="role-fit-checklist">
+                                    @foreach (var item in result.FormalItems)
+                                    {
+                                        <li class="@(item.Met ? "is-met" : "is-gap")">
+                                            <span aria-hidden="true">@(item.Met ? "✓" : "✗")</span>
+                                            <span>
+                                                <strong>@item.Label</strong>
+                                                <span class="muted">@item.Note</span>
+                                            </span>
+                                        </li>
+                                    }
+                                </ul>
+                            </section>
                         }
                         else
                         {
-                            <p class="login-lead">@Culture["Fit.CultureMissing"]</p>
+                            <p class="login-lead">@Culture["Fit.LowBarrierNote"]</p>
                         }
-                    </section>
-                    @if (result.ShowFormalBlock)
-                    {
-                        <section class="role-fit-block role-fit-block--formal">
-                            <h4>@Culture["Fit.FormalBlock"]</h4>
-                            <ul class="role-fit-checklist">
-                                @foreach (var item in result.FormalItems)
-                                {
-                                    <li class="@(item.Met ? "is-met" : "is-gap")">
-                                        <span aria-hidden="true">@(item.Met ? "✓" : "✗")</span>
-                                        <span>
-                                            <strong>@item.Label</strong>
-                                            <span class="muted">@item.Note</span>
-                                        </span>
-                                    </li>
-                                }
-                            </ul>
-                        </section>
                     }
-                    else
-                    {
-                        <p class="login-lead">@Culture["Fit.LowBarrierNote"]</p>
-                    }
-                }
-                <section>
-                    <h4>@Culture["Fit.Strengths"]</h4>
+                </li>
+                <li class="role-fit-funnel__step">
+                    <h4>@Culture["Fit.Step2"]</h4>
+                    <p class="visually-hidden">@Culture["Fit.Strengths"]</p>
                     <ul>
                         @foreach (var line in result.Strengths)
                         {
                             <li>@line</li>
                         }
                     </ul>
-                </section>
-                <section>
-                    <h4>@Culture["Fit.Gaps"]</h4>
+                </li>
+                <li class="role-fit-funnel__step">
+                    <h4>@Culture["Fit.Step3"]</h4>
+                    <p class="visually-hidden">@Culture["Fit.Gaps"]</p>
                     <ul>
                         @foreach (var line in result.Gaps)
                         {
                             <li>@line</li>
                         }
                     </ul>
-                </section>
-                <section>
-                    <h4>@Culture["Fit.Steps"]</h4>
-                    <ol>
+                </li>
+                <li class="role-fit-funnel__step">
+                    <h4>@Culture["Fit.Step4"]</h4>
+                    <p class="visually-hidden">@Culture["Fit.Steps"]</p>
+                    <ol class="role-fit-funnel__actions">
                         @foreach (var line in result.ActionSteps)
                         {
                             <li>@line</li>
                         }
                     </ol>
+                    @if (result.ShowUpskill || result.VacancyId is null)
+                    {
+                        <TrainingOffersBlock Offers="result.TrainingOffers" JobTitle="@result.JobTitle" Campaign="functie_fit" />
+                    }
+                </li>
+            </ol>
+
+            @if (result.SimilarRoles.Count > 0)
+            {
+                <section class="role-fit-convert" aria-labelledby="fit-similar-title">
+                    <h4 id="fit-similar-title">@Culture["Fit.SimilarTitle"]</h4>
+                    <p class="login-lead">@Culture["Fit.SimilarLead"]</p>
+                    <ul class="role-fit-convert__list">
+                        @foreach (var role in result.SimilarRoles)
+                        {
+                            <li>
+                                <p>
+                                    <strong>@role.Title</strong>
+                                    @if (role.FitPercent > 0)
+                                    {
+                                        <span class="muted">@role.FitPercent%</span>
+                                    }
+                                </p>
+                                <p class="muted">@role.Why</p>
+                                <button class="engagement-btn" type="button" disabled="@_busy" @onclick="() => EvaluateSimilarAsync(role.Title)">
+                                    @Culture["Fit.CheckSimilar"]
+                                </button>
+                            </li>
+                        }
+                    </ul>
                 </section>
-                <a class="login-submit" href="@result.MapHref">@Culture["Fit.OpenMap"]</a>
-                @if (result.ShowUpskill || result.VacancyId is null)
+            }
+
+            <section class="role-fit-convert" aria-labelledby="fit-direct-title">
+                <h4 id="fit-direct-title">@Culture["Fit.DirectTitle"]</h4>
+                <p class="login-lead">@Culture["Fit.DirectLead"]</p>
+                @if (result.DirectVacancies.Count == 0)
                 {
-                    <TrainingOffersBlock Offers="result.TrainingOffers" JobTitle="@result.JobTitle" Campaign="functie_fit" />
+                    <p class="muted">@Culture["Fit.DirectEmpty"]</p>
                 }
-            </div>
+                else
+                {
+                    <ul class="role-fit-convert__list">
+                        @foreach (var vacancy in result.DirectVacancies)
+                        {
+                            <li>
+                                <p>
+                                    <a href="@vacancy.Href"><strong>@vacancy.Title</strong></a>
+                                    <span class="muted">@vacancy.MatchPercent% · @vacancy.CompanyName</span>
+                                </p>
+                            </li>
+                        }
+                    </ul>
+                }
+                <a class="engagement-btn" href="@result.MapHref">@Culture["Fit.OpenMap"]</a>
+            </section>
+
             @if (result.ShowDeepUpsell)
             {
                 <p class="login-lead fit-upsell">@Culture["Fit.DeepUpsell"]</p>
@@ -139,9 +195,13 @@
     private string _jobTitle = "";
     private RoleFitCheckState? _state;
     private bool _autoEvaluated;
+    private Guid? _activeVacancyId;
 
     protected override void OnInitialized()
-        => Culture.Changed += OnCultureChanged;
+    {
+        _activeVacancyId = VacancyId;
+        Culture.Changed += OnCultureChanged;
+    }
 
     protected override Task OnInitializedAsync()
         => TryLoadAsync();
@@ -176,6 +236,7 @@
             if (VacancyId is Guid vid && _state is { IsUnlocked: true } && !_autoEvaluated)
             {
                 _autoEvaluated = true;
+                _activeVacancyId = vid;
                 _state = await Api.EvaluateRoleFitAsync(_jobTitle, vid);
                 if (_state.LastResult is { } fresh)
                 {
@@ -197,13 +258,23 @@
         }
     }
 
-    private async Task EvaluateAsync()
+    private Task EvaluateAsync()
+        => RunEvaluateAsync(_jobTitle, _activeVacancyId);
+
+    private Task EvaluateSimilarAsync(string title)
+    {
+        _jobTitle = title;
+        _activeVacancyId = null;
+        return RunEvaluateAsync(title, vacancyId: null);
+    }
+
+    private async Task RunEvaluateAsync(string title, Guid? vacancyId)
     {
         _busy = true;
         _message = null;
         try
         {
-            _state = await Api.EvaluateRoleFitAsync(_jobTitle, VacancyId);
+            _state = await Api.EvaluateRoleFitAsync(title, vacancyId);
         }
         catch (Exception ex)
         {

@@ -55,7 +55,11 @@ public static class RoleFitCheckJson
                         dto.AvailabilityOk ?? true,
                         dto.ShowFormalBlock ?? false,
                         dto.ShowUpskill ?? false)
-                    : null);
+                    : null,
+                (dto.SimilarRoles ?? [])
+                    .Where(s => !string.IsNullOrWhiteSpace(s.Title))
+                    .Select(s => new RoleFitSimilarRole(s.Title!.Trim(), s.Why ?? "", s.FitPercent))
+                    .ToList());
             return RoleFitCheckBuilder.Sanitize(snapshot);
         }
         catch (JsonException)
@@ -89,7 +93,13 @@ public static class RoleFitCheckJson
         }).ToList(),
         AvailabilityOk = snapshot.VacancyFit?.AvailabilityOk,
         ShowFormalBlock = snapshot.VacancyFit?.ShowFormalBlock,
-        ShowUpskill = snapshot.VacancyFit?.ShowUpskill
+        ShowUpskill = snapshot.VacancyFit?.ShowUpskill,
+        SimilarRoles = snapshot.SimilarRoles?.Select(s => new SimilarDto
+        {
+            Title = s.Title,
+            Why = s.Why,
+            FitPercent = s.FitPercent
+        }).ToList()
     };
 
     private sealed class FitDto
@@ -112,6 +122,14 @@ public static class RoleFitCheckJson
         public bool? AvailabilityOk { get; set; }
         public bool? ShowFormalBlock { get; set; }
         public bool? ShowUpskill { get; set; }
+        public List<SimilarDto>? SimilarRoles { get; set; }
+    }
+
+    private sealed class SimilarDto
+    {
+        public string? Title { get; set; }
+        public string? Why { get; set; }
+        public int FitPercent { get; set; }
     }
 
     private sealed class FormalDto

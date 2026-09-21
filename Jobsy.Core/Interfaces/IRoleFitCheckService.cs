@@ -44,6 +44,17 @@ public sealed record RoleFitCheckResultDto(
     IReadOnlyList<RoleFitFormalItemDto>? FormalItems = null,
     bool ShowFormalBlock = false,
     bool ShowUpskill = false,
-    bool AvailabilityOk = true);
+    bool AvailabilityOk = true,
+    IReadOnlyList<RoleFitSimilarRoleDto>? SimilarRoles = null,
+    IReadOnlyList<RoleFitDirectVacancyDto>? DirectVacancies = null);
 
 public sealed record RoleFitFormalItemDto(string Key, string Label, bool Met, string Note);
+
+public sealed record RoleFitSimilarRoleDto(string Title, string Why, int FitPercent);
+
+public sealed record RoleFitDirectVacancyDto(
+    Guid Id,
+    string Title,
+    string CompanyName,
+    int MatchPercent,
+    string Href);

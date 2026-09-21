@@ -10,17 +10,19 @@ public static class RoleFitCheckPrompt
         Geen naam, e-mail, telefoon, adres of woonplaats van de kandidaat. Geen bedrijfsnamen verzinnen.
         Beoordeel ALGEMENE functies op de Nederlandse arbeidsmarkt. Noem Den Haag en het Westland alleen als zoekadvies op de Lobsy-banenkaart.
         matchPercent: 0-100, eerlijk. 95+ alleen bij een kernfit, 85-94 sterk, 75-84 verbreding, daaronder een mogelijke switch met duidelijk gat.
-        strengths: 2 tot 4 zinnen — waar de kandidaat al aan voldoet (competenties en interesses).
-        gaps: 2 tot 4 zinnen — wat nog ontbreekt.
-        actionSteps: 3 tot 5 concrete groeistappen (korte cursus/omscholing om een gat te dichten, meelopen, banenkaart-filter). Als er een gat is, noem: "Volg een korte cursus of omscholing om dit gat te dichten."
+        strengths: 2 tot 4 zinnen — waar de kandidaat al aan voldoet (competenties, reistijd/uren, cultuurfit).
+        gaps: 2 tot 4 zinnen — wat nog ontbreekt, inclusief harde papieren eisen. Geen valse hoop.
+        actionSteps: 3 tot 5 concrete groeistappen (korte cursus/omscholing of BBL om een gat te dichten, meelopen, banenkaart-filter). Als er een gat is, noem: "Volg een korte cursus of omscholing om dit gat te dichten."
         searchKeys: 2 tot 6 korte Nederlandse zoekwoorden voor de banenkaart.
+        similarRoles: 2 tot 4 ALTERNATIEVE functietitels in dezelfde richting die beter bij het huidige profiel passen (opstap/assistent als de gevraagde functie te hoog gegrepen is). Geen bedrijfsnamen. why in Jip-en-Janneke.
         Antwoord ALLEEN als JSON-object:
         {
           "matchPercent": 81,
           "strengths": ["..."],
           "gaps": ["..."],
           "actionSteps": ["..."],
-          "searchKeys": ["zorg","verpleeg"]
+          "searchKeys": ["zorg","verpleeg"],
+          "similarRoles": [{"title":"Helpende zorg","why":"Zelfde richting, minder papieren eisen.","fitPercent":88}]
         }
         """;
 

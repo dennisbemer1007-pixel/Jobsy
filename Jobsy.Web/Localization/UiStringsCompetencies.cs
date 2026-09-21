@@ -215,9 +215,9 @@ internal static class UiStringsCompetencies
         ["Fit.Placeholder"] = "Bijvoorbeeld verpleegkundige of magazijnmedewerker",
         ["Fit.Check"] = "Past dit bij mij?",
         ["Fit.Match"] = "Match",
-        ["Fit.Strengths"] = "Waar voldoe je al aan?",
-        ["Fit.Gaps"] = "Waar zit het gat?",
-        ["Fit.Steps"] = "Groeistappen",
+        ["Fit.Strengths"] = "Waar je op matcht",
+        ["Fit.Gaps"] = "Wat je mist",
+        ["Fit.Steps"] = "Wat je dient te doen",
         ["Fit.OpenMap"] = "Vergelijkbare vacatures in Den Haag en het Westland",
         ["Fit.TrainingTitle"] = "Erkende opleidingen",
         ["Fit.TrainingLead"] = "Volg een korte cursus of omscholing om dit gat te dichten. Eerst lokale praktijkopleiders in Den Haag en het Westland; landelijke cursussen als vangnet.",
@@ -227,7 +227,17 @@ internal static class UiStringsCompetencies
         ["Fit.LowBarrierNote"] = "Geen extra diploma’s of certificaten nodig. Reistijd en beschikbaarheid zijn genoeg.",
         ["Fit.CheckVacancy"] = "Past deze vacature bij mij?",
         ["Fit.ShowScores"] = "Bekijk scores en werkstijl",
-        ["Fit.HideScores"] = "Verberg scores"
+        ["Fit.HideScores"] = "Verberg scores",
+        ["Fit.Step1"] = "Stap 1 — Matchpercentage",
+        ["Fit.Step2"] = "Stap 2 — Waar je op matcht",
+        ["Fit.Step3"] = "Stap 3 — Wat je mist",
+        ["Fit.Step4"] = "Stap 4 — Wat je dient te doen",
+        ["Fit.SimilarTitle"] = "Vergelijkbare functies",
+        ["Fit.SimilarLead"] = "Deze richtingen sluiten beter aan bij je huidige profiel — vaak een opstap als de gekozen functie te hoog gegrepen is.",
+        ["Fit.CheckSimilar"] = "Toets deze functie",
+        ["Fit.DirectTitle"] = "Direct passende vacatures op Lobsy",
+        ["Fit.DirectLead"] = "Openstaande banen in Den Haag en het Westland waar je met je huidige profiel kunt starten — zonder extra opleiding.",
+        ["Fit.DirectEmpty"] = "We vinden nu geen vacature waar je zonder extra papierwerk op kunt starten. Kijk op de banenkaart of kies een vergelijkbare functie."
     };
 
     private static Dictionary<string, string> En() => new(StringComparer.OrdinalIgnoreCase)
@@ -419,9 +429,9 @@ internal static class UiStringsCompetencies
         ["Fit.Placeholder"] = "For example nurse or warehouse worker",
         ["Fit.Check"] = "Does this fit me?",
         ["Fit.Match"] = "Match",
-        ["Fit.Strengths"] = "What do you already bring?",
-        ["Fit.Gaps"] = "Where is the gap?",
-        ["Fit.Steps"] = "Growth steps",
+        ["Fit.Strengths"] = "Where you already match",
+        ["Fit.Gaps"] = "What you are missing",
+        ["Fit.Steps"] = "What you should do next",
         ["Fit.OpenMap"] = "Similar vacancies in The Hague and Westland",
         ["Fit.TrainingTitle"] = "Recognised courses",
         ["Fit.TrainingLead"] = "Take a short course or retraining to close this gap. Local providers in The Hague and Westland first; national courses as a fallback.",
@@ -431,6 +441,16 @@ internal static class UiStringsCompetencies
         ["Fit.LowBarrierNote"] = "No extra diplomas or certificates needed. Travel time and availability are enough.",
         ["Fit.CheckVacancy"] = "Does this vacancy fit me?",
         ["Fit.ShowScores"] = "View scores and work style",
-        ["Fit.HideScores"] = "Hide scores"
+        ["Fit.HideScores"] = "Hide scores",
+        ["Fit.Step1"] = "Step 1 — Match percentage",
+        ["Fit.Step2"] = "Step 2 — Where you match",
+        ["Fit.Step3"] = "Step 3 — What you are missing",
+        ["Fit.Step4"] = "Step 4 — What you should do",
+        ["Fit.SimilarTitle"] = "Similar roles",
+        ["Fit.SimilarLead"] = "These directions fit your current profile better — often a stepping stone if the chosen role is a stretch.",
+        ["Fit.CheckSimilar"] = "Check this role",
+        ["Fit.DirectTitle"] = "Vacancies on Lobsy you can start now",
+        ["Fit.DirectLead"] = "Open jobs in The Hague and Westland that match your current profile — no extra training needed.",
+        ["Fit.DirectEmpty"] = "We cannot find a vacancy you can start without extra papers. Open the job map or try a similar role."
     };
 }
