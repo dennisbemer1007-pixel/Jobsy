@@ -262,12 +262,20 @@ public class CareerCompassTests
         Assert.DoesNotContain("kompas-grid", home, StringComparison.Ordinal);
 
         var css = File.ReadAllText(Path.Combine(root, "Jobsy.Web/wwwroot/css/app.css"));
-        Assert.Contains(".kompas-tabs.admin-sublinks", css, StringComparison.Ordinal);
+        Assert.Contains(".kompas-tabs.admin-sublinks {\n    position: sticky;\n    top: 0;\n    z-index: 6;\n    display: flex;\n    flex-direction: row;\n    flex-wrap: wrap;", css, StringComparison.Ordinal);
+        Assert.Contains(".kompas-workspace", css, StringComparison.Ordinal);
+        Assert.Contains(".competency-match-card__head", css, StringComparison.Ordinal);
         Assert.Contains(".kompas-status-stack", css, StringComparison.Ordinal);
         Assert.Contains(".kompas-card[hidden]", css, StringComparison.Ordinal);
         var minCss = File.ReadAllText(Path.Combine(root, "Jobsy.Web/wwwroot/css/app.min.css"));
         Assert.Contains(".kompas-tabs.admin-sublinks", minCss, StringComparison.Ordinal);
+        Assert.Contains(".kompas-workspace", minCss, StringComparison.Ordinal);
+        Assert.Contains(".competency-match-card__head", minCss, StringComparison.Ordinal);
         Assert.Contains(".kompas-card[hidden]", minCss, StringComparison.Ordinal);
+        Assert.Contains("kompas-workspace", home, StringComparison.Ordinal);
+        Assert.DoesNotContain("pill-scroller", home, StringComparison.Ordinal);
+        var matches = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Pages/Candidate/CompetencyMatchPanel.razor"));
+        Assert.Contains("competency-match-card__head", matches, StringComparison.Ordinal);
         Assert.Contains(".competency-skill-list", css, StringComparison.Ordinal);
         Assert.Contains(".competency-skill-list", minCss, StringComparison.Ordinal);
 

@@ -20,7 +20,7 @@
         <p class="state-message">@_message</p>
     }
 
-    <div class="kompas-tabs admin-sublinks pill-scroller"
+    <div class="kompas-tabs admin-sublinks"
          role="tablist"
          aria-label="@Culture["Kompas.TabsLabel"]"
          @onkeydown="OnTabListKeyDown">
@@ -86,6 +86,8 @@
         </button>
     </div>
 
+    <div class="kompas-workspace">
+    <div class="kompas-workspace__main">
     <article id="kompas-panel-whoami"
              class="kompas-card kompas-card--tab"
              role="tabpanel"
@@ -349,6 +351,14 @@
              hidden="@(_tab != CandidateKompasTabs.Fit)">
         <RoleFitCheckPanel VacancyId="@_vacancyId" />
     </article>
+    </div>
+    @if (Side is not null)
+    {
+        <div class="kompas-workspace__side">
+            @Side
+        </div>
+    }
+    </div>
 </section>
 
 @code {
@@ -389,6 +399,7 @@
 
     [Parameter] public string? InitialTab { get; set; }
     [Parameter] public RenderFragment? ProfileTab { get; set; }
+    [Parameter] public RenderFragment? Side { get; set; }
 
     protected override void OnInitialized()
     {

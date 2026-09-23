@@ -21,9 +21,6 @@
             <p class="login-lead">@Culture["Profile.ReturnHint"]</p>
         }
     </header>
-    <div class="profile-layout">
-    <div class="profile-layout__main">
-    <section class="detail-card competency-profile-card" aria-labelledby="kompas-title">
         <CandidateKompas>
             <ProfileTab>
         <p class="login-lead">@Culture["Profile.Lead"]</p>
@@ -38,7 +35,7 @@
         }
         else
         {
-            <div class="profile-form">
+            <div class="profile-form competency-profile-card">
                 <nav class="profile-section-nav pill-scroller" aria-label="@Culture["Profile.Lead"]">
                     <button type="button"
                             class="admin-sublink @(IsSectionOpen("personal") ? "admin-sublink--active" : null)"
@@ -534,15 +531,14 @@
             </section>
         }
             </ProfileTab>
+            <Side>
+                <div class="profile-layout__matches">
+                    <div class="detail-card">
+                        <CompetencyMatchPanel Items="_matchedVacancies" Loading="_matchesLoading" />
+                    </div>
+                </div>
+            </Side>
         </CandidateKompas>
-    </section>
-    </div>
-    <aside class="profile-layout__matches">
-        <div class="detail-card">
-            <CompetencyMatchPanel Items="_matchedVacancies" Loading="_matchesLoading" />
-        </div>
-    </aside>
-    </div>
 </div>
 
 <UnsubscribeDialog IsOpen="_unsubscribeOpen"
