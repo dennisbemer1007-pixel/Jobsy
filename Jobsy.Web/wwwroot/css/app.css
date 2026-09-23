@@ -11260,6 +11260,46 @@ button.linkish:hover {
     background: color-mix(in srgb, #c4a35a 22%, transparent);
 }
 
+.source-badge--regular {
+    color: #1d4f6b;
+    background: color-mix(in srgb, #5a9bc4 18%, transparent);
+}
+
+.vacancy-source-balance {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem 0.75rem;
+    align-items: center;
+    margin: 0 0 0.75rem;
+}
+
+.vacancy-source-balance__chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.35rem 0.65rem;
+    border: 1px solid var(--border, #d5dbe3);
+    border-radius: 0.35rem;
+    background: color-mix(in srgb, var(--bg, #fff) 92%, var(--brand, #0b6e4f) 8%);
+    font-size: 0.875rem;
+    cursor: pointer;
+    color: inherit;
+}
+
+.vacancy-source-balance__chip.is-active {
+    border-color: color-mix(in srgb, var(--brand, #0b6e4f) 55%, var(--border, #d5dbe3));
+    background: color-mix(in srgb, var(--brand, #0b6e4f) 12%, transparent);
+    font-weight: 600;
+}
+
+.vacancy-source-balance__chip:hover {
+    border-color: color-mix(in srgb, var(--brand, #0b6e4f) 40%, var(--border, #d5dbe3));
+}
+
+.ats-card__channel {
+    margin-left: 0.35rem;
+}
+
 .ats-score {
     display: inline-block;
     min-width: 2.75rem;

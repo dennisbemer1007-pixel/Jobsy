@@ -71,10 +71,18 @@ public class Sprint8PolishTests
         foreach (var key in new[]
                  {
                      "active_vacancies", "active_vacancies_employers", "active_vacancies_intermediaries",
+                     "active_vacancies_ats", "active_vacancies_regular",
                      "users_open_for_work", "users_active", "companies_employers", "companies_intermediaries"
                  })
         {
             var count = summary.First(m => m.Key == key).Value;
+            if (key is "active_vacancies_ats")
+            {
+                // Seed may have zero ATS vacancies; still require the metric key.
+                Assert.True(count >= 0);
+                continue;
+            }
+
             Assert.True(count > 0, $"{key} summary should be > 0 after seed");
             var drill = await sut.GetDrilldownAsync(key, includePlatformOnly: true, companyIds: null, period: "month");
             Assert.True(drill.Count > 0, $"{key} drilldown should list items");

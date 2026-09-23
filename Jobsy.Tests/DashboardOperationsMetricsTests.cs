@@ -165,6 +165,8 @@ public sealed class DashboardOperationsMetricsTests
         Assert.Equal("growth", MetricDashboardCatalog.CategoryIdFor("applications_pending"));
         Assert.Equal("growth", MetricDashboardCatalog.CategoryIdFor("conversion_rate"));
         Assert.Equal("growth", MetricDashboardCatalog.CategoryIdFor("tokens_balance"));
+        Assert.Equal("growth", MetricDashboardCatalog.CategoryIdFor("active_vacancies_ats"));
+        Assert.Equal("growth", MetricDashboardCatalog.CategoryIdFor("active_vacancies_regular"));
         Assert.Equal("engagement", MetricDashboardCatalog.CategoryIdFor("active_boosts"));
         Assert.Equal("engagement", MetricDashboardCatalog.CategoryIdFor("avg_travel_minutes"));
         Assert.Equal("engagement", MetricDashboardCatalog.CategoryIdFor("top_transport_share"));

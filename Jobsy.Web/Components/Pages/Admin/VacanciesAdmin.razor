@@ -21,6 +21,31 @@
     }
     else
     {
+        <div class="vacancy-source-balance" role="group" aria-label="Bronverhouding actieve vacatures">
+            <button type="button"
+                    class="vacancy-source-balance__chip @(_channelFilter == "" ? "is-active" : null)"
+                    @onclick='() => SetChannelFilter("")'>
+                Alle actief
+                <strong>@_activeTotal</strong>
+            </button>
+            <button type="button"
+                    class="vacancy-source-balance__chip @(_channelFilter == "ats" ? "is-active" : null)"
+                    @onclick='() => SetChannelFilter("ats")'>
+                <span class="source-badge source-badge--ats">ATS</span>
+                <strong>@_activeAts</strong>
+            </button>
+            <button type="button"
+                    class="vacancy-source-balance__chip @(_channelFilter == "regular" ? "is-active" : null)"
+                    @onclick='() => SetChannelFilter("regular")'>
+                <span class="source-badge source-badge--regular">Regulier</span>
+                <strong>@_activeRegular</strong>
+            </button>
+            @if (_activeTotal > 0)
+            {
+                <span class="muted">@_activeAts / @_activeTotal ATS · @_activeRegular / @_activeTotal regulier</span>
+            }
+        </div>
+
         <div class="filter-bar">
             <label class="filter-bar__query">
                 @Culture["Common.Search"]
@@ -28,6 +53,14 @@
                        @bind="_searchQuery"
                        @bind:event="oninput"
                        placeholder="@Culture["Vacancy.SearchCompanyOrTitlePlaceholder"]" />
+            </label>
+            <label>
+                Bron
+                <select @bind="_channelFilter">
+                    <option value="">Alle</option>
+                    <option value="ats">ATS</option>
+                    <option value="regular">Regulier</option>
+                </select>
             </label>
             <span class="muted">@_filtered.Count van @_vacancies.Count</span>
         </div>
@@ -90,8 +123,9 @@
                                 <td>@v.StartDate.ToString("dd-MM-yyyy")</td>
                                 <td>@v.EndDate.ToString("dd-MM-yyyy")</td>
                                 <td>
-                                    <span class="source-badge source-badge--@VacancySourceDisplay.CssModifier(v.CreatedVia)">
-                                        @VacancySourceDisplay.Label(v.CreatedVia)
+                                    <span class="source-badge source-badge--@VacancySourceDisplay.ChannelCssModifier(v.CreatedVia)"
+                                          title="@VacancySourceDisplay.Label(v.CreatedVia)">
+                                        @VacancySourceDisplay.ChannelLabel(v.CreatedVia)
                                     </span>
                                 </td>
                                 <td><a href="@MetricHref(v, "impressions")">@v.ImpressionCount</a></td>
@@ -161,6 +195,7 @@
     private string _sortColumn = "start";
     private bool _sortAscending;
     private string _statusFilter = "";
+    private string _channelFilter = "";
     private bool _extendedOnly;
     private bool _sortByApplications;
     private Guid? _companyIdFilter;
@@ -173,6 +208,16 @@
     private List<MetricDrilldownItem> _drilldown = [];
 
     private List<AdminVacancyItem> _filtered => Filter().ToList();
+
+    private int _activeAts => _vacancies.Count(v =>
+        v.Status.Equals("Active", StringComparison.OrdinalIgnoreCase)
+        && VacancySourceDisplay.IsAts(v.CreatedVia));
+
+    private int _activeRegular => _vacancies.Count(v =>
+        v.Status.Equals("Active", StringComparison.OrdinalIgnoreCase)
+        && !VacancySourceDisplay.IsAts(v.CreatedVia));
+
+    private int _activeTotal => _activeAts + _activeRegular;
 
 
     protected override void OnInitialized()
@@ -196,6 +241,15 @@
         if (qs.TryGetValue("status", out var status))
         {
             _statusFilter = status.ToString();
+        }
+
+        if (qs.TryGetValue("channel", out var channel)
+            || qs.TryGetValue("source", out channel))
+        {
+            var raw = channel.ToString().Trim().ToLowerInvariant();
+            _channelFilter = raw is "ats" or "regular" or "regulier"
+                ? (raw is "regulier" ? "regular" : raw)
+                : "";
         }
 
         if (qs.TryGetValue("extended", out var ext) && bool.TryParse(ext, out var extended) && extended)
@@ -243,6 +297,15 @@
             q = q.Where(v => v.Status.Equals(_statusFilter, StringComparison.OrdinalIgnoreCase));
         }
 
+        if (string.Equals(_channelFilter, "ats", StringComparison.OrdinalIgnoreCase))
+        {
+            q = q.Where(v => VacancySourceDisplay.IsAts(v.CreatedVia));
+        }
+        else if (string.Equals(_channelFilter, "regular", StringComparison.OrdinalIgnoreCase))
+        {
+            q = q.Where(v => !VacancySourceDisplay.IsAts(v.CreatedVia));
+        }
+
         if (_extendedOnly)
         {
             q = q.Where(v => v.IsExtended);
@@ -288,6 +351,9 @@
 
     private static string MetricHref(AdminVacancyItem v, string metric)
         => $"/vacancies/{v.Id}?metric={metric}";
+
+    private void SetChannelFilter(string channel)
+        => _channelFilter = channel ?? "";
 
     private void OpenVacancyDetails(AdminVacancyItem vacancy)
         => Nav.NavigateTo($"/vacancies/{vacancy.Id}");

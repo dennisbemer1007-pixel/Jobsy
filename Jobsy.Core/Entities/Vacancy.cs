@@ -28,7 +28,9 @@ public class Vacancy
     /// </summary>
     public bool ShowClientAddressOnMap { get; set; }
 
-    /// <summary>Whether the vacancy was created via the UI, external API, or CSV import.</summary>
+    /// <summary>
+    /// Origin channel: Manual / Api / Csv = Regulier; Ats = scrape pipeline.
+    /// </summary>
     public VacancySource CreatedVia { get; set; } = VacancySource.Manual;
 
     /// <summary>UTC creation timestamp (used for never-published draft cleanup).</summary>

@@ -25,6 +25,8 @@ public static class MetricDashboardCatalog
                 "applications_pending",
                 "conversion_rate",
                 "active_vacancies",
+                "active_vacancies_ats",
+                "active_vacancies_regular",
                 "active_vacancies_employers",
                 "active_vacancies_intermediaries",
                 "users_active",
