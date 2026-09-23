@@ -17676,55 +17676,121 @@ html.cookie-consent-known .cookie-consent {
     z-index: 1;
 }
 
+@keyframes swipe-card-enter {
+    0% {
+        opacity: 0;
+        transform: translate3d(0, 22px, 0) scale(0.94);
+    }
+    65% {
+        opacity: 1;
+        transform: translate3d(0, -5px, 0) scale(1.015);
+    }
+    100% {
+        opacity: 1;
+        transform: translate3d(0, 0, 0) scale(1);
+    }
+}
+
+@keyframes swipe-btn-pop {
+    0% { transform: scale(1); }
+    30% { transform: scale(0.84); }
+    62% { transform: scale(1.1); }
+    100% { transform: scale(1); }
+}
+
+@keyframes match-badge-glow {
+    0%, 100% {
+        box-shadow:
+            0 0 0 3px rgba(255, 122, 61, 0.28),
+            0 4px 14px rgba(255, 106, 40, 0.45);
+    }
+    50% {
+        box-shadow:
+            0 0 0 5px rgba(255, 122, 61, 0.18),
+            0 6px 18px rgba(255, 106, 40, 0.55);
+    }
+}
+
 .swipe-card {
     position: relative;
     background: #fff;
-    border-radius: 1rem;
+    border-radius: 1.75rem; /* rounded-3xl */
     box-shadow: 0 8px 22px rgba(18, 32, 51, 0.1);
     padding: 0.55rem 0.6rem 0.7rem;
     touch-action: pan-y;
     user-select: none;
     transition: transform var(--swipe-duration, 280ms) cubic-bezier(0.22, 0.9, 0.3, 1),
-                opacity var(--swipe-duration, 280ms) ease;
-    will-change: transform, opacity;
+                opacity var(--swipe-duration, 280ms) ease,
+                box-shadow 180ms ease;
+    will-change: transform, opacity, box-shadow;
     flex: 1;
     min-height: 0;
     display: flex;
     flex-direction: column;
     overflow: hidden;
+    backface-visibility: hidden;
+}
+
+.swipe-card--enter:not(.is-dragging):not(.swipe-card--out-left):not(.swipe-card--out-right) {
+    animation: swipe-card-enter 420ms cubic-bezier(0.34, 1.45, 0.64, 1) both;
 }
 
 .swipe-card--backdrop {
     transform: scale(0.985);
     opacity: 0.92;
     box-shadow: 0 4px 14px rgba(18, 32, 51, 0.08);
+    animation: none;
 }
 
-.swipe-card.is-dragging {
+.swipe-card.is-dragging,
+.swipe-card.is-lifting {
     cursor: grabbing;
+    animation: none;
 }
 
 .swipe-card--out-left {
-    transform: translateX(-130%) rotate(-14deg);
+    transform: translate3d(-130%, 8px, 0) rotate(-14deg) scale(0.96);
     opacity: 0;
+    box-shadow: 0 18px 36px rgba(18, 32, 51, 0.22);
 }
 
 .swipe-card--out-right {
-    transform: translateX(130%) rotate(14deg);
+    transform: translate3d(130%, 8px, 0) rotate(14deg) scale(0.96);
     opacity: 0;
+    box-shadow: 0 18px 36px rgba(18, 32, 51, 0.22);
 }
 
 .swipe-card__match-badge {
     position: absolute;
-    top: 0.45rem;
-    right: 0.45rem;
-    z-index: 2;
-    background: #0f2d5c;
-    color: #fff;
-    font-weight: 700;
-    font-size: 0.7rem;
-    padding: 0.2rem 0.45rem;
+    top: 0.5rem;
+    right: 0.5rem;
+    z-index: 3;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 2.55rem;
+    padding: 0.28rem 0.55rem;
     border-radius: 999px;
+    background: linear-gradient(145deg, #ff8a4c 0%, #ff5a2a 55%, #f04318 100%);
+    color: #fff;
+    font-weight: 800;
+    font-size: 0.74rem;
+    letter-spacing: 0.01em;
+    animation: match-badge-glow 2.4s ease-in-out infinite;
+}
+
+.swipe-card__match-badge-glow {
+    position: absolute;
+    inset: -2px;
+    border-radius: inherit;
+    background: radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.45), transparent 60%);
+    pointer-events: none;
+    opacity: 0.7;
+}
+
+.swipe-card__match-badge-value {
+    position: relative;
+    z-index: 1;
 }
 
 .swipe-card__logo-row {
@@ -17757,7 +17823,7 @@ html.cookie-consent-known .cookie-consent {
 
 .swipe-card__photo {
     position: relative;
-    border-radius: 0.7rem;
+    border-radius: 1.15rem;
     overflow: hidden;
     flex: 1 1 auto;
     min-height: 7.5rem;
@@ -17785,7 +17851,7 @@ html.cookie-consent-known .cookie-consent {
     left: 0.4rem;
     bottom: 0.4rem;
     padding: 0.2rem 0.45rem;
-    border-radius: 0.4rem;
+    border-radius: 0.55rem;
     background: rgba(0, 0, 0, 0.45);
     color: #fff;
     font-size: 0.7rem;
@@ -17801,18 +17867,19 @@ html.cookie-consent-known .cookie-consent {
     top: 0.55rem;
     padding: 0.2rem 0.45rem;
     border: 3px solid currentColor;
-    border-radius: 0.35rem;
+    border-radius: 0.55rem;
     font-weight: 800;
     letter-spacing: 0.06em;
     font-size: 0.75rem;
     opacity: 0;
     transform: scale(0.85) rotate(-12deg);
-    transition: opacity 120ms ease;
+    transition: opacity 120ms ease, transform 180ms cubic-bezier(0.34, 1.45, 0.64, 1);
     pointer-events: none;
 }
 
 .swipe-card__stamp.is-on {
-    opacity: 0.9;
+    opacity: 0.92;
+    transform: scale(1) rotate(-8deg);
 }
 
 .swipe-card__stamp--no {
@@ -17826,6 +17893,10 @@ html.cookie-consent-known .cookie-consent {
     transform: scale(0.85) rotate(12deg);
 }
 
+.swipe-card__stamp--yes.is-on {
+    transform: scale(1) rotate(8deg);
+}
+
 .swipe-card__stats {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
@@ -17836,7 +17907,7 @@ html.cookie-consent-known .cookie-consent {
 
 .swipe-card__stat {
     border: 1px solid #e4ddd2;
-    border-radius: 0.5rem;
+    border-radius: 0.75rem;
     padding: 0.3rem 0.25rem;
     text-align: center;
     display: flex;
@@ -17844,6 +17915,7 @@ html.cookie-consent-known .cookie-consent {
     align-items: center;
     gap: 0.05rem;
     min-width: 0;
+    background: #fffcfa;
 }
 
 .swipe-card__stat-icon {
@@ -17885,19 +17957,21 @@ html.cookie-consent-known .cookie-consent {
     padding: 0;
     display: flex;
     flex-wrap: wrap;
-    gap: 0.25rem;
+    gap: 0.28rem;
     max-height: 2.6rem;
     overflow: hidden;
     flex-shrink: 0;
 }
 
 .swipe-card__tags li {
-    background: #4f8a68;
-    color: #fff;
+    background: linear-gradient(180deg, #eef8f1 0%, #e2f3e8 100%);
+    color: #1d6b45;
+    border: 1.5px solid #9fd4b3;
     font-size: 0.65rem;
-    font-weight: 600;
-    padding: 0.2rem 0.48rem;
+    font-weight: 700;
+    padding: 0.22rem 0.55rem;
     border-radius: 999px;
+    box-shadow: 0 1px 0 rgba(255, 255, 255, 0.8) inset;
 }
 
 .swipe-card__more {
@@ -17916,6 +17990,11 @@ html.cookie-consent-known .cookie-consent {
     border-radius: 999px;
     box-shadow: 0 2px 8px rgba(18, 32, 51, 0.12);
     cursor: pointer;
+    transition: transform 160ms cubic-bezier(0.34, 1.45, 0.64, 1);
+}
+
+.swipe-card__more:active:not(:disabled) {
+    transform: scale(0.94);
 }
 
 .swipe-card__more:disabled,
@@ -17953,14 +18032,25 @@ html.cookie-consent-known .cookie-consent {
     display: grid;
     place-items: center;
     box-shadow: 0 6px 14px rgba(18, 32, 51, 0.16);
+    transition: transform 180ms cubic-bezier(0.34, 1.56, 0.64, 1),
+                box-shadow 180ms ease;
+    will-change: transform;
+}
+
+.swipe-actions__btn:active:not(:disabled) .swipe-actions__circle {
+    transform: scale(0.86);
+}
+
+.swipe-actions__btn.is-pressed .swipe-actions__circle {
+    animation: swipe-btn-pop 340ms cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 .swipe-actions__btn--reject .swipe-actions__circle {
-    background: #ef4444;
+    background: radial-gradient(circle at 35% 30%, #ff7b7b, #ef4444 55%, #dc2626);
 }
 
 .swipe-actions__btn--interest .swipe-actions__circle {
-    background: #6fbf8a;
+    background: radial-gradient(circle at 35% 30%, #95e0ad, #6fbf8a 55%, #4ade80);
 }
 
 .swipe-actions__label {
@@ -17988,6 +18078,20 @@ html.cookie-consent-known .cookie-consent {
 
     .swipe-card__tags {
         max-height: 1.35rem;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .swipe-card--enter,
+    .swipe-actions__btn.is-pressed .swipe-actions__circle,
+    .swipe-card__match-badge {
+        animation: none !important;
+    }
+
+    .swipe-card,
+    .swipe-actions__circle,
+    .swipe-card__more {
+        transition: none !important;
     }
 }
 
