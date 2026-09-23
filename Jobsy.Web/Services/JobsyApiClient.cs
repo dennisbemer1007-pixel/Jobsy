@@ -3820,7 +3820,8 @@ public record CreateVacancyForm(
     string[]? BarrierDiplomas = null,
     string[]? BarrierCertifications = null,
     int? BarrierMinExperienceYears = null,
-    int? BarrierMinExperienceHours = null);
+    int? BarrierMinExperienceHours = null,
+    string[]? BarrierHardChecks = null);
 
 public sealed class CsvImportRowForm
 {

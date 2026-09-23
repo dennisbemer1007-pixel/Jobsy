@@ -67,7 +67,8 @@ public static class RoleFitCheckBuilder
         var keys = CareerOccupationKeys.Merge(title, occupation is null ? null : CareerOccupationKeys.FromTitle(occupation.Title));
         var strengths = BuildStrengths(title, occupation, competencies, career, disc);
         var gaps = BuildGaps(occupation, competencies, career, disc);
-        var steps = BuildSteps(title, gaps, fromDeepAnalysis);
+        var path = CareerPathPlanner.ForTitle(title);
+        var steps = BuildSteps(title, gaps, fromDeepAnalysis, path);
         var similar = RoleFitFunnel.SuggestSimilar(title, career);
 
         return Sanitize(new RoleFitCheckSnapshot(
@@ -79,7 +80,8 @@ public static class RoleFitCheckBuilder
             keys,
             fromDeepAnalysis,
             FromOpenAi: false,
-            SimilarRoles: similar));
+            SimilarRoles: similar,
+            CareerPath: path));
     }
 
     public static RoleFitVacancyFit BuildVacancyFit(
@@ -100,7 +102,7 @@ public static class RoleFitCheckBuilder
             culture?.Why,
             formal.Items,
             availabilityOk,
-            VacancyBarrierCatalog.ShowFormalBlock(requirements),
+            VacancyBarrierCatalog.ShowFormalBlock(requirements) || formal.Items.Count > 0,
             availabilityOk && cultureOk && formalGaps);
     }
 
@@ -118,7 +120,8 @@ public static class RoleFitCheckBuilder
             snapshot.FromDeepAnalysis,
             snapshot.FromOpenAi,
             snapshot.VacancyFit is null ? null : SanitizeVacancy(snapshot.VacancyFit),
-            RoleFitFunnel.MergeSimilar(snapshot.SimilarRoles, null));
+            RoleFitFunnel.MergeSimilar(snapshot.SimilarRoles, null),
+            SanitizePath(snapshot.CareerPath));
     }
 
     private static RoleFitVacancyFit SanitizeVacancy(RoleFitVacancyFit fit)
@@ -339,17 +342,36 @@ public static class RoleFitCheckBuilder
         return lines.Take(4).ToList();
     }
 
-    private static List<string> BuildSteps(string title, IReadOnlyList<string> gaps, bool fromDeepAnalysis)
+    private static CareerPathPlan? SanitizePath(CareerPathPlan? path)
+    {
+        if (path is null || CareerCompassBuilder.ContainsForbiddenJargon(path.Summary) || path.Summary.Contains('@'))
+        {
+            return null;
+        }
+
+        var steps = path.Steps
+            .Where(s => !string.IsNullOrWhiteSpace(s.Title))
+            .Where(s => !s.Title.Contains('@') && !s.Detail.Contains('@'))
+            .Where(s => !CareerCompassBuilder.ContainsForbiddenJargon(s.Title) && !CareerCompassBuilder.ContainsForbiddenJargon(s.Detail))
+            .Take(6)
+            .ToList();
+        return path with { Steps = steps };
+    }
+
+    private static List<string> BuildSteps(string title, IReadOnlyList<string> gaps, bool fromDeepAnalysis, CareerPathPlan? path)
     {
         var role = title.ToLowerInvariant();
-        var steps = new List<string>
+        var steps = new List<string>();
+        if (path is not null)
         {
-            $"Zoek op de Lobsy-banenkaart in Den Haag en het Westland naar {role} en filter op hoge match.",
-            TrainingCopy.GapAdvice,
-            gaps.Count > 0
-                ? "Pak het grootste gat uit de lijst hierboven: volg een korte training of vraag of je die taak mag oefenen."
-                : "Bewaar twee vacatures die voelen als ‘dit is het’ en solliciteer op de beste fit."
-        };
+            steps.Add(path.Summary);
+        }
+
+        steps.Add($"Zoek op de Lobsy-banenkaart in Den Haag en het Westland naar {role} en filter op hoge match.");
+        steps.Add(TrainingCopy.GapAdvice);
+        steps.Add(gaps.Count > 0
+            ? "Pak het grootste gat uit de lijst hierboven: volg een korte training of vraag of je die taak mag oefenen."
+            : "Bewaar twee vacatures die voelen als ‘dit is het’ en solliciteer op de beste fit.");
         if (!fromDeepAnalysis)
         {
             steps.Add("Wil je een scherper groeistappenplan? Vul de uitgebreide 150-vragen analyse in.");

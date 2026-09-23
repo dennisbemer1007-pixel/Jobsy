@@ -73,9 +73,17 @@
                                 <ul class="role-fit-checklist">
                                     @foreach (var item in result.FormalItems)
                                     {
-                                        <li class="@(item.Met ? "is-met" : "is-gap")">
+                                        <li class="@(item.Met ? "is-met" : item.Dealbreaker ? "is-gap is-dealbreaker" : "is-gap")">
                                             <span aria-hidden="true">@(item.Met ? "✓" : "✗")</span>
                                             <span>
+                                                @if (!item.Met && item.Dealbreaker)
+                                                {
+                                                    <strong class="role-fit-dealbreaker">@Culture["Fit.Dealbreaker"]</strong>
+                                                }
+                                                else if (!item.Met)
+                                                {
+                                                    <strong class="role-fit-important">@Culture["Fit.Important"]</strong>
+                                                }
                                                 <strong>@item.Label</strong>
                                                 <span class="muted">@item.Note</span>
                                             </span>
@@ -113,6 +121,26 @@
                 <li class="role-fit-funnel__step">
                     <h4>@Culture["Fit.Step4"]</h4>
                     <p class="visually-hidden">@Culture["Fit.Steps"]</p>
+                    @if (result.CareerPath is { } path)
+                    {
+                        <section class="role-fit-path" aria-label="@Culture["Fit.PathTitle"]">
+                            <h5>@Culture["Fit.PathTitle"]</h5>
+                            <p class="role-fit-path__summary">@path.Summary</p>
+                            @if (path.Steps.Count > 0)
+                            {
+                                <ol class="role-fit-path__steps">
+                                    @foreach (var step in path.Steps)
+                                    {
+                                        <li>
+                                            <strong>@step.Title</strong>
+                                            <span class="role-fit-path__time">@Culture.Format("Fit.PathWithin", step.DurationLabel)</span>
+                                            <span class="muted">@step.Detail</span>
+                                        </li>
+                                    }
+                                </ol>
+                            }
+                        </section>
+                    }
                     <ol class="role-fit-funnel__actions">
                         @foreach (var line in result.ActionSteps)
                         {

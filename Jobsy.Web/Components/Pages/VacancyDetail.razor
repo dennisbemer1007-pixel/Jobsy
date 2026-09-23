@@ -332,10 +332,7 @@
                 </aside>
             }
 
-            @if (!string.IsNullOrWhiteSpace(_vacancy.RequiredDrivingLicense)
-                || !string.IsNullOrWhiteSpace(_vacancy.RequiredEducation)
-                || _vacancy.MinimumEmployers is > 0
-                || _vacancy.MinimumReferences is > 0)
+            @if (HasHardRequirementTags)
             {
                 <aside class="lobsy-proximity" aria-label="@Culture["Vacancy.HardRequirements"]">
                     <span class="lobsy-proximity__icon"><LobsyMark /></span>
@@ -350,6 +347,22 @@
                             {
                                 <span class="lobsy-proximity__chip">@Culture["Vacancy.EducationLevel"]: @LocalizeEducationList(_vacancy.RequiredEducation)</span>
                             }
+                            @foreach (var kind in _vacancy.BarrierHardChecks ?? [])
+                            {
+                                <span class="lobsy-proximity__chip">@VacancyHardCheckCatalog.Label(kind)</span>
+                            }
+                            @foreach (var diploma in _vacancy.BarrierDiplomas ?? [])
+                            {
+                                <span class="lobsy-proximity__chip">@diploma</span>
+                            }
+                            @foreach (var cert in _vacancy.BarrierCertifications ?? [])
+                            {
+                                <span class="lobsy-proximity__chip">@cert</span>
+                            }
+                            @if (_vacancy.BarrierMinExperienceYears is int years and > 0)
+                            {
+                                <span class="lobsy-proximity__chip">@Culture.Format("Vacancy.MinExperienceYears", years)</span>
+                            }
                             @if (_vacancy.MinimumEmployers is > 0)
                             {
                                 <span class="lobsy-proximity__chip">@Culture.Format("Vacancy.MinEmployers", _vacancy.MinimumEmployers)</span>
@@ -359,6 +372,27 @@
                                 <span class="lobsy-proximity__chip">@Culture.Format("Vacancy.MinReferences", _vacancy.MinimumReferences)</span>
                             }
                         </p>
+                    </div>
+                </aside>
+            }
+
+            @if (VacancyCareerPath is { } careerPath)
+            {
+                <aside class="lobsy-proximity role-fit-path" aria-label="@Culture["Vacancy.PathTitle"]">
+                    <span class="lobsy-proximity__icon"><LobsyMark /></span>
+                    <div class="lobsy-proximity__body">
+                        <p class="lobsy-proximity__title">@Culture["Vacancy.PathTitle"]</p>
+                        <p>@careerPath.Summary</p>
+                        <ol class="role-fit-path__steps">
+                            @foreach (var step in careerPath.Steps)
+                            {
+                                <li>
+                                    <strong>@step.Title</strong>
+                                    <span class="role-fit-path__time">@Culture.Format("Fit.PathWithin", step.DurationLabel)</span>
+                                    <span class="muted">@step.Detail</span>
+                                </li>
+                            }
+                        </ol>
                     </div>
                 </aside>
             }
@@ -882,6 +916,20 @@
             || (!string.IsNullOrWhiteSpace(_vacancy.ScheduleJson) && ScheduleChips.Count > 0));
 
     private bool HasLegalInfo => LegalFactItems.Count > 0;
+
+    private bool HasHardRequirementTags =>
+        _vacancy is not null
+        && (!string.IsNullOrWhiteSpace(_vacancy.RequiredDrivingLicense)
+            || !string.IsNullOrWhiteSpace(_vacancy.RequiredEducation)
+            || _vacancy.MinimumEmployers is > 0
+            || _vacancy.MinimumReferences is > 0
+            || (_vacancy.BarrierHardChecks?.Count ?? 0) > 0
+            || (_vacancy.BarrierDiplomas?.Count ?? 0) > 0
+            || (_vacancy.BarrierCertifications?.Count ?? 0) > 0
+            || _vacancy.BarrierMinExperienceYears is > 0);
+
+    private CareerPathPlan? VacancyCareerPath =>
+        _vacancy is null ? null : CareerPathPlanner.ForTitle(_vacancy.Title);
 
     private string? HoursCategoryLabel
     {

@@ -259,10 +259,14 @@ internal static class UiStringsCompetencies
         ["Fit.Step3"] = "Stap 3 — Wat je mist",
         ["Fit.Step4"] = "Stap 4 — Wat je dient te doen",
         ["Fit.SimilarTitle"] = "Vergelijkbare functies",
-        ["Fit.SimilarLead"] = "Deze richtingen sluiten beter aan bij je huidige profiel — vaak een opstap als de gekozen functie te hoog gegrepen is.",
+        ["Fit.Dealbreaker"] = "Dealbreaker",
+        ["Fit.Important"] = "Belangrijk",
+        ["Fit.PathTitle"] = "Opleidingspad",
+        ["Fit.PathWithin"] = "binnen {0}",
+        ["Fit.SimilarLead"] = "Alleen functies in hetzelfde vakgebied of met een direct verwante opleiding. Overeenkomst in soft skills is niet genoeg.",
         ["Fit.CheckSimilar"] = "Toets deze functie",
         ["Fit.DirectTitle"] = "Direct passende vacatures op Lobsy",
-        ["Fit.DirectLead"] = "Openstaande banen in Den Haag en het Westland waar je met je huidige profiel kunt starten — zonder extra opleiding.",
+        ["Fit.DirectLead"] = "Openstaande banen in hetzelfde vakgebied in Den Haag en het Westland waar je met je huidige profiel kunt starten.",
         ["Fit.DirectEmpty"] = "We vinden nu geen vacature waar je zonder extra papierwerk op kunt starten. Kijk op de banenkaart of kies een vergelijkbare functie."
     };
 
@@ -499,10 +503,14 @@ internal static class UiStringsCompetencies
         ["Fit.Step3"] = "Step 3 — What you are missing",
         ["Fit.Step4"] = "Step 4 — What you should do",
         ["Fit.SimilarTitle"] = "Similar roles",
-        ["Fit.SimilarLead"] = "These directions fit your current profile better — often a stepping stone if the chosen role is a stretch.",
+        ["Fit.Dealbreaker"] = "Dealbreaker",
+        ["Fit.Important"] = "Important",
+        ["Fit.PathTitle"] = "Training path",
+        ["Fit.PathWithin"] = "within {0}",
+        ["Fit.SimilarLead"] = "Only roles in the same field, or with a directly related course of study. Shared soft skills are not enough.",
         ["Fit.CheckSimilar"] = "Check this role",
         ["Fit.DirectTitle"] = "Vacancies on Lobsy you can start now",
-        ["Fit.DirectLead"] = "Open jobs in The Hague and Westland that match your current profile — no extra training needed.",
+        ["Fit.DirectLead"] = "Open jobs in the same field in The Hague and Westland that you can start with your current profile.",
         ["Fit.DirectEmpty"] = "We cannot find a vacancy you can start without extra papers. Open the job map or try a similar role."
     };
 }

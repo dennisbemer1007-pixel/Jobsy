@@ -353,6 +353,18 @@
                         @Culture["Employer.Barrier.Diplomas"]
                         <textarea rows="3" @bind="_barrierDiplomas" @bind:event="oninput" placeholder="MBO Verpleegkunde"></textarea>
                     </label>
+                    <p class="muted vacancy-field-hint">@Culture["Employer.Barrier.HardHint"]</p>
+                    <div class="profile-min-employers__options" role="group" aria-label="@Culture["Employer.Barrier.HardChecks"]">
+                        @foreach (var check in VacancyHardCheckCatalog.Suggested)
+                        {
+                            <label>
+                                <input type="checkbox"
+                                       checked="@_barrierHardChecks.Contains(check.Kind)"
+                                       @onchange="e => ToggleHardCheck(check.Kind, e)" />
+                                @check.Label
+                            </label>
+                        }
+                    </div>
                     <p class="muted vacancy-field-hint">@Culture["Employer.Barrier.Certs"]</p>
                     <div class="profile-min-employers__options" role="group">
                         @foreach (var cert in VacancyBarrierCatalog.SuggestedCertifications)
@@ -752,6 +764,7 @@
     private bool _barrierHigh;
     private string _barrierDiplomas = "";
     private readonly HashSet<string> _barrierCerts = new(StringComparer.OrdinalIgnoreCase);
+    private readonly HashSet<string> _barrierHardChecks = new(StringComparer.Ordinal);
     private string _barrierCertExtra = "";
     private int? _barrierYears;
     private int? _barrierHours;
@@ -1231,6 +1244,15 @@
             }
             _barrierYears = source.BarrierMinExperienceYears;
             _barrierHours = source.BarrierMinExperienceHours;
+            _barrierHardChecks.Clear();
+            foreach (var kind in source.BarrierHardChecks ?? [])
+            {
+                var normalized = VacancyHardCheckCatalog.NormalizeKind(kind);
+                if (normalized is not null)
+                {
+                    _barrierHardChecks.Add(normalized);
+                }
+            }
             _minHours = source.MinHoursPerWeek ?? 8;
             _maxHours = source.MaxHoursPerWeek ?? 16;
             _flexibleTimes = source.FlexibleTimes || string.IsNullOrWhiteSpace(source.ScheduleJson);
@@ -1334,6 +1356,18 @@
     private void SetMinimumEmployers(int? value) => _minimumEmployers = value;
     private void SetMinimumReferences(int? value) => _minimumReferences = value;
     private void SetBarrierHigh(bool value) => _barrierHigh = value;
+
+    private void ToggleHardCheck(string kind, ChangeEventArgs e)
+    {
+        if (e.Value is bool on && on)
+        {
+            _barrierHardChecks.Add(kind);
+        }
+        else
+        {
+            _barrierHardChecks.Remove(kind);
+        }
+    }
 
     private void ToggleBarrierCert(string cert, ChangeEventArgs e)
     {
@@ -1737,7 +1771,8 @@
                 BarrierDiplomas: SplitLines(_barrierDiplomas),
                 BarrierCertifications: BarrierCertList(),
                 BarrierMinExperienceYears: _barrierHigh ? _barrierYears : null,
-                BarrierMinExperienceHours: _barrierHigh ? _barrierHours : null);
+                BarrierMinExperienceHours: _barrierHigh ? _barrierHours : null,
+                BarrierHardChecks: _barrierHigh ? _barrierHardChecks.ToArray() : null);
 
             var saved = _editVacancyId is Guid editId
                 ? await Api.UpdateVacancyAsync(editId, form)

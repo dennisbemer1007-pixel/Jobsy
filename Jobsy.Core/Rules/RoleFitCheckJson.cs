@@ -50,7 +50,7 @@ public static class RoleFitCheckJson
                         dto.CultureWhy,
                         (dto.FormalItems ?? [])
                             .Where(i => !string.IsNullOrWhiteSpace(i.Label))
-                            .Select(i => new VacancyBarrierCheckItem(i.Key ?? "", i.Label!.Trim(), i.Met, i.Note ?? ""))
+                            .Select(i => new VacancyBarrierCheckItem(i.Key ?? "", i.Label!.Trim(), i.Met, i.Note ?? "", i.Dealbreaker))
                             .ToList(),
                         dto.AvailabilityOk ?? true,
                         dto.ShowFormalBlock ?? false,
@@ -59,7 +59,8 @@ public static class RoleFitCheckJson
                 (dto.SimilarRoles ?? [])
                     .Where(s => !string.IsNullOrWhiteSpace(s.Title))
                     .Select(s => new RoleFitSimilarRole(s.Title!.Trim(), s.Why ?? "", s.FitPercent))
-                    .ToList());
+                    .ToList(),
+                ReadPath(dto.CareerPath));
             return RoleFitCheckBuilder.Sanitize(snapshot);
         }
         catch (JsonException)
@@ -89,7 +90,8 @@ public static class RoleFitCheckJson
             Key = i.Key,
             Label = i.Label,
             Met = i.Met,
-            Note = i.Note
+            Note = i.Note,
+            Dealbreaker = i.IsDealbreaker
         }).ToList(),
         AvailabilityOk = snapshot.VacancyFit?.AvailabilityOk,
         ShowFormalBlock = snapshot.VacancyFit?.ShowFormalBlock,
@@ -99,8 +101,45 @@ public static class RoleFitCheckJson
             Title = s.Title,
             Why = s.Why,
             FitPercent = s.FitPercent
-        }).ToList()
+        }).ToList(),
+        CareerPath = snapshot.CareerPath is null ? null : new CareerPathDto
+        {
+            TotalMonths = snapshot.CareerPath.TotalMonths,
+            DurationLabel = snapshot.CareerPath.DurationLabel,
+            Summary = snapshot.CareerPath.Summary,
+            Steps = snapshot.CareerPath.Steps.Select(s => new CareerPathStepDto
+            {
+                Order = s.Order,
+                Title = s.Title,
+                DurationMonths = s.DurationMonths,
+                DurationLabel = s.DurationLabel,
+                Detail = s.Detail
+            }).ToList()
+        }
     };
+
+    private static CareerPathPlan? ReadPath(CareerPathDto? dto)
+    {
+        if (dto is null || string.IsNullOrWhiteSpace(dto.Summary))
+        {
+            return null;
+        }
+
+        var steps = (dto.Steps ?? [])
+            .Where(s => !string.IsNullOrWhiteSpace(s.Title))
+            .Select(s => new CareerPathStep(
+                s.Order,
+                s.Title!.Trim(),
+                Math.Max(0, s.DurationMonths),
+                string.IsNullOrWhiteSpace(s.DurationLabel) ? CareerPathPlanner.FormatDuration(s.DurationMonths) : s.DurationLabel.Trim(),
+                s.Detail?.Trim() ?? ""))
+            .ToList();
+        return new CareerPathPlan(
+            Math.Max(0, dto.TotalMonths),
+            string.IsNullOrWhiteSpace(dto.DurationLabel) ? CareerPathPlanner.FormatDuration(dto.TotalMonths) : dto.DurationLabel.Trim(),
+            dto.Summary.Trim(),
+            steps);
+    }
 
     private sealed class FitDto
     {
@@ -123,6 +162,24 @@ public static class RoleFitCheckJson
         public bool? ShowFormalBlock { get; set; }
         public bool? ShowUpskill { get; set; }
         public List<SimilarDto>? SimilarRoles { get; set; }
+        public CareerPathDto? CareerPath { get; set; }
+    }
+
+    private sealed class CareerPathDto
+    {
+        public int TotalMonths { get; set; }
+        public string? DurationLabel { get; set; }
+        public string? Summary { get; set; }
+        public List<CareerPathStepDto>? Steps { get; set; }
+    }
+
+    private sealed class CareerPathStepDto
+    {
+        public int Order { get; set; }
+        public string? Title { get; set; }
+        public int DurationMonths { get; set; }
+        public string? DurationLabel { get; set; }
+        public string? Detail { get; set; }
     }
 
     private sealed class SimilarDto
@@ -138,5 +195,6 @@ public static class RoleFitCheckJson
         public string? Label { get; set; }
         public bool Met { get; set; }
         public string? Note { get; set; }
+        public bool Dealbreaker { get; set; }
     }
 }

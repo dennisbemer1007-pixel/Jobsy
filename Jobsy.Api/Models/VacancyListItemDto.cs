@@ -95,7 +95,8 @@ public record VacancyListItemDto(
     IReadOnlyList<string>? BarrierDiplomas = null,
     IReadOnlyList<string>? BarrierCertifications = null,
     int? BarrierMinExperienceYears = null,
-    int? BarrierMinExperienceHours = null);
+    int? BarrierMinExperienceHours = null,
+    IReadOnlyList<string>? BarrierHardChecks = null);
 
 /// <summary>Public MapLibre opening camera. Coordinates only — no vacancy or employer PII.</summary>
 public sealed record VacancyMapViewDto(double Lat, double Lng, double Zoom, int PinCount);

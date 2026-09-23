@@ -10,7 +10,8 @@ public sealed record RoleFitCheckSnapshot(
     bool FromDeepAnalysis,
     bool FromOpenAi = false,
     RoleFitVacancyFit? VacancyFit = null,
-    IReadOnlyList<RoleFitSimilarRole>? SimilarRoles = null)
+    IReadOnlyList<RoleFitSimilarRole>? SimilarRoles = null,
+    CareerPathPlan? CareerPath = null)
 {
     public string MapQuery
     {

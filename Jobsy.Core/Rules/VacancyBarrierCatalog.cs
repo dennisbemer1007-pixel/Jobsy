@@ -16,13 +16,29 @@ public sealed record VacancyBarrierRequirements(
     IReadOnlyList<string> Diplomas,
     IReadOnlyList<string> Certifications,
     int? MinExperienceYears,
-    int? MinExperienceHours);
+    int? MinExperienceHours,
+    IReadOnlyList<string> HardChecks)
+{
+    public IReadOnlyList<string> HardCheckLabels
+        => HardChecks.Select(VacancyHardCheckCatalog.Label).ToList();
+}
 
 public sealed record VacancyBarrierCheckItem(
     string Key,
     string Label,
     bool Met,
-    string Note);
+    string Note,
+    bool Dealbreaker = false)
+{
+    public bool IsDealbreaker => Dealbreaker || (!Met && IsHardKey(Key));
+
+    public static bool IsHardKey(string key)
+        => key.StartsWith("hard:", StringComparison.Ordinal)
+           || key.StartsWith("cert:", StringComparison.Ordinal)
+           || key.StartsWith("diploma:", StringComparison.Ordinal)
+           || key.StartsWith("license:", StringComparison.Ordinal)
+           || key.StartsWith("edu-level:", StringComparison.Ordinal);
+}
 
 public sealed record VacancyBarrierCheck(
     VacancyBarrierKind Barrier,
@@ -53,12 +69,13 @@ public static class VacancyBarrierCatalog
     };
 
     public static VacancyBarrierRequirements Empty { get; } =
-        new(VacancyBarrierKind.Low, [], [], null, null);
+        new(VacancyBarrierKind.Low, [], [], null, null, []);
 
     public static bool HasFormalRequirements(VacancyBarrierRequirements? req)
         => req is not null
            && (req.Diplomas.Count > 0
                || req.Certifications.Count > 0
+               || req.HardChecks.Count > 0
                || req.MinExperienceYears is > 0
                || req.MinExperienceHours is > 0);
 
@@ -70,19 +87,26 @@ public static class VacancyBarrierCatalog
         IEnumerable<string>? diplomas,
         IEnumerable<string>? certifications,
         int? minExperienceYears,
-        int? minExperienceHours)
+        int? minExperienceHours,
+        IEnumerable<string>? hardChecks = null)
     {
         var kind = barrier ?? VacancyBarrierKind.Low;
         var dips = CleanList(diplomas);
         var certs = CleanList(certifications);
+        var checks = CleanHardChecks(hardChecks);
         var years = Clamp(minExperienceYears, 40);
         var hours = Clamp(minExperienceHours, 80_000);
-        if (kind == VacancyBarrierKind.Low && dips.Count == 0 && certs.Count == 0 && years is null && hours is null)
+        if (kind == VacancyBarrierKind.Low
+            && dips.Count == 0
+            && certs.Count == 0
+            && checks.Count == 0
+            && years is null
+            && hours is null)
         {
             return Empty;
         }
 
-        return new VacancyBarrierRequirements(kind, dips, certs, years, hours);
+        return new VacancyBarrierRequirements(kind, dips, certs, years, hours, checks);
     }
 
     public static string? Serialize(VacancyBarrierRequirements? req)
@@ -99,7 +123,8 @@ public static class VacancyBarrierCatalog
             Diplomas = normalized.Diplomas.ToList(),
             Certifications = normalized.Certifications.ToList(),
             MinExperienceYears = normalized.MinExperienceYears,
-            MinExperienceHours = normalized.MinExperienceHours
+            MinExperienceHours = normalized.MinExperienceHours,
+            HardChecks = normalized.HardChecks.ToList()
         }, JsonOptions);
     }
 
@@ -121,7 +146,7 @@ public static class VacancyBarrierCatalog
             var kind = string.Equals(dto.Barrier, "high", StringComparison.OrdinalIgnoreCase)
                 ? VacancyBarrierKind.High
                 : VacancyBarrierKind.Low;
-            return Normalize(kind, dto.Diplomas, dto.Certifications, dto.MinExperienceYears, dto.MinExperienceHours);
+            return Normalize(kind, dto.Diplomas, dto.Certifications, dto.MinExperienceYears, dto.MinExperienceHours, dto.HardChecks);
         }
         catch (JsonException)
         {
@@ -131,13 +156,56 @@ public static class VacancyBarrierCatalog
 
     public static VacancyBarrierCheck Evaluate(
         VacancyBarrierRequirements req,
-        CandidatePreferencesDto? prefs)
+        CandidatePreferencesDto? prefs,
+        string? requiredDrivingLicense = null,
+        string? requiredEducationLevel = null)
     {
         var educations = prefs?.Educations ?? [];
         var certs = prefs?.Certificates ?? [];
         var years = CandidateExperienceYears(prefs);
         var hours = years is int y ? y * HoursPerYear : 0;
+        var evidence = VacancyHardCheckCatalog.CandidateEvidence.From(prefs);
         var items = new List<VacancyBarrierCheckItem>();
+
+        foreach (var kind in req.HardChecks)
+        {
+            var met = VacancyHardCheckCatalog.CandidateMeets(kind, evidence);
+            var label = VacancyHardCheckCatalog.Label(kind);
+            items.Add(new VacancyBarrierCheckItem(
+                "hard:" + kind,
+                label,
+                met,
+                met
+                    ? $"{label} staat in je profiel."
+                    : $"Dealbreaker: {label.ToLowerInvariant()} ontbreekt. Zonder deze harde eis kun je niet starten.",
+                Dealbreaker: !met));
+        }
+
+        if (!string.IsNullOrWhiteSpace(requiredDrivingLicense))
+        {
+            var met = DrivingLicenseLabels.CandidateMeetsRequirement(prefs?.DrivingLicenses, requiredDrivingLicense);
+            items.Add(new VacancyBarrierCheckItem(
+                "license:" + requiredDrivingLicense.Trim(),
+                "Rijbewijs: " + requiredDrivingLicense.Trim(),
+                met,
+                met
+                    ? "Het gevraagde rijbewijs staat in je profiel."
+                    : $"Dealbreaker: rijbewijs {requiredDrivingLicense.Trim()} ontbreekt.",
+                Dealbreaker: !met));
+        }
+
+        if (!string.IsNullOrWhiteSpace(requiredEducationLevel))
+        {
+            var met = EducationLevelLabels.CandidateMeetsRequirement(prefs?.Educations, requiredEducationLevel);
+            items.Add(new VacancyBarrierCheckItem(
+                "edu-level:" + requiredEducationLevel.Trim(),
+                "Opleidingsniveau: " + requiredEducationLevel.Trim(),
+                met,
+                met
+                    ? "Je opleidingsniveau dekt deze eis."
+                    : $"Dealbreaker: opleidingsniveau {requiredEducationLevel.Trim()} ontbreekt.",
+                Dealbreaker: !met));
+        }
 
         foreach (var diploma in req.Diplomas)
         {
@@ -148,7 +216,8 @@ public static class VacancyBarrierCatalog
                 met,
                 met
                     ? "Dit diploma staat in je profiel."
-                    : "Dit diploma ontbreekt nog op je profiel — een erkende opleiding kan het gat dichten."));
+                    : "Dealbreaker: diploma " + diploma + " ontbreekt nog. Zonder dit diploma kun je niet starten.",
+                Dealbreaker: !met));
         }
 
         foreach (var cert in req.Certifications)
@@ -160,7 +229,8 @@ public static class VacancyBarrierCatalog
                 met,
                 met
                     ? "Dit certificaat staat in je profiel."
-                    : "Dit certificaat ontbreekt nog. Een korte cursus bij een regionale partner helpt."));
+                    : "Dealbreaker: certificaat " + cert + " ontbreekt. Een verplichte licentie of cursus hoort hierbij.",
+                Dealbreaker: !met));
         }
 
         if (req.MinExperienceYears is int needYears and > 0)
@@ -316,5 +386,22 @@ public static class VacancyBarrierCatalog
         public List<string>? Certifications { get; set; }
         public int? MinExperienceYears { get; set; }
         public int? MinExperienceHours { get; set; }
+        public List<string>? HardChecks { get; set; }
+    }
+
+    private static IReadOnlyList<string> CleanHardChecks(IEnumerable<string>? values)
+    {
+        if (values is null)
+        {
+            return [];
+        }
+
+        return values
+            .Select(VacancyHardCheckCatalog.NormalizeKind)
+            .Where(v => v is not null)
+            .Select(v => v!)
+            .Distinct(StringComparer.Ordinal)
+            .Take(VacancyHardCheckCatalog.Suggested.Length)
+            .ToList();
     }
 }

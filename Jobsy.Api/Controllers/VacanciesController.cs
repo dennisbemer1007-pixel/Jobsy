@@ -741,7 +741,8 @@ public class VacanciesController : ControllerBase
                 request.BarrierDiplomas,
                 request.BarrierCertifications,
                 request.BarrierMinExperienceYears,
-                request.BarrierMinExperienceHours));
+                request.BarrierMinExperienceHours,
+                request.BarrierHardChecks));
         vacancy.OverrideContactPreference = request.OverrideContactPreference;
         vacancy.DirectContactEnabled = request.OverrideContactPreference && request.DirectContactEnabled;
         vacancy.ContactPreferMail = request.OverrideContactPreference && request.DirectContactEnabled && request.ContactPreferMail;
@@ -1774,16 +1775,17 @@ public class VacanciesController : ControllerBase
             BarrierDiplomas: barrier.Diplomas,
             BarrierCertifications: barrier.Certs,
             BarrierMinExperienceYears: barrier.Years,
-            BarrierMinExperienceHours: barrier.Hours);
+            BarrierMinExperienceHours: barrier.Hours,
+            BarrierHardChecks: barrier.HardChecks);
     }
 
-    private static (string? Kind, IReadOnlyList<string>? Diplomas, IReadOnlyList<string>? Certs, int? Years, int? Hours)
+    private static (string? Kind, IReadOnlyList<string>? Diplomas, IReadOnlyList<string>? Certs, int? Years, int? Hours, IReadOnlyList<string>? HardChecks)
         MapBarrier(string? json)
     {
         var req = VacancyBarrierCatalog.Deserialize(json);
         if (req.Barrier == VacancyBarrierKind.Low && !VacancyBarrierCatalog.HasFormalRequirements(req))
         {
-            return ("Low", null, null, null, null);
+            return ("Low", null, null, null, null, null);
         }
 
         return (
@@ -1791,7 +1793,8 @@ public class VacanciesController : ControllerBase
             req.Diplomas.Count == 0 ? null : req.Diplomas,
             req.Certifications.Count == 0 ? null : req.Certifications,
             req.MinExperienceYears,
-            req.MinExperienceHours);
+            req.MinExperienceHours,
+            req.HardChecks.Count == 0 ? null : req.HardChecks);
     }
 
     private static VacancyBarrierKind? ParseBarrierKind(string? raw)

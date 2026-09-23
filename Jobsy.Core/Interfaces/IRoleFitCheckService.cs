@@ -46,9 +46,10 @@ public sealed record RoleFitCheckResultDto(
     bool ShowUpskill = false,
     bool AvailabilityOk = true,
     IReadOnlyList<RoleFitSimilarRoleDto>? SimilarRoles = null,
-    IReadOnlyList<RoleFitDirectVacancyDto>? DirectVacancies = null);
+    IReadOnlyList<RoleFitDirectVacancyDto>? DirectVacancies = null,
+    CareerPathPlan? CareerPath = null);
 
-public sealed record RoleFitFormalItemDto(string Key, string Label, bool Met, string Note);
+public sealed record RoleFitFormalItemDto(string Key, string Label, bool Met, string Note, bool Dealbreaker = false);
 
 public sealed record RoleFitSimilarRoleDto(string Title, string Why, int FitPercent);
 

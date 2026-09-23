@@ -16898,6 +16898,46 @@ html.cookie-consent-known .cookie-consent {
     color: #9b1c1c;
 }
 
+.role-fit-dealbreaker,
+.role-fit-important {
+    display: inline-block;
+    margin-right: 0.35rem;
+    padding: 0.05rem 0.4rem;
+    border-radius: 999px;
+    font-size: 0.75rem;
+    letter-spacing: 0.01em;
+}
+
+.role-fit-dealbreaker {
+    background: var(--danger-soft);
+    color: var(--danger);
+}
+
+.role-fit-important {
+    background: var(--warn-soft);
+    color: var(--warn);
+}
+
+.role-fit-path__summary {
+    margin: 0 0 0.6rem;
+    font-weight: 650;
+}
+
+.role-fit-path__steps {
+    margin: 0;
+    padding-left: 1.15rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.45rem;
+}
+
+.role-fit-path__time {
+    display: inline-block;
+    margin-left: 0.35rem;
+    color: var(--brand);
+    font-size: 0.85rem;
+}
+
 .role-fit-culture strong {
     font-size: 1.2rem;
     margin-right: 0.35rem;

@@ -14,9 +14,9 @@ public static class RoleFitCheckPrompt
         matchPercent: 0-100, eerlijk. 95+ alleen bij een kernfit, 85-94 sterk, 75-84 verbreding, daaronder een mogelijke switch met duidelijk gat.
         strengths: 2 tot 4 zinnen — waar de kandidaat al aan voldoet (opleiding, competenties/drijfveren, overdraagbare ervaring, reistijd/uren).
         gaps: 2 tot 4 zinnen — wat nog ontbreekt, inclusief harde papieren eisen. Geen valse hoop.
-        actionSteps: 3 tot 5 concrete groeistappen (korte cursus/omscholing of BBL om een gat te dichten, meelopen, banenkaart-filter). Als er een gat is, noem subtiel: "Een korte cursus kan dit stukje aanvullen." Geen schreeuwende marketing.
+        actionSteps: 3 tot 5 concrete groeistappen (korte cursus/omscholing of BBL om een gat te dichten, meelopen, banenkaart-filter). Noem hoe lang de route duurt, bijvoorbeeld: "Met de volgende opleidingen en cursussen kun je binnen 6 jaar deze vacature bereiken." Als er een gat is, noem subtiel: "Een korte cursus kan dit stukje aanvullen." Geen schreeuwende marketing.
         searchKeys: 2 tot 6 korte Nederlandse zoekwoorden voor de banenkaart.
-        similarRoles: 2 tot 4 ALTERNATIEVE functietitels in dezelfde richting die beter bij het huidige profiel passen (opstap/assistent als de gevraagde functie te hoog gegrepen is). Geen bedrijfsnamen. why in Jip-en-Janneke met overdraagbare skills.
+        similarRoles: 2 tot 4 alternatieve functietitels in HETZELFDE vakgebied of met een direct verwante opleiding (zelfde sector). Nooit een ander beroep alleen omdat soft skills overlappen — een piloot is geen labassistent of café-hulp. why benoemt het vakgebied. Geen bedrijfsnamen.
         Antwoord ALLEEN als JSON-object:
         {
           "matchPercent": 81,

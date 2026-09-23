@@ -97,6 +97,7 @@ public class VacancyListItem
     public List<string> BarrierCertifications { get; set; } = [];
     public int? BarrierMinExperienceYears { get; set; }
     public int? BarrierMinExperienceHours { get; set; }
+    public List<string> BarrierHardChecks { get; set; } = [];
 }
 
 public sealed class WageByAgeItem

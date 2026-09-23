@@ -243,6 +243,24 @@ public sealed class RoleFitCheckResult
     public bool AvailabilityOk { get; set; } = true;
     public List<RoleFitSimilarRoleCard> SimilarRoles { get; set; } = [];
     public List<RoleFitDirectVacancyCard> DirectVacancies { get; set; } = [];
+    public CareerPathPlanModel? CareerPath { get; set; }
+}
+
+public sealed class CareerPathPlanModel
+{
+    public int TotalMonths { get; set; }
+    public string DurationLabel { get; set; } = "";
+    public string Summary { get; set; } = "";
+    public List<CareerPathStepModel> Steps { get; set; } = [];
+}
+
+public sealed class CareerPathStepModel
+{
+    public int Order { get; set; }
+    public string Title { get; set; } = "";
+    public int DurationMonths { get; set; }
+    public string DurationLabel { get; set; } = "";
+    public string Detail { get; set; } = "";
 }
 
 public sealed class RoleFitFormalItem
@@ -251,6 +269,7 @@ public sealed class RoleFitFormalItem
     public string Label { get; set; } = "";
     public bool Met { get; set; }
     public string Note { get; set; } = "";
+    public bool Dealbreaker { get; set; }
 }
 
 public sealed class RoleFitSimilarRoleCard

@@ -14,6 +14,7 @@ Alle noemenswaardige wijzigingen aan dit project worden in dit bestand bijgehoud
 ## [Unreleased]
 
 ### Changed
+- **Vakgebied-matching:** vergelijkbare functies en directe vacatures blijven in dezelfde sector (een piloot krijgt geen lab of café). Vacatures tonen harde eisen (keuring, ogentest, fitheid, certificaten, rijbewijs) en een ontbrekende eis is een dealbreaker. Het loopbaanadvies noemt hoe lang het opleidingspad duurt, in stappen.
 - **Diepte-analyse UX (150 vragen):** sticky voortgangsbalk met live %-indicatie, onderwerpen-tracker (afgerond / nu / komt nog), info-knop met praktijkvoorbeeld per vraag, en motiverende boosters elke 25 vragen.
 
 ### Changed

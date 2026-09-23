@@ -44,4 +44,5 @@ public record CreateVacancyRequest(
     string[]? BarrierDiplomas = null,
     string[]? BarrierCertifications = null,
     int? BarrierMinExperienceYears = null,
-    int? BarrierMinExperienceHours = null);
+    int? BarrierMinExperienceHours = null,
+    string[]? BarrierHardChecks = null);

@@ -130,8 +130,21 @@ public sealed class RoleFitCheckService : IRoleFitCheckService
                        ?? local;
         snapshot = snapshot with
         {
-            SimilarRoles = RoleFitFunnel.MergeSimilar(snapshot.SimilarRoles, local.SimilarRoles)
+            SimilarRoles = RoleFitFunnel.MergeSimilar(
+                local.SimilarRoles,
+                OccupationTaxonomy.WithinDomain(title, snapshot.SimilarRoles))
         };
+        var prefs = await LoadPrefsAsync(userId, cancellationToken);
+        var path = CareerPathPlanner.Personalize(snapshot.JobTitle, prefs, formal: null);
+        if (path is not null)
+        {
+            snapshot = snapshot with
+            {
+                CareerPath = path,
+                ActionSteps = CareerPathPlanner.WithSummary(snapshot.ActionSteps, path.Summary)
+            };
+        }
+
         if (vacancy is not null)
         {
             snapshot = await AttachVacancyAsync(userId, vacancy, competence, snapshot, disc, cancellationToken);
@@ -341,7 +354,7 @@ public sealed class RoleFitCheckService : IRoleFitCheckService
         var similar = (snapshot.SimilarRoles ?? [])
             .Select(s => new RoleFitSimilarRoleDto(s.Title, s.Why, s.FitPercent))
             .ToList();
-        var direct = await ScanDirectVacanciesAsync(userId, fit?.VacancyId, cancellationToken);
+        var direct = await ScanDirectVacanciesAsync(userId, fit?.VacancyId, snapshot.JobTitle, cancellationToken);
 
         return new RoleFitCheckResultDto(
             snapshot.JobTitle,
@@ -361,12 +374,13 @@ public sealed class RoleFitCheckService : IRoleFitCheckService
             fit?.CultureBand,
             fit?.CultureLabel,
             fit?.CultureWhy,
-            fit?.FormalItems.Select(i => new RoleFitFormalItemDto(i.Key, i.Label, i.Met, i.Note)).ToList(),
+            fit?.FormalItems.Select(i => new RoleFitFormalItemDto(i.Key, i.Label, i.Met, i.Note, i.IsDealbreaker)).ToList(),
             fit?.ShowFormalBlock ?? false,
             fit?.ShowUpskill ?? false,
             fit?.AvailabilityOk ?? true,
             similar,
-            direct);
+            direct,
+            snapshot.CareerPath ?? CareerPathPlanner.ForTitle(snapshot.JobTitle));
     }
 
     private async Task<RoleFitCheckSnapshot> AttachVacancyAsync(
@@ -380,7 +394,11 @@ public sealed class RoleFitCheckService : IRoleFitCheckService
         var user = await _db.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Id == userId, cancellationToken);
         var prefs = MatchingProfileMapper.DeserializePrefs(user?.PreferencesJson);
         var requirements = VacancyBarrierCatalog.Deserialize(vacancy.BarrierRequirementsJson);
-        var formal = VacancyBarrierCatalog.Evaluate(requirements, prefs);
+        var formal = VacancyBarrierCatalog.Evaluate(
+            requirements,
+            prefs,
+            vacancy.RequiredDrivingLicense,
+            vacancy.RequiredEducation);
         var availability = VacancyBarrierCatalog.AvailabilityLooksOk(
             prefs,
             vacancy.MinHoursPerWeek,
@@ -434,18 +452,36 @@ public sealed class RoleFitCheckService : IRoleFitCheckService
             };
         }
 
+        var vacancyPath = CareerPathPlanner.Personalize(snapshot.JobTitle, prefs, formal);
+        if (vacancyPath is not null)
+        {
+            snapshot = snapshot with
+            {
+                CareerPath = vacancyPath,
+                ActionSteps = CareerPathPlanner.WithSummary(snapshot.ActionSteps, vacancyPath.Summary)
+            };
+        }
+
         return RoleFitCheckBuilder.Sanitize(snapshot with
         {
             MatchPercent = overall,
             Strengths = extraStrengths.Take(5).ToList(),
             Gaps = extraGaps.Count > 0 ? extraGaps.Take(5).ToList() : snapshot.Gaps,
-            VacancyFit = vacancyFit
+            VacancyFit = vacancyFit,
+            CareerPath = snapshot.CareerPath
         });
+    }
+
+    private async Task<CandidatePreferencesDto?> LoadPrefsAsync(Guid userId, CancellationToken cancellationToken)
+    {
+        var user = await _db.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Id == userId, cancellationToken);
+        return MatchingProfileMapper.DeserializePrefs(user?.PreferencesJson);
     }
 
     private async Task<IReadOnlyList<RoleFitDirectVacancyDto>> ScanDirectVacanciesAsync(
         Guid userId,
         Guid? excludeVacancyId,
+        string? searchedTitle,
         CancellationToken cancellationToken)
     {
         var context = await _matches.TryLoadForUserIdAsync(userId, cancellationToken);
@@ -509,6 +545,11 @@ public sealed class RoleFitCheckService : IRoleFitCheckService
                 record.MaxHoursPerWeek,
                 record.RequiredDrivingLicense,
                 record.RequiredEducation);
+            if (!OccupationTaxonomy.VacancySharesDomain(searchedTitle, record.Title))
+            {
+                continue;
+            }
+
             if (!RoleFitFunnel.CanStartImmediately(
                     match.Core.LegalEligible,
                     match.TotalPercent,
