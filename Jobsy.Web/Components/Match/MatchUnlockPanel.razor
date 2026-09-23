@@ -1,0 +1,95 @@
+@namespace Jobsy.Web.Components.Match
+@using Jobsy.Web.Models
+@using Jobsy.Web.Navigation
+@inject NavigationManager Navigation
+
+<div class="match-gate" aria-label="Match ontgrendelen">
+    @if (!Gate.IsAuthenticated)
+    {
+        <h2 class="match-gate__title">Ontgrendel Match</h2>
+        <p class="match-gate__lead">Log in als kandidaat en rond je profiel af om relevante vacatures te swipen.</p>
+        <div class="match-gate__actions">
+            <a class="match-page__cta" href="@($"/login?returnUrl={Uri.EscapeDataString("/candidate/match")}")">Inloggen</a>
+            <a class="match-page__cta match-page__cta--ghost" href="/">Naar de banenkaart</a>
+        </div>
+        <p class="match-gate__hint">
+            Wil je breder zoeken of andere typen vacatures vinden? Ga dan naar de banenkaart.
+        </p>
+    }
+    else
+    {
+        <h2 class="match-gate__title">Maak Match compleet</h2>
+        <p class="match-gate__lead">
+            Vul de checklist in — daarna tonen we alleen vacatures die bij jouw opleiding en voorkeuren passen.
+        </p>
+        <p class="match-gate__progress">@Gate.CompletedCount van @Gate.RequiredCount klaar</p>
+
+        <ol class="whoami-checklist match-gate__checklist">
+            <li class="@(Gate.ProfileBasicsFilled ? "is-done" : null)">
+                <span class="whoami-check" aria-hidden="true">@(Gate.ProfileBasicsFilled ? "✓" : "")</span>
+                <div>
+                    <strong>Basisgegevens</strong>
+                    <p>Naam, achtergrond en reistijd/vervoer</p>
+                    @if (!Gate.ProfileBasicsFilled)
+                    {
+                        <a class="engagement-btn" href="/home?tab=profile">Naar profiel</a>
+                    }
+                </div>
+            </li>
+            <li class="@(Gate.HasEducationLevel ? "is-done" : null)">
+                <span class="whoami-check" aria-hidden="true">@(Gate.HasEducationLevel ? "✓" : "")</span>
+                <div>
+                    <strong>Opleidingsniveau</strong>
+                    <p>Zodat we geen niet-passende vacatures tonen</p>
+                    @if (!Gate.HasEducationLevel)
+                    {
+                        <a class="engagement-btn" href="/home?tab=profile">Opleiding invullen</a>
+                    }
+                </div>
+            </li>
+            <li class="@(Gate.CompetencyCompleted ? "is-done" : null)">
+                <span class="whoami-check" aria-hidden="true">@(Gate.CompetencyCompleted ? "✓" : "")</span>
+                <div>
+                    <strong>Competentietest (IPIP)</strong>
+                    <p>25 vragen over hoe jij werkt</p>
+                    @if (!Gate.CompetencyCompleted)
+                    {
+                        <a class="engagement-btn" href="/candidate/competencies">Start test</a>
+                    }
+                </div>
+            </li>
+            <li class="@(Gate.CareerCompleted ? "is-done" : null)">
+                <span class="whoami-check" aria-hidden="true">@(Gate.CareerCompleted ? "✓" : "")</span>
+                <div>
+                    <strong>Beroepentest</strong>
+                    <p>Welke richtingen bij je passen</p>
+                    @if (!Gate.CareerCompleted)
+                    {
+                        <a class="engagement-btn" href="/candidate/career">Start test</a>
+                    }
+                </div>
+            </li>
+            <li class="@(Gate.DiscCompleted ? "is-done" : null)">
+                <span class="whoami-check" aria-hidden="true">@(Gate.DiscCompleted ? "✓" : "")</span>
+                <div>
+                    <strong>Gedragsanalyse (DISC)</strong>
+                    <p>Korte scan voor betere matches</p>
+                    @if (!Gate.DiscCompleted)
+                    {
+                        <a class="engagement-btn" href="/candidate/disc">Start scan</a>
+                    }
+                </div>
+            </li>
+        </ol>
+
+        <p class="match-gate__hint">
+            Wil je breder zoeken of andere typen vacatures vinden? Ga dan naar de
+            <a href="/">banenkaart</a>.
+        </p>
+    }
+</div>
+
+@code {
+    [Parameter, EditorRequired]
+    public MatchProfileGateViewModel Gate { get; set; } = new();
+}
