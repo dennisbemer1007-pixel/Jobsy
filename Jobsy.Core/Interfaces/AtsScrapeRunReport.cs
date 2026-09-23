@@ -31,6 +31,12 @@ public sealed class AtsScrapeSourceReport
     public int? ListHttpStatus { get; set; }
     public int RawAnchorCount { get; set; }
     public int VacancyLinkCount { get; set; }
+    /// <summary>List/hub/pagination pages fetched while crawling this domain.</summary>
+    public int PagesScanned { get; set; }
+    /// <summary>Pagination or hub pages followed beyond the start URL.</summary>
+    public int PaginationFollowed { get; set; }
+    /// <summary>New ATS listings inserted this run (CreatedVia=Ats when approved later).</summary>
+    public int AtsListingsSaved { get; set; }
     public int DetailPagesFetched { get; set; }
     public int Upserted { get; set; }
     public int Inserted { get; set; }

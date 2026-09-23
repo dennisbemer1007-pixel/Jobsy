@@ -610,6 +610,9 @@ public class AtsScrapeSourceReport
     public int? ListHttpStatus { get; set; }
     public int RawAnchorCount { get; set; }
     public int VacancyLinkCount { get; set; }
+    public int PagesScanned { get; set; }
+    public int PaginationFollowed { get; set; }
+    public int AtsListingsSaved { get; set; }
     public int DetailPagesFetched { get; set; }
     public int Upserted { get; set; }
     public int Inserted { get; set; }

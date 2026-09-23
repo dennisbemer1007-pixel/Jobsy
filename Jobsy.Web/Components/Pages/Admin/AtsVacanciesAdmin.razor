@@ -63,7 +63,14 @@
                                 <strong>@s.Name</strong>
                                 <span class="ats-status-badge ats-status-badge--@DomainStatusClass(s.Status)">@s.Status</span>
                             </div>
-                            <div class="muted">@s.Domain · HTTP @(s.ListHttpStatus?.ToString() ?? "—") · anchors @s.RawAnchorCount · links @s.VacancyLinkCount</div>
+                            <div class="muted">
+                                @s.Domain · HTTP @(s.ListHttpStatus?.ToString() ?? "—")
+                                · pages @s.PagesScanned
+                                · pagination @s.PaginationFollowed
+                                · unique URLs @s.VacancyLinkCount
+                                · ATS opgeslagen @s.AtsListingsSaved
+                                · anchors @s.RawAnchorCount
+                            </div>
                             @if (!string.IsNullOrWhiteSpace(s.Error))
                             {
                                 <div class="ats-diag__source-error">@s.Error</div>

@@ -39,12 +39,48 @@ public class AtsPipelineTests
         => Assert.Equal(blocked, AtsBlacklistFilter.IsBlocked(url, title, company));
 
     [Fact]
-    public void Domain_whitelist_allows_subdomains_only()
+    public void Domain_whitelist_allows_sibling_career_subdomains()
     {
         Assert.True(AtsBlacklistFilter.IsDomainAllowed(
             "https://werkenbij.denhaag.nl/vacature/1", "werkenbij.denhaag.nl"));
+        Assert.True(AtsBlacklistFilter.IsDomainAllowed(
+            "https://werkenbij.hagaziekenhuis.nl/vacatures", "www.hagaziekenhuis.nl"));
+        Assert.True(AtsBlacklistFilter.IsDomainAllowed(
+            "https://careers.optiflor.nl/jobs", "optiflor.nl"));
         Assert.False(AtsBlacklistFilter.IsDomainAllowed(
             "https://evil.example/vacature/1", "werkenbij.denhaag.nl"));
+        Assert.Equal("hagaziekenhuis.nl", AtsBlacklistFilter.RegistrableBase("www.hagaziekenhuis.nl"));
+    }
+
+    [Fact]
+    public void ExtractPagination_finds_next_page_and_hub_links()
+    {
+        const string html = """
+            <html><body>
+            <a href="/vacatures?page=2">Volgende</a>
+            <a rel="next" href="/vacatures?page=3">Next</a>
+            <a href="/werken-bij">Werken bij</a>
+            <a href="/vacatures/kassamedewerker">Kassamedewerker</a>
+            </body></html>
+            """;
+        var pages = AtsScrapeService.ExtractPaginationAndHubUrls(
+            html,
+            "https://tuin.example.nl/vacatures",
+            "tuin.example.nl");
+        Assert.Contains(pages, u => u.Contains("page=2", StringComparison.OrdinalIgnoreCase));
+        Assert.Contains(pages, u => u.Contains("page=3", StringComparison.OrdinalIgnoreCase)
+                                    || u.Contains("werken-bij", StringComparison.OrdinalIgnoreCase));
+    }
+
+    [Fact]
+    public void TryBuildNextPageUrl_increments_page_query()
+    {
+        Assert.True(AtsScrapeService.TryBuildNextPageUrl(
+            "https://tuin.example.nl/vacatures?page=2", out var next));
+        Assert.Contains("page=3", next, StringComparison.OrdinalIgnoreCase);
+        Assert.True(AtsScrapeService.TryBuildNextPageUrl(
+            "https://tuin.example.nl/vacatures", out var page2));
+        Assert.Contains("page=2", page2, StringComparison.OrdinalIgnoreCase);
     }
 
     [Fact]

@@ -325,7 +325,8 @@ public static class DependencyInjection
         services.AddScoped<IFeedbackService, FeedbackService>();
         services.AddHttpClient(AtsScrapeService.HttpClientName, client =>
         {
-            client.Timeout = TimeSpan.FromSeconds(25);
+            // Deep crawl fetches many pages per domain; keep per-request budget generous.
+            client.Timeout = TimeSpan.FromSeconds(45);
             client.DefaultRequestHeaders.UserAgent.ParseAdd(
                 "LobsyAtsBot/1.0 (+https://lobsy.nl; direct-employer vacancy ingest)");
         }).ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler
