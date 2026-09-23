@@ -582,6 +582,43 @@ public record AtsListingUpdateForm(
 
 public record AtsApproveResult(Guid ListingId, Guid VacancyId, string VacancyStatus);
 
+public class AtsScrapeRunReport
+{
+    public DateTime StartedAtUtc { get; set; }
+    public DateTime FinishedAtUtc { get; set; }
+    public int SourceCount { get; set; }
+    public int Upserted { get; set; }
+    public int Inserted { get; set; }
+    public int Updated { get; set; }
+    public int SkippedDuplicateHash { get; set; }
+    public int SkippedBlacklist { get; set; }
+    public int SkippedParse { get; set; }
+    public int HttpErrors { get; set; }
+    public List<AtsScrapeSourceReport> Sources { get; set; } = [];
+    public List<string> Lines { get; set; } = [];
+}
+
+public class AtsScrapeSourceReport
+{
+    public Guid SourceId { get; set; }
+    public string Name { get; set; } = string.Empty;
+    public string Domain { get; set; } = string.Empty;
+    public string ListUrl { get; set; } = string.Empty;
+    public int? ListHttpStatus { get; set; }
+    public int RawAnchorCount { get; set; }
+    public int VacancyLinkCount { get; set; }
+    public int DetailPagesFetched { get; set; }
+    public int Upserted { get; set; }
+    public int Inserted { get; set; }
+    public int Updated { get; set; }
+    public int SkippedDuplicateHash { get; set; }
+    public int SkippedBlacklist { get; set; }
+    public int SkippedParse { get; set; }
+    public int HttpErrors { get; set; }
+    public string? Error { get; set; }
+    public List<string> Lines { get; set; } = [];
+}
+
 public class PlatformLogItem
 {
     public Guid Id { get; set; }

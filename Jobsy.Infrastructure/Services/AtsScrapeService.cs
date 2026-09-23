@@ -1,7 +1,6 @@
 using System.Net;
 using System.Text.Json;
 using System.Text.RegularExpressions;
-using AngleSharp;
 using AngleSharp.Dom;
 using AngleSharp.Html.Parser;
 using Jobsy.Core.Entities;
@@ -51,101 +50,217 @@ public sealed class AtsScrapeService : IAtsScrapeService
         _logger = logger;
     }
 
-    public async Task<int> ScrapeAllEnabledAsync(CancellationToken cancellationToken = default)
+    public async Task<AtsScrapeRunReport> ScrapeAllEnabledAsync(CancellationToken cancellationToken = default)
     {
+        var report = new AtsScrapeRunReport { StartedAtUtc = DateTime.UtcNow };
+        Line(report, $"ATS scrape-all start at {report.StartedAtUtc:O}");
+        _logger.LogInformation("ATS scrape-all starting.");
+
         var ids = await _db.AtsScrapeSources.AsNoTracking()
             .Where(s => s.IsEnabled)
             .OrderBy(s => s.Name)
             .Select(s => s.Id)
             .ToListAsync(cancellationToken);
 
-        var total = 0;
+        report.SourceCount = ids.Count;
+        Line(report, $"Enabled whitelist sources: {ids.Count}");
+
         foreach (var id in ids)
         {
-            total += await ScrapeSourceAsync(id, cancellationToken);
+            var part = await ScrapeSourceAsync(id, cancellationToken);
+            Merge(report, part);
         }
 
-        return total;
+        report.FinishedAtUtc = DateTime.UtcNow;
+        Line(report,
+            $"ATS scrape-all done: upserted={report.Upserted} inserted={report.Inserted} updated={report.Updated} " +
+            $"dupHash={report.SkippedDuplicateHash} blacklist={report.SkippedBlacklist} parseSkip={report.SkippedParse} httpErr={report.HttpErrors}");
+        _logger.LogInformation(
+            "ATS scrape-all finished upserted={Upserted} inserted={Inserted} updated={Updated} httpErrors={HttpErrors}",
+            report.Upserted, report.Inserted, report.Updated, report.HttpErrors);
+        return report;
     }
 
-    public async Task<int> ScrapeSourceAsync(Guid sourceId, CancellationToken cancellationToken = default)
+    public async Task<AtsScrapeRunReport> ScrapeSourceAsync(
+        Guid sourceId,
+        CancellationToken cancellationToken = default)
     {
+        var report = new AtsScrapeRunReport { StartedAtUtc = DateTime.UtcNow, SourceCount = 1 };
         var source = await _db.AtsScrapeSources
             .FirstOrDefaultAsync(s => s.Id == sourceId, cancellationToken);
-        if (source is null || !source.IsEnabled)
+        if (source is null)
         {
-            return 0;
+            Line(report, $"Source {sourceId} not found.");
+            _logger.LogWarning("ATS scrape source {SourceId} not found.", sourceId);
+            report.FinishedAtUtc = DateTime.UtcNow;
+            return report;
+        }
+
+        var srcReport = new AtsScrapeSourceReport
+        {
+            SourceId = source.Id,
+            Name = source.Name,
+            Domain = source.Domain,
+            ListUrl = source.ListUrl
+        };
+        report.Sources.Add(srcReport);
+
+        Line(report, srcReport, $"START scrape domain={source.Domain} listUrl={source.ListUrl} enabled={source.IsEnabled}");
+        _logger.LogInformation(
+            "ATS scrape START name={Name} domain={Domain} url={Url}",
+            source.Name, source.Domain, source.ListUrl);
+
+        if (!source.IsEnabled)
+        {
+            srcReport.Error = "Bron is uitgeschakeld.";
+            Line(report, srcReport, "SKIP: source disabled.");
+            report.FinishedAtUtc = DateTime.UtcNow;
+            return report;
         }
 
         if (AtsBlacklistFilter.IsBlockedHost(source.ListUrl)
             || AtsBlacklistFilter.IsBlocked(source.ListUrl, source.Name, source.Name))
         {
+            srcReport.Error = "Bron geblokkeerd door blacklist.";
+            Line(report, srcReport, "SKIP: blacklist hit on source; disabling.");
             _logger.LogWarning("ATS source {Name} blocked by blacklist; disabling.", source.Name);
             source.IsEnabled = false;
             await _db.SaveChangesAsync(cancellationToken);
-            return 0;
+            report.SkippedBlacklist++;
+            srcReport.SkippedBlacklist++;
+            report.FinishedAtUtc = DateTime.UtcNow;
+            return report;
         }
 
         var client = _httpClientFactory.CreateClient(HttpClientName);
         string listHtml;
         try
         {
-            listHtml = await FetchHtmlAsync(client, source.ListUrl, cancellationToken);
+            var (status, html) = await FetchHtmlAsync(client, source.ListUrl, cancellationToken);
+            srcReport.ListHttpStatus = (int)status;
+            Line(report, srcReport, $"LIST HTTP {(int)status} {status} for {source.ListUrl}");
+            _logger.LogInformation(
+                "ATS list HTTP {StatusCode} for {Domain} {Url}",
+                (int)status, source.Domain, source.ListUrl);
+            listHtml = html;
         }
-        catch (Exception ex) when (ex is not OperationCanceledException)
+        catch (HttpRequestException ex)
         {
+            srcReport.HttpErrors++;
+            report.HttpErrors++;
+            srcReport.Error = ex.Message;
+            srcReport.ListHttpStatus = TryParseStatus(ex.Message);
+            Line(report, srcReport, $"LIST FETCH FAILED: {ex.Message}");
             _logger.LogWarning(ex, "ATS list fetch failed for {Domain}", source.Domain);
             source.LastScrapedAtUtc = DateTime.UtcNow;
             await _db.SaveChangesAsync(cancellationToken);
-            return 0;
+            report.FinishedAtUtc = DateTime.UtcNow;
+            return report;
         }
-
-        var detailUrls = ExtractDetailUrls(listHtml, source.ListUrl, source.Domain)
-            .Take(40)
-            .ToList();
-
-        // Fallback: treat the list URL itself as a single vacancy page.
-        if (detailUrls.Count == 0)
+        catch (Exception ex) when (ex is not OperationCanceledException)
         {
-            detailUrls.Add(source.ListUrl);
+            srcReport.HttpErrors++;
+            report.HttpErrors++;
+            srcReport.Error = ex.Message;
+            Line(report, srcReport, $"LIST FETCH ERROR: {ex.Message}");
+            _logger.LogWarning(ex, "ATS list fetch failed for {Domain}", source.Domain);
+            source.LastScrapedAtUtc = DateTime.UtcNow;
+            await _db.SaveChangesAsync(cancellationToken);
+            report.FinishedAtUtc = DateTime.UtcNow;
+            return report;
         }
 
-        var upserted = 0;
-        foreach (var detailUrl in detailUrls)
+        var (detailUrls, rawAnchors) = ExtractDetailUrlsWithStats(listHtml, source.ListUrl, source.Domain);
+        srcReport.RawAnchorCount = rawAnchors;
+        srcReport.VacancyLinkCount = detailUrls.Count;
+        Line(report, srcReport,
+            $"SELECTORS: raw <a href>={rawAnchors}, vacancy-like links={detailUrls.Count} (CSS/path hints: vacature|job|werkenbij|career|sollicit)");
+        _logger.LogInformation(
+            "ATS selectors domain={Domain} rawAnchors={Raw} vacancyLinks={Vacancy}",
+            source.Domain, rawAnchors, detailUrls.Count);
+
+        var urls = detailUrls.Take(40).ToList();
+        if (urls.Count == 0)
+        {
+            urls.Add(source.ListUrl);
+            Line(report, srcReport, "FALLBACK: no vacancy links — treating list URL as single detail page.");
+            _logger.LogInformation("ATS fallback to list URL as detail for {Domain}", source.Domain);
+        }
+
+        foreach (var detailUrl in urls)
         {
             cancellationToken.ThrowIfCancellationRequested();
             if (AtsBlacklistFilter.IsBlocked(detailUrl, null)
                 || !AtsBlacklistFilter.IsDomainAllowed(detailUrl, source.Domain))
             {
+                srcReport.SkippedBlacklist++;
+                report.SkippedBlacklist++;
+                Line(report, srcReport, $"SKIP blacklist/domain: {detailUrl}");
+                _logger.LogInformation("ATS skip blacklist/domain {Url}", detailUrl);
                 continue;
             }
 
             try
             {
-                var html = string.Equals(detailUrl, source.ListUrl, StringComparison.OrdinalIgnoreCase)
-                    ? listHtml
-                    : await FetchHtmlAsync(client, detailUrl, cancellationToken);
-
-                if (await UpsertFromHtmlAsync(source, detailUrl, html, cancellationToken))
+                string html;
+                if (string.Equals(detailUrl, source.ListUrl, StringComparison.OrdinalIgnoreCase))
                 {
-                    upserted++;
+                    html = listHtml;
+                    Line(report, srcReport, $"DETAIL reuse list HTML for {detailUrl}");
                 }
+                else
+                {
+                    var (status, body) = await FetchHtmlAsync(client, detailUrl, cancellationToken);
+                    srcReport.DetailPagesFetched++;
+                    Line(report, srcReport, $"DETAIL HTTP {(int)status} {status} {detailUrl}");
+                    _logger.LogInformation("ATS detail HTTP {StatusCode} {Url}", (int)status, detailUrl);
+                    html = body;
+                }
+
+                var outcome = await UpsertFromHtmlAsync(source, detailUrl, html, cancellationToken);
+                ApplyOutcome(report, srcReport, outcome, detailUrl);
+            }
+            catch (HttpRequestException ex)
+            {
+                srcReport.HttpErrors++;
+                report.HttpErrors++;
+                Line(report, srcReport, $"DETAIL HTTP ERROR {detailUrl}: {ex.Message}");
+                _logger.LogWarning(ex, "ATS detail fetch failed {Url}", detailUrl);
             }
             catch (Exception ex) when (ex is not OperationCanceledException)
             {
-                _logger.LogDebug(ex, "ATS detail scrape skipped for {Url}", detailUrl);
+                srcReport.HttpErrors++;
+                report.HttpErrors++;
+                Line(report, srcReport, $"DETAIL ERROR {detailUrl}: {ex.Message}");
+                _logger.LogWarning(ex, "ATS detail scrape skipped for {Url}", detailUrl);
             }
         }
 
         source.LastScrapedAtUtc = DateTime.UtcNow;
         await _db.SaveChangesAsync(cancellationToken);
+
+        Line(report, srcReport,
+            $"END {source.Name}: upserted={srcReport.Upserted} inserted={srcReport.Inserted} updated={srcReport.Updated} " +
+            $"dupHash={srcReport.SkippedDuplicateHash} parseSkip={srcReport.SkippedParse} httpErr={srcReport.HttpErrors}");
         _logger.LogInformation(
-            "ATS scrape {Name}: upserted={Upserted} from {Urls} urls.",
-            source.Name, upserted, detailUrls.Count);
-        return upserted;
+            "ATS scrape END name={Name} upserted={Upserted} inserted={Inserted} updated={Updated} dupHash={Dup} parseSkip={Parse} httpErr={Http}",
+            source.Name, srcReport.Upserted, srcReport.Inserted, srcReport.Updated,
+            srcReport.SkippedDuplicateHash, srcReport.SkippedParse, srcReport.HttpErrors);
+
+        report.FinishedAtUtc = DateTime.UtcNow;
+        return report;
     }
 
-    private async Task<bool> UpsertFromHtmlAsync(
+    private enum UpsertOutcome
+    {
+        Inserted,
+        Updated,
+        DuplicateUnchanged,
+        SkippedBlacklist,
+        SkippedParse
+    }
+
+    private async Task<UpsertOutcome> UpsertFromHtmlAsync(
         AtsScrapeSource source,
         string sourceUrl,
         string html,
@@ -161,7 +276,8 @@ public sealed class AtsScrapeService : IAtsScrapeService
         title = CleanText(title);
         if (string.IsNullOrWhiteSpace(title) || title.Length < 3)
         {
-            return false;
+            _logger.LogInformation("ATS parse skip (no title) {Url}", sourceUrl);
+            return UpsertOutcome.SkippedParse;
         }
 
         var companyName = FirstNonEmpty(
@@ -171,7 +287,10 @@ public sealed class AtsScrapeService : IAtsScrapeService
 
         if (AtsBlacklistFilter.IsBlocked(sourceUrl, title, companyName))
         {
-            return false;
+            _logger.LogInformation(
+                "ATS blacklist skip title={Title} company={Company} url={Url}",
+                title, companyName, sourceUrl);
+            return UpsertOutcome.SkippedBlacklist;
         }
 
         var description = ExtractDescription(document);
@@ -231,10 +350,16 @@ public sealed class AtsScrapeService : IAtsScrapeService
                 LastCheckedAtUtc = now,
                 ExpiresAtUtc = AtsVacancyRules.DefaultExpiresAt(now)
             });
-            return true;
+            _logger.LogInformation(
+                "ATS INSERT hash={Hash} title={Title} company={Company} url={Url} score={Score}",
+                hash[..12], title, companyName, sourceUrl, completeness);
+            return UpsertOutcome.Inserted;
         }
 
-        // Refresh content for non-terminal statuses; keep Approved/Rejected as-is for status.
+        _logger.LogInformation(
+            "ATS DEDUP hash hit hash={Hash} title={Title} existingId={Id} — refreshing row",
+            hash[..12], title, existing.Id);
+
         existing.SourceUrl = Truncate(sourceUrl, 2048) ?? sourceUrl;
         existing.SourceId = source.Id;
         existing.CompanyName = Truncate(companyName, 256)!;
@@ -259,20 +384,70 @@ public sealed class AtsScrapeService : IAtsScrapeService
             existing.RejectReason = null;
         }
 
-        return true;
+        return UpsertOutcome.Updated;
+    }
+
+    private static void ApplyOutcome(
+        AtsScrapeRunReport report,
+        AtsScrapeSourceReport src,
+        UpsertOutcome outcome,
+        string url)
+    {
+        switch (outcome)
+        {
+            case UpsertOutcome.Inserted:
+                report.Inserted++;
+                report.Upserted++;
+                src.Inserted++;
+                src.Upserted++;
+                Line(report, src, $"INSERT OK {url}");
+                break;
+            case UpsertOutcome.Updated:
+                report.Updated++;
+                report.Upserted++;
+                report.SkippedDuplicateHash++;
+                src.Updated++;
+                src.Upserted++;
+                src.SkippedDuplicateHash++;
+                Line(report, src, $"DEDUP refresh (hash exists) {url}");
+                break;
+            case UpsertOutcome.DuplicateUnchanged:
+                report.SkippedDuplicateHash++;
+                src.SkippedDuplicateHash++;
+                Line(report, src, $"DEDUP skip unchanged {url}");
+                break;
+            case UpsertOutcome.SkippedBlacklist:
+                report.SkippedBlacklist++;
+                src.SkippedBlacklist++;
+                Line(report, src, $"SKIP blacklist content {url}");
+                break;
+            case UpsertOutcome.SkippedParse:
+                report.SkippedParse++;
+                src.SkippedParse++;
+                Line(report, src, $"SKIP parse (no usable title) {url}");
+                break;
+        }
     }
 
     internal static IReadOnlyList<string> ExtractDetailUrls(string html, string listUrl, string allowedDomain)
+        => ExtractDetailUrlsWithStats(html, listUrl, allowedDomain).Urls;
+
+    internal static (IReadOnlyList<string> Urls, int RawAnchorCount) ExtractDetailUrlsWithStats(
+        string html,
+        string listUrl,
+        string allowedDomain)
     {
         var parser = new HtmlParser();
         using var document = parser.ParseDocument(html);
         if (!Uri.TryCreate(listUrl, UriKind.Absolute, out var baseUri))
         {
-            return [];
+            return ([], 0);
         }
 
+        var anchors = document.QuerySelectorAll("a[href]");
+        var raw = anchors.Length;
         var found = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-        foreach (var anchor in document.QuerySelectorAll("a[href]"))
+        foreach (var anchor in anchors)
         {
             var href = anchor.GetAttribute("href");
             if (string.IsNullOrWhiteSpace(href)
@@ -309,7 +484,6 @@ public sealed class AtsScrapeService : IAtsScrapeService
                 continue;
             }
 
-            // Prefer detail-ish paths over the listing root itself.
             var normalized = absolute.GetLeftPart(UriPartial.Query);
             if (string.Equals(normalized.TrimEnd('/'), listUrl.TrimEnd('/'), StringComparison.OrdinalIgnoreCase))
             {
@@ -319,10 +493,10 @@ public sealed class AtsScrapeService : IAtsScrapeService
             found.Add(normalized);
         }
 
-        return found.OrderBy(u => u, StringComparer.OrdinalIgnoreCase).ToList();
+        return (found.OrderBy(u => u, StringComparer.OrdinalIgnoreCase).ToList(), raw);
     }
 
-    private static async Task<string> FetchHtmlAsync(
+    private static async Task<(HttpStatusCode Status, string Html)> FetchHtmlAsync(
         HttpClient client,
         string url,
         CancellationToken cancellationToken)
@@ -330,13 +504,58 @@ public sealed class AtsScrapeService : IAtsScrapeService
         using var request = new HttpRequestMessage(HttpMethod.Get, url);
         request.Headers.TryAddWithoutValidation("Accept", "text/html,application/xhtml+xml");
         using var response = await client.SendAsync(request, cancellationToken);
-        if (response.StatusCode is HttpStatusCode.NotFound or HttpStatusCode.Gone)
+        var status = response.StatusCode;
+        if (status is HttpStatusCode.NotFound or HttpStatusCode.Gone)
         {
-            throw new HttpRequestException($"HTTP {(int)response.StatusCode}");
+            throw new HttpRequestException($"HTTP {(int)status} {status}");
         }
 
         response.EnsureSuccessStatusCode();
-        return await response.Content.ReadAsStringAsync(cancellationToken);
+        var html = await response.Content.ReadAsStringAsync(cancellationToken);
+        return (status, html);
+    }
+
+    private static int? TryParseStatus(string message)
+    {
+        if (message.StartsWith("HTTP ", StringComparison.Ordinal)
+            && int.TryParse(message.AsSpan(5, 3), out var code))
+        {
+            return code;
+        }
+
+        return null;
+    }
+
+    private static void Merge(AtsScrapeRunReport target, AtsScrapeRunReport part)
+    {
+        target.Upserted += part.Upserted;
+        target.Inserted += part.Inserted;
+        target.Updated += part.Updated;
+        target.SkippedDuplicateHash += part.SkippedDuplicateHash;
+        target.SkippedBlacklist += part.SkippedBlacklist;
+        target.SkippedParse += part.SkippedParse;
+        target.HttpErrors += part.HttpErrors;
+        foreach (var s in part.Sources)
+        {
+            target.Sources.Add(s);
+        }
+
+        foreach (var line in part.Lines)
+        {
+            target.Lines.Add(line);
+        }
+    }
+
+    private static void Line(AtsScrapeRunReport report, string message)
+    {
+        report.Lines.Add($"[{DateTime.UtcNow:HH:mm:ss}] {message}");
+    }
+
+    private static void Line(AtsScrapeRunReport report, AtsScrapeSourceReport src, string message)
+    {
+        var line = $"[{DateTime.UtcNow:HH:mm:ss}] [{src.Domain}] {message}";
+        report.Lines.Add(line);
+        src.Lines.Add(line);
     }
 
     private static string ExtractDescription(IDocument document)
@@ -365,8 +584,7 @@ public sealed class AtsScrapeService : IAtsScrapeService
             return fromDom;
         }
 
-        var postal = ExtractPostal(description);
-        return postal;
+        return ExtractPostal(description);
     }
 
     private static string? ExtractPostal(string? text)

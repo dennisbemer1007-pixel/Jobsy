@@ -120,14 +120,14 @@ public sealed class AdminAtsController : ControllerBase
     }
 
     [HttpPost("scrape")]
-    public async Task<ActionResult<object>> ScrapeNow(
+    public async Task<ActionResult<AtsScrapeRunReportDto>> ScrapeNow(
         [FromQuery] Guid? sourceId = null,
         CancellationToken cancellationToken = default)
     {
-        var n = sourceId is Guid id
+        var report = sourceId is Guid id
             ? await _scrape.ScrapeSourceAsync(id, cancellationToken)
             : await _scrape.ScrapeAllEnabledAsync(cancellationToken);
-        return Ok(new { upserted = n });
+        return Ok(ToReportDto(report));
     }
 
     [HttpPost("health")]
@@ -136,6 +136,37 @@ public sealed class AdminAtsController : ControllerBase
         var n = await _health.RunHealthPassAsync(cancellationToken);
         return Ok(new { changed = n });
     }
+
+    private static AtsScrapeRunReportDto ToReportDto(AtsScrapeRunReport r) => new(
+        r.StartedAtUtc,
+        r.FinishedAtUtc,
+        r.SourceCount,
+        r.Upserted,
+        r.Inserted,
+        r.Updated,
+        r.SkippedDuplicateHash,
+        r.SkippedBlacklist,
+        r.SkippedParse,
+        r.HttpErrors,
+        r.Sources.Select(s => new AtsScrapeSourceReportDto(
+            s.SourceId,
+            s.Name,
+            s.Domain,
+            s.ListUrl,
+            s.ListHttpStatus,
+            s.RawAnchorCount,
+            s.VacancyLinkCount,
+            s.DetailPagesFetched,
+            s.Upserted,
+            s.Inserted,
+            s.Updated,
+            s.SkippedDuplicateHash,
+            s.SkippedBlacklist,
+            s.SkippedParse,
+            s.HttpErrors,
+            s.Error,
+            s.Lines.ToList())).ToList(),
+        r.Lines.ToList());
 
     private static AtsListingDto ToDto(Core.Entities.AtsScrapedListing l) => new(
         l.Id,
@@ -202,3 +233,36 @@ public record AtsListingUpdateRequest(
 public record AtsRejectRequest(string? Reason);
 
 public record AtsApproveResultDto(Guid ListingId, Guid VacancyId, string VacancyStatus);
+
+public record AtsScrapeRunReportDto(
+    DateTime StartedAtUtc,
+    DateTime FinishedAtUtc,
+    int SourceCount,
+    int Upserted,
+    int Inserted,
+    int Updated,
+    int SkippedDuplicateHash,
+    int SkippedBlacklist,
+    int SkippedParse,
+    int HttpErrors,
+    IReadOnlyList<AtsScrapeSourceReportDto> Sources,
+    IReadOnlyList<string> Lines);
+
+public record AtsScrapeSourceReportDto(
+    Guid SourceId,
+    string Name,
+    string Domain,
+    string ListUrl,
+    int? ListHttpStatus,
+    int RawAnchorCount,
+    int VacancyLinkCount,
+    int DetailPagesFetched,
+    int Upserted,
+    int Inserted,
+    int Updated,
+    int SkippedDuplicateHash,
+    int SkippedBlacklist,
+    int SkippedParse,
+    int HttpErrors,
+    string? Error,
+    IReadOnlyList<string> Lines);

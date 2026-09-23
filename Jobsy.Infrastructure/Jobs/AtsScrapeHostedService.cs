@@ -29,8 +29,10 @@ public sealed class AtsScrapeHostedService : BackgroundService
             {
                 await using var scope = _scopeFactory.CreateAsyncScope();
                 var scrape = scope.ServiceProvider.GetRequiredService<IAtsScrapeService>();
-                var n = await scrape.ScrapeAllEnabledAsync(stoppingToken);
-                _logger.LogInformation("ATS scrape cycle finished; upserted={Count}.", n);
+                var report = await scrape.ScrapeAllEnabledAsync(stoppingToken);
+                _logger.LogInformation(
+                    "ATS scrape cycle finished; upserted={Count} inserted={Inserted} httpErrors={HttpErrors}.",
+                    report.Upserted, report.Inserted, report.HttpErrors);
             }
             catch (Exception ex) when (ex is not OperationCanceledException)
             {

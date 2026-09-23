@@ -195,6 +195,21 @@ public class RoleNavCatalogTests
     }
 
     [Fact]
+    public void ForUser_admin_includes_dedicated_ats_vacancies_nav()
+    {
+        var admin = new ClaimsPrincipal(new ClaimsIdentity([new Claim(ClaimTypes.Role, JobsyRoles.Admin)], "test"));
+        var items = RoleNavCatalog.ForUser(admin);
+        Assert.Contains(items, i => i.Href == "/admin/ats-vacancies" && i.TitleKey == "Admin.AtsVacancies");
+        Assert.True(RoleNavCatalog.IsActive(
+            items.First(i => i.Href == "/admin/ats-vacancies"),
+            "admin/ats-vacancies",
+            items));
+
+        var candidate = new ClaimsPrincipal(new ClaimsIdentity([new Claim(ClaimTypes.Role, JobsyRoles.Candidate)], "test"));
+        Assert.DoesNotContain(RoleNavCatalog.ForUser(candidate), i => i.Href == "/admin/ats-vacancies");
+    }
+
+    [Fact]
     public void HowLobsyHrefFor_admin_and_guests_have_no_guide_link()
     {
         var admin = new ClaimsPrincipal(new ClaimsIdentity([new Claim(ClaimTypes.Role, JobsyRoles.Admin)], "test"));

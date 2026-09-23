@@ -29,11 +29,66 @@
                 <option value="Inactive">Inactief</option>
             </select>
         </label>
-        <button class="btn-compact" type="button" disabled="@_busy" @onclick="ScrapeAsync">Nu scrapen</button>
+        <button class="btn-primary" type="button" disabled="@_busy" @onclick="ScrapeAsync">
+            Start Scrape Handmatig
+        </button>
         <button class="btn-compact" type="button" disabled="@_busy" @onclick="HealthAsync">Health-check</button>
         <button class="btn-compact" type="button" disabled="@_busy" @onclick="ReloadAsync">Vernieuwen</button>
         <span class="muted">@_filtered.Count van @_listings.Count</span>
     </div>
+
+    @if (_scrapeReport is not null)
+    {
+        <section class="panel-section ats-diag">
+            <div class="panel-header">
+                <h2>Scrape-diagnostiek</h2>
+                <button class="btn-compact" type="button" @onclick="() => _scrapeReport = null">Sluiten</button>
+            </div>
+            <p>
+                Bronnen: <strong>@_scrapeReport.SourceCount</strong>
+                · upsert: <strong>@_scrapeReport.Upserted</strong>
+                (nieuw @_scrapeReport.Inserted / refresh @_scrapeReport.Updated)
+                · dedup: @_scrapeReport.SkippedDuplicateHash
+                · blacklist: @_scrapeReport.SkippedBlacklist
+                · parse-skip: @_scrapeReport.SkippedParse
+                · HTTP-fouten: <strong>@_scrapeReport.HttpErrors</strong>
+            </p>
+            @if (_scrapeReport.Sources.Count > 0)
+            {
+                <div class="table-scroll">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Bron</th>
+                                <th>HTTP</th>
+                                <th>Anchors</th>
+                                <th>Vacature-links</th>
+                                <th>Upsert</th>
+                                <th>Fout</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var s in _scrapeReport.Sources)
+                            {
+                                <tr>
+                                    <td class="data-table__col--wrap">
+                                        <strong>@s.Name</strong>
+                                        <div class="muted">@s.Domain</div>
+                                    </td>
+                                    <td>@(s.ListHttpStatus?.ToString() ?? "—")</td>
+                                    <td>@s.RawAnchorCount</td>
+                                    <td>@s.VacancyLinkCount</td>
+                                    <td>@s.Upserted (@s.Inserted/@s.Updated)</td>
+                                    <td class="data-table__col--wrap">@(s.Error ?? "—")</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+            <pre class="ats-diag__log">@string.Join('\n', _scrapeReport.Lines)</pre>
+        </section>
+    }
 
     @if (!string.IsNullOrEmpty(_message))
     {
@@ -165,6 +220,7 @@
     private string? _message;
     private string _searchQuery = string.Empty;
     private string _statusFilter = "PendingReview";
+    private AtsScrapeRunReport? _scrapeReport;
     private AtsListingItem? _edit;
     private string _editTitle = string.Empty;
     private string _editCompany = string.Empty;
@@ -335,15 +391,24 @@
     {
         _busy = true;
         _message = null;
+        _scrapeReport = null;
         try
         {
-            var n = await Api.RunAtsScrapeAsync();
-            _message = $"Scrape klaar: {n} upsert(s).";
+            _message = "Scrape gestart… diagnostiek volgt zodra de run klaar is.";
+            StateHasChanged();
+            var report = await Api.RunAtsScrapeAsync();
+            _scrapeReport = report;
+            _message =
+                $"Scrape klaar: {report.Upserted} upsert(s) " +
+                $"({report.Inserted} nieuw, {report.Updated} refresh), " +
+                $"{report.HttpErrors} HTTP-fout(en), {report.SourceCount} bron(nen).";
+            // Show all statuses after a manual run so new/updated rows are visible.
+            _statusFilter = string.Empty;
             await ReloadAsync();
         }
         catch (Exception ex)
         {
-            _message = ex.Message;
+            _message = "Scrape mislukt: " + ex.Message;
         }
         finally
         {

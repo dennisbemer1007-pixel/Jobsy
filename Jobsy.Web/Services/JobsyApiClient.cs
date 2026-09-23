@@ -2973,15 +2973,20 @@ public sealed class JobsyApiClient : IAsyncDisposable
         }
     }
 
-    public async Task<int> RunAtsScrapeAsync(Guid? sourceId = null, CancellationToken ct = default)
+    public async Task<AtsScrapeRunReport> RunAtsScrapeAsync(Guid? sourceId = null, CancellationToken ct = default)
     {
         var url = sourceId is Guid id
             ? $"api/admin/ats/scrape?sourceId={id}"
             : "api/admin/ats/scrape";
         var response = await _http.PostAsync(url, null, ct);
-        response.EnsureSuccessStatusCode();
-        var payload = await response.Content.ReadFromJsonAsync<JsonElement>(cancellationToken: ct);
-        return payload.TryGetProperty("upserted", out var u) ? u.GetInt32() : 0;
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException(string.IsNullOrWhiteSpace(body) ? response.ReasonPhrase : body);
+        }
+
+        return await response.Content.ReadFromJsonAsync<AtsScrapeRunReport>(cancellationToken: ct)
+               ?? new AtsScrapeRunReport();
     }
 
     public async Task<int> RunAtsHealthAsync(CancellationToken ct = default)

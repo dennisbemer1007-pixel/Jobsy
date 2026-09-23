@@ -5,8 +5,8 @@ namespace Jobsy.Core.Interfaces;
 
 public interface IAtsScrapeService
 {
-    Task<int> ScrapeSourceAsync(Guid sourceId, CancellationToken cancellationToken = default);
-    Task<int> ScrapeAllEnabledAsync(CancellationToken cancellationToken = default);
+    Task<AtsScrapeRunReport> ScrapeSourceAsync(Guid sourceId, CancellationToken cancellationToken = default);
+    Task<AtsScrapeRunReport> ScrapeAllEnabledAsync(CancellationToken cancellationToken = default);
 }
 
 public interface IAtsVacancyModerationService
