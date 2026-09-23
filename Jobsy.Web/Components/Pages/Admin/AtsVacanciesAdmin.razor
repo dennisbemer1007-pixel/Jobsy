@@ -142,55 +142,65 @@
 
     @if (_edit is not null)
     {
-        <div class="share-modal-backdrop lobsy-dialog-backdrop" @onclick="CloseDetail"></div>
+        <div class="ats-detail-backdrop" @onclick="CloseDetail"></div>
         <aside class="ats-detail-drawer" role="dialog" aria-modal="true" aria-labelledby="ats-detail-title">
-            <div class="ats-detail-drawer__head">
-                <div>
+            <header class="ats-detail-drawer__head">
+                <div class="ats-detail-drawer__head-text">
                     <p class="ats-detail-drawer__eyebrow">
                         <span class="source-badge source-badge--ats">ATS</span>
-                        · @StatusLabel(_edit.Status) · score @_edit.CompletenessScore%
+                        <span class="ats-status-badge ats-status-badge--@StatusClass(_edit.Status)">@StatusLabel(_edit.Status)</span>
+                        <span class="muted">score @_edit.CompletenessScore%</span>
                     </p>
                     <h2 id="ats-detail-title">@_edit.Title</h2>
                     <p class="ats-detail-drawer__company">@_edit.CompanyName</p>
                 </div>
-                <button class="btn-compact" type="button" @onclick="CloseDetail">Sluiten</button>
-            </div>
+                <button class="ats-detail-drawer__close btn-compact" type="button" @onclick="CloseDetail" aria-label="Sluiten">
+                    Sluiten
+                </button>
+            </header>
 
-            <div class="ats-detail-drawer__meta">
-                <div><span class="muted">Locatie</span><strong>@(_edit.LocationLabel ?? "—")</strong></div>
-                <div><span class="muted">Salaris</span><strong>@(SalaryDisplay(_edit))</strong></div>
-                <div><span class="muted">Uren</span><strong>@(_edit.HoursText ?? "—")</strong></div>
-                <div><span class="muted">Gescrapet</span><strong>@_edit.ScrapedAtUtc.ToLocalTime().ToString("dd-MM-yyyy HH:mm")</strong></div>
-                <div><span class="muted">Laatste check</span><strong>@(_edit.LastCheckedAtUtc?.ToLocalTime().ToString("dd-MM-yyyy HH:mm") ?? "—")</strong></div>
-                <div><span class="muted">Bron</span><strong><a href="@_edit.SourceUrl" target="_blank" rel="noopener noreferrer">@_edit.SourceDomain</a></strong></div>
-            </div>
-
-            <section class="ats-detail-drawer__body">
-                <h3>Vacaturetekst</h3>
-                <div class="ats-detail-drawer__prose">@_edit.Description</div>
-                <p class="muted ats-detail-drawer__source-url">
-                    Originele URL:
-                    <a href="@_edit.SourceUrl" target="_blank" rel="noopener noreferrer">@_edit.SourceUrl</a>
-                </p>
-            </section>
-
-            <details class="ats-detail-drawer__edit">
-                <summary>Velden handmatig bewerken</summary>
-                <div class="ats-edit-grid">
-                    <label>Titel <input @bind="_editTitle" /></label>
-                    <label>Bedrijf <input @bind="_editCompany" /></label>
-                    <label>Locatie <input @bind="_editLocation" /></label>
-                    <label>Salaris-tekst <input @bind="_editSalary" /></label>
-                    <label>Uurloon <input type="number" step="0.01" @bind="_editWage" /></label>
-                    <label>Uren-tekst <input @bind="_editHours" /></label>
-                    <label class="ats-edit-grid__full">Omschrijving
-                        <textarea rows="8" @bind="_editDescription"></textarea>
-                    </label>
+            <div class="ats-detail-drawer__scroll">
+                <div class="ats-detail-drawer__meta">
+                    <div><span class="muted">Locatie</span><strong>@(_edit.LocationLabel ?? "—")</strong></div>
+                    <div><span class="muted">Salaris</span><strong>@(SalaryDisplay(_edit))</strong></div>
+                    <div><span class="muted">Uren</span><strong>@(_edit.HoursText ?? "—")</strong></div>
+                    <div><span class="muted">Gescrapet</span><strong>@_edit.ScrapedAtUtc.ToLocalTime().ToString("dd-MM-yyyy HH:mm")</strong></div>
+                    <div><span class="muted">Laatste check</span><strong>@(_edit.LastCheckedAtUtc?.ToLocalTime().ToString("dd-MM-yyyy HH:mm") ?? "—")</strong></div>
+                    <div><span class="muted">Bron</span><strong><a href="@_edit.SourceUrl" target="_blank" rel="noopener noreferrer">@_edit.SourceDomain</a></strong></div>
                 </div>
-                <button class="btn-compact" type="button" disabled="@_busy" @onclick="SaveEditAsync">Opslaan</button>
-            </details>
 
-            <div class="ats-detail-drawer__actions">
+                <section class="ats-detail-drawer__body">
+                    <div class="ats-detail-drawer__body-head">
+                        <h3>Vacaturetekst</h3>
+                        <a class="ats-detail-drawer__open-source" href="@_edit.SourceUrl" target="_blank" rel="noopener noreferrer">
+                            Open bronpagina
+                        </a>
+                    </div>
+                    <div class="ats-detail-drawer__prose">@FormatDescription(_edit.Description)</div>
+                    <p class="muted ats-detail-drawer__source-url">
+                        Originele URL:
+                        <a href="@_edit.SourceUrl" target="_blank" rel="noopener noreferrer">@_edit.SourceUrl</a>
+                    </p>
+                </section>
+
+                <details class="ats-detail-drawer__edit">
+                    <summary>Velden handmatig bewerken</summary>
+                    <div class="ats-edit-grid">
+                        <label>Titel <input @bind="_editTitle" /></label>
+                        <label>Bedrijf <input @bind="_editCompany" /></label>
+                        <label>Locatie <input @bind="_editLocation" /></label>
+                        <label>Salaris-tekst <input @bind="_editSalary" /></label>
+                        <label>Uurloon <input type="number" step="0.01" @bind="_editWage" /></label>
+                        <label>Uren-tekst <input @bind="_editHours" /></label>
+                        <label class="ats-edit-grid__full">Omschrijving
+                            <textarea rows="10" @bind="_editDescription"></textarea>
+                        </label>
+                    </div>
+                    <button class="btn-compact" type="button" disabled="@_busy" @onclick="SaveEditAsync">Opslaan</button>
+                </details>
+            </div>
+
+            <footer class="ats-detail-drawer__actions">
                 @if (_edit.Status is "PendingReview" or "Inactive")
                 {
                     <button class="btn-primary" type="button" disabled="@_busy" @onclick="() => ApproveAsync(_edit)">Goedkeuren / Actief</button>
@@ -204,7 +214,7 @@
                 {
                     <a class="btn-compact" href="/vacancies/@vid">Gekoppelde vacature</a>
                 }
-            </div>
+            </footer>
         </aside>
     }
 </AdminPageShell>
@@ -432,6 +442,19 @@
         if (string.IsNullOrWhiteSpace(text)) return "Geen omschrijving.";
         var clean = System.Text.RegularExpressions.Regex.Replace(text, @"\s+", " ").Trim();
         return clean.Length <= 160 ? clean : clean[..157] + "…";
+    }
+
+    private static string FormatDescription(string? text)
+    {
+        if (string.IsNullOrWhiteSpace(text))
+        {
+            return "Geen vacaturetekst beschikbaar. Open de bronpagina of bewerk de velden handmatig.";
+        }
+
+        // Normalize messy scrape whitespace into readable paragraphs without losing content.
+        var normalized = System.Text.RegularExpressions.Regex.Replace(text.Trim(), @"[ \t]+", " ");
+        normalized = System.Text.RegularExpressions.Regex.Replace(normalized, @"\n{3,}", "\n\n");
+        return normalized;
     }
 
     private static string SalaryDisplay(AtsListingItem row)
