@@ -403,7 +403,14 @@ public sealed class DeepAnalysisService : IDeepAnalysisService
             answers,
             unlocked
                 ? DeepAnalysisCatalog.QuestionsFor(kind)
-                    .Select(q => new DeepAnalysisQuestionDto(q.Id, q.Family, q.Domain, q.Reverse, q.PromptNl))
+                    .Select(q => new DeepAnalysisQuestionDto(
+                        q.Id,
+                        q.Family,
+                        q.Domain,
+                        q.Reverse,
+                        q.PromptNl,
+                        DeepAnalysisQuestionHelp.ExampleFor(q),
+                        DeepAnalysisQuestionHelp.DomainLabel(q.Domain)))
                     .ToList()
                 : [],
             FormatUpsellCopy(priceEuro, kind));

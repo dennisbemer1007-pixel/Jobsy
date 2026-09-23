@@ -16442,6 +16442,105 @@ html.cookie-consent-known .cookie-consent {
     background: var(--brand);
 }
 
+.deep-analysis-chrome {
+    position: sticky;
+    top: 0;
+    z-index: 5;
+    display: flex;
+    flex-direction: column;
+    gap: 0.55rem;
+    margin: 0 0 1rem;
+    padding: 0.75rem 0.85rem;
+    background: color-mix(in srgb, var(--surface) 92%, var(--pearl-shine));
+    border: 1px solid var(--border);
+    border-radius: var(--radius, 12px);
+    box-shadow: 0 1px 0 rgba(255, 255, 255, 0.65) inset;
+}
+
+.deep-analysis-chrome__progress {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+}
+
+.deep-analysis-topics {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+}
+
+.deep-analysis-topics__item {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    max-width: 100%;
+    padding: 0.2rem 0.55rem;
+    border-radius: 999px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    font-size: 0.78rem;
+    line-height: 1.2;
+    color: var(--muted);
+}
+
+.deep-analysis-topics__item--done {
+    color: #0f7a3f;
+    border-color: color-mix(in srgb, #0f7a3f 35%, var(--border));
+    background: color-mix(in srgb, #0f7a3f 8%, var(--surface));
+}
+
+.deep-analysis-topics__item--current {
+    color: var(--brand);
+    border-color: color-mix(in srgb, var(--brand) 40%, var(--border));
+    background: color-mix(in srgb, var(--brand) 8%, var(--surface));
+    font-weight: 650;
+}
+
+.deep-analysis-topics__label {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 11rem;
+}
+
+.deep-analysis-topics__check {
+    font-weight: 700;
+}
+
+.deep-analysis-topics__dot {
+    width: 0.45rem;
+    height: 0.45rem;
+    border-radius: 50%;
+    background: var(--brand);
+    flex-shrink: 0;
+}
+
+.competency-question__head {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.45rem;
+    margin: 0 0 0.45rem;
+}
+
+.competency-question__head .competency-question__text {
+    margin: 0;
+    flex: 1;
+}
+
+.deep-analysis-info {
+    flex-shrink: 0;
+    margin-top: 0.1rem;
+}
+
+@media (max-width: 640px) {
+    .deep-analysis-topics__label {
+        max-width: 7.5rem;
+    }
+}
+
 .competency-test__cat {
     border: 1px solid var(--border);
     border-radius: 12px;

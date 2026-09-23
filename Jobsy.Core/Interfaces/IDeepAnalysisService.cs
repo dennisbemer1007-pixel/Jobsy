@@ -59,7 +59,9 @@ public sealed record DeepAnalysisQuestionDto(
     string Family,
     string Domain,
     bool Reverse,
-    string PromptNl);
+    string PromptNl,
+    string ExampleNl = "",
+    string DomainLabel = "");
 
 public sealed record DeepAnalysisCheckoutResult(
     Guid CheckoutId,

@@ -3,6 +3,7 @@
 @rendermode @(new InteractiveServerRenderMode(prerender: false))
 @attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Candidate")]
 @using Jobsy.Core.Enums
+@using Jobsy.Core.Rules
 @using Jobsy.Web.Localization
 @inject JobsyApiClient Api
 @inject CultureState Culture
@@ -11,7 +12,7 @@
 
 <PageTitle>@Culture[_titleKey] · Lobsy</PageTitle>
 
-<div class="panel-page profile-page profile-page--candidate competency-test-page">
+<div class="panel-page profile-page profile-page--candidate competency-test-page deep-analysis-page">
     <header class="saved-gate__header profile-page__header">
         <h1>@Culture[_titleKey]</h1>
         <p class="login-lead">@_upsell</p>
@@ -44,17 +45,69 @@
         }
         else
         {
-            <p class="competency-test__progress" aria-live="polite">
-                @Culture.Format("Competency.Progress", AnsweredCount, _state?.QuestionCount ?? 150)
-            </p>
+            <div class="deep-analysis-chrome" aria-label="@Culture["Deep.ChromeLabel"]">
+                <div class="deep-analysis-chrome__progress">
+                    <p class="competency-test__progress" aria-live="polite">
+                        @Culture.Format("Deep.ProgressPercent", ProgressPercent)
+                        <span class="muted">· @Culture.Format("Competency.Progress", AnsweredCount, QuestionCount)</span>
+                    </p>
+                    <div class="competency-test__meter"
+                         role="progressbar"
+                         aria-valuemin="0"
+                         aria-valuemax="100"
+                         aria-valuenow="@ProgressPercent"
+                         aria-label="@Culture.Format("Deep.ProgressPercent", ProgressPercent)">
+                        <span style="width: @(ProgressPercent.ToString(System.Globalization.CultureInfo.InvariantCulture))%"></span>
+                    </div>
+                </div>
+                <ol class="deep-analysis-topics" aria-label="@Culture["Deep.TopicsLabel"]">
+                    @foreach (var topic in Topics)
+                    {
+                        <li class="deep-analysis-topics__item deep-analysis-topics__item--@topic.Status"
+                            title="@topic.Label">
+                            @if (topic.Status == "done")
+                            {
+                                <span class="deep-analysis-topics__check" aria-hidden="true">✓</span>
+                            }
+                            else if (topic.Status == "current")
+                            {
+                                <span class="deep-analysis-topics__dot" aria-hidden="true"></span>
+                            }
+                            else
+                            {
+                                <span class="deep-analysis-topics__soon" aria-hidden="true">·</span>
+                            }
+                            <span class="deep-analysis-topics__label">@topic.Label</span>
+                            <span class="visually-hidden">
+                                @topic.Label — @Culture[$"Deep.Topic.{topic.Status}"] (@topic.Done/@topic.Total)
+                            </span>
+                        </li>
+                    }
+                </ol>
+            </div>
+
             @foreach (var group in QuestionGroups)
             {
-                <fieldset class="competency-test__cat">
-                    <legend>@group.Key</legend>
+                var domainLabel = group.FirstOrDefault()?.DomainLabel;
+                if (string.IsNullOrWhiteSpace(domainLabel))
+                {
+                    domainLabel = DeepAnalysisQuestionHelp.DomainLabel(group.Key);
+                }
+                <fieldset class="competency-test__cat" id="@($"deep-topic-{Slug(group.Key)}")">
+                    <legend>@domainLabel</legend>
                     @foreach (var question in group)
                     {
                         <div class="competency-question">
-                            <p class="competency-question__text">@question.Id. @question.PromptNl</p>
+                            <div class="competency-question__head">
+                                <p class="competency-question__text">@question.Id. @question.PromptNl</p>
+                                <button type="button"
+                                        class="competency-help deep-analysis-info"
+                                        title="@Culture["Deep.InfoTitle"]"
+                                        aria-label="@Culture.Format("Deep.InfoAria", question.Id)"
+                                        @onclick="() => OpenExample(question)">
+                                    ?
+                                </button>
+                            </div>
                             <div class="competency-likert" role="radiogroup" aria-label="@question.PromptNl">
                                 @for (var value = 1; value <= 5; value++)
                                 {
@@ -80,7 +133,7 @@
                 <button class="engagement-btn" type="button" disabled="@_saving" @onclick="() => PersistAsync(false)">
                     @Culture["Competency.SaveDraft"]
                 </button>
-                <button class="login-submit" type="button" disabled="@(_saving || AnsweredCount < (_state?.QuestionCount ?? 150))" @onclick="() => PersistAsync(true)">
+                <button class="login-submit" type="button" disabled="@(_saving || AnsweredCount < QuestionCount)" @onclick="() => PersistAsync(true)">
                     @Culture["Competency.Complete"]
                 </button>
                 @if (!string.IsNullOrEmpty(_message))
@@ -91,6 +144,30 @@
         }
     </article>
 </div>
+
+@if (_exampleQuestion is not null)
+{
+    <LobsyFriendlyDialog IsOpen="true"
+                         Title="@Culture["Deep.InfoTitle"]"
+                         TitleId="deep-example-title"
+                         Lead="@Culture.Format("Deep.InfoLead", _exampleQuestion.Id)"
+                         OnClose="CloseExample">
+        <p>@_exampleQuestion.ExampleNl</p>
+        <button class="login-submit" type="button" @onclick="CloseExample">@Culture["Common.Close"]</button>
+    </LobsyFriendlyDialog>
+}
+
+@if (_boosterMilestone is int boosterAt)
+{
+    <LobsyFriendlyDialog IsOpen="true"
+                         Mood="LobsyDialogMood.Celebrate"
+                         Title="@DeepAnalysisBoosters.TitleFor(boosterAt)"
+                         TitleId="deep-booster-title"
+                         Lead="@DeepAnalysisBoosters.TryMessage(boosterAt, QuestionCount)"
+                         OnClose="CloseBooster">
+        <button class="login-submit" type="button" @onclick="CloseBooster">@Culture["Deep.BoosterContinue"]</button>
+    </LobsyFriendlyDialog>
+}
 
 @code {
     [Parameter] public string? Kind { get; set; }
@@ -104,11 +181,59 @@
     private string _titleKey = "Deep.CompetenceTitle";
     private DeepAnalysisState? _state;
     private readonly Dictionary<int, int> _answers = [];
+    private readonly HashSet<int> _seenBoosters = [];
+    private DeepAnalysisQuestionItem? _exampleQuestion;
+    private int? _boosterMilestone;
 
     private int AnsweredCount => _answers.Count;
+    private int QuestionCount => _state?.QuestionCount ?? DeepAnalysisCatalog.QuestionCount;
+    private int ProgressPercent => QuestionCount <= 0
+        ? 0
+        : (int)Math.Clamp(Math.Round(100.0 * AnsweredCount / QuestionCount), 0, 100);
 
     private IEnumerable<IGrouping<string, DeepAnalysisQuestionItem>> QuestionGroups =>
         (_state?.Questions ?? []).GroupBy(q => q.Domain);
+
+    private IReadOnlyList<TopicChip> Topics
+    {
+        get
+        {
+            var groups = (_state?.Questions ?? [])
+                .GroupBy(q => q.Domain, StringComparer.OrdinalIgnoreCase)
+                .ToList();
+            var chips = new List<TopicChip>(groups.Count);
+            var foundCurrent = false;
+            foreach (var group in groups)
+            {
+                var total = group.Count();
+                var done = group.Count(q => _answers.ContainsKey(q.Id));
+                string status;
+                if (done >= total)
+                {
+                    status = "done";
+                }
+                else if (!foundCurrent)
+                {
+                    status = "current";
+                    foundCurrent = true;
+                }
+                else
+                {
+                    status = "upcoming";
+                }
+
+                var label = group.FirstOrDefault()?.DomainLabel;
+                if (string.IsNullOrWhiteSpace(label))
+                {
+                    label = DeepAnalysisQuestionHelp.DomainLabel(group.Key);
+                }
+
+                chips.Add(new TopicChip(label, status, done, total));
+            }
+
+            return chips;
+        }
+    }
 
     protected override async Task OnInitializedAsync()
     {
@@ -134,6 +259,14 @@
                     }
                 }
             }
+
+            foreach (var milestone in DeepAnalysisBoosters.Milestones)
+            {
+                if (AnsweredCount >= milestone)
+                {
+                    _seenBoosters.Add(milestone);
+                }
+            }
         }
         catch (Exception ex)
         {
@@ -146,7 +279,35 @@
         }
     }
 
-    private void SetAnswer(int id, int value) => _answers[id] = value;
+    private void SetAnswer(int id, int value)
+    {
+        var before = AnsweredCount;
+        var wasNew = !_answers.ContainsKey(id);
+        _answers[id] = value;
+        if (!wasNew)
+        {
+            return;
+        }
+
+        var after = AnsweredCount;
+        foreach (var milestone in DeepAnalysisBoosters.Milestones)
+        {
+            if (before < milestone && after >= milestone && _seenBoosters.Add(milestone))
+            {
+                _boosterMilestone = milestone;
+                break;
+            }
+        }
+    }
+
+    private void OpenExample(DeepAnalysisQuestionItem question) => _exampleQuestion = question;
+
+    private void CloseExample() => _exampleQuestion = null;
+
+    private void CloseBooster() => _boosterMilestone = null;
+
+    private static string Slug(string value)
+        => string.Concat((value ?? "").Where(char.IsLetterOrDigit)).ToLowerInvariant();
 
     private async Task StartCheckoutAsync()
     {
@@ -202,4 +363,6 @@
             _saving = false;
         }
     }
+
+    private sealed record TopicChip(string Label, string Status, int Done, int Total);
 }

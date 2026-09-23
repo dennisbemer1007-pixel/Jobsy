@@ -192,6 +192,8 @@ public sealed class DeepAnalysisQuestionItem
     public string Domain { get; set; } = "";
     public bool Reverse { get; set; }
     public string PromptNl { get; set; } = "";
+    public string ExampleNl { get; set; } = "";
+    public string DomainLabel { get; set; } = "";
 }
 
 public sealed class DeepAnalysisCheckout

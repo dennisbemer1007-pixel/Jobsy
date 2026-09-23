@@ -14,6 +14,9 @@ Alle noemenswaardige wijzigingen aan dit project worden in dit bestand bijgehoud
 ## [Unreleased]
 
 ### Changed
+- **Diepte-analyse UX (150 vragen):** sticky voortgangsbalk met live %-indicatie, onderwerpen-tracker (afgerond / nu / komt nog), info-knop met praktijkvoorbeeld per vraag, en motiverende boosters elke 25 vragen.
+
+### Changed
 - **Multidimensionale vacature-matching:** ranking weegt opleiding (niveau/richting), competenties & drijfveren (Wie ben ik? / DISC/OCEAN) en overdraagbare werkervaring — niet alleen een exacte functietitel. Bij bredere matches toont banenkaart/Top 10 een korte AI-onderbouwing.
 - **Opleidingen subtiel & deeplinks:** in-context tekstlinks i.p.v. schreeuwende CTA’s; outbound-URL’s moeten altijd op een specifieke cursuspagina landen (geen opleider-homepage).
 
