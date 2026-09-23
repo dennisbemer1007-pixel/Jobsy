@@ -3,28 +3,23 @@
 @attribute [Microsoft.AspNetCore.Authorization.AllowAnonymous]
 @using Jobsy.Web.Components.Match
 @using Jobsy.Web.Models
-@using Microsoft.AspNetCore.Components.Authorization
 @inject JobsyApiClient Api
 @inject NavigationManager Navigation
-@inject AuthenticationStateProvider AuthState
 
 <PageTitle>Match · Lobsy</PageTitle>
 
 <div class="match-page match-page--shell">
     <header class="match-page__top">
-        <div class="match-page__brand">
-            <LobsyMark Compact="true" />
-            <span>Match</span>
-        </div>
+        <span class="match-page__title">Match</span>
         <div class="match-page__top-actions">
             <button type="button" class="match-page__icon-btn" title="Geschiedenis" @onclick="ShowHistoryHint">
-                <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                     <circle cx="12" cy="12" r="9"/>
                     <path d="M12 7v5l3 2"/>
                 </svg>
             </button>
             <a class="match-page__icon-btn" href="/" title="Filters / banenkaart" aria-label="Filters">
-                <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                     <line x1="4" y1="6" x2="20" y2="6"/>
                     <line x1="8" y1="12" x2="20" y2="12"/>
                     <line x1="4" y1="18" x2="16" y2="18"/>
@@ -40,7 +35,7 @@
         {
             <p class="match-page__state">Vacatures laden…</p>
         }
-        else if (_current is null)
+        else if (Current is null)
         {
             <div class="match-page__empty">
                 <h2>Alles gezien</h2>
@@ -50,13 +45,29 @@
         }
         else
         {
-            <SwipeCard @key="_current.VacancyId"
-                       Model="_current"
-                       AnimationDurationMs="360"
-                       OnReject="HandleRejectAsync"
-                       OnInterest="HandleInterestAsync"
-                       OnMoreInfo="HandleMoreInfo"
-                       OnSwipeComplete="HandleSwipeCompleteAsync" />
+            <div class="swipe-stack">
+                @* Next card already mounted underneath for instant reveal after swipe. *@
+                @if (PeekNext is not null)
+                {
+                    <SwipeCard Model="PeekNext"
+                               IsBackdrop="true"
+                               AnimationDurationMs="0" />
+                }
+
+                <SwipeCard @key="Current.VacancyId ?? Guid.Empty"
+                           Model="Current"
+                           AnimationDurationMs="280"
+                           OnReject="HandleReject"
+                           OnInterest="HandleInterest"
+                           OnMoreInfo="HandleMoreInfo"
+                           OnSwipeComplete="HandleSwipeComplete" />
+            </div>
+
+            @* Warm browser image cache for the card after next. *@
+            @if (PeekAfterNext?.ImageUrl is { Length: > 0 } prefetchUrl)
+            {
+                <img class="match-page__prefetch" src="@prefetchUrl" alt="" aria-hidden="true" />
+            }
         }
 
         @if (!string.IsNullOrWhiteSpace(_toast))
@@ -74,11 +85,21 @@
         Guid.Parse("cccccccc-dddd-eeee-ffff-aaaaaaaaaaaa")
     ];
 
-    private readonly Queue<SwipeViewModel> _deck = new();
-    private SwipeViewModel? _current;
+    /// <summary>Preloaded deck — advances by index only (no network between swipes).</summary>
+    private readonly List<SwipeViewModel> _deck = [];
+    private int _index;
     private bool _loading = true;
     private string? _toast;
     private CancellationTokenSource? _toastCts;
+
+    private SwipeViewModel? Current =>
+        _index >= 0 && _index < _deck.Count ? _deck[_index] : null;
+
+    private SwipeViewModel? PeekNext =>
+        _index + 1 < _deck.Count ? _deck[_index + 1] : null;
+
+    private SwipeViewModel? PeekAfterNext =>
+        _index + 2 < _deck.Count ? _deck[_index + 2] : null;
 
     protected override async Task OnInitializedAsync()
         => await ReloadDeckAsync();
@@ -87,7 +108,7 @@
     {
         _loading = true;
         _deck.Clear();
-        _current = null;
+        _index = 0;
         StateHasChanged();
 
         try
@@ -98,11 +119,11 @@
                 transport: "Auto",
                 maxMinutes: 60,
                 radiusKm: null,
-                take: 12);
+                take: 24);
 
-            foreach (var item in items.Take(12))
+            foreach (var item in items.Take(24))
             {
-                _deck.Enqueue(SwipeViewModel.FromVacancy(item, showMatchPercentage: true));
+                _deck.Add(SwipeViewModel.FromVacancy(item, showMatchPercentage: true));
             }
         }
         catch
@@ -112,36 +133,38 @@
 
         if (_deck.Count == 0)
         {
-            foreach (var demo in SwipeViewModel.CreateDemoDeck())
-            {
-                _deck.Enqueue(demo);
-            }
+            _deck.AddRange(SwipeViewModel.CreateDemoDeck());
         }
 
-        _current = _deck.Count > 0 ? _deck.Dequeue() : null;
+        _index = 0;
         _loading = false;
     }
 
-    private async Task HandleRejectAsync(SwipeViewModel model)
-        => await ShowToastAsync("Overgeslagen");
+    /// <summary>Non-blocking — must not delay the swipe animation or next-card reveal.</summary>
+    private void HandleReject(SwipeViewModel model)
+        => _ = ShowToastAsync("Overgeslagen");
 
-    private async Task HandleInterestAsync(SwipeViewModel model)
+    /// <summary>Like is fired in the background so the next card appears instantly.</summary>
+    private void HandleInterest(SwipeViewModel model)
     {
         if (model.VacancyId is Guid id && !DemoIds.Contains(id))
         {
-            try
-            {
-                await Api.SetLikedAsync(id, liked: true);
-                await ShowToastAsync("Opgeslagen — koffie!");
-                return;
-            }
-            catch
-            {
-                // Fall through when not logged in.
-            }
+            _ = PersistLikeAsync(id);
         }
 
-        await ShowToastAsync("Koffie genoteerd (demo)");
+        _ = ShowToastAsync("Interesse genoteerd");
+    }
+
+    private async Task PersistLikeAsync(Guid vacancyId)
+    {
+        try
+        {
+            await Api.SetLikedAsync(vacancyId, liked: true);
+        }
+        catch
+        {
+            // Guest / network — swipe UX must stay instant.
+        }
     }
 
     private void HandleMoreInfo(SwipeViewModel model)
@@ -155,10 +178,13 @@
         _ = ShowToastAsync("Meer info (demo-card)");
     }
 
-    private Task HandleSwipeCompleteAsync((SwipeViewModel Model, SwipeDirection Direction) result)
+    private void HandleSwipeComplete((SwipeViewModel Model, SwipeDirection Direction) result)
     {
-        _current = _deck.Count > 0 ? _deck.Dequeue() : null;
-        return Task.CompletedTask;
+        // Instant advance from the in-memory list — no await, no API call.
+        if (_index < _deck.Count)
+        {
+            _index++;
+        }
     }
 
     private void ShowHistoryHint()
@@ -170,9 +196,10 @@
         _toastCts = new CancellationTokenSource();
         var token = _toastCts.Token;
         _toast = message;
+        await InvokeAsync(StateHasChanged);
         try
         {
-            await Task.Delay(2200, token);
+            await Task.Delay(1800, token);
             if (!token.IsCancellationRequested)
             {
                 _toast = null;

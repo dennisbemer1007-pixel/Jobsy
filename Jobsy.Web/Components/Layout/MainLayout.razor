@@ -8,38 +8,49 @@
 @inject NavigationManager Navigation
 @implements IDisposable
 
-<div class="app-shell @(_hasBottomNav ? "has-bottom-nav" : null)" dir="@(Culture.IsRightToLeft ? "rtl" : null)">
+<div class="app-shell @(_hasBottomNav ? "has-bottom-nav" : null) @(_isMatchPage ? "app-shell--match" : null)"
+     dir="@(Culture.IsRightToLeft ? "rtl" : null)">
     <PageSeoHead />
-    <header class="app-header">
-        <div class="app-header__brand">
-            <a class="brand" href="/" aria-label="Lobsy">
-                <LobsyLogo Class="brand__logo" Alt="Lobsy" />
-                <span class="brand__text">
-                    <span class="brand__name">Lobsy</span>
-                    <span class="brand-tagline">@HeaderTagline</span>
-                </span>
-            </a>
-        </div>
-        <div class="app-header__actions">
-            <PageHelp />
-            <NotificationBell />
-            <TokenWalletChip />
-            <SalesWalletChip />
-            <LanguageSelector />
-            <AuthHeader />
-        </div>
-    </header>
+    @if (!_isMatchPage)
+    {
+        <header class="app-header">
+            <div class="app-header__brand">
+                <a class="brand" href="/" aria-label="Lobsy">
+                    <LobsyLogo Class="brand__logo" Alt="Lobsy" />
+                    <span class="brand__text">
+                        <span class="brand__name">Lobsy</span>
+                        <span class="brand-tagline">@HeaderTagline</span>
+                    </span>
+                </a>
+            </div>
+            <div class="app-header__actions">
+                <PageHelp />
+                <NotificationBell />
+                <TokenWalletChip />
+                <SalesWalletChip />
+                <LanguageSelector />
+                <AuthHeader />
+            </div>
+        </header>
+    }
 
     <main class="app-main">
         @Body
-        <AppFooter />
+        @if (!_isMatchPage)
+        {
+            <AppFooter />
+        }
     </main>
 
     <BottomNav HasItemsChanged="OnBottomNavItemsChanged" />
-    @if (RendererInfo.IsInteractive)
+    @if (RendererInfo.IsInteractive && !_isMatchPage)
     {
         <LobsyAssistantChat HasBottomNav="_hasBottomNav" />
         <FeedbackWidget HasBottomNav="_hasBottomNav" />
+        <ConsentReacceptDialog />
+    }
+    else if (RendererInfo.IsInteractive)
+    {
         <ConsentReacceptDialog />
     }
     <CookieConsentBanner OnConsentChanged="OnCookieConsentChanged" />
@@ -49,12 +60,15 @@
 @code {
     private bool _siteVisitRecorded;
     private bool _hasBottomNav;
+    private bool _isMatchPage;
 
     protected override async Task OnInitializedAsync()
     {
         Culture.Changed += OnCultureChanged;
         RegionHost.Changed += OnBrandingChanged;
         Branding.Changed += OnBrandingChanged;
+        Navigation.LocationChanged += OnLocationChanged;
+        RefreshMatchPageFlag();
         await Culture.InitializeAsync();
         await Culture.SyncDocumentAsync();
         // Do not block first paint (or /home dashboards) on region/slogan HTTP.
@@ -115,6 +129,29 @@
         return InvokeAsync(StateHasChanged);
     }
 
+    private void OnLocationChanged(object? sender, LocationChangedEventArgs e)
+    {
+        var changed = RefreshMatchPageFlag();
+        if (changed)
+        {
+            _ = InvokeAsync(StateHasChanged);
+        }
+    }
+
+    private bool RefreshMatchPageFlag()
+    {
+        var path = Navigation.ToBaseRelativePath(Navigation.Uri).Split('?', '#')[0];
+        var match = path.Equals("candidate/match", StringComparison.OrdinalIgnoreCase)
+                    || path.Equals("/candidate/match", StringComparison.OrdinalIgnoreCase);
+        if (_isMatchPage == match)
+        {
+            return false;
+        }
+
+        _isMatchPage = match;
+        return true;
+    }
+
     private string HeaderTagline => Branding.ResolveTagline(RegionHost.Current?.Slogan, Culture["Brand.Tagline"]);
 
     private void OnCultureChanged()
@@ -128,5 +165,6 @@
         Culture.Changed -= OnCultureChanged;
         RegionHost.Changed -= OnBrandingChanged;
         Branding.Changed -= OnBrandingChanged;
+        Navigation.LocationChanged -= OnLocationChanged;
     }
 }
