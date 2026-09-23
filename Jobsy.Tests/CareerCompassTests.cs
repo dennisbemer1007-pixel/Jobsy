@@ -263,14 +263,15 @@ public class CareerCompassTests
 
         var css = File.ReadAllText(Path.Combine(root, "Jobsy.Web/wwwroot/css/app.css"));
         Assert.Contains(".kompas-tabs.admin-sublinks {\n    position: sticky;\n    top: 0;\n    z-index: 6;\n    display: flex;\n    flex-direction: row;\n    flex-wrap: wrap;", css, StringComparison.Ordinal);
-        Assert.Contains(".kompas-workspace", css, StringComparison.Ordinal);
+        Assert.Contains(".kompas-workspace--with-side", css, StringComparison.Ordinal);
         Assert.Contains(".competency-match-card__head", css, StringComparison.Ordinal);
         Assert.Contains(".kompas-status-stack", css, StringComparison.Ordinal);
         Assert.Contains(".kompas-card[hidden]", css, StringComparison.Ordinal);
         var minCss = File.ReadAllText(Path.Combine(root, "Jobsy.Web/wwwroot/css/app.min.css"));
         Assert.Contains(".kompas-tabs.admin-sublinks", minCss, StringComparison.Ordinal);
-        Assert.Contains(".kompas-workspace", minCss, StringComparison.Ordinal);
+        Assert.Contains(".kompas-workspace--with-side", minCss, StringComparison.Ordinal);
         Assert.Contains(".competency-match-card__head", minCss, StringComparison.Ordinal);
+        Assert.Equal(0, minCss.Count(c => c == '{') - minCss.Count(c => c == '}'));
         Assert.Contains(".kompas-card[hidden]", minCss, StringComparison.Ordinal);
         Assert.Contains("kompas-workspace", home, StringComparison.Ordinal);
         Assert.DoesNotContain("pill-scroller", home, StringComparison.Ordinal);

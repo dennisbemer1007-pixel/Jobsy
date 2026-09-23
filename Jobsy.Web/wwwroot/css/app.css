@@ -16735,6 +16735,7 @@ html.cookie-consent-known .cookie-consent {
 
 @media (min-width: 1024px) {
     .profile-layout,
+    .kompas-workspace--with-side,
     .kompas-workspace:has(.kompas-workspace__side) {
         grid-template-columns: minmax(0, 1fr) minmax(18.75rem, 22.5rem);
     }

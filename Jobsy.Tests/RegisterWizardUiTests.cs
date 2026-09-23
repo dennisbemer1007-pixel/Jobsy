@@ -55,12 +55,10 @@ public class RegisterWizardUiTests
     public void Production_asset_query_is_cache_busted_and_commit_is_exposed()
     {
         var app = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/Components/App.razor"));
-<<<<<<< HEAD
-        Assert.Contains("css/app.min.css?v=20260923-ats-source", app);
+        Assert.Contains("css/app.min.css?v=20260923-top10-ats", app);
+        Assert.DoesNotContain("css/app.min.css?v=20260923-ats-source", app);
         Assert.DoesNotContain("css/app.min.css?v=20260923-atsui", app);
-=======
-        Assert.Contains("css/app.min.css?v=20260923-atsui", app);
->>>>>>> origin/cursor/ats-scraper-flexible-harvest-c856
+        Assert.DoesNotContain("css/app.min.css?v=20260923-top10\"", app);
         Assert.DoesNotContain("css/app.min.css?v=20260923-matchstable", app);
         Assert.DoesNotContain("css/app.min.css?v=20260923-matchgate", app);
         Assert.DoesNotContain("css/app.min.css?v=20260923-matchswipe", app);
