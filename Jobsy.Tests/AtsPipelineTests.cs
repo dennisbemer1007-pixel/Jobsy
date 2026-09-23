@@ -11,6 +11,19 @@ namespace Jobsy.Tests;
 
 public class AtsPipelineTests
 {
+    [Fact]
+    public void Validation_rejects_missing_location_and_error_titles()
+    {
+        Assert.False(AtsListingValidation.TryValidateForReview(
+            "404 Not Found", "Acme", "Den Haag", new string('x', 80), out _));
+        Assert.False(AtsListingValidation.TryValidateForReview(
+            "Kassamedewerker", "Acme", null, new string('x', 80), out var reason));
+        Assert.Contains("locatie", reason!, StringComparison.OrdinalIgnoreCase);
+        Assert.True(AtsListingValidation.TryValidateForReview(
+            "Kassamedewerker", "Acme", "Naaldwijk", new string('x', 80), out _));
+        Assert.True(AtsListingValidation.IsDemoListing("Kassamedewerker (demo)", "https://x/demo-abc", null));
+    }
+
     [Theory]
     [InlineData("https://www.randstad.nl/vacatures", "Kassamedewerker", true)]
     [InlineData("https://werkenbij.denhaag.nl/vacature/1", "Beleidsadviseur", false)]

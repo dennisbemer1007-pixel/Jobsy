@@ -74,10 +74,11 @@ public sealed class AtsScrapeService : IAtsScrapeService
         report.FinishedAtUtc = DateTime.UtcNow;
         Line(report,
             $"ATS scrape-all done: upserted={report.Upserted} inserted={report.Inserted} updated={report.Updated} " +
-            $"dupHash={report.SkippedDuplicateHash} blacklist={report.SkippedBlacklist} parseSkip={report.SkippedParse} httpErr={report.HttpErrors}");
+            $"dupHash={report.SkippedDuplicateHash} blacklist={report.SkippedBlacklist} parseSkip={report.SkippedParse} " +
+            $"invalid={report.SkippedInvalid} httpErr={report.HttpErrors} failedSources={report.FailedSources}");
         _logger.LogInformation(
-            "ATS scrape-all finished upserted={Upserted} inserted={Inserted} updated={Updated} httpErrors={HttpErrors}",
-            report.Upserted, report.Inserted, report.Updated, report.HttpErrors);
+            "ATS scrape-all finished upserted={Upserted} inserted={Inserted} updated={Updated} httpErrors={HttpErrors} failedSources={Failed}",
+            report.Upserted, report.Inserted, report.Updated, report.HttpErrors, report.FailedSources);
         return report;
     }
 
@@ -144,29 +145,10 @@ public sealed class AtsScrapeService : IAtsScrapeService
                 (int)status, source.Domain, source.ListUrl);
             listHtml = html;
         }
-        catch (HttpRequestException ex)
+        catch (Exception ex) when (IsSkippableFetchFailure(ex))
         {
-            srcReport.HttpErrors++;
-            report.HttpErrors++;
-            srcReport.Error = ex.Message;
-            srcReport.ListHttpStatus = TryParseStatus(ex.Message);
-            Line(report, srcReport, $"LIST FETCH FAILED: {ex.Message}");
-            _logger.LogWarning(ex, "ATS list fetch failed for {Domain}", source.Domain);
-            source.LastScrapedAtUtc = DateTime.UtcNow;
-            await _db.SaveChangesAsync(cancellationToken);
-            report.FinishedAtUtc = DateTime.UtcNow;
-            return report;
-        }
-        catch (Exception ex) when (ex is not OperationCanceledException)
-        {
-            srcReport.HttpErrors++;
-            report.HttpErrors++;
-            srcReport.Error = ex.Message;
-            Line(report, srcReport, $"LIST FETCH ERROR: {ex.Message}");
-            _logger.LogWarning(ex, "ATS list fetch failed for {Domain}", source.Domain);
-            source.LastScrapedAtUtc = DateTime.UtcNow;
-            await _db.SaveChangesAsync(cancellationToken);
-            report.FinishedAtUtc = DateTime.UtcNow;
+            await MarkSourceFailedAsync(
+                report, srcReport, source, ex, cancellationToken);
             return report;
         }
 
@@ -196,7 +178,7 @@ public sealed class AtsScrapeService : IAtsScrapeService
                 srcReport.SkippedBlacklist++;
                 report.SkippedBlacklist++;
                 Line(report, srcReport, $"SKIP blacklist/domain: {detailUrl}");
-                _logger.LogInformation("ATS skip blacklist/domain {Url}", detailUrl);
+                _logger.LogDebug("ATS skip blacklist/domain {Url}", detailUrl);
                 continue;
             }
 
@@ -220,35 +202,151 @@ public sealed class AtsScrapeService : IAtsScrapeService
                 var outcome = await UpsertFromHtmlAsync(source, detailUrl, html, cancellationToken);
                 ApplyOutcome(report, srcReport, outcome, detailUrl);
             }
-            catch (HttpRequestException ex)
+            catch (Exception ex) when (IsSkippableFetchFailure(ex))
             {
+                // Skip bad detail URLs quietly — do not pollute vacancy overview; keep admin log only.
                 srcReport.HttpErrors++;
                 report.HttpErrors++;
-                Line(report, srcReport, $"DETAIL HTTP ERROR {detailUrl}: {ex.Message}");
-                _logger.LogWarning(ex, "ATS detail fetch failed {Url}", detailUrl);
-            }
-            catch (Exception ex) when (ex is not OperationCanceledException)
-            {
-                srcReport.HttpErrors++;
-                report.HttpErrors++;
-                Line(report, srcReport, $"DETAIL ERROR {detailUrl}: {ex.Message}");
-                _logger.LogWarning(ex, "ATS detail scrape skipped for {Url}", detailUrl);
+                Line(report, srcReport, $"SKIP failed URL ({ClassifyFetchFailure(ex)}): {detailUrl} — {ex.Message}");
+                _logger.LogInformation(
+                    "ATS skip failed detail url={Url} reason={Reason}",
+                    detailUrl, ClassifyFetchFailure(ex));
+                await WriteBackgroundLogAsync(
+                    PlatformLogLevel.Warning,
+                    $"Detail skip {source.Domain}: {ClassifyFetchFailure(ex)} — {detailUrl}",
+                    cancellationToken);
             }
         }
 
         source.LastScrapedAtUtc = DateTime.UtcNow;
+        FinalizeSourceStatus(report, srcReport);
         await _db.SaveChangesAsync(cancellationToken);
 
         Line(report, srcReport,
-            $"END {source.Name}: upserted={srcReport.Upserted} inserted={srcReport.Inserted} updated={srcReport.Updated} " +
-            $"dupHash={srcReport.SkippedDuplicateHash} parseSkip={srcReport.SkippedParse} httpErr={srcReport.HttpErrors}");
+            $"END {source.Name} status={srcReport.Status}: upserted={srcReport.Upserted} inserted={srcReport.Inserted} updated={srcReport.Updated} " +
+            $"dupHash={srcReport.SkippedDuplicateHash} parseSkip={srcReport.SkippedParse} invalid={srcReport.SkippedInvalid} httpErr={srcReport.HttpErrors}");
         _logger.LogInformation(
-            "ATS scrape END name={Name} upserted={Upserted} inserted={Inserted} updated={Updated} dupHash={Dup} parseSkip={Parse} httpErr={Http}",
-            source.Name, srcReport.Upserted, srcReport.Inserted, srcReport.Updated,
-            srcReport.SkippedDuplicateHash, srcReport.SkippedParse, srcReport.HttpErrors);
+            "ATS scrape END name={Name} status={Status} upserted={Upserted} inserted={Inserted} updated={Updated} dupHash={Dup} parseSkip={Parse} invalid={Invalid} httpErr={Http}",
+            source.Name, srcReport.Status, srcReport.Upserted, srcReport.Inserted, srcReport.Updated,
+            srcReport.SkippedDuplicateHash, srcReport.SkippedParse, srcReport.SkippedInvalid, srcReport.HttpErrors);
 
         report.FinishedAtUtc = DateTime.UtcNow;
         return report;
+    }
+
+    private async Task MarkSourceFailedAsync(
+        AtsScrapeRunReport report,
+        AtsScrapeSourceReport srcReport,
+        AtsScrapeSource source,
+        Exception ex,
+        CancellationToken cancellationToken)
+    {
+        var reason = ClassifyFetchFailure(ex);
+        srcReport.Status = "Failed";
+        srcReport.HttpErrors++;
+        report.HttpErrors++;
+        report.FailedSources++;
+        srcReport.Error = $"{reason}: {ex.Message}";
+        srcReport.ListHttpStatus = TryParseStatus(ex.Message);
+        Line(report, srcReport, $"FAILED domain={source.Domain} ({reason}): {ex.Message}");
+        _logger.LogWarning(
+            "ATS source FAILED name={Name} domain={Domain} reason={Reason}: {Message}",
+            source.Name, source.Domain, reason, ex.Message);
+        source.LastScrapedAtUtc = DateTime.UtcNow;
+        await WriteBackgroundLogAsync(
+            PlatformLogLevel.Warning,
+            $"Source failed {source.Domain} ({reason}): {ex.Message}",
+            cancellationToken);
+        await _db.SaveChangesAsync(cancellationToken);
+        report.FinishedAtUtc = DateTime.UtcNow;
+    }
+
+    private static void FinalizeSourceStatus(AtsScrapeRunReport report, AtsScrapeSourceReport src)
+    {
+        if (string.Equals(src.Status, "Failed", StringComparison.OrdinalIgnoreCase))
+        {
+            return;
+        }
+
+        if (src.HttpErrors > 0 && src.Upserted == 0)
+        {
+            src.Status = "Failed";
+            report.FailedSources++;
+            src.Error ??= "Geen geldige vacatures; HTTP/DNS-fouten op detail-URL's.";
+        }
+        else if (src.HttpErrors > 0 || src.SkippedInvalid > 0 || src.SkippedParse > 0)
+        {
+            src.Status = "Partial";
+        }
+        else
+        {
+            src.Status = "Ok";
+        }
+    }
+
+    private async Task WriteBackgroundLogAsync(
+        PlatformLogLevel level,
+        string message,
+        CancellationToken cancellationToken)
+    {
+        _db.PlatformLogs.Add(new Core.Entities.PlatformLog
+        {
+            Id = Guid.NewGuid(),
+            Level = level,
+            Category = "AtsScrape",
+            Message = Truncate(message, 2000) ?? message,
+            CreatedAt = DateTime.UtcNow
+        });
+        // Caller SaveChanges persists; for mid-run skips we still want durable logs.
+        await _db.SaveChangesAsync(cancellationToken);
+    }
+
+    private static bool IsSkippableFetchFailure(Exception ex)
+    {
+        if (ex is OperationCanceledException && ex is not TaskCanceledException)
+        {
+            return false;
+        }
+
+        return ex is HttpRequestException
+               or TaskCanceledException
+               or TimeoutException
+               or System.Net.Sockets.SocketException
+               || ex.InnerException is System.Net.Sockets.SocketException
+               || (ex.Message?.Contains("Name or service not known", StringComparison.OrdinalIgnoreCase) ?? false)
+               || (ex.Message?.Contains("nodename nor servname", StringComparison.OrdinalIgnoreCase) ?? false)
+               || (ex.Message?.Contains("No such host", StringComparison.OrdinalIgnoreCase) ?? false);
+    }
+
+    private static string ClassifyFetchFailure(Exception ex)
+    {
+        var msg = ex.Message ?? string.Empty;
+        if (msg.Contains("404", StringComparison.Ordinal) || msg.Contains("Gone", StringComparison.OrdinalIgnoreCase))
+        {
+            return "HTTP 404";
+        }
+
+        if (ex is TaskCanceledException or TimeoutException
+            || msg.Contains("timeout", StringComparison.OrdinalIgnoreCase))
+        {
+            return "Timeout";
+        }
+
+        if (ex is System.Net.Sockets.SocketException
+            || ex.InnerException is System.Net.Sockets.SocketException
+            || msg.Contains("Name or service not known", StringComparison.OrdinalIgnoreCase)
+            || msg.Contains("No such host", StringComparison.OrdinalIgnoreCase)
+            || msg.Contains("nodename nor servname", StringComparison.OrdinalIgnoreCase))
+        {
+            return "DNS";
+        }
+
+        if (ex is HttpRequestException)
+        {
+            return "HTTP";
+        }
+
+        return "Error";
     }
 
     private enum UpsertOutcome
@@ -257,7 +355,8 @@ public sealed class AtsScrapeService : IAtsScrapeService
         Updated,
         DuplicateUnchanged,
         SkippedBlacklist,
-        SkippedParse
+        SkippedParse,
+        SkippedInvalid
     }
 
     private async Task<UpsertOutcome> UpsertFromHtmlAsync(
@@ -299,6 +398,15 @@ public sealed class AtsScrapeService : IAtsScrapeService
             source.DefaultLocationLabel);
         var postal = ExtractPostal(description) ?? ExtractPostal(locationLabel);
         var locationKey = FirstNonEmpty(postal, locationLabel);
+
+        if (!AtsListingValidation.TryValidateForReview(
+                title, companyName, locationLabel, description, out var rejectReason))
+        {
+            _logger.LogInformation(
+                "ATS invalid skip reason={Reason} title={Title} url={Url}",
+                rejectReason, title, sourceUrl);
+            return UpsertOutcome.SkippedInvalid;
+        }
 
         var salaryText = ExtractSalaryText(description);
         var hourly = ParseHourly(salaryText) ?? ParseHourly(description);
@@ -426,6 +534,11 @@ public sealed class AtsScrapeService : IAtsScrapeService
                 src.SkippedParse++;
                 Line(report, src, $"SKIP parse (no usable title) {url}");
                 break;
+            case UpsertOutcome.SkippedInvalid:
+                report.SkippedInvalid++;
+                src.SkippedInvalid++;
+                Line(report, src, $"SKIP invalid (missing required fields) {url}");
+                break;
         }
     }
 
@@ -534,7 +647,9 @@ public sealed class AtsScrapeService : IAtsScrapeService
         target.SkippedDuplicateHash += part.SkippedDuplicateHash;
         target.SkippedBlacklist += part.SkippedBlacklist;
         target.SkippedParse += part.SkippedParse;
+        target.SkippedInvalid += part.SkippedInvalid;
         target.HttpErrors += part.HttpErrors;
+        target.FailedSources += part.FailedSources;
         foreach (var s in part.Sources)
         {
             target.Sources.Add(s);

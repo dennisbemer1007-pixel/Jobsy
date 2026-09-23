@@ -29,6 +29,10 @@ public sealed class AtsVacancyModerationService : IAtsVacancyModerationService
     {
         var q = _db.AtsScrapedListings.AsNoTracking()
             .Include(l => l.Source)
+            .Where(l =>
+                !l.Title.Contains("(demo)")
+                && !l.SourceUrl.Contains("/demo-")
+                && (l.TagsJson == null || !l.TagsJson.Contains("\"demo\"")))
             .AsQueryable();
 
         if (status is not null)
@@ -85,6 +89,12 @@ public sealed class AtsVacancyModerationService : IAtsVacancyModerationService
         listing.CompanyName = TruncateRequired(companyName, 256);
         listing.LocationLabel = Truncate(locationLabel, 256);
         listing.Description = TruncateRequired(description, 20_000);
+        if (!AtsListingValidation.TryValidateForReview(
+                listing.Title, listing.CompanyName, listing.LocationLabel, listing.Description, out var reason))
+        {
+            throw new InvalidOperationException(reason ?? "Listing is onvolledig.");
+        }
+
         listing.SalaryText = Truncate(salaryText, 512);
         listing.HourlyWage = hourlyWage;
         listing.HoursText = Truncate(hoursText, 256);

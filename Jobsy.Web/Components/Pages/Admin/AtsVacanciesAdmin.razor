@@ -10,83 +10,72 @@
 <PageTitle>@Culture["Admin.AtsVacancies"] · Lobsy</PageTitle>
 
 <AdminPageShell Title="@Culture["Admin.AtsVacancies"]" Lead="@Culture["Admin.AtsVacanciesLead"]" Wide="true" ShowVacanciesNav="true">
-    <div class="filter-bar">
-        <label class="filter-bar__query">
-            @Culture["Common.Search"]
+    <div class="ats-toolbar">
+        <label class="ats-toolbar__search">
+            <span class="visually-hidden">@Culture["Common.Search"]</span>
             <input type="search"
                    @bind="_searchQuery"
                    @bind:event="oninput"
-                   placeholder="Bedrijf, titel, URL…" />
+                   placeholder="Zoek op titel, bedrijf of locatie…" />
         </label>
-        <label>
+        <label class="ats-toolbar__filter">
             Status
             <select @bind="_statusFilter" @bind:after="ReloadAsync">
                 <option value="">Alle</option>
-                <option value="PendingReview">In afwachting van review</option>
-                <option value="Approved">Actief (goedgekeurd)</option>
+                <option value="PendingReview">In afwachting</option>
+                <option value="Approved">Actief</option>
                 <option value="Rejected">Afgekeurd</option>
                 <option value="Expired">Verlopen</option>
                 <option value="Inactive">Inactief</option>
             </select>
         </label>
-        <button class="btn-primary" type="button" disabled="@_busy" @onclick="ScrapeAsync">
-            Start Scrape Handmatig
-        </button>
-        <button class="btn-compact" type="button" disabled="@_busy" @onclick="HealthAsync">Health-check</button>
-        <button class="btn-compact" type="button" disabled="@_busy" @onclick="ReloadAsync">Vernieuwen</button>
-        <span class="muted">@_filtered.Count van @_listings.Count</span>
+        <div class="ats-toolbar__actions">
+            <button class="btn-primary" type="button" disabled="@_busy" @onclick="ScrapeAsync">
+                Start Scrape Handmatig
+            </button>
+            <button class="btn-compact" type="button" disabled="@_busy" @onclick="HealthAsync">Health-check</button>
+            <button class="btn-compact" type="button" disabled="@_busy" @onclick="ReloadAsync">Vernieuwen</button>
+        </div>
+        <span class="ats-toolbar__count muted">@_filtered.Count resultaat@(_filtered.Count == 1 ? "" : "en")</span>
     </div>
 
     @if (_scrapeReport is not null)
     {
-        <section class="panel-section ats-diag">
+        <section class="ats-diag panel-section">
             <div class="panel-header">
-                <h2>Scrape-diagnostiek</h2>
+                <h2>Scrape-log (achtergrond)</h2>
                 <button class="btn-compact" type="button" @onclick="() => _scrapeReport = null">Sluiten</button>
             </div>
-            <p>
-                Bronnen: <strong>@_scrapeReport.SourceCount</strong>
-                · upsert: <strong>@_scrapeReport.Upserted</strong>
-                (nieuw @_scrapeReport.Inserted / refresh @_scrapeReport.Updated)
-                · dedup: @_scrapeReport.SkippedDuplicateHash
-                · blacklist: @_scrapeReport.SkippedBlacklist
-                · parse-skip: @_scrapeReport.SkippedParse
-                · HTTP-fouten: <strong>@_scrapeReport.HttpErrors</strong>
+            <p class="ats-diag__summary">
+                Bronnen <strong>@_scrapeReport.SourceCount</strong>
+                · Failed <strong>@_scrapeReport.FailedSources</strong>
+                · upsert <strong>@_scrapeReport.Upserted</strong>
+                · invalid skip @_scrapeReport.SkippedInvalid
+                · HTTP @_scrapeReport.HttpErrors
             </p>
             @if (_scrapeReport.Sources.Count > 0)
             {
-                <div class="table-scroll">
-                    <table class="data-table">
-                        <thead>
-                            <tr>
-                                <th>Bron</th>
-                                <th>HTTP</th>
-                                <th>Anchors</th>
-                                <th>Vacature-links</th>
-                                <th>Upsert</th>
-                                <th>Fout</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach (var s in _scrapeReport.Sources)
+                <div class="ats-diag__sources">
+                    @foreach (var s in _scrapeReport.Sources)
+                    {
+                        <div class="ats-diag__source ats-diag__source--@s.Status.ToLowerInvariant()">
+                            <div class="ats-diag__source-head">
+                                <strong>@s.Name</strong>
+                                <span class="ats-status-badge ats-status-badge--@DomainStatusClass(s.Status)">@s.Status</span>
+                            </div>
+                            <div class="muted">@s.Domain · HTTP @(s.ListHttpStatus?.ToString() ?? "—") · anchors @s.RawAnchorCount · links @s.VacancyLinkCount</div>
+                            @if (!string.IsNullOrWhiteSpace(s.Error))
                             {
-                                <tr>
-                                    <td class="data-table__col--wrap">
-                                        <strong>@s.Name</strong>
-                                        <div class="muted">@s.Domain</div>
-                                    </td>
-                                    <td>@(s.ListHttpStatus?.ToString() ?? "—")</td>
-                                    <td>@s.RawAnchorCount</td>
-                                    <td>@s.VacancyLinkCount</td>
-                                    <td>@s.Upserted (@s.Inserted/@s.Updated)</td>
-                                    <td class="data-table__col--wrap">@(s.Error ?? "—")</td>
-                                </tr>
+                                <div class="ats-diag__source-error">@s.Error</div>
                             }
-                        </tbody>
-                    </table>
+                        </div>
+                    }
                 </div>
             }
-            <pre class="ats-diag__log">@string.Join('\n', _scrapeReport.Lines)</pre>
+            <details class="ats-diag__details">
+                <summary>Volledige logregels</summary>
+                <pre class="ats-diag__log">@string.Join('\n', _scrapeReport.Lines)</pre>
+            </details>
         </section>
     }
 
@@ -105,110 +94,112 @@
     }
     else if (_filtered.Count == 0)
     {
-        <p class="state-message">Geen ATS-vacatures. Draai een scrape of voeg whitelist-bronnen toe.</p>
+        <div class="ats-empty">
+            <h2>Geen gescrapete vacatures</h2>
+            <p class="muted">Het overzicht toont alleen echte scrape-resultaten. Start een handmatige scrape of wacht op de dagelijkse run.</p>
+        </div>
     }
     else
     {
-        <div class="table-scroll vacancy-grid">
-            <table class="data-table">
-                <thead>
-                    <tr>
-                        <th class="data-table__col--wrap">Titel</th>
-                        <th class="data-table__col--wrap">Bedrijf</th>
-                        <th class="data-table__col--wrap">Bron</th>
-                        <th>Score</th>
-                        <th>Status</th>
-                        <th>Gescrapet</th>
-                        <th>Laatste check</th>
-                        <th class="data-table__col--actions">@Culture["Common.Actions"]</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach (var row in _filtered)
-                    {
-                        <tr class="data-table__row--interactive" @ondblclick="() => OpenDetail(row)">
-                            <td class="data-table__col--wrap"><strong>@row.Title</strong></td>
-                            <td class="data-table__col--wrap">@row.CompanyName</td>
-                            <td class="data-table__col--wrap">
-                                <a href="@row.SourceUrl" target="_blank" rel="noopener noreferrer">@row.SourceDomain</a>
-                                @if (!string.IsNullOrWhiteSpace(row.LocationLabel))
-                                {
-                                    <div class="muted">@row.LocationLabel</div>
-                                }
-                            </td>
-                            <td>
-                                <span class="ats-score ats-score--@ScoreBand(row.CompletenessScore)">
-                                    @row.CompletenessScore%
-                                </span>
-                            </td>
-                            <td>@StatusLabel(row.Status)</td>
-                            <td>@row.ScrapedAtUtc.ToLocalTime().ToString("dd-MM HH:mm")</td>
-                            <td>@(row.LastCheckedAtUtc?.ToLocalTime().ToString("dd-MM HH:mm") ?? "—")</td>
-                            <td class="data-table__col--actions" @ondblclick:stopPropagation="true">
-                                <RowActionsMenu>
-                                    <button class="row-actions-menu__item" type="button" role="menuitem" @onclick="() => OpenDetail(row)">
-                                        Bekijken / bewerken
-                                    </button>
-                                    @if (row.Status is "PendingReview" or "Inactive")
-                                    {
-                                        <button class="row-actions-menu__item" type="button" role="menuitem" disabled="@_busy" @onclick="() => ApproveAsync(row)">
-                                            Goedkeuren / Actief
-                                        </button>
-                                    }
-                                    @if (row.Status is not "Rejected")
-                                    {
-                                        <button class="row-actions-menu__item" type="button" role="menuitem" disabled="@_busy" @onclick="() => RejectAsync(row)">
-                                            Afkeuren
-                                        </button>
-                                    }
-                                    <button class="row-actions-menu__item" type="button" role="menuitem" disabled="@_busy" @onclick="() => DeleteAsync(row)">
-                                        Verwijderen
-                                    </button>
-                                    @if (row.LinkedVacancyId is Guid vid)
-                                    {
-                                        <a class="row-actions-menu__item" role="menuitem" href="/vacancies/@vid">Vacature openen</a>
-                                    }
-                                </RowActionsMenu>
-                            </td>
-                        </tr>
-                    }
-                </tbody>
-            </table>
+        <div class="ats-card-grid">
+            @foreach (var row in _filtered)
+            {
+                <article class="ats-card" @onclick="() => OpenDetail(row)">
+                    <header class="ats-card__header">
+                        <div>
+                            <h3 class="ats-card__title">@row.Title</h3>
+                            <p class="ats-card__company">@row.CompanyName</p>
+                        </div>
+                        <span class="ats-status-badge ats-status-badge--@StatusClass(row.Status)">@StatusLabel(row.Status)</span>
+                    </header>
+                    <div class="ats-card__meta">
+                        <span>@(string.IsNullOrWhiteSpace(row.LocationLabel) ? "Locatie onbekend" : row.LocationLabel)</span>
+                        <span class="ats-score ats-score--@ScoreBand(row.CompletenessScore)">@row.CompletenessScore%</span>
+                        <span class="muted">@row.ScrapedAtUtc.ToLocalTime().ToString("dd MMM yyyy HH:mm")</span>
+                    </div>
+                    <p class="ats-card__excerpt">@Excerpt(row.Description)</p>
+                    <footer class="ats-card__footer" @onclick:stopPropagation="true">
+                        <a class="ats-card__source" href="@row.SourceUrl" target="_blank" rel="noopener noreferrer">@row.SourceDomain</a>
+                        <div class="ats-card__actions">
+                            @if (row.Status is "PendingReview" or "Inactive")
+                            {
+                                <button class="btn-compact btn-compact--ok" type="button" disabled="@_busy" @onclick="() => ApproveAsync(row)">Goedkeuren</button>
+                            }
+                            @if (row.Status is not "Rejected")
+                            {
+                                <button class="btn-compact" type="button" disabled="@_busy" @onclick="() => RejectAsync(row)">Afkeuren</button>
+                            }
+                            <button class="btn-compact" type="button" @onclick="() => OpenDetail(row)">Inzien</button>
+                        </div>
+                    </footer>
+                </article>
+            }
         </div>
     }
 
     @if (_edit is not null)
     {
         <div class="share-modal-backdrop lobsy-dialog-backdrop" @onclick="CloseDetail"></div>
-        <div class="share-modal-panel ats-edit-modal" role="dialog" aria-modal="true">
-            <div class="panel-header">
-                <h2>ATS detail</h2>
+        <aside class="ats-detail-drawer" role="dialog" aria-modal="true" aria-labelledby="ats-detail-title">
+            <div class="ats-detail-drawer__head">
+                <div>
+                    <p class="ats-detail-drawer__eyebrow">@StatusLabel(_edit.Status) · score @_edit.CompletenessScore%</p>
+                    <h2 id="ats-detail-title">@_edit.Title</h2>
+                    <p class="ats-detail-drawer__company">@_edit.CompanyName</p>
+                </div>
                 <button class="btn-compact" type="button" @onclick="CloseDetail">Sluiten</button>
             </div>
-            <p class="muted">
-                <a href="@_edit.SourceUrl" target="_blank" rel="noopener noreferrer">@_edit.SourceUrl</a>
-                · score @_edit.CompletenessScore% · @StatusLabel(_edit.Status)
-            </p>
-            <div class="ats-edit-grid">
-                <label>Titel <input @bind="_editTitle" /></label>
-                <label>Bedrijf <input @bind="_editCompany" /></label>
-                <label>Locatie <input @bind="_editLocation" /></label>
-                <label>Salaris-tekst <input @bind="_editSalary" /></label>
-                <label>Uurloon <input type="number" step="0.01" @bind="_editWage" /></label>
-                <label>Uren-tekst <input @bind="_editHours" /></label>
-                <label class="ats-edit-grid__full">Omschrijving
-                    <textarea rows="8" @bind="_editDescription"></textarea>
-                </label>
+
+            <div class="ats-detail-drawer__meta">
+                <div><span class="muted">Locatie</span><strong>@(_edit.LocationLabel ?? "—")</strong></div>
+                <div><span class="muted">Salaris</span><strong>@(SalaryDisplay(_edit))</strong></div>
+                <div><span class="muted">Uren</span><strong>@(_edit.HoursText ?? "—")</strong></div>
+                <div><span class="muted">Gescrapet</span><strong>@_edit.ScrapedAtUtc.ToLocalTime().ToString("dd-MM-yyyy HH:mm")</strong></div>
+                <div><span class="muted">Laatste check</span><strong>@(_edit.LastCheckedAtUtc?.ToLocalTime().ToString("dd-MM-yyyy HH:mm") ?? "—")</strong></div>
+                <div><span class="muted">Bron</span><strong><a href="@_edit.SourceUrl" target="_blank" rel="noopener noreferrer">@_edit.SourceDomain</a></strong></div>
             </div>
-            <div class="action-row">
-                <button class="btn-primary" type="button" disabled="@_busy" @onclick="SaveEditAsync">Opslaan</button>
+
+            <section class="ats-detail-drawer__body">
+                <h3>Vacaturetekst</h3>
+                <div class="ats-detail-drawer__prose">@_edit.Description</div>
+                <p class="muted ats-detail-drawer__source-url">
+                    Originele URL:
+                    <a href="@_edit.SourceUrl" target="_blank" rel="noopener noreferrer">@_edit.SourceUrl</a>
+                </p>
+            </section>
+
+            <details class="ats-detail-drawer__edit">
+                <summary>Velden handmatig bewerken</summary>
+                <div class="ats-edit-grid">
+                    <label>Titel <input @bind="_editTitle" /></label>
+                    <label>Bedrijf <input @bind="_editCompany" /></label>
+                    <label>Locatie <input @bind="_editLocation" /></label>
+                    <label>Salaris-tekst <input @bind="_editSalary" /></label>
+                    <label>Uurloon <input type="number" step="0.01" @bind="_editWage" /></label>
+                    <label>Uren-tekst <input @bind="_editHours" /></label>
+                    <label class="ats-edit-grid__full">Omschrijving
+                        <textarea rows="8" @bind="_editDescription"></textarea>
+                    </label>
+                </div>
+                <button class="btn-compact" type="button" disabled="@_busy" @onclick="SaveEditAsync">Opslaan</button>
+            </details>
+
+            <div class="ats-detail-drawer__actions">
                 @if (_edit.Status is "PendingReview" or "Inactive")
                 {
-                    <button class="btn-compact" type="button" disabled="@_busy" @onclick="() => ApproveAsync(_edit)">Goedkeuren</button>
+                    <button class="btn-primary" type="button" disabled="@_busy" @onclick="() => ApproveAsync(_edit)">Goedkeuren / Actief</button>
                 }
-                <button class="btn-compact" type="button" disabled="@_busy" @onclick="() => RejectAsync(_edit)">Afkeuren</button>
+                @if (_edit.Status is not "Rejected")
+                {
+                    <button class="btn-compact" type="button" disabled="@_busy" @onclick="() => RejectAsync(_edit)">Afkeuren</button>
+                }
+                <button class="btn-compact" type="button" disabled="@_busy" @onclick="() => DeleteAsync(_edit)">Verwijderen</button>
+                @if (_edit.LinkedVacancyId is Guid vid)
+                {
+                    <a class="btn-compact" href="/vacancies/@vid">Gekoppelde vacature</a>
+                }
             </div>
-        </div>
+        </aside>
     }
 </AdminPageShell>
 
@@ -293,11 +284,7 @@
 
     private async Task SaveEditAsync()
     {
-        if (_edit is null)
-        {
-            return;
-        }
-
+        if (_edit is null) return;
         _busy = true;
         _message = null;
         try
@@ -394,15 +381,13 @@
         _scrapeReport = null;
         try
         {
-            _message = "Scrape gestart… diagnostiek volgt zodra de run klaar is.";
+            _message = "Scrape gestart…";
             StateHasChanged();
             var report = await Api.RunAtsScrapeAsync();
             _scrapeReport = report;
             _message =
-                $"Scrape klaar: {report.Upserted} upsert(s) " +
-                $"({report.Inserted} nieuw, {report.Updated} refresh), " +
-                $"{report.HttpErrors} HTTP-fout(en), {report.SourceCount} bron(nen).";
-            // Show all statuses after a manual run so new/updated rows are visible.
+                $"Scrape klaar: {report.Upserted} upsert(s), {report.FailedSources} failed bron(nen), " +
+                $"{report.SkippedInvalid} invalid skip(s). Alleen valide listings staan in het overzicht.";
             _statusFilter = string.Empty;
             await ReloadAsync();
         }
@@ -436,14 +421,45 @@
         }
     }
 
+    private static string Excerpt(string? text)
+    {
+        if (string.IsNullOrWhiteSpace(text)) return "Geen omschrijving.";
+        var clean = System.Text.RegularExpressions.Regex.Replace(text, @"\s+", " ").Trim();
+        return clean.Length <= 160 ? clean : clean[..157] + "…";
+    }
+
+    private static string SalaryDisplay(AtsListingItem row)
+    {
+        if (!string.IsNullOrWhiteSpace(row.SalaryText)) return row.SalaryText!;
+        if (row.HourlyWage is > 0) return $"€{row.HourlyWage:0.00} / uur";
+        return "—";
+    }
+
     private static string StatusLabel(string status) => status switch
     {
-        "PendingReview" => "In afwachting van review",
+        "PendingReview" => "In afwachting",
         "Approved" => "Actief",
         "Rejected" => "Afgekeurd",
         "Expired" => "Verlopen",
         "Inactive" => "Inactief",
         _ => status
+    };
+
+    private static string StatusClass(string status) => status switch
+    {
+        "PendingReview" => "pending",
+        "Approved" => "ok",
+        "Rejected" => "bad",
+        "Expired" or "Inactive" => "muted",
+        _ => "muted"
+    };
+
+    private static string DomainStatusClass(string status) => status.ToLowerInvariant() switch
+    {
+        "ok" => "ok",
+        "partial" => "pending",
+        "failed" => "bad",
+        _ => "muted"
     };
 
     private static string ScoreBand(int score) => score switch
