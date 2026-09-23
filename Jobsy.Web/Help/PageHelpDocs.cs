@@ -141,11 +141,23 @@ public static class PageHelpDocs
             "Beantwoord in je eigen tempo. Tussentijds opslaan mag; later kun je antwoorden wijzigen. Afronden herberekent je scores en de vacature-matches op je profiel. Optioneel: uitgebreide analyse (150 vragen, € 2,99) met PDF.",
             "Inzicht in samenwerken, resultaatgerichtheid, stressbestendigheid, innovatie en extraversie."),
 
+        ["/candidate/culture"] = new(
+            "Cultuurscan",
+            "Achttien stellingen over hoe jij graag werkt: sfeer, zelfstandigheid, samenwerken en hoe jij in een team past.",
+            "Rond af voor je cultuur- en persoonlijkheidsprofiel. Geen 150-vragen deep analysis — de Quick-Scan is genoeg voor matching.",
+            "Cultuurvoorkeur mee laten wegen in Functie-Fit en cultuurfit."),
+
         ["/candidate/disc"] = new(
-            "Gedragsanalyse",
-            "Vijfentwintig stellingen over hoe jij in een team werkt: voortouw, mensen meenemen, ritme en nauwkeurigheid.",
-            "Rond af voor de grafiek en workshops per stijl. Optioneel: uitgebreide analyse (150 vragen, € 2,99) met PDF over gedrag onder druk en teamrol.",
-            "Gedragsstijl mee laten wegen in Functie-Fit en cultuurfit."),
+            "Cultuurscan",
+            "Achttien stellingen over hoe jij graag werkt: sfeer, zelfstandigheid, samenwerken en hoe jij in een team past.",
+            "Rond af voor je cultuur- en persoonlijkheidsprofiel. Geen 150-vragen deep analysis — de Quick-Scan is genoeg voor matching.",
+            "Cultuurvoorkeur mee laten wegen in Functie-Fit en cultuurfit."),
+
+        ["/employer/culture"] = new(
+            "Bedrijfscultuur",
+            "Twaalf stellingen over hoe jullie team écht werkt.",
+            "Vul in zodat kandidaten beter matchen op sfeer, niet alleen op functietitel.",
+            "Objectief cultuurprofiel voor matching."),
 
         ["/candidate/career"] = new(
             "Beroepentest",

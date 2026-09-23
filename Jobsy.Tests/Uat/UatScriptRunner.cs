@@ -473,7 +473,7 @@ public static class UatScriptRunner
             Assert.Contains("Kompas.TabWhoAmI", kompas, StringComparison.Ordinal);
             Assert.Contains("Kompas.TabProfile", kompas, StringComparison.Ordinal);
             Assert.Contains("Kompas.TabCompetencies", kompas, StringComparison.Ordinal);
-            Assert.Contains("Kompas.TabDisc", kompas, StringComparison.Ordinal);
+            Assert.Contains("Kompas.TabCulture", kompas, StringComparison.Ordinal);
             Assert.Contains("Kompas.TabCareers", kompas, StringComparison.Ordinal);
             Assert.Contains("Kompas.TabFit", kompas, StringComparison.Ordinal);
             Assert.Contains("role=\"tablist\"", kompas, StringComparison.Ordinal);
@@ -491,13 +491,15 @@ public static class UatScriptRunner
             var root = RepoRoot.Find();
             var panel = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Pages/Candidate/WhoAmIPanel.razor"));
             Assert.Contains("WhoAmI.AttachCv", panel, StringComparison.Ordinal);
-            Assert.Contains("WhoAmIDiscQuadrant", panel, StringComparison.Ordinal);
+            Assert.Contains("CultureScorePanel", panel, StringComparison.Ordinal);
             Assert.False(WhoAmICompleteness.IsUnlocked(false, true, true, true));
             Assert.True(WhoAmICompleteness.IsUnlocked(true, true, true, true));
             Assert.DoesNotContain("@", WhoAmIPrompt.User(
                 new CompetencyScores(80, 70, 60, 50),
                 new RiasecScores(80, 40, 30, 50, 20, 10),
-                new DiscScores(70, 60, 80, 40)), StringComparison.Ordinal);
+                new CulturePersonalityScores(
+                Autonomy: 70, Informal: 60, Collaboration: 80, Flexibility: 55, Innovation: 50, PeopleFirst: 65,
+                Openness: 55, Conscientiousness: 70, Extraversion: 60, Agreeableness: 75, EmotionalStability: 70)), StringComparison.Ordinal);
         }
 
         if (Contains(blob, "accordeon per vaardigheid", "workshops"))
@@ -520,12 +522,13 @@ public static class UatScriptRunner
         if (Contains(blob, "DISC-Analyse", "gedragsstijl", "workshops"))
         {
             var root = RepoRoot.Find();
-            var panel = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Pages/Candidate/DiscScorePanel.razor"));
+            var panel = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Pages/Candidate/CultureScorePanel.razor"));
             Assert.Contains("competency-skill__details", panel, StringComparison.Ordinal);
             Assert.Contains("TrainingOffersBlock", panel, StringComparison.Ordinal);
-            Assert.Equal(25, DiscTestCatalog.QuestionCount);
-            Assert.Equal(150, DeepAnalysisCatalog.QuestionsFor(AssessmentKind.Disc).Count);
-            Assert.Equal("disc", TrainingTracking.CampaignDisc);
+            Assert.Equal(18, CulturePersonalityCatalog.QuestionCount);
+            Assert.False(DeepAnalysisCatalog.SupportsDeepAnalysis(AssessmentKind.Culture));
+            Assert.Equal("culture", TrainingTracking.CampaignCulture);
+            Assert.Equal("culture", TrainingTracking.CampaignDisc);
         }
 
         if (Contains(blob, "Cultuur Fit", "cultuurpijlers"))

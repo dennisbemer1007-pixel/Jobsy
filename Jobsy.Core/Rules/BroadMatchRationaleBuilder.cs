@@ -93,10 +93,11 @@ public static class BroadMatchRationaleBuilder
             return "Wat jij wilt in werk sluit inhoudelijk aan bij deze vacature, ook zonder exacte functietitel-match.";
         }
 
-        if (input.CandidateDiscScores is { IsComplete: true }
-            && DiscFitRules.Fit01(input.CandidateDiscScores, input.VacancyTitle, input.VacancyDescription) >= 0.6)
+        if (input.CandidateCultureScores is { IsComplete: true }
+            && CulturePersonalityFitRules.PersonalityFit01(
+                input.CandidateCultureScores, input.VacancyTitle, input.VacancyDescription) >= 0.6)
         {
-            return "Hoe jij in een team werkt (gedragsprofiel) sluit aan bij deze functie.";
+            return "Hoe jij graag werkt en in een team past, sluit aan bij deze functie.";
         }
 
         return null;

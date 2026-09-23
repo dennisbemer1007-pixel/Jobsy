@@ -11,7 +11,6 @@ public static class DeepAnalysisCatalog
     public const int QuestionCount = 150;
     public const int CompetenceItemsPerDomain = 30;
     public const int CareerItemsPerDomain = 25;
-    public const int DiscItemsPerDomain = 37;
     public const int LikertMin = LikertAnswerJson.LikertMin;
     public const int LikertMax = LikertAnswerJson.LikertMax;
 
@@ -19,31 +18,29 @@ public static class DeepAnalysisCatalog
 
     private static readonly Lazy<IReadOnlyList<DeepAnalysisQuestion>> LazyCompetence = new(BuildCompetenceQuestions);
     private static readonly Lazy<IReadOnlyList<DeepAnalysisQuestion>> LazyCareer = new(BuildCareerQuestions);
-    private static readonly Lazy<IReadOnlyList<DeepAnalysisQuestion>> LazyDisc = new(BuildDiscQuestions);
 
     /// <summary>Competence deep analysis (backward-compatible default).</summary>
     public static IReadOnlyList<DeepAnalysisQuestion> Questions => LazyCompetence.Value;
 
     public static IReadOnlyList<DeepAnalysisQuestion> CareerQuestions => LazyCareer.Value;
 
-    public static IReadOnlyList<DeepAnalysisQuestion> DiscQuestions => LazyDisc.Value;
-
     public static IReadOnlyList<DeepAnalysisQuestion> QuestionsFor(AssessmentKind kind)
         => kind switch
         {
             AssessmentKind.Career => CareerQuestions,
-            AssessmentKind.Disc => DiscQuestions,
+            AssessmentKind.Culture => throw new InvalidOperationException(
+                "De cultuurscan heeft geen 150-vragen deep analysis. Gebruik de gratis Quick-Scan (18 vragen)."),
             _ => Questions
         };
+
+    public static bool SupportsDeepAnalysis(AssessmentKind kind)
+        => kind is AssessmentKind.Competence or AssessmentKind.Career;
 
     private static IReadOnlyList<DeepAnalysisQuestion> BuildCompetenceQuestions()
         => Materialize("BigFive", DeepAnalysisCompetenceItems.All, AssessmentKind.Competence, CompetenceItemsPerDomain);
 
     private static IReadOnlyList<DeepAnalysisQuestion> BuildCareerQuestions()
         => Materialize("RIASEC", DeepAnalysisCareerItems.All, AssessmentKind.Career, CareerItemsPerDomain);
-
-    private static IReadOnlyList<DeepAnalysisQuestion> BuildDiscQuestions()
-        => Materialize("DISC", DeepAnalysisDiscItems.All, AssessmentKind.Disc, DiscItemsPerDomain);
 
     private static IReadOnlyList<DeepAnalysisQuestion> Materialize(
         string family,
@@ -94,9 +91,7 @@ public static class DeepAnalysisCatalog
 
         foreach (var group in list.GroupBy(q => q.Domain, StringComparer.OrdinalIgnoreCase))
         {
-            var expected = kind == AssessmentKind.Disc
-                ? group.Count() is >= 37 and <= 38 ? group.Count() : expectedPerDomain
-                : expectedPerDomain;
+            var expected = expectedPerDomain;
             if (group.Count() != expected)
             {
                 throw new InvalidOperationException(
@@ -250,18 +245,6 @@ public static class DeepAnalysisCatalog
             Get(CareerTestCatalog.Conventional));
     }
 
-    public static DiscScores ToDiscScores(IReadOnlyList<DeepAnalysisDomainScore> scores)
-    {
-        int Get(string code) =>
-            scores.FirstOrDefault(s => s.Domain.Equals(code, StringComparison.OrdinalIgnoreCase))?.Percent ?? 0;
-
-        return new DiscScores(
-            Get(DiscTestCatalog.Dominant),
-            Get(DiscTestCatalog.Invloed),
-            Get(DiscTestCatalog.Stabiel),
-            Get(DiscTestCatalog.Nauwkeurig));
-    }
-
     public static IReadOnlyList<string> CareerAdviceParagraphs(IReadOnlyList<DeepAnalysisDomainScore> scores)
     {
         var top = scores
@@ -315,14 +298,6 @@ public static class DeepAnalysisCatalog
             "Vriendelijkheid: samenwerking en gastvrijheid zijn een sterke match-tag in de talentpool.",
         DeepAnalysisCompetenceItems.EmotioneleStabiliteit =>
             "Emotionele stabiliteit: piekdruk (seizoen, horeca, logistiek) is haalbaarder als de rest van het profiel klopt.",
-        DiscTestCatalog.Dominant =>
-            "Je pakt graag het voortouw. Dat helpt in ploegen met tempo: logistiek, teelt met pieken, of een winkelavond die moet lopen.",
-        DiscTestCatalog.Invloed =>
-            "Je neemt mensen mee. Retail, horeca, inwerken van seizoenscollega’s en klantcontact in de regio liggen je.",
-        DiscTestCatalog.Stabiel =>
-            "Je houdt van rust en ritme. Kas, zorg, vaste ronden in het magazijn of een voorspelbare winkelploeg passen sterk.",
-        DiscTestCatalog.Nauwkeurig =>
-            "Je werkt netjes en checkt. Kwaliteit, registratie, inpakken en procedures in de keten benutten dat.",
         _ => $"Op {Label(domain)} scoor je hoog; weeg dat mee bij branchevorkeur en matching."
     };
 
@@ -336,10 +311,6 @@ public static class DeepAnalysisCatalog
         CareerTestCatalog.Conventional => CareerCompassBuilder.TypeLabel(CareerTestCatalog.Conventional),
         DeepAnalysisCompetenceItems.EmotioneleStabiliteit => "emotionele stabiliteit",
         DeepAnalysisCompetenceItems.Vriendelijkheid => "vriendelijkheid",
-        DiscTestCatalog.Dominant => "het voortouw nemen",
-        DiscTestCatalog.Invloed => "mensen meenemen",
-        DiscTestCatalog.Stabiel => "rust en ritme",
-        DiscTestCatalog.Nauwkeurig => "nauwkeurig werken",
         _ => domain.ToLowerInvariant()
     };
 

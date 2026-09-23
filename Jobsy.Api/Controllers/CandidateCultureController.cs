@@ -8,21 +8,21 @@ using Microsoft.AspNetCore.RateLimiting;
 namespace Jobsy.Api.Controllers;
 
 [ApiController]
-[Route("api/me/disc")]
+[Route("api/me/culture")]
 [Authorize(Policy = JobsyPolicies.RequireCandidate)]
-public sealed class CandidateDiscController : ControllerBase
+public sealed class CandidateCultureController : ControllerBase
 {
-    private readonly ICandidateDiscService _disc;
+    private readonly ICandidateCulturePersonalityService _culture;
     private readonly IUserLookupService _users;
 
-    public CandidateDiscController(ICandidateDiscService disc, IUserLookupService users)
+    public CandidateCultureController(ICandidateCulturePersonalityService culture, IUserLookupService users)
     {
-        _disc = disc;
+        _culture = culture;
         _users = users;
     }
 
     [HttpGet]
-    public async Task<ActionResult<CandidateDiscStateDto>> Get(CancellationToken cancellationToken)
+    public async Task<ActionResult<CandidateCulturePersonalityStateDto>> Get(CancellationToken cancellationToken)
     {
         var user = await _users.FindByPrincipalAsync(User, cancellationToken);
         if (user is null)
@@ -30,12 +30,12 @@ public sealed class CandidateDiscController : ControllerBase
             return NotFound(new { message = "Gebruiker niet gevonden in Jobsy." });
         }
 
-        return Ok(await _disc.GetAsync(user.Id, cancellationToken));
+        return Ok(await _culture.GetAsync(user.Id, cancellationToken));
     }
 
     [HttpPut]
     [EnableRateLimiting("public-write")]
-    public async Task<ActionResult<CandidateDiscStateDto>> Save(
+    public async Task<ActionResult<CandidateCulturePersonalityStateDto>> Save(
         [FromBody] SaveCandidateCompetenciesRequest request,
         CancellationToken cancellationToken)
     {
@@ -56,14 +56,14 @@ public sealed class CandidateDiscController : ControllerBase
                 }
                 else
                 {
-                    return BadRequest(new { message = "Onbekend vraagnummer in de gedragsanalyse." });
+                    return BadRequest(new { message = "Onbekend vraagnummer in de cultuurscan." });
                 }
             }
         }
 
         try
         {
-            return Ok(await _disc.SaveAsync(user.Id, answers, request.Complete, cancellationToken));
+            return Ok(await _culture.SaveAsync(user.Id, answers, request.Complete, cancellationToken));
         }
         catch (InvalidOperationException ex)
         {

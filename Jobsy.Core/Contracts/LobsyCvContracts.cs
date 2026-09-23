@@ -50,7 +50,7 @@ public sealed record LobsyCvWhoAmI(
     string Story,
     IReadOnlyList<string> Keywords,
     IReadOnlyList<LobsyCvScoreBar> Competencies,
-    IReadOnlyList<LobsyCvScoreBar> Disc);
+    IReadOnlyList<LobsyCvScoreBar> Culture);
 
 public sealed record LobsyCvScoreBar(string Label, int Percent);
 

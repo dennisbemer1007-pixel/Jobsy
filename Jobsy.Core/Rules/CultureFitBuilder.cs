@@ -42,7 +42,7 @@ public static class CultureFitBuilder
     public static CultureFitResult? Evaluate(
         IEnumerable<string>? pillarIds,
         CompetencyScores? scores,
-        DiscScores? disc = null)
+        CulturePersonalityScores? culture = null)
     {
         if (scores is not { IsComplete: true })
         {
@@ -63,11 +63,11 @@ public static class CultureFitBuilder
             Math.Round(100 * fits.Average(), MidpointRounding.AwayFromZero),
             0,
             100);
-        if (disc is { IsComplete: true })
+        if (culture is { IsComplete: true })
         {
-            var discAvg = pillars.Select(p => DiscFitRules.PillarFit01(p.Id, disc)).Average();
+            var cultureAvg = pillars.Select(p => CulturePersonalityFitRules.PillarFit01(p.Id, culture)).Average();
             percent = (int)Math.Clamp(
-                Math.Round(0.82 * percent + 0.18 * 100 * discAvg, MidpointRounding.AwayFromZero),
+                Math.Round(0.82 * percent + 0.18 * 100 * cultureAvg, MidpointRounding.AwayFromZero),
                 0,
                 100);
         }

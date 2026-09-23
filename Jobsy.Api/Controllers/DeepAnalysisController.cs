@@ -84,9 +84,7 @@ public sealed class DeepAnalysisController : ControllerBase
 
         var checkoutKind = paymentId.Contains("_career_", StringComparison.OrdinalIgnoreCase)
             ? AssessmentKind.Career
-            : paymentId.Contains("_disc_", StringComparison.OrdinalIgnoreCase)
-                ? AssessmentKind.Disc
-                : AssessmentKind.Competence;
+            : AssessmentKind.Competence;
 
         return Ok(await _deep.GetStateAsync(user.Id, checkoutKind, cancellationToken));
     }

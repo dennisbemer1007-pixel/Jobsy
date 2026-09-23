@@ -57,12 +57,12 @@ public sealed class WhoAmIService : IWhoAmIService
         var state = await LoadAsync(userId, persistStory: true, cancellationToken);
         if (!state.IsUnlocked || !state.IncludeOnCv || string.IsNullOrWhiteSpace(state.Story)
             || state.CompetencyScores is not { IsComplete: true } competency
-            || state.DiscScores is not { IsComplete: true } disc)
+            || state.CultureScores is not { IsComplete: true } culture)
         {
             return null;
         }
 
-        return ToAttachment(state.Story, state.Keywords, competency, disc);
+        return ToAttachment(state.Story, state.Keywords, competency, culture);
     }
 
     private async Task<WhoAmIStateDto> LoadAsync(Guid userId, bool persistStory, CancellationToken cancellationToken)
@@ -85,7 +85,7 @@ public sealed class WhoAmIService : IWhoAmIService
             .FirstOrDefaultAsync(c => c.UserId == userId, cancellationToken);
         var careerRow = await _db.CandidateCareerInterests.AsNoTracking()
             .FirstOrDefaultAsync(c => c.UserId == userId, cancellationToken);
-        var discRow = await _db.CandidateDiscProfiles.AsNoTracking()
+        var cultureRow = await _db.CandidateCulturePersonalityProfiles.AsNoTracking()
             .FirstOrDefaultAsync(c => c.UserId == userId, cancellationToken);
 
         var competency = CompetencyTestCatalog.CompletedScoresOrNull(
@@ -103,18 +103,31 @@ public sealed class WhoAmIService : IWhoAmIService
             careerRow?.SocialPercent,
             careerRow?.EnterprisingPercent,
             careerRow?.ConventionalPercent);
-        var disc = DiscTestCatalog.CompletedScoresOrNull(
-            discRow?.Status,
-            discRow?.DominantPercent,
-            discRow?.InvloedPercent,
-            discRow?.StabielPercent,
-            discRow?.NauwkeurigPercent);
+        var culture = cultureRow is null
+            || !CandidateCompetencyStatuses.IsCompleted(cultureRow.Status)
+            ? null
+            : new CulturePersonalityScores(
+                cultureRow.AutonomyPercent,
+                cultureRow.InformalPercent,
+                cultureRow.CollaborationPercent,
+                cultureRow.FlexibilityPercent,
+                cultureRow.InnovationPercent,
+                cultureRow.PeopleFirstPercent,
+                cultureRow.OpennessPercent,
+                cultureRow.ConscientiousnessPercent,
+                cultureRow.ExtraversionPercent,
+                cultureRow.AgreeablenessPercent,
+                cultureRow.EmotionalStabilityPercent);
+        if (culture is not { IsComplete: true })
+        {
+            culture = null;
+        }
 
         var competencyDone = competency is { IsComplete: true };
         var careerDone = career is { IsComplete: true };
-        var discDone = disc is { IsComplete: true };
-        var unlocked = WhoAmICompleteness.IsUnlocked(profileFilled, competencyDone, careerDone, discDone);
-        var encouragement = Encouragement(profileFilled, competencyDone, careerDone, discDone);
+        var cultureDone = culture is { IsComplete: true };
+        var unlocked = WhoAmICompleteness.IsUnlocked(profileFilled, competencyDone, careerDone, cultureDone);
+        var encouragement = Encouragement(profileFilled, competencyDone, careerDone, cultureDone);
 
         string? story = null;
         IReadOnlyList<string> keywords = [];
@@ -131,9 +144,9 @@ public sealed class WhoAmIService : IWhoAmIService
 
         if (unlocked && competency is { IsComplete: true } cScores
             && career is { IsComplete: true } rScores
-            && disc is { IsComplete: true } dScores)
+            && culture is { IsComplete: true } cultureScores)
         {
-            var fingerprint = WhoAmICompleteness.Fingerprint(cScores, rScores, dScores);
+            var fingerprint = WhoAmICompleteness.Fingerprint(cScores, rScores, cultureScores);
             if (stored is not null
                 && string.Equals(stored.InputFingerprint, fingerprint, StringComparison.Ordinal)
                 && WhoAmIStoryBuilder.Sanitize(stored.StoryText) is { } cachedStory)
@@ -145,7 +158,7 @@ public sealed class WhoAmIService : IWhoAmIService
             }
             else
             {
-                var generated = await _generate.GenerateAsync(cScores, rScores, dScores, cancellationToken);
+                var generated = await _generate.GenerateAsync(cScores, rScores, cultureScores, cancellationToken);
                 story = generated.Story;
                 keywords = generated.Keywords;
                 fromOpenAi = generated.FromOpenAi;
@@ -175,14 +188,14 @@ public sealed class WhoAmIService : IWhoAmIService
             profileFilled,
             competencyDone,
             careerDone,
-            discDone,
+            cultureDone,
             unlocked,
             encouragement,
             story,
             fromOpenAi,
             keywords,
             competency,
-            disc,
+            culture,
             includeOnCv,
             generatedAt);
     }
@@ -191,15 +204,15 @@ public sealed class WhoAmIService : IWhoAmIService
         string story,
         IReadOnlyList<string> keywords,
         CompetencyScores competency,
-        DiscScores disc)
+        CulturePersonalityScores culture)
         => new(
             story,
             keywords,
             CompetencyTestCatalog.CategoryCodes
                 .Select(code => new LobsyCvScoreBar(WhoAmIKeywords.EverydayCompetency(code), competency.Get(code)))
                 .ToList(),
-            DiscTestCatalog.CategoryCodes
-                .Select(code => new LobsyCvScoreBar(DiscTestCatalog.EverydayLabel(code), disc.Get(code)))
+            CulturePersonalityCatalog.CategoryCodes
+                .Select(code => new LobsyCvScoreBar(CulturePersonalityCatalog.EverydayLabel(code), culture.Get(code)))
                 .ToList());
 
     private static CandidateWhoAmIProfile NewRow(Guid userId)
@@ -215,9 +228,9 @@ public sealed class WhoAmIService : IWhoAmIService
         bool profile,
         bool competency,
         bool career,
-        bool disc)
+        bool culture)
     {
-        if (WhoAmICompleteness.IsUnlocked(profile, competency, career, disc))
+        if (WhoAmICompleteness.IsUnlocked(profile, competency, career, culture))
         {
             return "";
         }
@@ -237,6 +250,6 @@ public sealed class WhoAmIService : IWhoAmIService
             return "Rond de beroepentest af. Samen met je competenties wordt je verhaal écht van jou.";
         }
 
-        return "Rond de gedragsanalyse af (gratis Quick-Scan of de uitgebreide versie). Daarna is je rapport klaar.";
+        return "Rond de cultuurscan af (18 korte stellingen). Daarna is je rapport klaar.";
     }
 }

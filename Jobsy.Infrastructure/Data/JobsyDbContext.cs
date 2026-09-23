@@ -30,7 +30,8 @@ public class JobsyDbContext : DbContext
     public DbSet<CandidateUploadedCv> CandidateUploadedCvs => Set<CandidateUploadedCv>();
     public DbSet<CandidateReference> CandidateReferences => Set<CandidateReference>();
     public DbSet<CandidateCompetency> CandidateCompetencies => Set<CandidateCompetency>();
-    public DbSet<CandidateDiscProfile> CandidateDiscProfiles => Set<CandidateDiscProfile>();
+    public DbSet<CandidateCulturePersonalityProfile> CandidateCulturePersonalityProfiles => Set<CandidateCulturePersonalityProfile>();
+    public DbSet<CompanyCultureProfile> CompanyCultureProfiles => Set<CompanyCultureProfile>();
     public DbSet<CandidateWhoAmIProfile> CandidateWhoAmIProfiles => Set<CandidateWhoAmIProfile>();
     public DbSet<CandidateCareerInterest> CandidateCareerInterests => Set<CandidateCareerInterest>();
     public DbSet<CandidateRoleFitCheck> CandidateRoleFitChecks => Set<CandidateRoleFitCheck>();
@@ -539,9 +540,9 @@ public class JobsyDbContext : DbContext
                 .OnDelete(DeleteBehavior.Cascade);
         });
 
-        modelBuilder.Entity<CandidateDiscProfile>(entity =>
+        modelBuilder.Entity<CandidateCulturePersonalityProfile>(entity =>
         {
-            entity.ToTable("CandidateDiscProfiles");
+            entity.ToTable("CandidateCulturePersonalityProfiles");
             entity.HasKey(e => e.Id);
             entity.Property(e => e.Status).HasMaxLength(16).IsRequired();
             entity.Property(e => e.AnswersJson).HasMaxLength(4000).IsRequired();
@@ -550,6 +551,19 @@ public class JobsyDbContext : DbContext
             entity.HasOne(e => e.User)
                 .WithMany()
                 .HasForeignKey(e => e.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<CompanyCultureProfile>(entity =>
+        {
+            entity.ToTable("CompanyCultureProfiles");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Status).HasMaxLength(16).IsRequired();
+            entity.Property(e => e.AnswersJson).HasMaxLength(4000).IsRequired();
+            entity.HasIndex(e => e.CompanyId).IsUnique();
+            entity.HasOne(e => e.Company)
+                .WithMany()
+                .HasForeignKey(e => e.CompanyId)
                 .OnDelete(DeleteBehavior.Cascade);
         });
 

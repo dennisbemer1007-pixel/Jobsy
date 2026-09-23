@@ -41,10 +41,10 @@ public sealed class DeepAnalysisService : IDeepAnalysisService
         var price = priceEuro.ToString("0.00", CultureInfo.GetCultureInfo("nl-NL"));
         return kind switch
         {
+            AssessmentKind.Culture =>
+                "De cultuurscan is een gratis Quick-Scan van 18 stellingen — er is geen aparte 150-vragen deep analysis.",
             AssessmentKind.Career =>
                 $"Wil je een diepgaand carrière-advies en een uitgebreid overzicht van al je opties inclusief PDF-rapport? Ontgrendel de uitgebreide beroepentest voor € {price}.",
-            AssessmentKind.Disc =>
-                $"Wil je onder druk, in overleg en in je teamrol nog scherper zien hoe jij werkt? Ontgrendel de uitgebreide gedragsanalyse inclusief PDF-rapport voor € {price}.",
             _ =>
                 $"Ontgrendel je uitgebreide competentie-analyse inclusief officiële PDF-rapportage voor € {price}."
         };
@@ -66,6 +66,12 @@ public sealed class DeepAnalysisService : IDeepAnalysisService
         AssessmentKind kind,
         CancellationToken cancellationToken = default)
     {
+        if (!DeepAnalysisCatalog.SupportsDeepAnalysis(kind))
+        {
+            throw new InvalidOperationException(
+                "De cultuurscan heeft geen 150-vragen deep analysis. Gebruik de gratis Quick-Scan van 18 stellingen.");
+        }
+
         _ = await _db.Users.FirstOrDefaultAsync(u => u.Id == userId, cancellationToken)
             ?? throw new KeyNotFoundException("Gebruiker niet gevonden.");
 
@@ -320,42 +326,9 @@ public sealed class DeepAnalysisService : IDeepAnalysisService
             return;
         }
 
-        if (kind == AssessmentKind.Disc)
+        if (kind == AssessmentKind.Culture)
         {
-            var disc = await _db.CandidateDiscProfiles
-                .FirstOrDefaultAsync(c => c.UserId == userId, cancellationToken);
-            var mapped = DeepAnalysisCatalog.ToDiscScores(
-                DeepAnalysisCatalog.ScoreDomains(answers, AssessmentKind.Disc));
-            if (disc is null)
-            {
-                disc = new CandidateDiscProfile
-                {
-                    Id = Guid.NewGuid(),
-                    UserId = userId,
-                    Status = CandidateCompetencyStatuses.Completed,
-                    AnswersJson = "{}",
-                    CreatedAtUtc = now
-                };
-                _db.CandidateDiscProfiles.Add(disc);
-            }
-
-            disc.Status = CandidateCompetencyStatuses.Completed;
-            disc.DominantPercent = mapped.Dominant;
-            disc.InvloedPercent = mapped.Invloed;
-            disc.StabielPercent = mapped.Stabiel;
-            disc.NauwkeurigPercent = mapped.Nauwkeurig;
-            var existing = DiscTestCatalog.ParseTagsJson(disc.MatchTagsJson).ToList();
-            foreach (var tag in tags.Concat(DiscTestCatalog.DeriveMatchTags(mapped)))
-            {
-                if (!existing.Contains(tag, StringComparer.OrdinalIgnoreCase))
-                {
-                    existing.Add(tag);
-                }
-            }
-
-            disc.MatchTagsJson = DiscTestCatalog.SerializeTags(existing);
-            disc.CompletedAtUtc ??= now;
-            disc.UpdatedAtUtc = now;
+            // Culture uses Quick-Scan only; deep analysis does not write culture scores.
             return;
         }
 

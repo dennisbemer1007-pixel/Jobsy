@@ -9,7 +9,8 @@ public class DeepAnalysisUxTests
     [Theory]
     [InlineData(AssessmentKind.Competence)]
     [InlineData(AssessmentKind.Career)]
-    [InlineData(AssessmentKind.Disc)]
+    // Culture has no deep analysis bank
+    // [InlineData(AssessmentKind.Culture)]
     public void Every_deep_question_has_a_concrete_practice_example(AssessmentKind kind)
     {
         var questions = DeepAnalysisCatalog.QuestionsFor(kind);
@@ -30,7 +31,6 @@ public class DeepAnalysisUxTests
     public void Domain_labels_are_plain_language()
     {
         Assert.Equal("Nieuwe dingen proberen", DeepAnalysisQuestionHelp.DomainLabel("Openheid"));
-        Assert.Equal("Voortouw nemen", DeepAnalysisQuestionHelp.DomainLabel(DiscTestCatalog.Dominant));
         Assert.False(string.IsNullOrWhiteSpace(
             DeepAnalysisQuestionHelp.DomainLabel(CareerTestCatalog.Social)));
     }

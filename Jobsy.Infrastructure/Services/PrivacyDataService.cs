@@ -321,16 +321,23 @@ public sealed class PrivacyDataService : IPrivacyDataService
                     c.UpdatedAtUtc
                 })
                 .FirstOrDefaultAsync(cancellationToken),
-            DiscProfiles = await _db.CandidateDiscProfiles.AsNoTracking()
+            DiscProfiles = await _db.CandidateCulturePersonalityProfiles.AsNoTracking()
                 .Where(c => c.UserId == user.Id)
                 .Select(c => new
                 {
                     c.Status,
                     c.AnswersJson,
-                    c.DominantPercent,
-                    c.InvloedPercent,
-                    c.StabielPercent,
-                    c.NauwkeurigPercent,
+                    c.AutonomyPercent,
+                    c.InformalPercent,
+                    c.CollaborationPercent,
+                    c.FlexibilityPercent,
+                    c.InnovationPercent,
+                    c.PeopleFirstPercent,
+                    c.OpennessPercent,
+                    c.ConscientiousnessPercent,
+                    c.ExtraversionPercent,
+                    c.AgreeablenessPercent,
+                    c.EmotionalStabilityPercent,
                     c.MatchTagsJson,
                     c.CompletedAtUtc,
                     c.UpdatedAtUtc
@@ -941,12 +948,12 @@ public sealed class PrivacyDataService : IPrivacyDataService
             _db.CandidateCompetencies.RemoveRange(competencies);
         }
 
-        var discs = await _db.CandidateDiscProfiles
+        var discs = await _db.CandidateCulturePersonalityProfiles
             .Where(c => c.UserId == user.Id)
             .ToListAsync(cancellationToken);
         if (discs.Count > 0)
         {
-            _db.CandidateDiscProfiles.RemoveRange(discs);
+            _db.CandidateCulturePersonalityProfiles.RemoveRange(discs);
         }
 
         var whoAmI = await _db.CandidateWhoAmIProfiles

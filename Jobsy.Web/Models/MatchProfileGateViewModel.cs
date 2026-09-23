@@ -9,7 +9,7 @@ public sealed class MatchProfileGateViewModel
     public bool HasEducationLevel { get; set; }
     public bool CompetencyCompleted { get; set; }
     public bool CareerCompleted { get; set; }
-    public bool DiscCompleted { get; set; }
+    public bool CultureCompleted { get; set; }
 
     /// <summary>True when every required Match checklist item is done.</summary>
     public bool IsProfileComplete { get; set; }

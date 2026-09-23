@@ -7,7 +7,7 @@ public static class WhoAmIKeywords
     public static IReadOnlyList<string> FromScores(
         CompetencyScores competency,
         RiasecScores career,
-        DiscScores disc)
+        CulturePersonalityScores culture)
     {
         var items = new List<(string Label, int Percent)>();
         foreach (var code in CompetencyTestCatalog.CategoryCodes)
@@ -15,9 +15,9 @@ public static class WhoAmIKeywords
             items.Add((EverydayCompetency(code), competency.Get(code)));
         }
 
-        foreach (var code in DiscTestCatalog.CategoryCodes)
+        foreach (var code in CulturePersonalityCatalog.CategoryCodes)
         {
-            items.Add((DiscTestCatalog.EverydayLabel(code), disc.Get(code)));
+            items.Add((CulturePersonalityCatalog.EverydayLabel(code), culture.Get(code)));
         }
 
         foreach (var code in CareerTestCatalog.RiasecCodes)

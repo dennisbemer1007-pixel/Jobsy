@@ -18,7 +18,7 @@ public class RoleFitCheckTests
         Assert.Equal("Wie ben ik?", UiStringsNl("Kompas.TabWhoAmI"));
         Assert.Equal("Mijn profiel", UiStringsNl("Kompas.TabProfile"));
         Assert.Equal("Mijn competenties", UiStringsNl("Kompas.TabCompetencies"));
-        Assert.Equal("DISC-Analyse", UiStringsNl("Kompas.TabDisc"));
+        Assert.Equal("Cultuurscan", UiStringsNl("Kompas.TabDisc"));
         Assert.Equal("Mijn beste match", UiStringsNl("Kompas.TabCareers"));
         Assert.Equal("Functiefit checker", UiStringsNl("Kompas.TabFit"));
     }

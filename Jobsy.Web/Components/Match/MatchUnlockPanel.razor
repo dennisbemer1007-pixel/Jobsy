@@ -70,14 +70,14 @@
                     }
                 </div>
             </li>
-            <li class="@(Gate.DiscCompleted ? "is-done" : null)">
-                <span class="whoami-check" aria-hidden="true">@(Gate.DiscCompleted ? "✓" : "")</span>
+            <li class="@(Gate.CultureCompleted ? "is-done" : null)">
+                <span class="whoami-check" aria-hidden="true">@(Gate.CultureCompleted ? "✓" : "")</span>
                 <div>
-                    <strong>Gedragsanalyse (DISC)</strong>
-                    <p>Korte scan voor betere matches</p>
-                    @if (!Gate.DiscCompleted)
+                    <strong>Cultuurscan</strong>
+                    <p>18 korte stellingen over hoe jij graag werkt</p>
+                    @if (!Gate.CultureCompleted)
                     {
-                        <a class="engagement-btn" href="/candidate/disc">Start scan</a>
+                        <a class="engagement-btn" href="/candidate/culture">Start scan</a>
                     }
                 </div>
             </li>

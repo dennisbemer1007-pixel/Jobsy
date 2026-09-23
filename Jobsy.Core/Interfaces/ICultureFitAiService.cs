@@ -8,6 +8,6 @@ public interface ICultureFitAiService
         CultureFitResult local,
         CompetencyScores scores,
         IReadOnlyList<string> pillarLabels,
-        DiscScores? disc = null,
+        CulturePersonalityScores? culture = null,
         CancellationToken cancellationToken = default);
 }

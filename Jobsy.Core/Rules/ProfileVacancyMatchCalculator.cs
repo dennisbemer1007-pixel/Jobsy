@@ -6,7 +6,7 @@ namespace Jobsy.Core.Rules;
 /// <summary>
 /// Candidate-facing vacancy ranking for the profile Top 10 widget.
 /// Multidimensional: travel/hours/day-parts + opleiding, competenties/drijfveren
-/// (Wie ben ik? / DISC/OCEAN), and transferable skills — not exact functietitel alone.
+/// (Wie ben ik? / cultuur &amp; persoonlijkheid), and transferable skills — not exact functietitel alone.
 /// </summary>
 public static class ProfileVacancyMatchCalculator
 {
@@ -33,10 +33,19 @@ public static class ProfileVacancyMatchCalculator
                 input.VacancyDescription))
             : (double?)null;
         if (competency01 is not null
-            && input.CandidateDiscScores is { IsComplete: true } discScores)
+            && input.CandidateCultureScores is { IsComplete: true } cultureScores)
         {
-            var disc01 = DiscFitRules.Fit01(discScores, input.VacancyTitle, input.VacancyDescription);
-            competency01 = 0.75 * competency01.Value + 0.25 * disc01;
+            var personality01 = CulturePersonalityFitRules.PersonalityFit01(
+                cultureScores, input.VacancyTitle, input.VacancyDescription);
+            var blend = personality01;
+            if (input.CompanyCultureScores is { } companyCulture
+                && companyCulture.Autonomy is not null)
+            {
+                var culture01 = CulturePersonalityFitRules.CultureFit01(cultureScores, companyCulture);
+                blend = 0.55 * personality01 + 0.45 * culture01;
+            }
+
+            competency01 = 0.75 * competency01.Value + 0.25 * blend;
         }
         var interest01 = input.CandidateRiasecScores is { IsComplete: true } scored
             ? VacancyRiasecProfile.Fit01(
@@ -110,7 +119,7 @@ public static class ProfileVacancyMatchCalculator
             culture = CultureFitBuilder.Evaluate(
                 input.CulturePillars,
                 input.CandidateCompetencies,
-                input.CandidateDiscScores);
+                input.CandidateCultureScores);
             if (culture is not null)
             {
                 total01 = (1 - CultureFitBuilder.TotalScoreWeight) * total01
@@ -676,7 +685,8 @@ public sealed class ProfileVacancyMatchInput
     public IReadOnlyList<string>? VacancyRiasecTags { get; init; }
     public IReadOnlyList<CareerOccupationMatch>? CareerOccupations { get; init; }
     public IReadOnlyList<string>? CulturePillars { get; init; }
-    public DiscScores? CandidateDiscScores { get; init; }
+    public CulturePersonalityScores? CandidateCultureScores { get; init; }
+    public CulturePersonalityScores? CompanyCultureScores { get; init; }
 }
 
 public sealed class ProfileVacancyMatch

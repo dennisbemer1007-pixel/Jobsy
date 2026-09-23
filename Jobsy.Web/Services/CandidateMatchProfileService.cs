@@ -58,17 +58,17 @@ public sealed class CandidateMatchProfileService
         var basics = whoAmI?.ProfileFilled == true;
         var competency = whoAmI?.CompetencyCompleted == true;
         var career = whoAmI?.CareerCompleted == true;
-        var disc = whoAmI?.DiscCompleted == true;
+        var culture = whoAmI?.CultureCompleted == true;
 
         gate.ProfileBasicsFilled = basics;
         gate.HasEducationLevel = hasEducation;
         gate.CompetencyCompleted = competency;
         gate.CareerCompleted = career;
-        gate.DiscCompleted = disc;
+        gate.CultureCompleted = culture;
         gate.IsProfileComplete = MatchProfileCompleteness.IsProfileComplete(
-            basics, hasEducation, competency, career, disc);
+            basics, hasEducation, competency, career, culture);
         gate.CompletedCount = MatchProfileCompleteness.CompletedCount(
-            basics, hasEducation, competency, career, disc);
+            basics, hasEducation, competency, career, culture);
         gate.RequiredCount = MatchProfileCompleteness.RequiredStepCount;
         gate.Educations = educations;
         gate.PreferredTransport = profile?.Preferences?.PreferredTransport;

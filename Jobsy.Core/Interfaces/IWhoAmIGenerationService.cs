@@ -8,7 +8,7 @@ public interface IWhoAmIGenerationService
     Task<WhoAmIGeneratedStory> GenerateAsync(
         CompetencyScores competency,
         RiasecScores career,
-        DiscScores disc,
+        CulturePersonalityScores culture,
         CancellationToken cancellationToken = default);
 }
 

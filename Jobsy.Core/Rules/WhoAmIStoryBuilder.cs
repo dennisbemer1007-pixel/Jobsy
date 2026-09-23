@@ -10,24 +10,24 @@ public static class WhoAmIStoryBuilder
     public static string Build(
         CompetencyScores competency,
         RiasecScores career,
-        DiscScores disc)
+        CulturePersonalityScores culture)
     {
         var careerTop = TopLabels(
             CareerTestCatalog.RiasecCodes.Select(c => (CareerCompassBuilder.TypeLabel(c), career.Get(c))),
             2);
-        var discTop = TopLabels(
-            DiscTestCatalog.CategoryCodes.Select(c => (DiscTestCatalog.EverydayLabel(c), disc.Get(c))),
+        var cultureTop = TopLabels(
+            CulturePersonalityCatalog.CategoryCodes.Select(c => (CulturePersonalityCatalog.EverydayLabel(c), culture.Get(c))),
             2);
         var compTop = TopLabels(
             CompetencyTestCatalog.CategoryCodes.Select(c => (WhoAmIKeywords.EverydayCompetency(c), competency.Get(c))),
             2);
-        var keywords = WhoAmIKeywords.FromScores(competency, career, disc);
+        var keywords = WhoAmIKeywords.FromScores(competency, career, culture);
 
         var sb = new StringBuilder();
         sb.Append("Ik ben iemand die tot zijn recht komt bij ");
         sb.Append(JoinDutch(careerTop));
-        sb.Append(". In een team zie je dat vooral als ik ");
-        sb.Append(JoinDutch(discTop));
+        sb.Append(". Op de werkvloer voel ik me het best bij ");
+        sb.Append(JoinDutch(cultureTop));
         sb.AppendLine(".");
         sb.AppendLine();
         sb.Append("Op de werkvloer is mijn kracht ");
