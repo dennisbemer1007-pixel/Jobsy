@@ -2909,6 +2909,89 @@ public sealed class JobsyApiClient : IAsyncDisposable
     public async Task<IReadOnlyList<AdminVacancyItem>> GetAdminVacanciesAsync(CancellationToken ct = default)
         => await _http.GetFromJsonAsync<List<AdminVacancyItem>>("api/admin/vacancies", ct) ?? [];
 
+    public async Task<IReadOnlyList<AtsListingItem>> GetAtsListingsAsync(
+        string? status = null,
+        string? q = null,
+        CancellationToken ct = default)
+    {
+        var qs = new List<string>();
+        if (!string.IsNullOrWhiteSpace(status))
+        {
+            qs.Add($"status={Uri.EscapeDataString(status)}");
+        }
+
+        if (!string.IsNullOrWhiteSpace(q))
+        {
+            qs.Add($"q={Uri.EscapeDataString(q)}");
+        }
+
+        var url = qs.Count == 0 ? "api/admin/ats/listings" : "api/admin/ats/listings?" + string.Join('&', qs);
+        return await _http.GetFromJsonAsync<List<AtsListingItem>>(url, ct) ?? [];
+    }
+
+    public async Task<AtsListingItem?> UpdateAtsListingAsync(Guid id, AtsListingUpdateForm form, CancellationToken ct = default)
+    {
+        var response = await _http.PutAsJsonAsync($"api/admin/ats/listings/{id}", form, ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException(string.IsNullOrWhiteSpace(body) ? response.ReasonPhrase : body);
+        }
+
+        return await response.Content.ReadFromJsonAsync<AtsListingItem>(cancellationToken: ct);
+    }
+
+    public async Task<AtsApproveResult?> ApproveAtsListingAsync(Guid id, CancellationToken ct = default)
+    {
+        var response = await _http.PostAsync($"api/admin/ats/listings/{id}/approve", null, ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException(string.IsNullOrWhiteSpace(body) ? response.ReasonPhrase : body);
+        }
+
+        return await response.Content.ReadFromJsonAsync<AtsApproveResult>(cancellationToken: ct);
+    }
+
+    public async Task RejectAtsListingAsync(Guid id, string? reason, CancellationToken ct = default)
+    {
+        var response = await _http.PostAsJsonAsync($"api/admin/ats/listings/{id}/reject", new { reason }, ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException(string.IsNullOrWhiteSpace(body) ? response.ReasonPhrase : body);
+        }
+    }
+
+    public async Task DeleteAtsListingAsync(Guid id, CancellationToken ct = default)
+    {
+        var response = await _http.DeleteAsync($"api/admin/ats/listings/{id}", ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException(string.IsNullOrWhiteSpace(body) ? response.ReasonPhrase : body);
+        }
+    }
+
+    public async Task<int> RunAtsScrapeAsync(Guid? sourceId = null, CancellationToken ct = default)
+    {
+        var url = sourceId is Guid id
+            ? $"api/admin/ats/scrape?sourceId={id}"
+            : "api/admin/ats/scrape";
+        var response = await _http.PostAsync(url, null, ct);
+        response.EnsureSuccessStatusCode();
+        var payload = await response.Content.ReadFromJsonAsync<JsonElement>(cancellationToken: ct);
+        return payload.TryGetProperty("upserted", out var u) ? u.GetInt32() : 0;
+    }
+
+    public async Task<int> RunAtsHealthAsync(CancellationToken ct = default)
+    {
+        var response = await _http.PostAsync("api/admin/ats/health", null, ct);
+        response.EnsureSuccessStatusCode();
+        var payload = await response.Content.ReadFromJsonAsync<JsonElement>(cancellationToken: ct);
+        return payload.TryGetProperty("changed", out var c) ? c.GetInt32() : 0;
+    }
+
     public async Task<VacancyProductActionResult?> AdminExtendVacancyAsync(Guid vacancyId, CancellationToken ct = default)
         => await PostVacancyProductAsync($"api/admin/vacancies/{vacancyId}/extend", ct);
 

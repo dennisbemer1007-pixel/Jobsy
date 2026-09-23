@@ -323,6 +323,21 @@ public static class DependencyInjection
         services.AddScoped<ICandidateActionTokenService, CandidateActionTokenService>();
         services.AddScoped<ICursorCloudAgentClient, CursorCloudAgentClient>();
         services.AddScoped<IFeedbackService, FeedbackService>();
+        services.AddHttpClient(AtsScrapeService.HttpClientName, client =>
+        {
+            client.Timeout = TimeSpan.FromSeconds(25);
+            client.DefaultRequestHeaders.UserAgent.ParseAdd(
+                "LobsyAtsBot/1.0 (+https://lobsy.nl; direct-employer vacancy ingest)");
+        }).ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler
+        {
+            AllowAutoRedirect = true,
+            MaxAutomaticRedirections = 5
+        });
+        services.AddScoped<IAtsScrapeService, AtsScrapeService>();
+        services.AddScoped<IAtsVacancyModerationService, AtsVacancyModerationService>();
+        services.AddScoped<IAtsVacancyHealthService, AtsVacancyHealthService>();
+        services.AddHostedService<AtsScrapeHostedService>();
+        services.AddHostedService<AtsVacancyHealthHostedService>();
         services.AddHostedService<FeedbackAutomationPollHostedService>();
         services.AddHostedService<DataRetentionHostedService>();
         services.AddHostedService<TalentContactRefundHostedService>();

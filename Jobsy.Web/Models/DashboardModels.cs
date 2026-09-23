@@ -543,6 +543,45 @@ public class AdminVacancyItem
     public string CreatedVia { get; set; } = "Manual";
 }
 
+public class AtsListingItem
+{
+    public Guid Id { get; set; }
+    public Guid SourceId { get; set; }
+    public string SourceName { get; set; } = string.Empty;
+    public string SourceDomain { get; set; } = string.Empty;
+    public string SourceUrl { get; set; } = string.Empty;
+    public string CompanyName { get; set; } = string.Empty;
+    public string Title { get; set; } = string.Empty;
+    public string? LocationLabel { get; set; }
+    public string? PostalCode { get; set; }
+    public string Description { get; set; } = string.Empty;
+    public string? SalaryText { get; set; }
+    public decimal? HourlyWage { get; set; }
+    public string? HoursText { get; set; }
+    public decimal? MinHoursPerWeek { get; set; }
+    public decimal? MaxHoursPerWeek { get; set; }
+    public string? TagsJson { get; set; }
+    public int CompletenessScore { get; set; }
+    public string Status { get; set; } = string.Empty;
+    public string? RejectReason { get; set; }
+    public DateTime ScrapedAtUtc { get; set; }
+    public DateTime? LastCheckedAtUtc { get; set; }
+    public DateTime? ExpiresAtUtc { get; set; }
+    public DateTime? ReviewedAtUtc { get; set; }
+    public Guid? LinkedVacancyId { get; set; }
+}
+
+public record AtsListingUpdateForm(
+    string Title,
+    string CompanyName,
+    string? LocationLabel,
+    string Description,
+    string? SalaryText,
+    decimal? HourlyWage,
+    string? HoursText);
+
+public record AtsApproveResult(Guid ListingId, Guid VacancyId, string VacancyStatus);
+
 public class PlatformLogItem
 {
     public Guid Id { get; set; }

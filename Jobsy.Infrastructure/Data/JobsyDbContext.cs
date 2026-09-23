@@ -23,6 +23,8 @@ public class JobsyDbContext : DbContext
     public DbSet<Company> Companies => Set<Company>();
     public DbSet<UserCompany> UserCompanies => Set<UserCompany>();
     public DbSet<Vacancy> Vacancies => Set<Vacancy>();
+    public DbSet<AtsScrapeSource> AtsScrapeSources => Set<AtsScrapeSource>();
+    public DbSet<AtsScrapedListing> AtsScrapedListings => Set<AtsScrapedListing>();
     public DbSet<TokenTransaction> TokenTransactions => Set<TokenTransaction>();
     public DbSet<Application> Applications => Set<Application>();
     public DbSet<CandidateUploadedCv> CandidateUploadedCvs => Set<CandidateUploadedCv>();
@@ -281,6 +283,58 @@ public class JobsyDbContext : DbContext
             entity.HasOne(e => e.Category)
                 .WithMany(c => c.Vacancies)
                 .HasForeignKey(e => e.CategoryId)
+                .OnDelete(DeleteBehavior.SetNull);
+        });
+
+        modelBuilder.Entity<AtsScrapeSource>(entity =>
+        {
+            entity.ToTable("AtsScrapeSources");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Name).HasMaxLength(256).IsRequired();
+            entity.Property(e => e.Domain).HasMaxLength(256).IsRequired();
+            entity.Property(e => e.ListUrl).HasMaxLength(2048).IsRequired();
+            entity.Property(e => e.DefaultLocationLabel).HasMaxLength(256);
+            entity.Property(e => e.CreatedAtUtc).HasDefaultValueSql("CURRENT_TIMESTAMP");
+            entity.HasIndex(e => e.Domain).IsUnique();
+            entity.HasIndex(e => new { e.IsEnabled, e.LastScrapedAtUtc });
+            entity.HasOne(e => e.PreferredCompany)
+                .WithMany()
+                .HasForeignKey(e => e.PreferredCompanyId)
+                .OnDelete(DeleteBehavior.SetNull);
+        });
+
+        modelBuilder.Entity<AtsScrapedListing>(entity =>
+        {
+            entity.ToTable("AtsScrapedListings");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.DedupHash).HasMaxLength(64).IsRequired();
+            entity.Property(e => e.SourceUrl).HasMaxLength(2048).IsRequired();
+            entity.Property(e => e.CompanyName).HasMaxLength(256).IsRequired();
+            entity.Property(e => e.Title).HasMaxLength(256).IsRequired();
+            entity.Property(e => e.LocationLabel).HasMaxLength(256);
+            entity.Property(e => e.PostalCode).HasMaxLength(16);
+            entity.Property(e => e.Description).HasMaxLength(20000).IsRequired();
+            entity.Property(e => e.SalaryText).HasMaxLength(512);
+            entity.Property(e => e.HourlyWage).HasPrecision(8, 2);
+            entity.Property(e => e.HoursText).HasMaxLength(256);
+            entity.Property(e => e.MinHoursPerWeek).HasPrecision(5, 1);
+            entity.Property(e => e.MaxHoursPerWeek).HasPrecision(5, 1);
+            entity.Property(e => e.TagsJson).HasMaxLength(2000);
+            entity.Property(e => e.ImageUrl).HasMaxLength(HtmlSanitize.MaxImageUrlLength);
+            entity.Property(e => e.RejectReason).HasMaxLength(1000);
+            entity.Property(e => e.ScrapedAtUtc).HasDefaultValueSql("CURRENT_TIMESTAMP");
+            entity.HasIndex(e => e.DedupHash).IsUnique();
+            entity.HasIndex(e => new { e.Status, e.ScrapedAtUtc });
+            entity.HasIndex(e => e.SourceId);
+            entity.HasIndex(e => e.LinkedVacancyId);
+            entity.HasIndex(e => e.LastCheckedAtUtc);
+            entity.HasOne(e => e.Source)
+                .WithMany(s => s.Listings)
+                .HasForeignKey(e => e.SourceId)
+                .OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne(e => e.LinkedVacancy)
+                .WithMany()
+                .HasForeignKey(e => e.LinkedVacancyId)
                 .OnDelete(DeleteBehavior.SetNull);
         });
 

@@ -357,6 +357,12 @@ public static class PageHelpDocs
             "Zoek en open vacatures over alle bedrijven heen.",
             "Moderatie, support en kwaliteitscontrole."),
 
+        ["/admin/ats-vacancies"] = new(
+            "Beheer · ATS Vacatures",
+            "Gescrapete vacatures van directe lokale werkgevers.",
+            "Review completeness, keur goed voor Match/banenkaart, of keur af.",
+            "Whitelist-domeinen, blacklist uitzend/recruitment, TTL 30 dagen."),
+
         ["/admin/finance"] = new(
             "Beheer · Financieel",
             "Financieel overzicht van het platform.",

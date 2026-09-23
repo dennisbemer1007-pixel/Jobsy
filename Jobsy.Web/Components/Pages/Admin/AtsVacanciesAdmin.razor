@@ -1,0 +1,392 @@
+@page "/admin/ats-vacancies"
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
+@attribute [Authorize(Roles = "Admin")]
+@using Jobsy.Web.Components.Admin
+@inject JobsyApiClient Api
+@inject NavigationManager Nav
+@inject CultureState Culture
+@implements IDisposable
+
+<PageTitle>@Culture["Admin.AtsVacancies"] · Lobsy</PageTitle>
+
+<AdminPageShell Title="@Culture["Admin.AtsVacancies"]" Lead="@Culture["Admin.AtsVacanciesLead"]" Wide="true">
+    <div class="filter-bar">
+        <label class="filter-bar__query">
+            @Culture["Common.Search"]
+            <input type="search"
+                   @bind="_searchQuery"
+                   @bind:event="oninput"
+                   placeholder="Bedrijf, titel, URL…" />
+        </label>
+        <label>
+            Status
+            <select @bind="_statusFilter" @bind:after="ReloadAsync">
+                <option value="">Alle</option>
+                <option value="PendingReview">In afwachting van review</option>
+                <option value="Approved">Actief (goedgekeurd)</option>
+                <option value="Rejected">Afgekeurd</option>
+                <option value="Expired">Verlopen</option>
+                <option value="Inactive">Inactief</option>
+            </select>
+        </label>
+        <button class="btn-compact" type="button" disabled="@_busy" @onclick="ScrapeAsync">Nu scrapen</button>
+        <button class="btn-compact" type="button" disabled="@_busy" @onclick="HealthAsync">Health-check</button>
+        <button class="btn-compact" type="button" disabled="@_busy" @onclick="ReloadAsync">Vernieuwen</button>
+        <span class="muted">@_filtered.Count van @_listings.Count</span>
+    </div>
+
+    @if (!string.IsNullOrEmpty(_message))
+    {
+        <p class="state-message">@_message</p>
+    }
+
+    @if (_loading)
+    {
+        <p class="state-message">@Culture["Common.Loading"]</p>
+    }
+    else if (!string.IsNullOrEmpty(_error))
+    {
+        <p class="state-message error">@_error</p>
+    }
+    else if (_filtered.Count == 0)
+    {
+        <p class="state-message">Geen ATS-vacatures. Draai een scrape of voeg whitelist-bronnen toe.</p>
+    }
+    else
+    {
+        <div class="table-scroll vacancy-grid">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th class="data-table__col--wrap">Titel</th>
+                        <th class="data-table__col--wrap">Bedrijf</th>
+                        <th class="data-table__col--wrap">Bron</th>
+                        <th>Score</th>
+                        <th>Status</th>
+                        <th>Gescrapet</th>
+                        <th>Laatste check</th>
+                        <th class="data-table__col--actions">@Culture["Common.Actions"]</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var row in _filtered)
+                    {
+                        <tr class="data-table__row--interactive" @ondblclick="() => OpenDetail(row)">
+                            <td class="data-table__col--wrap"><strong>@row.Title</strong></td>
+                            <td class="data-table__col--wrap">@row.CompanyName</td>
+                            <td class="data-table__col--wrap">
+                                <a href="@row.SourceUrl" target="_blank" rel="noopener noreferrer">@row.SourceDomain</a>
+                                @if (!string.IsNullOrWhiteSpace(row.LocationLabel))
+                                {
+                                    <div class="muted">@row.LocationLabel</div>
+                                }
+                            </td>
+                            <td>
+                                <span class="ats-score ats-score--@ScoreBand(row.CompletenessScore)">
+                                    @row.CompletenessScore%
+                                </span>
+                            </td>
+                            <td>@StatusLabel(row.Status)</td>
+                            <td>@row.ScrapedAtUtc.ToLocalTime().ToString("dd-MM HH:mm")</td>
+                            <td>@(row.LastCheckedAtUtc?.ToLocalTime().ToString("dd-MM HH:mm") ?? "—")</td>
+                            <td class="data-table__col--actions" @ondblclick:stopPropagation="true">
+                                <RowActionsMenu>
+                                    <button class="row-actions-menu__item" type="button" role="menuitem" @onclick="() => OpenDetail(row)">
+                                        Bekijken / bewerken
+                                    </button>
+                                    @if (row.Status is "PendingReview" or "Inactive")
+                                    {
+                                        <button class="row-actions-menu__item" type="button" role="menuitem" disabled="@_busy" @onclick="() => ApproveAsync(row)">
+                                            Goedkeuren / Actief
+                                        </button>
+                                    }
+                                    @if (row.Status is not "Rejected")
+                                    {
+                                        <button class="row-actions-menu__item" type="button" role="menuitem" disabled="@_busy" @onclick="() => RejectAsync(row)">
+                                            Afkeuren
+                                        </button>
+                                    }
+                                    <button class="row-actions-menu__item" type="button" role="menuitem" disabled="@_busy" @onclick="() => DeleteAsync(row)">
+                                        Verwijderen
+                                    </button>
+                                    @if (row.LinkedVacancyId is Guid vid)
+                                    {
+                                        <a class="row-actions-menu__item" role="menuitem" href="/vacancies/@vid">Vacature openen</a>
+                                    }
+                                </RowActionsMenu>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+
+    @if (_edit is not null)
+    {
+        <div class="share-modal-backdrop lobsy-dialog-backdrop" @onclick="CloseDetail"></div>
+        <div class="share-modal-panel ats-edit-modal" role="dialog" aria-modal="true">
+            <div class="panel-header">
+                <h2>ATS detail</h2>
+                <button class="btn-compact" type="button" @onclick="CloseDetail">Sluiten</button>
+            </div>
+            <p class="muted">
+                <a href="@_edit.SourceUrl" target="_blank" rel="noopener noreferrer">@_edit.SourceUrl</a>
+                · score @_edit.CompletenessScore% · @StatusLabel(_edit.Status)
+            </p>
+            <div class="ats-edit-grid">
+                <label>Titel <input @bind="_editTitle" /></label>
+                <label>Bedrijf <input @bind="_editCompany" /></label>
+                <label>Locatie <input @bind="_editLocation" /></label>
+                <label>Salaris-tekst <input @bind="_editSalary" /></label>
+                <label>Uurloon <input type="number" step="0.01" @bind="_editWage" /></label>
+                <label>Uren-tekst <input @bind="_editHours" /></label>
+                <label class="ats-edit-grid__full">Omschrijving
+                    <textarea rows="8" @bind="_editDescription"></textarea>
+                </label>
+            </div>
+            <div class="action-row">
+                <button class="btn-primary" type="button" disabled="@_busy" @onclick="SaveEditAsync">Opslaan</button>
+                @if (_edit.Status is "PendingReview" or "Inactive")
+                {
+                    <button class="btn-compact" type="button" disabled="@_busy" @onclick="() => ApproveAsync(_edit)">Goedkeuren</button>
+                }
+                <button class="btn-compact" type="button" disabled="@_busy" @onclick="() => RejectAsync(_edit)">Afkeuren</button>
+            </div>
+        </div>
+    }
+</AdminPageShell>
+
+@code {
+    private List<AtsListingItem> _listings = [];
+    private bool _loading = true;
+    private bool _busy;
+    private string? _error;
+    private string? _message;
+    private string _searchQuery = string.Empty;
+    private string _statusFilter = "PendingReview";
+    private AtsListingItem? _edit;
+    private string _editTitle = string.Empty;
+    private string _editCompany = string.Empty;
+    private string? _editLocation;
+    private string _editDescription = string.Empty;
+    private string? _editSalary;
+    private decimal? _editWage;
+    private string? _editHours;
+
+    private List<AtsListingItem> _filtered => Filter().ToList();
+
+    protected override async Task OnInitializedAsync()
+    {
+        Culture.Changed += OnCultureChanged;
+        await ReloadAsync();
+    }
+
+    private void OnCultureChanged() => InvokeAsync(StateHasChanged);
+
+    private async Task ReloadAsync()
+    {
+        _loading = true;
+        _error = null;
+        try
+        {
+            _listings = (await Api.GetAtsListingsAsync(
+                string.IsNullOrWhiteSpace(_statusFilter) ? null : _statusFilter)).ToList();
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+            _listings = [];
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private IEnumerable<AtsListingItem> Filter()
+    {
+        IEnumerable<AtsListingItem> q = _listings;
+        if (!string.IsNullOrWhiteSpace(_searchQuery))
+        {
+            var term = _searchQuery.Trim();
+            q = q.Where(l =>
+                l.Title.Contains(term, StringComparison.OrdinalIgnoreCase)
+                || l.CompanyName.Contains(term, StringComparison.OrdinalIgnoreCase)
+                || (l.LocationLabel?.Contains(term, StringComparison.OrdinalIgnoreCase) ?? false)
+                || l.SourceUrl.Contains(term, StringComparison.OrdinalIgnoreCase)
+                || l.SourceDomain.Contains(term, StringComparison.OrdinalIgnoreCase));
+        }
+
+        return q;
+    }
+
+    private void OpenDetail(AtsListingItem row)
+    {
+        _edit = row;
+        _editTitle = row.Title;
+        _editCompany = row.CompanyName;
+        _editLocation = row.LocationLabel;
+        _editDescription = row.Description;
+        _editSalary = row.SalaryText;
+        _editWage = row.HourlyWage;
+        _editHours = row.HoursText;
+    }
+
+    private void CloseDetail() => _edit = null;
+
+    private async Task SaveEditAsync()
+    {
+        if (_edit is null)
+        {
+            return;
+        }
+
+        _busy = true;
+        _message = null;
+        try
+        {
+            var updated = await Api.UpdateAtsListingAsync(_edit.Id, new AtsListingUpdateForm(
+                _editTitle, _editCompany, _editLocation, _editDescription,
+                _editSalary, _editWage, _editHours));
+            _message = "Opgeslagen.";
+            await ReloadAsync();
+            if (updated is not null)
+            {
+                OpenDetail(_listings.FirstOrDefault(l => l.Id == updated.Id) ?? updated);
+            }
+        }
+        catch (Exception ex)
+        {
+            _message = ex.Message;
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private async Task ApproveAsync(AtsListingItem row)
+    {
+        _busy = true;
+        _message = null;
+        try
+        {
+            var result = await Api.ApproveAtsListingAsync(row.Id);
+            _message = result is null
+                ? "Goedgekeurd."
+                : $"Goedgekeurd → vacature {result.VacancyId} ({result.VacancyStatus}).";
+            CloseDetail();
+            await ReloadAsync();
+        }
+        catch (Exception ex)
+        {
+            _message = ex.Message;
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private async Task RejectAsync(AtsListingItem row)
+    {
+        _busy = true;
+        _message = null;
+        try
+        {
+            await Api.RejectAtsListingAsync(row.Id, "Handmatig afgekeurd door admin");
+            _message = "Afgekeurd.";
+            CloseDetail();
+            await ReloadAsync();
+        }
+        catch (Exception ex)
+        {
+            _message = ex.Message;
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private async Task DeleteAsync(AtsListingItem row)
+    {
+        _busy = true;
+        _message = null;
+        try
+        {
+            await Api.DeleteAtsListingAsync(row.Id);
+            _message = "Verwijderd.";
+            CloseDetail();
+            await ReloadAsync();
+        }
+        catch (Exception ex)
+        {
+            _message = ex.Message;
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private async Task ScrapeAsync()
+    {
+        _busy = true;
+        _message = null;
+        try
+        {
+            var n = await Api.RunAtsScrapeAsync();
+            _message = $"Scrape klaar: {n} upsert(s).";
+            await ReloadAsync();
+        }
+        catch (Exception ex)
+        {
+            _message = ex.Message;
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private async Task HealthAsync()
+    {
+        _busy = true;
+        _message = null;
+        try
+        {
+            var n = await Api.RunAtsHealthAsync();
+            _message = $"Health-check klaar: {n} wijziging(en).";
+            await ReloadAsync();
+        }
+        catch (Exception ex)
+        {
+            _message = ex.Message;
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private static string StatusLabel(string status) => status switch
+    {
+        "PendingReview" => "In afwachting van review",
+        "Approved" => "Actief",
+        "Rejected" => "Afgekeurd",
+        "Expired" => "Verlopen",
+        "Inactive" => "Inactief",
+        _ => status
+    };
+
+    private static string ScoreBand(int score) => score switch
+    {
+        >= 80 => "high",
+        >= 50 => "mid",
+        _ => "low"
+    };
+
+    public void Dispose() => Culture.Changed -= OnCultureChanged;
+}

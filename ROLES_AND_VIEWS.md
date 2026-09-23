@@ -156,7 +156,7 @@ Admin: `/admin/ambassadeurs` — uitnodigen, drempels (50 / +1% / max), commissi
 | Route | Inhoud |
 |-------|--------|
 | `/home` | Platform-KPI’s (Bento, sparklines/ringen, Top/Flop vacatures) + drilldown |
-| `/admin/companies` · `/admin/users` · `/admin/vacancies` | Beheer |
+| `/admin/companies` · `/admin/users` · `/admin/vacancies` · `/admin/ats-vacancies` | Beheer (ATS = gescrapete directe werkgevers) |
 | `/admin/finance` · `/admin/tokens` | Finance KPI + tokenlog / grant |
 | `/admin/sales` | Sales beheer: tokenwaarde, commissie-% (direct/indirect), duur, tarieven, pakketten, highlights |
 | `/admin/sales-managers` | Salesmanagers, aanbevelingen (approve/reject), trackingcodes, suppliers |

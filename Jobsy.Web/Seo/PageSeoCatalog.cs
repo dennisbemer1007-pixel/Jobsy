@@ -190,6 +190,7 @@ public static partial class PageSeoCatalog
             ["/admin/token-finance"] = Private("Seo.SiteName", "Seo.PrivateDescription"),
             ["/admin/users"] = Private("Admin.Users", "Seo.PrivateDescription"),
             ["/admin/vacancies"] = Private("Admin.Vacancies", "Seo.PrivateDescription"),
+            ["/admin/ats-vacancies"] = Private("Admin.AtsVacancies", "Seo.PrivateDescription"),
             ["/admin/vacancy-categories"] = Private("Admin.VacancyCategories", "Seo.PrivateDescription"),
             ["/admin/training"] = Private("Admin.Training", "Seo.PrivateDescription"),
             ["/admin/wages"] = Private("Admin.Wages", "Seo.PrivateDescription"),

@@ -6,6 +6,7 @@ public static class VacancySourceDisplay
     {
         "api" => "api",
         "csv" => "csv",
+        "ats" => "ats",
         _ => "manual"
     };
 
@@ -13,6 +14,7 @@ public static class VacancySourceDisplay
     {
         "api" => "API",
         "csv" => "CSV",
+        "ats" => "ATS",
         _ => "Handmatig"
     };
 }

@@ -60,6 +60,15 @@ public static class JobsyDbSeeder
         {
             logger.LogWarning(ex, "Competency tag backfill after migrate failed; continuing.");
         }
+
+        try
+        {
+            await AtsScrapeSourceSeeder.SeedAsync(db, logger);
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(ex, "ATS scrape source seed after migrate failed; continuing.");
+        }
     }
 
     public static bool PreferWipeOverSeed(IConfiguration configuration)
@@ -124,6 +133,7 @@ public static class JobsyDbSeeder
                 await MediaBackfillSeeder.BackfillMediaAsync(db, logger);
                 // EnsureForAll also fills empty tables and assigns missing vacancy salary tables.
                 await WmlSalaryTableService.EnsureForAllCompaniesAsync(db);
+                await AtsScrapeSourceSeeder.SeedAsync(db, logger);
             }
             catch (Exception ex)
             {
@@ -151,6 +161,7 @@ public static class JobsyDbSeeder
             await MediaBackfillSeeder.BackfillMediaAsync(db, logger);
             // EnsureForAll also fills empty tables and assigns missing vacancy salary tables.
             await WmlSalaryTableService.EnsureForAllCompaniesAsync(db);
+            await AtsScrapeSourceSeeder.SeedAsync(db, logger);
             logger.LogInformation("Seed completed: employers + intermediary, vacancies, tokens, role users, sprint-0/8 demo.");
         }
         catch (Exception ex)

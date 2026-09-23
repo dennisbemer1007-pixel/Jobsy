@@ -11,7 +11,7 @@ public static class RoleNavCatalog
     [
         new("Nav.Home", "/home", NavIcons.Home),
         new("Nav.JobMap", "/", NavIcons.Map),
-        new("Nav.Vacancies", "/admin/vacancies", NavIcons.Vacancies, ["/admin/moderation"]),
+        new("Nav.Vacancies", "/admin/vacancies", NavIcons.Vacancies, ["/admin/moderation", "/admin/ats-vacancies"]),
         new("Nav.Finance", "/admin/finance", NavIcons.Finance, ["/admin/tokens", "/admin/token-finance", "/admin/sales-managers", "/admin/ambassadeurs", "/admin/sales"]),
         new("Nav.Companies", "/admin/companies", NavIcons.Companies),
         new("Nav.Settings", "/admin/settings", NavIcons.Settings,
