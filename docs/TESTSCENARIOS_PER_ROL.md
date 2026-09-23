@@ -728,7 +728,7 @@ Account: `admin@jobsy.local`. Bottom-nav: Home · Kaart · Vacatures · Financie
 |-----|--------------|--------------------|
 | Admin | Login → `/home` AdminHomePanel. | Platform-KPI’s, periode-tabs, Top/Flop, drilldowns. |
 | Admin | `/admin` en `/admin/cockpit`. | Redirect `/home`. |
-| Admin | Elke bottom-nav: Home, `/`, `/admin/vacancies`, `/admin/finance`, `/admin/companies`, `/admin/settings`. | Juiste pagina; Settings extra paths actief houden Settings-tab. |
+| Admin | Elke bottom-nav: Home, `/`, `/admin/vacancies`, `/admin/ats-vacancies`, `/admin/finance`, `/admin/companies`, `/admin/settings`. | Juiste pagina; ATS alleen voor Admin; Settings extra paths actief houden Settings-tab. |
 | Admin | PageShell **← Beheer** op een admin-pagina. | `/home`. |
 | Admin | Home: elke metric-tegel + drilldown + overview-links (logging, companies, API keys, users, tokenlog, vacancies). | DrilldownGrid; overview landt op module. |
 | Admin | Home Top/Flop vacatureklik + load-fout + lege drilldown. | Detail of error/empty; KPI’s blijven. |
