@@ -1,8 +1,9 @@
 namespace Jobsy.Core.Rules;
 
 /// <summary>
-/// Strict gate before an ATS scrape may become PendingReview in the admin overview.
-/// Incomplete / error-page parses must never pollute the queue.
+/// Soft gate before an ATS scrape may become PendingReview in the admin overview.
+/// Rejects only hard failures (missing title/company, error pages). Optional fields
+/// such as salary, hours, or even location may be empty so admins can complete them.
 /// </summary>
 public static class AtsListingValidation
 {
@@ -17,6 +18,9 @@ public static class AtsListingValidation
         "404", "not found", "niet gevonden", "access denied", "forbidden",
         "service unavailable", "foutmelding"
     ];
+
+    /// <summary>Minimum description length for scrape intake (admin can enrich later).</summary>
+    public const int MinDescriptionLengthForIntake = 12;
 
     public static bool TryValidateForReview(
         string? title,
@@ -43,13 +47,9 @@ public static class AtsListingValidation
             return false;
         }
 
-        if (string.IsNullOrWhiteSpace(locationLabel) || locationLabel.Trim().Length < 2)
-        {
-            rejectReason = "Werklocatie ontbreekt.";
-            return false;
-        }
-
-        if (string.IsNullOrWhiteSpace(description) || description.Trim().Length < 40)
+        // Location and salary are optional at intake — missing values stay empty for admin review.
+        // Description may be short; only reject empty/near-empty shells and clear error pages.
+        if (string.IsNullOrWhiteSpace(description) || description.Trim().Length < MinDescriptionLengthForIntake)
         {
             rejectReason = "Vacaturetekst ontbreekt of is te kort.";
             return false;

@@ -12,25 +12,31 @@ namespace Jobsy.Tests;
 public class AtsPipelineTests
 {
     [Fact]
-    public void Validation_rejects_missing_location_and_error_titles()
+    public void Validation_allows_missing_location_but_rejects_error_titles()
     {
         Assert.False(AtsListingValidation.TryValidateForReview(
             "404 Not Found", "Acme", "Den Haag", new string('x', 80), out _));
-        Assert.False(AtsListingValidation.TryValidateForReview(
-            "Kassamedewerker", "Acme", null, new string('x', 80), out var reason));
-        Assert.Contains("locatie", reason!, StringComparison.OrdinalIgnoreCase);
+        // Location / salary may be empty at intake — admin completes in ATS module.
+        Assert.True(AtsListingValidation.TryValidateForReview(
+            "Kassamedewerker", "Acme", null, new string('x', 80), out _));
         Assert.True(AtsListingValidation.TryValidateForReview(
             "Kassamedewerker", "Acme", "Naaldwijk", new string('x', 80), out _));
+        Assert.False(AtsListingValidation.TryValidateForReview(
+            "Kassamedewerker", "Acme", "Naaldwijk", "kort", out var shortReason));
+        Assert.Contains("tekst", shortReason!, StringComparison.OrdinalIgnoreCase);
         Assert.True(AtsListingValidation.IsDemoListing("Kassamedewerker (demo)", "https://x/demo-abc", null));
     }
 
     [Theory]
-    [InlineData("https://www.randstad.nl/vacatures", "Kassamedewerker", true)]
-    [InlineData("https://werkenbij.denhaag.nl/vacature/1", "Beleidsadviseur", false)]
-    [InlineData("https://tuinder.example.nl/jobs/1", "Flex medewerker uitzendbureau", true)]
-    [InlineData("https://www.indeed.com/viewjob", "Magazijn", true)]
-    public void Blacklist_blocks_agencies_and_aggregators(string url, string title, bool blocked)
-        => Assert.Equal(blocked, AtsBlacklistFilter.IsBlocked(url, title, "Acme"));
+    [InlineData("https://www.randstad.nl/vacatures", "Kassamedewerker", null, true)]
+    [InlineData("https://werkenbij.denhaag.nl/vacature/1", "Beleidsadviseur", "Gemeente", false)]
+    [InlineData("https://tuinder.example.nl/jobs/1", "Flex medewerker uitzendbureau", "Tuinder", true)]
+    [InlineData("https://www.indeed.com/viewjob", "Magazijn", null, true)]
+    [InlineData("https://shop.example.nl/vacature/1", "Flex medewerker", "Staffing Partners", true)]
+    [InlineData("https://shop.example.nl/vacature/1", "Verkoper", "Adecco Westland", true)]
+    [InlineData("https://shop.example.nl/vacature/1", "Verkoper met flexibele uren", "Tuincentrum De Roos", false)]
+    public void Blacklist_blocks_agencies_and_aggregators(string url, string title, string? company, bool blocked)
+        => Assert.Equal(blocked, AtsBlacklistFilter.IsBlocked(url, title, company));
 
     [Fact]
     public void Domain_whitelist_allows_subdomains_only()
@@ -85,6 +91,44 @@ public class AtsPipelineTests
             "winkel.example.nl");
         Assert.Contains(urls, u => u.Contains("/vacatures/kassa", StringComparison.Ordinal));
         Assert.DoesNotContain(urls, u => u.Contains("randstad", StringComparison.OrdinalIgnoreCase));
+    }
+
+    [Fact]
+    public void ExtractDetailUrls_falls_back_from_structural_to_keyword_hints()
+    {
+        // No structural hooks in href/CSS — only link text contains "vacature".
+        const string html = """
+            <html><body>
+            <a href="/open/role-verkoper">Vacature: Verkoper Naaldwijk</a>
+            <a href="/contact">Contact</a>
+            <a href="/nieuws/opening">Nieuws</a>
+            </body></html>
+            """;
+        var (urls, raw, strategy) = AtsScrapeService.ExtractDetailUrlsWithStats(
+            html,
+            "https://tuincentrum.example.nl/werken-bij",
+            "tuincentrum.example.nl");
+        Assert.True(raw >= 3);
+        Assert.Contains(urls, u => u.Contains("/open/role-verkoper", StringComparison.OrdinalIgnoreCase));
+        Assert.Equal("keyword-fallback", strategy);
+    }
+
+    [Fact]
+    public void ExtractDetailUrls_uses_structural_job_item_when_present()
+    {
+        const string html = """
+            <html><body>
+            <div class="job-item"><a href="/careers/post-1">Magazijnmedewerker</a></div>
+            <a href="/random/page">Niet een vacature</a>
+            </body></html>
+            """;
+        var (urls, _, strategy) = AtsScrapeService.ExtractDetailUrlsWithStats(
+            html,
+            "https://mkb.example.nl/careers",
+            "mkb.example.nl");
+        Assert.Equal("structural", strategy);
+        Assert.Contains(urls, u => u.Contains("/careers/post-1", StringComparison.Ordinal));
+        Assert.DoesNotContain(urls, u => u.Contains("/random/page", StringComparison.Ordinal));
     }
 
     [Fact]
