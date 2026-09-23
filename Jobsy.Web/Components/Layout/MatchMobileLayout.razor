@@ -1,0 +1,26 @@
+@inherits LayoutComponentBase
+@* Minimal mobile shell for Match & Swipe — no global BottomNav (page has its own tabs). *@
+@using Jobsy.Web.Localization
+@inject CultureState Culture
+@implements IDisposable
+
+<PageSeoHead />
+<div class="match-mobile-shell" dir="@(Culture.IsRightToLeft ? "rtl" : null)">
+    <main class="match-mobile-shell__main">
+        @Body
+    </main>
+    <CookieConsentBanner />
+</div>
+
+@code {
+    protected override async Task OnInitializedAsync()
+    {
+        Culture.Changed += OnCultureChanged;
+        await Culture.InitializeAsync();
+        await Culture.SyncDocumentAsync();
+    }
+
+    private void OnCultureChanged() => InvokeAsync(StateHasChanged);
+
+    public void Dispose() => Culture.Changed -= OnCultureChanged;
+}

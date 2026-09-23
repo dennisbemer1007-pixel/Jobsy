@@ -1,0 +1,368 @@
+@* Mobile Match & Swipe card — CSS translate/rotate, pointer gestures, no UI library. *@
+@using Jobsy.Web.Models
+
+@if (_visible && Model is not null)
+{
+    <div class="swipe-card-stage">
+        <article class="swipe-card @_animClass @(_dragging ? "is-dragging" : null)"
+                 style="@CardStyle"
+                 @ontouchstart="OnPointerDown"
+                 @ontouchmove="OnTouchMove"
+                 @ontouchend="OnPointerUp"
+                 @ontouchcancel="OnPointerCancel"
+                 @onpointerdown="OnMouseDown"
+                 @onpointermove="OnMouseMove"
+                 @onpointerup="OnMouseUp"
+                 @onpointercancel="OnPointerCancel"
+                 @onpointerleave="OnMouseLeave">
+            @if (Model.ShowMatchPercentage && Model.MatchPercentage is int pct)
+            {
+                <span class="swipe-card__match-badge" title="Match">@pct%</span>
+            }
+
+            <div class="swipe-card__logo-row">
+                @if (!string.IsNullOrWhiteSpace(Model.CompanyLogoUrl))
+                {
+                    <img class="swipe-card__logo"
+                         src="@Model.CompanyLogoUrl"
+                         alt="@Model.CompanyName"
+                         loading="lazy" />
+                }
+                else
+                {
+                    <div class="swipe-card__logo-fallback" aria-hidden="true">
+                        <svg viewBox="0 0 48 48" width="40" height="40" fill="none">
+                            <circle cx="24" cy="24" r="22" fill="#2f6b4f"/>
+                            <path d="M16 28c4-10 12-14 18-16-2 8-6 14-12 18-2-4-4-6-6-2z" fill="#8fbf45"/>
+                            <path d="M18 30c2-6 6-10 12-12" stroke="#fff" stroke-width="1.5" stroke-linecap="round"/>
+                        </svg>
+                        <span class="swipe-card__logo-text">@LogoLabel</span>
+                    </div>
+                }
+            </div>
+
+            <div class="swipe-card__photo">
+                @if (!string.IsNullOrWhiteSpace(Model.ImageUrl))
+                {
+                    <img src="@Model.ImageUrl"
+                         alt=""
+                         loading="lazy" />
+                }
+                else
+                {
+                    <div class="swipe-card__photo-placeholder" aria-hidden="true"></div>
+                }
+                <span class="swipe-card__photo-overlay">@Model.CompanyName</span>
+                <div class="swipe-card__stamp swipe-card__stamp--no @_stampNoClass" aria-hidden="true">NOPE</div>
+                <div class="swipe-card__stamp swipe-card__stamp--yes @_stampYesClass" aria-hidden="true">LIKE</div>
+            </div>
+
+            <div class="swipe-card__stats" role="group" aria-label="Kerngegevens">
+                <div class="swipe-card__stat">
+                    <span class="swipe-card__stat-icon" aria-hidden="true">
+                        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M12 21s7-5.2 7-11a7 7 0 1 0-14 0c0 5.8 7 11 7 11z"/>
+                            <circle cx="12" cy="10" r="2.5"/>
+                        </svg>
+                    </span>
+                    <strong>@Model.LocationPrimary</strong>
+                    @if (!string.IsNullOrWhiteSpace(Model.LocationSecondary))
+                    {
+                        <span>@Model.LocationSecondary</span>
+                    }
+                </div>
+                <div class="swipe-card__stat">
+                    <span class="swipe-card__stat-icon" aria-hidden="true">€</span>
+                    <strong>@Model.SalaryPrimary</strong>
+                    <span>@Model.SalarySecondary</span>
+                </div>
+                <div class="swipe-card__stat">
+                    <span class="swipe-card__stat-icon" aria-hidden="true">
+                        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="12" r="9"/>
+                            <path d="M12 7v5l3 2"/>
+                        </svg>
+                    </span>
+                    <strong>@Model.HoursPrimary</strong>
+                    <span>@Model.HoursSecondary</span>
+                </div>
+            </div>
+
+            <h2 class="swipe-card__title">@Model.JobTitle</h2>
+
+            @if (Model.Tags.Count > 0)
+            {
+                <ul class="swipe-card__tags">
+                    @foreach (var tag in Model.Tags)
+                    {
+                        <li>@tag</li>
+                    }
+                </ul>
+            }
+
+            <button type="button"
+                    class="swipe-card__more"
+                    disabled="@_animating"
+                    @onclick="RaiseMoreInfoAsync"
+                    @onclick:stopPropagation="true">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="M4 6h10M4 12h10M4 18h7"/>
+                    <path d="m14 9 5 3-5 3"/>
+                </svg>
+                Meer info
+            </button>
+        </article>
+
+        <div class="swipe-actions" role="group" aria-label="Match-acties">
+            <button type="button"
+                    class="swipe-actions__btn swipe-actions__btn--reject"
+                    disabled="@_animating"
+                    @onclick="() => SwipeAsync(SwipeDirection.Left)">
+                <span class="swipe-actions__circle" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round">
+                        <path d="M7 7l10 10M17 7 7 17"/>
+                    </svg>
+                </span>
+                <span class="swipe-actions__label">Niet voor mij</span>
+            </button>
+            <button type="button"
+                    class="swipe-actions__btn swipe-actions__btn--interest"
+                    disabled="@_animating"
+                    @onclick="() => SwipeAsync(SwipeDirection.Right)">
+                <span class="swipe-actions__circle" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="#fff" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M7 16c1.5-1 3-1.5 5-1.5s3.5.5 5 1.5"/>
+                        <path d="M8 10h.01M16 10h.01"/>
+                        <path d="M6 8c0-2.5 2.2-4.5 6-4.5s6 2 6 4.5v2.2c0 1.3-.6 2.4-1.6 3.1L12 18l-4.4-4.7C6.6 12.6 6 11.5 6 10.2V8z"/>
+                        <path d="M10 4.5c.4-1.2 1.2-2 2-2s1.6.8 2 2"/>
+                    </svg>
+                </span>
+                <span class="swipe-actions__label">Koffie doen</span>
+            </button>
+        </div>
+    </div>
+}
+
+@code {
+    private bool _visible = true;
+    private bool _animating;
+    private bool _dragging;
+    private bool _pointerActive;
+    private double _dragX;
+    private double _dragY;
+    private double _startX;
+    private double _startY;
+    private string _animClass = "";
+    private string _stampNoClass = "";
+    private string _stampYesClass = "";
+
+    [Parameter] public SwipeViewModel? Model { get; set; }
+
+    /// <summary>Swipe animation duration in milliseconds (default 360).</summary>
+    [Parameter] public int AnimationDurationMs { get; set; } = 360;
+
+    /// <summary>Horizontal drag distance (px) required to commit a swipe.</summary>
+    [Parameter] public int SwipeThresholdPx { get; set; } = 110;
+
+    [Parameter] public EventCallback<SwipeViewModel> OnReject { get; set; }
+    [Parameter] public EventCallback<SwipeViewModel> OnInterest { get; set; }
+    [Parameter] public EventCallback<SwipeViewModel> OnMoreInfo { get; set; }
+    [Parameter] public EventCallback<(SwipeViewModel Model, SwipeDirection Direction)> OnSwipeComplete { get; set; }
+
+    private string LogoLabel
+    {
+        get
+        {
+            var name = Model?.CompanyName?.Trim() ?? "";
+            if (name.Length == 0)
+            {
+                return "Bedrijf";
+            }
+
+            return name.Length <= 28 ? name : name[..25] + "…";
+        }
+    }
+
+    private string CardStyle
+    {
+        get
+        {
+            var duration = Math.Clamp(AnimationDurationMs, 120, 1200);
+            if (_dragging || (_pointerActive && !_animating))
+            {
+                var rotate = Math.Clamp(_dragX / 18.0, -18, 18);
+                return $"transform: translate({_dragX:0.##}px, {_dragY:0.##}px) rotate({rotate:0.##}deg); transition: none; --swipe-duration: {duration}ms;";
+            }
+
+            return $"--swipe-duration: {duration}ms;";
+        }
+    }
+
+    protected override void OnParametersSet()
+    {
+        // New card from parent → reset visual state.
+        _visible = Model is not null;
+        if (!_animating)
+        {
+            _animClass = "";
+            _stampNoClass = "";
+            _stampYesClass = "";
+            _dragX = 0;
+            _dragY = 0;
+        }
+    }
+
+    private async Task RaiseMoreInfoAsync()
+    {
+        if (_animating || Model is null)
+        {
+            return;
+        }
+
+        await OnMoreInfo.InvokeAsync(Model);
+    }
+
+    private async Task SwipeAsync(SwipeDirection direction)
+    {
+        if (_animating || Model is null)
+        {
+            return;
+        }
+
+        _animating = true;
+        _dragging = false;
+        _pointerActive = false;
+        _dragX = 0;
+        _dragY = 0;
+
+        if (direction == SwipeDirection.Left)
+        {
+            _animClass = "swipe-card--out-left";
+            _stampNoClass = "is-on";
+            await OnReject.InvokeAsync(Model);
+        }
+        else
+        {
+            _animClass = "swipe-card--out-right";
+            _stampYesClass = "is-on";
+            await OnInterest.InvokeAsync(Model);
+        }
+
+        StateHasChanged();
+        await Task.Delay(Math.Clamp(AnimationDurationMs, 120, 1200));
+
+        var completed = Model;
+        _visible = false;
+        _animating = false;
+        _animClass = "";
+        _stampNoClass = "";
+        _stampYesClass = "";
+        await OnSwipeComplete.InvokeAsync((completed, direction));
+    }
+
+    private void OnPointerDown(TouchEventArgs e)
+    {
+        if (_animating || e.Touches.Length == 0)
+        {
+            return;
+        }
+
+        BeginDrag(e.Touches[0].ClientX, e.Touches[0].ClientY);
+    }
+
+    private void OnTouchMove(TouchEventArgs e)
+    {
+        if (!_pointerActive || e.Touches.Length == 0)
+        {
+            return;
+        }
+
+        MoveDrag(e.Touches[0].ClientX, e.Touches[0].ClientY);
+    }
+
+    private async Task OnPointerUp(TouchEventArgs e)
+    {
+        await EndDragAsync();
+    }
+
+    private void OnMouseDown(PointerEventArgs e)
+    {
+        if (_animating || e.Button != 0)
+        {
+            return;
+        }
+
+        BeginDrag(e.ClientX, e.ClientY);
+    }
+
+    private void OnMouseMove(PointerEventArgs e)
+    {
+        if (!_pointerActive)
+        {
+            return;
+        }
+
+        MoveDrag(e.ClientX, e.ClientY);
+    }
+
+    private async Task OnMouseUp(PointerEventArgs e) => await EndDragAsync();
+
+    private async Task OnMouseLeave(PointerEventArgs e)
+    {
+        if (_pointerActive)
+        {
+            await EndDragAsync();
+        }
+    }
+
+    private void OnPointerCancel()
+    {
+        _pointerActive = false;
+        _dragging = false;
+        _dragX = 0;
+        _dragY = 0;
+        _stampNoClass = "";
+        _stampYesClass = "";
+    }
+
+    private void BeginDrag(double x, double y)
+    {
+        _pointerActive = true;
+        _dragging = true;
+        _startX = x;
+        _startY = y;
+        _dragX = 0;
+        _dragY = 0;
+    }
+
+    private void MoveDrag(double x, double y)
+    {
+        _dragX = x - _startX;
+        _dragY = (y - _startY) * 0.35;
+        _stampNoClass = _dragX < -40 ? "is-on" : "";
+        _stampYesClass = _dragX > 40 ? "is-on" : "";
+    }
+
+    private async Task EndDragAsync()
+    {
+        if (!_pointerActive)
+        {
+            return;
+        }
+
+        _pointerActive = false;
+        _dragging = false;
+
+        if (Math.Abs(_dragX) >= SwipeThresholdPx)
+        {
+            var direction = _dragX < 0 ? SwipeDirection.Left : SwipeDirection.Right;
+            await SwipeAsync(direction);
+            return;
+        }
+
+        _dragX = 0;
+        _dragY = 0;
+        _stampNoClass = "";
+        _stampYesClass = "";
+    }
+}
