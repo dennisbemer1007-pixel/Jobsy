@@ -2069,7 +2069,7 @@ public class VacanciesController : ControllerBase
         {
             var labels = CulturePillarCatalog.Labels(record.CulturePillars);
             var refined = await _cultureFitAi.TryRefineAsync(
-                local, scores, labels, matchContext.DiscScores, cancellationToken);
+                local, scores, labels, matchContext.CultureScores, cancellationToken);
             if (refined is not null)
             {
                 match = CloneMatchWithCulture(match, refined);

@@ -55,14 +55,14 @@
             @Culture["Kompas.TabCompetencies"]
         </button>
         <button type="button"
-                id="kompas-tab-disc"
-                class="admin-sublink @(_tab == CandidateKompasTabs.Disc ? "admin-sublink--active" : null)"
+                id="kompas-tab-culture"
+                class="admin-sublink @(_tab == CandidateKompasTabs.Culture ? "admin-sublink--active" : null)"
                 role="tab"
-                aria-selected="@(_tab == CandidateKompasTabs.Disc)"
-                aria-controls="kompas-panel-disc"
-                tabindex="@(_tab == CandidateKompasTabs.Disc ? 0 : -1)"
-                @onclick='() => SetTab(CandidateKompasTabs.Disc)'>
-            @Culture["Kompas.TabDisc"]
+                aria-selected="@(_tab == CandidateKompasTabs.Culture)"
+                aria-controls="kompas-panel-culture"
+                tabindex="@(_tab == CandidateKompasTabs.Culture ? 0 : -1)"
+                @onclick='() => SetTab(CandidateKompasTabs.Culture)'>
+            @Culture["Kompas.TabCulture"]
         </button>
         <button type="button"
                 id="kompas-tab-career"
@@ -241,51 +241,34 @@
         }
     </article>
 
-    <article id="kompas-panel-disc"
+    <article id="kompas-panel-culture"
              class="kompas-card kompas-card--tab"
              role="tabpanel"
-             aria-labelledby="kompas-tab-disc"
-             hidden="@(_tab != CandidateKompasTabs.Disc)">
-        <h3 id="kompas-disc-title" class="visually-hidden">@Culture["Kompas.TabDisc"]</h3>
-        <p class="login-lead">@Culture["Kompas.DiscLead"]</p>
+             aria-labelledby="kompas-tab-culture"
+             hidden="@(_tab != CandidateKompasTabs.Culture)">
+        <h3 id="kompas-culture-title" class="visually-hidden">@Culture["Kompas.TabCulture"]</h3>
+        <p class="login-lead">@Culture["Kompas.CultureLead"]</p>
         @if (_loading)
         {
             <p class="state-message">@Culture["Common.Loading"]</p>
         }
-        else if (_discCompleted && _discScores is { IsComplete: true })
+        else if (_cultureCompleted && _cultureScores is { IsComplete: true })
         {
             <p class="kompas-status kompas-status--ok">@Culture["Kompas.QuickScanDone"]</p>
-            <DiscScorePanel Scores="_discScores" />
-            @if (_discDeep is { IsCompleted: true })
-            {
-                <p class="kompas-status kompas-status--ok">@Culture["Kompas.DeepDone"]</p>
-                <button class="login-submit" type="button" disabled="@_busy" @onclick='() => DownloadPdfAsync("disc")'>
-                    @Culture["Deep.DownloadPdf"]
-                </button>
-            }
-            else if (_discDeep is { IsUnlocked: true })
-            {
-                <p class="kompas-status">@Culture["Kompas.DeepReady"]</p>
-                <a class="login-submit" href="/candidate/deep-analysis/disc">@Culture["Disc.DeepUnlock"]</a>
-            }
-            else
-            {
-                <p class="login-lead">@_discUpsell</p>
-                <a class="login-submit" href="/candidate/deep-analysis/disc">@Culture["Disc.DeepUnlock"]</a>
-            }
-            <a class="engagement-btn" href="/candidate/disc">@Culture["Disc.Retake"]</a>
+            <CultureScorePanel Scores="_cultureScores" />
+            <a class="engagement-btn" href="/candidate/culture">@Culture["CultureScan.Retake"]</a>
         }
-        else if (_discAnswered > 0)
+        else if (_cultureAnswered > 0)
         {
             <p class="kompas-status">@Culture["Kompas.QuickScanOpen"]</p>
-            <p class="login-lead">@Culture.Format("Competency.DraftProgress", _discAnswered, 25)</p>
-            <a class="login-submit" href="/candidate/disc">@Culture["Disc.Continue"]</a>
+            <p class="login-lead">@Culture.Format("Competency.DraftProgress", _cultureAnswered, 18)</p>
+            <a class="login-submit" href="/candidate/culture">@Culture["CultureScan.Continue"]</a>
         }
         else
         {
             <p class="kompas-status">@Culture["Kompas.QuickScanOpen"]</p>
-            <p class="login-lead">@Culture["Disc.Empty"]</p>
-            <a class="login-submit" href="/candidate/disc">@Culture["Disc.Start"]</a>
+            <p class="login-lead">@Culture["CultureScan.Empty"]</p>
+            <a class="login-submit" href="/candidate/culture">@Culture["CultureScan.Start"]</a>
         }
     </article>
 
@@ -372,11 +355,9 @@
     private CompetencyScoreSet? _competencyScores;
     private string _competencyUpsell = "";
     private DeepAnalysisState? _competenceDeep;
-    private bool _discCompleted;
-    private int _discAnswered;
-    private DiscScoreSet? _discScores;
-    private string _discUpsell = "";
-    private DeepAnalysisState? _discDeep;
+    private bool _cultureCompleted;
+    private int _cultureAnswered;
+    private CulturePersonalityScoreSet? _cultureScores;
     private bool _careerCompleted;
     private int _careerAnswered;
     private CareerCompassModel _careerCompass = new();
@@ -579,16 +560,14 @@
             }
 
             _competenceDeep = await Api.GetDeepAnalysisAsync("competence");
-            _discDeep = await Api.GetDeepAnalysisAsync("disc");
             _careerDeep = await Api.GetDeepAnalysisAsync("career");
 
-            var disc = await Api.GetMyDiscAsync();
-            if (disc is not null)
+            var culture = await Api.GetMyCultureAsync();
+            if (culture is not null)
             {
-                _discAnswered = disc.AnsweredCount;
-                _discCompleted = string.Equals(disc.Status, "Completed", StringComparison.OrdinalIgnoreCase);
-                _discScores = disc.Scores;
-                _discUpsell = disc.DeepAnalysisUpsellCopy;
+                _cultureAnswered = culture.AnsweredCount;
+                _cultureCompleted = string.Equals(culture.Status, "Completed", StringComparison.OrdinalIgnoreCase);
+                _cultureScores = culture.Scores;
             }
         }
         catch

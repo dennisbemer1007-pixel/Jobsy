@@ -5,14 +5,14 @@ public sealed class WhoAmIState
     public bool ProfileFilled { get; set; }
     public bool CompetencyCompleted { get; set; }
     public bool CareerCompleted { get; set; }
-    public bool DiscCompleted { get; set; }
+    public bool CultureCompleted { get; set; }
     public bool IsUnlocked { get; set; }
     public string Encouragement { get; set; } = "";
     public string? Story { get; set; }
     public bool FromOpenAi { get; set; }
     public List<string> Keywords { get; set; } = [];
     public CompetencyScoreSet? CompetencyScores { get; set; }
-    public DiscScoreSet? DiscScores { get; set; }
+    public CulturePersonalityScoreSet? CultureScores { get; set; }
     public bool IncludeOnCv { get; set; }
     public DateTime? StoryGeneratedAtUtc { get; set; }
 
@@ -20,7 +20,7 @@ public sealed class WhoAmIState
         (ProfileFilled ? 1 : 0)
         + (CompetencyCompleted ? 1 : 0)
         + (CareerCompleted ? 1 : 0)
-        + (DiscCompleted ? 1 : 0);
+        + (CultureCompleted ? 1 : 0);
 }
 
 public sealed class CandidateCompetencyState
@@ -72,33 +72,53 @@ public sealed class CompetencyScoreSet
         && Innovatie is not null;
 }
 
-public sealed class DiscScoreSet
+public sealed class CulturePersonalityScoreSet
 {
-    public int? Dominant { get; set; }
-    public int? Invloed { get; set; }
-    public int? Stabiel { get; set; }
-    public int? Nauwkeurig { get; set; }
+    public int? Autonomy { get; set; }
+    public int? Informal { get; set; }
+    public int? Collaboration { get; set; }
+    public int? Flexibility { get; set; }
+    public int? Innovation { get; set; }
+    public int? PeopleFirst { get; set; }
+    public int? Openness { get; set; }
+    public int? Conscientiousness { get; set; }
+    public int? Extraversion { get; set; }
+    public int? Agreeableness { get; set; }
+    public int? EmotionalStability { get; set; }
 
     public bool IsComplete =>
-        Dominant is not null
-        && Invloed is not null
-        && Stabiel is not null
-        && Nauwkeurig is not null;
+        Autonomy is not null
+        && Informal is not null
+        && Collaboration is not null
+        && Flexibility is not null
+        && Innovation is not null
+        && PeopleFirst is not null
+        && Openness is not null
+        && Conscientiousness is not null
+        && Extraversion is not null
+        && Agreeableness is not null
+        && EmotionalStability is not null;
 }
 
-public sealed class CandidateDiscState
+public sealed class CandidateCultureState
 {
     public string Status { get; set; } = "Draft";
     public Dictionary<string, int> Answers { get; set; } = new(StringComparer.OrdinalIgnoreCase);
-    public int AnsweredCount { get; set; }
-    public int QuestionCount { get; set; } = 25;
-    public DiscScoreSet? Scores { get; set; }
-    public DiscScoreSet? PreviewScores { get; set; }
+    public CulturePersonalityScoreSet? Scores { get; set; }
     public DateTime? CompletedAtUtc { get; set; }
-    public DateTime? UpdatedAtUtc { get; set; }
-    public List<CompetencyQuestionItem> Questions { get; set; } = [];
     public List<string> MatchTags { get; set; } = [];
-    public string DeepAnalysisUpsellCopy { get; set; } = "";
+    public decimal DeepAnalysisPriceEuro { get; set; }
+
+    public int AnsweredCount => Answers.Count;
+    public int QuestionCount => 18;
+}
+
+public sealed class CompanyCultureState
+{
+    public string Status { get; set; } = "Draft";
+    public Dictionary<string, int> Answers { get; set; } = new(StringComparer.OrdinalIgnoreCase);
+    public CulturePersonalityScoreSet? Scores { get; set; }
+    public DateTime? CompletedAtUtc { get; set; }
 }
 
 public sealed class RiasecScoreSet

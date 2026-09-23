@@ -4,7 +4,7 @@ using Jobsy.Core.Contracts;
 namespace Jobsy.Core.Rules;
 
 /// <summary>
-/// Four-step gate for the "Wie ben ik?" report: profile, competence, careers, DISC Quick-Scan or deep.
+/// Four-step gate for the "Wie ben ik?" report: profile, competence, careers, culture &amp; personality scan.
 /// </summary>
 public static class WhoAmICompleteness
 {
@@ -202,10 +202,13 @@ public static class WhoAmICompleteness
         bool profileFilled,
         bool competencyCompleted,
         bool careerCompleted,
-        bool discCompleted)
-        => profileFilled && competencyCompleted && careerCompleted && discCompleted;
+        bool cultureCompleted)
+        => profileFilled && competencyCompleted && careerCompleted && cultureCompleted;
 
-    public static string Fingerprint(CompetencyScores competency, RiasecScores career, DiscScores disc)
+    public static string Fingerprint(
+        CompetencyScores competency,
+        RiasecScores career,
+        CulturePersonalityScores culture)
         => string.Join('|',
             competency.Samenwerken,
             competency.Resultaatgerichtheid,
@@ -218,8 +221,15 @@ public static class WhoAmICompleteness
             career.Social,
             career.Enterprising,
             career.Conventional,
-            disc.Dominant,
-            disc.Invloed,
-            disc.Stabiel,
-            disc.Nauwkeurig);
+            culture.Autonomy,
+            culture.Informal,
+            culture.Collaboration,
+            culture.Flexibility,
+            culture.Innovation,
+            culture.PeopleFirst,
+            culture.Openness,
+            culture.Conscientiousness,
+            culture.Extraversion,
+            culture.Agreeableness,
+            culture.EmotionalStability);
 }

@@ -17,7 +17,10 @@ public static class CultureFitPrompt
         }
         """;
 
-    public static string User(IReadOnlyList<string> pillarLabels, CompetencyScores scores, DiscScores? disc = null)
+    public static string User(
+        IReadOnlyList<string> pillarLabels,
+        CompetencyScores scores,
+        CulturePersonalityScores? culture = null)
     {
         var sb = new StringBuilder();
         sb.AppendLine("Cultuurpijlers van het team (gekozen door de werkgever):");
@@ -36,13 +39,17 @@ public static class CultureFitPrompt
             sb.Append("- Energie van mensen om je heen: ").Append(extra).AppendLine("%");
         }
 
-        if (disc is { IsComplete: true })
+        if (culture is { IsComplete: true })
         {
-            sb.AppendLine("Gedragsstijl in het team 0-100:");
-            sb.Append("- Het voortouw nemen: ").Append(disc.Dominant ?? 0).AppendLine("%");
-            sb.Append("- Mensen meenemen: ").Append(disc.Invloed ?? 0).AppendLine("%");
-            sb.Append("- Rust en ritme: ").Append(disc.Stabiel ?? 0).AppendLine("%");
-            sb.Append("- Nauwkeurig werken: ").Append(disc.Nauwkeurig ?? 0).AppendLine("%");
+            sb.AppendLine("Cultuurvoorkeur van de kandidaat 0-100:");
+            foreach (var code in CulturePersonalityCatalog.CultureDimensionCodes)
+            {
+                sb.Append("- ")
+                    .Append(CulturePersonalityCatalog.EverydayLabel(code))
+                    .Append(": ")
+                    .Append(culture.Get(code))
+                    .AppendLine("%");
+            }
         }
 
         return sb.ToString();

@@ -33,10 +33,6 @@ public static class DeepAnalysisQuestionHelp
         CareerTestCatalog.Social => CareerCompassBuilder.TypeLabel(CareerTestCatalog.Social),
         CareerTestCatalog.Enterprising => CareerCompassBuilder.TypeLabel(CareerTestCatalog.Enterprising),
         CareerTestCatalog.Conventional => CareerCompassBuilder.TypeLabel(CareerTestCatalog.Conventional),
-        DiscTestCatalog.Dominant => "Voortouw nemen",
-        DiscTestCatalog.Invloed => "Mensen meenemen",
-        DiscTestCatalog.Stabiel => "Rust & ritme",
-        DiscTestCatalog.Nauwkeurig => "Nauwkeurig werken",
         _ => string.IsNullOrWhiteSpace(domain) ? "Onderwerp" : domain
     };
 
@@ -107,26 +103,6 @@ public static class DeepAnalysisQuestionHelp
         [
             "Voorbeeld: je houdt van duidelijke lijsten, labels en systemen zodat niets zoekraakt.",
             "Voorbeeld: administratie of planning op orde geven je rust — chaos juist niet."
-        ],
-        DiscTestCatalog.Dominant =>
-        [
-            "Voorbeeld: het werk loopt vast. Jij zegt wat er nu moet gebeuren en zet de eerste stap.",
-            "Voorbeeld: bij tijdsdruk kies jij snel een richting in plaats van lang te twijfelen."
-        ],
-        DiscTestCatalog.Invloed =>
-        [
-            "Voorbeeld: je krijgt een stil team weer in beweging met een grapje of een helder verhaal.",
-            "Voorbeeld: je overtuigt een klant of collega door enthousiasme, niet door druk."
-        ],
-        DiscTestCatalog.Stabiel =>
-        [
-            "Voorbeeld: je houdt van een vast ritme in de ploeg — weten wat er wanneer gebeurt.",
-            "Voorbeeld: bij onrust blijf jij de rustige factor zodat anderen ook tot bedaren komen."
-        ],
-        DiscTestCatalog.Nauwkeurig =>
-        [
-            "Voorbeeld: je checkt cijfers, labels of veiligheidsstappen dubbel voordat iets de deur uit gaat.",
-            "Voorbeeld: slordig werk irriteert je; jij wilt dat het klopt."
         ],
         _ => []
     };

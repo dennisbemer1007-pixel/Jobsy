@@ -15,5 +15,6 @@ public sealed class ProfileVacancyMatchContext
     public RiasecScores? RiasecScores { get; init; }
     public bool CareerDeepCompleted { get; init; }
     public IReadOnlyList<CareerOccupationMatch> CareerOccupations { get; init; } = [];
-    public DiscScores? DiscScores { get; init; }
+    public CulturePersonalityScores? CultureScores { get; init; }
+    public CulturePersonalityScores? CompanyCultureScores { get; init; }
 }

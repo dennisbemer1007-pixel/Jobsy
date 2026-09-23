@@ -37,26 +37,30 @@ public static class RoleFitCheckPrompt
         string? transport,
         IReadOnlyList<string>? licenses,
         IReadOnlyList<string>? roles,
-        DiscScores? disc = null)
+        CulturePersonalityScores? culture = null)
     {
         var sb = new StringBuilder();
         sb.AppendLine("Functietitel om te toetsen (geen persoonsgegevens):");
         sb.AppendLine(jobTitle);
         sb.AppendLine(fromDeepAnalysis
             ? "Bron: uitgebreide 150-vragen analyse + quick-scans. Wees preciezer in het groeistappenplan."
-            : "Bron: gratis quick-scans (2× 25 vragen). Geef een betrouwbare indicatie, geen overclaim.");
+            : "Bron: gratis quick-scans. Geef een betrouwbare indicatie, geen overclaim.");
         sb.AppendLine("Werkstijl 0-100:");
         sb.Append("- Samenwerken: ").Append(competencies.Samenwerken ?? 0).AppendLine("%");
         sb.Append("- Afmaken wat je belooft: ").Append(competencies.Resultaatgerichtheid ?? 0).AppendLine("%");
         sb.Append("- Kalm blijven als het druk is: ").Append(competencies.Stressbestendigheid ?? 0).AppendLine("%");
         sb.Append("- Nieuwe wegen zoeken: ").Append(competencies.Innovatie ?? 0).AppendLine("%");
-        if (disc is { IsComplete: true })
+        if (culture is { IsComplete: true })
         {
-            sb.AppendLine("Gedrag in het team 0-100:");
-            sb.Append("- Het voortouw nemen: ").Append(disc.Dominant ?? 0).AppendLine("%");
-            sb.Append("- Mensen meenemen: ").Append(disc.Invloed ?? 0).AppendLine("%");
-            sb.Append("- Rust en ritme: ").Append(disc.Stabiel ?? 0).AppendLine("%");
-            sb.Append("- Nauwkeurig werken: ").Append(disc.Nauwkeurig ?? 0).AppendLine("%");
+            sb.AppendLine("Cultuur & persoonlijkheid 0-100:");
+            foreach (var code in CulturePersonalityCatalog.CategoryCodes)
+            {
+                sb.Append("- ")
+                    .Append(CulturePersonalityCatalog.EverydayLabel(code))
+                    .Append(": ")
+                    .Append(culture.Get(code))
+                    .AppendLine("%");
+            }
         }
         sb.AppendLine("Richting 0-100:");
         foreach (var code in CareerTestCatalog.RiasecCodes)

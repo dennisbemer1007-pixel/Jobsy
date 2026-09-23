@@ -4,7 +4,7 @@ namespace Jobsy.Core.Rules;
 
 /// <summary>
 /// Unlock gate for the candidate Match &amp; Swipe tab.
-/// Basics + education answer (including "Geen") + competency (IPIP) + career + DISC.
+/// Basics + education answer (including "Geen") + competency (IPIP) + career + culture scan.
 /// </summary>
 public static class MatchProfileCompleteness
 {
@@ -42,24 +42,24 @@ public static class MatchProfileCompleteness
         bool hasEducationLevel,
         bool competencyCompleted,
         bool careerCompleted,
-        bool discCompleted)
+        bool cultureCompleted)
         => profileBasicsFilled
            && hasEducationLevel
            && competencyCompleted
            && careerCompleted
-           && discCompleted;
+           && cultureCompleted;
 
     public static int CompletedCount(
         bool profileBasicsFilled,
         bool hasEducationLevel,
         bool competencyCompleted,
         bool careerCompleted,
-        bool discCompleted)
+        bool cultureCompleted)
         => (profileBasicsFilled ? 1 : 0)
            + (hasEducationLevel ? 1 : 0)
            + (competencyCompleted ? 1 : 0)
            + (careerCompleted ? 1 : 0)
-           + (discCompleted ? 1 : 0);
+           + (cultureCompleted ? 1 : 0);
 
     public const int RequiredStepCount = 5;
 }

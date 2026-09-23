@@ -40,8 +40,8 @@
         <div class="whoami-visuals">
             <CompetencyScorePanel Scores="open.CompetencyScores" />
             <div>
-                <h3 class="whoami__title">@Culture["WhoAmI.DiscTitle"]</h3>
-                <WhoAmIDiscQuadrant Scores="open.DiscScores" />
+                <h3 class="whoami__title">@Culture["WhoAmI.CultureTitle"]</h3>
+                <CultureScorePanel Scores="open.CultureScores" />
             </div>
         </div>
         <label class="whoami-attach">
@@ -88,13 +88,13 @@
                     }
                 </div>
             </li>
-            <li class="@(locked.DiscCompleted ? "is-done" : null)">
-                <span class="whoami-check" aria-hidden="true">@(locked.DiscCompleted ? "✓" : "")</span>
+            <li class="@(locked.CultureCompleted ? "is-done" : null)">
+                <span class="whoami-check" aria-hidden="true">@(locked.CultureCompleted ? "✓" : "")</span>
                 <div>
-                    <strong>@Culture["WhoAmI.StepDisc"]</strong>
-                    @if (!locked.DiscCompleted)
+                    <strong>@Culture["WhoAmI.StepCulture"]</strong>
+                    @if (!locked.CultureCompleted)
                     {
-                        <a class="engagement-btn" href="/candidate/disc">@Culture["WhoAmI.OpenDisc"]</a>
+                        <a class="engagement-btn" href="/candidate/culture">@Culture["WhoAmI.OpenCulture"]</a>
                     }
                 </div>
             </li>

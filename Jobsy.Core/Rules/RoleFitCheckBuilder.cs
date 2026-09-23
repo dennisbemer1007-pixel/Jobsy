@@ -40,7 +40,7 @@ public static class RoleFitCheckBuilder
         CompetencyScores competencies,
         RiasecScores career,
         bool fromDeepAnalysis,
-        DiscScores? disc = null)
+        CulturePersonalityScores? culture = null)
     {
         var title = NormalizeTitle(jobTitle) ?? "deze functie";
         var occupation = FindClosestOccupation(title);
@@ -48,12 +48,12 @@ public static class RoleFitCheckBuilder
             ? Average(career)
             : CareerCompassBuilder.Score(occupation, career).Percent;
         var competencePercent = CompetenceFit(occupation, competencies);
-        var discPercent = disc is { IsComplete: true } completeDisc
-            ? DiscFitRules.FitPercent(occupation, completeDisc)
+        var culturePercent = culture is { IsComplete: true } completeCulture
+            ? CulturePersonalityFitRules.FitPercent(occupation, completeCulture)
             : (int?)null;
         var percent = (int)Math.Clamp(
             Math.Round(
-                discPercent is int d
+                culturePercent is int d
                     ? interestPercent * 0.58 + competencePercent * 0.27 + d * 0.15
                     : interestPercent * 0.65 + competencePercent * 0.35,
                 MidpointRounding.AwayFromZero),
@@ -65,8 +65,8 @@ public static class RoleFitCheckBuilder
         }
 
         var keys = CareerOccupationKeys.Merge(title, occupation is null ? null : CareerOccupationKeys.FromTitle(occupation.Title));
-        var strengths = BuildStrengths(title, occupation, competencies, career, disc);
-        var gaps = BuildGaps(occupation, competencies, career, disc);
+        var strengths = BuildStrengths(title, occupation, competencies, career, culture);
+        var gaps = BuildGaps(occupation, competencies, career, culture);
         var path = CareerPathPlanner.ForTitle(title);
         var steps = BuildSteps(title, gaps, fromDeepAnalysis, path);
         var similar = RoleFitFunnel.SuggestSimilar(title, career);
@@ -236,17 +236,17 @@ public static class RoleFitCheckBuilder
         CareerOccupation? occupation,
         CompetencyScores competencies,
         RiasecScores career,
-        DiscScores? disc)
+        CulturePersonalityScores? culture)
     {
         var lines = new List<string>();
-        if (disc is { IsComplete: true })
+        if (culture is { IsComplete: true })
         {
-            foreach (var category in DiscFitRules.Needed(occupation))
+            foreach (var category in CulturePersonalityFitRules.NeededFacets(occupation))
             {
-                var value = disc.Get(category);
+                var value = culture.Get(category);
                 if (value >= 70)
                 {
-                    lines.Add($"In het team ligt {DiscTestCatalog.EverydayLabel(category)} je goed ({value}%). Dat sluit aan bij hoe deze functie dagelijks loopt.");
+                    lines.Add($"Bij {CulturePersonalityCatalog.EverydayLabel(category)} scoor je {value}%. Dat sluit aan bij hoe deze functie dagelijks loopt.");
                 }
             }
         }
@@ -257,18 +257,6 @@ public static class RoleFitCheckBuilder
             if (value >= 70)
             {
                 lines.Add($"{CompetenceLabel(category)} zit al stevig: {value}%. Dat helpt in {title.ToLowerInvariant()}.");
-            }
-        }
-
-        if (disc is { IsComplete: true })
-        {
-            foreach (var category in DiscFitRules.Needed(occupation))
-            {
-                var value = disc.Get(category);
-                if (value >= 70)
-                {
-                    lines.Add($"In het team ligt {DiscTestCatalog.EverydayLabel(category)} je goed ({value}%). Dat sluit aan bij hoe deze functie dagelijks loopt.");
-                }
             }
         }
 
@@ -298,7 +286,7 @@ public static class RoleFitCheckBuilder
         CareerOccupation? occupation,
         CompetencyScores competencies,
         RiasecScores career,
-        DiscScores? disc)
+        CulturePersonalityScores? culture)
     {
         var lines = new List<string>();
         foreach (var category in NeededCompetencies(occupation))
@@ -310,14 +298,14 @@ public static class RoleFitCheckBuilder
             }
         }
 
-        if (disc is { IsComplete: true })
+        if (culture is { IsComplete: true })
         {
-            foreach (var category in DiscFitRules.Needed(occupation))
+            foreach (var category in CulturePersonalityFitRules.NeededFacets(occupation))
             {
-                var value = disc.Get(category);
+                var value = culture.Get(category);
                 if (value < 55)
                 {
-                    lines.Add($"{DiscTestCatalog.EverydayLabel(category)} scoort {value}%. In dit team wordt dat vaker gevraagd — een workshop helpt.");
+                    lines.Add($"{CulturePersonalityCatalog.EverydayLabel(category)} scoort {value}%. In dit team wordt dat vaker gevraagd — een workshop helpt.");
                 }
             }
         }

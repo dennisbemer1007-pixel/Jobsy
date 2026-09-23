@@ -40,10 +40,10 @@ public sealed class WhoAmIGenerationService : IWhoAmIGenerationService
     public async Task<WhoAmIGeneratedStory> GenerateAsync(
         CompetencyScores competency,
         RiasecScores career,
-        DiscScores disc,
+        CulturePersonalityScores culture,
         CancellationToken cancellationToken = default)
     {
-        var local = Local(competency, career, disc);
+        var local = Local(competency, career, culture);
         var apiKey = await ResolveApiKeyAsync(cancellationToken);
         if (string.IsNullOrWhiteSpace(apiKey))
         {
@@ -55,7 +55,7 @@ public sealed class WhoAmIGenerationService : IWhoAmIGenerationService
             var generated = await GenerateWithOpenAiAsync(
                 competency,
                 career,
-                disc,
+                culture,
                 apiKey,
                 await ResolveModelAsync(cancellationToken),
                 await ResolveBaseUrlAsync(cancellationToken),
@@ -76,16 +76,16 @@ public sealed class WhoAmIGenerationService : IWhoAmIGenerationService
     private static WhoAmIGeneratedStory Local(
         CompetencyScores competency,
         RiasecScores career,
-        DiscScores disc)
+        CulturePersonalityScores culture)
         => new(
-            WhoAmIStoryBuilder.Build(competency, career, disc),
-            WhoAmIKeywords.FromScores(competency, career, disc),
+            WhoAmIStoryBuilder.Build(competency, career, culture),
+            WhoAmIKeywords.FromScores(competency, career, culture),
             FromOpenAi: false);
 
     private async Task<WhoAmIGeneratedStory?> GenerateWithOpenAiAsync(
         CompetencyScores competency,
         RiasecScores career,
-        DiscScores disc,
+        CulturePersonalityScores culture,
         string apiKey,
         string model,
         string baseUrl,
@@ -104,7 +104,7 @@ public sealed class WhoAmIGenerationService : IWhoAmIGenerationService
             messages = new object[]
             {
                 new { role = "system", content = WhoAmIPrompt.System },
-                new { role = "user", content = WhoAmIPrompt.User(competency, career, disc) }
+                new { role = "user", content = WhoAmIPrompt.User(competency, career, culture) }
             }
         });
 
@@ -148,7 +148,7 @@ public sealed class WhoAmIGenerationService : IWhoAmIGenerationService
             .ToList();
         if (keywords.Count == 0)
         {
-            keywords = WhoAmIKeywords.FromScores(competency, career, disc).ToList();
+            keywords = WhoAmIKeywords.FromScores(competency, career, culture).ToList();
         }
 
         return new WhoAmIGeneratedStory(story, keywords, FromOpenAi: true);

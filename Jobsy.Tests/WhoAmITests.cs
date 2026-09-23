@@ -41,7 +41,9 @@ public class WhoAmITests
         var story = WhoAmIStoryBuilder.Build(
             new CompetencyScores(88, 70, 72, 40),
             new RiasecScores(20, 30, 25, 95, 40, 35),
-            new DiscScores(40, 88, 80, 50));
+            new CulturePersonalityScores(
+            Autonomy: 70, Informal: 60, Collaboration: 80, Flexibility: 55, Innovation: 50, PeopleFirst: 65,
+            Openness: 55, Conscientiousness: 70, Extraversion: 60, Agreeableness: 75, EmotionalStability: 70));
         Assert.Contains("Ik", story, StringComparison.Ordinal);
         Assert.False(CareerCompassBuilder.ContainsForbiddenJargon(story));
         Assert.DoesNotContain("@", story, StringComparison.Ordinal);
@@ -55,9 +57,11 @@ public class WhoAmITests
         var user = WhoAmIPrompt.User(
             new CompetencyScores(88, 70, 72, 40),
             new RiasecScores(20, 30, 25, 95, 40, 35),
-            new DiscScores(40, 88, 80, 50));
-        Assert.Contains("mensen meenemen", user, StringComparison.OrdinalIgnoreCase);
+            new CulturePersonalityScores(
+            Autonomy: 70, Informal: 60, Collaboration: 80, Flexibility: 55, Innovation: 50, PeopleFirst: 65,
+            Openness: 55, Conscientiousness: 70, Extraversion: 60, Agreeableness: 75, EmotionalStability: 70));
         Assert.Contains("samenwerken", user, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("zelfstandig", user, StringComparison.OrdinalIgnoreCase);
         Assert.DoesNotContain("@", user, StringComparison.Ordinal);
         Assert.DoesNotContain("ada", user, StringComparison.OrdinalIgnoreCase);
         Assert.True(CareerCompassBuilder.ContainsForbiddenJargon(WhoAmIPrompt.System));

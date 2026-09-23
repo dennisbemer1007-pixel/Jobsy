@@ -5,7 +5,7 @@
 @if (Scores is { IsComplete: true } complete)
 {
     <div class="competency-score-panel">
-        <svg class="competency-radar" viewBox="0 0 220 220" role="img" aria-label="@Culture["Disc.RadarLabel"]">
+        <svg class="competency-radar" viewBox="0 0 220 220" role="img" aria-label="@Culture["CultureScan.RadarLabel"]">
             <g transform="translate(110,110)">
                 @for (var ring = 1; ring <= 4; ring++)
                 {
@@ -19,23 +19,23 @@
                 <polygon class="competency-radar__fill" points="@RadarShape(complete)" />
             </g>
         </svg>
-        <ul class="competency-skill-list" aria-label="@Culture["Kompas.TabDisc"]">
-            @foreach (var category in DiscTestCatalog.CategoryCodes)
+        <ul class="competency-skill-list" aria-label="@Culture["Kompas.TabCulture"]">
+            @foreach (var category in CulturePersonalityCatalog.CategoryCodes)
             {
                 var value = Value(complete, category) ?? 0;
                 <li class="competency-skill">
                     <details class="competency-skill__details">
                         <summary>
-                            <span class="competency-skill__name">@Culture[$"Disc.Cat.{category}"]</span>
+                            <span class="competency-skill__name">@Culture[$"CultureScan.Cat.{category}"]</span>
                             <span class="competency-skill__value">@value%</span>
                         </summary>
                         <div class="competency-skill__body">
-                            <p class="competency-skill__meaning">@Culture[DiscTrainingCatalog.MeaningKey(category, value)]</p>
-                            <p class="competency-skill__meaning">@Culture[DiscTrainingCatalog.DevelopKey(category)]</p>
-                            <TrainingOffersBlock JobTitle="@DiscTrainingCatalog.SearchBlob(category)"
-                                                 Campaign="@TrainingTracking.CampaignDisc"
+                            <p class="competency-skill__meaning">@Culture[CultureTrainingCatalog.MeaningKey(category, value)]</p>
+                            <p class="competency-skill__meaning">@Culture[CultureTrainingCatalog.DevelopKey(category)]</p>
+                            <TrainingOffersBlock JobTitle="@CultureTrainingCatalog.SearchBlob(category)"
+                                                 Campaign="@TrainingTracking.CampaignCulture"
                                                  Compact="true"
-                                                 TitleKey="Disc.TrainingTitle" />
+                                                 TitleKey="CultureScan.TrainingTitle" />
                         </div>
                     </details>
                 </li>
@@ -45,31 +45,33 @@
 }
 
 @code {
-    [Parameter] public DiscScoreSet? Scores { get; set; }
+    [Parameter] public CulturePersonalityScoreSet? Scores { get; set; }
 
-    private const int AxisCount = 4;
+    private static readonly string[] RadarAxes = CulturePersonalityCatalog.CultureDimensionCodes;
+    private static int AxisCount => RadarAxes.Length;
 
-    private static int? Value(DiscScoreSet scores, string category) => category switch
+    private static int? Value(CulturePersonalityScoreSet scores, string category) => category switch
     {
-        DiscTestCatalog.Dominant => scores.Dominant,
-        DiscTestCatalog.Invloed => scores.Invloed,
-        DiscTestCatalog.Stabiel => scores.Stabiel,
-        DiscTestCatalog.Nauwkeurig => scores.Nauwkeurig,
+        CulturePersonalityCatalog.Autonomy => scores.Autonomy,
+        CulturePersonalityCatalog.Informal => scores.Informal,
+        CulturePersonalityCatalog.Collaboration => scores.Collaboration,
+        CulturePersonalityCatalog.Flexibility => scores.Flexibility,
+        CulturePersonalityCatalog.Innovation => scores.Innovation,
+        CulturePersonalityCatalog.PeopleFirst => scores.PeopleFirst,
+        CulturePersonalityCatalog.Openness => scores.Openness,
+        CulturePersonalityCatalog.Conscientiousness => scores.Conscientiousness,
+        CulturePersonalityCatalog.Extraversion => scores.Extraversion,
+        CulturePersonalityCatalog.Agreeableness => scores.Agreeableness,
+        CulturePersonalityCatalog.EmotionalStability => scores.EmotionalStability,
         _ => null
     };
 
     private static string RadarRing(double percent)
         => string.Join(" ", Enumerable.Range(0, AxisCount).Select(i => FormatPoint(RadarPoint(percent, i))));
 
-    private static string RadarShape(DiscScoreSet scores)
+    private static string RadarShape(CulturePersonalityScoreSet scores)
     {
-        var values = new[]
-        {
-            scores.Dominant ?? 0,
-            scores.Invloed ?? 0,
-            scores.Stabiel ?? 0,
-            scores.Nauwkeurig ?? 0
-        };
+        var values = RadarAxes.Select(code => Value(scores, code) ?? 0).ToArray();
         return string.Join(" ", values.Select((v, i) => FormatPoint(RadarPoint(v, i))));
     }
 

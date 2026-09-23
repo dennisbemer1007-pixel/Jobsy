@@ -499,7 +499,7 @@ public sealed class LobsyCvPdfService : ILobsyCvPdfService
             }
 
             ScoreBars(body, "Competenties", whoAmI.Competencies);
-            ScoreBars(body, "Gedrag in het team", whoAmI.Disc);
+            ScoreBars(body, "Hoe ik graag werk", whoAmI.Culture);
         });
 
         page.Footer().AlignCenter().PaddingTop(6).Text("Bijlage persoonsprofiel · geen vaktermen · gegenereerd door Lobsy")

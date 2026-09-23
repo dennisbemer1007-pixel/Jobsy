@@ -73,7 +73,8 @@ public sealed class ProfileVacancyMatchService : IProfileVacancyMatchService
                 VacancyRiasecTags = VacancyRiasecProfile.InferTags(record),
                 CareerOccupations = context.CareerOccupations,
                 CulturePillars = record.CulturePillars,
-                CandidateDiscScores = context.DiscScores
+                CandidateCultureScores = context.CultureScores,
+                CompanyCultureScores = context.CompanyCultureScores
             });
             result[record.Id] = match;
         }
@@ -130,16 +131,28 @@ public sealed class ProfileVacancyMatchService : IProfileVacancyMatchService
 
         var occupations = ResolveOccupations(career, riasecScores, careerDeep);
 
-        var discRow = await _db.CandidateDiscProfiles.AsNoTracking()
+        var cultureRow = await _db.CandidateCulturePersonalityProfiles.AsNoTracking()
             .FirstOrDefaultAsync(c => c.UserId == userId, cancellationToken);
-        var disc = discRow is null
-            ? null
-            : DiscTestCatalog.CompletedScoresOrNull(
-                discRow.Status,
-                discRow.DominantPercent,
-                discRow.InvloedPercent,
-                discRow.StabielPercent,
-                discRow.NauwkeurigPercent);
+        CulturePersonalityScores? culture = null;
+        if (cultureRow is not null && CandidateCompetencyStatuses.IsCompleted(cultureRow.Status))
+        {
+            culture = new CulturePersonalityScores(
+                cultureRow.AutonomyPercent,
+                cultureRow.InformalPercent,
+                cultureRow.CollaborationPercent,
+                cultureRow.FlexibilityPercent,
+                cultureRow.InnovationPercent,
+                cultureRow.PeopleFirstPercent,
+                cultureRow.OpennessPercent,
+                cultureRow.ConscientiousnessPercent,
+                cultureRow.ExtraversionPercent,
+                cultureRow.AgreeablenessPercent,
+                cultureRow.EmotionalStabilityPercent);
+            if (culture is not { IsComplete: true })
+            {
+                culture = null;
+            }
+        }
 
         return new ProfileVacancyMatchContext
         {
@@ -153,7 +166,7 @@ public sealed class ProfileVacancyMatchService : IProfileVacancyMatchService
             RiasecScores = riasecScores,
             CareerDeepCompleted = careerDeep,
             CareerOccupations = occupations,
-            DiscScores = disc
+            CultureScores = culture
         };
     }
 

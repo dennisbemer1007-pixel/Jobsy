@@ -34,7 +34,9 @@ public class MultidimensionalMatchingTests
             RequiredEducation = "HBO",
             CandidateEmployerCount = 2,
             CandidateCompetencies = new CompetencyScores(70, 88, 75, 60),
-            CandidateDiscScores = new DiscScores(55, 45, 60, 90),
+            CandidateCultureScores = new CulturePersonalityScores(
+            Autonomy: 55, Informal: 45, Collaboration: 60, Flexibility: 50, Innovation: 40, PeopleFirst: 50,
+            Openness: 50, Conscientiousness: 90, Extraversion: 45, Agreeableness: 55, EmotionalStability: 70),
             CandidateRiasecScores = new RiasecScores(20, 40, 20, 25, 50, 95),
             CareerDeepCompleted = true,
             CareerOccupations =

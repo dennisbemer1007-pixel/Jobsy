@@ -924,11 +924,11 @@ public sealed class JobsyApiClient : IAsyncDisposable
                ?? new CandidateCompetencyState();
     }
 
-    public async Task<CandidateDiscState?> GetMyDiscAsync(CancellationToken ct = default)
+    public async Task<CandidateCultureState?> GetMyCultureAsync(CancellationToken ct = default)
     {
         try
         {
-            return await _http.GetFromJsonAsync<CandidateDiscState>("api/me/disc", ct);
+            return await _http.GetFromJsonAsync<CandidateCultureState>("api/me/culture", ct);
         }
         catch (HttpRequestException ex) when (ex.StatusCode is HttpStatusCode.Unauthorized or HttpStatusCode.NotFound or HttpStatusCode.Forbidden)
         {
@@ -936,7 +936,7 @@ public sealed class JobsyApiClient : IAsyncDisposable
         }
     }
 
-    public async Task<CandidateDiscState> SaveMyDiscAsync(
+    public async Task<CandidateCultureState> SaveMyCultureAsync(
         IReadOnlyDictionary<int, int> answers,
         bool complete,
         CancellationToken ct = default)
@@ -946,15 +946,51 @@ public sealed class JobsyApiClient : IAsyncDisposable
             answers = answers.ToDictionary(kv => kv.Key.ToString(), kv => kv.Value),
             complete
         };
-        var response = await _http.PutAsJsonAsync("api/me/disc", payload, ct);
+        var response = await _http.PutAsJsonAsync("api/me/culture", payload, ct);
         if (!response.IsSuccessStatusCode)
         {
             var body = await response.Content.ReadAsStringAsync(ct);
-            throw new InvalidOperationException(ExtractMessage(body) ?? "Gedragsanalyse opslaan mislukt.");
+            throw new InvalidOperationException(ExtractMessage(body) ?? "Cultuurscan opslaan mislukt.");
         }
 
-        return await response.Content.ReadFromJsonAsync<CandidateDiscState>(cancellationToken: ct)
-               ?? new CandidateDiscState();
+        return await response.Content.ReadFromJsonAsync<CandidateCultureState>(cancellationToken: ct)
+               ?? new CandidateCultureState();
+    }
+
+    public async Task<CompanyCultureState?> GetCompanyCultureAsync(Guid? companyId = null, CancellationToken ct = default)
+    {
+        try
+        {
+            var qs = companyId is Guid id ? $"?companyId={id}" : "";
+            return await _http.GetFromJsonAsync<CompanyCultureState>($"api/company/culture{qs}", ct);
+        }
+        catch (HttpRequestException ex) when (ex.StatusCode is HttpStatusCode.Unauthorized or HttpStatusCode.NotFound or HttpStatusCode.Forbidden)
+        {
+            return null;
+        }
+    }
+
+    public async Task<CompanyCultureState> SaveCompanyCultureAsync(
+        IReadOnlyDictionary<int, int> answers,
+        bool complete,
+        Guid? companyId = null,
+        CancellationToken ct = default)
+    {
+        var payload = new
+        {
+            answers = answers.ToDictionary(kv => kv.Key.ToString(), kv => kv.Value),
+            complete
+        };
+        var qs = companyId is Guid id ? $"?companyId={id}" : "";
+        var response = await _http.PutAsJsonAsync($"api/company/culture{qs}", payload, ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException(ExtractMessage(body) ?? "Bedrijfscultuur opslaan mislukt.");
+        }
+
+        return await response.Content.ReadFromJsonAsync<CompanyCultureState>(cancellationToken: ct)
+               ?? new CompanyCultureState();
     }
 
     public async Task<CandidateCareerInterestState?> GetMyCareerInterestsAsync(CancellationToken ct = default)

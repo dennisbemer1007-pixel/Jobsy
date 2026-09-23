@@ -243,7 +243,7 @@ public class CareerCompassTests
         Assert.Contains("Kompas.TabWhoAmI", home, StringComparison.Ordinal);
         Assert.Contains("Kompas.TabProfile", home, StringComparison.Ordinal);
         Assert.Contains("Kompas.TabCompetencies", home, StringComparison.Ordinal);
-        Assert.Contains("Kompas.TabDisc", home, StringComparison.Ordinal);
+        Assert.Contains("Kompas.TabCulture", home, StringComparison.Ordinal);
         Assert.Contains("Kompas.TabCareers", home, StringComparison.Ordinal);
         Assert.Contains("Kompas.TabFit", home, StringComparison.Ordinal);
         Assert.Contains("AxisCount = 5", File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Pages/Candidate/CompetencyScorePanel.razor")), StringComparison.Ordinal);
@@ -289,7 +289,7 @@ public class CareerCompassTests
 
         var di = File.ReadAllText(Path.Combine(root, "Jobsy.Infrastructure/DependencyInjection.cs"));
         Assert.Contains("ICandidateCareerInterestService", di, StringComparison.Ordinal);
-        Assert.Contains("ICandidateDiscService", di, StringComparison.Ordinal);
+        Assert.Contains("ICandidateCulturePersonalityService", di, StringComparison.Ordinal);
         Assert.Contains("ICareerCompassGenerationService", di, StringComparison.Ordinal);
 
         var merge = File.ReadAllText(Path.Combine(root, "Jobsy.Infrastructure/Services/DeepAnalysisService.cs"));
